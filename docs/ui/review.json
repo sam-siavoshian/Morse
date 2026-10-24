@@ -1296,35 +1296,6 @@
   "welcome/fa-allow-window": {
    "note": "R6: Persian"
   },
-  "site/landing": {
-   "note": "the hero video and the See it change pairs say \u201cClaude Code (haiku)\u201d: they are real runs recorded with haiku (site/config.js); a sonnet recording needs real runs. R6: the landing page whole at 1440, 768 and 390; every picture loaded, nothing scrolls sideways. At 390 the rows that scroll sideways (Tested apps, Your first minute) take keyboard focus (axe scrollable-region-focusable)",
-   "verdict": "residual"
-  },
-  "site/first-screen": {
-   "verdict": "residual",
-   "note": "the video's strip reads \u201cVSCodium on Linux \u00b7 Claude Code (haiku) \u00b7 real runs\u201d: true for that recording; retake it with sonnet"
-  },
-  "site/nav-open": {
-   "note": "R6: the nav sheet on a phone, the ring on its first link"
-  },
-  "site/nav-focus": {
-   "note": "R6: the ring on a nav link"
-  },
-  "site/try": {
-   "note": "R6: Try it here, ready"
-  },
-  "site/try-focus": {
-   "note": "R6: the ring on a suggestion"
-  },
-  "site/try-working": {
-   "note": "R6: the real runtime writing the sleep timer"
-  },
-  "site/try-result": {
-   "note": "R6: the result: Save, Undo, Edit code, Share"
-  },
-  "site/try-unknown": {
-   "note": "R6: a request with no sample answer: the note in the bar. The first-save card waits until the bar closes (it used to land on top of the reopened bar)"
-  },
   "new-bar/kept-toast": {
    "note": "R6: Esc keeps the change and says so, with Undo"
   },
@@ -1351,6 +1322,93 @@
   },
   "new-bar/redo-tool": {
    "note": "R6: Redo in the edit toolbar, disabled (--m-signal-1) with nothing to redo"
+  },
+  "site/landing-1440": {
+   "note": "the hero video and the See it change pairs say \u201cClaude Code (haiku)\u201d: they are real runs recorded with haiku (site/config.js); a sonnet recording needs real runs. R6: the landing page whole at 1440, 768 and 390; every picture loaded, nothing scrolls sideways. At 390 the rows that scroll sideways (Tested apps, Your first minute) take keyboard focus (axe scrollable-region-focusable)",
+   "verdict": "residual"
+  },
+  "site/landing-768": {
+   "note": "the hero video and the See it change pairs say \u201cClaude Code (haiku)\u201d: they are real runs recorded with haiku (site/config.js); a sonnet recording needs real runs. R6: the landing page whole at 1440, 768 and 390; every picture loaded, nothing scrolls sideways. At 390 the rows that scroll sideways (Tested apps, Your first minute) take keyboard focus (axe scrollable-region-focusable)",
+   "verdict": "residual"
+  },
+  "site/landing-390": {
+   "note": "the hero video and the See it change pairs say \u201cClaude Code (haiku)\u201d: they are real runs recorded with haiku (site/config.js); a sonnet recording needs real runs. R6: the landing page whole at 1440, 768 and 390; every picture loaded, nothing scrolls sideways. At 390 the rows that scroll sideways (Tested apps, Your first minute) take keyboard focus (axe scrollable-region-focusable)",
+   "verdict": "residual"
+  },
+  "site/first-screen-1440": {
+   "verdict": "residual",
+   "note": "the video's strip reads \u201cVSCodium on Linux \u00b7 Claude Code (haiku) \u00b7 real runs\u201d: true for that recording; retake it with sonnet"
+  },
+  "site/first-screen-768": {
+   "verdict": "residual",
+   "note": "the video's strip reads \u201cVSCodium on Linux \u00b7 Claude Code (haiku) \u00b7 real runs\u201d: true for that recording; retake it with sonnet"
+  },
+  "site/first-screen-390": {
+   "verdict": "residual",
+   "note": "the video's strip reads \u201cVSCodium on Linux \u00b7 Claude Code (haiku) \u00b7 real runs\u201d: true for that recording; retake it with sonnet"
+  },
+  "site/nav-open-1440": {
+   "note": "R6: the nav sheet on a phone, the ring on its first link"
+  },
+  "site/nav-open-768": {
+   "note": "R6: the nav sheet on a phone, the ring on its first link"
+  },
+  "site/nav-open-390": {
+   "note": "R6: the nav sheet on a phone, the ring on its first link"
+  },
+  "site/nav-focus-1440": {
+   "note": "R6: the ring on a nav link"
+  },
+  "site/nav-focus-768": {
+   "note": "R6: the ring on a nav link"
+  },
+  "site/nav-focus-390": {
+   "note": "R6: the ring on a nav link"
+  },
+  "site/try-1440": {
+   "note": "R6: Try it here, ready"
+  },
+  "site/try-768": {
+   "note": "R6: Try it here, ready"
+  },
+  "site/try-390": {
+   "note": "R6: Try it here, ready"
+  },
+  "site/try-focus-1440": {
+   "note": "R6: the ring on a suggestion"
+  },
+  "site/try-focus-768": {
+   "note": "R6: the ring on a suggestion"
+  },
+  "site/try-focus-390": {
+   "note": "R6: the ring on a suggestion"
+  },
+  "site/try-working-1440": {
+   "note": "R6: the real runtime writing the sleep timer"
+  },
+  "site/try-working-768": {
+   "note": "R6: the real runtime writing the sleep timer"
+  },
+  "site/try-working-390": {
+   "note": "R6: the real runtime writing the sleep timer"
+  },
+  "site/try-result-1440": {
+   "note": "R6: the result: Save, Undo, Edit code, Share"
+  },
+  "site/try-result-768": {
+   "note": "R6: the result: Save, Undo, Edit code, Share"
+  },
+  "site/try-result-390": {
+   "note": "R6: the result: Save, Undo, Edit code, Share"
+  },
+  "site/try-unknown-1440": {
+   "note": "R6: a request with no sample answer: the note in the bar. The first-save card waits until the bar closes (it used to land on top of the reopened bar)"
+  },
+  "site/try-unknown-768": {
+   "note": "R6: a request with no sample answer: the note in the bar. The first-save card waits until the bar closes (it used to land on top of the reopened bar)"
+  },
+  "site/try-unknown-390": {
+   "note": "R6: a request with no sample answer: the note in the bar. The first-save card waits until the bar closes (it used to land on top of the reopened bar)"
   }
  },
  "fixes": [
