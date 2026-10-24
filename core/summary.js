@@ -44,6 +44,46 @@ const POINTER_EVENTS = /^(click|dblclick|auxclick|contextmenu|mouse\w*|pointer\w
 
 const has = (src, re) => re.test(src);
 
+// Names the mod gives to things it makes itself: `const label = morse.el(...)`,
+// `let b = document.createElement(...)`. Changing the words on, or removing,
+// something the mod added doesn't change the page, so those don't count as
+// "Hides or removes parts of the page" or "Changes text on the page".
+// A name that is also used for anything else (a callback's parameter, another
+// assignment) is left out, so a page element never hides behind it.
+function ownNames(js) {
+  const made = new Set();
+  for (const m of js.matchAll(/(?:\b(?:const|let|var)\s+)?\b([A-Za-z_$][\w$]*)\s*=\s*(?:morse\.el|document\.createElement(?:NS)?|createElement(?:NS)?)\s*\(/g)) made.add(m[1]);
+  for (const name of [...made]) {
+    const n = name.replace(/\$/g, "\\$");
+    const assigns = [...js.matchAll(new RegExp(`(?<![\\w$.])${n}\\s*=(?![=>])\\s*(?=([\\s\\S]{0,40}))`, "g"))];
+    const other = assigns.some(a => !/^(?:morse\.el|document\.createElement(?:NS)?|createElement(?:NS)?)\s*\(/.test(a[1]));
+    const param = new RegExp(`(?<![\\w$.])${n}\\s*=>|\\(([^()]*[,\\s(])?${n}\\s*(?:,[^()]*)?\\)\\s*(?:=>|\\{)|\\bfunction\\b[^(]*\\(([^()]*[,\\s])?${n}\\b|\\b(?:for|catch)\\s*\\(\\s*(?:const|let|var)?\\s*${n}\\b`).test(js);
+    if (other || param) made.delete(name);
+  }
+  return made;
+}
+
+// Does the code do this to the page, and not only to things it made itself?
+// `re` is global; its `who` group, when it matches, is the name the action is
+// done on. No name (a chain like a.b.remove(), `this`, a CSS string) counts.
+function onPage(js, re, own) {
+  for (const m of js.matchAll(re)) if (!m.groups?.who || !own.has(m.groups.who)) return true;
+  return false;
+}
+const WHO = String.raw`(?:(?<![\w$.\])])(?<who>[A-Za-z_$][\w$]*)\s*\.\s*)?`;
+const HIDES_JS = new RegExp(WHO + "(?:" + [
+  String.raw`remove\s*\(\s*\)`,
+  String.raw`removeChild\s*\(`,
+  String.raw`hidden\s*=\s*(?:true|!0|1)`,
+  String.raw`style\s*\.\s*display\s*=\s*["'\`]none`,
+  String.raw`style\s*\.\s*visibility\s*=\s*["'\`]hidden`,
+  String.raw`display\s*:\s*["'\`]?none`,
+  String.raw`visibility\s*:\s*["'\`]?hidden`,
+  String.raw`replaceChildren\s*\(\s*\)`,
+  String.raw`(?:setAttribute|toggleAttribute)\s*\(\s*["'\`]hidden`,
+].join("|") + ")", "gi");
+const TEXT_JS = new RegExp(WHO + String.raw`(?:textContent|innerText|nodeValue|outerText|placeholder|innerHTML|outerHTML)\s*\+?=(?!=)`, "g");
+
 // Event names the code listens for: addEventListener("x"), morse.on(t, "x"),
 // morse.el(..., { on: { x } }), el.onx = ... Quoted words right after a
 // listener call are taken as event names when they look like one.
@@ -82,10 +122,10 @@ export function summarizeMod(mod) {
 
     // looks
     if (has(js, /\.style\b|morse\.css\s*\(|classList|className\s*=|setAttribute\s*\(\s*["'`](style|class)|insertRule|createElement\s*\(\s*["'`]style|<style/i)) add("looks");
-    // hides
-    if (has(js, /\.remove\s*\(\s*\)|removeChild\s*\(|\.hidden\s*=\s*(true|!0|1)|display\s*[:=]\s*["'`]?none|visibility\s*[:=]\s*["'`]?hidden|replaceChildren\s*\(\s*\)|setAttribute\s*\(\s*["'`]hidden|toggleAttribute\s*\(\s*["'`]hidden/i)) add("hides");
-    // text
-    if (has(js, /\b(textContent|innerText|nodeValue|outerText|placeholder)\s*\+?=(?!=)|\b(inner|outer)HTML\s*\+?=(?!=)|document\.title\s*=(?!=)/)) add("text");
+    // hides, and text: only when it's the page's own things, not ones the mod added
+    const own = ownNames(js);
+    if (onPage(js, HIDES_JS, own)) add("hides");
+    if (onPage(js, TEXT_JS, own) || has(js, /document\.title\s*=(?!=)/)) add("text");
     // buttons, other new things
     if (has(js, /(morse\.el|createElement)\s*\(\s*["'`]button|<button|role\s*[:=,]\s*["'`]?button|type\s*:\s*["'`]button/i)) add("buttons");
     if (has(js, /morse\.el\s*\(|createElement(NS)?\s*\(|insertAdjacent(HTML|Element|Text)|\.(append|prepend|after|before|appendChild|insertBefore|replaceWith|replaceChildren)\s*\(|\binnerHTML\s*\+?=(?!=)|cloneNode\s*\(/)) add("adds");

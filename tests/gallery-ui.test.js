@@ -1,8 +1,8 @@
 // Mods for this site, end to end in real Chromium: the Tunes demo site, the
 // real desktop connector (CDP) as the host, and the repo's own gallery list
 // served locally (site/mods/index.json, with the demo port swapped for this
-// run's). The chip in the empty bar, Try it then Remove (nothing left
-// behind), Try it then Keep, Install through the install review, Update
+// run's). The chip in the empty bar, Try it then Undo (nothing left
+// behind), Try it then Save, Install through the install review, Update
 // available after the gallery moves on, and the update review.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -108,13 +108,16 @@ test("the empty bar suggests the mods others made for this site; nothing is fetc
   assert.equal(indexHits, 1);
 });
 
-test("Try it runs the mod without saving it, and Remove takes it all away", { skip }, async () => {
+test("Try it runs the mod without saving it, and Undo takes it all away", { skip }, async () => {
   await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').click();
   await page.locator(".morse-sleep").waitFor();
   assert.equal(await page.locator('style[data-morse-css="tunes-sleep-timer"]').count(), 1);
   await ui(".gl-trial").waitFor();
   assert.match(await ui(".gl-trial").textContent(), /Trying “Sleep timer”.*Nothing is saved yet/);
   assert.match(await ui('.gl-item[data-glid="tunes-sleep-timer"]').textContent(), /On this page now/);
+  // The same two words as any unsaved change: Save and Undo (docs/WRITING.md).
+  assert.deepEqual(await ui(".gl-trial button").allTextContents(), ["Undo", "Save"]);
+  assert.deepEqual(await ui('.gl-item[data-glid="tunes-sleep-timer"] .gl-btns button').allTextContents(), ["Save", "Undo"]);
   assert.equal(await exists(modFile("tunes-sleep-timer")), false, "trying saves nothing");
   // The trial's button works like the real thing.
   await page.locator(".morse-sleep").click();
@@ -125,15 +128,16 @@ test("Try it runs the mod without saving it, and Remove takes it all away", { sk
   assert.equal(await page.locator('style[data-morse-css="tunes-sleep-timer"]').count(), 0);
   assert.equal(await ui(".gl-trial").isHidden(), true);
   assert.equal(await exists(modFile("tunes-sleep-timer")), false);
+  await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').waitFor({ timeout: 5000 }); // the panel redraws once the mod is off
   assert.ok(await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').isVisible(), "back to Try it");
 });
 
-test("Keep saves a tried mod, with where it came from", { skip }, async () => {
+test("Save keeps a tried mod, with where it came from", { skip }, async () => {
   const grid = page.locator('[data-testid="album-grid"]').first();
   assert.equal(await grid.evaluate(e => getComputedStyle(e).columnGap), "18px");
   await ui('.gl-item[data-glid="tunes-big-covers"] [data-gl=try]').click();
   await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-testid="album-grid"]')).columnGap === "24px");
-  // Keep from the strip at the top (the panel can be closed meanwhile).
+  // Save from the strip at the top (the panel can be closed meanwhile).
   await ui(".gl-trial [data-gl=keep]").click();
   await until(() => exists(modFile("tunes-big-covers")));
   const mod = await readMod("tunes-big-covers");

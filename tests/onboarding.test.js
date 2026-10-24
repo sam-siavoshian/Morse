@@ -137,7 +137,7 @@ test("help pane: from the menu and F1, examples fill the input, links to the sho
     await t.waitFor(s => s.pane === "help");
     const text = await t.q(".pane");
     for (const cat of ["Looks", "Layout", "New buttons", "Hiding things", "Reading", "Media", "Writing"]) assert.ok(text.includes(cat), cat);
-    assert.match(text, /Use the edit tools.*No model needed/s);
+    assert.match(text, /Use the Edit tools.*No model needed/s);
     assert.match(text, /Hold.*Space.*and say it/s, "uses the real talk hotkey");
     assert.equal(await t.status().then(s => s.focus), "ex", "focus moves to the first example");
 
