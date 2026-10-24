@@ -153,6 +153,7 @@ async function withRuntime(html, fn) {
       onMessage: f => subs.push(f),
       send(m) {
         window.__sent.push(m);
+        if (m.type === "capture") m.morseVisible = getComputedStyle(document.querySelector("[data-morse-ui]")).visibility; // what a screenshot now would show
         const result = m.type === "hello" ? { mode: "playground", label: "test", quiet: true, settings: { welcome: false } }
           : m.type === "mods.list" ? [] : m.type === "generate" ? { ok: false, error: "test" } : null;
         setTimeout(() => subs.forEach(f => f({ reply: m.id, result })), 5);
@@ -201,6 +202,20 @@ test("the page context sent to the model leaves out typed values, hidden fields,
     assert.match(ctx.target.html, /value="pay-now"/, "a button's value is its label");
     assert.match(ctx.target.html, /lang=en/);
     assert.match(ctx.target.facts, /#pay \{ background: url\("\/bg\.png\?…"\); \}/, "the CSS rule, without its signature");
+  });
+});
+
+test("screenshots leave Morse's own UI out even when the page's CSS insists it shows", { skip }, async () => {
+  await withRuntime(`<!doctype html><title>Shot</title><style>[data-morse-ui] { visibility: visible !important; }</style><h1 id="t">Title</h1>`, async page => {
+    await page.keyboard.press(OPEN_KEY);
+    await page.waitForTimeout(200);
+    await page.keyboard.type("make it red");
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(() => window.__sent.some(m => m.type === "capture"));
+    const shots = await page.evaluate(() => window.__sent.filter(m => m.type === "capture").map(m => m.morseVisible));
+    assert.deepEqual([...new Set(shots)], ["hidden"]);
+    await page.waitForTimeout(200);
+    assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-morse-ui]")).visibility), "visible", "and back afterwards");
   });
 });
 

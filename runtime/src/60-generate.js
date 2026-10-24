@@ -11,12 +11,13 @@
 //             updated, mod (the saved mod it edits), saved (set once kept) }
 
 async function capture() {
-  const vis = hostEl.style.visibility;
-  hostEl.style.visibility = "hidden";
+  // !important, like the rest of the host's style: a page rule can't keep
+  // Morse's own UI in the picture (Describe sends it to the model).
+  hostEl.style.setProperty("visibility", "hidden", "important");
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   let shot = null;
   try { shot = await call("capture"); } catch {}
-  hostEl.style.visibility = vis;
+  hostEl.style.removeProperty("visibility");
   return shot;
 }
 
