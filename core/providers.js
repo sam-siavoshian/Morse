@@ -39,7 +39,7 @@ function pickCoder(names) {
 }
 
 export function settingsLabel(s) {
-  if (s.provider === "demo") return "demo model · no local model found";
+  if (s.provider === "demo") return "demo model · no model installed";
   if (s.provider === "openai") return `${s.model} · ${new URL(s.baseUrl).host}`;
   return `${s.model} · local`;
 }
@@ -69,7 +69,7 @@ async function ollamaStream(s, messages, onToken, signal) {
     body: JSON.stringify({ model: s.model, messages, stream: true, options: { temperature: 0.2, num_ctx: 8192 } }),
     signal,
   });
-  if (!res.ok) throw new Error(`Ollama returned ${res.status}${res.status === 403 ? " (set OLLAMA_ORIGINS to allow this origin)" : ""}`);
+  if (!res.ok) throw new Error(`Ollama couldn't answer (error ${res.status}). ${res.status === 403 ? "Set OLLAMA_ORIGINS, then restart Ollama." : "Check that the model is installed."}`);
   let text = "";
   for await (const line of lines(res)) {
     const msg = JSON.parse(line);
@@ -88,7 +88,7 @@ async function openaiStream(s, messages, onToken, signal) {
     body: JSON.stringify({ model: s.model, messages, stream: true, temperature: 0.2 }),
     signal,
   });
-  if (!res.ok) throw new Error(`Model server returned ${res.status}`);
+  if (!res.ok) throw new Error(`The model server refused (error ${res.status}). Check the model settings.`);
   let text = "";
   for await (const line of lines(res)) {
     if (!line.startsWith("data:")) continue;

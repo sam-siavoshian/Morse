@@ -118,7 +118,7 @@ await news.locator(".gm-sw button[data-c='#262626']").hover();
 await sleep(500);
 await shot(news, "52-recolor.png");
 await news.keyboard.press("Escape");
-await news.keyboard.press("Escape"); // closes the bar: the session is saved as one "Manual edits" mod
+await news.keyboard.press("Escape"); // closes the bar: the session is saved as one "Direct edits" mod
 await sleep(600);
 
 // 54. Page tools: hide ads and popups, then dark mode

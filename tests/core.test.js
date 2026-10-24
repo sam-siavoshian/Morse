@@ -39,7 +39,7 @@ test("share links round-trip and drop local state", async () => {
 });
 
 test("rejects links that aren't mods", async () => {
-  await assert.rejects(decodeShare("https://x/install.html"), /Not a Morse share link/);
+  await assert.rejects(decodeShare("https://x/install.html"), /isn't a Morse share link/);
 });
 
 test("matching by host and by app", () => {

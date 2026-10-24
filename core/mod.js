@@ -47,9 +47,9 @@ export function modMatches(mod, { url, app }) {
 }
 
 export function validateMod(m) {
-  if (!m || typeof m !== "object" || m.morse !== 1) throw new Error("Not a Morse mod");
-  for (const k of ["id", "title", "prompt"]) if (typeof m[k] !== "string") throw new Error(`Mod is missing ${k}`);
-  if (typeof m.css !== "string" || typeof m.js !== "string") throw new Error("Mod has no code");
+  if (!m || typeof m !== "object" || m.morse !== 1) throw new Error("This isn't a Morse mod. Check that you copied all of it.");
+  for (const k of ["id", "title", "prompt"]) if (typeof m[k] !== "string") throw new Error(`This mod is incomplete (no ${k}). Ask for a new share link.`);
+  if (typeof m.css !== "string" || typeof m.js !== "string") throw new Error("This mod has no code in it. Ask for a new share link.");
   return m;
 }
 
@@ -82,7 +82,7 @@ export async function encodeShare(mod) {
 
 export async function decodeShare(link) {
   const frag = String(link).split("#m=")[1];
-  if (!frag) throw new Error("Not a Morse share link");
+  if (!frag) throw new Error("This isn't a Morse share link. Check that you copied the whole link.");
   const json = new TextDecoder().decode(await inflate(unb64url(frag)));
   return validateMod(JSON.parse(json));
 }

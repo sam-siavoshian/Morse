@@ -36,5 +36,5 @@ export async function runMorse({ settings, request, context, exec, emit, signal,
     previous = { raw, error: res.error };
     last.error = res.error;
   }
-  return { ...last, ok: false, error: last?.error || "The model did not produce a usable change." };
+  return { ...last, ok: false, error: last?.error || "The model's answer had no change in it. Try other words." };
 }

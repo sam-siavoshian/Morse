@@ -160,7 +160,7 @@ export async function voiceStatus(opts = {}) {
     provider: providers[0] || null,
     providers,
     label,
-    hint: providers.length ? "" : "Voice: set OPENAI_API_KEY, or install whisper-cli (whisper.cpp) on your PATH",
+    hint: providers.length ? "" : "To use voice, set OPENAI_API_KEY or install whisper-cli (whisper.cpp)",
   };
 }
 
