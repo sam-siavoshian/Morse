@@ -174,11 +174,12 @@ function pageStrings(src) {
   return [...html.split("\n").map((text, k) => ({ text, line: k + 1 })), ...scripts];
 }
 
-test("the extension's pages, the share page and the website show no developer jargon", () => {
+test("the extension's pages, the share page, the website and Morse Desktop show no developer jargon", () => {
   const files = [
     ...readdirSync(new URL("extension/", ROOT)).filter(f => f.endsWith(".html")).map(f => `extension/${f}`),
     ...readdirSync(new URL("extension/", ROOT)).filter(f => /^(popup|popup-control|popup-states|welcome)\.js$/.test(f)).map(f => `extension/${f}`),
     "share/install.html", "site/index.html", "site/gallery.html",
+    "desktop-app/ui/index.html", "desktop-app/ui/app.js", // Morse Desktop's window
   ];
   const found = [];
   for (const file of files) {

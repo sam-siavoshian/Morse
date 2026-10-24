@@ -46,8 +46,11 @@ section { max-width: 720px; margin: 0 auto; display: flex; flex-direction: colum
 @keyframes fade { from { opacity: 0; transform: translateY(2px); } }
 @media (prefers-reduced-motion: reduce) { section { animation: none; } }
 .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 4px; }
-.head p { margin-top: 4px; max-width: 520px; color: var(--m-text-2); }
+.head p { margin-top: 4px; max-width: 560px; color: var(--m-text-2); text-wrap: pretty; }
 .head-actions { display: flex; gap: 8px; flex: none; }
+/* title and buttons on one line, the text under both */
+.head.two { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 16px; }
+.head.two p { grid-column: 1 / -1; max-width: none; }
 .foot { color: var(--m-text-3); font-size: var(--m-text-sm); line-height: 18px; }
 .eyebrow { display: block; font: 500 var(--m-text-xs)/16px var(--m-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--m-text-3); }
 
@@ -102,10 +105,12 @@ input[role="switch"]:disabled { opacity: .5; cursor: default; }
 /* ---- cards and lists */
 .card { padding: 16px 18px; background: var(--m-surface); border: 1px solid var(--m-line); border-radius: var(--m-r-lg); }
 .list { list-style: none; margin: 0; padding: 4px; background: var(--m-surface); border: 1px solid var(--m-line); border-radius: var(--m-r-lg); }
-.list > li { display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 10px 12px; border-radius: var(--m-r-md); }
-.list > li + li { box-shadow: 0 -1px 0 var(--m-line); }
+.list > li { position: relative; display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 10px 12px; border-radius: var(--m-r-md); transition: background var(--m-fast); }
+/* hairlines between rows, starting under the text; none next to the row under the mouse */
+.list > li + li::before { content: ""; position: absolute; top: 0; left: 62px; right: 12px; height: 1px; background: var(--m-line); }
+.list.mods > li + li::before, .list.checks > li + li::before { left: 12px; }
 .list > li:hover { background: var(--m-raised); }
-.list > li:hover + li, .list > li:hover { box-shadow: none; }
+.list > li:hover::before, .list > li:hover + li::before { opacity: 0; }
 .list > li.empty { justify-content: center; min-height: 96px; color: var(--m-text-3); }
 .grow { flex: 1; min-width: 0; }
 .grow b { display: block; font-weight: 600; font-size: var(--m-text-md); line-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -211,3 +216,10 @@ dialog p { color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 19p
 dialog .row-end { margin-top: 8px; }
 label.check { display: flex; align-items: center; gap: 8px; color: var(--m-text-2); font-size: var(--m-text-sm); cursor: pointer; }
 label.check input { accent-color: var(--m-signal-4); margin: 0; }
+
+/* ---- small things */
+.choice .why::first-letter { text-transform: uppercase; }
+main::-webkit-scrollbar { width: 10px; }
+main::-webkit-scrollbar-thumb { background: var(--m-line-strong); border: 3px solid var(--m-bg); border-radius: 6px; }
+main::-webkit-scrollbar-thumb:hover { background: var(--m-signal-1); }
+main::-webkit-scrollbar-track { background: transparent; }

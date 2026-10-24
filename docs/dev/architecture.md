@@ -123,6 +123,38 @@ and app, never to what the message claims.
   `status.js` (sessions for `morse status`), `control.js` (pause, export,
   install, code), `cli.js` (the `morse` command), `setup.js` (`morse setup`).
 
+### Morse Desktop (`desktop-app/`)
+
+The app people install instead of the `morse` command ([user page](../desktop-app.md),
+[releasing](releasing.md)). Its Electron main process imports the daemon
+modules and runs them in place, so there is no separate Node:
+
+- [`service.js`](../../desktop-app/service.js) holds what the window can do,
+  with no Electron in it: the app list (`discoverApps`, processes, session
+  files), Open with Morse and Connect (`connectApp` + `startSession` from
+  `desktop.js`, the same steps as `morse launch`, several sessions in one
+  process), the model (`setup.js` `detectBackends`, `saveChoice`,
+  `checkModel`), the Morse helper (`createBridge`, `startPairing`, run in the
+  background), mods (`store.js`), the off switch (`control.js` pause) and
+  `morse doctor`'s rows. Its own settings are `~/.morse/desktop.json`.
+- [`ipc.js`](../../desktop-app/ipc.js) is the only door from the window: one
+  channel per request, argument checks, and a sender check (the main frame
+  of Morse's window, on `morse-app://ui/index.html`). Errors come back as
+  `{ error }` in plain words.
+- [`preload.cjs`](../../desktop-app/preload.cjs) exposes those requests as
+  `window.morse` (frozen; plain values only) and nothing else.
+- [`main.js`](../../desktop-app/main.js): the window (context isolation,
+  sandbox, no Node, no webviews; it can't navigate or open windows, and asks
+  for no permissions), the page served from a `morse-app://` scheme with a
+  CSP that allows only its own files, the tray, open at login (Electron on
+  macOS and Windows, `~/.config/autostart` on Linux), and `morse://pair?code=`
+  links from the welcome page, which only take effect after Connect is
+  clicked in the window.
+
+Sessions Morse Desktop holds are ordinary session files with its own pid, so
+`morse status` and `morse stop` work on them, and apps a terminal connected
+show as connected in the window.
+
 ### The Morse helper (`daemon/bridge.js`)
 
 `morse serve` runs a small HTTP server on 127.0.0.1:7457 so the extension

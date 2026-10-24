@@ -77,6 +77,7 @@ export function builderConfig({ stage, out, res, electronDist = null, electronVe
       } } : {}),
     },
     nsis: {
+      artifactName: "Morse-Setup-${version}.exe", // one installer for x64 and arm64
       oneClick: true,
       perMachine: false, // installs for this user only: no admin prompt
       shortcutName: "Morse",

@@ -43,15 +43,13 @@
   <main>
     <!-- Your apps -->
     <section id="apps" aria-labelledby="apps-h">
-      <header class="head">
-        <div>
-          <h1 id="apps-h">Your apps</h1>
-          <p>Open an app with Morse, then press <span class="caps" id="open-key"></span> in it. Point at something and say what to change.</p>
-        </div>
+      <header class="head two">
+        <h1 id="apps-h">Your apps</h1>
         <div class="head-actions">
           <button type="button" class="ibtn" id="refresh" aria-label="Look again" title="Look again"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.6"/><path d="M13 2.8v2.6h-2.6"/></svg></button>
           <button type="button" class="btn" id="add-app">Add an app…</button>
         </div>
+        <p>Open an app with Morse, then press <span class="caps" id="open-key"></span> in it, point at something and say what to change.</p>
       </header>
       <div class="notice" id="no-model" hidden><span><b>Choose a model first.</b> Morse needs one to write your changes.</span><button type="button" class="btn primary" data-go="model">Choose a model</button></div>
       <p class="error" id="apps-error" role="alert" hidden></p>
@@ -122,12 +120,10 @@
 
     <!-- Checks -->
     <section id="checks" aria-labelledby="checks-h" hidden>
-      <header class="head">
-        <div>
-          <h1 id="checks-h">Checks</h1>
-          <p>What Morse found on this computer, and whether your model answers.</p>
-        </div>
+      <header class="head two">
+        <h1 id="checks-h">Checks</h1>
         <div class="head-actions"><button type="button" class="btn primary" id="run-checks">Run checks</button></div>
+        <p>What Morse found on this computer, and whether your model answers.</p>
       </header>
       <ul class="list checks" id="check-list" aria-label="Checks"></ul>
       <p class="foot">Something wrong? <button type="button" class="link" data-link="troubleshooting">Troubleshooting</button> says what each message means.</p>

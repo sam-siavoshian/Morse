@@ -204,15 +204,17 @@ test("Add an app… keeps the file in desktop.json, and refuses native apps", as
 });
 
 test("the model: choices from what's installed, a choice saved the way morse setup saves it, then checked", async () => {
-  const { call, daemon } = setup();
+  const { call, daemon, service } = setup();
   const choices = await call("modelChoices");
   assert.deepEqual(choices.map(c => [c.id, c.found, c.recommended]), [["claude-code", true, true], ["codex", false, false], ["api-key", false, false]]);
+  await call("openApp", "tunes");
   assert.match((await call("chooseModel", "codex")).error, /isn't installed/);
   assert.match((await call("chooseModel", "api-key")).error, /Paste your API key/);
   const r = await call("chooseModel", "claude-code");
   assert.equal(r.ok, true);
   assert.deepEqual(r.check, { ok: true, ms: 1200, error: "", at: r.check.at, label: "\x1b[1mclaude-code\x1b[22m" });
   assert.deepEqual(daemon.calls.find(c => c[0] === "saveChoice").slice(1), ["claude-code", { provider: "claude-code" }]);
+  assert.equal(service.sessions.get("tunes").connector.settings.provider, "claude-code", "a connected app uses the new model from now on");
   const m = (await call("state")).model;
   assert.equal(m.name, "Claude Code");
   assert.equal(m.model, "haiku");

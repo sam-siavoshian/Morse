@@ -47,7 +47,8 @@ function show(tab) {
   for (const s of document.querySelectorAll("main > section")) s.hidden = s.id !== tab;
   try { sessionStorage.setItem("tab", tab); } catch {}
   $(tab).closest("main").scrollTop = 0;
-  if (tab === "checks" && !$("check-list").children.length) runChecks();
+  // Checks ask the model a question, so they run only when asked.
+  if (tab === "checks" && !$("check-list").children.length) $("check-list").replaceChildren(h("li", { class: "empty" }, "Run checks to see what Morse found on this computer. It also asks your model a short question."));
 }
 for (const b of document.querySelectorAll("nav button")) b.onclick = () => show(b.dataset.tab);
 for (const b of document.querySelectorAll("[data-go]")) b.onclick = () => show(b.dataset.go);
@@ -235,7 +236,7 @@ function renderChrome() {
   if (c.error) live.replaceChildren(h("i", { class: "dot bad" }), h("span", { text: c.error }));
   else if (c.running) live.replaceChildren(h("i", { class: "dot on" }),
     h("span", { text: `${c.ours ? "On." : "On, started from a terminal."} ${c.browsers ? `${plural(c.browsers, "browser")} connected.` : "No browser connected yet."}` }),
-    c.browsers ? h("button", { type: "button", class: "link", onclick: () => morse.signOutBrowsers() }, "Sign out browsers") : null);
+    c.browsers ? h("button", { type: "button", class: "link", onclick: () => morse.signOutBrowsers() }, "Sign out browsers") : "");
   else live.replaceChildren(h("i", { class: "dot" }), h("span", { text: "Off. Chrome can't use your model until it's on." }));
   // A code waiting: from "Show a code", or the one Chrome's welcome page sent.
   const w = c.waiting;

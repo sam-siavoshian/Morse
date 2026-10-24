@@ -123,7 +123,7 @@ async function loadCode(fresh = false) {
 await loadCode();
 
 // What the model step says right now, in one line. `st` is popup.state.
-let st = null, copied = false, tried = false, triedAt = 0, pairError = "", busy = false;
+let st = null, copied = false, tried = false, triedAt = 0, pairError = "", busy = false, toDesktop = false;
 const LIVE = (text, kind = "wait") => `<span class="dot ${kind}" aria-hidden="true"></span><span>${text}</span>`;
 function render() {
   const live = $("live"), h = st?.helper;
@@ -137,6 +137,7 @@ function render() {
   else if (h?.paired && h.provider === "none") live.innerHTML = LIVE("Connected, but no model is set up on this computer yet. Run the command above to choose one.", "bad");
   else if (manual) live.innerHTML = LIVE("The Morse helper is running. Run the command above to connect, or type the code it shows here.", "ok");
   else if (h) live.innerHTML = LIVE("Found the Morse helper. Connecting…");
+  else if (toDesktop) live.innerHTML = LIVE(`Waiting for Morse Desktop. When it asks, check that it shows ${esc(pairCode)} and click Connect.`);
   else live.innerHTML = LIVE(copied ? "Waiting for the command to finish in your terminal…" : "Waiting for you to run the command…");
   $("model-label").textContent = connected ? `Using ${st.label}` : "";
 }
@@ -147,6 +148,15 @@ $("copy-setup").onclick = async e => {
   try { await navigator.clipboard.writeText($("setup-cmd").textContent); b.textContent = "Copied"; }
   catch { b.textContent = "Select it and copy"; }
   setTimeout(() => (b.textContent = "Copy"), 2400);
+  render();
+};
+
+// Morse Desktop: one click. Chrome asks to open Morse, Morse asks the person
+// to connect (showing this code), and then the helper inside Morse Desktop
+// waits with this page's code, the same as `morse setup --pair` leaves it.
+$("desktop-pair").onclick = () => {
+  toDesktop = true;
+  location.href = `morse://pair?code=${encodeURIComponent(pairCode)}`;
   render();
 };
 

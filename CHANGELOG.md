@@ -26,6 +26,12 @@ The first version meant for other people to install.
 - Desktop apps built from web pages (Spotify, Slack, Discord, VS Code, Notion,
   Obsidian and others): `morse launch spotify` reopens the app with Morse
   connected. Morse never changes the app's files.
+- Morse Desktop: an app for your computer, so you don't need a terminal or
+  Node. It lists your apps and opens them with Morse, chooses and checks your
+  model, runs the Morse helper for Chrome (whose welcome page connects with one
+  click), and shows your mods and checks. It waits in the tray or menu bar, and
+  opens at login only if you turn that on. Built as a Linux AppImage; the macOS
+  and Windows builds are set up but not tried yet.
 
 ### Your model
 

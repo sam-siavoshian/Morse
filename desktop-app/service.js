@@ -252,7 +252,10 @@ export function createService({
         if (!row?.found) return { error: `${b.name} isn't installed on this computer yet. Install it, then choose it here.` };
         m = d.configFor(choice);
       }
-      await d.saveChoice(choice, m);
+      const cfg = await d.saveChoice(choice, m);
+      // Apps connected now use the new model from their next change on.
+      const next = d.settingsFromConfig(cfg);
+      for (const s of own.values()) s.connector.settings = next;
       changed();
       return { ok: true, check: await check() };
     } catch (e) { return fail(e); }
@@ -358,7 +361,7 @@ export function createService({
   // ---- mods and the off switch (morse mods, pause, resume)
   async function mods() {
     const list = await d.listMods();
-    const names = new Map((found || []).map(a => [a.id, a.name]));
+    const names = new Map((await appList()).map(a => [a.id, a.name]));
     for (const s of await d.readSessions()) names.set(s.id, s.name);
     const groups = new Map();
     for (const m of list) {
@@ -399,7 +402,8 @@ export function createService({
       rows.push({ label: r.label[0].toUpperCase() + r.label.slice(1), ok: r.ok, text: plain(r.text) });
     }
     for (const b of await d.detectBackends()) {
-      rows.push({ label: b.name, ok: b.found ? true : null, text: plain(b.detail) || (b.found ? "found" : "not installed") });
+      const text = plain(b.detail) || (b.found ? "found" : "not installed");
+      rows.push({ label: b.name, ok: b.found ? true : null, text: text.replace(/^[a-z]/, c => c.toUpperCase()) }); // "not installed" -> "Not installed"; paths stay as they are
     }
     const c = await chrome();
     rows.push({ label: "Morse helper", ok: c.running ? true : null, text: c.running ? `Running${c.ours ? " in Morse" : ""}. ${c.browsers} browser${c.browsers === 1 ? "" : "s"} connected.` : "Off. Chrome can't use your model until it's on." });

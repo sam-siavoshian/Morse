@@ -41,7 +41,8 @@
         <li data-step="model" id="model">
           <span class="tick" aria-hidden="true"></span>
           <div><b>Connect a model</b>
-            <span>Morse uses an AI you already have: Claude Code, Codex or an API key. Paste this in a terminal and press Enter.</span>
+            <span>Morse uses an AI you already have: Claude Code, Codex or an API key. With Morse Desktop, click the button below. Without it, paste this in a terminal and press Enter.</span>
+            <span class="row"><button type="button" id="desktop-pair">Connect Morse Desktop</button></span><!-- opens morse://pair?code=…: Morse Desktop asks, then this page pairs by itself (desktop-app/main.js) -->
             <span class="cmd"><code id="setup-cmd">morse setup</code><button type="button" id="copy-setup" class="quiet">Copy</button></span>
             <span class="live" id="live" role="status" aria-live="polite"></span>
             <span class="pairrow" id="pairrow" hidden><input id="code" maxlength="7" placeholder="Code" autocomplete="off" spellcheck="false" aria-label="Pairing code"><button type="button" id="pair">Connect</button></span>

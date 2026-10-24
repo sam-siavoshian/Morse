@@ -264,6 +264,8 @@ app.whenReady().then(async () => {
   lockSession();
   if (["dark", "light"].includes(process.env.MORSE_DESKTOP_THEME)) nativeTheme.themeSource = process.env.MORSE_DESKTOP_THEME; // screenshots
   if (MAC) app.dock?.setIcon(appIcon());
+  // macOS needs a menu for ⌘Q, ⌘W and copy and paste (the API key field); elsewhere there is none.
+  Menu.setApplicationMenu(MAC ? Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }, { role: "windowMenu" }]) : null);
   service = createService({ daemon: await loadDaemon(), emit: changed, log, iconFor, copyExtension: app.isPackaged, self: [process.execPath, APPIMAGE] });
   registerIpc({
     ipcMain, service, isTrusted, log,

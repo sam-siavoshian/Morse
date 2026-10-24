@@ -110,6 +110,14 @@ names a folder), 22-web-working.png, 26-news-before.png, 31-installed.png and
 |---|---|---|---|
 | landing-, landing-nav-, gallery-, gallery-drawer-{desktop,mobile}.png | shoot-site.js | ✅ | The site in the Lanes design, light only like Lanes, so one scheme |
 | install-{desktop,mobile}-{dark,light}.png | shoot-site.js | ✅ | The share page keeps its earlier look |
+| 167-desktop-app-apps.png | shoot-desktop-app.js | ✅ | Morse Desktop: this machine's apps, Tunes really connected (2 windows) |
+| 168-desktop-app-restart.png | shoot-desktop-app.js | ✅ | “Tunes is open. Restart it with Morse?”, with Always restart |
+| 169-desktop-app-model.png | shoot-desktop-app.js | ✅ | Real Claude Code (haiku) answered the check; the three choices |
+| 170-desktop-app-chrome.png | shoot-desktop-app.js | ✅ | The Morse helper on, the three ways to connect Chrome, a code |
+| 171-desktop-app-pair.png | shoot-desktop-app.js | ✅ | A morse://pair link handed over by a second start; asks before connecting |
+| 172-desktop-app-mods.png | shoot-desktop-app.js | ✅ | Mods per app with switches; one turned off |
+| 173-desktop-app-checks.png | shoot-desktop-app.js | ✅ | The checks, with the model answering for real; “You're root” is this test machine |
+| 174-desktop-app-light.png | shoot-desktop-app.js | ✅ | Light mode; Tunes open and ready to connect |
 | compare-{390,768,1280,1440}-{first-screen,full}, compare-gallery-1440, compare-privacy-1440 | by hand, from a local build of the Lanes site | ✅ | Lanes on the left, Morse on the right, same width |
 | install-bad-link-desktop-dark.png | shoot-site.js | ✅ | |
 

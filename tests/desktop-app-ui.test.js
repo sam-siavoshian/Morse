@@ -137,9 +137,6 @@ test("Morse Desktop opens Tunes with Morse, disconnects, connects again, asks be
   await rowState("connected", 90000);
   await until(() => plain.exitCode !== null || plain.signalCode !== null, 15000, "the Tunes started without Morse to have quit");
   const s2 = await session();
-  await row.getByRole("button", { name: "Disconnect" }).click();
-  await rowState("open-connectable", 30000);
-  await quitTunes(s2.port);
 
   // Last, since Playwright then waits for a navigation that never comes: the
   // page can't go anywhere else, or open windows.
@@ -156,4 +153,15 @@ test("Morse Desktop opens Tunes with Morse, disconnects, connects again, asks be
   const still = await electronApp.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().map(b => ({ visible: b.isVisible(), destroyed: b.isDestroyed() })));
   assert.deepEqual(still, [{ visible: false, destroyed: false }]);
   assert.equal(electronApp.process().exitCode, null, "still running");
+
+  // Quit Morse (the tray's Quit Morse) while Tunes is connected: Morse leaves
+  // Tunes, which keeps running, and its session goes away.
+  const proc = electronApp.process();
+  const exited = new Promise(r => proc.once("exit", r));
+  await electronApp.evaluate(({ app }) => { app.quit(); }).catch(() => {});
+  await Promise.race([exited, new Promise((_, no) => setTimeout(() => no(new Error("Morse didn't quit within 15 s")), 15000))]);
+  electronApp = null;
+  await until(async () => !(await fs.stat(path.join(home, "sessions", "tunes.json")).catch(() => null)), 10000, "Tunes' session file to go");
+  assert.equal(await inTunes(s2.port, `!!document.querySelector("[data-morse-ui]")`), false, "Morse is off Tunes");
+  await quitTunes(s2.port);
 });
