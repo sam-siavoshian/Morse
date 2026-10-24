@@ -13,7 +13,7 @@ Morse isn't in the Chrome Web Store yet, so you add it from its folder:
 
 1. Open `chrome://extensions` and turn on **Developer mode**.
 2. Click **Load unpacked** and choose the Morse extension folder. To find
-   it, click **Show the extension folder** in Morse Desktop, or run
+   it, click **Add to Chrome** in Morse Desktop, or run
    `morse extension` in a terminal.
 
 Morse's welcome page opens by itself.

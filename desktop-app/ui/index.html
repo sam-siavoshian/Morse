@@ -117,7 +117,33 @@
       <div class="card">
         <h2>Connect Chrome</h2>
         <ol class="steps">
-          <li><span class="n">1</span><div><b>Add Morse to Chrome</b><span>Open <code>chrome://extensions</code>, turn on Developer mode, click Load unpacked and choose the extension folder.</span><button type="button" class="btn" id="show-ext">Show the extension folder</button></div></li>
+          <li><span class="n">1</span><div><b>Add Morse to Chrome</b><span>Morse opens Chrome's extensions page and shows you its folder. Until Morse is in the Chrome Web Store, you add it from that folder.</span><button type="button" class="btn primary" id="show-ext">Add to Chrome</button>
+            <div class="add-how" id="add-how" hidden>
+              <!-- The one picture: Chrome's extensions page, where the two things are -->
+              <svg class="add-pic" viewBox="0 0 360 156" role="img" aria-labelledby="add-pic-t">
+                <title id="add-pic-t">Chrome's extensions page: Developer mode is the switch at the top right, Load unpacked the first button under the title. The Morse folder is dragged onto the page.</title>
+                <rect class="win" x="1" y="1" width="358" height="154" rx="9"/>
+                <rect class="bar" x="1" y="1" width="358" height="24" rx="9"/><rect class="bar" x="1" y="14" width="358" height="11"/>
+                <circle class="dot" cx="14" cy="13" r="3.5"/><circle class="dot" cx="25" cy="13" r="3.5"/><circle class="dot" cx="36" cy="13" r="3.5"/>
+                <rect class="url" x="50" y="6" width="170" height="14" rx="7"/><text class="t s" x="60" y="16.5">chrome://extensions</text>
+                <text class="t h" x="16" y="48">Extensions</text>
+                <text class="t s" x="214" y="47">Developer mode</text>
+                <rect class="hl" x="290" y="35" width="56" height="20" rx="10"/><rect class="sw" x="302" y="39" width="24" height="12" rx="6"/><circle class="knob" cx="320" cy="45" r="4.5"/>
+                <text class="t num" x="344" y="30">1</text>
+                <rect class="hl" x="12" y="60" width="92" height="24" rx="6"/><rect class="btnr" x="16" y="64" width="84" height="16" rx="4"/><text class="t s" x="24" y="75.5">Load unpacked</text>
+                <text class="t num" x="108" y="66">2</text>
+                <rect class="card" x="16" y="94" width="150" height="48" rx="6"/><rect class="line" x="26" y="106" width="80" height="6" rx="3"/><rect class="line" x="26" y="120" width="120" height="5" rx="2.5"/>
+                <path class="arrow" d="M300 128 C 270 128, 240 118, 214 110" marker-end="url(#add-arrow)"/>
+                <defs><marker id="add-arrow" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path class="arrowhead" d="M0 0 L8 4 L0 8 z"/></marker></defs>
+                <path class="folder" d="M304 112 h14 l4 5 h22 a3 3 0 0 1 3 3 v20 a3 3 0 0 1 -3 3 h-40 a3 3 0 0 1 -3 -3 v-25 a3 3 0 0 1 3 -3 z"/>
+                <text class="t s" x="282" y="152">chrome-extension</text>
+              </svg>
+              <ol class="add-steps">
+                <li>In Chrome, turn on <b>Developer mode</b>, at the top right.</li>
+                <li>Drag the <b>chrome-extension</b> folder Morse showed you onto that page. Or click <b>Load unpacked</b> and choose it: its place is copied, so <span class="mac-only">press ⌘⇧G and paste it.</span><span class="not-mac">paste it where the window asks for a folder.</span></li>
+              </ol>
+              <p class="live" id="add-note" role="status"></p>
+            </div></div></li>
           <li><span class="n">2</span><div><b>Allow it here</b><span>On the welcome page Chrome opens, click Connect. Morse asks whether Chrome may use your model. Click Allow. There's no code to type.</span></div></li>
           <li><span class="n">3</span><div><b>Or type a code</b><span>In Chrome, click Morse in the toolbar. Type this code under Morse helper.</span>
             <div class="coderow"><button type="button" class="btn" id="new-code">Show a code</button><output class="code" id="pair-code" hidden></output><small id="code-note"></small></div></div></li>

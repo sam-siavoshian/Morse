@@ -154,6 +154,7 @@ ${B(t("settings.model"))} ${h("model.note")}
                             ${h("config.auto")}
       --anthropic-key <key> --openai-key <key> --base-url <url>   ${h("config.keys")}
   morse doctor              ${h("doctor")}
+  morse uninstall           ${h("uninstall")}
 
 ${B(h("mods"))}
   morse mods                ${h("modsCmd")}
@@ -254,7 +255,8 @@ async function main() {
       const { EXTENSION_DIR } = await import("./setup.js");
       const { existsSync } = await import("node:fs");
       if (!existsSync(EXTENSION_DIR)) throw new Error(t("cli.extension.notBuilt", { dir: EXTENSION_DIR.replace(/[\\/]dist[\\/]extension$/, "") }));
-      console.log(EXTENSION_DIR);
+      // Installed with the install line: the copy in the Morse folder, which stays put across updates (daemon/installed.js).
+      console.log(await (await import("./installed.js")).extensionFolder({ builtDir: EXTENSION_DIR }));
       console.log(D(t("cli.extension.how")));
       break;
     }
@@ -289,14 +291,19 @@ async function main() {
       console.log(t("cli.unpaired", { n }));
       break;
     }
+    case "uninstall": // what the install line added (daemon/installed.js)
+      await (await import("./installed.js")).uninstallCli(f);
+      break;
     case "doctor": {
+      // --offline: no request leaves this computer (no version check, no model question).
+      const offline = f.offline === true;
       if (f.provider) assertProvider(f.provider);
       const cfg = await loadConfig();
       const h = detectHarnesses();
       const keys = keysFrom(cfg);
       const row = (k, v) => console.log(`  ${k.padEnd(9)} ${v}`);
       // Is a newer morse-cli on npm? At most once a day; MORSE_NO_UPDATE_CHECK=1 turns it off (docs/privacy.md).
-      const update = (await import("./update-check.js")).checkForUpdate(VERSION).catch(() => ({ state: "unknown" }));
+      const update = offline ? Promise.resolve({ state: "skipped" }) : (await import("./update-check.js")).checkForUpdate(VERSION).catch(() => ({ state: "unknown" }));
       console.log(LOGO + "\n");
       const u = await update;
       // "unpublished": morse-cli isn't on npm (yet), so there is nothing to compare with.
@@ -317,9 +324,10 @@ async function main() {
       row("model", s.provider === "none" ? WARN("none") : `${B(settingsLabel(s))}${s.detected ? D("  (auto-detected)") : ""}`);
       if (s.provider === "none") {
         console.log(`\n  No model is connected. Run morse setup to choose Claude Code, Codex or an API key.`);
-        process.exitCode = 1;
+        if (!offline) process.exitCode = 1;
         break;
       }
+      if (offline) { row("test", D("skipped (--offline): morse doctor asks the model a short question")); break; }
       const t0 = Date.now();
       try {
         const reply = await streamChat(s, [
