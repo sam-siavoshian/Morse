@@ -43,15 +43,16 @@ before(async () => {
 after(async () => { await ctx?.close(); await demo?.close(); });
 
 const stored = () => sw.evaluate(async () => Object.keys((await chrome.storage.local.get("mods")).mods || {}));
-// A page with the overlay's shadow root open (localStorage morse:debug) so the test can look inside.
+// A page with the overlay's shadow root open (localStorage morse:debug, set
+// before the first load) so the test can look inside.
 async function open(url) {
   const p = await ctx.newPage();
+  await p.addInitScript(() => localStorage.setItem("morse:debug", "1"));
   await p.goto(url);
-  await p.evaluate(() => localStorage.setItem("morse:debug", "1"));
-  await p.reload();
   await p.waitForFunction(() => document.documentElement.dataset.morseExtension === "1" && document.querySelector("[data-morse-ui]")?.shadowRoot);
   return p;
 }
+const noMods = () => sw.evaluate(() => chrome.storage.local.set({ mods: {} }));
 const shadowText = p => p.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.textContent);
 
 test("without “Allow User Scripts” a mod's style shows, its code never runs, and Morse says it waits", { skip }, async () => {
@@ -90,7 +91,7 @@ test("without “Allow User Scripts” a mod's style shows, its code never runs,
   await pop.locator("#warn button", { hasText: "Turn it on" }).waitFor();
   await pop.close();
   await p.close();
-  await sw.evaluate(() => chrome.storage.local.set({ mods: {} }));
+  await noMods();
 });
 
 test("the practice page loads under its stricter sandbox rules (no eval there either)", { skip }, async () => {
@@ -145,6 +146,7 @@ async function askToInstall(p, mod) {
 
 test("a page can't draw over the install review, and Install waits until the review has been seen", { skip }, async () => {
   const mod = createMod({ title: "Prize", prompt: "make headings red", url: "http://127.0.0.1:8787/", css: "h1{color:red}", js: "" });
+  await noMods(); // whatever an earlier test left
   const p = await open(HOSTILE);
   await p.waitForFunction(() => typeof window.cover === "function");
   await askToInstall(p, mod);
@@ -197,5 +199,5 @@ test("a page can't draw over the install review, and Install waits until the rev
   await p.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
   assert.deepEqual(await waitFor(async () => { const ids = await stored(); return ids.length && ids; }, { what: "the mod in storage" }), [mod.id]);
   await p.close();
-  await sw.evaluate(() => chrome.storage.local.set({ mods: {} }));
+  await noMods();
 });
