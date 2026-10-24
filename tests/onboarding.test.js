@@ -60,7 +60,7 @@ test("coach: shows the first time, follows point, describe, keep, then never aga
     await t.open();
     assert.equal(await t.q(".ob-coach", "visible"), true);
     assert.match(await t.q(".ob-steps .now"), /Point/);
-    assert.match(await t.q(".ob-say"), /Click the part of the page/);
+    assert.match(await t.q(".ob-say"), /Click the part you want to change/);
 
     await pointAt(page, "#toolbar");
     await page.waitForFunction(ui(".ob-steps .now") + "?.includes('Describe')");
@@ -156,19 +156,17 @@ test("help pane: from the menu and F1, examples fill the input, links to the sho
   });
 });
 
-test("notices: no model, then user scripts off; each has a button and can be dismissed for good", { skip }, async () => {
+test("notices: no model has a button and can be dismissed for good; “Allow User Scripts” waits until a change needs it", { skip }, async () => {
   await scenario("?onboarding&nomodel&noscripts", { coach: "done" }, async t => {
     await t.open();
     assert.match(await t.q(".ob-note"), /No model connected yet/);
     await t.click(".ob-note [data-ob=model]");
     await t.page.waitForFunction(() => window.__fake.opened === "model");
     await t.click(".ob-note .ob-close");
-    await t.page.waitForFunction(ui(".ob-note") + "?.includes('Allow User Scripts')");
-    await t.click(".ob-note [data-ob=userscripts]");
-    await t.page.waitForFunction(() => window.__fake.opened === "userscripts");
-    await t.click(".ob-note .ob-close");
+    // onboarding v2: no standing “Allow User Scripts” note (it comes with a change that needs it, 64-waiting.js)
     await t.page.waitForFunction(ui(".ob-note", "hidden"));
-    assert.deepEqual((await t.stored()).dismissed, { model: true, userScripts: true });
+    assert.equal((await t.stored()).dismissed.model, true);
+    assert.ok(!(await t.stored()).dismissed.userScripts, "nothing about “Allow User Scripts” was shown to dismiss");
     // The help pane still offers both.
     await t.page.keyboard.press("F1");
     await t.waitFor(s => s.pane === "help");

@@ -152,8 +152,8 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
 
   // One-click pairing: the Morse extension asks the helper, Morse asks the
   // person, Allow makes the token (docs/dev/pairing.md). The helper's side
-  // is onboarding v2's (daemon/bridge.js); until it is in, health.ask is
-  // false and this part only checks that Morse Desktop doesn't claim it.
+  // is onboarding v2's (daemon/bridge.js /v1/pair/ask). The question's words
+  // are Morse's own (askWords), never anything the extension sends.
   await w.evaluate(() => window.morse.setHelper(true));
   const EXT = `chrome-extension://${"abcdefghijklmnop".repeat(2)}`;
   const call = (method, p) => new Promise((resolve, reject) => {
@@ -164,13 +164,14 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
     req.end(method === "GET" ? undefined : "{}");
   });
   const health = await until(async () => (await call("GET", "/v1/health")).body, 15000, "the Morse helper");
-  if (health.ask !== true) console.log("desktop-app-ui.test.js: this helper can't ask yet (onboarding v2's daemon/bridge.js isn't merged): skipping Allow");
-  else {
+  assert.equal(health.ask, true, "Morse Desktop's helper asks the person");
+  {
     assert.equal(health.app, "desktop");
     const asked = await until(async () => { const r = await call("POST", "/v1/pair/ask"); return r.status === 202 && r; }, 15000, "the helper to take the request");
     const dialogAsk = w.locator("dialog#ask-pair[open]");
     await dialogAsk.waitFor({ timeout: 15000 });
-    assert.match(await dialogAsk.locator("h2").innerText(), /^Allow Chrome to use .+\?$/);
+    assert.match(await dialogAsk.locator("h2").innerText(), /^Allow Chrome to use your .+\?$/);
+    assert.doesNotMatch(await dialogAsk.innerText(), /pair\.ask/, "Morse's own words, not a message id");
     assert.equal((await call("POST", `/v1/pair/ask/${asked.body.id}`)).body.state, "waiting", "nothing until the person answers");
     await dialogAsk.getByRole("button", { name: "Allow" }).click();
     const answered = await until(async () => { const r = await call("POST", `/v1/pair/ask/${asked.body.id}`); return r.body?.state !== "waiting" && r; }, 15000, "the answer");

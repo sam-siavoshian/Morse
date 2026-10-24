@@ -1,0 +1,23 @@
+/* onboarding v2: the “Allow User Scripts” window. Tokens only (design/tokens.css). */
+* { box-sizing: border-box; }
+html { color-scheme: dark light; }
+body { margin: 0; background: var(--m-bg); color: var(--m-text); font: 400 14px/1.5 var(--m-font); letter-spacing: var(--m-tracking); -webkit-font-smoothing: antialiased; }
+main { max-width: 420px; padding: 22px 20px 20px; }
+h1 { margin: 0 0 6px; font: 600 var(--m-text-xl)/1.25 var(--m-font); letter-spacing: -0.01em; }
+p { margin: 0; color: var(--m-text-2); font-size: var(--m-text-sm); }
+figure { margin: 16px 0 14px; }
+img { display: block; width: 100%; height: auto; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); }
+figcaption { margin-top: 10px; color: var(--m-text); font-size: var(--m-text-sm); line-height: 19px; }
+.live { display: flex; gap: 8px; align-items: flex-start; }
+.dot { flex: none; width: 6px; height: 6px; margin-top: 7px; border-radius: 1.5px; background: var(--m-signal-2); animation: al-pulse 1.2s ease infinite; }
+.live.ok .dot { background: var(--m-primary); animation: none; }
+.live.ok { color: var(--m-text); }
+@keyframes al-pulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+.row { display: flex; gap: 8px; margin-top: 16px; }
+.row[hidden] { display: none; }
+button { height: 32px; padding: 0 12px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: transparent; color: var(--m-text); font: 500 var(--m-text-sm)/1 var(--m-font); cursor: pointer; }
+button:hover { background: var(--m-hover); }
+button.primary { background: var(--m-primary); border-color: var(--m-primary); color: var(--m-primary-text); }
+button.primary:hover { background: var(--m-primary-hover); }
+:focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
