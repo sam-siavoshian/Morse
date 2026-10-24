@@ -236,7 +236,7 @@ console.log(`model+apply ${(summary.genMs.median / 1000).toFixed(1)}s / p90 ${(s
 console.log(summary.byCategory);
 
 if (!opt["no-write"]) {
-  const stamp = started.toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const stamp = started.toISOString().replace(/[:.]/g, "-").slice(0, 19) + "-" + process.pid;
   await fs.mkdir(path.join(HERE, "results"), { recursive: true });
   const file = path.join(HERE, "results", `${stamp}.json`);
   await fs.writeFile(file, JSON.stringify({ startedAt: started.toISOString(), summary, results }, null, 2));

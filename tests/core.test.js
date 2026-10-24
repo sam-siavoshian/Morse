@@ -4,7 +4,7 @@ import http from "node:http";
 import { parseModResponse, completeCssPrefix } from "../core/parse.js";
 import { createMod, encodeShare, decodeShare, toUserscript, modMatches } from "../core/mod.js";
 import { streamChat, registerProvider } from "../core/providers.js";
-import { runMorse, selectorsIn } from "../core/engine.js";
+import { runMorse, selectorsIn, deadHooks } from "../core/engine.js";
 import { buildMessages } from "../core/prompt.js";
 import { readFuseWire, fuseVerdict } from "../daemon/fuses.js";
 
@@ -110,6 +110,23 @@ test("CSS rules that reach into a shadow root or frame move to the JS", () => {
   const plain = parseModResponse("TITLE: x\n```css\n.a{}\n```");
   assert.equal(plain.css, ".a{}\n");
   assert.equal(plain.js, "");
+});
+
+test("a class or CSS variable the JS sets that no CSS uses gets a repair round", async () => {
+  const replies = [
+    "TITLE: Hi\n```css\n.card .pri { color: orange }\n```\n```js\nmorse.watch('.card', c => c.classList.toggle('is-hot', /High/.test(c.textContent)));\n```",
+    "TITLE: Hi\n```css\n.card.is-hot { background: orange }\n```\n```js\nmorse.watch('.card', c => c.classList.toggle('is-hot', /High/.test(c.textContent)));\n```",
+  ];
+  const prompts = [];
+  registerProvider("script", async (s, messages, { onToken }) => { prompts.push(messages.at(-1).content); const r = replies.shift(); onToken(r); return r; });
+  const res = await runMorse({ settings: { provider: "script" }, request: "high ones orange", context: { url: "x", title: "x" }, emit: () => {}, exec: async () => ({ ok: true }) });
+  assert.equal(res.attempts, 2);
+  assert.match(prompts[1], /adds the class "is-hot" and no CSS uses it/);
+  // The page's own classes, and classes the JS reads back, are fine.
+  assert.equal(deadHooks({ css: "", js: "el.classList.add('open')" }, { target: { html: '<div class="menu open">' } }), null);
+  assert.equal(deadHooks({ css: "", js: "el.classList.toggle('x1'); if (el.classList.contains('x1')) go();" }, {}), null);
+  assert.match(deadHooks({ css: ".bar { width: 10px }", js: "document.body.style.setProperty('--p', '50%')" }, {}), /CSS variable --p/);
+  assert.equal(deadHooks({ css: ".bar { width: var(--p) }", js: "document.body.style.setProperty('--p', '50%')" }, {}), null);
 });
 
 test("finds the selectors a draft relies on", () => {

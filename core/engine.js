@@ -61,6 +61,14 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
         continue;
       }
     }
+    // ---- hooks nothing uses: JS that marks elements for CSS that isn't there
+    const dead = attempt < maxAttempts && !signal?.aborted ? deadHooks(draft, context) : null;
+    if (dead) {
+      if (draft.js.trim()) await exec("").catch(() => {}); // same mod id: turns the draft off
+      previous = { raw, error: dead };
+      repairs.push(dead);
+      continue;
+    }
     // ---- effect check: did the change do anything visible?
     if (before && attempt < maxAttempts && !signal?.aborted) {
       const miss = await noEffect(probe, before, draft).catch(() => null);
@@ -74,6 +82,24 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     return { ...last, ok: true };
   }
   return { ...last, ok: false, error: last?.error || "The model's answer had no change in it. Try other words." };
+}
+
+// A class the JS adds (or a CSS variable it sets) that no CSS uses changes
+// nothing: the model styled something else, or forgot the rule. Classes and
+// variables the page already has (anywhere in the context) are the page's own.
+export function deadHooks({ css = "", js = "" }, context) {
+  if (!js.trim()) return null;
+  const known = JSON.stringify(context || {}), styles = `${css}\n${js}`, out = [];
+  for (const m of js.matchAll(/classList\.(?:add|toggle)\(\s*(["'`])([\w-]+)\1/g)) {
+    const cls = m[2];
+    if (new RegExp(`\\.${cls}(?![\\w-])`).test(styles) || known.includes(cls) || js.split(cls).length > 2) continue;
+    out.push(`adds the class "${cls}"`);
+  }
+  for (const m of js.matchAll(/setProperty\(\s*(["'`])(--[\w-]+)\1/g)) {
+    if (!styles.includes(`var(${m[2]}`) && !known.includes(m[2])) out.push(`sets the CSS variable ${m[2]}`);
+  }
+  if (!out.length) return null;
+  return `It ran, but your JS ${[...new Set(out)].slice(0, 3).join(" and ")} and no CSS uses it, so nothing changes on screen. Add CSS rules for it (in the css block), or set the styles directly.`;
 }
 
 // ---- effect check helpers
