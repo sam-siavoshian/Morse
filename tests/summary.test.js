@@ -134,6 +134,24 @@ test("acts: clicking or submitting for you", () => {
   says(js("document.querySelector('.next').click()"), "acts");
   says(js("form.submit()"), "acts");
   says(js("el.dispatchEvent(new MouseEvent('click'))"), "acts");
+  says(js("morse.watch('.row', r => r.click())"), "acts");
+  // A download link the mod made and clicks itself clicks nothing on the page
+  // (the gallery's "Download the table as CSV").
+  silent(js("const a = morse.el('a', { href: url, download: 'x.csv' }); document.body.appendChild(a); a.click(); a.remove();"), "acts");
+  silent(js("const a = document.createElement('a'); a.href = u; a.click();"), "acts");
+  says(js("const a = morse.el('a'); a.click(); morse.$('#send').click();"), "acts", "the page's own button still counts");
+});
+
+test("hides: a choice that can hide, and not a hidden attribute in markup", () => {
+  // The gallery's "Hide sold-out products": display set to "none" or "".
+  says(js("morse.watch('.card', el => { el.style.display = oos ? 'none' : ''; })"), "hides");
+  says(js("el.style.visibility = done ? \"hidden\" : \"visible\""), "hides");
+  says(js("el.style.setProperty('display', 'none', 'important')"), "hides");
+  says(js("row.hidden = isDone"), "hides");
+  silent(js("row.hidden = false"), "hides");
+  silent(js("el.style.display = 'block'"), "hides");
+  silent(js("if (el.style.display === 'none') show()"), "hides", "reading the display isn't hiding");
+  silent(js("const b = morse.el('button', { html: '<span aria-hidden=\"true\">↓</span> CSV' }); h.append(b);"), "hides", "aria-hidden in its own markup");
 });
 
 test("ongoing: watchers and timers", () => {

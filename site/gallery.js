@@ -1,5 +1,6 @@
 import { initPage, modCard, highlight, slugOf, esc, appGlyph, copyText, flash, toast } from "./common.js";
 import { encodeShare, toUserscript } from "../core/mod.js";
+import { summarizeMod } from "../core/summary.js";
 
 initPage();
 
@@ -8,45 +9,69 @@ const grid = $("grid"), q = $("q"), filters = $("filters"), count = $("count"), 
 const drawer = $("drawer"), scrim = $("scrim");
 
 let entries = [];
-let app = "All";
+let cat = "All", noScripts = false;
+// The filters, in this order; a mod's "category" in mods/index.json.
+const CATS = ["Reading", "Dark mode", "Declutter", "Layout", "Keyboard", "New features"];
+const DEMO = "Demo apps";
+const inCat = (e, c) => c === "All" || (c === DEMO ? !!e.demo : e.category === c);
 const cards = new Map();   // slug -> card element
 const mods = new Map();    // slug -> full mod (fetched on open)
 
 // ---------- load + render ----------
 try {
   entries = await (await fetch("mods/index.json")).json();
-  entries = entries.filter(e => !e.demo); // mods for the local demo sites only show in Morse (Mods for this site)
+  // The ones with pictures first, then checked mods, the rest, and demo-app mods last.
+  const rank = e => (e.shots ? (e.demo ? 1 : 0) : e.demo ? 4 : e.checked ? 2 : 3);
+  entries.sort((x, y) => rank(x) - rank(y));
 } catch (e) {
   grid.innerHTML = `<p class="muted">Couldn’t load the gallery. Check your connection and reload the page.</p>`;
 }
 
+// What a card says besides the request: whether it needs Chrome's “Allow
+// User Scripts” (mods with code do; style-only mods don't), and demo-app mods.
+const notesHtml = e => [
+  e.userScripts === false ? `<span class="g-badge ok">Works without “Allow User Scripts”</span>` : e.userScripts ? `<span class="g-badge">Needs “Allow User Scripts”</span>` : "",
+  e.demo ? `<span class="g-badge demo">Demo app</span>` : "",
+].join("");
+
 for (const entry of entries) {
   const card = modCard(entry, { onOpen: e => open(slugOf(e)) });
   card.setAttribute("aria-haspopup", "dialog");
+  if (entry.shots?.after) card.insertAdjacentHTML("afterbegin", `<img class="card-shot" src="mods/${esc(entry.shots.after)}" alt="" loading="lazy" width="640" height="400">`);
+  const notes = notesHtml(entry);
+  if (notes) card.querySelector(".tags").insertAdjacentHTML("beforebegin", `<p class="g-badges">${notes}</p>`);
   cards.set(slugOf(entry), card);
   grid.append(card);
 }
 
-const apps = [...new Set(entries.map(e => e.app))].sort((a, b) => a.localeCompare(b));
-for (const name of ["All", ...apps]) {
-  const n = name === "All" ? entries.length : entries.filter(e => e.app === name).length;
+const filterButton = (label, n, pressed, onClick) => {
   const b = Object.assign(document.createElement("button"), { type: "button", className: "g-filter" });
-  b.innerHTML = `${esc(name)}<b>${n}</b>`;
-  b.setAttribute("aria-pressed", String(name === app));
-  b.addEventListener("click", () => {
-    app = name;
-    for (const x of filters.children) x.setAttribute("aria-pressed", String(x === b));
-    apply();
-  });
+  b.innerHTML = `${esc(label)}${n == null ? "" : `<b>${n}</b>`}`;
+  b.setAttribute("aria-pressed", String(pressed));
+  b.addEventListener("click", () => onClick(b));
   filters.append(b);
+  return b;
+};
+const catButtons = [];
+for (const name of ["All", ...CATS.filter(c => entries.some(e => e.category === c)), ...(entries.some(e => e.demo) ? [DEMO] : [])]) {
+  catButtons.push(filterButton(name, entries.filter(e => inCat(e, name)).length, name === cat, b => {
+    cat = name;
+    for (const x of catButtons) x.setAttribute("aria-pressed", String(x === b));
+    apply();
+  }));
 }
+filterButton("Works without “Allow User Scripts”", entries.filter(e => e.userScripts === false).length, noScripts, b => {
+  noScripts = !noScripts;
+  b.setAttribute("aria-pressed", String(noScripts));
+  apply();
+}).classList.add("g-switch");
 
 function apply() {
   const words = q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
   let shown = 0;
   for (const entry of entries) {
-    const hay = [entry.title, entry.prompt, entry.app, entry.surface, ...(entry.tags || [])].join(" ").toLowerCase();
-    const ok = (app === "All" || entry.app === app) && words.every(w => hay.includes(w));
+    const hay = [entry.title, entry.prompt, entry.app, entry.category, entry.surface, ...(entry.tags || []), ...(entry.match?.hosts || []), entry.demo ? "demo" : ""].join(" ").toLowerCase();
+    const ok = inCat(entry, cat) && (!noScripts || entry.userScripts === false) && words.every(w => hay.includes(w));
     cards.get(slugOf(entry)).hidden = !ok;
     if (ok) shown++;
   }
@@ -100,10 +125,25 @@ async function open(slug, { push = true } = {}) {
   const where = mod.match?.app
     ? `<code>morse launch ${esc(mod.match.app)}</code>`
     : (mod.match?.hosts || []).map(h => `<code>${esc(h)}</code>`).join("");
+  // What it does: the same plain lines the install review shows (core/summary.js).
+  const does = summarizeMod(mod).items.filter(i => i.id !== "code").map(i => esc(i.text));
+  const needs = mod.js.trim()
+    ? "“Allow User Scripts” in Chrome. Without it, only its look shows."
+    : "Nothing else. It only changes how the page looks, so it works without “Allow User Scripts”.";
+  $("d-shots").innerHTML = entry.shots?.before && entry.shots?.after
+    ? `<figure><img src="mods/${esc(entry.shots.before)}" alt="${esc(entry.app)} before the mod" loading="lazy"><figcaption>Before</figcaption></figure>
+       <figure><img src="mods/${esc(entry.shots.after)}" alt="${esc(entry.app)} with “${esc(mod.title)}”" loading="lazy"><figcaption>After</figcaption></figure>`
+    : "";
+  $("d-shots").hidden = !$("d-shots").innerHTML;
   $("d-meta").innerHTML = `
+    <dt>What it does</dt><dd class="d-does">${does.map(t => `<span>${t}</span>`).join("")}</dd>
+    <dt>Needs</dt><dd>${needs}</dd>
     <dt>Runs in</dt><dd>${where}</dd>
-    <dt>Works in</dt><dd>${esc(entry.surface || "web")}</dd>
+    ${entry.demo ? `<dt>Demo app</dt><dd>This mod is for one of the Morse demo apps, not a real website. Start them with <code>node demo/serve.js</code>.</dd>` : ""}
+    <dt>Checked</dt><dd>${entry.checked ? esc(entry.checked) : "Not checked by Morse. Written by hand for this app."}</dd>
     ${mod.target?.label ? `<dt>Pointed at</dt><dd>${esc(mod.target.label)}</dd>` : ""}
+    ${mod.note ? `<dt>Note</dt><dd>${esc(mod.note)}</dd>` : ""}
+    <dt>By</dt><dd>${esc(mod.author || entry.author || "")}</dd>
     <dt>Tags</dt><dd>${(entry.tags || []).map(t => `<span class="chip">${esc(t)}</span>`).join("")}</dd>
     <dt>File</dt><dd><a href="mods/${esc(entry.file)}" download>${esc(entry.file)}</a></dd>`;
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Morse gallery: example mods</title>
-<meta name="description" content="Example Morse mods for YouTube, GitHub, ChatGPT, Claude, Spotify, Slack, Notion, Gmail and more. Read the code, install it in Morse, or download it for Tampermonkey.">
+<meta name="description" content="Morse mods for PyPI, Node.js docs, Docker Hub, GitLab, RubyGems, YouTube, GitHub, Spotify, Slack and more: dark modes, reading modes, keyboard shortcuts and new buttons. Read the code, install it in Morse, or download it for Tampermonkey.">
 <meta property="og:title" content="Morse gallery">
 <meta property="og:description" content="Example mods for apps you already use. Read the code, then install.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -40,7 +40,7 @@
       <p class="eyebrow">Gallery</p>
       <h1>Example mods.</h1>
       <p class="lede">A mod is a change to an app, saved with Morse. These are small ones for apps you already use. See what each one does, then install it in Morse or download it for Tampermonkey.</p>
-      <p class="g-note"><span data-radar="14" data-still></span><span>Written by hand for each app in October 2026. Apps change often, so a mod may stop working. If one does, open Morse in that app and say “fix this”.</span></p>
+      <p class="g-note"><span data-radar="14" data-still></span><span>Most of these were made by Morse from the request you see, then checked on the real page in October 2026: they work, and still work after a reload. The ones marked “Demo app” are for the Morse demo apps. Apps change often, so a mod may stop working. If one does, open Morse in that app and say “fix this”.</span></p>
     </div>
   </section>
 
@@ -53,7 +53,7 @@
           <input id="q" type="search" placeholder="Search mods" autocomplete="off" spellcheck="false">
           <kbd aria-hidden="true">/</kbd>
         </label>
-        <div class="g-filters" id="filters" role="group" aria-label="Filter by app"></div>
+        <div class="g-filters" id="filters" role="group" aria-label="Filter mods"></div>
       </div>
       <p class="g-count faint mono" id="count" aria-live="polite"></p>
       <div class="cards" id="grid"></div>
@@ -76,6 +76,7 @@
   <div class="d-scroll">
     <h2 id="d-title"></h2>
     <p class="d-prompt" id="d-prompt"></p>
+    <div class="d-shots" id="d-shots" hidden></div>
     <dl class="d-meta" id="d-meta"></dl>
     <div class="d-actions">
       <a class="btn primary" id="d-install" target="_blank" rel="noopener">Install in Morse</a>

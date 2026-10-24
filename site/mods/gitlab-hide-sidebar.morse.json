@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "gitlab-hide-sidebar",
+  "title": "Hide the left sidebar",
+  "prompt": "hide the left sidebar so the page uses the full width",
+  "match": {
+    "hosts": [
+      "gitlab.com"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "#super-sidebar",
+    "label": "“Project” sidebar"
+  },
+  "css": ".super-sidebar-wrapper { display: none !important; }\n.layout-page.js-page-layout .panels-container { margin-left: 0 !important; width: 100% !important; }\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

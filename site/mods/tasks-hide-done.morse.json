@@ -1,0 +1,21 @@
+{
+  "morse": 1,
+  "id": "tasks-hide-done",
+  "title": "Hide finished tasks",
+  "prompt": "hide the tasks I've finished",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8796"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": "article.card:has(input[type=\"checkbox\"]:checked) {\n  display: none !important;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

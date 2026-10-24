@@ -1,0 +1,22 @@
+{
+  "morse": 1,
+  "id": "pypi-dark-mode",
+  "title": "Dark mode",
+  "prompt": "dark mode for the whole page, including the sidebar on the right, with text that's easy to read",
+  "match": {
+    "hosts": [
+      "pypi.org"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": "body, #content, .banner, .horizontal-section, .project-tabs, .project-tabs__panel, .project-description, .site-header, #sticky-notifications, aside, [class*=\"sidebar\"] { background-color: #0d1117 !important; }\nbody, #content, .project-tabs, .project-description *:not(a), .site-header *:not(a), aside *:not(a), [class*=\"sidebar\"] *:not(a) { color: #e6edf3 !important; }\n#content a, .site-header a, aside a, [class*=\"sidebar\"] a { color: #58a6ff !important; }\n#content h1, #content h2, #content h3, .project-description h2 { border-color: #30363d !important; }\npre, code { background-color: #161b22 !important; color: #e6edf3 !important; border-color: #30363d !important; }\n#search, input, textarea, select { background-color: #161b22 !important; color: #e6edf3 !important; border-color: #30363d !important; }\nbutton { background-color: #21262d !important; color: #e6edf3 !important; border-color: #30363d !important; }\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "note": "Asked three times. The first answers to “dark mode, with text that's easy to read” left the sidebar boxes light, so the request now names the sidebar.",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}
