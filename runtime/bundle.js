@@ -10,5 +10,15 @@ export function bundleRuntime() {
   const parts = readdirSync(SRC).filter(f => f.endsWith(".js")).sort()
     .map(f => `// ---- ${f}\n${readFileSync(new URL(f, SRC), "utf8")}`);
   const tokens = readFileSync(new URL("../design/tokens.css", import.meta.url), "utf8");
-  return `/* Morse runtime (built from runtime/src) */\n(() => {\nconst TOKENS_CSS = ${JSON.stringify(tokens)};\n${parts.join("\n")}\n})();\n`;
+  // God mode hook: the pure edit compiler (shared with tests) is inlined here.
+  const shared = inlineModule("../core/edits.js");
+  return `/* Morse runtime (built from runtime/src) */\n(() => {\nconst TOKENS_CSS = ${JSON.stringify(tokens)};\n${shared}\n${parts.join("\n")}\n})();\n`;
+}
+
+// Inlines a dependency-free ES module as a block whose exports become locals,
+// so its private helpers can't collide with runtime names.
+function inlineModule(rel) {
+  const src = readFileSync(new URL(rel, import.meta.url), "utf8");
+  const names = [...src.matchAll(/^export\s+(?:async\s+)?(?:function\*?|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)].map(m => m[1]);
+  return `// ---- ${rel.replace("../", "")} (inlined)\nconst { ${names.join(", ")} } = (() => {\n${src.replace(/^export\s+/gm, "")}\nreturn { ${names.join(", ")} };\n})();`;
 }
