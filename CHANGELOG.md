@@ -73,6 +73,9 @@ The first version meant for other people to install.
 - `npm run package:extension` makes the zip for the Chrome Web Store.
 - A privacy policy that says exactly what leaves your computer:
   [docs/privacy.md](docs/privacy.md).
+- Try it on the website first, with nothing to install: the real Morse runs
+  in a small music app and a news site on the page, with sample answers for a
+  few changes. Save one, reload the app, and it comes back.
 
 ## 0.1.0
 

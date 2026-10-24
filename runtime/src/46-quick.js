@@ -92,7 +92,12 @@ const GodQuick = (() => {
     if (!menu.contains(root.activeElement)) return;
     if (menuKeys(e, menu)) e.stopImmediatePropagation();
   }, true);
-  listen("pointerdown", e => {
+  // A press anywhere else closes it. Outside Morse the window hears it; inside,
+  // the shadow root does: seen from the window, a closed shadow root (every
+  // page but the tests') hides the menu from composedPath, so a press on a
+  // menu item would close the menu before its click.
+  listen("pointerdown", e => { if (!menu.hidden && !e.composedPath().includes(hostEl)) close(); }, true);
+  root.addEventListener("pointerdown", e => {
     if (!menu.hidden && !e.composedPath().some(n => n === menu || n === btn)) close();
   }, true);
   new MutationObserver(() => { if (bar.hidden) close(); }).observe(bar, { attributes: true, attributeFilter: ["hidden"] });

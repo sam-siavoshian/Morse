@@ -87,6 +87,24 @@ layout that share links and the gallery list depend on.
 - **`site/site.css`**: the one stylesheet for the site's pages (Nunito Sans,
   OFL, in `site/fonts/`). `site/shots/` holds the screenshots the page shows,
   as WebP copies of `docs/screenshots/`.
+- **Try it here** ([`site/try/`](../../site/try/), the `#try` section between
+  `<!-- try-it -->` markers in `site/index.html`): the real runtime in a demo
+  app (`demo/sites/tunes` or `byte`), in an iframe sandboxed with
+  `allow-scripts` only. `section.js` fills the section and adds `try.css`
+  (dark, in the tokens' charcoal, whatever the page around it does); it
+  loads `try.js` only when the section is about to scroll into view or
+  something in it is clicked. `try.js` is the runtime's host, like
+  `demo/playground.html`'s fake host but over postMessage, and `frame.js` is
+  the frame's side and the only place mod code runs. The demo model
+  (`core/demo.js`) writes the changes through the real engine; a request it
+  has no reply for gets a note that points to installing Morse
+  (`isDemoFallback`; the section's `data-install` says where). Saved mods
+  stay in the page's localStorage (`morse:try:*`). `npm run pages` publishes
+  the two demo apps and writes the runtime to `dist/extension/runtime.js`,
+  where `try.js` loads it from (run `npm run build` to try it from a
+  checkout). [`tests/try.test.js`](../../tests/try.test.js) drives it in
+  Chromium on a fresh `npm run pages` build, on a desktop and a 390px phone;
+  `node demo/shoot-try.js` takes its screenshots.
 - [`tests/site.test.js`](../../tests/site.test.js) checks that every link,
   image, icon, fragment and config target on the pages resolves.
 - **`site/gallery.html`**: example mods from [`site/mods/`](../../site/mods/)
