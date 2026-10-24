@@ -100,12 +100,42 @@ mod by itself. Only your click in Morse's own review does.
 
 ## Desktop apps
 
-`morse launch` opens the app with a debugging port. That is how Morse
-connects. While the app is open, other programs on your computer could
-connect to it too, even ones run by another account on the same computer.
-Quit the app to close the port. Morse makes sure other computers can't reach
-the port. It only connects when the app that answers is the one it started.
-On Linux, it also checks that no other account's program holds the port.
+To connect to a desktop app, Morse has to open it with a switch that lets
+another program control it.
+
+**Most Electron apps get a private connection.** When Morse opens an Electron
+app itself (`morse launch`, or Open with Morse in Morse Desktop), it gives the
+app a connection that only Morse holds. It doesn't open a port. Other
+programs on your computer, even ones another account runs, can't reach the
+app through it. This was tested on Linux with VSCodium, Obsidian, Joplin and
+Electron 10 to 45. On a Mac it works the same way, but it hasn't been tested
+there yet.
+
+What that doesn't cover:
+
+- **Programs running as you.** Any program that runs under your own account
+  can already control your apps in other ways. Morse can't protect an app
+  from those, with or without this.
+- **A debugging port is still used** where the private connection isn't
+  possible: on Windows (not tested yet), for browsers and other Chromium-based
+  apps, apps that start through a launcher (like Squirrel's `Update.exe`,
+  flatpak or snap), and Electron 9 and older. It is also used when you pass
+  `--port` or set `MORSE_PIPE=0`, and for `morse attach` to an app that is
+  already open with a port. While such a port is open, other programs on your
+  computer could connect to the app too, even ones another account on the
+  same computer runs. Quit the app to close the port. Morse makes sure other
+  computers can't reach the port. It only connects when the app that answers
+  is the one it started. On Linux, it also checks that no other account's
+  program holds the port.
+- **After Morse stops or quits**, the app keeps running, and nothing else can
+  use the private connection. Morse can't use it again either. To connect
+  later, Morse has to open the app again. (Morse Desktop can connect again
+  while it stays open.) If Morse crashes instead of quitting, it can't take
+  its code off. Until the app restarts, pages the app opens still load
+  Morse's small start-up code. That code does nothing without Morse (no bar,
+  no mods).
+- **An app that restarts itself** (some do after an update) starts again
+  without Morse.
 
 The Morse helper (`morse serve`) only answers on this computer. It only
 answers the Morse extension, and only a browser you paired with its one-time

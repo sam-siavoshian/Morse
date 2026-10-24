@@ -97,7 +97,15 @@ morse stop obsidian   # disconnect; the app keeps running, your changes come off
 
 Ctrl+C in the terminal where `morse launch` runs does the same as
 `morse stop`. Quitting the app also ends `morse launch`. Add `--watch` to keep
-waiting and connect again when the app comes back.
+Morse waiting. Then run `morse launch <app>` again, and the waiting Morse
+opens the app and connects.
+
+Morse opens most apps on a private connection that only it can use (see
+[What Morse does to the app](#what-morse-does-to-the-app)). That connection
+ends when Morse disconnects. To connect to the same app again later, Morse
+has to open it again. `morse launch` asks first, as for any app that is
+already open. In Morse Desktop, **Connect** after **Disconnect** works
+without a restart, as long as Morse Desktop stays open.
 
 | | |
 |---|---|
@@ -130,10 +138,20 @@ morse attach --port 9222 --app Obsidian
 
 ## What Morse does to the app
 
-- **It restarts the app with one extra switch**, `--remote-debugging-port`.
-  Every Chromium-based app understands it. The port only listens on this
-  computer. Morse checks that, and checks that the app that answers is the one
-  it started.
+- **It restarts the app with one extra switch.** For Electron apps, that is
+  `--remote-debugging-pipe`. The app talks to Morse over a private connection
+  that Morse hands it when it starts. There is no port that other programs
+  could use. This was tested on VSCodium, Obsidian, Joplin and every Electron
+  release from 10 on, on Linux. On a Mac it works the same way, but it hasn't
+  been tested there yet.
+- **A debugging port is used only where the private connection can't be:**
+  Windows (not tested yet), browsers and other Chromium-based apps, apps that
+  start through a launcher (Squirrel's `Update.exe`, flatpak, snap), Electron 9
+  and older, `--port`, `MORSE_PIPE=0`, and `morse attach`. The switch is then
+  `--remote-debugging-port`, which every Chromium-based app understands. The
+  port only listens on this computer. Morse checks that, and checks that the
+  app that answers is the one it started. While the port is open, other
+  programs on this computer can connect to the app too.
 - **It never changes the app's files.** Signed apps stay signed. Apps that
   check their own files still pass that check. App updates don't undo
   anything.
@@ -143,8 +161,65 @@ morse attach --port 9222 --app Obsidian
   each window. Your changes run in the page so they can work with it, but the
   page can't reach Morse or your model.
 - When you stop Morse, it takes its bar and your changes off every open
-  window. The app keeps running. Its debugging port closes when you quit the
-  app.
+  window. The app keeps running, even when Morse quits or crashes. A
+  debugging port, where one was used, closes when you quit the app.
+
+## Changes to what an app does
+
+Most changes are about how an app looks. Some are about what it does: "add a
+button that formats my document", "when I open a note, copy its name", "make
+Ctrl+Shift+K copy the line instead of deleting it". For these, Morse needs to
+know how the app works inside, not only what is on the screen.
+
+So the first time you open a desktop app with Morse, it reads how the app is
+put together. This happens in the background. It reads:
+
+- the app's own commands, with their names, and how to run them. VSCodium,
+  like VS Code, has over two thousand: Format Document, Save, Duplicate
+  Selection… Obsidian and Joplin have their own.
+- how its windows talk to the rest of the app.
+- what its main buttons do.
+
+This takes a few seconds, and you can use Morse while it happens. Morse keeps
+what it learned in your Morse folder (`~/.morse/profiles`), so next time it
+is ready at once. When the app updates, Morse reads it again.
+
+When you ask for a change to what the app does, Morse gives your model the
+few commands and parts of the app that fit your request. Your change can then
+run the app's own commands, the same ones its menus and shortcuts run. It
+doesn't have to guess at buttons and keys.
+
+- **Morse only reads.** It never changes the app's files (the tests check
+  every file before and after). It never replaces the app's own code. A
+  change adds to what the app does. Turning it off takes that away again.
+- **Your request decides.** A change to how something looks doesn't need any
+  of this, so Morse leaves it out.
+- To see what Morse found in an app, run `morse profile code` (or any app's
+  name). To try Morse without it, start it with `MORSE_PROFILE=off`.
+
+### What it made possible
+
+Each request was tested on real apps with Claude Code (haiku), once with this
+and once without. Then the change was used the way a person would use it
+(details in [App profiles](dev/rea.md#measurements)). With it, 10 of 11
+changes worked. Without it, 4 did. These worked only with it:
+
+| | |
+|---|---|
+| ![](screenshots/231-profile-vscode-format-before.png) VSCodium: "add a button here that formats the document" | ![](screenshots/232-profile-vscode-format-after.png) The Format button in the status bar runs VS Code's own Format Document |
+| ![](screenshots/241-profile-vscode-sort-before.png) "add a button here that sorts the lines of the file alphabetically" | ![](screenshots/233-profile-vscode-sort-after.png) Sorted by VS Code's own Sort Lines |
+| ![](screenshots/234-profile-vscode-remap-without.png) "make Ctrl+Shift+K duplicate the current line instead of deleting it", without: the line is deleted | ![](screenshots/235-profile-vscode-remap-with.png) With: the line is copied |
+| ![](screenshots/237-profile-joplin-duplicate-before.png) Joplin: "add a button that makes a copy of the note I'm looking at" | ![](screenshots/238-profile-joplin-duplicate-after.png) Joplin's own Duplicate made a copy of the welcome note |
+| ![](screenshots/236-profile-vscode-comment-after.png) VSCodium: "add a button here that comments out the line the cursor is on" | ![](screenshots/239-profile-joplin-clipboard-after.png) Joplin: "add a keyboard shortcut Ctrl+Alt+N that creates a new note from what is in the clipboard" |
+
+In Obsidian, the same kind of change worked with or without it. Here it was
+"add a button that inserts today's date into the note where my cursor is".
+With it, the change used Obsidian's own Insert current date:
+![](screenshots/240-profile-obsidian-date-after.png)
+
+Not working yet: "save the file automatically a second after I stop typing"
+in VSCodium. The change waited for typing in a way VS Code's editor doesn't
+report, with or without this.
 
 ## Which apps can't work, and why
 

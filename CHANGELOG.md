@@ -29,7 +29,17 @@ Version 0.2.0, the first version for other people to install.
 - Websites, with the Chrome extension.
 - Desktop apps built from web pages, tested on VSCodium, Obsidian and Joplin.
   `morse launch obsidian` opens the app again with Morse. Morse never changes
-  the app's files.
+  the app's files. When Morse opens an Electron app itself, the app gets a
+  private connection that only Morse can use. Other programs can't use it,
+  as they could a debugging port. This works on Linux and macOS, and was
+  tested on Linux.
+- Changes to what a desktop app does, not only how it looks. The first time
+  an app opens with Morse, Morse reads how it works inside: its commands, how
+  its windows talk to the rest of it, and what its buttons do. It keeps that
+  in `~/.morse/profiles` and gives your model the parts that fit your
+  request. A change can then run the app's own commands ("add a button that
+  formats the document" in VSCodium). `morse profile <app>` shows what Morse
+  found.
 - Morse Desktop: an app for your computer, so you don't need a terminal or
   Node. It lists your apps and opens them with Morse. It chooses and checks
   your model, and runs the Morse helper for Chrome. Chrome asks once and you
