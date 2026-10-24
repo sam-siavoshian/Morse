@@ -344,7 +344,6 @@ test("“Allow User Scripts” only when a change needs it: one switch, a pictur
     await sw.evaluate(mods => chrome.storage.local.set({ mods }), { [mod.id]: mod });
     await site.reload();
     await site.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
-    await site.waitForFunction(() => getComputedStyle(document.querySelector("h1")).outlineColor === "rgb(1, 2, 3)");
     const button = site.locator("[data-morse-ui] button", { hasText: "Open Morse's details" });
     await button.waitFor({ timeout: 10000 * SCALE });
     const pages = [];
@@ -361,6 +360,7 @@ test("“Allow User Scripts” only when a change needs it: one switch, a pictur
     await until(() => guide.isClosed() && details.isClosed(), 15000, "the window and the details tab to close");
     assert.equal(await sw.evaluate(async () => (await chrome.tabs.query({ active: true, lastFocusedWindow: true }))[0]?.url), byte, "back on the tab the change was on");
     await until(() => site.evaluate(() => document.documentElement.dataset.wordCount === "ran"), 15000, "the waiting mod to run");
+    await site.waitForFunction(() => getComputedStyle(document.querySelector("h1")).outlineColor === "rgb(1, 2, 3)"); // its look came with it
   } finally { await ctx.close(); }
 });
 
