@@ -1,18 +1,17 @@
 # Morse docs
 
-Morse lets you change any website or desktop app by saying what you want. A
-mod is a change you saved. Morse brings it back every time you open that site
-or app.
+Morse lets you change any website or desktop app in your own words. A mod is a
+change you saved. Morse brings it back every time you open that site or app.
 
-New here? Start with [Getting started](getting-started.md).
+If you're new, start with [Getting started](getting-started.md).
 
 ## Using Morse
 
 | Page | What's in it |
 |---|---|
 | [Getting started](getting-started.md) | Install Morse for Chrome and for desktop apps, connect a model, make your first change |
-| [Changing things](changing-things.md) | The bar: point, describe, watch it change, Save and Undo, follow-ups, History, voice and shortcuts |
-| [Edit tools and Page tools](edit-and-page-tools.md) | Change things yourself with no model: hide, move, recolor, rename. Dark mode, text size, hide ads |
+| [Changing things](changing-things.md) | The bar: point at something, describe a change, Save or Undo, ask for more, History, voice and shortcuts |
+| [Edit tools and Page tools](edit-and-page-tools.md) | Change things yourself, with no model: hide, move, recolor, rename. Dark mode, text size, hide ads |
 | [Ask and find](ask-and-find.md) | Ask what something does or where a setting is. Show me, and Explain this page |
 | [Show me once](show-me-once.md) | Do a task by hand once, then have Morse do it for you |
 | [Easier to use](easier-to-use.md) | Higher contrast, bigger click targets, easier fonts, Read aloud, Check this page, Describe this picture |
@@ -21,10 +20,10 @@ New here? Start with [Getting started](getting-started.md).
 | [Mod packs](mod-packs.md) | Several mods shared together: make a pack, install the ones you want, and packs that stay up to date for a team |
 | [Your controls](your-controls.md) | The off switch, pausing Morse, Safe start, mods that slow down or freeze a page, and backups |
 | [Desktop apps](desktop.md) | Apps like VSCodium, Obsidian and Joplin: how to connect, and which apps can't work |
-| [Morse Desktop](desktop-app.md) | The app for your computer: your apps, your model, Chrome, your mods and checks, without a terminal |
+| [Morse Desktop](desktop-app.md) | The app for your computer: your apps, your model, Chrome and your mods, without a terminal |
 | [Models and setup](models.md) | Claude Code, Codex or an API key: how to choose, and how Chrome reaches your model |
 | [Privacy and safety](privacy-and-safety.md) | What leaves your computer, when, and what mods can do |
-| [Privacy policy](privacy.md) | The formal privacy policy for the extension and the `morse` command |
+| [Privacy policy](privacy.md) | The privacy policy for the extension and the `morse` command |
 | [Troubleshooting](troubleshooting.md) | Common messages, what they mean, and what to do |
 | [Morse in your language](i18n.md) | The nine languages, right to left for Persian and Arabic, what stays English, and how to improve a translation |
 
@@ -50,5 +49,5 @@ New here? Start with [Getting started](getting-started.md).
 | [Chrome Web Store kit](store/README.md) | The store listing, permission notes and screenshots |
 | [Evals](../evals/README.md) | How often Morse does what people ask, measured |
 
-Everything here is plain Markdown in the repo. To add to it, see
+These pages are plain Markdown files in the repo. To add one, see
 [Adding a feature](dev/adding-a-feature.md#docs).

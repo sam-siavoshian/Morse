@@ -1,7 +1,7 @@
 # Changing things
 
-Everything starts in the bar. Press the shortcut, point at something, say
-what you want, and watch it change.
+Everything starts in the bar. Press the shortcut, point at something and say
+what you want. Then watch it change.
 
 ```
 press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the model writes the change ▦▦▦ ─▶ you see it ─▶ Save · Share
@@ -9,20 +9,20 @@ press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the mode
 
 ![Morse adding a sleep timer to a music player](screenshots/clip-sleep-timer.gif)
 
-*Recorded by Morse. The model's answers in this clip are played back from a
-file so it comes out the same every time. The same steps with real Claude
-Code answers are in [screenshots/claude-code](screenshots/claude-code).*
+*Recorded by Morse. This clip plays back saved answers, so it looks the same
+every time. The same steps with real Claude Code answers are in
+[screenshots/claude-code](screenshots/claude-code).*
 
 ## Point
 
-Press **⌥Space** (Ctrl+Shift+Space on Windows and Linux). The bar opens and
-Morse waits for you to point. Move the mouse over the part you want to change
-and click it. The bar names what you pointed at, the way a person would say
-it: “Player controls”, “Send button”.
+Press **⌥Space** (Ctrl+Shift+Space on Windows and Linux). The bar opens.
+Move the mouse over the part you want to change and click it. The bar names
+what you pointed at, the way a person would say it: “Player controls”, “Send
+button”.
 
 The mouse chooses the smallest thing under it, like one link in a list. To
-choose the bigger part around it (the whole list), press **⌥↑** (Alt+↑);
-press it again for a bigger part still.
+choose the bigger part around it (the whole list), press **⌥↑** (Alt+↑).
+Press it again to go bigger still.
 
 To change the whole page, don't point. Describe the change.
 
@@ -33,7 +33,7 @@ Type what you want and press **Enter**: “add a sleep timer”, “hide the ads
 enough. Or hold the shortcut and say it (see [Voice](#voice)).
 
 For ideas, press **F1** in the bar. When you point at something, the bar
-also suggests a few changes for it: **Tab** picks one, **←** and **→** move
+also suggests a few changes for it. **Tab** picks one. **←** and **→** move
 between them.
 
 | | |
@@ -43,12 +43,13 @@ between them.
 ## Watch it happen
 
 While the model writes, what you pointed at turns into a grid of small
-squares, and the bar shows the change as it is written. Changes to how things
-look show up while the model is still writing. When it's done, the grid
-sweeps away and you see the result.
+squares. The bar shows the change as it is written. Changes to how things
+look show up before the model finishes. When it's done, the grid sweeps away
+and you see the result.
 
 If the change doesn't work the first time, Morse shows the model what went
-wrong and it tries once more. The bar then says “needed a second try”.
+wrong, and the model tries once more. The bar then says “needed a second
+try”.
 
 Press **Esc** at any time to stop. Nothing is left behind.
 
@@ -62,15 +63,13 @@ Press **Esc** at any time to stop. Nothing is left behind.
 
 When the change is done, the bar shows what it made and how long it took.
 
-- **Save** keeps it. It becomes a mod, and Morse brings it back every time you
+- **Save** keeps it. It becomes a mod. Morse brings it back every time you
   open that site or app, even after a restart. **Enter** with nothing typed
   also saves.
 - **Undo** takes it off the page. Nothing is saved.
-- **Esc** (or clicking away) closes the bar and keeps the change, like Save.
-  Morse says so (“Kept … Closing the bar keeps a change.”), with **Undo**
-  right there if you meant to drop it.
-- **Edit code** shows the code the model wrote, if you want to read or change
-  it.
+- **Esc**, or a click outside the bar, closes the bar and keeps the change,
+  like Save. Morse tells you, and shows **Undo** in case you didn't want it.
+- **Edit code** shows the code the model wrote, so you can read or change it.
 - **Share** makes a link, an image or a file to send to someone. See
   [Mods](mods.md#share-a-mod).
 
@@ -82,50 +81,51 @@ When the change is done, the bar shows what it made and how long it took.
 
 ## Keep improving it
 
-A result isn't final.
+You can keep changing a result.
 
-- **Follow-ups.** Type under the result, like “make it bigger” or “use icons
-  instead”, and press **Enter**. The model gets your first request, the code
-  as it is now and your follow-up, and changes the same mod.
-- **Step back.** **⌘Z** (Ctrl+Z) goes back one version, and **⌘⇧Z**
-  (Ctrl+Shift+Z or Ctrl+Y) goes forward again, until you ask for something new.
+- **Ask for more.** Type under the result, like “make it bigger” or “use
+  icons instead”, and press **Enter**. The model reads your first request,
+  the code as it is now and what you added. Then it changes the same mod.
+- **Step back.** **⌘Z** (Ctrl+Z) goes back one version. **⌘⇧Z**
+  (Ctrl+Shift+Z or Ctrl+Y) goes forward again, until you ask for something
+  new.
 - **History.** Every saved mod keeps its last 20 versions. Open the Mods panel
   (**⌥⇧M**) and choose **History** on a mod. Click a version to bring it back.
-- **Change.** On a saved mod in the Mods panel, **Change** opens the bar on it,
-  so you can describe what to change.
+- **Change.** On a saved mod in the Mods panel, click **Change** to open the
+  bar on it. Then describe what to change.
 - **Fix it.** When a saved mod stops working, its row in the Mods panel says
-  so, and **Fix it** asks the model to repair it. See
+  so. Click **Fix it** and the model repairs it. See
   [Mods](mods.md#when-a-site-changes).
 
 | | |
 |---|---|
-| ![](screenshots/40-refine.png) A follow-up typed under the result | ![](screenshots/41-history.png) **History**: three versions; click one to bring it back |
+| ![](screenshots/40-refine.png) More typed under the result | ![](screenshots/41-history.png) **History**: three versions; click one to bring it back |
 
 ## Voice
 
-Tap the microphone in the bar, or hold the shortcut: a tap opens Morse, and
-holding it talks. Your words appear as you speak. Let go and Morse starts on
-the change. Turn on **Send after a pause** in Settings to send as soon as you
-stop talking.
+Tap the microphone in the bar, or hold the shortcut. A tap opens Morse.
+Holding it lets you talk. Your words appear as you speak. Let go, and Morse
+starts on the change. To send as soon as you stop talking, turn on **Send
+after a pause** in Settings.
 
 - **In Chrome**, Chrome turns your speech into text.
-- **In desktop apps**, the Morse helper does it, with your OpenAI key or with
-  Whisper if it's installed on your computer. Setup:
+- **In desktop apps**, the Morse helper does it. It uses your OpenAI key, or
+  Whisper if it's on your computer. To set it up, see
   [Models and setup](models.md#voice-in-desktop-apps).
 
 ![Hold the shortcut to talk: your words appear as you speak](screenshots/60-voice.png)
 
 ## Shortcuts and Settings
 
-Open Settings from the slider button in the bar, or with **⌘,** (Ctrl+,).
-There you can change every shortcut: open Morse, talk, the Mods panel, the
-Edit tools, and the off switch. Morse refuses keys that would cause trouble,
-like ⌘Q or Alt+F4.
+Open Settings with the slider button in the bar, or press **⌘,** (Ctrl+,).
+You can change every shortcut there: open Morse, talk, the Mods panel, the
+Edit tools and the off switch. Morse won't take keys that would cause
+trouble, like ⌘Q or Alt+F4.
 
-The defaults are ⌥Space on macOS and Ctrl+Shift+Space on Windows and Linux,
-where Alt+Space opens the window menu (or KRunner on KDE). Morse's own
-button in Chrome's toolbar uses Ctrl+Shift+Y (⌘⇧Y), so it never takes the
-keys Morse uses in the page. The full list is in
+The default is ⌥Space on macOS. On Windows and Linux it is Ctrl+Shift+Space,
+because Alt+Space opens the window menu there (or KRunner on KDE). Morse's
+button in Chrome's toolbar uses Ctrl+Shift+Y (⌘⇧Y), so it never takes keys
+Morse uses in the page. See the full list in
 [Getting started](getting-started.md#shortcuts).
 
 In the bar:
@@ -135,13 +135,13 @@ In the bar:
 - **Esc** or **⌘.** stops Morse.
 - **?** shows every shortcut you have.
 
-When the bar closes, you're back where you were, and the app gets every key
+When the bar closes, you're back where you were. The app gets every key
 except your Morse shortcuts.
 
 | | |
 |---|---|
-| ![](screenshots/61-settings.png) **Settings** | ![](screenshots/62-hotkey-recorder.png) **Change a shortcut**: Morse refuses keys that would quit the app |
+| ![](screenshots/61-settings.png) **Settings** | ![](screenshots/62-hotkey-recorder.png) **Change a shortcut**: Morse won't take keys that would quit the app |
 | ![](screenshots/64-shortcuts.png) **?** shows the shortcuts you have | ![](screenshots/21-web-point.png) Pointing at a chat box: the bar moves out of your way |
 
-Settings are kept in Chrome's sync storage for the extension, and in
-`~/.morse/settings.json` for desktop apps.
+In Chrome, Morse keeps your settings in Chrome's sync storage. For desktop
+apps, it keeps them in `~/.morse/settings.json`.

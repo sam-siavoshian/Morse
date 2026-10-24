@@ -233,7 +233,7 @@ export function startTry(section) {
         emit: ev => event({ ...ev, genId: m.genId }),
       }).catch(e => ({ ok: false, error: e?.name === "AbortError" ? "Stopped" : e.message }));
       if (unknown) {
-        say(`This demo only has sample answers for the suggested changes. <a href="${esc(section.dataset.install || "#install")}">Get Morse</a> to ask for anything, on any site or app.`, "unknown");
+        say(`This demo only has answers for the suggested changes. <a href="${esc(section.dataset.install || "#install")}">Get Morse</a> to ask for anything, on any site or app.`, "unknown");
       } else if (res.ok && res.kind === "answer") {
         say("Answered in the app.", "");
       } else if (res.ok) {
@@ -297,14 +297,14 @@ export function startTry(section) {
   async function reload() {
     const n = savedCount();
     await load();
-    say(n ? `<b>Reloaded.</b> ${n === 1 ? "Your saved change came back" : `Your ${n} saved changes came back`}. That's a mod: a change you saved. Morse brings it back every time you open that site or app.` : "Reloaded. Nothing is saved yet, so the app is as it was.", n ? "back" : "");
+    say(n ? `<b>Reloaded.</b> ${n === 1 ? "Your saved change came back" : `Your ${n} saved changes came back`}. A mod is a change you saved. Morse brings it back every time you open that site or app.` : "Reloaded. You haven't saved anything yet, so the app looks as it did.", n ? "back" : "");
   }
   async function reset() {
     store.drop(modsKey());
     store.drop("control:" + app);
     ctl = null;
     await load();
-    say("Started over. Every change in this demo app is gone.", "");
+    say("Started over. All changes in this demo app are gone.", "");
   }
 
   // The shortcut, pressed on this page while the demo is in view, opens Morse

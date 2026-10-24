@@ -29,7 +29,7 @@ export const DEMO_VIDEO = {
   height: 1080,
   label: "Morse changing VSCodium, a mail app and a music app, 36 seconds",
   strip: "VSCodium on Linux · Claude Code (haiku) · real runs",
-  caption: "36 seconds, no sound. VSCodium is VS Code without Microsoft’s branding. The mail and music apps are Morse’s demo apps. Waits for the model are sped up, and the video says so.",
+  caption: "36 seconds, no sound. VSCodium is VS Code without Microsoft’s name and logo. The mail and music apps are Morse’s demo apps. Waits for the model are sped up, and the video says so.",
 };
 
 // "See it change": the big before and after pairs, in order. Each picture is a
@@ -40,7 +40,7 @@ export const SHOWCASE = [
   {
     app: "VSCodium",
     kind: "Desktop app, on Linux",
-    note: "VS Code without Microsoft’s branding.",
+    note: "VS Code without Microsoft’s name and logo.",
     ask: "make it look like a retro green terminal: green glowing text on black",
     by: "Claude Code (haiku), 11.6 seconds",
     before: "shots/200-vscodium-terminal-before.webp",
@@ -54,7 +54,7 @@ export const SHOWCASE = [
   {
     app: "Obsidian",
     kind: "Desktop app, on Linux",
-    note: "Pointed at the ribbon on the left, then opened again after saving.",
+    note: "Pointed at the ribbon on the left. Saved, then opened the app again.",
     ask: "hide this ribbon",
     by: "Claude Code (haiku)",
     before: "shots/149-obsidian-bar.webp",
@@ -68,7 +68,7 @@ export const SHOWCASE = [
   {
     app: "PyPI",
     kind: "Website, in Chrome",
-    note: "pypi.org/project/requests, checked on the live site.",
+    note: "pypi.org/project/requests, tested on the live site.",
     ask: "dark mode for the whole page, including the sidebar on the right, with text that’s easy to read",
     by: "Claude Code (haiku)",
     before: "mods/shots/pypi-dark-mode-before.jpg",
@@ -82,7 +82,7 @@ export const SHOWCASE = [
   {
     app: "Node.js docs",
     kind: "Website, in Chrome",
-    note: "nodejs.org/api/path.html, checked on the live site.",
+    note: "nodejs.org/api/path.html, tested on the live site.",
     ask: "show the table of contents on the right side and keep it there while I scroll",
     by: "Claude Code (haiku)",
     before: "mods/shots/nodejs-side-contents-before.jpg",
@@ -104,5 +104,5 @@ export const REAL_APPS = [
   { app: "GitLab", kind: "Website", ask: "add a back to top button in the bottom right corner", src: "shots/153-web-gitlab-back-to-top.webp", width: 1280, height: 800, alt: "A GitLab project page with a new floating back to top button, and the bar offering Save." },
   { app: "Docker Hub", kind: "Website", ask: "make these code blocks bigger with a dark background", src: "shots/155-web-docker-hub-code.webp", width: 1280, height: 800, alt: "The nginx page on Docker Hub with larger, dark code blocks, and the bar offering Save." },
   { app: "Go packages", kind: "Website", ask: "put the code examples on a dark background with bigger text, and hide the survey banner", src: "shots/180-web-go-packages.webp", width: 1280, height: 800, alt: "The net/http page on pkg.go.dev with code examples on a dark background while the change is written." },
-  { app: "RubyGems", kind: "Website", ask: "", by: "The Edit tools: change it by hand, no model", src: "shots/181-web-rubygems-edit.webp", width: 1280, height: 800, alt: "The rails page on RubyGems with the Edit tools open on the heading: hide, move, resize, text and color." },
+  { app: "RubyGems", kind: "Website", ask: "", by: "Changed by hand with the Edit tools. No model.", src: "shots/181-web-rubygems-edit.webp", width: 1280, height: 800, alt: "The rails page on RubyGems with the Edit tools open on the heading: hide, move, resize, text and color." },
 ];

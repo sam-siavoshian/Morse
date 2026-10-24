@@ -1,8 +1,8 @@
 # Edit tools and Page tools
 
 Some changes don't need a model. The Edit tools change one thing you point
-at. Page tools change the whole page in one click. Both work at once, with no
-waiting, and save like any other change.
+at. Page tools change the whole page in one click. Both work at once, and you
+save them like any other change.
 
 [![Edit tools: rename a headline, move a pop-up](launch/poster-direct-edit.png)](launch/clip-direct-edit.mp4)
 
@@ -11,9 +11,9 @@ pop-up out of the way, with no model.*
 
 ## Edit tools
 
-Point at something and the Edit tools appear next to it. Click a tool, or
+Point at something, and the Edit tools appear next to it. Click a tool, or
 press **⌘E** (Ctrl+E) to use them from the keyboard. Each tool has its own
-key, shown in its tooltip:
+key. Its tooltip shows the key.
 
 | Key | Tool | What it does |
 |---|---|---|
@@ -29,14 +29,15 @@ key, shown in its tooltip:
 
 Or start typing to describe a change.
 
-No mouse? Press **⌥↓** (Alt+↓) in the bar to choose a part of the page with
-the arrow keys, then **⌘E** (Ctrl+E). **Tab** moves between the tools (and
-**←** **→** once you're on one); **Enter** uses one. See
+With the keyboard, press **⌥↓** (Alt+↓) in the bar and choose a part of the
+page with the arrow keys. Then press **⌘E** (Ctrl+E). **Tab** moves between
+the tools. Once you're on one, **←** and **→** move too. **Enter** uses a
+tool. See
 [Using Morse with the keyboard](getting-started.md#using-morse-with-the-keyboard-or-a-screen-reader).
 
-Your edits on a site are saved together as one mod called “Direct edits”,
-with undo and redo (**⌘Z** and **⇧⌘Z**). It saves, shares and exports like any
-other mod. **⌥⇧G** (Alt+Shift+G) shows the Edit tools from anywhere.
+Your edits on a site are saved together as one mod called “Direct edits”.
+**⌘Z** undoes an edit and **⇧⌘Z** redoes it. You can save and share it like
+any other mod. **⌥⇧G** (Alt+Shift+G) shows the Edit tools from anywhere.
 
 | | |
 |---|---|
@@ -45,10 +46,10 @@ other mod. **⌥⇧G** (Alt+Shift+G) shows the Edit tools from anywhere.
 
 ## Capture
 
-Like how something looks in one app? Point at it and press **⇧C**. Morse
-saves it under **Captured** in the bar. Open Morse in another app, pick it
-from the bar, and describe where you want it: the model rebuilds that look
-there.
+To reuse how something looks in another app, point at it and press **⇧C**.
+Morse saves it under **Captured** in the bar. Open Morse in the other app,
+pick it from the bar, and say where you want it. The model rebuilds that
+look there.
 
 | | |
 |---|---|
@@ -56,8 +57,8 @@ there.
 
 ## Page tools
 
-Click the Page tools button in the bar for one-click changes to the whole
-page:
+Click the Page tools button in the bar. Each tool changes the whole page in
+one click:
 
 - **Dark mode** and **Light mode**. Dark mode leaves photos, videos and parts
   that are already dark as they are.
@@ -65,13 +66,13 @@ page:
 - **Hide ads and pop-ups**
 - **Focus mode**
 - **Turn off all mods here**
-- **Explain this page**: the model sums up in a few lines what the screen is
+- **Explain this page**: the model says in a few lines what the screen is
   for. See [Ask and find](ask-and-find.md#explain-this-page).
 
 Each one stays on for that site, like a mod. Click it again to turn it off.
 
 Page tools also have the **Easier to use** group: higher contrast, bigger
-click targets, easier fonts, Read aloud and more. It has its own page:
+click targets, easier fonts, Read aloud and more. See
 [Easier to use](easier-to-use.md).
 
 [![Page tools: hide ads, then dark mode](launch/poster-page-tools.png)](launch/clip-page-tools.mp4)

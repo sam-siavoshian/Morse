@@ -1,17 +1,53 @@
-# Your style: one look, on every site and app
+# Your style
 
-Say it once, ending with “everywhere” or “on every site”: *Georgia font, bigger text and underline links everywhere except Figma*. Morse shows it at once on the page you're on, with Save and Undo, and from then on every site and app you open has it, before you open anything. Say more later and it adds to it. You can also set it, part by part, under **Your style** in Settings.
+Your style is one look for every site and app. Say it once, and end with
+“everywhere” or “on every site”. For example: *Georgia font, bigger text and
+underline links everywhere except Figma*.
 
-- **No model for the basics.** Your words become building blocks Morse makes itself ([`core/style.js`](../core/style.js), [`core/style-host.js`](../core/style-host.js)): a font, text size, space between lines, softer colors, red and green easier to tell apart, dark pages, fewer animations, no autoplay, underlined links. They reuse Easier to use and Page tools. It is style only, so it costs next to nothing when a page loads; only no autoplay and dark pages add a little code.
-- **Not on this site.** Say “not on this site” in the bar, press **Not on this site** in the Mods panel, or keep a list in Settings. “except Figma” in your words leaves out figma.com and the Figma app.
-- **One style in Chrome and your apps.** When Chrome is paired with the Morse helper (Morse Desktop or `morse serve`), they share it: say it in Chrome and your desktop apps have it too, and the other way round. Chrome reads the helper's copy when it starts, when it is paired, and when a page loads (at most every 5 seconds), and sends its own when you change it; if both changed, the newer one wins. Not paired, Chrome's style is for every site in Chrome and the apps keep their own, and Morse says so when you save (“every site in Chrome”, or “every app you open with Morse”). How it works: [`core/style-sync.js`](../core/style-sync.js).
-- **Stays in your hands.** It sits at the top of the Mods panel with its own switch. The off switch and pausing Morse turn it off like any mod, and self-heal never flags it.
-- **Fit to each site (off until you turn it on).** A general style can break a layout. With **Fit it to each site with the model** on, the first time you open a site the model gets your style and what Morse measured it broke there, and its fix shows in the bar for review, like any change. Saved, it belongs to your style for that site. Once per site.
+Morse shows it right away on the page you're on, with Save and Undo. After
+you save it, every site and app you open has it from the start. Say more
+later, and Morse adds it to your style. You can also set each part under
+**Your style** in Settings.
 
-Checked with real Claude Code (haiku) by [`demo/style-fit-real.js`](../demo/style-fit-real.js): on the Tunes demo, bigger text pushed the player bar below the bottom of the window; the fit (one try, 11 to 18 s) brought it back, and it came back on the next visit with no model call. Captured by [`demo/shoot-style.js`](../demo/shoot-style.js) on three demo sites at once; tested by [`tests/style.test.js`](../tests/style.test.js), [`tests/style-ui.test.js`](../tests/style-ui.test.js) and, for Chrome and the apps sharing it, [`tests/style-share.test.js`](../tests/style-share.test.js).
+- **No model for the basics.** Morse makes these itself: a font, text size,
+  space between lines, softer colors, red and green that are easier to tell
+  apart, dark pages, fewer animations, no autoplay and underlined links. They
+  are the same as in Easier to use and Page tools. They add almost no time
+  when a page loads. Only no autoplay and dark pages add a little code.
+- **Leave a site out.** Say “not on this site” in the bar, or click **Not on
+  this site** in the Mods panel. You can also keep a list in Settings.
+  “except Figma” in your words leaves out figma.com and the Figma app.
+- **One style in Chrome and your apps.** When Chrome is paired with the Morse
+  helper (Morse Desktop or `morse serve`), they share your style. Set it in
+  Chrome and your desktop apps get it too, and the other way round. If both
+  changed, the newer one wins. When Chrome isn't paired, Chrome and your apps
+  each keep their own style. Morse tells you which one you saved to (“every
+  site in Chrome”, or “every app you open with Morse”).
+- **You stay in charge.** Your style sits at the top of the Mods panel with
+  its own switch. The off switch and pausing Morse turn it off, like any mod.
+  Morse never marks it as broken.
+- **Fit to each site.** This is off until you turn it on. A style for every
+  site can break the layout of one. Turn on **Fit it to each site with the
+  model**. Then, the first time you open a site, the model sees your style
+  and what it broke there. Its fix shows in the bar, and you Save or Undo it
+  like any change. This happens once per site.
+
+## How it was tested
+
+Real Claude Code (haiku) ran [`demo/style-fit-real.js`](../demo/style-fit-real.js).
+On the Tunes demo, bigger text pushed the player bar below the window. The
+fit took one try (11 to 18 seconds) and brought the bar back. On the next
+visit it was still there, with no model call. The pictures come from
+[`demo/shoot-style.js`](../demo/shoot-style.js), on three demo sites. Tests:
+[`tests/style.test.js`](../tests/style.test.js),
+[`tests/style-ui.test.js`](../tests/style-ui.test.js) and, for Chrome and the
+apps sharing one style, [`tests/style-share.test.js`](../tests/style-share.test.js).
+The code is in [`core/style.js`](../core/style.js),
+[`core/style-host.js`](../core/style-host.js) and
+[`core/style-sync.js`](../core/style-sync.js).
 
 | | |
 |---|---|
-| ![](screenshots/150-style-bar.png) **“…everywhere”**, shown live with Save and Undo | ![](screenshots/152-style-mods-panel.png) **The Mods panel**: Your style at the top |
-| ![](screenshots/153-style-settings.png) **Settings**: part by part, and the sites it skips | ![](screenshots/154-style-not-here.png) **Not on this site**, with Undo |
+| ![](screenshots/150-style-bar.png) **“…everywhere”**, shown at once with Save and Undo | ![](screenshots/152-style-mods-panel.png) **The Mods panel**: Your style at the top |
+| ![](screenshots/153-style-settings.png) **Settings**: each part, and the sites it skips | ![](screenshots/154-style-not-here.png) **Not on this site**, with Undo |
 | ![](screenshots/155-style-calmer.png) **Calmer** on the library: the video waits, the ticker stops | ![](screenshots/158-style-fit-haiku-review.png) **Fit to this site** by Claude Code (haiku): the player bar is back |
