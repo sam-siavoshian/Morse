@@ -92,13 +92,12 @@ export function siteChrome(index, page = "") {
     if (!m) throw new Error(`site/index.html has no ${name}`);
     return m[0];
   };
-  // Links into the landing page go back to it; the icon sprite's #i-* stay.
+  // Links into the landing page go back to it.
   const away = html => html
     .replace(/href="#top"/g, 'href="./"')
-    .replace(/href="#(?!i-)([\w-]+)"/g, 'href="./#$1"')
+    .replace(/href="#([\w-]+)"/g, 'href="./#$1"')
     .replace(`<a class="nav-link" href="${page}">`, `<a class="nav-link" href="${page}" aria-current="page">`);
   return {
-    sprite: pick("icon sprite", /<svg width="0"[\s\S]*?<\/svg>/),
     header: away(pick("nav bar", /<header class="nav">[\s\S]*?<\/header>/)),
     footer: away(pick("footer", /<footer class="foot">[\s\S]*?<\/footer>/)),
   };
@@ -132,14 +131,13 @@ export function privacyPage(md, chrome) {
 <meta name="description" content="What data leaves your computer when you use Morse, when, and to whom.">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="color-scheme" content="dark">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.png" type="image/png" sizes="64x64">
 <link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
 </head>
 <body>
 <a class="skip-link" href="#top">Skip to content</a>
-${chrome.sprite}
 ${chrome.header}
 <main id="top">
 <section class="page-head">

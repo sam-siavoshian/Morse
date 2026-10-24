@@ -1,4 +1,4 @@
-import { initPage, modCard, highlight, slugOf, esc, appGlyph, copyText, flash, toast } from "./common.js";
+import { initPage, modCard, highlight, slugOf, esc, appIcon, copyText, flash, toast } from "./common.js";
 import { encodeShare, toUserscript } from "../core/mod.js";
 import { summarizeMod } from "../core/summary.js";
 
@@ -122,7 +122,7 @@ async function open(slug, { push = true } = {}) {
   current = slug;
   lastFocus = document.activeElement;
 
-  $("d-app").innerHTML = `<span class="glyph" aria-hidden="true">${esc(appGlyph(entry.app))}</span>${esc(entry.app)}`;
+  $("d-app").innerHTML = `${appIcon(entry.app)}${esc(entry.app)}`;
   $("d-title").textContent = mod.title;
   $("d-prompt").textContent = `“${mod.prompt}”`;
   const where = mod.match?.app
@@ -131,10 +131,10 @@ async function open(slug, { push = true } = {}) {
   // What it does: the same plain lines the install review shows (core/summary.js).
   const does = summarizeMod(mod).items.filter(i => i.id !== "code").map(i => esc(i.text));
   const needs = !inChrome(entry)
-    ? "Nothing else. Open the app with Morse, and it runs there."
+    ? "Nothing else. Open the app with Morse and it runs there."
     : mod.js.trim()
-    ? "“Allow User Scripts” in Chrome. Without it, only its look shows."
-    : "Nothing else. It only changes how the page looks, so it works without “Allow User Scripts”.";
+    ? "“Allow User Scripts” in Chrome. Without it, only the change in looks shows."
+    : "Nothing else. It only changes how the page looks, so it doesn't need “Allow User Scripts”.";
   $("d-shots").innerHTML = entry.shots?.before && entry.shots?.after
     ? `<figure><img src="mods/${esc(entry.shots.before)}" alt="${esc(entry.app)} before the mod" loading="lazy"><figcaption>Before</figcaption></figure>
        <figure><img src="mods/${esc(entry.shots.after)}" alt="${esc(entry.app)} with “${esc(mod.title)}”" loading="lazy"><figcaption>After</figcaption></figure>`
@@ -145,7 +145,7 @@ async function open(slug, { push = true } = {}) {
     <dt>Needs</dt><dd>${needs}</dd>
     <dt>Runs in</dt><dd>${where}</dd>
     ${entry.demo ? `<dt>Demo app</dt><dd><span>This mod is for one of the Morse demo apps, not a real website. Start them with <code>node demo/serve.js</code>.</span></dd>` : ""}
-    <dt>Checked</dt><dd>${entry.checked ? esc(entry.checked) : "Not checked by Morse. Written by hand for this app."}</dd>
+    <dt>Checked</dt><dd>${entry.checked ? esc(entry.checked) : "Not tested by Morse. Someone wrote it by hand for this app."}</dd>
     ${mod.target?.label ? `<dt>Pointed at</dt><dd>${esc(mod.target.label)}</dd>` : ""}
     ${mod.note ? `<dt>Note</dt><dd>${esc(mod.note)}</dd>` : ""}
     <dt>By</dt><dd>${esc(mod.author || entry.author || "")}</dd>

@@ -52,16 +52,16 @@ the same way) and on the catalog and the extension pages:
 | Rule | Where | Fix |
 |---|---|---|
 | `aria-allowed-attr` (critical) | the captured chips in the bar: `role=option` with `aria-pressed` | a group of toggle buttons |
-| `aria-required-children` (critical) | Page tools: a `<header>` counted as a banner inside `role=menu`; the empty Mods list: `role=list` with no items | card headers and footers are `role="none"`; the list is a `role=group` named Mods |
+| `aria-required-children` (critical) | Page tools: a `<header>` counted as a banner inside `role=menu`. The empty Mods list: `role=list` with no items | card headers and footers are `role="none"`. The list is a `role=group` named Mods |
 | `label` (critical) | Edit code's two code fields, the Share link field | `<label for>`, `aria-label` |
-| `aria-allowed-role` (minor) | the Mods panel was an `<aside role=dialog>`, each mod an `<article role=listitem>` | a `<section role=dialog>`; rows are plain articles with their name |
+| `aria-allowed-role` (minor) | the Mods panel was an `<aside role=dialog>`, each mod an `<article role=listitem>` | a `<section role=dialog>`. Rows are plain articles with their name |
 | `landmark-no-duplicate-banner`, `landmark-no-duplicate-contentinfo` (moderate) | every card's `<header>`/`<footer>` counted as the page's banner and footer | `role="none"` on them (12-focus.js does it for every card) |
 | `html-has-lang` (serious), `landmark-one-main`, `page-has-heading-one`, `region`, then `heading-order` | popup and options | `lang`, a `<main>`, the wordmark is the `<h1>`, sections are `<h2>`, the test result is a status |
 | `color-contrast` (serious), `landmark-one-main`, `region` | practice page | the byline is #707070 (4.9:1), the ad label .85 opacity, a `<main>`, the cookie bar is a named region |
-| `scrollable-region-focusable` (serious) | the full catalog: Show code and the install review's code blocks, and Page tools at phone width (it scrolls, and its items are out of the Tab order) | the code blocks are named, focusable regions; a menu's current item is its one Tab stop |
+| `scrollable-region-focusable` (serious) | the full catalog: Show code and the install review's code blocks, and Page tools at phone width (it scrolls, and its items are out of the Tab order) | the code blocks are named, focusable regions. A menu's current item is its one Tab stop |
 
 The welcome page had none. The full catalog (519 states in the dark theme,
-phone width included) found only `scrollable-region-focusable`; after that
+phone width included) found only `scrollable-region-focusable`. After that
 fix, the light theme's 519 states had no violations at all, nor did the
 111 states of the extension's pages, the popup, Trusted Types and round 4's
 hostile hosts (`--only=extension,popup,trusted-types,hostile-r4`, under Xvfb).
@@ -69,13 +69,13 @@ hostile hosts (`--only=extension,popup,trusted-types,hostile-r4`, under Xvfb).
 
 Semantics added without an axe rule asking for them:
 
-- **Page tools** on/off items were `menuitem` with `aria-checked`; they are
+- **Page tools** on/off items were `menuitem` with `aria-checked`. They are
   `menuitemcheckbox`. Color's Text/Fill/Border were `role=tab` with
-  `aria-pressed` and no tab panels; they and the weights are radio groups.
+  `aria-pressed` and no tab panels. They and the weights are radio groups.
 
 - **Modals** (Edit code, Share, Install a mod, the review, Show code, Update):
   `role=dialog`, `aria-modal`, `aria-labelledby` its title,
-  `aria-describedby` its line under the title; focus goes to the first field
+  `aria-describedby` its line under the title. Focus goes to the first field
   (or Cancel in a review), Tab stays inside, and Esc, Close, Cancel, a click
   outside or Install put focus back where it was (or the bar input, or the
   panel). The bar's own `aria-modal` steps aside while a modal is open.
@@ -83,10 +83,10 @@ Semantics added without an axe rule asking for them:
   open, so Tab cycles inside it. The Edit tools and their popover float
   outside its box, so the bar `aria-owns` them and Tab reaches them.
 - **Menus** (⋯ and Page tools): `aria-haspopup`, `aria-expanded`,
-  `aria-controls`; items are out of the Tab order; ↑/↓ wrap, Home/End, and
+  `aria-controls`. Items are out of the Tab order; ↑/↓ wrap, Home/End, and
   type-ahead (`menuKeys`, 12-focus.js); Tab or Esc closes and returns to the
   button.
-- **Icon buttons** all have names; tooltips are `aria-hidden` (the name is
+- **Icon buttons** all have names. Tooltips are `aria-hidden` (the name is
   on the button) and the tools list their keys in `aria-keyshortcuts`.
   Swatches say a color name, not a hex code. The radar, the effect canvas,
   the picker frame and the edit frame are `aria-hidden`.
@@ -101,20 +101,20 @@ Semantics added without an axe rule asking for them:
   the page's focus handling. Only trusted key events count, like every key
   Morse takes.
 - **Edit tools**: Tab walks the tools (UI review round 3) and, past the last
-  one, goes on to the rest of the bar instead of wrapping; on a tool,
-  ←/→/Home/End move between tools too (the toolbar pattern); on the toolbar
+  one, goes on to the rest of the bar instead of wrapping. On a tool,
+  ←/→/Home/End move between tools too (the toolbar pattern). On the toolbar
   itself (Ctrl+E), or with Move on, arrows still move the selection. Color
-  and Text size take focus when they open; the palette moves with arrows
+  and Text size take focus when they open. The palette moves with arrows
   over its 8 columns.
 - **Mods panel**: one Tab stop for the list (the current row and its own
   buttons), so Install a mod… is a few Tabs away however many mods there
   are.
 - **Show me**: Alt+↓ goes to the step's part of the page (focus only, Morse
-  never clicks); each step is announced.
+  never clicks). Each step is announced.
 - **Esc** closes the top layer first everywhere: a menu, a popover or tool,
   choosing with keys, a sheet, a modal, the panel, then the bar. Read aloud,
   Describe this picture and Show me leave Esc to an open panel or modal.
-- **Focus** comes back on close; when nothing on the page had focus before,
+- **Focus** comes back on close. When nothing on the page had focus before,
   the page's next Tab starts from its top instead of past Morse's hidden UI
   at the end of the document (`focusPageTop`).
 - **The focus ring** is 2px everywhere (`:focus-visible`, 99-css.js). A
@@ -134,7 +134,7 @@ then "Done: <title>, <time>. Press Enter to save it…" or "That didn't work:
 line is echoed only while idle (notes, voice, Stopped).
 `tests/a11y-morse.test.js` records every message during a 60-token
 generation and expects 2 to 5, none of them code. Toasts and the toasts with
-buttons (`controlToast`) are announced too; one with buttons stays while it
+buttons (`controlToast`) are announced too. One with buttons stays while it
 has focus or the pointer.
 
 ## Zoom, forced colors, motion
@@ -146,7 +146,7 @@ has focus or the pointer.
   surfaces and icon buttons keep a border, what's on or chosen shows as a
   ring, and swatches keep their real colors (`forced-color-adjust: none`).
 - **Reduced motion**: Effects default to Subtle (a still outline), as
-  before; nothing slides or pulses.
+  before. Nothing slides or pulses.
 
 ## What's left
 
@@ -156,11 +156,11 @@ has focus or the pointer.
   the states before it are audited, and the gallery and heal tests run axe
   on the real flows.
 
-- The edit frame's resize handles are pointer-only; resizing by keyboard
+- The edit frame's resize handles are pointer-only. Resizing by keyboard
   isn't there yet (Move nudges with arrows; Text size and Color have
   fields).
 - A `controlToast`'s buttons (Turn back on, Undo a fix) are reached by Tab
-  from the page; there is no shortcut to jump to them. The same actions are
+  from the page. There is no shortcut to jump to them. The same actions are
   in the Mods panel.
 - Show me needs the user to use the marked part themselves; Alt+↓ takes
   focus there, but a part that isn't focusable can only be found, not

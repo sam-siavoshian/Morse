@@ -2,7 +2,7 @@
 // from config.js, the radar marks, a tiny monochrome highlighter, mod cards,
 // copy buttons and a toast.
 import { mountAll } from "./radar.js";
-import { LINKS, DEMO_VIDEO } from "./config.js";
+import { LINKS, DEMO_VIDEO, APP_ICONS } from "./config.js";
 
 export const REPO = LINKS.github;
 
@@ -250,6 +250,13 @@ export function highlight(code, lang = "js") {
 }
 
 // ---------- mod cards ----------
+// The app's real icon (config.js APP_ICONS), or its first letter when there is none.
+export function appIcon(app, size = 30) {
+  const src = APP_ICONS[app];
+  return src ? `<img class="glyph glyph-img" src="${esc(src)}" width="${size}" height="${size}" alt="" aria-hidden="true">`
+    : `<span class="glyph" aria-hidden="true">${esc(appGlyph(app))}</span>`;
+}
+
 export function appGlyph(app) {
   const words = String(app).split(/\s+/).filter(w => /^[\p{L}\d]/u.test(w)); // "Inkwell (demo)" is I, not I(
   if (words[0].length <= 2 && words[0] === words[0].toUpperCase()) return words[0];
@@ -267,13 +274,13 @@ export function modCard(entry, { href, onOpen } = {}) {
   el.dataset.slug = slugOf(entry);
   el.innerHTML = `
     <div class="card-top">
-      <span class="card-app"><span class="glyph" aria-hidden="true">${esc(appGlyph(entry.app))}</span>${esc(entry.app)}</span>
+      <span class="card-app">${appIcon(entry.app)}${esc(entry.app)}</span>
       ${entry.surface ? `<span class="card-surface">${esc(entry.surface)}</span>` : ""}
     </div>
     <h3>${esc(entry.title)}</h3>
     <p class="prompt">“${esc(entry.prompt)}”</p>
     <div class="tags">${(entry.tags || []).map(t => `<span class="chip">${esc(t)}</span>`).join("")}</div>
-    <svg class="card-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg>`;
+    <span class="card-arrow" aria-hidden="true">→</span>`;
   if (onOpen) el.addEventListener("click", e => { e.preventDefault(); onOpen(entry, el); });
   return el;
 }

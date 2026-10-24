@@ -14,9 +14,9 @@ User-facing steps: [Getting started](../getting-started.md).
 | One dense welcome page: a practice area next to a four-step checklist (connect a model, “Allow User Scripts”, first change, pin to the toolbar) and four "good to know" notes. | One screen at a time: a question, connect, try it, the win. Each has one thing to do. |
 | Connecting Claude Code or Codex meant `npm i -g morse-cli`, then pasting `morse setup --pair <code>` in a terminal and answering its questions. | With Morse Desktop open, the page finds it and shows one button, **Use Claude Code**. Morse Desktop asks **“Allow Chrome to use your Claude Code?”**; Allow connects. No code, no terminal. |
 | Without a terminal: an API key behind a "Use an Anthropic API key instead" fold. | Without Morse Desktop: **Get Morse Desktop** (recommended) and an API key field side by side (websites), or the key behind a link (desktop apps). The terminal command is still there, folded. |
-| “Allow User Scripts” was a checklist step, a standing note in the bar and in the popup, and part of the bar's label. | It comes up only when a change needs it. One button opens Morse's details and a small window with a picture of the switch; when it's on, both close and you're back on your tab, where the change runs. |
+| “Allow User Scripts” was a checklist step, a standing note in the bar and in the popup, and part of the bar's label. | It comes up only when a change needs it. One button opens Morse's details and a small window with a picture of the switch. When it's on, both close and you're back on your tab, where the change runs. |
 | The practice page was one panel among many. | The practice page *is* the step: three steps above it tick as you go (open, point and describe, save), then a page celebrates the first mod and sends you to a real site. |
-| After the practice page: nothing. | Suggested sites (Wikipedia, Hacker News, YouTube, BBC News) open with the bar open and the words typed in; or type any address. Desktop-app people get how to open an app in Morse Desktop. |
+| After the practice page: nothing. | Suggested sites (Wikipedia, Hacker News, YouTube, BBC News) open with the bar open and the words typed in. Or type any address. Desktop-app people get how to open an app in Morse Desktop. |
 
 Removed: the "Pin Morse to the toolbar" step (not needed: the shortcut opens
 Morse), the "good to know" block (its one useful line, reload tabs that were
@@ -27,8 +27,8 @@ step and the bar's standing note about it.
 
 Counted from the moment the welcome page opens to the first saved change.
 Adding the extension to Chrome (Developer mode, Load unpacked) is the same
-in both and not counted; so is installing Node (before) or downloading Morse
-Desktop (after). A *decision* is a choice the person has to make; a *screen*
+in both and not counted. So is installing Node (before) or downloading Morse
+Desktop (after). A *decision* is a choice the person has to make. A *screen*
 is a new surface they have to read (a page, a terminal, a dialog).
 
 ### Chrome + Claude Code
@@ -67,7 +67,7 @@ If `morse` isn't on the PATH ("command not found"), a fallback line explains
 
 **Before:** welcome page (*decide* how to connect), click **Use an
 Anthropic API key instead**, paste the key, click **Save key**, *decide*
-about the other checklist steps; then the practice change as above.
+about the other checklist steps. Then the practice change as above.
 
 **After:** one question (*decide*, click **Websites**), the connect screen
 (*decide*: Morse Desktop or a key), paste the key, Enter. The page moves on
@@ -81,7 +81,7 @@ not driven here.
 **Before:** in a terminal, `npm i -g morse-cli` (20 keys and a wait),
 `morse setup` (12 keys, two questions), `morse apps` (11 keys, a list to
 read), `morse launch spotify` (21 keys; if Spotify is open, *decide* y/n),
-keep the terminal open; in the app, the shortcut, point, describe, Save.
+keep the terminal open. In the app, the shortcut, point, describe, Save.
 About 64 keystrokes and 4 decisions before the first change, and a terminal
 that has to stay open.
 
@@ -114,9 +114,9 @@ Medians of three to five runs.
 | API key to connected, after | 1 | 3 | 2 | 2 | 1.4 s | 12.0 s |
 
 Claude Code: half the keystrokes (none of them in a terminal), two fewer
-decisions, and about half the time; first change saved in well under a
+decisions, and about half the time. First change saved in well under a
 minute. Without the 30 s npm estimate, before is about 59 s. The API key
-path costs one more screen (the question) and about 2 s; the practice change
+path costs one more screen (the question) and about 2 s. The practice change
 after it is the same as with Claude Code. Two more clicks after (**Use
 Claude Code**, **Allow**) replace a whole terminal session.
 
@@ -144,8 +144,8 @@ node scripts/build.js && DISPLAY=:99 node demo/measure-onboarding.js --before /t
 
 Endpoints, both POST (Chrome sends an extension's `Origin` on POST, not GET):
 
-- `POST /v1/pair/ask` → `202 { id, expires }`. Extension origins only; one
-  question at a time (asking again while waiting returns the same id); after
+- `POST /v1/pair/ask` → `202 { id, expires }`. Extension origins only. One
+  question at a time (asking again while waiting returns the same id). After
   Deny, that extension waits a few seconds before it can ask again. Without
   an `ask` handler: `404 { code: "no-ask" }`, and the page offers the code.
 - `POST /v1/pair/ask/<id>` → `{ state: "waiting" | "allowed" | "denied" |
@@ -160,13 +160,13 @@ person on this computer clicks Allow.
 
 `health.signedIn` says whether Claude Code (`claude auth status`) and Codex
 (`codex login status`) are signed in, checked in the background at most every
-five minutes; the page warns when the model it would use isn't.
+five minutes. The page warns when the model it would use isn't.
 
 **Morse Desktop** (`desktop-app/`, landing from its own branch) turns this on
 in `desktop-app/service.js`: `startHelper()` calls
 `d.createBridge({ port, app: "desktop", ask: askAllow, log })`. `askAllow`
 brings its window forward and shows `words.message` with Allow and Deny in
-the window's own dialog; an aborted `signal` counts as Deny, and turning the
+the window's own dialog. An aborted `signal` counts as Deny, and turning the
 helper off answers Deny to anything waiting. The welcome page's "Already have
 it? Open Morse Desktop" opens `morse://open`, which shows Morse Desktop's
 window (and starts it, once it is installed). Morse Desktop's
@@ -212,8 +212,8 @@ which `host.js` turns into a `waiting.retry` event: the waiting mods run.
 ## Tests and pictures
 
 - `tests/first-run.test.js`: the question; Morse Desktop found, Deny connects
-  nothing, Allow connects; the steps tick; the win; a suggested site opens
-  with the words typed; a demo site's change saved, back after a reload,
+  nothing, Allow connects. The steps tick, then the win screen. A suggested site opens
+  with the words typed. A demo site's change saved, back after a reload,
   shared. The API key path. The terminal path and the code box. “Allow User
   Scripts” only when needed, and back to the tab with the mod running.
 - `tests/bridge.test.js`: the ask endpoints (origins, one question, once-only
