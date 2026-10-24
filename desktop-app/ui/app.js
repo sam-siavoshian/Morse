@@ -135,12 +135,12 @@ async function disconnect(a) {
 }
 
 // "Tunes is open. Restart it with Morse?" (the same question as `morse launch`)
-function askRestart(a) {
+function askRestart(a, then = open) {
   const d = $("ask-restart");
   $("ask-restart-h").textContent = `${a.name} is open. Restart it with Morse?`;
   $("always-label").textContent = `Always restart ${a.name}`;
   $("always-restart").checked = false;
-  $("restart-ok").onclick = () => { const always = $("always-restart").checked; d.close(); open(a, always ? "a" : "y"); };
+  $("restart-ok").onclick = () => { const always = $("always-restart").checked; d.close(); then(a, always ? "a" : "y"); };
   $("restart-cancel").onclick = () => d.close();
   d.showModal();
   $("restart-ok").focus();
@@ -182,6 +182,7 @@ async function checkModel() {
   checking = true;
   $("check-model").disabled = true;
   $("model-live").replaceChildren(radar(12), h("span", { text: `Checking that ${st.model.name} answers. This can take a few seconds…` }));
+  if (st && !st.settings.welcomed) renderFirst();
   try { await morse.checkModel(); } finally { checking = false; $("check-model").disabled = false; st = await morse.state(); render(); }
 }
 $("check-model").onclick = checkModel;
@@ -245,22 +246,39 @@ function renderChrome() {
     $("pair-code").textContent = w.code;
     const min = Math.max(1, Math.round((w.expires - Date.now()) / 60000));
     $("code-note").textContent = `Works once, for ${plural(min, "minute")}`;
-  } else $("code-note").textContent = w?.fromChrome ? "Waiting for Chrome. The welcome page connects by itself." : "";
-  $("new-code").textContent = w && !w.fromChrome ? "New code" : "Show a code";
+  } else $("code-note").textContent = "";
+  $("new-code").textContent = w ? "New code" : "Show a code";
   const nav = $("nav-chrome");
   nav.textContent = c.browsers ? "on" : "";
   nav.className = c.browsers && c.running ? "on" : "";
-  // Chrome's welcome page asked to connect: only a click here lets it in.
+  // The Morse extension asked to connect: only Allow here makes it a token.
   const d = $("ask-pair");
-  if (c.link && !d.open) { $("link-code").textContent = c.link.code; d.showModal(); $("pair-yes").focus(); }
-  if (!c.link && d.open) d.close();
+  if (c.ask && d.dataset.id !== c.ask.id) {
+    d.dataset.id = c.ask.id;
+    $("ask-pair-h").textContent = `Allow Chrome to use ${modelPhrase()}?`;
+    $("ask-ext").textContent = `Extension ${c.ask.extension.slice(0, 12)}…`;
+    if (!d.open) d.showModal();
+    $("pair-yes").focus();
+  }
+  if (!c.ask && d.open) { d.close(); delete d.dataset.id; }
+}
+// "your Claude Code", "your Codex", "your API key": what Chrome would use.
+function modelPhrase() {
+  const p = st.model.provider;
+  return p === "claude-code" ? "your Claude Code" : p === "codex" ? "your Codex" : p === "anthropic" || p === "openai" ? "your API key" : p === "demo" ? "the demo model" : "your model";
+}
+async function answerAsk(allow) {
+  const d = $("ask-pair"), id = d.dataset.id;
+  d.close();
+  delete d.dataset.id;
+  if (id) await morse.answerAsk(id, allow);
 }
 $("helper-on").onchange = e => morse.setHelper(e.target.checked);
 $("new-code").onclick = () => morse.newPairingCode();
 $("show-ext").onclick = async () => { const r = await morse.showExtensionFolder(); if (r?.error) $("code-note").textContent = r.error; };
-$("pair-yes").onclick = async () => { $("ask-pair").close(); await morse.answerPairLink(true); show("chrome"); };
-$("pair-no").onclick = async () => { $("ask-pair").close(); await morse.answerPairLink(false); };
-$("ask-pair").addEventListener("cancel", () => morse.answerPairLink(false));
+$("pair-yes").onclick = () => answerAsk(true);
+$("pair-no").onclick = () => answerAsk(false);
+$("ask-pair").addEventListener("cancel", e => { e.preventDefault(); answerAsk(false); }); // Esc is Deny
 
 // ---------------------------------------------------------------- mods
 function renderMods() {
@@ -312,8 +330,53 @@ $("run-checks").onclick = runChecks;
 $("at-login").onchange = e => morse.setStartAtLogin(e.target.checked);
 
 // ---------------------------------------------------------------- state
+// ---------------------------------------------------------------- first run
+// One screen: the model Morse found by itself (checked once), and the apps to
+// open. Opening one, or Skip, leads to the main window for good.
+let firstChecked = false;
+function renderFirst() {
+  const first = !st.settings.welcomed;
+  $("first").hidden = !first;
+  document.querySelector(".app").hidden = first;
+  if (!first) return;
+  const m = st.model;
+  $("first-key").hidden = !m.none;
+  const live = $("first-model");
+  if (m.none) live.replaceChildren(h("i", { class: "dot warn" }), h("span", { text: "Morse didn't find Claude Code or Codex on this computer. Paste an API key, or install Claude Code and open Morse again." }));
+  else if (checking) live.replaceChildren(radar(12), h("span", { text: `Morse will use ${m.name}. Checking that it answers…` }));
+  else if (m.check?.ok) live.replaceChildren(h("i", { class: "dot on" }), h("span", { text: `Morse will use ${m.name}. It answered in ${(m.check.ms / 1000).toFixed(1)}s.` }));
+  else if (m.check) live.replaceChildren(h("i", { class: "dot bad" }), h("span", { text: `Morse will use ${m.name}, but it didn't answer: ${m.check.error}` }));
+  else live.replaceChildren(h("i", { class: "dot" }), h("span", { text: `Morse will use ${m.name}.` }));
+  if (!m.none && !m.check && !firstChecked) { firstChecked = true; checkModel(); }
+  $("first-key-caps").replaceChildren(caps(st.keys.open || (platform === "darwin" ? "⌥+Space" : "Ctrl+Shift+Space")));
+  const apps = st.apps.filter(a => a.canAttach !== false).slice(0, 6);
+  const sig = JSON.stringify(apps.map(a => [a.id, a.state, a.icon ? 1 : 0]));
+  if ($("first-apps").dataset.sig === sig) return;
+  $("first-apps").dataset.sig = sig;
+  $("first-apps").replaceChildren(...(apps.length ? apps.map(a => {
+    const busy = ["opening", "connecting"].includes(a.state);
+    return h("li", { "data-first-app": a.id },
+      h("div", { class: `appicon${a.icon ? " has-img" : ""}`, "aria-hidden": "true" }, a.icon ? h("img", { src: a.icon, alt: "" }) : (a.name || "?").trim()[0].toUpperCase()),
+      h("div", { class: "grow" }, h("b", { text: a.name }), h("small", {}, ...(busy ? [radar(12), h("span", { text: `Opening ${a.name} with Morse…` })] : [h("span", { text: a.state === "closed" ? "Not open" : "Open now" })]))),
+      h("button", { type: "button", class: "btn primary", disabled: busy, onclick: () => openFirst(a) }, "Open with Morse"));
+  }) : [h("li", { class: "empty" }, "Morse didn't find any apps it can open. Skip for now, then use Add an app….")]));
+}
+async function openFirst(a, answer) {
+  const r = await morse.openApp(a.id, answer);
+  if (r?.needsRestart) return askRestart(a, openFirst); // the same question as everywhere else
+  if (r?.error) { $("first-model").replaceChildren(h("i", { class: "dot bad" }), h("span", { text: r.error })); return; }
+  await morse.finishWelcome();
+}
+$("first-skip").onclick = () => morse.finishWelcome();
+$("first-key-use").onclick = async () => {
+  const r = await morse.chooseModel("api-key", $("first-key-input").value);
+  $("first-key-input").value = "";
+  if (r?.error) $("first-model").replaceChildren(h("i", { class: "dot bad" }), h("span", { text: r.error }));
+};
+
 function render() {
   if (!st || st.error) return;
+  renderFirst();
   renderApps(); renderModel(); renderChrome(); renderMods();
   $("at-login").checked = st.settings.startAtLogin;
   $("version").textContent = `Morse ${st.version}`;

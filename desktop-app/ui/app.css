@@ -214,8 +214,21 @@ dialog[open] { display: flex; flex-direction: column; gap: 12px; animation: pop 
 dialog::backdrop { background: var(--m-scrim); }
 dialog p { color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 19px; }
 dialog .row-end { margin-top: 8px; }
+dialog small.ext { font: var(--m-text-xs)/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; }
 label.check { display: flex; align-items: center; gap: 8px; color: var(--m-text-2); font-size: var(--m-text-sm); cursor: pointer; }
 label.check input { accent-color: var(--m-signal-4); margin: 0; }
+
+/* ---- the first run: one centered card */
+.first { height: 100%; overflow-y: auto; display: grid; place-items: center; padding: 40px 24px; }
+.first-card { width: min(560px, 100%); display: flex; flex-direction: column; gap: 12px; }
+.first-card > .radar { color: var(--m-text); margin-bottom: 4px; }
+.first-card h1 { font-size: 26px; line-height: 32px; letter-spacing: -0.02em; }
+.first-card .lede { color: var(--m-text-2); font-size: var(--m-text-lg); margin-top: -6px; }
+.first-card .live { padding: 10px 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-surface); }
+.first-card h2 { margin-top: 12px; }
+.first-card #first-skip { align-self: flex-start; font-size: var(--m-text-sm); }
+body.mac .first { padding-top: 56px; -webkit-app-region: drag; }
+body.mac .first :is(button, input, li) { -webkit-app-region: no-drag; }
 
 /* ---- small things */
 .choice .why::first-letter { text-transform: uppercase; }

@@ -43,7 +43,6 @@
           <div><b data-i18n="welcome.model.b">Connect a model</b>
             <span data-i18n="welcome.model">Morse uses an AI you already have: Claude Code, Codex or an API key. Paste this in a terminal and press Enter.</span>
             <span class="cmd"><code id="setup-cmd">morse setup</code><button type="button" id="copy-setup" class="quiet" data-i18n="welcome.copy">Copy</button></span>
-            <span class="row"><button type="button" id="desktop-pair" class="quiet" data-i18n="welcome.desktop.btn">Connect Morse Desktop</button></span><!-- opens morse://pair?code=…: Morse Desktop asks, then this page pairs by itself (desktop-app/main.js) -->
             <span class="live" id="live" role="status" aria-live="polite"></span>
             <span class="pairrow" id="pairrow" hidden><input id="code" maxlength="7" placeholder="Code" autocomplete="off" spellcheck="false" aria-label="Pairing code" data-i18n-attr="placeholder:welcome.code;aria-label:welcome.code.label"><button type="button" id="pair" data-i18n="welcome.connect">Connect</button></span>
             <small class="fallback" data-i18n-html="welcome.fallback">Says “command not found”? Run it in the Morse folder as <code id="node-cmd">node daemon/cli.js setup</code>.</small>

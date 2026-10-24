@@ -1,10 +1,12 @@
 // Morse Desktop for real: the Electron app (desktop-app/) driven with
 // Playwright's _electron, opening Tunes (demo/electron-app, packaged on the
-// same Electron runtime) the way a person would: the window lists Tunes,
+// same Electron runtime) the way a person would: the first-run screen offers
+// Tunes and the model it found, the window lists Tunes,
 // Open with Morse connects it (Morse's code shows up in Tunes), Disconnect
 // takes Morse off while Tunes keeps running, Connect attaches to it again,
 // an app that is already open asks "Tunes is open. Restart it with Morse?",
-// and closing the window keeps Morse running in the tray. Also: the page
+// the Morse extension asking to connect gets a token only after Allow, and
+// closing the window keeps Morse running in the tray. Also: the page
 // sees window.morse and nothing else, and can't navigate anywhere.
 //
 // Needs an Electron runtime, Playwright and a display; skips otherwise:
@@ -17,6 +19,7 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { spawn } from "node:child_process";
+import http from "node:http";
 import { createRequire } from "node:module";
 import { promises as fs } from "node:fs";
 import { waitFor } from "./helpers/wait.js";
@@ -60,15 +63,16 @@ async function quitTunes(port) {
   b.close();
 }
 
-test("Morse Desktop opens Tunes with Morse, disconnects, connects again, asks before restarting it, and stays in the tray", { skip, timeout: 300000 }, async () => {
+test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects again, asks before restarting it, Allow for Chrome, stays in the tray", { skip, timeout: 300000 }, async () => {
   const { exe } = await tunesApp();
   const profile = path.join(home, "tunes-profile");
   await fs.writeFile(path.join(home, "desktop.json"), JSON.stringify({ helper: false, apps: [exe], appArgs: { tunes: [`--user-data-dir=${profile}`, ...ROOT] } }));
 
+  const helperPort = await freePort();
   electronApp = await _electron.launch({
     executablePath: electronExe,
     args: [path.join(root, "desktop-app"), ...ROOT],
-    env: { ...process.env, MORSE_HOME: home, MORSE_DESKTOP_SCAN: "0", MORSE_PROVIDER: "demo", MORSE_HELPER_PORT: String(await freePort()), ELECTRON_RUN_AS_NODE: "" },
+    env: { ...process.env, MORSE_HOME: home, MORSE_DESKTOP_SCAN: "0", MORSE_PROVIDER: "demo", MORSE_HELPER_PORT: String(helperPort), ELECTRON_RUN_AS_NODE: "" },
     timeout: 60000,
   });
   const logs = [];
@@ -89,7 +93,7 @@ test("Morse Desktop opens Tunes with Morse, disconnects, connects again, asks be
     morse: Object.keys(window.morse), frozen: Object.isFrozen(window.morse),
     require: typeof window.require, process: typeof window.process, ipc: typeof window.ipcRenderer, electron: typeof window.electron, Buffer: typeof window.Buffer,
   }));
-  assert.deepEqual(globals.morse, ["state", "refreshApps", "openApp", "disconnectApp", "addApp", "modelChoices", "chooseModel", "checkModel", "setHelper", "newPairingCode", "answerPairLink", "signOutBrowsers", "showExtensionFolder", "setModOn", "setAllModsOff", "runChecks", "setStartAtLogin", "openLink", "onChange"]);
+  assert.deepEqual(globals.morse, ["state", "refreshApps", "openApp", "disconnectApp", "addApp", "modelChoices", "chooseModel", "checkModel", "setHelper", "newPairingCode", "answerAsk", "signOutBrowsers", "showExtensionFolder", "setModOn", "setAllModsOff", "runChecks", "setStartAtLogin", "openLink", "finishWelcome", "onChange"]);
   assert.equal(globals.frozen, true);
   for (const k of ["require", "process", "ipc", "electron", "Buffer"]) assert.equal(globals[k], "undefined", k);
   const prefs = await electronApp.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences());
@@ -99,14 +103,21 @@ test("Morse Desktop opens Tunes with Morse, disconnects, connects again, asks be
   // Fetching anything from the page is refused by the CSP (connect-src 'none').
   assert.equal(await w.evaluate(() => fetch("https://example.com/").then(() => "fetched", () => "refused")), "refused");
 
-  // Tunes is listed.
-  const row = w.locator('li[data-app="tunes"]');
-  await row.waitFor({ timeout: 30000 });
-  assert.match(await row.innerText(), /Tunes/);
+  // The first run: one screen. The model is found by itself; Tunes is offered.
+  await w.locator("#first").waitFor({ timeout: 30000 });
+  assert.equal(await w.locator(".app").isVisible(), false, "nothing else until the first app is opened");
+  assert.match(await w.locator("#first-model").innerText(), /Morse will use Demo model/);
+  const first = w.locator('li[data-first-app="tunes"]');
+  await first.waitFor({ timeout: 30000 });
 
-  // Open with Morse: Tunes starts with Morse connected.
-  await row.getByRole("button", { name: "Open with Morse" }).click();
+  // Open with Morse, from the first screen: Tunes starts with Morse connected,
+  // and the main window takes over for good.
+  await first.getByRole("button", { name: "Open with Morse" }).click();
+  await w.locator(".app").waitFor({ timeout: 90000 });
+  assert.equal(await w.locator("#first").isVisible(), false);
+  const row = w.locator('li[data-app="tunes"]');
   await rowState("connected", 90000);
+  assert.equal(JSON.parse(await fs.readFile(path.join(home, "desktop.json"), "utf8")).welcomed, true);
   assert.match(await row.innerText(), /Connected/);
   const s1 = await until(async () => { const s = await session(); return s.state === "attached" && s.windows?.length && s; }, 30000, "the session file to show Tunes' windows");
   assert.equal(s1.pid, electronApp.process().pid, "Morse Desktop holds the session itself");
@@ -137,6 +148,28 @@ test("Morse Desktop opens Tunes with Morse, disconnects, connects again, asks be
   await rowState("connected", 90000);
   await until(() => plain.exitCode !== null || plain.signalCode !== null, 15000, "the Tunes started without Morse to have quit");
   const s2 = await session();
+
+  // One-click pairing: the Morse extension asks the helper, Morse asks the
+  // person, Allow makes the token (docs/dev/pairing.md).
+  await w.evaluate(() => window.morse.setHelper(true));
+  const EXT = `chrome-extension://${"abcdefghijklmnop".repeat(2)}`;
+  const ask = (method, p) => new Promise((resolve, reject) => {
+    const req = http.request({ host: "127.0.0.1", port: helperPort, method, path: p, headers: { Origin: EXT } }, res => {
+      let d = ""; res.on("data", c => (d += c)); res.on("end", () => resolve({ status: res.statusCode, body: JSON.parse(d || "null") }));
+    });
+    req.on("error", reject);
+    req.end();
+  });
+  const asked = await until(async () => { const r = await ask("POST", "/v1/pair/ask"); return r.status === 202 && r; }, 15000, "the helper to take the request");
+  const dialogAsk = w.locator("dialog#ask-pair[open]");
+  await dialogAsk.waitFor({ timeout: 15000 });
+  assert.equal(await dialogAsk.locator("h2").innerText(), "Allow Chrome to use the demo model?");
+  assert.equal((await ask("GET", `/v1/pair/ask/${asked.body.id}`)).body.status, "waiting", "nothing until the person answers");
+  await dialogAsk.getByRole("button", { name: "Allow" }).click();
+  const answered = await until(async () => { const r = await ask("GET", `/v1/pair/ask/${asked.body.id}`); return r.body?.status !== "waiting" && r; }, 15000, "the answer");
+  assert.equal(answered.body.status, "allowed");
+  assert.match(answered.body.token, /^[\w-]{40,}$/);
+  assert.equal(await w.locator("dialog#ask-pair[open]").count(), 0);
 
   // Last, since Playwright then waits for a navigation that never comes: the
   // page can't go anywhere else, or open windows.

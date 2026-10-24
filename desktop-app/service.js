@@ -18,9 +18,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // The daemon modules, the way the CLI uses them. One object, so tests can
 // hand createService a fake with the same names.
 export async function loadDaemon() {
-  const [apps, desktop, status, store, models, setup, bridge, control, coreControl, platform, providers, onboarding] = await Promise.all([
+  const [apps, desktop, status, store, models, setup, bridge, pairAsk, control, coreControl, platform, providers, onboarding] = await Promise.all([
     import("../daemon/apps.js"), import("../daemon/desktop.js"), import("../daemon/status.js"), import("../daemon/store.js"),
-    import("../daemon/models.js"), import("../daemon/setup.js"), import("../daemon/bridge.js"), import("../daemon/control.js"),
+    import("../daemon/models.js"), import("../daemon/setup.js"), import("../daemon/bridge.js"), import("../daemon/pair-ask.js"), import("../daemon/control.js"),
     import("../core/control.js"), import("../daemon/platform.js"), import("../core/providers.js"), import("../core/onboarding.js"),
   ]);
   return {
@@ -33,7 +33,7 @@ export async function loadDaemon() {
     keysFrom: models.keysFrom, mask: models.mask, detectBackends: setup.detectBackends, recommend: setup.recommend, configFor: setup.configFor,
     saveChoice: setup.saveChoice, checkModel: setup.checkModel, BACKENDS: setup.BACKENDS, EXTENSION_DIR: setup.EXTENSION_DIR,
     // the Morse helper (morse serve, pair, unpair)
-    createBridge: bridge.createBridge, startPairing: bridge.startPairing, helperPort: bridge.helperPort, validPairingCode: bridge.validPairingCode, VERSION: bridge.VERSION,
+    createBridge: bridge.createBridge, pairAsks: pairAsk.pairAsks, startPairing: bridge.startPairing, helperPort: bridge.helperPort, validPairingCode: bridge.validPairingCode, VERSION: bridge.VERSION,
     // mods and the off switch (morse mods, pause, resume)
     listMods: store.listMods, getMod: store.getMod, saveMod: store.saveMod,
     loadControl: control.loadControl, saveControl: control.saveControl, setPause: coreControl.setPause, pauseInfo: coreControl.pauseInfo,
@@ -48,7 +48,7 @@ export async function loadDaemon() {
 //   helper        run the Morse helper in the background, for Chrome; on
 //   apps          apps you added by their file, for apps Morse didn't find
 //   appArgs       { "<app id>": [arguments] }: what `morse launch <app> -- <args>` passes (no window for it)
-const DEFAULTS = { startAtLogin: false, helper: true, apps: [], appArgs: {} };
+const DEFAULTS = { startAtLogin: false, helper: true, welcomed: false, apps: [], appArgs: {} };
 const argsFor = (s, id) => (Array.isArray(s.appArgs?.[id]) ? s.appArgs[id].map(String) : []);
 
 export function createService({
@@ -57,6 +57,7 @@ export function createService({
   fetchHealth = defaultHealth, now = () => Date.now(),
   copyExtension = false, // packaged: the extension lives inside the app, so Chrome gets a copy in the Morse folder
   self = [], // Morse Desktop's own program: never listed as an app to open with Morse
+  onAsk = () => {}, // Chrome asked to connect: main.js brings the window forward
 } = {}) {
   const SETTINGS = path.join(d.HOME, "desktop.json");
   const own = new Map();     // app id -> a session this process runs (daemon/desktop.js startSession)
@@ -65,7 +66,8 @@ export function createService({
   let found = null, foundAt = 0;
   let helper = { bridge: null, running: false, ours: false, error: "" };
   let lastCheck = null;      // { ok, ms, error, at, label }
-  let pairLink = null;       // a code from Chrome's welcome page, waiting for Connect
+  let asks = [];             // Chrome asking to connect, waiting for Allow or Deny (daemon/pair-ask.js)
+  let pairAsk = null;        // the helper's side of those requests
   let settings = null;
 
   const changed = () => { try { emit(); } catch {} };
@@ -166,7 +168,7 @@ export function createService({
         log: line => log(`${app.name}: ${plain(line).trim()}`), onChange: changed,
       });
       own.set(id, s);
-      s.done.catch(() => {}).finally(() => { if (own.get(id) === s) own.delete(id); changed(); });
+      s.done.catch(e => log(`${app.name}: the connection ended with an error: ${e?.stack || e}`)).finally(() => { if (own.get(id) === s) own.delete(id); changed(); });
       await s.flushed;
       // Until the first window is connected, the row says "Opening".
       const end = now() + 15000;
@@ -266,7 +268,9 @@ export function createService({
     const port = d.helperPort();
     if (helper.running && helper.ours) return chrome();
     if (await fetchHealth(port)) { helper = { bridge: null, running: true, ours: false, error: "" }; changed(); return chrome(); }
-    const bridge = d.createBridge({ port, log: line => log(`helper: ${plain(line).trim()}`) });
+    // One-click pairing: Chrome asks, the person answers here (daemon/pair-ask.js).
+    pairAsk = d.pairAsks({ onAsk: list => { asks = list; changed(); if (list.length) onAsk(list); }, log: line => log(`helper: ${plain(line).trim()}`) });
+    const bridge = d.createBridge({ port, ask: pairAsk, log: line => log(`helper: ${plain(line).trim()}`) });
     try {
       await bridge.listen();
       helper = { bridge, running: true, ours: true, error: "" };
@@ -279,6 +283,8 @@ export function createService({
   async function stopHelper() {
     if (helper.bridge) await helper.bridge.close().catch(() => {});
     helper = { bridge: null, running: false, ours: false, error: "" };
+    pairAsk = null;
+    asks = [];
     changed();
     return chrome();
   }
@@ -292,10 +298,10 @@ export function createService({
       if (running !== helper.running) helper = { ...helper, running };
     }
     const p = cfg.bridge?.pairing;
-    const waiting = p && p.expires > now() ? { code: p.code, expires: p.expires, fromChrome: !!(pairLink?.accepted && pairLink.code === p.code) } : null;
+    const waiting = p && p.expires > now() ? { code: p.code, expires: p.expires } : null;
     return {
       running, ours: helper.ours, error: helper.error, browsers: (cfg.bridge?.tokens || []).length, waiting,
-      link: pairLink && !pairLink.accepted ? { code: pairLink.code } : null,
+      ask: asks[0] ? { id: asks[0].id, extension: asks[0].extension } : null, // "Allow Chrome to use your Claude Code?"
       extensionDir: copyExtension ? path.join(d.HOME, "chrome-extension") : d.EXTENSION_DIR,
     };
   }
@@ -327,27 +333,10 @@ export function createService({
     return chrome();
   }
 
-  // Chrome's welcome page opened morse://pair?code=… (main.js). Nothing
-  // happens until the person clicks Connect in this window: a page can open a
-  // link, but only a person here can let a code in.
-  function pairRequest(code) {
-    code = String(code || "").trim().toUpperCase();
-    if (!d.validPairingCode(code)) return { error: "That pairing link doesn't look right. Open it again from Morse's welcome page in Chrome." };
-    pairLink = { code, at: now(), accepted: false };
-    changed();
-    return { ok: true };
-  }
-  async function answerPairLink(yes) {
-    const link = pairLink;
-    if (!link || link.accepted) return chrome();
-    if (!yes || now() - link.at > 10 * 60_000) { pairLink = null; changed(); return chrome(); }
-    if (!helper.running) await startHelper();
-    if (!helper.running) return { ...(await chrome()), error: helper.error };
-    // The same as `morse setup --pair <code>`: the code waits in the helper,
-    // and the welcome page pairs by itself.
-    await d.startPairing(undefined, link.code);
-    pairLink = { ...link, accepted: true };
-    changed();
+  // "Allow" or "Deny" for Chrome asking to connect. Only a click here makes a token.
+  async function answerAsk(id, allow) {
+    if (!pairAsk || !asks.some(x => x.id === id)) return { error: "Chrome stopped asking. Click Connect in Chrome again." };
+    await pairAsk.answer(id, !!allow);
     return chrome();
   }
 
@@ -420,7 +409,7 @@ export function createService({
   async function state({ fresh = false } = {}) {
     const [m, a, c, md, p, s] = await Promise.all([model(), apps({ fresh }), chrome(), mods(), pause(), loadSettings()]);
     const keys = await d.configuredHotkeys().catch(() => ({}));
-    return { version: d.VERSION, platform: process.platform, keys: { open: keys.open || "", mods: keys.mods || "", off: keys.off || "" }, model: m, apps: a, chrome: c, mods: md, pause: p, settings: { startAtLogin: !!s.startAtLogin, helper: !!s.helper } };
+    return { version: d.VERSION, platform: process.platform, keys: { open: keys.open || "", mods: keys.mods || "", off: keys.off || "" }, model: m, apps: a, chrome: c, mods: md, pause: p, settings: { startAtLogin: !!s.startAtLogin, helper: !!s.helper, welcomed: !!s.welcomed } };
   }
 
   async function setSetting(name, value) {
@@ -441,7 +430,7 @@ export function createService({
 
   return {
     state, apps, openApp, disconnectApp, addApp, model, modelChoices, chooseModel, check, chrome, startHelper, stopHelper, newCode,
-    extensionFolder, pairRequest, answerPairLink, signOutBrowsers, mods, setModOn, pause, setAllModsOff, doctor, setSetting, loadSettings, shutdown,
+    extensionFolder, answerAsk, signOutBrowsers, mods, setModOn, pause, setAllModsOff, doctor, setSetting, loadSettings, shutdown,
     get sessions() { return own; },
   };
 }

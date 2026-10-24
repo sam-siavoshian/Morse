@@ -22,6 +22,7 @@ const key = v => {
   return v.trim();
 };
 const none = () => undefined;
+const askId = v => { if (typeof v !== "string" || !/^[\w-]{10,64}$/.test(v)) throw new TypeError("bad request id"); return v; };
 
 // Links the window may open in the browser, by name. Never an address from the window.
 export const LINKS = {
@@ -43,7 +44,7 @@ export const API = {
   checkModel:         [[none], (s) => s.check()],
   setHelper:          [[bool], (s, n, on) => s.setSetting("helper", on).then(() => s.chrome())],
   newPairingCode:     [[none], (s) => s.newCode()],
-  answerPairLink:     [[bool], (s, n, yes) => s.answerPairLink(yes)],
+  answerAsk:          [[askId, bool], (s, n, id, allow) => s.answerAsk(id, allow)],
   signOutBrowsers:    [[none], (s) => s.signOutBrowsers()],
   showExtensionFolder:[[none], async (s, n) => n.showFolder(await s.extensionFolder())],
   setModOn:           [[id, bool], (s, n, modId, on) => s.setModOn(modId, on)],
@@ -51,6 +52,7 @@ export const API = {
   runChecks:          [[none], (s) => s.doctor()],
   setStartAtLogin:    [[bool], async (s, n, on) => { await n.setLoginItem(on); return s.setSetting("startAtLogin", on); }],
   openLink:           [[oneOf(...Object.keys(LINKS))], (s, n, name) => n.openExternal(LINKS[name])],
+  finishWelcome:      [[none], (s) => s.setSetting("welcomed", true)],
 };
 
 // Registers every channel. isTrusted(event): the request came from Morse's
@@ -71,12 +73,7 @@ export function registerIpc({ ipcMain, service, native, isTrusted, log = () => {
   return Object.keys(API).map(CHANNEL);
 }
 
-// morse://pair?code=ABC234: the link on Chrome's welcome page that hands its
-// pairing code to Morse Desktop. The code, or "" for anything else.
-export function pairCodeFromLink(link) {
-  let u;
-  try { u = new URL(String(link)); } catch { return ""; }
-  if (u.protocol !== "morse:" || (u.hostname || u.pathname.replace(/^\/+/, "")) !== "pair") return "";
-  const code = (u.searchParams.get("code") || "").trim().toUpperCase();
-  return /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/.test(code) ? code : "";
+// morse://open, the only link Morse Desktop takes (it shows the window).
+export function isOpenLink(link) {
+  try { const u = new URL(String(link)); return u.protocol === "morse:" && (u.hostname || u.pathname.replace(/^\/+|\/+$/g, "")) === "open"; } catch { return false; }
 }

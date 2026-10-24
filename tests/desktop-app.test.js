@@ -9,7 +9,7 @@ import { readFileSync, existsSync, promises as fs } from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 
-const { API, CHANNEL, LINKS, registerIpc, pairCodeFromLink } = await import("../desktop-app/ipc.js");
+const { API, CHANNEL, LINKS, registerIpc, isOpenLink } = await import("../desktop-app/ipc.js");
 const { createService } = await import("../desktop-app/service.js");
 const { desktopEntry, setAutostart, AUTOSTART } = await import("../desktop-app/linux.js");
 const { markPng, markPixels } = await import("../desktop-app/mark.js");
@@ -77,6 +77,12 @@ function fakeDaemon(over = {}) {
     saveChoice: rec("saveChoice", async (choice, m) => { cfg = { ...cfg, provider: m.provider, setup: { backend: choice } }; return cfg; }),
     checkModel: rec("checkModel", async () => ({ ok: true, ms: 1200 })),
     createBridge: rec("createBridge", () => ({ listen: async () => 7457, close: async () => {} })),
+    // daemon/pair-ask.js: the test plays the extension through d.ask(origin).
+    pairAsks: ({ onAsk }) => {
+      const list = [];
+      d.ask = origin => { const a = { id: `ask${"x".repeat(12)}${list.length}`, origin, extension: origin.slice(19), at: Date.now() }; list.push(a); onAsk([...list]); return a.id; };
+      return { answer: rec("answerAsk", async (id, allow) => { const i = list.findIndex(a => a.id === id); if (i < 0) return false; list.splice(i, 1); onAsk([...list]); return allow; }), close() {} };
+    },
     startPairing: rec("startPairing", async (_ttl, code = "NEWCDE") => { cfg = { ...cfg, bridge: { ...cfg.bridge, pairing: { code, expires: Date.now() + 600000 } } }; return { code }; }),
     helperPort: () => 1,
     validPairingCode: c => /^[A-HJ-NP-Z2-9]{6}$/.test(c),
@@ -126,7 +132,7 @@ test("arguments are checked: ids, answers, switches, choices, keys, link names, 
   for (const [name, args] of [
     ["openApp", ["../etc"]], ["openApp", [{ id: "tunes" }]], ["openApp", ["tunes", "yes please"]], ["openApp", ["tunes", "y", "extra"]],
     ["disconnectApp", [""]], ["setModOn", ["m1", "true"]], ["setAllModsOff", [1]], ["chooseModel", ["gpt", ""]],
-    ["chooseModel", ["api-key", "sk-ant key with spaces"]], ["openLink", ["https://evil.example"]], ["answerPairLink", ["yes"]],
+    ["chooseModel", ["api-key", "sk-ant key with spaces"]], ["openLink", ["https://evil.example"]], ["answerAsk", ["short", true]], ["answerAsk", ["abcdefghijkl", "yes"]],
     ["setStartAtLogin", [null]], ["state", ["x", "y"]],
   ]) assert.deepEqual(await call(name, ...args), { error: "Not allowed." }, `${name}(${JSON.stringify(args)})`);
   assert.equal(daemon.calls.filter(c => c[0] === "connectApp").length, 0, "nothing ran");
@@ -149,7 +155,7 @@ test("state: each app says whether it's open and connected, with its mods; the m
   assert.deepEqual(st.chrome.browsers, 1);
   assert.equal(st.pause.all, false);
   assert.equal(st.keys.open, "Ctrl+Shift+Space");
-  assert.deepEqual(st.settings, { startAtLogin: false, helper: true }, "login start is off until the person turns it on");
+  assert.deepEqual(st.settings, { startAtLogin: false, helper: true, welcomed: false }, "login start is off until the person turns it on; the first run shows");
 });
 
 test("Open with Morse runs the launch steps and holds the session; Disconnect stops it", async () => {
@@ -224,23 +230,34 @@ test("the model: choices from what's installed, a choice saved the way morse set
   assert.deepEqual(daemon.calls.filter(c => c[0] === "saveChoice").at(-1).slice(1), ["api-key", { provider: "anthropic", keys: { x: "sk-ant-abc" } }]);
 });
 
-test("Chrome: a pairing link only lets its code in after Connect is clicked here", async () => {
-  const { call, daemon, service } = setup();
-  assert.match(service.pairRequest("bad").error, /doesn't look right/);
-  assert.deepEqual(service.pairRequest("abc234"), { ok: true });
-  let c = await call("state").then(s => s.chrome);
-  assert.deepEqual(c.link, { code: "ABC234" });
-  assert.equal(daemon.calls.some(x => x[0] === "startPairing"), false, "nothing waits in the helper yet");
-  c = await call("answerPairLink", true);
-  assert.deepEqual(daemon.calls.find(x => x[0] === "startPairing").slice(1), [undefined, "ABC234"]);
-  assert.ok(daemon.calls.some(x => x[0] === "createBridge"), "the helper was started for it");
-  assert.equal(c.link, null);
-  assert.equal(c.waiting.code, "ABC234");
-  assert.equal(c.waiting.fromChrome, true);
-  // Not now: nothing waits.
-  service.pairRequest("XYZ789");
-  await call("answerPairLink", false);
-  assert.equal(daemon.calls.filter(x => x[0] === "startPairing").length, 1);
+test("Chrome asks to connect: Morse Desktop shows it, and only Allow here answers it", async () => {
+  const asked = [];
+  const daemon = fakeDaemon();
+  const service = createService({ daemon, fetchHealth: async () => null, onAsk: list => asked.push(list.length) });
+  const ipcMain = fakeIpc();
+  registerIpc({ ipcMain, service, native: {}, isTrusted: e => e === TRUSTED });
+  const call = (name, ...args) => ipcMain.handlers.get(CHANNEL(name))(TRUSTED, ...args);
+  await call("setHelper", true);
+  const id = daemon.ask("chrome-extension://abcdefghijklmnopabcdefghijklmnop");
+  let c = (await call("state")).chrome;
+  assert.deepEqual(c.ask, { id, extension: "abcdefghijklmnopabcdefghijklmnop" });
+  assert.deepEqual(asked, [1], "the window is brought forward");
+  assert.equal(daemon.calls.some(x => x[0] === "answerAsk"), false, "nothing is answered by itself");
+  c = await call("answerAsk", id, true);
+  assert.deepEqual(daemon.calls.find(x => x[0] === "answerAsk").slice(1), [id, true]);
+  assert.equal(c.ask, null);
+  assert.match((await call("answerAsk", id, true)).error, /stopped asking/);
+  // Turning the helper off forgets what was waiting.
+  daemon.ask("chrome-extension://abcdefghijklmnopabcdefghijklmnop");
+  c = await call("setHelper", false);
+  assert.equal(c.ask, null);
+});
+
+test("the first run: shown until an app is opened or Skip, then never again", async () => {
+  const { call } = setup();
+  assert.equal((await call("state")).settings.welcomed, false);
+  await call("finishWelcome");
+  assert.equal((await call("state")).settings.welcomed, true);
 });
 
 test("Chrome: the helper runs here unless one is already running; Show a code; Sign out browsers", async () => {
@@ -250,7 +267,6 @@ test("Chrome: the helper runs here unless one is already running; Show a code; S
   assert.equal(c.ours, true);
   c = await call("newPairingCode");
   assert.equal(c.waiting.code, "NEWCDE");
-  assert.equal(c.waiting.fromChrome, false);
   c = await call("signOutBrowsers");
   assert.equal(c.browsers, 0);
   c = await call("setHelper", false);
@@ -354,10 +370,10 @@ test("the window's page: a strict CSP, no inline code, only its own files", () =
 
 // ---------------------------------------------------------------- links, desktop files, the icon
 
-test("morse://pair links: only the pair path and a well-formed code", () => {
-  assert.equal(pairCodeFromLink("morse://pair?code=abc234"), "ABC234");
-  assert.equal(pairCodeFromLink("morse://pair/?code=ABC234"), "ABC234");
-  for (const bad of ["morse://evil?code=ABC234", "https://pair?code=ABC234", "morse://pair?code=ABC23", "morse://pair?code=ABCDE0", "morse://pair", "not a url", null]) assert.equal(pairCodeFromLink(bad), "", String(bad));
+test("morse:// links: only morse://open, which shows the window", () => {
+  assert.equal(isOpenLink("morse://open"), true);
+  assert.equal(isOpenLink("morse://open/"), true);
+  for (const bad of ["morse://pair?code=ABC234", "https://open", "morse://evil", "not a url", null]) assert.equal(isOpenLink(bad), false, String(bad));
 });
 
 test("Linux desktop files: quoted Exec lines, the login one starts hidden, the menu one takes morse:// links", async () => {

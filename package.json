@@ -28,6 +28,7 @@
     "daemon/",
     "core/",
     "runtime/bundle.js",
+    "runtime/boot.js",
     "runtime/src/",
     "design/tokens.css",
     "dist/extension/",

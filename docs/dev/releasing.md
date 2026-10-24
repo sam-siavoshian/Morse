@@ -118,7 +118,7 @@ On each platform, with the downloaded file:
 3. **Open with Morse** on an app, make a change, Save; **Disconnect**; quit
    Morse from the tray.
 4. In Chrome, load the extension from **Show the extension folder** and click
-   **Connect Morse Desktop** on the welcome page.
+   **Connect** on the welcome page, then **Allow** in Morse Desktop.
 5. Turn on **Open at login**, log out and in: Morse is in the tray, without
    the window.
 
@@ -126,11 +126,12 @@ On each platform, with the downloaded file:
 
 - **Linux (x64)**: the AppImage was built here (Electron 45) and its app
   opened under Xvfb: the window listed this machine's apps, the model and the
-  Morse helper (running inside it) answered. `tests/desktop-app-ui.test.js`
-  runs the same app unpackaged against Tunes.
+  Morse helper (running inside it) answered, and it opened a packaged Tunes
+  with Morse connected and disconnected it. `tests/desktop-app-ui.test.js`
+  runs the same app unpackaged against Tunes, including the first run and
+  one-click pairing (a request made the way the extension will make it).
 - **macOS and Windows**: the configuration is written and the workflow runs
   them, but no dmg or installer was built or opened yet, signed or not.
 - The tray menu and **Open at login** were not tried on a real desktop.
-- **Connect Morse Desktop** in Chrome (the `morse://` link) was not tried in
-  a real Chrome: Morse Desktop's side is tested, and the welcome page's button
-  only opens the link.
+- One-click pairing from the real extension: the extension side isn't on
+  this branch yet ([Pairing](pairing.md) is the contract it follows).

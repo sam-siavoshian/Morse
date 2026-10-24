@@ -4,6 +4,8 @@
 //
 //   GET  /v1/health    status (no auth, never includes keys)
 //   POST /v1/pair      { code } -> { token }   one-time code printed by `morse serve` / `morse pair`
+//   POST /v1/pair/ask, GET|DELETE /v1/pair/ask/<id>   one-click pairing, when a person can
+//                      answer in Morse Desktop (daemon/pair-ask.js, docs/dev/pairing.md)
 //   POST /v1/complete  { messages, model? }    Bearer token -> NDJSON {type: token|stage|done|error}
 //   POST /v1/warm      { model? }               Bearer token: get the model ready (the bar opened)
 //   GET  /v1/voice, POST /v1/transcribe        Bearer token, see daemon/voice.js
@@ -98,7 +100,8 @@ const validBlocks = x => x.role === "user" && Array.isArray(x.content) && x.cont
   (b?.type === "text" && typeof b.text === "string" && b.text.length <= 200_000) ||
   (b?.type === "image" && b.source?.type === "base64" && /^image\/(png|jpeg|webp|gif)$/.test(b.source.media_type) && typeof b.source.data === "string"));
 
-export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, timeoutMs = TIMEOUT_MS } = {}) {
+// ask: pairAsks() from daemon/pair-ask.js (Morse Desktop), for one-click pairing.
+export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, timeoutMs = TIMEOUT_MS, ask = null } = {}) {
   let harnessCache = null, harnessAt = 0;
   const harnesses = () => {
     if (!harnessCache || Date.now() - harnessAt > 5000) { harnessCache = detectHarnesses(); harnessAt = Date.now(); }
@@ -120,7 +123,7 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
         res.setHeader("Access-Control-Allow-Origin", origin);
         res.setHeader("Vary", "Origin");
         res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
-        res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
         res.setHeader("Access-Control-Allow-Private-Network", "true");
         res.setHeader("Access-Control-Max-Age", "600");
       }
@@ -135,6 +138,7 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
           ok: true, version: VERSION, provider: s.provider, model: s.model, label: settingsLabel(s),
           harnesses: { claude: harnesses().claude.found, codex: harnesses().codex.found }, paired: !!rec && (!origin || !rec.origin || rec.origin === origin),
           pairing: !!cfg.bridge?.pairing && cfg.bridge.pairing.expires > Date.now(), // first run: a code is waiting (never the code itself)
+          ask: !!ask, // one-click pairing: POST /v1/pair/ask and a person answers in Morse Desktop
         });
       }
 
@@ -160,6 +164,8 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
         if (result[0] === 200) log(origin ? "  ✓ Paired with Morse in Chrome. Changes you ask for there come through here." : "  ✓ Paired a local client"); // first-run hook: plain words
         return send(...result);
       }
+
+      if (ask && await ask.handle(req, url, send)) return; // one-click pairing (daemon/pair-ask.js)
 
       // Everything below needs a paired token.
       const cfg = await loadConfig();
@@ -225,6 +231,6 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
       server.once("error", reject);
       server.listen(port, host, () => { server.off("error", reject); resolve(server.address().port); });
     }),
-    close: () => new Promise(r => { for (const ac of active) ac.abort(abortError()); server.closeAllConnections?.(); server.close(() => r()); }),
+    close: () => new Promise(r => { for (const ac of active) ac.abort(abortError()); ask?.close(); server.closeAllConnections?.(); server.close(() => r()); }),
   };
 }

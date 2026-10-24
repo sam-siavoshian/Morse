@@ -27,6 +27,14 @@ On a Mac, right-click Morse in Applications and choose Open. On Windows, click
 
 Working from the Morse folder? `npm run desktop` opens it from there.
 
+## The first time
+
+Morse Desktop opens on one screen. It finds Claude Code or Codex by itself and
+checks that it answers, then shows your apps. Click **Open with Morse** next to
+one, and you're done. If Morse finds neither, paste an API key there instead.
+
+![The first run: the model Morse found, and your apps](screenshots/175-desktop-app-first-run.png)
+
 ## Your apps
 
 Morse Desktop shows the apps Morse can connect to: the same list as `morse apps`.
@@ -70,19 +78,19 @@ To connect Chrome:
 1. Add the Morse extension to Chrome. **Show the extension folder** opens the
    folder that Chrome's **Load unpacked** asks for (turn on Developer mode in
    `chrome://extensions` first).
-2. On the welcome page Chrome opens, click **Connect Morse Desktop**. Chrome
-   asks whether to open Morse. Morse then asks you to connect and shows a
-   code. Check that the welcome page shows the same code, then click
-   **Connect**. The welcome page finishes by itself.
+2. On the welcome page Chrome opens, click **Connect**. Morse Desktop asks
+   “Allow Chrome to use your Claude Code?”. Click **Allow**. There's no code
+   to type.
 3. Or click **Show a code** and type that code in Morse's menu in Chrome,
    under Morse helper.
 
 ![Chrome: the Morse helper is on, with a code to type](screenshots/170-desktop-app-chrome.png)
 
-![Chrome's welcome page asked to connect](screenshots/171-desktop-app-pair.png)
+![“Allow Chrome to use your Claude Code?”](screenshots/171-desktop-app-allow-chrome.png)
 
-Nothing connects until you click **Connect** in Morse Desktop, so a web page
-that opens Morse can't connect anything by itself.
+Only the Morse extension can ask, only from this computer, and nothing
+connects until you click **Allow**. Allow it only when you just clicked
+Connect in Chrome. **Sign out browsers** disconnects every browser.
 
 ## Mods
 
@@ -133,5 +141,5 @@ connected in Morse Desktop too.
 - The window only shows Morse's own page. It never loads anything from the
   internet, and web pages can't control it.
 - Morse never changes an app's files, and asks before it restarts an app.
-- Chrome connects only after you click **Connect** in Morse Desktop.
+- Chrome connects only after you click **Allow** in Morse Desktop (or type a code).
 - What Morse sends to your model, and when: [Privacy and safety](privacy-and-safety.md).

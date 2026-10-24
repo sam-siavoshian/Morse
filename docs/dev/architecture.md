@@ -147,9 +147,14 @@ modules and runs them in place, so there is no separate Node:
   sandbox, no Node, no webviews; it can't navigate or open windows, and asks
   for no permissions), the page served from a `morse-app://` scheme with a
   CSP that allows only its own files, the tray, open at login (Electron on
-  macOS and Windows, `~/.config/autostart` on Linux), and `morse://pair?code=`
-  links from the welcome page, which only take effect after Connect is
-  clicked in the window.
+  macOS and Windows, `~/.config/autostart` on Linux), and `morse://open`
+  links (they only show the window).
+- The Morse helper runs inside it with one-click pairing
+  ([`daemon/pair-ask.js`](../../daemon/pair-ask.js)): the extension asks,
+  the window shows “Allow Chrome to use your Claude Code?”, and only Allow
+  makes a token. The requests are in [Pairing](pairing.md).
+- The first run is one screen: the model Morse found by itself (checked
+  once) and the apps to open. Opening one, or Skip, leads to the main window.
 
 Sessions Morse Desktop holds are ordinary session files with its own pid, so
 `morse status` and `morse stop` work on them, and apps a terminal connected
@@ -164,6 +169,7 @@ keys kept there.
 ```
 GET  /v1/health    status (no auth, never includes keys)
 POST /v1/pair      { code } -> { token }   one-time code printed by `morse serve` / `morse pair`
+POST /v1/pair/ask, GET|DELETE /v1/pair/ask/<id>   one-click pairing, Morse Desktop only (pairing.md)
 POST /v1/complete  { messages, model? }    Bearer token -> NDJSON {type: token|done|error}
 GET  /v1/voice, POST /v1/transcribe        Bearer token, see daemon/voice.js
 ```

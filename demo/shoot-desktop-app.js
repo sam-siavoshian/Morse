@@ -6,6 +6,7 @@
 //   DISPLAY=:99 node demo/shoot-desktop-app.js [outDir]   (default docs/screenshots)
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
+import http from "node:http";
 import { mkdtempSync, existsSync, promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -59,6 +60,12 @@ const tab = async (w, name) => { await w.click(`nav button[data-tab="${name}"]`)
 
 try {
   let { app, w } = await launch("dark");
+  // 0. The first run: the model found by itself (checked for real), and the apps.
+  await w.locator("#first").waitFor();
+  await w.waitForFunction(() => !document.querySelector("#first-model .radar") && /answered|didn't answer/.test(document.querySelector("#first-model").textContent), null, { timeout: 120000 });
+  await w.mouse.move(5, 600);
+  await shot(w, "175-desktop-app-first-run.png");
+  await w.click("#first-skip");
   const row = w.locator('li[data-app="tunes"]');
   await row.waitFor();
   // 1. Your apps, Tunes connected.
@@ -100,11 +107,14 @@ try {
   await w.waitForSelector("#pair-code:not([hidden])");
   await shot(w, "170-desktop-app-chrome.png");
 
-  // 5. Chrome's welcome page asked to connect (a morse:// link, handed over by a second start).
-  const second = spawn(electronExe, [path.join(root, "desktop-app"), ...ROOT, "morse://pair?code=K7QM2X"], { stdio: "ignore", env });
-  kids.push(second);
+  // 5. The Morse extension asks to connect (the request it makes, docs/dev/pairing.md).
+  await new Promise((resolve, reject) => {
+    const req = http.request({ host: "127.0.0.1", port: Number(env.MORSE_HELPER_PORT), method: "POST", path: "/v1/pair/ask", headers: { Origin: `chrome-extension://${"lkbmdfnoigeajfhc".repeat(2)}` } }, res => { res.resume(); res.on("end", resolve); });
+    req.on("error", reject);
+    req.end("{}");
+  });
   await w.waitForSelector("dialog#ask-pair[open]", { timeout: 30000 });
-  await shot(w, "171-desktop-app-pair.png");
+  await shot(w, "171-desktop-app-allow-chrome.png");
   await w.click("#pair-no");
 
   // 6. Mods, per app, with switches.

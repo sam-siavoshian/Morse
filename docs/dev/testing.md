@@ -186,7 +186,7 @@ script that makes it, and whether it was checked and passed.
 
 ```bash
 DISPLAY=:99 npm run screenshots    # shoot-extension, shoot-desktop, shoot-control
-DISPLAY=:99 node demo/shoot-desktop-app.js   # Morse Desktop (167-174): Tunes for real, Claude Code checked for real if installed
+DISPLAY=:99 node demo/shoot-desktop-app.js   # Morse Desktop (167-175): Tunes for real, Claude Code checked for real if installed
 ```
 
 The scripts start what they need themselves: the demo sites on free ports

@@ -10,6 +10,25 @@
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
+<!-- The first run: one screen, nothing to decide. The model is found by
+     itself; the only thing to do is open an app. -->
+<div class="first" id="first" hidden>
+  <div class="first-card">
+    <svg class="radar" viewBox="0 0 15 15" width="36" height="36" fill="currentColor" aria-hidden="true"><rect x="4" y="0" width="3" height="3" rx="1" class="o"/><rect x="8" y="0" width="3" height="3" rx="1" class="o"/><rect x="0" y="4" width="3" height="3" rx="1" class="o"/><rect x="4" y="4" width="3" height="3" rx="1" class="c"/><rect x="8" y="4" width="3" height="3" rx="1" class="c"/><rect x="12" y="4" width="3" height="3" rx="1" class="o"/><rect x="0" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="8" width="3" height="3" rx="1" class="c"/><rect x="8" y="8" width="3" height="3" rx="1" class="c"/><rect x="12" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="12" width="3" height="3" rx="1" class="o"/><rect x="8" y="12" width="3" height="3" rx="1" class="o"/></svg>
+    <h1>Welcome to Morse</h1>
+    <p class="lede">Change any app in your own words.</p>
+    <p class="live" id="first-model" role="status"></p>
+    <div class="keyrow" id="first-key" hidden>
+      <input id="first-key-input" type="password" placeholder="Paste an Anthropic or OpenAI API key" autocomplete="off" spellcheck="false" aria-label="API key">
+      <div class="row-end"><button type="button" class="link" data-link="models">Other ways to connect a model</button><button type="button" class="btn" id="first-key-use">Use this key</button></div>
+    </div>
+    <h2>Open an app with Morse</h2>
+    <ul class="list" id="first-apps" aria-label="Apps"></ul>
+    <p class="foot">Then press <span class="caps" id="first-key-caps"></span> in the app, point at something and say what to change. Chrome connects when you click Connect in Morse's welcome page there.</p>
+    <button type="button" class="link" id="first-skip">Skip for now</button>
+  </div>
+</div>
+
 <div class="app">
   <aside class="side">
     <div class="brand">
@@ -96,7 +115,7 @@
         <span class="eyebrow">Connect Chrome</span>
         <ol class="steps">
           <li><span class="n">1</span><div><b>Add Morse to Chrome</b><span>Open <code>chrome://extensions</code>, turn on Developer mode, click Load unpacked and choose the extension folder.</span><button type="button" class="btn" id="show-ext">Show the extension folder</button></div></li>
-          <li><span class="n">2</span><div><b>Click Connect Morse Desktop</b><span>It's on the welcome page Chrome opens. Chrome asks to open Morse, then Morse asks you to connect.</span></div></li>
+          <li><span class="n">2</span><div><b>Allow it here</b><span>On the welcome page Chrome opens, click Connect. Morse asks whether Chrome may use your model. Click Allow. There's no code to type.</span></div></li>
           <li><span class="n">3</span><div><b>Or type a code</b><span>In Chrome, click Morse in the toolbar and type this code under Morse helper.</span>
             <div class="coderow"><button type="button" class="btn" id="new-code">Show a code</button><output class="code" id="pair-code" hidden></output><small id="code-note"></small></div></div></li>
         </ol>
@@ -139,12 +158,12 @@
   <div class="row-end"><button type="button" class="btn" value="cancel" id="restart-cancel">Cancel</button><button type="button" class="btn primary" id="restart-ok">Restart</button></div>
 </dialog>
 
-<!-- Asked when Chrome's welcome page opened a pairing link -->
+<!-- Asked when the Morse extension in Chrome asks to connect (daemon/pair-ask.js) -->
 <dialog id="ask-pair" aria-labelledby="ask-pair-h">
-  <h2 id="ask-pair-h">Connect Chrome to Morse?</h2>
-  <p>Morse's welcome page in Chrome asked to connect. Check that it shows this code:</p>
-  <output class="code big" id="link-code"></output>
-  <div class="row-end"><button type="button" class="btn" id="pair-no">Not now</button><button type="button" class="btn primary" id="pair-yes">Connect</button></div>
+  <h2 id="ask-pair-h">Allow Chrome to use your model?</h2>
+  <p>Morse in Chrome asked to connect to this computer. Allow it if you just set up Morse in Chrome. Then the changes you ask for on websites are written by your model too.</p>
+  <small class="ext" id="ask-ext"></small>
+  <div class="row-end"><button type="button" class="btn" id="pair-no">Deny</button><button type="button" class="btn primary" id="pair-yes">Allow</button></div>
 </dialog>
 
 <script src="app.js" type="module"></script>

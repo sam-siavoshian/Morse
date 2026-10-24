@@ -20,7 +20,7 @@ import path from "node:path";
 import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { createService, loadDaemon } from "./service.js";
-import { registerIpc, PUSH, pairCodeFromLink } from "./ipc.js";
+import { registerIpc, PUSH, isOpenLink } from "./ipc.js";
 import { markPng } from "./mark.js";
 import { linuxIconFor } from "./icons.js";
 import { setAutostart, writeMenuEntry } from "./linux.js";
@@ -59,8 +59,7 @@ if (APPIMAGE) {
   }
 }
 
-// One Morse at a time: a second start shows this window (and hands over a
-// morse:// link Chrome opened).
+// One Morse at a time: a second start (or a morse://open link) shows this window.
 // A Morse folder of its own (MORSE_HOME, as tests use) is a Morse of its own.
 if (process.env.MORSE_HOME) app.setPath("userData", path.join(process.env.MORSE_HOME, "desktop-profile"));
 if (!app.requestSingleInstanceLock()) { app.quit(); process.exit(0); }
@@ -211,17 +210,14 @@ async function setLoginItem(on) {
 }
 
 // ---------------------------------------------------------------- morse:// links
+// morse://open (from Chrome's welcome page, say) starts Morse or brings its
+// window forward. A link carries nothing else: connecting Chrome goes through
+// the Morse helper and the person's Allow (daemon/pair-ask.js).
 function handleLink(url) {
-  const code = pairCodeFromLink(url);
-  if (!code) return;
-  service?.pairRequest(code);
-  showWindow();
+  if (isOpenLink(url)) app.whenReady().then(showWindow);
 }
 app.on("open-url", (e, url) => { e.preventDefault(); app.whenReady().then(() => handleLink(url)); }); // macOS
-app.on("second-instance", (_e, argv) => {
-  const link = argv.find(a => a.startsWith("morse://"));
-  if (link) handleLink(link); else showWindow();
-});
+app.on("second-instance", () => showWindow()); // a second start (or a morse://open link) brings this window forward
 
 function registerLinks() {
   // Packaged only: a clone started with run.js shouldn't take over morse:// links.
@@ -266,7 +262,7 @@ app.whenReady().then(async () => {
   if (MAC) app.dock?.setIcon(appIcon());
   // macOS needs a menu for ⌘Q, ⌘W and copy and paste (the API key field); elsewhere there is none.
   Menu.setApplicationMenu(MAC ? Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }, { role: "windowMenu" }]) : null);
-  service = createService({ daemon: await loadDaemon(), emit: changed, log, iconFor, copyExtension: app.isPackaged, self: [process.execPath, APPIMAGE] });
+  service = createService({ daemon: await loadDaemon(), emit: changed, log, iconFor, copyExtension: app.isPackaged, self: [process.execPath, APPIMAGE], onAsk: () => showWindow() });
   registerIpc({
     ipcMain, service, isTrusted, log,
     native: {

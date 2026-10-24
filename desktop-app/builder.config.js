@@ -34,7 +34,7 @@ export function builderConfig({ stage, out, res, electronDist = null, electronVe
       onlyLoadAppFromAsar: true,
       grantFileProtocolExtraPrivileges: false,
     },
-    // Chrome's welcome page opens morse://pair?code=… (desktop-app/main.js).
+    // morse://open starts Morse Desktop or shows its window (desktop-app/main.js).
     protocols: [{ name: "Morse", schemes: ["morse"] }],
 
     linux: {

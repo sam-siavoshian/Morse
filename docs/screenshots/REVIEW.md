@@ -114,10 +114,11 @@ names a folder), 22-web-working.png, 26-news-before.png, 31-installed.png and
 | 168-desktop-app-restart.png | shoot-desktop-app.js | ✅ | “Tunes is open. Restart it with Morse?”, with Always restart |
 | 169-desktop-app-model.png | shoot-desktop-app.js | ✅ | Real Claude Code (haiku) answered the check; the three choices |
 | 170-desktop-app-chrome.png | shoot-desktop-app.js | ✅ | The Morse helper on, the three ways to connect Chrome, a code |
-| 171-desktop-app-pair.png | shoot-desktop-app.js | ✅ | A morse://pair link handed over by a second start; asks before connecting |
+| 171-desktop-app-allow-chrome.png | shoot-desktop-app.js | ✅ | “Allow Chrome to use your Claude Code?”: a request made the way the extension makes it |
 | 172-desktop-app-mods.png | shoot-desktop-app.js | ✅ | Mods per app with switches; one turned off |
 | 173-desktop-app-checks.png | shoot-desktop-app.js | ✅ | The checks, with the model answering for real; “You're root” is this test machine |
 | 174-desktop-app-light.png | shoot-desktop-app.js | ✅ | Light mode; Tunes open and ready to connect |
+| 175-desktop-app-first-run.png | shoot-desktop-app.js | ✅ | The first run: Claude Code found and checked for real, the apps to open |
 | compare-{390,768,1280,1440}-{first-screen,full}, compare-gallery-1440, compare-privacy-1440 | by hand, from a local build of the Lanes site | ✅ | Lanes on the left, Morse on the right, same width |
 | install-bad-link-desktop-dark.png | shoot-site.js | ✅ | |
 
