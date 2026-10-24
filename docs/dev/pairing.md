@@ -76,8 +76,8 @@ window ([How Morse works](architecture.md#morse-desktop-desktop-app)).
 - **Sign out browsers** in Morse Desktop (or `morse unpair`) removes every token.
 
 The question shows the asking extension's id in small print. Another
-extension the person installed could still ask; the wording (“Allow it if you
-just set up Morse in Chrome”) is what stands between that and a click. A code
+extension the person installed could still ask; the wording (“Allow it only if you
+set up Morse in Chrome a moment ago”) is what stands between that and a click. A code
 doesn't have that question: the person carries it over.
 
 ## Opening Morse Desktop from Chrome

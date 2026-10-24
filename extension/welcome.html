@@ -41,11 +41,11 @@
         <li data-step="model" id="model">
           <span class="tick" aria-hidden="true"></span>
           <div><b data-i18n="welcome.model.b">Connect a model</b>
-            <span data-i18n="welcome.model">Morse uses an AI you already have: Claude Code, Codex or an API key. Paste this in a terminal and press Enter.</span>
+            <span data-i18n="welcome.model">Morse uses a model you already have: Claude Code, Codex or an API key. Paste this in a terminal and press Enter.</span>
             <span class="cmd"><code id="setup-cmd">morse setup</code><button type="button" id="copy-setup" class="quiet" data-i18n="welcome.copy">Copy</button></span>
             <span class="live" id="live" role="status" aria-live="polite"></span>
             <span class="pairrow" id="pairrow" hidden><input id="code" maxlength="7" placeholder="Code" autocomplete="off" spellcheck="false" aria-label="Pairing code" data-i18n-attr="placeholder:welcome.code;aria-label:welcome.code.label"><button type="button" id="pair" data-i18n="welcome.connect">Connect</button></span>
-            <small class="fallback" data-i18n-html="welcome.fallback">Says “command not found”? Run it in the Morse folder as <code id="node-cmd">node daemon/cli.js setup</code>.</small>
+            <small class="fallback" data-i18n-html="welcome.fallback">If it says “command not found”, run it in the Morse folder as <code id="node-cmd">node daemon/cli.js setup</code>.</small>
             <details class="alt" id="alt"><summary data-i18n="welcome.alt">Use an Anthropic API key instead</summary>
               <span class="pairrow"><input id="key" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" aria-label="Anthropic API key" data-i18n-attr="aria-label:welcome.key.label"><button type="button" id="save-key" data-i18n="welcome.saveKey">Save key</button></span>
               <small id="keynote" role="status" data-i18n="welcome.keynote">The key stays in this browser. Nothing to install.</small>
@@ -77,8 +77,8 @@
     <div class="cols">
       <div><b data-i18n="welcome.know.tabs.b">Tabs that were already open</b><span data-i18n="welcome.know.tabs">Reload them once. Chrome only adds Morse to pages loaded after it was installed.</span></div>
       <div><b data-i18n="welcome.know.where.b">Where Morse can't run</b><span data-i18n-html="welcome.know.where">Chrome's own pages, the Chrome Web Store and PDFs in Chrome's viewer. Files on your computer need “Allow access to file URLs” in <button type="button" class="link" id="open-ext-2">Morse's settings</button>.</span></div>
-      <div><b data-i18n="welcome.know.help.b">Help while you work</b><span data-i18n-html="welcome.know.help">In the Morse bar, <span class="caps"><kbd>F1</kbd></span> shows what you can do and example sentences, and <span class="caps"><kbd>?</kbd></span> shows keyboard shortcuts.</span></div>
-      <div><b data-i18n="welcome.know.mods.b">Nothing is permanent</b><span data-i18n-html="welcome.know.mods">A change you save is called a mod. Morse brings it back every time you open that site. <span class="hk" data-hk="mods"></span> opens the Mods panel, where you can turn one off, edit it or share it.</span></div>
+      <div><b data-i18n="welcome.know.help.b">Help while you work</b><span data-i18n-html="welcome.know.help">In the Morse bar, <span class="caps"><kbd>F1</kbd></span> shows help and examples. <span class="caps"><kbd>?</kbd></span> shows keyboard shortcuts.</span></div>
+      <div><b data-i18n="welcome.know.mods.b">Your saved changes</b><span data-i18n-html="welcome.know.mods">A change you save is called a mod. Morse brings it back every time you open that site. <span class="hk" data-hk="mods"></span> opens the Mods panel, where you can turn one off, edit it or share it.</span></div>
     </div>
   </section>
 </main>

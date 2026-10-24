@@ -1,6 +1,6 @@
 # Morse launch kit
 
-**Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like.**
+**Morse lets you change any website or desktop app by saying what you want.**
 
 [![The 92-second demo](poster-demo-v2.png)](morse-demo-v2.mp4)
 

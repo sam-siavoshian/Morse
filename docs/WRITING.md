@@ -241,7 +241,7 @@ in one or two short sentences.
 
 | Where | Before | After |
 |---|---|---|
-| Bar, pointing | **Point** at anything to change it · or just describe it · Esc to close | **Point** at anything to change it, or just describe it · Esc to close |
+| Bar, pointing | **Point** at anything to change it · or just describe it · Esc to close | **Point** at something, or describe a change · Esc to close |
 | Bar, something pointed at | Type to describe a change · ⌘E to edit directly · Esc to close | Describe a change · ⌘E for Edit tools · Esc to close |
 | Bar, working | Writing | Writing the change |
 | Bar, fixing | Fixing a problem in the new code | Fixing a mistake and trying again |

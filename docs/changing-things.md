@@ -24,7 +24,7 @@ The mouse chooses the smallest thing under it, like one link in a list. To
 choose the bigger part around it (the whole list), press **⌥↑** (Alt+↑);
 press it again for a bigger part still.
 
-To change the whole page, don't point. Just describe the change.
+To change the whole page, don't point. Describe the change.
 
 ## Describe
 

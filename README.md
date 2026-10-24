@@ -1,6 +1,6 @@
 # ▦ Morse
 
-**Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like.**
+**Morse lets you change any website or desktop app by saying what you want.**
 
 [![Watch the 92-second demo](https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/poster-demo-v2.png)](https://github.com/sam-siavoshian/RRAA/blob/main/docs/launch/morse-demo-v2.mp4)
 
