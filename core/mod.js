@@ -89,6 +89,10 @@ export function saveKeepsScope(next, existing, where) {
     && Array.isArray(next.hosts) && next.hosts.length > 0 && next.hosts.every(h => h === hostOf(where.url));
 }
 
+// A site or app name with control, direction or zero-width characters: shown
+// reversed or with an invisible part, it reads as another site than the one
+// it runs on ("For: moc.knab.www"), and it matches no real one.
+const UNSEEN = /[\p{Cc}\p{Cf}\u2028\u2029]/u;
 export function validateMod(m) {
   if (!m || typeof m !== "object" || m.morse !== 1) throw new Error("This isn't a Morse mod. Check that you copied all of it.");
   for (const k of ["id", "title", "prompt"]) if (typeof m[k] !== "string") throw new Error(`This mod is incomplete (no ${k}). Ask for a new share link.`);
@@ -96,8 +100,8 @@ export function validateMod(m) {
   if (typeof m.css !== "string" || typeof m.js !== "string") throw new Error("This mod has no code in it. Ask for a new share link.");
   const where = m.match;
   if (!where || typeof where !== "object" || Array.isArray(where)
-    || !Array.isArray(where.hosts) || !where.hosts.length || !where.hosts.every(h => typeof h === "string" && h && h.length <= 253)
-    || !(where.app == null || typeof where.app === "string")) {
+    || !Array.isArray(where.hosts) || !where.hosts.length || !where.hosts.every(h => typeof h === "string" && h && h.length <= 253 && !UNSEEN.test(h))
+    || !(where.app == null || (typeof where.app === "string" && !UNSEEN.test(where.app)))) {
     throw new Error("This mod doesn't say where it runs. Ask for a new share link.");
   }
   return m;

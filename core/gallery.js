@@ -32,7 +32,9 @@ export const MAX_FRESH = 7 * DAY;
 const ID = /^[\w-]{1,40}$/;
 const FILE = /^[\w.-]{1,80}\.morse\.json$/;       // a file next to the list, never a path or another site
 const HOST = /^(\*|\*\.)?[\w.-]{1,253}(:\d{1,5})?$/;
-const str = (v, max) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "");
+// One line of text, without control characters, direction overrides or
+// zero-width spaces (which can make a title or tag read in another order).
+const str = (v, max) => (typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f-\u009f\u061c\u200b\u200e\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069\ufeff]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max) : "");
 
 // ---- the list
 
