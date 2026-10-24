@@ -14,6 +14,7 @@ import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
 import { Generations } from "../core/cancel.js";
 import { cachedVoiceStatus, transcribeAudio } from "./voice.js";
+import { CONTROL_REQUESTS, handleControl, watchControl } from "./control.js"; // user control: pause, safe start, install review, backup
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
@@ -38,6 +39,7 @@ export class Connector {
   }
 
   async run() {
+    watchControl(this); // user control: tell windows when Morse is paused or resumed
     for (;;) {
       try {
         for (const t of await listTargets(this.port)) {
@@ -110,6 +112,7 @@ export class Connector {
 
   async dispatch(s, ctx, msg) {
     const where = { url: msg.url, app: this.app?.id || null };
+    if (CONTROL_REQUESTS.has(msg.type)) return handleControl(msg, where); // user control (control.js)
     switch (msg.type) {
       case "hello":
         this.grantMic(s, msg.url);

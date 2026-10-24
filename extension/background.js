@@ -9,6 +9,7 @@ import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatc
 import { wrapModCode } from "./core/kit.js";
 import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
 import { clipAdd } from "./core/clipboard.js"; // God mode clipboard
+import { CONTROL_REQUESTS, handleControlRequest } from "./control-host.js"; // user control: pause, safe start, install review, backup
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
@@ -68,6 +69,7 @@ async function dispatch(msg, port) {
   const tab = port.sender.tab;
   const target = { tabId: tab.id, frameIds: [port.sender.frameId ?? 0] };
   if (BAR_REQUESTS.has(msg.type)) return handleBarRequest(msg);
+  if (CONTROL_REQUESTS.has(msg.type)) return handleControlRequest(msg, port); // user control (control-host.js)
   switch (msg.type) {
     case "hello": {
       const s = await settings();

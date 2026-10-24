@@ -8,6 +8,7 @@ import { waitForEndpoint } from "./cdp.js";
 import { listMods, deleteMod, saveMod, loadConfig, saveConfig, writeExport, HOME } from "./store.js";
 import { resolveSettings, settingsLabel, DEFAULT_SETTINGS } from "../core/providers.js";
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
+import { pauseCli, resumeCli, exportAllCli, importCli, codeCli } from "./control.js"; // user control
 
 const G = s => `\x1b[32m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`;
 const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· customize any app in one sentence")}\n${G("▪▫▪")}`;
@@ -52,12 +53,19 @@ ${B("Mods")}
   morse rm <id>             delete a mod
   morse export <id>         write .morse.json, .user.js and a share link
   morse install <link|file> install a shared mod
+  morse code <id>           what a mod does, in plain words, and its code
+  morse export --all        back up every mod to one file  [--out <file>]
+  morse import <file|link>  install from a backup, .morse.json or share link (shows what it does first)
+
+${B("Pause")}
+  morse pause [site|app]    stop running mods everywhere, or on one site or app (they stay saved)
+  morse resume [site|app]   run them again  [--all also resumes every single site]
 
 ${B("Model")}
   morse model               show the model Morse will use
   morse model --provider ollama|openai|demo --model <name> [--base-url <url>] [--api-key <key>]
 
-In any attached window: ${B("Alt+Space")} to morse · ${B("Alt+Shift+M")} for your mods.
+In any attached window: ${B("Alt+Space")} to morse · ${B("Alt+Shift+M")} for your mods · ${B("Alt+Shift+0")} turns every mod off.
 Websites: load the browser extension (npm run build, then load dist/extension).`;
 
 async function main() {
@@ -118,6 +126,7 @@ async function main() {
       console.log("Deleted " + f._[0]);
       break;
     case "export": {
+      if (f.all) return exportAllCli(f); // user control: back up everything
       const mod = (await listMods()).find(m => m.id === f._[0]);
       if (!mod) throw new Error("No mod " + f._[0]);
       const slug = mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -134,6 +143,10 @@ async function main() {
       console.log(`Installed ${B(mod.title)} for ${mod.match.app || mod.match.hosts.join(", ")}`);
       break;
     }
+    case "pause": return pauseCli(f);   // user control (control.js)
+    case "resume": return resumeCli(f);
+    case "import": return importCli(f);
+    case "code": return codeCli(f);
     case "model": {
       if (f.provider || f.model || f["base-url"] || f["api-key"]) {
         const cfg = await loadConfig();
