@@ -43,7 +43,12 @@ export function runtimeBundleProblems() {
       else seen.set(name, at);
     }
   };
-  const bundleSrc = readFileSync(path.join(root, "runtime", "bundle.js"), "utf8");
+  // The UI half's scope (runtime/bundle.js bundleUI); the boot half is its own
+  // scope and is checked in tests/bundle.test.js.
+  const whole = readFileSync(path.join(root, "runtime", "bundle.js"), "utf8");
+  const ui = whole.indexOf("export function bundleUI(");
+  const end = ui < 0 ? -1 : whole.indexOf("\nexport function", ui + 1);
+  const bundleSrc = ui < 0 ? whole : whole.slice(ui, end < 0 ? undefined : end);
   seen.set("TOKENS_CSS", "runtime/bundle.js");
   // core modules inlined with `export` dropped (const shared = ["hotkeys.js", …])
   const shared = /const shared = \[([^\]]*)\]/.exec(bundleSrc)?.[1].match(/[\w.-]+\.js/g) || [];

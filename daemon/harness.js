@@ -6,6 +6,7 @@
 //   - runs in an empty directory under ~/.morse (no CLAUDE.md / AGENTS.md),
 //   - is killed on timeout (120s) and when the caller aborts.
 
+import { trace } from "./trace.js"; // MORSE_TRACE
 import { spawn } from "node:child_process";
 import { promises as fs, statSync, accessSync, constants } from "node:fs";
 import path from "node:path";
@@ -237,6 +238,7 @@ export async function claudeCodeStream(s, messages, { onToken, signal, onStage }
   const t0 = Date.now();
   const key = claudeKey(bin, s, system);
   const reused = await takeWarm(key);
+  trace("harness", `${reused ? "using a Claude Code process started when the bar opened" : "starting Claude Code now"}: ${path.basename(bin)} ${claudeArgs(s, "<morse instructions>").map(a => a === "" ? '""' : a).join(" ")}`);
   const h = reused || await startClaude(bin, s, system);
   // Describe this image (core/a11y.js): pictures travel in the same user message.
   const images = imageBlocks(messages);
@@ -248,7 +250,7 @@ export async function claudeCodeStream(s, messages, { onToken, signal, onStage }
       onLine(line, finish) {
         let ev;
         try { ev = JSON.parse(line); } catch { return; }
-        if (ev.type === "system" && ev.subtype === "init") onStage?.({ stage: "ready", spawnMs: Date.now() - t0, warm: !!reused });
+        if (ev.type === "system" && ev.subtype === "init") { trace("harness", `Claude Code ready (${ev.model || s.model || "default model"}), request sent on stdin as stream-json`); onStage?.({ stage: "ready", spawnMs: Date.now() - t0, warm: !!reused }); }
         else if (ev.type === "system" && ev.subtype === "thinking_tokens") onStage?.({ stage: "thinking" });
         else if (ev.type === "stream_event") {
           const e = ev.event;

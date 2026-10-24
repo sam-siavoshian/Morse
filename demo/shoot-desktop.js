@@ -3,14 +3,15 @@
 // port, attaches over CDP, injects the runtime. Playwright only plays the
 // user (keyboard + mouse) and takes screenshots.
 //
-//   DISPLAY=:99 MORSE_HOME=/tmp/mh node demo/shoot-desktop.js
-//   (MORSE_DEMO_PORT and MORSE_CDP_PORT move the ports for parallel runs)
+//   DISPLAY=:99 node demo/shoot-desktop.js
+//   (the demo site and the debugging port are on free ports; MORSE_HOME, if
+//   set, keeps the app profile, clips and log; MORSE_CDP_PORT fixes the port)
 //
 // By default generation is replayed from core/demo.js (a test fixture) so the
 // screenshots are reproducible. With a real model, e.g. Claude Code:
 //
 //   MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code \
-//   DISPLAY=:99 MORSE_HOME=/tmp/mh node demo/shoot-desktop.js
+//   DISPLAY=:99 node demo/shoot-desktop.js
 //
 // a real model doesn't always need a repair round and names things its own
 // way, so those steps are skipped when they don't happen.
@@ -18,9 +19,10 @@
 import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { createRequire } from "node:module";
-// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
+import { demoSites, openBar, seasonHome } from "./helper.js";
+import { freePort } from "../tests/helpers/net.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -29,30 +31,53 @@ const PROVIDER = process.env.MORSE_PROVIDER || "demo";
 const REAL = PROVIDER !== "demo";
 const T = REAL ? 150000 : 15000; // a real model takes its time
 const MODEL_ARGS = process.env.MORSE_MODEL ? ["--model", process.env.MORSE_MODEL] : [];
-const ENV = { ...process.env, MORSE_PROVIDER: PROVIDER };
-const HOME = process.env.MORSE_HOME;
+const ENV = { ...process.env, MORSE_PROVIDER: PROVIDER, MORSE_DEBUG: "1" }; // MORSE_DEBUG: the bar reports its status, for waiting on it
+const HOME = process.env.MORSE_HOME || await fs.mkdtemp(path.join(os.tmpdir(), "morse-desktop-"));
+ENV.MORSE_HOME = HOME;
+await seasonHome(HOME); // someone who has used Morse before: no first-run coach
+await fs.writeFile(path.join(HOME, "settings.json"), JSON.stringify({ welcome: false, gallery: false }));
 const CHROME = process.env.CHROME || chromium.executablePath();
-const PORT = Number(process.env.MORSE_CDP_PORT || 9333);
-const TUNES = `http://127.0.0.1:${Number(process.env.MORSE_DEMO_PORT || 8787) + 2}/demo/sites/tunes/`; // node demo/serve.js
+const PORT = Number(process.env.MORSE_CDP_PORT) || await freePort();
+const sites = await demoSites();
+// The app is at http://tunes/ (mapped to the demo server's real port), so what
+// Morse shows of its address reads "tunes", not 127.0.0.1 and a random port.
+const TUNES = "http://tunes/demo/sites/tunes/";
+const MAP = `--host-resolver-rules=MAP tunes 127.0.0.1:${sites.sites.tunes}`;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 await fs.mkdir(OUT, { recursive: true });
 
+// --enable-automation: the app reports navigator.webdriver like a test
+// browser, so with morse:debug Morse's UI can be clicked by this script.
 const log = [];
 const morse = spawn("node", [path.join(root, "daemon/cli.js"), "launch", CHROME, "--name", "Tunes", "--port", String(PORT), ...MODEL_ARGS, "--",
   `--app=${TUNES}`, `--user-data-dir=${path.join(HOME, "app-profile")}`,
-  "--no-first-run", "--window-size=1280,800", "--window-position=0,0", "--no-sandbox", "--force-device-scale-factor=1"],
+  "--no-first-run", "--enable-automation", MAP, "--window-size=1280,800", "--window-position=0,0", "--no-sandbox", "--force-device-scale-factor=1"],
   { env: { ...ENV, FORCE_COLOR: "1" } });
 morse.stdout.on("data", d => { log.push(String(d)); process.stdout.write(d); });
 morse.stderr.on("data", d => process.stderr.write(d));
 
-await sleep(2500);
+// Wait for morse launch to say it's connected (a busy machine starts the app slowly).
+async function until(fn, ms, what) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) { if (await fn()) return; await sleep(150); }
+  throw new Error("timed out waiting for " + what);
+}
+await until(() => /connected to/.test(log.join("")), 90000, "morse launch to connect");
 const browser = await chromium.connectOverCDP(`http://127.0.0.1:${PORT}`);
 const page = browser.contexts()[0].pages().find(p => p.url().includes("tunes"));
 await page.evaluate(() => localStorage.setItem("morse:debug", "1"));
 await page.reload();
 await sleep(1500);
 const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui][data-status]")?.dataset.status || "null"));
-const shot = async name => { await page.screenshot({ path: path.join(OUT, name) }); console.log("  📸", name); };
+// The docs use some of these pictures. The steps between them (story shots)
+// are written only for a record of a whole run, when SHOTS names a folder
+// (e.g. docs/screenshots/claude-code).
+const STORY = !!process.env.SHOTS;
+const shot = async (name, { story = false, on = page } = {}) => {
+  if (story && !STORY) return;
+  await on.screenshot({ path: path.join(OUT, name) });
+  console.log("  📸", name);
+};
 async function waitFor(pred, ms = 15000) {
   const end = Date.now() + ms;
   while (Date.now() < end) { const s = await status(); if (s && pred(s)) return s; await sleep(40); }
@@ -60,16 +85,16 @@ async function waitFor(pred, ms = 15000) {
 }
 
 // 1. Ready
-await shot("01-desktop-ready.png");
+await shot("01-desktop-ready.png", { story: true });
 
 // 2. Hotkey + point
-await page.keyboard.press(OPEN_KEY);
+await openBar(page);
 await sleep(300);
 const controls = page.locator('[data-testid="player-controls"] .btns');
 const box = await controls.boundingBox();
 await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 8 });
 await sleep(250);
-await shot("02-point-at-anything.png");
+await shot("02-point-at-anything.png", { story: true });
 
 // 3. Describe it
 await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
@@ -77,7 +102,7 @@ await sleep(200);
 // After pointing, typing goes straight to the bar (no "a" for Ask first).
 await page.keyboard.type("add a sleep timer that pauses the music after a while", { delay: 18 });
 await sleep(200);
-await shot("03-say-what-you-want.png");
+await shot("03-say-what-you-want.png", { story: true });
 
 // 4. Working effect while tokens stream
 await page.keyboard.press("Enter");
@@ -96,14 +121,17 @@ if (/fixing/i.test(s5.hint)) {
 const s6 = await waitFor(s => s.phase === "result" || (REAL && s.phase === "error"), REAL ? T : 20000);
 if (s6.phase === "error") { await shot("06-error.png"); throw new Error("generation failed: " + s6.hint); }
 await sleep(400);
-await shot("06-done.png");
+await shot("06-done.png", { story: true });
 
-// 7. Share: Keep + share card (before/after, cropped to the change) + exports
+// 7. Share: the share card (before/after, cropped to the change) and exports (before/after, cropped to the change) + exports
 const clipDir = id => path.join(HOME, "clips");
 await sleep(4500); // let ffmpeg finish the clip so the Clip button shows
 await page.locator(".actions [data-a=share]").click();
 await sleep(1200);
 await shot("07-share.png");
+// 14. The share card on its own, as "Download image" saves it
+const card = await page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".cardimg")?.src);
+if (card) { await fs.writeFile(path.join(OUT, "14-share-card.png"), Buffer.from(card.split(",")[1], "base64")); console.log("  📸 14-share-card.png"); }
 for (const a of ["png", "json", "user", "clip"]) {
   const b = page.locator(`.exports [data-a=${a}]`);
   if (await b.count()) { await b.click(); await sleep(400); }
@@ -119,7 +147,7 @@ await shot("08-the-new-feature-works.png");
 
 // 9. Page-wide CSS change, applied live while the model is still writing
 await page.mouse.move(640, 200);
-await page.keyboard.press(OPEN_KEY);
+await openBar(page);
 await sleep(200);
 await page.keyboard.type("make the album covers bigger with rounder corners", { delay: 14 });
 await page.keyboard.press("Enter");
@@ -128,9 +156,9 @@ await sleep(1500);
 await shot("09-css-applies-while-it-writes.png");
 await waitFor(s => s.phase === "result", T);
 await sleep(300);
-await page.keyboard.press("Enter"); // Keep
+await page.keyboard.press("Enter"); // Save
 await sleep(700);
-await shot("10-covers-done.png");
+await shot("10-covers-done.png", { story: true });
 
 // 10. Mods panel
 await page.keyboard.press("Alt+Shift+KeyM");
@@ -152,17 +180,18 @@ morse.kill();
 await sleep(1500);
 const morse2 = spawn("node", [path.join(root, "daemon/cli.js"), "launch", CHROME, "--name", "Tunes", "--port", String(PORT), ...MODEL_ARGS, "--",
   `--app=${TUNES}`, `--user-data-dir=${path.join(HOME, "app-profile")}`,
-  "--no-first-run", "--window-size=1280,800", "--window-position=0,0", "--no-sandbox", "--force-device-scale-factor=1"], { env: ENV });
-morse2.stdout.on("data", d => process.stdout.write(d));
-await sleep(3500);
+  "--no-first-run", "--enable-automation", MAP, "--window-size=1280,800", "--window-position=0,0", "--no-sandbox", "--force-device-scale-factor=1"], { env: ENV });
+let log2 = "";
+morse2.stdout.on("data", d => { log2 += d; process.stdout.write(d); });
+await until(() => /connected to/.test(log2), 90000, "the second morse launch to connect");
 const b2 = await chromium.connectOverCDP(`http://127.0.0.1:${PORT}`);
 const p2 = b2.contexts()[0].pages().find(p => p.url().includes("tunes"));
 // Wait for both saved mods to be back on the page, not a fixed time.
 await p2.waitForFunction(() => document.querySelectorAll("style[data-morse-css]").length >= 2, null, { timeout: 15000 }).catch(() => {});
 await sleep(600);
-await p2.screenshot({ path: path.join(OUT, "13-still-there-after-restart.png") });
-console.log("  📸 13-still-there-after-restart.png");
+await shot("13-still-there-after-restart.png", { story: true, on: p2 });
 await (await b2.newBrowserCDPSession()).send("Browser.close").catch(() => {});
 morse2.kill();
 await fs.writeFile(path.join(HOME, "desktop-log.txt"), log.join(""));
+await sites.close();
 process.exit(0);

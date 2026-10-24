@@ -31,25 +31,42 @@ onEvent(msg => {
   };
 }
 
-(async () => {
+// Take over from boot.js. Until now it has applied the mods, followed
+// navigations and caught the first hotkey; from here the UI's own handlers
+// run, and whatever arrived before it (that hotkey, a host event, a toast)
+// is replayed once the hello reply is in.
+B.adopt({
+  toast, key: adoptKey, modsChanged() { if (!panel.hidden) renderPanel(); },
+  health: (m, r) => Health.ran(m, r), // repair: the panel marks mods that stopped working (70-panel.js)
+  controlReady, // user control: the safe-start / off-switch notice after the first sync (63-control.js)
+  healFound: () => Heal.found(), // self-heal: what boot.js found broken, for the dot, the note and Fix it (71-heal.js)
+  guardHeard: (id, p) => Guard.heard(id, p), // guard hook: the kit paused a mod (64-guard.js)
+  guardStop, // guard hook: boot.js didn't apply a mod, or undid it (64-guard.js)
+  guardReady, // guard hook: a mod that froze the page was turned off (64-guard.js)
+  styleReady: () => YourStyle.ready(), // your-style hook: fit it to this site once, if turned on (72-style.js)
+  waitingAdd: m => Waiting.add(m), // waiting hook: “Allow User Scripts” is off; the style shows, the code never ran (64-waiting.js)
+});
+B.ready.then(hello => {
   try {
-    const hello = await call("hello", { url: location.href });
-    S.label = hello.label; S.mode = hello.mode; S.app = hello.app || null; S.appName = hello.appName || hello.app || null;
-    // Hosts from before settings existed don't send them; ask (or use local ones).
-    if (hello.settings) { setPrefs(hello.settings); hostPrefs = true; } else await loadPrefs();
+    setPrefs(B.prefs());
+    if (hello.settings) hostPrefs = true; // the host sent settings with its hello (03-prefs.js)
     Voice.configure(hello.voice);
     PromptHistory.load();
-    await controlBoot(); await syncMods(); controlReady(); // user control: pause, safe start (63-control.js)
-    guardReady(); // guard hook: a mod that froze the page was turned off (64-guard.js)
-    Heal.soon(); // self-heal hook: after idle, did a saved mod stop working? (71-heal.js)
-    YourStyle.ready(); // your-style hook: fit it to this site once, if turned on (72-style.js)
     if (hello.debug) debugStatus(); // the host was started with MORSE_DEBUG=1
-    S.ready = true; // tests: the host answered hello and the mods are on
-    if (!hello.quiet && PREFS.welcome) toast(`Morse is ready. Press ${HOTKEY} to change this page.`);
-  } catch (e) { console.warn("[morse] host unavailable", e); }
-  // single-page apps change URL without reloading
-  setInterval(() => { if (live() && location.href !== S.url) { S.url = location.href; syncMods().catch(() => {}); Heal.soon(); /* self-heal hook */ } }, 1000);
-})();
+  } finally { B.started(); S.ready = true; /* tests: the host answered hello and the mods are on */ }
+}).catch(e => console.warn("[morse]", e));
+
+// boot.js applies the mods, so the guards around applyMod run there
+// (core/guard.js finds the harm); the reason the model gets for Fix it is
+// worded here, as 64-guard.js before() and after() word it.
+function guardStop(id, why) {
+  const m = S.mods.find(x => x.id === id);
+  if (!m) return;
+  const error = why === "hid-js"
+    ? "Morse paused it because after it ran the whole page was hidden (html or body ended up with display: none or opacity: 0). Never hide html, body, :root or *. Hide or change only the parts the user asked about."
+    : `Morse paused it. ${draftHarm(why === "endless" ? { js: m.js } : { css: m.css })?.model || ""}`;
+  Guard.heard(id, { why: why === "endless" ? "endless" : "hid", error });
+}
 
 // Read-only status for automated screenshots/tests; off unless opted in
 // (Playwright with morse:debug, or a desktop host started with MORSE_DEBUG=1,

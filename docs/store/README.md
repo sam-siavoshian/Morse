@@ -37,7 +37,7 @@ is exactly 1280×800, and copies it here.
 
 | File | Shows | Caption for the store |
 |---|---|---|
-| `1-point-and-describe.png` | The bar open on a chat app, with the first-run tips | Point at anything, or describe a change to the whole page. |
+| `1-point-and-describe.png` | The bar open on a chat app, with suggestions for the page | Point at anything, or describe a change to the whole page. |
 | `2-it-changes-while-you-watch.png` | A news page restyling while the change is written | The new look shows up while it is being written. |
 | `3-add-what-the-app-is-missing.png` | A word count added to a chat app, with Save, Undo, Edit code, Share | Add what a site is missing. Save it, undo it or read the code. |
 | `4-edit-tools.png` | The edit tools on a headline | Edit tools: hide, move, resize, rename and recolor with no model. |

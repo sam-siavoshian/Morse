@@ -12,6 +12,7 @@ import assert from "node:assert/strict";
 import { promises as fs, existsSync } from "node:fs";
 import path from "node:path";
 import { launchBrowser, noBrowser } from "./helpers/browser.js";
+import { axeCheck, axeLines } from "../demo/axe.js"; // axe-core on Morse's own UI (tests/a11y-morse.test.js)
 import { pressOpen, HOTKEYS } from "./helpers/keys.js";
 import { waitFor, waitForStatus, settle, TIMEOUT } from "./helpers/wait.js";
 import { openStyleWorld } from "../demo/style-world.js";
@@ -56,6 +57,7 @@ async function makeStyle(page, words) {
 async function openPanel(page) {
   await page.keyboard.press(HOTKEYS.mods);
   await page.locator(".panel .ys-row").waitFor();
+  assert.deepEqual(axeLines(await axeCheck(page)), [], "axe-core: Your style in the Mods panel");
 }
 
 test("made once from the bar, shown for review, then on every site at boot with no model and no bar", { skip }, async () => {

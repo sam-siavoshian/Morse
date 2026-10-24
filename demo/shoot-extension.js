@@ -6,23 +6,23 @@
 //
 // The extension gets its model from the Morse helper, started here in a
 // scratch home and paired through the popup (replayed replies by default,
-// see demo/helper.js). MORSE_DEMO_PORT moves the demo sites, SHOTS the output.
+// see demo/helper.js). The demo sites run on free ports and show at their
+// usual addresses; SHOTS moves the output.
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { createRequire } from "node:module";
 import { toUserscript } from "../core/mod.js";
-import { startHelper, pairExtension } from "./helper.js";
-// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
+import { startHelper, pairExtension, routeHelper, demoSites, openBar, pick, clearBar, seasonExtension } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const OUT = path.resolve(root, process.env.SHOTS || path.join("docs", "screenshots"));
 const EXT = path.join(root, "dist", "extension");
-const BASE = Number(process.env.MORSE_DEMO_PORT || 8787);
-const SITE = { parley: `http://127.0.0.1:${BASE}/demo/sites/parley/`, byte: `http://127.0.0.1:${BASE + 1}/demo/sites/byte/` };
+const sites = await demoSites();
+const SITE = { parley: sites.url("parley"), byte: sites.url("byte") };
+const SHARE = sites.url("parley", ""); // where share links open (the extension trusts 127.0.0.1:8787)
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-ext-"));
 await fs.mkdir(OUT, { recursive: true });
@@ -33,14 +33,17 @@ async function browserWithMorse(name) {
     headless: false, viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1,
     args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, "--no-sandbox"],
   });
+  await sites.route(ctx);
+  await routeHelper(ctx, helper);
   const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
   const id = sw.url().split("/")[2];
   const p = await ctx.newPage();
   await p.goto(`chrome://extensions/?id=${id}`);
   await p.locator("#allow-user-scripts").click();
   await sleep(500);
-  // Morse's settings open by themselves on install, since no model is connected yet.
-  for (const other of ctx.pages()) if (other.url().includes("/options.html")) await other.close();
+  // The welcome page opens by itself on install.
+  for (const other of ctx.pages()) if (/\/(welcome|options)\.html/.test(other.url())) await other.close();
+  await seasonExtension(sw, { gallery: false }); // someone who has used Morse before: no first-run coach
   return { ctx, sw, id, setup: p };
 }
 async function open(ctx, url) {
@@ -71,22 +74,24 @@ console.log("  📸 20-extension-installed.png");
 // 21. Point at the composer of a chat app with a strict CSP
 const chat = await open(ctx, SITE.parley);
 const C = helpers(chat);
-await chat.keyboard.press(OPEN_KEY);
+await openBar(chat);
 await sleep(200);
 const ta = await chat.locator("textarea[aria-label=\"Message Parley\"]").boundingBox();
+await clearBar(chat, ta.x + 120, ta.y + 20);
 await chat.mouse.move(ta.x + 120, ta.y + 20, { steps: 6 });
 await sleep(250);
 await C.shot("21-web-point.png");
-await chat.mouse.click(ta.x + 120, ta.y + 20);
-await chat.keyboard.type("show a live word count and reading time under the message box", { delay: 12 });
+await pick(chat, 'textarea[aria-label="Message Parley"]', 120 / ta.width, 20 / ta.height);
+// One input event for the whole request: on a busy machine single keys can
+// arrive late, and the bar shows the request exactly as typed either way.
+await C.waitFor(s => s.focus === "in");
+await chat.keyboard.insertText("show a live word count and reading time under the message box");
+await C.waitFor(s => /under the message box$/.test(s.input)); // all of it reached the bar
 await chat.keyboard.press("Enter");
-await C.waitFor(s => s.ticker.length > 40);
-await sleep(700);
-await C.shot("22-web-working.png");
 await C.waitFor(s => s.phase === "result");
 await sleep(300);
 await C.shot("23-web-done.png");
-await chat.keyboard.press("Enter"); // Keep
+await chat.keyboard.press("Enter"); // Save
 await sleep(400);
 await chat.locator("textarea[aria-label=\"Message Parley\"]").click();
 await chat.keyboard.type("How do CRDTs resolve two people editing the same sentence offline? Assume a text CRDT like RGA, and explain what the merged result looks like.", { delay: 4 });
@@ -94,7 +99,7 @@ await sleep(300);
 await C.shot("24-web-word-count-works.png");
 
 // 25. Page-wide request: a new button
-await chat.keyboard.press(OPEN_KEY);
+await openBar(chat);
 await sleep(150);
 await chat.mouse.move(640, 400);
 await chat.keyboard.type("add a button that copies the whole conversation as markdown", { delay: 10 });
@@ -106,11 +111,10 @@ await chat.locator(".morse-copy").click();
 await sleep(300);
 await C.shot("25-web-new-button.png");
 
-// 26-29. A cluttered news site: live CSS, share card
+// 27-29. A cluttered news site: live CSS, share card
 const news = await open(ctx, SITE.byte);
 const N = helpers(news);
-await N.shot("26-news-before.png");
-await news.keyboard.press(OPEN_KEY);
+await openBar(news);
 await sleep(150);
 await news.mouse.move(640, 300);
 await news.keyboard.type("hide the ads and make the article easier to read", { delay: 10 });
@@ -133,6 +137,9 @@ const pop = await ctx.newPage();
 await pop.setViewportSize({ width: 360, height: 620 });
 await pop.goto(`chrome-extension://${id}/popup.html?url=${encodeURIComponent(SITE.parley)}`);
 await sleep(800);
+// Tall enough for all of it: this site's mods and the model settings.
+await pop.setViewportSize({ width: 360, height: Math.min(1100, await pop.evaluate(() => document.documentElement.scrollHeight)) });
+await sleep(200);
 await pop.screenshot({ path: path.join(OUT, "34-popup.png") });
 console.log("  📸 34-popup.png");
 
@@ -140,25 +147,21 @@ console.log("  📸 34-popup.png");
 const { mods } = await sw.evaluate(() => chrome.storage.local.get("mods"));
 await ctx.close();
 
-// 30-32. Someone else opens the share link in a fresh browser and installs it
+// 30, 32. Someone else opens the share link in a fresh browser and installs it
 const friend = await browserWithMorse("friend");
 const install = await friend.ctx.newPage();
-await install.goto(`http://127.0.0.1:${BASE}/share/install.html`);
+await install.goto(`${SHARE}/share/install.html`);
 await install.evaluate(() => localStorage.setItem("morse:debug", "1")); // open shadow root so the script can click
-await install.goto(link.replace(/^https:\/\/[^/]+\/RRAA/, `http://127.0.0.1:${BASE}`));
+await install.goto(link.replace(/^https:\/\/[^/]+\/RRAA/, SHARE));
 await install.goto("about:blank");
-await install.goto(link.replace(/^https:\/\/[^/]+\/RRAA/, `http://127.0.0.1:${BASE}`));
+await install.goto(link.replace(/^https:\/\/[^/]+\/RRAA/, SHARE));
 await sleep(800);
 await install.screenshot({ path: path.join(OUT, "30-share-link.png") });
 console.log("  📸 30-share-link.png");
 await install.locator("#install").click();
 await install.locator(".card [data-a=install]").waitFor();
-await install.screenshot({ path: path.join(OUT, "30b-confirm-install.png") });
-console.log("  📸 30b-confirm-install.png");
 await install.locator(".card [data-a=install]").click();
 await sleep(800);
-await install.screenshot({ path: path.join(OUT, "31-installed.png") });
-console.log("  📸 31-installed.png");
 const theirs = await friend.ctx.newPage();
 await theirs.goto(SITE.byte);
 await sleep(1200);
@@ -169,7 +172,9 @@ await friend.ctx.close();
 // 33. The .user.js export runs with no Morse at all (Tampermonkey path)
 const plain = await chromium.launch();
 // Userscript managers inject outside the page's CSP; bypassCSP is the equivalent here.
-const pp = await plain.newPage({ viewport: { width: 1280, height: 800 }, bypassCSP: true });
+const pctx = await plain.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, bypassCSP: true });
+await sites.route(pctx);
+const pp = await pctx.newPage();
 await pp.goto(SITE.parley);
 const wc = Object.values(mods).find(m => /word/i.test(m.title));
 await pp.addScriptTag({ content: toUserscript(wc) });
@@ -182,3 +187,6 @@ await plain.close();
 await fs.writeFile(path.join(tmp, "link.txt"), link);
 console.log("share link:", link.slice(0, 90) + "…");
 helper.stop();
+await sites.close();
+await fs.rm(tmp, { recursive: true, force: true }).catch(() => {});
+process.exit(0);

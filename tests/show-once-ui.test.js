@@ -10,6 +10,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { openSite } from "../demo/show-once-page.js";
+import { axeCheck, axeLines } from "../demo/axe.js"; // axe-core on Morse's own UI (tests/a11y-morse.test.js)
 const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 
 let chromium;
@@ -76,6 +77,7 @@ test("Show me once: do it by hand, say “every unread email”, and a button do
   await until(async () => (await status(page)).open);
   assert.equal(await page.locator(".so-strip").isHidden(), true);
   assert.deepEqual(await page.locator(".so-card .so-w").allInnerTexts(), ["Click “Leo Martins”", "Click “Archive”"]);
+  assert.deepEqual(axeLines(await axeCheck(page)), [], "axe-core: the steps in the bar");
   assert.deepEqual((await page.locator(".sugs .sug").allInnerTexts()).map(s => s.replace(/\n/g, "").trim()), ["Add a button", "Add a shortcut…", "Do it to every…"]);
   assert.equal(await page.locator("textarea.in").getAttribute("placeholder"), "What should Morse do with these steps?");
   assert.match((await status(page)).hint, /Say what Morse should do with these steps/);
