@@ -28,7 +28,7 @@ const extra = ["/usr/share/codium/codium", path.join(os.homedir(), "Applications
   ...(process.env.MORSE_SHOT_APPS || "").split(":")].filter(p => p && existsSync(p));
 await fs.writeFile(path.join(home, "desktop.json"), JSON.stringify({ helper: true, apps: [exe, ...extra], appArgs: { tunes: [`--user-data-dir=${profile}`, ...ROOT] } }));
 const claude = !!process.env.PATH.split(":").find(d => existsSync(path.join(d, "claude")));
-await fs.writeFile(path.join(home, "config.json"), JSON.stringify(claude ? { provider: "claude-code", models: { "claude-code": "haiku" } } : { provider: "demo" }), { mode: 0o600 });
+await fs.writeFile(path.join(home, "config.json"), JSON.stringify(claude ? { provider: "claude-code", models: { "claude-code": "sonnet" } } : { provider: "demo" }), { mode: 0o600 });
 await fs.mkdir(path.join(home, "mods"), { recursive: true });
 const mod = (app, url, title, prompt, enabled = true) => ({ ...createMod({ title, prompt, css: "/* … */", url, app }), enabled });
 for (const m of [

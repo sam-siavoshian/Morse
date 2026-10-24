@@ -526,9 +526,12 @@ async function panelStates(theme, width) {
       const art = ui(p, ".list article");
       await art.hover(); await sleep(150);
       await shot(p, "panel", "row-hover", art, { pad: 8 });
-      await ui(p, ".btns [data-a=code]").hover(); await sleep(150);
+      await ui(p, ".btns [data-a=share]").hover(); await sleep(150);
       await shot(p, "panel", "row-button-hover", art, { pad: 8 });
-      await shot(p, "panel", "row-button-focus", art, { pad: 8, checks: [await focusVisible(p, ui(p, ".btns [data-a=code]"))] });
+      await shot(p, "panel", "row-button-focus", art, { pad: 8, checks: [await focusVisible(p, ui(p, ".btns [data-a=share]"))] });
+      await ui(p, ".rmore summary").click(); await sleep(150); // simplify: the row's More
+      await shot(p, "panel", "row-more", art, { pad: 8 });
+      await ui(p, ".rmore summary").click(); await sleep(100);
       await ui(p, "header [data-a=close]").hover(); await sleep(150);
       await shot(p, "panel", "close-hover", ui(p, ".panel header"), { pad: 4 });
       await shot(p, "panel", "close-focus", ui(p, ".panel header"), { pad: 4, checks: [await focusVisible(p, ui(p, "header [data-a=close]"))] });
@@ -587,7 +590,9 @@ async function modalStates(theme, width) {
   p = await open({ theme, width, height: n ? 844 : 720, mods: 12 });
   await p.evaluate(() => { const m = __cat.mods[1]; m.css = Array.from({ length: 30 }, (_, i) => `.player-bar .controls > button:nth-child(${i + 1}) { transition: opacity 120ms ease, transform 120ms ease; transform: translateY(0); } /* a long line that should scroll, not wrap the layout */`).join("\n"); });
   await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel").waitFor(); await sleep(300);
-  await ui(p, "article[data-id=mod2] [data-a=code]").click();
+  await ui(p, "article[data-id=mod2] .rmore summary").click(); // simplify: Show code, then Edit code
+  await ui(p, "article[data-id=mod2] [data-c=show]").click();
+  await ui(p, ".card [data-c=edit]").click();
   await ui(p, ".card").waitFor({ state: "visible" }); await sleep(300);
   await shot(p, "modal", "code-long", ui(p, ".card"));
   await p.keyboard.press("Escape"); await sleep(100);
@@ -923,7 +928,7 @@ async function sheetStates(theme, width) {
   if (!n) {
     await p.keyboard.press("ArrowDown"); await sleep(80);
     await shot(p, "menu", "item-focus", ui(p, ".bmenu"), { pad: 12 });
-    await ui(p, ".bmenu [data-m=mods]").hover(); await sleep(150);
+    await ui(p, ".bmenu [data-m=settings]").hover(); await sleep(150);
     await shot(p, "menu", "item-hover", ui(p, ".bmenu"), { pad: 12 });
   }
   await p.keyboard.press("Escape"); await sleep(100);
@@ -1235,6 +1240,7 @@ async function a11yStates(theme, width) {
   const q = ui(p, ".gm-qbtn");
   // the menu group, then with two tools on
   await q.click(); await sleep(250);
+  await ui(p, ".gm-menu [data-a11y=more]").click(); await sleep(150); // simplify: the group opens from its item
   await ui(p, ".gm-menu .a11y-group").waitFor({ timeout: 3000 }).catch(() => {});
   await shot(p, "a11y", "menu", [ui(p, ".gm-menu"), ui(p, ".gm-menu .a11y-group"), q], { pad: 12 });
   for (const k of ["underline", "readable"]) {
@@ -1372,10 +1378,13 @@ async function controlStates(theme, width) {
     await ui(p, ".ctl-row").hover(); await sleep(150);
     await shot(p, "control", "pause-row-hover", ui(p, ".ctl-strip"), { pad: 4 });
     await shot(p, "control", "pause-row-focus", ui(p, ".ctl-strip"), { pad: 4, checks: [await focusVisible(p, ui(p, "[data-c=pause-site]"))] });
+    await ui(p, ".pmore summary").click(); await sleep(150); // simplify: backup is under the panel's More
     await ui(p, "[data-c=export]").hover(); await sleep(150);
     await shot(p, "control", "backup-hover", ui(p, ".ctl-backup:not(.pk-bar)"), { pad: 4 });
-    await shot(p, "control", "backup-focus", ui(p, ".ctl-backup:not(.pk-bar)"), { pad: 4, checks: [await focusVisible(p, ui(p, "[data-c=import-file]"))] });
-    await shot(p, "control", "origin-show-code", ui(p, ".list article").first(), { pad: 8, checks: [await focusVisible(p, ui(p, "[data-c=show]"))] });
+    await shot(p, "control", "backup-focus", ui(p, ".ctl-backup:not(.pk-bar)"), { pad: 4, checks: [await focusVisible(p, ui(p, "[data-c=export]"))] });
+    await ui(p, ".pmore summary").click(); await sleep(100);
+    await ui(p, ".list article .rmore summary").first().click(); await sleep(150);
+    await shot(p, "control", "origin-show-code", ui(p, ".list article").first(), { pad: 8, checks: [await focusVisible(p, ui(p, "[data-c=show]").first())] });
   }
   // pause this site: the row turns on, every mod shows "not running", a toast
   await ui(p, ".ctl-row .sw").click(); await sleep(400); await p.mouse.move(2, 2);
@@ -1384,7 +1393,8 @@ async function controlStates(theme, width) {
   if (!n) await shot(p, "control", "toast-action-focus", ui(p, ".ctl-toast"), { pad: 16, checks: [await focusVisible(p, ui(p, ".ctl-toast [data-i='0']"))] });
   await ui(p, ".ctl-row .sw").click(); await sleep(300);
   // Show code (what it does, then the code)
-  await ui(p, "[data-c=show]").click(); await ui(p, ".card").waitFor({ state: "visible" }); await sleep(300); await blur(p);
+  if (await ui(p, "[data-c=show]").first().isHidden()) await ui(p, ".list article .rmore summary").first().click();
+  await ui(p, "[data-c=show]").first().click(); await ui(p, ".card").waitFor({ state: "visible" }); await sleep(300); await blur(p);
   await shot(p, "control", "show-code", ui(p, ".card"));
   await p.keyboard.press("Escape"); await sleep(150);
   // install review: one mod from a link, then a backup with three
@@ -2341,7 +2351,8 @@ async function packStates(theme, width) {
     await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel").waitFor(); await sleep(400); await p.mouse.move(2, 2);
   };
   await openPanel();
-  await shot(p, "packs", "panel-make", [ui(p, ".pk-bar"), ui(p, ".panel footer")], { pad: 4, note: "Packs · Make a pack… sits with the backup buttons at the foot of the panel" });
+  await ui(p, ".pmore summary").click(); await sleep(150); // simplify: under the panel's More
+  await shot(p, "packs", "panel-make", [ui(p, ".pk-bar"), ui(p, ".panel footer")], { pad: 4, note: "Packs · Make a pack… sits with the backup buttons under More, at the foot of the panel" });
   if (!n) await shot(p, "packs", "panel-make-focus", ui(p, ".pk-bar"), { pad: 8, checks: [await focusVisible(p, ui(p, "[data-pk=make]"))] });
   // choosing mods
   await ui(p, "[data-pk=make]").click(); await sleep(300); await blur(p);

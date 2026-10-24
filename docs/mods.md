@@ -12,11 +12,12 @@ the mods for the site or app you're on. For each one you can:
 - turn it on or off with its switch
 - **Change** it: the bar opens on it, so you can describe what to change
 - bring back an older version from **History** (the last 20 are kept)
-- **Share** it, **Copy link**, **Edit code**, or delete it
+- **Share** it
+- under **More**: **Copy link**, **Show code** (with **Edit code** inside it), or **Delete**
 
 Each mod also says where it came from: made here (and with which model), your
 own edits, installed from a shared link (and from whom), or restored from a
-backup. **Show code** next to it shows its code.
+backup.
 
 With more than six mods, a search box appears. From the keyboard: **↑** and
 **↓** move, **Space** turns a mod on or off, **Enter** changes it.

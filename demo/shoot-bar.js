@@ -73,7 +73,10 @@ await scene("62-hotkey-recorder.png", "", async p => {
   await p.keyboard.press("Meta+Comma");
   await p.mouse.move(640, 500);
   await p.waitForTimeout(200);
-  await p.keyboard.press("Tab"); // Open Morse -> Push to talk
+  // Push to talk is under More settings (docs/dev/simplify.md)
+  await p.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector("[data-act=more]").click());
+  await p.waitForTimeout(150);
+  await p.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector("[data-hk=talk]").focus());
   await p.keyboard.press("Enter");
   await p.waitForTimeout(150);
   await p.keyboard.press("Meta+KeyQ");

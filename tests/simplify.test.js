@@ -9,7 +9,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { serveBar } from "./helpers/demo-server.js";
 import { pressOpen } from "./helpers/keys.js";
-import { noBrowser, launchBrowser } from "./helpers/browser.js";
+import { noBrowser, noDisplay, launchBrowser, chromium } from "./helpers/browser.js";
 import { waitForStatus, waitForReady, TIMEOUT } from "./helpers/wait.js";
 import { home, tempDir } from "./helpers/home.js";
 import { writeFileSync, readdirSync, readFileSync } from "node:fs";
@@ -200,4 +200,38 @@ test("a config file Morse can't read: commands say so, and a change keeps a copy
   assert.equal(readFileSync(path.join(h, copies[0]), "utf8"), "{ this is not json");
   assert.match(c.stderr, /copy/, c.stderr);
   assert.doesNotMatch(run(["model"]).stderr, /can't read/, "fine once it was written again");
+});
+
+test("toolbar popup: a model that works is one line that opens to all of it; no model, it is open", { skip: noDisplay }, async () => {
+  const EXT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../dist/extension");
+  const ctx = await chromium.launchPersistentContext(tempDir("morse-simplify-popup-"), {
+    headless: false, timeout: TIMEOUT * 2, args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
+  });
+  try {
+    const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker", { timeout: TIMEOUT });
+    const id = new URL(sw.url()).host;
+    const popup = async () => {
+      const p = await ctx.newPage();
+      await p.goto(`chrome-extension://${id}/popup.html?url=${encodeURIComponent("https://example.com/")}`);
+      await p.locator("#modelsum").waitFor({ state: "attached" });
+      await p.waitForTimeout(300);
+      return p;
+    };
+    // A fresh install has no model: the Model box is open, with the ways to connect one.
+    let p = await popup();
+    assert.equal(await p.locator("#modelbox").evaluate(d => d.open), true);
+    assert.equal(await p.locator("#modelsum").textContent(), "");
+    await p.close();
+    // An Anthropic key: one line, "Model · …", that opens to every control.
+    await sw.evaluate(() => chrome.storage.local.set({ model: { backend: "anthropic", anthropicKey: "sk-ant-test-0000000000" } }));
+    p = await popup();
+    assert.equal(await p.locator("#modelbox").evaluate(d => d.open), false);
+    assert.match(await p.locator("#modelbox > summary").innerText(), /Model\s+·\s+\S/i);
+    assert.equal(await p.locator("#test").isVisible(), false);
+    await p.locator("#modelbox > summary").focus();
+    await p.keyboard.press("Enter");
+    await p.locator("#test").waitFor();
+    assert.equal(await p.locator("#modelbox").evaluate(d => d.open), true, "opens from the keyboard");
+    await p.close();
+  } finally { await ctx.close(); }
 });

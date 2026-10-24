@@ -78,8 +78,8 @@ website or reads what you type, and shows its code. See
 
 At the bottom of the Mods panel:
 
-- **Export all mods** saves every mod to one file.
-- **Install from a file…** brings them back, on this computer or another one.
+- **More → Export all mods** saves every mod to one file.
+- **Install a mod… → Install from a file…** brings them back, on this computer or another one.
 
 In a terminal: `morse export --all` (add `--out <file>` to choose where) and
 `morse install <backup file>`.

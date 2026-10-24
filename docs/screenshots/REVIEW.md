@@ -18,8 +18,8 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 07-share.png | shoot-desktop.js | ✅ | Share card, link and downloads; the app is named "tunes" |
 | 08-the-new-feature-works.png | shoot-desktop.js | ✅ | The sleep timer counting down |
 | 09-css-applies-while-it-writes.png | shoot-desktop.js | ✅ | Bigger covers showing while the change is written |
-| 11-mods-panel.png | shoot-desktop.js | ✅ | Two mods, Change / Copy link / Share / Edit code |
-| 12-edit-the-code.png | shoot-desktop.js | ✅ | Code boxes now have dark scrollbars (runtime fix in 99-css.js) |
+| 11-mods-panel.png | shoot-desktop.js | ✅ | Two mods, Change / Share / More; Install a mod… and More at the foot (simplify) |
+| 12-edit-the-code.png | shoot-desktop.js | ✅ | Opened from More → Show code → Edit code; dark scrollbars |
 | 14-share-card.png | shoot-desktop.js | ✅ | Was made by no script; now saved from the share dialog |
 | 20-extension-installed.png | shoot-extension.js | ✅ | Chrome's details page, "Allow User Scripts" on |
 | 21-web-point.png | shoot-extension.js | ✅ | |
@@ -32,7 +32,7 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 30-share-link.png | shoot-extension.js | ✅ | The share page in a second browser |
 | 32-friend-gets-the-mod.png | shoot-extension.js | ✅ | |
 | 33-userscript-runs-without-morse.png | shoot-extension.js | ✅ | |
-| 34-popup.png | shoot-extension.js | ✅ | Whole popup: this site's mods and the Morse helper |
+| 34-popup.png | shoot-extension.js | ✅ | Whole popup: this site's mods; a working model is one line, “Model · demo replay” (simplify) |
 | 40-refine.png | shoot-iterate.js | ✅ | A follow-up under the result, "needed a second try" (name kept: docs link it) |
 | 41-history.png | shoot-iterate.js | ✅ | Three versions |
 | 42-fix-it.png | shoot-iterate.js | ✅ | "Not working" with Fix it |
@@ -44,8 +44,8 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 55-capture.png | shoot-godmode.js | ✅ | |
 | 56-reuse.png | shoot-godmode.js | ✅ | |
 | 60-voice.png | shoot-bar.js | ✅ | |
-| 61-settings.png | shoot-bar.js | ✅ | Your style, Shortcuts, Voice, Appearance; the rest scrolls |
-| 62-hotkey-recorder.png | shoot-bar.js | ✅ | "⌘Q quits the app. Pick another." |
+| 61-settings.png | shoot-bar.js | ✅ | Your style, Open Morse, Theme, Language, Fix automatically, then More settings; nothing scrolls (simplify) |
+| 62-hotkey-recorder.png | shoot-bar.js | ✅ | "⌘Q quits the app. Pick another.", Push to talk under More settings |
 | 63-suggestions.png | shoot-bar.js | ✅ | |
 | 64-shortcuts.png | shoot-bar.js | ✅ | |
 | 65-cancelled.png | shoot-bar.js | ✅ | "Stopped. Nothing was changed" |
@@ -64,7 +64,7 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 96-install-summary.png | shoot-control.js | ✅ | |
 | 97-pause-site.png | shoot-control.js | ✅ | A model connected, so no "connect a model" note |
 | 98-popup-pause.png | shoot-control.js | ✅ | Ends where "Model" starts |
-| 100-easier-to-use.png | shoot-a11y.js | ✅ | |
+| 100-easier-to-use.png | shoot-a11y.js | ✅ | Opened from its one item in Page tools, which shows a tick when a tool is on (simplify) |
 | 101-read-aloud.png | shoot-a11y.js | ✅ | |
 | 102-check-page.png | shoot-a11y.js | ✅ | |
 | 103-before-after-contrast.png | shoot-a11y.js | ✅ | |
@@ -100,11 +100,11 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | claude-code/01 … 14 | shoot-desktop.js with `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code` | ✅ | Whole run with real Claude Code. 14-share-card.png is new. Taken before the last merge from main, so the Mods panel (11) has no Packs row yet; a rerun after it was worse (haiku answered in 5 s, so 04 caught the finished change) and wasn't kept |
 | 167-desktop-app-apps.png | shoot-desktop-app.js | ✅ | Morse Desktop: this machine's apps, Tunes really connected (2 windows) |
 | 168-desktop-app-restart.png | shoot-desktop-app.js | ✅ | “Tunes is open. Restart it with Morse?”, with Always restart |
-| 169-desktop-app-model.png | shoot-desktop-app.js | ✅ | Real Claude Code (haiku) answered the check; the three choices |
+| 169-desktop-app-model.png | shoot-desktop-app.js | ✅ | Real Claude Code (sonnet) answered the check; the three choices; four sections now |
 | 170-desktop-app-chrome.png | shoot-desktop-app.js | ✅ | The Morse helper on, the three ways to connect Chrome, a code |
 | 171-desktop-app-allow-chrome.png | shoot-desktop-app.js | ✅ | “Allow Chrome to use your Claude Code · haiku?”: the real helper (onboarding v2, daemon/bridge.js /v1/pair/ask) asking, for a request made the way the extension makes it |
 | 172-desktop-app-mods.png | shoot-desktop-app.js | ✅ | Mods per app with switches; one turned off |
-| 173-desktop-app-checks.png | shoot-desktop-app.js | ✅ | The checks, with the model answering for real; “You're root” is this test machine |
+| 173-desktop-app-checks.png | shoot-desktop-app.js | ✅ | The checks, a card under Model now (simplify), with the model answering for real; “You're root” is this test machine |
 | 174-desktop-app-light.png | shoot-desktop-app.js | ✅ | Light mode; Tunes open and ready to connect |
 | 175-desktop-app-first-run.png | shoot-desktop-app.js | ✅ | The first run: Claude Code found and checked for real, the apps to open |
 

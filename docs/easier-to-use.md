@@ -1,8 +1,9 @@
 # Easier to use
 
 Some apps are hard to read, hard to click, or never stop moving. Page tools
-have an **Easier to use** group that changes that for the site or app you're
-on, at once and with no model.
+have an **Easier to use** item that opens a group of tools beside the menu
+(click it, or press →) and changes that for the site or app you're on, at
+once and with no model.
 
 Each one is a small mod Morse makes itself. It stays on for that site.
 Clicking it again turns it off and puts the page back exactly as it was.
