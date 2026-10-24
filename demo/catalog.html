@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morse UI catalog host</title>
+<style>
+  /* A plain fake app with targets of every shape: a wide toolbar, a tall
+     sidebar, a square card, a tiny button, an element flush with the top edge
+     and one flush with the right edge. ?theme=light for a light app. */
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; font: 15px/1.5 system-ui, sans-serif; background: #0e0e10; color: #e7e7ea; }
+  body.light { background: #f6f6f7; color: #1a1a1d; }
+  .app { display: grid; grid-template-columns: 200px 1fr; min-height: 100vh; }
+  #sidebar { padding: 56px 12px 12px; border-right: 1px solid color-mix(in srgb, currentColor 12%, transparent); display: flex; flex-direction: column; gap: 4px; }
+  #sidebar a { color: inherit; opacity: .75; text-decoration: none; padding: 6px 10px; border-radius: 6px; }
+  #topEdge { position: fixed; top: 0; left: 0; right: 0; height: 40px; display: flex; align-items: center; padding: 0 16px; font-weight: 600;
+    background: color-mix(in srgb, currentColor 6%, transparent); z-index: 1; }
+  #rightEdge { position: fixed; top: 8px; right: 0; padding: 4px 10px; font-size: 12px; border-radius: 6px 0 0 6px; background: color-mix(in srgb, currentColor 14%, transparent); z-index: 2; }
+  main { padding: 64px 32px 32px; display: grid; gap: 24px; align-content: start; }
+  #toolbar { display: flex; gap: 12px; align-items: center; padding: 10px 16px; border-radius: 12px; background: color-mix(in srgb, currentColor 6%, transparent); }
+  #toolbar button { background: none; border: 0; color: inherit; font: inherit; opacity: .8; padding: 4px 6px; }
+  .row { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  #card { width: 240px; height: 240px; padding: 20px; border-radius: 14px; background: color-mix(in srgb, currentColor 5%, transparent); }
+  #big { flex: 1; min-width: 260px; height: 240px; padding: 20px; border-radius: 14px; background: color-mix(in srgb, currentColor 5%, transparent); }
+  #long { padding: 8px 12px; border-radius: 8px; border: 1px solid color-mix(in srgb, currentColor 20%, transparent); background: none; color: inherit; font: inherit; }
+  @media (max-width: 600px) {
+    .app { grid-template-columns: 1fr; }
+    #sidebar { display: none; }
+    main { padding: 56px 16px 16px; }
+    #card { width: 160px; height: 160px; }
+  }
+</style>
+</head>
+<body>
+<div id="topEdge">Header flush with the top edge</div>
+<span id="rightEdge">Right edge label</span>
+<div class="app">
+  <nav id="sidebar" aria-label="Library"><a href="#">Home</a><a href="#">Search</a><a href="#">Your library</a><a href="#">Liked songs</a><a href="#">Podcasts</a><a href="#">Settings</a></nav>
+  <main>
+    <div id="toolbar" aria-label="Player toolbar"><button id="small" aria-label="Shuffle">⤮</button><button aria-label="Previous">⏮</button><button aria-label="Play">▶</button><button aria-label="Next">⏭</button><span style="flex:1"></span><button>Settings</button></div>
+    <div class="row">
+      <div id="card"><h3 style="margin:0 0 8px">Release notes</h3><p style="margin:0;opacity:.7">Pointing at things and describing what you want is the whole interface.</p></div>
+      <div id="big"><h3 style="margin:0 0 8px">Now playing</h3><p style="margin:0;opacity:.7">A large target: the hover label sits on its top-left corner.</p></div>
+    </div>
+    <div><button id="long" aria-label="Open the notification and privacy settings for this workspace and all of its channels">Settings…</button></div>
+  </main>
+</div>
+<script>
+  if (/[?&]theme=light/.test(location.search)) document.body.classList.add("light");
+</script>
+<script src="/demo/catalog-host.js"></script>
+<script src="/dist/extension/runtime.js"></script>
+</body>
+</html>
