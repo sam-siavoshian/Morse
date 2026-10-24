@@ -77,6 +77,7 @@ export function pagePathShape(url) {
 // transient: selectors whose every match sits inside a dialog, menu or pop-up.
 // null when nothing the mod relies on is on the page now.
 export function makeFingerprint(mod, counts, { url = "", size = 0, at = new Date().toISOString(), transient = [] } = {}) {
+  if (mod?.kind === "style") return null; // your-style hook: Your style is generic; a site without links or videos is no sign it broke
   const skip = new Set(transient);
   const sels = selectorsIn(mod)
     .filter(s => s.length <= 200 && !skip.has(s) && Number(counts?.[s]) > 0)

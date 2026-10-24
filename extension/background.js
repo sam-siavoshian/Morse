@@ -19,6 +19,7 @@ import { CONTROL_REQUESTS, handleControlRequest } from "./control-host.js"; // u
 import { serialized } from "./bar-host.js"; // hardening: one queue for every storage read-modify-write
 import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver, practiceSample, SAMPLE_ONLY, openSetup } from "./onboarding-host.js"; // onboarding hook: welcome page, first-run state, practice area
 import { GALLERY_REQUESTS, handleGallery } from "./gallery-host.js"; // gallery hook: Mods for this site
+import { Style } from "./style-host.js"; // your-style hook: one style on every site
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
@@ -152,6 +153,7 @@ async function dispatch(msg, port) {
   if (CONTROL_REQUESTS.has(msg.type)) return handleControlRequest({ ...msg, url: here.url }, port); // user control (control-host.js)
   if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { practice: Practice.has(tab.id) }); // onboarding hook
   if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, here.url); // gallery hook: Mods for this site
+  if (Style.owns(msg)) return Style.handle(msg, here); // your-style hook
   switch (msg.type) {
     case "hello": {
       const b = await backend();
@@ -163,7 +165,7 @@ async function dispatch(msg, port) {
         settings: await getPrefs(), voice: await voiceInfo() };
     }
     case "mods.list":
-      return Object.values(await allMods()).filter(m => modMatches(m, here)).sort(byCreated); // hardening: caller's page
+      return Style.list(Object.values(await allMods()).filter(m => modMatches(m, here)).sort(byCreated), here); // hardening: caller's page; your-style hook: the style first
     case "mods.save": {
       // As on the desktop (daemon/connector.js): a page's Morse changes only
       // mods for its own page, and can't widen where one runs.
