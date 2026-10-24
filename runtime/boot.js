@@ -50,9 +50,15 @@ const regs = [];
 const capture = o => !!(o === true || (o && o.capture));
 function on(target, type, fn, opts) {
   if (regs.some(r => r.target === target && r.type === type && r.fn === fn && r.cap === capture(opts))) return;
-  const wrapped = function (e) { try { return apply(fn, this, [e]); } catch (err) { warn(err); } };
-  regs.push({ target, type, fn, wrapped, opts, cap: capture(opts) });
-  pristine.addEventListener(target, type, wrapped, opts);
+  const reg = { target, type, fn, opts, cap: capture(opts) };
+  const forget = () => { const i = regs.indexOf(reg); if (i >= 0) regs.splice(i, 1); };
+  reg.wrapped = function (e) {
+    if (opts && opts.once) forget();
+    try { return apply(fn, this, [e]); } catch (err) { warn(err); }
+  };
+  if (opts && opts.signal) { if (opts.signal.aborted) return; pristine.addEventListener(opts.signal, "abort", forget, { once: true }); }
+  regs.push(reg);
+  pristine.addEventListener(target, type, reg.wrapped, opts);
 }
 function off(target, type, fn, opts) {
   const i = regs.findIndex(r => r.target === target && r.type === type && r.fn === fn && r.cap === capture(opts));

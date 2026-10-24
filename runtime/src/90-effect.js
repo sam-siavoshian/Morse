@@ -12,13 +12,14 @@ const MORSE_CODE = {
 // Frame budget: ~2ms on a 4K target. Per-cell geometry is computed once per
 // layout, the number of drawn cells is capped (a huge target gets bigger
 // pixels, not 130,000 of them), and a frame is one pass that sorts cells into
-// color x alpha buckets, then one fill per bucket: a few dozen draw calls
-// instead of one per cell. The rAF loop only runs while the effect is on
-// screen, and a hidden tab ends it at once.
+// color x alpha buckets, then one fill of plain rects per bucket plus one
+// pattern fill that rounds every corner: a few dozen draw calls instead of
+// one per cell. The rAF loop only runs while the effect is on screen, and a
+// hidden tab ends it at once.
 const Effect = (() => {
   const g = fx.getContext("2d");
   const BASE = 8, GAP = 2, MAX_CELLS = 6000, MAX_PX = 2.1e6, LEVELS = 16, BAND = 2;
-  let CELL = BASE, SQ = BASE - GAP, RAD = 1.5;
+  let CELL = BASE, SQ = BASE - GAP, OFF = GAP / 2, RAD = 1.5, mask = null, maskKey = "";
   let target = null, running = false, mode = "thinking", rect = null, cols = 0, rows = 0;
   let t0 = 0, end0 = 0, endResolve = null, ok = true, frame = 0, pal = null, blips = [];
   // Per-cell constants, rebuilt when the grid changes, and the cells drawn at
@@ -54,13 +55,32 @@ const Effect = (() => {
     Object.assign(fx.style, { left: rect.x + "px", top: rect.y + "px", width: rect.w + "px", height: rect.h + "px", display: "block", imageRendering: k > 1 ? "pixelated" : "" });
     g.setTransform(scale, 0, 0, scale, 0, 0);
     const n = drawnCells(rect.w, rect.h, BASE);
-    const cell = n > MAX_CELLS ? Math.ceil(BASE * Math.sqrt(n / MAX_CELLS)) : BASE;
+    // Snapped to whole canvas pixels, so the corner mask below tiles exactly.
+    const cell = Math.max(2, Math.round((n > MAX_CELLS ? BASE * Math.sqrt(n / MAX_CELLS) : BASE) * scale)) / scale;
     const nc = Math.ceil(rect.w / cell), nrw = Math.ceil(rect.h / cell);
     if (nc !== cols || nrw !== rows || cell !== CELL) {
-      CELL = cell; SQ = cell - GAP * cell / BASE; RAD = 1.5 * cell / BASE;
+      CELL = cell; SQ = cell - GAP * cell / BASE; OFF = GAP / 2 * cell / BASE; RAD = 1.5 * cell / BASE;
       cols = nc; rows = nrw;
       grid();
     }
+    cornerMask(scale);
+  }
+  // Rounded pixels without rounded paths: cells are drawn as plain rects (a
+  // fraction of the cost), then one fill of a one-cell pattern cuts every
+  // cell's corners at once.
+  function cornerMask(scale) {
+    const px = Math.round(CELL * scale), key = `${px}:${scale}`;
+    if (key === maskKey) return;
+    maskKey = key; mask = null;
+    if (RAD * scale < 0.75) return; // too small to see
+    const tile = document.createElement("canvas");
+    tile.width = tile.height = px;
+    const c = tile.getContext("2d");
+    if (!c || !c.roundRect) return;
+    c.scale(scale, scale);
+    c.beginPath(); c.rect(OFF, OFF, SQ, SQ); c.roundRect(OFF, OFF, SQ, SQ, RAD); c.fill("evenodd");
+    mask = g.createPattern(tile, "repeat");
+    mask.setTransform(new DOMMatrix([1 / scale, 0, 0, 1 / scale, 0, 0]));
   }
   function grid() {
     const N = cols * rows, cx = cols / 2, cy = rows / 2;
@@ -143,11 +163,6 @@ const Effect = (() => {
     g.clearRect(0, 0, rect.w, rect.h);
     const end = mode === "end", endP = end ? Math.min(1, (now - end0) / 650) : 0;
     const maxR = Math.SQRT2, tol = 1.1 / Math.max(2, Math.min(cols / 2, rows / 2));
-    if (target) {
-      g.globalAlpha = end ? 1 - endP : 1;
-      g.fillStyle = pal.scrim;
-      g.beginPath(); g.roundRect ? g.roundRect(0, 0, rect.w, rect.h, 10) : g.rect(0, 0, rect.w, rect.h); g.fill();
-    }
     const ping = ringRadius(now), pingFade = 1 - ping / maxR;
     // Morse blips light cells; collect them per frame.
     let lit = null;
@@ -205,13 +220,29 @@ const Effect = (() => {
       g.globalAlpha = (b % LEVELS) / (LEVELS - 1);
       g.fillStyle = pal[COLORS[(b / LEVELS) | 0]];
       g.beginPath();
-      for (const i of list) {
-        const x = (i % cols) * CELL + 1, y = ((i / cols) | 0) * CELL + 1;
-        g.roundRect ? g.roundRect(x, y, SQ, SQ, RAD) : g.rect(x, y, SQ, SQ);
-      }
+      for (const i of list) g.rect((i % cols) * CELL + OFF, ((i / cols) | 0) * CELL + OFF, SQ, SQ);
       g.fill();
     }
     g.globalAlpha = 1;
+    if (mask) {
+      g.globalCompositeOperation = "destination-out";
+      g.fillStyle = mask;
+      if (target) g.fillRect(0, 0, rect.w, rect.h);
+      else {
+        const bw = BAND * CELL;
+        g.fillRect(0, 0, rect.w, bw); g.fillRect(0, (rows - BAND) * CELL, rect.w, bw);
+        g.fillRect(0, 0, bw, rect.h); g.fillRect((cols - BAND) * CELL, 0, bw, rect.h);
+      }
+    }
+    if (target) {
+      // the scrim goes behind the cells
+      g.globalCompositeOperation = "destination-over";
+      g.globalAlpha = end ? 1 - endP : 1;
+      g.fillStyle = pal.scrim;
+      g.beginPath(); g.roundRect ? g.roundRect(0, 0, rect.w, rect.h, 10) : g.rect(0, 0, rect.w, rect.h); g.fill();
+      g.globalAlpha = 1;
+    }
+    g.globalCompositeOperation = "source-over";
     if (end && endP >= 1) {
       stop();
       if (target && ok) pulse(target);
