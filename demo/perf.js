@@ -3,7 +3,8 @@
 //
 //   node demo/perf.js                  # measure, print, write the report
 //   node demo/perf.js --label before   # save as the baseline the report compares against
-//   node demo/perf.js --runs 5 --only boot,mods
+//   node demo/perf.js --runs 5 --only boot,mods   # re-measure some sections, keep the rest
+//   node demo/perf.js --label after --report      # rewrite the report from saved JSON
 //
 // Sections: payload (bytes, compile), boot (per site: what Morse creates and
 // costs before anyone opens it), idle (what still runs), open (hotkey to bar),
@@ -21,6 +22,14 @@ const LABEL = arg("--label", "current");
 const RUNS = Number(arg("--runs", 3));
 const ONLY = new Set(String(arg("--only", "payload,boot,open,mods,spa,effect,extension")).split(","));
 const OUT = path.join(ROOT, "docs", "perf");
+// --report: rebuild report.md from docs/perf/<label>.json and before.json, no measuring.
+if (argv.includes("--report")) {
+  const read = async f => JSON.parse(await fs.readFile(path.join(OUT, f), "utf8"));
+  const md = report(await read(`${LABEL}.json`), await read("before.json").catch(() => null));
+  await fs.writeFile(path.join(OUT, "report.md"), md);
+  console.log(md);
+  process.exit(0);
+}
 if (!chromium) { console.error("playwright is not installed"); process.exit(1); }
 
 const srv = await serve();
@@ -207,13 +216,20 @@ async function effect() {
       await sleep(300); // past the first frame, which builds the grid
       // ThreadTime is the main thread's CPU time: it holds up on a loaded machine where wall time doesn't.
       const cpu0 = (await metrics(t.cdp)).ThreadTime;
+      // A sampling profile gives the effect's own cost (its draw() and the canvas
+      // calls it makes), apart from everything else the machine is doing.
+      await t.cdp.send("Profiler.enable");
+      await t.cdp.send("Profiler.setSamplingInterval", { interval: 200 });
       await t.page.evaluate(() => { window.__perf.reset(); window.__perf.countFrames(true); });
+      await t.cdp.send("Profiler.start");
       await sleep(1500);
+      const { profile } = await t.cdp.send("Profiler.stop");
       const s = await t.page.evaluate(() => { window.__perf.countFrames(false); return window.__perf.snap(); });
       const cpu1 = (await metrics(t.cdp)).ThreadTime;
+      const fxMs = profileMs(profile, /^(draw|fill|fillRect|rect|roundRect|arcTo|clearRect|createPattern)$/);
       const valid = await fxOn(t.page), f = Math.max(1, s.frames);
       runs.push({ valid, frames: s.frames, rafCallbacks: s.calls.raf || 0, msPerFrame: (s.ms.raf || 0) / f, maxFrameMs: s.max.raf || 0,
-        cpuMsPerFrame: ((cpu1 - cpu0) * 1000) / f, drawCallsPerFrame: Math.round(s.canvas.fills / f), shapesPerFrame: Math.round(s.canvas.shapes / f), errors: t.errors });
+        cpuMsPerFrame: ((cpu1 - cpu0) * 1000) / f, effectMsPerFrame: fxMs / f, drawCallsPerFrame: Math.round(s.canvas.fills / f), shapesPerFrame: Math.round(s.canvas.shapes / f), errors: t.errors });
       if (!idle) {
         end = Date.now() + 30000;
         while (Date.now() < end && (await working(t.page))) await sleep(50);
@@ -234,10 +250,19 @@ async function effect() {
     const ok = runs.filter(r => r.valid);
     const m = k => r2(median(ok.map(r => r[k])));
     out[name] = { validRuns: ok.length, frames: m("frames"), rafCallbacks: m("rafCallbacks"), msPerFrame: m("msPerFrame"), minMsPerFrame: r2(Math.min(...ok.map(r => r.msPerFrame))), maxFrameMs: m("maxFrameMs"),
-      cpuMsPerFrame: m("cpuMsPerFrame"), drawCallsPerFrame: m("drawCallsPerFrame"), shapesPerFrame: m("shapesPerFrame"), ...idle, errors: runs.flatMap(r => r.errors) };
+      cpuMsPerFrame: m("cpuMsPerFrame"), effectMsPerFrame: m("effectMsPerFrame"), drawCallsPerFrame: m("drawCallsPerFrame"), shapesPerFrame: m("shapesPerFrame"), ...idle, errors: runs.flatMap(r => r.errors) };
     log(`  effect ${name}: ${JSON.stringify(out[name])}`);
   }
   return out;
+}
+
+// Self time of the functions whose names match, from a CDP CPU profile (ms).
+function profileMs(profile, re) {
+  const byId = new Map(profile.nodes.map(n => [n.id, n]));
+  const per = (profile.endTime - profile.startTime) / 1000 / Math.max(1, profile.samples.length);
+  let ms = 0;
+  for (const id of profile.samples) if (re.test(byId.get(id)?.callFrame.functionName || "")) ms += per;
+  return ms;
 }
 
 // ---------------------------------------------------------------- extension
@@ -336,7 +361,7 @@ function report(now, was) {
     for (const [label, k] of keys) rows.push([label, ...sites.map(s => cell(v(now.boot, s, k), v(was, "boot", s, k)))]);
     L.push(table(["", ...sites], rows), "");
   }
-  if (now.open) L.push("## Opening Morse", "", table(["", "value"], [["Hotkey to bar visible, 10k-node page (ms)", cell(now.open.hotkeyToBarMs, was?.open?.hotkeyToBarMs)]]), "");
+  if (now.open) L.push("## Opening Morse", "", "The price of a free boot: the first open on a page fetches and builds the UI (~230 KB) from the host. Later opens are instant, as before.", "", table(["", "value"], [["Hotkey to bar visible, 10k-node page (ms)", cell(now.open.hotkeyToBarMs, was?.open?.hotkeyToBarMs)]]), "");
   if (now.mods && !now.mods.error) {
     L.push("## Mods at scale: 30 `morse.watch` mods on a chat app streaming a reply", "", "A token every 30 ms and a new message every 300 ms for 4 s, 300 messages already on screen.", "");
     const k = [["All 30 mods applied (ms after navigation)", "allAppliedMs"], ["MutationObservers", "observers"], ["Subtree observe() calls", "subtreeObserves"], ["Observer callbacks", "moCallbacks"], ["rAF callbacks", "rafCallbacks"],
@@ -349,14 +374,14 @@ function report(now, was) {
   }
   if (now.effect && !now.effect.error) {
     const names = Object.keys(now.effect);
-    const k = [["Frames drawn in 1.5 s", "frames"], ["Canvas draw calls per frame", "drawCallsPerFrame"], ["Shapes per frame", "shapesPerFrame"], ["Morse rAF ms per frame (median run)", "msPerFrame"], ["… best run", "minMsPerFrame"], ["Slowest frame (ms)", "maxFrameMs"],
+    const k = [["Frames drawn in 1.5 s", "frames"], ["Canvas draw calls per frame", "drawCallsPerFrame"], ["Shapes per frame", "shapesPerFrame"], ["Effect JS + canvas calls per frame (CPU profile, ms)", "effectMsPerFrame"], ["Morse rAF ms per frame, wall clock (median run)", "msPerFrame"], ["… best run", "minMsPerFrame"], ["Slowest frame (ms)", "maxFrameMs"],
       ["Main-thread CPU ms per frame (all work)", "cpuMsPerFrame"], ["rAF callbacks/s with the result showing", "rafPerSecIdleOpen"], ["Callbacks/s after closing", "callbacksPerSecIdleClosed"]];
-    L.push("## Working effect", "", "Wall-clock frame times depend on how loaded the machine is (headless, software raster); draw calls are exact and CPU time per frame is the steadier timing.", "", table(["", ...names], k.map(([l, key]) => [l, ...names.map(n => cell(v(now.effect, n, key), v(was, "effect", n, key)))])), "");
+    L.push("## Working effect", "", "Wall-clock frame times depend on how loaded the machine is (headless, software raster, the desktop host's clip recorder encoding frames); draw calls are exact, and the CPU profile isolates the effect's own work. Baseline target cells are from runs where the old effect stayed on screen for the whole sample.", "", table(["", ...names], k.map(([l, key]) => [l, ...names.map(n => cell(v(now.effect, n, key), v(was, "effect", n, key)))])), "");
   }
   if (now.extension && !now.extension.error && !now.extension.skipped) {
     const sites = Object.keys(now.extension);
     const k = [["DOM nodes added", "nodes"], ["Event listeners added", "jsListeners"], ["Main-thread script (ms)", "scriptMs"], ["Extra layouts", "layouts"], ["JS heap (KB)", "heapKB"], ["First mod CSS applied (ms)", "firstCssMs"], ["Overlay mounted", "uiMountedAtBoot"]];
-    L.push("## Extension (content script, isolated world)", "", table(["", ...sites], k.map(([l, key]) => [l, ...sites.map(s => cell(v(now.extension, s, key), v(was, "extension", s, key)))])), "");
+    L.push("## Extension (content script, isolated world)", "", "Parley has a strict CSP and this run doesn't turn on Allow User Scripts, so the mod's JS is refused and Morse loads its UI to show that error, as it should; the other sites never load it.", "", table(["", ...sites], k.map(([l, key]) => [l, ...sites.map(s => cell(v(now.extension, s, key), v(was, "extension", s, key)))])), "");
   }
   return L.join("\n");
 }
