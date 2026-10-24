@@ -135,7 +135,7 @@ async function iconFor(a) {
 // ---------------------------------------------------------------- the window
 function createWindow() {
   win = new BrowserWindow({
-    width: 940, height: 660, minWidth: 760, minHeight: 520, show: false,
+    width: 960, height: 720, minWidth: 760, minHeight: 560, show: false,
     title: "Morse", icon: MAC ? undefined : appIcon(),
     backgroundColor: nativeTheme.shouldUseDarkColors ? "#0b0b0c" : "#fbfbfb",
     ...(MAC ? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 16, y: 18 } } : { autoHideMenuBar: true }),

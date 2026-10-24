@@ -66,11 +66,11 @@ section { max-width: 680px; margin: 0 auto; display: flex; flex-direction: colum
 @keyframes fade { from { opacity: 0; transform: translateY(2px); } }
 @media (prefers-reduced-motion: reduce) { section { animation: none; } }
 .head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s-4); }
-.head p { margin-top: var(--s-1); max-width: 560px; color: var(--m-text-2); font-size: 14px; line-height: 22px; text-wrap: pretty; }
+.head p { margin-top: var(--s-1); max-width: 620px; color: var(--m-text-2); font-size: 14px; line-height: 22px; text-wrap: pretty; }
 .head-actions { display: flex; align-items: center; gap: var(--s-2); flex: none; }
 /* title and buttons on one line, the text under both */
 .head.two { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 var(--s-4); }
-.head.two p { grid-column: 1 / -1; max-width: 600px; }
+.head.two p { grid-column: 1 / -1; max-width: 640px; }
 .foot { color: var(--m-text-3); font-size: 12px; line-height: 18px; text-wrap: pretty; }
 
 /* ---- controls */
@@ -224,6 +224,12 @@ li .radar.live rect.o, .live .radar.live rect.o { animation-name: m-pulse-dim; }
 .steps b { display: block; font-weight: 600; font-size: 14px; line-height: 24px; }
 .steps div > span { display: block; margin: 2px 0 var(--s-3); color: var(--m-text-2); line-height: 20px; text-wrap: pretty; }
 .steps div > span:last-child { margin-bottom: 0; }
+/* a step's one button sits at its end; the code row runs under the text */
+.steps li > div { flex: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-5); align-items: center; }
+.steps li > div > :is(b, span) { grid-column: 1; }
+.steps li > div > .btn { grid-column: 2; grid-row: 1 / span 2; }
+.steps li > div > span:has(+ .btn) { margin-bottom: 0; }
+.steps li > div > .coderow { grid-column: 1 / -1; }
 .coderow { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
 .coderow small { color: var(--m-text-3); font-size: 12px; }
 .code { display: inline-flex; align-items: center; height: 36px; padding: 0 var(--s-4); border-radius: var(--r); background: var(--m-hover);
