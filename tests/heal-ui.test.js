@@ -14,6 +14,7 @@ import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import { createRequire } from "node:module";
+import { axeCheck, axeLines } from "../demo/axe.js"; // axe-core on Morse's own UI (tests/a11y-morse.test.js)
 const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 
 let chromium;
@@ -130,6 +131,7 @@ test("the site changes: the mod is flagged quietly, Fix it brings it back, Histo
   await note.waitFor();
   assert.equal((await note.locator("p").textContent()).trim(), "Stopped working after this site changed. It can't find the part of the page it changes.");
   assert.equal(await ui(".panel[data-heal]").count(), 1, "the dot on the panel's mark");
+  assert.deepEqual(axeLines(await axeCheck(page)), [], "axe-core: a mod that stopped working, with Fix it");
 
   // Fix it: the model gets what used to match and what the page has now.
   await note.locator("[data-a=fix]").click();
@@ -220,6 +222,7 @@ test("auto-fix (off by default) fixes a gallery mod in the background, with Undo
   const share = row.locator("[data-a=heal-share]");
   await share.waitFor();
   assert.match(await row.locator(".heal-fixed p").textContent(), /Fixed after this site changed\. Others who use it may need this fix too\./);
+  assert.deepEqual(axeLines(await axeCheck(page)), [], "axe-core: fixed in the background, with Share the fix");
   await share.click();
   const opened = await until(() => fs.readFile(path.join(bin, "opened.txt"), "utf8"));
   const u = new URL(opened);

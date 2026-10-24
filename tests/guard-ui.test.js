@@ -17,6 +17,7 @@ import http from "node:http";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import { noBrowser as skip, launchBrowser } from "./helpers/browser.js";
+import { axeCheck, axeLines } from "../demo/axe.js"; // axe-core on Morse's own UI (tests/a11y-morse.test.js)
 import { freePort, listen } from "./helpers/net.js";
 import { waitFor, scaled } from "./helpers/wait.js";
 import * as store from "../daemon/store.js";
@@ -93,6 +94,7 @@ async function said(page, id, toast, lead, note) {
   await row.waitFor({ timeout: 5000 });
   assert.equal((await row.locator("p").textContent()).trim(), `${lead} ${note}`);
   assert.deepEqual(await row.locator("button").allTextContents(), ["Turn back on", "Fix it"]);
+  assert.deepEqual(axeLines(await axeCheck(page)), [], "axe-core: a paused mod, its toast and its row");
   return row;
 }
 const SLOW = "Paused because it was slowing this page down.";

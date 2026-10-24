@@ -26,6 +26,9 @@ function CSS() {
   :focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
   :is(.gm-tb, .seg, .gm-sw) button:focus-visible { outline-offset: 0; }
   :is(.menu, .a11y-group) > button:focus-visible { outline-offset: -2px; background: var(--m-hover); }
+  /* boxes that take focus themselves (the edit toolbar after Ctrl+E, the Mods search) ring like fields: border + 1px = 2px */
+  .gm-tb:focus-visible { border-color: var(--m-signal-3); box-shadow: 0 0 0 1px var(--m-signal-3), var(--m-shadow); }
+  .psearch .search:focus-visible { border-color: var(--m-signal-3); box-shadow: 0 0 0 1px var(--m-signal-3); }
 
   /* ---- icons: one set, drawn on a 16px grid with 1.5px round strokes */
   button > svg:not(.radar), .menu svg, .gm-note > svg { flex: none; width: 16px; height: 16px; }
@@ -224,7 +227,7 @@ function CSS() {
   .psearch .search::placeholder { color: var(--m-text-3); opacity: 1; }
   .psearch .search:focus { border-color: var(--m-signal-2); }
   .list article { outline: none; }
-  .list article:focus-visible { background: var(--m-raised); box-shadow: inset 0 0 0 1.5px var(--m-signal-3); }
+  .list article:focus-visible { background: var(--m-raised); outline: 2px solid var(--m-signal-3); outline-offset: -2px; }
   .meta small.latest { color: var(--m-text-3); }
   .tags .when { font: 400 var(--m-text-xs)/16px var(--m-font); font-style: normal; color: var(--m-text-3); letter-spacing: 0; white-space: nowrap; }
   /* a follow-up is typed: Enter refines, so Keep loses its ↵ */
@@ -286,5 +289,24 @@ function CSS() {
     .mark.live .radar rect, .hint .radar rect { animation: none !important; }
     .mark.live .radar rect.c, .hint .radar rect.c { opacity: 1; }
     .mark.live .radar rect.o, .hint .radar rect.o { opacity: 0.55; }
+  }
+
+  /* forced colors (Windows High Contrast): shadows and fills are dropped and
+     colors become the system's, so every focus ring is an outline in
+     Highlight, every surface and button keeps a border, and what is on or
+     chosen shows as a ring. Swatches keep their real colors. */
+  @media (forced-colors: active) {
+    :focus-visible, .list article:focus-visible, .sw input:focus-visible + span, .field:is(:focus-within, :focus-visible), .link input:focus-visible, .code:focus-visible, .in:focus-visible {
+      outline: 2px solid Highlight !important; outline-offset: 2px; }
+    :is(.menu, .a11y-group) > button:focus-visible, .list article:focus-visible { outline-offset: -2px; }
+    .bar, .panel, .card, .toast, .pop, .gm-tb, .gm-pop, .gm-note, .menu, .chip, .tip, .guide, .ctl-toast, .so-strip, kbd { border: 1px solid CanvasText; }
+    .go, .ibtn, .tbtn, .seg button, .sug, .chip .x, .panel header > button, .card header > button, .gm-chip { border: 1px solid ButtonText !important; }
+    :is(.seg button, .ibtn, .gm-chip, .gm-sw button):is([aria-checked="true"], [aria-pressed="true"]) { outline: 2px solid Highlight; outline-offset: -2px; }
+    .sw span { border: 1px solid ButtonText; }
+    .sw span::after { background: ButtonText; }
+    .sw input:checked + span { background: Highlight; }
+    .sw input:checked + span::after { background: HighlightText; }
+    .hl, .sel, .gm-frame { outline-color: Highlight; border-color: Highlight; }
+    .gm-sw button, .gm-hex i { forced-color-adjust: none; }
   }
 `; }

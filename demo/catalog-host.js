@@ -102,6 +102,16 @@
         case "mods.import":
           if (C.importFail) return fail(C.importFail);
           return reply(fixture(99, { title: "Imported mod" }));
+        // Install a mod: the review (63-control.js) asks what a link holds, then installs it
+        case "mods.preview":
+          if (C.importFail) return fail(C.importFail);
+          if (!/morse|install/i.test(m.source || "")) return fail("This isn't a Morse share link or mod file. Check that you copied all of it.");
+          return reply({ kind: "link", mods: [fixture(98, { id: undefined, title: "Bigger buttons", prompt: "make every button bigger", css: "button { min-height: 40px }" })] });
+        case "control.install": {
+          const saved = m.mods.map((x, i) => ({ ...x, id: `installed${C.mods.length + i}`, enabled: true, created: now, updated: now }));
+          C.mods.push(...saved);
+          return reply(structuredClone(saved));
+        }
         case "exec": return reply(C.execFail ? { ok: false, error: C.execFail } : { ok: true });
         case "off": return reply(true);
         case "capture": return reply(globalThis.__catCapture ? await globalThis.__catCapture() : card);

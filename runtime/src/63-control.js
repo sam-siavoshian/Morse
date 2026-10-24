@@ -148,8 +148,8 @@ async function runAgain(m) {
 const ctlToast = document.createElement("div");
 ctlToast.className = "ctl-toast";
 ctlToast.hidden = true;
-ctlToast.setAttribute("role", "status");
-ctlToast.setAttribute("aria-live", "polite");
+ctlToast.setAttribute("role", "group");
+ctlToast.setAttribute("aria-label", "Morse");
 root.append(ctlToast);
 let ctlToastTimer = 0;
 function controlToast(msg, actions = [], { sticky = false, title = "" } = {}) {
@@ -159,6 +159,8 @@ function controlToast(msg, actions = [], { sticky = false, title = "" } = {}) {
     ${actions.length ? `<div class="ctl-acts">${actions.map(([label], i) => `<button data-i="${i}"${i === actions.length - 1 ? ` class="primary"` : ""}>${esc(label)}</button>`).join("")}</div>` : ""}
     <button class="ctl-x" data-i="-1" title="Close" aria-label="Close">×</button>`;
   ctlToast.hidden = false;
+  // Said once, with what can be done; it stays while it has focus or the pointer.
+  announce(`${title ? title + " " : ""}${msg}${actions.length ? `. ${actions.map(([l]) => l).join(" or ")}, in Morse's message at the bottom of the page.` : ""}`, { again: true });
   ctlToast.onclick = e => {
     const b = e.target.closest("button[data-i]");
     if (!b) return;
@@ -168,8 +170,8 @@ function controlToast(msg, actions = [], { sticky = false, title = "" } = {}) {
   };
   clearTimeout(ctlToastTimer);
   const later = () => { if (!sticky) ctlToastTimer = setTimeout(() => (ctlToast.hidden = true), actions.length ? 8000 : 3200); };
-  ctlToast.onmouseenter = () => clearTimeout(ctlToastTimer);
-  ctlToast.onmouseleave = later;
+  ctlToast.onmouseenter = ctlToast.onfocusin = () => clearTimeout(ctlToastTimer);
+  ctlToast.onmouseleave = ctlToast.onfocusout = e => { if (!ctlToast.contains(e.relatedTarget) && !ctlToast.matches(":hover")) later(); };
   later();
 }
 

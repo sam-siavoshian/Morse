@@ -33,6 +33,7 @@ New here? Start with [Getting started](getting-started.md).
 | [How Morse works](dev/architecture.md) | Hosts, the in-app code, the `morse` kit, the engine, models, the mod format, security |
 | [Testing](dev/testing.md) | `npm run check`, `npm test`, `npm run test:ui`, test helpers, evals, screenshots, what was verified |
 | [Adding a feature](dev/adding-a-feature.md) | Rules for the in-app code, words, the UI review, docs |
+| [Accessibility of Morse itself](dev/accessibility.md) | Keyboard, screen readers, zoom and forced colors in Morse's own UI; the axe-core audit |
 | [How Morse talks](WRITING.md) | The style guide for every word a person reads |
 | [UI review checklist](ui/CHECKLIST.md) | What every screenshot in the UI catalog is checked against |
 | [Launch kit](launch/README.md) | The demo video, clips and how they were recorded |

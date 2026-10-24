@@ -11,7 +11,7 @@ body[data-page="options"] { width: auto; max-width: 480px; margin: 48px auto; pa
 html:has(body[data-page="options"]) { background: var(--m-bg); }
 
 header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-header b { font-size: var(--m-text-lg); font-weight: 600; }
+header b, header h1 { margin: 0; font-size: var(--m-text-lg); font-weight: 600; }
 header span { margin-left: auto; font: var(--m-text-xs)/1.3 var(--m-mono); color: var(--m-text-3); text-align: right; }
 .logo { display: grid; grid-template-columns: repeat(3, 6px); gap: 2px; }
 .logo i { width: 6px; height: 6px; border-radius: 2px; background: var(--m-signal-2); }
@@ -35,7 +35,7 @@ code { font: var(--m-text-xs) var(--m-mono); background: var(--m-raised); border
 
 .notice { margin: 12px 0 0; background: var(--m-raised); border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); padding: 8px 12px; font-size: var(--m-text-sm); color: var(--m-text-2); }
 .notice b { color: var(--m-text); }
-h3 { font-size: var(--m-text-xs); font-weight: 600; color: var(--m-text-3); text-transform: uppercase; letter-spacing: .06em; margin: 20px 0 8px; }
+h2, h3 { font-size: var(--m-text-xs); font-weight: 600; color: var(--m-text-3); text-transform: uppercase; letter-spacing: .06em; margin: 20px 0 8px; }
 ul { list-style: none; margin: 0; padding: 0; }
 li { padding: 8px 0; border-bottom: 1px solid var(--m-line); }
 li i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 8px; background: var(--m-signal-1); }

@@ -243,7 +243,7 @@ const ReadAloud = (() => {
   });
   // Esc stops reading (the bar takes Esc first while it's open).
   listen("keydown", e => {
-    if (!e.isTrusted || !R || S.open || e.key !== "Escape") return;
+    if (!e.isTrusted || !R || S.open || !panel.hidden || !modal.hidden || e.key !== "Escape") return; // the top layer takes Esc first
     e.preventDefault();
     e.stopImmediatePropagation();
     stop();

@@ -9,6 +9,7 @@ import { readFile } from "node:fs/promises";
 import { bundleRuntime } from "../runtime/bundle.js";
 import { createMod, encodeShare } from "../core/mod.js";
 import { launchBrowser, noBrowser } from "./helpers/browser.js";
+import { axeCheck, axeLines } from "../demo/axe.js"; // axe-core on Morse's own UI (tests/a11y-morse.test.js)
 import { pressOpen } from "./helpers/keys.js";
 import { TIMEOUT, hostRoundTrip, settle, waitForReady } from "./helpers/wait.js";
 
@@ -214,6 +215,7 @@ test("import: the in-app review shows what it does, folds the code, and installs
   assert.match(await text(page, '.modal .ctl-warn[data-s="typing"]'), /read what you type/);
   assert.equal(await page.evaluate(`${sr(".modal details.ctl-code")}.open`), false, "code is folded");
   assert.equal(await page.evaluate(`document.querySelector("[data-morse-ui]").shadowRoot.activeElement?.textContent`), "Cancel", "focus starts on Cancel, never on Install");
+  assert.deepEqual(axeLines(await axeCheck(page)), [], "axe-core: the install review");
   assert.equal(Object.keys(await stored(page)).length, 2, "nothing installed yet");
   await click(page, ".modal [data-a=install]");
   await until(async () => Object.keys(await stored(page)).length === 3);

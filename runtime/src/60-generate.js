@@ -60,6 +60,10 @@ async function submit(request, opts = {}) {
   if (!prev || S.before?.id !== id) S.before = { id, shot: await capture(), rect: R(tr), focus: R(rect), vw: innerWidth, vh: innerHeight };
   const t0 = performance.now();
   hint.innerHTML = `${radar(12)} Thinking`;
+  // Screen readers hear a few steps, never the streaming code: working, the
+  // first change on the page, a retry, then done or what went wrong.
+  announce(prev ? "Working on the change" : "Working on your change");
+  let shown = false;
   actions.innerHTML = `<span class="ms">0.0s</span>`;
   const clock = setInterval(() => { const m = actions.querySelector(".ms"); if (m) m.textContent = ((performance.now() - t0) / 1000).toFixed(1) + "s"; }, 100);
   Effect.start(focus);
@@ -71,9 +75,12 @@ async function submit(request, opts = {}) {
       if (!wrote) { wrote = true; if (/Thinking/.test(hint.textContent)) hint.innerHTML = `${radar(12)} Writing the change`; }
       Effect.token(msg.text); tick(msg.text);
     }
-    if (msg.type === "css") setCss(id, msg.css);
+    if (msg.type === "css") {
+      setCss(id, msg.css);
+      if (!shown && String(msg.css || "").trim()) { shown = true; announce("The first change is showing on the page"); }
+    }
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") { hint.innerHTML = `${radar(12)} Fixing a mistake and trying again`; hint.title = String(msg.error || ""); }
+      if (msg.phase === "fixing") { hint.innerHTML = `${radar(12)} Fixing a mistake and trying again`; hint.title = String(msg.error || ""); announce("Fixing a mistake and trying again"); }
       if (msg.phase === "applying") hint.innerHTML = `${radar(12)} Trying the change`;
       if (msg.phase === "thinking") hint.innerHTML = `${radar(12)} Writing the change`;
     }
@@ -116,6 +123,7 @@ async function submit(request, opts = {}) {
       S.phase = "error";
       bar.classList.add("err");
       hint.innerHTML = `That didn't work: <i>${esc(plainError(res.error).slice(0, 120))}</i>`;
+      announce(`That didn't work: ${plainError(res.error)}. Press Try again, or Escape to close.`);
       hint.title = res.error || "";
       actions.innerHTML = `<button data-a="again">Try again</button>`;
       return;
@@ -148,6 +156,10 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
     ? `<button data-a="code">Edit code</button><button data-a="keep">Done</button>`
     : `<button data-a="keep" class="primary">Save <kbd>↵</kbd></button><button data-a="undo">Undo</button><button data-a="code">Edit code</button><button data-a="share">Share</button>`;
   updateChips();
+  announce(error ? `${d.title}. That didn't work: ${error}`
+    : note ? `${d.title}. ${note}`
+    : d.saved ? `${d.title}. Describe what to change, or press Done.`
+    : `Done: ${d.title}${meta ? `, ${meta}` : ""}. Press Enter to save it, or describe what to change. Undo is next to Save.`);
   input.focus({ preventScroll: true });
 }
 

@@ -21,10 +21,10 @@ ${A11Y_CSS() /* Easier to use hook: 98-a11y-css.js */}</style>
   <style>${GALLERY_CSS() /* gallery hook: 98-gallery-css.js */}</style>
   <style>${HEAL_CSS() /* self-heal hook: 98-heal-css.js */}</style>
   <style>${STYLE_CSS() /* your-style hook: 98-style-css.js */}</style>
-  <canvas class="fx"></canvas>
-  <div class="hl" hidden><span></span></div>
-  <div class="sel" hidden></div>
-  <div class="bar" hidden>
+  <canvas class="fx" aria-hidden="true"></canvas>
+  <div class="hl" hidden aria-hidden="true"><span></span></div>
+  <div class="sel" hidden aria-hidden="true"></div>
+  <section class="bar" hidden>
     <div class="row">
       <span class="mark">${radar(18)}</span>
       <div class="chip target" hidden><span></span><button class="x" title="Point at something else">×</button></div>
@@ -36,9 +36,9 @@ ${A11Y_CSS() /* Easier to use hook: 98-a11y-css.js */}</style>
       <span class="ticker"></span>
       <span class="actions"></span>
     </div>
-  </div>
-  <aside class="panel" hidden></aside>
-  <div class="modal" hidden></div>
+  </section>
+  <section class="panel" hidden></section>
+  <section class="modal" hidden></section>
   <div class="toast" hidden></div>`;
 const $ = s => root.querySelector(s);
 const fx = $(".fx"), hl = $(".hl"), selBox = $(".sel"), bar = $(".bar"), input = $(".in");

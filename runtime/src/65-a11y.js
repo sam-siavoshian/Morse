@@ -33,13 +33,13 @@ const A11y = (() => {
   // ---- the menu group (46-quick.js rebuilds the menu each time it opens)
   quickMenuGroups.push(() => {
     const r = modFor("readable");
-    const item = (k, label, on, cls = "") => `<button role="menuitemcheckbox" class="${cls}" data-a11y="${k}" aria-checked="${on}">${cls ? "" : svg(I[k])}<span>${label}</span><span class="gm-state">${on ? svg(I.on) : ""}</span></button>`;
+    const item = (k, label, on, cls = "") => `<button role="menuitemcheckbox" tabindex="-1" class="${cls}" data-a11y="${k}" aria-checked="${on}">${cls ? "" : svg(I[k])}<span>${label}</span><span class="gm-state">${on ? svg(I.on) : ""}</span></button>`;
     return `<div class="a11y-group" role="group" aria-label="Easier to use">
-      <header>Easier to use<small>no model needed</small></header>
+      <header aria-hidden="true">Easier to use<small>no model needed</small></header>
       ${A11Y_KINDS.map(k => item(k, A11Y_TOOLS[k].title, isOn(k)) + (k === "readable" ? item("dyslexia", "Dyslexia-friendly letters", !!(r?.enabled && r.edits[0].dyslexia), "a11y-sub") : "")).join("")}
       <hr>
-      <button role="menuitem" data-a11y="read">${svg(I.read)}<span>Read aloud</span><span class="gm-state">${ReadAloud.hasSelection() ? "selection" : ""}</span></button>
-      <button role="menuitem" data-a11y="check">${svg(I.check)}<span>Check this page</span><span class="gm-state"></span></button>
+      <button role="menuitem" tabindex="-1" data-a11y="read">${svg(I.read)}<span>Read aloud</span><span class="gm-state">${ReadAloud.hasSelection() ? "selection" : ""}</span></button>
+      <button role="menuitem" tabindex="-1" data-a11y="check">${svg(I.check)}<span>Check this page</span><span class="gm-state"></span></button>
     </div>`;
   });
   const menu = bar.querySelector(".gm-menu");
