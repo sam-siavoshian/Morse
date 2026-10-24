@@ -204,7 +204,7 @@ files on disk, because those live outside the windows.
 Real apps, downloaded from their official releases and installed the way their
 own instructions say, on Linux (Ubuntu 24.04 in a container, running as root,
 so each had `-- --no-sandbox`). Each was opened with `morse launch`, changed
-with **Claude Code (haiku)** using the real hotkey, mouse and keyboard, saved,
+with **Claude Code (haiku)** using the real shortcut, mouse and keyboard, saved,
 quit, and opened again with `morse launch`.
 
 | App | How it was installed | What was asked | Result | Time | Back after reopening |
@@ -242,8 +242,8 @@ What these apps turned up, now fixed:
 - **The Mods panel said "Stops every mod on this site"** in an app. It now
   says "in this app".
 
-Not tested: Microsoft's own VS Code build, Slack, Discord, Signal, Spotify and
-Element (their downloads aren't reachable from the test machine, or they need
+Not tested: Microsoft's own VS Code build, Slack, Discord, Signal and Spotify
+(their downloads aren't reachable from the test machine, or they need
 an account), Flatpak and Snap installs, macOS, Windows and Wayland. Signing in
 to anything wasn't tested.
 
