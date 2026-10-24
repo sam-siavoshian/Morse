@@ -1,6 +1,7 @@
 // Getting Morse to people: one version everywhere, `morse --version` and
 // `morse setup --help`, setup writing what the model code reads, the npm
 // package's file list, the store zip, the privacy page and the Pages build.
+import { tempDir } from "./helpers/home.js"; // first: a MORSE_HOME of its own, and temp folders removed at exit
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync, execFileSync } from "node:child_process";
@@ -20,7 +21,7 @@ const plain = s => s.replace(/\x1b\[\d+m/g, "");
 const run = (args, home) => spawnSync(process.execPath, [CLI, ...args], { env: { ...process.env, MORSE_HOME: home }, encoding: "utf8" });
 
 test("one version: package.json, morse --version, and the built manifest", async () => {
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-ver-"));
+  const home = tempDir("morse-ver-");
   try {
     for (const flag of ["--version", "-v", "version"]) {
       const r = run([flag], home);
@@ -36,7 +37,7 @@ test("one version: package.json, morse --version, and the built manifest", async
 });
 
 test("morse setup --help explains the choices and changes nothing", async () => {
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-help-"));
+  const home = tempDir("morse-help-");
   try {
     const r = run(["setup", "--help"], home);
     assert.equal(r.status, 0);
@@ -114,7 +115,7 @@ test("site/privacy.html is made from docs/privacy.md and is current", async () =
 });
 
 test("the Pages build publishes the paths the code uses, with no broken links", async () => {
-  const out = await fs.mkdtemp(path.join(os.tmpdir(), "morse-pages-"));
+  const out = tempDir("morse-pages-");
   try {
     await buildPages({ out });
     for (const p of ["index.html", "site/index.html", "site/privacy.html", "site/mods/index.json", "share/install.html", "core/mod.js", "design/tokens.css", "docs/launch/morse-demo.mp4", ".nojekyll"]) {

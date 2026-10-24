@@ -65,7 +65,8 @@ than sleeping. New tests use [`tests/helpers/`](../../tests/helpers/):
 
 | Helper | What it gives you |
 |---|---|
-| `home.js` | Import it first: the test process's own `MORSE_HOME`, set before any daemon module reads it, and `tempDir()` for scratch folders removed at exit |
+| `home.js` | Import it first: the test process's own `MORSE_HOME`, set before any daemon module reads it, and `tempDir()` for scratch folders (homes, browser profiles, app copies) removed when the process ends, however it ends |
+| `disk.js` | Free disk: `npm test` stops at once when the temp folder's disk has under 2 GB free, and each test file warns |
 | `net.js` | Ports picked by the OS, never fixed |
 | `wait.js` | `waitFor(fn, { what })`: polls until a condition holds, with a generous timeout and a useful error; `waitForStatus`, `waitForReady` and `settle` for the runtime |
 | `browser.js` | The globally installed Playwright, skip reasons (`noDisplay`), and launching Chromium with a startup timeout that survives a busy machine |
@@ -73,6 +74,25 @@ than sleeping. New tests use [`tests/helpers/`](../../tests/helpers/):
 | `demo-server.js` | The demo sites on free ports, routed to their usual addresses in a Playwright context |
 
 `MORSE_TEST_TIMEOUT_SCALE=2` doubles every timeout on a slow machine.
+
+### Temp folders and disk
+
+A test leaves nothing in the temp folder: make every scratch folder, browser
+profile and home with `tempDir()`, never `fs.mkdtemp`. They're removed when
+the test process exits, also after a failure, a timeout, Ctrl+C or SIGTERM,
+and a browser or app still running from one of them is stopped first so it
+can't write into it again. Browser profiles and Electron apps are big, and a
+full disk makes Chromium crash ("Target crashed") in ways that look like real
+failures, so `npm test` checks for 2 GB free before it starts
+(`MORSE_TEST_MIN_FREE_GB` changes that; 0 skips it). The packaged Electron
+apps of [`tests/electron.test.js`](../../tests/electron.test.js) aren't copied
+per run: they're built once into `~/.cache/morse/tunes`, next to the Electron
+runtime, and shared. To check a run left nothing behind, give it a temp
+folder of its own:
+
+```bash
+T=$(mktemp -d) && TMPDIR=$T DISPLAY=:99 npm test; ls -A $T   # empty
+```
 
 ### The extension with a real Morse helper
 

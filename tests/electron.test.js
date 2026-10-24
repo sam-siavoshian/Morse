@@ -15,20 +15,22 @@
 // demo/shoot-electron.js drives the same flow with real X input (xdotool).
 //
 // The tests at the top need no Electron: they cover what the real app turned up.
+import { tempDir } from "./helpers/home.js"; // first: a MORSE_HOME of its own, and temp folders removed at exit
 import { test, after, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { spawn, execFile } from "node:child_process";
-import { promises as fs } from "node:fs";
+import { promises as fs, existsSync } from "node:fs";
+import { createHash } from "node:crypto";
 
-const home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-electron-test-"));
+const home = tempDir("morse-electron-test-");
 process.env.MORSE_HOME = home;
 const apps = await import("../daemon/apps.js");
 const { inspectFuses, fuseVerdict, formatFuses } = await import("../daemon/fuses.js");
 const { CDPSession, listTargets } = await import("../daemon/cdp.js");
-const { findElectron, buildTunes, setFuses, packAsar } = await import("../demo/electron-app/build.mjs");
+const { findElectron, electronVersion, buildTunes, setFuses, packAsar } = await import("../demo/electron-app/build.mjs");
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -43,7 +45,7 @@ const put = async (file, data = "") => { await fs.mkdir(path.dirname(file), { re
 // ---------------------------------------------------------------- no Electron needed
 
 test("an unpacked Electron app in /opt is found and named from its package.json, not its runtime's files", async () => {
-  const r = await fs.mkdtemp(path.join(os.tmpdir(), "morse-opt-"));
+  const r = tempDir("morse-opt-");
   // What build.mjs makes: the runtime renamed to the app, the app in resources/app/.
   await put(path.join(r, "opt/Tunes/tunes"), "\x7fELF");
   await put(path.join(r, "opt/Tunes/libvulkan.so.1"), "\x7fELF");
@@ -72,7 +74,7 @@ test("an unpacked Electron app in /opt is found and named from its package.json,
 });
 
 test("app.asar: only the header and package.json are read, and Electron's own default app has no name", async () => {
-  const r = await fs.mkdtemp(path.join(os.tmpdir(), "morse-asar-"));
+  const r = tempDir("morse-asar-");
   const src = path.join(r, "src");
   await put(path.join(src, "big.bin"), Buffer.alloc(2 << 20));
   await put(path.join(src, "package.json"), JSON.stringify({ name: "electron", productName: "Electron", version: "1.0.0" }));
@@ -122,7 +124,7 @@ test("the model is told not to use prompt(), which throws in Electron apps", asy
 
 test("fuses: the verdict is in plain words, and a native Mac app (a folder) has no fuse wire", async () => {
   const sentinel = "dL7pKGdnNz796PbbjQWNKmHXBZaB9tsX";
-  const r = await fs.mkdtemp(path.join(os.tmpdir(), "morse-fuses-"));
+  const r = tempDir("morse-fuses-");
   await put(path.join(r, "locked"), Buffer.concat([Buffer.alloc(64), Buffer.from(sentinel), Buffer.from([1, 9]), Buffer.from("001010r01")]));
   const info = await inspectFuses(path.join(r, "locked"));
   assert.equal(info.electron, true);
@@ -150,8 +152,42 @@ if (skip) console.log(`electron.test.js: skipping the real Electron app: ${skip}
 const ROOT = process.getuid?.() === 0;
 const ENV = { ...process.env, MORSE_HOME: home, MORSE_PROVIDER: "demo", FORCE_COLOR: "0", MORSE_DEBUG: "1" }; // MORSE_DEBUG: the runtime's status attribute (the app has no navigator.webdriver)
 const procs = [];
+// The packaged apps are built once per Electron runtime and app source and
+// kept in ~/.cache/morse/tunes, next to the runtime (hard links on the same
+// disk, so they take almost no room), and every run, side by side included,
+// opens the same copy. Each is built in a folder of its own and renamed into
+// place when done; profiles and everything an app writes stay in this run's
+// home. A build for older sources is removed after a day.
+const CACHE = path.join(os.homedir(), ".cache", "morse", "tunes");
+async function cachedApp(name, build) {
+  const src = path.join(root, "demo", "electron-app");
+  const h = createHash("sha256").update(`${dist}\0${electronVersion(dist)}\0${name}\0`);
+  for (const f of [...(await fs.readdir(src)).sort().map(f => path.join(src, f)), path.join(root, "demo", "sites", "tunes", "index.html")]) h.update(f).update(await fs.readFile(f));
+  const id = `${name}-${h.digest("hex").slice(0, 12)}`, dir = path.join(CACHE, id);
+  const result = () => ({ dir, exe: path.join(dir, "tunes"), version: electronVersion(dir) });
+  await fs.mkdir(CACHE, { recursive: true });
+  for (const old of await fs.readdir(CACHE)) {
+    if (!old.startsWith(`${name}-`) || old === id) continue;
+    const st = await fs.stat(path.join(CACHE, old)).catch(() => null);
+    if (st && Date.now() - st.mtimeMs > 86400e3) await fs.rm(path.join(CACHE, old), { recursive: true, force: true }).catch(() => {});
+  }
+  if (existsSync(path.join(dir, ".built"))) { await fs.utimes(dir, new Date(), new Date()).catch(() => {}); return result(); }
+  const tmp = `${dir}.${process.pid}.tmp`;
+  try {
+    await build(tmp);
+    await fs.writeFile(path.join(tmp, ".built"), "");
+    // Another run may have finished the same build first: theirs is as good.
+    await fs.rename(tmp, dir).catch(e => { if (!existsSync(path.join(dir, ".built"))) throw e; });
+  } finally { await fs.rm(tmp, { recursive: true, force: true }); }
+  return result();
+}
 let built = null;
-const tunesApp = async () => built ||= await buildTunes(path.join(home, "Tunes"));
+const tunesApp = async () => built ||= await cachedApp("Tunes", out => buildTunes(out, { dist }));
+const lockedApp = () => cachedApp("TunesLocked", async out => {
+  const { exe } = await buildTunes(out, { dist, asar: true });
+  await setFuses(exe, { RunAsNode: false, EnableNodeOptionsEnvironmentVariable: false, EnableNodeCliInspectArguments: false,
+    OnlyLoadAppFromAsar: true, EnableCookieEncryption: true, GrantFileProtocolExtraPrivileges: false });
+});
 
 const freePort = () => new Promise(r => { const s = net.createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => r(p)); }); });
 function morse(...args) {
@@ -320,9 +356,7 @@ test("real Electron: launch, hotkey, point, change, save, quit, relaunch, second
 });
 
 test("real Electron: packed as app.asar with its fuses locked down, Morse still gets in", { skip, timeout: 90000 }, async () => {
-  const { exe } = await buildTunes(path.join(home, "TunesLocked"), { dist, asar: true });
-  await setFuses(exe, { RunAsNode: false, EnableNodeOptionsEnvironmentVariable: false, EnableNodeCliInspectArguments: false,
-    OnlyLoadAppFromAsar: true, EnableCookieEncryption: true, GrantFileProtocolExtraPrivileges: false });
+  const { exe } = await lockedApp();
   const info = await inspectFuses(exe);
   assert.equal(info.fuses.RunAsNode, "disabled");
   assert.equal(info.fuses.OnlyLoadAppFromAsar, "enabled");

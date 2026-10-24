@@ -1,7 +1,7 @@
 // First run without a browser: `morse setup` detection and choices, the
 // getting started a bare `morse` prints, and the shared onboarding rules
 // (state, unsupported pages, errors in plain words).
-import "./helpers/home.js";
+import { tempDir } from "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PassThrough } from "node:stream";
@@ -46,7 +46,7 @@ test("nothing installed: nothing to recommend", async () => {
 });
 
 test("whichBin finds executables on PATH and skips plain files", async () => {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "morse-path-"));
+  const dir = tempDir("morse-path-");
   await fs.writeFile(path.join(dir, "codex"), "#!/bin/sh\necho codex-cli 0.46.0\n", { mode: 0o755 });
   await fs.writeFile(path.join(dir, "claude"), "not executable", { mode: 0o644 });
   try {
@@ -164,7 +164,7 @@ test("setup --pair: a bad code says what to do; the helper takes the welcome pag
   assert.equal(bad.status, 1);
   assert.match(plain(bad.stderr), /That pairing code doesn't look right\. Copy the whole command from Morse's welcome page again\./);
   // In a child process: daemon/store.js reads MORSE_HOME once, when first imported.
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-pair-"));
+  const home = tempDir("morse-pair-");
   try {
     const bridge = new URL("../daemon/bridge.js", import.meta.url).href;
     const r = spawnSync(process.execPath, ["--input-type=module", "-e", `
@@ -188,7 +188,7 @@ test("bare `morse` prints a three-line getting started until something is set up
   assert.match(lines[0], /run morse setup/);
   assert.match(lines[2], /Press Ctrl\+Shift\+Space/);
 
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-home-"));
+  const home = tempDir("morse-home-");
   try {
     const env = { ...process.env, MORSE_HOME: home };
     const first = spawnSync(process.execPath, [CLI], { env, encoding: "utf8" });

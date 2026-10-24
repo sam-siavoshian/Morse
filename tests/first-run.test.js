@@ -12,11 +12,12 @@
 // saved change's card.
 //
 //   node scripts/build.js && DISPLAY=:99 node --test tests/first-run.test.js
+import { tempDir } from "./helpers/home.js"; // first: a MORSE_HOME of its own, and temp folders removed at exit
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
-import { mkdtempSync, existsSync, rmSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -32,7 +33,7 @@ const skip = !chromium && "playwright not installed";
 const skipExt = skip || (!process.env.DISPLAY && "extensions need a display (run under Xvfb)") || (!existsSync(EXT) && "run node scripts/build.js first");
 const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const tmp = mkdtempSync(path.join(os.tmpdir(), "morse-first-run-"));
+const tmp = tempDir("morse-first-run-");
 after(() => rmSync(tmp, { recursive: true, force: true }));
 
 async function until(fn, ms = 20000, what = "condition") {
