@@ -1,0 +1,25 @@
+Provider marks: one shared set for Morse Desktop and the Morse extension
+(scripts/build.js copies this folder to dist/extension/brand/).
+
+They are used only to name the service a person chooses (nominative use):
+Claude Code, Codex, and an Anthropic or OpenAI API key. Morse is not made by,
+affiliated with or endorsed by Anthropic or OpenAI. The marks belong to their
+owners. Each is the company's own artwork, unaltered except for size and a
+transparent background; 96 x 96 PNG, shown at 48px or smaller (2x).
+
+claude.png     The Claude mark (Anthropic PBC). Anthropic's own vector, from
+               the favicon Anthropic publishes at https://platform.claude.com/
+               (favicon.svg; the dark tile behind it removed). Anthropic's press
+               kit, https://www.anthropic.com/press-kit, has the same mark.
+
+anthropic.png  The Anthropic mark (Anthropic PBC), from Anthropic's own avatar
+               on its GitHub organization, https://github.com/anthropics
+               (white on dark there; here a black mark on transparent).
+
+openai.png     The OpenAI mark (OpenAI), from OpenAI's own avatar on its GitHub
+               organization, https://github.com/openai (black on white there;
+               here black on transparent). Brand guidelines:
+               https://openai.com/brand/
+
+The black marks (anthropic.png, openai.png) are shown white in dark mode by a
+CSS invert, the way both companies show them on dark backgrounds.

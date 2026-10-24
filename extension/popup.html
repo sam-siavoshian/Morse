@@ -18,6 +18,7 @@
     <p id="connect" class="notice" hidden><b data-i18n="popup.connect">Connect a model to start.</b> <span id="reason"></span></p>
 
     <label class="choice"><input type="radio" name="backend" value="helper">
+      <span class="pmark" id="hmark" aria-hidden="true"><img src="brand/claude.png" alt=""><img src="brand/openai.png" alt="" class="mono"></span>
       <span><b data-i18n="popup.helper">Morse helper</b><small data-i18n="popup.helper.sub">Use Claude Code, Codex or an API key on your computer</small></span></label>
     <div class="panel" data-for="helper">
       <div class="status"><i id="hdot" class="dot"></i><span id="hstatus" data-i18n="popup.checking">Checking…</span></div>
@@ -32,11 +33,12 @@
     </div>
 
     <label class="choice"><input type="radio" name="backend" value="anthropic">
+      <span class="pmark" aria-hidden="true"><img src="brand/anthropic.png" alt="" class="mono"></span>
       <span><b data-i18n="popup.anthropic">Anthropic API key</b><small data-i18n="popup.anthropic.sub">Nothing to install. The key stays in this browser.</small></span></label>
     <div class="panel" data-for="anthropic">
       <label><span data-i18n="popup.apiKey">API key</span> <input id="anthropicKey" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false"></label>
       <label><span data-i18n="popup.modelHarder">Model for harder changes</span> <select id="anthropicModel"></select></label>
-      <p class="hint" data-i18n="popup.modelHint">New features and restyles use this model, small tweaks claude-sonnet-5-5. Choose another model to use it for every change.</p>
+      <p class="hint" data-i18n="popup.modelHint">New features and new looks use this model. Small changes use claude-sonnet-5-5. Choose another model to use it for every change.</p>
     </div>
 
     <div class="row actions">

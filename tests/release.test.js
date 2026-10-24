@@ -51,7 +51,7 @@ test("morse setup --help explains the choices and changes nothing", async () => 
     assert.match(out, /morse setup --use claude-code/);
     assert.match(out, /morse setup --use codex/);
     assert.match(out, /--use api-key --key <key>/);
-    assert.doesNotMatch(out, /Looking for something/, "it doesn't start the walk-through");
+    assert.doesNotMatch(out, /Looking for Claude Code/, "it doesn't start the walk-through");
     assert.equal(existsSync(path.join(home, "config.json")), false);
     assert.match(plain(run(["help"], home).stdout), /morse extension/);
   } finally { await fs.rm(home, { recursive: true, force: true }); }

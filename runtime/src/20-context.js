@@ -1,6 +1,9 @@
 const HASHED = /^(css|sc|jsx|emotion|styled|svelte|chakra|mui)-|^_?[a-z0-9]{5,}$|[A-Z][a-z]+_[a-z]+__[a-zA-Z0-9]{5}/;
 const looksHashed = s => /\d/.test(s) && /[a-z]/i.test(s) && HASHED.test(s) || /^[a-z]{1,3}[0-9][a-z0-9]{3,}$/i.test(s);
 const cssEsc = s => (globalThis.CSS && CSS.escape ? CSS.escape(s) : String(s).replace(/["\\]/g, "\\$&"));
+// An id as a selector. One that needs escapes (VS Code: "workbench.parts.statusbar")
+// as [id="…"]: the model copies selectors into JS strings, where "\\." loses its backslash.
+const idSel = id => (cssEsc(id) === id ? `#${id}` : `[id="${String(id).replace(/["\\]/g, "\\$&")}"]`);
 
 // redact: what never goes into the prompt, in one place. context() runs it on
 // the whole context object, and snippet() on every element clone before it is
@@ -133,7 +136,7 @@ function stableAttr(el) {
 const parentOf = el => el.parentElement || (el.parentNode?.nodeType === 11 ? el.parentNode : null);
 function segment(el) {
   const tag = el.tagName.toLowerCase();
-  if (el.id && !looksHashed(el.id)) return { s: `#${cssEsc(el.id)}`, anchor: true };
+  if (el.id && !looksHashed(el.id)) return { s: idSel(el.id), anchor: true };
   const attr = stableAttr(el);
   if (attr && !/^\[role=/.test(attr)) return { s: tag + attr, anchor: true };
   const classes = [...el.classList].filter(c => !looksHashed(c)).slice(0, 2).map(c => "." + cssEsc(c)).join("");
@@ -430,7 +433,7 @@ function kindOf(el) {
 const groupKey = el => kindOf(el) + "|" + [...el.classList].filter(looksHashed).sort().join(".");
 function selName(el) {
   const tag = el.tagName.toLowerCase();
-  if (el.id && !looksHashed(el.id)) return `${tag}#${cssEsc(el.id)}`;
+  if (el.id && !looksHashed(el.id)) return tag + idSel(el.id);
   const attr = stableAttr(el);
   const cls = [...el.classList].filter(c => !looksHashed(c)).slice(0, 2).map(c => "." + cssEsc(c)).join("");
   return tag + (attr && !/^\[role=/.test(attr) ? attr : cls || attr);
@@ -737,7 +740,243 @@ function pageNotes(roots) {
   if (panes.length) notes.push(`Panes placed by the app's own code: ${panes.map(p => `${selectorFor(p.parent)} > ${p.sel} (${p.n}, each with an inline left/width or top/height)`).join("; ")}. The app sets where each pane sits and how big it is, and doesn't move the others when one is hidden: hiding a pane leaves an empty gap. To give its space to the rest, also change the neighbors' left/width (or top/height) with !important. To show a hidden pane on hover, make the pane position:fixed with a z-index and put the hover strip where nothing else covers it. Panes nest (a pane holds panes): pick one by its own child, :has(> #part), never :has(#part), which also matches every pane around it.`);
   const canvases = [...document.querySelectorAll("canvas")].filter(c => { const r = c.getBoundingClientRect(); return r.width >= 150 && r.height >= 100 && !c.closest("[data-morse-ui]"); });
   if (canvases.length) notes.push(`Drawn on <canvas>: ${canvases.slice(0, 3).map(c => `${selectorFor(c)} (${c.width}×${c.height})`).join(", ")}. What a canvas shows is pixels, not elements: CSS can size, move or hide it; reading or saving the picture is canvas.toBlob()/toDataURL(); drawing is the app's job (use its own buttons and shortcuts where they exist).`);
+  // Trusted Types (VS Code): HTML strings throw in the page's world, where mods run.
+  if (/require-trusted-types-for/.test([...document.querySelectorAll('meta[http-equiv="Content-Security-Policy" i]')].map(m => m.content).join(" ")))
+    notes.push("This app refuses HTML strings (Trusted Types): innerHTML, insertAdjacentHTML and morse.el's html throw. Build elements with morse.el(tag, { text, class }, ...kids) and textContent.");
   return notes.map(n => "- " + n).join("\n");
+}
+
+// ---- design: the app's own design language, so a new button, panel or count
+// looks like it shipped with the app (core/prompt.js, "Design system").
+// designOf(el) returns a few compact lines:
+//   - light or dark, and whether the app has both (theme classes, media queries)
+//   - the CSS variables near what was pointed at: the ones its rules (and the
+//     exemplars' rules) read, ones named after where it is, the core palette
+//   - fonts, and the text size, spacing and radius the app uses most
+//   - 2 to 4 of the app's own components nearby (a button, a field, a list row,
+//     a header) with their classes and look, variables kept as written
+//   - its icons (codicons, lucide, Font Awesome, a sprite, inline SVG) and emoji
+// Everything goes through redact() with the rest of the context.
+const DESIGN_KINDS = [
+  ["button", "button,[role=button],input[type=button],input[type=submit],a[class*=button],a[class*=btn]"],
+  ["field", "input:not([type]),input[type=text],input[type=search],input[type=number],textarea,select"],
+  ["list row", "[role=treeitem],[role=option],[role=listitem],li,[role=row],[class*=tree-item],[class*=list-item],[class*=listitem]"],
+  ["header", "h2,h3,h4,[role=heading],[class*=header]:not([class*=item],button),[class*=title]:not([class*=item],button)"],
+];
+const DESIGN_PROPS = ["color", "background-color", "background", "border", "border-color", "border-bottom", "border-radius", "padding", "font-family", "font-size", "font-weight", "line-height", "height", "box-shadow", "outline"];
+const CORE_VAR = /(^|-)(fore|back)ground$|accent|interactive|primary|secondary|focus|border(-colou?r)?$|font-(family|size|interface|text|ui|mono)|radius|button-(back|fore|border|hover)|input-(back|fore|border)|text-(normal|muted|faint|accent)|(^|-)(bg|fg)(-|$)|hover|selection|widget-(back|border|shadow)|shadow|spacing|(^|-)size-\d/i;
+const DESIGN_STOP = /^(border|outline|shadow|radius|colou?r|background|foreground|item|items|label|icon|icons|text|title|action|actions|link|style|styled|theme|dark|light|show|enabled|disabled|motion|enable|modern|linux|chromium|windows|frameless|focused|scrollbars|floating|connected|visible|hidden|default|status|separator|view|node|grid|split|branch|vertical|horizontal|monaco|wrapper|layout|flex)$/;
+const DARK_SEL = /(?:\.(?:dark|dark-mode|dark-theme|theme-dark|vs-dark)|\[data-(?:theme|color-mode|mode|bs-theme)[~^*]?=["']?dark["']?\])(?![\w-])/;
+const NOISE_VAR = /^--tw-|twoslash|icon-[\w-]*(content|font-family)$|-ansi|z-index|^--layer-|-animation|-duration|transition|-easing|csstools|^--cursor$|-position$|corner-shape/i;
+// "??", "Segoe UI", sans-serif -> "Segoe UI", sans-serif (Obsidian leaves placeholders in its font lists)
+const fontList = f => String(f || "").split(",").map(s => s.trim()).filter(s => /\p{L}/u.test(s)).join(", ");
+const designShown = el => { const r = el.getBoundingClientRect(); return r.width >= 8 && r.height >= 8 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth && !isMorseUI(el) && (!el.checkVisibility || el.checkVisibility({ visibilityProperty: true, opacityProperty: true })); };
+const px = v => (/^-?[\d.]+px$/.test(v) ? Math.round(parseFloat(v)) + "px" : v);
+const hex = c => { const m = String(c).match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/); if (!m) return c; if (m[4] != null && +m[4] < 1) return +m[4] === 0 ? "transparent" : c; return "#" + [m[1], m[2], m[3]].map(n => (+n).toString(16).padStart(2, "0")).join(""); };
+const lum = c => { const m = String(c).match(/\d+(\.\d+)?/g); if (!m) return 1; const [r, g, b] = m.slice(0, 3).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+// The background that shows behind el: the first one up its ancestors that isn't transparent.
+function shownBg(el) {
+  const doc = el.ownerDocument;
+  // The body's background paints the whole window when the root has none.
+  const clear = b => /^(transparent|rgba\(.*,\s*0\))$/.test(b);
+  for (let n = el; n && n.nodeType === 1; n = n.parentElement) { const b = styleOf(n).backgroundColor; if (!clear(b)) return b; }
+  const b = doc.body ? styleOf(doc.body).backgroundColor : "";
+  return b && !clear(b) ? b : "rgb(255, 255, 255)";
+}
+// The nearest visible element of a kind: searched in el's ancestors from the
+// closest out, the one nearest to el on screen; with no el, the first on screen.
+function nearestOf(sel, el, skip) {
+  const doc = el?.ownerDocument || document, at = el?.getBoundingClientRect();
+  const ok = e => e !== el && !skip.has(e) && designShown(e) && e.getBoundingClientRect().height <= 90 && e.getBoundingClientRect().width <= innerWidth * 0.6
+    && !/transparent|rgba\(.*,\s*0\)$/.test(styleOf(e).color); // not a hidden helper (VS Code's IME textarea)
+  for (let a = el || doc.body, i = 0; a && i < 12; a = a.parentElement || outerOf(a), i++) {
+    let found;
+    try { found = [...a.querySelectorAll(sel)].slice(0, 300).filter(ok); } catch { return null; }
+    if (!found.length) continue;
+    if (!at) return found[0];
+    const d = e => { const r = e.getBoundingClientRect(); return Math.hypot(r.x + r.width / 2 - at.x - at.width / 2, r.y + r.height / 2 - at.y - at.height / 2); };
+    return found.sort((x, y) => d(x) - d(y))[0];
+  }
+  return null;
+}
+// One pass over the style sheets for a few elements: the declarations each
+// matches (hover ones apart) and the CSS variables those rules read.
+function designRules(els) {
+  const out = new Map(els.map(e => [e, { decl: {}, hover: {}, vars: new Set() }]));
+  const marks = new Set();
+  for (const e of els) { for (const c of e.classList) marks.add("." + c); if (e.id) marks.add("#" + e.id); }
+  const roots = [...new Set(els.map(e => e.getRootNode()))];
+  let budget = 30000, dark = false, darkSel = "";
+  const take = (r, hover) => {
+    const sel = hover ? r.selectorText.replace(/:hover\b/g, "") : r.selectorText;
+    const named = sel.match(/[.#][\w-]+/g);
+    if (named && !named.some(n => marks.has(n.replace(/\\/g, "")))) return; // speed: only rules that name these elements' classes or ids (or none)
+    for (const e of els) {
+      let hit = false;
+      try { hit = e.matches(sel); } catch {}
+      if (!hit) continue;
+      const o = out.get(e), into = hover ? o.hover : o.decl;
+      for (const p of DESIGN_PROPS) {
+        const v = r.style.getPropertyValue(p);
+        if (v && (!into[p] || r.style.getPropertyPriority(p) || !into[p].imp)) into[p] = { v, imp: !!r.style.getPropertyPriority(p) };
+      }
+      for (const m of r.cssText.matchAll(/var\(\s*(--[\w-]+)/g)) o.vars.add(m[1]);
+    }
+  };
+  const walk = (rules, win) => {
+    for (const r of rules) {
+      if (--budget < 0) return;
+      if (r.selectorText) {
+        if (!darkSel) darkSel = (r.selectorText.match(DARK_SEL) || [""])[0]; // a theme switched by a class or attribute
+        take(r, /:hover\b/.test(r.selectorText));
+      }
+      else if (r.cssRules) {
+        if (r.media && /prefers-color-scheme/.test(r.media.mediaText)) dark = true;
+        if (!r.media || win.matchMedia(r.media.mediaText).matches) walk(r.cssRules, win);
+      }
+    }
+  };
+  for (const root of roots) {
+    const win = (root.ownerDocument || root).defaultView || window;
+    for (const sheet of sheetsOf(root)) {
+      if (sheet.ownerNode?.hasAttribute?.("data-morse-css") || sheet.ownerNode?.closest?.("[data-morse-ui]")) continue;
+      let rules;
+      try { rules = sheet.cssRules; } catch { continue; }
+      walk(rules, win);
+    }
+  }
+  for (const e of els) for (const m of (e.getAttribute("style") || "").matchAll(/var\(\s*(--[\w-]+)/g)) out.get(e).vars.add(m[1]);
+  return { per: out, darkMedia: dark, darkSel };
+}
+// "background var(--x) = #1e1e1e": as the rule says it, and what it is now.
+function designLook(el, rules) {
+  const cs = styleOf(el), r = el.getBoundingClientRect(), d = rules?.decl || {};
+  const say = (p, now) => { const v = d[p]?.v; return v && /var\(/.test(v) ? `${clip(v, 70)}${now && now !== v ? ` = ${now}` : ""}` : now; };
+  const bits = [`${Math.round(r.height)}px tall`];
+  const pad = cs.padding.split(" ").map(px).join(" ");
+  if (pad !== "0px") bits.push(`padding ${pad}`);
+  bits.push(`font ${px(cs.fontSize)} ${cs.fontWeight !== "400" ? cs.fontWeight + " " : ""}${clip(fontList(cs.fontFamily).split(",")[0], 30)}`);
+  bits.push(`color ${say("color", hex(cs.color))}`);
+  const bg = hex(cs.backgroundColor);
+  if (bg !== "transparent" || d["background-color"] || d.background) bits.push(`background ${say(d["background-color"] ? "background-color" : "background", bg)}`);
+  const bw = parseFloat(cs.borderTopWidth) || parseFloat(cs.borderBottomWidth);
+  if (bw) bits.push(`border ${say(d.border ? "border" : d["border-bottom"] ? "border-bottom" : "border-color", `${px(cs.borderTopWidth)} ${cs.borderTopStyle} ${hex(cs.borderTopColor)}`)}`);
+  if (cs.borderRadius !== "0px") bits.push(`radius ${say("border-radius", px(cs.borderRadius))}`);
+  if (cs.boxShadow !== "none") bits.push(`shadow ${clip(say("box-shadow", cs.boxShadow), 70)}`);
+  const hv = rules?.hover || {}, hk = ["background-color", "background", "color"].find(p => hv[p]);
+  if (hk) bits.push(`hover ${hk.replace("-color", "")} ${clip(hv[hk].v, 60)}`);
+  return bits.join(", ");
+}
+const designTag = (el, wrap = true) => {
+  const cls = [...el.classList].filter(c => !looksHashed(c) && !STATE_CLASS.test(c)).slice(0, 4);
+  const role = el.getAttribute("role");
+  const tag = `<${el.localName}${cls.length ? ` class="${cls.join(" ")}"` : ""}${role ? ` role="${role}"` : ""}>`;
+  // A wrapper that is part of the component (VS Code's div.statusbar-item around its label).
+  const p = el.parentElement;
+  return wrap && p && p.children.length === 1 && [...p.classList].some(c => !looksHashed(c)) ? `${designTag(p, false)} > ${tag}` : tag;
+};
+function iconsOf(el) {
+  const doc = el?.ownerDocument || document;
+  const near = sel => { const e = el ? nearestOf(sel, el, new Set()) : null; try { return e || doc.querySelector(sel); } catch { return null; } };
+  const names = (sel, re) => { const s = new Set(); try { for (const e of doc.querySelectorAll(sel)) { for (const c of (e.getAttribute("class") || "").split(/\s+/)) { const m = c.match(re); if (m && s.size < 4) s.add(m[0]); } if (s.size >= 4) break; } } catch {} return [...s]; };
+  if (near('.codicon[class*="codicon-"]')) return `codicons, an icon font: <span class="codicon codicon-NAME"></span> (in use: ${names(".codicon", /^codicon-[\w-]+$/).join(", ")}). Sized by font-size (16px), colored by color.`;
+  const luc = near('svg[class*="lucide-"]');
+  if (luc) return `lucide SVG icons (<svg class="${clip(luc.getAttribute("class"), 50)}">, ${Math.round(luc.getBoundingClientRect().width)}px, stroke currentColor). There is no icon font: copy one the app already shows with cloneNode(true) (in use: ${names('svg[class*="lucide-"]', /^lucide-[\w-]+$/).join(", ")}).`;
+  if (near('[class*="fa-"]:is(.fa,.fas,.far,.fab,.fa-solid,.fa-regular,i)')) return `Font Awesome: <i class="fas fa-NAME"></i> (in use: ${names('[class*="fa-"]', /^fa-(?!solid|regular|brands|fw|lg)[\w-]+$/).join(", ")}).`;
+  if (near(".material-icons,.material-symbols-outlined,.material-symbols-rounded")) return `Material icons: <span class="material-icons">NAME</span>.`;
+  const font = names('[class^="icon-"],[class*=" icon-"]', /^icon-[\w-]+$/);
+  if (font.length) return `icon-font classes: <i class="icon-NAME"></i> (in use: ${font.join(", ")}).`;
+  const use = near('svg use[href^="#"],svg use[*|href^="#"]');
+  if (use) return `an SVG sprite: <svg><use href="#ID"></use></svg> (e.g. ${clip(use.getAttribute("href") || use.getAttribute("xlink:href"), 30)}).`;
+  const svg = near("svg");
+  if (svg) { const r = svg.getBoundingClientRect(), s = styleOf(svg); return `inline SVG icons (${Math.round(r.width)}px, ${s.stroke && s.stroke !== "none" ? "stroked" : "filled"} with currentColor): copy one the app shows, or draw a simple one the same way.`; }
+  return "";
+}
+function designOf(el) {
+  const doc = el?.ownerDocument || document, body = doc.body;
+  if (!body) return "";
+  const here = el || body, lines = [];
+  // Exemplars: the app's own components near what was pointed at.
+  const skip = new Set(), ex = [];
+  // The items that already live where it was pointed (a status bar's entries,
+  // a toolbar's buttons): a new one there should look like them.
+  if (el) {
+    const kids = [...el.children].filter(c => designShown(c) && c.getBoundingClientRect().height <= 90);
+    const item = kids.find(c => kids.filter(d => groupKey(d) === groupKey(c)).length >= 2 && /\S/.test(c.textContent));
+    if (item) { skip.add(item); ex.push(["item here", item]); }
+  }
+  for (const [kind, sel] of DESIGN_KINDS) {
+    if (ex.length >= 4) break;
+    const e = nearestOf(sel, el, skip);
+    if (!e || (kind === "header" && !/\S/.test([...e.childNodes].filter(c => c.nodeType === 3).map(c => c.textContent).join("")) && e.children.length > 2)) continue;
+    skip.add(e); ex.push([kind, e]);
+  }
+  const ups = [];
+  for (let a = el?.parentElement, i = 0; a && a !== body && i < 4; a = a.parentElement, i++) ups.push(a);
+  const { per, darkMedia, darkSel } = designRules([...(el ? [el] : []), ...ups, ...ex.map(x => x[1])]);
+  // ---- light or dark: the page's, from what fills the middle of the window
+  // (the part pointed at may differ, like a dark sidebar)
+  const mid = [...(doc.elementsFromPoint?.(innerWidth / 2, innerHeight / 2) || [])].find(e => !isMorseUI(e)) || body;
+  const bg = shownBg(mid), dark = lum(bg) < 0.25, own = el ? shownBg(el) : bg;
+  const marks = new Set();
+  const chain = [];
+  for (let a = here; a; a = a.parentElement || outerOf(a)) chain.push(a);
+  for (const n of [...new Set([doc.documentElement, body, body.firstElementChild, ...chain])].filter(Boolean)) {
+    for (const c of n.classList) if (/(^|[-_])(dark|light)([-_]|$)|^(vs|vs-dark|hc-black|hc-light)$/i.test(c)) marks.add(`.${c}`);
+    for (const a of ["data-theme", "data-color-mode", "data-mode", "data-color-scheme", "data-bs-theme"]) if (n.getAttribute(a)) marks.add(`[${a}="${n.getAttribute(a)}"]`);
+  }
+  const scheme = styleOf(doc.documentElement).colorScheme;
+  if (darkSel) marks.add(darkSel);
+  const both = marks.size || darkMedia || /light dark|dark light/.test(scheme);
+  lines.push(`Mode: ${dark ? "dark" : "light"} (background ${hex(bg)}${Math.abs(lum(own) - lum(bg)) > 0.2 ? `; the part pointed at: ${hex(own)}` : ""}${marks.size ? `; ${[...marks].slice(0, 4).join(" ")}` : ""}). ${both ? "The app has light and dark themes: use its variables (or inherit/currentColor) so the change follows the theme." : "No dark theme found."}`);
+  // ---- variables
+  const cs = styleOf(here), vars = new Map();
+  let defined = 0;
+  // Words naming where this is ("statusbar", "sidebar", "nav"), never how it looks ("border", "active").
+  const words = new Set();
+  for (const n of [here, ...ups.slice(0, 1)]) for (const raw of [n.id, ...n.classList]) for (const w of String(raw || "").replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase().split(/[^a-z]+/)) if (w.length >= 4 && !NAMELESS.test(w) && !DESIGN_STOP.test(w) && !looksHashed(w)) words.add(w);
+  const regionWords = [...words].slice(0, 8);
+  const usedNear = new Map();
+  for (const [e, o] of per) for (const v of o.vars) usedNear.set(v, (usedNear.get(v) || 0) + (e === el || ex.some(x => x[1] === e) ? 2 : 1));
+  for (let i = 0; i < cs.length && i < 6000; i++) {
+    const name = cs[i];
+    if (!name.startsWith("--")) continue;
+    defined++;
+    if (NOISE_VAR.test(name)) continue;
+    const flat = name.toLowerCase().replace(/[^a-z]/g, "");
+    const score = Math.min(3, usedNear.get(name) || 0) * 3 + (regionWords.some(w => flat.includes(w)) ? 3 : 0) + (CORE_VAR.test(name) ? 2 : 0);
+    if (score < 2) continue;
+    const v = cs.getPropertyValue(name).trim(); // speed: only the ones that may be kept (VS Code defines 3,000+)
+    if (v && v.length <= 60 && !/url\(|^["']|^\\/.test(v)) vars.set(name, { v, score });
+  }
+  for (const [name] of usedNear) if (!vars.has(name) && !NOISE_VAR.test(name)) { const v = cs.getPropertyValue(name).trim(); if (v && v.length <= 60 && !/url\(/.test(v)) vars.set(name, { v, score: 9 }); }
+  const picked = [...vars].sort((a, b) => b[1].score - a[1].score || a[0].length - b[0].length).slice(0, 30).sort((a, b) => a[0].localeCompare(b[0]));
+  if (picked.length) lines.push(`CSS variables (${picked.length} of the ${defined} the app defines, picked for this spot):\n` + picked.map(([n, o]) => `${n}: ${clip(o.v, 50)}`).join("; "));
+  else lines.push("CSS variables: none. The app sets colors directly: reuse the exact values of the components below.");
+  // ---- fonts and scale: what the visible elements around here use most
+  const area = (() => { for (let a = el; a && a !== body; a = a.parentElement) { const r = a.getBoundingClientRect(); if (r.width * r.height >= innerWidth * innerHeight * 0.15) return a; } return body; })();
+  const count = new Map(), bump = (k, v) => { if (!v || v === "0px" || v === "normal" || v === "auto") return; const m = count.get(k) || new Map(); m.set(v, (m.get(v) || 0) + 1); count.set(k, m); };
+  const w = doc.createTreeWalker(area, NodeFilter.SHOW_ELEMENT);
+  let mono = "";
+  for (let n = w.currentNode, k = 0; n && k < 900; n = w.nextNode(), k++) {
+    if (isMorseUI(n) || !designShown(n)) continue;
+    const s = styleOf(n);
+    if (!n.closest("pre,code") && [...n.childNodes].some(c => c.nodeType === 3 && c.textContent.trim())) { bump("text", px(s.fontSize)); bump("font", fontList(s.fontFamily)); }
+    for (const p of ["paddingTop", "paddingLeft", "gap"]) if (/^\d+(\.\d+)?px$/.test(s[p])) bump("space", px(s[p]));
+    if (s.borderTopLeftRadius !== "0px" && parseFloat(s.borderTopLeftRadius) < 40) bump("radius", px(s.borderTopLeftRadius));
+    if (/^(button|input|select)$/.test(n.localName) || n.getAttribute("role") === "button") bump("control", Math.round(n.getBoundingClientRect().height) + "px");
+    if (!mono && /^(code|pre|kbd)$/.test(n.localName)) mono = `${clip(fontList(s.fontFamily).split(",")[0], 30)} ${px(s.fontSize)}`;
+  }
+  const top = (k, n) => [...(count.get(k) || [])].sort((a, b) => b[1] - a[1]).slice(0, n).map(x => x[0]);
+  const font = top("font", 1)[0] || fontList(styleOf(here).fontFamily);
+  lines.push(`Fonts: ${clip(font, 90)}${mono ? `; code: ${mono}` : ""}. Text sizes, most used first: ${top("text", 4).join(", ") || px(styleOf(here).fontSize)}. Spacing: ${top("space", 6).sort((a, b) => parseFloat(a) - parseFloat(b)).join(", ") || "-"}. Radius: ${top("radius", 3).join(", ") || "none (square)"}.${count.get("control") ? ` Control heights: ${top("control", 3).join(", ")}.` : ""}`);
+  // ---- components
+  if (ex.length) lines.push("The app's own components near here (reuse their classes and look for new ones of the same kind):\n" + ex.map(([kind, e]) => `- ${kind}: ${designTag(e)} ${clip(e.innerText || e.getAttribute("aria-label") || "", 24) ? `"${clip(e.innerText || e.getAttribute("aria-label"), 24)}" ` : ""}${designLook(e, per.get(e))}`).join("\n"));
+  // ---- icons
+  const icons = iconsOf(el);
+  const emoji = /\p{Extended_Pictographic}/u.test(clip(body.innerText, 4000).replace(/[©®™]/g, ""));
+  lines.push(`Icons: ${icons || "none found."}${emoji ? " The app shows emoji in its text." : " The app uses no emoji: don't use emoji as icons."}`);
+  return lines.join("\n").slice(0, 3400);
 }
 
 // Visible blocks as an indented tree: name, size, layout and look flags,
@@ -858,6 +1097,30 @@ function spotsShown() {
 // connector over CDP, the extension's content script): never the page's. A
 // short wait lets just-applied CSS start rendering (transitions move) first.
 globalThis.__morseProbe = (target, selectors) => new Promise(r => setTimeout(() => r(effectProbe(target, selectors)), 100));
+// polish (core/polish.js): the part of the window to show the model, in CSS
+// px of the viewport: what was pointed at plus what the mod made, with some
+// of the app around it (at least 560×260), within the window. Its scale keeps
+// the picture within 1280×900. Only for the top document; null in a frame.
+function shotArea(selector, modId) {
+  if (window.top !== window) return null;
+  const rects = [];
+  let t = null;
+  try { t = selector ? deepAll(selector).find(e => e.ownerDocument === document) : null; } catch {}
+  if (t) rects.push(t.getBoundingClientRect());
+  if (modId) for (const e of document.querySelectorAll(`[data-morse="${cssEsc(modId)}"]`)) { const r = e.getBoundingClientRect(); if (r.width && r.height) rects.push(r); }
+  const W = innerWidth, H = innerHeight, on = rects.filter(r => r.bottom > 0 && r.right > 0 && r.top < H && r.left < W);
+  let x0 = 0, y0 = 0, x1 = W, y1 = H;
+  if (on.length) {
+    x0 = Math.min(...on.map(r => r.left)) - 32; y0 = Math.min(...on.map(r => r.top)) - 32;
+    x1 = Math.max(...on.map(r => r.right)) + 32; y1 = Math.max(...on.map(r => r.bottom)) + 32;
+    const grow = (a, b, min) => { const d = Math.max(0, min - (b - a)) / 2; return [a - d, b + d]; };
+    [x0, x1] = grow(x0, x1, 560); [y0, y1] = grow(y0, y1, 260);
+  }
+  x0 = Math.max(0, Math.floor(x0)); y0 = Math.max(0, Math.floor(y0)); x1 = Math.min(W, Math.ceil(x1)); y1 = Math.min(H, Math.ceil(y1));
+  const width = x1 - x0, height = y1 - y0;
+  if (width < 8 || height < 8) return null;
+  return { x: x0, y: y0, width, height, scrollX, scrollY, vw: W, vh: H, scale: Math.min(1, 1280 / width, 900 / height) };
+}
 function context() {
   const cs = getComputedStyle(document.body);
   const roots = allRoots();
@@ -868,6 +1131,7 @@ function context() {
     outline: outline(roots),
     layout: layout(),
   };
+  try { ctx.design = designOf(S.target && S.target.isConnected ? S.target : null); } catch {} // design: never in the way of the rest
   if (S.target && S.target.isConnected) {
     const path = [], t = S.target, outer = outerOf(t);
     for (let n = t.parentElement, i = 0; n && n !== t.ownerDocument.body && i < 5; n = n.parentElement, i++) path.unshift(segment(n).s);

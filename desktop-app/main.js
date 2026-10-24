@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 import { createService, loadDaemon } from "./service.js";
 import { registerIpc, PUSH, isOpenLink } from "./ipc.js";
 import { markPng } from "./mark.js";
-import { linuxIconFor } from "./icons.js";
+import { iconSource } from "./icons.js";
 import { setAutostart, writeMenuEntry } from "./linux.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -35,6 +35,9 @@ const UI_FILES = {
   "/app.css": [path.join(HERE, "ui", "app.css"), "text/css; charset=utf-8"],
   "/app.js": [path.join(HERE, "ui", "app.js"), "text/javascript; charset=utf-8"],
   "/tokens.css": [path.join(HERE, "..", "design", "tokens.css"), "text/css; charset=utf-8"],
+  // The marks of the models you can choose (ui/icons/NOTICE), and the site's own Inter.
+  ...Object.fromEntries(["claude", "openai", "anthropic"].map(n => [`/icons/${n}.png`, [path.join(HERE, "ui", "icons", `${n}.png`), "image/png"]])),
+  ...Object.fromEntries(["inter-regular", "inter-medium", "interdisplay-semibold"].map(n => [`/fonts/${n}.woff2`, [path.join(HERE, "..", "site", "fonts", `${n}.woff2`), "font/woff2"]])),
 };
 const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 protocol.registerSchemesAsPrivileged([{ scheme: SCHEME, privileges: { standard: true, secure: true } }]);
@@ -117,22 +120,22 @@ function trayIcon() {
   return img;
 }
 
-// An app's own icon, as a data: URL for the list (or null: the list shows a letter).
+// An app's own icon, as a data: URL for the list (or null: the list shows a
+// letter). icons.js finds the app's real icon file (the icon theme, the app's
+// folder, inside an AppImage, the .icns in a Mac app); Electron's
+// app.getFileIcon is the fallback on macOS and the way on Windows. On Linux it
+// gives a generic "program" picture, not the app's, so it isn't used there.
 async function iconFor(a) {
-  if (MAC || WIN) {
-    const img = await app.getFileIcon(a.path || a.exe, { size: MAC ? "large" : "normal" });
-    return img.isEmpty() ? null : img.resize({ width: 64, height: 64, quality: "best" }).toDataURL();
-  }
-  const file = linuxIconFor(a);
-  if (!file) return null;
-  const img = nativeImage.createFromPath(file);
-  return img.isEmpty() ? null : img.resize({ width: 64, height: 64, quality: "best" }).toDataURL();
+  const src = iconSource(a);
+  let img = src?.png ? nativeImage.createFromBuffer(src.png) : src?.file ? nativeImage.createFromPath(src.file) : null;
+  if ((!img || img.isEmpty()) && (MAC || WIN)) img = await app.getFileIcon(a.path || a.exe, { size: "large" });
+  return !img || img.isEmpty() ? null : img.resize({ width: 64, height: 64, quality: "best" }).toDataURL();
 }
 
 // ---------------------------------------------------------------- the window
 function createWindow() {
   win = new BrowserWindow({
-    width: 940, height: 660, minWidth: 760, minHeight: 520, show: false,
+    width: 960, height: 720, minWidth: 760, minHeight: 560, show: false,
     title: "Morse", icon: MAC ? undefined : appIcon(),
     backgroundColor: nativeTheme.shouldUseDarkColors ? "#0b0b0c" : "#fbfbfb",
     ...(MAC ? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 16, y: 18 } } : { autoHideMenuBar: true }),

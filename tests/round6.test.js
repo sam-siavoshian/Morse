@@ -33,7 +33,7 @@ test("packs: a pack mod whose id differs from yours only in case is a clash (one
   const mine = [mod("abc123", { title: "My notes" })];
   const p = parsePack(pack([mod("ABC123", { title: "Theirs" })])).pack;
   assert.deepEqual(clashesFor(p, mine), { ABC123: { kind: "clash", id: "abc123", title: "My notes" } });
-  assert.throws(() => planInstall(p, [{ id: "ABC123" }], mine), /Choose whether to keep both or replace yours/);
+  assert.throws(() => planInstall(p, [{ id: "ABC123" }], mine), /Choose Keep both or Replace yours/);
   const both = planInstall(p, [{ id: "ABC123", as: "copy" }], mine).put;
   assert.notEqual(both[0].id.toLowerCase(), "abc123", "Keep both keeps yours");
   // Replace yours replaces that mod (its own file), not a second one beside it.

@@ -103,7 +103,7 @@ test("a feedback loop with the page's framework: paused, the page keeps working"
   const { page, id } = await open({ title: "Mark seen tasks", js: `morse.watch(".item", el => el.setAttribute("data-seen", ""));` }, "?framework");
   await paused(page, id, "loop");
   await usable(page);
-  await said(page, id, "Paused “Mark seen tasks” because it was slowing this page down.", SLOW, "It kept running again every time the page changed.");
+  await said(page, id, "Paused “Mark seen tasks” because it was slowing this page down.", SLOW, "It ran again every time the page changed.");
   await page.close();
 });
 

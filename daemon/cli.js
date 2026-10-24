@@ -136,6 +136,7 @@ ${B(h("desktop"))} ${h("desktop.note")}
   morse status              ${h("status")}
   morse stop <app>          ${h("stop")}
   morse fuses <app|path>    ${h("fuses")}
+  morse profile <app|path>  ${h("profile")}
 
 ${B(h("web"))} ${h("web.note")}
   morse extension           ${h("extension")}
@@ -203,6 +204,14 @@ async function main() {
       // A native app has no fuses, and Morse can't connect to it anyway: say that.
       if (app.canAttach === false) return console.log(`${app.name}  ${app.path}\n  ${t("cli.cantConnect", { why: app.why })}`);
       console.log(formatFuses(info, app.name));
+      break;
+    }
+    case "profile": { // app profiles: what Morse read about how an app works inside (daemon/profile.js)
+      const app = resolveApp(f._.join(" "));
+      const { profileForApp, formatProfile } = await import("./profile.js");
+      const p = await profileForApp(app);
+      if (f.json) return console.log(JSON.stringify(p, null, 2));
+      console.log(formatProfile(p));
       break;
     }
     case "mods": {

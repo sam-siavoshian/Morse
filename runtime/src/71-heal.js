@@ -14,7 +14,7 @@
 //     original request, the code, what used to match and the page as it is
 //     now, and the result shows for review with Save and Undo. The old
 //     version stays in History.
-//   - Settings → "Fix my mods automatically when a site changes" (off by
+//   - Settings → "Fix my mods when a site changes" (off by
 //     default) fixes in the background and says so, with Undo.
 //   - a fixed gallery mod offers to share the fix (core/heal.js fixIssue).
 //

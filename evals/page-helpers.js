@@ -52,11 +52,17 @@ export function stubs() {
     } });
   } catch {}
   const exec = document.execCommand.bind(document);
+  // An app that fills the clipboard from its own copy handler (VS Code's
+  // editor): what it puts there counts, read as the copy event bubbles up.
+  let copied = null;
+  document.addEventListener("copy", e => { try { const t = e.clipboardData?.getData("text/plain"); if (t) copied = t; } catch {} });
   document.execCommand = function (cmd, ...rest) {
     if (/^(copy|cut)$/i.test(cmd)) {
       const a = document.activeElement;
       const sel = a && "value" in a && typeof a.selectionStart === "number" ? a.value.slice(a.selectionStart, a.selectionEnd) : String(getSelection());
-      window.__clip = sel || (a && a.value) || "";
+      copied = null;
+      if (/^copy$/i.test(cmd)) try { exec(cmd, ...rest); } catch {}
+      window.__clip = copied || sel || (a && a.value) || "";
       return true;
     }
     return exec(cmd, ...rest);
