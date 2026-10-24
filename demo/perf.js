@@ -283,7 +283,7 @@ async function extension() {
   let ctx;
   try {
     ctx = await chromium.launchPersistentContext(profile, { channel: "chromium", headless: true, args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`] });
-  } catch (e) { return { skipped: e.message.split("\n")[0] }; }
+  } catch (e) { await fs.rm(profile, { recursive: true, force: true }).catch(() => {}); return { skipped: e.message.split("\n")[0] }; }
   const plain = await chromium.launch({ channel: "chromium", headless: true }).catch(() => chromium.launch());
   try {
     const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker", { timeout: 10000 });
@@ -317,7 +317,7 @@ async function extension() {
       log(`  extension ${name}: ${JSON.stringify(out[name])}`);
     }
     return out;
-  } finally { await ctx.close(); await plain.close(); }
+  } finally { await ctx.close(); await plain.close(); await fs.rm(profile, { recursive: true, force: true }).catch(() => {}); }
 }
 
 // ---------------------------------------------------------------- run

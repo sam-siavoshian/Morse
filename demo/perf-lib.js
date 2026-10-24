@@ -203,7 +203,9 @@ export function instrument() {
 }
 
 // ---- the desktop path: a Chromium with a debugging port and the real connector
+// A home it made itself (no `home` given) is removed by close().
 export async function desktop({ home, headless = true, args = [] } = {}) {
+  const ownHome = !home;
   home ||= await fs.mkdtemp(path.join(os.tmpdir(), "morse-perf-"));
   process.env.MORSE_HOME = home;
   await fs.mkdir(path.join(home, "mods"), { recursive: true });
@@ -287,7 +289,11 @@ export async function desktop({ home, headless = true, args = [] } = {}) {
         clearSends: () => inMorse(P => { P.sends.length = 0; }),
       };
     },
-    close: () => browser.close(),
+    async close() {
+      await browser.close().catch(() => {});
+      await Promise.race([connector.stop().catch(() => {}), sleep(2000)]); // its file watchers; the windows are gone
+      if (ownHome) await fs.rm(home, { recursive: true, force: true }).catch(() => {});
+    },
   };
 }
 
