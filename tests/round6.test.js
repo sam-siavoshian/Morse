@@ -119,7 +119,7 @@ test("a shared mod can't arrive as Your style (hidden from the Mods panel), skip
 // ======================================================================
 // The Trusted Types builder
 
-test("the HTML builder also drops javascript: links spelled with tabs or control characters, SVG animation of links, and doesn't throw on a bad entity", { skip, timeout: 30000 }, async () => {
+test("the HTML builder also drops javascript: links spelled with tabs or control characters, SVG animation of links; a bad entity doesn't throw, and text that grows when lower-cased (İ) no longer loops forever", { skip, timeout: 30000 }, async () => {
   const browser = await chromium.launch();
   cleanups.push(() => browser.close());
   const page = await browser.newPage();
