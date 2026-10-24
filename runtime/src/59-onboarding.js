@@ -78,8 +78,7 @@ const Onboarding = (() => {
     const waiting = Waiting.list(); // waiting hook: mods here whose code waits for “Allow User Scripts” (64-waiting.js)
     if (waiting.length && !Waiting.quiet)
       return { id: `waiting:${waiting.length}`, text: Waiting.text(waiting), btn: t("popup.turnItOn"), act: "userscripts" };
-    if (status.userScripts === false && !st.dismissed.userScripts)
-      return { id: "userScripts", text: t("ob.scriptsOff"), btn: t("popup.turnItOn"), act: "userscripts" };
+    // onboarding v2: no standing “Allow User Scripts is off” note. It comes up when a change needs it (Waiting, above; 60-generate.js).
     return null;
   }
   function renderNote() {

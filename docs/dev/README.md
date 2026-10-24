@@ -11,6 +11,9 @@ How to work on Morse itself. For using Morse, see the [docs](../README.md).
 - [Accessibility of Morse itself](accessibility.md): keyboard, screen
   readers, zoom and forced colors in Morse's own UI, and how axe-core checks
   it.
+- [Onboarding](onboarding.md): the first minutes, mapped and measured before
+  and after onboarding v2, one-click pairing with Morse Desktop, and
+  “Allow User Scripts” only when a change needs it.
 - [Checking a Mac or Windows PC](platform-testing.md): the 15-minute check
   for the desktop support that has only been tested on Linux.
 
@@ -180,8 +183,12 @@ The version lives in `package.json` only; the build writes it into the
 extension's manifest, and `morse --version` prints it. See
 [CHANGELOG.md](../../CHANGELOG.md).
 
-- **npm:** `npm publish` (the `prepare` script builds the extension that
-  ships inside the package, also for installs from GitHub).
+`npm run release -- minor`, then `git push --follow-tags origin main`: the
+tag's workflow tests, publishes to npm and makes the GitHub release with the
+store zip. The one-time setup and every step: [Releasing](releasing.md).
+
+- **npm:** the `prepare` script builds the extension that ships inside the
+  package, also for installs from GitHub.
 - **Chrome Web Store:** `npm run store` makes
   `dist/morse-extension-<version>-store.zip` (a `MORSE_STORE=1` build) and
   prints its SHA-256. The listing text, permission notes, screenshots and the

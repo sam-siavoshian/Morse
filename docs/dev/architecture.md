@@ -415,12 +415,16 @@ Mods are code running inside apps you're signed into, so:
   (every GitHub Pages project of the same owner shares it). Its Install
   button opens Morse's own review; only a click there installs.
 - `morse launch` opens a debugging port on 127.0.0.1. While it's open, **any
-  local process can attach to that app**, which is the same trust level as
-  anything else running as you, but worth knowing. Quit the app normally to
+  local process can attach to that app**, including one another account on
+  the same computer runs: the port has no password. Quit the app normally to
   close it. Morse picks a free port, drops any `--remote-debugging-address`
-  you pass, checks the port can't be reached from this machine's other
-  addresses, and won't connect if what answers isn't the app it started
-  (process id, then user agent).
+  or `--remote-allow-origins` you pass (however it's spelled), checks the
+  port can't be reached from this machine's other addresses, won't connect
+  if what answers isn't the app it started (process id, then user agent),
+  and on Linux won't connect when another account's program holds the port
+  (`/proc/net/tcp`, `ports.js portIsMine`), since that program could say
+  any process id and user agent. Morse Desktop doesn't count a Morse helper
+  another account started as running, for the same reason.
 - Share links carry the mod in the URL fragment, which browsers never send to
   a server.
 - Page text goes to the model, so a page can try to prompt-inject it. That's

@@ -31,6 +31,9 @@ const APPS = {
   tunes: { page: new URL("../../demo/sites/tunes/index.html", import.meta.url).href, title: "Tunes, a music app" },
   byte: { page: new URL("../../demo/sites/byte/index.html", import.meta.url).href, title: "The Daily Byte, a news site" },
 };
+// One of APPS by its own name (the one saved in localStorage may be anything:
+// "toString" is `in` every object), else the music app.
+export const knownApp = name => (typeof name === "string" && Object.hasOwn(APPS, name) ? name : "tunes");
 const RUNTIME = new URL("../../dist/extension/runtime.js", import.meta.url).href;
 const BRIDGE = new URL("frame.js", import.meta.url).href;
 
@@ -81,7 +84,7 @@ export function startTry(section) {
   const view = $(".try-view");
   const status = $(".try-status");
   const platform = detectPlatform();
-  let app = store.get("app", "tunes") in APPS ? store.get("app", "tunes") : "tunes";
+  let app = knownApp(store.get("app", "tunes"));
   let frame = null, ready = false, readyWait = null, pages = {};
   let draft = null; // the id of a change that waits for Save or Undo
   const running = new Map(); // genId -> AbortController
@@ -274,7 +277,7 @@ export function startTry(section) {
     event({ type: "request", text: btn.dataset.text || btn.textContent.trim(), at: btn.dataset.at || undefined });
   }
   async function pickApp(name) {
-    if (!(name in APPS) || (name === app && frame)) return;
+    if (knownApp(name) !== name || (name === app && frame)) return;
     app = name;
     ctl = null;
     store.set("app", app);

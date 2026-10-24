@@ -19,10 +19,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // The daemon modules, the way the CLI uses them. One object, so tests can
 // hand createService a fake with the same names.
 export async function loadDaemon() {
-  const [apps, desktop, status, store, models, setup, bridge, control, coreControl, platform, providers, onboarding] = await Promise.all([
+  const [apps, desktop, status, store, models, setup, bridge, control, coreControl, platform, providers, onboarding, ports] = await Promise.all([
     import("../daemon/apps.js"), import("../daemon/desktop.js"), import("../daemon/status.js"), import("../daemon/store.js"),
     import("../daemon/models.js"), import("../daemon/setup.js"), import("../daemon/bridge.js"), import("../daemon/control.js"),
-    import("../core/control.js"), import("../daemon/platform.js"), import("../core/providers.js"), import("../core/onboarding.js"),
+    import("../core/control.js"), import("../daemon/platform.js"), import("../core/providers.js"), import("../core/onboarding.js"), import("../daemon/ports.js"),
   ]);
   return {
     // apps (morse apps, launch, attach, status, stop)
@@ -35,6 +35,7 @@ export async function loadDaemon() {
     saveChoice: setup.saveChoice, checkModel: setup.checkModel, BACKENDS: setup.BACKENDS, EXTENSION_DIR: setup.EXTENSION_DIR,
     // the Morse helper (morse serve, pair, unpair)
     createBridge: bridge.createBridge, startPairing: bridge.startPairing, helperPort: bridge.helperPort, validPairingCode: bridge.validPairingCode, VERSION: bridge.VERSION,
+    portIsMine: ports.portIsMine, // another account's program on the helper's place (Linux)
     // mods and the off switch (morse mods, pause, resume)
     listMods: store.listMods, getMod: store.getMod, saveMod: store.saveMod,
     loadControl: control.loadControl, saveControl: control.saveControl, setPause: coreControl.setPause, pauseInfo: coreControl.pauseInfo,
@@ -264,9 +265,14 @@ export function createService({
   }
 
   // ---- Chrome: the Morse helper (morse serve) and pairing
+  // A program another account started can sit on the helper's place and answer
+  // like a helper. Chrome would send it your requests, so it never counts as running.
+  const theirs = port => d.portIsMine?.(port) === false;
+  const THEIRS = "A program another account on this computer started is using the Morse helper's place. Chrome can't use your model until it's gone: restart the computer, then turn the helper on again.";
   async function startHelper() {
     const port = d.helperPort();
     if (helper.running && helper.ours) return chrome();
+    if (theirs(port)) { helper = { bridge: null, running: false, ours: false, error: THEIRS }; changed(); return chrome(); }
     if (await fetchHealth(port)) { helper = { bridge: null, running: true, ours: false, error: "" }; changed(); return chrome(); }
     // One-click pairing (onboarding v2, daemon/bridge.js): the helper calls
     // askAllow when Chrome asks to connect; the person answers in this window.
@@ -294,8 +300,9 @@ export function createService({
     let running = helper.running;
     // A helper started from a terminal (morse serve) counts too.
     if (!helper.ours) {
-      running = !!(await fetchHealth(d.helperPort()));
-      if (running !== helper.running) helper = { ...helper, running };
+      const foreign = theirs(d.helperPort());
+      running = !foreign && !!(await fetchHealth(d.helperPort()));
+      if (running !== helper.running || (foreign && helper.error !== THEIRS)) helper = { ...helper, running, ...(foreign && { error: THEIRS }) };
     }
     const p = cfg.bridge?.pairing;
     const waiting = p && p.expires > now() ? { code: p.code, expires: p.expires } : null;
@@ -337,6 +344,7 @@ export function createService({
   // The helper's question (createBridge's `ask`): { origin, label, words, signal } -> true (Allow) | false.
   function askAllow({ origin, words = null, signal } = {}) {
     return new Promise(resolve => {
+      if (signal?.aborted) return resolve(false); // its time ran out already: "abort" won't fire again
       const a = { id: crypto.randomBytes(12).toString("base64url"), extension: String(origin || "").replace(/^chrome-extension:\/\//, ""), words, resolve: null };
       a.resolve = yes => { asks = asks.filter(x => x !== a); changed(); resolve(yes === true); };
       asks = [...asks, a];
