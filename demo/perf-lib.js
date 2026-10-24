@@ -207,6 +207,9 @@ export async function desktop({ home, headless = true, args = [] } = {}) {
   home ||= await fs.mkdtemp(path.join(os.tmpdir(), "morse-perf-"));
   process.env.MORSE_HOME = home;
   await fs.mkdir(path.join(home, "mods"), { recursive: true });
+  // Steady-state page loads: the once-per-window welcome toast (which loads the
+  // UI when the page goes idle) would otherwise land in every new test window.
+  await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false })).catch(() => {});
   const port = await freePort();
   const launchArgs = [`--remote-debugging-port=${port}`, ...args];
   let browser;
