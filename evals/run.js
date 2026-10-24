@@ -39,22 +39,30 @@ const { values: opt } = parseArgs({ options: {
   model: { type: "string", default: "haiku" },
   provider: { type: "string", default: "claude-code" },
   only: { type: "string", default: "" },
+  sites: { type: "string", default: "" }, // e.g. the hard apps: shop,home,builder,logs,tasks,sketch,wiki
   repeat: { type: "string", default: "1" },
   concurrency: { type: "string", default: "4" },
   label: { type: "string", default: "" },
   "no-probe": { type: "boolean", default: false },
   "no-write": { type: "boolean", default: false },
   "dump-context": { type: "boolean", default: false },
+  "context-only": { type: "boolean", default: false },
 } });
 
+// Named groups for --sites.
+const HARD = { hard: "shop,home,builder,logs,tasks,sketch,wiki", easy: "tunes,parley,byte,mail,notes,dash" };
 const all = JSON.parse(readFileSync(path.join(HERE, "cases.json"), "utf8")).cases;
 let cases = all.filter(c => opt.split === "all" || (c.split || "train") === opt.split);
+if (opt.sites) { const sites = (HARD[opt.sites] || opt.sites).split(","); cases = cases.filter(c => sites.includes(c.site)); }
 if (opt.only) { const ids = opt.only.split(","); cases = all.filter(c => ids.includes(c.id)); }
 const repeat = Math.max(1, +opt.repeat);
 const settings = { provider: opt.provider, model: opt.model };
 
 // ---- static server for the demo sites (CSP like demo/serve.js) -------------
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css" };
+// Apps settle (timers, first re-renders) and the user points and types
+// before the context is read.
+const SETTLE_MS = 1200;
 const server = http.createServer(async (req, res) => {
   const p = decodeURIComponent(new URL(req.url, "http://x").pathname).replace(/\/$/, "/index.html");
   const file = path.join(ROOT, path.normalize(p));
@@ -79,7 +87,9 @@ const INSTALL_CONTEXT = `(() => {
   ${CONTEXT_SRC}
   window.__morseEval = {
     context(sel) {
-      S.target = sel ? document.querySelector(sel) : null;
+      // "host >>> inner": inside an open shadow root or a same-origin iframe
+      // (what the picker can point at: it reaches into open shadow roots).
+      S.target = sel ? window.__deep(sel)[0] || null : null;
       if (sel && !S.target) throw new Error("target not found: " + sel);
       return context();
     },
@@ -107,22 +117,34 @@ async function runCase(c, rep) {
   await page.exposeFunction("__evalClick", (x, y) => page.mouse.click(x, y));
   await page.exposeFunction("__evalType", t => page.keyboard.type(t, { delay: 5 }));
   await page.exposeFunction("__evalPress", k => page.keyboard.press(k));
+  await page.exposeFunction("__evalMove", (x, y) => page.mouse.move(x, y));
+  await page.exposeFunction("__evalDrag", async (x1, y1, x2, y2) => {
+    await page.mouse.move(x1, y1); await page.mouse.down();
+    for (let i = 1; i <= 8; i++) await page.mouse.move(x1 + (x2 - x1) * i / 8, y1 + (y2 - y1) * i / 8);
+    await page.mouse.up();
+  });
 
   const rec = { id: c.id, rep, site: c.site, category: c.category, split: c.split || "train", request: c.request, target: c.target };
   const t0 = Date.now();
   try {
-    await page.goto(`${BASE}/demo/sites/${c.site}/`, { waitUntil: "load" });
+    await page.goto(`${BASE}/demo/sites/${c.site}/${c.page || ""}`, { waitUntil: "load" });
     await page.evaluate(INSTALL_CONTEXT);
+    await page.waitForTimeout(SETTLE_MS);
+    const tc = Date.now();
     const context = await page.evaluate(sel => window.__morseEval.context(sel), c.target);
+    rec.ctxMs = Date.now() - tc;
     rec.contextChars = buildMessages({ request: c.request, context }).map(m => m.content).join("").length;
     if (opt["dump-context"]) console.log(`---- ${c.id}\n` + buildMessages({ request: c.request, context })[1].content);
-    // Everything that exists now is "original"; checkers can tell new elements apart.
-    await page.evaluate(() => { window.__orig = new WeakSet(document.querySelectorAll("*")); });
+    if (opt["dump-context"] && opt["context-only"]) { await ctx.close(); return { ...rec, pass: true, ms: 0 }; }
+    // Everything that exists now is "original" (in every open shadow root and
+    // same-origin frame too); checkers can tell new elements apart.
+    await page.evaluate(() => { window.__orig = new WeakSet(window.__roots().flatMap(r => [...r.querySelectorAll("*")])); });
     await page.evaluate(helpers);
     await page.evaluate(() => { window.__pseudo0 = T.pseudoTexts(); });
     const B = c.before ? await page.evaluate(`(async () => { ${c.before} })()`) : null;
 
     const modId = `eval-${c.id}`;
+    const tg = Date.now();
     let cssApplied = Promise.resolve();
     const hasProbe = !opt["no-probe"] && await page.evaluate(() => !!window.__morseEval.probe);
     const res = await runMorse({
@@ -148,6 +170,7 @@ async function runCase(c, rep) {
       probe: hasProbe ? async sels => { await cssApplied; await page.waitForTimeout(80); return page.evaluate(([t, s]) => window.__morseEval.probe(t, s), [c.target, sels]); } : undefined,
     });
     await cssApplied;
+    rec.genMs = Date.now() - tg;
     rec.ms = Date.now() - t0;
     Object.assign(rec, { attempts: res.attempts, title: res.title, css: res.css, js: res.js, engineOk: res.ok, engineError: res.error || null, repairs: res.repairs || [] });
     await page.waitForTimeout(300);
@@ -191,17 +214,25 @@ server.close();
 
 results.sort((a, b) => a.id.localeCompare(b.id) || a.rep - b.rep);
 const pass = results.filter(r => r.pass).length;
-const lat = results.map(r => r.ms || 0).sort((a, b) => a - b);
-const median = lat.length ? lat[Math.floor(lat.length / 2)] : 0;
+const pct = (xs, p) => { const a = xs.filter(x => x != null).sort((x, y) => x - y); return a.length ? a[Math.min(a.length - 1, Math.floor(a.length * p))] : 0; };
+const lat = results.map(r => r.ms || 0);
+const median = pct(lat, 0.5);
 const summary = {
   label: opt.label, model: `${opt.provider}:${opt.model}`, split: opt.only ? "only" : opt.split, probe: !opt["no-probe"],
-  cases: results.length, pass, rate: +(pass / Math.max(1, results.length)).toFixed(3), medianMs: median,
+  cases: results.length, pass, rate: +(pass / Math.max(1, results.length)).toFixed(3), medianMs: median, p90Ms: pct(lat, 0.9),
+  // The model call plus applying (what the user waits for after Enter), the
+  // prompt size, and reading the page (context()).
+  genMs: { median: pct(results.map(r => r.genMs), 0.5), p90: pct(results.map(r => r.genMs), 0.9) },
+  promptChars: { median: pct(results.map(r => r.contextChars), 0.5), p90: pct(results.map(r => r.contextChars), 0.9) },
+  ctxMs: { median: pct(results.map(r => r.ctxMs), 0.5), p90: pct(results.map(r => r.ctxMs), 0.9) },
+  repairs: results.filter(r => (r.attempts || 0) > 1).length,
   byCategory: Object.fromEntries([...new Set(results.map(r => r.category))].sort().map(k => {
     const rs = results.filter(r => r.category === k);
     return [k, `${rs.filter(r => r.pass).length}/${rs.length}`];
   })),
 };
-console.log(`\n${pass}/${results.length} passed (${(summary.rate * 100).toFixed(0)}%), median ${(median / 1000).toFixed(1)}s`);
+console.log(`\n${pass}/${results.length} passed (${(summary.rate * 100).toFixed(0)}%), median ${(median / 1000).toFixed(1)}s, p90 ${(summary.p90Ms / 1000).toFixed(1)}s`);
+console.log(`model+apply ${(summary.genMs.median / 1000).toFixed(1)}s / p90 ${(summary.genMs.p90 / 1000).toFixed(1)}s · prompt ${summary.promptChars.median} / p90 ${summary.promptChars.p90} chars · context ${summary.ctxMs.median} / p90 ${summary.ctxMs.p90} ms · ${summary.repairs} repair rounds`);
 console.log(summary.byCategory);
 
 if (!opt["no-write"]) {
