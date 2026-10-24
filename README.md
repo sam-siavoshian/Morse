@@ -2,6 +2,10 @@
 
 **Customize any app in one sentence.** Press a hotkey, point at something, say what you want. Your model (Claude Code, Codex, or an API key) writes the change and Morse applies it to the running app, live, while you watch.
 
+[![Watch the 85-second demo](docs/launch/poster-demo.png)](docs/launch/morse-demo.mp4)
+
+*[Watch the 85-second demo](docs/launch/morse-demo.mp4), recorded from real runs: Claude Code (haiku) wrote the sleep timer and the word count. Clips, posters and notes on how it was made: [`docs/launch`](docs/launch/).*
+
 ![Morse adding a sleep timer to a music player](docs/screenshots/clip-sleep-timer.gif)
 
 *Recorded automatically by Morse. The model in this clip is a replay of pre-written replies, so the clip is reproducible (see [Status](#status)); everything after generation (streaming, injection, self-repair, recording) is the real pipeline. The same flow with real Claude Code output is in [`docs/screenshots/claude-code`](docs/screenshots/claude-code).*
