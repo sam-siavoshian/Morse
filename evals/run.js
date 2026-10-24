@@ -158,10 +158,10 @@ async function runCase(c, rep) {
       probe: hasProbe ? async sels => { await cssApplied; await page.waitForTimeout(80); return page.evaluate(([t, s]) => window.__morseEval.probe(t, s), [c.target, sels]); } : undefined,
     });
     await cssApplied;
-    rec.ms = Date.now() - t0;
+    rec.ms = Date.now() - t0 - Math.max(0, +opt["typing-ms"]); // the typing time is not latency
     // speed: per-stage latency, ms from Enter (context, model, first style on the page, done)
     const tm = res.timing || {}, off = tCtx - tEnter, at = v => (v == null ? null : Math.round(v + off));
-    rec.stages = { context: Math.round(ctxMs), contextRoundTrip: off, promptChars: rec.contextChars, spawn: tm.spawn ?? null,
+    rec.stages = { context: Math.round(ctxMs), contextRoundTrip: off, promptChars: rec.contextChars, spawn: tm.spawn ?? null, warm: tm.warm ?? null,
       modelReady: at(tm.modelReady), firstToken: at(tm.firstToken), firstCss: firstCssAt == null ? null : firstCssAt - tEnter,
       lastToken: at(tm.lastToken), modelDone: at(tm.modelDone), total: Date.now() - tEnter };
     Object.assign(rec, { attempts: res.attempts, title: res.title, css: res.css, js: res.js, engineOk: res.ok, engineError: res.error || null, repairs: res.repairs || [] });
