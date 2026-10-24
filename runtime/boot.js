@@ -400,9 +400,23 @@ const Heal = (() => {
   let running = null, again = false, badged = -1, wantUi = false;
   const wait = ms => new Promise(r => pristine.setTimeout(r, ms));
   const pageSize = () => (D.body ? D.body.getElementsByTagName("*").length : 0);
+  // "host >>> inside": into open shadow roots and same-origin frames (20-context.js deepAll).
+  const frameDoc = el => { try { const d = el.contentDocument; return d && d.documentElement ? d : null; } catch { return null; } };
+  const inner = el => (el.shadowRoot && !el.hasAttribute("data-morse-ui") ? el.shadowRoot : null) || (el.localName === "iframe" || el.localName === "frame" ? frameDoc(el) : null);
+  function deepAll(sel) {
+    const parts = sel.split(/\s*>>>\s*/);
+    let scopes = [D];
+    for (let i = 0; i < parts.length; i++) {
+      const found = [];
+      for (const sc of scopes) found.push(...sc.querySelectorAll(parts[i]));
+      if (i === parts.length - 1) return found;
+      scopes = found.map(inner).filter(Boolean);
+    }
+    return [];
+  }
   function countOf(sel) {
     let list;
-    try { list = D.querySelectorAll(sel); } catch { return null; }
+    try { list = sel.includes(">>>") ? deepAll(sel) : D.querySelectorAll(sel); } catch { return null; }
     let n = 0, rest = 0, top = Infinity;
     for (const el of list) {
       if (el.closest(NOT_OURS)) continue;
