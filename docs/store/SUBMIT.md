@@ -25,10 +25,11 @@ stuck if they aren't.
   (`/RRAA/share/install.html`), which the extension uses.
 - [ ] **`morse-cli` is on npm.** The description and the welcome page tell
   people to install the Morse helper with `npm install -g morse-cli`, then
-  run `morse setup`. Today `npm view morse-cli` says 404. Publish it
-  (`npm publish` from the repo; `files` in `package.json` already lists what
-  ships) before the listing goes live, or a reviewer who follows the
-  description will hit an error. People with an API key don't need it.
+  run `morse setup`. Today `npm view morse-cli` says 404. Publish it before
+  the listing goes live, or a reviewer who follows the description will hit
+  an error: the first release does it
+  ([Releasing](../dev/releasing.md#the-first-time)). People with an API key
+  don't need it.
 - [ ] **The developer account is ready:** the one-time fee is paid, the
   contact email is verified, the Google account has 2-Step Verification on
   (the dashboard won't publish without it), and the trader / non-trader
@@ -52,6 +53,11 @@ test address).
 
 `store:smoke` should end with "clean: no errors or warnings from the
 extension".
+
+The release workflow builds the same zip for every version tag and attaches
+it to the GitHub release, with its SHA-256 in the notes. You can upload that
+one instead; `node scripts/store-smoke.js <zip>` checks a downloaded zip the
+same way.
 
 ## 3. Create the item
 
@@ -213,6 +219,8 @@ store`), and answer in the dashboard's appeal or resubmit with a note.
 
 - Point the website's "Get it for Chrome" buttons at the store page
   (`site/index.html`, marked with a comment) and the README's install steps.
-- Each update: bump `version` in `package.json`, `npm run store`, then
+- Each update: `npm run release` and push the tag
+  ([Releasing](../dev/releasing.md#every-release-after-that)), take
+  `morse-extension-<version>-store.zip` from the GitHub release, then
   **Package → Upload new package** in the dashboard and **Submit for review**.
   Updates that don't add permissions usually go through faster.

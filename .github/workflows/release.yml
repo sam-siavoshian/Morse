@@ -1,0 +1,288 @@
+# Ships a version when its tag is pushed. Make the tag with
+#   npm run release -- patch|minor|major|x.y.z   (scripts/release.js)
+#   git push --follow-tags origin main
+# docs/dev/releasing.md has the one-time setup and every step.
+#
+#   verify   the tag matches package.json, CHANGELOG.md has its section,
+#            npm ci, npm run check, npm test (the headless tests, as in ci.yml)
+#   build    the Chrome Web Store zip (MORSE_STORE=1), the npm package (its
+#            extension is the same store build) installed and tried once,
+#            and the release notes from CHANGELOG.md
+#   npm      npm publish --provenance, only when the NPM_TOKEN secret is set
+#   release  the GitHub release: the notes, the store zip, the npm package and,
+#            when .github/workflows/release-desktop.yml exists, the Morse
+#            Desktop downloads that workflow builds for the same tag
+#
+# Run by hand from the Actions tab (workflow_dispatch), it is a dry run: the
+# same checks and files, `npm publish --dry-run`, and no release; the files
+# are kept as the run's artifacts.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+# Read only by default; each job asks for what it needs. Actions are pinned to
+# a commit (a tag can be moved); the comment says which release it is.
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PLAYWRIGHT_VERSION: "1.63.0" # the same as ci.yml
+  DRY_RUN: ${{ github.event_name != 'push' && '1' || '' }}
+
+jobs:
+  verify:
+    name: Check and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false # nothing here pushes; gh uses GH_TOKEN
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - name: The tag, package.json and CHANGELOG.md agree
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(node -p 'require("./package.json").version')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [ -z "$DRY_RUN" ] && [ "$GITHUB_REF_NAME" != "v$VERSION" ]; then
+            echo "::error::The tag is $GITHUB_REF_NAME but package.json says $VERSION. Make tags with npm run release."
+            exit 1
+          fi
+          node scripts/release.js notes "$VERSION" > /dev/null || {
+            echo "::error::CHANGELOG.md has no section for $VERSION. npm run release adds it."
+            exit 1
+          }
+          echo "Releasing $VERSION${DRY_RUN:+ (dry run)}"
+      - run: npm ci
+      - run: npm run check
+      - name: Cache Playwright browsers
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+      - name: Install Playwright (global) and Chromium
+        run: |
+          npm install -g "playwright@${PLAYWRIGHT_VERSION}"
+          echo "NODE_PATH=$(npm root -g)" >> "$GITHUB_ENV"
+          playwright install --with-deps chromium
+      - name: npm test
+        shell: bash
+        run: npm test 2>&1 | tee test.log
+      - name: Upload test log
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: test-log
+          path: test.log
+          if-no-files-found: ignore
+
+  build:
+    name: Store zip and npm package
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false # nothing here pushes; gh uses GH_TOKEN
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Chrome Web Store zip
+        run: npm run store # MORSE_STORE=1 build, checked, zipped: dist/morse-extension-<version>-store.zip
+      - name: npm package, with the store build of the extension inside
+        shell: bash
+        env:
+          MORSE_STORE: "1" # read by scripts/build.js, which `prepare` runs
+        run: |
+          mkdir -p out
+          npm pack --pack-destination out
+          mv "dist/morse-extension-$VERSION-store.zip" out/
+          ls -l out
+      - name: Install the package and try it
+        shell: bash
+        run: |
+          PREFIX=$(mktemp -d)
+          npm install -g --prefix "$PREFIX" "./out/morse-cli-$VERSION.tgz"
+          export PATH="$PREFIX/bin:$PATH" MORSE_HOME=$(mktemp -d) MORSE_NO_UPDATE_CHECK=1
+          test "$(morse --version)" = "$VERSION"
+          # (output saved first: grep -q stops reading early, and pipefail would count that)
+          HELP=$(morse help); SETUP=$(morse setup --help); EXTOUT=$(morse extension)
+          grep -q "morse extension" <<< "$HELP"
+          grep -q "morse setup --use claude-code" <<< "$SETUP"
+          EXT=$(sed -n 1p <<< "$EXTOUT")
+          test "$(node -p "require('$EXT/manifest.json').version")" = "$VERSION"
+          if grep -q '"http://127.0.0.1:8787"' "$EXT/host.js"; then
+            echo "::error::The extension in the package is the test build (it trusts 127.0.0.1:8787)."
+            exit 1
+          fi
+          echo "morse $VERSION works from the package; extension at $EXT"
+      - name: Release notes
+        shell: bash
+        run: |
+          node scripts/release.js notes "$VERSION" > out/notes.md
+          test -s out/notes.md || { echo "::error::No release notes for $VERSION in CHANGELOG.md."; exit 1; }
+          (cd out && sha256sum *.zip *.tgz) > out/SHA256SUMS
+          cat out/notes.md out/SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release
+          path: out/
+          if-no-files-found: error
+
+  npm:
+    name: Publish to npm
+    needs: [verify, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # --provenance: npm shows which workflow run built the package
+    outputs:
+      published: ${{ steps.publish.outputs.published }}
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+      HAS_NPM_TOKEN: ${{ secrets.NPM_TOKEN != '' && '1' || '' }}
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release
+          path: out
+      - name: npm publish
+        id: publish
+        shell: bash
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # .npmrc from setup-node reads it
+        run: |
+          TAG=latest
+          case "$VERSION" in *-*) TAG=next ;; esac # 1.0.0-beta.1 doesn't become what npm install gets
+          if [ -n "$DRY_RUN" ]; then
+            npm publish "out/morse-cli-$VERSION.tgz" --dry-run --access public --tag "$TAG"
+            echo "::notice::Dry run: npm publish --dry-run only."
+          elif [ -z "$HAS_NPM_TOKEN" ]; then
+            echo "::notice title=npm skipped::No NPM_TOKEN secret, so morse-cli $VERSION was not published to npm. Add the secret (docs/dev/releasing.md) and re-run this job."
+          elif [ "$(npm view "morse-cli@$VERSION" version 2>/dev/null)" = "$VERSION" ]; then
+            echo "::notice::morse-cli $VERSION is already on npm."
+            echo "published=1" >> "$GITHUB_OUTPUT"
+          else
+            npm publish "out/morse-cli-$VERSION.tgz" --provenance --access public --tag "$TAG"
+            echo "published=1" >> "$GITHUB_OUTPUT"
+          fi
+
+  release:
+    name: GitHub release
+    needs: [verify, build, npm]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90 # waits for the Morse Desktop builds
+    permissions:
+      contents: write # the release
+      actions: read # the Morse Desktop run and its files
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+      TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+      NPM_PUBLISHED: ${{ needs.npm.outputs.published }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false # nothing here pushes; gh uses GH_TOKEN
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release
+          path: out
+      - name: Morse Desktop downloads
+        shell: bash
+        run: |
+          mkdir -p desktop
+          if [ ! -f .github/workflows/release-desktop.yml ]; then
+            echo "No release-desktop.yml at this tag: the release has no Morse Desktop downloads."
+            exit 0
+          fi
+          if [ -n "$DRY_RUN" ]; then
+            echo "Dry run: not waiting for Morse Desktop (it runs on tags)."
+            exit 0
+          fi
+          # The tag started release-desktop.yml too. Wait for it, then take its files.
+          RUN=""
+          for i in $(seq 1 20); do
+            RUN=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow release-desktop.yml --event push --limit 20 --json databaseId,headSha \
+              --jq "[.[] | select(.headSha == \"$GITHUB_SHA\")][0].databaseId // empty")
+            [ -n "$RUN" ] && break
+            sleep 15
+          done
+          if [ -z "$RUN" ]; then
+            echo "::warning::No Morse Desktop run for $TAG: the release has no desktop downloads."
+            exit 0
+          fi
+          gh run watch "$RUN" --repo "$GITHUB_REPOSITORY" --interval 60 --exit-status > /dev/null \
+            || echo "::warning::The Morse Desktop run failed: https://github.com/$GITHUB_REPOSITORY/actions/runs/$RUN. Attaching whatever it built."
+          gh run download "$RUN" --repo "$GITHUB_REPOSITORY" --pattern "morse-desktop-*" --dir desktop || true
+          find desktop -type f -exec mv {} out/ \;
+          ls -l out
+      - name: Notes
+        shell: bash
+        run: |
+          {
+            cat out/notes.md
+            echo
+            echo "### Get it"
+            echo
+            if [ -n "$NPM_PUBLISHED" ]; then echo "- The \`morse\` command, with the Chrome extension inside: \`npm install -g morse-cli@$VERSION\`"; fi
+            echo "- \`morse-extension-$VERSION-store.zip\`: the Chrome extension, as uploaded to the Chrome Web Store"
+            ls out | grep -qiE '\.(AppImage|dmg|exe)$' && echo "- Morse Desktop: the \`.AppImage\` (Linux), \`.dmg\` (macOS) and \`.exe\` (Windows) below"
+            echo
+            echo "SHA-256:"
+            echo
+            echo '```'
+            (cd out && sha256sum $(ls | grep -vE '^(notes\.md|SHA256SUMS)$'))
+            echo '```'
+          } > notes-full.md
+          cat notes-full.md
+      - name: Make or update the release
+        shell: bash
+        run: |
+          FILES=$(ls out/* | grep -vE '/(notes\.md|SHA256SUMS)$')
+          PRE=""
+          case "$VERSION" in *-*) PRE="--prerelease" ;; esac
+          if [ -n "$DRY_RUN" ]; then
+            echo "Dry run. Would release Morse $VERSION ($TAG) with:"
+            echo "$FILES"
+            exit 0
+          fi
+          # release-desktop.yml may have made a draft for this tag already.
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --title "Morse $VERSION" --notes-file notes-full.md $PRE \
+              || gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null
+          fi
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "Morse $VERSION" --notes-file notes-full.md $PRE
+          gh release upload "$TAG" $FILES --repo "$GITHUB_REPOSITORY" --clobber
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+          echo "::notice title=Released::https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG. Upload morse-extension-$VERSION-store.zip to the Chrome Web Store by hand (docs/store/SUBMIT.md)."
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: env.DRY_RUN == '1'
+        with:
+          name: dry-run-release
+          path: |
+            out/
+            notes-full.md

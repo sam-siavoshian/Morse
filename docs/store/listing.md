@@ -34,7 +34,7 @@ Morse lets you change any website in your own words.
 Open Morse on a page, point at something, and say what you want: "hide the sidebar", "make this easier to read", "add a copy button to every code example". You see the page change while Morse writes the change. If you like it, press Save and it becomes a mod. A mod is a change you saved. Morse brings it back every time you open that site.
 
 What you can do
-• Hide what you never use, restyle what tires your eyes, or add the button a site forgot.
+• Hide parts you never use, make text easier to read, or add a button a site is missing.
 • Watch it change. The new look shows up while the change is being written.
 • Ask for a follow-up ("a bit smaller"), or undo it. Nothing is saved until you press Save.
 • Use the Edit tools to hide, move, resize, recolor or rename part of a page at once, with no typing.

@@ -140,6 +140,63 @@ morse attach --port 9222 --app Slack
 - When you stop Morse, it takes its bar and your changes off every open
   window. The app keeps running. Its debugging port closes when you quit it.
 
+## Changes to what an app does
+
+Most changes are about how an app looks. Some are about what it does: "add a
+button that formats my document", "when I open a note, copy its name", "make
+Ctrl+Shift+K copy the line instead of deleting it". For these, Morse needs to
+know how the app works inside, not only what is on the screen.
+
+So the first time you open a desktop app with Morse, it reads how the app is
+put together, in the background:
+
+- the app's own commands, with their names (VSCodium, like VS Code, has over two thousand:
+  Format Document, Save, Duplicate Selection…; Obsidian and Joplin have their
+  own), and how to run them;
+- how its windows talk to the rest of the app;
+- what its main buttons do.
+
+This takes a few seconds, and you can use Morse while it happens. Morse keeps
+what it learned in your Morse folder (`~/.morse/profiles`), so the next time
+it is ready at once. When the app updates, Morse reads it again.
+
+When you ask for a change to what the app does, Morse gives your model the
+few commands and parts of the app that fit your request. Your change can then
+run the app's own commands, the same ones its menus and shortcuts run,
+instead of guessing at buttons and keys.
+
+- **Morse only reads.** It never changes the app's files (the tests check
+  every file before and after), and it never replaces the app's own code. A
+  change adds to what the app does; turning it off takes that away again.
+- **Your request decides.** A change to how something looks doesn't need any
+  of this, so Morse leaves it out.
+- To see what Morse found in an app, run `morse profile code` (or any app's
+  name). To try Morse without it, start it with `MORSE_PROFILE=off`.
+
+### What it made possible
+
+Tried on real apps with Claude Code (haiku), each request once with this and
+once without, and then used the way a person would (details in
+[App profiles](dev/rea.md#measurements)). With it, 10 of 11 changes worked;
+without it, 4. The ones only this made possible:
+
+| | |
+|---|---|
+| ![](screenshots/231-profile-vscode-format-before.png) VSCodium: "add a button here that formats the document" | ![](screenshots/232-profile-vscode-format-after.png) The Format button in the status bar runs VS Code's own Format Document |
+| ![](screenshots/241-profile-vscode-sort-before.png) "add a button here that sorts the lines of the file alphabetically" | ![](screenshots/233-profile-vscode-sort-after.png) Sorted by VS Code's own Sort Lines |
+| ![](screenshots/234-profile-vscode-remap-without.png) "make Ctrl+Shift+K duplicate the current line instead of deleting it", without: the line is deleted | ![](screenshots/235-profile-vscode-remap-with.png) With: the line is copied |
+| ![](screenshots/237-profile-joplin-duplicate-before.png) Joplin: "add a button that makes a copy of the note I'm looking at" | ![](screenshots/238-profile-joplin-duplicate-after.png) Joplin's own Duplicate made a copy of the welcome note |
+| ![](screenshots/236-profile-vscode-comment-after.png) VSCodium: "add a button here that comments out the line the cursor is on" | ![](screenshots/239-profile-joplin-clipboard-after.png) Joplin: "add a keyboard shortcut Ctrl+Alt+N that creates a new note from what is in the clipboard" |
+
+In Obsidian the same kind of change worked with or without it (here "add a
+button that inserts today's date into the note where my cursor is"), and with
+it the change used Obsidian's own Insert current date:
+![](screenshots/240-profile-obsidian-date-after.png)
+
+Not yet: "save the file automatically a second after I stop typing" in
+VS Code. The change waited for typing in a way VS Code's editor doesn't
+report, with or without this.
+
 ## Which apps can't work, and why
 
 **Native apps.** Morse changes web pages. Apps that aren't drawn with web
@@ -310,7 +367,7 @@ is, and whether Morse can see which apps are open.
   `Update.exe`, it asks `Update.exe` to start the app with the debugging
   switch, then finds the app by that switch, and waits up to 20 seconds while
   the app checks for updates first.
-- **Folders with spaces just work.** Morse starts programs with a list of
+- **Folders with spaces work.** Morse starts programs with a list of
   arguments, never by typing a command line, so `C:\Program Files` and
   `D:\Tools\Acme Chat` need no quotes.
 - **`--restart`** asks each window of the app to close, waits up to 10

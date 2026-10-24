@@ -39,7 +39,7 @@ function render(s) {
   // Without “Allow User Scripts” a mod's code doesn't run (background.js cantRun): say which mods here wait for it.
   const waits = m => !s.userScripts && m.enabled && !!m.js?.trim();
   const waiting = s.mods.filter(waits);
-  $("warn").hidden = s.userScripts;
+  $("warn").hidden = s.userScripts || !waiting.length; // onboarding v2: only when a mod here needs it
   $("warntext").innerHTML = waiting.length
     ? t("popup.waiting", { n: waiting.length, list: waiting.map(m => `“${esc(m.title)}”`).join(", ") })
     : t("popup.warnOff");
@@ -64,6 +64,9 @@ function render(s) {
   $("pairrow").hidden = !!h?.paired;
   $("hhint").hidden = !!h?.paired;
   $("unpair").hidden = !h?.paired;
+  // The helper's mark: what it uses (Claude Code, Codex, a key), both while that's unknown.
+  const marks = { "claude-code": ["claude"], codex: ["openai"], anthropic: ["anthropic"], openai: ["openai"] }[h?.provider] || ["claude", "openai"];
+  $("hmark").innerHTML = marks.map(n => `<img src="brand/${n}.png" alt=""${n === "claude" ? "" : ' class="mono"'}>`).join("");
   const hp = h?.provider && s.providers[h.provider];
   $("helperModels").innerHTML = (hp?.models || []).map(m => `<option value="${esc(m)}">`).join("");
   $("helperModel").placeholder = h?.model ? t("popup.helperChoice.model", { model: h.model }) : t("popup.helperChoice");

@@ -62,7 +62,7 @@ try {
   let { app, w } = await launch("dark");
   // 0. The first run: the model found by itself (checked for real), and the apps.
   await w.locator("#first").waitFor();
-  await w.waitForFunction(() => !document.querySelector("#first-model .radar") && /answered|didn't answer/.test(document.querySelector("#first-model").textContent), null, { timeout: 120000 });
+  await w.waitForFunction(() => !document.querySelector("#first-model .radar.live") && /answered|didn't answer/.test(document.querySelector("#first-model").textContent), null, { timeout: 120000 });
   await w.mouse.move(5, 600);
   await shot(w, "175-desktop-app-first-run.png");
   await w.click("#first-skip");
@@ -94,7 +94,7 @@ try {
   // 3. Model: checked, and the choices.
   await tab(w, "model");
   await w.click("#check-model");
-  await w.waitForFunction(() => !document.querySelector("#model-live .radar"), null, { timeout: 120000 });
+  await w.waitForFunction(() => !document.querySelector("#model-live .radar.live"), null, { timeout: 120000 });
   await w.click("#change-model");
   await w.waitForSelector("#choice-list .choice");
   await w.mouse.move(5, 500);

@@ -1,6 +1,7 @@
 onEvent(msg => {
   if (msg.type === "toggle") S.open ? closeBar() : openBar();
   if (msg.type === "open") S.open ? input.focus() : openBar(); // the website's Try it here: its Open Morse button never closes the bar
+  if (msg.type === "toggle" && typeof msg.text === "string" && msg.text && S.open && !input.value) { input.value = msg.text.slice(0, 200); input.dispatchEvent(new Event("input")); } // onboarding v2: the welcome page's first site
   if (msg.type === "panel") openPanel();
   if (msg.type === "mods.changed") syncMods();
   if (msg.type === "settings.changed" && msg.settings) setPrefs(msg.settings);
@@ -73,6 +74,7 @@ B.ready.then(hello => {
     Voice.configure(hello.voice);
     PromptHistory.load();
     if (hello.debug) debugStatus(); // the host was started with MORSE_DEBUG=1
+    if (hello.rebuilt) devRebuilt(); // developers: npm run build ran under a running extension
   } finally {
     // The person's language first (04-i18n.js), so the overlay never opens in
     // English and then changes; a host slow to send the words holds it up 1.5 s at most.
@@ -80,6 +82,14 @@ B.ready.then(hello => {
     else Promise.race([languageReady, new Promise(r => setTimeout(r, 1500))]).then(uiStarted).catch(e => console.warn("[morse]", e));
   }
 }).catch(e => console.warn("[morse]", e));
+
+// For people working on Morse (extension/dev-host.js; never in a store build):
+// the service worker still runs the code from before `npm run build`. It
+// stays until closed. (No Reload button: chrome.runtime.reload() unloads an
+// extension that was started with --load-extension.)
+function devRebuilt() {
+  controlToast(t("dev.rebuilt"), [], { sticky: true });
+}
 
 // boot.js applies the mods, so the guards around applyMod run there
 // (core/guard.js finds the harm); the reason the model gets for Fix it is

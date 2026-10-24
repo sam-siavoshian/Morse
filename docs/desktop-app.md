@@ -62,10 +62,15 @@ setting so it can connect.
 
 Morse has no model of its own. It uses one you already have: Claude Code,
 Codex or an API key. **Change…** shows what's on this computer and recommends
-one, the same as `morse setup`. **Check** asks the model a short question to
+one, the same as `morse setup`. Each choice says **Ready** or **Not
+installed**. **How to install** shows the one command to run, and **Look
+again** finds it once it's there. **Check** asks the model a short question to
 make sure it answers.
 
-![Model: Claude Code answered in 2.3 seconds, and the choices](screenshots/169-desktop-app-model.png)
+![Model: Claude Code answered, and the choices: Claude Code ready, Codex not installed, an API key](screenshots/169-desktop-app-model.png)
+
+The marks of Claude, OpenAI and Anthropic only name the service you choose.
+Where they come from: `desktop-app/ui/icons/NOTICE`.
 
 ## Chrome
 
@@ -89,8 +94,8 @@ To connect Chrome:
 ![“Allow Chrome to use your Claude Code?”](screenshots/171-desktop-app-allow-chrome.png)
 
 Only the Morse extension can ask, only from this computer, and nothing
-connects until you click **Allow**. Allow it only when you just clicked
-Connect in Chrome. **Sign out browsers** disconnects every browser.
+connects until you click **Allow**. Allow it only when you clicked
+Connect in Chrome a moment ago. **Sign out browsers** disconnects every browser.
 
 ## Mods
 

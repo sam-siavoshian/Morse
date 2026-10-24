@@ -3,9 +3,13 @@
 Morse's version lives in `package.json`. The build copies it into the Chrome
 extension, and `morse --version` prints it.
 
-## 0.2.0 (not released yet)
+Add what people will notice under "Unreleased". `npm run release` moves it
+under the new version number with the date
+([Releasing](docs/dev/releasing.md)).
 
-The first version meant for other people to install.
+## Unreleased
+
+Version 0.2.0, the first version meant for other people to install.
 
 ### Change apps in your own words
 
@@ -26,6 +30,12 @@ The first version meant for other people to install.
 - Desktop apps built from web pages (Spotify, Slack, Discord, VS Code, Notion,
   Obsidian and others): `morse launch spotify` reopens the app with Morse
   connected. Morse never changes the app's files.
+- Changes to what a desktop app does, not only how it looks: the first time
+  an app opens with Morse, Morse reads how it works inside (its commands,
+  how its windows talk to the rest of it, what its buttons do), keeps that in
+  `~/.morse/profiles`, and gives your model the parts that fit your request.
+  A change can then run the app's own commands ("add a button that formats
+  the document" in VSCodium). `morse profile <app>` shows what Morse found.
 - Morse Desktop: an app for your computer, so you don't need a terminal or
   Node. It lists your apps and opens them with Morse, chooses and checks your
   model, runs the Morse helper for Chrome (Chrome asks once and you click
@@ -91,6 +101,13 @@ The first version meant for other people to install.
   without the address only tests use) and prints its SHA-256;
   `npm run store:smoke` tries that zip in a fresh browser.
   [docs/store/SUBMIT.md](docs/store/SUBMIT.md) goes through the submission.
+- The welcome page asks one question (websites, desktop apps or both), then
+  connects in one click: with Morse Desktop open, **Use Claude Code** and
+  Morse Desktop asks you to Allow. No code to type, no terminal. Or paste an
+  Anthropic API key. The first change is guided on a practice page, then a
+  site you choose opens with Morse ready. “Allow User Scripts” comes up only
+  when a change needs it, with a picture of the switch.
+  [docs/dev/onboarding.md](docs/dev/onboarding.md) has the before and after.
 - The Morse icon sits on a dark tile, so it shows on light backgrounds too.
 - Needs Chrome 138 or later, the first with the "Allow User Scripts" switch.
 - A privacy policy that says exactly what leaves your computer:

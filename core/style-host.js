@@ -10,12 +10,17 @@
 // needs it (no autoplay, dark pages), and the off switch, pause and safe start
 // hold it back like any mod.
 //
-//   style.get      -> { style, entry, summary, here: { key, excepted } }
+//   style.get      -> { style, entry, summary, here: { key, excepted }, reach }
 //   style.preview  { words } -> the same, for the style with these words added (nothing is saved)
 //   style.save     { add: words } | { patch } | { reset: true } -> the same, saved
 //   style.except   { on, key? } leave this site (or key) out, or bring it back
 //   style.tried    the model fitted the style to this site once (or the person said no)
 //   mods.save / mods.delete of STYLE_ID: the Mods panel's switch and Safe start
+//
+// reach: where a saved style shows, for the words that say so: "all" (every
+// site and app: Chrome and the desktop share it through the Morse helper,
+// core/style-sync.js), "web" (every site in Chrome) or "apps" (every app
+// opened with Morse).
 
 import {
   STYLE_ID, STYLE_TITLE, normalizeStyle, hasStyle, parseStyleWords, mergeStyle, styleSummary, styleKey, styleExcepted,
@@ -23,6 +28,7 @@ import {
 } from "./style.js";
 import { compileA11y, A11Y_FONTS } from "./a11y.js";
 import { compileEdits, zoomFor } from "./edits.js";
+import { styleStamp } from "./style-sync.js";
 
 export const STYLE_REQUESTS = new Set(["style.get", "style.preview", "style.save", "style.except", "style.tried"]);
 
@@ -114,7 +120,8 @@ export function styleEntry(style, where) {
 // ---- the requests
 
 // store: { load() -> style | null, save(style | null) }; onChange(): tell open pages.
-export function createStyleHost({ load, save, onChange = () => {}, now = () => new Date().toISOString() }) {
+// reach() -> "all" | "web" | "apps" (above).
+export function createStyleHost({ load, save, onChange = () => {}, now = () => new Date().toISOString(), reach = async () => "all" }) {
   let queue = Promise.resolve();
   const current = async () => { const raw = await load(); return raw && hasStyle(raw) ? normalizeStyle(raw) : null; };
   // One read-modify-write at a time, so two tabs can't drop each other's change.
@@ -152,7 +159,7 @@ export function createStyleHost({ load, save, onChange = () => {}, now = () => n
     return stamp(next);
   }
 
-  return {
+  const host = {
     owns: msg => STYLE_REQUESTS.has(msg?.type) || (msg?.type === "mods.save" && msg.mod?.id === STYLE_ID) || (msg?.type === "mods.delete" && msg.modId === STYLE_ID),
 
     // The page's mods with the style first. Mods that fit the style to this
@@ -166,7 +173,26 @@ export function createStyleHost({ load, save, onChange = () => {}, now = () => n
       return [entry, ...list.filter(m => !isStyleChild(m) || entry.enabled)];
     },
 
+    // Sharing (core/style-sync.js): the style as kept, and putting another
+    // copy in its place only if this one is still the copy `was` names.
+    shared: () => current(),
+    async replace(next, was = "") {
+      let ok = false;
+      await update(cur => {
+        if (styleStamp(cur) !== was) return undefined;
+        ok = true;
+        return next && hasStyle(next) ? normalizeStyle(next) : null;
+      });
+      return ok;
+    },
+
     async handle(msg, where) {
+      const r = await host.answer(msg, where);
+      if (r && typeof r === "object" && "here" in r) r.reach = await reach().catch(() => "all");
+      return r;
+    },
+
+    async answer(msg, where) {
       switch (msg.type) {
         case "style.get": return view(await current(), where);
         case "style.preview": {
@@ -212,4 +238,5 @@ export function createStyleHost({ load, save, onChange = () => {}, now = () => n
       throw new Error(`Unknown request ${msg.type}`);
     },
   };
+  return host;
 }

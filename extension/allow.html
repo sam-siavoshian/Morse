@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turn on one switch</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="allow.css">
+</head>
+<body>
+<!-- onboarding v2: “Allow User Scripts”, only when a change needs it. A small
+     window next to Morse's details in Chrome (onboarding-host.js
+     allowUserScripts): a picture of the switch, and when it comes on, both
+     close and you are back on your tab. -->
+<main>
+  <h1 data-i18n="allow.h">Turn on one switch</h1>
+  <p data-i18n="allow.d">This change adds a button or a feature. Chrome asks you to allow that yourself, once.</p>
+  <figure>
+    <img src="allow-user-scripts.png" width="408" height="137" alt="The “Allow User Scripts” switch in Morse's details, turned on" data-i18n-attr="alt:allow.alt">
+    <figcaption data-i18n-html="allow.where">In the Chrome tab behind this window, turn on <b>“Allow User Scripts”</b>.</figcaption>
+  </figure>
+  <p class="live" id="live" role="status"><span class="dot" aria-hidden="true"></span><span id="say" data-i18n="allow.waiting">Morse brings you back when it's on.</span></p>
+  <div class="row"><button type="button" id="show" class="primary" data-i18n="allow.show">Show me the switch</button><button type="button" id="later" data-i18n="allow.later">Not now</button></div>
+</main>
+<script src="allow.js" type="module"></script>
+</body>
+</html>

@@ -56,6 +56,9 @@ this page run on your computer and send nothing to the model.
   in. Nothing is posted until you post it.
 - **Settings sync.** In Chrome, your Morse settings (shortcuts, bar position
   and the like) are kept in Chrome's sync storage. Your keys and mods are not.
+- **Newer version.** `morse doctor` asks npm (registry.npmjs.org) whether a
+  newer Morse is out, at most once a day. Nothing about you goes with it.
+  Turn it off with `MORSE_NO_UPDATE_CHECK=1`.
 
 ## What stays on your computer
 
@@ -97,9 +100,10 @@ mod by itself: only your click in Morse's own review does.
 
 `morse launch` opens the app with a debugging port, which is how Morse
 connects. While the app is open, other programs on your computer could
-connect to it too, the same as anything else running as you. Quit the app to
-close it. Morse makes sure the port can't be reached from other computers,
-and only connects when what answers is the app it started.
+connect to it too, also ones another account on the same computer runs. Quit
+the app to close it. Morse makes sure the port can't be reached from other
+computers, and only connects when what answers is the app it started (on
+Linux it also checks that no other account's program holds the port).
 
 The Morse helper (`morse serve`) only answers on this computer, only to the
 Morse extension, and only to a browser you paired with its one-time code.
