@@ -31,6 +31,7 @@ import os from "node:os";
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { startHelper, pairExtension, seasonExtension, seasonHome, pick } from "../demo/helper.js";
+import { freePort } from "../tests/helpers/net.js";
 
 const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -168,13 +169,15 @@ const takenNow = async () => { try { return JSON.parse(await fs.readFile(takenFi
 async function takeInApp(c) {
   const env = { ...process.env, MORSE_HOME: HOME, MORSE_DEBUG: "1", FORCE_COLOR: "0" };
   const appArgs = ["--no-sandbox", `--user-data-dir=${path.join(tmp, "app-profile")}`, "--disable-workspace-trust"];
-  const m = spawn(process.execPath, [path.join(root, "daemon/cli.js"), "launch", c.from.app, ...(process.env.MORSE_MODEL ? ["--model", process.env.MORSE_MODEL] : []), "--", ...appArgs], { env });
+  // A debugging port (not the private pipe Morse uses by default), so this script can drive the app too.
+  const appPort = await freePort();
+  const m = spawn(process.execPath, [path.join(root, "daemon/cli.js"), "launch", c.from.app, "--port", String(appPort), ...(process.env.MORSE_MODEL ? ["--model", process.env.MORSE_MODEL] : []), "--", ...appArgs], { env });
   let out = "";
   m.stdout.on("data", d => { out += d; }); m.stderr.on("data", d => { out += d; });
   try {
     await until(() => /✓ connected to/i.test(out) || m.exitCode != null, 120000, "morse launch to connect");
     if (m.exitCode != null) throw new Error("morse launch ended: " + out.slice(-400));
-    const port = Number(out.match(/port\s+(\d+)/)[1]);
+    const port = appPort;
     const browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
     const page = await until(() => browser.contexts().flatMap(x => x.pages()).find(p => p.url().includes(c.from.window || "")), 60000, "the app's window");
     await page.setViewportSize?.({ width: 1280, height: 800 }).catch(() => {});
@@ -200,9 +203,13 @@ async function takeInApp(c) {
     const item = await until(async () => (await takenNow()).length > before && (await takenNow())[0].about && (await takenNow())[0], T_MODEL, "the model to name what was taken");
     await sleep(1500);
     await snap(page, c.id, "taken");
-    await browser.close().catch(() => {});
     return item;
   } finally {
+    // Quit the app it opened (a CDP connection's close only disconnects), then Morse.
+    const port = appPort;
+    if (port) {
+      try { await (await (await chromium.connectOverCDP(`http://127.0.0.1:${port}`)).newBrowserCDPSession()).send("Browser.close"); } catch {}
+    }
     m.kill();
     spawn(process.execPath, [path.join(root, "daemon/cli.js"), "stop"], { env, stdio: "ignore" });
   }
