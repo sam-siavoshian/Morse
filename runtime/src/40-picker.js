@@ -9,7 +9,7 @@ function boxTo(el, box, label) {
 const ours = e => e.composedPath().includes(hostEl);
 function onMove(e) {
   if (!S.picking) return;
-  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const el = GodMode.deepAt(e.clientX, e.clientY); // God mode hook: also points into open shadow roots
   if (!el || el === hostEl || el === document.documentElement) { hoverEl = null; hl.hidden = true; return; }
   hoverEl = el;
   boxTo(el, hl, describe(el));
@@ -47,5 +47,6 @@ function setTarget(el) {
   } else { selBox.hidden = true; chip.hidden = true; }
   setHint();
   input.focus();
+  GodMode.onTarget(el); // God mode hook: edit toolbar for the selection
 }
 chip.querySelector(".x").onclick = () => { setTarget(null); startPicking(); };

@@ -4,6 +4,7 @@ import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { modMatches, validateMod } from "../core/mod.js";
+import { clipAdd } from "../core/clipboard.js";
 
 export const HOME = process.env.MORSE_HOME || path.join(os.homedir(), ".morse");
 const MODS = path.join(HOME, "mods");
@@ -52,6 +53,18 @@ export async function writeExport(filename, data) {
   const p = path.join(HOME, "exports", path.basename(filename));
   await fs.writeFile(p, data);
   return p;
+}
+
+// God mode's cross-app clipboard: ~/.morse/clipboard.json, newest first, max 20.
+const CLIPBOARD = path.join(HOME, "clipboard.json");
+export async function readClipboard() {
+  try { const l = JSON.parse(await fs.readFile(CLIPBOARD, "utf8")); return Array.isArray(l) ? l : []; } catch { return []; }
+}
+export async function putClipboard(item) {
+  const list = clipAdd(await readClipboard(), item);
+  await ensureHome();
+  await fs.writeFile(CLIPBOARD, JSON.stringify(list));
+  return list;
 }
 
 const safe = id => String(id).replace(/[^a-zA-Z0-9_-]/g, "");

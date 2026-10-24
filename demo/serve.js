@@ -22,7 +22,9 @@ const server = async (req, res) => {
 };
 
 // Each demo app gets its own origin, like real apps do (mods are scoped per host).
-const SITES = { 8787: "parley", 8788: "byte", 8789: "tunes" };
+// MORSE_DEMO_PORT moves all three (e.g. 9787 → 9787/9788/9789) so parallel runs don't collide.
+const BASE = Number(process.env.MORSE_DEMO_PORT || 8787);
+const SITES = { [BASE]: "parley", [BASE + 1]: "byte", [BASE + 2]: "tunes" };
 for (const [port, site] of Object.entries(SITES)) {
   http.createServer(server).listen(Number(port), "127.0.0.1", () => console.log(`${site.padEnd(7)} http://127.0.0.1:${port}/demo/sites/${site}/`));
 }

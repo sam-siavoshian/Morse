@@ -5,7 +5,7 @@
 
 import { spawn } from "node:child_process";
 import { CDPSession, listTargets } from "./cdp.js";
-import { modsFor, saveMod, deleteMod, writeExport } from "./store.js";
+import { modsFor, saveMod, deleteMod, writeExport, readClipboard, putClipboard } from "./store.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
 import { runMorse } from "../core/engine.js";
@@ -108,6 +108,11 @@ export class Connector {
         const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
         return saveMod({ ...mod, enabled: true, imported: true, match: mod.match || { hosts: [hostOf(where.url)], app: where.app } });
       }
+      // God mode: cross-app clipboard (Capture in one app, rebuild in another)
+      case "clipboard.list":
+        return readClipboard();
+      case "clipboard.put":
+        return putClipboard({ ...msg.item, from: { ...msg.item?.from, app: this.app?.name || msg.item?.from?.app || null } });
       case "exec":
         return this.exec(s, ctx, msg.modId, msg.js);
       case "off":
