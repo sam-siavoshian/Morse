@@ -16,6 +16,7 @@ New here? Start with [Getting started](getting-started.md).
 | [Ask and find](ask-and-find.md) | Ask what something does or where a setting is. Show me, and Explain this page |
 | [Show me once](show-me-once.md) | Do a task by hand once, then have Morse do it for you |
 | [Easier to use](easier-to-use.md) | Higher contrast, bigger click targets, easier fonts, Read aloud, Check this page, Describe this picture |
+| [Your style](your-style.md) | One look on every site and app: font, text size, calmer pages, colors, and the sites it skips |
 | [Mods](mods.md) | The Mods panel, sharing, the gallery, Try it, what a mod does before you install it, and fixing mods when a site changes |
 | [Your controls](your-controls.md) | The off switch, pausing Morse, Safe start, mods that slow down or freeze a page, and backups |
 | [Desktop apps](desktop.md) | Spotify, Slack, Discord, VS Code and other apps: how to connect, and which apps can't work |

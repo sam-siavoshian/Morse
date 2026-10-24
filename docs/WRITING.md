@@ -166,6 +166,7 @@ a different thing: it keeps a mod turned off.)
 | **alt text** | The description of a picture that screen readers read. "Save as alt text". | alt attribute, image label |
 | **Accessibility fixes** | The one mod per site that holds what Fix it and Describe this picture saved. | |
 | **Show me once** | Do a task by hand once so Morse can write down the steps; then say what to do with them (a button, a shortcut, every item). Each one is a **step**: Click “Archive”. A password's value shows as “(hidden)”. | record a macro, automation, workflow |
+| **Your style** | One style that follows you to every site and app: your font, text size, calmer colors, no autoplay and more. Say it once in the bar, ending with "everywhere", or set it in Settings. **Not on this site** leaves one site out. **Fit to this site** asks the model to fix what it breaks there; you review it like any change. | theme, global mod, preferences |
 | **capture** | Save the look of something so you can rebuild it in another app. Captured things show under "Captured" in the bar. | copy, clip, clipboard |
 | **voice** | Talking to Morse instead of typing. "Hold ⌥Space to talk." | dictation, speech input |
 | **shortcut** | A keyboard shortcut. | hotkey, keybinding (fine in developer docs) |

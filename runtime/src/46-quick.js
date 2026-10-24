@@ -141,7 +141,7 @@ const GodQuick = (() => {
   async function reset() {
     const s = GodMode.resetSession();
     if (s.id) await removeMod(s.id);
-    const on = S.mods.filter(m => m.enabled);
+    const on = S.mods.filter(m => m.enabled && m.kind !== "style"); // your-style hook: "Not on this site" is in the Mods panel
     if (!on.length && !s.history.length) return toast("Nothing to reset here");
     for (const m of on) {
       m.enabled = false;
