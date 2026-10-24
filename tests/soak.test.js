@@ -76,18 +76,37 @@ test("running a mod again and again (refine, off and on) on an element that stay
 
 test("a runtime that went quiet (morse stop) lets go of the page: attach and stop again and again, listeners and observers stay level", { skip }, async () => {
   const { bundleRuntime } = await import("../runtime/bundle.js");
+  const { pressOpen } = await import("./helpers/keys.js");
   const page = await browser.newPage();
-  await page.setContent(`<!doctype html><title>Quiet</title><h1>Hello</h1>`);
+  const server = http.createServer((q, r) => r.writeHead(200, { "Content-Type": "text/html" }).end(`<!doctype html><title>Quiet</title><h1>Hello</h1>`));
+  await listen(server);
+  after(() => server.close());
+  await page.goto(`http://127.0.0.1:${server.address().port}/`);
+  await page.evaluate(() => localStorage.setItem("morse:debug", "1")); // the UI comes at once, with its status
   // Each attach brings its own host, as the connector's shim does (daemon/connector.js).
   const install = () => page.evaluate(() => {
     const subs = [];
     globalThis.__morseHost = {
       onMessage: f => subs.push(f),
-      send: m => setTimeout(() => subs.forEach(f => f({ reply: m.id, result: m.type === "hello" ? { mode: "playground", label: "t", quiet: true, settings: { welcome: false } } : m.type === "mods.list" ? [] : null })), 2),
+      send: m => setTimeout(() => subs.forEach(f => f({ reply: m.id, result: m.type === "hello" ? { mode: "desktop", label: "t", quiet: true, settings: { welcome: false } }
+        : m.type === "mods.list" ? [] : m.type === "generate" ? { ok: true, title: "Gold", css: "h1 { color: gold }", js: "" } : null })), 2),
     };
   });
   const probe = await PageProbe.forPage(page);
-  const boot = async () => { await install(); await page.addScriptTag({ content: bundleRuntime() }); await page.waitForFunction(() => !!document.querySelector("[data-morse-ui]")); };
+  const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "{}"));
+  // Attach, then use it: a change made and undone (what builds the UI's page observers).
+  const boot = async () => {
+    await install();
+    await page.addScriptTag({ content: bundleRuntime() });
+    await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "{}").ready);
+    await pressOpen(page);
+    await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).open);
+    await page.keyboard.type("make the title gold");
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).phase === "result");
+    await page.locator("[data-morse-ui] .actions [data-a=undo]").click();
+    await page.waitForFunction(() => !JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).open);
+  };
   // What the connector's stop() runs in Morse's world, then its clean-up.
   const stop = () => page.evaluate(() => {
     globalThis.__morseGen = (globalThis.__morseGen || 0) + 1;

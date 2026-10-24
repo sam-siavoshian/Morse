@@ -28,4 +28,15 @@ const listen = (type, fn, opts) => addEventListener(type, e => { if (live()) fn(
 // resolve to the originals here. Window listeners also survive document.open().
 const addEventListener = (type, fn, opts) => B.on(window, type, fn, opts);
 const removeEventListener = (type, fn, opts) => B.off(window, type, fn, opts);
-const { MutationObserver, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, getComputedStyle } = B.pristine;
+const { MutationObserver: PageObserver, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, getComputedStyle } = B.pristine;
+// soak: the UI's observers, tracked while they observe, so a copy that went
+// quiet (`morse stop`, then attach again) disconnects them when the next boot
+// disposes of this one (boot.js dispose -> letGo). Some watch the whole page
+// (the re-render notes in 20-context.js), and each kept a whole old UI alive:
+// on the desktop, runtime observers went 25 -> 101 over three stop + attach.
+const uiObservers = new Set();
+const MutationObserver = class extends PageObserver {
+  observe(...a) { uiObservers.add(this); return super.observe(...a); }
+  disconnect() { uiObservers.delete(this); return super.disconnect(); }
+};
+function letGo() { for (const o of uiObservers) o.disconnect(); }

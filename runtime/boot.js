@@ -679,6 +679,7 @@ Object.defineProperty(W, BOOT, { configurable: true, value: Object.freeze({
   dispose() {
     if (live()) return;
     for (const r of regs.splice(0)) pristine.removeEventListener(r.target, r.type, r.wrapped, r.opts);
+    try { ui?.dispose?.(); } catch {} // soak: the UI's own observers (01-rpc.js letGo)
     domMo.disconnect();
     domHooks.clear();
     listeners.clear();

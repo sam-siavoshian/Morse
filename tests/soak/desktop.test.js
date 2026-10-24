@@ -11,7 +11,7 @@ import { KEEP_CLIPS } from "../../daemon/record.js";
 import { pick } from "../../demo/soak/lib.js";
 
 test("desktop soak: the loop, popups, a crash and stop/attach cycles stay level", { skip: noBrowser, timeout: 600000 }, async () => {
-  const r = await soakDesktop({ iterations: 12, minutes: 3, sampleEvery: 3, popupEvery: 3, crashEvery: 6, reloadEvery: 4, cycleEvery: 4, log: false });
+  const r = await soakDesktop({ iterations: 7, minutes: 6, sampleEvery: 2, popupEvery: 3, crashEvery: 3, reloadEvery: 4, cycleEvery: 2, log: false });
   const v = verdict(r);
   const last = r.samples.at(-1), first = r.samples[0];
   assert.ok(r.meta.cycles >= 2 && r.meta.crashes >= 1, `cycles ${r.meta.cycles}, crashes ${r.meta.crashes}`);

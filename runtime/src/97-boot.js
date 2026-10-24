@@ -56,6 +56,7 @@ B.adopt({
   // boot.js has no words of its own: it hands over message ids ({ id, vars }) for t()
   toast: x => toast(x && typeof x === "object" ? t(x.id, x.vars) : x), key: adoptKey,
   modsChanged() { Health.prune(new Set(S.mods.map(m => m.id))); if (!panel.hidden) renderPanel(); }, // soak: prune
+  dispose: letGo, // soak: boot.js dispose, once this copy went quiet (01-rpc.js)
   health: (m, r) => Health.ran(m, r), // repair: the panel marks mods that stopped working (70-panel.js)
   controlReady, // user control: the safe-start / off-switch notice after the first sync (63-control.js)
   healFound: () => Heal.found(), // self-heal: what boot.js found broken, for the dot, the note and Fix it (71-heal.js)
