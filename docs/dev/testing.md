@@ -74,6 +74,31 @@ than sleeping. New tests use [`tests/helpers/`](../../tests/helpers/):
 
 `MORSE_TEST_TIMEOUT_SCALE=2` doubles every timeout on a slow machine.
 
+### The extension with a real Morse helper
+
+The extension looks for the Morse helper on 127.0.0.1:7457. A test that
+pairs the real extension with a real helper (`morse serve`, `morse setup
+--pair`) gives both its own port, so runs side by side never meet:
+
+```js
+import { freePort } from "./helpers/net.js";
+
+const port = await freePort();
+// The extension: chrome.storage.local "morse.helperPort", set through its service worker.
+await sw.evaluate(p => chrome.storage.local.set({ "morse.helperPort": p }), port);
+// The CLI: MORSE_HELPER_PORT.
+spawn(process.execPath, [CLI, "serve"], { env: { ...process.env, MORSE_HELPER_PORT: String(port) } });
+```
+
+Set it before the extension looks for a helper: the welcome page opens on
+install and starts looking at once, so reload it after setting the port
+([`tests/first-run.test.js`](../../tests/first-run.test.js) does both). The
+setting only takes a whole number from 1024 to 65535 (anything else means
+7457) and the host is always 127.0.0.1. Only the service worker and the
+extension's own pages can write it: storage.local is closed to content
+scripts, and no message sets it
+([`tests/security.test.js`](../../tests/security.test.js)).
+
 ### The real Electron app
 
 [`tests/electron.test.js`](../../tests/electron.test.js) runs the desktop

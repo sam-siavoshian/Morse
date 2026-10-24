@@ -11,7 +11,7 @@ import os from "node:os";
 import path from "node:path";
 import { detectBackends, recommend, configFor, applyChoice, isSetUp, runSetup, whichBin, gettingStarted } from "../daemon/setup.js";
 import { settingsFromConfig, migrateLegacy } from "../daemon/models.js";
-import { pageSupport, explainError, plainError, mergeOnboarding, normalizeOnboarding, modelMissing } from "../core/onboarding.js";
+import { pageSupport, explainError, plainError, mergeOnboarding, normalizeOnboarding, modelMissing, setHelperPort } from "../core/onboarding.js";
 
 const plain = s => s.replace(/\x1b\[\d+m/g, "");
 const CLI = new URL("../daemon/cli.js", import.meta.url).pathname;
@@ -263,6 +263,19 @@ test("generation errors in plain words, each with something to do", () => {
   assert.equal(modelMissing({}, "demo model · no model found"), true);
   assert.equal(modelMissing({ model: { connected: true } }, "demo model"), false, "the host's answer wins over the label");
   assert.equal(modelMissing({}, "Claude Code · haiku"), false);
+});
+
+test("the helper not running reads the same on any port the helper was moved to", () => {
+  const refused = port => explainError(`fetch failed: connect ECONNREFUSED 127.0.0.1:${port}`)?.action;
+  assert.equal(refused(7457), "setup");
+  assert.notEqual(refused(41234), "setup", "another local server isn't the helper");
+  setHelperPort(41234); // MORSE_HELPER_PORT=41234 (daemon/cli.js)
+  try {
+    assert.equal(refused(41234), "setup");
+    assert.equal(refused(7457), "setup");
+    assert.notEqual(refused(412345), "setup");
+    assert.notEqual(refused(11434), "setup");
+  } finally { setHelperPort(7457); }
 });
 
 test("plainError: plain words for a person, never raw jargon", () => {

@@ -289,8 +289,8 @@ async function checkModel(cfg) {
 // here with the welcome page's code waiting, so the page pairs by itself. A
 // helper that's already running just gets the code.
 export async function connectBrowser(code, { say = s => console.log(s) } = {}) {
-  const { createBridge, startPairing } = await import("./bridge.js");
-  const { HELPER_PORT } = await import("../core/providers.js");
+  const { createBridge, startPairing, helperPort } = await import("./bridge.js");
+  const HELPER_PORT = helperPort();
   const up = await fetch(`http://127.0.0.1:${HELPER_PORT}/v1/health`, { signal: AbortSignal.timeout(800) }).then(r => r.ok, () => false);
   if (up) {
     await startPairing(undefined, code);
