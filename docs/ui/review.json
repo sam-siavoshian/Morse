@@ -689,6 +689,11 @@
    "after": "heal/bar-dot-narrow-light.png"
   },
   {
+   "title": "R3-24. Show me once (new on main) drew its chip icon at 14px (and 12/14px in its strip), off the one 16px set; flagged on every empty-bar shot. Now 16px",
+   "before": "before/suggestions-page-dark.png",
+   "after": "suggestions/page-dark.png"
+  },
+  {
    "title": "1. A page rule (`[data-morse-ui] { display: none !important }`) hid the whole overlay; zoom, dir=rtl and --m-* variables also leaked in. Host styles are now !important, direction is pinned, html zoom is countered, tokens are !important inside the shadow root",
    "before": "before/hostile-hostile-broken-light.png",
    "after": "hostile/hostile-bar-light.png"
