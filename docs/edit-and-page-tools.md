@@ -27,7 +27,7 @@ key, shown in its tooltip:
 | **⇧C** | Capture | Saves how it looks, to rebuild it in another app (see below) |
 | **A** | Describe | Describe a change for the model instead |
 
-Or just start typing to describe a change.
+Or start typing to describe a change.
 
 No mouse? Press **⌥↓** (Alt+↓) in the bar to choose a part of the page with
 the arrow keys, then **⌘E** (Ctrl+E). **Tab** moves between the tools (and

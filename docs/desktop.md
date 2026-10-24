@@ -367,7 +367,7 @@ is, and whether Morse can see which apps are open.
   `Update.exe`, it asks `Update.exe` to start the app with the debugging
   switch, then finds the app by that switch, and waits up to 20 seconds while
   the app checks for updates first.
-- **Folders with spaces just work.** Morse starts programs with a list of
+- **Folders with spaces work.** Morse starts programs with a list of
   arguments, never by typing a command line, so `C:\Program Files` and
   `D:\Tools\Acme Chat` need no quotes.
 - **`--restart`** asks each window of the app to close, waits up to 10

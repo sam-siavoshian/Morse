@@ -33,7 +33,7 @@
 - **Live and reversible.** CSS is applied while the model streams it
   (complete rules only). Every element, listener, timer and observer a mod
   creates is tracked, so turning it off removes all of it.
-- **The `morse` kit keeps mods short and robust.** `morse.watch(selector, fn)`
+- **The `morse` kit keeps mods short, and keeps them working when the page re-renders.** `morse.watch(selector, fn)`
   survives React re-renders; `morse.el(...)` creates elements that are
   tracked for undo; errors inside callbacks are captured and fed back to the
   model. Short, concrete API → fewer tokens, fewer mistakes.
