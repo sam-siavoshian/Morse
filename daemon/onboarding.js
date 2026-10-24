@@ -28,11 +28,14 @@ export async function saveOnboarding(patch) {
   return next;
 }
 
+// "none" is what settings resolve to when nothing is set up; "demo" is a test fixture.
+export const modelConnected = settings => !!settings?.provider && !["none", "demo"].includes(settings.provider);
+
 // `settings` is the connector's resolved model settings.
 export async function handleOnboarding(msg, { settings } = {}) {
   switch (msg.type) {
     case "onboarding.get":
-      return { state: await loadOnboarding(), status: { mode: "desktop", model: { connected: !!settings?.provider && settings.provider !== "demo", provider: settings?.provider || "" } } };
+      return { state: await loadOnboarding(), status: { mode: "desktop", model: { connected: modelConnected(settings), provider: settings?.provider || "" } } };
     case "onboarding.set":
       return saveOnboarding(msg.patch);
     case "onboarding.open":

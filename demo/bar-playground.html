@@ -48,7 +48,7 @@
   const emit = m => subs.forEach(f => f(m));
   const merge = (a, b) => { const o = { ...a }; for (const [k, v] of Object.entries(b || {})) o[k] = v && typeof v === "object" && !Array.isArray(v) ? { ...(a[k] || {}), ...v } : v; return o; };
   const voice = q.get("voice") === "0"
-    ? { transcribe: false, provider: null, label: "", hint: "To use voice here, add an OpenAI key in the Morse popup or run the Morse helper" }
+    ? { transcribe: false, provider: null, label: "", hint: "Voice isn't available here. Type your change instead, or set up voice in the Morse helper on this computer (an OpenAI key or whisper)." }
     : { transcribe: true, provider: "openai", label: "OpenAI gpt-4o-mini-transcribe", hint: "" };
   globalThis.__morseHost = {
     onMessage: fn => subs.push(fn),

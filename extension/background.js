@@ -182,6 +182,10 @@ async function dispatch(msg, port) {
       // gens.run's signal aborts the model call (the helper kills the harness
       // process when the connection closes): Stop in the bar, or closing the tab.
       port.__gens.add(msg.genId);
+      // Chrome stops an idle service worker after about 30 seconds, and a
+      // model can think longer than that without a word. Waiting on fetch
+      // doesn't count as activity; calling an extension API does.
+      const keepAlive = setInterval(() => chrome.runtime.getPlatformInfo().catch(() => {}), 20000);
       try {
         const res = await gens.run(msg.genId, signal => runMorse({
           settings: b.settings,
@@ -198,6 +202,7 @@ async function dispatch(msg, port) {
         if (e.code === "no_model") { cached = null; openSettings(); }
         throw e;
       } finally {
+        clearInterval(keepAlive);
         port.__gens.delete(msg.genId);
       }
     }

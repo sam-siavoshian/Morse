@@ -19,8 +19,11 @@ try { esbuild = await import("esbuild"); } catch {
 await fs.rm(out, { recursive: true, force: true });
 await fs.mkdir(path.join(out, "icons"), { recursive: true });
 
+// The worker's own modules import ../core and are only ever bundled into
+// background.js; copied raw they'd be dead files with broken imports.
+const BUNDLED_ONLY = ["background.js", "bar-host.js", "onboarding-host.js", "control-host.js"];
 for (const f of await fs.readdir(path.join(root, "extension"))) {
-  if (!["background.js", "bar-host.js"].includes(f)) await fs.copyFile(path.join(root, "extension", f), path.join(out, f));
+  if (!BUNDLED_ONLY.includes(f)) await fs.copyFile(path.join(root, "extension", f), path.join(out, f));
 }
 await esbuild.build({
   entryPoints: [path.join(root, "extension", "background.js")],

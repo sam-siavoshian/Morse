@@ -115,8 +115,8 @@ async function commitHotkey(id, value, verdict) {
   announce(`${HOTKEY_ACTIONS.find(a => a.id === id).label}: ${hotkeyText(id) || "off"}. ${verdict?.message || ""}`);
 }
 
-addEventListener("keydown", e => {
-  if (!recording) return;
+listen("keydown", e => {
+  if (!e.isTrusted || !recording) return;
   if (e.isComposing || e.keyCode === 229) return;
   // The recorder owns the keyboard while armed: nothing reaches the page or our hotkeys.
   e.preventDefault();
@@ -142,8 +142,8 @@ addEventListener("keydown", e => {
   }
   commitHotkey(id, combo, verdict);
 }, true);
-addEventListener("keyup", e => {
-  if (!recording) return;
+listen("keyup", e => {
+  if (!e.isTrusted || !recording) return;
   e.preventDefault();
   e.stopImmediatePropagation();
   recording.partial = comboFromEvent(e).partial;
@@ -151,7 +151,7 @@ addEventListener("keyup", e => {
 }, true);
 // Click away (or blur the window) and the recorder gives up.
 root.addEventListener("pointerdown", e => { if (recording && !e.composedPath().some(n => n?.dataset?.hk || n?.dataset?.off)) stopRecording(false); });
-addEventListener("blur", () => stopRecording(false));
+listen("blur", () => stopRecording(false));
 
 pane.addEventListener("click", e => {
   const t = e.target;

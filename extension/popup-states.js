@@ -75,7 +75,7 @@ const st = await send({ type: "onboarding.status" });
 const status = st?.status || {};
 if (!why && modelMissing(status, document.getElementById("label")?.textContent)) {
   const details = document.querySelector("details");
-  notice("No model connected yet, so Morse uses a demo that only knows a few requests.", "Choose a model", () => {
+  notice("No model connected yet. Choose one below so Morse can make changes.", "Choose a model", () => {
     if (details) { details.open = true; details.scrollIntoView({ block: "start" }); details.querySelector("select, input")?.focus(); }
   }).dataset.state = "model";
 }
