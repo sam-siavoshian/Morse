@@ -7,7 +7,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { bundleRuntime } from "../runtime/bundle.js";
-import { OPEN_KEY } from "./helpers/keys.js";
+import { pressOpen } from "./helpers/keys.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
 import { waitFor, waitForReady, settle, TIMEOUT } from "./helpers/wait.js";
 
@@ -50,7 +50,7 @@ const savedMods = page => page.evaluate(() => Object.values(JSON.parse(localStor
 
 test("hide, move, rename, recolor and dark mode apply live, undo, save, and come back after a reload", { skip }, async () => {
   const { ctx, page, errors } = await playground("?light");
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
 
   // Rename: T edits the text in place, Enter keeps it.
   await select(page, "#card h3");
@@ -128,7 +128,7 @@ test("hide, move, rename, recolor and dark mode apply live, undo, save, and come
 
 test("edge cases: shadow DOM, mixed inline text, frames, duplicates, and dark pages", { skip }, async () => {
   const { ctx, page, errors } = await playground("");
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
 
   // Inside an open shadow root: the edit carries the host chain.
   await select(page, "#badge", 20, 8);

@@ -5,7 +5,7 @@ import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { serveBar } from "./helpers/demo-server.js";
-import { OPEN_KEY, holdKeys, releaseKeys } from "./helpers/keys.js";
+import { OPEN_KEY, holdKeys, pressOpen, releaseKeys } from "./helpers/keys.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
 import { waitForStatus, waitForReady, settle, TIMEOUT } from "./helpers/wait.js";
 
@@ -56,7 +56,7 @@ test("hotkey recorder: refuses critical combos, rebinds, persists, and the old k
   await scenario("", null, async t => {
     const { page } = t;
     await page.evaluate(() => { window.__pageKeys = []; addEventListener("keydown", e => __pageKeys.push(e.code)); });
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await t.waitFor(s => s.open);
     await page.keyboard.press("Control+Comma");
     await t.waitFor(s => s.pane === "settings");
@@ -76,7 +76,7 @@ test("hotkey recorder: refuses critical combos, rebinds, persists, and the old k
     await t.waitFor(s => !s.open);
     // The old hotkey now belongs to the page again.
     await page.evaluate(() => (__pageKeys.length = 0));
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await page.waitForFunction(() => __pageKeys.includes("Space")); // the page got the key
     await settle(page);
     assert.equal((await t.status()).open, false);
@@ -101,7 +101,7 @@ test("prompt history: ↑/↓ in an empty input, per site, persisted", { skip },
   await scenario("?ms=1", null, async t => {
     const { page } = t;
     for (const p of ["make it dark", "hide the sidebar"]) {
-      await page.keyboard.press(OPEN_KEY);
+      await pressOpen(page);
       await t.waitFor(s => s.open && s.phase === "idle");
       await page.keyboard.type(p);
       await page.keyboard.press("Enter");
@@ -109,7 +109,7 @@ test("prompt history: ↑/↓ in an empty input, per site, persisted", { skip },
       await page.keyboard.press("Escape"); // keeps the result and closes
       await t.waitFor(s => !s.open);
     }
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await t.waitFor(s => s.open);
     const expectInput = (v, msg) => t.waitFor(s => s.input === v, 10000).catch(() => assert.fail(msg || `input should be ${JSON.stringify(v)}`));
     await page.keyboard.press("ArrowUp");
@@ -131,7 +131,7 @@ test("prompt history: ↑/↓ in an empty input, per site, persisted", { skip },
     assert.match(adds[0].scope, /^127\.0\.0\.1:\d+$/);
     await page.reload();
     await waitForReady(page); // history.get answered
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await t.waitFor(s => s.open);
     await page.keyboard.press("ArrowUp");
     await expectInput("hide the sidebar", "history survives a reload");
@@ -143,7 +143,7 @@ test("Esc mid-generation: cancels on the host, removes partial CSS, ends the eff
     const { page } = t;
     const gap = () => page.evaluate(() => getComputedStyle(document.getElementById("toolbar")).gap);
     const before = await gap();
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     const tb = await page.locator("#toolbar").boundingBox();
     await page.mouse.click(tb.x + tb.width / 2, tb.y + 4);
     await page.keyboard.type("make the toolbar airier");
@@ -173,7 +173,7 @@ test("Esc mid-generation: cancels on the host, removes partial CSS, ends the eff
 test("voice: Web Speech fails, the recording goes to the host's transcribe", { skip }, async () => {
   await scenario("", SPEECH_FAILS, async t => {
     const { page } = t;
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await t.waitFor(s => s.open);
     await page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".mic").click());
     await t.waitFor(s => s.voice === "listening");
@@ -207,20 +207,20 @@ test("voice: hold the hotkey to talk, release to finish; auto-submit sends it", 
 test("voice: explains in one line when it can't work", { skip }, async () => {
   const clickMic = t => t.page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".mic").click());
   await scenario("?voice=0", () => { delete globalThis.webkitSpeechRecognition; delete globalThis.SpeechRecognition; }, async t => {
-    await t.page.keyboard.press(OPEN_KEY);
+    await pressOpen(t.page);
     await clickMic(t);
     const s = await t.waitFor(s => /OpenAI key/.test(s.hint));
     assert.equal(s.voice, "idle");
     assert.equal(await t.page.evaluate(`${sr(".mic")}.classList.contains("off")`), true);
   });
   await scenario("", () => { navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException("denied", "NotAllowedError")); }, async t => {
-    await t.page.keyboard.press(OPEN_KEY);
+    await pressOpen(t.page);
     await clickMic(t);
     const s = await t.waitFor(s => /Microphone access is blocked/.test(s.hint));
     assert.equal(s.voice, "idle");
   });
   await scenario("", () => { navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException("none", "NotFoundError")); }, async t => {
-    await t.page.keyboard.press(OPEN_KEY);
+    await pressOpen(t.page);
     await clickMic(t);
     await t.waitFor(s => /No microphone found/.test(s.hint));
   });
@@ -230,7 +230,7 @@ test("keyboard and a11y: dialog, live status, Tab stays in the bar, focus comes 
   await scenario("", null, async t => {
     const { page } = t;
     await page.focus("#pagefield");
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await t.waitFor(s => s.open);
     assert.equal(await page.evaluate(`${sr(".bar")}.getAttribute("role")`), "dialog");
     assert.ok(await page.evaluate(`${sr(".bar")}.getAttribute("aria-label")`));
@@ -278,7 +278,7 @@ test("effects setting: off shows no animation over the page, subtle keeps a stil
     const init = `localStorage.setItem("fake:settings", JSON.stringify({ effects: "${effects}" }))`;
     await scenario("?ms=150", init, async t => { // slow enough to still be working when we look
       const { page } = t;
-      await page.keyboard.press(OPEN_KEY);
+      await pressOpen(page);
       const tb = await page.locator("#toolbar").boundingBox();
       await page.mouse.click(tb.x + tb.width / 2, tb.y + 4);
       await page.keyboard.type("make the toolbar airier");

@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import http from "node:http";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { OPEN_KEY } from "./helpers/keys.js";
+import { pressOpen } from "./helpers/keys.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
 import { freePort, listen } from "./helpers/net.js";
 import { waitFor, waitForStatus, waitForReady } from "./helpers/wait.js";
@@ -59,7 +59,7 @@ after(async () => {
 });
 
 test("settings round-trip through ~/.morse/settings.json", { skip }, async () => {
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
   await status(s => s.open, "the bar to open");
   await page.keyboard.press("Control+Comma");
   await status(s => s.pane === "settings", "the settings sheet");

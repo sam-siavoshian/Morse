@@ -12,7 +12,7 @@ import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import { launchBrowser, noBrowser } from "./helpers/browser.js";
-import { OPEN_KEY } from "./helpers/keys.js";
+import { pressOpen } from "./helpers/keys.js";
 import { TIMEOUT, settle, waitForReady } from "./helpers/wait.js";
 import { freePort } from "./helpers/net.js";
 
@@ -84,7 +84,7 @@ after(async () => {
 test("the empty bar suggests the mods others made for this site; nothing is fetched before Morse opens", { skip }, async () => {
   await settle(page); // the runtime is ready (hello, mods): anything it fetches at load has been asked for
   assert.equal(indexHits, 0, "opening the page alone doesn't ask the gallery");
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
   await waitFor(s => s.open);
   const chip = ui(".sugs .gl-sug");
   await chip.waitFor();
@@ -238,7 +238,7 @@ test("Show mods others made, turned off, hides the section and the chip", { skip
   const hits = indexHits;
   await page.reload();
   await waitForReady(page);
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
   await waitFor(s => s.open);
   await ui(".sugs .sug").first().waitFor();
   assert.equal(await ui(".sugs .gl-sug").count(), 0);

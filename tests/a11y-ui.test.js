@@ -10,7 +10,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { openLibrary } from "../demo/a11y-page.js";
 import { launchBrowser, noBrowser } from "./helpers/browser.js";
-import { OPEN_KEY } from "./helpers/keys.js";
+import { pressOpen } from "./helpers/keys.js";
 import { TIMEOUT, waitForReady } from "./helpers/wait.js";
 
 const skip = noBrowser;
@@ -46,7 +46,7 @@ const snapshot = page => page.evaluate(() => ({
 }));
 
 async function openTools(page) {
-  if (await page.locator(".bar").isHidden()) await page.keyboard.press(OPEN_KEY);
+  if (await page.locator(".bar").isHidden()) await pressOpen(page);
   await page.locator(".gm-qbtn").click();
   await page.locator(".gm-menu .a11y-group").waitFor();
 }
@@ -218,7 +218,7 @@ test("Read aloud: reads the selection a sentence at a time, marks it, pauses, ch
 
 test("Read aloud: point at text and use the edit toolbar; with nothing chosen it reads the article", { skip }, () => scenario(async ({ page }) => {
   await page.evaluate(() => document.querySelector(".light").scrollIntoView({ block: "center" }));
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
   const r = await page.locator(".light").boundingBox();
   await page.mouse.move(r.x + 40, r.y + 8);
   await page.mouse.click(r.x + 40, r.y + 8);
@@ -320,7 +320,7 @@ test("Check this page: Fix it saves what Morse can work out and asks the model, 
 }));
 
 test("Describe this picture: point at it, read the description, save it as alt text", { skip }, () => scenario(async ({ page }) => {
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
   const r = await page.locator('img[src="chart.png"]').boundingBox();
   await page.mouse.move(r.x + 200, r.y + 150);
   await page.mouse.click(r.x + 200, r.y + 150);
@@ -347,7 +347,7 @@ test("Describe this picture: point at it, read the description, save it as alt t
 }));
 
 test("Describe this picture: a video frame comes from a screenshot cropped to it", { skip }, () => scenario(async ({ page }) => {
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
   const r = await page.locator("video").boundingBox();
   await page.mouse.move(r.x + 60, r.y + 40);
   await page.mouse.click(r.x + 60, r.y + 40);

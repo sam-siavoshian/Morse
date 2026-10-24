@@ -16,7 +16,7 @@ import { bundleRuntime } from "../runtime/bundle.js";
 import { defaultHotkeys } from "../core/hotkeys.js";
 import { plainError } from "../core/onboarding.js";
 import { chromium, launchBrowser, noBrowser, noDisplay } from "./helpers/browser.js";
-import { OPEN_KEY, holdKeys, releaseKeys } from "./helpers/keys.js";
+import { holdKeys, pressOpen, releaseKeys } from "./helpers/keys.js";
 import { TIMEOUT, hostRoundTrip, settle, waitForReady } from "./helpers/wait.js";
 import { tempDir } from "./helpers/home.js";
 // The default Open Morse / push-to-talk combo for this platform.
@@ -138,7 +138,7 @@ test("God mode: one edit whose request is lost doesn't stop later edits from app
       host.send = m => { if (m.type === "exec" && ++window.__execs === 1) return; return send(m); };
     });
     const saved = () => page.evaluate(() => Object.values(JSON.parse(localStorage.getItem("morse:playground:mods") || "{}")));
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await selectInGodMode(page, "#card h3");
     await page.keyboard.press("Control+e");
     await page.keyboard.press("t");
@@ -172,7 +172,7 @@ test("synthetic key events from the page don't open the bar, talk, or act inside
     assert.equal(s.voice, "idle");
     assert.equal(await page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".panel").hidden), true);
     // Real keys still work, and fake ones still do nothing once the bar is open.
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await waitFor(s => s.open);
     await page.evaluate(fakeKey("keydown", { code: "F1", key: "F1" }));
     await page.evaluate(fakeKey("keydown", { code: "Escape", key: "Escape" }));
@@ -190,7 +190,7 @@ test("synthetic key events from the page don't open the bar, talk, or act inside
 
 test("voice over a result: holding the hotkey dictates a refinement instead of saving and closing", { skip }, async () => {
   await scenario({ query: "?ms=1", init: SPEECH_FAILS }, async ({ page, waitFor, log }) => {
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await waitFor(s => s.open);
     await page.keyboard.type("make it airy");
     await page.keyboard.press("Enter");
@@ -213,7 +213,7 @@ test("voice over a result: holding the hotkey dictates a refinement instead of s
   });
   // With "Send after a pause" on, releasing refines straight away.
   await scenario({ query: "?auto&ms=1", init: SPEECH_FAILS }, async ({ page, waitFor, log }) => {
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await waitFor(s => s.open);
     await page.keyboard.type("make it airy");
     await page.keyboard.press("Enter");
@@ -232,7 +232,7 @@ test("voice over a result: holding the hotkey dictates a refinement instead of s
 
 test("hotkey recorder: God mode doesn't take the keys being recorded", { skip }, async () => {
   await scenario({ page: "god", query: "?light&reset" }, async ({ page, waitFor }) => {
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await selectInGodMode(page, "#card h3");
     await page.keyboard.press("Control+Comma");
     await waitFor(s => s.pane === "settings");
@@ -266,7 +266,7 @@ test("after the host detaches, the old runtime leaves the page's clicks and keys
       document.addEventListener("click", e => __got.push("click:" + (e.target.id || e.target.localName)));
       document.addEventListener("keydown", e => __got.push(e.key));
     });
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await waitFor(s => s.open); // pointing: it was taking every click
     await page.evaluate(() => { globalThis.__morseGen++; __got.length = 0; }); // what `morse stop` does
     await page.locator("#pagefield").click();
@@ -310,7 +310,7 @@ test("the extension command's keys differ from every platform's Open Morse and T
 
 test("edit tools hotkey: leaves a running change's status alone; help shows the real key", { skip }, async () => {
   await scenario({ query: "?ms=150" }, async ({ page, waitFor, ui }) => {
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await waitFor(s => s.open);
     await page.keyboard.press("F1");
     await waitFor(s => s.pane === "help");
@@ -369,7 +369,7 @@ test("popup: shows the Open Morse shortcut from settings", { skip: skipExt }, as
 
 test("first-run coach: page tools saving on their own don't finish it or show the first-save tip", { skip }, async () => {
   await scenario({ query: "?onboarding&light" }, async ({ page, waitFor }) => {
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await waitFor(s => s.open);
     await page.locator(".gm-qbtn").click();
     await page.locator(".gm-menu button[data-k=dark]").click();

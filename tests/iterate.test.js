@@ -9,7 +9,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { bundleRuntime } from "../runtime/bundle.js";
-import { OPEN_KEY } from "./helpers/keys.js";
+import { pressOpen } from "./helpers/keys.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
 import { waitForStatus, waitForReady, settle, TIMEOUT } from "./helpers/wait.js";
 
@@ -49,7 +49,7 @@ const ui = (page, sel) => page.locator(`[data-morse-ui] ${sel}`);
 
 test("refine a result, step back with Ctrl+Z, keep, restore from History, refine from the panel", { skip }, async () => {
   const { ctx, page, errors, waitFor } = await playground();
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
   await waitFor(s => s.open);
   await page.keyboard.type("add a now playing label to the toolbar");
   await page.keyboard.press("Enter");

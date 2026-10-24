@@ -9,7 +9,7 @@ import { readFile } from "node:fs/promises";
 import { bundleRuntime } from "../runtime/bundle.js";
 import { createMod, encodeShare } from "../core/mod.js";
 import { launchBrowser, noBrowser } from "./helpers/browser.js";
-import { OPEN_KEY } from "./helpers/keys.js";
+import { pressOpen } from "./helpers/keys.js";
 import { TIMEOUT, hostRoundTrip, settle, waitForReady } from "./helpers/wait.js";
 
 const skip = noBrowser;
@@ -114,7 +114,7 @@ test("off switch: Alt+Shift+0 turns every mod off at once, the toast turns them 
 test("the off switch is a setting with a recorder like the other hotkeys", { skip }, async () => {
   const ctx = await context();
   const { page } = await playground(ctx);
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
   await page.keyboard.press("Control+Comma");
   await until(() => page.evaluate(`!!${sr('.hk[data-hk="off"]')}`));
   assert.match(await text(page, '.hkrow[data-id="off"]'), /Turn off all mods/);

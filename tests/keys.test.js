@@ -6,7 +6,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { serveBar } from "../demo/bar-server.js";
 import { launchBrowser, noBrowser } from "./helpers/browser.js";
-import { OPEN_KEY } from "./helpers/keys.js";
+import { pressOpen } from "./helpers/keys.js";
 import { settle, waitForReady } from "./helpers/wait.js";
 
 const skip = noBrowser;
@@ -52,7 +52,7 @@ test("typing in the bar doesn't fire the page's capture-phase shortcuts", { skip
     assert.equal((await host()).ce, null);
     const closedWhiteSpace = await page.evaluate(WHITE_SPACE);
 
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).focus === "in");
     await page.evaluate(() => (__shortcuts.length = 0));
     await page.keyboard.type("jk/gx");
