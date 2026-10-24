@@ -72,6 +72,11 @@ in the CLI and in the README.
 | **edit tools** | The toolbar that appears on what you point at: hide, move, resize, edit text, color, text size, duplicate. Works instantly, no model. Shortcut: Edit tools. | God mode (that is the code name only), inspector |
 | **direct edits** | Changes made with the edit tools. Saved together as one mod called "Direct edits". | manual edits |
 | **page tools** | One-click changes for the whole page: dark mode, light mode, bigger or smaller text, hide ads and pop-ups, focus mode, turn off all mods. | quick actions, presets |
+| **Easier to use** | The group of page tools that make an app easier to read and use: higher contrast, bigger click targets, easier to read font, underline links, stop animations, focus outline everywhere, reading ruler, hide distractions. Plus Read aloud and Check this page. | accessibility mode, a11y (fine in developer docs) |
+| **Read aloud** | The computer reads text out loud, a sentence at a time. | text to speech, TTS |
+| **Check this page** | A quick look for common problems (pictures with no description, unnamed buttons, unlabeled fields, faint text, tiny targets, autoplay). Each kind has a **Fix it** button. | audit, scan, lint |
+| **alt text** | The description of a picture that screen readers read. "Save as alt text". | alt attribute, image label |
+| **Accessibility fixes** | The one mod per site that holds what Fix it and Describe this picture saved. | |
 | **capture** | Save the look of something so you can rebuild it in another app. Captured things show under "Captured" in the bar. | copy, clip, clipboard |
 | **voice** | Talking to Morse instead of typing. "Hold ⌥Space to talk." | dictation, speech input |
 | **shortcut** | A keyboard shortcut. | hotkey, keybinding (fine in developer docs) |

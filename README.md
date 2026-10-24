@@ -28,6 +28,7 @@ press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the mode
 | **Your model** | Claude Code or Codex (your own subscription, no API key), or an Anthropic or OpenAI API key. See [Models](#models) |
 | **God mode** | Direct editing with no model call: hide, move, resize, rename, recolor, retype, duplicate. Page tools (dark/light mode, text size, hide ads, focus mode). Capture an element in one app and rebuild it in another |
 | **Ask and find** | Ask about the app instead of changing it: plain answers with numbered markers, "where is X" names the menu to open, Show me walks the steps while you click, Explain this page, follow-ups |
+| **Easier to use** | Accessibility for any app, no model needed: higher contrast, bigger click targets, an easier to read font (and dyslexia-friendly letters), underlined links, no animations, a visible focus outline, a reading ruler, no distractions. Read aloud, Check this page with Fix it, and Describe this picture (the model writes the alt text) |
 
 ## Screenshots
 
@@ -94,6 +95,28 @@ Same hotkey, same bar: ask a question instead of describing a change ("what does
 |---|---|
 | ![](docs/screenshots/90-ask.png) **Ask** what something does: an answer, and a marker on it | ![](docs/screenshots/91-find.png) **Find** a setting that lives behind a menu |
 | ![](docs/screenshots/92-show-me.png) **Show me**: one step at a time, you do the clicking | ![](docs/screenshots/93-explain.png) **Explain this page**, from the page tools |
+
+### Easier to use: accessibility for any app
+
+Some apps are hard to read, hard to click, or never stop moving. The page tools have an **Easier to use** group that changes that for the site or app you're on, at once and with no model. Morse writes each one itself ([`core/a11y.js`](core/a11y.js)) as a small mod: it stays on for that site, and clicking it again turns it off and puts the page back exactly as it was.
+
+- **Higher contrast**: text darker, to at least 7 to 1 against its background; faint borders stronger; faded text back to full strength.
+- **Bigger click targets**: buttons, links and fields at least 44 × 44 pixels. Links inside sentences stay as they are.
+- **Easier to read font**: a plain sans-serif with a little more space between letters, words and lines, lines that stop at about 70 characters, no justified text. **Dyslexia-friendly letters** uses OpenDyslexic, Atkinson Hyperlegible or Lexend if they're on your computer, else Verdana. Nothing is downloaded.
+- **Underline links**. **Stop animations**: animations jump to their end, video and sound that start by themselves pause, GIFs show their first frame. **Focus outline everywhere**: a ring you can see on any background when you use the keyboard. **Reading ruler**: a band that follows the pointer and dims the rest. **Hide distractions**: cookie bars, chat bubbles and sticky announcements, never the site's header or navigation.
+
+**Read aloud** reads what you selected, what you pointed at, or the main text of the page, a sentence at a time, and marks the sentence it's reading. Play, pause, previous and next sentence, five speeds, <kbd>Esc</kbd> to stop. It uses your computer's own voices, so it works offline.
+
+**Check this page** looks for common problems: pictures with no description, buttons and links with no name, form fields with no label, text too light to read (measured, not guessed), things too small to click, and video or sound that plays by itself. Every place gets a numbered marker, and each kind of problem a **Fix it** button. What Morse can work out itself is fixed at once and saved in one "Accessibility fixes" mod: a name from a tooltip, an icon or where a link goes, a darker color, a bigger size. What needs judgment becomes one precise request to the model, with the exact places in it, which you save or undo like any change.
+
+**Describe this picture**: point at a picture and press the picture button on the edit toolbar. The model says in a sentence or two what it shows, and **Save as alt text** keeps that for screen readers. This needs a model that can look at pictures: Claude Code, the Anthropic API or the OpenAI API (Codex says it can't). Checked once with real Claude Code (haiku) on the demo site's chart: "A bar chart titled “Visitors by month” for Riverside Library from January to June shows visitor counts rising each month: 1,200 in January, … 3,400 in June", in about 6 s.
+
+Captured by [`demo/shoot-a11y.js`](demo/shoot-a11y.js) on [`demo/sites/a11y`](demo/sites/a11y/index.html), a library site with problems planted on purpose (the real runtime, a stand-in host with the demo model, speech recorded instead of spoken).
+
+| | |
+|---|---|
+| ![](docs/screenshots/100-easier-to-use.png) **Easier to use**, beside the page tools: three tools on | ![](docs/screenshots/101-read-aloud.png) **Read aloud**: the sentence being read is marked |
+| ![](docs/screenshots/102-check-page.png) **Check this page**: 17 places, each with a marker, and Fix it | ![](docs/screenshots/103-before-after-contrast.png) **Higher contrast**, before and after |
 
 ## Status
 
