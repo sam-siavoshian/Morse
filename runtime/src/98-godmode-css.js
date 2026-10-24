@@ -21,6 +21,10 @@ function GOD_CSS() { return `
   .gm-read { position: absolute; left: 50%; top: calc(100% + 8px); transform: translateX(-50%); padding: 2px 6px; border-radius: 4px;
     background: var(--m-signal-4); color: var(--m-text-inverse); font: 500 11px/16px var(--m-mono); letter-spacing: 0; white-space: pre;
     font-variant-numeric: tabular-nums; }
+  .gm-read.in { top: auto; bottom: 8px; }
+
+  .gm-svgtext { position: fixed; left: 0; top: 0; height: 32px; padding: 0 8px; pointer-events: auto; border: 1px solid var(--m-signal-4); border-radius: var(--m-r-sm);
+    background: var(--m-surface); color: var(--m-text); box-shadow: var(--m-shadow); outline: none; font: 450 var(--m-text-md)/1 var(--m-font); letter-spacing: var(--m-tracking); }
 
   /* ---- toolbar */
   .gm-tb { position: fixed; left: 0; top: 0; display: flex; align-items: center; gap: 2px; height: 40px; padding: 4px; pointer-events: auto;
@@ -90,7 +94,8 @@ function GOD_CSS() { return `
   /* ---- capture */
   .gm-pop-capture { width: 280px; }
   .gm-cap-shot { display: grid; place-items: center; height: 112px; overflow: hidden; border-radius: var(--m-r-sm); background: var(--m-raised); border: 1px solid var(--m-line); }
-  .gm-cap-shot img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; }
+  .gm-cap-shot img { display: block; width: 100%; height: 100%; object-fit: contain; }
+  :host([data-page-inverted]) :is(.gm-cap-shot, .gm-chip) img { filter: invert(1) hue-rotate(180deg); }
   .gm-cap-shot .gm-ph { color: var(--m-text-3); }
   .gm-cap-meta { display: flex; flex-direction: column; gap: 2px; margin: 12px 0 8px; }
   .gm-cap-meta b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -129,7 +134,7 @@ function GOD_CSS() { return `
     border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-raised); color: var(--m-text); transition: border-color var(--m-fast), background var(--m-fast); }
   .gm-chip:hover { background: var(--m-hover); }
   .gm-chip[aria-pressed="true"] { border-color: var(--m-text); background: var(--m-surface); }
-  .gm-chip img, .gm-chip .gm-ph { flex: none; width: 40px; height: 28px; border-radius: 4px; object-fit: cover; background: var(--m-hover); }
+  .gm-chip img, .gm-chip .gm-ph { flex: none; width: 40px; height: 28px; border-radius: 4px; object-fit: cover; object-position: left center; background: var(--m-hover); }
   .gm-chip .gm-ph { display: grid; place-items: center; color: var(--m-text-3); }
   .gm-chip span:not(.gm-ph) { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .gm-chip b { font: 500 var(--m-text-sm)/1.2 var(--m-font); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

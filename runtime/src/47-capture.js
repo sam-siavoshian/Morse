@@ -75,8 +75,12 @@ const GodCapture = (() => {
   }
   async function thumbOf(el) {
     const r = el.getBoundingClientRect();
-    const x = Math.max(0, r.left), y = Math.max(0, r.top), w = Math.min(innerWidth, r.right) - x, h = Math.min(innerHeight, r.bottom) - y;
+    const x = Math.max(0, r.left), y = Math.max(0, r.top);
+    // visible part, trimmed to at most 3:1 (or 1:1.25) from the top left so wide bars stay legible
+    let w = Math.min(innerWidth, r.right) - x, h = Math.min(innerHeight, r.bottom) - y;
     if (w < 4 || h < 4) return null;
+    w = Math.min(w, h * 3);
+    h = Math.min(h, w * 1.25);
     const vis = hostEl.style.visibility;
     hostEl.style.visibility = "hidden";
     await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
@@ -86,12 +90,12 @@ const GodCapture = (() => {
     if (!shot) return null;
     const img = await new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = shot; });
     if (!img) return null;
-    const sx = img.width / innerWidth, sy = img.height / innerHeight, k = Math.min(1, 480 / w, 240 / h);
+    const sx = img.width / innerWidth, sy = img.height / innerHeight, k = Math.min(1, 560 / (w * sx), 280 / (h * sy));
     const c = document.createElement("canvas");
-    c.width = Math.max(1, Math.round(w * k));
-    c.height = Math.max(1, Math.round(h * k));
+    c.width = Math.max(1, Math.round(w * sx * k));
+    c.height = Math.max(1, Math.round(h * sy * k));
     c.getContext("2d").drawImage(img, x * sx, y * sy, w * sx, h * sy, 0, 0, c.width, c.height);
-    return c.toDataURL("image/jpeg", 0.86);
+    return c.toDataURL("image/jpeg", 0.88);
   }
   const forPrompt = item => ({ label: item.label, html: item.html, styles: item.styles, hover: item.hover, note: item.note, from: item.from });
   const fallbackThumb = `<span class="gm-ph">${GodMode.icon("capture", 16)}</span>`;
@@ -100,6 +104,7 @@ const GodCapture = (() => {
   // The popover God mode opens for Capture (Shift+C).
   function pop(el, target, close) {
     let thumb = null;
+    hostEl.toggleAttribute("data-page-inverted", /invert/.test(getComputedStyle(document.documentElement).filter));
     el.innerHTML = `
       <div class="gm-cap-shot">${fallbackThumb}</div>
       <div class="gm-cap-meta"><b>${esc(describe(target))}</b><small>${esc(siteName())} · ${Math.round(target.getBoundingClientRect().width)}×${Math.round(target.getBoundingClientRect().height)}</small></div>
@@ -134,6 +139,8 @@ const GodCapture = (() => {
   const placeholder = input.placeholder;
 
   function render() {
+    // Dark/light mode inverts the whole page, our overlay included: flip thumbnails back.
+    hostEl.toggleAttribute("data-page-inverted", /invert/.test(getComputedStyle(document.documentElement).filter));
     const phase = S.phase;
     const used = phase !== "idle" && st.used;
     const items = used ? [st.used] : st.list.slice(0, 8);
@@ -186,5 +193,5 @@ const GodCapture = (() => {
     return msg;
   });
 
-  return { pop, snapshot, get list() { return st.list; } };
+  return { pop, snapshot, refresh: render, get list() { return st.list; } };
 })();

@@ -157,6 +157,12 @@ test("edge cases: shadow DOM, mixed inline text, frames, duplicates, and dark pa
   await page.keyboard.type("Hit");
   await page.keyboard.press("Enter");
   assert.equal(await page.locator("#mixed").innerHTML(), "Hit <b>Alt+Space</b> to start");
+  // The app re-renders: the text comes back in place, and a brand-new element gets it too.
+  await until(async () => (await savedMods(page)).some(m => m.js.includes('"Hit"')));
+  await page.evaluate(() => { document.querySelector("#mixed").firstChild.nodeValue = "Press "; });
+  await until(async () => (await page.locator("#mixed").innerHTML()) === "Hit <b>Alt+Space</b> to start");
+  await page.evaluate(() => { const m = document.querySelector("#mixed"), n = m.cloneNode(false); n.innerHTML = "Press <b>Alt+Space</b> to start"; m.replaceWith(n); });
+  await until(async () => (await page.locator("#mixed").innerHTML()) === "Hit <b>Alt+Space</b> to start");
 
   // Frames: selectable, but only from the outside.
   const f = await page.locator("iframe").boundingBox();

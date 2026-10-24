@@ -53,6 +53,11 @@ test("later edits to the same property win and a move keeps the original transfo
   assert.doesNotMatch(a, /red/);
 });
 
+test("inline elements move as inline-block (transforms skip inline boxes)", () => {
+  assert.match(compileEdits([{ op: "move", sel: "a.x", x: 3, y: 0, inline: true }]).css, /display: inline-block !important;/);
+  assert.equal(compileEdits([{ op: "move", sel: "a.x", x: 3, y: 0, inline: true }, { op: "move", sel: "a.x", x: 0, y: 0, inline: true }]).css, "");
+});
+
 test("moving back to the start removes the transform", () => {
   assert.equal(compileEdits([{ op: "move", sel: "#a", x: 10, y: 0 }, { op: "move", sel: "#a", x: 0, y: 0 }]).css, "");
 });
@@ -108,10 +113,11 @@ test("duplicates, copies' children and shadow-root edits compile to valid JS", (
 test("page tools: dark/light check the page first; zoom, ads and focus", () => {
   const dark = compileEdits([{ op: "page", kind: "dark" }]);
   compiles(dark.js);
-  assert.match(dark.js, /if \(!pageIsDark\(\)\) morse\.css\(/);
+  assert.match(dark.js, /if \(!pageIsDark\(\)\) \{\n {2}morse\.css\(/);
+  assert.match(dark.js, /keepAsIs\(true\);/, "already-dark parts keep their colors");
   assert.match(dark.js, /invert\(0\.93\) hue-rotate\(180deg\)/);
   assert.match(dark.js, /:where\(img, video/, "media are re-inverted");
-  assert.match(compileEdits([{ op: "page", kind: "light" }]).js, /if \(pageIsDark\(\)\) morse\.css\(/);
+  assert.match(compileEdits([{ op: "page", kind: "light" }]).js, /if \(pageIsDark\(\)\) \{[\s\S]*keepAsIs\(false\);/);
 
   assert.match(compileEdits([{ op: "page", kind: "zoom", level: 2 }]).css, /body \{\n {2}zoom: 1\.21 !important;/);
   assert.equal(compileEdits([{ op: "page", kind: "zoom", level: 0 }]).css, "");

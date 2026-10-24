@@ -230,9 +230,11 @@ const GodMode = (() => {
   }
   function currentMove() {
     const prev = allEdits().filter(e => e.op === "move" && sameTarget(e, G.t)).pop();
-    if (prev) return { x: prev.x || 0, y: prev.y || 0, base: prev.base };
-    const base = getComputedStyle(G.el).transform;
-    return { x: 0, y: 0, base: base && base !== "none" ? base : undefined };
+    if (prev) return { x: prev.x || 0, y: prev.y || 0, base: prev.base, inline: prev.inline };
+    const cs = getComputedStyle(G.el), base = cs.transform;
+    // transforms don't apply to inline boxes (links, spans): those move as inline-block
+    const inline = G.kind === "html" && cs.display === "inline" ? true : undefined;
+    return { x: 0, y: 0, base: base && base !== "none" ? base : undefined, inline };
   }
 
   // ---- selection and placement
@@ -297,6 +299,7 @@ const GodMode = (() => {
     const fl = Math.round(clamp(r.left - 1, 0, vw - 2)), ft = Math.round(clamp(r.top - 1, 0, vh - 2));
     const fr = Math.round(clamp(r.right + 1, fl + 2, vw)), fb = Math.round(clamp(r.bottom + 1, ft + 2, vh));
     Object.assign(frame.style, { transform: `translate(${fl}px, ${ft}px)`, width: fr - fl + "px", height: fb - ft + "px" });
+    read.classList.toggle("in", fb + 32 > vh);
 
     const tw = tb.offsetWidth, th = tb.offsetHeight;
     const barR = bar.hidden ? null : bar.getBoundingClientRect();
@@ -304,7 +307,12 @@ const GodMode = (() => {
     const fits = top => top >= M && top + th <= vh - M && !(barR && overlaps({ left, right: left + tw, top, bottom: top + th }, barR));
     let side = "above", top = r.top - th - M;
     if (!fits(top)) { side = "below"; top = r.bottom + M; }
-    if (!fits(top)) { side = "inside"; top = clamp(r.top + M, M, vh - th - M); if (barR && overlaps({ left, right: left + tw, top, bottom: top + th }, barR)) top = clamp(barR.top - th - M, M, vh - th - M); }
+    if (!fits(top)) {
+      // tall or whole-page element: pin inside its top edge, clear of the bar
+      side = "inside";
+      top = clamp(r.top + M, M, vh - th - M);
+      if (!fits(top) && barR) top = barR.top > vh / 2 ? clamp(barR.top - th - M, M, vh - th - M) : clamp(barR.bottom + M, M, vh - th - M);
+    }
     top = Math.round(top);
     tb.style.transform = `translate(${left}px, ${top}px)`;
     // tooltips open away from the element, unless that runs off screen
@@ -395,7 +403,7 @@ const GodMode = (() => {
       if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }
       if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 2) moved = true;
       const x = Math.round(cur.x + dx), y = Math.round(cur.y + dy);
-      preview([{ op: "move", ...t, x, y, base: cur.base, label }]);
+      preview([{ op: "move", ...t, x, y, base: cur.base, inline: cur.inline, label }]);
       readout(`x ${signed(x)}  y ${signed(y)}`);
     }, () => {
       const p = GS.preview;
@@ -407,7 +415,7 @@ const GodMode = (() => {
     if (now - G.lastNudge > 1000) G.nudgeSeq++;
     G.lastNudge = now;
     const x = cur.x + dx, y = cur.y + dy;
-    commit([{ op: "move", ...tgt(), x, y, base: cur.base, label: G.t.label }], `nudge:${G.nudgeSeq}:${G.t.sel}`);
+    commit([{ op: "move", ...tgt(), x, y, base: cur.base, inline: cur.inline, label: G.t.label }], `nudge:${G.nudgeSeq}:${G.t.sel}`);
     readout(`x ${signed(x)}  y ${signed(y)}`);
   }
   function startResize(e, h) {
@@ -431,7 +439,7 @@ const GodMode = (() => {
       if (ex > 0) mx += (r0.left - r1.left) / s.x; else if (ex < 0) mx += (r0.right - r1.right) / s.x;
       if (ey > 0) my += (r0.top - r1.top) / s.y; else if (ey < 0) my += (r0.bottom - r1.bottom) / s.y;
       mx = Math.round(mx); my = Math.round(my);
-      if (mx !== cur.x || my !== cur.y) preview([size, { op: "move", ...t, x: mx, y: my, base: cur.base, label }]);
+      if (mx !== cur.x || my !== cur.y) preview([size, { op: "move", ...t, x: mx, y: my, base: cur.base, inline: cur.inline, label }]);
       readout(`${Math.round(r1.width / s.x)} × ${Math.round(r1.height / s.y)}`);
     }, () => {
       const p = GS.preview;
@@ -449,7 +457,8 @@ const GodMode = (() => {
   });
 
   // Text: edit one run of text in place. The run is wrapped in a temporary
-  // plaintext-only span (the app's own node object is put back afterwards).
+  // plaintext-only span (the app's own node object is put back afterwards);
+  // SVG text gets a small field over it instead.
   const runs = el => [...el.childNodes].filter(n => n.nodeType === 3 && n.nodeValue.trim());
   function textNodeIn(el) {
     const all = [];
@@ -476,35 +485,57 @@ const GodMode = (() => {
     if (!node) return toast("There's no text to edit here");
     const parent = node.parentElement;
     if (parent.closest("[data-morse]") && !parent.closest("[data-morse-dup]")) return toast("That text comes from a mod. Edit it in Mods → Code.");
-    const span = document.createElement("span");
-    const ed = { node, span, i: runs(parent).indexOf(node), was: node.nodeValue, target: targetOf(parent), label: describe(parent) };
-    span.setAttribute("data-morse-ui", "");
-    span.style.cssText = "outline: none; caret-color: currentColor; cursor: text;";
-    span.spellcheck = false;
-    node.before(span);
-    span.append(node);
-    span.contentEditable = "plaintext-only";
+    const ed = { node, i: runs(parent).indexOf(node), was: node.nodeValue, target: targetOf(parent), label: describe(parent) };
+    const [, before, , after] = /^(\s*)([\s\S]*?)(\s*)$/.exec(ed.was);
     ed.onBlur = () => setTimeout(() => { if (G.editing === ed) endText(true); }, 0);
-    span.addEventListener("focusout", ed.onBlur);
+    if (parent instanceof SVGElement) {
+      // SVG text can't host an HTML editor: type in a field over it, previewing live.
+      const rg = document.createRange();
+      rg.selectNodeContents(node);
+      const r = rg.getBoundingClientRect();
+      const field = ed.field = document.createElement("input");
+      field.className = "gm-svgtext";
+      field.spellcheck = false;
+      field.value = ed.was.trim();
+      field.style.transform = `translate(${Math.round(r.left - 8)}px, ${Math.round(r.top + r.height / 2 - 16)}px)`;
+      field.style.width = `${Math.round(Math.max(120, r.width + 48))}px`;
+      field.oninput = () => { node.nodeValue = before + field.value + after; };
+      field.addEventListener("focusout", ed.onBlur);
+      wrap.append(field);
+      ed.read = () => field.value;
+    } else {
+      const span = ed.span = document.createElement("span");
+      span.setAttribute("data-morse-ui", "");
+      span.style.cssText = "outline: none; caret-color: currentColor; cursor: text;";
+      span.spellcheck = false;
+      node.before(span);
+      span.append(node);
+      span.contentEditable = "plaintext-only";
+      span.addEventListener("focusout", ed.onBlur);
+      ed.read = () => span.textContent;
+    }
     G.editing = ed;
     S.picking = false;
     hl.hidden = true;
     frame.dataset.tool = "text";
     syncButtons();
-    span.focus({ preventScroll: true });
-    const sel = getSelection(), rg = document.createRange();
-    rg.selectNodeContents(span);
-    sel.removeAllRanges();
-    sel.addRange(rg);
+    if (ed.field) { ed.field.focus({ preventScroll: true }); ed.field.select(); }
+    else {
+      ed.span.focus({ preventScroll: true });
+      const sel = getSelection(), rg = document.createRange();
+      rg.selectNodeContents(ed.span);
+      sel.removeAllRanges();
+      sel.addRange(rg);
+    }
     hint.innerHTML = `Type the new text · <kbd>↵</kbd> save · <kbd>Esc</kbd> cancel`;
   }
   function endText(ok) {
     const ed = G.editing;
     if (!ed) return;
     G.editing = null;
-    ed.span.removeEventListener("focusout", ed.onBlur);
-    const text = ed.span.textContent.replace(/\s+/g, " ").trim();
-    ed.span.replaceWith(ed.node);
+    const text = ed.read().replace(/\s+/g, " ").trim();
+    if (ed.span) { ed.span.removeEventListener("focusout", ed.onBlur); ed.span.replaceWith(ed.node); }
+    if (ed.field) { ed.field.removeEventListener("focusout", ed.onBlur); ed.field.remove(); }
     const [, before, , after] = /^(\s*)([\s\S]*?)(\s*)$/.exec(ed.was);
     delete frame.dataset.tool;
     if (ok && text && text !== ed.was.trim()) {
@@ -678,7 +709,7 @@ const GodMode = (() => {
       return;
     }
     if (!G.el || S.phase !== "idle" || wrap.hidden) return;
-    const onTb = active && (active === tb || tb.contains(active));
+    const onTb = active && (active === tb || tb.contains(active) || (pop.contains(active) && !active.matches("input, textarea")));
     if (!onTb) return;
     if (e.key.startsWith("Arrow") && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();

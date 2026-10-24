@@ -12,7 +12,7 @@
 // Edit shapes (every edit may also carry `shadow: [hostSelector, ...]` for
 // elements inside open shadow roots, and a `label` for summaries):
 //   { op: "hide",      sel }
-//   { op: "move",      sel, x, y, base? }        absolute offset in CSS px; base = original transform
+//   { op: "move",      sel, x, y, base?, inline? }  absolute offset in CSS px; base = original transform
 //   { op: "resize",    sel, w?, h?, inline?, flex? }
 //   { op: "style",     sel, props: { "color": "#fff", ... } }
 //   { op: "text",      sel, i, text, was }       i-th non-empty text run directly inside sel
@@ -67,20 +67,39 @@ const FOCUS_CSS = `[data-morse-focus-hide] { display: none !important; }
 // ---- helpers that run in the page (embedded via toString)
 
 /* global morse, undo, dupHooks */
+function luminance(c) {
+  const m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/.exec(c);
+  if (!m || (m[4] !== undefined && +m[4] < 0.5)) return null;
+  return (0.2126 * m[1] + 0.7152 * m[2] + 0.0722 * m[3]) / 255;
+}
+
 export function pageIsDark() {
-  const lum = c => {
-    const m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/.exec(c);
-    if (!m || (m[4] !== undefined && +m[4] < 0.5)) return null;
-    return (0.2126 * m[1] + 0.7152 * m[2] + 0.0722 * m[3]) / 255;
-  };
   const starts = [document.elementFromPoint(innerWidth / 2, innerHeight / 3), document.body, document.documentElement];
   for (const start of starts) {
     for (let n = start; n && n.nodeType === 1; n = n.parentElement) {
-      const l = lum(getComputedStyle(n).backgroundColor);
+      const l = luminance(getComputedStyle(n).backgroundColor);
       if (l != null) return l < 0.45;
     }
   }
   return false;
+}
+
+// Parts that already look the way the page is heading (a dark masthead or a
+// brand-colored button on a light page) are flipped back, so they keep their
+// colors and only the rest of the page changes.
+function keepAsIs(toDark) {
+  const media = "img, video, picture, canvas, iframe, embed, object, svg image";
+  morse.css(`[data-morse-keep] { filter: invert(1) hue-rotate(180deg) !important; }\n[data-morse-keep] :where(${media}) { filter: none !important; }`);
+  const page = innerWidth * innerHeight;
+  morse.watch("body *", el => {
+    if (el.closest("[data-morse-keep]")) return;
+    const l = luminance(getComputedStyle(el).backgroundColor);
+    if (l == null || (toDark ? l > 0.3 : l < 0.75)) return;
+    const r = el.getBoundingClientRect();
+    if (r.width * r.height > page * 0.5) return;
+    el.setAttribute("data-morse-keep", "");
+    undo.push(() => el.removeAttribute("data-morse-keep"));
+  });
 }
 
 function each(sel, shadow, fn) {
@@ -225,7 +244,7 @@ export function compileEdits(edits = []) {
         break;
       case "move": {
         const x = px(e.x), y = px(e.y), base = e.base && e.base !== "none" ? " " + cssValue(e.base) : "";
-        set(e, { transform: x || y ? `translate(${x}px, ${y}px)${base}` : null });
+        set(e, { transform: x || y ? `translate(${x}px, ${y}px)${base}` : null, ...(e.inline ? { display: x || y ? "inline-block" : null } : {}) });
         break;
       }
       case "resize": {
@@ -291,7 +310,7 @@ export function compileEdits(edits = []) {
       if (z !== 1) cssParts.push(`body {\n  zoom: ${z} !important;\n}`);
     } else if (kind === "dark" || kind === "light") {
       need.add("dark");
-      body.push(`// ${PAGE_TOOLS[kind].title}: smart invert, skipped on pages that are already ${kind}.\nif (${kind === "dark" ? "!" : ""}pageIsDark()) morse.css(${str(INVERT_CSS)});`);
+      body.push(`// ${PAGE_TOOLS[kind].title}: smart invert, skipped on pages that are already ${kind}.\nif (${kind === "dark" ? "!" : ""}pageIsDark()) {\n  morse.css(${str(INVERT_CSS)});\n  keepAsIs(${kind === "dark"});\n}`);
     } else if (kind === "noads") {
       cssParts.push(ADS_CSS);
       need.add("popups");
@@ -313,7 +332,7 @@ export function compileEdits(edits = []) {
   if (need.has("rename")) helpers.push(rename.toString());
   if (need.has("dup")) helpers.push(cloneAfter.toString());
   if (need.has("style")) helpers.push(addStyle.toString());
-  if (need.has("dark")) helpers.push(pageIsDark.toString());
+  if (need.has("dark")) helpers.push(luminance.toString(), pageIsDark.toString(), keepAsIs.toString());
   if (need.has("focus")) helpers.push(focusOn.toString());
   if (need.has("popups")) helpers.push(hidePopups.toString());
   const js2 = [

@@ -72,7 +72,7 @@ const GodQuick = (() => {
     const b = e.target.closest("button[data-k]");
     if (!b) return;
     close();
-    act(b.dataset.k).catch(err => toast(err.message));
+    act(b.dataset.k).catch(err => toast(err.message)).finally(() => GodCapture.refresh());
   });
   // Escape and arrows while the menu is open (registered before 95-keys.js).
   addEventListener("keydown", e => {
