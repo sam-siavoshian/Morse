@@ -296,7 +296,8 @@ function CSS() {
   :host([dir=rtl]) { direction: rtl; }
   kbd, .caps { direction: ltr; unicode-bidi: isolate; }
   .in { unicode-bidi: plaintext; } /* what you type lines up with its own language */
-  :host([dir=rtl]) .i-go { transform: scaleX(-1); }
+  :host([dir=rtl]) :is(.i-go, [data-t=undo] svg, [data-t=redo] svg) { transform: scaleX(-1); }
+  .chip span, .model, .panel header small { unicode-bidi: plaintext; } /* names of things on the page keep their own direction */
   :host([dir=rtl]) .panel { animation-name: slide-rtl; }
   @keyframes slide-rtl { from { transform: translateX(-12px); opacity: 0 } }
   :host([dir=rtl]) .sw input:checked + span::after { transform: translateX(-12px); }

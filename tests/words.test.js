@@ -7,6 +7,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
+import en from "../core/locales/en.js";
 
 const ROOT = new URL("../", import.meta.url);
 const read = p => readFileSync(new URL(p, ROOT), "utf8");
@@ -159,7 +160,30 @@ test("the runtime shows no developer jargon", () => {
     seen += strings.filter(s => readable(s.text)).length;
     found.push(...hits(file, strings));
   }
-  assert.ok(seen > 400, `the scan reads the runtime's sentences and labels (saw ${seen})`);
+  // Most of what the runtime shows now comes from the English catalog (scanned below).
+  const catalog = catalogStrings().filter(s => readable(s.text)).length;
+  assert.ok(seen + catalog > 400, `the scan reads the runtime's sentences and labels (saw ${seen} in the source, ${catalog} in the catalog)`);
+  assert.deepEqual(found, [], `jargon a person would read:\n${found.join("\n")}`);
+});
+
+// ---- the English catalog (core/locales/en.js): what people read in every
+// part of Morse that says it through t(). Code shown as code (<code>…</code>)
+// and {placeholders} aren't prose; the code view's headings are allowed, as
+// in the source above.
+const CATALOG_ALLOWED = new Set([
+  "install.code.style", // "Style (CSS)": the share page's code view
+  "install.code.script", // "Script (JavaScript)": the share page's code view
+]);
+function catalogStrings() {
+  return Object.entries(en).flatMap(([id, v]) => (typeof v === "object" ? Object.values(v) : [v]).map(text => ({
+    id, line: id, text: String(text).replace(/<code\b[^>]*>[\s\S]*?<\/code>/g, " ").replace(/\{\w+\}/g, "something"),
+  })));
+}
+
+test("the English catalog shows no developer jargon", () => {
+  const strings = catalogStrings().filter(s => !CATALOG_ALLOWED.has(s.id));
+  assert.ok(strings.filter(s => readable(s.text)).length > 400, "the scan reads the catalog's sentences and labels");
+  const found = hits("core/locales/en.js", strings);
   assert.deepEqual(found, [], `jargon a person would read:\n${found.join("\n")}`);
 });
 

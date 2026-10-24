@@ -23,7 +23,8 @@
      Used by tests/bar.test.js and demo/shoot-bar.js.
        ?ms=30       token interval        ?light       light page
        ?voice=0     no transcription      ?auto        auto-submit voice
-       ?onboarding  first run (coach, tips, notices; see the onboarding cases below) -->
+       ?onboarding  first run (coach, tips, notices; see the onboarding cases below)
+       ?keepmods    saved mods stay in the Mods panel (demo/shoot-i18n.js) -->
 <div class="stage">
   <div class="toolbar" id="toolbar" data-testid="player-controls" aria-label="Player controls"><button aria-label="Shuffle">⤮</button><button aria-label="Previous">⏮</button><button aria-label="Play">▶</button><button aria-label="Next">⏭</button><button aria-label="Repeat">↻</button><span class="now">Now playing · Low Light — Kiasmos</span><span style="flex:1"></span><button>Settings</button></div>
   <div class="card" id="card">
@@ -58,7 +59,7 @@
       switch (m.type) {
         case "hello":
           return reply({ mode: "playground", label: "playground · fake host", quiet: !q.has("welcome"), settings: store.get("settings", {}), voice });
-        case "mods.list": return reply([]);
+        case "mods.list": return reply(q.has("keepmods") ? store.get("mods", []) : []);
         case "settings.get": return reply(store.get("settings", {}));
         case "settings.set": { const s = merge(store.get("settings", {}), m.settings); store.set("settings", s); return reply(s); }
         case "history.get": return reply(store.get("history", {})[m.scope] || []);
@@ -104,7 +105,11 @@
         case "onboarding.get": return reply(q.has("onboarding") ? { state: store.get("onboarding", {}), status: { mode: "playground", model: { connected: !q.has("nomodel") }, userScripts: !q.has("noscripts") } } : null);
         case "onboarding.set": { const s = merge(store.get("onboarding", {}), m.patch); store.set("onboarding", s); return reply(s); }
         case "onboarding.open": fake.opened = m.what; return reply({ ok: true });
-        case "mods.save": return reply({ ...(m.draft || m.mod), enabled: true, created: new Date().toISOString(), updated: new Date().toISOString() });
+        case "mods.save": {
+          const saved = { ...(m.draft || m.mod), enabled: true, created: new Date().toISOString(), updated: new Date().toISOString() };
+          if (q.has("keepmods")) store.set("mods", [...store.get("mods", []).filter(x => x.id !== saved.id), saved]);
+          return reply(saved);
+        }
         case "exec": return reply({ ok: true });
         default: return reply(null);
       }

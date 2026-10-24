@@ -107,8 +107,8 @@ const GodCapture = (() => {
     el.innerHTML = `
       <div class="gm-cap-shot">${fallbackThumb}</div>
       <div class="gm-cap-meta"><b>${esc(describe(target))}</b><small>${esc(siteName())} · ${Math.round(target.getBoundingClientRect().width)}×${Math.round(target.getBoundingClientRect().height)}</small></div>
-      <input class="gm-cap-note field" placeholder="Add a note (optional)" spellcheck="false" aria-label="Note">
-      <div class="gm-cap-foot"><span>Use it later in any app</span><button class="btn primary" data-a="save">Capture <kbd>↵</kbd></button></div>`;
+      <input class="gm-cap-note field" placeholder="${esc(t("cap.note"))}" spellcheck="false" aria-label="${esc(t("cap.noteLabel"))}">
+      <div class="gm-cap-foot"><span>${t("cap.later")}</span><button class="btn primary" data-a="save">${t("cap.capture")} <kbd>↵</kbd></button></div>`;
     const shot = el.querySelector(".gm-cap-shot"), field = el.querySelector(".gm-cap-note");
     thumbOf(target).then(t => {
       thumb = t;
@@ -119,10 +119,10 @@ const GodCapture = (() => {
       if (thumb) item.thumb = thumb;
       try {
         st.list = (await call("clipboard.put", { item })) || [item];
-      } catch (e) { return toast(`Couldn't capture this. ${plainError(e)}`); }
+      } catch (e) { return toast(t("cap.failed", { error: plainError(e) })); }
       close();
       render();
-      toast(`Captured ${item.label}. Open Morse in another app to use it.`);
+      toast(t("cap.done", { label: item.label }));
     };
     el.querySelector("[data-a=save]").onclick = save;
     field.onkeydown = e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); save(); } };
@@ -132,10 +132,9 @@ const GodCapture = (() => {
   const row = document.createElement("div");
   row.className = "gm-clips";
   row.hidden = true;
-  row.innerHTML = `<span class="gm-clips-l">Captured</span><div class="gm-chips" role="listbox" aria-label="Captured items"></div>`;
+  row.innerHTML = `<span class="gm-clips-l">${t("cap.captured")}</span><div class="gm-chips" role="listbox" aria-label="${esc(t("cap.items"))}"></div>`;
   bar.insertBefore(row, bar.querySelector(".status"));
   const chips = row.querySelector(".gm-chips"), label = row.querySelector(".gm-clips-l");
-  const placeholder = input.placeholder;
 
   function render() {
     // Dark/light mode inverts the whole page, our overlay included: flip thumbnails back.
@@ -145,14 +144,14 @@ const GodCapture = (() => {
     const items = used ? [st.used] : st.list.slice(0, 8);
     row.hidden = bar.hidden || !items.length || (phase !== "idle" && !used);
     if (row.hidden) return;
-    label.textContent = used ? "Using" : "Captured";
+    label.textContent = used ? t("cap.using") : t("cap.captured");
     chips.innerHTML = items.map(it => `<button class="gm-chip" role="option" data-id="${esc(it.id)}" aria-pressed="${!!used || st.picked?.id === it.id}" title="${esc(it.label)}${it.note ? " · " + esc(it.note) : ""}">
       ${thumbHtml(it)}<span><b>${esc(it.label)}</b><small>${esc(it.from?.app || it.from?.title || "")}</small></span></button>`).join("");
     chips.querySelectorAll("img").forEach(i => (i.onerror = () => i.replaceWith(Object.assign(document.createElement("span"), { className: "gm-ph", innerHTML: GodMode.icon("capture", 16) }))));
   }
   function pick(item) {
     st.picked = st.picked?.id === item?.id ? null : item;
-    input.placeholder = st.picked ? "Describe where and how to use it here…" : placeholder;
+    input.placeholder = st.picked ? t("cap.placeholder") : PLACEHOLDER();
     render();
     input.focus();
   }
@@ -165,7 +164,7 @@ const GodCapture = (() => {
     if (bar.hidden) {
       st.picked = null;
       if (!S.draft || S.draft.saved) st.used = null;
-      input.placeholder = placeholder;
+      input.placeholder = PLACEHOLDER();
       row.hidden = true;
       return;
     }
@@ -184,7 +183,7 @@ const GodCapture = (() => {
       msg.context.snapshot = forPrompt(st.picked);
       st.used = st.picked;
       st.picked = null;
-      input.placeholder = placeholder;
+      input.placeholder = PLACEHOLDER();
       queueMicrotask(render); // the bar turned "working" before this request went out
     } else if (msg.type === "mods.save" && msg.draft && st.used && S.draft?.id === msg.draft.id && S.draft.ctx?.snapshot) {
       msg.draft.from = st.used.from;

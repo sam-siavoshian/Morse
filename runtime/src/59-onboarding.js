@@ -20,7 +20,7 @@ const Onboarding = (() => {
   let tipSaved = false, tipShare = false;
   const CHECK = `<svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg>`;
 
-  const coachEl = makeEl("div", { className: "ob-coach", hidden: true }, { role: "group", "aria-label": "Getting started" });
+  const coachEl = tBind(makeEl("div", { className: "ob-coach", hidden: true }, { role: "group" }), "aria-label", "ob.coach");
   const noteEl = makeEl("div", { className: "ob-note", hidden: true }, { role: "note" });
   bar.prepend(coachEl);
   statusRow.before(noteEl);
@@ -41,17 +41,17 @@ const Onboarding = (() => {
   }
 
   // ---- the coach
-  const STEPS = [["point", "Point"], ["describe", "Describe"], ["keep", "Save"]];
+  const STEPS = [["point", "welcome.step2.b"], ["describe", "welcome.step3.b"], ["keep", "btn.save"]];
   function step() {
-    if (S.phase === "result") return ["keep", `Like it? <b>Save</b> keeps it for next time. <b>Undo</b> puts the page back.`];
-    if (S.phase === "working") return ["describe", `Morse is making the change. You'll see it as it happens. <kbd>Esc</kbd> stops it.`];
+    if (S.phase === "result") return ["keep", t("ob.keep")];
+    if (S.phase === "working") return ["describe", t("ob.working")];
     if (S.phase === "error") { // first-run hook: say what to do about this error, not "try other words" for a missing model
       const why = explainError(hint.title || hint.textContent), raw = hint.title || hint.textContent;
-      if (why?.action === "model" || why?.action === "setup" || /no model connected|sample answers/i.test(raw)) return ["describe", `Morse needs a model for this. Connect one, then press <kbd>Enter</kbd> to try again.`];
-      return ["describe", `That didn't work. Try other words, or point at something else.`];
+      if (why?.action === "model" || why?.action === "setup" || /no model connected|sample answers/i.test(raw)) return ["describe", t("ob.needModel")];
+      return ["describe", t("ob.failed")];
     }
-    if (S.target || input.value.trim()) return ["describe", `Say what you want, like “make this bigger”, then press <kbd>Enter</kbd>.`];
-    return ["point", `Click the part of the page you want to change. Or skip this and describe a change to the whole page.`];
+    if (S.target || input.value.trim()) return ["describe", t("ob.describe")];
+    return ["point", t("ob.point")];
   }
   const coachOn = () => !!st && st.coach !== "done" && S.open && !bar.hidden && !paneKind;
   function renderCoach() {
@@ -62,10 +62,10 @@ const Onboarding = (() => {
     if (shownStep === id + say) return;
     shownStep = id + say;
     const at = STEPS.findIndex(s => s[0] === id);
-    const examples = id === "describe" && S.phase === "idle" ? ` <button type="button" class="ob-link" data-ob="help">See examples</button>` : "";
+    const examples = id === "describe" && S.phase === "idle" ? ` <button type="button" class="ob-link" data-ob="help">${t("ob.examples")}</button>` : "";
     coachEl.innerHTML = `
-      <ol class="ob-steps">${STEPS.map(([, label], i) => `<li class="${i < at ? "done" : i === at ? "now" : ""}"${i === at ? ` aria-current="step"` : ""}><span class="n">${i < at ? CHECK : i + 1}</span>${label}</li>`).join("")}</ol>
-      <button type="button" class="ob-hide" data-ob="skip">Hide tips</button>
+      <ol class="ob-steps">${STEPS.map(([, label], i) => `<li class="${i < at ? "done" : i === at ? "now" : ""}"${i === at ? ` aria-current="step"` : ""}><span class="n">${i < at ? CHECK : i + 1}</span>${t(label)}</li>`).join("")}</ol>
+      <button type="button" class="ob-hide" data-ob="skip">${t("ob.hideTips")}</button>
       <p class="ob-say">${say}${examples}</p>`;
   }
 
@@ -73,9 +73,9 @@ const Onboarding = (() => {
   function noteNow() {
     if (!st || coachOn() || !S.open || bar.hidden || S.phase !== "idle" || paneKind) return null;
     if (modelMissing(status, S.label) && !st.dismissed.model && !status.sample) // the practice page's sample answers need no model
-      return { id: "model", text: "No model connected yet. Connect one so Morse can make changes.", btn: "Connect a model", act: "model" };
+      return { id: "model", text: t("ob.noModel"), btn: t("welcome.model.b"), act: "model" };
     if (status.userScripts === false && !st.dismissed.userScripts)
-      return { id: "userScripts", text: "“Allow User Scripts” is off, so added buttons and features won't run on some sites.", btn: "Turn it on", act: "userscripts" };
+      return { id: "userScripts", text: t("ob.scriptsOff"), btn: t("popup.turnItOn"), act: "userscripts" };
     return null;
   }
   function renderNote() {
@@ -85,17 +85,17 @@ const Onboarding = (() => {
     shownNote = n?.id || "";
     noteEl.innerHTML = n ? `<span class="ob-dot" aria-hidden="true"></span><span class="ob-text">${esc(n.text)}</span>
       <button type="button" data-ob="${n.act}">${esc(n.btn)}</button>
-      <button type="button" class="ob-close" data-ob="dismiss" data-id="${n.id}" aria-label="Don't show this again" title="Don't show this again">×</button>` : "";
+      <button type="button" class="ob-close" data-ob="dismiss" data-id="${n.id}" aria-label="${esc(t("ob.dontShow"))}" title="${esc(t("ob.dontShow"))}">×</button>` : "";
   }
 
   // ---- errors in plain words, with a button that does something about it
-  const ACTION_LABEL = { userscripts: "Turn on Allow User Scripts", model: "Model settings", setup: "Copy “morse setup”" };
+  const ACTION_LABEL = { userscripts: "help.userScripts", model: "ob.modelSettings", setup: "ob.copySetup" };
   function explainFailure() {
     if (S.phase !== "error" || hint.querySelector(".ob-why")) return;
     const why = explainError(hint.title || hint.textContent);
     if (!why) return;
-    hint.innerHTML = `That didn't work: <span class="ob-why">${esc(why.text)}</span>`;
-    const label = ACTION_LABEL[why.action];
+    hint.innerHTML = t("result.failedNote", { detail: `<span class="ob-why">${esc(why.text)}</span>` });
+    const label = ACTION_LABEL[why.action] && t(ACTION_LABEL[why.action]);
     if (label && !actions.querySelector("[data-ob]")) actions.insertAdjacentHTML("afterbegin", `<button type="button" data-ob="${why.action}">${esc(label)}</button>`);
   }
 
@@ -122,7 +122,7 @@ const Onboarding = (() => {
   async function copyCommand(cmd) {
     let copied = false;
     try { await navigator.clipboard.writeText(cmd); copied = true; } catch {}
-    showTip(copied ? `Copied “${cmd}”. Paste it in a terminal and press Enter.` : `Run “${cmd}” in a terminal.`, 7000);
+    showTip(copied ? t("ob.copied", { cmd }) : t("ob.run", { cmd }), 7000);
   }
   async function act(what, btn) {
     if (what === "skip") return save({ coach: "done" });
@@ -135,9 +135,7 @@ const Onboarding = (() => {
     let r = null;
     try { r = await call("onboarding.open", { what }); } catch {}
     if (r && r.copy) return copyCommand(r.copy);
-    if (!r) showTip(what === "userscripts"
-      ? "Open chrome://extensions, click Details under Morse, and turn on “Allow User Scripts”."
-      : S.mode === "extension" ? "Click the Morse icon in Chrome's toolbar, then open Model." : "Run “morse setup” in a terminal to connect a model.", 9000);
+    if (!r) showTip(what === "userscripts" ? t("ob.howScripts") : S.mode === "extension" ? t("ob.howModelExt") : t("ob.howModel"), 9000);
   }
   for (const el of [coachEl, noteEl, actions]) el.addEventListener("click", e => {
     const b = e.target.closest("[data-ob]");
@@ -157,7 +155,7 @@ const Onboarding = (() => {
     clearTimeout(toast.t);
     toast.t = setTimeout(() => (toastEl.hidden = true), ms);
   }
-  const where = () => S.appName || (/^https?:$/.test(location.protocol) && location.host) || "this page";
+  const where = () => S.appName || (/^https?:$/.test(location.protocol) && location.host) || t("panel.thisPage");
   function savedTip() {
     tipSaved = false;
     celebrate(S.mods[S.mods.length - 1]);
@@ -176,17 +174,17 @@ const Onboarding = (() => {
     const k = id => (hotkey(id) ? caps(hotkey(id)) : "");
     const edit = hotkey("godmode") ? caps(hotkey("godmode")) : caps([primaryMod, "E"]);
     const next = [
-      typeof GodQuick !== "undefined" && ["Page tools", "Dark mode, bigger text and more, from the new button in the bar."],
-      ["Edit tools", `Point at something and press ${edit} to hide, move or recolor it.`],
-      ["Ask", "Ask about the page, like “what does this button do?”"],
+      typeof GodQuick !== "undefined" && [t("quick.title"), esc(t("ob.win.quick"))],
+      [t("hk.godmode"), t("ob.win.edit", { key: edit })],
+      [t("ob.win.ask"), esc(t("ob.win.ask.d"))],
     ].filter(Boolean);
     winEl.innerHTML = `<div class="ob-win-mark" aria-hidden="true">${radar(30)}<svg class="ob-win-check" viewBox="0 0 16 16" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg></div>
       <div class="ob-win-body">
-        <b>Your first mod is saved</b>
-        <p>A mod is a change you saved. Morse brings ${m ? `“${esc(m.title)}”` : "it"} back every time you open ${esc(where())}. ${k("mods") ? `${k("mods")} opens` : "Mods opens"} the Mods panel, to turn it off or share it.</p>
-        <h4>Now in your bar</h4>
-        <ul>${next.map(([t, d]) => `<li><b>${esc(t)}</b><span>${d}</span></li>`).join("")}</ul>
-        <div class="ob-win-row">${m ? `<button type="button" class="primary" data-win="share">Share it</button>` : ""}<button type="button" data-win="done">Done</button><span><span class="caps"><kbd>F1</kbd></span> for help</span></div>
+        <b>${t("ob.win.title")}</b>
+        <p>${t("ob.win.body", { mod: m ? `“${esc(m.title)}”` : t("ob.win.it"), where: esc(where()), key: k("mods") || t("bar.mods") })}</p>
+        <h4>${t("ob.win.now")}</h4>
+        <ul>${next.map(([title, d]) => `<li><b>${esc(title)}</b><span>${d}</span></li>`).join("")}</ul>
+        <div class="ob-win-row">${m ? `<button type="button" class="primary" data-win="share">${t("ob.win.share")}</button>` : ""}<button type="button" data-win="done">${t("btn.done")}</button><span>${t("ob.win.help")}</span></div>
       </div>`;
     winEl.hidden = false;
     clearTimeout(celebrate.t);
@@ -218,7 +216,7 @@ const Onboarding = (() => {
     const card = !modal.hidden && modal.querySelector(".card");
     if (!tipShare || !card || !card.querySelector(".exports")) return;
     tipShare = false;
-    card.insertAdjacentHTML("beforeend", `<p class="ob-tip">${radar(12)}<span>Anyone with Morse can install it from this link. The Tampermonkey download runs in Tampermonkey or Violentmonkey without Morse. People see the code before they install it.</span></p>`);
+    card.insertAdjacentHTML("beforeend", `<p class="ob-tip">${radar(12)}<span>${t("ob.shareTip")}</span></p>`);
   }).observe(modal, { childList: true, attributes: true, attributeFilter: ["hidden"] });
 
   // ---- follow the bar: open/close, target, phase, panes
@@ -236,9 +234,9 @@ const Onboarding = (() => {
   // ---- the Mods panel with nothing in it (70-panel.js hook)
   function emptyMods() {
     const open = hotkey("open");
-    return `<div class="empty ob-empty">${radar(22)}<b>No mods on ${esc(where())} yet</b>
-      <span>${open ? `Press ${caps(open)}, point` : "Open Morse, point"} at something and say what you want changed. What you save shows up here, to turn off, edit or share.</span>
-      <div class="ob-row"><button type="button" class="primary" data-ob="start">Make a change</button><button type="button" data-ob="help">See examples</button></div></div>`;
+    return `<div class="empty ob-empty">${radar(22)}<b>${t("ob.empty.title", { where: esc(where()) })}</b>
+      <span>${open ? t("ob.empty.press", { key: caps(open) }) : t("ob.empty.open")}</span>
+      <div class="ob-row"><button type="button" class="primary" data-ob="start">${t("ob.empty.make")}</button><button type="button" data-ob="help">${t("ob.examples")}</button></div></div>`;
   }
 
   load();

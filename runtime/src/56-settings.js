@@ -91,7 +91,7 @@ function languageRowHtml() {
   const sys = languageName(systemLanguage());
   const opts = [["", t("settings.language.system", { name: sys })], ...LANGUAGES.map(l => [l.code, l.name])];
   const label = t("settings.language");
-  return `<div class="srow lang"><div class="lbl"><span>${esc(label)}${getLanguage() === "en" ? "" : ` <span class="dim" lang="en" dir="ltr">· Language</span>`}</span><small>${t("settings.language.help")}</small></div>
+  return `<div class="srow lang"><div class="lbl"><span>${esc(label)}${getLanguage() === "en" ? "" : ` <span class="dim">· <span lang="en" dir="ltr">Language</span></span>`}</span><small>${t("settings.language.help")}</small></div>
     <div class="ctl"><select class="field" data-k="language" aria-label="${esc(label)}">${opts.map(([v, name]) =>
       `<option value="${esc(v)}"${v === PREFS.language ? " selected" : ""}${v ? ` lang="${esc(v)}"` : ""}>${esc(name)}</option>`).join("")}</select></div></div>`;
 }

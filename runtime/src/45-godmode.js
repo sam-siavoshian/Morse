@@ -32,42 +32,50 @@ const GodMode = (() => {
   const icon = (n, s = 16) => `<svg viewBox="0 0 16 16" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
   const tip = (label, key) => `<span class="tip" role="tooltip">${esc(label)}${key ? `<kbd>${esc(key)}</kbd>` : ""}</span>`;
 
+  // tip: a message id (core/locales/en.js), read when the toolbar is drawn or the language changes
   const TOOLS = [
-    { t: "hide", tip: "Hide", key: "H" },
-    { t: "move", tip: "Move", key: "M" },
-    { t: "resize", tip: "Resize", key: "R" },
-    { t: "text", tip: "Edit text", key: "T" },
-    { t: "color", tip: "Color", key: "C" },
-    { t: "type", tip: "Text size", key: "F" },
-    { t: "dup", tip: "Duplicate", key: "D" },
+    { t: "hide", tip: "gm.hide", key: "H" },
+    { t: "move", tip: "gm.move", key: "M" },
+    { t: "resize", tip: "gm.resize", key: "R" },
+    { t: "text", tip: "gm.text", key: "T" },
+    { t: "color", tip: "gm.color", key: "C" },
+    { t: "type", tip: "gm.type", key: "F" },
+    { t: "dup", tip: "gm.dup", key: "D" },
     null,
-    { t: "capture", tip: "Capture to use in another app", key: SHIFT + "C" },
-    { t: "ask", tip: "Describe a change", key: "A" },
+    { t: "capture", tip: "gm.capture", key: SHIFT + "C" },
+    { t: "ask", tip: "bar.input", key: "A" },
     null,
-    { t: "undo", tip: "Undo", key: MOD + "Z" },
-    { t: "redo", tip: "Redo", key: SHIFT + MOD + "Z" },
+    { t: "undo", tip: "btn.undo", key: MOD + "Z" },
+    { t: "redo", tip: "gm.redo", key: SHIFT + MOD + "Z" },
   ];
   // Tools that need to reach inside the element (not possible for frames).
   const INSIDE = new Set(["text", "color", "type", "dup", "capture"]);
   const KEYS = { h: "hide", delete: "hide", backspace: "hide", m: "move", r: "resize", t: "text", c: "color", f: "type", d: "dup", a: "ask" };
   const PALETTE = ["#000000", "#262626", "#525252", "#a3a3a3", "#e5e5e5", "#ffffff", "#ef4444", "#f97316",
     "#eab308", "#22c55e", "#14b8a6", "#3b82f6", "#6366f1", "#a855f7", "#ec4899", "transparent"];
-  const WEIGHTS = [[300, "Light"], [400, "Regular"], [500, "Medium"], [600, "Semi"], [700, "Bold"]];
+  const WEIGHTS = [[300, "gm.w.light"], [400, "gm.w.regular"], [500, "gm.w.medium"], [600, "gm.w.semi"], [700, "gm.w.bold"]];
 
   const wrap = document.createElement("div");
   wrap.className = "gm";
   wrap.hidden = true;
   wrap.innerHTML = `
     <div class="gm-frame">${["nw", "n", "ne", "e", "se", "s", "sw", "w"].map(h => `<i data-h="${h}"></i>`).join("")}<span class="gm-read" hidden></span></div>
-    <div class="gm-tb" role="toolbar" aria-label="Edit tools" tabindex="-1">
+    <div class="gm-tb" role="toolbar" aria-label="${esc(t("hk.godmode"))}" tabindex="-1">
       <span class="gm-tag"></span><span class="gm-sep"></span>
-      ${TOOLS.map(x => x ? `<button class="ibtn" data-t="${x.t}" aria-label="${esc(x.tip)}">${icon(x.t)}${tip(x.tip, x.key)}</button>` : `<span class="gm-sep"></span>`).join("")}
+      ${TOOLS.map(x => x ? `<button class="ibtn" data-t="${x.t}" aria-label="${esc(t(x.tip))}">${icon(x.t)}${tip(t(x.tip), x.key)}</button>` : `<span class="gm-sep"></span>`).join("")}
     </div>
     <div class="gm-note" hidden></div>
     <div class="gm-pop" hidden></div>`;
   root.append(wrap);
   const frame = wrap.querySelector(".gm-frame"), tb = wrap.querySelector(".gm-tb"), tag = wrap.querySelector(".gm-tag");
   const note = wrap.querySelector(".gm-note"), pop = wrap.querySelector(".gm-pop"), read = wrap.querySelector(".gm-read");
+  langSubs.add(() => { // the toolbar's names in the new language (04-i18n.js)
+    tb.setAttribute("aria-label", t("hk.godmode"));
+    for (const x of TOOLS) {
+      const b = x && tb.querySelector(`[data-t="${x.t}"]`);
+      if (b) { b.setAttribute("aria-label", t(x.tip)); b.querySelector(".tip").firstChild.textContent = t(x.tip); }
+    }
+  });
 
   const G = { el: null, t: null, kind: "html", tool: null, pop: null, popSeq: 0, editing: null, raf: 0, pointer: { x: 0, y: 0 }, nudgeSeq: 0, lastNudge: 0 };
   const newSession = () => ({ id: null, mod: null, history: [], future: [], preview: [], lastJs: "", chain: Promise.resolve(), saveTimer: 0 });
@@ -179,7 +187,7 @@ const GodMode = (() => {
       if (js === s.lastJs) return;
       s.lastJs = js;
       const r = js ? await call("exec", { modId: s.id, js }) : await call("off", { modId: s.id });
-      if (js && r && !r.ok) toast(`Couldn't make that edit (${plainError(r.error)}). Press ${MOD}Z to undo it.`);
+      if (js && r && !r.ok) toast(t("gm.editFailed", { error: plainError(r.error), key: `${MOD}Z` }));
       relink();
     }, e => { s.lastJs = null; console.warn("[morse] god mode", e); }); // a lost step runs again with the next edit
     clearTimeout(s.saveTimer);
@@ -192,12 +200,12 @@ const GodMode = (() => {
   function queue(s, step, onError) {
     const run = () => {
       let timer;
-      const late = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("Morse didn't hear back in time. Try again.")), STEP_MS); });
+      const late = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(t("gm.late"))), STEP_MS); });
       return Promise.race([Promise.resolve().then(step), late]).finally(() => clearTimeout(timer));
     };
     return (s.chain = s.chain.then(run).catch(onError));
   }
-  const saveFailed = e => toast(`Couldn't save your edits. ${plainError(e)}`);
+  const saveFailed = e => toast(t("gm.saveFailed", { error: plainError(e) }));
   async function persist(s) {
     const edits = allEdits(s);
     if (!edits.length) {
@@ -219,18 +227,18 @@ const GodMode = (() => {
   function undo() {
     finishTool();
     const h = GS.history.pop();
-    if (!h) return toast("Nothing to undo");
+    if (!h) return toast(t("gm.nothingUndo"));
     GS.future.push(h);
     apply();
-    toast(`Undone: ${describeEdit(h.edits[0])}`);
+    toast(t("gm.undone", { what: describeEdit(h.edits[0]) }));
   }
   function redo() {
     finishTool();
     const h = GS.future.pop();
-    if (!h) return toast("Nothing to redo");
+    if (!h) return toast(t("gm.nothingRedo"));
     GS.history.push(h);
     apply();
-    toast(`Redone: ${describeEdit(h.edits[0])}`);
+    toast(t("gm.redone", { what: describeEdit(h.edits[0]) }));
   }
   // Re-running mod JS recreates duplicates and apps re-render: find the selection again.
   function relink() {
@@ -267,7 +275,7 @@ const GodMode = (() => {
       let from = "";
       const src = el.getAttribute("src") || el.getAttribute("data");
       try { if (src) from = new URL(src, location.href).host; } catch {}
-      note.innerHTML = `${icon("frame")}<span><b>This part is another page${from ? ` from ${esc(from)}` : ""}.</b> Morse can hide, move or resize it, but can't edit what's inside.</span>`;
+      note.innerHTML = `${icon("frame")}<span>${t("gm.frame", { from: from ? t("gm.frameFrom", { host: esc(from) }) : "" })}</span>`;
     }
     syncButtons();
     wrap.hidden = false;
@@ -275,7 +283,7 @@ const GodMode = (() => {
     S.picking = true;
     // Typing describes a change (the main interaction); the tools are one
     // shortcut away so a sentence starting with "m" never triggers Move.
-    hint.innerHTML = `Describe a change · <kbd>${PLATFORM === "mac" ? "⌘" : "Ctrl+"}E</kbd> for Edit tools · <kbd>Esc</kbd> to close`;
+    hint.innerHTML = t("gm.hint", { key: `${PLATFORM === "mac" ? "⌘" : "Ctrl+"}E` });
     // A toolbar action that changes the selection (duplicate, Alt+↑/↓) keeps the toolbar focused.
     if (G.keepTb) { G.keepTb = false; tb.focus({ preventScroll: true }); }
     if (!G.raf) G.raf = requestAnimationFrame(loop);
@@ -404,7 +412,7 @@ const GodMode = (() => {
     const label = G.t.label;
     commit([{ op: "hide", ...tgt(), label }]);
     deselect();
-    toast(`Hid ${label}. Press ${MOD}Z to undo.`);
+    toast(t("gm.hid", { label, key: `${MOD}Z` }));
   }
 
   function readout(text) { read.textContent = text; read.hidden = false; }
@@ -509,11 +517,11 @@ const GodMode = (() => {
   function startText() {
     finishTool();
     closePop();
-    if (G.el.matches("input, textarea, select")) return toast("Text in a form field can't be edited here. Press A to describe the change instead.");
+    if (G.el.matches("input, textarea, select")) return toast(t("gm.formField"));
     const node = textNodeIn(G.el);
-    if (!node) return toast("There's no text here to edit");
+    if (!node) return toast(t("gm.noText"));
     const parent = node.parentElement;
-    if (parent.closest("[data-morse]") && !parent.closest("[data-morse-dup]")) return toast("That text comes from a mod. Change it in Mods → Edit code.");
+    if (parent.closest("[data-morse]") && !parent.closest("[data-morse-dup]")) return toast(t("gm.fromMod"));
     const ed = { node, i: runs(parent).indexOf(node), was: node.nodeValue, target: targetOf(parent), label: describe(parent) };
     const [, before, , after] = /^(\s*)([\s\S]*?)(\s*)$/.exec(ed.was);
     ed.onBlur = () => setTimeout(() => { if (G.editing === ed) endText(true); }, 0);
@@ -557,7 +565,7 @@ const GodMode = (() => {
       sel.removeAllRanges();
       sel.addRange(rg);
     }
-    hint.innerHTML = `Type the new text · <kbd>↵</kbd> to save · <kbd>Esc</kbd> to cancel`;
+    hint.innerHTML = t("gm.typeHint");
   }
   function endText(ok) {
     const ed = G.editing;
@@ -578,7 +586,7 @@ const GodMode = (() => {
     if (G.el && S.open) {
       S.picking = true;
       tb.focus({ preventScroll: true });
-      hint.innerHTML = `Use the Edit tools, or describe a change · <kbd>Esc</kbd> to close`;
+      hint.innerHTML = t("gm.toolsHint");
     }
   }
 
@@ -589,7 +597,7 @@ const GodMode = (() => {
     await commit([{ op: "duplicate", ...tgt(), key, label: G.t.label }]);
     const copy = find({ sel: `[data-morse-dup="${key}"]`, shadow });
     if (copy) { G.keepTb = true; setTarget(copy); }
-    toast(`Duplicated. Press M to move the copy.`);
+    toast(t("gm.duplicated"));
   }
 
   // ---- popovers: color, type (here) and capture (47-capture.js)
@@ -633,7 +641,7 @@ const GodMode = (() => {
   const validColor = v => /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v) || v === "transparent";
   function colorPop() {
     const el = G.el, cs = getComputedStyle(el), svg = G.kind === "svg";
-    const chans = svg ? [["fill", "Fill"], ["stroke", "Outline"]] : [["color", "Text"], ["background", "Fill"], ["border", "Border"]];
+    const chans = svg ? [["fill", t("gm.ch.fill")], ["stroke", t("gm.ch.outline")]] : [["color", t("gm.ch.text")], ["background", t("gm.ch.fill")], ["border", t("gm.ch.border")]];
     const noBorder = !svg && !(parseFloat(cs.borderTopWidth) > 0 && cs.borderTopStyle !== "none");
     const gradient = !svg && /gradient/.test(cs.backgroundImage);
     let ch = chans[0][0];
@@ -647,7 +655,7 @@ const GodMode = (() => {
     pop.innerHTML = `
       <div class="seg" role="tablist">${chans.map(([k, l]) => `<button data-ch="${k}" role="tab">${l}</button>`).join("")}</div>
       <div class="gm-sw">${PALETTE.map(c => `<button data-c="${c}" title="${c}" aria-label="${c}"${c === "transparent" ? ' class="none"' : ` style="--c:${c}"`}></button>`).join("")}</div>
-      <div class="gm-hex field"><i></i><input spellcheck="false" maxlength="11" pattern="#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})|transparent" aria-label="Color code">${globalThis.EyeDropper ? `<button class="ibtn xs" data-a="pick" title="Pick a color from the screen" aria-label="Pick a color from the screen">${icon("drop")}</button>` : ""}</div>`;
+      <div class="gm-hex field"><i></i><input spellcheck="false" maxlength="11" pattern="#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})|transparent" aria-label="${esc(t("gm.colorCode"))}">${globalThis.EyeDropper ? `<button class="ibtn xs" data-a="pick" title="${esc(t("gm.pick"))}" aria-label="${esc(t("gm.pick"))}">${icon("drop")}</button>` : ""}</div>`;
     const field = pop.querySelector("input"), dot = pop.querySelector(".gm-hex i");
     const paint = v => {
       field.value = v;
@@ -678,11 +686,11 @@ const GodMode = (() => {
     const cs = getComputedStyle(G.el);
     let size = Math.round(parseFloat(cs.fontSize) || 16), weight = Math.round(+cs.fontWeight / 100) * 100 || 400;
     pop.innerHTML = `
-      <div class="gm-field"><label>Size</label>
-        <div class="gm-step field"><button class="ibtn xs" data-d="-1" aria-label="Smaller">${icon("minus")}</button><input inputmode="numeric" aria-label="Text size in pixels"><span>px</span><button class="ibtn xs" data-d="1" aria-label="Bigger">${icon("plus")}</button></div></div>
-      <input class="gm-range" type="range" min="8" max="72" step="1" aria-label="Text size">
-      <div class="gm-field"><label>Weight</label></div>
-      <div class="seg gm-weights">${WEIGHTS.map(([w, l]) => `<button data-w="${w}" style="font-weight:${w}" title="${w}">${l}</button>`).join("")}</div>`;
+      <div class="gm-field"><label>${t("gm.size")}</label>
+        <div class="gm-step field"><button class="ibtn xs" data-d="-1" aria-label="${esc(t("gm.smaller"))}">${icon("minus")}</button><input inputmode="numeric" aria-label="${esc(t("gm.sizePx"))}"><span>px</span><button class="ibtn xs" data-d="1" aria-label="${esc(t("gm.bigger"))}">${icon("plus")}</button></div></div>
+      <input class="gm-range" type="range" min="8" max="72" step="1" aria-label="${esc(t("gm.type"))}">
+      <div class="gm-field"><label>${t("gm.weight")}</label></div>
+      <div class="seg gm-weights">${WEIGHTS.map(([w, l]) => `<button data-w="${w}" style="font-weight:${w}" title="${w}">${t(l)}</button>`).join("")}</div>`;
     const field = pop.querySelector(".gm-step input"), range = pop.querySelector(".gm-range");
     const paint = () => {
       field.value = size;
@@ -839,7 +847,7 @@ const GodMode = (() => {
       if (!S.open) openBar();
       revealEditTools(); // first-run hook: 59-onboarding.js
       if (G.el && !wrap.hidden) tb.focus({ preventScroll: true });
-      else hint.innerHTML = `Point at something to use the Edit tools on it`;
+      else hint.innerHTML = esc(t("gm.pointFirst"));
     },
   };
 })();
