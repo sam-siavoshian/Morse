@@ -42,10 +42,29 @@ export async function loadConfig() {
   try { return JSON.parse(await fs.readFile(CONFIG, "utf8")); } catch { return {}; }
 }
 
+// The config holds API keys and helper tokens: owner-only, written atomically.
 export async function saveConfig(cfg) {
   await ensureHome();
-  await fs.writeFile(CONFIG, JSON.stringify(cfg, null, 2));
+  const tmp = `${CONFIG}.${process.pid}.${Date.now()}.tmp`;
+  await fs.writeFile(tmp, JSON.stringify(cfg, null, 2), { mode: 0o600 });
+  await fs.rename(tmp, CONFIG);
+  await fs.chmod(CONFIG, 0o600).catch(() => {});
 }
+
+// Read-modify-write, serialized within this process.
+let queue = Promise.resolve();
+export function updateConfig(fn) {
+  const run = queue.then(async () => {
+    const cfg = await loadConfig();
+    const out = (await fn(cfg)) ?? cfg;
+    await saveConfig(out);
+    return out;
+  });
+  queue = run.catch(() => {});
+  return run;
+}
+
+export const CONFIG_PATH = CONFIG;
 
 export async function writeExport(filename, data) {
   await ensureHome();

@@ -1,24 +1,97 @@
+// Toolbar popup, and (with <body data-page="options">) the options page.
 const $ = id => document.getElementById(id);
-const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-const isMac = navigator.platform.includes("Mac");
-$("key").textContent = isMac ? "⌥ Space" : "Alt+Space";
+const isOptions = document.body.dataset.page === "options";
+const [tab] = isOptions ? [null] : await chrome.tabs.query({ active: true, currentWindow: true });
+$("key").textContent = navigator.platform.includes("Mac") ? "⌥ Space" : "Alt+Space";
 
 // ?url= lets the popup be opened as a page (screenshots, debugging).
 const url = new URLSearchParams(location.search).get("url") || tab?.url || "";
-const st = await chrome.runtime.sendMessage({ type: "popup.state", url });
-$("label").textContent = st.label;
-$("warn").hidden = st.userScripts;
-$("count").textContent = st.mods.length ? `· ${st.mods.length}` : "";
-$("mods").innerHTML = st.mods.length
-  ? st.mods.map(m => `<li>${m.enabled ? "●" : "○"} ${esc(m.title)}<small>“${esc(m.prompt)}”</small></li>`).join("")
-  : `<li class="empty">None yet.</li>`;
-for (const k of ["provider", "baseUrl", "model", "apiKey"]) if (st.saved[k]) $(k).value = st.saved[k];
+const send = msg => chrome.runtime.sendMessage({ ...msg, url });
 
-$("go").onclick = async () => { await chrome.tabs.sendMessage(tab.id, { morseToggle: true }).catch(() => {}); window.close(); };
-$("save").onclick = async () => {
-  const settings = {};
-  for (const k of ["provider", "baseUrl", "model", "apiKey"]) if ($(k).value) settings[k] = $(k).value;
-  const r = await chrome.runtime.sendMessage({ type: "popup.settings", settings });
-  $("label").textContent = r.label;
+let st = await send({ type: "popup.state" });
+render(st);
+
+function render(s) {
+  st = s;
+  $("label").textContent = s.label;
+  $("page").hidden = isOptions;
+  $("warn").hidden = s.userScripts;
+  $("count").textContent = s.mods.length ? `· ${s.mods.length}` : "";
+  $("mods").innerHTML = s.mods.length
+    ? s.mods.map(m => `<li><i class="${m.enabled ? "on" : ""}"></i>${esc(m.title)}<small>“${esc(m.prompt)}”</small></li>`).join("")
+    : `<li class="empty">None yet.</li>`;
+
+  $("connect").hidden = s.kind !== "none";
+  $("reason").textContent = s.reason;
+
+  // Auto (no explicit choice): show whichever is in use, else the helper.
+  const backend = s.backend || (s.kind === "anthropic" ? "anthropic" : "helper");
+  for (const r of document.querySelectorAll("input[name=backend]")) r.checked = r.value === backend;
+  for (const p of document.querySelectorAll(".panel")) p.hidden = p.dataset.for !== backend;
+
+  const h = s.helper;
+  $("hdot").className = "dot " + (h?.paired ? "ok" : h ? "warn" : "off");
+  $("hstatus").textContent = !h ? "Helper not running on this computer"
+    : !h.paired ? `Helper running · ${h.label} · not paired`
+    : `Paired · ${h.label}`;
+  $("pairrow").hidden = !!h?.paired;
+  $("hhint").hidden = !!h?.paired;
+  $("unpair").hidden = !h?.paired;
+  const hp = h?.provider && s.providers[h.provider];
+  $("helperModels").innerHTML = (hp?.models || []).map(m => `<option value="${esc(m)}">`).join("");
+  $("helperModel").placeholder = h?.model ? `${h.model} (helper default)` : "helper default";
+  if (document.activeElement !== $("helperModel")) $("helperModel").value = s.helperModel;
+
+  $("anthropicModel").innerHTML = s.anthropicModels.map(m => `<option${m === s.anthropicModel ? " selected" : ""}>${esc(m)}</option>`).join("");
+  $("anthropicKey").placeholder = s.anthropicKey ? `saved ${s.anthropicKey}` : "sk-ant-…";
+}
+
+async function save(patch) {
+  const r = await send({ type: "popup.save", ...patch });
+  if (r.error) return note(r.error, true);
+  render(r);
+}
+
+function note(text, bad) {
+  $("result").textContent = text;
+  $("result").className = "hint" + (bad ? " bad" : "");
+}
+
+for (const r of document.querySelectorAll("input[name=backend]")) r.onchange = () => save({ backend: r.value });
+$("helperModel").onchange = () => save({ helperModel: $("helperModel").value });
+$("anthropicModel").onchange = () => save({ anthropicModel: $("anthropicModel").value });
+$("anthropicKey").onchange = async () => {
+  const v = $("anthropicKey").value.trim();
+  if (!v) return;
+  await save({ anthropicKey: v, backend: "anthropic" });
+  $("anthropicKey").value = "";
+  note("Key saved.");
 };
+$("code").oninput = () => { $("code").value = $("code").value.toUpperCase().replace(/[^A-Z0-9]/g, ""); };
+$("code").onkeydown = e => { if (e.key === "Enter") $("pair").click(); };
+$("pair").onclick = async () => {
+  const code = $("code").value.trim();
+  if (code.length !== 6) return note("Enter the 6-character code from `morse serve`.", true);
+  $("pair").disabled = true;
+  const r = await send({ type: "popup.pair", code });
+  $("pair").disabled = false;
+  if (r.error) return note(r.error, true);
+  $("code").value = "";
+  render(r);
+  note("Paired.");
+};
+$("unpair").onclick = async () => render(await send({ type: "popup.unpair" }));
+$("test").onclick = async () => {
+  $("test").disabled = true;
+  note("Testing… (Claude Code takes a few seconds to start)");
+  const r = await send({ type: "popup.test" });
+  $("test").disabled = false;
+  if (!r.ok) return note(r.error || "Failed", true);
+  note(`✓ ${r.label} replied “${r.text}” in ${(r.ms / 1000).toFixed(1)}s`);
+};
+$("go").onclick = async () => { await chrome.tabs.sendMessage(tab.id, { morseToggle: true }).catch(() => {}); window.close(); };
+
+// Keep the helper status fresh while the page is open (e.g. after `morse serve`).
+setInterval(async () => { if (document.activeElement?.tagName !== "INPUT") render(await send({ type: "popup.state" })); }, 4000);
+
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }

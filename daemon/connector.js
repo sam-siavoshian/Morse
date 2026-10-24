@@ -9,7 +9,7 @@ import { modsFor, saveMod, deleteMod, writeExport } from "./store.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
 import { runMorse } from "../core/engine.js";
-import { settingsLabel } from "../core/providers.js";
+import { settingsLabel } from "./models.js"; // also registers the Claude Code / Codex providers
 import { Recorder } from "./record.js";
 
 import { bundleRuntime } from "../runtime/bundle.js";
