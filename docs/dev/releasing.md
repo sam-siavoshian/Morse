@@ -260,6 +260,13 @@ Morse's own page, which is what the sandbox would protect.
   [release workflow](#what-one-release-makes) waits for this one, takes its
   files too, and publishes the release with the notes, the store zip and the
   npm package.
+- The builds can only read the repo (they run npm packages' install scripts
+  next to the signing secrets); only the job that drafts the release can
+  write. Each action is pinned to a commit, with its version in a comment: to
+  update one, look up the new tag's commit (`git ls-remote
+  https://github.com/actions/checkout refs/tags/v4`) and change both.
+  `.github/workflows/release.yml` pins the same way, and
+  `tests/round9.test.js` fails on an action pinned to a tag.
 
 Add the secrets above under Settings, Secrets and variables, Actions.
 

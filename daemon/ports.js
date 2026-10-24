@@ -4,6 +4,7 @@
 
 import net from "node:net";
 import os from "node:os";
+import { readFileSync } from "node:fs";
 
 // MORSE_PORT_RANGE=<from>-<to> moves the range (tests and parallel runs use it
 // so concurrent copies don't pick the same port); the default is unchanged.
@@ -65,10 +66,40 @@ export async function reachableFrom(port, addresses = externalAddresses(), answe
   return open;
 }
 
+// Who holds a listening TCP port: the user ids of its listeners, from
+// /proc/net/tcp and tcp6 (Linux lists every account's there). [] when
+// nothing listens on it; null where Morse can't tell this way (macOS, Windows).
+export function listenerUids(port, { platform = process.platform, read = f => readFileSync(f, "utf8") } = {}) {
+  if (platform !== "linux") return null;
+  const uids = new Set();
+  let readAny = false;
+  for (const file of ["/proc/net/tcp", "/proc/net/tcp6"]) {
+    let text;
+    try { text = read(file); readAny = true; } catch { continue; }
+    for (const line of text.split("\n").slice(1)) {
+      const c = line.trim().split(/\s+/); // sl local_address rem_address st … uid
+      if (c.length < 8 || c[3] !== "0A") continue; // 0A: listening
+      if (parseInt(c[1].split(":").pop(), 16) === port) uids.add(Number(c[7]));
+    }
+  }
+  return readAny ? [...uids] : null;
+}
+
+// Is what listens on `port` a program of this account? false: another
+// account on this computer holds it (it got there first, so it can pose as
+// the app, user agent, process id and all). null: Morse can't tell.
+export function portIsMine(port, { uid = process.getuid?.(), ...o } = {}) {
+  if (uid == null) return null;
+  const uids = listenerUids(port, o);
+  if (!uids?.length) return null;
+  return uids.every(u => u === uid);
+}
+
 // Strip switches that would widen who can reach the port (an allowed origin
-// lets web pages with that origin drive the app).
+// lets web pages with that origin drive the app). Chromium also reads a
+// switch with one dash, and on Windows with a slash or in capitals.
 export function safeExtraArgs(args = []) {
-  return args.filter(a => !/^--remote-(debugging-(address|port|pipe)|allow-origins)\b/.test(a));
+  return args.filter(a => !/^(--?|\/)remote-(debugging-(address|port|pipe)|allow-origins)\b/i.test(a));
 }
 
 async function json(port, path) {

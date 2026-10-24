@@ -242,5 +242,8 @@ test("the release workflow: on v* tags, checks and tests first, store zip, npm o
   assert.match(wf, /on:\s*\n\s+push:\s*\n\s+tags:\s*\["v\*"\]/);
   for (const step of ["npm ci", "npm run check", "npm test", "MORSE_STORE", "node scripts/release.js notes", "--provenance", "release-desktop.yml"]) assert.ok(wf.includes(step), `release.yml has ${step}`);
   assert.match(wf, /::notice[^\n]*NPM_TOKEN/, "says clearly when npm is skipped");
+  // It holds NPM_TOKEN and can write releases: every action pinned to a commit, as in release-desktop.yml.
+  for (const [, u] of wf.matchAll(/uses:\s*(\S+)/g)) assert.match(u, /^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/, `${u} is pinned to a commit, not a tag that can move`);
+  assert.match(wf, /^permissions:\n\s+contents: read$/m, "read only unless a job asks for more");
   assert.match(readFileSync(path.join(root, ".github", "workflows", "pages.yml"), "utf8"), /branches: \[main\]/, "Pages publishes from main, whatever the default branch is");
 });

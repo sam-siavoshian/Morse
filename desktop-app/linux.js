@@ -12,7 +12,14 @@ export const AUTOSTART = (home = os.homedir()) => path.join(home, ".config", "au
 export const MENU_ENTRY = (home = os.homedir()) => path.join(home, ".local", "share", "applications", "morse-desktop.desktop");
 
 // One word of an Exec= line, quoted the way the Desktop Entry spec reads it.
-const quote = s => (/^[\w./:=-]+$/.test(s) ? s : `"${String(s).replace(/(["`$\\])/g, "\\$1")}"`);
+// A line break would start a line of its own (another Exec=), so a path with
+// one is refused; % starts a field code (%u), so a real one is written %%.
+const quote = s => {
+  s = String(s);
+  if (/[\x00-\x1f\x7f]/.test(s)) throw Object.assign(new Error("The path to Morse has a line break in it, so Morse can't add itself to your apps or open at login. Move Morse to another folder."), { plain: true });
+  s = s.replace(/%/g, "%%");
+  return /^[\w./:=-]+$/.test(s) ? s : `"${s.replace(/(["`$\\])/g, "\\$1")}"`;
+};
 
 export function desktopEntry({ exec, args = [], icon = "", hidden = false, url = false }) {
   return [
