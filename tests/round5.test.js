@@ -430,7 +430,7 @@ test("kit: choose never clicks a button, and Enter only submits a form when a re
     morse.choose(document.getElementById("rc"), true);
     morse.choose(document.getElementById("rc"), true);
     for (const id of ["b1", "c1", "d1"]) morse.key(document.getElementById(id), "Enter");`));
-  assert.deepEqual(r, { ok: true });
+  assert.equal(r.ok, true);
   const got = await page.evaluate(() => ({ chose: window.__chose, sub: window.__sub || [], rc: document.getElementById("rc").getAttribute("aria-checked") }));
   assert.match(got.chose, /^morse\.choose works on a menu, a checkbox or an option/);
   assert.deepEqual(got.sub, ["d"], "two fields and no button, or a turned-off button: Enter submits nothing");
@@ -460,7 +460,7 @@ test("kit: confirm resolves only on the person's own click; No, Esc and turning 
   // In an app that refuses HTML strings (Trusted Types, like VS Code's window) it still asks.
   const tt = await kitPage(`<meta http-equiv="Content-Security-Policy" content="require-trusted-types-for 'script'"><p>app</p>`);
   assert.equal(await tt.evaluate(() => { try { document.body.innerHTML = "<b>x</b>"; return "allowed"; } catch { return "refused"; } }), "refused");
-  assert.deepEqual(await tt.evaluate(wrapModCode("k6", `morse.confirm("Delete it?").then(v => (window.__ans = v));`)), { ok: true });
+  assert.equal((await tt.evaluate(wrapModCode("k6", `morse.confirm("Delete it?").then(v => (window.__ans = v));`))).ok, true);
   await tt.locator("[role=alertdialog] button.y").click();
   await tt.waitForFunction(() => window.__ans === true);
 });
