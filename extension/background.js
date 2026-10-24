@@ -7,6 +7,8 @@ import { runMorse } from "./core/engine.js";
 import { resolveSettings, settingsLabel, DEFAULT_SETTINGS } from "./core/providers.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf } from "./core/mod.js";
 import { wrapModCode } from "./core/kit.js";
+import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
+import { clipAdd } from "./core/clipboard.js"; // God mode clipboard
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
@@ -65,11 +67,13 @@ function textUrl(text, mime) {
 async function dispatch(msg, port) {
   const tab = port.sender.tab;
   const target = { tabId: tab.id, frameIds: [port.sender.frameId ?? 0] };
+  if (BAR_REQUESTS.has(msg.type)) return handleBarRequest(msg);
   switch (msg.type) {
     case "hello": {
       const s = await settings();
       const label = settingsLabel(s) + (userScriptsAvailable() ? "" : " · user scripts off");
-      return { mode: "extension", app: null, label, quiet: !(await get("welcomed", false)) ? (await set("welcomed", true), false) : true };
+      return { mode: "extension", app: null, label, quiet: !(await get("welcomed", false)) ? (await set("welcomed", true), false) : true,
+        settings: await getPrefs(), voice: await voiceInfo() };
     }
     case "mods.list":
       return Object.values(await allMods()).filter(m => modMatches(m, { url: msg.url, app: null })).sort((a, b) => a.created.localeCompare(b.created));
@@ -89,19 +93,25 @@ async function dispatch(msg, port) {
       const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
       return putMod({ ...mod, enabled: true, imported: true, match: mod.match || { hosts: [hostOf(msg.url)], app: null } });
     }
+    // God mode: cross-app clipboard (see core/clipboard.js)
+    case "clipboard.list": return get("clipboard", []);
+    case "clipboard.put": { const list = clipAdd(await get("clipboard", []), msg.item); await set("clipboard", list); return list; }
     case "exec":
       return exec(target, msg.modId, msg.js);
     case "off":
       await execIn(target, `globalThis.morse && morse.__off(${JSON.stringify(msg.modId)})`);
       return true;
     case "generate": {
-      const res = await runMorse({
-        settings: await settings(),
+      const s = await settings();
+      const res = await gens.run(msg.genId, signal => runMorse({
+        settings: s,
         request: msg.request,
         context: msg.context,
         exec: js => exec(target, msg.genId, js),
-        emit: ev => { try { port.postMessage({ ...ev, genId: msg.genId }); } catch {} },
-      });
+        emit: ev => { if (!signal.aborted) try { port.postMessage({ ...ev, genId: msg.genId }); } catch {} },
+        signal,
+      }));
+      if (res.cancelled) return res;
       return { ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts };
     }
     case "capture":

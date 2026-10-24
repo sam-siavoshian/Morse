@@ -5,12 +5,15 @@
 
 import { spawn } from "node:child_process";
 import { CDPSession, listTargets } from "./cdp.js";
-import { modsFor, saveMod, deleteMod, writeExport } from "./store.js";
+import { modsFor, saveMod, deleteMod, writeExport, readClipboard, putClipboard } from "./store.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
 import { runMorse } from "../core/engine.js";
 import { settingsLabel } from "../core/providers.js";
 import { Recorder } from "./record.js";
+import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
+import { Generations } from "../core/cancel.js";
+import { cachedVoiceStatus, transcribeAudio } from "./voice.js";
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
@@ -31,6 +34,7 @@ export class Connector {
   constructor({ port, app = null, settings, log = console.log }) {
     Object.assign(this, { port, app, settings, log });
     this.pages = new Map();
+    this.gens = new Generations();
   }
 
   async run() {
@@ -68,6 +72,20 @@ export class Connector {
     this.log(`  ✓ attached to ${target.title || target.url}`);
   }
 
+  // Voice input records in the page; let it use the microphone without a
+  // prompt the app may never show. Scoped to this page's origin.
+  async grantMic(s, url) {
+    let origin;
+    try { origin = new URL(url).origin; } catch { return; }
+    if (!/^https?:/.test(origin) || this.granted?.has(origin)) return;
+    try {
+      const info = await s.send("Target.getTargetInfo").catch(() => null);
+      const browserContextId = info?.targetInfo?.browserContextId;
+      await s.send("Browser.grantPermissions", { origin, permissions: ["audioCapture"], ...(browserContextId && { browserContextId }) });
+      (this.granted ||= new Set()).add(origin);
+    } catch {}
+  }
+
   push(s, ctx, msg) {
     return s.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive(${JSON.stringify(msg)})`, contextId: ctx }).catch(() => {});
   }
@@ -94,7 +112,9 @@ export class Connector {
     const where = { url: msg.url, app: this.app?.id || null };
     switch (msg.type) {
       case "hello":
-        return { mode: "desktop", app: this.app?.id || null, appName: this.app?.name || null, label: settingsLabel(this.settings) };
+        this.grantMic(s, msg.url);
+        return { mode: "desktop", app: this.app?.id || null, appName: this.app?.name || null, label: settingsLabel(this.settings),
+          settings: await loadPrefs(), voice: await cachedVoiceStatus() };
       case "mods.list":
         return modsFor({ url: msg.url, app: this.app?.id || null });
       case "mods.save": {
@@ -108,6 +128,11 @@ export class Connector {
         const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
         return saveMod({ ...mod, enabled: true, imported: true, match: mod.match || { hosts: [hostOf(where.url)], app: where.app } });
       }
+      // God mode: cross-app clipboard (Capture in one app, rebuild in another)
+      case "clipboard.list":
+        return readClipboard();
+      case "clipboard.put":
+        return putClipboard({ ...msg.item, from: { ...msg.item?.from, app: this.app?.name || msg.item?.from?.app || null } });
       case "exec":
         return this.exec(s, ctx, msg.modId, msg.js);
       case "off":
@@ -115,13 +140,15 @@ export class Connector {
         return true;
       case "generate": {
         const t0 = Date.now();
-        const res = await runMorse({
+        const res = await this.gens.run(msg.genId, signal => runMorse({
           settings: this.settings,
           request: msg.request,
           context: { ...msg.context, app: this.app?.name || msg.context.app },
           exec: js => this.exec(s, ctx, msg.genId, js),
-          emit: ev => this.push(s, ctx, { ...ev, genId: msg.genId }),
-        });
+          emit: ev => { if (!signal.aborted) this.push(s, ctx, { ...ev, genId: msg.genId }); },
+          signal,
+        }));
+        if (res.cancelled) { this.log(`  ■ "${msg.request}" stopped after ${Date.now() - t0}ms`); return res; }
         this.log(`  ${res.ok ? "✓" : "✗"} "${msg.request}" → ${res.title || "-"} (${Date.now() - t0}ms, ${res.attempts} attempt${res.attempts > 1 ? "s" : ""})`);
         return { ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts };
       }
@@ -164,6 +191,19 @@ export class Connector {
         spawn(cmd, [msg.url], { detached: true, stdio: "ignore" }).unref();
         return true;
       }
+      // ---- command bar: stop, settings, history, voice
+      case "generate.cancel":
+        return this.gens.cancel(msg.genId);
+      case "settings.get":
+        return loadPrefs();
+      case "settings.set":
+        return savePrefs(msg.settings);
+      case "history.get":
+        return loadHistory(String(msg.scope || where.app || hostOf(msg.url)));
+      case "history.add":
+        return addHistory(String(msg.scope || where.app || hostOf(msg.url)), msg.text);
+      case "transcribe":
+        return transcribeAudio({ audio: msg.audio, mime: msg.mime });
       default:
         throw new Error(`Unknown request ${msg.type}`);
     }

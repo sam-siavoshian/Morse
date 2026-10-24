@@ -29,6 +29,7 @@ export async function runMorse({ settings, request, context, exec, emit, signal,
       continue;
     }
     if (!draft.js.trim()) return { ...last, ok: true };
+    if (signal?.aborted) throw new Error("aborted"); // stopped: never run the JS
     emit({ type: "phase", phase: "applying" });
     const res = await exec(draft.js);
     if (res.ok) return { ...last, ok: true };
