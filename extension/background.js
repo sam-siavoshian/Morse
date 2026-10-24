@@ -8,6 +8,7 @@ import { resolveSettings, settingsLabel, DEFAULT_SETTINGS } from "./core/provide
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf } from "./core/mod.js";
 import { wrapModCode } from "./core/kit.js";
 import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
+import { serialized } from "./bar-host.js"; // hardening: one queue for every storage read-modify-write
 import { clipAdd } from "./core/clipboard.js"; // God mode clipboard
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
@@ -52,7 +53,8 @@ async function exec(target, modId, js) {
 }
 
 async function allMods() { return get("mods", {}); }
-async function putMod(m) { validateMod(m); const all = await allMods(); all[m.id] = m; await set("mods", all); return m; }
+// hardening: serialized so concurrent saves/deletes can't drop each other
+async function putMod(m) { validateMod(m); await serialized(async () => { const all = await allMods(); all[m.id] = m; await set("mods", all); }); return m; }
 
 function download(filename, url) {
   return chrome.downloads.download({ url, filename: `morse/${filename}`, saveAs: false }).then(() => ({ path: `Downloads/morse/${filename}` }));
@@ -87,9 +89,11 @@ async function dispatch(msg, port) {
       return putMod(msg.mod);
     }
     case "mods.delete": {
-      const all = await allMods();
-      delete all[msg.modId];
-      await set("mods", all);
+      await serialized(async () => { // hardening: serialized
+        const all = await allMods();
+        delete all[msg.modId];
+        await set("mods", all);
+      });
       return true;
     }
     // Decode and validate a shared mod without saving it (install confirmation).
@@ -104,7 +108,7 @@ async function dispatch(msg, port) {
     }
     // God mode: cross-app clipboard (see core/clipboard.js)
     case "clipboard.list": return get("clipboard", []);
-    case "clipboard.put": { const list = clipAdd(await get("clipboard", []), msg.item); await set("clipboard", list); return list; }
+    case "clipboard.put": return serialized(async () => { const list = clipAdd(await get("clipboard", []), msg.item); await set("clipboard", list); return list; }); // hardening: serialized
     case "exec":
       return exec(target, msg.modId, msg.js);
     case "off":
@@ -166,7 +170,7 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
       const mods = Object.values(await allMods()).filter(m => modMatches(m, { url: msg.url, app: null }));
       respond({ label: settingsLabel(s), provider: s.provider, saved: await get("settings", {}), userScripts: userScriptsAvailable(), mods });
     } else if (msg.type === "popup.settings") {
-      await set("settings", msg.settings);
+      await serialized(() => set("settings", msg.settings)); // hardening: serialized
       resolved = null;
       respond({ label: settingsLabel(await settings()) });
     }

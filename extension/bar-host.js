@@ -11,8 +11,15 @@ import { normalizePrefs, mergePrefs, pushHistory } from "./core/prefs.js";
 import { transcribeOpenAI, OPENAI_TRANSCRIBE_MODEL } from "./core/transcribe.js";
 import { Generations } from "./core/cancel.js";
 import { hostOf } from "./core/mod.js";
+import { serialQueue } from "./core/serial.js";
 
 export const gens = new Generations();
+
+// Every read-modify-write of Morse's chrome.storage data (mods, history,
+// settings, clipboard) goes through this one queue, here and in background.js,
+// so two tabs updating at once can't drop each other's changes.
+const storageQueue = serialQueue();
+export const serialized = job => storageQueue("chrome.storage", job);
 export const BAR_REQUESTS = new Set(["generate.cancel", "settings.get", "settings.set", "history.get", "history.add", "transcribe"]);
 
 const HELPER = "http://127.0.0.1:7457";
@@ -29,18 +36,22 @@ async function syncSet(k, v) {
 }
 
 export async function getPrefs() { return normalizePrefs(await syncGet(PREFS_KEY)); }
-export async function setPrefs(patch) {
-  const next = mergePrefs(await getPrefs(), patch);
-  await syncSet(PREFS_KEY, next);
-  return next;
+export function setPrefs(patch) {
+  return serialized(async () => {
+    const next = mergePrefs(await getPrefs(), patch);
+    await syncSet(PREFS_KEY, next);
+    return next;
+  });
 }
 
 async function history(scope, text) {
-  const all = await local(HISTORY_KEY, {});
-  if (text === undefined) return all[scope] || [];
-  all[scope] = pushHistory(all[scope], text);
-  await chrome.storage.local.set({ [HISTORY_KEY]: all });
-  return all[scope];
+  if (text === undefined) return (await local(HISTORY_KEY, {}))[scope] || [];
+  return serialized(async () => {
+    const all = await local(HISTORY_KEY, {});
+    all[scope] = pushHistory(all[scope], text);
+    await chrome.storage.local.set({ [HISTORY_KEY]: all });
+    return all[scope];
+  });
 }
 
 // ---- voice
