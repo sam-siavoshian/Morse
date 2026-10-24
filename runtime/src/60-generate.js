@@ -57,6 +57,7 @@ async function submit(request) {
     S.phase = "error";
     bar.classList.add("err");
     hint.innerHTML = `Couldn't do that: <i>${esc(res.error || "unknown error").slice(0, 120)}</i>`;
+    hint.title = res.error || "";
     actions.innerHTML = `<button data-a="again">Try again</button>`;
     return;
   }

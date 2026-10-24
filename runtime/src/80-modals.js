@@ -123,7 +123,7 @@ async function renderCard(m) {
     g.fillStyle = accent; g.font = "700 13px ui-monospace, Menlo, monospace";
     g.fillText(label, P.x + 2, P.y - 10);
   };
-  draw(b, panels[0], "BEFORE", "#3a3a40");
+  draw(b, panels[0], "BEFORE", "#8e8e96");
   draw(a, panels[1], "AFTER", "#f4f4f5", S.after.focus);
   g.fillStyle = "#f4f4f5"; g.font = "600 34px ui-sans-serif, system-ui, sans-serif";
   g.font = "600 34px ui-sans-serif, system-ui, sans-serif";
