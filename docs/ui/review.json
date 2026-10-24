@@ -28,7 +28,7 @@
    "note": "focus ring: 2px --m-signal-3, 2px offset, everywhere (was 24% white, ~2:1)"
   },
   "bar/typing-long": {
-   "note": "the input scrolls; the chip keeps its 44% cap and ellipsis"
+   "note": "the input grows to five lines, then scrolls. R5: at 390px the chip has its own line, the input keeps ~60% of the bar and wraps at words (was ~70px wide, breaking words)"
   },
   "bar/fixing": {
    "note": "the error is one line with an ellipsis; the phase word and timer always stay visible"
@@ -40,7 +40,7 @@
    "note": "the title gives way first; the timing and 'repaired once' and all four actions stay"
   },
   "bar/result": {
-   "note": "Save is focused after a keyboard submit, so its ring shows; Enter saves"
+   "note": "Save is focused after a keyboard submit, so its ring shows; Enter saves. R5: at 390px ⋯ ends the hint's row"
   },
   "effect/*": {
    "note": "radar field in --m-signal-1..4 over --m-overlay; follows the target's shape. Cosmetic: when the target is not a multiple of 8px the last row/column of cells is cut by the canvas edge"
@@ -235,7 +235,7 @@
    "note": "“Stop showing these” is a .tbtn (was its own ghost-button copy)"
   },
   "gallery/update-row": {
-   "note": "Update available: the same note box as Not working (white dot instead of red), Update… a 24px button like Fix it"
+   "note": "R5: Update available carries the radar-square status dot like every other status line (it was round)"
   },
   "gallery/update-row-focus": {
    "note": "shared ring"
@@ -400,10 +400,10 @@
    "note": "the switch's track takes the ring"
   },
   "control/backup-hover": {
-   "note": "shared hover"
+   "note": "R5: the shot finds the backup row again (Packs now sits above it with the same class); hover on Export all mods"
   },
   "control/backup-focus": {
-   "note": "shared ring"
+   "note": "2px ring on Install from a file…"
   },
   "control/origin-show-code": {
    "note": "where the mod came from, then Show code: an underlined text link, 20px tall now (was 16, off the control grid)"
@@ -451,7 +451,7 @@
    "note": "paused everywhere: a note with Resume"
   },
   "control/safe-start": {
-   "note": "safe start: the title in bold, why, and two choices (Keep it off .btn, Turn it back on .btn.primary); it stays until answered"
+   "note": "R5: the title is a line of its own above the sentence (it ran into it); Turn it back on is the main button"
   },
   "control/safe-start-focus": {
    "note": "shared ring"
@@ -487,7 +487,7 @@
    "note": "the result says which version this is"
   },
   "iterate/stepped-back": {
-   "note": "⌘Z after a result: back one version, said in the hint"
+   "note": "Back to version 1 after the title; the note gives way before the title when the bar is short"
   },
   "iterate/history-rows": {
    "note": "History opens the versions under the row: number, request (ellipsis), when; the current one on top. Rows are 24px (were 25px: the baseline of the mono number pushed them off the grid)"
@@ -538,7 +538,7 @@
    "note": "a pointer that rests on the bar away from its controls for 350ms: the bar steps aside so what is under it can be pointed at"
   },
   "heal/bar-dot": {
-   "note": "a mod here stopped working after the site changed: a 7px --m-danger dot on the Morse mark with a 2px surface ring, nothing pops up. At phone width the mark (normally hidden there for room) stays while the dot is on, so the sign isn't lost"
+   "note": "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up. R5: the catalog's fingerprint names the page as opened (?theme= is part of the page now), so the dot shows again"
   },
   "heal/mark-dot": {
    "note": "the dot at the mark's top-right corner"
@@ -751,7 +751,7 @@
    "note": "a refusal is Morse holding back, not a failure: “Morse didn't apply it: it would have hidden this whole page” fits the one-line hint (it was “That didn't work: The change would have … Try other words.” cut off by the ellipsis); the full sentence is the hint's title"
   },
   "guard/refused-loop": {
-   "note": "the same for code that would freeze the page"
+   "note": "the same for code that would freeze the page. R5: at 390px the chip has a line of its own above the input, which keeps the row less its three buttons (~60% of the bar) and wraps at words"
   },
   "guard/refused-wipe": {
    "note": "the same for code that would replace the page"
@@ -829,10 +829,10 @@
    "note": "the checklist after connecting"
   },
   "practice/sample-bar": {
-   "note": "the practice page before any model: the real bar with sample answers and the coach (shown at 1x: the sandboxed frame)"
+   "note": "the practice page before any model: the real bar with sample answers and the coach (shown at 1x: the sandboxed frame). R5: at phone width the practice article's text sits under the bar at phone width, so the bar is solid (--m-surface): the coach and input read over nothing (50-bar.js Backing). On a calm page it stays glass"
   },
   "practice/first-save": {
-   "note": "the first saved change on the practice page: the card"
+   "note": "the first saved change on the practice page: the card. R5: solid over the article at phone width (Backing); ⋯ ends the hint's row, so the four actions fit on the second row in the 340px frame (⋯ used to fall onto a line of its own)"
   },
   "popup/first-run-no-model": {
    "note": "no model: one notice with the button that opens the welcome page; the notice is the popup's .notice (it was a copy with 8px corners and hard-coded fallback colors)"
@@ -883,8 +883,7 @@
    "note": "Your style's row on a hostile host"
   },
   "hostile/hostile-guard-row": {
-   "verdict": "residual",
-   "note": "Your style's softer colors are on in this run: the overlay's counter-filter (72-style.js overlayUnfilter) can't give back colors the page filter clipped, so the --m-danger dot comes out brighter than the token. Grays are exact. Logic, not CSS: left for the style owner"
+   "note": "R5: Your style's softer colors are on in this run and the row is pixel-identical to the same row without the style (the catalog compares them: see the -plain shot). The overlay lives in the top layer, which the page's filter never reaches, so it takes no counter-filter there (72-style.js overlayUnfilter); the old counter-filter brightened the --m-danger dot"
   },
   "hostile/hostile-show-once-strip": {
    "note": "the recording strip on a hostile host"
@@ -899,8 +898,7 @@
    "note": "Your style's row on a hostile host"
   },
   "hostile/parley-guard-row": {
-   "verdict": "residual",
-   "note": "Your style's softer colors are on in this run: the overlay's counter-filter (72-style.js overlayUnfilter) can't give back colors the page filter clipped, so the --m-danger dot comes out brighter than the token. Grays are exact. Logic, not CSS: left for the style owner"
+   "note": "R5: Your style's softer colors are on in this run and the row is pixel-identical to the same row without the style (the catalog compares them: see the -plain shot). The overlay lives in the top layer, which the page's filter never reaches, so it takes no counter-filter there (72-style.js overlayUnfilter); the old counter-filter brightened the --m-danger dot"
   },
   "hostile/parley-show-once-strip": {
    "note": "the recording strip on a hostile host"
@@ -908,29 +906,146 @@
   "hostile/parley-show-once-steps": {
    "note": "the steps in the bar on a hostile host"
   },
-  "guard/refused-loop-narrow-dark": {
-   "verdict": "residual",
-   "note": "the refusal reads well; the bar's input is squeezed to ~70px by the target chip at 390px and breaks words (bar/typing-long-narrow has it too). A chip on its own line at phone width is a bar layout change: open"
+  "hostile/hostile-guard-row-plain": {
+   "note": "the same guard row without Your style: the reference the styled row is compared with, pixel by pixel"
   },
-  "practice/sample-bar-narrow-dark": {
-   "verdict": "residual",
-   "note": "the bar's glass (--m-overlay) lets the practice article's text show through the coach and input in a phone-width frame; readable, but busy. The see-through bar is a design decision in 98-bar-css.js. (The coach keeps only the current step's word under 360px, so Hide tips no longer overlaps Save)"
+  "hostile/parley-guard-row-plain": {
+   "note": "the same guard row without Your style: the reference the styled row is compared with, pixel by pixel"
   },
-  "practice/first-save-narrow-dark": {
-   "verdict": "residual",
-   "note": "the bar's glass (--m-overlay) lets the practice article's text show through the coach and input in a phone-width frame; readable, but busy. The see-through bar is a design decision in 98-bar-css.js. (The coach keeps only the current step's word under 360px, so Hide tips no longer overlaps Save)"
+  "bar/chip-long": {
+   "note": "the chip ends in an ellipsis; at 390px it is on a line of its own (max 100%), the input below it"
   },
-  "guard/refused-loop-narrow-light": {
-   "verdict": "residual",
-   "note": "the refusal reads well; the bar's input is squeezed to ~70px by the target chip at 390px and breaks words (bar/typing-long-narrow has it too). A chip on its own line at phone width is a bar layout change: open"
+  "bar/chip-short": {
+   "note": "at 390px the chip is on its own line: 8 + 24 + 8 + 32 + 8"
   },
-  "practice/sample-bar-narrow-light": {
-   "verdict": "residual",
-   "note": "the bar's glass (--m-overlay) lets the practice article's text show through the coach and input in a phone-width frame; readable, but busy. The see-through bar is a design decision in 98-bar-css.js. (The coach keeps only the current step's word under 360px, so Hide tips no longer overlaps Save)"
+  "bar/thinking": {
+   "note": "stage 1, “Asking the model”, the moment Enter is pressed; the working mark pulses, the timer runs"
   },
-  "practice/first-save-narrow-light": {
-   "verdict": "residual",
-   "note": "the bar's glass (--m-overlay) lets the practice article's text show through the coach and input in a phone-width frame; readable, but busy. The see-through bar is a design decision in 98-bar-css.js. (The coach keeps only the current step's word under 360px, so Hide tips no longer overlaps Save)"
+  "bar/stage-reading": {
+   "note": "stage 2: “The model is reading the page” (a host that reports it); one line, the timer stays"
+  },
+  "bar/stage-thinking": {
+   "note": "stage 2b: “Thinking”, for a model that thinks before it writes"
+  },
+  "bar/writing": {
+   "note": "stage 3: “Writing the change”; the ticker shows the words as they come and fades in from the left"
+  },
+  "bar/writing-visible": {
+   "note": "stage 3b: “Writing the change · you can see it now” once the new look shows while the rest is written; at 390px it fits on the hint's row with ⋯, the ticker and timer below"
+  },
+  "bar/applying": {
+   "note": "stage 4: “Trying the change”"
+  },
+  "waiting/notice": {
+   "note": "once per site in a tab: the title on a line of its own (R5: it used to run into the sentence), which mod waits, that its look already shows, Not now / Open Morse's details"
+  },
+  "waiting/notice-focus": {
+   "note": "the ring on Open Morse's details"
+  },
+  "waiting/bar-note": {
+   "note": "the bar's note under the input: the warn dot (radar square), the same words, Turn it on, × for this page; on the 16px inset"
+  },
+  "waiting/bar-note-focus": {
+   "note": "Turn it on: 2px ring"
+  },
+  "waiting/panel-row": {
+   "note": "the tag on the mod: “waits for “Allow User Scripts”” in --m-warn mono, the full sentence is its title"
+  },
+  "waiting/result": {
+   "note": "R5: the result's note is a sentence; it gives way before the title and ends in an ellipsis (it used to push the title out and clip without one). With Turn on “Allow User Scripts” the hint gets its own row; at 390px the actions wrap inside the bar (they used to stick out of it)"
+  },
+  "waiting/result-practice": {
+   "note": "the practice page: “This is how it looks. What it adds works on real websites”, after the title, ending in an ellipsis when long"
+  },
+  "popup/waiting-warn": {
+   "note": "the popup with “Allow User Scripts” off: which mods here wait, that their look already shows, the steps and Turn it on (28px)"
+  },
+  "popup/waiting-mods": {
+   "note": "“Waits for “Allow User Scripts”” in --m-warn under each mod whose code waits; a mod that only changes the look has none"
+  },
+  "popup/waiting-whole": {
+   "note": "the whole popup in that state"
+  },
+  "packs/panel-make": {
+   "note": "Packs · Make a pack… with the backup buttons at the foot of the panel; the same eyebrow and 28px buttons"
+  },
+  "packs/panel-make-focus": {
+   "note": "2px ring on Make a pack…"
+  },
+  "packs/choose-none": {
+   "note": "a tick on every row, the strip with Cancel and Next; R5: Next with nothing chosen is --m-line-strong / --m-text-2 like Install with nothing ticked (it looked like an enabled primary: the shared primary rule is !important)"
+  },
+  "packs/choose": {
+   "note": "three chosen: “3 chosen”, Next on; the switches and row buttons step aside while choosing"
+  },
+  "packs/choose-tick-focus": {
+   "note": "2px ring on the tick"
+  },
+  "packs/make-no-name": {
+   "note": "Copy link without a name: “Give the pack a name.” in --m-danger, the name field focused"
+  },
+  "packs/make": {
+   "note": "name (32px field), an optional note, the mods in it with where they run; Copy link is the main button"
+  },
+  "packs/make-name-focus": {
+   "note": "the field's 2px ring (the catalog's check now looks at the field around an input)"
+  },
+  "packs/make-link": {
+   "note": "the link (mono, ellipsis), Copy again, Copied, and Cancel becomes Done"
+  },
+  "packs/review": {
+   "note": "R5: the maker's note is a quote in the box the update review uses (it had a 2px left rule). Every mod with a tick, what it does and where; Cancel has focus; Install counts the ticked ones"
+  },
+  "packs/review-clash": {
+   "note": "the same id as one of yours: Keep both (default) or Replace yours, a 24px segmented control inside the note"
+  },
+  "packs/review-clash-focus": {
+   "note": "flush ring on the segment"
+  },
+  "packs/review-wide": {
+   "note": "for every website: not ticked, the note in full. R5: a mod scrolled into view clears the sticky footer (scroll-margin-bottom); the footer used to cover its note"
+  },
+  "packs/review-sends": {
+   "note": "sends what's on the page somewhere: the note says so"
+  },
+  "packs/review-unticked": {
+   "note": "R5: unticked is muted by color (--m-text-2), not opacity (was 2.4–3.4:1)"
+  },
+  "packs/review-end": {
+   "note": "Check this address for updates is the person's choice; Install sticks to the bottom of the card"
+  },
+  "packs/review-install-focus": {
+   "note": "2px ring on Install"
+  },
+  "packs/installed-toast": {
+   "note": "Installed N mods from “Orders team”, and that Morse checks it once a day"
+  },
+  "packs/panel-group": {
+   "note": "the pack's name, Pack · 4 mods here · gets updates, Copy link and Stop updates; its mods under it"
+  },
+  "packs/panel-group-switch-focus": {
+   "note": "2px ring on the pack's switch"
+  },
+  "packs/panel-group-off": {
+   "note": "the whole pack off: one switch, the rows off"
+  },
+  "packs/panel-update": {
+   "note": "R5: Update available with the radar-square dot (it was round, like nothing else), what changed in a few words, Review…"
+  },
+  "packs/update": {
+   "note": "R5: What changed is the eyebrow the gallery's update review uses (it was a bold heading). Then the team's note, Changed / New in the pack / No longer in the pack; nothing changes until Update"
+  },
+  "packs/update-changed": {
+   "note": "line counts and the diff, open when short; code scrolls, never wraps"
+  },
+  "packs/update-end": {
+   "note": "no longer in the pack (untick to keep), History keeps your versions; Not now has focus"
+  },
+  "gallery/try-review": {
+   "note": "Try it shows what the mod does first (since bug hunt 4): nothing runs until Try it, nothing is saved; the same review as Install with Try it as the main button. New in the catalog this round"
+  },
+  "settings/saved-flash": {
+   "note": "every change saves at once; “Saved” fades. R5: the shot scrolls the sheet back to its header (the sheet got taller)"
   }
  },
  "fixes": [
@@ -1293,6 +1408,91 @@
    "title": "R4-16. Show me once at phone width: the hairline before the chip started a line of its own when the chips wrapped",
    "before": "before/r4-first-run-note-user-scripts-narrow-dark.png",
    "after": "first-run/note-user-scripts-narrow-dark.png"
+  },
+  {
+   "title": "R5-1. Your style's softer colors no longer reach Morse: the overlay is in the top layer, which a filter on <html> never reaches, so its counter-filter only made saturated colors brighter (the --m-danger dot). No counter-filter there now; the row is pixel-identical to the one without the style",
+   "before": "before/r5-hostile-guard-row-light.png",
+   "after": "hostile/hostile-guard-row-light.png"
+  },
+  {
+   "title": "R5-2. Same on Parley (strict CSP), compared pixel by pixel with parley-guard-row-plain",
+   "before": "before/r5-parley-guard-row-dark.png",
+   "after": "hostile/parley-guard-row-dark.png"
+  },
+  {
+   "title": "R5-3. At 390px the picked-target chip squeezed the input to ~70px and words broke; the chip now has a line of its own above the input (ellipsis when long), the input keeps ~60% of the bar",
+   "before": "before/r5-bar-typing-long-narrow-dark.png",
+   "after": "bar/typing-long-narrow-dark.png"
+  },
+  {
+   "title": "R5-4. The same in a refusal at phone width",
+   "before": "before/r5-guard-refused-loop-narrow-light.png",
+   "after": "guard/refused-loop-narrow-light.png"
+  },
+  {
+   "title": "R5-5. A long chip at phone width: its own line, the input's full width below",
+   "before": "before/r5-bar-chip-long-narrow-dark.png",
+   "after": "bar/chip-long-narrow-dark.png"
+  },
+  {
+   "title": "R5-6. The practice page at phone width: the article read through the coach and input. The bar (and Morse's other glass surfaces) turn solid when the page's own text sits under them, and stay glass on calm pages",
+   "before": "before/r5-practice-sample-bar-narrow-light.png",
+   "after": "practice/sample-bar-narrow-light.png"
+  },
+  {
+   "title": "R5-7. The first save on the practice page: solid over the article, and ⋯ ends the hint's row so it no longer falls onto a line of its own",
+   "before": "before/r5-practice-first-save-narrow-dark.png",
+   "after": "practice/first-save-narrow-dark.png"
+  },
+  {
+   "title": "R5-8. Waiting for “Allow User Scripts”: the notice's title ran into its sentence; it is a line of its own (Safe start too)",
+   "before": "before/r5-waiting-notice-dark.png",
+   "after": "waiting/notice-dark.png"
+  },
+  {
+   "title": "R5-9. A new change whose code waits: the long note pushed the title out and was clipped without an ellipsis; now the note gives way first, ends in an ellipsis (the whole sentence is the hint's title) and gets its own row next to Turn on “Allow User Scripts”",
+   "before": "before/r5-waiting-result-dark.png",
+   "after": "waiting/result-dark.png"
+  },
+  {
+   "title": "R5-10. The same at phone width: five actions stuck out of the bar; they wrap inside it, right-aligned",
+   "before": "before/r5-waiting-result-narrow-dark.png",
+   "after": "waiting/result-narrow-dark.png"
+  },
+  {
+   "title": "R5-11. Pack review: the maker's note had a 2px left rule; it is the 1px box the update review uses",
+   "before": "before/r5-packs-review-dark.png",
+   "after": "packs/review-dark.png"
+  },
+  {
+   "title": "R5-12. Pack review: unticked mods were muted with 60% opacity (2.4–3.4:1); muted by color now",
+   "before": "before/r5-packs-review-end-light.png",
+   "after": "packs/review-end-light.png"
+  },
+  {
+   "title": "R5-13. Choosing mods for a pack: Next with nothing chosen looked like an enabled primary; now the off look Install uses",
+   "before": "before/r5-packs-choose-none-dark.png",
+   "after": "packs/choose-none-dark.png"
+  },
+  {
+   "title": "R5-14. A pack's update row: the round dot is the radar-square status dot",
+   "before": "before/r5-packs-panel-update-dark.png",
+   "after": "packs/panel-update-dark.png"
+  },
+  {
+   "title": "R5-15. The gallery's update row: the same square dot",
+   "before": "before/r5-gallery-update-row-dark.png",
+   "after": "gallery/update-row-dark.png"
+  },
+  {
+   "title": "R5-16. Pack update review: What changed is the eyebrow, like the gallery's",
+   "before": "before/r5-packs-update-dark.png",
+   "after": "packs/update-dark.png"
+  },
+  {
+   "title": "R5-17. Pack review: the sticky footer covered the mod scrolled into view; items now clear it",
+   "before": "before/r5-packs-review-wide-dark.png",
+   "after": "packs/review-wide-dark.png"
   }
  ]
 }

@@ -941,7 +941,7 @@ async function sheetStates(theme, width) {
     await sw.scrollIntoViewIfNeeded();
     await shot(p, "settings", "switch-focus", ui(p, ".pane .srow:has(.sw)"), { pad: 4, checks: [await focusVisible(p, ui(p, ".pane .sw input"))] });
     await shot(p, "settings", "voice-ready", ui(p, ".pane .srow:has(.pill)"), { pad: 4 });
-    await ui(p, ".seg[data-k=effects] [data-v=subtle]").click(); await sleep(200);
+    await ui(p, ".seg[data-k=effects] [data-v=subtle]").click(); await ui(p, ".pane").evaluate(e => { e.scrollTop = 0; }); await sleep(200);
     await shot(p, "settings", "saved-flash", ui(p, ".sheet header"), { pad: 8, note: "every change saves at once; “Saved” fades" });
     await pane.evaluate(el => (el.scrollTop = el.scrollHeight)); await sleep(100);
     await ui(p, "[data-act=reset-all]").hover(); await sleep(150);
@@ -1141,6 +1141,12 @@ async function galleryStates(theme, width) {
   if (!n) await shot(p, "gallery", "update-row-focus", upd, { pad: 8, checks: [await focusVisible(p, ui(p, "[data-gl=update]"))] });
   // Try it: the strip and the item
   await ui(p, ".gl-item[data-glid=cat-no-promos] [data-gl=try]").click(); await sleep(400);
+  // (round 5) Try it reviews first: what it does, then Try it (63-control.js reviewImport)
+  if (await ui(p, ".card [data-a=install]").isVisible().catch(() => false)) {
+    await sleep(500); await blur(p); await p.mouse.move(2, H / 2);
+    await shot(p, "gallery", "try-review", ui(p, ".card"), { note: "Try it shows what the mod does first; nothing runs until Try it, nothing is saved; Cancel has focus" });
+    await ui(p, ".card [data-a=install]").click(); await sleep(500);
+  }
   await p.mouse.move(2, H / 2); await toastGone(p);
   await shot(p, "gallery", "trying-strip", ui(p, ".gl-trial"), { pad: 12 });
   await ui(p, ".gl-item.trying").scrollIntoViewIfNeeded().catch(() => {}); await sleep(100);
@@ -1353,8 +1359,8 @@ async function controlStates(theme, width) {
     await shot(p, "control", "pause-row-hover", ui(p, ".ctl-strip"), { pad: 4 });
     await shot(p, "control", "pause-row-focus", ui(p, ".ctl-strip"), { pad: 4, checks: [await focusVisible(p, ui(p, "[data-c=pause-site]"))] });
     await ui(p, "[data-c=export]").hover(); await sleep(150);
-    await shot(p, "control", "backup-hover", ui(p, ".ctl-backup"), { pad: 4 });
-    await shot(p, "control", "backup-focus", ui(p, ".ctl-backup"), { pad: 4, checks: [await focusVisible(p, ui(p, "[data-c=import-file]"))] });
+    await shot(p, "control", "backup-hover", ui(p, ".ctl-backup:not(.pk-bar)"), { pad: 4 });
+    await shot(p, "control", "backup-focus", ui(p, ".ctl-backup:not(.pk-bar)"), { pad: 4, checks: [await focusVisible(p, ui(p, "[data-c=import-file]"))] });
     await shot(p, "control", "origin-show-code", ui(p, ".list article").first(), { pad: 8, checks: [await focusVisible(p, ui(p, "[data-c=show]"))] });
   }
   // pause this site: the row turns on, every mod shows "not running", a toast
@@ -1566,7 +1572,7 @@ async function healStates(theme, width) {
   const { modCodeHash, pagePathShape } = await import("../core/heal.js");
   const mod = { title: "Album grid spacing", prompt: "more space between the albums", css: ".album-grid { gap: 24px }", js: "", target: { label: "Album grid" },
     gallery: { id: "cat-album-grid", version: 1 }, imported: true, importedFrom: "gallery", author: "Ana" };
-  const fp = { v: 1, code: modCodeHash(mod), path: pagePathShape(`${BASE}/demo/catalog.html`), size: 1, at: "2026-10-20T09:00:00Z", sels: [[".album-grid", 6]] };
+  const fp = { v: 1, code: modCodeHash(mod), path: pagePathShape(`${BASE}/demo/catalog.html?theme=${theme}`) /* the page as opened (a word in the address, like ?theme=dark, is part of the page) */, size: 1, at: "2026-10-20T09:00:00Z", sels: [[".album-grid", 6]] };
   const seed = new Function(`globalThis.__catHealMod = ${JSON.stringify(mod)}; globalThis.__catHealFp = ${JSON.stringify(fp)};`);
   const openHeal = extra => open({ theme, width, height: H, extra: `&heal=1${extra}`, init: [seed] });
   const broken = p => p.waitForFunction(() => document.querySelector(":root > [data-morse-ui]").shadowRoot.querySelector(".bar").hasAttribute("data-heal"), null, { timeout: 15000 }).then(() => "", () => "the dot never showed (no mod marked as stopped working)");
@@ -2258,6 +2264,8 @@ async function waitingStates(theme, width) {
 async function packStates(theme, width) {
   const n = width < 600, H = n ? 844 : 720;
   const p = await open({ theme, width, height: H, mods: 12, extra: "&packs=1" });
+  // (the fixture's broken mod says so in a toast: out of the way of the panel)
+  await ui(p, ".ctl-toast").waitFor({ timeout: 3000 }).catch(() => {}); await ui(p, ".ctl-toast").evaluate(el => (el.hidden = true)).catch(() => {});
   const card = ui(p, ".modal .card");
   const openPanel = async () => {
     if (await ui(p, ".panel").isVisible()) { await p.keyboard.press("Escape"); await sleep(200); }

@@ -300,7 +300,7 @@ const Packs = (() => {
     const parts = updateParts(u);
     openModal(`
       <header><b>Update “${esc(sub.name)}”?</b><small>From ${esc(site)}${sub.checked ? ` · checked ${esc(relativeTime(new Date(sub.checked).toISOString()))}` : ""}. Nothing changes until you press Update.</small><button data-a="close" aria-label="Close">×</button></header>
-      <div class="gl-what"><h5>What changed</h5><p>${esc(parts.join(" · "))}</p>${u.note ? `<p class="gl-note">“${esc(u.note)}”</p>` : ""}</div>
+      <div class="gl-what"><h5 class="eyebrow">What changed</h5><p>${esc(parts.join(" · "))}</p>${u.note ? `<p class="gl-note">“${esc(u.note)}”</p>` : ""}</div>
       ${u.changed.length ? `<h4 class="ctl-h eyebrow">Changed</h4><div class="pk-items">${u.changed.map(changedHtml).join("")}</div>` : ""}
       ${fresh.length ? `<h4 class="ctl-h eyebrow">New in the pack</h4><div class="pk-items">${fresh.map(m => itemHtml(m, { ticked: !wide(m), why: "Not ticked: tick it if you want it." })).join("")}</div>` : ""}
       ${u.removed.length ? `<h4 class="ctl-h eyebrow">No longer in the pack</h4><div class="pk-items">${u.removed.map(removedHtml).join("")}</div>` : ""}

@@ -10,7 +10,10 @@ demo/sites/a11y library), user control (install review, off switch, pause,
 safe start, Show code, backup, the popup's pause switches), refine, version
 history and a broken mod with Fix it, and (round 4) Show me once, Your style, the guards, first run in the bar, the
 extension's own pages (welcome, practice, popup: the real extension, headful under Xvfb, `--only=extension`) and the bar,
-panel, toolbar and settings on a page that enforces Trusted Types (pixel-compared with the normal page), runs the automated checks marked **[auto]** on each
+panel, toolbar and settings on a page that enforces Trusted Types (pixel-compared with the normal page), and (round 5) mods
+waiting for “Allow User Scripts” (notice, bar note, panel tag, result, popup), mod packs (Make a pack, the install
+review with ticks and clashes, the grouped panel, the update review), every status stage of a model run, and a
+guard row under Your style's softer colors pixel-compared with the same row without it, runs the automated checks marked **[auto]** on each
 shot, and writes `docs/ui/index.html`. The rest are checked by eye; verdicts
 and notes live in `docs/ui/review.json`.
 
@@ -43,7 +46,9 @@ known issue is written down with its reason, ❌ when it fails review.
 - [auto] Nothing sticks out of its bar, panel, modal or toast, or out of the viewport (measured on the painted rect, after ancestors' overflow clipping). Inside the mods list only horizontal overflow counts (the list scrolls).
 - Single-line places (hint, chip, model label, picker label, panel host) end in an ellipsis; the result title shrinks before its timing does; actions never shrink.
 - Multi-line places (mod titles and prompts, toast, modal titles) wrap, including unbroken strings (`overflow-wrap: anywhere`). Code does not wrap; it scrolls.
-- At 390px the status line wraps: hint on the first row, ticker and actions on the second.
+- At 390px the status line wraps: hint and ⋯ on the first row, ticker and actions on the second; actions that don't fit wrap inside the bar, right-aligned.
+- At 390px what you pointed at (the chip) gets a line of its own above the input, so the input keeps the row less its three buttons (~60% of the bar) and never breaks words.
+- A result's note that is a sentence (“Needs “Allow User Scripts” to work…”) gives way before the title and ends in an ellipsis; the hint's title holds the whole sentence. With one more thing to do (Turn on “Allow User Scripts”) the hint gets a row of its own.
 
 ## 5. States
 
@@ -80,6 +85,13 @@ known issue is written down with its reason, ❌ when it fails review.
 - New features use the shared parts by class, never copies: `.btn` / `.btn.primary` (toasts with actions, the trial strip, Describe, Fix it), `.tbtn` (Check again, Show/Hide, Stop showing these; works inside the panel too), `.ibtn` (Read aloud, the toolbar's Read aloud and Describe), `.ibtn.close` (every × outside the panel and modal headers: the same 16px mask glyph), `.menu` (the Easier to use group is a second `.menu`), `.eyebrow` (section labels).
 - Notes in a row (install review) read as one box with one "Note" label; the warn edge is a 2px inset shadow inside the 1px border.
 - A sheet open in the bar is solid (`--m-surface`), pauses the picker's hover box and hides the edit toolbar, so nothing draws through or over it.
+- The see-through surfaces (bar, Show me once's strip, the guide, Describe) are glass only over a calm page: when the page's own text sits under one it turns solid `--m-surface` (50-bar.js `Backing`), so its words never read over the page's.
+- A control toast's title (Safe start, Turn on “Allow User Scripts”) is a line of its own above its sentence.
+- Unticked mods in a pack review are muted by color (`--m-text-2`), never opacity; a disabled primary (Next, Install) is `--m-line-strong` with `--m-text-2`.
+
+## 6c. Your style
+
+- [auto] Your style's softer colors filter the page, never Morse: the overlay lives in the top layer, which the page's filter doesn't reach, so it takes no counter-filter there. A guard row (with the `--m-danger` dot) is shot with and without the style and must be pixel-identical.
 
 ## 7. Isolation from the host page
 

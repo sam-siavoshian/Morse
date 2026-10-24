@@ -6,6 +6,8 @@
 function PACKS_CSS() { return `
   /* ---- the reviews: one block per mod, with a tick */
   .pk-card { width: min(680px, calc(100vw - 32px)); }
+  /* a mod scrolled into view (Tab, a tick) clears the sticky footer */
+  .pk-card :is(.pk-item, .pk-sub, .pk-before) { scroll-margin-bottom: 88px; }
   /* a pack can be long: Install / Update stay in view at the bottom of the card */
   .pk-card footer { position: sticky; bottom: -20px; z-index: 1; margin: 16px -20px -20px; padding: 12px 20px 20px; background: var(--m-surface); border-top: 1px solid var(--m-line); }
   /* the maker's note: a quote in the box the update review's "What changed" uses (98-gallery-css.js .gl-what) */
@@ -95,5 +97,5 @@ function PACKS_CSS() { return `
   .pk-pickbar b { display: block; font-weight: 600; line-height: 20px; }
   .pk-pickbar small { display: block; color: var(--m-text-3); font-size: var(--m-text-sm); line-height: 16px; }
   /* Next with nothing chosen: the same off look as Install with nothing ticked (color only) */
-  .panel .pk-pickbar button.primary:disabled { background: var(--m-line-strong); border-color: var(--m-line-strong); color: var(--m-text-2); cursor: default; }
+  .panel .pk-pickbar button.primary:disabled { background: var(--m-line-strong) !important; border-color: var(--m-line-strong) !important; color: var(--m-text-2) !important; cursor: default; }
 `; }
