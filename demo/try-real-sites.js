@@ -9,15 +9,21 @@
 //     NO_USER_SCRIPTS=1            leave Chrome's "Allow User Scripts" off
 //     PROXY=http://127.0.0.1:3128  the proxy Chromium should use (default: $HTTPS_PROXY)
 //
-// sites.json: [{ name, url, ask, point?, check, setup? }], where check is JS
-// run in the page: false before the change, true after it and after a reload.
+// sites.json: [{ name, url, ask, point?, check, ready?, setup?, then?, thenClick?, scroll? }],
+// where check is JS run in the page: false before the change, true after it
+// and after a reload. After the reload, before the last picture: scroll (px, or a selector)
+// scrolls the page, thenClick (a selector, or text=/regex/i) is clicked with
+// the mouse, then (JS) runs in the page, so the picture shows the change in use
+// (scroll also frames the "before" picture the same way). ready: JS that is
+// true once the real page is there, after loading and after the reload (not a
+// "verifying your browser" page in front of it).
 // Prints one JSON line per site.
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { createRequire } from "node:module";
-import { startHelper, pairExtension } from "./helper.js";
+import { startHelper, pairExtension, routeHelper, seasonExtension } from "./helper.js";
 
 const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -45,6 +51,10 @@ await setup.goto(`chrome://extensions/?id=${id}`);
 if (!process.env.NO_USER_SCRIPTS) await setup.locator("#allow-user-scripts").click();
 await sleep(500);
 for (const p of ctx.pages()) if (p.url().includes("/options.html")) await p.close();
+// This run's own helper (another run may be on the usual port), and someone
+// who has used Morse before (no first-run coach over the pictures).
+await routeHelper(ctx, helper);
+await seasonExtension(sw);
 await pairExtension(ctx, id, helper.code);
 say(`extension ${id} paired · Allow User Scripts ${process.env.NO_USER_SCRIPTS ? "off" : "on"}`);
 
@@ -66,9 +76,12 @@ for (const site of sites) {
     await page.evaluate(() => localStorage.setItem("morse:debug", "1"));
     await page.reload({ waitUntil: "domcontentloaded", timeout: 90000 });
     await until(status, 30000, "Morse in the page");
+    if (site.ready) await until(() => page.evaluate(site.ready), 60000, "the page (ready)");
     if (site.setup) await page.evaluate(site.setup);
     await sleep(2500);
     result.before = await check();
+    if (site.scroll) { await page.evaluate(to => typeof to === "number" ? scrollTo(0, to) : document.querySelector(to)?.scrollIntoView({ block: "start" }), site.scroll); await sleep(800); }
+    await shot("before");
     // Open, point, describe.
     await page.keyboard.press(OPEN_KEY);
     await until(async () => (await status())?.open, 8000, "the bar");
@@ -99,12 +112,27 @@ for (const site of sites) {
     // Save, then reload.
     await page.keyboard.press("Enter");
     await until(async () => (await status())?.mods > 0, 15000, "the mod to be saved");
+    // What was saved: CSS only works with "Allow User Scripts" off; code needs it on.
+    const modsDir = path.join(tmp, "helper-home", "mods");
+    const saved = (await fs.readdir(modsDir).catch(() => [])).filter(f => f.endsWith(".json"));
+    const mod = (await Promise.all(saved.map(async f => JSON.parse(await fs.readFile(path.join(modsDir, f), "utf8")))))
+      .filter(m => m.prompt === site.ask).at(-1);
+    if (mod) Object.assign(result, { title: mod.title, cssChars: (mod.css || "").length, jsChars: (mod.js || "").trim().length });
     await page.keyboard.press("Escape");
     await sleep(500);
     await page.reload({ waitUntil: "domcontentloaded", timeout: 90000 });
     await until(status, 30000, "Morse after the reload");
+    if (site.ready) await until(() => page.evaluate(site.ready), 60000, "the page after the reload (ready)");
     result.persisted = !!(await until(check, 30000, "the change after the reload").catch(() => false));
     await sleep(1500);
+    if (site.scroll) { await page.evaluate(to => typeof to === "number" ? scrollTo(0, to) : document.querySelector(to)?.scrollIntoView({ block: "start" }), site.scroll); await sleep(800); }
+    if (site.thenClick) {
+      const text = /^text=\/(.+)\/([a-z]*)$/.exec(site.thenClick);
+      const target = text ? page.getByText(new RegExp(text[1], text[2])).first() : page.locator(site.thenClick).first();
+      await target.click({ timeout: 10000 }).catch(e => say("thenClick: " + e.message.split("\n")[0]));
+      await sleep(1000);
+    }
+    if (site.then) result.then = await page.evaluate(site.then).catch(e => "threw: " + e.message);
     await shot("after-reload");
     say(`${site.name}: after a reload the change is ${result.persisted ? "still there" : "GONE"}`);
     result.ok = true;
@@ -118,4 +146,5 @@ for (const site of sites) {
 }
 await ctx.close();
 helper.stop();
+await fs.rm(tmp, { recursive: true, force: true }).catch(() => {});
 process.exit(0);

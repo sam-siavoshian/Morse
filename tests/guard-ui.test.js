@@ -22,6 +22,7 @@ import { freePort, listen } from "./helpers/net.js";
 import { waitFor, scaled } from "./helpers/wait.js";
 import * as store from "../daemon/store.js";
 import { createMod } from "../core/mod.js";
+import { LATER_MS } from "../daemon/guard.js";
 import { openLibrary, ORIGIN as LIBRARY } from "../demo/a11y-page.js";
 
 const ROOT = new URL("../", import.meta.url);
@@ -168,10 +169,29 @@ test("desktop: a click handler that never returns is stopped the same way", { sk
   const t0 = Date.now();
   await page.click("#done", { noWaitAfter: true }).catch(() => {}); // the page freezes here
   await paused(page, id, "froze");
-  assert.ok(Date.now() - t0 < 15000, "recovered within seconds");
+  // With no mod code being run, the guard waits LATER_MS (a busy page's own work isn't stopped).
+  assert.ok(Date.now() - t0 < LATER_MS + 15000, "recovered within seconds of the guard stepping in");
   await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: scaled(30000) });
   await usable(page);
   await said(page, id, "Paused “Spin on click” because it froze this page.", "Paused because it froze this page.", "Morse stopped it and reloaded the page.");
+  await page.close();
+});
+
+// Real VS Code, starting up on a busy machine, kept its page from answering
+// for up to 8 s; Morse took that for a frozen mod and stopped VS Code's own
+// code, which left the workbench half drawn.
+test("desktop: a page busy with its own code for seconds, after a mod ran, is left alone", { skip, timeout: 90000 }, async () => {
+  const { page, id } = await open({ title: "Mark done", js: `morse.watch("#done", el => el.dataset.marked = "1");` });
+  await until(() => page.evaluate(() => document.getElementById("done").dataset.marked === "1"), 10000, "the mod ran");
+  await page.evaluate(() => { window.__sameDocument = true; });
+  // The page's own script (not Morse's, not a mod's) blocks for 9 s, longer than the guard waits.
+  await page.addScriptTag({ content: "setTimeout(() => { const t = performance.now(); while (performance.now() - t < 9000) {} document.body.dataset.busyDone = '1'; }, 100);" });
+  await page.waitForFunction(() => document.body.dataset.busyDone === "1", null, { timeout: scaled(40000) });
+  assert.equal(await page.evaluate(() => window.__sameDocument), true, "not reloaded");
+  const m = await readMod(id);
+  assert.equal(m.enabled, true, "the mod is still on");
+  assert.equal(m.paused, undefined);
+  await usable(page);
   await page.close();
 });
 
