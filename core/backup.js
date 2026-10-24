@@ -50,5 +50,9 @@ export function prepareInstall(mod, { kind = "link", where = {}, now = new Date(
   if (kind === "backup") {
     return { ...m, match, enabled: m.enabled !== false, imported: true, importedFrom: m.imported ? m.importedFrom || "link" : "backup", importedAt: m.importedAt || now.toISOString() };
   }
-  return { ...m, match, enabled: true, imported: true, importedFrom: kind === "mod" ? "file" : "link", importedAt: now.toISOString() };
+  // A shared mod is the code its review showed: no earlier versions ride along
+  // (History could bring back code nobody reviewed). Links never carry one
+  // (stripLocal), so this only drops what a hand-made link or file added.
+  const { history, ...shared } = m;
+  return { ...shared, match, enabled: true, imported: true, importedFrom: kind === "mod" ? "file" : "link", importedAt: now.toISOString() };
 }

