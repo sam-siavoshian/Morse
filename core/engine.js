@@ -112,6 +112,19 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
         last.error = res.error;
         continue;
       }
+      // dogfood (guard): code that hid most of the page, which the CSS check
+      // before it lands can't see (VSCodium: a JS-only "hide the sidebar" hid
+      // every part of the window).
+      const after = before?.shown >= 8 && !signal?.aborted ? await probe([]).catch(() => null) : null;
+      const gone = after ? collapseHarm({ before: before.shown, after: after.shown }) : null;
+      if (gone) {
+        await exec("").catch(() => {}); // same mod id: turns the draft off
+        emit({ type: "css", css: "" });
+        previous = { raw, error: gone.model.replace("your CSS hid", "your change hid") };
+        repairs.push(previous.error);
+        last = { ...last, css: "", js: "", error: gone.user };
+        continue;
+      }
     }
     // ---- hooks nothing uses: JS that marks elements for CSS that isn't there,
     // or a change that only says it happened

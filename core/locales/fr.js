@@ -18,6 +18,7 @@ export default {
   "bar.repoint": "Pointer autre chose",
   "bar.hint.pointing": "<b>Pointez</b> ou décrivez · <kbd>Esc</kbd> pour fermer",
   "bar.hint.target": "Décrivez ce qu'il faut changer ici · <kbd>Enter</kbd> pour envoyer",
+  "bar.hint.wider": "<kbd>{key}</kbd> partie plus grande", // dogfood: Alt+↑ after pointing
   "bar.hint.page": "Décrivez un changement sur cette page · <kbd>Enter</kbd> pour envoyer",
   "bar.mods": "Mods",
   "bar.stopped": "<b>Arrêté.</b> Rien n'a changé · <kbd>Enter</kbd> pour réessayer",
@@ -72,6 +73,7 @@ export default {
   "result.describeChange": "décrivez ce qu'il faut changer",
   "result.firstVersion": "C'est la première version",
   "result.backTo": "Retour à la version {n}",
+  "result.forwardTo": "En avant vers la version {n}", // dogfood: ⌘⇧Z after ⌘Z
   "result.fixNote": "Réparé pour qu'il fonctionne à nouveau",
 
   // ---- boutons
@@ -803,9 +805,12 @@ export default {
 
   // ---- désactiver, mettre en pause, installer
   "ctl.offN": { one: "{n} mod désactivé sur cette page", other: "{n} mods désactivés sur cette page" },
+  "ctl.offNApp": { one: "{n} mod désactivé dans {app}", other: "{n} mods désactivés dans {app}" }, // dogfood: the off switch in a desktop app names the app
   "ctl.offNone": "Les mods sont désactivés sur cette page",
+  "ctl.offNoneApp": "Les mods sont désactivés dans {app}", // dogfood: the off switch in a desktop app names the app
   "ctl.turnBackOn": "Réactiver",
   "ctl.offSay": "Tous les mods sont désactivés sur cette page.",
+  "ctl.offSayApp": "Tous les mods sont désactivés dans {app}.", // dogfood: the off switch in a desktop app names the app
   "ctl.stillPausedAll": "Morse est toujours en pause partout.",
   "ctl.stillPausedOn": "Morse est toujours en pause sur {where}.",
   "ctl.resume": "Reprendre",
@@ -847,6 +852,7 @@ export default {
   "ctl.tooLarge": "Ce fichier est trop gros pour être une sauvegarde Morse.",
   "ctl.pausedAllNote": "Morse est en pause partout. Vos mods sont enregistrés mais ne s'exécutent pas.",
   "ctl.offNote": "Les mods sont désactivés sur cette page.",
+  "ctl.offNoteApp": "Les mods sont désactivés dans {app}.", // dogfood: the off switch in a desktop app names the app
   "ctl.heldNote": "« {title} » est mis de côté : cette page s'est fermée ou rechargée juste après son lancement.",
   "ctl.pausedHere2": "Vos mods ici sont enregistrés mais ne s'exécutent pas",
   "ctl.stopsApp": "Arrête tous les mods dans cette app",
@@ -1208,11 +1214,11 @@ export default {
   "ys.startHint": "Décrivez votre style et terminez par <b>everywhere</b>",
   "popup.warnOff": "<b>« Allow User Scripts » est désactivé.</b> Les changements d'apparence marchent. Ceux qui ajoutent des boutons ou des fonctions ne s'exécutent que s'il est activé.",
   "popup.warnSteps": "Cliquez sur <b>L'activer</b>, activez <b>Allow User Scripts</b> sur la page qui s'ouvre, puis rechargez cet onglet.",
-  "popup.waiting": { one: "<b>En attente de « Allow User Scripts » :</b> {list}. Son nouveau look s'affiche déjà. Ce qu'il ajoute marchera une fois activé.", other: "<b>En attente de « Allow User Scripts » :</b> {list}. Leur nouveau look s'affiche déjà. Ce qu'ils ajoutent marchera une fois activé." },
+  "popup.waiting": { one: "<b>En attente de « Allow User Scripts » :</b> {list}. Il reste éteint d'ici là, pour que les pages ne soient pas à moitié changées.", other: "<b>En attente de « Allow User Scripts » :</b> {list}. Ils restent éteints d'ici là, pour que les pages ne soient pas à moitié changées." },
   "popup.waits": "Attend « Allow User Scripts »",
   "wait.two": "« {a} » et « {b} »",
   "wait.many": { one: "{n} mod", other: "{n} mods" },
-  "wait.text": { one: "{names} ajoute des fonctions qui attendent « Allow User Scripts ». Le nouveau look s'affiche déjà.", other: "{names} ajoutent des fonctions qui attendent « Allow User Scripts ». Le nouveau look s'affiche déjà." },
+  "wait.text": { one: "{names} ajoute des fonctions qui attendent « Allow User Scripts ». Il reste éteint d'ici là, pour que la page ne soit pas à moitié changée.", other: "{names} ajoutent des fonctions qui attendent « Allow User Scripts ». Ils restent éteints d'ici là, pour que la page ne soit pas à moitié changée." },
   "wait.steps": "Ouvrez les détails de Morse, activez « Allow User Scripts », puis revenez à cet onglet.",
   "wait.openDetails": "Ouvrir les détails de Morse",
   "wait.turnOn": "Activer « Allow User Scripts »",
@@ -1221,7 +1227,7 @@ export default {
   "wait.notePractice": "Voici le rendu. Ce qu'il ajoute marche sur de vrais sites",
   "wait.note": "A besoin de « Allow User Scripts ». Seul son look s'affiche tant que vous ne l'activez pas",
   "wait.tag": "attend « Allow User Scripts »",
-  "wait.tagTitle": "Son nouveau look s'affiche. Ce qu'il ajoute marchera une fois « Allow User Scripts » activé.",
+  "wait.tagTitle": "Il marchera en entier, look compris, une fois « Allow User Scripts » activé.",
   "so.hidden": "(masqué)",
   "so.askShort": "Que faire de ces étapes ?",
   "origin.pack": "Du pack « {name} »{by}{on}",

@@ -2,7 +2,7 @@
 //   - a result stays editable: type a follow-up and Enter refines the same
 //     mod (the model gets the original ask, the current code and the
 //     follow-up, and rewrites it whole); Enter on an empty input keeps it
-//   - ⌘Z / Ctrl+Z after a result steps back one version
+//   - ⌘Z / Ctrl+Z after a result steps back one version, ⌘⇧Z / Ctrl+Y forward again
 //   - refineMod(m) opens the bar on a saved mod (the panel's Refine), and
 //     fixMod(m) re-runs it with what went wrong (the panel's Fix it)
 // Versions are plain data (core/versions.js, inlined by runtime/bundle.js).
@@ -225,15 +225,20 @@ goBtn.addEventListener("click", () => {
   v ? refine(v) : keep();
 });
 
-// ⌘Z / Ctrl+Z after a result: one version back. Typing in the input keeps the
-// usual text undo; God mode's own ⌘Z only runs while nothing is showing a result.
+// ⌘Z / Ctrl+Z after a result: one version back. ⌘⇧Z / Ctrl+Shift+Z (or
+// Ctrl+Y) forward again (dogfood: a step back used to lose the newer version
+// for good). Typing in the input keeps the usual text undo; God mode's own ⌘Z
+// only runs while nothing is showing a result.
 listen("keydown", e => {
   if (!e.isTrusted || !S.open || S.phase !== "result" || !modal.hidden) return;
-  if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey || e.key.toLowerCase() !== "z") return;
+  if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+  const k = e.key.toLowerCase();
+  const fwd = (k === "z" && e.shiftKey) || (k === "y" && e.ctrlKey && !e.metaKey && !e.shiftKey);
+  if (!fwd && (k !== "z" || e.shiftKey)) return;
   if (root.activeElement === input && input.value) return;
   e.preventDefault();
   e.stopImmediatePropagation();
-  stepBackDraft();
+  fwd ? stepForwardDraft() : stepBackDraft();
 }, true);
 
 async function stepBackDraft() {
@@ -244,9 +249,19 @@ async function stepBackDraft() {
     if (!d.mod) return undo(); // the first version of a new change: same as Undo
     return showResult(d, { note: t("result.firstVersion") });
   }
-  S.draft = Object.assign(back, { saved: null, saving: null });
+  S.draft = Object.assign(back, { saved: null, saving: null, ahead: [...(d.ahead || []), d] });
   await showVersion(d.id, back);
   showResult(back, { note: t("result.backTo", { n: versionsOf(back).length + 1 }) });
+}
+// The version a step back left, while nothing new was asked since (dogfood).
+async function stepForwardDraft() {
+  const d = S.draft;
+  const ahead = d?.ahead || [];
+  if (!ahead.length) return;
+  const next = Object.assign(ahead[ahead.length - 1], { saved: null, saving: null, ahead: ahead.slice(0, -1) });
+  S.draft = next;
+  await showVersion(d.id, next);
+  showResult(next, { note: t("result.forwardTo", { n: versionsOf(next).length + 1 }) });
 }
 
 // ---- refine or fix a saved mod (from the Mods panel)

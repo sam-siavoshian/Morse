@@ -18,6 +18,7 @@ export default {
   "bar.repoint": "指向别的东西",
   "bar.hint.pointing": "<b>指向</b>任何想改的东西，或直接描述 · <kbd>Esc</kbd> 关闭",
   "bar.hint.target": "描述要对它做什么改动 · <kbd>Enter</kbd> 发送",
+  "bar.hint.wider": "<kbd>{key}</kbd> 选更大的部分", // dogfood: Alt+↑ after pointing
   "bar.hint.page": "描述对这个页面的改动 · <kbd>Enter</kbd> 发送",
   "bar.mods": "模组",
   "bar.stopped": "<b>已停止。</b>什么都没改 · <kbd>Enter</kbd> 再试一次",
@@ -72,6 +73,7 @@ export default {
   "result.describeChange": "描述要改什么",
   "result.firstVersion": "这是第一版",
   "result.backTo": "回到第 {n} 版",
+  "result.forwardTo": "前进到第 {n} 版", // dogfood: ⌘⇧Z after ⌘Z
   "result.fixNote": "修好了，又能用了",
 
   // ---- 按钮
@@ -803,9 +805,12 @@ export default {
 
   // ---- 关闭、暂停、安装
   "ctl.offN": { other: "已关掉这个页面上的 {n} 个模组" },
+  "ctl.offNApp": { other: "已关掉 {app} 里的 {n} 个模组" }, // dogfood: the off switch in a desktop app names the app
   "ctl.offNone": "这个页面上的模组已关闭",
+  "ctl.offNoneApp": "{app} 里的模组已关闭", // dogfood: the off switch in a desktop app names the app
   "ctl.turnBackOn": "重新开启",
   "ctl.offSay": "这个页面上的所有模组都已关闭。",
+  "ctl.offSayApp": "{app} 里的所有模组都已关闭。", // dogfood: the off switch in a desktop app names the app
   "ctl.stillPausedAll": "Morse 仍在所有地方暂停。",
   "ctl.stillPausedOn": "Morse 仍在 {where} 上暂停。",
   "ctl.resume": "继续",
@@ -847,6 +852,7 @@ export default {
   "ctl.tooLarge": "这个文件太大，不可能是 Morse 备份。",
   "ctl.pausedAllNote": "Morse 在所有地方暂停。你的模组已保存，但没有运行。",
   "ctl.offNote": "这个页面上的模组已关闭。",
+  "ctl.offNoteApp": "{app} 里的模组已关闭。", // dogfood: the off switch in a desktop app names the app
   "ctl.heldNote": "“{title}”被暂时挡住了：它刚运行，这个页面就关闭或重新加载了。",
   "ctl.pausedHere2": "你在这里的模组已保存，但没有运行",
   "ctl.stopsApp": "停止这个应用里的所有模组",
@@ -1208,11 +1214,11 @@ export default {
   "ys.startHint": "描述你的风格，用 <b>everywhere</b> 结尾",
   "popup.warnOff": "<b>“Allow User Scripts”是关着的。</b>改外观的改动可以用。添加按钮或功能的改动要打开它才会运行。",
   "popup.warnSteps": "点击<b>打开它</b>，在打开的页面里打开 <b>Allow User Scripts</b>，然后重新加载这个标签页。",
-  "popup.waiting": { other: "<b>在等“Allow User Scripts”：</b>{list}。新外观已经显示了。添加的功能要等它打开后才会运行。" },
+  "popup.waiting": { other: "<b>在等“Allow User Scripts”：</b>{list}。在那之前保持关闭，免得页面只改了一半。" },
   "popup.waits": "在等“Allow User Scripts”",
   "wait.two": "“{a}”和“{b}”",
   "wait.many": { other: "{n} 个模组" },
-  "wait.text": { other: "{names}添加的功能在等“Allow User Scripts”。新外观已经显示了。" },
+  "wait.text": { other: "{names}添加的功能在等“Allow User Scripts”。在那之前它保持关闭，免得页面只改了一半。" },
   "wait.steps": "打开 Morse 的详细信息，打开“Allow User Scripts”，然后回到这个标签页。",
   "wait.openDetails": "打开 Morse 的详细信息",
   "wait.turnOn": "打开“Allow User Scripts”",
@@ -1221,7 +1227,7 @@ export default {
   "wait.notePractice": "看起来就是这样。添加的功能在真实网站上才会运行",
   "wait.note": "需要“Allow User Scripts”才能运行。打开之前只显示外观",
   "wait.tag": "在等“Allow User Scripts”",
-  "wait.tagTitle": "新外观已经显示。添加的功能要等“Allow User Scripts”打开后才会运行。",
+  "wait.tagTitle": "“Allow User Scripts”打开后，它会连同外观一起运行。",
   "so.hidden": "（已隐藏）",
   "so.askShort": "这些步骤要怎么用？",
   "origin.pack": "来自模组包“{name}”{by}{on}",
