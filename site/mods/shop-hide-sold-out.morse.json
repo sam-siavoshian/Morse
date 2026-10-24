@@ -1,0 +1,21 @@
+{
+  "morse": 1,
+  "id": "shop-hide-sold-out",
+  "title": "Hide sold-out products",
+  "prompt": "hide the products that are out of stock",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8794"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": "",
+  "js": "morse.watch(\"#__next > div:nth-of-type(2) > main > div:nth-of-type(2) > div\", el => {\n  const oos = [...el.querySelectorAll(\"button\")].some(b => b.disabled && b.textContent.trim() === \"Notify me\");\n  el.style.display = oos ? \"none\" : \"\";\n}, { live: true });\n",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

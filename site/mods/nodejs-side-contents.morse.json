@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "nodejs-side-contents",
+  "title": "Contents on the side",
+  "prompt": "show the table of contents on the right side and keep it there while I scroll",
+  "match": {
+    "hosts": [
+      "nodejs.org"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "#toc",
+    "label": "“Table of contents”"
+  },
+  "css": "#toc {\n  position: fixed !important;\n  top: 130px;\n  right: 1rem;\n  width: 240px;\n  max-height: calc(100vh - 150px);\n  overflow-y: auto;\n  z-index: 5;\n  margin: 0 !important;\n  box-sizing: border-box;\n  padding: 0.5rem 0.75rem;\n  background: Canvas;\n  color: CanvasText;\n  border: 1px solid rgba(128, 128, 128, 0.25);\n  border-radius: 6px;\n}\n#apicontent {\n  margin-right: 260px;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

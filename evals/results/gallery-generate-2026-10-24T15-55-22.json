@@ -1,0 +1,1499 @@
+{
+  "startedAt": "2026-10-24T15:55:22.686Z",
+  "mode": "generate",
+  "model": "claude-code:haiku",
+  "pass": 26,
+  "total": 34,
+  "results": [
+    {
+      "id": "nodejs-bigger-code",
+      "request": "make the code examples bigger",
+      "url": "https://nodejs.org/api/path.html",
+      "ms": 7097,
+      "title": "Enlarge code example text",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "nodejs-bigger-code",
+        "title": "Bigger code examples",
+        "prompt": "make the code examples bigger",
+        "match": {
+          "hosts": [
+            "nodejs.org"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": "#apicontent pre",
+          "label": "code example"
+        },
+        "css": "pre.shiki, pre.shiki code {\n  font-size: 1.1em !important;\n  line-height: 1.7rem !important;\n}\npre.shiki {\n  padding: 1.25rem 1.25rem 0.75rem !important;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:55:37.561Z",
+        "updated": "2026-10-24T15:55:37.561Z"
+      },
+      "verify": {
+        "id": "nodejs-bigger-code",
+        "before": "6 code examples still under 16px: 13",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "pypi-dark-mode",
+      "request": "dark mode, with text that's easy to read",
+      "url": "https://pypi.org/project/requests/",
+      "ms": 11808,
+      "title": "Dark mode with readable text",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "16 of 58 are hard to read, e.g. li “Source” 1.1, a “Source” 1.9, li “Released: May 14, 2026” 1.2",
+      "mod": {
+        "morse": 1,
+        "id": "pypi-dark-mode",
+        "title": "Dark mode",
+        "prompt": "dark mode, with text that's easy to read",
+        "match": {
+          "hosts": [
+            "pypi.org"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "body,\nmain#content,\n.banner,\n.project-tabs,\n.horizontal-section,\n.site-container,\n.project-description,\n.project-description__content,\nheader.site-header,\n.dropdown,\n.project-tabs__panel {\n  background-color: #1b1d21 !important;\n  color: #e4e6eb !important;\n}\n\nheader.site-header,\n.horizontal-section--grey {\n  background-color: #14161a !important;\n  border-color: #2c2f36 !important;\n}\n\nh1, h2, h3, h4, h5, h6,\n.project-header__name,\n.project-header__summary,\n.project-header__pip-instructions,\n#pip-command {\n  color: #f5f6f8 !important;\n}\n\na {\n  color: #8ab4ff !important;\n}\n\npre, code, kbd {\n  background-color: #252830 !important;\n  color: #e4e6eb !important;\n  border-color: #3a3e48 !important;\n}\n\ninput#search {\n  background-color: #252830 !important;\n  color: #f5f6f8 !important;\n  border-color: #3a3e48 !important;\n}\n\nhr, table, th, td {\n  border-color: #3a3e48 !important;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:55:54.156Z",
+        "updated": "2026-10-24T15:55:54.156Z"
+      },
+      "verify": {
+        "id": "pypi-dark-mode",
+        "before": "only 0 of 49 points on the screen are dark",
+        "errors": [],
+        "first": "16 of 58 are hard to read, e.g. li “Source” 1.1, a “Source” 1.9, li “Released: May 14, 2026” 1.2",
+        "reload": "20 of 66 are hard to read, e.g. li “Source” 1.1, a “Source” 1.9, li “Released: May 14, 2026” 1.2",
+        "pass": false,
+        "why": "16 of 58 are hard to read, e.g. li “Source” 1.1, a “Source” 1.9, li “Released: May 14, 2026” 1.2",
+        "pageErrors": [
+          "Failed to fetch",
+          "Failed to fetch",
+          "Failed to fetch"
+        ]
+      },
+      "pass": false
+    },
+    {
+      "id": "pypi-hide-prereleases",
+      "request": "in the release history, hide pre-releases and yanked versions",
+      "url": "https://pypi.org/project/requests/#history",
+      "ms": 13197,
+      "title": "Hide pre-releases and yanked versions",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "1 pre-release or yanked versions still show",
+      "mod": {
+        "morse": 1,
+        "id": "pypi-hide-prereleases",
+        "title": "Hide pre-releases and yanked versions",
+        "prompt": "in the release history, hide pre-releases and yanked versions",
+        "match": {
+          "hosts": [
+            "pypi.org"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "#history .release.morse-hidden {\n  display: none !important;\n}\n",
+        "js": "morse.watch(\"#history .release\", el => {\n  const version = el.querySelector(\"p.release__version a\")?.textContent.trim() ?? \"\";\n  const isPre = /\\d(?:a|b|c|rc|alpha|beta|pre|preview|dev)\\d*(?:\\.post\\d+)?$/i.test(version);\n  const isYanked = /\\byanked\\b/i.test(el.textContent);\n  el.classList.toggle(\"morse-hidden\", isPre || isYanked);\n}, { live: true });\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:55:55.506Z",
+        "updated": "2026-10-24T15:55:55.506Z"
+      },
+      "verify": {
+        "id": "pypi-hide-prereleases",
+        "before": "3 pre-release or yanked versions still show",
+        "errors": [],
+        "first": "1 pre-release or yanked versions still show",
+        "reload": "1 pre-release or yanked versions still show",
+        "pass": false,
+        "why": "1 pre-release or yanked versions still show",
+        "pageErrors": [
+          "Failed to fetch",
+          "Failed to fetch",
+          "Failed to fetch"
+        ]
+      },
+      "pass": false
+    },
+    {
+      "id": "pypi-sticky-install",
+      "request": "keep the pip install command visible at the top while I scroll",
+      "url": "https://pypi.org/project/requests/",
+      "ms": 15975,
+      "title": "Keep pip command pinned on scroll",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "no readme text in view under it",
+      "mod": {
+        "morse": 1,
+        "id": "pypi-sticky-install",
+        "title": "Install command always in view",
+        "prompt": "keep the pip install command visible at the top while I scroll",
+        "match": {
+          "hosts": [
+            "pypi.org"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": "#pip-command",
+          "label": "“pip install requests” command"
+        },
+        "css": ".banner.banner--project {\n  position: sticky !important;\n  top: 0 !important;\n  z-index: 50;\n  background-color: rgb(253, 253, 253) !important;\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);\n}\nbody.with-sticky .banner.banner--project {\n  top: 64px !important;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:55:59.348Z",
+        "updated": "2026-10-24T15:55:59.348Z"
+      },
+      "verify": {
+        "id": "pypi-sticky-install",
+        "before": "the install command is not in view after scrolling: top -2213",
+        "errors": [],
+        "first": "no readme text in view under it",
+        "reload": "no readme text in view under it",
+        "pass": false,
+        "why": "no readme text in view under it",
+        "pageErrors": [
+          "Failed to fetch",
+          "Failed to fetch",
+          "Failed to fetch"
+        ]
+      },
+      "pass": false
+    },
+    {
+      "id": "nodejs-side-contents",
+      "request": "show the table of contents on the right side and keep it there while I scroll",
+      "url": "https://nodejs.org/api/path.html",
+      "ms": 9602,
+      "title": "Pin table of contents to right",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "nodejs-side-contents",
+        "title": "Contents on the side",
+        "prompt": "show the table of contents on the right side and keep it there while I scroll",
+        "match": {
+          "hosts": [
+            "nodejs.org"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": "#toc",
+          "label": "“Table of contents”"
+        },
+        "css": "#toc {\n  position: fixed !important;\n  top: 130px;\n  right: 1rem;\n  width: 240px;\n  max-height: calc(100vh - 150px);\n  overflow-y: auto;\n  z-index: 5;\n  margin: 0 !important;\n  box-sizing: border-box;\n  padding: 0.5rem 0.75rem;\n  background: Canvas;\n  color: CanvasText;\n  border: 1px solid rgba(128, 128, 128, 0.25);\n  border-radius: 6px;\n}\n#apicontent {\n  margin-right: 260px;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:56:14.809Z",
+        "updated": "2026-10-24T15:56:14.809Z"
+      },
+      "verify": {
+        "id": "nodejs-side-contents",
+        "before": "the contents are not in view on the right after scrolling (0 links)",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "go-bigger-code",
+      "request": "make the code examples bigger",
+      "url": "https://pkg.go.dev/net/http",
+      "ms": 6313,
+      "title": "Larger code example text",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "go-bigger-code",
+        "title": "Bigger code examples",
+        "prompt": "make the code examples bigger",
+        "match": {
+          "hosts": [
+            "pkg.go.dev"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".Documentation pre",
+          "label": "code example"
+        },
+        "css": "section.Documentation-overview pre {\n  font-size: 1.1rem !important;\n  line-height: 1.6em !important;\n  padding: 0.9rem !important;\n}\nsection.Documentation-overview pre code {\n  font-size: inherit !important;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:56:40.293Z",
+        "updated": "2026-10-24T15:56:40.293Z"
+      },
+      "verify": {
+        "id": "go-bigger-code",
+        "before": "6 code examples still under 16px: 14",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "go-hide-banners",
+      "request": "hide the cookie notice and the survey banner",
+      "url": "https://pkg.go.dev/net/http",
+      "ms": 6845,
+      "title": "Hide survey banner",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "Cookie-notice still shows",
+      "mod": {
+        "morse": 1,
+        "id": "go-hide-banners",
+        "title": "No cookie notice or survey banner",
+        "prompt": "hide the cookie notice and the survey banner",
+        "match": {
+          "hosts": [
+            "pkg.go.dev"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "/* The cookie notice isn't in the page outline I was given, so it can't be targeted here. */\nsection[aria-label=\"\\32 026\\ Go\\ Developer\\ Survey\"] {\n  display: none !important;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:56:38.756Z",
+        "updated": "2026-10-24T15:56:38.756Z"
+      },
+      "verify": {
+        "id": "go-hide-banners",
+        "before": "go-SurveyBanner still shows",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": false
+    },
+    {
+      "id": "nodejs-section-keys",
+      "request": "let me press j and k to jump to the next and previous section",
+      "url": "https://nodejs.org/api/path.html",
+      "ms": 7503,
+      "title": "Jump between sections with j/k",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "nodejs-section-keys",
+        "title": "J and K to jump between sections",
+        "prompt": "let me press j and k to jump to the next and previous section",
+        "match": {
+          "hosts": [
+            "nodejs.org"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "#apicontent > section { scroll-margin-top: 140px; }\n",
+        "js": "morse.on(window, \"keydown\", e => {\n  if (e.metaKey || e.ctrlKey || e.altKey) return;\n  const t = e.target;\n  if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;\n  if (e.key !== \"j\" && e.key !== \"k\") return;\n  const secs = morse.$$(\"#apicontent > section\");\n  if (!secs.length) return;\n  let idx = -1;\n  secs.forEach((s, i) => { if (s.getBoundingClientRect().top <= 142) idx = i; });\n  let next = e.key === \"j\" ? idx + 1 : idx - 1;\n  next = Math.max(0, Math.min(secs.length - 1, next));\n  e.preventDefault();\n  secs[next].scrollIntoView({ behavior: \"smooth\", block: \"start\" });\n});\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:56:38.153Z",
+        "updated": "2026-10-24T15:56:38.153Z"
+      },
+      "verify": {
+        "id": "nodejs-section-keys",
+        "before": "j did not move down",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "rubygems-dark-mode",
+      "request": "dark mode, with text that's easy to read",
+      "url": "https://rubygems.org/gems/rails",
+      "ms": 3191,
+      "title": "Dark mode with high-contrast text",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "only 14 of 49 points on the screen are dark",
+      "mod": {
+        "morse": 1,
+        "id": "rubygems-dark-mode",
+        "title": "Dark mode",
+        "prompt": "dark mode, with text that's easy to read",
+        "match": {
+          "hosts": [
+            "rubygems.org"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "html, body {\n  color-scheme: dark;\n}\nbody.bg-neutral-050,\nbody {\n  background-color: rgb(18, 18, 18) !important;\n  color: rgb(245, 245, 245) !important;\n}\nheader.bg-white,\ndiv.hidden.lg\\:block,\ndialog,\naside[aria-label=\"Details\"] {\n  background-color: rgb(28, 28, 28) !important;\n  color: rgb(245, 245, 245) !important;\n}\na,\nbutton,\np,\nh1,\nh2,\nh3,\nspan,\nli,\nlabel,\ninput {\n  color: rgb(245, 245, 245);\n}\na:hover,\nbutton:hover {\n  color: rgb(255, 255, 255) !important;\n}\ninput#query {\n  background-color: rgb(40, 40, 40) !important;\n  color: rgb(245, 245, 245) !important;\n  border-color: rgb(90, 90, 90) !important;\n}\n#markup,\ndiv.versions,\ndiv.flex.flex-col,\ndiv.flex.flex-wrap {\n  color: rgb(230, 230, 230);\n}\ndiv.versions a.inline-block {\n  color: rgb(140, 190, 255) !important;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:57:12.131Z",
+        "updated": "2026-10-24T15:57:12.131Z"
+      },
+      "verify": {
+        "id": "rubygems-dark-mode",
+        "before": "only 0 of 49 points on the screen are dark",
+        "errors": [],
+        "first": "only 14 of 49 points on the screen are dark",
+        "reload": "only 14 of 49 points on the screen are dark",
+        "pass": false,
+        "why": "only 14 of 49 points on the screen are dark"
+      },
+      "pass": false
+    },
+    {
+      "id": "nuget-dark-mode",
+      "request": "dark mode, with text that's easy to read",
+      "url": "https://www.nuget.org/packages/Newtonsoft.Json",
+      "ms": 9588,
+      "title": "Dark mode with readable text",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "nuget-dark-mode",
+        "title": "Dark mode",
+        "prompt": "dark mode, with text that's easy to read",
+        "match": {
+          "hosts": [
+            "www.nuget.org"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "html, body, section, main, aside, .container, .row, .col-sm-9, .package-details-main,\n.tab-content, .tab-pane, .sidebar-section, #skippedToContent, footer, .footer {\n  background-color: #1e1e1e !important;\n  color: #e6e6e6 !important;\n}\nnav.navbar, nav.navbar a { color: #f0f0f0 !important; }\nh1, h2, h3, h4, h5, p, li, label, td, th, span, strong, b, dt, dd {\n  color: #e6e6e6 !important;\n}\na { color: #6cb6ff !important; }\npre, code, .install-script-row, .install-tabs, .icon-text.alert, .alert, #search {\n  background-color: #2a2a2a !important;\n  color: #e6e6e6 !important;\n  border-color: #3a3a3a !important;\n}\n.nav-tabs > li > a, .nav-tabs > li > a:hover {\n  background-color: #1e1e1e !important;\n  color: #e6e6e6 !important;\n  border-color: #3a3a3a !important;\n}\n.nav-tabs > li.active > a, .nav-tabs > li.active > a:hover, .nav-tabs > li.active > a:focus {\n  background-color: #2a2a2a !important;\n  color: #ffffff !important;\n  border-color: #3a3a3a #3a3a3a transparent !important;\n}\ntable, tr, td, th { background-color: transparent !important; border-color: #3a3a3a !important; }\nhr, .sidebar-section, .body-tabs { border-color: #3a3a3a !important; }\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:57:46.640Z",
+        "updated": "2026-10-24T15:57:46.640Z"
+      },
+      "verify": {
+        "id": "nuget-dark-mode",
+        "before": "only 0 of 45 points on the screen are dark",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true,
+        "pageErrors": [
+          "hljs is not defined",
+          "hljs is not defined",
+          "hljs is not defined"
+        ]
+      },
+      "pass": true
+    },
+    {
+      "id": "packagist-copy-command",
+      "request": "add a copy button next to the composer require command",
+      "url": "https://packagist.org/packages/laravel/framework",
+      "ms": 6397,
+      "title": "Copy button for composer command",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "packagist-copy-command",
+        "title": "Copy the install command",
+        "prompt": "add a copy button next to the composer require command",
+        "match": {
+          "hosts": [
+            "packagist.org"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".requireme",
+          "label": "“composer require laravel/framework” command"
+        },
+        "css": ".package .requireme input { flex: 1 1 auto; min-width: 0; }\n.package .requireme .morse-copy { flex: 0 0 auto; font: inherit; font-size: 13px; color: currentColor; background: #fff; border: 1px solid #ccc; border-radius: 4px; padding: 4px 10px; cursor: pointer; }\n.package .requireme .morse-copy:hover { background: #eee; }\n",
+        "js": "morse.watch(\".package .requireme\", el => {\n  if (el.querySelector(\".morse-copy\")) return;\n  const input = el.querySelector(\"input\");\n  if (!input) return;\n  const btn = morse.el(\"button\", {\n    type: \"button\",\n    class: \"morse-copy\",\n    text: \"Copy\",\n    on: {\n      click: () => {\n        navigator.clipboard.writeText(input.value)\n          .then(() => morse.toast(\"Command copied\"))\n          .catch(() => { input.select(); morse.toast(\"Copy failed, press Ctrl+C\"); });\n      }\n    }\n  });\n  el.appendChild(btn);\n});\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:58:14.277Z",
+        "updated": "2026-10-24T15:58:14.277Z"
+      },
+      "verify": {
+        "id": "packagist-copy-command",
+        "before": "no new button",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true,
+        "pageErrors": [
+          "Unreachable hosts - your application id may be incorrect. If the error persists, please visit our help center https://alg.li/support-unreachable-hosts or reach out to the Algolia Support team: https://alg.li/support"
+        ]
+      },
+      "pass": true
+    },
+    {
+      "id": "gitlab-hide-sidebar",
+      "request": "hide the left sidebar so the page uses the full width",
+      "url": "https://gitlab.com/gitlab-org/gitlab",
+      "ms": 5594,
+      "title": "Hide sidebar for full width",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "the page did not move into the space: title at 81px",
+      "mod": {
+        "morse": 1,
+        "id": "gitlab-hide-sidebar",
+        "title": "Hide the left sidebar",
+        "prompt": "hide the left sidebar so the page uses the full width",
+        "match": {
+          "hosts": [
+            "gitlab.com"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": "#super-sidebar",
+          "label": "“Project” sidebar"
+        },
+        "css": ".super-sidebar-wrapper { display: none !important; }\n.layout-page.js-page-layout .panels-container { margin-left: 0 !important; width: 100% !important; }\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:57:58.562Z",
+        "updated": "2026-10-24T15:57:58.562Z"
+      },
+      "verify": {
+        "id": "gitlab-hide-sidebar",
+        "before": "the sidebar still shows",
+        "errors": [],
+        "first": "the page did not move into the space: title at 81px",
+        "reload": "the page did not move into the space: title at 81px",
+        "pass": false,
+        "why": "the page did not move into the space: title at 81px"
+      },
+      "pass": false
+    },
+    {
+      "id": "docker-dark-code",
+      "request": "make these code blocks bigger with a dark background",
+      "url": "https://hub.docker.com/_/nginx",
+      "ms": 5891,
+      "title": "Larger dark code blocks",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "docker-dark-code",
+        "title": "Bigger code on dark blocks",
+        "prompt": "make these code blocks bigger with a dark background",
+        "match": {
+          "hosts": [
+            "hub.docker.com"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": "pre",
+          "label": "code block"
+        },
+        "css": "div[data-testid=\"markdownContent\"] pre {\n  background-color: #1e1e1e !important;\n  border-color: #1e1e1e !important;\n  color: #e6e6e6 !important;\n  font-size: 16px !important;\n  line-height: 1.6 !important;\n  padding: 20px !important;\n  min-height: 90px !important;\n  height: auto !important;\n  border-radius: 8px !important;\n}\ndiv[data-testid=\"markdownContent\"] pre code {\n  background: transparent !important;\n  color: inherit !important;\n  font-size: inherit !important;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:57:38.165Z",
+        "updated": "2026-10-24T15:57:38.165Z"
+      },
+      "verify": {
+        "id": "docker-dark-code",
+        "before": "code is 13.7px",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "metacpan-sticky-contents",
+      "request": "keep the contents box in view while I scroll",
+      "url": "https://metacpan.org/pod/Moose",
+      "ms": 7072,
+      "title": "Keep contents box visible",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "metacpan-sticky-contents",
+        "title": "Contents always in view",
+        "prompt": "keep the contents box in view while I scroll",
+        "match": {
+          "hosts": [
+            "metacpan.org"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": "nav.toc",
+          "label": "“Contents” box"
+        },
+        "css": "main { overflow: visible !important; }\nmain .toc {\n  position: sticky !important;\n  top: 70px;\n  max-height: calc(100vh - 90px);\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:58:42.167Z",
+        "updated": "2026-10-24T15:58:42.167Z"
+      },
+      "verify": {
+        "id": "metacpan-sticky-contents",
+        "before": "the contents are not in view after scrolling (0 links)",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "wiki-sticky-contents",
+      "request": "keep the contents visible while I scroll",
+      "url": "http://127.0.0.1:38529/demo/sites/wiki/",
+      "ms": 3595,
+      "title": "Keep contents visible on scroll",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "wiki-sticky-contents",
+        "title": "Contents always in view",
+        "prompt": "keep the contents visible while I scroll",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8795"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".toc",
+          "label": "“Contents” box"
+        },
+        "css": ".toc { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:59:00.393Z",
+        "updated": "2026-10-24T15:59:00.393Z"
+      },
+      "verify": {
+        "id": "wiki-sticky-contents",
+        "before": "the contents scrolled away",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "wiki-dark-mode",
+      "request": "dark mode, with text that's easy to read",
+      "url": "http://127.0.0.1:38529/demo/sites/wiki/",
+      "ms": 3479,
+      "title": "Dark mode with readable text",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "12 of 80 are hard to read, e.g. a “Mount northstad” 2.0, a “East bayville” 2.0, a “North mountton” 2.0",
+      "mod": {
+        "morse": 1,
+        "id": "wiki-dark-mode",
+        "title": "Dark mode",
+        "prompt": "dark mode, with text that's easy to read",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8795"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "html, body, .page, .art, .mast, .foot, nav[aria-label=\"Contents\"], section[aria-label=\"Comments\"], .c, .ibox, .refs {\n  background: #1e1f22 !important;\n  color: #e8eaed !important;\n}\n.mast, .foot, .c, .ibox {\n  border-color: #3c4043 !important;\n}\na {\n  color: #8ab4f8 !important;\n}\na:visited {\n  color: #c58af9 !important;\n}\ninput[aria-label=\"Search\\ Openpedia\"] {\n  background: #2a2b2f !important;\n  color: #e8eaed !important;\n  border-color: #5f6368 !important;\n}\nbutton {\n  color: #e8eaed !important;\n}\n.who, .tx, .acts, .sub, p, li, h1, h2, td, th {\n  color: #e8eaed !important;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:59:11.830Z",
+        "updated": "2026-10-24T15:59:11.830Z"
+      },
+      "verify": {
+        "id": "wiki-dark-mode",
+        "before": "only 0 of 49 points on the screen are dark",
+        "errors": [],
+        "first": "12 of 80 are hard to read, e.g. a “Mount northstad” 2.0, a “East bayville” 2.0, a “North mountton” 2.0",
+        "reload": "12 of 80 are hard to read, e.g. a “Mount northstad” 2.0, a “East bayville” 2.0, a “North mountton” 2.0",
+        "pass": false,
+        "why": "12 of 80 are hard to read, e.g. a “Mount northstad” 2.0, a “East bayville” 2.0, a “North mountton” 2.0"
+      },
+      "pass": false
+    },
+    {
+      "id": "wiki-reading-mode",
+      "request": "reading mode: hide the contents box and the footer, and show the article in a narrower column with bigger text",
+      "url": "http://127.0.0.1:38529/demo/sites/wiki/",
+      "ms": 7107,
+      "title": "Reading mode with narrow column",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "wiki-reading-mode",
+        "title": "Reading mode",
+        "prompt": "reading mode: hide the contents box and the footer, and show the article in a narrower column with bigger text",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8795"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "div.page > nav[aria-label=\"Contents\"],\ndiv.foot { display: none !important; }\n\ndiv.page { grid-template-columns: 1fr !important; }\n\ndiv.art {\n  width: min(680px, 100%) !important;\n  max-width: 680px !important;\n  margin: 0 auto !important;\n  justify-self: center !important;\n  font-size: 19px !important;\n  line-height: 1.75 !important;\n}\n\ndiv.art h1 { font-size: 2.4em !important; }\ndiv.art p, div.art li { font-size: 1.05em !important; }\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:59:21.261Z",
+        "updated": "2026-10-24T15:59:21.261Z"
+      },
+      "verify": {
+        "id": "wiki-reading-mode",
+        "before": "the contents box still shows",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "mail-hide-upgrade",
+      "request": "hide the Postbox Pro upgrade banner",
+      "url": "http://127.0.0.1:38529/demo/sites/mail/",
+      "ms": 7050,
+      "title": "Hide Postbox Pro upgrade banner",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "mail-hide-upgrade",
+        "title": "Hide the upgrade ad",
+        "prompt": "hide the Postbox Pro upgrade banner",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8791"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".pz7",
+          "label": "“Postbox Pro” banner"
+        },
+        "css": "body > div[role=\"note\"] { display: none !important; }\nbody:has(> div[role=\"note\"]) { grid-template-rows: 56px 1fr !important; }\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:59:26.856Z",
+        "updated": "2026-10-24T15:59:26.856Z"
+      },
+      "verify": {
+        "id": "mail-hide-upgrade",
+        "before": "banner still visible",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "wiki-collapse-comments",
+      "request": "collapse the comments, with a button to show them",
+      "url": "http://127.0.0.1:38529/demo/sites/wiki/",
+      "ms": 8662,
+      "title": "Collapsible comments with toggle button",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "checker threw: page.evaluate: SyntaxError: Identifier 'b' has already been declared",
+      "mod": {
+        "morse": 1,
+        "id": "wiki-collapse-comments",
+        "title": "Collapse the comments",
+        "prompt": "collapse the comments, with a button to show them",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8795"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".cm h2",
+          "label": "“Comments (400)” heading"
+        },
+        "css": "section[aria-label=\"Comments\"].morse-collapsed > .c { display: none; }\n.morse-cm-toggle { font: inherit; font-size: 14px; color: inherit; background: none; border: 1px solid rgb(162, 169, 177); border-radius: 2px; padding: 4px 10px; margin: 0 0 8px; cursor: pointer; }\n",
+        "js": "morse.watch('section[aria-label=\"Comments\"]', sec => {\n  const h = sec.querySelector(':scope > h2');\n  if (!h) return;\n  const btn = morse.el(\"button\", {\n    class: \"morse-cm-toggle\",\n    text: \"Hide comments\",\n    on: { click: () => {\n      const hidden = sec.classList.toggle(\"morse-collapsed\");\n      btn.textContent = hidden ? \"Show comments\" : \"Hide comments\";\n    }}\n  });\n  h.after(btn);\n});\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:59:30.607Z",
+        "updated": "2026-10-24T15:59:30.607Z"
+      },
+      "verify": {
+        "id": "wiki-collapse-comments",
+        "before": "checker threw: page.evaluate: SyntaxError: Identifier 'b' has already been declared",
+        "errors": [],
+        "first": "checker threw: page.evaluate: SyntaxError: Identifier 'b' has already been declared",
+        "reload": "checker threw: page.evaluate: SyntaxError: Identifier 'b' has already been declared",
+        "pass": false,
+        "why": "checker threw: page.evaluate: SyntaxError: Identifier 'b' has already been declared"
+      },
+      "pass": false
+    },
+    {
+      "id": "mail-bigger-text",
+      "request": "make the email text bigger and easier to read",
+      "url": "http://127.0.0.1:38529/demo/sites/mail/",
+      "ms": 2297,
+      "title": "Larger reading pane text",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "mail-bigger-text",
+        "title": "Bigger email text",
+        "prompt": "make the email text bigger and easier to read",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8791"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".rd .bd",
+          "label": "email text"
+        },
+        "css": "section[aria-label=\"Reading\\ pane\"] > div.bd {\n  font-size: 16px !important;\n  line-height: 1.6 !important;\n  max-width: 640px;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:59:42.040Z",
+        "updated": "2026-10-24T15:59:42.040Z"
+      },
+      "verify": {
+        "id": "mail-bigger-text",
+        "before": "font 12px",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "mail-jk-keys",
+      "request": "let me use j and k to move up and down the email list",
+      "url": "http://127.0.0.1:38529/demo/sites/mail/",
+      "ms": 8659,
+      "title": "Keyboard j/k email list navigation",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "mail-jk-keys",
+        "title": "J and K to move through email",
+        "prompt": "let me use j and k to move up and down the email list",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8791"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "",
+        "js": "morse.on(document, \"keydown\", e => {\n  if (e.metaKey || e.ctrlKey || e.altKey) return;\n  if (e.key !== \"j\" && e.key !== \"k\") return;\n  if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable=\"true\"]')) return;\n  const rows = morse.$$('[role=\"option\"][data-i]');\n  if (!rows.length) return;\n  const cur = rows.findIndex(r => r.getAttribute(\"aria-selected\") === \"true\");\n  const next = e.key === \"j\"\n    ? Math.min(cur + 1, rows.length - 1)\n    : Math.max(cur < 0 ? 0 : cur - 1, 0);\n  const row = rows[next];\n  e.preventDefault();\n  row.scrollIntoView({ block: \"nearest\" });\n  row.click();\n});\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:59:43.759Z",
+        "updated": "2026-10-24T15:59:43.759Z"
+      },
+      "verify": {
+        "id": "mail-jk-keys",
+        "before": "j j did not move to the third email",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "notes-focus-timer",
+      "request": "add a 25 minute focus timer here that I can start and pause",
+      "url": "http://127.0.0.1:38529/demo/sites/notes/",
+      "ms": 8264,
+      "title": "Focus timer with start and pause",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "notes-focus-timer",
+        "title": "Focus timer",
+        "prompt": "add a 25 minute focus timer here that I can start and pause",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8792"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".crumbs .sp",
+          "label": "Share, star and more buttons"
+        },
+        "css": ".crumbs .sp .focus-timer {\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n  margin-right: 4px;\n  font: inherit;\n  color: currentColor;\n  font-variant-numeric: tabular-nums;\n}\n.crumbs .sp .focus-timer button {\n  font: inherit;\n  color: inherit;\n}\n",
+        "js": "morse.watch(\"body > div.pg > div.crumbs > span.sp\", el => {\n  if (el.querySelector(\".focus-timer\")) return;\n  let remaining = 25 * 60;\n  let running = false;\n  let handle = null;\n\n  const label = morse.el(\"span\", { text: \"25:00\" });\n  const toggle = morse.el(\"button\", { text: \"▶\", title: \"Start focus timer\" });\n\n  const fmt = s => String(Math.floor(s / 60)).padStart(2, \"0\") + \":\" + String(s % 60).padStart(2, \"0\");\n  const render = () => { label.textContent = fmt(remaining); };\n\n  const stop = () => {\n    running = false;\n    clearInterval(handle);\n    handle = null;\n    toggle.textContent = \"▶\";\n    toggle.title = \"Start focus timer\";\n  };\n\n  const start = () => {\n    if (remaining <= 0) remaining = 25 * 60;\n    running = true;\n    toggle.textContent = \"❚❚\";\n    toggle.title = \"Pause focus timer\";\n    handle = setInterval(() => {\n      remaining -= 1;\n      render();\n      if (remaining <= 0) {\n        stop();\n        morse.toast(\"Focus session complete\");\n      }\n    }, 1000);\n  };\n\n  toggle.addEventListener(\"click\", () => (running ? stop() : start()));\n\n  const wrap = morse.el(\"span\", { class: \"focus-timer\" }, label, toggle);\n  el.prepend(wrap);\n});\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:59:53.465Z",
+        "updated": "2026-10-24T15:59:53.465Z"
+      },
+      "verify": {
+        "id": "notes-focus-timer",
+        "before": "no new button",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "notes-easier-to-read",
+      "request": "the note text is too light and small, make it darker and bigger",
+      "url": "http://127.0.0.1:38529/demo/sites/notes/",
+      "ms": 4851,
+      "title": "Darker, larger note text",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "notes-easier-to-read",
+        "title": "Darker, bigger note text",
+        "prompt": "the note text is too light and small, make it darker and bigger",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8792"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".ed_9f p",
+          "label": "note text"
+        },
+        "css": ".ed_9f p { color: rgb(55, 53, 47) !important; font-size: 16px !important; }\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:00:03.401Z",
+        "updated": "2026-10-24T16:00:03.401Z"
+      },
+      "verify": {
+        "id": "notes-easier-to-read",
+        "before": "contrast 2.8",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "notes-focus-mode",
+      "request": "focus mode: hide everything except the page I'm writing",
+      "url": "http://127.0.0.1:38529/demo/sites/notes/",
+      "ms": 4923,
+      "title": "Focus mode, hide chrome",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "notes-focus-mode",
+        "title": "Focus mode",
+        "prompt": "focus mode: hide everything except the page I'm writing",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8792"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "aside[aria-label=\"Notes\"],\ndiv.crumbs,\ndiv[aria-label=\"Formatting\"],\ndiv.stat {\n  display: none !important;\n}\ndiv.pg {\n  padding-top: 0 !important;\n}\ndiv.doc {\n  width: 100% !important;\n  height: 100% !important;\n}\ndiv.in {\n  margin: 0 auto !important;\n  max-width: 620px !important;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:00:07.277Z",
+        "updated": "2026-10-24T16:00:07.277Z"
+      },
+      "verify": {
+        "id": "notes-focus-mode",
+        "before": "sidebar still visible",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "notes-word-count",
+      "request": "add a live word count at the bottom",
+      "url": "http://127.0.0.1:38529/demo/sites/notes/",
+      "ms": 10430,
+      "title": "Live word count under editor",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "notes-word-count",
+        "title": "Live word count",
+        "prompt": "add a live word count at the bottom",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8792"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".ed_9f",
+          "label": "note text"
+        },
+        "css": "",
+        "js": "morse.watch('div.doc > div.in > div[role=\"textbox\"]', ed => {\n  const count = () => {\n    const n = ed.textContent.trim().split(/\\s+/).filter(Boolean).length;\n    w.textContent = n + (n === 1 ? \" word\" : \" words\");\n  };\n  const w = morse.el(\"div\", { class: \"wc\", style: \"margin-top:24px;font-size:12px;color:rgb(155,154,151);\" });\n  ed.after(w);\n  count();\n  morse.on(ed, \"input\", count);\n  morse.every(500, count);\n});\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:00:05.573Z",
+        "updated": "2026-10-24T16:00:05.573Z"
+      },
+      "verify": {
+        "id": "notes-word-count",
+        "before": "no count shown: ",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "dash-sticky-header",
+      "request": "keep the column names visible when I scroll the table",
+      "url": "http://127.0.0.1:38529/demo/sites/dash/",
+      "ms": 6872,
+      "title": "Sticky recent orders header",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "dash-sticky-header",
+        "title": "Table header stays in view",
+        "prompt": "keep the column names visible when I scroll the table",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8793"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": "thead",
+          "label": "table header"
+        },
+        "css": ".tbl .sc thead th {\n  position: sticky;\n  top: 0;\n  z-index: 1;\n  background: #fff;\n  box-shadow: inset 0 -1px 0 rgba(23, 43, 77, 0.12);\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:00:24.611Z",
+        "updated": "2026-10-24T16:00:24.611Z"
+      },
+      "verify": {
+        "id": "dash-sticky-header",
+        "before": "header -150px from the top of the table",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "dash-download-csv",
+      "request": "add a button that downloads this table as a CSV file",
+      "url": "http://127.0.0.1:38529/demo/sites/dash/",
+      "ms": 4022,
+      "title": "Download recent orders as CSV",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "dash-download-csv",
+        "title": "Download the table as CSV",
+        "prompt": "add a button that downloads this table as a CSV file",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8793"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".tbl h3",
+          "label": "“Recent orders” heading"
+        },
+        "css": ".tbl .csv-btn { margin-left: 10px; font: inherit; font-size: 12px; font-weight: 600; color: rgb(23, 43, 77); background: #fff; border: 1px solid rgb(229, 231, 235); border-radius: 6px; padding: 3px 10px; cursor: pointer; }\n",
+        "js": "morse.watch(\".tbl > h3\", h => {\n  if (h.querySelector(\".csv-btn\")) return;\n  const btn = morse.el(\"button\", {\n    class: \"csv-btn\",\n    text: \"Download CSV\",\n    on: {\n      click: () => {\n        const table = h.parentElement.querySelector(\".sc table\");\n        if (!table) return morse.toast(\"No table found\");\n        const rows = [...table.querySelectorAll(\"tr\")].map(tr =>\n          [...tr.children].map(c => {\n            const t = c.textContent.trim().replace(/\"/g, '\"\"');\n            return /[\",\\n]/.test(t) ? `\"${t}\"` : t;\n          }).join(\",\")\n        );\n        const blob = new Blob([rows.join(\"\\n\")], { type: \"text/csv\" });\n        const a = morse.el(\"a\", { href: URL.createObjectURL(blob), download: \"recent-orders.csv\" });\n        document.body.appendChild(a);\n        a.click();\n        a.remove();\n        morse.toast(\"CSV downloaded\");\n      }\n    }\n  });\n  h.appendChild(btn);\n});\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:00:20.908Z",
+        "updated": "2026-10-24T16:00:20.908Z"
+      },
+      "verify": {
+        "id": "dash-download-csv",
+        "before": "no new button",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "dash-failed-red",
+      "request": "highlight failed orders in red",
+      "url": "http://127.0.0.1:38529/demo/sites/dash/",
+      "ms": 7935,
+      "title": "Highlight failed orders in red",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "dash-failed-red",
+        "title": "Failed orders in red",
+        "prompt": "highlight failed orders in red",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8793"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": "tbody tr:nth-child(3) .st",
+          "label": "“Failed” status"
+        },
+        "css": "tbody tr:has(span.st[data-s=\"failed\"]) > td {\n  background: rgb(254, 242, 242) !important;\n}\ntbody tr:has(span.st[data-s=\"failed\"]) > td:first-child {\n  box-shadow: inset 3px 0 0 rgb(185, 28, 28);\n}\ntbody tr:has(span.st[data-s=\"failed\"]) span.st {\n  background: rgb(254, 226, 226);\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:00:30.168Z",
+        "updated": "2026-10-24T16:00:30.168Z"
+      },
+      "verify": {
+        "id": "dash-failed-red",
+        "before": "failed rows are not red",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "dash-dollars",
+      "request": "show the amounts as dollars with commas",
+      "url": "http://127.0.0.1:38529/demo/sites/dash/",
+      "ms": 9748,
+      "title": "Format order amounts as dollars",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "dash-dollars",
+        "title": "Amounts as dollars",
+        "prompt": "show the amounts as dollars with commas",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8793"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": "tbody tr:first-child td.am",
+          "label": "amount"
+        },
+        "css": "",
+        "js": "morse.watch(\"div.tbl td.am\", el => {\n  const t = el.textContent.trim();\n  if (!/^-?\\d+(\\.\\d+)?$/.test(t)) return;\n  el.textContent = Number(t).toLocaleString(\"en-US\", { style: \"currency\", currency: \"USD\" });\n}, { live: true });\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:00:37.453Z",
+        "updated": "2026-10-24T16:00:37.453Z"
+      },
+      "verify": {
+        "id": "dash-dollars",
+        "before": "not formatted: 1240.5 | 89.99 | 412",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "shop-hide-sold-out",
+      "request": "hide the products that are out of stock",
+      "url": "http://127.0.0.1:38529/demo/sites/shop/",
+      "ms": 11523,
+      "title": "Hide out-of-stock products",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "shop-hide-sold-out",
+        "title": "Hide sold-out products",
+        "prompt": "hide the products that are out of stock",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8794"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "",
+        "js": "morse.watch(\"#__next > div:nth-of-type(2) > main > div:nth-of-type(2) > div\", el => {\n  const oos = [...el.querySelectorAll(\"button\")].some(b => b.disabled && b.textContent.trim() === \"Notify me\");\n  el.style.display = oos ? \"none\" : \"\";\n}, { live: true });\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:00:58.444Z",
+        "updated": "2026-10-24T16:00:58.444Z"
+      },
+      "verify": {
+        "id": "shop-hide-sold-out",
+        "before": "3 out-of-stock products still visible after the next deploy",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "tasks-hide-done",
+      "request": "hide the tasks I've finished",
+      "url": "http://127.0.0.1:38529/demo/sites/tasks/",
+      "ms": 8428,
+      "title": "Hide finished tasks",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "tasks-hide-done",
+        "title": "Hide finished tasks",
+        "prompt": "hide the tasks I've finished",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8796"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "article.card:has(input[type=\"checkbox\"]:checked) {\n  display: none !important;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:00:54.306Z",
+        "updated": "2026-10-24T16:00:54.306Z"
+      },
+      "verify": {
+        "id": "tasks-hide-done",
+        "before": "a finished task still shows",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "shop-sort-price",
+      "request": "add a button that sorts the products by price, lowest first",
+      "url": "http://127.0.0.1:38529/demo/sites/shop/",
+      "ms": 13056,
+      "title": "Sort products by price",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "shop-sort-price",
+        "title": "Sort by price",
+        "prompt": "add a button that sorts the products by price, lowest first",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8794"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": "#__next main > div:nth-of-type(1)",
+          "label": "results bar"
+        },
+        "css": "",
+        "js": "morse.watch(\"#__next > div:nth-of-type(2) > main > div:nth-of-type(1)\", bar => {\n  if (bar.querySelector(\"[data-sort-price]\")) return;\n  let original = null;\n  let sorted = false;\n  const price = c => {\n    const m = c.textContent.match(/\\$\\s*([\\d,]+(?:\\.\\d+)?)/);\n    return m ? parseFloat(m[1].replace(/,/g, \"\")) : 1e9;\n  };\n  const btn = morse.el(\"button\", {\n    \"data-sort-price\": \"\",\n    type: \"button\",\n    text: \"Sort: price ↑\",\n    style: \"margin-left:auto;font:inherit;font-size:13px;color:inherit;background:transparent;border:1px solid currentColor;border-radius:6px;padding:4px 10px;cursor:pointer;opacity:.8\",\n    on: {\n      click: () => {\n        const grid = morse.$$(\"#__next > div:nth-of-type(2) > main > div:nth-of-type(2)\")[0];\n        if (!grid) return;\n        const cards = [...grid.children];\n        if (!original) original = cards.slice();\n        if (!sorted) {\n          cards.slice().sort((a, b) => price(a) - price(b)).forEach(c => grid.appendChild(c));\n          btn.textContent = \"Sort: default\";\n        } else {\n          original.forEach(c => grid.appendChild(c));\n          btn.textContent = \"Sort: price ↑\";\n        }\n        sorted = !sorted;\n      }\n    }\n  });\n  bar.appendChild(btn);\n});\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:01:07.043Z",
+        "updated": "2026-10-24T16:01:07.043Z"
+      },
+      "verify": {
+        "id": "shop-sort-price",
+        "before": "no new control",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "tasks-cross-out-done",
+      "request": "cross out the tasks I've finished",
+      "url": "http://127.0.0.1:38529/demo/sites/tasks/",
+      "ms": 7202,
+      "title": "Strike through finished tasks",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "tasks-cross-out-done",
+        "title": "Cross out finished tasks",
+        "prompt": "cross out the tasks I've finished",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8796"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".col:first-child .card:nth-child(2) .t",
+          "label": "finished task"
+        },
+        "css": "article.card:has(input[type=\"checkbox\"]:checked) span.t {\n  text-decoration: line-through;\n  text-decoration-thickness: 1px;\n  opacity: 0.55;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:00:55.506Z",
+        "updated": "2026-10-24T16:00:55.506Z"
+      },
+      "verify": {
+        "id": "tasks-cross-out-done",
+        "before": "after a re-render: finished tasks not crossed out",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "logs-errors-red",
+      "request": "highlight the error lines in red",
+      "url": "http://127.0.0.1:38529/demo/sites/logs/",
+      "ms": 2200,
+      "title": "Highlight error rows in red",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "logs-errors-red",
+        "title": "Errors in red",
+        "prompt": "highlight the error lines in red",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8797"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".vp .row:nth-child(5)",
+          "label": "log line"
+        },
+        "css": "div[aria-label=\"Log\\ lines\"] > div.sz > div.row.is-error {\n  background: rgba(248, 81, 73, 0.15) !important;\n  box-shadow: inset 3px 0 0 rgb(248, 81, 73);\n}\n",
+        "js": "morse.watch('div[aria-label=\"Log\\\\ lines\"] > div.sz > div.row', (el) => {\n  const lv = el.querySelector('span.lv');\n  el.classList.toggle('is-error', !!lv && lv.textContent.trim() === 'ERROR');\n}, { live: true });\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:01:15.833Z",
+        "updated": "2026-10-24T16:01:15.833Z"
+      },
+      "verify": {
+        "id": "logs-errors-red",
+        "before": "at scroll 0: 3 of 3 error lines not red",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    }
+  ]
+}

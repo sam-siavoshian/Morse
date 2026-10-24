@@ -18,5 +18,6 @@
   "enabled": true,
   "model": null,
   "created": "2026-10-13T11:30:00.000Z",
-  "updated": "2026-10-13T11:30:00.000Z"
+  "updated": "2026-10-13T11:30:00.000Z",
+  "author": "Morse team"
 }
