@@ -32,18 +32,25 @@ export function createMod({ id, title, prompt, css, js, url, app, target, model,
   };
 }
 
+// What a mod is filed under: the host for web pages, and the file itself
+// (file://<dir>/<name>, no query or hash) for local files, so a mod made on
+// one local page doesn't follow you to every other one.
 export function hostOf(url) {
   try {
     const u = new URL(url);
-    return u.protocol === "file:" ? "file" : u.host;
+    return u.protocol === "file:" ? `file://${u.host}${u.pathname}` : u.host;
   } catch { return "*"; }
 }
 
 export function modMatches(mod, { url, app }) {
-  if (mod.match?.app && app && mod.match.app !== app) return false;
-  if (mod.match?.app && !app) return false;
+  // Desktop apps often serve their UI from a random localhost port, so a mod
+  // made for an app follows the app, not the host it happened to load from.
+  if (mod.match?.app) return !!app && mod.match.app === app;
   const h = hostOf(url);
-  return (mod.match?.hosts || ["*"]).some(p => p === "*" || p === h || (p.startsWith("*.") && h.endsWith(p.slice(1))));
+  // "file" is how mods made before per-file matching were filed: keep them
+  // working on local files.
+  const legacyFile = h.startsWith("file://") ? "file" : null;
+  return (mod.match?.hosts || ["*"]).some(p => p === "*" || p === h || p === legacyFile || (!legacyFile && p.startsWith("*.") && h.endsWith(p.slice(1))));
 }
 
 export function validateMod(m) {
@@ -60,7 +67,7 @@ const oneLine = s => String(s).replace(/[\r\n\u2028\u2029]+/g, " ");
 // Tampermonkey / Violentmonkey compatible export: the helper kit is inlined so
 // the script runs without Morse installed.
 export function toUserscript(mod) {
-  const matches = (mod.match?.hosts || ["*"]).map(h => h === "file" ? "file:///*" : h === "*" ? "*://*/*" : `*://${h}/*`);
+  const matches = (mod.match?.hosts || ["*"]).map(h => h === "file" ? "file:///*" : h.startsWith("file://") ? h : h === "*" ? "*://*/*" : `*://${h}/*`);
   const header = [
     "// ==UserScript==",
     `// @name         ${oneLine(mod.title)}`,
