@@ -38,7 +38,7 @@ const Health = (() => {
     if (stats?.error) return broken(id, modProblem(stats.error), stats.error);
     if (w.length && w.every(x => !x.total)) {
       const sel = w[0].selector;
-      return broken(id, "It looks for a part of the page that isn't there right now.",
+      return broken(id, t("mod.problem.missing"),
         `morse.watch(${JSON.stringify(sel)}) matched nothing on the page for ${WAIT / 1000} seconds` +
         (w.length > 1 ? `, and neither did ${w.slice(1).map(x => JSON.stringify(x.selector)).join(", ")}` : "") + ".");
     }
@@ -60,12 +60,12 @@ const Health = (() => {
 // core/onboarding.js covers model and connection errors). The exact error goes to the model.
 function modProblem(e) {
   const s = String(e || "").split("\n")[0].replace(/^(Uncaught )?([A-Z]\w*Error): /, "");
-  if (/ is not defined/.test(s)) return "It uses something this page doesn't have.";
-  if (/Cannot read propert(y|ies) of (null|undefined)|Cannot set propert(y|ies) of (null|undefined)|is null$|is undefined$/.test(s)) return "It expected a part of the page that isn't there.";
-  if (/ is not a function/.test(s)) return "It uses something that doesn't work on this page.";
-  if (/is not a valid selector/.test(s)) return "It has a mistake in how it finds things on the page.";
+  if (/ is not defined/.test(s)) return t("mod.problem.undefined");
+  if (/Cannot read propert(y|ies) of (null|undefined)|Cannot set propert(y|ies) of (null|undefined)|is null$|is undefined$/.test(s)) return t("mod.problem.null");
+  if (/ is not a function/.test(s)) return t("mod.problem.notFunction");
+  if (/is not a valid selector/.test(s)) return t("mod.problem.badFind");
   if (/user scripts|Content Security Policy|unsafe-eval|blocks injected/i.test(s)) return explainError(s)?.text || s;
-  return "It stopped with an error.";
+  return t("mod.problem.error");
 }
 
 // ---- the panel
@@ -80,27 +80,49 @@ async function openPanel() {
     PanelUI.back = a && a !== document.body && a !== document.documentElement && a !== hostEl ? a : null;
   }
   panel.hidden = false;
-  await syncMods().catch(() => {});
+  // Focus lands as the panel shows, on the mods known now, so the first key
+  // pressed is the panel's (not the page's); the fresh list then replaces the
+  // rows in place and renderPanel keeps focus on the same one.
+  const focusCurrent = () => focusRow(PanelUI.focus ? rows().findIndex(r => r.dataset.id === PanelUI.focus) : 0);
   renderPanel();
-  focusRow(PanelUI.focus ? rows().findIndex(r => r.dataset.id === PanelUI.focus) : 0);
+  focusCurrent();
+  await syncMods().catch(() => {});
+  if (panel.hidden) return;
+  renderPanel();
+  if (!panel.contains(root.activeElement)) focusCurrent();
   Health.recheck().catch(() => {});
 }
 panel.setAttribute("role", "dialog");
-panel.setAttribute("aria-label", "Mods on this page");
+tBind(panel, "aria-label", "panel.label");
+langSubs.add(() => { if (!panel.hidden) renderPanel(); });
 // Closing the panel gives focus back to the page, unless the bar took it.
 new MutationObserver(() => {
   if (!panel.hidden) return;
   const back = PanelUI.back;
   PanelUI.back = null;
-  if (!S.open && back?.isConnected) try { back.focus({ preventScroll: true }); } catch {}
+  if (S.open || !modal.hidden) return;
+  if (back?.isConnected) try { back.focus({ preventScroll: true }); return; } catch {}
+  if (panel.contains(root.activeElement)) focusPageTop();
 }).observe(panel, { attributes: true, attributeFilter: ["hidden"] });
 
 const rows = () => [...panel.querySelectorAll(".list article")];
+// One Tab stop for the list: the current row and its own buttons. ↑/↓ move
+// between rows, so "Install a mod…" is a few Tabs away however many mods there are.
+function roveRows(cur) {
+  for (const r of rows()) {
+    r.tabIndex = r === cur ? 0 : -1;
+    for (const b of r.querySelectorAll("button, a[href], summary")) if (!b.matches(".sw input")) b.tabIndex = r === cur ? 0 : -1;
+  }
+}
+panel.addEventListener("focusin", e => {
+  const art = e.target.closest?.(".list article");
+  if (art && art.tabIndex !== 0) { PanelUI.focus = art.dataset.id; roveRows(art); }
+});
 function focusRow(i) {
   const list = rows();
   if (!list.length) return panel.querySelector(".search, [data-a=import]")?.focus({ preventScroll: true });
   const el = list[Math.max(0, Math.min(list.length - 1, i < 0 ? 0 : i))];
-  list.forEach(r => (r.tabIndex = r === el ? 0 : -1));
+  roveRows(el);
   PanelUI.focus = el.dataset.id;
   el.focus({ preventScroll: true });
   el.scrollIntoView({ block: "nearest" });
@@ -112,17 +134,17 @@ function matches(m, q) {
 }
 
 function renderPanel() {
-  const where = S.appName || location.host || "this page";
+  const where = S.appName || location.host || t("panel.thisPage");
   const active = panel.contains(root.activeElement) ? root.activeElement : null;
   const keep = active && { search: active.classList.contains("search"), id: active.closest("article")?.dataset.id, a: active.dataset.a, row: active.tagName === "ARTICLE",
     sel: active.classList.contains("search") ? [active.selectionStart, active.selectionEnd] : null };
   const searchable = S.mods.length > SEARCH_AFTER;
   if (!searchable) PanelUI.q = "";
   panel.innerHTML = `
-    <header><span class="mark">${radar(16)}</span><div><b>Mods</b><small>${esc(where)}</small></div><button data-a="close" title="Close" aria-label="Close">×</button></header>
-    ${searchable ? `<div class="psearch"><input class="search" type="search" placeholder="Search ${S.mods.length} mods" aria-label="Search mods" spellcheck="false" autocomplete="off" value="${esc(PanelUI.q)}"></div>` : ""}
-    <div class="list" role="list" aria-label="Mods"></div>
-    <footer><button data-a="import">Install a mod…</button><span>${esc(S.label)}</span></footer>`;
+    <header><span class="mark">${radar(16)}</span><div><b>${t("panel.title")}</b><small>${esc(where)}</small></div><button data-a="close" title="${esc(t("btn.close"))}" aria-label="${esc(t("btn.close"))}">×</button></header>
+    ${searchable ? `<div class="psearch"><input class="search" type="search" placeholder="${esc(t("panel.search", { n: S.mods.length }))}" aria-label="${esc(t("panel.search.label"))}" spellcheck="false" autocomplete="off" value="${esc(PanelUI.q)}"></div>` : ""}
+    <div class="list" role="group" aria-label="${esc(t("panel.title"))}"></div><p class="sr" id="m-row-keys">${t("panel.rowKeys")}</p>
+    <footer><button data-a="import">${t("panel.install")}</button><span>${esc(S.label)}</span></footer>`;
   renderList();
   controlPanel(); // user control: pause, backup (63-control.js)
   packPanel(); // packs hook: Make a pack… (69-packs.js)
@@ -144,13 +166,13 @@ function renderList() {
   const shown = PanelUI.q ? mods.filter(m => matches(m, PanelUI.q)) : mods;
   list.innerHTML = YourStyle.rowHtml() + (!mods.length // your-style hook (72-style.js)
     ? emptyModsHtml() /* onboarding hook: 59-onboarding.js */
-    : shown.length ? packListHtml(shown) /* packs hook: pack mods under the pack's name (69-packs.js) */ : `<p class="empty">No mods match “${esc(PanelUI.q)}”.</p>`);
+    : shown.length ? packListHtml(shown) /* packs hook: pack mods under the pack's name (69-packs.js) */ : `<p class="empty">${t("panel.noMatch", { q: esc(PanelUI.q) })}</p>`);
   list.insertAdjacentHTML("beforeend", gallerySectionHtml()); // gallery hook: Mods for this site (68-gallery.js)
   const r = rows();
   const i = Math.max(0, r.findIndex(a => a.dataset.id === PanelUI.focus));
-  r.forEach((a, j) => (a.tabIndex = j === i ? 0 : -1));
   controlRows(); // user control: where each mod came from, Show code (63-control.js)
   packRows(); // packs hook: ticks while making a pack (69-packs.js)
+  roveRows(r[i]);
 }
 
 function rowHtml(m) {
@@ -160,29 +182,29 @@ function rowHtml(m) {
   const open = PanelUI.hist === m.id && versions.length;
   const changed = m.updated && m.created && m.updated !== m.created;
   const when = relativeTime(changed ? m.updated : m.created);
-  const label = `${m.title}${m.enabled ? "" : ", off"}${broken ? ", not working" : ""}`;
+  const label = `${m.title}${m.enabled ? "" : t("panel.row.off")}${broken ? t("panel.row.broken") : ""}`;
   return `
-      <article data-id="${esc(m.id)}" class="${m.enabled ? "" : "off"}${broken ? " broken" : ""}" role="listitem" tabindex="-1" aria-label="${esc(label)}">
-        <label class="sw" title="${m.enabled ? "Turn off" : "Turn on"}"><input type="checkbox" data-a="toggle" tabindex="-1" aria-label="${esc(m.title)}" ${m.enabled ? "checked" : ""}><span></span></label>
-        <div class="meta"><b>${esc(m.title)}</b><small>“${esc(m.prompt)}”</small>${m.refined ? `<small class="latest">Latest change: “${esc(m.refined)}”</small>` : ""}
-          <div class="tags">${m.css.trim() ? "<span>style</span>" : ""}${m.js.trim() ? "<span>script</span>" : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : "<span>whole page</span>"}${when ? `<em class="when">${changed ? "changed" : "added"} ${esc(when)}</em>` : ""}</div>
+      <article data-id="${esc(m.id)}" class="${m.enabled ? "" : "off"}${broken ? " broken" : ""}" tabindex="-1" aria-label="${esc(label)}" aria-describedby="m-row-keys">
+        <label class="sw" title="${m.enabled ? t("btn.turnOff") : t("btn.turnOn")}"><input type="checkbox" data-a="toggle" tabindex="-1" aria-label="${esc(m.title)}" ${m.enabled ? "checked" : ""}><span></span></label>
+        <div class="meta"><b>${esc(m.title)}</b><small>“${esc(m.prompt)}”</small>${m.refined ? `<small class="latest">${t("panel.latest", { text: esc(m.refined) })}</small>` : ""}
+          <div class="tags">${m.css.trim() ? `<span>${t("panel.tag.style")}</span>` : ""}${m.js.trim() ? `<span>${t("panel.tag.script")}</span>` : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : `<span>${t("panel.tag.page")}</span>`}${when ? `<em class="when">${esc(changed ? t("panel.changed", { when }) : t("panel.added", { when }))}</em>` : ""}</div>
         </div>
-        ${broken ? `<div class="health" role="status"><p><b>${esc(h.lead || "Not working." /* self-heal hook: 71-heal.js */)}</b> ${esc(h.reason)}</p><button class="primary" data-a="fix">Fix it</button></div>` : ""}
+        ${broken ? `<div class="health" role="status"><p><b>${esc(h.lead || t("panel.notWorking") /* self-heal hook: 71-heal.js */)}</b> ${esc(h.reason)}</p><button class="primary" data-a="fix">${t("btn.fixIt")}</button></div>` : ""}
         ${guardRowHtml(m) /* guard hook: Paused because it was slowing this page down (64-guard.js) */}
         ${galleryRowHtml(m) /* gallery hook: Update available (68-gallery.js) */}
         ${healRowHtml(m) /* self-heal hook: Share the fix (71-heal.js) */}
-        <div class="btns"><button data-a="refine">Change</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}">History <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">Copy link</button><button data-a="share">Share</button><button data-a="code">Edit code</button><button data-a="del">Delete</button></div>
+        <div class="btns"><button data-a="refine">${t("btn.change")}</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}"${open ? ` aria-controls="m-versions-${esc(m.id)}"` : ""}>${t("panel.history")} <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">${t("btn.copyLink")}</button><button data-a="share">${t("btn.share")}</button><button data-a="code">${t("btn.editCode")}</button><button data-a="del">${t("btn.delete")}</button></div>
         ${open ? versionsHtml(m, versions) : ""}
       </article>`;
 }
 
 function versionsHtml(m, vs) {
   const row = (n, prompt, time, i) => `<span class="vn">${n}</span><span class="vp">“${esc(prompt)}”</span><span class="vt">${esc(time)}</span>`;
-  const items = [`<li class="cur" aria-current="true">${row(vs.length + 1, m.refined || m.prompt, "showing now")}</li>`];
+  const items = [`<li class="cur" aria-current="true">${row(vs.length + 1, m.refined || m.prompt, t("panel.showingNow"))}</li>`];
   for (let i = vs.length - 1; i >= 0; i--) {
-    items.push(`<li><button data-a="restore" data-v="${i}" title="Bring back version ${i + 1}">${row(i + 1, vs[i].prompt, relativeTime(vs[i].at) || "earlier")}</button></li>`);
+    items.push(`<li><button data-a="restore" data-v="${i}" title="${esc(t("panel.bringBack", { n: i + 1 }))}">${row(i + 1, vs[i].prompt, relativeTime(vs[i].at) || t("panel.earlier"))}</button></li>`);
   }
-  return `<ol class="versions" aria-label="Versions of ${esc(m.title)}">${items.join("")}</ol><p class="vhint">Click a version to bring it back. The one showing now stays in this list.</p>`;
+  return `<ol class="versions" id="m-versions-${esc(m.id)}" aria-label="${esc(t("panel.versionsOf", { title: m.title }))}">${items.join("")}</ol><p class="vhint">${t("panel.vhint")}</p>`;
 }
 
 // ---- actions
@@ -204,7 +226,7 @@ async function restoreTo(m, i) {
     await applyMod(saved);
   }
   renderPanel();
-  toast(`Back to version ${i + 1} (“${v.prompt}”)`);
+  toast(t("toast.backToVersion", { n: i + 1, prompt: v.prompt }));
 }
 async function copyText(text) {
   try { await navigator.clipboard.writeText(text); return; } catch {}
@@ -221,10 +243,10 @@ async function copyLink(m, btn) {
   try {
     const r = await call("share", { mod: m, kind: "link" });
     await copyText(r.link);
-    btn.textContent = "Copied";
-    setTimeout(() => { if (btn.isConnected) btn.textContent = "Copy link"; }, 1600);
-    toast(`Link copied. Anyone with Morse can install “${m.title}”.`);
-  } catch (e) { console.warn("[morse] copy link", e); toast("Couldn't copy the link. Try Share instead."); }
+    btn.textContent = t("btn.copied");
+    setTimeout(() => { if (btn.isConnected) btn.textContent = t("btn.copyLink"); }, 1600);
+    toast(t("toast.linkCopied", { title: m.title }));
+  } catch (e) { console.warn("[morse] copy link", e); toast(t("toast.linkFailed")); }
 }
 
 panel.addEventListener("click", async e => {
@@ -243,7 +265,7 @@ panel.addEventListener("click", async e => {
     S.mods = S.mods.filter(x => x !== m);
     renderPanel();
     focusRow(Math.min(i, rows().length - 1));
-    toast(`Deleted “${m.title}”`);
+    toast(t("toast.deleted", { title: m.title }));
   }
   if (a === "code" && m) showCode(m);
   if (a === "share" && m) showShare(m);

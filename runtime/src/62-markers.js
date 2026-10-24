@@ -58,7 +58,7 @@ const Markers = (() => {
       badge.dataset.n = p.n;
       badge.textContent = p.n;
       badge.title = p.label || "";
-      badge.setAttribute("aria-label", `${p.n}: ${p.label || "marked on the page"}. Scroll to it`);
+      badge.setAttribute("aria-label", t("ask.badge", { n: p.n, label: p.label || t("ask.markedOnPage") }));
       badge.addEventListener("click", e => { e.stopPropagation(); scrollTo(p.n); });
       layer.append(ring, badge);
       return { ...p, el: find(p.selector, p.label), ring, badge };
@@ -111,7 +111,7 @@ const Markers = (() => {
     const it = items.find(i => String(i.n) === String(n));
     if (!it) return false;
     if (!visible(it.el)) { const el = find(it.selector, it.label); if (el) it.el = el; }
-    if (!visible(it.el)) { toast(`${it.label ? `“${it.label}”` : "That"} isn't showing right now. It may be inside a menu that's closed.`); return false; }
+    if (!visible(it.el)) { toast(it.label ? t("ask.hiddenNamed", { label: it.label }) : t("ask.hidden")); return false; }
     it.el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
     it.ring.classList.remove("ping");
     void it.ring.offsetWidth;

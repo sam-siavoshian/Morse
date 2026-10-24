@@ -5,22 +5,23 @@
 //   97-pause-site.png     "Pause Morse on <site>" in the Mods panel
 //   98-popup-pause.png    the same from the toolbar popup, with "Pause everywhere"
 //
-//   npm run build && node demo/serve.js & DISPLAY=:99 node demo/shoot-control.js [outDir]
-// MORSE_DEMO_PORT moves the demo sites (default 8787, The Daily Byte on +1).
+//   npm run build && DISPLAY=:99 node demo/shoot-control.js [outDir]
+// The demo sites run on free ports and show at their usual addresses
+// (The Daily Byte at 127.0.0.1:8788).
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { createRequire } from "node:module";
 import { createMod, encodeShare } from "../core/mod.js";
+import { demoSites, seasonExtension, startHelper, routeHelper, pairExtension } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const OUT = process.argv[2] || path.join(root, "docs", "screenshots");
+const OUT = path.resolve(root, process.argv[2] || process.env.SHOTS || path.join("docs", "screenshots"));
 const EXT = path.join(root, "dist", "extension");
-const BASE = Number(process.env.MORSE_DEMO_PORT || 8787);
-const BYTE = `http://127.0.0.1:${BASE + 1}/demo/sites/byte/`;
-const HOST = `127.0.0.1:${BASE + 1}`;
+const sites = await demoSites();
+const BYTE = sites.url("byte");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-ctl-"));
 
@@ -28,10 +29,27 @@ const ctx = await chromium.launchPersistentContext(path.join(tmp, "profile"), {
   headless: false, viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, colorScheme: "light",
   args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, "--no-sandbox"],
 });
+await sites.route(ctx);
 const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
+await seasonExtension(sw, { gallery: false });
+for (const p of ctx.pages()) if (p.url().includes("/welcome.html")) await p.close();
+// Set up like someone who uses Morse: "Allow User Scripts" on, and a model
+// connected (the Morse helper with the demo model), so the popup and the
+// panel show only what these pictures are about.
+{
+  const id = sw.url().split("/")[2];
+  const p = await ctx.newPage();
+  await p.goto(`chrome://extensions/?id=${id}`);
+  await p.locator("#allow-user-scripts").click();
+  await p.close();
+  const helper = await startHelper(path.join(tmp, "helper-home"));
+  process.on("exit", helper.stop);
+  await routeHelper(ctx, helper);
+  await pairExtension(ctx, id, helper.code);
+}
 const shot = async (page, name) => { await page.screenshot({ path: path.join(OUT, name) }); console.log("  📸", name); };
 
-// Three mods on The Daily Byte: one made here, one God-mode edit, one installed from a friend's link.
+// Three mods on The Daily Byte: two made here, one installed from a friend's link.
 const day = d => new Date(Date.UTC(2026, 9, d, 10)).toISOString();
 const mods = [
   { ...createMod({ title: "Calm reading", prompt: "hide the ads and make the article easier to read", url: BYTE,
@@ -46,7 +64,7 @@ const mods = [
 await sw.evaluate(async list => {
   const all = {};
   for (const m of list) all[m.id] = m;
-  await chrome.storage.local.set({ mods: all, welcomed: true });
+  await chrome.storage.local.set({ mods: all });
 }, mods);
 
 async function openByte() {
@@ -90,6 +108,12 @@ async function openByte() {
   await pop.setViewportSize({ width: 348, height: 680 });
   await pop.goto(`chrome-extension://${id}/popup.html?url=${encodeURIComponent(BYTE)}`);
   await sleep(500);
+  // Morse rechecks the model every 15 seconds: wait until it knows about the pairing.
+  for (let i = 0; i < 20 && await pop.getByText("No model connected").count(); i++) { await sleep(1500); await pop.reload(); await sleep(500); }
+  // The picture ends where "Model" starts: the pause switches and this site's mods are what it's about.
+  const h = await pop.evaluate(() => { document.documentElement.style.overflow = "hidden"; return Math.ceil(document.querySelector("#model").getBoundingClientRect().top); });
+  await pop.setViewportSize({ width: 348, height: h });
+  await sleep(200);
   await shot(pop, "98-popup-pause.png");
   await pop.close();
   await page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector("[data-c=pause-site]").click());
@@ -101,7 +125,9 @@ await ctx.close();
 // 96 · the share page: what a shared mod does, before anything is installed
 {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 1000 }, colorScheme: "dark" }); // tall enough to show Install under the summary
+  const bctx = await browser.newContext({ viewport: { width: 1280, height: 1000 }, colorScheme: "dark", deviceScaleFactor: 1 }); // tall enough to show Install under the summary
+  await sites.route(bctx);
+  const page = await bctx.newPage();
   const mod = createMod({
     title: "Draft keeper", prompt: "keep a copy of what I type in the message box so I never lose a draft", url: "https://chat.example.com/",
     css: ".draft-saved { font-size: 12px; opacity: .6; margin-left: 8px; }",
@@ -109,10 +135,12 @@ await ctx.close();
     model: "Claude Code · haiku",
   });
   const link = await encodeShare({ ...mod, author: "Sam" });
-  await page.goto(`http://127.0.0.1:${BASE}/share/install.html#m=${link.split("#m=")[1]}`);
+  await page.goto(sites.url("parley", `/share/install.html#m=${link.split("#m=")[1]}`));
   await page.waitForSelector("ul.i-items li");
   await sleep(300);
   await shot(page, "96-install-summary.png");
   await browser.close();
 }
 await fs.rm(tmp, { recursive: true, force: true });
+await sites.close();
+process.exit(0);

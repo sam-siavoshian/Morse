@@ -22,7 +22,7 @@ function PACKS_CSS() { return `
   .pk-pick > span { flex: 1; min-width: 0; }
   .pk-pick b { display: block; font-weight: 600; line-height: 20px; overflow-wrap: anywhere; }
   .pk-pick .ctl-from { display: block; margin: 0; }
-  .pk-body { min-width: 0; margin: 4px 0 0 28px; }
+  .pk-body { min-width: 0; margin-block: 4px 0; margin-inline: 28px 0; }
   .pk-body pre { max-width: 100%; }
   .pk-body .ctl-prompt { font-size: var(--m-text-sm); line-height: 16px; }
   .pk-does { margin: 8px 0 0; color: var(--m-text); font-size: var(--m-text-sm); line-height: 20px; overflow-wrap: anywhere; }
@@ -78,10 +78,10 @@ function PACKS_CSS() { return `
   .pk-meta b { display: block; font-weight: 600; line-height: 20px; overflow-wrap: anywhere; }
   .pk-meta small { display: block; color: var(--m-text-3); font-size: var(--m-text-sm); line-height: 16px; }
   .pk-group.off .pk-meta b { color: var(--m-text-2); }
-  .pk-btns { grid-column: 2; display: flex; flex-wrap: wrap; gap: 2px; margin: 4px 0 0 -8px; }
+  .pk-btns { grid-column: 2; display: flex; flex-wrap: wrap; gap: 2px; margin-block: 4px 0; margin-inline: -8px 0; }
   .panel .pk-btns button { height: 24px; padding: 0 8px; border: 0; background: none; color: var(--m-text-3); font: 500 var(--m-text-sm)/16px var(--m-font); }
   .panel .pk-btns button:hover { color: var(--m-text); background: var(--m-hover); }
-  .pk-group .pk-upd { margin: 0; border-width: 1px 0 0; border-radius: 0; padding: 8px 8px 8px 12px; }
+  .pk-group .pk-upd { margin: 0; border-width: 1px 0 0; border-radius: 0; padding-block: 8px; padding-inline: 12px 8px; }
   .pk-group > article { margin: 0; border-radius: 0; border-top: 1px solid var(--m-line); }
   .pk-group > article:hover { background: var(--m-raised); }
 

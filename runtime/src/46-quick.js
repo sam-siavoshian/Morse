@@ -18,31 +18,36 @@ const GodQuick = (() => {
     check: '<path d="M3.5 8.5 6.5 11.5 12.5 4.5"/>',
   };
   const ITEMS = [
-    { k: "dark", label: "Dark mode" },
-    { k: "light", label: "Light mode" },
-    { k: "bigger", label: "Bigger text" },
-    { k: "smaller", label: "Smaller text" },
-    { k: "noads", label: "Hide ads and pop-ups" },
-    { k: "focus", label: "Focus mode" },
+    { k: "dark", label: "quick.dark" }, // message ids (core/locales/en.js)
+    { k: "light", label: "quick.light" },
+    { k: "bigger", label: "quick.bigger" },
+    { k: "smaller", label: "quick.smaller" },
+    { k: "noads", label: "quick.noads" },
+    { k: "focus", label: "quick.focus" },
     null,
-    { k: "reset", label: "Turn off all mods here" },
+    { k: "reset", label: "quick.reset" },
   ];
 
   const btn = document.createElement("button");
   btn.className = "gm-qbtn ibtn";
-  btn.setAttribute("aria-label", "Page tools");
   btn.setAttribute("aria-haspopup", "menu");
-  btn.innerHTML = svg(I.tools) + GodMode.tip("Page tools", "");
+  btn.setAttribute("aria-expanded", "false");
+  btn.setAttribute("aria-controls", "m-page-tools");
+  const label = () => { btn.setAttribute("aria-label", t("quick.title")); btn.innerHTML = svg(I.tools) + GodMode.tip(t("quick.title"), ""); };
+  label();
+  langSubs.add(label);
   const row = bar.querySelector(".row");
   row.insertBefore(btn, row.querySelector(".go"));
   const menu = document.createElement("div");
   menu.className = "gm-menu menu";
+  menu.id = "m-page-tools";
   menu.setAttribute("role", "menu");
+  menu.setAttribute("aria-label", "Page tools");
   menu.hidden = true;
   bar.append(menu);
 
   const quickMod = k => S.mods.find(m => m.kind === "quick" && m.edits?.[0]?.kind === k);
-  const where = () => S.appName || location.host || "this page";
+  const where = () => S.appName || location.host || t("panel.thisPage");
   const titleFor = e => e.kind === "zoom" ? `Text size ${Math.round(zoomFor(e.level) * 100)}%` : PAGE_TOOLS[e.kind].title;
 
   function render() {
@@ -53,9 +58,14 @@ const GodQuick = (() => {
       if (k === "reset") return "";
       return quickMod(k)?.enabled ? svg(I.check) : "";
     };
-    menu.innerHTML = `<header>Page tools<small>${esc(where())}</small></header>` + ITEMS.map(it => it
-      ? `<button role="menuitem" data-k="${it.k}" aria-checked="${!!quickMod(it.k)?.enabled}">${svg(I[it.k])}<span>${it.label}</span><span class="gm-state">${state(it.k)}</span></button>`
+    // On/off tools are checkboxes in the menu; Bigger, Smaller and Turn off all are plain actions (they say their level).
+    const ONOFF = new Set(["dark", "light", "noads", "focus"]);
+    menu.innerHTML = `<header aria-hidden="true">${t("quick.title")}<small>${esc(where())}</small></header>` + ITEMS.map(it => it
+      ? `<button ${ONOFF.has(it.k) ? `role="menuitemcheckbox" aria-checked="${!!quickMod(it.k)?.enabled}"` : `role="menuitem"`} tabindex="-1" data-k="${it.k}">${svg(I[it.k])}<span>${t(it.label)}</span><span class="gm-state">${state(it.k)}</span></button>`
       : `<hr>`).join("") + quickMenuGroups.map(g => g()).join(""); // hook: 65-a11y.js
+    for (const b of menu.querySelectorAll("button")) b.tabIndex = -1; // one Tab stop: the menu's arrows do the rest
+    const first = menu.querySelector("[role^=menuitem]");
+    if (first) first.tabIndex = 0; // (a menu that scrolls on a small screen still has a way in)
   }
   function open() {
     render();
@@ -76,16 +86,12 @@ const GodQuick = (() => {
     close();
     act(b.dataset.k).catch(err => toast(plainError(err))).finally(() => GodCapture.refresh());
   });
-  // Escape and arrows while the menu is open (registered before 95-keys.js).
+  // Escape, Tab, arrows, Home/End and type-ahead while the menu is open (registered before 95-keys.js).
   listen("keydown", e => {
     if (!e.isTrusted || menu.hidden) return;
-    if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); close(true); return; }
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      const items = [...menu.querySelectorAll("button")], i = items.indexOf(root.activeElement);
-      items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
-    }
+    if (e.key === "Escape" || e.key === "Tab") { e.preventDefault(); e.stopImmediatePropagation(); close(true); return; }
+    if (!menu.contains(root.activeElement)) return;
+    if (menuKeys(e, menu)) e.stopImmediatePropagation();
   }, true);
   listen("pointerdown", e => {
     if (!menu.hidden && !e.composedPath().some(n => n === menu || n === btn)) close();
@@ -109,25 +115,25 @@ const GodQuick = (() => {
   async function act(k) {
     if (k === "reset") return reset();
     if (k === "bigger" || k === "smaller") return zoom(k === "bigger" ? 1 : -1);
-    const title = PAGE_TOOLS[k].title, existing = quickMod(k);
-    if (existing?.enabled) { await drop(existing); return toast(`${title} off`); }
-    if (k === "dark" && !quickMod("light")?.enabled && pageIsDark()) return toast("This page is already dark");
-    if (k === "light" && !quickMod("dark")?.enabled && !pageIsDark()) return toast("This page is already light");
+    const title = t("quick." + k), existing = quickMod(k);
+    if (existing?.enabled) { await drop(existing); return toast(t("quick.toolOff", { title })); }
+    if (k === "dark" && !quickMod("light")?.enabled && pageIsDark()) return toast(t("quick.alreadyDark"));
+    if (k === "light" && !quickMod("dark")?.enabled && !pageIsDark()) return toast(t("quick.alreadyLight"));
     if (existing) await drop(existing);
     if (k === "dark" || k === "light") { const other = quickMod(k === "dark" ? "light" : "dark"); if (other) await drop(other); }
     const edit = { op: "page", kind: k };
     if (k === "focus") {
       const main = mainContent();
-      if (!main) return toast("Couldn't find the main part of this page. Point at it and describe the change instead.");
+      if (!main) return toast(t("quick.noMain"));
       Object.assign(edit, GodMode.targetOf(main), { label: describe(main) });
     }
     await create([edit]);
-    toast(`${title} on for ${where()}`);
+    toast(t("quick.toolOn", { title, where: where() }));
   }
   async function zoom(d) {
     const m = quickMod("zoom");
     const level = Math.max(-6, Math.min(8, (m?.enabled ? m.edits[0].level || 0 : 0) + d));
-    if (!level) { if (m) await drop(m); return toast("Text size back to 100%"); }
+    if (!level) { if (m) await drop(m); return toast(t("quick.zoomReset")); }
     const edits = [{ op: "page", kind: "zoom", level }];
     if (!m) await create(edits);
     else {
@@ -136,19 +142,19 @@ const GodQuick = (() => {
       S.mods = S.mods.map(x => (x.id === next.id ? next : x));
       await applyMod(next);
     }
-    toast(`Text size ${Math.round(zoomFor(level) * 100)}%`);
+    toast(t("quick.zoom", { pct: Math.round(zoomFor(level) * 100) }));
   }
   async function reset() {
     const s = GodMode.resetSession();
     if (s.id) await removeMod(s.id);
     const on = S.mods.filter(m => m.enabled && m.kind !== "style"); // your-style hook: "Not on this site" is in the Mods panel
-    if (!on.length && !s.history.length) return toast("Nothing to reset here");
+    if (!on.length && !s.history.length) return toast(t("quick.nothing"));
     for (const m of on) {
       m.enabled = false;
       await call("mods.save", { mod: m });
       await removeMod(m.id);
     }
-    toast(`Turned off ${on.length} mod${on.length === 1 ? "" : "s"} here. Turn them back on in Mods.`);
+    toast(t("quick.resetDone", { n: on.length }));
   }
 
   // The smallest landmark holding most of the page's text, else the block

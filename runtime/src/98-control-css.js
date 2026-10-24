@@ -4,22 +4,22 @@
 // 4px grid. Joined into the shadow root's <style> by a hook in 10-dom.js.
 function CONTROL_CSS() { return `
   /* ---- toast with actions */
-  .ctl-toast { position: fixed; left: 20px; bottom: 20px; width: max-content; max-width: min(440px, calc(100vw - 40px)); pointer-events: auto;
+  .ctl-toast { position: fixed; inset-inline-start: 20px; bottom: 20px; width: max-content; max-width: min(440px, calc(100vw - 40px)); pointer-events: auto;
     display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start;
     background: var(--m-surface); color: var(--m-text); border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); box-shadow: var(--m-shadow);
     font: 450 var(--m-text-md)/20px var(--m-font); letter-spacing: var(--m-tracking); animation: rise2 var(--m-med) var(--m-ease); }
   .ctl-toast[hidden] { display: none; }
-  .ctl-msg { grid-column: 1; grid-row: 1; display: flex; align-items: flex-start; gap: 10px; padding: 9px 4px 9px 12px; min-width: 0; }
+  .ctl-msg { grid-column: 1; grid-row: 1; display: flex; align-items: flex-start; gap: 10px; padding-block: 9px; padding-inline: 12px 4px; min-width: 0; }
   .ctl-msg .radar { flex: none; color: var(--m-text-2); margin-top: 4px; }
   .ctl-msg span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
   .ctl-msg b { display: block; font-weight: 600; } /* the title (Safe start, Turn on “Allow User Scripts”) is a line of its own */
-  .ctl-toast .ctl-x { grid-column: 2; grid-row: 1; margin: 8px 8px 0 0; }
+  .ctl-toast .ctl-x { grid-column: 2; grid-row: 1; margin-block: 8px 0; margin-inline: 0 8px; }
   .ctl-acts { grid-column: 1 / -1; grid-row: 2; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 0 12px 12px; }
   /* one short message and one action: a single 40px row */
   .ctl-toast.inline { grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; }
-  .ctl-toast.inline .ctl-msg { padding-right: 12px; }
+  .ctl-toast.inline .ctl-msg { padding-inline-end: 12px; }
   .ctl-toast.inline .ctl-acts { grid-column: 2; grid-row: 1; padding: 0; }
-  .ctl-toast.inline .ctl-x { grid-column: 3; margin: 0 8px 0 4px; }
+  .ctl-toast.inline .ctl-x { grid-column: 3; margin-block: 0; margin-inline: 4px 8px; }
 
   /* ---- Mods panel: pause strip, notices */
   .ctl-strip { padding: 4px 8px 8px; border-bottom: 1px solid var(--m-line); }
@@ -29,20 +29,20 @@ function CONTROL_CSS() { return `
   .ctl-l > span { display: block; font-weight: 550; line-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ctl-l small { display: block; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 16px; }
   .ctl-row .sw { flex: none; display: block; }
-  .ctl-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 0; padding: 8px 8px 8px 12px; border: 1px solid var(--m-line-strong);
+  .ctl-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 0; padding-block: 8px; padding-inline: 12px 8px; border: 1px solid var(--m-line-strong);
     border-radius: var(--m-r-md); background: var(--m-raised); font-size: var(--m-text-sm); line-height: 16px; }
   .ctl-note span { flex: 1 1 180px; min-width: 0; color: var(--m-text); overflow-wrap: anywhere; }
   .panel .ctl-note button { height: 24px; padding: 0 8px; }
 
   /* ---- Mods panel: where it came from, Show code */
   .meta .ctl-origin { margin-top: 4px; color: var(--m-text-3); font-size: var(--m-text-sm); line-height: 16px; overflow-wrap: anywhere; }
-  .panel .ctl-link, .ctl-link { height: 20px; padding: 0; margin-left: 4px; border: 0; background: none; color: var(--m-text-2); font: 500 var(--m-text-sm)/16px var(--m-font);
+  .panel .ctl-link, .ctl-link { height: 20px; padding: 0; margin-inline-start: 4px; border: 0; background: none; color: var(--m-text-2); font: 500 var(--m-text-sm)/16px var(--m-font);
     letter-spacing: var(--m-tracking); text-decoration: underline; text-decoration-color: var(--m-line-strong); text-underline-offset: 3px; border-radius: 2px; }
   .panel .ctl-link:hover { background: none; color: var(--m-text); text-decoration-color: currentColor; }
 
   /* ---- Mods panel: backup row */
-  .ctl-backup { display: flex; align-items: center; gap: 8px; padding: 10px 12px 10px 16px; border-top: 1px solid var(--m-line); }
-  .ctl-backup > span { flex: 1; min-width: 0; }
+  .ctl-backup { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-block: 10px; padding-inline: 16px 12px; border-top: 1px solid var(--m-line); }
+  .ctl-backup > span { flex: 1 0 auto; white-space: nowrap; } /* a longer word (other languages) moves the buttons to a line of their own */
   .ctl-backup button { flex: none; }
 
   /* ---- summary: install review and Show code */
@@ -54,12 +54,12 @@ function CONTROL_CSS() { return `
   .ctl-from span { color: var(--m-text); }
   .ctl-h { margin: 16px 0 8px; }
   .ctl-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-  .ctl-items li { position: relative; padding-left: 20px; }
-  .ctl-items li::before { content: ""; position: absolute; left: 4px; top: 7px; background: var(--m-signal-3); } /* the status dot: 99-css.js */
+  .ctl-items li { position: relative; padding-inline-start: 20px; }
+  .ctl-items li::before { content: ""; position: absolute; inset-inline-start: 4px; top: 7px; background: var(--m-signal-3); } /* the status dot: 99-css.js */
   .ctl-items b { display: block; font-weight: 500; line-height: 20px; }
   .ctl-items small { display: block; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 16px; }
   /* a 2px warn edge drawn inside the 1px box; notes in a row read as one box with one label */
-  .ctl-warn { margin: 12px 0 0; padding: 10px 12px 10px 14px; border: 1px solid var(--m-line-strong); box-shadow: inset 2px 0 0 var(--m-warn); border-radius: var(--m-r-sm);
+  .ctl-warn { margin: 12px 0 0; padding-block: 10px; padding-inline: 14px 12px; border: 1px solid var(--m-line-strong); box-shadow: inset 2px 0 0 var(--m-warn); border-radius: var(--m-r-sm);
     background: var(--m-raised); color: var(--m-text); line-height: 20px; overflow-wrap: anywhere; }
   .ctl-warn:has(+ .ctl-warn) { padding-bottom: 4px; border-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
   .ctl-warn + .ctl-warn { margin-top: 0; padding-top: 4px; border-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }

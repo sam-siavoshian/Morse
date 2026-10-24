@@ -26,6 +26,8 @@ import path from "node:path";
 import { CDPSession, listTargets } from "../daemon/cdp.js";
 import { listProcesses } from "../daemon/apps.js";
 import { buildTunes } from "./electron-app/build.mjs";
+import { defaultHotkeys } from "../core/hotkeys.js";
+import { seasonHome } from "./helper.js";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const PROVIDER = process.env.MORSE_PROVIDER || "demo";
@@ -34,10 +36,16 @@ const T = REAL ? 240000 : 20000;
 const OUT = path.resolve(root, process.env.SHOTS || "docs/screenshots");
 let n = Number(process.env.FIRST || 120);
 const HOME = process.env.MORSE_HOME || await fs.mkdtemp(path.join(os.tmpdir(), "morse-electron-"));
-const ENV = { ...process.env, MORSE_HOME: HOME, MORSE_PROVIDER: PROVIDER, FORCE_COLOR: "0" };
+// MORSE_DEBUG: the bar reports its status, for waiting on it (a real app has no navigator.webdriver)
+const ENV = { ...process.env, MORSE_HOME: HOME, MORSE_PROVIDER: PROVIDER, FORCE_COLOR: "0", MORSE_DEBUG: "1" };
+// Someone who has used Morse before: no first-run coach, no gallery list, no welcome toast.
+await seasonHome(HOME);
+await fs.writeFile(path.join(HOME, "settings.json"), JSON.stringify({ welcome: false, gallery: false }));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const say = s => console.log(`· ${s}`);
 const x = (...args) => execFileSync("xdotool", args, { encoding: "utf8" }).trim();
+// The platform's Open Morse key (Ctrl+Shift+Space on Linux) in xdotool's syntax.
+const OPEN_X = defaultHotkeys("linux").open.toLowerCase();
 
 const tunes = process.env.TUNES || (await buildTunes(path.join(HOME, "Tunes"))).exe;
 const profile = path.join(HOME, "tunes-profile");
@@ -79,6 +87,20 @@ async function mainWindow(port) {
   return { s, ev, status: async () => JSON.parse((await ev(`document.querySelector("[data-morse-ui][data-status]")?.dataset.status || "null"`)) || "null") };
 }
 
+// Whether a part of Morse's UI is showing (<tag class=cls> without hidden).
+// The bar's shadow root is closed in a real app (no navigator.webdriver);
+// DevTools can still read it.
+async function uiShowing(w, tag, cls) {
+  const { root } = await w.s.send("DOM.getDocument", { depth: -1, pierce: true });
+  const find = n => {
+    const a = n.attributes || [];
+    const c = a.includes("class") ? a[a.indexOf("class") + 1] : "";
+    if (n.localName === tag && c.split(" ").includes(cls) && !a.includes("hidden")) return true;
+    return [...(n.children || []), ...(n.shadowRoots || [])].some(find);
+  };
+  return find(root);
+}
+
 // The X window of the app's main window, and where its web content starts
 // (below the native menu bar).
 async function xWindow(w) {
@@ -93,6 +115,14 @@ async function xWindow(w) {
 async function centerOf(w, win, selector) {
   const r = await w.ev(`(() => { const r = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
   return [Math.round(win.x + r[0]), Math.round(win.top + r[1])];
+}
+// Without a window manager a click is what gives a window the keyboard:
+// click a quiet spot (the empty space right of the heading) before a shortcut.
+async function focusApp(win) {
+  x("windowfocus", "--sync", win.id);
+  x("mousemove", "--sync", String(win.x + 900), String(win.top + 40));
+  x("click", "1");
+  await sleep(300);
 }
 async function shot(win, name) {
   if (process.env.NO_SHOTS) return;
@@ -118,21 +148,31 @@ let win = await xWindow(w);
 x("windowfocus", "--sync", win.id);
 
 // ---- 2. the real hotkey, from the X server
+await focusApp(win);
 x("mousemove", String(win.x + 700), String(win.top + 300));
-x("key", "ctrl+shift+space");
-await until(async () => (await w.status())?.open, 5000, "the bar to open on Ctrl+Shift+Space");
-say("the bar opened from a real Ctrl+Shift+Space");
+x("key", OPEN_X);
+await until(async () => (await w.status())?.open, 15000, `the bar to open on ${OPEN_X}`);
+say(`the bar opened from a real ${OPEN_X}`);
 
 // ---- 3. point at the player controls, pick them, describe the change
+// On a busy machine the app can miss a quick hover or click: wait for the
+// outline before the picture, and for the pick before typing.
 const [cx, cy] = await centerOf(w, win, '[data-testid="player-controls"] .btns');
-x("mousemove", "--sync", String(cx - 30), String(cy));
-await sleep(200);
-x("mousemove", "--sync", String(cx), String(cy));
-await sleep(400);
-await shot(win, "electron-point");
-x("click", "1");
-await sleep(300);
+let shotPoint = false;
+const picked = async () => !/^Point at anything/.test((await w.status())?.hint || "Point at anything");
+for (let i = 0; i < 4 && !(await picked()); i++) {
+  x("mousemove", "--sync", String(cx - 30), String(cy));
+  await sleep(300);
+  x("mousemove", "--sync", String(cx), String(cy));
+  const outlined = await until(() => uiShowing(w, "div", "hl"), 5000, "the outline").catch(() => false);
+  await sleep(300);
+  if (outlined && !shotPoint) { await shot(win, "electron-point"); shotPoint = true; }
+  x("click", "1");
+  await until(async () => (await picked()) || null, 4000, "the pick").catch(() => {});
+}
+if (!(await picked()) || !shotPoint) throw new Error("couldn't point at the player controls");
 x("type", "--delay", "15", "add a sleep timer that pauses the music after a while");
+await until(async () => /after a while$/.test((await w.status())?.input || ""), 15000, "the request in the bar");
 await sleep(300);
 await shot(win, "electron-bar");
 x("key", "Return");
@@ -155,9 +195,12 @@ say(`saved "${mod.title}" for app ${mod.match.app} on ${mod.match.hosts.join(", 
 
 // ---- 5. quit from the app's own menu shortcut; morse notices
 x("windowfocus", "--sync", win.id);
+x("key", "Escape"); // close the bar, so the app has the keyboard
+await until(async () => !(await w.status())?.open, 5000, "the bar to close");
+await focusApp(win);
 x("key", "ctrl+q");
 // (morse launch then exits, after it finishes encoding the share clip if one is still going)
-await until(() => /closed, so Morse stopped/.test(m1.out), 15000, "morse to notice the app quit");
+await until(() => /closed, so Morse stopped/.test(m1.out), 60000, "morse to notice the app quit"); // it finishes the share clip first
 say(`Tunes quit from its menu shortcut; morse said "${m1.out.trim().split("\n").pop()}"`);
 
 // ---- 6. launch again: the mod comes back by itself
@@ -175,13 +218,15 @@ await shot(win, "electron-mod-back");
 say("after relaunch the mod is back: it runs again and finds its elements" + (REAL ? "" : ", and the ☾ button is in the player"));
 
 // ---- 6b. the Mods panel hotkey (Alt+Shift+M) works with the native menu bar there
-x("windowfocus", "--sync", win.id);
+await focusApp(win);
 x("key", "alt+shift+m");
-await until(() => w.ev(`!!document.querySelector("[data-morse-ui]")?.shadowRoot?.querySelector(".panel:not([hidden])")`), 5000, "the Mods panel on Alt+Shift+M");
+const panelOpen = () => uiShowing(w, "aside", "panel");
+await until(panelOpen, 15000, "the Mods panel on Alt+Shift+M");
 say("the Mods panel opened from a real Alt+Shift+M");
 await sleep(400);
 await shot(win, "electron-mods-panel");
 x("key", "Escape");
+await focusApp(win);
 
 // ---- 6c. a second window from the app's menu shortcut gets Morse too
 x("key", "ctrl+shift+m");
@@ -202,7 +247,7 @@ await until(async () => !(await w.ev(`!!document.querySelector("style[data-morse
 const still = (await listTargets(port2)).some(t => t.url.startsWith("app://tunes/"));
 say(`after morse stop: mod and bar removed, app still running: ${still}`);
 w.s.close();
-x("windowfocus", "--sync", win.id);
+await focusApp(win);
 x("key", "ctrl+q");
 
 // ---- 8. fuses on the real binary

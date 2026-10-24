@@ -66,6 +66,7 @@ after(() => browser?.close());
 
 const contextFor = sel => page.evaluate(`(() => {
   const S = { app: null, target: ${JSON.stringify(sel)} ? document.querySelector(${JSON.stringify(sel || "x")}) : null };
+  const getLanguage = () => "en"; // core/i18n.js, inlined before this in the runtime
   ${SRC}
   return context();
 })()`);
@@ -114,6 +115,7 @@ test("the context reaches into open shadow roots and same-origin frames", { skip
   assert.match(ctx.outline, /x-panel >>> button\[part="go"\]|x-panel >>> button/);
   const inside = await page.evaluate(`(() => {
     const S = { app: null, target: document.querySelector("x-panel").shadowRoot.querySelector("button") };
+    const getLanguage = () => "en";
     ${SRC}
     return context().target;
   })()`);
