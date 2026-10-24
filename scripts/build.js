@@ -167,3 +167,9 @@ function crc32(buf) {
 }
 
 console.log(`Built ${path.relative(root, out)} (version ${version}${STORE ? ", store build" : ""}): load it in chrome://extensions → Load unpacked.`);
+// `npm install` (or bun install) in a clone runs this as "prepare": say what's next.
+if (process.env.npm_lifecycle_event === "prepare" && !process.env.CI && !STORE && outArg < 0) {
+  console.log("\nNext: npm run setup   (finds Claude Code or Codex)");
+  console.log("Then, in Chrome: chrome://extensions, Developer mode on, Load unpacked, choose the dist/extension folder.");
+  console.log("Desktop apps: npm run morse -- launch obsidian. Everything else: docs/getting-started.md");
+}

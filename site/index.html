@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Morse: change any app in your own words</title>
-<meta name="description" content="Morse lets you change any website or desktop app by saying what you want. Free and open source.">
+<title>Morse: change any website or desktop app in your own words</title>
+<meta name="description" content="Change any website in Chrome, or desktop apps like VSCodium and Obsidian, by saying what you want. Your own AI makes the change. Free and open source.">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="color-scheme" content="dark">
-<meta property="og:title" content="Morse: change any app in your own words">
-<meta property="og:description" content="Press a shortcut, point at something and say the change. Your own model makes it in the running app while you watch.">
-<meta property="og:image" content="https://sam-siavoshian.github.io/RRAA/docs/launch/poster-social.png">
+<!-- seo: npm run pages puts the canonical address, link previews and structured data here (scripts/build-pages.js) -->
 <link rel="icon" href="favicon.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="mark/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
-<link rel="preload" as="image" href="shots/198-film-poster.webp" fetchpriority="high">
+<link rel="preload" as="image" href="shots/202-film-poster.webp" fetchpriority="high">
 <link rel="stylesheet" href="site.css">
 </head>
 <body>
@@ -80,13 +80,13 @@
     <!-- The film. Its file, poster, shape and captions live in config.js (DEMO_VIDEO). -->
     <div class="wrap">
       <figure class="film" id="demo" data-film>
-        <p class="film-strip"><span class="film-dot" aria-hidden="true"></span><span data-film-strip>VSCodium on Linux · Claude Code (haiku) · real runs</span></p>
+        <p class="film-strip"><span class="film-dot" aria-hidden="true"></span><span data-film-strip>Real apps on Linux · Claude Code (Opus) · real runs</span></p>
         <div class="film-frame">
-          <img class="film-poster" src="shots/198-film-poster.webp" width="1280" height="720" alt="" fetchpriority="high">
+          <img class="film-poster" src="shots/202-film-poster.webp" width="1280" height="720" alt="Microsoft’s VS Code turned Synthwave ’84 by Morse: a violet editor, hot pink keywords and cyan strings, with the Morse bar at the bottom." fetchpriority="high">
           <button type="button" class="film-play" aria-label="Play the video from the start, with controls"><span class="film-disc" aria-hidden="true"><span class="icon" aria-hidden="true">►</span></span></button>
           <button type="button" class="film-toggle" aria-label="Pause or play the loop"><span class="icon icon-pause" aria-hidden="true">❚❚</span><span class="icon icon-play" aria-hidden="true">►</span></button>
         </div>
-        <figcaption>36 seconds, no sound.</figcaption>
+        <figcaption>34 seconds.</figcaption>
       </figure>
     </div>
   </section>
@@ -156,9 +156,9 @@
       <header class="section-head">
         <p class="eyebrow">Real apps</p>
         <h2>Tested on real apps.</h2>
-        <p class="lede">Desktop apps built from web pages: Visual Studio Code, VSCodium, Obsidian, Logseq and Joplin, on Linux. Websites in Chrome, such as PyPI, GitLab and Docker Hub.</p>
+        <p class="lede">Desktop apps built from web pages: Visual Studio Code, VSCodium, Obsidian, Logseq and Joplin, on Linux. Websites in Chrome, such as the Node.js docs, PyPI, RubyGems and Docker Hub.</p>
       </header>
-      <ul class="apps" id="apps-grid"></ul>
+      <ul class="apps" id="apps-grid" aria-label="Tested apps"></ul>
       <p class="fine">Not tested yet: Slack, Discord, Spotify, macOS and Windows. <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/desktop.md#tested-on">What was tested</a></p>
     </div>
   </section>
@@ -193,11 +193,11 @@
           <p>Morse for desktop apps built from web pages.</p>
           <a class="btn btn-primary btn-lg" href="./#desktop-steps" data-link="desktop">Download Morse<span class="icon" aria-hidden="true">→</span></a>
           <details class="get-steps" id="desktop-steps">
-            <summary>No download yet. Use the morse command</summary>
+            <summary>Downloads for every computer</summary>
             <ol>
-              <li>Install it: <code>npm i -g morse-cli</code> (needs <a href="https://nodejs.org/">Node 22</a> or newer).</li>
-              <li>Run <code>morse setup</code>. It finds Claude Code, Codex or an API key and asks which to use.</li>
-              <li>Open an app with Morse: <code>morse launch obsidian</code>. Run <code>morse apps</code> to see which apps it found.</li>
+              <li><a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg" data-link="desktopMac">Mac with Apple silicon</a> · <a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg" data-link="desktopMacIntel">Mac with Intel</a> · <a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe" data-link="desktopWindows">Windows</a> · <a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage" data-link="desktopLinux">Linux</a></li>
+              <li>Not signed yet, so the first time: on a Mac, open Morse, then System Settings, Privacy &amp; Security, <strong>Open Anyway</strong>. On Windows, <strong>More info</strong>, then <strong>Run anyway</strong>.</li>
+              <li>Morse finds Claude Code or Codex by itself. Click <strong>Open with Morse</strong> next to an app.</li>
             </ol>
           </details>
         </article>
@@ -214,7 +214,7 @@
 
       <div class="first-run">
         <h3>Your first minute</h3>
-        <ol class="first-run-list">
+        <ol class="first-run-list" aria-label="Your first minute">
           <li>
             <figure class="shot"><img src="shots/135-welcome.webp" width="1280" height="860" loading="lazy" decoding="async" alt="The Morse welcome page: Morse is installed, a practice page to try it on, and a short list to get set up."></figure>
             <p><span class="step-n">1</span><span>Morse opens a welcome page, with a practice page to try it on.</span></p>

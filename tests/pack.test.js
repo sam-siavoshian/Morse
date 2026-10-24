@@ -144,7 +144,7 @@ test("an id that clashes with one of your mods: never overwritten without a choi
   const p = parsePack(pack([mod("a"), mod("b")])).pack;
   const mine = [mod("b", { title: "My b" })];
   assert.deepEqual(clashesFor(p, mine), { b: { kind: "clash", id: "b", title: "My b" } });
-  assert.throws(() => planInstall(p, [{ id: "a" }, { id: "b" }], mine), /already have a mod with the id b \(“My b”\)\. Choose whether to keep both or replace yours/);
+  assert.throws(() => planInstall(p, [{ id: "a" }, { id: "b" }], mine), /already have this mod \(b, “My b”\)\. Choose Keep both or Replace yours/);
   const both = planInstall(p, [{ id: "a" }, { id: "b", as: "copy" }], mine).put;
   assert.deepEqual(both.map(m => m.id), ["a", "b-2"]);
   assert.equal(both[1].pack.mod, "b", "remembers which mod of the pack it is");
@@ -283,7 +283,7 @@ test("host: install checks the hash the review showed, and the clash choices", a
   assert.match(preview.hash, /^[0-9a-f]{64}$/);
   assert.deepEqual(preview.clash, { b: { kind: "clash", id: "b", title: "Mine" } });
   await assert.rejects(packs.install({ source, hash: "0".repeat(64), picks: [{ id: "a" }] }), /changed while you were looking/);
-  await assert.rejects(packs.install({ source, hash: preview.hash, picks: [{ id: "b" }] }), /Choose whether to keep both/);
+  await assert.rejects(packs.install({ source, hash: preview.hash, picks: [{ id: "b" }] }), /Choose Keep both or Replace yours/);
   const r = await packs.install({ source, hash: preview.hash, picks: [{ id: "a" }, { id: "b", as: "copy" }] });
   assert.deepEqual(r.saved.map(x => x.id), ["a", "b-2"]);
   assert.equal(m.mods.b.title, "Mine");

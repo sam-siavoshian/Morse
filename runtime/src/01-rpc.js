@@ -28,4 +28,22 @@ const listen = (type, fn, opts) => addEventListener(type, e => { if (live()) fn(
 // resolve to the originals here. Window listeners also survive document.open().
 const addEventListener = (type, fn, opts) => B.on(window, type, fn, opts);
 const removeEventListener = (type, fn, opts) => B.off(window, type, fn, opts);
-const { MutationObserver, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, getComputedStyle } = B.pristine;
+const { MutationObserver: PageObserver, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, getComputedStyle } = B.pristine;
+// soak: the UI's observers, tracked while they observe, so a copy that went
+// quiet (`morse stop`) disconnects them once its overlay is taken off the page
+// (letGo, from 10-dom.js; the boot lets go of its own listeners when the next
+// one starts). Some watch the whole page
+// (the re-render notes in 20-context.js), and each kept a whole old UI alive:
+// on the desktop, runtime observers went 25 -> 101 over three stop + attach.
+const uiObservers = new Set();
+const MutationObserver = class extends PageObserver {
+  observe(...a) { uiObservers.add(this); return super.observe(...a); }
+  disconnect() { uiObservers.delete(this); return super.disconnect(); }
+};
+function letGo() {
+  for (const o of uiObservers) o.disconnect();
+  // The document keeps some of the old UI's elements in tables of its own (the
+  // bar through its aria-owns, the settings pane), and through one element
+  // its whole tree: take every element apart, so each holds only itself.
+  try { bar.removeAttribute("aria-owns"); for (const el of [...root.querySelectorAll("*")].reverse()) el.remove(); root.replaceChildren(); hostEl.remove(); } catch {}
+}

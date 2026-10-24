@@ -162,7 +162,7 @@ test("words: plain, counted right, no words the style guide rules out", () => {
   assert.equal(auditSummary("label", 1).title, "1 form field has no label");
   assert.equal(auditSummary("target", 3).title, "3 things are too small to click");
   assert.equal(auditSummary("autoplay", 1).title, "1 video or sound plays by itself");
-  assert.equal(auditSummary("contrast", 2, [{ ratio: 2.24 }, { ratio: 3.1 }]).help, "The text is too light for its background (as low as 2.2 to 1; 4.5 to 1 is the minimum).");
+  assert.equal(auditSummary("contrast", 2, [{ ratio: 2.24 }, { ratio: 3.1 }]).help, "The text is too light for its background. It goes as low as 2.2 to 1. It needs at least 4.5 to 1.");
   const all = [...Object.values(A11Y_TOOLS).map(t => t.title), ...["alt", "name", "label", "contrast", "target", "autoplay"].flatMap(r => [1, 2].flatMap(n => Object.values(auditSummary(r, n))))];
   for (const s of all) assert.doesNotMatch(s, BANNED, s);
   for (const s of Object.values(A11Y_TOOLS).map(t => t.title)) assert.match(s, /^[A-Z][a-z ]+$/, "sentence case");

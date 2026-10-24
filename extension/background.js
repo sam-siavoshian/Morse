@@ -170,6 +170,37 @@ function probe(port, targetSelector, selectors, opts = null) {
   });
 }
 
+// polish (core/polish.js): a picture of the changed part of the tab. The
+// content script says where (runtime/src/60-generate.js __morseShotArea, which
+// also hides Morse's UI meanwhile); the worker takes the visible tab, only
+// while it is in front, and crops it to a JPEG at most 1280×900.
+let shotSeq = 0;
+async function shoot(port, targetSelector, modId) {
+  const tab = port.sender.tab;
+  if (!tab || Practice.has(tab.id)) return null;
+  const id = ++shotSeq;
+  const area = await new Promise(resolve => {
+    const done = v => { clearTimeout(t); port.__probes.delete(`shot${id}`); resolve(v ?? null); };
+    const t = setTimeout(() => done(null), 3000);
+    port.__probes.set(`shot${id}`, done);
+    try { port.postMessage({ morseShot: id, target: targetSelector || null, modId }); } catch { done(null); }
+  });
+  if (!area) return null;
+  try {
+    if ((await chrome.tabs.query({ active: true, windowId: tab.windowId }))[0]?.id !== tab.id) return null;
+    const url = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
+    const bmp = await createImageBitmap(await (await fetch(url)).blob());
+    const k = bmp.width / area.vw, w = Math.max(1, Math.round(area.width * area.scale)), h = Math.max(1, Math.round(area.height * area.scale));
+    const c = new OffscreenCanvas(w, h);
+    c.getContext("2d").drawImage(bmp, area.x * k, area.y * k, area.width * k, area.height * k, 0, 0, w, h);
+    const bytes = new Uint8Array(await (await c.convertToBlob({ type: "image/jpeg", quality: 0.85 })).arrayBuffer());
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return { mediaType: "image/jpeg", data: btoa(bin) };
+  } catch { return null; }
+  finally { try { port.postMessage({ morseShotDone: id }); } catch {} }
+}
+
 async function allMods() { return get("mods", {}); }
 // hardening: serialized so concurrent saves/deletes can't drop each other
 async function putMod(m) { validateMod(m); await serialized(async () => { const all = await allMods(); all[m.id] = m; await set("mods", all); }); return m; }
@@ -291,7 +322,8 @@ async function dispatch(msg, port) {
       // doesn't count as activity; calling an extension API does.
       const keepAlive = setInterval(() => chrome.runtime.getPlatformInfo().catch(() => {}), 20000);
       try {
-        const mode = (await getPrefs()).modelMode; // models: Automatic, Always fast, Always best
+        const prefs = await getPrefs();
+        const mode = prefs.modelMode; // models: Automatic, Always fast, Always best
         const res = await gens.run(msg.genId, signal => runMorse({
           settings: { ...b.settings, mode },
           request: msg.request,
@@ -301,6 +333,7 @@ async function dispatch(msg, port) {
           exec: js => exec(target, msg.genId, js),
           probe: (sels, opts) => probe(port, msg.context?.target?.selector, sels, opts),
           collapse: css => execIn(target, `(${pageCollapse})(${JSON.stringify(css)}, ${JSON.stringify(msg.genId)})`), // guard hook: hid most of the page?
+          polish: prefs.polish, review: () => shoot(port, msg.context?.target?.selector, msg.genId), // polish: a look at the change (core/polish.js)
           emit: ev => { if (!signal.aborted) try { port.postMessage({ ...ev, genId: msg.genId }); } catch {} },
         }));
         if (res.cancelled) return res;
@@ -355,6 +388,7 @@ chrome.runtime.onConnect.addListener(port => {
   port.onDisconnect.addListener(() => { for (const id of port.__gens) gens.cancel(id); for (const done of port.__probes.values()) done(null); });
   port.onMessage.addListener(async msg => {
     if (msg?.morseProbeReply != null) { port.__probes.get(msg.morseProbeReply)?.(msg.result); return; }
+    if (msg?.morseShotReply != null) { port.__probes.get(`shot${msg.morseShotReply}`)?.(msg.result); return; } // polish: where to take the picture
     try { port.postMessage({ reply: msg.id, result: await dispatch(msg, port) }); }
     catch (e) { try { port.postMessage({ reply: msg.id, error: e.message || String(e) }); } catch {} }
   });

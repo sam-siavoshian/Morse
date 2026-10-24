@@ -21,6 +21,15 @@
         catch { answer(null); }
         return;
       }
+      // polish (background.js shoot): where to take the picture, and Morse's
+      // UI back once it's taken.
+      if (m && m.morseShot != null) {
+        const answer = result => { try { p.postMessage({ morseShotReply: m.morseShot, result: result ?? null }); } catch {} };
+        try { Promise.resolve(globalThis.__morseShotArea ? globalThis.__morseShotArea(m.target, m.modId) : null).then(answer, () => answer(null)); }
+        catch { answer(null); }
+        return;
+      }
+      if (m && m.morseShotDone != null) { try { globalThis.__morseShotArea?.(null, null, true); } catch {} return; }
       if (m && m.reply != null) pending.delete(m.reply);
       emit(m);
     });

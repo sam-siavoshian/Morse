@@ -332,7 +332,7 @@ export function createService({
     };
   }
 
-  // "Show the extension folder": the folder Chrome's Load unpacked takes. A
+  // "Add to Chrome": the folder Chrome's Load unpacked takes. A
   // packaged Morse keeps the extension inside its own app file (and an AppImage
   // moves on every start), so Chrome gets a copy in the Morse folder, made again
   // each time so it matches this version.

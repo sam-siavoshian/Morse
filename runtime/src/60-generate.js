@@ -21,6 +21,18 @@ async function capture() {
   return shot;
 }
 
+// polish (core/polish.js): the host takes a picture of the change for the
+// model's look at it. This says where, and keeps Morse's own UI out of the
+// picture until the host calls it again with done.
+globalThis.__morseShotArea = async (selector, modId, done) => {
+  if (done) { hostEl.style.setProperty("visibility", "initial"); return null; } // as 10-dom.js set it (all: initial)
+  const area = shotArea(selector, modId);
+  if (!area) return null;
+  hostEl.style.setProperty("visibility", "hidden", "important");
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  return area;
+};
+
 const PLACEHOLDER = () => t("bar.placeholder");
 const REFINE_PLACEHOLDER = () => t("bar.placeholder.refine");
 const FIX_NOTE = () => t("result.fixNote");
@@ -55,6 +67,7 @@ async function submit(request, opts = {}) {
   // The draft and its stop handle exist before the first await, so Stop
   // pressed right after Enter cancels this run, not the previous one.
   S.draft = prev ? { ...prev, ctx: prev.ctx || ctx } : { id, request, prompt: request, ctx, title: "", css: "", js: "", history: [] };
+  if (!prev) call("clip.start").catch(() => {}); // soak: recording starts with the change (50-bar.js openBar)
   let stopped = false;
   const stopSignal = cancelSignal(id).then(r => { stopped = true; return r; });
   const t0 = performance.now();
@@ -102,6 +115,7 @@ async function submit(request, opts = {}) {
     if (msg.type === "phase") {
       if (msg.phase === "fixing") { const what = t(msg.stronger ? "gen.stronger" : "gen.fixing"); fixing = true; say(what); hint.title = String(msg.error || ""); announce(what); } // models: core/route.js
       if (msg.phase === "applying") say(t("gen.trying"));
+      if (msg.phase === "polishing") { say(t("gen.polishing")); announce(t("gen.polishing")); } // polish: core/polish.js
     }
   });
   let res;

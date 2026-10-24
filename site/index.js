@@ -154,3 +154,12 @@ mountPairs(document.getElementById("pairs"));
 mountApps(document.getElementById("apps-grid"));
 mountSteps(document.querySelector("[data-steps]"));
 for (const el of document.querySelectorAll("[data-pixels]")) mountPixels(el);
+// Rows that scroll sideways (the apps and the first minute, on a phone) take
+// keyboard focus while they scroll, so the arrow keys can move them too.
+function scrollRows() {
+  for (const el of document.querySelectorAll("#apps-grid, .first-run-list")) {
+    if (el.scrollWidth > el.clientWidth + 1) el.tabIndex = 0; else el.removeAttribute("tabindex");
+  }
+}
+scrollRows();
+addEventListener("resize", scrollRows, { passive: true });

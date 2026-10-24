@@ -96,7 +96,7 @@ test("the landing page has what it promises: buttons, video slot, sections and r
   assert.ok(shots.length >= 6, `screenshots on the page (saw ${shots.length})`);
   for (const s of shots) assert.ok(existsSync(path.join(SITE, s)), s);
   // The first run, in three pictures at most.
-  const firstRun = /<ol class="first-run-list">([\s\S]*?)<\/ol>/.exec(html)?.[1] || "";
+  const firstRun = /<ol class="first-run-list"[^>]*>([\s\S]*?)<\/ol>/.exec(html)?.[1] || "";
   const firstRunShots = (firstRun.match(/<img\b/g) || []).length;
   assert.ok(firstRunShots >= 1 && firstRunShots <= 3, `the first run in three pictures at most (saw ${firstRunShots})`);
   // Every <img> has alt text and a size, so nothing shifts as it loads; all
@@ -144,6 +144,12 @@ test("site/config.js: the button targets and the demo video resolve", async () =
   for (const key of ["mp4", "poster"]) {
     const problem = check("index.html", DEMO_VIDEO[key], index);
     assert.equal(problem, null, `DEMO_VIDEO.${key} = ${DEMO_VIDEO[key]}: ${problem}`);
+  }
+  // The autoplay loop is a small copy (the page's speed): each file resolves and stays under 2 MB.
+  for (const [key, ref] of Object.entries(DEMO_VIDEO.loop || {})) {
+    const problem = check("index.html", ref, index);
+    assert.equal(problem, null, `DEMO_VIDEO.loop.${key} = ${ref}: ${problem}`);
+    assert.ok(statSync(path.resolve(SITE, ref)).size < 2e6, `DEMO_VIDEO.loop.${key} is under 2 MB`);
   }
   assert.ok(DEMO_VIDEO.width > 0 && DEMO_VIDEO.height > 0 && DEMO_VIDEO.label && DEMO_VIDEO.caption);
   // The Pages build publishes what the video slot points at.

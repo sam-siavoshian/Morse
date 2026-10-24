@@ -10,6 +10,7 @@ import { selectorsIn, selectorLists } from "./heal.js"; // self-heal hook: share
 import { cannotUndo } from "./showonce.js"; // show-once hook: ask before steps that can't be undone
 import { draftHarm, cssHidesPage, collapseHarm } from "./guard.js"; // guard hook: code that would obviously break the page
 import { bringMisses } from "./take.js"; // take-and-bring hook: a brought feature that finds none of this page's things
+import { wantsPolish, polishRound } from "./polish.js"; // polish: a look at the change, and one fix
 
 // `probe(selectors)` (optional, from the host) returns { fp, unmatched }: a
 // fingerprint of what the page renders and which of the given selectors match
@@ -26,7 +27,11 @@ import { bringMisses } from "./take.js"; // take-and-bring hook: a brought featu
 // `vet(draft)` (optional, from the host) returns a repair message for a draft
 // that can't work in this app, or null: app profiles (daemon/profile.js)
 // check that the commands it runs with morse.app.command exist.
-export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2, probe, collapse, vet }) {
+//
+// polish (core/polish.js): with `polish` on and `review(draft)` from the host
+// (a picture of the changed part of the page: { mediaType, data }), a change
+// that adds or restyles something gets one look and, if needed, one fix.
+export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2, probe, collapse, vet, review, polish = false }) {
   let previous = null;
   let last = null;
   const started = Date.now();
@@ -217,6 +222,17 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
         advance("effect");
         continue;
       }
+    }
+    // ---- polish: the model looks at a picture of the change in the app and
+    // fixes what doesn't look native, once (core/polish.js)
+    if (polish && review && !base?.error && !signal?.aborted && wantsPolish(draft, request)) {
+      const p = await polishRound({
+        settings: current(), request, context, base, raw, draft, review, exec, emit, signal,
+        check: d => generatedNames(d, context) || deadHooks(d, context) || (vet ? vet(d) : null), // the same checks a draft gets
+      });
+      timing.polish = p.ms;
+      if (p.verdict === "fixed") last = { ...last, ...p.draft, raw: p.raw };
+      last = { ...last, polish: { verdict: p.verdict, ms: p.ms, shotMs: p.shotMs, fixes: p.fixes || [], ...(p.error && { error: p.error }) } };
     }
     return { ...last, ok: true };
   }

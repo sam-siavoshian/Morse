@@ -14,6 +14,8 @@
 //   node demo/ui-catalog.js --no-axe                     skip axe-core (demo/axe.js) on each state
 //   DISPLAY=:99 node demo/ui-catalog.js --only=extension   the extension's own pages
 //                                   (welcome, practice, popup) need the real extension, headful
+//   DISPLAY=:99 node demo/ui-catalog.js --only=desktop,welcome,site,new-bar   round 6: Morse Desktop
+//                                   (the real Electron app), onboarding v2, the website and Try it here, newer bar states
 //
 // Needs Playwright (resolved from the global install).
 import { createRequire } from "node:module";
@@ -48,7 +50,8 @@ const server = http.createServer(async (req, res) => {
     if (p.startsWith("/demo/sites/parley/")) headers["Content-Security-Policy"] = "script-src 'self'";
     // round 4: a page that enforces Trusted Types, as VS Code's window does
     if (/[?&]tt=1/.test(req.url)) headers["Content-Security-Policy"] = "require-trusted-types-for 'script'";
-    res.writeHead(200, headers).end(await fs.readFile(file));
+    const body = await fs.readFile(file); // read first: a missing file is a 404, not a second writeHead
+    res.writeHead(200, headers).end(body);
   } catch { res.writeHead(404).end("not found"); }
 });
 await new Promise(r => server.listen(0, "127.0.0.1", r));
@@ -469,8 +472,8 @@ async function reducedMotion(theme) {
   await submit(p, "make it airier");
   await stream(p, 12, 30);
   await sleep(300);
-  // Settings → Effects defaults to Subtle under reduced motion: no radar field
-  // (Subtle draws no canvas at all), a still outline on the target instead.
+  // Settings → Effects defaults to Less under reduced motion: no radar field
+  // (Less draws no canvas at all), a still outline on the target instead.
   const canvas = await ui(p, ".fx").isVisible();
   const fx = ui(p, ".sel.busy");
   const still = await fx.isVisible();
@@ -478,8 +481,8 @@ async function reducedMotion(theme) {
   const b = still ? await fx.screenshot() : null;
   const mark1 = await ui(p, ".row .mark").screenshot(); await sleep(450);
   const mark2 = await ui(p, ".row .mark").screenshot();
-  await shot(p, "motion", "reduced-effect", still ? [fx, p.locator("#card")] : ui(p, ".bar"), { pad: 16, note: "Effects default to Subtle here: a still outline on the target, no field", checks: [
-    canvas ? "the radar field is drawn under prefers-reduced-motion (Subtle draws no canvas)" : "",
+  await shot(p, "motion", "reduced-effect", still ? [fx, p.locator("#card")] : ui(p, ".bar"), { pad: 16, note: "Effects default to Less here: a still outline on the target, no field", checks: [
+    canvas ? "the radar field is drawn under prefers-reduced-motion (Less draws no canvas)" : "",
     still ? "" : "no still outline on the target while working",
     still && !a.equals(b) ? "the outline animates under prefers-reduced-motion" : ""] });
   await shot(p, "motion", "reduced-mark-live", ui(p, ".row .mark"), { pad: 8, checks: [mark1.equals(mark2) ? "" : "radar mark still pulses under prefers-reduced-motion"] });
@@ -1928,7 +1931,7 @@ async function guardStates(theme, width) {
 
   // refusals in the bar: code that would obviously break the page never runs (core/guard.js)
   const REFUSE = [
-    ["hide", "The change would have hidden this whole page, so Morse didn't apply it. Try other words."],
+    ["hide", "The change would have hidden this whole page, so Morse didn't run it. Try other words."],
     ["loop", "The change would have frozen this page, so Morse didn't run it. Try other words."],
     ["wipe", "The change would have replaced this whole page, so Morse didn't run it. Try other words."],
     ["nav", "The change would have reloaded or left this page, so Morse didn't run it. Try other words."],
@@ -1996,7 +1999,7 @@ async function firstRunStates(theme, width) {
 // ---- first run on the extension's own pages: the real built extension,
 // headful under Xvfb (DISPLAY), with the replies about the model stubbed so
 // each state comes out the same every time (no helper on 7457 needed).
-const PARTS = new Set(String(args.ext || "welcome,popup").split(",")); // --ext=popup: only the popup
+const PARTS = new Set(String(args.ext || "popup").split(",")); // the welcome page is welcomeStates (onboarding v2)
 const extCtxs = []; // the extension's own browsers: closed (and their profiles removed) if a flow fails
 async function extensionStates() {
   if (!process.env.DISPLAY) { console.warn("  ! extension pages need DISPLAY (Xvfb :99)"); return; }
@@ -2076,56 +2079,6 @@ async function extensionStates() {
     console.log(`  ${issues.length ? "!" : "✓"} ${area}/${name}${issues.length ? "  " + issues.join(" | ") : ""}`);
   };
   for (const theme of ["dark", "light"]) {
-    for (const width of PARTS.has("welcome") ? [1100, 390] : []) {
-      const n = width < 600, H = n ? 844 : 900;
-      // the welcome page: waiting for the command, the whole page
-      let { ctx, id } = await launch(theme, width, H, STATES.waiting);
-      let w = await ctx.newPage();
-      await w.goto(`chrome-extension://${id}/welcome.html`); await sleep(1200);
-      await extShot(w, "welcome", "page", theme, null, { full: true, note: "the welcome page: try it here, and the checklist that ticks itself" });
-      await extShot(w, "welcome", "model-waiting", theme, w.locator("#model"), { note: "one command connects a model" });
-      if (!n) {
-        await w.locator("#copy-setup").focus(); await w.keyboard.press("Shift"); await w.locator("#copy-setup").focus(); await sleep(150);
-        const ring = await w.locator("#copy-setup").evaluate(el => { const c = getComputedStyle(el); return el.matches(":focus-visible") && c.outlineStyle !== "none" && parseFloat(c.outlineWidth) >= 2 ? "" : "no 2px focus ring on Copy"; });
-        await extShot(w, "welcome", "copy-focus", theme, w.locator("#model .cmd"), { pad: 8, checks: [ring] });
-      }
-      // an API key that isn't one, and one that is refused
-      await w.locator("#alt summary").click();
-      await w.locator("#key").fill("my-key-123"); await w.locator("#save-key").click(); await sleep(200);
-      await extShot(w, "welcome", "key-not-a-key", theme, w.locator("#alt"), { pad: 8 });
-      await w.locator("#key").fill("sk-ant-api03-xxxx"); await w.locator("#save-key").click(); await sleep(300);
-      await extShot(w, "welcome", "key-refused", theme, w.locator("#alt"), { pad: 8 });
-      // the practice page, with sample answers
-      await w.locator("#try").click(); await sleep(900);
-      await w.mouse.move(width / 2, 300); await sleep(300);
-      await extShot(w, "practice", "sample-bar", theme, w.locator("#frame"), { note: "the practice page before any model: suggestions with sample answers" });
-      await ctx.close();
-      for (const k of ["found", "wrong", "nomodel", "connected"]) {
-        ({ ctx, id } = await launch(theme, width, H, STATES[k]));
-        w = await ctx.newPage();
-        await w.goto(`chrome-extension://${id}/welcome.html`); await sleep(1300);
-        if (k === "found") { await w.locator("#code").pressSequentially("ZZZZZZ"); await sleep(500); }
-        await extShot(w, "welcome", `model-${k}`, theme, w.locator("#model"), { note: {
-          found: "a helper running without our code: the code box", wrong: "the helper waits for a different code", nomodel: "paired, but no model set up", connected: "connected: the step ticks itself" }[k] });
-        if (k === "connected") await extShot(w, "welcome", "checklist-connected", theme, w.locator(".check"));
-        await ctx.close();
-      }
-      // the practice page's first save
-      if (!n || theme === "dark") {
-        ({ ctx, id } = await launch(theme, width, H, STATES.waiting));
-        w = await ctx.newPage();
-        await w.goto(`chrome-extension://${id}/welcome.html`); await sleep(1200);
-        const practice = () => w.frames().find(f => f.url().includes("practice.html"));
-        await w.locator("#try").click(); await sleep(700);
-        await w.keyboard.press("Tab"); await w.keyboard.press("ArrowRight"); await w.keyboard.press("Enter");
-        const end = Date.now() + 25000;
-        while (Date.now() < end && !(await practice()?.evaluate(() => getComputedStyle(document.querySelector('aside[aria-label="Sponsored"]')).display === "none").catch(() => false))) await sleep(200);
-        await sleep(1500);
-        await w.keyboard.press("Enter"); await sleep(2000);
-        await extShot(w, "practice", "first-save", theme, w.locator("#frame"), { note: "the first saved change on the practice page: the card" });
-        await ctx.close();
-      }
-    }
     // the popup: no model; a page Morse can't run on; user scripts off
     for (const [state, st, url, scripts] of [["no-model", STATES.waiting, "https://thedailybyte.news/", true], ["chrome-page", STATES.connected, "chrome://settings/", true],
       ["store-page", STATES.connected, "https://chromewebstore.google.com/detail/x", true], ["user-scripts-off", STATES.connected, "https://thedailybyte.news/", false], ["ready", STATES.connected, "https://thedailybyte.news/", true]].filter(() => PARTS.has("popup"))) {
@@ -2426,6 +2379,554 @@ async function packStates(theme, width) {
   await close(p);
 }
 
+// ---------------------------------------------------------------- round 6
+// Whole pages (Morse Desktop's window, the welcome page, the website): one
+// screenshot of the page or of one part of it, audited like the extension's
+// pages: nothing sticks out or scrolls sideways, cut text ends in an
+// ellipsis, and axe-core on the whole page.
+async function pageShot(page, area, state, theme, target, opts = {}) {
+  const vp = page.viewportSize() || await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+  let clip = null;
+  if (target) {
+    await target.scrollIntoViewIfNeeded().catch(() => {});
+    const b = await target.boundingBox(), sy = opts.full ? await page.evaluate(() => scrollY) : 0;
+    if (b) {
+      const pad = opts.pad ?? 12;
+      const x = Math.max(0, b.x - pad), y = Math.max(0, b.y + sy - pad);
+      clip = { x, y, width: Math.min(vp.width - x, b.width + 2 * pad), height: b.height + 2 * pad };
+    }
+  }
+  const name = `${state}${opts.suffix ?? (vp.width < 600 ? "-narrow" : "")}-${theme}`;
+  const file = path.join(OUT, area, `${name}.png`);
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  const snap = () => page.screenshot(clip ? { path: file, clip, fullPage: !!opts.full } : { path: file, fullPage: !!opts.full });
+  await snap().catch(async e => { console.warn(`  (retrying ${name}: ${String(e.message).split("\n")[0]})`); await opts.wake?.(); await sleep(1000); await snap(); }); // a window that stopped painting
+  const issues = (await page.evaluate(() => {
+    const out = [], W = document.documentElement.clientWidth;
+    for (const el of document.querySelectorAll("body *")) {
+      const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+      if (!r.width || cs.visibility === "hidden" || el.closest("[hidden]")) continue;
+      if (r.width <= 1 && /rect\(0px/.test(cs.clip)) continue; // visually hidden, for screen readers (.sr-only)
+      if (r.right > W + 0.5 && cs.position !== "fixed" && !el.closest("[data-morse-ui]")) {
+        // inside something that scrolls or clips sideways, it's that thing's business
+        let a = el.parentElement, held = false;
+        while (a && a !== document.body) { if (/auto|scroll|hidden|clip/.test(getComputedStyle(a).overflowX)) { held = true; break; } a = a.parentElement; }
+        if (!held) out.push(`${el.tagName.toLowerCase()}${el.id ? "#" + el.id : typeof el.className === "string" && el.className ? "." + el.className.split(" ")[0] : ""} sticks out of the page (${Math.round(r.right)} > ${W})`);
+      }
+      const text = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
+      if (text && el.scrollWidth > el.clientWidth + 1 && /hidden|clip/.test(cs.overflowX) && cs.textOverflow !== "ellipsis") out.push(`${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""} clips its text`);
+    }
+    if (document.documentElement.scrollWidth > W + 1) out.push(`the page scrolls sideways (${document.documentElement.scrollWidth} > ${W})`);
+    return [...new Set(out)].slice(0, 6);
+  })).concat((opts.checks || []).filter(Boolean));
+  if (!args["no-axe"] && opts.axe !== false) {
+    const found = await axeCheck(page, { page: true, disable: opts.axeOff || [] }).catch(e => [{ id: "axe-failed", impact: "critical", help: e.message.split("\n")[0], targets: [] }]);
+    for (const v of found) axeTally.set(v.id, (axeTally.get(v.id) || 0) + 1);
+    issues.push(...axeLines(found));
+  }
+  results.push({ area, state: name, theme, file: path.relative(OUT, file), issues, note: opts.note || "" });
+  console.log(`  ${issues.length ? "!" : "✓"} ${area}/${name}${issues.length ? "  " + issues.join(" | ") : ""}`);
+}
+// A keyboard focus ring on a whole page's control: :focus-visible and a 2px outline (or a ring shadow on it or its row).
+async function pageFocus(page, loc) {
+  await page.keyboard.press("Shift");
+  await loc.focus();
+  await sleep(250);
+  return loc.evaluate(el => {
+    if (!el.matches(":focus-visible")) return "focus does not match :focus-visible";
+    const ring = n => { const s = getComputedStyle(n); return (s.outlineStyle !== "none" && parseFloat(s.outlineWidth) >= 2) || /0px 0px 0px [123]px/.test(s.boxShadow); };
+    const host = el.closest(".choice, label, .row, .keyrow");
+    return ring(el) || (host && ring(host)) ? "" : "no visible focus indicator (no 2px ring)";
+  });
+}
+
+// ---- Morse Desktop (desktop-app/): the real app under Xvfb, driven the way
+// tests/desktop-app-ui.test.js and demo/shoot-desktop-app.js drive it. Tunes
+// (demo/electron-app) opens with Morse for real; the apps this machine has are
+// listed with their own icons (desktop-app/icons.js finds them, inside AppImages
+// too); `claude` is demo/fake-claude (Claude Code · sonnet,
+// answering the check at once, late, or not at all, so each shot is the same).
+async function desktopStates() {
+  if (!process.env.DISPLAY) { console.warn("  ! Morse Desktop needs DISPLAY (Xvfb :99)"); return; }
+  const os = await import("node:os");
+  const { _electron } = createRequire(import.meta.url)("playwright");
+  const { electronExe, tunesApp } = await import("../tests/helpers/tunes.js");
+  if (!electronExe) { console.warn("  ! no Electron runtime (npm install --prefix ~/.cache/morse/electron electron)"); return; }
+  const { createMod } = await import("../core/mod.js");
+  const AS_ROOT = process.getuid?.() === 0 ? ["--no-sandbox"] : [];
+  const tmp = await fs.mkdtemp(path.join(existsSync("/dev/shm") ? "/dev/shm" : os.tmpdir(), "morse-ui-desktop-")); // in memory: the disk is tight
+  const realHome = os.homedir();
+  const { exe: tunes } = await tunesApp();
+  // The apps on this machine, by their files; their icons from their own packages.
+  const found = [["vscodium", "/usr/share/codium/codium"], ["obsidian", path.join(realHome, "Applications/Obsidian-1.14.5.AppImage")], ["joplin", path.join(realHome, ".joplin/Joplin.AppImage")]].filter(([, f]) => existsSync(f));
+  const fakeHome = path.join(tmp, "home"); // a home of its own: no menu entries or icons but the apps' own (desktop-app/icons.js reads them, AppImages too)
+  await fs.mkdir(fakeHome, { recursive: true });
+  const ctl = path.join(tmp, "fake-claude.json");
+  const say = o => fs.writeFile(ctl, JSON.stringify(o));
+  await say({});
+  const mod = (app, url, title, prompt, enabled = true) => ({ ...createMod({ title, prompt, css: "/* … */", url, app }), enabled });
+  const MODS = [
+    mod("tunes", "app://tunes/index.html", "Sleep timer", "add a sleep timer that pauses the music after a while"),
+    mod("tunes", "app://tunes/index.html", "Bigger album art", "make the album art twice as big"),
+    mod("tunes", "app://tunes/index.html", "Hide the shop", "hide the shop banner", false),
+    mod("vscodium", "vscode-file://vscode-app/index.html", "Status bar back", "put the status bar back at the bottom"),
+    mod("obsidian", "app://obsidian.md/index.html", "No ribbon", "hide the ribbon on the left"),
+  ];
+  const kids = [];
+  async function launch(name, { desktop, config, mods = [] }) {
+    const home = path.join(tmp, name);
+    await fs.mkdir(path.join(home, "mods"), { recursive: true });
+    await fs.writeFile(path.join(home, "desktop.json"), JSON.stringify(desktop));
+    await fs.writeFile(path.join(home, "config.json"), JSON.stringify(config), { mode: 0o600 });
+    for (const m of mods) await fs.writeFile(path.join(home, "mods", `${m.id}.json`), JSON.stringify(m, null, 2));
+    const port = 17000 + Math.floor(Math.random() * 2000);
+    const env = { ...process.env, HOME: fakeHome, MORSE_HOME: home, MORSE_DESKTOP_SCAN: "0", MORSE_HELPER_PORT: String(port), ELECTRON_RUN_AS_NODE: "", FAKE_CLAUDE_CTL: ctl,
+      PATH: `${path.join(ROOT, "demo", "fake-claude")}:${process.env.PATH}`, MORSE_DESKTOP_THEME: "dark" };
+    const app = await _electron.launch({ executablePath: electronExe, args: [path.join(ROOT, "desktop-app"), ...AS_ROOT], env, colorScheme: "dark", timeout: 120000 });
+    kids.push(app);
+    const w = await app.firstWindow();
+    await w.waitForSelector("html[data-ready]", { timeout: 60000 });
+    await sleep(600);
+    return { app, w, port };
+  }
+  const setTheme = (app, t) => app.evaluate(({ nativeTheme, BrowserWindow }, t) => { nativeTheme.themeSource = t; const b = BrowserWindow.getAllWindows()[0]; b.show(); b.focus(); b.webContents.invalidate(); }, t);
+  // One state in both themes (the window follows the system's light or dark; nativeTheme stands in for it).
+  async function both(app, w, state, target, opts = {}) {
+    for (const t of opts.themes || ["dark", "light"]) {
+      await setTheme(app, t); await w.emulateMedia({ colorScheme: t });
+      if (!opts.keepPointer) { await w.mouse.move(480, 8); await w.mouse.move(4, 710); } // no row left looking hovered
+      await sleep(350);
+      await pageShot(w, "desktop", state, t, target ? target() : null, { suffix: "", wake: () => setTheme(app, t), ...opts });
+    }
+    await setTheme(app, "dark"); await w.emulateMedia({ colorScheme: "dark" }); await sleep(200);
+    if (/focus/.test(state)) await w.evaluate(() => document.activeElement?.blur());
+  }
+  const tab = async (w, name) => { await w.click(`nav button[data-tab="${name}"]`); await sleep(350); await w.mouse.move(4, 710); };
+  async function quit(app) {
+    const pid = app.process().pid;
+    await Promise.race([app.evaluate(({ app }) => app.quit()).catch(() => {}), sleep(8000)]);
+    await sleep(1500);
+    try { process.kill(pid, "SIGKILL"); } catch {}
+  }
+  try {
+    // ---- 1. a computer with Claude Code (sonnet), Tunes, VSCodium, Obsidian and Joplin
+    // the check, while the model answers (a launch of its own: the answer comes late)
+    await say({ delay: 90000 });
+    let { app, w, port } = await launch("check", { desktop: { helper: false, apps: [tunes] }, config: { provider: "claude-code", models: { "claude-code": "sonnet" } } });
+    await w.locator("#first").waitFor();
+    await w.waitForFunction(() => /Checking/.test(document.querySelector("#first-model")?.textContent || ""), null, { timeout: 60000 });
+    await w.mouse.move(4, 710);
+    await pageShot(w, "desktop", "first-run-checking", "dark", null, { suffix: "", note: "the model found by itself, checked once: the radar pulses while it answers" });
+    await quit(app);
+    await say({ delay: 1200 });
+    ({ app, w, port } = await launch("full", {
+      desktop: { helper: true, apps: [tunes, ...found.map(f => f[1])], appArgs: { tunes: [`--user-data-dir=${path.join(tmp, "tunes-profile")}`, ...AS_ROOT] } },
+      config: { provider: "claude-code", models: { "claude-code": "sonnet" } }, mods: MODS,
+    }));
+    await w.locator("#first").waitFor();
+    await w.waitForFunction(() => /answered/i.test(document.querySelector("#first-model")?.textContent || ""), null, { timeout: 60000 });
+    await say({});
+    await both(app, w, "first-run", null, { note: "the first run: Claude Code · sonnet found and answering, the apps to open, with their own icons" });
+    await both(app, w, "first-run-focus", () => w.locator("#first-apps li").first(), { themes: ["dark"], pad: 16, checks: [await pageFocus(w, w.locator("#first-apps button").first())] });
+    await w.click("#first-skip");
+    await w.locator(".app").waitFor();
+    await w.locator('li[data-app="tunes"]').waitFor();
+    await w.mouse.move(4, 710); await sleep(500);
+    await both(app, w, "apps", null, { note: "Your apps: each app's own icon (an app without one gets the apps glyph, never a letter)" });
+    // Tunes, opened with Morse for real
+    await w.locator('li[data-app="tunes"]').getByRole("button", { name: "Open with Morse" }).click();
+    await w.waitForFunction(() => /Opening|Connecting/.test(document.querySelector('li[data-app="tunes"]')?.textContent || ""), null, { timeout: 20000 }).catch(() => {});
+    await pageShot(w, "desktop", "apps-opening", "dark", w.locator("#app-list"), { suffix: "", note: "opening Tunes with Morse: the radar pulses in its row" });
+    await w.locator('li[data-app="tunes"].connected').waitFor({ timeout: 120000 });
+    await w.mouse.move(4, 710); await sleep(400);
+    await both(app, w, "apps-connected", null, { note: "Tunes connected: 1 window, 2 mods on; the nav says 1 on" });
+    await w.locator('li[data-app="tunes"] button').hover(); await sleep(200);
+    await both(app, w, "apps-row-hover", () => w.locator('li[data-app="tunes"]'), { themes: ["dark"], pad: 8, keepPointer: true });
+    await both(app, w, "apps-button-focus", () => w.locator('li[data-app="tunes"]'), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator('li[data-app="tunes"] button'))] });
+    await w.mouse.move(4, 710);
+    // a launch that failed says why, in the window (the real words: daemon/apps.js launchFailure)
+    await w.evaluate(() => { const e = document.getElementById("apps-error"); e.textContent = "Joplin quit right after it started (exit code 1), before Morse could connect. You're running as root, and Electron and Chromium apps won't start as root with their sandbox on. Run Morse as your own user. If you really must use root: morse launch joplin -- --no-sandbox"; e.hidden = false; });
+    await both(app, w, "apps-error", null, { note: "an app that wouldn't start: Morse's own words for why (daemon/apps.js launchFailure)" });
+    await w.evaluate(() => { document.getElementById("apps-error").hidden = true; });
+    // the question before restarting an app that is open without Morse (app.js askRestart)
+    await w.evaluate(() => { document.getElementById("ask-restart-h").textContent = "Obsidian is open. Restart it with Morse?"; document.getElementById("always-label").textContent = "Always restart Obsidian"; document.getElementById("ask-restart").showModal(); document.getElementById("restart-ok").focus(); });
+    await sleep(300);
+    await both(app, w, "restart", null, { note: "“Obsidian is open. Restart it with Morse?”, with Always restart" });
+    await w.evaluate(() => document.getElementById("ask-restart").close());
+
+    // ---- Model
+    await tab(w, "model");
+    await both(app, w, "model", null, { note: "Claude Code · sonnet, answered; the real Claude mark" });
+    await w.click("#change-model");
+    await w.waitForSelector("#choice-list .choice");
+    await w.mouse.move(4, 710); await sleep(500);
+    await both(app, w, "model-choices", null, { note: "three choices with their real marks: Ready, Not installed, and nothing for a key" });
+    await w.click('[data-howto="codex"]'); await w.mouse.move(4, 710); await sleep(300);
+    await both(app, w, "model-howto", () => w.locator("#choices"), { note: "How to install: the one command, and Look again" });
+    await both(app, w, "model-howto-focus", () => w.locator('[data-choice="codex"]'), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator('[data-howto="codex"]'))] });
+    await w.click('[data-choice="api-key"]'); await w.mouse.move(4, 710); await sleep(300);
+    await both(app, w, "model-key", () => w.locator("#choices"), { note: "API key: the field, and where it stays" });
+    await both(app, w, "model-choice-focus", () => w.locator('[data-choice="api-key"]'), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator('[data-choice="api-key"] input'))] });
+    await w.click("#cancel-choice");
+    await say({ delay: 6000 });
+    await w.click("#check-model");
+    await sleep(500);
+    await pageShot(w, "desktop", "model-checking", "dark", w.locator(".card.current"), { suffix: "", note: "checking that the model answers" });
+    await w.waitForFunction(() => !document.querySelector("#check-model").disabled, null, { timeout: 60000 });
+    await say({ fail: "You've hit your usage limit. It resets at 4pm." });
+    await w.click("#check-model");
+    await w.waitForFunction(() => /Didn't answer/.test(document.querySelector("#model-live").textContent), null, { timeout: 60000 });
+    await w.mouse.move(4, 710);
+    await both(app, w, "model-failed", () => w.locator(".card.current"), { note: "a check that failed says why, in the model's own words; the nav shows !" });
+    await say({});
+    await w.click("#check-model");
+    await w.waitForFunction(() => /Answered/.test(document.querySelector("#model-live").textContent), null, { timeout: 60000 });
+
+    // ---- Chrome
+    await tab(w, "chrome");
+    await both(app, w, "chrome", null, { note: "the Morse helper on, the ways to connect Chrome" });
+    await w.click("#new-code");
+    await w.waitForSelector("#pair-code:not([hidden])");
+    await w.mouse.move(4, 710);
+    await both(app, w, "chrome-code", null, { note: "a code to type in Chrome, for a few minutes" });
+    await w.click("#helper-on"); await sleep(1500);
+    await both(app, w, "chrome-off", () => w.locator("section#chrome .card").first(), { note: "the helper off: Chrome can't use the model" });
+    await both(app, w, "chrome-switch-focus", () => w.locator("section#chrome .card").first(), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator("#helper-on"))] });
+    await w.click("#helper-on"); await sleep(2500);
+    // the Morse extension asks to connect (daemon/bridge.js /v1/pair/ask), as the welcome page does
+    const health = await fetch(`http://127.0.0.1:${port}/v1/health`).then(r => r.json(), () => ({}));
+    if (health.ask) {
+      const http = await import("node:http");
+      await new Promise((resolve, reject) => {
+        const req = http.request({ host: "127.0.0.1", port, method: "POST", path: "/v1/pair/ask", headers: { Origin: `chrome-extension://${"lkbmdfnoigeajfhc".repeat(2)}`, "Content-Type": "application/json" } }, res => { res.resume(); res.on("end", resolve); });
+        req.on("error", reject); req.end("{}");
+      });
+      await w.waitForSelector("dialog#ask-pair[open]", { timeout: 30000 });
+      await sleep(400);
+      await both(app, w, "allow", null, { note: "“Allow Chrome to use your Claude Code · sonnet?”: the real helper asking" });
+      await w.click("#pair-no");
+    } else console.warn("  ! the helper can't ask: no Allow state");
+
+    // ---- Mods
+    await tab(w, "mods");
+    await both(app, w, "mods", null, { note: "mods per app, each app's icon, a switch each; one off" });
+    await both(app, w, "mods-switch-focus", () => w.locator(".group").first(), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator(".mods input").first())] });
+    await w.click("#mods-on"); await sleep(1200);
+    await both(app, w, "mods-paused", null, { note: "every mod off: the notice, and the switch in the sidebar" });
+    await w.click("#resume"); await sleep(1000);
+
+    // ---- Checks
+    await tab(w, "checks");
+    await both(app, w, "checks-idle", null, { note: "checks run only when asked: they ask the model a question" });
+    await say({ delay: 5000 });
+    await w.click("#run-checks"); await sleep(600);
+    await pageShot(w, "desktop", "checks-running", "dark", null, { suffix: "" });
+    await w.waitForFunction(() => !document.querySelector("#run-checks").disabled, null, { timeout: 120000 });
+    await say({});
+    await w.mouse.move(4, 710);
+    await both(app, w, "checks", null, { note: "what Morse found; “You're root” is this test machine" });
+    await both(app, w, "nav-focus", () => w.locator("nav"), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator('nav button[data-tab="apps"]'))] });
+
+    // ---- the window at its smallest (760 × 560)
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(760, 560));
+    await sleep(800);
+    await tab(w, "apps");
+    await both(app, w, "apps", null, { suffix: "-min", note: "the window at its smallest, 760 × 560" });
+    await tab(w, "model");
+    await w.click("#change-model"); await w.waitForSelector("#choice-list .choice"); await sleep(500);
+    await w.click('[data-howto="codex"]'); await sleep(300);
+    await both(app, w, "model-choices", null, { suffix: "-min", themes: ["dark"] });
+    await w.click("#cancel-choice");
+    await tab(w, "chrome");
+    await both(app, w, "chrome", null, { suffix: "-min", themes: ["dark"] });
+    await tab(w, "checks");
+    await both(app, w, "checks", null, { suffix: "-min", themes: ["dark"] });
+    await quit(app);
+
+    // ---- 2. a computer with no model and no app Morse can open
+    ({ app, w } = await launch("empty", { desktop: { helper: false, apps: ["/bin/true"] }, config: { provider: "none" } }));
+    await w.locator("#first").waitFor();
+    await w.mouse.move(4, 710); await sleep(500);
+    await both(app, w, "first-run-no-model", null, { note: "nothing found: paste a key, or other ways to connect a model" });
+    await both(app, w, "first-run-key-focus", () => w.locator("#first-key"), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator("#first-key-input"))] });
+    await w.click("#first-skip");
+    await w.locator(".app").waitFor(); await w.mouse.move(4, 710); await sleep(500);
+    await both(app, w, "apps-empty", null, { note: "Choose a model first; an app Morse can't connect to says why" });
+    await tab(w, "model");
+    await both(app, w, "model-none", null, { note: "no model yet: Choose…" });
+    await tab(w, "chrome");
+    await both(app, w, "chrome-helper-off", null, { themes: ["dark"] });
+    await tab(w, "mods");
+    await both(app, w, "mods-empty", null, { note: "No mods yet" });
+    await quit(app);
+  } finally {
+    for (const k of kids) { try { process.kill(k.process().pid, "SIGKILL"); } catch {} }
+    try { const { listProcesses } = await import("../daemon/apps.js"); for (const p of listProcesses()) if (p.cmd.includes(tmp)) try { process.kill(p.pid, "SIGKILL"); } catch {} } catch {}
+    await fs.rm(tmp, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+// ---- the welcome page, onboarding v2 (extension/welcome.*), and the
+// “Allow User Scripts” window (extension/allow.html): the real built
+// extension, headful under Xvfb, every screen at 1280 and 390, dark and light,
+// in English, German (long words) and Persian (right to left). What the page
+// hears about the model (popup.state, the Allow question, pairing, a key) is
+// stubbed per state, so each shot is the same every time; the practice page
+// is the real one, with sample answers.
+const HELPER = { app: "desktop", ask: true, paired: false, pairing: false, provider: "claude-code", label: "Claude Code · sonnet", signedIn: { claude: true } };
+const WELCOME = {
+  none: { st: { kind: "none", label: "", helper: null } },
+  looking: { st: { kind: "none", label: "", helper: null }, slow: 60000 },
+  ask: { st: { kind: "none", label: "", helper: HELPER } },
+  "ask-signed-out": { st: { kind: "none", label: "", helper: { ...HELPER, signedIn: { claude: false } } } },
+  "ask-waiting": { st: { kind: "none", label: "", helper: HELPER }, ask: "waiting" },
+  "ask-denied": { st: { kind: "none", label: "", helper: HELPER }, ask: "denied" },
+  code: { st: { kind: "none", label: "", helper: { ...HELPER, app: "cli", ask: false } } },
+  "no-model": { st: { kind: "none", label: "", helper: { ...HELPER, provider: "none", label: "No model" } } },
+  connected: { st: { kind: "helper", label: "Claude Code · sonnet", helper: { ...HELPER, paired: true } } },
+};
+async function welcomeStates() {
+  if (!process.env.DISPLAY) { console.warn("  ! the welcome page needs DISPLAY (Xvfb :99)"); return; }
+  const os = await import("node:os");
+  const EXT = path.join(ROOT, "dist", "extension");
+  // The page's messages about the model, answered from localStorage["morse-ui"] (set before each reload).
+  const stub = () => {
+    if (location.protocol !== "chrome-extension:" || !globalThis.chrome?.runtime?.sendMessage) return;
+    const real = chrome.runtime.sendMessage.bind(chrome.runtime);
+    const conf = () => { try { return JSON.parse(localStorage.getItem("morse-ui") || "null"); } catch { return null; } };
+    chrome.runtime.sendMessage = async m => {
+      const c = conf();
+      if (!c) return real(m);
+      if (m?.type === "popup.state") { if (c.slow) await new Promise(r => setTimeout(r, c.slow)); return { userScripts: true, mods: [], ...c.st }; }
+      if (m?.type === "popup.askStart") return { id: "ask-1", expires: Date.now() + 120000 };
+      if (m?.type === "popup.askCheck") return { state: c.ask || "waiting" };
+      if (m?.type === "popup.pair") return { error: "That code doesn't match the one the Morse helper shows. Check it and try again." };
+      if (m?.type === "popup.save") return { error: "The key was refused: invalid x-api-key" };
+      if (m?.type === "onboarding.status") return { state: {}, status: { model: { connected: c.st.kind !== "none" }, userScripts: true, mods: 0 } };
+      return real(m);
+    };
+  };
+  for (const theme of ["dark", "light"]) {
+    const dir = await fs.mkdtemp(path.join(existsSync("/dev/shm") ? "/dev/shm" : os.tmpdir(), "morse-ui-welcome-"));
+    const ctx = await chromium.launchPersistentContext(dir, {
+      headless: false, viewport: { width: 1280, height: 860 }, deviceScaleFactor: 1, colorScheme: theme,
+      args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, "--no-sandbox"],
+    });
+    extCtxs.push(ctx);
+    try {
+      ctx.setDefaultTimeout(Number(process.env.UI_TIMEOUT) || 15000);
+      await ctx.addInitScript(stub);
+      const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
+      const id = sw.url().split("/")[2];
+      await sleep(800);
+      for (const pg of ctx.pages()) if (pg.url().includes("welcome.html")) await pg.close().catch(() => {});
+      const w = await ctx.newPage();
+      await w.goto(`chrome-extension://${id}/welcome.html`);
+      await w.addStyleTag({ content: "html { scrollbar-width: none; }" }).catch(() => {});
+      // One screen of the welcome page: where you are, the language, what the page hears.
+      const at = async ({ screen = "choose", want = "web", lang = "en", state = "none", width = 1280 }) => {
+        await w.setViewportSize({ width, height: width < 600 ? 844 : 860 });
+        await w.evaluate(async ({ screen, want, lang, conf }) => {
+          localStorage.setItem("morse-ui", JSON.stringify(conf));
+          await chrome.storage.local.set({ "morse.start": { want, screen }, "morse.settings": { language: lang } });
+          await chrome.storage.sync.remove("morse.settings").catch(() => {});
+        }, { screen, want, lang, conf: WELCOME[state] });
+        await w.reload();
+        await w.addStyleTag({ content: "html { scrollbar-width: none; }" }).catch(() => {});
+        await w.waitForFunction(s => document.getElementById("app")?.dataset.screen === s, screen);
+        await sleep(state === "looking" ? 600 : 1500);
+        await w.mouse.move(width - 4, 4);
+      };
+      const shoot = (state, opts = {}) => pageShot(w, "welcome", state, theme, opts.target || null, { full: !opts.target, ...opts });
+      for (const width of [1280, 390]) {
+        for (const lang of ["en", "de", "fa"]) {
+          const L = lang === "en" ? "" : `${lang}-`;
+          await at({ screen: "choose", lang, width });
+          await shoot(`${L}choose`, { note: "one question: websites, desktop apps or both" });
+          if (lang === "en" && width > 600) {
+            await w.locator("[data-want=web]").hover(); await sleep(200);
+            await shoot("choose-hover", { target: w.locator(".choices"), note: "a choice under the pointer: one step lighter" });
+            await shoot("choose-focus", { target: w.locator(".choices"), checks: [await pageFocus(w, w.locator("[data-want=apps]"))] });
+            await w.mouse.move(width - 4, 4);
+          }
+          await at({ screen: "connect", want: "web", lang, width });
+          await shoot(`${L}connect`, { note: "nothing found yet: Get Morse Desktop, or an API key" });
+          await at({ screen: "connect", want: "both", lang, state: "ask", width });
+          await shoot(`${L}connect-found`, { note: "Morse Desktop is open, with Claude Code · sonnet: one button" });
+          await at({ screen: "try", lang, state: "none", width });
+          await sleep(1500);
+          await shoot(`${L}try`, { note: "the first change: three steps, the practice page, sample answers until a model is connected" });
+          await at({ screen: "win", want: "both", lang, state: "connected", width });
+          await shoot(`${L}win`, { note: "the first mod is saved: a real site next, and the apps" });
+          if (lang !== "en") continue;
+          // the rest of connect, in English
+          await at({ screen: "connect", want: "both", width });
+          await shoot("connect-both", { note: "websites and apps: Morse Desktop first, the key folded away" });
+          await w.locator("#term summary").click(); await w.locator("#key-more summary").click(); await sleep(300);
+          await shoot("connect-both-open", { note: "the key and the terminal, opened" });
+          await at({ screen: "connect", want: "web", width });
+          await w.locator("#key").fill("my-key-123"); await w.locator("#save-key").click(); await sleep(400);
+          await shoot("connect-key-bad", { target: w.locator("[data-view=key]"), note: "a key that isn't one" });
+          await w.locator("#key").fill("sk-ant-api03-xxxx"); await w.locator("#save-key").click(); await sleep(600);
+          await shoot("connect-key-refused", { target: w.locator("[data-view=key]"), note: "a key the API refused" });
+          if (width > 600) await shoot("connect-key-focus", { target: w.locator("[data-view=key]"), checks: [await pageFocus(w, w.locator("#key"))] });
+          await at({ screen: "connect", width, state: "looking" });
+          await shoot("connect-looking", { target: w.locator("#connect"), note: "looking for Morse Desktop" });
+          for (const s of ["ask-signed-out", "code", "no-model", "connected"]) {
+            await at({ screen: "connect", want: "both", state: s, width });
+            if (s === "code") { await w.locator("#code").fill("ZZZZZ"); await w.locator("#pair").click(); await sleep(400); }
+            await shoot(`connect-${s}`, { target: w.locator("#connect"), note: { "ask-signed-out": "Claude Code found but signed out", code: "a helper started from a terminal: type its code", "no-model": "Morse Desktop without a model", connected: "connected: on to the first change" }[s] });
+          }
+          for (const s of ["ask-waiting", "ask-denied"]) {
+            await at({ screen: "connect", want: "both", state: s, width });
+            await w.locator("#use").click(); await sleep(1600);
+            await shoot(`connect-${s}`, { target: w.locator("#connect"), note: s === "ask-waiting" ? "waiting for Allow in Morse Desktop" : "Denied in Morse Desktop" });
+          }
+          if (width > 600) {
+            await at({ screen: "connect", want: "both", state: "ask", width });
+            await shoot("connect-use-focus", { target: w.locator("#connect"), checks: [await pageFocus(w, w.locator("#use"))] });
+          }
+          for (const want of ["web", "apps"]) {
+            await at({ screen: "win", want, state: want === "web" ? "connected" : "ask", width });
+            await shoot(`win-${want}${want === "apps" ? "-no-model" : ""}`, { note: want === "web" ? "websites only" : "apps only, tried with a sample answer: connect a model next" });
+          }
+          // the practice page's bar, with the sample suggestions
+          await at({ screen: "try", state: "none", width });
+          await w.locator("#open-bar").click().catch(() => {}); await sleep(1800);
+          await pageShot(w, "practice", "sample-bar", theme, w.locator("#frame"), { note: "the practice bar, opened from step 1: the coach, sample suggestions" });
+        }
+      }
+      // the “Allow User Scripts” window, as Chrome shows it beside Morse's details
+      const a = await ctx.newPage();
+      for (const lang of ["en", "de", "fa"]) {
+        await w.evaluate(lang => chrome.storage.local.set({ "morse.settings": { language: lang } }), lang);
+        await a.setViewportSize({ width: 360, height: 440 });
+        await a.goto(`chrome-extension://${id}/allow.html`); await sleep(900);
+        await pageShot(a, "welcome", `${lang === "en" ? "" : lang + "-"}allow-window`, theme, null, { suffix: "", full: true, note: "“Allow User Scripts”: a picture of the switch, and Morse waits for it" });
+      }
+      await a.close();
+    } finally {
+      await ctx.close().catch(() => {});
+      await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+    }
+  }
+}
+
+// ---- the website (site/) and its Try it here (site/try/), as demo/shoot-site.js
+// and demo/shoot-try.js show them: the landing page whole and its first screen
+// at 1440, 768 and 390, the nav sheet on a phone, and Try it here writing the
+// sleep timer, its result and a request it has no sample for. The site is
+// Morse's own dark design: one scheme.
+async function siteStates() {
+  const { demoSites } = await import("./helper.js");
+  const sites = await demoSites();
+  try {
+    for (const width of [1440, 768, 390]) {
+      const phone = width < 600;
+      const ctx = await browser.newContext({ viewport: { width, height: phone ? 844 : 900 }, deviceScaleFactor: 1, colorScheme: "dark", reducedMotion: "reduce", hasTouch: phone, isMobile: phone });
+      ctx.setDefaultTimeout(Number(process.env.UI_TIMEOUT) || 20000);
+      await sites.route(ctx);
+      const p = await ctx.newPage();
+      p.on("pageerror", e => console.warn("  [pageerror]", e.message));
+      await p.goto(sites.url("parley", "/site/"));
+      await p.waitForLoadState("networkidle").catch(() => {});
+      // lazy pictures load near the screen: scroll down a screen at a time, then wait for each
+      const H = await p.evaluate(() => document.documentElement.scrollHeight);
+      for (let y = 0; y < H; y += 450) { await p.evaluate(y => scrollTo(0, y), y); await sleep(80); }
+      const missing = await p.evaluate(async () => { await Promise.all([...document.images].map(i => i.decode().catch(() => {}))); await document.fonts.ready; return [...document.images].filter(i => !i.complete || !i.naturalWidth).map(i => i.getAttribute("src")); });
+      await p.evaluate(() => scrollTo(0, 0)); await sleep(300);
+      await pageShot(p, "site", "landing", "dark", null, { suffix: `-${width}`, full: true, checks: [missing.length ? `pictures that didn't load: ${missing.join(", ")}` : ""], note: "the landing page, whole" });
+      await pageShot(p, "site", "first-screen", "dark", null, { suffix: `-${width}`, axe: false, note: "what someone arriving sees first" });
+      if (phone) {
+        await p.click(".nav-toggle"); await p.waitForSelector(".nav.is-open"); await sleep(400);
+        await pageShot(p, "site", "nav-open", "dark", null, { suffix: `-${width}`, checks: [await pageFocus(p, p.locator(".nav.is-open a").first())], note: "the nav sheet on a phone" });
+        await p.click(".nav-toggle"); await sleep(300);
+      } else {
+        await pageShot(p, "site", "nav-focus", "dark", p.locator("header.nav"), { suffix: `-${width}`, pad: 4, axe: false, checks: [await pageFocus(p, p.locator("header.nav a[href]:visible").nth(1))] });
+      }
+      // Try it here
+      await p.evaluate(() => document.querySelector("#try .try-window").scrollIntoView({ block: "center" }));
+      await p.waitForSelector("#try.is-live");
+      await sleep(1200);
+      const kind = k => p.waitForFunction(k => document.querySelector("#try .try-status")?.dataset.kind === k, k, { timeout: 60000 });
+      const tryBox = p.locator("#try");
+      await pageShot(p, "site", "try", "dark", tryBox, { suffix: `-${width}`, axe: false, note: "Try it here, ready: the suggestions to tap" });
+      if (!phone) await pageShot(p, "site", "try-focus", "dark", p.locator('#try [data-try="ask"]').first(), { suffix: `-${width}`, pad: 8, axe: false, checks: [await pageFocus(p, p.locator('#try [data-try="ask"]').first())] });
+      await p.locator('#try [data-try="ask"][data-text="Add a sleep timer"]').click();
+      await kind("working"); await sleep(1300);
+      await pageShot(p, "site", "try-working", "dark", tryBox, { suffix: `-${width}`, axe: false, note: "the real runtime writing the sleep timer (a sample answer)" });
+      await kind("done"); await sleep(1500);
+      await pageShot(p, "site", "try-result", "dark", tryBox, { suffix: `-${width}`, note: "the sleep timer in the player, Save and Undo" });
+      if (width !== 768) {
+        await p.keyboard.press("Escape"); await sleep(500);
+        await p.locator('#try [data-try="open"]').click(); await sleep(600);
+        await p.keyboard.type("make the logo purple"); await p.keyboard.press("Enter");
+        await kind("unknown"); await sleep(800);
+        await pageShot(p, "site", "try-unknown", "dark", tryBox, { suffix: `-${width}`, axe: false, note: "a request with no sample answer: how to get Morse" });
+      }
+      await ctx.close();
+    }
+  } finally { await sites.close(); }
+}
+
+// ---- round 6 bar states: Esc keeps a change (“Kept it”, with Undo), the
+// developer's “rebuilt” note, Your style's header saying where it shows,
+// Alt+↑ for a bigger part, and Redo in the edit tools.
+async function newBarStates(theme, width) {
+  const n = width < 600, H = n ? 844 : 720;
+  // Esc after a result keeps it: the toast says so, with Undo
+  let p = await open({ theme, width, height: H });
+  await openBar(p); await pick(p, "#card");
+  await submit(p, "make the shuffle button bigger");
+  await stream(p, 12, 20);
+  await finish(p, OK({ title: "Bigger shuffle button" }));
+  await p.keyboard.press("Escape");
+  await ui(p, ".ctl-toast").waitFor({ timeout: 6000 }); await sleep(300); await p.mouse.move(2, H / 2);
+  await shot(p, "new-bar", "kept-toast", ui(p, ".ctl-toast"), { pad: 16, note: "Esc keeps the change and says so, with Undo" });
+  if (!n) await shot(p, "new-bar", "kept-undo-focus", ui(p, ".ctl-toast"), { pad: 16, checks: [await focusVisible(p, ui(p, ".ctl-toast button").first())] });
+  await close(p);
+  // the developer's note: npm run build ran under a running extension
+  p = await open({ theme, width, height: H, extra: "&rebuilt=1" });
+  await ui(p, ".ctl-toast").waitFor({ timeout: 6000 }); await sleep(300);
+  await shot(p, "new-bar", "rebuilt", ui(p, ".ctl-toast"), { pad: 16, note: "for people working on Morse: reload the extension, then the page" });
+  await close(p);
+  // Your style: where it shows, in the sheet's header
+  for (const reach of ["web", "all"]) {
+    p = await open({ theme, width, height: H, extra: `&style=plain&reach=${reach}` });
+    await openBar(p);
+    await ui(p, ".in").fill("bigger text and underline links everywhere");
+    await ui(p, ".in").press("Enter");
+    await ui(p, ".ys-sheet").waitFor({ timeout: 6000 }); await sleep(300);
+    await shot(p, "new-bar", `style-${reach}`, ui(p, ".bar"), { note: reach === "web" ? "“Every site in Chrome”: Chrome on its own" : "“Every site and app”: Chrome paired with Morse Desktop" });
+    await close(p);
+  }
+  // Alt+↑: a bigger part than the one pointed at
+  p = await open({ theme, width, height: H });
+  await openBar(p); await pick(p, "#small");
+  await shot(p, "new-bar", "hint-wider", ui(p, ".bar"), { note: "after pointing, the hint names Alt+↑ for a bigger part" });
+  await ui(p, ".in").focus();
+  await p.keyboard.press("Alt+ArrowUp"); await sleep(300);
+  await shot(p, "new-bar", "wider-picked", [ui(p, ".bar"), ui(p, ".sel")], { pad: 12, note: "Alt+↑ picked the part around it" });
+  await close(p);
+  // Redo in the edit tools
+  p = await open({ theme, width, height: H });
+  await openBar(p);
+  await select(p, "#toolbar", 0.5, 0.15);
+  await editFocus(p);
+  await p.keyboard.press("h"); await sleep(350); await toastGone(p);
+  await p.keyboard.press("Control+KeyZ"); await sleep(350); await toastGone(p);
+  await p.keyboard.press("Control+Shift+KeyZ"); await sleep(350);
+  await shot(p, "new-bar", "redone-toast", ui(p, ".toast"), { pad: 16, note: "Redo: “Redone: …”" });
+  await toastGone(p);
+  if (!n) {
+    await select(p, "#card", 0.5, 0.5);
+    const r = ui(p, ".gm-tb button[data-t=redo]");
+    await r.hover(); await sleep(520);
+    await shot(p, "new-bar", "redo-tool", [tb(p), ui(p, ".gm-tb button[data-t=redo] .tip")], { pad: 8, note: "the Redo tool, off when there is nothing to redo, with its key" });
+  }
+  await close(p);
+}
+
 // ---------------------------------------------------------------- run
 // A flow that throws is a finding, not the end of the run.
 async function guard(area, fn) {
@@ -2471,6 +2972,7 @@ for (const theme of THEMES) {
     if (want("waiting")) await guard("waiting", () => waitingStates(theme, width));
     if (want("packs")) await guard("packs", () => packStates(theme, width));
     if (want("i18n")) await guard("i18n", () => i18nStates(theme, width));
+    if (want("new-bar")) await guard("new-bar", () => newBarStates(theme, width));
   }
   if (want("popup")) await guard("popup", () => popupStates(theme));
   if (want("motion")) await guard("motion", () => reducedMotion(theme));
@@ -2478,6 +2980,9 @@ for (const theme of THEMES) {
 if (want("hostile")) { console.log("— hostile hosts"); await hostileStates(); }
 if (want("hostile") || want("hostile-r4")) { console.log("— hostile hosts, round 4"); await guard("hostile", hostileR4States); }
 if (want("trusted-types")) { console.log("— Trusted Types"); await guard("trusted-types", trustedTypesStates); }
+if (want("site")) { console.log("— the website and Try it here"); await guard("site", siteStates); }
+if (want("desktop")) { console.log("— Morse Desktop (Xvfb)"); await guard("desktop", desktopStates); }
+if (want("welcome") || want("extension")) { console.log("— the welcome page, onboarding v2 (Xvfb)"); await guard("welcome", welcomeStates); }
 if (want("extension")) { console.log("— the extension's own pages (Xvfb)"); await guard("extension", extensionStates); }
 if (want("a11y-site")) { console.log("— Riverside Library (page tools)"); for (const w of WIDTHS) await a11ySiteStates(w); }
 await browser.close();

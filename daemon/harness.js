@@ -174,15 +174,20 @@ export function setWarmPoolSize(n, { keepOthers: k = false } = {}) { warmMax = M
 // (update checks, error reports, a summary of each turn after it ends).
 const claudeEnv = () => ({ ...process.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: process.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC ?? "1" });
 const EFFORTS = new Set(["low", "medium", "high", "xhigh", "max"]);
-// dogfood (speed): low effort unless the settings say otherwise, like the API
-// path (core/providers.js). On real apps (VSCodium, Joplin) haiku at its
-// default effort thought for 11 to 21 s before writing; at low, 2 to 3 s most
-// times (docs/dogfood.md). A Claude Code too old to know --effort says so
-// once; Morse then leaves the flag out (noEffort).
+// dogfood (speed): a set effort unless the settings say otherwise. On real
+// apps (VSCodium, Joplin) haiku at its default effort thought for 11 to 21 s
+// before writing; at low, 2 to 3 s most times (docs/dogfood.md). design: on
+// the design eval (evals/design/README.md, 23 cases on real apps and sites,
+// sonnet with Polish changes) medium made the best-looking and most complete
+// changes (4.39 of 5, 23 of 23 working) where low lost both (4.19, 20 of 23),
+// and was faster than the CLI's own effort (16.1 vs 17.8 s median, 4.32 of 5):
+// medium is the default. A Claude Code too old to know --effort says so once;
+// Morse then leaves the flag out (noEffort).
 let noEffort = false;
 // The strong tier of Automatic routing (core/route.js, tier "best") keeps the
 // CLI's own effort: it gets the requests that look hard, and second tries.
-export const effortOf = s => (noEffort ? "" : EFFORTS.has(s.effort) ? s.effort : s.tier === "best" ? "" : "low");
+// "default" asks for the CLI's own effort by name (evals/design compares them).
+export const effortOf = s => (noEffort || s.effort === "default" ? "" : EFFORTS.has(s.effort) ? s.effort : s.tier === "best" ? "" : "medium");
 function claudeArgs(s, sysFile) {
   const effort = effortOf(s);
   return [
