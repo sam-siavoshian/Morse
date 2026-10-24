@@ -2,6 +2,8 @@
 
 How often does Morse actually do what people ask? Each case is a realistic request on a demo app ("make the album covers bigger", "hide the ads", "let me sort by this column"). The runner sends it through the real pipeline and then checks the result in the page.
 
+Whether a new feature or restyle *looks* like it belongs (on real apps: VSCodium, VS Code, Obsidian, Joplin, nodejs.org, scored by an Opus judge from screenshots) is the [design fit eval](design/README.md). `--polish` here turns on Polish changes (`core/polish.js`).
+
 ```bash
 node evals/run.js                                  # train split, Claude Code, Automatic (sonnet, then opus), 4 at a time
 node evals/run.js --repeat 3                       # the numbers below are 3 runs per case
@@ -279,4 +281,5 @@ Rows before "baseline (rescored checkers)" used earlier checkers. "dev" rows are
 | 2026-10-24 16:35 | routing: held-out shop case after the generated-names check | claude-code:auto | only | 2/2 (100%) | 2.7s (p90 2.7s) |
 | 2026-10-24 17:59 | models: before, Automatic haiku then sonnet (copy of 61afab7) | claude-code:auto | only | 47/51 (92%) | 4.4s (p90 9.4s) |
 | 2026-10-24 17:59 | models: after, Automatic sonnet then opus | claude-code:auto | only | 48/51 (94%) | 5.9s (p90 13.2s) |
+| 2026-10-24 21:19 | design-fit: this branch, polish on, sonnet low | claude-code:sonnet | only | 44/44 (100%) | 9.7s (p90 19.5s) |
 <!-- run-log -->

@@ -90,8 +90,10 @@ from the welcome page. Each task was watched closely on its own screen, with
 
 **Slowness**
 
-Claude Code now runs at low effort unless you choose another
-(`daemon/harness.js`), like the Anthropic key already did. Measured with the
+Claude Code now runs at a set effort unless you choose another
+(`daemon/harness.js`): low at first, now medium, which made better-looking
+and more complete changes than low on the design eval
+([evals/design](../evals/design/README.md)) for a second or two more. Measured with the
 same request and Morse's instructions, five runs each with haiku: the first
 words came after **14.2 s** (11.2 to 21.3 s) at Claude Code's own effort and
 **2.7 s** (1.7 to 11.9 s) at low. On the real apps, VSCodium went from 19.5 s
