@@ -54,6 +54,7 @@ ${B("Mods")}
   morse install <link|file> install a shared mod
 
 ${B("Model")}
+  morse setup               choose Claude Code, Codex, an API key or Ollama (finds what is installed)
   morse model               show the model Morse will use
   morse model --provider ollama|openai|demo --model <name> [--base-url <url>] [--api-key <key>]
 
@@ -63,6 +64,7 @@ Websites: load the browser extension (npm run build, then load dist/extension).`
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const f = flags(rest);
+  if (await (await import("./setup.js")).maybeRun(cmd, rest)) return; // onboarding hook: morse setup, and getting started while nothing is set up
   switch (cmd) {
     case "launch": {
       if (!f._[0]) throw new Error("Which app? e.g. morse launch spotify");

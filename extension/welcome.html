@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welcome to Morse</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="welcome.css">
+</head>
+<body>
+<!-- Opened once on install (onboarding-host.js). The practice area is a
+     sandboxed frame (practice.html) relayed by welcome.js; the checklist ticks
+     itself from chrome.storage and the browser's own state. -->
+<main class="wrap">
+  <header class="hero">
+    <div class="brand"><span class="mark" aria-hidden="true"></span>morse</div>
+    <h1>Morse is installed.</h1>
+    <p class="lede">Morse changes any website the way you describe it: press <span class="hk" data-hk="open"></span>, point at something, and say what you want different.</p>
+  </header>
+
+  <div class="grid">
+    <section class="practice" id="practice" aria-labelledby="practice-h">
+      <div class="head">
+        <h2 id="practice-h">Try it here</h2>
+        <span>This practice page is yours to change. Nothing leaves your browser.</span>
+      </div>
+      <ol class="three">
+        <li><span class="n">1</span><div><b>Open Morse</b><span>Click the page below, then press <span class="hk" data-hk="open"></span>. <button type="button" class="link" id="try">Or click here</button></span></div></li>
+        <li><span class="n">2</span><div><b>Point</b><span>Click the article to pick it.</span></div></li>
+        <li><span class="n">3</span><div><b>Describe</b><span>Type <q>make this easier to read</q>, press Enter, then Keep.</span></div></li>
+      </ol>
+      <div class="frame" id="frame"></div>
+      <p class="aside">No model connected yet? This page works with the built-in demo model, which knows <q>make this easier to read</q> and <q>add a word count under the note box</q>.</p>
+    </section>
+
+    <aside class="check" aria-labelledby="check-h">
+      <h2 id="check-h">Get set up <span id="progress"></span></h2>
+      <ul>
+        <li data-step="pin">
+          <span class="tick" aria-hidden="true"></span>
+          <div><b>Pin Morse to the toolbar</b>
+            <span>Click the puzzle piece next to the address bar, then the pin next to Morse. Its menu shows your mods and settings.</span></div>
+        </li>
+        <li data-step="scripts">
+          <span class="tick" aria-hidden="true"></span>
+          <div><b>Turn on “Allow User Scripts”</b>
+            <span>Chrome only runs the code Morse writes when this is on. Without it, style changes still work, but new buttons and features don't run on sites with strict security.</span>
+            <button type="button" id="open-ext">Open Morse's settings</button></div>
+        </li>
+        <li data-step="model" id="model">
+          <span class="tick" aria-hidden="true"></span>
+          <div><b>Connect a model</b>
+            <span>Morse needs a model to write changes. Choose Ollama, an OpenAI-compatible server or an API key in Morse's menu. For Claude Code or Codex, run <code>morse setup</code> in a terminal.</span>
+            <span class="row"><button type="button" id="open-model">Open model settings</button><button type="button" id="copy-setup" class="quiet">Copy <code>morse setup</code></button></span>
+            <small id="model-label"></small></div>
+        </li>
+        <li data-step="first">
+          <span class="tick" aria-hidden="true"></span>
+          <div><b>Make your first change</b>
+            <span>On the practice page, or on any website. Keep it, and it's there next time.</span></div>
+        </li>
+      </ul>
+    </aside>
+  </div>
+
+  <section class="know" aria-labelledby="know-h">
+    <h2 id="know-h">Good to know</h2>
+    <div class="cols">
+      <div><b>Tabs that were already open</b><span>Reload them once. Chrome only adds Morse to pages loaded after it was installed.</span></div>
+      <div><b>Where Morse can't run</b><span>Chrome's own pages, the Chrome Web Store and PDFs in Chrome's viewer. Files on your computer need “Allow access to file URLs” in <button type="button" class="link" id="open-ext-2">Morse's settings</button>.</span></div>
+      <div><b>Help while you work</b><span>In the Morse bar, <span class="caps"><kbd>F1</kbd></span> shows example sentences and <span class="caps"><kbd>?</kbd></span> shows keyboard shortcuts.</span></div>
+      <div><b>Nothing is permanent</b><span>Every change is a mod. <span class="hk" data-hk="mods"></span> opens Mods, where you can turn one off, edit it or share it.</span></div>
+    </div>
+  </section>
+</main>
+<script src="welcome.js" type="module"></script>
+</body>
+</html>
