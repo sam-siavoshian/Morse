@@ -13,7 +13,13 @@ extension's own pages (welcome, practice, popup: the real extension, headful und
 panel, toolbar and settings on a page that enforces Trusted Types (pixel-compared with the normal page), and (round 5) mods
 waiting for “Allow User Scripts” (notice, bar note, panel tag, result, popup), mod packs (Make a pack, the install
 review with ticks and clashes, the grouped panel, the update review), every status stage of a model run, and a
-guard row under Your style's softer colors pixel-compared with the same row without it, runs the automated checks marked **[auto]** on each
+guard row under Your style's softer colors pixel-compared with the same row without it, and (round 6) Morse Desktop (the real
+Electron app under Xvfb, `--only=desktop`: first run, Apps with the apps' own icons, Model with the real marks, Chrome, the
+Allow question, Mods, Checks, empty, loading and error states, the window at 760 × 560), the welcome page of onboarding v2
+and the “Allow User Scripts” window (`--only=welcome`: every step at 1280 and 390 in English, German and Persian), the
+website and Try it here (`--only=site`: 1440, 768 and 390) and the newer bar states (`--only=new-bar`: Esc's “Kept”
+toast with Undo, the developer's “rebuilt” note, Your style's “Every site in Chrome” / “Every site and app”, Alt+↑ for a
+bigger part, Redo), runs the automated checks marked **[auto]** on each
 shot, and writes `docs/ui/index.html`. The rest are checked by eye; verdicts
 and notes live in `docs/ui/review.json`.
 
@@ -107,6 +113,14 @@ known issue is written down with its reason, ❌ when it fails review.
 
 - The welcome page, the practice page and the popup use design/tokens.css only (no fallback colors), the same control heights (28 buttons, 24 inline), 1px lines, 4px key caps and the radar-square status dot. Disabled is `--m-signal-1`, never opacity.
 - [auto] Nothing sticks out of the page or scrolls it sideways at 1100px and 390px; text that is cut ends in an ellipsis.
+
+## 7c2. Morse Desktop and whole pages (round 6)
+
+- An app's icon is its own (desktop-app/icons.js); an app with none gets the sidebar's Apps glyph, never a letter. Model marks are the real Claude, OpenAI and Anthropic marks (desktop-app/ui/icons/NOTICE); no other drawn art.
+- A list's empty or loading row is a line inside the list, never a second bordered box.
+- At the window's smallest (760 × 560) nothing that names something is cut: buttons wrap under the name.
+- [auto] Whole pages (`pageShot`): nothing sticks out or scrolls sideways, cut text ends in an ellipsis (visually hidden text excepted), axe-core on the page; focus states check a 2px ring.
+- Disabled buttons and done steps on extension pages are muted by tokens, never opacity. Grid columns that hold words are `minmax(0, 1fr)`, so a long German word never widens the page.
 
 ## 7d. Languages
 

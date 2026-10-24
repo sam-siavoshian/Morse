@@ -4,9 +4,14 @@
 //
 //   - while a mod's code is in the document (from its first exec until the
 //     next navigation), ping the page once a second with Runtime.evaluate
-//   - no answer for HANG_MS while a mod's code is being run (1.5 times that
-//     later on): Runtime.terminateExecution, which interrupts the running
-//     script from the browser side
+//   - no answer for HANG_MS while a mod's code is being run, or for LATER_MS
+//     later on: Runtime.terminateExecution, which interrupts the running
+//     script from the browser side. Later on, the page's own code may be
+//     what's busy: real VS Code starting up on a loaded machine kept its page
+//     from answering for up to 8 s at a time, and stopping that left the
+//     workbench half drawn. Whose code is running can't be seen from outside
+//     without the debugger, and turning that on (Debugger.enable) froze VS
+//     Code's page for 7 s by itself, so the guard waits long enough instead
 //   - then ask the kit which mod's code was running (morse.__hung(), which
 //     also stops that mod); if the kit can't tell, the mod whose code was
 //     being run (an exec still waiting) is the one
@@ -25,6 +30,9 @@
 
 import { HANG_MS, FROZE_ERROR } from "../core/guard.js";
 export { HANG_MS, FROZE_ERROR };
+// No answer this long with no mod code being run: a mod's event handler or
+// timer that never returns (the page's own work doesn't take this long).
+export const LATER_MS = 20000;
 
 const LAST_MAX = 64; // soak: mods whose code is remembered per window
 const race = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]).catch(() => null);
@@ -32,8 +40,8 @@ const race = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(nul
 export class HangGuard {
   // onFroze(id | null, { running }) is called once the script was stopped;
   // `running` means the stopped code was an exec still waiting for its result.
-  constructor(session, { onFroze, hangMs = HANG_MS, every = 1000 } = {}) {
-    Object.assign(this, { s: session, onFroze, hangMs });
+  constructor(session, { onFroze, hangMs = HANG_MS, laterMs = LATER_MS, every = 1000 } = {}) {
+    Object.assign(this, { s: session, onFroze, hangMs, laterMs });
     this.armed = false;
     this.ctx = null;            // the main-world context mods ran in
     this.running = new Map();   // mod id -> execs in flight
@@ -70,7 +78,7 @@ export class HangGuard {
     if (this.pinging) {
       // A mod's code being run is surely what's stuck; later on, the page's
       // own code might be, so give it longer before stepping in.
-      if (Date.now() - this.pingAt >= (this.running.size ? this.hangMs : this.hangMs * 1.5)) this.rescue();
+      if (Date.now() - this.pingAt >= (this.running.size ? this.hangMs : this.laterMs)) this.rescue();
       return;
     }
     this.pinging = true;

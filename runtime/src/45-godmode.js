@@ -293,7 +293,8 @@ const GodMode = (() => {
     S.picking = true;
     // Typing describes a change (the main interaction); the tools are one
     // shortcut away so a sentence starting with "m" never triggers Move.
-    hint.innerHTML = `${t("gm.hint", { key: `${PLATFORM === "mac" ? "⌘" : "Ctrl+"}E` })} · ${t("bar.hint.wider", { key: PLATFORM === "mac" ? "⌥↑" : "Alt+↑" })}`; // dogfood: Alt+↑ (41-keypick.js)
+    // a part is chosen: Alt+↑ for a bigger one takes Esc's place, so the hint fits at desktop width
+    hint.innerHTML = `${t("gm.hintTarget", { key: `${PLATFORM === "mac" ? "⌘" : "Ctrl+"}E` })} · ${t("bar.hint.wider", { key: PLATFORM === "mac" ? "⌥↑" : "Alt+↑" })}`; // dogfood: Alt+↑ (41-keypick.js)
     // A toolbar action that changes the selection (duplicate, Alt+↑/↓) keeps the toolbar focused.
     if (G.keepTb) { G.keepTb = false; tb.focus({ preventScroll: true }); }
     if (!G.raf) G.raf = requestAnimationFrame(loop);
