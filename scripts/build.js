@@ -36,6 +36,7 @@ await fs.copyFile(path.join(root, "design", "tokens.css"), path.join(out, "token
 const popup = await fs.readFile(path.join(root, "extension", "popup.html"), "utf8");
 await fs.writeFile(path.join(out, "options.html"), popup.replace("<title>Morse</title>", "<title>Morse settings</title>").replace("<body>", '<body data-page="options">'));
 await fs.writeFile(path.join(out, "runtime.js"), bundleRuntime());
+await fs.copyFile(path.join(root, "design", "tokens.css"), path.join(out, "tokens.css")); // extension pages (welcome) share the design tokens
 
 // The logo: a 3x3 grid in the gray signal ramp.
 const GRID = ["4a4a50", "f4f4f5", "7a7a82", "b4b4bb", "f4f4f5", "7a7a82", "f4f4f5", "7a7a82", "4a4a50"];

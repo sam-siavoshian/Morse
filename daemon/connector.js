@@ -14,6 +14,7 @@ import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
 import { Generations } from "../core/cancel.js";
 import { cachedVoiceStatus, transcribeAudio } from "./voice.js";
+import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
@@ -110,6 +111,7 @@ export class Connector {
 
   async dispatch(s, ctx, msg) {
     const where = { url: msg.url, app: this.app?.id || null };
+    if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
     switch (msg.type) {
       case "hello":
         this.grantMic(s, msg.url);

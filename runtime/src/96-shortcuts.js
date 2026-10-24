@@ -23,7 +23,7 @@ function renderShortcuts() {
     ]],
   ];
   pane.innerHTML = `<div class="sheet kbsheet" role="group" aria-label="Keyboard shortcuts">
-    <header><b>Keyboard shortcuts</b><button type="button" class="tbtn" data-act="settings">Change shortcuts…</button></header>
+    <header><b>Keyboard shortcuts</b><button type="button" class="tbtn" data-act="help">Examples</button><!-- onboarding hook: 59-help.js --><button type="button" class="tbtn" data-act="settings">Change…</button></header>
     <div class="cols">${groups.map(([title, rows]) => `<section><h4>${title}</h4>${rows.map(([l, k]) => `<div class="krow"><span>${esc(l)}</span><span class="k">${k}</span></div>`).join("")}</section>`).join("")}</div>
   </div>`;
   pane.querySelector("[data-act=settings]").onclick = () => toggleSettings();
