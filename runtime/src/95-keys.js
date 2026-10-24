@@ -87,3 +87,11 @@ listen("keyup", e => {
 }, true);
 // Switching windows mid-hold never delivers the keyup.
 listen("blur", () => { if (held) release(); });
+
+// A hotkey pressed before the UI was loaded (boot.js swallowed it and asked
+// for the UI): run it now, as a tap if it was already let go.
+function adoptKey(p) {
+  if (held || !p?.id || !live()) return;
+  runHotkey(p.id);
+  if (held && p.up) release();
+}

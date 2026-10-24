@@ -23,7 +23,7 @@ morse status     # which desktop apps Morse is connected to, and the mods on in 
 | That model isn't available. Pick another one in model settings. | The model name you chose doesn't exist for this key or plan. | Choose another model: `morse config --model <name>`, or in the popup. |
 | Morse couldn't reach the model. Make sure it's running, or choose another one in model settings. | No answer from the model's server, or no internet connection. | Check your connection. If you set a server address, check that it's running. |
 | The model took too long to answer. Try again, or ask for something smaller. | The request took too long and Morse stopped it. | Ask for a smaller change, or split it in two. |
-| No model connected yet. Settings just opened in a new tab. | Chrome has no model connected. | Connect one in the page that opened: see [Models and setup](models.md#in-chrome). |
+| No model connected yet. Morse's welcome page just opened to connect one. | Chrome has no model connected. | Run the one command the welcome page shows, or paste an API key there: see [Models and setup](models.md#in-chrome). |
 | No model is connected. Run morse setup in a terminal to choose one. | A desktop app is connected, but no model is chosen. | Run `morse setup`. |
 
 ## Messages about the change
@@ -81,7 +81,7 @@ More: [Your controls](your-controls.md#mods-cant-freeze-or-slow-down-a-page).
 | Port … is already used by another program. Leave out --port and Morse picks a free one. | Run the command again without `--port`. |
 | Port … can be reached from other computers …, so Morse won't use it. | Quit the app and run `morse launch` again without extra network switches. |
 | Couldn't make the clip. Check that ffmpeg is installed and try again. | Install `ffmpeg`. |
-| “…” isn't a model name Morse can use. Check the spelling. | Check `morse help` for model names, like `opus`, `sonnet`, `haiku`. |
+| “…” isn't a model name Morse can use. Check the spelling. | Check `morse help` for model names, like `opus` or `sonnet`. |
 | Add --yes to install without being asked. | `morse install` needs a terminal to ask you. Add `--yes` if you already checked the mod. |
 
 In the terminal, the original error follows the plain sentence in grey, for

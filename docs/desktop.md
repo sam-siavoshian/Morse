@@ -8,6 +8,9 @@ changes websites: you point at something, say what you want, and keep it.
 This page explains how to do that, what Morse does to the app (and what it
 doesn't), and which apps can't work.
 
+Rather not use a terminal? [Morse Desktop](desktop-app.md) does the same in a
+window: it lists your apps, opens them with Morse and disconnects them.
+
 ![Tunes, a real Electron app, with the Morse bar open](screenshots/121-electron-bar.png)
 
 ## The short version
@@ -479,7 +482,8 @@ renamed to `tunes`, with the app next to it, unpacked or as
   which built a working "Sleep: off / 15 / 30 / 60 min" picker in about 10
   seconds. That run found a real problem: haiku's first try asked for the
   minutes with `prompt()`, which Electron doesn't support. Morse now tells the
-  model not to use it.
+  model not to use it. Run again for the pictures below (October 24), haiku
+  built a sleep timer picker under the player in about 4 seconds.
 - The same app was run as a normal user with Chromium's sandbox fully on and
   connected with `morse attach --port`.
 - [`tests/electron.test.js`](../tests/electron.test.js) runs the flow on every

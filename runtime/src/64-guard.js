@@ -20,37 +20,45 @@
 // (rowHtml, toggleMod, Health), 97-boot.js (guardReady).
 
 const Guard = (() => {
-  const SLOW = "Paused because it was slowing this page down.";
+  // [lead, note]: message ids "guard.lead.<x>" ("Paused because…") and "guard.note.<x>".
+  // `lang` "en" is for the model (Fix it); people read them in their language.
   const WHY = {
-    slow: [SLOW, "It kept this page busy most of the time."],
-    loop: [SLOW, "It kept running again every time the page changed."],
-    big: [SLOW, "It added too much to the page."],
-    froze: ["Paused because it froze this page.", "Morse turned it off so the page works again."],
-    endless: ["Paused because it would freeze this page.", "Its code never stops running."],
-    hid: ["Paused because it hid this page.", "It would have hidden everything on the page."],
+    slow: ["slow", "slow"],
+    loop: ["slow", "loop"],
+    big: ["slow", "big"],
+    froze: ["froze", "froze"],
+    endless: ["endless", "endless"],
+    hid: ["hid", "hid"],
   };
-  const lead = p => (WHY[p?.why] || WHY.slow)[0];
-  const note = p => (p?.why === "froze" && p.reloaded ? "Morse stopped it and reloaded the page." : (WHY[p?.why] || WHY.slow)[1]);
-  const because = p => lead(p).replace(/^Paused /, "").replace(/\.$/, ""); // "because it froze this page"
+  const lead = (p, lang) => t(`guard.lead.${(WHY[p?.why] || WHY.slow)[0]}`, {}, lang);
+  const note = (p, lang) => (p?.why === "froze" && p.reloaded ? t("guard.note.reloaded", {}, lang) : t(`guard.note.${(WHY[p?.why] || WHY.slow)[1]}`, {}, lang));
+  const because = p => t(`guard.because.${(WHY[p?.why] || WHY.slow)[0]}`); // "because it froze this page"
   const codeKey = m => cssKey(`${m.css}\n${m.js}`);
 
   // ---- the kit paused a mod
+  // A page can fire the event too: it gets one check a second (as in boot.js),
+  // and the listener goes through B.on, so a detached UI lets go of it.
   const heardIds = new Set();
-  let heardTimer = 0;
-  listen("morse:paused", e => { // soak: listen(), so a quiet copy lets go of it
+  let heardTimer = 0, heardAt = -1e9;
+  B.on(document, "morse:paused", e => {
     let id = null;
     try { id = JSON.parse(e.detail).id; } catch {}
     // The detail may not cross JS worlds: then every mod with code is asked.
     const ids = id ? [String(id)] : [...S.mods.filter(m => m.enabled && m.js.trim()).map(m => m.id), S.draft?.id].filter(Boolean);
     ids.forEach(x => heardIds.add(x));
-    clearTimeout(heardTimer);
-    heardTimer = setTimeout(checkHeard, 30);
-  }, undefined, document);
+    heardLater();
+  });
+  function heardLater() {
+    if (heardTimer || !heardIds.size) return;
+    heardTimer = setTimeout(() => checkHeard().finally(() => { heardTimer = 0; heardLater(); }), Math.max(30, heardAt + 1000 - performance.now()));
+  }
   async function checkHeard() {
+    heardAt = performance.now();
     const ids = [...heardIds];
     heardIds.clear();
     for (const id of ids) {
-      const stats = await call("stats", { modId: id }).catch(() => null); // core/kit.js __stats: the page can't fake this
+      if (!live()) return;
+      const stats = await call("stats", { modId: id }).catch(() => null); // core/kit.js __stats (in the extension the page can't fake it; on the desktop mods share the page's world)
       if (stats?.paused) await heard(id, stats.paused);
     }
   }
@@ -64,7 +72,7 @@ const Guard = (() => {
       // While it's being made, the model hears it and tries again (core/engine.js).
       if (S.phase === "working" || toldDraft === `${id}:${p.at}`) return;
       toldDraft = `${id}:${p.at}`;
-      return controlToast(`Paused this change ${because(p)}. Try describing it another way.`);
+      return controlToast(t("guard.pausedChange", { because: because(p) }));
     }
     if (!m.enabled || !S.mods.find(x => x.id === id)?.enabled || p.why === "froze") return; // a frozen page: the host turns it off and reloads
     await pause(m, p);
@@ -86,7 +94,7 @@ const Guard = (() => {
     toastFor(saved);
   }
   function toastFor(m) {
-    controlToast(`Paused “${m.title}” ${because(m.paused)}.`, [["Turn back on", () => resume(m.id)], ["Fix it", () => fix(m.id)]]);
+    controlToast(t("guard.paused", { title: m.title, because: because(m.paused) }), [[t("ctl.turnBackOn"), () => resume(m.id)], [t("btn.fixIt"), () => fix(m.id)]]);
   }
 
   // Turned back on by the person: no longer paused. For CSS that hides the
@@ -104,12 +112,12 @@ const Guard = (() => {
     S.mods = S.mods.map(x => (x.id === id ? saved : x));
     await applyMod(saved);
     if (!panel.hidden) renderPanel();
-    if (saved.enabled && !saved.paused && S.mods.find(x => x.id === id)?.enabled) controlToast(`“${saved.title}” is back on`);
+    if (saved.enabled && !saved.paused && S.mods.find(x => x.id === id)?.enabled) controlToast(t("ctl.isBackOn", { title: saved.title }));
   }
   // Fix it: the model gets the kit's reason as what went wrong (core/prompt.js).
   function fix(id) {
     const m = S.mods.find(x => x.id === id);
-    if (m) fixMod(m, m.paused?.error || `Morse paused it. ${lead(m.paused)} ${note(m.paused)}`);
+    if (m) fixMod(m, m.paused?.error || `Morse paused it. ${lead(m.paused, "en")} ${note(m.paused, "en")}`);
   }
 
   // ---- CSS or code that hides the whole page (from applyMod)
@@ -149,7 +157,7 @@ const Guard = (() => {
   function rowHtml(m) {
     const p = !m.enabled && m.paused;
     if (!p) return "";
-    return `<div class="health guard" role="status"><p><b>${esc(lead(p))}</b> ${esc(note(p))}</p><button data-a="guard-on">Turn back on</button><button class="primary" data-a="guard-fix">Fix it</button></div>`;
+    return `<div class="health guard" role="status"><p><b>${esc(lead(p))}</b> ${esc(note(p))}</p><button data-a="guard-on">${t("ctl.turnBackOn")}</button><button class="primary" data-a="guard-fix">${t("btn.fixIt")}</button></div>`;
   }
   panel.addEventListener("click", e => {
     const b = e.target.closest("[data-a=guard-on], [data-a=guard-fix]");
@@ -178,6 +186,9 @@ function guardRowHtml(m) { return Guard.rowHtml(m); }
 // hint ("Try other words" is what the input and Try again are for). 60-generate.js.
 function guardRefusalHint(error) {
   const m = /^The change would have (.+?), so Morse didn't (apply|run) it\./.exec(String(error || ""));
-  return m ? `Morse didn't ${m[2]} it: <i>it would have ${esc(m[1])}</i>` : "";
+  if (!m) return "";
+  // core/guard.js draftHarm's four, in the person's language (guard.refused.*)
+  const what = { "frozen this page": "loop", "replaced this whole page": "wipe", "reloaded or left this page": "nav", "hidden this whole page": "hide" }[m[1]];
+  return what ? t(`guard.refused.${what}`) : `Morse didn't ${m[2]} it: <i>it would have ${esc(m[1])}</i>`;
 }
 function guardHeld(v) { return !!(v?.paused || v?.mod?.paused); } // a paused mod's code stays off the page

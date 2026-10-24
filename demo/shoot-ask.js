@@ -3,26 +3,23 @@
 // hidden behind a menu, let "Show me" walk through it (the user clicks, never
 // Morse), and explain a page from the page tools.
 //
-//   npm run build && node demo/serve.js &   (MORSE_DEMO_PORT moves the ports)
-//   DISPLAY=:99 node demo/shoot-ask.js      (or: xvfb-run -a node demo/shoot-ask.js)
+// The demo sites run on free ports and show at their usual addresses. The
+// answers come from the Morse helper with the demo model (demo/helper.js).
+//
+//   npm run build && DISPLAY=:99 node demo/shoot-ask.js      (or: xvfb-run -a node demo/shoot-ask.js)
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { createRequire } from "node:module";
-// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
+import { startHelper, pairExtension, routeHelper, demoSites, openBar, pick, seasonExtension } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const OUT = path.join(root, "docs", "screenshots");
+const OUT = path.resolve(root, process.env.SHOTS || path.join("docs", "screenshots"));
 const EXT = path.join(root, "dist", "extension");
-const BASE = Number(process.env.MORSE_DEMO_PORT || 8787);
-const SITE = {
-  parley: `http://127.0.0.1:${BASE}/demo/sites/parley/`,
-  byte: `http://127.0.0.1:${BASE + 1}/demo/sites/byte/`,
-  tunes: `http://127.0.0.1:${BASE + 2}/demo/sites/tunes/`,
-};
+const sites = await demoSites();
+const SITE = { parley: sites.url("parley"), byte: sites.url("byte"), tunes: sites.url("tunes") };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-ask-"));
 
@@ -30,13 +27,20 @@ const ctx = await chromium.launchPersistentContext(path.join(tmp, "profile"), {
   headless: false, viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1,
   args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, "--no-sandbox"],
 });
+await sites.route(ctx);
 const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
 const id = sw.url().split("/")[2];
+await seasonExtension(sw, { gallery: false });
 const setup = await ctx.newPage();
 await setup.goto(`chrome://extensions/?id=${id}`);
 await setup.locator("#allow-user-scripts").click();
 await sleep(400);
 await setup.close();
+for (const p of ctx.pages()) if (p.url().includes("/welcome.html")) await p.close();
+await fs.mkdir(OUT, { recursive: true });
+const helper = await startHelper(path.join(tmp, "helper-home"));
+await routeHelper(ctx, helper);
+await pairExtension(ctx, id, helper.code);
 
 async function open(url) {
   const page = await ctx.newPage();
@@ -55,20 +59,10 @@ async function waitFor(page, pred, ms = 15000) {
   throw new Error("timeout; last " + JSON.stringify(await status(page)));
 }
 const answered = page => waitFor(page, s => s.phase === "idle" && /Answered/.test(s.hint));
-async function pick(page, sel, fx = 0.5, fy = 0.5) {
-  const r = await page.locator(sel).first().boundingBox();
-  const x = r.x + r.width * fx, y = r.y + r.height * fy;
-  await page.mouse.move(x - 40, y - 20);
-  await page.mouse.move(x, y, { steps: 6 });
-  await sleep(120);
-  await page.mouse.click(x, y);
-  await sleep(250);
-  return r;
-}
 
 // 90. Ask: point at a control, ask what it does
 const tunes = await open(SITE.tunes);
-await tunes.keyboard.press(OPEN_KEY);
+await openBar(tunes);
 await sleep(200);
 await pick(tunes, '[aria-label="Repeat"]');
 await tunes.keyboard.type("what does this button do?", { delay: 14 });
@@ -81,7 +75,7 @@ await tunes.close();
 
 // 91. Find: a setting that lives behind a menu
 const chat = await open(SITE.parley);
-await chat.keyboard.press(OPEN_KEY);
+await openBar(chat);
 await sleep(200);
 await chat.mouse.move(640, 520);
 await chat.keyboard.type("where do I change notification settings?", { delay: 14 });
@@ -106,7 +100,7 @@ await chat.close();
 
 // 93. Explain this page, from the page tools
 const news = await open(SITE.byte);
-await news.keyboard.press(OPEN_KEY);
+await openBar(news);
 await sleep(200);
 await news.mouse.move(1000, 120);
 await news.locator(".gm-qbtn").click();
@@ -118,3 +112,7 @@ await sleep(1100);
 await shot(news, "93-explain.png");
 
 await ctx.close();
+helper.stop();
+await sites.close();
+await fs.rm(tmp, { recursive: true, force: true }).catch(() => {});
+process.exit(0);

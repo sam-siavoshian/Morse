@@ -13,6 +13,7 @@ import {
 import { pickPort, portFree, portAnswers, reachableFrom, identify, checkIdentity } from "./ports.js";
 import { readSessions, publishSession, stopRequested, stopSession, withMods, formatStatus } from "./status.js";
 import { settingsLabel } from "../core/providers.js";
+import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
 import { paint } from "./colors.js";
 
 const { g: G, d: D, b: B } = paint;
@@ -47,14 +48,14 @@ export async function stopCommand(f) {
   const query = f._.join(" ") || (f.all ? "all" : "");
   const r = await stopSession(query);
   if (!r.stopped.length) { console.log(r.message); return; }
-  for (const s of r.stopped) console.log(`Disconnected from ${B(s.name)}. It keeps running without Morse. Its debugging port closes when you quit it.`);
+  for (const s of r.stopped) console.log(t("launch.stopped", { name: B(s.name) }));
 }
 
 export async function launchCommand(f, { settingsFrom, logo }) {
   const ctx = hostContext();
   const app = resolveApp(f._.join(" "), { ctx });
   if (f.name) Object.assign(app, { id: slug(f.name), name: String(f.name), aliases: [...(app.aliases || []), app.name] });
-  if (app.canAttach === false) throw said(`${app.name} is a ${app.why}, so Morse can't connect to it.`);
+  if (app.canAttach === false) throw said(t("launch.cant", { name: app.name, why: app.why }));
   const extra = f.rest || [];
   const pref = (await loadAppPrefs())[app.id] || {};
   const settings = await settingsFrom(f);
@@ -74,14 +75,38 @@ export async function launchCommand(f, { settingsFrom, logo }) {
   const existing = (await readSessions()).find(s => s.id === app.id);
   if (existing?.state === "waiting") {
     launchApp(app, existing.port, extra);
-    console.log(`\n  Opening ${app.name}. Morse is already waiting for it on port ${existing.port} and will connect.`);
+    console.log(`\n  ${t("launch.waiting", { name: app.name, port: existing.port })}`);
     return;
   }
   if (existing) {
-    console.log(`\n  Morse is already connected to ${app.name} on port ${existing.port}. Run ${B("morse status")} to see its windows, or ${B(`morse stop ${app.id}`)} to disconnect.`);
+    console.log(`\n  ${t("launch.already", { name: app.name, port: existing.port, status: B("morse status"), stop: B(`morse stop ${app.id}`) })}`);
     return;
   }
 
+  const ready = await connectApp(app, {
+    extra, pref, port: f.port, restart: f.restart === true, noRestart: !!f["no-restart"],
+    ask: process.stdin.isTTY && process.stdout.isTTY
+      ? () => ask(`\n  ${t("launch.isOpen", { name: app.name })}\n  ${t("launch.restartAsk")} ${D(t("launch.restartKeys", { name: app.name }))} `)
+      : null,
+    say: line => console.log(`  ${line}`),
+  });
+  console.log(`  port    ${ready.port} ${D("(127.0.0.1 only)")}`);
+  console.log(`  engine  ${ready.who.browser.replace("/", " ")}${ready.who.electron ? ` · Electron ${ready.who.electron}` : ""}\n`);
+  return runSession({ port: ready.port, app, settings, watch: !!f.watch, verify: ready.verify, who: ready.who });
+}
+
+// The steps of `morse launch` once the app is chosen, without the terminal
+// (Morse Desktop runs the same ones): connect to the app if it is already open
+// with a debugging port; otherwise quit it (when allowed) and open it again on
+// a free port; then check that the port is for this computer only and that
+// the app is the one we started. Resolves { port, pids, who, verify }.
+//   restart, noRestart  the --restart and --no-restart flags
+//   ask(app)            asks whether to quit the open app: "y", "n" or "a" (always); null: don't ask
+//   say(line)           progress, one line at a time
+// Throws a plain error (said) when the app is open and may not be restarted
+// (with .running = true), or when Morse can't connect to it.
+export async function connectApp(app, { extra = [], pref = null, port: wantPort = null, restart: restartFlag = false, noRestart = false, ask: askRestart = null, say = () => {} } = {}) {
+  pref ??= (await loadAppPrefs())[app.id] || {};
   // Already open?
   let port = null, pids = [];
   const procs = listProcesses();
@@ -90,27 +115,27 @@ export async function launchCommand(f, { settingsFrom, logo }) {
     const open = running.map(p => ({ pid: p.pid, port: debugPortOf(p.cmd) })).find(p => p.port);
     if (open && await portAnswers(open.port)) {
       const v = checkIdentity(await identify(open.port), app, running.map(p => p.pid));
-      if (v.ok) { port = open.port; pids = running.map(p => p.pid); console.log(`  ${app.name} is already open with a debugging port. Connecting to it.`); }
+      if (v.ok) { port = open.port; pids = running.map(p => p.pid); say(t("launch.openWithPort", { name: app.name })); }
     }
     if (!port) {
-      let restart = f.restart === true || (pref.restart === true && !f["no-restart"]);
-      if (!restart && !f["no-restart"] && process.stdin.isTTY && process.stdout.isTTY) {
-        const a = await ask(`\n  ${app.name} is already open. Morse can only connect to an app when it starts.\n  Quit it and open it again with Morse? ${D("[y]es  [n]o  [a]lways for " + app.name)} `);
+      let restart = restartFlag || (pref.restart === true && !noRestart);
+      if (!restart && !noRestart && askRestart) {
+        const a = await askRestart(app);
         if (a === "a") await saveAppPref(app.id, { restart: true });
         restart = a === "y" || a === "a";
       }
-      if (!restart) throw said(`${app.name} is already open. Morse can only connect to an app when it starts. Run ${B(`morse launch ${app.id} --restart`)} to quit it and open it again. Morse remembers that choice.`);
-      console.log(`  quitting ${app.name}…`);
-      if (!await quitApp(app, { procs, extraArgs: extra })) throw said(`${app.name} didn't quit. Close it yourself, then run this again.`);
+      if (!restart) throw Object.assign(said(`${t("launch.isOpen", { name: app.name })} ${t("launch.restartHow", { cmd: B(`morse launch ${app.id} --restart`) })}`), { running: true });
+      say(t("launch.quitting", { name: app.name }));
+      if (!await quitApp(app, { procs, extraArgs: extra })) throw said(t("launch.didntQuit", { name: app.name }));
     }
   }
-  if (f.restart === true && !pref.restart) await saveAppPref(app.id, { restart: true });
-  if (f["no-restart"] && pref.restart) await saveAppPref(app.id, { restart: null });
+  if (restartFlag && !pref.restart) await saveAppPref(app.id, { restart: true });
+  if (noRestart && pref.restart) await saveAppPref(app.id, { restart: null });
 
   // Launch on a free port.
   if (!port) {
-    if (f.port) {
-      port = Number(f.port);
+    if (wantPort) {
+      port = Number(wantPort);
       if (!await portFree(port)) throw said(`Port ${port} is already used by another program. Leave out --port and Morse picks a free one.`);
     } else port = await pickPort({ preferred: [pref.port].filter(Boolean) });
     const child = launchApp(app, port, extra);
@@ -133,14 +158,12 @@ export async function launchCommand(f, { settingsFrom, logo }) {
   const who = await identify(port);
   const v = checkIdentity(who, app, pids);
   if (!v.ok) throw said(`Morse didn't connect: ${v.why}.`);
-  console.log(`  port    ${port} ${D("(127.0.0.1 only)")}`);
-  console.log(`  engine  ${who.browser.replace("/", " ")}${who.electron ? ` · Electron ${who.electron}` : ""}\n`);
 
   const verify = async () => {
     const mine = findAppProcesses(app, listProcesses(), { extraArgs: extra }).filter(p => debugPortOf(p.cmd) === port).map(p => p.pid);
     return checkIdentity(await identify(port), app, mine);
   };
-  return runSession({ port, app, settings, watch: !!f.watch, verify, who });
+  return { port, pids, who, verify };
 }
 
 export async function attachCommand(f, { settingsFrom, logo }) {
@@ -159,28 +182,44 @@ export async function attachCommand(f, { settingsFrom, logo }) {
 // Runs the connector until the app quits, `morse stop`, or Ctrl+C, keeping
 // ~/.morse/sessions/<id>.json current for `morse status`.
 async function runSession({ port, app, id = app.id, name = app.name, settings, watch, verify = null, who }) {
-  const modsApp = app && !app.browser ? app : null;
-  const connector = new Connector({ port, app: modsApp, settings, watch, verify, onChange: () => pub.changed() });
-  const pub = publishSession(connector, {
-    id, name, path: app?.path || null, aliases: app?.aliases || [], modsApp: modsApp?.id ?? null,
-    browser: who?.browser || null, electron: who?.electron || null, started: new Date().toISOString(),
-  });
-  await pub.flush();
+  const session = startSession({ port, app, id, name, settings, watch, verify, who });
+  await session.flushed;
   let ending = false;
   const finish = async (how) => {
     if (ending) return;
     ending = true;
-    clearInterval(poll);
-    await connector.stop();
-    await pub.close();
-    if (how === "stop") console.log(`Disconnected from ${name}.`);
-    else console.log(`\nDisconnected from ${name}. It keeps running without Morse.`);
+    await session.stop();
+    if (how === "stop") console.log(t("launch.disconnected", { name }));
+    else console.log(`\n${t("launch.disconnectedRunning", { name })}`);
     process.exit(0);
   };
-  const poll = setInterval(() => { if (stopRequested(id)) finish("stop"); }, 400);
+  session.onStopRequested = () => finish("stop");
   process.once("SIGINT", () => finish("interrupt"));
   process.once("SIGTERM", () => finish("stop"));
-  await connector.run();
-  clearInterval(poll);
-  await pub.close();
+  await session.done;
+}
+
+// One connected app, without the terminal. Morse Desktop keeps several in one
+// process. It is the connector, its session file (for `morse status`), and
+// `morse stop <app>` from a terminal. Returns
+//   { id, name, connector, flushed, done, stop(), onStopRequested }
+// `done` resolves when the app quits (unless watching) or after stop();
+// onStopRequested (stop() when left null) runs when `morse stop` asks.
+export function startSession({ port, app, id = app.id, name = app.name, settings, watch = false, verify = null, who, log = console.log, onChange = null }) {
+  const modsApp = app && !app.browser ? app : null;
+  const connector = new Connector({ port, app: modsApp, settings, watch, verify, log, onChange: () => { pub.changed(); onChange?.(connector); } });
+  const pub = publishSession(connector, {
+    id, name, path: app?.path || null, aliases: app?.aliases || [], modsApp: modsApp?.id ?? null,
+    browser: who?.browser || null, electron: who?.electron || null, started: new Date().toISOString(),
+  });
+  let stopping = null;
+  const session = {
+    id, name, connector,
+    flushed: pub.flush(),
+    onStopRequested: null,
+    stop: () => (stopping ||= (async () => { clearInterval(poll); await connector.stop(); await pub.close(); })()),
+  };
+  const poll = setInterval(() => { if (!stopping && stopRequested(id)) (session.onStopRequested || session.stop)(); }, 400);
+  session.done = session.flushed.then(() => connector.run()).then(async state => { clearInterval(poll); await pub.close(); return state; });
+  return session;
 }

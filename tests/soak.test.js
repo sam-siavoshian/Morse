@@ -78,7 +78,8 @@ test("a runtime that went quiet (morse stop) lets go of the page: attach and sto
   const { bundleRuntime } = await import("../runtime/bundle.js");
   const page = await browser.newPage();
   await page.setContent(`<!doctype html><title>Quiet</title><h1>Hello</h1>`);
-  await page.evaluate(() => {
+  // Each attach brings its own host, as the connector's shim does (daemon/connector.js).
+  const install = () => page.evaluate(() => {
     const subs = [];
     globalThis.__morseHost = {
       onMessage: f => subs.push(f),
@@ -86,11 +87,11 @@ test("a runtime that went quiet (morse stop) lets go of the page: attach and sto
     };
   });
   const probe = await PageProbe.forPage(page);
-  const boot = async () => { await page.addScriptTag({ content: bundleRuntime() }); await page.waitForFunction(() => document.querySelector("[data-morse-ui]")); };
+  const boot = async () => { await install(); await page.addScriptTag({ content: bundleRuntime() }); await page.waitForFunction(() => !!document.querySelector("[data-morse-ui]")); };
   // What the connector's stop() runs in Morse's world, then its clean-up.
   const stop = () => page.evaluate(() => {
     globalThis.__morseGen = (globalThis.__morseGen || 0) + 1;
-    delete globalThis.__morseRuntime;
+    delete globalThis.__morseRuntime; delete globalThis.__morseHost;
     document.querySelectorAll("[data-morse-ui]").forEach(e => e.remove());
   });
   await boot();
@@ -100,6 +101,7 @@ test("a runtime that went quiet (morse stop) lets go of the page: attach and sto
   const now = await counts(page, probe);
   assert.ok(now.win - first.win <= 2, `listeners on window: ${first.win} -> ${now.win} after 4 stop + attach`);
   assert.ok(now.mo - first.mo <= 4, `MutationObservers: ${first.mo} -> ${now.mo} after 4 stop + attach`);
+  assert.ok(now.detached - first.detached <= 20, `detached elements held: ${first.detached} -> ${now.detached} after 4 stop + attach (a whole old overlay each time?)`);
   await page.close();
 });
 

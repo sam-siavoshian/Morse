@@ -19,8 +19,8 @@
 const Gallery = (() => {
   const st = { key: "", items: [], site: "", loading: null, expanded: false, trial: null };
   const pageKey = () => `${location.host}|${S.app || ""}`;
-  const where = () => S.appName || st.site || location.host || "this site";
-  const countText = n => `${n} mod${n === 1 ? "" : "s"} for ${where()}`;
+  const where = () => S.appName || st.site || location.host || t("gl.thisSite");
+  const countText = n => t("gl.count", { n, where: where() });
 
   // What a mod does, in a few words: core/summary.js (the same lines as the
   // install review), the ones that say most first; core/gallery.js
@@ -67,15 +67,15 @@ const Gallery = (() => {
     const list = fresh();
     if (!list.length) return "";
     const open = st.expanded;
-    return `<section class="gl-site${open ? " open" : ""}" aria-label="For this site">
-      <h4 class="eyebrow">For this site</h4>
+    return `<section class="gl-site${open ? " open" : ""}" aria-label="${esc(t("gl.forSite"))}">
+      <h4 class="eyebrow">${t("gl.forSite")}</h4>
       <div class="gl-head" data-gl="expand">
         <span class="gl-mark" aria-hidden="true">${radar(16)}</span>
-        <span class="gl-count"><b>${esc(countText(list.length))}</b><small>Made by other people</small></span>
-        <button type="button" class="tbtn gl-show" data-gl="expand" aria-expanded="${open}">${open ? "Hide" : "Show"}</button>
+        <span class="gl-count"><b>${esc(countText(list.length))}</b><small>${t("gl.byOthers")}</small></span>
+        <button type="button" class="tbtn gl-show" data-gl="expand" aria-expanded="${open}">${open ? t("gl.hide") : t("gl.show")}</button>
       </div>
       ${open ? `<div class="gl-items">${list.map(itemHtml).join("")}</div>
-      <p class="gl-foot"><span>From the Morse gallery</span><button type="button" class="tbtn gl-link" data-gl="off">Stop showing these</button></p>` : ""}
+      <p class="gl-foot"><span>${t("gl.fromGallery")}</span><button type="button" class="tbtn gl-link" data-gl="off">${t("gl.stop")}</button></p>` : ""}
     </section>`;
   }
   function itemHtml(e) {
@@ -86,11 +86,11 @@ const Gallery = (() => {
       <b>${esc(m.title || e.title)}</b>
       <small class="gl-req">“${esc(m.prompt || e.prompt)}”</small>
       ${sum.length ? `<p class="gl-sum">${sum.map(esc).join(" · ")}</p>` : ""}
-      <small class="gl-by">${e.author ? `by ${esc(e.author)}` : "From the gallery"}${compareVersions(v, 1) > 0 ? ` · version ${esc(String(v))}` : ""}</small>
-      ${trying ? `<p class="gl-trying" role="status">On this page now. Nothing is saved yet.</p>` : ""}
+      <small class="gl-by">${e.author ? esc(t("gl.by", { author: e.author })) : t("gl.fromGalleryShort")}${compareVersions(v, 1) > 0 ? ` · ${esc(t("result.version", { n: String(v) }))}` : ""}</small>
+      ${trying ? `<p class="gl-trying" role="status">${t("gl.trying")}</p>` : ""}
       <div class="gl-btns">${trying
-        ? `<button type="button" class="primary" data-gl="keep">Save</button><button type="button" data-gl="remove">Undo</button>`
-        : `${careful(m) ? "" : `<button type="button" data-gl="try">Try it</button>`}<button type="button" data-gl="install">Install…</button>`}</div>
+        ? `<button type="button" class="primary" data-gl="keep">${t("btn.save")}</button><button type="button" data-gl="remove">${t("btn.undo")}</button>`
+        : `${careful(m) ? "" : `<button type="button" data-gl="try">${t("ctl.tryIt")}</button>`}<button type="button" data-gl="install">${t("gl.install")}</button>`}</div>
     </div>`;
   }
   function rowHtml(m) {
@@ -98,7 +98,7 @@ const Gallery = (() => {
     const e = updateFor(m, st.items);
     if (!e) return "";
     const v = e.mod.version ?? e.version;
-    return `<div class="gl-upd" role="status"><p><b>Update available.</b> Version ${esc(String(v))}${e.changes ? `: ${esc(e.changes)}` : ""}</p><button type="button" data-gl="update" data-id="${esc(m.id)}">Update…</button></div>`;
+    return `<div class="gl-upd" role="status"><p><b>${t("gl.updateAvailable")}</b> ${esc(t("gl.versionN", { n: String(v) }))}${e.changes ? `: ${esc(e.changes)}` : ""}</p><button type="button" data-gl="update" data-id="${esc(m.id)}">${t("gl.update")}</button></div>`;
   }
 
   // Re-render the panel without losing the focused gallery button.
@@ -132,32 +132,32 @@ const Gallery = (() => {
     showStrip();
     rerender({ g: "keep", gid: e.id });
     try { await applyMod({ ...e.mod, enabled: true }); }
-    catch (err) { toast(`Couldn't try “${st.trial?.title}”. ${plainError(err)}`); }
+    catch (err) { toast(t("gl.tryFailed", { title: st.trial?.title, error: plainError(err) })); }
   }
   async function endTrial({ quiet = false } = {}) {
-    const t = st.trial;
-    if (!t) return;
+    const tr = st.trial;
+    if (!tr) return;
     st.trial = null;
     hideStrip();
-    await removeMod(t.id).catch(() => {});
-    rerender({ g: "try", gid: t.id });
+    await removeMod(tr.id).catch(() => {});
+    rerender({ g: "try", gid: tr.id });
     placeChip();
-    if (!quiet) toast(`Took “${t.title}” off the page. Nothing was saved.`);
+    if (!quiet) toast(t("gl.tookOff", { title: tr.title }));
   }
   async function keep() {
-    const t = st.trial, e = t && byId(t.id);
+    const tr = st.trial, e = tr && byId(tr.id);
     if (!e) return endTrial({ quiet: true });
     const now = new Date().toISOString();
     const mod = { ...installable(e), importedFrom: "gallery", importedAt: now, created: now, updated: now };
     // Kept after its review: saved the way Install… saves (the host keeps the
     // gallery's match, which mods.save would refuse to widen to).
     try { await call("control.install", { url: location.href, app: S.app, mods: [mod], kind: "mod" }); }
-    catch (err) { return toast(`Couldn't save “${t.title}”. ${plainError(err)}`); }
+    catch (err) { return toast(t("gl.saveFailed", { title: tr.title, error: plainError(err) })); }
     st.trial = null;
     hideStrip();
     await syncMods().catch(() => {}); // runs it again as a saved mod (core/kit.js turns the trial off first)
     changed();
-    toast(`Saved “${mod.title}”. It will be here next time.`);
+    toast(t("toast.saved", { title: mod.title }));
   }
 
   // ---- Install…: the same review every shared mod goes through
@@ -173,13 +173,12 @@ const Gallery = (() => {
     if (!d.added && !d.removed) return "";
     const rows = trimDiff(d.lines).map(l => l.op === "…"
       ? `<span class="skip">${esc(l.text)}</span>`
-      : `<span class="${l.op === "+" ? "add" : l.op === "-" ? "del" : "ctx"}"><i aria-hidden="true">${l.op === " " ? "" : l.op}</i>${esc(l.text) || " "}</span>`).join("");
-    return `<label>${label} <span class="dim">${kind} · ${d.added} added, ${d.removed} removed</span></label><pre class="code gl-diff" tabindex="0">${rows}</pre>`;
+      : `<span class="${l.op === "+" ? "add" : l.op === "-" ? "del" : "ctx"}"><i aria-hidden="true">${l.op === " " ? "" : l.op}</i>${esc(shownCode(l.text)) || " "}</span>`).join("");
+    return `<label>${label} <span class="dim">${kind} · ${t("gl.diff", { added: d.added, removed: d.removed })}</span></label><pre class="code gl-diff" tabindex="0">${rows}</pre>`;
   }
-  const lines = (n, word) => `${n} line${n === 1 ? "" : "s"} ${word}`;
   function countLine(name, d) {
-    if (!d.added && !d.removed) return `${name}: no change`;
-    return `${name}: ${[d.added && lines(d.added, "added"), d.removed && lines(d.removed, "removed")].filter(Boolean).join(", ")}`;
+    if (!d.added && !d.removed) return t("gl.noChange", { name });
+    return `${name}: ${[d.added && t("gl.linesAdded", { n: d.added }), d.removed && t("gl.linesRemoved", { n: d.removed })].filter(Boolean).join(", ")}`;
   }
   function showUpdate(m) {
     const e = updateFor(m, st.items);
@@ -188,42 +187,42 @@ const Gallery = (() => {
     const ch = whatChanged(m, next, summarize);
     const worry = careful(next) && !careful(m);
     openModal(`
-      <header><b>Update “${esc(m.title)}”?</b><small>Version ${esc(String(from))} to version ${esc(String(to))}, from the Morse gallery${e.author ? ` · by ${esc(e.author)}` : ""}</small><button data-a="close" aria-label="Close">×</button></header>
+      <header><b>${t("gl.updateTitle", { title: esc(m.title) })}</b><small>${esc(t("gl.updateSub", { from: String(from), to: String(to) }))}${e.author ? ` · ${esc(t("gl.by", { author: e.author }))}` : ""}</small><button data-a="close" aria-label="${esc(t("btn.close"))}">×</button></header>
       <div class="gl-what">
-        <h5 class="eyebrow">What changed</h5>
+        <h5 class="eyebrow">${t("gl.whatChanged")}</h5>
         ${e.changes ? `<p class="gl-note">${esc(e.changes)}</p>` : ""}
-        ${ch.added.length ? `<p><b>Now also:</b> ${ch.added.map(esc).join(" · ")}</p>` : ""}
-        ${ch.removed.length ? `<p><b>No longer:</b> ${ch.removed.map(esc).join(" · ")}</p>` : ""}
-        ${worry ? `<p class="gl-warn">The new version can send information to another website or read what you type. Update only if you trust the person who made it.</p>` : ""}
-        <p class="dim">${esc(countLine("Style", ch.css))} · ${esc(countLine("Script", ch.js))}</p>
+        ${ch.added.length ? `<p><b>${t("gl.nowAlso")}</b> ${ch.added.map(esc).join(" · ")}</p>` : ""}
+        ${ch.removed.length ? `<p><b>${t("gl.noLonger")}</b> ${ch.removed.map(esc).join(" · ")}</p>` : ""}
+        ${worry ? `<p class="gl-warn">${t("gl.worry")}</p>` : ""}
+        <p class="dim">${esc(countLine(t("code.style"), ch.css))} · ${esc(countLine(t("code.script"), ch.js))}</p>
       </div>
-      ${diffHtml("Style", "CSS", ch.css)}${diffHtml("Script", "JavaScript", ch.js)}
-      <p class="dim gl-hist">Your version stays in History, so you can go back to it.</p>
-      <footer><button data-a="close">Not now</button><button class="primary" data-gl="apply" data-settle>Update</button></footer>`, { review: true }); // top layer, 80-modals.js
+      ${diffHtml(t("code.style"), "CSS", ch.css)}${diffHtml(t("code.script"), "JavaScript", ch.js)}
+      <p class="dim gl-hist">${t("gl.history")}</p>
+      <footer><button data-a="close">${t("gl.notNow")}</button><button class="primary" data-gl="apply" data-settle>${t("gl.updateBtn")}</button></footer>`, { review: true }); // top layer, 80-modals.js
     modal.querySelector("footer [data-a=close]")?.focus();
     modal.querySelector("[data-gl=apply]").onclick = () => applyUpdate(m, e);
   }
   async function applyUpdate(m, e) {
     const v = e.mod.version ?? e.version;
     const next = {
-      ...reviseMod(m, { prompt: `Updated to version ${v} from the gallery`, css: e.mod.css, js: e.mod.js }),
+      ...reviseMod(m, { prompt: t("gl.historyNote", { n: v }), css: e.mod.css, js: e.mod.js }),
       title: e.mod.title || m.title, version: v, gallery: { id: e.id, version: v },
     };
     let saved;
     try { saved = (await call("mods.save", { mod: next })) || next; }
-    catch (err) { return toast(`Couldn't update “${m.title}”. ${plainError(err)}`); }
+    catch (err) { return toast(t("gl.updateFailed", { title: m.title, error: plainError(err) })); }
     modal.hidden = true;
     S.mods = S.mods.map(x => (x.id === m.id ? saved : x));
     await removeMod(m.id).catch(() => {});
     if (saved.enabled) await applyMod(saved);
     if (!panel.hidden) renderPanel();
-    toast(`Updated “${saved.title}” to version ${v}. The old one is in History.`);
+    toast(t("gl.updated", { title: saved.title, n: v }));
   }
 
   // ---- Submit to the gallery… (Share dialog, 80-modals.js hook)
   function shareHtml(m) {
     if (!m || typeof m.id !== "string" || m.gallery || byId(galleryIdOf(m) || "")) return "";
-    return `<button data-gl="submit" data-id="${esc(m.id)}">Submit to the gallery…</button>`;
+    return `<button data-gl="submit" data-id="${esc(m.id)}">${t("gl.submit")}</button>`;
   }
   async function submit(m) {
     const r = submitIssue(m, { site: S.appName || location.host, summary: summarize(m) });
@@ -231,10 +230,8 @@ const Gallery = (() => {
     if (r.attached) file = await call("share", { mod: forGallery(m), kind: "json" }).catch(() => null);
     try {
       await call("open", { url: r.url });
-      toast(r.attached
-        ? `Opened GitHub to send your mod to the gallery. It's too long for the link, so it was saved${file?.path ? ` to ${file.path}` : ""}. Attach that file there.`
-        : "Opened GitHub with your mod filled in. Read it over, then send it.");
-    } catch (err) { toast(`Couldn't open GitHub. ${plainError(err)}`); }
+      toast(r.attached ? t("gl.submittedFile", { to: file?.path ? t("gl.to", { path: file.path }) : "" }) : t("gl.submitted"));
+    } catch (err) { toast(t("gl.githubFailed", { error: plainError(err) })); }
   }
   modal.addEventListener("click", ev => {
     const b = ev.target.closest("[data-gl=submit]");
@@ -247,7 +244,7 @@ const Gallery = (() => {
   async function turnOff() {
     await endTrial({ quiet: true });
     await savePrefs({ gallery: false });
-    toast("Mods others made are hidden. Turn them back on in Settings.");
+    toast(t("gl.hidden"));
   }
   panel.addEventListener("click", ev => {
     const b = ev.target.closest("[data-gl]");
@@ -268,10 +265,10 @@ const Gallery = (() => {
   strip.className = "gl-trial";
   strip.hidden = true;
   strip.setAttribute("role", "region");
-  strip.setAttribute("aria-label", "Trying a mod");
+  tBind(strip, "aria-label", "gl.tryingAria");
   root.append(strip);
   function showStrip() {
-    strip.innerHTML = `<span class="gl-mark" aria-hidden="true">${radar(12)}</span><span class="gl-txt"><b>Trying “${esc(st.trial.title)}”</b><small>Nothing is saved yet</small></span><button type="button" class="btn" data-gl="remove">Undo</button><button type="button" class="btn primary" data-gl="keep">Save</button>`;
+    strip.innerHTML = `<span class="gl-mark" aria-hidden="true">${radar(12)}</span><span class="gl-txt"><b>${t("gl.tryingTitle", { title: esc(st.trial.title) })}</b><small>${t("gl.notSaved")}</small></span><button type="button" class="btn" data-gl="remove">${t("btn.undo")}</button><button type="button" class="btn primary" data-gl="keep">${t("btn.save")}</button>`;
     strip.hidden = false;
   }
   function hideStrip() { strip.hidden = true; strip.innerHTML = ""; }
@@ -295,7 +292,7 @@ const Gallery = (() => {
     if (chip.dataset.text !== text) {
       chip.dataset.text = text;
       chip.innerHTML = `<span class="gl-mark" aria-hidden="true">${radar(12)}</span>${esc(text)}`;
-      chip.title = "See mods other people made for this site";
+      chip.title = t("gl.chipTitle");
     }
     if (sugEl.lastElementChild !== chip) sugEl.append(chip);
   }

@@ -7,10 +7,15 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildMessages } from "../core/prompt.js";
+import en from "../core/locales/en.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
 
 const skip = noBrowser;
-const SRC = readFileSync(new URL("../runtime/src/20-context.js", import.meta.url), "utf8");
+// core/i18n.js is inlined before this in the runtime: getLanguage() and t(), in English here.
+const SRC = `const getLanguage = () => "en";
+const __en = ${JSON.stringify(en)};
+const t = (id, v = {}) => String(__en[id] ?? id).replace(/\\{(\\w+)\\}/g, (m, k) => v[k] ?? m);
+${readFileSync(new URL("../runtime/src/20-context.js", import.meta.url), "utf8")}`;
 let browser, page;
 
 const SECRETS = {

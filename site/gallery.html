@@ -4,43 +4,79 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Morse gallery: example mods</title>
-<meta name="description" content="Example Morse mods for YouTube, GitHub, ChatGPT, Claude, Spotify, Slack, Notion, Gmail and more. Read the code, install it in Morse, or download it for Tampermonkey.">
+<meta name="description" content="Morse mods for PyPI, Node.js docs, Docker Hub, GitLab, RubyGems, YouTube, GitHub, Spotify, Slack and more: dark modes, reading modes, keyboard shortcuts and new buttons. Read the code, install it in Morse, or download it for Tampermonkey.">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="color-scheme" content="dark">
 <meta property="og:title" content="Morse gallery">
 <meta property="og:description" content="Example mods for apps you already use. Read the code, then install.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../design/tokens.css">
+<link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
 <link rel="stylesheet" href="gallery.css">
 </head>
 <body>
-
-<header class="top">
+<a class="skip-link" href="#top">Skip to content</a>
+<!-- The nav bar and footer come from site/index.html: npm run pages copies them in between these markers. -->
+<!-- chrome:sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
+  <symbol id="i-drag" viewBox="0 0 24 24"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/></symbol>
+</svg>
+<!-- /chrome:sprite -->
+<!-- chrome:header -->
+<header class="nav">
   <div class="wrap">
-    <a class="brand" href="./" aria-label="Morse home"><span data-radar="20"></span>Morse</a>
-    <nav class="nav" aria-label="Main">
-      <a class="hide-sm" href="./#how">How it works</a>
-      <a class="hide-sm" href="./#examples">Examples</a>
-      <a class="hide-sm" href="./#godmode">Edit tools</a>
-      <a href="gallery.html" aria-current="page">Gallery</a>
-      <a href="./#install">Install</a>
-      <a class="gh" href="https://github.com/sam-siavoshian/RRAA" aria-label="Source on GitHub">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-        <span class="hide-sm">GitHub</span>
-      </a>
-    </nav>
+    <div class="nav-bar">
+      <a href="./" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="20"></span><span class="brand-name">Morse</span></a>
+      <nav class="nav-links" aria-label="Primary">
+        <ul class="nav-list">
+          <li><a class="nav-link" href="./#change">See it change</a></li>
+          <li><a class="nav-link" href="./#how">How it works</a></li>
+          <li><a class="nav-link" href="./#try">Try it</a></li>
+          <li><a class="nav-link" href="gallery.html" aria-current="page">Gallery</a></li>
+          <li><a class="nav-link" href="./#faq">FAQ</a></li>
+        </ul>
+      </nav>
+      <div class="nav-end">
+        <a class="nav-link nav-quiet" href="https://github.com/sam-siavoshian/RRAA" data-link="github">GitHub</a>
+        <a class="btn btn-primary btn-sm" href="./#install">Get Morse</a>
+        <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Open menu"><span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span></span></button>
+      </div>
+    </div>
+    <div class="nav-menu" id="nav-menu">
+      <nav class="nav-sheet" aria-label="Sections">
+        <ul>
+          <li><a href="./#change">See it change</a></li>
+          <li><a href="./#how">How it works</a></li>
+          <li><a href="./#try">Try it here</a></li>
+          <li><a href="./#apps">Real apps</a></li>
+          <li><a href="./#install">Install</a></li>
+          <li><a href="./#faq">FAQ</a></li>
+          <li><a href="gallery.html">Gallery</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a href="https://github.com/sam-siavoshian/RRAA" data-link="github">GitHub</a></li>
+        </ul>
+        <div class="nav-sheet-get">
+          <a class="btn btn-primary" href="./#chrome-steps" data-link="chrome">Add to Chrome</a>
+          <a class="btn btn-secondary" href="./#desktop-steps" data-link="desktop">Download Morse</a>
+        </div>
+      </nav>
+    </div>
   </div>
 </header>
+<!-- /chrome:header -->
 
-<main>
-  <section class="g-head">
+<main id="top">
+  <section class="page-head">
+    <div class="pixels" aria-hidden="true"></div>
     <div class="wrap">
       <p class="eyebrow">Gallery</p>
-      <h1>Example mods.</h1>
-      <p class="lede">A mod is a change to an app, saved with Morse. These are small ones for apps you already use. See what each one does, then install it in Morse or download it for Tampermonkey.</p>
-      <p class="g-note"><span data-radar="14" data-still></span><span>Written by hand for each app in October 2026. Apps change often, so a mod may stop working. If one does, open Morse in that app and say “fix this”.</span></p>
+      <h1>Example mods</h1>
+      <p class="lede">A mod is a change you saved. Morse brings it back every time you open that site or app. These are small ones for apps you already use. See what each one does, then install it in Morse or download it for Tampermonkey.</p>
+      <p class="g-note">Most of these were made by Morse from the request you see, then checked on the real page in October 2026: they work, and still work after a reload. The ones marked “Demo app” are for the Morse demo apps. Apps change often, so a mod may stop working. If one does, open Morse in that app and say “fix this”.</p>
     </div>
   </section>
 
@@ -53,13 +89,13 @@
           <input id="q" type="search" placeholder="Search mods" autocomplete="off" spellcheck="false">
           <kbd aria-hidden="true">/</kbd>
         </label>
-        <div class="g-filters" id="filters" role="group" aria-label="Filter by app"></div>
+        <div class="g-filters" id="filters" role="group" aria-label="Filter mods"></div>
       </div>
-      <p class="g-count faint mono" id="count" aria-live="polite"></p>
+      <p class="g-count" id="count" aria-live="polite"></p>
       <div class="cards" id="grid"></div>
       <div class="g-empty" id="empty" hidden>
         <p>No mods match that.</p>
-        <p class="muted">Morse can make it for you: press <kbd>⌥</kbd> <kbd>Space</kbd> in the app and say what you want.</p>
+        <p>Morse can make it for you: press <kbd>⌥</kbd> <kbd>Space</kbd> in the app and say what you want.</p>
       </div>
     </div>
   </section>
@@ -69,36 +105,46 @@
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="d-title" tabindex="-1" hidden>
   <div class="d-top">
     <span class="card-app" id="d-app"></span>
-    <button class="btn sm icon" type="button" id="d-close" aria-label="Close">
+    <button class="btn btn-secondary btn-icon" type="button" id="d-close" aria-label="Close">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8"/></svg>
     </button>
   </div>
   <div class="d-scroll">
     <h2 id="d-title"></h2>
     <p class="d-prompt" id="d-prompt"></p>
+    <div class="d-shots" id="d-shots" hidden></div>
     <dl class="d-meta" id="d-meta"></dl>
     <div class="d-actions">
-      <a class="btn primary" id="d-install" target="_blank" rel="noopener">Install in Morse</a>
-      <a class="btn" id="d-userscript" download>Download for Tampermonkey</a>
-      <button class="btn" type="button" id="d-copy">Copy link</button>
+      <a class="btn btn-primary" id="d-install" target="_blank" rel="noopener">Install in Morse</a>
+      <a class="btn btn-secondary" id="d-userscript" download>Download for Tampermonkey</a>
+      <button class="btn btn-secondary" type="button" id="d-copy">Copy link</button>
     </div>
-    <p class="d-safety faint">A mod is code that runs inside the app. The install page shows every line again before anything runs.</p>
+    <p class="d-safety">A mod is code that runs inside the app. The install page shows every line again before anything runs.</p>
     <div class="d-code" id="d-code"></div>
   </div>
 </aside>
 
+<!-- chrome:footer -->
 <footer class="foot">
   <div class="wrap">
-    <a class="brand" href="./"><span data-radar="16" data-still></span>Morse</a>
-    <span data-signal="your own words"></span>
-    <nav aria-label="Footer">
-      <a href="gallery.html">Gallery</a>
-      <a href="https://github.com/sam-siavoshian/RRAA">GitHub</a>
-      <a href="privacy.html">Privacy</a>
-      <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/LICENSE">MIT license</a>
-    </nav>
+    <div class="foot-top">
+      <a href="./" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="20" data-still></span><span class="brand-name">Morse</span></a>
+      <nav class="foot-links" aria-label="Footer">
+        <a href="./#install">Install</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs">Guides</a>
+        <a href="https://github.com/sam-siavoshian/RRAA" data-link="github">Source on GitHub</a>
+        <a href="https://github.com/sam-siavoshian/RRAA/issues">Report a problem</a>
+      </nav>
+    </div>
+    <div class="foot-base">
+      <span>Change any website or desktop app in your own words.</span>
+      <span>&copy; 2026 Morse · <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/LICENSE">MIT license</a></span>
+    </div>
   </div>
 </footer>
+<!-- /chrome:footer -->
 
 <script type="module" src="gallery.js"></script>
 </body>

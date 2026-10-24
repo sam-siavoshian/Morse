@@ -22,7 +22,7 @@ const ReadAloud = (() => {
   card.className = "ra";
   card.hidden = true;
   card.setAttribute("role", "region");
-  card.setAttribute("aria-label", "Read aloud");
+  tBind(card, "aria-label", "a11y.read");
   root.insertBefore(layer, bar);
   root.append(card);
 
@@ -31,13 +31,13 @@ const ReadAloud = (() => {
 
   // ---- what to read: the last selection on the page, kept while the bar opens
   let lastSel = null;
-  listen("selectionchange", () => { // soak: listen(), so a quiet copy lets go of it
+  B.on(document, "selectionchange", () => { // through the boot: quiet once detached, and let go of (boot.js dispose)
     const s = document.getSelection();
     if (!s || s.isCollapsed || !s.rangeCount) return;
     const r = s.getRangeAt(0);
     if (r.commonAncestorContainer === hostEl || hostEl.contains(r.commonAncestorContainer) || !r.toString().trim()) return;
     lastSel = r.cloneRange();
-  }, undefined, document);
+  });
   listen("pointerdown", e => { if (!ours(e) && !card.contains(e.target)) lastSel = null; }, true);
   const hasSelection = () => !!(lastSel && lastSel.startContainer.isConnected && lastSel.toString().trim());
 
@@ -114,14 +114,14 @@ const ReadAloud = (() => {
 
   // ---- reading
   function start(what) {
-    if (!synth() || !globalThis.SpeechSynthesisUtterance) return toast("This app has no voice to read aloud with.");
+    if (!synth() || !globalThis.SpeechSynthesisUtterance) return toast(t("ra.noVoice"));
     let range = what;
     if (!(what instanceof Range)) {
       range = document.createRange();
       range.selectNodeContents(what || mainText());
     }
     const segs = sentences(range);
-    if (!segs.length) return toast("There's no text to read there. Point at some text, or select it first.");
+    if (!segs.length) return toast(t("ra.noText"));
     stop(true);
     if (S.open) closeBar(); // the page is theirs while it reads
     const lang = (range.startContainer.parentElement?.closest("[lang]") || document.documentElement).getAttribute("lang") || navigator.language;
@@ -153,7 +153,7 @@ const ReadAloud = (() => {
       if (!R || R.token !== token || /interrupted|canceled/.test(e.error || "")) return;
       stop();
       console.warn("[morse] read aloud", e.error);
-      toast("Couldn't read aloud. Check that this computer has a voice installed.");
+      toast(t("ra.failed"));
     };
     s.speak(u);
     render();
@@ -180,7 +180,7 @@ const ReadAloud = (() => {
   }
   function done() {
     stop(true);
-    toast("Finished reading");
+    toast(t("ra.finished"));
   }
   function stop(quiet) {
     if (!R) return;
@@ -191,7 +191,7 @@ const ReadAloud = (() => {
     layer.textContent = "";
     cancelAnimationFrame(raf);
     raf = 0;
-    if (!quiet) toast("Stopped reading");
+    if (!quiet) toast(t("ra.stopped"));
   }
 
   // ---- the card, and the mark on the sentence being read
@@ -199,12 +199,12 @@ const ReadAloud = (() => {
     if (!R) return;
     const n = R.segs.length;
     card.innerHTML = `
-      <button type="button" class="ibtn ra-main" data-ra="play" aria-label="${R.playing ? "Pause" : "Play"}" title="${R.playing ? "Pause" : "Play"}">${icon(R.playing ? I.pause : I.play)}</button>
-      <button type="button" class="ibtn" data-ra="prev" aria-label="Previous sentence" title="Previous sentence" ${R.i === 0 ? "disabled" : ""}>${icon(I.prev)}</button>
-      <button type="button" class="ibtn" data-ra="next" aria-label="Next sentence" title="Next sentence" ${R.i >= n - 1 ? "disabled" : ""}>${icon(I.next)}</button>
-      <div class="ra-text" aria-live="off"><b>${R.playing ? "Reading aloud" : "Paused"}</b><small>Sentence ${R.i + 1} of ${n}</small></div>
-      <button type="button" class="btn ra-rate" data-ra="rate" aria-label="Speed ${R.rate} times. Change speed" title="Speed">${R.rate}×</button>
-      <button type="button" class="ibtn close ra-x" data-ra="stop" aria-label="Stop reading" title="Stop (Esc)">×</button>`;
+      <button type="button" class="ibtn ra-main" data-ra="play" aria-label="${esc(R.playing ? t("ra.pause") : t("ra.play"))}" title="${esc(R.playing ? t("ra.pause") : t("ra.play"))}">${icon(R.playing ? I.pause : I.play)}</button>
+      <button type="button" class="ibtn" data-ra="prev" aria-label="${esc(t("ra.prev"))}" title="${esc(t("ra.prev"))}" ${R.i === 0 ? "disabled" : ""}>${icon(I.prev)}</button>
+      <button type="button" class="ibtn" data-ra="next" aria-label="${esc(t("ra.next"))}" title="${esc(t("ra.next"))}" ${R.i >= n - 1 ? "disabled" : ""}>${icon(I.next)}</button>
+      <div class="ra-text" aria-live="off"><b>${R.playing ? t("ra.reading") : t("ra.paused")}</b><small>${t("ra.sentence", { i: R.i + 1, n })}</small></div>
+      <button type="button" class="btn ra-rate" data-ra="rate" aria-label="${esc(t("ra.speedLabel", { rate: R.rate }))}" title="${esc(t("ra.speed"))}">${R.rate}×</button>
+      <button type="button" class="ibtn close ra-x" data-ra="stop" aria-label="${esc(t("ra.stop"))}" title="${esc(t("ra.stopTitle"))}">×</button>`;
   }
   function reveal() {
     const r = R?.segs[R.i]?.range.getBoundingClientRect();
@@ -243,7 +243,7 @@ const ReadAloud = (() => {
   });
   // Esc stops reading (the bar takes Esc first while it's open).
   listen("keydown", e => {
-    if (!e.isTrusted || !R || S.open || e.key !== "Escape") return;
+    if (!e.isTrusted || !R || S.open || !panel.hidden || !modal.hidden || e.key !== "Escape") return; // the top layer takes Esc first
     e.preventDefault();
     e.stopImmediatePropagation();
     stop();

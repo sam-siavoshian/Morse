@@ -1,0 +1,21 @@
+{
+  "morse": 1,
+  "id": "mail-jk-keys",
+  "title": "J and K to move through email",
+  "prompt": "let me use j and k to move up and down the email list",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8791"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": "",
+  "js": "morse.on(document, \"keydown\", e => {\n  if (e.metaKey || e.ctrlKey || e.altKey) return;\n  if (e.key !== \"j\" && e.key !== \"k\") return;\n  if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable=\"true\"]')) return;\n  const rows = morse.$$('[role=\"option\"][data-i]');\n  if (!rows.length) return;\n  const cur = rows.findIndex(r => r.getAttribute(\"aria-selected\") === \"true\");\n  const next = e.key === \"j\"\n    ? Math.min(cur + 1, rows.length - 1)\n    : Math.max(cur < 0 ? 0 : cur - 1, 0);\n  const row = rows[next];\n  e.preventDefault();\n  row.scrollIntoView({ block: \"nearest\" });\n  row.click();\n});\n",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

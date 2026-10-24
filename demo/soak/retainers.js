@@ -30,7 +30,7 @@ export async function detachedIds(send, contextId, max = 60) {
   return ids;
 }
 
-export function analyze(snap, { ids = null, match = /^Detached /, max = 12, depth = 14 } = {}) {
+export function analyze(snap, { ids = null, match = /^Detached /, byName = null, max = 12, depth = 40 } = {}) {
   const m = snap.snapshot.meta;
   const NF = m.node_fields.length, EF = m.edge_fields.length;
   const nType = m.node_fields.indexOf("type"), nName = m.node_fields.indexOf("name"), nEdges = m.node_fields.indexOf("edge_count");
@@ -57,7 +57,7 @@ export function analyze(snap, { ids = null, match = /^Detached /, max = 12, dept
   const nDet = m.node_fields.indexOf("detachedness"), nId = m.node_fields.indexOf("id");
   const targets = [];
   for (let i = 0; i < count; i++) {
-    if (ids ? ids.has(nodes[i * NF + nId]) : nDet >= 0 ? nodes[i * NF + nDet] === 2 && /^(HTML|SVG)\w*Element|^<|Element$/.test(name(i)) && type(i) !== "native" : match.test(name(i))) targets.push(i);
+    if (byName ? byName.test(name(i)) : ids ? ids.has(nodes[i * NF + nId]) : nDet >= 0 ? nodes[i * NF + nDet] === 2 && /^(HTML|SVG)\w*Element|^<|Element$/.test(name(i)) && type(i) !== "native" : match.test(name(i))) targets.push(i);
   }
   // For each detached element whose parent isn't also detached-matching: a path to the root (node 0).
   const groups = new Map();
@@ -81,7 +81,7 @@ export function analyze(snap, { ids = null, match = /^Detached /, max = 12, dept
     const path = [];
     for (let n = found; n !== t;) { const [to, e] = seen.get(n); path.push(`${name(n).slice(0, 40)} -${edgeLabel(e)}->`); n = to; }
     path.push(name(t));
-    const key = path.slice(-7).join(" ");
+    const key = (path.length > 12 ? [...path.slice(0, 5), "…", ...path.slice(-7)] : path).join(" ");
     groups.set(key, (groups.get(key) || 0) + 1);
   }
   const det = new Map();

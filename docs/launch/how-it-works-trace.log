@@ -1,0 +1,15 @@
+  MORSE · live trace (MORSE_TRACE=1)
+  every step of a change, as it happens
+
+15:59:43.942  connect  CDP attached to "vscode-app": Morse's code runs in its own isolated world ("morse"), talks to this process through the __morseHostSend binding
+16:00:04.431  bar      "add a big live cllock to the status bar" · pointed at #workbench.parts.statusbar > div.left-items.items-container · VSCodium
+16:00:04.432  model    claude-code · haiku
+16:00:04.434  harness  using a Claude Code process started when the bar opened: claude -p --output-format stream-json --input-format stream-json --verbose --include-partial-messages --tools "" --strict-mcp-config --disable-slash-commands --no-session-persistence --system-prompt-file <morse instructions> --model haiku
+16:00:04.972  harness  Claude Code ready (claude-haiku-5-5), request sent on stdin as stream-json
+16:00:06.030  stream   first words from the model after 1599ms
+16:00:06.156  page     CSS reaches the page while the model is still writing (1725ms), pushed over CDP to Morse's world
+16:00:09.706  page     JS (388 chars) run in the app's own page world via CDP Runtime.evaluate
+16:00:11.132  done     ✓ "Live clock in status bar" in 6701ms · 43 chunks streamed · css 202 chars · js 388 chars · 1 attempt
+16:00:14.155  save     Saved "Live clock in status bar" to ~/.morse/mods/ · it runs again every time this app opens
+16:00:40.085  connect  CDP attached to "vscode-app": Morse's code runs in its own isolated world ("morse"), talks to this process through the __morseHostSend binding
+16:00:42.513  page     JS (388 chars) run in the app's own page world via CDP Runtime.evaluate

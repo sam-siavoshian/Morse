@@ -7,8 +7,8 @@
 //   - A page can't draw over Morse's install review: the review is in the
 //     browser's top layer, comes back on top when the page puts something of
 //     its own there, and Install only works once it has been seen uncovered.
-//     The page is demo/sites/hostile/?cover, on the share page's test address
-//     so it can ask for an install.
+//     The page is demo/sites/hostile/?cover, shown at the share page's test
+//     address (127.0.0.1:8787/share/) so it can ask for an install.
 import { home, tempDir } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -24,7 +24,9 @@ const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..")
 const EXT = path.join(root, "dist", "extension");
 const skip = noDisplay;
 const BYTE = "http://127.0.0.1:8788/demo/sites/byte/";
-const HOSTILE = "http://127.0.0.1:8787/demo/sites/hostile/?cover";
+// The extension only trusts the share page's folder, so the hostile page is
+// shown there (the route in before()).
+const HOSTILE = "http://127.0.0.1:8787/share/hostile/?cover";
 let ctx, sw, demo, extId;
 
 before(async () => {
@@ -35,6 +37,14 @@ before(async () => {
     args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
   });
   await routeDemoOrigins(ctx, demo);
+  // Routes run newest first: this one wins over the 8787 route above.
+  await ctx.route("http://127.0.0.1:8787/share/hostile/**", async route => {
+    const url = new URL(route.request().url());
+    url.port = String(demo.sites.parley);
+    url.pathname = url.pathname.replace("/share/hostile/", "/demo/sites/hostile/");
+    try { await route.fulfill({ response: await route.fetch({ url: url.href }) }); }
+    catch { await route.abort().catch(() => {}); }
+  });
   sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker", { timeout: TIMEOUT });
   extId = new URL(sw.url()).host;
   // No first-run tips in the way.
@@ -100,6 +110,29 @@ test("without “Allow User Scripts” a mod's style shows, its code never runs,
 // all, and the bar says the change needs "Allow User Scripts", with the click
 // that opens it. (The playground: the real runtime and engine with the demo
 // model, and a host that answers like the extension with the setting off.)
+// perf split: the boot (runtime/boot.js) applies mods before any UI exists. A
+// waiting mod brings the UI in to say so, once per tab; after that a reload
+// loads nothing.
+test("with no UI loaded yet, a waiting mod brings the UI in once per tab to say so", { skip }, async () => {
+  const mod = createMod({ title: "Word count", prompt: "count words", url: BYTE, css: "h1 { outline: 3px solid rgb(1, 2, 3) !important; }", js: "document.documentElement.dataset.wordCount = 'ran';" });
+  await sw.evaluate(mods => chrome.storage.local.set({ mods }), { [mod.id]: mod });
+  const p = await ctx.newPage();
+  try {
+    await p.goto(BYTE);
+    // No debug flag left from the other tests (it builds the UI at once), and a fresh tab.
+    await p.evaluate(() => { localStorage.removeItem("morse:debug"); sessionStorage.clear(); });
+    await p.reload();
+    await p.waitForFunction(() => getComputedStyle(document.querySelector("h1")).outlineColor === "rgb(1, 2, 3)");
+    await p.waitForFunction(() => document.querySelector("[data-morse-ui]"), null, { timeout: TIMEOUT });
+    assert.equal(await p.evaluate(() => document.documentElement.dataset.wordCount), undefined, "the code never ran");
+    await waitFor(() => p.evaluate(() => sessionStorage.getItem("morse:waiting-told") === "1"), { what: "the notice" });
+    await p.reload();
+    await p.waitForFunction(() => getComputedStyle(document.querySelector("h1")).outlineColor === "rgb(1, 2, 3)");
+    await p.waitForTimeout(1500);
+    assert.equal(await p.evaluate(() => !!document.querySelector("[data-morse-ui]")), false, "told once in this tab: no UI after the reload");
+  } finally { await p.close(); await noMods(); }
+});
+
 test("a change that needs code says so in the bar, with one click to turn on “Allow User Scripts”", { skip }, async () => {
   const browser = await chromium.launch();
   try {

@@ -43,6 +43,11 @@ A few tests read the repo itself:
 - `tests/words.test.js`: no developer jargon in what people read (the
   runtime, the extension's pages, the share page, the website, and the user
   pages in `docs/`). See [docs/WRITING.md](../WRITING.md).
+- `tests/a11y-morse.test.js`: Morse's own UI with the keyboard alone and a
+  screen reader: axe-core (vendored in `demo/vendor/`, test-only) on the key
+  states and the extension's pages, the core flows without a mouse, what is
+  announced during a generation, forced colors and 320px. `npm run ui` runs
+  axe on every catalog state. See [Accessibility](accessibility.md).
 - `tests/docs.test.js`: every relative link and image in the README and
   `docs/` exists, every `#anchor` matches a heading, every page is listed in
   [docs/README.md](../README.md), and the README stays short.
@@ -131,6 +136,16 @@ node ~/.cache/morse/electron/node_modules/electron/install.js   # only if dist/ 
 DISPLAY=:99 node --test tests/electron.test.js
 ```
 
+Morse Desktop has two test files.
+[`tests/desktop-app.test.js`](../../tests/desktop-app.test.js) needs nothing
+extra: it covers the IPC handlers over the service with a fake daemon, the
+preload's exposed API, `morse://` links, the Linux desktop files and the icon.
+[`tests/desktop-app-ui.test.js`](../../tests/desktop-app-ui.test.js) drives the
+real app with Playwright's `_electron`, with the same runtime and display as
+above. It lists Tunes, opens it with Morse, disconnects, connects again,
+answers the restart question, closes the window and quits. Its app list is
+only Tunes (`MORSE_DESKTOP_SCAN=0` and `apps` in `desktop.json`).
+
 Multi-window edge cases (crashes, kill and restart, `--restart`) are tested
 against a fake Chromium app ([`demo/fake-app.js`](../../demo/fake-app.js),
 [`tests/desktop.test.js`](../../tests/desktop.test.js)).
@@ -157,7 +172,7 @@ with Claude Code and checked in the page. Run it after changing the prompt,
 the context builder or the engine:
 
 ```bash
-node evals/run.js                  # train split, Claude Code haiku
+node evals/run.js                  # train split, Claude Code, Automatic (sonnet, then opus)
 node evals/run.js --split test     # held-out cases: only for final reports
 ```
 
@@ -179,33 +194,56 @@ demo/contrast.js` checks every color token pair. The checklist is
 ## Screenshots
 
 Every screenshot in [`docs/screenshots/`](../screenshots/) is made by a
-script in `demo/`, with the real extension or the real desktop connector:
+script in `demo/`, with the real extension or the real desktop connector.
+[`docs/screenshots/REVIEW.md`](../screenshots/REVIEW.md) lists each one, the
+script that makes it, and whether it was checked and passed.
 
 ```bash
-npm run demo:serve &
 DISPLAY=:99 npm run screenshots    # shoot-extension, shoot-desktop, shoot-control
+DISPLAY=:99 node demo/shoot-desktop-app.js   # Morse Desktop (167-175): Tunes for real, Claude Code checked for real if installed
 ```
+
+The scripts start what they need themselves: the demo sites on free ports
+(shown to the browser at their usual addresses, 127.0.0.1:8787–8790, so other
+runs on those ports don't matter) and the Morse helper on a free port
+(or `MORSE_HELPER_PORT`), which the extension in the script's browser is told
+about ("morse.helperPort", as in the tests). They press the platform's
+Open Morse key (Ctrl+Shift+Space off macOS, from
+[`tests/helpers/keys.js`](../../tests/helpers/keys.js)) and start as someone
+who has used Morse before, with no first-run guide. They wait for the bar
+to say it is open and that something was picked before they type, so a slow
+machine makes them slower, not wrong. Shared pieces are in
+[`demo/helper.js`](../../demo/helper.js).
 
 They replay pre-written replies ([`core/demo.js`](../../core/demo.js)) so they
 come out the same every time. For a real model, run `demo/shoot-desktop.js`
-with `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku
-SHOTS=docs/screenshots/claude-code`. They need Xvfb, Chromium through
-Playwright and ffmpeg; set `MORSE_HOME` to a scratch folder.
+with `MORSE_PROVIDER=claude-code MORSE_MODEL=sonnet
+SHOTS=docs/screenshots/claude-code`; with `SHOTS` set it also keeps the steps
+between the pictures the docs use. They need Xvfb, Chromium through
+Playwright and ffmpeg. On a busy machine, rerun a script if a picture caught
+something half drawn.
 
 Each feature has its own script: `shoot-bar.js` (voice, shortcuts, settings,
 from [`demo/bar-playground.html`](../../demo/bar-playground.html)),
-`shoot-godmode.js` (Edit tools), `shoot-iterate.js` (follow-ups, History,
-Fix it), `shoot-ask.js`, `shoot-control.js`, `shoot-gallery.js`,
-`shoot-a11y.js`, `shoot-show-once.js`, `shoot-heal.js`, `shoot-electron.js`,
-`shoot-onboarding.js` and `shoot-apps.js` (`morse apps` and `morse status`,
-rendered from the macOS fixture tree in
-[`demo/fake-installs.js`](../../demo/fake-installs.js)). The launch videos
-are made by [`demo/record-launch.js`](../../demo/record-launch.js); see the
+`shoot-godmode.js` (Edit tools and Page tools), `shoot-iterate.js`
+(follow-ups, History, Fix it), `shoot-ask.js`, `shoot-control.js`,
+`shoot-gallery.js`, `shoot-a11y.js`, `shoot-show-once.js`, `shoot-heal.js`,
+`shoot-onboarding.js` and `shoot-first-run.js` (first run), `shoot-electron.js`
+(the real Electron app, with real X input: `FIRST=126` and a real model for
+126–127), `shoot-apps.js` (`morse apps` and `morse status`, rendered from the
+macOS fixture tree in [`demo/fake-installs.js`](../../demo/fake-installs.js))
+and `shoot-site.js` (the website and share page, into
+[`docs/site/`](../site/)). `shoot-style.js` and `shoot-packs.js` make
+150–166; the pictures of real apps and sites (147–156) come from
+`demo/try-real-app.js` and `demo/try-real-sites.js`. The launch videos are made by
+[`demo/record-launch.js`](../../demo/record-launch.js); see the
 [launch kit](../launch/README.md).
 
-Some of the older screenshots (the 00–60s) were taken before the
-plain-words pass and still show old labels (“Keep”, “Code”). The script that
-made each one retakes it.
+Every picture up to 146 was retaken on October 24, 2026, after the
+plain-words pass (Save, Change, Edit tools, no local models). The launch video and its poster
+frames (`docs/launch/`) are older: they come from real Claude Code runs and
+still show the bar before the plain-words pass in places, until the video is
+recorded again.
 
 ## What was verified and how
 
@@ -219,11 +257,12 @@ made each one retakes it.
   [`core/demo.js`](../../core/demo.js), a test fixture. The same desktop flow
   was also run with **real Claude Code** (`claude` on the Claude
   subscription, model `haiku`):
-  [`docs/screenshots/claude-code`](../screenshots/claude-code). It built a
-  working sleep timer on the first try (no repair round needed) in about
-  15 s. Its "bigger album covers" change targeted `img` elements the demo app
-  doesn't have, so that one did nothing visible: a small fast model guessing
-  at markup. The extension was checked the same way: paired with
+  [`docs/screenshots/claude-code`](../screenshots/claude-code), last run on
+  October 24, 2026. It built a working sleep timer (a "Sleep" picker under
+  the player) on the first try in about 19 s, and made the album covers
+  bigger with rounder corners in about 17 s. An earlier run's covers change
+  targeted `img` elements the demo app doesn't have and did nothing visible:
+  a small fast model guessing at markup. The extension was checked the same way: paired with
   `morse serve`, the popup's Test button, a full generation through the
   helper, and Stop killing the `claude` process mid-run.
 - **The demo video** was recorded from real runs: Claude Code (haiku) wrote

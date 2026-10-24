@@ -1,0 +1,742 @@
+{
+  "about": "The gallery mods (site/mods/) and how each is checked. See evals/gallery-check.js. `from` borrows the checker of an eval case in evals/cases.json. `existing` mods were written before this list and are only verified.",
+  "cases": [
+    {
+      "id": "pypi-dark-mode",
+      "title": "Dark mode",
+      "app": "PyPI",
+      "category": "Dark mode",
+      "tags": [
+        "dark mode",
+        "reading"
+      ],
+      "url": "https://pypi.org/project/requests/",
+      "waitFor": "#description",
+      "request": "dark mode for the whole page, including the sidebar on the right, with text that's easy to read",
+      "check": [
+        "return T.darkPage('.project-description p, .project-description li, .project-description h1, .project-description h2, .project-header__name, .project-header__summary, .sidebar-section h3, .sidebar-section a, .vertical-tabs__tab, .site-header a')"
+      ],
+      "how": "Most of the screen is dark, and at least 92% of the description, header, tabs and sidebar text has a contrast of 4.5 or more."
+    },
+    {
+      "id": "pypi-sticky-install",
+      "title": "Install command always in view",
+      "app": "PyPI",
+      "category": "Layout",
+      "tags": [
+        "layout",
+        "install"
+      ],
+      "url": "https://pypi.org/project/requests/",
+      "waitFor": "#pip-command",
+      "target": "#pip-command",
+      "label": "“pip install requests” command",
+      "request": "keep the pip install command visible at the top while I scroll",
+      "check": [
+        "scrollTo(0, 2500); await T.sleep(500);",
+        "const e = T.$('#pip-command');",
+        "if (!T.inView(e)) return 'the install command is not in view after scrolling: top ' + Math.round(T.rect(e).top);",
+        "if (T.rect(e).bottom > innerHeight * 0.4) return 'what stays at the top covers too much of the page: ' + Math.round(T.rect(e).bottom) + 'px';",
+        "const pinned = T.$$('.banner *, header *').filter(x => T.inView(x) && x.textContent.trim() && !x.children.length && T.rect(x).top < innerHeight * 0.4);",
+        "const faint = pinned.filter(x => T.contrast(x) < 3);",
+        "if (faint.length) return 'text pinned at the top is hard to read: “' + faint[0].textContent.trim().slice(0, 30) + '” ' + T.contrast(faint[0]).toFixed(1);",
+        "const below = T.$$('.project-description *').filter(x => { const r = T.rect(x); return T.visible(x) && x.textContent.trim() && r.top > T.rect(e).bottom + 4 && r.bottom < innerHeight; });",
+        "return below.length > 0 || 'no project description in view under it';"
+      ],
+      "shot": "scrollTo(0, 1800);",
+      "how": "Scrolls 2,500px down: the pip install command is still fully in view and not covered, what stays at the top takes less than 40% of the screen and its text is readable (contrast 3 or more), and description text shows under it."
+    },
+    {
+      "id": "pypi-hide-prereleases",
+      "title": "Hide pre-releases and yanked versions",
+      "app": "PyPI",
+      "category": "Declutter",
+      "tags": [
+        "declutter",
+        "releases"
+      ],
+      "url": "https://pypi.org/project/requests/#history",
+      "waitFor": ".release-timeline",
+      "setup": [
+        "document.querySelector('a[href=\"#history\"]')?.click();"
+      ],
+      "request": "in the release history, hide the releases marked pre-release or yanked",
+      "check": [
+        "const odd = T.$$('.release--pre-release, .release--yanked');",
+        "if (!odd.length) return 'no pre-releases on the page to hide';",
+        "if (odd.some(T.visible)) return odd.filter(T.visible).length + ' pre-release or yanked versions still show';",
+        "const ok = T.$$('.release').filter(r => !r.matches('.release--pre-release, .release--yanked') && T.visible(r));",
+        "return ok.length > 50 || 'only ' + ok.length + ' normal releases still show';"
+      ],
+      "shot": "document.querySelector('.release-timeline')?.scrollIntoView({ block: 'start' });",
+      "how": "Opens Release history: no pre-release or yanked version shows, and more than 50 normal releases still do."
+    },
+    {
+      "id": "nodejs-bigger-code",
+      "title": "Bigger code examples",
+      "app": "Node.js docs",
+      "category": "Reading",
+      "tags": [
+        "reading",
+        "code"
+      ],
+      "url": "https://nodejs.org/api/path.html",
+      "waitFor": "#apicontent pre",
+      "target": "#apicontent pre",
+      "label": "code example",
+      "request": "make the code examples bigger",
+      "check": [
+        "const ps = T.$$('#apicontent pre').filter(T.visible).slice(0, 6);",
+        "if (!ps.length) return 'no code examples visible';",
+        "const small = ps.filter(p => T.fontPx(p.querySelector('code') || p) < 16);",
+        "return !small.length || small.length + ' code examples still under 16px: ' + T.fontPx(small[0].querySelector('code') || small[0]);"
+      ],
+      "shot": "document.querySelector('#apicontent pre')?.scrollIntoView({ block: 'center' });",
+      "how": "The first six code examples are at least 16px."
+    },
+    {
+      "id": "nodejs-side-contents",
+      "title": "Contents on the side",
+      "app": "Node.js docs",
+      "category": "Reading",
+      "tags": [
+        "reading",
+        "navigation"
+      ],
+      "url": "https://nodejs.org/api/path.html",
+      "waitFor": "#toc",
+      "target": "#toc",
+      "label": "“Table of contents”",
+      "request": "show the table of contents on the right side and keep it there while I scroll",
+      "check": [
+        "scrollTo(0, document.documentElement.scrollHeight * 0.6); await T.sleep(500);",
+        "const toc = T.$('#toc');",
+        "const links = [...toc.querySelectorAll('a')].filter(a => T.inView(a) && T.rect(a).left > innerWidth * 0.55);",
+        "if (links.length < 3) return 'the contents are not in view on the right after scrolling (' + links.length + ' links)';",
+        "const tr = T.rect(toc);",
+        "const ps = T.$$('#apicontent p').filter(p => { const r = T.rect(p); return T.visible(p) && r.top > 0 && r.bottom < innerHeight; });",
+        "if (!ps.length) return 'no text in view';",
+        "return ps.every(p => T.rect(p).right <= T.rect(links[0]).left + 2) || 'the contents cover the text';"
+      ],
+      "shot": "scrollTo(0, 1400);",
+      "how": "Scrolls to 60% of the page: at least three contents links are in view on the right half, and no paragraph in view runs under them."
+    },
+    {
+      "id": "nodejs-section-keys",
+      "title": "J and K to jump between sections",
+      "app": "Node.js docs",
+      "category": "Keyboard",
+      "tags": [
+        "keyboard",
+        "navigation"
+      ],
+      "url": "https://nodejs.org/api/path.html",
+      "waitFor": "#apicontent h2",
+      "request": "let me press j and k to jump to the next and previous section",
+      "check": [
+        "scrollTo(0, 0); await T.sleep(300); document.activeElement?.blur?.();",
+        "const heads = () => T.$$('#apicontent h2, #apicontent h3').filter(T.visible);",
+        "const y0 = scrollY;",
+        "await T.press('j'); await T.sleep(1200);",
+        "const y1 = scrollY; if (y1 <= y0 + 40) return 'j did not move down';",
+        "if (!heads().some(h => Math.abs(T.rect(h).top) < 140)) return 'j did not stop at a section heading';",
+        "await T.press('j'); await T.sleep(1200);",
+        "const y2 = scrollY; if (y2 <= y1 + 10) return 'a second j did not move further down';",
+        "await T.press('k'); await T.sleep(1200);",
+        "return scrollY < y2 - 10 || 'k did not move back up';"
+      ],
+      "how": "Presses j (real key): the page moves down to a section heading; j again moves further; k moves back up."
+    },
+    {
+      "id": "go-hide-banners",
+      "title": "No cookie notice or survey banner",
+      "app": "Go packages",
+      "category": "Declutter",
+      "tags": [
+        "declutter"
+      ],
+      "url": "https://pkg.go.dev/net/http",
+      "waitFor": ".Documentation",
+      "request": "hide the cookie notice at the bottom and the Go survey banner",
+      "check": [
+        "const els = T.$$('.Cookie-notice, .go-SurveyBanner');",
+        "if (!els.length) return 'the banners are not on the page';",
+        "if (els.some(T.visible)) return els.filter(T.visible).map(e => e.className.split(' ')[0]).join(', ') + ' still shows';",
+        "return T.visible(T.$('.Documentation')) || 'the documentation was hidden too';"
+      ],
+      "how": "The cookie notice and the survey banner are hidden; the documentation still shows."
+    },
+    {
+      "id": "go-bigger-code",
+      "title": "Bigger code examples",
+      "app": "Go packages",
+      "category": "Reading",
+      "tags": [
+        "reading",
+        "code"
+      ],
+      "url": "https://pkg.go.dev/net/http",
+      "waitFor": ".Documentation pre",
+      "target": ".Documentation pre",
+      "label": "code example",
+      "request": "make the code examples bigger",
+      "check": [
+        "const ps = T.$$('.Documentation pre').filter(T.visible).slice(0, 6);",
+        "if (!ps.length) return 'no code examples visible';",
+        "const small = ps.filter(p => T.fontPx(p) < 16);",
+        "return !small.length || small.length + ' code examples still under 16px: ' + T.fontPx(small[0]);"
+      ],
+      "shot": "document.querySelector('.Documentation pre')?.scrollIntoView({ block: 'center' });",
+      "how": "The first six code examples are at least 16px."
+    },
+    {
+      "id": "rubygems-dark-mode",
+      "title": "Dark mode",
+      "app": "RubyGems",
+      "category": "Dark mode",
+      "tags": [
+        "dark mode"
+      ],
+      "url": "https://rubygems.org/gems/rails",
+      "waitFor": "main",
+      "request": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+      "check": [
+        "return T.darkPage('main h1, main h2, main h3, main p, main a, main li, main span, main code, header a')"
+      ],
+      "how": "Most of the screen is dark, and at least 92% of the text in the header and page has a contrast of 4.5 or more."
+    },
+    {
+      "id": "docker-dark-code",
+      "title": "Bigger code on dark blocks",
+      "app": "Docker Hub",
+      "category": "Reading",
+      "tags": [
+        "reading",
+        "code"
+      ],
+      "url": "https://hub.docker.com/_/nginx",
+      "waitFor": "pre",
+      "settle": 4000,
+      "target": "pre",
+      "label": "code block",
+      "request": "make these code blocks bigger with a dark background",
+      "check": [
+        "const ps = T.$$('pre').filter(T.visible).slice(0, 6);",
+        "if (!ps.length) return 'no code blocks visible';",
+        "for (const p of ps) {",
+        "  const f = T.fontPx(p.querySelector('code') || p), [r, g, b] = T.bg(p);",
+        "  if (f < 15) return 'code is ' + f + 'px';",
+        "  if (r + g + b > 200) return 'a code block is not dark: rgb(' + [r, g, b].map(Math.round) + ')';",
+        "  if (T.contrast(p.querySelector('code') || p) < 4.5) return 'code is hard to read on the dark block';",
+        "}",
+        "return true;"
+      ],
+      "shot": "const p = document.querySelector('div[data-testid=markdownContent] pre'); if (p) scrollTo(0, p.getBoundingClientRect().top + scrollY - 160);",
+      "how": "The first six code blocks are at least 15px, on a dark background, with text contrast of 4.5 or more."
+    },
+    {
+      "id": "gitlab-hide-sidebar",
+      "title": "Hide the left sidebar",
+      "app": "GitLab",
+      "category": "Layout",
+      "tags": [
+        "layout",
+        "declutter"
+      ],
+      "url": "https://gitlab.com/gitlab-org/gitlab",
+      "waitFor": "#super-sidebar",
+      "settle": 4000,
+      "target": "#super-sidebar",
+      "label": "“Project” sidebar",
+      "request": "hide the left sidebar so the page uses the full width",
+      "check": [
+        "const sb = T.$('#super-sidebar');",
+        "if (sb && T.visible(sb) && T.rect(sb).right > 20) return 'the sidebar still shows';",
+        "const h = T.$$('h1, .home-panel-title, [itemprop=name]').find(T.visible);",
+        "if (!h) return 'the project page was hidden too';",
+        "return T.rect(h).left < B - 120 || 'the page did not move into the space: title at ' + Math.round(T.rect(h).left) + 'px, was ' + Math.round(B);"
+      ],
+      "before": "const h = T.$$('h1, .home-panel-title, [itemprop=name]').find(T.visible); return h ? T.rect(h).left : null;",
+      "how": "The left sidebar is hidden and the project title moves at least 120px to the left."
+    },
+    {
+      "id": "nuget-dark-mode",
+      "title": "Dark mode",
+      "app": "NuGet",
+      "category": "Dark mode",
+      "tags": [
+        "dark mode"
+      ],
+      "url": "https://www.nuget.org/packages/Newtonsoft.Json",
+      "waitFor": "main, #skippedToContent, .package-details-main",
+      "request": "dark mode, with text that's easy to read",
+      "check": [
+        "return T.darkPage('h1, h2, h3, p, a, li, span, td, th, .install-script')"
+      ],
+      "how": "Most of the screen is dark, and at least 92% of the text has a contrast of 4.5 or more."
+    },
+    {
+      "id": "packagist-copy-command",
+      "title": "Copy the install command",
+      "app": "Packagist",
+      "category": "New features",
+      "tags": [
+        "new feature",
+        "install"
+      ],
+      "url": "https://packagist.org/packages/laravel/framework",
+      "waitFor": ".requireme",
+      "target": ".requireme",
+      "label": "“composer require laravel/framework” command",
+      "request": "add a copy button next to the composer require command",
+      "check": [
+        "const b = T.fresh('button,[role=button]').filter(T.visible)[0];",
+        "if (!b) return 'no new button';",
+        "window.__clip = ''; await T.click(b); await T.sleep(400);",
+        "return /^\\s*composer require laravel\\/framework\\s*$/.test(window.__clip) || 'copied: ' + JSON.stringify(window.__clip.slice(0, 80));"
+      ],
+      "how": "Clicks the new button (real click): the clipboard holds exactly “composer require laravel/framework”."
+    },
+    {
+      "id": "metacpan-sticky-contents",
+      "title": "Contents always in view",
+      "app": "MetaCPAN",
+      "category": "Reading",
+      "tags": [
+        "reading",
+        "navigation"
+      ],
+      "url": "https://metacpan.org/pod/Moose",
+      "waitFor": "nav.toc",
+      "target": "nav.toc",
+      "label": "“Contents” box",
+      "request": "keep the contents box in view while I scroll, in its own column on the right so it never covers the text",
+      "check": [
+        "scrollTo(0, document.documentElement.scrollHeight * 0.5); await T.sleep(500);",
+        "const toc = T.$('nav.toc'), links = [...toc.querySelectorAll('a')].filter(T.inView);",
+        "if (links.length < 3) return 'the contents are not in view after scrolling (' + links.length + ' links)';",
+        "const tr = T.rect(toc);",
+        "const over = T.$$('.pod p, .pod pre, .pod h2, .pod dt, .pod dd').filter(e => { if (toc.contains(e) || !T.visible(e)) return false; const r = T.rect(e); return r.bottom > tr.top + 2 && r.top < tr.bottom - 2 && r.right > tr.left + 2 && r.left < tr.right - 2; });",
+        "return !over.length || over.length + ' parts of the text run under the contents box, e.g. “' + over[0].textContent.trim().slice(0, 30) + '”';"
+      ],
+      "shot": "scrollTo(0, 3000);",
+      "how": "Scrolls halfway down: at least three contents links are fully in view, and no text in view runs under the contents box."
+    },
+    {
+      "id": "wiki-sticky-contents",
+      "title": "Contents always in view",
+      "app": "Openpedia (demo)",
+      "site": "wiki",
+      "category": "Reading",
+      "tags": [
+        "reading",
+        "navigation"
+      ],
+      "from": "l-toc-sticky",
+      "label": "“Contents” box",
+      "request": "keep the contents visible while I scroll",
+      "shot": "scrollTo(0, 6000);",
+      "how": "Scrolls halfway down the 85,000px page: the contents box is still in view near the top."
+    },
+    {
+      "id": "wiki-dark-mode",
+      "title": "Dark mode",
+      "app": "Openpedia (demo)",
+      "site": "wiki",
+      "category": "Dark mode",
+      "tags": [
+        "dark mode",
+        "reading"
+      ],
+      "request": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+      "check": [
+        "const r = T.darkPage('.art p, .art h1, .art h2, .art a, .toc a, .toc h2, .ibox th, .ibox td, .mast b');",
+        "if (r !== true) return r;",
+        "scrollTo(0, T.$('.wt').offsetTop); await T.sleep(200);",
+        "const cells = T.$$('.wt td, .wt th').filter(e => T.visible(e) && T.rect(e).top > 0 && T.rect(e).top < innerHeight).slice(0, 40);",
+        "const bad = cells.filter(c => T.contrast(c.querySelector('a') || c) < 4.5);",
+        "return !bad.length || bad.length + ' table cells are hard to read';"
+      ],
+      "how": "Most of the screen is dark, at least 92% of the article, contents and info box text has a contrast of 4.5 or more, and every cell of the big table in view does too."
+    },
+    {
+      "id": "wiki-reading-mode",
+      "title": "Reading mode",
+      "app": "Openpedia (demo)",
+      "site": "wiki",
+      "category": "Reading",
+      "tags": [
+        "reading",
+        "declutter"
+      ],
+      "request": "reading mode: hide the contents box and the footer, and show the article in a narrower column with bigger text",
+      "check": [
+        "if (T.visible(T.$('.toc'))) return 'the contents box still shows';",
+        "const p = T.$('.art p');",
+        "const fs = T.fontPx(p), w = T.rect(p).width;",
+        "if (fs < 17) return 'text is ' + fs + 'px';",
+        "if (w > 820) return 'the column is ' + Math.round(w) + 'px wide';",
+        "if (w < 400) return 'the column is only ' + Math.round(w) + 'px wide';",
+        "const cx = T.rect(p).left + w / 2; if (Math.abs(cx - innerWidth / 2) > 120) return 'the column is not near the middle';",
+        "return !T.$$('.foot a').some(T.visible) || 'the footer still shows';"
+      ],
+      "how": "The contents box and footer are hidden; article text is at least 17px in a column 400 to 820px wide, near the middle."
+    },
+    {
+      "id": "wiki-collapse-comments",
+      "title": "Collapse the comments",
+      "app": "Openpedia (demo)",
+      "site": "wiki",
+      "category": "Declutter",
+      "tags": [
+        "declutter",
+        "new feature"
+      ],
+      "target": ".cm h2",
+      "label": "“Comments (400)” heading",
+      "request": "collapse the comments, with a button to show them",
+      "check": [
+        "const items = () => T.$$('.cm .c').filter(T.visible);",
+        "if (items().length) return items().length + ' comments still show';",
+        "if (!T.visible(T.$('.refs'))) return 'the references were hidden too';",
+        "const b = T.fresh('button,[role=button],summary').filter(T.visible)[0] || T.$$('.cm summary, .cm h2').find(T.visible);",
+        "if (!b) return 'no button to show the comments';",
+        "await T.click(b); await T.sleep(400);",
+        "return items().length >= 300 || 'after the click ' + items().length + ' comments show';"
+      ],
+      "shot": "document.querySelector('.cm')?.scrollIntoView({ block: 'start' });",
+      "how": "All 400 comments are hidden and the references still show; clicking the new button (real click) shows at least 300 of them."
+    },
+    {
+      "id": "mail-hide-upgrade",
+      "title": "Hide the upgrade ad",
+      "app": "Postbox (demo)",
+      "site": "mail",
+      "category": "Declutter",
+      "tags": [
+        "declutter"
+      ],
+      "from": "m-promo",
+      "label": "“Postbox Pro” banner",
+      "request": "hide the Postbox Pro upgrade banner",
+      "check": [
+        "if (T.visible(T.$('.pz7'))) return 'banner still visible';",
+        "return (T.visible(T.$('.r9')) && T.visible(T.$('.rd h2'))) || 'the inbox was hidden too';"
+      ],
+      "how": "The Postbox Pro banner is hidden; the inbox and the open email still show."
+    },
+    {
+      "id": "mail-jk-keys",
+      "title": "J and K to move through email",
+      "app": "Postbox (demo)",
+      "site": "mail",
+      "category": "Keyboard",
+      "tags": [
+        "keyboard"
+      ],
+      "from": "m-jk",
+      "request": "let me use j and k to move up and down the email list",
+      "how": "Presses j, j, k (real keys): the third email, then the second, is the one marked or open."
+    },
+    {
+      "id": "mail-bigger-text",
+      "title": "Bigger email text",
+      "app": "Postbox (demo)",
+      "site": "mail",
+      "category": "Reading",
+      "tags": [
+        "reading"
+      ],
+      "from": "m-pane-font",
+      "label": "email text",
+      "request": "make the email text bigger and easier to read",
+      "check": [
+        "const p = T.$('.rd .bd p'), fs = T.fontPx(p);",
+        "if (fs < 15) return 'font ' + fs + 'px';",
+        "return T.contrast(p) >= 7 || 'contrast ' + T.contrast(p).toFixed(1);"
+      ],
+      "how": "The email text is at least 15px with a contrast of 7 or more."
+    },
+    {
+      "id": "notes-focus-timer",
+      "title": "Focus timer",
+      "app": "Inkwell (demo)",
+      "site": "notes",
+      "category": "New features",
+      "tags": [
+        "focus",
+        "new feature"
+      ],
+      "target": ".crumbs .sp",
+      "label": "Share, star and more buttons",
+      "request": "add a 25 minute focus timer here that I can start and pause",
+      "check": [
+        "const b = T.fresh('button,[role=button]').filter(T.visible)[0];",
+        "if (!b) return 'no new button';",
+        "const txt = () => (T.freshText() + ' ' + T.$('.crumbs').innerText);",
+        "const time = () => { const m = txt().match(/(\\d{1,2})\\s*:\\s*(\\d{2})/); return m ? +m[1] * 60 + +m[2] : null; };",
+        "if (time() !== 1500) return 'does not show 25:00 before starting: ' + txt().slice(0, 80);",
+        "await T.click(b); await T.sleep(2300);",
+        "const t1 = time(); if (t1 == null || t1 >= 1500 || t1 < 1490) return 'not counting down after start: ' + txt().slice(0, 80);",
+        "const pause = T.fresh('button,[role=button]').filter(T.visible).find(e => /pause|stop/i.test(e.innerText + e.title + e.getAttribute('aria-label'))) || b;",
+        "await T.click(pause); await T.sleep(300); const t2 = time(); await T.sleep(1600);",
+        "return time() === t2 || 'still counting after pause: ' + t2 + ' then ' + time();"
+      ],
+      "how": "Shows 25:00; clicking start (real click) counts down; clicking pause stops it."
+    },
+    {
+      "id": "notes-word-count",
+      "title": "Live word count",
+      "app": "Inkwell (demo)",
+      "site": "notes",
+      "category": "New features",
+      "tags": [
+        "writing",
+        "new feature"
+      ],
+      "from": "n-word-count",
+      "label": "note text",
+      "request": "add a live word count at the bottom",
+      "how": "Shows a number; typing four more words (real keys) raises it by exactly four."
+    },
+    {
+      "id": "notes-easier-to-read",
+      "title": "Darker, bigger note text",
+      "app": "Inkwell (demo)",
+      "site": "notes",
+      "category": "Reading",
+      "tags": [
+        "reading",
+        "writing"
+      ],
+      "from": "n-contrast",
+      "label": "note text",
+      "request": "the note text is too light and small, make it darker and bigger",
+      "check": [
+        "const p = T.$('.ed_9f p'), c = T.contrast(p), fs = T.fontPx(p);",
+        "if (c < 7) return 'contrast ' + c.toFixed(1);",
+        "return fs >= 15 || 'font ' + fs + 'px';"
+      ],
+      "how": "The note text has a contrast of 7 or more and is at least 15px."
+    },
+    {
+      "id": "notes-focus-mode",
+      "title": "Focus mode",
+      "app": "Inkwell (demo)",
+      "site": "notes",
+      "category": "Declutter",
+      "tags": [
+        "focus",
+        "writing",
+        "declutter"
+      ],
+      "from": "n-focus",
+      "request": "focus mode: hide everything except the page I'm writing",
+      "how": "The sidebar and the breadcrumbs are hidden; the editor still shows."
+    },
+    {
+      "id": "dash-download-csv",
+      "title": "Download the table as CSV",
+      "app": "Metricly (demo)",
+      "site": "dash",
+      "category": "New features",
+      "tags": [
+        "tables",
+        "new feature"
+      ],
+      "from": "d-csv",
+      "target": ".tbl h3",
+      "label": "“Recent orders” heading",
+      "request": "add a button that downloads this table as a CSV file",
+      "how": "Clicks the new button (real click): a file downloads with the table's rows, comma separated."
+    },
+    {
+      "id": "dash-sticky-header",
+      "title": "Table header stays in view",
+      "app": "Metricly (demo)",
+      "site": "dash",
+      "category": "Layout",
+      "tags": [
+        "tables",
+        "layout"
+      ],
+      "from": "d-sticky",
+      "label": "table header",
+      "request": "keep the column names visible when I scroll the table",
+      "how": "Scrolls the table 150px: the column names stay at its top."
+    },
+    {
+      "id": "dash-failed-red",
+      "title": "Failed orders in red",
+      "app": "Metricly (demo)",
+      "site": "dash",
+      "category": "Reading",
+      "tags": [
+        "tables",
+        "highlight"
+      ],
+      "from": "d-failed-red",
+      "label": "“Failed” status",
+      "request": "highlight failed orders in red",
+      "how": "Every failed order's row is red and no other row is."
+    },
+    {
+      "id": "dash-dollars",
+      "title": "Amounts as dollars",
+      "app": "Metricly (demo)",
+      "site": "dash",
+      "category": "Reading",
+      "tags": [
+        "tables"
+      ],
+      "from": "d-currency",
+      "label": "amount",
+      "request": "show the amounts as dollars with commas",
+      "how": "Every amount reads like $1,240.50."
+    },
+    {
+      "id": "tasks-cross-out-done",
+      "title": "Cross out finished tasks",
+      "app": "Tasky (demo)",
+      "site": "tasks",
+      "category": "Reading",
+      "tags": [
+        "tasks"
+      ],
+      "from": "r-strike",
+      "label": "finished task",
+      "request": "cross out the tasks I've finished",
+      "how": "Finished tasks are crossed out and open ones aren't, also after ticking one and after the app redraws."
+    },
+    {
+      "id": "tasks-hide-done",
+      "title": "Hide finished tasks",
+      "app": "Tasky (demo)",
+      "site": "tasks",
+      "category": "Declutter",
+      "tags": [
+        "tasks",
+        "declutter"
+      ],
+      "request": "hide the tasks I've finished",
+      "check": [
+        "const cards = () => T.$$('.card');",
+        "const shown = () => cards().filter(T.visible);",
+        "if (cards().some(c => c.querySelector('input').checked && T.visible(c))) return 'a finished task still shows';",
+        "const open = shown().length; if (open !== 8) return open + ' open tasks show, not 8';",
+        "const box = cards().find(c => !c.querySelector('input').checked && T.visible(c)).querySelector('input');",
+        "await T.click(box); await T.sleep(500);",
+        "if (shown().length !== 7) return 'after ticking one, ' + shown().length + ' tasks show';",
+        "await T.sleep(3200);",
+        "return shown().length === 7 || 'after the app redrew, ' + shown().length + ' tasks show';"
+      ],
+      "how": "Only the 8 open tasks show; ticking one (real click) leaves 7, and still 7 after the app redraws."
+    },
+    {
+      "id": "shop-hide-sold-out",
+      "title": "Hide sold-out products",
+      "app": "Shoply (demo)",
+      "site": "shop",
+      "category": "Declutter",
+      "tags": [
+        "shopping",
+        "declutter"
+      ],
+      "from": "s-oos",
+      "request": "hide the products that are out of stock",
+      "how": "After the next deploy changes every class name, the 3 sold-out products are hidden and the 9 others show."
+    },
+    {
+      "id": "shop-sort-price",
+      "title": "Sort by price",
+      "app": "Shoply (demo)",
+      "site": "shop",
+      "category": "New features",
+      "tags": [
+        "shopping",
+        "new feature"
+      ],
+      "from": "s-sort",
+      "label": "results bar",
+      "request": "add a button that sorts the products by price, lowest first",
+      "how": "Clicks the new button (real click) after the class names change: the 12 products show from lowest price to highest."
+    },
+    {
+      "id": "logs-errors-red",
+      "title": "Errors in red",
+      "app": "Logline (demo)",
+      "site": "logs",
+      "category": "Reading",
+      "tags": [
+        "logs",
+        "highlight"
+      ],
+      "from": "v-errors-red",
+      "label": "log line",
+      "request": "highlight the error lines in red",
+      "how": "Scrolls the 5,000 lines to four places: every error line in view is red and no other line is."
+    },
+    {
+      "id": "byte-reading-mode",
+      "existing": true,
+      "app": "The Daily Byte (demo)",
+      "site": "byte",
+      "category": "Reading",
+      "tags": [
+        "declutter",
+        "reading"
+      ],
+      "request": "hide the ads and pop-ups and make the article easy to read",
+      "check": [
+        "const ads = T.$$('[data-ad], .ad-slot').filter(T.visible);",
+        "if (ads.length) return ads.length + ' ads still show';",
+        "const p = T.$('article p');",
+        "if (T.fontPx(p) < 18) return 'article text ' + T.fontPx(p) + 'px';",
+        "return T.contrast(p) >= 7 || 'contrast ' + T.contrast(p).toFixed(1);"
+      ],
+      "how": "No ads show; article text is at least 18px with a contrast of 7 or more."
+    },
+    {
+      "id": "parley-copy-markdown",
+      "existing": true,
+      "app": "Parley (demo)",
+      "site": "parley",
+      "category": "New features",
+      "tags": [
+        "new feature",
+        "writing"
+      ],
+      "from": "p-copy-md",
+      "request": "add a button that copies the conversation as Markdown",
+      "how": "Clicks the new button (real click): the clipboard holds the conversation."
+    },
+    {
+      "id": "tunes-big-covers",
+      "existing": true,
+      "app": "Tunes (demo)",
+      "site": "tunes",
+      "category": "Layout",
+      "tags": [
+        "theme",
+        "layout"
+      ],
+      "from": "t-covers-bigger",
+      "request": "make the album covers bigger, with rounded corners and a soft shadow",
+      "how": "Every album cover is at least 25% wider than before."
+    },
+    {
+      "id": "tunes-sleep-timer",
+      "existing": true,
+      "app": "Tunes (demo)",
+      "site": "tunes",
+      "category": "New features",
+      "tags": [
+        "new feature",
+        "playback"
+      ],
+      "from": "t-sleep-timer",
+      "request": "add a sleep timer that pauses the music after 15, 30 or 60 minutes",
+      "how": "Clicks the new button and picks a time (real clicks): a countdown shows."
+    }
+  ]
+}

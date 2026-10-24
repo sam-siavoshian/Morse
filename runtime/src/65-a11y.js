@@ -24,7 +24,7 @@ const A11y = (() => {
     describe: '<rect x="2.25" y="3" width="11.5" height="10" rx="1.75"/><circle cx="6" cy="6.5" r="1.1"/><path d="M2.5 11.25 6 8.5l2.5 2 1.75-1.25 3.25 2.25"/>',
     on: '<path d="M3.5 8.5 6.5 11.5 12.5 4.5"/>',
   };
-  const where = () => S.appName || location.host || "this page";
+  const where = () => S.appName || location.host || t("panel.thisPage");
 
   // Saved per site as quick mods: { kind: "quick", edits: [{ op: "a11y", kind, ...opts }] }.
   const modFor = k => S.mods.find(m => m.kind === "quick" && m.edits?.[0]?.op === "a11y" && m.edits[0].kind === k);
@@ -33,13 +33,13 @@ const A11y = (() => {
   // ---- the menu group (46-quick.js rebuilds the menu each time it opens)
   quickMenuGroups.push(() => {
     const r = modFor("readable");
-    const item = (k, label, on, cls = "") => `<button role="menuitemcheckbox" class="${cls}" data-a11y="${k}" aria-checked="${on}">${cls ? "" : svg(I[k])}<span>${label}</span><span class="gm-state">${on ? svg(I.on) : ""}</span></button>`;
-    return `<div class="a11y-group menu" role="group" aria-label="Easier to use">
-      <header>Easier to use<small>no model needed</small></header>
-      ${A11Y_KINDS.map(k => item(k, A11Y_TOOLS[k].title, isOn(k)) + (k === "readable" ? item("dyslexia", "Dyslexia-friendly letters", !!(r?.enabled && r.edits[0].dyslexia), "a11y-sub") : "")).join("")}
+    const item = (k, label, on, cls = "") => `<button role="menuitemcheckbox" tabindex="-1" class="${cls}" data-a11y="${k}" aria-checked="${on}">${cls ? "" : svg(I[k])}<span>${label}</span><span class="gm-state">${on ? svg(I.on) : ""}</span></button>`;
+    return `<div class="a11y-group menu" role="group" aria-label="${esc(t("a11y.title"))}">
+      <header aria-hidden="true">${t("a11y.title")}<small>${t("a11y.noModel")}</small></header>
+      ${A11Y_KINDS.map(k => item(k, t(`a11y.${k}`), isOn(k)) + (k === "readable" ? item("dyslexia", t("a11y.dyslexia"), !!(r?.enabled && r.edits[0].dyslexia), "a11y-sub") : "")).join("")}
       <hr>
-      <button role="menuitem" data-a11y="read">${svg(I.read)}<span>Read aloud</span><span class="gm-state">${ReadAloud.hasSelection() ? "selection" : ""}</span></button>
-      <button role="menuitem" data-a11y="check">${svg(I.check)}<span>Check this page</span><span class="gm-state"></span></button>
+      <button role="menuitem" tabindex="-1" data-a11y="read">${svg(I.read)}<span>${t("a11y.read")}</span><span class="gm-state">${ReadAloud.hasSelection() ? t("a11y.selection") : ""}</span></button>
+      <button role="menuitem" tabindex="-1" data-a11y="check">${svg(I.check)}<span>${t("a11y.check")}</span><span class="gm-state"></span></button>
     </div>`;
   });
   const menu = bar.querySelector(".gm-menu");
@@ -56,12 +56,12 @@ const A11y = (() => {
     if (k === "dyslexia") {
       const r = modFor("readable"), on = !!(r?.enabled && r.edits[0].dyslexia);
       await set("readable", on ? {} : { dyslexia: true });
-      return toast(on ? "Dyslexia-friendly letters off" : `Dyslexia-friendly letters on for ${where()}`);
+      return toast(on ? t("quick.toolOff", { title: t("a11y.dyslexia") }) : t("quick.toolOn", { title: t("a11y.dyslexia"), where: where() }));
     }
     if (!A11Y_TOOLS[k]) return;
-    if (isOn(k)) { await drop(modFor(k)); return toast(`${A11Y_TOOLS[k].title} off`); }
+    if (isOn(k)) { await drop(modFor(k)); return toast(t("quick.toolOff", { title: t(`a11y.${k}`) })); }
     await set(k, {});
-    toast(`${A11Y_TOOLS[k].title} on for ${where()}`);
+    toast(t("quick.toolOn", { title: t(`a11y.${k}`), where: where() }));
   }
 
   // Turns a tool on with these options (replacing any earlier copy of it).
@@ -69,8 +69,8 @@ const A11y = (() => {
     const old = modFor(k);
     if (old) await drop(old);
     const { css, js } = compileA11y(k, opts);
-    const title = a11yTitle(k, opts);
-    const mod = await call("mods.save", { draft: { id: uid(), title, prompt: `Page tool: ${title}`, css, js, url: location.href, app: S.app, kind: "quick", edits: [{ op: "a11y", kind: k, ...opts }] } });
+    const title = k === "readable" && opts?.dyslexia ? t("a11y.dyslexia") : t(`a11y.${k}`);
+    const mod = await call("mods.save", { draft: { id: uid(), title, prompt: t("quick.prompt", { title }), css, js, url: location.href, app: S.app, kind: "quick", edits: [{ op: "a11y", kind: k, ...opts }] } });
     S.mods.push(mod);
     await applyMod(mod);
     return mod;
@@ -93,7 +93,7 @@ const A11y = (() => {
       mod = await call("mods.save", { mod: { ...m, css, js, edits, prompt, enabled: true, updated: new Date().toISOString() } });
       S.mods = S.mods.map(x => (x.id === mod.id ? mod : x));
     } else {
-      mod = await call("mods.save", { draft: { id: uid(), title: FIX_TITLE, prompt, css, js, url: location.href, app: S.app, kind: "quick", edits } });
+      mod = await call("mods.save", { draft: { id: uid(), title: t("a11y.fixes"), prompt, css, js, url: location.href, app: S.app, kind: "quick", edits } });
       S.mods.push(mod);
     }
     await applyMod(mod);
@@ -104,15 +104,16 @@ const A11y = (() => {
   const tb = root.querySelector(".gm-tb");
   const sep = document.createElement("span");
   sep.className = "gm-sep a11y-tb";
-  const tbBtn = (k, label) => {
+  const tbBtn = (k, id) => {
     const b = document.createElement("button");
     b.className = "ibtn a11y-tb";
     b.dataset.a11yTb = k;
-    b.setAttribute("aria-label", label);
-    b.innerHTML = svg(I[k]) + GodMode.tip(label, "");
+    const words = () => { b.setAttribute("aria-label", t(id)); b.innerHTML = svg(I[k]) + GodMode.tip(t(id), ""); };
+    words();
+    langSubs.add(words);
     return b;
   };
-  const readBtn = tbBtn("read", "Read aloud"), descBtn = tbBtn("describe", "Describe this picture");
+  const readBtn = tbBtn("read", "a11y.read"), descBtn = tbBtn("describe", "a11y.describe");
   if (tb) {
     const seps = tb.querySelectorAll(".gm-sep");
     tb.insertBefore(sep, seps[seps.length - 1] || null);

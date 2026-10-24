@@ -128,6 +128,50 @@ function pngBox(file) {
   return { w, h, x0, y0, x1, y1 };
 }
 
+test("the listing's summary is the manifest's description: 132 characters at most; Chrome 138+ for “Allow User Scripts”", () => {
+  const m = JSON.parse(read("extension/manifest.json"));
+  assert.ok(m.description.length <= 132, `${m.description.length} characters`);
+  assert.ok(read("docs/store/listing.md").includes(m.description), "docs/store/listing.md has the same summary");
+  // userScripts.execute is Chrome 135; the per-extension "Allow User Scripts" switch Morse tells people about is 138.
+  assert.ok(Number(m.minimum_chrome_version) >= 138);
+});
+
+// MORSE_STORE=1 (npm run store) leaves out the local share page that tests
+// use, and the demo sites' local gallery list; the test build keeps them.
+// Both builds, side by side in a scratch folder.
+test("a store build doesn't trust the test share page or read the demo gallery list; a test build does; nothing else differs", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { mkdtempSync, rmSync } = await import("node:fs");
+  const os = await import("node:os");
+  const { storeChecks } = await import("../scripts/store.js");
+  const tmp = mkdtempSync(path.join(os.tmpdir(), "morse-store-build-"));
+  try {
+    const build = (dir, env) => execFileSync(process.execPath, [path.join(root, "scripts/build.js"), "--out", dir], { env: { ...process.env, MORSE_STORE: "", ...env }, stdio: "ignore" });
+    const dev = path.join(tmp, "dev"), store = path.join(tmp, "store");
+    build(dev, {});
+    build(store, { MORSE_STORE: "1" });
+    const host = d => readFileSync(path.join(d, "host.js"), "utf8");
+    const pages = d => /const SHARE_PAGES = (\[[^\]]*\])/.exec(host(d).replace(/\/\*[^*]*\*\//g, ""))[1];
+    assert.deepEqual(JSON.parse(pages(dev)), ["https://sam-siavoshian.github.io/RRAA/share/", "http://127.0.0.1:8787/share/"]);
+    assert.deepEqual(JSON.parse(pages(store)), ["https://sam-siavoshian.github.io/RRAA/share/"]);
+    const files = d => { const out = []; const walk = (b, rel = "") => { for (const e of readdirSync(path.join(b, rel), { withFileTypes: true })) e.isDirectory() ? walk(b, path.join(rel, e.name)) : out.push(path.join(rel, e.name)); }; walk(d); return out.sort(); };
+    assert.deepEqual(files(store), files(dev));
+    for (const f of files(dev)) if (f !== "host.js" && f !== "background.js") assert.ok(readFileSync(path.join(dev, f)).equals(readFileSync(path.join(store, f))), `${f} is the same in both builds`);
+    // The service worker: pages on the demo ports (127.0.0.1:8787-8797) get the
+    // local gallery list in a test build only; the store build has no such address.
+    const sw = d => readFileSync(path.join(d, "background.js"), "utf8");
+    const DEMO_LIST = "http://127.0.0.1:8787/site/mods/index.json";
+    assert.ok(sw(dev).includes(DEMO_LIST));
+    assert.ok(!/127\.0\.0\.1:8787\/site\/mods/.test(sw(store)), "the store build never reads the demo list");
+    const only = (a, b) => { const bs = new Set(b.split("\n")); return a.split("\n").filter(l => !bs.has(l)); };
+    assert.deepEqual(only(sw(store), sw(dev)), ['  demoIndex: true ? "" : DEMO_INDEX_URL'], "and nothing else differs");
+    assert.deepEqual((await storeChecks(store)).problems, []);
+    const devProblems = (await storeChecks(dev)).problems.join("\n");
+    assert.match(devProblems, /test share page/, "npm run store refuses a test build");
+    assert.match(devProblems, /demo sites' gallery list/);
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
+});
+
 test("icons: 16, 32, 48 and 128px, the 128px one with its artwork in the middle 96px", { skip: !built && "no dist/extension (npm run build)" }, () => {
   const m = JSON.parse(readFileSync(path.join(DIST, "manifest.json"), "utf8"));
   assert.deepEqual(Object.keys(m.icons).map(Number), [16, 32, 48, 128]);

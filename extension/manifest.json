@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Morse",
-  "description": "Change any website in your own words. Point at something, describe the change, and your model makes it while you watch.",
-  "minimum_chrome_version": "135",
+  "description": "Change any website in your own words. Point at something, say what you want, see it change. Uses Claude Code, Codex or an API key.",
+  "minimum_chrome_version": "138",
   "permissions": ["storage", "scripting", "userScripts", "tabs", "downloads"],
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js", "type": "module" },
   "content_scripts": [
-    { "matches": ["<all_urls>"], "js": ["host.js", "runtime.js"], "run_at": "document_idle" }
+    { "matches": ["<all_urls>"], "js": ["host.js", "boot.js"], "run_at": "document_start" }
   ],
   "sandbox": { "pages": ["practice.html"] },
   "content_security_policy": { "sandbox": "sandbox allow-scripts allow-forms allow-popups allow-modals; script-src 'self'; object-src 'none'; child-src 'self'" },

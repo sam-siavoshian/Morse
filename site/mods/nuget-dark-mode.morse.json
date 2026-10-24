@@ -1,0 +1,21 @@
+{
+  "morse": 1,
+  "id": "nuget-dark-mode",
+  "title": "Dark mode",
+  "prompt": "dark mode, with text that's easy to read",
+  "match": {
+    "hosts": [
+      "www.nuget.org"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": "html, body, section, main, aside, .container, .row, .col-sm-9, .package-details-main,\n.tab-content, .tab-pane, .sidebar-section, #skippedToContent, footer, .footer {\n  background-color: #1e1e1e !important;\n  color: #e6e6e6 !important;\n}\nnav.navbar, nav.navbar a { color: #f0f0f0 !important; }\nh1, h2, h3, h4, h5, p, li, label, td, th, span, strong, b, dt, dd {\n  color: #e6e6e6 !important;\n}\na { color: #6cb6ff !important; }\npre, code, .install-script-row, .install-tabs, .icon-text.alert, .alert, #search {\n  background-color: #2a2a2a !important;\n  color: #e6e6e6 !important;\n  border-color: #3a3a3a !important;\n}\n.nav-tabs > li > a, .nav-tabs > li > a:hover {\n  background-color: #1e1e1e !important;\n  color: #e6e6e6 !important;\n  border-color: #3a3a3a !important;\n}\n.nav-tabs > li.active > a, .nav-tabs > li.active > a:hover, .nav-tabs > li.active > a:focus {\n  background-color: #2a2a2a !important;\n  color: #ffffff !important;\n  border-color: #3a3a3a #3a3a3a transparent !important;\n}\ntable, tr, td, th { background-color: transparent !important; border-color: #3a3a3a !important; }\nhr, .sidebar-section, .body-tabs { border-color: #3a3a3a !important; }\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

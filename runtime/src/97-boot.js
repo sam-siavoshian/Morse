@@ -1,9 +1,26 @@
 onEvent(msg => {
   if (msg.type === "toggle") S.open ? closeBar() : openBar();
+  if (msg.type === "open") S.open ? input.focus() : openBar(); // the website's Try it here: its Open Morse button never closes the bar
   if (msg.type === "panel") openPanel();
   if (msg.type === "mods.changed") syncMods();
   if (msg.type === "settings.changed" && msg.settings) setPrefs(msg.settings);
+  if (msg.type === "request" && typeof msg.text === "string") hostRequest(msg.text.trim().slice(0, 2000), msg.at);
 });
+
+// A request from the host, sent as if it were typed in the bar (the website's
+// Try it here section, site/try.js, has buttons for a few). `at` points at
+// that part of the page first. While a change waits for Save or Undo, it waits
+// too (the host says so).
+function hostRequest(text, at) {
+  if (!text || S.phase === "working") return;
+  if (S.open && S.phase === "result" && S.draft && !S.draft.saved) return;
+  openBar();
+  let el = null;
+  try { el = typeof at === "string" && at ? document.querySelector(at) : null; } catch {}
+  if (el) setTarget(el);
+  setInput(text);
+  send(text);
+}
 
 // Effect intensity (Settings → Effects). Full is the radar field over the
 // target; subtle keeps a still outline and the pulsing mark (the default under
@@ -31,38 +48,45 @@ onEvent(msg => {
   };
 }
 
-// soak: the host can go away while the page starts (Chrome stops and restarts
-// the extension's worker; its requests then fail with "Morse restarted"). Ask
-// again a few times instead of staying without mods until the next reload.
-async function askAgain(fn, tries = 4) {
-  for (let n = 1; ; n++) {
-    try { return await fn(); }
-    catch (e) { if (n >= tries || !live()) throw e; await new Promise(r => setTimeout(r, 400 * n)); }
-  }
-}
-
-(async () => {
+// Take over from boot.js. Until now it has applied the mods, followed
+// navigations and caught the first hotkey; from here the UI's own handlers
+// run, and whatever arrived before it (that hotkey, a host event, a toast)
+// is replayed once the hello reply is in.
+B.adopt({
+  // boot.js has no words of its own: it hands over message ids ({ id, vars }) for t()
+  toast: x => toast(x && typeof x === "object" ? t(x.id, x.vars) : x), key: adoptKey,
+  modsChanged() { Health.prune(new Set(S.mods.map(m => m.id))); if (!panel.hidden) renderPanel(); }, // soak: prune
+  health: (m, r) => Health.ran(m, r), // repair: the panel marks mods that stopped working (70-panel.js)
+  controlReady, // user control: the safe-start / off-switch notice after the first sync (63-control.js)
+  healFound: () => Heal.found(), // self-heal: what boot.js found broken, for the dot, the note and Fix it (71-heal.js)
+  guardHeard: (id, p) => Guard.heard(id, p), // guard hook: the kit paused a mod (64-guard.js)
+  guardStop, // guard hook: boot.js didn't apply a mod, or undid it (64-guard.js)
+  guardReady, // guard hook: a mod that froze the page was turned off (64-guard.js)
+  styleReady: () => YourStyle.ready(), // your-style hook: fit it to this site once, if turned on (72-style.js)
+  waitingAdd: m => Waiting.add(m), // waiting hook: “Allow User Scripts” is off; the style shows, the code never ran (64-waiting.js)
+});
+B.ready.then(hello => {
   try {
-    const hello = await askAgain(() => call("hello", { url: location.href }));
-    S.label = hello.label; S.mode = hello.mode; S.app = hello.app || null; S.appName = hello.appName || hello.app || null;
-    // Hosts from before settings existed don't send them; ask (or use local ones).
-    if (hello.settings) { setPrefs(hello.settings); hostPrefs = true; } else await loadPrefs();
+    setPrefs(B.prefs());
+    S.models = hello.models || null; // models: the names the Settings sheet shows (56-settings.js)
+    if (hello.settings) hostPrefs = true; // the host sent settings with its hello (03-prefs.js)
     Voice.configure(hello.voice);
     PromptHistory.load();
-    await controlBoot(); await askAgain(syncMods); controlReady(); // user control: pause, safe start (63-control.js)
-    guardReady(); // guard hook: a mod that froze the page was turned off (64-guard.js)
-    Heal.soon(); // self-heal hook: after idle, did a saved mod stop working? (71-heal.js)
-    YourStyle.ready(); // your-style hook: fit it to this site once, if turned on (72-style.js)
     if (hello.debug) debugStatus(); // the host was started with MORSE_DEBUG=1
-    S.ready = true; // tests: the host answered hello and the mods are on
-    if (!hello.quiet && PREFS.welcome) toast(`Morse is ready. Press ${HOTKEY} to change this page.`);
-  } catch (e) { console.warn("[morse] host unavailable", e); }
-  // single-page apps change URL without reloading
-  const urlTimer = setInterval(() => {
-    if (!live()) { clearInterval(urlTimer); letGo(); return; } // soak: gone quiet (01-rpc.js)
-    if (location.href !== S.url) { S.url = location.href; syncMods().catch(() => {}); Heal.soon(); /* self-heal hook */ }
-  }, 1000);
-})();
+  } finally { B.started(); S.ready = true; /* tests: the host answered hello and the mods are on */ }
+}).catch(e => console.warn("[morse]", e));
+
+// boot.js applies the mods, so the guards around applyMod run there
+// (core/guard.js finds the harm); the reason the model gets for Fix it is
+// worded here, as 64-guard.js before() and after() word it.
+function guardStop(id, why) {
+  const m = S.mods.find(x => x.id === id);
+  if (!m) return;
+  const error = why === "hid-js"
+    ? "Morse paused it because after it ran the whole page was hidden (html or body ended up with display: none or opacity: 0). Never hide html, body, :root or *. Hide or change only the parts the user asked about."
+    : `Morse paused it. ${draftHarm(why === "endless" ? { js: m.js } : { css: m.css })?.model || ""}`;
+  Guard.heard(id, { why: why === "endless" ? "endless" : "hid", error });
+}
 
 // Read-only status for automated screenshots/tests; off unless opted in
 // (Playwright with morse:debug, or a desktop host started with MORSE_DEBUG=1,
@@ -72,8 +96,8 @@ let statusOn = false;
 function debugStatus() {
   if (statusOn) return;
   statusOn = true;
-  const statusTimer = setInterval(() => {
-  if (!live()) return clearInterval(statusTimer); // soak
+  const timer = setInterval(() => {
+  if (!live()) return clearInterval(timer); // soak: a copy that went quiet (morse stop) stops, and can be let go
   hostEl.dataset.status = JSON.stringify({
     ready: !!S.ready, phase: S.phase, hint: hint.textContent, ticker: ticker.textContent, mods: S.mods.length,
     open: S.open, input: input.value, voice: Voice.state(), backend: Voice.backend(), level: Voice.level(), db: Voice.db(), pane: paneKind,

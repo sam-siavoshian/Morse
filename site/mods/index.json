@@ -1,10 +1,938 @@
 [
   {
+    "file": "pypi-dark-mode.morse.json",
+    "title": "Dark mode",
+    "prompt": "dark mode for the whole page, including the sidebar on the right, with text that's easy to read",
+    "app": "PyPI",
+    "author": "Morse team",
+    "category": "Dark mode",
+    "tags": [
+      "dark mode",
+      "reading"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "pypi.org"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload.",
+    "shots": {
+      "before": "shots/pypi-dark-mode-before.jpg",
+      "after": "shots/pypi-dark-mode-after.jpg"
+    }
+  },
+  {
+    "file": "pypi-sticky-install.morse.json",
+    "title": "Install command always in view",
+    "prompt": "keep the pip install command visible at the top while I scroll",
+    "app": "PyPI",
+    "author": "Morse team",
+    "category": "Layout",
+    "tags": [
+      "layout",
+      "install"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "pypi.org"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload."
+  },
+  {
+    "file": "pypi-hide-prereleases.morse.json",
+    "title": "Hide pre-releases and yanked versions",
+    "prompt": "in the release history, hide the releases marked pre-release or yanked",
+    "app": "PyPI",
+    "author": "Morse team",
+    "category": "Declutter",
+    "tags": [
+      "declutter",
+      "releases"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "pypi.org"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload."
+  },
+  {
+    "file": "nodejs-bigger-code.morse.json",
+    "title": "Bigger code examples",
+    "prompt": "make the code examples bigger",
+    "app": "Node.js docs",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "reading",
+      "code"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "nodejs.org"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload."
+  },
+  {
+    "file": "nodejs-side-contents.morse.json",
+    "title": "Contents on the side",
+    "prompt": "show the table of contents on the right side and keep it there while I scroll",
+    "app": "Node.js docs",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "reading",
+      "navigation"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "nodejs.org"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload.",
+    "shots": {
+      "before": "shots/nodejs-side-contents-before.jpg",
+      "after": "shots/nodejs-side-contents-after.jpg"
+    }
+  },
+  {
+    "file": "nodejs-section-keys.morse.json",
+    "title": "J and K to jump between sections",
+    "prompt": "let me press j and k to jump to the next and previous section",
+    "app": "Node.js docs",
+    "author": "Morse team",
+    "category": "Keyboard",
+    "tags": [
+      "keyboard",
+      "navigation"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "nodejs.org"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload."
+  },
+  {
+    "file": "go-hide-banners.morse.json",
+    "title": "No cookie notice or survey banner",
+    "prompt": "hide the cookie notice at the bottom and the Go survey banner",
+    "app": "Go packages",
+    "author": "Morse team",
+    "category": "Declutter",
+    "tags": [
+      "declutter"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "pkg.go.dev"
+      ],
+      "app": null
+    },
+    "version": 2,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload.",
+    "updated": "2026-10-24T18:00:00.000Z",
+    "changes": "Finds the cookie notice by its name and looks only at likely notices, so the page stays fast."
+  },
+  {
+    "file": "go-bigger-code.morse.json",
+    "title": "Bigger code examples",
+    "prompt": "make the code examples bigger",
+    "app": "Go packages",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "reading",
+      "code"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "pkg.go.dev"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload."
+  },
+  {
+    "file": "rubygems-dark-mode.morse.json",
+    "title": "Dark mode",
+    "prompt": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+    "app": "RubyGems",
+    "author": "Morse team",
+    "category": "Dark mode",
+    "tags": [
+      "dark mode"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "rubygems.org"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload.",
+    "shots": {
+      "before": "shots/rubygems-dark-mode-before.jpg",
+      "after": "shots/rubygems-dark-mode-after.jpg"
+    }
+  },
+  {
+    "file": "docker-dark-code.morse.json",
+    "title": "Bigger code on dark blocks",
+    "prompt": "make these code blocks bigger with a dark background",
+    "app": "Docker Hub",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "reading",
+      "code"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "hub.docker.com"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload.",
+    "shots": {
+      "before": "shots/docker-dark-code-before.jpg",
+      "after": "shots/docker-dark-code-after.jpg"
+    }
+  },
+  {
+    "file": "gitlab-hide-sidebar.morse.json",
+    "title": "Hide the left sidebar",
+    "prompt": "hide the left sidebar so the page uses the full width",
+    "app": "GitLab",
+    "author": "Morse team",
+    "category": "Layout",
+    "tags": [
+      "layout",
+      "declutter"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "gitlab.com"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload."
+  },
+  {
+    "file": "nuget-dark-mode.morse.json",
+    "title": "Dark mode",
+    "prompt": "dark mode, with text that's easy to read",
+    "app": "NuGet",
+    "author": "Morse team",
+    "category": "Dark mode",
+    "tags": [
+      "dark mode"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "www.nuget.org"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload."
+  },
+  {
+    "file": "packagist-copy-command.morse.json",
+    "title": "Copy the install command",
+    "prompt": "add a copy button next to the composer require command",
+    "app": "Packagist",
+    "author": "Morse team",
+    "category": "New features",
+    "tags": [
+      "new feature",
+      "install"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "packagist.org"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload."
+  },
+  {
+    "file": "metacpan-sticky-contents.morse.json",
+    "title": "Contents always in view",
+    "prompt": "keep the contents box in view while I scroll, in its own column on the right so it never covers the text",
+    "app": "MetaCPAN",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "reading",
+      "navigation"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "metacpan.org"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload."
+  },
+  {
+    "file": "wiki-sticky-contents.morse.json",
+    "title": "Contents always in view",
+    "prompt": "keep the contents visible while I scroll",
+    "app": "Openpedia (demo)",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "reading",
+      "navigation"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8795"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "wiki-dark-mode.morse.json",
+    "title": "Dark mode",
+    "prompt": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+    "app": "Openpedia (demo)",
+    "author": "Morse team",
+    "category": "Dark mode",
+    "tags": [
+      "dark mode",
+      "reading"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8795"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "shots": {
+      "before": "shots/wiki-dark-mode-before.jpg",
+      "after": "shots/wiki-dark-mode-after.jpg"
+    },
+    "demo": true
+  },
+  {
+    "file": "wiki-reading-mode.morse.json",
+    "title": "Reading mode",
+    "prompt": "reading mode: hide the contents box and the footer, and show the article in a narrower column with bigger text",
+    "app": "Openpedia (demo)",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "reading",
+      "declutter"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8795"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "wiki-collapse-comments.morse.json",
+    "title": "Collapse the comments",
+    "prompt": "collapse the comments, with a button to show them",
+    "app": "Openpedia (demo)",
+    "author": "Morse team",
+    "category": "Declutter",
+    "tags": [
+      "declutter",
+      "new feature"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8795"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "mail-hide-upgrade.morse.json",
+    "title": "Hide the upgrade ad",
+    "prompt": "hide the Postbox Pro upgrade banner",
+    "app": "Postbox (demo)",
+    "author": "Morse team",
+    "category": "Declutter",
+    "tags": [
+      "declutter"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8791"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "mail-jk-keys.morse.json",
+    "title": "J and K to move through email",
+    "prompt": "let me use j and k to move up and down the email list",
+    "app": "Postbox (demo)",
+    "author": "Morse team",
+    "category": "Keyboard",
+    "tags": [
+      "keyboard"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8791"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "mail-bigger-text.morse.json",
+    "title": "Bigger email text",
+    "prompt": "make the email text bigger and easier to read",
+    "app": "Postbox (demo)",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "reading"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8791"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "notes-focus-timer.morse.json",
+    "title": "Focus timer",
+    "prompt": "add a 25 minute focus timer here that I can start and pause",
+    "app": "Inkwell (demo)",
+    "author": "Morse team",
+    "category": "New features",
+    "tags": [
+      "focus",
+      "new feature"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8792"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "notes-word-count.morse.json",
+    "title": "Live word count",
+    "prompt": "add a live word count at the bottom",
+    "app": "Inkwell (demo)",
+    "author": "Morse team",
+    "category": "New features",
+    "tags": [
+      "writing",
+      "new feature"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8792"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "notes-easier-to-read.morse.json",
+    "title": "Darker, bigger note text",
+    "prompt": "the note text is too light and small, make it darker and bigger",
+    "app": "Inkwell (demo)",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "reading",
+      "writing"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8792"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "notes-focus-mode.morse.json",
+    "title": "Focus mode",
+    "prompt": "focus mode: hide everything except the page I'm writing",
+    "app": "Inkwell (demo)",
+    "author": "Morse team",
+    "category": "Declutter",
+    "tags": [
+      "focus",
+      "writing",
+      "declutter"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8792"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "dash-download-csv.morse.json",
+    "title": "Download the table as CSV",
+    "prompt": "add a button that downloads this table as a CSV file",
+    "app": "Metricly (demo)",
+    "author": "Morse team",
+    "category": "New features",
+    "tags": [
+      "tables",
+      "new feature"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8793"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "dash-sticky-header.morse.json",
+    "title": "Table header stays in view",
+    "prompt": "keep the column names visible when I scroll the table",
+    "app": "Metricly (demo)",
+    "author": "Morse team",
+    "category": "Layout",
+    "tags": [
+      "tables",
+      "layout"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8793"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "dash-failed-red.morse.json",
+    "title": "Failed orders in red",
+    "prompt": "highlight failed orders in red",
+    "app": "Metricly (demo)",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "tables",
+      "highlight"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8793"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "dash-dollars.morse.json",
+    "title": "Amounts as dollars",
+    "prompt": "show the amounts as dollars with commas",
+    "app": "Metricly (demo)",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "tables"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8793"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "tasks-cross-out-done.morse.json",
+    "title": "Cross out finished tasks",
+    "prompt": "cross out the tasks I've finished",
+    "app": "Tasky (demo)",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "tasks"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8796"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "tasks-hide-done.morse.json",
+    "title": "Hide finished tasks",
+    "prompt": "hide the tasks I've finished",
+    "app": "Tasky (demo)",
+    "author": "Morse team",
+    "category": "Declutter",
+    "tags": [
+      "tasks",
+      "declutter"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8796"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "shop-hide-sold-out.morse.json",
+    "title": "Hide sold-out products",
+    "prompt": "hide the products that are out of stock",
+    "app": "Shoply (demo)",
+    "author": "Morse team",
+    "category": "Declutter",
+    "tags": [
+      "shopping",
+      "declutter"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8794"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "shots": {
+      "before": "shots/shop-hide-sold-out-before.jpg",
+      "after": "shots/shop-hide-sold-out-after.jpg"
+    },
+    "demo": true
+  },
+  {
+    "file": "shop-sort-price.morse.json",
+    "title": "Sort by price",
+    "prompt": "add a button that sorts the products by price, lowest first",
+    "app": "Shoply (demo)",
+    "author": "Morse team",
+    "category": "New features",
+    "tags": [
+      "shopping",
+      "new feature"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8794"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "logs-errors-red.morse.json",
+    "title": "Errors in red",
+    "prompt": "highlight the error lines in red",
+    "app": "Logline (demo)",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "logs",
+      "highlight"
+    ],
+    "created": "2026-10-24T12:00:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8797"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "shots": {
+      "before": "shots/logs-errors-red-before.jpg",
+      "after": "shots/logs-errors-red-after.jpg"
+    },
+    "demo": true
+  },
+  {
+    "file": "byte-reading-mode.morse.json",
+    "title": "Reading mode",
+    "prompt": "hide the ads and pop-ups and make the article easy to read",
+    "app": "The Daily Byte (demo)",
+    "author": "Morse team",
+    "category": "Reading",
+    "tags": [
+      "declutter",
+      "reading"
+    ],
+    "created": "2026-10-18T08:45:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8788"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "shots": {
+      "before": "shots/byte-reading-mode-before.jpg",
+      "after": "shots/byte-reading-mode-after.jpg"
+    },
+    "demo": true
+  },
+  {
+    "file": "parley-copy-markdown.morse.json",
+    "title": "Copy as Markdown",
+    "prompt": "add a button that copies the conversation as Markdown",
+    "app": "Parley (demo)",
+    "author": "Morse team",
+    "category": "New features",
+    "tags": [
+      "new feature",
+      "writing"
+    ],
+    "created": "2026-10-19T15:30:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8787"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
+    "file": "tunes-sleep-timer.morse.json",
+    "title": "Sleep timer",
+    "prompt": "add a sleep timer that pauses the music after 15, 30 or 60 minutes",
+    "app": "Tunes (demo)",
+    "author": "Morse team",
+    "category": "New features",
+    "tags": [
+      "new feature",
+      "playback"
+    ],
+    "created": "2026-10-20T21:10:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8789"
+      ],
+      "app": null
+    },
+    "version": 2,
+    "userScripts": true,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true,
+    "updated": "2026-10-23T18:40:00.000Z",
+    "changes": "Shows the time left on the button, and a fourth click turns the timer off."
+  },
+  {
+    "file": "tunes-big-covers.morse.json",
+    "title": "Bigger rounded covers",
+    "prompt": "make the album covers bigger, with rounded corners and a soft shadow",
+    "app": "Tunes (demo)",
+    "author": "Morse team",
+    "category": "Layout",
+    "tags": [
+      "theme",
+      "layout"
+    ],
+    "created": "2026-10-21T10:02:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8789"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true
+  },
+  {
     "file": "vscode-obvious-tab.morse.json",
     "title": "Obvious active tab",
     "prompt": "make the active editor tab obvious and fade the others",
     "app": "VS Code",
-    "author": "morse",
+    "author": "Morse team",
+    "category": "Reading",
     "tags": [
       "theme",
       "editor"
@@ -17,14 +945,16 @@
       ],
       "app": "vscode"
     },
-    "version": 1
+    "version": 1,
+    "userScripts": false
   },
   {
     "file": "discord-no-upsells.morse.json",
     "title": "No Nitro upsells",
     "prompt": "remove the gift button, the Nitro tab and the shop",
     "app": "Discord",
-    "author": "morse",
+    "author": "Morse team",
+    "category": "Declutter",
     "tags": [
       "declutter"
     ],
@@ -36,14 +966,16 @@
       ],
       "app": null
     },
-    "version": 1
+    "version": 1,
+    "userScripts": false
   },
   {
     "file": "gmail-reading-pane.morse.json",
     "title": "Comfortable reading",
     "prompt": "make emails easier to read: bigger text and a narrower column",
     "app": "Gmail",
-    "author": "morse",
+    "author": "Morse team",
+    "category": "Reading",
     "tags": [
       "reading",
       "layout"
@@ -56,14 +988,16 @@
       ],
       "app": null
     },
-    "version": 1
+    "version": 1,
+    "userScripts": false
   },
   {
     "file": "x-hide-trending.morse.json",
     "title": "Hide trends",
     "prompt": "hide trending, who to follow and the premium upsell from the sidebar",
     "app": "X",
-    "author": "morse",
+    "author": "Morse team",
+    "category": "Declutter",
     "tags": [
       "declutter",
       "focus"
@@ -76,14 +1010,16 @@
       ],
       "app": null
     },
-    "version": 1
+    "version": 1,
+    "userScripts": true
   },
   {
     "file": "hn-dark-mode.morse.json",
     "title": "Dark mode",
     "prompt": "dark mode that's easy on the eyes, keep a hint of the orange",
     "app": "Hacker News",
-    "author": "morse",
+    "author": "Morse team",
+    "category": "Dark mode",
     "tags": [
       "theme",
       "dark mode"
@@ -96,14 +1032,16 @@
       ],
       "app": null
     },
-    "version": 1
+    "version": 1,
+    "userScripts": false
   },
   {
     "file": "notion-focus-mode.morse.json",
     "title": "Focus mode",
     "prompt": "add a focus button that hides the sidebar and everything except the page",
     "app": "Notion",
-    "author": "morse",
+    "author": "Morse team",
+    "category": "Declutter",
     "tags": [
       "focus",
       "writing",
@@ -117,14 +1055,16 @@
       ],
       "app": null
     },
-    "version": 1
+    "version": 1,
+    "userScripts": true
   },
   {
     "file": "slack-quiet-sidebar.morse.json",
     "title": "Quiet sidebar",
     "prompt": "fade every channel without unread messages so the unread ones stand out",
     "app": "Slack",
-    "author": "morse",
+    "author": "Morse team",
+    "category": "Declutter",
     "tags": [
       "focus",
       "declutter"
@@ -137,14 +1077,16 @@
       ],
       "app": "slack"
     },
-    "version": 1
+    "version": 1,
+    "userScripts": false
   },
   {
     "file": "spotify-sleep-timer.morse.json",
     "title": "Sleep timer",
     "prompt": "add a sleep timer that pauses the music after a while",
     "app": "Spotify",
-    "author": "morse",
+    "author": "Morse team",
+    "category": "New features",
     "tags": [
       "new feature",
       "playback"
@@ -157,14 +1099,16 @@
       ],
       "app": "spotify"
     },
-    "version": 1
+    "version": 1,
+    "userScripts": true
   },
   {
     "file": "claude-enter-newline.morse.json",
     "title": "Enter for newline",
     "prompt": "make Enter add a new line and Ctrl+Enter send the message",
     "app": "Claude",
-    "author": "morse",
+    "author": "Morse team",
+    "category": "Keyboard",
     "tags": [
       "keyboard",
       "writing"
@@ -177,14 +1121,16 @@
       ],
       "app": null
     },
-    "version": 1
+    "version": 1,
+    "userScripts": true
   },
   {
     "file": "chatgpt-word-count.morse.json",
     "title": "Composer word count",
     "prompt": "show a live word count under the message box",
     "app": "ChatGPT",
-    "author": "morse",
+    "author": "Morse team",
+    "category": "New features",
     "tags": [
       "writing",
       "new feature"
@@ -197,14 +1143,16 @@
       ],
       "app": null
     },
-    "version": 1
+    "version": 1,
+    "userScripts": true
   },
   {
     "file": "github-wide-diffs.morse.json",
     "title": "Full-width diffs",
     "prompt": "use the full width of the screen for pull request diffs",
     "app": "GitHub",
-    "author": "morse",
+    "author": "Morse team",
+    "category": "Layout",
     "tags": [
       "layout",
       "code review"
@@ -217,14 +1165,16 @@
       ],
       "app": null
     },
-    "version": 1
+    "version": 1,
+    "userScripts": false
   },
   {
     "file": "youtube-hide-shorts.morse.json",
     "title": "Hide Shorts",
     "prompt": "hide Shorts everywhere, and open any Shorts link as a normal video",
     "app": "YouTube",
-    "author": "morse",
+    "author": "Morse team",
+    "category": "Declutter",
     "tags": [
       "declutter",
       "redirect"
@@ -237,92 +1187,7 @@
       ],
       "app": null
     },
-    "version": 1
-  },
-  {
-    "file": "tunes-sleep-timer.morse.json",
-    "title": "Sleep timer",
-    "prompt": "add a sleep timer that pauses the music after 15, 30 or 60 minutes",
-    "app": "Tunes",
-    "author": "june",
-    "tags": [
-      "new feature",
-      "playback"
-    ],
-    "created": "2026-10-20T21:10:00.000Z",
-    "updated": "2026-10-23T18:40:00.000Z",
-    "surface": "web, desktop",
-    "match": {
-      "hosts": [
-        "127.0.0.1:8789"
-      ],
-      "app": null
-    },
-    "version": 2,
-    "changes": "Shows the time left on the button, and a fourth click turns the timer off.",
-    "demo": true
-  },
-  {
-    "file": "tunes-big-covers.morse.json",
-    "title": "Bigger rounded covers",
-    "prompt": "make the album covers bigger, with rounded corners and a soft shadow",
-    "app": "Tunes",
-    "author": "kairo",
-    "tags": [
-      "theme",
-      "layout"
-    ],
-    "created": "2026-10-21T10:02:00.000Z",
-    "surface": "web, desktop",
-    "match": {
-      "hosts": [
-        "127.0.0.1:8789"
-      ],
-      "app": null
-    },
     "version": 1,
-    "demo": true
-  },
-  {
-    "file": "parley-copy-markdown.morse.json",
-    "title": "Copy as Markdown",
-    "prompt": "add a button that copies the conversation as Markdown",
-    "app": "Parley",
-    "author": "sam",
-    "tags": [
-      "new feature",
-      "writing"
-    ],
-    "created": "2026-10-19T15:30:00.000Z",
-    "surface": "web, desktop",
-    "match": {
-      "hosts": [
-        "127.0.0.1:8787"
-      ],
-      "app": null
-    },
-    "version": 1,
-    "demo": true
-  },
-  {
-    "file": "byte-reading-mode.morse.json",
-    "title": "Reading mode",
-    "prompt": "hide the ads and pop-ups and make the article easy to read",
-    "app": "The Daily Byte",
-    "author": "dana",
-    "tags": [
-      "declutter",
-      "reading"
-    ],
-    "created": "2026-10-18T08:45:00.000Z",
-    "surface": "web, desktop",
-    "match": {
-      "hosts": [
-        "127.0.0.1:8788"
-      ],
-      "app": null
-    },
-    "version": 1,
-    "demo": true
+    "userScripts": true
   }
 ]

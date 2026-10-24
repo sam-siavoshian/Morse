@@ -28,7 +28,7 @@ const world = await openStyleWorld({ launch: args => chromium.launch({ args }), 
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
 await fs.writeFile(path.join(home, "mods", "quiet-sidebar.json"), JSON.stringify({ morse: 1, id: "quiet-sidebar", title: "Quieter sidebar", prompt: "make the sidebar quieter so the albums stand out",
   match: { hosts: ["tunes.test"], app: null }, target: { selector: "nav", label: "Sidebar" },
-  css: "nav { background: #0b0b0b !important; }\nnav a:not(.on) { color: #7d7d7d !important; }\n", js: "", enabled: true, model: "Claude Code · haiku", created: ago(9 * 86400), updated: ago(9 * 86400) }, null, 2));
+  css: "nav { background: #0b0b0b !important; }\nnav a:not(.on) { color: #7d7d7d !important; }\n", js: "", enabled: true, model: "Claude Code · sonnet", created: ago(9 * 86400), updated: ago(9 * 86400) }, null, 2));
 
 const OPEN = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 const status = page => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));

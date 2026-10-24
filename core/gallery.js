@@ -12,6 +12,7 @@
 //
 // Dependency-free: the hosts import it (core/gallery-host.js), and
 // runtime/bundle.js inlines it into the in-app runtime.
+import { t } from "./i18n.js"; // the words, in the language the host speaks (core/i18n.js)
 
 // The list lives on the same site as the share page (SHARE_BASE in
 // core/mod.js): https://sam-siavoshian.github.io/RRAA/ + site/mods/index.json.
@@ -32,7 +33,9 @@ export const MAX_FRESH = 7 * DAY;
 const ID = /^[\w-]{1,40}$/;
 const FILE = /^[\w.-]{1,80}\.morse\.json$/;       // a file next to the list, never a path or another site
 const HOST = /^(\*|\*\.)?[\w.-]{1,253}(:\d{1,5})?$/;
-const str = (v, max) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "");
+// One line of text, without control characters, direction overrides or
+// zero-width spaces (which can make a title or tag read in another order).
+const str = (v, max) => (typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f-\u009f\u061c\u200b\u200e\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069\ufeff]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max) : "");
 
 // ---- the list
 
@@ -41,10 +44,10 @@ const str = (v, max) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().s
 export function parseIndex(input) {
   let data = input;
   if (typeof data === "string") {
-    try { data = JSON.parse(data); } catch { throw new Error("The gallery list isn't readable."); }
+    try { data = JSON.parse(data); } catch { throw new Error(t("gl.err.unreadable")); }
   }
   const list = Array.isArray(data) ? data : Array.isArray(data?.mods) ? data.mods : null;
-  if (!list) throw new Error("The gallery list isn't readable.");
+  if (!list) throw new Error(t("gl.err.unreadable"));
   const entries = [], seen = new Set();
   let skipped = 0;
   for (const raw of list.slice(0, MAX_ENTRIES)) {
@@ -101,11 +104,16 @@ function tooWide(h) {
 
 // Which list to read for a page: the one set in the host's settings, the
 // local one for the demo sites (`node demo/serve.js`), or the public one.
-export function indexUrlFor(pageUrl, configured = "") {
+// The local list is for working on Morse only: a host passes `demoIndex`
+// (DEMO_INDEX_URL) to use it, and the store build of the extension never does
+// (extension/gallery-host.js), so any page on those ports gets the public list.
+export function indexUrlFor(pageUrl, configured = "", demoIndex = "") {
   if (configured && /^https?:\/\//.test(configured)) return configured;
+  if (!demoIndex) return GALLERY_INDEX_URL;
   try {
     const u = new URL(pageUrl);
-    if (/^(127\.0\.0\.1|localhost)$/.test(u.hostname) && /^878[789]$/.test(u.port)) return DEMO_INDEX_URL;
+    // demo/serve.js: the demo apps on 8787-8797
+    if (/^(127\.0\.0\.1|localhost)$/.test(u.hostname) && /^87(8[7-9]|9[0-7])$/.test(u.port)) return demoIndex;
   } catch {}
   return GALLERY_INDEX_URL;
 }
@@ -198,8 +206,8 @@ export function afterResponse(cache, res, now = Date.now()) {
   if (res.status === 304 && Array.isArray(cache?.entries)) {
     return { ...cache, fetchedAt: now, failedAt: 0, error: "", maxAge: maxAgeOf(res.cacheControl) || cache.maxAge || 0 };
   }
-  if (res.status !== 200) return afterFailure(cache, now, `The gallery didn't answer (error ${res.status}).`);
-  if (typeof res.body === "string" && res.body.length > MAX_INDEX_BYTES) return afterFailure(cache, now, "The gallery list is too big.");
+  if (res.status !== 200) return afterFailure(cache, now, t("gl.err.status", { status: res.status }));
+  if (typeof res.body === "string" && res.body.length > MAX_INDEX_BYTES) return afterFailure(cache, now, t("gl.err.tooBig"));
   let parsed;
   try { parsed = parseIndex(res.body); } catch (e) { return afterFailure(cache, now, e.message); }
   return {
@@ -212,24 +220,17 @@ export function afterResponse(cache, res, now = Date.now()) {
 }
 
 export function afterFailure(cache, now = Date.now(), error = "") {
-  return { entries: [], fetchedAt: 0, ...cache, failedAt: now, error: String(error?.message || error || "Couldn't reach the gallery.") };
+  return { entries: [], fetchedAt: 0, ...cache, failedAt: now, error: String(error?.message || error || t("gl.err.unreachable")) };
 }
 
 // ---- what a mod does, in a few words
 //
 // core/summary.js has the full review; this short version is for a line in
 // the Mods panel, and for hosts and runtimes that don't have summary.js.
-const BRIEF = [
-  ["looks", "Changes how the page looks"],
-  ["hides", "Hides parts of the page"],
-  ["buttons", "Adds buttons"],
-  ["adds", "Adds new things to the page"],
-  ["typing", "Reads what you type"],
-  ["ongoing", "Keeps running while the page is open"],
-  ["storage", "Remembers settings on this site"],
-  ["network", "Sends data to another website"],
-];
-export function briefSummary(mod) {
+// The words: message ids "gl.brief.<id>" (core/locales/en.js).
+const BRIEF = ["looks", "hides", "buttons", "adds", "typing", "ongoing", "storage", "network"];
+export function briefSummary(mod) { return briefIds(mod).map(id => t(`gl.brief.${id}`)); }
+function briefIds(mod) {
   const css = String(mod?.css || ""), js = String(mod?.js || "");
   const found = new Set();
   if (css.trim()) {
@@ -247,12 +248,12 @@ export function briefSummary(mod) {
     if (/morse\.store\b|localStorage|sessionStorage|indexedDB/.test(js)) found.add("storage");
     if (/\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|new\s+Image\b/.test(js)) found.add("network");
   }
-  return BRIEF.filter(([id]) => found.has(id)).map(([, text]) => text);
+  return BRIEF.filter(id => found.has(id));
 }
 // Lines that should send someone to the full review rather than a quick try.
 export function needsCarefulLook(mod) {
-  const s = briefSummary(mod);
-  return s.includes("Sends data to another website") || s.includes("Reads what you type");
+  const s = briefIds(mod);
+  return s.includes("network") || s.includes("typing");
 }
 
 // ---- what changed between two versions

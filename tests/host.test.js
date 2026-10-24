@@ -7,7 +7,10 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const HOST = readFileSync(new URL("../extension/host.js", import.meta.url), "utf8");
-const RPC = readFileSync(new URL("../runtime/src/01-rpc.js", import.meta.url), "utf8");
+// The runtime's RPC layer lives in the boot (runtime/boot.js, "talking to the host").
+const BOOT_SRC = readFileSync(new URL("../runtime/boot.js", import.meta.url), "utf8");
+const RPC = `const host = globalThis.__morseHost, live = () => true, warn = () => {};\n` +
+  BOOT_SRC.slice(BOOT_SRC.indexOf("// ---- talking to the host"), BOOT_SRC.indexOf("// ---- shared state"));
 
 const event = () => { const fns = []; return { fns, addListener: f => fns.push(f), fire: (...a) => fns.forEach(f => f(...a)) }; };
 

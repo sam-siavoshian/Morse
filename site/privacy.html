@@ -3,42 +3,75 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- Made from docs/privacy.md by scripts/build-pages.js. Edit that file, then run npm run pages. -->
+<!-- Made from docs/privacy.md and the nav of site/index.html by scripts/build-pages.js. Edit those, then run npm run pages. -->
 <title>Morse privacy policy</title>
 <meta name="description" content="What data leaves your computer when you use Morse, when, and to whom.">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="color-scheme" content="dark">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../design/tokens.css">
+<link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
-<style>
-  .doc { max-width: 720px; padding: 56px 0 96px; }
-  .doc h1 { font-size: clamp(32px, 6vw, 44px); letter-spacing: -0.03em; line-height: 1.1; margin: 0 0 16px; }
-  .doc h2 { font-size: 22px; letter-spacing: -0.02em; margin: 48px 0 12px; }
-  .doc p, .doc li { color: var(--m-text-2); font-size: 16px; line-height: 1.65; }
-  .doc p { margin: 12px 0; }
-  .doc strong { color: var(--m-text); font-weight: 600; }
-  .doc ul { padding-left: 20px; }
-  .doc li { margin: 6px 0; }
-  .doc a { color: var(--m-text); }
-  .doc code { font-family: var(--m-mono); font-size: 0.88em; background: var(--m-raised); border: 1px solid var(--m-line); border-radius: 4px; padding: 1px 5px; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
-  .doc .table { overflow-x: auto; margin: 16px 0; }
-  .doc table { border-collapse: collapse; width: 100%; font-size: 14px; }
-  .doc th, .doc td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--m-line); color: var(--m-text-2); }
-  .doc th { color: var(--m-text); font-weight: 500; }
-</style>
 </head>
 <body>
-<header class="top">
+<a class="skip-link" href="#top">Skip to content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
+  <symbol id="i-drag" viewBox="0 0 24 24"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/></symbol>
+</svg>
+<header class="nav">
   <div class="wrap">
-    <a class="brand" href="./" aria-label="Morse home"><span data-radar="20"></span>Morse</a>
-    <nav class="nav" aria-label="Main">
-      <a href="./#install">Install</a>
-      <a href="gallery.html">Gallery</a>
-      <a href="https://github.com/sam-siavoshian/RRAA">GitHub</a>
-    </nav>
+    <div class="nav-bar">
+      <a href="./" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="20"></span><span class="brand-name">Morse</span></a>
+      <nav class="nav-links" aria-label="Primary">
+        <ul class="nav-list">
+          <li><a class="nav-link" href="./#change">See it change</a></li>
+          <li><a class="nav-link" href="./#how">How it works</a></li>
+          <li><a class="nav-link" href="./#try">Try it</a></li>
+          <li><a class="nav-link" href="gallery.html">Gallery</a></li>
+          <li><a class="nav-link" href="./#faq">FAQ</a></li>
+        </ul>
+      </nav>
+      <div class="nav-end">
+        <a class="nav-link nav-quiet" href="https://github.com/sam-siavoshian/RRAA" data-link="github">GitHub</a>
+        <a class="btn btn-primary btn-sm" href="./#install">Get Morse</a>
+        <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Open menu"><span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span></span></button>
+      </div>
+    </div>
+    <div class="nav-menu" id="nav-menu">
+      <nav class="nav-sheet" aria-label="Sections">
+        <ul>
+          <li><a href="./#change">See it change</a></li>
+          <li><a href="./#how">How it works</a></li>
+          <li><a href="./#try">Try it here</a></li>
+          <li><a href="./#apps">Real apps</a></li>
+          <li><a href="./#install">Install</a></li>
+          <li><a href="./#faq">FAQ</a></li>
+          <li><a href="gallery.html">Gallery</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a href="https://github.com/sam-siavoshian/RRAA" data-link="github">GitHub</a></li>
+        </ul>
+        <div class="nav-sheet-get">
+          <a class="btn btn-primary" href="./#chrome-steps" data-link="chrome">Add to Chrome</a>
+          <a class="btn btn-secondary" href="./#desktop-steps" data-link="desktop">Download Morse</a>
+        </div>
+      </nav>
+    </div>
   </div>
 </header>
-<main class="wrap">
-<article class="doc">
+<main id="top">
+<section class="page-head">
+  <div class="pixels" aria-hidden="true"></div>
+  <div class="wrap">
+    <p class="eyebrow">Privacy</p>
+    <h1>Morse privacy policy</h1>
+    <p class="lede">What leaves your computer when you use Morse, when, and to whom.</p>
+  </div>
+</section>
+<article class="prose">
+<div class="wrap">
 <h1>Morse privacy policy</h1>
 <p>Last updated: October 24, 2026. This covers the Morse Chrome extension and the <code>morse</code> command (the Morse helper). It is checked against the code in this repository; if the two ever disagree, please <a href="https://github.com/sam-siavoshian/RRAA/issues/new">open an issue</a>.</p>
 <h2>The short version</h2>
@@ -59,6 +92,7 @@
 <li>the CSS rules that style what you pointed at</li>
 <li>for Refine and Fix: the code of the mod and the error it hit</li>
 <li>for &quot;Describe this picture&quot;: the picture, or a screenshot cropped to it</li>
+<li>for &quot;Show me once&quot;: the steps you did on the page while it was recording, such as what you clicked and what you typed. What you type in password and card number fields is never kept or sent.</li>
 </ul>
 <p>Where it goes depends on your choice:</p>
 <div class="table"><table>
@@ -82,10 +116,11 @@
 <h2>Only when you use them</h2>
 <p>These send data somewhere other than your model, and only when you use them:</p>
 <ul>
-<li><strong>Voice in Chrome.</strong> Morse uses Chrome's own speech recognition. Chrome sends your voice to Google to turn it into text. If you never use voice, no audio is recorded.</li>
+<li><strong>Voice in Chrome.</strong> Morse uses Chrome's own speech recognition. Chrome sends your voice to Google to turn it into text. If the Morse helper is paired and can turn speech into text, or you gave Morse an OpenAI key, Morse also records what you say while you talk to it, and sends that recording to the Morse helper (which uses OpenAI or Whisper on your computer, as below) or to OpenAI. If you never use voice, no audio is recorded.</li>
 <li><strong>Voice in desktop apps.</strong> The Morse helper turns speech into text with OpenAI (when you gave it an OpenAI key) or with Whisper on your computer (nothing leaves your computer).</li>
 <li><strong>Read aloud.</strong> Morse picks a voice installed on your computer. If there is none, Chrome uses its default voice, which can be an online Google voice.</li>
 <li><strong>Sharing.</strong> A share link holds the whole mod after the <code>#</code>. Browsers do not send that part to a server, so the install page at GitHub Pages never sees the mod. Sending the link is up to you. The &quot;Post&quot; button opens x.com with your request and the link filled in, and the link holds the mod. Nothing is posted until you post it.</li>
+<li><strong>Mod packs from an address.</strong> When you install a pack from a web address, Morse downloads it from there. If you chose to get its updates, Morse checks that address at most once a day. The request carries no cookies and nothing about you or the page; that server sees your IP address, as with any website. &quot;Stop updates&quot; in the Mods panel ends it.</li>
 <li><strong>Submitting to the gallery</strong> opens a new GitHub issue with your mod in it, in your browser. Nothing is posted until you click Submit on GitHub.</li>
 <li><strong>Settings sync.</strong> Your Morse settings (shortcuts, bar position, theme, whether to show gallery mods) are kept in Chrome's sync storage. If you turned on Chrome sync, Google syncs them between your browsers. Your API key, your mods and your history are not in sync storage.</li>
 </ul>
@@ -109,17 +144,26 @@
 <p>Morse is not made for children under 13 and collects nothing from anyone.</p>
 <h2>Changes</h2>
 <p>Changes to this policy are made in this file, so its history on GitHub shows every change. Questions: <a href="https://github.com/sam-siavoshian/RRAA/issues/new">open an issue</a>.</p>
+</div>
 </article>
 </main>
 <footer class="foot">
   <div class="wrap">
-    <a class="brand" href="./"><span data-radar="16" data-still></span>Morse</a>
-    <nav aria-label="Footer">
-      <a href="gallery.html">Gallery</a>
-      <a href="privacy.html" aria-current="page">Privacy</a>
-      <a href="https://github.com/sam-siavoshian/RRAA">GitHub</a>
-      <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/LICENSE">MIT license</a>
-    </nav>
+    <div class="foot-top">
+      <a href="./" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="20" data-still></span><span class="brand-name">Morse</span></a>
+      <nav class="foot-links" aria-label="Footer">
+        <a href="./#install">Install</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs">Guides</a>
+        <a href="https://github.com/sam-siavoshian/RRAA" data-link="github">Source on GitHub</a>
+        <a href="https://github.com/sam-siavoshian/RRAA/issues">Report a problem</a>
+      </nav>
+    </div>
+    <div class="foot-base">
+      <span>Change any website or desktop app in your own words.</span>
+      <span>&copy; 2026 Morse · <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/LICENSE">MIT license</a></span>
+    </div>
   </div>
 </footer>
 <script type="module">import { initPage } from "./common.js"; initPage();</script>

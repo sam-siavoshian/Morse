@@ -3,24 +3,34 @@
 //
 //   /RRAA/                         -> redirects to site/
 //   /RRAA/site/                    landing page, gallery, privacy policy
+//   /RRAA/privacy.html             redirects to site/privacy.html
 //   /RRAA/site/mods/index.json     the gallery list (core/gallery.js GALLERY_INDEX_URL)
 //   /RRAA/share/install.html       share links (core/mod.js SHARE_BASE)
 //   /RRAA/core/, /RRAA/design/     modules and tokens the pages import
 //   /RRAA/docs/launch/             the demo video and posters
+//   /RRAA/demo/sites/tunes/, byte/ the demo apps in the landing page's Try it here
+//   /RRAA/dist/extension/runtime.js  the Morse runtime that runs inside them
 //
-// It also writes site/privacy.html from docs/privacy.md (committed, so the page
-// works from a checkout too), and fails if any page links to a file that isn't
-// published.
+// It also writes site/privacy.html from docs/privacy.md, copies the nav bar and
+// footer of site/index.html into site/privacy.html and site/gallery.html (all
+// committed, so the pages work from a checkout too), and fails if any page
+// links to a file that isn't published.
 //
 //   npm run pages            (the Pages workflow runs the same)
 //   node scripts/build-pages.js --check    only check that site/privacy.html is current
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { bundleRuntime } from "../runtime/bundle.js";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const OUT = path.join(root, "dist", "pages");
-const PUBLISH = ["site", "share", "core", "design/tokens.css", "docs/launch"];
+// docs/showcase holds before and after pictures site/config.js may name; it is
+// published when it exists.
+const PUBLISH = ["site", "share", "core", "design/tokens.css", "docs/launch", "docs/showcase", "demo/sites/tunes", "demo/sites/byte"];
+// Try it here (site/try.js) loads the runtime from where scripts/build.js puts
+// it; this writes the same file, so the build needs no other step first.
+const RUNTIME = "dist/extension/runtime.js";
 
 // ---- docs/privacy.md -> site/privacy.html
 
@@ -68,62 +78,85 @@ export function mdToHtml(md) {
   return out.join("\n");
 }
 
-export function privacyPage(md) {
+// ---- the nav bar and footer, shared by every page
+//
+// site/index.html holds the one copy. The gallery and the privacy policy take
+// theirs from it, with the landing page's own links (#how) pointed back at it
+// (./#how). The privacy policy is written whole; site/gallery.html keeps its
+// copy between <!-- chrome:NAME --> and <!-- /chrome:NAME --> markers, and
+// npm run pages refreshes it (--check fails when it is out of date).
+
+export function siteChrome(index, page = "") {
+  const pick = (name, re) => {
+    const m = re.exec(index);
+    if (!m) throw new Error(`site/index.html has no ${name}`);
+    return m[0];
+  };
+  // Links into the landing page go back to it; the icon sprite's #i-* stay.
+  const away = html => html
+    .replace(/href="#top"/g, 'href="./"')
+    .replace(/href="#(?!i-)([\w-]+)"/g, 'href="./#$1"')
+    .replace(`<a class="nav-link" href="${page}">`, `<a class="nav-link" href="${page}" aria-current="page">`);
+  return {
+    sprite: pick("icon sprite", /<svg width="0"[\s\S]*?<\/svg>/),
+    header: away(pick("nav bar", /<header class="nav">[\s\S]*?<\/header>/)),
+    footer: away(pick("footer", /<footer class="foot">[\s\S]*?<\/footer>/)),
+  };
+}
+
+// Puts each part of the chrome between that part's markers in a page.
+export function withChrome(html, chrome) {
+  let out = html;
+  for (const [name, part] of Object.entries(chrome)) {
+    const re = new RegExp(`(<!-- chrome:${name} -->)[\\s\\S]*?(<!-- /chrome:${name} -->)`);
+    if (!re.test(out)) throw new Error(`no <!-- chrome:${name} --> markers`);
+    out = out.replace(re, (_, a, b) => `${a}\n${part}\n${b}`);
+  }
+  return out;
+}
+
+const readSite = f => fs.readFile(path.join(root, "site", f), "utf8");
+
+export async function galleryHtml() {
+  return withChrome(await readSite("gallery.html"), siteChrome(await readSite("index.html"), "gallery.html"));
+}
+
+export function privacyPage(md, chrome) {
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- Made from docs/privacy.md by scripts/build-pages.js. Edit that file, then run npm run pages. -->
+<!-- Made from docs/privacy.md and the nav of site/index.html by scripts/build-pages.js. Edit those, then run npm run pages. -->
 <title>Morse privacy policy</title>
 <meta name="description" content="What data leaves your computer when you use Morse, when, and to whom.">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="color-scheme" content="dark">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../design/tokens.css">
+<link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
-<style>
-  .doc { max-width: 720px; padding: 56px 0 96px; }
-  .doc h1 { font-size: clamp(32px, 6vw, 44px); letter-spacing: -0.03em; line-height: 1.1; margin: 0 0 16px; }
-  .doc h2 { font-size: 22px; letter-spacing: -0.02em; margin: 48px 0 12px; }
-  .doc p, .doc li { color: var(--m-text-2); font-size: 16px; line-height: 1.65; }
-  .doc p { margin: 12px 0; }
-  .doc strong { color: var(--m-text); font-weight: 600; }
-  .doc ul { padding-left: 20px; }
-  .doc li { margin: 6px 0; }
-  .doc a { color: var(--m-text); }
-  .doc code { font-family: var(--m-mono); font-size: 0.88em; background: var(--m-raised); border: 1px solid var(--m-line); border-radius: 4px; padding: 1px 5px; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
-  .doc .table { overflow-x: auto; margin: 16px 0; }
-  .doc table { border-collapse: collapse; width: 100%; font-size: 14px; }
-  .doc th, .doc td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--m-line); color: var(--m-text-2); }
-  .doc th { color: var(--m-text); font-weight: 500; }
-</style>
 </head>
 <body>
-<header class="top">
+<a class="skip-link" href="#top">Skip to content</a>
+${chrome.sprite}
+${chrome.header}
+<main id="top">
+<section class="page-head">
+  <div class="pixels" aria-hidden="true"></div>
   <div class="wrap">
-    <a class="brand" href="./" aria-label="Morse home"><span data-radar="20"></span>Morse</a>
-    <nav class="nav" aria-label="Main">
-      <a href="./#install">Install</a>
-      <a href="gallery.html">Gallery</a>
-      <a href="https://github.com/sam-siavoshian/RRAA">GitHub</a>
-    </nav>
+    <p class="eyebrow">Privacy</p>
+    <h1>Morse privacy policy</h1>
+    <p class="lede">What leaves your computer when you use Morse, when, and to whom.</p>
   </div>
-</header>
-<main class="wrap">
-<article class="doc">
+</section>
+<article class="prose">
+<div class="wrap">
 ${mdToHtml(md)}
+</div>
 </article>
 </main>
-<footer class="foot">
-  <div class="wrap">
-    <a class="brand" href="./"><span data-radar="16" data-still></span>Morse</a>
-    <nav aria-label="Footer">
-      <a href="gallery.html">Gallery</a>
-      <a href="privacy.html" aria-current="page">Privacy</a>
-      <a href="https://github.com/sam-siavoshian/RRAA">GitHub</a>
-      <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/LICENSE">MIT license</a>
-    </nav>
-  </div>
-</footer>
+${chrome.footer}
 <script type="module">import { initPage } from "./common.js"; initPage();</script>
 </body>
 </html>
@@ -131,7 +164,8 @@ ${mdToHtml(md)}
 }
 
 export async function privacyHtml() {
-  return privacyPage(await fs.readFile(path.join(root, "docs", "privacy.md"), "utf8"));
+  const md = await fs.readFile(path.join(root, "docs", "privacy.md"), "utf8");
+  return privacyPage(md, siteChrome(await readSite("index.html"), "privacy.html"));
 }
 
 // ---- dist/pages
@@ -178,10 +212,20 @@ export async function brokenLinks(dir) {
   return broken;
 }
 
-export async function buildPages({ out = OUT } = {}) {
-  await fs.writeFile(path.join(root, "site", "privacy.html"), await privacyHtml());
+// refresh: false leaves site/privacy.html and site/gallery.html as they are
+// (tests build into a folder of their own while other tests read those).
+export async function buildPages({ out = OUT, refresh = true } = {}) {
+  if (refresh) {
+    await fs.writeFile(path.join(root, "site", "privacy.html"), await privacyHtml());
+    await fs.writeFile(path.join(root, "site", "gallery.html"), await galleryHtml());
+  }
   await fs.rm(out, { recursive: true, force: true });
-  for (const p of PUBLISH) await copy(path.join(root, p), path.join(out, p));
+  for (const p of PUBLISH) {
+    if (p === "docs/showcase" && !(await fs.stat(path.join(root, p)).catch(() => null))) continue;
+    await copy(path.join(root, p), path.join(out, p));
+  }
+  await fs.mkdir(path.dirname(path.join(out, RUNTIME)), { recursive: true });
+  await fs.writeFile(path.join(out, RUNTIME), bundleRuntime());
   await fs.copyFile(path.join(root, "docs", "privacy.md"), path.join(out, "docs", "privacy.md"));
   await fs.writeFile(path.join(out, ".nojekyll"), "");
   await fs.writeFile(path.join(out, "index.html"), `<!doctype html>
@@ -189,6 +233,14 @@ export async function buildPages({ out = OUT } = {}) {
 <meta http-equiv="refresh" content="0; url=site/">
 <link rel="canonical" href="site/"></head>
 <body><a href="site/">Morse</a></body></html>
+`);
+  // The policy's address is site/privacy.html (the Chrome Web Store listing
+  // gives that one); /RRAA/privacy.html sends people there too.
+  await fs.writeFile(path.join(out, "privacy.html"), `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Morse privacy policy</title>
+<meta http-equiv="refresh" content="0; url=site/privacy.html">
+<link rel="canonical" href="site/privacy.html"></head>
+<body><a href="site/privacy.html">Morse privacy policy</a></body></html>
 `);
   const broken = await brokenLinks(out);
   if (broken.length) throw new Error(`Links to files that aren't published:\n  ${broken.join("\n  ")}`);
@@ -199,8 +251,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(im
   try {
     if (process.argv.includes("--check")) {
       const now = await fs.readFile(path.join(root, "site", "privacy.html"), "utf8").catch(() => "");
-      if (now !== await privacyHtml()) throw new Error("site/privacy.html is out of date with docs/privacy.md. Run npm run pages.");
-      console.log("site/privacy.html is current.");
+      if (now !== await privacyHtml()) throw new Error("site/privacy.html is out of date with docs/privacy.md or site/index.html. Run npm run pages.");
+      if (await readSite("gallery.html") !== await galleryHtml()) throw new Error("site/gallery.html's nav or footer is out of date with site/index.html. Run npm run pages.");
+      console.log("site/privacy.html and site/gallery.html are current.");
     } else {
       const r = await buildPages();
       console.log(`Built ${path.relative(root, r.out)}: ${r.files} files.`);
