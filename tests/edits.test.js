@@ -1,5 +1,6 @@
 // God mode: the pure edit compiler (core/edits.js), the clipboard helper and
 // the snapshot prompt. The in-page behavior is covered by godmode.test.js.
+import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { compileEdits, summarizeEdits, describeEdit, zoomFor, EDIT_TITLE } from "../core/edits.js";

@@ -1,6 +1,7 @@
 // Pause state, safe start, export/import and the shared control host
 // (core/control.js, core/backup.js, core/control-host.js), and the desktop
 // CLI commands in daemon/control.js against a scratch MORSE_HOME.
+import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";

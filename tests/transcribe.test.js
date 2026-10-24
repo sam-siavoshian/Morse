@@ -1,5 +1,6 @@
 // Voice transcription providers against a fake OpenAI server and fake
 // whisper binaries on PATH; the helper's HTTP route; stopping a generation.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -9,6 +10,7 @@ import { promises as fs } from "node:fs";
 import { transcribe, transcribeOpenAI, transcribeWhisper, voiceStatus, findWhisper } from "../core/transcribe.js";
 import { Generations } from "../core/cancel.js";
 import { runMorse } from "../core/engine.js";
+import { waitFor } from "./helpers/wait.js";
 
 const AUDIO = Buffer.from("RIFF fake webm bytes for the test").toString("base64");
 let server, base, calls = [], respond = null, tmp, binDir;
@@ -135,7 +137,7 @@ test("generate.cancel aborts the model mid-stream and never runs the JS", async 
     settings: { provider: "demo" }, request: "add a sleep timer", context: { url: "https://x/", outline: "" },
     exec: async () => { execs++; return { ok: true }; }, emit: e => { if (e.type === "token") tokens++; }, signal,
   }));
-  await new Promise(r => setTimeout(r, 300));
+  await waitFor(() => tokens > 0, { what: "the first tokens" }); // mid-stream
   assert.equal(gens.cancel("g1"), true);
   const res = await p;
   assert.deepEqual(res, { ok: false, cancelled: true, error: "Stopped" });

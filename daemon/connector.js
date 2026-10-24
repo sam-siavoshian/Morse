@@ -110,8 +110,10 @@ export class Connector {
       let list = null;
       try { list = await listTargets(this.port); misses = 0; }
       catch (e) { misses += /ECONNREFUSED|ECONNRESET/.test(String(e?.cause?.code || e?.code || e?.message)) ? 3 : 1; }
+      if (!this.running) break; // stop() landed during the poll: don't mark attached or attach again
       if (list && this.state === "waiting") {
         const v = this.verify ? await this.verify().catch(e => ({ ok: false, why: e.message })) : { ok: true };
+        if (!this.running) break;
         if (!v.ok) {
           if (this.refused !== v.why) this.log(`  ! Morse didn't connect: ${v.why}.`);
           this.refused = v.why;
@@ -206,12 +208,12 @@ export class Connector {
       if (c.auxData.isDefault) {
         frame(frameId).main = c.id;
         // Belt and braces for documents the new-document script misses (a
-        // renderer that came back after a crash): if no Morse world shows up
-        // for this document, make one and boot there; the shim makes a second
-        // boot a no-op.
+        // renderer that came back after a crash, or one whose world came up
+        // without the binding): boot() makes the world if there's none and
+        // starts the runtime unless it's already running there.
         if (w.ready && frameId === w.frameId) setTimeout(() => {
           const f = frames.get(frameId);
-          if (f && f.main === c.id && !f.world) this.boot(s, w, source).catch(() => {});
+          if (f && f.main === c.id) this.boot(s, w, source).catch(() => {});
         }, 400);
       } else if (c.name === WORLD) { frame(frameId).world = c.id; worlds.set(c.id, frameId); }
     });
@@ -266,6 +268,11 @@ export class Connector {
   async boot(s, w, source) {
     let ctx = w.frames.get(w.frameId)?.world;
     if (ctx == null) ctx = (await s.send("Page.createIsolatedWorld", { frameId: w.frameId, worldName: WORLD })).executionContextId;
+    const probe = (await s.send("Runtime.evaluate", { expression: `[!!globalThis.__morseHost, typeof globalThis.${BINDING}]`, contextId: ctx, returnByValue: true }).catch(() => null))?.result?.value;
+    if (probe?.[0]) return; // already running in this document
+    // A document that committed in a new renderer while we were attaching (an
+    // app still starting up) can come without the binding: add it back first.
+    if (probe && probe[1] !== "function") await s.send("Runtime.addBinding", { name: BINDING, executionContextName: WORLD }).catch(() => {});
     await s.send("Runtime.evaluate", { expression: source, contextId: ctx });
   }
 

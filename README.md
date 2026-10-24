@@ -358,4 +358,15 @@ demo/        demo apps + the scripts that produced every screenshot
 
 Regenerate the screenshots: `npm run demo:serve &` then `DISPLAY=:99 npm run screenshots` (replayed replies; add `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code` to `demo/shoot-desktop.js` for a real model) (needs Xvfb, Chromium/Playwright, ffmpeg; set `MORSE_HOME` to a scratch dir). The Edit tools' are `DISPLAY=:99 node demo/shoot-godmode.js`; `morse apps` / `morse status` are `node demo/shoot-apps.js`.
 
+## Contributing
+
+```bash
+npm ci
+npm run check      # build, node --check on every JS file, the runtime bundle (no top-level name declared twice), every file the extension references is in dist/extension
+npm test           # everything that runs headless (Playwright, installed globally, for the browser tests)
+npm run test:ui    # the tests that need a display (the built extension), under xvfb-run if there's no $DISPLAY
+```
+
+CI (`.github/workflows/ci.yml`) runs all three on every push and pull request. Tests are safe to run in parallel, several checkouts at once included: each test file gets its own `MORSE_HOME` (never your `~/.morse`), every server and debugging port is picked by the OS, and tests wait on real conditions rather than sleeping. New tests should use `tests/helpers/` (`home.js` first, then `net.js`, `wait.js`, `browser.js`, `keys.js` for the platform's default hotkeys, `demo-server.js`). `MORSE_TEST_TIMEOUT_SCALE=2` doubles every timeout on a slow machine.
+
 MIT licensed.

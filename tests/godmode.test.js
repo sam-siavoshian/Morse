@@ -2,22 +2,21 @@
 // (its fake host persists mods in localStorage and runs mod JS through the
 // real helper kit). Hide, move, rename, recolor, undo/redo, dark mode, then a
 // reload must bring every saved edit back.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
 import { bundleRuntime } from "../runtime/bundle.js";
-// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
+import { pressOpen } from "./helpers/keys.js";
+import { noBrowser, launchBrowser } from "./helpers/browser.js";
+import { waitFor, waitForReady, settle, TIMEOUT } from "./helpers/wait.js";
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
+const skip = noBrowser;
 const ROOT = new URL("../", import.meta.url);
 const ORIGIN = "http://morse.test";
 let browser;
 
-before(async () => { if (!skip) browser = await chromium.launch(); });
+before(async () => { if (!skip) browser = await launchBrowser(); });
 after(() => browser?.close());
 
 async function playground(query = "?light") {
@@ -35,19 +34,10 @@ async function playground(query = "?light") {
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   await page.goto(`${ORIGIN}/demo/playground.html${query}`);
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  await waitForReady(page);
   return { ctx, page, errors };
 }
-async function until(fn, ms = 4000) {
-  const end = Date.now() + ms;
-  for (;;) {
-    let v;
-    try { v = await fn(); } catch (e) { if (Date.now() > end) throw e; }
-    if (v) return v;
-    if (Date.now() > end) throw new Error("timed out waiting for " + fn);
-    await new Promise(r => setTimeout(r, 50));
-  }
-}
+const until = (fn, ms = TIMEOUT) => waitFor(fn, { timeout: ms, what: String(fn) });
 const style = (page, sel, prop) => page.locator(sel).first().evaluate((e, p) => getComputedStyle(e)[p], prop);
 async function select(page, sel, dx = 12, dy = 8) {
   const r = await page.locator(sel).first().boundingBox();
@@ -60,7 +50,7 @@ const savedMods = page => page.evaluate(() => Object.values(JSON.parse(localStor
 
 test("hide, move, rename, recolor and dark mode apply live, undo, save, and come back after a reload", { skip }, async () => {
   const { ctx, page, errors } = await playground("?light");
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
 
   // Rename: T edits the text in place, Enter keeps it.
   await select(page, "#card h3");
@@ -126,7 +116,7 @@ test("hide, move, rename, recolor and dark mode apply live, undo, save, and come
 
   // Reload: everything comes back from the saved mods alone.
   await page.reload();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  await waitForReady(page);
   await until(async () => (await page.locator("#card h3").textContent()) === "What's new");
   assert.equal(await style(page, "#toolbar button >> nth=1", "display"), "none");
   assert.equal(await style(page, "#card", "transform"), "matrix(1, 0, 0, 1, 48, 1)");
@@ -138,7 +128,7 @@ test("hide, move, rename, recolor and dark mode apply live, undo, save, and come
 
 test("edge cases: shadow DOM, mixed inline text, frames, duplicates, and dark pages", { skip }, async () => {
   const { ctx, page, errors } = await playground("");
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
 
   // Inside an open shadow root: the edit carries the host chain.
   await select(page, "#badge", 20, 8);
@@ -189,7 +179,8 @@ test("edge cases: shadow DOM, mixed inline text, frames, duplicates, and dark pa
   await page.keyboard.press("Escape");
   await page.locator(".gm-qbtn").click();
   await page.locator(".gm-menu button[data-k=dark]").click();
-  await page.waitForTimeout(300);
+  await page.getByText("This page is already dark").waitFor(); // it says so instead
+  await settle(page);
   assert.equal(await style(page, "html", "filter"), "none");
   assert.equal((await savedMods(page)).filter(m => m.kind === "quick").length, 0);
   assert.deepEqual(errors, []);
