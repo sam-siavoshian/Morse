@@ -44,6 +44,8 @@ export async function parseImport(source) {
 // it came from and when. A backup keeps each mod's on/off state and history.
 export function prepareInstall(mod, { kind = "link", where = {}, now = new Date() } = {}) {
   const m = validateMod({ ...mod });
+  // Hand-written files may leave out the dates the lists sort and show by.
+  for (const k of ["created", "updated"]) if (typeof m[k] !== "string" || isNaN(Date.parse(m[k]))) m[k] = now.toISOString();
   const match = m.match && Array.isArray(m.match.hosts) ? m.match : { hosts: [hostOf(where.url)], app: where.app || null };
   if (kind === "backup") {
     return { ...m, match, enabled: m.enabled !== false, imported: true, importedFrom: m.imported ? m.importedFrom || "link" : "backup", importedAt: m.importedAt || now.toISOString() };

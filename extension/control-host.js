@@ -5,6 +5,7 @@
 // popup talks to it directly (control.* messages).
 
 import { controlHandler, CONTROL_REQUESTS } from "../core/control-host.js";
+import { serialized } from "./bar-host.js"; // the one queue every read-modify-write of "mods" goes through
 
 export { CONTROL_REQUESTS };
 
@@ -24,11 +25,11 @@ const handle = controlHandler({
   load: () => getLocal(KEY, {}),
   save: state => chrome.storage.local.set({ [KEY]: state }),
   listMods: async () => Object.values(await getLocal("mods", {})),
-  putMods: async list => {
+  putMods: list => serialized(async () => {
     const all = await getLocal("mods", {});
     for (const m of list) all[m.id] = m;
     await chrome.storage.local.set({ mods: all });
-  },
+  }),
   onPause: pause => {
     badge(pause);
     for (const p of ports) try { p.postMessage({ type: "control.changed", pause }); } catch {}

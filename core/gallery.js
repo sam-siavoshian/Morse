@@ -25,6 +25,9 @@ export const RETRY_AFTER = 60 * 60 * 1000; // after a failed fetch (offline), wa
 export const MAX_ENTRIES = 1000;
 export const MAX_INDEX_BYTES = 2 * 1024 * 1024;
 export const MAX_MOD_BYTES = 512 * 1024;
+// However long a server says its list stays fresh, it is checked again within
+// a week: a list served once (by a bad mirror, or before a fix) can't pin itself.
+export const MAX_FRESH = 7 * DAY;
 
 const ID = /^[\w-]{1,40}$/;
 const FILE = /^[\w.-]{1,80}\.morse\.json$/;       // a file next to the list, never a path or another site
@@ -81,10 +84,19 @@ function parseMatch(m) {
   if (!m || typeof m !== "object") return null;
   const hosts = Array.isArray(m.hosts) ? m.hosts.filter(h => typeof h === "string" && HOST.test(h)).slice(0, 20) : [];
   if (!hosts.length) return null;
-  // A gallery mod for every website is not a "mod for this site".
-  if (hosts.includes("*")) return null;
+  // A gallery mod for every website is not a "mod for this site", and neither
+  // is one for every .com (or .co.uk) site.
+  if (hosts.some(tooWide)) return null;
   const app = typeof m.app === "string" && /^[\w.-]{1,40}$/.test(m.app) ? m.app : null;
   return { hosts, app };
+}
+
+const SUFFIX2 = /^(co|com|net|org|gov|edu|ac|or|ne|go|gob|nic|mil|ltd|plc)\.[a-z]{2}$/i;
+function tooWide(h) {
+  if (h === "*") return true;
+  if (!h.startsWith("*.")) return false;
+  const rest = h.slice(2).replace(/:\d+$/, "").replace(/\.$/, "");
+  return !rest.includes(".") || SUFFIX2.test(rest);
 }
 
 // Which list to read for a page: the one set in the host's settings, the
@@ -164,7 +176,7 @@ export function maxAgeOf(cacheControl) {
 }
 
 export function freshFor(cache) {
-  return Math.max(DAY, (cache?.maxAge || 0) * 1000);
+  return Math.min(MAX_FRESH, Math.max(DAY, (cache?.maxAge || 0) * 1000));
 }
 
 export function needsFetch(cache, now = Date.now()) {

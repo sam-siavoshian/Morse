@@ -41,6 +41,10 @@ export function createMod({ id, title, prompt, css, js, url, app, target, model,
   };
 }
 
+// Saved mods in the order they were made. Installed files may lack "created"
+// (or have it as a number): that must not break the list for every site.
+export const byCreated = (a, b) => String(a?.created ?? "").localeCompare(String(b?.created ?? ""));
+
 // What a mod is filed under: the host for web pages, and the file itself
 // (file://<dir>/<name>, no query or hash) for local files, so a mod made on
 // one local page doesn't follow you to every other one.

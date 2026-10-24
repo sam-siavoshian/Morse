@@ -200,19 +200,22 @@ function showModCode(m) {
 
 // Before anything is installed: what each mod does, the code folded below,
 // and an explicit Install. Nothing is saved until Install is pressed.
-async function reviewImport(source, { onDone } = {}) {
+// trial: { run(mod) } turns it into the review before trying one mod (Mods for
+// this site, 68-gallery.js): the same review, with Try it instead of Install.
+async function reviewImport(source, { onDone, trial = null } = {}) {
   const done = r => { const f = onDone; onDone = null; f?.(r); };
   let r;
   try { r = await call("mods.preview", { source }); }
   catch (e) { const msg = plainError(e); toast(msg); return done({ error: msg }); }
   if (!r?.mods?.length) { const e = "This isn't a Morse share link or mod file. Check that you copied all of it."; toast(e); return done({ error: e }); }
+  if (trial) r.mods = r.mods.slice(0, 1);
   const many = r.mods.length > 1;
   const hostHere = controlKey(here());
   const other = m => !m.match?.app && !(modHosts(m) || []).some(h => h === "*" || h === hostHere || (h.startsWith("*.") && hostHere.endsWith(h.slice(1))));
   applyTheme();
   openModal(`
-    <header><b>${many ? `Install ${r.mods.length} mods?` : `Install “${esc(r.mods[0].title)}”?`}</b>
-      <small>${r.kind === "backup" ? "From a backup file. " : ""}Here is what ${many ? "they do" : "it does"}. Nothing is installed until you press Install.</small>
+    <header><b>${trial ? `Try “${esc(r.mods[0].title)}”?` : many ? `Install ${r.mods.length} mods?` : `Install “${esc(r.mods[0].title)}”?`}</b>
+      <small>${trial ? "Here is what it does. Nothing runs until you press Try it, and nothing is saved." : `${r.kind === "backup" ? "From a backup file. " : ""}Here is what ${many ? "they do" : "it does"}. Nothing is installed until you press Install.`}</small>
       <button data-a="close" aria-label="Close">×</button></header>
     ${r.mods.map(m => `<section class="ctl-review">
       ${many ? `<h3>${esc(m.title)}</h3>` : ""}
@@ -224,12 +227,13 @@ async function reviewImport(source, { onDone } = {}) {
       <details class="ctl-code"><summary>Show code</summary>${codeHtml(m)}</details>
     </section>`).join("")}
     ${r.errors?.length ? `<p class="dim ctl-skip">Skipped ${esc(r.errors.join("; "))}</p>` : ""}
-    <footer><button data-a="close">Cancel</button><button class="primary" data-a="install">Install${many ? ` ${r.mods.length}` : ""}</button></footer>`);
+    <footer><button data-a="close">Cancel</button><button class="primary" data-a="install">${trial ? "Try it" : `Install${many ? ` ${r.mods.length}` : ""}`}</button></footer>`);
   modal.querySelector(".card").classList.add("ctl-card");
   modal.querySelector("[data-a=close]:not(header [data-a])")?.focus(); // Cancel, never Install: a page could make someone press Enter
   const watch = new MutationObserver(() => { if (modal.hidden) { watch.disconnect(); done({ error: "Not installed. You cancelled it." }); } });
   watch.observe(modal, { attributes: true, attributeFilter: ["hidden"] });
   modal.querySelector("[data-a=install]").onclick = async e => {
+    if (trial) { watch.disconnect(); modal.hidden = true; done({ title: r.mods[0].title }); return trial.run(r.mods[0]); }
     e.currentTarget.disabled = true;
     try {
       const saved = await call("control.install", { url: location.href, app: S.app, mods: r.mods, kind: r.kind });
