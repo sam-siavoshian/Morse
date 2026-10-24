@@ -144,7 +144,21 @@ preload's exposed API, `morse://` links, the Linux desktop files and the icon.
 real app with Playwright's `_electron`, with the same runtime and display as
 above. It lists Tunes, opens it with Morse, disconnects, connects again,
 answers the restart question, closes the window and quits. Its app list is
-only Tunes (`MORSE_DESKTOP_SCAN=0` and `apps` in `desktop.json`).
+only Tunes (`MORSE_DESKTOP_SCAN=0` and `apps` in `desktop.json`). That flow
+runs with `MORSE_PIPE=0` (a debugging port, so the test can look inside
+Tunes); a second test does the same on the private pipe, where nothing but
+Morse can look inside, and checks there is no port, Connect needs no restart
+and Tunes outlives Morse.
+
+The private pipe ([architecture](architecture.md#the-private-pipe)):
+[`tests/pipe.test.js`](../../tests/pipe.test.js) needs no Electron. A stand-in
+app ([`tests/helpers/fake-pipe-app.js`](../../tests/helpers/fake-pipe-app.js))
+speaks CDP on fds 3 and 4, records the flags its fd 3 came with (Chromium
+needs it blocking) and whether it ever read an end of file (Electron 12+ quit
+then), so the tests cover the framing, flat sessions, the launch, Morse being
+killed, the fallback to a port, the connector and `--watch`. The pipe tests in
+`tests/electron.test.js` do it on real Electron, looking inside over the same
+pipe with a session of their own.
 
 Multi-window edge cases (crashes, kill and restart, `--restart`) are tested
 against a fake Chromium app ([`demo/fake-app.js`](../../demo/fake-app.js),
@@ -221,7 +235,10 @@ macOS fixture tree in [`demo/fake-installs.js`](../../demo/fake-installs.js))
 and `shoot-site.js` (the website and share page, into
 [`docs/site/`](../site/)). `shoot-style.js` and `shoot-packs.js` make
 150–166; the pictures of real apps and sites (147–156) come from
-`demo/try-real-app.js` and `demo/try-real-sites.js`. The launch videos are made by
+`demo/try-real-app.js` and `demo/try-real-sites.js`, and 231–241 (changes
+to what an app does, with and without its profile) from
+[`demo/try-app-logic.js`](../../demo/try-app-logic.js), which also writes the
+numbers in [App profiles](rea.md#measurements). The launch videos are made by
 [`demo/record-launch.js`](../../demo/record-launch.js); see the
 [launch kit](../launch/README.md).
 

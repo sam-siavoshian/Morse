@@ -20,6 +20,17 @@
 //   --setup     JS run in the page once Morse is connected (open a view, close a dialog)
 //   --port      debugging port (default: morse picks one)
 //   --move      a window title (xdotool --name): move those windows to 0,0 first
+//
+// For changes to what the app does (app profiles, docs/dev/rea.md), the
+// change is also used before it is checked:
+//   --act       JS run in the page after the change, before --check (open a note, fill the clipboard)
+//   --press     real keys (before --click), for xdotool key (ctrl+shift+k); spaces between presses
+//   --type      real typing after that
+//   --click     click the first part the change added ([data-morse]) with the real mouse (yes), or a CSS selector
+//   --focus-act CSS selector clicked with the real mouse before the keys (the editor)
+//   --wait      ms to wait after acting before checking (default 1500)
+//   --profile   yes: wait for the app profile before asking; MORSE_PROFILE=off runs without one
+//   --relaunch  no: stop after the check (no save, quit and reopen)
 //   --shots     where pictures go (none unless given), --first their first number, --name their prefix
 //   -- <args>   arguments for the app (as root: --no-sandbox)
 //
@@ -47,7 +58,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const say = s => console.log(`· ${s}`);
 const x = (...args) => execFileSync("xdotool", args, { encoding: "utf8" }).trim();
 const modelArgs = process.env.MORSE_MODEL ? ["--model", process.env.MORSE_MODEL] : [];
-const result = { app: opt.app, ask: opt.ask };
+const result = { app: opt.app, ask: opt.ask, profile: process.env.MORSE_PROFILE !== "off" };
 
 const children = [];
 const done = code => { for (const c of children) try { c.kill(); } catch {} console.log(JSON.stringify(result)); process.exit(code); };
@@ -134,6 +145,13 @@ let win = await geometry(w);
 say(`window "${win.title}" at ${win.x},${win.y} ${win.w}x${win.h}`);
 await shot(win, "before");
 
+// The app profile (daemon/profile.js) is built in the background; wait for it
+// so the request is judged with it, not raced against it.
+if (opt.profile === "yes" && result.profile) {
+  await until(() => /Morse looked at how it works inside/.test(m.out), 120000, "the app profile");
+  result.profileLine = m.out.match(/· .*Morse looked at how it works inside[^\n]*/)?.[0];
+}
+
 // ---- 2. the real hotkey
 // Click somewhere in the window first (--focus: a selector; the middle otherwise).
 const [fx, fy] = opt.focus ? await centerOf(w, win, opt.focus) : [win.left + Math.round(win.w / 2), win.top + Math.round(win.h / 2)];
@@ -167,25 +185,70 @@ result.ms = Date.now() - t0;
 result.hint = res.hint;
 if (res.phase === "error") { result.ok = false; await shot(win, "error"); throw new Error("the change failed: " + res.hint); }
 await sleep(800);
-result.applied = opt.check ? !!(await w.ev(opt.check).catch(e => (say("check threw: " + e.message), false))) : null;
 await shot(win, "result");
+// Use the change the way a person would: a click on what it added, keys, typing.
+async function act() {
+  if (opt.act) await w.ev(opt.act).catch(e => say("act threw: " + e.message));
+  if (opt["focus-act"]) {
+    const [ax, ay] = await centerOf(w, win, opt["focus-act"]);
+    x("mousemove", "--sync", String(ax), String(ay));
+    x("click", "1");
+    await sleep(400);
+  }
+  if (opt.press) for (const k of opt.press.split(" ")) { x("key", k); await sleep(250); }
+  if (opt.click) {
+    const sel = opt.click === "yes" ? null : opt.click;
+    const all = sel ? `[...document.querySelectorAll(${JSON.stringify(sel)})]` : `[...document.querySelectorAll("[data-morse]")].flatMap(e => [e, ...e.querySelectorAll("*")])`;
+    const at = await w.ev(`(() => { const all = ${all}.filter(e => e.getClientRects().length && (e.matches("button,a,[role=button],[onclick]") || getComputedStyle(e).cursor === "pointer"));
+      const e = all[0]; if (!e) return null; e.scrollIntoView({ block: "nearest" }); const r = e.getBoundingClientRect();
+      return [r.x + r.width / 2, r.y + r.height / 2, (e.textContent || e.title || e.getAttribute("aria-label") || "").trim().slice(0, 40)]; })()`);
+    if (!at) say("nothing to click: the change added no button");
+    else {
+      x("mousemove", "--sync", String(Math.round(win.left + at[0])), String(Math.round(win.top + at[1])));
+      await sleep(200);
+      x("click", "1");
+      result.clicked = at[2];
+      say(`clicked “${at[2]}”`);
+    }
+    await sleep(500);
+  }
+  if (opt.type) x("type", "--delay", "40", opt.type);
+  await sleep(Number(opt.wait || 1500));
+}
+const modsDir = path.join(HOME, "mods");
+let mod = null;
+async function save() {
+  if (mod) return mod;
+  x("key", "Return"); // the bar still has the focus: Enter saves
+  const saved = async () => (await fs.readdir(modsDir).catch(() => [])).find(f => f.endsWith(".json"));
+  // Some apps take the keyboard back once the page changes (Logseq focuses its
+  // editor): then click Save, as a person would. (MORSE_DEBUG opens Morse's
+  // shadow root, so the button can be found.)
+  if (!(await until(saved, 4000, "the mod on disk").catch(() => null))) {
+    const r = await w.ev(`(() => { const b = document.querySelector("[data-morse-ui]")?.shadowRoot?.querySelector('[data-a="keep"]'); if (!b) return null; const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
+    if (r) { say("Enter didn't save here: clicking Save"); x("mousemove", "--sync", String(Math.round(win.left + r[0])), String(Math.round(win.top + r[1]))); x("click", "1"); }
+  }
+  const file = await until(saved, 15000, "the mod on disk");
+  mod = JSON.parse(await fs.readFile(path.join(modsDir, file), "utf8"));
+  Object.assign(result, { title: mod.title, match: mod.match, css: (mod.css || "").length, js: (mod.js || "").length, code: mod.js || "", style: mod.css || "" });
+  say(`saved "${mod.title}" for ${JSON.stringify(mod.match)}`);
+  return mod;
+}
+if (opt.act || opt.click || opt.press || opt.type) { await save(); await sleep(600); await act(); await shot(win, "used"); }
+result.applied = opt.check ? !!(await w.ev(opt.check).catch(e => (say("check threw: " + e.message), false))) : null;
 say(`result in ${(result.ms / 1000).toFixed(1)}s: ${res.hint} · check ${result.applied}`);
+result.prompted = /the prompt gets \d+ lines about how/.test(m.out); // MORSE_TRACE=1: the prompt had the profile's slice
+if (opt.relaunch === "no") {
+  await save().catch(e => say("not saved: " + e.message));
+  w.s.close();
+  await quit(port).catch(() => {});
+  await sleep(1500);
+  result.ok = !!result.applied;
+  done(0);
+}
 
 // ---- 4. save
-x("key", "Return");
-const modsDir = path.join(HOME, "mods");
-const saved = () => fs.readdir(modsDir).then(fs => fs.find(f => f.endsWith(".json")), () => null);
-// Some apps take the keyboard back once the page changes (Logseq focuses its
-// editor): then click Save, as a person would. (MORSE_DEBUG opens Morse's
-// shadow root, so the button can be found.)
-if (!(await until(saved, 4000, "the mod on disk").catch(() => null))) {
-  const r = await w.ev(`(() => { const b = document.querySelector("[data-morse-ui]")?.shadowRoot?.querySelector('[data-a="keep"]'); if (!b) return null; const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
-  if (r) { say("Enter didn't save here: clicking Save"); x("mousemove", "--sync", String(Math.round(win.left + r[0])), String(Math.round(win.top + r[1]))); x("click", "1"); }
-}
-const file = await until(saved, 15000, "the mod on disk");
-const mod = JSON.parse(await fs.readFile(path.join(modsDir, file), "utf8"));
-Object.assign(result, { title: mod.title, match: mod.match, css: (mod.css || "").length, js: (mod.js || "").length });
-say(`saved "${mod.title}" for ${JSON.stringify(mod.match)}`);
+await save();
 
 // ---- 5. quit, open again
 w.s.close();
