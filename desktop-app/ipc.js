@@ -28,7 +28,7 @@ const askId = v => { if (typeof v !== "string" || !/^[\w-]{10,64}$/.test(v)) thr
 export const LINKS = {
   docs: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/desktop-app.md",
   models: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/models.md",
-  chrome: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/getting-started.md#2-websites-add-morse-to-chrome",
+  chrome: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/getting-started.md", // no anchor: the page's headings are changing (onboarding v2)
   troubleshooting: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/troubleshooting.md",
 };
 
