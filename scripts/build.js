@@ -74,6 +74,7 @@ async function shipCore(file) {
     const rel = path.relative(out, path.resolve(path.dirname(file), m[1] || m[2])).split(path.sep).join("/");
     if (!rel.startsWith("core/") || shipped.has(rel)) continue;
     shipped.add(rel);
+    await fs.mkdir(path.dirname(path.join(out, rel)), { recursive: true }); // core/locales/*.js, which core/i18n.js imports
     await fs.copyFile(path.join(root, rel), path.join(out, rel));
     await shipCore(path.join(out, rel));
   }

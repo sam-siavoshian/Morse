@@ -24,36 +24,36 @@ const ShowOnce = (() => {
   const I_REC = svg('<circle cx="8" cy="8" r="5.75"/><circle cx="8" cy="8" r="2.25" fill="currentColor" stroke="none"/>');
   const I_X = svg('<path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>');
   const I_STOP = `<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5"/></svg>`;
-  const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
   // ---- the strip, while recording
   const strip = document.createElement("section");
   strip.className = "so-strip";
   strip.hidden = true;
   strip.setAttribute("role", "region");
-  strip.setAttribute("aria-label", "Show me once");
+  tBind(strip, "aria-label", "menu.showonce");
   root.append(strip);
   const say = t => announce(t, { again: true }); // 12-focus.js
   for (const t of ["keydown", "keyup", "keypress"]) strip.addEventListener(t, ev => { if (ev.key !== "Escape") ev.stopPropagation(); });
 
   function stepRow(s, i, { remove = true, last = false } = {}) {
-    return `<li class="${last ? "so-last" : ""}"><span class="so-n">${i + 1}</span><span class="so-w" title="${esc(stepWords(s))}">${esc(stepWords(s)).replace("(hidden)", '<span class="so-hid">(hidden)</span>')}</span>${remove
-      ? `<button type="button" class="ibtn xs so-rm" data-so="remove" data-i="${i}" aria-label="Remove step ${i + 1}" title="Remove this step">${I_X}</button>` : ""}</li>`;
+    const hid = esc(t("so.hidden"));
+    return `<li class="${last ? "so-last" : ""}"><span class="so-n">${i + 1}</span><span class="so-w" title="${esc(stepWords(s))}">${esc(stepWords(s)).replace(hid, `<span class="so-hid">${hid}</span>`)}</span>${remove
+      ? `<button type="button" class="ibtn xs so-rm" data-so="remove" data-i="${i}" aria-label="${esc(t("so.remove", { n: i + 1 }))}" title="${esc(t("so.removeTitle"))}">${I_X}</button>` : ""}</li>`;
   }
   function renderStrip() {
     const n = R.steps.length, shown = Math.min(n, 4), first = n - shown;
     strip.innerHTML = `
       <header class="so-head">
         <span class="so-dot" aria-hidden="true"></span>
-        <b>Show me once</b>
-        <span class="so-count">${n ? plural(n, "step") : "Watching"}</span>
+        <b>${t("menu.showonce")}</b>
+        <span class="so-count">${n ? t("so.steps", { n }) : t("so.watching")}</span>
         <span class="so-sp"></span>
-        <button type="button" class="tbtn" data-so="cancel" title="Cancel (Esc)">Cancel</button>
-        <button type="button" class="btn primary" data-so="stop" title="Stop and say what to do with these steps">${I_STOP}Stop</button>
+        <button type="button" class="tbtn" data-so="cancel" title="${esc(t("so.cancelTitle"))}">${t("btn.cancel")}</button>
+        <button type="button" class="btn primary" data-so="stop" title="${esc(t("so.stopTitle"))}">${I_STOP}${t("bar.stop")}</button>
       </header>
-      ${n ? `<ol class="so-steps">${first ? `<li class="so-more">${plural(first, "earlier step")}</li>` : ""}${R.steps.slice(first).map((s, k) => stepRow(s, first + k, { last: first + k === n - 1 })).join("")}</ol>`
-        : `<p class="so-empty">Do the task by hand, once. Each click, choice and thing you type shows up here.</p>`}
-      <footer class="so-foot"><kbd>Esc</kbd> to cancel · Nothing is sent until you say what to do</footer>`;
+      ${n ? `<ol class="so-steps">${first ? `<li class="so-more">${t("so.earlier", { n: first })}</li>` : ""}${R.steps.slice(first).map((s, k) => stepRow(s, first + k, { last: first + k === n - 1 })).join("")}</ol>`
+        : `<p class="so-empty">${t("so.empty")}</p>`}
+      <footer class="so-foot">${t("so.foot")}</footer>`;
   }
   strip.addEventListener("click", ev => {
     const b = ev.target.closest("[data-so]");
@@ -86,14 +86,14 @@ const ShowOnce = (() => {
     renderStrip();
     strip.classList.remove("top");
     strip.hidden = false;
-    say("Show me once. Do the task by hand. Press Escape to cancel.");
+    say(t("so.say.start"));
   }
   function finish() {
     if (!R.on) return;
     R.on = false;
     strip.hidden = true;
     if (!R.steps.length) {
-      toast("Stopped. No steps were recorded.");
+      toast(t("so.noSteps"));
       return;
     }
     R.attached = { steps: R.steps, els: R.els };
@@ -106,7 +106,7 @@ const ShowOnce = (() => {
     R.on = false;
     strip.hidden = true;
     R.steps = []; R.els = [];
-    toast("Cancelled. No steps were kept.");
+    toast(t("so.cancelled"));
   }
 
   // ---- recording: the user's own clicks, typing, choices and keys
@@ -117,7 +117,7 @@ const ShowOnce = (() => {
     const n = R.steps.length;
     addStep(R.steps, step, R.els, el);
     renderStrip();
-    if (R.steps.length > n) say(`Step ${R.steps.length}: ${stepWords(R.steps[R.steps.length - 1])}`);
+    if (R.steps.length > n) say(t("so.say.step", { n: R.steps.length, words: stepWords(R.steps[R.steps.length - 1]) }));
   }
   listen("click", e => {
     if (!e.isTrusted || !recording() || ours(e)) return;
@@ -201,28 +201,27 @@ const ShowOnce = (() => {
     const n = R.steps.length;
     addStep(R.steps, { do: "key", selector: "body", key }, R.els, null);
     renderStrip();
-    if (R.steps.length > n) say(`Step ${R.steps.length}: ${stepWords(R.steps[R.steps.length - 1])}`);
+    if (R.steps.length > n) say(t("so.say.step", { n: R.steps.length, words: stepWords(R.steps[R.steps.length - 1]) }));
   }, true);
 
   // ---- after Stop: the steps in the bar, waiting for what to do with them
   const card = document.createElement("section");
   card.className = "so-card";
   card.hidden = true;
-  card.setAttribute("aria-label", "Your steps");
+  tBind(card, "aria-label", "so.yourSteps");
   bar.prepend(card);
-  const PLACEHOLDER = input.placeholder;
+  // PLACEHOLDER(): 60-generate.js
   // (a phone-width bar fits only the short one: a textarea's placeholder can't end in an ellipsis)
-  const ASK_LONG = "What should Morse do with these steps?", ASK_SHORT = "What to do with the steps?";
-  const askWhat = () => (innerWidth < 560 ? ASK_SHORT : ASK_LONG);
-  const asking = () => input.placeholder === ASK_LONG || input.placeholder === ASK_SHORT;
+  const askWhat = () => (innerWidth < 560 ? t("so.askShort") : t("so.askWhat"));
+  const asking = () => input.placeholder === t("so.askWhat") || input.placeholder === t("so.askShort");
   function renderCard() {
     const steps = R.attached?.steps || [];
     card.innerHTML = `
       <header class="so-ch">
-        <span class="eyebrow">Your steps</span><span class="so-count">${steps.length}</span>
+        <span class="eyebrow">${t("so.yourSteps")}</span><span class="so-count">${steps.length}</span>
         <span class="so-sp"></span>
-        <button type="button" class="tbtn" data-so="again" title="Do the task again">Show again</button>
-        <button type="button" class="ibtn xs" data-so="forget" aria-label="Forget these steps" title="Forget these steps">${I_X}</button>
+        <button type="button" class="tbtn" data-so="again" title="${esc(t("so.againTitle"))}">${t("so.again")}</button>
+        <button type="button" class="ibtn xs" data-so="forget" aria-label="${esc(t("so.forget"))}" title="${esc(t("so.forget"))}">${I_X}</button>
       </header>
       <ol class="so-steps">${steps.map((s, i) => stepRow(s, i, { remove: steps.length > 1 })).join("")}</ol>`;
   }
@@ -233,7 +232,7 @@ const ShowOnce = (() => {
     renderCard();
     syncCard();
     input.placeholder = askWhat();
-    note(`Say what Morse should do with these steps · <kbd>Enter</kbd> to send`, 0);
+    note(t("so.sayWhat"), 0);
     updateChips();
     input.focus();
   }
@@ -243,8 +242,8 @@ const ShowOnce = (() => {
     card.hidden = true;
     card.innerHTML = "";
     bar.classList.remove("has-so");
-    if (asking()) input.placeholder = PLACEHOLDER;
-    if (/these steps/.test(hint.textContent)) { hintNote = ""; setHint(); }
+    if (asking()) input.placeholder = PLACEHOLDER();
+    if (hintNote === t("so.sayWhat")) { hintNote = ""; setHint(); }
     updateChips();
   }
   // The list shows while the bar waits for words; working on, or showing,
@@ -253,19 +252,19 @@ const ShowOnce = (() => {
     const show = !!R.attached && S.open && S.phase === "idle" && !bar.classList.contains("has-pane");
     card.hidden = !show;
     bar.classList.toggle("has-so", show);
-    if (R.attached && S.phase === "idle" && input.placeholder === PLACEHOLDER) input.placeholder = askWhat();
+    if (R.attached && S.phase === "idle" && input.placeholder === PLACEHOLDER()) input.placeholder = askWhat();
   }
   new MutationObserver(syncCard).observe(bar, { attributes: true, attributeFilter: ["class"] });
   // Voice and the bar reset the words in the empty input; while steps wait, ours stay.
   new MutationObserver(() => {
-    if (R.attached && S.phase === "idle" && input.placeholder === PLACEHOLDER) input.placeholder = askWhat();
+    if (R.attached && S.phase === "idle" && input.placeholder === PLACEHOLDER()) input.placeholder = askWhat();
   }).observe(input, { attributes: true, attributeFilter: ["placeholder"] });
   card.addEventListener("click", ev => {
     const b = ev.target.closest("[data-so]");
     if (!b) return;
     const a = b.dataset.so;
     if (a === "again") start();
-    if (a === "forget") { detach(); input.focus(); toast("Forgot the steps"); }
+    if (a === "forget") { detach(); input.focus(); toast(t("so.forgot")); }
     if (a === "remove" && R.attached) {
       R.attached.steps.splice(+b.dataset.i, 1);
       R.attached.els.splice(+b.dataset.i, 1);
@@ -292,8 +291,9 @@ const ShowOnce = (() => {
   entry.type = "button";
   entry.className = "sug so-sug";
   entry.tabIndex = -1;
-  entry.title = "Do a task by hand once, then let Morse repeat it";
-  entry.innerHTML = `${I_REC}Show me once`;
+  const entryWords = () => { entry.title = t("so.entryTitle"); entry.innerHTML = `${I_REC}${esc(t("menu.showonce"))}`; };
+  entryWords();
+  langSubs.add(entryWords);
   entry.addEventListener("click", ev => { ev.stopPropagation(); start(); });
   function placeEntry() {
     if (sugEl.hidden || R.attached) { if (entry.isConnected) entry.remove(); return; }
@@ -304,15 +304,16 @@ const ShowOnce = (() => {
   new MutationObserver(placeEntry).observe(sugEl, { attributes: true, attributeFilter: ["hidden"], childList: true });
 
   // With steps attached, the chips are what people usually want.
-  const CHIPS = [
-    { label: "Add a button", prompt: "Add a button that does these steps" },
-    { label: "Add a shortcut", prompt: "Do these steps when I press Ctrl+Shift+", fill: true },
-    { label: "Do it to every", prompt: "Do these steps to every ", fill: true },
+  // label "so.chip.<x>", what it asks "so.chip.<x>.p" (a `fill` one is finished in the input)
+  const CHIPS = () => [
+    { id: "button", label: t("so.chip.button"), prompt: t("so.chip.button.p") },
+    { id: "shortcut", label: t("so.chip.shortcut"), prompt: t("so.chip.shortcut.p"), fill: true },
+    { id: "every", label: t("so.chip.every"), prompt: t("so.chip.every.p"), fill: true },
   ];
 
   return {
     start, finish, cancel,
-    chips: () => (R.attached ? CHIPS : null),
+    chips: () => (R.attached ? CHIPS() : null),
     get recording() { return R.on; },
     get steps() { return (R.on ? R.steps : R.attached?.steps || []).map(s => ({ ...s, words: stepWords(s) })); },
   };

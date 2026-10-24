@@ -69,8 +69,26 @@ fails on a broken link. `site/privacy.html` is made from
 [docs/privacy.md](../privacy.md) by `npm run pages`, and
 `tests/release.test.js` checks that it is current.
 
-- **`site/index.html`**: the landing page, with an in-browser demo of the
-  pixel effect (simulated, no model runs).
+The design is ported from the Lanes landing page (same owner): its layout,
+type scale, spacing, components and motion, in plain HTML and CSS, with
+Morse's monochrome in place of Lanes' purple. Light only, like Lanes. Static
+files were chosen over bringing in Next.js because Lanes' page is itself a
+static export whose styles are one plain stylesheet, so a port reproduces it
+exactly with no build step, no dependencies and no change to the Pages
+layout that share links and the gallery list depend on.
+
+- **`site/index.html`**: the landing page. It holds the one copy of the nav
+  bar and footer: `npm run pages` copies them into `site/gallery.html`
+  (between its `<!-- chrome:… -->` markers) and `site/privacy.html`.
+- **`site/config.js`**: where the buttons go (**Get it for Chrome**, **Get the
+  desktop app**; the install steps until there is a store listing or a
+  download) and the demo video under the headline (file, poster, shape,
+  caption). Swap the video there.
+- **`site/site.css`**: the one stylesheet for the site's pages (Nunito Sans,
+  OFL, in `site/fonts/`). `site/shots/` holds the screenshots the page shows,
+  as WebP copies of `docs/screenshots/`.
+- [`tests/site.test.js`](../../tests/site.test.js) checks that every link,
+  image, icon, fragment and config target on the pages resolves.
 - **`site/gallery.html`**: example mods from [`site/mods/`](../../site/mods/)
   (`index.json` lists them; each `*.morse.json` is a normal mod). Search,
   filter by app, read the code, then **Install in Morse** (a share link built
@@ -79,11 +97,14 @@ fails on a broken link. `site/privacy.html` is made from
   2026, so a selector may need a refresh.
 - **`site/radar.js`**: the radar mark (OpenCode's 4×4 pixel spinner) as a
   tiny module.
-- **`share/install.html`** uses the same styles.
+- **`share/install.html`** keeps the site's earlier look, in
+  `share/install.css` with `design/tokens.css`.
 
 Run it locally with `npm run demo:serve` and open
-`http://127.0.0.1:8787/site/`. Screenshots (1440×900 and 390×844, dark and
-light) are in [`docs/site/`](../site/).
+`http://127.0.0.1:8787/site/`. Screenshots are in [`docs/site/`](../site/):
+`node demo/shoot-site.js` makes the pages' own (1440×900 and 390×844), and
+the `compare-*` pictures put Lanes' page beside Morse's at 390, 768, 1280
+and 1440 pixels wide, the first screen and the whole page.
 
 To add a mod to the gallery, export it (`morse export <id>` writes a
 `.morse.json`), drop it in `site/mods/`, and add an entry to

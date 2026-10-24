@@ -14,7 +14,7 @@ const Audit = (() => {
   const card = document.createElement("section");
   card.className = "au";
   card.hidden = true;
-  card.setAttribute("aria-label", "Check this page");
+  tBind(card, "aria-label", "a11y.check");
   bar.insertBefore(card, bar.querySelector(".status"));
   let groups = [];
 
@@ -47,17 +47,17 @@ const Audit = (() => {
     dodge();
     const total = new Set(groups.flatMap(g => g.items.map(i => i.el))).size;
     hintNote = "";
-    note(total ? `<b>Checked</b> · ${total} place${total > 1 ? "s" : ""} to fix · <kbd>Esc</kbd> to close` : `<b>Checked</b> · nothing to fix · <kbd>Esc</kbd> to close`, 0);
-    setTimeout(() => announce(total ? `Found ${groups.map(g => auditSummary(g.rule, g.items.length, g.items).title).join(". ")}.` : "No common problems found on this page."), 300);
+    note(total ? t("au.checked", { n: total }) : t("au.checkedNone"), 0);
+    setTimeout(() => announce(total ? t("au.found", { list: groups.map(g => auditSummary(g.rule, g.items.length, g.items).title).join(". ") }) : t("au.noneFound")), 300);
   }
 
   function label(it) {
-    const el = it.el, kind = el.matches("a") ? "link" : el.matches("select") ? "list" : el.matches("input, textarea") ? "field" : el.matches("video, audio") ? el.localName : "button";
-    const guess = it.guess?.text ? ` (maybe “${it.guess.text}”)` : "";
-    if (it.rule === "contrast") return `“${(el.innerText || "").trim().slice(0, 28)}…” (${it.ratio.toFixed(1)} to 1)`;
-    if (it.rule === "target") return `${kind}, ${it.w}×${it.h} pixels`;
-    if (it.rule === "alt") { const src = el.getAttribute("src") || ""; return /^data:/.test(src) ? "picture" : src.split(/[/?#]/).filter(Boolean).pop()?.slice(0, 32) || "picture"; }
-    if (it.rule === "name" || it.rule === "label") return `${kind}${guess || ", no hint"}`;
+    const el = it.el, kind = t("au.kind." + (el.matches("a") ? "link" : el.matches("select") ? "list" : el.matches("input, textarea") ? "field" : el.matches("video, audio") ? el.localName : "button"));
+    const guess = it.guess?.text ? t("au.maybe", { text: it.guess.text }) : "";
+    if (it.rule === "contrast") return t("au.contrast", { text: (el.innerText || "").trim().slice(0, 28), ratio: it.ratio.toFixed(1) });
+    if (it.rule === "target") return t("au.size", { kind, w: it.w, h: it.h });
+    if (it.rule === "alt") { const src = el.getAttribute("src") || ""; return /^data:/.test(src) ? t("au.kind.picture") : src.split(/[/?#]/).filter(Boolean).pop()?.slice(0, 32) || t("au.kind.picture"); }
+    if (it.rule === "name" || it.rule === "label") return `${kind}${guess || t("au.noHint")}`;
     return kind;
   }
 
@@ -75,9 +75,9 @@ const Audit = (() => {
   }
   function fixNote(p) {
     const parts = [];
-    if (p.now.length) parts.push(`${p.now.length} now`);
-    if (p.model.length) parts.push(`${p.model.length} by the model`);
-    if (p.describe.length) parts.push(`describe ${p.describe.length}`);
+    if (p.now.length) parts.push(t("au.now", { n: p.now.length }));
+    if (p.model.length) parts.push(t("au.byModel", { n: p.model.length }));
+    if (p.describe.length) parts.push(t("au.describeN", { n: p.describe.length }));
     return parts.join(" · ");
   }
 
@@ -87,23 +87,23 @@ const Audit = (() => {
     bar.classList.add("has-audit");
     card.innerHTML = `
       <header class="au-head">
-        <span class="eyebrow au-k">Check this page</span>
-        <span class="au-sum">${total ? `${groups.length} kind${groups.length > 1 ? "s" : ""} of problem · ${total} place${total > 1 ? "s" : ""}` : "Nothing to fix"}</span>
-        <button type="button" class="tbtn au-again" data-au="again" title="Check again">Check again</button>
-        <button type="button" class="ibtn xs close" data-au="close" aria-label="Close" title="Close">×</button>
+        <span class="eyebrow au-k">${t("a11y.check")}</span>
+        <span class="au-sum">${total ? `${t("au.kinds", { n: groups.length })} · ${t("au.places", { n: total })}` : t("au.nothing")}</span>
+        <button type="button" class="tbtn au-again" data-au="again" title="${esc(t("au.again"))}">${t("au.again")}</button>
+        <button type="button" class="ibtn xs close" data-au="close" aria-label="${esc(t("btn.close"))}" title="${esc(t("btn.close"))}">×</button>
       </header>
       ${total ? `<ol class="au-list">${groups.map((g, gi) => {
         const s = auditSummary(g.rule, g.items.length, g.items), p = plan(g);
-        const fixLabel = p.describe.length && !p.now.length ? "Describe" : "Fix it";
+        const fixLabel = p.describe.length && !p.now.length ? t("au.describe") : t("btn.fixIt");
         return `<li class="au-item">
           <div class="au-main">
             <b>${esc(s.title)}</b>
             <div class="au-sub"><small>${esc(s.help)}</small>
-            <span class="au-marks">${g.items.map(it => `<button type="button" class="ask-n" data-n="${it.n}" title="${esc(label(it))}" aria-label="${it.n}: ${esc(label(it))}. Scroll to it">${it.n}</button>`).join("")}</span></div>
+            <span class="au-marks">${g.items.map(it => `<button type="button" class="ask-n" data-n="${it.n}" title="${esc(label(it))}" aria-label="${esc(t("ask.badge", { n: it.n, label: label(it) }))}">${it.n}</button>`).join("")}</span></div>
           </div>
           <div class="au-act"><button type="button" class="btn au-fix" data-fix="${gi}">${fixLabel}</button><small>${esc(fixNote(p))}</small></div>
         </li>`;
-      }).join("")}</ol>` : `<p class="au-ok">No pictures without descriptions, unnamed buttons, unlabeled fields, faint text, tiny targets or autoplaying media found.</p>`}`;
+      }).join("")}</ol>` : `<p class="au-ok">${t("au.ok")}</p>`}`;
   }
   function hide() {
     if (card.hidden) return;
@@ -130,30 +130,22 @@ const Audit = (() => {
     if (p.model.length) {
       const request = fixRequest(g.rule, p.model.map(it => it.sel));
       hide();
-      if (p.now.length) toast(`Fixed ${p.now.length}. Asking the model about the other ${p.model.length}.`);
+      if (p.now.length) toast(t("au.fixedAsk", { n: p.now.length, m: p.model.length }));
       setInput(request);
       send(request);
       return;
     }
     if (p.describe.length) {
-      if (p.now.length) toast(`Fixed ${p.now.length}. Now describe the other ${p.describe.length === 1 ? "picture" : `${p.describe.length} pictures`}, one at a time.`);
+      if (p.now.length) toast(t("au.fixedDescribe", { n: p.describe.length, fixed: p.now.length }));
       hide();
       closeBar();
       return DescribeImage.start(p.describe[0].el, { fromAudit: true });
     }
-    toast(`${done(g.rule, p.now.length)}. Saved in “${FIX_TITLE}”.`);
+    toast(t("au.savedIn", { done: done(g.rule, p.now.length), title: t("a11y.fixes") }));
     check();
   }
   function done(rule, n) {
-    const s = n === 1;
-    return {
-      name: `Named ${n} button${s ? "" : "s"} and link${s ? "" : "s"}`,
-      label: `Labeled ${n} form field${s ? "" : "s"}`,
-      alt: `Marked ${n} picture${s ? "" : "s"} as decoration`,
-      contrast: `Darkened ${n} piece${s ? "" : "s"} of text`,
-      target: `Made ${n} thing${s ? "" : "s"} bigger`,
-      autoplay: `Stopped ${n} video${s ? "" : "s"} from playing by ${s ? "itself" : "themselves"}`,
-    }[rule] || `Fixed ${n}`;
+    return ["name", "label", "alt", "contrast", "target", "autoplay"].includes(rule) ? t(`au.done.${rule}`, { n }) : t("au.done.other", { n });
   }
 
   card.addEventListener("click", e => {
@@ -162,7 +154,7 @@ const Audit = (() => {
     if (b.dataset.n) return void Markers.scrollTo(b.dataset.n);
     if (b.dataset.au === "close") { hide(); hintNote = ""; setHint(); input.focus(); }
     if (b.dataset.au === "again") check();
-    if (b.dataset.fix) fix(+b.dataset.fix).catch(err => toast(`Couldn't fix that. ${plainError(err)}`));
+    if (b.dataset.fix) fix(+b.dataset.fix).catch(err => toast(t("au.failed", { error: plainError(err) })));
   });
   new MutationObserver(() => { if (bar.hidden) hide(); }).observe(bar, { attributes: true, attributeFilter: ["hidden"] });
   // A new question or change replaces the list.

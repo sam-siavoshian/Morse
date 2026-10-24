@@ -26,6 +26,7 @@ import { asReviewed } from "../core/summary.js"; // installs keep only the revie
 import { runMorse } from "../core/engine.js";
 import { settingsLabel, currentSettings } from "./models.js"; // also registers the Claude Code / Codex providers
 import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
+import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
 import { prewarm } from "../core/providers.js";
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
@@ -90,7 +91,7 @@ export const PRISTINE = `(() => { try {
 // bar back) and a later attach can start a fresh one.
 const QUIET = `(() => { try {
   globalThis.__morseGen = (globalThis.__morseGen || 0) + 1;
-  delete globalThis.__morseHost; delete globalThis.__morseHostReceive; delete globalThis.__morseRuntime;
+  delete globalThis.__morseHost; delete globalThis.__morseHostReceive; delete globalThis.__morseRuntime; delete globalThis.__morseProbe;
 } catch {} })()`;
 // Then in the page's main world, where the mods run.
 const cleanup = ids => `(() => { try {
@@ -107,7 +108,11 @@ export class Connector {
   // verify(): called before attaching again after a restart; { ok, why }.
   // onChange(connector): windows or state changed (for `morse status`).
   constructor({ port, app = null, settings, log = console.log, watch = false, verify = null, onChange = null, interval = 1000 }) {
-    Object.assign(this, { port, app, settings, log, watch, verify, onChange, interval });
+    // Log lines name windows (the page's own title), mods (a shared mod's
+    // title) and the model's results: as text, never escape sequences that
+    // could rewrite the terminal or set its clipboard.
+    const shown = s => String(s).replace(/[\x00-\x09\x0b-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069]+/g, " ");
+    Object.assign(this, { port, app, settings, log: line => log(shown(line)), watch, verify, onChange, interval });
     this.pages = new Map();   // target id -> CDPSession (null while connecting)
     this.windows = new Map(); // target id -> { id, type, kind, title, url, frame, session, since }
     this.retry = new Map();   // target id -> { at, n } after a failed attach
@@ -143,7 +148,7 @@ export class Connector {
           list = null;
         } else {
           this.refused = null;
-          this.log(`  ↻ ${this.appName} is open again. Connecting.`);
+          this.log(`  ↻ ${t("launch.openAgain", { name: this.appName })}`);
         }
       }
       if (list) {
@@ -151,9 +156,9 @@ export class Connector {
         this.sync(list);
       } else if (misses >= 3 && this.state === "attached") {
         this.dropAll();
-        if (!this.watch) { this.log(`${this.appName} closed, so Morse stopped.`); this.state = "stopped"; break; }
+        if (!this.watch) { this.log(t("launch.closed", { name: this.appName })); this.state = "stopped"; break; }
         this.state = "waiting";
-        this.log(`  … ${this.appName} closed. Waiting for it to open again (Ctrl+C to stop).`);
+        this.log(`  … ${t("launch.closedWaiting", { name: this.appName })}`);
         this.changed();
       }
       await sleep(this.interval);
@@ -286,11 +291,11 @@ export class Connector {
     await this.boot(s, w, source).catch(() => {});
     if (w.detaching || this.state === "stopped") return; // stopped meanwhile: nothing was connected
     readTitle();
-    this.log(`  ✓ connected to ${title}${kind === "window" ? "" : ` (${kind})`}`);
+    this.log(`  ✓ ${t("launch.connected", { title })}${kind === "window" ? "" : ` (${kind})`}`);
     trace("connect", `CDP attached to "${title}": Morse's code runs in its own isolated world ("morse"), talks to this process through the __morseHostSend binding`);
     if (!this.hinted && kind === "window") { // first-run hook: say what to do next, once
       this.hinted = true;
-      configuredHotkeys().then(k => k.open && this.log(`\n  In ${this.app?.name || title || "the app"}, press ${k.open}, point at something and say what to change.\n`), () => {});
+      configuredHotkeys().then(k => k.open && this.log(`\n  ${t("launch.ready", { name: this.app?.name || title || t("launch.theApp"), key: k.open })}\n`), () => {});
     }
     this.changed();
   }

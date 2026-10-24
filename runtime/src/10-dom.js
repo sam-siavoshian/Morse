@@ -25,9 +25,9 @@ ${A11Y_CSS() /* Easier to use hook: 98-a11y-css.js */}</style>
   <section class="bar" hidden>
     <div class="row">
       <span class="mark">${radar(18)}</span>
-      <div class="chip target" hidden><span></span><button class="x" title="Point at something else">×</button></div>
-      <textarea class="in" rows="1" placeholder="Describe a change…" spellcheck="false" autocomplete="off"></textarea>
-      <button class="go" title="Send (Enter)"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9.5M8.75 4.25 12.5 8l-3.75 3.75"/></svg></button>
+      <div class="chip target" hidden><span></span><button class="x">×</button></div>
+      <textarea class="in" rows="1" placeholder="${esc(t("bar.placeholder"))}" spellcheck="false" autocomplete="off"></textarea>
+      <button class="go" title="${esc(t("bar.send.title"))}"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9.5M8.75 4.25 12.5 8l-3.75 3.75"/></svg></button>
     </div>
     <div class="status">
       <span class="hint"></span>
