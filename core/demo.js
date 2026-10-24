@@ -161,6 +161,12 @@ morse.watch("#toolbar", bar => {
 });
 `);
 
+// The effect check (core/engine.js): the first draft's selector matches
+// nothing, so it changes nothing; the repair round names it and the second
+// draft paints the page.
+const GOLD_MISS = reply("Gold page", `.morse-demo-nothing-here { background: gold !important; }`, "");
+const GOLD = reply("Gold page", `body { background: rgb(255, 215, 0) !important; }`, "");
+
 const RULES = [
   [/now playing/i, NOW_PLAYING],
   [/word|token count|character count|count/i, WORD_COUNT],
@@ -245,6 +251,7 @@ export function demoResponse(messages) {
   if (answer) return answer;
   const fixes = fixesDemo(request); // Easier to use: Check this page
   if (fixes) return fixes;
+  if (/\bgold\b/i.test(request)) return isRetry ? GOLD : GOLD_MISS;
   for (const [re, resp] of RULES) {
     if (!re.test(request)) continue;
     if (resp === null) return isRetry ? SLEEP : SLEEP_BROKEN;

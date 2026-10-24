@@ -338,6 +338,10 @@ function effectProbe(target, selectors = []) {
   const unmatched = selectors.filter(sel => { try { return !document.querySelector(sel); } catch { return true; } });
   return { fp: String(h), unmatched };
 }
+// The hosts' effect check asks for it from Morse's own JS world (the desktop
+// connector over CDP, the extension's content script): never the page's. A
+// short wait lets just-applied CSS start rendering (transitions move) first.
+globalThis.__morseProbe = (target, selectors) => new Promise(r => setTimeout(() => r(effectProbe(target, selectors)), 100));
 function context() {
   const cs = getComputedStyle(document.body);
   const ctx = {

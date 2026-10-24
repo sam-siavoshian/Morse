@@ -376,6 +376,16 @@ export class Connector {
     return errs.length ? { ok: false, error: errs[0].split("\n")[0] } : { ok: true };
   }
 
+  // Effect check (core/engine.js): the runtime's effectProbe, in Morse's world
+  // of the document that asked (it shares the DOM with the page). null when
+  // it can't answer; the engine then skips the check.
+  async probe(s, caller, target, selectors) {
+    if (caller.world == null) return null;
+    const expression = `globalThis.__morseProbe ? globalThis.__morseProbe(${JSON.stringify(target || null)}, ${JSON.stringify(selectors || [])}) : null`;
+    const r = await s.send("Runtime.evaluate", { expression, contextId: caller.world, returnByValue: true, awaitPromise: true });
+    return r.exceptionDetails ? null : r.result?.value ?? null;
+  }
+
   // caller: { world, main, frameId } of the document whose runtime asked.
   async handle(s, caller, msg) {
     const reply = (result, error) => this.push(s, caller, { reply: msg.id, result, error });
@@ -449,6 +459,9 @@ export class Connector {
           context: { ...msg.context, app: this.app?.name || msg.context.app },
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           exec: js => this.exec(s, caller, msg.genId, js),
+          // The streamed CSS reaches the runtime first: pushes and probes go
+          // over the same session, in order.
+          probe: sels => this.probe(s, caller, msg.context?.target?.selector, sels),
           emit: ev => { if (!signal.aborted) this.push(s, caller, { ...ev, genId: msg.genId }); },
           signal,
         }));

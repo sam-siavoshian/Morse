@@ -106,6 +106,23 @@ async function exec(target, modId, js) {
   return errs.length ? { ok: false, error: String(errs[0]).split("\n")[0] } : { ok: true };
 }
 
+// Effect check (core/engine.js): the runtime's effectProbe, asked over the
+// same port the streamed CSS goes out on, so it runs after that CSS is on the
+// page. The content script (host.js) answers from its world, where
+// runtime/src/20-context.js publishes it. null when it can't answer (an older
+// content script, the practice area); the engine then skips the check.
+let probeSeq = 0;
+function probe(port, targetSelector, selectors) {
+  if (Practice.has(port.sender.tab?.id)) return Promise.resolve(null); // the welcome page's sandboxed practice area
+  const id = ++probeSeq;
+  return new Promise(resolve => {
+    const done = v => { clearTimeout(t); port.__probes.delete(id); resolve(v ?? null); };
+    const t = setTimeout(() => done(null), 3000);
+    port.__probes.set(id, done);
+    try { port.postMessage({ morseProbe: id, target: targetSelector || null, selectors: selectors || [] }); } catch { done(null); }
+  });
+}
+
 async function allMods() { return get("mods", {}); }
 // hardening: serialized so concurrent saves/deletes can't drop each other
 async function putMod(m) { validateMod(m); await serialized(async () => { const all = await allMods(); all[m.id] = m; await set("mods", all); }); return m; }
@@ -196,6 +213,7 @@ async function dispatch(msg, port) {
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           signal,
           exec: js => exec(target, msg.genId, js),
+          probe: sels => probe(port, msg.context?.target?.selector, sels),
           emit: ev => { if (!signal.aborted) try { port.postMessage({ ...ev, genId: msg.genId }); } catch {} },
         }));
         if (res.cancelled) return res;
@@ -238,8 +256,10 @@ chrome.runtime.onConnect.addListener(port => {
   if (port.name !== "morse") return;
   // Closing the tab aborts its generations (and the helper kills the harness).
   port.__gens = new Set();
-  port.onDisconnect.addListener(() => { for (const id of port.__gens) gens.cancel(id); });
+  port.__probes = new Map(); // effect check answers from the content script
+  port.onDisconnect.addListener(() => { for (const id of port.__gens) gens.cancel(id); for (const done of port.__probes.values()) done(null); });
   port.onMessage.addListener(async msg => {
+    if (msg?.morseProbeReply != null) { port.__probes.get(msg.morseProbeReply)?.(msg.result); return; }
     try { port.postMessage({ reply: msg.id, result: await dispatch(msg, port) }); }
     catch (e) { try { port.postMessage({ reply: msg.id, error: e.message || String(e) }); } catch {} }
   });
