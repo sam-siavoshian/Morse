@@ -17,6 +17,7 @@
   .top nav a { color: #666; text-decoration: none; }
   .top .sub { margin-left: auto; font-size: 12px; padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; color: #444; background: #fafafa; }
   .wrap { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 22px; max-width: 900px; margin: 0 auto; padding: 18px 22px 40px; }
+  @media (max-width: 560px) { .wrap { grid-template-columns: minmax(0, 1fr); } } /* a phone-width welcome page: the ad goes under the article */
   article { background: #fff; border: 1px solid #e4e4e0; padding: 16px 22px 20px; }
   article h1 { margin: 2px 0 4px; color: #222; font-size: 22px; line-height: 1.25; }
   article .by { color: #707070; font-size: 12px; margin-bottom: 12px; }

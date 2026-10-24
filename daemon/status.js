@@ -4,9 +4,10 @@
 
 import { promises as fs, existsSync, rmSync } from "node:fs";
 import path from "node:path";
-import { HOME, modsFor } from "./store.js";
+import { HOME, modsFor, renameOver } from "./store.js";
 import { describeTarget } from "./targets.js";
 import { matchApp } from "./apps.js";
+import { paint } from "./colors.js";
 
 const DIR = () => path.join(HOME, "sessions");
 const file = id => path.join(DIR(), `${String(id).replace(/[^a-z0-9_-]/gi, "")}.json`);
@@ -18,7 +19,7 @@ export async function writeSession(s) {
   await fs.mkdir(DIR(), { recursive: true });
   const tmp = `${file(s.id)}.${process.pid}.tmp`;
   await fs.writeFile(tmp, JSON.stringify({ ...s, updated: new Date().toISOString() }, null, 2));
-  await fs.rename(tmp, file(s.id));
+  await renameOver(tmp, file(s.id)); // Windows: retries while a reader has it open
 }
 
 export function removeSession(id) {
@@ -92,7 +93,7 @@ export async function stopSession(query, { wait = 6000 } = {}) {
 }
 
 // ---------------------------------------------------------------- output
-const C = { g: s => `\x1b[32m${s}\x1b[0m`, d: s => `\x1b[2m${s}\x1b[0m`, b: s => `\x1b[1m${s}\x1b[0m` };
+const C = paint;
 const pad = (s, n) => s + " ".repeat(Math.max(1, n - s.length));
 const ago = iso => {
   const s = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));

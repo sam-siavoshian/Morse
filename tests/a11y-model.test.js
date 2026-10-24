@@ -4,7 +4,7 @@
 //   - Claude Code: one stream-json user message on stdin (fake `claude`)
 //   - Codex: refused with a clear message, nothing is run
 //   - the Morse helper accepts picture messages from the extension
-import "./helpers/home.js";
+import { tempDir } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -22,7 +22,7 @@ const MESSAGES = [
 let tmp, streamChat, createBridge, startPairing;
 
 before(async () => {
-  tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-a11y-model-"));
+  tmp = tempDir("morse-a11y-model-");
   await installFakeClis(path.join(tmp, "bin"));
   process.env.PATH = `${path.join(tmp, "bin")}${path.delimiter}${process.env.PATH}`;
   process.env.MORSE_HOME = path.join(tmp, "home");

@@ -24,8 +24,18 @@ export const PROVIDERS = {
   openai: { name: "OpenAI API", models: ["gpt-5", "gpt-5-mini"], defaultModel: "gpt-5" },
 };
 export const USER_PROVIDERS = Object.keys(PROVIDERS);
-export const HELPER_URL = "http://127.0.0.1:7457";
 export const HELPER_PORT = 7457;
+export const HELPER_URL = `http://127.0.0.1:${HELPER_PORT}`;
+// Tests only: chrome.storage.local "morse.helperPort" moves the extension's
+// helper off 7457, so several test runs (each with its own `morse serve` on
+// MORSE_HELPER_PORT) can run at once. Only the service worker reads it, and
+// only the extension's own pages and worker can write it (background.js
+// keeps chrome.storage.local away from content scripts; no message sets it).
+// The helper is always on 127.0.0.1; anything but a whole number in
+// 1024-65535 means the default.
+export const HELPER_PORT_KEY = "morse.helperPort";
+export const validHelperPort = v => (Number.isInteger(v) && v >= 1024 && v <= 65535 ? v : null);
+export const helperUrlFor = port => `http://127.0.0.1:${validHelperPort(port) ?? HELPER_PORT}`;
 
 export const DEFAULT_SETTINGS = { provider: "", model: "", apiKey: "", baseUrl: "" };
 

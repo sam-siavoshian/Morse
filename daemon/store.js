@@ -21,7 +21,9 @@ const PREFS = path.join(HOME, "settings.json");
 const HISTORY = path.join(HOME, "history.json");
 
 export async function ensureHome() {
-  for (const d of [HOME, MODS, path.join(HOME, "exports"), path.join(HOME, "clips")]) await fs.mkdir(d, { recursive: true });
+  // Owner-only on macOS and Linux (Windows ignores the mode; see daemon/platform.js).
+  await fs.mkdir(HOME, { recursive: true, mode: 0o700 });
+  for (const d of [MODS, path.join(HOME, "exports"), path.join(HOME, "clips")]) await fs.mkdir(d, { recursive: true });
 }
 
 const queue = serialQueue();
@@ -40,9 +42,14 @@ async function writeAtomic(file, data, opts) {
   }
 }
 
+// JSON from a file a person may have edited: Notepad on Windows can save it
+// with a byte order mark in front, which JSON.parse refuses (and the file
+// would quietly read as empty). Line endings don't matter to JSON.
+export const parseJson = text => JSON.parse(String(text).replace(/^\uFEFF/, ""));
+
 // Windows refuses to replace a file that another process (an antivirus, an
 // indexer, a reader) has open for a moment; try again briefly.
-async function renameOver(from, to) {
+export async function renameOver(from, to) {
   for (let i = 0; ; i++) {
     try { return await fs.rename(from, to); }
     catch (e) {
@@ -57,7 +64,7 @@ export async function listMods() {
   const out = [];
   for (const f of await fs.readdir(MODS)) {
     if (!f.endsWith(".json")) continue;
-    try { const m = JSON.parse(await fs.readFile(path.join(MODS, f), "utf8")); if (m && typeof m === "object") out.push(m); } catch {}
+    try { const m = parseJson(await fs.readFile(path.join(MODS, f), "utf8")); if (m && typeof m === "object") out.push(m); } catch {}
   }
   return out.sort(byCreated);
 }
@@ -79,11 +86,11 @@ export async function deleteMod(id) {
 }
 
 export async function getMod(id) {
-  try { return JSON.parse(await fs.readFile(path.join(MODS, `${safe(id)}.json`), "utf8")); } catch { return null; }
+  try { return parseJson(await fs.readFile(path.join(MODS, `${safe(id)}.json`), "utf8")); } catch { return null; }
 }
 
 export async function loadConfig() {
-  try { return JSON.parse(await fs.readFile(CONFIG, "utf8")); } catch { return {}; }
+  try { return parseJson(await fs.readFile(CONFIG, "utf8")); } catch { return {}; }
 }
 
 // The config holds API keys and helper tokens: owner-only, written atomically.
@@ -109,7 +116,7 @@ export const CONFIG_PATH = CONFIG;
 
 // Command-bar settings (hotkeys, voice, appearance): ~/.morse/settings.json
 export async function loadPrefs() {
-  try { return normalizePrefs(JSON.parse(await fs.readFile(PREFS, "utf8"))); } catch { return normalizePrefs({}); }
+  try { return normalizePrefs(parseJson(await fs.readFile(PREFS, "utf8"))); } catch { return normalizePrefs({}); }
 }
 
 export function savePrefs(patch) {
@@ -129,7 +136,7 @@ export async function configuredHotkeys(platform = detectPlatform({ platform: pr
 
 // Prompt history per app (or per site): ~/.morse/history.json
 async function readHistory() {
-  try { return JSON.parse(await fs.readFile(HISTORY, "utf8")) || {}; } catch { return {}; }
+  try { return parseJson(await fs.readFile(HISTORY, "utf8")) || {}; } catch { return {}; }
 }
 
 export async function loadHistory(scope) {
@@ -155,7 +162,7 @@ export async function writeExport(filename, data) {
 // God mode's cross-app clipboard: ~/.morse/clipboard.json, newest first, max 20.
 const CLIPBOARD = path.join(HOME, "clipboard.json");
 export async function readClipboard() {
-  try { const l = JSON.parse(await fs.readFile(CLIPBOARD, "utf8")); return Array.isArray(l) ? l : []; } catch { return []; }
+  try { const l = parseJson(await fs.readFile(CLIPBOARD, "utf8")); return Array.isArray(l) ? l : []; } catch { return []; }
 }
 export function putClipboard(item) {
   return queue(CLIPBOARD, async () => {

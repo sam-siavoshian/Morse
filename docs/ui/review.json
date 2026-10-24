@@ -382,8 +382,7 @@
    "note": "Reading ruler: a clear band at the pointer, the rest dimmed"
   },
   "a11y-site/calm": {
-   "verdict": "residual",
-   "note": "Hide distractions removes the announcement bar, cookie bar and chat bubble; the scrolling ticker stays (Stop animations stops it). Whether calm should take the ticker too is a rule in core/a11y.js, not UI"
+   "note": "Hide distractions removes the announcement bar, the cookie bar, the chat bubble and now the scrolling ticker (anything that slides sideways on a loop in a narrow strip: a CSS or script animation, or a marquee). Spinners, slideshows and the site's own header stay (core/a11y.js calmPage, tests/a11y-ui.test.js)"
   },
   "a11y-site/*": {
    "note": "phone width: the demo site's own layout is not responsive (a fixed 300px sidebar), so the narrow shots are crowded before any tool runs; the tools themselves behave the same"
@@ -570,6 +569,368 @@
   },
   "heal/setting": {
    "note": "Fix my mods automatically when a site changes: the shared switch"
+  },
+  "show-once/entry-chip": {
+   "note": "the way in: a .sug chip after the suggestions, past a hairline; hidden for a new user until the first save (progressive reveal)"
+  },
+  "show-once/entry-chip-hover": {
+   "note": "the shared .sug hover: --m-hover and --m-signal-1 border"
+  },
+  "show-once/entry-chip-focus": {
+   "note": "2px --m-signal-3 ring, 2px offset"
+  },
+  "show-once/menu-item": {
+   "note": "the first ⋯ menu row: 32px, the shared row hover and focus; no key cap (it has no shortcut)"
+  },
+  "show-once/strip-empty": {
+   "note": "watching, before the first step: the bar's glass, 14px corners, Stop is .btn.primary, Cancel .tbtn; the dot pulses on purpose (recording) and is still with reduced motion"
+  },
+  "show-once/strip-steps": {
+   "note": "one 28px row per step; the newest number is filled --m-primary; 16px left inset like the bar"
+  },
+  "show-once/strip-hidden": {
+   "note": "a password: the step is kept, the value never is; (hidden) is now set apart in muted mono so it reads as Morse speaking, not as typed text"
+  },
+  "show-once/strip-many": {
+   "note": "the four newest steps and a mono count of the earlier ones; a long label ends in an ellipsis"
+  },
+  "show-once/strip-remove-hover": {
+   "note": "the × shows on hover (and keyboard focus) only, so the list stays calm"
+  },
+  "show-once/strip-remove-focus": {
+   "note": ".ibtn.xs with the shared ring"
+  },
+  "show-once/strip-stop-focus": {
+   "note": "Stop: primary with the 2px ring"
+  },
+  "show-once/strip-top": {
+   "note": "moves to the top right when what you are about to click is under it"
+  },
+  "show-once/steps-in-bar": {
+   "note": "after Stop: the steps above the input under the shared .eyebrow (it was a private copy, .so-eyebrow); five and a half rows show, so a longer list reads as one that scrolls (it used to cut off exactly at a row, hiding step 6 with no cue)"
+  },
+  "show-once/steps-forget-focus": {
+   "note": "× is .ibtn.xs with the shared ring"
+  },
+  "show-once/steps-again-focus": {
+   "note": "Show again is .tbtn"
+  },
+  "show-once/steps-one": {
+   "note": "one step: no remove button (Forget is the way out)"
+  },
+  "show-once/working": {
+   "note": "working: the steps fold away (they still go along to the model)"
+  },
+  "show-once/result": {
+   "note": "the result is a mod like any other: Save, Undo, Edit code, Share"
+  },
+  "show-once/error": {
+   "note": "the error in plain words, Try again; the steps come back with the bar idle"
+  },
+  "show-once/stopped-empty-toast": {
+   "note": "Stop with nothing recorded says so"
+  },
+  "show-once/cancelled-toast": {
+   "note": "Esc cancels and says nothing was kept"
+  },
+  "style/review": {
+   "note": "“…everywhere”: shown live, with Save and Undo; the sheet header is the shared .sheet header; summary tags are the shared .tags; “except figma” is a note"
+  },
+  "style/review-save-focus": {
+   "note": "Save is primary with the ring"
+  },
+  "style/review-undone-toast": {
+   "note": "Undo puts the page back and says so"
+  },
+  "style/review-fit-switch": {
+   "note": "something only the model can do: the switch to fit it per site, with the words it is for"
+  },
+  "style/review-which-font": {
+   "note": "a font without a name says how to name it"
+  },
+  "style/row-on": {
+   "note": "Your style above the mods: the switch and words now line up with the mod rows (11px padding + the 1px line); where it runs is always its own line"
+  },
+  "style/row-off": {
+   "note": "off everywhere: muted by color tokens, not opacity; only Change"
+  },
+  "style/row-not-here": {
+   "note": "off on this site: Use on this site"
+  },
+  "style/row-fitted": {
+   "note": "fitted to this site is a tag; Fit to this site is gone"
+  },
+  "style/panel": {
+   "note": "Your style sits above this site's own mods"
+  },
+  "style/row-button-hover": {
+   "note": "the panel's ghost buttons (.tbtn)"
+  },
+  "style/row-fit-focus": {
+   "note": "shared ring"
+  },
+  "style/row-switch-focus": {
+   "note": "the switch's ring is on its track"
+  },
+  "style/not-here-toast": {
+   "note": "off on this site, with Undo (the control toast)"
+  },
+  "style/row-after-not-here": {
+   "note": "the row follows at once"
+  },
+  "style/back-on-toast": {
+   "note": "Undo says it is back on"
+  },
+  "style/off-everywhere-toast": {
+   "note": "the switch: off everywhere, with Undo"
+  },
+  "style/settings-top": {
+   "note": "Your style in Settings: the shared .srow, .seg and .field"
+  },
+  "style/settings-switches": {
+   "note": "each switch with one line of help"
+  },
+  "style/settings-sites": {
+   "note": "the sites it skips are the bar's .chip with the shared × (it was a private chip with a text ×); Not on this site is .tbtn"
+  },
+  "style/settings-font-focus": {
+   "note": "fields light their border into the 2px ring"
+  },
+  "style/settings-size-focus": {
+   "note": "segments: flush ring"
+  },
+  "style/settings-chip-focus": {
+   "note": "the × ring is flush inside the chip (it used to cover the site name)"
+  },
+  "style/settings-site-added": {
+   "note": "Enter adds a site"
+  },
+  "style/settings-no-sites": {
+   "note": "none: it runs everywhere"
+  },
+  "style/settings-none": {
+   "note": "no style yet: Set up… (.btn)"
+  },
+  "style/fit-working": {
+   "note": "fitting it to this site is an ordinary change in the bar"
+  },
+  "style/fit-review": {
+   "note": "the fix for review; a title that already says Your style no longer gets a second “Your style ·” in the meta"
+  },
+  "guard/froze-toast": {
+   "note": "on the next load after a mod froze the page: why, Turn back on, Fix it (a full sentence now, with its period)"
+  },
+  "guard/paused-toast": {
+   "note": "the kit paused a mod: why, Turn back on (.btn), Fix it (.btn.primary)"
+  },
+  "guard/paused-toast-focus": {
+   "note": "shared ring"
+  },
+  "guard/row-slowing": {
+   "note": "the panel note: the heal note's box (.health), the status dot, Turn back on and Fix it"
+  },
+  "guard/row-froze": {
+   "note": "froze: says Morse stopped it and reloaded the page"
+  },
+  "guard/row-hid": {
+   "note": "hid: says it would have hidden everything"
+  },
+  "guard/row-slowing-now": {
+   "note": "paused while the page was open"
+  },
+  "guard/row-turn-on-hover": {
+   "note": "shared hover"
+  },
+  "guard/row-fix-focus": {
+   "note": "shared ring"
+  },
+  "guard/back-on-toast": {
+   "note": "Turn back on says so"
+  },
+  "guard/refused-hide": {
+   "note": "a refusal is Morse holding back, not a failure: “Morse didn't apply it: it would have hidden this whole page” fits the one-line hint (it was “That didn't work: The change would have … Try other words.” cut off by the ellipsis); the full sentence is the hint's title"
+  },
+  "guard/refused-loop": {
+   "note": "the same for code that would freeze the page"
+  },
+  "guard/refused-wipe": {
+   "note": "the same for code that would replace the page"
+  },
+  "guard/refused-nav": {
+   "note": "the same for code that would reload or leave the page"
+  },
+  "guard/draft-paused-toast": {
+   "note": "a change still in the bar slowed the page: nothing to turn off, so it says to describe it another way; the toast moves to the top while the bar is open"
+  },
+  "first-run/coach-point": {
+   "note": "a new user's bar: the three steps and only the basics (no Page tools, no Show me once yet). Step numbers are the same 20px round mono number as Show me once's steps (they were 18px rounded squares)"
+  },
+  "first-run/coach-describe": {
+   "note": "pointed: suggestions for what was picked; See examples is a 20px inline link (was 18px)"
+  },
+  "first-run/coach-hide-focus": {
+   "note": "Hide tips is .tbtn (was a private copy)"
+  },
+  "first-run/coach-working": {
+   "note": "the coach follows the bar"
+  },
+  "first-run/coach-keep": {
+   "note": "done steps show the 16px check at 1.5px (it was a 10px check at 2.2px)"
+  },
+  "first-run/first-save-card": {
+   "note": "the first saved change: a card instead of the toast; “Now in your bar” is the shared .eyebrow; Share it and Done are .btn / .btn.primary (were copies); the check settles over the mark"
+  },
+  "first-run/first-save-share-focus": {
+   "note": "shared ring"
+  },
+  "first-run/revealed": {
+   "note": "after the first save: Page tools and Show me once are in the bar; Mods shows its count"
+  },
+  "first-run/note-no-model": {
+   "note": "one notice under the input: the status dot, .btn, and the shared 16px × mask (it was a text × in a private button)"
+  },
+  "first-run/note-no-model-close-focus": {
+   "note": "shared ring"
+  },
+  "first-run/note-user-scripts": {
+   "note": "at phone width the sentence wraps with the dot on its first line, the button under the words and × at the end (the dot used to sit halfway down and × floated)"
+  },
+  "first-run/error-with-action": {
+   "note": "an error in plain words, with a button that does something about it"
+  },
+  "welcome/page": {
+   "note": "the welcome page at 1100 and 390: try it here, and the checklist that ticks itself. Key caps are the bar's cap (1px line, 4px corners; they had a 2px bottom border and 5px corners), numbered steps are round like the bar's, the checkbox has a 1px line"
+  },
+  "welcome/model-waiting": {
+   "note": "one command connects a model; the status dot pulses only while waiting"
+  },
+  "welcome/copy-focus": {
+   "note": "Copy: the ring; 24px inside the command box (was 26)"
+  },
+  "welcome/key-not-a-key": {
+   "note": "a key that is not one: --m-warn note under the field"
+  },
+  "welcome/key-refused": {
+   "note": "a refused key: the plain error under the field"
+  },
+  "welcome/model-found": {
+   "note": "a helper running without our code: the code box; a wrong code says so"
+  },
+  "welcome/model-wrong": {
+   "note": "the helper waits for a different code"
+  },
+  "welcome/model-nomodel": {
+   "note": "paired, but no model set up"
+  },
+  "welcome/model-connected": {
+   "note": "connected: the step ticks itself"
+  },
+  "welcome/checklist-connected": {
+   "note": "the checklist after connecting"
+  },
+  "practice/sample-bar": {
+   "note": "the practice page before any model: the real bar with sample answers and the coach (shown at 1x: the sandboxed frame)"
+  },
+  "practice/first-save": {
+   "note": "the first saved change on the practice page: the card"
+  },
+  "popup/first-run-no-model": {
+   "note": "no model: one notice with the button that opens the welcome page; the notice is the popup's .notice (it was a copy with 8px corners and hard-coded fallback colors)"
+  },
+  "popup/first-run-model": {
+   "note": "the model section"
+  },
+  "popup/first-run-chrome-page": {
+   "note": "a page Morse can't run on: the notice, and Change this page disabled with --m-signal-1 on --m-raised (it was faded to 45% opacity)"
+  },
+  "popup/first-run-store-page": {
+   "note": "the Web Store: the same"
+  },
+  "popup/first-run-user-scripts-off": {
+   "note": "Allow User Scripts off: the warning with Turn it on (28px, was 26)"
+  },
+  "popup/first-run-ready": {
+   "note": "ready: Change this page is 32px like every primary control (was 36)"
+  },
+  "trusted-types/bar-plain": {
+   "note": "the normal page"
+  },
+  "trusted-types/bar-tt": {
+   "note": "the same page sending require-trusted-types-for 'script': the UI is built without HTML strings (00-trusted-html.js) and is pixel-identical to the normal page (transitions and the caret frozen in both, so only the build differs)"
+  },
+  "trusted-types/toolbar-plain": {
+   "note": "the normal page"
+  },
+  "trusted-types/toolbar-tt": {
+   "note": "the same page sending require-trusted-types-for 'script': the UI is built without HTML strings (00-trusted-html.js) and is pixel-identical to the normal page (transitions and the caret frozen in both, so only the build differs)"
+  },
+  "trusted-types/panel-plain": {
+   "note": "the normal page"
+  },
+  "trusted-types/panel-tt": {
+   "note": "the same page sending require-trusted-types-for 'script': the UI is built without HTML strings (00-trusted-html.js) and is pixel-identical to the normal page (transitions and the caret frozen in both, so only the build differs)"
+  },
+  "trusted-types/settings-plain": {
+   "note": "the normal page"
+  },
+  "trusted-types/settings-tt": {
+   "note": "the same page sending require-trusted-types-for 'script': the UI is built without HTML strings (00-trusted-html.js) and is pixel-identical to the normal page (transitions and the caret frozen in both, so only the build differs)"
+  },
+  "hostile/hostile-guard-toast": {
+   "note": "the guard toast on a hostile host"
+  },
+  "hostile/hostile-style-row": {
+   "note": "Your style's row on a hostile host"
+  },
+  "hostile/hostile-guard-row": {
+   "verdict": "residual",
+   "note": "Your style's softer colors are on in this run: the overlay's counter-filter (72-style.js overlayUnfilter) can't give back colors the page filter clipped, so the --m-danger dot comes out brighter than the token. Grays are exact. Logic, not CSS: left for the style owner"
+  },
+  "hostile/hostile-show-once-strip": {
+   "note": "the recording strip on a hostile host"
+  },
+  "hostile/hostile-show-once-steps": {
+   "note": "the steps in the bar on a hostile host"
+  },
+  "hostile/parley-guard-toast": {
+   "note": "the guard toast on a hostile host"
+  },
+  "hostile/parley-style-row": {
+   "note": "Your style's row on a hostile host"
+  },
+  "hostile/parley-guard-row": {
+   "verdict": "residual",
+   "note": "Your style's softer colors are on in this run: the overlay's counter-filter (72-style.js overlayUnfilter) can't give back colors the page filter clipped, so the --m-danger dot comes out brighter than the token. Grays are exact. Logic, not CSS: left for the style owner"
+  },
+  "hostile/parley-show-once-strip": {
+   "note": "the recording strip on a hostile host"
+  },
+  "hostile/parley-show-once-steps": {
+   "note": "the steps in the bar on a hostile host"
+  },
+  "guard/refused-loop-narrow-dark": {
+   "verdict": "residual",
+   "note": "the refusal reads well; the bar's input is squeezed to ~70px by the target chip at 390px and breaks words (bar/typing-long-narrow has it too). A chip on its own line at phone width is a bar layout change: open"
+  },
+  "practice/sample-bar-narrow-dark": {
+   "verdict": "residual",
+   "note": "the bar's glass (--m-overlay) lets the practice article's text show through the coach and input in a phone-width frame; readable, but busy. The see-through bar is a design decision in 98-bar-css.js. (The coach keeps only the current step's word under 360px, so Hide tips no longer overlaps Save)"
+  },
+  "practice/first-save-narrow-dark": {
+   "verdict": "residual",
+   "note": "the bar's glass (--m-overlay) lets the practice article's text show through the coach and input in a phone-width frame; readable, but busy. The see-through bar is a design decision in 98-bar-css.js. (The coach keeps only the current step's word under 360px, so Hide tips no longer overlaps Save)"
+  },
+  "guard/refused-loop-narrow-light": {
+   "verdict": "residual",
+   "note": "the refusal reads well; the bar's input is squeezed to ~70px by the target chip at 390px and breaks words (bar/typing-long-narrow has it too). A chip on its own line at phone width is a bar layout change: open"
+  },
+  "practice/sample-bar-narrow-light": {
+   "verdict": "residual",
+   "note": "the bar's glass (--m-overlay) lets the practice article's text show through the coach and input in a phone-width frame; readable, but busy. The see-through bar is a design decision in 98-bar-css.js. (The coach keeps only the current step's word under 360px, so Hide tips no longer overlaps Save)"
+  },
+  "practice/first-save-narrow-light": {
+   "verdict": "residual",
+   "note": "the bar's glass (--m-overlay) lets the practice article's text show through the coach and input in a phone-width frame; readable, but busy. The see-through bar is a design decision in 98-bar-css.js. (The coach keeps only the current step's word under 360px, so Hide tips no longer overlaps Save)"
   }
  },
  "fixes": [
@@ -852,6 +1213,86 @@
    "title": "32. Key caps had three designs (16px inline, 20px with a 2px bottom border and r 5, borderless in tooltips). One cap: 1px line, r 4, 16px inline / 20px in sheets and menus",
    "before": "before/shortcuts-sheet-light.png",
    "after": "shortcuts/sheet-light.png"
+  },
+  {
+   "title": "R4-1. Hide distractions left the scrolling ticker running. It now takes any narrow strip whose content slides sideways on a loop (a CSS or script animation, or a marquee); spinners, slideshows and the site's own header stay. Tested in tests/a11y-ui.test.js",
+   "before": "before/r4-calm-ticker-light.png",
+   "after": "a11y-site/calm-light.png"
+  },
+  {
+   "title": "R4-2. A refusal read as a failure and lost its point to the ellipsis (“That didn't work: The change would have hidden this whole page, so Morse didn't apply it. …”). Now Morse says it held back: “Morse didn't apply it: it would have hidden this whole page”",
+   "before": "before/r4-guard-refused-hide-dark.png",
+   "after": "guard/refused-hide-dark.png"
+  },
+  {
+   "title": "R4-3. Show me once: the steps in the bar stopped exactly at a row, so step 6 was hidden with no cue that the list scrolls. Five and a half rows show now; the label is the shared .eyebrow (it was a private copy)",
+   "before": "before/r4-show-once-steps-in-bar-dark.png",
+   "after": "show-once/steps-in-bar-dark.png"
+  },
+  {
+   "title": "R4-4. Show me once: “(hidden)” read like something typed. It is set apart in muted mono, as Morse's own word",
+   "before": "before/r4-show-once-strip-hidden-dark.png",
+   "after": "show-once/strip-hidden-dark.png"
+  },
+  {
+   "title": "R4-5. Show me once at phone width: the textarea placeholder was cut mid-word (a textarea can't end it in an ellipsis). A shorter one is used under 560px",
+   "before": "before/r4-show-once-steps-in-bar-narrow-light.png",
+   "after": "show-once/steps-in-bar-narrow-light.png"
+  },
+  {
+   "title": "R4-6. Your style's row: the switch and words sat 1px off the mod rows (the extra line), and “where it runs” hung beside the last tag, off its baseline. 11px padding, and the state always gets its own line",
+   "before": "before/r4-style-row-off-light.png",
+   "after": "style/row-off-light.png"
+  },
+  {
+   "title": "R4-7. Your style's sites were a private chip with a text ×, and the × ring covered the site name. They are the bar's .chip with the shared mask ×, ring flush inside the chip (the bar's chip too)",
+   "before": "before/r4-style-settings-chip-focus-dark.png",
+   "after": "style/settings-chip-focus-dark.png"
+  },
+  {
+   "title": "R4-8. Your style at phone width: “Not on this site” stretched across the whole row as a centred ghost button. It sits at the end, like every other .tbtn",
+   "before": "before/r4-style-settings-sites-narrow-light.png",
+   "after": "style/settings-sites-narrow-light.png"
+  },
+  {
+   "title": "R4-9. Fit to this site said “Your style” twice (“Your style for host · Your style · 3.0s”)",
+   "before": "before/r4-style-fit-review-dark.png",
+   "after": "style/fit-review-dark.png"
+  },
+  {
+   "title": "R4-10. The first-run coach: 18px rounded-square numbers and a 10px check at 2.2px, a third kind of step marker. Now the 20px round number of Show me once, and the 16px check at 1.5px; Hide tips is .tbtn",
+   "before": "before/r4-first-run-coach-keep-light.png",
+   "after": "first-run/coach-keep-light.png"
+  },
+  {
+   "title": "R4-11. The first-run notice at phone width: the dot sat halfway down the sentence and × floated alone. Dot on the first line, button under the words, × at the end; the buttons are .btn and the shared .ibtn.close (were copies, with a text ×)",
+   "before": "before/r4-first-run-note-user-scripts-narrow-light.png",
+   "after": "first-run/note-user-scripts-narrow-light.png"
+  },
+  {
+   "title": "R4-12. The first saved change card: its buttons and “Now in your bar” label were private copies of .btn and the eyebrow; the check over the mark is on the 1.5px stroke",
+   "before": "before/r4-first-run-first-save-card-dark.png",
+   "after": "first-run/first-save-card-dark.png"
+  },
+  {
+   "title": "R4-13. The guard toast was a sentence without its period (“…because it froze this page”)",
+   "before": "before/r4-guard-froze-toast-dark.png",
+   "after": "guard/froze-toast-dark.png"
+  },
+  {
+   "title": "R4-14. The popup on a page Morse can't run on: Change this page faded to 45% opacity, and the notice was a copy with 8px corners and hard-coded fallback colors. Disabled is --m-signal-1 on --m-raised; the notice is the popup's .notice; Change this page is 32px (was 36)",
+   "before": "before/r4-popup-first-run-chrome-page-dark.png",
+   "after": "popup/first-run-chrome-page-dark.png"
+  },
+  {
+   "title": "R4-15. The welcome page's key caps had the old 2px bottom border and 5px corners, numbered steps were rounded squares, the checkbox a 1.5px line and Copy 26px tall. One key cap, round step numbers, 1px lines, 24px Copy; the practice page goes to one column at phone width",
+   "before": "before/r4-welcome-page-dark.png",
+   "after": "welcome/page-dark.png"
+  },
+  {
+   "title": "R4-16. Show me once at phone width: the hairline before the chip started a line of its own when the chips wrapped",
+   "before": "before/r4-first-run-note-user-scripts-narrow-dark.png",
+   "after": "first-run/note-user-scripts-narrow-dark.png"
   }
  ]
 }

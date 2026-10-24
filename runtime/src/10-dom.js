@@ -21,6 +21,7 @@ ${A11Y_CSS() /* Easier to use hook: 98-a11y-css.js */}</style>
   <style>${GALLERY_CSS() /* gallery hook: 98-gallery-css.js */}</style>
   <style>${HEAL_CSS() /* self-heal hook: 98-heal-css.js */}</style>
   <style>${STYLE_CSS() /* your-style hook: 98-style-css.js */}</style>
+  <style>${PACKS_CSS() /* packs hook: 98-packs-css.js */}</style>
   <canvas class="fx" aria-hidden="true"></canvas>
   <div class="hl" hidden aria-hidden="true"><span></span></div>
   <div class="sel" hidden aria-hidden="true"></div>

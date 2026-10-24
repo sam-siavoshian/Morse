@@ -55,7 +55,7 @@ function CONTROL_CSS() { return `
   .ctl-h { margin: 16px 0 8px; }
   .ctl-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
   .ctl-items li { position: relative; padding-left: 20px; }
-  .ctl-items li::before { content: ""; position: absolute; left: 4px; top: 7px; width: 6px; height: 6px; border-radius: 1.5px; background: var(--m-signal-3); }
+  .ctl-items li::before { content: ""; position: absolute; left: 4px; top: 7px; background: var(--m-signal-3); } /* the status dot: 99-css.js */
   .ctl-items b { display: block; font-weight: 500; line-height: 20px; }
   .ctl-items small { display: block; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 16px; }
   /* a 2px warn edge drawn inside the 1px box; notes in a row read as one box with one label */

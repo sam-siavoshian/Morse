@@ -37,7 +37,7 @@ const ShowOnce = (() => {
   for (const t of ["keydown", "keyup", "keypress"]) strip.addEventListener(t, ev => { if (ev.key !== "Escape") ev.stopPropagation(); });
 
   function stepRow(s, i, { remove = true, last = false } = {}) {
-    return `<li class="${last ? "so-last" : ""}"><span class="so-n">${i + 1}</span><span class="so-w" title="${esc(stepWords(s))}">${esc(stepWords(s))}</span>${remove
+    return `<li class="${last ? "so-last" : ""}"><span class="so-n">${i + 1}</span><span class="so-w" title="${esc(stepWords(s))}">${esc(stepWords(s)).replace("(hidden)", '<span class="so-hid">(hidden)</span>')}</span>${remove
       ? `<button type="button" class="ibtn xs so-rm" data-so="remove" data-i="${i}" aria-label="Remove step ${i + 1}" title="Remove this step">${I_X}</button>` : ""}</li>`;
   }
   function renderStrip() {
@@ -211,12 +211,15 @@ const ShowOnce = (() => {
   card.setAttribute("aria-label", "Your steps");
   bar.prepend(card);
   const PLACEHOLDER = input.placeholder;
-  const ASK_WHAT = "What should Morse do with these steps?";
+  // (a phone-width bar fits only the short one: a textarea's placeholder can't end in an ellipsis)
+  const ASK_LONG = "What should Morse do with these steps?", ASK_SHORT = "What to do with the steps?";
+  const askWhat = () => (innerWidth < 560 ? ASK_SHORT : ASK_LONG);
+  const asking = () => input.placeholder === ASK_LONG || input.placeholder === ASK_SHORT;
   function renderCard() {
     const steps = R.attached?.steps || [];
     card.innerHTML = `
       <header class="so-ch">
-        <span class="so-eyebrow">Your steps</span><span class="so-count">${steps.length}</span>
+        <span class="eyebrow">Your steps</span><span class="so-count">${steps.length}</span>
         <span class="so-sp"></span>
         <button type="button" class="tbtn" data-so="again" title="Do the task again">Show again</button>
         <button type="button" class="ibtn xs" data-so="forget" aria-label="Forget these steps" title="Forget these steps">${I_X}</button>
@@ -229,7 +232,7 @@ const ShowOnce = (() => {
     hl.hidden = true;
     renderCard();
     syncCard();
-    input.placeholder = ASK_WHAT;
+    input.placeholder = askWhat();
     note(`Say what Morse should do with these steps · <kbd>Enter</kbd> to send`, 0);
     updateChips();
     input.focus();
@@ -240,7 +243,7 @@ const ShowOnce = (() => {
     card.hidden = true;
     card.innerHTML = "";
     bar.classList.remove("has-so");
-    if (input.placeholder === ASK_WHAT) input.placeholder = PLACEHOLDER;
+    if (asking()) input.placeholder = PLACEHOLDER;
     if (/these steps/.test(hint.textContent)) { hintNote = ""; setHint(); }
     updateChips();
   }
@@ -250,12 +253,12 @@ const ShowOnce = (() => {
     const show = !!R.attached && S.open && S.phase === "idle" && !bar.classList.contains("has-pane");
     card.hidden = !show;
     bar.classList.toggle("has-so", show);
-    if (R.attached && S.phase === "idle" && input.placeholder === PLACEHOLDER) input.placeholder = ASK_WHAT;
+    if (R.attached && S.phase === "idle" && input.placeholder === PLACEHOLDER) input.placeholder = askWhat();
   }
   new MutationObserver(syncCard).observe(bar, { attributes: true, attributeFilter: ["class"] });
   // Voice and the bar reset the words in the empty input; while steps wait, ours stay.
   new MutationObserver(() => {
-    if (R.attached && S.phase === "idle" && input.placeholder === PLACEHOLDER) input.placeholder = ASK_WHAT;
+    if (R.attached && S.phase === "idle" && input.placeholder === PLACEHOLDER) input.placeholder = askWhat();
   }).observe(input, { attributes: true, attributeFilter: ["placeholder"] });
   card.addEventListener("click", ev => {
     const b = ev.target.closest("[data-so]");

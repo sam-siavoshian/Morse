@@ -6,6 +6,7 @@
 // to the model with what used to match, the fix shows for review, Save keeps
 // it and History keeps the old version. With "Fix my mods automatically" on,
 // a gallery mod is fixed in the background, with Undo and Share the fix.
+import { tempDir } from "./helpers/home.js"; // first: a MORSE_HOME of its own, and temp folders removed at exit
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -59,13 +60,13 @@ const healDot = () => page.evaluate(() => {
 
 before(async () => {
   if (skip) return;
-  home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-heal-"));
+  home = tempDir("morse-heal-");
   process.env.MORSE_HOME = home;
   await fs.mkdir(path.join(home, "mods"), { recursive: true });
   await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false, gallery: false }));
   await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } }));
   // "Share the fix…" opens a browser (xdg-open / open): a stand-in records the address instead.
-  bin = await fs.mkdtemp(path.join(os.tmpdir(), "morse-heal-bin-"));
+  bin = tempDir("morse-heal-bin-");
   for (const name of ["xdg-open", "open"]) await fs.writeFile(path.join(bin, name), `#!/bin/sh\nprintf '%s' "$1" > "${bin}/opened.txt"\n`, { mode: 0o755 });
   process.env.PATH = `${bin}:${process.env.PATH}`;
 

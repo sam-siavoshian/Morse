@@ -24,10 +24,15 @@ import { readFileSync } from "node:fs";
 import { loadConfig, updateConfig } from "./store.js";
 import { settingsFromConfig, settingsLabel } from "./models.js";
 import { detectHarnesses, validModel, TIMEOUT_MS } from "./harness.js";
-import { streamChat, abortError, prewarm } from "../core/providers.js";
+import { streamChat, abortError, prewarm, HELPER_PORT } from "../core/providers.js";
 import { handleVoice } from "./voice.js";
 
 export const VERSION = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
+
+// The helper's port: 7457, or MORSE_HELPER_PORT (tests run several helpers at
+// once, and point their extension at theirs with chrome.storage.local
+// "morse.helperPort", core/providers.js HELPER_PORT_KEY).
+export const helperPort = () => Number(process.env.MORSE_HELPER_PORT) || HELPER_PORT;
 export const PAIR_TTL_MS = 10 * 60_000;
 const MAX_ATTEMPTS = 5, MAX_TOKENS = 20, MAX_BODY = 1 << 20;
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

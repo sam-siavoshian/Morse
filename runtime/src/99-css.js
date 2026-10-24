@@ -161,6 +161,7 @@ function CSS() {
   .chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .chip .x { flex: none; width: 20px; height: 20px; display: grid; place-items: center; border: 0; border-radius: 4px; background: none; color: var(--m-text-3); padding: 0; }
   .chip .x:hover { color: var(--m-text); background: var(--m-hover); }
+  .chip .x:focus-visible { outline-offset: 0; } /* nested in the chip: flush, so the ring doesn't cover the words */
   .status { display: flex; align-items: center; gap: 12px; padding: 6px 8px 6px 16px; border-top: 1px solid var(--m-line); font-size: var(--m-text-sm); line-height: 16px; color: var(--m-text-2); min-height: 40px; }
   /* one line that ends in an ellipsis, whatever it holds (hint, error, phase) */
   .hint { flex: 0 1 auto; min-width: 0; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -237,7 +238,10 @@ function CSS() {
   .health { grid-column: 2; display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 8px 8px 8px 12px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-bg); }
   .health p { flex: 1; min-width: 0; margin: 0; font-size: var(--m-text-sm); line-height: 16px; color: var(--m-text-2); overflow-wrap: anywhere; }
   .health b { color: var(--m-text); font-weight: 600; }
-  .health b::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 7px 1px 0; border-radius: 1.5px; background: var(--m-danger); vertical-align: middle; }
+  .health b::before { content: ""; margin: 0 7px 1px 0; background: var(--m-danger); vertical-align: middle; }
+  /* ---- the status dot: a 6px square with 1.5px corners, one of the radar mark's squares
+     (a stopped or paused mod, trying a mod, a notice under the input, a list of what's in a mod) */
+  .health b::before, .gl-trying::before, .ctl-items li::before, .ob-dot { flex: none; display: inline-block; width: 6px; height: 6px; border-radius: 1.5px; }
   .panel .health button { flex: none; height: 24px; padding: 0 10px; }
   /* two buttons (a paused mod, 64-guard.js): the words get the whole row, the buttons go under them on the right */
   .health.guard { flex-wrap: wrap; row-gap: 8px; }

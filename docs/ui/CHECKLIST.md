@@ -8,7 +8,9 @@ voice, settings, hotkey recorder, cheat sheet, suggestions, history and Stop,
 and (round 3) Mods for this site, Easier to use (with each page tool on the
 demo/sites/a11y library), user control (install review, off switch, pause,
 safe start, Show code, backup, the popup's pause switches), refine, version
-history and a broken mod with Fix it, runs the automated checks marked **[auto]** on each
+history and a broken mod with Fix it, and (round 4) Show me once, Your style, the guards, first run in the bar, the
+extension's own pages (welcome, practice, popup: the real extension, headful under Xvfb, `--only=extension`) and the bar,
+panel, toolbar and settings on a page that enforces Trusted Types (pixel-compared with the normal page), runs the automated checks marked **[auto]** on each
 shot, and writes `docs/ui/index.html`. The rest are checked by eye; verdicts
 and notes live in `docs/ui/review.json`.
 
@@ -26,7 +28,7 @@ known issue is written down with its reason, ❌ when it fails review.
 
 - [auto] `runtime/src/99-css.js`, `98-bar-css.js` and `98-godmode-css.js` have no color literals: every color is a `var(--m-*)` (the `#000` in the ticker's mask-image and the close icon's mask are alpha masks, not colors).
 - Fonts: `--m-font` for UI, `--m-mono` for code, labels, kbd, model names. Sizes from `--m-text-*` (10.5/11.5px only for kbd, tags, ticker).
-- [auto] Radii: `--m-r-sm` 6 (controls, chip, picker box and label, fields, menu rows), `--m-r-md` 10 (rows, toast, code fields, effect canvas, popovers, menus, the edit toolbar), `--m-r-lg` 14 (bar, panel, modal). 4px only for kbd, tags and controls nested inside a 6px control (segments, the ± and eyedropper buttons, the chip's ×); 2px for the edit frame and its handles (a hairline hugging arbitrary content); round for the switch, swatches and status dots.
+- [auto] Radii: `--m-r-sm` 6 (controls, chip, picker box and label, fields, menu rows), `--m-r-md` 10 (rows, toast, code fields, effect canvas, popovers, menus, the edit toolbar), `--m-r-lg` 14 (bar, panel, modal). 4px only for kbd, tags and controls nested inside a 6px control (segments, the ± and eyedropper buttons, the chip's ×); 2px for the edit frame and its handles (a hairline hugging arbitrary content); round for the switch, swatches, numbered steps (Show me once, the first-run coach) and the recording dot. The 6px status dot (a paused or stopped mod, trying a mod, a notice under the input) is one of the radar mark's squares: 1.5px corners, declared once in 99-css.js.
 - [auto] Borders are 1px `--m-line` / `--m-line-strong` (the picker outline is 1.5px on purpose: it sits on arbitrary app content). Rings that mean "selected" or "focused" are box-shadows on top of the 1px border, never thicker borders.
 
 ## 3. Geometry (4px grid)
@@ -45,6 +47,7 @@ known issue is written down with its reason, ❌ when it fails review.
 
 ## 5. States
 
+- Refusals are said as Morse holding back, not as a failure: “Morse didn't apply it: it would have hidden this whole page” (the full sentence is the hint's title).
 - Every button has a hover state that is visible but subtle (one step: `--m-hover` background, `--m-signal-1` border; primary goes to `--m-primary-hover`). Pressed tools (`aria-pressed`) are primary; a button whose menu is open (`aria-expanded`) keeps the hover look.
 - [auto] Every focusable control shows a focus ring when focused from the keyboard (`:focus-visible`, and a real 2px indicator, are checked on each `*-focus` shot): 2px `--m-signal-3`, 2px offset for standalone controls, flush (offset 0) in tight groups (edit toolbar, segments, swatches), inset (−2px) on menu rows, which also take the hover background. Fields light their border into a 2px `--m-signal-3` ring. The bar's text input has no ring by design (the caret and the bar are the focus).
 - Disabled controls use `--m-signal-1`, never opacity, show no tooltip and take no focus.
@@ -70,7 +73,10 @@ known issue is written down with its reason, ❌ when it fails review.
 - Section labels everywhere (sheets, menus, popovers, modals, Try, Clipboard) are the same eyebrow: 11px mono, uppercase, .06em, `--m-text-3`.
 - The picker label and the edit frame's size/offset readout are the same inverse mono label.
 - Both menus (⋯ and Page tools) have 32px rows, the same hover and focus, and right-aligned detail (key caps, state, check).
-- New bar rows (suggestions, clipboard) share the 16px left inset of the input and status rows.
+- New bar rows (suggestions, clipboard, Show me once's steps, the first-run coach and notice) share the 16px left inset of the input and status rows.
+- Numbered steps look the same wherever they are: a 20px round mono number, the current one filled `--m-primary` (Show me once's strip and steps, the first-run coach); a done step shows the 16px check.
+- Removable chips (the bar's target, Your style's sites) are one `.chip` with the shared `.x` (14px mask ×); the × ring is flush (offset 0) inside the chip.
+- A list that scrolls shows a part of its next row (Show me once's steps in the bar: five and a half rows), so it reads as one that scrolls.
 - New features use the shared parts by class, never copies: `.btn` / `.btn.primary` (toasts with actions, the trial strip, Describe, Fix it), `.tbtn` (Check again, Show/Hide, Stop showing these; works inside the panel too), `.ibtn` (Read aloud, the toolbar's Read aloud and Describe), `.ibtn.close` (every × outside the panel and modal headers: the same 16px mask glyph), `.menu` (the Easier to use group is a second `.menu`), `.eyebrow` (section labels).
 - Notes in a row (install review) read as one box with one "Note" label; the warn edge is a 2px inset shadow inside the 1px border.
 - A sheet open in the bar is solid (`--m-surface`), pauses the picker's hover box and hides the edit toolbar, so nothing draws through or over it.
@@ -80,6 +86,15 @@ known issue is written down with its reason, ❌ when it fails review.
 - [auto] On every host (catalog page, Parley with a strict CSP, The Daily Byte, Tunes, and `demo/sites/hostile/`): the overlay host is visible, `position: fixed`, untransformed; `.bar/.panel/.card/.toast/label` have `direction: ltr`, no text-transform, normal style, our font; the bar is exactly `min(680px, 100vw - 32px)` wide (no zoom leak); the hover box sits within 2px of its target.
 - On every hostile host the edit toolbar, color popover, in-place text editing, settings sheet and page-tools menu are shot too. Text being edited in place lives in the page (a span marked `data-morse-ui`), so it carries `!important` inline display/visibility: `[data-morse-ui] { display: none !important }` must not hide it.
 - The hostile page applies `* { all: unset }`, `!important` rules on `div, span, button, input…`, `[data-morse-ui] { display: none !important; transform: scale(2) !important }`, `html { zoom: 1.25; font-size: 40px }`, `dir="rtl"`, a rotated body, `[hidden] { display: block !important }`, and (the "-noise" run) `--m-*` custom properties on every `div` and on the overlay host. The overlay must look identical to the plain catalog page.
+
+## 7b. Trusted Types
+
+- [auto] On a page that sends `require-trusted-types-for 'script'` (VS Code's window), the runtime builds its UI without HTML strings (00-trusted-html.js). The bar, edit toolbar, Mods panel and settings are shot on that page and on the normal one and must be pixel-identical.
+
+## 7c. Extension pages
+
+- The welcome page, the practice page and the popup use design/tokens.css only (no fallback colors), the same control heights (28 buttons, 24 inline), 1px lines, 4px key caps and the radar-square status dot. Disabled is `--m-signal-1`, never opacity.
+- [auto] Nothing sticks out of the page or scrolls it sideways at 1100px and 390px; text that is cut ends in an ellipsis.
 
 ## 8. Themes
 

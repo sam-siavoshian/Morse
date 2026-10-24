@@ -5,9 +5,11 @@
 import { promises as fs } from "node:fs";
 import { deflateSync } from "node:zlib";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { bundleRuntime } from "../runtime/bundle.js";
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+// fileURLToPath, not URL.pathname: that gives /C:/… on Windows and %20 for spaces.
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, "dist", "extension");
 
 let esbuild;
@@ -21,7 +23,7 @@ await fs.mkdir(path.join(out, "icons"), { recursive: true });
 
 // The worker's own modules import ../core and are only ever bundled into
 // background.js; copied raw they'd be dead files with broken imports.
-const BUNDLED_ONLY = ["background.js", "bar-host.js", "onboarding-host.js", "control-host.js", "gallery-host.js", "style-host.js" /* your-style hook */];
+const BUNDLED_ONLY = ["background.js", "bar-host.js", "onboarding-host.js", "control-host.js", "gallery-host.js", "style-host.js" /* your-style hook */, "pack-host.js" /* packs hook */];
 for (const f of await fs.readdir(path.join(root, "extension"))) {
   if (!BUNDLED_ONLY.includes(f)) await fs.copyFile(path.join(root, "extension", f), path.join(out, f));
 }

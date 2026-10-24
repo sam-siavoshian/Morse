@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bloom Bakery · Pagecraft</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; display: grid; grid-template-rows: 48px 1fr; background: #f1f5f9; color: #0f172a; font: 13px/1.4 Inter, "Segoe UI", system-ui, sans-serif; }
+  .top { display: flex; align-items: center; gap: 14px; padding: 0 16px; background: #fff; border-bottom: 1px solid #e2e8f0; }
+  .top b { font-size: 15px; } .top .pg { color: #64748b; }
+  .top .sp { flex: 1; }
+  .top button { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  .top button.pub { background: #4f46e5; border-color: #4f46e5; color: #fff; font-weight: 600; }
+  .ws { display: flex; min-height: 0; }
+  .blocks { width: 240px; background: #fff; border-right: 1px solid #e2e8f0; padding: 14px; overflow: auto; }
+  .blocks h4, .props h4 { margin: 0 0 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; }
+  .blocks .bk { display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; cursor: grab; }
+  .blocks .bk i { width: 28px; height: 20px; border-radius: 4px; background: #e0e7ff; }
+  .stage { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 18px; min-width: 0; }
+  .stage .dev { display: flex; gap: 6px; margin-bottom: 10px; }
+  .stage .dev button { border: 0; background: #e2e8f0; border-radius: 6px; padding: 4px 10px; font: inherit; }
+  #pv { width: 640px; flex: 1; border: 0; border-radius: 8px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.1), 0 10px 30px rgba(15,23,42,.08); }
+  .props { width: 280px; background: #fff; border-left: 1px solid #e2e8f0; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .props label { display: grid; gap: 4px; color: #475569; }
+  .props input, .props select { border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 8px; font: inherit; }
+  .props iframe { margin-top: auto; height: 190px; border: 1px solid #e2e8f0; border-radius: 8px; }
+</style>
+</head>
+<body>
+  <div class="top"><b>Pagecraft</b><span class="pg">Bloom Bakery / Home</span><span class="sp"></span><button>Undo</button><button>Preview</button><button class="pub">Publish</button></div>
+  <div class="ws">
+    <aside class="blocks" aria-label="Blocks">
+      <h4>Blocks</h4>
+      <div class="bk"><i></i>Heading</div><div class="bk"><i></i>Text</div><div class="bk"><i></i>Image</div>
+      <div class="bk"><i></i>Menu list</div><div class="bk"><i></i>Button</div><div class="bk"><i></i>Footer</div>
+    </aside>
+    <section class="stage" aria-label="Canvas">
+      <div class="dev"><button>Desktop</button><button>Tablet</button><button>Phone</button></div>
+      <iframe id="pv" title="Page preview" src="preview.html"></iframe>
+    </section>
+    <aside class="props" aria-label="Properties">
+      <h4>Text block</h4>
+      <label>Font<select><option>Georgia</option><option>Inter</option></select></label>
+      <label>Size<input value="16"></label>
+      <label>Color<input value="#3f2a1d"></label>
+      <iframe title="Help" src="help.html"></iframe>
+    </aside>
+  </div>
+</body>
+</html>

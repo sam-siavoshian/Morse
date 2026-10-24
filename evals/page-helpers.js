@@ -5,6 +5,35 @@
 //            real input through Playwright via exposed functions).
 
 export function stubs() {
+  // Every root a checker (or a mod) may need: the document, open shadow roots
+  // (nested too) and same-origin iframes. "a >>> b" selects b inside a's
+  // shadow root or frame document.
+  window.__roots = (doc = document) => {
+    const out = [];
+    const visit = root => {
+      out.push(root);
+      for (const el of root.querySelectorAll("*")) {
+        if (el.shadowRoot) visit(el.shadowRoot);
+        if (el.localName === "iframe" || el.localName === "frame") { try { const d = el.contentDocument; if (d?.documentElement) visit(d); } catch {} }
+      }
+    };
+    visit(doc);
+    return out;
+  };
+  window.__deep = sel => {
+    let scopes = [document];
+    const parts = String(sel).split(/\s*>>>\s*/);
+    for (let i = 0; i < parts.length; i++) {
+      const found = scopes.flatMap(sc => [...sc.querySelectorAll(parts[i])]);
+      if (i === parts.length - 1) return found;
+      scopes = found.map(el => { try { return el.shadowRoot || el.contentDocument || null; } catch { return null; } }).filter(Boolean);
+    }
+    return [];
+  };
+  // confirm() answers what the checker says (default: OK) and is recorded.
+  window.__confirms = [];
+  window.__confirmAnswer = true;
+  window.confirm = msg => { window.__confirms.push(String(msg ?? "")); return window.__confirmAnswer; };
   window.__clip = "";
   window.__blobs = new Map();
   window.__downloads = [];
@@ -51,15 +80,23 @@ export function helpers() {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 1;
   const g = canvas.getContext("2d", { willReadFrequently: true });
+  // Up the flat tree: out of shadow roots and same-origin frames.
+  const up = e => e.parentElement || e.getRootNode().host || (e.ownerDocument !== document && e === e.ownerDocument.documentElement ? e.ownerDocument.defaultView.frameElement : null);
   const T = {
     $: s => document.querySelector(s),
     $$: s => [...document.querySelectorAll(s)],
+    // Deep: "host >>> inner" through open shadow roots and same-origin frames.
+    q: s => window.__deep(s)[0] || null,
+    qq: s => window.__deep(s),
+    // s matched in every root (document, shadow roots, frames).
+    all: s => window.__roots().flatMap(r => [...r.querySelectorAll(s)]),
+    async scroll(el, top) { el.scrollTop = top; el.dispatchEvent(new Event("scroll")); await T.sleep(150); },
     sleep: ms => new Promise(r => setTimeout(r, ms)),
     rect: el => el.getBoundingClientRect(),
     cs: el => getComputedStyle(el),
     orig: el => orig.has(el),
     // Elements that did not exist before the mod was applied.
-    fresh: (sel = "*") => T.$$(sel).filter(e => !orig.has(e) && !/^(STYLE|SCRIPT|LINK|META)$/.test(e.tagName)),
+    fresh: (sel = "*") => T.all(sel).filter(e => !orig.has(e) && !/^(STYLE|SCRIPT|LINK|META)$/.test(e.tagName)),
     // Text the mod added: new elements, plus ::before/::after content that
     // wasn't there before (CSS-only labels like `content: attr(data-n) " words"`).
     freshText() {
@@ -119,12 +156,16 @@ export function helpers() {
       if (!el.checkVisibility({ opacityProperty: true, visibilityProperty: true, contentVisibilityAuto: true })) return false;
       const r = el.getBoundingClientRect();
       if (r.width < 2 || r.height < 2) return false;
-      if (r.right <= 0 || r.bottom <= 0 || r.left >= Math.max(innerWidth, document.documentElement.scrollWidth)) return false;
-      // Clipped away by an ancestor (max-height: 0 / width: 0 + overflow hidden).
-      for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      const doc = el.ownerDocument, win = doc.defaultView || window;
+      if (r.right <= 0 || r.bottom <= 0 || r.left >= Math.max(win.innerWidth, doc.documentElement.scrollWidth)) return false;
+      // Clipped away by an ancestor (max-height: 0 / width: 0 + overflow hidden),
+      // across shadow roots.
+      for (let p = el.parentElement || el.getRootNode().host; p && p !== doc.body; p = p.parentElement || p.getRootNode().host) {
         const s = getComputedStyle(p);
         if (s.overflow !== "visible") { const pr = p.getBoundingClientRect(); if (pr.width < 2 || pr.height < 2) return false; }
       }
+      // Inside a frame: the frame must show too.
+      if (win !== window && win.frameElement) return T.visible(win.frameElement);
       return true;
     },
     rgb(c) {
@@ -142,7 +183,7 @@ export function helpers() {
     },
     inverted(el) {
       let n = 0;
-      for (let p = el; p; p = p.parentElement) {
+      for (let p = el; p; p = up(p)) {
         const m = getComputedStyle(p).filter.match(/invert\(([\d.]+)(%?)\)/);
         if (m && (m[2] ? +m[1] / 100 : +m[1]) >= 0.5) n++;
       }
@@ -152,7 +193,7 @@ export function helpers() {
     // backgrounds and accounts for invert() filters (a common dark mode).
     bg(el) {
       const layers = [];
-      for (let p = el; p; p = p.parentElement) {
+      for (let p = el; p; p = up(p)) {
         const c = T.rgb(getComputedStyle(p).backgroundColor);
         if (c[3] > 0) { layers.push(c); if (c[3] >= 1) break; }
       }
@@ -173,7 +214,7 @@ export function helpers() {
     },
     fontPx(el) {
       let z = 1;
-      for (let p = el.parentElement; p; p = p.parentElement) z *= parseFloat(getComputedStyle(p).zoom) || 1;
+      for (let p = up(el); p; p = up(p)) z *= parseFloat(getComputedStyle(p).zoom) || 1;
       return Math.round(parseFloat(getComputedStyle(el).fontSize) * (parseFloat(getComputedStyle(el).zoom) || 1) * z * 10) / 10;
     },
     sig(el) {
@@ -181,11 +222,45 @@ export function helpers() {
       return [el, ...el.querySelectorAll("*")].map(e => { const s = getComputedStyle(e); return props.map(p => s[p]).join("|") + (T.visible(e) ? "" : "!"); }).join(";")
         + "#" + el.querySelectorAll("*").length;
     },
-    async click(el) {
-      el.scrollIntoView({ block: "center", inline: "center" });
-      await T.sleep(50);
+    // Text a person can read in every root (shadow roots and frames included).
+    deepText() {
+      const out = [];
+      for (const root of window.__roots()) {
+        const top = root.body || root;
+        if (!top) continue;
+        const w = (root.ownerDocument || root).createTreeWalker(top, NodeFilter.SHOW_TEXT);
+        for (let n; (n = w.nextNode());) {
+          const p = n.parentElement;
+          if (!n.textContent.trim() || !p || /^(SCRIPT|STYLE|NOSCRIPT)$/.test(p.tagName) || !T.visible(p)) continue;
+          out.push(n.textContent.trim());
+        }
+      }
+      return out.join(" ");
+    },
+    // Downloads as { href, name, type } (type: a blob's MIME type).
+    downloads: () => window.__downloads.map(d => ({ ...d, type: d.href?.startsWith("blob:") ? window.__blobs.get(d.href)?.type || "" : (d.href?.match(/^data:([^;,]*)/) || [])[1] || "" })),
+    async hover(el) {
       const r = el.getBoundingClientRect();
-      await window.__evalClick(r.left + r.width / 2, r.top + r.height / 2);
+      await window.__evalMove(r.left + Math.min(r.width / 2, 200), r.top + r.height / 2);
+      await T.sleep(50);
+    },
+    // Like a person: scroll only when it isn't already on screen and on top.
+    async click(el) {
+      const onTop = () => {
+        const r = el.getBoundingClientRect(), win = el.ownerDocument.defaultView;
+        if (r.top < 0 || r.left < 0 || r.bottom > win.innerHeight || r.right > win.innerWidth || !r.width) return false;
+        const hit = (el.getRootNode().elementFromPoint ? el.getRootNode() : el.ownerDocument).elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return !!hit && (hit === el || el.contains(hit));
+      };
+      if (!onTop() || el.ownerDocument !== document) { el.scrollIntoView({ block: "center", inline: "center" }); await T.sleep(50); }
+      const r = el.getBoundingClientRect();
+      // Inside a same-origin frame: add the frames' offsets.
+      let x = r.left + r.width / 2, y = r.top + r.height / 2;
+      for (let w = el.ownerDocument.defaultView; w && w !== window && w.frameElement; w = w.parent) {
+        const f = w.frameElement.getBoundingClientRect(), cs = getComputedStyle(w.frameElement);
+        x += f.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft); y += f.top + parseFloat(cs.borderTopWidth) + parseFloat(cs.paddingTop);
+      }
+      await window.__evalClick(x, y);
       await T.sleep(50);
     },
     caretEnd(el) {

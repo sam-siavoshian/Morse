@@ -4,7 +4,7 @@
 // run's). The chip in the empty bar, Try it then Undo (nothing left
 // behind), Try it then Save, Install through the install review, Update
 // available after the gallery moves on, and the update review.
-import "./helpers/home.js";
+import { tempDir } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -40,7 +40,7 @@ async function until(fn, ms = TIMEOUT) {
 
 before(async () => {
   if (skip) return;
-  home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-gallery-"));
+  home = tempDir("morse-gallery-");
   process.env.MORSE_HOME = home;
   await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false }));
   await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } }));

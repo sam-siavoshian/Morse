@@ -32,9 +32,10 @@ themselves.
 morse apps
 ```
 
-Morse looks where apps are usually installed: `/Applications` on a Mac,
-Program Files and your user's app folders on Windows, and `PATH`, `/opt`, snap,
-flatpak and the app menu on Linux. On Linux it also finds AppImages in
+Morse looks where apps are usually installed: `/Applications` and
+`~/Applications` on a Mac, your user's app folders, Program Files and the
+Start menu on Windows, and `PATH`, `/opt`, snap, flatpak and the app menu on
+Linux. There's more for [macOS](#macos) and [Windows](#windows) below. On Linux it also finds AppImages in
 `~/Applications`, `~/Downloads` and `~/.local/bin`, and ones an installer added
 to the app menu. Each app gets one line:
 
@@ -199,6 +200,186 @@ files on disk, because those live outside the windows.
 - `morse pause slack` turns off every change in Slack without deleting them.
   `morse resume slack` turns them back on.
 
+## macOS
+
+> **Not yet tested on real hardware.** Everything in this section is built
+> and checked against copies of real app folders on Linux, not on a Mac. If
+> you have a Mac, the [15-minute check](dev/platform-testing.md) says what to
+> try, and an issue with what you saw helps everyone.
+
+### What to do
+
+1. Install Node.js 22 or newer, then Morse: `npm install -g morse-cli`.
+2. Open each app you want to change once the usual way, from Finder or
+   Launchpad, then quit it. A Mac checks an app you downloaded the first time
+   you open it. Morse starts apps from the terminal, where that first check
+   can stop the app instead of asking you.
+3. Run `morse apps`. It lists the apps in `/Applications`,
+   `/Applications/Utilities` and `~/Applications`.
+4. Run `morse launch slack --restart`. If Slack is open, Morse asks it to
+   quit, the same as pressing ⌘Q. The first time, macOS asks whether your
+   terminal may control Slack. Say **OK**: Morse only uses it to ask the app
+   to quit. If you say no, Morse tells the app to stop at once instead,
+   which can lose its window layout.
+5. In the app, press **⌥Space**. The Morse bar opens.
+
+`morse doctor` shows your macOS version, whether your Morse folder
+(`~/.morse`) is private, and your shortcut.
+
+### What Morse does on a Mac
+
+- **It reads each app's own description** (`Contents/Info.plist`): its name,
+  version and the program inside it. An app built on Electron has
+  `Electron Framework` in `Contents/Frameworks`, which also says which
+  Electron version. Spotify's has `Chromium Embedded Framework` instead.
+  Apps with neither are native: `morse apps` leaves them out, or marks them
+  "can't connect" when it knows their name (ChatGPT).
+- **It starts the program inside the app**, like
+  `Slack.app/Contents/MacOS/Slack`, with the debugging switch. It doesn't use
+  `open -a`: that drops the switch when the app is already open, and doesn't
+  say which program it started.
+- **It never changes the app.** Every Mac app is signed. Changing any file in
+  it (the fuses in `Electron Framework` included) breaks the signature, and
+  macOS then refuses to open the app. Morse only reads. Your changes live in
+  `~/.morse`.
+- **It needs no permissions.** Not Accessibility, not Screen Recording, not
+  Input Monitoring. The shortcut works because Morse runs inside the app's
+  own windows, and clips are recorded from the app's own window. The only
+  question macOS asks is the one in step 4, and only for `--restart`.
+- **Apple silicon and Intel.** Most apps carry both. `morse fuses` reads the
+  fuses of both parts and says so if they differ.
+
+### Things to know on a Mac
+
+- **⌥Space taken.** Alfred, Raycast and the ChatGPT app often use ⌥Space
+  themselves, and they get the key before the app does. If the bar doesn't
+  open, change Morse's shortcut in the bar's settings, or theirs.
+- **Microphone and camera.** macOS can ask for the microphone on behalf of
+  your terminal (not the app), because the terminal started the app. If a
+  call in Slack or Discord asks for that, allow it, or open the app the usual
+  way for calls.
+- **The menu bar, the Dock and notifications** stay the app's own. Morse
+  changes what's in the app's windows.
+
+### Popular apps on a Mac
+
+All of these should work, as far as Morse can tell without a Mac. None of
+them has been tried on one yet.
+
+| App | Built on | What to expect |
+|---|---|---|
+| Slack | Electron | Only one copy can run, so use `--restart` when it's open. Closing its window doesn't quit it. |
+| Discord | Electron | Its update check runs first. If Discord restarts itself after an update, Morse loses it: run `morse launch discord` again. |
+| Spotify | Chromium Embedded Framework | Not Electron. Apps built this way usually accept the debugging switch. If this Spotify release doesn't, `morse launch` says it "never opened its debugging port". |
+| VS Code | Electron | Works on Linux (VSCodium). Its own protection against outside code is kept on. |
+| Notion | Electron | Should work like Slack. |
+| Obsidian | Electron | Works on Linux. |
+| Figma | Electron | The panels and toolbars can change. The design itself is drawn as a picture, so Morse can't point at shapes in it. |
+
+## Windows
+
+> **Not yet tested on real hardware.** Everything in this section is built
+> and checked against copies of real install folders and shortcuts on Linux,
+> not on Windows. If you have a Windows PC, the
+> [15-minute check](dev/platform-testing.md) says what to try.
+
+### What to do
+
+1. Install Node.js 22 or newer from nodejs.org, then, in PowerShell or
+   Windows Terminal: `npm install -g morse-cli`.
+2. Run `morse apps`.
+3. Run `morse launch slack --restart`.
+4. In the app, press **Ctrl+Shift+Space**. The Morse bar opens.
+
+`morse doctor` shows your Windows version and build, where your Morse folder
+is, and whether Morse can see which apps are open.
+
+### What Morse does on Windows
+
+- **It finds apps** in `%LOCALAPPDATA%\Programs` (VS Code, Obsidian, Notion
+  and most apps that install without asking for an administrator),
+  `%LOCALAPPDATA%` (Slack, Discord, Figma), `%APPDATA%` (Spotify), Program
+  Files, and the Start menu, for everything else, including apps on other
+  drives.
+- **Slack, Discord and Figma keep one folder per version.** They install
+  with Squirrel: an `Update.exe` and a folder like `app-4.41.105` for each
+  version. Morse starts the app in the newest folder. If it only finds
+  `Update.exe`, it asks `Update.exe` to start the app with the debugging
+  switch, then finds the app by that switch, and waits up to 20 seconds while
+  the app checks for updates first.
+- **Folders with spaces just work.** Morse starts programs with a list of
+  arguments, never by typing a command line, so `C:\Program Files` and
+  `D:\Tools\Acme Chat` need no quotes.
+- **`--restart`** asks each window of the app to close, waits up to 10
+  seconds, then ends the app and every process it started. Slack and Discord
+  only hide in the tray when their window closes, so for them the second step
+  is usual. It's the same as quitting from the tray icon.
+- **No firewall question.** The app's debugging port and the Morse helper
+  only listen on this computer, so Windows Firewall has nothing to ask about.
+- **Your Morse folder is `%USERPROFILE%\.morse`** (`C:\Users\you\.morse`).
+  On macOS and Linux, Morse makes its files readable by you only. Windows
+  doesn't use those settings. Instead, your user folder can only be opened by
+  you, administrators and Windows itself, and the Morse folder keeps those
+  permissions. Morse doesn't change them. If you move the folder with
+  `MORSE_HOME` to a shared drive, `morse doctor` warns you, because other
+  people may be able to read your API keys there.
+- **It never changes the app.** Most Windows apps are signed too, and Morse
+  only reads them.
+
+### Things to know on Windows
+
+- **Ctrl+Shift+Space**, because Alt+Space opens the window menu on Windows
+  (and PowerToys Run). In VS Code, Ctrl+Shift+Space also shows hints for a
+  function. If that's what you see, change Morse's shortcut in the bar's
+  settings.
+- **Colors** show in Windows Terminal, PowerShell and the old console. Output
+  saved to a file has none, and `NO_COLOR=1` turns them off. In the old
+  console, some fonts show the dots in `morse apps` as question marks.
+  Windows Terminal's font has them.
+- **Files you edit in Notepad still load**, whatever line endings Notepad
+  saves with. Morse writes its own files with Unix line endings, which every
+  editor on Windows reads.
+- **Microsoft Store versions** (Spotify from the Store) run from a protected
+  folder and may ignore the debugging switch. `morse apps` marks them.
+  Install the app from its own website instead.
+- **Apps built on Edge's WebView2** (the new Teams, the new Outlook,
+  WhatsApp) aren't Chromium apps Morse can start with the switch. Morse can't
+  connect to them for now.
+
+### Popular apps on Windows
+
+As on the Mac: all of these should work, and none has been tried on Windows
+yet.
+
+| App | How it installs | What to expect |
+|---|---|---|
+| Slack | Squirrel, in `%LOCALAPPDATA%\slack` | Hides in the tray when closed, so `--restart` ends it after 10 seconds. |
+| Discord | Squirrel, in `%LOCALAPPDATA%\Discord` | Its update check runs first. Morse waits for the real app. |
+| Spotify | `%APPDATA%\Spotify` from spotify.com | Chromium Embedded Framework, not Electron. The Store version may not work. |
+| VS Code | `%LOCALAPPDATA%\Programs\Microsoft VS Code`, or Program Files | Morse starts `Code.exe`, not the `code` command. |
+| Notion | `%LOCALAPPDATA%\Programs\Notion` | Should work like Slack. |
+| Obsidian | `%LOCALAPPDATA%\Programs\Obsidian` | Works on Linux. |
+| Figma | Squirrel, in `%LOCALAPPDATA%\Figma` | The panels and toolbars can change, not the design itself. |
+
+### Fuses, on both
+
+Electron apps can lock some features when they're built (`morse fuses <app>`
+shows them). None of them turns off the debugging switch, so none of them
+stops Morse:
+
+- **`RunAsNode`**: when it's on and your terminal has
+  `ELECTRON_RUN_AS_NODE` set, the app would start as plain Node.js with no
+  window. Morse clears that setting (and `NODE_OPTIONS`) for the app it
+  starts.
+- **`EnableNodeCliInspectArguments`** off: the app's background process
+  can't be debugged with `--inspect`. Morse doesn't use it.
+- **ASAR integrity** on: the app checks its own files. Morse never changes
+  them.
+
+What does stop Morse is an app that quits when it sees the debugging switch,
+or ignores it. `morse launch` then says the app "never opened its debugging
+port".
+
 ## Tested on
 
 Real apps, downloaded from their official releases and installed the way their
@@ -245,7 +426,8 @@ What these apps turned up, now fixed:
 Not tested: Microsoft's own VS Code build, Slack, Discord, Signal and Spotify
 (their downloads aren't reachable from the test machine, or they need
 an account), Flatpak and Snap installs, macOS, Windows and Wayland. Signing in
-to anything wasn't tested.
+to anything wasn't tested. For macOS and Windows, see what's ready and how to
+check it in [macOS](#macos) and [Windows](#windows).
 
 ### Websites
 
@@ -316,5 +498,9 @@ renamed to `tunes`, with the app next to it, unpacked or as
 
 Real installed apps (VSCodium, Obsidian, Joplin) are under
 [Tested on](#tested-on). Not tested: Slack, Discord, Microsoft's VS Code or
-Spotify, macOS and Windows (quitting with AppleScript or taskkill, `.app`
-bundles, Squirrel installs), and Wayland.
+Spotify, macOS and Windows, and Wayland. The macOS and Windows parts (reading
+`.app` bundles, Squirrel installs and Start menu shortcuts, quitting with
+AppleScript or taskkill, starting apps, the fuses in a Mac app) are checked
+on Linux against copies of real app folders and real file formats
+([`tests/platforms.test.js`](../tests/platforms.test.js)), not on the real
+systems.

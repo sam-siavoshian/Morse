@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>checkout-api · Logline</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; display: grid; grid-template-rows: 50px 44px 1fr 28px; background: #0b0e14; color: #c9d1d9; font: 13px/1.4 system-ui, sans-serif; }
+  .hd { display: flex; align-items: center; gap: 16px; padding: 0 16px; background: #11151c; border-bottom: 1px solid #1f2630; }
+  .hd b { color: #fff; font-size: 15px; } .hd .src { color: #8b949e; }
+  .hd .live { margin-left: auto; color: #3fb950; font-size: 12px; }
+  .tb { display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid #1f2630; }
+  .tb input { width: 320px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: inherit; padding: 6px 10px; font: inherit; }
+  .tb span { color: #8b949e; }
+  .vp { position: relative; overflow-y: auto; min-height: 0; font: 12px/24px ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .sz { position: relative; }
+  .row { position: absolute; left: 0; right: 0; top: 0; height: 24px; display: flex; gap: 14px; padding: 0 16px; white-space: nowrap; border-bottom: 1px solid #12161d; }
+  .row:hover { background: #161b22; }
+  .row .ts { color: #6e7681; } .row .lv { width: 46px; font-weight: 600; } .row .svc { width: 84px; color: #79c0ff; overflow: hidden; } .row .msg { overflow: hidden; text-overflow: ellipsis; }
+  .ft { display: flex; align-items: center; padding: 0 16px; color: #6e7681; font-size: 12px; border-top: 1px solid #1f2630; }
+</style>
+</head>
+<body>
+  <div class="hd"><b>Logline</b><span class="src">checkout-api · production · last 24h</span><span class="live">● Live</span></div>
+  <div class="tb"><input placeholder="Filter logs" aria-label="Filter logs"><span>5,000 lines</span></div>
+  <div class="vp" role="log" aria-label="Log lines"><div class="sz"></div></div>
+  <div class="ft">Showing newest at the bottom</div>
+<script>
+// A virtualized log view: 5,000 lines, but only the rows on screen (plus a
+// few) exist. As you scroll, the same row elements are reused for other lines.
+// The level is just text (with an inline color).
+const N = 5000, H = 24;
+let seed = 7;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const pick = a => a[Math.floor(rnd() * a.length)];
+const SVC = ["checkout", "payments", "cart", "auth", "inventory", "emailer"];
+const MSG = {
+  DEBUG: ["cache lookup key=cart:%d hit=%b", "span finished in %dms", "retry budget %d/10", "flushing %d metrics"],
+  INFO: ["GET /api/cart/%d 200 in %dms", "order %d created", "user %d signed in", "webhook delivered to shop %d", "POST /api/checkout 201 in %dms"],
+  WARN: ["slow query on orders (%dms)", "retrying payment capture for order %d", "rate limit at 80%% for key %d"],
+  ERROR: ["payment provider timeout after %dms", "order %d failed: card declined", "database connection reset (pool %d)", "unhandled exception in /api/checkout: TypeError"],
+};
+const COLOR = { DEBUG: "#6e7681", INFO: "#58a6ff", WARN: "#d29922", ERROR: "#f85149" };
+const lines = [];
+for (let i = 0; i < N; i++) {
+  const r = rnd();
+  const lv = r < 0.25 ? "DEBUG" : r < 0.8 ? "INFO" : r < 0.92 ? "WARN" : "ERROR";
+  const t = new Date(Date.UTC(2026, 9, 24, 0, 0, 0) + i * 17000 + Math.floor(rnd() * 900));
+  const msg = pick(MSG[lv]).replace(/%d/g, () => String(Math.floor(rnd() * 9000) + 100)).replace("%b", rnd() < 0.5 ? "true" : "false").replace("%%", "%");
+  lines.push({ ts: t.toISOString().slice(11, 23), lv, svc: pick(SVC), msg: `${msg} #${i + 1}` });
+}
+const vp = document.querySelector(".vp"), sz = document.querySelector(".sz");
+sz.style.height = N * H + "px";
+const pool = [];
+function row() {
+  const el = document.createElement("div");
+  el.className = "row";
+  el.innerHTML = `<span class="ts"></span><span class="lv"></span><span class="svc"></span><span class="msg"></span>`;
+  sz.append(el);
+  return el;
+}
+function render() {
+  const first = Math.max(0, Math.floor(vp.scrollTop / H) - 4);
+  const count = Math.ceil(vp.clientHeight / H) + 8;
+  while (pool.length < count) pool.push(row());
+  for (let k = 0; k < pool.length; k++) {
+    const i = first + k, el = pool[k];
+    if (i >= N) { el.hidden = true; continue; }
+    el.hidden = false;
+    const L = lines[i];
+    el.dataset.index = i;
+    el.style.transform = `translateY(${i * H}px)`;
+    const [ts, lv, svc, msg] = el.children;
+    ts.textContent = L.ts; lv.textContent = L.lv; lv.style.color = COLOR[L.lv]; svc.textContent = L.svc; msg.textContent = L.msg;
+  }
+}
+vp.addEventListener("scroll", render, { passive: true });
+addEventListener("resize", render);
+render();
+</script>
+</body>
+</html>

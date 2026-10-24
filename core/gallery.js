@@ -323,7 +323,7 @@ export const SUBMIT_MAX_URL = 7500;
 // names what was pointed at with the page's own words, and `from` the page a
 // captured element came from (its full address and title).
 export function forGallery(mod) {
-  const { enabled, history, imported, gallery, refined, fp, fixShared, target, from, ...rest } = mod || {}; // self-heal hook: fp, fixShared
+  const { enabled, history, imported, gallery, refined, fp, fixShared, target, from, pack, ...rest } = mod || {}; // self-heal hook: fp, fixShared; packs hook: pack
   return rest;
 }
 

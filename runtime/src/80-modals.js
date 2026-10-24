@@ -177,8 +177,8 @@ async function showShare(m) {
 }
 function showImport() {
   openModal(`
-    <header><b>Install a shared mod</b><small>Paste a share link, or the text of a mod file.</small><button data-a="close">×</button></header>
-    <textarea class="code" data-k="src" spellcheck="false" placeholder="https://…/install.html#m=…" aria-label="Share link or mod file"></textarea>
+    <header><b>Install a shared mod</b><small>Paste a share link, the address of a pack, or the text of a mod file.</small><button data-a="close">×</button></header>
+    <textarea class="code" data-k="src" spellcheck="false" placeholder="https://…/install.html#m=…" aria-label="Share link, pack address or mod file"></textarea>
     <footer><button data-a="close">Cancel</button><button class="primary" data-a="go">Next</button></footer>`);
   // user control: say what it does before anything is installed (63-control.js)
   modal.querySelector("[data-a=go]").onclick = () => reviewImport(modal.querySelector("[data-k=src]").value);

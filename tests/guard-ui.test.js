@@ -103,7 +103,7 @@ test("a feedback loop with the page's framework: paused, the page keeps working"
   const { page, id } = await open({ title: "Mark seen tasks", js: `morse.watch(".item", el => el.setAttribute("data-seen", ""));` }, "?framework");
   await paused(page, id, "loop");
   await usable(page);
-  await said(page, id, "Paused “Mark seen tasks” because it was slowing this page down", SLOW, "It kept running again every time the page changed.");
+  await said(page, id, "Paused “Mark seen tasks” because it was slowing this page down.", SLOW, "It kept running again every time the page changed.");
   await page.close();
 });
 
@@ -112,7 +112,7 @@ test("a fast interval doing real work: paused; Turn back on runs it again under 
   const { page, id } = await open({ title: "Busy clock", js });
   await paused(page, id, "slow");
   await usable(page);
-  const row = await said(page, id, "Paused “Busy clock” because it was slowing this page down", SLOW, "It kept this page busy most of the time.");
+  const row = await said(page, id, "Paused “Busy clock” because it was slowing this page down.", SLOW, "It kept this page busy most of the time.");
   // The person turns it back on: it runs, and is paused again for the same reason.
   const before = (await readMod(id)).paused.at;
   await row.locator("button", { hasText: "Turn back on" }).click();
@@ -128,7 +128,7 @@ test("a heavy watch on a live feed: paused; Fix it asks the model with the reaso
   const { page, id } = await open({ title: "Bold new tasks", js }, "?feed");
   await paused(page, id, "slow");
   await usable(page);
-  const row = await said(page, id, "Paused “Bold new tasks” because it was slowing this page down", SLOW, "It kept this page busy most of the time.");
+  const row = await said(page, id, "Paused “Bold new tasks” because it was slowing this page down.", SLOW, "It kept this page busy most of the time.");
   await row.locator("button", { hasText: "Fix it" }).click();
   const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "null"));
   await until(async () => { const s = await status(); return s.open && s.phase === "result"; }, 30000, "the fix");
@@ -148,7 +148,7 @@ test("CSS that hides everything is never applied: paused, the page stays visible
   await paused(page, id, "hid");
   await usable(page);
   assert.equal(await page.locator("style[data-morse-css]").count(), 0);
-  await said(page, id, "Paused “Hide everything” because it hid this page", "Paused because it hid this page.", "It would have hidden everything on the page.");
+  await said(page, id, "Paused “Hide everything” because it hid this page.", "Paused because it hid this page.", "It would have hidden everything on the page.");
   await page.close();
 });
 
@@ -158,7 +158,7 @@ test("desktop: `while (true) {}` in a mod freezes the page; Morse stops it, turn
   assert.equal(m.paused.reloaded, true);
   await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: scaled(30000) });
   await usable(page);
-  await said(page, id, "Paused “Spin” because it froze this page", "Paused because it froze this page.", "Morse stopped it and reloaded the page.");
+  await said(page, id, "Paused “Spin” because it froze this page.", "Paused because it froze this page.", "Morse stopped it and reloaded the page.");
   await page.close();
 });
 
@@ -171,7 +171,7 @@ test("desktop: a click handler that never returns is stopped the same way", { sk
   assert.ok(Date.now() - t0 < 15000, "recovered within seconds");
   await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: scaled(30000) });
   await usable(page);
-  await said(page, id, "Paused “Spin on click” because it froze this page", "Paused because it froze this page.", "Morse stopped it and reloaded the page.");
+  await said(page, id, "Paused “Spin on click” because it froze this page.", "Paused because it froze this page.", "Morse stopped it and reloaded the page.");
   await page.close();
 });
 
@@ -193,7 +193,7 @@ test("where a frozen page can't be stopped (the extension), a loop with no way o
     assert.ok(lag < 100, "the page never froze");
     const t = ui(page, ".ctl-toast:not([hidden])");
     await t.waitFor({ timeout: 10000 });
-    assert.equal((await t.locator(".ctl-msg span").textContent()).trim(), "Paused “Spin” because it would freeze this page");
+    assert.equal((await t.locator(".ctl-msg span").textContent()).trim(), "Paused “Spin” because it would freeze this page.");
     assert.deepEqual(errors, []);
   } finally { await c.close(); await own.close(); }
 });

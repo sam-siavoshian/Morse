@@ -12,6 +12,8 @@
 //   node demo/ui-catalog.js --out=/tmp/ui --only=panel   audit run, docs/ui untouched
 //   node demo/ui-catalog.js --theme=dark --width=1100          one theme, one width
 //   node demo/ui-catalog.js --no-axe                     skip axe-core (demo/axe.js) on each state
+//   DISPLAY=:99 node demo/ui-catalog.js --only=extension   the extension's own pages
+//                                   (welcome, practice, popup) need the real extension, headful
 //
 // Needs Playwright (resolved from the global install).
 import { createRequire } from "node:module";
@@ -44,6 +46,8 @@ const server = http.createServer(async (req, res) => {
   try {
     const headers = { "Content-Type": TYPES[path.extname(file)] || "application/octet-stream", "Cache-Control": "no-store" };
     if (p.startsWith("/demo/sites/parley/")) headers["Content-Security-Policy"] = "script-src 'self'";
+    // round 4: a page that enforces Trusted Types, as VS Code's window does
+    if (/[?&]tt=1/.test(req.url)) headers["Content-Security-Policy"] = "require-trusted-types-for 'script'";
     res.writeHead(200, headers).end(await fs.readFile(file));
   } catch { res.writeHead(404).end("not found"); }
 });
@@ -54,7 +58,8 @@ const results = [];
 const axeTally = new Map(); // axe rule -> states where it broke
 const TIMED = new Set(["effect", "pulse", "motion", "radar"]);
 // a fake microphone (a tone) for the voice states; Web Speech is stubbed per page
-const browser = await chromium.launch({ args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] });
+const launchBrowser = () => chromium.launch({ args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] });
+let browser = await launchBrowser();
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const LONG_ERROR = "TypeError: Cannot read properties of null (reading 'addEventListener') at morse.watch callback (mod.js:14:22) — the selector #toolbar > div.controls:nth-of-type(2) matched nothing after the app re-rendered the player";
@@ -185,7 +190,7 @@ async function audit(page, clip) {
       } else if (r.right > W + 0.5 || r.left < -0.5 || r.top < -0.5 || r.bottom > H + 0.5) out.push(`${name(el)} is outside the viewport (${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}×${Math.round(r.height)})`);
       if (clip && !(r.right > clip.x && r.left < clip.x + clip.width && r.bottom > clip.y && r.top < clip.y + clip.height)) continue;
       // anything that sticks out of the bar / panel / card / toast it belongs to
-      const box = el.parentElement && el.closest(".bar, .panel, .card, .toast, .gm-tb, .gm-pop, .gm-note, .gm-menu, .bmenu, .a11y-group, .ra, .ds, .ctl-toast, .gl-trial");
+      const box = el.parentElement && el.closest(".bar, .panel, .card, .toast, .gm-tb, .gm-pop, .gm-note, .gm-menu, .bmenu, .a11y-group, .ra, .ds, .ctl-toast, .gl-trial, .so-strip, .ob-win, .ys-row");
       if (box && box !== el && !el.closest(".list, .card textarea, .tip, .gm-chips, .pane")) {
         const b = box.getBoundingClientRect();
         if (r.right > b.right + 0.5 || r.left < b.left - 0.5) out.push(`${name(el)} sticks out of ${name(box)}`);
@@ -212,7 +217,9 @@ async function audit(page, clip) {
       }
       // radii: 6/10/14 from the tokens; 4 for kbd, tags and controls nested in a 6px control; 2 for the selection frame; round for switch, swatches, dots
       const rad = parseFloat(cs.borderTopLeftRadius);
-      if (rad && ![2, 4, 6, 10, 14].includes(rad) && !(rad >= br.height / 2 - 0.5) && !/%/.test(cs.borderTopLeftRadius)) out.push(`${name(el)} radius ${rad}px is not 4/6/10/14`);
+      // (and 1.5 for the 6px status dot, one of the radar mark's squares)
+      const dot = rad === 1.5 && Math.round(br.width) === 6 && Math.round(br.height) === 6;
+      if (rad && !dot && ![2, 4, 6, 10, 14].includes(rad) && !(rad >= br.height / 2 - 0.5) && !/%/.test(cs.borderTopLeftRadius)) out.push(`${name(el)} radius ${rad}px is not 4/6/10/14`);
       // 1px lines (the picker outline is 1.5 on purpose and is an outline, not a border)
       for (const side of ["Top", "Right", "Bottom", "Left"]) {
         const w = parseFloat(cs[`border${side}Width`]);
@@ -220,7 +227,7 @@ async function audit(page, clip) {
       }
     }
     // icons: one set, 16px, 1.5px strokes, round caps (the radar mark has its own sizes)
-    for (const svg of root.querySelectorAll("svg:not(.radar)")) {
+    for (const svg of root.querySelectorAll("svg:not(.radar):not(.ob-win-check)")) { // (the first-save check is drawn over the 30px mark)
       if (!visible(svg) || opacityOf(svg.parentElement) < 0.02) continue;
       const b = svg.getBoundingClientRect();
       if (clip && !(b.right > clip.x && b.left < clip.x + clip.width && b.bottom > clip.y && b.top < clip.y + clip.height)) continue;
@@ -229,7 +236,7 @@ async function audit(page, clip) {
       if (cs.stroke !== "none" && parseFloat(cs.strokeWidth) !== 1.5) out.push(`icon in ${name(svg.parentElement)} has a ${cs.strokeWidth} stroke, not 1.5px`);
     }
     // host-style leakage: the overlay must look the same on any page
-    for (const sel of [".bar", ".panel", ".card", ".toast", ".hl span", ".gm-tb", ".gm-pop", ".gm-menu", ".bmenu", ".pane", ".ra", ".ds", ".ctl-toast", ".gl-trial"]) {
+    for (const sel of [".bar", ".panel", ".card", ".toast", ".hl span", ".gm-tb", ".gm-pop", ".gm-menu", ".bmenu", ".pane", ".ra", ".ds", ".ctl-toast", ".gl-trial", ".so-strip", ".ob-win"]) {
       const el = root.querySelector(sel);
       if (!el || !visible(el)) continue;
       const cs = getComputedStyle(el);
@@ -300,7 +307,16 @@ const OK = (over = {}) => ({ ok: true, title: "Airier toolbar", css: "#toolbar {
 async function focusVisible(page, loc) {
   await page.keyboard.press("Shift");
   await loc.focus();
-  await sleep(200); // past the 120ms transition
+  // past the 120ms transition (on a busy machine a frame can come late: look again, up to a second)
+  let verdict = "";
+  for (let i = 0; i < 5; i++) {
+    await sleep(200);
+    verdict = await check(loc);
+    if (!verdict) break;
+  }
+  return verdict;
+}
+function check(loc) {
   return loc.evaluate(el => {
     if (!el.matches(":focus-visible")) return "focus does not match :focus-visible";
     // the indicator itself: a 2px ring (on the control, its track, or its field), or a highlighted menu row
@@ -1629,6 +1645,541 @@ async function leftoverStates(theme, width) {
   }
 }
 
+// ================================================================ round 4
+// Show me once, Your style, guards, first run (in the bar and on the
+// extension's own pages), and the UI on a page that enforces Trusted Types.
+
+// A search field and a sign-in on the catalog page, for recording typing.
+async function addForm(p) {
+  await p.evaluate(() => {
+    const f = document.createElement("form");
+    f.id = "soform";
+    f.style.cssText = "display:flex;gap:8px;flex-wrap:wrap";
+    f.onsubmit = e => e.preventDefault();
+    f.innerHTML = `<input id="q" aria-label="Search mail" placeholder="Search mail" style="height:32px;padding:0 10px;font:inherit;color:inherit;background:transparent;border:1px solid currentColor;border-radius:6px">
+      <input id="pw" type="password" aria-label="Password" placeholder="Password" style="height:32px;padding:0 10px;font:inherit;color:inherit;background:transparent;border:1px solid currentColor;border-radius:6px">`;
+    document.querySelector("main").prepend(f);
+  });
+}
+const strip = p => ui(p, ".so-strip");
+async function clickPage(p, sel) {
+  const b = await p.locator(sel).first().boundingBox();
+  await p.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+  await sleep(120);
+}
+
+// ---- Show me once (64-show-once.js)
+async function showOnceStates(theme, width) {
+  const n = width < 600, H = n ? 844 : 720;
+  let p = await open({ theme, width, height: H });
+  await addForm(p);
+  await openBar(p);
+  await p.mouse.move(5, H / 2); await sleep(150);
+  await shot(p, "show-once", "entry-chip", ui(p, ".bar"), { note: "the way in: a chip after the suggestions, past a hairline" });
+  if (!n) {
+    await ui(p, ".so-sug").hover(); await sleep(450);
+    await shot(p, "show-once", "entry-chip-hover", ui(p, ".sugs"), { pad: 8 });
+    await shot(p, "show-once", "entry-chip-focus", ui(p, ".sugs"), { pad: 8, checks: [await focusVisible(p, ui(p, ".so-sug"))] });
+  }
+  await ui(p, ".more").click(); await ui(p, ".bmenu").waitFor(); await sleep(200);
+  await ui(p, ".bmenu [data-m=showonce]").hover(); await sleep(150);
+  await shot(p, "show-once", "menu-item", [ui(p, ".bmenu"), ui(p, ".more")], { pad: 8, note: "Show me once is the first item of the ⋯ menu" });
+  await ui(p, ".bmenu [data-m=showonce]").click(); await strip(p).waitFor(); await sleep(400);
+  await p.mouse.move(5, 5);
+  await shot(p, "show-once", "strip-empty", strip(p), { pad: 16, note: "watching, before the first step; the dot pulses on purpose (recording), still with reduced motion" });
+  await clickPage(p, "#toolbar [aria-label=Play]");
+  await clickPage(p, "#q"); await p.keyboard.type("invoice", { delay: 10 }); await sleep(100);
+  await p.mouse.move(5, 5); await sleep(350);
+  await shot(p, "show-once", "strip-steps", strip(p), { pad: 16 });
+  await clickPage(p, "#pw"); await p.keyboard.type("correct horse", { delay: 10 }); await sleep(100);
+  await p.mouse.move(5, 5); await sleep(350);
+  await shot(p, "show-once", "strip-hidden", strip(p), { pad: 16, note: "a password: the step is kept, the value never is" });
+  for (const s of ["#toolbar [aria-label=Next]", "#toolbar [aria-label=Previous]", "#long"]) await clickPage(p, s);
+  await p.mouse.move(5, 5); await sleep(350);
+  await shot(p, "show-once", "strip-many", strip(p), { pad: 16, note: "the four newest steps, and how many came before" });
+  if (!n) {
+    await strip(p).locator("li.so-last").hover(); await sleep(200);
+    await shot(p, "show-once", "strip-remove-hover", strip(p), { pad: 16 });
+    await shot(p, "show-once", "strip-remove-focus", strip(p), { pad: 16, checks: [await focusVisible(p, strip(p).locator("li.so-last .so-rm"))] });
+    await shot(p, "show-once", "strip-stop-focus", strip(p), { pad: 16, checks: [await focusVisible(p, strip(p).locator("[data-so=stop]"))] });
+    await blur(p);
+  }
+  await shadowEval(p, r => r.querySelector(".so-strip").classList.add("top")); await p.mouse.move(5, H - 5); await sleep(200);
+  await shot(p, "show-once", "strip-top", strip(p), { pad: 16, note: "moved to the top when what you're about to click is under it" });
+  await strip(p).locator("[data-so=stop]").click();
+  await ui(p, ".so-card").waitFor(); await sleep(400);
+  await ui(p, ".so-card .eyebrow, .so-card header").first().hover(); await sleep(150);
+  await shot(p, "show-once", "steps-in-bar", ui(p, ".bar"), { note: "after Stop: the steps above the input, and chips for what people usually want" });
+  if (!n) {
+    await shot(p, "show-once", "steps-forget-focus", ui(p, ".so-card header"), { pad: 8, checks: [await focusVisible(p, ui(p, ".so-card [data-so=forget]"))] });
+    await shot(p, "show-once", "steps-again-focus", ui(p, ".so-card header"), { pad: 8, checks: [await focusVisible(p, ui(p, ".so-card [data-so=again]"))] });
+  }
+  await submit(p, "add a button to the toolbar that does these steps");
+  await stream(p, 12, 25);
+  await shot(p, "show-once", "working", ui(p, ".bar"), { note: "working: the steps fold away (they still go along)" });
+  await finish(p, OK({ title: "Archive button", css: "", js: "morse.el('button')" }));
+  await shot(p, "show-once", "result", ui(p, ".bar"));
+  await close(p);
+
+  // errors: the model failed; Stop with nothing recorded; cancelled
+  p = await open({ theme, width, height: H });
+  await openBar(p);
+  await ui(p, ".so-sug").click(); await strip(p).waitFor(); await sleep(300);
+  await clickPage(p, "#toolbar [aria-label=Play]");
+  await strip(p).locator("[data-so=stop]").click(); await ui(p, ".so-card").waitFor(); await sleep(300);
+  await shot(p, "show-once", "steps-one", ui(p, ".bar"), { note: "one step: no remove button (Forget is the way out)" });
+  await submit(p, "do these steps when I press Ctrl+Shift+P");
+  await finish(p, { ok: false, error: LONG_ERROR });
+  await shot(p, "show-once", "error", ui(p, ".bar"));
+  await p.keyboard.press("Escape"); await sleep(200);
+  if (await ui(p, ".bar").isVisible()) { await p.keyboard.press("Escape"); await sleep(200); }
+  await toastGone(p);
+  await openBar(p);
+  await ui(p, ".so-sug").click(); await strip(p).waitFor(); await sleep(300);
+  await strip(p).locator("[data-so=stop]").click(); await sleep(400);
+  await shot(p, "show-once", "stopped-empty-toast", ui(p, ".toast"), { pad: 16 });
+  await toastGone(p);
+  await openBar(p);
+  await ui(p, ".so-sug").click(); await strip(p).waitFor(); await sleep(300);
+  await clickPage(p, "#toolbar [aria-label=Next]");
+  await p.keyboard.press("Escape"); await sleep(400);
+  await shot(p, "show-once", "cancelled-toast", ui(p, ".toast"), { pad: 16 });
+  await close(p);
+}
+
+// ---- Your style (72-style.js)
+async function styleStates(theme, width) {
+  const n = width < 600, H = n ? 844 : 720;
+  // the live review in the bar
+  let p = await open({ theme, width, height: H, extra: "&style=plain" });
+  await openBar(p);
+  await ui(p, ".in").fill("Georgia font, bigger text and underline links everywhere except figma");
+  await ui(p, ".in").press("Enter");
+  await ui(p, ".ys-sheet").waitFor({ timeout: 6000 }); await sleep(300);
+  await shot(p, "style", "review", ui(p, ".bar"), { note: "“…everywhere”: shown live, with Save and Undo; except figma is a note" });
+  if (!n) await shot(p, "style", "review-save-focus", ui(p, ".actions"), { pad: 8, checks: [await focusVisible(p, ui(p, "[data-a=ys-save]"))] });
+  await ui(p, "[data-a=ys-undo]").click(); await sleep(400);
+  await shot(p, "style", "review-undone-toast", ui(p, ".toast"), { pad: 16 });
+  await toastGone(p);
+  await openBar(p);
+  await ui(p, ".in").fill("bigger text everywhere and make headings less shouty");
+  await ui(p, ".in").press("Enter");
+  await ui(p, ".ys-sheet").waitFor({ timeout: 6000 }); await sleep(300);
+  await shot(p, "style", "review-fit-switch", ui(p, ".bar"), { note: "something only the model can do: fit it per site, switch on" });
+  await ui(p, "[data-a=ys-undo]").click(); await sleep(300); await toastGone(p);
+  await openBar(p);
+  await ui(p, ".in").fill("a nicer font everywhere");
+  await ui(p, ".in").press("Enter");
+  await ui(p, ".ys-sheet").waitFor({ timeout: 6000 }); await sleep(300);
+  await shot(p, "style", "review-which-font", ui(p, ".bar"), { note: "a font without a name: says how to name it" });
+  await close(p);
+
+  // the Mods panel row: on, off everywhere, off here, fitted
+  for (const kind of ["1", "off", "except", "fitted"]) {
+    p = await open({ theme, width, height: H, mods: 1, extra: `&style=${kind}` });
+    await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel .ys-row").waitFor(); await sleep(300); await p.mouse.move(2, 2);
+    const name = { 1: "row-on", off: "row-off", except: "row-not-here", fitted: "row-fitted" }[kind];
+    await shot(p, "style", name, ui(p, ".ys-row"), { pad: 8 });
+    if (kind === "1") {
+      await shot(p, "style", "panel", ui(p, ".panel"), { note: "Your style sits above this site's own mods" });
+      if (!n) {
+        await ui(p, ".ys-row [data-y=not-here]").hover(); await sleep(150);
+        await shot(p, "style", "row-button-hover", ui(p, ".ys-row"), { pad: 8 });
+        await shot(p, "style", "row-fit-focus", ui(p, ".ys-row"), { pad: 8, checks: [await focusVisible(p, ui(p, ".ys-row [data-y=fit]"))] });
+        await shot(p, "style", "row-switch-focus", ui(p, ".ys-row"), { pad: 8, checks: [await focusVisible(p, ui(p, ".ys-row .sw input"))] });
+        await blur(p);
+      }
+      // Not on this site, with Undo
+      await ui(p, ".ys-row [data-y=not-here]").click(); await ui(p, ".ctl-toast").waitFor({ timeout: 4000 }); await sleep(300);
+      await shot(p, "style", "not-here-toast", ui(p, ".ctl-toast"), { pad: 16, note: "off on this site, with Undo" });
+      await shot(p, "style", "row-after-not-here", ui(p, ".ys-row"), { pad: 8 });
+      await ui(p, ".ctl-toast button").first().click(); await sleep(500);
+      await ui(p, ".ctl-toast").waitFor({ timeout: 3000 }).catch(() => {});
+      await shot(p, "style", "back-on-toast", ui(p, ".ctl-toast"), { pad: 16 });
+      // the switch: off everywhere, with Undo
+      await ui(p, ".ys-row .sw").click(); await sleep(500);
+      await shot(p, "style", "off-everywhere-toast", ui(p, ".ctl-toast"), { pad: 16 });
+    }
+    await close(p);
+  }
+
+  // Settings: Your style, block by block, and the sites list
+  p = await open({ theme, width, height: H, mods: 1, extra: "&style=1" });
+  await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel .ys-row").waitFor(); await sleep(200);
+  await ui(p, ".ys-row [data-y=change]").click();
+  await ui(p, ".pane [data-ys-sec]").waitFor(); await sleep(500); await blur(p); await p.mouse.move(2, 2);
+  const sec = ui(p, ".pane [data-ys-sec]");
+  const rowAt = async (sel, state, note) => {
+    const r = ui(p, `.pane [data-ys-sec] ${sel}`);
+    await r.evaluate(el => el.scrollIntoView({ block: "start" })); await sleep(150);
+    await shot(p, "style", state, ui(p, ".pane"), { pad: 0, note });
+  };
+  await rowAt("h4", "settings-top", "Your style, its words, font, text size, space between lines");
+  await rowAt(".srow:has([data-ys=soft])", "settings-switches", "the switches, each with one line of help");
+  await rowAt(".srow:has([data-ys=adapt])", "settings-sites", "fit per site, the sites and apps it skips, start over");
+  if (!n) {
+    await shot(p, "style", "settings-font-focus", ui(p, ".pane .srow:has([data-ys=font])"), { pad: 4, checks: [await focusVisible(p, ui(p, ".pane [data-ys=font]"))] });
+    await shot(p, "style", "settings-size-focus", ui(p, ".pane .srow:has([data-ys^='size:'])"), { pad: 4, checks: [await focusVisible(p, ui(p, ".pane [data-ys='size:2']"))] });
+    await shot(p, "style", "settings-chip-focus", ui(p, ".pane .ys-except"), { pad: 4, checks: [await focusVisible(p, ui(p, ".pane .ys-chip .x"))] });
+    await blur(p);
+  }
+  await ui(p, ".pane [data-ys=add-except]").fill("notion.so");
+  await ui(p, ".pane [data-ys=add-except]").press("Enter"); await sleep(600);
+  await ui(p, ".pane .ys-except").evaluate(el => el.scrollIntoView({ block: "center" })); await sleep(150);
+  await shot(p, "style", "settings-site-added", ui(p, ".pane .ys-except"), { pad: 4 });
+  for (let i = 0; i < 4; i++) {
+    const x = ui(p, ".pane .ys-chip .x");
+    if (!(await x.count())) break;
+    await x.click(); await sleep(450);
+  }
+  await ui(p, ".pane .ys-except").evaluate(el => el.scrollIntoView({ block: "center" })); await sleep(150); await blur(p);
+  await shot(p, "style", "settings-no-sites", ui(p, ".pane .ys-except"), { pad: 4, note: "none: it runs everywhere" });
+  await close(p);
+  // Settings before there is a style
+  p = await open({ theme, width, height: H, extra: "&style=plain" });
+  await openBar(p);
+  await p.keyboard.press("Control+Comma"); await sleep(400);
+  await ui(p, ".pane [data-ys-sec]").evaluate(el => el.scrollIntoView({ block: "start" })); await sleep(150); await blur(p);
+  await shot(p, "style", "settings-none", ui(p, ".pane"), { pad: 0, note: "no style yet: Set up…" });
+  await close(p);
+
+  // fit to this site: the model's fix, for review
+  p = await open({ theme, width, height: H, mods: 1, extra: "&style=1" });
+  await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel .ys-row").waitFor(); await sleep(200);
+  await ui(p, ".ys-row [data-y=fit]").click();
+  await p.waitForFunction(() => globalThis.__cat.gen, null, { timeout: 6000 });
+  await stream(p, 10, 25);
+  await shot(p, "style", "fit-working", ui(p, ".bar"));
+  await finish(p, OK({ title: `Your style for ${new URL(BASE).host}`, css: ".app { max-width: 100vw }" }));
+  await shot(p, "style", "fit-review", ui(p, ".bar"), { note: "the fix is a mod for this site that belongs to Your style; the meta says so" });
+  await close(p);
+}
+
+// ---- guards (64-guard.js)
+async function guardStates(theme, width) {
+  const n = width < 600, H = n ? 844 : 720;
+  let p = await open({ theme, width, height: H, extra: "&guard=1" });
+  await ui(p, ".ctl-toast").waitFor({ timeout: 4000 }).catch(() => {}); await sleep(300);
+  await shot(p, "guard", "froze-toast", ui(p, ".ctl-toast"), { pad: 16, note: "on the next load after a mod froze the page" });
+  await ui(p, ".ctl-toast").evaluate(el => (el.hidden = true));
+  await p.evaluate(() => document.dispatchEvent(new CustomEvent("morse:paused", { detail: JSON.stringify({ id: "mod43" }) })));
+  await ui(p, ".ctl-toast").waitFor({ timeout: 4000 }); await sleep(300);
+  await shot(p, "guard", "paused-toast", ui(p, ".ctl-toast"), { pad: 16, note: "the kit paused a mod: why, Turn back on, Fix it" });
+  if (!n) await shot(p, "guard", "paused-toast-focus", ui(p, ".ctl-toast"), { pad: 16, checks: [await focusVisible(p, ui(p, ".ctl-toast button"))] });
+  await ui(p, ".ctl-toast").evaluate(el => (el.hidden = true));
+  await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel").waitFor(); await sleep(400); await p.mouse.move(2, 2);
+  for (const [id, state] of [["mod40", "row-slowing"], ["mod41", "row-froze"], ["mod42", "row-hid"], ["mod43", "row-slowing-now"]]) {
+    const row = ui(p, `article[data-id=${id}]`);
+    await row.scrollIntoViewIfNeeded().catch(() => {}); await sleep(100);
+    await shot(p, "guard", state, row, { pad: 8 });
+  }
+  if (!n) {
+    const row = ui(p, "article[data-id=mod40]");
+    await row.scrollIntoViewIfNeeded(); await ui(p, "article[data-id=mod40] [data-a=guard-on]").hover(); await sleep(150);
+    await shot(p, "guard", "row-turn-on-hover", row, { pad: 8 });
+    await shot(p, "guard", "row-fix-focus", row, { pad: 8, checks: [await focusVisible(p, ui(p, "article[data-id=mod40] [data-a=guard-fix]"))] });
+  }
+  await ui(p, "article[data-id=mod42] [data-a=guard-on]").click(); await sleep(600);
+  await ui(p, ".ctl-toast").waitFor({ timeout: 3000 }).catch(() => {});
+  await shot(p, "guard", "back-on-toast", ui(p, ".ctl-toast"), { pad: 16 });
+  await close(p);
+
+  // refusals in the bar: code that would obviously break the page never runs (core/guard.js)
+  const REFUSE = [
+    ["hide", "The change would have hidden this whole page, so Morse didn't apply it. Try other words."],
+    ["loop", "The change would have frozen this page, so Morse didn't run it. Try other words."],
+    ["wipe", "The change would have replaced this whole page, so Morse didn't run it. Try other words."],
+    ["nav", "The change would have reloaded or left this page, so Morse didn't run it. Try other words."],
+  ];
+  p = await open({ theme, width, height: H });
+  for (const [k, error] of n ? REFUSE.slice(0, 2) : REFUSE) {
+    await openBar(p); await pick(p, "#card");
+    await submit(p, "hide everything except the article");
+    await finish(p, { ok: false, error });
+    await shot(p, "guard", `refused-${k}`, ui(p, ".bar"));
+    await p.keyboard.press("Escape"); await sleep(150);
+    if (await ui(p, ".bar").isVisible()) { await p.keyboard.press("Escape"); await sleep(250); }
+    await toastGone(p);
+  }
+  // the change in the bar slowed the page down after it showed
+  await openBar(p); await pick(p, "#card");
+  await submit(p, "highlight new messages");
+  await finish(p, OK({ js: "morse.watch('.msg', m => {})" }));
+  await p.evaluate(() => { __cat.slow = { draft: { why: "loop", at: new Date().toISOString() } }; document.dispatchEvent(new CustomEvent("morse:paused", { detail: JSON.stringify({ id: "draft" }) })); });
+  await ui(p, ".ctl-toast").waitFor({ timeout: 4000 }).catch(() => {}); await sleep(300);
+  await shot(p, "guard", "draft-paused-toast", [ui(p, ".ctl-toast"), ui(p, ".bar")], { pad: 12, note: "a change still in the bar: nothing to turn off, so it says to describe it another way" });
+  await close(p);
+}
+
+// ---- first run, in the bar (59-onboarding.js): the coach, notes, progressive reveal, the first-save card
+async function firstRunStates(theme, width) {
+  const n = width < 600, H = n ? 844 : 720;
+  let p = await open({ theme, width, height: H, extra: "&onboard=new" });
+  await openBar(p);
+  await p.mouse.move(5, H / 2); await sleep(200);
+  await shot(p, "first-run", "coach-point", ui(p, ".bar"), { note: "a new user's bar: the three steps, and only the basics (no Page tools, no Show me once yet)" });
+  await pick(p, "#card");
+  await shot(p, "first-run", "coach-describe", ui(p, ".bar"), { note: "pointed: suggestions for what was picked; no Edit tools pop up yet" });
+  if (!n) await shot(p, "first-run", "coach-hide-focus", ui(p, ".ob-coach"), { pad: 8, checks: [await focusVisible(p, ui(p, ".ob-hide"))] });
+  await submit(p, "make this easier to read");
+  await stream(p, 8, 25);
+  await shot(p, "first-run", "coach-working", ui(p, ".bar"));
+  await finish(p, OK({ title: "Easier to read" }));
+  await shot(p, "first-run", "coach-keep", ui(p, ".bar"));
+  await ui(p, "[data-a=keep]").click();
+  await ui(p, ".ob-win").waitFor({ timeout: 6000 }); await sleep(1600); // past the mark settling into a check
+  await shot(p, "first-run", "first-save-card", ui(p, ".ob-win"), { pad: 16, note: "the first saved change: a card instead of the toast; it names what is new in the bar" });
+  if (!n) await shot(p, "first-run", "first-save-share-focus", ui(p, ".ob-win"), { pad: 16, checks: [await focusVisible(p, ui(p, ".ob-win [data-win=share]"))] });
+  await ui(p, ".ob-win [data-win=done]").click(); await sleep(200);
+  await openBar(p);
+  await p.mouse.move(5, H / 2); await sleep(200);
+  await shot(p, "first-run", "revealed", ui(p, ".bar"), { note: "after the first save: Page tools and Show me once are in the bar now" });
+  await close(p);
+
+  for (const [kind, state] of [["nomodel", "note-no-model"], ["noscripts", "note-user-scripts"]]) {
+    p = await open({ theme, width, height: H, extra: `&onboard=${kind}` });
+    await openBar(p); await p.mouse.move(5, H / 2); await sleep(200);
+    await shot(p, "first-run", state, ui(p, ".bar"));
+    if (!n && kind === "nomodel") await shot(p, "first-run", `${state}-close-focus`, ui(p, ".ob-note"), { pad: 8, checks: [await focusVisible(p, ui(p, ".ob-note .ob-close"))] });
+    await close(p);
+  }
+  p = await open({ theme, width, height: H, extra: "&onboard=done" });
+  await openBar(p); await pick(p, "#card");
+  await submit(p, "make this easier to read");
+  await finish(p, { ok: false, error: "Can't reach the Morse helper at 127.0.0.1:7457" });
+  await shot(p, "first-run", "error-with-action", ui(p, ".bar"), { note: "an error in plain words, with a button that does something about it" });
+  await close(p);
+}
+
+// ---- first run on the extension's own pages: the real built extension,
+// headful under Xvfb (DISPLAY), with the replies about the model stubbed so
+// each state comes out the same every time (no helper on 7457 needed).
+const PARTS = new Set(String(args.ext || "welcome,popup").split(",")); // --ext=popup: only the popup
+const extCtxs = []; // the extension's own browsers: closed (and their profiles removed) if a flow fails
+async function extensionStates() {
+  if (!process.env.DISPLAY) { console.warn("  ! extension pages need DISPLAY (Xvfb :99)"); return; }
+  const os = await import("node:os");
+  const EXT = path.join(ROOT, "dist", "extension");
+  const STATES = {
+    waiting: { kind: "none", helper: null, label: "", reason: "" },
+    found: { kind: "none", helper: { paired: false, pairing: false, label: "Claude Code", provider: "claude-code" }, label: "", reason: "" },
+    wrong: { kind: "none", helper: { paired: false, pairing: true, label: "Claude Code", provider: "claude-code" }, label: "", reason: "", pairFails: true },
+    nomodel: { kind: "none", helper: { paired: true, pairing: false, label: "No model", provider: "none" }, label: "", reason: "" },
+    connected: { kind: "helper", helper: { paired: true, label: "Claude Code", provider: "claude-code" }, label: "Claude Code · sonnet", reason: "" },
+  };
+  const stub = ([st, scripts]) => {
+    if (location.protocol !== "chrome-extension:" || !globalThis.chrome?.runtime?.sendMessage) return;
+    const real = chrome.runtime.sendMessage.bind(chrome.runtime);
+    const base = { userScripts: scripts, backend: "", providers: {}, helperModel: "", anthropicModels: ["claude-sonnet-4-5"], anthropicModel: "claude-sonnet-4-5", mods: [] };
+    const connected = st.kind !== "none";
+    chrome.runtime.sendMessage = async m => {
+      if (m?.type === "popup.state") return { ...base, ...st };
+      if (m?.type === "popup.pair") return st.pairFails || m.code === "ZZZZZZ" ? { error: "That code doesn't match the one the Morse helper shows. Check it and try again." } : { ...base, ...st };
+      if (m?.type === "popup.save") return { error: "The key was refused: invalid x-api-key" };
+      if (m?.type === "onboarding.status") return { state: {}, status: { model: { connected }, userScripts: scripts, mods: 0 } };
+      return real(m);
+    };
+  };
+  const launch = async (theme, width, height, st, scripts = true) => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "morse-ui-ext-"));
+    const ctx = await chromium.launchPersistentContext(dir, {
+      headless: false, viewport: { width, height }, deviceScaleFactor: 2, colorScheme: theme,
+      args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, "--no-sandbox"],
+    });
+    const shut = ctx.close.bind(ctx);
+    ctx.close = async () => { await shut().catch(() => {}); await fs.rm(dir, { recursive: true, force: true }).catch(() => {}); }; // a profile is ~8MB: never leave one behind
+    extCtxs.push(ctx);
+    await ctx.addInitScript(stub, [st, scripts]);
+    const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
+    const id = sw.url().split("/")[2];
+    // the welcome page the install opened: closed, it is opened again with the stub in place
+    await sleep(800);
+    for (const pg of ctx.pages()) if (pg.url().includes("welcome.html")) await pg.close();
+    return { ctx, id };
+  };
+  const extShot = async (page, area, state, theme, target, opts = {}) => {
+    const vp = page.viewportSize();
+    let clip = { x: 0, y: 0, width: vp.width, height: vp.height };
+    if (target) {
+      // in page coordinates, so a part below the fold (the checklist under the practice page at 390px) is shot whole
+      await target.scrollIntoViewIfNeeded().catch(() => {});
+      const b = await target.boundingBox(), sy = await page.evaluate(() => scrollY);
+      const pad = opts.pad ?? 12;
+      const x = Math.max(0, b.x - pad), y = Math.max(0, b.y + sy - pad);
+      clip = { x, y, width: Math.min(vp.width - x, b.width + 2 * pad), height: b.height + 2 * pad };
+    }
+    const name = `${state}${vp.width < 600 && area !== "popup" ? "-narrow" : ""}-${theme}`;
+    const file = path.join(OUT, area, `${name}.png`);
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await page.screenshot(opts.full && !target ? { path: file, fullPage: true } : { path: file, clip, fullPage: !!target });
+    const issues = (await page.evaluate(() => {
+      const out = [], W = innerWidth;
+      for (const el of document.querySelectorAll("body *")) {
+        const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+        if (!r.width || cs.visibility === "hidden" || el.closest("[hidden]")) continue;
+        if (r.right > W + 0.5 && cs.position !== "fixed") out.push(`${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""} sticks out of the page (${Math.round(r.right)} > ${W})`);
+        const text = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
+        if (text && el.scrollWidth > el.clientWidth + 1 && /hidden|clip/.test(cs.overflowX) && cs.textOverflow !== "ellipsis") out.push(`${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""} clips its text`);
+      }
+      if (document.documentElement.scrollWidth > W + 1) out.push(`the page scrolls sideways (${document.documentElement.scrollWidth} > ${W})`);
+      return out.slice(0, 6);
+    })).concat((opts.checks || []).filter(Boolean));
+    // axe-core on the whole extension page (demo/axe.js), every rule
+    if (!args["no-axe"]) {
+      const found = await axeCheck(page, { page: true }).catch(e => [{ id: "axe-failed", impact: "critical", help: e.message.split("\n")[0], targets: [] }]);
+      for (const v of found) axeTally.set(v.id, (axeTally.get(v.id) || 0) + 1);
+      issues.push(...axeLines(found));
+    }
+    results.push({ area, state: name, theme, file: path.relative(OUT, file), issues, note: opts.note || "" });
+    console.log(`  ${issues.length ? "!" : "✓"} ${area}/${name}${issues.length ? "  " + issues.join(" | ") : ""}`);
+  };
+  for (const theme of ["dark", "light"]) {
+    for (const width of PARTS.has("welcome") ? [1100, 390] : []) {
+      const n = width < 600, H = n ? 844 : 900;
+      // the welcome page: waiting for the command, the whole page
+      let { ctx, id } = await launch(theme, width, H, STATES.waiting);
+      let w = await ctx.newPage();
+      await w.goto(`chrome-extension://${id}/welcome.html`); await sleep(1200);
+      await extShot(w, "welcome", "page", theme, null, { full: true, note: "the welcome page: try it here, and the checklist that ticks itself" });
+      await extShot(w, "welcome", "model-waiting", theme, w.locator("#model"), { note: "one command connects a model" });
+      if (!n) {
+        await w.locator("#copy-setup").focus(); await w.keyboard.press("Shift"); await w.locator("#copy-setup").focus(); await sleep(150);
+        const ring = await w.locator("#copy-setup").evaluate(el => { const c = getComputedStyle(el); return el.matches(":focus-visible") && c.outlineStyle !== "none" && parseFloat(c.outlineWidth) >= 2 ? "" : "no 2px focus ring on Copy"; });
+        await extShot(w, "welcome", "copy-focus", theme, w.locator("#model .cmd"), { pad: 8, checks: [ring] });
+      }
+      // an API key that isn't one, and one that is refused
+      await w.locator("#alt summary").click();
+      await w.locator("#key").fill("my-key-123"); await w.locator("#save-key").click(); await sleep(200);
+      await extShot(w, "welcome", "key-not-a-key", theme, w.locator("#alt"), { pad: 8 });
+      await w.locator("#key").fill("sk-ant-api03-xxxx"); await w.locator("#save-key").click(); await sleep(300);
+      await extShot(w, "welcome", "key-refused", theme, w.locator("#alt"), { pad: 8 });
+      // the practice page, with sample answers
+      await w.locator("#try").click(); await sleep(900);
+      await w.mouse.move(width / 2, 300); await sleep(300);
+      await extShot(w, "practice", "sample-bar", theme, w.locator("#frame"), { note: "the practice page before any model: suggestions with sample answers" });
+      await ctx.close();
+      for (const k of ["found", "wrong", "nomodel", "connected"]) {
+        ({ ctx, id } = await launch(theme, width, H, STATES[k]));
+        w = await ctx.newPage();
+        await w.goto(`chrome-extension://${id}/welcome.html`); await sleep(1300);
+        if (k === "found") { await w.locator("#code").pressSequentially("ZZZZZZ"); await sleep(500); }
+        await extShot(w, "welcome", `model-${k}`, theme, w.locator("#model"), { note: {
+          found: "a helper running without our code: the code box", wrong: "the helper waits for a different code", nomodel: "paired, but no model set up", connected: "connected: the step ticks itself" }[k] });
+        if (k === "connected") await extShot(w, "welcome", "checklist-connected", theme, w.locator(".check"));
+        await ctx.close();
+      }
+      // the practice page's first save
+      if (!n || theme === "dark") {
+        ({ ctx, id } = await launch(theme, width, H, STATES.waiting));
+        w = await ctx.newPage();
+        await w.goto(`chrome-extension://${id}/welcome.html`); await sleep(1200);
+        const practice = () => w.frames().find(f => f.url().includes("practice.html"));
+        await w.locator("#try").click(); await sleep(700);
+        await w.keyboard.press("Tab"); await w.keyboard.press("ArrowRight"); await w.keyboard.press("Enter");
+        const end = Date.now() + 25000;
+        while (Date.now() < end && !(await practice()?.evaluate(() => getComputedStyle(document.querySelector('aside[aria-label="Sponsored"]')).display === "none").catch(() => false))) await sleep(200);
+        await sleep(1500);
+        await w.keyboard.press("Enter"); await sleep(2000);
+        await extShot(w, "practice", "first-save", theme, w.locator("#frame"), { note: "the first saved change on the practice page: the card" });
+        await ctx.close();
+      }
+    }
+    // the popup: no model; a page Morse can't run on; user scripts off
+    for (const [state, st, url, scripts] of [["no-model", STATES.waiting, "https://thedailybyte.news/", true], ["chrome-page", STATES.connected, "chrome://settings/", true],
+      ["store-page", STATES.connected, "https://chromewebstore.google.com/detail/x", true], ["user-scripts-off", STATES.connected, "https://thedailybyte.news/", false], ["ready", STATES.connected, "https://thedailybyte.news/", true]].filter(() => PARTS.has("popup"))) {
+      const { ctx, id } = await launch(theme, 380, 640, st, scripts);
+      const pg = await ctx.newPage();
+      await pg.goto(`chrome-extension://${id}/popup.html?url=${encodeURIComponent(url)}`); await sleep(900);
+      await extShot(pg, "popup", `first-run-${state}`, theme, pg.locator("body"), { pad: 0 });
+      if (state === "no-model") await extShot(pg, "popup", "first-run-model", theme, pg.locator("#model"), { pad: 8 });
+      await ctx.close();
+    }
+  }
+}
+
+// ---- Trusted Types: the same UI, built without innerHTML (00-trusted-html.js)
+async function trustedTypesStates() {
+  const diff = async (a, b) => {
+    const pg = await browser.newPage();
+    const r = await pg.evaluate(async ([a, b]) => {
+      const load = src => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.src = src; });
+      const [x, y] = await Promise.all([load(a), load(b)]);
+      if (x.width !== y.width || x.height !== y.height) return { size: `${x.width}×${x.height} vs ${y.width}×${y.height}` };
+      const px = img => { const c = new OffscreenCanvas(img.width, img.height), g = c.getContext("2d"); g.drawImage(img, 0, 0); return g.getImageData(0, 0, img.width, img.height).data; };
+      const p = px(x), q = px(y);
+      let bad = 0;
+      for (let i = 0; i < p.length; i += 4) if (p[i] !== q[i] || p[i + 1] !== q[i + 1] || p[i + 2] !== q[i + 2] || p[i + 3] !== q[i + 3]) bad++;
+      return { bad, total: p.length / 4 };
+    }, [a, b].map(f => "data:image/png;base64," + readFileSync(f).toString("base64")));
+    await pg.close();
+    return r;
+  };
+  for (const theme of ["dark", "light"]) {
+    for (const width of [1100, 390]) {
+      const n = width < 600, H = n ? 844 : 720;
+      const files = {};
+      for (const tt of [false, true]) {
+        const p = await open({ theme, width, height: H, mods: 12, extra: tt ? "&tt=1" : "" });
+        // (innerHTML is the runtime's own builder on such a page; a script's text is a sink it leaves alone)
+        const enforced = await p.evaluate(() => { try { document.createElement("script").text = "0"; return false; } catch { return !!globalThis.__morseTrustedHtml; } });
+        const tag = tt ? "tt" : "plain";
+        // only how the UI is built may differ: no transition or caret blink caught halfway (a style element's text is no sink)
+        await shadowEval(p, r => { const st = document.createElement("style"); st.textContent = "*, *::before, *::after { transition: none !important; animation: none !important; caret-color: transparent !important; }"; r.append(st); });
+        await openBar(p); await p.mouse.move(5, H / 2); await sleep(200); await blur(p);
+        await shot(p, "trusted-types", `bar-${tag}`, ui(p, ".bar"), { checks: [tt && !enforced ? "the page does not enforce Trusted Types" : ""] });
+        await select(p, "#card", 0.3, 0.6); await p.mouse.move(5, H / 2); await sleep(300); await blur(p);
+        await shot(p, "trusted-types", `toolbar-${tag}`, [ui(p, ".gm-tb"), ui(p, ".gm-frame")], { pad: 12 });
+        await p.keyboard.press("Escape"); await sleep(150);
+        if (await ui(p, ".bar").isVisible()) { await p.keyboard.press("Escape"); await sleep(200); }
+        await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel").waitFor(); await sleep(400); await p.mouse.move(2, 2); await blur(p);
+        await shot(p, "trusted-types", `panel-${tag}`, ui(p, ".panel"));
+        await p.keyboard.press("Escape"); await sleep(200);
+        await openBar(p); await p.keyboard.press("Control+Comma"); await sleep(400); await blur(p); await p.mouse.move(5, H / 2); await sleep(150);
+        await shot(p, "trusted-types", `settings-${tag}`, ui(p, ".bar"));
+        for (const k of ["bar", "toolbar", "panel", "settings"]) (files[k] ||= []).push(path.join(OUT, "trusted-types", `${k}-${tag}${n ? "-narrow" : ""}-${theme}.png`));
+        await close(p);
+      }
+      for (const [k, [a, b]] of Object.entries(files)) {
+        const d = await diff(a, b);
+        const same = d.bad === 0;
+        const r = results.find(x => x.file === path.relative(OUT, b));
+        if (r) {
+          r.note = same ? `pixel-identical to ${k}-plain (${d.total} pixels compared)` : "";
+          if (!same) r.issues.push(d.size ? `size differs from the normal page: ${d.size}` : `${d.bad} of ${d.total} pixels differ from the normal page`);
+        }
+        console.log(`  ${same ? "✓" : "!"} trusted-types/${k}${n ? "-narrow" : ""}-${theme}: ${same ? "identical" : JSON.stringify(d)}`);
+      }
+    }
+  }
+}
+
+// ---- the round 4 features on the hostile hosts
+async function hostileR4States() {
+  for (const [site, url] of [["hostile", "/demo/sites/hostile/"], ["parley", "/demo/sites/parley/"]]) {
+    let p = await open({ url, mods: 1, width: 1100, height: 720, extra: "&style=1&guard=1" });
+    try {
+      await ui(p, ".ctl-toast").waitFor({ timeout: 4000 }).catch(() => {}); await sleep(300);
+      await shot(p, "hostile", `${site}-guard-toast`, ui(p, ".ctl-toast"), { pad: 16 });
+      await ui(p, ".ctl-toast").evaluate(el => (el.hidden = true));
+      await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel").waitFor(); await sleep(400); await p.mouse.move(2, 2);
+      await shot(p, "hostile", `${site}-style-row`, ui(p, ".ys-row"), { pad: 8 });
+      const row = ui(p, "article[data-id=mod41]");
+      await row.scrollIntoViewIfNeeded(); await sleep(100);
+      await shot(p, "hostile", `${site}-guard-row`, row, { pad: 8 });
+      await p.keyboard.press("Escape"); await sleep(200);
+      await openBar(p);
+      await ui(p, ".so-sug").click(); await strip(p).waitFor(); await sleep(300);
+      await p.mouse.click(300, 300); await sleep(150); await p.mouse.move(2, 2); await sleep(300);
+      await shot(p, "hostile", `${site}-show-once-strip`, strip(p), { pad: 16 });
+      await strip(p).locator("[data-so=stop]").click(); await sleep(400);
+      if (await ui(p, ".so-card").isVisible()) await shot(p, "hostile", `${site}-show-once-steps`, ui(p, ".bar"));
+    } catch (e) {
+      await shot(p, "hostile", `${site}-r4-broken`, null, { checks: [`flow failed: ${e.message.split("\n")[0]}`] });
+    }
+    await close(p);
+  }
+}
+
 // ---------------------------------------------------------------- run
 // A flow that throws is a finding, not the end of the run.
 async function guard(area, fn) {
@@ -1637,6 +2188,8 @@ async function guard(area, fn) {
     console.warn(`  ! ${area}: ${msg}`);
     results.push({ area, state: `flow-failed-${results.length}`, theme: "", file: "", issues: [msg], note: "" });
     for (const c of browser.contexts()) await c.close().catch(() => {});
+    for (const c of extCtxs.splice(0)) await c.close().catch(() => {});
+    if (!browser.isConnected()) browser = await launchBrowser(); // a crashed renderer took the browser with it: the next area starts fresh
   }
 }
 await fs.mkdir(OUT, { recursive: true });
@@ -1665,11 +2218,18 @@ for (const theme of THEMES) {
     if (want("iterate")) await guard("iterate", () => iterateStates(theme, width));
     if (want("leftovers")) await guard("leftovers", () => leftoverStates(theme, width));
     if (want("heal")) await guard("heal", () => healStates(theme, width));
+    if (want("show-once")) await guard("show-once", () => showOnceStates(theme, width));
+    if (want("style")) await guard("style", () => styleStates(theme, width));
+    if (want("guard")) await guard("guard", () => guardStates(theme, width));
+    if (want("first-run")) await guard("first-run", () => firstRunStates(theme, width));
   }
   if (want("popup")) await guard("popup", () => popupStates(theme));
   if (want("motion")) await guard("motion", () => reducedMotion(theme));
 }
 if (want("hostile")) { console.log("— hostile hosts"); await hostileStates(); }
+if (want("hostile") || want("hostile-r4")) { console.log("— hostile hosts, round 4"); await guard("hostile", hostileR4States); }
+if (want("trusted-types")) { console.log("— Trusted Types"); await guard("trusted-types", trustedTypesStates); }
+if (want("extension")) { console.log("— the extension's own pages (Xvfb)"); await guard("extension", extensionStates); }
 if (want("a11y-site")) { console.log("— Riverside Library (page tools)"); for (const w of WIDTHS) await a11ySiteStates(w); }
 await browser.close();
 server.close();
