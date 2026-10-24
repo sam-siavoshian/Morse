@@ -26,6 +26,7 @@ import { asReviewed } from "../core/summary.js"; // installs keep only the revie
 import { runMorse } from "../core/engine.js";
 import { settingsLabel, currentSettings } from "./models.js"; // also registers the Claude Code / Codex providers
 import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
+import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
 import { prewarm } from "../core/providers.js";
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
@@ -143,7 +144,7 @@ export class Connector {
           list = null;
         } else {
           this.refused = null;
-          this.log(`  ↻ ${this.appName} is open again. Connecting.`);
+          this.log(`  ↻ ${t("launch.openAgain", { name: this.appName })}`);
         }
       }
       if (list) {
@@ -151,9 +152,9 @@ export class Connector {
         this.sync(list);
       } else if (misses >= 3 && this.state === "attached") {
         this.dropAll();
-        if (!this.watch) { this.log(`${this.appName} closed, so Morse stopped.`); this.state = "stopped"; break; }
+        if (!this.watch) { this.log(t("launch.closed", { name: this.appName })); this.state = "stopped"; break; }
         this.state = "waiting";
-        this.log(`  … ${this.appName} closed. Waiting for it to open again (Ctrl+C to stop).`);
+        this.log(`  … ${t("launch.closedWaiting", { name: this.appName })}`);
         this.changed();
       }
       await sleep(this.interval);
@@ -286,11 +287,11 @@ export class Connector {
     await this.boot(s, w, source).catch(() => {});
     if (w.detaching || this.state === "stopped") return; // stopped meanwhile: nothing was connected
     readTitle();
-    this.log(`  ✓ connected to ${title}${kind === "window" ? "" : ` (${kind})`}`);
+    this.log(`  ✓ ${t("launch.connected", { title })}${kind === "window" ? "" : ` (${kind})`}`);
     trace("connect", `CDP attached to "${title}": Morse's code runs in its own isolated world ("morse"), talks to this process through the __morseHostSend binding`);
     if (!this.hinted && kind === "window") { // first-run hook: say what to do next, once
       this.hinted = true;
-      configuredHotkeys().then(k => k.open && this.log(`\n  In ${this.app?.name || title || "the app"}, press ${k.open}, point at something and say what to change.\n`), () => {});
+      configuredHotkeys().then(k => k.open && this.log(`\n  ${t("launch.ready", { name: this.app?.name || title || t("launch.theApp"), key: k.open })}\n`), () => {});
     }
     this.changed();
   }

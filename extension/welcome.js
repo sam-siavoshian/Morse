@@ -5,6 +5,8 @@
 // see Practice in onboarding-host.js). "Connect a model" pairs with the Morse
 // helper by itself once `morse setup --pair <code>` has run (see below).
 
+import "./i18n-page.js"; // the page in the person's language, before anything below runs
+import { t } from "./core/i18n.js";
 import { normalizePrefs } from "./core/prefs.js";
 import { plainError } from "./core/onboarding.js";
 import { detectPlatform, resolveHotkeys, comboParts, matchCombo } from "./core/hotkeys.js";
@@ -30,7 +32,7 @@ async function loadHotkeys() {
   HOTKEYS = resolveHotkeys(normalizePrefs(stored).hotkeys, PLATFORM);
   for (const el of document.querySelectorAll(".hk[data-hk]")) {
     const parts = comboParts(HOTKEYS[el.dataset.hk] || "", PLATFORM);
-    el.innerHTML = parts.length ? `<span class="caps">${parts.map(k => `<kbd>${esc(k)}</kbd>`).join("")}</span>` : "the Morse shortcut";
+    el.innerHTML = parts.length ? `<span class="caps">${parts.map(k => `<kbd>${esc(k)}</kbd>`).join("")}</span>` : esc(t("welcome.theShortcut"));
   }
 }
 await loadHotkeys();
@@ -38,7 +40,7 @@ chrome.storage.onChanged.addListener(c => { if (c["morse.settings"]) loadHotkeys
 
 // ---- the practice area
 const frame = document.createElement("iframe");
-frame.title = "Practice page";
+frame.title = t("welcome.frameTitle");
 let practicePort = null;
 function connectPractice() {
   practicePort = chrome.runtime.connect({ name: "morse-practice" });
@@ -132,21 +134,21 @@ function render() {
   const manual = !connected && !!h && !h.paired && (!h.pairing || !!pairError);
   $("pairrow").hidden = !manual;
   if (connected) live.innerHTML = "";
-  else if (busy) live.innerHTML = LIVE("Connecting…");
+  else if (busy) live.innerHTML = LIVE(esc(t("welcome.live.connecting")));
   else if (pairError) live.innerHTML = LIVE(esc(pairError), "bad");
-  else if (h?.paired && h.provider === "none") live.innerHTML = LIVE("Connected, but no model is set up on this computer yet. Run the command above to choose one.", "bad");
-  else if (manual) live.innerHTML = LIVE("The Morse helper is running. Run the command above to connect, or type the code it shows here.", "ok");
-  else if (h) live.innerHTML = LIVE("Found the Morse helper. Connecting…");
-  else live.innerHTML = LIVE(copied ? "Waiting for the command to finish in your terminal…" : "Waiting for you to run the command…");
-  $("model-label").textContent = connected ? `Using ${st.label}` : "";
+  else if (h?.paired && h.provider === "none") live.innerHTML = LIVE(esc(t("welcome.live.noModel")), "bad");
+  else if (manual) live.innerHTML = LIVE(esc(t("welcome.live.manual")), "ok");
+  else if (h) live.innerHTML = LIVE(esc(t("welcome.live.found")));
+  else live.innerHTML = LIVE(esc(copied ? t("welcome.live.waitingCopied") : t("welcome.live.waiting")));
+  $("model-label").textContent = connected ? t("welcome.using", { label: st.label }) : "";
 }
 
 $("copy-setup").onclick = async e => {
   const b = e.currentTarget;
   copied = true;
-  try { await navigator.clipboard.writeText($("setup-cmd").textContent); b.textContent = "Copied"; }
-  catch { b.textContent = "Select it and copy"; }
-  setTimeout(() => (b.textContent = "Copy"), 2400);
+  try { await navigator.clipboard.writeText($("setup-cmd").textContent); b.textContent = t("btn.copied"); }
+  catch { b.textContent = t("welcome.selectCopy"); }
+  setTimeout(() => (b.textContent = t("welcome.copy")), 2400);
   render();
 };
 
@@ -157,7 +159,7 @@ async function pair(code, auto) {
   if (!r || r.error) {
     // Our own code didn't match: the helper waits for a different one
     // (started with morse serve). Ask for that one instead of retrying.
-    pairError = auto ? "The Morse helper is waiting for a different code. Type the code it shows, or run the command above again." : plainError(r?.error);
+    pairError = auto ? t("welcome.pair.different") : plainError(r?.error);
   } else {
     pairError = "";
     if (auto) await loadCode(true); // a code is used once
@@ -173,7 +175,7 @@ $("code").oninput = () => {
 $("code").onkeydown = e => { if (e.key === "Enter") $("pair").click(); };
 $("pair").onclick = () => {
   const code = $("code").value.trim();
-  if (code.length !== 6) { pairError = "Type all 6 characters of the code."; return render(); }
+  if (code.length !== 6) { pairError = t("welcome.pair.short"); return render(); }
   pair(code, false);
 };
 // The API key's own note, under its field (pairing keeps the live line).
@@ -183,11 +185,11 @@ $("key").oninput = () => keyNote();
 $("key").onkeydown = e => { if (e.key === "Enter") $("save-key").click(); };
 $("save-key").onclick = async () => {
   const key = $("key").value.trim();
-  if (!/^sk-ant-/.test(key)) return keyNote("That doesn't look like an Anthropic API key. It starts with sk-ant-.", true);
+  if (!/^sk-ant-/.test(key)) return keyNote(t("welcome.key.bad"), true);
   const r = await send({ type: "popup.save", anthropicKey: key, backend: "anthropic" });
   $("key").value = "";
   if (!r || r.error) return keyNote(plainError(r?.error), true);
-  keyNote("Key saved.");
+  keyNote(t("welcome.key.saved"));
   st = r;
   render();
   refresh();
@@ -228,11 +230,11 @@ async function refresh() {
   };
   for (const [step, ok] of Object.entries(done)) document.querySelector(`[data-step="${step}"]`).classList.toggle("done", ok);
   const n = Object.values(done).filter(Boolean).length;
-  $("progress").textContent = n === 4 ? "All done" : `${n} of 4 done`;
+  $("progress").textContent = n === 4 ? t("welcome.progress.all") : t("welcome.progress", { n });
   // The practice page works before a model is connected, with sample answers (onboarding-host.js).
   $("practice-note").innerHTML = model
-    ? "This page uses your model. It shows how a change looks; changes that add features work on real websites."
-    : "No model yet? This page has sample answers for <q>make this easier to read</q>, so you can try Morse now. Connect a model to change any website.";
+    ? esc(t("welcome.practice.model"))
+    : t("welcome.practice.sample");
 }
 refresh();
 chrome.storage.onChanged.addListener(() => refresh());

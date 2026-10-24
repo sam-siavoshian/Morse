@@ -40,26 +40,26 @@ function BAR_CSS() { return `
   .status { position: relative; }
   .hint:has(.note) { flex: 1 1 auto; max-width: none; }
   .hint .note { color: var(--m-text-2); font-style: normal; overflow: hidden; text-overflow: ellipsis; }
-  .hint .note::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 8px 1px 0; border-radius: 2px; background: var(--m-warn); vertical-align: middle; }
+  .hint .note::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-block: 0 1px; margin-inline: 0 8px; border-radius: 2px; background: var(--m-warn); vertical-align: middle; }
   .hint:has(.note) ~ .ticker { display: none; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
   /* suggestion chips: .sug is a quiet .btn, on the bar's 16px inset */
-  .sugs { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 0 8px 8px 16px; }
-  .sugs .try { margin-right: 4px; }
+  .sugs { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding-block: 0 8px; padding-inline: 16px 8px; }
+  .sugs .try { margin-inline-end: 4px; }
   .sug { color: var(--m-text-2); }
   .sug:hover { color: var(--m-text); }
-  .sug .ell { color: var(--m-text-3); margin-left: -8px; }
+  .sug .ell { color: var(--m-text-3); margin-inline-start: -8px; }
 
   /* the overflow menu (a .menu) */
-  .bmenu { right: 8px; bottom: calc(100% + 8px); }
+  .bmenu { inset-inline-end: 8px; bottom: calc(100% + 8px); }
   .bmenu.below { bottom: auto; top: calc(100% + 8px); }
 
   /* panes: settings + shortcuts */
   .pane { min-height: 0; overflow: auto; border-top: 1px solid var(--m-line); max-height: min(calc(100vh - 168px), 640px); scrollbar-width: thin; animation: fade var(--m-fast); }
   .pane[data-kind="shortcuts"] { max-height: min(62vh, 400px); }
   .sheet { padding: 4px 8px 8px; }
-  .sheet header { display: flex; align-items: center; gap: 8px; padding: 8px 0 4px 8px; }
+  .sheet header { display: flex; align-items: center; gap: 8px; padding-block: 8px 4px; padding-inline: 8px 0; }
   .sheet header b { font: 600 var(--m-text-md)/20px var(--m-font); color: var(--m-text); }
   .sheet header .flash { flex: 1; font: var(--m-text-xs)/16px var(--m-mono); color: var(--m-text-3); opacity: 0; letter-spacing: 0; }
   .sheet header .flash.show { animation: saved 1.6s var(--m-ease); }
@@ -68,7 +68,7 @@ function BAR_CSS() { return `
   .sheet section { padding: 4px 0 8px; }
   .sheet section + section { border-top: 1px solid var(--m-line); padding-top: 8px; }
   .sheet h4 { margin: 8px 8px 4px; }
-  .srow { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 4px 0 4px 8px; border-radius: var(--m-r-sm); }
+  .srow { display: flex; align-items: center; gap: 12px; min-height: 40px; padding-block: 4px; padding-inline: 8px 0; border-radius: var(--m-r-sm); }
   .srow .lbl { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
   .srow .lbl > span { color: var(--m-text); font: 450 var(--m-text-md)/16px var(--m-font); }
   .srow .lbl small { color: var(--m-text-3); font: 400 var(--m-text-xs)/16px var(--m-font); letter-spacing: 0; }
@@ -76,7 +76,7 @@ function BAR_CSS() { return `
   .srow .lbl .bad { color: var(--m-danger); }
   .srow .ctl { flex: none; display: flex; align-items: center; gap: 8px; }
   .pill.on { color: var(--m-text); }
-  .pill.on::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 2px; background: var(--m-signal-4); margin-right: 6px; }
+  .pill.on::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 2px; background: var(--m-signal-4); margin-inline-end: 6px; }
 
   /* hotkey recorder: a .field that holds key caps */
   .hk { min-width: 96px; height: 28px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 4px; }

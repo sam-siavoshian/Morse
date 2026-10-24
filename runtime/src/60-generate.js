@@ -21,9 +21,10 @@ async function capture() {
   return shot;
 }
 
-const PLACEHOLDER = input.placeholder;
-const REFINE_PLACEHOLDER = "Describe what to change…";
-const FIX_NOTE = "Fixed it so it works again";
+const PLACEHOLDER = () => t("bar.placeholder");
+const REFINE_PLACEHOLDER = () => t("bar.placeholder.refine");
+const FIX_NOTE = () => t("result.fixNote");
+langSubs.add(() => { input.placeholder = bar.classList.contains("done") ? REFINE_PLACEHOLDER() : PLACEHOLDER(); });
 
 // Puts a version's code on the page under the mod's id (the old JS is undone first).
 async function showVersion(id, v) {
@@ -61,10 +62,10 @@ async function submit(request, opts = {}) {
   // looks the same as any other): asking, the model reading, thinking,
   // writing, the change showing up as it's written, trying it.
   const say = text => { hint.innerHTML = `${radar(12)} ${text}`; };
-  say("Asking the model");
+  say(t("gen.asking"));
   // Screen readers hear a few steps, never the streaming code: working, the
   // first change on the page, a retry, then done or what went wrong.
-  announce(prev ? "Working on the change" : "Working on your change");
+  announce(prev ? t("gen.workingAgain") : t("gen.working"));
   actions.innerHTML = `<span class="ms">0.0s</span>`;
   const clock = setInterval(() => { const m = actions.querySelector(".ms"); if (m) m.textContent = ((performance.now() - t0) / 1000).toFixed(1) + "s"; }, 100);
   Effect.start(focus);
@@ -86,21 +87,21 @@ async function submit(request, opts = {}) {
     setCss(id, css);
     if (!css.trim() || showing) return;
     showing = true;
-    announce("The first change is showing on the page");
+    announce(t("gen.firstShowing"));
     Effect.reveal(); // the change shows through while the rest is written
-    if (!fixing && wrote) say("Writing the change · you can see it now");
+    if (!fixing && wrote) say(t("gen.writingVisible"));
   }
   const off = onEvent(msg => {
     if (msg.genId !== id) return;
     if (msg.type === "token") {
-      if (!wrote) { wrote = true; if (!fixing) say("Writing the change"); }
+      if (!wrote) { wrote = true; if (!fixing) say(t("gen.writing")); }
       Effect.token(msg.text); tick(msg.text);
     }
     if (msg.type === "css") { if (shotDone) showCss(msg.css); else pendingCss = msg.css; }
-    if (msg.type === "stage" && !wrote && !fixing) say(msg.stage === "thinking" ? "Thinking" : "The model is reading the page");
+    if (msg.type === "stage" && !wrote && !fixing) say(msg.stage === "thinking" ? t("gen.thinking") : t("gen.reading"));
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") { fixing = true; say("Fixing a mistake and trying again"); hint.title = String(msg.error || ""); announce("Fixing a mistake and trying again"); }
-      if (msg.phase === "applying") say("Trying the change");
+      if (msg.phase === "fixing") { fixing = true; say(t("gen.fixing")); hint.title = String(msg.error || ""); announce(t("gen.fixing")); }
+      if (msg.phase === "applying") say(t("gen.trying"));
     }
   });
   let res;
@@ -122,8 +123,8 @@ async function submit(request, opts = {}) {
       await showVersion(id, prev);
       S.draft = prev;
       hintNote = "";
-      if (answered) return showResult(prev, { note: "Answered · describe what to change next" });
-      if (res.cancelled) return showResult(prev, { note: "Stopped. Nothing was changed", keepInput: true });
+      if (answered) return showResult(prev, { note: t("result.answered") });
+      if (res.cancelled) return showResult(prev, { note: t("result.stopped"), keepInput: true });
       return showResult(prev, { error: plainError(res.error), keepInput: true });
     }
     const next = reviseMod(prev, { prompt: opts.note || request, css: res.css || "", js: res.js || "" });
@@ -141,10 +142,10 @@ async function submit(request, opts = {}) {
       if (res.cancelled) return onCancelled(id); // Stop: 50-bar.js
       S.phase = "error";
       bar.classList.add("err");
-      hint.innerHTML = guardRefusalHint(res.error) || `That didn't work: <i>${esc(plainError(res.error).slice(0, 120))}</i>`; // guard hook: 64-guard.js
-      announce(`${hint.textContent}. Press Try again, or Escape to close.`);
+      hint.innerHTML = guardRefusalHint(res.error) || t("result.failed", { detail: esc(plainError(res.error).slice(0, 120)) }); // guard hook: 64-guard.js
+      announce(t("result.failedSay", { text: hint.textContent }));
       hint.title = res.error || "";
-      actions.innerHTML = `<button data-a="again">Try again</button>`;
+      actions.innerHTML = `<button data-a="again">${t("result.again")}</button>`;
       return;
     }
   }
@@ -162,18 +163,18 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
   bar.classList.remove("err", "working");
   bar.classList.add("done");
   input.disabled = false;
-  input.placeholder = REFINE_PLACEHOLDER;
+  input.placeholder = REFINE_PLACEHOLDER();
   if (!keepInput) setInput("");
   const n = versionsOf(d).length + 1;
-  const meta = note || [d.secs && !d.saved ? `${d.secs}s` : "", d.attempts > 1 && !d.saved ? "needed a second try" : "", n > 1 ? `version ${n}` : ""].filter(Boolean).join(" · ");
+  const meta = note || [d.secs && !d.saved ? t("result.secs", { secs: d.secs }) : "", d.attempts > 1 && !d.saved ? t("result.secondTry") : "", n > 1 ? t("result.version", { n }) : ""].filter(Boolean).join(" · ");
   hint.title = error;
   hint.innerHTML = error
-    ? `<b class="ok">${esc(d.title)}</b> <span class="note">That didn't work: ${esc(error).slice(0, 120)}</span>`
-    : `<b class="ok">${esc(d.title)}</b> <span class="dim">${esc(meta || (d.saved ? "describe what to change" : ""))}</span>`;
+    ? `<b class="ok">${esc(d.title)}</b> <span class="note">${t("result.failedNote", { detail: esc(error).slice(0, 120) })}</span>`
+    : `<b class="ok">${esc(d.title)}</b> <span class="dim">${esc(meta || (d.saved ? t("result.describeChange") : ""))}</span>`;
   ticker.textContent = "";
   actions.innerHTML = d.saved
-    ? `<button data-a="code">Edit code</button><button data-a="keep">Done</button>`
-    : `<button data-a="keep" class="primary">Save <kbd>↵</kbd></button><button data-a="undo">Undo</button><button data-a="code">Edit code</button><button data-a="share">Share</button>`;
+    ? `<button data-a="code">${t("btn.editCode")}</button><button data-a="keep">${t("btn.done")}</button>`
+    : `<button data-a="keep" class="primary">${t("btn.save")} <kbd>↵</kbd></button><button data-a="undo">${t("btn.undo")}</button><button data-a="code">${t("btn.editCode")}</button><button data-a="share">${t("btn.share")}</button>`;
   updateChips();
   announce(error ? `${d.title}. That didn't work: ${error}`
     : note ? `${d.title}. ${note}`
@@ -184,7 +185,7 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
 
 // Leaving the result (opening the bar fresh, an error) puts the usual words back.
 new MutationObserver(() => {
-  if (!bar.classList.contains("done") && S.phase !== "working" && input.placeholder === REFINE_PLACEHOLDER) input.placeholder = PLACEHOLDER;
+  if (!bar.classList.contains("done") && S.phase !== "working" && input.placeholder === REFINE_PLACEHOLDER()) input.placeholder = PLACEHOLDER();
 }).observe(bar, { attributes: true, attributeFilter: ["class", "hidden"] });
 
 const onEvent = fn => { listeners.add(fn); return () => listeners.delete(fn); };
@@ -241,11 +242,11 @@ async function stepBackDraft() {
   const back = stepBack(d);
   if (!back) {
     if (!d.mod) return undo(); // the first version of a new change: same as Undo
-    return showResult(d, { note: "This is the first version" });
+    return showResult(d, { note: t("result.firstVersion") });
   }
   S.draft = Object.assign(back, { saved: null, saving: null });
   await showVersion(d.id, back);
-  showResult(back, { note: `Back to version ${versionsOf(back).length + 1}` });
+  showResult(back, { note: t("result.backTo", { n: versionsOf(back).length + 1 }) });
 }
 
 // ---- refine or fix a saved mod (from the Mods panel)
@@ -278,7 +279,7 @@ function fixMod(m, problem) {
   const d = S.draft;
   S.phase = "result";
   sugEl.hidden = true; // the fix is underway: no suggestions under it
-  submit(m.prompt, { from: d, note: FIX_NOTE, base: { prompt: m.prompt, css: m.css, js: m.js, error: problem } });
+  submit(m.prompt, { from: d, note: FIX_NOTE(), base: { prompt: m.prompt, css: m.css, js: m.js, error: problem } });
 }
 
 // ---- keep, undo
@@ -314,7 +315,7 @@ async function keep() {
   S.phase = "idle";
   closeBar();
   const n = versionsOf(mod).length + 1;
-  toast(n > 1 ? `Saved “${mod.title}”. This is version ${n}.` : `Saved “${mod.title}”. It will be here next time.`);
+  toast(n > 1 ? t("toast.savedVersion", { title: mod.title, n }) : t("toast.saved", { title: mod.title }));
   return mod;
 }
 async function undo() {
@@ -326,11 +327,11 @@ async function undo() {
     S.draft = null;
     S.phase = "idle";
     closeBar();
-    toast("Back to the saved version");
+    toast(t("toast.backToSaved"));
     return;
   }
   await removeMod(d.id);
   S.draft = null;
   closeBar();
-  toast("Change undone");
+  toast(t("toast.undone"));
 }

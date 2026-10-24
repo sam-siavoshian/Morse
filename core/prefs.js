@@ -14,7 +14,10 @@ export const DEFAULT_PREFS = {
   theme: "auto",       // "auto" (match the app) | "light" | "dark"
   gallery: true,       // gallery hook: "Show mods others made" (Mods for this site)
   autoFix: false,      // self-heal hook: "Fix my mods automatically when a site changes"
+  language: "",        // "" = same as my computer; else a code from core/i18n.js LANGUAGES
 };
+// core/i18n.js LANGUAGES, as codes (tests/i18n.test.js keeps the two in step).
+export const PREF_LANGUAGES = ["en", "es", "de", "fr", "pt-BR", "zh-CN", "ja", "fa", "ar"];
 
 const PREF_COMBO = /^((Ctrl|Alt|Shift|Meta)\+){0,4}[A-Za-z0-9]{1,24}$/;
 const pickPref = (v, allowed, d) => (allowed.includes(v) ? v : d);
@@ -36,6 +39,7 @@ export function normalizePrefs(p) {
     theme: pickPref(src.theme, ["auto", "light", "dark"], "auto"),
     gallery: src.gallery !== false, // gallery hook
     autoFix: src.autoFix === true, // self-heal hook
+    language: pickPref(src.language, PREF_LANGUAGES, ""),
   };
 }
 
