@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parley</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; display: flex; background: #212121; color: #ececec; font: 15px/1.6 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif; }
+  .s0x9a { width: 260px; background: #171717; padding: 10px; display: flex; flex-direction: column; gap: 2px; }
+  .s0x9a .n1k { display: flex; align-items: center; gap: 8px; padding: 10px; font-weight: 600; }
+  .s0x9a .n1k i { width: 22px; height: 22px; border-radius: 50%; background: conic-gradient(#10a37f, #6e56cf, #10a37f); }
+  .s0x9a h4 { font-size: 12px; color: #8e8e8e; margin: 18px 10px 6px; font-weight: 500; }
+  .s0x9a a { color: #ececec; text-decoration: none; padding: 8px 10px; border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
+  .s0x9a a:hover, .s0x9a a.a9 { background: #2f2f2f; }
+  main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  header { display: flex; align-items: center; gap: 10px; padding: 12px 18px; }
+  header .m2q { font-size: 18px; font-weight: 600; color: #ececec; }
+  header .m2q span { color: #8e8e8e; font-weight: 400; }
+  header .h7r { margin-left: auto; display: flex; gap: 8px; }
+  header button { background: transparent; color: #ececec; border: 1px solid #424242; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13px; }
+  .t4l { flex: 1; overflow: auto; }
+  .t4l > div { max-width: 740px; margin: 0 auto; padding: 10px 24px 40px; }
+  .msg { margin: 22px 0; }
+  .msg[data-role="user"] { display: flex; justify-content: flex-end; }
+  .msg[data-role="user"] p { background: #2f2f2f; padding: 10px 18px; border-radius: 22px; max-width: 70%; margin: 0; }
+  .msg[data-role="assistant"] { display: flex; gap: 14px; }
+  .msg[data-role="assistant"] .av { flex: none; width: 28px; height: 28px; border-radius: 50%; background: conic-gradient(#10a37f, #6e56cf, #10a37f); margin-top: 2px; }
+  .msg[data-role="assistant"] p { margin: 0 0 10px; }
+  code { background: #2f2f2f; padding: 1px 6px; border-radius: 5px; font-size: 13px; }
+  ol { padding-left: 20px; margin: 6px 0 10px; } li { margin: 4px 0; }
+  form#composer { max-width: 740px; width: 100%; margin: 0 auto; padding: 0 24px 6px; }
+  .c8f2ka { display: flex; align-items: flex-end; gap: 8px; background: #2f2f2f; border-radius: 26px; padding: 10px 10px 10px 20px; }
+  .c8f2ka textarea { flex: 1; resize: none; border: 0; outline: 0; background: transparent; color: #ececec; font: inherit; height: 52px; padding: 4px 0; overflow: hidden; }
+  .c8f2ka textarea::placeholder { color: #8e8e8e; }
+  .c8f2ka button { width: 36px; height: 36px; border-radius: 50%; border: 0; background: #ececec; color: #171717; font-size: 18px; font-weight: 700; }
+  .f3n { text-align: center; color: #8e8e8e; font-size: 12px; padding: 6px 0 14px; }
+</style>
+</head>
+<body>
+  <nav class="s0x9a" aria-label="Chat history">
+    <div class="n1k"><i></i> Parley</div>
+    <h4>Today</h4>
+    <a class="a9" href="#">Debounce vs throttle in JS</a>
+    <a href="#">Trip plan: Lisbon in 4 days</a>
+    <h4>Previous 7 days</h4>
+    <a href="#">Sourdough starter troubleshooting</a>
+    <a href="#">Explain CRDTs like I'm five</a>
+    <a href="#">SQL window functions cheat sheet</a>
+    <a href="#">Gift ideas for a climber</a>
+  </nav>
+  <main>
+    <header role="banner">
+      <div class="m2q">Parley <span>4.1</span></div>
+      <div class="h7r"><button>Share</button></div>
+    </header>
+    <section class="t4l" aria-label="Conversation"><div>
+      <div class="msg" data-role="user"><p>What's the difference between debounce and throttle?</p></div>
+      <div class="msg" data-role="assistant"><div class="av"></div><div>
+        <p>Both limit how often a function runs, but they answer different questions:</p>
+        <ol>
+          <li><b>Debounce</b> waits until calls <i>stop</i> for <code>n</code> ms, then runs once. Good for search-as-you-type.</li>
+          <li><b>Throttle</b> runs at most once every <code>n</code> ms while calls keep coming. Good for scroll and resize handlers.</li>
+        </ol>
+        <p>Rule of thumb: debounce when you only care about the final value, throttle when you need steady updates.</p>
+      </div></div>
+      <div class="msg" data-role="user"><p>Show me a tiny debounce implementation</p></div>
+      <div class="msg" data-role="assistant"><div class="av"></div><div>
+        <p>Here's the whole thing: keep a timer, reset it on every call, and only fire when it survives:</p>
+        <p><code>const debounce = (fn, ms) =&gt; { let t; return (...a) =&gt; { clearTimeout(t); t = setTimeout(() =&gt; fn(...a), ms); }; };</code></p>
+      </div></div>
+    </div></section>
+    <form id="composer" onsubmit="return false">
+      <div class="c8f2ka">
+        <textarea aria-label="Message Parley" placeholder="Message Parley"></textarea>
+        <button aria-label="Send message">↑</button>
+      </div>
+    </form>
+    <div class="f3n">Parley can make mistakes. Check important info.</div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install a Morph mod</title>
+<style>
+  :root { --bg: #0d1117; --panel: #161b22; --line: #30363d; --fg: #e6edf3; --dim: #8b949e; --g1: #0e4429; --g2: #006d32; --g3: #26a641; --g4: #39d353; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 16px 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+  .logo { display: grid; grid-template-columns: repeat(3, 8px); gap: 2px; }
+  .logo i { width: 8px; height: 8px; border-radius: 2px; background: var(--g3); } .logo i:nth-child(odd) { background: var(--g4); } .logo i:nth-child(1), .logo i:nth-child(9) { background: var(--g1); } .logo i:nth-child(4) { background: var(--g2); }
+  h1 { font-size: 32px; line-height: 1.2; margin: 36px 0 8px; }
+  .prompt { font-size: 20px; color: var(--dim); margin: 0 0 24px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .meta span { font: 12px ui-monospace, Menlo, monospace; color: #7ee787; background: rgba(46,160,67,.12); border: 1px solid rgba(46,160,67,.3); border-radius: 6px; padding: 2px 8px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
+  button, a.btn { font: 600 14px/1 inherit; font-family: inherit; padding: 11px 16px; border-radius: 9px; border: 1px solid var(--line); background: #21262d; color: var(--fg); cursor: pointer; text-decoration: none; }
+  .primary { background: #238636 !important; border-color: #2ea043 !important; color: #fff !important; }
+  #status { color: var(--dim); font-size: 14px; min-height: 1.5em; }
+  h2 { font: 600 12px ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: .05em; color: var(--dim); margin: 24px 0 8px; }
+  pre { background: #010409; border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow: auto; font: 12.5px/1.55 ui-monospace, Menlo, monospace; max-height: 340px; margin: 0; }
+  .warn { border: 1px solid rgba(210,153,34,.4); background: rgba(210,153,34,.08); color: #e3b341; border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+  .err { color: #f85149; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><div class="logo"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>morph</div>
+  <div id="root"><p id="status">Reading mod…</p></div>
+</main>
+<script type="module">
+  import { decodeShare, toUserscript } from "../core/mod.js";
+  const root = document.getElementById("root");
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  try {
+    const mod = await decodeShare(location.href);
+    const where = mod.match.app || mod.match.hosts.join(", ");
+    root.innerHTML = `
+      <h1>${esc(mod.title)}</h1>
+      <p class="prompt">“${esc(mod.prompt)}”</p>
+      <div class="meta"><span>for ${esc(where)}</span>${mod.css.trim() ? "<span>css</span>" : ""}${mod.js.trim() ? "<span>js</span>" : ""}${mod.model ? `<span>made with ${esc(mod.model)}</span>` : ""}</div>
+      <div class="actions">
+        <button class="primary" id="install">Install in Morph</button>
+        <a class="btn" id="userscript" download>Download .user.js</a>
+      </div>
+      <p id="status"></p>
+      <div class="warn">Mods are code that runs inside ${esc(where)}. Read it below before installing: it can see what you see in that app.</div>
+      ${mod.css.trim() ? `<h2>CSS</h2><pre>${esc(mod.css)}</pre>` : ""}
+      ${mod.js.trim() ? `<h2>JavaScript</h2><pre>${esc(mod.js)}</pre>` : ""}`;
+    const us = document.getElementById("userscript");
+    us.href = URL.createObjectURL(new Blob([toUserscript(mod)], { type: "text/javascript" }));
+    us.download = `${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.user.js`;
+    const status = document.getElementById("status");
+    document.getElementById("install").onclick = () => {
+      if (document.documentElement.dataset.morphExtension) {
+        window.postMessage({ morphInstall: location.href }, "*");
+        status.textContent = "Installing…";
+      } else {
+        navigator.clipboard?.writeText(location.href);
+        status.innerHTML = mod.match.app
+          ? `Link copied. Run <code>morph install "&lt;link&gt;"</code>, or paste it into Morph → Mods → Import.`
+          : `Morph isn't installed in this browser. Link copied: paste it into Morph → Mods → Import, or use the .user.js with Tampermonkey.`;
+      }
+    };
+    window.addEventListener("message", e => {
+      if (e.source !== window || !e.data?.morphInstalled) return;
+      const r = e.data.morphInstalled;
+      status.innerHTML = r.error ? `<span class="err">${esc(r.error)}</span>` : `✓ Installed “${esc(r.title)}”. Open ${esc(where)} to see it.`;
+    });
+  } catch (e) {
+    root.innerHTML = `<h1>That link doesn't contain a mod</h1><p class="err">${esc(e.message)}</p>`;
+  }
+</script>
+</body>
+</html>

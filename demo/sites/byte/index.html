@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Daily Byte: Why every app is secretly a web page</title>
+<style>
+  body { margin: 0; background: #fff; color: #222; font: 14px/1.45 Arial, Helvetica, sans-serif; }
+  .tb { background: #c8102e; color: #fff; padding: 10px 20px; display: flex; gap: 22px; align-items: center; font-weight: 700; }
+  .tb .lg { font: 900 24px Georgia, serif; letter-spacing: -.5px; } .tb a { color: #fff; text-decoration: none; font-size: 13px; }
+  .ad-slot { background: repeating-linear-gradient(45deg, #ffe066, #ffe066 12px, #ffd43b 12px, #ffd43b 24px); color: #5c3c00; display: grid; place-items: center; font-weight: 800; text-align: center; }
+  .ad-slot small { display: block; font-weight: 400; }
+  .lead-ad { height: 90px; margin: 12px auto; max-width: 970px; }
+  .wrap { display: grid; grid-template-columns: 1fr 300px; gap: 20px; max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+  article h1 { font-size: 26px; line-height: 1.2; margin: 10px 0; } .by { color: #777; font-size: 12px; margin-bottom: 10px; }
+  article p { margin: 0 0 10px; }
+  .inline-ad { height: 120px; margin: 14px 0; }
+  aside[aria-label="Sponsored"] .ad-slot { height: 250px; margin-bottom: 14px; }
+  .pop { position: fixed; right: 16px; bottom: 16px; width: 300px; background: #fff; border: 2px solid #c8102e; padding: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+  .pop b { color: #c8102e; } .pop button { margin-top: 8px; background: #c8102e; color: #fff; border: 0; padding: 8px 12px; font-weight: 700; }
+</style>
+</head>
+<body>
+  <div class="tb"><span class="lg">The Daily Byte</span><a href="#">Tech</a><a href="#">Business</a><a href="#">Science</a><a href="#">Opinion</a><a href="#">Video</a></div>
+  <div class="ad-slot lead-ad" data-ad="leaderboard">ADVERTISEMENT<small>Buy 3 mattresses, get a 4th mattress</small></div>
+  <div class="wrap">
+    <article>
+      <h1>Why every app on your computer is secretly a web page</h1>
+      <div class="by">By Dana Okafor · 6 min read · Updated 2h ago</div>
+      <p>Open the chat app, the music player, the code editor and the note-taking app on a typical laptop and you are, in a very literal sense, running four copies of a web browser. Electron, the framework behind most of them, bundles Chromium and Node.js into a single package so that teams can ship one codebase to Mac, Windows and Linux.</p>
+      <p>That convenience has a side effect few users think about: everything you see in those apps is HTML, CSS and JavaScript, the same stuff as any website. And anything that is a web page can be inspected, styled and modified while it runs.</p>
+      <div class="ad-slot inline-ad" data-ad="inline">ADVERTISEMENT<small>You won't believe what this one weird browser tab does</small></div>
+      <p>Enthusiasts have exploited this for years. Theming tools restyle music players, client mods add features to chat apps, and userscript managers let people rewrite websites with a few lines of code. The barrier has always been that someone has to write that code.</p>
+      <p>A new wave of tools aims to remove that barrier by having a language model write the modification from a plain-English request, running locally so nothing leaves the machine.</p>
+      <p>Whether app makers embrace or resist that shift remains to be seen. Some apps already lock down debugging ports; others publish official extension APIs. What is clear is that the line between using software and shaping it is getting thinner.</p>
+    </article>
+    <aside aria-label="Sponsored">
+      <div class="ad-slot" data-ad="sidebar">ADVERTISEMENT<small>Local singles want to review your pull request</small></div>
+      <div class="ad-slot" data-ad="sidebar-2">ADVERTISEMENT<small>Crypto, but for houseplants</small></div>
+    </aside>
+  </div>
+  <div class="pop" data-ad="newsletter"><b>Don't miss a byte!</b><br>Subscribe to our 7 daily newsletters.<br><button>Subscribe</button></div>
+</body>
+</html>

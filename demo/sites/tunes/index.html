@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tunes</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; display: grid; grid-template-columns: 240px 1fr; grid-template-rows: 1fr 84px; background: #000; color: #fff; font: 14px/1.4 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  nav { background: #121212; margin: 8px 0 0 8px; border-radius: 8px; padding: 18px 12px; }
+  nav .lg { font-weight: 800; font-size: 20px; padding: 0 10px 18px; display: flex; gap: 8px; align-items: center; }
+  nav .lg i { width: 24px; height: 24px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ff7ab6, #7a3cff); }
+  nav a { display: block; color: #b3b3b3; text-decoration: none; padding: 8px 10px; border-radius: 6px; font-weight: 600; }
+  nav a.on { color: #fff; background: #232323; }
+  nav h5 { color: #b3b3b3; margin: 22px 10px 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+  .vw { background: linear-gradient(#2a2440 0, #121212 280px); margin: 8px 8px 0; border-radius: 8px; overflow: auto; padding: 24px 28px; }
+  .vw h1 { font-size: 30px; margin: 4px 0 4px; } .vw p.sub { color: #b3b3b3; margin: 0 0 20px; }
+  .vw h2 { font-size: 20px; margin: 26px 0 12px; }
+  [data-testid="album-grid"] { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; }
+  .q8c { background: #181818; padding: 12px; border-radius: 8px; }
+  .q8c .cv { aspect-ratio: 1; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.5); display: grid; place-items: end start; padding: 10px; font-weight: 800; font-size: 13px; color: rgba(255,255,255,.9); }
+  .q8c b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .q8c small { color: #a7a7a7; }
+  footer { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.4fr 1fr; align-items: center; padding: 0 16px; }
+  .np { display: flex; gap: 12px; align-items: center; } .np .cv { width: 56px; height: 56px; border-radius: 4px; background: linear-gradient(135deg, #ff6b6b, #7a3cff); }
+  .np b { display: block; } .np small { color: #b3b3b3; }
+  [data-testid="player-controls"] { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .btns { display: flex; align-items: center; gap: 18px; }
+  .btns button { background: none; border: 0; color: #b3b3b3; font-size: 16px; cursor: pointer; }
+  .btns [data-testid="play-pause"] { width: 34px; height: 34px; border-radius: 50%; background: #fff; color: #000; font-size: 14px; }
+  .pr { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 520px; color: #a7a7a7; font-size: 11px; }
+  .pr .bar { flex: 1; height: 4px; background: #4d4d4d; border-radius: 2px; } .pr .bar i { display: block; height: 100%; width: 37%; background: #fff; border-radius: 2px; }
+  .vol { justify-self: end; color: #b3b3b3; display: flex; gap: 10px; align-items: center; } .vol .bar { width: 90px; height: 4px; background: #4d4d4d; border-radius: 2px; } .vol .bar i { display: block; width: 70%; height: 100%; background: #fff; border-radius: 2px; }
+</style>
+</head>
+<body>
+  <nav>
+    <div class="lg"><i></i>Tunes</div>
+    <a class="on" href="#">Home</a><a href="#">Search</a><a href="#">Your Library</a>
+    <h5>Playlists</h5>
+    <a href="#">Deep Focus</a><a href="#">Night Drive</a><a href="#">Liked Songs</a><a href="#">Discover Weekly</a>
+  </nav>
+  <section class="vw">
+    <h1>Good evening</h1><p class="sub">Picked for you, based on what you've been playing</p>
+    <h2>Recently played</h2>
+    <div data-testid="album-grid"></div>
+    <h2>Made for you</h2>
+    <div data-testid="album-grid" class="mfy"></div>
+  </section>
+  <footer>
+    <div class="np"><div class="cv"></div><div><b>Neon Tides</b><small>Hollow Coast</small></div></div>
+    <div data-testid="player-controls">
+      <div class="btns">
+        <button aria-label="Shuffle">⤮</button><button aria-label="Previous">⏮</button>
+        <button data-testid="play-pause" aria-label="Pause">❚❚</button>
+        <button aria-label="Next">⏭</button><button aria-label="Repeat">↻</button>
+      </div>
+      <div class="pr"><span class="el">1:24</span><div class="bar"><i></i></div><span>3:48</span></div>
+    </div>
+    <div class="vol">🔈<div class="bar"><i></i></div></div>
+  </footer>
+<script>
+  const albums = [
+    ["Neon Tides", "Hollow Coast", "#ff6b6b,#7a3cff"], ["Paper Satellites", "Mira Vale", "#00c9a7,#005f73"], ["Slow Bloom", "Juniper Lane", "#f9c74f,#f3722c"],
+    ["Static Hearts", "The Lowlights", "#4361ee,#4cc9f0"], ["Glass Animals of Fog", "Oda Rhee", "#b5179e,#560bad"], ["Overgrown", "Fern & Wire", "#52b788,#1b4332"],
+    ["Midnight Atlas", "Kairo", "#3a0ca3,#f72585"], ["Low Sun", "Amberline", "#ffb703,#fb8500"], ["Driftwood", "Sea Glass", "#8ecae6,#219ebc"],
+    ["Quiet Machines", "Lumen", "#adb5bd,#343a40"], ["Firefly Season", "June Park", "#e9c46a,#2a9d8f"], ["Velvet Hour", "Noor", "#9d4edd,#240046"],
+  ];
+  const grids = document.querySelectorAll('[data-testid="album-grid"]');
+  albums.forEach(([t, a, c], i) => {
+    const d = document.createElement("div");
+    d.className = "q8c";
+    d.innerHTML = `<div class="cv" style="background:linear-gradient(135deg,${c})">${t.split(" ")[0]}</div><b>${t}</b><small>${a}</small>`;
+    grids[i < 6 ? 0 : 1].append(d);
+  });
+  const pp = document.querySelector('[data-testid="play-pause"]');
+  pp.onclick = () => { const playing = pp.getAttribute("aria-label") === "Pause"; pp.setAttribute("aria-label", playing ? "Play" : "Pause"); pp.textContent = playing ? "▶" : "❚❚"; };
+</script>
+</body>
+</html>

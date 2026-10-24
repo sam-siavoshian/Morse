@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Morph",
+  "version": "0.1.0",
+  "description": "Customize any website in one sentence. Point at it, say what you want, a local model rewrites it live.",
+  "minimum_chrome_version": "135",
+  "permissions": ["storage", "scripting", "userScripts", "tabs", "downloads"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "content_scripts": [
+    { "matches": ["<all_urls>"], "js": ["host.js", "runtime.js"], "run_at": "document_idle" }
+  ],
+  "action": { "default_popup": "popup.html", "default_title": "Morph" },
+  "commands": {
+    "toggle-morph": { "suggested_key": { "default": "Ctrl+Shift+Space", "mac": "Alt+Shift+Space" }, "description": "Morph this page" }
+  },
+  "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" }
+}
