@@ -392,7 +392,7 @@ export class Connector {
     const historyScope = async () => app || hostOf((await here()).url);
     if (CONTROL_REQUESTS.has(msg.type)) return handleControl(msg, await here()); // user control (control.js)
     if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
-    if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, where); // gallery hook: Mods for this site
+    if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, await here()); // gallery hook: Mods for this site
     switch (msg.type) {
       case "hello":
         this.grantMic(s, (await here()).url);

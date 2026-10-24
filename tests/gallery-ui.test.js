@@ -12,6 +12,7 @@ import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import { createRequire } from "node:module";
+const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 
 let chromium;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
@@ -81,7 +82,7 @@ after(async () => {
 test("the empty bar suggests the mods others made for this site; nothing is fetched before Morse opens", { skip }, async () => {
   await page.waitForTimeout(300);
   assert.equal(indexHits, 0, "opening the page alone doesn't ask the gallery");
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await waitFor(s => s.open);
   const chip = ui(".sugs .gl-sug");
   await chip.waitFor();
@@ -235,7 +236,7 @@ test("Show mods others made, turned off, hides the section and the chip", { skip
   const hits = indexHits;
   await page.reload();
   await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await waitFor(s => s.open);
   await ui(".sugs .sug").first().waitFor();
   assert.equal(await ui(".sugs .gl-sug").count(), 0);
