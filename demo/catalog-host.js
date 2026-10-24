@@ -10,6 +10,7 @@
 //   ?clips=1       fixture snapshots on the Morse clipboard
 //   ?hist=1        fixture prompt history
 //   ?gallery=1 ?suspect=1 ?paused=1 ?versions=1   see the round 3 fixtures below
+//   ?style= ?guard=1 ?onboard=   see the round 4 fixtures below
 (() => {
   if (globalThis.__morseHost) return;
   try { localStorage.setItem("morse:debug", "1"); } catch {}
@@ -99,6 +100,42 @@
     return { kind: Array.isArray(data) || data?.mods ? "backup" : "mod", mods: list.map(m => ({ css: "", js: "", ...m })), errors: [] };
   }
 
+  // ---- round 4 fixtures: Your style, guards, first run
+  //   ?style=1|off|except|fitted   Your style (the real core/style-host.js, kept in memory):
+  //                  on everywhere, off everywhere, off on this site, fitted to this site
+  //   ?guard=1       three mods the guards paused (slowing, froze, hid) and one that is
+  //                  about to slow the page (C.slow: the kit's __stats says so)
+  //   ?onboard=new|nomodel|noscripts|done   first-run progress (onboarding.get)
+  const where = () => ({ url: location.href, app: null });
+  const styleHost = q.get("style") ? import("/core/style-host.js").then(async ({ createStyleHost }) => {
+    const { parseStyleWords, mergeStyle, styleKey } = await import("/core/style.js");
+    const words = "Georgia font, bigger text, softer colors and underline links everywhere except figma and slack";
+    let s = mergeStyle(null, parseStyleWords(words), words, now);
+    if (q.get("style") === "off") s = { ...s, enabled: false };
+    if (q.get("style") === "except") s = { ...s, except: [...s.except, styleKey(where())] };
+    if (q.get("style") === "fitted") s = { ...s, adapt: true, tried: { [styleKey(where())]: now } };
+    if (q.get("style") === "plain") s = null;
+    let stored = s;
+    return createStyleHost({ load: async () => stored, save: async v => { stored = v; }, now: () => now });
+  }) : null;
+  if (q.get("guard")) {
+    const at = new Date(Date.now() - 20000).toISOString();
+    C.mods.push(
+      fixture(40, { title: "Live word count", prompt: "show a live word count under every text box", js: "morse.watch('textarea', t => {})", enabled: false, paused: { why: "loop", at, error: "" } }),
+      fixture(41, { title: "Infinite scroll for the archive", prompt: "load the next page of the archive when I reach the bottom", js: "while (true) {}", enabled: false, paused: { why: "froze", at, reloaded: true, error: "" } }),
+      fixture(42, { title: "Focus mode", prompt: "hide everything except the article", css: "body { display: none }", enabled: false, paused: { why: "hid", at, error: "" } }),
+      fixture(43, { title: "Highlight new messages", prompt: "highlight messages that arrived since my last visit", js: "morse.watch('.msg', m => {})" }),
+    );
+    C.slow = { mod43: { why: "slow", at } };
+  }
+  if (q.get("style") === "fitted") C.mods.push(fixture(50, { title: `Your style for ${location.host}`, prompt: "Fit Your style to this site", parent: "morse-style", css: ".app { max-width: 100vw }" }));
+  const ONBOARD = {
+    new: { state: {}, status: { mode: "catalog", model: { connected: true }, userScripts: true } },
+    nomodel: { state: { coach: "done" }, status: { mode: "catalog", model: { connected: false }, userScripts: true } },
+    noscripts: { state: { coach: "done" }, status: { mode: "catalog", model: { connected: true }, userScripts: false } },
+    done: { state: { coach: "done", tips: { saved: true } }, status: { mode: "catalog", model: { connected: true }, userScripts: true } },
+  }[q.get("onboard") || ""];
+
   const merge = (a, b) => { const o = { ...a }; for (const [k, v] of Object.entries(b || {})) o[k] = v && typeof v === "object" && !Array.isArray(v) ? { ...(a[k] || {}), ...v } : v; return o; };
   const voice = q.get("voice") === "none" ? null : q.get("voice") === "0"
     ? { transcribe: false, provider: null, label: "", hint: "Voice: add an OpenAI key in the Morse popup, or run the Morse helper" }
@@ -110,6 +147,17 @@
       C.calls.push(m.type);
       const reply = result => emit({ reply: m.id, result });
       const fail = error => emit({ reply: m.id, error });
+      if (styleHost) {
+        const sh = await styleHost;
+        if (sh.owns(m)) { try { return reply(await sh.handle(m, where())); } catch (e) { return fail(e.message); } }
+        if (m.type === "mods.list") return reply(await sh.list(structuredClone(C.mods), where()));
+      }
+      if (ONBOARD) {
+        if (m.type === "onboarding.get") return reply(structuredClone(ONBOARD));
+        if (m.type === "onboarding.set") { ONBOARD.state = merge(ONBOARD.state, m.patch); return reply(true); }
+        if (m.type === "onboarding.open") return reply(null);
+      }
+      if (m.type === "stats" && C.slow?.[m.modId]) return reply({ watches: [], paused: C.slow[m.modId] });
       switch (m.type) {
         case "hello": return reply({ mode: "catalog", label: C.label, quiet: q.get("quiet") !== "0", appName: q.get("app") || null, settings: C.settings, voice });
         case "settings.get": return reply(C.settings);

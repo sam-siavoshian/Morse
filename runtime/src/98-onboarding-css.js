@@ -8,29 +8,25 @@ function ONBOARDING_CSS() { return `
   .ob-steps { display: flex; align-items: center; gap: 8px; min-width: 0; margin: 0; padding: 0; list-style: none; font: 500 var(--m-text-sm)/20px var(--m-font); color: var(--m-text-3); }
   .ob-steps li { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
   .ob-steps li + li::before { content: ""; width: 16px; height: 1px; background: var(--m-line-strong); margin-right: 1px; }
-  .ob-steps .n { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 5px; border: 1px solid var(--m-line-strong); font: 500 10.5px/1 var(--m-mono); color: var(--m-text-3); letter-spacing: 0; }
+  /* step numbers: the same 20px round number as Show me once's steps (98-show-once-css.js .so-n) */
+  .ob-steps .n { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--m-line-strong); font: 500 var(--m-text-xs)/1 var(--m-mono); color: var(--m-text-2); letter-spacing: 0; font-variant-numeric: tabular-nums; }
   .ob-steps li.now { color: var(--m-text); }
   .ob-steps li.now .n { background: var(--m-primary); border-color: var(--m-primary); color: var(--m-primary-text); }
   .ob-steps li.done { color: var(--m-text-2); }
   .ob-steps li.done .n { background: var(--m-raised); color: var(--m-text); }
-  .ob-hide { height: 24px; padding: 0 8px; margin: -2px 0; border: 0; border-radius: var(--m-r-sm); background: none; color: var(--m-text-3); font: 500 var(--m-text-xs)/24px var(--m-font); white-space: nowrap; }
-  .ob-hide:hover { color: var(--m-text); background: var(--m-hover); }
+  .ob-hide { margin: -2px 0; } /* .tbtn */
   .ob-say { grid-column: 1 / -1; margin: 0; color: var(--m-text-2); font: 400 var(--m-text-sm)/18px var(--m-font); }
   .ob-say b { color: var(--m-text); font-weight: 500; }
   .ob-say kbd { margin: 0 1px; }
-  .ob-link { border: 0; background: none; padding: 0; margin-left: 2px; color: var(--m-text); font: 500 var(--m-text-sm)/18px var(--m-font);
+  .ob-link { height: 20px; border: 0; background: none; padding: 0; margin-left: 2px; color: var(--m-text); font: 500 var(--m-text-sm)/20px var(--m-font);
     text-decoration: underline; text-decoration-color: var(--m-signal-1); text-underline-offset: 3px; }
   .ob-link:hover { text-decoration-color: var(--m-text); }
 
   /* one notice under the input (no model, user scripts off) */
   .ob-note { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 16px; border-top: 1px solid var(--m-line); color: var(--m-text-2); font: 400 var(--m-text-sm)/18px var(--m-font); }
-  .ob-dot { flex: none; width: 6px; height: 6px; border-radius: 1.5px; background: var(--m-warn); }
+  .ob-dot { background: var(--m-warn); } /* the status dot: 99-css.js */
   .ob-text { flex: 1; min-width: 0; }
-  .ob-note button { flex: none; height: 28px; padding: 0 10px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: transparent; color: var(--m-text);
-    font: 500 var(--m-text-sm)/18px var(--m-font); white-space: nowrap; transition: background var(--m-fast), border-color var(--m-fast); }
-  .ob-note button:hover { background: var(--m-hover); border-color: var(--m-signal-1); }
-  .ob-note .ob-close { width: 28px; padding: 0; border-color: transparent; color: var(--m-text-3); font-size: 16px; line-height: 1; }
-  .ob-note .ob-close:hover { border-color: transparent; color: var(--m-text); }
+  .ob-note .ob-close { color: var(--m-text-3); } /* .btn and .ibtn.sm.close */
 
   /* errors in plain words: the sentence may take two lines */
   .bar.err .hint:has(.ob-why) { white-space: normal; }
@@ -77,7 +73,9 @@ function ONBOARDING_CSS() { return `
     .ob-help .ob-can { grid-template-columns: 1fr; }
     .sheet .ob-ex section, .sheet .ob-ex section + section { grid-template-columns: 1fr; gap: 2px; }
     .ob-steps { gap: 6px; } .ob-steps li + li::before { width: 8px; }
-    .ob-note { flex-wrap: wrap; } .ob-text { flex-basis: calc(100% - 60px); }
+    /* the sentence on its own lines, the dot on its first line, the button under the words, × at the end */
+    .ob-note { flex-wrap: wrap; align-items: flex-start; row-gap: 8px; } .ob-text { flex-basis: calc(100% - 16px); }
+    .ob-note .ob-dot { margin-top: 6px; } .ob-note .btn { margin-left: 16px; } .ob-note .ob-close { margin-left: auto; }
   }
   :host([data-fx="off"]) .ob-coach { animation: none; }
 
@@ -101,7 +99,7 @@ function ONBOARDING_CSS() { return `
   .ob-win-body { min-width: 0; flex: 1; }
   .ob-win-body > b { display: block; font: 600 var(--m-text-md)/20px var(--m-font); margin-bottom: 4px; }
   .ob-win-body p { margin: 0; color: var(--m-text-2); }
-  .ob-win-body h4 { margin: 12px 0 6px; font: 500 var(--m-text-xs)/16px var(--m-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--m-text-3); }
+  .ob-win-body h4 { margin: 12px 0 6px; } /* .eyebrow (99-css.js) */
   .ob-win-body ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
   .ob-win-body li { display: flex; flex-direction: column; }
   .ob-win-body li b { font-weight: 500; color: var(--m-text); }
@@ -109,9 +107,6 @@ function ONBOARDING_CSS() { return `
   .ob-win .caps kbd { height: 18px; min-width: 18px; padding: 0 4px; font-size: 10.5px; }
   .ob-win .caps { gap: 3px; vertical-align: 1px; }
   .ob-win-row { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
-  .ob-win-row button { height: 28px; padding: 0 12px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: transparent; color: var(--m-text);
-    font: 500 var(--m-text-sm)/18px var(--m-font); transition: background var(--m-fast), border-color var(--m-fast); }
-  .ob-win-row button:hover { background: var(--m-hover); border-color: var(--m-signal-1); }
   .ob-win-row > span { margin-left: auto; color: var(--m-text-3); font-size: var(--m-text-xs); }
   :host([data-fx="off"]) .ob-win, :host([data-fx="off"]) .ob-win-mark .radar rect, :host([data-fx="off"]) .ob-win-check { animation-duration: 1ms !important; animation-delay: 0s !important; }
   @media (prefers-reduced-motion: reduce) { .ob-win-check { animation-delay: 0s !important; } }

@@ -25,9 +25,9 @@ button {
   transition: background var(--m-fast) var(--m-ease);
 }
 button:hover { background: var(--m-hover); }
-button:disabled { opacity: .5; cursor: default; }
+button:disabled { color: var(--m-signal-1); cursor: default; } /* disabled: a token, never opacity */
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
-button.primary { width: 100%; height: 36px; background: var(--m-primary); color: var(--m-primary-text); border-color: transparent; font-weight: 600; }
+button.primary { width: 100%; height: 32px; background: var(--m-primary); color: var(--m-primary-text); border-color: transparent; font-weight: 600; }
 button.primary:hover { background: var(--m-primary-hover); }
 button.link { background: none; border: 0; padding: 0; height: auto; color: var(--m-text-3); text-decoration: underline; font-size: var(--m-text-sm); margin-top: 8px; }
 kbd { font: var(--m-text-xs) var(--m-mono); opacity: .7; margin-left: 8px; }

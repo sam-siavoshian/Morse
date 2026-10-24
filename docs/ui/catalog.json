@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-24T12:48:48.182Z",
+ "generated": "2026-10-24T13:56:35.649Z",
  "shots": [
   {
    "area": "bar",
@@ -8128,6 +8128,684 @@
    "file": "motion/reduced-landing-light.png",
    "issues": [],
    "note": "no sweep: the field fades out, the bar shows the result"
+  },
+  {
+   "area": "show-once",
+   "state": "entry-chip-dark",
+   "theme": "dark",
+   "file": "show-once/entry-chip-dark.png",
+   "issues": [],
+   "note": "the way in: a chip after the suggestions, past a hairline"
+  },
+  {
+   "area": "show-once",
+   "state": "entry-chip-hover-dark",
+   "theme": "dark",
+   "file": "show-once/entry-chip-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "show-once",
+   "state": "entry-chip-focus-dark",
+   "theme": "dark",
+   "file": "show-once/entry-chip-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "show-once",
+   "state": "menu-item-dark",
+   "theme": "dark",
+   "file": "show-once/menu-item-dark.png",
+   "issues": [],
+   "note": "Show me once is the first item of the ⋯ menu"
+  },
+  {
+   "area": "show-once",
+   "state": "strip-empty-dark",
+   "theme": "dark",
+   "file": "show-once/strip-empty-dark.png",
+   "issues": [],
+   "note": "watching, before the first step; the dot pulses on purpose (recording), still with reduced motion"
+  },
+  {
+   "area": "show-once",
+   "state": "strip-steps-dark",
+   "theme": "dark",
+   "file": "show-once/strip-steps-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "show-once",
+   "state": "strip-hidden-dark",
+   "theme": "dark",
+   "file": "show-once/strip-hidden-dark.png",
+   "issues": [],
+   "note": "a password: the step is kept, the value never is"
+  },
+  {
+   "area": "show-once",
+   "state": "strip-many-dark",
+   "theme": "dark",
+   "file": "show-once/strip-many-dark.png",
+   "issues": [],
+   "note": "the four newest steps, and how many came before"
+  },
+  {
+   "area": "show-once",
+   "state": "strip-remove-hover-dark",
+   "theme": "dark",
+   "file": "show-once/strip-remove-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "show-once",
+   "state": "strip-remove-focus-dark",
+   "theme": "dark",
+   "file": "show-once/strip-remove-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "show-once",
+   "state": "strip-stop-focus-dark",
+   "theme": "dark",
+   "file": "show-once/strip-stop-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "show-once",
+   "state": "strip-top-dark",
+   "theme": "dark",
+   "file": "show-once/strip-top-dark.png",
+   "issues": [],
+   "note": "moved to the top when what you're about to click is under it"
+  },
+  {
+   "area": "show-once",
+   "state": "steps-in-bar-dark",
+   "theme": "dark",
+   "file": "show-once/steps-in-bar-dark.png",
+   "issues": [],
+   "note": "after Stop: the steps above the input, and chips for what people usually want"
+  },
+  {
+   "area": "show-once",
+   "state": "steps-forget-focus-dark",
+   "theme": "dark",
+   "file": "show-once/steps-forget-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "welcome",
+   "state": "page-dark",
+   "theme": "dark",
+   "file": "welcome/page-dark.png",
+   "issues": [],
+   "note": "the welcome page: try it here, and the checklist that ticks itself"
+  },
+  {
+   "area": "welcome",
+   "state": "model-waiting-dark",
+   "theme": "dark",
+   "file": "welcome/model-waiting-dark.png",
+   "issues": [],
+   "note": "one command connects a model"
+  },
+  {
+   "area": "welcome",
+   "state": "copy-focus-dark",
+   "theme": "dark",
+   "file": "welcome/copy-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "welcome",
+   "state": "key-not-a-key-dark",
+   "theme": "dark",
+   "file": "welcome/key-not-a-key-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "welcome",
+   "state": "key-refused-dark",
+   "theme": "dark",
+   "file": "welcome/key-refused-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "practice",
+   "state": "sample-bar-dark",
+   "theme": "dark",
+   "file": "practice/sample-bar-dark.png",
+   "issues": [],
+   "note": "the practice page before any model: suggestions with sample answers"
+  },
+  {
+   "area": "welcome",
+   "state": "model-found-dark",
+   "theme": "dark",
+   "file": "welcome/model-found-dark.png",
+   "issues": [],
+   "note": "a helper running without our code: the code box"
+  },
+  {
+   "area": "welcome",
+   "state": "model-wrong-dark",
+   "theme": "dark",
+   "file": "welcome/model-wrong-dark.png",
+   "issues": [],
+   "note": "the helper waits for a different code"
+  },
+  {
+   "area": "welcome",
+   "state": "model-nomodel-dark",
+   "theme": "dark",
+   "file": "welcome/model-nomodel-dark.png",
+   "issues": [],
+   "note": "paired, but no model set up"
+  },
+  {
+   "area": "welcome",
+   "state": "model-connected-dark",
+   "theme": "dark",
+   "file": "welcome/model-connected-dark.png",
+   "issues": [],
+   "note": "connected: the step ticks itself"
+  },
+  {
+   "area": "welcome",
+   "state": "checklist-connected-dark",
+   "theme": "dark",
+   "file": "welcome/checklist-connected-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "practice",
+   "state": "first-save-dark",
+   "theme": "dark",
+   "file": "practice/first-save-dark.png",
+   "issues": [],
+   "note": "the first saved change on the practice page: the card"
+  },
+  {
+   "area": "welcome",
+   "state": "page-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/page-narrow-dark.png",
+   "issues": [],
+   "note": "the welcome page: try it here, and the checklist that ticks itself"
+  },
+  {
+   "area": "trusted-types",
+   "state": "bar-plain-dark",
+   "theme": "dark",
+   "file": "trusted-types/bar-plain-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "toolbar-plain-dark",
+   "theme": "dark",
+   "file": "trusted-types/toolbar-plain-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "panel-plain-dark",
+   "theme": "dark",
+   "file": "trusted-types/panel-plain-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "settings-plain-dark",
+   "theme": "dark",
+   "file": "trusted-types/settings-plain-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "bar-tt-dark",
+   "theme": "dark",
+   "file": "trusted-types/bar-tt-dark.png",
+   "issues": [
+    "the page does not enforce Trusted Types"
+   ],
+   "note": "pixel-identical to bar-plain (425216 pixels compared)"
+  },
+  {
+   "area": "trusted-types",
+   "state": "toolbar-tt-dark",
+   "theme": "dark",
+   "file": "trusted-types/toolbar-tt-dark.png",
+   "issues": [],
+   "note": "pixel-identical to toolbar-plain (681088 pixels compared)"
+  },
+  {
+   "area": "trusted-types",
+   "state": "panel-tt-dark",
+   "theme": "dark",
+   "file": "trusted-types/panel-tt-dark.png",
+   "issues": [],
+   "note": "pixel-identical to panel-plain (1140480 pixels compared)"
+  },
+  {
+   "area": "trusted-types",
+   "state": "settings-tt-dark",
+   "theme": "dark",
+   "file": "trusted-types/settings-tt-dark.png",
+   "issues": [],
+   "note": "pixel-identical to settings-plain (1878272 pixels compared)"
+  },
+  {
+   "area": "trusted-types",
+   "state": "bar-plain-narrow-dark",
+   "theme": "dark",
+   "file": "trusted-types/bar-plain-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "toolbar-plain-narrow-dark",
+   "theme": "dark",
+   "file": "trusted-types/toolbar-plain-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "panel-plain-narrow-dark",
+   "theme": "dark",
+   "file": "trusted-types/panel-plain-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "settings-plain-narrow-dark",
+   "theme": "dark",
+   "file": "trusted-types/settings-plain-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "bar-tt-narrow-dark",
+   "theme": "dark",
+   "file": "trusted-types/bar-tt-narrow-dark.png",
+   "issues": [
+    "the page does not enforce Trusted Types"
+   ],
+   "note": "pixel-identical to bar-plain (322408 pixels compared)"
+  },
+  {
+   "area": "trusted-types",
+   "state": "toolbar-tt-narrow-dark",
+   "theme": "dark",
+   "file": "trusted-types/toolbar-tt-narrow-dark.png",
+   "issues": [],
+   "note": "pixel-identical to toolbar-plain (338520 pixels compared)"
+  },
+  {
+   "area": "trusted-types",
+   "state": "panel-tt-narrow-dark",
+   "theme": "dark",
+   "file": "trusted-types/panel-tt-narrow-dark.png",
+   "issues": [],
+   "note": "pixel-identical to panel-plain (1316640 pixels compared)"
+  },
+  {
+   "area": "trusted-types",
+   "state": "settings-tt-narrow-dark",
+   "theme": "dark",
+   "file": "trusted-types/settings-tt-narrow-dark.png",
+   "issues": [],
+   "note": "pixel-identical to settings-plain (1190312 pixels compared)"
+  },
+  {
+   "area": "trusted-types",
+   "state": "bar-plain-light",
+   "theme": "light",
+   "file": "trusted-types/bar-plain-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "toolbar-plain-light",
+   "theme": "light",
+   "file": "trusted-types/toolbar-plain-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "panel-plain-light",
+   "theme": "light",
+   "file": "trusted-types/panel-plain-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "settings-plain-light",
+   "theme": "light",
+   "file": "trusted-types/settings-plain-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "bar-tt-light",
+   "theme": "light",
+   "file": "trusted-types/bar-tt-light.png",
+   "issues": [
+    "the page does not enforce Trusted Types"
+   ],
+   "note": "pixel-identical to bar-plain (425216 pixels compared)"
+  },
+  {
+   "area": "trusted-types",
+   "state": "toolbar-tt-light",
+   "theme": "light",
+   "file": "trusted-types/toolbar-tt-light.png",
+   "issues": [],
+   "note": "pixel-identical to toolbar-plain (681088 pixels compared)"
+  },
+  {
+   "area": "trusted-types",
+   "state": "panel-tt-light",
+   "theme": "light",
+   "file": "trusted-types/panel-tt-light.png",
+   "issues": [
+    "259101 of 1140480 pixels differ from the normal page"
+   ],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "settings-tt-light",
+   "theme": "light",
+   "file": "trusted-types/settings-tt-light.png",
+   "issues": [],
+   "note": "pixel-identical to settings-plain (1878272 pixels compared)"
+  },
+  {
+   "area": "trusted-types",
+   "state": "bar-plain-narrow-light",
+   "theme": "light",
+   "file": "trusted-types/bar-plain-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "toolbar-plain-narrow-light",
+   "theme": "light",
+   "file": "trusted-types/toolbar-plain-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "panel-plain-narrow-light",
+   "theme": "light",
+   "file": "trusted-types/panel-plain-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "settings-plain-narrow-light",
+   "theme": "light",
+   "file": "trusted-types/settings-plain-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "bar-tt-narrow-light",
+   "theme": "light",
+   "file": "trusted-types/bar-tt-narrow-light.png",
+   "issues": [
+    "the page does not enforce Trusted Types"
+   ],
+   "note": "pixel-identical to bar-plain (322408 pixels compared)"
+  },
+  {
+   "area": "trusted-types",
+   "state": "toolbar-tt-narrow-light",
+   "theme": "light",
+   "file": "trusted-types/toolbar-tt-narrow-light.png",
+   "issues": [
+    "19300 of 338520 pixels differ from the normal page"
+   ],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "panel-tt-narrow-light",
+   "theme": "light",
+   "file": "trusted-types/panel-tt-narrow-light.png",
+   "issues": [
+    "254417 of 1316640 pixels differ from the normal page"
+   ],
+   "note": ""
+  },
+  {
+   "area": "trusted-types",
+   "state": "settings-tt-narrow-light",
+   "theme": "light",
+   "file": "trusted-types/settings-tt-narrow-light.png",
+   "issues": [],
+   "note": "pixel-identical to settings-plain (1190312 pixels compared)"
+  },
+  {
+   "area": "popup",
+   "state": "first-run-no-model-narrow-dark",
+   "theme": "dark",
+   "file": "popup/first-run-no-model-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-model-narrow-dark",
+   "theme": "dark",
+   "file": "popup/first-run-model-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-chrome-page-narrow-dark",
+   "theme": "dark",
+   "file": "popup/first-run-chrome-page-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-store-page-narrow-dark",
+   "theme": "dark",
+   "file": "popup/first-run-store-page-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-user-scripts-off-narrow-dark",
+   "theme": "dark",
+   "file": "popup/first-run-user-scripts-off-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-ready-narrow-dark",
+   "theme": "dark",
+   "file": "popup/first-run-ready-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-no-model-narrow-light",
+   "theme": "light",
+   "file": "popup/first-run-no-model-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-model-narrow-light",
+   "theme": "light",
+   "file": "popup/first-run-model-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-chrome-page-narrow-light",
+   "theme": "light",
+   "file": "popup/first-run-chrome-page-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-store-page-narrow-light",
+   "theme": "light",
+   "file": "popup/first-run-store-page-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-user-scripts-off-narrow-light",
+   "theme": "light",
+   "file": "popup/first-run-user-scripts-off-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-ready-narrow-light",
+   "theme": "light",
+   "file": "popup/first-run-ready-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-no-model-dark",
+   "theme": "dark",
+   "file": "popup/first-run-no-model-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-model-dark",
+   "theme": "dark",
+   "file": "popup/first-run-model-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-chrome-page-dark",
+   "theme": "dark",
+   "file": "popup/first-run-chrome-page-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-store-page-dark",
+   "theme": "dark",
+   "file": "popup/first-run-store-page-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-user-scripts-off-dark",
+   "theme": "dark",
+   "file": "popup/first-run-user-scripts-off-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-ready-dark",
+   "theme": "dark",
+   "file": "popup/first-run-ready-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-no-model-light",
+   "theme": "light",
+   "file": "popup/first-run-no-model-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-model-light",
+   "theme": "light",
+   "file": "popup/first-run-model-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-chrome-page-light",
+   "theme": "light",
+   "file": "popup/first-run-chrome-page-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-store-page-light",
+   "theme": "light",
+   "file": "popup/first-run-store-page-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-user-scripts-off-light",
+   "theme": "light",
+   "file": "popup/first-run-user-scripts-off-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "first-run-ready-light",
+   "theme": "light",
+   "file": "popup/first-run-ready-light.png",
+   "issues": [],
+   "note": ""
   }
  ]
 }
