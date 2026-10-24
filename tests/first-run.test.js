@@ -12,15 +12,18 @@
 // saved change's card.
 //
 //   node scripts/build.js && DISPLAY=:99 node --test tests/first-run.test.js
+import { tempDir } from "./helpers/home.js"; // first: a MORSE_HOME of its own, and temp folders removed at exit
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
-import { mkdtempSync, existsSync, rmSync } from "node:fs";
-import net from "node:net";
+import { existsSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { serveBar } from "../demo/bar-server.js";
+import { serveDemo } from "../demo/serve.js";
+import { freePort } from "./helpers/net.js";
+import { SCALE } from "./helpers/wait.js";
 
 let chromium;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
@@ -30,23 +33,20 @@ const CLI = path.join(root, "daemon", "cli.js");
 const skip = !chromium && "playwright not installed";
 const skipExt = skip || (!process.env.DISPLAY && "extensions need a display (run under Xvfb)") || (!existsSync(EXT) && "run node scripts/build.js first");
 const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
-const HELPER_PORT = 7457; // the extension always looks for the Morse helper here (core/providers.js)
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const tmp = mkdtempSync(path.join(os.tmpdir(), "morse-first-run-"));
+const tmp = tempDir("morse-first-run-");
 after(() => rmSync(tmp, { recursive: true, force: true }));
 
 async function until(fn, ms = 20000, what = "condition") {
-  const end = Date.now() + ms;
+  const end = Date.now() + Math.max(ms, 15000) * SCALE; // a busy machine (several runs at once) is slow, not broken
   let last;
   while (Date.now() < end) { try { last = await fn(); if (last) return last; } catch (e) { last = e; } await sleep(100); }
   throw new Error(`timed out waiting for ${what}; last: ${last instanceof Error ? last.message : JSON.stringify(last)}`);
 }
-const portFree = port => new Promise(r => { const s = net.createServer().once("error", () => r(false)).listen(port, "127.0.0.1", () => s.close(() => r(true))); });
-// Other runs on this machine may hold the helper's port for a moment.
-const helperPortFree = () => until(() => portFree(HELPER_PORT), 90000, `port ${HELPER_PORT} to be free`);
 
-function run(args, env = {}) {
-  const p = spawn(process.execPath, [CLI, ...args], { env: { ...process.env, ...env }, stdio: ["pipe", "pipe", "pipe"] });
+// `morse`, with its Morse helper on `port` (MORSE_HELPER_PORT).
+function run(args, env = {}, port) {
+  const p = spawn(process.execPath, [CLI, ...args], { env: { ...process.env, MORSE_HELPER_PORT: String(port), ...env }, stdio: ["pipe", "pipe", "pipe"] });
   p.out = "";
   p.stdout.on("data", d => (p.out += d));
   p.stderr.on("data", d => (p.out += d));
@@ -62,9 +62,17 @@ async function install(name) {
   });
   const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
   const id = new URL(sw.url()).host;
+  // Each test has its own Morse helper on a port the OS picked, so runs side
+  // by side never meet. The extension looks for it there ("morse.helperPort",
+  // core/providers.js HELPER_PORT_KEY); the welcome page opened on install
+  // before that was set, so it starts again.
+  const port = await freePort();
+  await sw.evaluate(p => chrome.storage.local.set({ "morse.helperPort": p }), port);
   const welcome = await until(() => ctx.pages().find(p => p.url().includes("/welcome.html")), 15000, "the welcome page to open on install");
   await welcome.waitForLoadState();
-  return { ctx, sw, id, welcome };
+  await welcome.reload();
+  await welcome.waitForLoadState();
+  return { ctx, sw, id, welcome, port };
 }
 // The practice frame is sandboxed, so its bar can't be put in debug mode and
 // its shadow root stays closed. DevTools can still read it (pierce).
@@ -89,16 +97,15 @@ const stepDone = (page, step) => page.evaluate(s => document.querySelector(`[dat
 let sites = null;
 async function demoSites() {
   if (sites) return sites;
-  const base = 21000 + Math.floor(Math.random() * 20000);
-  const p = spawn(process.execPath, [path.join(root, "demo/serve.js")], { env: { ...process.env, MORSE_DEMO_PORT: String(base) }, stdio: "ignore" });
-  await until(async () => !(await portFree(base + 1)), 10000, "the demo sites");
-  sites = { byte: `http://127.0.0.1:${base + 1}/demo/sites/byte/`, stop: () => p.kill() };
+  // Every site on a port the OS picked (a random fixed range could be taken).
+  const demo = await serveDemo();
+  sites = { byte: `${demo.origin("byte")}/demo/sites/byte/`, stop: () => demo.close() };
   return sites;
 }
 after(() => sites?.stop());
 
 test("first run in Chrome: welcome only, try it with no model, connect in one command, first saved change on a site, reload, share", { skip: skipExt, timeout: 240000 }, async () => {
-  const { ctx, sw, id, welcome } = await install("profile-flow");
+  const { ctx, sw, id, welcome, port } = await install("profile-flow");
   let helper = null;
   try {
     // Install opens the welcome page, not the settings page too.
@@ -130,9 +137,8 @@ test("first run in Chrome: welcome only, try it with no model, connect in one co
     const m = /^morse setup --pair ([A-HJ-NP-Z2-9]{6})$/.exec(cmd);
     assert.ok(m, `one command with a pairing code: ${cmd}`);
     assert.match(await welcome.locator("#live").textContent(), /Waiting for you to run the command/);
-    await helperPortFree();
     const home = path.join(tmp, "home-flow");
-    helper = run(["setup", "--use", "demo", "--pair", m[1]], { MORSE_HOME: home });
+    helper = run(["setup", "--use", "demo", "--pair", m[1]], { MORSE_HOME: home }, port);
     await until(() => /The Morse helper is running\. Go back to Chrome/.test(helper.out), 30000, () => "setup to start the helper: " + helper.out);
     await until(() => stepDone(welcome, "model"), 20000, "the welcome page to pair by itself");
     assert.match(await welcome.locator("#model-label").textContent(), /^Using /);
@@ -183,7 +189,7 @@ test("first run in Chrome: welcome only, try it with no model, connect in one co
 });
 
 test("welcome page errors say what to do: another code waiting, a wrong code, a key that isn't one", { skip: skipExt, timeout: 120000 }, async () => {
-  const { ctx, welcome } = await install("profile-errors");
+  const { ctx, welcome, port } = await install("profile-errors");
   let helper = null;
   try {
     // A key that isn't an Anthropic key.
@@ -194,11 +200,10 @@ test("welcome page errors say what to do: another code waiting, a wrong code, a 
     await welcome.locator("#key").fill("");
 
     // A helper started with `morse serve` waits for its own code, not ours.
-    await helperPortFree();
-    helper = run(["serve"], { MORSE_HOME: path.join(tmp, "home-errors"), MORSE_PROVIDER: "demo" });
+    helper = run(["serve"], { MORSE_HOME: path.join(tmp, "home-errors"), MORSE_PROVIDER: "demo" }, port);
     const code = (await until(() => /pair\s+(?:\x1b\[[\d;]*m)*([A-Z0-9]{6})/.exec(helper.out), 15000, () => "morse serve's code: " + helper.out))[1];
     await until(async () => !(await welcome.locator("#pairrow").isHidden()), 15000, "the code box");
-    assert.match(await welcome.locator("#live").textContent(), /waiting for a different code\. Type the code it shows/);
+    await until(async () => /waiting for a different code\. Type the code it shows/.test(await welcome.locator("#live").textContent()), 15000, "the note about the helper's own code");
     // A wrong code, then the right one (typing six characters connects).
     await welcome.locator("#code").fill("");
     await welcome.locator("#code").pressSequentially(code === "ZZZZZZ" ? "YYYYYY" : "ZZZZZZ");

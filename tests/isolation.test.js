@@ -1,7 +1,7 @@
 // Desktop: the runtime and its host binding live in an isolated world, so the
 // app's own scripts can't use Morse's host API; mods still run in the page's
 // main world. Host reads and writes are scoped to the page that asked.
-import "./helpers/home.js";
+import { tempDir } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -44,7 +44,7 @@ look(); setInterval(look, 50);
 
 before(async () => {
   if (skip) return;
-  home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-iso-"));
+  home = tempDir("morse-iso-");
   process.env.MORSE_HOME = home;
   site = http.createServer((q, r) => r.writeHead(200, { "Content-Type": "text/html" }).end(APP)).listen(0, "127.0.0.1");
   await new Promise(r => site.on("listening", r));

@@ -5,14 +5,12 @@
 // under its name with one switch, and a pack from an address: Check this
 // address for updates, then Update available and the update review. Last,
 // the Chrome extension's service worker answering the same requests.
-import "./helpers/home.js";
+import { tempDir } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import os from "node:os";
-import { mkdtempSync } from "node:fs";
 import { launchBrowser, noBrowser, chromium } from "./helpers/browser.js";
 import { TIMEOUT, waitForReady } from "./helpers/wait.js";
 import { freePort } from "./helpers/net.js";
@@ -343,7 +341,7 @@ async function asMorse(page, msg) {
 }
 
 test("extension: a pack is previewed, installed only as reviewed, and its switch works, in the service worker", { skip: skipExt }, async () => {
-  const ctx = await chromium.launchPersistentContext(mkdtempSync(path.join(os.tmpdir(), "morse-pack-ext-")), {
+  const ctx = await chromium.launchPersistentContext(tempDir("morse-pack-ext-"), {
     headless: false, args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
   });
   try {

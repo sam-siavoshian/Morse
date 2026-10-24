@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bloom Bakery</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fffaf3; color: #3f2a1d; font: 16px/1.6 Georgia, "Times New Roman", serif; }
+  .nav { display: flex; gap: 18px; align-items: center; padding: 14px 28px; border-bottom: 1px solid #f1e4d3; }
+  .nav b { font-size: 20px; margin-right: auto; } .nav a { color: #8a5a3c; text-decoration: none; font-size: 14px; }
+  .hero { padding: 40px 28px 24px; }
+  .hero h1 { font-size: 34px; line-height: 1.15; margin: 0 0 12px; }
+  .hero p, .story p { font-size: 15px; margin: 0 0 12px; color: #5b4636; }
+  .cta { display: inline-block; background: #b45309; color: #fff; padding: 10px 18px; border-radius: 22px; text-decoration: none; font: 600 14px/1 system-ui, sans-serif; }
+  .menu { padding: 8px 28px 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .menu div { background: #fff; border: 1px solid #f1e4d3; border-radius: 10px; padding: 12px; }
+  .menu b { display: block; } .menu span { color: #8a5a3c; font-size: 14px; }
+  .story { padding: 0 28px 120px; }
+  .cookie { position: fixed; left: 16px; right: 16px; bottom: 16px; background: #3f2a1d; color: #fffaf3; border-radius: 10px; padding: 12px 16px; display: flex; gap: 12px; align-items: center; font: 13px/1.4 system-ui, sans-serif; }
+  .cookie button { margin-left: auto; border: 0; border-radius: 6px; background: #fbbf24; padding: 6px 12px; font: inherit; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="nav"><b>Bloom Bakery</b><a href="#">Menu</a><a href="#">Visit</a><a href="#">Order</a></div>
+  <div class="hero">
+    <h1>Slow-rised bread, baked every morning</h1>
+    <p>We bake small batches from organic flour, starting at 4 a.m., so the loaves on our shelves are never more than a few hours old.</p>
+    <p>Come for the sourdough, stay for the cardamom buns.</p>
+    <a class="cta" href="#">See today's menu</a>
+  </div>
+  <div class="menu">
+    <div><b>Country sourdough</b><span>$9</span></div><div><b>Cardamom bun</b><span>$4.50</span></div><div><b>Rye loaf</b><span>$8</span></div>
+    <div><b>Butter croissant</b><span>$4</span></div><div><b>Seeded baguette</b><span>$5</span></div><div><b>Olive focaccia</b><span>$7</span></div>
+  </div>
+  <div class="story">
+    <p>Bloom started in 2014 as a stall at the Saturday market. Ten years later we still use the same starter, fed twice a day.</p>
+    <p>Everything unsold at closing time goes to the shelter on Elm Street.</p>
+  </div>
+  <div class="cookie">We use cookies to remember your order. <button>Accept</button></div>
+</body>
+</html>

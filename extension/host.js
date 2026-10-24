@@ -12,7 +12,18 @@
   const fail = id => { pending.delete(id); emit({ reply: id, error: "Morse restarted. Try again." }); };
   const connect = () => {
     const p = chrome.runtime.connect({ name: "morse" });
-    p.onMessage.addListener(m => { if (m && m.reply != null) pending.delete(m.reply); emit(m); });
+    p.onMessage.addListener(m => {
+      // The effect check (background.js probe): answered here, in order after
+      // the CSS that came before it on this port.
+      if (m && m.morseProbe != null) {
+        const answer = result => { try { p.postMessage({ morseProbeReply: m.morseProbe, result: result ?? null }); } catch {} };
+        try { Promise.resolve(globalThis.__morseProbe ? globalThis.__morseProbe(m.target, m.selectors) : null).then(answer, () => answer(null)); }
+        catch { answer(null); }
+        return;
+      }
+      if (m && m.reply != null) pending.delete(m.reply);
+      emit(m);
+    });
     p.onDisconnect.addListener(() => {
       if (port === p) port = null;
       for (const [id, via] of [...pending]) if (via === p) fail(id);

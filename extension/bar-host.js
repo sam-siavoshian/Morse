@@ -6,12 +6,16 @@
 //   history   chrome.storage.local "morse.history" { [site]: [prompt, ...] }
 //   voice     the Morse helper (http://127.0.0.1:7457/v1/transcribe) when it's
 //             running and paired, else OpenAI with the user's key
+//   helper    helperUrl(): where the Morse helper is, for this file and
+//             background.js (127.0.0.1:7457; tests move the port with
+//             core/providers.js HELPER_PORT_KEY)
 
 import { normalizePrefs, mergePrefs, pushHistory } from "../core/prefs.js";
 import { transcribeOpenAI, OPENAI_TRANSCRIBE_MODEL } from "../core/transcribe.js";
 import { Generations } from "../core/cancel.js";
 import { hostOf } from "../core/mod.js";
 import { serialQueue } from "../core/serial.js";
+import { HELPER_PORT_KEY, helperUrlFor } from "../core/providers.js";
 
 export const gens = new Generations();
 
@@ -22,10 +26,11 @@ const storageQueue = serialQueue();
 export const serialized = job => storageQueue("chrome.storage", job);
 export const BAR_REQUESTS = new Set(["generate.cancel", "settings.get", "settings.set", "history.get", "history.add", "transcribe"]);
 
-const HELPER = "http://127.0.0.1:7457";
 const PREFS_KEY = "morse.settings", HISTORY_KEY = "morse.history";
 
 const local = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
+// Always 127.0.0.1; the port is 7457 unless a test set HELPER_PORT_KEY.
+export const helperUrl = async () => helperUrlFor(await local(HELPER_PORT_KEY, null));
 // sync can be unavailable (signed out, policy); local keeps working.
 async function syncGet(k) {
   try { const v = (await chrome.storage.sync.get(k))[k]; if (v !== undefined) return v; } catch {}
@@ -56,11 +61,12 @@ async function history(scope, text) {
 
 // ---- voice
 
-// The pairing record the helper's pairing flow leaves in storage.local.
+// The pairing record the helper's pairing flow leaves in storage.local. The
+// address is always helperUrl(), never one kept in the record.
 async function pairing() {
   for (const k of ["helper", "bridge", "pairing"]) {
     const v = await local(k, null);
-    if (v && typeof v === "object" && (v.token || v.paired)) return { url: v.url || (v.port ? `http://127.0.0.1:${v.port}` : HELPER), token: v.token || "" };
+    if (v && typeof v === "object" && (v.token || v.paired)) return { url: await helperUrl(), token: v.token || "" };
   }
   return null;
 }

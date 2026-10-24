@@ -10,13 +10,13 @@
 // core/ and the Anthropic SDK by scripts/build.js.
 
 import { runMorse } from "../core/engine.js";
-import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_URL, prewarm } from "../core/providers.js";
+import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_PORT_KEY, prewarm } from "../core/providers.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf, byCreated, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode, settleMs } from "../core/kit.js";
 import { asReviewed } from "../core/summary.js"; // installs keep only the reviewed code
 import { HANG_MS, FROZE_ERROR, pageCollapse } from "../core/guard.js"; // guard hook: frozen pages, a change that hides most of the page
 import { clipAdd } from "../core/clipboard.js"; // God mode clipboard
-import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
+import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo, helperUrl } from "./bar-host.js"; // command bar: stop, settings, history, voice
 import { CONTROL_REQUESTS, handleControlRequest } from "./control-host.js"; // user control: pause, safe start, install review, backup
 import { serialized } from "./bar-host.js"; // hardening: one queue for every storage read-modify-write
 import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver, practiceSample, SAMPLE_ONLY, openSetup } from "./onboarding-host.js"; // onboarding hook: welcome page, first-run state, practice area
@@ -26,6 +26,13 @@ import { PACK_REQUESTS, handlePack } from "./pack-host.js"; // packs hook: mod p
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
+
+// Content scripts never use chrome.storage (they ask this worker over the
+// "morse" port), so storage.local is kept to this worker and the extension's
+// own pages: API keys, the helper's token and the test-only helper port
+// (core/providers.js HELPER_PORT_KEY) are out of a content script's reach.
+try { chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" }).catch(() => {}); } catch {}
+chrome.storage.onChanged.addListener(c => { if (c[HELPER_PORT_KEY]) cached = null; });
 
 // chrome.storage.local "model": { backend: "helper"|"anthropic"|"" (auto),
 //   helperModel, anthropicKey, anthropicModel }
@@ -43,7 +50,7 @@ async function saveModelPrefs(p) {
 
 async function helperHealth(token) {
   try {
-    const r = await fetch(`${HELPER_URL}/v1/health`, { headers: token ? { Authorization: `Bearer ${token}` } : {}, signal: AbortSignal.timeout(1200) });
+    const r = await fetch(`${await helperUrl()}/v1/health`, { headers: token ? { Authorization: `Bearer ${token}` } : {}, signal: AbortSignal.timeout(1200) });
     return r.ok ? await r.json() : null;
   } catch { return null; }
 }
@@ -58,7 +65,7 @@ async function backend(fresh = false) {
   let out;
   if (want !== "anthropic" && helper?.paired) {
     const label = p.helperModel ? settingsLabel({ provider: helper.provider, model: p.helperModel }) : helper.label;
-    out = { kind: "helper", label, helper, settings: { provider: "helper", baseUrl: HELPER_URL, token: p.helperToken, model: p.helperModel || "", label } };
+    out = { kind: "helper", label, helper, settings: { provider: "helper", baseUrl: await helperUrl(), token: p.helperToken, model: p.helperModel || "", label } };
   } else if (want !== "helper" && p.anthropicKey) {
     const settings = { provider: "anthropic", apiKey: p.anthropicKey, model: p.anthropicModel || PROVIDERS.anthropic.defaultModel };
     out = { kind: "anthropic", label: settingsLabel(settings), settings, helper };
@@ -128,6 +135,23 @@ async function exec(target, modId, js) {
   await new Promise(r => setTimeout(r, settleMs(res))); // speed: core/kit.js settle
   const errs = (await execIn(target, `morse.__errors(${JSON.stringify(modId)})`)) || [];
   return errs.length ? { ok: false, error: String(errs[0]).split("\n")[0] } : { ok: true };
+}
+
+// Effect check (core/engine.js): the runtime's effectProbe, asked over the
+// same port the streamed CSS goes out on, so it runs after that CSS is on the
+// page. The content script (host.js) answers from its world, where
+// runtime/src/20-context.js publishes it. null when it can't answer (an older
+// content script, the practice area); the engine then skips the check.
+let probeSeq = 0;
+function probe(port, targetSelector, selectors) {
+  if (Practice.has(port.sender.tab?.id)) return Promise.resolve(null); // the welcome page's sandboxed practice area
+  const id = ++probeSeq;
+  return new Promise(resolve => {
+    const done = v => { clearTimeout(t); port.__probes.delete(id); resolve(v ?? null); };
+    const t = setTimeout(() => done(null), 3000);
+    port.__probes.set(id, done);
+    try { port.postMessage({ morseProbe: id, target: targetSelector || null, selectors: selectors || [] }); } catch { done(null); }
+  });
 }
 
 async function allMods() { return get("mods", {}); }
@@ -249,6 +273,7 @@ async function dispatch(msg, port) {
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           signal,
           exec: js => exec(target, msg.genId, js),
+          probe: sels => probe(port, msg.context?.target?.selector, sels),
           collapse: css => execIn(target, `(${pageCollapse})(${JSON.stringify(css)}, ${JSON.stringify(msg.genId)})`), // guard hook: hid most of the page?
           emit: ev => { if (!signal.aborted) try { port.postMessage({ ...ev, genId: msg.genId }); } catch {} },
         }));
@@ -300,8 +325,10 @@ chrome.runtime.onConnect.addListener(port => {
   if (port.name !== "morse") return;
   // Closing the tab aborts its generations (and the helper kills the harness).
   port.__gens = new Set();
-  port.onDisconnect.addListener(() => { for (const id of port.__gens) gens.cancel(id); });
+  port.__probes = new Map(); // effect check answers from the content script
+  port.onDisconnect.addListener(() => { for (const id of port.__gens) gens.cancel(id); for (const done of port.__probes.values()) done(null); });
   port.onMessage.addListener(async msg => {
+    if (msg?.morseProbeReply != null) { port.__probes.get(msg.morseProbeReply)?.(msg.result); return; }
     try { port.postMessage({ reply: msg.id, result: await dispatch(msg, port) }); }
     catch (e) { try { port.postMessage({ reply: msg.id, error: e.message || String(e) }); } catch {} }
   });
@@ -340,16 +367,17 @@ async function popup(msg) {
       return popupState(msg.url);
     }
     case "popup.pair": {
+      const base = await helperUrl();
       let r;
       try {
-        r = await fetch(`${HELPER_URL}/v1/pair`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: String(msg.code || "").trim().toUpperCase() }), signal: AbortSignal.timeout(5000) });
+        r = await fetch(`${base}/v1/pair`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: String(msg.code || "").trim().toUpperCase() }), signal: AbortSignal.timeout(5000) });
       } catch {
         return { error: "Can't reach the Morse helper. Run morse serve on this computer." };
       }
       const body = await r.json().catch(() => ({}));
       if (!r.ok || !body.token) return { error: body.error || `Pairing didn't work (error ${r.status}). Run morse pair for a new code and try again.` };
       const p = await modelPrefs();
-      await set("helper", { token: body.token, url: HELPER_URL });
+      await set("helper", { token: body.token, url: base });
       await saveModelPrefs({ ...p, backend: p.backend === "anthropic" ? "anthropic" : "helper" });
       cached = null;
       return popupState(msg.url);

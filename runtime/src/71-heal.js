@@ -38,7 +38,7 @@ const Heal = (() => {
   // ---- counting
   function countOf(sel) {
     let list;
-    try { list = document.querySelectorAll(sel); } catch { return null; }
+    try { list = sel.includes(">>>") ? deepAll(sel) : document.querySelectorAll(sel); } catch { return null; } // "host >>> inside": shadow roots, frames (20-context.js)
     let n = 0, rest = 0, top = Infinity;
     for (const el of list) {
       if (el.closest(NOT_OURS)) continue;

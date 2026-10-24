@@ -55,10 +55,17 @@ export function pageSupport(url, { fileAccess = true, extensionId = "" } = {}) {
 // Generation errors in plain words. `action` names a button the runtime can
 // offer: "userscripts" (open Morse's extension settings), "model" (model
 // settings, or `morse setup` on the desktop), "setup" (copy `morse setup`).
+// The helper's address is 127.0.0.1:7457, or the port a host moved it to
+// (setHelperPort: MORSE_HELPER_PORT in the CLI). Other 127.0.0.1 servers (a
+// local OpenAI-compatible model) aren't the helper.
+let ERROR_HELPER_PORT = 7457;
+export function setHelperPort(port) { if (Number.isInteger(port) && port > 0 && port <= 65535) ERROR_HELPER_PORT = port; }
+const helperAddress = { test: m => /127\.0\.0\.1:7457(?!\d)/.test(m) || new RegExp(`127\\.0\\.0\\.1:${ERROR_HELPER_PORT}(?!\\d)`).test(m) };
 const ERROR_RULES = [
   [/user ?scripts|unsafe-eval|content.security.policy|blocks injected scripts/i,
     "This site blocks scripts that Morse adds. Turn on “Allow User Scripts” for Morse, then try again.", "userscripts"],
-  [/127\.0\.0\.1:7457|can't reach the morse helper|helper (is )?not running|helper.*(unreachable|offline)/i,
+  [helperAddress, "The Morse helper isn't running on this computer. Run morse setup in a terminal to start it.", "setup"],
+  [/can't reach the morse helper|helper (is )?not running|helper.*(unreachable|offline)/i,
     "The Morse helper isn't running on this computer. Run morse setup in a terminal to start it.", "setup"],
   [/(claude|codex)\b.*(ENOENT|not found|not installed)|(ENOENT|command not found).*(claude|codex)/i,
     "Claude Code or Codex isn't installed here. Run morse setup in a terminal to pick what Morse uses.", "setup"],
