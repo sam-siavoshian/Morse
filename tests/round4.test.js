@@ -248,6 +248,11 @@ async function extension() {
   });
   cleanups.push(() => ctx.close());
   const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
+  // A fresh install opens Morse's welcome and settings tabs (no model yet);
+  // let them open and close them, so they don't take over a test's tab.
+  for (let i = 0; i < 40 && !ctx.pages().some(p => /options\.html/.test(p.url())); i++) await new Promise(r => setTimeout(r, 100));
+  await new Promise(r => setTimeout(r, 300));
+  for (const p of ctx.pages()) if (p.url().startsWith("chrome-extension://")) await p.close().catch(() => {});
   return (extCtx = { ctx, sw });
 }
 // Sends a request (or several at once) as Morse's runtime would, from the
