@@ -66,8 +66,8 @@ These run on the Morse demo apps (`node demo/serve.js`), not real websites.
 | [Errors in red](logs-errors-red.morse.json) | Logline (demo) | demo app `logs` | haiku | Yes | Scrolls the 5,000 lines to four places: every error line in view is red and no other line is. | Pass |
 | [Reading mode](byte-reading-mode.morse.json) | The Daily Byte (demo) | demo app `byte` | made by hand before this list | No | No ads show; article text is at least 18px with a contrast of 7 or more. | Pass |
 | [Copy as Markdown](parley-copy-markdown.morse.json) | Parley (demo) | demo app `parley` | made by hand before this list | Yes | Clicks the new button (real click): the clipboard holds the conversation. | Pass |
-| [Bigger rounded covers](tunes-big-covers.morse.json) | Tunes (demo) | demo app `tunes` | made by hand before this list | No | Every album cover is at least 25% wider than before. | Pass |
 | [Sleep timer](tunes-sleep-timer.morse.json) | Tunes (demo) | demo app `tunes` | made by hand before this list | Yes | Clicks the new button and picks a time (real clicks): a countdown shows. | Pass |
+| [Bigger rounded covers](tunes-big-covers.morse.json) | Tunes (demo) | demo app `tunes` | made by hand before this list | No | Every album cover is at least 25% wider than before. | Pass |
 
 ## Not checked
 

@@ -875,30 +875,6 @@
     "demo": true
   },
   {
-    "file": "tunes-big-covers.morse.json",
-    "title": "Bigger rounded covers",
-    "prompt": "make the album covers bigger, with rounded corners and a soft shadow",
-    "app": "Tunes (demo)",
-    "author": "Morse team",
-    "category": "Layout",
-    "tags": [
-      "theme",
-      "layout"
-    ],
-    "created": "2026-10-21T10:02:00.000Z",
-    "surface": "web",
-    "match": {
-      "hosts": [
-        "127.0.0.1:8789"
-      ],
-      "app": null
-    },
-    "version": 1,
-    "userScripts": false,
-    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
-    "demo": true
-  },
-  {
     "file": "tunes-sleep-timer.morse.json",
     "title": "Sleep timer",
     "prompt": "add a sleep timer that pauses the music after 15, 30 or 60 minutes",
@@ -919,6 +895,32 @@
     },
     "version": 2,
     "userScripts": true,
+    "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
+    "demo": true,
+    "updated": "2026-10-23T18:40:00.000Z",
+    "changes": "Shows the time left on the button, and a fourth click turns the timer off."
+  },
+  {
+    "file": "tunes-big-covers.morse.json",
+    "title": "Bigger rounded covers",
+    "prompt": "make the album covers bigger, with rounded corners and a soft shadow",
+    "app": "Tunes (demo)",
+    "author": "Morse team",
+    "category": "Layout",
+    "tags": [
+      "theme",
+      "layout"
+    ],
+    "created": "2026-10-21T10:02:00.000Z",
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8789"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "userScripts": false,
     "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
     "demo": true
   },
