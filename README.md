@@ -69,12 +69,12 @@ How to choose one, and what each can do: [Models and setup](docs/models.md).
 
 ## Privacy
 
-There is no Morse server. What you point at and what you ask go only to the model you chose, and only when you ask. Your mods stay on your computer.
+There is no Morse server. What you point at and what you ask go only to the model you chose, and only when you ask (or turn on automatic fixes). Your mods stay on your computer.
 More, including what mods can do: [Privacy and safety](docs/privacy-and-safety.md) and the [privacy policy](docs/privacy.md).
 
 ## Status
 
-Version 0.2 ([changelog](CHANGELOG.md)). What was checked for real, and what wasn't:
+Version 0.2, not released yet ([changelog](CHANGELOG.md)). What was checked for real, and what wasn't:
 
 **Verified**
 
