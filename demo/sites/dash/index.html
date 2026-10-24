@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orders · Metricly</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f4f5f7; color: #172b4d; font: 13px/1.45 Inter, "Segoe UI", system-ui, sans-serif; }
+  .tp { display: flex; align-items: center; gap: 24px; height: 52px; padding: 0 24px; background: #0f172a; color: #cbd5e1; }
+  .tp .lg { color: #fff; font-weight: 700; font-size: 16px; display: flex; gap: 8px; align-items: center; }
+  .tp .lg i { width: 18px; height: 18px; border-radius: 4px; background: linear-gradient(45deg, #22d3ee, #6366f1); }
+  .tp a { color: inherit; text-decoration: none; } .tp a.on { color: #fff; }
+  .mn { max-width: 1180px; margin: 0 auto; padding: 20px 24px; }
+  .mn h1 { font-size: 22px; margin: 0 0 16px; display: flex; align-items: center; }
+  .mn h1 .rng { margin-left: auto; font-size: 13px; font-weight: 500; border: 1px solid #dfe1e6; background: #fff; padding: 6px 12px; border-radius: 6px; }
+  .kp { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+  .kc { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; }
+  .kc .lb { color: #6b7280; font-size: 12px; }
+  .kc .vl { font-size: 18px; font-weight: 600; margin: 4px 0 2px; }
+  .kc .dl { font-size: 11px; color: #059669; } .kc .dl.dn { color: #dc2626; }
+  .row2 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  .ch_x { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; }
+  .ch_x h3, .tbl h3 { margin: 0 0 10px; font-size: 14px; }
+  .ch_x .bars { display: flex; align-items: flex-end; gap: 10px; height: 120px; }
+  .ch_x .bars div { flex: 1; background: #6366f1; border-radius: 3px 3px 0 0; }
+  .ch_x .ax { display: flex; gap: 10px; color: #9ca3af; font-size: 11px; } .ch_x .ax span { flex: 1; text-align: center; }
+  .tbl { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; }
+  .tbl .sc { max-height: 300px; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-weight: 600; color: #6b7280; font-size: 12px; padding: 8px 10px; border-bottom: 1px solid #e5e7eb; background: #fff; }
+  td { padding: 8px 10px; border-bottom: 1px solid #f3f4f6; }
+  td.am, th.am { text-align: right; font-variant-numeric: tabular-nums; }
+  .st { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background: #f3f4f6; }
+  .st[data-s="paid"] { color: #047857; } .st[data-s="pending"] { color: #b45309; } .st[data-s="failed"] { color: #b91c1c; } .st[data-s="refunded"] { color: #4b5563; }
+</style>
+</head>
+<body>
+  <div class="tp"><span class="lg"><i></i>Metricly</span><a href="#">Overview</a><a class="on" href="#">Orders</a><a href="#">Customers</a><a href="#">Settings</a></div>
+  <div class="mn">
+    <h1>Orders <span class="rng">Last 30 days ▾</span></h1>
+    <div class="kp">
+      <div class="kc"><div class="lb">Revenue</div><div class="vl">$48,210</div><div class="dl">▲ 12.4%</div></div>
+      <div class="kc"><div class="lb">Orders</div><div class="vl">1,284</div><div class="dl">▲ 3.1%</div></div>
+      <div class="kc"><div class="lb">Avg. order</div><div class="vl">$37.55</div><div class="dl dn">▼ 1.8%</div></div>
+      <div class="kc"><div class="lb">Refund rate</div><div class="vl">2.3%</div><div class="dl">▼ 0.4%</div></div>
+    </div>
+    <div class="row2">
+      <div class="ch_x"><h3>Revenue by week</h3>
+        <div class="bars"><div style="height:40%"></div><div style="height:55%"></div><div style="height:48%"></div><div style="height:70%"></div><div style="height:62%"></div><div style="height:85%"></div><div style="height:78%"></div><div style="height:95%"></div></div>
+        <div class="ax"><span>W1</span><span>W2</span><span>W3</span><span>W4</span><span>W5</span><span>W6</span><span>W7</span><span>W8</span></div>
+      </div>
+      <div class="tbl"><h3>Recent orders</h3><div class="sc">
+        <table>
+          <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Status</th><th class="am">Amount</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div></div>
+    </div>
+  </div>
+<script>
+  const rows = [
+    ["#10482", "Acme Corp", "2026-10-23", "paid", 1240.5], ["#10481", "Globex", "2026-10-23", "pending", 89.99], ["#10480", "Initech", "2026-10-22", "failed", 412],
+    ["#10479", "Acme Corp", "2026-10-22", "paid", 33.2], ["#10478", "Umbrella", "2026-10-21", "refunded", 150], ["#10477", "Hooli", "2026-10-21", "paid", 2999],
+    ["#10476", "Stark Industries", "2026-10-20", "paid", 18.75], ["#10475", "Wayne Enterprises", "2026-10-20", "failed", 640.1], ["#10474", "Globex", "2026-10-19", "paid", 77],
+    ["#10473", "Acme Corp", "2026-10-19", "pending", 503.45], ["#10472", "Soylent", "2026-10-18", "paid", 61.3], ["#10471", "Initech", "2026-10-18", "paid", 1499.99],
+    ["#10470", "Vandelay Imports", "2026-10-17", "failed", 25], ["#10469", "Hooli", "2026-10-16", "paid", 310.6], ["#10468", "Umbrella", "2026-10-15", "paid", 920],
+  ];
+  const tb = document.querySelector("tbody");
+  for (const [id, c, d, s, a] of rows) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${id}</td><td>${c}</td><td>${d}</td><td><span class="st" data-s="${s}">${s[0].toUpperCase() + s.slice(1)}</span></td><td class="am">${a}</td>`;
+    tb.append(tr);
+  }
+</script>
+</body>
+</html>

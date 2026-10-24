@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inbox - Postbox</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; display: grid; grid-template-columns: 220px 400px 1fr; grid-template-rows: 56px auto 1fr; background: #f6f8fc; color: #1f1f1f; font: 13px/1.4 "Segoe UI", Roboto, system-ui, sans-serif; overflow: hidden; }
+  .x1hd { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; padding: 0 16px; }
+  .x1hd .lg { font-size: 20px; font-weight: 600; width: 188px; display: flex; gap: 8px; align-items: center; }
+  .x1hd .lg span { width: 26px; height: 20px; border-radius: 4px; background: linear-gradient(135deg, #ea4335 50%, #c5221f 50%); }
+  .x1hd input { flex: 1; max-width: 700px; height: 44px; border: 0; border-radius: 22px; background: #e9eef6; padding: 0 20px; font: inherit; font-size: 15px; }
+  .x1hd .me { margin-left: auto; width: 32px; height: 32px; border-radius: 50%; background: #7b1fa2 center/cover; color: #fff; display: grid; place-items: center; font-weight: 600; }
+  .pz7 { grid-column: 1 / -1; margin: 0 16px 8px; padding: 10px 16px; border-radius: 12px; background: #fff4e5; color: #6b3d00; display: flex; align-items: center; gap: 12px; }
+  .pz7 b { font-weight: 600; } .pz7 button { margin-left: auto; border: 0; background: #e8710a; color: #fff; border-radius: 16px; padding: 6px 14px; font: inherit; font-weight: 600; }
+  .fd2 { padding: 4px 8px 0 0; }
+  .fd2 .cmp { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 14px 8px; padding: 16px 22px; border-radius: 16px; background: #c2e7ff; font-weight: 600; font-size: 14px; border: 0; }
+  .fd2 a { display: flex; justify-content: space-between; padding: 6px 12px 6px 24px; border-radius: 0 16px 16px 0; color: #1f1f1f; text-decoration: none; }
+  .fd2 a.on { background: #d3e3fd; font-weight: 700; }
+  .ls4 { background: #fff; border-radius: 16px 0 0 16px; overflow: auto; margin-bottom: 16px; }
+  .ls4 .tb { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid #eee; }
+  .ls4 .tb button { border: 0; background: none; padding: 6px 8px; border-radius: 6px; color: #444; font: inherit; }
+  .r9 { display: grid; grid-template-columns: 36px 1fr auto; gap: 2px 10px; padding: 12px 14px; border-bottom: 1px solid #f1f3f4; cursor: pointer; align-items: center; }
+  .r9[aria-selected="true"] { background: #e8f0fe; }
+  .r9 .av { grid-row: span 2; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 13px; }
+  .r9 .fr { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .r9 .dt { color: #5f6368; font-size: 12px; }
+  .r9 .sj { grid-column: 2 / -1; color: #5f6368; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .r9 .sj em { font-style: normal; color: #1f1f1f; }
+  .r9 .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #0b57d0; margin-right: 6px; vertical-align: middle; visibility: hidden; }
+  .r9[data-unread="true"] .dot { visibility: visible; }
+  .r9[data-unread="true"] .fr { font-weight: 600; }
+  .rd { background: #fff; margin: 0 16px 16px 0; border-radius: 0 16px 16px 0; border-left: 1px solid #eee; overflow: auto; padding: 20px 28px; }
+  .rd h2 { font-size: 20px; font-weight: 400; margin: 0 0 14px; }
+  .rd .meta { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; color: #5f6368; font-size: 12px; }
+  .rd .meta b { color: #1f1f1f; font-size: 13px; }
+  .rd .bd { font-size: 12px; line-height: 1.5; color: #333; max-width: 640px; }
+  .rd .acts { display: flex; gap: 8px; margin-top: 22px; }
+  .rd .acts button { border: 1px solid #747775; background: #fff; border-radius: 18px; padding: 8px 18px; font: inherit; font-weight: 500; }
+</style>
+</head>
+<body>
+  <div class="x1hd">
+    <div class="lg"><span></span>Postbox</div>
+    <input type="search" placeholder="Search mail" aria-label="Search mail">
+    <div class="me" title="Sam Rivera">S</div>
+  </div>
+  <div class="pz7" role="note"><b>Postbox Pro</b> Get 2 TB of storage, custom domains and an ad-free inbox for $4.99/month. <button>Upgrade</button></div>
+  <nav class="fd2" aria-label="Folders">
+    <button class="cmp">✎ Compose</button>
+    <a class="on" href="#">Inbox <span>4</span></a><a href="#">Starred <span></span></a><a href="#">Snoozed <span></span></a>
+    <a href="#">Sent <span></span></a><a href="#">Drafts <span>2</span></a><a href="#">Spam <span>9</span></a>
+  </nav>
+  <section class="ls4" aria-label="Message list">
+    <div class="tb"><button aria-label="Select">☐</button><button aria-label="Refresh">↻</button><button aria-label="More">⋮</button></div>
+    <div class="lst" role="listbox"></div>
+  </section>
+  <section class="rd" aria-label="Reading pane">
+    <h2></h2>
+    <div class="meta"><div class="av"></div><div><b class="from"></b><br><span class="addr"></span></div><span class="when" style="margin-left:auto"></span></div>
+    <div class="bd"></div>
+    <div class="acts"><button>↩ Reply</button><button>↪ Forward</button><button>Archive</button><button>Delete</button></div>
+  </section>
+<script>
+  const mails = [
+    ["Maya Chen", "maya@lumen.io", "#e8710a", "Q3 roadmap review", "Can we move the review to Thursday? I want to fold in the latest usage numbers before we decide on the onboarding work.", "10:42 AM", true],
+    ["GitHub", "noreply@github.com", "#24292f", "[morse] CI failed on main", "The workflow run for commit 2e45d79 failed: 1 job failed (test). View the logs for details.", "9:15 AM", true],
+    ["Northwind Billing", "billing@northwind.com", "#0b8043", "Your invoice #4821 is ready", "Your invoice for October is attached. The total of $1,248.00 will be charged on November 1. Questions? Reply to this email.", "8:03 AM", false],
+    ["Leo Martins", "leo@hey.com", "#3949ab", "Climbing on Saturday?", "The gym opens at 9. Want to try the new overhang wall? I can bring the spare harness for Ana.", "Yesterday", true],
+    ["Figma", "team@figma.com", "#a142f4", "Dana commented on Onboarding v4", "\"The second step feels long. Could we split it?\" Reply directly to this email to respond.", "Yesterday", false],
+    ["Priya Nair", "priya@lumen.io", "#d81b60", "Re: invoice discrepancy", "I checked with finance: the second invoice was a duplicate and has been voided. Sorry for the noise.", "Oct 21", false],
+    ["Calendar", "calendar@postbox.app", "#1a73e8", "Reminder: Dentist at 3:30 PM", "This is a reminder for Dentist on Thursday, Oct 26 at 3:30 PM.", "Oct 21", true],
+    ["Jonas Weber", "jonas@weber.de", "#00897b", "Photos from Lisbon", "Finally uploaded everything. The tram one came out great. Link inside, it expires in 7 days.", "Oct 20", false],
+    ["Airline", "trips@skyway.com", "#5f6368", "Your trip to Lisbon: check in now", "Check-in for flight SW 2210 is open. Add your passport details to skip the counter.", "Oct 19", false],
+    ["Hacker Weekly", "digest@hw.news", "#ef6c00", "This week: CRDTs, Electron and you", "Issue 312: why every desktop app ships a browser, a gentle intro to CRDTs, and more.", "Oct 18", false],
+  ];
+  const lst = document.querySelector(".lst"), rd = document.querySelector(".rd");
+  const initials = n => n.split(" ").map(w => w[0]).join("").slice(0, 2);
+  function open(row) {
+    lst.querySelectorAll(".r9").forEach(r => r.setAttribute("aria-selected", "false"));
+    row.setAttribute("aria-selected", "true");
+    row.dataset.unread = "false";
+    const m = mails[+row.dataset.i];
+    rd.querySelector("h2").textContent = m[3];
+    rd.querySelector(".from").textContent = m[0];
+    rd.querySelector(".addr").textContent = "<" + m[1] + ">";
+    rd.querySelector(".when").textContent = m[5];
+    rd.querySelector(".bd").innerHTML = `<p>Hi Sam,</p><p>${m[4]}</p><p>${m[4]}</p><p>Best,<br>${m[0].split(" ")[0]}</p>`;
+    const av = rd.querySelector(".av");
+    av.style.cssText = `width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:600;background:${m[2]}`;
+    av.textContent = initials(m[0]);
+  }
+  mails.forEach((m, i) => {
+    const row = document.createElement("div");
+    row.className = "r9";
+    row.setAttribute("role", "option");
+    row.dataset.i = i;
+    row.dataset.unread = String(m[6]);
+    row.setAttribute("aria-selected", "false");
+    row.innerHTML = `<div class="av" style="background:${m[2]}">${initials(m[0])}</div><div class="fr"><span class="dot"></span>${m[0]}</div><div class="dt">${m[5]}</div><div class="sj"><em>${m[3]}</em> - ${m[4]}</div>`;
+    row.onclick = () => open(row);
+    lst.append(row);
+  });
+  open(lst.firstElementChild);
+  lst.firstElementChild.dataset.unread = "true";
+</script>
+</body>
+</html>
