@@ -40,6 +40,9 @@ const popup = await fs.readFile(path.join(root, "extension", "popup.html"), "utf
 await fs.writeFile(path.join(out, "options.html"), popup.replace("<title>Morse</title>", "<title>Morse settings</title>").replace("<body>", '<body data-page="options">'));
 await fs.writeFile(path.join(out, "runtime.js"), bundleRuntime());
 await fs.copyFile(path.join(root, "design", "tokens.css"), path.join(out, "tokens.css")); // extension pages (welcome) share the design tokens
+// Extension pages (popup, welcome) import these dependency-free core modules as ./core/*.js.
+await fs.mkdir(path.join(out, "core"), { recursive: true });
+for (const f of ["onboarding.js", "prefs.js", "hotkeys.js"]) await fs.copyFile(path.join(root, "core", f), path.join(out, "core", f));
 
 // The logo: a 3x3 grid in the gray signal ramp.
 const GRID = ["4a4a50", "f4f4f5", "7a7a82", "b4b4bb", "f4f4f5", "7a7a82", "f4f4f5", "7a7a82", "4a4a50"];

@@ -32,7 +32,7 @@ export const DEFAULT_SETTINGS = { provider: "", model: "", apiKey: "", baseUrl: 
 const FALLBACK_MODELS = /^claude-(opus|sonnet)-5-5\b/;
 
 export class NoModelError extends Error {
-  constructor(msg = "No model connected. Start the Morse helper (`morse serve`) or add an Anthropic API key.") {
+  constructor(msg = "No model is connected. Run morse serve, or add an API key in Morse's settings.") {
     super(msg);
     this.code = "no_model";
   }
@@ -51,7 +51,7 @@ export async function streamChat(settings, messages, { onToken, signal, maxToken
   const s = { ...DEFAULT_SETTINGS, ...settings };
   const impl = impls[s.provider];
   if (!s.provider || s.provider === "none") throw new NoModelError();
-  if (!impl) throw new Error(`Unknown model provider "${s.provider}"`);
+  if (!impl) throw new Error(`Morse doesn't know the model "${s.provider}". Choose another in Morse's settings.`);
   if (signal?.aborted) throw abortError();
   return impl(s, messages, { onToken, signal, maxTokens });
 }
@@ -143,13 +143,13 @@ async function anthropicStream(s, messages, { onToken, signal, maxTokens }) {
     const final = await stream.finalMessage();
     if (final.stop_reason === "refusal") {
       const cat = final.stop_details?.category;
-      throw new Error(`Claude declined this request${cat ? ` (${cat} safeguard)` : ""}. Try rephrasing it.`);
+      throw new Error(`Claude declined this request${cat ? ` (${cat} safeguard)` : ""}. Try saying it another way.`);
     }
   } catch (e) {
     if (signal?.aborted) throw abortError();
     if (e instanceof Anthropic.AuthenticationError) throw new Error("Anthropic rejected the API key (401). Check it in Morse's settings.");
-    if (e instanceof Anthropic.RateLimitError) throw new Error("Anthropic rate limit hit (429). Try again in a moment.");
-    if (e instanceof Anthropic.APIError && e.status) throw new Error(`Anthropic API error ${e.status}: ${e.error?.error?.message || e.message}`);
+    if (e instanceof Anthropic.RateLimitError) throw new Error("Too many requests to Anthropic right now (429). Try again in a minute.");
+    if (e instanceof Anthropic.APIError && e.status) throw new Error(`Anthropic couldn't answer (error ${e.status}): ${e.error?.error?.message || e.message}`);
     throw e;
   }
   return text;
@@ -169,7 +169,7 @@ async function openaiStream(s, messages, { onToken, signal, maxTokens }) {
   if (!res.ok) {
     let detail = "";
     try { detail = (await res.json()).error?.message || ""; } catch {}
-    throw new Error(`Model server returned ${res.status}${detail ? `: ${detail}` : ""}`);
+    throw new Error(`The model server couldn't answer (error ${res.status})${detail ? `: ${detail}` : ". Check the model settings."}`);
   }
   let text = "";
   for await (const line of lines(res.body)) {
@@ -198,13 +198,13 @@ async function helperStream(s, messages, { onToken, signal }) {
     });
   } catch (e) {
     if (signal?.aborted) throw abortError();
-    throw new NoModelError("Can't reach the Morse helper. Run `morse serve` on this computer.");
+    throw new NoModelError("Can't reach the Morse helper. Run morse serve on this computer.");
   }
   if (res.status === 401) throw new NoModelError("The Morse helper doesn't recognize this browser. Pair again in Morse's settings.");
   if (!res.ok) {
     let msg = "";
     try { msg = (await res.json()).error || ""; } catch {}
-    throw new Error(`Morse helper returned ${res.status}${msg ? `: ${msg}` : ""}`);
+    throw new Error(`The Morse helper couldn't answer (error ${res.status})${msg ? `: ${msg}` : ". Try again."}`);
   }
   let text = "";
   for await (const line of lines(res.body)) {
@@ -214,7 +214,7 @@ async function helperStream(s, messages, { onToken, signal }) {
     else if (ev.type === "done") return typeof ev.text === "string" ? ev.text : text;
   }
   if (signal?.aborted) throw abortError();
-  throw new Error("The Morse helper closed the connection before finishing.");
+  throw new Error("The Morse helper stopped before the change was done. Try again.");
 }
 
 // Internal test fixture: replays pre-written replies. Used by tests and the

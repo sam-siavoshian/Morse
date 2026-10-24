@@ -41,7 +41,7 @@ export async function currentSettings(overrides) {
 }
 
 export function assertProvider(p) {
-  if (!USER_PROVIDERS.includes(p)) throw new Error(`Unknown provider "${p}". Use one of: ${USER_PROVIDERS.join(", ")}`);
+  if (!USER_PROVIDERS.includes(p)) throw new Error(`Morse doesn't know "${p}". Use one of: ${USER_PROVIDERS.join(", ")}.`);
 }
 
 export const mask = k => (k ? `${k.slice(0, 7)}…${k.slice(-4)}` : "");

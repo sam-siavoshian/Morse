@@ -4,7 +4,8 @@
 //
 //   onboarding state   { coach: "" | "done", tips: { saved, share }, dismissed: { model, userScripts } }
 //   pageSupport(url)   why Morse can't run on a page, in one plain sentence, or null
-//   explainError(msg)  a generation error in plain words, with what to do about it
+//   explainError(msg)  a raw error in plain words, with a button to offer, or null
+//   plainError(msg)    the one string to show for any error (plain words, never raw jargon)
 
 export const ONBOARDING_DEFAULT = { coach: "", tips: { saved: false, share: false }, dismissed: { model: false, userScripts: false } };
 
@@ -31,11 +32,11 @@ export function mergeOnboarding(base, patch) {
 // Returns { id, text, action? } or null when the page is fine.
 export function pageSupport(url, { fileAccess = true, extensionId = "" } = {}) {
   let u;
-  try { u = new URL(String(url || "")); } catch { return { id: "blank", text: "Open any website, then press the Morse hotkey there." }; }
+  try { u = new URL(String(url || "")); } catch { return { id: "blank", text: "Open any website, then press the Morse shortcut there." }; }
   const host = u.hostname.toLowerCase();
   if (u.protocol === "chrome-extension:" && host === extensionId && /\/welcome\.html$/.test(u.pathname)) return null;
   if (u.protocol === "chrome:" && /^(newtab|new-tab-page)$/.test(host) || u.protocol === "about:" || u.href === "chrome-search://local-ntp/local-ntp.html")
-    return { id: "newtab", text: "This is a new tab. Open any website, then press the Morse hotkey there.", action: "practice" };
+    return { id: "newtab", text: "This is a new tab. Open any website, then press the Morse shortcut there.", action: "practice" };
   if (/^(chrome|edge|brave|opera|vivaldi|devtools|chrome-search|chrome-untrusted|view-source):$/.test(u.protocol))
     return { id: "browser", text: "Chrome doesn't let extensions change its own pages. Any website works.", action: "practice" };
   if (u.protocol === "chrome-extension:")
@@ -47,7 +48,7 @@ export function pageSupport(url, { fileAccess = true, extensionId = "" } = {}) {
   if (/\.pdf$/i.test(u.pathname) && /^(https?|file):$/.test(u.protocol))
     return { id: "pdf", text: "Morse can't change PDFs in Chrome's PDF viewer. Web pages work." };
   if (!/^(https?|file):$/.test(u.protocol))
-    return { id: "other", text: "Morse works on websites (http and https). Open one, then press the Morse hotkey." };
+    return { id: "other", text: "Morse works on websites (http and https). Open one, then press the Morse shortcut." };
   return null;
 }
 
@@ -57,7 +58,7 @@ export function pageSupport(url, { fileAccess = true, extensionId = "" } = {}) {
 const ERROR_RULES = [
   [/user ?scripts|unsafe-eval|content.security.policy|blocks injected scripts/i,
     "This site blocks scripts that Morse adds. Turn on “Allow User Scripts” for Morse, then try again.", "userscripts"],
-  [/127\.0\.0\.1:7457|morse helper|helper (is )?not running|helper.*(unreachable|offline)/i,
+  [/127\.0\.0\.1:7457|can't reach the morse helper|helper (is )?not running|helper.*(unreachable|offline)/i,
     "The Morse helper isn't running on this computer. Run morse setup in a terminal to start it.", "setup"],
   [/(claude|codex)\b.*(ENOENT|not found|not installed)|(ENOENT|command not found).*(claude|codex)/i,
     "Claude Code or Codex isn't installed here. Run morse setup in a terminal to pick what Morse uses.", "setup"],
@@ -67,13 +68,19 @@ const ERROR_RULES = [
     "The model is busy or out of quota. Wait a minute and try again.", ""],
   [/model.{0,40}(not found|does not exist|unknown)|no such model|\b404\b/i,
     "That model isn't available. Pick another one in model settings.", "model"],
-  [/ECONNREFUSED|failed to fetch|fetch failed|networkerror|ENOTFOUND|EAI_AGAIN|socket hang up|could not connect|connection refused/i,
+  [/could not establish connection|receiving end does not exist|extension context invalidated|message port closed/i,
+    "Morse lost touch with this page. Reload the page and try again.", ""],
+  [/ECONNREFUSED|ECONNRESET|failed to fetch|fetch failed|connection error|networkerror|network request failed|ERR_(CONNECTION|NAME_NOT_RESOLVED|INTERNET|NETWORK)|ENOTFOUND|EAI_AGAIN|socket hang up|could not connect|connection refused/i,
     "Morse couldn't reach the model. Make sure it's running, or choose another one in model settings.", "model"],
   [/timed? ?out|ETIMEDOUT|deadline/i,
     "The model took too long to answer. Try again, or ask for something smaller.", ""],
   [/no ```css or ```js block|did not produce a usable change|unusable/i,
     "The model's answer wasn't a change Morse could apply. Try saying it another way.", ""],
-  [/TypeError|ReferenceError|SyntaxError|is not a function|is not defined|Cannot read prop|null \(reading/i,
+  [/^no result$/i,
+    "The change didn't run on this page. Reload the page and try again.", ""],
+  [/^Unexpected end of JSON|is not valid JSON|JSON\.parse/i,
+    "Morse got an answer it couldn't read. Try again.", ""],
+  [/TypeError|ReferenceError|SyntaxError|is not a function|is not defined|Cannot read prop|Cannot set prop|is not iterable|is not a valid selector|Failed to execute|null \(reading/i,
     "The code the model wrote didn't work on this page. Try again, or describe it differently.", ""],
 ];
 export function explainError(message) {
@@ -81,6 +88,16 @@ export function explainError(message) {
   if (!m || /^stopped$/i.test(m)) return null;
   for (const [re, text, action] of ERROR_RULES) if (re.test(m)) return { text, action };
   return null;
+}
+
+// The one string to show for any error, in the bar, toasts, the popup and the
+// install page: explainError's sentence when there is one, Morse's own
+// message when it already reads well, never an empty line.
+export function plainError(err) {
+  const raw = String((err && err.message) || err || "").trim();
+  if (!raw) return "Something went wrong. Try again.";
+  if (/^(stopped|aborted|AbortError.*|The (user|operation) aborted.*|signal is aborted.*)$/i.test(raw)) return "Stopped. Nothing was changed.";
+  return explainError(raw)?.text || raw;
 }
 
 // "No model connected" from what a host reports, or from its label when it

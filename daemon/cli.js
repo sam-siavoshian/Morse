@@ -2,10 +2,9 @@
 // morse: change any app in your own words.
 
 import { execFile } from "node:child_process";
-import { Connector } from "./connector.js";
-import { resolveApp, launchApp, quitApp, KNOWN_APPS } from "./apps.js";
-import { inspectFuses, fuseVerdict, electronBinaryFor } from "./fuses.js";
-import { waitForEndpoint } from "./cdp.js";
+import { resolveApp } from "./apps.js";
+import { inspectFuses, fuseVerdict } from "./fuses.js";
+import { appsCommand, launchCommand, attachCommand, statusCommand, stopCommand } from "./desktop.js";
 import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH } from "./store.js";
 import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask } from "./models.js";
 import { detectHarnesses, validModel } from "./harness.js";
@@ -90,13 +89,16 @@ async function helperHealth() {
 const HELP = `${LOGO}
 
 ${B("Desktop apps")} (Electron / Chromium)
-  morse launch <app|path>   open an app with Morse connected
-                            apps: ${Object.keys(KNOWN_APPS).join(", ")}
-      --restart             quit the app first if it's open
-      --name <name>         name to save mods under (default: the app)
-      --port <n>            debugging port (default 9333)
-      -- <args>             pass extra arguments to the app
+  morse apps                list the apps Morse found and whether it can connect to them
+  morse launch <app|path>   reopen an app with Morse connected (partial names work: code, spot)
+      --restart             quit the app first if it's open (remembered per app; --no-restart forgets)
+      --watch               keep waiting when the app quits, connect again when it's back
+      --name <name>         name mods are filed under (defaults to the app)
+      --port <n>            debugging port (default: a free one from 9333)
+      -- <args>             extra arguments for the app
   morse attach --port <n>   connect to an app already started with --remote-debugging-port
+  morse status              apps Morse is connected to, their windows and mods
+  morse stop <app>          disconnect from an app (it keeps running)
   morse fuses <app|path>    check whether Morse can work with a desktop app
 
 ${B("Websites")} (the Chrome extension uses this helper to reach your model)
@@ -134,41 +136,18 @@ async function main() {
   const f = flags(rest);
   if (await (await import("./setup.js")).maybeRun(cmd, rest)) return; // onboarding hook: morse setup, and getting started while nothing is set up
   switch (cmd) {
-    case "launch": {
-      if (!f._[0]) throw new Error("Name an app to open, for example: morse launch spotify");
-      const app = resolveApp(f._[0]);
-      if (f.name) Object.assign(app, { id: String(f.name).toLowerCase(), name: f.name });
-      const port = Number(f.port || 9333);
-      const settings = await settingsFrom(f);
-      console.log(LOGO + "\n");
-      console.log(`  app     ${B(app.name)} ${D(app.path)}`);
-      try {
-        const info = await inspectFuses(await electronBinaryFor(app.path));
-        if (info.electron) {
-          console.log(`  fuses   ${Object.entries(info.fuses).filter(([k]) => /Inspect|Asar|RunAsNode/.test(k)).map(([k, v]) => `${k}=${v}`).join("  ")}`);
-          for (const line of fuseVerdict(info)) console.log(D(`          ${line}`));
-        }
-      } catch {}
-      console.log(`  model   ${settingsLabel(settings)}`);
-      if (f.restart) { quitApp(app); await new Promise(r => setTimeout(r, 1500)); }
-      launchApp(app, port, f.rest);
-      await waitForEndpoint(port).catch(e => {
-        throw new Error(`${e.message}\n  If ${app.name} was already open, quit it first or add --restart.`);
-      });
-      console.log(`  port    ${port}\n`);
-      await new Connector({ port, app: app.browser ? null : app, settings }).run();
-      break;
-    }
-    case "attach": {
-      const port = Number(f.port || 9222);
-      const settings = await settingsFrom(f);
-      await waitForEndpoint(port, 3000);
-      console.log(LOGO + `\n\n  connected on port ${port} · model ${settingsLabel(settings)}\n`);
-      await new Connector({ port, app: f.app ? { id: f.app, name: f.app } : null, settings }).run();
-      break;
-    }
+    case "apps":
+      return appsCommand(f);
+    case "launch":
+      return launchCommand(f, { settingsFrom, logo: LOGO });
+    case "attach":
+      return attachCommand(f, { settingsFrom, logo: LOGO });
+    case "status":
+      return statusCommand(f);
+    case "stop":
+      return stopCommand(f);
     case "fuses": {
-      const app = resolveApp(f._[0]);
+      const app = resolveApp(f._.join(" "));
       const info = await inspectFuses(app.path);
       console.log(JSON.stringify(info, null, 2));
       for (const line of fuseVerdict(info)) console.log("- " + line);

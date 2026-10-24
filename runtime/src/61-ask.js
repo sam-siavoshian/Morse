@@ -128,7 +128,7 @@ const Ask = (() => {
       <div class="ask-body">${streaming ? withCaret(renderMarkdown(a.text, { refs: marks.length })) : renderMarkdown(a.text, { refs: marks.length })}</div>
       ${marks.length ? `<ol class="ask-marks">${marks.map((m, i) => {
         const where = whereIs(items[i]?.el);
-        return `<li><button type="button" data-n="${m.n}" title="${where ? "Not showing right now" : "Scroll to it"}" ${where ? `class="away"` : ""}><span class="ask-n">${m.n}</span><span class="ask-l">${esc(m.label || m.selector)}</span>${where ? `<small>${esc(where)}</small>` : ""}</button></li>`;
+        return `<li><button type="button" data-n="${m.n}" title="${where ? "Not showing right now" : "Scroll to it"}" ${where ? `class="away"` : ""}><span class="ask-n">${m.n}</span><span class="ask-l">${esc(m.label || "Marked spot")}</span>${where ? `<small>${esc(where)}</small>` : ""}</button></li>`;
       }).join("")}</ol>` : ""}
       ${!streaming && a.steps.length ? `<footer class="ask-foot">
         <button type="button" class="primary" data-ask="show">Show me<small>${a.steps.length} step${a.steps.length > 1 ? "s" : ""}</small></button>
@@ -153,7 +153,7 @@ const Ask = (() => {
     if (b.dataset.n) return void Markers.scrollTo(b.dataset.n);
     const act = b.dataset.ask;
     if (act === "close" || act === "forget") { hide(); hintNote = ""; setHint(); input.focus(); }
-    if (act === "forget") { A.turns = []; toast("New topic: earlier questions forgotten"); }
+    if (act === "forget") { A.turns = []; toast("New topic. Morse forgot the earlier questions."); }
     if (act === "show" && A.answer) Guide.start(A.answer.steps, A.q);
   });
   // Typing a new question replaces the answer's "Answered" note.

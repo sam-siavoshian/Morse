@@ -111,7 +111,7 @@ const Markers = (() => {
     const it = items.find(i => String(i.n) === String(n));
     if (!it) return false;
     if (!visible(it.el)) { const el = find(it.selector, it.label); if (el) it.el = el; }
-    if (!visible(it.el)) { toast(`“${it.label || "That"}” isn't showing right now. It may be inside a menu that's closed.`); return false; }
+    if (!visible(it.el)) { toast(`${it.label ? `“${it.label}”` : "That"} isn't showing right now. It may be inside a menu that's closed.`); return false; }
     it.el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
     it.ring.classList.remove("ping");
     void it.ring.offsetWidth;

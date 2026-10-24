@@ -3,7 +3,7 @@
 // commands `morse pause`, `morse resume`, `morse export --all`,
 // `morse import <file|link>` and `morse code <id>`.
 
-import { promises as fs, watchFile } from "node:fs";
+import { promises as fs, watchFile, unwatchFile } from "node:fs";
 import path from "node:path";
 import { createInterface } from "node:readline/promises";
 import { HOME, ensureHome, listMods, saveMod, writeExport } from "./store.js";
@@ -40,19 +40,23 @@ export function handleControl(msg, where) {
 
 // Tells every attached window when the pause state changes, whoever changed it
 // (this connector, another one, or `morse pause` in a terminal).
+// Returns { close() }.
 export function watchControl(connector) {
   let last = null;
   loadControl().then(s => { last = JSON.stringify(s.pause); });
-  watchFile(CONTROL_FILE, { interval: 700 }, async () => {
+  const onChange = async () => {
     const s = await loadControl();
     const now = JSON.stringify(s.pause);
     if (now === last) return;
     last = now;
     const msg = JSON.stringify({ type: "control.changed", pause: s.pause });
-    for (const session of connector.pages.values()) {
+    const sessions = connector.windows ? [...connector.windows.values()].map(w => w.session) : [...connector.pages.values()];
+    for (const session of sessions) {
       session?.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive(${msg})` }).catch(() => {});
     }
-  }).unref?.();
+  };
+  watchFile(CONTROL_FILE, { interval: 700 }, onChange).unref?.();
+  return { close: () => unwatchFile(CONTROL_FILE, onChange) };
 }
 
 // ---- CLI

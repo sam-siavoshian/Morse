@@ -120,7 +120,7 @@ const GodCapture = (() => {
       if (thumb) item.thumb = thumb;
       try {
         st.list = (await call("clipboard.put", { item })) || [item];
-      } catch (e) { return toast(`Couldn't capture this: ${e.message}`); }
+      } catch (e) { return toast(`Couldn't capture this. ${plainError(e)}`); }
       close();
       render();
       toast(`Captured ${item.label}. Open Morse in another app to use it.`);

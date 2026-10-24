@@ -181,8 +181,8 @@ function summaryHtml(m) {
     ${s.notes.map(n => `<p class="ctl-warn" data-s="${n.id}"><b>Note</b>${esc(n.text)}</p>`).join("")}`;
 }
 function codeHtml(m) {
-  return `${m.css.trim() ? `<label>CSS</label><pre class="code ctl-pre">${esc(m.css.trim())}</pre>` : ""}
-    ${m.js.trim() ? `<label>JavaScript <span class="dim">runs with the <code>morse</code> helpers</span></label><pre class="code ctl-pre">${esc(m.js.trim())}</pre>` : ""}
+  return `${m.css.trim() ? `<label>Style <span class="dim">CSS</span></label><pre class="code ctl-pre">${esc(m.css.trim())}</pre>` : ""}
+    ${m.js.trim() ? `<label>Script <span class="dim">JavaScript, runs with the <code>morse</code> helpers</span></label><pre class="code ctl-pre">${esc(m.js.trim())}</pre>` : ""}
     ${!m.css.trim() && !m.js.trim() ? `<p class="dim">No code.</p>` : ""}`;
 }
 
@@ -204,7 +204,7 @@ async function reviewImport(source, { onDone } = {}) {
   const done = r => { const f = onDone; onDone = null; f?.(r); };
   let r;
   try { r = await call("mods.preview", { source }); }
-  catch (e) { toast(e.message); return done({ error: e.message }); }
+  catch (e) { const msg = plainError(e); toast(msg); return done({ error: msg }); }
   if (!r?.mods?.length) { const e = "This isn't a Morse share link or mod file. Check that you copied all of it."; toast(e); return done({ error: e }); }
   const many = r.mods.length > 1;
   const hostHere = controlKey(here());
@@ -226,7 +226,7 @@ async function reviewImport(source, { onDone } = {}) {
     <footer><button data-a="close">Cancel</button><button class="primary" data-a="install">Install${many ? ` ${r.mods.length}` : ""}</button></footer>`);
   modal.querySelector(".card").classList.add("ctl-card");
   modal.querySelector("[data-a=close]:not(header [data-a])")?.focus(); // Cancel, never Install: a page could make someone press Enter
-  const watch = new MutationObserver(() => { if (modal.hidden) { watch.disconnect(); done({ error: "Not installed." }); } });
+  const watch = new MutationObserver(() => { if (modal.hidden) { watch.disconnect(); done({ error: "Not installed. You cancelled it." }); } });
   watch.observe(modal, { attributes: true, attributeFilter: ["hidden"] });
   modal.querySelector("[data-a=install]").onclick = async e => {
     e.currentTarget.disabled = true;
@@ -237,7 +237,7 @@ async function reviewImport(source, { onDone } = {}) {
       toast(saved.length === 1 ? `Installed “${saved[0].title}”` : `Installed ${saved.length} mods`);
       done({ title: saved.map(m => m.title).join(", ") });
       await syncMods();
-    } catch (err) { e.currentTarget.disabled = false; toast(err.message); }
+    } catch (err) { e.currentTarget.disabled = false; toast(plainError(err)); }
   };
 }
 
@@ -249,7 +249,7 @@ async function exportAll() {
   try {
     const saved = await call("export", { filename: r.filename, content: r.content });
     toast(`Saved ${plural(r.count, "mod")} to ${saved?.path || r.filename}`);
-  } catch (e) { toast(e.message); }
+  } catch (e) { toast(plainError(e)); }
 }
 function importFile() {
   const input = document.createElement("input");
@@ -264,7 +264,8 @@ function importFile() {
   input.click();
 }
 
-// ---- the Mods panel: pause switch, notices, where each mod came from, backup
+// ---- the Mods panel: pause switch, notices and backup (controlPanel, from
+// renderPanel), where each mod came from and Show code (controlRows, from renderList)
 
 function controlPanel() {
   const where = hereName();
@@ -279,6 +280,10 @@ function controlPanel() {
     <label class="ctl-row"><span class="ctl-l"><span>Pause Morse on ${esc(where)}</span><small>${site ? "Your mods here are saved but not running" : "Stops every mod on this site"}</small></span>
       <span class="sw"><input type="checkbox" data-c="pause-site" ${site ? "checked" : ""} aria-label="Pause Morse on ${esc(where)}"><span></span></span></label>
     ${notes}</div>`);
+  panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", `<div class="ctl-backup"><span>Backup</span><button data-c="export">Export all mods</button><button data-c="import-file">Install from a file…</button></div>`);
+}
+// Each row in the list (re-run whenever the list is redrawn, e.g. by search).
+function controlRows() {
   for (const a of panel.querySelectorAll(".list article[data-id]")) {
     const m = S.mods.find(x => x.id === a.dataset.id);
     const meta = a.querySelector(".meta");
@@ -289,7 +294,6 @@ function controlPanel() {
     if (tags) tags.insertAdjacentHTML("beforeend", show); else meta.insertAdjacentHTML("beforeend", show);
     if (m.enabled && modHeld(m)) tags?.insertAdjacentHTML("afterbegin", `<span>not running</span>`);
   }
-  panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", `<div class="ctl-backup"><span>Backup</span><button data-c="export">Export all mods</button><button data-c="import-file">Install from a file…</button></div>`);
 }
 panel.addEventListener("click", e => {
   const b = e.target.closest("button[data-c]");

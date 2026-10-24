@@ -133,11 +133,10 @@ const GodMode = (() => {
   }
   const tgt = () => ({ sel: G.t.sel, ...(G.t.shadow ? { shadow: G.t.shadow } : {}) });
   const sameTarget = (e, t) => e.sel === t.sel && JSON.stringify(e.shadow || null) === JSON.stringify(t.shadow || null);
+  // The toolbar's short name for the selection: what kind of thing it is.
   function shortName(el) {
-    const n = el.localName;
-    if (el.id && !looksHashed(el.id)) return `${n}#${el.id}`;
-    const c = [...el.classList].find(c => !looksHashed(c) && !c.startsWith("morse"));
-    return c ? `${n}.${c}` : n;
+    const r = roleWord(el) || (el.children.length ? "section" : "text");
+    return r.charAt(0).toUpperCase() + r.slice(1);
   }
   function kindOf(el) {
     if (el.matches("iframe, frame, embed, object")) return "frame";
@@ -180,11 +179,11 @@ const GodMode = (() => {
       if (js === s.lastJs) return;
       s.lastJs = js;
       const r = js ? await call("exec", { modId: s.id, js }) : await call("off", { modId: s.id });
-      if (js && r && !r.ok) toast(`Couldn't make that edit: ${r.error}. Press ${MOD}Z to undo it.`);
+      if (js && r && !r.ok) toast(`Couldn't make that edit (${plainError(r.error)}). Press ${MOD}Z to undo it.`);
       relink();
     }).catch(e => console.warn("[morse] god mode", e));
     clearTimeout(s.saveTimer);
-    s.saveTimer = setTimeout(() => { s.chain = s.chain.then(() => persist(s)).catch(e => toast(`Couldn't save your edits: ${e.message}. Try again.`)); }, 250);
+    s.saveTimer = setTimeout(() => { s.chain = s.chain.then(() => persist(s)).catch(e => toast(`Couldn't save your edits. ${plainError(e)}`)); }, 250);
     return s.chain;
   }
   async function persist(s) {
@@ -248,7 +247,8 @@ const GodMode = (() => {
     G.kind = kindOf(el);
     hostEl.setAttribute("data-gm", "");
     tag.textContent = shortName(el);
-    tag.title = `${G.t.shadow ? G.t.shadow.join(" ⟩ ") + " ⟩ " : ""}${G.t.sel}`;
+    tag.title = G.t.label;
+    tag.dataset.sel = `${G.t.shadow ? G.t.shadow.join(" ⟩ ") + " ⟩ " : ""}${G.t.sel}`; // for tests and debugging
     for (const b of tb.querySelectorAll("button[data-t]")) b.disabled = G.kind === "frame" && INSIDE.has(b.dataset.t);
     note.hidden = G.kind !== "frame";
     if (G.kind === "frame") {
@@ -705,6 +705,7 @@ const GodMode = (() => {
     }
     if ((e.metaKey || e.ctrlKey) && !e.altKey && (k === "z" || k === "y")) {
       if (active === input && input.value) return;
+      if (S.phase === "result") return; // keep iterating: ⌘Z after a result steps back a version (60-generate.js)
       if (active && active !== input && active.matches?.("input, textarea")) return;
       if (!GS.history.length && !GS.future.length) return;
       e.preventDefault();
@@ -755,7 +756,7 @@ const GodMode = (() => {
   addEventListener("pointerover", e => {
     if (!S.picking || ours(e) || !e.target.matches?.(FRAMES)) return;
     hoverEl = e.target;
-    boxTo(e.target, hl, `${e.target.localName} · another page`);
+    boxTo(e.target, hl, describe(e.target));
   }, true);
   addEventListener("blur", () => setTimeout(() => {
     const a = document.activeElement;
@@ -790,7 +791,7 @@ const GodMode = (() => {
     const s = GS;
     if (s.history.length || s.mod) {
       clearTimeout(s.saveTimer);
-      s.chain = s.chain.then(() => persist(s)).catch(e => toast(`Couldn't save your edits: ${e.message}. Try again.`));
+      s.chain = s.chain.then(() => persist(s)).catch(e => toast(`Couldn't save your edits. ${plainError(e)}`));
     }
     GS = newSession();
   }

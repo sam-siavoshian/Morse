@@ -6,14 +6,14 @@ import { parseModResponse, completeCssPrefix } from "./parse.js";
 import { parseReply } from "./answer.js"; // Ask and find
 import { streamChat } from "./providers.js";
 
-export async function runMorse({ settings, request, context, exec, emit, signal, maxAttempts = 2 }) {
+export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2 }) {
   let previous = null;
   let last = null;
   const started = Date.now();
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     emit({ type: "phase", phase: attempt === 1 ? "thinking" : "fixing", error: previous?.error });
     let raw = "", lastCss = "", lastAnswer = "";
-    raw = await streamChat(settings, buildMessages({ request, context, previous }), {
+    raw = await streamChat(settings, buildMessages({ request, context, previous, base }), {
       signal,
       onToken(tok) {
         raw += tok;

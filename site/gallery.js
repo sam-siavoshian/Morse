@@ -16,7 +16,7 @@ const mods = new Map();    // slug -> full mod (fetched on open)
 try {
   entries = await (await fetch("mods/index.json")).json();
 } catch (e) {
-  grid.innerHTML = `<p class="muted">Couldn’t load the gallery (${esc(e.message)}).</p>`;
+  grid.innerHTML = `<p class="muted">Couldn’t load the gallery. Check your connection and reload the page.</p>`;
 }
 
 for (const entry of entries) {
@@ -89,7 +89,7 @@ async function open(slug, { push = true } = {}) {
   if (!entry) return;
   let mod;
   try { mod = await getMod(slug); }
-  catch (e) { toast("Couldn’t load that mod"); console.warn(e); return; }
+  catch (e) { toast("Couldn’t open that mod. Reload the page and try again."); console.warn(e); return; }
   current = slug;
   lastFocus = document.activeElement;
 
@@ -101,7 +101,7 @@ async function open(slug, { push = true } = {}) {
     : (mod.match?.hosts || []).map(h => `<code>${esc(h)}</code>`).join("");
   $("d-meta").innerHTML = `
     <dt>Runs in</dt><dd>${where}</dd>
-    <dt>Surface</dt><dd>${esc(entry.surface || "web")}</dd>
+    <dt>Works in</dt><dd>${esc(entry.surface || "web")}</dd>
     ${mod.target ? `<dt>Pointed at</dt><dd><code>${esc(mod.target.label || mod.target.selector)}</code></dd>` : ""}
     <dt>Tags</dt><dd>${(entry.tags || []).map(t => `<span class="chip">${esc(t)}</span>`).join("")}</dd>
     <dt>File</dt><dd><a href="mods/${esc(entry.file)}" download>${esc(entry.file)}</a></dd>`;
@@ -114,8 +114,8 @@ async function open(slug, { push = true } = {}) {
   us.download = `${slug}.user.js`;
 
   const blocks = [];
-  if (mod.css.trim()) blocks.push(`<h3>CSS <span>${mod.css.split("\n").length} lines</span></h3><pre class="code">${highlight(mod.css.trimEnd(), "css")}</pre>`);
-  if (mod.js.trim()) blocks.push(`<h3>JavaScript <span>${mod.js.split("\n").length} lines</span></h3><pre class="code">${highlight(mod.js.trimEnd(), "js")}</pre>`);
+  if (mod.css.trim()) blocks.push(`<h3>Style (CSS) <span>${mod.css.split("\n").length} lines</span></h3><pre class="code">${highlight(mod.css.trimEnd(), "css")}</pre>`);
+  if (mod.js.trim()) blocks.push(`<h3>Script (JavaScript) <span>${mod.js.split("\n").length} lines</span></h3><pre class="code">${highlight(mod.js.trimEnd(), "js")}</pre>`);
   $("d-code").innerHTML = blocks.join("");
 
   if (push && location.hash !== "#" + slug) history.pushState(null, "", "#" + slug);

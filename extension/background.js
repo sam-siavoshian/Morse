@@ -56,9 +56,9 @@ async function backend(fresh = false) {
     const settings = { provider: "anthropic", apiKey: p.anthropicKey, model: p.anthropicModel || PROVIDERS.anthropic.defaultModel };
     out = { kind: "anthropic", label: settingsLabel(settings), settings, helper };
   } else {
-    const reason = want === "anthropic" ? "Add your Anthropic API key."
-      : helper ? "Pair this browser with the Morse helper."
-      : "Start the Morse helper (`morse serve`) or add an Anthropic API key.";
+    const reason = want === "anthropic" ? "Add your Anthropic API key below."
+      : helper ? "Pair this browser with the Morse helper below."
+      : "Run morse serve on your computer, or add an Anthropic API key.";
     out = { kind: "none", label: "Connect a model", helper, reason, settings: { provider: "none" } };
   }
   cached = out; cachedAt = Date.now();
@@ -97,7 +97,7 @@ async function execIn(target, code) {
 }
 
 async function exec(target, modId, js) {
-  const res = (await execIn(target, wrapModCode(modId, js))) || { ok: false, error: "no result" };
+  const res = (await execIn(target, wrapModCode(modId, js))) || { ok: false, error: "The change didn't run on this page. Reload the page and try again." };
   if (!res.ok) return res;
   await new Promise(r => setTimeout(r, 600));
   const errs = (await execIn(target, `morse.__errors(${JSON.stringify(modId)})`)) || [];
@@ -161,12 +161,14 @@ async function dispatch(msg, port) {
     case "off":
       await execIn(target, `globalThis.morse && morse.__off(${JSON.stringify(msg.modId)})`);
       return true;
+    case "stats": // repair: does a saved mod still find its elements? (core/kit.js __stats)
+      return (await execIn(target, `globalThis.morse?.__stats?.(${JSON.stringify(msg.modId)}) ?? null`)) ?? null;
     case "generate": {
       let b = await backend();
       if (b.kind === "none") b = await backend(true);
       if (b.kind === "none") {
         openSettings();
-        throw new NoModelError(`No model connected. ${b.reason} Morse's settings are open in a new tab.`);
+        throw new NoModelError(`No model connected yet. Settings just opened in a new tab.`);
       }
       // gens.run's signal aborts the model call (the helper kills the harness
       // process when the connection closes): Stop in the bar, or closing the tab.
@@ -176,6 +178,7 @@ async function dispatch(msg, port) {
           settings: b.settings,
           request: msg.request,
           context: msg.context,
+          base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           signal,
           exec: js => exec(target, msg.genId, js),
           emit: ev => { if (!signal.aborted) try { port.postMessage({ ...ev, genId: msg.genId }); } catch {} },
@@ -261,10 +264,10 @@ async function popup(msg) {
       try {
         r = await fetch(`${HELPER_URL}/v1/pair`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: String(msg.code || "").trim().toUpperCase() }), signal: AbortSignal.timeout(5000) });
       } catch {
-        return { error: "Can't reach the Morse helper. Run `morse serve` on this computer." };
+        return { error: "Can't reach the Morse helper. Run morse serve on this computer." };
       }
       const body = await r.json().catch(() => ({}));
-      if (!r.ok || !body.token) return { error: body.error || `Pairing failed (${r.status})` };
+      if (!r.ok || !body.token) return { error: body.error || `Pairing didn't work (error ${r.status}). Run morse pair for a new code and try again.` };
       const p = await modelPrefs();
       await set("helper", { token: body.token, url: HELPER_URL });
       await saveModelPrefs({ ...p, backend: p.backend === "anthropic" ? "anthropic" : "helper" });

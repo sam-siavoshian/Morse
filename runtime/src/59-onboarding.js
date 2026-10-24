@@ -41,9 +41,9 @@ const Onboarding = (() => {
   }
 
   // ---- the coach
-  const STEPS = [["point", "Point"], ["describe", "Describe"], ["keep", "Keep"]];
+  const STEPS = [["point", "Point"], ["describe", "Describe"], ["keep", "Save"]];
   function step() {
-    if (S.phase === "result") return ["keep", `Like it? <b>Keep</b> saves it for next time. <b>Undo</b> puts the page back.`];
+    if (S.phase === "result") return ["keep", `Like it? <b>Save</b> keeps it for next time. <b>Undo</b> puts the page back.`];
     if (S.phase === "working") return ["describe", `Morse is writing the change and applying it as it goes. <kbd>Esc</kbd> stops it.`];
     if (S.phase === "error") return ["describe", `That didn't work. Try other words, or point at something else.`];
     if (S.target || input.value.trim()) return ["describe", `Say what you want, like “make this bigger”, then press <kbd>Enter</kbd>.`];
@@ -85,12 +85,12 @@ const Onboarding = (() => {
   }
 
   // ---- errors in plain words, with a button that does something about it
-  const ACTION_LABEL = { userscripts: "Turn on user scripts", model: "Model settings", setup: "Copy “morse setup”" };
+  const ACTION_LABEL = { userscripts: "Turn on Allow User Scripts", model: "Model settings", setup: "Copy “morse setup”" };
   function explainFailure() {
     if (S.phase !== "error" || hint.querySelector(".ob-why")) return;
     const why = explainError(hint.title || hint.textContent);
     if (!why) return;
-    hint.innerHTML = `Couldn't do that. <span class="ob-why">${esc(why.text)}</span>`;
+    hint.innerHTML = `That didn't work: <span class="ob-why">${esc(why.text)}</span>`;
     const label = ACTION_LABEL[why.action];
     if (label && !actions.querySelector("[data-ob]")) actions.insertAdjacentHTML("afterbegin", `<button type="button" data-ob="${why.action}">${esc(label)}</button>`);
   }
@@ -162,7 +162,7 @@ const Onboarding = (() => {
     const card = !modal.hidden && modal.querySelector(".card");
     if (!tipShare || !card || !card.querySelector(".exports")) return;
     tipShare = false;
-    card.insertAdjacentHTML("beforeend", `<p class="ob-tip">${radar(12)}<span>Anyone with Morse can install it from this link. The .user.js file runs in Tampermonkey or Violentmonkey without Morse. People see the code before they install it.</span></p>`);
+    card.insertAdjacentHTML("beforeend", `<p class="ob-tip">${radar(12)}<span>Anyone with Morse can install it from this link. The Tampermonkey download runs in Tampermonkey or Violentmonkey without Morse. People see the code before they install it.</span></p>`);
   }).observe(modal, { childList: true, attributes: true, attributeFilter: ["hidden"] });
 
   // ---- follow the bar: open/close, target, phase, panes
@@ -181,7 +181,7 @@ const Onboarding = (() => {
   function emptyMods() {
     const open = hotkey("open");
     return `<div class="empty ob-empty">${radar(22)}<b>No mods on ${esc(where())} yet</b>
-      <span>${open ? `Press ${caps(open)}, point` : "Open Morse, point"} at something and say what you want changed. What you keep shows up here, to turn off, edit or share.</span>
+      <span>${open ? `Press ${caps(open)}, point` : "Open Morse, point"} at something and say what you want changed. What you save shows up here, to turn off, edit or share.</span>
       <div class="ob-row"><button type="button" class="primary" data-ob="start">Make a change</button><button type="button" data-ob="help">See examples</button></div></div>`;
   }
 

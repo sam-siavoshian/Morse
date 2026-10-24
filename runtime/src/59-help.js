@@ -21,9 +21,9 @@ function helpAbilities() {
   return [
     ["Describe a change", `Point at something first, or just describe a change to the whole page.`],
     hotkey("talk") && ["Talk instead of typing", `Hold ${k("talk")} and say it.`],
-    edit && ["Edit it yourself", `Point at something, then press ${edit} to hide, move, resize, recolor or rename it. No model needed.`],
+    edit && ["Use the edit tools", `Point at something, then press ${edit} to hide, move, resize, recolor or rename it. No model needed.`],
     typeof GodQuick !== "undefined" && ["Page tools", `Dark mode, bigger text, focus mode and more, from the tools button in the bar.`],
-    ["Keep, undo, share", `Every change you keep is a mod. ${hotkey("mods") ? `${k("mods")} opens Mods` : "Mods"} to turn them off, edit or share them.`],
+    ["Save, undo, share", `Every change you save is a mod. ${hotkey("mods") ? `${k("mods")} opens Mods` : "Mods"} to turn them off, edit or share them.`],
   ].filter(Boolean);
 }
 
@@ -32,7 +32,7 @@ function helpSetup() {
   const rows = [];
   if (modelMissing(status, S.label)) rows.push(`<span>No model connected</span><button type="button" class="tbtn" data-ob="model">Connect a model</button>`);
   else if (S.label) rows.push(`<span class="dim">Model: ${esc(S.label)}</span>`);
-  if (status.userScripts === false) rows.push(`<button type="button" class="tbtn" data-ob="userscripts">Turn on user scripts</button>`);
+  if (status.userScripts === false) rows.push(`<button type="button" class="tbtn" data-ob="userscripts">Turn on Allow User Scripts</button>`);
   if (st) rows.push(`<button type="button" class="tbtn" data-ob="tour">Show the 3 steps again</button>`);
   return rows.join("");
 }

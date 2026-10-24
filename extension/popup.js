@@ -1,4 +1,5 @@
 // Toolbar popup, and (with <body data-page="options">) the options page.
+import { plainError } from "./core/onboarding.js";
 import { modExtras } from "./popup-control.js"; // user control: pause switches, where each mod came from, Show code
 const $ = id => document.getElementById(id);
 const isOptions = document.body.dataset.page === "options";
@@ -20,7 +21,7 @@ function render(s) {
   $("count").textContent = s.mods.length ? `· ${s.mods.length}` : "";
   $("mods").innerHTML = s.mods.length
     ? s.mods.map(m => `<li><i class="${m.enabled ? "on" : ""}"></i>${esc(m.title)}<small>“${esc(m.prompt)}”</small>${modExtras(m)}</li>`).join("")
-    : `<li class="empty">None yet.</li>`;
+    : `<li class="empty">No mods on this site yet.</li>`;
 
   $("connect").hidden = s.kind !== "none";
   $("reason").textContent = s.reason;
@@ -32,19 +33,19 @@ function render(s) {
 
   const h = s.helper;
   $("hdot").className = "dot " + (h?.paired ? "ok" : h ? "warn" : "off");
-  $("hstatus").textContent = !h ? "Helper not running on this computer"
-    : !h.paired ? `Helper running · ${h.label} · not paired`
+  $("hstatus").textContent = !h ? "The Morse helper isn't running on this computer"
+    : !h.paired ? `Helper running · ${h.label} · not paired yet`
     : `Paired · ${h.label}`;
   $("pairrow").hidden = !!h?.paired;
   $("hhint").hidden = !!h?.paired;
   $("unpair").hidden = !h?.paired;
   const hp = h?.provider && s.providers[h.provider];
   $("helperModels").innerHTML = (hp?.models || []).map(m => `<option value="${esc(m)}">`).join("");
-  $("helperModel").placeholder = h?.model ? `${h.model} (helper default)` : "helper default";
+  $("helperModel").placeholder = h?.model ? `${h.model} (the helper's choice)` : "The helper's choice";
   if (document.activeElement !== $("helperModel")) $("helperModel").value = s.helperModel;
 
   $("anthropicModel").innerHTML = s.anthropicModels.map(m => `<option${m === s.anthropicModel ? " selected" : ""}>${esc(m)}</option>`).join("");
-  $("anthropicKey").placeholder = s.anthropicKey ? `saved ${s.anthropicKey}` : "sk-ant-…";
+  $("anthropicKey").placeholder = s.anthropicKey ? `Saved: ${s.anthropicKey}` : "sk-ant-…";
 }
 
 async function save(patch) {
@@ -54,7 +55,7 @@ async function save(patch) {
 }
 
 function note(text, bad) {
-  $("result").textContent = text;
+  $("result").textContent = bad ? plainError(text) : text;
   $("result").className = "hint" + (bad ? " bad" : "");
 }
 
@@ -72,23 +73,23 @@ $("code").oninput = () => { $("code").value = $("code").value.toUpperCase().repl
 $("code").onkeydown = e => { if (e.key === "Enter") $("pair").click(); };
 $("pair").onclick = async () => {
   const code = $("code").value.trim();
-  if (code.length !== 6) return note("Enter the 6-character code from `morse serve`.", true);
+  if (code.length !== 6) return note("Type the 6-character code that morse serve shows.", true);
   $("pair").disabled = true;
   const r = await send({ type: "popup.pair", code });
   $("pair").disabled = false;
   if (r.error) return note(r.error, true);
   $("code").value = "";
   render(r);
-  note("Paired.");
+  note("Paired. Morse can use your model now.");
 };
 $("unpair").onclick = async () => render(await send({ type: "popup.unpair" }));
 $("test").onclick = async () => {
   $("test").disabled = true;
-  note("Testing… (Claude Code takes a few seconds to start)");
+  note("Testing. Claude Code can take a few seconds to start.");
   const r = await send({ type: "popup.test" });
   $("test").disabled = false;
-  if (!r.ok) return note(r.error || "Failed", true);
-  note(`✓ ${r.label} replied “${r.text}” in ${(r.ms / 1000).toFixed(1)}s`);
+  if (!r.ok) return note(r.error || "The test didn't work. Check the model settings and try again.", true);
+  note(`It works. ${r.label} replied “${r.text}” in ${(r.ms / 1000).toFixed(1)}s.`);
 };
 $("go").onclick = async () => { await chrome.tabs.sendMessage(tab.id, { morseToggle: true }).catch(() => {}); window.close(); };
 

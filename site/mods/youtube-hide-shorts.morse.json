@@ -11,7 +11,7 @@
   },
   "target": {
     "selector": "ytd-rich-shelf-renderer[is-shorts]",
-    "label": "ytd-rich-shelf-renderer · “Shorts”"
+    "label": "“Shorts” section"
   },
   "css": "/* Shorts shelves on Home, Subscriptions and Search */\nytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),\nytd-reel-shelf-renderer,\nytd-rich-item-renderer:has(a[href^=\"/shorts/\"]),\nytd-video-renderer:has(a[href^=\"/shorts/\"]),\nytd-grid-video-renderer:has(a[href^=\"/shorts/\"]) {\n  display: none !important;\n}\n\n/* Shorts entry in the sidebar, mini sidebar and filter chips */\nytd-guide-entry-renderer:has(a[title=\"Shorts\"]),\nytd-mini-guide-entry-renderer[aria-label=\"Shorts\"],\nyt-chip-cloud-chip-renderer:has([title=\"Shorts\"]),\nyt-tab-shape[tab-title=\"Shorts\"] {\n  display: none !important;\n}\n",
   "js": "// /shorts/<id> -> /watch?v=<id>, on load and on in-app navigation\nconst unshort = () => {\n  const m = location.pathname.match(/^\\/shorts\\/([\\w-]{6,})/);\n  if (m) location.replace(\"/watch?v=\" + m[1]);\n};\nunshort();\nmorse.on(document, \"yt-navigate-finish\", unshort);\n",

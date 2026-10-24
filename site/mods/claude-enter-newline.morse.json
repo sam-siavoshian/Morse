@@ -11,7 +11,7 @@
   },
   "target": {
     "selector": "div[contenteditable=\"true\"].ProseMirror",
-    "label": "div · composer"
+    "label": "Message box"
   },
   "css": ".morse-send-hint {\n  position: absolute;\n  right: 12px;\n  bottom: -20px;\n  font-size: 11px;\n  opacity: .55;\n  pointer-events: none;\n}\n",
   "js": "morse.watch('div[contenteditable=\"true\"].ProseMirror', box => {\n  morse.on(box, \"keydown\", e => {\n    // Our own re-dispatched event is untrusted: let the editor handle it.\n    if (e.key !== \"Enter\" || e.isComposing || e.shiftKey || !e.isTrusted) return;\n    e.preventDefault();\n    e.stopImmediatePropagation();\n    if (e.ctrlKey || e.metaKey) {\n      document.querySelector('button[aria-label=\"Send message\"]')?.click();\n    } else {\n      box.dispatchEvent(new KeyboardEvent(\"keydown\", {\n        key: \"Enter\", code: \"Enter\", shiftKey: true, bubbles: true, cancelable: true,\n      }));\n    }\n  }, true);\n\n  const wrap = box.closest(\"fieldset\") || box.parentElement;\n  if (getComputedStyle(wrap).position === \"static\") wrap.style.position = \"relative\";\n  const mac = /Mac/.test(navigator.platform);\n  wrap.append(morse.el(\"div\", { class: \"morse-send-hint\", text: (mac ? \"⌘\" : \"Ctrl\") + \" + Enter to send\" }));\n});\n",

@@ -66,7 +66,7 @@ function readJson(req) {
     const chunks = [];
     req.on("data", c => {
       size += c.length;
-      if (size > MAX_BODY) { reject(Object.assign(new Error("Request too large"), { status: 413 })); req.destroy(); return; }
+      if (size > MAX_BODY) { reject(Object.assign(new Error("This request is too large for the Morse helper."), { status: 413 })); req.destroy(); return; }
       chunks.push(c);
     });
     req.on("end", () => {
@@ -126,11 +126,11 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
         let result;
         await updateConfig(cfg => {
           const p = cfg.bridge?.pairing;
-          if (!p || p.expires < Date.now()) { result = [400, { error: "No pairing code is active. Run `morse pair` to get one." }]; if (p) delete cfg.bridge.pairing; return cfg; }
+          if (!p || p.expires < Date.now()) { result = [400, { error: "That code has expired. Run morse pair on your computer to get a new one." }]; if (p) delete cfg.bridge.pairing; return cfg; }
           if (typeof code !== "string" || !same(code.trim().toUpperCase(), p.code)) {
             p.attempts = (p.attempts || 0) + 1;
             if (p.attempts >= MAX_ATTEMPTS) delete cfg.bridge.pairing;
-            result = [403, { error: p.attempts >= MAX_ATTEMPTS ? "Too many wrong codes. Run `morse pair` for a new one." : "Wrong pairing code." }];
+            result = [403, { error: p.attempts >= MAX_ATTEMPTS ? "Too many wrong codes. Run morse pair on your computer to get a new one." : "That code doesn't match. Check the code the Morse helper shows and try again." }];
             return cfg;
           }
           const token = crypto.randomBytes(32).toString("base64url");
@@ -147,17 +147,17 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
       // Everything below needs a paired token.
       const cfg = await loadConfig();
       const rec = tokenRecord(cfg, bearer(req));
-      if (!rec) return send(401, { error: "Not paired. Enter the code from `morse pair` in Morse's settings." });
-      if (origin && rec.origin && rec.origin !== origin) return send(403, { error: "This token was issued to a different extension." });
+      if (!rec) return send(401, { error: "This browser isn't paired yet. Type the code from morse pair into Morse's settings." });
+      if (origin && rec.origin && rec.origin !== origin) return send(403, { error: "This pairing belongs to a different copy of Morse. Pair this browser again." });
 
       if (await handleVoice(req, res)) return;
 
       if (req.method === "POST" && url.pathname === "/v1/complete") {
         const body = await readJson(req);
         if (!validMessages(body.messages)) return send(400, { error: "Expected { messages: [{ role, content }] }" });
-        if (body.model !== undefined && (typeof body.model !== "string" || !validModel(body.model))) return send(400, { error: "Invalid model name" });
+        if (body.model !== undefined && (typeof body.model !== "string" || !validModel(body.model))) return send(400, { error: "That model name isn't one Morse can use. Check the spelling in Morse's settings." });
         const settings = settingsFromConfig(cfg, body.model ? { model: body.model } : {}, { harnesses: harnesses() });
-        if (settings.provider === "none") return send(503, { error: "No model configured on this computer. Run `morse config --provider claude-code` (or codex / anthropic / openai)." });
+        if (settings.provider === "none") return send(503, { error: "No model is set up on this computer. Run morse doctor there to set one up." });
 
         res.writeHead(200, { "Content-Type": "application/x-ndjson", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
         res.flushHeaders();
@@ -175,7 +175,7 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
         } catch (e) {
           if (ac.signal.aborted && ac.signal.reason?.name === "AbortError") log(`  · cancelled after ${Date.now() - t0}ms`);
           else {
-            const message = ac.signal.aborted ? `The model took longer than ${Math.round(timeoutMs / 1000)}s and was stopped.` : e.message || String(e);
+            const message = ac.signal.aborted ? `The model took longer than ${Math.round(timeoutMs / 1000)}s, so Morse stopped it. Try a smaller change.` : e.message || String(e);
             write({ type: "error", message });
             log(`  ✗ ${message}`);
           }

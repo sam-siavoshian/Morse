@@ -77,8 +77,8 @@ test("coach: shows the first time, follows point, describe, keep, then never aga
     await t.waitFor(s => s.phase === "working");
     assert.match(await t.q(".ob-say"), /Esc stops it/);
     await t.waitFor(s => s.phase === "result");
-    await page.waitForFunction(ui(".ob-steps .now") + "?.includes('Keep')");
-    assert.match(await t.q(".ob-say"), /Keep saves it for next time/);
+    await page.waitForFunction(ui(".ob-steps .now") + "?.includes('Save')");
+    assert.match(await t.q(".ob-say"), /Save keeps it for next time/);
 
     await page.keyboard.press("Enter"); // Keep
     await t.waitFor(s => !s.open);
@@ -135,7 +135,7 @@ test("help pane: from the menu and F1, examples fill the input, links to the sho
     await t.waitFor(s => s.pane === "help");
     const text = await t.q(".pane");
     for (const cat of ["Looks", "Layout", "New buttons", "Hiding things", "Reading", "Media", "Writing"]) assert.ok(text.includes(cat), cat);
-    assert.match(text, /Edit it yourself.*No model needed/s);
+    assert.match(text, /Use the edit tools.*No model needed/s);
     assert.match(text, /Hold.*Space.*and say it/s, "uses the real talk hotkey");
     assert.equal(await t.status().then(s => s.focus), "ex", "focus moves to the first example");
 
@@ -173,7 +173,7 @@ test("notices: no model, then user scripts off; each has a button and can be dis
     // The help pane still offers both.
     await t.page.keyboard.press("F1");
     await t.waitFor(s => s.pane === "help");
-    assert.match(await t.q(".ob-help footer"), /No model connected.*Connect a model.*Turn on user scripts/s);
+    assert.match(await t.q(".ob-help footer"), /No model connected.*Connect a model.*Turn on Allow User Scripts/s);
   });
 });
 
@@ -184,7 +184,7 @@ test("errors in plain words, with a button that does something", { skip }, async
     await t.page.keyboard.press("Enter");
     await t.waitFor(s => s.phase === "error");
     await t.page.waitForFunction(ui(".hint") + "?.includes('reach the model')");
-    assert.equal(await t.q(".hint"), "Couldn't do that. Morse couldn't reach the model. Make sure it's running, or choose another one in model settings.");
+    assert.equal(await t.q(".hint"), "That didn't work: Morse couldn't reach the model. Make sure it's running, or choose another one in model settings.");
     assert.match(await t.q(".hint", "title"), /ECONNREFUSED/, "the raw error stays in the tooltip");
     assert.match(await t.q(".actions"), /Model settings\s*Try again/);
     await t.click(".actions [data-ob=model]");

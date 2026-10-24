@@ -72,9 +72,7 @@ await shot("02-point-at-anything.png");
 // 3. Describe it
 await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 await sleep(200);
-// Ask: when the edit toolbar has focus after pointing, "a…" would be its shortcut
-const typing = await page.evaluate(() => /INPUT|TEXTAREA/.test(document.querySelector("[data-morse-ui]")?.shadowRoot?.activeElement?.tagName || ""));
-if (!typing) await page.keyboard.press("a");
+// After pointing, typing goes straight to the bar (no "a" for Ask first).
 await page.keyboard.type("add a sleep timer that pauses the music after a while", { delay: 18 });
 await sleep(200);
 await shot("03-say-what-you-want.png");
@@ -157,7 +155,9 @@ morse2.stdout.on("data", d => process.stdout.write(d));
 await sleep(3500);
 const b2 = await chromium.connectOverCDP(`http://127.0.0.1:${PORT}`);
 const p2 = b2.contexts()[0].pages().find(p => p.url().includes("tunes"));
-await sleep(1200);
+// Wait for both saved mods to be back on the page, not a fixed time.
+await p2.waitForFunction(() => document.querySelectorAll("style[data-morse-css]").length >= 2, null, { timeout: 15000 }).catch(() => {});
+await sleep(600);
 await p2.screenshot({ path: path.join(OUT, "13-still-there-after-restart.png") });
 console.log("  📸 13-still-there-after-restart.png");
 await (await b2.newBrowserCDPSession()).send("Browser.close").catch(() => {});
