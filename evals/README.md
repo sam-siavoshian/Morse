@@ -17,8 +17,8 @@ Requires `claude` on PATH and signed in, plus Playwright with Chromium (`npm tes
 ## How a case runs
 
 1. Open the demo app (`demo/sites/<site>/`) in Chromium at 1280×800, served with the same CSP as `demo/serve.js`.
-2. Build the context by evaluating **`runtime/src/20-context.js` itself** in the page, with the case's `target` as the pointed-at element. This is exactly what the extension and desktop runtime send.
-3. Call **`core/engine.js` `runMorse`** with the `claude-code` provider (`daemon/harness.js`). CSS is applied as it streams (a `style[data-morse-css]`, like `30-mods.js`). JS runs through `wrapModCode` and the helper kit, and late callback errors are collected after 600 ms, as `daemon/connector.js` does. The engine also gets `probe`, the runtime's `effectProbe`.
+2. Like a person, the bar opens and the model gets ready (`prewarm`) 2.5 s before Enter (`--typing-ms`; 0 for no head start). Build the context by evaluating **`runtime/src/20-context.js` itself** in the page, with the case's `target` as the pointed-at element. This is exactly what the extension and desktop runtime send.
+3. Call **`core/engine.js` `runMorse`** with the `claude-code` provider (`daemon/harness.js`). CSS is applied as it streams (a `style[data-morse-css]`, like `30-mods.js`). JS runs through `wrapModCode` and the helper kit, and late callback errors are collected after the wait the kit asks for (`settle`: 150 ms for most mods, up to 600 ms when timers or events could fire), as `daemon/connector.js` does. The engine also gets `probe`, the runtime's `effectProbe`.
 4. Run the case's `check` in the page. A check is the body of an async function that returns `true` or a failure reason. It can use `T` ([`page-helpers.js`](page-helpers.js)):
    - **Queries:** `T.$`, `T.$$`, `T.fresh()` (elements the mod created).
    - **Visibility and text:** `T.visible`, `T.visibleText()` (includes `::before`/`::after` content), `T.freshText()`.
@@ -87,6 +87,32 @@ The baseline above was re-scored with the final checkers.
 
 **Wiring the effect check in the app.** `runMorse({ probe })` is optional, and hosts that don't pass it behave exactly as before. Today only the eval passes it. To turn it on, the desktop connector and the extension need to evaluate `effectProbe(targetSelector, selectors)` from `20-context.js` in the page and return `{ fp, unmatched }`.
 
+## Speed
+
+Every run prints the median and p90 of each stage, in ms from Enter, and the results JSON has them per case (`stages`). The subset below is 18 cases on all six apps (CSS-only and JS changes), ×2, Claude Code `haiku`, 2 at a time, on a busy machine (load 13 to 30).
+
+| Stage (ms from Enter) | Before | After, bar opened 2.5 s before Enter | After, no head start |
+|---|---|---|---|
+| Reading the page (in the page) | 7 / 16 | 9 / 28 | 8 / 15 |
+| Prompt size (chars) | 6020 / 7974 | 6020 / 7974 | 6020 / 7974 |
+| `claude -p` start (spawn to ready) | 3078 / 6018 | 138 / 349 | 2902 / 4137 |
+| First token | 5123 / 8520 | 1800 / 4831 | 5088 / 9447 |
+| First change on the page | 5304 / 8678 | **1685 / 4712** | 4857 / 9577 |
+| Model done | 8838 / 12196 | 2489 / 5346 | 5363 / 10837 |
+| Total | 9197 / 12913 | **2655 / 5561** | 5503 / 11109 |
+| Passed | 36/36 | 36/36 | 36/36 |
+
+Median / p90. All 55 cases ×2 after the changes: 110/110. Run side by side on a much busier machine (load 50 to 66, both at once, after merging main): first change on the page 13523 / 17780 → 6935 / 11684, total 17973 / 22260 → 7483 / 11969, 36/36 both. There, starting `claude` took longer than the 2.5 s head start, so the process was still starting at Enter.
+
+What moved the numbers:
+- **Answer at `message_stop`** (`daemon/harness.js`). Claude Code kept running for 2.4 to 4.8 s after the last token (a summary of the turn, usage, exit) before the harness returned. Now it returns at `message_stop`, and the CLI runs with `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`. Last token to done: 3124 → 33 ms.
+- **A process started ahead of time.** Starting `claude` takes 1 to 3 s (more on a busy machine). When the bar opens, and after each request, Morse starts the next process with `--input-format stream-json` and stdin open; the request is written to it on Enter. Each process answers one request in a fresh empty directory with no session saved, and only takes a request whose model, instructions and environment match. Unused, it stops after 5 minutes (about 185 MB while it waits). `MORSE_WARM=0` turns it off.
+- **Error wait per mod** (`core/kit.js` `settle`). Hosts waited 600 ms after running JS for late errors. The kit now says how long its callbacks can take: 150 ms for watches and clicks, until the first tick for timers, 600 ms for events that fire on their own. Model done to total, JS changes: 768 → 326 ms.
+- **The page outline** built a page-wide selector for every button before trimming to 50 lines. On a page with 5,000 table rows that took 27 s; now 0.35 s, with byte-identical context on all 55 cases.
+- **Anthropic API** (measured against a local mock; no key here): the instructions go in a cached `system` block, and opening the bar sends a `max_tokens: 0` request that writes the cache and loads the SDK. The first request's own overhead went from 1.1 to 1.5 s to 25 to 120 ms.
+
+Tried and left out: `--effort low` for Claude Code (no faster on haiku: 2946 vs 2655 ms total), and trimming the context (reading the page is under 30 ms on these apps, and the model's thinking, not the prompt length, is what remains).
+
 ## Run log
 
 Rows before "baseline (rescored checkers)" used earlier checkers. Results JSON is kept only for the latest final run; this table summarizes the rest.
@@ -103,4 +129,8 @@ Rows before "baseline (rescored checkers)" used earlier checkers. Results JSON i
 | 2026-10-24 09:12 | baseline (final checkers) | claude-code:haiku | all | 136/165 (82%) | 8.7s |
 | 2026-10-24 09:20 | ablation: effect check only (old context+prompt) | claude-code:haiku | train | 103/123 (84%) | 13.8s |
 | 2026-10-24 09:30 | final, sonnet spot check | claude-code:sonnet | all | 54/55 (98%) | 9.2s |
+| 2026-10-24 11:58 | speed: baseline subset | claude-code:haiku | only | 36/36 (100%) | 9.4s |
+| 2026-10-24 12:14 | speed: after, warm subset (bar opened 2.5 s before Enter) | claude-code:haiku | only | 36/36 (100%) | 2.7s |
+| 2026-10-24 12:19 | speed: after, cold (no head start) subset | claude-code:haiku | only | 36/36 (100%) | 5.8s |
+| 2026-10-24 12:29 | speed: final, all cases x2 (machine load ~80, latency not comparable) | claude-code:haiku | all | 110/110 (100%) | 18.2s |
 <!-- run-log -->

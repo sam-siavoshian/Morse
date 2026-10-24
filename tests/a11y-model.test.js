@@ -61,7 +61,7 @@ test("Anthropic API: the picture goes as an image block, untouched", async () =>
   try {
     const text = await streamChat({ provider: "anthropic", apiKey: "k", baseUrl: api.url }, MESSAGES);
     assert.equal(text, "ANSWER: A single dot.");
-    assert.equal(api.seen[0].system, "You describe pictures.");
+    assert.deepEqual(api.seen[0].system, [{ type: "text", text: "You describe pictures.", cache_control: { type: "ephemeral" } }]); // speed: cached instructions
     assert.deepEqual(api.seen[0].messages, [{ role: "user", content: [IMAGE, { type: "text", text: "Request: Describe this picture" }] }]);
   } finally { api.s.close(); }
 });
@@ -92,8 +92,8 @@ test("Claude Code: the picture goes in as one stream-json user message; text-onl
   assert.deepEqual(line, { type: "user", message: { role: "user", content: [IMAGE, { type: "text", text: "Request: Describe this picture" }] } });
   await streamChat({ provider: "claude-code" }, [{ role: "system", content: "s" }, { role: "user", content: "make it blue" }]);
   const plain = JSON.parse(await fs.readFile(path.join(tmp, "claude.json"), "utf8"));
-  assert.equal(plain.input, "make it blue");
-  assert.ok(!plain.argv.includes("--input-format"));
+  // speed: every request is one stream-json message now (a process can start before it)
+  assert.deepEqual(JSON.parse(plain.input), { type: "user", message: { role: "user", content: "make it blue" } });
 });
 
 test("Codex: says plainly it can't look at pictures, and runs nothing", async () => {

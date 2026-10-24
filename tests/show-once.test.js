@@ -244,7 +244,7 @@ test("kit: waitFor waits for an element to appear, by words; type, choose and ke
       document.addEventListener("keydown", e => (__so.key = (e.ctrlKey ? "Ctrl+" : "") + e.key), { once: true });
       morse.key(document.body, "k", { ctrl: true });
     })();`));
-  assert.deepEqual(r, { ok: true });
+  assert.equal(r.ok, true);
   await page.waitForFunction(() => window.__so.key, null, { timeout: 3000 });
   const got = await page.evaluate(() => ({ ...window.__so, ship: document.querySelector("[name=ship]").value, gift: document.querySelector("[name=gift]").checked }));
   assert.deepEqual(got, { found: "Done later", waited: true, missing: "Couldn't find #nothing on the page", input: "sam@example.com", key: "Ctrl+k", ship: "Express", gift: true });

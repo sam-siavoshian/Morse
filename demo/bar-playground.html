@@ -86,6 +86,7 @@
           const speed = Number(q.get("ms") || 30);
           const g = { id: m.id };
           fake.gens.set(m.genId, g);
+          emit({ type: "stage", stage: "ready", genId: m.genId }); // the model has the request (the bar says so)
           g.t = setInterval(() => {
             const tok = TEXT.slice(i, i += 4);
             emit({ type: "token", text: tok, genId: m.genId });

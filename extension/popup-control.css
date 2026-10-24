@@ -16,8 +16,8 @@
 .ctl-sw input:focus-visible + i { outline: 2px solid var(--m-signal-3, #b4b4bb); outline-offset: 2px; }
 .ctl-hint { margin: 0; padding: 8px 12px; border-top: 1px solid var(--m-line, #232327); color: var(--m-text-3, #86868e); font-size: 12px; line-height: 16px; }
 .ctl-hint kbd { font: 11px ui-monospace, Menlo, monospace; margin: 0; opacity: 1; color: var(--m-text-2, #a0a0a8); }
-.ctl-origin { display: block; color: var(--m-text-3, #86868e); font-size: 12px; line-height: 16px; margin-top: 2px; }
-.ctl-code { margin-top: 4px; }
+.ctl-origin { display: block; color: var(--m-text-3, #86868e); font-size: 12px; line-height: 16px; margin: 2px 0 0 16px; }
+.ctl-code { margin: 4px 0 0 16px; }
 .ctl-code summary { color: var(--m-text-2, #a0a0a8); font-size: 12px; cursor: pointer; }
 .ctl-code summary:hover { color: var(--m-text, #ededef); }
 .ctl-items { margin: 6px 0; padding-left: 16px; color: var(--m-text, #ededef); font-size: 12px; }

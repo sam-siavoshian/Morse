@@ -156,8 +156,8 @@ function controlToast(msg, actions = [], { sticky = false, title = "" } = {}) {
   toastEl.hidden = true;
   ctlToast.classList.toggle("inline", actions.length <= 1 && msg.length < 60);
   ctlToast.innerHTML = `<div class="ctl-msg">${radar(12)}<span>${title ? `<b>${esc(title)}</b> ` : ""}${esc(msg)}</span></div>
-    ${actions.length ? `<div class="ctl-acts">${actions.map(([label], i) => `<button data-i="${i}"${i === actions.length - 1 ? ` class="primary"` : ""}>${esc(label)}</button>`).join("")}</div>` : ""}
-    <button class="ctl-x" data-i="-1" title="Close" aria-label="Close">×</button>`;
+    ${actions.length ? `<div class="ctl-acts">${actions.map(([label], i) => `<button class="btn${i === actions.length - 1 ? " primary" : ""}" data-i="${i}">${esc(label)}</button>`).join("")}</div>` : ""}
+    <button class="ibtn xs close ctl-x" data-i="-1" title="Close" aria-label="Close">×</button>`;
   ctlToast.hidden = false;
   ctlToast.onclick = e => {
     const b = e.target.closest("button[data-i]");
@@ -195,7 +195,7 @@ function showModCode(m) {
   openModal(`
     <header><b>${esc(m.title)}</b><small>“${esc(m.prompt)}”</small><button data-a="close" aria-label="Close">×</button></header>
     <p class="ctl-from">${esc(modOrigin(m))} · runs on ${esc(whereFor(m))}</p>
-    <h4 class="ctl-h">What it does</h4>
+    <h4 class="ctl-h eyebrow">What it does</h4>
     ${summaryHtml(m)}
     ${codeHtml(m)}
     <footer><button data-c="edit">Edit code</button><button class="primary" data-a="close">Done</button></footer>`);
@@ -225,21 +225,23 @@ async function reviewImport(source, { onDone, trial = null } = {}) {
       ${many ? `<h3>${esc(m.title)}</h3>` : ""}
       <p class="ctl-prompt">“${esc(m.prompt)}”</p>
       <p class="ctl-from">For ${esc(whereFor(m))}${m.author ? ` · made by ${esc(m.author)}` : ""}${m.model ? ` · written by ${esc(m.model)}` : ""}${other(m) ? ` · <span>not this page</span>` : ""}</p>
-      <h4 class="ctl-h">What it does</h4>
+      <h4 class="ctl-h eyebrow">What it does</h4>
       ${summaryHtml(m)}
       ${everywhere(m) ? `<p class="ctl-warn" data-s="everywhere"><b>Note</b>This mod runs on every website you visit, not just one. It can see what you see on all of them.</p>`
         : broadEndings(m).length ? `<p class="ctl-warn" data-s="everywhere"><b>Note</b>This mod runs on every website whose address ends in ${esc(broadEndings(m).join(" or "))}, not just one. It can see what you see on all of them.</p>` : ""}
       <details class="ctl-code"><summary>Show code</summary>${codeHtml(m)}</details>
     </section>`).join("")}
     ${r.errors?.length ? `<p class="dim ctl-skip">Skipped ${esc(r.errors.join("; "))}</p>` : ""}
-    <footer><button data-a="close">Cancel</button><button class="primary" data-a="install">${trial ? "Try it" : `Install${many ? ` ${r.mods.length}` : ""}`}</button></footer>`);
+    <footer><button data-a="close">Cancel</button><button class="primary" data-a="install" data-settle>${trial ? "Try it" : `Install${many ? ` ${r.mods.length}` : ""}`}</button></footer>`, { review: true }); // top layer, 80-modals.js
   modal.querySelector(".card").classList.add("ctl-card");
   modal.querySelector("[data-a=close]:not(header [data-a])")?.focus(); // Cancel, never Install: a page could make someone press Enter
   const watch = new MutationObserver(() => { if (modal.hidden) { watch.disconnect(); done({ error: "Not installed. You cancelled it." }); } });
   watch.observe(modal, { attributes: true, attributeFilter: ["hidden"] });
   modal.querySelector("[data-a=install]").onclick = async e => {
     if (trial) { watch.disconnect(); modal.hidden = true; done({ title: r.mods[0].title }); return trial.run(r.mods[0]); }
-    e.currentTarget.disabled = true;
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.dataset.settle = "busy"; // a review brought back on top doesn't turn it on again mid-install (80-modals.js)
     try {
       const saved = await call("control.install", { url: location.href, app: S.app, mods: r.mods, kind: r.kind });
       watch.disconnect();
@@ -247,7 +249,7 @@ async function reviewImport(source, { onDone, trial = null } = {}) {
       toast(saved.length === 1 ? `Installed “${saved[0].title}”` : `Installed ${saved.length} mods`);
       done({ title: saved.map(m => m.title).join(", ") });
       await syncMods();
-    } catch (err) { e.currentTarget.disabled = false; toast(plainError(err)); }
+    } catch (err) { btn.disabled = false; btn.dataset.settle = ""; toast(plainError(err)); }
   };
 }
 
@@ -290,7 +292,7 @@ function controlPanel() {
     <label class="ctl-row"><span class="ctl-l"><span>Pause Morse on ${esc(where)}</span><small>${site ? "Your mods here are saved but not running" : `Stops every mod ${S.mode === "desktop" && S.app ? "in this app" : "on this site"}`}</small></span>
       <span class="sw"><input type="checkbox" data-c="pause-site" ${site ? "checked" : ""} aria-label="Pause Morse on ${esc(where)}"><span></span></span></label>
     ${notes}</div>`);
-  panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", `<div class="ctl-backup"><span>Backup</span><button data-c="export">Export all mods</button><button data-c="import-file">Install from a file…</button></div>`);
+  panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", `<div class="ctl-backup"><span class="eyebrow">Backup</span><button data-c="export">Export all mods</button><button data-c="import-file">Install from a file…</button></div>`);
 }
 // Each row in the list (re-run whenever the list is redrawn, e.g. by search).
 function controlRows() {
@@ -303,6 +305,7 @@ function controlRows() {
     (tags || meta).insertAdjacentHTML("beforebegin", `<small class="ctl-origin">${esc(modOrigin(m))}</small>`);
     if (tags) tags.insertAdjacentHTML("beforeend", show); else meta.insertAdjacentHTML("beforeend", show);
     if (m.enabled && modHeld(m)) tags?.insertAdjacentHTML("afterbegin", `<span>not running</span>`);
+    else if (m.enabled && Waiting.has(m.id)) tags?.insertAdjacentHTML("afterbegin", `<span class="waiting" title="Its new look shows. What it adds runs once “Allow User Scripts” is on.">waits for “Allow User Scripts”</span>`); // waiting hook (64-waiting.js)
   }
 }
 panel.addEventListener("click", e => {
