@@ -22,6 +22,7 @@ press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ local mo
 | **Self-repair** | If the generated JS throws, Morse shows the model the error and retries once |
 | **Persistent mods** | Saved per site (web) or per app (desktop), re-applied on reload and on app restart |
 | **Undo / edit** | Every mod is fully reversible (all elements, listeners, timers, observers are tracked) and editable |
+| **Keep iterating** | Refine a result or any saved mod with a follow-up, step back with ⌘Z, bring back any of the last 20 versions, and fix a mod that stopped working in one click |
 | **Share** | Before/after share card (1200×675), auto-recorded GIF + MP4 clip (desktop), share link with the mod in the URL fragment, `.morse.json`, and a `.user.js` that runs in Tampermonkey without Morse |
 | **Web** | Chrome extension (MV3). Mod JS runs through `chrome.userScripts`, so it works on strict-CSP sites |
 | **Desktop** | `morse launch spotify` relaunches an Electron app with a debugging port and attaches over CDP. No patching of app files: code signatures and ASAR integrity stay intact, updates don't break it |
@@ -84,6 +85,19 @@ Point at something and an edit toolbar anchors to it. Every key is a tool while 
 | ![](docs/screenshots/51-move.png) **M**: move a fixed popup out of the way (Shift locks the axis) | ![](docs/screenshots/52-recolor.png) **C**: recolor the masthead |
 | ![](docs/screenshots/54-dark-mode.png) Page tools: hide ads, then a smart-invert dark mode that keeps media and already-dark parts as they are | ![](docs/screenshots/55-capture.png) **⇧C**: capture the masthead to the Morse clipboard |
 | ![](docs/screenshots/56-reuse.png) In a different app, pick it from the bar: the model rebuilds that look natively | |
+
+### Keep iterating: refine, history, fix it
+
+A result isn't final. Type a follow-up under it ("make it bigger", "use icons instead") and Enter changes the same mod: the model gets the original request, the code as it is now and your follow-up, and writes the whole thing again. Enter on an empty input keeps it, and ⌘Z / Ctrl+Z steps back one version. Every saved mod keeps its last 20 versions ([`core/versions.js`](core/versions.js)); the Mods panel lists them with times, and clicking one brings it back. **Refine** on any saved mod opens the bar on it.
+
+When a saved mod fails as it loads (its code throws, or nothing it looks for has shown up after 5 seconds, from `morse.__stats` in [`core/kit.js`](core/kit.js)), its row says so in plain words and **Fix it** sends the model the error, the page as it is now and the old code. The panel also has search (past six mods), **Copy link**, and keys: ↑/↓ to move, Space to turn a mod on or off, Enter to refine.
+
+Captured by [`demo/shoot-iterate.js`](demo/shoot-iterate.js) with the real extension and the demo model.
+
+| | |
+|---|---|
+| ![](docs/screenshots/40-refine.png) A follow-up typed under the result: Enter refines, Keep saves | ![](docs/screenshots/41-history.png) **History**: three versions; click one to bring it back |
+| ![](docs/screenshots/42-fix-it.png) The app changed under a saved mod: **Fix it** | |
 
 ## Status
 
