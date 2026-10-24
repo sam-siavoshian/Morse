@@ -1,13 +1,17 @@
-// Modals (Edit code, Share, Install a mod, the install review, Show code) are
-// real modal dialogs: named by their title, focus goes in, Tab stays in, Esc
-// or Close puts focus back where it was (12-focus.js has the helpers).
+// Modals (Edit code, Share, Install a mod, the install and update reviews,
+// Show code) are real modal dialogs: the <dialog> is named by the card's
+// title, focus goes in, Tab stays in, and Esc or Close puts focus back where
+// it was (12-focus.js has the helpers).
+// { review: true }: an install or update review (63-control.js, 68-gallery.js).
 let modalBack = null;
-function openModal(html) {
+function openModal(html, { review = false } = {}) {
   if (modal.hidden) modalBack = nowFocused(); // a modal replacing another (Install a mod → review) keeps the first one's
-  modal.innerHTML = `<div class="card" role="dialog" aria-modal="true">${html}<div class="sr" role="status" aria-live="polite"></div></div>`;
+  modal.innerHTML = `<div class="card">${html}<div class="sr" role="status" aria-live="polite"></div></div>`;
   const card = modal.querySelector(".card"), title = card.querySelector("header b"), sub = card.querySelector("header small");
-  if (title) { title.id = "m-modal-title"; card.setAttribute("aria-labelledby", title.id); }
-  if (sub) { sub.id = "m-modal-sub"; card.setAttribute("aria-describedby", sub.id); }
+  modal.setAttribute("aria-modal", "true");
+  for (const [attr, el, id] of [["aria-labelledby", title, "m-modal-title"], ["aria-describedby", sub, "m-modal-sub"]]) {
+    if (el) { el.id = id; modal.setAttribute(attr, id); } else modal.removeAttribute(attr);
+  }
   for (const b of card.querySelectorAll("header > button[data-a=close]")) if (!b.getAttribute("aria-label")) b.setAttribute("aria-label", "Close");
   modal.hidden = false;
   bar.setAttribute("aria-modal", "false"); // one modal at a time for screen readers: this one
@@ -15,6 +19,7 @@ function openModal(html) {
   // The first field, else the first button that isn't Close; callers may move it (the review starts on Cancel).
   const all = tabbables(card);
   (all.find(n => n.matches("textarea:not([readonly]), input:not([readonly])")) || all.find(n => !n.closest("header") && !n.matches("[readonly]")) || all[0])?.focus({ preventScroll: true });
+  if (review) showReview();
 }
 // One listener for the life of the page (it used to be added on every open).
 modal.addEventListener("keydown", e => {
@@ -29,12 +34,79 @@ new MutationObserver(() => {
   bar.setAttribute("aria-modal", "true");
   const back = modalBack;
   modalBack = null;
-  if (modal.contains(root.activeElement) || !root.activeElement) {
+  // After the <dialog> has closed (a review's close() moves focus on its own).
+  setTimeout(() => {
+    if (!modal.hidden || !(modal.contains(root.activeElement) || !root.activeElement)) return;
     const visible = n => n?.isConnected && n.getClientRects().length && !n.closest("[hidden]");
     const to = visible(back) ? back : !bar.hidden ? input : !panel.hidden ? panel.querySelector(".list article[tabindex='0'], [data-a=close]") : back?.isConnected ? back : null;
     try { to?.focus({ preventScroll: true }); } catch {}
-  }
+  }, 0);
 }).observe(modal, { attributes: true, attributeFilter: ["hidden"] });
+
+// ---- reviews: on top of everything, and no click until they have been seen
+// A review is shown as a modal <dialog>: the browser draws it above the whole
+// page (top layer) and the page can't be clicked under it. Its main button
+// ([data-settle]: Install, Update) turns on only after the review has been on
+// top, uncovered, for REVIEW_SETTLE ms, so a page can't uncover it just as
+// someone clicks. If the page draws something of its own over it (a popover,
+// a modal dialog, full screen), the review comes back on top and waits again;
+// a page that keeps doing it gets the review closed.
+const REVIEW_SETTLE = 500;
+// IntersectionObserver v2 (Chrome) reports whether anything at all is drawn
+// over the button, a popover hidden in the page's own shadow root included.
+const SEES_COVERS = "isVisible" in (globalThis.IntersectionObserverEntry?.prototype || {});
+const Review = { clearSince: null, covers: [], io: null, timer: 0 };
+function showReview() {
+  if (typeof modal.showModal !== "function") return;
+  const focused = root.activeElement;
+  TopLayer.raise();
+  try { if (modal.open) modal.close(); modal.showModal(); } catch { return; }
+  if (focused && modal.contains(focused)) focused.focus({ preventScroll: true });
+  Review.clearSince = SEES_COVERS ? null : performance.now(); // with v2: from when it reports the button uncovered
+  Review.io?.disconnect();
+  if (SEES_COVERS) {
+    Review.io = new IntersectionObserver(seen, { trackVisibility: true, delay: 100 });
+    for (const b of modal.querySelectorAll("[data-settle]")) Review.io.observe(b);
+  }
+  settleReview();
+}
+function seen(entries) {
+  if (!modal.open) return;
+  if (entries[entries.length - 1].isVisible) Review.clearSince ??= performance.now();
+  else if (Review.clearSince != null) { Review.clearSince = null; return coveredUI(); }
+  settleReview();
+}
+function settleReview() {
+  clearTimeout(Review.timer);
+  const t = Review.clearSince == null ? -1 : performance.now() - Review.clearSince;
+  const ok = modal.open && t >= REVIEW_SETTLE;
+  for (const b of modal.querySelectorAll("[data-settle]")) if (b.dataset.settle !== "busy") b.disabled = !ok;
+  if (modal.open && t >= 0 && !ok) Review.timer = setTimeout(settleReview, REVIEW_SETTLE - t + 10);
+}
+// Something of the page's is drawn over Morse: back on top.
+function coveredUI() {
+  const now = performance.now();
+  Review.covers = Review.covers.filter(t => now - t < 3000).concat(now);
+  if (modal.open && Review.covers.length > 5) {
+    modal.hidden = true;
+    return toast("This page kept covering Morse's review, so Morse closed it. Nothing was installed.");
+  }
+  if (Review.covers.length > 10) return; // stop taking turns with a page that won't stop
+  if (modal.open) showReview(); else TopLayer.raise();
+}
+new MutationObserver(() => {
+  if (!modal.hidden) return;
+  Review.io?.disconnect();
+  if (modal.open) modal.close();
+}).observe(modal, { attributes: true, attributeFilter: ["hidden"] });
+modal.addEventListener("cancel", e => { e.preventDefault(); modal.hidden = true; }); // Escape: closed the usual way
+function pageTopLayer(e) {
+  if (e.type === "toggle" && (e.newState !== "open" || e.target === hostEl)) return;
+  if (bar.hidden && panel.hidden && modal.hidden) return;
+  coveredUI();
+}
+listen("toggle", pageTopLayer, true);
+listen("fullscreenchange", pageTopLayer, true);
 // Editing the code by hand makes a new version, like a refine (⌘Z or the
 // panel's History bring the old one back).
 const HAND_EDIT = "Edited the code by hand";
@@ -160,16 +232,17 @@ async function renderCard(m) {
     }
     g.restore();
     g.strokeStyle = accent; g.lineWidth = 2; roundRect(g, P.x, P.y, P.w, P.h, 14); g.stroke();
-    g.fillStyle = accent; g.font = "700 13px ui-monospace, Menlo, monospace";
-    g.fillText(label, P.x + 2, P.y - 10);
+    // the caption: 15px, at least 7:1 on the card (it shrinks to ~9px in the dialog and in feeds)
+    g.fillStyle = accent; g.font = "700 15px ui-monospace, Menlo, monospace";
+    g.fillText(label, P.x + 2, P.y - 12);
   };
-  draw(b, panels[0], "BEFORE", "#8e8e96");
+  draw(b, panels[0], "BEFORE", "#a0a0a8");
   draw(a, panels[1], "AFTER", "#f4f4f5", S.after.focus);
   g.fillStyle = "#f4f4f5"; g.font = "600 34px ui-sans-serif, system-ui, sans-serif";
   g.font = "600 34px ui-sans-serif, system-ui, sans-serif";
   const oneLine = g.measureText(`“${m.prompt}”`).width <= W - 80;
   wrap(g, `“${m.prompt}”`, 40, oneLine ? 92 : 70, W - 80, 42, 2);
-  g.fillStyle = "#8e8e96"; g.font = "500 17px ui-sans-serif, system-ui, sans-serif";
+  g.fillStyle = "#a0a0a8"; g.font = "500 17px ui-sans-serif, system-ui, sans-serif";
   g.fillText(`${S.appName || location.host} · ${d.secs}s · ${S.label.split(" · ")[0]}`, 40, oneLine ? 136 : 154);
   // wordmark
   const lx = W - 168, ly = 632;
@@ -180,7 +253,7 @@ async function renderCard(m) {
     roundRect(g, lx + (i % 4) * 7, ly + Math.floor(i / 4) * 7, 5.5, 5.5, 1.5); g.fill();
   }
   g.fillStyle = "#f4f4f5"; g.font = "600 22px ui-sans-serif, system-ui, sans-serif"; g.fillText("morse", lx + 34, ly + 21);
-  g.fillStyle = "#8e8e96"; g.font = "500 15px ui-sans-serif, system-ui, sans-serif"; g.fillText("change any app in your own words", 40, ly + 20);
+  g.fillStyle = "#a0a0a8"; g.font = "500 17px ui-sans-serif, system-ui, sans-serif"; g.fillText("change any app in your own words", 40, ly + 20);
   return c.toDataURL("image/png");
 }
 function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
@@ -193,6 +266,10 @@ function wrap(g, text, x, y, maxW, lh, maxLines) {
   }
   g.fillText(line, x, y);
 }
+
+// People read plain words (core/onboarding.js plainError); developers find
+// the error it stood for in the console.
+onHiddenError(raw => console.warn("[morse] details:", raw));
 
 function toast(msg) {
   announce(msg, { again: true }); // screen readers hear every toast (12-focus.js)

@@ -217,6 +217,7 @@ test("import: the in-app review shows what it does, folds the code, and installs
   assert.equal(await page.evaluate(`document.querySelector("[data-morse-ui]").shadowRoot.activeElement?.textContent`), "Cancel", "focus starts on Cancel, never on Install");
   assert.deepEqual(axeLines(await axeCheck(page)), [], "axe-core: the install review");
   assert.equal(Object.keys(await stored(page)).length, 2, "nothing installed yet");
+  await until(() => page.evaluate(`!${sr(".modal [data-a=install]")}.disabled`));
   await click(page, ".modal [data-a=install]");
   await until(async () => Object.keys(await stored(page)).length === 3);
   const m = (await stored(page))[spy.id];
@@ -269,6 +270,7 @@ test("the share page's install request always gets an answer: Esc, the backdrop 
   assert.equal((await replies()).length, 3, "one answer per request");
   await ask();
   await until(() => text(page, ".modal .ctl-items"));
+  await until(() => page.evaluate(`!${sr(".modal [data-a=install]")}.disabled`)); // Install waits a moment after the review shows (80-modals.js)
   await click(page, ".modal [data-a=install]");
   assert.deepEqual(await until(async () => (await replies())[3]), { title: "Big text" });
   assert.deepEqual(errors, []);

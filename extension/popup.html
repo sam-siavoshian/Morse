@@ -7,7 +7,8 @@
   <main>
   <section id="page">
     <button id="go" class="primary">Change this page <kbd id="key"></kbd></button>
-    <p id="warn" class="notice" hidden>Some sites block mods that add buttons or features. To allow them, turn on <b>Allow User Scripts</b> for Morse in <code>chrome://extensions</code>. Mods that only change the look work either way.</p>
+    <p id="warn" class="notice" hidden><span id="warntext"><b>“Allow User Scripts” is off.</b> Changes to how pages look work. Changes that add buttons or features run only when it is on.</span>
+      <span class="steps">Click <b>Turn it on</b>, turn on <b>Allow User Scripts</b> on the page that opens, then reload this tab.</span></p>
     <h2>Mods on this site <span id="count"></span></h2>
     <ul id="mods"></ul>
   </section>

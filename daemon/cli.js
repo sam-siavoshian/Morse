@@ -284,6 +284,7 @@ async function main() {
 
 main().catch(e => {
   const plain = plainError(e);
-  console.error(`${ERR("✗")} ${plain}${plain !== e.message && e.message ? D(`  (${e.message})`) : ""}`);
+  const details = e?.details || (plain !== e?.message && e?.message) || "";
+  console.error(`${ERR("✗")} ${plain}${details ? D(`  (${details})`) : ""}`);
   process.exit(1);
 });

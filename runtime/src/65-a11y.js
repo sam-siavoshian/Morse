@@ -34,7 +34,7 @@ const A11y = (() => {
   quickMenuGroups.push(() => {
     const r = modFor("readable");
     const item = (k, label, on, cls = "") => `<button role="menuitemcheckbox" tabindex="-1" class="${cls}" data-a11y="${k}" aria-checked="${on}">${cls ? "" : svg(I[k])}<span>${label}</span><span class="gm-state">${on ? svg(I.on) : ""}</span></button>`;
-    return `<div class="a11y-group" role="group" aria-label="Easier to use">
+    return `<div class="a11y-group menu" role="group" aria-label="Easier to use">
       <header aria-hidden="true">Easier to use<small>no model needed</small></header>
       ${A11Y_KINDS.map(k => item(k, A11Y_TOOLS[k].title, isOn(k)) + (k === "readable" ? item("dyslexia", "Dyslexia-friendly letters", !!(r?.enabled && r.edits[0].dyslexia), "a11y-sub") : "")).join("")}
       <hr>
@@ -106,7 +106,7 @@ const A11y = (() => {
   sep.className = "gm-sep a11y-tb";
   const tbBtn = (k, label) => {
     const b = document.createElement("button");
-    b.className = "a11y-tb";
+    b.className = "ibtn a11y-tb";
     b.dataset.a11yTb = k;
     b.setAttribute("aria-label", label);
     b.innerHTML = svg(I[k]) + GodMode.tip(label, "");

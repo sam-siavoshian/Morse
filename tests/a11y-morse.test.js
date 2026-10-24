@@ -50,6 +50,8 @@ async function open({ mods = 0, width = 1100, height = 720, theme = "dark", forc
   await waitForStatus(page, s => s.ready, { what: "the runtime to be ready" });
   return { ctx, page, errors };
 }
+// A share link the catalog host can read (demo/catalog-host.js decodes #m=).
+const LINK = `https://morse.sh/install#m=${Buffer.from(JSON.stringify({ title: "Bigger buttons", prompt: "make every button bigger", css: "button { min-height: 40px }" })).toString("base64")}`;
 const status = page => page.evaluate(() => JSON.parse(document.querySelector(":root > [data-morse-ui]").dataset.status));
 const until = (page, pred, what) => waitForStatus(page, pred, { what });
 // What has focus inside the overlay: "tag.class[data-…]", for messages and checks.
@@ -156,7 +158,7 @@ test("axe-core finds nothing in the key states: bar, choosing with keys, edit to
     await page.keyboard.press("Enter");
     await page.locator(".card textarea").waitFor();
     await axeOk(page, "Install a mod");
-    await page.keyboard.type("https://morse.sh/install#m=abc");
+    await page.keyboard.type(LINK);
     await tabTo(page, /\[a=go\]/);
     await page.keyboard.press("Enter");
     await page.locator(".card [data-a=install]").waitFor();
@@ -221,19 +223,20 @@ test("keyboard only: open, choose with keys, describe, Save, Mods panel, turn a 
     await page.keyboard.press("Enter");
     await page.locator(".card textarea").waitFor();
     assert.match(await focused(page), /^textarea/, "focus goes into the modal");
-    assert.equal(await page.locator(".card").getAttribute("aria-modal"), "true");
+    assert.equal(await page.locator(".modal").getAttribute("aria-modal"), "true");
     for (let i = 0; i < 6; i++) await page.keyboard.press("Tab");
     assert.ok(await page.evaluate(() => document.querySelector(":root > [data-morse-ui]").shadowRoot.querySelector(".card").contains(document.querySelector(":root > [data-morse-ui]").shadowRoot.activeElement)), "Tab stays in the modal");
     await page.keyboard.press("Escape");
     await waitFor(async () => /\[a=import\]/.test(await focused(page)), { what: "focus back on Install a mod" });
     await page.keyboard.press("Enter");
     await page.locator(".card textarea").waitFor();
-    await page.keyboard.type("https://morse.sh/install#m=bigger-buttons");
+    await page.keyboard.type(LINK);
     await tabTo(page, /\[a=go\]/);
     await page.keyboard.press("Enter");
     await page.locator(".card [data-a=install]").waitFor();
     assert.match(await focused(page), /\[a=close\]/, "the review starts on Cancel, never Install");
-    assert.match(await page.locator(".card").getAttribute("aria-labelledby"), /./);
+    assert.match(await page.locator(".modal").getAttribute("aria-labelledby"), /./);
+    await page.locator(".card [data-a=install]:not([disabled])").waitFor(); // Install waits until the review has been seen (80-modals.js)
     await tabTo(page, /\[a=install\]/);
     await page.keyboard.press("Enter");
     await waitFor(() => page.evaluate(() => __cat.mods.some(m => m.title === "Bigger buttons")), { what: "the mod to install" });

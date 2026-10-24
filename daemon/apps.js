@@ -182,6 +182,7 @@ export function readBundle(ctx, bundle) {
 // Unpacked apps keep it in resources/app/; packed ones in app.asar, whose
 // header (a JSON file table after two 4-byte sizes) says where it is, so only
 // the header and that one file are read, not the whole archive.
+export const ASAR_HEADER_MAX = 64 * 1024 * 1024;
 export function appPackage(ctx, dir) {
   const pp = ctx.pp;
   let text = ctx.read(pp.join(dir, "resources", "app", "package.json"))?.toString("utf8");
@@ -191,6 +192,9 @@ export function appPackage(ctx, dir) {
       const sizes = ctx.readRange(asar, 0, 16);
       const headerSize = sizes.readUInt32LE(4); // pickle holding the header
       const jsonSize = sizes.readUInt32LE(12);
+      // The sizes come from the file: a broken or hostile one can say 4 GB.
+      // Real headers are a few MB even for the biggest apps.
+      if (jsonSize > ASAR_HEADER_MAX || jsonSize > headerSize) throw new Error("not an asar header");
       const header = JSON.parse(ctx.readRange(asar, 16, jsonSize).toString("utf8"));
       const f = header.files?.["package.json"];
       if (f && !f.unpacked && Number(f.size) < 1 << 20) text = ctx.readRange(asar, 8 + headerSize + Number(f.offset), Number(f.size)).toString("utf8");
@@ -505,21 +509,25 @@ export function matchApp(query, apps) {
   return { app: top[0].a };
 }
 
+// An error written for a person: shown as is, whatever its length
+// (core/onboarding.js plainError). App names and paths can be long.
+export const said = msg => Object.assign(new Error(msg), { plain: true });
+
 // From what the person typed to an app to launch.
 export function resolveApp(query, { ctx = hostContext(), apps } = {}) {
   const q = String(query || "").trim();
-  if (!q) throw new Error("Which app? For example: morse launch spotify. Run morse apps to see what's installed.");
+  if (!q) throw said("Which app? For example: morse launch spotify. Run morse apps to see what's installed.");
   const looksLikePath = /[\\/]/.test(q) || /\.(app|exe)$/i.test(q);
   if (looksLikePath && ctx.exists(q)) return appFromPath(ctx, q);
   const installed = apps || discoverApps(ctx);
   const m = matchApp(q, installed);
-  if (m.ambiguous) throw new Error(`"${q}" could be ${m.ambiguous.map(a => a.name).join(" or ")}. Say which one.`);
+  if (m.ambiguous) throw said(`"${q}" could be ${m.ambiguous.map(a => a.name).join(" or ")}. Say which one.`);
   if (m.app) return m.app;
   const catalogApps = Object.entries(CATALOG).map(([id, c]) => ({ id, ...c }));
   const c = matchApp(q, catalogApps).app;
-  if (c) throw new Error(`${c.name} isn't in the usual places. If it's somewhere else, give its path: morse launch "/path/to/${c.name}"`);
-  if (looksLikePath) throw new Error(`Nothing at ${q}.`);
-  throw new Error(`Morse couldn't find an app called "${q}". Run morse apps to see what it found, or give the app's path.`);
+  if (c) throw said(`${c.name} isn't in the usual places. If it's somewhere else, give its path: morse launch "/path/to/${c.name}"`);
+  if (looksLikePath) throw said(`Nothing at ${q}.`);
+  throw said(`Morse couldn't find an app called "${q}". Run morse apps to see what it found, or give the app's path.`);
 }
 
 export function appFromPath(ctx, p) {
@@ -698,7 +706,7 @@ export function appImageEnv(app, { env = process.env, has = existsSync } = {}) {
 // and every Electron app inherits that, so root gets its own hint.
 export function launchFailure(app, { code = null, signal = null, error = null } = {}, { platform = process.platform, uid = process.getuid?.() } = {}) {
   const name = app.name || "The app";
-  if (error) return `Morse couldn't start ${name}: ${error.code === "ENOENT" ? `there's nothing to run at ${executableFor(app)}` : error.code === "EACCES" ? "it isn't allowed to run (not executable)" : error.message}.`;
+  if (error) return `Morse couldn't start ${name}${error.code === "ENOENT" ? `: there's nothing to run at ${executableFor(app)}` : error.code === "EACCES" || error.code === "EPERM" ? ": it isn't allowed to run (not executable)" : ". Check that it opens on its own"}.`;
   let msg = `${name} quit right after it started (${signal ? `stopped by ${signal}` : `exit code ${code}`}), before Morse could connect.`;
   if (platform === "linux" && uid === 0 && app.engine !== "native")
     msg += ` You're running as root, and Electron and Chromium apps won't start as root with their sandbox on. Run Morse as your own user. If you really must use root: morse launch ${app.id || "<app>"} -- --no-sandbox`;
@@ -713,13 +721,15 @@ export async function waitForLaunch(child, app, port, { timeoutMs = 30000, grace
   let exitedAt = null;
   while (Date.now() < end) {
     try { return await wait(port, 500); } catch {}
-    if (child.failed) throw Object.assign(new Error(launchFailure(app, { error: child.failed })), { failed: true });
+    // Written for a person (plain: shown as is, not as "Something went wrong");
+    // the system's own words go in details, for the terminal's dim line.
+    if (child.failed) throw Object.assign(new Error(launchFailure(app, { error: child.failed })), { failed: true, plain: true, details: child.failed.message });
     if (child.exited) {
       exitedAt ??= Date.now();
-      if (Date.now() - exitedAt >= grace) throw Object.assign(new Error(launchFailure(app, child.exited)), { failed: true });
+      if (Date.now() - exitedAt >= grace) throw Object.assign(new Error(launchFailure(app, child.exited)), { failed: true, plain: true });
     }
   }
-  throw new Error(`${app.name} started but never opened its debugging port. It may still be running in the background (try --restart), or it blocks the setting Morse needs.`);
+  throw said(`${app.name} started but never opened its debugging port. It may still be running in the background (try --restart), or it blocks the setting Morse needs.`);
 }
 
 // ---------------------------------------------------------------- per-app choices

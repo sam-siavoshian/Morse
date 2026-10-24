@@ -69,12 +69,18 @@ export function showOnceDemo(prompt) {
   const css = `.morse-so-btn { margin: 8px 12px; padding: 6px 14px; border: 1px solid currentColor; border-radius: 999px; background: none; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
 .morse-so-btn:disabled { opacity: .45; cursor: default; }`;
   const lines = (list, pad = "    ") => list.map(c => pad + c + "\n").join("");
+  // A step that can't be taken back (core/showonce.js cannotUndo): ask first, once.
+  const sure = steps.find(s => s.confirm);
+  const sureWord = sure ? (sure.label || sure.text || sure.key || "Do it") : "";
+  const ask = !sure ? "" : every
+    ? `if (!(await morse.confirm(${J(sureWord)} + " " + items.length + " " + (items.length === 1 ? ${J(every.noun)} : ${J(every.noun.replace(/([^s])$/, "$1s"))}) + "? This can't be undone.", { yes: ${J(sureWord)} }))) return;\n    `
+    : `if (!(await morse.confirm(${J(`This will ${sure.do === "key" ? "press" : "click"} “${sureWord}”, which can't be undone. Go ahead?`)}, { yes: ${J(sureWord)} }))) return;\n    `;
   const body = every
     ? `const items = [...document.querySelectorAll(${J(every.selector)})];
-${lines(steps.slice(0, every.from).map(s => stepCode(s, false)))}    for (const item of items) {
+    ${ask}${lines(steps.slice(0, every.from).map(s => stepCode(s, false))).trimStart()}    for (const item of items) {
 ${lines(steps.slice(every.from).map(s => stepCode(s, true)), "      ")}    }
     morse.toast("Done for " + items.length + " " + (items.length === 1 ? ${J(every.noun)} : ${J(every.noun.replace(/([^s])$/, "$1s"))}));`
-    : `${lines(steps.map(s => stepCode(s, false))).trimStart()}    morse.toast("Done");`;
+    : `${ask}${lines(steps.map(s => stepCode(s, false))).trimStart()}    morse.toast("Done");`;
   const run = `async function run() {
   try {
     ${body}

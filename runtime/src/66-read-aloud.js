@@ -199,12 +199,12 @@ const ReadAloud = (() => {
     if (!R) return;
     const n = R.segs.length;
     card.innerHTML = `
-      <button type="button" class="ra-main" data-ra="play" aria-label="${R.playing ? "Pause" : "Play"}" title="${R.playing ? "Pause" : "Play"}">${icon(R.playing ? I.pause : I.play)}</button>
-      <button type="button" data-ra="prev" aria-label="Previous sentence" title="Previous sentence" ${R.i === 0 ? "disabled" : ""}>${icon(I.prev)}</button>
-      <button type="button" data-ra="next" aria-label="Next sentence" title="Next sentence" ${R.i >= n - 1 ? "disabled" : ""}>${icon(I.next)}</button>
+      <button type="button" class="ibtn ra-main" data-ra="play" aria-label="${R.playing ? "Pause" : "Play"}" title="${R.playing ? "Pause" : "Play"}">${icon(R.playing ? I.pause : I.play)}</button>
+      <button type="button" class="ibtn" data-ra="prev" aria-label="Previous sentence" title="Previous sentence" ${R.i === 0 ? "disabled" : ""}>${icon(I.prev)}</button>
+      <button type="button" class="ibtn" data-ra="next" aria-label="Next sentence" title="Next sentence" ${R.i >= n - 1 ? "disabled" : ""}>${icon(I.next)}</button>
       <div class="ra-text" aria-live="off"><b>${R.playing ? "Reading aloud" : "Paused"}</b><small>Sentence ${R.i + 1} of ${n}</small></div>
-      <button type="button" class="ra-rate" data-ra="rate" aria-label="Speed ${R.rate} times. Change speed" title="Speed">${R.rate}×</button>
-      <button type="button" class="ra-x" data-ra="stop" aria-label="Stop reading" title="Stop (Esc)">×</button>`;
+      <button type="button" class="btn ra-rate" data-ra="rate" aria-label="Speed ${R.rate} times. Change speed" title="Speed">${R.rate}×</button>
+      <button type="button" class="ibtn close ra-x" data-ra="stop" aria-label="Stop reading" title="Stop (Esc)">×</button>`;
   }
   function reveal() {
     const r = R?.segs[R.i]?.range.getBoundingClientRect();
