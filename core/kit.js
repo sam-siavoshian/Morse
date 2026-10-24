@@ -48,7 +48,7 @@ function installMorseKit() {
   function ctxFor(id) {
     if (mods.has(id)) return mods.get(id);
     const c = { id, cleanups: [], errors: [], nerr: 0, observers: new Set(), watches: [], timers: new Set(), frames: new Set(),
-      els: [], elsMax: 256, ms: 0, hits: 0, in: 0, since: 0, g: { w: now(), t: 0, n: 0, h: 0, hot: 0, bulk: 0, flood: 0 } };
+      els: [], elsMax: 256, ms: 0, hits: 0, in: 0, t1: 0, k: 0, g: { w: now(), t: 0, n: 0, h: 0, hot: 0, bulk: 0, flood: 0 } };
     mods.set(id, c);
     return c;
   }
@@ -96,14 +96,15 @@ function installMorseKit() {
     for (const w of watches) {
       const c = w.c;
       if (c.dead) { watches.delete(w); continue; }
-      // guard: each watch's batch is the mod's time; what it changes is its own
-      const h0 = c.hits, prev = cur, t0 = now();
-      cur = c; depth++;
-      if (!c.in++) c.since = t0;
+      // guard: what its callbacks do is the mod's, timed from the first one
+      // (a frame where nothing new matched costs no clock reads)
+      const h0 = c.hits, prev = cur;
+      cur = c; depth++; c.in++; c.t1 = 0;
       if (full) scanAll(w);
       else for (const r of list) if (r.isConnected) scanIn(w, r);
       c.in--; depth--; cur = prev;
-      tally(c, now() - t0, c.hits !== h0 ? dropOwn() : 0, c.hits - h0);
+      if (c.hits !== h0) { const t = now(); tally(c, c.t1 ? t - c.t1 : 0, dropOwn(), c.hits - h0, t); }
+      c.t1 = 0;
     }
     if (!watches.size) stopWatching();
   }
@@ -159,17 +160,18 @@ function installMorseKit() {
     const prev = cur;
     if (!depth) takePage();
     cur = c; depth++;
-    if (!c.in++) c.since = now();
+    if (!c.in++) c.t1 = 0;
     return prev;
   }
   function leave(c, prev, t0) {
-    const dt = now() - t0;
-    c.in--; depth--; cur = prev;
-    tally(c, dt, depth ? 0 : dropOwn(), 0);
+    const t = now();
+    if (!--c.in) c.t1 = 0;
+    depth--; cur = prev;
+    tally(c, t - t0, depth ? 0 : dropOwn(), 0, t);
   }
   // Adds to a mod's per-second budget and pauses it when it goes over.
-  function tally(c, dt, made, hits) {
-    const g = c.g, t = now();
+  function tally(c, dt, made, hits, t = now()) {
+    const g = c.g;
     if (t - g.w >= 1000) {
       const next = t - g.w < 2000; // the second right after, not after a quiet gap
       g.hot = next && g.t > L.BUSY_MS ? g.hot + 1 : 0;
@@ -271,9 +273,10 @@ function installMorseKit() {
         const seen = new WeakSet();
         const run = el => {
           if (c.dead) return;
+          if (!c.t1) c.t1 = now();
           try { fn(el); } catch (e) { fail(c, e); }
           // Many matches at once with a slow callback: stop now, not after all of them.
-          if (now() - c.since > L.STALL_MS) pause(c, "slow", `one run of its morse.watch callback over the elements it found kept the page busy for over ${L.STALL_MS} ms. Do far less work per element.`);
+          if (!(++c.k & 15) && now() - c.t1 > L.STALL_MS) pause(c, "slow", `one run of its morse.watch callback over the elements it found kept the page busy for over ${L.STALL_MS} ms. Do far less work per element.`);
         };
         // Match counts for __stats: a watch that never matches means the page
         // changed under the mod (the panel offers to fix it). `now` is exact
