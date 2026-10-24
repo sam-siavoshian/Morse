@@ -16,6 +16,8 @@
 // locals there). Helpers that run inside the page are real functions here,
 // embedded with .toString(), so "Edit code" shows plain, readable JavaScript.
 
+import { t } from "./i18n.js"; // auditSummary in the person's language (the runtime inlines i18n first)
+
 export const A11Y_TOOLS = {
   contrast: { title: "Higher contrast" },
   targets: { title: "Bigger click targets" },
@@ -803,20 +805,17 @@ export function auditPage(doc = document, { limit = 40, budget = 4000 } = {}) {
 
 export const AUDIT_ORDER = ["name", "alt", "label", "contrast", "target", "autoplay"];
 
-// Plain words for a group of problems: { title, help }.
+// Plain words for a group of problems: { title, help }, in the person's
+// language: message ids "au.sum.<rule>" (a plural by n) and "au.help.<rule>".
 export function auditSummary(rule, n, items = []) {
-  const one = n === 1;
   switch (rule) {
-    case "alt": return { title: one ? "1 picture has no description" : `${n} pictures have no description`, help: "Screen readers can't say what they show." };
-    case "name": return { title: one ? "1 button or link has no name" : `${n} buttons and links have no name`, help: "A screen reader only says “button”, or reads out a symbol." };
-    case "label": return { title: one ? "1 form field has no label" : `${n} form fields have no label`, help: "Someone using a screen reader won't know what to type." };
+    case "alt": case "name": case "label": case "target": case "autoplay":
+      return { title: t(`au.sum.${rule}`, { n }), help: t(`au.help.${rule}`) };
     case "contrast": {
       const worst = items.length ? Math.min(...items.map(i => i.ratio || 21)) : 0;
-      return { title: one ? "1 piece of text is hard to read" : `${n} pieces of text are hard to read`, help: `The text is too light for its background${worst ? ` (as low as ${worst.toFixed(1)} to 1; 4.5 to 1 is the minimum)` : ""}.` };
+      return { title: t("au.sum.contrast", { n }), help: worst ? t("au.help.contrastRatio", { ratio: worst.toFixed(1) }) : t("au.help.contrast") };
     }
-    case "target": return { title: one ? "1 thing is too small to click" : `${n} things are too small to click`, help: "Under 24 pixels. Hard to hit with a shaky hand or a finger." };
-    case "autoplay": return { title: one ? "1 video or sound plays by itself" : `${n} videos or sounds play by themselves`, help: "Moving or sounding content is distracting and hard to stop." };
-    default: return { title: `${n} problems`, help: "" };
+    default: return { title: t("au.sum.other", { n }), help: "" };
   }
 }
 

@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="../design/tokens.css">
-<link rel="stylesheet" href="../site/site.css">
+<link rel="stylesheet" href="install.css">
 <style>
   .i-main { max-width: calc(760px + 2 * var(--s-gutter)); padding-top: 64px; padding-bottom: 96px; }
   .i-main h1 { font-size: clamp(32px, 5vw, 44px); line-height: 1.1; letter-spacing: -0.035em; }
@@ -78,13 +78,13 @@
   <div class="wrap">
     <a class="brand" href="../site/" aria-label="Morse home"><span data-radar="20"></span>Morse</a>
     <nav class="nav" aria-label="Main">
-      <a href="../site/gallery.html">Gallery</a>
-      <a href="../site/">What is Morse?</a>
+      <a href="../site/gallery.html" data-i18n="install.nav.gallery">Gallery</a>
+      <a href="../site/" data-i18n="install.nav.what">What is Morse?</a>
     </nav>
   </div>
 </header>
 <main class="wrap i-main">
-  <div id="root"><p id="status" class="i-loading"><span data-radar="16"></span>Opening the mod…</p></div>
+  <div id="root"><p id="status" class="i-loading"><span data-radar="16"></span><span data-i18n="install.opening">Opening the mod…</span></p></div>
 </main>
 <script type="module">
   import { decodeShare, decodeShareText, toUserscript } from "../core/mod.js";
@@ -92,49 +92,53 @@
   import { initPage, highlight, esc } from "../site/common.js";
   import { mountAll } from "../site/radar.js";
   import { summarizeMod, whereRuns, modHosts, broadEndings } from "../core/summary.js";
+  import { t, setLanguage, pickLanguage, translatePage } from "../core/i18n.js";
 
+  // This page has no Morse settings to read: it follows the browser's language.
+  setLanguage(pickLanguage(navigator.languages?.length ? navigator.languages : [navigator.language]));
+  translatePage(document);
   initPage();
   addEventListener("hashchange", () => location.reload());
   const root = document.getElementById("root");
   const check = `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
   const warn = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 1.75l6.5 11.5h-13z" stroke-linejoin="round"/><path d="M8 6.5v3"/><circle cx="8" cy="11.5" r=".5" fill="currentColor"/></svg>`;
-  const lines = s => { const n = s.trimEnd().split("\n").length; return `${n} line${n === 1 ? "" : "s"}`; };
+  const lines = s => t("install.lines", { n: s.trimEnd().split("\n").length });
   // packs hook: a link can carry a pack; it gets its own page (showPack, below).
-  const pack = await decodeShareText(location.href).then(t => { try { return isPack(JSON.parse(t)) ? t : null; } catch { return null; } }, () => null);
+  const pack = await decodeShareText(location.href).then(txt => { try { return isPack(JSON.parse(txt)) ? txt : null; } catch { return null; } }, () => null);
   if (pack) showPack(pack);
   else try {
     const mod = await decodeShare(location.href);
     const where = whereRuns(mod); // the same rule Morse uses to decide where it runs
     const everywhere = !mod.match?.app && !!modHosts(mod)?.includes("*");
-    document.title = `${mod.title} · Morse mod`;
+    document.title = t("install.docTitle", { title: mod.title });
     // What it does, in plain words, worked out from the code itself.
     const sum = summarizeMod(mod);
     const items = sum.empty
-      ? `<li><b>Doesn't change anything</b><small>It has no code.</small></li>`
+      ? `<li><b>${esc(t("sum.empty"))}</b><small>${esc(t("install.noCode"))}</small></li>`
       : sum.items.map(i => `<li data-s="${i.id}"><b>${esc(i.text)}</b>${i.detail ? `<small>${esc(i.detail)}</small>` : ""}</li>`).join("");
     root.innerHTML = `
-      <p class="eyebrow"><span data-radar="14" data-still></span>Shared mod</p>
+      <p class="eyebrow"><span data-radar="14" data-still></span>${esc(t("install.eyebrow"))}</p>
       <h1>${esc(mod.title)}</h1>
       <p class="i-prompt">“${esc(mod.prompt)}”</p>
-      <div class="i-meta"><span class="chip">for ${esc(where)}</span>${mod.css.trim() ? `<span class="chip">style</span>` : ""}${mod.js.trim() ? `<span class="chip">script</span>` : ""}${mod.model ? `<span class="chip">made with ${esc(mod.model)}</span>` : ""}</div>
+      <div class="i-meta"><span class="chip">${esc(t("install.for", { where }))}</span>${mod.css.trim() ? `<span class="chip">${esc(t("panel.tag.style"))}</span>` : ""}${mod.js.trim() ? `<span class="chip">${esc(t("panel.tag.script"))}</span>` : ""}${mod.model ? `<span class="chip">${esc(t("install.madeWith", { model: mod.model }))}</span>` : ""}</div>
       <section class="i-does" aria-labelledby="does">
-        <h2 id="does">What this mod does</h2>
+        <h2 id="does">${esc(t("install.does"))}</h2>
         <ul class="i-items">${items}</ul>
-        ${everywhere ? `<p class="i-note" data-s="everywhere">${warn}<span>This mod runs on every website you visit, not just one. It can see what you see on all of them.</span></p>`
-          : broadEndings(mod).length ? `<p class="i-note" data-s="everywhere">${warn}<span>This mod runs on every website whose address ends in ${esc(broadEndings(mod).join(" or "))}, not just one. It can see what you see on all of them.</span></p>` : ""}
+        ${everywhere ? `<p class="i-note" data-s="everywhere">${warn}<span>${esc(t("install.everywhere"))}</span></p>`
+          : broadEndings(mod).length ? `<p class="i-note" data-s="everywhere">${warn}<span>${esc(t("install.broad", { endings: broadEndings(mod).join(t("install.or")) }))}</span></p>` : ""}
         ${sum.notes.map(n => `<p class="i-note" data-s="${n.id}">${warn}<span>${esc(n.text)}</span></p>`).join("")}
       </section>
       <div class="i-actions">
-        <button class="btn primary" type="button" id="install">Install</button>
-        <a class="btn" id="userscript" download>Download for Tampermonkey</a>
+        <button class="btn primary" type="button" id="install">${esc(t("install.install"))}</button>
+        <a class="btn" id="userscript" download>${esc(t("install.tampermonkey"))}</a>
       </div>
       <p id="status" role="status"></p>
       <details class="i-code" id="code">
-        <summary>Show code</summary>
-        ${mod.css.trim() ? `<h2>Style (CSS) <span>${lines(mod.css)}</span></h2><pre class="code">${highlight(mod.css.trimEnd(), "css")}</pre>` : ""}
-        ${mod.js.trim() ? `<h2>Script (JavaScript) <span>${lines(mod.js)}</span></h2><pre class="code">${highlight(mod.js.trimEnd(), "js")}</pre>` : ""}
+        <summary>${esc(t("ctl.showCode"))}</summary>
+        ${mod.css.trim() ? `<h2>${esc(t("install.code.style"))} <span>${lines(mod.css)}</span></h2><pre class="code">${highlight(mod.css.trimEnd(), "css")}</pre>` : ""}
+        ${mod.js.trim() ? `<h2>${esc(t("install.code.script"))} <span>${lines(mod.js)}</span></h2><pre class="code">${highlight(mod.js.trimEnd(), "js")}</pre>` : ""}
       </details>
-      <p class="i-foot">A mod is a change to a website or app, made with Morse. Morse brings it back every time you open that site or app. This whole mod is in the link, after the <code>#</code>. Browsers never send that part to a server, so only you and the person who sent it have seen it. The list above comes from reading the code, and it mentions anything the code might do. Once it's installed, <kbd>⌥⇧0</kbd> (Alt+Shift+0) turns off every mod on a page at once.</p>`;
+      <p class="i-foot">${t("install.foot")}</p>`;
     mountAll(root);
     const us = document.getElementById("userscript");
     us.href = URL.createObjectURL(new Blob([toUserscript(mod)], { type: "text/javascript" }));
@@ -143,24 +147,22 @@
     document.getElementById("install").onclick = () => {
       if (document.documentElement.dataset.morseExtension) {
         window.postMessage({ morseInstall: location.href }, "*");
-        status.textContent = "Check the Morse window on this page to finish installing.";
+        status.textContent = t("install.checkWindow");
       } else {
         navigator.clipboard?.writeText(location.href).catch(() => {});
-        status.innerHTML = mod.match.app
-          ? `Link copied. In the app, open Morse, then Mods → Install a mod…, and paste it. Or run <code>morse install "&lt;link&gt;"</code> in a terminal.`
-          : `Morse isn't installed in this browser. The link is copied: paste it into Morse under Mods → Install a mod…, or download the mod for Tampermonkey.`;
+        status.innerHTML = mod.match.app ? t("install.copied.app") : esc(t("install.copied.web"));
       }
     };
     window.addEventListener("message", e => {
       if (e.source !== window || !e.data?.morseInstalled) return;
       const r = e.data.morseInstalled;
-      status.innerHTML = r.error ? `<span class="err">${esc(r.error)}</span>` : `<span class="ok">${check}Installed “${esc(r.title)}”.</span> Open ${esc(where)} to see it.`;
+      status.innerHTML = r.error ? `<span class="err">${esc(r.error)}</span>` : `<span class="ok">${check}${esc(t("install.installed", { title: r.title }))}</span> ${esc(t("install.openIt", { where }))}`;
     });
   } catch (e) {
     root.innerHTML = `
-      <p class="eyebrow">Shared mod</p>
-      <h1>This link doesn't have a mod in it.</h1>
-      <p class="i-prompt">It may have been cut off when it was copied. Ask for the link again, or browse the <a href="../site/gallery.html">gallery</a>.</p>
+      <p class="eyebrow">${esc(t("install.eyebrow"))}</p>
+      <h1>${esc(t("install.bad.h"))}</h1>
+      <p class="i-prompt">${t("install.bad")}</p>
       ${/^This /.test(e.message) ? `<p class="err" style="margin-top:16px;font-size:14px">${esc(e.message)}</p>` : ""}`;
   }
   // ---- packs hook: every mod in the pack, what each does and where, its code.

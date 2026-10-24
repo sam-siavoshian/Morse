@@ -305,7 +305,7 @@ async function applyMod(m) {
     const r = await call("exec", { modId: m.id, js: m.js });
     if (r?.waiting) return waitingAdd(m);
     health(m, r);
-    if (r && !r.ok && !guardPaused(m, r)) { warn(m.title, r.error); notify(`“${m.title}” didn't work on this page. Open Mods to turn it off or fix it.`); }
+    if (r && !r.ok && !guardPaused(m, r)) { warn(m.title, r.error); notify({ id: "mod.failedHere", vars: { title: m.title } }); }
   }
   ran(m);
   guardAfter(m, look);
@@ -530,7 +530,7 @@ const Heal = (() => {
     if (ui) { try { ui.healFound?.(); } catch (e) { warn(e); } }
     // Auto-fix (Settings) needs the model and the UI's review flow: load it now,
     // for a mod it would try (once per version, never on its own fix: 71-heal.js autoFix).
-    else if (prefs.autoFix && [...broken.keys()].some(id => { const m = S.mods.find(x => x.id === id); return m?.enabled && !m.fp?.tried && m.refined !== "Fixed after this site changed" && modCodeHash(m) === m.fp?.code; })) { wantUi = true; loadUI().catch(() => {}); }
+    else if (prefs.autoFix && [...broken.keys()].some(id => { const m = S.mods.find(x => x.id === id); return m?.enabled && !m.fp?.tried && !AUTO_FIX_NOTES.includes(m.refined) /* in any language Morse speaks (runtime/bundle.js) */ && modCodeHash(m) === m.fp?.code; })) { wantUi = true; loadUI().catch(() => {}); }
   }
   function soon() {
     if (!live()) return null;
@@ -628,7 +628,7 @@ const ready = (async () => {
   return hello;
 })();
 ready.then(hello => {
-  if (!hello.quiet && hello.mode && prefs.welcome) notify(`Morse is ready. Press ${formatCombo(keys.open, PLATFORM) || "the Morse hotkey"} to change this page.`, true);
+  if (!hello.quiet && hello.mode && prefs.welcome) notify(formatCombo(keys.open, PLATFORM) ? { id: "boot.ready", vars: { key: formatCombo(keys.open, PLATFORM) } } : { id: "boot.readyNoKey" }, true);
   // Screenshots and tests read the overlay's status: the UI comes at once (a
   // desktop host started with MORSE_DEBUG=1 says so in its hello).
   if (DEBUG || hello.debug) loadUI().catch(() => {});

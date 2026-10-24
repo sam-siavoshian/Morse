@@ -1,7 +1,10 @@
 // Screenshots of the website (site/) and the share page (share/install.html)
-// for docs/site/: the landing page, the gallery and a mod's drawer, the share
-// page for a mod and for a broken link, at 1440×900 and 390×844, dark and light.
-// Full pages are whole; the drawer and the broken link are one screen.
+// for docs/site/: the landing page, its nav menu (wide) and nav sheet (phone),
+// the gallery and a mod's drawer, at 1440×900 and 390×844 (the site is light
+// only), and the share page for a mod and for a broken link, dark and light.
+// Full pages are whole; the menu, the drawer and the broken link are one
+// screen. The pictures of Lanes beside Morse (compare-*) are made separately,
+// from a local build of the Lanes site.
 //
 //   node demo/shoot-site.js            (SHOTS=dir to write elsewhere)
 //
@@ -46,29 +49,60 @@ const shot = async (p, name, full) => {
   console.log("  📸", name);
 };
 
+// Lazy pictures load only near the screen, and a full-page screenshot doesn't
+// scroll. So scroll down the page a screen at a time, then wait until every
+// picture has decoded, and fail if one didn't, rather than shoot blank boxes.
+async function loadEveryPicture(p) {
+  const height = await p.evaluate(() => document.documentElement.scrollHeight);
+  const step = p.viewportSize().height / 2;
+  for (let y = 0; y < height; y += step) {
+    await p.evaluate(top => window.scrollTo(0, top), y);
+    await sleep(120);
+  }
+  const missing = await p.evaluate(async () => {
+    await Promise.all([...document.images].map(i => i.decode().catch(() => {})));
+    await document.fonts.ready;
+    return [...document.images].filter(i => !i.complete || !i.naturalWidth).map(i => i.getAttribute("src"));
+  });
+  if (missing.length) throw new Error(`pictures that didn't load: ${missing.join(", ")}`);
+  await p.evaluate(() => window.scrollTo(0, 0));
+  await sleep(300);
+}
+
 for (const size of ["desktop", "mobile"]) {
+  // The landing page, top to bottom, every picture loaded.
+  let p = await page(size, "light");
+  await p.goto(at("/site/"));
+  await p.waitForLoadState("networkidle");
+  await loadEveryPicture(p);
+  await sleep(300);
+  await shot(p, `landing-${size}.png`, true);
+  // The nav: a menu panel on a wide screen, the sheet on a phone.
+  if (size === "desktop") {
+    await p.hover(".nav-item[data-menu] .nav-trigger");
+    await p.waitForSelector("#nav-panel-product:not([hidden])");
+  } else {
+    await p.click(".nav-toggle");
+    await p.waitForSelector(".nav.is-open");
+  }
+  await sleep(400);
+  await shot(p, `landing-nav-${size}.png`, false);
+  await p.context().close();
+
+  // The gallery, and one mod opened in its drawer.
+  p = await page(size, "light");
+  await p.goto(at("/site/gallery.html"));
+  await p.waitForSelector("#grid .card");
+  await loadEveryPicture(p);
+  await shot(p, `gallery-${size}.png`, true);
+  await p.locator("#grid > *").first().click();
+  await p.waitForSelector("#drawer.open");
+  await sleep(500);
+  await shot(p, `gallery-drawer-${size}.png`, false);
+  await p.context().close();
+
+  // The share page for a mod (it keeps the dark and light looks).
   for (const scheme of ["dark", "light"]) {
-    // The landing page, top to bottom.
-    let p = await page(size, scheme);
-    await p.goto(at("/site/"));
-    await p.waitForLoadState("networkidle");
-    await sleep(600);
-    await shot(p, `landing-${size}-${scheme}.png`, true);
-    await p.context().close();
-
-    // The gallery, and one mod opened in its drawer.
-    p = await page(size, scheme);
-    await p.goto(at("/site/gallery.html"));
-    await p.waitForSelector("#grid article, #grid .card, #grid > *");
-    await sleep(500);
-    await shot(p, `gallery-${size}-${scheme}.png`, true);
-    await p.locator("#grid > *").first().click();
-    await p.waitForSelector("#drawer.open");
-    await sleep(500);
-    await shot(p, `gallery-drawer-${size}-${scheme}.png`, false);
-    await p.context().close();
-
-    // The share page for a mod.
     p = await page(size, scheme);
     await p.goto(SHARE);
     await p.waitForSelector("ul.i-items li");
