@@ -1,0 +1,12 @@
+Apps Morse found on this computer
+  ● Chrome                   browser, separate profile   /usr/bin/chromium
+  ● Discord                  Electron app                open with port 9222
+  ● Obsidian                 Electron app                flatpak
+  ● Slack                    Electron                    open without Morse → morse launch slack --restart
+  ● Spotify                  Chromium (CEF)              snap
+  ● VS Code                  Electron                    connected · port 9333
+
+Other Electron and Chromium apps
+  ● Beeper                   Electron 31                 /opt/Beeper/beeper
+
+morse launch <name> · partial names work: code, vs code, spot, slack

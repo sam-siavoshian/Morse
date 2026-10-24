@@ -1,0 +1,15 @@
+Apps Morse found on this PC
+  ● Chrome                      browser, separate profile   C:\Program Files\Google\Chrome\Application\chrome.exe
+  ● Discord         1.0.9170    Electron                    open with port 9222
+  ● Figma           125.0.3     Electron                    ~\Local\Figma\app-125.0.3\Figma.exe
+  ● Obsidian                    Electron                    ~\Local\Programs\Obsidian\Obsidian.exe
+  ● Slack           4.41.105    Electron                    open without Morse → morse launch slack --restart
+  ● Spotify                     Chromium (CEF)              ~\Roaming\Spotify\Spotify.exe
+  ● VS Code                     Electron                    connected · port 9333
+
+Other Electron and Chromium apps
+  ● Acme Chat       2.1.0       Electron                    D:\Tools\Acme Chat\Acme Chat.exe
+  ● Beeper                      Electron                    ~\Local\Programs\Beeper\Beeper.exe
+  ● GitHub Desktop  3.4.9       Electron                    ~\Local\GitHubDesktop\app-3.4.9\GitHubDesktop.exe
+
+morse launch <name> · partial names work: code, vs code, spot, slack

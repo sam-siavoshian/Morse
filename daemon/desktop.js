@@ -13,8 +13,9 @@ import {
 import { pickPort, portFree, portAnswers, reachableFrom, identify, checkIdentity } from "./ports.js";
 import { readSessions, publishSession, stopRequested, stopSession, withMods, formatStatus } from "./status.js";
 import { settingsLabel } from "../core/providers.js";
+import { paint } from "./colors.js";
 
-const G = s => `\x1b[32m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`;
+const { g: G, d: D, b: B } = paint;
 const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 async function ask(question) {
@@ -117,6 +118,12 @@ export async function launchCommand(f, { settingsFrom, logo }) {
     // Says why when the app dies on start. An AppImage that has to unpack
     // itself first (no FUSE, apps.js appImageEnv) can take a minute.
     await waitForLaunch(child, app, port, app.appimage ? { timeoutMs: 120000 } : undefined);
+    // What we started handed over to the real app (Squirrel's Update.exe,
+    // flatpak, snap): the app is the process that has our port.
+    if (child.handoff || child.exited) {
+      const real = findAppProcesses(app, listProcesses(), { extraArgs: extra }).filter(p => debugPortOf(p.cmd) === port).map(p => p.pid);
+      if (real.length) pids = real;
+    }
     if (pref.port !== port) await saveAppPref(app.id, { port });
   }
 
