@@ -599,7 +599,8 @@
         "scrollTo(0, document.documentElement.scrollHeight); await T.sleep(400);",
         "const b = T.fresh('button,[role=button],a').filter(e => T.visible(e) && T.rect(e).top >= 0 && T.rect(e).bottom <= innerHeight)[0];",
         "if (!b) return 'no button on screen at the bottom of the page';",
-        "const r = T.rect(b); await window.__evalClick(r.left + r.width / 2, r.top + r.height / 2); await T.sleep(1500);",
+        "const r = T.rect(b); await window.__evalClick(r.left + r.width / 2, r.top + r.height / 2);",
+        "for (let i = 0; i < 40 && scrollY >= 50; i++) await T.sleep(100); // a smooth scroll up a long page takes a moment",
         "return scrollY < 50 || 'still at scrollY ' + Math.round(scrollY);"] }
   ]
 }
