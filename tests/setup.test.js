@@ -182,7 +182,6 @@ test("generation errors in plain words, each with something to do", () => {
     ["spawn claude ENOENT", "setup"],
     ["Model server returned 401", "model"],
     ["Invalid API key provided", "model"],
-    ["Ollama returned 403 (set OLLAMA_ORIGINS to allow this origin)", ""],
     ["Failed to fetch", "model"],
     ["model 'qwen9' not found, try pulling it first", "model"],
     ["Model server returned 429", ""],

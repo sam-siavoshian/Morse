@@ -57,8 +57,6 @@ export function pageSupport(url, { fileAccess = true, extensionId = "" } = {}) {
 const ERROR_RULES = [
   [/user ?scripts|unsafe-eval|content.security.policy|blocks injected scripts/i,
     "This site blocks scripts that Morse adds. Turn on “Allow User Scripts” for Morse, then try again.", "userscripts"],
-  [/OLLAMA_ORIGINS|ollama returned 403/i,
-    "Ollama is refusing requests from this page. Quit Ollama, start it again with OLLAMA_ORIGINS=*, then try again.", ""],
   [/127\.0\.0\.1:7457|morse helper|helper (is )?not running|helper.*(unreachable|offline)/i,
     "The Morse helper isn't running on this computer. Run morse setup in a terminal to start it.", "setup"],
   [/(claude|codex)\b.*(ENOENT|not found|not installed)|(ENOENT|command not found).*(claude|codex)/i,
