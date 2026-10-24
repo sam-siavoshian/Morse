@@ -316,7 +316,7 @@ function outline(roots = [document]) {
   }
   const lineOf = x => {
     const all = x.n >= 3 && similar(x.el);
-    return all ? `${all.sel}${x.rest} ×${all.n}` : uniqueSelector(x.el) + x.rest;
+    return all ? `${all.sel}${x.rest} ×${x.n}` : uniqueSelector(x.el) + x.rest;
   };
   // Within a kind, the ways around (settings, account, export…) go first.
   const lines = picked.flatMap((list, k) => [...list].sort((a, b) => b.ways - a.ways || a.i - b.i).slice(0, OUTLINE_BUDGET[k]))
@@ -646,7 +646,9 @@ function layout(maxLines = 70, top = document.body) {
     // Repeated items show their attributes: that's where state lives (data-unread, aria-selected).
     const attrs = n < 2 ? "" : [...el.attributes].filter(a => !/^(class|style|on|href$|src$|value$)/.test(a.name)).slice(0, 5)
       .map(a => `${a.name}="${clip(a.value, 20)}"`).join(" ");
-    return "  ".repeat(depth) + (n > 1 ? `${kindOf(el)} ×${n}` : selName(el)) + (attrs ? ` [${attrs}]` : "") + ` (${f.join(", ")})` + (text ? ` "${text}"` : "");
+    // A list's container with no name of its own gets its full selector.
+    const bare = n < 2 && selName(el) === el.localName && [...el.children].filter(k => groupKey(k) === groupKey(el.children[0] || el)).length >= 3;
+    return "  ".repeat(depth) + (n > 1 ? `${kindOf(el)} ×${n}` : selName(el)) + (attrs ? ` [${attrs}]` : "") + ` (${f.join(", ")})` + (text ? ` "${text}"` : "") + (bare ? ` = ${selectorFor(el)}` : "");
   };
   const childrenOf = el => {
     const inner = innerRoot(el);
