@@ -61,6 +61,7 @@ export async function openLibrary(browser, { viewport = { width: 1280, height: 8
     });
   });
   await page.goto(`${ORIGIN}/demo/sites/a11y/index.html`);
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  // ready: the host answered hello and the mods are on (tests may press keys right away)
+  await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "{}").ready, null, { timeout: 60000 });
   return { ctx, page, errors };
 }

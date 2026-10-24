@@ -1,5 +1,6 @@
 // Concurrent updates to Morse's storage keep every change: the daemon's files
 // in ~/.morse and the extension's chrome.storage.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { promises as fs } from "node:fs";

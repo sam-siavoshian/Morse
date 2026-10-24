@@ -5,27 +5,26 @@
 // Runtime cases run the real runtime in Chromium against the fake hosts in
 // demo/bar-playground.html and demo/playground.html; extension cases load the
 // built extension (they need a display, like tests/security.test.js).
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
-import { readFileSync, existsSync, readdirSync, mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 import { serveBar } from "../demo/bar-server.js";
 import { bundleRuntime } from "../runtime/bundle.js";
 import { defaultHotkeys } from "../core/hotkeys.js";
 import { plainError } from "../core/onboarding.js";
+import { chromium, launchBrowser, noBrowser, noDisplay } from "./helpers/browser.js";
+import { OPEN_KEY, holdKeys, releaseKeys } from "./helpers/keys.js";
+import { TIMEOUT, hostRoundTrip, settle, waitForReady } from "./helpers/wait.js";
+import { tempDir } from "./helpers/home.js";
 // The default Open Morse / push-to-talk combo for this platform.
 const MAC = process.platform === "darwin";
-const OPEN_KEY = MAC ? "Alt+Space" : "Control+Shift+Space";
-const OPEN_MODS = MAC ? ["Alt"] : ["Control", "Shift"];
 const OPEN_FLAGS = MAC ? { altKey: true } : { ctrlKey: true, shiftKey: true };
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
-const skipExt = skip || (!process.env.DISPLAY && "extensions need a display (run under Xvfb)");
+const skip = noBrowser;
+const skipExt = noDisplay;
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const EXT = path.join(root, "dist", "extension");
 let browser, srv;
@@ -34,8 +33,7 @@ before(async () => {
   if (skip) return;
   srv = await serveBar();
   const args = ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"];
-  try { browser = await chromium.launch({ channel: "chromium", args }); }
-  catch { browser = await chromium.launch({ args }); }
+  browser = await launchBrowser({ channel: "chromium", args });
 });
 after(async () => { await browser?.close(); await srv?.close(); });
 
@@ -57,9 +55,9 @@ async function scenario({ page: which = "bar", query = "", init, clock = false }
   page.on("pageerror", e => errors.push(e.message));
   const url = which === "god" ? srv.url.replace("bar-playground.html", "playground.html") : srv.url;
   await page.goto(url + query);
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  await waitForReady(page);
   const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
-  const waitFor = async (pred, ms = 8000) => {
+  const waitFor = async (pred, ms = TIMEOUT) => {
     const end = Date.now() + ms;
     let s;
     while (Date.now() < end) { s = await status(); if (pred(s)) return s; await page.waitForTimeout(25); }
@@ -147,7 +145,7 @@ test("God mode: one edit whose request is lost doesn't stop later edits from app
     await page.keyboard.type("One");
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.__execs === 1);
-    await page.waitForTimeout(600); // the save is queued behind the lost exec
+    await page.waitForTimeout(600); // an observation window (the page clock is faked, so no frames to settle on): the save is queued behind the lost exec
     assert.deepEqual(await saved(), []);
     await page.clock.fastForward(16000); // each step gets 15s at most
     await page.waitForFunction(() => Object.keys(JSON.parse(localStorage.getItem("morse:playground:mods") || "{}")).length === 1);
@@ -165,10 +163,10 @@ test("God mode: one edit whose request is lost doesn't stop later edits from app
 test("synthetic key events from the page don't open the bar, talk, or act inside it", { skip }, async () => {
   await scenario({ init: SPEECH_FAILS }, async ({ page, status, waitFor }) => {
     await page.evaluate(fakeKey("keydown", { code: "Space", key: " ", ...OPEN_FLAGS }));
-    await page.waitForTimeout(450); // longer than a hold
+    await page.waitForTimeout(450); // longer than a hold: a duration being tested, not a wait for the app
     await page.evaluate(fakeKey("keyup", { code: "Space", key: " ", ...OPEN_FLAGS }));
     await page.evaluate(fakeKey("keydown", { code: "KeyM", key: "M", altKey: true, shiftKey: true }));
-    await page.waitForTimeout(100);
+    await settle(page);
     let s = await status();
     assert.equal(s.open, false);
     assert.equal(s.voice, "idle");
@@ -179,7 +177,7 @@ test("synthetic key events from the page don't open the bar, talk, or act inside
     await page.evaluate(fakeKey("keydown", { code: "F1", key: "F1" }));
     await page.evaluate(fakeKey("keydown", { code: "Escape", key: "Escape" }));
     await page.evaluate(fakeKey("keydown", { code: "Comma", key: ",", ctrlKey: true }));
-    await page.waitForTimeout(100);
+    await settle(page);
     s = await status();
     assert.equal(s.open, true);
     assert.equal(s.pane, "");
@@ -197,14 +195,12 @@ test("voice over a result: holding the hotkey dictates a refinement instead of s
     await page.keyboard.type("make it airy");
     await page.keyboard.press("Enter");
     await waitFor(s => s.phase === "result");
-    for (const k of OPEN_MODS) await page.keyboard.down(k);
-    await page.keyboard.down("Space");
+    await holdKeys(page);
     const listening = await waitFor(s => s.voice === "listening");
     assert.equal(listening.phase, "result");
     assert.match(listening.hint, /Listening/);
-    await page.waitForTimeout(1300);
-    await page.keyboard.up("Space");
-    for (const k of [...OPEN_MODS].reverse()) await page.keyboard.up(k);
+    await page.waitForTimeout(1300); // talk for 1.3s
+    await releaseKeys(page);
     const s = await waitFor(s => s.voice === "idle" && s.input === "make the toolbar airier");
     assert.equal(s.open, true, "the bar stays open");
     assert.equal(s.phase, "result");
@@ -222,12 +218,10 @@ test("voice over a result: holding the hotkey dictates a refinement instead of s
     await page.keyboard.type("make it airy");
     await page.keyboard.press("Enter");
     await waitFor(s => s.phase === "result");
-    for (const k of OPEN_MODS) await page.keyboard.down(k);
-    await page.keyboard.down("Space");
+    await holdKeys(page);
     await waitFor(s => s.voice === "listening");
-    await page.waitForTimeout(1300);
-    await page.keyboard.up("Space");
-    for (const k of [...OPEN_MODS].reverse()) await page.keyboard.up(k);
+    await page.waitForTimeout(1300); // talk for 1.3s
+    await releaseKeys(page);
     await page.waitForFunction(() => window.__fake.log.filter(m => m.type === "generate").length === 2);
     await waitFor(s => s.phase === "result");
     assert.ok(!(await log()).some(m => m.type === "mods.save"));
@@ -253,7 +247,7 @@ test("hotkey recorder: God mode doesn't take the keys being recorded", { skip },
 // ---- 5. "none" is not a connected model
 
 test("desktop onboarding: provider \"none\" is not a connected model", async () => {
-  process.env.MORSE_HOME = mkdtempSync(path.join(tmpdir(), "morse-hard-"));
+  process.env.MORSE_HOME = tempDir("morse-hard-");
   const { handleOnboarding, modelConnected } = await import("../daemon/onboarding.js");
   const status = async settings => (await handleOnboarding({ type: "onboarding.get" }, { settings })).status.model.connected;
   assert.equal(await status({ provider: "none" }), false);
@@ -327,7 +321,7 @@ test("edit tools hotkey: leaves a running change's status alone; help shows the 
     await page.keyboard.press("Enter");
     await waitFor(s => s.phase === "working");
     await page.keyboard.press("Alt+Shift+KeyG");
-    await page.waitForTimeout(200);
+    await settle(page);
     const s = await waitFor(s => s.phase === "working");
     assert.doesNotMatch(s.hint, /Point at something/);
   });
@@ -351,8 +345,8 @@ test("copy: no demo fallback promised, no OpenAI key field promised", () => {
 });
 
 test("popup: shows the Open Morse shortcut from settings", { skip: skipExt }, async () => {
-  const ctx = await chromium.launchPersistentContext(mkdtempSync(path.join(tmpdir(), "morse-hard-")), {
-    headless: false, args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
+  const ctx = await chromium.launchPersistentContext(tempDir("morse-hard-"), {
+    headless: false, timeout: TIMEOUT * 2, args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
   });
   try {
     const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
@@ -380,7 +374,8 @@ test("first-run coach: page tools saving on their own don't finish it or show th
     await page.locator(".gm-qbtn").click();
     await page.locator(".gm-menu button[data-k=dark]").click();
     await page.waitForFunction(() => window.__fake.log.some(m => m.type === "mods.save"));
-    await page.waitForTimeout(300);
+    await hostRoundTrip(page); // the save's reply, and whatever the coach does with it, are done
+    await settle(page);
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("fake:onboarding") || "{}"));
     assert.notEqual(stored.coach, "done");
     assert.ok(!stored.tips?.saved);

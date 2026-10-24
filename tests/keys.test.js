@@ -1,21 +1,21 @@
 // Keys typed in Morse's bar must not trigger the page's own single-key
 // shortcuts, which apps register as capture-phase listeners and skip for
 // editable targets.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { serveBar } from "../demo/bar-server.js";
+import { launchBrowser, noBrowser } from "./helpers/browser.js";
+import { OPEN_KEY } from "./helpers/keys.js";
+import { settle, waitForReady } from "./helpers/wait.js";
 
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
+const skip = noBrowser;
 let browser, srv;
 
 before(async () => {
   if (skip) return;
   srv = await serveBar();
-  try { browser = await chromium.launch({ channel: "chromium" }); } catch { browser = await chromium.launch(); }
+  browser = await launchBrowser({ channel: "chromium" });
 });
 after(async () => { await browser?.close(); await srv?.close(); });
 
@@ -43,7 +43,7 @@ test("typing in the bar doesn't fire the page's capture-phase shortcuts", { skip
   page.on("pageerror", e => errors.push(e.message));
   try {
     await page.goto(srv.url);
-    await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+    await waitForReady(page);
     const host = () => page.evaluate(() => { const h = document.querySelector("[data-morse-ui]"); return { ce: h.getAttribute("contenteditable"), ice: h.isContentEditable, children: h.childNodes.length }; });
 
     // Closed: the page's shortcuts are the page's.
@@ -56,7 +56,7 @@ test("typing in the bar doesn't fire the page's capture-phase shortcuts", { skip
     await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).focus === "in");
     await page.evaluate(() => (__shortcuts.length = 0));
     await page.keyboard.type("jk/gx");
-    await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).input === "jk/gx", null, { timeout: 3000 }); // the bar got every key
+    await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).input === "jk/gx"); // the bar got every key
     assert.deepEqual(await page.evaluate(() => __shortcuts), [], "the page ran none of its shortcuts");
     const h = await host();
     assert.equal(h.ice, true);
@@ -67,7 +67,7 @@ test("typing in the bar doesn't fire the page's capture-phase shortcuts", { skip
 
     // Moving focus between Morse's own controls keeps it that way.
     await page.keyboard.press("Tab");
-    await page.waitForTimeout(50);
+    await settle(page);
     await page.keyboard.press("j");
     assert.deepEqual(await page.evaluate(() => __shortcuts), []);
 
@@ -75,7 +75,7 @@ test("typing in the bar doesn't fire the page's capture-phase shortcuts", { skip
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
     await page.waitForFunction(() => !JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).open);
-    await page.waitForTimeout(50);
+    await settle(page);
     assert.equal((await host()).ce, null);
     await page.keyboard.press("k");
     assert.deepEqual(await page.evaluate(() => __shortcuts), ["k"]);

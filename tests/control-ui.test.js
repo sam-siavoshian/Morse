@@ -2,22 +2,23 @@
 // start, the in-app install review, and the share page's plain-language
 // summary. The runtime runs on demo/playground.html, whose fake host uses
 // the real core/control-host.js and keeps everything in localStorage.
+import "./helpers/home.js";
 import { test, before, after, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
 import { bundleRuntime } from "../runtime/bundle.js";
 import { createMod, encodeShare } from "../core/mod.js";
+import { launchBrowser, noBrowser } from "./helpers/browser.js";
+import { OPEN_KEY } from "./helpers/keys.js";
+import { TIMEOUT, hostRoundTrip, settle, waitForReady } from "./helpers/wait.js";
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
+const skip = noBrowser;
 const ROOT = new URL("../", import.meta.url);
 const ORIGIN = "http://morse.test";
 const TYPES = { html: "text/html", js: "text/javascript", css: "text/css", json: "application/json" };
 let browser;
 
-before(async () => { if (!skip) browser = await chromium.launch(); });
+before(async () => { if (!skip) browser = await launchBrowser(); });
 after(() => browser?.close());
 // A failed test must not leave its page around (it would keep timers and focus).
 const contexts = new Set();
@@ -55,19 +56,19 @@ async function playground(ctx, mods = MODS) {
   await page.goto(`${ORIGIN}/blank`);
   await page.evaluate(m => { localStorage.setItem("morse:playground:mods", JSON.stringify(m)); localStorage.setItem("morse:debug", "1"); }, mods);
   await page.goto(`${ORIGIN}/demo/playground.html?light`);
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  await waitForReady(page);
   await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).mods > 0);
   return { page, errors };
 }
 async function reload(page) {
   await page.reload();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  await waitForReady(page);
   await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).mods > 0);
 }
 const sr = sel => `document.querySelector("[data-morse-ui]").shadowRoot.querySelector(${JSON.stringify(sel)})`;
 const text = (page, sel) => page.evaluate(`${sr(sel)}?.textContent || ""`);
 const click = (page, sel) => page.evaluate(`${sr(sel)}.click()`);
-async function until(fn, ms = 8000) {
+async function until(fn, ms = TIMEOUT) {
   const end = Date.now() + ms;
   for (;;) {
     const v = await Promise.resolve().then(fn).catch(() => null);
@@ -87,7 +88,7 @@ test("off switch: Alt+Shift+0 turns every mod off at once, the toast turns them 
   const { page, errors } = await playground(ctx);
   await until(() => running(page));
   await page.keyboard.press("Alt+Shift+Digit0");
-  await until(() => stopped(page), 3000); // the CSS goes at once; the toast follows once the code is off
+  await until(() => stopped(page)); // the CSS goes at once; the toast follows once the code is off
   assert.match(await until(() => text(page, ".ctl-toast")), /Turned off 2 mods on this page/);
   assert.equal(await text(page, ".ctl-toast .ctl-acts button"), "Turn back on");
   assert.deepEqual(Object.values(await stored(page)).map(m => m.enabled), [true, true], "nothing is deleted or switched off for good");
@@ -97,7 +98,7 @@ test("off switch: Alt+Shift+0 turns every mod off at once, the toast turns them 
   await page.keyboard.press("Alt+Shift+Digit0");
   await until(() => stopped(page));
   await reload(page);
-  await page.waitForTimeout(400);
+  await settle(page);
   assert.ok(await stopped(page), "still off after a reload");
   await page.keyboard.press("Alt+Shift+KeyM");
   await until(() => text(page, ".ctl-strip"));
@@ -113,7 +114,7 @@ test("off switch: Alt+Shift+0 turns every mod off at once, the toast turns them 
 test("the off switch is a setting with a recorder like the other hotkeys", { skip }, async () => {
   const ctx = await context();
   const { page } = await playground(ctx);
-  await page.keyboard.press(process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space");
+  await page.keyboard.press(OPEN_KEY);
   await page.keyboard.press("Control+Comma");
   await until(() => page.evaluate(`!!${sr('.hk[data-hk="off"]')}`));
   assert.match(await text(page, '.hkrow[data-id="off"]'), /Turn off all mods/);
@@ -140,7 +141,7 @@ test("Pause Morse here: from the Mods panel, kept by the host across reloads", {
   const control = await page.evaluate(() => JSON.parse(localStorage.getItem("morse:playground:control")));
   assert.ok(control.pause.sites["morse.test"]);
   await reload(page);
-  await page.waitForTimeout(400);
+  await settle(page);
   assert.ok(await stopped(page), "paused after a reload");
   await page.keyboard.press("Alt+Shift+KeyM");
   await until(() => page.evaluate(`${sr("[data-c=pause-site]")}?.checked`));
@@ -173,18 +174,21 @@ test("safe start: a page that keeps reloading within seconds after a mod runs ho
   await until(() => helloCount(page));
   for (const strike of [1, 2]) {
     await reload(page);
-    await until(() => helloCount(page), 8000).catch(() => assert.fail(`ran on load ${strike + 1}`));
+    await until(() => helloCount(page)).catch(() => assert.fail(`ran on load ${strike + 1}`));
   }
   await reload(page); // the third strike: held back on this load
   await until(() => text(page, ".ctl-toast"));
   assert.match(await text(page, ".ctl-toast"), /Safe start “Loopy” is off for now/);
-  await page.waitForTimeout(300);
+  await hostRoundTrip(page);
+  await settle(page);
   assert.equal(await helloCount(page), 0, "not run");
   assert.deepEqual([...(await page.evaluate(`[...${sr(".ctl-toast .ctl-acts")}.querySelectorAll("button")].map(b => b.textContent)`))], ["Keep it off", "Turn it back on"]);
   await page.evaluate(`[...${sr(".ctl-toast .ctl-acts")}.querySelectorAll("button")][0].click()`);
   await until(async () => (await stored(page)).loopy.enabled === false);
   await reload(page).catch(() => {}); // no mods enabled now, so don't wait for them
-  await page.waitForTimeout(500);
+  await waitForReady(page);
+  await hostRoundTrip(page);
+  await settle(page);
   assert.equal(await helloCount(page), 0);
   assert.deepEqual(errors, []);
   await ctx.close();
@@ -223,7 +227,8 @@ test("import: the in-app review shows what it does, folds the code, and installs
   await click(page, "[data-a=go]");
   await until(() => text(page, ".modal .ctl-items"));
   await click(page, ".modal footer [data-a=close]");
-  await page.waitForTimeout(200);
+  await until(() => page.evaluate(`${sr(".modal")}.hidden`));
+  await hostRoundTrip(page);
   assert.equal(Object.keys(await stored(page)).length, 3);
   assert.deepEqual(errors, []);
   await ctx.close();
@@ -288,7 +293,7 @@ test("share page: plain-language summary first, code folded below, an explicit I
   const posted = [];
   await page.exposeFunction("__posted", d => posted.push(d));
   await page.evaluate(() => { document.documentElement.dataset.morseExtension = "1"; addEventListener("message", e => e.data?.morseInstall && __posted(e.data.morseInstall)); });
-  await page.waitForTimeout(100);
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
   assert.equal(posted.length, 0);
   await page.locator("#install").click();
   await until(() => posted.length === 1);

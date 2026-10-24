@@ -5,17 +5,17 @@
 // and turns off leaving the page exactly as it was; Read aloud reads sentence
 // by sentence (speech is recorded, not spoken); Check this page finds the
 // planted problems and fixes them; Describe this picture saves alt text.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { openLibrary } from "../demo/a11y-page.js";
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
+import { launchBrowser, noBrowser } from "./helpers/browser.js";
+import { OPEN_KEY } from "./helpers/keys.js";
+import { TIMEOUT, waitForReady } from "./helpers/wait.js";
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
+const skip = noBrowser;
 let browser;
-before(async () => { if (!skip) browser = await chromium.launch(); });
+before(async () => { if (!skip) browser = await launchBrowser(); });
 after(() => browser?.close());
 
 async function scenario(fn, opts) {
@@ -23,7 +23,7 @@ async function scenario(fn, opts) {
   try { await fn(t); assert.deepEqual(t.errors, []); }
   finally { await t.ctx.close(); }
 }
-async function until(fn, ms = 6000) {
+async function until(fn, ms = TIMEOUT) {
   const end = Date.now() + ms;
   for (;;) {
     let v;
@@ -169,7 +169,7 @@ test("Easier to use: tools are saved for this site and come back after a reload"
   assert.deepEqual(saved.map(m => m.title).sort(), ["Higher contrast", "Underline links"]);
   assert.ok(saved.every(m => m.kind === "quick" && m.match.hosts[0] === "library.morse.test" && m.css.includes("no model involved")));
   await page.reload();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  await waitForReady(page);
   await until(async () => await ratio(page, ".meta") >= 7);
   assert.match(await css(page, 'a[href="#rules"]', "textDecorationLine"), /underline/);
   await openTools(page);
@@ -294,7 +294,7 @@ test("Check this page: Fix it saves what Morse can work out and asks the model, 
   assert.deepEqual(named, ["Close", "Search", "Account", "Like", "Facebook", "Instagram", null]);
   const req = await page.evaluate(() => window.__fake.requests.at(-1).request);
   assert.equal(req, "Give this icon button or link an accessible name (aria-label) that says what it does, based on its icon, tooltip and what's around it: `#m7`. Change nothing else.");
-  await until(async () => (await status(page)).phase === "result", 10000);
+  await until(async () => (await status(page)).phase === "result");
   assert.equal(await page.evaluate(() => document.querySelector("#m7").getAttribute("aria-label")), "Menu"); // the demo model's answer
   await page.keyboard.press("Escape"); // keeps the model's change, like any change
   await page.locator(".bar").waitFor({ state: "hidden" });
@@ -304,7 +304,7 @@ test("Check this page: Fix it saves what Morse can work out and asks the model, 
   await until(() => page.evaluate(() => window.__fake.requests.at(-1).request.includes("form field")));
   assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll(".signup input")].map(i => i.getAttribute("aria-label"))), ["Email address", "Your name"]);
   assert.match(await page.evaluate(() => window.__fake.requests.at(-1).request), /^Give this form field a label that screen readers can read \(aria-label\), based on the text and layout around it: `body > div.page > aside > form.box.signup > select`\. Change nothing else\.$/);
-  await until(async () => (await status(page)).phase === "result", 10000);
+  await until(async () => (await status(page)).phase === "result");
   assert.equal(await page.evaluate(() => document.querySelector(".signup select").getAttribute("aria-label")), "Branch");
   await page.keyboard.press("Escape");
   await page.locator(".bar").waitFor({ state: "hidden" });
@@ -342,7 +342,7 @@ test("Describe this picture: point at it, read the description, save it as alt t
   assert.deepEqual((await mods(page)).map(m => [m.title, m.edits[0].fixes.length]), [["Accessibility fixes", 1]]);
   // Still there after a reload.
   await page.reload();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  await waitForReady(page);
   await until(() => page.evaluate(t => document.querySelector('img[src="chart.png"]').alt === t, text));
 }));
 

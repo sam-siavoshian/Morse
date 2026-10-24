@@ -1,5 +1,6 @@
 // core/summary.js: what a mod does, in plain words. One small example per
 // category, plus the notes and the cases that must not cry wolf.
+import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { summarizeMod, summaryLines, modOrigin, modHosts, whereRuns, SUMMARY_ITEMS, SUMMARY_NOTES } from "../core/summary.js";

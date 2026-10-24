@@ -49,3 +49,13 @@ export const waitForReady = (page, opts) => waitForStatus(page, s => s.ready, { 
 // observers and the work they schedule for the next frames. Use before
 // asserting that something did NOT happen.
 export const settle = page => page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 0)))));
+
+// A round trip through a page's fake host (the playgrounds' __morseHost,
+// which answer in order): every reply the host queued before this one has
+// been delivered and handled. Use before asserting a host-side effect did NOT
+// happen.
+export const hostRoundTrip = page => page.evaluate(() => new Promise(resolve => {
+  const id = `roundtrip-${Math.random()}`;
+  globalThis.__morseHost.onMessage(m => { if (m && m.reply === id) setTimeout(resolve, 0); });
+  globalThis.__morseHost.send({ id, type: "ping" });
+}));
