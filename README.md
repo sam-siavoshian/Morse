@@ -24,19 +24,19 @@ You need [Node](https://nodejs.org) 22 or newer. Full steps, and what to do when
 
 **Websites (Chrome)**
 
-1. Get Morse: `git clone https://github.com/sam-siavoshian/RRAA morse && cd morse && npm install && npm run build`
-2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and choose the `dist/extension` folder. The welcome page opens.
+1. Get Morse: `npm install -g morse-cli` (until the first npm release: `npm install -g github:sam-siavoshian/RRAA`).
+2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and choose the folder `morse extension` prints. The welcome page opens.
 3. In Morse's details, turn on **“Allow User Scripts”**, so mods that add buttons work on every site.
-4. Connect a model: run `node daemon/cli.js setup`, then `node daemon/cli.js serve`, and type its 6-character code into the Morse popup. Or paste an Anthropic API key in the popup. Then press **⌥Space** (Ctrl+Shift+Space on Windows and Linux) on any page.
+4. Connect a model: run `morse setup`, then `morse serve`, and type its 6-character code into the Morse popup. Or paste an Anthropic API key in the popup. Then press **⌥Space** (Ctrl+Shift+Space on Windows and Linux) on any page.
 
 **Desktop apps (Spotify, Slack, Discord, VS Code…)**
 
-1. Get Morse as in step 1 above, then run `node daemon/cli.js setup` to choose your model.
-2. `node daemon/cli.js apps` shows which of your apps Morse can connect to.
-3. `node daemon/cli.js launch spotify` opens the app with Morse connected. Keep the terminal open.
+1. Get Morse as in step 1 above, then run `morse setup` to choose your model.
+2. `morse apps` shows which of your apps Morse can connect to.
+3. `morse launch spotify` opens the app with Morse connected. Keep the terminal open.
 4. In the app, press **Ctrl+Shift+Space** (⌥Space on a Mac), point at something and say what you want. More: [Desktop apps](docs/desktop.md).
 
-Run `npm link` once to type `morse` instead of `node daemon/cli.js`.
+To work on Morse itself from a clone, see the [developer guide](docs/dev/README.md#set-up-a-checkout).
 
 ## What you can do
 
@@ -51,7 +51,7 @@ Run `npm link` once to type `morse` instead of `node daemon/cli.js`.
 | **Show me once** | Do a task by hand once, then turn it into a button, a shortcut, or “do this to every one”. | [Show me once](docs/show-me-once.md) |
 | **Easier to use** | Higher contrast, bigger click targets, an easier font, Read aloud, and Check this page with Fix it. | [Easier to use](docs/easier-to-use.md) |
 | **Mods** | Turn mods on and off, share them with a link, try mods other people made, and fix one when a site changes. | [Mods](docs/mods.md) |
-| **Your controls** | One shortcut turns every mod off. Pause Morse on a site. A mod that keeps breaking a page is held back. Back up everything to one file. | [Your controls](docs/your-controls.md) |
+| **Your controls** | One shortcut turns every mod off. Pause Morse on a site. A mod that slows down, freezes or keeps breaking a page is stopped. Back up everything to one file. | [Your controls](docs/your-controls.md) |
 | **Desktop apps** | `morse launch spotify` opens the app with Morse connected. The app's own files never change. | [Desktop apps](docs/desktop.md) |
 
 ## Which models work
@@ -70,11 +70,11 @@ How to choose one, and what each can do: [Models and setup](docs/models.md).
 ## Privacy
 
 There is no Morse server. What you point at and what you ask go only to the model you chose, and only when you ask. Your mods stay on your computer.
-More, including what mods can do: [Privacy and safety](docs/privacy-and-safety.md).
+More, including what mods can do: [Privacy and safety](docs/privacy-and-safety.md) and the [privacy policy](docs/privacy.md).
 
 ## Status
 
-Version 0.1. What was checked for real, and what wasn't:
+Version 0.2 ([changelog](CHANGELOG.md)). What was checked for real, and what wasn't:
 
 **Verified**
 
@@ -93,4 +93,4 @@ Version 0.1. What was checked for real, and what wasn't:
 
 ## More
 
-[Docs](docs/README.md) · [Contributing](CONTRIBUTING.md) · [How Morse works](docs/dev/architecture.md) · [Launch videos](docs/launch/README.md) · MIT licensed
+[Docs](docs/README.md) · [Contributing](CONTRIBUTING.md) · [How Morse works](docs/dev/architecture.md) · [Privacy policy](docs/privacy.md) · [Changelog](CHANGELOG.md) · [Launch videos](docs/launch/README.md) · MIT licensed

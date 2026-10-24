@@ -12,15 +12,18 @@ You need [Node](https://nodejs.org) 22 or newer. To record clips of your
 changes, you also need `ffmpeg`.
 
 ```bash
-git clone https://github.com/sam-siavoshian/RRAA morse && cd morse
-npm install                         # what Morse needs to run
-npm run build                       # builds the Chrome extension into dist/extension
-node daemon/cli.js setup            # choose Claude Code, Codex or an API key
-node daemon/cli.js doctor           # checks that the model answers
+npm install -g morse-cli   # adds the morse command
+morse setup                # choose Claude Code, Codex or an API key
+morse doctor               # checks that the model answers
 ```
 
-On these pages, `morse` means `node daemon/cli.js`. Run `npm link` once to
-type just `morse`. `morse help` lists every command.
+Until the first npm release, install from GitHub instead:
+`npm install -g github:sam-siavoshian/RRAA`. To try it without installing,
+`npx morse-cli setup` works too. `morse help` lists every command, and
+`morse --version` shows the version.
+
+Working on Morse itself? Set up a clone with the
+[developer guide](dev/README.md#set-up-a-checkout).
 
 `morse setup` looks for Claude Code, Codex and an API key on this computer,
 recommends the first one it finds, and saves your choice. More about each:
@@ -29,7 +32,8 @@ recommends the first one it finds, and saves your choice. More about each:
 ## 2. Websites: add Morse to Chrome
 
 1. Open `chrome://extensions` and turn on **Developer mode**.
-2. Click **Load unpacked** and choose the `dist/extension` folder.
+2. Click **Load unpacked** and choose the folder that `morse extension`
+   prints (`dist/extension` in a clone).
 3. Open Morse's details and turn on **“Allow User Scripts”**. Mods that only
    change how a site looks work without it. Mods that add buttons or
    features need it on some sites.

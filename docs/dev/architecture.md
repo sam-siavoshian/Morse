@@ -115,8 +115,8 @@ and kills the Claude Code or Codex process. `MORSE_HELPER_PORT` moves it off
 design tokens and the pure core modules it shares with the hosts
 (`hotkeys.js` and `prefs.js` inlined with `export` dropped; `edits.js`,
 `versions.js`, `onboarding.js`, `answer.js`, `summary.js`, `control.js`,
-`gallery.js`, `a11y.js`, `showonce.js` and `heal.js` inlined each in its own
-scope). Both the extension build and the desktop connector inject exactly
+`gallery.js`, `a11y.js`, `showonce.js`, `heal.js` and `guard.js` inlined each
+in its own scope). Both the extension build and the desktop connector inject exactly
 this string. Because it is one scope, two files must never declare the same
 top-level name ([Adding a feature](adding-a-feature.md#runtime-rules)).
 
@@ -131,7 +131,7 @@ The files run in order, by number:
 | `40-picker.js` … `47-capture.js` | Pointing, the Edit tools (code name God mode), Page tools, capture |
 | `50-bar.js` … `59-onboarding.js` | The bar, voice, Settings, history, suggestions, help, first-run guide |
 | `60-generate.js`, `61-ask.js`, `62-markers.js` | A request: generate, show the result, Save/Undo/follow-ups; questions and answers with markers |
-| `63-control.js` … `71-heal.js` | Feature hooks: user control, Show me once, Easier to use, Read aloud, Check this page, Describe this picture, the gallery, self-heal |
+| `63-control.js` … `71-heal.js` | Feature hooks: user control, Show me once, guards (`64-guard.js`), Easier to use, Read aloud, Check this page, Describe this picture, the gallery, self-heal |
 | `70-panel.js`, `80-modals.js` | The Mods panel, Share and Edit code |
 | `90-effect.js` | The pixel effect over what the model is changing |
 | `95-keys.js`, `96-shortcuts.js` | Shortcuts and the cheat sheet |
@@ -166,6 +166,42 @@ tracked, so turning the mod off fully undoes it.
 Callbacks are wrapped: an error (or a rejected promise) is recorded on the
 mod, shown in the Mods panel, and fed back to the model on repair.
 `wrapModCode(id, js)` wraps a mod's code for running.
+
+## Guards
+
+So a mod can't hurt the page:
+
+- **Before anything runs**, [`core/guard.js`](../../core/guard.js) refuses
+  code that would obviously break the page (CSS hiding `html`, `body` or `*`,
+  `pointer-events: none` on the page, a `while (true)` with no way out,
+  reloading or leaving the page when you didn't ask) and gives the model one
+  more try with what was wrong. The runtime checks saved mods' CSS with
+  `cssHidesPage()` before applying it.
+- **While a mod runs**, [`core/kit.js`](../../core/kit.js) times every
+  callback it hands Morse, and the `setTimeout`, `setInterval`,
+  `requestAnimationFrame` and `MutationObserver` it uses directly: over
+  200 ms of every second for 3 seconds, one burst over a second, more than
+  1,000 new matches a second for 3 seconds (a feedback loop through the
+  page), an observer called back over 250 times in a second, or more than
+  20,000 new elements in a second, and the mod is paused and turned off with
+  the reason saved (`mod.paused`). `every()` and `setInterval` run at most
+  every 100 ms; changes a mod makes never trigger its own watches or
+  observers; only its first few errors reach the console. This costs about
+  2 µs per callback and nothing measurable for watches (30 watch mods on a
+  streaming chat: same main-thread time as without guards).
+  [`runtime/src/64-guard.js`](../../runtime/src/64-guard.js) shows why in
+  the Mods panel, with Turn back on and Fix it.
+- **Frozen pages.** Code that never returns can't be stopped from inside the
+  page. On the desktop, [`daemon/guard.js`](../../daemon/guard.js) pings each
+  page that runs mod code once a second; after 4 seconds without an answer (6
+  once the mod's code has started), it interrupts the script over CDP
+  (`Runtime.terminateExecution`), asks the kit whose code was running, turns
+  that mod off and reloads the page. Pages where no mod code ran are never
+  interrupted. In the extension only a debugger could interrupt a page, and
+  Morse doesn't ask for that permission. There, a saved mod with a loop that
+  has no way out never starts, a mod whose code doesn't finish within 4
+  seconds of starting is turned off so the next load is clean, and a freeze
+  later on is left to Chrome's *Page unresponsive* dialog and safe start.
 
 ## The engine (`core/engine.js`)
 
@@ -226,6 +262,7 @@ follow-up that made the current one, [`core/versions.js`](../../core/versions.js
 `kind` and `edits` (Edit tools and Page tools mods, compiled by
 [`core/edits.js`](../../core/edits.js)), `from` (where a captured look came
 from), `fp` (the self-heal fingerprint, [`core/heal.js`](../../core/heal.js)),
+`paused` (why a guard turned it off, [Guards](#guards)),
 `imported`, `importedFrom` (`link`, `file` or `backup`), `importedAt` and
 `gallery`, `author` (where an installed mod came from, shown by `modOrigin()` in
 `core/summary.js`).
@@ -264,7 +301,8 @@ Mods are code running inside apps you're signed into, so:
   pattern matching, not a guarantee.
 - One key (⌥⇧0) turns every mod on a page off; Morse can be paused per site
   or everywhere; a mod that keeps crashing a page is held back on the next
-  load.
+  load; a mod that slows down, freezes or hides the page is paused (see
+  [Guards](#guards)).
 - Mods run in the renderer only. They get no Node or Electron APIs.
 - Morse's own UI runs in an isolated JS world (a content script on the web, a
   CDP isolated world on the desktop), so the app's or website's scripts can't

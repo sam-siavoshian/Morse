@@ -227,7 +227,11 @@ function markdownProse(src) {
 }
 
 // Words a user page may use on purpose: [file, text the line contains, why].
-const DOCS_ALLOWED = [];
+const DOCS_ALLOWED = [
+  ["docs/privacy.md", "API address you entered", "the privacy policy names exactly where data goes (site/privacy.html is built from it)"],
+  ["docs/privacy.md", "the CSS rules that style", "the privacy policy names exactly what is sent"],
+  ["docs/privacy.md", "Anthropic API key", "the privacy policy names the account whose terms apply"],
+];
 
 test("the user pages in docs/ show no developer jargon", () => {
   const files = readdirSync(new URL("docs/", ROOT)).filter(f => f.endsWith(".md") && f !== "WRITING.md").map(f => `docs/${f}`);

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tasks</title>
+<!--
+  A small app for testing Morse's guards (tests/guard-ui.test.js): mods that
+  would freeze, slow down or hide it must be paused while it stays usable.
+    ?feed       a new task arrives every 100ms (the oldest goes), like a live feed
+    ?framework  the list is rebuilt whenever something changes a task's
+                attributes, the way a framework re-renders what it owns
+  The Done button and the clock show whether the page still responds.
+-->
+<style>
+  body { margin: 0; font: 15px/1.4 system-ui, sans-serif; background: #f6f6f4; color: #1d1d1b; }
+  header { display: flex; align-items: center; gap: 16px; padding: 14px 20px; background: #fff; border-bottom: 1px solid #ddd; }
+  header h1 { margin: 0; font-size: 18px; flex: 1; }
+  #clock { font-variant-numeric: tabular-nums; color: #666; }
+  #done { height: 32px; padding: 0 14px; border: 1px solid #bbb; border-radius: 6px; background: #fff; font: inherit; cursor: pointer; }
+  main { padding: 16px 20px; }
+  #list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .item { padding: 8px 12px; background: #fff; border: 1px solid #e3e3e0; border-radius: 6px; }
+</style>
+</head>
+<body>
+<header><h1>Tasks</h1><span id="clock">0</span><button id="done" type="button">Done <b id="count">0</b></button></header>
+<main><ul id="list"></ul></main>
+<script>
+  const q = new URLSearchParams(location.search);
+  const list = document.getElementById("list");
+  let next = 0;
+  const item = n => `<li class="item" data-n="${n}">Task ${n}</li>`;
+  const tasks = Array.from({ length: 40 }, () => next++);
+  const render = () => { list.innerHTML = tasks.map(item).join(""); };
+  render();
+  document.getElementById("done").addEventListener("click", () => {
+    const c = document.getElementById("count");
+    c.textContent = String(+c.textContent + 1);
+  });
+  setInterval(() => { document.getElementById("clock").textContent = String(Math.floor(performance.now() / 100)); }, 100);
+  if (q.has("feed")) setInterval(() => {
+    tasks.push(next++);
+    tasks.shift();
+    list.firstElementChild?.remove();
+    list.insertAdjacentHTML("beforeend", item(tasks.at(-1)));
+  }, 100);
+  // A framework that owns the list: anything else touching a task's
+  // attributes makes it render the list again, from its own data.
+  if (q.has("framework")) {
+    new MutationObserver(recs => { if (recs.some(r => r.target.classList?.contains("item"))) render(); })
+      .observe(list, { subtree: true, attributes: true });
+  }
+</script>
+</body>
+</html>

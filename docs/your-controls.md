@@ -35,6 +35,38 @@ If a page closes, crashes or reloads within seconds after a mod ran, three
 times in a row, Morse holds that mod back the next time and asks: **Keep it
 off** or **Turn it back on**.
 
+## Mods can't freeze or slow down a page
+
+Morse watches every mod while it runs. A mod is paused, turned off and kept
+off on the next visit, when it:
+
+- keeps the page busy most of the time
+- keeps running again every time the page changes
+- adds too much to the page
+- would hide everything on the page
+- has code that never stops running
+
+Its row in the Mods panel says why, in plain words: *Paused because it was
+slowing this page down*, *Paused because it froze this page*, *Paused because
+it hid this page*. **Turn back on** runs it again (under the same limits), and
+**Fix it** asks the model for a version that doesn't, telling it what went
+wrong. A change you haven't saved yet is stopped the same way, and the bar
+says “Try describing it another way”.
+
+Before anything runs, Morse also refuses code that would obviously break the
+page, like hiding the whole page or reloading it when you didn't ask, and
+gives the model one more try.
+
+When a page freezes anyway:
+
+- **In a desktop app**, Morse notices within a few seconds, stops the mod,
+  turns it off and reloads the page.
+- **In Chrome**, a saved mod with a loop that has no way out is never started, and a
+  mod that hasn't finished within 4 seconds of starting is turned off so the
+  next visit is clean. If a page freezes later, Chrome's own *Page
+  unresponsive* message lets you close it, and Safe start holds the mod back
+  next time.
+
 ## Before you install
 
 A mod someone shared with you never installs by itself. Morse first says in

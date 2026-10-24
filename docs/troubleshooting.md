@@ -41,8 +41,18 @@ morse status     # which desktop apps Morse is connected to, and the mods on in 
 | Stopped. Nothing was changed. | You pressed Stop or Esc. | Nothing to do. |
 | Something went wrong. Try again. | An error Morse can't put in plain words. The details are in the message's tooltip. | Try again. If it keeps happening, [report it](https://github.com/sam-siavoshian/RRAA/issues/new) with what you did. |
 
-A saved mod that stopped working says so in the Mods panel, with **Fix it**.
-See [Mods](mods.md#when-a-site-changes).
+## Messages about a saved mod
+
+| Message | What it means | What to do |
+|---|---|---|
+| Stopped working after this site changed. | The site changed its page, and nothing the mod used to change is there any more. | Click **Fix it**. See [Mods](mods.md#when-a-site-changes). |
+| Paused because it was slowing this page down. | The mod kept the page busy, kept running every time the page changed, or added too much. | **Fix it** asks the model for a lighter version. **Turn back on** runs it again. |
+| Paused because it froze this page. | The mod's code never finished, so Morse stopped it. | Click **Fix it**, or delete the mod. |
+| Paused because it would freeze this page. | The mod's code has a loop that never ends, so it was never started. | Click **Fix it**. |
+| Paused because it hid this page. | The mod would have hidden everything on the page. | Click **Fix it**, or **Turn back on** if you meant it. |
+| Paused this change because … Try describing it another way. | A change you haven't saved yet slowed down or froze the page. | Describe it another way. |
+
+More: [Your controls](your-controls.md#mods-cant-freeze-or-slow-down-a-page).
 
 ## Pages where Morse can't run
 

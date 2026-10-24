@@ -17,10 +17,11 @@ New here? Start with [Getting started](getting-started.md).
 | [Show me once](show-me-once.md) | Do a task by hand once, then have Morse do it for you |
 | [Easier to use](easier-to-use.md) | Higher contrast, bigger click targets, easier fonts, Read aloud, Check this page, Describe this picture |
 | [Mods](mods.md) | The Mods panel, sharing, the gallery, Try it, what a mod does before you install it, and fixing mods when a site changes |
-| [Your controls](your-controls.md) | The off switch, pausing Morse, Safe start, where a mod came from, and backups |
+| [Your controls](your-controls.md) | The off switch, pausing Morse, Safe start, mods that slow down or freeze a page, and backups |
 | [Desktop apps](desktop.md) | Spotify, Slack, Discord, VS Code and other apps: how to connect, and which apps can't work |
 | [Models and setup](models.md) | Claude Code, Codex or an API key: how to choose, and how Chrome reaches your model |
 | [Privacy and safety](privacy-and-safety.md) | What leaves your computer, when, and what mods can do |
+| [Privacy policy](privacy.md) | The formal privacy policy for the extension and the `morse` command |
 | [Troubleshooting](troubleshooting.md) | Common messages, what they mean, and what to do |
 
 ## Working on Morse
@@ -34,6 +35,7 @@ New here? Start with [Getting started](getting-started.md).
 | [How Morse talks](WRITING.md) | The style guide for every word a person reads |
 | [UI review checklist](ui/CHECKLIST.md) | What every screenshot in the UI catalog is checked against |
 | [Launch kit](launch/README.md) | The demo video, clips and how they were recorded |
+| [Chrome Web Store kit](store/README.md) | The store listing, permission notes and screenshots |
 | [Evals](../evals/README.md) | How often Morse does what people ask, measured |
 
 Everything here is plain Markdown in the repo. To add to it, see

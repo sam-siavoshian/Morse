@@ -24,8 +24,14 @@ npm run demo:serve           # the demo sites and the website on http://127.0.0.
 ```
 
 Load `dist/extension` in `chrome://extensions` (Developer mode, Load
-unpacked). After changing anything under `runtime/`, `core/` or `extension/`,
-run `npm run build` again and reload the extension.
+unpacked); `morse extension` prints that folder. After changing anything
+under `runtime/`, `core/` or `extension/`, run `npm run build` again and
+reload the extension.
+
+People who only use Morse install it with `npm install -g morse-cli` (or,
+until the first npm release, `npm install -g github:sam-siavoshian/RRAA`);
+the `prepare` script builds the extension inside the package, and
+`morse extension` prints where it is.
 
 ## Repo layout
 
@@ -49,8 +55,14 @@ docs/        user docs; docs/dev for developers; screenshots, UI catalog, launch
 ## The website and the gallery
 
 [`site/`](../../site/) is the public website: static HTML, CSS and ES
-modules, no build step, so GitHub Pages can serve the repo root as is
-(`/site/` for the site, `/share/install.html` for share links).
+modules, no build step. The Pages workflow
+([`.github/workflows/pages.yml`](../../.github/workflows/pages.yml))
+publishes it laid out like the repo (`/site/` for the site,
+`/share/install.html` for share links, `/site/mods/index.json` for the
+gallery list); `npm run pages` builds the same thing into `dist/pages` and
+fails on a broken link. `site/privacy.html` is made from
+[docs/privacy.md](../privacy.md) by `npm run pages`, and
+`tests/release.test.js` checks that it is current.
 
 - **`site/index.html`**: the landing page, with an in-browser demo of the
   pixel effect (simulated, no model runs).
@@ -85,6 +97,20 @@ mod, and people who installed it see Update available. Entries with
 sites) and don't show on the gallery page. To read another list, set
 `MORSE_GALLERY_URL` or `"gallery": { "index": "…" }` in `~/.morse/config.json`
 (desktop), or `morse.gallery.url` in the extension's local storage.
+
+## Releasing
+
+The version lives in `package.json` only; the build writes it into the
+extension's manifest, and `morse --version` prints it. See
+[CHANGELOG.md](../../CHANGELOG.md).
+
+- **npm:** `npm publish` (the `prepare` script builds the extension that
+  ships inside the package, also for installs from GitHub).
+- **Chrome Web Store:** `npm run package:extension` makes
+  `dist/morse-extension-<version>.zip`. The listing text, permission notes
+  and screenshots are in [`docs/store/`](../store/README.md).
+- **Privacy policy:** [docs/privacy.md](../privacy.md), published as
+  `site/privacy.html` by `npm run pages`.
 
 ## Where REA fits
 

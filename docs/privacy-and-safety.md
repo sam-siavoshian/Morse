@@ -2,7 +2,8 @@
 
 Morse has no account and no server of its own. It collects nothing about you
 and sends nothing to the people who make it. This page says what does leave
-your computer, when, and what mods can do.
+your computer, when, and what mods can do. The formal version is the
+[privacy policy](privacy.md).
 
 ## What goes to your model
 
@@ -17,7 +18,8 @@ What is sent:
 - the address and title of the page or app window
 - what you pointed at, and an outline of the page around it (its layout,
   headings and button labels). This can include text on the screen, like
-  message previews or names.
+  message previews or names. What you typed into fields, hidden fields,
+  email addresses and things that look like passwords or keys are left out.
 - how what you pointed at is styled
 - for follow-ups and Fix it: the mod's code, and what went wrong
 - for Describe this picture: the picture
@@ -81,8 +83,8 @@ that page can, and see what you see there.
 - In desktop apps, mods only change the app's windows. They can't reach your
   files or the rest of the app.
 - [Your controls](your-controls.md): one key turns every mod off, you can
-  pause Morse on a site or everywhere, and a mod that keeps breaking a page is
-  held back.
+  pause Morse on a site or everywhere, a mod that slows down or freezes a
+  page is paused, and a mod that keeps breaking a page is held back.
 
 ## Morse is kept apart from the page
 
