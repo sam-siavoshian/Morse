@@ -133,6 +133,20 @@ test("extension: 20 concurrent adds each keep 20 (mods, history, clipboard)", as
     ]);
     const prefs = chrome.storage.sync.data["morse.settings"];
     assert.deepEqual([prefs.hotkeys.open, prefs.theme, prefs.barPosition], ["Alt+KeyJ", "dark", "top"]);
+
+    // Reads answer for the page that asked, not for the URL or scope a message names.
+    const other = createMod({ prompt: "b", url: "https://b.com/" });
+    await port.request({ id: ++id, type: "mods.save", mod: other });
+    await port.request({ id: ++id, url: "https://b.com/", type: "history.add", text: "typed on b" });
+    const listed = await port.request({ id: ++id, url: "https://b.com/", type: "mods.list" });
+    assert.equal(listed.result.length, 15);
+    assert.ok(listed.result.every(m => m.match.hosts[0] === "a.com"));
+    const hist = await port.request({ id: ++id, url: "https://b.com/", scope: "b.com", type: "history.get" });
+    assert.equal(hist.result.length, 21);
+    assert.equal(hist.result.at(-1), "typed on b", "filed under the caller's site");
+    assert.equal(chrome.storage.local.data["morse.history"]["b.com"], undefined);
+    const draft = await port.request({ id: ++id, url: "https://b.com/", type: "mods.save", draft: { prompt: "p", css: "", js: "", url: "https://b.com/" } });
+    assert.deepEqual(draft.result.match.hosts, ["a.com"]);
   } finally {
     delete globalThis.chrome;
     await fs.rm(dir, { recursive: true, force: true });

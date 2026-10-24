@@ -73,7 +73,12 @@ async function dispatch(msg, port) {
   const target = port.sender.documentId
     ? { tabId: tab.id, documentIds: [port.sender.documentId] }
     : { tabId: tab.id, frameIds: [port.sender.frameId ?? 0] };
-  if (BAR_REQUESTS.has(msg.type)) return handleBarRequest(msg);
+  // hardening: reads and saves answer for the page that asked, not for what
+  // the message claims. The content script reports location.href (it follows
+  // pushState); it's trusted only within the sender document's own site.
+  const sent = port.sender.url || tab?.url || "";
+  const here = { url: msg.url && hostOf(msg.url) === hostOf(sent) ? msg.url : sent, app: null };
+  if (BAR_REQUESTS.has(msg.type)) return handleBarRequest({ ...msg, url: here.url, scope: undefined }); // history per caller's site
   switch (msg.type) {
     case "hello": {
       const s = await settings();
@@ -82,10 +87,10 @@ async function dispatch(msg, port) {
         settings: await getPrefs(), voice: await voiceInfo() };
     }
     case "mods.list":
-      return Object.values(await allMods()).filter(m => modMatches(m, { url: msg.url, app: null })).sort((a, b) => a.created.localeCompare(b.created));
+      return Object.values(await allMods()).filter(m => modMatches(m, here)).sort((a, b) => a.created.localeCompare(b.created)); // hardening: caller's page
     case "mods.save": {
       const s = await settings();
-      if (msg.draft) return putMod(createMod({ ...msg.draft, app: null, model: s.model }));
+      if (msg.draft) return putMod(createMod({ ...msg.draft, url: here.url, app: null, model: s.model })); // hardening: filed under the caller's page
       return putMod(msg.mod);
     }
     case "mods.delete": {
@@ -104,7 +109,7 @@ async function dispatch(msg, port) {
     case "mods.import": {
       const src = msg.source.trim();
       const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
-      return putMod({ ...mod, enabled: true, imported: true, match: mod.match || { hosts: [hostOf(msg.url)], app: null } });
+      return putMod({ ...mod, enabled: true, imported: true, match: mod.match || { hosts: [hostOf(here.url)], app: null } }); // hardening: caller's page
     }
     // God mode: cross-app clipboard (see core/clipboard.js)
     case "clipboard.list": return get("clipboard", []);

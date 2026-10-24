@@ -52,7 +52,7 @@ before(async () => {
   const ctx = await browser.newContext({ viewport: { width: 1000, height: 700 } });
   await ctx.addInitScript(() => {
     localStorage.setItem("morse:debug", "1");
-    globalThis.webkitSpeechRecognition = class extends EventTarget { // as inside Electron
+    globalThis.webkitSpeechRecognition = class extends EventTarget { // as inside Electron (page world only: Morse's isolated world gets Chromium's own, which fails the same way here)
       start() { setTimeout(() => { this.onerror?.(Object.assign(new Event("error"), { error: "network" })); const e = new Event("end"); this.onend?.(e); this.dispatchEvent(e); }, 20); }
       stop() {} abort() {}
     };
