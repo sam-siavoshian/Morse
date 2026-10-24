@@ -23,7 +23,8 @@ export async function storeChecks(dir) {
   const problems = [];
   const read = f => fs.readFile(path.join(dir, f), "utf8");
   const manifest = JSON.parse(await read("manifest.json"));
-  if (/"http:\/\/127\.0\.0\.1:8787"/.test(await read("host.js"))) problems.push("host.js still trusts the test share page (127.0.0.1:8787)");
+  if (/"http:\/\/127\.0\.0\.1:8787[/"]/.test(await read("host.js"))) problems.push("host.js still trusts the test share page (127.0.0.1:8787)");
+  if (/127\.0\.0\.1:8787\/site\/mods\//.test(await read("background.js"))) problems.push("background.js still reads the demo sites' gallery list (127.0.0.1:8787)");
   const files = [];
   const walk = async d => { for (const e of await fs.readdir(d, { withFileTypes: true })) e.isDirectory() ? await walk(path.join(d, e.name)) : files.push(path.join(d, e.name)); };
   await walk(dir);

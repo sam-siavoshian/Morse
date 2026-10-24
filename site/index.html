@@ -5,116 +5,63 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Morse: change any app in your own words</title>
 <meta name="description" content="Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like. Free and open source.">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="color-scheme" content="dark">
 <meta property="og:title" content="Morse: change any app in your own words">
-<meta property="og:description" content="Press a shortcut, point at something and say the change. Your model writes it while you watch, and Morse keeps it as a mod you can share.">
-<meta property="og:image" content="https://sam-siavoshian.github.io/RRAA/docs/launch/poster-demo.png">
+<meta property="og:description" content="Press a shortcut, point at something and say the change. Your own model makes it in the running app while you watch.">
+<meta property="og:image" content="https://sam-siavoshian.github.io/RRAA/docs/launch/poster-social.png">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="preload" as="font" type="font/woff2" href="fonts/nunito-sans.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
+<link rel="preload" as="image" href="shots/198-film-poster.webp" fetchpriority="high">
 <link rel="stylesheet" href="site.css">
 </head>
 <body>
 <a class="skip-link" href="#top">Skip to content</a>
 
-<!-- Line icons in the Lanes style: 24px box, round caps, currentColor. -->
+<!-- Functional icons only: arrows, play and pause. -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
-  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
-  <symbol id="i-chrome" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM20.2 8.5H12M4.1 7.3l4.4 6.5M10.6 20.9l3.9-6.6"/></symbol>
-  <symbol id="i-laptop" viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 0 1 1 1v10H4V6a1 1 0 0 1 1-1ZM2 19.5h20"/></symbol>
-  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3.5c.6 3.9 2.6 5.9 6.5 6.5-3.9.6-5.9 2.6-6.5 6.5-.6-3.9-2.6-5.9-6.5-6.5 3.9-.6 5.9-2.6 6.5-6.5ZM18.5 15.5c.3 1.6 1 2.3 2.5 2.5-1.5.2-2.2.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5Z"/></symbol>
-  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M8 12V6.5a1.5 1.5 0 0 1 3 0V11M11 10V5a1.5 1.5 0 0 1 3 0v6M14 10.5V7a1.5 1.5 0 0 1 3 0v6c0 4-2.5 7-6 7-2.6 0-4-1.4-5.3-3.5L4 13.8a1.6 1.6 0 0 1 2.6-1.8L8 14"/></symbol>
-  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.6-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.6 4.5L20 16M20 20v-4h-4"/></symbol>
-  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></symbol>
-  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5zM3 13l9 5 9-5"/></symbol>
-  <symbol id="i-monitor" viewBox="0 0 24 24"><path d="M4 5h16v11H4zM9 20h6M12 16v4"/></symbol>
-  <symbol id="i-grid" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></symbol>
-  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3M7 10l5 5 5-5M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></symbol>
-  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.5 5 6v5.5c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V6z"/></symbol>
-  <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2zM22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></symbol>
-  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
-  <symbol id="i-help" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></symbol>
-  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12ZM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></symbol>
-  <symbol id="i-check" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM8 12.5l2.7 2.7L16 9.8"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
   <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
-  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7.6 5.5v13l10.5-6.5z"/></symbol>
-  <symbol id="i-mail" viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1ZM3 7l9 6 9-6"/></symbol>
-  <symbol id="i-github" viewBox="0 0 16 16"><path fill="currentColor" stroke="none" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></symbol>
+  <symbol id="i-drag" viewBox="0 0 24 24"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/></symbol>
 </svg>
 
 <header class="nav">
   <div class="wrap">
     <div class="nav-bar">
-      <a href="#top" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="22"></span><span class="brand-name">Morse</span></a>
-
+      <a href="#top" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="20"></span><span class="brand-name">Morse</span></a>
       <nav class="nav-links" aria-label="Primary">
         <ul class="nav-list">
-          <li class="nav-item" data-menu>
-            <button type="button" class="nav-trigger" aria-expanded="false" aria-controls="nav-panel-product">Product<svg class="icon nav-chevron"><use href="#i-chevron"/></svg></button>
-            <div id="nav-panel-product" class="nav-panel" hidden>
-              <ul class="nav-panel-grid">
-                <li><a class="nav-card" href="#how"><span class="nav-card-icon"><svg class="icon"><use href="#i-sparkle"/></svg></span><span class="nav-card-text"><strong>How it works</strong><span>Point at something, say the change, watch it happen.</span></span></a></li>
-                <li><a class="nav-card" href="#show-me-once"><span class="nav-card-icon"><svg class="icon"><use href="#i-hand"/></svg></span><span class="nav-card-text"><strong>Show me once</strong><span>Do a task by hand once. Morse does it from then on.</span></span></a></li>
-                <li><a class="nav-card" href="#self-heal"><span class="nav-card-icon"><svg class="icon"><use href="#i-refresh"/></svg></span><span class="nav-card-text"><strong>Fixes itself</strong><span>When a site changes, your mods catch up.</span></span></a></li>
-                <li><a class="nav-card" href="#your-style"><span class="nav-card-icon"><svg class="icon"><use href="#i-pen"/></svg></span><span class="nav-card-text"><strong>Your style</strong><span>One look, on every site and app.</span></span></a></li>
-                <li><a class="nav-card" href="#packs"><span class="nav-card-icon"><svg class="icon"><use href="#i-layers"/></svg></span><span class="nav-card-text"><strong>Mod packs</strong><span>Share a set of mods with your team.</span></span></a></li>
-                <li><a class="nav-card" href="#desktop"><span class="nav-card-icon"><svg class="icon"><use href="#i-monitor"/></svg></span><span class="nav-card-text"><strong>Desktop apps</strong><span>Tried on VSCodium, Obsidian and Joplin.</span></span></a></li>
-              </ul>
-            </div>
-          </li>
-          <li class="nav-item" data-menu>
-            <button type="button" class="nav-trigger" aria-expanded="false" aria-controls="nav-panel-resources">Resources<svg class="icon nav-chevron"><use href="#i-chevron"/></svg></button>
-            <div id="nav-panel-resources" class="nav-panel" hidden>
-              <ul class="nav-panel-grid">
-                <li><a class="nav-card" href="#install"><span class="nav-card-icon"><svg class="icon"><use href="#i-download"/></svg></span><span class="nav-card-text"><strong>Install</strong><span>Set up in about a minute.</span></span></a></li>
-                <li><a class="nav-card" href="privacy.html"><span class="nav-card-icon"><svg class="icon"><use href="#i-shield"/></svg></span><span class="nav-card-text"><strong>Privacy policy</strong><span>What leaves your computer, and when.</span></span></a></li>
-                <li><a class="nav-card" href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs"><span class="nav-card-icon"><svg class="icon"><use href="#i-book"/></svg></span><span class="nav-card-text"><strong>Guides</strong><span>Every feature, step by step.</span></span></a></li>
-                <li><a class="nav-card" href="https://github.com/sam-siavoshian/RRAA" data-link="github"><span class="nav-card-icon"><svg class="icon"><use href="#i-code"/></svg></span><span class="nav-card-text"><strong>Source</strong><span>MIT licensed. Read every line.</span></span></a></li>
-                <li><a class="nav-card" href="#faq"><span class="nav-card-icon"><svg class="icon"><use href="#i-help"/></svg></span><span class="nav-card-text"><strong>FAQ</strong><span>Questions people ask first.</span></span></a></li>
-              </ul>
-              <a class="nav-panel-foot" href="gallery.html">See every mod in the gallery<svg class="icon"><use href="#i-arrow"/></svg></a>
-            </div>
-          </li>
-          <li class="nav-item"><a class="nav-trigger" href="gallery.html">Gallery</a></li>
+          <li><a class="nav-link" href="#change">See it change</a></li>
+          <li><a class="nav-link" href="#how">How it works</a></li>
+          <li><a class="nav-link" href="#try">Try it</a></li>
+          <li><a class="nav-link" href="gallery.html">Gallery</a></li>
+          <li><a class="nav-link" href="#faq">FAQ</a></li>
         </ul>
       </nav>
-
       <div class="nav-end">
-        <a class="nav-quiet" href="https://github.com/sam-siavoshian/RRAA" data-link="github"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-github"/></svg>GitHub</a>
-        <a class="btn btn-primary btn-sm" href="#get">Get Morse</a>
+        <a class="nav-link nav-quiet" href="https://github.com/sam-siavoshian/RRAA" data-link="github">GitHub</a>
+        <a class="btn btn-primary btn-sm" href="#install">Get Morse</a>
         <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Open menu"><span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span></span></button>
       </div>
     </div>
-
     <div class="nav-menu" id="nav-menu">
       <nav class="nav-sheet" aria-label="Sections">
-        <section>
-          <p class="nav-sheet-title">Product</p>
-          <ul>
-            <li><a href="#how"><svg class="icon"><use href="#i-sparkle"/></svg>How it works</a></li>
-            <li><a href="#show-me-once"><svg class="icon"><use href="#i-hand"/></svg>Show me once</a></li>
-            <li><a href="#self-heal"><svg class="icon"><use href="#i-refresh"/></svg>Fixes itself</a></li>
-            <li><a href="#your-style"><svg class="icon"><use href="#i-pen"/></svg>Your style</a></li>
-            <li><a href="#packs"><svg class="icon"><use href="#i-layers"/></svg>Mod packs</a></li>
-            <li><a href="#desktop"><svg class="icon"><use href="#i-monitor"/></svg>Desktop apps</a></li>
-          </ul>
-        </section>
-        <section>
-          <p class="nav-sheet-title">Resources</p>
-          <ul>
-            <li><a href="#install"><svg class="icon"><use href="#i-download"/></svg>Install</a></li>
-            <li><a href="privacy.html"><svg class="icon"><use href="#i-shield"/></svg>Privacy policy</a></li>
-            <li><a href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs"><svg class="icon"><use href="#i-book"/></svg>Guides</a></li>
-            <li><a href="#faq"><svg class="icon"><use href="#i-help"/></svg>FAQ</a></li>
-          </ul>
-        </section>
-        <a class="nav-sheet-plain" href="gallery.html"><span>Gallery</span><svg class="icon"><use href="#i-arrow"/></svg></a>
-        <div class="nav-sheet-start">
-          <p class="nav-sheet-title">Get Morse</p>
-          <div class="start">
-            <div class="start-item"><a class="start-opt is-solid" href="./#install-chrome" data-link="chrome"><svg class="icon"><use href="#i-chrome"/></svg>Get it for Chrome</a></div>
-            <div class="start-item"><a class="start-opt is-soft" href="./#install-desktop" data-link="desktop"><svg class="icon"><use href="#i-laptop"/></svg>Get the desktop app</a></div>
-          </div>
+        <ul>
+          <li><a href="#change">See it change</a></li>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#try">Try it here</a></li>
+          <li><a href="#apps">Real apps</a></li>
+          <li><a href="#install">Install</a></li>
+          <li><a href="#faq">FAQ</a></li>
+          <li><a href="gallery.html">Gallery</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a href="https://github.com/sam-siavoshian/RRAA" data-link="github">GitHub</a></li>
+        </ul>
+        <div class="nav-sheet-get">
+          <a class="btn btn-primary" href="./#chrome-steps" data-link="chrome">Add to Chrome</a>
+          <a class="btn btn-secondary" href="./#desktop-steps" data-link="desktop">Download Morse</a>
         </div>
       </nav>
     </div>
@@ -123,331 +70,205 @@
 
 <main id="top">
   <!-- ============================================================ hero -->
-  <section class="hero-stage">
-    <div class="grid-bg" aria-hidden="true"><div class="grid-bg-glow"></div></div>
-    <div class="wrap hero-inner">
-      <div class="hero-mark"><span data-radar="56" data-label="The Morse mark"></span></div>
-      <p class="hero-kicker">Free and open source</p>
-      <h1 class="hero-big"><span>Change any app</span> <span class="hero-accent">in your own words.</span></h1>
-      <p class="hero-sub">Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like.</p>
-      <div class="start hero-start">
-        <div class="start-item">
-          <a class="start-opt is-solid" href="./#install-chrome" data-link="chrome"><svg class="icon"><use href="#i-chrome"/></svg>Get it for Chrome<svg class="icon start-go"><use href="#i-arrow"/></svg></a>
-          <p class="start-caption"><strong>Any website</strong><span>A Chrome extension. Free.</span></p>
+  <section class="hero">
+    <div class="pixels" aria-hidden="true" data-pixels></div>
+    <div class="wrap hero-grid">
+      <h1 class="hero-title">Change any app <span>in your own words.</span></h1>
+      <div class="hero-side">
+        <p class="hero-sub">Press a shortcut, point at something and say what you want. Your own model makes the change in the running app while you watch.</p>
+        <div class="get-row">
+          <a class="btn btn-primary btn-lg" href="./#chrome-steps" data-link="chrome">Add to Chrome<svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-secondary btn-lg" href="./#desktop-steps" data-link="desktop">Download Morse</a>
         </div>
-        <div class="start-item">
-          <a class="start-opt is-soft" href="./#install-desktop" data-link="desktop"><svg class="icon"><use href="#i-laptop"/></svg>Get the desktop app</a>
-          <p class="start-caption"><strong>Desktop apps</strong><span>Apps built from web pages, like VSCodium, Obsidian and Joplin.</span></p>
-        </div>
+        <p class="hero-note">Free and open source <span aria-hidden="true">·</span> No account <span aria-hidden="true">·</span> Uses Claude Code, Codex or your API key</p>
       </div>
-      <p class="hero-note"><span class="note-line">No account</span><span class="note-line">Uses Claude Code, Codex or your own API key</span></p>
     </div>
 
-    <!-- The video slot. Its file, poster, shape and caption live in config.js (DEMO_VIDEO). -->
-    <div class="wrap hero-media">
-      <figure class="hero-film" id="demo" data-film>
-        <div class="hero-film-frame">
-          <button type="button" class="hero-film-play" aria-label="Play the demo from the start">
-            <span class="hero-film-disc" aria-hidden="true"><svg viewBox="0 0 24 24" class="hero-film-tri" focusable="false"><path d="M7.3 6.1c0-.9 1-1.5 1.8-1l9 5.9c.7.5.7 1.5 0 2l-9 5.9c-.8.5-1.8-.1-1.8-1z" fill="currentColor"/></svg></span>
-          </button>
-          <button type="button" class="hero-film-toggle" aria-label="Pause or play the loop"><svg class="icon icon-pause"><use href="#i-pause"/></svg><svg class="icon icon-play"><use href="#i-play"/></svg></button>
-        </div>
-        <figcaption>The demo, 92 seconds, no sound.</figcaption>
-      </figure>
-    </div>
-
+    <!-- The film. Its file, poster, shape and captions live in config.js (DEMO_VIDEO). -->
     <div class="wrap">
-      <div class="hero-channels">
-        <p id="hero-apps-label">The gallery has example mods for these, written by hand</p>
-        <ul aria-labelledby="hero-apps-label">
-          <li class="channel-tile"><img src="logos/youtube.svg" alt="YouTube" width="22" height="22"></li>
-          <li class="channel-tile"><img src="logos/github.svg" alt="GitHub" width="22" height="22"></li>
-          <li class="channel-tile"><img src="logos/gmail.svg" alt="Gmail" width="22" height="22"></li>
-          <li class="channel-tile"><img src="logos/x.svg" alt="X" width="22" height="22"></li>
-          <li class="channel-tile"><img src="logos/ycombinator.svg" alt="Hacker News" width="22" height="22"></li>
-          <li class="channel-tile"><img src="logos/slack.svg" alt="Slack" width="22" height="22"></li>
-          <li class="channel-tile"><img src="logos/discord.svg" alt="Discord" width="22" height="22"></li>
-          <li class="channel-tile is-word">VS Code</li>
-          <li class="channel-tile is-word">Spotify</li>
-          <li class="channel-tile is-word">Notion</li>
-          <li class="channel-tile is-word">ChatGPT</li>
-        </ul>
-      </div>
+      <figure class="film" id="demo" data-film>
+        <p class="film-strip"><span class="film-dot" aria-hidden="true"></span><span data-film-strip>VSCodium on Linux · Claude Code (haiku) · real runs</span></p>
+        <div class="film-frame">
+          <img class="film-poster" src="shots/198-film-poster.webp" width="1280" height="720" alt="" fetchpriority="high">
+          <button type="button" class="film-play" aria-label="Play the video from the start, with controls"><span class="film-disc" aria-hidden="true"><svg class="icon"><use href="#i-play"/></svg></span></button>
+          <button type="button" class="film-toggle" aria-label="Pause or play the loop"><svg class="icon icon-pause"><use href="#i-pause"/></svg><svg class="icon icon-play"><use href="#i-play"/></svg></button>
+        </div>
+        <figcaption>36 seconds, no sound.</figcaption>
+      </figure>
     </div>
   </section>
 
-  <!-- ==================================================== how it works -->
-  <section id="how" class="section">
+  <!-- ===================================================== see it change -->
+  <!-- The pairs come from config.js (SHOWCASE); index.js puts them here. -->
+  <section id="change" class="section">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow">See it change</p>
+        <h2>One sentence. A different app.</h2>
+        <p class="lede">Real apps and real websites, changed by asking. Drag across a picture to see before and after.</p>
+      </header>
+      <div class="pairs" id="pairs"></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== how it works -->
+  <section id="how" class="section section-alt">
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow">How it works</p>
-        <h2>Point at it. Say it. Watch it change.</h2>
-        <p class="lede">No settings to learn and no code to write. Say what you want, the way you’d tell a friend.</p>
+        <h2>Three steps. Nothing to set up in the app.</h2>
       </header>
-      <div class="aha">
-        <div class="aha-media">
-          <figure class="frame">
-            <div class="frame-body"><img src="shots/142-site-pointed.webp" width="1280" height="860" alt="A news site with the Morse bar open at the bottom. A paragraph is pointed at, and the bar asks what to change about it."></div>
-          </figure>
-        </div>
-        <ol class="steps-plain">
-          <li>
-            <span class="steps-plain-n" aria-hidden="true">01</span>
-            <h3>Press the shortcut and point</h3>
-            <p>Press <kbd>⌥</kbd> <kbd>Space</kbd> in any page or app (<kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Space</kbd> on Windows and Linux), then click a button, a sidebar or a feed. Or skip pointing and describe the whole page.</p>
+      <div class="steps" data-steps>
+        <ol class="steps-list">
+          <li class="step is-on">
+            <button type="button" class="step-btn" aria-pressed="true" data-step="0">
+              <span class="step-n">01</span>
+              <span class="step-text"><strong>Point at it</strong><span>Press <kbd>⌥</kbd><kbd>Space</kbd> (<kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd> on Windows and Linux) and click the part you want to change. Or describe the whole page.</span></span>
+            </button>
           </li>
-          <li>
-            <span class="steps-plain-n" aria-hidden="true">02</span>
-            <h3>Say the change</h3>
-            <p>One sentence. Type it, or hold the shortcut and talk. Restyle it, hide it, or add something that wasn’t there: a word count, a sleep timer, a focus mode.</p>
+          <li class="step">
+            <button type="button" class="step-btn" aria-pressed="false" data-step="1">
+              <span class="step-n">02</span>
+              <span class="step-text"><strong>Say the change</strong><span>Type one sentence, or hold the shortcut and talk. Your model writes the change and you see it as it happens.</span></span>
+            </button>
           </li>
-          <li>
-            <span class="steps-plain-n" aria-hidden="true">03</span>
-            <h3>Watch it, then save it</h3>
-            <p>Your model writes the change and you see it right away. Save keeps it as a mod: a change you saved. Morse brings it back every time you open that site or app.</p>
+          <li class="step">
+            <button type="button" class="step-btn" aria-pressed="false" data-step="2">
+              <span class="step-n">03</span>
+              <span class="step-text"><strong>Keep it</strong><span>Save keeps it, and Morse brings it back every time you open the app. Undo puts it back the way it was.</span></span>
+            </button>
           </li>
         </ol>
-        <p class="goal-line"><span>Ideas to ask for:</span> <span class="goal">“hide Shorts everywhere”</span> · <span class="goal">“add a sleep timer that pauses the music”</span> · <span class="goal">“show a live word count under the message box”</span> · <span class="goal">“use the full width for pull request diffs”</span></p>
-      </div>
-
-      <div class="gtm">
-        <h3 class="gtm-title">Ideas, with an example mod for each in the gallery.</h3>
-        <ul class="plain-grid">
-          <li><h4>Hide what’s in the way</h4><p>Shorts on <a href="gallery.html#youtube-hide-shorts">YouTube</a>, trends on <a href="gallery.html#x-hide-trending">X</a>, upsells in <a href="gallery.html#discord-no-upsells">Discord</a>.</p></li>
-          <li><h4>Add what’s missing</h4><p>A sleep timer in <a href="gallery.html#spotify-sleep-timer">Spotify</a>, a word count in <a href="gallery.html#chatgpt-word-count">ChatGPT</a>.</p></li>
-          <li><h4>Make it easier to read</h4><p>Dark mode for <a href="gallery.html#hn-dark-mode">Hacker News</a>, a comfortable reading pane in <a href="gallery.html#gmail-reading-pane">Gmail</a>.</p></li>
-          <li><h4>Give it more room</h4><p>Full-width pull request diffs on <a href="gallery.html#github-wide-diffs">GitHub</a>.</p></li>
-          <li><h4>Help you focus</h4><p>Fade the channels with nothing new in <a href="gallery.html#slack-quiet-sidebar">Slack</a>, a focus mode for <a href="gallery.html#notion-focus-mode">Notion</a>.</p></li>
-          <li><h4>Or edit it by hand</h4><p>Point at something and the Edit tools appear: hide, move, resize, edit text, recolor. No model, no waiting.</p></li>
-        </ul>
-        <p class="guard-note">The gallery’s mods were written by hand for each site and app, not each tried on the live site. Sites change, so one may need a fix.</p>
-        <p class="gtm-more"><a class="text-link" href="gallery.html">See every mod in the gallery<svg class="icon"><use href="#i-arrow"/></svg></a></p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ======================================================== features -->
-  <section id="features" class="section section-soft">
-    <div class="wrap">
-      <div class="features">
-        <article class="feature" id="show-me-once">
-          <div class="feature-text">
-            <p class="eyebrow">Show me once</p>
-            <h2>Do it once. Morse does it from then on.</h2>
-            <p>Clicking the same things over and over? Do the task by hand once and Morse writes down each step. Then say what to do with them: a button, a shortcut, or the same steps for every unread email.</p>
-            <ul class="ticks">
-              <li>Each step in plain words as you go: <strong>Click “Archive”</strong>.</li>
-              <li>Passwords and card numbers show as “(hidden)” and are never kept.</li>
-              <li>Save it, change it or undo it, like any change.</li>
-            </ul>
+        <figure class="steps-stage">
+          <div class="shot steps-shots">
+            <img class="is-on" src="shots/149-obsidian-bar.webp" width="1024" height="800" loading="lazy" decoding="async" alt="Obsidian with the ribbon on the left outlined. The Morse bar holds the request “hide this ribbon”.">
+            <img src="shots/190-obsidian-working.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The Morse bar says it is making the change, and shows the code as it is written.">
+            <img src="shots/191-obsidian-result.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The ribbon is gone. The bar says “Hide left ribbon” and offers Save, Undo, Edit code and Share.">
           </div>
-          <figure class="frame">
-            <div class="frame-body"><img src="shots/132-show-once-result.webp" width="1280" height="800" loading="lazy" decoding="async" alt="A mail app with a new button, “Archive every unread email (3)”, made from two recorded clicks. The bar offers Save and Undo."></div>
-            <figcaption>Two clicks, shown once, became a button for every unread email.</figcaption>
-          </figure>
-        </article>
-
-        <article class="feature is-flipped" id="self-heal">
-          <div class="feature-text">
-            <p class="eyebrow">Fixes itself</p>
-            <h2>When a site changes, your mods catch up.</h2>
-            <p>Sites move things around. When a mod stops working, the Mods panel says why in plain words, and Fix it asks your model to repair it. You see the fixed version first, with Save and Undo.</p>
-            <ul class="ticks">
-              <li>Turn on <strong>Fix my mods automatically when a site changes</strong> and Morse fixes them for you, then tells you, with Undo.</li>
-              <li>Got the mod from the gallery? Share the fix, so everyone who uses it gets it too.</li>
-            </ul>
-          </div>
-          <figure class="frame">
-            <div class="frame-body"><img src="shots/113-stopped-working.webp" width="1280" height="800" loading="lazy" decoding="async" alt="The Mods panel in a music app. One mod says it stopped working after the site changed, with a Fix it button."></div>
-            <figcaption>“Stopped working after this site changed”, with Fix it.</figcaption>
-          </figure>
-        </article>
-
-        <article class="feature" id="your-style">
-          <div class="feature-text">
-            <p class="eyebrow">Your style</p>
-            <h2>One look, on every site and app.</h2>
-            <p>Say it once, ending with “everywhere”: <em>Georgia font, bigger text and underline links everywhere except Figma.</em> Every site and app you open has it from then on.</p>
-            <ul class="ticks">
-              <li>No model needed for the basics: font, text size, calmer colors, dark pages, no autoplay.</li>
-              <li><strong>Not on this site</strong> leaves one site out.</li>
-              <li>Fit to each site: your model fixes what your style breaks on a site, and you review it like any change. Off until you turn it on.</li>
-            </ul>
-          </div>
-          <figure class="frame">
-            <div class="frame-body"><img src="shots/150-style-bar.webp" width="1280" height="800" loading="lazy" decoding="async" alt="A news site with the bar open. Your style for every site and app: Georgia font, text 125%, underlined links, not on Figma. Save and Undo."></div>
-            <figcaption>Said once, shown at once, with Save and Undo.</figcaption>
-          </figure>
-        </article>
-
-        <article class="feature is-flipped" id="packs">
-          <div class="feature-text">
-            <p class="eyebrow">Mod packs</p>
-            <h2>Share a set of mods with your team.</h2>
-            <p>A pack is a few mods with a name and a note, shared and installed together, as a link or a file. For a team that wants the same changes to the tools it uses every day.</p>
-            <ul class="ticks">
-              <li>Whoever installs it sees every mod and what it does, and unticks what they don’t want.</li>
-              <li>Nothing is installed until they press Install.</li>
-              <li>When the pack changes, Morse shows what changed before anything updates.</li>
-            </ul>
-          </div>
-          <figure class="frame">
-            <div class="frame-body"><img src="shots/163-pack-review.webp" width="1280" height="860" loading="lazy" decoding="async" alt="Installing the pack “Orders team”: each mod with what it does in plain words, a tick box and Show code."></div>
-            <figcaption>Installing a pack: every mod, what it does, and a tick box.</figcaption>
-          </figure>
-        </article>
-      </div>
-      <div class="inline-cta">
-        <div class="start">
-          <div class="start-item"><a class="start-opt is-solid" href="./#install-chrome" data-link="chrome"><svg class="icon"><use href="#i-chrome"/></svg>Get it for Chrome</a></div>
-          <div class="start-item"><a class="start-opt is-soft" href="./#install-desktop" data-link="desktop"><svg class="icon"><use href="#i-laptop"/></svg>Get the desktop app</a></div>
-        </div>
-        <p>Free and open source. No account.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ==================================================== desktop apps -->
-  <section id="desktop" class="section section-dark scale">
-    <div class="wrap">
-      <div class="scale-grid">
-        <div class="scale-text">
-          <p class="eyebrow">Desktop apps</p>
-          <h2><span>Not just websites.</span> <span>Desktop apps too.</span></h2>
-          <p>Many desktop apps are web pages inside a window. <code>morse launch</code> opens one with Morse connected: point, say the change, save it. Tried so far on Linux with VSCodium, Obsidian, Joplin and a sample app made for testing.</p>
-          <p class="scale-number"><strong>0</strong><span>files in the app are changed. Morse connects while the app runs, so updates install as usual.</span></p>
-          <p class="scale-note">It is made for desktop apps built from web pages. Not tried yet: Microsoft’s VS Code, Slack, Discord, Spotify, macOS and Windows. A few apps block the connection, and <code>morse fuses</code> tells you before you try. Apps like Finder or Word can’t work.</p>
-        </div>
-        <figure class="frame scale-hero">
-          <div class="frame-body"><img src="shots/127-electron-haiku-result.webp" width="1280" height="800" loading="lazy" decoding="async" alt="A desktop music app with the bar open: “Sleep timer pauses playback”, written in 9.5 seconds, with Save and Undo."></div>
-          <figcaption>Tunes, the sample app Morse is tested on: a sleep timer, written by Claude Code.</figcaption>
+          <figcaption>Obsidian on Linux: <q class="ask">hide this ribbon</q></figcaption>
         </figure>
       </div>
-
-      <div class="gtm">
-        <h3 class="gtm-title">Tried in real apps: VSCodium, Obsidian and Joplin.</h3>
-        <ul class="gallery is-three">
-          <li><figure class="frame"><div class="frame-body"><img src="shots/147-vscodium-bar.webp" width="1208" height="804" loading="lazy" decoding="async" alt="VSCodium with the Morse bar open: “make the status bar bigger”."></div><figcaption>VSCodium: “make the status bar bigger”.</figcaption></figure></li>
-          <li><figure class="frame"><div class="frame-body"><img src="shots/149-obsidian-bar.webp" width="1024" height="800" loading="lazy" decoding="async" alt="Obsidian with the Morse bar open: “hide this ribbon”."></div><figcaption>Obsidian: “hide this ribbon”.</figcaption></figure></li>
-          <li><figure class="frame"><div class="frame-body"><img src="shots/152-joplin-sync-hidden.webp" width="1152" height="720" loading="lazy" decoding="async" alt="Joplin after “hide this button, I don’t use sync”: the Synchronize button is gone, and the bar offers Save."></div><figcaption>Joplin: “hide this button, I don’t use sync”.</figcaption></figure></li>
-        </ul>
-        <p class="guard-note">Each change took 6 to 16 seconds, and was back after quitting and opening the app again. <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/desktop.md#tested-on">What was tested</a></p>
-      </div>
     </div>
   </section>
 
-  <!-- ==================================================== more you can do -->
-  <section id="more" class="section">
+  <!-- try-it: the live demo. Everything for it is in site/try/; data-install is where its "Get Morse" link goes. -->
+  <section id="try" class="try" data-install="#install"></section>
+  <script type="module" src="try/section.js"></script>
+  <!-- /try-it -->
+
+  <!-- ========================================================= real apps -->
+  <!-- The pictures come from config.js (REAL_APPS); index.js puts them here. -->
+  <section id="apps" class="section section-alt">
     <div class="wrap">
       <header class="section-head">
-        <p class="eyebrow">Easier to use</p>
-        <h2>Make any app easier to read and use.</h2>
-        <p class="lede">Some apps are hard to read, hard to click, or never stop moving. Fix that in one click, with no model. Or try what other people made.</p>
+        <p class="eyebrow">Real apps</p>
+        <h2>Tried on the apps people use.</h2>
+        <p class="lede">Desktop apps built from web pages: VSCodium, Obsidian and Joplin, on Linux. Websites in Chrome, such as PyPI, GitLab and Docker Hub.</p>
       </header>
-      <ul class="guard-cards">
-        <li>
-          <figure class="frame"><div class="frame-body"><img src="shots/100-easier-to-use.webp" width="1280" height="800" loading="lazy" decoding="async" alt="A library site with the Easier to use list open: higher contrast, bigger click targets, easier to read font, underline links, stop animations and more."></div></figure>
-          <h3><span class="ico-tile"><svg class="icon"><use href="#i-eye"/></svg></span>Easier to use</h3>
-          <p>Higher contrast, bigger click targets, an easier font, no animations, a reading ruler. Click again and the page is exactly as it was.</p>
-        </li>
-        <li>
-          <figure class="frame"><div class="frame-body"><img src="shots/102-check-page.webp" width="1280" height="860" loading="lazy" decoding="async" alt="Check this page lists the problems it found, such as buttons with no name and text that is hard to read, each with Fix it."></div></figure>
-          <h3><span class="ico-tile"><svg class="icon"><use href="#i-check"/></svg></span>Check this page</h3>
-          <p>A quick look for pictures with no description, unnamed buttons, faint text and tiny targets. Each kind has a Fix it button.</p>
-        </li>
-        <li>
-          <figure class="frame"><div class="frame-body"><img src="shots/111-try-it.webp" width="1280" height="800" loading="lazy" decoding="async" alt="The Mods panel in a music app, trying a sleep timer from the gallery, with Save and Undo."></div></figure>
-          <h3><span class="ico-tile"><svg class="icon"><use href="#i-grid"/></svg></span>The gallery</h3>
-          <p>Mods other people made, for the site you’re on. Try one on the page, then Save or Undo. Or browse the <a href="gallery.html">gallery</a>.</p>
-        </li>
-      </ul>
-      <p class="guard-note">Read aloud, Describe this picture and Page tools for dark mode, text size and focus mode are in the same menu.</p>
+      <ul class="apps" id="apps-grid"></ul>
+      <p class="fine">Not tried yet: Microsoft’s VS Code, Slack, Discord, Spotify, macOS and Windows. <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/desktop.md#tested-on">What was tested</a></p>
     </div>
   </section>
 
-  <!-- ========================================================= privacy -->
-  <section id="privacy" class="section section-soft">
-    <div class="wrap">
-      <header class="section-head">
-        <p class="eyebrow">Privacy</p>
-        <h2>Uses the AI you already have. Nothing goes to our servers.</h2>
-        <p class="lede">There is no Morse account and no Morse server. When you ask for a change, Morse sends what you pointed at and what you said to the model you chose, and nothing to the people who make Morse.</p>
-      </header>
-      <ul class="plain-grid is-four">
-        <li><h3>Your model, your account</h3><p>Claude Code or Codex with the sign-in you already have, or an Anthropic or OpenAI API key.</p></li>
-        <li><h3>Kept on your computer</h3><p>Your mods stay on your computer. Nothing you make is uploaded unless you share it.</p></li>
-        <li><h3>Links carry the mod</h3><p>A share link holds the whole mod after the <code>#</code>. Browsers never send that part to a server.</p></li>
-        <li><h3>You see the code</h3><p>Every change shows its code and can be undone. Before you install a shared mod, Morse says what it does.</p></li>
-      </ul>
-      <p class="guard-note">The <a href="privacy.html">privacy policy</a> lists everything that leaves your computer, and when.</p>
-    </div>
-  </section>
-
-  <!-- ========================================================= install -->
+  <!-- =========================================================== install -->
   <section id="install" class="section">
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow">Install</p>
-        <h2>Set up in about a minute.</h2>
-        <p class="lede">You need <a href="https://nodejs.org/">Node 22</a> or newer, and Claude Code, Codex or an API key.</p>
+        <h2>Get Morse.</h2>
+        <p class="lede">Pick where you want to change things. You need Claude Code, Codex or an API key.</p>
       </header>
       <div class="get">
-        <article class="get-card" id="install-desktop">
-          <h3><span class="ico-tile"><svg class="icon"><use href="#i-laptop"/></svg></span>Desktop apps</h3>
-          <div class="codebox">
-            <pre id="cmd-install">$ npm install -g morse-cli
-$ morse setup</pre>
-            <button class="btn btn-secondary" type="button" data-copy="cmd-install">Copy</button>
-          </div>
-          <p><code>morse setup</code> finds Claude Code, Codex or an API key and asks which to use. Then open an app with Morse:</p>
-          <div class="codebox">
-            <pre id="cmd-launch">$ morse launch obsidian</pre>
-            <button class="btn btn-secondary" type="button" data-copy="cmd-launch">Copy</button>
-          </div>
-          <p class="get-small"><code>morse apps</code> lists the apps it found on this computer. You can also give a path to the app.</p>
-        </article>
         <article class="get-card" id="install-chrome">
-          <h3><span class="ico-tile"><svg class="icon"><use href="#i-chrome"/></svg></span>Chrome</h3>
-          <ol>
-            <li>Install the <code>morse</code> command, as for desktop apps. The extension comes with it: <code>morse extension</code> shows its folder.</li>
-            <li>Open <code>chrome://extensions</code>, turn on Developer mode, click <strong>Load unpacked</strong> and choose that folder.</li>
-            <li>In Morse’s details, turn on <strong>Allow User Scripts</strong>.</li>
-            <li>Run <code>morse serve</code> and type its code into Morse. Or paste an Anthropic API key in Morse’s settings instead.</li>
-          </ol>
-          <p class="get-small">Then press <kbd>⌥</kbd> <kbd>Space</kbd> on any page. Morse is coming to the Chrome Web Store.</p>
+          <p class="get-kind">Chrome</p>
+          <h3>Any website</h3>
+          <p>The Morse extension for Chrome.</p>
+          <a class="btn btn-primary btn-lg" href="./#chrome-steps" data-link="chrome">Add to Chrome<svg class="icon"><use href="#i-arrow"/></svg></a>
+          <details class="get-steps" id="chrome-steps">
+            <summary>Not in the Chrome Web Store yet. Install it by hand</summary>
+            <ol>
+              <li>Install the morse command (below). The extension comes with it: <code>morse extension</code> shows its folder.</li>
+              <li>Open <code>chrome://extensions</code>, turn on Developer mode, click <strong>Load unpacked</strong> and choose that folder.</li>
+              <li>In Morse’s details, turn on <strong>Allow User Scripts</strong>.</li>
+              <li>Run <code>morse serve</code> and type its code into Morse, or paste an Anthropic API key in Morse’s settings.</li>
+            </ol>
+          </details>
+        </article>
+        <article class="get-card" id="install-desktop">
+          <p class="get-kind">Desktop apps</p>
+          <h3>Apps like VSCodium, Obsidian and Joplin</h3>
+          <p>Morse for desktop apps built from web pages.</p>
+          <a class="btn btn-primary btn-lg" href="./#desktop-steps" data-link="desktop">Download Morse<svg class="icon"><use href="#i-arrow"/></svg></a>
+          <details class="get-steps" id="desktop-steps">
+            <summary>No download yet. Use the morse command</summary>
+            <ol>
+              <li>Install it: <code>npm i -g morse-cli</code> (needs <a href="https://nodejs.org/">Node 22</a> or newer).</li>
+              <li>Run <code>morse setup</code>. It finds Claude Code, Codex or an API key and asks which to use.</li>
+              <li>Open an app with Morse: <code>morse launch obsidian</code>. <code>morse apps</code> lists the apps it found.</li>
+            </ol>
+          </details>
         </article>
       </div>
-      <p class="guard-note">Morse is early: the <a href="https://github.com/sam-siavoshian/RRAA#status">status notes</a> say exactly what has been tested.</p>
+
+      <div class="dev">
+        <p class="dev-label">For developers</p>
+        <div class="dev-line">
+          <code id="cmd-install"><span class="dev-prompt" aria-hidden="true">$ </span>npm i -g morse-cli</code>
+          <button class="btn btn-secondary btn-sm" type="button" data-copy="cmd-install">Copy</button>
+        </div>
+        <p class="dev-then">then <code>morse setup</code></p>
+      </div>
+
+      <div class="first-run">
+        <h3>Your first minute</h3>
+        <ol class="first-run-list">
+          <li>
+            <figure class="shot"><img src="shots/135-welcome.webp" width="1280" height="860" loading="lazy" decoding="async" alt="The Morse welcome page: Morse is installed, a practice page to try it on, and a short list to get set up."></figure>
+            <p><span class="step-n">1</span><span>Morse opens a welcome page, with a practice page to try it on.</span></p>
+          </li>
+          <li>
+            <figure class="shot"><img src="shots/138-setup-pair.webp" width="1012" height="706" loading="lazy" decoding="async" alt="A terminal running morse setup: it finds Claude Code, says it will use it, and connects to Chrome."></figure>
+            <p><span class="step-n">2</span><span><code>morse setup</code> finds Claude Code, Codex or an API key.</span></p>
+          </li>
+          <li>
+            <figure class="shot"><img src="shots/137-practice-first-save.webp" width="1280" height="860" loading="lazy" decoding="async" alt="The practice page after a first change: “Your first mod is saved”, with what to try next."></figure>
+            <p><span class="step-n">3</span><span>Point, say a change, Save. Then try it on any site.</span></p>
+          </li>
+        </ol>
+      </div>
     </div>
   </section>
 
-  <!-- ============================================================= FAQ -->
-  <section id="faq" class="section section-soft">
-    <div class="wrap narrow">
+  <!-- =========================================================== privacy -->
+  <section id="privacy" class="section section-tight section-alt">
+    <div class="wrap">
+      <div class="privacy">
+        <p class="eyebrow">Privacy</p>
+        <p class="privacy-text">Morse has no account and no server. When you ask for a change, it sends what you pointed at and what you said to the model you chose, and nothing to the people who make Morse. <a href="privacy.html">Read the privacy policy</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============================================================== FAQ -->
+  <section id="faq" class="section">
+    <div class="wrap faq-grid">
       <header class="section-head">
         <p class="eyebrow">FAQ</p>
-        <h2>Questions people ask first</h2>
+        <h2>Questions people ask first.</h2>
+        <p class="lede">More in the <a href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs">guides</a>.</p>
       </header>
       <div class="faq-list">
-        <details class="faq-item" open>
-          <summary>What is Morse?</summary>
-          <p>Morse lets you change any website or desktop app by saying what you want. Press a shortcut, point at something and describe the change. Your model writes it and you see it right away. If you like it, save it as a mod: a change you saved. Morse brings it back every time you open that site or app.</p>
-        </details>
         <details class="faq-item">
-          <summary>What leaves my computer?</summary>
-          <p>When you ask for a change, Morse sends your request, the page address and title, and the part of the page you pointed at to the model you chose. When you open Morse, it may download the gallery list from GitHub, at most once a day. Nothing goes to the people who make Morse. <a href="privacy.html">Read the privacy policy</a>.</p>
+          <summary>What does it cost?</summary>
+          <p>Morse is free. Your model costs what it already costs you: Claude Code and Codex use your subscription, and with an API key, Anthropic or OpenAI bills you for each request. A change is usually one request.</p>
         </details>
         <details class="faq-item">
           <summary>Which models can I use?</summary>
-          <p>Claude Code or Codex, if you have them. Or an Anthropic or OpenAI API key. Or any server that works like OpenAI’s, including one on your own computer, such as LM Studio or llama.cpp. <code>morse setup</code> finds what you have. Claude Code is the one tried for real so far; the others are tested against stand-ins.</p>
-        </details>
-        <details class="faq-item">
-          <summary>What does it cost?</summary>
-          <p>Morse is free. Your model costs what it already costs you: Claude Code and Codex use your subscription, and with an API key, Anthropic or OpenAI bills you for each request. A change is usually one request, and one more if Morse has to fix it.</p>
+          <p>Claude Code or Codex, if you have them. Or an Anthropic or OpenAI API key, or a model on your own computer, such as LM Studio or llama.cpp. Claude Code is the one tried for real so far.</p>
         </details>
         <details class="faq-item">
           <summary>Which apps work?</summary>
-          <p>Websites in Chrome: tried on sites such as PyPI, GitLab and Docker Hub. Desktop apps built from web pages: tried on VSCodium, Obsidian and Joplin, on Linux. Microsoft’s VS Code, Slack, Discord, Spotify, macOS and Windows aren’t tried yet. A few apps block the connection Morse needs; <code>morse fuses &lt;app&gt;</code> tells you before you try. Apps that are not built from web pages, like Finder or Word, don’t work.</p>
+          <p>Websites in Chrome, and desktop apps built from web pages. Tried on VSCodium, Obsidian and Joplin, on Linux. Microsoft’s VS Code, Slack, Discord, Spotify, macOS and Windows aren’t tried yet. Apps like Finder or Word are not built from web pages and don’t work.</p>
         </details>
         <details class="faq-item">
           <summary>Do I need to know how to code?</summary>
@@ -455,77 +276,33 @@ $ morse setup</pre>
         </details>
         <details class="faq-item">
           <summary>What if the app or site updates?</summary>
-          <p>Morse never changes the app’s files, so updates install as usual. If an update moves things around, a mod can stop working. Fix it in the Mods panel asks your model to repair it, or Morse can fix it for you when you turn that on.</p>
+          <p>Morse never changes the app’s files, so updates install as usual. If an update moves things around and a mod stops working, Fix it in the Mods panel asks your model for a new version.</p>
         </details>
         <details class="faq-item">
           <summary>Is it safe to install mods other people made?</summary>
-          <p>A mod is code that runs in that site or app. Before you install one, Morse tells you in plain words what it does and shows its code. Someone reads every gallery mod before it goes in. One shortcut turns off every mod on a page.</p>
+          <p>A mod is code that runs in that site or app. Before you install one, Morse says in plain words what it does and shows its code. One shortcut turns off every mod on a page.</p>
         </details>
       </div>
-      <p class="faq-more">More in the <a href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs">guides</a>, or browse the <a href="gallery.html">gallery</a>.</p>
-    </div>
-  </section>
-
-  <!-- =========================================================== close -->
-  <section id="get" class="cta">
-    <div class="wrap">
-      <div class="cta-mark"><span data-radar="64"></span></div>
-      <h2><span>Try Morse.</span> <span>Change one thing today.</span></h2>
-      <p>Point at the thing that bugs you and say what you want instead.</p>
-      <div class="start cta-start">
-        <div class="start-item">
-          <a class="start-opt is-solid" href="./#install-chrome" data-link="chrome"><svg class="icon"><use href="#i-chrome"/></svg>Get it for Chrome<svg class="icon start-go"><use href="#i-arrow"/></svg></a>
-          <p class="start-caption"><strong>Any website</strong><span>A Chrome extension. Free.</span></p>
-        </div>
-        <div class="start-item">
-          <a class="start-opt is-soft" href="./#install-desktop" data-link="desktop"><svg class="icon"><use href="#i-laptop"/></svg>Get the desktop app</a>
-          <p class="start-caption"><strong>Desktop apps</strong><span>Apps built from web pages, like VSCodium, Obsidian and Joplin.</span></p>
-        </div>
-      </div>
-      <p class="cta-note">Free and open source · MIT license · No account</p>
     </div>
   </section>
 </main>
 
 <footer class="foot">
   <div class="wrap">
-    <div class="foot-grid">
-      <div class="foot-brand">
-        <a href="#top" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="22" data-still></span><span class="brand-name">Morse</span></a>
-        <p>Change any website or desktop app in your own words. Free and open source.</p>
-      </div>
-      <nav aria-label="Product">
-        <h2>Product</h2>
-        <ul>
-          <li><a href="#how">How it works</a></li>
-          <li><a href="#show-me-once">Show me once</a></li>
-          <li><a href="#your-style">Your style</a></li>
-          <li><a href="#packs">Mod packs</a></li>
-          <li><a href="#desktop">Desktop apps</a></li>
-          <li><a href="#faq">FAQ</a></li>
-        </ul>
-      </nav>
-      <nav aria-label="Get Morse">
-        <h2>Get Morse</h2>
-        <ul>
-          <li><a href="./#install-chrome" data-link="chrome"><svg class="icon"><use href="#i-chrome"/></svg>Get it for Chrome</a></li>
-          <li><a href="./#install-desktop" data-link="desktop"><svg class="icon"><use href="#i-laptop"/></svg>Get the desktop app</a></li>
-          <li><a href="gallery.html"><svg class="icon"><use href="#i-grid"/></svg>Gallery</a></li>
-        </ul>
-      </nav>
-      <nav aria-label="Project">
-        <h2>Project</h2>
-        <ul>
-          <li><a href="https://github.com/sam-siavoshian/RRAA" data-link="github"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-github"/></svg>Source on GitHub</a></li>
-          <li><a href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs"><svg class="icon"><use href="#i-book"/></svg>Guides</a></li>
-          <li><a href="privacy.html"><svg class="icon"><use href="#i-shield"/></svg>Privacy</a></li>
-          <li><a href="https://github.com/sam-siavoshian/RRAA/issues"><svg class="icon"><use href="#i-mail"/></svg>Report a problem</a></li>
-        </ul>
+    <div class="foot-top">
+      <a href="#top" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="20" data-still></span><span class="brand-name">Morse</span></a>
+      <nav class="foot-links" aria-label="Footer">
+        <a href="#install">Install</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs">Guides</a>
+        <a href="https://github.com/sam-siavoshian/RRAA" data-link="github">Source on GitHub</a>
+        <a href="https://github.com/sam-siavoshian/RRAA/issues">Report a problem</a>
       </nav>
     </div>
     <div class="foot-base">
+      <span>Change any website or desktop app in your own words.</span>
       <span>&copy; 2026 Morse · <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/LICENSE">MIT license</a></span>
-      <span>Runs in Chrome, and in desktop apps built from web pages.</span>
     </div>
   </div>
 </footer>

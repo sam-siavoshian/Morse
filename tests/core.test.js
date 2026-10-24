@@ -101,6 +101,24 @@ test("openai-compatible provider streams SSE tokens", async () => {
   assert.equal(text, "TITLE: B");
   assert.equal(body.stream, true);
   assert.equal(body.temperature, undefined);
+  assert.equal(body.reasoning_effort, undefined, "no effort, no field");
+  s.close();
+});
+
+test("openai: the strong tier is gpt-5 reasoning longer; other models never get reasoning_effort", async () => {
+  const bodies = [];
+  const s = await serve(async (req, res) => {
+    let b = ""; for await (const d of req) b += d;
+    bodies.push(JSON.parse(b));
+    res.end("data: [DONE]\n\n");
+  });
+  const base = { provider: "openai", baseUrl: `http://127.0.0.1:${s.address().port}`, apiKey: "k" };
+  const { resolveTiers, planRoute } = await import("../core/route.js");
+  const [best] = planRoute({ ...base, model: "", tiers: resolveTiers("openai"), mode: "best" }, "x", {}).steps;
+  await streamChat(best, []);
+  await streamChat({ ...base, model: "gpt-5", effort: "max" }, []);
+  await streamChat({ ...base, model: "gpt-4.1", effort: "high" }, []);
+  assert.deepEqual(bodies.map(b => [b.model, b.reasoning_effort]), [["gpt-5", "high"], ["gpt-5", "high"], ["gpt-4.1", undefined]]);
   s.close();
 });
 

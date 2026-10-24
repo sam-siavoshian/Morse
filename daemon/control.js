@@ -10,8 +10,8 @@ import { HOME, ensureHome, listMods, saveMod, writeExport } from "./store.js";
 import { controlHandler, CONTROL_REQUESTS } from "../core/control-host.js";
 import { normalizeControl, setPause, pauseInfo } from "../core/control.js";
 import { exportBundle, backupFilename, parseImport, prepareInstall } from "../core/backup.js";
-import { summarizeMod, modOrigin } from "../core/summary.js";
-import { paint } from "./colors.js";
+import { summarizeMod, modOrigin, shownCode } from "../core/summary.js";
+import { paint, shown } from "./colors.js";
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
 
 export { CONTROL_REQUESTS };
@@ -129,10 +129,10 @@ export async function exportAllCli(f) {
   return file;
 }
 
-// A shared mod's words go to the terminal as text: escape sequences in them
-// could move the cursor and rewrite the review above, or set the clipboard,
-// and a line break could add lines that look like the review's own.
-const shown = s => String(s ?? "").replace(/[\x00-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069]+/g, " ");
+// A shared mod's words go to the terminal as text (daemon/colors.js shown):
+// escape sequences in them could move the cursor and rewrite the review
+// above, or set the clipboard, and a line break could add lines that look
+// like the review's own. Its code is shown with those characters written out.
 export function describe(mod) { // packs hook: daemon/packs.js lists each mod in a pack the same way
   const s = summarizeMod(mod);
   const where = shown(mod.match?.app || (mod.match?.hosts || []).join(", ") || t("cli.ctl.anySite"));
@@ -162,7 +162,7 @@ export async function importCli(f) {
   }
   const saved = [];
   for (const m of mods) saved.push(await saveMod(prepareInstall(m, { kind: kind === "link" ? "link" : kind === "backup" ? "backup" : "mod", where: {} })));
-  out(`${t("cli.pk.installed")}: ${saved.map(m => B(m.title)).join(", ")}`);
+  out(`${t("cli.pk.installed")}: ${saved.map(m => B(shown(m.title))).join(", ")}`);
   return saved;
 }
 
@@ -172,7 +172,7 @@ export async function codeCli(f) {
   const mod = (await listMods()).find(m => m.id === id || m.id.startsWith(id || "\0"));
   if (!mod) throw new Error(t("cli.ctl.noMod", { id: id || "" }));
   out(describe(mod));
-  out(D(`  ${modOrigin(mod)} · ${t(mod.enabled ? "cli.ctl.on" : "cli.ctl.off")} · ${mod.id}`));
-  if (mod.css.trim()) out(`\n${B("CSS")}\n${mod.css.trim()}`);
-  if (mod.js.trim()) out(`\n${B("JavaScript")}\n${mod.js.trim()}`);
+  out(D(`  ${shown(modOrigin(mod))} · ${t(mod.enabled ? "cli.ctl.on" : "cli.ctl.off")} · ${mod.id}`));
+  if (mod.css.trim()) out(`\n${B("CSS")}\n${shownCode(mod.css.trim())}`);
+  if (mod.js.trim()) out(`\n${B("JavaScript")}\n${shownCode(mod.js.trim())}`);
 }

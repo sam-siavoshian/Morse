@@ -136,7 +136,9 @@ test("the Pages build publishes the paths the code uses, with no broken links", 
       assert.equal(u.origin, "https://sam-siavoshian.github.io");
       assert.ok(existsSync(path.join(out, u.pathname.replace(/^\/RRAA\//, ""))), `${url} is published`);
     }
-    assert.match(readFileSync(path.join(root, "extension", "host.js"), "utf8"), /SHARE_ORIGINS = \[[^\]]*"https:\/\/sam-siavoshian\.github\.io"/);
+    // The extension trusts the share page's folder: SHARE_BASE has to be in it.
+    const trusted = JSON.parse(/const SHARE_PAGES = (\[[^\]]*\])/.exec(readFileSync(path.join(root, "extension", "host.js"), "utf8").replace(/\/\*[^*]*\*\//g, ""))[1]);
+    assert.ok(SHARE_BASE.startsWith(trusted[0]) && new URL(trusted[0]).pathname === "/RRAA/share/", `${SHARE_BASE} is in ${trusted[0]}`);
     await fs.writeFile(path.join(out, "site", "broken.html"), '<a href="nope.html">x</a><img src="../docs/launch/missing.png">');
     assert.deepEqual(await brokenLinks(out), ["site/broken.html -> nope.html", "site/broken.html -> ../docs/launch/missing.png"]);
   } finally { await fs.rm(out, { recursive: true, force: true }); }

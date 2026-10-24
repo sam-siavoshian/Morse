@@ -10,7 +10,7 @@
 // By default generation is replayed from core/demo.js (a test fixture) so the
 // screenshots are reproducible. With a real model, e.g. Claude Code:
 //
-//   MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code \
+//   MORSE_PROVIDER=claude-code MORSE_MODEL=sonnet SHOTS=docs/screenshots/claude-code \
 //   DISPLAY=:99 node demo/shoot-desktop.js
 //
 // a real model doesn't always need a repair round and names things its own
