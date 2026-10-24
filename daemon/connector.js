@@ -20,6 +20,7 @@ import { cachedVoiceStatus, transcribeAudio } from "./voice.js";
 import { HOME, listMods } from "./store.js";
 import { classifyTarget, describeTarget } from "./targets.js";
 import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
+import { GALLERY_REQUESTS, handleGallery } from "./gallery.js"; // gallery hook: Mods for this site
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
@@ -290,6 +291,7 @@ export class Connector {
   async dispatch(s, ctx, msg) {
     const where = { url: msg.url, app: this.app?.id || null };
     if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
+    if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, where); // gallery hook: Mods for this site
     switch (msg.type) {
       case "hello":
         this.grantMic(s, msg.url);

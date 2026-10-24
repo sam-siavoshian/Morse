@@ -15,6 +15,7 @@ import { wrapModCode } from "../core/kit.js";
 import { clipAdd } from "../core/clipboard.js"; // God mode clipboard
 import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
 import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver } from "./onboarding-host.js"; // onboarding hook: welcome page, first-run state, practice area
+import { GALLERY_REQUESTS, handleGallery } from "./gallery-host.js"; // gallery hook: Mods for this site
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
@@ -125,6 +126,7 @@ async function dispatch(msg, port) {
     : { tabId: tab.id, frameIds: [port.sender.frameId ?? 0] };
   if (BAR_REQUESTS.has(msg.type)) return handleBarRequest(msg);
   if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg); // onboarding hook
+  if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, msg.url); // gallery hook: Mods for this site
   switch (msg.type) {
     case "hello": {
       const b = await backend();
