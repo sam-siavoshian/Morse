@@ -47,7 +47,7 @@ Claude Code `haiku`, 3 runs per case. The baseline is the code before this work:
 | Baseline | 101/123 **82.1%** (an earlier ×3 run: 85.4%) | 35/42 **83.3%** | 8.6 s |
 | Effect check only (old context and prompt) | 103/123 83.7% | | 13.8 s* |
 | **Final** | 122/123 **99.2%** | 41/42 **97.6%** | 7.0 s / 7.3 s |
-| Final, `sonnet`, ×1 | 41/41 | 13/14 → 14/14 after a checker fix | 9.2 s |
+| Final, `sonnet`, ×1 | 40/41 (41/41 after the progress-bar checker fix) | 14/14 | 9.2 s |
 
 \* CLI latency varies a lot with load. The repair round fired on only 8 of 123 runs.
 
