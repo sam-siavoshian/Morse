@@ -6,7 +6,7 @@
 <title>Install a Morse mod</title>
 <meta name="description" content="Someone shared a Morse mod with you. Read its code, then install it in Morse or download it for Tampermonkey.">
 <meta name="referrer" content="no-referrer">
-<link rel="icon" href="../site/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../site/favicon.png" type="image/png" sizes="64x64">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
@@ -48,7 +48,8 @@
   .i-items b { display: block; color: var(--m-text); font-weight: 500; line-height: 24px; }
   .i-items small { display: block; color: var(--m-text-2); font-size: 13px; line-height: 20px; }
   .i-note { display: flex; gap: 12px; margin: 20px 0 0; padding: 12px 16px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); background: var(--m-raised); color: var(--m-text); font-size: 14px; line-height: 22px; }
-  .i-note svg { flex: none; margin-top: 3px; color: var(--m-warn); }
+  .i-note .i-glyph { flex: none; color: var(--m-warn); }
+  .i-glyph { display: inline-block; margin-right: 4px; font-weight: 600; }
   .i-code { margin-top: 32px; }
   .i-code summary { display: inline-flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; list-style: none; color: var(--m-text-2); }
   .i-code summary::-webkit-details-marker { display: none; }
@@ -101,8 +102,8 @@
   initPage();
   addEventListener("hashchange", () => location.reload());
   const root = document.getElementById("root");
-  const check = `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
-  const warn = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 1.75l6.5 11.5h-13z" stroke-linejoin="round"/><path d="M8 6.5v3"/><circle cx="8" cy="11.5" r=".5" fill="currentColor"/></svg>`;
+  const check = `<span class="i-glyph" aria-hidden="true">✓</span>`;
+  const warn = `<span class="i-glyph" aria-hidden="true">!</span>`;
   const lines = s => t("install.lines", { n: s.trimEnd().split("\n").length });
   // packs hook: a link can carry a pack; it gets its own page (showPack, below).
   const pack = await decodeShareText(location.href).then(txt => { try { return isPack(JSON.parse(txt)) ? txt : null; } catch { return null; } }, () => null);

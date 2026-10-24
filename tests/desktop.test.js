@@ -456,3 +456,19 @@ test("status files: stale sessions are dropped; stop matches names loosely", asy
   assert.match(r.message, /isn't connected to "nonexistent"/);
   status.removeSession("vscode");
 });
+
+test("an app that doesn't answer its debugging port in time says so, not that the model was slow", async () => {
+  const { appTimeout } = await import("../daemon/cdp.js");
+  const { plainError } = await import("../core/onboarding.js");
+  const slow = Object.assign(new Error("The operation was aborted due to timeout"), { name: "TimeoutError" });
+  assert.match(plainError(slow), /model took too long/, "what `morse launch` said for a busy Joplin");
+  assert.match(plainError(appTimeout(slow, 9333)), /^The app didn't answer Morse in time \(port 9333\)/);
+  const other = new Error("ECONNREFUSED");
+  assert.equal(appTimeout(other, 1), other, "other errors pass through");
+  // A port that accepts and never answers.
+  const net = await import("node:net");
+  const silent = net.createServer(() => {}).listen(0, "127.0.0.1");
+  await new Promise(r => silent.once("listening", r));
+  await assert.rejects(listTargets(silent.address().port), e => /didn't answer Morse in time/.test(plainError(e)));
+  silent.close();
+});
