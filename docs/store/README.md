@@ -153,12 +153,13 @@ Checked on the zip `npm run store` made, unpacked:
   helper-port key (`morse.helperPort`) stays: it can only move the helper to
   another port on 127.0.0.1, and only the extension itself can set it (see
   permissions.md).
-- **The zip:** `dist/morse-extension-0.2.0-store.zip`, about 815 KB, 27
+- **The zip:** `dist/morse-extension-0.2.0-store.zip`, about 1.6 MB, 38
   files: the worker (`background.js`, which bundles the Anthropic SDK), the
   content scripts (`host.js`, `boot.js`) and the interface they load on first
   use (`ui.js`), the popup, options, welcome and practice pages with their
-  scripts and styles (`runtime.js` is the practice page's copy of Morse), four
-  core modules the pages import, and the icons.
+  scripts and styles (`runtime.js` is the practice page's copy of Morse), the
+  core modules the pages import (`hotkeys`, `i18n`, `onboarding`, `prefs`,
+  `summary`) with the nine languages in `core/locales/`, and the icons.
 - **Smoke test** (`npm run store:smoke`): welcome page, practice change,
   pairing, one change saved and back after a reload; nothing in the service
   worker's console.

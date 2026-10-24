@@ -45,6 +45,7 @@ What you can do
 • Ask a question about a page instead of changing it, and Morse points at the answer.
 • See all your mods for a site in the Mods panel, and turn each one on or off.
 • Try mods other people made, and share yours as a link. Before you install a mod from someone else, Morse says in plain words what it does.
+• Morse speaks English, Spanish, German, French, Brazilian Portuguese, Simplified Chinese, Japanese, Persian and Arabic. You can describe changes in any language.
 
 Your model, your account
 Morse has no account and no server of its own. Changes are written by a model you already use:

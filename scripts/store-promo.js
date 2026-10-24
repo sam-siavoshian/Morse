@@ -65,7 +65,7 @@ const marquee = shot => `<!doctype html><html><head><meta charset="utf-8"><style
   .chrome i { width: 10px; height: 10px; border-radius: 50%; background: #2e2e33; }
   .chrome .url { margin-left: 14px; height: 20px; flex: 0 0 300px; border-radius: 6px; background: #111113; color: #86868e; font-size: 11px; line-height: 20px; padding: 0 10px; }
   /* the part of the screenshot with the new Copy button and the bar, at 70% */
-  .shot .pic { width: 650px; height: 300px; background: var(--img) -42px -260px / 896px 560px no-repeat; }
+  .shot .pic { width: 650px; height: 300px; background: var(--img) -42px -268px / 896px 560px no-repeat; }
 </style></head><body><div class="glow"></div><div class="dots"></div>
 <div class="left">
   <div class="row">${logo(52)}<div class="name">Morse</div></div>
