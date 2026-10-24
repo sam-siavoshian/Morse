@@ -18,7 +18,7 @@ function boxTo(el, box, label) {
 const ours = e => e.composedPath().includes(hostEl);
 function onMove(e) {
   if (!S.picking) return;
-  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const el = GodMode.deepAt(e.clientX, e.clientY); // God mode hook: also points into open shadow roots
   if (!el || el === hostEl || el === document.documentElement) { hoverEl = null; hl.hidden = true; return; }
   hoverEl = el;
   boxTo(el, hl, describe(el));
@@ -43,18 +43,4 @@ for (const t of ["pointerdown", "mousedown", "pointerup", "mouseup"]) addEventLi
 addEventListener("click", onClick, true);
 addEventListener("scroll", () => { if (S.target) boxTo(S.target, selBox); }, true);
 
-function setTarget(el) {
-  S.target = el;
-  S.picking = false;
-  hl.hidden = true;
-  root.host.style.cursor = "";
-  if (el) {
-    boxTo(el, selBox);
-    placeBar(el.getBoundingClientRect());
-    chip.hidden = false;
-    chip.querySelector("span").textContent = describe(el);
-  } else { selBox.hidden = true; chip.hidden = true; }
-  setHint();
-  input.focus();
-}
-chip.querySelector(".x").onclick = () => { setTarget(null); startPicking(); };
+// setTarget lives in 50-bar.js (one definition; it calls the God mode hook).

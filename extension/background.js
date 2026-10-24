@@ -8,6 +8,7 @@ import { resolveSettings, settingsLabel, DEFAULT_SETTINGS } from "./core/provide
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf } from "./core/mod.js";
 import { wrapModCode } from "./core/kit.js";
 import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
+import { clipAdd } from "./core/clipboard.js"; // God mode clipboard
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
@@ -92,6 +93,9 @@ async function dispatch(msg, port) {
       const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
       return putMod({ ...mod, enabled: true, imported: true, match: mod.match || { hosts: [hostOf(msg.url)], app: null } });
     }
+    // God mode: cross-app clipboard (see core/clipboard.js)
+    case "clipboard.list": return get("clipboard", []);
+    case "clipboard.put": { const list = clipAdd(await get("clipboard", []), msg.item); await set("clipboard", list); return list; }
     case "exec":
       return exec(target, msg.modId, msg.js);
     case "off":

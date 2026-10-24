@@ -12,6 +12,7 @@ await p.keyboard.press("Alt+Space");
 const tb = await p.locator("#toolbar").boundingBox();
 await p.mouse.move(tb.x + 30, tb.y + tb.height / 2);
 await p.mouse.click(tb.x + tb.width / 2, tb.y + 4);
+await p.keyboard.press("a"); // Ask: after pointing the edit toolbar has focus, and "m" would be Move
 await p.keyboard.type("make the toolbar airier");
 await p.keyboard.press("Enter");
 for (const ms of [700, 1400, 2100]) {

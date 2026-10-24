@@ -71,6 +71,7 @@ function setTarget(el) {
   setHint();
   updateChips();
   input.focus();
+  GodMode.onTarget(el); // God mode: edit toolbar for the selection
 }
 chip.querySelector(".x").onclick = () => { setTarget(null); startPicking(); };
 chip.querySelector(".x").setAttribute("aria-label", "Clear target");

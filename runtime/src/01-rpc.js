@@ -23,8 +23,9 @@ host.onMessage(msg => {
     msg.error ? reject(new Error(msg.error)) : resolve(msg.result);
   } else listeners.forEach(fn => fn(msg));
 });
+const outgoing = []; // hook: fns that may decorate a request before it is sent (God mode capture)
 const call = (type, payload = {}) => new Promise((resolve, reject) => {
   const id = ++seq;
   pending.set(id, { resolve, reject });
-  host.send({ id, type, ...payload });
+  host.send(outgoing.reduce((m, f) => f(m) || m, { id, type, ...payload }));
 });

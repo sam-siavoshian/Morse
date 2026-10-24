@@ -10,28 +10,59 @@
   .toolbar { display: flex; gap: 12px; align-items: center; padding: 12px 16px; border-radius: 12px; background: color-mix(in srgb, var(--fg) 6%, transparent); }
   .toolbar button { background: none; border: 0; color: inherit; font: inherit; opacity: .7; }
   .card { padding: 20px; border-radius: 14px; background: color-mix(in srgb, var(--fg) 5%, transparent); height: 220px; }
+  .extras { display: flex; gap: 16px; align-items: center; font-size: 13px; }
+  .extras iframe { width: 180px; height: 40px; border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 8px; }
 </style>
 </head>
 <body>
 <!-- Dev playground: the real runtime with a fake host that streams canned
      tokens, so the UI and effect can be iterated on without a model.
-     Open with ?light for the light theme. -->
+     Open with ?light for the light theme, ?reset to forget saved mods.
+     Mods and the God mode clipboard persist in localStorage, and mod JS runs
+     through the real helper kit, so manual edits re-apply after a reload. -->
 <div class="stage">
   <div class="toolbar" id="toolbar"><button>⤮</button><button>⏮</button><button>▶</button><button>⏭</button><button>↻</button><span style="flex:1"></span><button>Settings</button></div>
   <div class="card" id="card"><h3 style="margin:0 0 8px">Release notes</h3><p style="margin:0;opacity:.7">Pointing at things and describing what you want is the whole interface.</p></div>
+  <div class="extras" id="extras"><span id="mixed">Press <b>Alt+Space</b> to start</span><x-badge id="badge"></x-badge><iframe title="Embedded" srcdoc="<p style='margin:8px;font:12px system-ui'>An embedded frame</p>"></iframe></div>
 </div>
 <script>
   if (location.search.includes("light")) document.body.classList.add("light");
+  if (location.search.includes("reset")) Object.keys(localStorage).filter(k => k.startsWith("morse:playground:")).forEach(k => localStorage.removeItem(k));
   localStorage.setItem("morse:debug", "1");
+  // A web component with an open shadow root, for God mode's shadow DOM path.
+  customElements.define("x-badge", class extends HTMLElement {
+    constructor() { super(); this.attachShadow({ mode: "open" }).innerHTML = `<style>span{padding:2px 8px;border-radius:99px;border:1px solid currentColor;opacity:.8}</style><span class="label">Shadow badge</span>`; }
+  });
   const TEXT = "TITLE: Demo\n```css\n#toolbar { gap: 20px; letter-spacing: .02em; }\n#toolbar button { opacity: .9; }\n```\n```js\nmorse.watch('#toolbar', t => t.append(morse.el('span', { text: 'hello' })));\n```\n";
+  const store = {
+    get(k, d) { try { return JSON.parse(localStorage.getItem("morse:playground:" + k)) ?? d; } catch { return d; } },
+    set(k, v) { localStorage.setItem("morse:playground:" + k, JSON.stringify(v)); },
+  };
+  const core = Promise.all([import("/core/kit.js"), import("/core/mod.js"), import("/core/clipboard.js")]);
   const subs = [];
   const emit = m => subs.forEach(f => f(m));
   globalThis.__morseHost = {
     onMessage: fn => subs.push(fn),
-    send(m) {
+    async send(m) {
       const reply = result => setTimeout(() => emit({ reply: m.id, result }), 10);
+      const [kit, mod, clip] = await core;
       if (m.type === "hello") return reply({ mode: "playground", label: "playground · fake host", quiet: true });
-      if (m.type === "mods.list") return reply([]);
+      if (m.type === "mods.list") return reply(Object.values(store.get("mods", {})).filter(x => mod.modMatches(x, { url: m.url || location.href, app: null })));
+      if (m.type === "mods.save") {
+        const x = m.draft ? mod.createMod({ ...m.draft, app: null, model: "playground" }) : m.mod;
+        const all = store.get("mods", {}); all[x.id] = x; store.set("mods", all);
+        return reply(x);
+      }
+      if (m.type === "mods.delete") { const all = store.get("mods", {}); delete all[m.modId]; store.set("mods", all); return reply(true); }
+      if (m.type === "exec") {
+        let r;
+        try { r = (0, eval)(kit.wrapModCode(m.modId, m.js)); } catch (e) { r = { ok: false, error: String(e.message || e) }; }
+        const errs = r && r.ok ? morse.__errors(m.modId) : [];
+        return reply(errs.length ? { ok: false, error: errs[0] } : r);
+      }
+      if (m.type === "off") { globalThis.morse?.__off(m.modId); return reply(true); }
+      if (m.type === "clipboard.list") return reply(store.get("clipboard", []));
+      if (m.type === "clipboard.put") { const l = clip.clipAdd(store.get("clipboard", []), m.item); store.set("clipboard", l); return reply(l); }
       if (m.type === "generate") {
         let i = 0;
         const speed = Number(new URLSearchParams(location.search).get("ms") || 30);
