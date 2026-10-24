@@ -301,12 +301,13 @@ test("auto-detect order: Claude Code, Codex, Anthropic key, OpenAI key", () => {
 });
 
 // dogfood: on real apps haiku at its default effort thought for 11 to 21 s
-// before writing a word; low effort is the default now, as on the API path.
-test("claude-code: low effort unless the settings choose one, and a Claude Code that doesn't know --effort still works", async () => {
+// before writing a word; a set effort is the default now. design: medium, which
+// made the best-looking changes on the design eval (evals/design/README.md).
+test("claude-code: medium effort unless the settings choose one, and a Claude Code that doesn't know --effort still works", async () => {
   process.env.FAKE_MODE = "ok";
   await streamChat({ provider: "claude-code", model: "haiku" }, MESSAGES);
   let { argv } = await log("claude");
-  assert.equal(argv[argv.indexOf("--effort") + 1], "low");
+  assert.equal(argv[argv.indexOf("--effort") + 1], "medium");
   await streamChat({ provider: "claude-code", model: "haiku", effort: "high" }, MESSAGES);
   ({ argv } = await log("claude"));
   assert.equal(argv[argv.indexOf("--effort") + 1], "high");

@@ -98,15 +98,29 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 160–166-pack-* | shoot-packs.js | ✅ | Came with main; current words |
 | clip-sleep-timer.gif, .mp4 | shoot-desktop.js's recording (`MORSE_HOME/clips`), encoded at double speed | ✅ | Today's bar; the machine was slow, so it is played twice as fast |
 | claude-code/01 … 14 | shoot-desktop.js with `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code` | ✅ | Whole run with real Claude Code. 14-share-card.png is new. Taken before the last merge from main, so the Mods panel (11) has no Packs row yet; a rerun after it was worse (haiku answered in 5 s, so 04 caught the finished change) and wasn't kept |
-| 167-desktop-app-apps.png | shoot-desktop-app.js | ✅ | Morse Desktop: this machine's apps, Tunes really connected (2 windows) |
-| 168-desktop-app-restart.png | shoot-desktop-app.js | ✅ | “Tunes is open. Restart it with Morse?”, with Always restart |
-| 169-desktop-app-model.png | shoot-desktop-app.js | ✅ | Real Claude Code (haiku) answered the check; the three choices |
+| 167-desktop-app-apps.png | shoot-desktop-app.js | ✅ | Morse Desktop: this machine's real apps, each with its own icon (Joplin, Logseq, Obsidian, Visual Studio Code, VSCodium); Microsoft's VS Code really connected |
+| 168-desktop-app-restart.png | shoot-desktop-app.js | ✅ | “Visual Studio Code is open. Restart it with Morse?”, with Always restart |
+| 169-desktop-app-model.png | shoot-desktop-app.js | ✅ | Real Claude Code (sonnet) answered the check; the three choices |
 | 170-desktop-app-chrome.png | shoot-desktop-app.js | ✅ | The Morse helper on, the three ways to connect Chrome, a code |
-| 171-desktop-app-allow-chrome.png | shoot-desktop-app.js | ✅ | “Allow Chrome to use your Claude Code · haiku?”: the real helper (onboarding v2, daemon/bridge.js /v1/pair/ask) asking, for a request made the way the extension makes it |
-| 172-desktop-app-mods.png | shoot-desktop-app.js | ✅ | Mods per app with switches; one turned off |
+| 171-desktop-app-allow-chrome.png | shoot-desktop-app.js | ✅ | “Allow Chrome to use your Claude Code · sonnet?”: the real helper asking |
+| 172-desktop-app-mods.png | shoot-desktop-app.js | ✅ | Mods per app with switches, the real apps' mods; one turned off |
 | 173-desktop-app-checks.png | shoot-desktop-app.js | ✅ | The checks, with the model answering for real; “You're root” is this test machine |
-| 174-desktop-app-light.png | shoot-desktop-app.js | ✅ | Light mode; Tunes open and ready to connect |
+| 174-desktop-app-light.png | shoot-desktop-app.js | ✅ | Light mode, with the apps' own icons |
 | 175-desktop-app-first-run.png | shoot-desktop-app.js | ✅ | The first run: Claude Code found and checked for real, the apps to open |
+| 300–318-real-*.png | demo/shoot-real.js (Claude Code · sonnet) | ✅ | Real websites: nodejs.org as a printed book (point, working, result, a follow-up, the Mods panel, History, Edit code, Share), Docker Hub (dark mode with Easier to use, Ask, Find, Explain), pkg.go.dev (Check this page), rubygems.org (Edit tools, rename, recolor), gitlab.com (Settings, shortcuts). No 309 (Higher contrast was paused by the slowness guard) or 319 (Stop: the model hadn't started in time) |
+| 320–322-vscode-*.png | demo/try-real-app.js (Claude Code · opus) | ✅ | Microsoft's Visual Studio Code 1.143.1: the request, the paper notebook result, and after reopening. 256 colors |
+| 323–326-obsidian-*.png | demo/try-real-app.js (Claude Code · sonnet) | ✅ | Obsidian 1.14.5: the request, while it writes, the typewritten page, after reopening |
+| 327, 328-vscodium-*.png | demo/try-real-app.js (Claude Code · opus) | ✅ | VSCodium: synthwave, and after reopening. 256 colors |
+| 329, 330-logseq-*.png | demo/try-real-app.js (Claude Code · sonnet) | ✅ | Logseq 0.10.9: the lined notebook, and while it writes |
+
+No longer in the user docs, the README or the store listing, because they
+show Morse's demo apps or the bar playground, not a real app or site (kept
+for the developer docs and tests that use them): 04, 05, 07–09, 11, 12, 14,
+21, 24, 25, 27–30, 32, 33, 40–42, 50–56, 60–65, 71, 72, 90–93, 95–98,
+100–103, 110–117, 120–127, 129, 131, 133, 147–152 and 160–166 (in
+desktop.md, the haiku runs' rows stay as text), 150–158-style-*, 170, 176,
+181 and clip-sleep-timer.gif; the launch posters poster-direct-edit.png and
+poster-page-tools.png, and poster-demo-v2.png in the README.
 
 Removed, after checking that no doc, page, test or script uses them:
 00-terminal.png (no script made it), 01, 02, 03, 06, 10, 13 (steps between
@@ -144,9 +158,9 @@ landing-nav-desktop); nothing uses them.
 
 | File | Made by | | Note |
 |---|---|---|---|
-| screenshots/1-describe-a-change.png | store-screenshots.js | ✅ | pkg.go.dev, a real model (Claude Code · haiku) while it writes |
+| screenshots/1-describe-a-change.png | store-screenshots.js | ✅ | pkg.go.dev, a real model (Claude Code · sonnet) while it writes |
 | screenshots/2-save-what-you-like.png | store-screenshots.js | ✅ | pypi.org: copy buttons on the code examples, with Save |
 | screenshots/3-your-mods.png | store-screenshots.js | ✅ | pypi.org: the Mods panel with the three mods made just before |
-| screenshots/4-mods-others-made.png | store-screenshots.js | ✅ | The Tunes demo app: the gallery's mods for real sites are for sites that need an account or that the machine taking the pictures can't reach |
+| screenshots/4-mods-others-made.png | store-screenshots.js | ✅ | pypi.org: the gallery's “Dark mode” for this site, tried before saving |
 | screenshots/5-edit-tools.png | store-screenshots.js | ✅ | rubygems.org: the Edit tools and the color palette |
 | promo/small-tile-440x280.png, promo/marquee-1400x560.png | store-promo.js | ✅ | The marquee shows part of screenshot 2 |

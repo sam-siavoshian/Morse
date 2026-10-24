@@ -210,3 +210,23 @@ test("a watch over a long flat list costs linear time, and what it puts next to 
   await page.evaluate(() => morse.__off("flat2"));
   await page.evaluate(() => { morse.__off("flat1"); document.getElementById("long").remove(); document.getElementById("short").remove(); });
 });
+
+// VS Code's ids have dots ("workbench.parts.statusbar"); models write them as
+// "#workbench.parts.statusbar" (an id and two classes), which matches nothing.
+test("an id with dots written as #a.b.c finds the part whose id it is, and #id.class still means a class", { skip }, async () => {
+  await page.evaluate(() => {
+    const bar = document.createElement("div");
+    bar.id = "workbench.parts.statusbar";
+    bar.innerHTML = `<div class="left-items"></div>`;
+    const plain = document.createElement("p");
+    plain.id = "note";
+    plain.className = "big";
+    document.body.append(bar, plain);
+  });
+  const r = await run("ids1", `morse.watch("#workbench.parts.statusbar > .left-items", el => el.append(morse.el("button", { text: "Format" })));
+    if (!morse.$("#note.big")) throw new Error("#id.class");`);
+  assert.equal(r.ok, true);
+  await settle(page);
+  assert.equal(await page.evaluate(() => document.querySelector('[id="workbench.parts.statusbar"] button')?.textContent), "Format");
+  await page.evaluate(() => morse.__off("ids1"));
+});

@@ -1,7 +1,7 @@
 # Submitting Morse to the Chrome Web Store
 
 Step by step, from a clean checkout to "Pending review". Everything to paste
-is in [listing.md](listing.md); every file to upload is in this folder or in
+is in [listing.md](listing.md). Every file to upload is in this folder or in
 `dist/` after step 2.
 
 ## 1. Before you start
@@ -46,7 +46,7 @@ DISPLAY=:99 npm run store:smoke       # the zip, unpacked, in a fresh profile
 ```
 
 `npm run store` writes `dist/morse-extension-0.2.0-store.zip`. Write down the
-SHA-256 it prints; it tells you later which build is in the store. Upload
+SHA-256 it prints. It tells you later which build is in the store. Upload
 **that** zip, not `dist/morse-extension-0.2.0.zip` (`npm run
 package:extension` makes that one from the test build, which trusts a local
 test address).
@@ -153,7 +153,7 @@ Morse's single purpose is to let the user change any website they visit, in
 their own words. The bar has to open on whatever page they're on, and the
 changes they saved have to come back on the sites they were made for. Morse
 can't know those sites in advance. The content script reads nothing and sends
-nothing until the user opens Morse on that page; a narrower list of sites, or
+nothing until the user opens Morse on that page. A narrower list of sites, or
 `activeTab` alone, would break saved changes, which have to apply on every
 visit without a click.
 

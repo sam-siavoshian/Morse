@@ -4,6 +4,9 @@ How to work on Morse itself. For using Morse, see the [docs](../README.md).
 
 - [How Morse works](architecture.md): hosts, the in-app runtime, the `morse`
   kit, the engine, model providers, the mod format, security.
+- [App profiles](rea.md): how Morse reads how a desktop app works inside
+  (its commands, channels and objects) so changes can use the app's own
+  logic. What was taken from REA and why it isn't a dependency.
 - [Testing](testing.md): `npm run check`, `npm test`, `npm run test:ui`, the
   test helpers, evals, screenshots, and what was verified for real.
 - [Adding a feature](adding-a-feature.md): the rules for runtime code, words
@@ -50,7 +53,7 @@ the `prepare` script builds the extension inside the package, and
 ## Repo layout
 
 ```
-core/        shared brain: engine, prompt, parser, model providers, mod format, the morse kit,
+core/        shared logic: engine, prompt, parser, model providers, mod format, the morse kit,
              onboarding and errors, gallery, heal, show-once, a11y, summary, demo replay (tests)
 runtime/     the in-app UI and effect: src/*.js bundled into one file, injected everywhere
 extension/   Chrome MV3 host: service worker, content-script bridge, popup, welcome page
@@ -83,9 +86,8 @@ The design is Morse's own, taken from the product: the dark grey ramp of
 and requests, and the radar's pixels as the one motif (a faint grid behind
 the headline, with a few lit squares pulsing like the mark while a model
 works). Dark only. There are no drawn pictures: every picture is a real
-screenshot or a frame of a real recording, and the only SVGs are the
-favicon and a few functional icons (arrows, play, pause);
-`tests/site.test.js` checks that. One page that sells in a minute: the
+screenshot or a frame of a real recording, every app icon is the app's own,
+and there is no SVG. `tests/site.test.js` checks that. The landing page, in order: the
 headline and the film, **See it change** (before and after pairs with a
 slider), **How it works** in three steps, **Try it here**, a strip of real
 apps, **Install** (two buttons, the steps by hand behind each, and one line
@@ -100,7 +102,7 @@ for developers), privacy in two lines, a short FAQ.
   listing or a Morse Desktop download). `DEMO_VIDEO`: the film under the
   headline (file, poster, shape, captions). `SHOWCASE`: the before and after
   pairs, each with the app's name as it shows on screen (VSCodium, not VS
-  Code), what was asked and by which model; swap in the pictures from
+  Code), what was asked and by which model. Swap in the pictures from
   `docs/showcase/` there (`npm run pages` publishes that folder when it
   exists). `REAL_APPS`: the strip of real apps. `site/index.js` builds those
   two sections from it.
@@ -108,19 +110,23 @@ for developers), privacy in two lines, a short FAQ.
   Display and JetBrains Mono, Latin subsets, OFL, in `site/fonts/`).
   `site/shots/` holds the screenshots the page shows, as WebP copies of
   `docs/screenshots/` (same numbers), frames of
-  `docs/launch/morse-social-16x9.mp4` (198, 200, 201), the Chrome Web Store
-  screenshots (180, 181) and the rest of the Obsidian run behind 149 (190,
-  191).
+  `docs/launch/morse-social-16x9.mp4` (198, 200, 201) and the Chrome Web
+  Store screenshots 2 and 3 (182, 184). `site/icons/` holds the real icon of
+  each app and site the page names (`APP_ICONS` in `config.js`: from the
+  installed app, or the site's own favicon, 64 pixels at most), shown on the
+  gallery cards, the showcase and the strip; a name without one shows its
+  first letter. The site has no SVG: the favicon is the Morse mark as a PNG,
+  and the arrow, play, pause and slider icons are text.
 - **Try it here** ([`site/try/`](../../site/try/), the `#try` section between
   `<!-- try-it -->` markers in `site/index.html`): the real runtime in a demo
   app (`demo/sites/tunes` or `byte`), in an iframe sandboxed with
   `allow-scripts` only. `section.js` fills the section and adds `try.css`
-  (dark, in the tokens' charcoal, whatever the page around it does); it
+  (dark, in the tokens' charcoal, whatever the page around it does). It
   loads `try.js` only when the section is about to scroll into view or
   something in it is clicked. `try.js` is the runtime's host, like
   `demo/playground.html`'s fake host but over postMessage, and `frame.js` is
   the frame's side and the only place mod code runs. The demo model
-  (`core/demo.js`) writes the changes through the real engine; a request it
+  (`core/demo.js`) writes the changes through the real engine. A request it
   has no reply for gets a note that points to installing Morse
   (`isDemoFallback`; the section's `data-install` says where). Saved mods
   stay in the page's localStorage (`morse:try:*`). `npm run pages` publishes
@@ -163,7 +169,7 @@ Claude Code (sonnet) for each request on its real page or demo app and checks
 the answer; `node evals/gallery.js --verify` checks the files in
 `site/mods/` (`SHOTS=dir` also takes the before and after pictures). The
 demo-app mods are checked again by every test run
-(`tests/gallery-mods.test.js`); the real-site results are in
+(`tests/gallery-mods.test.js`). The real-site results are in
 [`site/mods/VERIFIED.md`](../../site/mods/VERIFIED.md). Each entry also has a
 `category` (the gallery page's filters), `userScripts` (true when the mod has
 code, so it needs Chrome's “Allow User Scripts”), `checked` (when and where it
@@ -174,18 +180,18 @@ Morse reads the same list for **Mods for this site**
 ([`core/gallery.js`](../../core/gallery.js), fetched and cached by
 [`core/gallery-host.js`](../../core/gallery-host.js)). Each entry needs
 `match` (the mod's hosts and app, so Morse can tell which pages it is for)
-and `version`; raise `version` and add a one-line `changes` when you update a
+and `version`. Raise `version` and add a one-line `changes` when you update a
 mod, and people who installed it see Update available. Entries with
 `"demo": true` are for the demo sites (`npm run demo:serve` serves the list at
 `http://127.0.0.1:8787/site/mods/index.json`, which Morse uses on those
-sites in a test build and in the Morse helper; the store build never reads
+sites in a test build and in the Morse helper. The store build never reads
 it). The gallery page shows them with a “Demo app” badge. To read another list, set
 `MORSE_GALLERY_URL` or `"gallery": { "index": "…" }` in `~/.morse/config.json`
 (desktop), or `morse.gallery.url` in the extension's local storage.
 
 ## Releasing
 
-The version lives in `package.json` only; the build writes it into the
+The version lives in `package.json` only. The build writes it into the
 extension's manifest, and `morse --version` prints it. See
 [CHANGELOG.md](../../CHANGELOG.md).
 
@@ -209,23 +215,28 @@ read-only investigation toolkit for coding agents: it analyzes Electron/JS
 bundles statically, reads Electron fuses, observes runtime execution over
 CDP, and drives Ghidra/Hopper/IDA/Frida for native code. It deliberately never
 modifies a target and is built for careful evidence, not latency, so it is
-the wrong tool for Morse's instant loop. Morse borrows its approach where it
-helps:
+the wrong tool for Morse's instant loop. Morse reimplements the small parts it
+needs, in plain JavaScript with no new dependencies:
 
-- **Now:** the Electron fuse check (`daemon/fuses.js`, a reimplementation of
-  REA's `inspect_electron_fuses`) before relaunching an app.
-- **Next:** a one-time "app profile" pass with REA's static JS analysis
-  (modules, IPC channels, routes) and `inspect_web_event_listeners`, cached
-  and fed to the model as context for requests that need the app's *logic*,
-  not just its DOM ("make shuffle actually random").
+- the Electron fuse check (`daemon/fuses.js`, REA's `inspect_electron_fuses`)
+  before relaunching an app;
+- **app profiles** (`daemon/profile.js`, `core/profile.js`): a one-time,
+  read-only pass over the app's code (IPC channels, contextBridge APIs,
+  commands, routes, store actions) and over the running window (its own
+  objects, a command runner, `inspect_web_event_listeners`-style listener
+  reads), cached per app version and given to the model for requests about
+  what the app *does*. Mods run the app's commands with
+  `morse.app.command(id)`. The design, the choice not to depend on REA, and
+  the measurements are in [App profiles](rea.md).
 
 ## Roadmap
 
 - **Days:** tune the prompt and kit with Claude Code and Codex on real
-  Spotify, Slack, Discord, VS Code, Notion and ChatGPT; a tray app with a
-  global hotkey (Tauri) so `morse launch` isn't needed; clip recording in the
+  Spotify, Slack, Discord, VS Code, Notion and ChatGPT. A tray app with a
+  global hotkey (Tauri) so `morse launch` isn't needed. Clip recording in the
   extension (`tabCapture`).
-- **Weeks:** REA-powered app profiles for logic-level changes; enforce the
+- **Weeks:** app profiles for apps whose command runner Morse can't find yet
+  (see [App profiles](rea.md#what-doesnt-work-yet)). Enforce the
   no-network rule with a CSP or proxy for mod code. (Mod repair when an app
   update breaks selectors, and a static-site gallery of shared mods, have
   shipped: see [Mods](../mods.md).)

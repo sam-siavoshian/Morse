@@ -169,7 +169,7 @@ test("Esc on a result keeps it and says so, with Undo right there", { skip }, as
   await waitFor(s => !s.open);
   const toast = ui(page, ".ctl-toast");
   await toast.waitFor();
-  assert.match(await toast.textContent(), /Kept “Now playing label”\. Closing the bar keeps a change\./);
+  assert.match(await toast.textContent(), /Saved “Now playing label”\. Closing the bar saves a change\./);
   assert.equal((await saved(page)).length, 1, "it is kept");
   assert.equal(await page.locator("#toolbar .morse-now").count(), 1);
   await ui(page, ".ctl-toast .ctl-acts button", { hasText: "Undo" }).click();
@@ -198,7 +198,7 @@ test("Esc on a result keeps it and says so, with Undo right there", { skip }, as
   await page.keyboard.press("Escape");
   await waitFor(s => !s.open);
   await toast.waitFor();
-  assert.match(await toast.textContent(), /Kept “Now playing label”/);
+  assert.match(await toast.textContent(), /Saved “Now playing label”/);
   assert.equal((await saved(page))[0].history.length, 1);
   await ui(page, ".ctl-toast .ctl-acts button", { hasText: "Undo" }).click();
   await page.waitForFunction(() => getComputedStyle(document.querySelector("#toolbar .morse-now")).fontSize === "14px");

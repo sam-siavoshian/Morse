@@ -25,7 +25,7 @@ with as few lines as possible in shared files.
    Some files offer hook arrays instead, like `quickMenuGroups` in
    `46-quick.js` or `outgoing` in `01-rpc.js`.
 4. **Host requests in both hosts.** The extension routes them from
-   `extension/background.js` to a `extension/<feature>-host.js`; the desktop
+   `extension/background.js` to a `extension/<feature>-host.js`. The desktop
    connector to a `daemon/<feature>.js`. Code both share goes in
    `core/<feature>-host.js` with its storage passed in (like
    [`core/gallery-host.js`](../../core/gallery-host.js)).
@@ -42,7 +42,7 @@ rules are checked by tests:
 
 - **No duplicate top-level names.** `runtime/src/*.js` and the inlined core
   modules share one scope. A second `const` with the same name is a
-  SyntaxError that kills the whole runtime; a second `function` silently
+  SyntaxError that kills the whole runtime. A second `function` silently
   replaces the first. Wrap a feature in one object
   (`const Heal = (() => { … return { soon, kept }; })();`) and keep helpers
   inside it. `npm run check` and `tests/bundle.test.js` fail on a duplicate,

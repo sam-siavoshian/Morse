@@ -102,6 +102,9 @@ const popup = await fs.readFile(path.join(root, "extension", "popup.html"), "utf
 await fs.writeFile(path.join(out, "options.html"), popup.replace("<title>Morse</title>", "<title>Morse settings</title>").replace("<body>", '<body data-page="options">'));
 await fs.writeFile(path.join(out, "runtime.js"), bundleRuntime());
 await fs.copyFile(path.join(root, "design", "tokens.css"), path.join(out, "tokens.css")); // extension pages (welcome) share the design tokens
+// The marks of the models you can choose: the one set Morse Desktop uses too.
+await fs.mkdir(path.join(out, "brand"), { recursive: true });
+for (const f of await fs.readdir(path.join(root, "desktop-app", "ui", "icons"))) await fs.copyFile(path.join(root, "desktop-app", "ui", "icons", f), path.join(out, "brand", f));
 
 // The logo: a 3x3 grid in the gray signal ramp, on a dark rounded tile so the
 // light squares show on light backgrounds too (the store page, a light

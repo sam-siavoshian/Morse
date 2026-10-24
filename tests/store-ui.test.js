@@ -166,7 +166,8 @@ test("the practice page loads under its stricter sandbox rules (no eval there ei
   p.on("console", m => { if (/Content Security Policy|Refused to/i.test(m.text())) refused.push(m.text()); });
   await p.goto(`chrome-extension://${extId}/welcome.html`);
   const frame = await waitFor(() => p.frames().find(f => f.url().endsWith("/practice.html")), { what: "the practice frame" });
-  await frame.waitForFunction(() => !!document.querySelector("[data-morse-ui]") && !!globalThis.__morseHost);
+  // polling by time: a frame in a tab that isn't in front gets no animation frames, so the default (rAF) polling can stall
+  await frame.waitForFunction(() => !!document.querySelector("[data-morse-ui]") && !!globalThis.__morseHost, null, { polling: 100 });
   assert.deepEqual(refused, [], "nothing Morse loads there is refused");
   // Chrome's default sandbox rules allow inline code and eval; Morse's allow only its own files.
   // (The test's own evaluate is exempt from page rules, so it adds a script the way a page would.)
@@ -254,7 +255,7 @@ test("a page can't draw over the install review, and Install waits until the rev
   // A page that keeps covering it gets the review closed; nothing installed.
   await cover(p, "popover", { again: true });
   await waitFor(() => p.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".modal").hidden), { what: "the review closed" });
-  assert.match(await shadowText(p), /kept covering Morse's review/);
+  assert.match(await shadowText(p), /kept covering Morse's window/);
   await uncover(p);
   assert.deepEqual(await stored(), []);
 

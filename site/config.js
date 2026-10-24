@@ -38,71 +38,103 @@ export const DEMO_VIDEO = {
 // since one slides over the other. To swap a pair, change it here only.
 export const SHOWCASE = [
   {
-    app: "VSCodium",
+    app: "Visual Studio Code",
     kind: "Desktop app, on Linux",
-    note: "VS Code without Microsoft’s branding.",
-    ask: "make it look like a retro green terminal: green glowing text on black",
-    by: "Claude Code (haiku), 11.6 seconds",
-    before: "shots/200-vscodium-terminal-before.webp",
-    after: "shots/201-vscodium-terminal-after.webp",
+    note: "Microsoft’s Visual Studio Code 1.143. CSS only; quit and opened again, it was back.",
+    ask: "using only CSS, make VS Code look like a classic Windows 95 app: silver gray 3D bevelled panels, tabs and buttons, a navy blue title bar with white bold text, Tahoma for the menus and panels, black text on every gray panel and tab, white text on navy selections, and a plain white editor with dark text; the current line, the active tab and the section header rows should be light gray with black text; keep VS Code's own icons and the editor's monospace font",
+    by: "Claude Code (opus), 31 seconds",
+    before: "shots/210-vscode-windows-95-before.webp",
+    after: "shots/211-vscode-windows-95-after.webp",
     width: 1200, height: 750,
     alt: {
-      before: "VSCodium with its usual dark theme. The Morse bar at the bottom holds the request.",
-      after: "The same VSCodium window, all green text on black like an old terminal. The bar offers Save and Undo.",
+      before: "Visual Studio Code with its usual dark theme, a JavaScript file open and the file list on the left.",
+      after: "The same VS Code window as a Windows 95 app: navy title bar, silver gray bevelled panels and buttons, a white editor with black code.",
     },
   },
   {
     app: "Obsidian",
     kind: "Desktop app, on Linux",
-    note: "Pointed at the ribbon on the left, then opened again after saving.",
-    ask: "hide this ribbon",
-    by: "Claude Code (haiku)",
-    before: "shots/149-obsidian-bar.webp",
-    after: "shots/150-obsidian-ribbon-gone.webp",
-    width: 1024, height: 800,
+    note: "A real vault. Quit and opened again, it was back.",
+    ask: "make Obsidian look like an old typewriter: cream paper background with a subtle paper texture, a typewriter font like Courier for everything, dark brown ink for the text, and paper-colored side panels with thin ruled lines",
+    by: "Claude Code (opus), 15 seconds",
+    before: "shots/212-obsidian-typewriter-before.webp",
+    after: "shots/213-obsidian-typewriter-after.webp",
+    width: 1200, height: 750,
     alt: {
-      before: "Obsidian with the ribbon of icons on the left outlined, and the Morse bar asking what to change.",
-      after: "Obsidian opened again: the ribbon is gone and the file list starts at the left edge.",
+      before: "Obsidian with its usual light theme, the note Weekly plan open beside the file list.",
+      after: "The same note on cream paper in a typewriter font with dark brown ink, and ruled lines down the file list.",
     },
   },
   {
-    app: "PyPI",
-    kind: "Website, in Chrome",
-    note: "pypi.org/project/requests, checked on the live site.",
-    ask: "dark mode for the whole page, including the sidebar on the right, with text that’s easy to read",
-    by: "Claude Code (haiku)",
-    before: "mods/shots/pypi-dark-mode-before.jpg",
-    after: "mods/shots/pypi-dark-mode-after.jpg",
-    width: 1280, height: 800,
+    app: "Visual Studio Code",
+    kind: "Desktop app, on Linux",
+    note: "Microsoft’s Visual Studio Code 1.143. The picture is after pressing Ctrl+Alt+P for real.",
+    ask: "when I press Ctrl+Alt+P, switch to a presentation mode: hide the sidebar and the activity bar so the code fills the whole window, and make the code twice as big so people at the back can read it; pressing it again goes back",
+    by: "Claude Code (opus), 24 seconds",
+    before: "shots/214-vscode-presentation-shortcut-before.webp",
+    after: "shots/215-vscode-presentation-shortcut-after.webp",
+    width: 1200, height: 750,
     alt: {
-      before: "The PyPI page for requests, with its blue header and white page.",
-      after: "The same PyPI page in dark mode, with light text on dark grey.",
+      before: "Visual Studio Code with the file list, the activity bar and a JavaScript file in its usual small type.",
+      after: "After Ctrl+Alt+P: no sidebar or activity bar, the code twice as big across the whole window, and a note saying how to exit.",
     },
   },
   {
-    app: "Node.js docs",
+    app: "Docker Hub",
     kind: "Website, in Chrome",
-    note: "nodejs.org/api/path.html, checked on the live site.",
-    ask: "show the table of contents on the right side and keep it there while I scroll",
-    by: "Claude Code (haiku)",
-    before: "mods/shots/nodejs-side-contents-before.jpg",
-    after: "mods/shots/nodejs-side-contents-after.jpg",
-    width: 1280, height: 800,
+    note: "hub.docker.com/_/nginx, the live site, after a reload.",
+    ask: "hide everything on this page except the README, and center it in a comfortable reading column",
+    by: "Claude Code (opus), 9 seconds",
+    before: "shots/216-web-dockerhub-readme-only-before.webp",
+    after: "shots/217-web-dockerhub-readme-only-after.webp",
+    width: 1200, height: 750,
     alt: {
-      before: "The Node.js path documentation, with its contents only at the top of the page.",
-      after: "The same page with the contents in a column on the right, beside the text.",
+      before: "The nginx page on Docker Hub: blue header, image details, tabs, and the tag summary column beside the README.",
+      after: "The same page with only the README left, centered in one reading column: no header, tabs or side column.",
     },
   },
 ];
 
 // The strip of real apps and websites, each a real screenshot with the Morse
-// bar open. app is the name exactly as it shows on screen; ask is what was
-// asked (empty for a change made by hand with the Edit tools).
+// bar open, taken in October 2026 with Claude Code on Linux (sonnet or opus;
+// docs/desktop.md, Tested on). app is the name exactly as it shows on screen;
+// ask is what was asked; by is the model and how long it took to write.
 export const REAL_APPS = [
-  { app: "Joplin", kind: "Desktop app", ask: "hide this button, I don’t use sync", src: "shots/152-joplin-sync-hidden.webp", width: 1152, height: 720, alt: "Joplin after “hide this button, I don’t use sync”: the Synchronize button is gone and the bar offers Save." },
-  { app: "VSCodium", kind: "Desktop app", ask: "make the status bar bigger", src: "shots/148-vscodium-status-bar-back.webp", width: 1208, height: 804, alt: "VSCodium opened again after “make the status bar bigger”: the taller status bar is still there." },
-  { app: "GitLab", kind: "Website", ask: "add a back to top button in the bottom right corner", src: "shots/153-web-gitlab-back-to-top.webp", width: 1280, height: 800, alt: "A GitLab project page with a new floating back to top button, and the bar offering Save." },
-  { app: "Docker Hub", kind: "Website", ask: "make these code blocks bigger with a dark background", src: "shots/155-web-docker-hub-code.webp", width: 1280, height: 800, alt: "The nginx page on Docker Hub with larger, dark code blocks, and the bar offering Save." },
-  { app: "Go packages", kind: "Website", ask: "put the code examples on a dark background with bigger text, and hide the survey banner", src: "shots/180-web-go-packages.webp", width: 1280, height: 800, alt: "The net/http page on pkg.go.dev with code examples on a dark background while the change is written." },
-  { app: "RubyGems", kind: "Website", ask: "", by: "The Edit tools: change it by hand, no model", src: "shots/181-web-rubygems-edit.webp", width: 1280, height: 800, alt: "The rails page on RubyGems with the Edit tools open on the heading: hide, move, resize, text and color." },
+  { app: "Visual Studio Code", kind: "Desktop app", ask: "add a big Pomodoro focus timer panel in the top right of the editor: a large 25:00 countdown with Start, Pause and Reset buttons, styled like VS Code's own widgets", by: "Claude Code (opus)", src: "shots/218-vscode-focus-timer.webp", width: 1200, height: 750, alt: "Visual Studio Code with a Focus timer panel at the top right, counting down from 25:00, with Start, Pause and Reset." },
+  { app: "VSCodium", kind: "Desktop app", ask: "give the editor a synthwave look: deep purple background, neon pink and cyan text, and a glowing purple activity bar", by: "Claude Code (opus), 22.9 seconds", src: "shots/327-vscodium-synthwave.webp", width: 1200, height: 750, alt: "VSCodium with a deep purple editor, pink and cyan code and a purple activity bar. The bar offers Save." },
+  { app: "Obsidian", kind: "Desktop app", ask: "add a Pinned section at the top of the file list with Weekly plan and Reading list as big colored cards, each label vertically centered and fully visible; clicking a card opens that note", by: "Claude Code (opus)", src: "shots/220-obsidian-pinned-notes.webp", width: 1200, height: 750, alt: "Obsidian with a Pinned section above the file list: Weekly plan and Reading list as purple and orange cards." },
+  { app: "Obsidian", kind: "Desktop app", ask: "add a big New daily note button at the top of the file list, with its label vertically centered and fully visible, that creates a note named with today's date, like 2026-10-24, and opens it", by: "Claude Code (opus)", src: "shots/221-obsidian-daily-note-button.webp", width: 1200, height: 750, alt: "Obsidian after clicking a new “+ New daily note” button: a note named 2026-10-24 is created and open." },
+  { app: "Logseq", kind: "Desktop app", ask: "make the journal look like a lined paper notebook: cream ruled lines behind the text, a handwriting style font, and much bigger page titles", by: "Claude Code (sonnet), 6.4 seconds", src: "shots/329-logseq-notebook.webp", width: 980, height: 700, alt: "Logseq’s journal on ruled cream paper with a red margin line and a big serif date. The bar offers Save." },
+  { app: "Node.js docs", kind: "Website", ask: "add a floating table of contents on the right side that stays in view as I scroll and highlights the section I'm reading", by: "Claude Code (opus)", src: "shots/222-web-nodejs-floating-toc.webp", width: 1200, height: 750, alt: "The Node.js file system docs with a floating table of contents on the right, highlighting the section being read." },
+  { app: "PyPI", kind: "Website", ask: "add a copy button to the top right corner of every code example", by: "Claude Code (sonnet), 12.7 seconds", src: "shots/182-web-pypi-copy-buttons.webp", width: 1280, height: 800, alt: "The requests page on PyPI with a new Copy button on the code example. The bar offers Save." },
+  { app: "Docker Hub", kind: "Website", ask: "Explain this page", by: "Claude Code (sonnet), 6.4 seconds", src: "shots/313-real-explain.webp", width: 1280, height: 800, alt: "The nginx page on Docker Hub with numbered markers on the tabs, the tag list and the copy button, and the bar explaining each one." },
+  { app: "RubyGems", kind: "Website", ask: "give this page a dark reading mode: one consistent deep charcoal background across the whole page, soft off-white text, and links, buttons and numbers that stay easy to read", by: "Claude Code (opus)", src: "shots/223-web-rubygems-dark-mode.webp", width: 1200, height: 750, alt: "The rails page on RubyGems in a dark reading mode: charcoal background, soft white text and blue links." },
 ];
+
+// The real icon of each app or website the page names, by its name as it
+// shows on screen. Each file in icons/ is the app's own icon, taken from the
+// installed app (the icon VS Code, VSCodium, Obsidian, Joplin and Logseq ship)
+// or the site's own favicon, downloaded from it in October 2026, at 64 pixels
+// or the size the site has. They are there only to name the app or site a
+// picture or a mod is about (nominative use): they aren't Morse's, and Morse
+// isn't affiliated with any of them. A name with no entry shows its first
+// letter instead; that is only for sites whose icon couldn't be fetched.
+export const APP_ICONS = {
+  "VS Code": "icons/vscode.png",
+  "Visual Studio Code": "icons/vscode.png",
+  "VSCodium": "icons/vscodium.png",
+  "Obsidian": "icons/obsidian.png",
+  "Joplin": "icons/joplin.png",
+  "Logseq": "icons/logseq.png",
+  "PyPI": "icons/pypi.png",
+  "Node.js docs": "icons/nodejs.png",
+  "Go packages": "icons/go.png",
+  "RubyGems": "icons/rubygems.png",
+  "Docker Hub": "icons/docker.png",
+  "GitLab": "icons/gitlab.png",
+  "Ubuntu": "icons/ubuntu.png",
+  "NuGet": "icons/nuget.png",
+  "Packagist": "icons/packagist.png",
+  "MetaCPAN": "icons/metacpan.png",
+  "Claude": "icons/claude.png",
+};

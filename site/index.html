@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Morse: change any app in your own words</title>
-<meta name="description" content="Morse lets you change any website or desktop app by saying what you want. Free and open source.">
+<title>Morse: change any website or desktop app in your own words</title>
+<meta name="description" content="Change any website in Chrome, or desktop apps like VSCodium and Obsidian, by saying what you want. Your own AI makes the change. Free and open source.">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="color-scheme" content="dark">
-<meta property="og:title" content="Morse: change any app in your own words">
-<meta property="og:description" content="Press a shortcut, point at something and say the change. Your own model makes it in the running app while you watch.">
-<meta property="og:image" content="https://sam-siavoshian.github.io/RRAA/docs/launch/poster-social.png">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<!-- seo: npm run pages puts the canonical address, link previews and structured data here (scripts/build-pages.js) -->
+<link rel="icon" href="favicon.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="mark/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
 <link rel="preload" as="image" href="shots/198-film-poster.webp" fetchpriority="high">
@@ -19,13 +19,6 @@
 <body>
 <a class="skip-link" href="#top">Skip to content</a>
 
-<!-- Functional icons only: arrows, play and pause. -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
-  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
-  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
-  <symbol id="i-drag" viewBox="0 0 24 24"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/></symbol>
-</svg>
 
 <header class="nav">
   <div class="wrap">
@@ -75,9 +68,9 @@
     <div class="wrap hero-grid">
       <h1 class="hero-title">Change any app <span>in your own words.</span></h1>
       <div class="hero-side">
-        <p class="hero-sub">Press a shortcut, point at something and say what you want. Your own model makes the change in the running app while you watch.</p>
+        <p class="hero-sub">Point at something and say what you want. The app changes while you watch. Morse uses the model you already have.</p>
         <div class="get-row">
-          <a class="btn btn-primary btn-lg" href="./#chrome-steps" data-link="chrome">Add to Chrome<svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-primary btn-lg" href="./#chrome-steps" data-link="chrome">Add to Chrome<span class="icon" aria-hidden="true">→</span></a>
           <a class="btn btn-secondary btn-lg" href="./#desktop-steps" data-link="desktop">Download Morse</a>
         </div>
         <p class="hero-note">Free and open source <span aria-hidden="true">·</span> No account <span aria-hidden="true">·</span> Uses Claude Code, Codex or your API key</p>
@@ -89,9 +82,9 @@
       <figure class="film" id="demo" data-film>
         <p class="film-strip"><span class="film-dot" aria-hidden="true"></span><span data-film-strip>VSCodium on Linux · Claude Code (haiku) · real runs</span></p>
         <div class="film-frame">
-          <img class="film-poster" src="shots/198-film-poster.webp" width="1280" height="720" alt="" fetchpriority="high">
-          <button type="button" class="film-play" aria-label="Play the video from the start, with controls"><span class="film-disc" aria-hidden="true"><svg class="icon"><use href="#i-play"/></svg></span></button>
-          <button type="button" class="film-toggle" aria-label="Pause or play the loop"><svg class="icon icon-pause"><use href="#i-pause"/></svg><svg class="icon icon-play"><use href="#i-play"/></svg></button>
+          <img class="film-poster" src="shots/198-film-poster.webp" width="1280" height="720" alt="VSCodium with the Morse bar open at the bottom, and the request “make it look like a retro green terminal” being typed in." fetchpriority="high">
+          <button type="button" class="film-play" aria-label="Play the video from the start, with controls"><span class="film-disc" aria-hidden="true"><span class="icon" aria-hidden="true">►</span></span></button>
+          <button type="button" class="film-toggle" aria-label="Pause or play the loop"><span class="icon icon-pause" aria-hidden="true">❚❚</span><span class="icon icon-play" aria-hidden="true">►</span></button>
         </div>
         <figcaption>36 seconds, no sound.</figcaption>
       </figure>
@@ -105,7 +98,7 @@
       <header class="section-head">
         <p class="eyebrow">See it change</p>
         <h2>Each change took one sentence.</h2>
-        <p class="lede">Real apps and real websites, changed by asking. Drag across a picture to see before and after.</p>
+        <p class="lede">Real apps and websites. Drag across a picture to see before and after.</p>
       </header>
       <div class="pairs" id="pairs"></div>
     </div>
@@ -116,36 +109,36 @@
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow">How it works</p>
-        <h2>Three steps, with nothing to install in the app.</h2>
+        <h2>Three steps. The app’s own files never change.</h2>
       </header>
       <div class="steps" data-steps>
         <ol class="steps-list">
           <li class="step is-on">
             <button type="button" class="step-btn" aria-pressed="true" data-step="0">
               <span class="step-n">01</span>
-              <span class="step-text"><strong>Point at it</strong><span>Press <kbd>⌥</kbd><kbd>Space</kbd> (<kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd> on Windows and Linux) and click the part you want to change. Or describe the whole page.</span></span>
+              <span class="step-text"><strong>Point at it</strong><span>Press <kbd>⌥</kbd><kbd>Space</kbd> (<kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd> on Windows and Linux). Click the part you want to change, or describe the whole page.</span></span>
             </button>
           </li>
           <li class="step">
             <button type="button" class="step-btn" aria-pressed="false" data-step="1">
               <span class="step-n">02</span>
-              <span class="step-text"><strong>Say the change</strong><span>Type one sentence, or hold the shortcut and talk. Your model writes the change and you see it as it happens.</span></span>
+              <span class="step-text"><strong>Describe the change</strong><span>Type one sentence, or hold the shortcut and talk. You see the change while your model writes it.</span></span>
             </button>
           </li>
           <li class="step">
             <button type="button" class="step-btn" aria-pressed="false" data-step="2">
               <span class="step-n">03</span>
-              <span class="step-text"><strong>Keep it</strong><span>Save keeps it, and Morse brings it back every time you open the app. Undo puts it back the way it was.</span></span>
+              <span class="step-text"><strong>Save it</strong><span>Save keeps it for next time. Undo puts the app back.</span></span>
             </button>
           </li>
         </ol>
         <figure class="steps-stage">
           <div class="shot steps-shots">
-            <img class="is-on" src="shots/149-obsidian-bar.webp" width="1024" height="800" loading="lazy" decoding="async" alt="Obsidian with the ribbon on the left outlined. The Morse bar holds the request “hide this ribbon”.">
-            <img src="shots/190-obsidian-working.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The Morse bar says it is making the change, and shows the code as it is written.">
-            <img src="shots/191-obsidian-result.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The ribbon is gone. The bar says “Hide left ribbon” and offers Save, Undo, Edit code and Share.">
+            <img class="is-on" src="shots/323-obsidian-ask.webp" width="1024" height="800" loading="lazy" decoding="async" alt="Obsidian with a note open. The Morse bar holds the request “make my notes look like an old typewritten page: yellowed paper, a typewriter font, and the headings underlined in dark red”.">
+            <img src="shots/324-obsidian-working.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The note is already turning yellow while the bar says it is writing the change.">
+            <img src="shots/325-obsidian-result.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The note on yellowed paper in a typewriter font, with dark red underlined headings. The bar says “Old Typewritten Page” and offers Save, Undo, Edit code and Share.">
           </div>
-          <figcaption>Obsidian on Linux: <q class="ask">hide this ribbon</q></figcaption>
+          <figcaption>Obsidian on Linux, Claude Code (sonnet), 7.8 seconds: <q class="ask">make my notes look like an old typewritten page</q></figcaption>
         </figure>
       </div>
     </div>
@@ -163,10 +156,10 @@
       <header class="section-head">
         <p class="eyebrow">Real apps</p>
         <h2>Tested on real apps.</h2>
-        <p class="lede">Desktop apps built from web pages: VSCodium, Obsidian and Joplin, on Linux. Websites in Chrome, such as PyPI, GitLab and Docker Hub.</p>
+        <p class="lede">Desktop apps built from web pages: Visual Studio Code, VSCodium, Obsidian, Logseq and Joplin, on Linux. Websites in Chrome, such as the Node.js docs, PyPI, RubyGems and Docker Hub.</p>
       </header>
       <ul class="apps" id="apps-grid"></ul>
-      <p class="fine">Not tried yet: Microsoft’s VS Code, Slack, Discord, Spotify, macOS and Windows. <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/desktop.md#tested-on">What was tested</a></p>
+      <p class="fine">Not tested yet: Slack, Discord, Spotify, macOS and Windows. <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/desktop.md#tested-on">What was tested</a></p>
     </div>
   </section>
 
@@ -175,36 +168,36 @@
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow">Install</p>
-        <h2>Get Morse.</h2>
-        <p class="lede">Pick where you want to change things. You need Claude Code, Codex or an API key.</p>
+        <h2>Install Morse.</h2>
+        <p class="lede">Choose websites, desktop apps or both. You need Claude Code, Codex or an API key.</p>
       </header>
       <div class="get">
         <article class="get-card" id="install-chrome">
           <p class="get-kind">Chrome</p>
           <h3>Any website</h3>
           <p>The Morse extension for Chrome.</p>
-          <a class="btn btn-primary btn-lg" href="./#chrome-steps" data-link="chrome">Add to Chrome<svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-primary btn-lg" href="./#chrome-steps" data-link="chrome">Add to Chrome<span class="icon" aria-hidden="true">→</span></a>
           <details class="get-steps" id="chrome-steps">
             <summary>Not in the Chrome Web Store yet. Install it by hand</summary>
             <ol>
-              <li>Install the morse command (below). The extension comes with it: <code>morse extension</code> shows its folder.</li>
+              <li>Install the morse command (below). The extension comes with it. Run <code>morse extension</code> to see its folder.</li>
               <li>Open <code>chrome://extensions</code>, turn on Developer mode, click <strong>Load unpacked</strong> and choose that folder.</li>
               <li>In Morse’s details, turn on <strong>Allow User Scripts</strong>.</li>
-              <li>Run <code>morse serve</code> and type its code into Morse, or paste an Anthropic API key in Morse’s settings.</li>
+              <li>Run <code>morse serve</code> and type the code it shows into Morse. Or paste an Anthropic API key in Morse’s settings.</li>
             </ol>
           </details>
         </article>
         <article class="get-card" id="install-desktop">
           <p class="get-kind">Desktop apps</p>
-          <h3>Apps like VSCodium, Obsidian and Joplin</h3>
+          <h3>Apps like VS Code, Obsidian and Joplin</h3>
           <p>Morse for desktop apps built from web pages.</p>
-          <a class="btn btn-primary btn-lg" href="./#desktop-steps" data-link="desktop">Download Morse<svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-primary btn-lg" href="./#desktop-steps" data-link="desktop">Download Morse<span class="icon" aria-hidden="true">→</span></a>
           <details class="get-steps" id="desktop-steps">
             <summary>No download yet. Use the morse command</summary>
             <ol>
               <li>Install it: <code>npm i -g morse-cli</code> (needs <a href="https://nodejs.org/">Node 22</a> or newer).</li>
               <li>Run <code>morse setup</code>. It finds Claude Code, Codex or an API key and asks which to use.</li>
-              <li>Open an app with Morse: <code>morse launch obsidian</code>. <code>morse apps</code> lists the apps it found.</li>
+              <li>Open an app with Morse: <code>morse launch obsidian</code>. Run <code>morse apps</code> to see which apps it found.</li>
             </ol>
           </details>
         </article>
@@ -231,8 +224,8 @@
             <p><span class="step-n">2</span><span><code>morse setup</code> finds Claude Code, Codex or an API key.</span></p>
           </li>
           <li>
-            <figure class="shot"><img src="shots/137-practice-first-save.webp" width="1280" height="860" loading="lazy" decoding="async" alt="The practice page after a first change: “Your first mod is saved”, with what to try next."></figure>
-            <p><span class="step-n">3</span><span>Point, say a change, Save. Then try it on any site.</span></p>
+            <figure class="shot"><img src="shots/184-web-pypi-saved.webp" width="1280" height="800" loading="lazy" decoding="async" alt="pypi.org after a first change was saved: “Saved ‘Copy button on code blocks’. It will be here next time.”, with the Mods panel listing the changes made there."></figure>
+            <p><span class="step-n">3</span><span>Point at something, describe a change and click Save. Then try it on any site.</span></p>
           </li>
         </ol>
       </div>
@@ -244,7 +237,7 @@
     <div class="wrap">
       <div class="privacy">
         <p class="eyebrow">Privacy</p>
-        <p class="privacy-text">Morse has no account and no server. When you ask for a change, it sends what you pointed at and what you said to the model you chose, and nothing to the people who make Morse. <a href="privacy.html">Read the privacy policy</a></p>
+        <p class="privacy-text">Morse has no account and no server. When you ask for a change, Morse sends what you pointed at and what you said to your model. Nothing goes to the people who make Morse. <a href="privacy.html">Read the privacy policy</a></p>
       </div>
     </div>
   </section>
@@ -260,27 +253,27 @@
       <div class="faq-list">
         <details class="faq-item">
           <summary>What does it cost?</summary>
-          <p>Morse is free. Your model costs what it already costs you: Claude Code and Codex use your subscription, and with an API key, Anthropic or OpenAI bills you for each request. A change is usually one request.</p>
+          <p>Morse is free. Your model costs what it costs you now. Claude Code and Codex use your plan. With an API key, Anthropic or OpenAI bills you for each request. A change is usually one request.</p>
         </details>
         <details class="faq-item">
           <summary>Which models can I use?</summary>
-          <p>Claude Code or Codex, if you have them. Or an Anthropic or OpenAI API key, or a model on your own computer, such as LM Studio or llama.cpp. Claude Code is the one tried for real so far.</p>
+          <p>Claude Code or Codex, if you have them. Or an Anthropic or OpenAI API key. Or a model on your own computer, such as LM Studio or llama.cpp. So far, only Claude Code was tested on real apps.</p>
         </details>
         <details class="faq-item">
           <summary>Which apps work?</summary>
-          <p>Websites in Chrome, and desktop apps built from web pages. Tried on VSCodium, Obsidian and Joplin, on Linux. Microsoft’s VS Code, Slack, Discord, Spotify, macOS and Windows aren’t tried yet. Apps like Finder or Word are not built from web pages and don’t work.</p>
+          <p>Websites in Chrome, and desktop apps built from web pages. Tested on Visual Studio Code, VSCodium, Obsidian, Logseq and Joplin, on Linux. Not tested yet: Slack, Discord, Spotify, macOS and Windows. Apps like Finder or Word aren’t built from web pages, so they don’t work.</p>
         </details>
         <details class="faq-item">
           <summary>Do I need to know how to code?</summary>
-          <p>No. You describe the change in your own words. If you do code, you can read and edit every line Morse writes.</p>
+          <p>No. You describe the change in your own words. If you can code, you can read and edit every line Morse writes.</p>
         </details>
         <details class="faq-item">
           <summary>What if the app or site updates?</summary>
-          <p>Morse never changes the app’s files, so updates install as usual. If an update moves things around and a mod stops working, Fix it in the Mods panel asks your model for a new version.</p>
+          <p>Morse never changes the app’s files, so updates install as usual. If an update breaks a mod, click Fix it in the Mods panel. Your model writes a new version.</p>
         </details>
         <details class="faq-item">
           <summary>Is it safe to install mods other people made?</summary>
-          <p>A mod is code that runs in that site or app. Before you install one, Morse says in plain words what it does and shows its code. One shortcut turns off every mod on a page.</p>
+          <p>A mod is code that runs in that site or app. Before you install one, Morse tells you what it does and shows its code. One shortcut turns off every mod on a page.</p>
         </details>
       </div>
     </div>

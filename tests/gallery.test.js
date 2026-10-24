@@ -67,9 +67,9 @@ test("the default list is on the same site as share links", () => {
 });
 
 test("a broken list throws a plain error; broken entries are skipped", () => {
-  assert.throws(() => parseIndex("{not json"), /gallery list isn't readable/);
-  assert.throws(() => parseIndex(JSON.stringify({ hello: 1 })), /isn't readable/);
-  assert.throws(() => parseIndex("null"), /isn't readable/);
+  assert.throws(() => parseIndex("{not json"), /couldn't read the gallery list/);
+  assert.throws(() => parseIndex(JSON.stringify({ hello: 1 })), /couldn't read the gallery list/);
+  assert.throws(() => parseIndex("null"), /couldn't read the gallery list/);
   assert.deepEqual(parseIndex("[]"), { entries: [], skipped: 0 });
   const { entries, skipped } = parseIndex({ mods: [
     entry(),
@@ -206,7 +206,7 @@ test("responses: 200 replaces, 304 keeps the list, a broken list keeps the old o
   const broken = afterResponse(first, { status: 200, body: "<html>Not found</html>" }, t + DAY);
   assert.equal(broken.entries, first.entries, "a broken list never wipes the good one");
   assert.equal(broken.failedAt, t + DAY);
-  assert.match(broken.error, /isn't readable/);
+  assert.match(broken.error, /couldn't read the gallery list/);
   const down = afterResponse(first, { status: 503, body: "" }, t + DAY);
   assert.equal(down.entries.length, 1);
   assert.match(down.error, /error 503/);

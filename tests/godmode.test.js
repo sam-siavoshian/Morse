@@ -162,7 +162,7 @@ test("edge cases: shadow DOM, mixed inline text, frames, duplicates, and dark pa
   await page.mouse.move(f.x + 30, f.y + 20, { steps: 3 });
   await page.mouse.click(f.x + 30, f.y + 20);
   await until(() => page.locator(".gm-note").isVisible());
-  assert.match(await page.locator(".gm-note").textContent(), /can't edit what's inside/);
+  assert.match(await page.locator(".gm-note").textContent(), /can't change what's inside/);
   assert.ok(await page.locator(".gm-tb button[data-t=text]").isDisabled());
   assert.ok(!(await page.locator(".gm-tb button[data-t=hide]").isDisabled()));
 

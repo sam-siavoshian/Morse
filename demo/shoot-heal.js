@@ -5,7 +5,7 @@
 //   113 · Stopped working after this site changed, with Fix it, and the dot on the Morse mark
 //   114 · Fix it: the fixed version shown for review, with Save and Undo
 //   115 · Saved: share the fix with the gallery
-//   116 · Settings: Fix my mods automatically when a site changes
+//   116 · Settings: Fix my mods when a site changes
 //   117 · Fixed in the background, with Undo
 //
 //   node demo/shoot-heal.js

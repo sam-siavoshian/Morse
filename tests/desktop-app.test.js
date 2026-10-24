@@ -416,3 +416,100 @@ test("desktop.json lives in the Morse folder; unknown settings are refused", asy
   assert.equal(JSON.parse(await fs.readFile(path.join(daemon.HOME, "desktop.json"), "utf8")).startAtLogin, true);
   assert.ok(home);
 });
+
+// ---------------------------------------------------------------- app icons
+const { appImageIcon } = await import("../desktop-app/appimage.js");
+const { folderIconFor, icnsPng, linuxIconFor } = await import("../desktop-app/icons.js");
+const zlib = await import("node:zlib");
+
+// A PNG-looking file of a given width (the readers check the magic and IHDR only).
+const fakePng = w => { const b = Buffer.alloc(40); Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(b); b.write("IHDR", 12, "latin1"); b.writeUInt32BE(w, 16); b.writeUInt32BE(w, 20); return b; };
+
+// The smallest AppImage the reader takes: an ELF header, then SquashFS 4.0
+// with one folder holding ".DirIcon" (a link) -> "app.png" (one gzip block).
+function tinyAppImage(icon, { link = "app.png" } = {}) {
+  const elf = Buffer.alloc(64);
+  elf.writeUInt32BE(0x7f454c46, 0); elf[4] = 2; elf[5] = 1;
+  elf.writeBigUInt64LE(64n, 0x28); elf.writeUInt16LE(64, 0x3a); elf.writeUInt16LE(0, 0x3c);
+  const data = zlib.deflateSync(icon);
+  const u = (size, writes) => { const b = Buffer.alloc(size); writes(b); return b; };
+  const inodeHeader = (type, n) => u(16, h => { h.writeUInt16LE(type, 0); h.writeUInt32LE(n, 12); });
+  const entries = [{ name: ".DirIcon", at: 68, type: 3 }, { name: "app.png", at: 32, type: 2 }];
+  const dirBody = Buffer.concat([
+    u(12, h => { h.writeUInt32LE(entries.length - 1, 0); h.writeUInt32LE(0, 4); h.writeUInt32LE(1, 8); }),
+    ...entries.map((e, i) => Buffer.concat([u(8, b => { b.writeUInt16LE(e.at, 0); b.writeInt16LE(i + 1, 2); b.writeUInt16LE(e.type, 4); b.writeUInt16LE(e.name.length - 1, 6); }), Buffer.from(e.name)])),
+  ]);
+  const rootInode = Buffer.concat([inodeHeader(1, 1), u(16, b => { b.writeUInt32LE(2, 4); b.writeUInt16LE(dirBody.length + 3, 8); b.writeUInt32LE(1, 12); })]);
+  const fileInode = Buffer.concat([inodeHeader(2, 2), u(20, b => { b.writeUInt32LE(96, 0); b.writeUInt32LE(0xffffffff, 4); b.writeUInt32LE(icon.length, 12); b.writeUInt32LE(data.length, 16); })]);
+  const linkInode = Buffer.concat([inodeHeader(3, 3), u(8, b => { b.writeUInt32LE(1, 0); b.writeUInt32LE(link.length, 4); }), Buffer.from(link)]);
+  const meta = body => Buffer.concat([u(2, h => h.writeUInt16LE(body.length | 0x8000, 0)), body]);
+  const inodes = meta(Buffer.concat([rootInode, fileInode, linkInode]));
+  const dirs = meta(dirBody);
+  const T = 96 + data.length, D = T + inodes.length;
+  const sb = u(96, s => {
+    s.write("hsqs", 0, "latin1"); s.writeUInt32LE(3, 4); s.writeUInt32LE(131072, 12); s.writeUInt16LE(1, 20); s.writeUInt16LE(17, 22); s.writeUInt16LE(4, 28);
+    s.writeBigUInt64LE(BigInt(D + dirs.length), 40);
+    for (const [o, v] of [[48, -1n], [56, -1n], [64, BigInt(T)], [72, BigInt(D)], [80, -1n], [88, -1n]]) s.writeBigInt64LE(v, o);
+  });
+  return Buffer.concat([elf, sb, data, inodes, dirs]);
+}
+
+test("app icons: the icon inside an AppImage, read without running it, through .DirIcon's link", async () => {
+  const dir = await tempDir("morse-appimage-");
+  const icon = Buffer.concat([fakePng(256), Buffer.alloc(5000, 7)]);
+  const file = path.join(dir, "Tiny-1.0.AppImage");
+  await fs.writeFile(file, tinyAppImage(icon));
+  assert.deepEqual(appImageIcon(file), icon);
+  // A link to nothing: the PNG beside it is next. Not an AppImage, or no file: null, never a throw.
+  await fs.writeFile(path.join(dir, "broken.AppImage"), tinyAppImage(icon, { link: "nothing.png" }));
+  assert.deepEqual(appImageIcon(path.join(dir, "broken.AppImage")), icon);
+  await fs.writeFile(path.join(dir, "text.AppImage"), "#!/bin/sh\necho hi\n");
+  assert.equal(appImageIcon(path.join(dir, "text.AppImage")), null);
+  assert.equal(appImageIcon(path.join(dir, "missing.AppImage")), null);
+  assert.equal(appImageIcon(process.execPath), null, "an ELF program with no SquashFS after it");
+});
+
+test("app icons: real AppImages give their own icon (when this computer has them)", { skip: !existsSync("/root/morse-real-apps") && "no real AppImages here" }, async () => {
+  for (const [dir, name, w] of [["obsidian", "Obsidian", 512], ["joplin", "Joplin", 1024], ["logseq", "Logseq", 512]]) {
+    const f = (await fs.readdir(`/root/morse-real-apps/${dir}`).catch(() => [])).find(x => x.endsWith(".AppImage"));
+    if (!f) continue;
+    const png = appImageIcon(`/root/morse-real-apps/${dir}/${f}`, name);
+    assert.ok(png, name);
+    assert.equal(png.readUInt32BE(16), w, `${name}'s own icon, not Electron's default`);
+  }
+});
+
+test("app icons: the app's own folder (VS Code's resources/linux, icon.png), PNG only", () => {
+  const files = new Map([
+    ["/usr/share/code/resources/app/resources/linux/code.png", fakePng(512)],
+    ["/opt/Thing/resources/app/icon.png", fakePng(256)],
+    ["/opt/Svg/.DirIcon", Buffer.from("<svg>")],
+  ]);
+  const fake = {
+    exists: p => files.has(p),
+    readdir: d => [...files.keys()].filter(p => path.dirname(p) === d).map(p => path.basename(p)),
+    head: p => files.get(p).subarray(0, 4),
+  };
+  assert.equal(folderIconFor({ id: "vscode", name: "VS Code", exe: "/usr/share/code/code" }, fake), "/usr/share/code/resources/app/resources/linux/code.png");
+  assert.equal(folderIconFor({ id: "thing", name: "Thing", exe: "/opt/Thing/thing" }, fake), "/opt/Thing/resources/app/icon.png");
+  assert.equal(folderIconFor({ id: "svg", name: "Svg", exe: "/opt/Svg/svg" }, fake), null, "an SVG .DirIcon is skipped");
+  assert.equal(folderIconFor({ id: "x", name: "X", exe: "/x.AppImage", appimage: true }, fake), null);
+});
+
+test("app icons: the menu entry's Icon= in the hicolor theme comes first", () => {
+  const files = new Set(["/usr/share/icons/hicolor/256x256/apps/com.example.Notes.png"]);
+  const got = linuxIconFor({ id: "notes", name: "Notes", exe: "/opt/notes/notes" }, {
+    home: "/home/u", exists: p => files.has(p),
+    readdir: d => d === "/usr/share/applications" ? ["notes.desktop"] : [],
+    read: () => "[Desktop Entry]\nName=Notes\nExec=/opt/notes/notes %U\nIcon=com.example.Notes\n",
+  });
+  assert.equal(got, "/usr/share/icons/hicolor/256x256/apps/com.example.Notes.png");
+});
+
+test("app icons: a Mac .icns gives its PNG nearest 256 pixels", () => {
+  const entry = (type, data) => { const h = Buffer.alloc(8); h.write(type, 0, "latin1"); h.writeUInt32BE(data.length + 8, 4); return Buffer.concat([h, data]); };
+  const body = Buffer.concat([entry("is32", Buffer.alloc(30)), entry("ic07", fakePng(128)), entry("ic08", fakePng(256)), entry("ic10", fakePng(1024))]);
+  const head = Buffer.alloc(8); head.write("icns", 0, "latin1"); head.writeUInt32BE(body.length + 8, 4);
+  assert.equal(icnsPng(Buffer.concat([head, body])).readUInt32BE(16), 256);
+  assert.equal(icnsPng(Buffer.from("not an icns file")), null);
+});

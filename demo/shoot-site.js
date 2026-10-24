@@ -63,6 +63,9 @@ async function loadEveryPicture(p) {
     await sleep(120);
   }
   const missing = await p.evaluate(async () => {
+    // A lazy picture far to the side (the apps strip scrolls sideways on a
+    // phone) never starts loading, and decode() would wait for it forever.
+    for (const i of document.images) i.loading = "eager";
     await Promise.all([...document.images].map(i => i.decode().catch(() => {})));
     await document.fonts.ready;
     return [...document.images].filter(i => !i.complete || !i.naturalWidth).map(i => i.getAttribute("src"));

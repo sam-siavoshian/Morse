@@ -49,6 +49,10 @@ li.empty { color: var(--m-text-3); border: 0; }
 .choice:has(input:checked) { border-color: var(--m-line-strong); background: var(--m-raised); }
 .choice input { margin: 4px 0 0; accent-color: var(--m-signal-4); width: auto; }
 .choice small { display: block; color: var(--m-text-3); font-size: var(--m-text-sm); }
+/* the marks of the models (brand/, desktop-app/ui/icons/NOTICE): black marks turn white on dark */
+.choice .pmark { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 28px; height: 28px; padding: 0 6px; border-radius: 8px; background: var(--m-hover); }
+.choice .pmark img { display: block; width: 16px; height: 16px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) img.mono { filter: invert(1); } }
 .panel { padding: 8px 12px 4px 32px; }
 
 label { display: block; margin-top: 8px; color: var(--m-text-2); font-size: var(--m-text-sm); }

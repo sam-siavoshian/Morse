@@ -47,6 +47,20 @@ test("more ways to say it: named fonts, sizes, spacing, links, dark pages, and w
 test("“everywhere” and “not on this site” are told apart from ordinary changes", () => {
   for (const t of ["bigger text everywhere", "dark mode on every site", "underline links in all apps", "softer colors across all my sites", "Georgia on all websites and apps"]) assert.ok(isEverywhere(t), t);
   for (const t of ["make everything bigger", "hide the sidebar", "every site has a header", "add a word count"]) assert.ok(!isEverywhere(t), t);
+  // A bare "everywhere" in a request that names an app or a part of one is a
+  // change here, not Your style (real VS Code: this one became a style for
+  // every site and app).
+  for (const t of [
+    "make VS Code look like a classic Windows 95 app: silver gray panels, black text everywhere so the file list stays readable",
+    "make the whole editor cream, everywhere",
+    "black text everywhere in the sidebar",
+    "make my notes look typewritten everywhere",
+    "rounded corners everywhere in this app",
+  ]) assert.ok(!isEverywhere(t), t);
+  assert.ok(isEverywhere("cream background everywhere", { here: ["Obsidian"] }), "nothing named: still Your style");
+  assert.ok(!isEverywhere("make Obsidian cream everywhere", { here: ["Obsidian"] }), "the app you're in, named");
+  // The explicit words still mean every site and app, whatever else is named.
+  for (const t of ["hide the sidebar on every site", "bigger text in all apps, the editor too", "Georgia everywhere"]) assert.ok(isEverywhere(t), t);
   for (const t of ["not on this site", "Not here", "turn off my style here", "my style should be off on this site", "no your style on this page"]) assert.ok(isNotHere(t), t);
   for (const t of ["not on hover", "make this not bold here", "hide the banner on this site"]) assert.ok(!isNotHere(t), t);
 });

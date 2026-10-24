@@ -144,7 +144,21 @@ preload's exposed API, `morse://` links, the Linux desktop files and the icon.
 real app with Playwright's `_electron`, with the same runtime and display as
 above. It lists Tunes, opens it with Morse, disconnects, connects again,
 answers the restart question, closes the window and quits. Its app list is
-only Tunes (`MORSE_DESKTOP_SCAN=0` and `apps` in `desktop.json`).
+only Tunes (`MORSE_DESKTOP_SCAN=0` and `apps` in `desktop.json`). That flow
+runs with `MORSE_PIPE=0` (a debugging port, so the test can look inside
+Tunes). A second test does the same on the private pipe, where nothing but
+Morse can look inside, and checks there is no port, Connect needs no restart
+and Tunes outlives Morse.
+
+The private pipe ([architecture](architecture.md#the-private-pipe)):
+[`tests/pipe.test.js`](../../tests/pipe.test.js) needs no Electron. A stand-in
+app ([`tests/helpers/fake-pipe-app.js`](../../tests/helpers/fake-pipe-app.js))
+speaks CDP on fds 3 and 4, records the flags its fd 3 came with (Chromium
+needs it blocking) and whether it ever read an end of file (Electron 12+ quit
+then), so the tests cover the framing, flat sessions, the launch, Morse being
+killed, the fallback to a port, the connector and `--watch`. The pipe tests in
+`tests/electron.test.js` do it on real Electron, looking inside over the same
+pipe with a session of their own.
 
 Multi-window edge cases (crashes, kill and restart, `--restart`) are tested
 against a fake Chromium app ([`demo/fake-app.js`](../../demo/fake-app.js),
@@ -173,7 +187,7 @@ screenshot per state in a dark and a light host, at desktop and phone width,
 and on hostile host pages, audits each one, and writes
 [`docs/ui/index.html`](../ui/index.html) as a contact sheet. `node
 demo/contrast.js` checks every color token pair. The checklist is
-[docs/ui/CHECKLIST.md](../ui/CHECKLIST.md); verdicts and notes live in
+[docs/ui/CHECKLIST.md](../ui/CHECKLIST.md). Verdicts and notes live in
 `docs/ui/review.json`. See
 [Adding a feature](adding-a-feature.md#the-ui-review-loop).
 
@@ -220,9 +234,12 @@ from [`demo/bar-playground.html`](../../demo/bar-playground.html)),
 macOS fixture tree in [`demo/fake-installs.js`](../../demo/fake-installs.js))
 and `shoot-site.js` (the website and share page, into
 [`docs/site/`](../site/)). `shoot-style.js` and `shoot-packs.js` make
-150–166; the pictures of real apps and sites (147–156) come from
-`demo/try-real-app.js` and `demo/try-real-sites.js`. The launch videos are made by
-[`demo/record-launch.js`](../../demo/record-launch.js); see the
+150–166. The pictures of real apps and sites (147–156) come from
+`demo/try-real-app.js` and `demo/try-real-sites.js`, and 231–241 (changes
+to what an app does, with and without its profile) from
+[`demo/try-app-logic.js`](../../demo/try-app-logic.js), which also writes the
+numbers in [App profiles](rea.md#measurements). The launch videos are made by
+[`demo/record-launch.js`](../../demo/record-launch.js). See the
 [launch kit](../launch/README.md).
 
 Every picture up to 146 was retaken on October 24, 2026, after the
@@ -234,10 +251,10 @@ recorded again.
 ## What was verified and how
 
 - **Verified end to end** (in a Linux container, Chromium 153): the
-  extension on three sites including a strict-CSP one; the desktop connector
+  extension on three sites including a strict-CSP one. The desktop connector
   via `morse launch` → CDP attach → inject → generate → self-repair → save →
-  full app restart → mods re-applied; share link → install in a second
-  browser profile; userscript export running standalone; clip recording to
+  full app restart → mods re-applied. Share link → install in a second
+  browser profile. Userscript export running standalone. Clip recording to
   GIF and MP4.
 - **The main screenshots replay pre-written replies** from
   [`core/demo.js`](../../core/demo.js), a test fixture. The same desktop flow
@@ -267,7 +284,7 @@ recorded again.
   (test model, and once real Claude Code haiku) → Save → quit with the app's
   Ctrl+Q → `morse launch` again, mod back → Mods panel → second window and
   webview get Morse → `morse status` → `morse stop`; `morse attach --port` to
-  a copy running as a normal user with Chromium's sandbox fully on; and the
+  a copy running as a normal user with Chromium's sandbox fully on. And the
   same app with its fuses locked down. Details:
   [Desktop apps](../desktop.md#how-this-was-tested).
 - **Describe this picture**: checked once with real Claude Code (haiku) on
@@ -287,9 +304,9 @@ recorded again.
   tables and fake `osascript` / `taskkill` runners cover `--restart`;
   `morse apps` has a snapshot per platform in
   [`tests/snapshots/`](../../tests/snapshots/) (`UPDATE_SNAPSHOTS=1` rewrites
-  them); hashing every fixture file before and after shows nothing Morse
+  them). Hashing every fixture file before and after shows nothing Morse
   does to find, read or plan a launch changes an app's files.
-- **Not tested:** real Slack, Discord, VS Code or Spotify installs; macOS and
+- **Not tested:** real Slack, Discord, VS Code or Spotify installs. macOS and
   Windows on real hardware (permission prompts, Gatekeeper, real Squirrel
   hand-offs, PowerShell's process list, the firewall, terminal colors);
   Wayland. [Checking a Mac or Windows PC](platform-testing.md) is the

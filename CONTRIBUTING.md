@@ -1,20 +1,20 @@
 # Contributing to Morse
 
-Thanks for helping. Bug reports, mods for the gallery and pull requests are
-all welcome.
+Thanks for helping. You can report a bug, add a mod to the gallery or send a
+pull request.
 
 ## Report a bug
 
 [Open an issue](https://github.com/sam-siavoshian/RRAA/issues/new/choose) and
 pick "Something doesn't work". Say what you did, what Morse did, and on which
-site or app. `morse --version` gives the version. Please leave out API keys,
-pairing codes and anything private from the page.
+site or app. Run `morse --version` to get the version. Leave out API keys,
+pairing codes and anything private on the page.
 [Troubleshooting](docs/troubleshooting.md) may already have the answer.
 
 ## Add a mod to the gallery
 
-In Morse, open the Mods panel, click Share on the mod, then **Submit to the
-gallery**. That opens a GitHub issue with everything filled in. You can also
+In Morse, open the Mods panel. Click Share on the mod, then **Submit to the
+gallery**. This opens a GitHub issue with everything filled in. You can also
 [open one by hand](https://github.com/sam-siavoshian/RRAA/issues/new?template=gallery.md).
 
 Someone reads every line before a mod goes in the gallery. A good gallery mod:
@@ -24,9 +24,9 @@ Someone reads every line before a mod goes in the gallery. A good gallery mod:
 - uses stable selectors (ids, `aria-*`, `data-*`, roles), not generated class
   names like `css-1x2y3`
 
-To add one yourself, put the `.morse.json` file in `site/mods/` and add an
-entry to `site/mods/index.json` (see
-[The website and the gallery](docs/dev/README.md#the-website-and-the-gallery)).
+To add one yourself, put the `.morse.json` file in `site/mods/`. Then add an
+entry to `site/mods/index.json`. See
+[The website and the gallery](docs/dev/README.md#the-website-and-the-gallery).
 
 ## Work on the code
 
@@ -50,8 +50,8 @@ npm run build      # builds the Chrome extension into dist/extension
 npm link           # so `morse` runs this checkout
 ```
 
-The tests start real Chromium through Playwright, so on a machine without a
-screen run them under Xvfb:
+The tests start real Chromium through Playwright. On a machine without a
+screen, run them under Xvfb:
 
 ```bash
 Xvfb :99 &
@@ -78,13 +78,14 @@ Before you open a pull request:
 The version is in `package.json` only. Write what changed under
 "Unreleased" in CHANGELOG.md, then:
 
-- `npm run release -- minor` (or `patch`, `major`, `1.4.0`; `--dry-run`
-  first to see what it does) raises the version, dates the CHANGELOG entry,
-  runs the checks and tests, commits and tags.
-- `git push --follow-tags origin main` starts the release workflow: npm and
-  the GitHub release with the Chrome Web Store zip.
+- `npm run release -- minor` raises the version, dates the CHANGELOG entry,
+  runs the checks and tests, commits and tags. Use `patch`, `major` or a
+  version like `1.4.0` in place of `minor`. Add `--dry-run` first to see what
+  it does.
+- `git push --follow-tags origin main` starts the release workflow. It
+  publishes to npm and makes the GitHub release with the Chrome Web Store zip.
 - Upload that zip as [docs/store/SUBMIT.md](docs/store/SUBMIT.md) says.
 
-The one-time setup and the details: [Releasing](docs/dev/releasing.md).
+For the one-time setup and the details, see [Releasing](docs/dev/releasing.md).
 
-By contributing you agree your work is released under the [MIT license](LICENSE).
+By contributing, you agree that your work is released under the [MIT license](LICENSE).

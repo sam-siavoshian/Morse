@@ -125,7 +125,7 @@ export function fuseVerdict(info) {
   if (info.appimage) return ["It's an AppImage: the app is packed inside it, so Morse can't read its fuses without unpacking it. No fuse turns off the debugging port, so if the app is built on Electron, Morse can connect."];
   if (!info.electron) return ["No Electron fuses in this file. If the app is built on Chromium, Morse can still connect. If it's a native app, it can't."];
   const f = info.fuses, out = [];
-  out.push("Morse can connect: it opens the app with --remote-debugging-port, which no Electron fuse turns off.");
+  out.push("Morse can connect: it opens the app with --remote-debugging-pipe (or a debugging port), which no Electron fuse turns off.");
   if (f.EnableNodeCliInspectArguments === "disabled") out.push("--inspect is fused off, so the app's Node.js side can't be debugged. Morse doesn't need it: mods run in the app's windows.");
   if (f.EnableEmbeddedAsarIntegrityValidation === "enabled") out.push("The app checks its own files (ASAR integrity). Morse never changes them, so that's fine.");
   if (f.RunAsNode === "enabled") out.push("ELECTRON_RUN_AS_NODE would start this app as plain Node.js. Morse clears that variable when it opens the app.");
