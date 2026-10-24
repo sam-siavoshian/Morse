@@ -15,6 +15,7 @@ export function bundleRuntime() {
   const shared = ["hotkeys.js", "prefs.js"]
     .map(f => `// ---- core/${f}\n${readFileSync(new URL(`../core/${f}`, import.meta.url), "utf8").replace(/^export /gm, "")}`);
   shared.push(inlineModule("../core/edits.js"));
+  shared.push(inlineModule("../core/answer.js")); // Ask and find: reply parser + markdown subset
   return `/* Morse runtime (built from runtime/src) */\n(() => {\nconst TOKENS_CSS = ${JSON.stringify(tokens)};\n${shared.join("\n")}\n${parts.join("\n")}\n})();\n`;
 }
 
