@@ -75,6 +75,7 @@ function paintSettings() {
         <div class="srow"><div class="lbl"><span>${t("settings.position")}</span><small>${t("settings.position.help")}</small></div><div class="ctl">${segHtml("barPosition", t("settings.position"), [["auto", t("settings.position.auto")], ["top", t("settings.position.top")], ["bottom", t("settings.position.bottom")]], PREFS.barPosition)}</div></div>
         <div class="srow"><div class="lbl"><span>${t("settings.theme")}</span></div><div class="ctl">${segHtml("theme", t("settings.theme"), [["auto", t("settings.theme.auto")], ["light", t("settings.theme.light")], ["dark", t("settings.theme.dark")]], PREFS.theme)}</div></div>
       </section>
+      ${modelSection()}
       <section><h4>${t("settings.general")}</h4>
         ${languageRowHtml()}
         <div class="srow"><div class="lbl"><span>${t("settings.welcome")}</span><small>${t("settings.welcome.help")}</small></div><div class="ctl">${switchHtml("welcome", PREFS.welcome, t("settings.welcome"))}</div></div>
@@ -83,6 +84,19 @@ function paintSettings() {
       </section>
       <footer><button type="button" class="tbtn" data-act="reset-all">${t("settings.resetAll")}</button><span class="dim">${esc(S.mode === "extension" ? t("settings.synced") : S.mode === "desktop" ? t("settings.savedHere") : "")}</span></footer>
     </div>`;
+}
+// models (core/route.js): Automatic, Always fast, Always best, and the two
+// names. The names are set with morse setup / morse config, or in the popup.
+function modelSection() {
+  const m = S.models;
+  if (!m) return "";
+  const head = `<section><h4>${t("settings.model")}</h4>`;
+  if (m.pinned) return `${head}<div class="srow"><div class="lbl"><span>${t("settings.model")}</span><small>${esc(t("settings.model.pinned", { model: m.pinned }))}</small></div></div></section>`;
+  const mode = PREFS.modelMode || "auto";
+  const note = t(`settings.model.note.${mode}`, { fast: m.fast, best: m.best });
+  return `${head}
+        <div class="srow"><div class="lbl"><span>${t("settings.model")}</span><small>${esc(note)}</small></div><div class="ctl">${segHtml("modelMode", t("settings.model"), [["auto", t("settings.model.auto")], ["fast", t("settings.model.fast")], ["best", t("settings.model.best")]], mode)}</div></div>
+      </section>`;
 }
 // Language: "Same as my computer" (the default), or one of core/i18n.js LANGUAGES,
 // each named in its own language. The label also says "Language" in English, so

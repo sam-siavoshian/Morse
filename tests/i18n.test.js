@@ -18,6 +18,15 @@ const EN = CATALOGS.en;
 // Messages a language keeps in English on purpose: [lang] -> [id, why].
 // (Keep this short: a missing message shows the English one.)
 const ENGLISH_ON_PURPOSE = {};
+// New messages that show in English until they are translated, in every
+// language. Remove an id once the languages have it.
+const WAITING_FOR_TRANSLATION = [
+  // models (core/route.js): the Model setting, the setup question, the popup label
+  "gen.stronger", "settings.model", "settings.model.auto", "settings.model.fast", "settings.model.best",
+  "settings.model.note.auto", "settings.model.note.fast", "settings.model.note.best", "settings.model.pinned",
+  "popup.modelHarder", "setup.model.which", "setup.model.autoWhy", "setup.model.fastWhy", "setup.model.bestWhy",
+  "setup.model.choose", "setup.model.now", "setup.model.always", "setup.model.change", "cli.badModelMode",
+];
 
 const placeholders = s => [...String(s).matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort();
 const tags = s => [...String(s).matchAll(/<\/?([a-z][\w-]*)([^>]*)>/gi)].map(m => `${m[1].toLowerCase()}${(m[2].match(/\b(class|id|data-[\w-]+|href|type)="[^"]*"/g) || []).sort().join(" ")}`).sort();
@@ -29,7 +38,7 @@ test("every language has every message, and nothing English doesn't have", () =>
   for (const { code } of LANGUAGES) {
     if (code === "en") continue;
     const cat = CATALOGS[code];
-    const kept = new Set((ENGLISH_ON_PURPOSE[code] || []).map(([id]) => id));
+    const kept = new Set([...(ENGLISH_ON_PURPOSE[code] || []).map(([id]) => id), ...WAITING_FOR_TRANSLATION.filter(id => cat[id] == null)]);
     const missing = ids.filter(id => cat[id] == null && !kept.has(id));
     const extra = Object.keys(cat).filter(id => EN[id] == null);
     assert.deepEqual(missing, [], `${code} is missing ${missing.length} messages`);

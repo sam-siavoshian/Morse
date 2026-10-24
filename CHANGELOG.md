@@ -32,6 +32,10 @@ The first version meant for other people to install.
 - Claude Code or Codex, with your own subscription, or an Anthropic or OpenAI
   API key. `morse setup` finds what you have and asks which to use.
 - No Morse account and no Morse server.
+- Quick changes use a fast model and harder ones a stronger one, from what
+  you chose (Claude Code: haiku, then sonnet). When the fast model's change
+  doesn't work, the stronger one tries before Morse gives up. Settings has
+  Model: Automatic, Always fast or Always best.
 
 ### Without a model
 
