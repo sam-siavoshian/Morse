@@ -57,8 +57,12 @@ the same way) and on the catalog and the extension pages:
 | `landmark-no-duplicate-banner`, `landmark-no-duplicate-contentinfo` (moderate) | every card's `<header>`/`<footer>` counted as the page's banner and footer | `role="none"` on them (12-focus.js does it for every card) |
 | `html-has-lang` (serious), `landmark-one-main`, `page-has-heading-one`, `region`, then `heading-order` | popup and options | `lang`, a `<main>`, the wordmark is the `<h1>`, sections are `<h2>`, the test result is a status |
 | `color-contrast` (serious), `landmark-one-main`, `region` | practice page | the byline is #707070 (4.9:1), the ad label .85 opacity, a `<main>`, the cookie bar is a named region |
+| `scrollable-region-focusable` (serious) | the full catalog: Show code and the install review's code blocks, and Page tools at phone width (it scrolls, and its items are out of the Tab order) | the code blocks are named, focusable regions; a menu's current item is its one Tab stop |
 
-The welcome page had none.
+The welcome page had none. The full catalog (519 states in the dark theme,
+phone width included) found only `scrollable-region-focusable`; after that
+fix, the light theme's 519 states had no violations at all.
+
 
 Semantics added without an axe rule asking for them:
 
@@ -142,6 +146,12 @@ has focus or the pointer.
   before; nothing slides or pulses.
 
 ## What's left
+
+- In `npm run ui`, the gallery and self-heal areas stop partway ("flow
+  failed": a Try it strip button and the stopped-working dot never show in
+  the catalog's fake host). That happens on main without these changes too;
+  the states before it are audited, and the gallery and heal tests run axe
+  on the real flows.
 
 - The edit frame's resize handles are pointer-only; resizing by keyboard
   isn't there yet (Move nudges with arrows; Text size and Color have
