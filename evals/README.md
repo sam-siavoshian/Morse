@@ -102,7 +102,7 @@ Every run prints the median and p90 of each stage, in ms from Enter, and the res
 | Total | 9197 / 12913 | **2655 / 5561** | 5503 / 11109 |
 | Passed | 36/36 | 36/36 | 36/36 |
 
-Median / p90. All 55 cases ×2 after the changes: 110/110.
+Median / p90. All 55 cases ×2 after the changes: 110/110. Run side by side on a much busier machine (load 50 to 66, both at once, after merging main): first change on the page 13523 / 17780 → 6935 / 11684, total 17973 / 22260 → 7483 / 11969, 36/36 both. There, starting `claude` took longer than the 2.5 s head start, so the process was still starting at Enter.
 
 What moved the numbers:
 - **Answer at `message_stop`** (`daemon/harness.js`). Claude Code kept running for 2.4 to 4.8 s after the last token (a summary of the turn, usage, exit) before the harness returned. Now it returns at `message_stop`, and the CLI runs with `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`. Last token to done: 3124 → 33 ms.
