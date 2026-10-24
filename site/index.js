@@ -171,7 +171,7 @@ async function play({ loop = !reduced } = {}) {
     const max = Math.max(12, Math.floor(codeEl.clientWidth / 6.6));
     codeEl.textContent = CODE.slice(Math.max(0, i - max), i);
     timeEl.textContent = ((performance.now() - t0) / 1000).toFixed(1) + "s";
-    await sleep(34);
+    await sleep(26);
   }
   // 4. the grid sweeps away to reveal the change
   win.classList.add("has-sleep");
@@ -232,4 +232,43 @@ if (reduced) {
   } catch (e) {
     console.warn("[morse site]", e);
   }
+})();
+
+// ============================================================================
+// Voice: a radar-pixel level meter and a transcript that arrives word by word.
+// ============================================================================
+(() => {
+  const meter = $("voice-meter"), said = $("voice-said");
+  if (!meter || !said) return;
+  const px = [];
+  for (let i = 0; i < 25; i++) px.push(meter.appendChild(document.createElement("i")));
+  const LINES = ["hide the trending sidebar", "make the reading column narrower", "add a word count under the composer"];
+  let on = false;
+  new IntersectionObserver(([e]) => { on = e.isIntersecting; }).observe(meter);
+  const draw = level => {
+    for (let c = 0; c < 5; c++) {
+      const h = Math.max(1, Math.round(level * (c === 2 ? 5 : c % 2 ? 4 : 3) * (0.6 + Math.random() * 0.4)));
+      for (let r = 0; r < 5; r++) px[r * 5 + c].style.opacity = 4 - r < h ? (r === 4 ? 1 : 0.85 - (4 - r) * 0.12) : 0.12;
+    }
+  };
+  if (reduced) { said.textContent = LINES[0]; draw(0.7); return; }
+  let level = 0, talking = false;
+  setInterval(() => {
+    if (!on) return;
+    level += ((talking ? 0.35 + Math.random() * 0.65 : 0.05) - level) * 0.5;
+    draw(level);
+  }, 90);
+  (async () => {
+    for (let n = 0; ; n++) {
+      while (!on) await sleep(400);
+      said.textContent = "";
+      talking = true;
+      for (const w of LINES[n % LINES.length].split(" ")) {
+        said.textContent += (said.textContent ? " " : "") + w;
+        await sleep(260 + Math.random() * 260);
+      }
+      talking = false;
+      await sleep(2200);
+    }
+  })();
 })();

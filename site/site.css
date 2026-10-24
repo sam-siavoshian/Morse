@@ -260,3 +260,7 @@ pre.code .k { color: var(--m-text); font-weight: 600; }
   pointer-events: none;
 }
 .s-toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (max-width: 720px) { .foot .signal { display: none; } }
+h1, h2, h3 { text-wrap: balance; }
+.lede, p { text-wrap: pretty; }
+@media (max-width: 720px) { .card { min-height: 0; } }

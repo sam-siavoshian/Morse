@@ -14,7 +14,7 @@
     "label": "div · sidebar"
   },
   "css": "[data-testid=\"sidebarColumn\"] section:has([aria-label^=\"Timeline: Trending\"]),\n[data-testid=\"sidebarColumn\"] aside[aria-label=\"Who to follow\"],\n[data-testid=\"sidebarColumn\"] aside[aria-label^=\"Subscribe to Premium\"],\n[data-testid=\"sidebarColumn\"] div:has(> aside[aria-label^=\"Subscribe to Premium\"]) {\n  display: none !important;\n}\n",
-  "js": "// Fallback for when the aria-labels change: hide sidebar blocks by heading.\nconst NOISE = /what.s happening|trends for you|who to follow|subscribe to premium/i;\nmorse.watch('[data-testid=\"sidebarColumn\"] section, [data-testid=\"sidebarColumn\"] aside', block => {\n  const heading = block.querySelector(\"h2, h1\");\n  if (heading && NOISE.test(heading.textContent)) {\n    block.style.setProperty(\"display\", \"none\", \"important\");\n  }\n});\n",
+  "js": "// Fallback for when the aria-labels change: hide sidebar blocks by heading.\nconst hidden = [];\nconst NOISE = /what.s happening|trends for you|who to follow|subscribe to premium/i;\nmorse.watch('[data-testid=\"sidebarColumn\"] section, [data-testid=\"sidebarColumn\"] aside', block => {\n  const heading = block.querySelector(\"h2, h1\");\n  if (heading && NOISE.test(heading.textContent)) {\n    block.style.setProperty(\"display\", \"none\", \"important\");\n    hidden.push(block);\n  }\n});\n\nreturn () => hidden.forEach(b => b.style.removeProperty(\"display\"));\n",
   "enabled": true,
   "model": null,
   "created": "2026-10-16T07:50:00.000Z",
