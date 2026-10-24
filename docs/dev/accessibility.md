@@ -93,10 +93,12 @@ Semantics added without an axe rule asking for them:
   goes back; Enter chooses. Focus never leaves the bar, so it doesn't fight
   the page's focus handling. Only trusted key events count, like every key
   Morse takes.
-- **Edit tools**: one Tab stop, ←/→/Home/End between tools (a toolbar);
-  arrows still move the selection when the toolbar itself has focus (Ctrl+E)
-  or Move is on. Color and Text size take focus when they open; the palette
-  moves with arrows over its 8 columns.
+- **Edit tools**: Tab walks the tools (UI review round 3) and, past the last
+  one, goes on to the rest of the bar instead of wrapping; on a tool,
+  ←/→/Home/End move between tools too (the toolbar pattern); on the toolbar
+  itself (Ctrl+E), or with Move on, arrows still move the selection. Color
+  and Text size take focus when they open; the palette moves with arrows
+  over its 8 columns.
 - **Mods panel**: one Tab stop for the list (the current row and its own
   buttons), so Install a mod… is a few Tabs away however many mods there
   are.

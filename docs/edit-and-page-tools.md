@@ -29,6 +29,11 @@ key, shown in its tooltip:
 
 Or just start typing to describe a change.
 
+No mouse? Press **⌥↓** (Alt+↓) in the bar to choose a part of the page with
+the arrow keys, then **⌘E** (Ctrl+E). **Tab** moves between the tools (and
+**←** **→** once you're on one); **Enter** uses one. See
+[Using Morse with the keyboard](getting-started.md#using-morse-with-the-keyboard-or-a-screen-reader).
+
 Your edits on a site are saved together as one mod called “Direct edits”,
 with undo and redo (**⌘Z** and **⇧⌘Z**). It saves, shares and exports like any
 other mod. **⌥⇧G** (Alt+Shift+G) shows the Edit tools from anywhere.
