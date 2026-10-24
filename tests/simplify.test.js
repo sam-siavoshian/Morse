@@ -142,6 +142,33 @@ test("morse help: the commands people use, and --all for every one", () => {
   assert.match(typo.stdout, /no command “lauch”/);
 });
 
+// Checked end to end (docs/dev/simplify.md): VSCodium opened a second time on
+// a busy machine took over 1.5 s to answer /json/version, and morse launch
+// gave up with “The model took too long to answer”, though no model was asked.
+test("morse launch: an app slow to answer on its port is waited for, and one that never answers isn't blamed on the model", async () => {
+  const http = await import("node:http");
+  const { identify } = await import("../daemon/ports.js");
+  const { plainError } = await import("../core/onboarding.js");
+  const serve = delay => new Promise(resolve => {
+    const s = http.createServer((req, res) => {
+      if (req.url !== "/json/version") return res.writeHead(404).end();
+      setTimeout(() => res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ Browser: "Chrome/140", "User-Agent": "Mozilla/5.0 Electron/43.0.0" })), delay);
+    }).listen(0, "127.0.0.1", () => resolve(s));
+  });
+  const slow = await serve(2500);
+  try {
+    const who = await identify(slow.address().port);
+    assert.equal(who.electron, "43.0.0", "a slow answer still counts");
+  } finally { slow.closeAllConnections(); slow.close(); }
+  const mute = await serve(60_000);
+  try {
+    const e = await identify(mute.address().port, { tries: [300, 300] }).then(() => null, e => e);
+    assert.ok(e, "no answer at all is an error");
+    assert.doesNotMatch(plainError(e), /model/i, plainError(e));
+    assert.match(plainError(e), /didn't answer/);
+  } finally { mute.closeAllConnections(); mute.close(); }
+});
+
 // Checked end to end (docs/dev/simplify.md): every command says something
 // useful with no config, a broken one, or no model.
 const cli = h => args => spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8", env: { ...process.env, MORSE_HOME: h, NO_COLOR: "1", LANG: "en_US.UTF-8", MORSE_NO_UPDATE_CHECK: "1" } });
