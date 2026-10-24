@@ -239,8 +239,9 @@ test("keyboard only: open, choose with keys, describe, Save, Mods panel, turn a 
     await page.locator(".card [data-a=install]:not([disabled])").waitFor(); // Install waits until the review has been seen (80-modals.js)
     await tabTo(page, /\[a=install\]/);
     await page.keyboard.press("Enter");
-    await waitFor(() => page.evaluate(() => __cat.mods.some(m => m.title === "Bigger buttons")), { what: "the mod to install" });
-    assert.match(await page.locator(".toast").textContent(), /Installed/);
+    // The host stores it before it answers; the toast comes with the answer.
+    await waitFor(async () => /Installed “Bigger buttons”/.test(await page.locator(".toast").textContent()), { what: "the Installed toast" });
+    assert.ok(await page.evaluate(() => __cat.mods.some(m => m.title === "Bigger buttons")));
     await waitFor(async () => (await focused(page)) !== "", { what: "focus to stay in Morse" });
     await page.keyboard.press("Escape");
     await waitFor(() => page.locator(".panel").isHidden(), { what: "Esc to close the panel" });
