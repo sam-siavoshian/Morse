@@ -130,6 +130,7 @@ jobs:
         shell: bash
         run: |
           node scripts/release.js notes "$VERSION" > out/notes.md
+          test -s out/notes.md || { echo "::error::No release notes for $VERSION in CHANGELOG.md."; exit 1; }
           (cd out && sha256sum *.zip *.tgz) > out/SHA256SUMS
           cat out/notes.md out/SHA256SUMS
       - uses: actions/upload-artifact@v4
@@ -215,7 +216,8 @@ jobs:
           # The tag started release-desktop.yml too. Wait for it, then take its files.
           RUN=""
           for i in $(seq 1 20); do
-            RUN=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow release-desktop.yml --event push --commit "$GITHUB_SHA" --json databaseId --jq '.[0].databaseId // empty')
+            RUN=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow release-desktop.yml --event push --limit 20 --json databaseId,headSha \
+              --jq "[.[] | select(.headSha == \"$GITHUB_SHA\")][0].databaseId // empty")
             [ -n "$RUN" ] && break
             sleep 15
           done

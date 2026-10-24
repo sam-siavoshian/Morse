@@ -21,7 +21,7 @@
 // docs/dev/releasing.md is the whole process.
 
 import { spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -175,7 +175,7 @@ ${notesFor(newChangelog, version)}`);
   writeFileSync(file("package.json"), withVersion(before["package.json"], version));
   if (before["package-lock.json"]) writeFileSync(file("package-lock.json"), lockWithVersion(before["package-lock.json"], version));
   writeFileSync(file("CHANGELOG.md"), newChangelog);
-  log(`${tag}: wrote ${changed.join(", ")}.`);
+  log(`${tag}: changed ${changed.filter(f => read(f) !== before[f]).join(", ")}.`);
 
   if (!opts.has("--skip-checks")) {
     for (const script of ["check", "test"]) {
@@ -212,7 +212,7 @@ with the Chrome Web Store zip. Then upload the zip by hand
 Changed your mind? git tag -d ${tag} && git reset --hard HEAD~1`);
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && realpathSync(path.resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url))) {
   try {
     main(process.argv.slice(2), { root: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..") });
   } catch (e) {
