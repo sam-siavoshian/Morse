@@ -42,7 +42,8 @@ const MutationObserver = class extends PageObserver {
 };
 function letGo() {
   for (const o of uiObservers) o.disconnect();
-  // The document kept the old bar (and through it the whole old UI) in a
-  // table of its own, reached through the bar's aria-owns: empty the UI.
-  try { bar.removeAttribute("aria-owns"); root.replaceChildren(); hostEl.remove(); } catch {}
+  // The document keeps some of the old UI's elements in tables of its own (the
+  // bar through its aria-owns, the settings pane), and through one element
+  // its whole tree: take every element apart, so each holds only itself.
+  try { bar.removeAttribute("aria-owns"); for (const el of [...root.querySelectorAll("*")].reverse()) el.remove(); root.replaceChildren(); hostEl.remove(); } catch {}
 }

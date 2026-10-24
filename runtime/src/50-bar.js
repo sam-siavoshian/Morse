@@ -281,6 +281,10 @@ function onCancelled(id) {
 let paneKind = "";
 function showPane(kind) {
   if (paneKind === "settings" && kind !== "settings") stopRecording();
+  // soak: focus leaves the pane before it is hidden and emptied. Hidden with
+  // the focus inside, the page's document kept the pane in a table of its own
+  // (and through its listeners the whole UI, after morse stop).
+  if (kind !== paneKind && pane.contains(root.activeElement)) input.focus({ preventScroll: true });
   paneKind = kind;
   pane.hidden = !kind;
   pane.dataset.kind = kind;
