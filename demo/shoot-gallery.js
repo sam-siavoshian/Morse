@@ -2,7 +2,7 @@
 // on the Tunes demo site, reading this checkout's gallery list
 // (site/mods/index.json) from a local server, in a scratch MORSE_HOME.
 //   110 · For this site: the mods others made, in the Mods panel
-//   111 · Try it: running without being saved, with Keep and Remove
+//   111 · Try it: running without being saved, with Save and Undo
 //   112 · Update: what changed in the gallery's newer version
 //
 //   node demo/shoot-gallery.js

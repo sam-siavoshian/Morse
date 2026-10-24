@@ -22,7 +22,9 @@ repository; if the two ever disagree, please
 
 Only when you send a request: you type or say a change or a question, use
 Refine or Fix, or use "Explain this page", "Describe this picture" or a
-"Fix it" that needs the model.
+"Fix it" that needs the model. And, if you turned on "Fix my mods
+automatically when a site changes" (it is off unless you turn it on), when
+one of your saved mods stops working on a page.
 
 Sent to the model you chose:
 
@@ -47,7 +49,7 @@ Where it goes depends on your choice:
 Claude Code and Codex are separate programs with their own privacy terms.
 Morse starts them and hands them the request; it does not see what they log.
 
-Morse sends nothing to a model on its own. Opening the bar, pointing, the
+Apart from that setting, Morse sends nothing to a model on its own. Opening the bar, pointing, the
 edit tools, the other page tools, "Easier to use", Read aloud and "Check this
 page" itself run on your computer and send nothing to the model.
 

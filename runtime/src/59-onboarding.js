@@ -44,7 +44,7 @@ const Onboarding = (() => {
   const STEPS = [["point", "Point"], ["describe", "Describe"], ["keep", "Save"]];
   function step() {
     if (S.phase === "result") return ["keep", `Like it? <b>Save</b> keeps it for next time. <b>Undo</b> puts the page back.`];
-    if (S.phase === "working") return ["describe", `Morse is writing the change and applying it as it goes. <kbd>Esc</kbd> stops it.`];
+    if (S.phase === "working") return ["describe", `Morse is making the change. You'll see it as it happens. <kbd>Esc</kbd> stops it.`];
     if (S.phase === "error") return ["describe", `That didn't work. Try other words, or point at something else.`];
     if (S.target || input.value.trim()) return ["describe", `Say what you want, like “make this bigger”, then press <kbd>Enter</kbd>.`];
     return ["point", `Click the part of the page you want to change. Or skip this and describe a change to the whole page.`];
@@ -145,7 +145,7 @@ const Onboarding = (() => {
     tipSaved = false;
     const m = S.mods[S.mods.length - 1];
     const keys = hotkeyText("mods");
-    showTip(`Saved${m ? ` “${m.title}”` : ""}. It comes back every time you open ${where()}. To turn it off, edit or share it, open Mods${keys ? ` (${keys})` : ""}.`);
+    showTip(`Saved${m ? ` “${m.title}”` : ""} as a mod. It comes back every time you open ${where()}. To turn it off, edit or share it, open Mods${keys ? ` (${keys})` : ""}.`);
   }
   outgoing.push(m => {
     if (!st) return;

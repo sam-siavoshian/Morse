@@ -121,7 +121,7 @@
         ${mod.css.trim() ? `<h2>Style (CSS) <span>${lines(mod.css)}</span></h2><pre class="code">${highlight(mod.css.trimEnd(), "css")}</pre>` : ""}
         ${mod.js.trim() ? `<h2>Script (JavaScript) <span>${lines(mod.js)}</span></h2><pre class="code">${highlight(mod.js.trimEnd(), "js")}</pre>` : ""}
       </details>
-      <p class="i-foot">This whole mod is in the link, after the <code>#</code>. Browsers never send that part to a server, so nobody but you and the sender has seen it. The list above is worked out from the code, and it errs on the side of mentioning things. Once it's installed, <kbd>⌥⇧0</kbd> (Alt+Shift+0) turns off every mod on a page at once.</p>`;
+      <p class="i-foot">A mod is a change to a website or app, made with Morse. Morse brings it back every time you open that site or app. This whole mod is in the link, after the <code>#</code>. Browsers never send that part to a server, so only you and the person who sent it have seen it. The list above comes from reading the code, and it mentions anything the code might do. Once it's installed, <kbd>⌥⇧0</kbd> (Alt+Shift+0) turns off every mod on a page at once.</p>`;
     mountAll(root);
     const us = document.getElementById("userscript");
     us.href = URL.createObjectURL(new Blob([toUserscript(mod)], { type: "text/javascript" }));
@@ -134,8 +134,8 @@
       } else {
         navigator.clipboard?.writeText(location.href).catch(() => {});
         status.innerHTML = mod.match.app
-          ? `Link copied. In Morse, open Mods and choose Install a mod, then paste it. Or run <code>morse install "&lt;link&gt;"</code>.`
-          : `Morse isn't installed in this browser. The link is copied: paste it into Morse under Mods → Install a mod, or download the mod for Tampermonkey.`;
+          ? `Link copied. In the app, open Morse, then Mods → Install a mod…, and paste it. Or run <code>morse install "&lt;link&gt;"</code> in a terminal.`
+          : `Morse isn't installed in this browser. The link is copied: paste it into Morse under Mods → Install a mod…, or download the mod for Tampermonkey.`;
       }
     };
     window.addEventListener("message", e => {

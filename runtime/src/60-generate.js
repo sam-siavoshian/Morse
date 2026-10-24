@@ -21,7 +21,7 @@ async function capture() {
 }
 
 const PLACEHOLDER = input.placeholder;
-const REFINE_PLACEHOLDER = "Refine…";
+const REFINE_PLACEHOLDER = "Describe what to change…";
 const FIX_NOTE = "Fixed it so it works again";
 
 // Puts a version's code on the page under the mod's id (the old JS is undone first).
@@ -71,7 +71,7 @@ async function submit(request, opts = {}) {
     }
     if (msg.type === "css") setCss(id, msg.css);
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") { hint.innerHTML = `${radar(12)} Fixing a problem in the new code`; hint.title = String(msg.error || ""); }
+      if (msg.phase === "fixing") { hint.innerHTML = `${radar(12)} Fixing a mistake and trying again`; hint.title = String(msg.error || ""); }
       if (msg.phase === "applying") hint.innerHTML = `${radar(12)} Trying the change`;
       if (msg.phase === "thinking") hint.innerHTML = `${radar(12)} Writing the change`;
     }
@@ -94,9 +94,9 @@ async function submit(request, opts = {}) {
       await showVersion(id, prev);
       S.draft = prev;
       hintNote = "";
-      if (answered) return showResult(prev, { note: "Answered · describe a change to refine it" });
+      if (answered) return showResult(prev, { note: "Answered · describe what to change next" });
       if (res.cancelled) return showResult(prev, { note: "Stopped. Nothing was changed", keepInput: true });
-      return showResult(prev, { error: res.error || "Something went wrong. Try again.", keepInput: true });
+      return showResult(prev, { error: plainError(res.error), keepInput: true });
     }
     const next = reviseMod(prev, { prompt: opts.note || request, css: res.css || "", js: res.js || "" });
     S.draft = Object.assign(next, { saved: null, saving: null, secs, attempts: res.attempts, model: S.label });
@@ -275,6 +275,7 @@ async function keep() {
   d.saved = mod;
   d.mod = mod;
   Health.ran(mod, { ok: true }); // it ran fine just now; check it keeps finding its elements
+  Heal.kept(mod); // self-heal hook: remember what it changes (71-heal.js)
   S.phase = "idle";
   closeBar();
   const n = versionsOf(mod).length + 1;

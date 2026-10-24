@@ -63,7 +63,7 @@ test("refine a result, step back with Ctrl+Z, keep, restore from History, refine
   assert.equal(await page.locator("#toolbar .morse-now").count(), 1);
   assert.equal(await fontSize(page), "14px");
   // The input stays usable for a follow-up.
-  assert.equal(await ui(page, ".in").getAttribute("placeholder"), "Refine…");
+  assert.equal(await ui(page, ".in").getAttribute("placeholder"), "Describe what to change…");
   assert.equal(await ui(page, ".in").isEnabled(), true);
   assert.equal(s.focus, "in");
 
@@ -163,11 +163,11 @@ test("a saved mod that stopped working says why, and Fix it repairs it", { skip 
   // A mod that throws is flagged right away, in plain words.
   const oops = ui(page, ".panel article[data-id=oops] .health");
   await oops.waitFor();
-  assert.match(await oops.textContent(), /Not working\. It uses “nowPlaying”, which doesn't exist on this page\./);
+  assert.match(await oops.textContent(), /Not working\. It uses something this page doesn't have\./);
   // One whose selectors match nothing is flagged after 5 seconds.
   const gone = ui(page, ".panel article[data-id=gone] .health");
   await gone.waitFor({ timeout: 9000 });
-  assert.match(await gone.textContent(), /It looks for “#player-bar”, and nothing on this page matches\./);
+  assert.match(await gone.textContent(), /It looks for a part of the page that isn't there right now\./);
 
   await gone.locator("[data-a=fix]").click();
   let s = await waitFor(s => s.open && s.phase === "result" && /version 2/.test(s.hint));

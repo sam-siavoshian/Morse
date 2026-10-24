@@ -44,13 +44,13 @@
         <li data-step="scripts">
           <span class="tick" aria-hidden="true"></span>
           <div><b>Turn on “Allow User Scripts”</b>
-            <span>Chrome only runs the code Morse writes when this is on. Without it, style changes still work, but new buttons and features don't run on sites with strict security.</span>
+            <span>Without it, changes to how a site looks still work, but new buttons and features don't run on some sites.</span>
             <button type="button" id="open-ext">Open Morse's settings</button></div>
         </li>
         <li data-step="model" id="model">
           <span class="tick" aria-hidden="true"></span>
           <div><b>Connect a model</b>
-            <span>Morse needs a model to write changes. Run <code>morse setup</code> in a terminal to use your Claude Code or Codex subscription, or an Anthropic or OpenAI API key. Or add an Anthropic API key in model settings.</span>
+            <span>Morse needs an AI model to write changes. Run <code>morse setup</code> in a terminal to use your Claude Code or Codex subscription, or an Anthropic or OpenAI API key. Or add an Anthropic API key in model settings.</span>
             <span class="row"><button type="button" id="open-model">Open model settings</button><button type="button" id="copy-setup" class="quiet">Copy <code>morse setup</code></button></span>
             <small id="model-label"></small></div>
         </li>
@@ -69,7 +69,7 @@
       <div><b>Tabs that were already open</b><span>Reload them once. Chrome only adds Morse to pages loaded after it was installed.</span></div>
       <div><b>Where Morse can't run</b><span>Chrome's own pages, the Chrome Web Store and PDFs in Chrome's viewer. Files on your computer need “Allow access to file URLs” in <button type="button" class="link" id="open-ext-2">Morse's settings</button>.</span></div>
       <div><b>Help while you work</b><span>In the Morse bar, <span class="caps"><kbd>F1</kbd></span> shows example sentences and <span class="caps"><kbd>?</kbd></span> shows keyboard shortcuts.</span></div>
-      <div><b>Nothing is permanent</b><span>Every change is a mod. <span class="hk" data-hk="mods"></span> opens Mods, where you can turn one off, edit it or share it.</span></div>
+      <div><b>Nothing is permanent</b><span>A change you save is called a mod. Morse brings it back every time you open that site. <span class="hk" data-hk="mods"></span> opens the Mods panel, where you can turn one off, edit it or share it.</span></div>
     </div>
   </section>
 </main>

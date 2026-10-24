@@ -11,12 +11,13 @@ import { detectHarnesses, validModel } from "./harness.js";
 import { createBridge, startPairing, VERSION } from "./bridge.js";
 import { streamChat, HELPER_PORT } from "../core/providers.js";
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
+import { plainError } from "../core/onboarding.js";
 import { pauseCli, resumeCli, exportAllCli, importCli, codeCli } from "./control.js"; // user control
 import { configuredHotkeys } from "./store.js";
 
 // The hotkeys as set in ~/.morse/settings.json (platform defaults otherwise).
 const KEYS = await configuredHotkeys().catch(() => ({}));
-const openKey = KEYS.open || "the Open Morse hotkey";
+const openKey = KEYS.open || "the Open Morse shortcut";
 
 const W = s => `\x1b[97m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`;
 const WARN = s => `\x1b[33m${s}\x1b[0m`, ERR = s => `\x1b[31m${s}\x1b[0m`;
@@ -40,7 +41,7 @@ function flags(argv) {
 async function settingsFrom(f) {
   if (f.provider) assertProvider(f.provider);
   const s = await currentSettings({ ...(f.provider && { provider: f.provider }), ...(f.model && { model: f.model }) });
-  if (s.provider === "none") console.log(`${WARN("!")} No model is connected. Run ${B("morse doctor")} to set one up.`);
+  if (s.provider === "none") console.log(`${WARN("!")} No model is connected. Run ${B("morse setup")} to choose one.`);
   return s;
 }
 
@@ -93,7 +94,7 @@ async function helperHealth() {
 
 const HELP = `${LOGO}
 
-${B("Desktop apps")} (Electron / Chromium)
+${B("Desktop apps")} (Spotify, Slack, Discord, VS Code and other apps built on Electron)
   morse apps                list the apps Morse found and whether it can connect to them
   morse launch <app|path>   reopen an app with Morse connected (partial names work: code, spot)
       --restart             quit the app first if it's open (remembered per app; --no-restart forgets)
@@ -104,11 +105,11 @@ ${B("Desktop apps")} (Electron / Chromium)
   morse attach --port <n>   connect to an app already started with --remote-debugging-port
   morse status              apps Morse is connected to, their windows and mods
   morse stop <app>          disconnect from an app (it keeps running)
-  morse fuses <app|path>    check whether Morse can work with a desktop app
+  morse fuses <app|path>    check whether an app lets Morse connect to it
 
-${B("Websites")} (the Chrome extension uses this helper to reach your model)
+${B("Websites")} (the Chrome extension uses the Morse helper to reach your model)
   morse extension           show the Chrome extension folder and how to add it
-  morse serve              start the Morse helper and show a pairing code
+  morse serve               start the Morse helper and show a pairing code
   morse pair                show a new pairing code for the running helper
   morse unpair              sign out every paired browser
 
@@ -135,7 +136,7 @@ ${B("Pause")}
 
 In a connected app, press ${B(openKey)} to open Morse.${KEYS.mods ? ` Press ${B(KEYS.mods)} to see your mods.` : ""}${KEYS.off ? `
 Press ${B(KEYS.off)} to turn all your mods off (press it again to turn them back on).` : ""}
-For websites: run ${B("morse extension")} to find the Chrome extension, then ${B("morse serve")} and type the code into Morse.
+For websites: run ${B("morse extension")} to find the Chrome extension, then ${B("morse serve")} and type its code into the Morse popup.
 morse --version shows the version.`;
 
 async function main() {
@@ -164,7 +165,7 @@ async function main() {
     }
     case "mods": {
       const mods = await listMods();
-      if (!mods.length) return console.log(D(`No mods yet. Open an app with morse launch, then press ${openKey}.`));
+      if (!mods.length) return console.log(D(`No mods yet. Open an app with morse launch <app>, then press ${openKey} in it.`));
       for (const m of mods) {
         const where = m.match.app || m.match.hosts.join(",");
         console.log(`${m.enabled ? W("●") : D("○")} ${B(m.title)} ${D(m.id)}  ${where}\n    ${D("“" + m.prompt + "”")}`);
@@ -173,12 +174,12 @@ async function main() {
     }
     case "rm":
       await deleteMod(f._[0]);
-      console.log("Deleted " + f._[0]);
+      console.log(`Deleted ${f._[0]}.`);
       break;
     case "export": {
       if (f.all) return exportAllCli(f); // user control: back up everything
       const mod = (await listMods()).find(m => m.id === f._[0]);
-      if (!mod) throw new Error(`No mod with the id ${f._[0]}. Run morse mods to see them.`);
+      if (!mod) throw new Error(`There's no mod called ${f._[0]}. Run morse mods to see your mods.`);
       const slug = mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       console.log(await writeExport(`${slug}.morse.json`, JSON.stringify(mod, null, 2)));
       console.log(await writeExport(`${slug}.user.js`, toUserscript(mod)));
@@ -215,7 +216,7 @@ async function main() {
       const { code } = await startPairing();
       console.log(LOGO + "\n");
       console.log(`  helper  http://127.0.0.1:${port}  ${D("v" + VERSION)}`);
-      console.log(`  model   ${s.provider === "none" ? `${WARN("none")} ${D("(run morse doctor to set one up)")}` : settingsLabel(s)}`);
+      console.log(`  model   ${s.provider === "none" ? `${WARN("none")} ${D("(run morse setup to choose one)")}` : settingsLabel(s)}`);
       console.log(`  pair    ${B(code)}  ${D("type it into the Morse extension · works for 10 minutes · morse pair for a new one")}\n`);
       const stop = async () => { await bridge.close(); process.exit(0); };
       process.on("SIGINT", stop);
@@ -253,7 +254,7 @@ async function main() {
       const s = settingsFromConfig(cfg, { ...(f.provider && { provider: f.provider }), ...(f.model && { model: f.model }) });
       row("model", s.provider === "none" ? WARN("none") : `${B(settingsLabel(s))}${s.detected ? D("  (auto-detected)") : ""}`);
       if (s.provider === "none") {
-        console.log(`\n  No model is connected. Install Claude Code (claude.com/claude-code) or Codex,\n  or add an API key: morse config --provider anthropic --anthropic-key sk-ant-…`);
+        console.log(`\n  No model is connected. Run morse setup to choose Claude Code, Codex or an API key.`);
         process.exitCode = 1;
         break;
       }
@@ -275,4 +276,8 @@ async function main() {
   }
 }
 
-main().catch(e => { console.error(`${ERR("✗")} ${e.message}`); process.exit(1); });
+main().catch(e => {
+  const plain = plainError(e);
+  console.error(`${ERR("✗")} ${plain}${plain !== e.message && e.message ? D(`  (${e.message})`) : ""}`);
+  process.exit(1);
+});

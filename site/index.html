@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Morse: change any app in your own words</title>
-<meta name="description" content="Press Alt+Space, point at anything in a website or desktop app, and say what you want. Your model writes the change and you see it right away. Open source.">
+<meta name="description" content="Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like. Open source.">
 <meta property="og:title" content="Morse: change any app in your own words">
 <meta property="og:description" content="Point at anything, describe a change, watch it happen. Claude Code, Codex, or your own API key.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -40,7 +40,7 @@
     <div class="wrap">
       <p class="eyebrow"><span data-signal="morse" class="live"></span><span>Free and open source</span></p>
       <h1>Change any app<br class="br-lg"> in your own words.</h1>
-      <p class="lede">Morse lets you point at anything in a website or desktop app, say what you want, and watch the change happen.</p>
+      <p class="lede">Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like.</p>
     </div>
 
     <div class="wrap">
@@ -86,7 +86,7 @@
           <div class="step-art"><span class="step-px" id="step-px" aria-hidden="true"></span></div>
           <span class="step-n mono">03</span>
           <h3>Watch it change</h3>
-          <p class="muted">The new look shows up while the model is still writing. If the new code fails, Morse shows the model what went wrong and it fixes it. Save it, undo it, or edit the code.</p>
+          <p class="muted">The new look shows up while the model is still writing. If the change doesn’t work, Morse shows the model what went wrong and it fixes it. Save it to keep it, or undo it.</p>
         </li>
       </ol>
     </div>
@@ -142,7 +142,7 @@
       <div class="section-head">
         <p class="eyebrow">Edit tools</p>
         <h2>Or just grab it and edit.</h2>
-        <p class="lede">Some changes don’t need a model. Point at something and the edit tools appear next to it. Each tool has its own key. Your edits are saved as a mod, with undo and redo, like everything else.</p>
+        <p class="lede">Some changes don’t need a model. Point at something and the Edit tools appear next to it. Each tool has its own key. Your edits are saved as a mod, with undo and redo, like everything else.</p>
       </div>
       <div class="god">
         <div class="god-stage" aria-hidden="true">
@@ -209,7 +209,7 @@
       <div class="section-head">
         <p class="eyebrow">Models</p>
         <h2>Bring your own model.</h2>
-        <p class="lede">Morse has no server and no account. It hands what you pointed at and what you said to the coding model you already use, and runs what comes back.</p>
+        <p class="lede">Morse has no server and no account. It sends what you pointed at and what you said to the AI you already use, and shows you the change it writes.</p>
       </div>
       <ul class="rows">
         <li>
@@ -218,11 +218,11 @@
         </li>
         <li>
           <span class="row-k">Codex</span>
-          <span class="row-v muted">Uses your existing Codex CLI sign-in.</span>
+          <span class="row-v muted">Uses your existing Codex sign-in.</span>
         </li>
         <li>
           <span class="row-k">An API key</span>
-          <span class="row-v muted">Anthropic or OpenAI, or any OpenAI-compatible server in the cloud or on your computer (llama.cpp, LM Studio, vLLM).</span>
+          <span class="row-v muted">From Anthropic or OpenAI.</span>
         </li>
       </ul>
     </div>
@@ -242,7 +242,7 @@
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="3.5" width="16" height="13" rx="2.5"/><path d="M2 7.5h16"/><circle cx="5" cy="5.5" r=".6" fill="currentColor"/><circle cx="7" cy="5.5" r=".6" fill="currentColor"/></svg>
             <h3>Any website</h3>
           </div>
-          <p class="muted">A Chrome extension. With Allow User Scripts on, mods work even on sites with strict security settings.</p>
+          <p class="muted">A Chrome extension. With “Allow User Scripts” on, mods work even on sites with strict security settings.</p>
           <div class="surface-foot">
             <span class="chip">youtube.com</span><span class="chip">github.com</span><span class="chip">chatgpt.com</span><span class="chip">claude.ai</span><span class="chip">mail.google.com</span><span class="chip faint-chip">…</span>
           </div>
@@ -250,9 +250,9 @@
         <article class="surface">
           <div class="surface-head">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="3" width="16" height="11" rx="2"/><path d="M7 17h6M10 14v3"/></svg>
-            <h3>Electron desktop apps</h3>
+            <h3>Desktop apps</h3>
           </div>
-          <p class="muted"><code>morse launch spotify</code> reopens the app with Morse connected. Morse never changes the app’s files, so updates don’t break it.</p>
+          <p class="muted"><code>morse launch spotify</code> reopens the app with Morse connected. It works with apps built on Electron. Morse never changes the app’s files, so updates don’t break it.</p>
           <div class="surface-foot">
             <span class="chip">Spotify</span><span class="chip">Slack</span><span class="chip">Discord</span><span class="chip">VS Code</span><span class="chip">Notion</span><span class="chip">Obsidian</span>
           </div>
@@ -267,12 +267,12 @@
       <div class="split share-split">
         <div class="section-head">
           <p class="eyebrow">Sharing</p>
-          <h2>Mods are data.<br>Share them as a link.</h2>
-          <p class="lede">A mod is a small file: what you said, where it applies, and the code. Send it three ways.</p>
+          <h2>Share a mod<br>with a link.</h2>
+          <p class="lede">A mod is a change you saved. It's a small file: what you said, where it runs, and the code. Send it three ways.</p>
           <dl class="formats">
             <div><dt>Link</dt><dd class="muted">The whole mod is in the link, after the <code>#</code>. Browsers never send that part to a server. The install page shows every line before anything runs.</dd></div>
-            <div><dt><code>.morse.json</code></dt><dd class="muted">Install it in Morse on another computer.</dd></div>
-            <div><dt><code>.user.js</code></dt><dd class="muted">Runs in Tampermonkey or Violentmonkey, without Morse.</dd></div>
+            <div><dt>Mod file</dt><dd class="muted">Install it in Morse on another computer.</dd></div>
+            <div><dt>Tampermonkey</dt><dd class="muted">Runs in Tampermonkey or Violentmonkey, without Morse.</dd></div>
           </dl>
         </div>
         <div class="share-art">
@@ -294,7 +294,7 @@
       </div>
       <div class="facts">
         <div class="fact">
-          <h3>Stored locally</h3>
+          <h3>Kept on your computer</h3>
           <p class="muted">Desktop mods live in <code>~/.morse/mods</code>. Website mods live in the extension’s own storage.</p>
         </div>
         <div class="fact">
@@ -303,7 +303,7 @@
         </div>
         <div class="fact">
           <h3>You see the code</h3>
-          <p class="muted">Every change shows its code, can be undone, and is never applied silently. Shared mods show every line before install.</p>
+          <p class="muted">Every change shows its code, can be undone, and never happens without you seeing it. Before you install a shared mod, Morse says what it does and shows every line.</p>
         </div>
         <div class="fact">
           <h3>You pick the model</h3>
