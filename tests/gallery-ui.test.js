@@ -128,6 +128,7 @@ test("Try it runs the mod without saving it, and Undo takes it all away", { skip
   assert.equal(await page.locator('style[data-morse-css="tunes-sleep-timer"]').count(), 0);
   assert.equal(await ui(".gl-trial").isHidden(), true);
   assert.equal(await exists(modFile("tunes-sleep-timer")), false);
+  await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').waitFor({ timeout: 5000 }); // the panel redraws once the mod is off
   assert.ok(await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').isVisible(), "back to Try it");
 });
 
