@@ -3,11 +3,11 @@
 // pane. Tokens from design/tokens.css only; geometry follows docs/ui/CHECKLIST.md.
 function ONBOARDING_CSS() { return `
   /* coach: three steps at the top of the bar */
-  .ob-coach { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; padding: 10px 10px 10px 16px;
+  .ob-coach { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; padding-block: 10px; padding-inline: 16px 10px;
     border-bottom: 1px solid var(--m-line); animation: fade var(--m-fast); }
   .ob-steps { display: flex; align-items: center; gap: 8px; min-width: 0; margin: 0; padding: 0; list-style: none; font: 500 var(--m-text-sm)/20px var(--m-font); color: var(--m-text-3); }
   .ob-steps li { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
-  .ob-steps li + li::before { content: ""; width: 16px; height: 1px; background: var(--m-line-strong); margin-right: 1px; }
+  .ob-steps li + li::before { content: ""; width: 16px; height: 1px; background: var(--m-line-strong); margin-inline-end: 1px; }
   /* step numbers: the same 20px round number as Show me once's steps (98-show-once-css.js .so-n) */
   .ob-steps .n { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--m-line-strong); font: 500 var(--m-text-xs)/1 var(--m-mono); color: var(--m-text-2); letter-spacing: 0; font-variant-numeric: tabular-nums; }
   .ob-steps li.now { color: var(--m-text); }
@@ -18,12 +18,12 @@ function ONBOARDING_CSS() { return `
   .ob-say { grid-column: 1 / -1; margin: 0; color: var(--m-text-2); font: 400 var(--m-text-sm)/18px var(--m-font); }
   .ob-say b { color: var(--m-text); font-weight: 500; }
   .ob-say kbd { margin: 0 1px; }
-  .ob-link { height: 20px; border: 0; background: none; padding: 0; margin-left: 2px; color: var(--m-text); font: 500 var(--m-text-sm)/20px var(--m-font);
+  .ob-link { height: 20px; border: 0; background: none; padding: 0; margin-inline-start: 2px; color: var(--m-text); font: 500 var(--m-text-sm)/20px var(--m-font);
     text-decoration: underline; text-decoration-color: var(--m-signal-1); text-underline-offset: 3px; }
   .ob-link:hover { text-decoration-color: var(--m-text); }
 
   /* one notice under the input (no model, user scripts off) */
-  .ob-note { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 16px; border-top: 1px solid var(--m-line); color: var(--m-text-2); font: 400 var(--m-text-sm)/18px var(--m-font); }
+  .ob-note { display: flex; align-items: center; gap: 10px; padding-block: 8px; padding-inline: 16px 8px; border-top: 1px solid var(--m-line); color: var(--m-text-2); font: 400 var(--m-text-sm)/18px var(--m-font); }
   .ob-dot { background: var(--m-warn); } /* the status dot: 99-css.js */
   .ob-text { flex: 1; min-width: 0; }
   .ob-note .ob-close { color: var(--m-text-3); } /* .btn and .ibtn.sm.close */
@@ -53,7 +53,7 @@ function ONBOARDING_CSS() { return `
   .ob-can span { color: var(--m-text-2); font: 400 var(--m-text-sm)/18px var(--m-font); }
   .ob-can .caps { vertical-align: 1px; }
   .ob-can .caps kbd { height: 18px; min-width: 18px; font-size: 10.5px; }
-  .ob-help h4 { display: flex; align-items: baseline; gap: 10px; padding-top: 8px; border-top: 1px solid var(--m-line); margin: 4px 0 4px; padding-left: 8px; margin-left: 0; margin-right: 0; }
+  .ob-help h4 { display: flex; align-items: baseline; gap: 10px; padding-top: 8px; border-top: 1px solid var(--m-line); margin: 4px 0 4px; padding-inline-start: 8px; margin-inline-start: 0; margin-inline-end: 0; }
   .ob-help h4 span { color: var(--m-text-3); font: 400 var(--m-text-xs)/16px var(--m-font); text-transform: none; letter-spacing: 0; }
   /* examples: one row per category, sentences flow as chips */
   .ob-ex { display: flex; flex-direction: column; padding: 0 8px 6px; }
@@ -75,11 +75,11 @@ function ONBOARDING_CSS() { return `
     .ob-steps { gap: 6px; } .ob-steps li + li::before { width: 8px; }
     /* the sentence on its own lines, the dot on its first line, the button under the words, × at the end */
     .ob-note { flex-wrap: wrap; align-items: flex-start; row-gap: 8px; } .ob-text { flex-basis: calc(100% - 16px); }
-    .ob-note .ob-dot { margin-top: 6px; } .ob-note .btn { margin-left: 16px; } .ob-note .ob-close { margin-left: auto; }
+    .ob-note .ob-dot { margin-top: 6px; } .ob-note .btn { margin-inline-start: 16px; } .ob-note .ob-close { margin-inline-start: auto; }
   }
   /* a bar narrower than the three steps and Hide tips (the practice page on a phone): only the current step keeps its word */
   @media (max-width: 360px) {
-    .ob-steps li:not(.now) { font-size: 0; gap: 0; } .ob-steps li:not(.now)::before { margin-right: 6px; }
+    .ob-steps li:not(.now) { font-size: 0; gap: 0; } .ob-steps li:not(.now)::before { margin-inline-end: 6px; }
   }
   :host([data-fx="off"]) .ob-coach { animation: none; }
 
@@ -89,7 +89,7 @@ function ONBOARDING_CSS() { return `
   :host([data-new]:not([data-tools])) .gm { display: none !important; }
 
   /* the first saved change: a card where the toast goes, its mark settling into a check */
-  .ob-win { position: fixed; left: 20px; bottom: 20px; width: min(400px, calc(100vw - 40px)); display: flex; gap: 14px; padding: 16px 16px 14px;
+  .ob-win { position: fixed; inset-inline-start: 20px; bottom: 20px; width: min(400px, calc(100vw - 40px)); display: flex; gap: 14px; padding: 16px 16px 14px;
     background: var(--m-surface); color: var(--m-text); border: 1px solid var(--m-line-strong); border-radius: var(--m-r-lg); box-shadow: var(--m-shadow);
     font: 400 var(--m-text-sm)/18px var(--m-font); letter-spacing: var(--m-tracking); pointer-events: auto; animation: rise2 var(--m-med) var(--m-ease); }
   .ob-win-mark { position: relative; flex: none; width: 40px; height: 40px; display: grid; place-items: center; border-radius: var(--m-r-md); background: var(--m-raised); color: var(--m-text); }
@@ -111,7 +111,7 @@ function ONBOARDING_CSS() { return `
   .ob-win .caps kbd { height: 18px; min-width: 18px; padding: 0 4px; font-size: 10.5px; }
   .ob-win .caps { gap: 3px; vertical-align: 1px; }
   .ob-win-row { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
-  .ob-win-row > span { margin-left: auto; color: var(--m-text-3); font-size: var(--m-text-xs); }
+  .ob-win-row > span { margin-inline-start: auto; color: var(--m-text-3); font-size: var(--m-text-xs); }
   :host([data-fx="off"]) .ob-win, :host([data-fx="off"]) .ob-win-mark .radar rect, :host([data-fx="off"]) .ob-win-check { animation-duration: 1ms !important; animation-delay: 0s !important; }
   @media (prefers-reduced-motion: reduce) { .ob-win-check { animation-delay: 0s !important; } }
 `; }

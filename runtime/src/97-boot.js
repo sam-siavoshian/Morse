@@ -36,7 +36,8 @@ onEvent(msg => {
 // run, and whatever arrived before it (that hotkey, a host event, a toast)
 // is replayed once the hello reply is in.
 B.adopt({
-  toast, key: adoptKey, modsChanged() { if (!panel.hidden) renderPanel(); },
+  // boot.js has no words of its own: it hands over message ids ({ id, vars }) for t()
+  toast: x => toast(x && typeof x === "object" ? t(x.id, x.vars) : x), key: adoptKey, modsChanged() { if (!panel.hidden) renderPanel(); },
   health: (m, r) => Health.ran(m, r), // repair: the panel marks mods that stopped working (70-panel.js)
   controlReady, // user control: the safe-start / off-switch notice after the first sync (63-control.js)
   healFound: () => Heal.found(), // self-heal: what boot.js found broken, for the dot, the note and Fix it (71-heal.js)

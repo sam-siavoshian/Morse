@@ -4,46 +4,42 @@
 // panel. Keys live in the cheat sheet (96-shortcuts.js); this links there
 // instead of repeating them.
 
-const HELP_EXAMPLES = [
-  ["Looks", ["Make the buttons rounder", "Use a softer background color", "Make this text bigger"]],
-  ["Layout", ["Make the main column wider", "Move the sidebar to the left", "Put these side by side"]],
-  ["New buttons", ["Add a button that copies this as Markdown", "Add a back-to-top button"]],
-  ["Hiding things", ["Hide this", "Hide the ads and banners", "Hide the comments"]],
-  ["Reading", ["Make this easier to read", "Show reading time under the title"]],
-  ["Media", ["Add a sleep timer", "Add playback speed buttons", "Make the player controls bigger"]],
-  ["Writing", ["Show a word count under this box", "Make this box taller"]],
-];
+// [category, how many examples]: message ids "help.cat.<category>" and
+// "help.ex.<category>.<i>" (core/locales/en.js), so the examples are in the
+// person's language, like what they'd type.
+const HELP_EXAMPLES = () => [["looks", 3], ["layout", 3], ["buttons", 2], ["hiding", 3], ["reading", 2], ["media", 3], ["writing", 2]]
+  .map(([cat, n]) => [t(`help.cat.${cat}`), Array.from({ length: n }, (_, i) => t(`help.ex.${cat}.${i + 1}`))]);
 
 function helpAbilities() {
   const k = id => (hotkey(id) ? caps(hotkey(id)) : "");
   // The edit toolbar: its own hotkey if one is set, else the primary key + E on a picked element (45-godmode.js).
   const edit = typeof GodMode === "undefined" ? "" : hotkey("godmode") ? caps(hotkey("godmode")) : caps([primaryMod, "E"]);
   return [
-    ["Describe a change", `Point at something first, or just describe a change to the whole page.`],
-    hotkey("talk") && ["Talk instead of typing", `Hold ${k("talk")} and say it.`],
-    edit && ["Use the Edit tools", `Point at something, then press ${edit} to hide, move, resize, recolor or rename it. No model needed.`],
-    typeof GodQuick !== "undefined" && ["Page tools", `Dark mode, bigger text, focus mode and more, from the Page tools button in the bar.`],
-    ["Save, undo, share", `A change you save is called a mod. Morse brings it back next time. ${hotkey("mods") ? `${k("mods")} opens the Mods panel` : "The Mods panel"} to turn mods off, edit or share them.`],
+    [t("bar.input"), esc(t("help.describe"))],
+    hotkey("talk") && [t("help.talk"), t("help.talk.d", { key: k("talk") })],
+    edit && [t("help.edit"), t("help.edit.d", { key: edit })],
+    typeof GodQuick !== "undefined" && [t("quick.title"), esc(t("help.quick.d"))],
+    [t("help.save"), hotkey("mods") ? t("help.save.d", { key: k("mods") }) : esc(t("help.save.dNoKey"))],
   ].filter(Boolean);
 }
 
 function helpSetup() {
   const st = Onboarding.state(), status = Onboarding.status();
   const rows = [];
-  if (modelMissing(status, S.label)) rows.push(`<span>No model connected</span><button type="button" class="tbtn" data-ob="model">Connect a model</button>`);
-  else if (S.label) rows.push(`<span class="dim">Model: ${esc(S.label)}</span>`);
-  if (status.userScripts === false) rows.push(`<button type="button" class="tbtn" data-ob="userscripts">Turn on Allow User Scripts</button>`);
-  if (st) rows.push(`<button type="button" class="tbtn" data-ob="tour">Show the 3 steps again</button>`);
+  if (modelMissing(status, S.label)) rows.push(`<span>${t("help.noModel")}</span><button type="button" class="tbtn" data-ob="model">${t("welcome.model.b")}</button>`);
+  else if (S.label) rows.push(`<span class="dim">${t("help.model", { label: esc(S.label) })}</span>`);
+  if (status.userScripts === false) rows.push(`<button type="button" class="tbtn" data-ob="userscripts">${t("help.userScripts")}</button>`);
+  if (st) rows.push(`<button type="button" class="tbtn" data-ob="tour">${t("help.tour")}</button>`);
   return rows.join("");
 }
 
 function renderHelp() {
   if (paneKind !== "help") return;
-  pane.innerHTML = `<div class="sheet ob-help" role="group" aria-label="Help">
-    <header><b>What you can do</b><button type="button" class="tbtn" data-act="keys">Keyboard shortcuts <span class="caps"><kbd>?</kbd></span></button></header>
-    <ul class="ob-can">${helpAbilities().map(([t, d]) => `<li><b>${esc(t)}</b><span>${d}</span></li>`).join("")}</ul>
-    <h4>Try saying <span>Click one to use it</span></h4>
-    <div class="ob-ex">${HELP_EXAMPLES.map(([cat, list]) => `<section><h5>${esc(cat)}</h5><div class="chips">${list.map(s =>
+  pane.innerHTML = `<div class="sheet ob-help" role="group" aria-label="${esc(t("help.label"))}">
+    <header><b>${t("help.title")}</b><button type="button" class="tbtn" data-act="keys">${t("menu.shortcuts")} <span class="caps"><kbd>?</kbd></span></button></header>
+    <ul class="ob-can">${helpAbilities().map(([title, d]) => `<li><b>${esc(title)}</b><span>${d}</span></li>`).join("")}</ul>
+    <h4>${t("help.try")} <span>${t("help.tryHint")}</span></h4>
+    <div class="ob-ex">${HELP_EXAMPLES().map(([cat, list]) => `<section><h5>${esc(cat)}</h5><div class="chips">${list.map(s =>
       `<button type="button" class="ex" data-ex="${esc(s)}" title="${esc(s)}">${esc(s)}</button>`).join("")}</div></section>`).join("")}</div>
     <footer>${helpSetup()}</footer>
   </div>`;

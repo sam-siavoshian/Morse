@@ -49,17 +49,33 @@ const shot = async (p, name, full) => {
   console.log("  📸", name);
 };
 
+// Lazy pictures load only near the screen, and a full-page screenshot doesn't
+// scroll. So scroll down the page a screen at a time, then wait until every
+// picture has decoded, and fail if one didn't, rather than shoot blank boxes.
+async function loadEveryPicture(p) {
+  const height = await p.evaluate(() => document.documentElement.scrollHeight);
+  const step = p.viewportSize().height / 2;
+  for (let y = 0; y < height; y += step) {
+    await p.evaluate(top => window.scrollTo(0, top), y);
+    await sleep(120);
+  }
+  const missing = await p.evaluate(async () => {
+    await Promise.all([...document.images].map(i => i.decode().catch(() => {})));
+    await document.fonts.ready;
+    return [...document.images].filter(i => !i.complete || !i.naturalWidth).map(i => i.getAttribute("src"));
+  });
+  if (missing.length) throw new Error(`pictures that didn't load: ${missing.join(", ")}`);
+  await p.evaluate(() => window.scrollTo(0, 0));
+  await sleep(300);
+}
+
 for (const size of ["desktop", "mobile"]) {
-  // The landing page, top to bottom (lazy pictures loaded first).
+  // The landing page, top to bottom, every picture loaded.
   let p = await page(size, "light");
   await p.goto(at("/site/"));
   await p.waitForLoadState("networkidle");
-  await p.evaluate(async () => {
-    for (const img of document.querySelectorAll("img[loading=lazy]")) img.loading = "eager";
-    await Promise.all([...document.images].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })));
-    await document.fonts.ready;
-  });
-  await sleep(600);
+  await loadEveryPicture(p);
+  await sleep(300);
   await shot(p, `landing-${size}.png`, true);
   // The nav: a menu panel on a wide screen, the sheet on a phone.
   if (size === "desktop") {
@@ -77,7 +93,7 @@ for (const size of ["desktop", "mobile"]) {
   p = await page(size, "light");
   await p.goto(at("/site/gallery.html"));
   await p.waitForSelector("#grid .card");
-  await sleep(500);
+  await loadEveryPicture(p);
   await shot(p, `gallery-${size}.png`, true);
   await p.locator("#grid > *").first().click();
   await p.waitForSelector("#drawer.open");

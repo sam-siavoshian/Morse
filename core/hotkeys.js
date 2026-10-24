@@ -5,17 +5,19 @@
 //   "Alt+Space", "Ctrl+Shift+Space", "Alt+Shift+KeyM", "Meta+Comma"
 // "" means "use the platform default" and "none" means "turned off".
 //
-// Pure and dependency-free: the hosts import it, and runtime/bundle.js
-// inlines it into the in-app runtime (so no imports here, ever).
+// Pure: the hosts import it, and runtime/bundle.js inlines it into the in-app
+// runtime (so no imports here besides core/i18n.js, which the bundle inlines
+// first). Labels and messages are in the person's language (t()).
+import { t } from "./i18n.js";
 
 export const HOTKEY_MODS = ["Ctrl", "Alt", "Shift", "Meta"];
 
 export const HOTKEY_ACTIONS = [
-  { id: "open", label: "Open Morse" },
-  { id: "talk", label: "Push to talk", hold: true },
-  { id: "mods", label: "Mods panel" },
-  { id: "godmode", label: "Edit tools" },
-  { id: "off", label: "Turn off all mods" }, // the off switch (runtime/src/63-control.js)
+  { id: "open", get label() { return t("hk.open"); } },
+  { id: "talk", get label() { return t("hk.talk"); }, hold: true },
+  { id: "mods", get label() { return t("hk.mods"); } },
+  { id: "godmode", get label() { return t("hk.godmode"); } },
+  { id: "off", get label() { return t("hk.off"); } }, // the off switch (runtime/src/63-control.js)
 ];
 
 export function detectPlatform(nav = globalThis.navigator) {
@@ -141,7 +143,7 @@ export function comboParts(str, platform) {
 }
 
 export function formatCombo(str, platform) {
-  if (str === "none") return "Off";
+  if (str === "none") return t("hk.offShort");
   const parts = comboParts(str, platform);
   if (!parts.length) return "";
   return platform === "mac" ? parts.join("") : parts.join("+");
@@ -160,29 +162,31 @@ export function formatPartial(partial, platform) {
 // Critical OS/browser shortcuts are rejected outright: binding them would quit,
 // close or reload the app. Common app shortcuts are allowed with a warning.
 
+// What each one does: message ids "hk.does.<name>" (core/locales/en.js).
 const HK_CRITICAL = {
   mac: {
-    "Meta+KeyQ": "quits the app", "Meta+KeyW": "closes the window or tab", "Meta+KeyT": "opens a new tab",
-    "Meta+KeyN": "opens a new window", "Meta+KeyR": "reloads the page", "Meta+KeyL": "focuses the address bar",
-    "Meta+KeyH": "hides the app", "Meta+KeyM": "minimizes the window", "Meta+Space": "opens Spotlight",
-    "Meta+Tab": "switches apps", "Alt+Meta+Escape": "opens Force Quit", "Ctrl+Meta+KeyQ": "locks the screen",
-    "Meta+Shift+KeyQ": "logs you out", "Meta+Shift+KeyW": "closes the window", "Ctrl+Meta+Space": "opens the emoji picker",
+    "Meta+KeyQ": "quitApp", "Meta+KeyW": "closeWindowOrTab", "Meta+KeyT": "newTab",
+    "Meta+KeyN": "newWindow", "Meta+KeyR": "reload", "Meta+KeyL": "addressBar",
+    "Meta+KeyH": "hideApp", "Meta+KeyM": "minimize", "Meta+Space": "spotlight",
+    "Meta+Tab": "switchApps", "Alt+Meta+Escape": "forceQuit", "Ctrl+Meta+KeyQ": "lockScreen",
+    "Meta+Shift+KeyQ": "logOut", "Meta+Shift+KeyW": "closeWindow", "Ctrl+Meta+Space": "emoji",
   },
   other: {
-    "Alt+F4": "closes the window", "Alt+Tab": "switches windows", "Ctrl+KeyW": "closes the tab", "Ctrl+KeyT": "opens a new tab",
-    "Ctrl+KeyN": "opens a new window", "Ctrl+KeyR": "reloads the page", "Ctrl+KeyL": "focuses the address bar",
-    "Ctrl+KeyQ": "quits the app", "Ctrl+Shift+KeyQ": "quits the browser", "Ctrl+Shift+KeyW": "closes the window",
-    "Ctrl+Shift+KeyN": "opens a private window", "Ctrl+Alt+Delete": "is reserved by the system", "Ctrl+Shift+Escape": "opens Task Manager",
-    "Ctrl+Tab": "switches tabs", "Ctrl+Shift+Tab": "switches tabs", "Ctrl+F4": "closes the tab", "Meta+KeyL": "locks the computer",
-    "Meta+Tab": "switches windows", "Alt+Escape": "switches windows",
+    "Alt+F4": "closeWindow", "Alt+Tab": "switchWindows", "Ctrl+KeyW": "closeTab", "Ctrl+KeyT": "newTab",
+    "Ctrl+KeyN": "newWindow", "Ctrl+KeyR": "reload", "Ctrl+KeyL": "addressBar",
+    "Ctrl+KeyQ": "quitApp", "Ctrl+Shift+KeyQ": "quitBrowser", "Ctrl+Shift+KeyW": "closeWindow",
+    "Ctrl+Shift+KeyN": "privateWindow", "Ctrl+Alt+Delete": "system", "Ctrl+Shift+Escape": "taskManager",
+    "Ctrl+Tab": "switchTabs", "Ctrl+Shift+Tab": "switchTabs", "Ctrl+F4": "closeTab", "Meta+KeyL": "lockComputer",
+    "Meta+Tab": "switchWindows", "Alt+Escape": "switchWindows",
   },
 };
-const HK_CRITICAL_WIN = { "Alt+Space": "opens the window menu on Windows" };
+const HK_CRITICAL_WIN = { "Alt+Space": "windowMenu" };
+// Common app shortcuts: message ids "hk.app.<name>".
 const HK_COMMON = {
-  KeyC: "Copy", KeyV: "Paste", KeyX: "Cut", KeyZ: "Undo", KeyY: "Redo", KeyA: "Select all", KeyS: "Save", KeyF: "Find",
-  KeyP: "Print", KeyK: "the command palette", KeyB: "Bold", KeyI: "Italic", KeyU: "Underline", KeyO: "Open",
-  KeyD: "Bookmark", KeyE: "Search", KeyG: "Find next", KeyJ: "Downloads", KeyH: "History", Comma: "Settings",
-  Equal: "Zoom in", Minus: "Zoom out", Digit0: "Reset zoom", Slash: "Search", Enter: "Send",
+  KeyC: "copy", KeyV: "paste", KeyX: "cut", KeyZ: "undo", KeyY: "redo", KeyA: "selectAll", KeyS: "save", KeyF: "find",
+  KeyP: "print", KeyK: "palette", KeyB: "bold", KeyI: "italic", KeyU: "underline", KeyO: "open",
+  KeyD: "bookmark", KeyE: "search", KeyG: "findNext", KeyJ: "downloads", KeyH: "history", Comma: "settings",
+  Equal: "zoomIn", Minus: "zoomOut", Digit0: "resetZoom", Slash: "search", Enter: "send",
 };
 
 
@@ -191,31 +195,31 @@ const HK_COMMON = {
 export function checkCombo(str, platform, { self = "", others = {} } = {}) {
   if (str === "none") return { level: "ok", message: "" };
   const c = parseCombo(str);
-  if (!c) return { level: "error", message: "Add a letter or another key, not just Shift, Ctrl or Alt." };
+  if (!c) return { level: "error", message: t("hk.err.noKey") };
   const combo = stringifyCombo(c);
   const shown = formatCombo(combo, platform);
   const fkey = /^F(1[3-9]|2[0-4])$/.test(c.code);
   const strong = c.ctrl || c.alt || c.meta;
   if (!strong && !fkey) {
-    const need = platform === "mac" ? "⌘, ⌥ or ⌃" : "Ctrl or Alt";
-    return { level: "error", message: c.shift ? `${shown} types a character. Add ${need}.` : `A single key would fire while you type. Add ${need}.` };
+    const need = platform === "mac" ? t("hk.need.mac") : t("hk.need.other");
+    return { level: "error", message: c.shift ? t("hk.err.typesChar", { shown, need }) : t("hk.err.single", { need }) };
   }
   const table = platform === "mac" ? HK_CRITICAL.mac : { ...HK_CRITICAL.other, ...(platform === "win" ? HK_CRITICAL_WIN : {}) };
-  if (table[combo]) return { level: "error", message: `${shown} ${table[combo]}. Pick another.` };
+  if (table[combo]) return { level: "error", message: t("hk.err.critical", { shown, what: t("hk.does." + table[combo]) }) };
   for (const [id, other] of Object.entries(others)) {
     if (id === self || !other || normalizeCombo(other) !== combo) continue;
     const pair = [self, id].sort().join("+");
-    if (pair === "open+talk") return { level: "ok", message: "Same as Open Morse: tap to open, hold to talk." };
+    if (pair === "open+talk") return { level: "ok", message: t("hk.ok.openTalk") };
     const label = HOTKEY_ACTIONS.find(a => a.id === id)?.label || id;
-    return { level: "error", message: `Already used for ${label}.` };
+    return { level: "error", message: t("hk.err.used", { label }) };
   }
   const primary = platform === "mac" ? c.meta && !c.ctrl : c.ctrl && !c.meta;
-  if (primary && !c.alt && HK_COMMON[c.code]) return { level: "warn", message: `${shown} is ${HK_COMMON[c.code]} in most apps. Morse will take it over.` };
-  if (platform === "mac" && c.ctrl && !c.alt && !c.meta && c.code === "Space") return { level: "warn", message: "⌃Space switches the keyboard language on many Macs." };
-  if (platform !== "mac" && c.ctrl && !c.alt && !c.shift && c.code === "Space") return { level: "warn", message: "Ctrl+Space opens suggestions in many code editors." };
-  if (platform === "linux" && combo === "Alt+Space") return { level: "warn", message: "Alt+Space opens the window menu on GNOME and Xfce, and KRunner on KDE." };
-  if (platform === "mac" && c.alt && !c.ctrl && !c.meta && /^(Key|Digit)/.test(c.code)) return { level: "warn", message: `${shown} types a special character in text fields. Morse will take it over.` };
-  if (platform !== "mac" && c.alt && !c.ctrl && !c.meta && !c.shift && /^Key/.test(c.code)) return { level: "warn", message: `${shown} opens a menu in many desktop apps.` };
+  if (primary && !c.alt && HK_COMMON[c.code]) return { level: "warn", message: t("hk.warn.common", { shown, what: t("hk.app." + HK_COMMON[c.code]) }) };
+  if (platform === "mac" && c.ctrl && !c.alt && !c.meta && c.code === "Space") return { level: "warn", message: t("hk.warn.macCtrlSpace") };
+  if (platform !== "mac" && c.ctrl && !c.alt && !c.shift && c.code === "Space") return { level: "warn", message: t("hk.warn.ctrlSpace") };
+  if (platform === "linux" && combo === "Alt+Space") return { level: "warn", message: t("hk.warn.linuxAltSpace") };
+  if (platform === "mac" && c.alt && !c.ctrl && !c.meta && /^(Key|Digit)/.test(c.code)) return { level: "warn", message: t("hk.warn.macAlt", { shown }) };
+  if (platform !== "mac" && c.alt && !c.ctrl && !c.meta && !c.shift && /^Key/.test(c.code)) return { level: "warn", message: t("hk.warn.altMenu", { shown }) };
   return { level: "ok", message: "" };
 }
 

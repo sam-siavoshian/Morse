@@ -3,10 +3,11 @@
 // Every change saves immediately through savePrefs().
 
 const HOTKEY_HELP = {
-  open: "Works anywhere in the app",
-  talk: "Hold to talk, release to finish",
-  mods: "See and manage the mods here",
-  godmode: "Show the Edit tools",
+  get open() { return t("hk.help.open"); },
+  get talk() { return t("hk.help.talk"); },
+  get mods() { return t("hk.help.mods"); },
+  get godmode() { return t("hk.help.godmode"); },
+  get off() { return t("hk.help.off"); }, // the off switch (63-control.js)
 };
 
 // recording: { id, partial, error } while a hotkey button is listening for keys
@@ -43,7 +44,7 @@ function paintSettings() {
     const rec = recording?.id === id;
     const n = rec ? recording : hkNotes[id];
     const msg = rec
-      ? (recording.error ? `<span class="bad">${esc(recording.error)}</span>` : `Press the new shortcut · <kbd>Esc</kbd> to cancel · <kbd>${PLATFORM === "mac" ? "⌫" : "Backspace"}</kbd> to reset`)
+      ? (recording.error ? `<span class="bad">${esc(recording.error)}</span>` : t("settings.recording", { back: PLATFORM === "mac" ? "⌫" : "Backspace" }))
       : n?.message ? `<span class="${n.level === "warn" ? "warn" : ""}">${esc(n.message)}</span>` : esc(HOTKEY_HELP[id]);
     const shown = rec
       ? `<span class="rec">${recording.partial ? caps(comboParts({ ...flagsOf(recording.partial), code: "X" }, PLATFORM).slice(0, -1)) : ""}<span class="dots">${radar(12)}</span></span>`
@@ -54,33 +55,34 @@ function paintSettings() {
     return `<div class="srow hkrow${rec ? " recording" : ""}${shake ? " shake" : ""}" data-id="${esc(id)}">
       <div class="lbl"><span>${esc(label)}</span><small id="hk-${id}-msg">${msg}</small></div>
       <div class="ctl">
-        ${rec && id !== "open" ? `<button type="button" class="tbtn" data-off="${id}">Turn off</button>` : ""}
-        ${!rec && custom ? `<button type="button" class="tbtn" data-reset="${id}" title="Back to ${esc(formatCombo(resolveHotkeys({}, PLATFORM)[id], PLATFORM))}">Reset</button>` : ""}
-        <button type="button" class="hk field" data-hk="${id}" aria-describedby="hk-${id}-msg" aria-label="${esc(label)} shortcut: ${esc(hotkeyText(id) || "off")}. Press to change.">${shown}</button>
+        ${rec && id !== "open" ? `<button type="button" class="tbtn" data-off="${id}">${t("settings.turnOff")}</button>` : ""}
+        ${!rec && custom ? `<button type="button" class="tbtn" data-reset="${id}" title="${esc(t("settings.backTo", { key: formatCombo(resolveHotkeys({}, PLATFORM)[id], PLATFORM) }))}">${t("settings.reset")}</button>` : ""}
+        <button type="button" class="hk field" data-hk="${id}" aria-describedby="hk-${id}-msg" aria-label="${esc(t("settings.hkLabel", { label, key: hotkeyText(id) || t("settings.off") }))}">${shown}</button>
       </div>
     </div>`;
   }).join("");
   pane.innerHTML = `
-    <div class="sheet" role="group" aria-label="Settings">
-      <header><b>Settings</b><span class="flash" aria-hidden="true"></span><button type="button" class="tbtn" data-act="done">Done</button></header>
+    <div class="sheet" role="group" aria-label="${esc(t("settings.title"))}">
+      <header><b>${t("settings.title")}</b><span class="flash" aria-hidden="true"></span><button type="button" class="tbtn" data-act="done">${t("btn.done")}</button></header>
       ${YourStyle.settingsHtml() /* your-style hook: 72-style.js */}
-      <section><h4>Shortcuts</h4>${keyRows}</section>
-      <section><h4>Voice</h4>
-        <div class="srow"><div class="lbl"><span>Send after a pause</span><small>Sends when you stop talking</small></div><div class="ctl">${switchHtml("autoSubmit", PREFS.voice.autoSubmit, "Send after a pause")}</div></div>
-        <div class="srow"><div class="lbl"><span>Speech to text</span><small class="${v.ok ? "" : "warn"}">${esc(v.text)}</small></div><div class="ctl"><span class="pill ${v.ok ? "on" : ""}">${v.ok ? "Ready" : "Off"}</span></div></div>
+      <section><h4>${t("settings.shortcuts")}</h4>${keyRows}</section>
+      <section><h4>${t("settings.voice")}</h4>
+        <div class="srow"><div class="lbl"><span>${t("settings.autoSubmit")}</span><small>${t("settings.autoSubmit.help")}</small></div><div class="ctl">${switchHtml("autoSubmit", PREFS.voice.autoSubmit, t("settings.autoSubmit"))}</div></div>
+        <div class="srow"><div class="lbl"><span>${t("settings.speech")}</span><small class="${v.ok ? "" : "warn"}">${esc(v.text)}</small></div><div class="ctl"><span class="pill ${v.ok ? "on" : ""}">${v.ok ? t("settings.ready") : t("settings.off")}</span></div></div>
       </section>
-      <section><h4>Appearance</h4>
-        <div class="srow"><div class="lbl"><span>Effects</span><small>${PREFS.effects ? "The animation while Morse works" : `Follows your system's motion setting`}</small></div><div class="ctl">${segHtml("effects", "Effects", [["full", "Full"], ["subtle", "Subtle"], ["off", "Off"]], fx)}</div></div>
-        <div class="srow"><div class="lbl"><span>Bar position</span><small>Auto moves away from what you point at</small></div><div class="ctl">${segHtml("barPosition", "Bar position", [["auto", "Auto"], ["top", "Top"], ["bottom", "Bottom"]], PREFS.barPosition)}</div></div>
-        <div class="srow"><div class="lbl"><span>Theme</span></div><div class="ctl">${segHtml("theme", "Theme", [["auto", "Match app"], ["light", "Light"], ["dark", "Dark"]], PREFS.theme)}</div></div>
+      <section><h4>${t("settings.appearance")}</h4>
+        <div class="srow"><div class="lbl"><span>${t("settings.effects")}</span><small>${PREFS.effects ? t("settings.effects.help") : t("settings.effects.system")}</small></div><div class="ctl">${segHtml("effects", t("settings.effects"), [["full", t("settings.effects.full")], ["subtle", t("settings.effects.subtle")], ["off", t("settings.off")]], fx)}</div></div>
+        <div class="srow"><div class="lbl"><span>${t("settings.position")}</span><small>${t("settings.position.help")}</small></div><div class="ctl">${segHtml("barPosition", t("settings.position"), [["auto", t("settings.position.auto")], ["top", t("settings.position.top")], ["bottom", t("settings.position.bottom")]], PREFS.barPosition)}</div></div>
+        <div class="srow"><div class="lbl"><span>${t("settings.theme")}</span></div><div class="ctl">${segHtml("theme", t("settings.theme"), [["auto", t("settings.theme.auto")], ["light", t("settings.theme.light")], ["dark", t("settings.theme.dark")]], PREFS.theme)}</div></div>
       </section>
       ${modelSection()}
-      <section><h4>General</h4>
-        <div class="srow"><div class="lbl"><span>Welcome message</span><small>“Morse is ready” when an app or page loads</small></div><div class="ctl">${switchHtml("welcome", PREFS.welcome, "Welcome message")}</div></div>
-        <div class="srow"><div class="lbl"><span>Show mods others made</span><small>Mods from the Morse gallery for the site you're on</small></div><div class="ctl">${switchHtml("gallery", PREFS.gallery, "Show mods others made")}</div></div><!-- gallery hook: 68-gallery.js -->
-        <div class="srow"><div class="lbl"><span>Fix my mods automatically when a site changes</span><small>Fixes them in the background and tells you, with Undo</small></div><div class="ctl">${switchHtml("autoFix", PREFS.autoFix, "Fix my mods automatically when a site changes")}</div></div><!-- self-heal hook: 71-heal.js -->
+      <section><h4>${t("settings.general")}</h4>
+        ${languageRowHtml()}
+        <div class="srow"><div class="lbl"><span>${t("settings.welcome")}</span><small>${t("settings.welcome.help")}</small></div><div class="ctl">${switchHtml("welcome", PREFS.welcome, t("settings.welcome"))}</div></div>
+        <div class="srow"><div class="lbl"><span>${t("settings.gallery")}</span><small>${t("settings.gallery.help")}</small></div><div class="ctl">${switchHtml("gallery", PREFS.gallery, t("settings.gallery"))}</div></div><!-- gallery hook: 68-gallery.js -->
+        <div class="srow"><div class="lbl"><span>${t("settings.autoFix")}</span><small>${t("settings.autoFix.help")}</small></div><div class="ctl">${switchHtml("autoFix", PREFS.autoFix, t("settings.autoFix"))}</div></div><!-- self-heal hook: 71-heal.js -->
       </section>
-      <footer><button type="button" class="tbtn" data-act="reset-all">Reset all settings</button><span class="dim">${esc(S.mode === "extension" ? "Synced with your Chrome profile" : S.mode === "desktop" ? "Saved on this computer" : "")}</span></footer>
+      <footer><button type="button" class="tbtn" data-act="reset-all">${t("settings.resetAll")}</button><span class="dim">${esc(S.mode === "extension" ? t("settings.synced") : S.mode === "desktop" ? t("settings.savedHere") : "")}</span></footer>
     </div>`;
 }
 // models (core/route.js): Automatic, Always fast, Always best, and the two
@@ -88,19 +90,31 @@ function paintSettings() {
 function modelSection() {
   const m = S.models;
   if (!m) return "";
-  if (m.pinned) return `<section><h4>Model</h4><div class="srow"><div class="lbl"><span>Model</span><small>Always ${esc(m.pinned)}, as chosen in morse config</small></div></div></section>`;
+  const head = `<section><h4>${t("settings.model")}</h4>`;
+  if (m.pinned) return `${head}<div class="srow"><div class="lbl"><span>${t("settings.model")}</span><small>${esc(t("settings.model.pinned", { model: m.pinned }))}</small></div></div></section>`;
   const mode = PREFS.modelMode || "auto";
-  const note = mode === "fast" ? `Every change uses ${m.fast}` : mode === "best" ? `Every change uses ${m.best}. Slower, and uses more of your plan` : `Quick changes use ${m.fast}. Harder ones, and ones it gets wrong, go to ${m.best}`;
-  return `<section><h4>Model</h4>
-        <div class="srow"><div class="lbl"><span>Model</span><small>${esc(note)}</small></div><div class="ctl">${segHtml("modelMode", "Model", [["auto", "Automatic"], ["fast", "Always fast"], ["best", "Always best"]], mode)}</div></div>
+  const note = t(`settings.model.note.${mode}`, { fast: m.fast, best: m.best });
+  return `${head}
+        <div class="srow"><div class="lbl"><span>${t("settings.model")}</span><small>${esc(note)}</small></div><div class="ctl">${segHtml("modelMode", t("settings.model"), [["auto", t("settings.model.auto")], ["fast", t("settings.model.fast")], ["best", t("settings.model.best")]], mode)}</div></div>
       </section>`;
+}
+// Language: "Same as my computer" (the default), or one of core/i18n.js LANGUAGES,
+// each named in its own language. The label also says "Language" in English, so
+// someone who picked a language by mistake can find the way back.
+function languageRowHtml() {
+  const sys = languageName(systemLanguage());
+  const opts = [["", t("settings.language.system", { name: sys })], ...LANGUAGES.map(l => [l.code, l.name])];
+  const label = t("settings.language");
+  return `<div class="srow lang"><div class="lbl"><span>${esc(label)}${getLanguage() === "en" ? "" : ` <span class="dim">· <span lang="en" dir="ltr">Language</span></span>`}</span><small>${t("settings.language.help")}</small></div>
+    <div class="ctl"><select class="field" data-k="language" aria-label="${esc(label)}">${opts.map(([v, name]) =>
+      `<option value="${esc(v)}"${v === PREFS.language ? " selected" : ""}${v ? ` lang="${esc(v)}"` : ""}>${esc(name)}</option>`).join("")}</select></div></div>`;
 }
 const flagsOf = partial => ({ ctrl: /Ctrl/.test(partial), alt: /Alt/.test(partial), shift: /Shift/.test(partial), meta: /Meta/.test(partial) });
 
 function flashSaved() {
   const s = pane.querySelector(".flash");
   if (!s) return;
-  s.textContent = "Saved";
+  s.textContent = t("settings.saved");
   s.classList.remove("show"); void s.offsetWidth; s.classList.add("show");
 }
 async function saveSetting(patch, focusSel) {
@@ -115,7 +129,7 @@ function startRecording(id) {
   recording = { id, partial: "", error: "" };
   renderSettings();
   pane.querySelector(`[data-hk="${id}"]`)?.focus();
-  announce("Press the new shortcut. Escape cancels.");
+  announce(t("settings.recording.say"));
 }
 function stopRecording(focus = true) {
   if (!recording) return;
@@ -128,7 +142,7 @@ async function commitHotkey(id, value, verdict) {
   recording = null;
   hkNotes[id] = verdict && verdict.message ? verdict : null;
   await saveSetting({ hotkeys: { [id]: value } }, `[data-hk="${id}"]`);
-  announce(`${HOTKEY_ACTIONS.find(a => a.id === id).label}: ${hotkeyText(id) || "off"}. ${verdict?.message || ""}`);
+  announce(`${HOTKEY_ACTIONS.find(a => a.id === id).label}: ${hotkeyText(id) || t("settings.off")}. ${verdict?.message || ""}`);
 }
 
 listen("keydown", e => {
@@ -189,6 +203,7 @@ pane.addEventListener("change", e => {
   if (k === "welcome") saveSetting({ welcome: e.target.checked }, `[data-k="welcome"]`);
   if (k === "gallery") saveSetting({ gallery: e.target.checked }, `[data-k="gallery"]`); // gallery hook: 68-gallery.js
   if (k === "autoFix") saveSetting({ autoFix: e.target.checked }, `[data-k="autoFix"]`); // self-heal hook: 71-heal.js
+  if (k === "language") saveSetting({ language: e.target.value }, `[data-k="language"]`);
 });
 // Radio groups: arrows move and select, like native radios.
 pane.addEventListener("keydown", e => {

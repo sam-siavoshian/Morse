@@ -28,8 +28,10 @@
 // badge; everything people see and do about it stays here.
 
 const Heal = (() => {
-  const LEAD = "Stopped working after this site changed.";
-  const AUTO_NOTE = "Fixed after this site changed";
+  const LEAD = () => t("heal.lead");
+  const AUTO_NOTE = () => t("heal.autoNote");
+  // A newest version that is a fix (Fix it, or the automatic one), in any language Morse speaks.
+  const FIX_NOTES = () => LANGUAGES.flatMap(l => [t("result.fixNote", {}, l.code), t("heal.autoNote", {}, l.code)]);
   const NOT_OURS = "[data-morse-ui],[data-morse]";
   const TRANSIENT = "dialog,[role=dialog],[role=alertdialog],[aria-modal=true],[popover],[role=menu],[role=listbox],[role=tooltip]";
   const st = new Map(); // id -> { state: "broken", lead, reason, error (lazy), lost, code }
@@ -141,7 +143,7 @@ const Heal = (() => {
   }
 
   function mark(m, lost) {
-    const s = { state: "broken", lead: LEAD, reason: siteChangedReason(m), lost, code: modCodeHash(m), fp: m.fp, note: null };
+    const s = { state: "broken", lead: LEAD(), reason: siteChangedReason(m), lost, code: modCodeHash(m), fp: m.fp, note: null };
     // What the model gets (core/prompt.js basePrompt "What went wrong"),
     // worked out only when Fix it is pressed.
     Object.defineProperty(s, "error", { enumerable: true, get() { return s.note || (s.note = siteChangedNote(m.fp, lost, candidates(lost))); } });
@@ -175,7 +177,7 @@ const Heal = (() => {
     const n = brokenMods().length;
     if (bar.hasAttribute("data-heal") !== n > 0) bar.toggleAttribute("data-heal", n > 0);
     if (panel.hasAttribute("data-heal") !== n > 0) panel.toggleAttribute("data-heal", n > 0);
-    logo.title = n ? `${n === 1 ? "A mod" : `${n} mods`} stopped working after this site changed. Open Mods to fix ${n === 1 ? "it" : "them"}.` : "";
+    logo.title = n ? t("heal.dot", { n }) : "";
     if (S.mode === "extension" && n !== badged) { badged = n; call("heal.badge", { count: n }).catch(() => {}); } // the toolbar button
   }
   function paint() {
@@ -213,7 +215,7 @@ const Heal = (() => {
     const m = S.mods.find(x => x.id === id);
     const s = st.get(id);
     if (!m || !s || !checkable(m) || (S.draft?.id === id && S.open)) return;
-    if (m.refined === AUTO_NOTE || m.fp?.tried || modCodeHash(m) !== s.code) return; // the note stays: Fix it is one click
+    if (LANGUAGES.some(l => m.refined === t("heal.autoNote", {}, l.code)) /* in any language */ || m.fp?.tried || modCodeHash(m) !== s.code) return; // the note stays: Fix it is one click
     await saveFp(m, { ...m.fp, tried: true });
     const ctx = context();
     delete ctx.target; // what the bar points at has nothing to do with this mod
@@ -224,7 +226,7 @@ const Heal = (() => {
     // or deleted it: then the fix is dropped and what they did stands.
     const cur = S.mods.find(x => x.id === id);
     const still = !!cur && checkable(cur) && modCodeHash(cur) === s.code && !(S.draft?.id === id && S.open);
-    const next = still && res?.ok && (res.css?.trim() || res.js?.trim()) ? reviseMod(cur, { prompt: AUTO_NOTE, css: res.css || "", js: res.js || "" }) : null;
+    const next = still && res?.ok && (res.css?.trim() || res.js?.trim()) ? reviseMod(cur, { prompt: AUTO_NOTE(), css: res.css || "", js: res.js || "" }) : null;
     if (next) setCss(id, next.css);
     const fp = next && fingerprintNow(next);
     if (!fp) { // no fix, or one that finds nothing either: leave the note (or what the person chose)
@@ -237,8 +239,8 @@ const Heal = (() => {
     st.delete(id);
     B.heal.forget(id);
     paint();
-    const undo = ["Undo", () => undoFix(saved, s)];
-    controlToast(`Fixed “${saved.title}” after this site changed.`, galleryIdOf(saved) ? [undo, ["Share the fix…", () => shareFix(saved)]] : [undo]);
+    const undo = [t("btn.undo"), () => undoFix(saved, s)];
+    controlToast(t("heal.fixed", { title: saved.title }), galleryIdOf(saved) ? [undo, [t("heal.share"), () => shareFix(saved)]] : [undo]);
   }
   async function undoFix(m, s) {
     const back = stepBack(S.mods.find(x => x.id === m.id) || m);
@@ -249,13 +251,13 @@ const Heal = (() => {
     await showVersion(saved.id, saved);
     st.set(saved.id, s);
     paint();
-    toast("Back to the version from before the fix");
+    toast(t("heal.back"));
   }
 
   // ---- sharing a fix of a gallery mod: the gallery's submit flow (a
   // prefilled GitHub issue, core/gallery.js), titled as a fix.
   function offerShare(m) {
-    controlToast(`Saved the fix for “${m.title}”. Others who use it may need it too.`, [["Share the fix…", () => shareFix(m)]]);
+    controlToast(t("heal.savedFix", { title: m.title }), [[t("heal.share"), () => shareFix(m)]]);
   }
   async function shareFix(m) {
     const cur = S.mods.find(x => x.id === m.id) || m;
@@ -266,17 +268,17 @@ const Heal = (() => {
     if (r.attached) file = await call("share", { mod: forGallery(cur), kind: "json" }).catch(() => null);
     try {
       await call("open", { url: r.url });
-      toast(r.attached ? `Opened a new GitHub issue. Add the saved file${file?.path ? ` (${file.path})` : ""} to it.` : "Opened a new GitHub issue with the fix in it. Read it over, then submit it.");
+      toast(r.attached ? t("heal.issueFile", { path: file?.path ? ` (${file.path})` : "" }) : t("heal.issue"));
       const saved = { ...cur, fixShared: modCodeHash(cur) };
       await call("mods.save", { mod: saved }).catch(() => null);
       S.mods = S.mods.map(x => (x.id === saved.id ? saved : x));
       if (!panel.hidden) renderPanel();
-    } catch (e) { toast(`Couldn't open GitHub. ${plainError(e)}`); }
+    } catch (e) { toast(t("gl.githubFailed", { error: plainError(e) })); }
   }
   // A gallery mod whose newest version is a fix, not shared yet.
   function rowHtml(m) {
-    if (!galleryIdOf(m) || st.has(m.id) || !/^Fixed (it so it works again|after this site changed)$/.test(m.refined || "") || m.fixShared === modCodeHash(m)) return "";
-    return `<div class="health heal-fixed" role="status"><p><b>Fixed after this site changed.</b> Others who use it may need this fix too.</p><button data-a="heal-share">Share the fix…</button></div>`;
+    if (!galleryIdOf(m) || st.has(m.id) || !FIX_NOTES().includes(m.refined || "") || m.fixShared === modCodeHash(m)) return "";
+    return `<div class="health heal-fixed" role="status"><p><b>${t("heal.fixedLead")}</b> ${t("heal.othersMayNeed")}</p><button data-a="heal-share">${t("heal.share")}</button></div>`;
   }
   panel.addEventListener("click", e => {
     const b = e.target.closest("[data-a=heal-share]");

@@ -283,7 +283,7 @@ test("morse config: --model-mode, --fast-model and --best-model are saved; --mod
   let r = cli("--provider", "claude-code", "--model-mode", "fast", "--fast-model", "claude-haiku-4-5", "--best-model", "opus");
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /Claude Code · claude-haiku-4-5/);
-  assert.match(r.stdout, /always fast · fast claude-haiku-4-5 · best opus/);
+  assert.match(r.stdout, /Always fast · fast claude-haiku-4-5 · best opus/);
   assert.equal((await store.loadPrefs()).modelMode, "fast");
   assert.deepEqual((await store.loadConfig()).tiers["claude-code"], { fast: "claude-haiku-4-5", best: "opus" });
   r = cli("--model", "sonnet");
