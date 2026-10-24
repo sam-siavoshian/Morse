@@ -108,7 +108,9 @@ names a folder), 22-web-working.png, 26-news-before.png, 31-installed.png and
 
 | File | Made by | | Note |
 |---|---|---|---|
-| landing-, gallery-, gallery-drawer-, install-{desktop,mobile}-{dark,light}.png | shoot-site.js (new) | ✅ | No script made these before. The nav says "Edit tools", not "God mode" |
+| landing-, landing-nav-, gallery-, gallery-drawer-{desktop,mobile}.png | shoot-site.js | ✅ | The site in the Lanes design, light only like Lanes, so one scheme |
+| install-{desktop,mobile}-{dark,light}.png | shoot-site.js | ✅ | The share page keeps its earlier look |
+| compare-{390,768,1280,1440}-{first-screen,full}, compare-gallery-1440, compare-privacy-1440 | by hand, from a local build of the Lanes site | ✅ | Lanes on the left, Morse on the right, same width |
 | install-bad-link-desktop-dark.png | shoot-site.js | ✅ | |
 
 Removed: the landing page's demo shots (landing-demo-*, the landing page has a

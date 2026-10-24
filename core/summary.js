@@ -6,37 +6,47 @@
 // that builds itself while it runs (eval, encoded strings, window["..."])
 // gets its own note, because then reading the code isn't enough.
 //
-// Pure and dependency-free: the share page imports it, the hosts import it,
-// and runtime/bundle.js inlines it into the in-app runtime (so no imports).
+// Pure: the share page imports it, the hosts import it, and
+// runtime/bundle.js inlines it into the in-app runtime (so no imports besides
+// core/i18n.js, which the bundle inlines first). The words are in the
+// person's language: message ids "sum.<id>" and "sum.<id>.detail".
+import { t, getLanguage } from "./i18n.js";
 
+// One line of a summary: its words are read when shown, in the current language.
+function summaryItem(id, detail = false) {
+  const item = { id };
+  Object.defineProperty(item, "text", { get: () => t(`sum.${id}`), enumerable: true });
+  if (detail) Object.defineProperty(item, "detail", { get: () => t(`sum.${id}.detail`), enumerable: true });
+  return item;
+}
 // Every line a summary can contain, in the order they're shown.
 export const SUMMARY_ITEMS = [
-  { id: "looks", text: "Changes how the page looks" },
-  { id: "hides", text: "Hides or removes parts of the page" },
-  { id: "text", text: "Changes text on the page" },
-  { id: "buttons", text: "Adds buttons to the page" },
-  { id: "adds", text: "Adds new things to the page" },
-  { id: "clicks", text: "Reacts when you click, scroll or point" },
-  { id: "typing", text: "Reads what you type in this page", detail: "Including text you enter in boxes and fields." },
-  { id: "acts", text: "Clicks or submits things for you" },
-  { id: "ongoing", text: "Keeps running while the page is open", detail: "It checks the page again as it changes." },
-  { id: "storage", text: "Remembers settings on this site", detail: "Saved in your browser for this site only." },
-  { id: "cookies", text: "Reads or changes this site's cookies", detail: "Cookies can include what keeps you signed in." },
-  { id: "clipboard", text: "Uses your clipboard", detail: "Copying, and possibly reading what you copied." },
-  { id: "navigates", text: "Opens or reloads pages" },
-  { id: "loads", text: "Loads files from another website", detail: "That website can tell when you open this page." },
-  { id: "network", text: "Sends data to another website", detail: "What it sends could include what you see or type here." },
-  { id: "device", text: "Asks for your camera, microphone or location", detail: "Your browser asks you first." },
-  { id: "notify", text: "Shows notifications" },
-  { id: "dynamic", text: "Runs code it builds while running", detail: "So the code below may not show everything it does." },
-  { id: "code", text: "Runs its own code on this page", detail: "Code here can see everything on this page that you can." },
+  summaryItem("looks"),
+  summaryItem("hides"),
+  summaryItem("text"),
+  summaryItem("buttons"),
+  summaryItem("adds"),
+  summaryItem("clicks"),
+  summaryItem("typing", true),
+  summaryItem("acts"),
+  summaryItem("ongoing", true),
+  summaryItem("storage", true),
+  summaryItem("cookies", true),
+  summaryItem("clipboard", true),
+  summaryItem("navigates"),
+  summaryItem("loads", true),
+  summaryItem("network", true),
+  summaryItem("device", true),
+  summaryItem("notify"),
+  summaryItem("dynamic", true),
+  summaryItem("code", true),
 ];
 
 // The ones that get a clearly worded note above the Install button.
 export const SUMMARY_NOTES = {
-  network: "This mod can send information from this page to another website, including things you see or type here. Install it only if you trust the person who shared it.",
-  typing: "This mod can read what you type on this page. That can include messages and passwords.",
-  dynamic: "Part of this mod's code is put together while it runs, so reading it won't tell you everything it does.",
+  get network() { return t("sum.note.network"); },
+  get typing() { return t("sum.note.typing"); },
+  get dynamic() { return t("sum.note.dynamic"); },
 };
 
 const TYPING_EVENTS = /^(input|beforeinput|change|key(down|up|press)|paste|cut|copy|composition(start|update|end)|submit|formdata|select|selectionchange)$/i;
@@ -168,8 +178,8 @@ export function summarizeMod(mod) {
 // For the terminal: one line per item, notes last.
 export function summaryLines(mod) {
   const s = summarizeMod(mod);
-  if (s.empty) return ["Doesn't change anything (it has no code)"];
-  return [...s.items.map(i => i.text), ...s.notes.map(n => `Note: ${n.text}`)];
+  if (s.empty) return [t("sum.emptyLine")];
+  return [...s.items.map(i => i.text), ...s.notes.map(n => t("sum.noteLine", { text: n.text }))];
 }
 
 // The sites a mod runs on, exactly as modMatches (core/mod.js) reads them:
@@ -202,9 +212,9 @@ export function whereRuns(mod) {
   const app = mod?.match?.app;
   if (typeof app === "string" && app) return app;
   const h = modHosts(mod);
-  if (!h) return "nowhere (its list of sites is broken)";
-  if (h.includes("*")) return "every website";
-  return h.map(x => (x === "file" ? "files on this computer" : x)).join(", ");
+  if (!h) return t("where.broken");
+  if (h.includes("*")) return t("where.everywhere");
+  return h.map(x => (x === "file" ? t("where.files") : x)).join(", ");
 }
 
 // Where a mod came from, in a few words (Mods panel, popup, CLI).
@@ -213,24 +223,25 @@ export function modOrigin(mod) {
     try {
       const d = new Date(iso);
       if (isNaN(d)) return "";
-      return d.toLocaleDateString(undefined, { month: "short", day: "numeric", ...(d.getFullYear() === new Date().getFullYear() ? {} : { year: "numeric" }) });
+      return d.toLocaleDateString(getLanguage() === "en" ? undefined : getLanguage(), { month: "short", day: "numeric", ...(d.getFullYear() === new Date().getFullYear() ? {} : { year: "numeric" }) });
     } catch { return ""; }
   };
-  const by = typeof mod?.author === "string" && mod.author.trim() ? ` by ${mod.author.trim().slice(0, 60)}` : "";
-  if (mod?.imported && mod.gallery?.id) return `Installed from the Morse gallery${by}${mod.importedAt ? ` on ${day(mod.importedAt)}` : ""}`; // gallery hook (68-gallery.js)
-  if (mod?.imported && mod.pack && typeof mod.pack.name === "string") return `From the pack “${mod.pack.name.slice(0, 80)}”${by}${mod.importedAt ? ` on ${day(mod.importedAt)}` : ""}`; // packs hook (core/pack.js)
+  const by = typeof mod?.author === "string" && mod.author.trim() ? t("origin.by", { author: mod.author.trim().slice(0, 60) }) : "";
+  const on = iso => (iso ? t("origin.on", { day: day(iso) }) : "");
+  if (mod?.imported && mod.gallery?.id) return t("origin.gallery", { by, on: on(mod.importedAt) }); // gallery hook (68-gallery.js)
+  if (mod?.imported && mod.pack && typeof mod.pack.name === "string") return t("origin.pack", { name: mod.pack.name.slice(0, 80), by, on: on(mod.importedAt) }); // packs hook (core/pack.js)
   if (mod?.imported) {
-    const how = mod.importedFrom === "file" ? "Imported from a file" : mod.importedFrom === "backup" ? "Restored from a backup" : "Installed from a shared link";
-    const when = mod.importedAt ? ` on ${day(mod.importedAt)}` : "";
-    return `${how}${by}${when}`;
+    const how = mod.importedFrom === "file" ? "origin.file" : mod.importedFrom === "backup" ? "origin.backup" : "origin.link";
+    return t(how, { by, on: on(mod.importedAt) });
   }
   if (mod?.from && (mod.from.title || mod.from.app || mod.from.url)) {
     let where = mod.from.title || mod.from.app || "";
-    if (!where) { try { where = new URL(mod.from.url).host; } catch { where = "another page"; } }
-    return `Rebuilt from something in ${where}${by}`;
+    if (!where) { try { where = new URL(mod.from.url).host; } catch { where = t("origin.anotherPage"); } }
+    return t("origin.rebuilt", { where, by });
   }
-  if (mod?.kind === "manual" || mod?.kind === "quick") return `Your own edits${mod.created ? `, ${day(mod.created)}` : ""}`;
-  return `Made here${mod?.model ? ` with ${mod.model}` : ""}${by}${mod?.created ? `, ${day(mod.created)}` : ""}`;
+  const when = iso => (iso ? t("origin.when", { day: day(iso) }) : "");
+  if (mod?.kind === "manual" || mod?.kind === "quick") return t("origin.own", { when: when(mod.created) });
+  return t("origin.made", { with: mod?.model ? t("origin.with", { model: mod.model }) : "", by, when: when(mod?.created) });
 }
 
 // What an install keeps: the code the review showed, and nothing that could

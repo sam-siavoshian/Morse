@@ -1,20 +1,27 @@
-// Small shared pieces for the site pages: header state, the radar marks,
-// the Morse-code "signal", a tiny monochrome highlighter, mod cards, toast.
+// Small shared pieces for the site pages: the nav bar, the links and video
+// from config.js, the radar marks, a tiny monochrome highlighter, mod cards,
+// copy buttons and a toast.
 import { mountAll } from "./radar.js";
+import { LINKS, DEMO_VIDEO } from "./config.js";
 
-export const REPO = "https://github.com/sam-siavoshian/RRAA";
+export const REPO = LINKS.github;
 
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 export function initPage() {
   mountAll();
+  applyLinks();
+  initNav();
+  // The share page's header (share/install.html) gets a line once scrolled.
   const top = document.querySelector(".top");
   if (top) {
     const onScroll = () => top.classList.toggle("scrolled", scrollY > 8);
     addEventListener("scroll", onScroll, { passive: true });
     onScroll();
   }
-  for (const el of document.querySelectorAll("[data-signal]")) signal(el, el.dataset.signal);
+  for (const el of document.querySelectorAll("[data-film]")) mountFilm(el);
   for (const btn of document.querySelectorAll("[data-copy]")) {
     btn.addEventListener("click", async () => {
       const src = document.getElementById(btn.dataset.copy);
@@ -24,22 +31,154 @@ export function initPage() {
   }
 }
 
-// ---------- Morse code ----------
-const CODE = { A: ".-", B: "-...", C: "-.-.", D: "-..", E: ".", F: "..-.", G: "--.", H: "....", I: "..", J: ".---", K: "-.-", L: ".-..", M: "--", N: "-.", O: "---", P: ".--.", Q: "--.-", R: ".-.", S: "...", T: "-", U: "..-", V: "...-", W: ".--", X: "-..-", Y: "-.--", Z: "--.." };
-
-export function signal(el, text) {
-  el.classList.add("signal");
-  el.setAttribute("aria-hidden", "true");
-  let n = 0;
-  const html = [];
-  for (const ch of text.toUpperCase()) {
-    if (ch === " ") { html.push("<b></b><b></b>"); continue; }
-    const code = CODE[ch];
-    if (!code) continue;
-    if (html.length) html.push("<b></b>");
-    for (const sym of code) html.push(`<i class="${sym === "-" ? "dash" : "dot"}" style="--i:${n++}"></i>`);
+// Buttons name a key in LINKS (data-link="chrome"); the HTML carries the same
+// placeholder so they work before this runs.
+export function applyLinks(root = document) {
+  for (const a of root.querySelectorAll("a[data-link]")) {
+    const href = LINKS[a.dataset.link];
+    if (!href) continue;
+    // A link to this same page stays a fragment, so it scrolls instead of
+    // loading the page again (/site/ and /site/index.html are one page).
+    const page = u => u.origin + u.pathname.replace(/\/index\.html$/, "/");
+    const url = new URL(href, location.href);
+    a.href = url.hash && page(url) === page(new URL(location.href)) ? url.hash : href;
   }
-  el.innerHTML = html.join("");
+}
+
+// ---------- the nav bar ----------
+// Wide screens: menus open on hover (with a short grace period so the pointer
+// can travel into the panel), on click and from the keyboard: Enter or Space
+// toggles, ArrowDown opens and moves into the first link, Escape closes and
+// returns focus, and tabbing out closes. Narrow screens: a toggle opens a
+// sheet with the same links. It closes on a link, on Escape, on a press
+// outside it, and when the window grows past the breakpoint.
+const CLOSE_DELAY_MS = 140;
+const WIDE = "(min-width: 900px)";
+
+export function initNav(nav = document.querySelector("header.nav")) {
+  if (!nav?.querySelector(".nav-bar")) return;
+  const items = [...nav.querySelectorAll(".nav-item[data-menu]")];
+  const toggle = nav.querySelector(".nav-toggle");
+  const sheet = nav.querySelector(".nav-menu");
+  let open = null, hoverOpened = null, timer = 0;
+
+  const panelOf = item => item.querySelector(".nav-panel");
+  const triggerOf = item => item.querySelector(".nav-trigger");
+  const setOpen = item => {
+    open = item;
+    for (const it of items) {
+      const on = it === item;
+      it.classList.toggle("is-open", on);
+      triggerOf(it).setAttribute("aria-expanded", String(on));
+      panelOf(it).hidden = !on;
+    }
+  };
+  const closeSoon = () => { clearTimeout(timer); timer = setTimeout(() => { hoverOpened = null; setOpen(null); }, CLOSE_DELAY_MS); };
+  const setSheet = on => {
+    nav.classList.toggle("is-open", on);
+    toggle?.setAttribute("aria-expanded", String(on));
+    toggle?.setAttribute("aria-label", on ? "Close menu" : "Open menu");
+    if (sheet) sheet.inert = !on;
+  };
+  setSheet(false);
+
+  for (const item of items) {
+    const trigger = triggerOf(item), panel = panelOf(item);
+    item.addEventListener("pointerenter", e => {
+      if (e.pointerType !== "mouse") return;
+      clearTimeout(timer);
+      if (open !== item) hoverOpened = item;
+      setOpen(item);
+    });
+    item.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") closeSoon(); });
+    item.addEventListener("focusout", e => {
+      if (e.relatedTarget && !item.contains(e.relatedTarget) && open === item) setOpen(null);
+    });
+    trigger.addEventListener("click", e => {
+      // detail 0 is Enter or Space, which always toggles. A mouse user who
+      // hovered it open and then presses means "open".
+      if (e.detail > 0 && hoverOpened === item) { hoverOpened = null; setOpen(item); return; }
+      hoverOpened = null;
+      setOpen(open === item ? null : item);
+    });
+    trigger.addEventListener("keydown", e => {
+      if (e.key !== "ArrowDown") return;
+      e.preventDefault();
+      setOpen(item);
+      requestAnimationFrame(() => panel.querySelector("a")?.focus());
+    });
+    panel.addEventListener("keydown", e => {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      const links = [...panel.querySelectorAll("a")];
+      const at = links.indexOf(document.activeElement);
+      if (at === -1) return;
+      e.preventDefault();
+      if (e.key === "ArrowUp" && at === 0) { trigger.focus(); return; }
+      links[Math.min(links.length - 1, Math.max(0, at + (e.key === "ArrowDown" ? 1 : -1)))]?.focus();
+    });
+    panel.addEventListener("click", e => { if (e.target.closest("a")) setOpen(null); });
+  }
+
+  toggle?.addEventListener("click", () => setSheet(!nav.classList.contains("is-open")));
+  sheet?.addEventListener("click", e => { if (e.target.closest("a")) setSheet(false); });
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    if (open) { triggerOf(open).focus(); setOpen(null); }
+    if (nav.classList.contains("is-open")) { setSheet(false); toggle?.focus(); }
+  });
+  document.addEventListener("pointerdown", e => {
+    if (nav.contains(e.target)) return;
+    setOpen(null);
+    setSheet(false);
+  });
+  nav.addEventListener("focusout", e => {
+    if (e.relatedTarget && !nav.contains(e.relatedTarget)) { setOpen(null); setSheet(false); }
+  });
+  matchMedia(WIDE).addEventListener("change", e => { if (e.matches) setSheet(false); });
+}
+
+// ---------- the film ----------
+// Before the press it plays muted on a loop, so the first screen is already
+// moving; the press starts it from the beginning, with sound and controls.
+// Reduced motion: no autoplay, the poster stays until the press. The loop has
+// its own pause control, apart from the play press (WCAG 2.2.2).
+export function mountFilm(figure, film = DEMO_VIDEO) {
+  const frame = figure.querySelector(".hero-film-frame");
+  const play = figure.querySelector(".hero-film-play");
+  const toggle = figure.querySelector(".hero-film-toggle");
+  const caption = figure.querySelector("figcaption");
+  if (!frame || frame.querySelector("video")) return;
+  frame.style.setProperty("--film-ratio", `${film.width} / ${film.height}`);
+  // The poster behind the video too, for a browser that can't play the file.
+  frame.style.backgroundImage = `url("${new URL(film.poster, location.href).href}")`;
+  const video = document.createElement("video");
+  Object.assign(video, { muted: true, loop: true, playsInline: true, preload: "metadata", poster: film.poster });
+  video.setAttribute("muted", "");
+  video.setAttribute("playsinline", "");
+  video.setAttribute("aria-label", film.label);
+  video.width = film.width;
+  video.height = film.height;
+  const source = Object.assign(document.createElement("source"), { src: film.mp4, type: "video/mp4" });
+  video.append(source);
+  frame.prepend(video);
+  if (caption && film.caption) caption.textContent = film.caption;
+
+  const paused = () => figure.classList.toggle("is-paused", video.paused);
+  video.addEventListener("play", paused);
+  video.addEventListener("pause", paused);
+  if (reducedMotion()) paused();
+  else { video.autoplay = true; video.play().catch(paused); }
+
+  toggle?.addEventListener("click", () => { video.paused ? video.play().catch(() => {}) : video.pause(); });
+  play?.addEventListener("click", () => {
+    figure.classList.add("is-started");
+    video.loop = false;
+    video.muted = false;
+    video.controls = true;
+    video.currentTime = 0;
+    video.play().catch(() => {});
+    video.focus();
+  });
 }
 
 // ---------- highlighter (grays only: comments dim, strings mid, keywords bright) ----------

@@ -10,6 +10,7 @@
 // bundleRuntime() is both, back to back, for pages that load Morse in one go
 // (the playgrounds, the UI catalog, tests).
 import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { CATALOGS } from "../core/i18n.js";
 
 const SRC = new URL("./src/", import.meta.url);
 const read = rel => readFileSync(new URL(rel, import.meta.url), "utf8");
@@ -33,8 +34,13 @@ const HEAL_DETECT = "// ---- what the person reads";
 const HOTKEYS_BOOT = { parts: [[null, "// ---- vetting"], ["export function resolveHotkeys", null]] };
 const GUARD_DETECT = { parts: [["// Selectors that mean", "// Requests where reloading"], ["// A short fingerprint of CSS", null]], also: ["endlessLoop", "codeOnly"] };
 
+// The boot shows no words of its own (core/i18n.js and its catalogs are the
+// UI's): t() here only satisfies the hotkey labels, which the boot never
+// reads. What the boot compares against is in every language.
+const BOOT_WORDS = `const t = id => id;\nconst AUTO_FIX_NOTES = ${JSON.stringify([...new Set(Object.values(CATALOGS).map(c => c["heal.autoNote"]))])};\n`;
+
 export function bundleBoot() {
-  return lean(guarded("boot",`${inlineModule("../core/hotkeys.js", null, HOTKEYS_BOOT)}\n${inlineModule("../core/prefs.js")}\n${inlineModule("../core/control.js")}\n${inlineModule("../core/heal.js", HEAL_DETECT)}\n${inlineModule("../core/guard.js", null, GUARD_DETECT)}\n// ---- runtime/boot.js\n${read("./boot.js")}`));
+  return lean(guarded("boot",`${BOOT_WORDS}${inlineModule("../core/hotkeys.js", null, HOTKEYS_BOOT)}\n${inlineModule("../core/prefs.js")}\n${inlineModule("../core/control.js")}\n${inlineModule("../core/heal.js", HEAL_DETECT)}\n${inlineModule("../core/guard.js", null, GUARD_DETECT)}\n// ---- runtime/boot.js\n${read("./boot.js")}`));
 }
 
 export function bundleUI() {
@@ -44,7 +50,9 @@ export function bundleUI() {
   // Pure core modules shared with the hosts: hotkeys/prefs inlined with `export`
   // dropped; the edit compiler inlined in its own scope (God mode).
   const shared = ["hotkeys.js", "prefs.js"]
-    .map(f => `// ---- core/${f}\n${read(`../core/${f}`).replace(/^export /gm, "")}`);
+    .map(f => `// ---- core/${f}\n${dropImports(read(`../core/${f}`), new URL(`../core/${f}`, import.meta.url)).replace(/^export /gm, "")}`);
+  // i18n first: the modules after it use t() (their `import … from "./i18n.js"` is dropped).
+  shared.unshift(inlineModule("../core/i18n.js"));
   shared.push(inlineModule("../core/edits.js"));
   shared.push(inlineModule("../core/versions.js")); // keep iterating: mod version history (60/70)
   shared.push(inlineModule("../core/onboarding.js")); // first run and help (runtime/src/59-onboarding.js)
@@ -66,11 +74,14 @@ export function bundleRuntime() {
 
 // Inlines a dependency-free ES module as a block whose exports become locals,
 // so its private helpers can't collide with runtime names.
+// A default import of a data module (a language catalog) becomes a local
+// const; a named import from another inlined module is dropped, since its
+// names are already in scope.
 // until: inline only the part of the file before this line.
 // parts: only these [from, to] slices of it (null: its start or end), and
 // also: private names to hand out as well.
 function inlineModule(rel, until = null, { parts = null, also = [] } = {}) {
-  let src = read(rel);
+  let src = dropImports(read(rel), new URL(rel, import.meta.url));
   const at = (marker, dflt) => {
     if (marker == null) return dflt;
     const i = src.indexOf(marker);
@@ -81,4 +92,11 @@ function inlineModule(rel, until = null, { parts = null, also = [] } = {}) {
   if (parts) src = parts.map(([a, b]) => src.slice(at(a, 0), at(b, src.length))).join("\n");
   const names = [...src.matchAll(/^export\s+(?:async\s+)?(?:function\*?|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)].map(m => m[1]).concat(also);
   return `// ---- ${rel.replace("../", "")} (inlined)\nconst { ${names.join(", ")} } = (() => {\n${src.replace(/^export\s+/gm, "")}\nreturn { ${names.join(", ")} };\n})();`;
+}
+
+function dropImports(src, base) {
+  return src
+    .replace(/^import\s+([A-Za-z_$][\w$]*)\s+from\s+"(\.[^"]+)";?[^\n]*$/gm, (_, name, spec) =>
+      `const ${name} = ${readFileSync(new URL(spec, base), "utf8").replace(/^\s*export\s+default\s+/m, "").replace(/^\s*\/\/.*$/gm, "").trim().replace(/;$/, "")};`)
+    .replace(/^import\s*\{[^}]*\}\s*from\s*"\.\/[^"]+";?[^\n]*$/gm, "");
 }

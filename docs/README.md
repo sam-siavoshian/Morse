@@ -25,6 +25,7 @@ New here? Start with [Getting started](getting-started.md).
 | [Privacy and safety](privacy-and-safety.md) | What leaves your computer, when, and what mods can do |
 | [Privacy policy](privacy.md) | The formal privacy policy for the extension and the `morse` command |
 | [Troubleshooting](troubleshooting.md) | Common messages, what they mean, and what to do |
+| [Morse in your language](i18n.md) | The nine languages, right to left for Persian and Arabic, what stays English, and how to improve a translation |
 
 ## Working on Morse
 
@@ -38,6 +39,7 @@ New here? Start with [Getting started](getting-started.md).
 | [Accessibility of Morse itself](dev/accessibility.md) | Keyboard, screen readers, zoom and forced colors in Morse's own UI; the axe-core audit |
 | [Checking a Mac or Windows PC](dev/platform-testing.md) | The 15-minute check for desktop apps on a real Mac or Windows PC |
 | [How Morse talks](WRITING.md) | The style guide for every word a person reads |
+| [Languages in the code](dev/i18n.md) | `t()`, the message catalogs, the Language setting, right-to-left layout, and text that stays English for the model |
 | [UI review checklist](ui/CHECKLIST.md) | What every screenshot in the UI catalog is checked against |
 | [Launch kit](launch/README.md) | The demo video, clips and how they were recorded |
 | [Chrome Web Store kit](store/README.md) | The store listing, permission notes and screenshots |

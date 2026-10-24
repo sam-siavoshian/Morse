@@ -1,11 +1,14 @@
 // Version history for mods. Refining a mod pushes the version it replaces, so
-// any earlier one can be brought back. Plain data and no imports: the hosts
-// use it through core/mod.js, and runtime/bundle.js inlines it for the runtime.
+// any earlier one can be brought back. Plain data; the one import is core/i18n.js
+// (relative times in the person's language). The hosts use it through
+// core/mod.js, and runtime/bundle.js inlines it for the runtime.
 //
 //   mod.history  = [{ prompt, css, js, at }]  oldest first, at most HISTORY_CAP
 //   mod.refined  = the follow-up that produced the current code (absent for
 //                  the first version; mod.prompt always stays the original ask)
 // Mods saved before history existed have neither field and stay valid.
+
+import { t, getLanguage } from "./i18n.js";
 
 export const HISTORY_CAP = 20;
 
@@ -53,17 +56,18 @@ export function stepBack(mod, now = new Date().toISOString()) {
 
 // "just now", "5 min ago", "3 hours ago", "yesterday", "4 days ago", "Mar 2".
 export function relativeTime(iso, now = Date.now()) {
-  const t = Date.parse(iso || "");
-  if (!t) return "";
-  const s = Math.max(0, Math.round((now - t) / 1000));
-  if (s < 45) return "just now";
+  const at = Date.parse(iso || "");
+  if (!at) return "";
+  const s = Math.max(0, Math.round((now - at) / 1000));
+  if (s < 45) return t("time.justNow");
   const m = Math.round(s / 60);
-  if (m < 60) return `${m} min ago`;
+  if (m < 60) return t("time.minutes", { n: m });
   const h = Math.round(m / 60);
-  if (h < 24) return `${h} hour${h > 1 ? "s" : ""} ago`;
+  if (h < 24) return t("time.hours", { n: h });
   const d = Math.round(h / 24);
-  if (d === 1) return "yesterday";
-  if (d < 7) return `${d} days ago`;
-  const date = new Date(t);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", ...(date.getFullYear() !== new Date(now).getFullYear() ? { year: "numeric" } : {}) });
+  if (d === 1) return t("time.yesterday");
+  if (d < 7) return t("time.days", { n: d });
+  const date = new Date(at);
+  const lang = getLanguage();
+  return date.toLocaleDateString(lang === "en" ? "en-US" : lang, { month: "short", day: "numeric", ...(date.getFullYear() !== new Date(now).getFullYear() ? { year: "numeric" } : {}) });
 }
