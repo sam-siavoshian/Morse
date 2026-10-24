@@ -200,6 +200,21 @@ function installMorseKit() {
       // ">>>" allowed), the CSS goes inside each one's shadow root or frame
       // document, now and for every one that appears later.
       css(text, where) {
+        // Rules written "host >>> inside { … }" go inside each host.
+        if (!where && String(text).includes(">>>")) {
+          const byHost = new Map();
+          const plain = String(text).replace(/([^{}]*>>>[^{}]*)\{([^{}]*)\}/g, (all, sels, body) => {
+            for (const sel of sels.split(",")) {
+              const at = sel.lastIndexOf(">>>");
+              if (at < 0) continue;
+              const host = sel.slice(0, at).trim(), inside = sel.slice(at + 3).trim();
+              byHost.set(host, (byHost.get(host) || "") + `${inside} {${body}}\n`);
+            }
+            return "";
+          });
+          for (const [host, rules] of byHost) m.css(rules, host);
+          return plain.trim() ? m.css(plain) : null;
+        }
         if (where) {
           m.watch(where, host => {
             const root = inner(host);

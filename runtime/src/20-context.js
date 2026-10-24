@@ -109,7 +109,8 @@ function segment(el) {
   const p = parentOf(el);
   if (p) {
     const same = [...p.children].filter(c => c.tagName === el.tagName);
-    if (same.length > 1 && !classes && !attr) s += `:nth-of-type(${same.indexOf(el) + 1})`;
+    // Table cells are columns: their position always counts.
+    if (same.length > 1 && (!classes && !attr || /^t[dh]$/.test(tag))) s += `:nth-of-type(${same.indexOf(el) + 1})`;
   }
   return { s, anchor: false };
 }
@@ -461,7 +462,20 @@ function targetFacts(el) {
   if (bgs.length) lines.push(`${media.length ? "Also" : "No <img>: the visuals are"} CSS background images on ${[...new Set(bgs.map(selName))].slice(0, 3).join(", ")}`);
   lines.push(...placeFacts(el));
   const same = similar(el);
-  if (same) lines.push(`${same.n} similar elements (the same part of each repeated item): ${same.sel}`);
+  if (same) {
+    lines.push(`${same.n} similar elements (the same part of each repeated item): ${same.sel}`);
+    // A few labels (High / Medium / Low): say whether anything but the text tells them apart.
+    const els = same.n <= 500 ? deepAll(same.sel) : [];
+    const counts = new Map();
+    for (const e of els) { const t = clip(e.textContent, 30); counts.set(t, (counts.get(t) || 0) + 1); }
+    if (counts.size >= 2 && counts.size <= 8 && !counts.has("")) {
+      const sig = e => [...e.attributes].map(a => `${a.name}=${a.value}`).sort().join("|");
+      const list = [...counts].map(([t, n]) => `"${t}" ×${n}`).join(", ");
+      lines.push(new Set(els.map(sig)).size === 1
+        ? `Their text differs (${list}) but none of their attributes do: CSS can't pick them by it. Pick by text in JS (morse.watch on the item, test the text, toggle a class).`
+        : `Their texts: ${list}.`);
+    }
+  }
   else {
     const kind = kindOf(el);
     let n = 0;

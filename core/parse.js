@@ -24,7 +24,40 @@ export function parseModResponse(text) {
     if (lang === "css" && !out.css) { out.css = body; out.cssComplete = closed; }
     else if ((lang === "js" || lang === "javascript") && !out.js) { out.js = body; out.jsComplete = closed; }
   }
-  return out;
+  return liftDeepCss(out);
+}
+
+// Top-level rules of a stylesheet: [{ text, selector }], plus what isn't one.
+function topRules(css) {
+  const rules = [];
+  let depth = 0, start = 0, inStr = null, inComment = false;
+  for (let i = 0; i < css.length; i++) {
+    const c = css[i];
+    if (inComment) { if (c === "*" && css[i + 1] === "/") { inComment = false; i++; } continue; }
+    if (inStr) { if (c === "\\") i++; else if (c === inStr) inStr = null; continue; }
+    if (c === "/" && css[i + 1] === "*") { inComment = true; i++; continue; }
+    if (c === '"' || c === "'") { inStr = c; continue; }
+    if (c === "{") depth++;
+    else if (c === "}" && depth > 0 && --depth === 0) {
+      const text = css.slice(start, i + 1);
+      rules.push({ text, selector: text.slice(0, text.indexOf("{")).replace(/\/\*[\s\S]*?\*\//g, "").trim() });
+      start = i + 1;
+    }
+  }
+  return { rules, rest: css.slice(start) };
+}
+
+// CSS rules that reach into a shadow root or frame ("host >>> inside { … }")
+// can't work in a page stylesheet: they move to the JS as morse.css(…), which
+// puts them inside each host (core/kit.js).
+export function liftDeepCss(draft) {
+  if (!draft.css.includes(">>>")) return draft;
+  const { rules, rest } = topRules(draft.css);
+  const deep = rules.filter(r => r.selector.includes(">>>") && !r.selector.startsWith("@"));
+  if (!deep.length) return draft;
+  const css = rules.filter(r => !deep.includes(r)).map(r => r.text).join("") + rest;
+  const lift = `morse.css(${JSON.stringify(deep.map(r => r.text.trim()).join("\n"))});\n`;
+  return { ...draft, css: css.replace(/^\s*\n/, ""), js: lift + draft.js };
 }
 
 // Returns the prefix of a (possibly partial) stylesheet that ends on a complete

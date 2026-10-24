@@ -103,6 +103,15 @@ test("engine streams css, runs js, and repairs a failing first attempt", async (
   assert.ok(events.some(e => e.type === "css" && e.css.includes(".morse-sleep")));
 });
 
+test("CSS rules that reach into a shadow root or frame move to the JS", () => {
+  const d = parseModResponse("TITLE: x\n```css\n.a { color: red }\n#pv >>> .cookie, #pv >>> .x { display: none !important; }\n@media (max-width: 9px) { .b { color: blue } }\n```\n```js\nmorse.toast('hi');\n```");
+  assert.equal(d.css, ".a { color: red }\n@media (max-width: 9px) { .b { color: blue } }\n");
+  assert.equal(d.js, `morse.css("#pv >>> .cookie, #pv >>> .x { display: none !important; }");\nmorse.toast('hi');\n`);
+  const plain = parseModResponse("TITLE: x\n```css\n.a{}\n```");
+  assert.equal(plain.css, ".a{}\n");
+  assert.equal(plain.js, "");
+});
+
 test("finds the selectors a draft relies on", () => {
   const sels = selectorsIn({
     css: "/* x */ @media (max-width: 600px) { .a img, .b:hover::after { color: red } }\n@keyframes k { from { opacity: 0 } 50% { opacity: 1 } }\n:root { --x: 1 }\n[data-testid=\"grid\"] > .cv { width: 2px }",

@@ -152,4 +152,8 @@ test("'host >>> inside' reaches into open shadow roots and frames; css(text, whe
   assert.deepEqual((await look()).seen, ["1", "1"]);
   await page.evaluate(() => morse.__off("r4"));
   assert.deepEqual((await look()).colors, ["rgb(0, 0, 0)", "rgb(0, 0, 0)"], "off removes the CSS inside too");
+  // Rules written "host >>> inside" in plain morse.css go inside each host.
+  await run("r6", `morse.css("body { --x: 1 } x-card >>> .t, #fr >>> p { color: rgb(0, 0, 255) }");`);
+  assert.deepEqual(await look(), { colors: ["rgb(0, 0, 255)", "rgb(0, 0, 255)"], seen: ["1", "1"], frame: "rgb(0, 0, 255)" });
+  await page.evaluate(() => morse.__off("r6"));
 });

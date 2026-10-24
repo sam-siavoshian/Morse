@@ -218,7 +218,7 @@ const pct = (xs, p) => { const a = xs.filter(x => x != null).sort((x, y) => x - 
 const lat = results.map(r => r.ms || 0);
 const median = pct(lat, 0.5);
 const summary = {
-  label: opt.label, model: `${opt.provider}:${opt.model}`, split: opt.only ? "only" : opt.split, probe: !opt["no-probe"],
+  label: opt.label, model: `${opt.provider}:${opt.model}`, split: (opt.only ? "only" : opt.split) + (opt.sites ? ` (${opt.sites})` : ""), probe: !opt["no-probe"],
   cases: results.length, pass, rate: +(pass / Math.max(1, results.length)).toFixed(3), medianMs: median, p90Ms: pct(lat, 0.9),
   // The model call plus applying (what the user waits for after Enter), the
   // prompt size, and reading the page (context()).
@@ -247,7 +247,7 @@ if (!opt["no-write"]) {
   try { md = await fs.readFile(readme, "utf8"); } catch {}
   const MARK = "<!-- run-log -->";
   if (md.includes(MARK)) {
-    const row = `| ${started.toISOString().slice(0, 16).replace("T", " ")} | ${opt.label || "-"} | ${summary.model} | ${summary.split} | ${pass}/${results.length} (${(summary.rate * 100).toFixed(0)}%) | ${(median / 1000).toFixed(1)}s |`;
+    const row = `| ${started.toISOString().slice(0, 16).replace("T", " ")} | ${opt.label || "-"} | ${summary.model} | ${summary.split} | ${pass}/${results.length} (${(summary.rate * 100).toFixed(0)}%) | ${(median / 1000).toFixed(1)}s (p90 ${(summary.p90Ms / 1000).toFixed(1)}s) |`;
     await fs.writeFile(readme, md.replace(MARK, `${row}\n${MARK}`));
   }
 }
