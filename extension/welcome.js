@@ -231,8 +231,8 @@ async function refresh() {
   $("progress").textContent = n === 4 ? "All done" : `${n} of 4 done`;
   // The practice page works before a model is connected, with sample answers (onboarding-host.js).
   $("practice-note").innerHTML = model
-    ? "This page uses your model, like any other site."
-    : "No model yet? This page has sample answers for <q>make this easier to read</q> and <q>add a word count</q>, so you can try Morse now. Connect a model to change any website.";
+    ? "This page uses your model. It shows how a change looks; changes that add features work on real websites."
+    : "No model yet? This page has sample answers for <q>make this easier to read</q>, so you can try Morse now. Connect a model to change any website.";
 }
 refresh();
 chrome.storage.onChanged.addListener(() => refresh());

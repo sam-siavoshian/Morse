@@ -80,9 +80,10 @@ export async function openSetup(what) {
 // The practice area works before a model is connected: the sample answers
 // below (core/demo.js's replies for the practice page's markup), clearly
 // called sample answers on the welcome page. Anything else asks for a model.
-const SAMPLE = /\b(read|reading|clean|clutter|ads?|distract\w*|word|count)\b/i;
+// Only style changes: code never runs on the practice page (background.js cantRun).
+const SAMPLE = /\b(read|reading|clean|clutter|ads?|distract\w*)\b/i;
 export const practiceSample = request => SAMPLE.test(String(request || ""));
-export const SAMPLE_ONLY = "The practice page only knows “make this easier to read” and “add a word count”. Connect a model for more.";
+export const SAMPLE_ONLY = "The practice page only knows “make this easier to read”. Connect a model for more.";
 
 // `practice`: the request comes from the welcome page's practice area.
 export async function handleOnboarding(msg, { practice = false } = {}) {
