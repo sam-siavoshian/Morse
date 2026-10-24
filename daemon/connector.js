@@ -18,7 +18,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, watch } from "node:fs";
 import path from "node:path";
-import { CDPSession, listTargets } from "./cdp.js";
+import { portBrowser } from "./cdp.js"; // a debugging port, or the private pipe (cdp.js pipeBrowser)
 import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putClipboard } from "./store.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode, settleMs } from "../core/kit.js";
@@ -106,15 +106,18 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 
 export class Connector {
+  // port: the app's debugging port; or browser: how to reach the app
+  // (cdp.js portBrowser / pipeBrowser: listTargets() and connect(target)).
   // watch: keep waiting when the app quits and attach again when it's back.
   // verify(): called before attaching again after a restart; { ok, why }.
   // onChange(connector): windows or state changed (for `morse status`).
-  constructor({ port, app = null, settings, log = console.log, watch = false, verify = null, onChange = null, interval = 1000 }) {
+  constructor({ port = null, browser = null, app = null, settings, log = console.log, watch = false, verify = null, onChange = null, interval = 1000 }) {
     // Log lines name windows (the page's own title), mods (a shared mod's
     // title) and the model's results: as text, never escape sequences that
     // could rewrite the terminal or set its clipboard.
     const shown = s => String(s).replace(/[\x00-\x09\x0b-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069]+/g, " ");
-    Object.assign(this, { port, app, settings, log: line => log(shown(line)), watch, verify, onChange, interval });
+    Object.assign(this, { app, settings, log: line => log(shown(line)), watch, verify, onChange, interval });
+    this.browser = browser || portBrowser(port);
     this.pages = new Map();   // target id -> CDPSession (null while connecting)
     this.windows = new Map(); // target id -> { id, type, kind, title, url, frame, session, since }
     this.retry = new Map();   // target id -> { at, n } after a failed attach
@@ -124,6 +127,16 @@ export class Connector {
   }
 
   get appName() { return this.app?.name || "The app"; }
+  get port() { return this.browser.port ?? null; }
+  get transport() { return this.browser.kind || "port"; }
+
+  // The app was opened again (on a new pipe, or a port): reach it this way
+  // from now on. While waiting (--watch), the next poll attaches to it.
+  useBrowser(browser, verify = null) {
+    if (this.browser !== browser) Promise.resolve(this.browser.close?.()).catch(() => {});
+    this.browser = browser;
+    this.verify = verify;
+  }
 
   changed() { try { this.onChange?.(this); } catch {} }
 
@@ -138,7 +151,7 @@ export class Connector {
     let misses = 0;
     while (this.running) {
       let list = null;
-      try { list = await listTargets(this.port); misses = 0; }
+      try { list = await this.browser.listTargets(); misses = 0; }
       catch (e) { misses += /ECONNREFUSED|ECONNRESET/.test(String(e?.cause?.code || e?.code || e?.message)) ? 3 : 1; }
       if (!this.running) break; // stop() landed during the poll: don't mark attached or attach again
       if (list && this.state === "waiting") {
@@ -156,11 +169,15 @@ export class Connector {
       if (list) {
         if (this.state !== "attached") { this.state = "attached"; this.changed(); }
         this.sync(list);
-      } else if (misses >= 3 && this.state === "attached") {
+      } else if (misses >= 3 && (this.state === "attached" || (this.state === "starting" && this.browser.closed))) {
         this.dropAll();
+        const pipe = this.transport === "pipe";
+        if (this.browser.closed) this.browser.close(); // a pipe whose app quit: let go of Morse's ends too
         if (!this.watch) { this.log(t("launch.closed", { name: this.appName })); this.state = "stopped"; break; }
         this.state = "waiting";
-        this.log(`  … ${t("launch.closedWaiting", { name: this.appName })}`);
+        // On a port the app can come back by itself (on that port); on the
+        // pipe only Morse can open it again.
+        this.log(`  … ${pipe ? t("launch.closedWaitingPipe", { name: this.appName, cmd: `morse launch ${this.app?.id || ""}`.trim() }) : t("launch.closedWaiting", { name: this.appName })}`);
         this.changed();
       }
       await sleep(this.interval);
@@ -201,7 +218,7 @@ export class Connector {
   }
 
   async attach(target, how = classifyTarget(target)) {
-    const s = await CDPSession.connect(target.webSocketDebuggerUrl);
+    const s = await this.browser.connect(target);
     if (!this.running && this.state === "stopped") { s.close(); return; }
     const { kind, title } = describeTarget(target);
     const w = { id: target.id, type: target.type, kind, title: target.title, url: target.url, frame: !!how.frame, session: s, since: Date.now() };
@@ -216,7 +233,7 @@ export class Connector {
       this.changed();
       // A window closing on its own (the app keeps running) is worth a line.
       if (!w.crashed && !w.detaching && this.state === "attached") setTimeout(() => {
-        if (this.state === "attached" && !this.pages.has(target.id)) listTargets(this.port).then(l => {
+        if (this.state === "attached" && !this.pages.has(target.id)) this.browser.listTargets().then(l => {
           if (!l.some(t => t.id === target.id)) this.log(`  − ${kind} closed: ${describeTarget(w).title}`);
         }, () => {});
       }, 600);
@@ -363,7 +380,7 @@ export class Connector {
     return this.settings;
   }
 
-  async stop() {
+  async stop({ keepBrowser = false } = {}) {
     this.running = false;
     this.state = "stopped";
     this.modWatcher?.close();
@@ -385,6 +402,10 @@ export class Connector {
     }));
     this.windows.clear();
     this.pages.clear();
+    // On the pipe, Morse lets go of its ends now (once the detaching went
+    // out); the app keeps running. A port stays open until the app quits.
+    // keepBrowser: Morse Desktop holds on to the pipe, to connect again.
+    if (!keepBrowser) await Promise.resolve(this.browser.close?.()).catch(() => {});
     this.changed();
   }
 

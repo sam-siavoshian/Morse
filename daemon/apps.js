@@ -13,7 +13,7 @@ import os from "node:os";
 import path from "node:path";
 import { HOME, parseJson } from "./store.js";
 import { safeExtraArgs } from "./ports.js";
-import { waitForEndpoint } from "./cdp.js";
+import { waitForEndpoint, spawnWithPipe } from "./cdp.js";
 import { paint, painter } from "./colors.js";
 
 // ---------------------------------------------------------------- catalog
@@ -986,14 +986,35 @@ export async function quitApp(app, { procs = listProcesses(), platform = process
 }
 
 // ---------------------------------------------------------------- launching
-// Only the debugging port: Morse's CDP client (Node's WebSocket) sends no
-// Origin, so it needs no --remote-allow-origins, and some apps quit on any
-// switch they don't know (Joplin: "Unknown flag: --remote-allow-origins").
-// Chromium binds the port to 127.0.0.1 only, which is also why Windows
-// Firewall doesn't ask about it.
+// `port` is a number (--remote-debugging-port) or PIPE (--remote-debugging-pipe,
+// Morse's private channel: see cdp.js). Only that one switch: Morse's CDP
+// client (Node's WebSocket) sends no Origin, so it needs no
+// --remote-allow-origins, and some apps quit on any switch they don't know
+// (Joplin: "Unknown flag: --remote-allow-origins"). Chromium binds a port to
+// 127.0.0.1 only, which is also why Windows Firewall doesn't ask about it.
+export const PIPE = "pipe";
+
+// Can Morse open this app on the private pipe instead of a port? { ok, why }.
+// Tried on real apps (docs/dev/architecture.md#the-private-pipe): Electron 10
+// and later answer on it; 9 and older ignore it. What Morse starts has to be
+// the app itself, holding the pipe's descriptors: a launcher that hands over
+// (Squirrel's Update.exe, flatpak, snap, a wrapper script) would drop them.
+// Windows passes descriptors differently and hasn't been tried, so it keeps
+// the port; so do browsers and CEF apps. MORSE_PIPE=0 turns the pipe off
+// (a debugging port for every app, as before it).
+export function pipeFor(app, { platform = process.platform, env = process.env } = {}) {
+  if (/^(0|false|off|no)$/i.test(String(env.MORSE_PIPE ?? "").trim())) return { ok: false, why: "MORSE_PIPE=0" };
+  if (platform === "win32") return { ok: false, why: "Windows: not tried yet" };
+  if (app.engine !== "electron" || app.browser) return { ok: false, why: "not an Electron app" };
+  if (app.flatpak || app.source === "snap" || app.script || /(^|[\\/])update\.exe$/i.test(app.exe || "")) return { ok: false, why: "started through a launcher" };
+  const major = parseInt(app.electron, 10);
+  if (major && major < 10) return { ok: false, why: `Electron ${app.electron} has no pipe` };
+  return { ok: true, why: "" };
+}
+
 export function launchArgs(app, port, extraArgs = [], { platform = process.platform } = {}) {
   const extra = safeExtraArgs(extraArgs);
-  const args = [`--remote-debugging-port=${port}`, ...extra];
+  const args = [port === PIPE ? "--remote-debugging-pipe" : `--remote-debugging-port=${port}`, ...extra];
   const pj = platform === "win32" ? path.win32 : path.posix;
   if (app.browser && !extra.some(a => a.startsWith("--user-data-dir"))) args.push(`--user-data-dir=${pj.join(HOME, "browser-profile")}`, "--no-first-run");
   return args;
@@ -1037,15 +1058,22 @@ export function launchCommand(app, port, extraArgs = [], { platform = process.pl
   return { file, args: argv, env: launchEnv(app, { env, has }), handoff };
 }
 
+// Starts the app: the child process, unref'd (it outlives Morse). With PIPE
+// it resolves the child with child.cdp, the pipe (cdp.js spawnWithPipe).
 export function launchApp(app, port, extraArgs = []) {
   const cmd = launchCommand(app, port, extraArgs);
-  const child = spawn(cmd.file, cmd.args, { detached: true, stdio: "ignore", windowsHide: false, env: cmd.env });
-  child.handoff = cmd.handoff;
+  const options = { detached: true, windowsHide: false, env: cmd.env };
   // Remember how it ended, for waitForLaunch: an app that dies on start
   // should say so, not leave Morse waiting for a port that never opens.
-  child.on("error", e => { child.failed = e; });
-  child.on("exit", (code, signal) => { child.exited = { code, signal }; });
-  child.unref();
+  const watch = child => {
+    child.handoff = cmd.handoff;
+    child.on("error", e => { child.failed = e; });
+    child.on("exit", (code, signal) => { child.exited = { code, signal }; });
+    child.unref();
+  };
+  if (port === PIPE) return spawnWithPipe(cmd.file, cmd.args, options, { onChild: watch });
+  const child = spawn(cmd.file, cmd.args, { ...options, stdio: "ignore" });
+  watch(child);
   return child;
 }
 
