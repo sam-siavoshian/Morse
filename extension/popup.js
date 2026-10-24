@@ -1,3 +1,4 @@
+import { modExtras } from "./popup-control.js"; // user control: pause switches, origin, Show code
 const $ = id => document.getElementById(id);
 const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 const isMac = navigator.platform.includes("Mac");
@@ -10,7 +11,7 @@ $("label").textContent = st.label;
 $("warn").hidden = st.userScripts;
 $("count").textContent = st.mods.length ? `· ${st.mods.length}` : "";
 $("mods").innerHTML = st.mods.length
-  ? st.mods.map(m => `<li>${m.enabled ? "●" : "○"} ${esc(m.title)}<small>“${esc(m.prompt)}”</small></li>`).join("")
+  ? st.mods.map(m => `<li>${m.enabled ? "●" : "○"} ${esc(m.title)}<small>“${esc(m.prompt)}”</small>${modExtras(m)}</li>`).join("")
   : `<li class="empty">None yet.</li>`;
 for (const k of ["provider", "baseUrl", "model", "apiKey"]) if (st.saved[k]) $(k).value = st.saved[k];
 

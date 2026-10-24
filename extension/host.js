@@ -16,16 +16,13 @@
 
   chrome.runtime.onMessage.addListener(m => { if (m && m.morseToggle) subs.forEach(f => f({ type: "toggle" })); });
 
-  // The share page (share/install.html) asks to install through us.
+  // The share page (share/install.html) asks to install through us. Any page
+  // can post this message, so nothing is installed from here: the runtime
+  // shows Morse's own review (in its closed shadow root, which the page can't
+  // click) and installs only when the person presses Install there.
   document.documentElement.dataset.morseExtension = "1";
   window.addEventListener("message", e => {
     if (e.source !== window || !e.data || typeof e.data.morseInstall !== "string") return;
-    let id = "install-" + Date.now();
-    const off = m => {
-      if (m.reply !== id) return;
-      window.postMessage({ morseInstalled: m.error ? { error: m.error } : { title: m.result.title } }, "*");
-    };
-    subs.push(off);
-    globalThis.__morseHost.send({ id, type: "mods.import", source: e.data.morseInstall });
+    subs.forEach(f => f({ type: "install.request", source: e.data.morseInstall.slice(0, 2_000_000) }));
   });
 })();

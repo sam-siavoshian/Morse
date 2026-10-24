@@ -132,10 +132,15 @@ await ctx.close();
 const friend = await browserWithMorse("friend");
 const install = await friend.ctx.newPage();
 await install.goto(link.replace(/^https:\/\/[^/]+\/RRAA/, "http://127.0.0.1:8787"));
+await install.evaluate(() => localStorage.setItem("morse:debug", "1")); // open shadow root, so the script can press Install
+await install.reload();
 await sleep(800);
 await install.screenshot({ path: path.join(OUT, "30-share-link.png") });
 console.log("  📸 30-share-link.png");
 await install.locator("#install").click();
+// Morse shows its own review on the page; nothing is installed until Install is pressed there.
+await install.waitForFunction(() => document.querySelector("[data-morse-ui]")?.shadowRoot?.querySelector(".modal:not([hidden]) [data-c=install]"));
+await install.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".modal [data-c=install]").click());
 await sleep(800);
 await install.screenshot({ path: path.join(OUT, "31-installed.png") });
 console.log("  📸 31-installed.png");

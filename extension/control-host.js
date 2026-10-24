@@ -46,9 +46,11 @@ chrome.runtime.onConnect.addListener(port => {
   port.onDisconnect.addListener(() => ports.delete(port));
 });
 
-// The popup: control.get / control.pause / control.exportAll.
+// The popup (also when opened as a tab): control.get / control.pause / control.exportAll.
+// Only the extension's own pages; content scripts use the port above.
 chrome.runtime.onMessage.addListener((msg, sender, respond) => {
-  if (!msg || typeof msg.type !== "string" || !CONTROL_REQUESTS.has(msg.type) || sender.tab) return false;
+  if (!msg || typeof msg.type !== "string" || !CONTROL_REQUESTS.has(msg.type)) return false;
+  if (sender.id !== chrome.runtime.id || !String(sender.url || "").startsWith(chrome.runtime.getURL(""))) return false;
   handle(msg, { url: msg.url, app: null }).then(result => respond({ result }), e => respond({ error: e.message || String(e) }));
   return true;
 });
