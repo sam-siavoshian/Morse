@@ -102,7 +102,9 @@ export function helpers() {
     // Widest thin bar pinned to the top of the viewport (elements or pseudo-elements).
     topBarWidth() {
       let best = 0;
-      const ok = (r, s) => r.top < 12 && r.height > 0 && r.height <= 24 && s.display !== "none" && s.visibility !== "hidden" && +s.opacity > 0.05;
+      // Painted bars only: a transparent full-width track doesn't count, its fill does.
+      const ok = (r, s) => r.top < 12 && r.height > 0 && r.height <= 24 && s.display !== "none" && s.visibility !== "hidden" && +s.opacity > 0.05
+        && (T.rgb(s.backgroundColor)[3] > 0.05 || s.backgroundImage !== "none");
       for (const e of T.fresh()) { const r = T.rect(e), s = T.cs(e); if (ok(r, s) && T.visible(e)) best = Math.max(best, r.width); }
       for (const e of [document.documentElement, document.body, ...T.fresh()]) for (const w of ["::before", "::after"]) {
         const s = getComputedStyle(e, w);
