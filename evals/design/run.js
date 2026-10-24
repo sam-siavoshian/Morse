@@ -29,6 +29,7 @@ import { parseArgs } from "node:util";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { stubs, helpers } from "../page-helpers.js";
 import { designChecks } from "./checks.js";
+import EN from "../../core/locales/en.js"; // the words the context uses (core/i18n.js t())
 import { JUDGE_PROMPT, RUBRIC, shuffled, parseVerdict, mean } from "./judge.js";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -85,7 +86,7 @@ const TRUSTED_SRC = readFileSync(path.join(ROOT, "runtime", "src", "00-trusted-h
 const installContext = src => `globalThis.__morseHost ||= {}; ${TRUSTED_SRC}
 globalThis.__morseEval = (() => {
   const S = { app: null, target: null };
-  const live = () => true, getLanguage = () => "en";
+  const live = () => true, getLanguage = () => "en", __en = ${JSON.stringify(EN)}; const t = (id, v = {}) => String(__en[id] ?? id).replace(/\\{(\\w+)\\}/g, (m, k) => v[k] ?? m);
   ${src}
   return {
     context(sel) { S.target = sel ? (deepAll(sel)[0] || null) : null; if (sel && !S.target) throw new Error("target not found: " + sel); const t = performance.now(); const c = context(); return { c, ms: performance.now() - t }; },
@@ -94,7 +95,7 @@ globalThis.__morseEval = (() => {
 })();`;
 // The eval's own picture area (this code's shotArea), for every arm alike.
 const AREA_SRC = readFileSync(path.join(ROOT, "runtime", "src", "20-context.js"), "utf8");
-const installArea = `globalThis.__designArea = (() => { const S = { app: null, target: null }; const live = () => true, getLanguage = () => "en"; ${AREA_SRC}\n return shotArea; })();`;
+const installArea = `globalThis.__designArea = (() => { const S = { app: null, target: null }; const live = () => true, getLanguage = () => "en", __en = ${JSON.stringify(EN)}; const t = (id, v = {}) => String(__en[id] ?? id).replace(/\\{(\\w+)\\}/g, (m, k) => v[k] ?? m); ${AREA_SRC}\n return shotArea; })();`;
 // An isolated world in the page's main frame: evaluate(expression) -> value.
 async function isolatedWorld(page) {
   const cdp = await page.context().newCDPSession(page);

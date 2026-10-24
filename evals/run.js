@@ -33,6 +33,7 @@ import { setWarmPoolSize } from "../daemon/harness.js"; // registers the claude-
 import { registerProvider, prewarm, settingsLabel } from "../core/providers.js";
 import { resolveTiers, MODEL_MODES } from "../core/route.js"; // models: Automatic
 import { stubs, helpers } from "./page-helpers.js";
+import EN from "../core/locales/en.js"; // the words the context uses (core/i18n.js t())
 
 // "noop": an empty change, to check that every checker fails on the untouched page.
 registerProvider("noop", async () => "TITLE: Nothing\n```css\n/* nothing */\n```\n");
@@ -106,6 +107,8 @@ const CONTEXT_SRC = readFileSync(path.join(ROOT, "runtime", "src", "20-context.j
 // The runtime defines these before 20-context.js (01-rpc.js, 04-i18n.js).
 const INSTALL_CONTEXT = `(() => {
   const S = { app: null, target: null };
+  const __en = ${JSON.stringify(EN)};
+  const t = (id, v = {}) => String(__en[id] ?? id).replace(/\\{(\\w+)\\}/g, (m, k) => v[k] ?? m); // core/i18n.js t(), in English
   const live = () => true, getLanguage = () => "en"; // the runtime's language (core/i18n.js), which context() sends along
   ${CONTEXT_SRC}
   window.__morseEval = {

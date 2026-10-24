@@ -15,6 +15,7 @@ import { registerProvider } from "../core/providers.js";
 import { wantsPolish, polishMessages, POLISH_ASK } from "../core/polish.js";
 import { DEFAULT_PREFS, normalizePrefs, mergePrefs } from "../core/prefs.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
+import EN from "../core/locales/en.js";
 
 const skip = noBrowser;
 const SRC = readFileSync(new URL("../runtime/src/20-context.js", import.meta.url), "utf8");
@@ -57,7 +58,8 @@ const contextFor = async (url, sel) => {
   await page.goto(url);
   return page.evaluate(`(() => {
     const S = { app: null, target: ${JSON.stringify(sel)} ? document.querySelector(${JSON.stringify(sel || "x")}) : null };
-    const getLanguage = () => "en";
+    const getLanguage = () => "en", __en = ${JSON.stringify(EN)};
+    const t = (id, v = {}) => String(__en[id] ?? id).replace(/\\{(\\w+)\\}/g, (m, k) => v[k] ?? m);
     ${SRC}
     return context();
   })()`);
