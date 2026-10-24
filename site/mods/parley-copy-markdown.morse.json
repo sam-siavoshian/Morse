@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "parley-copy-markdown",
+  "title": "Copy as Markdown",
+  "prompt": "add a button that copies the conversation as Markdown",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8787"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "header[role=banner] button",
+    "label": "“Share” button"
+  },
+  "css": ".morse-copy { background: transparent; color: inherit; border: 1px solid #424242; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13px; cursor: pointer; }\n.morse-copy:hover { background: #2f2f2f; }\n",
+  "js": "morse.watch(\"header[role=banner] button\", share => {\n  const btn = morse.el(\"button\", { class: \"morse-copy\", text: \"Copy as Markdown\", on: { click() {\n    const md = [...document.querySelectorAll(\".msg[data-role]\")].map(m =>\n      (m.dataset.role === \"user\" ? \"**You:** \" : \"**Parley:** \") + m.innerText.trim()).join(\"\\n\\n\");\n    navigator.clipboard?.writeText(md);\n    morse.toast(\"Copied \" + md.split(/\\s+/).length + \" words as Markdown\");\n  } } });\n  share.before(btn);\n});\n",
+  "enabled": true,
+  "model": null,
+  "version": 1,
+  "author": "sam",
+  "created": "2026-10-19T15:30:00.000Z",
+  "updated": "2026-10-19T15:30:00.000Z"
+}

@@ -10,7 +10,14 @@
       "editor"
     ],
     "created": "2026-10-22T10:10:00.000Z",
-    "surface": "desktop"
+    "surface": "desktop",
+    "match": {
+      "hosts": [
+        "vscode-app"
+      ],
+      "app": "vscode"
+    },
+    "version": 1
   },
   {
     "file": "discord-no-upsells.morse.json",
@@ -22,7 +29,14 @@
       "declutter"
     ],
     "created": "2026-10-20T20:41:00.000Z",
-    "surface": "web, desktop"
+    "surface": "web, desktop",
+    "match": {
+      "hosts": [
+        "discord.com"
+      ],
+      "app": null
+    },
+    "version": 1
   },
   {
     "file": "gmail-reading-pane.morse.json",
@@ -35,7 +49,14 @@
       "layout"
     ],
     "created": "2026-10-18T13:22:00.000Z",
-    "surface": "web"
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "mail.google.com"
+      ],
+      "app": null
+    },
+    "version": 1
   },
   {
     "file": "x-hide-trending.morse.json",
@@ -48,7 +69,14 @@
       "focus"
     ],
     "created": "2026-10-16T07:50:00.000Z",
-    "surface": "web"
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "x.com"
+      ],
+      "app": null
+    },
+    "version": 1
   },
   {
     "file": "hn-dark-mode.morse.json",
@@ -61,7 +89,14 @@
       "dark mode"
     ],
     "created": "2026-10-14T19:05:00.000Z",
-    "surface": "web"
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "news.ycombinator.com"
+      ],
+      "app": null
+    },
+    "version": 1
   },
   {
     "file": "notion-focus-mode.morse.json",
@@ -75,7 +110,14 @@
       "new feature"
     ],
     "created": "2026-10-13T11:30:00.000Z",
-    "surface": "web, desktop"
+    "surface": "web, desktop",
+    "match": {
+      "hosts": [
+        "www.notion.so"
+      ],
+      "app": null
+    },
+    "version": 1
   },
   {
     "file": "slack-quiet-sidebar.morse.json",
@@ -88,7 +130,14 @@
       "declutter"
     ],
     "created": "2026-10-11T08:15:00.000Z",
-    "surface": "desktop"
+    "surface": "desktop",
+    "match": {
+      "hosts": [
+        "app.slack.com"
+      ],
+      "app": "slack"
+    },
+    "version": 1
   },
   {
     "file": "spotify-sleep-timer.morse.json",
@@ -101,7 +150,14 @@
       "playback"
     ],
     "created": "2026-10-09T23:48:00.000Z",
-    "surface": "desktop"
+    "surface": "desktop",
+    "match": {
+      "hosts": [
+        "xpui.app.spotify.com"
+      ],
+      "app": "spotify"
+    },
+    "version": 1
   },
   {
     "file": "claude-enter-newline.morse.json",
@@ -114,7 +170,14 @@
       "writing"
     ],
     "created": "2026-10-07T15:26:00.000Z",
-    "surface": "web"
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "claude.ai"
+      ],
+      "app": null
+    },
+    "version": 1
   },
   {
     "file": "chatgpt-word-count.morse.json",
@@ -127,7 +190,14 @@
       "new feature"
     ],
     "created": "2026-10-05T21:03:00.000Z",
-    "surface": "web"
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "chatgpt.com"
+      ],
+      "app": null
+    },
+    "version": 1
   },
   {
     "file": "github-wide-diffs.morse.json",
@@ -140,7 +210,14 @@
       "code review"
     ],
     "created": "2026-10-04T09:40:00.000Z",
-    "surface": "web"
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "github.com"
+      ],
+      "app": null
+    },
+    "version": 1
   },
   {
     "file": "youtube-hide-shorts.morse.json",
@@ -153,6 +230,99 @@
       "redirect"
     ],
     "created": "2026-10-02T17:12:00.000Z",
-    "surface": "web"
+    "surface": "web",
+    "match": {
+      "hosts": [
+        "www.youtube.com"
+      ],
+      "app": null
+    },
+    "version": 1
+  },
+  {
+    "file": "tunes-sleep-timer.morse.json",
+    "title": "Sleep timer",
+    "prompt": "add a sleep timer that pauses the music after 15, 30 or 60 minutes",
+    "app": "Tunes",
+    "author": "june",
+    "tags": [
+      "new feature",
+      "playback"
+    ],
+    "created": "2026-10-20T21:10:00.000Z",
+    "updated": "2026-10-23T18:40:00.000Z",
+    "surface": "web, desktop",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8789"
+      ],
+      "app": null
+    },
+    "version": 2,
+    "changes": "Shows the time left on the button, and a fourth click turns the timer off.",
+    "demo": true
+  },
+  {
+    "file": "tunes-big-covers.morse.json",
+    "title": "Bigger rounded covers",
+    "prompt": "make the album covers bigger, with rounded corners and a soft shadow",
+    "app": "Tunes",
+    "author": "kairo",
+    "tags": [
+      "theme",
+      "layout"
+    ],
+    "created": "2026-10-21T10:02:00.000Z",
+    "surface": "web, desktop",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8789"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "demo": true
+  },
+  {
+    "file": "parley-copy-markdown.morse.json",
+    "title": "Copy as Markdown",
+    "prompt": "add a button that copies the conversation as Markdown",
+    "app": "Parley",
+    "author": "sam",
+    "tags": [
+      "new feature",
+      "writing"
+    ],
+    "created": "2026-10-19T15:30:00.000Z",
+    "surface": "web, desktop",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8787"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "demo": true
+  },
+  {
+    "file": "byte-reading-mode.morse.json",
+    "title": "Reading mode",
+    "prompt": "hide the ads and pop-ups and make the article easy to read",
+    "app": "The Daily Byte",
+    "author": "dana",
+    "tags": [
+      "declutter",
+      "reading"
+    ],
+    "created": "2026-10-18T08:45:00.000Z",
+    "surface": "web, desktop",
+    "match": {
+      "hosts": [
+        "127.0.0.1:8788"
+      ],
+      "app": null
+    },
+    "version": 1,
+    "demo": true
   }
 ]

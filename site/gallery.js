@@ -15,6 +15,7 @@ const mods = new Map();    // slug -> full mod (fetched on open)
 // ---------- load + render ----------
 try {
   entries = await (await fetch("mods/index.json")).json();
+  entries = entries.filter(e => !e.demo); // mods for the local demo sites only show in Morse (Mods for this site)
 } catch (e) {
   grid.innerHTML = `<p class="muted">Couldn’t load the gallery. Check your connection and reload the page.</p>`;
 }

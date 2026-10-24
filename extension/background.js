@@ -17,6 +17,7 @@ import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar
 import { CONTROL_REQUESTS, handleControlRequest } from "./control-host.js"; // user control: pause, safe start, install review, backup
 import { serialized } from "./bar-host.js"; // hardening: one queue for every storage read-modify-write
 import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver } from "./onboarding-host.js"; // onboarding hook: welcome page, first-run state, practice area
+import { GALLERY_REQUESTS, handleGallery } from "./gallery-host.js"; // gallery hook: Mods for this site
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
@@ -134,6 +135,7 @@ async function dispatch(msg, port) {
   if (BAR_REQUESTS.has(msg.type)) return handleBarRequest({ ...msg, url: here.url, scope: undefined }); // history per caller's site
   if (CONTROL_REQUESTS.has(msg.type)) return handleControlRequest({ ...msg, url: here.url }, port); // user control (control-host.js)
   if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg); // onboarding hook
+  if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, msg.url); // gallery hook: Mods for this site
   switch (msg.type) {
     case "hello": {
       const b = await backend();

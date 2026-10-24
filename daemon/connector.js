@@ -32,6 +32,7 @@ import { CONTROL_REQUESTS, handleControl, watchControl } from "./control.js"; //
 import { HOME, listMods } from "./store.js";
 import { classifyTarget, describeTarget } from "./targets.js";
 import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
+import { GALLERY_REQUESTS, handleGallery } from "./gallery.js"; // gallery hook: Mods for this site
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
@@ -391,6 +392,7 @@ export class Connector {
     const historyScope = async () => app || hostOf((await here()).url);
     if (CONTROL_REQUESTS.has(msg.type)) return handleControl(msg, await here()); // user control (control.js)
     if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
+    if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, where); // gallery hook: Mods for this site
     switch (msg.type) {
       case "hello":
         this.grantMic(s, (await here()).url);

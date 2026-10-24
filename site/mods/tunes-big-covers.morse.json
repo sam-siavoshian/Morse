@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "tunes-big-covers",
+  "title": "Bigger rounded covers",
+  "prompt": "make the album covers bigger, with rounded corners and a soft shadow",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8789"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "[data-testid=\"album-grid\"]",
+    "label": "Album grid"
+  },
+  "css": "[data-testid=\"album-grid\"] {\n  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));\n  gap: 24px;\n}\n[data-testid=\"album-grid\"] > div {\n  background: transparent;\n  padding: 0;\n  transition: transform .2s ease;\n}\n[data-testid=\"album-grid\"] > div:hover {\n  transform: translateY(-4px);\n}\n[data-testid=\"album-grid\"] > div > div {\n  border-radius: 18px;\n  box-shadow: 0 18px 40px rgba(0, 0, 0, .55);\n  font-size: 18px;\n  padding: 16px;\n}\n[data-testid=\"album-grid\"] > div b {\n  font-size: 15px;\n  margin-top: 4px;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": null,
+  "version": 1,
+  "author": "kairo",
+  "created": "2026-10-21T10:02:00.000Z",
+  "updated": "2026-10-21T10:02:00.000Z"
+}
