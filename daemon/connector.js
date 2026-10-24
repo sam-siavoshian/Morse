@@ -43,6 +43,7 @@ import { Style, onStyleChange } from "./style.js"; // your-style hook: one style
 import { STYLE_ID } from "../core/style.js"; // your-style hook
 import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
 import { pageCollapse } from "../core/guard.js"; // guard hook: a change that hides most of the page
+import { AppProfiler } from "./profile.js"; // app profiles: how the app works inside (docs/dev/rea.md)
 
 // Perf: only the small boot goes into every page; the UI is evaluated on first use ("ui.load").
 import { bundleBoot, bundleUI } from "../runtime/bundle.js";
@@ -99,6 +100,7 @@ const cleanup = ids => `(() => { try {
   for (const s of document.querySelectorAll("style[data-morse-css]")) { globalThis.morse?.__off?.(s.dataset.morseCss); s.remove(); }
   for (const id of ${JSON.stringify(ids)}) globalThis.morse?.__off?.(id);
   document.querySelectorAll("[data-morse-ui]").forEach(e => e.remove());
+  delete window[Symbol.for("morse.app")]; // app profiles: the command handle (daemon/profile.js)
 } catch {} })()`;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -120,7 +122,12 @@ export class Connector {
     this.recentSaves = new Map();
     this.gens = new Generations();
     this.state = "starting";  // starting | attached | waiting | stopped
+    // app profiles: built in the background once Morse is in the app's window
+    this.profiler = app && AppProfiler.enabled() ? new AppProfiler({ app, port, log: this.log }) : null;
   }
+
+  // app profiles: the window a session belongs to
+  windowOf(s) { for (const w of this.windows.values()) if (w.session === s) return w; return null; }
 
   get appName() { return this.app?.name || "The app"; }
 
@@ -294,6 +301,7 @@ export class Connector {
     readTitle();
     this.log(`  ✓ ${t("launch.connected", { title })}${kind === "window" ? "" : ` (${kind})`}`);
     trace("connect", `CDP attached to "${title}": Morse's code runs in its own isolated world ("morse"), talks to this process through the __morseHostSend binding`);
+    this.profiler?.attached(s, w); // app profiles: in the background, never awaited
     if (!this.hinted && kind === "window") { // first-run hook: say what to do next, once
       this.hinted = true;
       configuredHotkeys().then(k => k.open && this.log(`\n  ${t("launch.ready", { name: this.app?.name || title || t("launch.theApp"), key: k.open })}\n`), () => {});
@@ -433,6 +441,8 @@ export class Connector {
   async exec(s, caller, modId, js) {
     const ctx = caller.main;
     if (ctx == null) return { ok: false, error: "The page isn't ready yet. Try again." };
+    // app profiles: mod code that runs the app's commands needs the handle in this document
+    if (this.profiler && /\bmorse\.app\b/.test(js || "")) { const w = this.windowOf(s); if (w) await this.profiler.ready(s, w, ctx).catch(() => {}); }
     const done = s.hang?.exec(modId, ctx, js); // guard hook: while mod code is here, notice if the page freezes
     let r;
     try { r = await s.send("Runtime.evaluate", { expression: wrapModCode(modId, js), contextId: ctx, returnByValue: true }); }
@@ -565,10 +575,14 @@ export class Connector {
         trace("bar", `"${msg.request}" · ${sel ? `pointed at ${sel}` : "the whole page"} · ${this.app?.name || "app"}`);
         trace("model", `${this.settings.provider}${this.settings.model ? ` · ${this.settings.model}` : ""}`);
         let cssPushes = 0, tokens = 0;
+        // app profiles: what the request needs to know about how the app works (core/profile.js profileSlice)
+        const appLogic = this.profiler ? await this.profiler.slice(s, caller, msg.request, sel).catch(() => "") : "";
+        if (appLogic) trace("profile", `the prompt gets ${appLogic.split("\n").length} lines about how ${this.app?.name || "the app"} works inside`);
         const res = await this.gens.run(msg.genId, signal => runMorse({
           settings: { ...this.settings, mode },
           request: msg.request,
-          context: { ...msg.context, app: this.app?.name || msg.context.app },
+          context: { ...msg.context, app: this.app?.name || msg.context.app, ...(appLogic && { appLogic }) },
+          vet: this.profiler ? d => this.profiler.vet(d) : undefined, // app profiles: commands the app has
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           exec: js => this.exec(s, caller, msg.genId, js),
           // The streamed CSS reaches the runtime first: pushes and probes go

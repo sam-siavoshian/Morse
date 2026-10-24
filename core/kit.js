@@ -523,8 +523,39 @@ function installMorseKit() {
       on(target, event, fn, opts) {
         const h = guard(c, fn);
         settleOn(c, event);
+        // app profiles: an app's own event emitter (app.vault.on("modify", …),
+        // an EventEmitter) is listened to the same way, and let go when the
+        // mod is turned off: dispose(), offref(), off() or removeListener().
+        if (typeof target?.addEventListener !== "function" && typeof target?.on === "function") {
+          const ref = target.on(event, h);
+          c.cleanups.push(() => {
+            if (ref && typeof ref.dispose === "function") ref.dispose();
+            else if (typeof target.offref === "function" && ref) target.offref(ref);
+            else if (typeof target.off === "function") target.off(event, h);
+            else if (typeof target.removeListener === "function") target.removeListener(event, h);
+          });
+          return ref;
+        }
         target.addEventListener(event, h, opts);
         c.cleanups.push(() => target.removeEventListener(event, h, opts));
+      },
+      // app profiles (daemon/profile.js): the app's own commands, through the
+      // runner Morse found in this app (a frozen handle on the page's window).
+      // command() resolves to what the app's command returns; a failure is
+      // the mod's error (the repair round sees it) and rejects.
+      app: {
+        get ready() { return !!globalThis[Symbol.for("morse.app")]; },
+        command(id, ...args) {
+          const h = globalThis[Symbol.for("morse.app")];
+          if (!h) { const e = new Error("morse.app.command: Morse found no way to run this app's commands here. Use the app's own objects or its buttons instead."); fail(c, e); return Promise.reject(e); }
+          return (async () => {
+            const r = await h.run(String(id), ...args);
+            // Some apps answer false for a command they don't have or can't run now (Obsidian).
+            if (r === false) fail(c, new Error(`morse.app.command("${id}"): the app didn't run it (no such command, or it can't run right now)`));
+            return r;
+          })().catch(e => { fail(c, e); throw e; });
+        },
+        commands() { const h = globalThis[Symbol.for("morse.app")]; try { return h && h.list ? h.list() : []; } catch { return []; } },
       },
       every(ms, fn) {
         settleFor(c, Math.max(L.MIN_EVERY, +ms || 0) + 60);
