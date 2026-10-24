@@ -7,7 +7,8 @@ import "../core/languages.js"; // the other languages' words, read from core/loc
 import { resolveApp } from "./apps.js";
 import { inspectFuses, formatFuses } from "./fuses.js";
 import { appsCommand, launchCommand, attachCommand, statusCommand, stopCommand } from "./desktop.js";
-import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH, HOME, savePrefs } from "./store.js";
+import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH, HOME, savePrefs, configUnreadable, keptConfigCopies } from "./store.js";
+import { said } from "./apps.js";
 import { startLabel, modelNames } from "../core/route.js"; // models: fast and strong
 import { commandFor, platformChecks, formatChecks } from "./platform.js";
 import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask, migrateLegacy } from "./models.js";
@@ -204,11 +205,21 @@ ${B(h("mods"))}
 ${h("foot.open", { key: B(openKey) })}${KEYS.off ? ` ${h("foot.off", { key: B(KEYS.off) })}` : ""}
 ${h("all", { cmd: B("morse help --all") })}`;
 
+// The mod a command names: no id asks which; an id that isn't there says so.
+async function findMod(id) {
+  if (!id) throw said(t("cli.whichMod"));
+  const mod = (await listMods()).find(m => m.id === id);
+  if (!mod) throw said(t("cli.noMod", { id: shown(id) }));
+  return mod;
+}
+
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const f = flags(rest);
   if (["--version", "-v", "version"].includes(cmd)) return console.log(VERSION);
   if (["--help", "-h", "help"].includes(cmd)) return console.log(f.all || f._[0] === "all" ? HELP : SHORT_HELP);
+  // A config.json that isn't valid JSON: say so once, before anything else (store.js).
+  if (await configUnreadable()) console.error(`${WARN("!")} ${t("cli.config.unreadable", { file: CONFIG_PATH })}`);
   if (await (await import("./setup.js")).maybeRun(cmd, rest)) return; // onboarding hook: morse setup, and getting started while nothing is set up
   switch (cmd) {
     case "apps":
@@ -239,14 +250,15 @@ async function main() {
       }
       break;
     }
-    case "rm":
-      await deleteMod(f._[0]);
-      console.log(t("cli.deleted", { id: f._[0] }));
+    case "rm": {
+      const mod = await findMod(f._[0]); // a typo deletes nothing, and says so
+      await deleteMod(mod.id);
+      console.log(t("cli.deleted", { id: mod.id }));
       break;
+    }
     case "export": {
       if (f.all) return exportAllCli(f); // user control: back up everything
-      const mod = (await listMods()).find(m => m.id === f._[0]);
-      if (!mod) throw new Error(t("cli.noMod", { id: f._[0] }));
+      const mod = await findMod(f._[0]);
       const slug = mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       console.log(await writeExport(`${slug}.morse.json`, JSON.stringify(mod, null, 2)));
       console.log(await writeExport(`${slug}.user.js`, toUserscript(mod)));
@@ -355,6 +367,7 @@ async function main() {
   }
 }
 
+process.on("exit", () => { for (const file of keptConfigCopies) console.error(D(t("cli.config.copied", { file }))); });
 main().catch(e => {
   const plain = plainError(e);
   const details = e?.details || (plain !== e?.message && e?.message) || "";

@@ -11,7 +11,8 @@ import { serveBar } from "./helpers/demo-server.js";
 import { pressOpen } from "./helpers/keys.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
 import { waitForStatus, waitForReady, TIMEOUT } from "./helpers/wait.js";
-import { home } from "./helpers/home.js";
+import { home, tempDir } from "./helpers/home.js";
+import { writeFileSync, readdirSync, readFileSync } from "node:fs";
 
 const skip = noBrowser;
 const CLI = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../daemon/cli.js");
@@ -139,4 +140,37 @@ test("morse help: the commands people use, and --all for every one", () => {
   const typo = run(["lauch"]);
   assert.equal(typo.status, 1, "an unknown command is an error");
   assert.match(typo.stdout, /no command “lauch”/);
+});
+
+// Checked end to end (docs/dev/simplify.md): every command says something
+// useful with no config, a broken one, or no model.
+const cli = h => args => spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8", env: { ...process.env, MORSE_HOME: h, NO_COLOR: "1", LANG: "en_US.UTF-8", MORSE_NO_UPDATE_CHECK: "1" } });
+
+test("morse rm, export and code: no id asks which mod; an unknown id says so, and nothing claims it was deleted", () => {
+  const run = cli(tempDir("morse-simplify-cli-"));
+  for (const cmd of ["rm", "export", "code"]) {
+    const r = run([cmd]);
+    assert.equal(r.status, 1, `morse ${cmd}`);
+    assert.match(r.stderr, /Which mod\?.*morse mods/, `morse ${cmd}: ${r.stderr}`);
+    const u = run([cmd, "nosuchid"]);
+    assert.equal(u.status, 1, `morse ${cmd} nosuchid`);
+    assert.match(u.stderr, /nosuchid/, `morse ${cmd} nosuchid: ${u.stderr}`);
+    assert.doesNotMatch(u.stdout + u.stderr, /\{id\}|Something went wrong|Deleted/, `morse ${cmd} nosuchid`);
+  }
+});
+
+test("a config file Morse can't read: commands say so, and a change keeps a copy of it", () => {
+  const h = tempDir("morse-simplify-cfg-");
+  const run = cli(h);
+  writeFileSync(path.join(h, "config.json"), "{ this is not json");
+  const m = run(["model"]);
+  assert.equal(m.status, 0);
+  assert.match(m.stderr, /can't read .*config\.json/, m.stderr);
+  const c = run(["config", "--model-mode", "fast"]);
+  assert.equal(c.status, 0, c.stderr);
+  const copies = readdirSync(h).filter(f => /^config\.json\.unreadable/.test(f));
+  assert.equal(copies.length, 1, readdirSync(h).join(", "));
+  assert.equal(readFileSync(path.join(h, copies[0]), "utf8"), "{ this is not json");
+  assert.match(c.stderr, /copy/, c.stderr);
+  assert.doesNotMatch(run(["model"]).stderr, /can't read/, "fine once it was written again");
 });
