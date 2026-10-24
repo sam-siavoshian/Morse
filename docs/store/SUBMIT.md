@@ -157,8 +157,11 @@ this: the code of a change the user just asked for, written by the model they
 connected (their own Claude Code, Codex, Anthropic or OpenAI account), or of a
 mod they chose to install after a review that says in plain words what it
 does. It runs in an isolated `USER_SCRIPT` world, only on the site it was made
-for, and only after the user turns on "Allow User Scripts". Nothing is fetched
-from a Morse server; there is none. There is no `eval`, no `new Function` and
+for, and only after the user turns on "Allow User Scripts". The model's code
+comes from the user's own model account, never from a server of ours. Morse
+downloads mods only from the public gallery (files on the project's GitHub
+Pages site) or from a pack address the user pastes, and one runs only after
+the user opens its review and clicks Try it or Install. There is no `eval`, no `new Function` and
 no remote script anywhere in the package; `chrome.scripting` only runs files
 from the package. The full list is in `docs/store/README.md`, "Code that Morse
 runs", and the source is public: https://github.com/sam-siavoshian/RRAA

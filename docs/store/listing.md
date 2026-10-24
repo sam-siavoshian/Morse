@@ -31,9 +31,7 @@ the older single list, pick **Productivity**.) Language: **English**.
 ```
 Morse lets you change any website in your own words.
 
-Open Morse on a page, point at something, and say what you want: "hide the sidebar", "make this easier to read", "add a copy button to every code example". You see the page change while Morse writes the change. If you like it, save it. Morse brings it back every time you open that site.
-
-A mod is a change you saved. Morse brings it back every time you open that site or app.
+Open Morse on a page, point at something, and say what you want: "hide the sidebar", "make this easier to read", "add a copy button to every code example". You see the page change while Morse writes the change. If you like it, press Save and it becomes a mod. A mod is a change you saved. Morse brings it back every time you open that site.
 
 What you can do
 • Hide what you never use, restyle what tires your eyes, or add the button a site forgot.
@@ -57,7 +55,7 @@ Changes that add buttons or features
 Changes that only restyle a page work right away. Changes that add buttons or features need one switch: in chrome://extensions, open Morse's details and turn on "Allow User Scripts". Morse tells you when a change is waiting for it and takes you there.
 
 Privacy
-When you ask for a change, what you pointed at and what you asked for go to the model you chose, and nowhere else. Your mods stay in your browser. Morse has no analytics and sends nothing to the people who make it. Full policy: https://sam-siavoshian.github.io/RRAA/site/privacy.html
+When you ask for a change, what you pointed at and what you asked for go only to the model you chose. Your mods stay in your browser. Morse has no analytics and sends nothing to the people who make it. Full policy: https://sam-siavoshian.github.io/RRAA/site/privacy.html
 
 Open source
 Morse is free and MIT licensed. Read every line: https://github.com/sam-siavoshian/RRAA
@@ -65,7 +63,7 @@ Morse is free and MIT licensed. Read every line: https://github.com/sam-siavoshi
 
 ## Links (Store listing tab)
 
-- Official URL / homepage: `https://sam-siavoshian.github.io/RRAA/site/`
+- Homepage URL: `https://sam-siavoshian.github.io/RRAA/site/`
 - Support URL: `https://github.com/sam-siavoshian/RRAA/issues`
 
 ## Single purpose (Privacy tab)
@@ -73,7 +71,7 @@ Morse is free and MIT licensed. Read every line: https://github.com/sam-siavoshi
 ```
 Change any website in your own words.
 
-You open Morse on a page, point at part of it and say what you want changed. Morse has your model write that change, shows it on the page, and, if you save it, applies it again whenever you visit that site. Everything else in Morse (the Edit tools, Page tools, the Mods panel, sharing) serves that one purpose: changing the websites you use.
+You open Morse on a page, point at part of it and say what you want changed. Morse has your model write that change and shows it on the page. If you save it, Morse brings it back whenever you visit that site. Everything else in Morse (the Edit tools, Page tools, the Mods panel, sharing) serves that one purpose: changing the websites you use.
 ```
 
 ## Permission justifications (Privacy tab)
@@ -120,7 +118,7 @@ Morse runs code that is not in the package in two cases, both started by the use
 
 This code runs only through the chrome.userScripts API (userScripts.execute in a USER_SCRIPT world), only on the site it was made for, and only after the user turns on "Allow User Scripts" for Morse. With that off, no such code runs at all: Morse adds only the change's style and tells the user which changes are waiting.
 
-The code is never fetched from a Morse server: there is none. The extension never runs strings as code any other way: no eval, no new Function, no remote scripts, and chrome.scripting only runs files from the package. All of the extension's own code is in the package.
+Code the model writes comes straight from the user's own model account; it is never fetched from a server run by Morse's developer. Morse downloads mods only from the public gallery (mod files on the project's GitHub Pages site, https://sam-siavoshian.github.io/RRAA/site/mods/, added by the project's maintainer through the public repository) or from a pack address the user pastes, and a downloaded mod runs only after the user opens its review and clicks Try it, Install or Update. The extension never runs strings as code any other way: no eval, no new Function, no remote scripts, and chrome.scripting only runs files from the package. All of the extension's own code is in the package.
 ```
 
 Every place that could run code is listed in [README.md](README.md), "Code
