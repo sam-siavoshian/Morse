@@ -77,6 +77,10 @@ function ONBOARDING_CSS() { return `
     .ob-note { flex-wrap: wrap; align-items: flex-start; row-gap: 8px; } .ob-text { flex-basis: calc(100% - 16px); }
     .ob-note .ob-dot { margin-top: 6px; } .ob-note .btn { margin-left: 16px; } .ob-note .ob-close { margin-left: auto; }
   }
+  /* a bar narrower than the three steps and Hide tips (the practice page on a phone): only the current step keeps its word */
+  @media (max-width: 360px) {
+    .ob-steps li:not(.now) { font-size: 0; gap: 0; } .ob-steps li:not(.now)::before { margin-right: 6px; }
+  }
   :host([data-fx="off"]) .ob-coach { animation: none; }
 
   /* progressive reveal (59-onboarding.js): before the first saved change, the

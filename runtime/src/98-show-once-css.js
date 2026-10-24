@@ -48,6 +48,7 @@ function SHOW_ONCE_CSS() { return `
   .sug.so-sug + .gl-sug::before { display: none; }
   .sug.so-sug + .gl-sug { margin-left: 0; }
 
-  @media (max-width: 560px) { .so-strip { left: 16px; width: auto; } .so-foot { display: none; } }
+  /* at phone width the chips wrap and the hairline would start a line on its own */
+  @media (max-width: 560px) { .so-strip { left: 16px; width: auto; } .so-foot { display: none; } .sug.so-sug { margin-left: 0; } .sug.so-sug::before { display: none; } }
   @media (prefers-reduced-motion: reduce) { .so-strip, .so-dot, .so-last { animation: none !important; } }
 `; }
