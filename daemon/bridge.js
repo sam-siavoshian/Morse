@@ -79,8 +79,12 @@ function readJson(req) {
 
 function validMessages(m) {
   return Array.isArray(m) && m.length > 0 && m.length <= 20 && m.every(x =>
-    x && ["system", "user", "assistant"].includes(x.role) && typeof x.content === "string" && x.content.length <= 200_000);
+    x && ["system", "user", "assistant"].includes(x.role) && (typeof x.content === "string" ? x.content.length <= 200_000 : validBlocks(x)));
 }
+// Describe this image (core/a11y.js): a user message may be text and picture blocks.
+const validBlocks = x => x.role === "user" && Array.isArray(x.content) && x.content.length <= 4 && x.content.every(b =>
+  (b?.type === "text" && typeof b.text === "string" && b.text.length <= 200_000) ||
+  (b?.type === "image" && b.source?.type === "base64" && /^image\/(png|jpeg|webp|gif)$/.test(b.source.media_type) && typeof b.source.data === "string"));
 
 export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, timeoutMs = TIMEOUT_MS } = {}) {
   let harnessCache = null, harnessAt = 0;
