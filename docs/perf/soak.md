@@ -99,6 +99,9 @@ Each fix is marked `// soak` in the code.
    frozen page and reloaded it. Now those are held weakly (`WeakRef`) and
    pruned, and observers count only while observing; over 30 minutes the
    same run stays level (nodes ~5,400, listeners 1,084, observers ~330).
+   **Open:** after the last merge of main (its newer `morse.watch` code),
+   the quick check of this in `tests/soak.test.js` holds the dropped items
+   again (marked todo); trace it with `demo/soak/retainers.js`.
 3. **Running a mod again on an element that stays kept each earlier run's
    elements** (kit). A watch that had run on an element stayed in that
    element's set after its mod stopped, and with it everything its callback
