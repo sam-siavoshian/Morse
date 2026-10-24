@@ -179,7 +179,7 @@ test("edge cases: shadow DOM, mixed inline text, frames, duplicates, and dark pa
   await page.keyboard.press("Escape");
   await page.locator(".gm-qbtn").click();
   await page.locator(".gm-menu button[data-k=dark]").click();
-  await page.getByText("This page is already dark").waitFor(); // it says so instead
+  await page.locator(".toast").getByText("This page is already dark").waitFor(); // it says so instead (and screen readers hear it)
   await settle(page);
   assert.equal(await style(page, "html", "filter"), "none");
   assert.equal((await savedMods(page)).filter(m => m.kind === "quick").length, 0);

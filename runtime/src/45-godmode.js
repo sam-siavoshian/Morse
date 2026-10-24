@@ -30,7 +30,9 @@ const GodMode = (() => {
     frame: '<rect x="2.25" y="3.25" width="11.5" height="9.5" rx="1.5"/><path d="M2.25 6h11.5"/>',
   };
   const icon = (n, s = 16) => `<svg viewBox="0 0 16 16" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
-  const tip = (label, key) => `<span class="tip" role="tooltip">${esc(label)}${key ? `<kbd>${esc(key)}</kbd>` : ""}</span>`;
+  const tip = (label, key) => `<span class="tip" aria-hidden="true">${esc(label)}${key ? `<kbd>${esc(key)}</kbd>` : ""}</span>`;
+  // "⇧⌘Z" / "Shift+Ctrl+Z" -> "Shift+Meta+Z" / "Shift+Control+Z", as aria-keyshortcuts spells them
+  const ariaKeys = k => String(k || "").replace(/⇧/g, "Shift+").replace(/⌘/g, "Meta+").replace(/Ctrl\+/g, "Control+").replace(/\+$/, "");
 
   const TOOLS = [
     { t: "hide", tip: "Hide", key: "H" },
@@ -53,19 +55,28 @@ const GodMode = (() => {
   const PALETTE = ["#000000", "#262626", "#525252", "#a3a3a3", "#e5e5e5", "#ffffff", "#ef4444", "#f97316",
     "#eab308", "#22c55e", "#14b8a6", "#3b82f6", "#6366f1", "#a855f7", "#ec4899", "transparent"];
   const WEIGHTS = [[300, "Light"], [400, "Regular"], [500, "Medium"], [600, "Semi"], [700, "Bold"]];
+  // What screen readers say for each swatch (the tooltip keeps the code).
+  const COLOR_NAMES = ["Black", "Near black", "Dark gray", "Gray", "Light gray", "White", "Red", "Orange",
+    "Yellow", "Green", "Teal", "Blue", "Indigo", "Purple", "Pink", "No color"];
 
   const wrap = document.createElement("div");
   wrap.className = "gm";
   wrap.hidden = true;
   wrap.innerHTML = `
     <div class="gm-frame">${["nw", "n", "ne", "e", "se", "s", "sw", "w"].map(h => `<i data-h="${h}"></i>`).join("")}<span class="gm-read" hidden></span></div>
-    <div class="gm-tb" role="toolbar" aria-label="Edit tools" tabindex="-1">
-      <span class="gm-tag"></span><span class="gm-sep"></span>
-      ${TOOLS.map(x => x ? `<button class="ibtn" data-t="${x.t}" aria-label="${esc(x.tip)}">${icon(x.t)}${tip(x.tip, x.key)}</button>` : `<span class="gm-sep"></span>`).join("")}
+    <div class="gm-tb" id="m-edit-tools" role="toolbar" aria-label="Edit tools" tabindex="-1">
+      <span class="gm-tag"></span><span class="gm-sep" aria-hidden="true"></span>
+      ${TOOLS.map(x => x ? `<button class="ibtn" data-t="${x.t}" tabindex="-1" aria-label="${esc(x.tip)}" aria-keyshortcuts="${esc(ariaKeys(x.key))}">${icon(x.t)}${tip(x.tip, x.key)}</button>` : `<span class="gm-sep" aria-hidden="true"></span>`).join("")}
     </div>
-    <div class="gm-note" hidden></div>
-    <div class="gm-pop" hidden></div>`;
+    <div class="gm-note" id="m-edit-note" hidden></div>
+    <div class="gm-pop" id="m-edit-pop" role="group" aria-label="Edit tool options" hidden></div>`;
   root.append(wrap);
+  const frame0 = wrap.querySelector(".gm-frame");
+  frame0.setAttribute("aria-hidden", "true");
+  // The toolbar and its popover float by the selection, outside the bar's box, but
+  // belong to it: screen readers find them in the bar, and Tab reaches them (50-bar.js).
+  bar.setAttribute("aria-owns", "m-edit-tools m-edit-note m-edit-pop");
+  barExtras.push(wrap.querySelector(".gm-tb"), wrap.querySelector(".gm-pop"));
   const frame = wrap.querySelector(".gm-frame"), tb = wrap.querySelector(".gm-tb"), tag = wrap.querySelector(".gm-tag");
   const note = wrap.querySelector(".gm-note"), pop = wrap.querySelector(".gm-pop"), read = wrap.querySelector(".gm-read");
 
@@ -301,8 +312,8 @@ const GodMode = (() => {
     if (show) {
       place();
       if (hoverEl && (hoverEl === G.el || G.tool)) hl.hidden = true;
-    }
-    G.raf = requestAnimationFrame(loop);
+      G.raf = requestAnimationFrame(loop);
+    } else if (!bar.hidden && !G.wait) G.wait = setTimeout(() => { G.wait = 0; if (G.el && !G.raf) G.raf = requestAnimationFrame(loop); }, 200); // perf: hidden (working, result, modal): check 5x/s, not every frame; Morse closed: stop (select() restarts it)
   }
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
@@ -379,6 +390,15 @@ const GodMode = (() => {
       else if (t === "redo") b.disabled = !GS.future.length;
       b.setAttribute("aria-pressed", String(t === G.tool || t === G.pop || (t === "text" && !!G.editing)));
     }
+    rove(null);
+  }
+  // One Tab stop for the toolbar: the last tool used (or the first), ←/→ to the others.
+  function rove(to) {
+    const all = [...tb.querySelectorAll("button")].filter(b => !b.disabled && !b.hidden);
+    const cur = to || all.find(b => b.tabIndex === 0) || all[0];
+    for (const b of tb.querySelectorAll("button")) b.tabIndex = b === cur && !b.disabled ? 0 : -1;
+    if (cur?.disabled) all[0] && (all[0].tabIndex = 0);
+    return all;
   }
   function toggleTool(t) {
     if (G.tool === t) return finishTool();
@@ -525,6 +545,7 @@ const GodMode = (() => {
       const field = ed.field = document.createElement("input");
       field.className = "gm-svgtext field";
       field.spellcheck = false;
+      field.setAttribute("aria-label", "New text");
       field.value = ed.was.trim();
       field.style.transform = `translate(${Math.round(r.left - 8)}px, ${Math.round(r.top + r.height / 2 - 16)}px)`;
       field.style.width = `${Math.round(Math.max(120, r.width + 48))}px`;
@@ -606,6 +627,9 @@ const GodMode = (() => {
     if (kind === "capture") GodCapture.pop(pop, G.el, closePop);
     syncButtons();
     place();
+    // Focus goes into it (the capture note focuses itself once its picture is ready); Esc comes back to the toolbar.
+    if (kind === "color") pop.querySelector("[data-ch][aria-checked=true]")?.focus({ preventScroll: true });
+    if (kind === "type") pop.querySelector(".gm-step input")?.focus({ preventScroll: true });
   }
   function closePop() {
     if (!G.pop) return;
@@ -620,6 +644,25 @@ const GodMode = (() => {
   pop.addEventListener("keydown", e => {
     e.stopPropagation(); // typing in our fields is ours, not the page's
     if (e.key === "Escape") { closePop(); tb.focus({ preventScroll: true }); }
+    // The palette: arrows move around its 8 columns, Home/End to the ends; Enter or Space picks.
+    const sw = e.target.closest?.(".gm-sw [data-c]");
+    if (sw && /^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(e.key)) {
+      e.preventDefault();
+      const all = [...sw.parentElement.children], i = all.indexOf(sw), step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -8, ArrowDown: 8 }[e.key];
+      const n = e.key === "Home" ? all[0] : e.key === "End" ? all[all.length - 1] : all[Math.max(0, Math.min(all.length - 1, i + step))];
+      all.forEach(b => (b.tabIndex = b === n ? 0 : -1));
+      n.focus();
+      return;
+    }
+    // Text/Fill/Border and the weights are radio groups: arrows move and pick, like native radios.
+    const r = e.target.closest?.("[role=radio]");
+    if (r && /^Arrow(Left|Right|Up|Down)$/.test(e.key)) {
+      e.preventDefault();
+      const all = [...r.parentElement.querySelectorAll("[role=radio]")], i = all.indexOf(r);
+      const n = all[(i + (/Right|Down/.test(e.key) ? 1 : -1) + all.length) % all.length];
+      n.click();
+      n.focus();
+    }
   });
   for (const t of ["keyup", "keypress", "input"]) pop.addEventListener(t, e => e.stopPropagation());
 
@@ -645,16 +688,17 @@ const GodMode = (() => {
     const edit = v => [{ op: "style", ...tgt(), props: propsFor(ch, v), label: G.t.label }];
     const set = v => { commit(edit(v), `color:${G.popSeq}:${ch}`); paint(v); };
     pop.innerHTML = `
-      <div class="seg" role="tablist">${chans.map(([k, l]) => `<button data-ch="${k}" role="tab">${l}</button>`).join("")}</div>
-      <div class="gm-sw">${PALETTE.map(c => `<button data-c="${c}" title="${c}" aria-label="${c}"${c === "transparent" ? ' class="none"' : ` style="--c:${c}"`}></button>`).join("")}</div>
+      <div class="seg" role="radiogroup" aria-label="Color of">${chans.map(([k, l]) => `<button data-ch="${k}" role="radio" aria-checked="false">${l}</button>`).join("")}</div>
+      <div class="gm-sw" role="group" aria-label="Colors">${PALETTE.map((c, i) => `<button data-c="${c}" title="${c}" aria-label="${COLOR_NAMES[i]}"${c === "transparent" ? ' class="none"' : ` style="--c:${c}"`}></button>`).join("")}</div>
       <div class="gm-hex field"><i></i><input spellcheck="false" maxlength="11" pattern="#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})|transparent" aria-label="Color code">${globalThis.EyeDropper ? `<button class="ibtn xs" data-a="pick" title="Pick a color from the screen" aria-label="Pick a color from the screen">${icon("drop")}</button>` : ""}</div>`;
     const field = pop.querySelector("input"), dot = pop.querySelector(".gm-hex i");
     const paint = v => {
       field.value = v;
       dot.style.setProperty("--c", v);
       dot.classList.toggle("none", v === "transparent");
-      for (const b of pop.querySelectorAll("[data-c]")) b.setAttribute("aria-pressed", String(b.dataset.c === v));
-      for (const b of pop.querySelectorAll("[data-ch]")) b.setAttribute("aria-pressed", String(b.dataset.ch === ch));
+      const sws = [...pop.querySelectorAll("[data-c]")], on = sws.find(b => b.dataset.c === v) || sws[0];
+      for (const b of sws) { b.setAttribute("aria-pressed", String(b.dataset.c === v)); b.tabIndex = b === on ? 0 : -1; } // one Tab stop, arrows inside
+      for (const b of pop.querySelectorAll("[data-ch]")) { b.setAttribute("aria-checked", String(b.dataset.ch === ch)); b.tabIndex = b.dataset.ch === ch ? 0 : -1; }
     };
     paint(current());
     pop.onclick = e => {
@@ -678,17 +722,17 @@ const GodMode = (() => {
     const cs = getComputedStyle(G.el);
     let size = Math.round(parseFloat(cs.fontSize) || 16), weight = Math.round(+cs.fontWeight / 100) * 100 || 400;
     pop.innerHTML = `
-      <div class="gm-field"><label>Size</label>
+      <div class="gm-field"><label aria-hidden="true">Size</label>
         <div class="gm-step field"><button class="ibtn xs" data-d="-1" aria-label="Smaller">${icon("minus")}</button><input inputmode="numeric" aria-label="Text size in pixels"><span>px</span><button class="ibtn xs" data-d="1" aria-label="Bigger">${icon("plus")}</button></div></div>
       <input class="gm-range" type="range" min="8" max="72" step="1" aria-label="Text size">
-      <div class="gm-field"><label>Weight</label></div>
-      <div class="seg gm-weights">${WEIGHTS.map(([w, l]) => `<button data-w="${w}" style="font-weight:${w}" title="${w}">${l}</button>`).join("")}</div>`;
+      <div class="gm-field"><label id="m-weight-l">Weight</label></div>
+      <div class="seg gm-weights" role="radiogroup" aria-labelledby="m-weight-l">${WEIGHTS.map(([w, l]) => `<button data-w="${w}" role="radio" aria-checked="false" style="font-weight:${w}" title="${w}">${l}</button>`).join("")}</div>`;
     const field = pop.querySelector(".gm-step input"), range = pop.querySelector(".gm-range");
     const paint = () => {
       field.value = size;
       range.value = clamp(size, 8, 72);
       range.style.setProperty("--p", `${((clamp(size, 8, 72) - 8) / 64) * 100}%`);
-      for (const b of pop.querySelectorAll("[data-w]")) b.setAttribute("aria-pressed", String(+b.dataset.w === weight));
+      for (const b of pop.querySelectorAll("[data-w]")) { b.setAttribute("aria-checked", String(+b.dataset.w === weight)); b.tabIndex = +b.dataset.w === weight ? 0 : -1; }
     };
     const setSize = v => { size = clamp(Math.round(v), 4, 400); commit([{ op: "style", ...tgt(), props: { "font-size": size + "px" }, label: G.t.label }], `type:${G.popSeq}:size`); paint(); };
     paint();
@@ -706,8 +750,9 @@ const GodMode = (() => {
 
   tb.addEventListener("click", e => {
     const b = e.target.closest("button[data-t]");
-    if (b && !b.disabled) run(b.dataset.t);
+    if (b && !b.disabled) { rove(b); run(b.dataset.t); }
   });
+  tb.addEventListener("focusin", e => { if (e.target.matches?.("button")) rove(e.target); });
 
   // ---- keys. Registered before 95-keys.js, so an open tool or popover gets
   // Escape first; with nothing open, Escape closes the bar as usual.
@@ -752,16 +797,30 @@ const GodMode = (() => {
     if (!G.el || S.phase !== "idle" || wrap.hidden) return;
     const onTb = active && (active === tb || tb.contains(active) || (pop.contains(active) && !active.matches("input, textarea")));
     if (!onTb) return;
-    // Tab and Shift+Tab walk the tools (arrows nudge the selection)
+    // Tab and Shift+Tab walk the tools, then leave the toolbar for the rest of the bar (50-bar.js).
     if (e.key === "Tab" && !e.altKey && !e.ctrlKey && !e.metaKey && (active === tb || tb.contains(active))) {
       const list = [...tb.querySelectorAll("button")].filter(b => !b.disabled && !b.hidden && b.getClientRects().length);
-      if (!list.length) return;
+      const i = list.indexOf(active);
+      if (!list.length || (active !== tb && (e.shiftKey ? i === 0 : i === list.length - 1))) return;
       e.preventDefault();
       e.stopImmediatePropagation();
-      const i = list.indexOf(active);
-      list[e.shiftKey ? (i <= 0 ? list.length - 1 : i - 1) : (i < 0 || i === list.length - 1 ? 0 : i + 1)].focus({ preventScroll: true });
+      list[e.shiftKey ? (i <= 0 ? list.length - 1 : i - 1) : i + 1].focus({ preventScroll: true });
       return;
     }
+    // On a tool: ←/→, Home and End go between the tools (a toolbar, as
+    // everywhere); on the toolbar itself (Ctrl+E), or with Move on, arrows move the selection.
+    const onTool = tb.contains(active) && active !== tb;
+    if (onTool && G.tool !== "move" && !e.altKey && !e.metaKey && !e.ctrlKey && /^(ArrowLeft|ArrowRight|ArrowUp|ArrowDown|Home|End)$/.test(e.key)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (e.key === "ArrowUp" || e.key === "ArrowDown") return;
+      const all = rove(null), i = all.indexOf(active);
+      const n = e.key === "Home" ? all[0] : e.key === "End" ? all[all.length - 1] : all[(i + (e.key === "ArrowRight" ? 1 : -1) + all.length) % all.length];
+      rove(n);
+      n?.focus();
+      return;
+    }
+    if (pop.contains(active) && e.key.startsWith("Arrow")) return; // the popover's own controls (radio groups above)
     if (e.key.startsWith("Arrow") && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
       e.stopImmediatePropagation();

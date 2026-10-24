@@ -16,10 +16,10 @@ goBtn.before(micBtn);
 const sugEl = makeEl("div", { className: "sugs", hidden: true }, { role: "toolbar", "aria-label": "Suggestions" });
 const pane = makeEl("div", { className: "pane", hidden: true });
 row.after(sugEl, pane);
-const moreBtn = makeEl("button", { className: "more ibtn sm", type: "button", title: "Settings and shortcuts" }, { "aria-label": "More", "aria-haspopup": "menu", "aria-expanded": "false" });
+const moreBtn = makeEl("button", { className: "more ibtn sm", type: "button", title: "Settings and shortcuts" }, { "aria-label": "More", "aria-haspopup": "menu", "aria-expanded": "false", "aria-controls": "m-more-menu" });
 moreBtn.innerHTML = `<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="8" r="1.25"/><circle cx="8" cy="8" r="1.25"/><circle cx="12.5" cy="8" r="1.25"/></svg>`;
 statusRow.append(moreBtn);
-const menuEl = makeEl("div", { className: "bmenu menu", hidden: true }, { role: "menu", "aria-label": "Morse" });
+const menuEl = makeEl("div", { className: "bmenu menu", hidden: true, id: "m-more-menu" }, { role: "menu", "aria-label": "Morse" });
 const liveEl = makeEl("div", { className: "sr" }, { role: "status", "aria-live": "polite" });
 bar.append(menuEl, liveEl);
 
@@ -29,16 +29,14 @@ function makeEl(tag, props = {}, attrs = {}) {
   return n;
 }
 
-// ---- screen readers hear what the status line says
-let lastSaid = "";
-function announce(text) {
-  const t = String(text || "").replace(/\s+/g, " ").trim();
-  if (!t || t === lastSaid) return;
-  lastSaid = t;
-  liveEl.textContent = t;
-}
-new MutationObserver(() => { clearTimeout(announce.t); announce.t = setTimeout(() => announce(hint.textContent), 120); })
-  .observe(hint, { childList: true, subtree: true, characterData: true });
+// ---- screen readers hear what the status line says (announce: 12-focus.js).
+// Only while idle: notes, voice, "Stopped". A change being made says its few
+// steps itself (60-generate.js), so the streaming code is never read out.
+new MutationObserver(() => {
+  clearTimeout(announce.t);
+  // A message said just now (what was chosen, a step of Choose with keys) isn't talked over by the status line.
+  announce.t = setTimeout(() => { if (S.phase === "idle" && !bar.hidden && !KeyPick.on && Date.now() - lastSaidAt > 400) announce(hint.textContent); }, 120);
+}).observe(hint, { childList: true, subtree: true, characterData: true });
 
 // ---- the input grows with its text up to five lines; Shift+Enter is a newline
 const LINE = 21, MAX_LINES = 5;
@@ -72,6 +70,7 @@ function setTarget(el) {
   updateChips();
   input.focus();
   GodMode.onTarget(el); // God mode: edit toolbar for the selection
+  if (el) announce(`Chosen: ${describe(el)}. ${hint.textContent}`); // screen readers hear what was picked, then what's next
 }
 chip.querySelector(".x").onclick = () => { setTarget(null); startPicking(); };
 chip.querySelector(".x").setAttribute("aria-label", "Point at something else");
@@ -89,7 +88,7 @@ function stickyHint(html) { hintSticky = html; setHint(); }
 function setHint() {
   if (S.phase !== "idle") return;
   hint.innerHTML = hintSticky || hintNote || (S.picking
-    ? `<b>Point</b> at anything to change it, or just describe it · <kbd>Esc</kbd> to close`
+    ? `<b>Point</b> at anything to change it, or just describe it · <kbd>Esc</kbd> to close<span class="sr"> · or press ${PLATFORM === "mac" ? "Option" : "Alt"} and Down arrow to choose a part of the page with keys</span>`
     : S.target ? `Describe what to change about this · <kbd>Enter</kbd> to send` : `Describe a change to this page · <kbd>Enter</kbd> to send`);
   ticker.textContent = "";
   actions.innerHTML = `<button data-a="mods">Mods${S.mods.length ? ` <em>${S.mods.length}</em>` : ""}</button><span class="model">${esc(S.label)}</span>`;
@@ -111,12 +110,14 @@ function deepActive() {
 function restoreFocus() {
   const f = returnFocus;
   returnFocus = null;
-  if (f && f.isConnected && typeof f.focus === "function") try { f.focus({ preventScroll: true }); } catch {}
+  if (f && f.isConnected && typeof f.focus === "function") try { f.focus({ preventScroll: true }); return; } catch {}
+  if (bar.contains(root.activeElement)) focusPageTop();
 }
-// Tab and Shift+Tab cycle through the bar while it's open.
+// Tab and Shift+Tab cycle through the bar while it's open (it is a modal
+// dialog: the page is for pointing at, not typing in). The Edit tools that
+// float by the selection count as part of it (45-godmode.js).
 function barFocusables() {
-  return [...bar.querySelectorAll("button, textarea, input, [tabindex]")]
-    .filter(n => !n.disabled && n.tabIndex >= 0 && !n.closest("[hidden]") && n.getClientRects().length);
+  return [bar, ...barExtras].flatMap(tabbables);
 }
 function trapTab(e) {
   const list = barFocusables();
@@ -255,6 +256,7 @@ function toggleSettings() {
 function menuItems() {
   return [
     { id: "showonce", label: "Show me once", keys: null }, // show-once hook: 64-show-once.js
+    { id: "keypick", label: "Choose with keys", keys: comboParts(KEYPICK_COMBO, PLATFORM) }, // 41-keypick.js
     { id: "settings", label: "Settings", keys: [primaryMod, ","] },
     { id: "shortcuts", label: "Keyboard shortcuts", keys: ["?"] },
     { id: "voice", label: "Talk", keys: comboParts(hotkey("talk"), PLATFORM), sub: hotkey("talk") === hotkey("open") ? "hold" : "" },
@@ -282,16 +284,13 @@ function runMenu(id) {
   if (id === "mods") openPanel();
   if (id === "help") toggleHelp(); // onboarding hook: 59-help.js
   if (id === "showonce") ShowOnce.start(); // show-once hook
+  if (id === "keypick") KeyPick.start(); // 41-keypick.js
 }
 moreBtn.addEventListener("click", () => (menuEl.hidden ? showMenu() : hideMenu()));
 menuEl.addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (b) runMenu(b.dataset.m); });
 menuEl.addEventListener("keydown", e => {
-  const items = [...menuEl.querySelectorAll("[data-m]")];
-  const i = items.indexOf(root.activeElement);
-  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-    e.preventDefault();
-    items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length].focus();
-  } else if (e.key === "Home" || e.key === "End") { e.preventDefault(); items[e.key === "Home" ? 0 : items.length - 1].focus(); }
+  if (e.key === "Tab") { e.preventDefault(); e.stopPropagation(); hideMenu(); moreBtn.focus(); return; } // Tab leaves a menu, as in any app
+  if (menuKeys(e, menuEl)) e.stopPropagation();
 });
 // Clicking anywhere else closes the menu.
 root.addEventListener("pointerdown", e => { if (!menuEl.hidden && !e.composedPath().some(n => n === menuEl || n === moreBtn)) hideMenu(); });

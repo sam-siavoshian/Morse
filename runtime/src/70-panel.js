@@ -92,15 +92,29 @@ new MutationObserver(() => {
   if (!panel.hidden) return;
   const back = PanelUI.back;
   PanelUI.back = null;
-  if (!S.open && back?.isConnected) try { back.focus({ preventScroll: true }); } catch {}
+  if (S.open || !modal.hidden) return;
+  if (back?.isConnected) try { back.focus({ preventScroll: true }); return; } catch {}
+  if (panel.contains(root.activeElement)) focusPageTop();
 }).observe(panel, { attributes: true, attributeFilter: ["hidden"] });
 
 const rows = () => [...panel.querySelectorAll(".list article")];
+// One Tab stop for the list: the current row and its own buttons. ↑/↓ move
+// between rows, so "Install a mod…" is a few Tabs away however many mods there are.
+function roveRows(cur) {
+  for (const r of rows()) {
+    r.tabIndex = r === cur ? 0 : -1;
+    for (const b of r.querySelectorAll("button, a[href], summary")) if (!b.matches(".sw input")) b.tabIndex = r === cur ? 0 : -1;
+  }
+}
+panel.addEventListener("focusin", e => {
+  const art = e.target.closest?.(".list article");
+  if (art && art.tabIndex !== 0) { PanelUI.focus = art.dataset.id; roveRows(art); }
+});
 function focusRow(i) {
   const list = rows();
   if (!list.length) return panel.querySelector(".search, [data-a=import]")?.focus({ preventScroll: true });
   const el = list[Math.max(0, Math.min(list.length - 1, i < 0 ? 0 : i))];
-  list.forEach(r => (r.tabIndex = r === el ? 0 : -1));
+  roveRows(el);
   PanelUI.focus = el.dataset.id;
   el.focus({ preventScroll: true });
   el.scrollIntoView({ block: "nearest" });
@@ -121,7 +135,7 @@ function renderPanel() {
   panel.innerHTML = `
     <header><span class="mark">${radar(16)}</span><div><b>Mods</b><small>${esc(where)}</small></div><button data-a="close" title="Close" aria-label="Close">×</button></header>
     ${searchable ? `<div class="psearch"><input class="search" type="search" placeholder="Search ${S.mods.length} mods" aria-label="Search mods" spellcheck="false" autocomplete="off" value="${esc(PanelUI.q)}"></div>` : ""}
-    <div class="list" role="list" aria-label="Mods"></div>
+    <div class="list" role="group" aria-label="Mods"></div><p class="sr" id="m-row-keys">Space turns it on or off. Enter changes it. Tab reaches its buttons.</p>
     <footer><button data-a="import">Install a mod…</button><span>${esc(S.label)}</span></footer>`;
   renderList();
   controlPanel(); // user control: pause, backup (63-control.js)
@@ -148,9 +162,9 @@ function renderList() {
   list.insertAdjacentHTML("beforeend", gallerySectionHtml()); // gallery hook: Mods for this site (68-gallery.js)
   const r = rows();
   const i = Math.max(0, r.findIndex(a => a.dataset.id === PanelUI.focus));
-  r.forEach((a, j) => (a.tabIndex = j === i ? 0 : -1));
   controlRows(); // user control: where each mod came from, Show code (63-control.js)
   packRows(); // packs hook: ticks while making a pack (69-packs.js)
+  roveRows(r[i]);
 }
 
 function rowHtml(m) {
@@ -162,7 +176,7 @@ function rowHtml(m) {
   const when = relativeTime(changed ? m.updated : m.created);
   const label = `${m.title}${m.enabled ? "" : ", off"}${broken ? ", not working" : ""}`;
   return `
-      <article data-id="${esc(m.id)}" class="${m.enabled ? "" : "off"}${broken ? " broken" : ""}" role="listitem" tabindex="-1" aria-label="${esc(label)}">
+      <article data-id="${esc(m.id)}" class="${m.enabled ? "" : "off"}${broken ? " broken" : ""}" tabindex="-1" aria-label="${esc(label)}" aria-describedby="m-row-keys">
         <label class="sw" title="${m.enabled ? "Turn off" : "Turn on"}"><input type="checkbox" data-a="toggle" tabindex="-1" aria-label="${esc(m.title)}" ${m.enabled ? "checked" : ""}><span></span></label>
         <div class="meta"><b>${esc(m.title)}</b><small>“${esc(m.prompt)}”</small>${m.refined ? `<small class="latest">Latest change: “${esc(m.refined)}”</small>` : ""}
           <div class="tags">${m.css.trim() ? "<span>style</span>" : ""}${m.js.trim() ? "<span>script</span>" : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : "<span>whole page</span>"}${when ? `<em class="when">${changed ? "changed" : "added"} ${esc(when)}</em>` : ""}</div>
@@ -171,7 +185,7 @@ function rowHtml(m) {
         ${guardRowHtml(m) /* guard hook: Paused because it was slowing this page down (64-guard.js) */}
         ${galleryRowHtml(m) /* gallery hook: Update available (68-gallery.js) */}
         ${healRowHtml(m) /* self-heal hook: Share the fix (71-heal.js) */}
-        <div class="btns"><button data-a="refine">Change</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}">History <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">Copy link</button><button data-a="share">Share</button><button data-a="code">Edit code</button><button data-a="del">Delete</button></div>
+        <div class="btns"><button data-a="refine">Change</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}"${open ? ` aria-controls="m-versions-${esc(m.id)}"` : ""}>History <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">Copy link</button><button data-a="share">Share</button><button data-a="code">Edit code</button><button data-a="del">Delete</button></div>
         ${open ? versionsHtml(m, versions) : ""}
       </article>`;
 }
@@ -182,7 +196,7 @@ function versionsHtml(m, vs) {
   for (let i = vs.length - 1; i >= 0; i--) {
     items.push(`<li><button data-a="restore" data-v="${i}" title="Bring back version ${i + 1}">${row(i + 1, vs[i].prompt, relativeTime(vs[i].at) || "earlier")}</button></li>`);
   }
-  return `<ol class="versions" aria-label="Versions of ${esc(m.title)}">${items.join("")}</ol><p class="vhint">Click a version to bring it back. The one showing now stays in this list.</p>`;
+  return `<ol class="versions" id="m-versions-${esc(m.id)}" aria-label="Versions of ${esc(m.title)}">${items.join("")}</ol><p class="vhint">Click a version to bring it back. The one showing now stays in this list.</p>`;
 }
 
 // ---- actions

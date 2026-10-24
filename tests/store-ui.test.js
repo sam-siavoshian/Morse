@@ -100,6 +100,29 @@ test("without “Allow User Scripts” a mod's style shows, its code never runs,
 // all, and the bar says the change needs "Allow User Scripts", with the click
 // that opens it. (The playground: the real runtime and engine with the demo
 // model, and a host that answers like the extension with the setting off.)
+// perf split: the boot (runtime/boot.js) applies mods before any UI exists. A
+// waiting mod brings the UI in to say so, once per tab; after that a reload
+// loads nothing.
+test("with no UI loaded yet, a waiting mod brings the UI in once per tab to say so", { skip }, async () => {
+  const mod = createMod({ title: "Word count", prompt: "count words", url: BYTE, css: "h1 { outline: 3px solid rgb(1, 2, 3) !important; }", js: "document.documentElement.dataset.wordCount = 'ran';" });
+  await sw.evaluate(mods => chrome.storage.local.set({ mods }), { [mod.id]: mod });
+  const p = await ctx.newPage();
+  try {
+    await p.goto(BYTE);
+    // No debug flag left from the other tests (it builds the UI at once), and a fresh tab.
+    await p.evaluate(() => { localStorage.removeItem("morse:debug"); sessionStorage.clear(); });
+    await p.reload();
+    await p.waitForFunction(() => getComputedStyle(document.querySelector("h1")).outlineColor === "rgb(1, 2, 3)");
+    await p.waitForFunction(() => document.querySelector("[data-morse-ui]"), null, { timeout: TIMEOUT });
+    assert.equal(await p.evaluate(() => document.documentElement.dataset.wordCount), undefined, "the code never ran");
+    await waitFor(() => p.evaluate(() => sessionStorage.getItem("morse:waiting-told") === "1"), { what: "the notice" });
+    await p.reload();
+    await p.waitForFunction(() => getComputedStyle(document.querySelector("h1")).outlineColor === "rgb(1, 2, 3)");
+    await p.waitForTimeout(1500);
+    assert.equal(await p.evaluate(() => !!document.querySelector("[data-morse-ui]")), false, "told once in this tab: no UI after the reload");
+  } finally { await p.close(); await noMods(); }
+});
+
 test("a change that needs code says so in the bar, with one click to turn on “Allow User Scripts”", { skip }, async () => {
   const browser = await chromium.launch();
   try {

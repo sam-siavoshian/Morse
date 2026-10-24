@@ -12,6 +12,7 @@ import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import { launchBrowser, noBrowser } from "./helpers/browser.js";
+import { axeCheck, axeLines } from "../demo/axe.js";
 import { pressOpen } from "./helpers/keys.js";
 import { TIMEOUT, settle, waitForReady } from "./helpers/wait.js";
 import { freePort } from "./helpers/net.js";
@@ -108,6 +109,7 @@ test("the empty bar suggests the mods others made for this site; nothing is fetc
   assert.match(await items.nth(0).textContent(), /Sleep timer.*“add a sleep timer that pauses the music after 15, 30 or 60 minutes”.*Adds buttons to the page.*by Morse team · version 2/s);
   assert.match(await items.nth(1).textContent(), /Bigger rounded covers.*Changes how the page looks.*by Morse team/s);
   assert.equal(indexHits, 1);
+  assert.deepEqual(axeLines(await axeCheck(page)), [], "axe-core: Mods for this site in the panel");
 });
 
 test("Try it runs the mod without saving it, and Undo takes it all away", { skip }, async () => {
@@ -131,6 +133,7 @@ test("Try it runs the mod without saving it, and Undo takes it all away", { skip
   // The same two words as any unsaved change: Save and Undo (docs/WRITING.md).
   assert.deepEqual(await ui(".gl-trial button").allTextContents(), ["Undo", "Save"]);
   assert.deepEqual(await ui('.gl-item[data-glid="tunes-sleep-timer"] .gl-btns button').allTextContents(), ["Save", "Undo"]);
+  assert.deepEqual(axeLines(await axeCheck(page)), [], "axe-core: trying a mod");
   assert.equal(await exists(modFile("tunes-sleep-timer")), false, "trying saves nothing");
   // The trial's button works like the real thing.
   await page.locator(".morse-sleep").click();
@@ -207,6 +210,7 @@ test("Update available when the gallery has a newer version; Update… shows wha
   assert.match(await card.locator(".gl-what").textContent(), /What changed.*Shows the time left on the button.*Style: no change · Script: \d+ lines? added, \d+ lines? removed/s);
   assert.ok(await card.locator(".gl-diff .add").count() > 0);
   assert.ok(await card.locator(".gl-diff .del").count() > 0);
+  assert.deepEqual(axeLines(await axeCheck(page)), [], "axe-core: the update review");
   assert.equal((await readMod("tunes-sleep-timer")).gallery.version, 1, "nothing changes before Update");
 
   await card.locator("[data-gl=apply]").click();

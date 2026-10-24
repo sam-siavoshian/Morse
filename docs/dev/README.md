@@ -8,6 +8,9 @@ How to work on Morse itself. For using Morse, see the [docs](../README.md).
   test helpers, evals, screenshots, and what was verified for real.
 - [Adding a feature](adding-a-feature.md): the rules for runtime code, words
   people read, the UI review loop, and where docs go.
+- [Accessibility of Morse itself](accessibility.md): keyboard, screen
+  readers, zoom and forced colors in Morse's own UI, and how axe-core checks
+  it.
 - [Checking a Mac or Windows PC](platform-testing.md): the 15-minute check
   for the desktop support that has only been tested on Linux.
 
