@@ -74,9 +74,11 @@ test("safe start: a page that keeps dying right after a mod runs holds that mod 
   r = load(s, key, 2000, [CALM, LOOPY, STYLE], 900); s = r.state;
   assert.equal(r.suspect, null, "one strike is not enough");
   r = load(s, key, 4000, [CALM, LOOPY, STYLE], 900); s = r.state;
-  assert.deepEqual(r.suspect, { id: "loopy", title: "Loopy", strikes: 2 }, "blames the newest mod with code, not the CSS-only one");
+  assert.equal(r.suspect, null, "nor two");
+  r = load(s, key, 6000, [CALM, LOOPY, STYLE], 900); s = r.state;
+  assert.deepEqual(r.suspect, { id: "loopy", title: "Loopy", strikes: 3 }, "blames the newest mod with code, not the CSS-only one");
   // Still held on the next load until the person decides.
-  r = load(s, key, 6000, [CALM, STYLE], 20000); s = r.state;
+  r = load(s, key, 8000, [CALM, STYLE], 20000); s = r.state;
   assert.equal(r.suspect?.id, "loopy");
   s = safeForgive(s, key);
   assert.equal(safeBoot(s, key, 30000).suspect, null, "forgiven");
@@ -108,11 +110,11 @@ test("safe start: other tabs of the same site don't count against each other", (
 test("safe start: a suspect that later runs fine is let go, and records stay bounded", () => {
   const key = safeKey(NEWS, "t");
   let s = normalizeControl({});
-  for (const t of [0, 2000, 4000]) s = load(s, key, t, [LOOPY], 500).state;
-  const b = safeBoot(s, key, 6000);
+  for (const t of [0, 2000, 4000, 6000]) s = load(s, key, t, [LOOPY], 500).state;
+  const b = safeBoot(s, key, 8000);
   assert.equal(b.suspect?.id, "loopy");
-  s = safeApplied(b.state, key, LOOPY, 6100); // turned back on by hand
-  s = safeAlive(s, key, 6100 + SAFE_WINDOW + 1);
+  s = safeApplied(b.state, key, LOOPY, 8100); // turned back on by hand
+  s = safeAlive(s, key, 8100 + SAFE_WINDOW + 1);
   assert.equal(s.safe[key].suspect, null);
   for (let i = 0; i < SAFE_MAX_RECORDS + 30; i++) s = safeBoot(s, safeKey(NEWS, `x${i}`), 10000 + i).state;
   assert.equal(Object.keys(s.safe).length, SAFE_MAX_RECORDS);
@@ -189,16 +191,16 @@ test("control host: pause broadcasts once per change, requests are serialized", 
 test("control host: safe start over requests, install and export", async () => {
   const h = memoryHost();
   const req = (type, extra = {}) => h.handle({ type, tab: "a", ...extra }, NEWS);
-  for (const t of [0, 3000, 6000]) {
+  for (const t of [0, 3000, 6000, 9000]) {
     h.at(t);
     const boot = await req("control.boot");
-    if (t < 6000) assert.equal(boot.suspect, null);
+    if (t < 9000) assert.equal(boot.suspect, null);
     else assert.equal(boot.suspect.id, "loopy");
     h.at(t + 50); await req("control.applied", { mod: LOOPY });
     h.at(t + 1500); await req("control.alive");
   }
   await req("control.forgive");
-  h.at(9000);
+  h.at(12000);
   assert.equal((await req("control.boot")).suspect, null);
 
   const link = await encodeShare(mod("shared", { author: "Ana" }));

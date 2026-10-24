@@ -6,8 +6,8 @@
 // ~/.morse/control.json); everything here is a pure function of it.
 // Pure and dependency-free: runtime/bundle.js inlines it into the runtime.
 
-export const SAFE_WINDOW = 8000;     // a page that ends this soon after a mod ran counts as a strike
-export const SAFE_STRIKES = 2;       // strikes in a row before the mod is held back
+export const SAFE_WINDOW = 6000;     // a page that ends this soon after a mod ran counts as a strike
+export const SAFE_STRIKES = 3;       // strikes in a row before the mod is held back
 export const SAFE_SPAN = 120000;     // a strike only counts if the next load comes within this
 export const SAFE_MAX_RECORDS = 100; // tabs remembered for safe start
 

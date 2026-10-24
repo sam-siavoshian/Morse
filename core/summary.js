@@ -128,7 +128,13 @@ export function summaryLines(mod) {
 
 // Where a mod came from, in a few words (Mods panel, popup, CLI).
 export function modOrigin(mod) {
-  const day = iso => { try { return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); } catch { return ""; } };
+  const day = iso => {
+    try {
+      const d = new Date(iso);
+      if (isNaN(d)) return "";
+      return d.toLocaleDateString(undefined, { month: "short", day: "numeric", ...(d.getFullYear() === new Date().getFullYear() ? {} : { year: "numeric" }) });
+    } catch { return ""; }
+  };
   const by = typeof mod?.author === "string" && mod.author.trim() ? ` by ${mod.author.trim().slice(0, 60)}` : "";
   if (mod?.imported) {
     const how = mod.importedFrom === "file" ? "Imported from a file" : mod.importedFrom === "backup" ? "Restored from a backup" : "Installed from a shared link";
