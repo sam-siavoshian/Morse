@@ -365,20 +365,22 @@ function installMorseKit() {
 
   globalThis.morse = {
     __kit: 1,
-    // Runs mod code; returns { ok, error } synchronously.
+    // Runs mod code; returns { ok, error } synchronously (and `paused`: why,
+    // when the guards stopped it while it started).
     __run(id, fn) {
       this.__off(id);
       const c = ctxFor(id);
       const prev = enter(c), t0 = now();
+      let res = { ok: true };
       try {
         const cleanup = fn(api(c), ...scope(c));
         if (typeof cleanup === "function") c.cleanups.push(cleanup);
-        return paused.has(id) ? { ok: false, error: paused.get(id).error } : { ok: true };
-      } catch (e) {
-        if (paused.has(id)) return { ok: false, error: paused.get(id).error };
-        this.__off(id);
-        return { ok: false, error: String(e && e.message || e) };
-      } finally { leave(c, prev, t0); }
+      } catch (e) { res = { ok: false, error: String(e && e.message || e) }; }
+      leave(c, prev, t0); // its start counts too: a start that takes over a second pauses it
+      const p = paused.get(id);
+      if (p) return { ok: false, error: p.error, paused: p.why };
+      if (!res.ok) this.__off(id);
+      return res;
     },
     __off(id) {
       paused.delete(id);

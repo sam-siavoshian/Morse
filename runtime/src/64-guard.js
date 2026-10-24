@@ -67,11 +67,17 @@ const Guard = (() => {
       toldDraft = `${id}:${p.at}`;
       return controlToast(`Paused this change ${because(p)}. Try describing it another way.`);
     }
-    if (!m.enabled || p.why === "froze") return; // a frozen page: the host turns it off and reloads
+    if (!m.enabled || !S.mods.find(x => x.id === id)?.enabled || p.why === "froze") return; // a frozen page: the host turns it off and reloads
     await pause(m, p);
   }
 
+  const pausing = new Set(); // heard from the exec result and from the event: once
   async function pause(m, p) {
+    if (pausing.has(m.id)) return;
+    pausing.add(m.id);
+    try { await pauseNow(m, p); } finally { pausing.delete(m.id); }
+  }
+  async function pauseNow(m, p) {
     const next = { ...m, enabled: false, paused: { why: p.why, at: new Date().toISOString(), error: String(p.error || "") } };
     setCss(m.id, "");
     if (m.js.trim()) call("off", { modId: m.id }).catch(() => {});
@@ -159,7 +165,13 @@ const Guard = (() => {
 // Hooks (see the top of this file).
 function guardBefore(m) { return Guard.before(m); }
 function guardAfter(m, look) { Guard.after(m, look); }
-function guardPaused(r) { return /^Morse (paused|stopped) it\b/.test(String(r?.error || "")); } // the guard says so itself
+// An exec result the guards produced: said by the guard, not as an error.
+// When the kit paused it while it started, the result says why.
+function guardPaused(m, r) {
+  if (!/^Morse (paused|stopped) it\b/.test(String(r?.error || ""))) return false;
+  if (r.paused) Guard.heard(m.id, { why: r.paused, error: r.error });
+  return true;
+}
 function guardReady() { Guard.ready(); }
 function guardRowHtml(m) { return Guard.rowHtml(m); }
 function guardHeld(v) { return !!(v?.paused || v?.mod?.paused); } // a paused mod's code stays off the page
