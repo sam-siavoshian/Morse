@@ -41,7 +41,7 @@ async function submit(request) {
     }
     if (msg.type === "css") setCss(id, msg.css);
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") hint.innerHTML = `${radar(12)} Fixing a problem: <i>${esc(String(msg.error).slice(0, 80))}</i>`;
+      if (msg.phase === "fixing") { hint.innerHTML = `${radar(12)} Fixing a problem in the new code`; hint.title = String(msg.error || ""); }
       if (msg.phase === "applying") hint.innerHTML = `${radar(12)} Trying the change`;
       if (msg.phase === "thinking") hint.innerHTML = `${radar(12)} Writing the change`;
     }
@@ -62,7 +62,7 @@ async function submit(request) {
     if (res.cancelled) return onCancelled(id); // Stop: 50-bar.js
     S.phase = "error";
     bar.classList.add("err");
-    hint.innerHTML = `That didn't work: <i>${esc(String(res.error || "Something went wrong. Try again.").slice(0, 120))}</i>`;
+    hint.innerHTML = `That didn't work: <i>${esc(plainError(res.error).slice(0, 120))}</i>`;
     hint.title = res.error || "";
     actions.innerHTML = `<button data-a="again">Try again</button>`;
     return;

@@ -55,6 +55,7 @@ in the CLI and in the README.
 | **mod** | One saved change to an app or a site. Plural "mods". Lowercase in sentences. | customization, script, plugin, extension |
 | **the bar** | The box at the bottom (or top) where you type or talk to Morse. | command palette, prompt box, input |
 | **point at** | Move the mouse over something and click it, to choose what to change. | select, pick, target, inspect |
+| **what you pointed at** | Named the way a person would say it: its visible label, then what kind of thing it is. "Player controls", "Send button", "“Release notes” heading". | `div · “Player controls”`, `h3`, `span.label`, CSS selectors |
 | **describe** | Type or say what you want. "Describe a change." | prompt, instruct, query |
 | **request** | What you described, as text ("Past requests"). | prompt (in the UI) |
 | **Send** | Send what you described to Morse. The button and Enter. | Run, Submit, Go |
@@ -110,6 +111,10 @@ An error says **what went wrong, in plain words**, then **the one thing to try**
   microphone".
 - Offer one next step, not a list. If there is nothing to do, say what Morse
   did instead ("Nothing was changed").
+- Raw errors from the browser, the network or the mod's own code ("Failed to
+  fetch", "x is not defined") never reach a person as is. `plainError()` in
+  `runtime/src/12-errors.js` turns them into one plain sentence; the raw text
+  stays in the tooltip and the console.
 - In the bar, the error line starts "That didn't work:" and the detail
   follows in italics. The bar has room for about 60 characters of detail, so
   keep the message and its next step short. The button next to it is "Try again".

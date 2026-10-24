@@ -69,7 +69,7 @@ function showImport() {
       modal.hidden = true;
       toast(`Installed “${mod.title}”`);
       await syncMods();
-    } catch (e) { toast(e.message); }
+    } catch (e) { toast(plainError(e)); }
   };
 }
 

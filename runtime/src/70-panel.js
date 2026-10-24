@@ -11,7 +11,7 @@ function renderPanel() {
     <header><span class="mark">${radar(16)}</span><div><b>Mods</b><small>${esc(where)}</small></div><button data-a="close" title="Close">×</button></header>
     <div class="list">${S.mods.length ? S.mods.map(m => `
       <article data-id="${esc(m.id)}" class="${m.enabled ? "" : "off"}">
-        <label class="sw"><input type="checkbox" data-a="toggle" ${m.enabled ? "checked" : ""}><span></span></label>
+        <label class="sw"><input type="checkbox" data-a="toggle" ${m.enabled ? "checked" : ""} aria-label="${esc(m.title)}"><span></span></label>
         <div class="meta"><b>${esc(m.title)}</b><small>“${esc(m.prompt)}”</small>
           <div class="tags">${m.css.trim() ? "<span>style</span>" : ""}${m.js.trim() ? "<span>script</span>" : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : "<span>whole page</span>"}</div>
         </div>
