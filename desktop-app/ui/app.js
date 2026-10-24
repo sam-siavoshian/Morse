@@ -101,7 +101,7 @@ function renderApps() {
   const rows = st.apps;
   const seen = new Set();
   if (!rows.length) {
-    list.replaceChildren(h("li", { class: "empty" }, "Morse didn't find any apps it can connect to. Use Add an app… to choose one."));
+    list.replaceChildren(h("li", { class: "empty" }, "Morse didn't find any apps it can connect to. Click Add an app… to choose one."));
   } else {
     if (list.querySelector("li.empty")) list.replaceChildren();
     let prev = null;
@@ -393,7 +393,7 @@ function renderFirst() {
       h("div", { class: `appicon${a.icon ? " has-img" : ""}`, "aria-hidden": "true" }, a.icon ? h("img", { src: a.icon, alt: "" }) : (a.name || "?").trim()[0].toUpperCase()),
       h("div", { class: "grow" }, h("b", { text: a.name }), h("small", {}, ...(busy ? [radar(12), h("span", { text: `Opening ${a.name} with Morse…` })] : [h("span", { text: a.state === "closed" ? "Not open" : "Open now" })]))),
       h("button", { type: "button", class: "btn", disabled: busy, onclick: () => openFirst(a) }, "Open with Morse"));
-  }) : [h("li", { class: "empty" }, "Morse didn't find any apps it can open. Skip for now, then use Add an app….")]));
+  }) : [h("li", { class: "empty" }, "Morse didn't find any apps it can open. Click Skip for now, then Add an app…")]));
 }
 async function openFirst(a, answer) {
   const r = await morse.openApp(a.id, answer);

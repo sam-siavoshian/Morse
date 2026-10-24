@@ -42,8 +42,8 @@ POST /v1/pair/ask/<id>                 the same Origin, body {}; poll about once
 ```
 
 The token is stored hashed with the asking extension's origin, exactly like
-a code-paired one, so `/v1/complete`, `/v1/warm`, `/v1/voice` and
-`/v1/transcribe` work the same way with it.
+a code-paired one, so `/v1/complete`, `/v1/warm`, `/v1/voice`,
+`/v1/transcribe` and `/v1/style` work the same way with it.
 
 ## Morse Desktop's side
 
@@ -76,8 +76,8 @@ window ([How Morse works](architecture.md#morse-desktop-desktop-app)).
 - **Sign out browsers** in Morse Desktop (or `morse unpair`) removes every token.
 
 The question shows the asking extension's id in small print. Another
-extension the person installed could still ask; the wording (“Allow it if you
-just set up Morse in Chrome”) is what stands between that and a click. A code
+extension the person installed could still ask; the wording (“Allow it only if you
+set up Morse in Chrome a moment ago”) is what stands between that and a click. A code
 doesn't have that question: the person carries it over.
 
 ## Opening Morse Desktop from Chrome
