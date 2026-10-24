@@ -56,6 +56,21 @@ test("translations keep the {placeholders}, the markup and the plural shape", ()
   assert.deepEqual(problems, []);
 });
 
+test("requests the person finishes in the bar keep their shape in every language", () => {
+  // Rename puts the caret before the last character (58-suggest.js caret -1),
+  // so the request ends in its closing quote; the Show me once chips are
+  // finished by typing after them, so the shortcut one ends in Ctrl+Shift+
+  // and the "every" one in a space or a colon the person types after.
+  const problems = [];
+  for (const { code } of LANGUAGES) {
+    const rename = t("sug.rename.p", {}, code), key = t("so.chip.shortcut.p", {}, code), every = t("so.chip.every.p", {}, code);
+    if (!/[”“»」"]$/.test(rename)) problems.push(`${code} sug.rename.p: “${rename}” doesn't end in a closing quote`);
+    if (!key.endsWith("Ctrl+Shift+")) problems.push(`${code} so.chip.shortcut.p: “${key}” doesn't end in Ctrl+Shift+`);
+    if (!/[\s:：]$/.test(every)) problems.push(`${code} so.chip.every.p: “${every}” doesn't end where the person types`);
+  }
+  assert.deepEqual(problems, []);
+});
+
 test("product and key names stay as they are", () => {
   const keep = ["Morse", "Claude Code", "Codex", "Chrome", "Esc", "Enter", "Ctrl", "Alt", "Shift", "F1", "Tampermonkey"];
   const problems = [];
