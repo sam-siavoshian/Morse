@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "tunes-sleep-timer",
+  "title": "Sleep timer",
+  "prompt": "add a sleep timer that pauses the music after 15, 30 or 60 minutes",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8789"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "[data-testid=\"player-controls\"] .btns",
+    "label": "Player controls"
+  },
+  "css": ".morse-sleep { background: none; border: 0; color: #b3b3b3; font-size: 16px; cursor: pointer; position: relative; padding: 0 2px; }\n.morse-sleep:hover { color: #fff; }\n.morse-sleep.on { color: #1ed760; }\n.morse-sleep span { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); font: 700 10px/1 ui-sans-serif, system-ui; background: #1ed760; color: #000; padding: 3px 6px; border-radius: 9px; white-space: nowrap; }\n",
+  "js": "morse.watch('[data-testid=\"player-controls\"] .btns', btns => {\n  const steps = [15, 30, 60, 0];\n  let left = 0, i = -1;\n  const label = morse.el(\"span\");\n  const btn = morse.el(\"button\", { class: \"morse-sleep\", title: \"Sleep timer\", text: \"☾\", on: { click() {\n    i = (i + 1) % steps.length;\n    left = steps[i] * 60;\n    render();\n    morse.toast(left ? \"Pausing in \" + steps[i] + \" minutes\" : \"Sleep timer off\");\n  } } });\n  const render = () => {\n    btn.classList.toggle(\"on\", left > 0);\n    label.textContent = left ? Math.floor(left / 60) + \":\" + String(left % 60).padStart(2, \"0\") : \"\";\n    if (left) btn.append(label); else label.remove();\n  };\n  morse.every(1000, () => {\n    if (!left) return;\n    if (--left === 0) {\n      const pp = document.querySelector('[data-testid=\"play-pause\"]');\n      if (pp && pp.getAttribute(\"aria-label\") === \"Pause\") pp.click();\n      morse.toast(\"Sleep timer: paused\");\n    }\n    render();\n  });\n  btns.append(btn);\n});\n",
+  "enabled": true,
+  "model": null,
+  "version": 2,
+  "author": "june",
+  "created": "2026-10-20T21:10:00.000Z",
+  "updated": "2026-10-23T18:40:00.000Z"
+}
