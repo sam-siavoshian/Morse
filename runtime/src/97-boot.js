@@ -50,6 +50,7 @@ B.adopt({
 B.ready.then(hello => {
   try {
     setPrefs(B.prefs());
+    S.models = hello.models || null; // models: the names the Settings sheet shows (56-settings.js)
     if (hello.settings) hostPrefs = true; // the host sent settings with its hello (03-prefs.js)
     Voice.configure(hello.voice);
     PromptHistory.load();

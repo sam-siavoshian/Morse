@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "notes-easier-to-read",
+  "title": "Darker, bigger note text",
+  "prompt": "the note text is too light and small, make it darker and bigger",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8792"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": ".ed_9f p",
+    "label": "note text"
+  },
+  "css": ".ed_9f p { color: rgb(55, 53, 47) !important; font-size: 16px !important; }\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

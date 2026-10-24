@@ -859,17 +859,17 @@ const GodMode = (() => {
   // takes focus away from this page.
   const FRAMES = "iframe, frame, embed, object";
   listen("pointerover", e => {
-    if (!S.picking || ours(e) || !e.target.matches?.(FRAMES)) return;
+    if (!S.picking || !e.isTrusted || ours(e) || !e.target.matches?.(FRAMES)) return;
     hoverEl = e.target;
     boxTo(e.target, hl, describe(e.target));
   }, true);
   listen("blur", () => setTimeout(() => {
     const a = document.activeElement;
-    if (S.open && S.picking && a && a !== G.el && a.matches?.(FRAMES)) setTarget(a);
+    if (S.open && S.picking && a && a !== G.el && a === hoverEl && a.matches?.(FRAMES)) setTarget(a); // the frame the pointer is on, not one the page focused
   }, 0));
   // Double-click the selection to edit its text.
   listen("dblclick", e => {
-    if (!G.el || !S.open || ours(e) || G.editing || !G.el.contains(e.target)) return;
+    if (!e.isTrusted || !G.el || !S.open || ours(e) || G.editing || !G.el.contains(e.target)) return;
     e.preventDefault();
     e.stopPropagation();
     if (G.kind !== "frame") startText();

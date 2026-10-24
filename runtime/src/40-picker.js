@@ -16,8 +16,10 @@ function boxTo(el, box, label) {
   }
 }
 const ours = e => e.composedPath().includes(hostEl);
+// Pointing is the person's own mouse: a page's synthetic mousemove and click
+// can't choose what Morse changes (isTrusted, like every key Morse takes).
 function onMove(e) {
-  if (!S.picking) return;
+  if (!S.picking || !e.isTrusted) return;
   const el = GodMode.deepAt(e.clientX, e.clientY); // God mode hook: also points into open shadow roots
   if (!el || el === hostEl || el === document.documentElement) { hoverEl = null; hl.hidden = true; return; }
   hoverEl = el;
@@ -34,7 +36,7 @@ function swallow(e) { if (S.picking && !ours(e)) { e.preventDefault(); e.stopPro
 function onClick(e) {
   if (!S.picking || ours(e)) return;
   e.preventDefault(); e.stopPropagation();
-  if (hoverEl) setTarget(hoverEl);
+  if (hoverEl && e.isTrusted) setTarget(hoverEl);
 }
 let pointerY = innerHeight / 2;
 listen("mousemove", e => { pointerY = e.clientY; }, true);

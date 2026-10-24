@@ -1,0 +1,95 @@
+{
+  "startedAt": "2026-10-24T15:54:36.645Z",
+  "mode": "generate",
+  "model": "claude-code:haiku",
+  "pass": 1,
+  "total": 2,
+  "results": [
+    {
+      "id": "mail-hide-upgrade",
+      "request": "hide the Postbox Pro upgrade banner",
+      "url": "http://127.0.0.1:44347/demo/sites/mail/",
+      "ms": 10631,
+      "title": "Hide Postbox Pro upgrade banner",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "mail-hide-upgrade",
+        "title": "Hide the upgrade ad",
+        "prompt": "hide the Postbox Pro upgrade banner",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8791"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".pz7",
+          "label": "“Postbox Pro” banner"
+        },
+        "css": "body > div[role=\"note\"] {\n  display: none !important;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:54:51.225Z",
+        "updated": "2026-10-24T15:54:51.225Z"
+      },
+      "verify": {
+        "id": "mail-hide-upgrade",
+        "before": "banner still visible",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "wiki-dark-mode",
+      "request": "dark mode, with text that's easy to read",
+      "url": "http://127.0.0.1:44347/demo/sites/wiki/",
+      "ms": 12980,
+      "title": "Dark mode with high-contrast text",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "12 of 80 are hard to read, e.g. a “Mount northstad” 2.0, a “East bayville” 2.0, a “North mountton” 2.0",
+      "mod": {
+        "morse": 1,
+        "id": "wiki-dark-mode",
+        "title": "Dark mode",
+        "prompt": "dark mode, with text that's easy to read",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8795"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "html, body, .page, .mast, .foot, nav[aria-label=\"Contents\"], .ibox, .art, .body, section[aria-label=\"Comments\"], .c {\n  background-color: #1b1d1f !important;\n  color: #e8eaed !important;\n}\n.mast, .foot, nav[aria-label=\"Contents\"] { background-color: #121314 !important; }\na { color: #8ab4f8 !important; }\na:visited { color: #c58af9 !important; }\nh1, h2, h3, h4, .sub { color: #f1f3f4 !important; border-color: #3c4043 !important; }\ninput[aria-label=\"Search\\ Openpedia\"] {\n  background-color: #2a2c2e !important;\n  color: #e8eaed !important;\n  border-color: #5f6368 !important;\n}\nbutton { background-color: #2a2c2e !important; color: #e8eaed !important; border-color: #5f6368 !important; }\n.ibox, table, th, td { border-color: #3c4043 !important; }\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T15:54:56.765Z",
+        "updated": "2026-10-24T15:54:56.765Z"
+      },
+      "verify": {
+        "id": "wiki-dark-mode",
+        "before": "only 0 of 49 points on the screen are dark",
+        "errors": [],
+        "first": "12 of 80 are hard to read, e.g. a “Mount northstad” 2.0, a “East bayville” 2.0, a “North mountton” 2.0",
+        "reload": "12 of 80 are hard to read, e.g. a “Mount northstad” 2.0, a “East bayville” 2.0, a “North mountton” 2.0",
+        "pass": false,
+        "why": "12 of 80 are hard to read, e.g. a “Mount northstad” 2.0, a “East bayville” 2.0, a “North mountton” 2.0"
+      },
+      "pass": false
+    }
+  ]
+}

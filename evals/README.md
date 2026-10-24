@@ -151,6 +151,40 @@ What moved the numbers:
 
 Tried and left out: `--effort low` for Claude Code (no faster on haiku: 2946 vs 2655 ms total), and trimming the context (reading the page is under 30 ms on these apps, and the model's thinking, not the prompt length, is what remains).
 
+## Fast and strong models (Automatic)
+
+`core/route.js` picks the model per request, within the backend the person chose (docs/models.md, "Quick and harder changes"). With Claude Code: haiku first; sonnet when the request looks hard (two or more of: new behavior, working with the data, several steps, a canvas, a page the notes say keeps changing, judged from the words and the page notes, no model call), or when haiku's draft fails a guard, the effect check, or still throws after its own repair round. Each move to sonnet adds one attempt. The runner compares models side by side, interleaved case by case so every arm sees the same machine load, each with its own warm processes:
+
+```bash
+node evals/run.js --model haiku,sonnet,auto --concurrency 2     # "auto" = Automatic; "fast"/"best" = the two tiers
+```
+
+Claude Code, ×1, 2 at a time, on a machine with load 30 to 60 (other agents were running), so the absolute times are high and noisy; the comparison between arms is what counts.
+
+| | haiku only | sonnet only | **Automatic** |
+|---|---|---|---|
+| Train (65 cases) | 63/65 96.9% | 64/65 98.5% | **64/65 98.5%** |
+| Held-out (21 cases) | 21/21 | 21/21 | **21/21** |
+| All 86: total time, median / p90 | 4.1 s / 8.3 s | 5.4 s / 10.2 s | 4.7 s / 10.2 s |
+| The 76 cases Automatic started on haiku | 4.0 s / 8.0 s | 5.2 s / 10.2 s | **4.1 s / 8.8 s** |
+| The 10 it started on sonnet | 7.2 s / 12.0 s | 6.2 s / 10.9 s | 9.9 s / 19.0 s |
+| Started on sonnet | | | 10/86 (12%) |
+| Moved to sonnet after a failed draft | | | 2/86 (2%), both then passed |
+
+Failures: haiku s-prices (used the shop's generated class names) and s-sort (no button); sonnet r-confirm; Automatic r-confirm (started on sonnet, failed like sonnet-only).
+
+**The cases where the arms differ, ×2** (12 train cases: the ten Automatic sends to sonnet or moved to sonnet, plus s-prices and r-confirm): haiku 21/24, sonnet 22/24, Automatic 19/24. Every arm failed r-confirm twice (a hard case for both models). Automatic's other misses: s-prices twice (haiku's draft used generated class names: it works on the page as it is and breaks with the app's next release, so neither the guards nor the effect check saw a problem and nothing moved it to sonnet) and r-left once (on sonnet).
+
+**Fix: generated class names count as a guard hit.** When the page notes say the class names are generated, a draft that selects by one (`.css-1nsad8`) now gets a repair message, and under Automatic goes to sonnet (`generatedNames` in `core/engine.js`, the same test for "looks generated" as the context). The shop's four train cases ×2 afterwards: haiku 8/8, sonnet 8/8, Automatic 8/8 (s-prices moved to sonnet both times and passed; it was 0/2). Held-out s-4cols ×2: 2/2 for every arm. The checkers are unchanged.
+
+What this says:
+- **Success.** Automatic matched sonnet-only on all 86 cases (85/86) and beat haiku-only (84/86). On the cases where the arms differ the gap is within noise, and the one systematic loss (generated class names) is fixed above.
+- **Speed.** Where Automatic stays on haiku (88% of requests) it is as fast as haiku (median 4.1 s vs 4.0 s). The cost is on the 12% it sends to sonnet: 9.9 s against sonnet-only's 6.2 s, because sonnet is not started ahead of time (on this loaded machine starting `claude` took several seconds). Most of the warm-process speedup is kept: haiku is warmed when the bar opens and again after every request, also after one that went to sonnet (`warmSettings`, `daemon/harness.js`).
+- **Pre-warming sonnet too** would save those few seconds on about one request in eight, for a second waiting process (about 185 MB) every time the bar opens. Left off; the fast model is the one most requests need.
+- **Usage.** Claude Code maps `haiku` to claude-haiku-5-5 and `sonnet` to claude-sonnet-5-5. At Anthropic's API prices sonnet costs about 20 times as much per token (a one-line `claude -p` ping: $0.0006 vs $0.0095 as Claude Code reports it), and a Claude plan's usage limits are used up in proportion. Automatic sent about 14% of requests to sonnet (12% from the start, 2% after haiku), so it uses roughly 3 to 4 times haiku-only's share of the plan, about a fifth of sonnet-only's.
+
+Results: `results/2026-10-24T16-02-10-routing-train.json`, `results/2026-10-24T16-20-13-routing-heldout.json`, `results/2026-10-24T16-25-26-routing-differ-x2.json` (each record has `arm`, `model` (who answered), `startedStrong`, `escalated`, `routeWhy`).
+
 ## Run log
 
 Rows before "baseline (rescored checkers)" used earlier checkers. "dev" rows are this round's development runs on the train split. Results JSON is kept only for the final pair (`results/*-baseline.json`, `results/*-final.json`); this table summarizes the rest. Baseline rows ran from a copy of commit fa7b111 with the current apps and checkers.
@@ -187,4 +221,19 @@ Rows before "baseline (rescored checkers)" used earlier checkers. "dev" rows are
 | 2026-10-24 12:14 | speed: after, warm subset (bar opened 2.5 s before Enter) | claude-code:haiku | only | 36/36 (100%) | 2.7s |
 | 2026-10-24 12:19 | speed: after, cold (no head start) subset | claude-code:haiku | only | 36/36 (100%) | 5.8s |
 | 2026-10-24 12:29 | speed: final, all cases x2 (machine load ~80, latency not comparable) | claude-code:haiku | all | 110/110 (100%) | 18.2s |
+| 2026-10-24 16:02 | routing: haiku vs sonnet vs automatic, train | claude-code:haiku | train | 63/65 (97%) | 4.2s (p90 8.7s) |
+| 2026-10-24 16:02 | routing: haiku vs sonnet vs automatic, train | claude-code:sonnet | train | 64/65 (99%) | 5.4s (p90 10.7s) |
+| 2026-10-24 16:02 | routing: haiku vs sonnet vs automatic, train | claude-code:auto | train | 64/65 (99%) | 4.9s (p90 10.3s) |
+| 2026-10-24 16:20 | routing: haiku vs sonnet vs automatic, held-out | claude-code:haiku | test | 21/21 (100%) | 3.7s (p90 8.1s) |
+| 2026-10-24 16:20 | routing: haiku vs sonnet vs automatic, held-out | claude-code:sonnet | test | 21/21 (100%) | 5.0s (p90 7.1s) |
+| 2026-10-24 16:20 | routing: haiku vs sonnet vs automatic, held-out | claude-code:auto | test | 21/21 (100%) | 3.3s (p90 6.4s) |
+| 2026-10-24 16:25 | routing: the cases where the arms differ, x2 | claude-code:haiku | only | 21/24 (88%) | 4.9s (p90 10.9s) |
+| 2026-10-24 16:25 | routing: the cases where the arms differ, x2 | claude-code:sonnet | only | 22/24 (92%) | 3.9s (p90 10.7s) |
+| 2026-10-24 16:25 | routing: the cases where the arms differ, x2 | claude-code:auto | only | 19/24 (79%) | 6.8s (p90 11.5s) |
+| 2026-10-24 16:33 | routing: generated class names count as a guard hit, shop x2 | claude-code:haiku | only | 8/8 (100%) | 7.0s (p90 10.4s) |
+| 2026-10-24 16:33 | routing: generated class names count as a guard hit, shop x2 | claude-code:sonnet | only | 8/8 (100%) | 3.1s (p90 6.3s) |
+| 2026-10-24 16:33 | routing: generated class names count as a guard hit, shop x2 | claude-code:auto | only | 8/8 (100%) | 5.4s (p90 6.7s) |
+| 2026-10-24 16:35 | routing: held-out shop case after the generated-names check | claude-code:haiku | only | 2/2 (100%) | 3.9s (p90 3.9s) |
+| 2026-10-24 16:35 | routing: held-out shop case after the generated-names check | claude-code:sonnet | only | 2/2 (100%) | 2.5s (p90 2.5s) |
+| 2026-10-24 16:35 | routing: held-out shop case after the generated-names check | claude-code:auto | only | 2/2 (100%) | 2.7s (p90 2.7s) |
 <!-- run-log -->

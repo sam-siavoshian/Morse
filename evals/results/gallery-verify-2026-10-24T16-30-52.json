@@ -1,0 +1,338 @@
+{
+  "startedAt": "2026-10-24T16:30:52.114Z",
+  "mode": "verify",
+  "model": "claude-code:haiku",
+  "pass": 38,
+  "total": 38,
+  "results": [
+    {
+      "id": "nodejs-bigger-code",
+      "before": "6 code examples still under 16px: 13",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "pypi-dark-mode",
+      "before": "only 0 of 49 points on the screen are dark",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true,
+      "pageErrors": [
+        "Failed to fetch",
+        "Failed to fetch",
+        "Failed to fetch"
+      ]
+    },
+    {
+      "id": "pypi-sticky-install",
+      "before": "the install command is not in view after scrolling: top -2213",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true,
+      "pageErrors": [
+        "Failed to fetch",
+        "Failed to fetch",
+        "Failed to fetch"
+      ]
+    },
+    {
+      "id": "pypi-hide-prereleases",
+      "before": "3 pre-release or yanked versions still show",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true,
+      "pageErrors": [
+        "Failed to fetch",
+        "Failed to fetch",
+        "Failed to fetch"
+      ]
+    },
+    {
+      "id": "go-hide-banners",
+      "before": "go-SurveyBanner still shows",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "nodejs-side-contents",
+      "before": "the contents are not in view on the right after scrolling (0 links)",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "go-bigger-code",
+      "before": "6 code examples still under 16px: 14",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "nodejs-section-keys",
+      "before": "j did not move down",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "rubygems-dark-mode",
+      "before": "only 0 of 49 points on the screen are dark",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "nuget-dark-mode",
+      "before": "only 0 of 45 points on the screen are dark",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true,
+      "pageErrors": [
+        "hljs is not defined",
+        "hljs is not defined",
+        "hljs is not defined"
+      ]
+    },
+    {
+      "id": "docker-dark-code",
+      "before": "code is 13.7px",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "gitlab-hide-sidebar",
+      "before": "the sidebar still shows",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "packagist-copy-command",
+      "before": "no new button",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true,
+      "pageErrors": [
+        "Unreachable hosts - your application id may be incorrect. If the error persists, please visit our help center https://alg.li/support-unreachable-hosts or reach out to the Algolia Support team: https://alg.li/support",
+        "Unreachable hosts - your application id may be incorrect. If the error persists, please visit our help center https://alg.li/support-unreachable-hosts or reach out to the Algolia Support team: https://alg.li/support",
+        "Unreachable hosts - your application id may be incorrect. If the error persists, please visit our help center https://alg.li/support-unreachable-hosts or reach out to the Algolia Support team: https://alg.li/support"
+      ]
+    },
+    {
+      "id": "metacpan-sticky-contents",
+      "before": "the contents are not in view after scrolling (0 links)",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "wiki-sticky-contents",
+      "before": "the contents scrolled away",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "wiki-reading-mode",
+      "before": "the contents box still shows",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "wiki-dark-mode",
+      "before": "only 0 of 49 points on the screen are dark",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "mail-hide-upgrade",
+      "before": "banner still visible",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "wiki-collapse-comments",
+      "before": "400 comments still show",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "mail-jk-keys",
+      "before": "j j did not move to the third email",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "mail-bigger-text",
+      "before": "font 12px",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "notes-easier-to-read",
+      "before": "contrast 2.8",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "notes-focus-mode",
+      "before": "sidebar still visible",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "notes-word-count",
+      "before": "no count shown: ",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "notes-focus-timer",
+      "before": "no new button",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "dash-failed-red",
+      "before": "failed rows are not red",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "dash-sticky-header",
+      "before": "header -150px from the top of the table",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "dash-download-csv",
+      "before": "no new button",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "dash-dollars",
+      "before": "not formatted: 1240.5 | 89.99 | 412",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "shop-hide-sold-out",
+      "before": "3 out-of-stock products still visible after the next deploy",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "shop-sort-price",
+      "before": "no new control",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "tasks-hide-done",
+      "before": "a finished task still shows",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "logs-errors-red",
+      "before": "at scroll 0: 3 of 3 error lines not red",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "byte-reading-mode",
+      "before": "5 ads still show",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "tasks-cross-out-done",
+      "before": "after a re-render: finished tasks not crossed out",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "parley-copy-markdown",
+      "before": "no new button",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "tunes-big-covers",
+      "before": "smallest cover 155px, was 155px",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    },
+    {
+      "id": "tunes-sleep-timer",
+      "before": "no new control",
+      "errors": [],
+      "first": true,
+      "reload": true,
+      "pass": true
+    }
+  ]
+}

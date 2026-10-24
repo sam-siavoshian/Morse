@@ -29,7 +29,7 @@ test("every language has every message, and nothing English doesn't have", () =>
   for (const { code } of LANGUAGES) {
     if (code === "en") continue;
     const cat = CATALOGS[code];
-    const kept = new Set((ENGLISH_ON_PURPOSE[code] || []).map(([id]) => id));
+    const kept = new Set([...(ENGLISH_ON_PURPOSE[code] || []).map(([id]) => id)]);
     const missing = ids.filter(id => cat[id] == null && !kept.has(id));
     const extra = Object.keys(cat).filter(id => EN[id] == null);
     assert.deepEqual(missing, [], `${code} is missing ${missing.length} messages`);

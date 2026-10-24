@@ -100,7 +100,7 @@ async function submit(request, opts = {}) {
     if (msg.type === "css") { if (shotDone) showCss(msg.css); else pendingCss = msg.css; }
     if (msg.type === "stage" && !wrote && !fixing) say(msg.stage === "thinking" ? t("gen.thinking") : t("gen.reading"));
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") { fixing = true; say(t("gen.fixing")); hint.title = String(msg.error || ""); announce(t("gen.fixing")); }
+      if (msg.phase === "fixing") { const what = t(msg.stronger ? "gen.stronger" : "gen.fixing"); fixing = true; say(what); hint.title = String(msg.error || ""); announce(what); } // models: core/route.js
       if (msg.phase === "applying") say(t("gen.trying"));
     }
   });
@@ -113,6 +113,7 @@ async function submit(request, opts = {}) {
   clearInterval(clock);
   bar.classList.remove("working");
   const secs = ((performance.now() - t0) / 1000).toFixed(1);
+  if (res?.model) S.label = res.model; // models: the footer names the model that answered
 
   if (prev) {
     if (!res.ok || res.kind === "answer") {

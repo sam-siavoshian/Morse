@@ -1,0 +1,138 @@
+{
+  "startedAt": "2026-10-24T16:04:33.546Z",
+  "mode": "generate",
+  "model": "claude-code:haiku",
+  "pass": 2,
+  "total": 3,
+  "results": [
+    {
+      "id": "go-hide-banners",
+      "request": "hide the cookie notice at the bottom and the Go survey banner",
+      "url": "https://pkg.go.dev/net/http",
+      "ms": 16284,
+      "title": "Hide survey and cookie notices",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "go-hide-banners",
+        "title": "No cookie notice or survey banner",
+        "prompt": "hide the cookie notice at the bottom and the Go survey banner",
+        "match": {
+          "hosts": [
+            "pkg.go.dev"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "section[aria-label=\"2026 Go Developer Survey\"] {\n  display: none !important;\n}\n",
+        "js": "morse.watch(\"body div, body section, body aside, body footer\", el => {\n  const pos = getComputedStyle(el).position;\n  if (pos !== \"fixed\") return;\n  const text = el.textContent || \"\";\n  if (/cookie/i.test(text) && text.length < 500) {\n    el.style.setProperty(\"display\", \"none\", \"important\");\n  }\n});\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:05:00.382Z",
+        "updated": "2026-10-24T16:05:00.382Z"
+      },
+      "verify": {
+        "id": "go-hide-banners",
+        "before": "go-SurveyBanner still shows",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "pypi-dark-mode",
+      "request": "dark mode for the whole page, including the sidebar on the right, with text that's easy to read",
+      "url": "https://pypi.org/project/requests/",
+      "ms": 23533,
+      "title": "Dark page theme with light text",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "pypi-dark-mode",
+        "title": "Dark mode",
+        "prompt": "dark mode for the whole page, including the sidebar on the right, with text that's easy to read",
+        "match": {
+          "hosts": [
+            "pypi.org"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "body, #content, .banner, .horizontal-section, .project-tabs, .project-tabs__panel, .project-description, .site-header, #sticky-notifications, aside, [class*=\"sidebar\"] { background-color: #0d1117 !important; }\nbody, #content, .project-tabs, .project-description *:not(a), .site-header *:not(a), aside *:not(a), [class*=\"sidebar\"] *:not(a) { color: #e6edf3 !important; }\n#content a, .site-header a, aside a, [class*=\"sidebar\"] a { color: #58a6ff !important; }\n#content h1, #content h2, #content h3, .project-description h2 { border-color: #30363d !important; }\npre, code { background-color: #161b22 !important; color: #e6edf3 !important; border-color: #30363d !important; }\n#search, input, textarea, select { background-color: #161b22 !important; color: #e6edf3 !important; border-color: #30363d !important; }\nbutton { background-color: #21262d !important; color: #e6edf3 !important; border-color: #30363d !important; }\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:05:09.835Z",
+        "updated": "2026-10-24T16:05:09.835Z"
+      },
+      "verify": {
+        "id": "pypi-dark-mode",
+        "before": "only 0 of 49 points on the screen are dark",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true,
+        "pageErrors": [
+          "Failed to fetch",
+          "Failed to fetch",
+          "Failed to fetch"
+        ]
+      },
+      "pass": true
+    },
+    {
+      "id": "rubygems-dark-mode",
+      "request": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+      "url": "https://rubygems.org/gems/rails",
+      "ms": 20964,
+      "title": "Dark mode for RubyGems",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "7 of 82 are hard to read, e.g. code “>= 3.2.0” 1.2, code “>= 1.8.11” 1.2, span “8.1.4” 1.2",
+      "mod": {
+        "morse": 1,
+        "id": "rubygems-dark-mode",
+        "title": "Dark mode",
+        "prompt": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+        "match": {
+          "hosts": [
+            "rubygems.org"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": ":root { color-scheme: dark; }\n\nbody, .min-h-screen, header, aside, main, .flex-1,\n[class*=\"bg-white\"], [class*=\"bg-neutral-0\"], [class*=\"bg-neutral-1\"], [class*=\"bg-black\"] {\n  background-color: #0f1115 !important;\n}\n\nheader, aside, .versions, [class*=\"bg-white\"] { background-color: #171a21 !important; }\n\nbody, p, span, div, li, td, th, dt, dd, label, h1, h2, h3, h4, h5, h6,\nnav a, aside a, main a, .text-h3, .text-b1, .text-b2, .text-b3, .text-b4, .text-h4 {\n  color: #e6e8ec !important;\n}\n\na, a:visited { color: #7cb8ff !important; }\nnav a:hover, aside a:hover, main a:hover { color: #b3d7ff !important; }\n\n[class*=\"border-\"], table, th, td, hr, li, ol, ul { border-color: #2c313b !important; }\n\ntable, th, td { background-color: transparent !important; }\nth { background-color: #1c2029 !important; }\n\ninput, textarea, select, #query {\n  background-color: #1c2029 !important;\n  color: #e6e8ec !important;\n  border-color: #2c313b !important;\n}\ninput::placeholder, textarea::placeholder { color: #8a909c !important; }\n\npre, code, [class*=\"bg-neutral-1\"] {\n  background-color: #1c2029 !important;\n  color: #e6e8ec !important;\n}\n\nbutton, [class*=\"bg-neutral-9\"], [class*=\"bg-neutral-8\"] {\n  color: #0f1115 !important;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:05:10.807Z",
+        "updated": "2026-10-24T16:05:10.807Z"
+      },
+      "verify": {
+        "id": "rubygems-dark-mode",
+        "before": "only 0 of 49 points on the screen are dark",
+        "errors": [],
+        "first": "7 of 82 are hard to read, e.g. code “>= 3.2.0” 1.2, code “>= 1.8.11” 1.2, span “8.1.4” 1.2",
+        "reload": "7 of 82 are hard to read, e.g. code “>= 3.2.0” 1.2, code “>= 1.8.11” 1.2, span “8.1.4” 1.2",
+        "pass": false,
+        "why": "7 of 82 are hard to read, e.g. code “>= 3.2.0” 1.2, code “>= 1.8.11” 1.2, span “8.1.4” 1.2"
+      },
+      "pass": false
+    }
+  ]
+}

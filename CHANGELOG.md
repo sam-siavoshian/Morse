@@ -32,6 +32,10 @@ The first version meant for other people to install.
 - Claude Code or Codex, with your own subscription, or an Anthropic or OpenAI
   API key. `morse setup` finds what you have and asks which to use.
 - No Morse account and no Morse server.
+- Quick changes use a fast model and harder ones a stronger one, from what
+  you chose (Claude Code: haiku, then sonnet). When the fast model's change
+  doesn't work, the stronger one tries before Morse gives up. Settings has
+  Model: Automatic, Always fast or Always best.
 
 ### Without a model
 
@@ -58,7 +62,12 @@ The first version meant for other people to install.
   without Morse. Before you install a shared mod, Morse says in plain words
   what it does.
 - The gallery: example mods for apps people use every day, and "Mods for this
-  site" in the bar and the Mods panel.
+  site" in the bar and the Mods panel. 38 of them were checked on the real
+  page or demo app: they work, and still work after a reload. Dark modes,
+  reading modes, contents that stay in view, keyboard shortcuts, a focus
+  timer, copy and download buttons and more. The gallery page has
+  categories, search, before and after pictures, and shows which mods work
+  without Chrome's “Allow User Scripts”.
 - One shortcut (⌥⇧0) turns off every mod on a page. Pause Morse on one site
   or everywhere. Back up every mod to one file.
 - Mod packs: share several mods together as a link or a file. Installing one

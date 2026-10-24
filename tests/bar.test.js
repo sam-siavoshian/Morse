@@ -295,3 +295,39 @@ test("effects setting: off shows no animation over the page, subtle keeps a stil
     });
   }
 });
+
+test("Model setting: Automatic, Always fast, Always best, saved; the footer names the model that answered", { skip }, async () => {
+  await scenario("?models&ms=40", null, async t => {
+    const { page } = t;
+    const seg = v => `.seg[data-k="modelMode"] [data-v="${v}"]`;
+    const openSettings = async () => {
+      await pressOpen(page);
+      await t.waitFor(s => s.open);
+      await page.keyboard.press("Control+Comma");
+      await t.waitFor(s => s.pane === "settings");
+    };
+    await openSettings();
+    assert.equal(await page.locator(seg("auto")).getAttribute("aria-checked"), "true", "Automatic unless chosen");
+    assert.match(await page.locator('.seg[data-k="modelMode"]').locator("xpath=../..").innerText(), /Quick changes use haiku/);
+    await page.locator(seg("best")).click();
+    await page.waitForFunction(() => window.__fake.log.some(m => m.type === "settings.set" && m.settings?.modelMode === "best"));
+    await page.locator(seg("best") + '[aria-checked="true"]').waitFor();
+    assert.match(await page.locator('.seg[data-k="modelMode"]').locator("xpath=../..").innerText(), /Every change uses sonnet/);
+    await page.reload();
+    await waitForReady(page);
+    await openSettings();
+    assert.equal(await page.locator(seg("best")).getAttribute("aria-checked"), "true", "kept after a reload");
+    await page.keyboard.press("Escape");
+    await t.waitFor(s => s.pane === "");
+    // The fast model's draft failed and the strong one took over: the bar says so, then names it.
+    await page.keyboard.type("make the toolbar airier");
+    await page.keyboard.press("Enter");
+    await t.waitFor(s => s.phase === "working" && /Asking a stronger model/.test(s.hint));
+    await t.waitFor(s => s.phase === "result");
+    await page.keyboard.press("Escape");
+    await t.waitFor(s => !s.open);
+    await pressOpen(page);
+    await t.waitFor(s => s.open && s.phase === "idle");
+    assert.equal(await page.locator(".model").innerText(), "Claude Code · sonnet");
+  });
+});

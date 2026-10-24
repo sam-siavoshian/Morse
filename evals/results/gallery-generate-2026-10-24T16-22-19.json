@@ -1,0 +1,103 @@
+{
+  "startedAt": "2026-10-24T16:22:19.061Z",
+  "mode": "generate",
+  "model": "claude-code:haiku",
+  "pass": 1,
+  "total": 2,
+  "results": [
+    {
+      "id": "metacpan-sticky-contents",
+      "request": "keep the contents box in view on the right while I scroll, without covering the text",
+      "url": "https://metacpan.org/pod/Moose",
+      "ms": 8780,
+      "title": "Keep contents box pinned on scroll",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "8 parts of the text run under the contents box, e.g. “The handles option provides Mo”",
+      "mod": {
+        "morse": 1,
+        "id": "metacpan-sticky-contents",
+        "title": "Contents always in view",
+        "prompt": "keep the contents box in view on the right while I scroll, without covering the text",
+        "match": {
+          "hosts": [
+            "metacpan.org"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": "nav.toc",
+          "label": "“Contents” box"
+        },
+        "css": "main { overflow-x: clip !important; }\nmain .toc { position: sticky !important; top: 70px; max-height: calc(100vh - 90px); overflow-y: auto; align-self: start; }\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:22:34.614Z",
+        "updated": "2026-10-24T16:22:34.614Z"
+      },
+      "verify": {
+        "id": "metacpan-sticky-contents",
+        "before": "the contents are not in view after scrolling (0 links)",
+        "errors": [],
+        "first": "17 parts of the text run under the contents box, e.g. “accessor”",
+        "reload": "17 parts of the text run under the contents box, e.g. “accessor”",
+        "pass": false,
+        "why": "17 parts of the text run under the contents box, e.g. “accessor”"
+      },
+      "pass": false
+    },
+    {
+      "id": "pypi-sticky-install",
+      "request": "keep the pip install command visible at the top while I scroll",
+      "url": "https://pypi.org/project/requests/",
+      "ms": 24666,
+      "title": "Pin pip command while scrolling",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "pypi-sticky-install",
+        "title": "Install command always in view",
+        "prompt": "keep the pip install command visible at the top while I scroll",
+        "match": {
+          "hosts": [
+            "pypi.org"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": "#pip-command",
+          "label": "“pip install requests” command"
+        },
+        "css": "p.project-header__pip-instructions.pip-stuck {\n  position: fixed;\n  top: 0;\n  left: 50%;\n  transform: translateX(-50%);\n  width: min(1090px, calc(100% - 40px));\n  z-index: 999;\n  margin: 0;\n  padding: 8px 0;\n  background: rgb(253, 253, 253);\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);\n}\n.pip-spacer { height: 0; }\n.project-header__pip-instructions.pip-stuck + .pip-spacer { height: 48px; }\n",
+        "js": "morse.watch('.project-header__pip-instructions', el => {\n  if (!el.nextElementSibling || !el.nextElementSibling.classList.contains('pip-spacer')) {\n    el.after(morse.el('div', { class: 'pip-spacer' }));\n  }\n});\nmorse.on(window, 'scroll', () => {\n  morse.$$('.project-header__pip-instructions').forEach(el => {\n    const sp = el.nextElementSibling;\n    if (!sp || !sp.classList.contains('pip-spacer')) return;\n    const top = el.classList.contains('pip-stuck')\n      ? sp.getBoundingClientRect().top\n      : el.getBoundingClientRect().top;\n    el.classList.toggle('pip-stuck', top < 0);\n  });\n});\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:22:53.233Z",
+        "updated": "2026-10-24T16:22:53.233Z"
+      },
+      "verify": {
+        "id": "pypi-sticky-install",
+        "before": "the install command is not in view after scrolling: top -2213",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true,
+        "pageErrors": [
+          "Failed to fetch",
+          "Failed to fetch",
+          "Failed to fetch"
+        ]
+      },
+      "pass": true
+    }
+  ]
+}
