@@ -11,9 +11,10 @@ import { spawn, execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync, realpathSync, openSync, readSync, closeSync, promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { HOME } from "./store.js";
+import { HOME, parseJson } from "./store.js";
 import { safeExtraArgs } from "./ports.js";
 import { waitForEndpoint } from "./cdp.js";
+import { paint, painter } from "./colors.js";
 
 // ---------------------------------------------------------------- catalog
 // engine: "electron" | "cef" (Chromium Embedded Framework) | "chromium" | "native"
@@ -109,7 +110,10 @@ export function hostContext(over = {}) {
         const r = realpathSync(real(p));
         if (!root) return r;
         const rootReal = realpathSync(root);
-        return r.startsWith(rootReal) ? "/" + path.relative(rootReal, r).split(path.sep).join("/") : p;
+        if (!r.startsWith(rootReal)) return p;
+        const parts = path.relative(rootReal, r).split(path.sep);
+        // Back to the path the app would see: "/C/Users/x" is C:\Users\x on Windows.
+        return platform === "win32" ? `${parts[0]}:\\${parts.slice(1).join("\\")}` : "/" + parts.join("/");
       } catch { return p; }
     },
   };
@@ -118,6 +122,9 @@ export function hostContext(over = {}) {
     APPDATA: pp.join(home, "AppData", "Roaming"),
     ProgramFiles: "C:\\Program Files",
     "ProgramFiles(x86)": "C:\\Program Files (x86)",
+    ProgramData: "C:\\ProgramData",
+    SystemRoot: "C:\\Windows",
+    USERPROFILE: home,
   }[name] || "";
   ctx.expand = p => p.replace(/%([^%]+)%/g, (_, v) => ctx.var(v));
   return ctx;
@@ -142,17 +149,75 @@ export function parsePlist(text) {
 }
 const unxml = s => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
 
+// Binary plists ("bplist00"), which many apps ship as their Info.plist: the
+// objects, then a table of their offsets, then a 32-byte trailer saying where
+// the table is and which object is the top one. Read here rather than with
+// plutil, so listing /Applications starts no process per app and tests can
+// use them on any machine. Dicts, arrays, strings, numbers, booleans, dates
+// (as ISO strings) and data (as Buffers); anything malformed gives null.
+export function parseBinaryPlist(buf) {
+  if (!buf || buf.length < 40 || buf.toString("latin1", 0, 8) !== "bplist00") return null;
+  try {
+    const t = buf.length - 32;
+    const offSize = buf[t + 6], refSize = buf[t + 7];
+    const count = Number(buf.readBigUInt64BE(t + 8)), top = Number(buf.readBigUInt64BE(t + 16)), table = Number(buf.readBigUInt64BE(t + 24));
+    if (!offSize || !refSize || offSize > 8 || refSize > 8 || top >= count || table + count * offSize > t) return null;
+    const uint = (at, n) => {
+      if (at + n > buf.length) throw new RangeError("past the end");
+      let v = 0;
+      for (let i = 0; i < n; i++) v = v * 256 + buf[at + i];
+      return v;
+    };
+    const obj = (i, depth) => {
+      if (i >= count || depth > 32) throw new RangeError("bad reference");
+      const at = uint(table + i * offSize, offSize);
+      const m = uint(at, 1), hi = m >> 4, lo = m & 15;
+      // Length in the low 4 bits, or (15) in an integer object that follows.
+      const sized = () => {
+        if (lo !== 15) return [lo, at + 1];
+        const n = 1 << (uint(at + 1, 1) & 15);
+        return [uint(at + 2, n), at + 2 + n];
+      };
+      const refs = (start, n) => Array.from({ length: n }, (_, k) => uint(start + k * refSize, refSize));
+      switch (hi) {
+        case 0x0: return lo === 8 ? false : lo === 9 ? true : null;
+        case 0x1: return lo === 3 ? Number(buf.readBigInt64BE(at + 1)) : uint(at + 1, 1 << lo);
+        case 0x2: return lo === 2 ? buf.readFloatBE(at + 1) : buf.readDoubleBE(at + 1);
+        case 0x3: return new Date((978307200 + buf.readDoubleBE(at + 1)) * 1000).toISOString();
+        case 0x4: { const [n, s] = sized(); return Buffer.from(buf.subarray(s, s + n)); }
+        case 0x5: { const [n, s] = sized(); return buf.toString("latin1", s, s + n); }
+        case 0x6: { const [n, s] = sized(); return Buffer.from(buf.subarray(s, s + 2 * n)).swap16().toString("utf16le"); }
+        case 0xA: { const [n, s] = sized(); return refs(s, n).map(r => obj(r, depth + 1)); }
+        case 0xD: {
+          const [n, s] = sized();
+          const keys = refs(s, n), vals = refs(s + n * refSize, n), out = {};
+          keys.forEach((k, j) => { out[obj(k, depth + 1)] = obj(vals[j], depth + 1); });
+          return out;
+        }
+        default: return null;
+      }
+    };
+    return obj(top, 0);
+  } catch { return null; }
+}
+
 function readPlist(ctx, file) {
   const buf = ctx.read(file);
   if (!buf) return null;
-  if (buf.slice(0, 6).toString() === "bplist") {
-    if (ctx.platform !== "darwin" || ctx.root) return null;
+  if (buf.subarray(0, 6).toString("latin1") === "bplist") {
+    const parsed = parseBinaryPlist(buf);
+    if (parsed || ctx.platform !== "darwin" || ctx.root) return parsed;
+    // A plist version this reader doesn't know: macOS's own tool can convert it.
     try { return JSON.parse(execFileSync("plutil", ["-convert", "json", "-o", "-", file], { encoding: "utf8" })); } catch { return null; }
   }
   return parsePlist(buf.toString("utf8"));
 }
 
 // Reads a .app bundle: name, bundle id, executable, version and engine.
+//   Contents/Info.plist                          name, bundle id, version, executable
+//   Contents/Frameworks/Electron Framework.framework   Electron (its own Info.plist has the version)
+//   Contents/Resources/app.asar (or app/)         the app's code, never changed by Morse
+//   Contents/MacOS/<CFBundleExecutable>           what `morse launch` runs
 export function readBundle(ctx, bundle) {
   const pp = ctx.pp;
   const info = readPlist(ctx, pp.join(bundle, "Contents", "Info.plist")) || {};
@@ -162,18 +227,24 @@ export function readBundle(ctx, bundle) {
   if (frameworks.includes("Electron Framework.framework")) {
     engine = "electron";
     const e = readPlist(ctx, pp.join(fw, "Electron Framework.framework", "Resources", "Info.plist"))
-      || readPlist(ctx, pp.join(fw, "Electron Framework.framework", "Versions", "A", "Resources", "Info.plist"));
-    electron = e?.CFBundleVersion || null;
+      || readPlist(ctx, pp.join(fw, "Electron Framework.framework", "Versions", "A", "Resources", "Info.plist"))
+      || readPlist(ctx, pp.join(fw, "Electron Framework.framework", "Versions", "Current", "Resources", "Info.plist"));
+    electron = e?.CFBundleVersion || e?.CFBundleShortVersionString || null;
   } else if (frameworks.includes("Chromium Embedded Framework.framework")) engine = "cef";
   else if (frameworks.some(f => /(Chrome|Chromium|Edge|Brave Browser|Vivaldi|Opera) Framework\.framework$/.test(f))) engine = "chromium";
   const base = pp.basename(bundle, ".app");
   const exeName = info.CFBundleExecutable || base;
+  const resources = pp.join(bundle, "Contents", "Resources");
+  const asar = engine !== "electron" ? null
+    : ctx.exists(pp.join(resources, "app.asar")) ? pp.join(resources, "app.asar")
+    : ctx.exists(pp.join(resources, "app", "package.json")) ? pp.join(resources, "app") : null;
+  const pkg = asar ? appPackage(ctx, bundle, { resources }) : {};
   return {
-    name: info.CFBundleDisplayName || info.CFBundleName || base,
+    name: info.CFBundleDisplayName || info.CFBundleName || pkg.name || base,
     bundleId: info.CFBundleIdentifier || null,
-    version: info.CFBundleShortVersionString || info.CFBundleVersion || null,
+    version: info.CFBundleShortVersionString || info.CFBundleVersion || pkg.version || null,
     exe: pp.join(bundle, "Contents", "MacOS", exeName),
-    engine, electron,
+    engine, electron, asar,
   };
 }
 
@@ -182,15 +253,21 @@ export function readBundle(ctx, bundle) {
 // Unpacked apps keep it in resources/app/; packed ones in app.asar, whose
 // header (a JSON file table after two 4-byte sizes) says where it is, so only
 // the header and that one file are read, not the whole archive.
-export function appPackage(ctx, dir) {
+export const ASAR_HEADER_MAX = 64 * 1024 * 1024;
+// `resources` is <dir>/resources on Windows and Linux, and
+// <App>.app/Contents/Resources on macOS.
+export function appPackage(ctx, dir, { resources = ctx.pp.join(dir, "resources") } = {}) {
   const pp = ctx.pp;
-  let text = ctx.read(pp.join(dir, "resources", "app", "package.json"))?.toString("utf8");
+  let text = ctx.read(pp.join(resources, "app", "package.json"))?.toString("utf8");
   if (!text) {
-    const asar = pp.join(dir, "resources", "app.asar");
+    const asar = pp.join(resources, "app.asar");
     try {
       const sizes = ctx.readRange(asar, 0, 16);
       const headerSize = sizes.readUInt32LE(4); // pickle holding the header
       const jsonSize = sizes.readUInt32LE(12);
+      // The sizes come from the file: a broken or hostile one can say 4 GB.
+      // Real headers are a few MB even for the biggest apps.
+      if (jsonSize > ASAR_HEADER_MAX || jsonSize > headerSize) throw new Error("not an asar header");
       const header = JSON.parse(ctx.readRange(asar, 16, jsonSize).toString("utf8"));
       const f = header.files?.["package.json"];
       if (f && !f.unpacked && Number(f.size) < 1 << 20) text = ctx.readRange(asar, 8 + headerSize + Number(f.offset), Number(f.size)).toString("utf8");
@@ -199,7 +276,7 @@ export function appPackage(ctx, dir) {
   // VS Code and its builds (VSCodium, Cursor) name themselves in product.json;
   // their package.json says "codium.desktop" or "code-oss-dev".
   let product = null;
-  try { product = JSON.parse(ctx.read(pp.join(dir, "resources", "app", "product.json"))?.toString("utf8")); } catch {}
+  try { product = JSON.parse(ctx.read(pp.join(resources, "app", "product.json"))?.toString("utf8")); } catch {}
   try {
     const p = JSON.parse(text);
     const name = [p.productName, product?.nameLong, p.desktopName?.replace(/\.desktop$/, ""), p.name].find(s => typeof s === "string" && s.trim() && !/^electron$/i.test(s));
@@ -255,10 +332,33 @@ function discoverMac(ctx) {
   return out;
 }
 
-function newestSquirrel(ctx, dir, exeName) {
+// Squirrel installs (Slack, Discord, Figma, GitHub Desktop, Claude) put a
+// small Update.exe at the top of their folder and the real app in
+// app-<version>\, one folder per version until the old ones are cleaned up.
+// The newest folder that has the app's exe in it is the one that runs.
+export function newestSquirrel(ctx, dir, exeName) {
   const apps = ctx.readdir(dir).filter(n => /^app-\d/.test(n) && ctx.exists(ctx.pp.join(dir, n, exeName)));
   apps.sort((a, b) => cmpVersion(b.slice(4), a.slice(4)));
   return apps[0] ? ctx.pp.join(dir, apps[0], exeName) : null;
+}
+
+// The app a Squirrel folder holds when its exe name isn't known: an exe in
+// the newest app-<version>\, preferably the one named like the folder.
+export function squirrelApp(ctx, dir) {
+  const pp = ctx.pp;
+  const versions = ctx.readdir(dir).filter(n => /^app-\d/.test(n) && ctx.isDir(pp.join(dir, n))).sort((a, b) => cmpVersion(b.slice(4), a.slice(4)));
+  for (const v of versions) {
+    const exes = ctx.readdir(pp.join(dir, v)).filter(f => /\.exe$/i.test(f) && !/^(update|squirrel|elevate|crashpad|notification_helper|uninstall)/i.test(f));
+    if (!exes.length) continue;
+    const exe = exes.find(f => slug(f.replace(/\.exe$/i, "")) === slug(pp.basename(dir))) || exes[0];
+    return pp.join(dir, v, exe);
+  }
+  return null;
+}
+
+// What a Squirrel shortcut starts: Update.exe --processStart "Discord.exe".
+export function processStartOf(args) {
+  return String(args || "").match(/--processStart(?:=|\s+)(?:"([^"]+)"|(\S+))/i)?.slice(1).find(Boolean) || null;
 }
 const cmpVersion = (a, b) => {
   const x = a.split(/[.-]/).map(Number), y = b.split(/[.-]/).map(Number);
@@ -277,7 +377,7 @@ function discoverWin(ctx) {
       const exe = real || p;
       const store = /\\WindowsApps\\/i.test(p);
       const eng = engineAt(ctx, exe);
-      out.push(entry(id, cat, { path: exe, exe, launcher: real ? p : null, processName: cat.squirrel || pp.basename(exe), ...eng,
+      out.push(entry(id, cat, { path: exe, exe, launcher: real ? p : null, processName: cat.squirrel || pp.basename(exe), version: squirrelVersion(exe), ...eng,
         note: store ? "Microsoft Store version: may ignore the debugging switch" : null, source: pp.dirname(p) }));
       seen.add(id);
       break;
@@ -301,7 +401,150 @@ function discoverWin(ctx) {
       out.push(entry(key, CATALOG[known], { name, path: exe, exe, processName: exeName, ...engineAt(ctx, exe), source: base }));
     }
   }
+  // The Start menu: apps installed anywhere else (D:\Tools, a deeper Program
+  // Files folder) and Squirrel apps the catalog doesn't know, through the
+  // shortcuts their installers made.
+  const have = new Set(out.flatMap(a => [a.exe, a.launcher].filter(Boolean).map(p => p.toLowerCase())));
+  for (const s of startMenuShortcuts(ctx)) {
+    const found = shortcutApp(ctx, s.file);
+    if (!found || have.has(found.exe.toLowerCase())) continue;
+    if (!["electron", "cef", "chromium"].includes(found.engine)) continue; // native apps, uninstallers, help files
+    const id = catalogFor(s.name, found.processName.replace(/\.exe$/i, ""));
+    const key = id || slug(s.name);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    for (const p of [found.exe, found.launcher]) if (p) have.add(p.toLowerCase());
+    out.push(entry(key, CATALOG[id], { name: s.name, ...found }));
+  }
   return out;
+}
+
+// .lnk files in the Start menu, for this user and for everyone, two folders deep.
+function startMenuShortcuts(ctx) {
+  const pp = ctx.pp, out = [];
+  const roots = [ctx.var("APPDATA"), ctx.var("ProgramData")].filter(Boolean).map(r => pp.join(r, "Microsoft", "Windows", "Start Menu", "Programs"));
+  const walk = (dir, depth) => {
+    for (const n of ctx.readdir(dir)) {
+      const p = pp.join(dir, n);
+      if (/\.lnk$/i.test(n)) { if (!/^(uninstall|help|readme|release notes|website)\b/i.test(n)) out.push({ file: p, name: n.replace(/\.lnk$/i, "") }); }
+      else if (depth < 2 && ctx.isDir(p)) walk(p, depth + 1);
+    }
+  };
+  for (const r of roots) walk(r, 0);
+  return out;
+}
+
+// The app a shortcut starts: { path, exe, launcher, processName, engine, ... },
+// or null. A Squirrel shortcut points at Update.exe --processStart X.exe;
+// the app is X.exe in the newest app-<version>\ next to it.
+export function shortcutApp(ctx, file) {
+  const pp = ctx.pp;
+  const lnk = parseLnk(ctx.read(file));
+  if (!lnk) return null;
+  let target = ctx.expand(lnk.target || "");
+  if (!target && lnk.relativePath) target = pp.resolve(pp.dirname(file), lnk.relativePath);
+  if (!target || !/\.exe$/i.test(target)) return null;
+  let exe = target, launcher = null, processName = pp.basename(target);
+  if (/^update\.exe$/i.test(pp.basename(target))) {
+    const started = processStartOf(lnk.arguments);
+    if (!started) return null;
+    launcher = target;
+    processName = started;
+    exe = newestSquirrel(ctx, pp.dirname(target), started);
+    if (!exe) return null;
+  }
+  if (!ctx.exists(exe)) return null;
+  return { path: exe, exe, launcher, processName, version: squirrelVersion(exe), ...engineAt(ctx, exe), source: pp.dirname(launcher || exe), shortcut: file };
+}
+
+// The version in a Squirrel folder name: …\app-4.41.105\slack.exe → 4.41.105.
+const squirrelVersion = exe => /[\\/]app-(\d[\w.-]*)[\\/][^\\/]+$/i.exec(exe)?.[1] || null;
+
+// ---------------------------------------------------------------- .lnk shortcuts
+// Windows shortcuts, enough to know what they start (MS-SHLLINK): a 76-byte
+// header with flags, an optional item list (skipped), LinkInfo with the
+// target's local path, then counted strings (name, relative path, working
+// folder, arguments, icon), then extra blocks, one of which can hold the
+// target with %VARIABLES% left in. Returns null for anything that isn't a
+// shortcut. Shortcuts with only an item list (no LinkInfo) give no target.
+const LNK_CLSID = "0114020000000000c000000000000046";
+
+// A path from a shortcut's item list: a drive item ("C:\") and then one
+// file item per folder. Each file item has a short (8.3) name, and the long
+// name in its 0xBEEF0004 extension block, whose place depends on the block's
+// version (layout as documented by libfwsi; checked against pylnk3's files).
+function idListPath(buf, at, end) {
+  const parts = [];
+  while (at + 2 <= end) {
+    const size = buf.readUInt16LE(at);
+    if (size < 2 || at + size > end) break;
+    const type = buf[at + 2];
+    if ((type & 0x70) === 0x20) parts.splice(0, parts.length, buf.toString("latin1", at + 3, at + 6).replace(/\0.*$/, "").replace(/\\$/, "")); // a drive: "C:"
+    else if ((type & 0x70) === 0x30) {
+      const uni = !!(type & 0x04);
+      let e = at + 14;
+      while (e + (uni ? 1 : 0) < at + size && (buf[e] || (uni && buf[e + 1]))) e += uni ? 2 : 1;
+      let name = uni ? buf.toString("utf16le", at + 14, e) : buf.toString("latin1", at + 14, e);
+      const ext = buf.indexOf(Buffer.from([0x04, 0x00, 0xef, 0xbe]), at + 14);
+      if (ext > 0 && ext - 4 >= at && ext < at + size) {
+        const block = ext - 4, version = buf.readUInt16LE(block + 2), blockEnd = block + buf.readUInt16LE(block);
+        const off = block + (version >= 9 ? 46 : version >= 8 ? 42 : version >= 7 ? 38 : 20);
+        let n = off;
+        while (n + 1 < blockEnd && (buf[n] || buf[n + 1])) n += 2;
+        const long = buf.toString("utf16le", off, n);
+        if (long && /^[^\x00-\x1f]+$/.test(long)) name = long;
+      }
+      if (parts.length) parts.push(name);
+    }
+    at += size;
+  }
+  return parts.length > 1 ? parts.join("\\") : null;
+}
+export function parseLnk(buf) {
+  if (!buf || buf.length < 0x4c || buf.readUInt32LE(0) !== 0x4c || buf.toString("hex", 4, 20) !== LNK_CLSID) return null;
+  try {
+    const flags = buf.readUInt32LE(0x14);
+    const unicode = !!(flags & 0x80);
+    const cstr = (at, end = buf.length) => { let e = at; while (e < end && buf[e]) e++; return buf.toString("latin1", at, e); };
+    const wstr = (at, end = buf.length) => { let e = at; while (e + 1 < end && (buf[e] || buf[e + 1])) e += 2; return buf.toString("utf16le", at, e); };
+    let at = 0x4c;
+    let target = null;
+    if (flags & 0x01) { // HasLinkTargetIDList: used when there's no LinkInfo
+      const size = buf.readUInt16LE(at);
+      target = idListPath(buf, at + 2, at + 2 + size);
+      at += 2 + size;
+    }
+    if (flags & 0x02) { // HasLinkInfo
+      const size = buf.readUInt32LE(at), header = buf.readUInt32LE(at + 4), info = buf.readUInt32LE(at + 8);
+      if (info & 0x01) { // VolumeIDAndLocalBasePath
+        const end = at + size;
+        const uni = header >= 0x24;
+        const base = uni && buf.readUInt32LE(at + 28) ? wstr(at + buf.readUInt32LE(at + 28), end) : cstr(at + buf.readUInt32LE(at + 16), end);
+        const suffix = uni && buf.readUInt32LE(at + 32) ? wstr(at + buf.readUInt32LE(at + 32), end) : cstr(at + buf.readUInt32LE(at + 24), end);
+        target = (base + (suffix && !base.endsWith("\\") ? "\\" : "") + suffix) || target;
+      }
+      at += size;
+    }
+    const out = { target };
+    for (const [bit, key] of [[0x04, "name"], [0x08, "relativePath"], [0x10, "workingDir"], [0x20, "arguments"], [0x40, "icon"]]) {
+      if (!(flags & bit)) continue;
+      const n = buf.readUInt16LE(at);
+      at += 2;
+      out[key] = unicode ? buf.toString("utf16le", at, at + 2 * n) : buf.toString("latin1", at, at + n);
+      at += unicode ? 2 * n : n;
+    }
+    // EnvironmentVariableDataBlock (HasExpString): the target as typed, like %LOCALAPPDATA%\Discord\Update.exe.
+    while (at + 8 <= buf.length) {
+      const size = buf.readUInt32LE(at);
+      if (size < 8 || at + size > buf.length) break;
+      if (buf.readUInt32LE(at + 4) === 0xa0000001 && size >= 0x314 && (flags & 0x200)) {
+        const t = wstr(at + 8 + 260, at + 8 + 260 + 520) || cstr(at + 8, at + 8 + 260);
+        if (t) out.target = t;
+      }
+      at += size;
+    }
+    return out;
+  } catch { return null; }
 }
 
 function onPath(ctx, bin) {
@@ -505,29 +748,54 @@ export function matchApp(query, apps) {
   return { app: top[0].a };
 }
 
+// An error written for a person: shown as is, whatever its length
+// (core/onboarding.js plainError). App names and paths can be long.
+export const said = msg => Object.assign(new Error(msg), { plain: true });
+
 // From what the person typed to an app to launch.
 export function resolveApp(query, { ctx = hostContext(), apps } = {}) {
   const q = String(query || "").trim();
-  if (!q) throw new Error("Which app? For example: morse launch spotify. Run morse apps to see what's installed.");
+  if (!q) throw said("Which app? For example: morse launch spotify. Run morse apps to see what's installed.");
   const looksLikePath = /[\\/]/.test(q) || /\.(app|exe)$/i.test(q);
   if (looksLikePath && ctx.exists(q)) return appFromPath(ctx, q);
   const installed = apps || discoverApps(ctx);
   const m = matchApp(q, installed);
-  if (m.ambiguous) throw new Error(`"${q}" could be ${m.ambiguous.map(a => a.name).join(" or ")}. Say which one.`);
+  if (m.ambiguous) throw said(`"${q}" could be ${m.ambiguous.map(a => a.name).join(" or ")}. Say which one.`);
   if (m.app) return m.app;
   const catalogApps = Object.entries(CATALOG).map(([id, c]) => ({ id, ...c }));
   const c = matchApp(q, catalogApps).app;
-  if (c) throw new Error(`${c.name} isn't in the usual places. If it's somewhere else, give its path: morse launch "/path/to/${c.name}"`);
-  if (looksLikePath) throw new Error(`Nothing at ${q}.`);
-  throw new Error(`Morse couldn't find an app called "${q}". Run morse apps to see what it found, or give the app's path.`);
+  if (c) throw said(`${c.name} isn't in the usual places. If it's somewhere else, give its path: morse launch "/path/to/${c.name}"`);
+  if (looksLikePath) throw said(`Nothing at ${q}.`);
+  throw said(`Morse couldn't find an app called "${q}". Run morse apps to see what it found, or give the app's path.`);
 }
 
 export function appFromPath(ctx, p) {
   const pp = ctx.pp;
-  if (/\.app\/?$/.test(p) && ctx.platform === "darwin") {
-    const b = readBundle(ctx, p.replace(/\/$/, ""));
-    const id = Object.keys(CATALOG).find(k => CATALOG[k].mac?.ids?.includes(b.bundleId)) || slug(b.name);
-    return { ...entry(id, CATALOG[id], { ...b, path: p }), ...attachVerdict({ engine: b.engine, electron: b.electron }) };
+  // A bundle, or a file inside one (…/Slack.app/Contents/MacOS/Slack): the bundle.
+  const bundle = ctx.platform === "darwin" && /^(.*?\.app)(\/|$)/.exec(p)?.[1];
+  if (bundle) {
+    const b = readBundle(ctx, bundle);
+    const name = pp.basename(bundle);
+    const known = Object.keys(CATALOG).find(k => CATALOG[k].mac?.ids?.includes(b.bundleId) || CATALOG[k].mac?.bundles?.includes(name));
+    const id = known || slug(b.name);
+    return { ...entry(id, CATALOG[known], { ...b, path: bundle, source: pp.dirname(bundle) }), ...attachVerdict({ engine: b.engine, electron: b.electron }) };
+  }
+  if (ctx.platform === "win32") {
+    // A shortcut: the app it starts, named like the shortcut.
+    if (/\.lnk$/i.test(p)) {
+      const found = shortcutApp(ctx, p);
+      if (!found) throw new Error(`The shortcut ${pp.basename(p)} doesn't point at an app Morse can open. Give the app's .exe instead.`);
+      const name = pp.basename(p).replace(/\.lnk$/i, ""), id = catalogFor(name, found.processName.replace(/\.exe$/i, ""));
+      const app = entry(id || slug(name), CATALOG[id], { name, ...found });
+      return { ...app, ...attachVerdict(app) };
+    }
+    // Squirrel's Update.exe: the app it starts, in the newest app-<version>\.
+    if (/^update\.exe$/i.test(pp.basename(p))) {
+      const real = squirrelApp(ctx, pp.dirname(p));
+      if (!real) throw new Error(`${p} only updates and starts an app, and Morse found no app next to it. Give the app's .exe instead.`);
+      const app = appFromPath(ctx, real);
+      return { ...app, launcher: p, source: pp.dirname(p) };
+    }
   }
   const file = pp.basename(p).replace(/\.(exe|app)$/i, "");
   // An AppImage: named from its file, and known only if the catalog knows it.
@@ -546,10 +814,13 @@ export function appFromPath(ctx, p) {
   return { ...app, ...attachVerdict(app) };
 }
 
-export function executableFor(app) {
+// What `morse launch` runs. On macOS that's the binary inside the bundle
+// (Contents/MacOS/<exe>), not `open -a`: `open` drops --args when the app is
+// already running and doesn't say which process it started.
+export function executableFor(app, platform = process.platform) {
   if (typeof app === "string") app = { path: app };
   if (app.exe) return app.exe;
-  if (process.platform === "darwin" && app.path.endsWith(".app")) return path.join(app.path, "Contents", "MacOS", path.basename(app.path, ".app"));
+  if (platform === "darwin" && app.path.endsWith(".app")) return path.posix.join(app.path, "Contents", "MacOS", path.posix.basename(app.path, ".app"));
   return app.path;
 }
 
@@ -568,13 +839,18 @@ export function parseWinProcesses(json) {
   return list.filter(Boolean).map(p => ({ pid: p.ProcessId, ppid: p.ParentProcessId, exe: p.ExecutablePath || "", cmd: p.CommandLine || p.ExecutablePath || "" }));
 }
 
+// The PowerShell command that lists processes. Its output is set to UTF-8
+// first: Windows PowerShell writes in the console's code page otherwise, and
+// a folder like C:\Users\José would come back garbled and match nothing.
+export const WIN_PROCESS_QUERY = "[Console]::OutputEncoding = [Text.Encoding]::UTF8; " +
+  "Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,ExecutablePath,CommandLine | ConvertTo-Json -Compress";
+
 export function listProcesses(platform = process.platform) {
   try {
     if (platform === "win32") {
-      const out = execFileSync("powershell", ["-NoProfile", "-Command",
-        "Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,ExecutablePath,CommandLine | ConvertTo-Json -Compress"],
+      const out = execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", WIN_PROCESS_QUERY],
         { encoding: "utf8", maxBuffer: 64 << 20, windowsHide: true });
-      return parseWinProcesses(out);
+      return parseWinProcesses(out.replace(/^\uFEFF/, ""));
     }
     return parsePs(execFileSync("ps", ["-A", "-ww", "-o", "pid=,ppid=,command="], { encoding: "utf8", maxBuffer: 64 << 20 }));
   } catch { return []; }
@@ -585,7 +861,12 @@ export function debugPortOf(cmd) {
   return m ? Number(m[1]) : null;
 }
 
-const argOf = (cmd, name) => String(cmd).match(new RegExp(`--${name}=("[^"]*"|\\S+)`))?.[1]?.replace(/^"|"$/g, "") || null;
+// --name=value, --name="value", or "--name=value with spaces" (how Windows
+// quotes a whole argument that has a space in it).
+export const argOf = (cmd, name) => {
+  const m = String(cmd).match(new RegExp(`"--${name}=([^"]*)"|--${name}=("[^"]*"|\\S+)`));
+  return (m?.[1] ?? m?.[2]?.replace(/^"|"$/g, "")) || null;
+};
 
 // Main processes of `app` (not its renderers/helpers, not Morse itself).
 //   extraArgs: what we would launch with; a --user-data-dir there means only
@@ -598,18 +879,22 @@ export function findAppProcesses(app, procs, { platform = process.platform, extr
     selfAndParents.add(p.ppid);
     pid = p.ppid;
   }
-  const wantProfile = extraArgs.map(a => argOf(a, "user-data-dir")).find(Boolean)
-    || (app.browser ? path.join(HOME, "browser-profile") : null);
-  const exe = executableFor(app);
   const lower = s => String(s || "").toLowerCase();
+  // extraArgs are single arguments (spaces and all), not a command line.
+  const wantProfile = extraArgs.map(a => /^--user-data-dir=(.+)$/.exec(a)?.[1]?.replace(/^"|"$/g, "")).find(Boolean)
+    || (app.browser ? (platform === "win32" ? path.win32 : path.posix).join(HOME, "browser-profile") : null);
+  const exe = executableFor(app, platform);
   const base = s => String(s || "").split(/[\\/]/).pop();
+  // Windows paths ignore case.
+  const sameProfile = (a, b) => platform === "win32" ? lower(a) === lower(b) : a === b;
   return procs.filter(p => {
-    if (selfAndParents.has(p.pid) || /\s--type=/.test(p.cmd)) return false;
-    if (/(^|[\\/])(node|morse)(\.exe)?\s/i.test(p.cmd)) return false; // the CLI itself, scripts naming the app
+    if (selfAndParents.has(p.pid) || /\s"?--type=/.test(p.cmd)) return false;
+    if (/(^|[\\/])(node|morse)(\.exe)?"?\s/i.test(p.cmd)) return false; // the CLI itself, scripts naming the app
     const profile = argOf(p.cmd, "user-data-dir");
-    if (wantProfile ? profile !== wantProfile : profile && app.browser) return false;
+    if (wantProfile ? !sameProfile(profile, wantProfile) : profile && app.browser) return false;
     if (platform === "darwin" && app.path?.endsWith(".app")) return p.cmd.startsWith(app.path.replace(/\/$/, "") + "/Contents/MacOS/");
     if (platform === "win32") {
+      // The command line may quote the exe; ExecutablePath doesn't.
       const pe = lower(p.exe || p.cmd.replace(/^"([^"]+)".*/, "$1"));
       return pe === lower(exe) || (app.processName && lower(base(pe)) === lower(app.processName) && (!app.source || pe.startsWith(lower(app.source))));
     }
@@ -625,54 +910,103 @@ export function findAppProcesses(app, procs, { platform = process.platform, extr
 const alive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === "EPERM"; } };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-async function waitGone(pids, ms) {
+async function waitGone(pids, ms, isAlive = alive) {
   const end = Date.now() + ms;
   while (Date.now() < end) {
-    if (!pids.some(alive)) return true;
+    if (!pids.some(isAlive)) return true;
     await sleep(250);
   }
-  return !pids.some(alive);
+  return !pids.some(isAlive);
 }
 
+// Runs a program with an argument list (no shell, no window); true when it exited with 0.
+const runQuiet = (cmd, args) => { try { execFileSync(cmd, args, { stdio: "ignore", windowsHide: true }); return true; } catch { return false; } };
+const sendSignal = (pid, sig) => { try { process.kill(pid, sig); } catch {} };
+
 // Quit the app the polite way, then wait for it. Returns true once it's gone.
-//   macOS: AppleScript "quit" (the app saves state as on ⌘Q), then SIGTERM.
-//   Windows: taskkill without /F (WM_CLOSE), then /F: chat apps hide to the tray on close.
+//   macOS: AppleScript "quit" (the app saves its state as on ⌘Q), then
+//     SIGTERM. macOS asks once whether your terminal may control the app; if
+//     that's refused (or osascript fails), SIGTERM goes out at once instead.
+//   Windows: taskkill /T without /F asks every window of the app's process
+//     tree to close, then /T /F ends the tree: chat apps only hide to the
+//     tray when their window closes.
 //   Linux: SIGTERM.
-export async function quitApp(app, { procs = listProcesses(), platform = process.platform, waitMs = 10000, extraArgs = [] } = {}) {
+// run, kill and isAlive are there for tests.
+export async function quitApp(app, { procs = listProcesses(), platform = process.platform, waitMs = 10000, extraArgs = [], run = runQuiet, kill = sendSignal, isAlive = alive } = {}) {
   const pids = findAppProcesses(app, procs, { platform, extraArgs }).map(p => p.pid);
   if (!pids.length) return true;
-  const run = (cmd, args) => { try { execFileSync(cmd, args, { stdio: "ignore", windowsHide: true }); } catch {} };
+  let termed = false;
   if (platform === "darwin") {
-    const target = app.bundleId ? `application id "${app.bundleId}"` : `application "${app.name.replace(/"/g, "")}"`;
-    run("osascript", ["-e", `tell ${target} to quit`]);
+    const target = app.bundleId ? `application id "${app.bundleId.replace(/["\\]/g, "")}"` : `application "${app.name.replace(/["\\]/g, "")}"`;
+    if (!run("osascript", ["-e", `tell ${target} to quit`])) { for (const pid of pids) kill(pid, "SIGTERM"); termed = true; }
   } else if (platform === "win32") {
     for (const pid of pids) run("taskkill", ["/PID", String(pid), "/T"]);
   } else {
-    for (const pid of pids) { try { process.kill(pid, "SIGTERM"); } catch {} }
+    for (const pid of pids) kill(pid, "SIGTERM");
+    termed = true;
   }
-  if (await waitGone(pids, waitMs)) return true;
-  if (platform === "darwin") for (const pid of pids) { try { process.kill(pid, "SIGTERM"); } catch {} }
+  if (await waitGone(pids, waitMs, isAlive)) return true;
+  if (platform === "darwin" && !termed) for (const pid of pids) kill(pid, "SIGTERM");
   if (platform === "win32") for (const pid of pids) run("taskkill", ["/PID", String(pid), "/T", "/F"]);
-  return waitGone(pids, 4000);
+  return waitGone(pids, 4000, isAlive);
 }
 
 // ---------------------------------------------------------------- launching
 // Only the debugging port: Morse's CDP client (Node's WebSocket) sends no
 // Origin, so it needs no --remote-allow-origins, and some apps quit on any
 // switch they don't know (Joplin: "Unknown flag: --remote-allow-origins").
-export function launchArgs(app, port, extraArgs = []) {
+// Chromium binds the port to 127.0.0.1 only, which is also why Windows
+// Firewall doesn't ask about it.
+export function launchArgs(app, port, extraArgs = [], { platform = process.platform } = {}) {
   const extra = safeExtraArgs(extraArgs);
   const args = [`--remote-debugging-port=${port}`, ...extra];
-  if (app.browser && !extra.some(a => a.startsWith("--user-data-dir"))) args.push(`--user-data-dir=${path.join(HOME, "browser-profile")}`, "--no-first-run");
+  const pj = platform === "win32" ? path.win32 : path.posix;
+  if (app.browser && !extra.some(a => a.startsWith("--user-data-dir"))) args.push(`--user-data-dir=${pj.join(HOME, "browser-profile")}`, "--no-first-run");
   return args;
 }
 
+// One Windows command-line argument, quoted the way programs split them
+// (CommandLineToArgvW): only when needed, backslashes doubled before a quote.
+export function winQuote(arg) {
+  const a = String(arg);
+  if (a && !/[\s"]/.test(a)) return a;
+  return `"${a.replace(/(\\*)"/g, '$1$1\\"').replace(/(\\+)$/, "$1$1")}"`;
+}
+
+// Variables the app shouldn't inherit from the terminal Morse runs in. With
+// ELECTRON_RUN_AS_NODE set (scripts and some editors' terminals set it), an
+// Electron app whose RunAsNode fuse is on starts as plain Node.js and quits
+// without a window; NODE_OPTIONS can carry --inspect and the like.
+const STRIP_ENV = new Set(["ELECTRON_RUN_AS_NODE", "NODE_OPTIONS"]);
+export function launchEnv(app, { env = process.env, has = existsSync } = {}) {
+  const out = { ...(appImageEnv(app, { env, has }) || env) };
+  // Windows variable names ignore case: drop every spelling.
+  for (const k of Object.keys(out)) if (STRIP_ENV.has(k.toUpperCase())) delete out[k];
+  return out;
+}
+
+// How to start the app: { file, args, env, handoff }. Always a program and
+// an argument list, never a shell string, so paths with spaces need no quoting.
+//   handoff: what we start hands over to the real app and exits (Squirrel's
+//   Update.exe, flatpak, snap, wrapper scripts), so its pid isn't the app's.
+export function launchCommand(app, port, extraArgs = [], { platform = process.platform, env = process.env, has = existsSync } = {}) {
+  const args = launchArgs(app, port, extraArgs, { platform });
+  const file = executableFor(app, platform);
+  let argv = args, handoff = !!(app.flatpak || app.source === "snap" || app.script);
+  // Only Squirrel's Update.exe was found (no app-<version>\ folder): it starts
+  // the app and passes it one string of arguments, quoted for Windows.
+  if (/(^|[\\/])update\.exe$/i.test(file)) {
+    if (!app.processName || /^update\.exe$/i.test(app.processName)) throw new Error(`Morse can't tell which app ${file} starts. Give the app's .exe instead.`);
+    argv = ["--processStart", app.processName, "--process-start-args", args.map(winQuote).join(" ")];
+    handoff = true;
+  }
+  return { file, args: argv, env: launchEnv(app, { env, has }), handoff };
+}
+
 export function launchApp(app, port, extraArgs = []) {
-  const args = launchArgs(app, port, extraArgs);
-  const exe = executableFor(app);
-  // Discord's updater stub, if that's all we found, takes the app's arguments separately.
-  const argv = /Update\.exe$/i.test(exe) ? ["--processStart", app.processName || "Discord.exe", "--process-start-args", args.join(" ")] : args;
-  const child = spawn(exe, argv, { detached: true, stdio: "ignore", windowsHide: false, ...(appImageEnv(app) && { env: appImageEnv(app) }) });
+  const cmd = launchCommand(app, port, extraArgs);
+  const child = spawn(cmd.file, cmd.args, { detached: true, stdio: "ignore", windowsHide: false, env: cmd.env });
+  child.handoff = cmd.handoff;
   // Remember how it ended, for waitForLaunch: an app that dies on start
   // should say so, not leave Morse waiting for a port that never opens.
   child.on("error", e => { child.failed = e; });
@@ -698,41 +1032,51 @@ export function appImageEnv(app, { env = process.env, has = existsSync } = {}) {
 // and every Electron app inherits that, so root gets its own hint.
 export function launchFailure(app, { code = null, signal = null, error = null } = {}, { platform = process.platform, uid = process.getuid?.() } = {}) {
   const name = app.name || "The app";
-  if (error) return `Morse couldn't start ${name}: ${error.code === "ENOENT" ? `there's nothing to run at ${executableFor(app)}` : error.code === "EACCES" ? "it isn't allowed to run (not executable)" : error.message}.`;
+  if (error) return `Morse couldn't start ${name}${error.code === "ENOENT" ? `: there's nothing to run at ${executableFor(app)}` : error.code === "EACCES" || error.code === "EPERM" ? ": it isn't allowed to run (not executable)" : ". Check that it opens on its own"}.`;
   let msg = `${name} quit right after it started (${signal ? `stopped by ${signal}` : `exit code ${code}`}), before Morse could connect.`;
   if (platform === "linux" && uid === 0 && app.engine !== "native")
     msg += ` You're running as root, and Electron and Chromium apps won't start as root with their sandbox on. Run Morse as your own user. If you really must use root: morse launch ${app.id || "<app>"} -- --no-sandbox`;
+  // A downloaded app macOS hasn't checked yet (Gatekeeper) is stopped before
+  // it runs when started from a terminal; opening it once from Finder clears that.
+  if (platform === "darwin") msg += ` If you haven't opened ${name} on this Mac before, open it once from Finder (so macOS can check it), quit it, and try again.`;
+  // Squirrel apps that are already open hand the new start to the open copy and quit.
+  if (platform === "win32" && code === 0) msg += ` It may already be running in the tray. Quit it from the tray icon, or run morse launch ${app.id || "<app>"} --restart.`;
   return msg;
 }
 
 // Waits for a freshly launched app's debugging port. A launcher that hands off
 // and exits (Squirrel's Update.exe, a wrapper script) gets `grace` ms for the
-// real app to open the port; after that, its exit is the answer.
-export async function waitForLaunch(child, app, port, { timeoutMs = 30000, grace = 4000, wait = waitForEndpoint } = {}) {
+// real app to open the port; after that, its exit is the answer. A known
+// hand-off (child.handoff) that exited cleanly gets 20 s: Squirrel apps can
+// check for updates before the real app starts.
+export async function waitForLaunch(child, app, port, { timeoutMs = 30000, grace = 4000, handoffGrace = 20000, wait = waitForEndpoint } = {}) {
   const end = Date.now() + timeoutMs;
   let exitedAt = null;
   while (Date.now() < end) {
     try { return await wait(port, 500); } catch {}
-    if (child.failed) throw Object.assign(new Error(launchFailure(app, { error: child.failed })), { failed: true });
+    // Written for a person (plain: shown as is, not as "Something went wrong");
+    // the system's own words go in details, for the terminal's dim line.
+    if (child.failed) throw Object.assign(new Error(launchFailure(app, { error: child.failed })), { failed: true, plain: true, details: child.failed.message });
     if (child.exited) {
       exitedAt ??= Date.now();
-      if (Date.now() - exitedAt >= grace) throw Object.assign(new Error(launchFailure(app, child.exited)), { failed: true });
+      const allow = child.handoff && child.exited.code === 0 ? Math.max(grace, handoffGrace) : grace;
+      if (Date.now() - exitedAt >= allow) throw Object.assign(new Error(launchFailure(app, child.exited)), { failed: true, plain: true });
     }
   }
-  throw new Error(`${app.name} started but never opened its debugging port. It may still be running in the background (try --restart), or it blocks the setting Morse needs.`);
+  throw said(`${app.name} started but never opened its debugging port. It may still be running in the background (try --restart), or it blocks the setting Morse needs.`);
 }
 
 // ---------------------------------------------------------------- per-app choices
 // ~/.morse/apps.json: { "<id>": { "restart": true, "port": 9334 } }
 const PREFS = () => path.join(HOME, "apps.json");
 export async function loadAppPrefs() {
-  try { return JSON.parse(await fs.readFile(PREFS(), "utf8")) || {}; } catch { return {}; }
+  try { return parseJson(await fs.readFile(PREFS(), "utf8")) || {}; } catch { return {}; }
 }
 export async function saveAppPref(id, patch) {
   const all = await loadAppPrefs();
   all[id] = { ...all[id], ...patch };
   for (const k of Object.keys(all[id])) if (all[id][k] == null) delete all[id][k];
-  await fs.mkdir(HOME, { recursive: true });
+  await fs.mkdir(HOME, { recursive: true, mode: 0o700 });
   await fs.writeFile(PREFS(), JSON.stringify(all, null, 2));
   return all[id];
 }
@@ -740,11 +1084,11 @@ export async function saveAppPref(id, patch) {
 // ---------------------------------------------------------------- `morse apps`
 const PLACE = { darwin: "this Mac", win32: "this PC", linux: "this computer" };
 
-export function formatApps(apps, { running = new Map(), sessions = [], platform = process.platform, color = true } = {}) {
-  const c = color
-    ? { g: s => `\x1b[32m${s}\x1b[0m`, d: s => `\x1b[2m${s}\x1b[0m`, b: s => `\x1b[1m${s}\x1b[0m` }
-    : { g: s => s, d: s => s, b: s => s };
+export function formatApps(apps, { running = new Map(), sessions = [], platform = process.platform, color = paint.on } = {}) {
+  const c = painter(color);
   const pad = (s, n) => s + " ".repeat(Math.max(1, n - s.length));
+  // Names as wide as the longest one ("GitHub Desktop"), within reason.
+  const nameWidth = Math.min(24, Math.max(13, ...apps.map(a => String(a.name).length + 2)));
   if (!apps.length) return `No Chromium or Electron apps found on ${PLACE[platform] || "this computer"}.\nIf an app is somewhere else, give its path: ${c.b("morse launch /path/to/App")}`;
   const where = a => a.source === "snap" || a.source === "flatpak" ? a.source
     : platform === "darwin" ? a.path.replace(/^\/Users\/[^/]+/, "~")
@@ -754,12 +1098,12 @@ export function formatApps(apps, { running = new Map(), sessions = [], platform 
     const s = sessions.find(x => x.id === a.id);
     const run = running.get(a.id);
     const dot = a.canAttach === false ? c.d("○") : a.canAttach ? c.g("●") : c.d("◌");
-    if (a.canAttach === false) return `  ${dot} ${c.d(pad(a.name, 13) + pad(version(a), 12) + `can't connect: ${a.why}`)}`;
+    if (a.canAttach === false) return `  ${dot} ${c.d(pad(a.name, nameWidth) + pad(version(a), 12) + `can't connect: ${a.why}`)}`;
     const state = s ? c.g(`connected · port ${s.port}`)
       : run?.port ? c.g(`open with port ${run.port}`)
       : run ? `open without Morse ${c.d(`→ morse launch ${a.id} --restart`)}`
       : c.d(a.note || where(a));
-    return `  ${dot} ${c.b(pad(a.name, 13))}${c.d(pad(version(a), 12))}${pad(a.why, 28)}${state}`;
+    return `  ${dot} ${c.b(pad(a.name, nameWidth))}${c.d(pad(version(a), 12))}${pad(a.why, 28)}${state}`;
   };
   const order = (x, y) => (x.canAttach === false) - (y.canAttach === false) || x.name.localeCompare(y.name);
   const known = apps.filter(a => a.known).sort(order), other = apps.filter(a => !a.known).sort(order);

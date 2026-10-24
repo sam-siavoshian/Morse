@@ -203,7 +203,23 @@ function nameOf(el) {
   if (attr) return { name: attr, from: "label" };
   if (el.localName === "input" && /^(button|submit|reset)$/i.test(el.type)) return { name: clean(el.value), from: "label" };
   const text = clean((el.innerText || el.textContent || "").trim().split("\n")[0]);
+  // A first line with no words ("0" in VS Code's status bar, "12:30", "⚠ 3")
+  // names nothing: the part's own id or class says more ("status bar"), and
+  // with neither, its kind alone does (describe).
+  if (text && !/\p{L}{2}/u.test(text)) return { name: namedBy(el), from: "class" };
   return { name: text, from: "text" };
+}
+// "workbench.parts.statusbar" -> "statusbar", "side-panel" -> "side panel";
+// never a generated name ("css-1x2y3a") or a word that says nothing ("part").
+const NAMELESS = /^(part|parts|container|wrapper|wrap|inner|outer|content|item|items|block|box|row|col|cell|root|el|elem|element|div|span|flex|grid|clearfix|active|selected|show|visible|hidden|left|right|top|bottom)$/i;
+function namedBy(el) {
+  for (const raw of [el.id, ...(el.classList || [])]) {
+    if (!raw || looksHashed(raw)) continue;
+    const last = String(raw).split(".").pop();
+    const words = last.replace(/([a-z])([A-Z])/g, "$1 $2").split(/[-_\s]+/).filter(w => /^\p{L}{2,}$/u.test(w) && !NAMELESS.test(w));
+    if (words.length && words.length <= 3) return words.join(" ").toLowerCase();
+  }
+  return "";
 }
 function describe(el) {
   const role = roleWord(el);
@@ -211,6 +227,7 @@ function describe(el) {
   const short = name.length > 28 ? name.slice(0, 27).trimEnd() + "…" : name;
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
   if (!short) return cap(role || (el.children.length ? "section" : "text"));
+  if (from === "class") return cap(short); // "Statusbar", "Side panel": its own name for itself
   // A container named by its first line of text is "“Release notes” section", not "Release notes".
   const kind = role || (from === "text" && el.children.length ? "section" : "");
   if (!kind || short.toLowerCase().endsWith(kind)) return from === "text" && !kind ? `“${short}”` : short;
@@ -344,6 +361,9 @@ function outline(roots = [document]) {
       note += `, ${where}`;
       tier = 3;
     }
+    // speed: the selector is built only for lines that make the cut below.
+    // uniqueSelector queries the whole page, so building it for every one of
+    // thousands of buttons took seconds on big pages (5,000 table rows: 27 s).
     picked[tier].push({ i: i++, el, rest: `${t ? `  "${t.replace(/"/g, "'")}"` : ""}${note ? `  (${note})` : ""}`, ways: OUTLINE_WAYS.test(t) });
   }
   // The same control repeated (a Reply button on every comment) is one line

@@ -25,9 +25,9 @@ button {
   transition: background var(--m-fast) var(--m-ease);
 }
 button:hover { background: var(--m-hover); }
-button:disabled { opacity: .5; cursor: default; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--m-focus); outline-offset: 1px; }
-button.primary { width: 100%; height: 36px; background: var(--m-primary); color: var(--m-primary-text); border-color: transparent; font-weight: 600; }
+button:disabled { color: var(--m-signal-1); cursor: default; } /* disabled: a token, never opacity */
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
+button.primary { width: 100%; height: 32px; background: var(--m-primary); color: var(--m-primary-text); border-color: transparent; font-weight: 600; }
 button.primary:hover { background: var(--m-primary-hover); }
 button.link { background: none; border: 0; padding: 0; height: auto; color: var(--m-text-3); text-decoration: underline; font-size: var(--m-text-sm); margin-top: 8px; }
 kbd { font: var(--m-text-xs) var(--m-mono); opacity: .7; margin-left: 8px; }
@@ -41,6 +41,8 @@ li { padding: 8px 0; border-bottom: 1px solid var(--m-line); }
 li i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 8px; background: var(--m-signal-1); }
 li i.on { background: var(--m-signal-4); }
 li small { display: block; color: var(--m-text-3); margin-left: 16px; }
+li small.waiting { color: var(--m-warn, #e5a54b); }
+#warn .steps { display: block; margin-top: 6px; }
 li.empty { color: var(--m-text-3); border: 0; }
 
 .choice { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; padding: 8px 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); cursor: pointer; color: var(--m-text); font-size: var(--m-text-md); }

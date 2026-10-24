@@ -21,10 +21,10 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { parseArgs } from "node:util";
 import { runMorse } from "../core/engine.js";
-import { wrapModCode } from "../core/kit.js";
+import { wrapModCode, settleMs } from "../core/kit.js";
 import { buildMessages } from "../core/prompt.js";
-import "../daemon/harness.js"; // registers the claude-code provider
-import { registerProvider } from "../core/providers.js";
+import { setWarmPoolSize } from "../daemon/harness.js"; // registers the claude-code provider
+import { registerProvider, prewarm } from "../core/providers.js";
 import { stubs, helpers } from "./page-helpers.js";
 
 // "noop": an empty change, to check that every checker fails on the untouched page.
@@ -47,6 +47,10 @@ const { values: opt } = parseArgs({ options: {
   "no-write": { type: "boolean", default: false },
   "dump-context": { type: "boolean", default: false },
   "context-only": { type: "boolean", default: false },
+  // speed: like a person, the bar opens (and the model gets ready) this long
+  // before Enter. --typing-ms 0 measures a request with no head start.
+  "typing-ms": { type: "string", default: "2500" },
+  effort: { type: "string", default: "" },
 } });
 
 // Named groups for --sites.
@@ -56,7 +60,8 @@ let cases = all.filter(c => opt.split === "all" || (c.split || "train") === opt.
 if (opt.sites) { const sites = (HARD[opt.sites] || opt.sites).split(","); cases = cases.filter(c => sites.includes(c.site)); }
 if (opt.only) { const ids = opt.only.split(","); cases = all.filter(c => ids.includes(c.id)); }
 const repeat = Math.max(1, +opt.repeat);
-const settings = { provider: opt.provider, model: opt.model };
+const settings = { provider: opt.provider, model: opt.model, ...(opt.effort && { effort: opt.effort }) };
+setWarmPoolSize(Math.min(+opt.concurrency, 4)); // each case is its own person with its own bar
 
 // ---- static server for the demo sites (CSP like demo/serve.js) -------------
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css" };
@@ -93,6 +98,7 @@ const INSTALL_CONTEXT = `(() => {
       if (sel && !S.target) throw new Error("target not found: " + sel);
       return context();
     },
+    timedContext(sel) { const t = performance.now(); const c = this.context(sel); return { c, ms: performance.now() - t }; }, // speed
     probe: typeof effectProbe === "function" ? effectProbe : null,
   };
 })()`;
@@ -129,10 +135,15 @@ async function runCase(c, rep) {
   try {
     await page.goto(`${BASE}/demo/sites/${c.site}/${c.page || ""}`, { waitUntil: "load" });
     await page.evaluate(INSTALL_CONTEXT);
-    await page.waitForTimeout(SETTLE_MS);
-    const tc = Date.now();
-    const context = await page.evaluate(sel => window.__morseEval.context(sel), c.target);
-    rec.ctxMs = Date.now() - tc;
+    // speed: the bar opens, the person points and types, then presses Enter.
+    // Apps settle meanwhile (timers, first re-renders): at least SETTLE_MS.
+    const typing = Math.max(+opt["typing-ms"], SETTLE_MS);
+    if (+opt["typing-ms"] > 0) prewarm(settings);
+    await page.waitForTimeout(typing);
+    const tEnter = Date.now();
+    const { c: context, ms: ctxMs } = await page.evaluate(sel => window.__morseEval.timedContext(sel), c.target);
+    const tCtx = Date.now();
+    rec.ctxMs = Math.round(ctxMs);
     rec.contextChars = buildMessages({ request: c.request, context }).map(m => m.content).join("").length;
     if (opt["dump-context"]) console.log(`---- ${c.id}\n` + buildMessages({ request: c.request, context })[1].content);
     if (opt["dump-context"] && opt["context-only"]) { await ctx.close(); return { ...rec, pass: true, ms: 0 }; }
@@ -145,7 +156,7 @@ async function runCase(c, rep) {
 
     const modId = `eval-${c.id}`;
     const tg = Date.now();
-    let cssApplied = Promise.resolve();
+    let cssApplied = Promise.resolve(), firstCssAt = null;
     const hasProbe = !opt["no-probe"] && await page.evaluate(() => !!window.__morseEval.probe);
     const res = await runMorse({
       settings, request: c.request, context,
@@ -155,7 +166,7 @@ async function runCase(c, rep) {
           let s = document.head.querySelector(`style[data-morse-css="${id}"]`);
           if (!s) { s = document.createElement("style"); s.setAttribute("data-morse-css", id); document.head.append(s); }
           s.textContent = css;
-        }, [modId, ev.css]).catch(() => {});
+        }, [modId, ev.css]).then(() => { if (firstCssAt == null && ev.css.trim()) firstCssAt = Date.now(); }, () => {});
       },
       // Same as daemon/connector.js exec: run, then collect late callback errors.
       exec: async js => {
@@ -163,7 +174,7 @@ async function runCase(c, rep) {
         try { r = await page.evaluate(wrapModCode(modId, js)); }
         catch (e) { return { ok: false, error: String(e.message || e).split("\n")[0].replace(/^page\.evaluate: /, "") }; }
         if (!r?.ok) return r || { ok: false, error: "no result" };
-        await page.waitForTimeout(600);
+        await page.waitForTimeout(settleMs(r)); // speed: core/kit.js settle
         const errs = await page.evaluate(id => morse.__errors(id), modId);
         return errs.length ? { ok: false, error: errs[0].split("\n")[0] } : { ok: true };
       },
@@ -171,7 +182,12 @@ async function runCase(c, rep) {
     });
     await cssApplied;
     rec.genMs = Date.now() - tg;
-    rec.ms = Date.now() - t0;
+    rec.ms = Date.now() - t0 - typing; // the typing time is not latency
+    // speed: per-stage latency, ms from Enter (context, model, first style on the page, done)
+    const tm = res.timing || {}, off = tCtx - tEnter, at = v => (v == null ? null : Math.round(v + off));
+    rec.stages = { context: Math.round(ctxMs), contextRoundTrip: off, promptChars: rec.contextChars, spawn: tm.spawn ?? null, warm: tm.warm ?? null,
+      modelReady: at(tm.modelReady), firstToken: at(tm.firstToken), firstCss: firstCssAt == null ? null : firstCssAt - tEnter,
+      lastToken: at(tm.lastToken), modelDone: at(tm.modelDone), total: Date.now() - tEnter };
     Object.assign(rec, { attempts: res.attempts, title: res.title, css: res.css, js: res.js, engineOk: res.ok, engineError: res.error || null, repairs: res.repairs || [] });
     await page.waitForTimeout(300);
     const verdict = await Promise.race([
@@ -231,6 +247,15 @@ const summary = {
     return [k, `${rs.filter(r => r.pass).length}/${rs.length}`];
   })),
 };
+// speed: median and p90 per stage
+summary.stages = {};
+for (const k of ["context", "promptChars", "spawn", "modelReady", "firstToken", "firstCss", "lastToken", "modelDone", "total"]) {
+  const xs = results.map(r => r.stages?.[k]).filter(v => v != null).sort((a, b) => a - b);
+  summary.stages[k] = { n: xs.length, median: pct(xs, 0.5), p90: pct(xs, 0.9) };
+}
+console.log("stage            n   median     p90");
+for (const [k, v] of Object.entries(summary.stages)) console.log(`${k.padEnd(14)} ${String(v.n).padStart(3)} ${String(v.median ?? "-").padStart(8)} ${String(v.p90 ?? "-").padStart(7)}`);
+console.log(`\n${pass}/${results.length} passed (${(summary.rate * 100).toFixed(0)}%), median ${(median / 1000).toFixed(1)}s`);
 console.log(`\n${pass}/${results.length} passed (${(summary.rate * 100).toFixed(0)}%), median ${(median / 1000).toFixed(1)}s, p90 ${(summary.p90Ms / 1000).toFixed(1)}s`);
 console.log(`model+apply ${(summary.genMs.median / 1000).toFixed(1)}s / p90 ${(summary.genMs.p90 / 1000).toFixed(1)}s · prompt ${summary.promptChars.median} / p90 ${summary.promptChars.p90} chars · context ${summary.ctxMs.median} / p90 ${summary.ctxMs.p90} ms · ${summary.repairs} repair rounds`);
 console.log(summary.byCategory);

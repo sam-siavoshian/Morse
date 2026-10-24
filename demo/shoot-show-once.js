@@ -50,7 +50,7 @@ await shot("130-show-once-recording.png");
 // ---- 131: Stop; the steps wait in the bar
 await page.locator(".so-strip [data-so=stop]").click();
 await until(async () => (await status(page)).open);
-await page.locator(".so-card .so-eyebrow").hover(); // on the bar, so nothing on the page is outlined for pointing
+await page.locator(".so-card .eyebrow").hover(); // on the bar, so nothing on the page is outlined for pointing
 await shot("131-show-once-steps.png");
 await page.locator(".sugs .sug", { hasText: "Do it to every" }).click();
 await page.keyboard.type("unread email", { delay: 20 });

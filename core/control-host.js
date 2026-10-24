@@ -14,6 +14,7 @@
 
 import { normalizeControl, isPaused, pauseInfo, setPause, safeKey, safeBoot, safeApplied, safeAlive, safeForgive, safeOff } from "./control.js";
 import { exportBundle, backupFilename, parseImport, prepareInstall } from "./backup.js";
+import { packPreview } from "./pack.js"; // packs hook
 
 export const CONTROL_REQUESTS = new Set(["control.get", "control.boot", "control.applied", "control.alive", "control.forgive", "control.off", "control.pause", "mods.preview", "control.install", "control.exportAll"]);
 
@@ -60,8 +61,10 @@ export function controlHandler(store, clock = () => Date.now()) {
           const state = msg.scope === "all" ? setPause(s, { all: !!msg.on }) : setPause(s, { key: msg.key || pauseInfo(s, where).key, on: !!msg.on });
           return { state, result: { pause: state.pause, info: pauseInfo(state, where) } };
         });
-      case "mods.preview":
-        return parseImport(msg.source);
+      case "mods.preview": {
+        const r = await parseImport(msg.source);
+        return r.kind === "pack" ? packPreview(r, await store.listMods(), { source: msg.source }) : r; // packs hook: clashes with your mods, and the hash Install checks (core/pack.js)
+      }
       case "control.install": {
         const list = (Array.isArray(msg.mods) ? msg.mods : []).map(m => prepareInstall(m, { kind: msg.kind, where }));
         if (!list.length) throw new Error("Nothing to install in this.");

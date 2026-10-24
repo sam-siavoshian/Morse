@@ -152,3 +152,46 @@ export function cssKey(css) {
   for (const ch of String(css || "")) h = (h * 31 + ch.charCodeAt(0)) | 0;
   return (h >>> 0).toString(36);
 }
+
+// ---- after it lands: did the change hide most of the page?
+// cssHidesPage only knows "the whole page" by name. A class the sidebar and
+// the main content share (`div.interior` on nodejs.org/api) blanks the page
+// just as well, and only the page itself can tell. pageCollapse runs in the
+// page (the hosts send its source), once per draft: what shows at 48 spots
+// of the window without the change (Morse's own draft style, `id`, set
+// aside) and with it, in one task, so nothing is painted in between.
+// -> { before, after }: spots that show a part of the page, not the bare
+// page behind it (Morse's own UI doesn't count either way).
+export function pageCollapse(css, id = "") {
+  const W = innerWidth, H = innerHeight;
+  if (!W || !H || !document.body) return null;
+  const sample = () => {
+    let n = 0;
+    for (let i = 1; i <= 8; i++) for (let j = 1; j <= 6; j++) {
+      const el = document.elementsFromPoint(W * i / 9, H * j / 7).find(e => !e.closest("[data-morse-ui]"));
+      if (el && el !== document.body && el !== document.documentElement) n++;
+    }
+    return n;
+  };
+  const mine = id ? [...document.querySelectorAll("style[data-morse-css]")].filter(s => s.getAttribute("data-morse-css") === id) : [];
+  const was = mine.map(s => s.disabled);
+  const test = document.createElement("style");
+  try {
+    mine.forEach(s => { s.disabled = true; });
+    const before = sample();
+    test.textContent = String(css || "");
+    (document.head || document.documentElement).append(test);
+    return { before, after: sample() };
+  } finally {
+    test.remove();
+    mine.forEach((s, k) => { s.disabled = was[k]; });
+  }
+}
+// Most of what showed is gone: a repair round, like draftHarm's.
+export function collapseHarm(c) {
+  if (!c || !(c.before >= 8) || !(c.after <= c.before * 0.35)) return null;
+  return { kind: "collapse", user: "That would have hidden most of the page, so Morse didn't keep it. Try saying which part you mean.",
+    model: `Applied, your CSS hid most of the page: of ${c.before} spots of the window that showed the page before, ${c.after} still do. `
+      + "A selector matches a container that holds much more than what was asked for (often a class that the part you meant shares with the main content). "
+      + "Use a selector that matches only that part: an id, a more specific class, or its place in the page." };
+}

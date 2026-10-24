@@ -26,7 +26,7 @@ You need [Node](https://nodejs.org) 22 or newer. Full steps, and what to do when
 
 1. Get Morse: `npm install -g morse-cli` (until the first npm release: `npm install -g github:sam-siavoshian/RRAA`).
 2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and choose the folder `morse extension` prints. The welcome page opens.
-3. In Morse's details, turn on **“Allow User Scripts”**, so mods that add buttons work on every site.
+3. In Morse's details, turn on **“Allow User Scripts”**, so mods that add buttons or features can run.
 4. Connect a model: the welcome page shows one command, `morse setup --pair <code>`. Paste it in a terminal. It finds Claude Code or Codex, checks that it answers, and the page connects by itself. Then press **⌥Space** (Ctrl+Shift+Space on Windows and Linux) on any page.
 
 **Desktop apps (Spotify, Slack, Discord, VS Code…)**
@@ -51,6 +51,7 @@ To work on Morse itself from a clone, see the [developer guide](docs/dev/README.
 | **Show me once** | Do a task by hand once, then turn it into a button, a shortcut, or “do this to every one”. | [Show me once](docs/show-me-once.md) |
 | **Easier to use** | Higher contrast, bigger click targets, an easier font, Read aloud, and Check this page with Fix it. | [Easier to use](docs/easier-to-use.md) |
 | **Mods** | Turn mods on and off, share them with a link, try mods other people made, and fix one when a site changes. | [Mods](docs/mods.md) |
+| **Mod packs** | Share several mods together with your team. Each person picks the ones they want, and the pack can stay up to date. | [Mod packs](docs/mod-packs.md) |
 | **Your controls** | One shortcut turns every mod off. Pause Morse on a site. A mod that slows down, freezes or keeps breaking a page is stopped. Back up everything to one file. | [Your controls](docs/your-controls.md) |
 | **Your style** | One look on every site and app: your font, bigger text, calmer pages, colors that are easier to tell apart. Say it once, ending with “everywhere”. | [Your style](docs/your-style.md) |
 | **Desktop apps** | `morse launch spotify` opens the app with Morse connected. The app's own files never change. | [Desktop apps](docs/desktop.md) |

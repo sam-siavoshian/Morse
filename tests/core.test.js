@@ -2,7 +2,7 @@ import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
-import { parseModResponse, completeCssPrefix } from "../core/parse.js";
+import { parseModResponse, completeCssPrefix, liveCss } from "../core/parse.js";
 import { createMod, encodeShare, decodeShare, toUserscript, modMatches } from "../core/mod.js";
 import { streamChat, registerProvider } from "../core/providers.js";
 import { runMorse, selectorsIn, deadHooks } from "../core/engine.js";
@@ -27,6 +27,23 @@ test("css prefix ignores braces in strings and comments, keeps nested at-rules w
   assert.equal(completeCssPrefix('a::after{content:"}"} /* } */ b{x:1'), 'a::after{content:"}"}');
   assert.equal(completeCssPrefix("@media (x){a{b:c}}d{"), "@media (x){a{b:c}}");
   assert.equal(completeCssPrefix("@media (x){a{b:c}"), "");
+});
+
+test("live css: each finished property goes on the page before its rule ends", () => {
+  assert.equal(liveCss("a{color:red} b{margin:0;padding:4p"), "a{color:red} b{margin:0;}");
+  assert.equal(liveCss("a{color:red} b{marg"), "a{color:red}");
+  assert.equal(liveCss("a{color:red;"), "a{color:red;}");
+  // a ";" inside url(...) or a string isn't the end of a property
+  assert.equal(liveCss("a{background:url(data:image/png;base64,AA"), "");
+  assert.equal(liveCss('a{content:"x;y'), "");
+  assert.equal(liveCss('a{content:"x;y";b:1'), 'a{content:"x;y";}');
+  // inside @media: finished rules, then finished properties, braces closed
+  assert.equal(liveCss("@media (x){a{b:c}d{e:f;g"), "@media (x){a{b:c}d{e:f;}}");
+  assert.equal(liveCss("@media (x){a{b:c}"), "@media (x){a{b:c}}");
+  assert.equal(liveCss("@media (x){a{b:c}}"), "@media (x){a{b:c}}");
+  // a half-written selector never goes on
+  assert.equal(liveCss("a{b:c}\n.card:not(.x"), "a{b:c}");
+  assert.equal(liveCss(""), "");
 });
 
 test("share links round-trip and drop local state", async () => {
@@ -186,7 +203,7 @@ test("reads an Electron fuse wire", () => {
   assert.equal(w.fuses.EnableNodeCliInspectArguments, "disabled");
   assert.equal(w.fuses.EnableEmbeddedAsarIntegrityValidation, "enabled");
   assert.equal(w.fuses.LoadBrowserProcessSpecificV8Snapshot, "removed");
-  assert.equal(fuseVerdict({ electron: true, ...w }).length, 3);
+  assert.equal(fuseVerdict({ electron: true, ...w }).length, 4, "connect, --inspect off, ASAR integrity, RunAsNode");
   assert.equal(readFuseWire(Buffer.from("no fuses here")), null);
 });
 

@@ -18,7 +18,8 @@ const Onboarding = (() => {
   let status = {}; // what the host knows: { mode, model: { connected }, userScripts }
   let loadedAt = 0, shownStep = "", shownNote = "";
   let tipSaved = false, tipShare = false;
-  const CHECK = `<svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg>`;
+  // a step that's done: the check from the 16px icon set, drawn small in the middle of its 16px box
+  const CHECK = `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.25 8.25 7.1 10.1 10.75 6"/></svg>`;
 
   const coachEl = makeEl("div", { className: "ob-coach", hidden: true }, { role: "group", "aria-label": "Getting started" });
   const noteEl = makeEl("div", { className: "ob-note", hidden: true }, { role: "note" });
@@ -65,7 +66,7 @@ const Onboarding = (() => {
     const examples = id === "describe" && S.phase === "idle" ? ` <button type="button" class="ob-link" data-ob="help">See examples</button>` : "";
     coachEl.innerHTML = `
       <ol class="ob-steps">${STEPS.map(([, label], i) => `<li class="${i < at ? "done" : i === at ? "now" : ""}"${i === at ? ` aria-current="step"` : ""}><span class="n">${i < at ? CHECK : i + 1}</span>${label}</li>`).join("")}</ol>
-      <button type="button" class="ob-hide" data-ob="skip">Hide tips</button>
+      <button type="button" class="tbtn ob-hide" data-ob="skip">Hide tips</button>
       <p class="ob-say">${say}${examples}</p>`;
   }
 
@@ -74,8 +75,11 @@ const Onboarding = (() => {
     if (!st || coachOn() || !S.open || bar.hidden || S.phase !== "idle" || paneKind) return null;
     if (modelMissing(status, S.label) && !st.dismissed.model && !status.sample) // the practice page's sample answers need no model
       return { id: "model", text: "No model connected yet. Connect one so Morse can make changes.", btn: "Connect a model", act: "model" };
+    const waiting = Waiting.list(); // waiting hook: mods here whose code waits for “Allow User Scripts” (64-waiting.js)
+    if (waiting.length && !Waiting.quiet)
+      return { id: `waiting:${waiting.length}`, text: Waiting.text(waiting), btn: "Turn it on", act: "userscripts" };
     if (status.userScripts === false && !st.dismissed.userScripts)
-      return { id: "userScripts", text: "“Allow User Scripts” is off, so added buttons and features won't run on some sites.", btn: "Turn it on", act: "userscripts" };
+      return { id: "userScripts", text: "“Allow User Scripts” is off, so changes that add buttons or features won't run. Changes to how pages look still work.", btn: "Turn it on", act: "userscripts" };
     return null;
   }
   function renderNote() {
@@ -84,8 +88,8 @@ const Onboarding = (() => {
     if ((n?.id || "") === shownNote) return;
     shownNote = n?.id || "";
     noteEl.innerHTML = n ? `<span class="ob-dot" aria-hidden="true"></span><span class="ob-text">${esc(n.text)}</span>
-      <button type="button" data-ob="${n.act}">${esc(n.btn)}</button>
-      <button type="button" class="ob-close" data-ob="dismiss" data-id="${n.id}" aria-label="Don't show this again" title="Don't show this again">×</button>` : "";
+      <button type="button" class="btn" data-ob="${n.act}">${esc(n.btn)}</button>
+      <button type="button" class="ibtn sm close ob-close" data-ob="dismiss" data-id="${n.id}" aria-label="Don't show this again" title="Don't show this again">×</button>` : "";
   }
 
   // ---- errors in plain words, with a button that does something about it
@@ -126,6 +130,7 @@ const Onboarding = (() => {
   }
   async function act(what, btn) {
     if (what === "skip") return save({ coach: "done" });
+    if (what === "dismiss" && btn.dataset.id?.startsWith("waiting")) { Waiting.quiet = true; return sync(); } // waiting hook: for this page only
     if (what === "dismiss") return save({ dismissed: { [btn.dataset.id]: true } });
     if (what === "help") return toggleHelp();
     if (what === "start") { panel.hidden = true; return openBar(); }
@@ -180,13 +185,13 @@ const Onboarding = (() => {
       ["Edit tools", `Point at something and press ${edit} to hide, move or recolor it.`],
       ["Ask", "Ask about the page, like “what does this button do?”"],
     ].filter(Boolean);
-    winEl.innerHTML = `<div class="ob-win-mark" aria-hidden="true">${radar(30)}<svg class="ob-win-check" viewBox="0 0 16 16" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg></div>
+    winEl.innerHTML = `<div class="ob-win-mark" aria-hidden="true">${radar(30)}<svg class="ob-win-check" viewBox="0 0 16 16" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg></div>
       <div class="ob-win-body">
         <b>Your first mod is saved</b>
         <p>A mod is a change you saved. Morse brings ${m ? `“${esc(m.title)}”` : "it"} back every time you open ${esc(where())}. ${k("mods") ? `${k("mods")} opens` : "Mods opens"} the Mods panel, to turn it off or share it.</p>
-        <h4>Now in your bar</h4>
+        <h4 class="eyebrow">Now in your bar</h4>
         <ul>${next.map(([t, d]) => `<li><b>${esc(t)}</b><span>${d}</span></li>`).join("")}</ul>
-        <div class="ob-win-row">${m ? `<button type="button" class="primary" data-win="share">Share it</button>` : ""}<button type="button" data-win="done">Done</button><span><span class="caps"><kbd>F1</kbd></span> for help</span></div>
+        <div class="ob-win-row">${m ? `<button type="button" class="btn primary" data-win="share">Share it</button>` : ""}<button type="button" class="btn" data-win="done">Done</button><span><span class="caps"><kbd>F1</kbd></span> for help</span></div>
       </div>`;
     winEl.hidden = false;
     clearTimeout(celebrate.t);
