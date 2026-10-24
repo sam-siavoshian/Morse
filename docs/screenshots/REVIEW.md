@@ -112,6 +112,7 @@ names a folder), 22-web-working.png, 26-news-before.png, 31-installed.png and
 | install-{desktop,mobile}-{dark,light}.png | shoot-site.js | ✅ | The share page keeps its earlier look |
 | compare-{390,768,1280,1440}-{first-screen,full}, compare-gallery-1440, compare-privacy-1440 | by hand, from a local build of the Lanes site | ✅ | Lanes on the left, Morse on the right, same width |
 | install-bad-link-desktop-dark.png | shoot-site.js | ✅ | |
+| try-{desktop,mobile}-{working,result}.png, try-desktop-unknown.png | shoot-try.js | ✅ | Try it here: the real runtime in the demo app with sample answers; a request with none gets the install note |
 
 Removed: the landing page's demo shots (landing-demo-*, the landing page has a
 video now) and install-installed-desktop-dark.png; nothing uses them.

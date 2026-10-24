@@ -8,6 +8,8 @@
 //   /RRAA/share/install.html       share links (core/mod.js SHARE_BASE)
 //   /RRAA/core/, /RRAA/design/     modules and tokens the pages import
 //   /RRAA/docs/launch/             the demo video and posters
+//   /RRAA/demo/sites/tunes/, byte/ the demo apps in the landing page's Try it here
+//   /RRAA/dist/extension/runtime.js  the Morse runtime that runs inside them
 //
 // It also writes site/privacy.html from docs/privacy.md, copies the nav bar and
 // footer of site/index.html into site/privacy.html and site/gallery.html (all
@@ -19,10 +21,14 @@
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { bundleRuntime } from "../runtime/bundle.js";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const OUT = path.join(root, "dist", "pages");
-const PUBLISH = ["site", "share", "core", "design/tokens.css", "docs/launch"];
+const PUBLISH = ["site", "share", "core", "design/tokens.css", "docs/launch", "demo/sites/tunes", "demo/sites/byte"];
+// Try it here (site/try.js) loads the runtime from where scripts/build.js puts
+// it; this writes the same file, so the build needs no other step first.
+const RUNTIME = "dist/extension/runtime.js";
 
 // ---- docs/privacy.md -> site/privacy.html
 
@@ -202,11 +208,17 @@ export async function brokenLinks(dir) {
   return broken;
 }
 
-export async function buildPages({ out = OUT } = {}) {
-  await fs.writeFile(path.join(root, "site", "privacy.html"), await privacyHtml());
-  await fs.writeFile(path.join(root, "site", "gallery.html"), await galleryHtml());
+// refresh: false leaves site/privacy.html and site/gallery.html as they are
+// (tests build into a folder of their own while other tests read those).
+export async function buildPages({ out = OUT, refresh = true } = {}) {
+  if (refresh) {
+    await fs.writeFile(path.join(root, "site", "privacy.html"), await privacyHtml());
+    await fs.writeFile(path.join(root, "site", "gallery.html"), await galleryHtml());
+  }
   await fs.rm(out, { recursive: true, force: true });
   for (const p of PUBLISH) await copy(path.join(root, p), path.join(out, p));
+  await fs.mkdir(path.dirname(path.join(out, RUNTIME)), { recursive: true });
+  await fs.writeFile(path.join(out, RUNTIME), bundleRuntime());
   await fs.copyFile(path.join(root, "docs", "privacy.md"), path.join(out, "docs", "privacy.md"));
   await fs.writeFile(path.join(out, ".nojekyll"), "");
   await fs.writeFile(path.join(out, "index.html"), `<!doctype html>
