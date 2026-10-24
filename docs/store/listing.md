@@ -31,34 +31,34 @@ the older single list, pick **Productivity**.) Language: **English**.
 ```
 Morse lets you change any website in your own words.
 
-Open Morse on a page, point at something, and say what you want: "hide the sidebar", "make this easier to read", "add a copy button to every code example". You see the page change while Morse writes the change. If you like it, press Save and it becomes a mod. A mod is a change you saved. Morse brings it back every time you open that site.
+Open Morse on a page, point at something and say what you want: "hide the sidebar", "make this easier to read", "add a copy button to every code example". You see the page change while Morse writes it. Save keeps it for next time. Undo puts the page back. A mod is a change you saved. Morse brings it back every time you open that site.
 
 What you can do
-• Hide what you never use, restyle what tires your eyes, or add the button a site forgot.
-• Watch it change. The new look shows up while the change is being written.
-• Ask for a follow-up ("a bit smaller"), or undo it. Nothing is saved until you press Save.
+• Hide parts you never use, make text easier to read, or add a button a site is missing.
+• Watch it change. The new look shows up while your model writes the change.
+• Ask for more ("a bit smaller"), or undo it. Nothing is saved until you press Save.
 • Use the Edit tools to hide, move, resize, recolor or rename part of a page at once, with no typing.
 • Page tools in one click: dark mode, bigger text, hide ads and pop-ups, focus mode.
 • Easier to use: higher contrast, bigger click targets, an easier to read font, a reading ruler, Read aloud and Check this page.
 • Ask a question about a page instead of changing it, and Morse points at the answer.
 • See all your mods for a site in the Mods panel, and turn each one on or off.
-• Try mods other people made, and share yours as a link. Before you install a mod from someone else, Morse says in plain words what it does.
+• Try mods other people made, and share yours as a link. Before you install a mod from someone else, Morse tells you what it does.
 • Morse speaks English, Spanish, German, French, Brazilian Portuguese, Simplified Chinese, Japanese, Persian and Arabic. You can describe changes in any language.
 
-Your model, your account
-Morse has no account and no server of its own. Changes are written by a model you already use:
+Models
+Morse has no account and no server of its own. A model you already use writes the changes:
 • Claude Code or Codex, through the free Morse helper on your computer (npm install -g morse-cli, then morse setup), or
 • an Anthropic or OpenAI API key, pasted into Morse's settings.
-The welcome page walks you through it. Until a model is connected, you can try Morse on a practice page.
+The welcome page shows you how. Until you connect a model, you can try Morse on a practice page.
 
 Changes that add buttons or features
-Changes that only restyle a page work right away. Changes that add buttons or features need one switch: in chrome://extensions, open Morse's details and turn on "Allow User Scripts". Morse tells you when a change is waiting for it and takes you there.
+Changes to how a page looks work right away. Changes that add buttons or features need one switch. In chrome://extensions, open Morse's details and turn on "Allow User Scripts". Morse tells you when a change is waiting for it, and takes you there.
 
 Privacy
 When you ask for a change, what you pointed at and what you asked for go only to the model you chose. Your mods stay in your browser. Morse has no analytics and sends nothing to the people who make it. Full policy: https://sam-siavoshian.github.io/RRAA/site/privacy.html
 
 Open source
-Morse is free and MIT licensed. Read every line: https://github.com/sam-siavoshian/RRAA
+Morse is free and MIT licensed. The code is on GitHub: https://github.com/sam-siavoshian/RRAA
 ```
 
 ## Links (Store listing tab)
@@ -71,7 +71,7 @@ Morse is free and MIT licensed. Read every line: https://github.com/sam-siavoshi
 ```
 Change any website in your own words.
 
-You open Morse on a page, point at part of it and say what you want changed. Morse has your model write that change and shows it on the page. If you save it, Morse brings it back whenever you visit that site. Everything else in Morse (the Edit tools, Page tools, the Mods panel, sharing) serves that one purpose: changing the websites you use.
+You open Morse on a page, point at part of it and say what you want changed. Your model writes that change, and Morse shows it on the page. If you save it, Morse brings it back whenever you visit that site. Everything else in Morse (the Edit tools, Page tools, the Mods panel, sharing) serves that one purpose: changing the websites you use.
 ```
 
 ## Permission justifications (Privacy tab)
@@ -157,8 +157,8 @@ about the launch, or alt text.
 
 | File | Caption |
 |---|---|
-| 1-describe-a-change.png | Say what to change. You see it change while it is being written. |
-| 2-save-what-you-like.png | Add what a site is missing. Save it, and it is there every time you come back. |
+| 1-describe-a-change.png | Describe a change. You see it while your model writes it. |
+| 2-save-what-you-like.png | Add what a site is missing. Save keeps it for next time. |
 | 3-your-mods.png | Your saved changes for a site in one place. Turn each one on or off. |
 | 4-mods-others-made.png | Try changes other people made. Save the ones you like. |
 | 5-edit-tools.png | Edit tools change the page at once: hide, move, resize, recolor, rename. |

@@ -94,3 +94,7 @@ body.locked { overflow: hidden; }
   .d-shots { grid-template-columns: 1fr; }
   .g-switch { margin-left: 0; }
 }
+
+/* Until the list loads, the grid holds a screen's height, so the footer
+   doesn't jump down when the cards arrive. */
+#grid:empty { min-height: 100vh; }

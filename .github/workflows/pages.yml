@@ -10,7 +10,7 @@ name: Pages
 on:
   push:
     branches: [main]
-    paths: ["site/**", "share/**", "core/**", "design/**", "docs/launch/**", "docs/privacy.md", "scripts/build-pages.js", ".github/workflows/pages.yml"]
+    paths: ["site/**", "share/**", "core/**", "design/**", "docs/launch/**", "docs/privacy.md", "scripts/build-pages.js", "scripts/site-images.js", "demo/sites/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:

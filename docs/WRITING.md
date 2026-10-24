@@ -22,6 +22,12 @@ written for developers are listed under [Where technical words are fine](#where-
   terms for developer docs and for the code view, where people chose to look
   at code.
 - **Calm, not excited.** No exclamation marks. No emoji. No hype.
+- **No sales rhythm.** No rhetorical questions ("Like it?"), no "X. Y. Z."
+  slogans, no lists of three for the sound of it, no em dashes. Say the one
+  thing that is true, and stop.
+- **Only claim what was checked.** Name the apps Morse was
+  [tested on](desktop.md#tested-on) (Visual Studio Code, VSCodium, Obsidian, Logseq, Joplin), not apps it
+  might work with.
 - **Plain, not clever.** No jokes, puns or cute names. A label says what the
   thing does. "Rewire" and "the magic moment" say nothing; "Change keys" and
   "Watch it happen" do.
@@ -41,6 +47,10 @@ written for developers are listed under [Where technical words are fine](#where-
 | magic, magical, the magic moment | (describe what you see) |
 | unlock, supercharge, level up | (say what the person gets) |
 | revolutionary, next-gen, cutting-edge | (nothing) |
+| effortless, intuitive, streamline, blazing fast | (say what happens, and how long it takes) |
+| elevate, empower, delve, harness, game-changer, next-level | (nothing) |
+| simply, just, easily | (cut it: "Describe the change", not "Just describe the change"; "just now" is fine) |
+| Let's…, Ready to…? | (say what to do: "Connect a model") |
 | customize, customization | change |
 | enable, disable, toggle | turn on, turn off |
 | refine (in the UI) | change, "describe what to change" |
@@ -51,6 +61,9 @@ written for developers are listed under [Where technical words are fine](#where-
 | invalid, illegal, fatal | (say what is wrong) |
 | please, sorry, oops | (just say it) |
 | Morse as a verb ("to morse") | open Morse, change |
+
+`tests/words.test.js` checks for these, and for exclamation marks and emoji,
+in everything a person reads (the developer docs only for the marketing words).
 
 ### Words people don't know
 
@@ -70,7 +83,7 @@ them (code in backticks is skipped).
 | runtime, harness, backend, provider, bridge, daemon | Morse, the model, the Morse helper |
 | endpoint, base URL, API (alone) | server address, API key |
 | localhost, 127.0.0.1, port | this computer |
-| Electron (alone) | desktop apps (Spotify, Slack, Discord, VS Code…) |
+| Electron (alone) | desktop apps (VSCodium, Obsidian, Joplin…) |
 | HTTP status codes in the sentence | the plain words, then "(error 401)" at the end |
 
 "API key" is fine: people paste one, and the provider's site calls it that.
@@ -173,7 +186,7 @@ a different thing: it keeps a mod turned off.)
 | **Settings** | The Settings sheet in the bar. | preferences, options, config |
 | **pause** | Stop every mod on a site, or everywhere, without deleting them. "Pause Morse on youtube.com". | suspend, disable |
 | **Safe start** | When a mod keeps closing or reloading a page, Morse holds it back next time and asks. | crash guard, quarantine |
-| **desktop app** | An app on your computer that Morse can connect to (Spotify, Slack, Discord, VS Code…). Say "Electron" only for developers. | Electron app, CDP target |
+| **desktop app** | An app on your computer that Morse can connect to (VSCodium, Obsidian, Joplin…). Name only apps Morse was [tested on](desktop.md#tested-on) as examples. Say "Electron" only for developers. | Electron app, CDP target |
 | **“Allow User Scripts”** | Chrome's switch that lets Morse run the code in mods on every site. Always Chrome's exact words, in quotes or bold. | userScripts, user scripts permission |
 
 ## Buttons and labels
@@ -241,7 +254,7 @@ in one or two short sentences.
 
 | Where | Before | After |
 |---|---|---|
-| Bar, pointing | **Point** at anything to change it · or just describe it · Esc to close | **Point** at anything to change it, or just describe it · Esc to close |
+| Bar, pointing | **Point** at anything to change it · or just describe it · Esc to close | **Point** at something, or describe a change · Esc to close |
 | Bar, something pointed at | Type to describe a change · ⌘E to edit directly · Esc to close | Describe a change · ⌘E for Edit tools · Esc to close |
 | Bar, working | Writing | Writing the change |
 | Bar, fixing | Fixing a problem in the new code | Fixing a mistake and trying again |

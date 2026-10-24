@@ -27,18 +27,18 @@ The store build differs from the test build (`npm run build`,
 
 - `extension/host.js` lets the local copy of the share page
   (`http://127.0.0.1:8787/share/`) ask for an install, so tests can run the
-  share flow; the store build leaves that address out. `scripts/build.js`
+  share flow. The store build leaves that address out. `scripts/build.js`
   fails if the line it removes ever changes.
 - The service worker reads the demo sites' local gallery list
   (`http://127.0.0.1:8787/site/mods/index.json`) on pages at
-  127.0.0.1:8787-8797; the store build never does, and that address isn't in
+  127.0.0.1:8787-8797. The store build never does, and that address isn't in
   it (`MORSE_STORE_BUILD` in `extension/gallery-host.js`).
 
 `npm run store` refuses a zip that still has either, and
 `tests/store.test.js` builds both and checks that nothing else differs.
 
 `npm run package:extension` still zips the test build
-(`dist/morse-extension-<version>.zip`); don't upload that one.
+(`dist/morse-extension-<version>.zip`). Don't upload that one.
 
 Then check the zip the way Chrome will see it:
 
@@ -56,8 +56,9 @@ extension's pages.
 ## Screenshots
 
 Spec: **1280×800**, 24-bit PNG without transparency, up to 5. All five are
-taken from the real extension with a real model (Claude Code · haiku through
-`morse serve`) on real public websites, except the gallery one:
+taken from the real extension with a real model (Claude Code · sonnet through
+`morse serve`) on real public websites (pkg.go.dev, pypi.org, rubygems.org);
+the gallery one tries the gallery's “Dark mode” mod for pypi.org:
 
 ```bash
 DISPLAY=:99 npm run store:screenshots       # ONLY=2,3 retakes some
@@ -72,8 +73,8 @@ retake the ones that don't read well.
 |---|---|---|
 | `1-describe-a-change.png` | pkg.go.dev while a change is being written: the code examples already dark, the survey banner gone | Say what to change. You see it change while it is being written. |
 | `2-save-what-you-like.png` | pypi.org: copy buttons added to the code examples, with Save, Undo, Edit code and Share | Add what a site is missing. Save it, and it is there every time you come back. |
-| `3-your-mods.png` | pypi.org: the Mods panel with the three mods just made | Your saved changes for a site in one place. Turn each one on or off. |
-| `4-mods-others-made.png` | The Tunes demo app: a gallery mod tried before saving, in the Mods panel | Try changes other people made. Save the ones you like. |
+| `3-your-mods.png` | pypi.org: the Mods panel with the three mods made a moment before | Your saved changes for a site in one place. Turn each one on or off. |
+| `4-mods-others-made.png` | pypi.org: the gallery's “Dark mode” for this site, tried before saving, in the Mods panel | Try changes other people made. Save the ones you like. |
 | `5-edit-tools.png` | rubygems.org: the Edit tools and the color palette on the heading | Edit tools change the page at once: hide, move, resize, recolor, rename. |
 
 The gallery picture uses a demo app because the gallery's mods for real sites
@@ -87,7 +88,7 @@ npm run store:promo
 ```
 
 `scripts/store-promo.js` draws both from HTML in Morse's design (the dark
-surfaces and gray ramp of `design/tokens.css`, Inter, the logo grid); the
+surfaces and gray ramp of `design/tokens.css`, Inter, the logo grid). The
 marquee shows part of screenshot 2.
 
 | File | Size | Field |
@@ -116,14 +117,14 @@ place in the extension that runs or could run code, and why it is allowed:
 | The same, when "Allow User Scripts" is off | Nothing. `exec` answers `{ waiting: "userScripts" }` without running anything | The content script still adds the mod's style as a `<style>` (styles aren't code). The bar, the Mods panel and the toolbar popup say which mods are waiting, with a button that opens Morse's details page in `chrome://extensions` and three short steps. Coming back to the tab tries the waiting mods again. |
 | `extension/background.js` `ui.load`: `chrome.scripting.executeScript({ files: ["ui.js"] })` | Morse's own interface, a file in the package, the first time the user opens Morse on a page | A packaged file, into the content script's own isolated world. |
 | `extension/popup-states.js`: `chrome.scripting.executeScript` | A fixed function written in the package that reads one attribute, to tell whether Morse is on the tab | No code is passed in (`func` is an arrow function in the file, no `args`). |
-| The practice area (`practice.html`, sandboxed) on the welcome page | Nothing. A change shows its style only; its code is never sent there | Its old `eval` is gone, and the manifest gives the sandbox stricter rules than Chrome's default: `script-src 'self'`, no `unsafe-eval` or `unsafe-inline`. |
+| The practice area (`practice.html`, sandboxed) on the welcome page | Nothing. A change shows its style only. Its code is never sent there | Its old `eval` is gone, and the manifest gives the sandbox stricter rules than Chrome's default: `script-src 'self'`, no `unsafe-eval` or `unsafe-inline`. |
 | Content scripts (`host.js`, `boot.js`, then `ui.js`) | Morse's own packaged code | They add mods' styles and Morse's own interface. They never run a string as code. |
 | `background.js` bundle (core and the Anthropic SDK) | Packaged code only | No `eval`, `new Function` or string timers anywhere in the built files. |
 
 `tests/store.test.js` checks this on every `npm test`: no `eval(`,
 `new Function(`, `Function("…")`, string `setTimeout`/`setInterval`, `MAIN`
 world scripts or `unsafe-eval` in the extension's source or in the built
-files; every `executeScript` runs a packaged file or a fixed function with
+files. Every `executeScript` runs a packaged file or a fixed function with
 nothing passed in; `userScripts.execute` appears only in `background.js`;
 and the manifest's permissions, page rules and icons are as described here.
 `tests/store-ui.test.js` loads the built extension in Chromium (where "Allow
@@ -143,12 +144,12 @@ Checked on the zip `npm run store` made, unpacked:
 - **`minimum_chrome_version`: 138**, the first Chrome with the "Allow User
   Scripts" switch Morse's pages talk about (`userScripts.execute` is 135).
 - **Permissions:** `storage`, `scripting`, `userScripts`, `tabs`,
-  `downloads`; each one is used and explained in permissions.md. Without
+  `downloads`. Each one is used and explained in permissions.md. Without
   `tabs` the popup can't tell Chrome's own pages apart (checked). No optional
   permissions, no `web_accessible_resources`, no `externally_connectable`.
 - **Host permissions:** `<all_urls>`, for the bar and saved mods on any site.
 - **No remote code:** see the table above. No `eval`, `new Function` or
-  string timers in the zip; every script tag in its pages loads a file from
+  string timers in the zip. Every script tag in its pages loads a file from
   the package, and no page has inline code.
 - **Page rules (CSP):** the manifest sets none for extension pages, so
   Chrome's Manifest V3 default applies (scripts only from the package, no
@@ -168,5 +169,5 @@ Checked on the zip `npm run store` made, unpacked:
   core modules the pages import (`hotkeys`, `i18n`, `onboarding`, `prefs`,
   `summary`) with the nine languages in `core/locales/`, and the icons.
 - **Smoke test** (`npm run store:smoke`): welcome page, practice change,
-  pairing, one change saved and back after a reload; nothing in the service
+  pairing, one change saved and back after a reload. Nothing in the service
   worker's console.

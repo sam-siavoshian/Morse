@@ -156,8 +156,61 @@ test("refine a result, step back with Ctrl+Z, keep, restore from History, refine
   await ctx.close();
 });
 
+// Dogfood: Esc on a result keeps it, on purpose, but the plain “Saved” toast
+// didn't say that Esc was what kept it, or how to take it back.
+test("Esc on a result keeps it and says so, with Undo right there", { skip }, async () => {
+  const { ctx, page, errors, waitFor } = await playground();
+  await pressOpen(page);
+  await waitFor(s => s.open);
+  await page.keyboard.type("add a now playing label to the toolbar");
+  await page.keyboard.press("Enter");
+  await waitFor(s => s.phase === "result");
+  await page.keyboard.press("Escape");
+  await waitFor(s => !s.open);
+  const toast = ui(page, ".ctl-toast");
+  await toast.waitFor();
+  assert.match(await toast.textContent(), /Kept “Now playing label”\. Closing the bar keeps a change\./);
+  assert.equal((await saved(page)).length, 1, "it is kept");
+  assert.equal(await page.locator("#toolbar .morse-now").count(), 1);
+  await ui(page, ".ctl-toast .ctl-acts button", { hasText: "Undo" }).click();
+  await page.waitForFunction(() => !document.querySelector("#toolbar .morse-now"));
+  assert.deepEqual(await saved(page), [], "Undo takes it out");
+  // Save (Enter) is a choice the person made: the usual toast, no Undo.
+  await pressOpen(page);
+  await waitFor(s => s.open);
+  await page.keyboard.type("add a now playing label to the toolbar");
+  await page.keyboard.press("Enter");
+  await waitFor(s => s.phase === "result");
+  await page.keyboard.press("Enter");
+  await waitFor(s => !s.open);
+  assert.equal(await ui(page, ".ctl-toast").isHidden(), true);
+  assert.match(await ui(page, ".toast").textContent(), /Saved “Now playing label”/);
+  // A follow-up on a saved change, closed with Esc: Undo goes back to the saved version.
+  await page.keyboard.press("Alt+Shift+KeyM");
+  await ui(page, ".panel article").waitFor();
+  await page.waitForFunction(() => document.querySelector("[data-morse-ui]").shadowRoot.activeElement?.tagName === "ARTICLE", null, { timeout: 5000 });
+  await page.keyboard.press("Enter");
+  await waitFor(s => s.open && s.phase === "result");
+  await page.keyboard.type("make it bigger");
+  await page.keyboard.press("Enter");
+  await waitFor(s => s.phase === "result" && /version 2/.test(s.hint));
+  assert.equal(await fontSize(page), "18px");
+  await page.keyboard.press("Escape");
+  await waitFor(s => !s.open);
+  await toast.waitFor();
+  assert.match(await toast.textContent(), /Kept “Now playing label”/);
+  assert.equal((await saved(page))[0].history.length, 1);
+  await ui(page, ".ctl-toast .ctl-acts button", { hasText: "Undo" }).click();
+  await page.waitForFunction(() => getComputedStyle(document.querySelector("#toolbar .morse-now")).fontSize === "14px");
+  const [mod] = await saved(page);
+  assert.equal(mod.history?.length || 0, 0, "back to the saved version");
+  assert.equal(mod.refined, undefined);
+  assert.deepEqual(errors, []);
+  await ctx.close();
+});
+
 const now = new Date().toISOString();
-const seed = (id, title, prompt, js, extra = {}) => ({ morse: 1, id, title, prompt, match: { hosts: ["morse.test"], app: null }, target: null, css: "", js, enabled: true, model: "demo", created: now, updated: now, ...extra });
+const seed =(id, title, prompt, js, extra = {}) => ({ morse: 1, id, title, prompt, match: { hosts: ["morse.test"], app: null }, target: null, css: "", js, enabled: true, model: "demo", created: now, updated: now, ...extra });
 
 test("a saved mod that stopped working says why, and Fix it repairs it", { skip }, async () => {
   const mods = {

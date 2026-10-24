@@ -143,7 +143,7 @@ export function gettingStarted({ platform = detectPlatform({ platform: process.p
   const key = formatCombo(defaultHotkeys(platform).open, platform);
   return [
     `${G("▦")} ${t("setup.start1", { cmd: B("morse setup") })}`,
-    `${G("▦")} ${t("setup.start2", { dir: B(extDir()), cmd: B("morse launch spotify") })}`,
+    `${G("▦")} ${t("setup.start2", { dir: B(extDir()), cmd: B("morse launch obsidian") })}`,
     `${G("▦")} ${t("setup.start3", { key: B(key) })} ${D(t("setup.start3.help"))}`,
   ].join("\n");
 }
@@ -153,7 +153,7 @@ function nextSteps(platform, { pairing = false } = {}) {
   const key = formatCombo(defaultHotkeys(platform).open, platform);
   const label = id => D(t(id).padEnd(8));
   return `  ${B(t("setup.next"))}
-${pairing ? "" : `    ${label("setup.next.websites")}  ${t("setup.next.load", { dir: extDir(), how: D(t("setup.next.how")) })}\n`}    ${label("setup.next.apps")}  morse launch spotify ${D(t("setup.next.or"))}${pairing ? D(t("setup.next.another")) : ""}
+${pairing ? "" : `    ${label("setup.next.websites")}  ${t("setup.next.load", { dir: extDir(), how: D(t("setup.next.how")) })}\n`}    ${label("setup.next.apps")}  morse launch obsidian ${D(t("setup.next.or"))}${pairing ? D(t("setup.next.another")) : ""}
     ${label("setup.next.then")}  ${t("setup.next.press", { key: B(key) })}`;
 }
 

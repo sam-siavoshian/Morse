@@ -5,6 +5,7 @@
 import net from "node:net";
 import os from "node:os";
 import { readFileSync } from "node:fs";
+import { appTimeout } from "./cdp.js";
 
 // MORSE_PORT_RANGE=<from>-<to> moves the range (tests and parallel runs use it
 // so concurrent copies don't pick the same port); the default is unchanged.
@@ -103,7 +104,7 @@ export function safeExtraArgs(args = []) {
 }
 
 async function json(port, path, ms = 1500) {
-  const res = await fetch(`http://127.0.0.1:${port}${path}`, { signal: AbortSignal.timeout(ms) });
+  const res = await fetch(`http://127.0.0.1:${port}${path}`, { signal: AbortSignal.timeout(ms) }).catch(e => { throw appTimeout(e, port); });
   return res.json();
 }
 
@@ -135,8 +136,7 @@ export async function identify(port, { tries = [1500, 3000, 6000] } = {}) {
   for (let i = 0; ; i++) {
     try { v = await json(port, "/json/version", tries[i]); break; }
     catch (e) {
-      if (e?.name !== "TimeoutError") throw e;
-      if (i === tries.length - 1) throw Object.assign(new Error(`The app on port ${port} didn't answer Morse in time. Wait until it has finished opening, then try again.`), { plain: true, details: e.message });
+      if (e?.cause?.name !== "TimeoutError" || i === tries.length - 1) throw e; // appTimeout (cdp.js): the app's, never the model's
     }
   }
   return {

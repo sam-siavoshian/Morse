@@ -1,7 +1,9 @@
 // Screenshots of Morse Desktop (desktop-app/) for docs/desktop-app.md, taken
-// from the real app: Tunes (demo/electron-app) opened with Morse for real,
-// Claude Code checked for real when it's installed (the demo model otherwise),
-// and the apps this machine has (MORSE_SHOT_APPS: more app paths to list).
+// from the real app with the real apps this machine has, each with its own
+// icon: Microsoft's Visual Studio Code opened with Morse for real; VSCodium,
+// Obsidian, Joplin and Logseq listed (MORSE_SHOT_APPS: more app paths to
+// list); Claude Code (sonnet) checked for real when it's installed (the demo
+// model otherwise).
 //
 //   DISPLAY=:99 node demo/shoot-desktop-app.js [outDir]   (default docs/screenshots)
 import { createRequire } from "node:module";
@@ -10,7 +12,7 @@ import http from "node:http";
 import { mkdtempSync, existsSync, promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { electronExe, tunesApp } from "../tests/helpers/tunes.js";
+import { electronExe } from "../tests/helpers/tunes.js";
 import { createMod } from "../core/mod.js";
 
 const { _electron } = createRequire(import.meta.url)("playwright");
@@ -21,22 +23,32 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const home = mkdtempSync(path.join(os.tmpdir(), "morse-shoot-desktop-"));
 const kids = [];
 
-const { exe } = await tunesApp();
-const profile = path.join(home, "tunes-profile");
+// The app opened with Morse: Microsoft's VS Code on a small real project
+// (Morse's own core/), without its first-run sign-in screen.
+const exe = "/usr/share/code/code", APP = "visual-studio-code";
+if (!existsSync(exe)) throw new Error("Install Visual Studio Code (code.visualstudio.com) first.");
+const profile = path.join(home, "vscode-profile");
+const project = path.join(home, "morse-core");
+await fs.mkdir(path.join(profile, "User"), { recursive: true });
+await fs.writeFile(path.join(profile, "User", "settings.json"), JSON.stringify({ "chat.disableAIFeatures": true, "workbench.startupEditor": "none", "workbench.tips.enabled": false, "security.workspace.trust.enabled": false, "telemetry.telemetryLevel": "off", "update.mode": "none", "workbench.secondarySideBar.defaultVisibility": "hidden" }));
+await fs.cp(path.join(root, "core"), project, { recursive: true });
+const appArgs = [...ROOT, `--user-data-dir=${profile}`, project, path.join(project, "engine.js")];
 // Apps on this machine, by their files, so the list doesn't depend on what else is running.
 const extra = ["/usr/share/codium/codium", path.join(os.homedir(), "Applications/Obsidian-1.14.5.AppImage"), path.join(os.homedir(), ".joplin/Joplin.AppImage"),
+  "/root/morse-real-apps/logseq/Logseq-linux-x64-0.10.9.AppImage",
   ...(process.env.MORSE_SHOT_APPS || "").split(":")].filter(p => p && existsSync(p));
-await fs.writeFile(path.join(home, "desktop.json"), JSON.stringify({ helper: true, apps: [exe, ...extra], appArgs: { tunes: [`--user-data-dir=${profile}`, ...ROOT] } }));
+await fs.writeFile(path.join(home, "desktop.json"), JSON.stringify({ helper: true, apps: [exe, ...extra], appArgs: { [APP]: appArgs } }));
 const claude = !!process.env.PATH.split(":").find(d => existsSync(path.join(d, "claude")));
 await fs.writeFile(path.join(home, "config.json"), JSON.stringify(claude ? { provider: "claude-code", models: { "claude-code": "sonnet" } } : { provider: "demo" }), { mode: 0o600 });
 await fs.mkdir(path.join(home, "mods"), { recursive: true });
 const mod = (app, url, title, prompt, enabled = true) => ({ ...createMod({ title, prompt, css: "/* … */", url, app }), enabled });
+// The mods real runs made in these apps (docs/desktop.md, Tested on).
 for (const m of [
-  mod("tunes", "app://tunes/index.html", "Sleep timer", "add a sleep timer that pauses the music after a while"),
-  mod("tunes", "app://tunes/index.html", "Bigger album art", "make the album art twice as big"),
-  mod("tunes", "app://tunes/index.html", "Hide the shop", "hide the shop banner", false),
-  mod("vscodium", "vscode-file://vscode-app/index.html", "Status bar back", "put the status bar back at the bottom"),
-  mod("obsidian", "app://obsidian.md/index.html", "No ribbon", "hide the ribbon on the left"),
+  mod(APP, "vscode-file://vscode-app/workbench.html", "Warm Paper Notebook Theme", "make the whole editor look like a warm paper notebook: cream backgrounds, dark brown text, and a serif font in the sidebar and the tabs"),
+  mod(APP, "vscode-file://vscode-app/workbench.html", "Bigger status bar", "make the status bar bigger", false),
+  mod("vscodium", "vscode-file://vscode-app/workbench.html", "Taller status bar", "make the status bar bigger"),
+  mod("obsidian", "app://obsidian.md/index.html", "No ribbon", "hide this ribbon"),
+  mod("joplin", "file:///joplin/index.html", "Hide Synchronize", "hide this button, I don't use sync"),
 ]) await fs.writeFile(path.join(home, "mods", `${m.id}.json`), JSON.stringify(m, null, 2));
 
 const env = { ...process.env, MORSE_HOME: home, MORSE_DESKTOP_SCAN: "0", MORSE_HELPER_PORT: String(17000 + Math.floor(Math.random() * 2000)), ELECTRON_RUN_AS_NODE: "" };
@@ -49,7 +61,7 @@ async function launch(theme) {
 }
 const shot = async (w, name) => { await sleep(400); await w.screenshot({ path: path.join(out, name) }); console.log(`saved ${name}`); };
 console.log("home", home);
-// Quit Morse (it takes Morse off Tunes first); force it if it takes too long.
+// Quit Morse (it takes Morse off VS Code first); force it if it takes too long.
 async function quit(app) {
   const pid = app.process().pid;
   await Promise.race([app.close().catch(() => {}), sleep(15000)]);
@@ -62,39 +74,38 @@ try {
   let { app, w } = await launch("dark");
   // 0. The first run: the model found by itself (checked for real), and the apps.
   await w.locator("#first").waitFor();
-  await w.waitForFunction(() => !document.querySelector("#first-model .radar") && /answered|didn't answer/.test(document.querySelector("#first-model").textContent), null, { timeout: 120000 });
+  await w.waitForFunction(() => !document.querySelector("#first-model .radar.live") && /answered|didn't answer/.test(document.querySelector("#first-model").textContent), null, { timeout: 120000 });
   await w.mouse.move(5, 600);
   await shot(w, "175-desktop-app-first-run.png");
   await w.click("#first-skip");
-  const row = w.locator('li[data-app="tunes"]');
+  const row = w.locator(`li[data-app="${APP}"]`);
   await row.waitFor();
-  // 1. Your apps, Tunes connected.
+  // 1. Your apps, VS Code connected.
   await row.getByRole("button", { name: "Open with Morse" }).click();
-  await w.locator('li[data-app="tunes"].connected').waitFor({ timeout: 90000 });
+  await w.locator(`li[data-app="${APP}"].connected`).waitFor({ timeout: 90000 });
   await w.mouse.move(5, 500);
   await shot(w, "167-desktop-app-apps.png");
 
   // 2. Already open: the question before restarting it.
   await row.getByRole("button", { name: "Disconnect" }).click();
-  await w.locator('li[data-app="tunes"].open-connectable').waitFor({ timeout: 30000 });
-  const port = JSON.parse(await fs.readFile(path.join(home, "apps.json"), "utf8")).tunes.port;
-  await fetch(`http://127.0.0.1:${port}/json/version`).then(r => r.json()).then(async v => {
-    const { CDPSession } = await import("../daemon/cdp.js");
-    const b = await CDPSession.connect(v.webSocketDebuggerUrl); await b.send("Browser.close").catch(() => {}); b.close();
-  });
-  await w.locator('li[data-app="tunes"].closed').waitFor({ timeout: 30000 });
-  kids.push(spawn(exe, [`--user-data-dir=${profile}`, ...ROOT], { stdio: "ignore", env: { ...process.env, ELECTRON_RUN_AS_NODE: "" } }));
-  await w.locator('li[data-app="tunes"].open').waitFor({ timeout: 60000 });
+  await w.locator(`li[data-app="${APP}"].open-connectable`).waitFor({ timeout: 30000 });
+  // Quit it (Morse connects over a private pipe now, so there's no port to
+  // ask): the processes with this run's own profile.
+  const { listProcesses } = await import("../daemon/apps.js");
+  for (const p of listProcesses()) if (p.cmd.includes(profile)) try { process.kill(p.pid, "SIGTERM"); } catch {}
+  await w.locator(`li[data-app="${APP}"].closed`).waitFor({ timeout: 30000 });
+  kids.push(spawn(exe, appArgs, { stdio: "ignore", env: { ...process.env, ELECTRON_RUN_AS_NODE: "" } }));
+  await w.locator(`li[data-app="${APP}"].open`).waitFor({ timeout: 60000 });
   await row.getByRole("button", { name: "Open with Morse" }).click();
   await w.locator("dialog#ask-restart[open]").waitFor();
   await shot(w, "168-desktop-app-restart.png");
   await w.getByRole("button", { name: "Restart" }).click();
-  await w.locator('li[data-app="tunes"].connected').waitFor({ timeout: 90000 });
+  await w.locator(`li[data-app="${APP}"].connected`).waitFor({ timeout: 90000 });
 
   // 3. Model: checked, and the choices.
   await tab(w, "model");
   await w.click("#check-model");
-  await w.waitForFunction(() => !document.querySelector("#model-live .radar"), null, { timeout: 120000 });
+  await w.waitForFunction(() => !document.querySelector("#model-live .radar.live"), null, { timeout: 120000 });
   await w.click("#change-model");
   await w.waitForSelector("#choice-list .choice");
   await w.mouse.move(5, 500);
@@ -136,7 +147,7 @@ try {
   await tab(w, "apps");
   await quit(app);
   ({ app, w } = await launch("light"));
-  await w.locator('li[data-app="tunes"]').waitFor();
+  await w.locator(`li[data-app="${APP}"]`).waitFor();
   await w.mouse.move(5, 500);
   await shot(w, "174-desktop-app-light.png");
   await quit(app);

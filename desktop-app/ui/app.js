@@ -35,6 +35,16 @@ function radar(size = 16) {
   return s;
 }
 const caps = combo => h("span", { class: "caps" }, ...String(combo || "").split("+").filter(Boolean).map(k => h("kbd", { text: k })));
+// The mark of what writes your changes (ui/icons/NOTICE): Claude Code, Codex,
+// an API key (both providers' marks), or Morse's own radar for the rest.
+const MARKS = { "claude-code": ["claude"], codex: ["openai"], anthropic: ["anthropic"], openai: ["openai"], "api-key": ["anthropic", "openai"] };
+function providerMark(id, big = false) {
+  const names = MARKS[id];
+  const tile = h("span", { class: `mark-tile${big ? " big" : ""}${names?.length > 1 ? " pair" : ""}`, "aria-hidden": "true" });
+  if (!names) { const r = radar(big ? 22 : 18); r.classList.remove("live"); tile.append(r); }
+  else for (const n of names) tile.append(h("img", { src: `icons/${n}.png`, alt: "", class: n === "claude" ? "" : "mono", draggable: "false" }));
+  return tile;
+}
 const plural = (n, one, many = one + "s") => `${n} ${n === 1 ? one : many}`;
 
 let st = null;
@@ -92,7 +102,7 @@ function renderApps() {
   const rows = st.apps;
   const seen = new Set();
   if (!rows.length) {
-    list.replaceChildren(h("li", { class: "empty" }, "Morse didn't find any apps it can connect to. Use Add an app… to choose one."));
+    list.replaceChildren(h("li", { class: "empty" }, "Morse didn't find any apps it can connect to. Click Add an app… to choose one."));
   } else {
     if (list.querySelector("li.empty")) list.replaceChildren();
     let prev = null;
@@ -162,6 +172,8 @@ $("add-app").onclick = async () => {
 function renderModel() {
   const m = st.model;
   $("model-name").textContent = m.none ? "No model yet" : m.name;
+  const mark = $("model-mark");
+  if (mark.dataset.p !== m.provider) { const next = providerMark(m.provider, true); next.id = "model-mark"; next.dataset.p = m.provider; mark.replaceWith(next); }
   $("model-pill").hidden = !m.model;
   $("model-pill").textContent = m.model;
   $("check-model").hidden = m.none;
@@ -189,23 +201,44 @@ async function checkModel() {
 $("check-model").onclick = checkModel;
 
 let choices = [];
-$("change-model").onclick = async () => {
+async function loadChoices() {
   $("choices").hidden = false;
   $("choice-list").replaceChildren(h("p", { class: "live" }, radar(12), h("span", { text: "Looking for what's installed…" })));
   choices = await morse.modelChoices();
   const current = { "claude-code": "claude-code", codex: "codex", anthropic: "api-key", openai: "api-key" }[st.model.provider];
   const pick = current || choices.find(c => c.recommended)?.id || "api-key";
-  $("choice-list").replaceChildren(...choices.map(c => h("label", { class: "choice" },
-    h("input", { type: "radio", name: "choice", value: c.id, checked: c.id === pick, onchange: syncChoice }),
-    h("div", {},
-      c.recommended ? h("span", { class: "tag tagline", text: "recommended" }) : null,
-      h("b", { text: c.name }), h("span", { class: "why", text: c.why }),
-      c.id === "api-key"
-        ? h("span", { class: `found${c.found ? " yes" : ""}`, text: c.found ? `${c.keyEnv} is set` : "Paste one below" })
-        : h("span", { class: `found${c.found ? " yes" : ""}`, text: c.found ? `Found · ${c.detail}` : `Not installed. To install it: ${c.install}` })))));
+  $("choice-list").replaceChildren(...choices.map(c => choiceRow(c, c.id === pick)));
   syncChoice();
   $("choices").scrollIntoView({ block: "nearest", behavior: "smooth" });
-};
+}
+// One choice: its mark, what it uses, and one word for whether it's ready.
+// Not installed: "How to install" shows the one command, on request.
+function choiceRow(c, checked) {
+  const ready = c.found;
+  const status = ready ? h("span", { class: "badge ready", title: c.id === "api-key" ? `${c.keyEnv} is set` : c.detail || null }, h("i", { class: "dot on" }), "Ready")
+    : c.id === "api-key" ? null
+    : h("span", { class: "badge" }, "Not installed");
+  const howto = !ready && c.install && c.id !== "api-key"
+    ? h("div", { class: "howto", hidden: true },
+      h("span", { text: `Install ${c.name} from a terminal, then look again:` }),
+      h("code", { text: c.install }),
+      h("button", { type: "button", class: "btn", onclick: e => { e.preventDefault(); loadChoices(); } }, "Look again"))
+    : null;
+  return h("label", { class: "choice", "data-choice": c.id },
+    h("input", { type: "radio", name: "choice", value: c.id, checked, onchange: syncChoice }),
+    providerMark(c.id),
+    h("span", { class: "grow" },
+      h("b", {}, h("span", { text: c.name }), c.recommended ? h("span", { class: "rec", text: "Recommended" }) : null),
+      h("small", { text: c.why })),
+    h("span", { class: "state" }, status,
+      howto ? h("button", { type: "button", class: "link", "data-howto": c.id, "aria-expanded": "false", onclick: e => {
+        e.preventDefault();
+        howto.hidden = !howto.hidden;
+        e.currentTarget.setAttribute("aria-expanded", String(!howto.hidden));
+      } }, "How to install") : null),
+    howto);
+}
+$("change-model").onclick = loadChoices;
 function syncChoice() {
   const v = document.querySelector('input[name="choice"]:checked')?.value;
   const c = choices.find(x => x.id === v);
@@ -258,6 +291,7 @@ function renderChrome() {
     d.dataset.id = c.ask.id;
     $("ask-pair-h").textContent = c.ask.words?.message || `Allow Chrome to use ${modelPhrase()}?`; // the helper's own words (askWords), when it has them
     $("ask-ext").textContent = `Extension ${c.ask.extension.slice(0, 12)}…`;
+    const mark = providerMark(st.model.provider); mark.id = "ask-mark"; $("ask-mark").replaceWith(mark);
     if (!d.open) d.showModal();
     $("pair-yes").focus();
   }
@@ -291,12 +325,12 @@ function renderMods() {
   const nav = $("nav-mods");
   nav.textContent = st.pause.all ? "off" : total || "";
   nav.className = st.pause.all ? "warn" : "";
-  const sig = JSON.stringify(groups);
+  const sig = JSON.stringify([groups, groups.map(g => !!st.apps.find(a => a.id === g.app)?.icon)]);
   if ($("mod-groups").dataset.sig === sig) return;
   $("mod-groups").dataset.sig = sig;
   const focused = document.activeElement?.dataset?.mod;
   $("mod-groups").replaceChildren(...groups.map(g => h("div", { class: "group" },
-    h("h2", {}, h("span", { text: g.name }), h("small", { text: `${plural(g.mods.length, "mod")} · ${g.mods.filter(m => m.on).length} on` })),
+    h("h2", {}, (icon => icon ? h("img", { class: "gicon", src: icon, alt: "" }) : null)(st.apps.find(a => a.id === g.app)?.icon), h("span", { text: g.name }), h("small", { text: `${plural(g.mods.length, "mod")} · ${g.mods.filter(m => m.on).length} on` })),
     h("ul", { class: "list mods" }, ...g.mods.map(m => h("li", { class: m.on ? "" : "off" },
       h("div", { class: "grow" }, h("b", { text: m.title }), h("small", {}, h("span", { text: m.paused ? "Stopped because it slowed down or broke the app. Turn it on to try again." : `“${m.request}”` }))),
       h("input", { type: "checkbox", role: "switch", "aria-label": `${m.title} on`, "data-mod": m.id, checked: m.on, onchange: e => morse.setModOn(m.id, e.target.checked) })))))));
@@ -343,10 +377,10 @@ function renderFirst() {
   $("first-key").hidden = !m.none;
   const live = $("first-model");
   if (m.none) live.replaceChildren(h("i", { class: "dot warn" }), h("span", { text: "Morse didn't find Claude Code or Codex on this computer. Paste an API key, or install Claude Code and open Morse again." }));
-  else if (checking) live.replaceChildren(radar(12), h("span", { text: `Morse will use ${m.name}. Checking that it answers…` }));
-  else if (m.check?.ok) live.replaceChildren(h("i", { class: "dot on" }), h("span", { text: `Morse will use ${m.name}. It answered in ${(m.check.ms / 1000).toFixed(1)}s.` }));
-  else if (m.check) live.replaceChildren(h("i", { class: "dot bad" }), h("span", { text: `Morse will use ${m.name}, but it didn't answer: ${m.check.error}` }));
-  else live.replaceChildren(h("i", { class: "dot" }), h("span", { text: `Morse will use ${m.name}.` }));
+  else if (checking) live.replaceChildren(providerMark(m.provider), h("span", { text: `Morse will use ${m.name}. Checking that it answers…` }), radar(14));
+  else if (m.check?.ok) live.replaceChildren(providerMark(m.provider), h("span", { text: `Morse will use ${m.name}. It answered in ${(m.check.ms / 1000).toFixed(1)}s.` }), h("span", { class: "badge ready" }, h("i", { class: "dot on" }), "Ready"));
+  else if (m.check) live.replaceChildren(providerMark(m.provider), h("span", { text: `Morse will use ${m.name}, but it didn't answer: ${m.check.error}` }), h("i", { class: "dot bad" }));
+  else live.replaceChildren(providerMark(m.provider), h("span", { text: `Morse will use ${m.name}.` }));
   if (!m.none && !m.check && !firstChecked) { firstChecked = true; checkModel(); }
   $("first-key-caps").replaceChildren(caps(st.keys.open || (platform === "darwin" ? "⌥+Space" : "Ctrl+Shift+Space")));
   const apps = st.apps.filter(a => a.canAttach !== false).slice(0, 6);
@@ -358,8 +392,8 @@ function renderFirst() {
     return h("li", { "data-first-app": a.id },
       h("div", { class: `appicon${a.icon ? " has-img" : ""}`, "aria-hidden": "true" }, a.icon ? h("img", { src: a.icon, alt: "" }) : (a.name || "?").trim()[0].toUpperCase()),
       h("div", { class: "grow" }, h("b", { text: a.name }), h("small", {}, ...(busy ? [radar(12), h("span", { text: `Opening ${a.name} with Morse…` })] : [h("span", { text: a.state === "closed" ? "Not open" : "Open now" })]))),
-      h("button", { type: "button", class: "btn primary", disabled: busy, onclick: () => openFirst(a) }, "Open with Morse"));
-  }) : [h("li", { class: "empty" }, "Morse didn't find any apps it can open. Skip for now, then use Add an app….")]));
+      h("button", { type: "button", class: "btn", disabled: busy, onclick: () => openFirst(a) }, "Open with Morse"));
+  }) : [h("li", { class: "empty" }, "Morse didn't find any apps it can open. Click Skip for now, then Add an app…")]));
 }
 async function openFirst(a, answer) {
   const r = await morse.openApp(a.id, answer);
