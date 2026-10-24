@@ -148,7 +148,7 @@ with Claude Code and checked in the page. Run it after changing the prompt,
 the context builder or the engine:
 
 ```bash
-node evals/run.js                  # train split, Claude Code haiku
+node evals/run.js                  # train split, Claude Code, Automatic (sonnet, then opus)
 node evals/run.js --split test     # held-out cases: only for final reports
 ```
 
@@ -192,7 +192,7 @@ machine makes them slower, not wrong. Shared pieces are in
 
 They replay pre-written replies ([`core/demo.js`](../../core/demo.js)) so they
 come out the same every time. For a real model, run `demo/shoot-desktop.js`
-with `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku
+with `MORSE_PROVIDER=claude-code MORSE_MODEL=sonnet
 SHOTS=docs/screenshots/claude-code`; with `SHOTS` set it also keeps the steps
 between the pictures the docs use. They need Xvfb, Chromium through
 Playwright and ffmpeg. On a busy machine, rerun a script if a picture caught

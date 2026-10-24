@@ -14,10 +14,11 @@ export function initPage() {
   mountAll();
   applyLinks();
   initNav();
-  // The share page's header (share/install.html) gets a line once scrolled.
-  const top = document.querySelector(".top");
-  if (top) {
-    const onScroll = () => top.classList.toggle("scrolled", scrollY > 8);
+  openDetailsOnHash();
+  // The nav bar (and the share page's header) gets a line once scrolled.
+  const bars = document.querySelectorAll("header.nav, .top");
+  if (bars.length) {
+    const onScroll = () => { for (const b of bars) b.classList.toggle("scrolled", scrollY > 8); };
     addEventListener("scroll", onScroll, { passive: true });
     onScroll();
   }
@@ -43,6 +44,22 @@ export function applyLinks(root = document) {
     const url = new URL(href, location.href);
     a.href = url.hash && page(url) === page(new URL(location.href)) ? url.hash : href;
   }
+}
+
+// A link to a <details> (the install steps: ./#chrome-steps) opens it, on
+// load and on every later jump to it.
+export function openDetailsOnHash() {
+  // A broken link (#%E0) can't be read: then it names nothing.
+  const target = hash => { try { return document.getElementById(decodeURIComponent(hash.slice(1))); } catch { return null; } };
+  const open = el => { if (el?.tagName === "DETAILS") el.open = true; };
+  addEventListener("hashchange", () => open(target(location.hash)));
+  document.addEventListener("click", e => {
+    const a = e.target.closest?.('a[href*="#"]');
+    if (!a) return;
+    const url = new URL(a.href, location.href);
+    if (url.pathname === location.pathname) open(target(url.hash));
+  });
+  if (location.hash.length > 1) open(target(location.hash));
 }
 
 // ---------- the nav bar ----------
@@ -138,39 +155,66 @@ export function initNav(nav = document.querySelector("header.nav")) {
 }
 
 // ---------- the film ----------
-// Before the press it plays muted on a loop, so the first screen is already
-// moving; the press starts it from the beginning, with sound and controls.
-// Reduced motion: no autoplay, the poster stays until the press. The loop has
-// its own pause control, apart from the play press (WCAG 2.2.2).
+// The poster shows at once (it is an <img> in the page, so the first screen
+// is fast). The video file loads only after the page has loaded and the film
+// is near the screen; then it plays muted on a loop. The press starts it from
+// the beginning, with sound and controls. Reduced motion: no autoplay, the
+// poster stays until the press. The loop has its own pause control, apart from
+// the play press (WCAG 2.2.2).
 export function mountFilm(figure, film = DEMO_VIDEO) {
-  const frame = figure.querySelector(".hero-film-frame");
-  const play = figure.querySelector(".hero-film-play");
-  const toggle = figure.querySelector(".hero-film-toggle");
+  const frame = figure.querySelector(".film-frame");
+  const play = figure.querySelector(".film-play");
+  const toggle = figure.querySelector(".film-toggle");
   const caption = figure.querySelector("figcaption");
+  const strip = figure.querySelector("[data-film-strip]");
+  const poster = figure.querySelector(".film-poster");
   if (!frame || frame.querySelector("video")) return;
   frame.style.setProperty("--film-ratio", `${film.width} / ${film.height}`);
-  // The poster behind the video too, for a browser that can't play the file.
-  frame.style.backgroundImage = `url("${new URL(film.poster, location.href).href}")`;
+  if (poster && poster.getAttribute("src") !== film.poster) poster.src = film.poster;
+  if (caption && film.caption) caption.textContent = film.caption;
+  if (strip && film.strip) strip.textContent = film.strip;
+
   const video = document.createElement("video");
-  Object.assign(video, { muted: true, loop: true, playsInline: true, preload: "metadata", poster: film.poster });
+  Object.assign(video, { muted: true, loop: true, playsInline: true, preload: "none", poster: film.poster });
   video.setAttribute("muted", "");
   video.setAttribute("playsinline", "");
   video.setAttribute("aria-label", film.label);
   video.width = film.width;
   video.height = film.height;
-  const source = Object.assign(document.createElement("source"), { src: film.mp4, type: "video/mp4" });
-  video.append(source);
   frame.prepend(video);
-  if (caption && film.caption) caption.textContent = film.caption;
 
-  const paused = () => figure.classList.toggle("is-paused", video.paused);
-  video.addEventListener("play", paused);
-  video.addEventListener("pause", paused);
-  if (reducedMotion()) paused();
-  else { video.autoplay = true; video.play().catch(paused); }
+  let loaded = false;
+  const load = () => {
+    if (loaded) return;
+    loaded = true;
+    video.append(Object.assign(document.createElement("source"), { src: film.mp4, type: "video/mp4" }));
+    video.load();
+  };
+  const state = () => {
+    figure.classList.toggle("is-paused", video.paused);
+    figure.classList.toggle("is-playing", !video.paused || video.currentTime > 0);
+  };
+  video.addEventListener("play", state);
+  video.addEventListener("pause", state);
+  video.addEventListener("playing", state);
+
+  // Autoplay the loop once the page is in, and only while it is on screen.
+  if (!reducedMotion()) {
+    const start = () => {
+      const io = new IntersectionObserver(([e]) => {
+        if (figure.classList.contains("is-started")) return;
+        if (e.isIntersecting) { load(); video.play().catch(state); }
+        else if (!video.paused) video.pause();
+      }, { rootMargin: "200px 0px" });
+      io.observe(figure);
+    };
+    if (document.readyState === "complete") start();
+    else addEventListener("load", start, { once: true });
+  }
 
   toggle?.addEventListener("click", () => { video.paused ? video.play().catch(() => {}) : video.pause(); });
   play?.addEventListener("click", () => {
+    load();
     figure.classList.add("is-started");
     video.loop = false;
     video.muted = false;
@@ -184,7 +228,13 @@ export function mountFilm(figure, film = DEMO_VIDEO) {
 // ---------- highlighter (grays only: comments dim, strings mid, keywords bright) ----------
 const TOKENS = /(\/\*[\s\S]*?\*\/|(?<![:\w])\/\/[^\n]*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)|\b(const|let|var|if|else|return|function|new|for|of|while|true|false|null|undefined)\b|([{}();,])/g;
 
+// Characters that change how code reads without being seen (direction
+// overrides, zero-width and control characters) are written out as \u202e,
+// as in Morse's own review (core/summary.js shownCode; not imported here, so
+// the landing page doesn't load the summary and its words).
+const HIDDEN_CHARS = /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\u061c\u200b-\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069\ufeff]/g;
 export function highlight(code, lang = "js") {
+  code = String(code).replace(/\r\n?/g, "\n").replace(HIDDEN_CHARS, c => `\\u${c.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0")}`);
   let out = "", last = 0;
   for (const m of code.matchAll(TOKENS)) {
     out += esc(code.slice(last, m.index));

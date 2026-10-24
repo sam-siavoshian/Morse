@@ -2,7 +2,7 @@
 // websites with the real built extension and a real model:
 //
 //   npm run store:screenshots      (DISPLAY=:99 on a machine without a screen)
-//     MORSE_PROVIDER=claude-code MORSE_MODEL=haiku   the model (these are the defaults)
+//     MORSE_PROVIDER=claude-code MORSE_MODEL=sonnet  the model (these are the defaults)
 //     ONLY=1,3                                        retake some of them
 //     PROXY=http://…                                  the proxy Chromium uses (default: $HTTPS_PROXY)
 //
@@ -43,7 +43,7 @@ export function pngSize(buf) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   process.env.MORSE_PROVIDER ||= "claude-code";
-  process.env.MORSE_MODEL ||= "haiku";
+  process.env.MORSE_MODEL ||= "sonnet";
   const { startHelper, pairExtension, routeHelper, seasonExtension, openBar, pick, demoSites } = await import("../demo/helper.js");
   const { chromium } = createRequire(import.meta.url)("playwright");
   const EXT = path.join(root, "dist", "extension");
@@ -212,7 +212,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       morse: 1, id: "quiet-sidebar", title: "Quieter sidebar", prompt: "make the sidebar quieter so the albums stand out",
       match: { hosts: ["127.0.0.1:8789"], app: null }, target: { selector: "nav", label: "Sidebar" },
       css: "nav { background: #0b0b0b !important; }\nnav a:not(.on) { color: #7d7d7d !important; }\n", js: "",
-      enabled: true, model: "Claude Code · haiku", created: made, updated: made,
+      enabled: true, model: "Claude Code · sonnet", created: made, updated: made,
     });
     const page = await open(sites.url("tunes"));
     await page.keyboard.press("Alt+Shift+KeyM");

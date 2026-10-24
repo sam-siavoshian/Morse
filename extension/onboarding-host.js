@@ -129,7 +129,9 @@ chrome.tabs.onRemoved.addListener(id => firstSite.delete(id));
 // Only style changes: code never runs on the practice page (background.js cantRun).
 const SAMPLE = /\b(read|reading|clean|clutter|ads?|distract\w*)\b/i;
 export const practiceSample = request => SAMPLE.test(String(request || ""));
-export const SAMPLE_ONLY = "The practice page only knows “make this easier to read”. Connect a model for more.";
+import { t } from "../core/i18n.js";
+export const SAMPLE_ONLY_ID = "bg.sampleOnly"; // t(): the words follow the worker's language (background.js)
+export const SAMPLE_ONLY = { toString: () => t(SAMPLE_ONLY_ID) };
 
 // `practice`: the request comes from the welcome page's practice area.
 export async function handleOnboarding(msg, { practice = false } = {}) {

@@ -2,7 +2,7 @@
 // The gallery mods (site/mods/): make them with a real model on the real page
 // (or demo app), and check them the way evals/run.js checks a change.
 //
-//   node evals/gallery.js --generate [--only a,b]   ask Claude Code (haiku) for each case's
+//   node evals/gallery.js --generate [--only a,b]   ask Claude Code (sonnet) for each case's
 //                                                   request on its page, check the result, write
 //                                                   evals/results/gallery-drafts/<id>.morse.json
 //   node evals/gallery.js --verify [--only a,b]     check the mods in site/mods/ as saved:
@@ -34,7 +34,7 @@ const { values: opt } = parseArgs({ options: {
   generate: { type: "boolean", default: false },
   verify: { type: "boolean", default: false },
   only: { type: "string", default: "" },
-  model: { type: "string", default: "haiku" },
+  model: { type: "string", default: "sonnet" },
   provider: { type: "string", default: "claude-code" },
   concurrency: { type: "string", default: "3" },
   "demo-only": { type: "boolean", default: false },

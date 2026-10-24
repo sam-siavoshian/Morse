@@ -67,6 +67,8 @@ Morse has no model and no account of its own. It uses one you already have, and 
 | **Anthropic API key** | A key from console.anthropic.com |
 | **OpenAI API key** | A key from platform.openai.com, or another server that works the same way |
 
+Morse uses strong models by default: with Claude Code, `sonnet` for small tweaks and `opus` for new features, new UI and restyles (with an API key, `claude-sonnet-5-5` and `claude-opus-5-5`). A smaller model only if you name one.
+
 How to choose one, and what each can do: [Models and setup](docs/models.md).
 
 ## Privacy
@@ -82,7 +84,8 @@ Version 0.2, not released yet ([changelog](CHANGELOG.md)). What was checked for 
 
 - **Websites:** the Chrome extension on three sites, one with strict security settings, in Chromium on Linux. Share links installed in a second browser profile; the Tampermonkey version runs without Morse.
 - **Desktop apps:** a real Electron app built for testing (Electron 45 on Linux, with a menu bar, a locked-down preload, an embedded page and a second window, packed the way apps ship), driven with real keyboard and mouse: launch, change, save, quit, launch again, and the mod is back. Fuses locked down and Chromium's sandbox on: Morse still connects.
-- **Claude Code (haiku)** as the model: the demo video, the Electron app, Describe this picture, Show me once (10 of 12 runs), and 55 everyday requests on 6 demo apps, 3 runs each: 163 of 165 worked ([evals](evals/README.md)).
+- **Claude Code with today's defaults** (sonnet for small tweaks, opus for new features and restyles): 48 of 51 requests on 13 demo apps, against 47 with the earlier haiku-then-sonnet choice ([evals](evals/README.md#fast-and-strong-models-automatic)).
+- **Claude Code (haiku)**, the default before, as the model: the demo video, the Electron app, Describe this picture, Show me once (10 of 12 runs), and 55 everyday requests on 6 demo apps, 3 runs each: 163 of 165 worked ([evals](evals/README.md)).
 - **Real apps on Linux**, with Claude Code (haiku) and real keyboard and mouse: VSCodium 1.140 (its `.deb`), Obsidian 1.14 and Joplin 3.7 (AppImages). `morse apps` found them and `morse launch` opened them. One change each (a bigger status bar, no ribbon, no Synchronize button) took 6 to 16 seconds and was back after quitting and opening the app again. [Tested on](docs/desktop.md#tested-on).
 - **Real websites** with the extension and Claude Code (haiku): pypi.org, gitlab.com, pkg.go.dev, rubygems.org, hub.docker.com and nodejs.org. Five changes worked and were still there after a reload. On the Node.js docs, “hide the left sidebar” blanked the whole page every time. With “Allow User Scripts” off, PyPI blocked a new button; GitLab didn't. [Details](docs/desktop.md#websites).
 - `npm test` covers every model connection against stand-ins, the Morse helper, the engine, sharing, and the UI in real Chromium.
