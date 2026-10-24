@@ -225,3 +225,15 @@ export function modOrigin(mod) {
   if (mod?.kind === "manual" || mod?.kind === "quick") return `Your own edits${mod.created ? `, ${day(mod.created)}` : ""}`;
   return `Made here${mod?.model ? ` with ${mod.model}` : ""}${by}${mod?.created ? `, ${day(mod.created)}` : ""}`;
 }
+
+// What an install keeps: the code the review showed, and nothing that could
+// turn into other code later. A "manual" or "quick" mod (God mode, page tools)
+// carries its edit list (core/edits.js), which Morse rebuilds into new CSS and
+// JS when you use that tool again; the review never shows that list. So an
+// installed mod loses it and becomes a plain mod: its CSS and JS, as shown.
+export function asReviewed(mod) {
+  if (!mod || typeof mod !== "object") return mod;
+  const { edits, ...rest } = mod;
+  if (rest.kind === "manual" || rest.kind === "quick") delete rest.kind;
+  return rest;
+}

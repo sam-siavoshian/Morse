@@ -30,6 +30,7 @@ morse status     # which desktop apps Morse is connected to, and the mods on in 
 
 | Message | What it means | What to do |
 |---|---|---|
+| “Word count” adds features that wait for “Allow User Scripts”. The new look already shows. | Chrome's “Allow User Scripts” switch is off for Morse, so a mod's code doesn't run at all. Its look still does. The Mods panel and the Morse button in Chrome's toolbar list every mod that is waiting. | Click **Open Morse's details** (or **Turn it on**), turn on **“Allow User Scripts”**, then come back to the tab. The waiting mods run then. |
 | This site blocks scripts that Morse adds. Turn on “Allow User Scripts” for Morse, then try again. | The site has strict security settings, and Chrome's “Allow User Scripts” switch is off for Morse. | Open `chrome://extensions`, open Morse's details and turn on **“Allow User Scripts”**. |
 | The model's answer had no change in it. Try saying it another way. | The model answered, but not with a change. | Say it differently, or point at the part you mean. |
 | The change didn't do anything you can see here. Point at the part you mean, or say it another way. | The change ran, but nothing on the page looks different. | Point at the exact part, and try again. |
