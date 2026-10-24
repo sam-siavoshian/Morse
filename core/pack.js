@@ -31,12 +31,14 @@ const MAX_TITLE = 120;
 const MAX_REQUEST = 4000;
 const ID = /^[\w-]{1,40}$/;
 
-// One line of plain text: no control characters, line breaks or direction
-// overrides (which can make a name read differently from what it is), spaces
-// collapsed. Markup stays as text: every place that shows it escapes it.
+// One line of plain text: no control characters, line breaks, direction
+// marks, overrides or isolates, or zero-width spaces (which can make a name
+// read differently from what it is), spaces collapsed. The joiners Persian
+// words and emoji need (U+200C, U+200D) stay, as in core/backup.js. Markup
+// stays as text: every place that shows it escapes it.
 export function cleanText(s, max) {
   if (typeof s !== "string") return "";
-  return s.replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]+/g, " ")
+  return s.replace(/[\u0000-\u001f\u007f-\u009f\u061c\u2028\u2029\u200b\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]+/g, " ")
     .replace(/\s+/g, " ").trim().slice(0, max).trim();
 }
 const slug = s => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30).replace(/-$/, "");

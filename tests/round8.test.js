@@ -1,11 +1,15 @@
 // Bug and security hunt, round 8: model routing and `morse setup`, the
 // words and code people review (direction overrides, escape sequences), the
-// how-it-works recording script and the demo server. Each test failed before its fix.
+// how-it-works recording script and the demo server; then the items that review
+// left open (the share page's address, the demo gallery list, joiners in pack
+// titles, a gallery mod that checked every box, a broken gallery link). Each
+// test failed before its fix.
 import { home } from "./helpers/home.js";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 import path from "node:path";
+import vm from "node:vm";
 import { readFileSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { PassThrough } from "node:stream";
@@ -241,4 +245,161 @@ test("demo/serve.js: another site (DNS rebinding) can't read the repo through it
   for (const p of ["/.git/HEAD", "/.git/config", "/.env", "/demo/sites/../.git/HEAD"]) assert.notEqual(await get(p), 200, p);
   assert.equal(await get("/%E0%A4%A"), 400);
   assert.equal(await get("/demo/sites/parley/"), 200, "still serving");
+});
+
+// ======================================================================
+// Left open by the round 8 review
+// ======================================================================
+
+// extension/host.js in a stand-in content script world, on the page at `url`.
+// -> { post(data), go(url), asked: [the install requests it passed on] }
+function shareHost(url) {
+  const listeners = [];
+  const window = { addEventListener: (type, f) => { if (type === "message") listeners.push(f); } };
+  window.top = window;
+  const location = {};
+  const go = u => { const x = new URL(u); Object.assign(location, { href: x.href, origin: x.origin, pathname: x.pathname }); };
+  go(url);
+  const chrome = { runtime: { connect: () => ({ postMessage() {}, onMessage: { addListener() {} }, onDisconnect: { addListener() {} } }), onMessage: { addListener() {} } } };
+  const ctx = vm.createContext({ chrome, window, location, document: { documentElement: { dataset: {} } } });
+  vm.runInContext(readFileSync(path.join(ROOT, "extension/host.js"), "utf8"), ctx);
+  const asked = [];
+  ctx.__morseHost.onMessage(m => { if (m.type === "install.request") asked.push(m.source); });
+  return { asked, go, post: data => listeners.forEach(f => f({ source: window, data })) };
+}
+
+test("only Morse's share page can ask for an install, not every page on the same GitHub Pages address", () => {
+  const asks = url => { const h = shareHost(url); h.post({ morseInstall: "#m=x" }); return h.asked.length === 1; };
+  assert.ok(asks("https://sam-siavoshian.github.io/RRAA/share/install.html#m=x"), "the share page");
+  assert.ok(asks("http://127.0.0.1:8787/share/install.html"), "its local copy (test builds)");
+  for (const other of [
+    "https://sam-siavoshian.github.io/",                      // the owner's own page
+    "https://sam-siavoshian.github.io/another-project/",      // any other Pages project
+    "https://sam-siavoshian.github.io/RRAA-fork/share/install.html",
+    "https://sam-siavoshian.github.io/RRAA/site/gallery.html", // Morse's site, but not the share page
+    "https://sam-siavoshian.github.io/RRAA/sharex/install.html",
+    "http://127.0.0.1:8787/demo/sites/hostile/",               // another page on the test address
+    "https://evil.example/RRAA/share/install.html",
+  ]) assert.equal(asks(other), false, other);
+  // A page that moves itself to the share page's address (history.pushState).
+  const h = shareHost("https://sam-siavoshian.github.io/another-project/");
+  h.go("https://sam-siavoshian.github.io/RRAA/share/install.html");
+  h.post({ morseInstall: "#m=x" });
+  assert.deepEqual(h.asked, [], "it has to have loaded there");
+});
+
+test("the demo sites' local gallery list (http, 127.0.0.1:8787) is only read where a host asks for it, never by default", async () => {
+  const { indexUrlFor, GALLERY_INDEX_URL, DEMO_INDEX_URL } = await import("../core/gallery.js");
+  const { createGallery } = await import("../core/gallery-host.js");
+  // Any local server on those ports (wrangler's is on 8787) gets no say in the gallery.
+  for (const page of ["http://127.0.0.1:8787/", "http://localhost:8789/app", "http://127.0.0.1:8797/x"]) {
+    assert.equal(indexUrlFor(page), GALLERY_INDEX_URL, page);
+    assert.equal(indexUrlFor(page, "", DEMO_INDEX_URL), DEMO_INDEX_URL, `${page}, from a checkout`);
+  }
+  const fetched = [];
+  const data = {};
+  const gallery = createGallery({
+    store: { get: async k => data[k], set: async (k, v) => { data[k] = v; } },
+    fetch: async url => { fetched.push(url); return new Response("[]", { status: 200 }); },
+  });
+  await gallery.list({ url: "http://127.0.0.1:8789/demo/sites/tunes/" });
+  assert.deepEqual(fetched, [GALLERY_INDEX_URL]);
+  // The extension asks for it in test builds only (tests/store.test.js builds both).
+  assert.match(readFileSync(path.join(ROOT, "extension/gallery-host.js"), "utf8"), /demoIndex: globalThis\.MORSE_STORE_BUILD \? "" : DEMO_INDEX_URL/);
+  assert.match(readFileSync(path.join(ROOT, "scripts/build.js"), "utf8"), /"globalThis\.MORSE_STORE_BUILD": String\(STORE\)/);
+});
+
+test("a pack's titles and names keep the joiners Persian words and emoji need, and still lose direction tricks", async () => {
+  const { cleanText, makePack, parsePack } = await import("../core/pack.js");
+  const persian = "می‌خواهم", family = "👩‍👩‍👧";
+  assert.equal(cleanText(`${persian} ${family}`, 80), `${persian} ${family}`);
+  // Direction marks, overrides and isolates, the Arabic letter mark and zero-width spaces still go.
+  for (const c of [RLO, RLI, PDI, "​", "‎", "‏", "؜", "⁦", "﻿", "\x1b"]) {
+    assert.equal(cleanText(`a${c}b`, 80), "a b", JSON.stringify(c));
+  }
+  const m = mod("r8-joiners", { title: `${persian} ${family}`, author: `${persian}${RLO}` });
+  const pack = makePack([m], { name: `${family} ${persian}`, author: persian });
+  assert.equal(pack.name, `${family} ${persian}`);
+  assert.equal(pack.author, persian);
+  assert.equal(pack.mods[0].title, `${persian} ${family}`);
+  assert.equal(pack.mods[0].author, persian, "the override still goes");
+  const back = parsePack(JSON.stringify(pack)).pack;
+  assert.equal(back.name, pack.name);
+  assert.equal(back.mods[0].title, pack.mods[0].title);
+});
+
+// A page shaped like pkg.go.dev/net/http (the gallery check's page): a long
+// documentation, the survey banner and the cookie notice, plus a second
+// cookie notice by another name (what the mod's code is for).
+const GO_PAGE = `<!doctype html><html><head><title>http package - net/http - Go Packages</title>
+<style>.Cookie-notice, .consent-bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 8px; background: #fff; }</style></head>
+<body><section class="go-SurveyBanner" aria-label="2026 Go Developer Survey">Take the survey</section>
+<main class="Documentation">${"<div><div><p>Package http provides HTTP client and server implementations.</p></div></div>".repeat(1500)}
+<div class="notice">A cookie jar keeps cookies between requests.</div></main>
+<aside class="Cookie-notice js-cookieNotice"><p>go.dev uses cookies from Google to deliver and enhance the quality of its services and to analyze traffic. <a href="#">Learn more.</a></p><button>Okay</button></aside>
+<div class="consent-bar" id="bar2">We use cookies. <button>OK</button></div></body></html>`;
+
+test("gallery mod go-hide-banners hides both banners without checking every box on the page", { skip, timeout: 120000 }, async () => {
+  const { loadCases, prepare, applyMod, runCheck } = await import("../evals/gallery-check.js");
+  const { stubs } = await import("../evals/page-helpers.js");
+  const c = loadCases().find(c => c.id === "go-hide-banners");
+  const m = JSON.parse(readFileSync(path.join(ROOT, "site/mods/go-hide-banners.morse.json"), "utf8"));
+  const browser = await launchBrowser();
+  cleanups.push(() => browser.close());
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  await ctx.route("https://pkg.go.dev/**", r => r.fulfill({ status: 200, contentType: "text/html", body: GO_PAGE }));
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on("pageerror", e => errors.push(e.message));
+  await page.addInitScript(stubs);
+  // Counts the style lookups the mod makes.
+  await page.addInitScript(() => {
+    const real = window.getComputedStyle;
+    window.__styleReads = 0;
+    window.getComputedStyle = function (...a) { window.__styleReads++; return real.apply(this, a); };
+  });
+  await page.goto(c.url);
+  await page.locator(c.waitFor).waitFor({ state: "attached" });
+  const B = await prepare(page, c);
+  assert.notEqual(await runCheck(page, c, B), true, "the check fails without the mod");
+  await page.evaluate(() => { window.__styleReads = 0; });
+  assert.deepEqual(await applyMod(page, m), []);
+  assert.equal(await runCheck(page, c, B), true, "the check passes with it");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById("bar2")).display), "none", "a cookie notice by another name too");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".Documentation .notice")).display), "block", "text about cookies in the page stays");
+  const first = await page.evaluate(() => window.__styleReads);
+  // The page keeps adding to the documentation: new boxes, none of them a notice.
+  await page.evaluate(async () => {
+    for (let i = 0; i < 5; i++) {
+      const more = document.createElement("div");
+      more.innerHTML = "<div><p>More documentation.</p></div>".repeat(400);
+      document.querySelector(".Documentation").append(more);
+      await new Promise(r => setTimeout(r, 300));
+    }
+    await new Promise(r => setTimeout(r, 1500)); // the kit's once-a-second look over the page
+  });
+  const total = await page.evaluate(() => window.__styleReads);
+  assert.ok(first <= 10, `${first} style lookups for a page of ${await page.evaluate(() => document.querySelectorAll("div").length)} boxes`);
+  assert.ok(total <= 20, `${total} style lookups after the page added 2000 more boxes`);
+  assert.deepEqual(errors, []);
+});
+
+test("the gallery page treats a broken link (#%E0) as no link, without an error", { skip, timeout: 60000 }, async () => {
+  const { serveDemo } = await import("../demo/serve.js");
+  const demo = await serveDemo({ base: 0 });
+  cleanups.push(() => demo.close());
+  const browser = await launchBrowser();
+  cleanups.push(() => browser.close());
+  const page = await browser.newPage();
+  const errors = [];
+  page.on("pageerror", e => errors.push(e.message));
+  await page.goto(`${demo.origin("parley")}/site/gallery.html#%E0`);
+  await page.waitForFunction(() => document.querySelectorAll("#grid > *").length > 5);
+  await page.waitForTimeout(300);
+  assert.deepEqual(errors, []);
+  assert.equal(await page.locator("#drawer").isHidden(), true, "no mod is open");
+  // A good link still opens its mod.
+  await page.evaluate(() => { location.hash = "#go-hide-banners"; });
+  await page.locator("#drawer").waitFor({ state: "visible" });
+  assert.deepEqual(errors, []);
 });

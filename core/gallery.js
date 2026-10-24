@@ -104,12 +104,16 @@ function tooWide(h) {
 
 // Which list to read for a page: the one set in the host's settings, the
 // local one for the demo sites (`node demo/serve.js`), or the public one.
-export function indexUrlFor(pageUrl, configured = "") {
+// The local list is for working on Morse only: a host passes `demoIndex`
+// (DEMO_INDEX_URL) to use it, and the store build of the extension never does
+// (extension/gallery-host.js), so any page on those ports gets the public list.
+export function indexUrlFor(pageUrl, configured = "", demoIndex = "") {
   if (configured && /^https?:\/\//.test(configured)) return configured;
+  if (!demoIndex) return GALLERY_INDEX_URL;
   try {
     const u = new URL(pageUrl);
     // demo/serve.js: the demo apps on 8787-8797
-    if (/^(127\.0\.0\.1|localhost)$/.test(u.hostname) && /^87(8[7-9]|9[0-7])$/.test(u.port)) return DEMO_INDEX_URL;
+    if (/^(127\.0\.0\.1|localhost)$/.test(u.hostname) && /^87(8[7-9]|9[0-7])$/.test(u.port)) return demoIndex;
   } catch {}
   return GALLERY_INDEX_URL;
 }

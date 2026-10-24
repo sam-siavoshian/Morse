@@ -20,7 +20,9 @@ const MAX_CACHED_MODS = 200; // mod files kept; older ones are fetched again if 
 // store:      { get(key) -> value | undefined, set(key, value) }, async
 // enabled():  the "Show mods others made" setting
 // configured(): an index URL the person set, or ""
-export function createGallery({ store, enabled = async () => true, configured = async () => "", fetch = globalThis.fetch, now = () => Date.now() }) {
+// demoIndex:  the local list for the demo sites (DEMO_INDEX_URL), only where
+//             Morse is being worked on; "" (the default) never uses it
+export function createGallery({ store, enabled = async () => true, configured = async () => "", demoIndex = "", fetch = globalThis.fetch, now = () => Date.now() }) {
   const inflight = new Map();
 
   // Reads at most `max` bytes: a huge (or endless) response is cut off, not
@@ -101,7 +103,7 @@ export function createGallery({ store, enabled = async () => true, configured = 
   async function list({ url, app = null, force = false }) {
     if (!(await enabled())) return { on: false, items: [] };
     const where = { url, app };
-    const indexUrl = indexUrlFor(url, await configured());
+    const indexUrl = indexUrlFor(url, await configured(), demoIndex);
     const cache = await index(indexUrl, { force });
     const entries = matchEntries(cache?.entries, where, modMatches).slice(0, MAX_ITEMS);
     const items = [];

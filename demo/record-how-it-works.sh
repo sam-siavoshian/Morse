@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # A real, unedited recording of Morse changing a real app, with a live trace of
 # every step beside it: VSCodium on the left, `MORSE_TRACE` on the right.
-# Real X key presses and clicks (xdotool), real Claude Code (haiku).
+# Real X key presses and clicks (xdotool), real Claude Code (sonnet).
 #
 #   demo/record-how-it-works.sh [out.mp4]
 #
@@ -52,7 +52,7 @@ FF=$!
     done
   done ) &
 
-MORSE_TRACE=$TRACE MORSE_PROVIDER=claude-code MORSE_MODEL=haiku \
+MORSE_TRACE=$TRACE MORSE_PROVIDER=claude-code MORSE_MODEL=sonnet \
   node demo/try-real-app.js --app codium --window 'workbench\.html' --point '.statusbar' \
   --ask 'add a big live clock to the status bar' \
   --check '/\d{1,2}:\d{2}/.test(document.querySelector(".statusbar")?.innerText || "")' \

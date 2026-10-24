@@ -70,8 +70,11 @@ const warmers = {
     method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.token || ""}` }, body: JSON.stringify({ ...(s.model && { model: s.model }), ...(s.effort && { effort: s.effort }) }),
   }).catch(() => {}),
 };
-export function prewarm(settings) {
-  const s = warmSettings({ ...DEFAULT_SETTINGS, ...settings }); // models: the model the next request starts on
+// request (optional): what the person has typed so far, not sent yet. Under
+// Automatic, the model that request would start on gets ready (the strong one
+// for new UI and features, core/route.js warmSettings).
+export function prewarm(settings, request) {
+  const s = warmSettings({ ...DEFAULT_SETTINGS, ...settings }, request); // models: the model the next request starts on
   try { return Promise.resolve(warmers[s.provider]?.(s)).catch(() => {}); } catch { return Promise.resolve(); }
 }
 
@@ -115,7 +118,8 @@ export function settingsLabel(s) {
     case "openai": {
       let host = "";
       try { host = s.baseUrl ? new URL(s.baseUrl).host : ""; } catch {}
-      return !host || host === "api.openai.com" ? `${model} · API` : `${model} · ${host}`;
+      const what = [model, s.effort && `${s.effort} effort`].filter(Boolean).join(", "); // models: the strong tier is gpt-5 thinking longer
+      return !host || host === "api.openai.com" ? `${what} · API` : `${what} · ${host}`;
     }
     case "helper": return s.label || "Morse helper";
     case "demo": return "demo replay";
@@ -241,12 +245,18 @@ async function anthropicWarm(s, { system = SYSTEM_PROMPT } = {}) {
 // OpenAI chat completions over SSE: api.openai.com or any compatible server
 // (OpenRouter, Azure and others). No temperature: current OpenAI
 // reasoning models reject non-default values.
+// models: a tier's effort becomes reasoning_effort (the strong OpenAI tier is
+// gpt-5 at "high", core/route.js TIERS). Only for reasoning models (gpt-5…,
+// o1/o3/o4…), since others reject the field; OpenAI's levels stop at "high".
+const REASONING_MODEL = /^(gpt-5|o\d)/;
+const reasoningEffort = (s, model) => (s.effort && REASONING_MODEL.test(model)
+  ? { reasoning_effort: ["low", "medium", "high"].includes(s.effort) ? s.effort : "high" } : {});
 async function openaiStream(s, messages, { onToken, signal, maxTokens, onStage }) {
   const base = (s.baseUrl || "https://api.openai.com").replace(/\/$/, "").replace(/\/v1$/, "");
   const res = await fetch(`${base}/v1/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(s.apiKey ? { Authorization: `Bearer ${s.apiKey}` } : {}) },
-    body: JSON.stringify({ model: s.model || PROVIDERS.openai.defaultModel, messages: messages.map(toOpenAI), stream: true, ...(maxTokens && { max_completion_tokens: maxTokens }) }),
+    body: JSON.stringify({ model: s.model || PROVIDERS.openai.defaultModel, messages: messages.map(toOpenAI), stream: true, ...(maxTokens && { max_completion_tokens: maxTokens }), ...reasoningEffort(s, s.model || PROVIDERS.openai.defaultModel) }),
     signal,
   });
   if (!res.ok) {

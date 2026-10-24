@@ -10,7 +10,7 @@
 //
 //   DISPLAY=:97 node demo/shoot-electron.js
 //     TUNES=/opt/Tunes/tunes     use an already packaged app (default: build one in a temp dir)
-//     MORSE_PROVIDER=claude-code MORSE_MODEL=haiku   a real model instead of the demo replay
+//     MORSE_PROVIDER=claude-code MORSE_MODEL=sonnet   a real model instead of the demo replay
 //     SHOTS=docs/screenshots  FIRST=120               where the pictures go, and their first number
 //     NO_SHOTS=1                                      drive it without writing pictures
 //

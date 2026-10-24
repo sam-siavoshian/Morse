@@ -37,9 +37,9 @@ for (const f of await fs.readdir(path.join(root, "extension"))) {
 }
 // Store builds drop what only tests use. Each entry has to match exactly once,
 // so a reworded line fails the build instead of shipping by accident.
-//   host.js: the local copy of the share page (http://127.0.0.1:8787), which
-//   tests use to ask for an install the way the real share page does
-const STORE_ONLY = [["host.js", /, "http:\/\/127\.0\.0\.1:8787" \/\* test-only \*\//g, ""]];
+//   host.js: the local copy of the share page (http://127.0.0.1:8787/share/),
+//   which tests use to ask for an install the way the real share page does
+const STORE_ONLY = [["host.js", /, "http:\/\/127\.0\.0\.1:8787\/share\/" \/\* test-only \*\//g, ""]];
 if (STORE) {
   for (const [file, re, to] of STORE_ONLY) {
     const f = path.join(out, file);
@@ -60,6 +60,8 @@ await esbuild.build({
   // core/transcribe.js lazily imports node: modules for local whisper, a path
   // the extension never takes.
   external: ["node:*"],
+  // extension/gallery-host.js: the store build never reads the demo sites' local gallery list.
+  define: { "globalThis.MORSE_STORE_BUILD": String(STORE) },
   legalComments: "none", logLevel: "warning",
 });
 await fs.copyFile(path.join(root, "design", "tokens.css"), path.join(out, "tokens.css"));
