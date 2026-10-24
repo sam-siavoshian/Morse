@@ -28,6 +28,7 @@ import { startLabel, modelNames } from "../core/route.js"; // models: "Claude Co
 import { settingsLabel, currentSettings } from "./models.js"; // also registers the Claude Code / Codex providers
 import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
+import { readWords } from "../core/languages.js"; // the bar's words in a language besides English ("i18n.words")
 import { prewarm } from "../core/providers.js";
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
@@ -508,6 +509,8 @@ export class Connector {
       case "ui.load": // perf: the overlay is evaluated on first use, into the world that asked
         await s.send("Runtime.evaluate", { expression: UI, contextId: caller.world });
         return true;
+      case "i18n.words": // the overlay carries English only: the words of the language it shows, from core/locales/
+        return readWords(msg.lang);
       case "mods.list":
         return Style.list(await modsFor(await here()), await here()); // your-style hook: the style first
       case "mods.save": {

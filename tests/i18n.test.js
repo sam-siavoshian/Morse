@@ -10,8 +10,10 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
-  t, setLanguage, getLanguage, pickLanguage, matchLanguage, languageFromEnv, isRtl, LANGUAGES, CATALOGS, englishName,
+  t, setLanguage, getLanguage, pickLanguage, matchLanguage, languageFromEnv, isRtl, LANGUAGES, CATALOGS, englishName, loadLanguage,
 } from "../core/i18n.js";
+import "../core/languages.js"; // English is built in; the others are read from core/locales/
+await Promise.all(LANGUAGES.map(l => loadLanguage(l.code)));
 import { PREF_LANGUAGES, normalizePrefs } from "../core/prefs.js";
 
 const EN = CATALOGS.en;

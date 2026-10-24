@@ -88,6 +88,7 @@
         catch (e) { return setTimeout(() => emit({ reply: m.id, error: e.message }), 10); }
       }
       if (m.type === "export") return reply({ path: "Downloads/morse/" + m.filename });
+      if (m.type === "i18n.words") return reply(await (await import("/core/languages.js")).readWords(m.lang)); // the runtime carries English only
       if (m.type === "settings.get") return reply(store.get("settings", {}));
       if (m.type === "settings.set") {
         const cur = store.get("settings", {}), next = { ...cur };
