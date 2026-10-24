@@ -237,7 +237,31 @@ async function evalIn(match, expression) {
   try { return (await s.send("Runtime.evaluate", { expression, returnByValue: true, userGesture: true })).result?.value; }
   finally { s.close(); }
 }
-const hasRuntime = re => evalIn(re, "!!globalThis.__morseHost && !!document.querySelector('[data-morse-ui]')").catch(() => false);
+// The same, in Morse's isolated world ("morse") of the target's top frame,
+// where the runtime and its host live; false when there is none.
+async function evalInMorse(match, expression) {
+  const t = (await listTargets(port)).find(x => x.type !== "service_worker" && match.test(x.url));
+  if (!t) throw new Error("no target " + match);
+  const s = await CDPSession.connect(t.webSocketDebuggerUrl);
+  try {
+    const worlds = [];
+    s.on("Runtime.executionContextCreated", ({ context: c }) => { if (c.name === "morse") worlds.push(c); });
+    await s.send("Runtime.enable");
+    const top = (await s.send("Page.getFrameTree")).frameTree.frame.id;
+    for (const c of worlds.filter(c => c.auxData?.frameId === top)) {
+      const v = (await s.send("Runtime.evaluate", { expression, contextId: c.id, returnByValue: true }).catch(() => null))?.result?.value;
+      if (v) return v;
+    }
+    return false;
+  } finally { s.close(); }
+}
+// The runtime is up in Morse's world, and the page's own world sees none of its host.
+const pageSeesNoHost = "!globalThis.__morseHost && !globalThis.__morseHostSend && !globalThis.__morseHostReceive";
+const hasRuntime = async (re, also = "true") => {
+  try {
+    return !!(await evalIn(re, `${pageSeesNoHost} && !!document.querySelector('[data-morse-ui]') && (${also})`)) && !!(await evalInMorse(re, "!!globalThis.__morseHost"));
+  } catch { return false; }
+};
 
 before(async () => {
   if (skip) return;
@@ -266,7 +290,8 @@ test("attaches to the main window and the app's own frame, not the third-party e
   assert.deepEqual(kinds, ["frame files.fake.test", "window app.fake.test"]);
   await until(() => hasRuntime(/app\.fake\.test:\d+\/$/), 10000, "runtime in the main window");
   await until(() => hasRuntime(/files\.fake\.test/), 10000, "runtime in the app frame");
-  assert.equal(await evalIn(/video\.example\.test/, "!!globalThis.__morseHost"), false, "third-party embed left alone");
+  assert.equal(await evalIn(/video\.example\.test/, "!!document.querySelector('[data-morse-ui]')"), false, "third-party embed left alone");
+  assert.equal(await evalInMorse(/video\.example\.test/, "!!globalThis.__morseHost"), false);
 });
 
 test("a window opened later gets the runtime, and a saved mod shows up in every window it matches", { skip }, async () => {
@@ -282,12 +307,12 @@ test("a window opened later gets the runtime, and a saved mod shows up in every 
 
 test("reloads, navigation and a page that reloads itself keep the runtime and the mods", { skip }, async () => {
   await evalIn(/app\.fake\.test:\d+\/$/, "window.__before = 1; location.reload()");
-  await until(async () => (await evalIn(/app\.fake\.test:\d+\/$/, "!window.__before && !!globalThis.__morseHost")), 10000, "runtime after reload");
+  await until(() => hasRuntime(/app\.fake\.test:\d+\/$/, "!window.__before"), 10000, "runtime after reload");
   await evalIn(/\/compose$/, "location.href = '/settings'");
   await until(() => hasRuntime(/\/settings$/), 10000, "runtime after navigating");
   await until(() => evalIn(/\/settings$/, "!!document.querySelector('style[data-morse-css]')"), 10000, "mods after navigating");
   await evalIn(/\/settings$/, "location.href = '/reloader'");
-  await until(() => evalIn(/\/reloader$/, "document.getElementById('n')?.textContent === 'load 3' && !!globalThis.__morseHost"), 15000, "runtime after self reloads");
+  await until(() => hasRuntime(/\/reloader$/, "document.getElementById('n')?.textContent === 'load 3'"), 15000, "runtime after self reloads");
 });
 
 test("a renderer crash: Morse notices, and the runtime is back once the page reloads", { skip }, async () => {
@@ -317,7 +342,7 @@ test("the app is killed and started again: --watch waits, verifies and reattache
 
 test("stop() detaches: bar and mods come off, new pages stay clean, the app keeps running", { skip }, async () => {
   const MAIN = /app\.fake\.test:\d+\/$/;
-  const leftovers = () => evalIn(MAIN, "!!globalThis.__morseHost || !!document.querySelector('[data-morse-ui], style[data-morse-css]')");
+  const leftovers = async () => !!(await evalIn(MAIN, "!!globalThis.__morseHost || !!document.querySelector('[data-morse-ui], style[data-morse-css]')")) || !!(await evalInMorse(MAIN, "!!globalThis.__morseHost"));
   await conn.stop();
   assert.equal(await running, "stopped");
   await sleep(300); // the runtime's own observer must not put the bar back
@@ -334,7 +359,8 @@ test("stop() detaches: bar and mods come off, new pages stay clean, the app keep
   assert.equal(await leftovers(), false);
   await evalIn(MAIN, "location.reload()");
   await sleep(1200);
-  assert.equal(await evalIn(/app\.fake\.test:\d+\/$/, "!!globalThis.__morseHost"), false);
+  assert.equal(await evalIn(/app\.fake\.test:\d+\/$/, "!!document.querySelector('[data-morse-ui]')"), false);
+  assert.equal(await evalInMorse(/app\.fake\.test:\d+\/$/, "!!globalThis.__morseHost"), false);
 });
 
 test("without --watch, the app quitting ends the session cleanly", { skip }, async () => {

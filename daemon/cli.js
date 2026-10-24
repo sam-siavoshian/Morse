@@ -12,6 +12,11 @@ import { createBridge, startPairing, VERSION } from "./bridge.js";
 import { streamChat, HELPER_PORT } from "../core/providers.js";
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
 import { pauseCli, resumeCli, exportAllCli, importCli, codeCli } from "./control.js"; // user control
+import { configuredHotkeys } from "./store.js";
+
+// The hotkeys as set in ~/.morse/settings.json (platform defaults otherwise).
+const KEYS = await configuredHotkeys().catch(() => ({}));
+const openKey = KEYS.open || "the Open Morse hotkey";
 
 const W = s => `\x1b[97m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`;
 const WARN = s => `\x1b[33m${s}\x1b[0m`, ERR = s => `\x1b[31m${s}\x1b[0m`;
@@ -127,8 +132,8 @@ ${B("Pause")}
   morse pause [site|app]    stop every mod everywhere, or on one site or app (they stay saved)
   morse resume [site|app]   start them again  [--all also resumes every single site]
 
-In a connected app, press ${B("Alt+Space")} to open Morse, ${B("Alt+Shift+M")} to see your mods
-and ${B("Alt+Shift+0")} to turn them all off.
+In a connected app, press ${B(openKey)} to open Morse.${KEYS.mods ? ` Press ${B(KEYS.mods)} to see your mods.` : ""}${KEYS.off ? `
+Press ${B(KEYS.off)} to turn all your mods off (press it again to turn them back on).` : ""}
 For websites: run npm run build, load dist/extension in Chrome, then run ${B("morse serve")} and type the code into Morse.`;
 
 async function main() {
@@ -155,7 +160,7 @@ async function main() {
     }
     case "mods": {
       const mods = await listMods();
-      if (!mods.length) return console.log(D("No mods yet. Open an app with morse launch, then press Alt+Space."));
+      if (!mods.length) return console.log(D(`No mods yet. Open an app with morse launch, then press ${openKey}.`));
       for (const m of mods) {
         const where = m.match.app || m.match.hosts.join(",");
         console.log(`${m.enabled ? W("●") : D("○")} ${B(m.title)} ${D(m.id)}  ${where}\n    ${D("“" + m.prompt + "”")}`);

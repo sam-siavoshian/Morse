@@ -113,7 +113,7 @@ test("off switch: Alt+Shift+0 turns every mod off at once, the toast turns them 
 test("the off switch is a setting with a recorder like the other hotkeys", { skip }, async () => {
   const ctx = await context();
   const { page } = await playground(ctx);
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space");
   await page.keyboard.press("Control+Comma");
   await until(() => page.evaluate(`!!${sr('.hk[data-hk="off"]')}`));
   assert.match(await text(page, '.hkrow[data-id="off"]'), /Turn off all mods/);

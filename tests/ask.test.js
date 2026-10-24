@@ -8,6 +8,8 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
 import { bundleRuntime } from "../runtime/bundle.js";
+// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
+const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 
 let chromium;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
@@ -66,7 +68,7 @@ const cardText = page => page.locator(".ask .ask-body").innerText();
 const badges = page => page.locator(".mk-badge").evaluateAll(bs => bs.map(b => ({ n: b.textContent, shown: !b.hidden })));
 
 test("Ask: a question about what you point at gets an answer and a marker, not a mod", { skip }, () => scenario(async ({ page }) => {
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   const r = await page.locator("#publish").boundingBox();
   await page.mouse.move(r.x + 10, r.y + 8);
   await page.mouse.click(r.x + 10, r.y + 8);
@@ -95,7 +97,7 @@ test("Ask: a question about what you point at gets an answer and a marker, not a
 }));
 
 test("Find: something inside a closed menu is named, its menu marked, and the item listed as hidden", { skip }, () => scenario(async ({ page }) => {
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await ask(page, "where is the export button?");
   assert.match(await cardText(page), /^Export is in the More menu 1 at the end of the toolbar\.\s+Open the More menu 1\.\s+Choose Export as PDF 2\.$/);
   assert.deepEqual(await badges(page), [{ n: "1", shown: true }, { n: "2", shown: false }]);
@@ -111,14 +113,14 @@ test("Find: something inside a closed menu is named, its menu marked, and the it
   assert.match(asks[0].outline, /#publish {2}"Publish" {2}\(button, disabled\)/);
   // Open the menu yourself: the hidden item's badge appears.
   await page.keyboard.press("Escape");
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await ask(page, "where is the export button?");
   await page.locator("#more").click();
   await until(async () => (await badges(page)).every(b => b.shown));
 }));
 
 test("Show me: each step waits for the user's own click; Morse never clicks", { skip }, () => scenario(async ({ page }) => {
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await ask(page, "where is the export button?");
   await page.locator(".ask [data-ask=show]").click();
   const guide = page.locator(".guide");
@@ -151,7 +153,7 @@ test("Show me: each step waits for the user's own click; Morse never clicks", { 
   assert.ok(f.clicks.every(c => c.trusted), JSON.stringify(f.clicks));
   await until(async () => await guide.isHidden(), 6000);
   // Esc stops a walk-through.
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await ask(page, "where is the export button?");
   await page.locator(".ask [data-ask=show]").click();
   await until(() => guide.isVisible());
@@ -160,7 +162,7 @@ test("Show me: each step waits for the user's own click; Morse never clicks", { 
 }));
 
 test("Follow-ups carry the page's earlier questions; New topic forgets them", { skip }, () => scenario(async ({ page }) => {
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await ask(page, "where is the export button?");
   await ask(page, "and how do I undo that?");
   assert.match(await cardText(page), /nothing on the page to undo/);
@@ -173,7 +175,7 @@ test("Follow-ups carry the page's earlier questions; New topic forgets them", { 
   assert.deepEqual(asks[1].ask.turns[0].points.map(p => p.selector), ["#more", "#export"]);
   // Closing and reopening the bar keeps the conversation (in memory only).
   await page.keyboard.press("Escape");
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await ask(page, "and then?");
   ({ asks } = await fake(page));
   assert.equal(asks[2].ask.turns.length, 2);
@@ -185,7 +187,7 @@ test("Follow-ups carry the page's earlier questions; New topic forgets them", { 
 }));
 
 test("Explain this page from the page tools: a plain summary with markers", { skip }, () => scenario(async ({ page }) => {
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await page.locator(".gm-qbtn").click();
   const item = page.locator(".gm-menu [data-ask=explain]");
   assert.equal(await item.innerText(), "Explain this page");
@@ -204,7 +206,7 @@ test("Explain this page from the page tools: a plain summary with markers", { sk
 }));
 
 test("Stopping mid-answer leaves no card, no markers and no turn behind", { skip }, () => scenario(async ({ page }) => {
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await page.keyboard.type("where is the export button?");
   await page.keyboard.press("Enter");
   await page.locator(".ask.streaming").waitFor({ timeout: 5000 });

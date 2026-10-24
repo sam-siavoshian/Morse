@@ -25,10 +25,11 @@ export function detectPlatform(nav = globalThis.navigator) {
   return "linux";
 }
 
-// Alt+Space opens the window menu on Windows, so Windows gets Ctrl+Shift+Space.
+// Alt+Space opens the window menu on Windows and on GNOME/Xfce, and KRunner on
+// KDE, so only macOS gets ⌥Space; everywhere else it's Ctrl+Shift+Space.
 // Push to talk defaults to holding the open hotkey: tap to open, hold to talk.
 export function defaultHotkeys(platform) {
-  const open = platform === "win" ? "Ctrl+Shift+Space" : "Alt+Space";
+  const open = platform === "mac" ? "Alt+Space" : "Ctrl+Shift+Space";
   return { open, talk: open, mods: "Alt+Shift+KeyM", godmode: "Alt+Shift+KeyG", off: "Alt+Shift+Digit0" };
 }
 
@@ -212,6 +213,7 @@ export function checkCombo(str, platform, { self = "", others = {} } = {}) {
   if (primary && !c.alt && HK_COMMON[c.code]) return { level: "warn", message: `${shown} is ${HK_COMMON[c.code]} in most apps. Morse will take it over.` };
   if (platform === "mac" && c.ctrl && !c.alt && !c.meta && c.code === "Space") return { level: "warn", message: "⌃Space switches the keyboard language on many Macs." };
   if (platform !== "mac" && c.ctrl && !c.alt && !c.shift && c.code === "Space") return { level: "warn", message: "Ctrl+Space opens suggestions in many code editors." };
+  if (platform === "linux" && combo === "Alt+Space") return { level: "warn", message: "Alt+Space opens the window menu on GNOME and Xfce, and KRunner on KDE." };
   if (platform === "mac" && c.alt && !c.ctrl && !c.meta && /^(Key|Digit)/.test(c.code)) return { level: "warn", message: `${shown} types a special character in text fields. Morse will take it over.` };
   if (platform !== "mac" && c.alt && !c.ctrl && !c.meta && !c.shift && /^Key/.test(c.code)) return { level: "warn", message: `${shown} opens a menu in many desktop apps.` };
   return { level: "ok", message: "" };

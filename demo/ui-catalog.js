@@ -15,6 +15,8 @@ import { createRequire } from "node:module";
 import http from "node:http";
 import { promises as fs, readFileSync, existsSync } from "node:fs";
 import path from "node:path";
+// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
+const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const OUT = path.join(ROOT, "docs", "ui");
@@ -240,7 +242,7 @@ async function alignCheck(page, target) {
 
 async function openBar(page) {
   await ui(page, ".bar").waitFor({ state: "hidden" });
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await ui(page, ".bar").waitFor({ state: "visible" });
   await sleep(300);
 }

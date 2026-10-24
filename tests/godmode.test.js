@@ -7,6 +7,8 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
 import { bundleRuntime } from "../runtime/bundle.js";
+// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
+const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 
 let chromium;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
@@ -58,7 +60,7 @@ const savedMods = page => page.evaluate(() => Object.values(JSON.parse(localStor
 
 test("hide, move, rename, recolor and dark mode apply live, undo, save, and come back after a reload", { skip }, async () => {
   const { ctx, page, errors } = await playground("?light");
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
 
   // Rename: T edits the text in place, Enter keeps it.
   await select(page, "#card h3");
@@ -136,7 +138,7 @@ test("hide, move, rename, recolor and dark mode apply live, undo, save, and come
 
 test("edge cases: shadow DOM, mixed inline text, frames, duplicates, and dark pages", { skip }, async () => {
   const { ctx, page, errors } = await playground("");
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
 
   // Inside an open shadow root: the edit carries the host chain.
   await select(page, "#badge", 20, 8);

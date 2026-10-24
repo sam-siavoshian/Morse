@@ -90,7 +90,7 @@ Captured by [`demo/shoot-bar.js`](demo/shoot-bar.js) from [`demo/bar-playground.
 | ![](docs/screenshots/64-shortcuts.png) **`?`** shows the shortcuts you have | ![](docs/screenshots/65-cancelled.png) **Esc** stops Morse. Nothing is left behind |
 
 - **Voice.** Tap the mic, or hold the shortcut (tap opens Morse, hold talks). On websites in Chrome, Chrome turns speech into text. In desktop apps, Morse records you and the Morse helper turns it into text with OpenAI `gpt-4o-mini-transcribe` (your key: `OPENAI_API_KEY` or `"voice": { "openaiKey" }` in `~/.morse/config.json`) or a local `whisper-cli` / `whisper` on your PATH. Turn on "Send after a pause" in Settings to send when you stop talking.
-- **Shortcuts** to open Morse, push to talk, open the Mods panel and show the edit tools. Change them in Settings. Defaults: ⌥Space (Ctrl+Shift+Space on Windows, where Alt+Space opens the window menu). Settings live in `~/.morse/settings.json` (desktop) or Chrome sync (extension).
+- **Shortcuts** to open Morse, push to talk, open the Mods panel and show the edit tools. Change them in Settings. Defaults: ⌥Space on macOS, Ctrl+Shift+Space on Windows and Linux (where Alt+Space opens the window menu, or KRunner on KDE). The extension's toolbar shortcut is Ctrl+Shift+Y (⌘⇧Y), so it never takes the in-page one. Settings live in `~/.morse/settings.json` (desktop) or Chrome sync (extension).
 - **In the bar:** ↑/↓ for your past requests in this app, Shift+Enter for a new line, Esc or ⌘. to stop. When the bar closes, you are back where you were, and the app gets every key except your Morse shortcuts.
 
 ### Edit tools: change things directly, no model
@@ -184,11 +184,11 @@ node daemon/cli.js export --all                 # back up every mod to one file
 2. Click **Load unpacked** and choose the `dist/extension` folder.
 3. Open Morse's details and turn on **Allow User Scripts**. Mods that only change the look work without it. Mods that add buttons or features need it on some sites.
 4. The Morse settings page opens the first time. Connect a model there (see [Models](#models)).
-5. Open any page and press **⌥Space** (Alt+Space).
+5. Open any page and press **⌥Space** (Ctrl+Shift+Space on Windows and Linux).
 
 ## How to use
 
-1. Press **⌥Space** (Alt+Space; Ctrl+Shift+Space on Windows). The Morse bar opens.
+1. Press **⌥Space** (Ctrl+Shift+Space on Windows and Linux). The Morse bar opens.
 2. Point at the thing you want to change and click it. To change the whole page, skip this step.
 3. Describe what you want, like "add a sleep timer" or "make this easier to read", and press Enter. Or hold ⌥Space and say it.
 4. Watch the change happen. Click **Save** to keep it, or **Undo** to remove it.
@@ -268,6 +268,7 @@ Mods are code running inside apps you're signed into, so:
 - The model is told not to use the network, eval, or external scripts, but **that is not enforced yet** (see roadmap). Before a shared mod is installed, Morse says in plain words what its code can do (sending data elsewhere and reading what you type get a clear note) and shows the code; imported mods say where they came from. The summary is pattern matching, not a guarantee, so it errs on the side of mentioning things and flags code that builds code while it runs.
 - One key (⌥⇧0) turns every mod on a page off; Morse can be paused per site or everywhere; a mod that keeps crashing a page is held back on the next load.
 - Mods run in the renderer only. They get no Node/Electron APIs.
+- Morse's own UI runs in an isolated JS world (a content script on the web, a CDP isolated world on desktop), so the app's or website's scripts can't reach Morse's host API: your prompt history, the clipboard, other sites' mods, exports or your model. Mod code runs in the page's main world, because it needs the page's own objects. Host requests are answered for the page that asked.
 - `morse launch` opens a debugging port on 127.0.0.1. While it's open, **any local process can attach to that app**, which is the same trust level as anything else running as you, but worth knowing. Quit the app normally to close it. Morse picks a free port, drops any `--remote-debugging-address` you pass, checks the port can't be reached from this machine's other addresses, and won't connect if what answers isn't the app it started (process id, then user agent).
 - Share links carry the mod in the URL fragment, which browsers never send to a server.
 - Page text goes to the model, so a page can try to prompt-inject it. That's one reason generated code is always shown, reversible, and never silent, and why Claude Code and Codex run with no tools, no MCP servers and an empty working folder: the model can only write text.

@@ -9,6 +9,8 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
 import { bundleRuntime } from "../runtime/bundle.js";
+// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
+const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 
 let chromium;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
@@ -53,7 +55,7 @@ const ui = (page, sel) => page.locator(`[data-morse-ui] ${sel}`);
 
 test("refine a result, step back with Ctrl+Z, keep, restore from History, refine from the panel", { skip }, async () => {
   const { ctx, page, errors, waitFor } = await playground();
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await waitFor(s => s.open);
   await page.keyboard.type("add a now playing label to the toolbar");
   await page.keyboard.press("Enter");

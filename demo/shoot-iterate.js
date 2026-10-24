@@ -13,6 +13,8 @@ import path from "node:path";
 import os from "node:os";
 import net from "node:net";
 import { createRequire } from "node:module";
+// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
+const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -74,7 +76,7 @@ const ui = (page, sel) => page.locator(`[data-morse-ui] ${sel}`);
 
 // ---- Tunes: a sleep timer, then keep going
 const tunes = await open(SITE.tunes);
-await tunes.keyboard.press("Alt+Space");
+await tunes.keyboard.press(OPEN_KEY);
 await sleep(200);
 await pick(tunes, '[data-testid="player-controls"] .btns', 0.5, 0.5);
 await tunes.keyboard.type("add a sleep timer", { delay: 14 });
@@ -113,7 +115,7 @@ await tunes.keyboard.press("Escape");
 
 // ---- Parley: a mod saved a while ago; the app has since changed
 const chat = await open(SITE.parley);
-await chat.keyboard.press("Alt+Space");
+await chat.keyboard.press(OPEN_KEY);
 await sleep(200);
 await pick(chat, "form#composer", 0.5, 0.3);
 await chat.keyboard.type("show a live word count", { delay: 10 });

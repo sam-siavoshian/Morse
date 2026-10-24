@@ -7,6 +7,8 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { serveBar } from "../demo/bar-server.js";
+// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
+const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 
 let chromium;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
@@ -43,7 +45,7 @@ async function install(query, state) {
     await page.waitForTimeout(150); // onboarding.get
   };
   const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem("fake:onboarding") || "null"));
-  const open = async () => { await page.keyboard.press("Alt+Space"); await waitFor(s => s.open); await page.waitForTimeout(60); };
+  const open = async () => { await page.keyboard.press(OPEN_KEY); await waitFor(s => s.open); await page.waitForTimeout(60); };
   await load();
   return { page, ctx, status, waitFor, load, stored, open, errors, q: (sel, prop) => page.evaluate(ui(sel, prop)), click: sel => page.evaluate(click(sel)) };
 }

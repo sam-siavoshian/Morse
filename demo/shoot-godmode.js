@@ -10,6 +10,8 @@ import path from "node:path";
 import os from "node:os";
 import { createRequire } from "node:module";
 import { startHelper, pairExtension } from "./helper.js";
+// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
+const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -66,7 +68,7 @@ async function pick(page, sel, fx = 0.5, fy = 0.5) {
 
 // ---- The Daily Byte: direct edits
 const news = await open(SITE.byte);
-await news.keyboard.press("Alt+Space");
+await news.keyboard.press(OPEN_KEY);
 await sleep(200);
 
 // 50. Select the headline: the toolbar anchors to it; hover shows name + shortcut
@@ -128,7 +130,7 @@ await news.keyboard.press("Escape"); // closes the bar: the session is saved as 
 await sleep(600);
 
 // 54. Page tools: hide ads and popups, then dark mode
-await news.keyboard.press("Alt+Space");
+await news.keyboard.press(OPEN_KEY);
 await sleep(200);
 await news.mouse.move(1000, 120);
 await news.locator(".gm-qbtn").click();
@@ -150,7 +152,7 @@ await sleep(300);
 
 // ---- Parley (another app, strict CSP): rebuild the captured masthead here
 const chat = await open(SITE.parley);
-await chat.keyboard.press("Alt+Space");
+await chat.keyboard.press(OPEN_KEY);
 await sleep(500);
 await pick(chat, 'header[role="banner"]', 0.45, 0.5);
 await chat.locator(".gm-chip").first().click();

@@ -41,23 +41,33 @@ export function createMod({ id, title, prompt, css, js, url, app, target, model,
   };
 }
 
+// What a mod is filed under: the host for web pages, and the file itself
+// (file://<dir>/<name>, no query or hash) for local files, so a mod made on
+// one local page doesn't follow you to every other one.
 export function hostOf(url) {
   try {
     const u = new URL(url);
-    return u.protocol === "file:" ? "file" : u.host;
+    return u.protocol === "file:" ? `file://${u.host}${u.pathname}` : u.host;
   } catch { return "*"; }
 }
+
+const LOOPBACK = /^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/;
 
 // A broken mod (bad match) matches nothing, so it can't stop the others loading.
 export function modMatches(mod, { url, app }) {
   if (!mod || typeof mod !== "object") return false;
   const m = mod.match && typeof mod.match === "object" ? mod.match : {};
-  if (m.app && app && m.app !== app) return false;
-  if (m.app && !app) return false;
+  if (m.app && m.app !== app) return false;
   const hosts = modHosts(mod);
   if (!hosts) return false;
   const h = hostOf(url);
-  return hosts.some(p => p === "*" || p === h || (p.startsWith("*.") && h.endsWith(p.slice(1))));
+  // "file" is how mods made before per-file matching were filed: keep them
+  // working on local files.
+  const legacyFile = h.startsWith("file://") ? "file" : null;
+  return hosts.some(p => p === "*" || p === h || p === legacyFile || (!legacyFile && p.startsWith("*.") && h.endsWith(p.slice(1)))
+    // Desktop apps often serve their UI from a random localhost port: within
+    // the app, a mod follows its local UI whatever port it loads from.
+    || (!!m.app && LOOPBACK.test(p) && LOOPBACK.test(h)));
 }
 
 export function validateMod(m) {
@@ -80,7 +90,7 @@ const oneLine = s => String(s).replace(/[\r\n\u2028\u2029]+/g, " ");
 // Tampermonkey / Violentmonkey compatible export: the helper kit is inlined so
 // the script runs without Morse installed.
 export function toUserscript(mod) {
-  const matches = (mod.match?.hosts || ["*"]).map(h => h === "file" ? "file:///*" : h === "*" ? "*://*/*" : `*://${h}/*`);
+  const matches = (mod.match?.hosts || ["*"]).map(h => h === "file" ? "file:///*" : h.startsWith("file://") ? h : h === "*" ? "*://*/*" : `*://${h}/*`);
   const header = [
     "// ==UserScript==",
     `// @name         ${oneLine(mod.title)}`,
