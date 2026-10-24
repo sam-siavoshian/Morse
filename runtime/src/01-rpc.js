@@ -30,8 +30,8 @@ const addEventListener = (type, fn, opts) => B.on(window, type, fn, opts);
 const removeEventListener = (type, fn, opts) => B.off(window, type, fn, opts);
 const { MutationObserver: PageObserver, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, getComputedStyle } = B.pristine;
 // soak: the UI's observers, tracked while they observe, so a copy that went
-// quiet (`morse stop`, then attach again) disconnects them when the next boot
-// disposes of this one (boot.js dispose -> letGo). Some watch the whole page
+// quiet (`morse stop`) disconnects them (letGo, checked every 2 s; the boot
+// lets go of its own listeners when the next one starts). Some watch the whole page
 // (the re-render notes in 20-context.js), and each kept a whole old UI alive:
 // on the desktop, runtime observers went 25 -> 101 over three stop + attach.
 const uiObservers = new Set();
@@ -45,3 +45,4 @@ function letGo() {
   // table of its own, reached through the bar's aria-owns: empty the UI.
   try { bar.removeAttribute("aria-owns"); root.replaceChildren(); hostEl.remove(); } catch {}
 }
+const quietCheck = setInterval(() => { if (!live()) { clearInterval(quietCheck); letGo(); } }, 2000); // soak

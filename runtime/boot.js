@@ -607,18 +607,8 @@ on(W, "focus", () => {
   loadPrefs().catch(() => {});
 });
 
-// soak: the host can go away while the page starts (Chrome stops and restarts
-// the extension's worker; its requests then fail with "Morse restarted"). Ask
-// again a few times instead of staying without mods until the next reload.
-async function askAgain(fn, tries = 4) {
-  for (let n = 1; ; n++) {
-    try { return await fn(); }
-    catch (e) { if (n >= tries || !live()) throw e; await new Promise(r => pristine.setTimeout(r, 400 * n)); }
-  }
-}
-
 // ---- start: hello, safe start and the mods in parallel
-askAgain(syncMods).then(() => {
+syncMods().then(() => {
   // What the UI's controlReady() (63-control.js) would say after the first sync.
   const sus = Control.suspect, m = sus && S.mods.find(x => x.id === sus.id);
   if (sus && (!m || !m.enabled)) { Control.held.delete(sus.id); Control.suspect = null; ctl("control.forgive"); }
@@ -633,7 +623,7 @@ askAgain(syncMods).then(() => {
 const ready = (async () => {
   let hello = {};
   try {
-    hello = (await askAgain(() => call("hello", { url: location.href }))) || {}; // soak: askAgain
+    hello = (await call("hello", { url: location.href })) || {};
     S.label = hello.label || ""; S.mode = hello.mode || ""; S.app = hello.app || null; S.appName = hello.appName || hello.app || null;
     // Hosts from before settings existed don't send them; ask (or use local ones).
     if (hello.settings) { setBootPrefs(hello.settings); hostPrefs = true; } else await loadPrefs();
@@ -679,7 +669,6 @@ Object.defineProperty(W, BOOT, { configurable: true, value: Object.freeze({
   dispose() {
     if (live()) return;
     for (const r of regs.splice(0)) pristine.removeEventListener(r.target, r.type, r.wrapped, r.opts);
-    try { ui?.dispose?.(); } catch {} // soak: the UI's own observers (01-rpc.js letGo)
     domMo.disconnect();
     domHooks.clear();
     listeners.clear();
