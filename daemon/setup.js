@@ -44,7 +44,7 @@ export function configFor(id, { key = "", keyEnv = "", vendor = "" } = {}) {
       return { ...m, ...(key ? { apiKey: key } : { apiKeyEnv: keyEnv }) };
     }
   }
-  throw new Error(`Unknown choice “${id}”. Use one of: ${BACKENDS.map(b => b.id).join(", ")}, demo`);
+  throw new Error(`Morse doesn't know “${id}”. Use one of: ${BACKENDS.map(b => b.id).join(", ")}, demo.`);
 }
 export const keyVendor = key => (/^sk-ant-/.test(String(key)) ? "anthropic" : "openai");
 
@@ -162,7 +162,7 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
       let key = typeof flag("key") === "string" ? flag("key") : "";
       if (!key && !row?.found) key = (await lines.ask(`  Paste your API key (it stays in ${tilde(HOME)}/config.json): `, { secret: isTTY })) || "";
       key = key.trim();
-      if (!key && !row?.found) { lines.close(); say(R(`\n  No key given, nothing changed.`)); return { saved: false, rows }; }
+      if (!key && !row?.found) { lines.close(); say(R(`\n  No key given, so nothing changed.`)); return { saved: false, rows }; }
       model = key ? configFor("api-key", { key }) : configFor("api-key", { keyEnv: row.keyEnv, vendor: row.vendor });
     } else model = configFor(choice);
   } catch (e) { lines.close(); say(R(`  ${e.message}`)); return { saved: false, rows }; }

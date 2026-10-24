@@ -62,7 +62,7 @@ test("config for each choice", () => {
   assert.deepEqual(configFor("api-key", { key: "sk-ant-abc" }), { provider: "anthropic", apiKey: "sk-ant-abc" });
   assert.deepEqual(configFor("api-key", { key: "sk-proj-abc" }), { provider: "openai", baseUrl: "https://api.openai.com", apiKey: "sk-proj-abc" });
   assert.deepEqual(configFor("api-key", { keyEnv: "ANTHROPIC_API_KEY", vendor: "anthropic" }), { provider: "anthropic", apiKeyEnv: "ANTHROPIC_API_KEY" });
-  assert.throws(() => configFor("gpt"), /Unknown choice/);
+  assert.throws(() => configFor("gpt"), /doesn't know “gpt”/);
   assert.equal(isSetUp({}), false);
   assert.equal(isSetUp({ model: { provider: "auto" } }), false);
   assert.equal(isSetUp({ model: { provider: "codex" } }), true);

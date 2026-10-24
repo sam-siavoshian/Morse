@@ -28,7 +28,7 @@ async function loadHotkeys() {
   HOTKEYS = resolveHotkeys(normalizePrefs(stored).hotkeys, PLATFORM);
   for (const el of document.querySelectorAll(".hk[data-hk]")) {
     const parts = comboParts(HOTKEYS[el.dataset.hk] || "", PLATFORM);
-    el.innerHTML = parts.length ? `<span class="caps">${parts.map(k => `<kbd>${esc(k)}</kbd>`).join("")}</span>` : "the Morse hotkey";
+    el.innerHTML = parts.length ? `<span class="caps">${parts.map(k => `<kbd>${esc(k)}</kbd>`).join("")}</span>` : "the Morse shortcut";
   }
 }
 await loadHotkeys();
@@ -56,7 +56,7 @@ function evalInFrame(code) {
     const id = ++evalSeq;
     evals.set(id, resolve);
     frame.contentWindow.postMessage({ morseEval: code, id }, "*");
-    setTimeout(() => { if (evals.delete(id)) resolve({ ok: false, error: "The practice page didn't answer" }); }, 4000);
+    setTimeout(() => { if (evals.delete(id)) resolve({ ok: false, error: "The practice page didn't answer. Reload this page and try again." }); }, 4000);
   });
 }
 
