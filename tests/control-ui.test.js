@@ -47,7 +47,7 @@ const MODS = {
     imported: true, importedFrom: "link", importedAt: now, author: "Ana" },
 };
 
-async function playground(ctx, mods = MODS) {
+async function playground(ctx, mods = MODS, query = "") {
   const page = await ctx.newPage();
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
@@ -56,7 +56,7 @@ async function playground(ctx, mods = MODS) {
   // first load already has the mods (an extra quick load would count for safe start).
   await page.goto(`${ORIGIN}/blank`);
   await page.evaluate(m => { localStorage.setItem("morse:playground:mods", JSON.stringify(m)); localStorage.setItem("morse:debug", "1"); }, mods);
-  await page.goto(`${ORIGIN}/demo/playground.html?light`);
+  await page.goto(`${ORIGIN}/demo/playground.html?light${query}`);
   await waitForReady(page);
   await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).mods > 0);
   return { page, errors };
@@ -83,6 +83,21 @@ const helloCount = page => page.locator(".hb").count();
 const running = async page => (await padding(page)) === "30px" && (await helloCount(page)) === 1;
 const stopped = async page => (await padding(page)) !== "30px" && (await helloCount(page)) === 0;
 const stored = page => page.evaluate(() => JSON.parse(localStorage.getItem("morse:playground:mods")));
+
+// dogfood: in Obsidian the toast said "Turned off 1 mod on this page".
+test("off switch: in a desktop app it names the app, not the page", { skip }, async () => {
+  const ctx = await context();
+  const { page, errors } = await playground(ctx, MODS, "&app=Obsidian");
+  await until(() => running(page));
+  await page.keyboard.press("Alt+Shift+Digit0");
+  await until(() => stopped(page));
+  assert.match(await until(() => text(page, ".ctl-toast")), /Turned off 2 mods in Obsidian/);
+  await page.keyboard.press("Alt+Shift+KeyM");
+  await until(() => text(page, ".ctl-strip"));
+  assert.match(await text(page, ".ctl-strip"), /Mods are turned off in Obsidian/);
+  assert.doesNotMatch(await text(page, ".ctl-strip"), /this page/);
+  assert.deepEqual(errors, []);
+});
 
 test("off switch: Alt+Shift+0 turns every mod off at once, the toast turns them back on, and it holds across a reload", { skip }, async () => {
   const ctx = await context();

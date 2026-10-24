@@ -91,7 +91,7 @@ function setHint() {
   if (S.phase !== "idle") return;
   hint.innerHTML = hintSticky || hintNote || (S.picking
     ? `${t("bar.hint.pointing")}<span class="sr"> · ${t("bar.hint.keys", { key: PLATFORM === "mac" ? "Option" : "Alt" })}</span>`
-    : S.target ? t("bar.hint.target") : t("bar.hint.page"));
+    : S.target ? `${t("bar.hint.target")} · ${t("bar.hint.wider", { key: PLATFORM === "mac" ? "⌥↑" : "Alt+↑" })}` : t("bar.hint.page")); // dogfood: Alt+↑
   ticker.textContent = "";
   actions.innerHTML = `<button data-a="mods">${t("bar.mods")}${S.mods.length ? ` <em>${S.mods.length}</em>` : ""}</button><span class="model">${esc(S.label)}</span>`;
 }

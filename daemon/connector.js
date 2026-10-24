@@ -517,7 +517,7 @@ export class Connector {
         const where = await here();
         if (msg.draft) {
           await this.ownMod(msg.draft.id, where);
-          trace("save", `Saved "${msg.draft.title || msg.draft.id}" to ~/.morse/mods/ · it runs again every time this app opens`);
+          trace("save", `Saved "${msg.draft.title || msg.draft.id}" to ${path.join(HOME, "mods")} · it runs again every time this app opens`); // dogfood: MORSE_HOME, not always ~/.morse
           return saveMod(createMod({ ...msg.draft, url: where.url, app, model: msg.draft.model || settingsLabel(this.settings) }));
         }
         validateMod(msg.mod);
