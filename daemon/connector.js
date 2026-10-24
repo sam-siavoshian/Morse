@@ -43,6 +43,7 @@ import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that f
 import { pageCollapse } from "../core/guard.js"; // guard hook: a change that hides most of the page
 
 import { bundleRuntime } from "../runtime/bundle.js";
+import { trace } from "./trace.js"; // MORSE_TRACE: one line per step of a change
 const RUNTIME = bundleRuntime();
 
 export const WORLD = "morse";            // the isolated world's name
@@ -266,6 +267,7 @@ export class Connector {
     if (w.detaching || this.state === "stopped") return; // stopped meanwhile: nothing was connected
     readTitle();
     this.log(`  ✓ connected to ${title}${kind === "window" ? "" : ` (${kind})`}`);
+    trace("connect", `CDP attached to "${title}": Morse's code runs in its own isolated world ("morse"), talks to this process through the __morseHostSend binding`);
     if (!this.hinted && kind === "window") { // first-run hook: say what to do next, once
       this.hinted = true;
       configuredHotkeys().then(k => k.open && this.log(`\n  In ${this.app?.name || title || "the app"}, press ${k.open}, point at something and say what to change.\n`), () => {});
@@ -410,6 +412,7 @@ export class Connector {
     catch (e) { if (!/Execution was terminated/.test(e.message) && !s.hang?.froze(modId)) throw e; r = null; }
     finally { done?.(); }
     if (!r || s.hang?.froze(modId)) return { ok: false, error: FROZE_ERROR };
+    trace("page", `JS (${js.length} chars) run in the app's own page world via CDP Runtime.evaluate${r.exceptionDetails ? " → error" : ""}`);
     if (r.exceptionDetails) return { ok: false, error: r.exceptionDetails.exception?.description?.split("\n")[0] || r.exceptionDetails.text };
     const res = r.result?.value || { ok: false, error: "no result" };
     if (!res.ok) return res;
@@ -477,6 +480,7 @@ export class Connector {
         const where = await here();
         if (msg.draft) {
           await this.ownMod(msg.draft.id, where);
+          trace("save", `Saved "${msg.draft.title || msg.draft.id}" to ~/.morse/mods/ · it runs again every time this app opens`);
           return saveMod(createMod({ ...msg.draft, url: where.url, app, model: msg.draft.model || settingsLabel(this.settings) }));
         }
         validateMod(msg.mod);
@@ -522,6 +526,10 @@ export class Connector {
         if (!this.settings?.provider || this.settings.provider === "none")
           throw new Error("No model is connected. Run morse setup in a terminal to choose one.");
         const t0 = Date.now();
+        const sel = msg.context?.target?.selector;
+        trace("bar", `"${msg.request}" · ${sel ? `pointed at ${sel}` : "the whole page"} · ${this.app?.name || "app"}`);
+        trace("model", `${this.settings.provider}${this.settings.model ? ` · ${this.settings.model}` : ""}`);
+        let cssPushes = 0, tokens = 0;
         const res = await this.gens.run(msg.genId, signal => runMorse({
           settings: this.settings,
           request: msg.request,
@@ -532,11 +540,17 @@ export class Connector {
           // over the same session, in order.
           probe: sels => this.probe(s, caller, msg.context?.target?.selector, sels),
           collapse: css => this.collapse(s, caller, msg.genId, css), // guard hook: hid most of the page?
-          emit: ev => { if (!signal.aborted) this.push(s, caller, { ...ev, genId: msg.genId }); },
+          emit: ev => {
+            if (ev.type === "token" && !tokens++) trace("stream", `first words from the model after ${Date.now() - t0}ms`);
+            if (ev.type === "css" && ev.css && !cssPushes++) trace("page", `CSS reaches the page while the model is still writing (${Date.now() - t0}ms), pushed over CDP to Morse's world`);
+            if (ev.type === "phase" && ev.phase === "fixing") trace("engine", `repair round: ${String(ev.error || "").slice(0, 100)}`);
+            if (!signal.aborted) this.push(s, caller, { ...ev, genId: msg.genId });
+          },
           signal,
         }));
         if (res.cancelled) { this.log(`  ■ "${msg.request}" stopped after ${Date.now() - t0}ms`); return res; }
         this.log(`  ${res.ok ? "✓" : "✗"} "${msg.request}" → ${res.title || "-"} (${Date.now() - t0}ms, ${res.attempts} attempt${res.attempts > 1 ? "s" : ""})`);
+        trace("done", `${res.ok ? "✓" : "✗"} "${res.title || "-"}" in ${Date.now() - t0}ms · ${tokens} chunks streamed · css ${res.css?.length || 0} chars · js ${res.js?.length || 0} chars · ${res.attempts} attempt${res.attempts > 1 ? "s" : ""}`);
         return { ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts };
       }
       case "capture": {
