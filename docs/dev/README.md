@@ -69,24 +69,39 @@ fails on a broken link. `site/privacy.html` is made from
 [docs/privacy.md](../privacy.md) by `npm run pages`, and
 `tests/release.test.js` checks that it is current.
 
-The design is ported from the Lanes landing page (same owner): its layout,
-type scale, spacing, components and motion, in plain HTML and CSS, with
-Morse's monochrome in place of Lanes' purple. Light only, like Lanes. Static
-files were chosen over bringing in Next.js because Lanes' page is itself a
-static export whose styles are one plain stylesheet, so a port reproduces it
-exactly with no build step, no dependencies and no change to the Pages
-layout that share links and the gallery list depend on.
+The design is Morse's own, taken from the product: the dark grey ramp of
+[`design/tokens.css`](../../design/tokens.css), white type, mono for keys
+and requests, and the radar's pixels as the one motif (a faint grid behind
+the headline, with a few lit squares pulsing like the mark while a model
+works). Dark only. There are no drawn pictures: every picture is a real
+screenshot or a frame of a real recording, and the only SVGs are the
+favicon and a few functional icons (arrows, play, pause);
+`tests/site.test.js` checks that. One page that sells in a minute: the
+headline and the film, **See it change** (before and after pairs with a
+slider), **How it works** in three steps, **Try it here**, a strip of real
+apps, **Install** (two buttons, the steps by hand behind each, and one line
+for developers), privacy in two lines, a short FAQ.
 
 - **`site/index.html`**: the landing page. It holds the one copy of the nav
   bar and footer: `npm run pages` copies them into `site/gallery.html`
   (between its `<!-- chrome:… -->` markers) and `site/privacy.html`.
-- **`site/config.js`**: where the buttons go (**Get it for Chrome**, **Get the
-  desktop app**; the install steps until there is a store listing or a
-  download) and the demo video under the headline (file, poster, shape,
-  caption). Swap the video there.
-- **`site/site.css`**: the one stylesheet for the site's pages (Nunito Sans,
-  OFL, in `site/fonts/`). `site/shots/` holds the screenshots the page shows,
-  as WebP copies of `docs/screenshots/`.
+- **`site/config.js`**: every link target and every real picture, in one
+  place. `LINKS`: where **Add to Chrome** and **Download Morse** go (the
+  steps by hand, `#chrome-steps` and `#desktop-steps`, until there is a store
+  listing or a Morse Desktop download). `DEMO_VIDEO`: the film under the
+  headline (file, poster, shape, captions). `SHOWCASE`: the before and after
+  pairs, each with the app's name as it shows on screen (VSCodium, not VS
+  Code), what was asked and by which model; swap in the pictures from
+  `docs/showcase/` there (`npm run pages` publishes that folder when it
+  exists). `REAL_APPS`: the strip of real apps. `site/index.js` builds those
+  two sections from it.
+- **`site/site.css`**: the one stylesheet for the site's pages (Inter, Inter
+  Display and JetBrains Mono, Latin subsets, OFL, in `site/fonts/`).
+  `site/shots/` holds the screenshots the page shows, as WebP copies of
+  `docs/screenshots/` (same numbers), frames of
+  `docs/launch/morse-social-16x9.mp4` (198, 200, 201), the Chrome Web Store
+  screenshots (180, 181) and the rest of the Obsidian run behind 149 (190,
+  191).
 - **Try it here** ([`site/try/`](../../site/try/), the `#try` section between
   `<!-- try-it -->` markers in `site/index.html`): the real runtime in a demo
   app (`demo/sites/tunes` or `byte`), in an iframe sandboxed with
@@ -115,14 +130,15 @@ layout that share links and the gallery list depend on.
   2026, so a selector may need a refresh.
 - **`site/radar.js`**: the radar mark (OpenCode's 4×4 pixel spinner) as a
   tiny module.
-- **`share/install.html`** keeps the site's earlier look, in
+- **`share/install.html`** follows the reader's light or dark setting, in
   `share/install.css` with `design/tokens.css`.
 
 Run it locally with `npm run demo:serve` and open
 `http://127.0.0.1:8787/site/`. Screenshots are in [`docs/site/`](../site/):
-`node demo/shoot-site.js` makes the pages' own (1440×900 and 390×844), and
-the `compare-*` pictures put Lanes' page beside Morse's at 390, 768, 1280
-and 1440 pixels wide, the first screen and the whole page.
+`node demo/shoot-site.js` makes them: the landing page whole at 390, 768,
+1280 and 1440 pixels wide (it fails if one scrolls sideways), each section
+at 1440 and 390 (`section-*`), the first screen, the nav sheet, the gallery,
+the privacy policy and the share page.
 
 To add a mod to the gallery, export it (`morse export <id>` writes a
 `.morse.json`), drop it in `site/mods/`, and add an entry to

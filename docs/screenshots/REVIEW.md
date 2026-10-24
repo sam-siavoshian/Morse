@@ -108,14 +108,17 @@ names a folder), 22-web-working.png, 26-news-before.png, 31-installed.png and
 
 | File | Made by | | Note |
 |---|---|---|---|
-| landing-, landing-nav-, gallery-, gallery-drawer-{desktop,mobile}.png | shoot-site.js | ✅ | The site in the Lanes design, light only like Lanes, so one scheme |
-| install-{desktop,mobile}-{dark,light}.png | shoot-site.js | ✅ | The share page keeps its earlier look |
-| compare-{390,768,1280,1440}-{first-screen,full}, compare-gallery-1440, compare-privacy-1440 | by hand, from a local build of the Lanes site | ✅ | Lanes on the left, Morse on the right, same width |
+| landing-{390,768,1280,1440}.png | shoot-site.js | ✅ | The whole landing page at each width, every picture loaded; the script fails if one scrolls sideways. Morse's own dark design, so one scheme |
+| section-{hero,change,how,try,apps,install,privacy,faq,footer}-{desktop,mobile}.png | shoot-site.js | ✅ | Each section of the landing page on its own, at 1440 and 390 |
+| landing-first-screen-, privacy-, gallery-, gallery-drawer-{desktop,mobile}.png, landing-nav-mobile.png | shoot-site.js | ✅ | |
+| install-{desktop,mobile}-{dark,light}.png | shoot-site.js | ✅ | The share page follows the reader's light or dark setting |
 | install-bad-link-desktop-dark.png | shoot-site.js | ✅ | |
 | try-{desktop,mobile}-{working,result}.png, try-desktop-unknown.png | shoot-try.js | ✅ | Try it here: the real runtime in the demo app with sample answers; a request with none gets the install note |
 
 Removed: the landing page's demo shots (landing-demo-*, the landing page has a
-video now) and install-installed-desktop-dark.png; nothing uses them.
+video now), install-installed-desktop-dark.png, and the pictures of the
+earlier design beside Lanes (compare-*, landing-{desktop,mobile},
+landing-nav-desktop); nothing uses them.
 
 ## docs/launch (the demo video)
 
