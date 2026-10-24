@@ -2,9 +2,9 @@
 
 Every word a person reads in Morse should be simple, clear and friendly. This
 guide covers the bar, the Mods panel, settings, toasts, the extension popup,
-the welcome page, the share page, the website, the `morse` command line and
-the README. Code comments and developer docs can stay technical, but should
-still be plain.
+the welcome page, the share page, the website, the `morse` command line, the
+README and the user pages in `docs/`. Code comments and developer docs
+(`docs/dev/`) can stay technical, but should still be plain.
 
 The reader is a normal person who uses apps, not someone who builds them.
 Assume they have never heard of CSS, Electron or an API. The only places
@@ -54,9 +54,10 @@ written for developers are listed under [Where technical words are fine](#where-
 
 ### Words people don't know
 
-These never appear in text a person reads in Morse, on the website or in the
-top half of the README. `tests/words.test.js` checks the runtime and the
-extension pages for them.
+These never appear in text a person reads in Morse, on the website, in the
+README or in the user pages in `docs/`. `tests/words.test.js` checks the
+runtime, the extension pages, the website and the user pages in `docs/` for
+them (code in backticks is skipped).
 
 | Technical word | Say instead |
 |---|---|
@@ -81,8 +82,8 @@ extension pages for them.
   summary, the gallery's code. People chose to look at code there, so "Style
   (CSS)" and "Script (JavaScript)" are fine as headings.
 - `morse help` flags and `morse doctor` / `morse model` output (developers run
-  them), and the README from **Status** down (how it works, security,
-  roadmap, repo layout).
+  them), and the developer docs in `docs/dev/` (how it works, testing,
+  security, roadmap, repo layout).
 - Code comments, tests and developer docs.
 
 ## Names, one for each thing
