@@ -252,6 +252,36 @@ test("prewarm warms the model requests start on; while typing, the one the words
   assert.deepEqual(seen, ["fast", "strong", "pinned", "strong", "fast", "pinned"]);
 });
 
+// perf: the bar warms on opening and again on each pause in typing (500 ms,
+// runtime/src/50-bar.js warmAsYouType). Words only ever turn a request hard,
+// so a typed request starts at most one more process; pauses that keep the
+// same model start none (docs/perf/report.md).
+test("warm while typing: one process when the bar opens, one more when the words turn hard, none on other pauses", async () => {
+  process.env.FAKE_MODE = "ok";
+  process.env.FAKE_WARM_TAG = `typing-${Date.now()}`;
+  const starts = async () => (await fs.readFile(path.join(tmp, "claude-starts.log"), "utf8").catch(() => "")).split("\n").filter(Boolean).map(Number);
+  const n = (await starts()).length;
+  await providers.prewarm(CC); // the bar opens
+  await waitFor(async () => (await starts()).length >= n + 1, { what: "sonnet" }); // (a process stopped before it ran never logs)
+  const words = "add a dark mode toggle to the header".split(" ");
+  for (let i = 1; i <= words.length; i++) {
+    const so = words.slice(0, i).join(" ");
+    await providers.prewarm(CC, so); // a pause after every word
+    await providers.prewarm(CC, so); // and the same words again (the bar sends each once; the extension's helper may repeat)
+  }
+  await waitFor(async () => (await starts()).length >= n + 2, { what: "sonnet, then opus" });
+  await new Promise(r => setTimeout(r, 1500));
+  assert.equal((await starts()).length - n, 2, "processes started for one typed request");
+  // Requests that stay easy keep the first model's process.
+  const m = (await starts()).length;
+  process.env.FAKE_WARM_TAG = `typing-easy-${Date.now()}`;
+  await providers.prewarm(CC);
+  for (const so of ["make", "make the", "make the header", "make the header blue"]) await providers.prewarm(CC, so);
+  await waitFor(async () => (await starts()).length >= m + 1, { what: "sonnet" });
+  await new Promise(r => setTimeout(r, 1500));
+  assert.equal((await starts()).length - m, 1, "processes started for an easy request");
+});
+
 test("popup: the Anthropic model picked there is the strong one; any other pick is used for everything", async () => {
   const { popupTiers } = await import("../core/route.js");
   assert.deepEqual(popupTiers("anthropic"), { fast: { model: "claude-sonnet-5-5" }, best: { model: "claude-opus-5-5" } });

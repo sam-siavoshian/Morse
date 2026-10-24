@@ -119,3 +119,26 @@ test("Your style: Chrome says where it goes, and once paired with the Morse help
   await waitFor(() => JSON.parse(readFileSync(STYLE_FILE, "utf8")).blocks.size === 2, { what: "bigger text on the desktop too" });
   await p.close();
 });
+
+// perf: a page load asks the helper for its copy at most every 5 s (a burst
+// of tabs asks once), and a check that finds nothing changed writes nothing
+// to chrome.storage (core/style-sync.js).
+test("Your style, paired: page loads check the helper at most every 5 s, and write nothing when nothing changed", { skip, timeout: 120000 }, async () => {
+  const gets = [];
+  const count = req => { if (req.url === "/v1/style" && req.method === "GET") gets.push(Date.now()); };
+  bridge.server.on("request", count);
+  await sw.evaluate(() => {
+    globalThis.__styleWrites = 0;
+    const set = chrome.storage.local.set.bind(chrome.storage.local);
+    chrome.storage.local.set = (items, ...rest) => { if (items && ("styleSync" in items || "style" in items)) globalThis.__styleWrites++; return set(items, ...rest); };
+  });
+  try {
+    await new Promise(r => setTimeout(r, 5500)); // past the last check
+    const t0 = Date.now();
+    for (let i = 0; i < 6; i++) await (await open()).close();
+    const ms = Date.now() - t0;
+    await new Promise(r => setTimeout(r, 1000));
+    assert.ok(gets.length >= 1 && gets.length <= 1 + Math.floor(ms / 5000), `${gets.length} checks for 6 page loads in ${ms} ms`);
+    assert.equal(await sw.evaluate(() => globalThis.__styleWrites), 0, "nothing written when nothing changed");
+  } finally { bridge.server.off("request", count); }
+});
