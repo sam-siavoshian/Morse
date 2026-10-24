@@ -68,7 +68,7 @@ try {
   await saveMod(createMod({ prompt: "make the inbox denser", title: "Compact inbox", css: "main{gap:4px}", js: "", url: server.url(), app: null }));
   await saveMod(createMod({ prompt: "hide the promo banner", title: "No promo banner", css: ".promo{display:none}", js: "", url: server.url(), app: null }));
   const mail = launch("Fake Mail", [...mailArgs, `--app=${server.url()}`]);
-  await until(() => /attached to/.test(mail.out));
+  await until(() => /connected to/.test(mail.out));
   const port = portOf(mail);
   // open the compose window the way a person would
   const main = (await listTargets(port)).find(t => t.type === "page");
@@ -79,7 +79,7 @@ try {
   // a second app, started with --watch and then closed: Morse waits for it
   const notesArgs = fakeAppArgs({ server, profile: path.join(HOME, "notes-profile"), page: "/settings" }).filter(a => !a.startsWith("http"));
   const notes = launch("Fake Notes", [...notesArgs, `--app=${server.url("/settings")}`], ["--watch"]);
-  await until(() => /attached to/.test(notes.out));
+  await until(() => /connected to/.test(notes.out));
   const v = await (await fetch(`http://127.0.0.1:${portOf(notes)}/json/version`)).json();
   const ws = new WebSocket(v.webSocketDebuggerUrl);
   await new Promise(r => ws.addEventListener("open", r));

@@ -12,13 +12,14 @@ import { modsFor, saveMod, deleteMod, writeExport, readClipboard, putClipboard }
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
 import { runMorse } from "../core/engine.js";
-import { settingsLabel } from "../core/providers.js";
+import { settingsLabel } from "./models.js"; // also registers the Claude Code / Codex providers
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
 import { Generations } from "../core/cancel.js";
 import { cachedVoiceStatus, transcribeAudio } from "./voice.js";
 import { HOME, listMods } from "./store.js";
 import { classifyTarget, describeTarget } from "./targets.js";
+import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
@@ -83,12 +84,12 @@ export class Connector {
       if (list && this.state === "waiting") {
         const v = this.verify ? await this.verify().catch(e => ({ ok: false, why: e.message })) : { ok: true };
         if (!v.ok) {
-          if (this.refused !== v.why) this.log(`  ! Not attaching: ${v.why}.`);
+          if (this.refused !== v.why) this.log(`  ! Morse didn't connect: ${v.why}.`);
           this.refused = v.why;
           list = null;
         } else {
           this.refused = null;
-          this.log(`  ↻ ${this.appName} is open again. Attaching.`);
+          this.log(`  ↻ ${this.appName} is open again. Connecting.`);
         }
       }
       if (list) {
@@ -96,7 +97,7 @@ export class Connector {
         this.sync(list);
       } else if (misses >= 3 && this.state === "attached") {
         this.dropAll();
-        if (!this.watch) { this.log(`${this.appName} closed. Morse stopped.`); this.state = "stopped"; break; }
+        if (!this.watch) { this.log(`${this.appName} closed, so Morse stopped.`); this.state = "stopped"; break; }
         this.state = "waiting";
         this.log(`  … ${this.appName} closed. Waiting for it to open again (Ctrl+C to stop).`);
         this.changed();
@@ -129,7 +130,7 @@ export class Connector {
         this.windows.delete(t.id);
         const n = (r?.n || 0) + 1;
         this.retry.set(t.id, { at: Date.now() + Math.min(30000, 500 * 2 ** n), n });
-        if (n === 1) this.log(`  ! couldn't attach to ${describeTarget(t).title}: ${e.message}`);
+        if (n === 1) this.log(`  ! Couldn't connect to ${describeTarget(t).title}: ${e.message}`);
       });
     }
     if (dirty) this.changed();
@@ -160,7 +161,7 @@ export class Connector {
     // comes back with the page's next document.
     s.on("Inspector.targetCrashed", () => {
       w.crashed = true;
-      this.log(`  ! ${describeTarget(w).title} crashed. Morse will attach again when it reloads.`);
+      this.log(`  ! ${describeTarget(w).title} stopped working. Morse will connect again when it reloads.`);
       s.close();
     });
     // Listen before injecting: the runtime says hello during evaluation.
@@ -193,7 +194,7 @@ export class Connector {
     // A page that is mid-crash or mid-navigation gets the runtime from its next document.
     await s.send("Runtime.evaluate", { expression: source }).catch(() => {});
     readTitle();
-    this.log(`  ✓ attached to ${title}${kind === "window" ? "" : ` (${kind})`}`);
+    this.log(`  ✓ connected to ${title}${kind === "window" ? "" : ` (${kind})`}`);
     this.changed();
   }
 
@@ -288,6 +289,7 @@ export class Connector {
 
   async dispatch(s, ctx, msg) {
     const where = { url: msg.url, app: this.app?.id || null };
+    if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
     switch (msg.type) {
       case "hello":
         this.grantMic(s, msg.url);
@@ -296,11 +298,16 @@ export class Connector {
       case "mods.list":
         return modsFor({ url: msg.url, app: this.app?.id || null });
       case "mods.save": {
-        if (msg.draft) return saveMod(createMod({ ...msg.draft, app: this.app?.id || null, model: this.settings.model }));
+        if (msg.draft) return saveMod(createMod({ ...msg.draft, app: this.app?.id || null, model: msg.draft.model || settingsLabel(this.settings) }));
         return saveMod(msg.mod);
       }
       case "mods.delete":
         return deleteMod(msg.modId);
+      // Decode and validate a shared mod without saving it (install confirmation).
+      case "mods.preview": {
+        const src = msg.source.trim();
+        return src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
+      }
       case "mods.import": {
         const src = msg.source.trim();
         const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
@@ -317,6 +324,8 @@ export class Connector {
         await s.send("Runtime.evaluate", { expression: `globalThis.morse && morse.__off(${JSON.stringify(msg.modId)})`, contextId: ctx });
         return true;
       case "generate": {
+        if (!this.settings?.provider || this.settings.provider === "none")
+          throw new Error("No model connected. Run `morse doctor` in a terminal to set one up (Claude Code, Codex or an API key).");
         const t0 = Date.now();
         const res = await this.gens.run(msg.genId, signal => runMorse({
           settings: this.settings,

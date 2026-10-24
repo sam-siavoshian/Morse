@@ -94,8 +94,8 @@ test("`morse apps` output: attachable first, plain reasons, running state", asyn
   const out = apps.formatApps(list, { platform: "darwin", color: false, running: new Map([["slack", { port: null }]]), sessions: [{ id: "vscode", port: 9333 }] });
   assert.match(out, /Apps Morse found on this Mac/);
   assert.match(out, /Slack .*open without Morse → morse launch slack --restart/);
-  assert.match(out, /VS Code .*attached · port 9333/);
-  assert.match(out, /ChatGPT .*can't attach: native app, not built on Chromium/);
+  assert.match(out, /VS Code .*connected · port 9333/);
+  assert.match(out, /ChatGPT .*can't connect: native app, not built on web technology/);
   const lines = out.split("\n");
   assert.ok(lines.findIndex(l => l.includes("ChatGPT")) > lines.findIndex(l => l.includes("VS Code")), "apps Morse can't attach to go last");
   assert.match(out, /Other Electron and Chromium apps\n.*Beeper/);
@@ -121,8 +121,8 @@ test("fuzzy app names: aliases, partial names, typos, initials", async () => {
   const amb = apps.matchApp("code", [{ id: "code-a", name: "Code A" }, { id: "code-b", name: "Code B" }]);
   assert.deepEqual(amb.ambiguous.map(a => a.id), ["code-a", "code-b"]);
   assert.equal(apps.resolveApp("vs code", { ctx }).id, "vscode");
-  assert.throws(() => apps.resolveApp("figma", { ctx }), /Figma isn't installed in the usual places/);
-  assert.throws(() => apps.resolveApp("qwertyuiop", { ctx }), /No app called "qwertyuiop"/);
+  assert.throws(() => apps.resolveApp("figma", { ctx }), /Figma isn't in the usual places/);
+  assert.throws(() => apps.resolveApp("qwertyuiop", { ctx }), /couldn't find an app called "qwertyuiop"/);
   assert.equal(apps.resolveApp("/Applications/Slack.app", { ctx }).id, "slack", "paths work too");
 });
 
@@ -294,7 +294,7 @@ test("a renderer crash: Morse notices, and the runtime is back once the page rel
   const t = (await listTargets(port)).find(x => /\/reloader$/.test(x.url));
   const s = await CDPSession.connect(t.webSocketDebuggerUrl);
   s.send("Page.crash").catch(() => {});
-  await until(() => logs.some(l => /crashed/.test(l)), 10000, "crash noticed");
+  await until(() => logs.some(l => /stopped working/.test(l)), 10000, "crash noticed");
   await sleep(300);
   await s.send("Page.reload").catch(async () => {
     const s2 = await CDPSession.connect(t.webSocketDebuggerUrl);
@@ -344,7 +344,7 @@ test("without --watch, the app quitting ends the session cleanly", { skip }, asy
   await until(() => c.windows.size >= 1, 10000, "attached");
   proc.kill("SIGTERM");
   assert.equal(await done, "stopped");
-  assert.ok(logs.some(l => l === "Fake Mail closed. Morse stopped."));
+  assert.ok(logs.some(l => l === "Fake Mail closed, so Morse stopped."));
 });
 
 // ---------------------------------------------------------------- live: the CLI
@@ -367,11 +367,11 @@ test("CLI: already open → one plain sentence; --restart quits it, relaunches o
   await sleep(1500);
   const refused = await cliOut(["launch", CHROME, "--name", "Fake Mail", "--", ...extra, `--app=${server.url()}`]);
   assert.equal(refused.code, 1);
-  assert.match(strip(refused.out), /Fake Mail is already open, and Morse can only attach to it when it starts\. Run morse launch fake-mail --restart/);
+  assert.match(strip(refused.out), /Fake Mail is already open\. Morse can only connect to an app when it starts\. Run morse launch fake-mail --restart/);
 
   const m = cli(["launch", CHROME, "--name", "Fake Mail", "--restart", "--", ...extra, `--app=${server.url()}`]);
   try {
-    await until(() => /attached to (Inbox|app\.fake\.test)/.test(m.out), 30000, () => "CLI attached: " + m.out);
+    await until(() => /connected to (Inbox|app\.fake\.test)/.test(m.out), 30000, () => "CLI attached: " + m.out);
     assert.match(m.out, /quitting Fake Mail/);
     assert.equal(plain.exitCode !== null || plain.signalCode !== null, true, "the old instance quit");
     const used = Number(m.out.match(/port +(\d+)/)[1]);
@@ -379,17 +379,17 @@ test("CLI: already open → one plain sentence; --restart quits it, relaunches o
     assert.equal((await apps.loadAppPrefs())["fake-mail"].restart, true, "--restart remembered");
     await store.saveMod(createMod({ prompt: "x", title: "Compact list", css: "main{gap:4px}", js: "", url: server.url(), app: null }));
     const st = await until(async () => { const o = strip((await cliOut(["status"])).out); return /Attachment preview/.test(o) && /mods on/.test(o) && o; }, 15000, "status with the frame");
-    assert.match(st, new RegExp(`Fake Mail +● attached · port ${used} \\(this computer only\\)`));
+    assert.match(st, new RegExp(`Fake Mail +● connected · port ${used} \\(this computer only\\)`));
     assert.match(st, /window +Inbox — Fake Mail/);
     assert.match(st, /frame +Attachment preview/);
     assert.match(st, /mods on: Compact list/);
     // a second launch doesn't fight the first
     const again = strip((await cliOut(["launch", CHROME, "--name", "Fake Mail", "--", ...extra])).out);
-    assert.match(again, /Morse is already attached to Fake Mail on port/);
+    assert.match(again, /Morse is already connected to Fake Mail on port/);
     const stop = strip((await cliOut(["stop", "fake"])).out);
-    assert.match(stop, /Detached from Fake Mail/);
+    assert.match(stop, /Disconnected from Fake Mail/);
     assert.equal(await m.done, 0);
-    assert.match(strip((await cliOut(["status"])).out), /Morse isn't attached to any app/);
+    assert.match(strip((await cliOut(["status"])).out), /Morse isn't connected to any app/);
     assert.equal(existsSync(path.join(home, "sessions", "fake-mail.json")), false);
   } finally {
     m.kill("SIGKILL");
@@ -415,9 +415,9 @@ test("status files: stale sessions are dropped; stop matches names loosely", asy
   assert.equal(existsSync(path.join(home, "sessions", "ghost.json")), false);
   await status.writeSession({ id: "vscode", name: "VS Code", aliases: ["code"], pid: process.pid, port: 9333, state: "attached", windows: [{ id: "1", type: "page", title: "app.ts — morse", url: "vscode-file://vscode-app/workbench.html" }] });
   const out = status.formatStatus(await status.withMods(await status.readSessions()));
-  assert.match(strip(out), /VS Code {2}● attached · port 9333/);
+  assert.match(strip(out), /VS Code {2}● connected · port 9333/);
   assert.match(strip(out), /window +app\.ts — morse/);
   const r = await status.stopSession("nonexistent");
-  assert.match(r.message, /isn't attached to "nonexistent"/);
+  assert.match(r.message, /isn't connected to "nonexistent"/);
   status.removeSession("vscode");
 });

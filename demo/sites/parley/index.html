@@ -17,7 +17,31 @@
   header { display: flex; align-items: center; gap: 10px; padding: 12px 18px; }
   header .m2q { font-size: 18px; font-weight: 600; color: #ececec; }
   header .m2q span { color: #8e8e8e; font-weight: 400; }
-  header .h7r { margin-left: auto; display: flex; gap: 8px; }
+  header .h7r { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .acct { position: relative; }
+  .acct summary { list-style: none; width: 32px; height: 32px; border-radius: 50%; background: #6e56cf; color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 600; cursor: pointer; user-select: none; }
+  .acct summary::-webkit-details-marker { display: none; }
+  .acct [role=menu] { position: absolute; right: 0; top: 40px; width: 230px; background: #2f2f2f; border: 1px solid #424242; border-radius: 14px; padding: 6px; z-index: 5; box-shadow: 0 12px 40px rgba(0,0,0,.45); display: grid; }
+  .acct [role=menu] a { color: #ececec; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; }
+  .acct [role=menu] a:hover { background: #3a3a3a; }
+  .acct .who { padding: 6px 12px 10px; color: #8e8e8e; font-size: 12px; border-bottom: 1px solid #424242; margin-bottom: 4px; }
+  #settings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 10; place-items: center; }
+  #settings:target, #settings:has(:target) { display: grid; }
+  #settings .dlg { width: 660px; min-height: 380px; background: #2f2f2f; border-radius: 16px; display: grid; grid-template-columns: 190px 1fr; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+  #settings [role=tablist] { padding: 16px 8px; background: #262626; display: grid; align-content: start; gap: 2px; }
+  #settings [role=tablist] b { padding: 4px 12px 12px; font-size: 16px; }
+  #settings [role=tab] { color: #ececec; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; }
+  #settings:target [href="#settings-general"], #settings:has(#settings-general:target) [href="#settings-general"],
+  #settings:has(#settings-notifications:target) [href="#settings-notifications"], #settings:has(#settings-data:target) [href="#settings-data"],
+  #settings:has(#settings-security:target) [href="#settings-security"] { background: #3a3a3a; }
+  #settings .pnl { position: relative; padding: 18px 26px; }
+  #settings .close { position: absolute; right: 14px; top: 10px; color: #8e8e8e; text-decoration: none; font-size: 22px; }
+  #settings [role=tabpanel] { display: none; }
+  #settings:target #settings-general, #settings [role=tabpanel]:target { display: block; }
+  #settings h3 { margin: 4px 0 14px; font-size: 18px; }
+  #settings label { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #3a3a3a; font-size: 14px; }
+  #settings label span { color: #8e8e8e; }
+  #settings input[type=checkbox] { width: 18px; height: 18px; accent-color: #10a37f; }
   header button { background: transparent; color: #ececec; border: 1px solid #424242; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13px; }
   .t4l { flex: 1; overflow: auto; }
   .t4l > div { max-width: 740px; margin: 0 auto; padding: 10px 24px 40px; }
@@ -52,7 +76,19 @@
   <main>
     <header role="banner">
       <div class="m2q">Parley <span>4.1</span></div>
-      <div class="h7r"><button>Share</button></div>
+      <div class="h7r"><button>Share</button>
+        <details class="acct">
+          <summary aria-label="Account menu" aria-haspopup="menu">SK</summary>
+          <div role="menu" aria-label="Account">
+            <div class="who">sam@parley.chat</div>
+            <a role="menuitem" href="#">My plan</a>
+            <a role="menuitem" href="#settings">Settings</a>
+            <a role="menuitem" href="#">Keyboard shortcuts</a>
+            <a role="menuitem" href="#">Help</a>
+            <a role="menuitem" href="#">Log out</a>
+          </div>
+        </details>
+      </div>
     </header>
     <section class="t4l" aria-label="Conversation"><div>
       <div class="msg" data-role="user"><p>What's the difference between debounce and throttle?</p></div>
@@ -78,5 +114,25 @@
     </form>
     <div class="f3n">Parley can make mistakes. Check important info.</div>
   </main>
+  <!-- Settings: a dialog opened by the account menu's link. No script (the
+       site's CSP allows none inline): :target opens it and picks the tab. -->
+  <section id="settings" role="dialog" aria-label="Settings">
+    <div class="dlg">
+      <div role="tablist" aria-label="Settings sections">
+        <b>Settings</b>
+        <a role="tab" href="#settings-general">General</a>
+        <a role="tab" href="#settings-notifications">Notifications</a>
+        <a role="tab" href="#settings-data">Data controls</a>
+        <a role="tab" href="#settings-security">Security</a>
+      </div>
+      <div class="pnl">
+        <a class="close" href="#" aria-label="Close settings">×</a>
+        <div id="settings-general" role="tabpanel"><h3>General</h3><label>Theme <span>Dark</span></label><label>Language <span>English</span></label></div>
+        <div id="settings-notifications" role="tabpanel"><h3>Notifications</h3><label>Email me when a long reply is ready <input type="checkbox" checked></label><label>Weekly summary <input type="checkbox"></label><label>Product news <input type="checkbox"></label></div>
+        <div id="settings-data" role="tabpanel"><h3>Data controls</h3><label>Improve the model for everyone <input type="checkbox"></label><label>Export data <span>Export</span></label></div>
+        <div id="settings-security" role="tabpanel"><h3>Security</h3><label>Password <span>Change</span></label><label>Two-step sign-in <input type="checkbox"></label></div>
+      </div>
+    </div>
+  </section>
 </body>
 </html>

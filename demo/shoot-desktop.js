@@ -4,6 +4,16 @@
 // user (keyboard + mouse) and takes screenshots.
 //
 //   DISPLAY=:99 MORSE_HOME=/tmp/mh node demo/shoot-desktop.js
+//   (MORSE_DEMO_PORT and MORSE_CDP_PORT move the ports for parallel runs)
+//
+// By default generation is replayed from core/demo.js (a test fixture) so the
+// screenshots are reproducible. With a real model, e.g. Claude Code:
+//
+//   MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code \
+//   DISPLAY=:99 MORSE_HOME=/tmp/mh node demo/shoot-desktop.js
+//
+// a real model doesn't always need a repair round and names things its own
+// way, so those steps are skipped when they don't happen.
 
 import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
@@ -12,18 +22,24 @@ import { createRequire } from "node:module";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const OUT = path.join(root, "docs", "screenshots");
+const OUT = path.resolve(root, process.env.SHOTS || path.join("docs", "screenshots"));
+const PROVIDER = process.env.MORSE_PROVIDER || "demo";
+const REAL = PROVIDER !== "demo";
+const T = REAL ? 150000 : 15000; // a real model takes its time
+const MODEL_ARGS = process.env.MORSE_MODEL ? ["--model", process.env.MORSE_MODEL] : [];
+const ENV = { ...process.env, MORSE_PROVIDER: PROVIDER };
 const HOME = process.env.MORSE_HOME;
 const CHROME = process.env.CHROME || chromium.executablePath();
-const PORT = 9333;
+const PORT = Number(process.env.MORSE_CDP_PORT || 9333);
+const TUNES = `http://127.0.0.1:${Number(process.env.MORSE_DEMO_PORT || 8787) + 2}/demo/sites/tunes/`; // node demo/serve.js
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 await fs.mkdir(OUT, { recursive: true });
 
 const log = [];
-const morse = spawn("node", [path.join(root, "daemon/cli.js"), "launch", CHROME, "--name", "Tunes", "--port", String(PORT), "--",
-  "--app=http://127.0.0.1:8789/demo/sites/tunes/", `--user-data-dir=${path.join(HOME, "app-profile")}`,
+const morse = spawn("node", [path.join(root, "daemon/cli.js"), "launch", CHROME, "--name", "Tunes", "--port", String(PORT), ...MODEL_ARGS, "--",
+  `--app=${TUNES}`, `--user-data-dir=${path.join(HOME, "app-profile")}`,
   "--no-first-run", "--window-size=1280,800", "--window-position=0,0", "--no-sandbox", "--force-device-scale-factor=1"],
-  { env: { ...process.env, FORCE_COLOR: "1" } });
+  { env: { ...ENV, FORCE_COLOR: "1" } });
 morse.stdout.on("data", d => { log.push(String(d)); process.stdout.write(d); });
 morse.stderr.on("data", d => process.stderr.write(d));
 
@@ -56,24 +72,27 @@ await shot("02-point-at-anything.png");
 // 3. Describe it
 await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 await sleep(200);
-await page.keyboard.press("a"); // Ask: the edit toolbar has focus after pointing, and "a…" would be its shortcut
+// After pointing, typing goes straight to the bar (no "a" for Ask first).
 await page.keyboard.type("add a sleep timer that pauses the music after a while", { delay: 18 });
 await sleep(200);
 await shot("03-say-what-you-want.png");
 
 // 4. Working effect while tokens stream
 await page.keyboard.press("Enter");
-await waitFor(s => s.ticker.length > 40);
+await waitFor(s => s.ticker.length > 40, T);
 await sleep(500);
 await shot("04-the-magic-moment.png");
 
 // 5. First attempt throws; it shows the model the error and fixes itself
-await waitFor(s => /fixing/i.test(s.hint));
-await sleep(500);
-await shot("05-fixes-its-own-bugs.png");
+const s5 = await waitFor(s => /fixing/i.test(s.hint) || (REAL && /result|error/.test(s.phase)), T);
+if (/fixing/i.test(s5.hint)) {
+  await sleep(500);
+  await shot("05-fixes-its-own-bugs.png");
+} else console.log("  · no repair round needed");
 
 // 6. Result
-await waitFor(s => s.phase === "result", 20000);
+const s6 = await waitFor(s => s.phase === "result" || (REAL && s.phase === "error"), REAL ? T : 20000);
+if (s6.phase === "error") { await shot("06-error.png"); throw new Error("generation failed: " + s6.hint); }
 await sleep(400);
 await shot("06-done.png");
 
@@ -91,9 +110,9 @@ await page.keyboard.press("Escape");
 await sleep(300);
 
 // 8. Use the new feature
-const moon = page.locator(".morse-sleep");
-await moon.click();
-await sleep(600);
+// (the demo reply names its button .morse-sleep; a real model picks its own markup)
+const moon = page.locator(REAL ? '[class*="sleep" i], [id*="sleep" i], [aria-label*="sleep" i], button:has-text("Sleep")' : ".morse-sleep").first();
+if (await moon.count()) { await moon.click().catch(() => {}); await sleep(600); }
 await shot("08-the-new-feature-works.png");
 
 // 9. Page-wide CSS change, applied live while the model is still writing
@@ -102,10 +121,10 @@ await page.keyboard.press("Alt+Space");
 await sleep(200);
 await page.keyboard.type("make the album covers bigger with rounder corners", { delay: 14 });
 await page.keyboard.press("Enter");
-await waitFor(s => s.ticker.length > 50);
+await waitFor(s => s.ticker.length > 50, T);
 await sleep(1500);
 await shot("09-css-applies-while-it-writes.png");
-await waitFor(s => s.phase === "result");
+await waitFor(s => s.phase === "result", T);
 await sleep(300);
 await page.keyboard.press("Enter"); // Keep
 await sleep(700);
@@ -129,14 +148,16 @@ const cdp = await chromium.connectOverCDP(`http://127.0.0.1:${PORT}`);
 await (await cdp.newBrowserCDPSession()).send("Browser.close").catch(() => {});
 morse.kill();
 await sleep(1500);
-const morse2 = spawn("node", [path.join(root, "daemon/cli.js"), "launch", CHROME, "--name", "Tunes", "--port", String(PORT), "--",
-  "--app=http://127.0.0.1:8789/demo/sites/tunes/", `--user-data-dir=${path.join(HOME, "app-profile")}`,
-  "--no-first-run", "--window-size=1280,800", "--window-position=0,0", "--no-sandbox", "--force-device-scale-factor=1"]);
+const morse2 = spawn("node", [path.join(root, "daemon/cli.js"), "launch", CHROME, "--name", "Tunes", "--port", String(PORT), ...MODEL_ARGS, "--",
+  `--app=${TUNES}`, `--user-data-dir=${path.join(HOME, "app-profile")}`,
+  "--no-first-run", "--window-size=1280,800", "--window-position=0,0", "--no-sandbox", "--force-device-scale-factor=1"], { env: ENV });
 morse2.stdout.on("data", d => process.stdout.write(d));
 await sleep(3500);
 const b2 = await chromium.connectOverCDP(`http://127.0.0.1:${PORT}`);
 const p2 = b2.contexts()[0].pages().find(p => p.url().includes("tunes"));
-await sleep(1200);
+// Wait for both saved mods to be back on the page, not a fixed time.
+await p2.waitForFunction(() => document.querySelectorAll("style[data-morse-css]").length >= 2, null, { timeout: 15000 }).catch(() => {});
+await sleep(600);
 await p2.screenshot({ path: path.join(OUT, "13-still-there-after-restart.png") });
 console.log("  📸 13-still-there-after-restart.png");
 await (await b2.newBrowserCDPSession()).send("Browser.close").catch(() => {});

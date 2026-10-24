@@ -310,7 +310,7 @@ export function attachVerdict(app) {
     case "electron": return { canAttach: true, why: app.engineGuessed ? "Electron app" : `Electron${app.electron ? " " + app.electron.split(".")[0] : ""}` };
     case "cef": return { canAttach: true, why: "Chromium (CEF)" };
     case "chromium": return { canAttach: true, why: app.browser ? "browser, separate profile" : "Chromium" };
-    case "native": return { canAttach: false, why: "native app, not built on Chromium" };
+    case "native": return { canAttach: false, why: "native app, not built on web technology" };
     default: return { canAttach: null, why: "couldn't tell what it's built on" };
   }
 }
@@ -368,7 +368,7 @@ export function matchApp(query, apps) {
 // From what the person typed to an app to launch.
 export function resolveApp(query, { ctx = hostContext(), apps } = {}) {
   const q = String(query || "").trim();
-  if (!q) throw new Error("Which app? e.g. morse launch spotify (see morse apps)");
+  if (!q) throw new Error("Which app? For example: morse launch spotify. Run morse apps to see what's installed.");
   const looksLikePath = /[\\/]/.test(q) || /\.(app|exe)$/i.test(q);
   if (looksLikePath && ctx.exists(q)) return appFromPath(ctx, q);
   const installed = apps || discoverApps(ctx);
@@ -377,9 +377,9 @@ export function resolveApp(query, { ctx = hostContext(), apps } = {}) {
   if (m.app) return m.app;
   const catalogApps = Object.entries(CATALOG).map(([id, c]) => ({ id, ...c }));
   const c = matchApp(q, catalogApps).app;
-  if (c) throw new Error(`${c.name} isn't installed in the usual places. If it is somewhere else, pass its path: morse launch "/path/to/${c.name}"`);
+  if (c) throw new Error(`${c.name} isn't in the usual places. If it's somewhere else, give its path: morse launch "/path/to/${c.name}"`);
   if (looksLikePath) throw new Error(`Nothing at ${q}.`);
-  throw new Error(`No app called "${q}" found. Run morse apps to see what Morse found, or pass the app's path.`);
+  throw new Error(`Morse couldn't find an app called "${q}". Run morse apps to see what it found, or give the app's path.`);
 }
 
 export function appFromPath(ctx, p) {
@@ -549,7 +549,7 @@ export function formatApps(apps, { running = new Map(), sessions = [], platform 
     ? { g: s => `\x1b[32m${s}\x1b[0m`, d: s => `\x1b[2m${s}\x1b[0m`, b: s => `\x1b[1m${s}\x1b[0m` }
     : { g: s => s, d: s => s, b: s => s };
   const pad = (s, n) => s + " ".repeat(Math.max(1, n - s.length));
-  if (!apps.length) return `No Chromium or Electron apps found on ${PLACE[platform] || "this computer"}.\nIf an app lives somewhere unusual, pass its path: ${c.b("morse launch /path/to/App")}`;
+  if (!apps.length) return `No Chromium or Electron apps found on ${PLACE[platform] || "this computer"}.\nIf an app is somewhere else, give its path: ${c.b("morse launch /path/to/App")}`;
   const where = a => a.source === "snap" || a.source === "flatpak" ? a.source
     : platform === "darwin" ? a.path.replace(/^\/Users\/[^/]+/, "~")
     : a.path.replace(/^C:\\Users\\[^\\]+/i, "~").replace(/\\AppData\\(Local|Roaming)/i, "\\$1");
@@ -558,8 +558,8 @@ export function formatApps(apps, { running = new Map(), sessions = [], platform 
     const s = sessions.find(x => x.id === a.id);
     const run = running.get(a.id);
     const dot = a.canAttach === false ? c.d("○") : a.canAttach ? c.g("●") : c.d("◌");
-    if (a.canAttach === false) return `  ${dot} ${c.d(pad(a.name, 13) + pad(version(a), 12) + `can't attach: ${a.why}`)}`;
-    const state = s ? c.g(`attached · port ${s.port}`)
+    if (a.canAttach === false) return `  ${dot} ${c.d(pad(a.name, 13) + pad(version(a), 12) + `can't connect: ${a.why}`)}`;
+    const state = s ? c.g(`connected · port ${s.port}`)
       : run?.port ? c.g(`open with port ${run.port}`)
       : run ? `open without Morse ${c.d(`→ morse launch ${a.id} --restart`)}`
       : c.d(a.note || where(a));

@@ -1,9 +1,23 @@
 // The system prompt is deliberately small: local 7B models follow short,
 // concrete contracts far better than long ones.
 
+import { askTurnsToMessages } from "./answer.js"; // Ask and find
+
+// ---- Ask and find: questions get an answer instead of a mod (core/answer.js
+// parses it; the runtime side is runtime/src/61-ask.js).
+const ASK_FORMAT = `
+If the user asks a question instead (what something does, why it is greyed out, where to find something, how to do something), change nothing. Reply in exactly this format:
+ANSWER: <plain, friendly answer in at most 5 short lines; "- " for lists; refer to marked things as [1], [2]>
+POINT: <selector> | <short label>
+STEP: <selector> | <what to click>
+- One POINT line per thing on the page worth looking at (at most 5). Use selectors from the element HTML or the page outline.
+- STEP lines only when the answer is clicks on this page, in order. Never claim you clicked anything.
+- If the thing is inside a closed menu, say which menu to open, and point at that menu's button first.
+- If the page doesn't show it, say so plainly. No jargon.`;
+
 export const SYSTEM_PROMPT = `You modify live apps. The user points at part of a running web or Electron app and describes a change. You reply with CSS and/or JavaScript that is injected into the page right now.
 
-Reply in exactly this format and nothing else:
+For a change, reply in exactly this format and nothing else:
 TITLE: <3-6 word name for the change>
 \`\`\`css
 <CSS, or leave empty>
@@ -27,7 +41,8 @@ Rules:
   morse.toast(message)              show a short notice
   Everything created through morse is removed automatically when the mod is turned off.
 - No network requests, no eval, no external scripts. Keep it short.
-- Match the app's look: reuse its fonts and colors (inherit, currentColor) unless asked otherwise.`;
+- Match the app's look: reuse its fonts and colors (inherit, currentColor) unless asked otherwise.
+${ASK_FORMAT}`;
 
 // A snapshot captured in another app (God mode's Capture): the model rebuilds
 // that look and behavior natively here instead of copying foreign markup.
@@ -57,10 +72,12 @@ export function buildMessages({ request, context, previous, snapshot = context?.
   }
   if (context.outline) parts.push("Page outline:\n" + context.outline);
   if (snapshot) parts.push(snapshotPrompt(snapshot));
+  if (context.ask?.mode === "explain") parts.push("Explain this page: reply with ANSWER, a plain summary in 5 short lines of what this page is for and the main things you can do here, and a POINT line for each of those main actions."); // Ask and find
   parts.push(`Request: ${request}`);
 
   const messages = [
     { role: "system", content: SYSTEM_PROMPT },
+    ...askTurnsToMessages(context.ask?.turns), // Ask and find: earlier Q&A on this page
     { role: "user", content: parts.join("\n\n") },
   ];
   if (previous) {

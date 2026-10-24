@@ -9,7 +9,7 @@ bar.setAttribute("role", "dialog");
 bar.setAttribute("aria-modal", "true");
 bar.setAttribute("aria-label", "Morse: describe a change to this app");
 input.setAttribute("aria-label", "Describe a change");
-goBtn.setAttribute("aria-label", "Run");
+goBtn.setAttribute("aria-label", "Send");
 goBtn.innerHTML = `<svg class="i-go" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"/></svg><svg class="i-stop" viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><rect x="3" y="3" width="10" height="10" rx="2"/></svg>`;
 const micBtn = makeEl("button", { className: "mic", type: "button" }, { "aria-label": "Voice input" });
 goBtn.before(micBtn);
@@ -74,7 +74,7 @@ function setTarget(el) {
   GodMode.onTarget(el); // God mode: edit toolbar for the selection
 }
 chip.querySelector(".x").onclick = () => { setTarget(null); startPicking(); };
-chip.querySelector(".x").setAttribute("aria-label", "Clear target");
+chip.querySelector(".x").setAttribute("aria-label", "Point at something else");
 
 // ---- the status line. A note (voice errors, "Stopped") sits on top of the
 // default hint for a few seconds; a sticky hint stays while voice is live.
@@ -89,8 +89,8 @@ function stickyHint(html) { hintSticky = html; setHint(); }
 function setHint() {
   if (S.phase !== "idle") return;
   hint.innerHTML = hintSticky || hintNote || (S.picking
-    ? `<b>Point</b> at anything to change it · or just describe it · <kbd>Esc</kbd> to close`
-    : S.target ? `Describe what to change about this · <kbd>Enter</kbd>` : `Describe a change to this page · <kbd>Enter</kbd>`);
+    ? `<b>Point</b> at anything to change it, or just describe it · <kbd>Esc</kbd> to close`
+    : S.target ? `Describe what to change about this · <kbd>Enter</kbd> to send` : `Describe a change to this page · <kbd>Enter</kbd> to send`);
   ticker.textContent = "";
   actions.innerHTML = `<button data-a="mods">Mods${S.mods.length ? ` <em>${S.mods.length}</em>` : ""}</button><span class="model">${esc(S.label)}</span>`;
 }
@@ -160,7 +160,7 @@ function closeBar() {
   if (S.phase === "working") return;
   // Dismissing a result keeps it; Undo is always one click away in Mods.
   if (S.phase === "result" && S.draft && !S.draft.saved) { keep(); return; }
-  if (S.phase === "idle") call("clip.cancel").catch(() => {});
+  if (S.phase !== "result") call("clip.cancel").catch(() => {});
   Voice.cancel();
   stopRecording();
   S.open = false; S.picking = false;
@@ -214,7 +214,7 @@ function onCancelled(id) {
   input.focus();
   input.setSelectionRange(input.value.length, input.value.length);
   if (S.target?.isConnected) boxTo(S.target, selBox);
-  note(`<b>Stopped</b> · nothing was changed · <kbd>Enter</kbd> to run again`, 0);
+  note(`<b>Stopped.</b> Nothing was changed · <kbd>Enter</kbd> to try again`, 0);
   // The prompt stays in the input; any edit clears the note.
   input.addEventListener("input", () => { hintNote = ""; setHint(); }, { once: true });
 }
@@ -245,8 +245,9 @@ function menuItems() {
   return [
     { id: "settings", label: "Settings", keys: [primaryMod, ","] },
     { id: "shortcuts", label: "Keyboard shortcuts", keys: ["?"] },
-    { id: "voice", label: "Voice input", keys: comboParts(hotkey("talk"), PLATFORM), sub: hotkey("talk") === hotkey("open") ? "hold" : "" },
-    { id: "mods", label: "Mods on this page", keys: comboParts(hotkey("mods"), PLATFORM) },
+    { id: "voice", label: "Talk", keys: comboParts(hotkey("talk"), PLATFORM), sub: hotkey("talk") === hotkey("open") ? "hold" : "" },
+    { id: "mods", label: "Mods panel", keys: comboParts(hotkey("mods"), PLATFORM) },
+    { id: "help", label: "Help and examples", keys: ["F1"] }, // onboarding hook: 59-help.js
   ];
 }
 function showMenu() {
@@ -267,6 +268,7 @@ function runMenu(id) {
   if (id === "shortcuts") { showPane(paneKind === "shortcuts" ? "" : "shortcuts"); input.focus(); }
   if (id === "voice") Voice.start("tap");
   if (id === "mods") openPanel();
+  if (id === "help") toggleHelp(); // onboarding hook: 59-help.js
 }
 moreBtn.addEventListener("click", () => (menuEl.hidden ? showMenu() : hideMenu()));
 menuEl.addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (b) runMenu(b.dataset.m); });
@@ -328,8 +330,8 @@ goBtn.onclick = () => {
 // Enter/Space stop too (the input is disabled meanwhile).
 new MutationObserver(() => {
   const working = bar.classList.contains("working");
-  goBtn.setAttribute("aria-label", working ? "Stop" : "Run");
-  goBtn.title = working ? `Stop (Esc or ${primaryMod}.)` : "Run (Enter)";
+  goBtn.setAttribute("aria-label", working ? "Stop" : "Send");
+  goBtn.title = working ? `Stop (Esc or ${primaryMod}.)` : "Send (Enter)";
   if (working && (!root.activeElement || root.activeElement === input)) goBtn.focus({ preventScroll: true });
 }).observe(bar, { attributes: true, attributeFilter: ["class"] });
 

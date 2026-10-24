@@ -69,15 +69,15 @@ export function publishSession(connector, info) {
 // `morse stop <app>`: ask the session to detach, wait, and if it doesn't, end it.
 export async function stopSession(query, { wait = 6000 } = {}) {
   const sessions = await readSessions();
-  if (!sessions.length) return { stopped: [], message: "Morse isn't attached to any app." };
+  if (!sessions.length) return { stopped: [], message: "Morse isn't connected to any app." };
   let pick = sessions;
   if (query && query !== "all" && query !== "--all") {
     const m = matchApp(query, sessions.map(s => ({ ...s, aliases: s.aliases || [] })));
     if (m.ambiguous) return { stopped: [], message: `"${query}" could be ${m.ambiguous.map(a => a.name).join(" or ")}. Say which one.` };
-    if (!m.app) return { stopped: [], message: `Morse isn't attached to "${query}". Attached: ${sessions.map(s => s.name).join(", ")}.` };
+    if (!m.app) return { stopped: [], message: `Morse isn't connected to "${query}". Connected: ${sessions.map(s => s.name).join(", ")}.` };
     pick = [m.app];
   } else if (!query && sessions.length > 1) {
-    return { stopped: [], message: `Morse is attached to ${sessions.map(s => s.name).join(", ")}. Say which one, or morse stop all.` };
+    return { stopped: [], message: `Morse is connected to ${sessions.map(s => s.name).join(", ")}. Say which one, or morse stop all.` };
   }
   const stopped = [];
   for (const s of pick) {
@@ -109,11 +109,11 @@ export async function withMods(sessions) {
 }
 
 export function formatStatus(sessions) {
-  if (!sessions.length) return `Morse isn't attached to any app. Start one with ${C.b("morse launch <app>")} (see ${C.b("morse apps")}).`;
+  if (!sessions.length) return `Morse isn't connected to any app. Start one with ${C.b("morse launch <app>")} (see ${C.b("morse apps")}).`;
   const out = [];
   for (const s of sessions) {
     const where = `port ${s.port} ${C.d("(this computer only)")}`;
-    const state = s.state === "attached" ? C.g("● attached") : s.state === "waiting" ? C.d(`○ waiting for ${s.name} to open again`) : C.d(`○ ${s.state}`);
+    const state = s.state === "attached" ? C.g("● connected") : s.state === "waiting" ? C.d(`○ waiting for ${s.name} to open again`) : C.d(`○ ${s.state}`);
     out.push(`${C.b(s.name)}  ${state} · ${where}${s.started ? C.d(` · ${ago(s.started)}`) : ""}`);
     if (s.browser) out.push(C.d(`  ${String(s.browser).replace("/", " ")}${s.electron ? ` · Electron ${s.electron}` : ""}${s.watch ? " · --watch" : ""}`));
     const wins = s.windows || [];
@@ -125,7 +125,7 @@ export function formatStatus(sessions) {
     }
     out.push("");
   }
-  out.push(C.d(`morse stop <app> detaches · morse launch <app> --watch reattaches after the app restarts`));
+  out.push(C.d(`morse stop <app> disconnects · morse launch <app> --watch connects again after the app restarts`));
   return out.join("\n");
 }
 

@@ -4,52 +4,97 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Install a Morse mod</title>
+<meta name="description" content="Someone shared a Morse mod with you. Read its code, then install it in Morse or download it as a userscript.">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="../site/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../design/tokens.css">
+<link rel="stylesheet" href="../site/site.css">
 <style>
-  :root { --bg: #0d1117; --panel: #161b22; --line: #30363d; --fg: #e6edf3; --dim: #8b949e; --g1: #0e4429; --g2: #006d32; --g3: #26a641; --g4: #39d353; }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-  main { max-width: 760px; margin: 0 auto; padding: 48px 16px 64px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
-  .logo { display: grid; grid-template-columns: repeat(3, 8px); gap: 2px; }
-  .logo i { width: 8px; height: 8px; border-radius: 2px; background: var(--g3); } .logo i:nth-child(odd) { background: var(--g4); } .logo i:nth-child(1), .logo i:nth-child(9) { background: var(--g1); } .logo i:nth-child(4) { background: var(--g2); }
-  h1 { font-size: 32px; line-height: 1.2; margin: 36px 0 8px; }
-  .prompt { font-size: 20px; color: var(--dim); margin: 0 0 24px; }
-  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-  .meta span { font: 12px ui-monospace, Menlo, monospace; color: #7ee787; background: rgba(46,160,67,.12); border: 1px solid rgba(46,160,67,.3); border-radius: 6px; padding: 2px 8px; }
-  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
-  button, a.btn { font: 600 14px/1 inherit; font-family: inherit; padding: 11px 16px; border-radius: 9px; border: 1px solid var(--line); background: #21262d; color: var(--fg); cursor: pointer; text-decoration: none; }
-  .primary { background: #238636 !important; border-color: #2ea043 !important; color: #fff !important; }
-  #status { color: var(--dim); font-size: 14px; min-height: 1.5em; }
-  h2 { font: 600 12px ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: .05em; color: var(--dim); margin: 24px 0 8px; }
-  pre { background: #010409; border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow: auto; font: 12.5px/1.55 ui-monospace, Menlo, monospace; max-height: 340px; margin: 0; }
-  .warn { border: 1px solid rgba(210,153,34,.4); background: rgba(210,153,34,.08); color: #e3b341; border-radius: 10px; padding: 12px 14px; font-size: 14px; }
-  .err { color: #f85149; }
+  .i-main { max-width: calc(760px + 2 * var(--s-gutter)); padding-top: 64px; padding-bottom: 96px; }
+  .i-main h1 { font-size: clamp(32px, 5vw, 44px); line-height: 1.1; letter-spacing: -0.035em; }
+  .i-prompt { margin-top: 12px; color: var(--m-text-2); font-size: 19px; line-height: 1.5; }
+  .i-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 24px; }
+  .i-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; }
+  #status { min-height: 24px; margin-top: 16px; color: var(--m-text-2); font-size: 14px; line-height: 22px; }
+  #status:empty { min-height: 0; margin-top: 0; }
+  #status .ok { display: inline-flex; align-items: center; gap: 8px; vertical-align: top; color: var(--m-text); font-weight: 500; }
+  .err { color: var(--m-danger); }
+  .i-warn {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding: 12px 16px;
+    border: 1px solid var(--m-line-strong);
+    border-radius: var(--m-r-md);
+    background: var(--m-surface);
+    color: var(--m-text-2);
+    font-size: 14px;
+    line-height: 22px;
+  }
+  .i-warn svg { flex: none; margin-top: 3px; color: var(--m-warn); }
+  .i-warn b { color: var(--m-text); font-weight: 600; }
+  .i-code h2 { display: flex; justify-content: space-between; margin: 40px 0 8px; color: var(--m-text-3); font: 500 12px/16px var(--m-mono); letter-spacing: .08em; text-transform: uppercase; }
+  .i-code h2 span { letter-spacing: 0; text-transform: none; }
+  .i-code pre.code { max-height: 420px; font-size: 12px; line-height: 20px; white-space: pre; }
+  .i-foot { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--m-line); color: var(--m-text-3); font-size: 13px; line-height: 20px; }
+  .i-loading { display: flex; align-items: center; gap: 12px; color: var(--m-text-2); }
+  @media (max-width: 720px) {
+    .i-main { padding-top: 40px; padding-bottom: 64px; }
+    .i-prompt { font-size: 17px; }
+    .i-actions .btn { flex: 1 1 auto; }
+  }
 </style>
 </head>
 <body>
-<main>
-  <div class="brand"><div class="logo"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>morse</div>
-  <div id="root"><p id="status">Reading mod…</p></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="../site/" aria-label="Morse home"><span data-radar="20"></span>Morse</a>
+    <nav class="nav" aria-label="Main">
+      <a href="../site/gallery.html">Gallery</a>
+      <a href="../site/">What is Morse?</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap i-main">
+  <div id="root"><p id="status" class="i-loading"><span data-radar="16"></span>Reading mod…</p></div>
 </main>
 <script type="module">
   import { decodeShare, toUserscript } from "../core/mod.js";
+  import { initPage, highlight, esc } from "../site/common.js";
+  import { mountAll } from "../site/radar.js";
+
+  initPage();
+  addEventListener("hashchange", () => location.reload());
   const root = document.getElementById("root");
-  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const check = `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
+  const lines = s => { const n = s.trimEnd().split("\n").length; return `${n} line${n === 1 ? "" : "s"}`; };
   try {
     const mod = await decodeShare(location.href);
     const where = mod.match.app || mod.match.hosts.join(", ");
+    document.title = `${mod.title} · Morse mod`;
     root.innerHTML = `
+      <p class="eyebrow"><span data-radar="14" data-still></span>Shared mod</p>
       <h1>${esc(mod.title)}</h1>
-      <p class="prompt">“${esc(mod.prompt)}”</p>
-      <div class="meta"><span>for ${esc(where)}</span>${mod.css.trim() ? "<span>css</span>" : ""}${mod.js.trim() ? "<span>js</span>" : ""}${mod.model ? `<span>made with ${esc(mod.model)}</span>` : ""}</div>
-      <div class="actions">
-        <button class="primary" id="install">Install in Morse</button>
+      <p class="i-prompt">“${esc(mod.prompt)}”</p>
+      <div class="i-meta"><span class="chip">for ${esc(where)}</span>${mod.css.trim() ? `<span class="chip">css</span>` : ""}${mod.js.trim() ? `<span class="chip">js</span>` : ""}${mod.model ? `<span class="chip">made with ${esc(mod.model)}</span>` : ""}</div>
+      <div class="i-actions">
+        <button class="btn primary" type="button" id="install">Install in Morse</button>
         <a class="btn" id="userscript" download>Download .user.js</a>
       </div>
-      <p id="status"></p>
-      <div class="warn">Mods are code that runs inside ${esc(where)}. Read it below before installing: it can see what you see in that app.</div>
-      ${mod.css.trim() ? `<h2>CSS</h2><pre>${esc(mod.css)}</pre>` : ""}
-      ${mod.js.trim() ? `<h2>JavaScript</h2><pre>${esc(mod.js)}</pre>` : ""}`;
+      <p id="status" role="status"></p>
+      <div class="i-warn">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 1.75l6.5 11.5h-13z" stroke-linejoin="round"/><path d="M8 6.5v3"/><circle cx="8" cy="11.5" r=".5" fill="currentColor"/></svg>
+        <p><b>Mods are code that runs inside ${esc(where)}.</b> Read it below before installing: it can see what you see in that app.</p>
+      </div>
+      <div class="i-code">
+        ${mod.css.trim() ? `<h2>CSS <span>${lines(mod.css)}</span></h2><pre class="code">${highlight(mod.css.trimEnd(), "css")}</pre>` : ""}
+        ${mod.js.trim() ? `<h2>JavaScript <span>${lines(mod.js)}</span></h2><pre class="code">${highlight(mod.js.trimEnd(), "js")}</pre>` : ""}
+      </div>
+      <p class="i-foot">This whole mod is in the link, after the <code>#</code>. Browsers never send that part to a server, so nobody but you and the sender has seen it.</p>`;
+    mountAll(root);
     const us = document.getElementById("userscript");
     us.href = URL.createObjectURL(new Blob([toUserscript(mod)], { type: "text/javascript" }));
     us.download = `${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.user.js`;
@@ -59,7 +104,7 @@
         window.postMessage({ morseInstall: location.href }, "*");
         status.textContent = "Installing…";
       } else {
-        navigator.clipboard?.writeText(location.href);
+        navigator.clipboard?.writeText(location.href).catch(() => {});
         status.innerHTML = mod.match.app
           ? `Link copied. Run <code>morse install "&lt;link&gt;"</code>, or paste it into Morse → Mods → Import.`
           : `Morse isn't installed in this browser. Link copied: paste it into Morse → Mods → Import, or use the .user.js with Tampermonkey.`;
@@ -68,10 +113,14 @@
     window.addEventListener("message", e => {
       if (e.source !== window || !e.data?.morseInstalled) return;
       const r = e.data.morseInstalled;
-      status.innerHTML = r.error ? `<span class="err">${esc(r.error)}</span>` : `✓ Installed “${esc(r.title)}”. Open ${esc(where)} to see it.`;
+      status.innerHTML = r.error ? `<span class="err">${esc(r.error)}</span>` : `<span class="ok">${check}Installed “${esc(r.title)}”.</span> Open ${esc(where)} to see it.`;
     });
   } catch (e) {
-    root.innerHTML = `<h1>That link doesn't contain a mod</h1><p class="err">${esc(e.message)}</p>`;
+    root.innerHTML = `
+      <p class="eyebrow">Shared mod</p>
+      <h1>That link doesn't contain a mod.</h1>
+      <p class="i-prompt">It may have been cut off when it was copied. Ask for the link again, or browse the <a href="../site/gallery.html">gallery</a>.</p>
+      <p class="err" style="margin-top:16px;font-size:14px">${esc(e.message)}</p>`;
   }
 </script>
 </body>
