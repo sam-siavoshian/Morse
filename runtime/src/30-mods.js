@@ -1,5 +1,5 @@
 function setCss(id, css) {
-  let s = document.head.querySelector(`style[data-morse-css="${id}"]`);
+  let s = document.head.querySelector(`style[data-morse-css="${cssEsc(id)}"]`);
   if (!css) { s?.remove(); return; }
   if (!s) { s = document.createElement("style"); s.setAttribute("data-morse-css", id); document.head.append(s); }
   if (s.textContent !== css) s.textContent = css;
@@ -9,7 +9,7 @@ async function applyMod(m) {
   if (m.js.trim()) {
     const r = await call("exec", { modId: m.id, js: m.js });
     Health.ran(m, r); // repair: the panel marks mods that stopped working (70-panel.js)
-    if (!r.ok) toast(`“${m.title}” failed: ${r.error}`);
+    if (!r.ok) toast(`Couldn't run “${m.title}”: ${r.error}. Edit its code in Mods.`);
   }
 }
 async function removeMod(id) { setCss(id, ""); await call("off", { modId: id }); }

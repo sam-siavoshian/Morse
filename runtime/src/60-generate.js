@@ -57,7 +57,7 @@ async function submit(request, opts = {}) {
   // A refine keeps the first "before" shot, so the share card shows the whole change.
   if (!prev || S.before?.id !== id) S.before = { id, shot: await capture(), rect: R(tr), focus: R(rect), vw: innerWidth, vh: innerHeight };
   const t0 = performance.now();
-  hint.innerHTML = `${radar(12)} ${opts.base?.error ? "Fixing" : prev ? "Refining" : "Thinking"}`;
+  hint.innerHTML = `${radar(12)} Thinking`;
   actions.innerHTML = `<span class="ms">0.0s</span>`;
   const clock = setInterval(() => { const m = actions.querySelector(".ms"); if (m) m.textContent = ((performance.now() - t0) / 1000).toFixed(1) + "s"; }, 100);
   Effect.start(focus);
@@ -66,14 +66,14 @@ async function submit(request, opts = {}) {
   const off = onEvent(msg => {
     if (msg.genId !== id) return;
     if (msg.type === "token") {
-      if (!wrote) { wrote = true; if (/Thinking|Refining/.test(hint.textContent)) hint.innerHTML = `${radar(12)} Writing`; }
+      if (!wrote) { wrote = true; if (/Thinking/.test(hint.textContent)) hint.innerHTML = `${radar(12)} Writing the change`; }
       Effect.token(msg.text); tick(msg.text);
     }
     if (msg.type === "css") setCss(id, msg.css);
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") hint.innerHTML = `${radar(12)} Fixing <i>${esc(msg.error).slice(0, 80)}</i>`;
-      if (msg.phase === "applying") hint.innerHTML = `${radar(12)} Applying`;
-      if (msg.phase === "thinking") hint.innerHTML = `${radar(12)} Writing`;
+      if (msg.phase === "fixing") hint.innerHTML = `${radar(12)} Fixing a problem: <i>${esc(String(msg.error).slice(0, 80))}</i>`;
+      if (msg.phase === "applying") hint.innerHTML = `${radar(12)} Trying the change`;
+      if (msg.phase === "thinking") hint.innerHTML = `${radar(12)} Writing the change`;
     }
   });
   let res;
@@ -86,29 +86,34 @@ async function submit(request, opts = {}) {
   const secs = ((performance.now() - t0) / 1000).toFixed(1);
 
   if (prev) {
-    if (!res.ok) {
-      // Nothing is lost: the version from before the refine goes back on the page.
-      await Effect.finish(false);
+    if (!res.ok || res.kind === "answer") {
+      // Nothing is lost: the version from before the refine goes back on the
+      // page (a failed attempt is turned off first: showVersion re-runs it).
+      await Effect.finish(res.ok);
+      const answered = res.kind === "answer" && Ask.handle(id, res); // a question about the change: show the answer (61-ask.js)
       await showVersion(id, prev);
       S.draft = prev;
       hintNote = "";
-      if (res.cancelled) return showResult(prev, { note: "Stopped · still the version you had", keepInput: true });
-      return showResult(prev, { error: res.error, keepInput: true });
+      if (answered) return showResult(prev, { note: "Answered · describe a change to refine it" });
+      if (res.cancelled) return showResult(prev, { note: "Stopped. Nothing was changed", keepInput: true });
+      return showResult(prev, { error: res.error || "Something went wrong. Try again.", keepInput: true });
     }
     const next = reviseMod(prev, { prompt: opts.note || request, css: res.css || "", js: res.js || "" });
-    S.draft = Object.assign(next, { saved: null, secs, attempts: res.attempts, model: S.label });
+    S.draft = Object.assign(next, { saved: null, saving: null, secs, attempts: res.attempts, model: S.label });
     setCss(id, next.css);
     await Effect.finish(true);
   } else {
     Object.assign(S.draft, { title: res.title || request.slice(0, 40), css: res.css || "", js: res.js || "", secs, attempts: res.attempts, model: S.label, updated: new Date().toISOString() });
     setCss(id, S.draft.css);
     await Effect.finish(res.ok);
+    if (Ask.handle(id, res)) return; // Ask and find: an answer, not a mod (61-ask.js)
     if (!res.ok) {
       setCss(id, "");
+      call("off", { modId: id }).catch(() => {}); // a failed attempt's JS may have left nodes, observers or timers
       if (res.cancelled) return onCancelled(id); // Stop: 50-bar.js
       S.phase = "error";
       bar.classList.add("err");
-      hint.innerHTML = `Couldn't do that: <i>${esc(res.error || "unknown error").slice(0, 120)}</i>`;
+      hint.innerHTML = `That didn't work: <i>${esc(String(res.error || "Something went wrong. Try again.").slice(0, 120))}</i>`;
       hint.title = res.error || "";
       actions.innerHTML = `<button data-a="again">Try again</button>`;
       return;
@@ -131,15 +136,15 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
   input.placeholder = REFINE_PLACEHOLDER;
   if (!keepInput) setInput("");
   const n = versionsOf(d).length + 1;
-  const meta = note || [d.secs && !d.saved ? `${d.secs}s` : "", d.attempts > 1 && !d.saved ? "repaired once" : "", n > 1 ? `version ${n}` : ""].filter(Boolean).join(" · ");
+  const meta = note || [d.secs && !d.saved ? `${d.secs}s` : "", d.attempts > 1 && !d.saved ? "needed a second try" : "", n > 1 ? `version ${n}` : ""].filter(Boolean).join(" · ");
   hint.title = error;
   hint.innerHTML = error
-    ? `<b class="ok">${esc(d.title)}</b> <span class="note">Couldn't change it: ${esc(error).slice(0, 120)}</span>`
-    : `<b class="ok">${esc(d.title)}</b> <span class="dim">${esc(meta || (d.saved ? "type what to change" : ""))}</span>`;
+    ? `<b class="ok">${esc(d.title)}</b> <span class="note">That didn't work: ${esc(error).slice(0, 120)}</span>`
+    : `<b class="ok">${esc(d.title)}</b> <span class="dim">${esc(meta || (d.saved ? "describe what to change" : ""))}</span>`;
   ticker.textContent = "";
   actions.innerHTML = d.saved
-    ? `<button data-a="code">Code</button><button data-a="keep">Done</button>`
-    : `<button data-a="keep" class="primary">Keep <kbd>↵</kbd></button><button data-a="undo">Undo</button><button data-a="code">Code</button><button data-a="share">Share</button>`;
+    ? `<button data-a="code">Edit code</button><button data-a="keep">Done</button>`
+    : `<button data-a="keep" class="primary">Save <kbd>↵</kbd></button><button data-a="undo">Undo</button><button data-a="code">Edit code</button><button data-a="share">Share</button>`;
   updateChips();
   input.focus({ preventScroll: true });
 }
@@ -168,7 +173,7 @@ function refine(text) {
   PromptHistory.add(text);
   submit(text, { from: d, base: { prompt: d.prompt || d.request, css: d.css, js: d.js } });
 }
-// While a follow-up is typed, Enter refines (and Keep drops its ↵).
+// While a follow-up is typed, Enter refines (and Save drops its ↵).
 const markRefining = () => bar.classList.toggle("refining", S.phase === "result" && !!input.value.trim());
 input.addEventListener("input", markRefining);
 new MutationObserver(markRefining).observe(bar, { attributes: true, attributeFilter: ["class"] });
@@ -205,7 +210,7 @@ async function stepBackDraft() {
     if (!d.mod) return undo(); // the first version of a new change: same as Undo
     return showResult(d, { note: "This is the first version" });
   }
-  S.draft = Object.assign(back, { saved: null });
+  S.draft = Object.assign(back, { saved: null, saving: null });
   await showVersion(d.id, back);
   showResult(back, { note: `Back to version ${versionsOf(back).length + 1}` });
 }
@@ -247,27 +252,33 @@ async function keep() {
   const d = S.draft;
   if (!d) return null;
   if (d.saved) {
-    if (S.phase === "result") { S.phase = "idle"; closeBar(); }
+    if (S.phase === "result" && S.draft === d) { S.phase = "idle"; closeBar(); } // "Done" on a saved mod
     return d.saved;
   }
-  let mod;
-  if (d.mod) {
-    mod = { ...d.mod, title: d.title || d.mod.title, css: d.css, js: d.js, history: versionsOf(d), updated: d.updated || new Date().toISOString() };
-    if (d.refined) mod.refined = d.refined; else delete mod.refined;
-    mod = (await call("mods.save", { mod })) || mod;
-    S.mods = S.mods.map(x => (x.id === mod.id ? mod : x));
-  } else {
-    mod = await call("mods.save", { draft: { id: d.id, title: d.title, prompt: d.request, css: d.css, js: d.js, url: location.href, app: S.app, target: d.ctx?.target, model: d.model,
+  if (d.saving) return d.saving; // Save then Share (or a double click) saves once
+  d.saving = (async () => {
+    if (d.mod) {
+      // Refined a saved mod: same mod, new version.
+      const m = { ...d.mod, title: d.title || d.mod.title, css: d.css, js: d.js, history: versionsOf(d), updated: d.updated || new Date().toISOString() };
+      if (d.refined) m.refined = d.refined; else delete m.refined;
+      const saved = (await call("mods.save", { mod: m })) || m;
+      S.mods = S.mods.map(x => (x.id === saved.id ? saved : x));
+      return saved;
+    }
+    const saved = await call("mods.save", { draft: { id: d.id, title: d.title, prompt: d.request, css: d.css, js: d.js, url: location.href, app: S.app, target: d.ctx?.target, model: d.model,
       ...(d.history?.length ? { history: d.history } : {}), ...(d.refined ? { refined: d.refined } : {}) } });
-    S.mods.push(mod);
-  }
+    S.mods.push(saved);
+    return saved;
+  })();
+  let mod;
+  try { mod = await d.saving; } finally { d.saving = null; }
   d.saved = mod;
   d.mod = mod;
   Health.ran(mod, { ok: true }); // it ran fine just now; check it keeps finding its elements
   S.phase = "idle";
   closeBar();
   const n = versionsOf(mod).length + 1;
-  toast(n > 1 ? `Saved “${mod.title}” · version ${n}` : `Saved “${mod.title}” · it'll be here next time`);
+  toast(n > 1 ? `Saved “${mod.title}”. This is version ${n}.` : `Saved “${mod.title}”. It will be here next time.`);
   return mod;
 }
 async function undo() {
@@ -285,5 +296,5 @@ async function undo() {
   await removeMod(d.id);
   S.draft = null;
   closeBar();
-  toast("Undone");
+  toast("Change undone");
 }

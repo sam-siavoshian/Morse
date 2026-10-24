@@ -121,7 +121,7 @@ function renderPanel() {
     <header><span class="mark">${radar(16)}</span><div><b>Mods</b><small>${esc(where)}</small></div><button data-a="close" title="Close" aria-label="Close">×</button></header>
     ${searchable ? `<div class="psearch"><input class="search" type="search" placeholder="Search ${S.mods.length} mods" aria-label="Search mods" spellcheck="false" autocomplete="off" value="${esc(PanelUI.q)}"></div>` : ""}
     <div class="list" role="list" aria-label="Mods"></div>
-    <footer><button data-a="import">Import mod…</button><span>${esc(S.label)}</span></footer>`;
+    <footer><button data-a="import">Install a mod…</button><span>${esc(S.label)}</span></footer>`;
   renderList();
   if (!keep) return;
   if (keep.search) {
@@ -139,7 +139,7 @@ function renderList() {
   const list = panel.querySelector(".list");
   const shown = PanelUI.q ? S.mods.filter(m => matches(m, PanelUI.q)) : S.mods;
   list.innerHTML = !S.mods.length
-    ? `<p class="empty">${radar(22)}<br>No mods here yet.<br>Press <kbd>${HOTKEY}</kbd>, point at something, and say what you want.</p>`
+    ? emptyModsHtml() /* onboarding hook: 59-onboarding.js */
     : shown.length ? shown.map(rowHtml).join("") : `<p class="empty">No mods match “${esc(PanelUI.q)}”.</p>`;
   const r = rows();
   const i = Math.max(0, r.findIndex(a => a.dataset.id === PanelUI.focus));
@@ -158,10 +158,10 @@ function rowHtml(m) {
       <article data-id="${esc(m.id)}" class="${m.enabled ? "" : "off"}${broken ? " broken" : ""}" role="listitem" tabindex="-1" aria-label="${esc(label)}">
         <label class="sw" title="${m.enabled ? "Turn off" : "Turn on"}"><input type="checkbox" data-a="toggle" tabindex="-1" aria-label="On" ${m.enabled ? "checked" : ""}><span></span></label>
         <div class="meta"><b>${esc(m.title)}</b><small>“${esc(m.prompt)}”</small>${m.refined ? `<small class="latest">Latest change: “${esc(m.refined)}”</small>` : ""}
-          <div class="tags">${m.css.trim() ? "<span>css</span>" : ""}${m.js.trim() ? "<span>js</span>" : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : "<span>page</span>"}${when ? `<em class="when">${changed ? "changed" : "added"} ${esc(when)}</em>` : ""}</div>
+          <div class="tags">${m.css.trim() ? "<span>style</span>" : ""}${m.js.trim() ? "<span>script</span>" : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : "<span>whole page</span>"}${when ? `<em class="when">${changed ? "changed" : "added"} ${esc(when)}</em>` : ""}</div>
         </div>
         ${broken ? `<div class="health" role="status"><p><b>Not working.</b> ${esc(h.reason)}</p><button class="primary" data-a="fix">Fix it</button></div>` : ""}
-        <div class="btns"><button data-a="refine">Refine</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}">History <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">Copy link</button><button data-a="share">Share</button><button data-a="code">Code</button><button data-a="del">Delete</button></div>
+        <div class="btns"><button data-a="refine">Refine</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}">History <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">Copy link</button><button data-a="share">Share</button><button data-a="code">Edit code</button><button data-a="del">Delete</button></div>
         ${open ? versionsHtml(m, versions) : ""}
       </article>`;
 }
@@ -193,7 +193,7 @@ async function restoreTo(m, i) {
     await applyMod(saved);
   }
   renderPanel();
-  toast(`Back to version ${i + 1}: “${v.prompt}”`);
+  toast(`Back to version ${i + 1} (“${v.prompt}”)`);
 }
 async function copyText(text) {
   try { await navigator.clipboard.writeText(text); return; } catch {}
@@ -212,8 +212,8 @@ async function copyLink(m, btn) {
     await copyText(r.link);
     btn.textContent = "Copied";
     setTimeout(() => { if (btn.isConnected) btn.textContent = "Copy link"; }, 1600);
-    toast(`Link copied · anyone with Morse can install “${m.title}”`);
-  } catch (e) { toast(`Couldn't copy the link: ${e.message}`); }
+    toast(`Link copied. Anyone with Morse can install “${m.title}”.`);
+  } catch (e) { toast(`Couldn't copy the link (${e.message}). Try Share instead.`); }
 }
 
 panel.addEventListener("click", async e => {

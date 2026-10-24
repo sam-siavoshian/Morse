@@ -162,7 +162,7 @@ test("summaries read like a changelog", () => {
 });
 
 test("manual mods keep their edit list; snapshot mods record where they came from", () => {
-  const manual = createMod({ title: "Manual edits", prompt: "Hid 1", css: "a{}", js: "", url: "https://x.com/", kind: "manual", edits: [{ op: "hide", sel: "a" }], model: "qwen" });
+  const manual = createMod({ title: "Direct edits", prompt: "Hid 1", css: "a{}", js: "", url: "https://x.com/", kind: "manual", edits: [{ op: "hide", sel: "a" }], model: "qwen" });
   assert.equal(manual.kind, "manual");
   assert.equal(manual.edits.length, 1);
   assert.equal(manual.model, null, "no model wrote it");

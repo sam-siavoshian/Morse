@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import http from "node:http";
 import { parseModResponse, completeCssPrefix } from "../core/parse.js";
 import { createMod, encodeShare, decodeShare, toUserscript, modMatches } from "../core/mod.js";
-import { streamChat, resolveSettings } from "../core/providers.js";
+import { streamChat } from "../core/providers.js";
 import { runMorse } from "../core/engine.js";
 import { buildMessages } from "../core/prompt.js";
 import { readFuseWire, fuseVerdict } from "../daemon/fuses.js";
@@ -39,7 +39,7 @@ test("share links round-trip and drop local state", async () => {
 });
 
 test("rejects links that aren't mods", async () => {
-  await assert.rejects(decodeShare("https://x/install.html"), /Not a Morse share link/);
+  await assert.rejects(decodeShare("https://x/install.html"), /isn't a Morse share link/);
 });
 
 test("matching by host and by app", () => {
@@ -69,43 +69,21 @@ function serve(handler) {
   return new Promise(r => { const s = http.createServer(handler).listen(0, "127.0.0.1", () => r(s)); });
 }
 
-test("ollama provider streams NDJSON tokens", async () => {
-  let body;
-  const s = await serve((req, res) => {
-    if (req.url === "/api/tags") return res.end(JSON.stringify({ models: [{ name: "llama3.2" }, { name: "qwen2.5-coder:7b" }] }));
-    let b = ""; req.on("data", d => (b += d)); req.on("end", () => {
-      body = JSON.parse(b);
-      res.write(JSON.stringify({ message: { content: "TITLE: A\n" } }) + "\n");
-      res.write(JSON.stringify({ message: { content: "```css\na{}\n```" } }) + "\n");
-      res.end(JSON.stringify({ done: true }) + "\n");
-    });
-  });
-  const baseUrl = `http://127.0.0.1:${s.address().port}`;
-  const resolved = await resolveSettings({ provider: "auto", baseUrl, model: "nope" });
-  assert.equal(resolved.provider, "ollama");
-  assert.equal(resolved.model, "qwen2.5-coder:7b");
-  const toks = [];
-  const text = await streamChat(resolved, [{ role: "user", content: "x" }], { onToken: t => toks.push(t) });
-  assert.equal(toks.length, 2);
-  assert.equal(parseModResponse(text).css.trim(), "a{}");
-  assert.equal(body.stream, true);
-  s.close();
-});
-
 test("openai-compatible provider streams SSE tokens", async () => {
-  const s = await serve((req, res) => {
+  let body;
+  const s = await serve(async (req, res) => {
     assert.equal(req.headers.authorization, "Bearer k");
+    assert.equal(req.url, "/v1/chat/completions");
+    let b = ""; for await (const d of req) b += d;
+    body = JSON.parse(b);
     res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: "TITLE: B" } }] })}\n\n`);
     res.end("data: [DONE]\n\n");
   });
   const text = await streamChat({ provider: "openai", baseUrl: `http://127.0.0.1:${s.address().port}`, model: "m", apiKey: "k" }, []);
   assert.equal(text, "TITLE: B");
+  assert.equal(body.stream, true);
+  assert.equal(body.temperature, undefined);
   s.close();
-});
-
-test("auto falls back to demo when no model is running", async () => {
-  const s = await resolveSettings({ provider: "auto", baseUrl: "http://127.0.0.1:9" });
-  assert.equal(s.provider, "demo");
 });
 
 test("engine streams css, runs js, and repairs a failing first attempt", async () => {

@@ -30,6 +30,18 @@ test("refine: the model gets the original request, the current code and the foll
   assert.ok(user.indexOf("Page outline") < user.indexOf("Original request"), "page context comes first");
 });
 
+test("base works with earlier Ask turns and a captured snapshot in the same request", () => {
+  const context = { ...ctx, ask: { turns: [{ q: "what does this do?", a: "It shows the track.", points: [] }] } };
+  const snapshot = { label: "button", html: "<button>Go</button>", styles: { root: { color: "red" } } };
+  const msgs = buildMessages({ request: "make it smaller", context, snapshot, base });
+  const all = msgs.map(m => m.content).join("\n");
+  assert.match(all, /what does this do\?/, "earlier turns are there");
+  const user = msgs.at(-1).content;
+  assert.match(user, /Captured HTML/);
+  assert.match(user, /^Follow-up: make it smaller$/m);
+  assert.match(user, /^Original request: add a now playing label$/m);
+});
+
 test("fix: the error goes in, and the self-repair retry still works on top", () => {
   const user = buildMessages({ request: base.prompt, context: ctx, base: { ...base, error: "nowPlaying is not defined" } })[1].content;
   assert.match(user, /stopped working/);

@@ -1,45 +1,46 @@
-// Keep-iterating screenshots (40-42): the real extension on the demo sites
-// with the built-in demo model, Playwright playing the user.
+// Keep-iterating screenshots (40-42): the real desktop connector (CDP) and
+// the demo model on the demo sites, in a scratch MORSE_HOME, with Playwright
+// playing the user. Needs no helper or paired extension.
 //   40 · refine: a follow-up typed under a fresh result
 //   41 · history: a mod's versions in the Mods panel
 //   42 · fix it: a saved mod that stopped working, in plain words
 //
-//   npm run build && node demo/serve.js &   (MORSE_DEMO_PORT moves the ports)
-//   DISPLAY=:99 node demo/shoot-iterate.js
+//   node demo/serve.js &   (MORSE_DEMO_PORT moves the ports)
+//   node demo/shoot-iterate.js
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import net from "node:net";
 import { createRequire } from "node:module";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const OUT = path.join(root, "docs", "screenshots");
-const EXT = path.join(root, "dist", "extension");
+const OUT = path.resolve(root, process.env.SHOTS || path.join("docs", "screenshots"));
 const BASE = Number(process.env.MORSE_DEMO_PORT || 8787);
 const SITE = { parley: `http://127.0.0.1:${BASE}/demo/sites/parley/`, tunes: `http://127.0.0.1:${BASE + 2}/demo/sites/tunes/` };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-iterate-"));
 
-const ctx = await chromium.launchPersistentContext(path.join(tmp, "profile"), {
-  headless: false, viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1,
-  args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, "--no-sandbox"],
-});
-const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
-const id = sw.url().split("/")[2];
-const setup = await ctx.newPage();
-await setup.goto(`chrome://extensions/?id=${id}`);
-await setup.locator("#allow-user-scripts").click();
-await sleep(400);
-await setup.close();
+// A scratch home: mods, settings and first-run state live here, not in ~/.morse.
+const home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-iterate-"));
+process.env.MORSE_HOME = home;
+await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false }));
+await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } }));
+const MODS = path.join(home, "mods");
+const { Connector } = await import("../daemon/connector.js");
+
+const port = await new Promise(r => { const s = net.createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => r(p)); }); });
+const browser = await chromium.launch({ args: [`--remote-debugging-port=${port}`] });
+const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
+await ctx.addInitScript(() => localStorage.setItem("morse:debug", "1"));
+new Connector({ port, app: null, settings: { provider: "demo", model: "demo" }, log: () => {} }).run();
 
 async function open(url) {
   const page = await ctx.newPage();
-  await page.goto(url);
-  await page.evaluate(() => localStorage.setItem("morse:debug", "1"));
-  await page.reload();
-  await sleep(900);
   page.on("pageerror", e => console.log("  ! pageerror", e.message));
+  await page.goto(url);
+  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
+  await sleep(600);
   return page;
 }
 const shot = async (page, name) => { await page.screenshot({ path: path.join(OUT, name) }); console.log("  📸", name); };
@@ -58,16 +59,16 @@ async function pick(page, sel, fx = 0.5, fy = 0.5) {
   await page.mouse.click(x, y);
   await sleep(250);
 }
+const readMods = async () => Promise.all((await fs.readdir(MODS)).map(async f => JSON.parse(await fs.readFile(path.join(MODS, f), "utf8"))));
+const writeMod = m => fs.writeFile(path.join(MODS, `${m.id}.json`), JSON.stringify(m, null, 2));
 // Spreads a mod's version times over the past days, the way a mod people
 // keep tuning looks (everything here happens within a minute).
-async function age(modId, ago) {
-  await sw.evaluate(({ modId, ago }) => chrome.storage.local.get("mods").then(({ mods }) => {
-    const m = mods[modId], t = s => new Date(Date.now() - s * 1000).toISOString();
-    m.created = t(ago[0]);
-    (m.history || []).forEach((v, i) => (v.at = t(ago[i])));
-    m.updated = t(ago[(m.history || []).length]);
-    return chrome.storage.local.set({ mods });
-  }), { modId, ago });
+async function age(mod, ago) {
+  const t = s => new Date(Date.now() - s * 1000).toISOString();
+  mod.created = t(ago[0]);
+  (mod.history || []).forEach((v, i) => (v.at = t(ago[i])));
+  mod.updated = t(ago[(mod.history || []).length]);
+  await writeMod(mod);
 }
 const ui = (page, sel) => page.locator(`[data-morse-ui] ${sel}`);
 
@@ -90,14 +91,15 @@ await waitFor(tunes, s => s.phase === "result" && /version 2/.test(s.hint));
 await tunes.keyboard.type("a little smaller", { delay: 14 });
 await tunes.keyboard.press("Enter");
 await waitFor(tunes, s => s.phase === "result" && /version 3/.test(s.hint));
-await tunes.keyboard.press("Enter"); // Keep
+await tunes.keyboard.press("Enter"); // Save
 await sleep(600);
 
 // 41 · its versions in the Mods panel
-const [timer] = Object.values((await sw.evaluate(() => chrome.storage.local.get("mods"))).mods);
-await age(timer.id, [3 * 86400, 26 * 3600, 12 * 60]);
+const [timer] = await readMods();
+await age(timer, [3 * 86400, 26 * 3600, 12 * 60]);
 await tunes.reload();
-await sleep(1200);
+await tunes.waitForFunction(() => document.querySelector(".morse-sleep"), null, { timeout: 15000 });
+await sleep(400);
 await tunes.locator('[data-testid="player-controls"] .morse-sleep').click(); // start a timer, so the change shows
 await sleep(300);
 await tunes.keyboard.press("Alt+Shift+KeyM");
@@ -109,7 +111,7 @@ await sleep(400);
 await shot(tunes, "41-history.png");
 await tunes.keyboard.press("Escape");
 
-// ---- Parley: two mods saved a while ago; the app has since changed
+// ---- Parley: a mod saved a while ago; the app has since changed
 const chat = await open(SITE.parley);
 await chat.keyboard.press("Alt+Space");
 await sleep(200);
@@ -119,18 +121,16 @@ await chat.keyboard.press("Enter");
 await waitFor(chat, s => s.phase === "result");
 await chat.keyboard.press("Enter");
 await sleep(500);
-await sw.evaluate(host => chrome.storage.local.get("mods").then(({ mods }) => {
-  const at = new Date(Date.now() - 9 * 86400 * 1000).toISOString();
-  mods.oldcopy = {
-    morse: 1, id: "oldcopy", title: "Copy chat as Markdown", prompt: "add a button that copies the chat as markdown",
-    match: { hosts: [host], app: null }, target: { selector: "header[role=banner] .share", label: "button · “Share”" },
-    css: ".morse-copy { border: 1px solid #424242; border-radius: 999px; padding: 6px 14px; }",
-    js: `morse.watch("header[role=banner] .share-btn", share => {\n  share.before(morse.el("button", { class: "morse-copy", text: "Copy as Markdown" }));\n});`,
-    enabled: true, model: "qwen2.5-coder:7b", created: at, updated: at,
-  };
-  return chrome.storage.local.set({ mods });
-}), new URL(SITE.parley).host);
+const at = new Date(Date.now() - 9 * 86400 * 1000).toISOString();
+await writeMod({
+  morse: 1, id: "oldcopy", title: "Copy chat as Markdown", prompt: "add a button that copies the chat as markdown",
+  match: { hosts: [new URL(SITE.parley).host], app: null }, target: { selector: "header[role=banner] .share", label: "button · “Share”" },
+  css: ".morse-copy { border: 1px solid #424242; border-radius: 999px; padding: 6px 14px; }",
+  js: `morse.watch("header[role=banner] .share-btn", share => {\n  share.before(morse.el("button", { class: "morse-copy", text: "Copy as Markdown" }));\n});`,
+  enabled: true, model: "qwen2.5-coder:7b", created: at, updated: at,
+});
 await chat.reload();
+await chat.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
 await sleep(6500); // the 5 second check
 await chat.keyboard.press("Alt+Shift+KeyM");
 await ui(chat, ".panel article .health").waitFor();
@@ -143,6 +143,7 @@ await chat.keyboard.press("Enter");
 await sleep(500);
 console.log("  fixed:", await chat.locator(".morse-copy").count() === 1);
 
-const { mods } = await sw.evaluate(() => chrome.storage.local.get("mods"));
-for (const m of Object.values(mods)) console.log(`  · ${m.title}: ${m.prompt}${m.refined ? ` → ${m.refined}` : ""} (${(m.history || []).length + 1} versions)`);
-await ctx.close();
+for (const m of await readMods()) console.log(`  · ${m.title}: ${m.prompt}${m.refined ? ` → ${m.refined}` : ""} (${(m.history || []).length + 1} versions)`);
+await browser.close();
+await fs.rm(home, { recursive: true, force: true });
+process.exit(0);

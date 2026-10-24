@@ -117,7 +117,7 @@ test("hide, move, rename, recolor and dark mode apply live, undo, save, and come
   await until(async () => (await savedMods(page)).length === 2);
   const mods = await savedMods(page);
   const manual = mods.find(m => m.kind === "manual");
-  assert.equal(manual.title, "Manual edits");
+  assert.equal(manual.title, "Direct edits");
   assert.deepEqual([...new Set(manual.edits.map(e => e.op))].sort(), ["hide", "move", "style", "text"]);
   assert.match(manual.prompt, /Renamed “Release notes” → “What's new”/);
   assert.equal(mods.find(m => m.kind === "quick").title, "Dark mode");
