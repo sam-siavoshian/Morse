@@ -51,7 +51,7 @@
   chrome.runtime.onMessage.addListener(m => { if (m && m.morseToggle) emit({ type: "toggle" }); });
 
   // The share page (share/install.html) asks to install through us.
-  document.documentElement.dataset.morseExtension = "1";
+  if (document.documentElement) document.documentElement.dataset.morseExtension = "1"; // document_start: the parser may not have made <html> yet
   // Only the official share page may ask, and it only *asks*: the runtime
   // shows Morse's own review (runtime/src/63-control.js, in the closed shadow
   // root the page can't click) and installs only if the person clicks Install.

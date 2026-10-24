@@ -20,6 +20,12 @@
 
 - **One runtime, two hosts.** The same runtime runs in websites (extension)
   and desktop apps (CDP); only the transport differs.
+- **Free until you use it.** Every page gets only a ~49 KB boot
+  (`runtime/boot.js`): it applies your mods (with the guards and safe start),
+  follows SPA navigations, checks for broken mods after idle and listens for
+  the hotkey, with no overlay, layout reads or timers. The UI is injected the
+  first time you open Morse. Measured in [`docs/perf/report.md`](../perf/report.md)
+  (`node demo/perf.js`), guarded by `tests/perf.test.js`.
 - **No patching.** On the web, mod JS runs through `chrome.userScripts`, so it
   works on strict-CSP sites. On the desktop, `morse launch` relaunches an
   Electron app with `--remote-debugging-port` and attaches over CDP; app
@@ -137,14 +143,21 @@ test set chrome.storage.local "morse.helperPort" ([testing](testing.md#the-exten
 
 ## The runtime (`runtime/`)
 
+The runtime comes in two parts. [`runtime/boot.js`](../../runtime/boot.js)
+(with `hotkeys.js`, `prefs.js`, `control.js`, the detection half of `heal.js`
+and `guard.js` inlined) runs on every page: it applies mods, follows
+navigations and catches the hotkey. The UI below is injected the first time
+it is needed (host request `ui.load`) and takes over through the handoff
+object boot.js leaves on `window[Symbol.for("morse.boot")]`.
+
 [`runtime/bundle.js`](../../runtime/bundle.js) concatenates
 `runtime/src/*.js`, sorted by filename, into one IIFE string, after the
 design tokens and the pure core modules it shares with the hosts
 (`hotkeys.js` and `prefs.js` inlined with `export` dropped; `edits.js`,
 `versions.js`, `onboarding.js`, `answer.js`, `summary.js`, `control.js`,
-`gallery.js`, `a11y.js`, `showonce.js`, `heal.js` and `guard.js` inlined each
+`gallery.js`, `a11y.js`, `showonce.js`, `heal.js`, `style.js` and `guard.js` inlined each
 in its own scope). Both the extension build and the desktop connector inject exactly
-this string. Because it is one scope, two files must never declare the same
+this string after the boot (`bundleBoot()`, `bundleUI()`). Because it is one scope, two files must never declare the same
 top-level name ([Adding a feature](adding-a-feature.md#runtime-rules)).
 
 The files run in order, by number:

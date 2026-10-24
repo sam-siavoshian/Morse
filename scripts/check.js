@@ -37,8 +37,10 @@ function jsFiles(dir) {
   return out;
 }
 const SRC = path.join(root, "runtime", "src");
-// runtime/src files are fragments of one function body (top-level `return`); check 2 parses them as the bundle.
-const files = jsFiles(root).filter(f => !f.startsWith(SRC + path.sep));
+// runtime/src files and runtime/boot.js are fragments of a function body
+// (top-level `return`); check 2 parses them as the bundle.
+const BOOT = path.join(root, "runtime", "boot.js");
+const files = jsFiles(root).filter(f => !f.startsWith(SRC + path.sep) && f !== BOOT);
 const nodeCheck = f => new Promise(resolve => execFile(process.execPath, ["--check", f], (e, so, se) => resolve(e ? String(se).trim().split("\n").slice(0, 5).join("\n") : null)));
 for (let i = 0; i < files.length; i += 8) {
   const batch = files.slice(i, i + 8);

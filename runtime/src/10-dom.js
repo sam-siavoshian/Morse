@@ -6,12 +6,9 @@ hostEl.style.cssText = "all:initial;position:fixed;inset:0;pointer-events:none;z
   .replace(/;/g, " !important;");
 hostEl.dir = "ltr";
 // Debug (an open shadow root and the status attribute, for tests and
-// screenshots) only in a browser driven by automation: localStorage belongs to
-// the page, so on its own the flag would let any site open Morse's UI to its
-// scripts. navigator.webdriver is read in Morse's own world, where the page
-// can't redefine it.
-let DEBUG = false;
-try { DEBUG = navigator.webdriver === true && !!localStorage.getItem("morse:debug"); } catch {}
+// screenshots) only in a browser driven by automation; boot.js decides it
+// (navigator.webdriver and localStorage "morse:debug", read in Morse's own world).
+const DEBUG = B.debug;
 const root = hostEl.attachShadow({ mode: DEBUG ? "open" : "closed" });
 // Tokens are custom properties, the one thing that inherits through a shadow
 // boundary. Marked !important, ours beat any `--m-*` the page sets on our host.
@@ -64,9 +61,11 @@ const TopLayer = {
   raise() { if (!this.ok || !hostEl.isConnected) return; try { if (hostEl.matches(":popover-open")) hostEl.hidePopover(); } catch {} this.show(); },
 };
 if (TopLayer.ok) hostEl.popover = "manual";
-function mount() { if (!hostEl.isConnected && live()) document.documentElement.append(hostEl); TopLayer.show(); }
+// Built on first use, not at page load. boot.js tells us when the page swaps
+// out <html> or its children (document.open, innerHTML), so we come back.
+function mount() { if (!hostEl.isConnected && live()) document.documentElement?.append(hostEl); TopLayer.show(); }
 mount();
 applyTheme();
-new MutationObserver(mount).observe(document.documentElement, { childList: true });
+B.domHooks.add(mount);
 // The page closed the overlay's popover (it can reach the host element): open it again.
 hostEl.addEventListener("toggle", e => { if (e.newState === "closed" && live()) setTimeout(() => TopLayer.show(), 0); });

@@ -9,18 +9,11 @@
 // (reviewImport), 95-keys.js (offSwitch), 96-shortcuts.js, 97-boot.js
 // (controlBoot, controlReady), 10-dom.js (CONTROL_CSS).
 
-const Control = {
-  pause: { all: false, sites: {} },
-  off: false,       // the off switch: every mod off in this tab until turned back on (survives reloads)
-  held: new Set(),  // safe start: mods held back on this load
-  suspect: null,
-  tab: "",          // tells this tab's loads apart from other tabs of the same site
-};
-try { Control.off = sessionStorage.getItem("morse:off") === "1"; } catch {}
-try {
-  Control.tab = sessionStorage.getItem("morse:tab") || uid();
-  sessionStorage.setItem("morse:tab", Control.tab);
-} catch {}
+// perf: boot.js applies mods before the UI exists, so it owns this state
+// (same shape: pause, off, held, suspect, tab): it reads morse:off and
+// morse:tab from sessionStorage and asks control.boot once per load (the
+// host's off switch wins over a page that cleared its storage).
+const Control = B.control;
 if (typeof HOTKEY_HELP === "object") HOTKEY_HELP.off = "Turn off every mod on this page at once";
 
 const here = () => ({ url: location.href, app: S.app });

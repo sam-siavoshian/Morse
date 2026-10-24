@@ -251,10 +251,12 @@ async function evalInMorse(match, expression) {
   } finally { s.close(); }
 }
 // The runtime is up in Morse's world, and the page's own world sees none of its host.
+// (The boot is what's always there; the overlay is only built when Morse is opened.)
 const pageSeesNoHost = "!globalThis.__morseHost && !globalThis.__morseHostSend && !globalThis.__morseHostReceive";
+const BOOTED = "!!globalThis.__morseHost && !!globalThis[Symbol.for('morse.boot')]?.live()";
 const hasRuntime = async (re, also = "true") => {
   try {
-    return !!(await evalIn(re, `${pageSeesNoHost} && !!document.querySelector('[data-morse-ui]') && (${also})`)) && !!(await evalInMorse(re, "!!globalThis.__morseHost"));
+    return !!(await evalIn(re, `${pageSeesNoHost} && (${also})`)) && !!(await evalInMorse(re, BOOTED));
   } catch { return false; }
 };
 
@@ -288,6 +290,7 @@ test("attaches to the main window and the app's own frame, not the third-party e
   await until(() => hasRuntime(/app\.fake\.test:\d+\/$/), 10000, "runtime in the main window");
   await until(() => hasRuntime(/files\.fake\.test/), 10000, "runtime in the app frame");
   assert.equal(await evalIn(/video\.example\.test/, "!!document.querySelector('[data-morse-ui]')"), false, "third-party embed left alone");
+  assert.equal(await evalInMorse(/video\.example\.test/, BOOTED), false, "no runtime in the third-party embed");
   assert.equal(await evalInMorse(/video\.example\.test/, "!!globalThis.__morseHost"), false);
 });
 
