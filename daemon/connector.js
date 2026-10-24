@@ -33,6 +33,8 @@ import { HOME, listMods } from "./store.js";
 import { classifyTarget, describeTarget } from "./targets.js";
 import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
 import { GALLERY_REQUESTS, handleGallery } from "./gallery.js"; // gallery hook: Mods for this site
+import { Style, onStyleChange } from "./style.js"; // your-style hook: one style on every site and app
+import { STYLE_ID } from "../core/style.js"; // your-style hook
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
@@ -105,6 +107,7 @@ export class Connector {
     this.running = true;
     this.watchMods();
     this.controlWatcher ||= watchControl(this); // user control: tell windows when Morse is paused or resumed
+    this.styleWatch ||= onStyleChange(() => this.modsChanged()); // your-style hook: a style change reaches every window
     let misses = 0;
     while (this.running) {
       let list = null;
@@ -138,6 +141,7 @@ export class Connector {
     this.running = false;
     this.modWatcher?.close();
     this.controlWatcher?.close(); this.controlWatcher = null;
+    this.styleWatch?.(); this.styleWatch = null; // your-style hook
     return this.state;
   }
 
@@ -316,7 +320,8 @@ export class Connector {
     this.state = "stopped";
     this.modWatcher?.close();
     this.controlWatcher?.close(); this.controlWatcher = null;
-    const ids = (await listMods().catch(() => [])).map(m => m.id);
+    this.styleWatch?.(); this.styleWatch = null; // your-style hook
+    const ids = (await listMods().catch(() => [])).map(m => m.id).concat(STYLE_ID); // your-style hook: its code goes too
     await Promise.all([...this.windows.values()].map(async w => {
       w.detaching = true;
       const s = w.session;
@@ -400,13 +405,14 @@ export class Connector {
     if (CONTROL_REQUESTS.has(msg.type)) return handleControl(msg, await here()); // user control (control.js)
     if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
     if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, await here()); // gallery hook: Mods for this site
+    if (Style.owns(msg)) { const r = await Style.handle(msg, await here()); if (msg.type !== "style.get" && msg.type !== "style.preview") this.modsChanged(s); return r; } // your-style hook
     switch (msg.type) {
       case "hello":
         this.grantMic(s, (await here()).url);
         return { mode: "desktop", app, appName: this.app?.name || null, label: settingsLabel(this.settings),
           settings: await loadPrefs(), voice: await cachedVoiceStatus() };
       case "mods.list":
-        return modsFor(await here());
+        return Style.list(await modsFor(await here()), await here()); // your-style hook: the style first
       case "mods.save": {
         const where = await here();
         if (msg.draft) {

@@ -337,6 +337,7 @@ const DYSLEXIA_FONT = `"OpenDyslexic", "Atkinson Hyperlegible", "Lexend", Verdan
 // Icons drawn with fonts and code keep their own font.
 const KEEP_FONT = `code, pre, kbd, samp, tt, var, code *, pre *, kbd *, i, svg, svg *, math, math *, [class*="icon" i], [class*="icon" i] *, [class*="symbol" i], [class*="material" i], [class*="glyph" i], [class^="fa"], [class*=" fa-"], [aria-hidden="true"], [aria-hidden="true"] *`;
 const ARTICLE = `article, main, [role=main], [role=article], [itemprop=articleBody], .post, .article, .entry-content, .post-content, .article-body, .story-body`;
+export const A11Y_FONTS = { read: READ_FONT, dyslexia: DYSLEXIA_FONT, keep: KEEP_FONT }; // your-style hook: core/style-host.js uses the same font stacks
 
 function readableCss(dys) {
   const font = dys ? DYSLEXIA_FONT : READ_FONT;

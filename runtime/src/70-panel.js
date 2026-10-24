@@ -138,10 +138,11 @@ function renderPanel() {
 
 function renderList() {
   const list = panel.querySelector(".list");
-  const shown = PanelUI.q ? S.mods.filter(m => matches(m, PanelUI.q)) : S.mods;
-  list.innerHTML = !S.mods.length
+  const mods = S.mods.filter(m => m.kind !== "style"); // your-style hook: Your style has its own row at the top
+  const shown = PanelUI.q ? mods.filter(m => matches(m, PanelUI.q)) : mods;
+  list.innerHTML = YourStyle.rowHtml() + (!mods.length // your-style hook (72-style.js)
     ? emptyModsHtml() /* onboarding hook: 59-onboarding.js */
-    : shown.length ? shown.map(rowHtml).join("") : `<p class="empty">No mods match “${esc(PanelUI.q)}”.</p>`;
+    : shown.length ? shown.map(rowHtml).join("") : `<p class="empty">No mods match “${esc(PanelUI.q)}”.</p>`);
   list.insertAdjacentHTML("beforeend", gallerySectionHtml()); // gallery hook: Mods for this site (68-gallery.js)
   const r = rows();
   const i = Math.max(0, r.findIndex(a => a.dataset.id === PanelUI.focus));

@@ -41,6 +41,7 @@ onEvent(msg => {
     PromptHistory.load();
     await controlBoot(); await syncMods(); controlReady(); // user control: pause, safe start (63-control.js)
     Heal.soon(); // self-heal hook: after idle, did a saved mod stop working? (71-heal.js)
+    YourStyle.ready(); // your-style hook: fit it to this site once, if turned on (72-style.js)
     S.ready = true; // tests: the host answered hello and the mods are on
     if (!hello.quiet && PREFS.welcome) toast(`Morse is ready. Press ${HOTKEY} to change this page.`);
   } catch (e) { console.warn("[morse] host unavailable", e); }

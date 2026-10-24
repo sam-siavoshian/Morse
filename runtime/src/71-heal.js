@@ -93,7 +93,7 @@ const Heal = (() => {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   // ---- the check
-  const checkable = m => m.enabled && !modHeld(m) && !!(m.css.trim() || m.js.trim());
+  const checkable = m => m.enabled && !modHeld(m) && !!(m.css.trim() || m.js.trim()) && m.kind !== "style"; // your-style hook: never flagged
 
   // One pass over the mods: learn fingerprints that are missing, and return
   // the ones that look broken now ({ id -> { mod, lost } }) and the ones that
