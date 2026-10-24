@@ -138,9 +138,9 @@ if (ONLY !== "desktop") {
   await welcome.click("#copy-setup");
   const home = path.join(tmp, "home-a");
   await fs.mkdir(home, { recursive: true });
-  // Real Claude Code when it's installed (Enter takes the recommendation; haiku keeps the check short).
+  // Real Claude Code when it's installed (Enter takes the recommendation; one model, sonnet, keeps the check short).
   await fs.mkdir(path.join(home, ".morse"), { recursive: true });
-  await fs.writeFile(path.join(home, ".morse", "config.json"), JSON.stringify({ models: { "claude-code": "haiku" } }));
+  await fs.writeFile(path.join(home, ".morse", "config.json"), JSON.stringify({ models: { "claude-code": "sonnet" } }));
   const setup = cli(["setup", "--pair", code], { home, env: { MORSE_HELPER_PORT: String(helperPort) } });
   setup.stdin.write("\n");
   await until(() => done(welcome, "model"), 40000, "pairing");

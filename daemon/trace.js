@@ -3,8 +3,8 @@
 // tokens or the page's content, only what happened, where and how long.
 //
 //   12:04:01.120  bar      "make the status bar purple" · pointed at .statusbar
-//   12:04:01.124  model    claude-code · haiku (warm process)
-//   12:04:01.130  harness  claude -p --output-format stream-json … --model haiku
+//   12:04:01.124  model    claude-code · sonnet (warm process)
+//   12:04:01.130  harness  claude -p --output-format stream-json … --model sonnet
 //   12:04:02.310  stream   first token after 1180ms
 //   12:04:02.420  page     CSS applied live (1 rule) via CDP Runtime.evaluate
 //   ...

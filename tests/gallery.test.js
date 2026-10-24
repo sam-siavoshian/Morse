@@ -115,11 +115,13 @@ test("matching uses the same host and app rules as saved mods", () => {
 
 test("which list a page reads", () => {
   assert.equal(indexUrlFor("https://www.youtube.com/"), GALLERY_INDEX_URL);
-  assert.equal(indexUrlFor("http://127.0.0.1:8789/demo/sites/tunes/"), DEMO_INDEX_URL);
-  assert.equal(indexUrlFor("http://localhost:8787/x"), DEMO_INDEX_URL);
-  assert.equal(indexUrlFor("http://127.0.0.1:8795/demo/sites/wiki/"), DEMO_INDEX_URL, "every demo app in demo/serve.js");
-  assert.equal(indexUrlFor("http://127.0.0.1:8798/"), GALLERY_INDEX_URL);
-  assert.equal(indexUrlFor("http://127.0.0.1:3000/"), GALLERY_INDEX_URL);
+  // The demo sites' local list, where the host asks for it (not the store build).
+  assert.equal(indexUrlFor("http://127.0.0.1:8789/demo/sites/tunes/", "", DEMO_INDEX_URL), DEMO_INDEX_URL);
+  assert.equal(indexUrlFor("http://localhost:8787/x", "", DEMO_INDEX_URL), DEMO_INDEX_URL);
+  assert.equal(indexUrlFor("http://127.0.0.1:8795/demo/sites/wiki/", "", DEMO_INDEX_URL), DEMO_INDEX_URL, "every demo app in demo/serve.js");
+  assert.equal(indexUrlFor("http://127.0.0.1:8798/", "", DEMO_INDEX_URL), GALLERY_INDEX_URL);
+  assert.equal(indexUrlFor("http://127.0.0.1:3000/", "", DEMO_INDEX_URL), GALLERY_INDEX_URL);
+  assert.equal(indexUrlFor("http://127.0.0.1:8789/demo/sites/tunes/"), GALLERY_INDEX_URL, "without it, the public list");
   assert.equal(indexUrlFor("https://www.youtube.com/", "https://me.example/list.json"), "https://me.example/list.json");
   assert.equal(indexUrlFor("https://www.youtube.com/", "javascript:alert(1)"), GALLERY_INDEX_URL);
   assert.equal(modUrl({ file: "a.morse.json" }, "https://h.example/RRAA/site/mods/index.json"), "https://h.example/RRAA/site/mods/a.morse.json");

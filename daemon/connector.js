@@ -541,9 +541,10 @@ export class Connector {
         return readClipboard();
       case "clipboard.put":
         return putClipboard({ ...msg.item, from: { ...msg.item?.from, app: this.app?.name || msg.item?.from?.app || null } });
-      case "warm": { // speed: the bar opened; get the model ready (core/providers.js prewarm)
+      case "warm": { // speed: the bar opened, or the person is typing; get the model ready (core/providers.js prewarm)
         const settings = await this.freshSettings();
-        if (settings?.provider && settings.provider !== "none") prewarm({ ...settings, mode: (await loadPrefs()).modelMode }); // models: warms the first model
+        const typed = typeof msg.request === "string" ? msg.request.slice(0, 500) : ""; // models: the strong model for new UI and features
+        if (settings?.provider && settings.provider !== "none") prewarm({ ...settings, mode: (await loadPrefs()).modelMode }, typed); // models: warms the model the request starts on
         return true;
       }
       case "exec":

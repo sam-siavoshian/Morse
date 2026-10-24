@@ -7,8 +7,8 @@
 //   - A page can't draw over Morse's install review: the review is in the
 //     browser's top layer, comes back on top when the page puts something of
 //     its own there, and Install only works once it has been seen uncovered.
-//     The page is demo/sites/hostile/?cover, on the share page's test address
-//     so it can ask for an install.
+//     The page is demo/sites/hostile/?cover, shown at the share page's test
+//     address (127.0.0.1:8787/share/) so it can ask for an install.
 import { home, tempDir } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -24,7 +24,9 @@ const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..")
 const EXT = path.join(root, "dist", "extension");
 const skip = noDisplay;
 const BYTE = "http://127.0.0.1:8788/demo/sites/byte/";
-const HOSTILE = "http://127.0.0.1:8787/demo/sites/hostile/?cover";
+// The extension only trusts the share page's folder, so the hostile page is
+// shown there (the route in before()).
+const HOSTILE = "http://127.0.0.1:8787/share/hostile/?cover";
 let ctx, sw, demo, extId;
 
 before(async () => {
@@ -35,6 +37,14 @@ before(async () => {
     args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
   });
   await routeDemoOrigins(ctx, demo);
+  // Routes run newest first: this one wins over the 8787 route above.
+  await ctx.route("http://127.0.0.1:8787/share/hostile/**", async route => {
+    const url = new URL(route.request().url());
+    url.port = String(demo.sites.parley);
+    url.pathname = url.pathname.replace("/share/hostile/", "/demo/sites/hostile/");
+    try { await route.fulfill({ response: await route.fetch({ url: url.href }) }); }
+    catch { await route.abort().catch(() => {}); }
+  });
   sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker", { timeout: TIMEOUT });
   extId = new URL(sw.url()).host;
   // No first-run tips in the way.

@@ -205,7 +205,9 @@ drawer.addEventListener("keydown", e => {
 });
 
 const fromHash = () => {
-  const slug = decodeURIComponent(location.hash.slice(1));
+  // A broken link (#%E0) can't be read: then it is no mod at all.
+  let slug = "";
+  try { slug = decodeURIComponent(location.hash.slice(1)); } catch {}
   if (slug && cards.has(slug)) open(slug, { push: false });
   else close({ push: false });
 };

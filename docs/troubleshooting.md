@@ -81,7 +81,7 @@ More: [Your controls](your-controls.md#mods-cant-freeze-or-slow-down-a-page).
 | Port … is already used by another program. Leave out --port and Morse picks a free one. | Run the command again without `--port`. |
 | Port … can be reached from other computers …, so Morse won't use it. | Quit the app and run `morse launch` again without extra network switches. |
 | Couldn't make the clip. Check that ffmpeg is installed and try again. | Install `ffmpeg`. |
-| “…” isn't a model name Morse can use. Check the spelling. | Check `morse help` for model names, like `opus`, `sonnet`, `haiku`. |
+| “…” isn't a model name Morse can use. Check the spelling. | Check `morse help` for model names, like `opus` or `sonnet`. |
 | Add --yes to install without being asked. | `morse install` needs a terminal to ask you. Add `--yes` if you already checked the mod. |
 
 In the terminal, the original error follows the plain sentence in grey, for
