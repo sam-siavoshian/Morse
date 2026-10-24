@@ -1,6 +1,6 @@
 # Morse launch kit
 
-**Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like.**
+**Morse lets you change any website or desktop app by saying what you want.**
 
 [![The 92-second demo](poster-demo-v2.png)](morse-demo-v2.mp4)
 
@@ -40,17 +40,17 @@ Made by `CUT=x` in [`demo/record-launch.js`](../../demo/record-launch.js): it re
 
 Three single posts, with the 4:5 video:
 
-> I typed “make it look like a retro green terminal” into VS Code. Twelve seconds later, it was one. Morse lets you change any app in your own words. Open source.
+> I typed “make it look like a retro green terminal” into VSCodium (VS Code without Microsoft's branding). Twelve seconds later, it was one. Morse lets you change websites and desktop apps in your own words. Open source.
 
-> VS Code doesn't have a focus timer. I asked for one, and Morse added it to the running app. No extension, no settings. Works in websites and desktop apps.
+> VSCodium doesn't have a focus timer. I asked for one, and Morse added it to the running app, with no extension to install. It works on websites and desktop apps too.
 
-> Your apps, your way. Point at something, say what you want changed, and your own model (Claude Code, Codex or an API key) writes it while you watch. Open source: github.com/sam-siavoshian/RRAA
+> Point at something in an app, say what you want changed, and your own model (Claude Code, Codex or an API key) writes the change while you watch. Open source: github.com/sam-siavoshian/RRAA
 
 A short thread:
 
-> 1/ I changed VS Code by typing one sentence. This is Morse, an open-source tool that lets you change any website or desktop app in your own words. [16:9 video]
+> 1/ I changed VSCodium (VS Code without Microsoft's branding) by typing one sentence. This is Morse, an open-source tool that lets you change any website or desktop app in your own words. [16:9 video]
 >
-> 2/ It works on websites, and in desktop apps built on web pages, like VS Code and Obsidian. Press a shortcut, point at something, say what you want. Your own model writes the change: Claude Code, Codex or an API key.
+> 2/ It works on websites, and in desktop apps built on web pages, like VSCodium and Obsidian. Press a shortcut, point at something, say what you want. Your own model writes the change: Claude Code, Codex or an API key.
 >
 > 3/ Do a chore once, and Morse turns it into a button. When a site update breaks one of your changes, Fix it writes a new version. One key turns every change off.
 >

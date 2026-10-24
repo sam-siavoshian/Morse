@@ -24,7 +24,7 @@ The mouse chooses the smallest thing under it, like one link in a list. To
 choose the bigger part around it (the whole list), press **⌥↑** (Alt+↑);
 press it again for a bigger part still.
 
-To change the whole page, don't point. Just describe the change.
+To change the whole page, don't point. Describe the change.
 
 ## Describe
 
@@ -75,6 +75,9 @@ When the change is done, the bar shows what it made and how long it took.
   open that site or app, even after a restart. **Enter** with nothing typed
   also saves.
 - **Undo** takes it off the page. Nothing is saved.
+- **Esc** (or clicking away) closes the bar and keeps the change, like Save.
+  Morse says so (“Kept … Closing the bar keeps a change.”), with **Undo**
+  right there if you meant to drop it.
 - **Edit code** shows the code the model wrote, if you want to read or change
   it.
 - **Share** makes a link, an image or a file to send to someone. See

@@ -23,11 +23,14 @@ import { wantsPolish, polishRound } from "./polish.js"; // polish: a look at the
 // request that looks hard starts on the strong one; otherwise the fast one
 // goes first and a draft it gets wrong goes to the strong one (with what was
 // wrong) instead of failing. Each model change adds one attempt.
+// `vet(draft)` (optional, from the host) returns a repair message for a draft
+// that can't work in this app, or null: app profiles (daemon/profile.js)
+// check that the commands it runs with morse.app.command exist.
 //
 // polish (core/polish.js): with `polish` on and `review(draft)` from the host
 // (a picture of the changed part of the page: { mediaType, data }), a change
 // that adds or restyles something gets one look and, if needed, one fix.
-export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2, probe, collapse, review, polish = false }) {
+export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2, probe, collapse, vet, review, polish = false }) {
   let previous = null;
   let last = null;
   const started = Date.now();
@@ -109,6 +112,14 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       previous = { raw, error: harm.model };
       repairs.push(harm.model);
       last = { ...last, css: "", js: "", error: harm.user };
+      advance("guard");
+      continue;
+    }
+    const wrong = more && vet ? vet(draft) : null; // app profiles: a command the app doesn't have
+    if (wrong) {
+      previous = { raw, error: wrong };
+      repairs.push(wrong);
+      last = { ...last, error: wrong };
       advance("guard");
       continue;
     }
@@ -203,7 +214,7 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     if (polish && review && !base?.error && !signal?.aborted && wantsPolish(draft, request)) {
       const p = await polishRound({
         settings: current(), request, context, base, raw, draft, review, exec, emit, signal,
-        check: d => generatedNames(d, context) || deadHooks(d, context),
+        check: d => generatedNames(d, context) || deadHooks(d, context) || (vet ? vet(d) : null), // the same checks a draft gets
       });
       timing.polish = p.ms;
       if (p.verdict === "fixed") last = { ...last, ...p.draft, raw: p.raw };

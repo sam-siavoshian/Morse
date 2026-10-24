@@ -100,7 +100,7 @@ const CARDS = {
   share: { line: "Every change is a mod you can share with a link." },
   end: { big: "morse", line: "Open source. Uses Claude Code, Codex or your own API key.", foot: "github.com/sam-siavoshian/RRAA" },
   // v2
-  open2: { big: "morse", line: "Your apps, your way. Change any website or desktop app in your own words.", foot: `Recorded from real runs, with ${MODEL_NAME} as the model.` },
+  open2: { big: "morse", line: "Change any website or desktop app in your own words.", foot: `Recorded from real runs, with ${MODEL_NAME} as the model.` },
   showonce: { line: "Do a chore once. Morse turns it into a button." },
   heal: { line: "When a site changes and a mod stops working, Morse can fix it." },
   desktop: { line: "The same works in desktop apps." },
