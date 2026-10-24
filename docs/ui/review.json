@@ -1108,10 +1108,10 @@
    "note": "Persian, right to left: a row: tags and actions in this language. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
   },
   "i18n/de-panel-foot": {
-   "note": "German: the foot: Packs, Backup, Install a mod. R5: a backup button that wraps stays at the end, under the one before it (German pushed it to the start). Open: Packs and Make a pack… are not translated yet (69-packs.js has no t() strings)"
+   "note": "German: the foot: Packs, Backup, Install a mod. R5: a backup button that wraps stays at the end, under the one before it (German pushed it to the start); Packs and Make a pack… are translated now too"
   },
   "i18n/fa-panel-foot": {
-   "note": "Persian, right to left: the foot: Packs, Backup, Install a mod. R5: a backup button that wraps stays at the end, under the one before it (German pushed it to the start). Open: Packs and Make a pack… are not translated yet (69-packs.js has no t() strings). R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
+   "note": "Persian, right to left: the foot: Packs, Backup, Install a mod. R5: a backup button that wraps stays at the end, under the one before it (German pushed it to the start); Packs and Make a pack… are translated now too. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
   }
  },
  "fixes": [

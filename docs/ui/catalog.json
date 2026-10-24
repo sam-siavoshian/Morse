@@ -1,334 +1,6 @@
 {
- "generated": "2026-10-24T19:04:43.753Z",
+ "generated": "2026-10-24T19:33:47.318Z",
  "shots": [
-  {
-   "area": "bar",
-   "state": "picking-dark",
-   "theme": "dark",
-   "file": "bar/picking-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "radar",
-   "state": "mark-static-dark",
-   "theme": "dark",
-   "file": "radar/mark-static-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "picker",
-   "state": "hover-small-dark",
-   "theme": "dark",
-   "file": "picker/hover-small-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "picker",
-   "state": "hover-large-dark",
-   "theme": "dark",
-   "file": "picker/hover-large-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "picker",
-   "state": "hover-top-edge-dark",
-   "theme": "dark",
-   "file": "picker/hover-top-edge-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "picker",
-   "state": "hover-right-edge-dark",
-   "theme": "dark",
-   "file": "picker/hover-right-edge-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "chip-short-dark",
-   "theme": "dark",
-   "file": "bar/chip-short-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "picker",
-   "state": "selected-dark",
-   "theme": "dark",
-   "file": "picker/selected-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "go-hover-dark",
-   "theme": "dark",
-   "file": "bar/go-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "go-focus-dark",
-   "theme": "dark",
-   "file": "bar/go-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "mods-button-hover-dark",
-   "theme": "dark",
-   "file": "bar/mods-button-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "mods-button-focus-dark",
-   "theme": "dark",
-   "file": "bar/mods-button-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "input-focus-dark",
-   "theme": "dark",
-   "file": "bar/input-focus-dark.png",
-   "issues": [],
-   "note": "the input has no ring by design; the caret and the bar are the focus"
-  },
-  {
-   "area": "bar",
-   "state": "chip-x-hover-dark",
-   "theme": "dark",
-   "file": "bar/chip-x-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "chip-x-focus-dark",
-   "theme": "dark",
-   "file": "bar/chip-x-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "chip-long-dark",
-   "theme": "dark",
-   "file": "bar/chip-long-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "typing-short-dark",
-   "theme": "dark",
-   "file": "bar/typing-short-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "typing-long-dark",
-   "theme": "dark",
-   "file": "bar/typing-long-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "typing-multiline-dark",
-   "theme": "dark",
-   "file": "bar/typing-multiline-dark.png",
-   "issues": [],
-   "note": "single-line input: pasted newlines collapse to spaces (by design; Enter submits)"
-  },
-  {
-   "area": "bar",
-   "state": "thinking-dark",
-   "theme": "dark",
-   "file": "bar/thinking-dark.png",
-   "issues": [],
-   "note": "stage 1: “Asking the model” as soon as Enter is pressed"
-  },
-  {
-   "area": "radar",
-   "state": "mark-live-dark",
-   "theme": "dark",
-   "file": "radar/mark-live-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "stage-reading-dark",
-   "theme": "dark",
-   "file": "bar/stage-reading-dark.png",
-   "issues": [],
-   "note": "stage 2: “The model is reading the page”"
-  },
-  {
-   "area": "bar",
-   "state": "stage-thinking-dark",
-   "theme": "dark",
-   "file": "bar/stage-thinking-dark.png",
-   "issues": [],
-   "note": "stage 2b: “Thinking”, for a model that thinks first"
-  },
-  {
-   "area": "bar",
-   "state": "writing-dark",
-   "theme": "dark",
-   "file": "bar/writing-dark.png",
-   "issues": [],
-   "note": "stage 3: “Writing the change”, the ticker shows the words as they come"
-  },
-  {
-   "area": "bar",
-   "state": "writing-visible-dark",
-   "theme": "dark",
-   "file": "bar/writing-visible-dark.png",
-   "issues": [],
-   "note": "stage 3b: “Writing the change · you can see it now”, once the new look shows while the rest is written"
-  },
-  {
-   "area": "bar",
-   "state": "fixing-dark",
-   "theme": "dark",
-   "file": "bar/fixing-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "applying-dark",
-   "theme": "dark",
-   "file": "bar/applying-dark.png",
-   "issues": [],
-   "note": "stage 4: “Trying the change”"
-  },
-  {
-   "area": "bar",
-   "state": "result-dark",
-   "theme": "dark",
-   "file": "bar/result-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-keep-hover-dark",
-   "theme": "dark",
-   "file": "bar/result-keep-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-keep-focus-dark",
-   "theme": "dark",
-   "file": "bar/result-keep-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-undo-hover-dark",
-   "theme": "dark",
-   "file": "bar/result-undo-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-undo-focus-dark",
-   "theme": "dark",
-   "file": "bar/result-undo-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-code-hover-dark",
-   "theme": "dark",
-   "file": "bar/result-code-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-code-focus-dark",
-   "theme": "dark",
-   "file": "bar/result-code-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-share-hover-dark",
-   "theme": "dark",
-   "file": "bar/result-share-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-share-focus-dark",
-   "theme": "dark",
-   "file": "bar/result-share-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-long-repaired-dark",
-   "theme": "dark",
-   "file": "bar/result-long-repaired-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "error-dark",
-   "theme": "dark",
-   "file": "bar/error-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "error-again-hover-dark",
-   "theme": "dark",
-   "file": "bar/error-again-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "error-again-focus-dark",
-   "theme": "dark",
-   "file": "bar/error-again-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "picking-with-mods-dark",
-   "theme": "dark",
-   "file": "bar/picking-with-mods-dark.png",
-   "issues": [],
-   "note": ""
-  },
   {
    "area": "toast",
    "state": "short-dark",
@@ -582,150 +254,6 @@
    "state": "import-error-dark",
    "theme": "dark",
    "file": "modal/import-error-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "picking-narrow-dark",
-   "theme": "dark",
-   "file": "bar/picking-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "picker",
-   "state": "hover-large-narrow-dark",
-   "theme": "dark",
-   "file": "picker/hover-large-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "chip-short-narrow-dark",
-   "theme": "dark",
-   "file": "bar/chip-short-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "chip-long-narrow-dark",
-   "theme": "dark",
-   "file": "bar/chip-long-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "typing-short-narrow-dark",
-   "theme": "dark",
-   "file": "bar/typing-short-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "typing-long-narrow-dark",
-   "theme": "dark",
-   "file": "bar/typing-long-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "typing-multiline-narrow-dark",
-   "theme": "dark",
-   "file": "bar/typing-multiline-narrow-dark.png",
-   "issues": [],
-   "note": "single-line input: pasted newlines collapse to spaces (by design; Enter submits)"
-  },
-  {
-   "area": "bar",
-   "state": "thinking-narrow-dark",
-   "theme": "dark",
-   "file": "bar/thinking-narrow-dark.png",
-   "issues": [],
-   "note": "stage 1: “Asking the model” as soon as Enter is pressed"
-  },
-  {
-   "area": "bar",
-   "state": "stage-reading-narrow-dark",
-   "theme": "dark",
-   "file": "bar/stage-reading-narrow-dark.png",
-   "issues": [],
-   "note": "stage 2: “The model is reading the page”"
-  },
-  {
-   "area": "bar",
-   "state": "stage-thinking-narrow-dark",
-   "theme": "dark",
-   "file": "bar/stage-thinking-narrow-dark.png",
-   "issues": [],
-   "note": "stage 2b: “Thinking”, for a model that thinks first"
-  },
-  {
-   "area": "bar",
-   "state": "writing-narrow-dark",
-   "theme": "dark",
-   "file": "bar/writing-narrow-dark.png",
-   "issues": [],
-   "note": "stage 3: “Writing the change”, the ticker shows the words as they come"
-  },
-  {
-   "area": "bar",
-   "state": "writing-visible-narrow-dark",
-   "theme": "dark",
-   "file": "bar/writing-visible-narrow-dark.png",
-   "issues": [],
-   "note": "stage 3b: “Writing the change · you can see it now”, once the new look shows while the rest is written"
-  },
-  {
-   "area": "bar",
-   "state": "fixing-narrow-dark",
-   "theme": "dark",
-   "file": "bar/fixing-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "applying-narrow-dark",
-   "theme": "dark",
-   "file": "bar/applying-narrow-dark.png",
-   "issues": [],
-   "note": "stage 4: “Trying the change”"
-  },
-  {
-   "area": "bar",
-   "state": "result-narrow-dark",
-   "theme": "dark",
-   "file": "bar/result-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-long-repaired-narrow-dark",
-   "theme": "dark",
-   "file": "bar/result-long-repaired-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "error-narrow-dark",
-   "theme": "dark",
-   "file": "bar/error-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "picking-with-mods-narrow-dark",
-   "theme": "dark",
-   "file": "bar/picking-with-mods-narrow-dark.png",
    "issues": [],
    "note": ""
   },
@@ -1666,222 +1194,6 @@
    "note": ""
   },
   {
-   "area": "menu",
-   "state": "more-hover-dark",
-   "theme": "dark",
-   "file": "menu/more-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "menu",
-   "state": "more-focus-dark",
-   "theme": "dark",
-   "file": "menu/more-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "menu",
-   "state": "open-dark",
-   "theme": "dark",
-   "file": "menu/open-dark.png",
-   "issues": [],
-   "note": "the first item takes focus (row highlight); ↑/↓ move"
-  },
-  {
-   "area": "menu",
-   "state": "item-focus-dark",
-   "theme": "dark",
-   "file": "menu/item-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "menu",
-   "state": "item-hover-dark",
-   "theme": "dark",
-   "file": "menu/item-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "sheet-dark",
-   "theme": "dark",
-   "file": "settings/sheet-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "sheet-bottom-dark",
-   "theme": "dark",
-   "file": "settings/sheet-bottom-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "idle-dark",
-   "theme": "dark",
-   "file": "hotkeys/idle-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "button-hover-dark",
-   "theme": "dark",
-   "file": "hotkeys/button-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "button-focus-dark",
-   "theme": "dark",
-   "file": "hotkeys/button-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "done-hover-dark",
-   "theme": "dark",
-   "file": "settings/done-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "done-focus-dark",
-   "theme": "dark",
-   "file": "settings/done-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "segment-hover-dark",
-   "theme": "dark",
-   "file": "settings/segment-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "segment-focus-dark",
-   "theme": "dark",
-   "file": "settings/segment-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "switch-focus-dark",
-   "theme": "dark",
-   "file": "settings/switch-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "voice-ready-dark",
-   "theme": "dark",
-   "file": "settings/voice-ready-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "saved-flash-dark",
-   "theme": "dark",
-   "file": "settings/saved-flash-dark.png",
-   "issues": [],
-   "note": "every change saves at once; “Saved” fades"
-  },
-  {
-   "area": "settings",
-   "state": "footer-hover-dark",
-   "theme": "dark",
-   "file": "settings/footer-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "recording-dark",
-   "theme": "dark",
-   "file": "hotkeys/recording-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "recording-held-dark",
-   "theme": "dark",
-   "file": "hotkeys/recording-held-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "rejected-dark",
-   "theme": "dark",
-   "file": "hotkeys/rejected-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "warning-dark",
-   "theme": "dark",
-   "file": "hotkeys/warning-dark.png",
-   "issues": [],
-   "note": "accepted with a warning: Reset appears for a custom key"
-  },
-  {
-   "area": "settings",
-   "state": "voice-off-dark",
-   "theme": "dark",
-   "file": "settings/voice-off-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "shortcuts",
-   "state": "sheet-dark",
-   "theme": "dark",
-   "file": "shortcuts/sheet-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "shortcuts",
-   "state": "row-hover-dark",
-   "theme": "dark",
-   "file": "shortcuts/row-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "shortcuts",
-   "state": "change-hover-dark",
-   "theme": "dark",
-   "file": "shortcuts/change-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "shortcuts",
-   "state": "change-focus-dark",
-   "theme": "dark",
-   "file": "shortcuts/change-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
    "area": "suggestions",
    "state": "page-dark",
    "theme": "dark",
@@ -2710,30 +2022,6 @@
    "note": ""
   },
   {
-   "area": "bar",
-   "state": "reach-page-tools-dark",
-   "theme": "dark",
-   "file": "bar/reach-page-tools-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "reach-suggestion-dark",
-   "theme": "dark",
-   "file": "bar/reach-suggestion-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "dodge-to-point-dark",
-   "theme": "dark",
-   "file": "bar/dodge-to-point-dark.png",
-   "issues": [],
-   "note": "a quick pass over the input, away from any control: the bar still steps aside so what is under it can be pointed at"
-  },
-  {
    "area": "heal",
    "state": "bar-dot-dark",
    "theme": "dark",
@@ -2990,126 +2278,6 @@
    "note": ""
   },
   {
-   "area": "guard",
-   "state": "froze-toast-dark",
-   "theme": "dark",
-   "file": "guard/froze-toast-dark.png",
-   "issues": [],
-   "note": "on the next load after a mod froze the page"
-  },
-  {
-   "area": "guard",
-   "state": "paused-toast-dark",
-   "theme": "dark",
-   "file": "guard/paused-toast-dark.png",
-   "issues": [],
-   "note": "the kit paused a mod: why, Turn back on, Fix it"
-  },
-  {
-   "area": "guard",
-   "state": "paused-toast-focus-dark",
-   "theme": "dark",
-   "file": "guard/paused-toast-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-slowing-dark",
-   "theme": "dark",
-   "file": "guard/row-slowing-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-froze-dark",
-   "theme": "dark",
-   "file": "guard/row-froze-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-hid-dark",
-   "theme": "dark",
-   "file": "guard/row-hid-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-slowing-now-dark",
-   "theme": "dark",
-   "file": "guard/row-slowing-now-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-turn-on-hover-dark",
-   "theme": "dark",
-   "file": "guard/row-turn-on-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-fix-focus-dark",
-   "theme": "dark",
-   "file": "guard/row-fix-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "back-on-toast-dark",
-   "theme": "dark",
-   "file": "guard/back-on-toast-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "refused-hide-dark",
-   "theme": "dark",
-   "file": "guard/refused-hide-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "refused-loop-dark",
-   "theme": "dark",
-   "file": "guard/refused-loop-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "refused-wipe-dark",
-   "theme": "dark",
-   "file": "guard/refused-wipe-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "refused-nav-dark",
-   "theme": "dark",
-   "file": "guard/refused-nav-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "draft-paused-toast-dark",
-   "theme": "dark",
-   "file": "guard/draft-paused-toast-dark.png",
-   "issues": [],
-   "note": "a change still in the bar: nothing to turn off, so it says to describe it another way"
-  },
-  {
    "area": "first-run",
    "state": "coach-point-dark",
    "theme": "dark",
@@ -3204,382 +2372,6 @@
    "file": "first-run/error-with-action-dark.png",
    "issues": [],
    "note": "an error in plain words, with a button that does something about it"
-  },
-  {
-   "area": "packs",
-   "state": "panel-make-dark",
-   "theme": "dark",
-   "file": "packs/panel-make-dark.png",
-   "issues": [],
-   "note": "Packs · Make a pack… sits with the backup buttons at the foot of the panel"
-  },
-  {
-   "area": "packs",
-   "state": "panel-make-focus-dark",
-   "theme": "dark",
-   "file": "packs/panel-make-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "choose-none-dark",
-   "theme": "dark",
-   "file": "packs/choose-none-dark.png",
-   "issues": [],
-   "note": "a tick on every row; Next stays off until one is chosen"
-  },
-  {
-   "area": "packs",
-   "state": "choose-dark",
-   "theme": "dark",
-   "file": "packs/choose-dark.png",
-   "issues": [],
-   "note": "three chosen: the strip counts them, Next turns on"
-  },
-  {
-   "area": "packs",
-   "state": "choose-tick-focus-dark",
-   "theme": "dark",
-   "file": "packs/choose-tick-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "make-no-name-dark",
-   "theme": "dark",
-   "file": "packs/make-no-name-dark.png",
-   "issues": [],
-   "note": "Copy link without a name: “Give the pack a name.” and the name field has focus"
-  },
-  {
-   "area": "packs",
-   "state": "make-dark",
-   "theme": "dark",
-   "file": "packs/make-dark.png",
-   "issues": [],
-   "note": "name, an optional note, the mods in it; Copy link is the main button"
-  },
-  {
-   "area": "packs",
-   "state": "make-name-focus-dark",
-   "theme": "dark",
-   "file": "packs/make-name-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "make-link-dark",
-   "theme": "dark",
-   "file": "packs/make-link-dark.png",
-   "issues": [],
-   "note": "the link, Copy again, and Cancel becomes Done"
-  },
-  {
-   "area": "packs",
-   "state": "review-dark",
-   "theme": "dark",
-   "file": "packs/review-dark.png",
-   "issues": [],
-   "note": "every mod with a tick, what it does and where; the one for every website and the clash need a choice; Cancel has focus"
-  },
-  {
-   "area": "packs",
-   "state": "review-clash-dark",
-   "theme": "dark",
-   "file": "packs/review-clash-dark.png",
-   "issues": [],
-   "note": "a mod with the same id as one of yours: Keep both (the default) or Replace yours"
-  },
-  {
-   "area": "packs",
-   "state": "review-clash-focus-dark",
-   "theme": "dark",
-   "file": "packs/review-clash-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "review-wide-dark",
-   "theme": "dark",
-   "file": "packs/review-wide-dark.png",
-   "issues": [],
-   "note": "every website: not ticked, with the note in full"
-  },
-  {
-   "area": "packs",
-   "state": "review-sends-dark",
-   "theme": "dark",
-   "file": "packs/review-sends-dark.png",
-   "issues": [],
-   "note": "a mod that sends what's on the page somewhere: the note says so"
-  },
-  {
-   "area": "packs",
-   "state": "review-unticked-dark",
-   "theme": "dark",
-   "file": "packs/review-unticked-dark.png",
-   "issues": [],
-   "note": "unticked: the mod folds to its name, muted by color, not opacity"
-  },
-  {
-   "area": "packs",
-   "state": "review-end-dark",
-   "theme": "dark",
-   "file": "packs/review-end-dark.png",
-   "issues": [],
-   "note": "the end: Check this address for updates (the person's choice), Install with the count"
-  },
-  {
-   "area": "packs",
-   "state": "review-install-focus-dark",
-   "theme": "dark",
-   "file": "packs/review-install-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "installed-toast-dark",
-   "theme": "dark",
-   "file": "packs/installed-toast-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "panel-group-dark",
-   "theme": "dark",
-   "file": "packs/panel-group-dark.png",
-   "issues": [],
-   "note": "the pack's name, how many mods, “gets updates”, Copy link and Stop updates; its mods under it"
-  },
-  {
-   "area": "packs",
-   "state": "panel-group-switch-focus-dark",
-   "theme": "dark",
-   "file": "packs/panel-group-switch-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "panel-group-off-dark",
-   "theme": "dark",
-   "file": "packs/panel-group-off-dark.png",
-   "issues": [],
-   "note": "the whole pack off with one switch"
-  },
-  {
-   "area": "packs",
-   "state": "panel-update-dark",
-   "theme": "dark",
-   "file": "packs/panel-update-dark.png",
-   "issues": [],
-   "note": "Update available, what changed in a few words, Review…"
-  },
-  {
-   "area": "packs",
-   "state": "update-dark",
-   "theme": "dark",
-   "file": "packs/update-dark.png",
-   "issues": [],
-   "note": "what changed, the team's note, then changed (with the lines), new and removed; nothing changes until Update"
-  },
-  {
-   "area": "packs",
-   "state": "update-changed-dark",
-   "theme": "dark",
-   "file": "packs/update-changed-dark.png",
-   "issues": [],
-   "note": "a changed mod: the line counts and the diff, open when short"
-  },
-  {
-   "area": "packs",
-   "state": "update-end-dark",
-   "theme": "dark",
-   "file": "packs/update-end-dark.png",
-   "issues": [],
-   "note": "no longer in the pack (untick to keep it), the mods left out before, and History keeps your versions"
-  },
-  {
-   "area": "i18n",
-   "state": "de-bar-dark",
-   "theme": "dark",
-   "file": "i18n/de-bar-dark.png",
-   "issues": [],
-   "note": "de: the empty bar, suggestions and hint"
-  },
-  {
-   "area": "i18n",
-   "state": "de-typing-dark",
-   "theme": "dark",
-   "file": "i18n/de-typing-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-working-dark",
-   "theme": "dark",
-   "file": "i18n/de-working-dark.png",
-   "issues": [],
-   "note": "a status stage in this language"
-  },
-  {
-   "area": "i18n",
-   "state": "de-result-dark",
-   "theme": "dark",
-   "file": "i18n/de-result-dark.png",
-   "issues": [],
-   "note": "the result: title, timing, Save Undo Edit code Share"
-  },
-  {
-   "area": "i18n",
-   "state": "de-error-dark",
-   "theme": "dark",
-   "file": "i18n/de-error-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-settings-dark",
-   "theme": "dark",
-   "file": "i18n/de-settings-dark.png",
-   "issues": [],
-   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
-  },
-  {
-   "area": "i18n",
-   "state": "de-settings-bottom-dark",
-   "theme": "dark",
-   "file": "i18n/de-settings-bottom-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-menu-dark",
-   "theme": "dark",
-   "file": "i18n/de-menu-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-panel-dark",
-   "theme": "dark",
-   "file": "i18n/de-panel-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-panel-row-dark",
-   "theme": "dark",
-   "file": "i18n/de-panel-row-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-panel-foot-dark",
-   "theme": "dark",
-   "file": "i18n/de-panel-foot-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-bar-dark",
-   "theme": "dark",
-   "file": "i18n/fa-bar-dark.png",
-   "issues": [],
-   "note": "fa: the empty bar, suggestions and hint"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-typing-dark",
-   "theme": "dark",
-   "file": "i18n/fa-typing-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-working-dark",
-   "theme": "dark",
-   "file": "i18n/fa-working-dark.png",
-   "issues": [],
-   "note": "a status stage in this language"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-result-dark",
-   "theme": "dark",
-   "file": "i18n/fa-result-dark.png",
-   "issues": [],
-   "note": "the result: title, timing, Save Undo Edit code Share"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-error-dark",
-   "theme": "dark",
-   "file": "i18n/fa-error-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-settings-dark",
-   "theme": "dark",
-   "file": "i18n/fa-settings-dark.png",
-   "issues": [],
-   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-settings-bottom-dark",
-   "theme": "dark",
-   "file": "i18n/fa-settings-bottom-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-menu-dark",
-   "theme": "dark",
-   "file": "i18n/fa-menu-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-panel-dark",
-   "theme": "dark",
-   "file": "i18n/fa-panel-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-panel-row-dark",
-   "theme": "dark",
-   "file": "i18n/fa-panel-row-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-panel-foot-dark",
-   "theme": "dark",
-   "file": "i18n/fa-panel-foot-dark.png",
-   "issues": [],
-   "note": ""
   },
   {
    "area": "edit-toolbar",
@@ -3906,78 +2698,6 @@
    "state": "error-transcription-failed-narrow-dark",
    "theme": "dark",
    "file": "voice/error-transcription-failed-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "menu",
-   "state": "open-narrow-dark",
-   "theme": "dark",
-   "file": "menu/open-narrow-dark.png",
-   "issues": [],
-   "note": "the first item takes focus (row highlight); ↑/↓ move"
-  },
-  {
-   "area": "settings",
-   "state": "sheet-narrow-dark",
-   "theme": "dark",
-   "file": "settings/sheet-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "sheet-bottom-narrow-dark",
-   "theme": "dark",
-   "file": "settings/sheet-bottom-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "recording-narrow-dark",
-   "theme": "dark",
-   "file": "hotkeys/recording-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "recording-held-narrow-dark",
-   "theme": "dark",
-   "file": "hotkeys/recording-held-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "rejected-narrow-dark",
-   "theme": "dark",
-   "file": "hotkeys/rejected-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "warning-narrow-dark",
-   "theme": "dark",
-   "file": "hotkeys/warning-narrow-dark.png",
-   "issues": [],
-   "note": "accepted with a warning: Reset appears for a custom key"
-  },
-  {
-   "area": "settings",
-   "state": "voice-off-narrow-dark",
-   "theme": "dark",
-   "file": "settings/voice-off-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "shortcuts",
-   "state": "sheet-narrow-dark",
-   "theme": "dark",
-   "file": "shortcuts/sheet-narrow-dark.png",
    "issues": [],
    "note": ""
   },
@@ -4634,86 +3354,6 @@
    "note": ""
   },
   {
-   "area": "guard",
-   "state": "froze-toast-narrow-dark",
-   "theme": "dark",
-   "file": "guard/froze-toast-narrow-dark.png",
-   "issues": [],
-   "note": "on the next load after a mod froze the page"
-  },
-  {
-   "area": "guard",
-   "state": "paused-toast-narrow-dark",
-   "theme": "dark",
-   "file": "guard/paused-toast-narrow-dark.png",
-   "issues": [],
-   "note": "the kit paused a mod: why, Turn back on, Fix it"
-  },
-  {
-   "area": "guard",
-   "state": "row-slowing-narrow-dark",
-   "theme": "dark",
-   "file": "guard/row-slowing-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-froze-narrow-dark",
-   "theme": "dark",
-   "file": "guard/row-froze-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-hid-narrow-dark",
-   "theme": "dark",
-   "file": "guard/row-hid-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-slowing-now-narrow-dark",
-   "theme": "dark",
-   "file": "guard/row-slowing-now-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "back-on-toast-narrow-dark",
-   "theme": "dark",
-   "file": "guard/back-on-toast-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "refused-hide-narrow-dark",
-   "theme": "dark",
-   "file": "guard/refused-hide-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "refused-loop-narrow-dark",
-   "theme": "dark",
-   "file": "guard/refused-loop-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "draft-paused-toast-narrow-dark",
-   "theme": "dark",
-   "file": "guard/draft-paused-toast-narrow-dark.png",
-   "issues": [],
-   "note": "a change still in the bar: nothing to turn off, so it says to describe it another way"
-  },
-  {
    "area": "first-run",
    "state": "coach-point-narrow-dark",
    "theme": "dark",
@@ -4784,334 +3424,6 @@
    "file": "first-run/error-with-action-narrow-dark.png",
    "issues": [],
    "note": "an error in plain words, with a button that does something about it"
-  },
-  {
-   "area": "packs",
-   "state": "panel-make-narrow-dark",
-   "theme": "dark",
-   "file": "packs/panel-make-narrow-dark.png",
-   "issues": [],
-   "note": "Packs · Make a pack… sits with the backup buttons at the foot of the panel"
-  },
-  {
-   "area": "packs",
-   "state": "choose-none-narrow-dark",
-   "theme": "dark",
-   "file": "packs/choose-none-narrow-dark.png",
-   "issues": [],
-   "note": "a tick on every row; Next stays off until one is chosen"
-  },
-  {
-   "area": "packs",
-   "state": "choose-narrow-dark",
-   "theme": "dark",
-   "file": "packs/choose-narrow-dark.png",
-   "issues": [],
-   "note": "three chosen: the strip counts them, Next turns on"
-  },
-  {
-   "area": "packs",
-   "state": "make-no-name-narrow-dark",
-   "theme": "dark",
-   "file": "packs/make-no-name-narrow-dark.png",
-   "issues": [],
-   "note": "Copy link without a name: “Give the pack a name.” and the name field has focus"
-  },
-  {
-   "area": "packs",
-   "state": "make-narrow-dark",
-   "theme": "dark",
-   "file": "packs/make-narrow-dark.png",
-   "issues": [],
-   "note": "name, an optional note, the mods in it; Copy link is the main button"
-  },
-  {
-   "area": "packs",
-   "state": "make-link-narrow-dark",
-   "theme": "dark",
-   "file": "packs/make-link-narrow-dark.png",
-   "issues": [],
-   "note": "the link, Copy again, and Cancel becomes Done"
-  },
-  {
-   "area": "packs",
-   "state": "review-narrow-dark",
-   "theme": "dark",
-   "file": "packs/review-narrow-dark.png",
-   "issues": [],
-   "note": "every mod with a tick, what it does and where; the one for every website and the clash need a choice; Cancel has focus"
-  },
-  {
-   "area": "packs",
-   "state": "review-clash-narrow-dark",
-   "theme": "dark",
-   "file": "packs/review-clash-narrow-dark.png",
-   "issues": [],
-   "note": "a mod with the same id as one of yours: Keep both (the default) or Replace yours"
-  },
-  {
-   "area": "packs",
-   "state": "review-wide-narrow-dark",
-   "theme": "dark",
-   "file": "packs/review-wide-narrow-dark.png",
-   "issues": [],
-   "note": "every website: not ticked, with the note in full"
-  },
-  {
-   "area": "packs",
-   "state": "review-sends-narrow-dark",
-   "theme": "dark",
-   "file": "packs/review-sends-narrow-dark.png",
-   "issues": [],
-   "note": "a mod that sends what's on the page somewhere: the note says so"
-  },
-  {
-   "area": "packs",
-   "state": "review-unticked-narrow-dark",
-   "theme": "dark",
-   "file": "packs/review-unticked-narrow-dark.png",
-   "issues": [],
-   "note": "unticked: the mod folds to its name, muted by color, not opacity"
-  },
-  {
-   "area": "packs",
-   "state": "review-end-narrow-dark",
-   "theme": "dark",
-   "file": "packs/review-end-narrow-dark.png",
-   "issues": [],
-   "note": "the end: Check this address for updates (the person's choice), Install with the count"
-  },
-  {
-   "area": "packs",
-   "state": "installed-toast-narrow-dark",
-   "theme": "dark",
-   "file": "packs/installed-toast-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "panel-group-narrow-dark",
-   "theme": "dark",
-   "file": "packs/panel-group-narrow-dark.png",
-   "issues": [],
-   "note": "the pack's name, how many mods, “gets updates”, Copy link and Stop updates; its mods under it"
-  },
-  {
-   "area": "packs",
-   "state": "panel-group-off-narrow-dark",
-   "theme": "dark",
-   "file": "packs/panel-group-off-narrow-dark.png",
-   "issues": [],
-   "note": "the whole pack off with one switch"
-  },
-  {
-   "area": "packs",
-   "state": "panel-update-narrow-dark",
-   "theme": "dark",
-   "file": "packs/panel-update-narrow-dark.png",
-   "issues": [],
-   "note": "Update available, what changed in a few words, Review…"
-  },
-  {
-   "area": "packs",
-   "state": "update-narrow-dark",
-   "theme": "dark",
-   "file": "packs/update-narrow-dark.png",
-   "issues": [],
-   "note": "what changed, the team's note, then changed (with the lines), new and removed; nothing changes until Update"
-  },
-  {
-   "area": "packs",
-   "state": "update-changed-narrow-dark",
-   "theme": "dark",
-   "file": "packs/update-changed-narrow-dark.png",
-   "issues": [],
-   "note": "a changed mod: the line counts and the diff, open when short"
-  },
-  {
-   "area": "packs",
-   "state": "update-end-narrow-dark",
-   "theme": "dark",
-   "file": "packs/update-end-narrow-dark.png",
-   "issues": [],
-   "note": "no longer in the pack (untick to keep it), the mods left out before, and History keeps your versions"
-  },
-  {
-   "area": "i18n",
-   "state": "de-bar-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/de-bar-narrow-dark.png",
-   "issues": [],
-   "note": "de: the empty bar, suggestions and hint"
-  },
-  {
-   "area": "i18n",
-   "state": "de-typing-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/de-typing-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-working-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/de-working-narrow-dark.png",
-   "issues": [],
-   "note": "a status stage in this language"
-  },
-  {
-   "area": "i18n",
-   "state": "de-result-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/de-result-narrow-dark.png",
-   "issues": [],
-   "note": "the result: title, timing, Save Undo Edit code Share"
-  },
-  {
-   "area": "i18n",
-   "state": "de-error-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/de-error-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-settings-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/de-settings-narrow-dark.png",
-   "issues": [],
-   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
-  },
-  {
-   "area": "i18n",
-   "state": "de-settings-bottom-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/de-settings-bottom-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-menu-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/de-menu-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-panel-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/de-panel-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-panel-row-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/de-panel-row-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-panel-foot-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/de-panel-foot-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-bar-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/fa-bar-narrow-dark.png",
-   "issues": [],
-   "note": "fa: the empty bar, suggestions and hint"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-typing-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/fa-typing-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-working-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/fa-working-narrow-dark.png",
-   "issues": [],
-   "note": "a status stage in this language"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-result-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/fa-result-narrow-dark.png",
-   "issues": [],
-   "note": "the result: title, timing, Save Undo Edit code Share"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-error-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/fa-error-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-settings-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/fa-settings-narrow-dark.png",
-   "issues": [],
-   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-settings-bottom-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/fa-settings-bottom-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-menu-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/fa-menu-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-panel-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/fa-panel-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-panel-row-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/fa-panel-row-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-panel-foot-narrow-dark",
-   "theme": "dark",
-   "file": "i18n/fa-panel-foot-narrow-dark.png",
-   "issues": [],
-   "note": ""
   },
   {
    "area": "popup",
@@ -5208,334 +3520,6 @@
    "file": "motion/reduced-landing-dark.png",
    "issues": [],
    "note": "no sweep: the field fades out, the bar shows the result"
-  },
-  {
-   "area": "bar",
-   "state": "picking-light",
-   "theme": "light",
-   "file": "bar/picking-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "radar",
-   "state": "mark-static-light",
-   "theme": "light",
-   "file": "radar/mark-static-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "picker",
-   "state": "hover-small-light",
-   "theme": "light",
-   "file": "picker/hover-small-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "picker",
-   "state": "hover-large-light",
-   "theme": "light",
-   "file": "picker/hover-large-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "picker",
-   "state": "hover-top-edge-light",
-   "theme": "light",
-   "file": "picker/hover-top-edge-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "picker",
-   "state": "hover-right-edge-light",
-   "theme": "light",
-   "file": "picker/hover-right-edge-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "chip-short-light",
-   "theme": "light",
-   "file": "bar/chip-short-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "picker",
-   "state": "selected-light",
-   "theme": "light",
-   "file": "picker/selected-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "go-hover-light",
-   "theme": "light",
-   "file": "bar/go-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "go-focus-light",
-   "theme": "light",
-   "file": "bar/go-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "mods-button-hover-light",
-   "theme": "light",
-   "file": "bar/mods-button-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "mods-button-focus-light",
-   "theme": "light",
-   "file": "bar/mods-button-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "input-focus-light",
-   "theme": "light",
-   "file": "bar/input-focus-light.png",
-   "issues": [],
-   "note": "the input has no ring by design; the caret and the bar are the focus"
-  },
-  {
-   "area": "bar",
-   "state": "chip-x-hover-light",
-   "theme": "light",
-   "file": "bar/chip-x-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "chip-x-focus-light",
-   "theme": "light",
-   "file": "bar/chip-x-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "chip-long-light",
-   "theme": "light",
-   "file": "bar/chip-long-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "typing-short-light",
-   "theme": "light",
-   "file": "bar/typing-short-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "typing-long-light",
-   "theme": "light",
-   "file": "bar/typing-long-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "typing-multiline-light",
-   "theme": "light",
-   "file": "bar/typing-multiline-light.png",
-   "issues": [],
-   "note": "single-line input: pasted newlines collapse to spaces (by design; Enter submits)"
-  },
-  {
-   "area": "bar",
-   "state": "thinking-light",
-   "theme": "light",
-   "file": "bar/thinking-light.png",
-   "issues": [],
-   "note": "stage 1: “Asking the model” as soon as Enter is pressed"
-  },
-  {
-   "area": "radar",
-   "state": "mark-live-light",
-   "theme": "light",
-   "file": "radar/mark-live-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "stage-reading-light",
-   "theme": "light",
-   "file": "bar/stage-reading-light.png",
-   "issues": [],
-   "note": "stage 2: “The model is reading the page”"
-  },
-  {
-   "area": "bar",
-   "state": "stage-thinking-light",
-   "theme": "light",
-   "file": "bar/stage-thinking-light.png",
-   "issues": [],
-   "note": "stage 2b: “Thinking”, for a model that thinks first"
-  },
-  {
-   "area": "bar",
-   "state": "writing-light",
-   "theme": "light",
-   "file": "bar/writing-light.png",
-   "issues": [],
-   "note": "stage 3: “Writing the change”, the ticker shows the words as they come"
-  },
-  {
-   "area": "bar",
-   "state": "writing-visible-light",
-   "theme": "light",
-   "file": "bar/writing-visible-light.png",
-   "issues": [],
-   "note": "stage 3b: “Writing the change · you can see it now”, once the new look shows while the rest is written"
-  },
-  {
-   "area": "bar",
-   "state": "fixing-light",
-   "theme": "light",
-   "file": "bar/fixing-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "applying-light",
-   "theme": "light",
-   "file": "bar/applying-light.png",
-   "issues": [],
-   "note": "stage 4: “Trying the change”"
-  },
-  {
-   "area": "bar",
-   "state": "result-light",
-   "theme": "light",
-   "file": "bar/result-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-keep-hover-light",
-   "theme": "light",
-   "file": "bar/result-keep-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-keep-focus-light",
-   "theme": "light",
-   "file": "bar/result-keep-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-undo-hover-light",
-   "theme": "light",
-   "file": "bar/result-undo-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-undo-focus-light",
-   "theme": "light",
-   "file": "bar/result-undo-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-code-hover-light",
-   "theme": "light",
-   "file": "bar/result-code-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-code-focus-light",
-   "theme": "light",
-   "file": "bar/result-code-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-share-hover-light",
-   "theme": "light",
-   "file": "bar/result-share-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-share-focus-light",
-   "theme": "light",
-   "file": "bar/result-share-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-long-repaired-light",
-   "theme": "light",
-   "file": "bar/result-long-repaired-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "error-light",
-   "theme": "light",
-   "file": "bar/error-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "error-again-hover-light",
-   "theme": "light",
-   "file": "bar/error-again-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "error-again-focus-light",
-   "theme": "light",
-   "file": "bar/error-again-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "picking-with-mods-light",
-   "theme": "light",
-   "file": "bar/picking-with-mods-light.png",
-   "issues": [],
-   "note": ""
   },
   {
    "area": "toast",
@@ -5790,150 +3774,6 @@
    "state": "import-error-light",
    "theme": "light",
    "file": "modal/import-error-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "picking-narrow-light",
-   "theme": "light",
-   "file": "bar/picking-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "picker",
-   "state": "hover-large-narrow-light",
-   "theme": "light",
-   "file": "picker/hover-large-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "chip-short-narrow-light",
-   "theme": "light",
-   "file": "bar/chip-short-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "chip-long-narrow-light",
-   "theme": "light",
-   "file": "bar/chip-long-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "typing-short-narrow-light",
-   "theme": "light",
-   "file": "bar/typing-short-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "typing-long-narrow-light",
-   "theme": "light",
-   "file": "bar/typing-long-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "typing-multiline-narrow-light",
-   "theme": "light",
-   "file": "bar/typing-multiline-narrow-light.png",
-   "issues": [],
-   "note": "single-line input: pasted newlines collapse to spaces (by design; Enter submits)"
-  },
-  {
-   "area": "bar",
-   "state": "thinking-narrow-light",
-   "theme": "light",
-   "file": "bar/thinking-narrow-light.png",
-   "issues": [],
-   "note": "stage 1: “Asking the model” as soon as Enter is pressed"
-  },
-  {
-   "area": "bar",
-   "state": "stage-reading-narrow-light",
-   "theme": "light",
-   "file": "bar/stage-reading-narrow-light.png",
-   "issues": [],
-   "note": "stage 2: “The model is reading the page”"
-  },
-  {
-   "area": "bar",
-   "state": "stage-thinking-narrow-light",
-   "theme": "light",
-   "file": "bar/stage-thinking-narrow-light.png",
-   "issues": [],
-   "note": "stage 2b: “Thinking”, for a model that thinks first"
-  },
-  {
-   "area": "bar",
-   "state": "writing-narrow-light",
-   "theme": "light",
-   "file": "bar/writing-narrow-light.png",
-   "issues": [],
-   "note": "stage 3: “Writing the change”, the ticker shows the words as they come"
-  },
-  {
-   "area": "bar",
-   "state": "writing-visible-narrow-light",
-   "theme": "light",
-   "file": "bar/writing-visible-narrow-light.png",
-   "issues": [],
-   "note": "stage 3b: “Writing the change · you can see it now”, once the new look shows while the rest is written"
-  },
-  {
-   "area": "bar",
-   "state": "fixing-narrow-light",
-   "theme": "light",
-   "file": "bar/fixing-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "applying-narrow-light",
-   "theme": "light",
-   "file": "bar/applying-narrow-light.png",
-   "issues": [],
-   "note": "stage 4: “Trying the change”"
-  },
-  {
-   "area": "bar",
-   "state": "result-narrow-light",
-   "theme": "light",
-   "file": "bar/result-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "result-long-repaired-narrow-light",
-   "theme": "light",
-   "file": "bar/result-long-repaired-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "error-narrow-light",
-   "theme": "light",
-   "file": "bar/error-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "picking-with-mods-narrow-light",
-   "theme": "light",
-   "file": "bar/picking-with-mods-narrow-light.png",
    "issues": [],
    "note": ""
   },
@@ -6874,222 +4714,6 @@
    "note": ""
   },
   {
-   "area": "menu",
-   "state": "more-hover-light",
-   "theme": "light",
-   "file": "menu/more-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "menu",
-   "state": "more-focus-light",
-   "theme": "light",
-   "file": "menu/more-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "menu",
-   "state": "open-light",
-   "theme": "light",
-   "file": "menu/open-light.png",
-   "issues": [],
-   "note": "the first item takes focus (row highlight); ↑/↓ move"
-  },
-  {
-   "area": "menu",
-   "state": "item-focus-light",
-   "theme": "light",
-   "file": "menu/item-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "menu",
-   "state": "item-hover-light",
-   "theme": "light",
-   "file": "menu/item-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "sheet-light",
-   "theme": "light",
-   "file": "settings/sheet-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "sheet-bottom-light",
-   "theme": "light",
-   "file": "settings/sheet-bottom-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "idle-light",
-   "theme": "light",
-   "file": "hotkeys/idle-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "button-hover-light",
-   "theme": "light",
-   "file": "hotkeys/button-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "button-focus-light",
-   "theme": "light",
-   "file": "hotkeys/button-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "done-hover-light",
-   "theme": "light",
-   "file": "settings/done-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "done-focus-light",
-   "theme": "light",
-   "file": "settings/done-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "segment-hover-light",
-   "theme": "light",
-   "file": "settings/segment-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "segment-focus-light",
-   "theme": "light",
-   "file": "settings/segment-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "switch-focus-light",
-   "theme": "light",
-   "file": "settings/switch-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "voice-ready-light",
-   "theme": "light",
-   "file": "settings/voice-ready-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "saved-flash-light",
-   "theme": "light",
-   "file": "settings/saved-flash-light.png",
-   "issues": [],
-   "note": "every change saves at once; “Saved” fades"
-  },
-  {
-   "area": "settings",
-   "state": "footer-hover-light",
-   "theme": "light",
-   "file": "settings/footer-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "recording-light",
-   "theme": "light",
-   "file": "hotkeys/recording-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "recording-held-light",
-   "theme": "light",
-   "file": "hotkeys/recording-held-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "rejected-light",
-   "theme": "light",
-   "file": "hotkeys/rejected-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "warning-light",
-   "theme": "light",
-   "file": "hotkeys/warning-light.png",
-   "issues": [],
-   "note": "accepted with a warning: Reset appears for a custom key"
-  },
-  {
-   "area": "settings",
-   "state": "voice-off-light",
-   "theme": "light",
-   "file": "settings/voice-off-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "shortcuts",
-   "state": "sheet-light",
-   "theme": "light",
-   "file": "shortcuts/sheet-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "shortcuts",
-   "state": "row-hover-light",
-   "theme": "light",
-   "file": "shortcuts/row-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "shortcuts",
-   "state": "change-hover-light",
-   "theme": "light",
-   "file": "shortcuts/change-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "shortcuts",
-   "state": "change-focus-light",
-   "theme": "light",
-   "file": "shortcuts/change-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
    "area": "suggestions",
    "state": "page-light",
    "theme": "light",
@@ -7918,30 +5542,6 @@
    "note": ""
   },
   {
-   "area": "bar",
-   "state": "reach-page-tools-light",
-   "theme": "light",
-   "file": "bar/reach-page-tools-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "reach-suggestion-light",
-   "theme": "light",
-   "file": "bar/reach-suggestion-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "dodge-to-point-light",
-   "theme": "light",
-   "file": "bar/dodge-to-point-light.png",
-   "issues": [],
-   "note": "a quick pass over the input, away from any control: the bar still steps aside so what is under it can be pointed at"
-  },
-  {
    "area": "heal",
    "state": "bar-dot-light",
    "theme": "light",
@@ -8198,126 +5798,6 @@
    "note": ""
   },
   {
-   "area": "guard",
-   "state": "froze-toast-light",
-   "theme": "light",
-   "file": "guard/froze-toast-light.png",
-   "issues": [],
-   "note": "on the next load after a mod froze the page"
-  },
-  {
-   "area": "guard",
-   "state": "paused-toast-light",
-   "theme": "light",
-   "file": "guard/paused-toast-light.png",
-   "issues": [],
-   "note": "the kit paused a mod: why, Turn back on, Fix it"
-  },
-  {
-   "area": "guard",
-   "state": "paused-toast-focus-light",
-   "theme": "light",
-   "file": "guard/paused-toast-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-slowing-light",
-   "theme": "light",
-   "file": "guard/row-slowing-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-froze-light",
-   "theme": "light",
-   "file": "guard/row-froze-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-hid-light",
-   "theme": "light",
-   "file": "guard/row-hid-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-slowing-now-light",
-   "theme": "light",
-   "file": "guard/row-slowing-now-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-turn-on-hover-light",
-   "theme": "light",
-   "file": "guard/row-turn-on-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-fix-focus-light",
-   "theme": "light",
-   "file": "guard/row-fix-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "back-on-toast-light",
-   "theme": "light",
-   "file": "guard/back-on-toast-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "refused-hide-light",
-   "theme": "light",
-   "file": "guard/refused-hide-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "refused-loop-light",
-   "theme": "light",
-   "file": "guard/refused-loop-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "refused-wipe-light",
-   "theme": "light",
-   "file": "guard/refused-wipe-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "refused-nav-light",
-   "theme": "light",
-   "file": "guard/refused-nav-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "draft-paused-toast-light",
-   "theme": "light",
-   "file": "guard/draft-paused-toast-light.png",
-   "issues": [],
-   "note": "a change still in the bar: nothing to turn off, so it says to describe it another way"
-  },
-  {
    "area": "first-run",
    "state": "coach-point-light",
    "theme": "light",
@@ -8412,382 +5892,6 @@
    "file": "first-run/error-with-action-light.png",
    "issues": [],
    "note": "an error in plain words, with a button that does something about it"
-  },
-  {
-   "area": "packs",
-   "state": "panel-make-light",
-   "theme": "light",
-   "file": "packs/panel-make-light.png",
-   "issues": [],
-   "note": "Packs · Make a pack… sits with the backup buttons at the foot of the panel"
-  },
-  {
-   "area": "packs",
-   "state": "panel-make-focus-light",
-   "theme": "light",
-   "file": "packs/panel-make-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "choose-none-light",
-   "theme": "light",
-   "file": "packs/choose-none-light.png",
-   "issues": [],
-   "note": "a tick on every row; Next stays off until one is chosen"
-  },
-  {
-   "area": "packs",
-   "state": "choose-light",
-   "theme": "light",
-   "file": "packs/choose-light.png",
-   "issues": [],
-   "note": "three chosen: the strip counts them, Next turns on"
-  },
-  {
-   "area": "packs",
-   "state": "choose-tick-focus-light",
-   "theme": "light",
-   "file": "packs/choose-tick-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "make-no-name-light",
-   "theme": "light",
-   "file": "packs/make-no-name-light.png",
-   "issues": [],
-   "note": "Copy link without a name: “Give the pack a name.” and the name field has focus"
-  },
-  {
-   "area": "packs",
-   "state": "make-light",
-   "theme": "light",
-   "file": "packs/make-light.png",
-   "issues": [],
-   "note": "name, an optional note, the mods in it; Copy link is the main button"
-  },
-  {
-   "area": "packs",
-   "state": "make-name-focus-light",
-   "theme": "light",
-   "file": "packs/make-name-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "make-link-light",
-   "theme": "light",
-   "file": "packs/make-link-light.png",
-   "issues": [],
-   "note": "the link, Copy again, and Cancel becomes Done"
-  },
-  {
-   "area": "packs",
-   "state": "review-light",
-   "theme": "light",
-   "file": "packs/review-light.png",
-   "issues": [],
-   "note": "every mod with a tick, what it does and where; the one for every website and the clash need a choice; Cancel has focus"
-  },
-  {
-   "area": "packs",
-   "state": "review-clash-light",
-   "theme": "light",
-   "file": "packs/review-clash-light.png",
-   "issues": [],
-   "note": "a mod with the same id as one of yours: Keep both (the default) or Replace yours"
-  },
-  {
-   "area": "packs",
-   "state": "review-clash-focus-light",
-   "theme": "light",
-   "file": "packs/review-clash-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "review-wide-light",
-   "theme": "light",
-   "file": "packs/review-wide-light.png",
-   "issues": [],
-   "note": "every website: not ticked, with the note in full"
-  },
-  {
-   "area": "packs",
-   "state": "review-sends-light",
-   "theme": "light",
-   "file": "packs/review-sends-light.png",
-   "issues": [],
-   "note": "a mod that sends what's on the page somewhere: the note says so"
-  },
-  {
-   "area": "packs",
-   "state": "review-unticked-light",
-   "theme": "light",
-   "file": "packs/review-unticked-light.png",
-   "issues": [],
-   "note": "unticked: the mod folds to its name, muted by color, not opacity"
-  },
-  {
-   "area": "packs",
-   "state": "review-end-light",
-   "theme": "light",
-   "file": "packs/review-end-light.png",
-   "issues": [],
-   "note": "the end: Check this address for updates (the person's choice), Install with the count"
-  },
-  {
-   "area": "packs",
-   "state": "review-install-focus-light",
-   "theme": "light",
-   "file": "packs/review-install-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "installed-toast-light",
-   "theme": "light",
-   "file": "packs/installed-toast-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "panel-group-light",
-   "theme": "light",
-   "file": "packs/panel-group-light.png",
-   "issues": [],
-   "note": "the pack's name, how many mods, “gets updates”, Copy link and Stop updates; its mods under it"
-  },
-  {
-   "area": "packs",
-   "state": "panel-group-switch-focus-light",
-   "theme": "light",
-   "file": "packs/panel-group-switch-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "panel-group-off-light",
-   "theme": "light",
-   "file": "packs/panel-group-off-light.png",
-   "issues": [],
-   "note": "the whole pack off with one switch"
-  },
-  {
-   "area": "packs",
-   "state": "panel-update-light",
-   "theme": "light",
-   "file": "packs/panel-update-light.png",
-   "issues": [],
-   "note": "Update available, what changed in a few words, Review…"
-  },
-  {
-   "area": "packs",
-   "state": "update-light",
-   "theme": "light",
-   "file": "packs/update-light.png",
-   "issues": [],
-   "note": "what changed, the team's note, then changed (with the lines), new and removed; nothing changes until Update"
-  },
-  {
-   "area": "packs",
-   "state": "update-changed-light",
-   "theme": "light",
-   "file": "packs/update-changed-light.png",
-   "issues": [],
-   "note": "a changed mod: the line counts and the diff, open when short"
-  },
-  {
-   "area": "packs",
-   "state": "update-end-light",
-   "theme": "light",
-   "file": "packs/update-end-light.png",
-   "issues": [],
-   "note": "no longer in the pack (untick to keep it), the mods left out before, and History keeps your versions"
-  },
-  {
-   "area": "i18n",
-   "state": "de-bar-light",
-   "theme": "light",
-   "file": "i18n/de-bar-light.png",
-   "issues": [],
-   "note": "de: the empty bar, suggestions and hint"
-  },
-  {
-   "area": "i18n",
-   "state": "de-typing-light",
-   "theme": "light",
-   "file": "i18n/de-typing-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-working-light",
-   "theme": "light",
-   "file": "i18n/de-working-light.png",
-   "issues": [],
-   "note": "a status stage in this language"
-  },
-  {
-   "area": "i18n",
-   "state": "de-result-light",
-   "theme": "light",
-   "file": "i18n/de-result-light.png",
-   "issues": [],
-   "note": "the result: title, timing, Save Undo Edit code Share"
-  },
-  {
-   "area": "i18n",
-   "state": "de-error-light",
-   "theme": "light",
-   "file": "i18n/de-error-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-settings-light",
-   "theme": "light",
-   "file": "i18n/de-settings-light.png",
-   "issues": [],
-   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
-  },
-  {
-   "area": "i18n",
-   "state": "de-settings-bottom-light",
-   "theme": "light",
-   "file": "i18n/de-settings-bottom-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-menu-light",
-   "theme": "light",
-   "file": "i18n/de-menu-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-panel-light",
-   "theme": "light",
-   "file": "i18n/de-panel-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-panel-row-light",
-   "theme": "light",
-   "file": "i18n/de-panel-row-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-panel-foot-light",
-   "theme": "light",
-   "file": "i18n/de-panel-foot-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-bar-light",
-   "theme": "light",
-   "file": "i18n/fa-bar-light.png",
-   "issues": [],
-   "note": "fa: the empty bar, suggestions and hint"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-typing-light",
-   "theme": "light",
-   "file": "i18n/fa-typing-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-working-light",
-   "theme": "light",
-   "file": "i18n/fa-working-light.png",
-   "issues": [],
-   "note": "a status stage in this language"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-result-light",
-   "theme": "light",
-   "file": "i18n/fa-result-light.png",
-   "issues": [],
-   "note": "the result: title, timing, Save Undo Edit code Share"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-error-light",
-   "theme": "light",
-   "file": "i18n/fa-error-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-settings-light",
-   "theme": "light",
-   "file": "i18n/fa-settings-light.png",
-   "issues": [],
-   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-settings-bottom-light",
-   "theme": "light",
-   "file": "i18n/fa-settings-bottom-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-menu-light",
-   "theme": "light",
-   "file": "i18n/fa-menu-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-panel-light",
-   "theme": "light",
-   "file": "i18n/fa-panel-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-panel-row-light",
-   "theme": "light",
-   "file": "i18n/fa-panel-row-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-panel-foot-light",
-   "theme": "light",
-   "file": "i18n/fa-panel-foot-light.png",
-   "issues": [],
-   "note": ""
   },
   {
    "area": "edit-toolbar",
@@ -9114,78 +6218,6 @@
    "state": "error-transcription-failed-narrow-light",
    "theme": "light",
    "file": "voice/error-transcription-failed-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "menu",
-   "state": "open-narrow-light",
-   "theme": "light",
-   "file": "menu/open-narrow-light.png",
-   "issues": [],
-   "note": "the first item takes focus (row highlight); ↑/↓ move"
-  },
-  {
-   "area": "settings",
-   "state": "sheet-narrow-light",
-   "theme": "light",
-   "file": "settings/sheet-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "settings",
-   "state": "sheet-bottom-narrow-light",
-   "theme": "light",
-   "file": "settings/sheet-bottom-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "recording-narrow-light",
-   "theme": "light",
-   "file": "hotkeys/recording-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "recording-held-narrow-light",
-   "theme": "light",
-   "file": "hotkeys/recording-held-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "rejected-narrow-light",
-   "theme": "light",
-   "file": "hotkeys/rejected-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "hotkeys",
-   "state": "warning-narrow-light",
-   "theme": "light",
-   "file": "hotkeys/warning-narrow-light.png",
-   "issues": [],
-   "note": "accepted with a warning: Reset appears for a custom key"
-  },
-  {
-   "area": "settings",
-   "state": "voice-off-narrow-light",
-   "theme": "light",
-   "file": "settings/voice-off-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "shortcuts",
-   "state": "sheet-narrow-light",
-   "theme": "light",
-   "file": "shortcuts/sheet-narrow-light.png",
    "issues": [],
    "note": ""
   },
@@ -9842,86 +6874,6 @@
    "note": ""
   },
   {
-   "area": "guard",
-   "state": "froze-toast-narrow-light",
-   "theme": "light",
-   "file": "guard/froze-toast-narrow-light.png",
-   "issues": [],
-   "note": "on the next load after a mod froze the page"
-  },
-  {
-   "area": "guard",
-   "state": "paused-toast-narrow-light",
-   "theme": "light",
-   "file": "guard/paused-toast-narrow-light.png",
-   "issues": [],
-   "note": "the kit paused a mod: why, Turn back on, Fix it"
-  },
-  {
-   "area": "guard",
-   "state": "row-slowing-narrow-light",
-   "theme": "light",
-   "file": "guard/row-slowing-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-froze-narrow-light",
-   "theme": "light",
-   "file": "guard/row-froze-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-hid-narrow-light",
-   "theme": "light",
-   "file": "guard/row-hid-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "row-slowing-now-narrow-light",
-   "theme": "light",
-   "file": "guard/row-slowing-now-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "back-on-toast-narrow-light",
-   "theme": "light",
-   "file": "guard/back-on-toast-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "refused-hide-narrow-light",
-   "theme": "light",
-   "file": "guard/refused-hide-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "refused-loop-narrow-light",
-   "theme": "light",
-   "file": "guard/refused-loop-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "guard",
-   "state": "draft-paused-toast-narrow-light",
-   "theme": "light",
-   "file": "guard/draft-paused-toast-narrow-light.png",
-   "issues": [],
-   "note": "a change still in the bar: nothing to turn off, so it says to describe it another way"
-  },
-  {
    "area": "first-run",
    "state": "coach-point-narrow-light",
    "theme": "light",
@@ -9992,334 +6944,6 @@
    "file": "first-run/error-with-action-narrow-light.png",
    "issues": [],
    "note": "an error in plain words, with a button that does something about it"
-  },
-  {
-   "area": "packs",
-   "state": "panel-make-narrow-light",
-   "theme": "light",
-   "file": "packs/panel-make-narrow-light.png",
-   "issues": [],
-   "note": "Packs · Make a pack… sits with the backup buttons at the foot of the panel"
-  },
-  {
-   "area": "packs",
-   "state": "choose-none-narrow-light",
-   "theme": "light",
-   "file": "packs/choose-none-narrow-light.png",
-   "issues": [],
-   "note": "a tick on every row; Next stays off until one is chosen"
-  },
-  {
-   "area": "packs",
-   "state": "choose-narrow-light",
-   "theme": "light",
-   "file": "packs/choose-narrow-light.png",
-   "issues": [],
-   "note": "three chosen: the strip counts them, Next turns on"
-  },
-  {
-   "area": "packs",
-   "state": "make-no-name-narrow-light",
-   "theme": "light",
-   "file": "packs/make-no-name-narrow-light.png",
-   "issues": [],
-   "note": "Copy link without a name: “Give the pack a name.” and the name field has focus"
-  },
-  {
-   "area": "packs",
-   "state": "make-narrow-light",
-   "theme": "light",
-   "file": "packs/make-narrow-light.png",
-   "issues": [],
-   "note": "name, an optional note, the mods in it; Copy link is the main button"
-  },
-  {
-   "area": "packs",
-   "state": "make-link-narrow-light",
-   "theme": "light",
-   "file": "packs/make-link-narrow-light.png",
-   "issues": [],
-   "note": "the link, Copy again, and Cancel becomes Done"
-  },
-  {
-   "area": "packs",
-   "state": "review-narrow-light",
-   "theme": "light",
-   "file": "packs/review-narrow-light.png",
-   "issues": [],
-   "note": "every mod with a tick, what it does and where; the one for every website and the clash need a choice; Cancel has focus"
-  },
-  {
-   "area": "packs",
-   "state": "review-clash-narrow-light",
-   "theme": "light",
-   "file": "packs/review-clash-narrow-light.png",
-   "issues": [],
-   "note": "a mod with the same id as one of yours: Keep both (the default) or Replace yours"
-  },
-  {
-   "area": "packs",
-   "state": "review-wide-narrow-light",
-   "theme": "light",
-   "file": "packs/review-wide-narrow-light.png",
-   "issues": [],
-   "note": "every website: not ticked, with the note in full"
-  },
-  {
-   "area": "packs",
-   "state": "review-sends-narrow-light",
-   "theme": "light",
-   "file": "packs/review-sends-narrow-light.png",
-   "issues": [],
-   "note": "a mod that sends what's on the page somewhere: the note says so"
-  },
-  {
-   "area": "packs",
-   "state": "review-unticked-narrow-light",
-   "theme": "light",
-   "file": "packs/review-unticked-narrow-light.png",
-   "issues": [],
-   "note": "unticked: the mod folds to its name, muted by color, not opacity"
-  },
-  {
-   "area": "packs",
-   "state": "review-end-narrow-light",
-   "theme": "light",
-   "file": "packs/review-end-narrow-light.png",
-   "issues": [],
-   "note": "the end: Check this address for updates (the person's choice), Install with the count"
-  },
-  {
-   "area": "packs",
-   "state": "installed-toast-narrow-light",
-   "theme": "light",
-   "file": "packs/installed-toast-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "packs",
-   "state": "panel-group-narrow-light",
-   "theme": "light",
-   "file": "packs/panel-group-narrow-light.png",
-   "issues": [],
-   "note": "the pack's name, how many mods, “gets updates”, Copy link and Stop updates; its mods under it"
-  },
-  {
-   "area": "packs",
-   "state": "panel-group-off-narrow-light",
-   "theme": "light",
-   "file": "packs/panel-group-off-narrow-light.png",
-   "issues": [],
-   "note": "the whole pack off with one switch"
-  },
-  {
-   "area": "packs",
-   "state": "panel-update-narrow-light",
-   "theme": "light",
-   "file": "packs/panel-update-narrow-light.png",
-   "issues": [],
-   "note": "Update available, what changed in a few words, Review…"
-  },
-  {
-   "area": "packs",
-   "state": "update-narrow-light",
-   "theme": "light",
-   "file": "packs/update-narrow-light.png",
-   "issues": [],
-   "note": "what changed, the team's note, then changed (with the lines), new and removed; nothing changes until Update"
-  },
-  {
-   "area": "packs",
-   "state": "update-changed-narrow-light",
-   "theme": "light",
-   "file": "packs/update-changed-narrow-light.png",
-   "issues": [],
-   "note": "a changed mod: the line counts and the diff, open when short"
-  },
-  {
-   "area": "packs",
-   "state": "update-end-narrow-light",
-   "theme": "light",
-   "file": "packs/update-end-narrow-light.png",
-   "issues": [],
-   "note": "no longer in the pack (untick to keep it), the mods left out before, and History keeps your versions"
-  },
-  {
-   "area": "i18n",
-   "state": "de-bar-narrow-light",
-   "theme": "light",
-   "file": "i18n/de-bar-narrow-light.png",
-   "issues": [],
-   "note": "de: the empty bar, suggestions and hint"
-  },
-  {
-   "area": "i18n",
-   "state": "de-typing-narrow-light",
-   "theme": "light",
-   "file": "i18n/de-typing-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-working-narrow-light",
-   "theme": "light",
-   "file": "i18n/de-working-narrow-light.png",
-   "issues": [],
-   "note": "a status stage in this language"
-  },
-  {
-   "area": "i18n",
-   "state": "de-result-narrow-light",
-   "theme": "light",
-   "file": "i18n/de-result-narrow-light.png",
-   "issues": [],
-   "note": "the result: title, timing, Save Undo Edit code Share"
-  },
-  {
-   "area": "i18n",
-   "state": "de-error-narrow-light",
-   "theme": "light",
-   "file": "i18n/de-error-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-settings-narrow-light",
-   "theme": "light",
-   "file": "i18n/de-settings-narrow-light.png",
-   "issues": [],
-   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
-  },
-  {
-   "area": "i18n",
-   "state": "de-settings-bottom-narrow-light",
-   "theme": "light",
-   "file": "i18n/de-settings-bottom-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-menu-narrow-light",
-   "theme": "light",
-   "file": "i18n/de-menu-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-panel-narrow-light",
-   "theme": "light",
-   "file": "i18n/de-panel-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-panel-row-narrow-light",
-   "theme": "light",
-   "file": "i18n/de-panel-row-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "de-panel-foot-narrow-light",
-   "theme": "light",
-   "file": "i18n/de-panel-foot-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-bar-narrow-light",
-   "theme": "light",
-   "file": "i18n/fa-bar-narrow-light.png",
-   "issues": [],
-   "note": "fa: the empty bar, suggestions and hint"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-typing-narrow-light",
-   "theme": "light",
-   "file": "i18n/fa-typing-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-working-narrow-light",
-   "theme": "light",
-   "file": "i18n/fa-working-narrow-light.png",
-   "issues": [],
-   "note": "a status stage in this language"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-result-narrow-light",
-   "theme": "light",
-   "file": "i18n/fa-result-narrow-light.png",
-   "issues": [],
-   "note": "the result: title, timing, Save Undo Edit code Share"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-error-narrow-light",
-   "theme": "light",
-   "file": "i18n/fa-error-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-settings-narrow-light",
-   "theme": "light",
-   "file": "i18n/fa-settings-narrow-light.png",
-   "issues": [],
-   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
-  },
-  {
-   "area": "i18n",
-   "state": "fa-settings-bottom-narrow-light",
-   "theme": "light",
-   "file": "i18n/fa-settings-bottom-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-menu-narrow-light",
-   "theme": "light",
-   "file": "i18n/fa-menu-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-panel-narrow-light",
-   "theme": "light",
-   "file": "i18n/fa-panel-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-panel-row-narrow-light",
-   "theme": "light",
-   "file": "i18n/fa-panel-row-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "i18n",
-   "state": "fa-panel-foot-narrow-light",
-   "theme": "light",
-   "file": "i18n/fa-panel-foot-narrow-light.png",
-   "issues": [],
-   "note": ""
   },
   {
    "area": "popup",
@@ -12506,198 +9130,6 @@
    "note": "pixel-identical to settings-plain (1202536 pixels compared)"
   },
   {
-   "area": "waiting",
-   "state": "notice-dark",
-   "theme": "dark",
-   "file": "waiting/notice-dark.png",
-   "issues": [],
-   "note": "once per site in a tab: which mod waits, what already shows, and Open Morse's details"
-  },
-  {
-   "area": "waiting",
-   "state": "notice-focus-dark",
-   "theme": "dark",
-   "file": "waiting/notice-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "waiting",
-   "state": "bar-note-dark",
-   "theme": "dark",
-   "file": "waiting/bar-note-dark.png",
-   "issues": [],
-   "note": "the bar's note: the same words, Turn it on, and × (for this page)"
-  },
-  {
-   "area": "waiting",
-   "state": "bar-note-focus-dark",
-   "theme": "dark",
-   "file": "waiting/bar-note-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "waiting",
-   "state": "panel-row-dark",
-   "theme": "dark",
-   "file": "waiting/panel-row-dark.png",
-   "issues": [],
-   "note": "the tag on the mod: waits for “Allow User Scripts” (the full sentence is its title)"
-  },
-  {
-   "area": "waiting",
-   "state": "result-dark",
-   "theme": "dark",
-   "file": "waiting/result-dark.png",
-   "issues": [],
-   "note": "the result never just looks done: the note, and Turn on “Allow User Scripts” first"
-  },
-  {
-   "area": "waiting",
-   "state": "result-practice-dark",
-   "theme": "dark",
-   "file": "waiting/result-practice-dark.png",
-   "issues": [],
-   "note": "on the practice page: this is how it looks, and what it adds works on real websites"
-  },
-  {
-   "area": "waiting",
-   "state": "notice-narrow-dark",
-   "theme": "dark",
-   "file": "waiting/notice-narrow-dark.png",
-   "issues": [],
-   "note": "once per site in a tab: which mod waits, what already shows, and Open Morse's details"
-  },
-  {
-   "area": "waiting",
-   "state": "bar-note-narrow-dark",
-   "theme": "dark",
-   "file": "waiting/bar-note-narrow-dark.png",
-   "issues": [],
-   "note": "the bar's note: the same words, Turn it on, and × (for this page)"
-  },
-  {
-   "area": "waiting",
-   "state": "panel-row-narrow-dark",
-   "theme": "dark",
-   "file": "waiting/panel-row-narrow-dark.png",
-   "issues": [],
-   "note": "the tag on the mod: waits for “Allow User Scripts” (the full sentence is its title)"
-  },
-  {
-   "area": "waiting",
-   "state": "result-narrow-dark",
-   "theme": "dark",
-   "file": "waiting/result-narrow-dark.png",
-   "issues": [],
-   "note": "the result never just looks done: the note, and Turn on “Allow User Scripts” first"
-  },
-  {
-   "area": "waiting",
-   "state": "result-practice-narrow-dark",
-   "theme": "dark",
-   "file": "waiting/result-practice-narrow-dark.png",
-   "issues": [],
-   "note": "on the practice page: this is how it looks, and what it adds works on real websites"
-  },
-  {
-   "area": "waiting",
-   "state": "notice-light",
-   "theme": "light",
-   "file": "waiting/notice-light.png",
-   "issues": [],
-   "note": "once per site in a tab: which mod waits, what already shows, and Open Morse's details"
-  },
-  {
-   "area": "waiting",
-   "state": "notice-focus-light",
-   "theme": "light",
-   "file": "waiting/notice-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "waiting",
-   "state": "bar-note-light",
-   "theme": "light",
-   "file": "waiting/bar-note-light.png",
-   "issues": [],
-   "note": "the bar's note: the same words, Turn it on, and × (for this page)"
-  },
-  {
-   "area": "waiting",
-   "state": "bar-note-focus-light",
-   "theme": "light",
-   "file": "waiting/bar-note-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "waiting",
-   "state": "panel-row-light",
-   "theme": "light",
-   "file": "waiting/panel-row-light.png",
-   "issues": [],
-   "note": "the tag on the mod: waits for “Allow User Scripts” (the full sentence is its title)"
-  },
-  {
-   "area": "waiting",
-   "state": "result-light",
-   "theme": "light",
-   "file": "waiting/result-light.png",
-   "issues": [],
-   "note": "the result never just looks done: the note, and Turn on “Allow User Scripts” first"
-  },
-  {
-   "area": "waiting",
-   "state": "result-practice-light",
-   "theme": "light",
-   "file": "waiting/result-practice-light.png",
-   "issues": [],
-   "note": "on the practice page: this is how it looks, and what it adds works on real websites"
-  },
-  {
-   "area": "waiting",
-   "state": "notice-narrow-light",
-   "theme": "light",
-   "file": "waiting/notice-narrow-light.png",
-   "issues": [],
-   "note": "once per site in a tab: which mod waits, what already shows, and Open Morse's details"
-  },
-  {
-   "area": "waiting",
-   "state": "bar-note-narrow-light",
-   "theme": "light",
-   "file": "waiting/bar-note-narrow-light.png",
-   "issues": [],
-   "note": "the bar's note: the same words, Turn it on, and × (for this page)"
-  },
-  {
-   "area": "waiting",
-   "state": "panel-row-narrow-light",
-   "theme": "light",
-   "file": "waiting/panel-row-narrow-light.png",
-   "issues": [],
-   "note": "the tag on the mod: waits for “Allow User Scripts” (the full sentence is its title)"
-  },
-  {
-   "area": "waiting",
-   "state": "result-narrow-light",
-   "theme": "light",
-   "file": "waiting/result-narrow-light.png",
-   "issues": [],
-   "note": "the result never just looks done: the note, and Turn on “Allow User Scripts” first"
-  },
-  {
-   "area": "waiting",
-   "state": "result-practice-narrow-light",
-   "theme": "light",
-   "file": "waiting/result-practice-narrow-light.png",
-   "issues": [],
-   "note": "on the practice page: this is how it looks, and what it adds works on real websites"
-  },
-  {
    "area": "hostile",
    "state": "hostile-guard-toast-light",
    "theme": "light",
@@ -12790,6 +9222,3526 @@
    "state": "parley-show-once-steps-dark",
    "theme": "dark",
    "file": "hostile/parley-show-once-steps-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "picking-dark",
+   "theme": "dark",
+   "file": "bar/picking-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "radar",
+   "state": "mark-static-dark",
+   "theme": "dark",
+   "file": "radar/mark-static-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "picker",
+   "state": "hover-small-dark",
+   "theme": "dark",
+   "file": "picker/hover-small-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "picker",
+   "state": "hover-large-dark",
+   "theme": "dark",
+   "file": "picker/hover-large-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "picker",
+   "state": "hover-top-edge-dark",
+   "theme": "dark",
+   "file": "picker/hover-top-edge-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "picker",
+   "state": "hover-right-edge-dark",
+   "theme": "dark",
+   "file": "picker/hover-right-edge-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "chip-short-dark",
+   "theme": "dark",
+   "file": "bar/chip-short-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "picker",
+   "state": "selected-dark",
+   "theme": "dark",
+   "file": "picker/selected-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "go-hover-dark",
+   "theme": "dark",
+   "file": "bar/go-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "go-focus-dark",
+   "theme": "dark",
+   "file": "bar/go-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "mods-button-hover-dark",
+   "theme": "dark",
+   "file": "bar/mods-button-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "mods-button-focus-dark",
+   "theme": "dark",
+   "file": "bar/mods-button-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "input-focus-dark",
+   "theme": "dark",
+   "file": "bar/input-focus-dark.png",
+   "issues": [],
+   "note": "the input has no ring by design; the caret and the bar are the focus"
+  },
+  {
+   "area": "bar",
+   "state": "chip-x-hover-dark",
+   "theme": "dark",
+   "file": "bar/chip-x-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "chip-x-focus-dark",
+   "theme": "dark",
+   "file": "bar/chip-x-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "chip-long-dark",
+   "theme": "dark",
+   "file": "bar/chip-long-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "typing-short-dark",
+   "theme": "dark",
+   "file": "bar/typing-short-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "typing-long-dark",
+   "theme": "dark",
+   "file": "bar/typing-long-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "typing-multiline-dark",
+   "theme": "dark",
+   "file": "bar/typing-multiline-dark.png",
+   "issues": [],
+   "note": "single-line input: pasted newlines collapse to spaces (by design; Enter submits)"
+  },
+  {
+   "area": "bar",
+   "state": "thinking-dark",
+   "theme": "dark",
+   "file": "bar/thinking-dark.png",
+   "issues": [],
+   "note": "stage 1: “Asking the model” as soon as Enter is pressed"
+  },
+  {
+   "area": "radar",
+   "state": "mark-live-dark",
+   "theme": "dark",
+   "file": "radar/mark-live-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "stage-reading-dark",
+   "theme": "dark",
+   "file": "bar/stage-reading-dark.png",
+   "issues": [],
+   "note": "stage 2: “The model is reading the page”"
+  },
+  {
+   "area": "bar",
+   "state": "stage-thinking-dark",
+   "theme": "dark",
+   "file": "bar/stage-thinking-dark.png",
+   "issues": [],
+   "note": "stage 2b: “Thinking”, for a model that thinks first"
+  },
+  {
+   "area": "bar",
+   "state": "writing-dark",
+   "theme": "dark",
+   "file": "bar/writing-dark.png",
+   "issues": [],
+   "note": "stage 3: “Writing the change”, the ticker shows the words as they come"
+  },
+  {
+   "area": "bar",
+   "state": "writing-visible-dark",
+   "theme": "dark",
+   "file": "bar/writing-visible-dark.png",
+   "issues": [],
+   "note": "stage 3b: “Writing the change · you can see it now”, once the new look shows while the rest is written"
+  },
+  {
+   "area": "bar",
+   "state": "fixing-dark",
+   "theme": "dark",
+   "file": "bar/fixing-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "applying-dark",
+   "theme": "dark",
+   "file": "bar/applying-dark.png",
+   "issues": [],
+   "note": "stage 4: “Trying the change”"
+  },
+  {
+   "area": "bar",
+   "state": "result-dark",
+   "theme": "dark",
+   "file": "bar/result-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-keep-hover-dark",
+   "theme": "dark",
+   "file": "bar/result-keep-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-keep-focus-dark",
+   "theme": "dark",
+   "file": "bar/result-keep-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-undo-hover-dark",
+   "theme": "dark",
+   "file": "bar/result-undo-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-undo-focus-dark",
+   "theme": "dark",
+   "file": "bar/result-undo-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-code-hover-dark",
+   "theme": "dark",
+   "file": "bar/result-code-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-code-focus-dark",
+   "theme": "dark",
+   "file": "bar/result-code-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-share-hover-dark",
+   "theme": "dark",
+   "file": "bar/result-share-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-share-focus-dark",
+   "theme": "dark",
+   "file": "bar/result-share-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-long-repaired-dark",
+   "theme": "dark",
+   "file": "bar/result-long-repaired-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "error-dark",
+   "theme": "dark",
+   "file": "bar/error-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "error-again-hover-dark",
+   "theme": "dark",
+   "file": "bar/error-again-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "error-again-focus-dark",
+   "theme": "dark",
+   "file": "bar/error-again-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "picking-with-mods-dark",
+   "theme": "dark",
+   "file": "bar/picking-with-mods-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "picking-narrow-dark",
+   "theme": "dark",
+   "file": "bar/picking-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "picker",
+   "state": "hover-large-narrow-dark",
+   "theme": "dark",
+   "file": "picker/hover-large-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "chip-short-narrow-dark",
+   "theme": "dark",
+   "file": "bar/chip-short-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "chip-long-narrow-dark",
+   "theme": "dark",
+   "file": "bar/chip-long-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "typing-short-narrow-dark",
+   "theme": "dark",
+   "file": "bar/typing-short-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "typing-long-narrow-dark",
+   "theme": "dark",
+   "file": "bar/typing-long-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "typing-multiline-narrow-dark",
+   "theme": "dark",
+   "file": "bar/typing-multiline-narrow-dark.png",
+   "issues": [],
+   "note": "single-line input: pasted newlines collapse to spaces (by design; Enter submits)"
+  },
+  {
+   "area": "bar",
+   "state": "thinking-narrow-dark",
+   "theme": "dark",
+   "file": "bar/thinking-narrow-dark.png",
+   "issues": [],
+   "note": "stage 1: “Asking the model” as soon as Enter is pressed"
+  },
+  {
+   "area": "bar",
+   "state": "stage-reading-narrow-dark",
+   "theme": "dark",
+   "file": "bar/stage-reading-narrow-dark.png",
+   "issues": [],
+   "note": "stage 2: “The model is reading the page”"
+  },
+  {
+   "area": "bar",
+   "state": "stage-thinking-narrow-dark",
+   "theme": "dark",
+   "file": "bar/stage-thinking-narrow-dark.png",
+   "issues": [],
+   "note": "stage 2b: “Thinking”, for a model that thinks first"
+  },
+  {
+   "area": "bar",
+   "state": "writing-narrow-dark",
+   "theme": "dark",
+   "file": "bar/writing-narrow-dark.png",
+   "issues": [],
+   "note": "stage 3: “Writing the change”, the ticker shows the words as they come"
+  },
+  {
+   "area": "bar",
+   "state": "writing-visible-narrow-dark",
+   "theme": "dark",
+   "file": "bar/writing-visible-narrow-dark.png",
+   "issues": [],
+   "note": "stage 3b: “Writing the change · you can see it now”, once the new look shows while the rest is written"
+  },
+  {
+   "area": "bar",
+   "state": "fixing-narrow-dark",
+   "theme": "dark",
+   "file": "bar/fixing-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "applying-narrow-dark",
+   "theme": "dark",
+   "file": "bar/applying-narrow-dark.png",
+   "issues": [],
+   "note": "stage 4: “Trying the change”"
+  },
+  {
+   "area": "bar",
+   "state": "result-narrow-dark",
+   "theme": "dark",
+   "file": "bar/result-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-long-repaired-narrow-dark",
+   "theme": "dark",
+   "file": "bar/result-long-repaired-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "error-narrow-dark",
+   "theme": "dark",
+   "file": "bar/error-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "picking-with-mods-narrow-dark",
+   "theme": "dark",
+   "file": "bar/picking-with-mods-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "more-hover-dark",
+   "theme": "dark",
+   "file": "menu/more-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "more-focus-dark",
+   "theme": "dark",
+   "file": "menu/more-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "open-dark",
+   "theme": "dark",
+   "file": "menu/open-dark.png",
+   "issues": [],
+   "note": "the first item takes focus (row highlight); ↑/↓ move"
+  },
+  {
+   "area": "menu",
+   "state": "item-focus-dark",
+   "theme": "dark",
+   "file": "menu/item-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "item-hover-dark",
+   "theme": "dark",
+   "file": "menu/item-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "sheet-dark",
+   "theme": "dark",
+   "file": "settings/sheet-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "sheet-bottom-dark",
+   "theme": "dark",
+   "file": "settings/sheet-bottom-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "idle-dark",
+   "theme": "dark",
+   "file": "hotkeys/idle-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "button-hover-dark",
+   "theme": "dark",
+   "file": "hotkeys/button-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "button-focus-dark",
+   "theme": "dark",
+   "file": "hotkeys/button-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "done-hover-dark",
+   "theme": "dark",
+   "file": "settings/done-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "done-focus-dark",
+   "theme": "dark",
+   "file": "settings/done-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "segment-hover-dark",
+   "theme": "dark",
+   "file": "settings/segment-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "segment-focus-dark",
+   "theme": "dark",
+   "file": "settings/segment-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "switch-focus-dark",
+   "theme": "dark",
+   "file": "settings/switch-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "voice-ready-dark",
+   "theme": "dark",
+   "file": "settings/voice-ready-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "saved-flash-dark",
+   "theme": "dark",
+   "file": "settings/saved-flash-dark.png",
+   "issues": [],
+   "note": "every change saves at once; “Saved” fades"
+  },
+  {
+   "area": "settings",
+   "state": "footer-hover-dark",
+   "theme": "dark",
+   "file": "settings/footer-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-dark",
+   "theme": "dark",
+   "file": "hotkeys/recording-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-held-dark",
+   "theme": "dark",
+   "file": "hotkeys/recording-held-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "rejected-dark",
+   "theme": "dark",
+   "file": "hotkeys/rejected-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "warning-dark",
+   "theme": "dark",
+   "file": "hotkeys/warning-dark.png",
+   "issues": [],
+   "note": "accepted with a warning: Reset appears for a custom key"
+  },
+  {
+   "area": "settings",
+   "state": "voice-off-dark",
+   "theme": "dark",
+   "file": "settings/voice-off-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "sheet-dark",
+   "theme": "dark",
+   "file": "shortcuts/sheet-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "row-hover-dark",
+   "theme": "dark",
+   "file": "shortcuts/row-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "change-hover-dark",
+   "theme": "dark",
+   "file": "shortcuts/change-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "change-focus-dark",
+   "theme": "dark",
+   "file": "shortcuts/change-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "froze-toast-dark",
+   "theme": "dark",
+   "file": "guard/froze-toast-dark.png",
+   "issues": [],
+   "note": "on the next load after a mod froze the page"
+  },
+  {
+   "area": "guard",
+   "state": "paused-toast-dark",
+   "theme": "dark",
+   "file": "guard/paused-toast-dark.png",
+   "issues": [],
+   "note": "the kit paused a mod: why, Turn back on, Fix it"
+  },
+  {
+   "area": "guard",
+   "state": "paused-toast-focus-dark",
+   "theme": "dark",
+   "file": "guard/paused-toast-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-slowing-dark",
+   "theme": "dark",
+   "file": "guard/row-slowing-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-froze-dark",
+   "theme": "dark",
+   "file": "guard/row-froze-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-hid-dark",
+   "theme": "dark",
+   "file": "guard/row-hid-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-slowing-now-dark",
+   "theme": "dark",
+   "file": "guard/row-slowing-now-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-turn-on-hover-dark",
+   "theme": "dark",
+   "file": "guard/row-turn-on-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-fix-focus-dark",
+   "theme": "dark",
+   "file": "guard/row-fix-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "back-on-toast-dark",
+   "theme": "dark",
+   "file": "guard/back-on-toast-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "refused-hide-dark",
+   "theme": "dark",
+   "file": "guard/refused-hide-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "refused-loop-dark",
+   "theme": "dark",
+   "file": "guard/refused-loop-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "refused-wipe-dark",
+   "theme": "dark",
+   "file": "guard/refused-wipe-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "refused-nav-dark",
+   "theme": "dark",
+   "file": "guard/refused-nav-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "draft-paused-toast-dark",
+   "theme": "dark",
+   "file": "guard/draft-paused-toast-dark.png",
+   "issues": [],
+   "note": "a change still in the bar: nothing to turn off, so it says to describe it another way"
+  },
+  {
+   "area": "waiting",
+   "state": "notice-dark",
+   "theme": "dark",
+   "file": "waiting/notice-dark.png",
+   "issues": [],
+   "note": "once per site in a tab: which mod waits, what already shows, and Open Morse's details"
+  },
+  {
+   "area": "waiting",
+   "state": "notice-focus-dark",
+   "theme": "dark",
+   "file": "waiting/notice-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "waiting",
+   "state": "bar-note-dark",
+   "theme": "dark",
+   "file": "waiting/bar-note-dark.png",
+   "issues": [],
+   "note": "the bar's note: the same words, Turn it on, and × (for this page)"
+  },
+  {
+   "area": "waiting",
+   "state": "bar-note-focus-dark",
+   "theme": "dark",
+   "file": "waiting/bar-note-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "waiting",
+   "state": "panel-row-dark",
+   "theme": "dark",
+   "file": "waiting/panel-row-dark.png",
+   "issues": [],
+   "note": "the tag on the mod: waits for “Allow User Scripts” (the full sentence is its title)"
+  },
+  {
+   "area": "waiting",
+   "state": "result-dark",
+   "theme": "dark",
+   "file": "waiting/result-dark.png",
+   "issues": [],
+   "note": "the result never just looks done: the note, and Turn on “Allow User Scripts” first"
+  },
+  {
+   "area": "waiting",
+   "state": "result-practice-dark",
+   "theme": "dark",
+   "file": "waiting/result-practice-dark.png",
+   "issues": [],
+   "note": "on the practice page: this is how it looks, and what it adds works on real websites"
+  },
+  {
+   "area": "packs",
+   "state": "panel-make-dark",
+   "theme": "dark",
+   "file": "packs/panel-make-dark.png",
+   "issues": [],
+   "note": "Packs · Make a pack… sits with the backup buttons at the foot of the panel"
+  },
+  {
+   "area": "packs",
+   "state": "panel-make-focus-dark",
+   "theme": "dark",
+   "file": "packs/panel-make-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "choose-none-dark",
+   "theme": "dark",
+   "file": "packs/choose-none-dark.png",
+   "issues": [],
+   "note": "a tick on every row; Next stays off until one is chosen"
+  },
+  {
+   "area": "packs",
+   "state": "choose-dark",
+   "theme": "dark",
+   "file": "packs/choose-dark.png",
+   "issues": [],
+   "note": "three chosen: the strip counts them, Next turns on"
+  },
+  {
+   "area": "packs",
+   "state": "choose-tick-focus-dark",
+   "theme": "dark",
+   "file": "packs/choose-tick-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "make-no-name-dark",
+   "theme": "dark",
+   "file": "packs/make-no-name-dark.png",
+   "issues": [],
+   "note": "Copy link without a name: “Give the pack a name.” and the name field has focus"
+  },
+  {
+   "area": "packs",
+   "state": "make-dark",
+   "theme": "dark",
+   "file": "packs/make-dark.png",
+   "issues": [],
+   "note": "name, an optional note, the mods in it; Copy link is the main button"
+  },
+  {
+   "area": "packs",
+   "state": "make-name-focus-dark",
+   "theme": "dark",
+   "file": "packs/make-name-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "make-link-dark",
+   "theme": "dark",
+   "file": "packs/make-link-dark.png",
+   "issues": [],
+   "note": "the link, Copy again, and Cancel becomes Done"
+  },
+  {
+   "area": "packs",
+   "state": "review-dark",
+   "theme": "dark",
+   "file": "packs/review-dark.png",
+   "issues": [],
+   "note": "every mod with a tick, what it does and where; the one for every website and the clash need a choice; Cancel has focus"
+  },
+  {
+   "area": "packs",
+   "state": "review-clash-dark",
+   "theme": "dark",
+   "file": "packs/review-clash-dark.png",
+   "issues": [],
+   "note": "a mod with the same id as one of yours: Keep both (the default) or Replace yours"
+  },
+  {
+   "area": "packs",
+   "state": "review-clash-focus-dark",
+   "theme": "dark",
+   "file": "packs/review-clash-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "review-wide-dark",
+   "theme": "dark",
+   "file": "packs/review-wide-dark.png",
+   "issues": [],
+   "note": "every website: not ticked, with the note in full"
+  },
+  {
+   "area": "packs",
+   "state": "review-sends-dark",
+   "theme": "dark",
+   "file": "packs/review-sends-dark.png",
+   "issues": [],
+   "note": "a mod that sends what's on the page somewhere: the note says so"
+  },
+  {
+   "area": "packs",
+   "state": "review-unticked-dark",
+   "theme": "dark",
+   "file": "packs/review-unticked-dark.png",
+   "issues": [],
+   "note": "unticked: the mod folds to its name, muted by color, not opacity"
+  },
+  {
+   "area": "packs",
+   "state": "review-end-dark",
+   "theme": "dark",
+   "file": "packs/review-end-dark.png",
+   "issues": [],
+   "note": "the end: Check this address for updates (the person's choice), Install with the count"
+  },
+  {
+   "area": "packs",
+   "state": "review-install-focus-dark",
+   "theme": "dark",
+   "file": "packs/review-install-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "installed-toast-dark",
+   "theme": "dark",
+   "file": "packs/installed-toast-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "panel-group-dark",
+   "theme": "dark",
+   "file": "packs/panel-group-dark.png",
+   "issues": [],
+   "note": "the pack's name, how many mods, “gets updates”, Copy link and Stop updates; its mods under it"
+  },
+  {
+   "area": "packs",
+   "state": "panel-group-switch-focus-dark",
+   "theme": "dark",
+   "file": "packs/panel-group-switch-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "panel-group-off-dark",
+   "theme": "dark",
+   "file": "packs/panel-group-off-dark.png",
+   "issues": [],
+   "note": "the whole pack off with one switch"
+  },
+  {
+   "area": "packs",
+   "state": "panel-update-dark",
+   "theme": "dark",
+   "file": "packs/panel-update-dark.png",
+   "issues": [],
+   "note": "Update available, what changed in a few words, Review…"
+  },
+  {
+   "area": "packs",
+   "state": "update-dark",
+   "theme": "dark",
+   "file": "packs/update-dark.png",
+   "issues": [],
+   "note": "what changed, the team's note, then changed (with the lines), new and removed; nothing changes until Update"
+  },
+  {
+   "area": "packs",
+   "state": "update-changed-dark",
+   "theme": "dark",
+   "file": "packs/update-changed-dark.png",
+   "issues": [],
+   "note": "a changed mod: the line counts and the diff, open when short"
+  },
+  {
+   "area": "packs",
+   "state": "update-end-dark",
+   "theme": "dark",
+   "file": "packs/update-end-dark.png",
+   "issues": [],
+   "note": "no longer in the pack (untick to keep it), the mods left out before, and History keeps your versions"
+  },
+  {
+   "area": "i18n",
+   "state": "de-bar-dark",
+   "theme": "dark",
+   "file": "i18n/de-bar-dark.png",
+   "issues": [],
+   "note": "de: the empty bar, suggestions and hint"
+  },
+  {
+   "area": "i18n",
+   "state": "de-typing-dark",
+   "theme": "dark",
+   "file": "i18n/de-typing-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-working-dark",
+   "theme": "dark",
+   "file": "i18n/de-working-dark.png",
+   "issues": [],
+   "note": "a status stage in this language"
+  },
+  {
+   "area": "i18n",
+   "state": "de-result-dark",
+   "theme": "dark",
+   "file": "i18n/de-result-dark.png",
+   "issues": [],
+   "note": "the result: title, timing, Save Undo Edit code Share"
+  },
+  {
+   "area": "i18n",
+   "state": "de-error-dark",
+   "theme": "dark",
+   "file": "i18n/de-error-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-settings-dark",
+   "theme": "dark",
+   "file": "i18n/de-settings-dark.png",
+   "issues": [],
+   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
+  },
+  {
+   "area": "i18n",
+   "state": "de-settings-bottom-dark",
+   "theme": "dark",
+   "file": "i18n/de-settings-bottom-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-menu-dark",
+   "theme": "dark",
+   "file": "i18n/de-menu-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-panel-dark",
+   "theme": "dark",
+   "file": "i18n/de-panel-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-panel-row-dark",
+   "theme": "dark",
+   "file": "i18n/de-panel-row-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-panel-foot-dark",
+   "theme": "dark",
+   "file": "i18n/de-panel-foot-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-bar-dark",
+   "theme": "dark",
+   "file": "i18n/fa-bar-dark.png",
+   "issues": [],
+   "note": "fa: the empty bar, suggestions and hint"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-typing-dark",
+   "theme": "dark",
+   "file": "i18n/fa-typing-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-working-dark",
+   "theme": "dark",
+   "file": "i18n/fa-working-dark.png",
+   "issues": [],
+   "note": "a status stage in this language"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-result-dark",
+   "theme": "dark",
+   "file": "i18n/fa-result-dark.png",
+   "issues": [],
+   "note": "the result: title, timing, Save Undo Edit code Share"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-error-dark",
+   "theme": "dark",
+   "file": "i18n/fa-error-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-settings-dark",
+   "theme": "dark",
+   "file": "i18n/fa-settings-dark.png",
+   "issues": [],
+   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-settings-bottom-dark",
+   "theme": "dark",
+   "file": "i18n/fa-settings-bottom-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-menu-dark",
+   "theme": "dark",
+   "file": "i18n/fa-menu-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-panel-dark",
+   "theme": "dark",
+   "file": "i18n/fa-panel-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-panel-row-dark",
+   "theme": "dark",
+   "file": "i18n/fa-panel-row-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-panel-foot-dark",
+   "theme": "dark",
+   "file": "i18n/fa-panel-foot-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "open-narrow-dark",
+   "theme": "dark",
+   "file": "menu/open-narrow-dark.png",
+   "issues": [],
+   "note": "the first item takes focus (row highlight); ↑/↓ move"
+  },
+  {
+   "area": "settings",
+   "state": "sheet-narrow-dark",
+   "theme": "dark",
+   "file": "settings/sheet-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "sheet-bottom-narrow-dark",
+   "theme": "dark",
+   "file": "settings/sheet-bottom-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-narrow-dark",
+   "theme": "dark",
+   "file": "hotkeys/recording-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-held-narrow-dark",
+   "theme": "dark",
+   "file": "hotkeys/recording-held-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "rejected-narrow-dark",
+   "theme": "dark",
+   "file": "hotkeys/rejected-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "warning-narrow-dark",
+   "theme": "dark",
+   "file": "hotkeys/warning-narrow-dark.png",
+   "issues": [],
+   "note": "accepted with a warning: Reset appears for a custom key"
+  },
+  {
+   "area": "settings",
+   "state": "voice-off-narrow-dark",
+   "theme": "dark",
+   "file": "settings/voice-off-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "sheet-narrow-dark",
+   "theme": "dark",
+   "file": "shortcuts/sheet-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "froze-toast-narrow-dark",
+   "theme": "dark",
+   "file": "guard/froze-toast-narrow-dark.png",
+   "issues": [],
+   "note": "on the next load after a mod froze the page"
+  },
+  {
+   "area": "guard",
+   "state": "paused-toast-narrow-dark",
+   "theme": "dark",
+   "file": "guard/paused-toast-narrow-dark.png",
+   "issues": [],
+   "note": "the kit paused a mod: why, Turn back on, Fix it"
+  },
+  {
+   "area": "guard",
+   "state": "row-slowing-narrow-dark",
+   "theme": "dark",
+   "file": "guard/row-slowing-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-froze-narrow-dark",
+   "theme": "dark",
+   "file": "guard/row-froze-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-hid-narrow-dark",
+   "theme": "dark",
+   "file": "guard/row-hid-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-slowing-now-narrow-dark",
+   "theme": "dark",
+   "file": "guard/row-slowing-now-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "back-on-toast-narrow-dark",
+   "theme": "dark",
+   "file": "guard/back-on-toast-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "refused-hide-narrow-dark",
+   "theme": "dark",
+   "file": "guard/refused-hide-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "refused-loop-narrow-dark",
+   "theme": "dark",
+   "file": "guard/refused-loop-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "draft-paused-toast-narrow-dark",
+   "theme": "dark",
+   "file": "guard/draft-paused-toast-narrow-dark.png",
+   "issues": [],
+   "note": "a change still in the bar: nothing to turn off, so it says to describe it another way"
+  },
+  {
+   "area": "waiting",
+   "state": "notice-narrow-dark",
+   "theme": "dark",
+   "file": "waiting/notice-narrow-dark.png",
+   "issues": [],
+   "note": "once per site in a tab: which mod waits, what already shows, and Open Morse's details"
+  },
+  {
+   "area": "waiting",
+   "state": "bar-note-narrow-dark",
+   "theme": "dark",
+   "file": "waiting/bar-note-narrow-dark.png",
+   "issues": [],
+   "note": "the bar's note: the same words, Turn it on, and × (for this page)"
+  },
+  {
+   "area": "waiting",
+   "state": "panel-row-narrow-dark",
+   "theme": "dark",
+   "file": "waiting/panel-row-narrow-dark.png",
+   "issues": [],
+   "note": "the tag on the mod: waits for “Allow User Scripts” (the full sentence is its title)"
+  },
+  {
+   "area": "waiting",
+   "state": "result-narrow-dark",
+   "theme": "dark",
+   "file": "waiting/result-narrow-dark.png",
+   "issues": [],
+   "note": "the result never just looks done: the note, and Turn on “Allow User Scripts” first"
+  },
+  {
+   "area": "waiting",
+   "state": "result-practice-narrow-dark",
+   "theme": "dark",
+   "file": "waiting/result-practice-narrow-dark.png",
+   "issues": [],
+   "note": "on the practice page: this is how it looks, and what it adds works on real websites"
+  },
+  {
+   "area": "packs",
+   "state": "panel-make-narrow-dark",
+   "theme": "dark",
+   "file": "packs/panel-make-narrow-dark.png",
+   "issues": [],
+   "note": "Packs · Make a pack… sits with the backup buttons at the foot of the panel"
+  },
+  {
+   "area": "packs",
+   "state": "choose-none-narrow-dark",
+   "theme": "dark",
+   "file": "packs/choose-none-narrow-dark.png",
+   "issues": [],
+   "note": "a tick on every row; Next stays off until one is chosen"
+  },
+  {
+   "area": "packs",
+   "state": "choose-narrow-dark",
+   "theme": "dark",
+   "file": "packs/choose-narrow-dark.png",
+   "issues": [],
+   "note": "three chosen: the strip counts them, Next turns on"
+  },
+  {
+   "area": "packs",
+   "state": "make-no-name-narrow-dark",
+   "theme": "dark",
+   "file": "packs/make-no-name-narrow-dark.png",
+   "issues": [],
+   "note": "Copy link without a name: “Give the pack a name.” and the name field has focus"
+  },
+  {
+   "area": "packs",
+   "state": "make-narrow-dark",
+   "theme": "dark",
+   "file": "packs/make-narrow-dark.png",
+   "issues": [],
+   "note": "name, an optional note, the mods in it; Copy link is the main button"
+  },
+  {
+   "area": "packs",
+   "state": "make-link-narrow-dark",
+   "theme": "dark",
+   "file": "packs/make-link-narrow-dark.png",
+   "issues": [],
+   "note": "the link, Copy again, and Cancel becomes Done"
+  },
+  {
+   "area": "packs",
+   "state": "review-narrow-dark",
+   "theme": "dark",
+   "file": "packs/review-narrow-dark.png",
+   "issues": [],
+   "note": "every mod with a tick, what it does and where; the one for every website and the clash need a choice; Cancel has focus"
+  },
+  {
+   "area": "packs",
+   "state": "review-clash-narrow-dark",
+   "theme": "dark",
+   "file": "packs/review-clash-narrow-dark.png",
+   "issues": [],
+   "note": "a mod with the same id as one of yours: Keep both (the default) or Replace yours"
+  },
+  {
+   "area": "packs",
+   "state": "review-wide-narrow-dark",
+   "theme": "dark",
+   "file": "packs/review-wide-narrow-dark.png",
+   "issues": [],
+   "note": "every website: not ticked, with the note in full"
+  },
+  {
+   "area": "packs",
+   "state": "review-sends-narrow-dark",
+   "theme": "dark",
+   "file": "packs/review-sends-narrow-dark.png",
+   "issues": [],
+   "note": "a mod that sends what's on the page somewhere: the note says so"
+  },
+  {
+   "area": "packs",
+   "state": "review-unticked-narrow-dark",
+   "theme": "dark",
+   "file": "packs/review-unticked-narrow-dark.png",
+   "issues": [],
+   "note": "unticked: the mod folds to its name, muted by color, not opacity"
+  },
+  {
+   "area": "packs",
+   "state": "review-end-narrow-dark",
+   "theme": "dark",
+   "file": "packs/review-end-narrow-dark.png",
+   "issues": [],
+   "note": "the end: Check this address for updates (the person's choice), Install with the count"
+  },
+  {
+   "area": "packs",
+   "state": "installed-toast-narrow-dark",
+   "theme": "dark",
+   "file": "packs/installed-toast-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "panel-group-narrow-dark",
+   "theme": "dark",
+   "file": "packs/panel-group-narrow-dark.png",
+   "issues": [],
+   "note": "the pack's name, how many mods, “gets updates”, Copy link and Stop updates; its mods under it"
+  },
+  {
+   "area": "packs",
+   "state": "panel-group-off-narrow-dark",
+   "theme": "dark",
+   "file": "packs/panel-group-off-narrow-dark.png",
+   "issues": [],
+   "note": "the whole pack off with one switch"
+  },
+  {
+   "area": "packs",
+   "state": "panel-update-narrow-dark",
+   "theme": "dark",
+   "file": "packs/panel-update-narrow-dark.png",
+   "issues": [],
+   "note": "Update available, what changed in a few words, Review…"
+  },
+  {
+   "area": "packs",
+   "state": "update-narrow-dark",
+   "theme": "dark",
+   "file": "packs/update-narrow-dark.png",
+   "issues": [],
+   "note": "what changed, the team's note, then changed (with the lines), new and removed; nothing changes until Update"
+  },
+  {
+   "area": "packs",
+   "state": "update-changed-narrow-dark",
+   "theme": "dark",
+   "file": "packs/update-changed-narrow-dark.png",
+   "issues": [],
+   "note": "a changed mod: the line counts and the diff, open when short"
+  },
+  {
+   "area": "packs",
+   "state": "update-end-narrow-dark",
+   "theme": "dark",
+   "file": "packs/update-end-narrow-dark.png",
+   "issues": [],
+   "note": "no longer in the pack (untick to keep it), the mods left out before, and History keeps your versions"
+  },
+  {
+   "area": "i18n",
+   "state": "de-bar-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/de-bar-narrow-dark.png",
+   "issues": [],
+   "note": "de: the empty bar, suggestions and hint"
+  },
+  {
+   "area": "i18n",
+   "state": "de-typing-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/de-typing-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-working-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/de-working-narrow-dark.png",
+   "issues": [],
+   "note": "a status stage in this language"
+  },
+  {
+   "area": "i18n",
+   "state": "de-result-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/de-result-narrow-dark.png",
+   "issues": [],
+   "note": "the result: title, timing, Save Undo Edit code Share"
+  },
+  {
+   "area": "i18n",
+   "state": "de-error-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/de-error-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-settings-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/de-settings-narrow-dark.png",
+   "issues": [],
+   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
+  },
+  {
+   "area": "i18n",
+   "state": "de-settings-bottom-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/de-settings-bottom-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-menu-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/de-menu-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-panel-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/de-panel-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-panel-row-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/de-panel-row-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-panel-foot-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/de-panel-foot-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-bar-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/fa-bar-narrow-dark.png",
+   "issues": [],
+   "note": "fa: the empty bar, suggestions and hint"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-typing-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/fa-typing-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-working-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/fa-working-narrow-dark.png",
+   "issues": [],
+   "note": "a status stage in this language"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-result-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/fa-result-narrow-dark.png",
+   "issues": [],
+   "note": "the result: title, timing, Save Undo Edit code Share"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-error-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/fa-error-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-settings-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/fa-settings-narrow-dark.png",
+   "issues": [],
+   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-settings-bottom-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/fa-settings-bottom-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-menu-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/fa-menu-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-panel-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/fa-panel-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-panel-row-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/fa-panel-row-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-panel-foot-narrow-dark",
+   "theme": "dark",
+   "file": "i18n/fa-panel-foot-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "picking-light",
+   "theme": "light",
+   "file": "bar/picking-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "radar",
+   "state": "mark-static-light",
+   "theme": "light",
+   "file": "radar/mark-static-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "picker",
+   "state": "hover-small-light",
+   "theme": "light",
+   "file": "picker/hover-small-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "picker",
+   "state": "hover-large-light",
+   "theme": "light",
+   "file": "picker/hover-large-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "picker",
+   "state": "hover-top-edge-light",
+   "theme": "light",
+   "file": "picker/hover-top-edge-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "picker",
+   "state": "hover-right-edge-light",
+   "theme": "light",
+   "file": "picker/hover-right-edge-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "chip-short-light",
+   "theme": "light",
+   "file": "bar/chip-short-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "picker",
+   "state": "selected-light",
+   "theme": "light",
+   "file": "picker/selected-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "go-hover-light",
+   "theme": "light",
+   "file": "bar/go-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "go-focus-light",
+   "theme": "light",
+   "file": "bar/go-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "mods-button-hover-light",
+   "theme": "light",
+   "file": "bar/mods-button-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "mods-button-focus-light",
+   "theme": "light",
+   "file": "bar/mods-button-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "input-focus-light",
+   "theme": "light",
+   "file": "bar/input-focus-light.png",
+   "issues": [],
+   "note": "the input has no ring by design; the caret and the bar are the focus"
+  },
+  {
+   "area": "bar",
+   "state": "chip-x-hover-light",
+   "theme": "light",
+   "file": "bar/chip-x-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "chip-x-focus-light",
+   "theme": "light",
+   "file": "bar/chip-x-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "chip-long-light",
+   "theme": "light",
+   "file": "bar/chip-long-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "typing-short-light",
+   "theme": "light",
+   "file": "bar/typing-short-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "typing-long-light",
+   "theme": "light",
+   "file": "bar/typing-long-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "typing-multiline-light",
+   "theme": "light",
+   "file": "bar/typing-multiline-light.png",
+   "issues": [],
+   "note": "single-line input: pasted newlines collapse to spaces (by design; Enter submits)"
+  },
+  {
+   "area": "bar",
+   "state": "thinking-light",
+   "theme": "light",
+   "file": "bar/thinking-light.png",
+   "issues": [],
+   "note": "stage 1: “Asking the model” as soon as Enter is pressed"
+  },
+  {
+   "area": "radar",
+   "state": "mark-live-light",
+   "theme": "light",
+   "file": "radar/mark-live-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "stage-reading-light",
+   "theme": "light",
+   "file": "bar/stage-reading-light.png",
+   "issues": [],
+   "note": "stage 2: “The model is reading the page”"
+  },
+  {
+   "area": "bar",
+   "state": "stage-thinking-light",
+   "theme": "light",
+   "file": "bar/stage-thinking-light.png",
+   "issues": [],
+   "note": "stage 2b: “Thinking”, for a model that thinks first"
+  },
+  {
+   "area": "bar",
+   "state": "writing-light",
+   "theme": "light",
+   "file": "bar/writing-light.png",
+   "issues": [],
+   "note": "stage 3: “Writing the change”, the ticker shows the words as they come"
+  },
+  {
+   "area": "bar",
+   "state": "writing-visible-light",
+   "theme": "light",
+   "file": "bar/writing-visible-light.png",
+   "issues": [],
+   "note": "stage 3b: “Writing the change · you can see it now”, once the new look shows while the rest is written"
+  },
+  {
+   "area": "bar",
+   "state": "fixing-light",
+   "theme": "light",
+   "file": "bar/fixing-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "applying-light",
+   "theme": "light",
+   "file": "bar/applying-light.png",
+   "issues": [],
+   "note": "stage 4: “Trying the change”"
+  },
+  {
+   "area": "bar",
+   "state": "result-light",
+   "theme": "light",
+   "file": "bar/result-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-keep-hover-light",
+   "theme": "light",
+   "file": "bar/result-keep-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-keep-focus-light",
+   "theme": "light",
+   "file": "bar/result-keep-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-undo-hover-light",
+   "theme": "light",
+   "file": "bar/result-undo-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-undo-focus-light",
+   "theme": "light",
+   "file": "bar/result-undo-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-code-hover-light",
+   "theme": "light",
+   "file": "bar/result-code-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-code-focus-light",
+   "theme": "light",
+   "file": "bar/result-code-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-share-hover-light",
+   "theme": "light",
+   "file": "bar/result-share-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-share-focus-light",
+   "theme": "light",
+   "file": "bar/result-share-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-long-repaired-light",
+   "theme": "light",
+   "file": "bar/result-long-repaired-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "error-light",
+   "theme": "light",
+   "file": "bar/error-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "error-again-hover-light",
+   "theme": "light",
+   "file": "bar/error-again-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "error-again-focus-light",
+   "theme": "light",
+   "file": "bar/error-again-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "picking-with-mods-light",
+   "theme": "light",
+   "file": "bar/picking-with-mods-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "picking-narrow-light",
+   "theme": "light",
+   "file": "bar/picking-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "picker",
+   "state": "hover-large-narrow-light",
+   "theme": "light",
+   "file": "picker/hover-large-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "chip-short-narrow-light",
+   "theme": "light",
+   "file": "bar/chip-short-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "chip-long-narrow-light",
+   "theme": "light",
+   "file": "bar/chip-long-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "typing-short-narrow-light",
+   "theme": "light",
+   "file": "bar/typing-short-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "typing-long-narrow-light",
+   "theme": "light",
+   "file": "bar/typing-long-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "typing-multiline-narrow-light",
+   "theme": "light",
+   "file": "bar/typing-multiline-narrow-light.png",
+   "issues": [],
+   "note": "single-line input: pasted newlines collapse to spaces (by design; Enter submits)"
+  },
+  {
+   "area": "bar",
+   "state": "thinking-narrow-light",
+   "theme": "light",
+   "file": "bar/thinking-narrow-light.png",
+   "issues": [],
+   "note": "stage 1: “Asking the model” as soon as Enter is pressed"
+  },
+  {
+   "area": "bar",
+   "state": "stage-reading-narrow-light",
+   "theme": "light",
+   "file": "bar/stage-reading-narrow-light.png",
+   "issues": [],
+   "note": "stage 2: “The model is reading the page”"
+  },
+  {
+   "area": "bar",
+   "state": "stage-thinking-narrow-light",
+   "theme": "light",
+   "file": "bar/stage-thinking-narrow-light.png",
+   "issues": [],
+   "note": "stage 2b: “Thinking”, for a model that thinks first"
+  },
+  {
+   "area": "bar",
+   "state": "writing-narrow-light",
+   "theme": "light",
+   "file": "bar/writing-narrow-light.png",
+   "issues": [],
+   "note": "stage 3: “Writing the change”, the ticker shows the words as they come"
+  },
+  {
+   "area": "bar",
+   "state": "writing-visible-narrow-light",
+   "theme": "light",
+   "file": "bar/writing-visible-narrow-light.png",
+   "issues": [],
+   "note": "stage 3b: “Writing the change · you can see it now”, once the new look shows while the rest is written"
+  },
+  {
+   "area": "bar",
+   "state": "fixing-narrow-light",
+   "theme": "light",
+   "file": "bar/fixing-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "applying-narrow-light",
+   "theme": "light",
+   "file": "bar/applying-narrow-light.png",
+   "issues": [],
+   "note": "stage 4: “Trying the change”"
+  },
+  {
+   "area": "bar",
+   "state": "result-narrow-light",
+   "theme": "light",
+   "file": "bar/result-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "result-long-repaired-narrow-light",
+   "theme": "light",
+   "file": "bar/result-long-repaired-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "error-narrow-light",
+   "theme": "light",
+   "file": "bar/error-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "picking-with-mods-narrow-light",
+   "theme": "light",
+   "file": "bar/picking-with-mods-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "more-hover-light",
+   "theme": "light",
+   "file": "menu/more-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "more-focus-light",
+   "theme": "light",
+   "file": "menu/more-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "open-light",
+   "theme": "light",
+   "file": "menu/open-light.png",
+   "issues": [],
+   "note": "the first item takes focus (row highlight); ↑/↓ move"
+  },
+  {
+   "area": "menu",
+   "state": "item-focus-light",
+   "theme": "light",
+   "file": "menu/item-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "item-hover-light",
+   "theme": "light",
+   "file": "menu/item-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "sheet-light",
+   "theme": "light",
+   "file": "settings/sheet-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "sheet-bottom-light",
+   "theme": "light",
+   "file": "settings/sheet-bottom-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "idle-light",
+   "theme": "light",
+   "file": "hotkeys/idle-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "button-hover-light",
+   "theme": "light",
+   "file": "hotkeys/button-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "button-focus-light",
+   "theme": "light",
+   "file": "hotkeys/button-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "done-hover-light",
+   "theme": "light",
+   "file": "settings/done-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "done-focus-light",
+   "theme": "light",
+   "file": "settings/done-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "segment-hover-light",
+   "theme": "light",
+   "file": "settings/segment-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "segment-focus-light",
+   "theme": "light",
+   "file": "settings/segment-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "switch-focus-light",
+   "theme": "light",
+   "file": "settings/switch-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "voice-ready-light",
+   "theme": "light",
+   "file": "settings/voice-ready-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "saved-flash-light",
+   "theme": "light",
+   "file": "settings/saved-flash-light.png",
+   "issues": [],
+   "note": "every change saves at once; “Saved” fades"
+  },
+  {
+   "area": "settings",
+   "state": "footer-hover-light",
+   "theme": "light",
+   "file": "settings/footer-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-light",
+   "theme": "light",
+   "file": "hotkeys/recording-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-held-light",
+   "theme": "light",
+   "file": "hotkeys/recording-held-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "rejected-light",
+   "theme": "light",
+   "file": "hotkeys/rejected-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "warning-light",
+   "theme": "light",
+   "file": "hotkeys/warning-light.png",
+   "issues": [],
+   "note": "accepted with a warning: Reset appears for a custom key"
+  },
+  {
+   "area": "settings",
+   "state": "voice-off-light",
+   "theme": "light",
+   "file": "settings/voice-off-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "sheet-light",
+   "theme": "light",
+   "file": "shortcuts/sheet-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "row-hover-light",
+   "theme": "light",
+   "file": "shortcuts/row-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "change-hover-light",
+   "theme": "light",
+   "file": "shortcuts/change-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "change-focus-light",
+   "theme": "light",
+   "file": "shortcuts/change-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "froze-toast-light",
+   "theme": "light",
+   "file": "guard/froze-toast-light.png",
+   "issues": [],
+   "note": "on the next load after a mod froze the page"
+  },
+  {
+   "area": "guard",
+   "state": "paused-toast-light",
+   "theme": "light",
+   "file": "guard/paused-toast-light.png",
+   "issues": [],
+   "note": "the kit paused a mod: why, Turn back on, Fix it"
+  },
+  {
+   "area": "guard",
+   "state": "paused-toast-focus-light",
+   "theme": "light",
+   "file": "guard/paused-toast-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-slowing-light",
+   "theme": "light",
+   "file": "guard/row-slowing-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-froze-light",
+   "theme": "light",
+   "file": "guard/row-froze-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-hid-light",
+   "theme": "light",
+   "file": "guard/row-hid-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-slowing-now-light",
+   "theme": "light",
+   "file": "guard/row-slowing-now-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-turn-on-hover-light",
+   "theme": "light",
+   "file": "guard/row-turn-on-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-fix-focus-light",
+   "theme": "light",
+   "file": "guard/row-fix-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "back-on-toast-light",
+   "theme": "light",
+   "file": "guard/back-on-toast-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "refused-hide-light",
+   "theme": "light",
+   "file": "guard/refused-hide-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "refused-loop-light",
+   "theme": "light",
+   "file": "guard/refused-loop-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "refused-wipe-light",
+   "theme": "light",
+   "file": "guard/refused-wipe-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "refused-nav-light",
+   "theme": "light",
+   "file": "guard/refused-nav-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "draft-paused-toast-light",
+   "theme": "light",
+   "file": "guard/draft-paused-toast-light.png",
+   "issues": [],
+   "note": "a change still in the bar: nothing to turn off, so it says to describe it another way"
+  },
+  {
+   "area": "waiting",
+   "state": "notice-light",
+   "theme": "light",
+   "file": "waiting/notice-light.png",
+   "issues": [],
+   "note": "once per site in a tab: which mod waits, what already shows, and Open Morse's details"
+  },
+  {
+   "area": "waiting",
+   "state": "notice-focus-light",
+   "theme": "light",
+   "file": "waiting/notice-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "waiting",
+   "state": "bar-note-light",
+   "theme": "light",
+   "file": "waiting/bar-note-light.png",
+   "issues": [],
+   "note": "the bar's note: the same words, Turn it on, and × (for this page)"
+  },
+  {
+   "area": "waiting",
+   "state": "bar-note-focus-light",
+   "theme": "light",
+   "file": "waiting/bar-note-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "waiting",
+   "state": "panel-row-light",
+   "theme": "light",
+   "file": "waiting/panel-row-light.png",
+   "issues": [],
+   "note": "the tag on the mod: waits for “Allow User Scripts” (the full sentence is its title)"
+  },
+  {
+   "area": "waiting",
+   "state": "result-light",
+   "theme": "light",
+   "file": "waiting/result-light.png",
+   "issues": [],
+   "note": "the result never just looks done: the note, and Turn on “Allow User Scripts” first"
+  },
+  {
+   "area": "waiting",
+   "state": "result-practice-light",
+   "theme": "light",
+   "file": "waiting/result-practice-light.png",
+   "issues": [],
+   "note": "on the practice page: this is how it looks, and what it adds works on real websites"
+  },
+  {
+   "area": "packs",
+   "state": "panel-make-light",
+   "theme": "light",
+   "file": "packs/panel-make-light.png",
+   "issues": [],
+   "note": "Packs · Make a pack… sits with the backup buttons at the foot of the panel"
+  },
+  {
+   "area": "packs",
+   "state": "panel-make-focus-light",
+   "theme": "light",
+   "file": "packs/panel-make-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "choose-none-light",
+   "theme": "light",
+   "file": "packs/choose-none-light.png",
+   "issues": [],
+   "note": "a tick on every row; Next stays off until one is chosen"
+  },
+  {
+   "area": "packs",
+   "state": "choose-light",
+   "theme": "light",
+   "file": "packs/choose-light.png",
+   "issues": [],
+   "note": "three chosen: the strip counts them, Next turns on"
+  },
+  {
+   "area": "packs",
+   "state": "choose-tick-focus-light",
+   "theme": "light",
+   "file": "packs/choose-tick-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "make-no-name-light",
+   "theme": "light",
+   "file": "packs/make-no-name-light.png",
+   "issues": [],
+   "note": "Copy link without a name: “Give the pack a name.” and the name field has focus"
+  },
+  {
+   "area": "packs",
+   "state": "make-light",
+   "theme": "light",
+   "file": "packs/make-light.png",
+   "issues": [],
+   "note": "name, an optional note, the mods in it; Copy link is the main button"
+  },
+  {
+   "area": "packs",
+   "state": "make-name-focus-light",
+   "theme": "light",
+   "file": "packs/make-name-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "make-link-light",
+   "theme": "light",
+   "file": "packs/make-link-light.png",
+   "issues": [],
+   "note": "the link, Copy again, and Cancel becomes Done"
+  },
+  {
+   "area": "packs",
+   "state": "review-light",
+   "theme": "light",
+   "file": "packs/review-light.png",
+   "issues": [],
+   "note": "every mod with a tick, what it does and where; the one for every website and the clash need a choice; Cancel has focus"
+  },
+  {
+   "area": "packs",
+   "state": "review-clash-light",
+   "theme": "light",
+   "file": "packs/review-clash-light.png",
+   "issues": [],
+   "note": "a mod with the same id as one of yours: Keep both (the default) or Replace yours"
+  },
+  {
+   "area": "packs",
+   "state": "review-clash-focus-light",
+   "theme": "light",
+   "file": "packs/review-clash-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "review-wide-light",
+   "theme": "light",
+   "file": "packs/review-wide-light.png",
+   "issues": [],
+   "note": "every website: not ticked, with the note in full"
+  },
+  {
+   "area": "packs",
+   "state": "review-sends-light",
+   "theme": "light",
+   "file": "packs/review-sends-light.png",
+   "issues": [],
+   "note": "a mod that sends what's on the page somewhere: the note says so"
+  },
+  {
+   "area": "packs",
+   "state": "review-unticked-light",
+   "theme": "light",
+   "file": "packs/review-unticked-light.png",
+   "issues": [],
+   "note": "unticked: the mod folds to its name, muted by color, not opacity"
+  },
+  {
+   "area": "packs",
+   "state": "review-end-light",
+   "theme": "light",
+   "file": "packs/review-end-light.png",
+   "issues": [],
+   "note": "the end: Check this address for updates (the person's choice), Install with the count"
+  },
+  {
+   "area": "packs",
+   "state": "review-install-focus-light",
+   "theme": "light",
+   "file": "packs/review-install-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "installed-toast-light",
+   "theme": "light",
+   "file": "packs/installed-toast-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "panel-group-light",
+   "theme": "light",
+   "file": "packs/panel-group-light.png",
+   "issues": [],
+   "note": "the pack's name, how many mods, “gets updates”, Copy link and Stop updates; its mods under it"
+  },
+  {
+   "area": "packs",
+   "state": "panel-group-switch-focus-light",
+   "theme": "light",
+   "file": "packs/panel-group-switch-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "panel-group-off-light",
+   "theme": "light",
+   "file": "packs/panel-group-off-light.png",
+   "issues": [],
+   "note": "the whole pack off with one switch"
+  },
+  {
+   "area": "packs",
+   "state": "panel-update-light",
+   "theme": "light",
+   "file": "packs/panel-update-light.png",
+   "issues": [],
+   "note": "Update available, what changed in a few words, Review…"
+  },
+  {
+   "area": "packs",
+   "state": "update-light",
+   "theme": "light",
+   "file": "packs/update-light.png",
+   "issues": [],
+   "note": "what changed, the team's note, then changed (with the lines), new and removed; nothing changes until Update"
+  },
+  {
+   "area": "packs",
+   "state": "update-changed-light",
+   "theme": "light",
+   "file": "packs/update-changed-light.png",
+   "issues": [],
+   "note": "a changed mod: the line counts and the diff, open when short"
+  },
+  {
+   "area": "packs",
+   "state": "update-end-light",
+   "theme": "light",
+   "file": "packs/update-end-light.png",
+   "issues": [],
+   "note": "no longer in the pack (untick to keep it), the mods left out before, and History keeps your versions"
+  },
+  {
+   "area": "i18n",
+   "state": "de-bar-light",
+   "theme": "light",
+   "file": "i18n/de-bar-light.png",
+   "issues": [],
+   "note": "de: the empty bar, suggestions and hint"
+  },
+  {
+   "area": "i18n",
+   "state": "de-typing-light",
+   "theme": "light",
+   "file": "i18n/de-typing-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-working-light",
+   "theme": "light",
+   "file": "i18n/de-working-light.png",
+   "issues": [],
+   "note": "a status stage in this language"
+  },
+  {
+   "area": "i18n",
+   "state": "de-result-light",
+   "theme": "light",
+   "file": "i18n/de-result-light.png",
+   "issues": [],
+   "note": "the result: title, timing, Save Undo Edit code Share"
+  },
+  {
+   "area": "i18n",
+   "state": "de-error-light",
+   "theme": "light",
+   "file": "i18n/de-error-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-settings-light",
+   "theme": "light",
+   "file": "i18n/de-settings-light.png",
+   "issues": [],
+   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
+  },
+  {
+   "area": "i18n",
+   "state": "de-settings-bottom-light",
+   "theme": "light",
+   "file": "i18n/de-settings-bottom-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-menu-light",
+   "theme": "light",
+   "file": "i18n/de-menu-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-panel-light",
+   "theme": "light",
+   "file": "i18n/de-panel-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-panel-row-light",
+   "theme": "light",
+   "file": "i18n/de-panel-row-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-panel-foot-light",
+   "theme": "light",
+   "file": "i18n/de-panel-foot-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-bar-light",
+   "theme": "light",
+   "file": "i18n/fa-bar-light.png",
+   "issues": [],
+   "note": "fa: the empty bar, suggestions and hint"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-typing-light",
+   "theme": "light",
+   "file": "i18n/fa-typing-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-working-light",
+   "theme": "light",
+   "file": "i18n/fa-working-light.png",
+   "issues": [],
+   "note": "a status stage in this language"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-result-light",
+   "theme": "light",
+   "file": "i18n/fa-result-light.png",
+   "issues": [],
+   "note": "the result: title, timing, Save Undo Edit code Share"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-error-light",
+   "theme": "light",
+   "file": "i18n/fa-error-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-settings-light",
+   "theme": "light",
+   "file": "i18n/fa-settings-light.png",
+   "issues": [],
+   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-settings-bottom-light",
+   "theme": "light",
+   "file": "i18n/fa-settings-bottom-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-menu-light",
+   "theme": "light",
+   "file": "i18n/fa-menu-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-panel-light",
+   "theme": "light",
+   "file": "i18n/fa-panel-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-panel-row-light",
+   "theme": "light",
+   "file": "i18n/fa-panel-row-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-panel-foot-light",
+   "theme": "light",
+   "file": "i18n/fa-panel-foot-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "open-narrow-light",
+   "theme": "light",
+   "file": "menu/open-narrow-light.png",
+   "issues": [],
+   "note": "the first item takes focus (row highlight); ↑/↓ move"
+  },
+  {
+   "area": "settings",
+   "state": "sheet-narrow-light",
+   "theme": "light",
+   "file": "settings/sheet-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "sheet-bottom-narrow-light",
+   "theme": "light",
+   "file": "settings/sheet-bottom-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-narrow-light",
+   "theme": "light",
+   "file": "hotkeys/recording-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-held-narrow-light",
+   "theme": "light",
+   "file": "hotkeys/recording-held-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "rejected-narrow-light",
+   "theme": "light",
+   "file": "hotkeys/rejected-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "warning-narrow-light",
+   "theme": "light",
+   "file": "hotkeys/warning-narrow-light.png",
+   "issues": [],
+   "note": "accepted with a warning: Reset appears for a custom key"
+  },
+  {
+   "area": "settings",
+   "state": "voice-off-narrow-light",
+   "theme": "light",
+   "file": "settings/voice-off-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "sheet-narrow-light",
+   "theme": "light",
+   "file": "shortcuts/sheet-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "froze-toast-narrow-light",
+   "theme": "light",
+   "file": "guard/froze-toast-narrow-light.png",
+   "issues": [],
+   "note": "on the next load after a mod froze the page"
+  },
+  {
+   "area": "guard",
+   "state": "paused-toast-narrow-light",
+   "theme": "light",
+   "file": "guard/paused-toast-narrow-light.png",
+   "issues": [],
+   "note": "the kit paused a mod: why, Turn back on, Fix it"
+  },
+  {
+   "area": "guard",
+   "state": "row-slowing-narrow-light",
+   "theme": "light",
+   "file": "guard/row-slowing-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-froze-narrow-light",
+   "theme": "light",
+   "file": "guard/row-froze-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-hid-narrow-light",
+   "theme": "light",
+   "file": "guard/row-hid-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "row-slowing-now-narrow-light",
+   "theme": "light",
+   "file": "guard/row-slowing-now-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "back-on-toast-narrow-light",
+   "theme": "light",
+   "file": "guard/back-on-toast-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "refused-hide-narrow-light",
+   "theme": "light",
+   "file": "guard/refused-hide-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "refused-loop-narrow-light",
+   "theme": "light",
+   "file": "guard/refused-loop-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "guard",
+   "state": "draft-paused-toast-narrow-light",
+   "theme": "light",
+   "file": "guard/draft-paused-toast-narrow-light.png",
+   "issues": [],
+   "note": "a change still in the bar: nothing to turn off, so it says to describe it another way"
+  },
+  {
+   "area": "waiting",
+   "state": "notice-narrow-light",
+   "theme": "light",
+   "file": "waiting/notice-narrow-light.png",
+   "issues": [],
+   "note": "once per site in a tab: which mod waits, what already shows, and Open Morse's details"
+  },
+  {
+   "area": "waiting",
+   "state": "bar-note-narrow-light",
+   "theme": "light",
+   "file": "waiting/bar-note-narrow-light.png",
+   "issues": [],
+   "note": "the bar's note: the same words, Turn it on, and × (for this page)"
+  },
+  {
+   "area": "waiting",
+   "state": "panel-row-narrow-light",
+   "theme": "light",
+   "file": "waiting/panel-row-narrow-light.png",
+   "issues": [],
+   "note": "the tag on the mod: waits for “Allow User Scripts” (the full sentence is its title)"
+  },
+  {
+   "area": "waiting",
+   "state": "result-narrow-light",
+   "theme": "light",
+   "file": "waiting/result-narrow-light.png",
+   "issues": [],
+   "note": "the result never just looks done: the note, and Turn on “Allow User Scripts” first"
+  },
+  {
+   "area": "waiting",
+   "state": "result-practice-narrow-light",
+   "theme": "light",
+   "file": "waiting/result-practice-narrow-light.png",
+   "issues": [],
+   "note": "on the practice page: this is how it looks, and what it adds works on real websites"
+  },
+  {
+   "area": "packs",
+   "state": "panel-make-narrow-light",
+   "theme": "light",
+   "file": "packs/panel-make-narrow-light.png",
+   "issues": [],
+   "note": "Packs · Make a pack… sits with the backup buttons at the foot of the panel"
+  },
+  {
+   "area": "packs",
+   "state": "choose-none-narrow-light",
+   "theme": "light",
+   "file": "packs/choose-none-narrow-light.png",
+   "issues": [],
+   "note": "a tick on every row; Next stays off until one is chosen"
+  },
+  {
+   "area": "packs",
+   "state": "choose-narrow-light",
+   "theme": "light",
+   "file": "packs/choose-narrow-light.png",
+   "issues": [],
+   "note": "three chosen: the strip counts them, Next turns on"
+  },
+  {
+   "area": "packs",
+   "state": "make-no-name-narrow-light",
+   "theme": "light",
+   "file": "packs/make-no-name-narrow-light.png",
+   "issues": [],
+   "note": "Copy link without a name: “Give the pack a name.” and the name field has focus"
+  },
+  {
+   "area": "packs",
+   "state": "make-narrow-light",
+   "theme": "light",
+   "file": "packs/make-narrow-light.png",
+   "issues": [],
+   "note": "name, an optional note, the mods in it; Copy link is the main button"
+  },
+  {
+   "area": "packs",
+   "state": "make-link-narrow-light",
+   "theme": "light",
+   "file": "packs/make-link-narrow-light.png",
+   "issues": [],
+   "note": "the link, Copy again, and Cancel becomes Done"
+  },
+  {
+   "area": "packs",
+   "state": "review-narrow-light",
+   "theme": "light",
+   "file": "packs/review-narrow-light.png",
+   "issues": [],
+   "note": "every mod with a tick, what it does and where; the one for every website and the clash need a choice; Cancel has focus"
+  },
+  {
+   "area": "packs",
+   "state": "review-clash-narrow-light",
+   "theme": "light",
+   "file": "packs/review-clash-narrow-light.png",
+   "issues": [],
+   "note": "a mod with the same id as one of yours: Keep both (the default) or Replace yours"
+  },
+  {
+   "area": "packs",
+   "state": "review-wide-narrow-light",
+   "theme": "light",
+   "file": "packs/review-wide-narrow-light.png",
+   "issues": [],
+   "note": "every website: not ticked, with the note in full"
+  },
+  {
+   "area": "packs",
+   "state": "review-sends-narrow-light",
+   "theme": "light",
+   "file": "packs/review-sends-narrow-light.png",
+   "issues": [],
+   "note": "a mod that sends what's on the page somewhere: the note says so"
+  },
+  {
+   "area": "packs",
+   "state": "review-unticked-narrow-light",
+   "theme": "light",
+   "file": "packs/review-unticked-narrow-light.png",
+   "issues": [],
+   "note": "unticked: the mod folds to its name, muted by color, not opacity"
+  },
+  {
+   "area": "packs",
+   "state": "review-end-narrow-light",
+   "theme": "light",
+   "file": "packs/review-end-narrow-light.png",
+   "issues": [],
+   "note": "the end: Check this address for updates (the person's choice), Install with the count"
+  },
+  {
+   "area": "packs",
+   "state": "installed-toast-narrow-light",
+   "theme": "light",
+   "file": "packs/installed-toast-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "packs",
+   "state": "panel-group-narrow-light",
+   "theme": "light",
+   "file": "packs/panel-group-narrow-light.png",
+   "issues": [],
+   "note": "the pack's name, how many mods, “gets updates”, Copy link and Stop updates; its mods under it"
+  },
+  {
+   "area": "packs",
+   "state": "panel-group-off-narrow-light",
+   "theme": "light",
+   "file": "packs/panel-group-off-narrow-light.png",
+   "issues": [],
+   "note": "the whole pack off with one switch"
+  },
+  {
+   "area": "packs",
+   "state": "panel-update-narrow-light",
+   "theme": "light",
+   "file": "packs/panel-update-narrow-light.png",
+   "issues": [],
+   "note": "Update available, what changed in a few words, Review…"
+  },
+  {
+   "area": "packs",
+   "state": "update-narrow-light",
+   "theme": "light",
+   "file": "packs/update-narrow-light.png",
+   "issues": [],
+   "note": "what changed, the team's note, then changed (with the lines), new and removed; nothing changes until Update"
+  },
+  {
+   "area": "packs",
+   "state": "update-changed-narrow-light",
+   "theme": "light",
+   "file": "packs/update-changed-narrow-light.png",
+   "issues": [],
+   "note": "a changed mod: the line counts and the diff, open when short"
+  },
+  {
+   "area": "packs",
+   "state": "update-end-narrow-light",
+   "theme": "light",
+   "file": "packs/update-end-narrow-light.png",
+   "issues": [],
+   "note": "no longer in the pack (untick to keep it), the mods left out before, and History keeps your versions"
+  },
+  {
+   "area": "i18n",
+   "state": "de-bar-narrow-light",
+   "theme": "light",
+   "file": "i18n/de-bar-narrow-light.png",
+   "issues": [],
+   "note": "de: the empty bar, suggestions and hint"
+  },
+  {
+   "area": "i18n",
+   "state": "de-typing-narrow-light",
+   "theme": "light",
+   "file": "i18n/de-typing-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-working-narrow-light",
+   "theme": "light",
+   "file": "i18n/de-working-narrow-light.png",
+   "issues": [],
+   "note": "a status stage in this language"
+  },
+  {
+   "area": "i18n",
+   "state": "de-result-narrow-light",
+   "theme": "light",
+   "file": "i18n/de-result-narrow-light.png",
+   "issues": [],
+   "note": "the result: title, timing, Save Undo Edit code Share"
+  },
+  {
+   "area": "i18n",
+   "state": "de-error-narrow-light",
+   "theme": "light",
+   "file": "i18n/de-error-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-settings-narrow-light",
+   "theme": "light",
+   "file": "i18n/de-settings-narrow-light.png",
+   "issues": [],
+   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
+  },
+  {
+   "area": "i18n",
+   "state": "de-settings-bottom-narrow-light",
+   "theme": "light",
+   "file": "i18n/de-settings-bottom-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-menu-narrow-light",
+   "theme": "light",
+   "file": "i18n/de-menu-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-panel-narrow-light",
+   "theme": "light",
+   "file": "i18n/de-panel-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-panel-row-narrow-light",
+   "theme": "light",
+   "file": "i18n/de-panel-row-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "de-panel-foot-narrow-light",
+   "theme": "light",
+   "file": "i18n/de-panel-foot-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-bar-narrow-light",
+   "theme": "light",
+   "file": "i18n/fa-bar-narrow-light.png",
+   "issues": [],
+   "note": "fa: the empty bar, suggestions and hint"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-typing-narrow-light",
+   "theme": "light",
+   "file": "i18n/fa-typing-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-working-narrow-light",
+   "theme": "light",
+   "file": "i18n/fa-working-narrow-light.png",
+   "issues": [],
+   "note": "a status stage in this language"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-result-narrow-light",
+   "theme": "light",
+   "file": "i18n/fa-result-narrow-light.png",
+   "issues": [],
+   "note": "the result: title, timing, Save Undo Edit code Share"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-error-narrow-light",
+   "theme": "light",
+   "file": "i18n/fa-error-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-settings-narrow-light",
+   "theme": "light",
+   "file": "i18n/fa-settings-narrow-light.png",
+   "issues": [],
+   "note": "Settings: the Language row says “Language” in English too, so a mistake can be undone"
+  },
+  {
+   "area": "i18n",
+   "state": "fa-settings-bottom-narrow-light",
+   "theme": "light",
+   "file": "i18n/fa-settings-bottom-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-menu-narrow-light",
+   "theme": "light",
+   "file": "i18n/fa-menu-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-panel-narrow-light",
+   "theme": "light",
+   "file": "i18n/fa-panel-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-panel-row-narrow-light",
+   "theme": "light",
+   "file": "i18n/fa-panel-row-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "i18n",
+   "state": "fa-panel-foot-narrow-light",
+   "theme": "light",
+   "file": "i18n/fa-panel-foot-narrow-light.png",
    "issues": [],
    "note": ""
   }
