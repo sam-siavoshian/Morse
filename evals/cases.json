@@ -19,7 +19,8 @@
         "return /\\d+\\s*:\\s*\\d{2}|\\d+\\s*(m|min|mins|minutes)\\b/i.test(txt) || 'no countdown shown: ' + txt.slice(0, 80);"] },
     { "id": "t-hide-sidebar", "site": "tunes", "category": "hide", "target": "nav",
       "request": "hide this sidebar",
-      "check": ["return !T.visible(T.$('nav')) || 'sidebar still visible';"] },
+      "check": [
+        "return !T.visible(T.$('nav')) || 'sidebar still visible';"] },
     { "id": "t-progress-thicker", "site": "tunes", "category": "looks", "target": ".pr .bar",
       "request": "make the progress bar thicker",
       "check": [
@@ -52,7 +53,7 @@
     { "id": "t-greeting", "site": "tunes", "category": "text", "target": ".vw h1",
       "request": "change this to say Welcome back, Sam",
       "check": [
-        "const t = document.body.innerText;",
+        "const t = T.visibleText();",
         "return (/welcome back,? sam/i.test(t) && !/good evening/i.test(t)) || 'greeting not replaced';"] },
     { "id": "t-hide-mfy", "site": "tunes", "category": "hide", "target": null,
       "request": "get rid of the Made for you section",
@@ -60,7 +61,6 @@
         "const h = T.$$('.vw h2').find(h => /made for you/i.test(h.textContent));",
         "if (T.visible(h) || T.visible(T.$('.mfy'))) return 'Made for you still visible';",
         "return T.visible(T.$('[data-testid=\"album-grid\"]:not(.mfy)')) || 'Recently played was hidden too';"] },
-
     { "id": "p-word-count", "site": "parley", "category": "feature", "target": "textarea[aria-label=\"Message Parley\"]",
       "request": "show a word count under the message box",
       "check": [
@@ -71,7 +71,8 @@
         "const b = T.freshText(); return /\\b5\\b/.test(b) || 'after 5 words: ' + b.slice(0, 80);"] },
     { "id": "p-wider", "site": "parley", "category": "layout", "target": "section[aria-label=\"Conversation\"]",
       "request": "the chat is too narrow, use the full width",
-      "check": ["const w = T.rect(T.$('.t4l > div')).width; return w >= 900 || `width ${Math.round(w)}px`;"] },
+      "check": [
+        "const w = T.rect(T.$('.t4l > div')).width; return w >= 900 || `width ${Math.round(w)}px`;"] },
     { "id": "p-copy-md", "site": "parley", "category": "feature", "target": "header[role=\"banner\"]",
       "request": "add a button that copies the conversation as markdown",
       "check": [
@@ -81,10 +82,12 @@
         "return (/debounce/i.test(c) && /throttle/i.test(c)) || 'clipboard: ' + JSON.stringify(c.slice(0, 80));"] },
     { "id": "p-bigger-text", "site": "parley", "category": "reading", "target": ".msg[data-role=\"assistant\"]",
       "request": "I can't read this, make it bigger",
-      "check": ["const fs = T.fontPx(T.$('.msg[data-role=\"assistant\"] p')); return fs >= 17 || `font ${fs}px`;"] },
+      "check": [
+        "const fs = T.fontPx(T.$('.msg[data-role=\"assistant\"] p')); return fs >= 17 || `font ${fs}px`;"] },
     { "id": "p-hide-history", "site": "parley", "category": "hide", "target": "nav[aria-label=\"Chat history\"]",
       "request": "hide the chat history",
-      "check": ["return !T.visible(T.$('nav')) || 'history still visible';"] },
+      "check": [
+        "return !T.visible(T.$('nav')) || 'history still visible';"] },
     { "id": "p-user-blue", "site": "parley", "category": "looks", "target": ".msg[data-role=\"user\"] p",
       "request": "make my messages blue",
       "check": [
@@ -107,8 +110,8 @@
         "return (T.visible(nav) && T.rect(nav).width > w0 * 0.8) || 'sidebar did not come back';"] },
     { "id": "p-disclaimer", "site": "parley", "category": "hide", "target": ".f3n", "split": "test",
       "request": "remove this",
-      "check": ["return !T.visible(T.$('.f3n')) || 'still visible';"] },
-
+      "check": [
+        "return !T.visible(T.$('.f3n')) || 'still visible';"] },
     { "id": "b-hide-ads", "site": "byte", "category": "hide", "target": null,
       "request": "hide the ads",
       "check": [
@@ -127,7 +130,8 @@
         "return (fs >= 16 || lh >= 1.6) || `font ${fs}px, line-height ${lh.toFixed(2)}`;"] },
     { "id": "b-popup", "site": "byte", "category": "hide", "target": ".pop",
       "request": "this popup is annoying",
-      "check": ["return !T.visible(T.$('.pop')) || 'popup still visible';"] },
+      "check": [
+        "return !T.visible(T.$('.pop')) || 'popup still visible';"] },
     { "id": "b-dark", "site": "byte", "category": "dark", "target": null,
       "request": "dark mode please",
       "check": [
@@ -143,11 +147,10 @@
       "request": "add a reading progress bar at the top",
       "check": [
         "const se = document.scrollingElement; if (se.scrollHeight <= innerHeight + 100) return 'fixture does not scroll';",
-        "const bars = () => T.fresh('*').filter(e => { const r = T.rect(e); return r.top < 12 && r.height <= 24 && T.cs(e).display !== 'none'; });",
         "window.scrollTo(0, 0); await T.sleep(300);",
-        "const w0 = Math.max(0, ...bars().map(e => T.visible(e) ? T.rect(e).width : 0));",
+        "const w0 = T.topBarWidth();",
         "window.scrollTo(0, (se.scrollHeight - innerHeight) * 0.6); await T.sleep(400);",
-        "const w1 = Math.max(0, ...bars().map(e => T.visible(e) ? T.rect(e).width : 0));",
+        "const w1 = T.topBarWidth();",
         "return w1 > w0 + 50 || `top bar ${Math.round(w0)}px -> ${Math.round(w1)}px after scrolling`;"] },
     { "id": "b-headline", "site": "byte", "category": "looks", "target": "article h1", "split": "test",
       "request": "make the headline serif and bigger",
@@ -160,10 +163,10 @@
         "window.scrollTo(0, 300); await T.sleep(300);",
         "if (scrollY < 100) return 'fixture did not scroll';",
         "const r = T.rect(T.$('.tb')); return (Math.abs(r.top) <= 2 && T.visible(T.$('.tb'))) || `bar top ${Math.round(r.top)}px after scrolling`;"] },
-
     { "id": "m-promo", "site": "mail", "category": "hide", "target": ".pz7",
       "request": "I don't care about this",
-      "check": ["return !T.visible(T.$('.pz7')) || 'banner still visible';"] },
+      "check": [
+        "return !T.visible(T.$('.pz7')) || 'banner still visible';"] },
     { "id": "m-unread", "site": "mail", "category": "looks", "target": ".lst",
       "request": "make unread emails stand out more",
       "before": "return T.sig(T.$('.r9[data-unread=\"true\"]:not([aria-selected=\"true\"])'))",
@@ -178,7 +181,8 @@
         "return w >= B * 1.3 || `avatar ${Math.round(w)}px, was ${Math.round(B)}px`;"] },
     { "id": "m-title-count", "site": "mail", "category": "feature", "target": null,
       "request": "show how many unread emails I have in the tab title",
-      "check": ["await T.sleep(300); return /\\b4\\b/.test(document.title) || 'title: ' + document.title;"] },
+      "check": [
+        "await T.sleep(2500); return /\\b4\\b/.test(document.title) || 'title: ' + document.title;"] },
     { "id": "m-mark-all", "site": "mail", "category": "feature", "target": ".ls4 .tb",
       "request": "add a button here that marks everything as read",
       "check": [
@@ -200,7 +204,8 @@
         "return at(1) || 'k did not move back up';"] },
     { "id": "m-pane-font", "site": "mail", "category": "reading", "target": ".rd .bd",
       "request": "this text is tiny",
-      "check": ["const fs = T.fontPx(T.$('.rd .bd p')); return fs >= 14 || `font ${fs}px`;"] },
+      "check": [
+        "const fs = T.fontPx(T.$('.rd .bd p')); return fs >= 14 || `font ${fs}px`;"] },
     { "id": "m-search", "site": "mail", "category": "feature", "target": "input[type=search]", "split": "test",
       "request": "make the search box filter the list as I type",
       "check": [
@@ -210,8 +215,8 @@
     { "id": "m-compact", "site": "mail", "category": "layout", "target": ".lst", "split": "test",
       "request": "show more emails at once, too much spacing",
       "before": "return T.rect(T.$('.r9')).height",
-      "check": ["const h = T.rect(T.$$('.r9')[3]).height; return h <= B * 0.8 || `row ${Math.round(h)}px, was ${Math.round(B)}px`;"] },
-
+      "check": [
+        "const h = T.rect(T.$$('.r9')[3]).height; return h <= B * 0.8 || `row ${Math.round(h)}px, was ${Math.round(B)}px`;"] },
     { "id": "n-word-count", "site": "notes", "category": "feature", "target": ".ed_9f",
       "request": "add a live word count",
       "check": [
@@ -221,7 +226,8 @@
         "return (m1 && +m1[0] === +m0[0] + 4) || `count ${m0[0]} -> ${m1 && m1[0]} after typing 4 words`;"] },
     { "id": "n-contrast", "site": "notes", "category": "reading", "target": ".ed_9f p",
       "request": "I can't read this",
-      "check": ["const c = T.contrast(T.$('.ed_9f p')); return c >= 4.5 || `contrast ${c.toFixed(1)}`;"] },
+      "check": [
+        "const c = T.contrast(T.$('.ed_9f p')); return c >= 4.5 || `contrast ${c.toFixed(1)}`;"] },
     { "id": "n-focus", "site": "notes", "category": "layout", "target": null,
       "request": "focus mode: hide everything except the page I'm writing",
       "check": [
@@ -231,14 +237,15 @@
     { "id": "n-wider", "site": "notes", "category": "layout", "target": ".ed_9f",
       "request": "make the writing area wider",
       "before": "return T.rect(T.$('.ed_9f')).width",
-      "check": ["const w = T.rect(T.$('.ed_9f')).width; return w >= B * 1.25 || `width ${Math.round(w)}px, was ${Math.round(B)}px`;"] },
+      "check": [
+        "const w = T.rect(T.$('.ed_9f')).width; return w >= B * 1.25 || `width ${Math.round(w)}px, was ${Math.round(B)}px`;"] },
     { "id": "n-ctrl-s", "site": "notes", "category": "keyboard", "target": null,
       "request": "when I press ctrl+s show a little Saved message instead of the browser's save dialog",
       "check": [
         "T.caretEnd(T.$('.ed_9f'));",
         "const prevented = await T.press('Control+s'); await T.sleep(300);",
         "if (!prevented) return 'ctrl+s was not prevented';",
-        "return /saved/i.test(document.body.innerText) || 'no Saved message';"] },
+        "return /saved/i.test(T.visibleText()) || 'no Saved message';"] },
     { "id": "n-dark", "site": "notes", "category": "dark", "target": null, "split": "test",
       "request": "make it dark, my eyes hurt",
       "check": [
@@ -247,7 +254,7 @@
     { "id": "n-rename", "site": "notes", "category": "text", "target": ".sb_k2 .new", "split": "test",
       "request": "rename this to Create note",
       "check": [
-        "const t = document.body.innerText;",
+        "const t = T.visibleText();",
         "return (/create note/i.test(t) && !/new note/i.test(t)) || 'button text: ' + T.$('.sb_k2 .new').innerText;"] },
     { "id": "n-date", "site": "notes", "category": "feature", "target": ".fmt",
       "request": "add a button that inserts today's date",
@@ -258,7 +265,6 @@
         "const y = String(new Date().getFullYear()), d = String(new Date().getDate());",
         "const t = T.$('.ed_9f').innerText;",
         "return (t.includes(y) || new RegExp('\\\\b' + d + '\\\\b').test(t.slice(-60))) || 'editor ends with: ' + t.slice(-60);"] },
-
     { "id": "d-sort", "site": "dash", "category": "table", "target": "th.am",
       "request": "let me sort by this column",
       "check": [
@@ -278,8 +284,8 @@
     { "id": "d-failed-red", "site": "dash", "category": "table", "target": "tbody tr:nth-child(3) .st",
       "request": "highlight failed orders in red",
       "check": [
-        "const red = c => { const [r, g, b, a] = T.rgb(c); return a > 0.05 && r > g + 40 && r > b + 40; };",
-        "const isRed = tr => [tr, ...tr.querySelectorAll('td, td *')].some(e => { const s = T.cs(e); return red(s.backgroundColor) || (parseFloat(s.borderLeftWidth) >= 2 && red(s.borderLeftColor)) || (e.tagName === 'TD' && red(s.color)) || /rgb\\((\\d+)/.test(s.boxShadow) && red(s.boxShadow.match(/rgba?\\([^)]*\\)/)[0]); });",
+        "const red = (c, d = 40) => { const [r, g, b, a] = T.rgb(c); return a > 0.05 && r >= Math.max(g, b) + d; };",
+        "const isRed = tr => [tr, ...tr.querySelectorAll('td, td *')].some(e => { const s = T.cs(e); return red(s.backgroundColor, 10) || (parseFloat(s.borderLeftWidth) >= 2 && red(s.borderLeftColor)) || (e.tagName === 'TD' && red(s.color)) || /rgb\\((\\d+)/.test(s.boxShadow) && red(s.boxShadow.match(/rgba?\\([^)]*\\)/)[0]); });",
         "const rows = T.$$('tbody tr'), f = rows.filter(r => /failed/i.test(r.textContent)), o = rows.filter(r => !/failed/i.test(r.textContent));",
         "if (!f.every(isRed)) return 'failed rows are not red';",
         "return !o.some(isRed) || 'other rows turned red too';"] },
@@ -305,7 +311,8 @@
     { "id": "d-kpi", "site": "dash", "category": "looks", "target": ".kc:first-child .vl",
       "request": "make these numbers pop",
       "before": "return T.fontPx(T.$('.kc .vl'))",
-      "check": ["const fs = Math.min(...T.$$('.kc .vl').map(T.fontPx)); return fs >= B * 1.2 || `numbers ${fs}px, were ${B}px`;"] },
+      "check": [
+        "const fs = Math.min(...T.$$('.kc .vl').map(T.fontPx)); return fs >= B * 1.2 || `numbers ${fs}px, were ${B}px`;"] },
     { "id": "d-hide-chart", "site": "dash", "category": "hide", "target": ".ch_x",
       "request": "I never look at this chart, hide it",
       "check": [

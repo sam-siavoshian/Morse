@@ -119,6 +119,7 @@ async function runCase(c, rep) {
     // Everything that exists now is "original"; checkers can tell new elements apart.
     await page.evaluate(() => { window.__orig = new WeakSet(document.querySelectorAll("*")); });
     await page.evaluate(helpers);
+    await page.evaluate(() => { window.__pseudo0 = T.pseudoTexts(); });
     const B = c.before ? await page.evaluate(`(async () => { ${c.before} })()`) : null;
 
     const modId = `eval-${c.id}`;

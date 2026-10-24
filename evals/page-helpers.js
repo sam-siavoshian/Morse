@@ -60,9 +60,57 @@ export function helpers() {
     orig: el => orig.has(el),
     // Elements that did not exist before the mod was applied.
     fresh: (sel = "*") => T.$$(sel).filter(e => !orig.has(e) && !/^(STYLE|SCRIPT|LINK|META)$/.test(e.tagName)),
+    // Text the mod added: new elements, plus ::before/::after content that
+    // wasn't there before (CSS-only labels like `content: attr(data-n) " words"`).
     freshText() {
       const top = T.fresh().filter(e => T.visible(e) && !(e.parentElement && !orig.has(e.parentElement) && e.parentElement !== document.body));
-      return top.map(e => e.innerText || e.value || "").join(" | ");
+      const before = new Set(window.__pseudo0 || []);
+      return [...top.map(e => e.innerText || e.value || ""), ...T.pseudoTexts().filter(t => !before.has(t))].join(" | ");
+    },
+    pseudo(el, which) {
+      const s = getComputedStyle(el, which);
+      const c = s.content;
+      if (!c || c === "none" || c === "normal" || s.display === "none" || parseFloat(s.fontSize) < 2) return "";
+      let out = "";
+      for (const m of c.matchAll(/"((?:\\.|[^"\\])*)"|attr\(([\w-]+)\)|counter\([^)]*\)/g)) {
+        if (m[1] !== undefined) out += m[1].replace(/\\(.)/g, "$1");
+        else if (m[2]) out += el.getAttribute(m[2]) || "";
+      }
+      return out.trim();
+    },
+    pseudoTexts() {
+      const out = [];
+      for (const e of [document.documentElement, ...document.body.querySelectorAll("*")]) {
+        if (e !== document.documentElement && e !== document.body && !T.visible(e)) continue;
+        for (const w of ["::before", "::after"]) { const t = T.pseudo(e, w); if (t) out.push(t); }
+      }
+      return out;
+    },
+    // What a person can actually read: visible text nodes at a real size and
+    // color, plus pseudo-element content.
+    visibleText() {
+      const out = [];
+      const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      for (let n; (n = w.nextNode());) {
+        const p = n.parentElement;
+        if (!n.textContent.trim() || !p || /^(SCRIPT|STYLE|NOSCRIPT)$/.test(p.tagName)) continue;
+        if (!T.visible(p) || T.fontPx(p) < 2 || T.rgb(getComputedStyle(p).color)[3] < 0.05) continue;
+        out.push(n.textContent.trim());
+      }
+      return [...out, ...T.pseudoTexts()].join(" ");
+    },
+    // Widest thin bar pinned to the top of the viewport (elements or pseudo-elements).
+    topBarWidth() {
+      let best = 0;
+      const ok = (r, s) => r.top < 12 && r.height > 0 && r.height <= 24 && s.display !== "none" && s.visibility !== "hidden" && +s.opacity > 0.05;
+      for (const e of T.fresh()) { const r = T.rect(e), s = T.cs(e); if (ok(r, s) && T.visible(e)) best = Math.max(best, r.width); }
+      for (const e of [document.documentElement, document.body, ...T.fresh()]) for (const w of ["::before", "::after"]) {
+        const s = getComputedStyle(e, w);
+        if (s.content === "none" || s.content === "normal" || !/fixed|sticky/.test(s.position)) continue;
+        const top = parseFloat(s.top) || 0, h = parseFloat(s.height) || 0;
+        if (ok({ top, height: h }, s)) best = Math.max(best, parseFloat(s.width) || 0);
+      }
+      return best;
     },
     visible(el) {
       if (!el || !el.isConnected) return false;
