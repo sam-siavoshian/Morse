@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "mail-bigger-text",
+  "title": "Bigger email text",
+  "prompt": "make the email text bigger and easier to read",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8791"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": ".rd .bd",
+    "label": "email text"
+  },
+  "css": "section[aria-label=\"Reading\\ pane\"] > div.bd {\n  font-size: 16px !important;\n  line-height: 1.6 !important;\n  max-width: 640px;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

@@ -576,7 +576,8 @@ function targetFacts(el) {
 const Churn = (() => {
   const seen = new Map(); // element -> recent times its child elements were replaced
   try {
-    new MutationObserver(recs => {
+    const mo = new MutationObserver(recs => {
+      if (!live()) { mo.disconnect(); seen.clear(); return; } // `morse stop`: stop watching every change on the page
       const now = Date.now();
       for (const r of recs) {
         const t = r.target;
@@ -587,7 +588,8 @@ const Churn = (() => {
         if (now - (ts.at(-1) || 0) > 50) ts.push(now); // one render, many records
         if (ts.length > 30) ts.shift();
       }
-    }).observe(document.documentElement, { childList: true, subtree: true });
+    });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
   } catch {}
   return {
     // [element, renders] in the last windowMs, busiest first; outermost wins.
@@ -789,7 +791,7 @@ function context() {
   const cs = getComputedStyle(document.body);
   const roots = allRoots();
   const ctx = {
-    url: location.href, title: document.title, app: S.app,
+    url: location.href, title: document.title, app: S.app, lang: getLanguage(), // Ask answers in the language Morse speaks (core/prompt.js)
     theme: { bg: cs.backgroundColor, fg: cs.color, font: cs.fontFamily.split(",")[0] },
     notes: pageNotes(roots),
     outline: outline(roots),

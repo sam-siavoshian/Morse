@@ -20,16 +20,31 @@ export const CONTROL_FILE = path.join(HOME, "control.json");
 export async function loadControl() {
   try { return normalizeControl(JSON.parse(await fs.readFile(CONTROL_FILE, "utf8"))); } catch { return normalizeControl({}); }
 }
-export async function saveControl(state) {
+// Writes in this process happen one at a time, in order, each through its
+// own temp file; a page's read-modify-write (the handler below) holds the
+// same turn from its read to its write, so a `saveControl` made meanwhile
+// (`morse pause` / `morse resume`, tests) lands after it instead of being lost.
+let turn = Promise.resolve();
+function inTurn(fn) {
+  const run = turn.then(fn);
+  turn = run.catch(() => {});
+  return run;
+}
+let writes = 0;
+async function writeControl(state) {
   await ensureHome();
-  const tmp = `${CONTROL_FILE}.${process.pid}.tmp`;
+  const tmp = `${CONTROL_FILE}.${process.pid}.${++writes}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(normalizeControl(state), null, 2));
   await fs.rename(tmp, CONTROL_FILE);
+}
+export function saveControl(state) {
+  return inTurn(() => writeControl(state));
 }
 
 const handler = controlHandler({
   load: loadControl,
-  save: saveControl,
+  save: writeControl,
+  atomic: inTurn,
   listMods,
   putMods: async list => { for (const m of list) await saveMod(m); },
 });

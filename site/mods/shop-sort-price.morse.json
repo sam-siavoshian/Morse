@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "shop-sort-price",
+  "title": "Sort by price",
+  "prompt": "add a button that sorts the products by price, lowest first",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8794"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "#__next main > div:nth-of-type(1)",
+    "label": "results bar"
+  },
+  "css": "",
+  "js": "morse.watch(\"#__next > div:nth-of-type(2) > main > div:nth-of-type(1)\", bar => {\n  if (bar.querySelector(\"[data-sort-price]\")) return;\n  let original = null;\n  let sorted = false;\n  const price = c => {\n    const m = c.textContent.match(/\\$\\s*([\\d,]+(?:\\.\\d+)?)/);\n    return m ? parseFloat(m[1].replace(/,/g, \"\")) : 1e9;\n  };\n  const btn = morse.el(\"button\", {\n    \"data-sort-price\": \"\",\n    type: \"button\",\n    text: \"Sort: price ↑\",\n    style: \"margin-left:auto;font:inherit;font-size:13px;color:inherit;background:transparent;border:1px solid currentColor;border-radius:6px;padding:4px 10px;cursor:pointer;opacity:.8\",\n    on: {\n      click: () => {\n        const grid = morse.$$(\"#__next > div:nth-of-type(2) > main > div:nth-of-type(2)\")[0];\n        if (!grid) return;\n        const cards = [...grid.children];\n        if (!original) original = cards.slice();\n        if (!sorted) {\n          cards.slice().sort((a, b) => price(a) - price(b)).forEach(c => grid.appendChild(c));\n          btn.textContent = \"Sort: default\";\n        } else {\n          original.forEach(c => grid.appendChild(c));\n          btn.textContent = \"Sort: price ↑\";\n        }\n        sorted = !sorted;\n      }\n    }\n  });\n  bar.appendChild(btn);\n});\n",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

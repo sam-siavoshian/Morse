@@ -9,6 +9,9 @@
 //   npm run ui                      build + shoot everything + write index
 //   node demo/ui-catalog.js --only=panel,modal
 //   node demo/ui-catalog.js --index  rewrite index.html from catalog.json
+//   node demo/ui-catalog.js --out=/tmp/ui --only=panel   audit run, docs/ui untouched
+//   node demo/ui-catalog.js --theme=dark --width=1100          one theme, one width
+//   node demo/ui-catalog.js --no-axe                     skip axe-core (demo/axe.js) on each state
 //   DISPLAY=:99 node demo/ui-catalog.js --only=extension   the extension's own pages
 //                                   (welcome, practice, popup) need the real extension, headful
 //
@@ -17,13 +20,15 @@ import { createRequire } from "node:module";
 import http from "node:http";
 import { promises as fs, readFileSync, existsSync } from "node:fs";
 import path from "node:path";
+import { axeCheck, axeLines, AXE_VERSION } from "./axe.js";
 import { fakeSpeech } from "./a11y-page.js";
 // The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
 const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const OUT = path.join(ROOT, "docs", "ui");
 const args = Object.fromEntries(process.argv.slice(2).map(a => { const [k, v] = a.replace(/^--/, "").split("="); return [k, v ?? true]; }));
+// --out=dir writes the shots and verdicts somewhere else (a scratch audit run that leaves docs/ui alone)
+const OUT = args.out ? path.resolve(String(args.out)) : path.join(ROOT, "docs", "ui");
 const ONLY = args.only ? new Set(String(args.only).split(",")) : null;
 const want = area => !ONLY || ONLY.has(area);
 
@@ -50,6 +55,8 @@ await new Promise(r => server.listen(0, "127.0.0.1", r));
 const BASE = `http://127.0.0.1:${server.address().port}`;
 
 const results = [];
+const axeTally = new Map(); // axe rule -> states where it broke
+const TIMED = new Set(["effect", "pulse", "motion", "radar"]);
 // a fake microphone (a tone) for the voice states; Web Speech is stubbed per page
 const launchBrowser = () => chromium.launch({ args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] });
 let browser = await launchBrowser();
@@ -114,6 +121,13 @@ async function shot(page, area, state, targets, { pad = 12, theme, note, checks 
   if (clip.width > 0 && clip.height > 0) await page.screenshot({ path: file, clip });
   else issues.push("nothing to photograph (element missing or zero-size)");
   issues = issues.concat(await audit(page, clip), checks.filter(Boolean));
+  // axe-core on the overlay as it is in this state (demo/axe.js); each broken rule is counted once per state
+  // (not on the animation states: they are timed to the frame, and the overlay is the bar's, audited in its own states)
+  if (!args["no-axe"] && !TIMED.has(area)) {
+    const found = await axeCheck(page).catch(e => [{ id: "axe-failed", impact: "critical", help: e.message.split("\n")[0], targets: [] }]);
+    for (const v of found) axeTally.set(v.id, (axeTally.get(v.id) || 0) + 1);
+    issues = issues.concat(axeLines(found));
+  }
   results.push({ area, state: name, theme, file: path.relative(OUT, file), issues: [...new Set(issues)], note: note || "" });
   console.log(`  ${issues.length ? "!" : "✓"} ${area}/${name}${issues.length ? "  " + issues.join(" | ") : ""}`);
 }
@@ -2010,6 +2024,12 @@ async function extensionStates() {
       if (document.documentElement.scrollWidth > W + 1) out.push(`the page scrolls sideways (${document.documentElement.scrollWidth} > ${W})`);
       return out.slice(0, 6);
     })).concat((opts.checks || []).filter(Boolean));
+    // axe-core on the whole extension page (demo/axe.js), every rule
+    if (!args["no-axe"]) {
+      const found = await axeCheck(page, { page: true }).catch(e => [{ id: "axe-failed", impact: "critical", help: e.message.split("\n")[0], targets: [] }]);
+      for (const v of found) axeTally.set(v.id, (axeTally.get(v.id) || 0) + 1);
+      issues.push(...axeLines(found));
+    }
     results.push({ area, state: name, theme, file: path.relative(OUT, file), issues, note: opts.note || "" });
     console.log(`  ${issues.length ? "!" : "✓"} ${area}/${name}${issues.length ? "  " + issues.join(" | ") : ""}`);
   };
@@ -2176,16 +2196,18 @@ await fs.mkdir(OUT, { recursive: true });
 // a full run starts clean; docs/ui/before (hand-picked "before" shots for the review) is kept
 if (!ONLY) for (const d of await fs.readdir(OUT)) if (!d.includes(".") && d !== "before") await fs.rm(path.join(OUT, d), { recursive: true, force: true });
 const t0 = Date.now();
-for (const theme of ["dark", "light"]) {
+const THEMES = args.theme ? [String(args.theme)] : ["dark", "light"];
+const WIDTHS = args.width ? [+args.width] : [1100, 390];
+for (const theme of THEMES) {
   console.log(`— ${theme}`);
-  for (const width of [1100, 390]) {
+  for (const width of WIDTHS) {
     if (want("bar")) await guard("bar", () => barStates(theme, width));
     if (want("toast")) await guard("toast", () => toastStates(theme, width));
     if (want("panel")) await guard("panel", () => panelStates(theme, width));
     if (want("modal")) await guard("modal", () => modalStates(theme, width));
   }
   if (want("effect")) await guard("effect", () => effectStates(theme));
-  for (const width of [1100, 390]) {
+  for (const width of WIDTHS) {
     if (want("god")) await guard("god", () => godStates(theme, width));
     if (want("voice")) await guard("voice", () => voiceStates(theme, width));
     if (want("sheets")) await guard("sheets", () => sheetStates(theme, width));
@@ -2208,7 +2230,7 @@ if (want("hostile")) { console.log("— hostile hosts"); await hostileStates(); 
 if (want("hostile") || want("hostile-r4")) { console.log("— hostile hosts, round 4"); await guard("hostile", hostileR4States); }
 if (want("trusted-types")) { console.log("— Trusted Types"); await guard("trusted-types", trustedTypesStates); }
 if (want("extension")) { console.log("— the extension's own pages (Xvfb)"); await guard("extension", extensionStates); }
-if (want("a11y-site")) { console.log("— Riverside Library (page tools)"); for (const w of [1100, 390]) await a11ySiteStates(w); }
+if (want("a11y-site")) { console.log("— Riverside Library (page tools)"); for (const w of WIDTHS) await a11ySiteStates(w); }
 await browser.close();
 server.close();
 
@@ -2225,6 +2247,7 @@ if (ONLY && existsSync(prevFile)) {
 await fs.writeFile(prevFile, JSON.stringify({ generated: new Date().toISOString(), shots: all }, null, 1));
 await writeIndex();
 const bad = results.filter(r => r.issues.length);
+if (!args["no-axe"]) console.log(`axe-core ${AXE_VERSION}: ${axeTally.size ? [...axeTally].map(([id, n]) => `${id} in ${n} states`).join(", ") : "no violations in any state"}`);
 console.log(`\n${results.length} states captured in ${((Date.now() - t0) / 1000).toFixed(0)}s · ${bad.length} with automated findings → docs/ui/index.html`);
 
 // ---------------------------------------------------------------- index.html

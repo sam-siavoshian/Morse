@@ -1,0 +1,25 @@
+{
+  "morse": 1,
+  "id": "docker-dark-code",
+  "title": "Bigger code on dark blocks",
+  "prompt": "make these code blocks bigger with a dark background",
+  "match": {
+    "hosts": [
+      "hub.docker.com"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "pre",
+    "label": "code block"
+  },
+  "css": "div[data-testid=\"markdownContent\"] pre {\n  background-color: #1e1e1e !important;\n  border-color: #1e1e1e !important;\n  color: #e6e6e6 !important;\n  font-size: 16px !important;\n  line-height: 1.6 !important;\n  padding: 20px !important;\n  min-height: 90px !important;\n  height: auto !important;\n  border-radius: 8px !important;\n}\ndiv[data-testid=\"markdownContent\"] pre code {\n  background: transparent !important;\n  color: inherit !important;\n  font-size: inherit !important;\n  border: 0 !important;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "note": "Hand-fixed: the code inside each block kept a thin light border around every line; one line removes it.",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

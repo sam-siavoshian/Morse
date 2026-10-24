@@ -6,10 +6,11 @@
 import path from "node:path";
 import { createRequire } from "node:module";
 import { serveBar } from "./bar-server.js";
+import { pressOpen } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const OUT = process.argv[2] || path.join(root, "docs", "screenshots");
+const OUT = path.resolve(root, process.argv[2] || process.env.SHOTS || path.join("docs", "screenshots"));
 const { url, close } = await serveBar();
 const browser = await chromium.launch({ channel: "chromium", args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] });
 
@@ -48,7 +49,7 @@ async function pointAt(page, sel) {
 
 // 60 · voice: hold ⌥Space to talk; partial transcript streams in
 await scene("60-voice.png", "", async p => {
-  await p.keyboard.press("Alt+Space");
+  await pressOpen(p, "Alt+Space"); // a tap: the page reports macOS, so Open Morse is ⌥Space
   await pointAt(p, "#toolbar");
   await p.keyboard.down("Alt");
   await p.keyboard.down("Space");
@@ -60,7 +61,7 @@ await scene("60-voice.png", "", async p => {
 
 // 61 · settings (⌘,)
 await scene("61-settings.png", "", async p => {
-  await p.keyboard.press("Alt+Space");
+  await pressOpen(p, "Alt+Space"); // a tap: the page reports macOS, so Open Morse is ⌥Space
   await p.keyboard.press("Meta+Comma");
   await p.mouse.move(640, 500);
   await p.waitForTimeout(250);
@@ -68,7 +69,7 @@ await scene("61-settings.png", "", async p => {
 
 // 62 · the hotkey recorder refusing ⌘Q
 await scene("62-hotkey-recorder.png", "", async p => {
-  await p.keyboard.press("Alt+Space");
+  await pressOpen(p, "Alt+Space"); // a tap: the page reports macOS, so Open Morse is ⌥Space
   await p.keyboard.press("Meta+Comma");
   await p.mouse.move(640, 500);
   await p.waitForTimeout(200);
@@ -84,7 +85,7 @@ await scene("62-hotkey-recorder.png", "", async p => {
 
 // 63 · suggestions for a media control, keyboard on the first chip
 await scene("63-suggestions.png", "", async p => {
-  await p.keyboard.press("Alt+Space");
+  await pressOpen(p, "Alt+Space"); // a tap: the page reports macOS, so Open Morse is ⌥Space
   await pointAt(p, "#toolbar");
   await p.waitForTimeout(150);
   await p.keyboard.press("Tab");
@@ -94,14 +95,14 @@ await scene("63-suggestions.png", "", async p => {
 
 // 64 · the cheat sheet (?)
 await scene("64-shortcuts.png", "", async p => {
-  await p.keyboard.press("Alt+Space");
+  await pressOpen(p, "Alt+Space"); // a tap: the page reports macOS, so Open Morse is ⌥Space
   await p.keyboard.type("?");
   await p.waitForTimeout(250);
 });
 
 // 65 · stopped mid-generation (Esc): partial CSS gone, prompt kept
 await scene("65-cancelled.png", "?ms=45", async p => {
-  await p.keyboard.press("Alt+Space");
+  await pressOpen(p, "Alt+Space"); // a tap: the page reports macOS, so Open Morse is ⌥Space
   await pointAt(p, "#toolbar");
   await p.keyboard.type("make the toolbar airier and add a sleep timer");
   await p.keyboard.press("Enter");

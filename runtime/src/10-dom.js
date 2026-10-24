@@ -6,12 +6,9 @@ hostEl.style.cssText = "all:initial;position:fixed;inset:0;pointer-events:none;z
   .replace(/;/g, " !important;");
 hostEl.dir = "ltr";
 // Debug (an open shadow root and the status attribute, for tests and
-// screenshots) only in a browser driven by automation: localStorage belongs to
-// the page, so on its own the flag would let any site open Morse's UI to its
-// scripts. navigator.webdriver is read in Morse's own world, where the page
-// can't redefine it.
-let DEBUG = false;
-try { DEBUG = navigator.webdriver === true && !!localStorage.getItem("morse:debug"); } catch {}
+// screenshots) only in a browser driven by automation; boot.js decides it
+// (navigator.webdriver and localStorage "morse:debug", read in Morse's own world).
+const DEBUG = B.debug;
 const root = hostEl.attachShadow({ mode: DEBUG ? "open" : "closed" });
 // Tokens are custom properties, the one thing that inherits through a shadow
 // boundary. Marked !important, ours beat any `--m-*` the page sets on our host.
@@ -22,23 +19,23 @@ ${A11Y_CSS() /* Easier to use hook: 98-a11y-css.js */}</style>
   <style>${HEAL_CSS() /* self-heal hook: 98-heal-css.js */}</style>
   <style>${STYLE_CSS() /* your-style hook: 98-style-css.js */}</style>
   <style>${PACKS_CSS() /* packs hook: 98-packs-css.js */}</style>
-  <canvas class="fx"></canvas>
-  <div class="hl" hidden><span></span></div>
-  <div class="sel" hidden></div>
-  <div class="bar" hidden>
+  <canvas class="fx" aria-hidden="true"></canvas>
+  <div class="hl" hidden aria-hidden="true"><span></span></div>
+  <div class="sel" hidden aria-hidden="true"></div>
+  <section class="bar" hidden>
     <div class="row">
       <span class="mark">${radar(18)}</span>
-      <div class="chip target" hidden><span></span><button class="x" title="Point at something else">×</button></div>
-      <textarea class="in" rows="1" placeholder="Describe a change…" spellcheck="false" autocomplete="off"></textarea>
-      <button class="go" title="Send (Enter)"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9.5M8.75 4.25 12.5 8l-3.75 3.75"/></svg></button>
+      <div class="chip target" hidden><span></span><button class="x">×</button></div>
+      <textarea class="in" rows="1" placeholder="${esc(t("bar.placeholder"))}" spellcheck="false" autocomplete="off"></textarea>
+      <button class="go" title="${esc(t("bar.send.title"))}"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9.5M8.75 4.25 12.5 8l-3.75 3.75"/></svg></button>
     </div>
     <div class="status">
       <span class="hint"></span>
       <span class="ticker"></span>
       <span class="actions"></span>
     </div>
-  </div>
-  <aside class="panel" hidden></aside>
+  </section>
+  <section class="panel" hidden></section>
   <dialog class="modal" hidden></dialog>
   <div class="toast" hidden></div>`;
 const $ = s => root.querySelector(s);
@@ -64,9 +61,11 @@ const TopLayer = {
   raise() { if (!this.ok || !hostEl.isConnected) return; try { if (hostEl.matches(":popover-open")) hostEl.hidePopover(); } catch {} this.show(); },
 };
 if (TopLayer.ok) hostEl.popover = "manual";
-function mount() { if (!hostEl.isConnected && live()) document.documentElement.append(hostEl); TopLayer.show(); }
+// Built on first use, not at page load. boot.js tells us when the page swaps
+// out <html> or its children (document.open, innerHTML), so we come back.
+function mount() { if (!hostEl.isConnected && live()) document.documentElement?.append(hostEl); TopLayer.show(); }
 mount();
 applyTheme();
-new MutationObserver(mount).observe(document.documentElement, { childList: true });
+B.domHooks.add(mount);
 // The page closed the overlay's popover (it can reach the host element): open it again.
 hostEl.addEventListener("toggle", e => { if (e.newState === "closed" && live()) setTimeout(() => TopLayer.show(), 0); });

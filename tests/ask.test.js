@@ -10,6 +10,7 @@ import { readFile } from "node:fs/promises";
 import { bundleRuntime } from "../runtime/bundle.js";
 import { pressOpen } from "./helpers/keys.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
+import { axeCheck, axeLines } from "../demo/axe.js"; // axe-core on Morse's own UI (tests/a11y-morse.test.js)
 import { waitFor, waitForReady, TIMEOUT } from "./helpers/wait.js";
 
 const skip = noBrowser;
@@ -95,6 +96,7 @@ test("Find: something inside a closed menu is named, its menu marked, and the it
   assert.match(chips[0], /More menu/);
   assert.match(chips[1], /Export as PDF\s*inside the More options menu/);
   assert.match(await page.locator(".ask [data-ask=show]").innerText(), /Show me\s*2 steps/);
+  assert.deepEqual(axeLines(await axeCheck(page)), [], "axe-core: an answer with numbered markers");
   // The model saw the menu, and what's inside it, in the page outline.
   const { asks } = await fake(page);
   assert.match(asks[0].outline, /^#more {2}"More options" {2}\(menu button, closed\)$/m);
@@ -117,6 +119,7 @@ test("Show me: each step waits for the user's own click; Morse never clicks", { 
   await until(async () => /Open the More menu/.test(await guide.innerText()));
   await until(async () => (await status(page)).open === false); // the bar steps aside
   assert.match(await guide.innerText(), /Step 1 of 2/);
+  assert.deepEqual(axeLines(await axeCheck(page)), [], "axe-core: Show me, step 1");
   // Waiting is all it does: watch for most of a second (an observation window,
   // not a wait for the app; a slow machine only makes it stricter).
   await page.waitForTimeout(900);

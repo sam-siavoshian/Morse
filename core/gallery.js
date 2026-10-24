@@ -105,7 +105,8 @@ export function indexUrlFor(pageUrl, configured = "") {
   if (configured && /^https?:\/\//.test(configured)) return configured;
   try {
     const u = new URL(pageUrl);
-    if (/^(127\.0\.0\.1|localhost)$/.test(u.hostname) && /^878[789]$/.test(u.port)) return DEMO_INDEX_URL;
+    // demo/serve.js: the demo apps on 8787-8797
+    if (/^(127\.0\.0\.1|localhost)$/.test(u.hostname) && /^87(8[7-9]|9[0-7])$/.test(u.port)) return DEMO_INDEX_URL;
   } catch {}
   return GALLERY_INDEX_URL;
 }

@@ -24,8 +24,10 @@ import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf,
 import { wrapModCode, settleMs } from "../core/kit.js";
 import { asReviewed } from "../core/summary.js"; // installs keep only the reviewed code
 import { runMorse } from "../core/engine.js";
+import { startLabel, modelNames } from "../core/route.js"; // models: "Claude Code · Automatic"
 import { settingsLabel, currentSettings } from "./models.js"; // also registers the Claude Code / Codex providers
 import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
+import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
 import { prewarm } from "../core/providers.js";
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
@@ -42,8 +44,11 @@ import { STYLE_ID } from "../core/style.js"; // your-style hook
 import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
 import { pageCollapse } from "../core/guard.js"; // guard hook: a change that hides most of the page
 
-import { bundleRuntime } from "../runtime/bundle.js";
-const RUNTIME = bundleRuntime();
+// Perf: only the small boot goes into every page; the UI is evaluated on first use ("ui.load").
+import { bundleBoot, bundleUI } from "../runtime/bundle.js";
+const RUNTIME = bundleBoot();
+const UI = bundleUI();
+import { trace } from "./trace.js"; // MORSE_TRACE: one line per step of a change
 
 export const WORLD = "morse";            // the isolated world's name
 export const BINDING = "__morseHostSend"; // exists only in that world
@@ -61,16 +66,33 @@ const shim = frame => `(() => {
   globalThis.__morseHostReceive = m => subs.forEach(f => f(m));
 })();`;
 
-// Page.addScriptToEvaluateOnNewDocument runs before <html> exists.
-const boot = frame => `(() => { const go = () => { ${shim(frame)}\n${RUNTIME} }; document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go, { once: true }) : go(); })();`;
+// Page.addScriptToEvaluateOnNewDocument runs before the page's own scripts.
+// perf: the boot runs right away (it waits for the DOM itself, and applies
+// CSS mods as early as it can); the UI comes later through "ui.load".
+const boot = frame => `${shim(frame)}\n${RUNTIME}`;
 export const BOOT = { window: boot(false), frame: boot(true) };
+
+// reliability: mod code runs in the page's main world, so the helper kit
+// (core/kit.js) takes MutationObserver, rAF and timers from here: captured
+// before the page's own scripts can replace or stub them.
+export const PRISTINE = `(() => { try {
+  const k = Symbol.for("morse.pristine"), W = window, a = Reflect.apply;
+  if (W[k]) return;
+  const f = { st: W.setTimeout, ct: W.clearTimeout, si: W.setInterval, ci: W.clearInterval, raf: W.requestAnimationFrame };
+  Object.defineProperty(W, k, { value: Object.freeze({
+    MutationObserver: W.MutationObserver,
+    setTimeout: (...x) => a(f.st, W, x), clearTimeout: id => a(f.ct, W, [id]),
+    setInterval: (...x) => a(f.si, W, x), clearInterval: id => a(f.ci, W, [id]),
+    requestAnimationFrame: fn => a(f.raf, W, [fn]),
+  }) });
+} catch {} })();`;
 
 // What `morse stop` leaves behind: no bar, no mods, no hooks for new pages.
 // In Morse's world, first: the runtime there goes quiet (so it won't put the
 // bar back) and a later attach can start a fresh one.
 const QUIET = `(() => { try {
   globalThis.__morseGen = (globalThis.__morseGen || 0) + 1;
-  delete globalThis.__morseHost; delete globalThis.__morseHostReceive; delete globalThis.__morseRuntime;
+  delete globalThis.__morseHost; delete globalThis.__morseHostReceive; delete globalThis.__morseRuntime; delete globalThis.__morseProbe;
 } catch {} })()`;
 // Then in the page's main world, where the mods run.
 const cleanup = ids => `(() => { try {
@@ -87,7 +109,11 @@ export class Connector {
   // verify(): called before attaching again after a restart; { ok, why }.
   // onChange(connector): windows or state changed (for `morse status`).
   constructor({ port, app = null, settings, log = console.log, watch = false, verify = null, onChange = null, interval = 1000 }) {
-    Object.assign(this, { port, app, settings, log, watch, verify, onChange, interval });
+    // Log lines name windows (the page's own title), mods (a shared mod's
+    // title) and the model's results: as text, never escape sequences that
+    // could rewrite the terminal or set its clipboard.
+    const shown = s => String(s).replace(/[\x00-\x09\x0b-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069]+/g, " ");
+    Object.assign(this, { port, app, settings, log: line => log(shown(line)), watch, verify, onChange, interval });
     this.pages = new Map();   // target id -> CDPSession (null while connecting)
     this.windows = new Map(); // target id -> { id, type, kind, title, url, frame, session, since }
     this.retry = new Map();   // target id -> { at, n } after a failed attach
@@ -123,7 +149,7 @@ export class Connector {
           list = null;
         } else {
           this.refused = null;
-          this.log(`  ↻ ${this.appName} is open again. Connecting.`);
+          this.log(`  ↻ ${t("launch.openAgain", { name: this.appName })}`);
         }
       }
       if (list) {
@@ -131,9 +157,9 @@ export class Connector {
         this.sync(list);
       } else if (misses >= 3 && this.state === "attached") {
         this.dropAll();
-        if (!this.watch) { this.log(`${this.appName} closed, so Morse stopped.`); this.state = "stopped"; break; }
+        if (!this.watch) { this.log(t("launch.closed", { name: this.appName })); this.state = "stopped"; break; }
         this.state = "waiting";
-        this.log(`  … ${this.appName} closed. Waiting for it to open again (Ctrl+C to stop).`);
+        this.log(`  … ${t("launch.closedWaiting", { name: this.appName })}`);
         this.changed();
       }
       await sleep(this.interval);
@@ -257,6 +283,7 @@ export class Connector {
     w.frameId = (await s.send("Page.getFrameTree").catch(() => null))?.frameTree?.frame?.id || target.id;
     await s.send("Runtime.addBinding", { name: BINDING, executionContextName: WORLD });
     // Every new document: Chromium creates Morse's world and runs the runtime in it.
+    w.pristine = (await s.send("Page.addScriptToEvaluateOnNewDocument", { source: PRISTINE }))?.identifier; // reliability: for the kit, in the main world
     w.script = (await s.send("Page.addScriptToEvaluateOnNewDocument", { source, worldName: WORLD }))?.identifier;
     await s.send("Runtime.enable"); // reports existing contexts, including a Morse world left by an earlier session
     w.ready = true;
@@ -265,10 +292,11 @@ export class Connector {
     await this.boot(s, w, source).catch(() => {});
     if (w.detaching || this.state === "stopped") return; // stopped meanwhile: nothing was connected
     readTitle();
-    this.log(`  ✓ connected to ${title}${kind === "window" ? "" : ` (${kind})`}`);
+    this.log(`  ✓ ${t("launch.connected", { title })}${kind === "window" ? "" : ` (${kind})`}`);
+    trace("connect", `CDP attached to "${title}": Morse's code runs in its own isolated world ("morse"), talks to this process through the __morseHostSend binding`);
     if (!this.hinted && kind === "window") { // first-run hook: say what to do next, once
       this.hinted = true;
-      configuredHotkeys().then(k => k.open && this.log(`\n  In ${this.app?.name || title || "the app"}, press ${k.open}, point at something and say what to change.\n`), () => {});
+      configuredHotkeys().then(k => k.open && this.log(`\n  ${t("launch.ready", { name: this.app?.name || title || t("launch.theApp"), key: k.open })}\n`), () => {});
     }
     this.changed();
   }
@@ -346,6 +374,7 @@ export class Connector {
       const s = w.session;
       try {
         if (w.script) await s.send("Page.removeScriptToEvaluateOnNewDocument", { identifier: w.script });
+        if (w.pristine) await s.send("Page.removeScriptToEvaluateOnNewDocument", { identifier: w.pristine });
         const world = w.frames?.get(w.frameId)?.world;
         if (world != null) await s.send("Runtime.evaluate", { expression: QUIET, contextId: world }).catch(() => {});
         await s.send("Runtime.evaluate", { expression: cleanup(ids) });
@@ -410,6 +439,7 @@ export class Connector {
     catch (e) { if (!/Execution was terminated/.test(e.message) && !s.hang?.froze(modId)) throw e; r = null; }
     finally { done?.(); }
     if (!r || s.hang?.froze(modId)) return { ok: false, error: FROZE_ERROR };
+    trace("page", `JS (${js.length} chars) run in the app's own page world via CDP Runtime.evaluate${r.exceptionDetails ? " → error" : ""}`);
     if (r.exceptionDetails) return { ok: false, error: r.exceptionDetails.exception?.description?.split("\n")[0] || r.exceptionDetails.text };
     const res = r.result?.value || { ok: false, error: "no result" };
     if (!res.ok) return res;
@@ -466,17 +496,25 @@ export class Connector {
     if (PACK_REQUESTS.has(msg.type)) { const r = await handlePack(msg); if (/^pack\.(install|update|enable)$/.test(msg.type)) this.modsChanged(s); return r; } // packs hook: mod packs (packs.js)
     if (Style.owns(msg)) { const r = await Style.handle(msg, await here()); if (msg.type !== "style.get" && msg.type !== "style.preview") this.modsChanged(s); return r; } // your-style hook
     switch (msg.type) {
-      case "hello":
+      case "hello": {
         this.grantMic(s, (await here()).url);
-        return { mode: "desktop", app, appName: this.app?.name || null, label: settingsLabel(this.settings),
-          settings: await loadPrefs(), voice: await cachedVoiceStatus(),
+        const prefs = await loadPrefs();
+        return { mode: "desktop", app, appName: this.app?.name || null, label: this.settings ? startLabel({ ...this.settings, mode: prefs.modelMode }, settingsLabel) : settingsLabel({}),
+          models: this.settings ? modelNames(this.settings, settingsLabel) : null, // models: the names the Settings sheet shows
+          settings: prefs, voice: await cachedVoiceStatus(),
+          quiet: !!s.welcomed || !(s.welcomed = true), // perf: welcome once per window, not on every reload (it loads the UI)
           debug: process.env.MORSE_DEBUG === "1" || undefined }; // status for tests (97-boot.js debugStatus)
+      }
+      case "ui.load": // perf: the overlay is evaluated on first use, into the world that asked
+        await s.send("Runtime.evaluate", { expression: UI, contextId: caller.world });
+        return true;
       case "mods.list":
         return Style.list(await modsFor(await here()), await here()); // your-style hook: the style first
       case "mods.save": {
         const where = await here();
         if (msg.draft) {
           await this.ownMod(msg.draft.id, where);
+          trace("save", `Saved "${msg.draft.title || msg.draft.id}" to ~/.morse/mods/ · it runs again every time this app opens`);
           return saveMod(createMod({ ...msg.draft, url: where.url, app, model: msg.draft.model || settingsLabel(this.settings) }));
         }
         validateMod(msg.mod);
@@ -505,7 +543,7 @@ export class Connector {
         return putClipboard({ ...msg.item, from: { ...msg.item?.from, app: this.app?.name || msg.item?.from?.app || null } });
       case "warm": { // speed: the bar opened; get the model ready (core/providers.js prewarm)
         const settings = await this.freshSettings();
-        if (settings?.provider && settings.provider !== "none") prewarm(settings);
+        if (settings?.provider && settings.provider !== "none") prewarm({ ...settings, mode: (await loadPrefs()).modelMode }); // models: warms the first model
         return true;
       }
       case "exec":
@@ -522,8 +560,13 @@ export class Connector {
         if (!this.settings?.provider || this.settings.provider === "none")
           throw new Error("No model is connected. Run morse setup in a terminal to choose one.");
         const t0 = Date.now();
+        const mode = (await loadPrefs()).modelMode; // models: Automatic, Always fast, Always best
+        const sel = msg.context?.target?.selector;
+        trace("bar", `"${msg.request}" · ${sel ? `pointed at ${sel}` : "the whole page"} · ${this.app?.name || "app"}`);
+        trace("model", `${this.settings.provider}${this.settings.model ? ` · ${this.settings.model}` : ""}`);
+        let cssPushes = 0, tokens = 0;
         const res = await this.gens.run(msg.genId, signal => runMorse({
-          settings: this.settings,
+          settings: { ...this.settings, mode },
           request: msg.request,
           context: { ...msg.context, app: this.app?.name || msg.context.app },
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
@@ -532,12 +575,18 @@ export class Connector {
           // over the same session, in order.
           probe: sels => this.probe(s, caller, msg.context?.target?.selector, sels),
           collapse: css => this.collapse(s, caller, msg.genId, css), // guard hook: hid most of the page?
-          emit: ev => { if (!signal.aborted) this.push(s, caller, { ...ev, genId: msg.genId }); },
+          emit: ev => {
+            if (ev.type === "token" && !tokens++) trace("stream", `first words from the model after ${Date.now() - t0}ms`);
+            if (ev.type === "css" && ev.css && !cssPushes++) trace("page", `CSS reaches the page while the model is still writing (${Date.now() - t0}ms), pushed over CDP to Morse's world`);
+            if (ev.type === "phase" && ev.phase === "fixing") trace("engine", `repair round: ${String(ev.error || "").slice(0, 100)}`);
+            if (!signal.aborted) this.push(s, caller, { ...ev, genId: msg.genId });
+          },
           signal,
         }));
         if (res.cancelled) { this.log(`  ■ "${msg.request}" stopped after ${Date.now() - t0}ms`); return res; }
-        this.log(`  ${res.ok ? "✓" : "✗"} "${msg.request}" → ${res.title || "-"} (${Date.now() - t0}ms, ${res.attempts} attempt${res.attempts > 1 ? "s" : ""})`);
-        return { ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts };
+        this.log(`  ${res.ok ? "✓" : "✗"} "${msg.request}" → ${res.title || "-"} (${Date.now() - t0}ms, ${res.attempts} attempt${res.attempts > 1 ? "s" : ""}${res.model ? `, ${res.model}${res.escalated ? " after the fast model" : ""}` : ""})`);
+        trace("done", `${res.ok ? "✓" : "✗"} "${res.title || "-"}" in ${Date.now() - t0}ms · ${tokens} chunks streamed · css ${res.css?.length || 0} chars · js ${res.js?.length || 0} chars · ${res.attempts} attempt${res.attempts > 1 ? "s" : ""}${res.model ? ` · ${res.model}` : ""}`);
+        return { ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts, model: res.model };
       }
       case "capture": {
         const from = Date.now() / 1000 - 0.15;

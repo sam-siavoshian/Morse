@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "dash-failed-red",
+  "title": "Failed orders in red",
+  "prompt": "highlight failed orders in red",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8793"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "tbody tr:nth-child(3) .st",
+    "label": "“Failed” status"
+  },
+  "css": "tbody tr:has(span.st[data-s=\"failed\"]) > td {\n  background: rgb(254, 242, 242) !important;\n}\ntbody tr:has(span.st[data-s=\"failed\"]) > td:first-child {\n  box-shadow: inset 3px 0 0 rgb(185, 28, 28);\n}\ntbody tr:has(span.st[data-s=\"failed\"]) span.st {\n  background: rgb(254, 226, 226);\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

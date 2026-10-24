@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "mail-hide-upgrade",
+  "title": "Hide the upgrade ad",
+  "prompt": "hide the Postbox Pro upgrade banner",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8791"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": ".pz7",
+    "label": "“Postbox Pro” banner"
+  },
+  "css": "body > div[role=\"note\"] { display: none !important; }\nbody:has(> div[role=\"note\"]) { grid-template-rows: 56px 1fr !important; }\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

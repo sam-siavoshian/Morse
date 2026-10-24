@@ -36,7 +36,7 @@ const Ask = (() => {
     if (A.turns.length) ask.turns = A.turns.slice(-4).map(t => ({ q: t.q, a: t.a, points: t.points }));
     if (A.mode) ask.mode = A.mode;
     if (Object.keys(ask).length) m.context = { ...m.context, ask };
-    A.gen = { id: m.genId, q: A.mode === "explain" ? "Explain this page" : m.request, mode: A.mode };
+    A.gen = { id: m.genId, q: A.mode === "explain" ? t("ask.explain") : m.request, mode: A.mode };
     A.mode = "";
     A.live = null;
     hide();
@@ -46,7 +46,7 @@ const Ask = (() => {
     if (msg.type !== "answer" || !A.gen || msg.genId !== A.gen.id) return;
     A.live = msg;
     if (S.phase !== "working") return;
-    if (!/Answering/.test(hint.textContent)) hint.innerHTML = `${radar(12)} Answering`;
+    if (!hint.textContent.includes(t("ask.answering"))) hint.innerHTML = `${radar(12)} ${t("ask.answering")}`;
     render(msg, A.gen.q, true);
   });
 
@@ -69,15 +69,15 @@ const Ask = (() => {
     if (S.target) setTarget(null);
     S.picking = false;
     setInput("");
-    input.placeholder = "Ask a follow-up, or describe a change…";
+    input.placeholder = t("ask.followUp");
     forgetIfMoved();
     A.turns.push({ q, a: a.text, points: marksOf(a).slice(0, 6).map(({ selector, label }) => ({ selector, label })) });
     A.turns = A.turns.slice(-MAX_TURNS);
     render(a, q, false);
     dodge();
-    note(`<b>Answered</b> · ask a follow-up, or <kbd>Esc</kbd> to close`, 0);
+    note(t("ask.answered"), 0);
     // Screen readers hear the answer itself, after the status line.
-    setTimeout(() => announce(`Answer: ${card.querySelector(".ask-body")?.innerText || ""}`), 400);
+    setTimeout(() => announce(t("ask.answerSay", { text: card.querySelector(".ask-body")?.innerText || "" })), 400);
     input.focus();
     return true;
   }
@@ -91,12 +91,12 @@ const Ask = (() => {
   }
   // Why a marked thing has no badge: where it's hiding.
   function whereIs(el) {
-    if (!el) return "not on this page";
+    if (!el) return t("ask.notOnPage");
     if (Markers.visible(el)) return "";
     const w = hiddenWhere(el); // 20-context.js
-    if (w?.menu) return `inside the ${w.menu}${/menu$/i.test(w.menu) ? "" : " menu"}`;
-    if (w?.panel) return `inside ${w.panel}`;
-    return "not showing right now";
+    if (w?.menu) return /menu$/i.test(w.menu) ? t("ask.insideMenuNamed", { menu: w.menu }) : t("ask.insideMenu", { menu: w.menu });
+    if (w?.panel) return t("ask.inside", { panel: w.panel });
+    return t("ask.notShowing");
   }
   // The bar goes to the top or bottom, whichever covers fewer marked things.
   function dodge() {
@@ -121,18 +121,18 @@ const Ask = (() => {
     card.innerHTML = `
       <header class="ask-head">
         <span class="ask-q" title="${esc(q)}">${esc(q)}</span>
-        ${earlier > 0 ? `<span class="ask-ctx">follows ${earlier} earlier question${earlier > 1 ? "s" : ""}</span>` : ""}
-        ${!streaming ? `<button type="button" class="ask-new" data-ask="forget" title="Forget earlier questions on this page">New topic</button>` : ""}
-        <button type="button" class="ask-x" data-ask="close" aria-label="Close answer" title="Close">×</button>
+        ${earlier > 0 ? `<span class="ask-ctx">${t("ask.follows", { n: earlier })}</span>` : ""}
+        ${!streaming ? `<button type="button" class="ask-new" data-ask="forget" title="${esc(t("ask.forget"))}">${t("ask.newTopic")}</button>` : ""}
+        <button type="button" class="ask-x" data-ask="close" aria-label="${esc(t("ask.close"))}" title="${esc(t("btn.close"))}">×</button>
       </header>
       <div class="ask-body">${streaming ? withCaret(renderMarkdown(a.text, { refs: marks.length })) : renderMarkdown(a.text, { refs: marks.length })}</div>
       ${marks.length ? `<ol class="ask-marks">${marks.map((m, i) => {
         const where = whereIs(items[i]?.el);
-        return `<li><button type="button" data-n="${m.n}" title="${where ? "Not showing right now" : "Scroll to it"}" ${where ? `class="away"` : ""}><span class="ask-n">${m.n}</span><span class="ask-l">${esc(m.label || "Marked spot")}</span>${where ? `<small>${esc(where)}</small>` : ""}</button></li>`;
+        return `<li><button type="button" data-n="${m.n}" title="${esc(where ? t("ask.notShowingTitle") : t("ask.scrollTo"))}" ${where ? `class="away"` : ""}><span class="ask-n">${m.n}</span><span class="ask-l">${esc(m.label || t("ask.marked"))}</span>${where ? `<small>${esc(where)}</small>` : ""}</button></li>`;
       }).join("")}</ol>` : ""}
       ${!streaming && a.steps.length ? `<footer class="ask-foot">
-        <button type="button" class="primary" data-ask="show">Show me<small>${a.steps.length} step${a.steps.length > 1 ? "s" : ""}</small></button>
-        <span class="ask-tip">You do the clicking; Morse points the way.</span>
+        <button type="button" class="primary" data-ask="show">${t("ask.showMe")}<small>${t("ask.steps", { n: a.steps.length })}</small></button>
+        <span class="ask-tip">${t("ask.tip")}</span>
       </footer>` : ""}`;
   }
   // The caret sits at the end of the last line being written, not under it.
@@ -153,15 +153,14 @@ const Ask = (() => {
     if (b.dataset.n) return void Markers.scrollTo(b.dataset.n);
     const act = b.dataset.ask;
     if (act === "close" || act === "forget") { hide(); hintNote = ""; setHint(); input.focus(); }
-    if (act === "forget") { A.turns = []; toast("New topic. Morse forgot the earlier questions."); }
+    if (act === "forget") { A.turns = []; toast(t("ask.forgot")); }
     if (act === "show" && A.answer) Guide.start(A.answer.steps, A.q);
   });
   // Typing a new question replaces the answer's "Answered" note.
-  input.addEventListener("input", () => { if (!card.hidden && /Answered/.test(hint.textContent)) { hintNote = ""; setHint(); } });
+  input.addEventListener("input", () => { if (!card.hidden && hintNote === t("ask.answered")) { hintNote = ""; setHint(); } });
 
-  const PLACEHOLDER = input.placeholder;
   new MutationObserver(() => {
-    if (bar.hidden) { hide(); if (input.placeholder.startsWith("Ask a follow-up")) input.placeholder = PLACEHOLDER; }
+    if (bar.hidden) { hide(); if (input.placeholder === t("ask.followUp")) input.placeholder = PLACEHOLDER(); }
     else if (Guide.active) Guide.stop(); // opening the bar again means moving on
   }).observe(bar, { attributes: true, attributeFilter: ["hidden"] });
 
@@ -174,8 +173,9 @@ const Ask = (() => {
       const head = toolsMenu.querySelector("header");
       const item = document.createElement("button");
       item.setAttribute("role", "menuitem");
+      item.tabIndex = -1;
       item.dataset.ask = "explain";
-      item.innerHTML = `${svg(I_EXPLAIN)}<span>Explain this page</span><span class="gm-state"></span>`;
+      item.innerHTML = `${svg(I_EXPLAIN)}<span>${t("ask.explain")}</span><span class="gm-state"></span>`;
       const hr = document.createElement("hr");
       if (head) head.after(item, hr); else toolsMenu.prepend(item, hr);
     };
@@ -204,7 +204,7 @@ const Ask = (() => {
     if (S.phase !== "idle") return;
     if (S.target) setTarget(null);
     A.mode = "explain";
-    send("Explain this page");
+    send(t("ask.explain"));
   }
 
   return {
@@ -222,7 +222,7 @@ const Guide = (() => {
   box.className = "guide";
   box.hidden = true;
   box.setAttribute("role", "dialog");
-  box.setAttribute("aria-label", "Show me");
+  tBind(box, "aria-label", "ask.showMe");
   root.insertBefore(box, bar);
   let G = null, raf = 0;
 
@@ -251,11 +251,24 @@ const Guide = (() => {
     const s = G.steps[G.i];
     Markers.show([{ n: G.i + 1, selector: s.selector, label: s.label }], { focus: true });
     render();
+    // Screen readers hear each step, and how to get there without a mouse.
+    const keys = PLATFORM === "mac" ? "Option" : "Alt";
+    announce(`${t("ask.stepOf", { i: G.i + 1, n: G.steps.length })}: ${s.label || t("so.step.marked")}. ${G.i === 0 ? t("ask.goFirst", { key: keys }) : t("ask.goNext", { key: keys })}`);
+  }
+  // Keyboard users go to the step's part of the page; Morse moves focus there, never clicks.
+  function goTo() {
+    const el = current()?.el;
+    if (!el || !Markers.visible(el)) return announce(t("ask.hidden"));
+    el.scrollIntoView({ block: "center", inline: "nearest" });
+    const FOCUS = "a[href], button, input, select, textarea, summary, [tabindex], [contenteditable=''], [contenteditable=true]";
+    const to = el.matches(FOCUS) ? el : el.querySelector(FOCUS);
+    if (to && !to.disabled) to.focus();
+    else announce(`${describe(el)} is marked on the page`);
   }
   function done() {
     Markers.clear();
     G.done = true;
-    box.innerHTML = `<div class="g-row"><span class="g-n g-ok">✓</span><div class="g-text"><b>That's it.</b><small>${esc(G.q)}</small></div><button type="button" data-g="stop" class="g-x" aria-label="Close">×</button></div>`;
+    box.innerHTML = `<div class="g-row"><span class="g-n g-ok">✓</span><div class="g-text"><b>${t("ask.thatsIt")}</b><small>${esc(G.q)}</small></div><button type="button" data-g="stop" class="g-x" aria-label="${esc(t("btn.close"))}">×</button></div>`;
     box.dataset.place = "";
     const g = G;
     setTimeout(() => { if (G === g) stop(); }, 4000);
@@ -268,14 +281,15 @@ const Guide = (() => {
     box.innerHTML = `
       <div class="g-row">
         <span class="g-n">${G.i + 1}</span>
-        <div class="g-text"><b>${esc(s.label || "Click the marked spot")}</b>
-          <small>${waiting ? `Can't see it yet. It may be inside a menu that's closed: go back a step.` : seen ? `Click it yourself when you're ready.` : `Looking for it…`}</small></div>
-        <button type="button" data-g="stop" class="g-x" aria-label="Stop showing me" title="Stop (Esc)">×</button>
+        <div class="g-text"><b>${esc(s.label || t("ask.clickMarked"))}</b>
+          <small>${waiting ? t("ask.cantSee") : seen ? t("ask.clickIt") : t("ask.looking")}</small></div>
+        <button type="button" data-g="stop" class="g-x" aria-label="${esc(t("ask.stopShowing"))}" title="${esc(t("ask.stopTitle"))}">×</button>
       </div>
       <div class="g-foot">
-        <span class="g-dots" aria-label="Step ${G.i + 1} of ${G.steps.length}">${G.steps.map((_, k) => `<i class="${k < G.i ? "past" : k === G.i ? "now" : ""}"></i>`).join("")}<span>Step ${G.i + 1} of ${G.steps.length}</span></span>
-        <button type="button" data-g="back" ${G.i === 0 ? "disabled" : ""}>Back</button>
-        <button type="button" data-g="skip">${G.i === G.steps.length - 1 ? "Finish" : "Skip"}</button>
+        <span class="g-dots" aria-label="${esc(t("ask.stepOf", { i: G.i + 1, n: G.steps.length }))}">${G.steps.map((_, k) => `<i class="${k < G.i ? "past" : k === G.i ? "now" : ""}"></i>`).join("")}<span>${t("ask.stepOf", { i: G.i + 1, n: G.steps.length })}</span></span>
+        ${seen ? `<button type="button" data-g="go" title="${esc(t("ask.goToTitle", { key: PLATFORM === "mac" ? "⌥↓" : "Alt+↓" }))}">${t("ask.goTo")}</button>` : ""}
+        <button type="button" data-g="back" ${G.i === 0 ? "disabled" : ""}>${t("ask.back")}</button>
+        <button type="button" data-g="skip">${G.i === G.steps.length - 1 ? t("ask.finish") : t("ask.skip")}</button>
       </div>`;
     G.rendered = `${G.i}:${seen}:${waiting}`;
   }
@@ -334,12 +348,13 @@ const Guide = (() => {
     if (a === "stop") stop();
     if (a === "back") go(G.i - 1);
     if (a === "skip") go(G.i + 1);
+    if (a === "go") goTo();
   });
   // The user's own click on the marked element moves to the next step. Some
   // menus act on pointerup and vanish before the click, so either counts.
   function hit(e) {
     const it = current();
-    if (!it || !it.el || G.hit === G.i || !e.composedPath().includes(it.el)) return;
+    if (!e.isTrusted || !it || !it.el || G.hit === G.i || !e.composedPath().includes(it.el)) return;
     G.hit = G.i;
     const at = G.i;
     setTimeout(() => { if (G && G.i === at) go(at + 1); }, 220); // let the page react first
@@ -347,10 +362,13 @@ const Guide = (() => {
   listen("click", hit, true);
   listen("pointerup", hit, true);
   listen("keydown", e => {
-    if (!e.isTrusted || !G || S.open || e.key !== "Escape") return;
+    if (!e.isTrusted || !G || S.open || !panel.hidden || !modal.hidden) return;
+    if (matchCombo(e, KEYPICK_COMBO) && !G.done) { e.preventDefault(); e.stopImmediatePropagation(); goTo(); return; } // 41-keypick.js's keys
+    if (e.key !== "Escape") return;
     e.preventDefault();
     e.stopImmediatePropagation();
     stop();
+    announce(t("ask.stopped"));
   }, true);
 
   return { start, stop, get active() { return !!G; }, get step() { return G ? G.i : -1; } };

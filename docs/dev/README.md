@@ -8,6 +8,9 @@ How to work on Morse itself. For using Morse, see the [docs](../README.md).
   test helpers, evals, screenshots, and what was verified for real.
 - [Adding a feature](adding-a-feature.md): the rules for runtime code, words
   people read, the UI review loop, and where docs go.
+- [Accessibility of Morse itself](accessibility.md): keyboard, screen
+  readers, zoom and forced colors in Morse's own UI, and how axe-core checks
+  it.
 - [Checking a Mac or Windows PC](platform-testing.md): the 15-minute check
   for the desktop support that has only been tested on Linux.
 
@@ -22,7 +25,7 @@ git clone https://github.com/sam-siavoshian/RRAA morse && cd morse
 npm ci                       # the Anthropic SDK and esbuild
 npm run build                # builds the Chrome extension into dist/extension
 npm link                     # so `morse` runs this checkout
-npm run demo:serve           # the demo sites and the website on http://127.0.0.1:8787-8790
+npm run demo:serve           # the demo sites and the website on http://127.0.0.1:8787-8797
 ```
 
 Load `dist/extension` in `chrome://extensions` (Developer mode, Load
@@ -66,8 +69,26 @@ fails on a broken link. `site/privacy.html` is made from
 [docs/privacy.md](../privacy.md) by `npm run pages`, and
 `tests/release.test.js` checks that it is current.
 
-- **`site/index.html`**: the landing page, with an in-browser demo of the
-  pixel effect (simulated, no model runs).
+The design is ported from the Lanes landing page (same owner): its layout,
+type scale, spacing, components and motion, in plain HTML and CSS, with
+Morse's monochrome in place of Lanes' purple. Light only, like Lanes. Static
+files were chosen over bringing in Next.js because Lanes' page is itself a
+static export whose styles are one plain stylesheet, so a port reproduces it
+exactly with no build step, no dependencies and no change to the Pages
+layout that share links and the gallery list depend on.
+
+- **`site/index.html`**: the landing page. It holds the one copy of the nav
+  bar and footer: `npm run pages` copies them into `site/gallery.html`
+  (between its `<!-- chrome:… -->` markers) and `site/privacy.html`.
+- **`site/config.js`**: where the buttons go (**Get it for Chrome**, **Get the
+  desktop app**; the install steps until there is a store listing or a
+  download) and the demo video under the headline (file, poster, shape,
+  caption). Swap the video there.
+- **`site/site.css`**: the one stylesheet for the site's pages (Nunito Sans,
+  OFL, in `site/fonts/`). `site/shots/` holds the screenshots the page shows,
+  as WebP copies of `docs/screenshots/`.
+- [`tests/site.test.js`](../../tests/site.test.js) checks that every link,
+  image, icon, fragment and config target on the pages resolves.
 - **`site/gallery.html`**: example mods from [`site/mods/`](../../site/mods/)
   (`index.json` lists them; each `*.morse.json` is a normal mod). Search,
   filter by app, read the code, then **Install in Morse** (a share link built
@@ -76,17 +97,35 @@ fails on a broken link. `site/privacy.html` is made from
   2026, so a selector may need a refresh.
 - **`site/radar.js`**: the radar mark (OpenCode's 4×4 pixel spinner) as a
   tiny module.
-- **`share/install.html`** uses the same styles.
+- **`share/install.html`** keeps the site's earlier look, in
+  `share/install.css` with `design/tokens.css`.
 
 Run it locally with `npm run demo:serve` and open
-`http://127.0.0.1:8787/site/`. Screenshots (1440×900 and 390×844, dark and
-light) are in [`docs/site/`](../site/).
+`http://127.0.0.1:8787/site/`. Screenshots are in [`docs/site/`](../site/):
+`node demo/shoot-site.js` makes the pages' own (1440×900 and 390×844), and
+the `compare-*` pictures put Lanes' page beside Morse's at 390, 768, 1280
+and 1440 pixels wide, the first screen and the whole page.
 
 To add a mod to the gallery, export it (`morse export <id>` writes a
 `.morse.json`), drop it in `site/mods/`, and add an entry to
 `site/mods/index.json`. A good gallery mod does one thing, its title says
 what, it sends nothing over the network, and it uses stable selectors (ids,
 `aria-*`, `data-*`, roles), not generated class names like `css-1x2y3`.
+
+Every gallery mod has a checker in
+[`evals/gallery-cases.json`](../../evals/gallery-cases.json): a short script
+that fails on the page without the mod, and passes with it and again after a
+reload, using real clicks and keys. `node evals/gallery.js --generate` asks
+Claude Code (haiku) for each request on its real page or demo app and checks
+the answer; `node evals/gallery.js --verify` checks the files in
+`site/mods/` (`SHOTS=dir` also takes the before and after pictures). The
+demo-app mods are checked again by every test run
+(`tests/gallery-mods.test.js`); the real-site results are in
+[`site/mods/VERIFIED.md`](../../site/mods/VERIFIED.md). Each entry also has a
+`category` (the gallery page's filters), `userScripts` (true when the mod has
+code, so it needs Chrome's “Allow User Scripts”), `checked` (when and where it
+was checked) and, for the best few, `shots` (before and after pictures in
+`site/mods/shots/`).
 
 Morse reads the same list for **Mods for this site**
 ([`core/gallery.js`](../../core/gallery.js), fetched and cached by
@@ -96,7 +135,7 @@ and `version`; raise `version` and add a one-line `changes` when you update a
 mod, and people who installed it see Update available. Entries with
 `"demo": true` are for the demo sites (`npm run demo:serve` serves the list at
 `http://127.0.0.1:8787/site/mods/index.json`, which Morse uses on those
-sites) and don't show on the gallery page. To read another list, set
+sites). The gallery page shows them with a “Demo app” badge. To read another list, set
 `MORSE_GALLERY_URL` or `"gallery": { "index": "…" }` in `~/.morse/config.json`
 (desktop), or `morse.gallery.url` in the extension's local storage.
 
