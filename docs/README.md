@@ -37,7 +37,7 @@ New here? Start with [Getting started](getting-started.md).
 | [Adding a feature](dev/adding-a-feature.md) | Rules for the in-app code, words, the UI review, docs |
 | [Checking a Mac or Windows PC](dev/platform-testing.md) | The 15-minute check for desktop apps on a real Mac or Windows PC |
 | [How Morse talks](WRITING.md) | The style guide for every word a person reads |
-| [Languages in the code](dev/i18n.md) | `t()`, the message catalogs, the Language setting, right-to-left CSS, and text that stays English for the model |
+| [Languages in the code](dev/i18n.md) | `t()`, the message catalogs, the Language setting, right-to-left layout, and text that stays English for the model |
 | [UI review checklist](ui/CHECKLIST.md) | What every screenshot in the UI catalog is checked against |
 | [Launch kit](launch/README.md) | The demo video, clips and how they were recorded |
 | [Chrome Web Store kit](store/README.md) | The store listing, permission notes and screenshots |
