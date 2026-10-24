@@ -92,7 +92,7 @@ desktop apps over the Chrome DevTools Protocol, on the user's own computer.
 - **Version:** from `package.json` (0.2.0); the build writes it into the
   manifest and `npm run package:extension` refuses a mismatch.
 - **The zip** (`npm run package:extension`): `dist/morse-extension-0.2.0.zip`,
-  about 430 KB, `manifest.json` at its root, 25 files: the worker
+  about 490 KB, `manifest.json` at its root, 25 files: the worker
   (`background.js`, which bundles the Anthropic SDK), the content scripts
   (`host.js`, `runtime.js`), the popup, options, welcome and practice pages
   with their scripts and styles, four core modules the pages import
