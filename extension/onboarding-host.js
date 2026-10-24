@@ -118,10 +118,10 @@ function openBarIn(tab) {
   firstSite.delete(tab.id);
   // Morse on the page may not be listening yet: try again for a few seconds.
   const send = left => chrome.tabs.sendMessage(tab.id, { morseToggle: true, text: want.text }).catch(() => { if (left > 0) setTimeout(() => send(left - 1), 400); });
-  setTimeout(() => send(20), 300);
+  setTimeout(() => send(40), 300); // about 16 s
 }
-chrome.tabs.onUpdated.addListener((_id, info, tab) => { if (info.status === "complete") openBarIn(tab); });
-chrome.tabs.onRemoved.addListener(id => firstSite.delete(id));
+chrome.tabs.onUpdated?.addListener((_id, info, tab) => { if (info.status === "complete") openBarIn(tab); });
+chrome.tabs.onRemoved?.addListener(id => firstSite.delete(id));
 
 // The practice area works before a model is connected: the sample answers
 // below (core/demo.js's replies for the practice page's markup), clearly
