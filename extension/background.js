@@ -158,14 +158,14 @@ async function exec(target, modId, js) {
 // runtime/src/20-context.js publishes it. null when it can't answer (an older
 // content script, the practice area); the engine then skips the check.
 let probeSeq = 0;
-function probe(port, targetSelector, selectors) {
+function probe(port, targetSelector, selectors, opts = null) {
   if (Practice.has(port.sender.tab?.id)) return Promise.resolve(null); // the welcome page's sandboxed practice area
   const id = ++probeSeq;
   return new Promise(resolve => {
     const done = v => { clearTimeout(t); port.__probes.delete(id); resolve(v ?? null); };
     const t = setTimeout(() => done(null), 3000);
     port.__probes.set(id, done);
-    try { port.postMessage({ morseProbe: id, target: targetSelector || null, selectors: selectors || [] }); } catch { done(null); }
+    try { port.postMessage({ morseProbe: id, target: targetSelector || null, selectors: selectors || [], ...(opts?.quick && { quick: true }) }); } catch { done(null); } // quick: take-and-bring hook
   });
 }
 
@@ -297,7 +297,7 @@ async function dispatch(msg, port) {
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           signal,
           exec: js => exec(target, msg.genId, js),
-          probe: sels => probe(port, msg.context?.target?.selector, sels),
+          probe: (sels, opts) => probe(port, msg.context?.target?.selector, sels, opts),
           collapse: css => execIn(target, `(${pageCollapse})(${JSON.stringify(css)}, ${JSON.stringify(msg.genId)})`), // guard hook: hid most of the page?
           emit: ev => { if (!signal.aborted) try { port.postMessage({ ...ev, genId: msg.genId }); } catch {} },
         }));

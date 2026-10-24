@@ -15,6 +15,7 @@ New here? Start with [Getting started](getting-started.md).
 | [Edit tools and Page tools](edit-and-page-tools.md) | Change things yourself with no model: hide, move, recolor, rename. Dark mode, text size, hide ads |
 | [Ask and find](ask-and-find.md) | Ask what something does or where a setting is. Show me, and Explain this page |
 | [Show me once](show-me-once.md) | Do a task by hand once, then have Morse do it for you |
+| [Bring a feature](bring-a-feature.md) | Take this in one app, Bring here in another: a feature rebuilt in that app's own look |
 | [Easier to use](easier-to-use.md) | Higher contrast, bigger click targets, easier fonts, Read aloud, Check this page, Describe this picture |
 | [Your style](your-style.md) | One look on every site and app: font, text size, calmer pages, colors, and the sites it skips |
 | [Mods](mods.md) | The Mods panel, sharing, the gallery, Try it, what a mod does before you install it, and fixing mods when a site changes |

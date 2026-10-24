@@ -1095,7 +1095,7 @@ export default {
   "take.this.title": "Take what you pointed at, to bring it into another app",
   "take.watch.title": "Open what you want to take while Morse watches, then press Stop",
   "take.watch.empty": "Open the feature you want to take, the way you usually do, and use it once. Then press Stop.",
-  "take.watch.foot": "<kbd>Esc</kbd> to cancel · Nothing is kept until you press Stop",
+  "take.watch.foot": "{key} or Stop takes what is open · Nothing is kept until then",
   "take.watch.stop": "Stop and take what is open",
   "take.how": "Show how it opens",
   "take.how.title": "Open it once by hand, so Morse knows how it opens",

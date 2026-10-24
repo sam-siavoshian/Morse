@@ -1070,7 +1070,7 @@ export default {
   "take.this.title": "指したものを持っていき、別のアプリに持ち込みます",
   "take.watch.title": "Morse が見ているあいだに持っていきたいものを開き、停止を押してください",
   "take.watch.empty": "持っていきたい機能をいつもどおりに開いて、一度使ってください。それから停止を押してください。",
-  "take.watch.foot": "<kbd>Esc</kbd> でキャンセル · 停止を押すまで何も残りません",
+  "take.watch.foot": "{key} か停止で、開いているものを持っていきます · それまで何も残りません",
   "take.watch.stop": "停止して、開いているものを持っていく",
   "take.how": "開き方を見せる",
   "take.how.title": "一度手で開いて、Morse に開き方を教えます",

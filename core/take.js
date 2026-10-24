@@ -219,8 +219,28 @@ export function bringPrompt(b) {
 - Make it work for real: it opens or turns on the way it did there (the same keys, unless this app already uses them for something; then pick free keys and say them once with morse.toast), and it responds to typing, clicks and keys the way it did. Something that opens over the page closes with Esc or a click outside.
 - Fill it with this app's own things (the links, buttons, headings and items on this page, from the HTML and the page outline), never with the other app's data. Things it can do here must really work when chosen.
 - Use this app's design, not the other app's: this app's font family and sizes, its text, background, border and accent colors, its spacing, corner radius and shadows, and its own components (reuse their classes when they are listed). Read them from the theme, the design notes, the CSS rules and the HTML you were given. The styles it had there are only for its layout and proportions.
+- A look it switches to (a dark mode, a compact view) is this app's own colors and sizes, changed with care, not a filter over the whole page.
 - Put it where the user pointed, or where such a thing belongs in this app (over the page for a palette or a finder, in the toolbar for a button, in a corner for a notice).
 - If it only opens with keys, also add a small button for it where this app keeps such controls, with the keys in its title.
+- Things it lists or acts on are found when it opens, with selectors that match the HTML and page outline you were given (links to places on this page may be written with its own address, like page.html#part).
 - Build everything with morse.el and morse.on, so turning it off removes all of it.`);
   return lines.join("\n\n");
+}
+
+// After a brought feature's code runs (core/engine.js): selectors its JS uses
+// to find this page's own things that match nothing. A palette that lists
+// nothing still adds its button, so the page changed and the usual effect
+// check passes; this catches it. Selectors for what the code makes itself
+// (ids and classes it gives its own parts) are left out. A repair message, or null.
+export function bringMisses(js, jsSelectors = [], unmatched = []) {
+  const made = new Set([...String(js || "").matchAll(/\b(?:id|class|className)\s*[:=]\s*(["'`])([^"'`]+)\1/g)].flatMap(m => m[2].split(/\s+/)).filter(Boolean));
+  const dead = new Set(unmatched || []);
+  const ours = s => [...s.matchAll(/[#.](-?[_a-zA-Z][\w-]*)/g)].some(m => made.has(m[1]) || /^morse/.test(m[1]));
+  // One call's list ("button, a[href], .row") is missing only when none of its parts match.
+  const calls = [...String(js || "").matchAll(/(?:\b(?:watch|querySelectorAll|querySelector|byText)|\.\$\$?)\(\s*(["'`])((?:\\.|(?!\1)[^\\])+)\1/g)]
+    .map(m => m[2].replace(/\\(.)/g, "$1").split(",").map(s => s.trim()).filter(Boolean));
+  const miss = calls.filter(parts => parts.every(s => dead.has(s) && jsSelectors.includes(s)) && !parts.some(ours)).map(p => p.join(", ")).slice(0, 4);
+  if (!miss.length) return null;
+  return `It ran, but your JS looks for this page's things with selectors that match nothing here: ${miss.map(s => `\`${s}\``).join(", ")}, so what it lists or acts on would be empty. `
+    + "Use selectors that match the HTML and page outline you were given (links to places on this page may be written with its own address, like page.html#part).";
 }

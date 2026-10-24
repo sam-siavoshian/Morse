@@ -51,7 +51,7 @@ await page.keyboard.type("zo");
 await shot("bring-02-watching.png");
 await page.locator(".so-strip [data-so=stop]").click();
 await until(async () => /opens with/.test(await page.locator(".tk-card").innerText()));
-await page.mouse.move(1200, 120);
+{ const b = await page.locator(".tk-card").boundingBox(); await page.mouse.move(b.x + b.width / 2, b.y + 20); } // on the bar: nothing on the page is lit up
 await shot("bring-03-taken.png");
 await page.locator(".tk-card [data-tk=done]").click();
 await page.keyboard.press("Escape");

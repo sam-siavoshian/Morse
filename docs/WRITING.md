@@ -181,6 +181,7 @@ a different thing: it keeps a mod turned off.)
 | **Show me once** | Do a task by hand once so Morse can write down the steps; then say what to do with them (a button, a shortcut, every item). Each one is a **step**: Click “Archive”. A password's value shows as “(hidden)”. | record a macro, automation, workflow |
 | **Your style** | One style that follows you to every site and app: your font, text size, calmer colors, no autoplay and more. Say it once in the bar, ending with "everywhere", or set it in Settings. **Not on this site** leaves one site out. **Fit to this site** asks the model to fix what it breaks there; you review it like any change. | theme, global mod, preferences |
 | **capture** | Save the look of something so you can rebuild it in another app. Captured things show under "Captured" in the bar. | copy, clip, clipboard |
+| **Take this / Bring here** | Take a feature from one app or site (point at it, or open it while Morse watches), then bring it into another, where Morse builds it in that app's own look. What you took is under “Taken from other apps” in the Mods panel. “Taken from VS Code”. | copy, clone, port, transplant, import |
 | **voice** | Talking to Morse instead of typing. "Hold ⌥Space to talk." | dictation, speech input |
 | **shortcut** | A keyboard shortcut. | hotkey, keybinding (fine in developer docs) |
 | **Settings** | The Settings sheet in the bar. | preferences, options, config |

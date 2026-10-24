@@ -90,6 +90,13 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 132-show-once-result.png | shoot-show-once.js | ✅ | |
 | 133-show-once-done.png | shoot-show-once.js | ✅ | |
 | 134-show-once-hidden.png | shoot-show-once.js | ✅ | |
+| bring-01-take-this.png | shoot-take.js | ✅ | Take this in the empty bar (Codepad, a demo code editor) |
+| bring-02-watching.png | shoot-take.js | ✅ | The palette open while Morse watches; the strip lists the two steps |
+| bring-03-taken.png | shoot-take.js | ✅ | Name and lines from the demo model |
+| bring-04-bring-here.png | shoot-take.js | ✅ | Inkwell: the Bring here list |
+| bring-05-bringing.png | shoot-take.js | ✅ | |
+| bring-06-brought.png | shoot-take.js | ✅ | The demo model's palette in Inkwell's font and corners |
+| bring-07-mods-panel.png | shoot-take.js | ✅ | “Taken from Codepad” on the mod, Taken from other apps below |
 | 135-welcome.png … 146-desktop-first-save.png | shoot-first-run.js | ⚠️ | 12 first-run pictures from before onboarding v2: 135–140 show the old welcome page (141–146, sites and desktop apps, still match); not in the docs |
 | 190-start-choose.png … 205-start-first-site.png | shoot-onboarding-v2.js | ✅ | Onboarding v2, in Getting started: the question, connect (nothing found, Morse Desktop found, waiting for Allow), the first change, the win; even numbers 1280×860, odd numbers phone width (390, full page); 204 the “Allow User Scripts” window, 205 a suggested site with the words typed. Real Claude Code. 182–189 left free for work landing at the same time |
 | 147–152 (VSCodium, Obsidian, Joplin), 153–156-web-* (GitLab, PyPI, Docker Hub) | demo/try-real-app.js, demo/try-real-sites.js (real apps and sites, real Claude Code) | ✅ | Came with main during this review; current words. Not retaken: they need the real apps and network |

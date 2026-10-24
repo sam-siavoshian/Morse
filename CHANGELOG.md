@@ -23,6 +23,11 @@ Version 0.2.0, the first version meant for other people to install.
 - Ask for a follow-up ("make it smaller") to change the same mod. Step back,
   bring back any of the last 20 versions, or fix a mod that stopped working.
 - Hold the shortcut and talk instead of typing.
+- Bring a feature from one app to another: **Take this** on a command palette,
+  a dark mode switch or a notice in one app or site, then **Bring here** in
+  another, or just type “add VS Code's command palette here”. Morse builds it
+  from that app's own fonts, colors and corners. Chrome and desktop apps share
+  what you took once they are paired.
 
 ### Where it works
 

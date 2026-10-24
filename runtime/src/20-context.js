@@ -851,7 +851,10 @@ function spotsShown() {
 // The hosts' effect check asks for it from Morse's own JS world (the desktop
 // connector over CDP, the extension's content script): never the page's. A
 // short wait lets just-applied CSS start rendering (transitions move) first.
-globalThis.__morseProbe = (target, selectors) => new Promise(r => setTimeout(() => r(effectProbe(target, selectors)), 100));
+// opts.quick (take-and-bring hook, core/take.js bringMisses): only which selectors match nothing, fast on a huge page.
+globalThis.__morseProbe = (target, selectors, opts) => new Promise(r => setTimeout(() => r(opts?.quick
+  ? { unmatched: (selectors || []).filter(sel => { try { return !deepAll(sel).length; } catch { return true; } }) }
+  : effectProbe(target, selectors)), 100));
 function context() {
   const cs = getComputedStyle(document.body);
   const roots = allRoots();

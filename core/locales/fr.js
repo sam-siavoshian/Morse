@@ -1069,7 +1069,7 @@ export default {
   "take.this.title": "Prendre ce que vous montrez, pour l'apporter dans une autre app",
   "take.watch.title": "Ouvrez ce que vous voulez prendre pendant que Morse regarde, puis appuyez sur Arrêter",
   "take.watch.empty": "Ouvrez la fonction que vous voulez prendre, comme d'habitude, et utilisez-la une fois. Puis appuyez sur Arrêter.",
-  "take.watch.foot": "<kbd>Esc</kbd> pour annuler · Rien n'est gardé avant que vous appuyiez sur Arrêter",
+  "take.watch.foot": "{key} ou Arrêter prend ce qui est ouvert · Rien n'est gardé avant",
   "take.watch.stop": "Arrêter et prendre ce qui est ouvert",
   "take.how": "Montrer comment ça s'ouvre",
   "take.how.title": "Ouvrez-le une fois à la main, pour que Morse sache comment il s'ouvre",

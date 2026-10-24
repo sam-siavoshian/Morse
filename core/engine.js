@@ -9,6 +9,7 @@ import { planRoute, shouldEscalate, tierLabel } from "./route.js"; // models: fa
 import { selectorsIn, selectorLists } from "./heal.js"; // self-heal hook: shared selector parsing
 import { cannotUndo } from "./showonce.js"; // show-once hook: ask before steps that can't be undone
 import { draftHarm, cssHidesPage, collapseHarm } from "./guard.js"; // guard hook: code that would obviously break the page
+import { bringMisses } from "./take.js"; // take-and-bring hook: a brought feature that finds none of this page's things
 
 // `probe(selectors)` (optional, from the host) returns { fp, unmatched }: a
 // fingerprint of what the page renders and which of the given selectors match
@@ -181,6 +182,19 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       repairs.push(dead);
       advance("effect");
       continue;
+    }
+    // take-and-bring hook: a brought feature whose JS finds none of this page's things (core/take.js)
+    if (context?.bring && probe && draft.js.trim() && more && !signal?.aborted) {
+      const sels = selectorLists(draft).js;
+      const miss = sels.length ? bringMisses(draft.js, sels, (await probe(sels, { quick: true }).catch(() => null))?.unmatched) : null;
+      if (miss) {
+        await exec("").catch(() => {});
+        emit({ type: "css", css: "" });
+        previous = { raw, error: miss };
+        repairs.push(miss);
+        advance("effect");
+        continue;
+      }
     }
     // ---- effect check: did the change do anything visible?
     if (before && more && !signal?.aborted) {

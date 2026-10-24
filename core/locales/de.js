@@ -1069,7 +1069,7 @@ export default {
   "take.this.title": "Nimm mit, worauf du zeigst, um es in eine andere App zu holen",
   "take.watch.title": "Öffne, was du mitnehmen willst, während Morse zusieht, und drück dann Stopp",
   "take.watch.empty": "Öffne die Funktion, die du mitnehmen willst, wie du es sonst tust, und benutze sie einmal. Drück dann Stopp.",
-  "take.watch.foot": "<kbd>Esc</kbd> bricht ab · Nichts wird behalten, bis du Stopp drückst",
+  "take.watch.foot": "{key} oder Stopp nimmt mit, was offen ist · Bis dahin wird nichts behalten",
   "take.watch.stop": "Stoppen und mitnehmen, was offen ist",
   "take.how": "Zeigen, wie es aufgeht",
   "take.how.title": "Öffne es einmal von Hand, damit Morse weiß, wie es aufgeht",

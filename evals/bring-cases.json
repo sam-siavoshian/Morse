@@ -1,0 +1,38 @@
+[
+  {
+    "id": "go-jump-to-node-docs",
+    "what": "pkg.go.dev's Jump to dialog (press f), brought into the Node.js docs",
+    "from": { "url": "https://pkg.go.dev/net/http", "open": [{ "press": "f" }, { "type": "Get" }, { "wait": 600 }] },
+    "to": {
+      "url": "https://nodejs.org/api/fs.html",
+      "open": [{ "pressOrClick": "f" }, { "wait": 700 }, { "type": "readFile" }, { "wait": 700 }],
+      "use": [{ "press": "Enter" }, { "wait": 1500 }],
+      "opened": "T.fresh().some(e => e.matches('input') && T.visible(e))",
+      "works": "/readfile/i.test(location.hash) || [...document.querySelectorAll('h2, h3, h4, h5')].some(h => /readFile/.test(h.textContent) && h.getBoundingClientRect().top >= -40 && h.getBoundingClientRect().top < innerHeight / 2)"
+    }
+  },
+  {
+    "id": "node-dark-switch-to-pypi",
+    "what": "The Node.js docs' dark mode switch, brought into PyPI",
+    "from": { "url": "https://nodejs.org/api/fs.html", "point": "#theme-toggle-btn" },
+    "to": {
+      "url": "https://pypi.org/project/requests/",
+      "open": [],
+      "use": [{ "clickFresh": "button, [role=button], [role=switch]" }, { "wait": 1200 }],
+      "opened": "T.fresh().some(e => e.matches('button, [role=button], [role=switch]') && T.visible(e))",
+      "works": "T.dark()"
+    }
+  },
+  {
+    "id": "vscodium-palette-to-rubygems",
+    "what": "VSCodium's command palette (Ctrl+Shift+P), taken in the desktop app and brought into RubyGems.org in Chrome",
+    "from": { "app": "codium", "window": "workbench", "open": [{ "press": "Control+Shift+P" }, { "wait": 800 }, { "type": "zoom" }, { "wait": 800 }] },
+    "to": {
+      "url": "https://rubygems.org/gems/rails",
+      "open": [{ "pressOrClick": "Control+Shift+P" }, { "wait": 700 }, { "type": "version" }, { "wait": 700 }],
+      "use": [{ "press": "ArrowDown" }, { "press": "Enter" }, { "wait": 1500 }],
+      "opened": "T.fresh().some(e => e.matches('input') && T.visible(e)) && T.fresh().filter(e => T.visible(e) && /version/i.test(e.textContent) && !e.querySelector('input')).length > 0",
+      "works": "location.href !== B.url || Math.abs(scrollY - B.scrollY) > 40 || !T.fresh().some(e => e.matches('input') && T.visible(e))"
+    }
+  }
+]

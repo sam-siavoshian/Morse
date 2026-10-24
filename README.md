@@ -51,6 +51,7 @@ To work on Morse itself from a clone, see the [developer guide](docs/dev/README.
 | **Page tools** | Dark or light mode, text size, hide ads and pop-ups, focus mode. One click each. | [Edit tools and Page tools](docs/edit-and-page-tools.md#page-tools) |
 | **Ask and find** | Ask what something does or where a setting is. **Show me** walks you through the clicks. | [Ask and find](docs/ask-and-find.md) |
 | **Show me once** | Do a task by hand once, then turn it into a button, a shortcut, or “do this to every one”. | [Show me once](docs/show-me-once.md) |
+| **Bring a feature** | **Take this** in one app (a command palette, a dark mode switch), then **Bring here** in another. Morse builds it there, in that app's own look. | [Bring a feature](docs/bring-a-feature.md) |
 | **Easier to use** | Higher contrast, bigger click targets, an easier font, Read aloud, and Check this page with Fix it. | [Easier to use](docs/easier-to-use.md) |
 | **Mods** | Turn mods on and off, share them with a link, try mods other people made, and fix one when a site changes. | [Mods](docs/mods.md) |
 | **Mod packs** | Share several mods together with your team. Each person picks the ones they want, and the pack can stay up to date. | [Mod packs](docs/mod-packs.md) |

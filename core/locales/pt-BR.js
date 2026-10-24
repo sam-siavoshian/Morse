@@ -1069,7 +1069,7 @@ export default {
   "take.this.title": "Leve o que você apontou para trazer a outro app",
   "take.watch.title": "Abra o que quer levar enquanto o Morse observa e depois aperte Parar",
   "take.watch.empty": "Abra o recurso que quer levar, do jeito de sempre, e use uma vez. Depois aperte Parar.",
-  "take.watch.foot": "<kbd>Esc</kbd> para cancelar · Nada é guardado até você apertar Parar",
+  "take.watch.foot": "{key} ou Parar leva o que está aberto · Nada é guardado antes disso",
   "take.watch.stop": "Parar e levar o que está aberto",
   "take.how": "Mostrar como abre",
   "take.how.title": "Abra uma vez à mão, para o Morse saber como abre",

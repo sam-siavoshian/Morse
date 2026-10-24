@@ -456,9 +456,9 @@ export class Connector {
   // Effect check (core/engine.js): the runtime's effectProbe, in Morse's world
   // of the document that asked (it shares the DOM with the page). null when
   // it can't answer; the engine then skips the check.
-  async probe(s, caller, target, selectors) {
+  async probe(s, caller, target, selectors, opts = null) {
     if (caller.world == null) return null;
-    const expression = `globalThis.__morseProbe ? globalThis.__morseProbe(${JSON.stringify(target || null)}, ${JSON.stringify(selectors || [])}) : null`;
+    const expression = `globalThis.__morseProbe ? globalThis.__morseProbe(${JSON.stringify(target || null)}, ${JSON.stringify(selectors || [])}${opts ? `, ${JSON.stringify(opts)}` : ""}) : null`; // opts: { quick } (take-and-bring hook)
     const r = await s.send("Runtime.evaluate", { expression, contextId: caller.world, returnByValue: true, awaitPromise: true });
     return r.exceptionDetails ? null : r.result?.value ?? null;
   }
@@ -579,7 +579,7 @@ export class Connector {
           exec: js => this.exec(s, caller, msg.genId, js),
           // The streamed CSS reaches the runtime first: pushes and probes go
           // over the same session, in order.
-          probe: sels => this.probe(s, caller, msg.context?.target?.selector, sels),
+          probe: (sels, opts) => this.probe(s, caller, msg.context?.target?.selector, sels, opts),
           collapse: css => this.collapse(s, caller, msg.genId, css), // guard hook: hid most of the page?
           emit: ev => {
             if (ev.type === "token" && !tokens++) trace("stream", `first words from the model after ${Date.now() - t0}ms`);

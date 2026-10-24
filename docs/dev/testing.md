@@ -163,7 +163,13 @@ node evals/run.js --split test     # held-out cases: only for final reports
 ```
 
 [`evals/show-once.js`](../../evals/show-once.js) checks Show me once the same
-way.
+way. [`evals/bring.js`](../../evals/bring.js) checks Take this and Bring here
+on real apps and sites, through the built extension and the Morse helper (and
+`morse launch` for a desktop app): whether the brought feature opens and works,
+and whether it fits the page's design (its fonts, colors and corners are ones
+the page already uses). See [the evals](../../evals/README.md#bring-a-feature).
+Without a model, [`tests/take-ui.test.js`](../../tests/take-ui.test.js) runs
+the whole flow on two demo apps with the demo model.
 
 ## The UI catalog and review
 

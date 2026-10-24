@@ -183,7 +183,7 @@ const ShowOnce = (() => {
   }
   listen("keydown", e => {
     if (!e.isTrusted || !recording()) return;
-    if (e.key === "Escape" && !e.ctrlKey && !e.metaKey && !e.altKey && panel.hidden && modal.hidden) {
+    if (e.key === "Escape" && !R.take && !e.ctrlKey && !e.metaKey && !e.altKey && panel.hidden && modal.hidden) {
       e.preventDefault();
       e.stopImmediatePropagation();
       cancel();

@@ -45,7 +45,7 @@ const TakeBring = (() => {
   function appName() {
     const meta = document.querySelector('meta[property="og:site_name"], meta[name="application-name"]')?.content?.trim();
     if (S.appName || meta) return (S.appName || meta).slice(0, 40);
-    const parts = document.title.split(/\s+[|·•–—-]\s+/).map(s => s.trim()).filter(Boolean);
+    const parts = document.title.split(/\s+[|·•–—-]\s+/).map(s => s.replace(/\s*\bv?\d+(\.\d+)+\b/g, "").trim()).filter(Boolean); // "Node.js v26.1 Documentation": no version
     const named = s => s && s.length <= 32 && /\p{Lu}/u.test(s);
     if (parts.length > 1) for (const s of [parts.at(-1), parts[0]]) if (named(s)) return s;
     return location.host.replace(/^www\./, "") || document.title.slice(0, 40);
@@ -116,7 +116,7 @@ const TakeBring = (() => {
     ShowOnce.start({ take: {
       title: onto ? t("take.how") : t("take.this"),
       empty: onto ? t("take.how.empty") : t("take.watch.empty"),
-      foot: t("take.watch.foot"),
+      foot: t("take.watch.foot", { key: caps(comboParts(hotkey("open"), PLATFORM)) }), // Esc belongs to the page here: it closes what was opened
       stopTitle: t("take.watch.stop"),
       say: onto ? t("take.how.empty") : t("take.watch.empty"),
       cancel: stop,

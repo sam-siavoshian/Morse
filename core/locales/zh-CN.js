@@ -1069,7 +1069,7 @@ export default {
   "take.this.title": "拿走你指着的东西，带到别的应用里",
   "take.watch.title": "在 Morse 看着时打开你想拿走的东西，然后按停止",
   "take.watch.empty": "像平常一样打开你想拿走的功能，用一次。然后按停止。",
-  "take.watch.foot": "<kbd>Esc</kbd> 取消 · 按停止之前什么都不会保留",
+  "take.watch.foot": "{key} 或停止：拿走打开的东西 · 在那之前什么都不保留",
   "take.watch.stop": "停止并拿走打开的东西",
   "take.how": "演示怎么打开",
   "take.how.title": "亲手打开一次，让 Morse 知道它怎么打开",
