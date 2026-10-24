@@ -56,6 +56,7 @@ async function submit(request) {
   Object.assign(S.draft, { title: res.title || request.slice(0, 40), css: res.css || "", js: res.js || "", secs, attempts: res.attempts, model: S.label });
   setCss(id, S.draft.css);
   await Effect.finish(res.ok);
+  if (Ask.handle(id, res)) return; // Ask and find: an answer, not a mod (61-ask.js)
   if (!res.ok) {
     setCss(id, "");
     call("off", { modId: id }).catch(() => {}); // a failed attempt's JS may have left nodes, observers or timers

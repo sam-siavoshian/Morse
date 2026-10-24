@@ -1,0 +1,89 @@
+/* The welcome page. Tokens from design/tokens.css (copied next to it by
+   scripts/build.js); no other colors. */
+* { box-sizing: border-box; }
+html { color-scheme: dark light; }
+body { margin: 0; background: var(--m-bg); color: var(--m-text); font: 400 14px/1.55 var(--m-font); letter-spacing: var(--m-tracking); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; cursor: pointer; }
+code, q { font-family: var(--m-mono); font-size: 0.92em; letter-spacing: 0; }
+q { quotes: "“" "”"; font-family: inherit; color: var(--m-text); }
+:focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
+
+.wrap { max-width: 1160px; margin: 0 auto; padding: 48px 32px 64px; }
+
+/* hero */
+.brand { display: inline-flex; align-items: center; gap: 10px; font: 600 15px/1 var(--m-font); color: var(--m-text); margin-bottom: 28px; }
+.brand svg rect.c { opacity: 0.9; } .brand svg rect.o { opacity: 0.3; }
+.hero h1 { margin: 0 0 10px; font: 600 32px/1.15 var(--m-font); letter-spacing: -0.02em; }
+.lede { margin: 0; max-width: 680px; color: var(--m-text-2); font-size: var(--m-text-lg); line-height: 1.6; }
+.lede .caps kbd { height: 22px; font-size: 12px; }
+
+/* key caps */
+.caps { display: inline-flex; gap: 3px; vertical-align: 1px; }
+.caps kbd { min-width: 20px; height: 20px; display: inline-grid; place-items: center; padding: 0 5px; font: 500 11px/1 var(--m-mono); color: var(--m-text-2);
+  background: var(--m-raised); border: 1px solid var(--m-line-strong); border-bottom-width: 2px; border-radius: 5px; }
+
+/* layout */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 28px; align-items: start; margin-top: 40px; }
+h2 { margin: 0; font: 600 var(--m-text-lg)/22px var(--m-font); }
+
+/* practice */
+.practice .head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.practice .head > span { color: var(--m-text-3); font-size: var(--m-text-sm); }
+.three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 0 14px; padding: 0; list-style: none; }
+.three li { display: flex; gap: 10px; padding: 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-surface); }
+.three .n, .tick { flex: none; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 6px; font: 500 11px/1 var(--m-mono); }
+.three .n { background: var(--m-primary); color: var(--m-primary-text); }
+.three b { display: block; font-weight: 600; font-size: var(--m-text-md); line-height: 20px; }
+.three div > span { display: block; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 18px; margin-top: 2px; }
+.three .caps kbd { height: 18px; min-width: 18px; font-size: 10.5px; }
+.frame { position: relative; height: 540px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-lg); overflow: hidden; background: var(--m-surface); box-shadow: var(--m-shadow); }
+.frame iframe { display: block; width: 100%; height: 100%; border: 0; }
+.aside { margin: 12px 2px 0; color: var(--m-text-3); font-size: var(--m-text-sm); line-height: 18px; }
+
+/* checklist */
+.check { position: sticky; top: 24px; padding: 18px 18px 8px; border: 1px solid var(--m-line); border-radius: var(--m-r-lg); background: var(--m-surface); }
+.check h2 { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+#progress { font: 500 var(--m-text-xs)/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; }
+.check ul { margin: 0; padding: 0; list-style: none; }
+.check li { display: flex; gap: 12px; padding: 14px 0; border-top: 1px solid var(--m-line); }
+.check li:first-child { border-top: 0; }
+.check li div { min-width: 0; }
+.check b { display: block; font-weight: 600; font-size: var(--m-text-md); line-height: 20px; }
+.check li div > span:not(.row) { display: block; margin-top: 2px; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 18px; }
+.check small { display: block; margin-top: 8px; color: var(--m-text-3); font: 11px/16px var(--m-mono); letter-spacing: 0; overflow-wrap: anywhere; }
+.check small:empty { display: none; }
+.tick { margin-top: 0; border: 1.5px solid var(--m-line-strong); transition: background var(--m-fast), border-color var(--m-fast); }
+.check li.done .tick { background: var(--m-primary); border-color: var(--m-primary); color: var(--m-primary-text); }
+.check li.done .tick::after { content: ""; width: 10px; height: 6px; margin-top: -2px; border: 2px solid currentColor; border-top: 0; border-right: 0; transform: rotate(-45deg); }
+.check li.done b { color: var(--m-text-2); }
+.check li.done div > span, .check li.done .row, .check li.done small { display: none !important; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* buttons */
+.check button, .row button { display: inline-flex; align-items: center; gap: 6px; height: 28px; margin-top: 10px; padding: 0 10px; border: 1px solid var(--m-primary); border-radius: var(--m-r-sm);
+  background: var(--m-primary); color: var(--m-primary-text); font: 500 var(--m-text-sm)/18px var(--m-font); white-space: nowrap; transition: background var(--m-fast); }
+.check button:hover { background: var(--m-primary-hover); }
+.check button.quiet { background: transparent; border-color: var(--m-line-strong); color: var(--m-text); }
+.check button.quiet:hover { background: var(--m-hover); border-color: var(--m-signal-1); }
+.check button code { font-size: 11px; }
+button.link { display: inline; height: auto; margin: 0; padding: 0; border: 0; background: none; color: var(--m-text); font: inherit; font-weight: 500;
+  text-decoration: underline; text-decoration-color: var(--m-signal-1); text-underline-offset: 3px; }
+button.link:hover { text-decoration-color: var(--m-text); }
+
+/* good to know */
+.know { margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--m-line); }
+.know .cols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin-top: 16px; }
+.know b { display: block; font-weight: 600; font-size: var(--m-text-md); line-height: 20px; margin-bottom: 4px; }
+.know span { color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 19px; }
+.know .caps kbd { height: 18px; min-width: 18px; font-size: 10.5px; }
+
+@media (max-width: 980px) {
+  .grid { grid-template-columns: 1fr; }
+  .check { position: static; }
+  .know .cols { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .wrap { padding: 32px 16px 48px; }
+  .three, .know .cols { grid-template-columns: 1fr; }
+  .frame { height: 600px; }
+}

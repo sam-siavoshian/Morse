@@ -104,6 +104,7 @@ ${B("Websites")} (the Chrome extension uses this helper to reach your model)
   morse unpair              sign out every paired browser
 
 ${B("Model")} (bring your own: Claude Code, Codex, or an API key)
+  morse setup               choose Claude Code, Codex or an API key (finds what is installed)
   morse model               show which model Morse uses
   morse config --provider claude-code|codex|anthropic|openai|auto
       --model <name>        for example opus · sonnet · haiku · claude-opus-5-5 · gpt-5
@@ -122,6 +123,7 @@ For websites: run npm run build, load dist/extension in Chrome, then run ${B("mo
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const f = flags(rest);
+  if (await (await import("./setup.js")).maybeRun(cmd, rest)) return; // onboarding hook: morse setup, and getting started while nothing is set up
   switch (cmd) {
     case "launch": {
       if (!f._[0]) throw new Error("Name an app to open, for example: morse launch spotify");

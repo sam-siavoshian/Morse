@@ -16,7 +16,7 @@ function renderPanel() {
           <div class="tags">${m.css.trim() ? "<span>style</span>" : ""}${m.js.trim() ? "<span>script</span>" : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : "<span>whole page</span>"}</div>
         </div>
         <div class="btns"><button data-a="share" title="Share">Share</button><button data-a="code" title="Edit code">Edit code</button><button data-a="del" title="Delete">Delete</button></div>
-      </article>`).join("") : `<p class="empty">${radar(22)}<br>No mods here yet.<br>Press <kbd>${HOTKEY}</kbd>, point at something and describe what you want.</p>`}
+      </article>`).join("") : emptyModsHtml() /* onboarding hook: 59-onboarding.js */}
     </div>
     <footer><button data-a="import">Install a mod…</button><span>${esc(S.label)}</span></footer>`;
 }

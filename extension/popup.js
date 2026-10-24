@@ -1,4 +1,5 @@
 // Toolbar popup, and (with <body data-page="options">) the options page.
+import { plainError } from "./core/onboarding.js";
 const $ = id => document.getElementById(id);
 const isOptions = document.body.dataset.page === "options";
 const [tab] = isOptions ? [null] : await chrome.tabs.query({ active: true, currentWindow: true });
@@ -53,7 +54,7 @@ async function save(patch) {
 }
 
 function note(text, bad) {
-  $("result").textContent = text;
+  $("result").textContent = bad ? plainError(text) : text;
   $("result").className = "hint" + (bad ? " bad" : "");
 }
 

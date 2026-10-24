@@ -113,7 +113,8 @@ An error says **what went wrong, in plain words**, then **the one thing to try**
   did instead ("Nothing was changed").
 - Raw errors from the browser, the network or the mod's own code ("Failed to
   fetch", "x is not defined") never reach a person as is. `plainError()` in
-  `runtime/src/12-errors.js` turns them into one plain sentence; the raw text
+  `core/onboarding.js` (built on `explainError()`, shared by the runtime,
+  the popup and the extension pages) turns them into one plain sentence; the raw text
   stays in the tooltip and the console.
 - In the bar, the error line starts "That didn't work:" and the detail
   follows in italics. The bar has room for about 60 characters of detail, so

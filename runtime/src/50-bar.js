@@ -247,6 +247,7 @@ function menuItems() {
     { id: "shortcuts", label: "Keyboard shortcuts", keys: ["?"] },
     { id: "voice", label: "Talk", keys: comboParts(hotkey("talk"), PLATFORM), sub: hotkey("talk") === hotkey("open") ? "hold" : "" },
     { id: "mods", label: "Mods panel", keys: comboParts(hotkey("mods"), PLATFORM) },
+    { id: "help", label: "Help and examples", keys: ["F1"] }, // onboarding hook: 59-help.js
   ];
 }
 function showMenu() {
@@ -267,6 +268,7 @@ function runMenu(id) {
   if (id === "shortcuts") { showPane(paneKind === "shortcuts" ? "" : "shortcuts"); input.focus(); }
   if (id === "voice") Voice.start("tap");
   if (id === "mods") openPanel();
+  if (id === "help") toggleHelp(); // onboarding hook: 59-help.js
 }
 moreBtn.addEventListener("click", () => (menuEl.hidden ? showMenu() : hideMenu()));
 menuEl.addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (b) runMenu(b.dataset.m); });

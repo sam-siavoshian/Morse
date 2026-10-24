@@ -115,16 +115,89 @@ function snippet(el) {
   const html = clone.outerHTML;
   return html.length > 3000 ? html.slice(0, 3000) + "…" : html;
 }
-function outline() {
-  const lines = [];
-  const q = "header,nav,main,aside,footer,[role=main],[role=navigation],h1,h2,h3,button,[role=button],input,textarea,form";
-  for (const el of document.querySelectorAll(q)) {
-    if (el.closest("[data-morse-ui]") || !el.getClientRects().length) continue;
-    const t = (el.getAttribute("aria-label") || el.innerText || el.getAttribute("placeholder") || "").trim().split("\n")[0].slice(0, 40);
-    lines.push(`${selectorFor(el)}${t ? `  "${t}"` : ""}`);
-    if (lines.length >= 40) break;
+// The page outline the model sees: landmarks, headings and controls, plus the
+// ways around an app (menu buttons, tabs, settings-like links) and what sits
+// inside closed menus, so "where is X?" can name the menu to open. One line
+// each, in page order: `selector  "label"  (note)`. Capped by kind so a long
+// list of links never crowds out the menus.
+const OUTLINE_Q = "header,nav,main,aside,footer,dialog,[role=main],[role=navigation],[role=dialog],h1,h2,h3,button,[role=button],input,textarea,select,form,a[href],summary,[role=tab],[role=menuitem],[role=menuitemcheckbox],[role=menuitemradio],[aria-haspopup]";
+const OUTLINE_WAYS = /setting|preference|account|profile|option|notification|privacy|security|password|billing|help|export|import|download|share|log ?out|sign ?(in|out)|more|menu/i;
+const OUTLINE_BUDGET = [28, 20, 10, 16]; // ways around + landmarks, controls, other links, inside closed menus
+const outlineLabel = el => (el.getAttribute("aria-label") || el.innerText || el.textContent || el.getAttribute("placeholder") || el.getAttribute("title") || "")
+  .trim().split("\n")[0].replace(/\s+/g, " ").slice(0, 40);
+const isMenuTrigger = el => el.localName === "summary" || (el.getAttribute("aria-haspopup") || "false") !== "false";
+// Where a control that isn't showing lives: a closed <details>, or a
+// menu/popover/dialog whose opener we can name. { menu, opener } for a closed
+// menu, { panel } for a closed dialog or tab; null when hidden for any other
+// reason. Also used by Ask and find (61-ask.js) to say where a marker is.
+function hiddenWhere(el) {
+  const d = el.closest("details:not([open])");
+  if (d && el.parentElement !== d) { const s = d.querySelector(":scope > summary"); return s ? { menu: outlineLabel(s), opener: s } : null; }
+  const box = el.closest("[role=menu],[role=listbox],[popover],dialog,[role=dialog],[role=tabpanel],[hidden],[aria-hidden=true]");
+  if (!box) return null;
+  let opener = null;
+  if (box.id) {
+    const id = cssEsc(box.id);
+    opener = document.querySelector(`[aria-controls~="${id}"],[popovertarget="${id}"],a[href="#${id}"]`);
   }
-  return lines.join("\n").slice(0, 1800);
+  if (!opener && box.getAttribute("aria-labelledby")) opener = document.getElementById(box.getAttribute("aria-labelledby").split(" ")[0]);
+  if (opener && isMenuTrigger(opener)) return { menu: outlineLabel(opener), opener };
+  const panel = opener ? outlineLabel(opener) : box.getAttribute("aria-label") || "";
+  return panel ? { panel, opener } : null;
+}
+// selectorFor() is about the element's role in the page, so siblings can
+// share one (two tabs); the outline needs each line to name exactly one.
+function uniqueSelector(el) {
+  const sel = selectorFor(el);
+  try {
+    if (document.querySelectorAll(sel).length <= 1 || !el.parentElement) return sel;
+    const k = [...el.parentElement.children].filter(c => c.localName === el.localName).indexOf(el) + 1;
+    const nth = `${sel}:nth-of-type(${k})`;
+    if (document.querySelector(nth) === el) return nth;
+  } catch {}
+  return sel;
+}
+function outline() {
+  const label = outlineLabel, isTrigger = isMenuTrigger;
+  const shown = el => el.getClientRects().length > 0 && (!el.checkVisibility || el.checkVisibility({ visibilityProperty: true }));
+  const whereHidden = el => {
+    const w = hiddenWhere(el);
+    return !w ? "" : w.menu ? `in closed menu "${w.menu}"` : `in "${w.panel}", not open`;
+  };
+  const picked = [[], [], [], []];
+  let i = 0;
+  for (const el of document.querySelectorAll(OUTLINE_Q)) {
+    if (el.closest("[data-morse-ui]") || el.type === "hidden") continue;
+    const tag = el.localName, role = el.getAttribute("role") || "", t = label(el);
+    const vis = shown(el);
+    let note = "", tier;
+    if (isTrigger(el)) {
+      const open = tag === "summary" ? el.parentElement?.open : el.getAttribute("aria-expanded") === "true";
+      note = `menu button, ${open ? "open" : "closed"}`; tier = 0;
+    } else if (role === "tab") { note = `tab${el.getAttribute("aria-selected") === "true" ? ", selected" : ""}`; tier = 0; }
+    else if (/^menuitem/.test(role)) { note = "menu item"; tier = 1; }
+    else if (tag === "a") { note = "link"; tier = OUTLINE_WAYS.test(t) || el.closest("header,[role=banner]") ? 0 : 2; }
+    else if (tag === "button" || role === "button") { note = `button${el.disabled || el.getAttribute("aria-disabled") === "true" ? ", disabled" : ""}`; tier = OUTLINE_WAYS.test(t) ? 0 : 1; }
+    else if (/^(input|textarea|select)$/.test(tag)) {
+      note = el.type === "checkbox" || el.type === "radio" ? `${el.type}, ${el.checked ? "on" : "off"}` : "field";
+      if (el.disabled) note += ", disabled";
+      tier = 1;
+    } else tier = /^(h3|form)$/.test(tag) ? 1 : 0;
+    if (!vis) {
+      if (!note || !t) continue;
+      const where = whereHidden(el);
+      if (!where) continue;
+      note += `, ${where}`;
+      tier = 3;
+    }
+    picked[tier].push({ i: i++, line: `${uniqueSelector(el)}${t ? `  "${t.replace(/"/g, "'")}"` : ""}${note ? `  (${note})` : ""}`, ways: OUTLINE_WAYS.test(t) });
+  }
+  // Within a kind, the ways around (settings, account, export…) go first.
+  const lines = picked.flatMap((list, k) => [...list].sort((a, b) => b.ways - a.ways || a.i - b.i).slice(0, OUTLINE_BUDGET[k]))
+    .sort((a, b) => a.i - b.i).map(x => x.line);
+  let out = "";
+  for (const l of lines) { if (out.length + l.length + 1 > 3600) break; out += (out ? "\n" : "") + l; }
+  return out;
 }
 function context() {
   const cs = getComputedStyle(document.body);
