@@ -259,7 +259,13 @@ keeps each record with the mod's code):
 |---|---|---|---|---|---|
 | pkg.go.dev “Jump to” → Node.js docs | “Jump to identifier” | 60 s, a second try | ✓ | ✓ | 1.0 |
 | Node.js docs dark mode switch → PyPI | “Dark mode switch” | 19 s | ✓ | ✓ | 1.0 |
-| VSCodium command palette → RubyGems.org | “Command palette” | 46 s, a second try | ✓ | ✓ | 1.0 |
+| VSCodium command palette → RubyGems.org | “Command palette” | 45 s, a second try | ✓ | ✓ | 0.98 |
+
+The first two rows are `results/bring-2026-10-24T22-46-27-074Z.json`. In that
+run the VSCodium case stopped before anything was taken (Tab didn't reach
+**Take this** under a load average of 80); run again on its own it passed
+(`results/bring-2026-10-24T23-12-14-512Z.json`), as it had in the run before.
+Its one color off the page's own is a red 4 steps from RubyGems' red.
 
 What the development runs showed, and what changed because of them:
 
