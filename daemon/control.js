@@ -63,8 +63,8 @@ const out = (...a) => console.log(...a);
 function printPause(s) {
   const info = pauseInfo(s);
   if (info.all) out(`Morse is ${B("paused everywhere")}. Mods are saved but not running. ${D("morse resume")}`);
-  else out(`Morse is ${G("on")}.`);
-  if (info.sites.length) out(`Paused on: ${info.sites.join(", ")} ${D("(morse resume <site>)")}`);
+  else if (!info.sites.length) out(`Morse is ${G("on")} everywhere.`);
+  if (info.sites.length) out(`Paused on: ${info.sites.join(", ")}${info.all ? "" : ". Running everywhere else."} ${D("(morse resume <site>)")}`);
 }
 
 // morse pause            pause everywhere
