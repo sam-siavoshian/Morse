@@ -47,7 +47,9 @@ export function settingsFromConfig(cfg, overrides = {}, { env = process.env, har
   const model = overrides.model || cfg.models?.[provider] || PROVIDERS[provider]?.defaultModel || "";
   const apiKey = provider === "anthropic" ? keys.anthropic : provider === "openai" ? keys.openai : "";
   const baseUrl = overrides.baseUrl || cfg.baseUrls?.[provider] || (provider === "openai" ? env.OPENAI_BASE_URL || "" : "");
-  return { provider, model, apiKey, baseUrl, detected };
+  // soak: MORSE_DEMO_MS speeds up (or slows down) the demo replay's stream, for long runs (demo/soak)
+  const demo = provider === "demo" && Number(env.MORSE_DEMO_MS) >= 0 && env.MORSE_DEMO_MS ? { demoMs: Number(env.MORSE_DEMO_MS) } : {};
+  return { provider, model, apiKey, baseUrl, detected, ...demo };
 }
 
 export async function currentSettings(overrides) {

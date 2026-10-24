@@ -31,13 +31,13 @@ const ReadAloud = (() => {
 
   // ---- what to read: the last selection on the page, kept while the bar opens
   let lastSel = null;
-  document.addEventListener("selectionchange", () => {
+  listen("selectionchange", () => { // soak: listen(), so a quiet copy lets go of it
     const s = document.getSelection();
     if (!s || s.isCollapsed || !s.rangeCount) return;
     const r = s.getRangeAt(0);
     if (r.commonAncestorContainer === hostEl || hostEl.contains(r.commonAncestorContainer) || !r.toString().trim()) return;
     lastSel = r.cloneRange();
-  });
+  }, undefined, document);
   listen("pointerdown", e => { if (!ours(e) && !card.contains(e.target)) lastSel = null; }, true);
   const hasSelection = () => !!(lastSel && lastSel.startContainer.isConnected && lastSel.toString().trim());
 

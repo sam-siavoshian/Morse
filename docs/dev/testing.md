@@ -135,6 +135,20 @@ Multi-window edge cases (crashes, kill and restart, `--restart`) are tested
 against a fake Chromium app ([`demo/fake-app.js`](../../demo/fake-app.js),
 [`tests/desktop.test.js`](../../tests/desktop.test.js)).
 
+## Soak tests
+
+Long, heavy use, measured over time: the extension loop on three demo
+sites, the desktop connector with windows, crashes and stop/attach cycles, 50
+mods on a streaming page, and service worker restarts
+([`demo/soak/`](../../demo/soak/), results in
+[docs/perf/soak.md](../perf/soak.md)).
+
+```bash
+DISPLAY=:99 npm run test:soak   # the short versions (a few minutes), not part of npm test
+```
+
+`tests/soak.test.js` (in `npm test`) pins each leak the long runs found.
+
 ## Evals
 
 [`evals/`](../../evals/README.md) measures how often Morse does what people

@@ -28,5 +28,6 @@ async function syncMods() {
     if (!m.enabled && was?.enabled) await removeMod(m.id);
   }
   for (const id of prev.keys()) if (!list.find(m => m.id === id)) await removeMod(id);
+  Health.prune(new Set(list.map(m => m.id))); // soak
   if (!panel.hidden) renderPanel();
 }

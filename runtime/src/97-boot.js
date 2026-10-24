@@ -31,15 +31,25 @@ onEvent(msg => {
   };
 }
 
+// soak: the host can go away while the page starts (Chrome stops and restarts
+// the extension's worker; its requests then fail with "Morse restarted"). Ask
+// again a few times instead of staying without mods until the next reload.
+async function askAgain(fn, tries = 4) {
+  for (let n = 1; ; n++) {
+    try { return await fn(); }
+    catch (e) { if (n >= tries || !live()) throw e; await new Promise(r => setTimeout(r, 400 * n)); }
+  }
+}
+
 (async () => {
   try {
-    const hello = await call("hello", { url: location.href });
+    const hello = await askAgain(() => call("hello", { url: location.href }));
     S.label = hello.label; S.mode = hello.mode; S.app = hello.app || null; S.appName = hello.appName || hello.app || null;
     // Hosts from before settings existed don't send them; ask (or use local ones).
     if (hello.settings) { setPrefs(hello.settings); hostPrefs = true; } else await loadPrefs();
     Voice.configure(hello.voice);
     PromptHistory.load();
-    await controlBoot(); await syncMods(); controlReady(); // user control: pause, safe start (63-control.js)
+    await controlBoot(); await askAgain(syncMods); controlReady(); // user control: pause, safe start (63-control.js)
     guardReady(); // guard hook: a mod that froze the page was turned off (64-guard.js)
     Heal.soon(); // self-heal hook: after idle, did a saved mod stop working? (71-heal.js)
     YourStyle.ready(); // your-style hook: fit it to this site once, if turned on (72-style.js)
@@ -48,7 +58,10 @@ onEvent(msg => {
     if (!hello.quiet && PREFS.welcome) toast(`Morse is ready. Press ${HOTKEY} to change this page.`);
   } catch (e) { console.warn("[morse] host unavailable", e); }
   // single-page apps change URL without reloading
-  setInterval(() => { if (live() && location.href !== S.url) { S.url = location.href; syncMods().catch(() => {}); Heal.soon(); /* self-heal hook */ } }, 1000);
+  const urlTimer = setInterval(() => {
+    if (!live()) { clearInterval(urlTimer); letGo(); return; } // soak: gone quiet (01-rpc.js)
+    if (location.href !== S.url) { S.url = location.href; syncMods().catch(() => {}); Heal.soon(); /* self-heal hook */ }
+  }, 1000);
 })();
 
 // Read-only status for automated screenshots/tests; off unless opted in
@@ -59,7 +72,8 @@ let statusOn = false;
 function debugStatus() {
   if (statusOn) return;
   statusOn = true;
-  setInterval(() => {
+  const statusTimer = setInterval(() => {
+  if (!live()) return clearInterval(statusTimer); // soak
   hostEl.dataset.status = JSON.stringify({
     ready: !!S.ready, phase: S.phase, hint: hint.textContent, ticker: ticker.textContent, mods: S.mods.length,
     open: S.open, input: input.value, voice: Voice.state(), backend: Voice.backend(), level: Voice.level(), db: Voice.db(), pane: paneKind,

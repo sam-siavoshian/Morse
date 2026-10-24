@@ -152,7 +152,9 @@ function openBar() {
   startPicking();
   Voice.refresh();
   requestAnimationFrame(() => input.focus());
-  call("clip.start").catch(() => {});
+  // soak: the clip starts with the change (60-generate.js submit), not here: on
+  // the desktop it screencasts every frame, which made the bar, the Edit tools
+  // and the page tools 2 to 4 times slower for as long as the bar was open.
   call("warm").catch(() => {}); // speed: the model gets ready while you point and type
   refreshPrefs();
   PromptHistory.load();

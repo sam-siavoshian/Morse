@@ -37,8 +37,7 @@ const Guard = (() => {
   // ---- the kit paused a mod
   const heardIds = new Set();
   let heardTimer = 0;
-  document.addEventListener("morse:paused", e => {
-    if (!live()) return;
+  listen("morse:paused", e => { // soak: listen(), so a quiet copy lets go of it
     let id = null;
     try { id = JSON.parse(e.detail).id; } catch {}
     // The detail may not cross JS worlds: then every mod with code is asked.
@@ -46,7 +45,7 @@ const Guard = (() => {
     ids.forEach(x => heardIds.add(x));
     clearTimeout(heardTimer);
     heardTimer = setTimeout(checkHeard, 30);
-  });
+  }, undefined, document);
   async function checkHeard() {
     const ids = [...heardIds];
     heardIds.clear();

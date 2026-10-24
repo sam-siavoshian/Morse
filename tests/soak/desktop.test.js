@@ -1,0 +1,28 @@
+// `npm run test:soak`: a short desktop soak (demo/soak/desktop.js --short):
+// the loop in a demo app with windows opening and closing, a renderer crash
+// and stop / attach cycles. Nothing may wedge or grow without bound.
+import "../helpers/home.js";
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { noBrowser } from "../helpers/browser.js";
+import { soakDesktop } from "../../demo/soak/desktop.js";
+import { verdict } from "../../demo/soak/report.js";
+import { KEEP_CLIPS } from "../../daemon/record.js";
+import { pick } from "../../demo/soak/lib.js";
+
+test("desktop soak: the loop, popups, a crash and stop/attach cycles stay level", { skip: noBrowser, timeout: 600000 }, async () => {
+  const r = await soakDesktop({ iterations: 12, minutes: 3, sampleEvery: 3, popupEvery: 3, crashEvery: 6, reloadEvery: 4, cycleEvery: 4, log: false });
+  const v = verdict(r);
+  const last = r.samples.at(-1), first = r.samples[0];
+  assert.ok(r.meta.cycles >= 2 && r.meta.crashes >= 1, `cycles ${r.meta.cycles}, crashes ${r.meta.crashes}`);
+  assert.equal(v.wedged, false, `failing iterations in a row: ${r.meta.maxFailStreak}\n${r.lastErrors.join("\n")}`);
+  // one runtime per window after every stop + attach: its observers don't pile up
+  assert.ok(pick(last, "main.worlds.runtime.mo") - pick(first, "main.worlds.runtime.mo") <= 6, `runtime observers ${pick(first, "main.worlds.runtime.mo")} -> ${pick(last, "main.worlds.runtime.mo")}`);
+  assert.ok(pick(last, "main.winListeners") - pick(first, "main.winListeners") <= 2, "window listeners");
+  // the daemon: a session per window, nothing stuck, clips capped
+  assert.ok(last.daemon.cdpOpen <= last.daemon.windows + 1, `CDP sessions ${last.daemon.cdpOpen} for ${last.daemon.windows} windows`);
+  assert.ok(last.daemon.hangLast <= 64 * last.daemon.windows, `hang guard code ${last.daemon.hangLast}`);
+  assert.ok(last.daemon.clips.files <= KEEP_CLIPS * 3, `clip files ${last.daemon.clips.files}`);
+  const uncaught = r.errors.filter(e => e.kind === "exception" && e.world === "runtime");
+  assert.deepEqual(uncaught, [], "no uncaught errors in Morse's world");
+});

@@ -26,6 +26,7 @@
 import { HANG_MS, FROZE_ERROR } from "../core/guard.js";
 export { HANG_MS, FROZE_ERROR };
 
+const LAST_MAX = 64; // soak: mods whose code is remembered per window
 const race = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]).catch(() => null);
 
 export class HangGuard {
@@ -44,13 +45,17 @@ export class HangGuard {
     session.on("Runtime.executionContextsCleared", () => this.reset());
   }
   stop() { clearInterval(this.timer); this.armed = false; }
-  reset() { this.armed = false; this.ctx = null; }
+  // soak: a new document has none of the old one's mod code: forget it (every
+  // change made in a window added its code here for as long as the window lived).
+  reset() { this.armed = false; this.ctx = null; this.last.clear(); this.stopped.clear(); }
 
   // An exec of a mod's code starts; returns the function that ends it.
   exec(id, ctx, js = "") {
     this.armed = true;
     this.ctx = ctx;
+    this.last.delete(id); // soak: newest last, and at most LAST_MAX kept
     this.last.set(id, js);
+    for (const k of this.last.keys()) { if (this.last.size <= LAST_MAX || this.running.has(k)) break; this.last.delete(k); }
     this.stopped.delete(id);
     this.running.set(id, (this.running.get(id) || 0) + 1);
     return () => { const n = this.running.get(id) - 1; n > 0 ? this.running.set(id, n) : this.running.delete(id); };
