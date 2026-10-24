@@ -70,7 +70,7 @@ test("made once from the bar, shown for review, then on every site at boot with 
   assert.equal(await stored(), null, "nothing saved yet");
   await byte.keyboard.press("Enter");
   await status(byte, s => !s.open, "the bar to close");
-  assert.match(await shadowText(byte, ".toast"), /Saved your style\. It follows you to every site and app\./);
+  await until(async () => /Saved your style\. It follows you to every site and app\./.test(await shadowText(byte, ".toast")), "the Saved toast");
   const s = await until(stored, "style.json");
   assert.deepEqual([s.blocks.size, s.blocks.underline, s.words], [2, true, "bigger text and underline links everywhere"]);
 
@@ -105,7 +105,7 @@ test("exceptions: “not on this site” from the bar, the Mods panel and Settin
   // The bar.
   await say(tunes, "not on this site");
   await until(() => plain(tunes), "the style off on Tunes");
-  assert.match(await shadowText(tunes, ".ctl-toast"), /Your style is off on tunes\.test/);
+  await until(async () => /Your style is off on tunes\.test/.test(await shadowText(tunes, ".ctl-toast")), "the toast on Tunes");
   assert.deepEqual((await stored()).except, ["library", "tunes.test"]);
   assert.ok(await styled(byte), "still on The Daily Byte");
 
@@ -139,7 +139,7 @@ test("the off switch and pause hold it back on the page; the panel's switch turn
 
   await byte.keyboard.press(HOTKEYS.off);
   await until(() => plain(byte), "the off switch takes it off");
-  assert.match(await shadowText(byte, ".ctl-toast"), /Turned off 1 mod on this page/);
+  await until(async () => /Turned off 1 mod on this page/.test(await shadowText(byte, ".ctl-toast")), "the off switch toast");
   assert.ok(await styled(tunes), "only this tab");
   await byte.reload();
   await world.ready(byte);
