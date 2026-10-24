@@ -10,7 +10,7 @@
 
 [![The 36-second cut](poster-social.png)](morse-social-16x9.mp4)
 
-A short cut for social media: Morse changing a real app, VS Code, in the first two seconds, then a new feature, then three quick cuts. Captions are burned in, because most people watch with the sound off.
+A short cut for social media. It opens on Morse changing a real app, VS Code, then adds a new feature, then three quick cuts. Captions are burned in, because most people watch with the sound off.
 
 | File | What it is | Size |
 |---|---|---|
@@ -65,7 +65,7 @@ People who use the same apps every day and wish one thing worked a little differ
 1. **Adds what an app is missing.** Point at a music player and say “add a sleep timer”. Your model writes the change and Morse adds it to the running app.
 2. **Turns a chore into a button.** With **Show me once**, you do a task by hand one time, like archiving an email. Then say what Morse should do with the steps: “add a button”, “do this when I press Ctrl+Shift+A”, or “do this to every unread email”.
 3. **Fixes mods when a site changes.** Sites change, and a mod can stop working. Morse notices, and **Fix it** asks the model for a version that fits the new page. You see it before you save it.
-4. **Works in desktop apps too.** `morse launch` reopens an app built on Electron (Spotify, Slack, Discord, VS Code and others) with Morse connected.
+4. **Works in desktop apps too.** `morse launch` reopens an app built on Electron with Morse connected. VSCodium (VS Code), Obsidian and Joplin are tested; Slack, Discord and Spotify are built the same way but aren't tested yet.
 5. **Lets you try mods other people made.** The Mods panel lists mods from the gallery for the site you're on. **Try it** runs one without saving anything. Then **Save** or **Undo**.
 
 A change you save is called a mod. Morse brings it back every time you open that site or app. You can also change things by hand with the Edit tools, use Page tools for the whole page (dark mode, hide ads, focus mode), and make an app easier to use (bigger text, higher contrast, Read aloud, Check this page).
@@ -89,7 +89,7 @@ Works today:
 Not yet, or not verified:
 
 - **Apps that aren't built on Electron** (Finder, most macOS and Windows system apps) don't work.
-- **Desktop apps were tested on a real Electron app made for it** (Tunes, in [`demo/electron-app`](../../demo/electron-app): Electron 45 on Linux, with a menu bar, a locked-down preload, an embedded page and a second window, packed the way apps ship). Not yet with real Spotify, Slack or Discord, and not on macOS or Windows. Some apps don't let Morse connect; `morse fuses <app>` tells you before you try. See [docs/desktop.md](../desktop.md).
+- **Desktop apps were tested on Linux only**: on VSCodium, Obsidian and Joplin as downloaded from their own releases, and on a sample Electron app made for it (Tunes, in [`demo/electron-app`](../../demo/electron-app)). Not yet with real Spotify, Slack or Discord, and not on real macOS or Windows. Some apps don't let Morse connect; `morse fuses <app>` tells you before you try. See [docs/desktop.md](../desktop.md).
 - **Codex** is only tested against a fake `codex` command. **The Anthropic and OpenAI APIs** are only tested against fake servers, not the real ones.
 - **Mods can do anything the page can.** The model is told not to send data anywhere, but nothing stops it yet. Read what a shared mod does before you install it; the install page says it in plain words, with all of its code below.
 - **The gallery is small**: a few example mods, most of them for the demo apps in this repo.
