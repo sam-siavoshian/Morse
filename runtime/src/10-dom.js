@@ -10,7 +10,8 @@ try { DEBUG = !!localStorage.getItem("morse:debug"); } catch {}
 const root = hostEl.attachShadow({ mode: DEBUG ? "open" : "closed" });
 // Tokens are custom properties, the one thing that inherits through a shadow
 // boundary. Marked !important, ours beat any `--m-*` the page sets on our host.
-root.innerHTML = `<style>${TOKENS_CSS.replace(/(--m-[\w-]+\s*:[^;!]+);/g, "$1 !important;")}\n${CSS()}\n${GOD_CSS() /* God mode hook */}\n${ASK_CSS() /* Ask and find hook */}</style>
+root.innerHTML = `<style>${TOKENS_CSS.replace(/(--m-[\w-]+\s*:[^;!]+);/g, "$1 !important;")}\n${CSS()}\n${GOD_CSS() /* God mode hook */}\n${ASK_CSS() /* Ask and find hook */}
+${A11Y_CSS() /* Easier to use hook: 98-a11y-css.js */}</style>
   <style>${BAR_CSS()}${ONBOARDING_CSS() /* onboarding hook: 98-onboarding-css.js */}</style>
   <canvas class="fx"></canvas>
   <div class="hl" hidden><span></span></div>

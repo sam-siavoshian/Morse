@@ -17,6 +17,7 @@ export function bundleRuntime() {
   shared.push(inlineModule("../core/edits.js"));
   shared.push(inlineModule("../core/onboarding.js")); // first run and help (runtime/src/59-onboarding.js)
   shared.push(inlineModule("../core/answer.js")); // Ask and find: reply parser + markdown subset
+  shared.push(inlineModule("../core/a11y.js")); // Easier to use: page tools, Check this page, fixes
   return `/* Morse runtime (built from runtime/src) */\n(() => {\nconst TOKENS_CSS = ${JSON.stringify(tokens)};\n${shared.join("\n")}\n${parts.join("\n")}\n})();\n`;
 }
 
