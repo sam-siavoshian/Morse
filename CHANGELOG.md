@@ -70,7 +70,12 @@ The first version meant for other people to install.
 
 - `npm install -g morse-cli` adds the `morse` command, with the Chrome
   extension inside (`morse extension` shows where).
-- `npm run package:extension` makes the zip for the Chrome Web Store.
+- `npm run store` makes the zip for the Chrome Web Store (a store build,
+  without the address only tests use) and prints its SHA-256;
+  `npm run store:smoke` tries that zip in a fresh browser.
+  [docs/store/SUBMIT.md](docs/store/SUBMIT.md) goes through the submission.
+- The Morse icon sits on a dark tile, so it shows on light backgrounds too.
+- Needs Chrome 138 or later, the first with the "Allow User Scripts" switch.
 - A privacy policy that says exactly what leaves your computer:
   [docs/privacy.md](docs/privacy.md).
 

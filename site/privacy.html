@@ -59,6 +59,7 @@
 <li>the CSS rules that style what you pointed at</li>
 <li>for Refine and Fix: the code of the mod and the error it hit</li>
 <li>for &quot;Describe this picture&quot;: the picture, or a screenshot cropped to it</li>
+<li>for &quot;Show me once&quot;: the steps you did on the page while it was recording, such as what you clicked and what you typed. What you type in password and card number fields is never kept or sent.</li>
 </ul>
 <p>Where it goes depends on your choice:</p>
 <div class="table"><table>
@@ -82,10 +83,11 @@
 <h2>Only when you use them</h2>
 <p>These send data somewhere other than your model, and only when you use them:</p>
 <ul>
-<li><strong>Voice in Chrome.</strong> Morse uses Chrome's own speech recognition. Chrome sends your voice to Google to turn it into text. If you never use voice, no audio is recorded.</li>
+<li><strong>Voice in Chrome.</strong> Morse uses Chrome's own speech recognition. Chrome sends your voice to Google to turn it into text. If the Morse helper is paired and can turn speech into text, or you gave Morse an OpenAI key, Morse also records what you say while you talk to it, and sends that recording to the Morse helper (which uses OpenAI or Whisper on your computer, as below) or to OpenAI. If you never use voice, no audio is recorded.</li>
 <li><strong>Voice in desktop apps.</strong> The Morse helper turns speech into text with OpenAI (when you gave it an OpenAI key) or with Whisper on your computer (nothing leaves your computer).</li>
 <li><strong>Read aloud.</strong> Morse picks a voice installed on your computer. If there is none, Chrome uses its default voice, which can be an online Google voice.</li>
 <li><strong>Sharing.</strong> A share link holds the whole mod after the <code>#</code>. Browsers do not send that part to a server, so the install page at GitHub Pages never sees the mod. Sending the link is up to you. The &quot;Post&quot; button opens x.com with your request and the link filled in, and the link holds the mod. Nothing is posted until you post it.</li>
+<li><strong>Mod packs from an address.</strong> When you install a pack from a web address, Morse downloads it from there. If you chose to get its updates, Morse checks that address at most once a day. The request carries no cookies and nothing about you or the page; that server sees your IP address, as with any website. &quot;Stop updates&quot; in the Mods panel ends it.</li>
 <li><strong>Submitting to the gallery</strong> opens a new GitHub issue with your mod in it, in your browser. Nothing is posted until you click Submit on GitHub.</li>
 <li><strong>Settings sync.</strong> Your Morse settings (shortcuts, bar position, theme, whether to show gallery mods) are kept in Chrome's sync storage. If you turned on Chrome sync, Google syncs them between your browsers. Your API key, your mods and your history are not in sync storage.</li>
 </ul>
