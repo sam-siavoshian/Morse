@@ -10,13 +10,13 @@
     "app": null
   },
   "target": null,
-  "css": "section.go-SurveyBanner,\nsection[aria-label$=\"Go Developer Survey\"] {\n  display: none !important;\n}\n",
-  "js": "morse.watch(\"body div, body section, body aside, body footer\", el => {\n  const pos = getComputedStyle(el).position;\n  if (pos !== \"fixed\") return;\n  const text = el.textContent || \"\";\n  if (/cookie/i.test(text) && text.length < 500) {\n    el.style.setProperty(\"display\", \"none\", \"important\");\n  }\n});\n",
+  "css": "section.go-SurveyBanner,\nsection[aria-label$=\"Go Developer Survey\"],\n.Cookie-notice {\n  display: none !important;\n}\n",
+  "js": "// A cookie notice by another name: only elements whose class, id, role or\n// label says notice, banner, cookie or consent, not every box on the page.\n// morse.watch looks at new elements only, once a frame.\nconst NOTICE = '[class*=\"cookie\" i], [id*=\"cookie\" i], [class*=\"consent\" i], [id*=\"consent\" i], [aria-label*=\"cookie\" i], [class*=\"notice\" i], [class*=\"banner\" i], [role=\"dialog\"], [role=\"alertdialog\"]';\nmorse.watch(NOTICE, el => {\n  const text = el.textContent || \"\";\n  if (text.length > 500 || !/cookie/i.test(text)) return;\n  const pos = getComputedStyle(el).position;\n  if (pos !== \"fixed\" && pos !== \"sticky\") return;\n  el.style.setProperty(\"display\", \"none\", \"important\");\n});\n",
   "enabled": true,
   "model": "haiku",
-  "version": 1,
+  "version": 2,
   "author": "Morse team",
   "note": "Asked twice. The first answer, to “hide the cookie notice and the survey banner”, only hid the survey banner. Hand-fixed: the survey banner was found by its 2026 title; it is now found by its own name, so next year's survey is hidden too.",
   "created": "2026-10-24T12:00:00.000Z",
-  "updated": "2026-10-24T12:00:00.000Z"
+  "updated": "2026-10-24T18:00:00.000Z"
 }

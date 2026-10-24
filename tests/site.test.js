@@ -5,10 +5,13 @@
 //     <use href="#i-…"> at an icon in the page's sprite
 //   - gallery.html#<slug> links name a mod that is in site/mods/
 //   - every url() in the stylesheets and every import in the scripts resolves
-//   - the link targets and the demo video in site/config.js resolve too
+//   - the link targets, the demo video and the real pictures in site/config.js
+//     resolve too, and every picture is labelled
 //   - the nav bar and footer of the gallery and the privacy policy are the
 //     landing page's (npm run pages copies them)
-//   - no analytics, and nothing of the Lanes site it was designed after
+//   - no drawn pictures: the only SVG files are the favicon, and the landing
+//     page's only inline SVGs are a few functional icons (arrows, play, pause)
+//   - no analytics, and nothing of the Lanes site the first design came from
 //
 // Links to other websites are checked for shape only; nothing is fetched.
 import { test } from "node:test";
@@ -69,27 +72,65 @@ test("every link, image, video and icon on the site's pages resolves", () => {
       if (problem) broken.push(`site/${page} ${attr}="${ref}": ${problem}`);
     }
   }
-  assert.ok(checked > 150, `the scan reads the pages' links (saw ${checked})`);
+  assert.ok(checked > 100, `the scan reads the pages' links (saw ${checked})`);
   assert.deepEqual(broken, [], `broken:\n${broken.join("\n")}`);
 });
 
 test("the landing page has what it promises: buttons, video slot, sections and real screenshots", () => {
   const html = read("index.html");
-  for (const id of ["how", "show-me-once", "self-heal", "your-style", "packs", "desktop", "more", "privacy", "install", "install-chrome", "install-desktop", "faq", "get"]) {
+  // A hero, see it change, how it works, try it here, real apps, install,
+  // privacy, FAQ: one page that sells in a minute.
+  for (const id of ["change", "how", "try", "apps", "install", "install-chrome", "install-desktop", "chrome-steps", "desktop-steps", "privacy", "faq"]) {
     assert.ok(ids(html).has(id), `a section with id="${id}"`);
   }
-  assert.match(html, /data-link="chrome"[^>]*>[\s\S]*?Get it for Chrome/);
-  assert.match(html, /data-link="desktop"[^>]*>[\s\S]*?Get the desktop app/);
+  // What was cut stays cut: feature rows, the logo wall, the idea list.
+  for (const id of ["show-me-once", "self-heal", "your-style", "packs", "more", "features", "get"]) {
+    assert.ok(!ids(html).has(id), `no section id="${id}" any more`);
+  }
+  assert.doesNotMatch(html, /logos\//, "no wall of logos");
+  assert.match(html, /data-link="chrome"[^>]*>[\s\S]*?Add to Chrome/);
+  assert.match(html, /data-link="desktop"[^>]*>[\s\S]*?Download Morse/);
+  assert.match(html, /npm i -g morse-cli/, "one line for developers");
   assert.match(html, /data-film/, "the video slot");
+  assert.match(html, /<section id="try" class="try" data-install="#install">/, "Try it here, pointing at the install section");
   const shots = [...html.matchAll(/src="(shots\/[^"]+)"/g)].map(m => m[1]);
-  assert.ok(shots.length >= 12, `screenshots on the page (saw ${shots.length})`);
+  assert.ok(shots.length >= 6, `screenshots on the page (saw ${shots.length})`);
   for (const s of shots) assert.ok(existsSync(path.join(SITE, s)), s);
-  // Every <img> has alt text and a size, so nothing shifts as it loads.
+  // The first run, in three pictures at most.
+  const firstRun = /<ol class="first-run-list">([\s\S]*?)<\/ol>/.exec(html)?.[1] || "";
+  const firstRunShots = (firstRun.match(/<img\b/g) || []).length;
+  assert.ok(firstRunShots >= 1 && firstRunShots <= 3, `the first run in three pictures at most (saw ${firstRunShots})`);
+  // Every <img> has alt text and a size, so nothing shifts as it loads; all
+  // but the first screen's poster wait until they are near.
   for (const page of PAGES) {
     for (const img of read(page).match(/<img\b[^>]*>/g) || []) {
       assert.match(img, /\salt="[^"]*"/, `${page}: ${img}`);
       assert.match(img, /\swidth="\d+"[^>]*\sheight="\d+"/, `${page}: ${img}`);
+      if (page === "index.html" && !/film-poster/.test(img)) assert.match(img, /\sloading="lazy"/, `${page}: ${img}`);
     }
+  }
+});
+
+test("site/config.js: every real picture resolves and says what it shows", async () => {
+  const { SHOWCASE, REAL_APPS } = await import("../site/config.js");
+  assert.ok(SHOWCASE.length >= 3 && SHOWCASE.length <= 4, `three or four before and after pairs (saw ${SHOWCASE.length})`);
+  for (const p of SHOWCASE) {
+    for (const key of ["app", "kind", "ask", "by"]) assert.ok(p[key], `${p.app}: ${key}`);
+    assert.ok(p.width > 0 && p.height > 0, `${p.app}: a size`);
+    for (const side of ["before", "after"]) {
+      assert.equal(check("index.html", p[side], new Set()), null, `${p.app} ${side}: ${p[side]}`);
+      assert.ok(p.alt?.[side]?.length > 20, `${p.app}: says what the ${side} picture shows`);
+    }
+  }
+  assert.ok(REAL_APPS.length >= 3, "a strip of real apps");
+  for (const a of REAL_APPS) {
+    assert.ok(a.app && a.kind && a.alt && a.width > 0 && a.height > 0, a.app);
+    assert.ok(a.ask || a.by, `${a.app}: what was asked, or how it was changed`);
+    assert.equal(check("index.html", a.src, new Set()), null, `${a.app}: ${a.src}`);
+  }
+  // VSCodium is labelled VSCodium; VS Code only where that is what ran.
+  for (const p of [...SHOWCASE, ...REAL_APPS]) {
+    if (/vscodium/i.test(p.before || p.src || "")) assert.equal(p.app, "VSCodium");
   }
 });
 
@@ -142,14 +183,39 @@ test("the gallery and the privacy policy carry the landing page's nav bar and fo
   }
 });
 
-test("no analytics, and nothing of the Lanes site but its design", () => {
+test("no drawn pictures: real screenshots, the mark, and a few functional icons", () => {
+  // The only SVG file is the favicon (the radar mark).
+  const svgFiles = [];
+  const walk = dir => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (e.isDirectory()) walk(path.join(dir, e.name));
+      else if (e.name.endsWith(".svg")) svgFiles.push(path.relative(SITE, path.join(dir, e.name)));
+    }
+  };
+  walk(SITE);
+  assert.deepEqual(svgFiles, ["favicon.svg"]);
+  // The landing page's icon sprite holds arrows, play and pause, nothing else,
+  // and every other inline <svg> there is one of those icons.
+  const html = read("index.html");
+  const sprite = /<svg width="0"[\s\S]*?<\/svg>/.exec(html)[0];
+  const symbols = [...sprite.matchAll(/<symbol id="([\w-]+)"/g)].map(m => m[1]).sort();
+  assert.deepEqual(symbols, ["i-arrow", "i-drag", "i-pause", "i-play"]);
+  for (const svg of html.replace(sprite, "").match(/<svg\b[\s\S]*?<\/svg>/g) || []) {
+    assert.match(svg, /^<svg class="icon[\w -]*"><use href="#i-[\w-]+"\/><\/svg>$/, `only icons: ${svg}`);
+  }
+});
+
+test("no analytics, and nothing of the Lanes site", () => {
   for (const f of readdirSync(SITE).filter(f => /\.(html|js|css)$/.test(f))) {
     const src = read(f);
     assert.doesNotMatch(src, /posthog|google-analytics|googletagmanager|gtag\(|plausible|segment\.com|mixpanel/i, `site/${f} loads no analytics`);
-    // Lanes appears only in comments that credit the design: no link, asset or visible word.
     const visible = src.replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
     assert.doesNotMatch(visible, /trylanes|\blanes\b/i, `site/${f} shows nothing of Lanes`);
   }
+  // Morse's own look: dark, Inter and JetBrains Mono, not Lanes' Nunito Sans.
+  const css = read("site.css");
+  assert.match(css, /color-scheme: dark/);
+  assert.doesNotMatch(css, /Nunito/i);
   for (const f of readdirSync(path.join(SITE, "shots"))) assert.match(f, /^\d+-[\w-]+\.webp$/, `site/shots/${f} is one of Morse's own screenshots`);
-  assert.ok(existsSync(path.join(SITE, "fonts", "NunitoSans-LICENSE.txt")), "the font's license ships with it");
+  for (const f of ["Inter-LICENSE.txt", "JetBrainsMono-LICENSE.txt"]) assert.ok(existsSync(path.join(SITE, "fonts", f)), `the fonts' licenses ship with them: ${f}`);
 });

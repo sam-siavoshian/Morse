@@ -308,11 +308,11 @@ test("Model setting: Automatic, Always fast, Always best, saved; the footer name
     };
     await openSettings();
     assert.equal(await page.locator(seg("auto")).getAttribute("aria-checked"), "true", "Automatic unless chosen");
-    assert.match(await page.locator('.seg[data-k="modelMode"]').locator("xpath=../..").innerText(), /Quick changes use haiku/);
+    assert.match(await page.locator('.seg[data-k="modelMode"]').locator("xpath=../..").innerText(), /Small tweaks use sonnet/);
     await page.locator(seg("best")).click();
     await page.waitForFunction(() => window.__fake.log.some(m => m.type === "settings.set" && m.settings?.modelMode === "best"));
     await page.locator(seg("best") + '[aria-checked="true"]').waitFor();
-    assert.match(await page.locator('.seg[data-k="modelMode"]').locator("xpath=../..").innerText(), /Every change uses sonnet/);
+    assert.match(await page.locator('.seg[data-k="modelMode"]').locator("xpath=../..").innerText(), /Every change uses opus/);
     await page.reload();
     await waitForReady(page);
     await openSettings();
@@ -321,6 +321,8 @@ test("Model setting: Automatic, Always fast, Always best, saved; the footer name
     await t.waitFor(s => s.pane === "");
     // The fast model's draft failed and the strong one took over: the bar says so, then names it.
     await page.keyboard.type("make the toolbar airier");
+    // A pause in typing tells the host the words so far (it warms the model they start on).
+    await page.waitForFunction(() => window.__fake.log.some(m => m.type === "warm" && m.request === "make the toolbar airier"));
     await page.keyboard.press("Enter");
     await t.waitFor(s => s.phase === "working" && /Asking a stronger model/.test(s.hint));
     await t.waitFor(s => s.phase === "result");
@@ -328,6 +330,6 @@ test("Model setting: Automatic, Always fast, Always best, saved; the footer name
     await t.waitFor(s => !s.open);
     await pressOpen(page);
     await t.waitFor(s => s.open && s.phase === "idle");
-    assert.equal(await page.locator(".model").innerText(), "Claude Code · sonnet");
+    assert.equal(await page.locator(".model").innerText(), "Claude Code · opus");
   });
 });

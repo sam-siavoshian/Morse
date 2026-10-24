@@ -97,6 +97,15 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 160–166-pack-* | shoot-packs.js | ✅ | Came with main; current words |
 | clip-sleep-timer.gif, .mp4 | shoot-desktop.js's recording (`MORSE_HOME/clips`), encoded at double speed | ✅ | Today's bar; the machine was slow, so it is played twice as fast |
 | claude-code/01 … 14 | shoot-desktop.js with `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code` | ✅ | Whole run with real Claude Code. 14-share-card.png is new. Taken before the last merge from main, so the Mods panel (11) has no Packs row yet; a rerun after it was worse (haiku answered in 5 s, so 04 caught the finished change) and wasn't kept |
+| 167-desktop-app-apps.png | shoot-desktop-app.js | ✅ | Morse Desktop: this machine's apps, Tunes really connected (2 windows) |
+| 168-desktop-app-restart.png | shoot-desktop-app.js | ✅ | “Tunes is open. Restart it with Morse?”, with Always restart |
+| 169-desktop-app-model.png | shoot-desktop-app.js | ✅ | Real Claude Code (haiku) answered the check; the three choices |
+| 170-desktop-app-chrome.png | shoot-desktop-app.js | ✅ | The Morse helper on, the three ways to connect Chrome, a code |
+| 171-desktop-app-allow-chrome.png | shoot-desktop-app.js | ✅ | “Allow Chrome to use your Claude Code?”: a request made the way the extension makes it. Retaken only with a helper that can ask (onboarding v2) |
+| 172-desktop-app-mods.png | shoot-desktop-app.js | ✅ | Mods per app with switches; one turned off |
+| 173-desktop-app-checks.png | shoot-desktop-app.js | ✅ | The checks, with the model answering for real; “You're root” is this test machine |
+| 174-desktop-app-light.png | shoot-desktop-app.js | ✅ | Light mode; Tunes open and ready to connect |
+| 175-desktop-app-first-run.png | shoot-desktop-app.js | ✅ | The first run: Claude Code found and checked for real, the apps to open |
 
 Removed, after checking that no doc, page, test or script uses them:
 00-terminal.png (no script made it), 01, 02, 03, 06, 10, 13 (steps between
@@ -108,23 +117,17 @@ names a folder), 22-web-working.png, 26-news-before.png, 31-installed.png and
 
 | File | Made by | | Note |
 |---|---|---|---|
-| landing-, landing-nav-, gallery-, gallery-drawer-{desktop,mobile}.png | shoot-site.js | ✅ | The site in the Lanes design, light only like Lanes, so one scheme |
-| install-{desktop,mobile}-{dark,light}.png | shoot-site.js | ✅ | The share page keeps its earlier look |
-| 167-desktop-app-apps.png | shoot-desktop-app.js | ✅ | Morse Desktop: this machine's apps, Tunes really connected (2 windows) |
-| 168-desktop-app-restart.png | shoot-desktop-app.js | ✅ | “Tunes is open. Restart it with Morse?”, with Always restart |
-| 169-desktop-app-model.png | shoot-desktop-app.js | ✅ | Real Claude Code (haiku) answered the check; the three choices |
-| 170-desktop-app-chrome.png | shoot-desktop-app.js | ✅ | The Morse helper on, the three ways to connect Chrome, a code |
-| 171-desktop-app-allow-chrome.png | shoot-desktop-app.js | ✅ | “Allow Chrome to use your Claude Code?”: a request made the way the extension makes it. Retaken only with a helper that can ask (onboarding v2) |
-| 172-desktop-app-mods.png | shoot-desktop-app.js | ✅ | Mods per app with switches; one turned off |
-| 173-desktop-app-checks.png | shoot-desktop-app.js | ✅ | The checks, with the model answering for real; “You're root” is this test machine |
-| 174-desktop-app-light.png | shoot-desktop-app.js | ✅ | Light mode; Tunes open and ready to connect |
-| 175-desktop-app-first-run.png | shoot-desktop-app.js | ✅ | The first run: Claude Code found and checked for real, the apps to open |
-| compare-{390,768,1280,1440}-{first-screen,full}, compare-gallery-1440, compare-privacy-1440 | by hand, from a local build of the Lanes site | ✅ | Lanes on the left, Morse on the right, same width |
+| landing-{390,768,1280,1440}.png | shoot-site.js | ✅ | The whole landing page at each width, every picture loaded; the script fails if one scrolls sideways. Morse's own dark design, so one scheme |
+| section-{hero,change,how,try,apps,install,privacy,faq,footer}-{desktop,mobile}.png | shoot-site.js | ✅ | Each section of the landing page on its own, at 1440 and 390 |
+| landing-first-screen-, privacy-, gallery-, gallery-drawer-{desktop,mobile}.png, landing-nav-mobile.png | shoot-site.js | ✅ | |
+| install-{desktop,mobile}-{dark,light}.png | shoot-site.js | ✅ | The share page follows the reader's light or dark setting |
 | install-bad-link-desktop-dark.png | shoot-site.js | ✅ | |
 | try-{desktop,mobile}-{working,result}.png, try-desktop-unknown.png | shoot-try.js | ✅ | Try it here: the real runtime in the demo app with sample answers; a request with none gets the install note |
 
 Removed: the landing page's demo shots (landing-demo-*, the landing page has a
-video now) and install-installed-desktop-dark.png; nothing uses them.
+video now), install-installed-desktop-dark.png, and the pictures of the
+earlier design beside Lanes (compare-*, landing-{desktop,mobile},
+landing-nav-desktop); nothing uses them.
 
 ## docs/launch (the demo video)
 

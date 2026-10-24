@@ -5,8 +5,8 @@
 // engine, run the mod it writes on a fresh copy of the page, and check that
 // it does the job.
 //
-//   node evals/show-once.js                       Claude Code haiku, all flows
-//   node evals/show-once.js --model sonnet --only every
+//   node evals/show-once.js                       Claude Code sonnet, all flows
+//   node evals/show-once.js --model opus --only every
 //
 // Flows:
 //   every     open an unread email, Archive · "do this to every unread email"
@@ -22,7 +22,7 @@ import { openSite } from "../demo/show-once-page.js";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 const { values: opt } = parseArgs({ options: {
-  model: { type: "string", default: "haiku" },
+  model: { type: "string", default: "sonnet" },
   provider: { type: "string", default: "claude-code" },
   only: { type: "string", default: "" },
 } });

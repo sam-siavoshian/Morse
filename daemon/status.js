@@ -7,7 +7,7 @@ import path from "node:path";
 import { HOME, modsFor, renameOver } from "./store.js";
 import { describeTarget } from "./targets.js";
 import { matchApp } from "./apps.js";
-import { paint } from "./colors.js";
+import { paint, shown } from "./colors.js";
 
 const DIR = () => path.join(HOME, "sessions");
 const file = id => path.join(DIR(), `${String(id).replace(/[^a-z0-9_-]/gi, "")}.json`);
@@ -123,8 +123,9 @@ export function formatStatus(sessions) {
     if (s.state === "attached" && !wins.length) out.push(C.d("  no windows yet"));
     for (const w of wins) {
       const { kind, title } = describeTarget(w);
-      out.push(`  ${C.d(pad(kind, 8))}${pad(title, 34)}${C.d(shortUrl(w.url))}`);
-      out.push(`  ${" ".repeat(8)}${w.mods?.length ? `${C.g("mods on:")} ${w.mods.join(", ")}` : C.d("no mods here yet")}`);
+      // A window's title is the app's page's to set, and a mod's title the mod's.
+      out.push(`  ${C.d(pad(kind, 8))}${pad(shown(title), 34)}${C.d(shown(shortUrl(w.url)))}`);
+      out.push(`  ${" ".repeat(8)}${w.mods?.length ? `${C.g("mods on:")} ${w.mods.map(shown).join(", ")}` : C.d("no mods here yet")}`);
     }
     out.push("");
   }

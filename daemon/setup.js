@@ -26,6 +26,7 @@ import { defaultHotkeys, formatCombo, detectPlatform } from "../core/hotkeys.js"
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
 import { paint } from "./colors.js";
 import { commandFor } from "./platform.js";
+import { validModel } from "./harness.js"; // models: names Morse can pass to claude and codex
 
 const { g: G, d: D, b: B, r: R } = paint;
 const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· setup")}\n${G("▪▫▪")}`;
@@ -189,6 +190,12 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
   const flag = name => { const i = args.indexOf(`--${name}`); return i >= 0 ? (args[i + 1] && !args[i + 1].startsWith("--") ? args[i + 1] : true) : undefined; };
   const isTTY = !!input.isTTY;
   say(LOGO + "\n");
+  // models: the names go to claude or codex as an argument (--model), so the
+  // same check as morse config: never one that reads as another option.
+  for (const k of ["fast-model", "best-model"]) {
+    const v = str(flag(k));
+    if (v && !validModel(v)) { say(R(`  ${t("cli.badModel", { model: v })}`)); return { saved: false, rows: [] }; }
+  }
   say(`  ${t("setup.looking")}\n`);
   const rows = await detectBackends(deps);
   for (const r of rows) say(`  ${r.found ? G("✓") : D("✗")} ${r.name.padEnd(12)} ${r.found ? r.detail : D(r.detail)}`);

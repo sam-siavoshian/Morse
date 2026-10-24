@@ -34,22 +34,33 @@ const CC = { provider: "claude-code", model: "", tiers: resolveTiers("claude-cod
 
 // ---- the heuristic
 
-test("looks hard: plain looks, hiding, layout and text stay on the fast model", () => {
-  for (const r of ["make the album covers bigger", "hide the ads", "make the play button green", "dark mode please",
-    "keep this bar at the top when I scroll", "rename this to Create note", "I can't read this, make it bigger",
-    "hide the DEBUG lines", "make the high priority tasks stand out in orange", "add a sleep timer", "show a word count under the message box"]) {
+test("looks hard: small tweaks (looks, hiding, layout, text) stay on the first model", () => {
+  for (const r of ["make the album covers bigger", "hide the ads", "make the play button green", "add a border to the cards",
+    "keep this bar at the top when I scroll", "rename this to Create note", "I can't read this, make it bigger", "add some space between the rows",
+    "hide the DEBUG lines", "make the high priority tasks stand out in orange", "show the sidebar again", "highlight the cities with more than a million people"]) {
     assert.equal(looksHard(r, { notes: "" }).hard, false, r);
   }
 });
 
-test("looks hard: new behavior with data, several steps, a canvas, every item of a changing list", () => {
-  assert.deepEqual(looksHard("add a button that sorts the products by price, lowest first", {}).why, ["adds behavior", "works with the data"]);
+test("looks hard: new UI, new behavior and restyles start on the strong model, each on its own", () => {
+  for (const [r, why] of [["add a sleep timer", "adds behavior"], ["add a summary panel above the orders", "new UI"],
+    ["show a word count under the message box", "new UI"], ["put a little badge on unread emails", "new UI"],
+    ["show how many tasks are left next to the sprint title", "new UI"], ["dark mode please", "a restyle"],
+    ["make it dark, my eyes hurt", "a restyle"], ["restyle the cards so they look native", "a restyle"], ["make this less cluttered", "a restyle"]]) {
+    const h = looksHard(r, { notes: "" });
+    assert.equal(h.hard, true, r);
+    assert.ok(h.why.includes(why), `${r}: ${h.why}`);
+  }
+});
+
+test("looks hard: why, and the weaker signals (data, several steps, a canvas, a changing list) in pairs", () => {
+  assert.deepEqual(looksHard("add a button that sorts the products by price, lowest first", {}).why, ["adds behavior", "new UI", "works with the data"]);
   assert.equal(looksHard("add a button to save my drawing as a PNG", {}).hard, true);
   assert.equal(looksHard("add a dark mode toggle, then remember it", {}).hard, true);
   // The page notes count: the same words on a page that re-renders are harder.
   const rerenders = { notes: "- This page re-renders: lately the app replaced what is inside main (3×)." };
-  assert.equal(looksHard("show how many tasks are left next to the sprint title", {}).hard, false);
-  assert.equal(looksHard("show how many tasks are left next to the sprint title", rerenders).hard, true);
+  assert.equal(looksHard("make the total in each row bold", {}).hard, false);
+  assert.equal(looksHard("make the total in each row bold", rerenders).hard, true);
   const virtual = { notes: "- #log is a virtualized list: 37 row elements stand in for about 5,000 items." };
   assert.equal(looksHard("add a copy button to each line", virtual).hard, true);
   assert.equal(looksHard("highlight the error lines in red", virtual).hard, false, "looks on a changing page are fine");
@@ -60,22 +71,29 @@ test("looks hard: new behavior with data, several steps, a canvas, every item of
 
 test("plan: fast then strong; hard requests start strong; Always fast / best; a pinned model never changes", () => {
   const models = p => p.steps.map(s => s.model);
-  assert.deepEqual(models(planRoute(CC, "make the covers bigger", {})), ["haiku", "sonnet"]);
+  assert.deepEqual(models(planRoute(CC, "make the covers bigger", {})), ["sonnet", "opus"]);
   const hard = planRoute(CC, "add a button that sorts the products by price", {});
-  assert.deepEqual([models(hard), hard.hard], [["sonnet"], true]);
-  assert.deepEqual(models(planRoute({ ...CC, mode: "fast" }, "add a button that sorts by price", {})), ["haiku"]);
-  assert.deepEqual(models(planRoute({ ...CC, mode: "best" }, "make it bigger", {})), ["sonnet"]);
+  assert.deepEqual([models(hard), hard.hard], [["opus"], true]);
+  assert.deepEqual(models(planRoute(CC, "add a reading progress bar at the top", {})), ["opus"], "new UI starts on the strong model");
+  assert.deepEqual(models(planRoute({ ...CC, mode: "fast" }, "add a button that sorts by price", {})), ["sonnet"]);
+  assert.deepEqual(models(planRoute({ ...CC, mode: "best" }, "make it bigger", {})), ["opus"]);
   assert.deepEqual(models(planRoute({ ...CC, model: "opus", pinned: true }, "make it bigger", {})), ["opus"]);
   assert.deepEqual(models(planRoute({ provider: "demo" }, "make it bigger", {})), [undefined], "no tiers: the settings as they are");
-  assert.deepEqual(models(planRoute({ ...CC, mode: "nonsense" }, "make it bigger", {})), ["haiku", "sonnet"], "unknown mode means Automatic");
+  assert.deepEqual(models(planRoute({ ...CC, mode: "nonsense" }, "make it bigger", {})), ["sonnet", "opus"], "unknown mode means Automatic");
   // Same name twice: one step.
-  assert.deepEqual(models(planRoute({ ...CC, tiers: resolveTiers("claude-code", { fast: "sonnet" }) }, "x", {})), ["sonnet"]);
+  assert.deepEqual(models(planRoute({ ...CC, tiers: resolveTiers("claude-code", { fast: "opus" }) }, "x", {})), ["opus"]);
+  // Someone who chose haiku keeps it.
+  assert.deepEqual(models(planRoute({ ...CC, tiers: resolveTiers("claude-code", { fast: "haiku" }) }, "make it bigger", {})), ["haiku", "opus"]);
 });
 
 test("tiers stay within the chosen backend; names from config.json win", () => {
-  assert.deepEqual(resolveTiers("claude-code"), { fast: { model: "haiku" }, best: { model: "sonnet" } });
-  assert.deepEqual(resolveTiers("anthropic"), { fast: { model: "claude-haiku-5-5" }, best: { model: "claude-opus-5-5" } });
-  assert.deepEqual(resolveTiers("codex"), { fast: { model: "", effort: "low" }, best: { model: "", effort: "high" } }, "Codex: the plan's model, thinking longer");
+  // The defaults are strong models: no small model unless the person names one.
+  assert.deepEqual(resolveTiers("claude-code"), { fast: { model: "sonnet" }, best: { model: "opus" } });
+  assert.deepEqual(resolveTiers("anthropic"), { fast: { model: "claude-sonnet-5-5" }, best: { model: "claude-opus-5-5" } });
+  assert.deepEqual(resolveTiers("openai"), { fast: { model: "gpt-5" }, best: { model: "gpt-5", effort: "high" } }, "OpenAI: gpt-5, reasoning longer");
+  assert.deepEqual(resolveTiers("codex"), { fast: { model: "", effort: "medium" }, best: { model: "", effort: "high" } }, "Codex: the plan's model, thinking longer");
+  for (const t of Object.values(TIERS)) assert.ok(!/haiku|mini/.test(t.fast.model + t.best.model), "never a small model by default");
+  assert.deepEqual(resolveTiers("openai", { best: "gpt-4.1" }).best, { model: "gpt-4.1" }, "another model doesn't inherit gpt-5's effort");
   assert.deepEqual(resolveTiers("claude-code", { fast: "claude-haiku-4-5", best: "opus" }), { fast: { model: "claude-haiku-4-5" }, best: { model: "opus" } });
   assert.equal(resolveTiers("openai", {}, { baseUrl: "http://localhost:11434" }), null, "another server: its own names, or none");
   assert.deepEqual(resolveTiers("openai", { fast: "small", best: "big" }, { baseUrl: "http://localhost:11434" }).best, { model: "big" });
@@ -92,14 +110,19 @@ test("escalation rule: a JS error gets the fast model's own repair first; everyt
 test("labels: Automatic until a model answers; the warm model is the first one", () => {
   const { settingsLabel } = providers;
   assert.equal(startLabel(CC, settingsLabel), "Claude Code · Automatic");
-  assert.equal(startLabel({ ...CC, mode: "best" }, settingsLabel), "Claude Code · sonnet");
+  assert.equal(startLabel({ ...CC, mode: "best" }, settingsLabel), "Claude Code · opus");
   assert.equal(startLabel({ provider: "claude-code", model: "opus", pinned: true, tiers: CC.tiers }, settingsLabel), "Claude Code · opus");
-  assert.equal(startLabel({ provider: "helper", backend: "claude-code", tiers: CC.tiers, mode: "fast", label: "x" }, settingsLabel), "Claude Code · haiku");
+  assert.equal(startLabel({ provider: "helper", backend: "claude-code", tiers: CC.tiers, mode: "fast", label: "x" }, settingsLabel), "Claude Code · sonnet");
   assert.equal(startLabel({ provider: "codex", tiers: resolveTiers("codex"), mode: "best" }, settingsLabel), "Codex · high effort");
   assert.equal(settingsLabel({ provider: "anthropic", tiers: resolveTiers("anthropic"), mode: "auto" }), "Anthropic API · Automatic");
-  assert.equal(warmSettings(CC).model, "haiku");
-  assert.equal(warmSettings({ ...CC, mode: "best" }).model, "sonnet");
-  assert.deepEqual(modelNames(CC, settingsLabel), { fast: "haiku", best: "sonnet" });
+  assert.equal(startLabel({ provider: "openai", tiers: resolveTiers("openai"), mode: "best" }, settingsLabel), "gpt-5, high effort · API");
+  assert.equal(warmSettings(CC).model, "sonnet");
+  assert.equal(warmSettings({ ...CC, mode: "best" }).model, "opus");
+  // While the person types: the model those words would start on.
+  assert.equal(warmSettings(CC, "add a summary panel at the top").model, "opus");
+  assert.equal(warmSettings(CC, "hide the ads").model, "sonnet");
+  assert.equal(warmSettings({ ...CC, mode: "fast" }, "add a summary panel at the top").model, "sonnet", "Always fast stays fast");
+  assert.deepEqual(modelNames(CC, settingsLabel), { fast: "sonnet", best: "opus" });
   assert.deepEqual(modelNames({ ...CC, model: "opus", pinned: true }, settingsLabel), { pinned: "Claude Code · opus" });
 });
 
@@ -216,34 +239,45 @@ test("engine: both models wrong means one more try on the strong model, and no m
 
 // ---- the warm process (speed): the first model stays warm
 
-test("prewarm warms the model requests start on", async () => {
+test("prewarm warms the model requests start on; while typing, the one the words start on", async () => {
   const seen = [];
   providers.registerProvider("fake-warm", async () => GOOD, { warm: s => seen.push(s.model) });
   const s = { provider: "fake-warm", tiers: { fast: { model: "fast" }, best: { model: "strong" } } };
   await providers.prewarm({ ...s, mode: "auto" });
   await providers.prewarm({ ...s, mode: "best" });
   await providers.prewarm({ ...s, model: "pinned", pinned: true, mode: "auto" });
-  assert.deepEqual(seen, ["fast", "strong", "pinned"]);
+  await providers.prewarm({ ...s, mode: "auto" }, "add a button that copies the conversation");
+  await providers.prewarm({ ...s, mode: "auto" }, "hide the ads");
+  await providers.prewarm({ ...s, model: "pinned", pinned: true, mode: "auto" }, "add a button that copies the conversation");
+  assert.deepEqual(seen, ["fast", "strong", "pinned", "strong", "fast", "pinned"]);
 });
 
-test("claude-code: after a request on the strong model, haiku is the one kept warm", async () => {
+test("popup: the Anthropic model picked there is the strong one; any other pick is used for everything", async () => {
+  const { popupTiers } = await import("../core/route.js");
+  assert.deepEqual(popupTiers("anthropic"), { fast: { model: "claude-sonnet-5-5" }, best: { model: "claude-opus-5-5" } });
+  assert.deepEqual(popupTiers("anthropic", "claude-opus-5-5"), popupTiers("anthropic"));
+  const haiku = popupTiers("anthropic", "claude-haiku-5-5"); // someone who picked haiku keeps it
+  assert.deepEqual(planRoute({ provider: "anthropic", tiers: haiku, mode: "auto" }, "add a summary panel", {}).steps.map(x => x.model), ["claude-haiku-5-5"]);
+});
+
+test("claude-code: after a request on the strong model, the first model (sonnet) is the one kept warm", async () => {
   process.env.FAKE_MODE = "ok";
   process.env.FAKE_WARM_TAG = String(Date.now());
   const { SYSTEM_PROMPT } = await import("../core/prompt.js");
   const MSGS = [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: "add a button" }];
   const starts = async () => (await fs.readFile(path.join(tmp, "claude-starts.log"), "utf8").catch(() => "")).split("\n").filter(Boolean).map(Number);
   const strong = planRoute(CC, "make it bigger", {}).steps[1];
-  assert.equal(strong.model, "sonnet");
+  assert.equal(strong.model, "opus");
   const n = (await starts()).length;
   await providers.streamChat(strong, MSGS);
   const served = JSON.parse(await fs.readFile(path.join(tmp, "claude.json"), "utf8"));
-  assert.equal(served.argv[served.argv.indexOf("--model") + 1], "sonnet");
+  assert.equal(served.argv[served.argv.indexOf("--model") + 1], "opus");
   await waitFor(async () => (await starts()).length > n + 1, { what: "the next process to start" });
   const next = (await starts()).at(-1);
   await providers.streamChat(planRoute(CC, "make it bigger", {}).steps[0], MSGS);
   const fast = JSON.parse(await fs.readFile(path.join(tmp, "claude.json"), "utf8"));
   assert.equal(fast.pid, next, "the process started ahead of time answered");
-  assert.equal(fast.argv[fast.argv.indexOf("--model") + 1], "haiku");
+  assert.equal(fast.argv[fast.argv.indexOf("--model") + 1], "sonnet");
 });
 
 test("codex: the strong tier thinks longer through model_reasoning_effort", async () => {
@@ -270,7 +304,11 @@ test("settings: the bar's Model setting is saved and read back; config.json hold
   assert.equal((await store.loadPrefs()).modelMode, "best");
   await store.saveConfig({ provider: "claude-code", tiers: { "claude-code": { fast: "claude-haiku-4-5" } } });
   let s = await models.currentSettings();
-  assert.deepEqual([s.mode, s.pinned, s.tiers.fast.model, s.tiers.best.model], ["best", false, "claude-haiku-4-5", "sonnet"]);
+  assert.deepEqual([s.mode, s.pinned, s.tiers.fast.model, s.tiers.best.model], ["best", false, "claude-haiku-4-5", "opus"], "a haiku chosen in config.json is kept");
+  // An older config.json with no names gets the current defaults.
+  await store.saveConfig({ provider: "claude-code" });
+  s = await models.currentSettings();
+  assert.deepEqual([s.tiers.fast.model, s.tiers.best.model], ["sonnet", "opus"]);
   assert.equal((await models.currentSettings({}, { env: { MORSE_MODEL_MODE: "fast" } })).mode, "fast");
   s = models.settingsFromConfig({ provider: "claude-code", models: { "claude-code": "opus" } }, {}, { env: {}, harnesses: { claude: { found: true }, codex: {} } });
   assert.deepEqual([s.model, s.pinned], ["opus", true], "a model named in config.json is used for everything");

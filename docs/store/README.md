@@ -23,12 +23,19 @@ writes `dist/morse-extension-<version>-store.zip`, with `manifest.json` at its
 root, then prints its path, size and SHA-256. Upload that zip.
 
 The store build differs from the test build (`npm run build`,
-`dist/extension`) in one line: `extension/host.js` lets the local copy of the
-share page (`http://127.0.0.1:8787`) ask for an install, so tests can run the
-share flow; the store build leaves that address out. `scripts/build.js` fails
-if the line it removes ever changes, `npm run store` refuses a zip that still
-has it, and `tests/store.test.js` builds both and checks that nothing else
-differs.
+`dist/extension`) in two places:
+
+- `extension/host.js` lets the local copy of the share page
+  (`http://127.0.0.1:8787/share/`) ask for an install, so tests can run the
+  share flow; the store build leaves that address out. `scripts/build.js`
+  fails if the line it removes ever changes.
+- The service worker reads the demo sites' local gallery list
+  (`http://127.0.0.1:8787/site/mods/index.json`) on pages at
+  127.0.0.1:8787-8797; the store build never does, and that address isn't in
+  it (`MORSE_STORE_BUILD` in `extension/gallery-host.js`).
+
+`npm run store` refuses a zip that still has either, and
+`tests/store.test.js` builds both and checks that nothing else differs.
 
 `npm run package:extension` still zips the test build
 (`dist/morse-extension-<version>.zip`); don't upload that one.

@@ -7,6 +7,7 @@
 // "morse.gallery.url" (for a fork of the gallery, or a local copy).
 
 import { createGallery } from "../core/gallery-host.js";
+import { DEMO_INDEX_URL } from "../core/gallery.js";
 import { getPrefs } from "./bar-host.js";
 
 export const GALLERY_REQUESTS = new Set(["gallery.list"]);
@@ -19,6 +20,10 @@ const gallery = createGallery({
   },
   enabled: async () => (await getPrefs()).gallery !== false,
   configured: async () => (await chrome.storage.local.get(KEY("url")))[KEY("url")] || "",
+  // The demo sites' local list (DEMO_INDEX_URL) is for working on Morse.
+  // scripts/build.js writes `true` here for the store build (MORSE_STORE=1,
+  // npm run store), so the list and its address are left out.
+  demoIndex: globalThis.MORSE_STORE_BUILD ? "" : DEMO_INDEX_URL,
 });
 
 export function handleGallery(msg, url) {
