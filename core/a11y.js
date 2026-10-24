@@ -789,8 +789,14 @@ export function auditSummary(rule, n, items = []) {
 }
 
 // The request for problems that need judgment, with the exact selectors.
+// A selector inside `…` in the request: built from the page's own ids and
+// labels, so a backtick or a line break in one could end the quote and put
+// the page's words in the request as the person's. CSS escapes (\60 is a
+// backtick) keep it the same selector.
+const quotedSel = s => `\`${String(s).replace(/\\?`/g, "\\60 ").replace(/\r/g, "\\d ").replace(/\n/g, "\\a ").replace(/[\u2028\u2029]/g, c => `\\${c.charCodeAt(0).toString(16)} `)}\``;
+
 export function fixRequest(rule, sels = []) {
-  const n = sels.length, list = sels.map(s => `\`${s}\``).join(", ");
+  const n = sels.length, list = sels.map(quotedSel).join(", ");
   switch (rule) {
     case "name": return `Give ${n === 1 ? "this icon button or link an accessible name" : `these ${n} icon buttons and links accessible names`} (aria-label) that ${n === 1 ? "says what it does" : "say what each does"}, based on ${n === 1 ? "its icon, tooltip" : "their icons, tooltips"} and what's around ${n === 1 ? "it" : "them"}: ${list}. Change nothing else.`;
     case "label": return `Give ${n === 1 ? "this form field a label" : `these ${n} form fields labels`} that screen readers can read (aria-label), based on the text and layout around ${n === 1 ? "it" : "them"}: ${list}. Change nothing else.`;

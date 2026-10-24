@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Made from docs/privacy.md by scripts/build-pages.js. Edit that file, then run npm run pages. -->
+<title>Morse privacy policy</title>
+<meta name="description" content="What data leaves your computer when you use Morse, when, and to whom.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../design/tokens.css">
+<link rel="stylesheet" href="site.css">
+<style>
+  .doc { max-width: 720px; padding: 56px 0 96px; }
+  .doc h1 { font-size: clamp(32px, 6vw, 44px); letter-spacing: -0.03em; line-height: 1.1; margin: 0 0 16px; }
+  .doc h2 { font-size: 22px; letter-spacing: -0.02em; margin: 48px 0 12px; }
+  .doc p, .doc li { color: var(--m-text-2); font-size: 16px; line-height: 1.65; }
+  .doc p { margin: 12px 0; }
+  .doc strong { color: var(--m-text); font-weight: 600; }
+  .doc ul { padding-left: 20px; }
+  .doc li { margin: 6px 0; }
+  .doc a { color: var(--m-text); }
+  .doc code { font-family: var(--m-mono); font-size: 0.88em; background: var(--m-raised); border: 1px solid var(--m-line); border-radius: 4px; padding: 1px 5px; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+  .doc .table { overflow-x: auto; margin: 16px 0; }
+  .doc table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  .doc th, .doc td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--m-line); color: var(--m-text-2); }
+  .doc th { color: var(--m-text); font-weight: 500; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="Morse home"><span data-radar="20"></span>Morse</a>
+    <nav class="nav" aria-label="Main">
+      <a href="./#install">Install</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="https://github.com/sam-siavoshian/RRAA">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<article class="doc">
+<h1>Morse privacy policy</h1>
+<p>Last updated: October 24, 2026. This covers the Morse Chrome extension and the <code>morse</code> command (the Morse helper). It is checked against the code in this repository; if the two ever disagree, please <a href="https://github.com/sam-siavoshian/RRAA/issues/new">open an issue</a>.</p>
+<h2>The short version</h2>
+<ul>
+<li>There is no Morse account and no Morse server. Morse collects nothing about you and sends nothing to the people who make it.</li>
+<li>When you ask for a change, Morse sends what it needs to write that change to <strong>the model you chose</strong>: Claude Code, Codex, or an Anthropic, OpenAI or other API address you entered.</li>
+<li>When you open the bar or the Mods panel, Morse may download <strong>the gallery list</strong> of mods other people made, from GitHub Pages. At most once a day.</li>
+<li>A few things you can choose to use send data elsewhere. They are listed below under &quot;Only when you use them&quot;.</li>
+<li>Nothing else leaves your computer.</li>
+</ul>
+<h2>What is sent to your model, and when</h2>
+<p>Only when you send a request: you type or say a change or a question, use Refine or Fix, or use &quot;Explain this page&quot;, &quot;Describe this picture&quot; or a &quot;Fix it&quot; that needs the model. And, if you turned on &quot;Fix my mods automatically when a site changes&quot; (it is off unless you turn it on), when one of your saved mods stops working on a page.</p>
+<p>Sent to the model you chose:</p>
+<ul>
+<li>what you typed or said</li>
+<li>the address and title of the page or app window</li>
+<li>the HTML of what you pointed at, and the page's layout, headings and button labels around it. This can include text that is on the screen, such as message previews or names.</li>
+<li>the CSS rules that style what you pointed at</li>
+<li>for Refine and Fix: the code of the mod and the error it hit</li>
+<li>for &quot;Describe this picture&quot;: the picture, or a screenshot cropped to it</li>
+</ul>
+<p>Where it goes depends on your choice:</p>
+<div class="table"><table>
+<thead><tr><th>You chose</th><th>Sent to</th><th>Under whose terms</th></tr></thead>
+<tbody>
+<tr><td>Claude Code</td><td>Anthropic, through the <code>claude</code> program on your computer</td><td>your Claude account</td></tr>
+<tr><td>Codex</td><td>OpenAI, through the <code>codex</code> program on your computer</td><td>your ChatGPT or OpenAI account</td></tr>
+<tr><td>Anthropic API key</td><td>api.anthropic.com, or the address you set</td><td>your Anthropic API account</td></tr>
+<tr><td>OpenAI API key</td><td>api.openai.com, or the address you set (for example a server on your own computer)</td><td>that service</td></tr>
+</tbody>
+</table></div>
+<p>Claude Code and Codex are separate programs with their own privacy terms. Morse starts them and hands them the request; it does not see what they log.</p>
+<p>Apart from that setting, Morse sends nothing to a model on its own. Opening the bar, pointing, the edit tools, the other page tools, &quot;Easier to use&quot;, Read aloud and &quot;Check this page&quot; itself run on your computer and send nothing to the model.</p>
+<h2>The gallery list</h2>
+<p>To show &quot;Mods for this site&quot;, Morse downloads the list of gallery mods from <code>https://sam-siavoshian.github.io/RRAA/site/mods/index.json</code>, and then the mod files that match the site you are on.</p>
+<ul>
+<li>It happens only when you open the bar or the Mods panel, and the list is downloaded at most once a day.</li>
+<li>The request carries no cookies and nothing about you or the page. If you set a different list address in settings, the same goes to that address instead. GitHub, which hosts the files, sees your IP address and which mod files were asked for, as with any website. A mod file is named after the site it is for, so that can show that you visited that site.</li>
+<li>Turn it off with &quot;Show mods others made&quot; in Morse settings. Then nothing is downloaded.</li>
+</ul>
+<h2>Only when you use them</h2>
+<p>These send data somewhere other than your model, and only when you use them:</p>
+<ul>
+<li><strong>Voice in Chrome.</strong> Morse uses Chrome's own speech recognition. Chrome sends your voice to Google to turn it into text. If you never use voice, no audio is recorded.</li>
+<li><strong>Voice in desktop apps.</strong> The Morse helper turns speech into text with OpenAI (when you gave it an OpenAI key) or with Whisper on your computer (nothing leaves your computer).</li>
+<li><strong>Read aloud.</strong> Morse picks a voice installed on your computer. If there is none, Chrome uses its default voice, which can be an online Google voice.</li>
+<li><strong>Sharing.</strong> A share link holds the whole mod after the <code>#</code>. Browsers do not send that part to a server, so the install page at GitHub Pages never sees the mod. Sending the link is up to you. The &quot;Post&quot; button opens x.com with your request and the link filled in, and the link holds the mod. Nothing is posted until you post it.</li>
+<li><strong>Submitting to the gallery</strong> opens a new GitHub issue with your mod in it, in your browser. Nothing is posted until you click Submit on GitHub.</li>
+<li><strong>Settings sync.</strong> Your Morse settings (shortcuts, bar position, theme, whether to show gallery mods) are kept in Chrome's sync storage. If you turned on Chrome sync, Google syncs them between your browsers. Your API key, your mods and your history are not in sync storage.</li>
+</ul>
+<h2>What stays on your computer</h2>
+<ul>
+<li>Your mods: in the extension's storage in Chrome, and in <code>~/.morse/mods</code> for desktop apps.</li>
+<li>Your API keys: in the extension's local storage, or in <code>~/.morse/config.json</code>. They are sent only to the service they are for.</li>
+<li>Your past requests, backups and exports.</li>
+<li>The Morse helper listens only on <code>127.0.0.1</code> (your own computer). A browser must be paired with a one-time code before the helper writes changes for it.</li>
+</ul>
+<h2>What mods can do</h2>
+<p>A mod is code that runs inside the page or app it is for, like any userscript. It can see what you see there. Mods you make are written by your model at your request. Before you install a mod from someone else, Morse shows what it does in plain words and lets you read its code. Morse does not check what a mod sends over the network; read it, or don't install it.</p>
+<h2>Things Morse never does</h2>
+<ul>
+<li>No analytics, tracking, crash reports or ads.</li>
+<li>No selling or sharing of data. Morse has no data to sell.</li>
+<li>Nothing is sent from a page until you use Morse there. Morse runs on every page so its shortcut works and your saved mods apply, but it only looks at a page to answer you.</li>
+</ul>
+<h2>Children</h2>
+<p>Morse is not made for children under 13 and collects nothing from anyone.</p>
+<h2>Changes</h2>
+<p>Changes to this policy are made in this file, so its history on GitHub shows every change. Questions: <a href="https://github.com/sam-siavoshian/RRAA/issues/new">open an issue</a>.</p>
+</article>
+</main>
+<footer class="foot">
+  <div class="wrap">
+    <a class="brand" href="./"><span data-radar="16" data-still></span>Morse</a>
+    <nav aria-label="Footer">
+      <a href="gallery.html">Gallery</a>
+      <a href="privacy.html" aria-current="page">Privacy</a>
+      <a href="https://github.com/sam-siavoshian/RRAA">GitHub</a>
+      <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/LICENSE">MIT license</a>
+    </nav>
+  </div>
+</footer>
+<script type="module">import { initPage } from "./common.js"; initPage();</script>
+</body>
+</html>

@@ -72,7 +72,7 @@ async function load() {
 
 // ---- 110: the chip in the empty bar leads to For this site
 await load();
-await page.keyboard.press("Alt+Space");
+await page.keyboard.press(process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space") /* the default Open Morse key (core/hotkeys.js) */;
 await ui(".sugs .gl-sug").waitFor({ timeout: 15000 });
 await page.keyboard.press("Tab");
 await page.keyboard.press("End");
@@ -88,6 +88,7 @@ await shot("110-for-this-site.png");
 
 // ---- 111: Try it
 await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').click();
+await ui(".modal .card [data-a=install]").click(); // Try it, after the same review as Install…
 await page.locator(".morse-sleep").waitFor();
 await page.locator(".morse-sleep").click();
 await page.locator(".morse-sleep span").waitFor();

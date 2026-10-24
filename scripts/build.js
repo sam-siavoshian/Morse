@@ -25,6 +25,10 @@ const BUNDLED_ONLY = ["background.js", "bar-host.js", "onboarding-host.js", "con
 for (const f of await fs.readdir(path.join(root, "extension"))) {
   if (!BUNDLED_ONLY.includes(f)) await fs.copyFile(path.join(root, "extension", f), path.join(out, f));
 }
+// One version for everything: package.json's. extension/manifest.json has none of its own.
+const { version } = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
+const manifest = JSON.parse(await fs.readFile(path.join(root, "extension", "manifest.json"), "utf8"));
+await fs.writeFile(path.join(out, "manifest.json"), JSON.stringify({ manifest_version: manifest.manifest_version, name: manifest.name, version, ...manifest }, null, 2) + "\n");
 await esbuild.build({
   entryPoints: [path.join(root, "extension", "background.js")],
   outfile: path.join(out, "background.js"),
@@ -83,4 +87,4 @@ function crc32(buf) {
   return ~c >>> 0;
 }
 
-console.log(`Built ${path.relative(root, out)}: load it in chrome://extensions → Load unpacked.`);
+console.log(`Built ${path.relative(root, out)} (version ${version}): load it in chrome://extensions → Load unpacked.`);

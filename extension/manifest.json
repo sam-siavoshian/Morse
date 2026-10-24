@@ -1,7 +1,6 @@
 {
   "manifest_version": 3,
   "name": "Morse",
-  "version": "0.2.0",
   "description": "Change any website in your own words. Point at something, describe the change, and your model makes it while you watch.",
   "minimum_chrome_version": "135",
   "permissions": ["storage", "scripting", "userScripts", "tabs", "downloads"],

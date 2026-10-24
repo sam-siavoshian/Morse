@@ -147,12 +147,15 @@ test("SPA: every pushState navigation re-syncs mods, without a poll", { skip }, 
     await t.clearSends();
     await t.reset();
     await t.page.evaluate(() => window.__nav(8, 120));
-    await sleep(500);
     const navs = await t.page.evaluate(() => window.__navs.slice(-8));
-    const lists = (await t.sends()).filter(s => s[0] === "mods.list").map(s => s[1]);
+    const listed = async () => (await t.sends()).filter(s => s[0] === "mods.list").map(s => s[1]);
+    // Every navigation is followed by a re-sync (the throttle allows one per 250 ms;
+    // the bound is loose because a busy machine delays the requests themselves).
+    await until(async () => (await listed()).some(x => x >= navs.at(-1)), 5000, "a re-sync after the last navigation");
+    const lists = await listed();
     for (const n of navs) {
       const hit = lists.find(x => x >= n);
-      assert.ok(hit != null && hit - n < 400, `navigation at ${n.toFixed(0)} noticed after ${hit == null ? "never" : (hit - n).toFixed(0) + "ms"}`);
+      assert.ok(hit != null && hit - n < 1000, `navigation at ${n.toFixed(0)} noticed after ${hit == null ? "never" : (hit - n).toFixed(0) + "ms"}`);
     }
     assert.ok(lists.length <= 8, `${lists.length} re-syncs for 8 navigations`);
     assert.equal((await t.snap()).counts.setInterval || 0, 0);

@@ -1,0 +1,7 @@
+# Blank issues stay on: Morse's "Submit to the gallery" opens a prefilled new issue
+# (core/gallery.js submitIssue) and needs the plain new-issue page.
+blank_issues_enabled: true
+contact_links:
+  - name: Privacy policy
+    url: https://sam-siavoshian.github.io/RRAA/site/privacy.html
+    about: What leaves your computer when you use Morse, and to whom.

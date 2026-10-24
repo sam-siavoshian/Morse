@@ -5,7 +5,10 @@ hostEl.setAttribute("data-morse-ui", "");
 hostEl.style.cssText = "all:initial;position:fixed;inset:0;pointer-events:none;z-index:2147483647;direction:ltr;zoom:1;display:block;"
   .replace(/;/g, " !important;");
 hostEl.dir = "ltr";
-const DEBUG = B.debug; // localStorage "morse:debug": open shadow root, status attribute (tests, screenshots)
+// Debug (an open shadow root and the status attribute, for tests and
+// screenshots) only in a browser driven by automation; boot.js decides it
+// (navigator.webdriver and localStorage "morse:debug", read in Morse's own world).
+const DEBUG = B.debug;
 const root = hostEl.attachShadow({ mode: DEBUG ? "open" : "closed" });
 // Tokens are custom properties, the one thing that inherits through a shadow
 // boundary. Marked !important, ours beat any `--m-*` the page sets on our host.

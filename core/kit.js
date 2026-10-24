@@ -286,10 +286,9 @@ function installMorseKit() {
     __stats(id) {
       const c = mods.get(id);
       if (!c) return null;
-      // Exact counts on demand, rather than a rescan on every removal.
-      for (const w of watches) if (w.c === c) {
-        try { w.st.now = [...document.querySelectorAll(w.selector)].filter(el => !el.closest("[data-morse-ui],[data-morse]")).length; } catch {}
-      }
+      // Exact counts on demand: this mod's watches catch up with the page now
+      // (what the next frame would do), rather than a rescan on every removal.
+      for (const w of [...watches]) if (w.c === c) scanAll(w);
       return { watches: c.watches.map(w => ({ ...w })), errors: c.errors.length, error: c.errors[0] ? String(c.errors[0]).split("\n")[0] : null };
     },
   };

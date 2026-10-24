@@ -109,8 +109,13 @@ const S = {
   mods: [], url: location.href,
 };
 const newId = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+// Debug (the UI's open shadow root and status attribute, for tests and
+// screenshots) only in a browser driven by automation: localStorage belongs to
+// the page, so on its own the flag would let any site open Morse's UI to its
+// scripts. navigator.webdriver is read here, in Morse's own world, where the
+// page can't redefine it.
 let DEBUG = false;
-try { DEBUG = !!W.localStorage.getItem("morse:debug"); } catch {}
+try { DEBUG = navigator.webdriver === true && !!W.localStorage.getItem("morse:debug"); } catch {}
 
 // ---- hotkeys (core/hotkeys.js, core/prefs.js are inlined above)
 const PLATFORM = detectPlatform(navigator);
@@ -160,6 +165,7 @@ const held = m => Control.off || isPaused({ pause: Control.pause }, { url: locat
 // Once per page load: pauses and the safe-start suspect, before any mod runs.
 const controlled = ctl("control.boot", {}, 2500).then(r => {
   if (r?.pause) Control.pause = normalizeControl({ pause: r.pause }).pause;
+  if (typeof r?.off === "boolean") Control.off = r.off; // the host keeps the off switch per tab (a page can clear its storage)
   if (r?.suspect?.id) { Control.suspect = r.suspect; Control.held.add(r.suspect.id); }
 });
 let aliveTimers = [];
@@ -475,7 +481,9 @@ const ready = (async () => {
 })();
 ready.then(hello => {
   if (!hello.quiet && hello.mode && prefs.welcome) notify(`Morse is ready. Press ${formatCombo(keys.open, PLATFORM) || "the Morse hotkey"} to change this page.`, true);
-  if (DEBUG) loadUI().catch(() => {}); // screenshots and tests read the overlay's status
+  // Screenshots and tests read the overlay's status: the UI comes at once (a
+  // desktop host started with MORSE_DEBUG=1 says so in its hello).
+  if (DEBUG || hello.debug) loadUI().catch(() => {});
 }).catch(warn);
 
 // ---- the handoff the UI (runtime/src, 01-rpc.js) picks up
