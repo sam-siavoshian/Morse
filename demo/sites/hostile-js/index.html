@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hostile JS</title>
+<script>
+  // A page whose own scripts get in the way, the way real ones do: hardened
+  // intrinsics (SES-style lockdown), "anti-shortcut" listener filters, broken
+  // or stubbed MutationObserver / requestAnimationFrame / timers, and code that
+  // throws away its own document. Morse must keep working and never throw here.
+  //   ?freeze   Object/Array/Function/Promise prototypes frozen
+  //   ?ael      every keydown/keyup listener not added by the page is dropped
+  //   ?mo       MutationObserver throws when constructed
+  //   ?raf      requestAnimationFrame never calls back
+  //   ?timers   setTimeout/setInterval never call back
+  //   ?nonav    no Navigation API (old Electron)
+  // Helpers for tests: __hostile.reopen(), .swapBody(), .swapHtml(), .go(path), .add(n)
+  (() => {
+    const q = new URLSearchParams(location.search);
+    const page = new WeakSet();
+    window.__hostile = { page };
+    if (q.has("ael")) {
+      const add = EventTarget.prototype.addEventListener;
+      EventTarget.prototype.addEventListener = function (type, fn, opts) {
+        if (/^key/.test(type) && !page.has(fn)) return; // "we own the keyboard"
+        return add.call(this, type, fn, opts);
+      };
+    }
+    if (q.has("mo")) window.MutationObserver = class { constructor() { throw new Error("MutationObserver is disabled on this page"); } };
+    if (q.has("raf")) window.requestAnimationFrame = () => 0;
+    if (q.has("timers")) { window.setTimeout = () => 0; window.setInterval = () => 0; }
+    if (q.has("nonav")) Object.defineProperty(window, "navigation", { value: undefined, configurable: true });
+    if (q.has("freeze")) for (const p of [Object.prototype, Array.prototype, Function.prototype, Promise.prototype]) Object.freeze(p);
+    const fresh = n => `<header><h1>Hostile JS</h1><nav><a href="/a">A</a> <a href="/b">B</a></nav></header><main>${"<p class=item>An item</p>".repeat(n)}</main>`;
+    Object.assign(window.__hostile, {
+      reopen() { document.open(); document.write(`<!doctype html><html><head><title>Reopened</title></head><body>${fresh(3)}</body></html>`); document.close(); },
+      swapBody() { const b = document.createElement("body"); b.innerHTML = fresh(4); document.body.replaceWith(b); },
+      swapHtml() { document.documentElement.innerHTML = `<head><title>Swapped</title></head><body>${fresh(5)}</body>`; },
+      go(path) { history.pushState({}, "", path); },
+      add(n = 1) { for (let i = 0; i < n; i++) { const p = document.createElement("p"); p.className = "item"; p.textContent = "Added"; document.querySelector("main").append(p); } },
+    });
+    const onKey = e => { (window.__hostile.keys ||= []).push(e.code); };
+    page.add(onKey);
+    addEventListener("keydown", onKey);
+  })();
+</script>
+<style>body { font: 16px/1.5 system-ui; margin: 24px; } .item { padding: 4px 8px; border-bottom: 1px solid #ddd; }</style>
+</head>
+<body>
+<header><h1>Hostile JS</h1><nav><a href="/a">A</a> <a href="/b">B</a></nav></header>
+<main><p class="item">An item</p><p class="item">An item</p></main>
+<button id="spa">Client-side route</button>
+<script>
+  // A router: a click that changes the URL without loading a page.
+  const route = () => history.pushState({}, "", "/routed/" + Date.now());
+  window.__hostile.page.add(route);
+  document.getElementById("spa").addEventListener("click", route);
+</script>
+</body>
+</html>

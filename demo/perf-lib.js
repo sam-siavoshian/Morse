@@ -154,7 +154,10 @@ export function instrument() {
   };
   window.setTimeout = function (fn, ms, ...a) { if (ours()) { inc(P.counts, "setTimeout"); fn = timed("timeout", fn); } return O.st.call(window, fn, ms, ...a); };
   window.setInterval = function (fn, ms, ...a) { if (ours()) { inc(P.counts, "setInterval"); fn = timed("interval", fn); } return O.si.call(window, fn, ms, ...a); };
-  window.requestAnimationFrame = function (fn) { if (ours()) { inc(P.counts, "raf"); fn = timed("raf", fn); } return O.raf.call(window, fn); };
+  window.requestAnimationFrame = function (fn) {
+    if (ours()) { inc(P.counts, "raf"); fn = timed("raf", fn); if (P.trace) P.trace.push(new O.Error().stack); } // P.trace = [] to see who schedules frames
+    return O.raf.call(window, fn);
+  };
   if (O.ric) window.requestIdleCallback = function (fn, o) { if (ours()) { inc(P.counts, "idle"); fn = timed("idle", fn); } return O.ric.call(window, fn, o); };
   window.getComputedStyle = function (...a) { if (ours()) inc(P.counts, "getComputedStyle"); return O.gcs.apply(window, a); };
   Element.prototype.getBoundingClientRect = function () { if (ours()) inc(P.counts, "layoutRead"); return O.gbcr.call(this); };
@@ -181,6 +184,10 @@ export function instrument() {
   };
   new O.MO(recs => { for (const r of recs) for (const n of r.addedNodes) seen(n); }).observe(document, { childList: true, subtree: true });
   O.ael.call(window, "keydown", e => { if (e.code === "Space" && e.altKey) P.keydown = O.now(); }, true);
+  // Anything that reaches the page's own error handlers.
+  P.pageErrors = [];
+  O.ael.call(window, "error", e => P.pageErrors.push(String(e.message || e.error)));
+  O.ael.call(window, "unhandledrejection", e => P.pageErrors.push("unhandled rejection: " + String(e.reason && e.reason.message || e.reason)));
   // Every request the runtime sends to the desktop host (binding installed by the connector).
   const b = globalThis.__morseHostSend;
   if (typeof b === "function") globalThis.__morseHostSend = s => { try { P.sends.push([JSON.parse(s).type, O.now()]); } catch {} return b(s); };

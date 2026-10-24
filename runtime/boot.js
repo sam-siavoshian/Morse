@@ -198,7 +198,7 @@ on(W, "pageshow", e => {
 const domHooks = new Set();
 let watchedRoot = null;
 const domMo = new pristine.MutationObserver(() => {
-  const swapped = D.documentElement !== watchedRoot; // document.open() erased our window listeners
+  const swapped = watchedRoot && D.documentElement !== watchedRoot; // document.open() erased our window listeners
   observeDom();
   for (const s of styles.values()) if (!s.isConnected) styleParent()?.append(s);
   if (swapped) relisten();
