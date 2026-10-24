@@ -122,6 +122,6 @@ function debugStatus() {
     });
   };
   setInterval(write, 40);
-  document.addEventListener("morse:status", write);
+  B.on(document, "morse:status", write);
 }
 if (DEBUG) debugStatus();
