@@ -22,6 +22,7 @@ import { CDPSession, listTargets } from "./cdp.js";
 import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putClipboard } from "./store.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode, settleMs } from "../core/kit.js";
+import { asReviewed } from "../core/summary.js"; // installs keep only the reviewed code
 import { runMorse } from "../core/engine.js";
 import { settingsLabel, currentSettings } from "./models.js"; // also registers the Claude Code / Codex providers
 import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
@@ -36,9 +37,11 @@ import { HOME, listMods } from "./store.js";
 import { classifyTarget, describeTarget } from "./targets.js";
 import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
 import { GALLERY_REQUESTS, handleGallery } from "./gallery.js"; // gallery hook: Mods for this site
+import { PACK_REQUESTS, handlePack } from "./packs.js"; // packs hook: mod packs
 import { Style, onStyleChange } from "./style.js"; // your-style hook: one style on every site and app
 import { STYLE_ID } from "../core/style.js"; // your-style hook
 import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
+import { pageCollapse } from "../core/guard.js"; // guard hook: a change that hides most of the page
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
@@ -162,6 +165,7 @@ export class Connector {
         this.pages.delete(t.id);
         this.windows.get(t.id)?.session?.close();
         this.windows.delete(t.id);
+        if (this.state === "stopped") return; // `morse stop` closed it mid-attach: not a failure to report
         const n = (r?.n || 0) + 1;
         this.retry.set(t.id, { at: Date.now() + Math.min(30000, 500 * 2 ** n), n });
         if (n === 1) this.log(`  ! Couldn't connect to ${describeTarget(t).title}: ${e.message}`);
@@ -260,6 +264,7 @@ export class Connector {
     // The document that's already loaded. A page that is mid-crash or
     // mid-navigation gets the runtime from its next document.
     await this.boot(s, w, source).catch(() => {});
+    if (w.detaching || this.state === "stopped") return; // stopped meanwhile: nothing was connected
     readTitle();
     this.log(`  ✓ ${t("launch.connected", { title })}${kind === "window" ? "" : ` (${kind})`}`);
     if (!this.hinted && kind === "window") { // first-run hook: say what to do next, once
@@ -277,9 +282,13 @@ export class Connector {
     if (ctx == null) ctx = (await s.send("Page.createIsolatedWorld", { frameId: w.frameId, worldName: WORLD })).executionContextId;
     const probe = (await s.send("Runtime.evaluate", { expression: `[!!globalThis.__morseHost, typeof globalThis.${BINDING}]`, contextId: ctx, returnByValue: true }).catch(() => null))?.result?.value;
     if (probe?.[0]) return; // already running in this document
+    // `morse stop` came while this was on its way: its clean-up may already
+    // have run, and a runtime started now would be left on the page.
+    if (w.detaching || this.state === "stopped") return;
     // A document that committed in a new renderer while we were attaching (an
     // app still starting up) can come without the binding: add it back first.
     if (probe && probe[1] !== "function") await s.send("Runtime.addBinding", { name: BINDING, executionContextName: WORLD }).catch(() => {});
+    if (w.detaching || this.state === "stopped") return;
     await s.send("Runtime.evaluate", { expression: source, contextId: ctx });
   }
 
@@ -384,6 +393,14 @@ export class Connector {
     return s.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive(${JSON.stringify(msg)})`, contextId: caller.world }).catch(() => {});
   }
 
+  // guard hook: how much of the page shows with and without a draft's CSS
+  // (core/guard.js pageCollapse), in Morse's world, where the page's own
+  // scripts can't change the answer.
+  async collapse(s, caller, id, css) {
+    const r = await s.send("Runtime.evaluate", { expression: `(${pageCollapse})(${JSON.stringify(css)}, ${JSON.stringify(id)})`, contextId: caller.world, returnByValue: true });
+    return r?.result?.value ?? null;
+  }
+
   // Mod code, in the page's main world of the document that asked.
   async exec(s, caller, modId, js) {
     const ctx = caller.main;
@@ -437,6 +454,7 @@ export class Connector {
     if (CONTROL_REQUESTS.has(msg.type)) return handleControl({ ...msg, tab: `frame:${caller.frameId}` }, await here()); // user control (control.js); per window, not the page's own tab id
     if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: await this.freshSettings() }); // onboarding hook
     if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, await here()); // gallery hook: Mods for this site
+    if (PACK_REQUESTS.has(msg.type)) { const r = await handlePack(msg); if (/^pack\.(install|update|enable)$/.test(msg.type)) this.modsChanged(s); return r; } // packs hook: mod packs (packs.js)
     if (Style.owns(msg)) { const r = await Style.handle(msg, await here()); if (msg.type !== "style.get" && msg.type !== "style.preview") this.modsChanged(s); return r; } // your-style hook
     switch (msg.type) {
       case "hello":
@@ -469,7 +487,7 @@ export class Connector {
         const src = msg.source.trim();
         const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
         const where = await here(); // the user confirmed this install in the runtime (64-install.js, 80-modals.js)
-        return saveMod({ ...mod, enabled: true, imported: true, match: mod.match || { hosts: [hostOf(where.url)], app: where.app } });
+        return saveMod({ ...asReviewed(mod), enabled: true, imported: true, match: mod.match || { hosts: [hostOf(where.url)], app: where.app } });
       }
       // God mode: cross-app clipboard (Capture in one app, rebuild in another)
       case "clipboard.list":
@@ -501,6 +519,7 @@ export class Connector {
           context: { ...msg.context, app: this.app?.name || msg.context.app },
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           exec: js => this.exec(s, caller, msg.genId, js),
+          collapse: css => this.collapse(s, caller, msg.genId, css), // guard hook: hid most of the page?
           emit: ev => { if (!signal.aborted) this.push(s, caller, { ...ev, genId: msg.genId }); },
           signal,
         }));

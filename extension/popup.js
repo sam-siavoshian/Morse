@@ -36,10 +36,16 @@ function render(s) {
   st = s;
   $("label").textContent = s.label;
   $("page").hidden = isOptions;
+  // Without “Allow User Scripts” a mod's code doesn't run (background.js cantRun): say which mods here wait for it.
+  const waits = m => !s.userScripts && m.enabled && !!m.js?.trim();
+  const waiting = s.mods.filter(waits);
   $("warn").hidden = s.userScripts;
+  $("warntext").innerHTML = waiting.length
+    ? t("popup.waiting", { n: waiting.length, list: waiting.map(m => `“${esc(m.title)}”`).join(", ") })
+    : t("popup.warnOff");
   $("count").textContent = s.mods.length ? `· ${s.mods.length}` : "";
   $("mods").innerHTML = s.mods.length
-    ? s.mods.map(m => `<li><i class="${m.enabled ? "on" : ""}"></i>${esc(m.title)}<small>“${esc(m.prompt)}”</small>${modExtras(m)}</li>`).join("")
+    ? s.mods.map(m => `<li><i class="${m.enabled ? "on" : ""}"></i>${esc(m.title)}<small>“${esc(m.prompt)}”</small>${waits(m) ? `<small class="waiting">${esc(t("popup.waits"))}</small>` : ""}${modExtras(m)}</li>`).join("")
     : `<li class="empty">${esc(t("popup.noMods"))}</li>`;
 
   $("connect").hidden = s.kind !== "none";

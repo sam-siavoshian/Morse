@@ -138,7 +138,7 @@ async function submit(request, opts = {}) {
       if (res.cancelled) return onCancelled(id); // Stop: 50-bar.js
       S.phase = "error";
       bar.classList.add("err");
-      hint.innerHTML = t("result.failed", { detail: esc(plainError(res.error).slice(0, 120)) });
+      hint.innerHTML = guardRefusalHint(res.error) || t("result.failed", { detail: esc(plainError(res.error).slice(0, 120)) }); // guard hook: 64-guard.js
       hint.title = res.error || "";
       actions.innerHTML = `<button data-a="again">${t("result.again")}</button>`;
       return;
@@ -148,7 +148,7 @@ async function submit(request, opts = {}) {
   selBox.hidden = true;
   S.after = { shot: await capture(), rect: S.target?.isConnected ? R(S.target.getBoundingClientRect()) : null, focus: focus?.isConnected ? R(focus.getBoundingClientRect()) : null };
   if (!prev) call("clip.stop", { modId: id }).then(c => { if (c) S.draft.clip = c; }).catch(() => {});
-  showResult(S.draft);
+  showResult(S.draft, Waiting.note(res, id)); Waiting.offer(res); // waiting hook: code that waits for “Allow User Scripts” (64-waiting.js)
 }
 
 // The result: the title, how it went, and what you can do next. The input

@@ -206,9 +206,11 @@ function showModCode(m) {
 // this site, 68-gallery.js): the same review, with Try it instead of Install.
 async function reviewImport(source, { onDone, trial = null } = {}) {
   const done = r => { const f = onDone; onDone = null; f?.(r); };
+  if (!trial && Packs.isAddress(source)) return Packs.reviewAddress(source, { onDone: done }); // packs hook: a pack's address (69-packs.js)
   let r;
   try { r = await call("mods.preview", { source }); }
   catch (e) { const msg = plainError(e); toast(msg); return done({ error: msg }); }
+  if (r?.kind === "pack" && !trial) return Packs.review(r, { source, onDone: done }); // packs hook: the pack review (69-packs.js)
   if (!r?.mods?.length) { const e = t("ctl.notShare"); toast(e); return done({ error: e }); }
   if (trial) r.mods = r.mods.slice(0, 1);
   const many = r.mods.length > 1;
@@ -230,14 +232,16 @@ async function reviewImport(source, { onDone, trial = null } = {}) {
       <details class="ctl-code"><summary>${t("ctl.showCode")}</summary>${codeHtml(m)}</details>
     </section>`).join("")}
     ${r.errors?.length ? `<p class="dim ctl-skip">${esc(t("ctl.skipped", { list: r.errors.join("; ") }))}</p>` : ""}
-    <footer><button data-a="close">${t("btn.cancel")}</button><button class="primary" data-a="install">${trial ? t("ctl.tryIt") : t("ctl.installN", { n: r.mods.length })}</button></footer>`);
+    <footer><button data-a="close">${t("btn.cancel")}</button><button class="primary" data-a="install" data-settle>${trial ? t("ctl.tryIt") : t("ctl.installN", { n: r.mods.length })}</button></footer>`, { review: true }); // top layer, 80-modals.js
   modal.querySelector(".card").classList.add("ctl-card");
   modal.querySelector("[data-a=close]:not(header [data-a])")?.focus(); // Cancel, never Install: a page could make someone press Enter
   const watch = new MutationObserver(() => { if (modal.hidden) { watch.disconnect(); done({ error: t("ctl.cancelled") }); } });
   watch.observe(modal, { attributes: true, attributeFilter: ["hidden"] });
   modal.querySelector("[data-a=install]").onclick = async e => {
     if (trial) { watch.disconnect(); modal.hidden = true; done({ title: r.mods[0].title }); return trial.run(r.mods[0]); }
-    e.currentTarget.disabled = true;
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.dataset.settle = "busy"; // a review brought back on top doesn't turn it on again mid-install (80-modals.js)
     try {
       const saved = await call("control.install", { url: location.href, app: S.app, mods: r.mods, kind: r.kind });
       watch.disconnect();
@@ -245,7 +249,7 @@ async function reviewImport(source, { onDone, trial = null } = {}) {
       toast(saved.length === 1 ? t("ctl.installedOne", { title: saved[0].title }) : t("ctl.installedMany", { n: saved.length }));
       done({ title: saved.map(m => m.title).join(", ") });
       await syncMods();
-    } catch (err) { e.currentTarget.disabled = false; toast(plainError(err)); }
+    } catch (err) { btn.disabled = false; btn.dataset.settle = ""; toast(plainError(err)); }
   };
 }
 
@@ -301,6 +305,7 @@ function controlRows() {
     (tags || meta).insertAdjacentHTML("beforebegin", `<small class="ctl-origin">${esc(modOrigin(m))}</small>`);
     if (tags) tags.insertAdjacentHTML("beforeend", show); else meta.insertAdjacentHTML("beforeend", show);
     if (m.enabled && modHeld(m)) tags?.insertAdjacentHTML("afterbegin", `<span>${t("ctl.notRunning")}</span>`);
+    else if (m.enabled && Waiting.has(m.id)) tags?.insertAdjacentHTML("afterbegin", `<span class="waiting" title="${esc(t("wait.tagTitle"))}">${t("wait.tag")}</span>`); // waiting hook (64-waiting.js)
   }
 }
 panel.addEventListener("click", e => {

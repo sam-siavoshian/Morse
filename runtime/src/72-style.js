@@ -227,7 +227,8 @@ const YourStyle = (() => {
       if (S.draft) S.draft.style = { parent: STYLE_ID, title: t("ys.forSite", { where: whereName() }), prompt: t("ys.fitPrompt") };
       await run;
       const meta = S.phase === "result" && hint.querySelector(".dim");
-      if (meta) meta.textContent = [t("ys.title"), meta.textContent].filter(Boolean).join(" · ");
+      // (a title that already says "Your style for …" needs no second "Your style")
+      if (meta && !/^Your style\b/.test(S.draft?.title || "")) meta.textContent = [t("ys.title"), meta.textContent].filter(Boolean).join(" · ");
       if (S.phase === "error") {
         const fine = S.draft?.title === FIT_TITLE;
         S.phase = "idle";
@@ -337,7 +338,7 @@ const YourStyle = (() => {
       ${SWITCHES.map(k => `<div class="srow"><div class="lbl"><span>${esc(t(`ys.${k}`))}</span><small>${esc(t(`ys.${k}.help`))}</small></div><div class="ctl">${sw(k, b[k], t(`ys.${k}`))}</div></div>`).join("")}
       <div class="srow"><div class="lbl"><span>${t("ys.adapt")}</span><small>${s.extra ? `${t("ys.alsoDoes", { extra: esc(s.extra.slice(0, 80)) })} ` : ""}${t("ys.adapt.help")}</small></div><div class="ctl">${sw("adapt", s.adapt, t("ys.adapt"))}</div></div>
       <div class="srow ys-except"><div class="lbl"><span>${t("ys.except")}</span>
-          <div class="ys-chips">${s.except.length ? s.except.map(x => `<span class="ys-chip">${esc(exceptionName(x))}<button type="button" class="ibtn xs" data-ys="rm:${esc(x)}" aria-label="${esc(t("ys.useAgainOn", { where: exceptionName(x) }))}" title="${esc(t("ys.useAgain"))}">×</button></span>`).join("") : `<small>${t("ys.noExcept")}</small>`}</div></div>
+          <div class="ys-chips">${s.except.length ? s.except.map(x => `<span class="chip ys-chip"><span>${esc(exceptionName(x))}</span><button type="button" class="x" data-ys="rm:${esc(x)}" aria-label="${esc(t("ys.useAgainOn", { where: exceptionName(x) }))}" title="${esc(t("ys.useAgain"))}">×</button></span>`).join("") : `<small>${t("ys.noExcept")}</small>`}</div></div>
         <div class="ctl"><input class="field ys-field" data-ys="add-except" placeholder="${esc(t("ys.addExcept"))}" spellcheck="false" autocomplete="off" aria-label="${esc(t("ys.addExcept.label"))}">
           ${hereKey && !info.here.excepted ? `<button type="button" class="tbtn" data-ys="not-here">${t("ys.notHere")}</button>` : ""}</div></div>
       <div class="srow"><div class="lbl"><span>${t("ys.startOver")}</span><small>${t("ys.startOver.help")}</small></div><div class="ctl"><button type="button" class="tbtn" data-ys="delete">${t("ys.delete")}</button></div></div>

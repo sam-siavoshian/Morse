@@ -55,7 +55,7 @@ function CONTROL_CSS() { return `
   .ctl-h { margin: 16px 0 8px; }
   .ctl-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
   .ctl-items li { position: relative; padding-inline-start: 20px; }
-  .ctl-items li::before { content: ""; position: absolute; inset-inline-start: 4px; top: 7px; width: 6px; height: 6px; border-radius: 1.5px; background: var(--m-signal-3); }
+  .ctl-items li::before { content: ""; position: absolute; inset-inline-start: 4px; top: 7px; background: var(--m-signal-3); } /* the status dot: 99-css.js */
   .ctl-items b { display: block; font-weight: 500; line-height: 20px; }
   .ctl-items small { display: block; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 16px; }
   /* a 2px warn edge drawn inside the 1px box; notes in a row read as one box with one label */
@@ -64,6 +64,7 @@ function CONTROL_CSS() { return `
   .ctl-warn:has(+ .ctl-warn) { padding-bottom: 4px; border-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
   .ctl-warn + .ctl-warn { margin-top: 0; padding-top: 4px; border-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
   .ctl-warn + .ctl-warn b { display: none; }
+  .tags .waiting { color: var(--m-warn); }
   .ctl-warn b { display: block; color: var(--m-warn); font: 600 var(--m-text-xs)/16px var(--m-mono); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
   .ctl-code { margin-top: 12px; }
   .ctl-code summary { display: inline-flex; align-items: center; gap: 6px; height: 28px; cursor: pointer; color: var(--m-text-2); font-weight: 500; border-radius: var(--m-r-sm); list-style: none; }

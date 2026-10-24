@@ -18,7 +18,8 @@ const Onboarding = (() => {
   let status = {}; // what the host knows: { mode, model: { connected }, userScripts }
   let loadedAt = 0, shownStep = "", shownNote = "";
   let tipSaved = false, tipShare = false;
-  const CHECK = `<svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg>`;
+  // a step that's done: the check from the 16px icon set, drawn small in the middle of its 16px box
+  const CHECK = `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.25 8.25 7.1 10.1 10.75 6"/></svg>`;
 
   const coachEl = tBind(makeEl("div", { className: "ob-coach", hidden: true }, { role: "group" }), "aria-label", "ob.coach");
   const noteEl = makeEl("div", { className: "ob-note", hidden: true }, { role: "note" });
@@ -65,7 +66,7 @@ const Onboarding = (() => {
     const examples = id === "describe" && S.phase === "idle" ? ` <button type="button" class="ob-link" data-ob="help">${t("ob.examples")}</button>` : "";
     coachEl.innerHTML = `
       <ol class="ob-steps">${STEPS.map(([, label], i) => `<li class="${i < at ? "done" : i === at ? "now" : ""}"${i === at ? ` aria-current="step"` : ""}><span class="n">${i < at ? CHECK : i + 1}</span>${t(label)}</li>`).join("")}</ol>
-      <button type="button" class="ob-hide" data-ob="skip">${t("ob.hideTips")}</button>
+      <button type="button" class="tbtn ob-hide" data-ob="skip">${t("ob.hideTips")}</button>
       <p class="ob-say">${say}${examples}</p>`;
   }
 
@@ -74,6 +75,9 @@ const Onboarding = (() => {
     if (!st || coachOn() || !S.open || bar.hidden || S.phase !== "idle" || paneKind) return null;
     if (modelMissing(status, S.label) && !st.dismissed.model && !status.sample) // the practice page's sample answers need no model
       return { id: "model", text: t("ob.noModel"), btn: t("welcome.model.b"), act: "model" };
+    const waiting = Waiting.list(); // waiting hook: mods here whose code waits for “Allow User Scripts” (64-waiting.js)
+    if (waiting.length && !Waiting.quiet)
+      return { id: `waiting:${waiting.length}`, text: Waiting.text(waiting), btn: t("popup.turnItOn"), act: "userscripts" };
     if (status.userScripts === false && !st.dismissed.userScripts)
       return { id: "userScripts", text: t("ob.scriptsOff"), btn: t("popup.turnItOn"), act: "userscripts" };
     return null;
@@ -84,8 +88,8 @@ const Onboarding = (() => {
     if ((n?.id || "") === shownNote) return;
     shownNote = n?.id || "";
     noteEl.innerHTML = n ? `<span class="ob-dot" aria-hidden="true"></span><span class="ob-text">${esc(n.text)}</span>
-      <button type="button" data-ob="${n.act}">${esc(n.btn)}</button>
-      <button type="button" class="ob-close" data-ob="dismiss" data-id="${n.id}" aria-label="${esc(t("ob.dontShow"))}" title="${esc(t("ob.dontShow"))}">×</button>` : "";
+      <button type="button" class="btn" data-ob="${n.act}">${esc(n.btn)}</button>
+      <button type="button" class="ibtn sm close ob-close" data-ob="dismiss" data-id="${n.id}" aria-label="${esc(t("ob.dontShow"))}" title="${esc(t("ob.dontShow"))}">×</button>` : "";
   }
 
   // ---- errors in plain words, with a button that does something about it
@@ -126,6 +130,7 @@ const Onboarding = (() => {
   }
   async function act(what, btn) {
     if (what === "skip") return save({ coach: "done" });
+    if (what === "dismiss" && btn.dataset.id?.startsWith("waiting")) { Waiting.quiet = true; return sync(); } // waiting hook: for this page only
     if (what === "dismiss") return save({ dismissed: { [btn.dataset.id]: true } });
     if (what === "help") return toggleHelp();
     if (what === "start") { panel.hidden = true; return openBar(); }
@@ -178,13 +183,13 @@ const Onboarding = (() => {
       [t("hk.godmode"), t("ob.win.edit", { key: edit })],
       [t("ob.win.ask"), esc(t("ob.win.ask.d"))],
     ].filter(Boolean);
-    winEl.innerHTML = `<div class="ob-win-mark" aria-hidden="true">${radar(30)}<svg class="ob-win-check" viewBox="0 0 16 16" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg></div>
+    winEl.innerHTML = `<div class="ob-win-mark" aria-hidden="true">${radar(30)}<svg class="ob-win-check" viewBox="0 0 16 16" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg></div>
       <div class="ob-win-body">
         <b>${t("ob.win.title")}</b>
         <p>${t("ob.win.body", { mod: m ? `“${esc(m.title)}”` : t("ob.win.it"), where: esc(where()), key: k("mods") || t("bar.mods") })}</p>
-        <h4>${t("ob.win.now")}</h4>
+        <h4 class="eyebrow">${t("ob.win.now")}</h4>
         <ul>${next.map(([title, d]) => `<li><b>${esc(title)}</b><span>${d}</span></li>`).join("")}</ul>
-        <div class="ob-win-row">${m ? `<button type="button" class="primary" data-win="share">${t("ob.win.share")}</button>` : ""}<button type="button" data-win="done">${t("btn.done")}</button><span>${t("ob.win.help")}</span></div>
+        <div class="ob-win-row">${m ? `<button type="button" class="btn primary" data-win="share">${t("ob.win.share")}</button>` : ""}<button type="button" class="btn" data-win="done">${t("btn.done")}</button><span>${t("ob.win.help")}</span></div>
       </div>`;
     winEl.hidden = false;
     clearTimeout(celebrate.t);

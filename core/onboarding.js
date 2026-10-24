@@ -59,15 +59,25 @@ export function pageSupport(url, { fileAccess = true, extensionId = "" } = {}) {
 // offer: "userscripts" (open Morse's extension settings), "model" (model
 // settings, or `morse setup` on the desktop), "setup" (copy `morse setup`).
 // The words are message ids (core/locales/en.js), shown in the person's language.
+// The helper's address is 127.0.0.1:7457, or the port a host moved it to
+// (setHelperPort: MORSE_HELPER_PORT in the CLI). Other 127.0.0.1 servers (a
+// local OpenAI-compatible model) aren't the helper.
+let ERROR_HELPER_PORT = 7457;
+export function setHelperPort(port) { if (Number.isInteger(port) && port > 0 && port <= 65535) ERROR_HELPER_PORT = port; }
+const helperAddress = { test: m => /127\.0\.0\.1:7457(?!\d)/.test(m) || new RegExp(`127\\.0\\.0\\.1:${ERROR_HELPER_PORT}(?!\\d)`).test(m) };
 const ERROR_RULES = [
   // Morse's own refusals (core/guard.js draftHarm), said by a host in English: in the person's words here.
   [/^The change would have frozen this page/, "err.harmLoop", ""],
   [/^The change would have replaced this whole page/, "err.harmWipe", ""],
   [/^The change would have reloaded or left this page/, "err.harmNav", ""],
   [/^The change would have hidden this whole page/, "err.harmHide", ""],
+  [/^That would have hidden most of the page, so Morse didn't keep it/, "err.collapse", ""],
+  [/^The change would delete, buy or send something without asking you first/, "err.unasked", ""],
+  [/^This share link is broken\./, "err.shareBroken", ""],
   [/user ?scripts|unsafe-eval|content.security.policy|blocks injected scripts/i,
     "err.userScripts", "userscripts"],
-  [/127\.0\.0\.1:7457|can't reach the morse helper|helper (is )?not running|helper.*(unreachable|offline)/i,
+  [helperAddress, "err.helper", "setup"],
+  [/can't reach the morse helper|helper (is )?not running|helper.*(unreachable|offline)/i,
     "err.helper", "setup"],
   [/(claude|codex)\b.*(ENOENT|not found|not installed)|(ENOENT|command not found).*(claude|codex)/i,
     "err.notInstalled", "setup"],
@@ -111,8 +121,21 @@ export function explainError(message) {
 // install page: explainError's sentence when there is one, Morse's own
 // message when it already reads well, and "Something went wrong" for a raw
 // technical message nobody could act on. Never an empty line.
+//
+// An error Morse wrote for a person (plain: true, like `morse launch` saying
+// why an app quit) shows as it is, however long. Whatever plainError hides
+// still reaches developers: onHiddenError(fn) is called with the raw message
+// (the runtime logs it to the console; the terminal prints it dimmed).
+let hiddenTo = null;
+export function onHiddenError(fn) { hiddenTo = typeof fn === "function" ? fn : null; }
 export function plainError(err) {
   const raw = String((err && err.message) || err || "").trim();
+  if (raw && err && typeof err === "object" && err.plain === true) return raw;
+  const out = plainWords(raw);
+  if (out !== raw && raw && hiddenTo && out !== t("err.stopped")) try { hiddenTo(raw); } catch {}
+  return out;
+}
+function plainWords(raw) {
   if (!raw) return t("err.generic");
   if (/^(stopped|aborted|AbortError.*|The (user|operation) aborted.*|signal is aborted.*)$/i.test(raw)) return t("err.stopped");
   const known = explainError(raw)?.text;

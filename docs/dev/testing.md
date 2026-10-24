@@ -65,7 +65,8 @@ than sleeping. New tests use [`tests/helpers/`](../../tests/helpers/):
 
 | Helper | What it gives you |
 |---|---|
-| `home.js` | Import it first: the test process's own `MORSE_HOME`, set before any daemon module reads it, and `tempDir()` for scratch folders removed at exit |
+| `home.js` | Import it first: the test process's own `MORSE_HOME`, set before any daemon module reads it, and `tempDir()` for scratch folders (homes, browser profiles, app copies) removed when the process ends, however it ends |
+| `disk.js` | Free disk: `npm test` stops at once when the temp folder's disk has under 2 GB free, and each test file warns |
 | `net.js` | Ports picked by the OS, never fixed |
 | `wait.js` | `waitFor(fn, { what })`: polls until a condition holds, with a generous timeout and a useful error; `waitForStatus`, `waitForReady` and `settle` for the runtime |
 | `browser.js` | The globally installed Playwright, skip reasons (`noDisplay`), and launching Chromium with a startup timeout that survives a busy machine |
@@ -73,6 +74,50 @@ than sleeping. New tests use [`tests/helpers/`](../../tests/helpers/):
 | `demo-server.js` | The demo sites on free ports, routed to their usual addresses in a Playwright context |
 
 `MORSE_TEST_TIMEOUT_SCALE=2` doubles every timeout on a slow machine.
+
+### Temp folders and disk
+
+A test leaves nothing in the temp folder: make every scratch folder, browser
+profile and home with `tempDir()`, never `fs.mkdtemp`. They're removed when
+the test process exits, also after a failure, a timeout, Ctrl+C or SIGTERM,
+and a browser or app still running from one of them is stopped first so it
+can't write into it again. Browser profiles and Electron apps are big, and a
+full disk makes Chromium crash ("Target crashed") in ways that look like real
+failures, so `npm test` checks for 2 GB free before it starts
+(`MORSE_TEST_MIN_FREE_GB` changes that; 0 skips it). The packaged Electron
+apps of [`tests/electron.test.js`](../../tests/electron.test.js) aren't copied
+per run: they're built once into `~/.cache/morse/tunes`, next to the Electron
+runtime, and shared. To check a run left nothing behind, give it a temp
+folder of its own:
+
+```bash
+T=$(mktemp -d) && TMPDIR=$T DISPLAY=:99 npm test; ls -A $T   # empty
+```
+
+### The extension with a real Morse helper
+
+The extension looks for the Morse helper on 127.0.0.1:7457. A test that
+pairs the real extension with a real helper (`morse serve`, `morse setup
+--pair`) gives both its own port, so runs side by side never meet:
+
+```js
+import { freePort } from "./helpers/net.js";
+
+const port = await freePort();
+// The extension: chrome.storage.local "morse.helperPort", set through its service worker.
+await sw.evaluate(p => chrome.storage.local.set({ "morse.helperPort": p }), port);
+// The CLI: MORSE_HELPER_PORT.
+spawn(process.execPath, [CLI, "serve"], { env: { ...process.env, MORSE_HELPER_PORT: String(port) } });
+```
+
+Set it before the extension looks for a helper: the welcome page opens on
+install and starts looking at once, so reload it after setting the port
+([`tests/first-run.test.js`](../../tests/first-run.test.js) does both). The
+setting only takes a whole number from 1024 to 65535 (anything else means
+7457) and the host is always 127.0.0.1. Only the service worker and the
+extension's own pages can write it: storage.local is closed to content
+scripts, and no message sets it
+([`tests/security.test.js`](../../tests/security.test.js)).
 
 ### The real Electron app
 
@@ -194,6 +239,19 @@ made each one retakes it.
 - **Evals**: 55 cases on 6 demo apps with Claude Code haiku, 3 runs each:
   122/123 on the train split, 41/42 held out
   ([results](../../evals/README.md#results)).
+- **macOS and Windows, from Linux only:**
+  [`tests/platforms.test.js`](../../tests/platforms.test.js) checks the code
+  for both against fake install trees ([`demo/fake-installs.js`](../../demo/fake-installs.js))
+  written in the real formats: binary `Info.plist`s (and one made by
+  Python's plistlib), `app.asar`, universal Mach-O fuse wires, `.lnk`
+  shortcuts (and one made by pylnk3, with only an item list). Fake process
+  tables and fake `osascript` / `taskkill` runners cover `--restart`;
+  `morse apps` has a snapshot per platform in
+  [`tests/snapshots/`](../../tests/snapshots/) (`UPDATE_SNAPSHOTS=1` rewrites
+  them); hashing every fixture file before and after shows nothing Morse
+  does to find, read or plan a launch changes an app's files.
 - **Not tested:** real Slack, Discord, VS Code or Spotify installs; macOS and
-  Windows (AppleScript and taskkill quitting, `.app` bundles, Squirrel
-  installs, Windows process listing); Wayland.
+  Windows on real hardware (permission prompts, Gatekeeper, real Squirrel
+  hand-offs, PowerShell's process list, the firewall, terminal colors);
+  Wayland. [Checking a Mac or Windows PC](platform-testing.md) is the
+  15-minute check to run there.

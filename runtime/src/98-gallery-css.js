@@ -26,7 +26,7 @@ function GALLERY_CSS() { return `
   .gl-by { margin-top: 6px; color: var(--m-text-3); font: 400 var(--m-text-xs)/16px var(--m-font); }
   .gl-trying { margin: 8px 0 0; color: var(--m-text); font: 500 var(--m-text-sm)/16px var(--m-font); }
   /* still: only "a model is working" loops */
-  .gl-trying::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-block: 0 1px; margin-inline: 0 8px; border-radius: 1.5px; background: var(--m-text); vertical-align: middle; }
+  .gl-trying::before { content: ""; margin-block: 0 1px; margin-inline: 0 8px; background: var(--m-text); vertical-align: middle; } /* the status dot: 99-css.js */
   .gl-item.trying { background: var(--m-raised); border-radius: var(--m-r-md); border-bottom-color: transparent; }
   .gl-btns { display: flex; gap: 8px; margin-top: 12px; }
   .gl-foot { display: flex; align-items: center; gap: 8px; margin: 4px 10px 0; font: 11px/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; }

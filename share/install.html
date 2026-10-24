@@ -58,6 +58,14 @@
   .i-foot kbd { font: 11px/14px var(--m-mono); border: 1px solid var(--m-line-strong); border-radius: 4px; padding: 0 4px; color: var(--m-text-2); background: var(--m-raised); }
   .i-foot { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--m-line); color: var(--m-text-3); font-size: 13px; line-height: 20px; }
   .i-loading { display: flex; align-items: center; gap: 12px; color: var(--m-text-2); }
+  /* packs hook: a pack link lists every mod in it (core/pack.js) */
+  .p-mods { display: grid; gap: 16px; margin-top: 32px; }
+  .p-mod { padding: 20px 24px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-lg); background: var(--m-surface); }
+  .p-mod h2 { margin: 0; font-size: 20px; line-height: 28px; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+  .p-mod .i-prompt { margin-top: 4px; font-size: 15px; line-height: 22px; overflow-wrap: anywhere; }
+  .p-mod .i-meta { margin-top: 12px; }
+  .p-does { margin: 12px 0 0; color: var(--m-text); font-size: 14px; line-height: 22px; }
+  .p-mod .i-code { margin-top: 16px; }
   @media (max-width: 720px) {
     .i-main { padding-top: 40px; padding-bottom: 64px; }
     .i-prompt { font-size: 17px; }
@@ -79,7 +87,8 @@
   <div id="root"><p id="status" class="i-loading"><span data-radar="16"></span><span data-i18n="install.opening">Opening the mod…</span></p></div>
 </main>
 <script type="module">
-  import { decodeShare, toUserscript } from "../core/mod.js";
+  import { decodeShare, decodeShareText, toUserscript } from "../core/mod.js";
+  import { parsePack, isPack, packFilename } from "../core/pack.js"; // packs hook
   import { initPage, highlight, esc } from "../site/common.js";
   import { mountAll } from "../site/radar.js";
   import { summarizeMod, whereRuns, modHosts, broadEndings } from "../core/summary.js";
@@ -94,7 +103,10 @@
   const check = `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
   const warn = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 1.75l6.5 11.5h-13z" stroke-linejoin="round"/><path d="M8 6.5v3"/><circle cx="8" cy="11.5" r=".5" fill="currentColor"/></svg>`;
   const lines = s => t("install.lines", { n: s.trimEnd().split("\n").length });
-  try {
+  // packs hook: a link can carry a pack; it gets its own page (showPack, below).
+  const pack = await decodeShareText(location.href).then(txt => { try { return isPack(JSON.parse(txt)) ? txt : null; } catch { return null; } }, () => null);
+  if (pack) showPack(pack);
+  else try {
     const mod = await decodeShare(location.href);
     const where = whereRuns(mod); // the same rule Morse uses to decide where it runs
     const everywhere = !mod.match?.app && !!modHosts(mod)?.includes("*");
@@ -152,6 +164,68 @@
       <h1>${esc(t("install.bad.h"))}</h1>
       <p class="i-prompt">${t("install.bad")}</p>
       ${/^This /.test(e.message) ? `<p class="err" style="margin-top:16px;font-size:14px">${esc(e.message)}</p>` : ""}`;
+  }
+  // ---- packs hook: every mod in the pack, what each does and where, its code.
+  // Install hands the link to Morse, whose own review lets you untick mods.
+  function showPack(text) {
+    let p;
+    try { p = parsePack(text); }
+    catch (e) {
+      root.innerHTML = `<p class="eyebrow">Shared pack</p><h1>This pack can't be installed.</h1><p class="i-prompt">${esc(e.message)}</p>`;
+      return;
+    }
+    const { pack, errors } = p;
+    document.title = `${pack.name} · Morse pack`;
+    const modHtml = m => {
+      const sum = summarizeMod(m), wide = !m.match?.app && !!modHosts(m)?.includes("*");
+      const does = sum.empty ? "Doesn't change anything" : sum.items.filter(i => i.id !== "code").map(i => i.text).join(" · ");
+      return `<section class="p-mod">
+        <h2>${esc(m.title)}</h2>
+        <p class="i-prompt">“${esc(m.prompt)}”</p>
+        <div class="i-meta"><span class="chip">for ${esc(whereRuns(m))}</span>${m.css.trim() ? `<span class="chip">style</span>` : ""}${m.js.trim() ? `<span class="chip">script</span>` : ""}</div>
+        <p class="p-does">${esc(does)}</p>
+        ${wide ? `<p class="i-note" data-s="everywhere">${warn}<span>This mod runs on every website you visit, not just one. It can see what you see on all of them.</span></p>`
+          : broadEndings(m).length ? `<p class="i-note" data-s="everywhere">${warn}<span>This mod runs on every website whose address ends in ${esc(broadEndings(m).join(" or "))}, not just one. It can see what you see on all of them.</span></p>` : ""}
+        ${sum.notes.map(n => `<p class="i-note" data-s="${n.id}">${warn}<span>${esc(n.text)}</span></p>`).join("")}
+        <details class="i-code"><summary>Show code</summary>
+          ${m.css.trim() ? `<h2>Style (CSS) <span>${lines(m.css)}</span></h2><pre class="code">${highlight(m.css.trimEnd(), "css")}</pre>` : ""}
+          ${m.js.trim() ? `<h2>Script (JavaScript) <span>${lines(m.js)}</span></h2><pre class="code">${highlight(m.js.trimEnd(), "js")}</pre>` : ""}
+        </details>
+      </section>`;
+    };
+    const n = pack.mods.length;
+    root.innerHTML = `
+      <p class="eyebrow"><span data-radar="14" data-still></span>Shared pack</p>
+      <h1>${esc(pack.name)}</h1>
+      ${pack.note ? `<p class="i-prompt">“${esc(pack.note)}”</p>` : ""}
+      <div class="i-meta"><span class="chip">${n} mod${n === 1 ? "" : "s"}</span>${pack.author ? `<span class="chip">by ${esc(pack.author)}</span>` : ""}</div>
+      <div class="i-actions">
+        <button class="btn primary" type="button" id="install">Install…</button>
+        <a class="btn" id="file" download>Download pack file</a>
+      </div>
+      <p id="status" role="status"></p>
+      <div class="p-mods">${pack.mods.map(modHtml).join("")}</div>
+      ${errors.length ? `<p class="i-foot">Left out: ${esc(errors.join("; "))}</p>` : ""}
+      <p class="i-foot">A pack is a few mods shared together. A mod is a change to a website or app, made with Morse. When you install the pack, Morse shows each mod again, and you can untick the ones you don't want. The whole pack is in the link, after the <code>#</code>. Browsers never send that part to a server. The lists above come from reading the code, and they mention anything the code might do.</p>`;
+    mountAll(root);
+    const file = document.getElementById("file");
+    file.href = URL.createObjectURL(new Blob([JSON.stringify(pack, null, 2)], { type: "application/json" }));
+    file.download = packFilename(pack);
+    const status = document.getElementById("status");
+    document.getElementById("install").onclick = () => {
+      if (document.documentElement.dataset.morseExtension) {
+        window.postMessage({ morseInstall: location.href }, "*");
+        status.textContent = "Check the Morse window on this page: choose the mods you want, then press Install.";
+      } else {
+        navigator.clipboard?.writeText(location.href).catch(() => {});
+        status.innerHTML = `Morse isn't installed in this browser. The link is copied: paste it into Morse under Mods → Install a mod…, or run <code>morse pack install "&lt;link&gt;"</code> in a terminal.`;
+      }
+    };
+    window.addEventListener("message", e => {
+      if (e.source !== window || !e.data?.morseInstalled) return;
+      const r = e.data.morseInstalled;
+      status.innerHTML = r.error ? `<span class="err">${esc(r.error)}</span>` : `<span class="ok">${check}Installed ${esc(String(r.count ?? ""))} mod${r.count === 1 ? "" : "s"} from “${esc(r.title)}”.</span>`;
+    });
   }
 </script>
 </body>

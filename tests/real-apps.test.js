@@ -9,6 +9,7 @@
 //   - Joplin quits on switches it doesn't know (--remote-allow-origins).
 //   - An AppImage's file:// UI moves every launch, so saved mods didn't come back.
 //   - The Mods panel said "on this site" in a desktop app.
+import { tempDir } from "./helpers/home.js"; // first: a MORSE_HOME of its own, and temp folders removed at exit
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -18,7 +19,7 @@ import path from "node:path";
 import { promises as fs } from "node:fs";
 import { createRequire } from "node:module";
 
-const home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-real-apps-"));
+const home = tempDir("morse-real-apps-");
 process.env.MORSE_HOME = home;
 const apps = await import("../daemon/apps.js");
 const { inspectFuses, formatFuses } = await import("../daemon/fuses.js");
@@ -32,7 +33,7 @@ const APPIMAGE = Buffer.concat([Buffer.from(ELF), Buffer.from("AI\x02"), Buffer.
 // ---------------------------------------------------------------- finding them
 
 test("morse apps finds a .deb in /usr/share (named from VS Code's product.json) and AppImages wherever they are", async () => {
-  const r = await fs.mkdtemp(path.join(os.tmpdir(), "morse-linux-"));
+  const r = tempDir("morse-linux-");
   // VSCodium's .deb: the app in /usr/share/codium, a menu entry, and a shell script on PATH.
   await put(path.join(r, "usr/share/codium/codium"), ELF);
   await put(path.join(r, "usr/share/codium/resources/app/package.json"), JSON.stringify({ name: "VSCodium", desktopName: "codium.desktop", version: "1.140.06880" }));
@@ -90,7 +91,7 @@ test("an AppImage without FUSE is run unpacked, and morse fuses says why it can'
   assert.equal(apps.appImageEnv(app, { env: { HOME: "/h" }, has: none }).APPIMAGE_EXTRACT_AND_RUN, "1", "Ubuntu 24.04 ships no libfuse2");
   assert.equal(apps.appImageEnv(app, { env: {}, has: () => true }), null, "with FUSE it mounts as usual");
   assert.equal(apps.appImageEnv({ id: "x" }, { env: {}, has: none }), null, "only AppImages");
-  const r = await fs.mkdtemp(path.join(os.tmpdir(), "morse-ai-"));
+  const r = tempDir("morse-ai-");
   await put(path.join(r, "Joplin.AppImage"), APPIMAGE);
   const info = await inspectFuses(path.join(r, "Joplin.AppImage"));
   assert.equal(info.appimage, true);

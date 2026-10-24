@@ -61,6 +61,10 @@ The first version meant for other people to install.
   site" in the bar and the Mods panel.
 - One shortcut (⌥⇧0) turns off every mod on a page. Pause Morse on one site
   or everywhere. Back up every mod to one file.
+- Mod packs: share several mods together as a link or a file. Installing one
+  shows every mod first, and you untick the ones you don't want. A team can
+  keep its pack at an address; Morse checks it at most once a day and shows
+  what changed before anything updates. `morse pack make | install | list`.
 
 ### Installing
 

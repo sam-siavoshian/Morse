@@ -45,7 +45,6 @@ let practicePort = null;
 function connectPractice() {
   practicePort = chrome.runtime.connect({ name: "morse-practice" });
   practicePort.onMessage.addListener(m => {
-    if (typeof m.eval === "string") evalInFrame(m.eval).then(result => practicePort?.postMessage({ evalReply: m.id, result }));
     if (m.toggle) openBar();
   });
   // The service worker can be recycled; the practice area keeps working.
@@ -53,16 +52,6 @@ function connectPractice() {
 }
 connectPractice();
 
-const evals = new Map();
-let evalSeq = 0;
-function evalInFrame(code) {
-  return new Promise(resolve => {
-    const id = ++evalSeq;
-    evals.set(id, resolve);
-    frame.contentWindow.postMessage({ morseEval: code, id }, "*");
-    setTimeout(() => { if (evals.delete(id)) resolve({ ok: false, error: t("welcome.practiceSilent") }); }, 4000);
-  });
-}
 
 let port = null; // { p, inflight }: requests the practice bar still waits on (see host.js)
 function relay(m) {
@@ -87,7 +76,6 @@ function relay(m) {
 addEventListener("message", e => {
   if (e.source !== frame.contentWindow || !e.data) return;
   if (e.data.morsePractice) relay(e.data.morsePractice);
-  if (e.data.morseEvalReply != null) { const done = evals.get(e.data.morseEvalReply); evals.delete(e.data.morseEvalReply); done?.(e.data.result); }
 });
 frame.src = "practice.html";
 $("frame").append(frame);

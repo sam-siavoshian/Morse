@@ -26,6 +26,7 @@ function SHOW_ONCE_CSS() { return `
   .so-n { flex: none; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 10px; background: var(--m-raised);
     border: 1px solid var(--m-line-strong); color: var(--m-text-2); font: 500 var(--m-text-xs)/1 var(--m-mono); letter-spacing: 0; font-variant-numeric: tabular-nums; }
   .so-w { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .so-hid { color: var(--m-text-3); font: 500 var(--m-text-xs)/16px var(--m-mono); letter-spacing: 0; }
   .so-last .so-n { background: var(--m-primary); border-color: var(--m-primary); color: var(--m-primary-text); }
   .so-strip .so-last { animation: so-in var(--m-med) var(--m-ease); }
   @keyframes so-in { from { opacity: 0; transform: translateY(4px); } }
@@ -37,8 +38,8 @@ function SHOW_ONCE_CSS() { return `
   /* ---- in the bar after Stop: the steps above the input */
   .so-card { border-bottom: 1px solid var(--m-line); }
   .so-ch { display: flex; align-items: center; gap: 8px; padding-block: 8px 0; padding-inline: 16px 8px; }
-  .so-eyebrow { font: 500 var(--m-text-xs)/16px var(--m-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--m-text-3); }
-  .so-card .so-steps { border-top: 0; padding: 4px 8px 8px; max-height: 148px; overflow: auto; scrollbar-width: thin; }
+  /* five and a half rows: a sixth step peeks out, so the list reads as one that scrolls */
+  .so-card .so-steps { border-top: 0; padding: 4px 8px 8px; max-height: 158px; overflow: auto; scrollbar-width: thin; }
 
   /* ---- the way in, beside the suggestions */
   .sug.so-sug { gap: 6px; padding-inline-start: 8px; margin-inline-start: 4px; position: relative; }
@@ -47,6 +48,7 @@ function SHOW_ONCE_CSS() { return `
   .sug.so-sug + .gl-sug::before { display: none; }
   .sug.so-sug + .gl-sug { margin-inline-start: 0; }
 
-  @media (max-width: 560px) { .so-strip { inset-inline-start: 16px; width: auto; } .so-foot { display: none; } }
+  /* at phone width the chips wrap and the hairline would start a line on its own */
+  @media (max-width: 560px) { .so-strip { inset-inline-start: 16px; width: auto; } .so-foot { display: none; } .sug.so-sug { margin-inline-start: 0; } .sug.so-sug::before { display: none; } }
   @media (prefers-reduced-motion: reduce) { .so-strip, .so-dot, .so-last { animation: none !important; } }
 `; }

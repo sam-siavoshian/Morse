@@ -175,4 +175,14 @@ function guardPaused(m, r) {
 }
 function guardReady() { Guard.ready(); }
 function guardRowHtml(m) { return Guard.rowHtml(m); }
+// A change Morse refused to run (core/guard.js draftHarm's plain sentence, from
+// core/engine.js): said as Morse holding back, short enough for the one-line
+// hint ("Try other words" is what the input and Try again are for). 60-generate.js.
+function guardRefusalHint(error) {
+  const m = /^The change would have (.+?), so Morse didn't (apply|run) it\./.exec(String(error || ""));
+  if (!m) return "";
+  // core/guard.js draftHarm's four, in the person's language (guard.refused.*)
+  const what = { "frozen this page": "loop", "replaced this whole page": "wipe", "reloaded or left this page": "nav", "hidden this whole page": "hide" }[m[1]];
+  return what ? t(`guard.refused.${what}`) : `Morse didn't ${m[2]} it: <i>it would have ${esc(m[1])}</i>`;
+}
 function guardHeld(v) { return !!(v?.paused || v?.mod?.paused); } // a paused mod's code stays off the page

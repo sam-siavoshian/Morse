@@ -223,6 +223,7 @@ export function modOrigin(mod) {
   const by = typeof mod?.author === "string" && mod.author.trim() ? t("origin.by", { author: mod.author.trim().slice(0, 60) }) : "";
   const on = iso => (iso ? t("origin.on", { day: day(iso) }) : "");
   if (mod?.imported && mod.gallery?.id) return t("origin.gallery", { by, on: on(mod.importedAt) }); // gallery hook (68-gallery.js)
+  if (mod?.imported && mod.pack && typeof mod.pack.name === "string") return t("origin.pack", { name: mod.pack.name.slice(0, 80), by, on: on(mod.importedAt) }); // packs hook (core/pack.js)
   if (mod?.imported) {
     const how = mod.importedFrom === "file" ? "origin.file" : mod.importedFrom === "backup" ? "origin.backup" : "origin.link";
     return t(how, { by, on: on(mod.importedAt) });
@@ -235,4 +236,16 @@ export function modOrigin(mod) {
   const when = iso => (iso ? t("origin.when", { day: day(iso) }) : "");
   if (mod?.kind === "manual" || mod?.kind === "quick") return t("origin.own", { when: when(mod.created) });
   return t("origin.made", { with: mod?.model ? t("origin.with", { model: mod.model }) : "", by, when: when(mod?.created) });
+}
+
+// What an install keeps: the code the review showed, and nothing that could
+// turn into other code later. A "manual" or "quick" mod (God mode, page tools)
+// carries its edit list (core/edits.js), which Morse rebuilds into new CSS and
+// JS when you use that tool again; the review never shows that list. So an
+// installed mod loses it and becomes a plain mod: its CSS and JS, as shown.
+export function asReviewed(mod) {
+  if (!mod || typeof mod !== "object") return mod;
+  const { edits, ...rest } = mod;
+  if (rest.kind === "manual" || rest.kind === "quick") delete rest.kind;
+  return rest;
 }

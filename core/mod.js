@@ -128,21 +128,29 @@ export function toUserscript(mod) {
 
 // Share links carry the whole mod in the URL fragment (never sent to a server).
 export async function encodeShare(mod) {
-  const json = JSON.stringify(stripLocal(mod));
-  const bytes = await deflate(new TextEncoder().encode(json));
-  return `${SHARE_BASE}#m=${b64url(bytes)}`;
+  return encodeShareText(JSON.stringify(stripLocal(mod)));
 }
 
 export async function decodeShare(link) {
+  return validateMod(JSON.parse(await decodeShareText(link)));
+}
+
+// packs hook (core/pack.js): the same #m= scheme carries a pack's JSON.
+export async function encodeShareText(json) {
+  const bytes = await deflate(new TextEncoder().encode(json));
+  return `${SHARE_BASE}#m=${b64url(bytes)}`;
+}
+export async function decodeShareText(link) {
   const frag = String(link).split("#m=")[1];
   if (!frag) throw new Error("This isn't a Morse share link. Check that you copied the whole link.");
-  const json = new TextDecoder().decode(await inflate(unb64url(frag)));
-  return validateMod(JSON.parse(json));
+  let bytes;
+  try { bytes = unb64url(frag.trim()); } catch { throw new Error("This share link is broken. Check that you copied the whole link."); }
+  return new TextDecoder().decode(await inflate(bytes));
 }
 
 // Links carry the current version only; the history stays on this machine.
 export function stripLocal(mod) {
-  const { enabled, history, fp, paused, guardOk, ...rest } = mod; // self-heal hook: fp describes this machine's page; guard hook: so do paused, guardOk
+  const { enabled, history, fp, paused, guardOk, pack, ...rest } = mod; // self-heal hook: fp describes this machine's page; guard hook: so do paused, guardOk; packs hook: pack (its address can be a team's private one)
   return rest;
 }
 

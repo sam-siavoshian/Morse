@@ -1,6 +1,6 @@
 // Voice transcription providers against a fake OpenAI server and fake
 // whisper binaries on PATH; the helper's HTTP route; stopping a generation.
-import "./helpers/home.js";
+import { tempDir } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -16,7 +16,7 @@ const AUDIO = Buffer.from("RIFF fake webm bytes for the test").toString("base64"
 let server, base, calls = [], respond = null, tmp, binDir;
 
 before(async () => {
-  tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-voice-test-"));
+  tmp = tempDir("morse-voice-test-");
   binDir = path.join(tmp, "bin");
   await fs.mkdir(binDir);
   // openai-whisper's CLI shape: writes <output_dir>/<input name>.txt

@@ -158,6 +158,7 @@ function CSS() {
   .chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .chip .x { flex: none; width: 20px; height: 20px; display: grid; place-items: center; border: 0; border-radius: 4px; background: none; color: var(--m-text-3); padding: 0; }
   .chip .x:hover { color: var(--m-text); background: var(--m-hover); }
+  .chip .x:focus-visible { outline-offset: 0; } /* nested in the chip: flush, so the ring doesn't cover the words */
   .status { display: flex; align-items: center; gap: 12px; padding-block: 6px; padding-inline: 16px 8px; border-top: 1px solid var(--m-line); font-size: var(--m-text-sm); line-height: 16px; color: var(--m-text-2); min-height: 40px; }
   /* one line that ends in an ellipsis, whatever it holds (hint, error, phase) */
   .hint { flex: 0 1 auto; min-width: 0; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -234,7 +235,10 @@ function CSS() {
   .health { grid-column: 2; display: flex; align-items: center; gap: 12px; margin-top: 10px; padding-block: 8px; padding-inline: 12px 8px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-bg); }
   .health p { flex: 1; min-width: 0; margin: 0; font-size: var(--m-text-sm); line-height: 16px; color: var(--m-text-2); overflow-wrap: anywhere; }
   .health b { color: var(--m-text); font-weight: 600; }
-  .health b::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-block: 0 1px; margin-inline: 0 7px; border-radius: 1.5px; background: var(--m-danger); vertical-align: middle; }
+  .health b::before { content: ""; margin-block: 0 1px; margin-inline: 0 7px; background: var(--m-danger); vertical-align: middle; }
+  /* ---- the status dot: a 6px square with 1.5px corners, one of the radar mark's squares
+     (a stopped or paused mod, trying a mod, a notice under the input, a list of what's in a mod) */
+  .health b::before, .gl-trying::before, .ctl-items li::before, .ob-dot { flex: none; display: inline-block; width: 6px; height: 6px; border-radius: 1.5px; }
   .panel .health button { flex: none; height: 24px; padding: 0 10px; }
   /* two buttons (a paused mod, 64-guard.js): the words get the whole row, the buttons go under them on the right */
   .health.guard { flex-wrap: wrap; row-gap: 8px; }
@@ -254,6 +258,9 @@ function CSS() {
 
   /* ---- modals */
   .modal { position: fixed; inset: 0; background: var(--m-scrim); display: flex; align-items: center; justify-content: center; pointer-events: auto; animation: fade var(--m-fast); }
+  /* a <dialog> (shown modally for reviews, 80-modals.js): none of the browser's dialog look */
+  dialog.modal { margin: 0; padding: 0; border: 0; width: auto; height: auto; max-width: none; max-height: none; color: inherit; overflow: visible; }
+  dialog.modal::backdrop { background: transparent; }
   @keyframes fade { from { opacity: 0 } }
   .card { width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 40px); overflow: auto; background: var(--m-surface); color: var(--m-text); border: 1px solid var(--m-line-strong);
     border-radius: var(--m-r-lg); padding: 20px; font: 400 var(--m-text-md)/1.45 var(--m-font); letter-spacing: var(--m-tracking); box-shadow: var(--m-shadow); animation: rise2 var(--m-med) var(--m-ease); }

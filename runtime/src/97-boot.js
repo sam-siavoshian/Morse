@@ -36,7 +36,7 @@ onEvent(msg => {
     const hello = await call("hello", { url: location.href });
     S.label = hello.label; S.mode = hello.mode; S.app = hello.app || null; S.appName = hello.appName || hello.app || null;
     // Hosts from before settings existed don't send them; ask (or use local ones).
-    if (hello.settings) setPrefs(hello.settings); else await loadPrefs();
+    if (hello.settings) { setPrefs(hello.settings); hostPrefs = true; } else await loadPrefs();
     Voice.configure(hello.voice);
     PromptHistory.load();
     await controlBoot(); await syncMods(); controlReady(); // user control: pause, safe start (63-control.js)

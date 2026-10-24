@@ -38,7 +38,7 @@ async function fixture(build) {
 test("discovers macOS apps from .app bundles: Info.plist, Electron Framework, CEF, native", async () => {
   const ctx = await fixture(buildMac);
   const found = byId(apps.discoverApps(ctx));
-  assert.deepEqual(Object.keys(found).sort(), ["beeper", "chatgpt", "chrome", "claude", "discord", "notion", "obsidian", "slack", "spotify", "vscode"]);
+  assert.deepEqual(Object.keys(found).sort(), ["beeper", "chatgpt", "chrome", "claude", "discord", "figma", "notion", "obsidian", "slack", "spotify", "vscode"]);
   assert.equal(found.vscode.exe, "/Applications/Visual Studio Code.app/Contents/MacOS/Electron", "executable comes from CFBundleExecutable");
   assert.equal(found.vscode.version, "1.95.3");
   assert.equal(found.slack.electron, "32.2.6");
@@ -55,7 +55,8 @@ test("discovers macOS apps from .app bundles: Info.plist, Electron Framework, CE
 test("discovers Windows apps: per-user Programs, Squirrel app-<version> folders, Roaming, Program Files", async () => {
   const ctx = await fixture(buildWindows);
   const found = byId(apps.discoverApps(ctx));
-  assert.deepEqual(Object.keys(found).sort(), ["beeper", "chrome", "discord", "obsidian", "slack", "spotify", "vscode"]);
+  // acme-chat and github-desktop come from Start menu shortcuts (tests/platforms.test.js).
+  assert.deepEqual(Object.keys(found).sort(), ["acme-chat", "beeper", "chrome", "discord", "figma", "github-desktop", "obsidian", "slack", "spotify", "vscode"]);
   assert.equal(found.discord.exe, "C:\\Users\\sam\\AppData\\Local\\Discord\\app-1.0.9170\\Discord.exe", "newest Squirrel version wins");
   assert.equal(found.discord.launcher, "C:\\Users\\sam\\AppData\\Local\\Discord\\Update.exe");
   assert.equal(found.slack.exe, "C:\\Users\\sam\\AppData\\Local\\slack\\app-4.41.105\\slack.exe");
@@ -117,7 +118,7 @@ test("fuzzy app names: aliases, partial names, typos, initials", async () => {
   const amb = apps.matchApp("code", [{ id: "code-a", name: "Code A" }, { id: "code-b", name: "Code B" }]);
   assert.deepEqual(amb.ambiguous.map(a => a.id), ["code-a", "code-b"]);
   assert.equal(apps.resolveApp("vs code", { ctx }).id, "vscode");
-  assert.throws(() => apps.resolveApp("figma", { ctx }), /Figma isn't in the usual places/);
+  assert.throws(() => apps.resolveApp("linear", { ctx }), /Linear isn.t in the usual places/);
   assert.throws(() => apps.resolveApp("qwertyuiop", { ctx }), /couldn't find an app called "qwertyuiop"/);
   assert.equal(apps.resolveApp("/Applications/Slack.app", { ctx }).id, "slack", "paths work too");
 });

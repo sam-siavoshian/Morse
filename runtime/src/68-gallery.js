@@ -59,7 +59,7 @@ const Gallery = (() => {
   const installedOf = e => S.mods.find(m => galleryIdOf(m) === e.id);
   const fresh = () => (PREFS.gallery ? st.items.filter(e => !installedOf(e)) : []);
   const byId = id => st.items.find(e => e.id === id);
-  const installable = e => ({ ...e.mod, ...(e.mod.author || !e.author ? {} : { author: e.author }), enabled: true, imported: true, gallery: { id: e.id, version: e.mod.version ?? e.version } });
+  const installable = e => ({ ...asReviewed(e.mod), ...(e.mod.author || !e.author ? {} : { author: e.author }), enabled: true, imported: true, gallery: { id: e.id, version: e.mod.version ?? e.version } });
 
   // ---- the Mods panel (70-panel.js hooks)
   function sectionHtml() {
@@ -198,7 +198,7 @@ const Gallery = (() => {
       </div>
       ${diffHtml(t("code.style"), "CSS", ch.css)}${diffHtml(t("code.script"), "JavaScript", ch.js)}
       <p class="dim gl-hist">${t("gl.history")}</p>
-      <footer><button data-a="close">${t("gl.notNow")}</button><button class="primary" data-gl="apply">${t("gl.updateBtn")}</button></footer>`);
+      <footer><button data-a="close">${t("gl.notNow")}</button><button class="primary" data-gl="apply" data-settle>${t("gl.updateBtn")}</button></footer>`, { review: true }); // top layer, 80-modals.js
     modal.querySelector("footer [data-a=close]")?.focus();
     modal.querySelector("[data-gl=apply]").onclick = () => applyUpdate(m, e);
   }

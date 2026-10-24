@@ -136,7 +136,8 @@ test("Easier to use: each page tool turns on, does its job, and turns off leavin
       assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".morse-ruler")).pointerEvents), "none");
     },
     async calm() {
-      for (const s of ["#cookie-notice", ".chat-launcher", ".announce-bar"]) assert.equal(await css(page, s, "display"), "none", s);
+      for (const s of ["#cookie-notice", ".chat-launcher", ".announce-bar", ".ticker"]) assert.equal(await css(page, s, "display"), "none", s);
+      assert.notEqual(await css(page, ".live", "display"), "none", "the pulsing LIVE badge is not a ticker");
       for (const s of ["header", "header nav", "main"]) assert.notEqual(await css(page, s, "display"), "none", s);
     },
   };
@@ -160,6 +161,28 @@ test("Easier to use: each page tool turns on, does its job, and turns off leavin
   await page.locator('.gm-menu [data-a11y="readable"]').click();
   await until(async () => (await mods(page)).length === 0);
   assert.deepEqual(await snapshot(page), was);
+}));
+
+test("Hide distractions: a scrolling ticker goes, whatever moves it; other loops and the site's own parts stay", { skip }, () => scenario(async ({ page }) => {
+  await page.evaluate(() => {
+    const add = html => { const d = document.createElement("div"); d.innerHTML = html; document.querySelector("main").prepend(d.firstElementChild); };
+    // a ticker moved by a script animation, a <marquee>, a spinner and a slideshow (tall: not a ticker)
+    add(`<div id="js-ticker" style="overflow:hidden;white-space:nowrap;width:640px;height:28px"><span style="display:inline-block">Breaking: the library opens late on Monday</span></div>`);
+    add(`<marquee id="mq" style="width:640px;height:24px">Free museum passes with your card</marquee>`);
+    add(`<div id="spin" style="width:32px;height:32px;border:3px solid #999;border-top-color:transparent;border-radius:50%"></div>`);
+    add(`<div id="slides" style="overflow:hidden;width:640px;height:240px"><div style="width:1920px;height:240px;background:linear-gradient(90deg,#246,#8ab)"></div></div>`);
+    const loop = { duration: 8000, iterations: Infinity };
+    document.querySelector("#js-ticker span").animate([{ transform: "translateX(0)" }, { transform: "translateX(-100%)" }], loop);
+    document.querySelector("#spin").animate([{ transform: "rotate(0)" }, { transform: "rotate(360deg)" }], loop);
+    document.querySelector("#slides > div").animate([{ transform: "translateX(0)" }, { transform: "translateX(-66%)" }], loop);
+  });
+  const was = await snapshot(page);
+  await tool(page, "calm");
+  await until(async () => await css(page, "#js-ticker", "display") === "none");
+  for (const s of [".ticker", "#js-ticker", "#mq"]) assert.equal(await css(page, s, "display"), "none", s);
+  for (const s of ["#spin", "#slides", "header", "header nav"]) assert.notEqual(await css(page, s, "display"), "none", s);
+  await tool(page, "calm");
+  assert.deepEqual(await snapshot(page), was, "Hide distractions left something behind");
 }));
 
 test("Easier to use: tools are saved for this site and come back after a reload", { skip }, () => scenario(async ({ page }) => {

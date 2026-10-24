@@ -302,17 +302,48 @@ function calmPage() {
   const HINT = /cookie|consent|gdpr|privacy-?banner|announce|promo|newsletter|subscribe|sign-?up-?bar|app-?banner|smart-?banner|notice-?bar|alert-?bar|top-?bar-?promo|chat|messenger|livechat|intercom|drift|crisp|zendesk|hubspot|tawk|olark|freshchat|helpscout|launcher/i;
   const words = el => [el.id, typeof el.className === "string" ? el.className : "", el.getAttribute("aria-label"), el.getAttribute("title"), el.getAttribute("name"), el.getAttribute("data-testid")].filter(Boolean).join(" ");
   let unlocked = false;
+  const siteOwn = el => el.matches("header, nav, main, article, [role=banner], [role=navigation], [role=main]") || !!el.querySelector("nav, main, article, h1, [role=main], [role=navigation]");
+  const hide = el => {
+    el.setAttribute("data-morse-calm", "");
+    undo.push(() => el.removeAttribute("data-morse-calm"));
+  };
+  // Scrolling tickers: something that slides sideways on a loop (a CSS or
+  // script animation of its position, or a <marquee>) inside a narrow
+  // horizontal strip. The strip goes, like the banners below.
+  const strip = el => {
+    for (let n = el, i = 0; n && n !== document.body && i < 4; n = n.parentElement, i++) {
+      const r = n.getBoundingClientRect(), cs = getComputedStyle(n);
+      const clips = n.localName === "marquee" || /hidden|clip/.test(cs.overflowX);
+      if (clips && r.height > 0 && r.height <= 96 && r.width >= Math.min(320, innerWidth * 0.4) && r.width >= r.height * 4) return n;
+    }
+    return null;
+  };
+  const MOVES = /^(transform|translate|left|right|marginLeft|marginRight|textIndent|offsetDistance)$/;
+  const tickers = () => {
+    const found = [...document.querySelectorAll("marquee")];
+    for (const a of document.getAnimations ? document.getAnimations() : []) {
+      const fx = a.effect, el = fx && fx.target;
+      if (!el || fx.pseudoElement || a.playState !== "running" || !fx.getComputedTiming || fx.getComputedTiming().iterations !== Infinity) continue;
+      let frames = [];
+      try { frames = fx.getKeyframes(); } catch {}
+      if (frames.some(k => Object.keys(k).some(p => MOVES.test(p)))) found.push(el);
+    }
+    for (const el of found) {
+      const s = strip(el);
+      if (s && !s.hasAttribute("data-morse-calm") && !s.closest("[data-morse-ui], [data-morse], [data-morse-calm]") && !siteOwn(s)) hide(s);
+    }
+  };
   const sweep = () => {
+    tickers();
     for (const el of document.querySelectorAll("body *")) {
       if (el.hasAttribute("data-morse-calm") || el.closest("[data-morse-ui], [data-morse], [data-morse-calm]")) continue;
-      if (el.matches("header, nav, main, article, [role=banner], [role=navigation], [role=main]") || el.querySelector("nav, main, article, h1, [role=main], [role=navigation]")) continue;
+      if (siteOwn(el)) continue;
       const pos = getComputedStyle(el).position;
       if (pos !== "fixed" && pos !== "sticky") continue;
       const tag = words(el) + (el.localName === "iframe" ? " " + (el.getAttribute("src") || "") : "");
       if (!HINT.test(tag)) continue;
       const r = el.getBoundingClientRect();
-      el.setAttribute("data-morse-calm", "");
-      undo.push(() => el.removeAttribute("data-morse-calm"));
+      hide(el);
       if (!unlocked && r.width * r.height > innerWidth * innerHeight * 0.3) {
         unlocked = true;
         morse.css("html, body { overflow: auto !important; }");

@@ -87,6 +87,11 @@ function launch({ bin, args, cwd, env = process.env }) {
 const running = h => !h.closed && h.child.exitCode === null && h.child.signalCode === null;
 function stop(h) {
   if (!running(h)) return;
+  // Windows: claude.cmd and codex.cmd run under cmd.exe, and ending cmd.exe
+  // leaves Claude Code or Codex running. End the whole process tree.
+  if (process.platform === "win32" && h.child.pid) {
+    try { spawn("taskkill", ["/PID", String(h.child.pid), "/T", "/F"], { stdio: "ignore", windowsHide: true }).on("error", () => {}); } catch {}
+  }
   try { h.child.kill("SIGTERM"); } catch {}
   setTimeout(() => { try { if (running(h)) h.child.kill("SIGKILL"); } catch {} }, 2000).unref();
 }
