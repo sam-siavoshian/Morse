@@ -239,7 +239,7 @@ test("openOnPipe: an app that ignores the pipe is quit and Morse falls back to a
   const launch = async (...a) => (started = await apps.launchApp(...a));
   const r = await desktop.openOnPipe(app, ["--fake-mode=ignore", `--fake-log=${path.join(dir, "ignore")}`], l => said.push(l), { timeoutMs: 1500, launch });
   assert.equal(r, null, "the caller opens it on a port instead");
-  assert.match(said.join("\n"), /Fake App didn't answer on Morse's private pipe .*debugging port instead/);
+  assert.match(said.join("\n"), /Fake App didn't answer on Morse's private connection\..*debugging port instead/);
   await until(() => !alive(started.pid), 10000, "the copy that ignored the pipe to be quit");
 
   await assert.rejects(desktop.openOnPipe(app, ["--fake-mode=die"], () => {}, { timeoutMs: 10000 }), e => e.failed && /Fake App quit right after it started \(exit code 3\)/.test(e.message));

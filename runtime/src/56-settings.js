@@ -88,6 +88,9 @@ function paintSettings() {
         <div class="srow"><div class="lbl"><span>${t("settings.position")}</span><small>${t("settings.position.help")}</small></div><div class="ctl">${segHtml("barPosition", t("settings.position"), [["auto", t("settings.position.auto")], ["top", t("settings.position.top")], ["bottom", t("settings.position.bottom")]], PREFS.barPosition)}</div></div>
       </section>
       ${modelSection()}
+      <section><h4>${t("settings.changes")}</h4>
+        <div class="srow"><div class="lbl"><span>${t("settings.polish")}</span><small>${t("settings.polish.help")}</small></div><div class="ctl">${switchHtml("polish", PREFS.polish, t("settings.polish"))}</div></div><!-- polish: core/polish.js -->
+      </section>
       <section><h4>${t("settings.general")}</h4>
         <div class="srow"><div class="lbl"><span>${t("settings.welcome")}</span><small>${t("settings.welcome.help")}</small></div><div class="ctl">${switchHtml("welcome", PREFS.welcome, t("settings.welcome"))}</div></div>
         <div class="srow"><div class="lbl"><span>${t("settings.gallery")}</span><small>${t("settings.gallery.help")}</small></div><div class="ctl">${switchHtml("gallery", PREFS.gallery, t("settings.gallery"))}</div></div><!-- gallery hook: 68-gallery.js -->
@@ -216,6 +219,7 @@ pane.addEventListener("change", e => {
   if (k === "welcome") saveSetting({ welcome: e.target.checked }, `[data-k="welcome"]`);
   if (k === "gallery") saveSetting({ gallery: e.target.checked }, `[data-k="gallery"]`); // gallery hook: 68-gallery.js
   if (k === "autoFix") saveSetting({ autoFix: e.target.checked }, `[data-k="autoFix"]`); // self-heal hook: 71-heal.js
+  if (k === "polish") saveSetting({ polish: e.target.checked }, `[data-k="polish"]`); // polish: core/polish.js
   if (k === "language") saveSetting({ language: e.target.value }, `[data-k="language"]`);
 });
 // Radio groups: arrows move and select, like native radios.

@@ -145,8 +145,24 @@ export function withoutExceptionsFor(style, where) {
 
 // ---- words in the bar
 
-const EVERYWHERE = /\b(?:every\s?where|on\s+(?:every|all|each|any)\s+(?:of\s+my\s+)?(?:sites?|websites?|web\s?pages?|pages?|apps?|tabs?)(?:\s+(?:and|&)\s+(?:apps?|sites?|websites?))?|in\s+(?:every|all|each|any)\s+(?:of\s+my\s+)?(?:apps?|sites?|websites?|programs?)(?:\s+(?:and|&)\s+(?:apps?|sites?|websites?))?|across\s+(?:every|all)\s+(?:my\s+)?(?:sites?|apps?|websites?)|(?:on|across)\s+the\s+whole\s+web|all\s+over\s+the\s+web)\b/i;
-export const isEverywhere = text => EVERYWHERE.test(String(text || ""));
+// "On every site", "in all my apps", "across the web": always Your style.
+const EVERY_SITE = /\b(?:on\s+(?:every|all|each|any)\s+(?:of\s+my\s+)?(?:sites?|websites?|web\s?pages?|pages?|apps?|tabs?)(?:\s+(?:and|&)\s+(?:apps?|sites?|websites?))?|in\s+(?:every|all|each|any)\s+(?:of\s+my\s+)?(?:apps?|sites?|websites?|programs?)(?:\s+(?:and|&)\s+(?:apps?|sites?|websites?))?|across\s+(?:every|all)\s+(?:my\s+)?(?:sites?|apps?|websites?)|(?:on|across)\s+the\s+whole\s+web|all\s+over\s+the\s+web)\b/i;
+const BARE = /\bevery\s?where\b/i;
+// A bare "everywhere" is often "everywhere here": "make VS Code look like
+// Windows 95, black text everywhere so the file list stays readable". When the
+// request names an app or a part of one, it's a change for this app or page.
+const APPS = /\b(?:vs\s?code|visual\s+studio\s+code|vscodium|codium|cursor|obsidian|joplin|logseq|notion|slack|discord|spotify|signal|figma|linear|gmail|outlook|youtube|this\s+(?:app|site|page|website|window|tab))\b/i;
+const PARTS = /\b(?:the|this|my|its|that)\s+(?:(?:whole|entire|left|right|top|bottom|side|main)\s+)?(?:sidebar|side\s+bar|editor|file\s+(?:list|tree)|explorer|status\s?bar|title\s?bar|tool\s?bar|tabs?|tab\s+bar|panel|panes?|menu|menus|header|footer|minimap|terminal|code|notes?|note\s+list|inbox|player|chat|feed|ribbon|activity\s+bar|search\s+box|nav(?:igation)?|button|buttons|list)\b/i;
+// here: names of the app or site you're on (S.appName, the host), which count as naming it.
+export function isEverywhere(text, { here = [] } = {}) {
+  const s = String(text || "");
+  if (EVERY_SITE.test(s)) return true;
+  if (!BARE.test(s)) return false;
+  const lower = s.toLowerCase();
+  if (here.some(h => h && h.length > 2 && lower.includes(String(h).toLowerCase()))) return false;
+  return !APPS.test(s) && !PARTS.test(s);
+}
+const EVERYWHERE = new RegExp(`${EVERY_SITE.source}|${BARE.source}`, "i"); // the words to strip (parseStyleWords)
 
 const NOT_HERE = [
   /^\s*(?:not|never)\s+(?:on|in|for)\s+this\s+(?:site|page|app|website)\s*\.?\s*$/i,

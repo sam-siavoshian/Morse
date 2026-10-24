@@ -8,10 +8,10 @@ Measured in headless Chromium through the real desktop connector (CDP, main worl
 
 |  | value |
 |---|---|
-| Script injected at page load (bytes) | 234550 → **49224** |
-| Compile (ms, median of 15, cache busted) | 15.68 → **3.96** |
-| Compile + top-level run on a 10k-node page (ms) | 34.84 → **0.27** |
-| Full UI, loaded on first open (bytes) | 801735 |
+| Script injected at page load (bytes) | 234550 → **51971** |
+| Compile (ms, median of 15, cache busted) | 15.68 → **6.07** |
+| Compile + top-level run on a 10k-node page (ms) | 34.84 → **7.81** |
+| Full UI, loaded on first open (bytes) | 986717 |
 
 ## Boot: what Morse does on a page nobody opened it on
 
@@ -19,7 +19,7 @@ One saved mod (CSS + a `morse.watch`) applies on each site.
 
 |  | parley | byte | tunes | big (10k nodes) |
 |---|---|---|---|---|
-| DOM nodes added | 238 → **5** | 235 → **2** | 236 → **3** | 237 → **4** |
+| DOM nodes added | 238 → **8** | 235 → **2** | 236 → **3** | 237 → **4** |
 | Listeners Morse adds | 56 → **8** | 56 → **8** | 56 → **8** | 56 → **8** |
 | MutationObservers | 8 → **2** | 8 → **2** | 8 → **2** | 8 → **2** |
 | Timers / rAF scheduled | 2 → **7** | 2 → **9** | 2 → **7** | 2 → **7** |
@@ -29,19 +29,19 @@ One saved mod (CSS + a `morse.watch`) applies on each site.
 | Elements created | 15 → **4** | 12 → **1** | 13 → **2** | 14 → **3** |
 | Shadow roots | 1 → **0** | 1 → **0** | 1 → **0** | 1 → **0** |
 | Overlay mounted | yes → **no** | yes → **no** | yes → **no** | yes → **no** |
-| Main-thread script (ms) | 8 → **7.4** | 58.8 → **1.6** | 9.6 → **-0.1** | -9.1 → **10.3** |
-| Extra layouts | 2 → **1** | 2 → **0** | 2 → **1** | 2 → **0** |
+| Main-thread script (ms) | 8 → **0.4** | 58.8 → **1.2** | 9.6 → **-1** | -9.1 → **106.3** |
+| Extra layouts | 2 → **1** | 2 → **0** | 2 → **1** | 2 → **1** |
 | Extra style recalcs | 7 → **2** | 12 → **1** | 9 → **2** | 9 → **1** |
-| JS heap (KB) | 732.4 → **353** | 766 → **395.9** | 736.1 → **356.7** | 704.9 → **355.7** |
-| First mod CSS applied (ms after navigation) | 139.3 → **281** | 149.7 → **215.1** | 101 → **487.9** | 431.4 → **416.8** |
-| First mod JS applied (ms after navigation) | 154.5 → **294.7** | – | 104.9 → **521.7** | 446.5 → **666.4** |
-| (DOMContentLoaded, ms) | 76.7 → **186.4** | 114.3 → **114.6** | 90.6 → **414.4** | 365.7 → **533.6** |
+| JS heap (KB) | 732.4 → **408.9** | 766 → **435** | 736.1 → **408.6** | 704.9 → **450.5** |
+| First mod CSS applied (ms after navigation) | 139.3 → **105.9** | 149.7 → **284** | 101 → **229.7** | 431.4 → **761.9** |
+| First mod JS applied (ms after navigation) | 154.5 → **142.4** | – | 104.9 → **238.5** | 446.5 → **841.8** |
+| (DOMContentLoaded, ms) | 76.7 → **91.5** | 114.3 → **56.2** | 90.6 → **197.5** | 365.7 → **789.8** |
 | Idle: Morse callbacks in 3 s | 4 → **3** | 3 → **2** | 4 → **3** | 4 → **3** |
-| Idle: Morse ms in 3 s | 0.3 → **0.9** | 0.2 → **1.4** | 0.4 → **1** | 0.3 → **1** |
+| Idle: Morse ms in 3 s | 0.3 → **0.9** | 0.2 → **1.2** | 0.4 → **0.9** | 0.3 → **0.8** |
 
 ## Opening Morse
 
-The price of a free boot: the first open on a page fetches and builds the UI (~783 KB) from the host. Later opens are instant, as before.
+The price of a free boot: the first open on a page fetches and builds the UI (~964 KB) from the host. Later opens are instant, as before.
 
 |  | value |
 |---|---|
@@ -103,3 +103,48 @@ Playwright's Chromium has Allow User Scripts off, so this section runs the mod's
 | JS heap (KB) | 462.3 → **354.4** | 493.8 → **354.5** | 497.5 → **350.4** | 494.8 → **373.5** |
 | First mod CSS applied (ms) | 189.5 → **96.1** | 270.4 → **168.3** | 96.2 → **201.4** | 209 → **192.2** |
 | Overlay mounted | yes → **no** | yes → **no** | yes → **no** | yes → **no** |
+
+## Languages: the bar's words
+
+English ships in the UI bundle. Another language is one request to the host (`i18n.words`; the desktop reads `core/locales/<code>.js` once per process, the extension's worker `locales/<code>.json` once while it runs) the first time the bar opens on a page; that first open waits for the words, 1.5 s at most, so the bar never shows English first. 10k-node page, first open (which also loads the UI).
+
+|  | English | German |
+|---|---|---|
+| Hotkey to bar visible, first open (ms) | 1361.8 | 1476.3 |
+| Word requests, first open | 0 | 1 |
+| … closing and opening again | 0 | 0 |
+
+## The bar open on big real pages
+
+The bar's solid backing (`50-bar.js` Backing) checks for the page's words under the bar with up to 20 `elementsFromPoint` hit tests (each needs layout up to date). Real pages in Chromium; the baseline is `docs/perf/before-real.json` (2026-10-24). Times are wall clock on a heavily loaded machine: compare counts, and times only within a row.
+
+|  | nodejs.org fs docs | pkg.go.dev net/http | GitHub file view |
+|---|---|---|---|
+| Typing 48 keys: hit tests | 155 → **5** | 30 → **1** | 560 → **20** |
+| … ms in hit tests and text rects | 3286.2 → **12.4** | 430.3 → **0.7** | 1743 → **9.1** |
+| … long tasks (any script) | 27 → **2** | 25 → **3** | 12 → **0** |
+| Pointing at the page, 40 moves: hit tests | 112 → **1** | 30 → **0** | 540 → **20** |
+| Bar stepping top ↔ bottom 24 times: hit tests | 20 → **0** | 25 → **2** | 260 → **0** |
+| … ms in hit tests and text rects | 1130.8 → **0** | 297.5 → **1.9** | 1705.6 → **0** |
+| Scrolling 30 wheel ticks: hit tests | 30 → **12** | 75 → **28** | 394 → **81** |
+| … ms in hit tests and text rects | 1874.8 → **274.8** | 1584.9 → **83.9** | 1883.8 → **82.2** |
+| … slowest Morse callback (ms) | 273.1 → **132.6** | 355.6 → **52.8** | 454.4 → **50.2** |
+| Closed, scrolling 30 ticks: Morse callbacks | 19 → **0** | 18 → **0** | 19 → **0** |
+
+## Boot on real sites, with 0 and with 20 saved mods
+
+Nobody opens Morse. Deltas against the same page without Morse (medians of 3); network time differs on every load, so these are memory and Morse's own work, not load times (the page's own script time on a real site varies by a few hundred ms from load to load, more than Morse's whole cost; `docs/perf/*.json` keep it anyway). The 20 mods each add CSS and a `morse.watch` on every site; most of their heap is the page's elements those watches touch.
+
+|  | nodejs.org fs docs | pkg.go.dev net/http | GitHub file view | pypi.org project | rubygems.org gem |
+|---|---|---|---|---|---|
+| Elements on the page | 53278 | 19353 | 17431 | 12298 | 1651 |
+| JS heap without Morse (KB) | 1290.8 | 1517.6 | 1258.4 | 2542.3 | 2381.1 |
+| 0 mods: JS heap (KB) | 246.2 → **268.7** | 235.3 → **240.3** | 191.5 → **196.7** | 232.8 → **218.8** | 230.9 → **226.1** |
+| 0 mods: Morse's own callbacks (ms) | 0.6 → **0.5** | 0.5 → **0.6** | 0.5 → **0.5** | 0.6 → **0.7** | 0.6 → **0.4** |
+| 0 mods: Extra layouts | 2 → **0** | 1 → **0** | 0 → **-1** | 4 → **-6** | -1 → **1** |
+| 0 mods: Layout reads by Morse | 0 → **0** | 0 → **0** | 0 → **0** | 0 → **0** | 0 → **0** |
+| 20 mods: JS heap (KB) | 3630.5 → **3705.1** | 3324.5 → **3382.3** | 2180.7 → **2250.6** | 2698.6 → **2761.5** | 2253 → **2326.9** |
+| 20 mods: Morse's own callbacks (ms) | 1.4 → **1.7** | 27.9 → **6.4** | 1.6 → **1.4** | 5.9 → **6.7** | 3 → **3.6** |
+| 20 mods: Extra layouts | 1 → **0** | 5 → **3** | 0 → **-1** | 6 → **-6** | 1 → **1** |
+| 20 mods: Layout reads by Morse | 8 → **8** | 26 → **26** | 15 → **15** | 25 → **25** | 22 → **22** |
+| 20 mods: First mod CSS applied (ms after navigation) | 1663.7 → **563.9** | 750.9 → **643.4** | 1234.7 → **1623** | 639.1 → **782.5** | 1148.9 → **726** |

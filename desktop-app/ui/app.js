@@ -34,6 +34,21 @@ function radar(size = 16) {
   }
   return s;
 }
+// An app's own icon, or (for an app with none Morse can read) the Apps glyph
+// from the sidebar: never a letter standing in for a picture.
+function appsGlyph() {
+  const s = document.createElementNS(svgNS, "svg");
+  for (const [k, v] of Object.entries({ viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", "stroke-width": "1.5", "aria-hidden": "true" })) s.setAttribute(k, v);
+  for (const [x, y] of [[2.5, 2.5], [9, 2.5], [2.5, 9], [9, 9]]) {
+    const r = document.createElementNS(svgNS, "rect");
+    for (const [k, v] of Object.entries({ x, y, width: 4.5, height: 4.5, rx: 1.2 })) r.setAttribute(k, v);
+    s.append(r);
+  }
+  return s;
+}
+function appIcon(a) {
+  return h("div", { class: `appicon${a.icon ? " has-img" : ""}`, "aria-hidden": "true" }, a.icon ? h("img", { src: a.icon, alt: "" }) : appsGlyph());
+}
 const caps = combo => h("span", { class: "caps" }, ...String(combo || "").split("+").filter(Boolean).map(k => h("kbd", { text: k })));
 // The mark of what writes your changes (ui/icons/NOTICE): Claude Code, Codex,
 // an API key (both providers' marks), or Morse's own radar for the rest.
@@ -79,7 +94,7 @@ const STATUS = {
 
 function appRow(a) {
   const cant = a.canAttach === false;
-  const icon = h("div", { class: `appicon${a.icon ? " has-img" : ""}`, "aria-hidden": "true" }, a.icon ? h("img", { src: a.icon, alt: "" }) : (a.name || "?").trim()[0].toUpperCase());
+  const icon = appIcon(a);
   const status = cant ? [h("span", { text: `Can't connect: ${a.why}` })]
     : a.canAttach === null && a.state === "closed" ? [h("span", { text: "Morse couldn't tell what it's built on. You can still try." })]
     : (STATUS[a.state] || STATUS.closed)(a);
@@ -182,7 +197,7 @@ function renderModel() {
     const live = $("model-live");
     if (m.none) live.replaceChildren(h("i", { class: "dot warn" }), h("span", { text: "Choose Claude Code, Codex or an API key to start." }));
     else if (m.check?.ok) live.replaceChildren(h("i", { class: "dot on" }), h("span", { text: `Answered in ${(m.check.ms / 1000).toFixed(1)}s${m.detected ? " · found on this computer" : ""}` }));
-    else if (m.check) live.replaceChildren(h("i", { class: "dot bad" }), h("span", { text: `Didn't answer: ${m.check.error}` }));
+    else if (m.check) live.replaceChildren(h("i", { class: "dot bad" }), h("span", { text: `Didn't answer: ${unprefixed(m.check.error, m.name)}` }));
     else live.replaceChildren(h("i", { class: "dot" }), h("span", { text: m.detected ? "Found on this computer. Not checked yet." : "Not checked yet." }));
   }
   const nav = $("nav-model");
@@ -190,6 +205,8 @@ function renderModel() {
   nav.className = m.none || (m.check && !m.check.ok) ? "warn" : "";
 }
 
+// "Claude Code: You've hit your limit" under Claude Code's own name: the words, without the name again.
+const unprefixed = (error, name) => { const e = String(error || ""); return name && e.startsWith(name + ": ") ? e.slice(name.length + 2) : e; };
 let checking = false;
 async function checkModel() {
   checking = true;
@@ -330,7 +347,7 @@ function renderMods() {
   $("mod-groups").dataset.sig = sig;
   const focused = document.activeElement?.dataset?.mod;
   $("mod-groups").replaceChildren(...groups.map(g => h("div", { class: "group" },
-    h("h2", {}, (icon => icon ? h("img", { class: "gicon", src: icon, alt: "" }) : null)(st.apps.find(a => a.id === g.app)?.icon), h("span", { text: g.name }), h("small", { text: `${plural(g.mods.length, "mod")} · ${g.mods.filter(m => m.on).length} on` })),
+    h("h2", {}, (icon => icon ? h("img", { class: "gicon", src: icon, alt: "" }) : h("span", { class: "gicon none", "aria-hidden": "true" }, appsGlyph()))(st.apps.find(a => a.id === g.app)?.icon), h("span", { text: g.name }), h("small", { text: `${plural(g.mods.length, "mod")} · ${g.mods.filter(m => m.on).length} on` })),
     h("ul", { class: "list mods" }, ...g.mods.map(m => h("li", { class: m.on ? "" : "off" },
       h("div", { class: "grow" }, h("b", { text: m.title }), h("small", {}, h("span", { text: m.paused ? "Stopped because it slowed down or broke the app. Turn it on to try again." : `“${m.request}”` }))),
       h("input", { type: "checkbox", role: "switch", "aria-label": `${m.title} on`, "data-mod": m.id, checked: m.on, onchange: e => morse.setModOn(m.id, e.target.checked) })))))));
@@ -379,7 +396,7 @@ function renderFirst() {
   if (m.none) live.replaceChildren(h("i", { class: "dot warn" }), h("span", { text: "Morse didn't find Claude Code or Codex on this computer. Paste an API key, or install Claude Code and open Morse again." }));
   else if (checking) live.replaceChildren(providerMark(m.provider), h("span", { text: `Morse will use ${m.name}. Checking that it answers…` }), radar(14));
   else if (m.check?.ok) live.replaceChildren(providerMark(m.provider), h("span", { text: `Morse will use ${m.name}. It answered in ${(m.check.ms / 1000).toFixed(1)}s.` }), h("span", { class: "badge ready" }, h("i", { class: "dot on" }), "Ready"));
-  else if (m.check) live.replaceChildren(providerMark(m.provider), h("span", { text: `Morse will use ${m.name}, but it didn't answer: ${m.check.error}` }), h("i", { class: "dot bad" }));
+  else if (m.check) live.replaceChildren(providerMark(m.provider), h("span", { text: `Morse will use ${m.name}, but it didn't answer: ${unprefixed(m.check.error, m.name)}` }), h("i", { class: "dot bad" }));
   else live.replaceChildren(providerMark(m.provider), h("span", { text: `Morse will use ${m.name}.` }));
   if (!m.none && !m.check && !firstChecked) { firstChecked = true; checkModel(); }
   $("first-key-caps").replaceChildren(caps(st.keys.open || (platform === "darwin" ? "⌥+Space" : "Ctrl+Shift+Space")));
@@ -390,7 +407,7 @@ function renderFirst() {
   $("first-apps").replaceChildren(...(apps.length ? apps.map(a => {
     const busy = ["opening", "connecting"].includes(a.state);
     return h("li", { "data-first-app": a.id },
-      h("div", { class: `appicon${a.icon ? " has-img" : ""}`, "aria-hidden": "true" }, a.icon ? h("img", { src: a.icon, alt: "" }) : (a.name || "?").trim()[0].toUpperCase()),
+      appIcon(a),
       h("div", { class: "grow" }, h("b", { text: a.name }), h("small", {}, ...(busy ? [radar(12), h("span", { text: `Opening ${a.name} with Morse…` })] : [h("span", { text: a.state === "closed" ? "Not open" : "Open now" })]))),
       h("button", { type: "button", class: "btn", disabled: busy, onclick: () => openFirst(a) }, "Open with Morse"));
   }) : [h("li", { class: "empty" }, "Morse didn't find any apps it can open. Click Skip for now, then Add an app…")]));

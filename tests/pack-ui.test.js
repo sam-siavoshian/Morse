@@ -146,7 +146,7 @@ test("Installing a pack: one review for every mod, untick some, a clash asks, no
   assert.match(await item("big-title").textContent(), /Bigger title.*For 127\.0\.0\.1.*Changes how the page looks/s);
   assert.match(await item("count-keys").textContent(), /Reads what you type/);
   assert.equal(await item("count-keys").locator('[data-s="typing"]').count(), 1, "a note for reading what you type");
-  assert.match(await item("count-keys").locator(".pk-clash").textContent(), /You already have a mod with this id: “My own counter”/);
+  assert.match(await item("count-keys").locator(".pk-clash").textContent(), /You already have this mod: “My own counter”/);
   assert.equal(await item("count-keys").locator('[data-pk-as="copy"]').getAttribute("aria-checked"), "true", "Keep both unless you choose");
   assert.match(await item("calm-all").locator('[data-s="everywhere"]').textContent(), /runs on every website you visit.*Not ticked/s);
   assert.equal(await item("calm-all").locator("[data-pk=pick]").isChecked(), false, "a mod for every website starts unticked");
@@ -361,7 +361,7 @@ test("extension: a pack is previewed, installed only as reviewed, and its switch
     assert.equal(prev.result.kind, "pack");
     assert.deepEqual(prev.result.clash, { "ext-a": { kind: "clash", id: "ext-a", title: "Mine" } });
     const unchosen = await asMorse(p, { type: "pack.install", source, hash: prev.result.hash, picks: [{ id: "ext-a" }, { id: "ext-b" }] });
-    assert.match(String(unchosen.error), /Choose whether to keep both/);
+    assert.match(String(unchosen.error), /Choose Keep both or Replace yours/);
     const forged = await asMorse(p, { type: "pack.install", source, hash: "0".repeat(64), picks: [{ id: "ext-b" }] });
     assert.match(String(forged.error), /changed while you were looking/);
     const ok = await asMorse(p, { type: "pack.install", source, hash: prev.result.hash, picks: [{ id: "ext-a", as: "copy" }, { id: "ext-b" }] });

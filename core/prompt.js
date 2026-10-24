@@ -54,7 +54,13 @@ Rules:
   Everything created through morse is removed automatically when the mod is turned off.
 - No network requests, no eval, no external scripts. Keep it short.
 - No prompt(), alert() or confirm(): Electron apps throw on prompt() and the others freeze the app. Ask for input with elements you make (morse.el).
-- Match the app's look: reuse its fonts and colors (inherit, currentColor) unless asked otherwise.
+- Faked key presses (dispatchEvent of a KeyboardEvent) don't run the app's or the browser's commands (copy, paste, save, shortcuts). Do the work yourself: read the text from the page, navigator.clipboard.writeText(text), click the app's own button.
+Design: anything you add must look like it shipped with the app (see "Design system"), unless asked otherwise.
+- Reuse the app's own classes and CSS variables: color: var(--x), never a hard-coded color when a variable exists. With no variables, copy the exact values of its components.
+- Copy font, size, height, padding, radius, border and hover from the app's component of the same kind (a new button looks like its buttons). Place it where the app would put it, aligned with its neighbors.
+- It must work in light and dark mode: variables, inherit and currentColor follow the theme; fixed colors don't.
+- Icons come from the app's icon system. No emoji as icons unless the app uses emoji.
+- A feature must be complete: an empty state, keyboard access (real <button>s with labels), state worth keeping in morse.store, no console errors, and morse.watch so it survives re-renders.
 ${ASK_FORMAT}`;
 
 // A snapshot captured in another app (God mode's Capture): the model rebuilds
@@ -108,6 +114,7 @@ export function buildMessages({ request, context, previous, snapshot = context?.
     parts.push("The user did not point at anything; the change is page-wide.");
   }
   if (context.notes) parts.push("About this page:\n" + context.notes);
+  if (context.design) parts.push("Design system (match it):\n" + context.design); // design: runtime/src/20-context.js designOf
   if (context.layout) parts.push("Page layout (visible blocks, px):\n" + context.layout);
   if (context.outline) parts.push((context.layout ? "Controls and headings:\n" : "Page outline:\n") + context.outline);
   if (context.appLogic) parts.push(String(context.appLogic).slice(0, 4000)); // app profiles: how the app works inside (core/profile.js profileSlice)

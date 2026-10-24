@@ -20,12 +20,13 @@
 
 - **One runtime, two hosts.** The same runtime runs in websites (extension)
   and desktop apps (CDP). Only the transport differs.
-- **Free until you use it.** Every page gets only a ~49 KB boot
+- **Free until you use it.** Every page gets only a ~52 KB boot
   (`runtime/boot.js`): it applies your mods (with the guards and safe start),
   follows SPA navigations, checks for broken mods after idle and listens for
   the hotkey, with no overlay, layout reads or timers. The UI is injected the
   first time you open Morse. Measured in [`docs/perf/report.md`](../perf/report.md)
-  (`node demo/perf.js`), guarded by `tests/perf.test.js`.
+  (`node demo/perf.js`), guarded by `tests/perf.test.js`; every budget and
+  the test that holds it is in [`docs/perf/budgets.md`](../perf/budgets.md).
 - **No patching.** On the web, mod JS runs through `chrome.userScripts`, so it
   works on strict-CSP sites. On the desktop, `morse launch` relaunches an
   Electron app with `--remote-debugging-pipe` (a private channel, see
@@ -307,7 +308,7 @@ The files run in order, by number:
 |---|---|
 | `01-rpc.js` | Talks to the host through `globalThis.__morseHost` (`send`, `onMessage`); `listen()`, which every window listener goes through. The generation counter that makes a detached copy go quiet |
 | `02-state.js`, `03-prefs.js`, `05-radar.js`, `10-dom.js` | Shared state, settings, the radar mark, and the closed shadow root all UI lives in, so the app's CSS can't touch it and Morse's can't leak out |
-| `20-context.js` | What the model sees: the pointed-at element, a stable selector, the page outline, the styles. It never sends what was typed into fields, hidden fields, secret-looking attributes, email addresses or signed URL queries |
+| `20-context.js` | What the model sees: the pointed-at element, a stable selector, the page outline, the styles, and the app's design (`designOf`, marked `// design`: theme variables near the target, fonts and scale, nearby components with their classes and look, the icon system, light or dark). It never sends what was typed into fields, hidden fields, secret-looking attributes, email addresses or signed URL queries |
 | `30-mods.js` | Running saved mods: CSS, JS through the host, turning them off |
 | `40-picker.js` … `47-capture.js` | Pointing, the Edit tools (code name God mode), Page tools, capture |
 | `50-bar.js` … `59-onboarding.js` | The bar, voice, Settings, history, suggestions, help, first-run guide |
@@ -395,6 +396,17 @@ the JS, and if the JS throws, show the model the error and try once more. With
 selectors match nothing), a change that ran but did nothing visible gets the
 repair round too. Questions get an answer instead of a mod
 ([`answer.js`](../../core/answer.js)).
+
+**Polish** ([`polish.js`](../../core/polish.js)): with the "Polish changes"
+setting on (the default) and `review` from the host, a change that adds UI or
+restyles a part (`wantsPolish`; a small CSS tweak skips it) gets one more look:
+the host takes a picture of the changed area without Morse's UI (desktop:
+`Page.captureScreenshot` with a clip, `daemon/connector.js` `shoot`; extension:
+`captureVisibleTab`, cropped in the worker), the model sees it with the request
+and its own draft and answers `OK` or `FIX:` lines and a new version. The new
+version replaces the draft only if it runs cleanly and keeps the JS; otherwise
+the draft goes back on the page. [evals/design](../../evals/design/README.md)
+measures what the design context, the prompt's design rules and this round do.
 
 The system prompt is small on purpose, and tells the model not to use the
 network, eval or external scripts. The [evals](../../evals/README.md) measure

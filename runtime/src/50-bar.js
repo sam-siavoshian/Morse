@@ -179,9 +179,19 @@ function closeBar() {
 // The bar (and Morse's other see-through surfaces) let a calm page show
 // through. When the page's own words sit right under one (an article on a
 // phone), it turns solid, so its words never read over the page's.
+// perf: a look is up to 20 hit tests, a few ms each on a big page, so it is
+// taken only where a surface hasn't looked since the page last moved (shown,
+// moved to the top or bottom, dragged, grown, or a new phase such as a
+// result), and after a scroll only once the page rests. A key, a pointer move
+// or a row changing inside the bar costs a rect read at most, and nothing
+// runs while every surface is hidden (docs/perf/report.md, tests/perf.test.js).
 const Backing = (() => {
   const SURFACES = ".bar, .so-strip, .guide, .ds";
-  let timer = 0;
+  const SHOWN = ".bar:not([hidden]), .so-strip:not([hidden]), .guide:not([hidden]), .ds:not([hidden])";
+  const REST = 200; // ms without a scroll
+  const answers = new Map(); // "left,top,width,height" -> words under it, until the page moves
+  const sizes = new ResizeObserver(() => soon()), sized = new WeakSet(); // grown or shrunk: a row inside shown or hidden, a second line typed
+  let timer = 0, scrolledAt = 0;
   // Is page text under this box? A few points across it, the page's topmost
   // part of the page at each, and that part's own lines of text.
   function textUnder(r) {
@@ -201,18 +211,55 @@ const Backing = (() => {
   }
   function check() {
     timer = 0;
+    const rest = scrolledAt + REST - performance.now();
+    if (rest > 0) { timer = setTimeout(check, rest); return; } // still scrolling: look once it rests
     for (const el of root.querySelectorAll(SURFACES)) {
-      if (el.hidden || !el.getClientRects().length) continue;
-      const solid = textUnder(el.getBoundingClientRect());
+      if (el.hidden) continue;
+      if (!sized.has(el)) { sized.add(el); sizes.observe(el); }
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) continue;
+      const at = `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)},${Math.round(r.height)}`;
+      // Same place over the same page, same answer: the bar stepping between
+      // top and bottom while you point looks twice, not on every step.
+      let solid = answers.get(at);
+      if (solid === undefined) {
+        if (answers.size > 40) answers.clear();
+        answers.set(at, solid = textUnder(r));
+      }
       if (el.classList.contains("solid") !== solid) el.classList.toggle("solid", solid);
     }
   }
   const soon = () => { if (!timer && live()) timer = setTimeout(check, 120); };
-  listen("scroll", soon, { capture: true, passive: true });
-  listen("resize", soon);
-  // a surface shown, moved (top or bottom, dragged) or grown (a row inside it shown)
-  new MutationObserver(recs => { if (recs.some(r => r.target.closest?.(SURFACES))) soon(); })
-    .observe(root, { subtree: true, attributes: true, attributeFilter: ["hidden", "style", "class", "data-pos"] });
+  const pageMoves = () => {
+    answers.clear();
+    if (!root.querySelector(SHOWN)) return; // closed: nothing to look for
+    scrolledAt = performance.now();
+    soon();
+  };
+  listen("scroll", pageMoves, { capture: true, passive: true });
+  listen("resize", pageMoves);
+  // A surface shown, hidden, moved (top or bottom, dragged) or in a new phase
+  // (working, a result, a sheet): its own attributes only, not every class and
+  // style inside it (the input's height on each key); a change of size comes
+  // from the ResizeObserver. Moving keeps what it saw; anything else may come
+  // with a changed page (a change applied, time gone by while hidden), so it
+  // looks anew. The same class set again (the picker's add("top") on every
+  // pointer move) is nothing.
+  const MOVES = new Set(["top", "solid"]);
+  new MutationObserver(recs => {
+    let seen = false;
+    for (const r of recs) {
+      if (!r.target.matches?.(SURFACES)) continue;
+      if (r.attributeName === "class") {
+        const was = new Set(String(r.oldValue || "").split(/\s+/).filter(Boolean)), now = r.target.classList;
+        const changed = [...was].filter(c => !now.contains(c)).concat([...now].filter(c => !was.has(c)));
+        if (!changed.length) continue;
+        if (changed.some(c => !MOVES.has(c))) answers.clear();
+      } else if (r.attributeName === "hidden") answers.clear();
+      seen = true;
+    }
+    if (seen) soon();
+  }).observe(root, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ["hidden", "style", "class", "data-pos"] });
   return { check: soon };
 })();
 // While pointing, the bar steps aside so nothing under it is unreachable, but

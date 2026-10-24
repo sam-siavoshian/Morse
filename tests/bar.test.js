@@ -216,7 +216,7 @@ test("voice: explains in one line when it can't work", { skip }, async () => {
   await scenario("", () => { navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException("denied", "NotAllowedError")); }, async t => {
     await pressOpen(t.page);
     await clickMic(t);
-    const s = await t.waitFor(s => /Microphone access is blocked/.test(s.hint));
+    const s = await t.waitFor(s => /The microphone is blocked/.test(s.hint));
     assert.equal(s.voice, "idle");
   });
   await scenario("", () => { navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException("none", "NotFoundError")); }, async t => {
@@ -310,7 +310,7 @@ test("Model setting: Automatic, Always fast, Always best, saved; the footer name
     };
     await openSettings();
     assert.equal(await page.locator(seg("auto")).getAttribute("aria-checked"), "true", "Automatic unless chosen");
-    assert.match(await page.locator('.seg[data-k="modelMode"]').locator("xpath=../..").innerText(), /Small tweaks use sonnet/);
+    assert.match(await page.locator('.seg[data-k="modelMode"]').locator("xpath=../..").innerText(), /Small changes use sonnet/);
     await page.locator(seg("best")).click();
     await page.waitForFunction(() => window.__fake.log.some(m => m.type === "settings.set" && m.settings?.modelMode === "best"));
     await page.locator(seg("best") + '[aria-checked="true"]').waitFor();
