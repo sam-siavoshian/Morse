@@ -3,7 +3,7 @@
 // it does in plain words. Loaded by popup.js; talks to control-host.js.
 
 import { t } from "./core/i18n.js";
-import { summarizeMod, modOrigin } from "./core/summary.js";
+import { summarizeMod, modOrigin, shownCode } from "./core/summary.js";
 import { resolveHotkeys, formatCombo, detectPlatform } from "./core/hotkeys.js";
 import { normalizePrefs } from "./core/prefs.js";
 
@@ -17,7 +17,7 @@ export function modExtras(m) {
     <details class="ctl-code"><summary>${esc(t("ctl.showCode"))}</summary>
       <ul class="ctl-items">${items}</ul>
       ${s.notes.map(n => `<p class="ctl-warn">${esc(n.text)}</p>`).join("")}
-      ${m.css?.trim() ? `<pre>${esc(m.css.trim())}</pre>` : ""}${m.js?.trim() ? `<pre>${esc(m.js.trim())}</pre>` : ""}
+      ${m.css?.trim() ? `<pre>${esc(shownCode(m.css.trim()))}</pre>` : ""}${m.js?.trim() ? `<pre>${esc(shownCode(m.js.trim()))}</pre>` : ""}
     </details>`;
 }
 

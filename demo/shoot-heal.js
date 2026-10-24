@@ -40,7 +40,7 @@ const ago = s => new Date(Date.now() - s * 1000).toISOString();
 // One mod of your own, and "Bigger rounded covers" from the gallery, installed last week.
 await writeMod({ morse: 1, id: "quiet-sidebar", title: "Quieter sidebar", prompt: "make the sidebar quieter so the albums stand out",
   match: { hosts: ["127.0.0.1:8789"], app: null }, target: { selector: "nav", label: "Sidebar" },
-  css: "nav { background: #0b0b0b !important; }\nnav a:not(.on) { color: #7d7d7d !important; }\n", js: "", enabled: true, model: "Claude Code · haiku", created: ago(9 * 86400), updated: ago(9 * 86400) });
+  css: "nav { background: #0b0b0b !important; }\nnav a:not(.on) { color: #7d7d7d !important; }\n", js: "", enabled: true, model: "Claude Code · sonnet", created: ago(9 * 86400), updated: ago(9 * 86400) });
 const gallery = JSON.parse(await fs.readFile(path.join(root, "site/mods/tunes-big-covers.morse.json"), "utf8"));
 const covers = { ...gallery, enabled: true, imported: true, importedFrom: "gallery", gallery: { id: "tunes-big-covers", version: 1 }, created: ago(6 * 86400), updated: ago(6 * 86400) };
 await writeMod(covers);

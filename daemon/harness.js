@@ -166,7 +166,7 @@ let warm = []; // started processes waiting for a request: { key, ready, dead, t
 let warmMax = 1; // one person, one request at a time
 let keepOthers = false;
 // The eval runs several cases at once, like several people (evals/run.js).
-// keepOthers: it also compares models side by side (--model haiku,sonnet,auto),
+// keepOthers: it also compares models side by side (--model sonnet,opus,auto),
 // each with its own processes (settings "pool"), so starting one doesn't stop another's.
 export function setWarmPoolSize(n, { keepOthers: k = false } = {}) { warmMax = Math.max(0, n | 0); keepOthers = k; }
 
@@ -174,17 +174,27 @@ export function setWarmPoolSize(n, { keepOthers: k = false } = {}) { warmMax = M
 // (update checks, error reports, a summary of each turn after it ends).
 const claudeEnv = () => ({ ...process.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: process.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC ?? "1" });
 const EFFORTS = new Set(["low", "medium", "high", "xhigh", "max"]);
+// dogfood (speed): low effort unless the settings say otherwise, like the API
+// path (core/providers.js). On real apps (VSCodium, Joplin) haiku at its
+// default effort thought for 11 to 21 s before writing; at low, 2 to 3 s most
+// times (docs/dogfood.md). A Claude Code too old to know --effort says so
+// once; Morse then leaves the flag out (noEffort).
+let noEffort = false;
+// The strong tier of Automatic routing (core/route.js, tier "best") keeps the
+// CLI's own effort: it gets the requests that look hard, and second tries.
+export const effortOf = s => (noEffort ? "" : EFFORTS.has(s.effort) ? s.effort : s.tier === "best" ? "" : "low");
 function claudeArgs(s, sysFile) {
+  const effort = effortOf(s);
   return [
     "-p", "--output-format", "stream-json", "--input-format", "stream-json", "--verbose", "--include-partial-messages",
     "--tools", "", "--strict-mcp-config", "--disable-slash-commands", "--no-session-persistence",
     "--system-prompt-file", sysFile,
     ...(s.model ? ["--model", s.model] : []),
-    ...(EFFORTS.has(s.effort) ? ["--effort", s.effort] : []),
+    ...(effort ? ["--effort", effort] : []),
   ];
 }
 const claudeKey = (bin, s, system) => crypto.createHash("sha256")
-  .update(JSON.stringify([bin, s.model || "", s.effort || "", system, process.env, s.pool || ""])).digest("hex");
+  .update(JSON.stringify([bin, s.model || "", effortOf(s), system, process.env, s.pool || ""])).digest("hex");
 
 async function startClaude(bin, s, system) {
   const dir = await runDir();
@@ -234,7 +244,16 @@ async function takeWarm(key) {
   return h;
 }
 
-export async function claudeCodeStream(s, messages, { onToken, signal, onStage }) {
+export async function claudeCodeStream(s, messages, opts) {
+  try { return await claudeCodeOnce(s, messages, opts); } catch (e) {
+    // dogfood: an older Claude Code that doesn't know --effort (effortOf)
+    if (noEffort || !/(unknown|unrecognized|invalid) option[^\n]*--effort/i.test(e.message)) throw e;
+    noEffort = true;
+    trace("harness", "this Claude Code doesn't know --effort; asking again without it");
+    return claudeCodeOnce(s, messages, opts);
+  }
+}
+async function claudeCodeOnce(s, messages, { onToken, signal, onStage }) {
   const bin = s.bin || which("claude");
   if (!bin) throw new Error("Claude Code isn't installed on this computer. Install it from claude.com/claude-code, or run morse setup to choose another model.");
   if (!validModel(s.model)) throw new Error(`"${s.model}" isn't a model name Morse can use. Check the spelling.`);
@@ -247,7 +266,7 @@ export async function claudeCodeStream(s, messages, { onToken, signal, onStage }
   // Describe this image (core/a11y.js): pictures travel in the same user message.
   const images = imageBlocks(messages);
   const input = JSON.stringify({ type: "user", message: { role: "user", content: images.length ? [...images, { type: "text", text: prompt }] : prompt } }) + "\n";
-  let text = "", result = null, stopReason = null;
+  let text = "", result = null, stopReason = null, thought = false;
   try {
     const { code, stderr, early } = await runProcess({
       proc: h, input, signal, timeoutMs: s.timeoutMs,
@@ -258,8 +277,12 @@ export async function claudeCodeStream(s, messages, { onToken, signal, onStage }
         else if (ev.type === "system" && ev.subtype === "thinking_tokens") onStage?.({ stage: "thinking" });
         else if (ev.type === "stream_event") {
           const e = ev.event;
-          if (e?.type === "content_block_start" && e.content_block?.type === "thinking") onStage?.({ stage: "thinking" });
-          else if (e?.type === "content_block_delta" && e.delta?.type === "text_delta") {
+          if (e?.type === "content_block_start" && e.content_block?.type === "thinking") {
+            // dogfood: the trace says when the wait is the model thinking
+            if (!thought) trace("stream", `the model is thinking before it writes (${effortOf(s) || "its default"} effort), ${Date.now() - t0}ms in`);
+            thought = true;
+            onStage?.({ stage: "thinking" });
+          } else if (e?.type === "content_block_delta" && e.delta?.type === "text_delta") {
             const t = e.delta.text || "";
             if (t) { text += t; onToken?.(t); }
           } else if (e?.type === "message_delta") stopReason = e.delta?.stop_reason || stopReason;
@@ -282,7 +305,7 @@ export async function claudeCodeStream(s, messages, { onToken, signal, onStage }
     // The next request starts warm (unless this one was stopped), with the
     // usual instructions: a one-off request (describing a picture) doesn't
     // take the place of the common case. models: and with the model requests
-    // start on (haiku), also after one that went to the strong model.
+    // start on (sonnet), also after one that went to the strong model.
     if (!signal?.aborted) prewarmClaudeCode(s.warmAs || warmSettings(s)); // warmAs: the helper, for Chrome (daemon/bridge.js)
   }
 }

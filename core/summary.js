@@ -255,3 +255,14 @@ export function asReviewed(mod) {
   if (rest.kind === "manual" || rest.kind === "quick") delete rest.kind;
   return rest;
 }
+
+// Code shown for review (the install review, the share page, morse code).
+// Characters that change how code reads without being seen are written out
+// as \u202e: direction overrides and isolates (they can make a line display
+// in another order than it runs, "Trojan Source"), zero-width ones, and
+// control characters (escape sequences that hide or rewrite lines in a
+// terminal). Line breaks and tabs stay; a lone \r is a line break in JS too.
+const HIDDEN_CHARS = /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\u061c\u200b-\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069\ufeff]/g;
+export function shownCode(code) {
+  return String(code ?? "").replace(/\r\n?/g, "\n").replace(HIDDEN_CHARS, c => `\\u${c.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0")}`);
+}

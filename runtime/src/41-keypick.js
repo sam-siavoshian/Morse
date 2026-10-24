@@ -9,6 +9,7 @@
 // Only real key presses count (isTrusted), like every key Morse takes.
 
 const KEYPICK_COMBO = "Alt+ArrowDown";
+const WIDER_COMBO = "Alt+ArrowUp"; // dogfood: a bigger part around what the mouse chose
 
 const KeyPick = (() => {
   const PARTS = [
@@ -75,7 +76,7 @@ const KeyPick = (() => {
     hl.hidden = true;
     hintNote = "";
     setHint();
-    if (!quiet) announce("Stopped choosing");
+    if (!quiet) announce(t("kp.stopped"));
   }
   function choose() {
     const el = K.el;
@@ -89,18 +90,24 @@ const KeyPick = (() => {
     if (!K.list[K.i].isConnected || !shown(K.list[K.i])) { K.list = collect(); K.i = Math.min(K.i, K.list.length - 1); }
     if (K.list[K.i]) show(K.list[K.i]);
   }
-  function wider() {
-    const r = K.el.getBoundingClientRect();
-    for (let p = K.el.parentElement || K.el.getRootNode()?.host; p && p !== document.body && p !== document.documentElement; p = p.parentElement || p.getRootNode()?.host) {
+  // The part around el that is bigger on screen, or null.
+  function widerOf(el) {
+    const r = el.getBoundingClientRect();
+    for (let p = el.parentElement || el.getRootNode()?.host; p && p !== document.body && p !== document.documentElement; p = p.parentElement || p.getRootNode()?.host) {
       const q = p.getBoundingClientRect();
-      if (q.width * q.height > r.width * r.height + 4 && shown(p)) { K.wider.push(K.el); return show(p); }
+      if (q.width * q.height > r.width * r.height + 4 && shown(p)) return p;
     }
+    return null;
+  }
+  function wider() {
+    const p = widerOf(K.el);
+    if (p) { K.wider.push(K.el); return show(p); }
     announce(t("kp.biggest"));
   }
   function smaller() {
     if (K.wider.length) return show(K.wider.pop());
     const inside = K.list.find(x => x !== K.el && K.el.contains(x));
-    if (!inside) return announce("There's nothing smaller inside");
+    if (!inside) return announce(t("kp.smallest"));
     K.i = K.list.indexOf(inside);
     show(inside);
   }
@@ -113,6 +120,14 @@ const KeyPick = (() => {
         e.preventDefault();
         e.stopImmediatePropagation();
         start();
+      }
+      // dogfood: the mouse picks the smallest thing under it (a link in a
+      // row of GitLab's file list); Alt+↑ (⌥↑) takes the part around it.
+      else if (S.open && S.phase === "idle" && modal.hidden && S.target?.isConnected && matchCombo(e, WIDER_COMBO) && root.activeElement === input) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const p = widerOf(S.target);
+        p ? setTarget(p) : announce(t("kp.biggest"));
       }
       return;
     }

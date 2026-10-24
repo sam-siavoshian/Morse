@@ -30,7 +30,7 @@ morse status     # which desktop apps Morse is connected to, and the mods on in 
 
 | Message | What it means | What to do |
 |---|---|---|
-| “Word count” adds features that wait for “Allow User Scripts”. The new look already shows. | Chrome's “Allow User Scripts” switch is off for Morse, so a mod's code doesn't run at all. Its look still does. The Mods panel and the Morse button in Chrome's toolbar list every mod that is waiting. | Click **Open Morse's details** (or **Turn it on**), turn on **“Allow User Scripts”**, then come back to the tab. The waiting mods run then. |
+| “Word count” adds features that wait for “Allow User Scripts”. It stays off until then, so the page isn't left half changed. | Chrome's “Allow User Scripts” switch is off for Morse, so a mod's code doesn't run at all. Its look waits too: on its own it could hide something the code was meant to replace. Mods that only change how a site looks still run. The Mods panel and the Morse button in Chrome's toolbar list every mod that is waiting. | Click **Open Morse's details** (or **Turn it on**), turn on **“Allow User Scripts”**, then come back to the tab. The waiting mods run then. |
 | This site blocks scripts that Morse adds. Turn on “Allow User Scripts” for Morse, then try again. | The site has strict security settings, and Chrome's “Allow User Scripts” switch is off for Morse. | Open `chrome://extensions`, open Morse's details and turn on **“Allow User Scripts”**. |
 | The model's answer had no change in it. Try saying it another way. | The model answered, but not with a change. | Say it differently, or point at the part you mean. |
 | The change didn't do anything you can see here. Point at the part you mean, or say it another way. | The change ran, but nothing on the page looks different. | Point at the exact part, and try again. |
@@ -81,7 +81,7 @@ More: [Your controls](your-controls.md#mods-cant-freeze-or-slow-down-a-page).
 | Port … is already used by another program. Leave out --port and Morse picks a free one. | Run the command again without `--port`. |
 | Port … can be reached from other computers …, so Morse won't use it. | Quit the app and run `morse launch` again without extra network switches. |
 | Couldn't make the clip. Check that ffmpeg is installed and try again. | Install `ffmpeg`. |
-| “…” isn't a model name Morse can use. Check the spelling. | Check `morse help` for model names, like `opus`, `sonnet`, `haiku`. |
+| “…” isn't a model name Morse can use. Check the spelling. | Check `morse help` for model names, like `opus` or `sonnet`. |
 | Add --yes to install without being asked. | `morse install` needs a terminal to ask you. Add `--yes` if you already checked the mod. |
 
 In the terminal, the original error follows the plain sentence in grey, for

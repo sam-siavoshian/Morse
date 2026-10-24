@@ -7,16 +7,17 @@
 // apply the CSS/JS the way the hosts do (style tag + wrapModCode through the
 // helper kit), then run the case's checker in the page.
 //
-//   node evals/run.js                        train split, Claude Code haiku
+//   node evals/run.js                        train split, Claude Code, Automatic (what people get)
 //   node evals/run.js --split test           held-out cases (final report only)
-//   node evals/run.js --split all --model sonnet --label "sonnet spot check"
+//   node evals/run.js --split all --model opus --label "opus spot check"
 //   node evals/run.js --only t-covers-bigger,b-hide-ads --repeat 3
 //   node evals/run.js --no-probe             engine without the visible-effect check
-//   node evals/run.js --model haiku,sonnet,auto --concurrency 2
+//   node evals/run.js --model sonnet,opus,auto --concurrency 2
 //                                            models side by side, interleaved case by case so
 //                                            each sees the same load; "auto" is Automatic (core/route.js:
-//                                            haiku first, sonnet for hard requests and failed drafts),
-//                                            "fast"/"best" the two tiers; any other name is that one model
+//                                            sonnet for small tweaks, opus for new UI, features,
+//                                            restyles and failed drafts), "fast"/"best" the two
+//                                            tiers; any other name is that one model
 //
 // Writes evals/results/<timestamp>.json and appends a row to evals/README.md.
 
@@ -42,7 +43,7 @@ const HERE = path.join(ROOT, "evals");
 
 const { values: opt } = parseArgs({ options: {
   split: { type: "string", default: "train" },
-  model: { type: "string", default: "haiku" },
+  model: { type: "string", default: "auto" },
   provider: { type: "string", default: "claude-code" },
   only: { type: "string", default: "" },
   sites: { type: "string", default: "" }, // e.g. the hard apps: shop,home,builder,logs,tasks,sketch,wiki
@@ -73,7 +74,9 @@ const armSettings = Object.fromEntries(arms.map(a => [a, {
   provider: opt.provider, ...(opt.effort && { effort: opt.effort }), pool: a,
   ...(MODEL_MODES.includes(a) ? { model: "", mode: a, tiers: resolveTiers(opt.provider), pinned: false } : { model: a, pinned: true }),
 }]));
-setWarmPoolSize(Math.min(+opt.concurrency, 4), { keepOthers: arms.length > 1 }); // each case is its own person with its own bar
+// Each case is its own person with its own bar: one case's warm-as-you-type
+// for the strong model doesn't stop the first model waiting for another case.
+setWarmPoolSize(Math.min(+opt.concurrency, 4), { keepOthers: arms.length > 1 || arms.includes("auto") });
 
 // ---- static server for the demo sites (CSP like demo/serve.js) -------------
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css" };
@@ -101,6 +104,7 @@ const CONTEXT_SRC = readFileSync(path.join(ROOT, "runtime", "src", "20-context.j
   .split(/\nconst hostEl\b/)[0];
 const INSTALL_CONTEXT = `(() => {
   const S = { app: null, target: null };
+  const getLanguage = () => "en"; // the runtime's language (core/i18n.js), which context() sends along
   ${CONTEXT_SRC}
   window.__morseEval = {
     context(sel) {
@@ -152,7 +156,12 @@ async function runCase(c, rep, arm = arms[0]) {
     // Apps settle meanwhile (timers, first re-renders): at least SETTLE_MS.
     const typing = Math.max(+opt["typing-ms"], SETTLE_MS);
     if (+opt["typing-ms"] > 0) prewarm(settings);
+    // models: the bar's warm as you type (runtime/src/50-bar.js warmAsYouType):
+    // the words are there a second before Enter (the pause before pressing it),
+    // and Automatic gets the model they start on ready.
+    const typed = +opt["typing-ms"] > 0 ? setTimeout(() => prewarm(settings, c.request), Math.max(0, +opt["typing-ms"] - 1000)) : null;
     await page.waitForTimeout(typing);
+    clearTimeout(typed);
     const tEnter = Date.now();
     const { c: context, ms: ctxMs } = await page.evaluate(sel => window.__morseEval.timedContext(sel), c.target);
     const tCtx = Date.now();

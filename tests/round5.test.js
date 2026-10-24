@@ -596,6 +596,42 @@ test("guard: CSS that hides a class the sidebar shares with the docs is caught a
   assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById("column1")).display), "none", "the streamed style is back");
 });
 
+// dogfood: VSCodium's workbench is a full-window backdrop with the parts on
+// it. `.split-view-view:has(#sidebar)` matched the outer view too and hid every
+// part; the backdrop under each spot still counted as "the page".
+const WORKBENCH = `<!doctype html><body style="margin:0"><div class="monaco-workbench" style="position:fixed;inset:0;background:#1e1e1e">
+  <div class="split-view-container" style="position:absolute;inset:0">
+    <div class="split-view-view" style="position:absolute;left:0;top:0;width:1200px;height:800px">
+      <div class="split-view-view" style="position:absolute;left:0;top:0;width:48px;height:800px">${"<a>☰</a>".repeat(6)}</div>
+      <div class="split-view-view" style="position:absolute;left:48px;top:0;width:300px;height:800px"><div id="sidebar">${Array.from({ length: 30 }, (_, i) => `<div style="height:24px">file${i}.js</div>`).join("")}</div></div>
+      <div class="split-view-view" style="position:absolute;left:348px;top:0;width:852px;height:800px">${Array.from({ length: 30 }, (_, i) => `<div style="height:24px;color:#ddd">const line${i} = ${i};</div>`).join("")}</div>
+    </div></div></div>`;
+test("guard: hiding every part of a full-window app (VS Code's workbench) is caught; hiding its sidebar isn't", { skip }, async () => {
+  const { pageCollapse, collapseHarm } = await import("../core/guard.js");
+  const ctx = await (await browser()).newContext({ viewport: { width: 1200, height: 800 } });
+  cleanups.push(() => ctx.close());
+  const page = await ctx.newPage();
+  await page.setContent(WORKBENCH);
+  const check = css => page.evaluate(([src, css]) => (0, eval)(`(${src})`)(css, ""), [pageCollapse.toString(), css]);
+  const all = await check(".split-view-view:has(#sidebar) { position: fixed !important; transform: translateX(-100%) !important; }");
+  assert.ok(collapseHarm(all), JSON.stringify(all));
+  assert.equal(collapseHarm(await check(".split-view-view:has(> #sidebar) { display: none !important; }")), null);
+});
+
+test("guard: code that hides most of the page once it runs gets the repair round, and is turned off", async () => {
+  const replies = ["TITLE: Auto-hide sidebar\n```js\nmorse.watch('.split-view-view', v => v.style.display = 'none');\n```", "TITLE: Auto-hide sidebar\n```js\nmorse.watch('#sidebar', v => v.style.display = 'none');\n```"];
+  const prompts = [], ran = [];
+  registerProvider("r5-jscollapse", async (s, m, { onToken }) => { prompts.push(m.at(-1).content); const r = replies[prompts.length - 1]; onToken(r); return r; });
+  let showing = 40;
+  const exec = async js => { ran.push(js); showing = /split-view-view/.test(js) ? 2 : js ? 33 : 40; return { ok: true }; };
+  const probe = async () => ({ fp: String(showing), unmatched: [], shown: showing });
+  const res = await runMorse({ settings: { provider: "r5-jscollapse" }, request: "hide the sidebar until I hover", context: { url: "x", title: "x" }, emit: () => {}, exec, probe });
+  assert.equal(res.ok, true);
+  assert.equal(res.attempts, 2);
+  assert.match(prompts[1], /your change hid most of the page: of 40 spots/);
+  assert.deepEqual(ran.map(j => (j ? (/split/.test(j) ? "bad" : "good") : "off")), ["bad", "off", "good"]);
+});
+
 test("guard: a change that hides most of the page gets the repair round; one that keeps doing it is never kept", async () => {
   const replies = ["TITLE: Hide sidebar\n```css\ndiv.interior { display: none !important; }\n```", "TITLE: Hide sidebar\n```css\n#column2 { display: none !important; }\n```"];
   const prompts = [];

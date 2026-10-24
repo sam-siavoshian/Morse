@@ -1,0 +1,13 @@
+{
+  "name": "morse-desktop",
+  "productName": "Morse",
+  "version": "0.2.0",
+  "description": "Morse for your computer: open your apps with Morse, choose your model and connect Chrome, without a terminal.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "main.js",
+  "devDependencies": {
+    "electron-builder": "26.0.12"
+  }
+}

@@ -1,4 +1,4 @@
-// Your style, fitted to one site by a real model: Claude Code with haiku
+// Your style, fitted to one site by a real model: Claude Code with sonnet
 // through the claude-code provider (the Morse helper's harness), on Tunes,
 // where the generic "bigger text" (zoom 121%) pushes the player bar below the
 // bottom of the window. Fit to each site is on; the first visit asks the
@@ -15,7 +15,7 @@ const { chromium } = createRequire(import.meta.url)("playwright");
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const OUT = path.resolve(root, process.env.SHOTS || path.join("docs", "screenshots"));
 const provider = process.env.MORSE_PROVIDER || "claude-code";
-const model = process.env.MORSE_MODEL || (provider === "claude-code" ? "haiku" : "demo");
+const model = process.env.MORSE_MODEL || (provider === "claude-code" ? "sonnet" : "demo");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-style-real-"));
 process.env.MORSE_HOME = home;

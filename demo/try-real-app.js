@@ -5,7 +5,7 @@
 //   → the model writes it → Enter to save → quit the app → morse launch again
 //   → is the change back?
 //
-//   DISPLAY=:93 MORSE_PROVIDER=claude-code MORSE_MODEL=haiku node demo/try-real-app.js \
+//   DISPLAY=:93 MORSE_PROVIDER=claude-code MORSE_MODEL=sonnet node demo/try-real-app.js \
 //     --app codium --window 'workbench\.html' --point '.statusbar' \
 //     --ask 'make the status bar taller with bigger text' \
 //     --check '(document.querySelector(".statusbar")?.offsetHeight || 0) > 22' \

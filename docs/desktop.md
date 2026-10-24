@@ -8,6 +8,9 @@ changes websites: you point at something, say what you want, and keep it.
 This page explains how to do that, what Morse does to the app (and what it
 doesn't), and which apps can't work.
 
+Rather not use a terminal? [Morse Desktop](desktop-app.md) does the same in a
+window: it lists your apps, opens them with Morse and disconnects them.
+
 ![Tunes, a real Electron app, with the Morse bar open](screenshots/121-electron-bar.png)
 
 ## The short version

@@ -16,7 +16,7 @@ const primaryMod = PLATFORM === "mac" ? "⌘" : "Ctrl";
 // Key caps for a combo or a list of key names.
 function caps(keys) {
   const parts = Array.isArray(keys) ? keys : comboParts(keys, PLATFORM);
-  return parts.length ? `<span class="caps">${parts.map(k => `<kbd>${esc(k)}</kbd>`).join("")}</span>` : `<span class="caps off">Off</span>`;
+  return parts.length ? `<span class="caps">${parts.map(k => `<kbd>${esc(k)}</kbd>`).join("")}</span>` : `<span class="caps off">${t("keys.off")}</span>`;
 }
 
 function reducedMotion() { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } }

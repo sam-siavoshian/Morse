@@ -7,10 +7,15 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildMessages } from "../core/prompt.js";
+import en from "../core/locales/en.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
 
 const skip = noBrowser;
-const SRC = readFileSync(new URL("../runtime/src/20-context.js", import.meta.url), "utf8");
+// core/i18n.js is inlined before this in the runtime: getLanguage() and t(), in English here.
+const SRC = `const getLanguage = () => "en";
+const __en = ${JSON.stringify(en)};
+const t = (id, v = {}) => String(__en[id] ?? id).replace(/\\{(\\w+)\\}/g, (m, k) => v[k] ?? m);
+${readFileSync(new URL("../runtime/src/20-context.js", import.meta.url), "utf8")}`;
 let browser, page;
 
 const SECRETS = {
@@ -66,7 +71,6 @@ after(() => browser?.close());
 
 const contextFor = sel => page.evaluate(`(() => {
   const S = { app: null, target: ${JSON.stringify(sel)} ? document.querySelector(${JSON.stringify(sel || "x")}) : null };
-  const getLanguage = () => "en"; // core/i18n.js, inlined before this in the runtime
   ${SRC}
   return context();
 })()`);
@@ -115,11 +119,25 @@ test("the context reaches into open shadow roots and same-origin frames", { skip
   assert.match(ctx.outline, /x-panel >>> button\[part="go"\]|x-panel >>> button/);
   const inside = await page.evaluate(`(() => {
     const S = { app: null, target: document.querySelector("x-panel").shadowRoot.querySelector("button") };
-    const getLanguage = () => "en";
     ${SRC}
     return context().target;
   })()`);
   assert.equal(inside.selector.split(" >>> ")[0], "body > x-panel");
   assert.match(inside.facts, /inside the open shadow root of <x-panel>/);
   assert.match(inside.facts, /x-panel::part\(go\)/);
+});
+
+// dogfood: in VSCodium "hide the sidebar until I hover" left a 300px gap
+// twice; the panes are placed by the app's own code, and the model now hears so.
+test("panes placed by the app's own code (VS Code's split view) get a note; a normal page doesn't", { skip }, async () => {
+  assert.doesNotMatch((await contextFor(null)).notes, /Panes placed/);
+  const p2 = await browser.newPage({ viewport: { width: 1200, height: 800 } });
+  await p2.setContent(`<div class="monaco-split-view2"><div class="split-view-container" style="position:relative;height:700px">
+    <div class="split-view-view" style="position:absolute;left:0px;width:48px;height:700px"></div>
+    <div class="split-view-view" style="position:absolute;left:48px;width:300px;height:700px"><div id="sidebar">Explorer</div></div>
+    <div class="split-view-view" style="position:absolute;left:348px;width:852px;height:700px"><div id="editor">Editor</div></div></div></div>`);
+  const notes = await p2.evaluate(`(() => { const S = { app: null, target: null }; ${SRC}; return context().notes; })()`);
+  await p2.close();
+  assert.match(notes, /Panes placed by the app's own code: .*split-view-container > [^ ]*split-view-view \(2,/);
+  assert.match(notes, /leaves an empty gap/);
 });

@@ -42,13 +42,13 @@ const GodQuick = (() => {
   menu.className = "gm-menu menu";
   menu.id = "m-page-tools";
   menu.setAttribute("role", "menu");
-  menu.setAttribute("aria-label", "Page tools");
+  tBind(menu, "aria-label", "quick.title");
   menu.hidden = true;
   bar.append(menu);
 
   const quickMod = k => S.mods.find(m => m.kind === "quick" && m.edits?.[0]?.kind === k);
   const where = () => S.appName || location.host || t("panel.thisPage");
-  const titleFor = e => e.kind === "zoom" ? `Text size ${Math.round(zoomFor(e.level) * 100)}%` : PAGE_TOOLS[e.kind].title;
+  const titleFor = e => e.kind === "zoom" ? t("quick.zoom", { pct: Math.round(zoomFor(e.level) * 100) }) : PAGE_TOOLS[e.kind] ? t(`quick.${e.kind}`) : PAGE_TOOLS[e.kind]?.title;
 
   function render() {
     const z = quickMod("zoom");
@@ -93,7 +93,12 @@ const GodQuick = (() => {
     if (!menu.contains(root.activeElement)) return;
     if (menuKeys(e, menu)) e.stopImmediatePropagation();
   }, true);
-  listen("pointerdown", e => {
+  // A press anywhere else closes it. Outside Morse the window hears it; inside,
+  // the shadow root does: seen from the window, a closed shadow root (every
+  // page but the tests') hides the menu from composedPath, so a press on a
+  // menu item would close the menu before its click.
+  listen("pointerdown", e => { if (!menu.hidden && !e.composedPath().includes(hostEl)) close(); }, true);
+  root.addEventListener("pointerdown", e => {
     if (!menu.hidden && !e.composedPath().some(n => n === menu || n === btn)) close();
   }, true);
   new MutationObserver(() => { if (bar.hidden) close(); }).observe(bar, { attributes: true, attributeFilter: ["hidden"] });
@@ -101,7 +106,7 @@ const GodQuick = (() => {
   async function create(edits) {
     const { css, js } = compileEdits(edits);
     const title = titleFor(edits[0]);
-    const mod = await call("mods.save", { draft: { id: uid(), title, prompt: `Page tool: ${title}`, css, js, url: location.href, app: S.app, kind: "quick", edits } });
+    const mod = await call("mods.save", { draft: { id: uid(), title, prompt: t("quick.prompt", { title }), css, js, url: location.href, app: S.app, kind: "quick", edits } });
     S.mods.push(mod);
     await applyMod(mod);
     return mod;
@@ -138,7 +143,7 @@ const GodQuick = (() => {
     if (!m) await create(edits);
     else {
       const { css, js } = compileEdits(edits), title = titleFor(edits[0]);
-      const next = await call("mods.save", { mod: { ...m, title, prompt: `Page tool: ${title}`, css, js, edits, enabled: true, updated: new Date().toISOString() } });
+      const next = await call("mods.save", { mod: { ...m, title, prompt: t("quick.prompt", { title }), css, js, edits, enabled: true, updated: new Date().toISOString() } });
       S.mods = S.mods.map(x => (x.id === next.id ? next : x));
       await applyMod(next);
     }

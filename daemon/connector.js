@@ -28,6 +28,7 @@ import { startLabel, modelNames } from "../core/route.js"; // models: "Claude Co
 import { settingsLabel, currentSettings } from "./models.js"; // also registers the Claude Code / Codex providers
 import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
+import { readWords } from "../core/languages.js"; // the bar's words in a language besides English ("i18n.words")
 import { prewarm } from "../core/providers.js";
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
@@ -518,13 +519,15 @@ export class Connector {
       case "ui.load": // perf: the overlay is evaluated on first use, into the world that asked
         await s.send("Runtime.evaluate", { expression: UI, contextId: caller.world });
         return true;
+      case "i18n.words": // the overlay carries English only: the words of the language it shows, from core/locales/
+        return readWords(msg.lang);
       case "mods.list":
         return Style.list(await modsFor(await here()), await here()); // your-style hook: the style first
       case "mods.save": {
         const where = await here();
         if (msg.draft) {
           await this.ownMod(msg.draft.id, where);
-          trace("save", `Saved "${msg.draft.title || msg.draft.id}" to ~/.morse/mods/ · it runs again every time this app opens`);
+          trace("save", `Saved "${msg.draft.title || msg.draft.id}" to ${path.join(HOME, "mods")} · it runs again every time this app opens`); // dogfood: MORSE_HOME, not always ~/.morse
           return saveMod(createMod({ ...msg.draft, url: where.url, app, model: msg.draft.model || settingsLabel(this.settings) }));
         }
         validateMod(msg.mod);
@@ -551,9 +554,10 @@ export class Connector {
         return readClipboard();
       case "clipboard.put":
         return putClipboard({ ...msg.item, from: { ...msg.item?.from, app: this.app?.name || msg.item?.from?.app || null } });
-      case "warm": { // speed: the bar opened; get the model ready (core/providers.js prewarm)
+      case "warm": { // speed: the bar opened, or the person is typing; get the model ready (core/providers.js prewarm)
         const settings = await this.freshSettings();
-        if (settings?.provider && settings.provider !== "none") prewarm({ ...settings, mode: (await loadPrefs()).modelMode }); // models: warms the first model
+        const typed = typeof msg.request === "string" ? msg.request.slice(0, 500) : ""; // models: the strong model for new UI and features
+        if (settings?.provider && settings.provider !== "none") prewarm({ ...settings, mode: (await loadPrefs()).modelMode }, typed); // models: warms the model the request starts on
         return true;
       }
       case "exec":

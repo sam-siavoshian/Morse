@@ -127,6 +127,43 @@ and app, never to what the message claims.
   `status.js` (sessions for `morse status`), `control.js` (pause, export,
   install, code), `cli.js` (the `morse` command), `setup.js` (`morse setup`).
 
+### Morse Desktop (`desktop-app/`)
+
+The app people install instead of the `morse` command ([user page](../desktop-app.md),
+[releasing](releasing.md)). Its Electron main process imports the daemon
+modules and runs them in place, so there is no separate Node:
+
+- [`service.js`](../../desktop-app/service.js) holds what the window can do,
+  with no Electron in it: the app list (`discoverApps`, processes, session
+  files), Open with Morse and Connect (`connectApp` + `startSession` from
+  `desktop.js`, the same steps as `morse launch`, several sessions in one
+  process), the model (`setup.js` `detectBackends`, `saveChoice`,
+  `checkModel`), the Morse helper (`createBridge`, `startPairing`, run in the
+  background), mods (`store.js`), the off switch (`control.js` pause) and
+  `morse doctor`'s rows. Its own settings are `~/.morse/desktop.json`.
+- [`ipc.js`](../../desktop-app/ipc.js) is the only door from the window: one
+  channel per request, argument checks, and a sender check (the main frame
+  of Morse's window, on `morse-app://ui/index.html`). Errors come back as
+  `{ error }` in plain words.
+- [`preload.cjs`](../../desktop-app/preload.cjs) exposes those requests as
+  `window.morse` (frozen; plain values only) and nothing else.
+- [`main.js`](../../desktop-app/main.js): the window (context isolation,
+  sandbox, no Node, no webviews; it can't navigate or open windows, and asks
+  for no permissions), the page served from a `morse-app://` scheme with a
+  CSP that allows only its own files, the tray, open at login (Electron on
+  macOS and Windows, `~/.config/autostart` on Linux), and `morse://open`
+  links (they only show the window).
+- The Morse helper runs inside it as `createBridge({ app: "desktop", ask })`
+  (one-click pairing, onboarding v2): the extension asks,
+  the window shows “Allow Chrome to use your Claude Code?”, and only Allow
+  makes a token. The requests are in [Pairing](pairing.md).
+- The first run is one screen: the model Morse found by itself (checked
+  once) and the apps to open. Opening one, or Skip, leads to the main window.
+
+Sessions Morse Desktop holds are ordinary session files with its own pid, so
+`morse status` and `morse stop` work on them, and apps a terminal connected
+show as connected in the window.
+
 ### The Morse helper (`daemon/bridge.js`)
 
 `morse serve` runs a small HTTP server on 127.0.0.1:7457 so the extension
@@ -270,10 +307,10 @@ text. The file runs unchanged in Node and in the extension's service worker.
 
 | Provider | What it is |
 |---|---|
-| `claude-code` | The `claude` CLI on the user's subscription ([`daemon/harness.js`](../../daemon/harness.js)): `claude -p` with every tool off, no MCP servers, no saved session, in an empty folder under `~/.morse` |
-| `codex` | The `codex` CLI: `codex exec` in a read-only sandbox, in an empty folder |
-| `anthropic` | An Anthropic API key, through the official SDK. `claude-opus-5-5` at low effort unless `claude-sonnet-5-5` or `claude-haiku-5-5` is chosen; refusals become a plain message |
-| `openai` | An OpenAI API key, or any OpenAI-compatible server (`--base-url`); chat completions, streamed |
+| `claude-code` | The `claude` CLI on the user's subscription ([`daemon/harness.js`](../../daemon/harness.js)): `claude -p` with every tool off, no MCP servers, no saved session, in an empty folder under `~/.morse`. Under Automatic `--model sonnet`, `opus` for new UI, features and restyles |
+| `codex` | The `codex` CLI: `codex exec` in a read-only sandbox, in an empty folder. Under Automatic the plan's model at medium effort, high for new UI, features and restyles |
+| `anthropic` | An Anthropic API key, through the official SDK, at low effort. Under Automatic `claude-sonnet-5-5` for small tweaks and `claude-opus-5-5` for new UI, features and restyles ([`core/route.js`](../../core/route.js)); one model chosen is used for everything. Refusals become a plain message |
+| `openai` | An OpenAI API key, or any OpenAI-compatible server (`--base-url`); chat completions, streamed. Under Automatic `gpt-5`, then `gpt-5` with `reasoning_effort: "high"` |
 | `helper` | The extension's client for the Morse helper |
 | `demo` | A test fixture that replays canned replies ([`core/demo.js`](../../core/demo.js)); never offered to users |
 
@@ -295,7 +332,7 @@ Config lives in `~/.morse/config.json` (mode 600); `ANTHROPIC_API_KEY` and
   "css": "…",
   "js": "…",
   "enabled": true,
-  "model": "Claude Code · haiku",
+  "model": "Claude Code · opus",
   "created": "2026-10-24T10:00:00.000Z",
   "updated": "2026-10-24T10:00:00.000Z"
 }
@@ -366,8 +403,10 @@ Mods are code running inside apps you're signed into, so:
   CDP isolated world on the desktop), so the app's or website's scripts can't
   reach Morse's host API: your prompt history, the clipboard, other sites'
   mods, exports or your model. Host requests are answered for the page that
-  asked. The share page's Install button opens Morse's own review; only a
-  click there installs.
+  asked. Only Morse's share page can ask for an install: a page that loaded
+  in `/RRAA/share/` on Morse's site, not any other page on that address
+  (every GitHub Pages project of the same owner shares it). Its Install
+  button opens Morse's own review; only a click there installs.
 - `morse launch` opens a debugging port on 127.0.0.1. While it's open, **any
   local process can attach to that app**, which is the same trust level as
   anything else running as you, but worth knowing. Quit the app normally to

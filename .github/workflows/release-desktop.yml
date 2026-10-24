@@ -1,0 +1,109 @@
+name: Release Morse Desktop
+
+# Builds Morse Desktop for Linux (AppImage), macOS (dmg) and Windows (NSIS
+# installer) when a version tag is pushed, and attaches them to a draft
+# release. Signing runs only when its secrets are set (docs/dev/releasing.md);
+# without them the builds are unsigned and the log says so.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write # the draft release
+
+concurrency:
+  group: release-desktop-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Linux AppImage, os: ubuntu-latest, flag: --linux, files: "dist/desktop-app/*.AppImage" }
+          - { name: macOS dmg, os: macos-latest, flag: --mac, files: "dist/desktop-app/*.dmg" }
+          - { name: Windows installer, os: windows-latest, flag: --win, files: "dist/desktop-app/*.exe" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix desktop-app
+
+      # ---- signing: each step only when its secrets are there
+      - name: macOS signing and notarization
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          CSC_LINK: ${{ runner.os == 'macOS' && secrets.MAC_CSC_LINK || '' }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+        run: |
+          if [ -n "$CSC_LINK" ]; then echo "SIGN=1" >> "$GITHUB_ENV"; echo "Signing with the Developer ID certificate."; else echo "::warning::No MAC_CSC_LINK secret: the dmg is unsigned."; echo "CSC_IDENTITY_AUTO_DISCOVERY=false" >> "$GITHUB_ENV"; fi
+          if [ -n "$APPLE_ID" ]; then echo "Notarizing with Apple."; else echo "::warning::No APPLE_ID secret: the app isn't notarized."; fi
+      - name: Windows signing
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: |
+          if [ -n "$WIN_CSC_LINK" ] || [ -n "$AZURE_TENANT_ID" ]; then echo "Signing the installer."; else echo "::warning::No WIN_CSC_LINK or Azure Trusted Signing secrets: the installer is unsigned."; echo "CSC_IDENTITY_AUTO_DISCOVERY=false" >> "$GITHUB_ENV"; fi
+
+      - name: Build
+        shell: bash
+        env:
+          # macOS (empty when the secret isn't set, and builder.config.js then skips signing)
+          CSC_LINK: ${{ runner.os == 'macOS' && secrets.MAC_CSC_LINK || '' }}
+          CSC_KEY_PASSWORD: ${{ runner.os == 'macOS' && secrets.MAC_CSC_KEY_PASSWORD || '' }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Windows: a .pfx, or Azure Trusted Signing
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_SIGNING_ENDPOINT: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          AZURE_CERT_PROFILE: ${{ secrets.AZURE_CERT_PROFILE }}
+          AZURE_PUBLISHER_NAME: ${{ secrets.AZURE_PUBLISHER_NAME }}
+        run: |
+          # An empty secret is the same as none.
+          for v in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID WIN_CSC_LINK WIN_CSC_KEY_PASSWORD AZURE_TENANT_ID AZURE_CLIENT_ID AZURE_CLIENT_SECRET AZURE_SIGNING_ENDPOINT AZURE_SIGNING_ACCOUNT AZURE_CERT_PROFILE AZURE_PUBLISHER_NAME; do
+            [ -z "${!v}" ] && unset "$v"
+          done
+          node desktop-app/build.js ${{ matrix.flag }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: morse-desktop-${{ runner.os }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+
+  release:
+    name: Draft release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: Draft a release with the three downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --title "Morse $TAG" --notes "Morse Desktop for Linux, macOS and Windows. See docs/desktop-app.md."
+          gh release upload "$TAG" out/* --repo "$GITHUB_REPOSITORY" --clobber

@@ -303,7 +303,10 @@ async function applyMod(m) {
     if (!live()) return;
     if (!guard.ok) look = guardLook();
     const r = await call("exec", { modId: m.id, js: m.js });
-    if (r?.waiting) return waitingAdd(m);
+    // dogfood: a mod's style is often half of a change its code finishes
+    // (hide the small date, then add a big one): alone it can leave the page
+    // worse than before. While the code waits, so does the style.
+    if (r?.waiting) { setCss(m.id, ""); return waitingAdd(m); }
     health(m, r);
     if (r && !r.ok && !guardPaused(m, r)) { warn(m.title, r.error); notify({ id: "mod.failedHere", vars: { title: m.title } }); }
   }
@@ -569,7 +572,7 @@ function notify(text, idle) {
   const go = () => loadUI().catch(() => {});
   idle ? pristine.requestIdleCallback(go, { timeout: 3000 }) : go();
 }
-const UI_EVENTS = new Set(["toggle", "panel", "install.request"]);
+const UI_EVENTS = new Set(["toggle", "open", "panel", "install.request", "request"]);
 listeners.add(msg => {
   if (msg.type === "settings.changed" && msg.settings) { setBootPrefs(msg.settings); hostPrefs = true; }
   if (ui) return; // the UI handles everything else once it's here

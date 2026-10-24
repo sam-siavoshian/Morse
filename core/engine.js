@@ -157,6 +157,19 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
         advance("exec");
         continue;
       }
+      // dogfood (guard): code that hid most of the page, which the CSS check
+      // before it lands can't see (VSCodium: a JS-only "hide the sidebar" hid
+      // every part of the window).
+      const after = before?.shown >= 8 && !signal?.aborted ? await probe([]).catch(() => null) : null;
+      const gone = after ? collapseHarm({ before: before.shown, after: after.shown }) : null;
+      if (gone) {
+        await exec("").catch(() => {}); // same mod id: turns the draft off
+        emit({ type: "css", css: "" });
+        previous = { raw, error: gone.model.replace("your CSS hid", "your change hid") };
+        repairs.push(previous.error);
+        last = { ...last, css: "", js: "", error: gone.user };
+        continue;
+      }
     }
     // ---- class names the page notes call generated: it works now and stops
     // working with the app's next release. The kind of slip a stronger model

@@ -18,6 +18,8 @@ const Control = B.control;
 
 const here = () => ({ url: location.href, app: S.app });
 const hereName = () => S.appName || controlKey(here());
+// dogfood: in a desktop app the off switch says "in Obsidian", not "on this page"
+const offWords = id => (S.mode === "desktop" && S.appName ? `${id}App` : id);
 const pausedHere = () => isPaused({ pause: Control.pause }, here());
 function modHeld(m) { return Control.off || pausedHere() || Control.held.has(m.id); }
 const running = m => !!m.enabled && !modHeld(m);
@@ -55,8 +57,8 @@ function rememberOff() {
 async function offSwitch() {
   if (Control.off) return turnBackOn();
   const { off } = await changeHeld(() => { Control.off = true; rememberOff(); });
-  controlToast(off ? t("ctl.offN", { n: off }) : t("ctl.offNone"), [[t("ctl.turnBackOn"), turnBackOn]]);
-  announce?.(t("ctl.offSay"));
+  controlToast(off ? t(offWords("ctl.offN"), { n: off, app: S.appName }) : t(offWords("ctl.offNone"), { app: S.appName }), [[t("ctl.turnBackOn"), turnBackOn]]);
+  announce?.(t(offWords("ctl.offSay"), { app: S.appName }));
 }
 async function turnBackOn() {
   const { on } = await changeHeld(() => { Control.off = false; rememberOff(); });
@@ -112,7 +114,7 @@ function controlReady() {
   const m = sus && S.mods.find(x => x.id === sus.id);
   if (sus && (!m || !m.enabled)) { forgive(sus.id); }
   else if (m) showSuspect(m);
-  else if (Control.off && S.mods.some(x => x.enabled)) controlToast(t("ctl.offNone"), [[t("ctl.turnBackOn"), turnBackOn]]);
+  else if (Control.off && S.mods.some(x => x.enabled)) controlToast(t(offWords("ctl.offNone"), { app: S.appName }), [[t("ctl.turnBackOn"), turnBackOn]]);
 }
 function forgive(id) {
   Control.held.delete(id);
@@ -179,8 +181,8 @@ function summaryHtml(m) {
     ${s.notes.map(n => `<p class="ctl-warn" data-s="${n.id}"><b>${t("ctl.note")}</b>${esc(n.text)}</p>`).join("")}`;
 }
 function codeHtml(m) {
-  return `${m.css.trim() ? `<label>${t("code.style")} <span class="dim">CSS</span></label><pre class="code ctl-pre" tabindex="0" role="region" aria-label="${esc(t("code.styleCode"))}">${esc(m.css.trim())}</pre>` : ""}
-    ${m.js.trim() ? `<label>${t("code.script")} <span class="dim">${t("code.scriptRuns")}</span></label><pre class="code ctl-pre" tabindex="0" role="region" aria-label="${esc(t("code.scriptCode"))}">${esc(m.js.trim())}</pre>` : ""}
+  return `${m.css.trim() ? `<label>${t("code.style")} <span class="dim">CSS</span></label><pre class="code ctl-pre" tabindex="0" role="region" aria-label="${esc(t("code.styleCode"))}">${esc(shownCode(m.css.trim()))}</pre>` : ""}
+    ${m.js.trim() ? `<label>${t("code.script")} <span class="dim">${t("code.scriptRuns")}</span></label><pre class="code ctl-pre" tabindex="0" role="region" aria-label="${esc(t("code.scriptCode"))}">${esc(shownCode(m.js.trim()))}</pre>` : ""}
     ${!m.css.trim() && !m.js.trim() ? `<p class="dim">${t("ctl.noCode")}</p>` : ""}`;
 }
 
@@ -281,7 +283,7 @@ function controlPanel() {
   const sus = Control.suspect && S.mods.find(m => m.id === Control.suspect.id && Control.held.has(m.id));
   const notes = [
     Control.pause.all && `<div class="ctl-note"><span>${t("ctl.pausedAllNote")}</span><button data-c="resume-all">${t("ctl.resume")}</button></div>`,
-    Control.off && `<div class="ctl-note"><span>${t("ctl.offNote")}</span><button data-c="back-on">${t("ctl.turnBackOn")}</button></div>`,
+    Control.off && `<div class="ctl-note"><span>${esc(t(offWords("ctl.offNote"), { app: S.appName }))}</span><button data-c="back-on">${t("ctl.turnBackOn")}</button></div>`,
     sus && `<div class="ctl-note"><span>${t("ctl.heldNote", { title: esc(sus.title) })}</span><button data-c="keep-off">${t("ctl.keepOff")}</button><button data-c="run-again">${t("btn.turnOn")}</button></div>`,
   ].filter(Boolean).join("");
   panel.querySelector("header")?.insertAdjacentHTML("afterend", `<div class="ctl-strip">
