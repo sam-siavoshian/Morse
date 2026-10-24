@@ -112,6 +112,17 @@ test("the empty bar suggests the mods others made for this site; nothing is fetc
 
 test("Try it runs the mod without saving it, and Undo takes it all away", { skip }, async () => {
   await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').click();
+  // The same review as Install…, and nothing on the page before Try it.
+  const card = ui(".modal .card");
+  await card.waitFor();
+  assert.match(await card.locator("header").textContent(), /Try “Sleep timer”\?.*Nothing runs until you press Try it/s);
+  assert.match(await card.textContent(), /What it does.*Adds buttons to the page/s);
+  assert.match(await card.textContent(), new RegExp(`For 127\\.0\\.0\\.1:${port}`));
+  assert.equal(await card.locator(".ctl-code pre").count(), 2, "Show code is there");
+  await page.waitForTimeout(200);
+  assert.equal(await page.locator(".morse-sleep").count(), 0, "nothing runs before Try it");
+  assert.equal(await page.locator('style[data-morse-css="tunes-sleep-timer"]').count(), 0);
+  await card.locator("[data-a=install]").click();
   await page.locator(".morse-sleep").waitFor();
   assert.equal(await page.locator('style[data-morse-css="tunes-sleep-timer"]').count(), 1);
   await ui(".gl-trial").waitFor();
@@ -137,6 +148,7 @@ test("Save keeps a tried mod, with where it came from", { skip }, async () => {
   const grid = page.locator('[data-testid="album-grid"]').first();
   assert.equal(await grid.evaluate(e => getComputedStyle(e).columnGap), "18px");
   await ui('.gl-item[data-glid="tunes-big-covers"] [data-gl=try]').click();
+  await ui(".modal .card [data-a=install]").click(); // Try it, in the review
   await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-testid="album-grid"]')).columnGap === "24px");
   // Save from the strip at the top (the panel can be closed meanwhile).
   await ui(".gl-trial [data-gl=keep]").click();

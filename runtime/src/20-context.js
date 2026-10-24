@@ -13,7 +13,9 @@ const cssEsc = s => (globalThis.CSS && CSS.escape ? CSS.escape(s) : String(s).re
 //     token/key/session values in URLs, card numbers (Luhn-checked)
 //   - email addresses
 // redact(string) returns it scrubbed; redact(clonedElement) scrubs the clone
-// in place; redact(object or array) scrubs every string in it.
+// in place (each attribute through redactAttr below too); redact(object or
+// array) scrubs every string in it. This is the one gate: whatever else
+// scrubs early (redactAttr, redactCss) only adds to it.
 const REDACT = [
   [/\beyJ[\w-]{6,}\.[\w-]{6,}\.[\w-]{6,}/g, "[token]"],
   [/\b(?:sk|pk|rk)[-_](?:live|test|ant|proj)?[-_]?[A-Za-z0-9_-]{16,}/g, "[token]"],
@@ -39,7 +41,7 @@ function redact(x) { // redact
       if (tag === "input" && !KEEP_VALUE.test(type)) e.removeAttribute("value");
       if (tag === "input" && /^hidden$/i.test(type)) for (const a of [...e.attributes]) if (!/^(type|name|id)$/.test(a.name)) e.removeAttribute(a.name);
       if (tag === "textarea") e.textContent = "";
-      for (const a of [...e.attributes]) { const v = redact(a.value); if (v !== a.value) e.setAttribute(a.name, v); }
+      for (const a of [...e.attributes]) { const v = redact(redactAttr(e, a.name, a.value)); if (v !== a.value) e.setAttribute(a.name, v); }
     }
     const w = (x.ownerDocument || document).createTreeWalker(x, NodeFilter.SHOW_TEXT);
     for (let n; (n = w.nextNode());) { const v = redact(n.textContent); if (v !== n.textContent) n.textContent = v; }
@@ -90,10 +92,40 @@ function deepAll(sel, root = document) {
   return [];
 }
 
+// ---- What never goes to the model from the page's markup: what was typed
+// into fields (React and others mirror it into the value attribute), hidden
+// fields (CSRF tokens), attributes named or shaped like secrets, email
+// addresses, and the query strings of signed URLs. The page's visible text
+// is what the model is for; these aren't.
+const REDACTED = "[redacted]";
+const SECRET_NAME = /password|passwd|passcode|\bpass\b|pwd|secret|token|csrf|xsrf|nonce|\bauth(?!or)|session|cookie|api[-_]?key|signature|\botp\b|one-time|cvc|cvv|card-?(num|number|no)\b|cc-?(num|number|exp|csc)|iban|\bssn\b/i;
+const EMAILS = /[\w.+-]+@[\w-]+(\.[\w-]+)+/g;
+// A JWT, a long hex string, or a long run of mixed-case letters and digits
+// (not a path or a slug like "album-cover-2024-large").
+const TOKENISH = v => /^eyJ[\w-]{8,}\.[\w-]{8,}/.test(v) || /^[a-f0-9]{32,}$/i.test(v)
+  || (/^[A-Za-z0-9+/=_-]{24,}$/.test(v) && /\d/.test(v) && /[a-z]/.test(v) && /[A-Z]/.test(v) && (v.match(/[-_/]/g) || []).length < 3);
+const decoded = v => { try { return decodeURIComponent(v); } catch { return v; } };
+// a=1&token=abc -> a=1&token=[redacted]; every value of a URL whose query is long or secret-looking.
+const redactUrl = s => String(s).replace(/([?&#][^=&#\s"')]*=)([^&#\s"')]*)/g, (m, k, v) => (SECRET_NAME.test(k) || /^(sig|s|k|key|code|state|access_token|id_token|t|x-amz-[\w-]+|expires)=$/i.test(k.slice(1)) || TOKENISH(decoded(v).slice(0, 400)) ? k + REDACTED : m));
+function redactAttr(el, name, value) {
+  const n = name.toLowerCase(), v = String(value ?? "");
+  if (n === "value" && el.localName === "input" && !KEEP_VALUE.test((el.getAttribute("type") || "text").toLowerCase())) return v ? REDACTED : v;
+  if (n === "class" || n === "id" || n === "role" || n === "type" || n === "tabindex") return v;
+  if (n === "value" && el.localName === "input" && SECRET_NAME.test(`${el.getAttribute("name") || ""} ${el.id || ""} ${el.getAttribute("autocomplete") || ""}`)) return REDACTED;
+  if (n !== "name" && n !== "autocomplete" && SECRET_NAME.test(n.replace(/^(data|aria)-/, ""))) return v ? REDACTED : v;
+  if (TOKENISH(v)) return REDACTED;
+  let out = v.replace(EMAILS, "[email]");
+  if (/^(href|src|srcset|action|formaction|poster|ping|style|data-[\w-]+)$/.test(n)) out = redactUrl(out).replace(/url\((["']?)([^)"']*)\1\)/g, (m, q, u) => `url(${q}${redactUrl(u)}${q})`);
+  return out;
+}
+// CSS text (rules, computed backgrounds): signed URLs keep their path only.
+const redactCss = s => String(s || "").replace(/url\((["']?)([^)"']*)\1\)/g, (m, q, u) => `url(${q}${u.replace(/[?#].*$/, u.includes("?") ? "?…" : "")}${q})`);
+
 function stableAttr(el) {
   for (const a of ["data-testid", "data-test", "data-qa", "data-id", "aria-label", "name", "role", "placeholder", "title"]) {
     const v = el.getAttribute?.(a);
-    if (v && v.length < 60 && !looksHashed(v)) return `[${a}="${cssEsc(v)}"]`;
+    // Never an email or a token in a selector: the selector goes to the model.
+    if (v && v.length < 60 && !looksHashed(v) && redactAttr(el, a, v) === v) return `[${a}="${cssEsc(v)}"]`;
   }
   return "";
 }
@@ -188,6 +220,15 @@ function describe(el) {
 }
 function snippet(el, { styles = false } = {}) {
   const clone = el.cloneNode(true);
+  // Redacted before anything is cut short (the element itself included).
+  const clean = c => {
+    for (const a of [...c.attributes]) {
+      const v = redactAttr(c, a.name, a.value);
+      if (v !== a.value) c.setAttribute(a.name, v);
+    }
+    if (c.localName === "textarea" && c.textContent) c.textContent = REDACTED;
+  };
+  if (clone.nodeType === 1) clean(clone);
   // n is a node of the clone and o the same node in the page: what an open
   // shadow root renders is shown as a <shadow-root> first child.
   const walk = (n, o, depth) => {
@@ -197,6 +238,7 @@ function snippet(el, { styles = false } = {}) {
       if (c.nodeType !== 1) { c.remove(); return; }
       if (/^(SCRIPT|STYLE|NOSCRIPT)$/.test(c.tagName) || c.hasAttribute("data-morse-ui")) { c.remove(); return; }
       if (c.tagName === "svg") { c.innerHTML = ""; }
+      clean(c);
       for (const a of [...c.attributes]) {
         if ((a.name === "style" && !styles) || a.name.startsWith("on")) c.removeAttribute(a.name);
         else if (a.value.length > 80) c.setAttribute(a.name, a.value.slice(0, 80) + "…");
@@ -217,7 +259,8 @@ function snippet(el, { styles = false } = {}) {
   walk(clone, el, 0);
   if (!styles) clone.removeAttribute?.("style");
   else if ((clone.getAttribute?.("style") || "").length > 80) clone.setAttribute("style", clone.getAttribute("style").slice(0, 80) + "…");
-  const html = redact(clone).outerHTML;
+  for (const a of [...(clone.attributes || [])]) if (a.name.startsWith("on")) clone.removeAttribute(a.name);
+  const html = redact(clone).outerHTML; // redact
   return html.length > 3000 ? html.slice(0, 3000) + "…" : html;
 }
 // The page outline the model sees: landmarks, headings and controls, plus the
@@ -230,7 +273,7 @@ const OUTLINE_WAYS = /setting|preference|account|profile|option|notification|pri
 const OUTLINE_BUDGET = [28, 20, 10, 16]; // ways around + landmarks, controls, other links, inside closed menus
 // A field's own text is never its label (a textarea's text is what was typed).
 const outlineLabel = el => (el.getAttribute("aria-label") || (/^(input|textarea)$/.test(el.localName) ? "" : el.innerText || el.textContent) || el.getAttribute("placeholder") || el.getAttribute("title") || "")
-  .trim().split("\n")[0].replace(/\s+/g, " ").slice(0, 40);
+  .trim().split("\n")[0].replace(/\s+/g, " ").replace(EMAILS, "[email]").slice(0, 40);
 const isMenuTrigger = el => el.localName === "summary" || (el.getAttribute("aria-haspopup") || "false") !== "false";
 // Where a control that isn't showing lives: a closed <details>, or a
 // menu/popover/dialog whose opener we can name. { menu, opener } for a closed
@@ -359,7 +402,7 @@ function rulesFor(el, max = 5) {
       if (out.length >= max) return;
       if (r.selectorText) {
         if (/^\s*\*\s*$/.test(r.selectorText)) continue;
-        try { if (el.matches(r.selectorText)) out.push(clip(r.cssText, 240)); } catch {}
+        try { if (el.matches(r.selectorText)) out.push(clip(redactCss(r.cssText), 240)); } catch {}
       } else if (r.cssRules && (!r.media || win.matchMedia(r.media.mediaText).matches)) walk(r.cssRules);
     }
   };
@@ -376,7 +419,7 @@ function looks(el) {
   const cs = styleOf(el), r = el.getBoundingClientRect();
   const bits = [`${Math.round(r.width)}×${Math.round(r.height)}px`, `display ${cs.display}`];
   if (cs.position !== "static") bits.push(`position ${cs.position}`);
-  bits.push(`color ${cs.color}`, `background ${cs.backgroundColor}${cs.backgroundImage !== "none" ? " + " + clip(cs.backgroundImage, 70) : ""}`);
+  bits.push(`color ${cs.color}`, `background ${cs.backgroundColor}${cs.backgroundImage !== "none" ? " + " + clip(redactCss(cs.backgroundImage), 70) : ""}`);
   bits.push(`font ${cs.fontSize} ${cs.fontWeight}`);
   if (cs.borderRadius !== "0px") bits.push(`radius ${cs.borderRadius}`);
   return bits.join(", ");
@@ -645,7 +688,7 @@ function layout(maxLines = 70, top = document.body) {
     const text = clip(own || (el.children.length <= 3 && !/^(input|textarea|select)$/.test(el.localName) ? el.innerText : ""), 32);
     // Repeated items show their attributes: that's where state lives (data-unread, aria-selected).
     const attrs = n < 2 ? "" : [...el.attributes].filter(a => !/^(class|style|on|href$|src$|value$)/.test(a.name)).slice(0, 5)
-      .map(a => `${a.name}="${clip(a.value, 20)}"`).join(" ");
+      .map(a => `${a.name}="${clip(redactAttr(el, a.name, a.value), 20)}"`).join(" ");
     // A list's container with no name of its own gets its full selector.
     const bare = n < 2 && selName(el) === el.localName && [...el.children].filter(k => groupKey(k) === groupKey(el.children[0] || el)).length >= 3;
     return "  ".repeat(depth) + (n > 1 ? `${kindOf(el)} ×${n}` : selName(el)) + (attrs ? ` [${attrs}]` : "") + ` (${f.join(", ")})` + (text ? ` "${text}"` : "") + (bare ? ` = ${selectorFor(el)}` : "");

@@ -8,6 +8,45 @@ const PAGE_SUGGESTIONS = [
   { label: "Easier to read", prompt: "Make the text on this page easier to read: a bit larger, more line height, comfortable line length" },
 ];
 
+// Three good first changes for THIS page, from what's on it: ads, a player, a
+// long read, a box to type in, its colors (first-run hook: the first try
+// should be one that works and shows). Read once per address, only when the
+// bar shows its suggestions, never on page load.
+const PAGE_IDEAS = {
+  ads: { label: "Hide the ads", prompt: "Hide the ads and sponsored boxes on this page" },
+  media: { label: "Sleep timer", prompt: "Add a sleep timer that pauses playback after a chosen number of minutes" },
+  read: { label: "Easier to read", prompt: "Make the text on this page easier to read: a bit larger, more line height, comfortable line length" },
+  type: { label: "Word count", prompt: "Show a live word count under the main text box" },
+  dark: { label: "Dark mode", prompt: "Give this page a dark mode" },
+  light: { label: "Light mode", prompt: "Give this page a light mode" },
+  popups: { label: "Hide pop-ups", prompt: "Hide the pop-ups, banners and boxes that float over the page" },
+};
+let pageIdeasFor = "", pageIdeas = null;
+function pageSuggestions() {
+  if (pageIdeas && pageIdeasFor === location.href) return pageIdeas;
+  const shown = el => !el.closest("[data-morse-ui]") && el.getClientRects().length > 0;
+  const some = (sel, test = shown) => { try { return [...document.querySelectorAll(sel)].slice(0, 60).some(test); } catch { return false; } };
+  const found = [];
+  if (some('[data-ad], .ad-slot, .adsbygoogle, [id^="google_ads"], [aria-label="Sponsored" i], [aria-label="Advertisement" i], [class~="ad"], [class~="ads"], [class*="advert"], iframe[src*="doubleclick"], iframe[src*="googlesyndication"]')) found.push("ads");
+  if (some('audio, video, [data-testid*="player" i], [aria-label*="player" i], [class*="player" i]')) found.push("media");
+  const words = (document.querySelector("article, main, [role=main]")?.innerText || "").length;
+  if (words > 600 || [...document.querySelectorAll("p")].slice(0, 80).filter(p => (p.textContent || "").length > 120).length >= 3) found.push("read");
+  if (some('textarea, [contenteditable="true"], [contenteditable=""], [role="textbox"]', el => shown(el) && el.getBoundingClientRect().width > 200)) found.push("type");
+  found.push(pageTheme() === "dark" ? "light" : "dark");
+  // Floating boxes: fixed to the window, not a top or side bar.
+  const floats = [...(document.body?.children || [])].slice(0, 80).some(el => {
+    if (!shown(el)) return false;
+    const cs = getComputedStyle(el), r = el.getBoundingClientRect();
+    return cs.position === "fixed" && r.width < innerWidth * 0.9 && r.height > 40 && r.top > 60;
+  });
+  if (floats) found.push("popups");
+  const list = found.slice(0, 3).map(k => PAGE_IDEAS[k]);
+  const themed = found.includes("light") || found.includes("dark");
+  for (const s of [PAGE_IDEAS.read, ...PAGE_SUGGESTIONS]) if (list.length < 3 && !list.some(x => x.label === s.label) && !(themed && s.label === "Dark mode")) list.push(s);
+  pageIdeasFor = location.href;
+  return (pageIdeas = list);
+}
+
 function looksMedia(el) {
   if (el.closest("audio, video") || el.querySelector?.("audio, video")) return true;
   const MEDIA = /\b(play(er|back)?|pause|track|shuffle|repeat|volume|scrub|seek|now-?playing|transport)\b/i;
@@ -27,7 +66,7 @@ function looksText(el) {
 
 function suggestionsFor(el) {
   const steps = showOnceChips(); if (steps) return steps; // show-once hook: 64-show-once.js
-  if (!el || el === document.body || el === document.documentElement) return PAGE_SUGGESTIONS;
+  if (!el || el === document.body || el === document.documentElement) return pageSuggestions(); // first-run hook
   if (looksMedia(el)) return [
     { label: "Sleep timer", prompt: "Add a sleep timer that pauses playback after a chosen number of minutes" },
     { label: "Playback speed", prompt: "Add playback speed buttons (0.75×, 1×, 1.25×, 1.5×, 2×)" },

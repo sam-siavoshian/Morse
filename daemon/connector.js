@@ -20,10 +20,11 @@ import { mkdirSync, watch } from "node:fs";
 import path from "node:path";
 import { CDPSession, listTargets } from "./cdp.js";
 import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putClipboard } from "./store.js";
-import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches } from "../core/mod.js";
+import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
 import { runMorse } from "../core/engine.js";
-import { settingsLabel } from "./models.js"; // also registers the Claude Code / Codex providers
+import { settingsLabel, currentSettings } from "./models.js"; // also registers the Claude Code / Codex providers
+import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
 import { Generations } from "../core/cancel.js";
@@ -33,6 +34,7 @@ import { HOME, listMods } from "./store.js";
 import { classifyTarget, describeTarget } from "./targets.js";
 import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
 import { GALLERY_REQUESTS, handleGallery } from "./gallery.js"; // gallery hook: Mods for this site
+import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
@@ -73,12 +75,6 @@ const cleanup = ids => `(() => { try {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// Where a mod applies, compared: same app, same set of hosts.
-const matchKey = m => JSON.stringify({ app: m?.app || null, hosts: [...(Array.isArray(m?.hosts) ? m.hosts : [])].map(String).sort() });
-const sameMatch = (a, b) => !!a && !!b && matchKey(a) === matchKey(b);
-// A match no wider than the caller's own site, in the caller's own app.
-const onlyHere = (m, where) => !!m && (m.app || null) === (where.app || null)
-  && Array.isArray(m.hosts) && m.hosts.length > 0 && m.hosts.every(h => h === hostOf(where.url));
 
 export class Connector {
   // watch: keep waiting when the app quits and attach again when it's back.
@@ -176,6 +172,7 @@ export class Connector {
     const source = how.frame ? BOOT.frame : BOOT.window;
     this.pages.set(target.id, s);
     this.windows.set(target.id, w);
+    s.hang = new HangGuard(s, { onFroze: (id, how) => this.froze(s, w, id, how) }); // guard hook: frozen pages (guard.js)
     this.everAttached = true;
     s.on("close", () => {
       this.pages.delete(target.id);
@@ -259,6 +256,10 @@ export class Connector {
     await this.boot(s, w, source).catch(() => {});
     readTitle();
     this.log(`  ✓ connected to ${title}${kind === "window" ? "" : ` (${kind})`}`);
+    if (!this.hinted && kind === "window") { // first-run hook: say what to do next, once
+      this.hinted = true;
+      configuredHotkeys().then(k => k.open && this.log(`\n  In ${this.app?.name || title || "the app"}, press ${k.open}, point at something and say what to change.\n`), () => {});
+    }
     this.changed();
   }
 
@@ -311,6 +312,14 @@ export class Connector {
 
   // Detach from every window: stop injecting into new pages, take the bar and
   // the mods off the open ones, close the sessions. The app keeps running.
+  // first-run hook: `morse launch` started before any model was set up. Once
+  // `morse setup` has run (the bar says to), pick it up without a relaunch.
+  async freshSettings() {
+    if (this.settings?.provider && this.settings.provider !== "none") return this.settings;
+    try { const s = await currentSettings(); if (s.provider !== "none") this.settings = s; } catch {}
+    return this.settings;
+  }
+
   async stop() {
     this.running = false;
     this.state = "stopped";
@@ -372,7 +381,12 @@ export class Connector {
   async exec(s, caller, modId, js) {
     const ctx = caller.main;
     if (ctx == null) return { ok: false, error: "The page isn't ready yet. Try again." };
-    const r = await s.send("Runtime.evaluate", { expression: wrapModCode(modId, js), contextId: ctx, returnByValue: true });
+    const done = s.hang?.exec(modId, ctx, js); // guard hook: while mod code is here, notice if the page freezes
+    let r;
+    try { r = await s.send("Runtime.evaluate", { expression: wrapModCode(modId, js), contextId: ctx, returnByValue: true }); }
+    catch (e) { if (!/Execution was terminated/.test(e.message) && !s.hang?.froze(modId)) throw e; r = null; }
+    finally { done?.(); }
+    if (!r || s.hang?.froze(modId)) return { ok: false, error: FROZE_ERROR };
     if (r.exceptionDetails) return { ok: false, error: r.exceptionDetails.exception?.description?.split("\n")[0] || r.exceptionDetails.text };
     const res = r.result?.value || { ok: false, error: "no result" };
     if (!res.ok) return res;
@@ -393,6 +407,21 @@ export class Connector {
     return r.exceptionDetails ? null : r.result?.value ?? null;
   }
 
+  // guard hook: mod code froze this window and was stopped (daemon/guard.js).
+  // A saved mod is turned off with why, and the page reloads clean; a change
+  // still being made just fails that run (the model gets its second try).
+  async froze(s, w, id, { running } = {}) {
+    const where = describeTarget(w).title;
+    const mod = id ? await getMod(id).catch(() => null) : null;
+    if (mod && mod.js === s.hang.code(id)) {
+      if (mod.enabled) await saveMod({ ...mod, enabled: false, paused: { why: "froze", at: new Date().toISOString(), error: FROZE_ERROR, reloaded: true } });
+      this.modsChanged(s);
+      this.log(`  ! “${mod.title}” froze ${where}. Morse stopped it, turned it off and reloaded the page.`);
+      await s.send("Page.reload").catch(() => {});
+    } else if (id) this.log(`  ! ${running ? "A change being made" : "A change you were trying"} froze ${where}. Morse stopped it.`);
+    else this.log(`  ! ${where} stopped responding. Morse stopped the script that was running.`);
+  }
+
   // caller: { world, main, frameId } of the document whose runtime asked.
   async handle(s, caller, msg) {
     const reply = (result, error) => this.push(s, caller, { reply: msg.id, result, error });
@@ -407,14 +436,15 @@ export class Connector {
     const here = async () => ({ url: await (at ||= this.callerUrl(s, caller)), app });
     // App-wide in desktop apps, per site in a browser.
     const historyScope = async () => app || hostOf((await here()).url);
-    if (CONTROL_REQUESTS.has(msg.type)) return handleControl(msg, await here()); // user control (control.js)
-    if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
+    if (CONTROL_REQUESTS.has(msg.type)) return handleControl({ ...msg, tab: `frame:${caller.frameId}` }, await here()); // user control (control.js); per window, not the page's own tab id
+    if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: await this.freshSettings() }); // onboarding hook
     if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, await here()); // gallery hook: Mods for this site
     switch (msg.type) {
       case "hello":
         this.grantMic(s, (await here()).url);
         return { mode: "desktop", app, appName: this.app?.name || null, label: settingsLabel(this.settings),
-          settings: await loadPrefs(), voice: await cachedVoiceStatus() };
+          settings: await loadPrefs(), voice: await cachedVoiceStatus(),
+          debug: process.env.MORSE_DEBUG === "1" || undefined }; // status for tests (97-boot.js debugStatus)
       case "mods.list":
         return modsFor(await here());
       case "mods.save": {
@@ -428,7 +458,7 @@ export class Connector {
         // A saved mod can be changed, not widened: its match stays what it
         // was, or is exactly this app (or this site). Wider matches ("*",
         // other hosts) only come in through a confirmed install (mods.import).
-        if (!sameMatch(msg.mod.match, existing?.match) && !onlyHere(msg.mod.match, where))
+        if (!saveKeepsScope(msg.mod.match, existing?.match, where))
           throw new Error("That mod is for another app or site");
         return saveMod(msg.mod);
       }
@@ -457,6 +487,7 @@ export class Connector {
         if (caller.main == null) return null;
         return (await s.send("Runtime.evaluate", { expression: `globalThis.morse?.__stats?.(${JSON.stringify(msg.modId)}) ?? null`, contextId: caller.main, returnByValue: true })).result?.value ?? null;
       case "generate": {
+        if (!this.settings?.provider || this.settings.provider === "none") await this.freshSettings(); // first-run hook
         if (!this.settings?.provider || this.settings.provider === "none")
           throw new Error("No model is connected. Run morse setup in a terminal to choose one.");
         const t0 = Date.now();

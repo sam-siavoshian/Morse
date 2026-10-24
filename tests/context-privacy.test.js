@@ -101,7 +101,7 @@ test("the redact helper scrubs strings, cloned elements and objects", { skip }, 
       obj: redact({ a: ["x@y.org"], b: { c: "?api_key=zzz" }, n: 3 }),
     };
   })()`);
-  assert.equal(out.html, '<input type="password"><input type="checkbox" value="yes"><input type="submit" value="Send"><textarea></textarea><a href="https://x.test/cb?code=[redacted]&amp;state=1">go</a>');
+  assert.equal(out.html, '<input type="password"><input type="checkbox" value="yes"><input type="submit" value="Send"><textarea></textarea><a href="https://x.test/cb?code=[redacted]&amp;state=[redacted]">go</a>');
   assert.equal(out.text, "mail me at [email], card [card], order 1234 5678 9012 3456, Bearer [token]", "Luhn: only card-like numbers");
   assert.deepEqual(out.obj, { a: ["[email]"], b: { c: "?api_key=[redacted]" }, n: 3 });
 });

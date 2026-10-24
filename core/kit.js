@@ -2,43 +2,84 @@
 // injected as source text into whichever world executes mods (the page's main
 // world over CDP, the USER_SCRIPT world in the extension, or a userscript).
 // Every resource a mod creates is tracked so turning the mod off fully undoes it.
+//
+// Guards: a mod can't freeze, slow down or break the page it runs in. Every
+// callback a mod hands the kit (watch, on, every, after, el's `on`, and the
+// setTimeout / setInterval / requestAnimationFrame / MutationObserver it uses
+// directly, which wrapModCode shadows for it) is timed with performance.now.
+// A mod is paused, says why in __stats, and the page hears "morse:paused"
+// (runtime/src/64-guard.js turns it off and tells the person) when it:
+//   - keeps the page busy: callbacks over BUSY_MS of a second for BUSY_SECS
+//     seconds in a row, or over STALL_MS in any one second
+//   - keeps reacting to the page: over FLOOD new watch matches a second for
+//     FLOOD_SECS seconds, or one observer called over MO_FLOOD times a second
+//   - adds too much: over MANY_NOW elements in one second, or over MANY a
+//     second for MANY_SECS seconds (morse.el, and what its callbacks insert
+//     while the kit watches the page for any morse.watch)
+// Changes a mod makes inside its callbacks never trigger a watch or any mod's
+// observer, so it can't feed back into itself: they are the mod's new state.
+//
+// Re-renders: when the page wipes what a watch callback did to an element
+// (the elements it added, the classes, inline styles, attributes or text it
+// set), the watch puts it back or runs the callback again. { live: true } also
+// runs it again whenever the element or its content changes (rows a
+// virtualized list reuses). "host >>> inside" selectors reach into open shadow
+// roots and same-origin frames (watch, $, $$, byText, css(text, where)). every() and setInterval run at
+// most every MIN_EVERY ms. Only the first LOG errors of a mod reach the console.
+// A loop that never returns can't be stopped from inside the page: the desktop
+// host stops it over CDP (daemon/guard.js) and asks __hung() whose it was.
 
 function installMorseKit() {
   if (globalThis.morse && globalThis.morse.__kit) return;
   const mods = new Map();
+  // On the desktop the kit shares the page's world; Morse's boot captured the
+  // built-ins before the page could replace them. Elsewhere use our own.
+  const P = globalThis[Symbol.for("morse.pristine")] || {};
+  const MO = P.MutationObserver || MutationObserver;
+  const raf = P.requestAnimationFrame || (fn => requestAnimationFrame(fn));
+  const caf = P.cancelAnimationFrame || (id => cancelAnimationFrame(id));
+  const setT = P.setTimeout || ((fn, ms) => setTimeout(fn, ms));
+  const clearT = P.clearTimeout || (id => clearTimeout(id));
+  const setI = P.setInterval || ((fn, ms) => setInterval(fn, ms));
+  const clearI = P.clearInterval || (id => clearInterval(id));
+  const now = P.now || (() => performance.now());
+
+  // ---- guard budgets (see the top of this file); tests may lower them
+  const L = { BUSY_MS: 200, BUSY_SECS: 3, STALL_MS: 1000, FLOOD: 1000, FLOOD_SECS: 3, MO_FLOOD: 250,
+    MANY: 2000, MANY_SECS: 5, MANY_NOW: 20000, MIN_EVERY: 100, LOG: 3, KEEP_ERRORS: 20 };
+  const paused = new Map(); // mod id -> why it was paused, until it runs again
+  const own = new Set();    // every mod's own MutationObservers
+  let cur = null;           // the mod whose code is running (for __hung)
+  let depth = 0;            // > 0 while any mod's code is running
 
   function ctxFor(id) {
     if (mods.has(id)) return mods.get(id);
-    const c = { id, cleanups: [], errors: [], observers: [], watches: [], syncs: [], made: new Set() };
+    const c = { id, cleanups: [], errors: [], nerr: 0, observers: new Set(), watches: [], timers: new Set(), frames: new Set(),
+      els: [], elsMax: 256, ms: 0, hits: 0, in: 0, t1: 0, k: 0, g: { w: now(), t: 0, n: 0, h: 0, hot: 0, bulk: 0, flood: 0 } };
     mods.set(id, c);
     return c;
   }
 
-  function guard(c, fn) {
-    return function (...args) {
-      if (c.dead) return; // the mod was turned off; a queued callback must not run
-      const fail = e => { c.errors.push(String(e && e.stack || e)); console.warn("[morse]", c.id, e); };
-      try {
-        const r = fn.apply(this, args);
-        if (r && typeof r.then === "function") r.then(null, fail); // async handlers (show-once hook)
-        return r;
-      } catch (e) { fail(e); }
-      // What the mod's own callbacks change is the mod's doing: watches take
-      // it as the new state instead of "putting it back".
-      finally { if (!c.inScan) for (const sync of c.syncs || []) sync(); }
-    };
+  function fail(c, e, log = true) {
+    c.nerr++;
+    if (c.errors.length < L.KEEP_ERRORS) c.errors.push(String(e && e.stack || e));
+    // A callback that fails on every change would fill the console.
+    if (!log) return;
+    if (c.nerr <= L.LOG) console.warn("[morse]", c.id, e);
+    else if (c.nerr === L.LOG + 1) console.warn("[morse]", c.id, "keeps failing; later errors are counted in morse.__stats, not logged");
   }
 
-  // "host >>> inside": into an open shadow root or a same-origin frame.
+  // ---- "host >>> inside": into an open shadow root or a same-origin frame.
   function inner(el) {
-    if (el.shadowRoot) return el.shadowRoot;
+    if (!el) return null;
+    if (el.shadowRoot && !el.hasAttribute("data-morse-ui")) return el.shadowRoot;
     if (el.localName === "iframe" || el.localName === "frame") {
       try { const d = el.contentDocument; return d && d.documentElement ? d : null; } catch { return null; }
     }
     return null;
   }
-  // Every match of a selector that may contain ">>>". onRoot(root, via) is
-  // told about each shadow root / frame document crossed.
+  // Every match of a selector that may contain ">>>"; onRoot(root, host) hears
+  // about each shadow root or frame document crossed.
   function query(selector, onRoot) {
     const parts = String(selector).split(/\s*>>>\s*/);
     let scopes = [document];
@@ -51,63 +92,284 @@ function installMorseKit() {
     }
     return [];
   }
+  // Elements watch callbacks ran on: element -> Set of watches. Changes inside
+  // them mark them dirty, and the next frame checks what a re-render wiped.
+  const tracked = new WeakMap(), madeBy = new WeakMap();
+  let trackedAny = false;
+
+  // ---- morse.watch: one MutationObserver for every watch of every mod.
+  // Mutations are batched per animation frame and each watch only checks the
+  // subtrees that were added. Matches that appear without an insertion
+  // (attribute changes, :has(), sibling selectors) are caught by a full rescan
+  // at most once a second, and only while the page keeps changing: an idle
+  // page costs nothing. Morse's own nodes (overlay, mod elements, mod styles)
+  // never trigger anything, and neither does anything a mod's code changes.
+  const watches = new Set();
+  const MAX_ROOTS = 64, FULL_EVERY = 1000;
+  let observer = null, queued = false, roots = [], needFull = false, lastFull = 0, fullTimer = 0;
+  const OURS = "[data-morse],[data-morse-ui],[data-morse-css]";
+  const ours = n => !!(n && n.nodeType === 1 && n.closest(OURS));
+
+  function scanAll(w) {
+    let list;
+    try { list = w.deep ? query(w.selector, observeRoot) : document.querySelectorAll(w.selector); } catch (e) { fail(w.c, e, false); watches.delete(w); return; }
+    let now = 0;
+    for (const el of list) if (w.hit(el)) now++;
+    w.st.now = now;
+  }
+  function scanIn(w, root) {
+    if (w.deep) return scanAll(w); // through shadow roots and frames: look again everywhere
+    try {
+      if (root.matches(w.selector)) w.hit(root);
+      if (root.firstElementChild) for (const el of root.querySelectorAll(w.selector)) w.hit(el);
+    } catch (e) { fail(w.c, e, false); watches.delete(w); }
+  }
+  function flush() {
+    queued = false;
+    const full = needFull, list = roots;
+    needFull = false; roots = [];
+    if (full) lastFull = now();
+    for (const w of watches) {
+      const c = w.c;
+      if (c.dead) { watches.delete(w); continue; }
+      // guard: what its callbacks do is the mod's, timed from the first one
+      // (a frame where nothing new matched costs no clock reads)
+      const h0 = c.hits, prev = cur;
+      cur = c; depth++; c.in++; c.t1 = 0;
+      if (full) scanAll(w);
+      else if (w.deep && (list.length || w.dirty.size)) scanAll(w);
+      else for (const r of list) if (r.isConnected) scanIn(w, r);
+      // What a re-render wiped (or, live, what changed) on elements it handled.
+      if (w.dirty.size) { const d = [...w.dirty]; w.dirty.clear(); for (const el of d) if (el.isConnected) w.recheck(el); }
+      c.in--; depth--; cur = prev;
+      if (c.hits !== h0) { const t = now(); tally(c, c.t1 ? t - c.t1 : 0, dropOwn(), c.hits - h0, t); }
+      else dropOwn();
+      c.t1 = 0;
+    }
+    if (!watches.size) stopWatching();
+  }
+  const schedule = () => { if (!queued) { queued = true; raf(flush); } };
+  function onMutations(recs) {
+    let changed = false, dirty = false;
+    for (const r of recs) {
+      const t = r.target.nodeType === 1 ? r.target : r.target.parentElement;
+      if (t && ours(t)) continue;
+      // A change in or on an element a watch handled: check it next frame.
+      if (trackedAny) for (let x = r.target; x; x = r.type === "attributes" ? null : x.parentNode || x.host) {
+        const ws = tracked.get(x);
+        if (ws) for (const w of ws) { w.dirty.add(x); dirty = true; }
+      }
+      if (r.type !== "childList") continue;
+      for (const n of r.addedNodes) {
+        if (n.nodeType !== 1 || ours(n)) continue;
+        changed = true;
+        if (needFull) continue;
+        // Many separate insertions in one frame: one full scan is cheaper.
+        if (roots.length < MAX_ROOTS) roots.push(n); else { needFull = true; roots = []; }
+      }
+      if (!changed) for (const n of r.removedNodes) if (n.nodeType === 1 && !(n.hasAttribute("data-morse") || n.hasAttribute("data-morse-ui") || n.hasAttribute("data-morse-css"))) { changed = true; break; }
+    }
+    if (dirty) schedule();
+    if (!changed) return;
+    if (roots.length || needFull) schedule();
+    if (!fullTimer) fullTimer = setT(() => { fullTimer = 0; needFull = true; roots = []; schedule(); }, Math.max(0, lastFull + FULL_EVERY - now()));
+  }
+  // Classes, inline styles and text too: that's how re-renders undo a mod.
+  const OBSERVE = { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style", "hidden"], characterData: true };
+  let observedRoots = new WeakSet();
+  function startWatching() {
+    if (observer) return;
+    observer = new MO(onMutations);
+    // `document`, not <html>: watches survive document.open() and <html> swaps.
+    observer.observe(document, OBSERVE);
+  }
+  // A shadow root or frame document a watch looks into is watched too; a
+  // frame that loads another page is looked at again.
+  function observeRoot(root, host) {
+    if (!root || observedRoots.has(root)) return;
+    startWatching();
+    observedRoots.add(root);
+    observer.observe(root, OBSERVE);
+    if (root.nodeType === 9 && host && !observedRoots.has(host)) {
+      observedRoots.add(host);
+      host.addEventListener("load", () => { needFull = true; schedule(); });
+    }
+  }
+  function stopWatching() {
+    if (observer) observer.disconnect();
+    observer = null; observedRoots = new WeakSet();
+    if (fullTimer) clearT(fullTimer);
+    fullTimer = 0; roots = []; needFull = false;
+  }
+
+  // The mod changed an element a watch handled, or removed something a
+  // callback made: that is what it wants now, not something to put back.
+  function accept(r) {
+    if (r.type === "childList") {
+      for (const n of r.removedNodes) { const rec = madeBy.get(n); if (rec) rec.created = rec.created.filter(k => k !== n); }
+      return;
+    }
+    const ws = r.type === "attributes" && tracked.get(r.target);
+    if (ws) for (const w of ws) w.accept(r.target, r.attributeName);
+  }
+
+  // ---- guards: time, size and loops, per mod
+  // Before a mod's callback: changes still pending are the page's, so they
+  // are handled as usual (a mod's own observers get theirs first).
+  function takePage() {
+    if (observer) { const r = observer.takeRecords(); if (r.length) onMutations(r); }
+    for (const o of own) { const r = o.takeRecords(); if (r.length) o.deliver(r); }
+  }
+  // After it: what changed meanwhile is the mod's own doing. No watch and no
+  // observer sees it; inserted elements count toward its size budget.
+  function dropOwn() {
+    let made = 0;
+    if (observer) for (const r of observer.takeRecords()) {
+      if (trackedAny) accept(r);
+      for (const n of r.addedNodes) if (n.nodeType === 1 && !n.hasAttribute("data-morse")) made += 1 + n.getElementsByTagName("*").length;
+    }
+    for (const o of own) o.takeRecords();
+    return made;
+  }
+  function enter(c) {
+    const prev = cur;
+    if (!depth) takePage();
+    cur = c; depth++;
+    if (!c.in++) c.t1 = 0;
+    return prev;
+  }
+  function leave(c, prev, t0) {
+    const t = now();
+    if (!--c.in) c.t1 = 0;
+    depth--; cur = prev;
+    tally(c, t - t0, depth ? 0 : dropOwn(), 0, t);
+  }
+  // Adds to a mod's per-second budget and pauses it when it goes over.
+  function tally(c, dt, made, hits, t = now()) {
+    const g = c.g;
+    if (t - g.w >= 1000) {
+      const next = t - g.w < 2000; // the second right after, not after a quiet gap
+      g.hot = next && g.t > L.BUSY_MS ? g.hot + 1 : 0;
+      g.bulk = next && g.n > L.MANY ? g.bulk + 1 : 0;
+      g.flood = next && g.h > L.FLOOD ? g.flood + 1 : 0;
+      g.w = t; g.t = 0; g.n = 0; g.h = 0;
+    }
+    c.ms += dt; g.t += dt; g.n += made; g.h += hits;
+    if (c.dead) return;
+    const ms = Math.round(g.t);
+    if (g.t > L.STALL_MS) pause(c, "slow", `one burst of its code kept the page busy for ${ms} ms. Do far less work per call.`);
+    else if (g.t > L.BUSY_MS && g.hot >= L.BUSY_SECS - 1) pause(c, "slow", `its callbacks kept the page busy over ${L.BUSY_MS} ms of every second for ${L.BUSY_SECS} seconds (${ms} ms in the last one). Do far less work per change: no loops over the whole page inside morse.watch callbacks, nothing heavy in morse.every.`);
+    else if (g.n > L.MANY_NOW || (g.n > L.MANY && g.bulk >= L.MANY_SECS - 1)) pause(c, "big", `it added ${g.n} elements to the page in one second. Add far fewer elements.`);
+    else if (g.h > L.FLOOD && g.flood >= L.FLOOD_SECS - 1) pause(c, "loop", `its morse.watch callbacks ran on over ${L.FLOOD} new elements a second for ${L.FLOOD_SECS} seconds: the page keeps rebuilding what the code changes, which runs the code again. Change those elements with CSS, or change something the page doesn't rebuild.`);
+  }
+  function pause(c, why, detail) {
+    if (c.dead) return;
+    paused.set(c.id, { why, error: `Morse paused it because ${detail}`, ms: Math.round(c.ms), at: Date.now() });
+    stop(c);
+    try { document.dispatchEvent(new CustomEvent("morse:paused", { detail: JSON.stringify({ id: c.id, why }) })); } catch {}
+  }
+  function stop(c) {
+    c.dead = true;
+    c.observers.forEach(o => { own.delete(o); o.disconnect(); });
+    for (const w of watches) if (w.c === c) watches.delete(w);
+    if (!watches.size) stopWatching();
+    c.timers.forEach(id => { clearT(id); clearI(id); });
+    c.frames.forEach(id => caf(id));
+    c.cleanups.reverse().forEach(f => { try { f(); } catch {} });
+    for (const r of c.els) r.deref()?.remove();
+    mods.delete(c.id);
+    // Always sweep: elements can outlive their context (e.g. a late callback).
+    document.querySelectorAll(`[data-morse="${CSS.escape(c.id)}"]`).forEach(e => e.remove());
+  }
+
+  // Runs a mod's callback: never after the mod is off, errors kept for the
+  // repair loop, time and changes counted against the mod.
+  function guard(c, fn) {
+    return function (...args) {
+      if (c.dead) return; // the mod was turned off; a queued callback must not run
+      const prev = enter(c), t0 = now();
+      try {
+        const r = fn.apply(this, args);
+        if (r && typeof r.then === "function") r.then(null, e => fail(c, e)); // async handlers (show-once hook)
+        return r;
+      } catch (e) { fail(c, e); }
+      finally { leave(c, prev, t0); }
+    };
+  }
+
+  // What mod code sees as setTimeout, setInterval, requestAnimationFrame,
+  // MutationObserver (and their clear/cancel): the page's own, guarded and
+  // tracked so turning the mod off stops them. Order matches SCOPE below.
+  function scope(c) {
+    const later = (set, clear, min) => function (fn, ms, ...args) {
+      if (typeof fn !== "function") return set(fn, ms);
+      const id = set(guard(c, function () { if (!min) c.timers.delete(id); fn.apply(this, args); }), min ? Math.max(min, +ms || 0) : ms);
+      c.timers.add(id);
+      return id;
+    };
+    const cancel = (clear, set) => id => { set.delete(id); clear(id); };
+    class Observer extends MO {
+      constructor(fn) {
+        let win = 0, n = 0;
+        const run = guard(c, fn);
+        super(function (recs, obs) {
+          const t = now();
+          if (t - win >= 1000) { win = t; n = 0; }
+          // Called back again and again within a second: a feedback loop.
+          if (++n > L.MO_FLOOD) return pause(c, "loop", `its MutationObserver was called ${n} times within a second: the code changes what it observes, so it runs again and again. Observe only what the page changes, or use morse.watch.`);
+          return run.call(this, recs, obs);
+        });
+        this.deliver = recs => run.call(this, recs, this);
+        c.observers.add(this);
+      }
+      observe(...a) { if (c.dead) return; own.add(this); return super.observe(...a); }
+      disconnect() { own.delete(this); return super.disconnect(); }
+    }
+    return [
+      later(setT, clearT, 0),
+      later(setI, clearI, L.MIN_EVERY),
+      cancel(clearT, c.timers),
+      cancel(clearI, c.timers),
+      fn => { const id = raf(guard(c, t => { c.frames.delete(id); fn(t); })); c.frames.add(id); return id; },
+      cancel(caf, c.frames),
+      Observer,
+    ];
+  }
+
+  // Elements a mod makes count toward its size budget; past it the mod is
+  // paused and making more throws, which ends a runaway loop.
+  function made(c) {
+    if (c.dead) throw new Error("Morse paused this mod");
+    c.g.n++;
+    if (c.g.n > L.MANY_NOW) { tally(c, 0, 0, 0); throw new Error("Morse paused this mod: it added too many elements"); }
+  }
 
   function api(c) {
     const tag = el => { if (el && el.setAttribute) el.setAttribute("data-morse", c.id); return el; };
-    c.syncs ||= [];
     const m = {
-      // fn(el) runs once for every current and future match. Apps re-render:
-      // when the app wipes what fn added (its elements, the classes, inline
-      // styles, attributes or text it set on el), the watch puts it back or
-      // runs fn again. With { live: true } fn also runs again whenever el or
-      // its content changes (rows a virtualized list reuses for other items);
-      // what fn did last time is undone first.
       watch(selector, fn, opts) {
         const live = !!(opts && opts.live);
-        const sel = String(selector);
         const seen = new WeakMap(); // element -> what fn did to it
-        const run = guard(c, fn);
-        // Match counts for __stats: a watch that never matches means the page
-        // changed under the mod (the panel offers to fix it).
-        const w = { selector: sel, now: 0, total: 0 };
-        c.watches.push(w);
-        const dirty = new Set(), madeBy = new WeakMap();
-        let queued = false;
-        const queue = () => {
-          if (queued || c.dead) return;
-          queued = true;
-          requestAnimationFrame(() => { queued = false; scan(); });
+        const run = el => {
+          if (c.dead) return;
+          if (!c.t1) c.t1 = now();
+          try { fn(el); } catch (e) { fail(c, e); }
+          // Many matches at once with a slow callback: stop now, not after all of them.
+          if (!(++c.k & 15) && now() - c.t1 > L.STALL_MS) pause(c, "slow", `one run of its morse.watch callback over the elements it found kept the page busy for over ${L.STALL_MS} ms. Do far less work per element.`);
         };
-        const owner = n => { for (let x = n; x; x = x.parentNode || x.host) if (seen.has(x)) return x; return null; };
-        const mo = new MutationObserver(recs => {
-          if (live) for (const r of recs) { const o = owner(r.target); if (o) dirty.add(o); }
-          queue();
-        });
-        c.observers.push(mo);
-        const observed = new WeakSet(), frames = new WeakSet();
-        const observe = (root, via) => {
-          if (!root || observed.has(root)) return;
-          observed.add(root);
-          mo.observe(root, { childList: true, subtree: true, attributes: true, characterData: true });
-          if (via && root.nodeType === 9 && !frames.has(via)) { // a frame that loads a new page
-            frames.add(via);
-            via.addEventListener("load", queue);
-            c.cleanups.push(() => via.removeEventListener("load", queue));
-          }
-        };
-        observe(document);
         const styles = el => { const o = {}; for (let i = 0; i < el.style.length; i++) { const p = el.style[i]; o[p] = [el.style.getPropertyValue(p), el.style.getPropertyPriority(p)]; } return o; };
         const attrs = el => { const o = {}; for (const a of el.attributes) if (a.name !== "class" && a.name !== "style") o[a.name] = a.value; return o; };
+        // Runs fn on el and remembers what it did: the elements it made or put
+        // in or next to el, and the classes, inline styles, attributes and text it set.
         const apply = (el, prev) => {
           const cl0 = new Set(el.classList), st0 = styles(el), at0 = attrs(el), tx0 = el.textContent;
           const kids0 = new Set(el.childNodes), sibs0 = el.parentNode ? new Set(el.parentNode.childNodes) : null;
-          // A burst of re-runs means fn and the app are fighting over el: then leave it alone.
-          const t = Date.now(), burst = prev && t - prev.at < 100 ? prev.burst + 1 : 0;
+          // A burst of re-runs means fn and the page are fighting over el: then leave it alone.
+          const t = now(), burst = prev && t - prev.at < 100 ? prev.burst + 1 : 0;
           const r = { created: [], at: t, burst, root: inner(el) };
           const outer = c.current;
           c.current = r;
           try { run(el); } finally { c.current = outer; }
-          // What fn made: elements through morse.el, and nodes it put in or next to el.
           for (const k of el.childNodes) if (!kids0.has(k) && k.nodeType === 1) r.created.push(k);
           if (sibs0 && el.parentNode) for (const k of el.parentNode.childNodes) if (!sibs0.has(k) && k.nodeType === 1) r.created.push(k);
           r.created = [...new Set(r.created)].filter(n => n.isConnected && n.parentNode !== n.ownerDocument.head);
@@ -122,72 +384,73 @@ function installMorseKit() {
           r.text = !r.created.some(n => el.contains(n)) && el.textContent !== tx0 ? el.textContent : null;
           seen.set(el, r);
         };
-        // Put back what the app undid: the classes, inline styles and attributes fn set.
+        // Puts back what the page undid: the classes, inline styles and attributes fn set.
         const reassert = (el, r) => {
           for (const x of r.addCls) if (!el.classList.contains(x)) el.classList.add(x);
           for (const x of r.rmCls) if (el.classList.contains(x)) el.classList.remove(x);
           for (const p in r.style) { const [v, pr] = r.style[p]; if (el.style.getPropertyValue(p) !== v || el.style.getPropertyPriority(p) !== pr) el.style.setProperty(p, v, pr); }
           for (const k in r.attrs) { const v = r.attrs[k][1]; if (el.getAttribute(k) !== v) v == null ? el.removeAttribute(k) : el.setAttribute(k, v); }
         };
-        // Undo what fn did, before running it again.
+        // Undoes what fn did, before running it again.
         const undo = (el, r) => {
-          for (const n of r.created) { n.remove(); c.made.delete(n); }
+          for (const n of r.created) n.remove();
           for (const x of r.addCls) el.classList.remove(x);
           for (const x of r.rmCls) el.classList.add(x);
           for (const p in r.style) { if (el.style.getPropertyValue(p) !== r.style[p][0]) continue; const o = r.styleWas[p]; o ? el.style.setProperty(p, o[0], o[1]) : el.style.removeProperty(p); }
           for (const k in r.attrs) { if (el.getAttribute(k) !== r.attrs[k][1]) continue; const o = r.attrs[k][0]; o == null ? el.removeAttribute(k) : el.setAttribute(k, o); }
         };
-        const scan = () => {
-          if (c.dead) return;
-          let list;
-          try { list = query(sel, observe); } catch (e) { c.errors.push(String(e)); return; }
+        // Match counts for __stats: a watch that never matches means the page
+        // changed under the mod (the panel offers to fix it). `now` is exact
+        // after each full scan and counts new matches in between.
+        const st = { selector: String(selector), now: 0, total: 0 };
+        c.watches.push(st);
+        const w = {
+          selector, c, st, deep: String(selector).includes(">>>"), dirty: new Set(),
           // Never match Morse's own elements: a mod that inserts a button next to
           // "header button" must not then match the button it inserted.
-          let now = 0;
-          const was = c.inScan;
-          c.inScan = true;
-          try {
-            for (const el of list) {
-              if (el.closest("[data-morse-ui],[data-morse]")) continue;
-              now++;
-              observe(inner(el), el); // what renders inside a matched component or frame
-              const r = seen.get(el);
-              if (!r) { w.total++; apply(el, null); continue; }
-              if (r.burst > 20) continue; // fighting the app: leave this one alone
-              const wiped = r.created.some(n => !n.isConnected) || r.root !== inner(el) || (r.text != null && el.textContent !== r.text);
-              if (wiped || (live && dirty.has(el))) { undo(el, r); apply(el, r); }
-              else reassert(el, r);
+          hit(el) {
+            if (el.closest("[data-morse-ui],[data-morse]")) return false;
+            observeRoot(inner(el), el); // what renders inside a matched component or frame
+            if (!seen.has(el)) {
+              st.total++; st.now++; c.hits++;
+              apply(el, null);
+              let ws = tracked.get(el);
+              if (!ws) tracked.set(el, ws = new Set());
+              ws.add(w); trackedAny = true;
             }
-          } finally { c.inScan = was; }
-          dirty.clear();
-          w.now = now;
-          mo.takeRecords(); // our own changes: nothing to react to
+            return true;
+          },
+          // After a change in or on el: put back what was wiped, or (live) run fn again.
+          recheck(el) {
+            const r = seen.get(el);
+            if (!r || r.burst > 20 || c.dead) return;
+            const wiped = r.created.some(n => !n.isConnected) || r.root !== inner(el) || (r.text != null && el.textContent !== r.text);
+            if (wiped || live) {
+              const ok = (() => { try { return el.matches(String(selector).split(/\s*>>>\s*/).pop()); } catch { return true; } })();
+              undo(el, r);
+              if (ok) apply(el, r); else seen.delete(el);
+            } else reassert(el, r);
+          },
+          // The mod's own code changed el: its new state.
+          accept(el, name) {
+            const r = seen.get(el);
+            if (!r) return;
+            if (name === "class") { r.addCls = r.addCls.filter(x => el.classList.contains(x)); r.rmCls = r.rmCls.filter(x => !el.classList.contains(x)); }
+            else if (name === "style") { const cur = styles(el); for (const p in r.style) cur[p] ? r.style[p] = cur[p] : delete r.style[p]; }
+            else if (r.attrs[name]) r.attrs[name][1] = el.getAttribute(name);
+          },
         };
-        // The mod's own callbacks (guard) changed things: that's the new state.
-        c.syncs.push(() => {
-          for (const rec of mo.takeRecords()) {
-            const el = rec.target, r = el.nodeType === 1 ? seen.get(el) : null;
-            if (rec.type === "childList") { // the mod removed something it made: fine
-              for (const n of rec.removedNodes) { const o = madeBy.get(n); if (o) o.created = o.created.filter(k => k !== n); }
-              continue;
-            }
-            if (!r || rec.type !== "attributes") continue;
-            if (rec.attributeName === "class") { r.addCls = r.addCls.filter(x => el.classList.contains(x)); r.rmCls = r.rmCls.filter(x => !el.classList.contains(x)); }
-            else if (rec.attributeName === "style") { const st = styles(el); for (const p in r.style) st[p] ? r.style[p] = st[p] : delete r.style[p]; }
-            else if (r.attrs[rec.attributeName]) r.attrs[rec.attributeName][1] = el.getAttribute(rec.attributeName);
-          }
-          if (live) dirty.clear();
-          queue();
-        });
-        scan();
+        watches.add(w);
+        scanAll(w);
+        if (watches.has(w)) startWatching();
       },
       // Elements matching a selector right now (">>>" crosses into shadow roots and frames).
       $$(selector) { return query(selector).filter(e => !e.closest("[data-morse-ui]")); },
       $(selector) { return m.$$(selector)[0] || null; },
       el(tagName, props, ...kids) {
+        made(c);
         const el = tag(document.createElement(tagName));
         if (c.current) c.current.created.push(el);
-        c.made.add(el); // removed when the mod is turned off
         for (const [k, v] of Object.entries(props || {})) {
           if (v == null) continue;
           if (k === "text") el.textContent = v;
@@ -198,14 +461,17 @@ function installMorseKit() {
           else el.setAttribute(k, v);
         }
         for (const kid of kids.flat()) if (kid != null) el.append(kid.nodeType ? kid : String(kid));
+        // Weakly held, so elements the page threw away can be freed: __off
+        // removes the rest (and sweeps [data-morse] in the document).
+        c.els.push(new WeakRef(el));
+        if (c.els.length > c.elsMax) { c.els = c.els.filter(r => r.deref()); c.elsMax = Math.max(256, c.els.length * 2); }
         return el;
       },
       // css(text, where): with `where` (a selector of components or frames,
       // ">>>" allowed), the CSS goes inside each one's shadow root or frame
-      // document, now and for every one that appears later.
+      // page, now and for every one that appears later. Rules written
+      // "host >>> inside { … }" go inside their hosts the same way.
       css(text, where) {
-        const styled = new WeakMap();
-        // Rules written "host >>> inside { … }" go inside each host.
         if (!where && String(text).includes(">>>")) {
           const byHost = new Map();
           const plain = String(text).replace(/([^{}]*>>>[^{}]*)\{([^{}]*)\}/g, (all, sels, body) => {
@@ -221,24 +487,18 @@ function installMorseKit() {
           return plain.trim() ? m.css(plain) : null;
         }
         if (where) {
+          const styled = new WeakMap();
           m.watch(where, host => {
             const root = inner(host);
-            if (!root) { // not a component or frame: plain CSS where it is
-              const at = host.getRootNode();
-              if (styled.has(at) && styled.get(at).isConnected) return;
-              const s = tag(host.ownerDocument.createElement("style"));
-              s.textContent = text;
-              (at.nodeType === 9 ? at.head || at.documentElement : at).append(s);
-              styled.set(at, s);
-              c.made.add(s);
-              return;
-            }
-            const doc = root.nodeType === 9 ? root : host.ownerDocument;
+            const at = root || host.getRootNode(); // not a component or frame: plain CSS where it is
+            if (!root && styled.get(at)?.isConnected) return;
+            const doc = at.nodeType === 9 ? at : host.ownerDocument;
             const s = tag(doc.createElement("style"));
             s.textContent = text;
-            (root.nodeType === 9 ? root.head || root.documentElement : root).append(s);
-            c.made.add(s);
-            if (c.current) c.current.created.push(s);
+            (at.nodeType === 9 ? at.head || at.documentElement : at).append(s);
+            styled.set(at, s);
+            if (root && c.current) c.current.created.push(s);
+            c.cleanups.push(() => s.remove());
           });
           return null;
         }
@@ -254,13 +514,13 @@ function installMorseKit() {
         c.cleanups.push(() => target.removeEventListener(event, h, opts));
       },
       every(ms, fn) {
-        const t = setInterval(guard(c, fn), ms);
-        c.cleanups.push(() => clearInterval(t));
+        const t = setI(guard(c, fn), Math.max(L.MIN_EVERY, +ms || 0)); // guard: a minimum interval
+        c.timers.add(t);
         return t;
       },
       after(ms, fn) {
-        const t = setTimeout(guard(c, fn), ms);
-        c.cleanups.push(() => clearTimeout(t));
+        const t = setT(guard(c, () => { c.timers.delete(t); fn(); }), ms);
+        c.timers.add(t);
         return t;
       },
       byText(selector, text) {
@@ -340,7 +600,7 @@ function installMorseKit() {
           padding: "8px 14px", borderRadius: "10px", border: "1px solid #30363d", boxShadow: "0 8px 30px rgba(0,0,0,.35)",
         });
         document.body.append(t);
-        setTimeout(() => t.remove(), 2600);
+        setT(() => t.remove(), 2600);
       },
       get id() { return c.id; },
     };
@@ -349,46 +609,66 @@ function installMorseKit() {
 
   globalThis.morse = {
     __kit: 1,
-    // Runs mod code; returns { ok, error } synchronously.
+    // Runs mod code; returns { ok, error } synchronously (and `paused`: why,
+    // when the guards stopped it while it started).
     __run(id, fn) {
       this.__off(id);
       const c = ctxFor(id);
+      const prev = enter(c), t0 = now();
+      let res = { ok: true };
       try {
-        const cleanup = fn(api(c));
+        const cleanup = fn(api(c), ...scope(c));
         if (typeof cleanup === "function") c.cleanups.push(cleanup);
-        return { ok: true };
-      } catch (e) {
-        this.__off(id);
-        return { ok: false, error: String(e && e.message || e) };
-      }
+      } catch (e) { res = { ok: false, error: String(e && e.message || e) }; }
+      leave(c, prev, t0); // its start counts too: a start that takes over a second pauses it
+      const p = paused.get(id);
+      if (p) return { ok: false, error: p.error, paused: p.why };
+      if (!res.ok) this.__off(id);
+      return res;
     },
     __off(id) {
+      paused.delete(id);
       const c = mods.get(id);
-      if (c) {
-        c.dead = true;
-        c.observers.forEach(o => o.disconnect());
-        c.made.forEach(e => e.remove());
-        c.cleanups.reverse().forEach(f => { try { f(); } catch {} });
-        mods.delete(id);
-      }
-      // Always sweep: elements can outlive their context (e.g. a late callback).
-      document.querySelectorAll(`[data-morse="${CSS.escape(id)}"]`).forEach(e => e.remove());
+      if (c) stop(c);
+      else document.querySelectorAll(`[data-morse="${CSS.escape(id)}"]`).forEach(e => e.remove());
       return true;
     },
-    __errors(id) { return (mods.get(id)?.errors || []).slice(0, 3); },
+    // A paused mod's reason comes first: the repair loop gives it to the model.
+    __errors(id) { return [...(paused.has(id) ? [paused.get(id).error] : []), ...(mods.get(id)?.errors || [])].slice(0, 3); },
     // How a running mod is doing: each watch's selector with the elements it
-    // matches now and has ever matched, plus errors so far. null if not running.
+    // matches now and has ever matched, errors so far, and the time its code
+    // took (ms). A paused mod: { paused: { why, error, ms, at } }. null if
+    // it isn't running.
     __stats(id) {
       const c = mods.get(id);
-      if (!c) return null;
-      return { watches: c.watches.map(w => ({ ...w })), errors: c.errors.length, error: c.errors[0] ? String(c.errors[0]).split("\n")[0] : null };
+      if (!c) return paused.has(id) ? { watches: [], errors: 0, error: null, ms: paused.get(id).ms, paused: { ...paused.get(id) } } : null;
+      // Exact counts on demand, rather than a rescan on every removal.
+      for (const w of watches) if (w.c === c) {
+        try { w.st.now = query(w.selector).filter(el => !el.closest("[data-morse-ui],[data-morse]")).length; } catch {}
+      }
+      return { watches: c.watches.map(w => ({ ...w })), errors: c.nerr, error: c.errors[0] ? String(c.errors[0]).split("\n")[0] : null, ms: Math.round(c.ms) };
     },
+    // After the host stopped a script that never returned (daemon/guard.js):
+    // which mod's code was running, if any. That mod is stopped, and the kit
+    // is ready for the next one.
+    __hung() {
+      const c = cur;
+      cur = null; depth = 0; queued = false;
+      if (!c) return null;
+      if (!c.dead) pause(c, "froze", "it froze the page: its code ran for seconds without finishing (an endless loop?). Never loop without an exit: react to the page with morse.watch, or repeat with morse.every.");
+      return c.id;
+    },
+    __limits: L,
   };
 }
 
 export const KIT_SOURCE = `(${installMorseKit.toString()})();`;
 
-// Wraps mod code so it can run without eval (page CSP friendly).
+// The globals mod code gets the guarded versions of (core/kit.js scope()).
+const SCOPE = ["setTimeout", "setInterval", "clearTimeout", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "MutationObserver"];
+
+// Wraps mod code so it can run without eval (page CSP friendly). The inner
+// function lets mod code declare its own names, even ones SCOPE shadows.
 export function wrapModCode(id, js) {
-  return `${KIT_SOURCE}\nmorse.__run(${JSON.stringify(id)}, function (morse) {\n${js}\n});`;
+  return `${KIT_SOURCE}\nmorse.__run(${JSON.stringify(id)}, function (morse, ${SCOPE.join(", ")}) {\nreturn (function () {\n${js}\n}).call(this);\n});\n//# sourceURL=morse-mod-${String(id).replace(/[^\w-]/g, "")}.js`;
 }

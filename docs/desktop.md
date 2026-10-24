@@ -88,6 +88,24 @@ Pressing Ctrl+C in the terminal where `morse launch` runs does the same as
 `morse stop`. Quitting the app also ends `morse launch`. Add `--watch` to keep
 waiting and connect again when the app comes back.
 
+| | |
+|---|---|
+| ![](screenshots/80-apps.png) **`morse apps`**: what's installed, and whether Morse can connect to it | ![](screenshots/81-status.png) **`morse status`**: windows, pop-ups and the mods on in each, and an app started with `--watch` waiting to come back |
+
+### What Morse follows in an app
+
+Morse connects to every place the app shows a page: all its windows, pop-ups
+that open later, side panels and embedded views (like VS Code's panels). It
+keeps up when a window reloads, goes to another page or crashes. A mod saved
+in one window shows up in every window it fits.
+
+It leaves alone what isn't the app's own: embedded pages from other sites,
+the developer tools, and the app's internal pages.
+
+When the app is already open, Morse says so in one sentence and offers
+`--restart`. Your answer is remembered for that app (in `~/.morse/apps.json`);
+`--no-restart` forgets it.
+
 ### An app that is already running with a debugging port
 
 If you (or a script) started the app yourself with
@@ -175,18 +193,18 @@ files on disk, because those live outside the windows.
 
 ## How this was tested
 
-On a real Electron 45 runtime in Linux, with a small music app built for it,
+On a real Electron 45 on Linux, with a small music app built for it,
 [`demo/electron-app`](../demo/electron-app) ("Tunes"). It has what real apps
 have: a native menu bar, a preload script with context isolation and the
 renderer sandbox on, its UI on a custom `app://` address, a `<webview>` side
 panel served from a random local port, a second window from a `file://` page,
-and a single-instance lock. It is packaged the way apps ship: the Electron
-runtime renamed to `tunes`, with the app next to it, unpacked or as
+and a single-instance lock. It is packaged the way apps ship: Electron
+renamed to `tunes`, with the app next to it, unpacked or as
 `app.asar`.
 
 - [`demo/shoot-electron.js`](../demo/shoot-electron.js) drives the whole flow
   with real keyboard and mouse input from the X server (xdotool) and takes the
-  screenshots above: `morse launch`, the hotkey, pointing, a change, Save,
+  screenshots above: `morse launch`, the shortcut, pointing, a change, Save,
   quitting with the app's own Ctrl+Q, `morse launch` again (the change is
   back), the Mods panel, the second window, `morse status`, `morse stop` and
   `morse fuses`.
@@ -198,7 +216,7 @@ runtime renamed to `tunes`, with the app next to it, unpacked or as
 - The same app was run as a normal user with Chromium's sandbox fully on and
   connected with `morse attach --port`.
 - [`tests/electron.test.js`](../tests/electron.test.js) runs the flow on every
-  `npm test` when an Electron runtime and a display are there, and skips with
+  `npm test` when Electron and a display are there, and skips with
   a message otherwise. To set it up:
 
   ```bash
