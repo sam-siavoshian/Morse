@@ -153,4 +153,6 @@ Rows before "baseline (rescored checkers)" used earlier checkers. "dev" rows are
 | 2026-10-24 11:48 | final, all apps | claude-code:haiku | all | 251/258 (97%) | 13.9s (p90 23.9s) |
 | 2026-10-24 12:15 | baseline (fa7b111), all apps, run 2 | claude-code:haiku | all | 236/258 (92%) | 23.5s (p90 61.4s) |
 | 2026-10-24 12:15 | final (merged), all apps | claude-code:haiku | all | 253/258 (98%) | 23.8s (p90 59.3s) |
+| 2026-10-24 13:05 | after merging the guarded kit, harder apps | claude-code:haiku | all (hard) | 29/31 (94%) | 42.1s (p90 65.2s) |
+| 2026-10-24 13:05 | after merging the guarded kit, first six apps | claude-code:haiku | all (easy) | 54/55 (98%) | 36.4s (p90 48.6s) |
 <!-- run-log -->

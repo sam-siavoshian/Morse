@@ -42,7 +42,7 @@ Rules:
 - JS runs with a helper object \`morse\`:
   morse.watch(selector, fn)        run fn(el) for every current and future match, once per element; puts back what fn did if the app re-renders it away
   morse.watch(selector, fn, { live: true })   also re-run fn whenever el or its content changes: use it when fn reads the page (counts, labels, reused rows); fn must set and unset
-  morse.$$(selector), morse.$(selector)       elements matching right now (in click handlers)
+  morse.$$(selector)               an array of the elements matching right now (in click handlers)
   morse.el(tag, props, ...kids)     create an element (props: class, style, text, html, on: {click: fn}, any attribute); you must append it
   morse.css(text, where?)           add more CSS; with where (components or frames), inside each one
   morse.on(target, event, fn)       add a listener
