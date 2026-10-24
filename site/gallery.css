@@ -79,7 +79,7 @@ body.locked { overflow: hidden; }
 }
 
 /* ---------- pictures, badges, what it does ---------- */
-.card-shot { display: block; width: calc(100% + 40px); height: auto; aspect-ratio: 16 / 10; margin: -20px -20px 4px; border-bottom: 1px solid var(--line); border-radius: var(--r-panel) var(--r-panel) 0 0; object-fit: cover; object-position: top left; background: var(--soft); }
+.card-shot { display: block; width: calc(100% + 40px); max-width: none; height: auto; aspect-ratio: 16 / 10; margin: -20px -20px 4px; border-bottom: 1px solid var(--line); border-radius: var(--r-panel) var(--r-panel) 0 0; object-fit: cover; object-position: top left; background: var(--soft); }
 .g-badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .g-badge { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--soft); color: var(--body); font-size: 12px; font-weight: 650; line-height: 18px; }
 .g-badge.ok { border-color: var(--brand-line); background: var(--wash); color: var(--ink); }

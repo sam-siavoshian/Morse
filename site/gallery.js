@@ -29,8 +29,11 @@ try {
 
 // What a card says besides the request: whether it needs Chrome's “Allow
 // User Scripts” (mods with code do; style-only mods don't), and demo-app mods.
+// Chrome's switch only matters on websites, not in desktop apps.
+const inChrome = e => /web/.test(e.surface || "web");
+const noScriptsOk = e => inChrome(e) && e.userScripts === false;
 const notesHtml = e => [
-  e.userScripts === false ? `<span class="g-badge ok">Works without “Allow User Scripts”</span>` : e.userScripts ? `<span class="g-badge">Needs “Allow User Scripts”</span>` : "",
+  !inChrome(e) ? "" : e.userScripts === false ? `<span class="g-badge ok">Works without “Allow User Scripts”</span>` : e.userScripts ? `<span class="g-badge">Needs “Allow User Scripts”</span>` : "",
   e.demo ? `<span class="g-badge demo">Demo app</span>` : "",
 ].join("");
 
@@ -60,7 +63,7 @@ for (const name of ["All", ...CATS.filter(c => entries.some(e => e.category === 
     apply();
   }));
 }
-filterButton("Works without “Allow User Scripts”", entries.filter(e => e.userScripts === false).length, noScripts, b => {
+filterButton("Works without “Allow User Scripts”", entries.filter(noScriptsOk).length, noScripts, b => {
   noScripts = !noScripts;
   b.setAttribute("aria-pressed", String(noScripts));
   apply();
@@ -71,7 +74,7 @@ function apply() {
   let shown = 0;
   for (const entry of entries) {
     const hay = [entry.title, entry.prompt, entry.app, entry.category, entry.surface, ...(entry.tags || []), ...(entry.match?.hosts || []), entry.demo ? "demo" : ""].join(" ").toLowerCase();
-    const ok = inCat(entry, cat) && (!noScripts || entry.userScripts === false) && words.every(w => hay.includes(w));
+    const ok = inCat(entry, cat) && (!noScripts || noScriptsOk(entry)) && words.every(w => hay.includes(w));
     cards.get(slugOf(entry)).hidden = !ok;
     if (ok) shown++;
   }
@@ -127,7 +130,9 @@ async function open(slug, { push = true } = {}) {
     : (mod.match?.hosts || []).map(h => `<code>${esc(h)}</code>`).join("");
   // What it does: the same plain lines the install review shows (core/summary.js).
   const does = summarizeMod(mod).items.filter(i => i.id !== "code").map(i => esc(i.text));
-  const needs = mod.js.trim()
+  const needs = !inChrome(entry)
+    ? "Nothing else. Open the app with Morse, and it runs there."
+    : mod.js.trim()
     ? "“Allow User Scripts” in Chrome. Without it, only its look shows."
     : "Nothing else. It only changes how the page looks, so it works without “Allow User Scripts”.";
   $("d-shots").innerHTML = entry.shots?.before && entry.shots?.after
@@ -139,7 +144,7 @@ async function open(slug, { push = true } = {}) {
     <dt>What it does</dt><dd class="d-does">${does.map(t => `<span>${t}</span>`).join("")}</dd>
     <dt>Needs</dt><dd>${needs}</dd>
     <dt>Runs in</dt><dd>${where}</dd>
-    ${entry.demo ? `<dt>Demo app</dt><dd>This mod is for one of the Morse demo apps, not a real website. Start them with <code>node demo/serve.js</code>.</dd>` : ""}
+    ${entry.demo ? `<dt>Demo app</dt><dd><span>This mod is for one of the Morse demo apps, not a real website. Start them with <code>node demo/serve.js</code>.</span></dd>` : ""}
     <dt>Checked</dt><dd>${entry.checked ? esc(entry.checked) : "Not checked by Morse. Written by hand for this app."}</dd>
     ${mod.target?.label ? `<dt>Pointed at</dt><dd>${esc(mod.target.label)}</dd>` : ""}
     ${mod.note ? `<dt>Note</dt><dd>${esc(mod.note)}</dd>` : ""}
