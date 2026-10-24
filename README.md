@@ -38,6 +38,7 @@ press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the mode
 | **Edit tools** | Change things directly, no model needed: hide, move, resize, rename, recolor, change text size, duplicate. Page tools for dark or light mode, text size, hiding ads and focus mode. Capture something in one app and rebuild it in another |
 | **Ask and find** | Ask about the app instead of changing it. You get a plain answer with numbered markers on what it means. Ask where something is and Morse tells you which menu to open. **Show me** walks you through the steps while you click. **Explain this page** sums up what the screen is for |
 | **You stay in control** | One shortcut (⌥⇧0) turns off every mod on a page. Pause Morse on a site or everywhere. A mod that keeps crashing a page is held back. Before you install a shared mod, Morse says in plain words what it does. Back up all your mods to one file |
+| **Show me once** | Do a task by hand once, then say “add a button that does this”, “do this when I press Ctrl+Shift+A” or “do this to every unread email”. Passwords are never recorded |
 | **Easier to use** | Accessibility for any app, no model needed: higher contrast, bigger click targets, an easier to read font (and dyslexia-friendly letters), underlined links, no animations, a visible focus outline, a reading ruler, no distractions. Read aloud, Check this page with Fix it, and Describe this picture (the model writes a description for screen readers) |
 
 ## Screenshots
@@ -188,6 +189,22 @@ Captured by [`demo/shoot-a11y.js`](demo/shoot-a11y.js) on [`demo/sites/a11y`](de
 |---|---|
 | ![](docs/screenshots/100-easier-to-use.png) **Easier to use**, beside Page tools: three tools on | ![](docs/screenshots/101-read-aloud.png) **Read aloud**: the sentence being read is marked |
 | ![](docs/screenshots/102-check-page.png) **Check this page**: 17 places, each with a marker, and Fix it | ![](docs/screenshots/103-before-after-contrast.png) **Higher contrast**, before and after |
+
+### Show me once: do it by hand, Morse repeats it
+
+Clicking the same things over and over? Choose **Show me once** (under the input in the empty bar, or in the ⋯ menu) and do the task by hand, once: click, type, choose, press keys. A small strip lists each step in plain words as you go: *Click “Archive”*, *Type “invoice” in “Search mail”*. **Stop** opens the bar with your steps. Then say what you want: “add a button that does this”, “do this when I press Ctrl+Shift+A” or “do this to every unread email”. Morse sends the steps to the model (in order, with what each thing is called and how to find it again) and the model writes a mod that does them for you, waiting for each thing to appear. Save, refine or undo it like any change.
+
+- **Passwords and card numbers stay yours.** For a password field, or one marked for card details, the step says “(hidden)” and the value is never kept. The mod stops at that field and asks you to type it.
+- **Only what you do, only here.** Morse records your own clicks and keys on this page while the strip shows. Not the page's own scripts, not other frames, not Morse itself. <kbd>Esc</kbd> cancels. Nothing is sent until you say what to do and press Enter.
+- Steps come from [`core/showonce.js`](core/showonce.js) (plain words, names that survive a reload: ids, test ids, labels, then the words on a button) and [`runtime/src/64-show-once.js`](runtime/src/64-show-once.js). The kit gained `morse.waitFor`, `morse.type`, `morse.choose`, `morse.key` and `morse.sleep` for doing the steps.
+
+Checked with real Claude Code (haiku) by [`evals/show-once.js`](evals/show-once.js) on the mail demo: “do this to every unread email” gave an **Archive unread** button that archived all 4 unread emails and kept the 6 read ones in 10 of 12 runs (the other 2 forgot to put the button on the page), about 10 to 25 s each; “do this when I press Ctrl+Shift+A” worked every time. Captured by [`demo/shoot-show-once.js`](demo/shoot-show-once.js).
+
+| | |
+|---|---|
+| ![](docs/screenshots/129-show-once-start.png) **Show me once**, in the bar and the ⋯ menu | ![](docs/screenshots/130-show-once-recording.png) **Recording**: each step as you do it |
+| ![](docs/screenshots/131-show-once-steps.png) **Stop**: say what to do with the steps | ![](docs/screenshots/132-show-once-result.png) **The result**, live: a button for every unread email |
+| ![](docs/screenshots/133-show-once-done.png) **Done** for 3 unread emails | ![](docs/screenshots/134-show-once-hidden.png) A sign-in: the password is “(hidden)” |
 
 ## Status
 

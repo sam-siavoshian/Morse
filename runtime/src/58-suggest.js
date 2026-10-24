@@ -26,6 +26,7 @@ function looksText(el) {
 }
 
 function suggestionsFor(el) {
+  const steps = showOnceChips(); if (steps) return steps; // show-once hook: 64-show-once.js
   if (!el || el === document.body || el === document.documentElement) return PAGE_SUGGESTIONS;
   if (looksMedia(el)) return [
     { label: "Sleep timer", prompt: "Add a sleep timer that pauses playback after a chosen number of minutes" },
