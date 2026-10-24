@@ -138,12 +138,15 @@ export class Connector {
       case "off":
         await s.send("Runtime.evaluate", { expression: `globalThis.morse && morse.__off(${JSON.stringify(msg.modId)})`, contextId: ctx });
         return true;
+      case "stats": // repair: does a saved mod still find its elements? (core/kit.js __stats)
+        return (await s.send("Runtime.evaluate", { expression: `globalThis.morse?.__stats?.(${JSON.stringify(msg.modId)}) ?? null`, contextId: ctx, returnByValue: true })).result?.value ?? null;
       case "generate": {
         const t0 = Date.now();
         const res = await this.gens.run(msg.genId, signal => runMorse({
           settings: this.settings,
           request: msg.request,
           context: { ...msg.context, app: this.app?.name || msg.context.app },
+          base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           exec: js => this.exec(s, ctx, msg.genId, js),
           emit: ev => { if (!signal.aborted) this.push(s, ctx, { ...ev, genId: msg.genId }); },
           signal,

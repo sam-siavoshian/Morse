@@ -43,7 +43,29 @@ export function snapshotPrompt(snapshot) {
   return lines.join("\n\n");
 }
 
-export function buildMessages({ request, context, previous, snapshot = context?.snapshot }) {
+// Keep iterating: `base` is the change as it is now ({ prompt, css, js }, plus
+// `error` when a saved mod stopped working). The model rewrites it whole, so
+// the reply replaces the mod in the same format.
+export function basePrompt(base, request) {
+  const fence = (lang, code) => "```" + lang + "\n" + String(code || "").trim().slice(0, 6000) + "\n```";
+  const lines = [
+    base.error
+      ? "This change was made earlier and saved. It has stopped working on the page as it is now."
+      : "You already made a change here. The user wants to adjust it.",
+    `Original request: ${base.prompt || "(none)"}`,
+    "Current code:\n" + fence("css", base.css) + "\n" + fence("js", base.js),
+  ];
+  if (base.error) {
+    lines.push(`What went wrong: ${base.error}`);
+    lines.push(`Fix it so it works on the page as it is now and still does what was asked.${request && request !== base.prompt ? ` The user adds: ${request}` : ""}`);
+  } else {
+    lines.push(`Follow-up: ${request}`);
+  }
+  lines.push("Reply with the complete new version: all of its CSS and JS, not only what changed, in the same format. Keep the parts the user didn't ask to change.");
+  return lines.join("\n\n");
+}
+
+export function buildMessages({ request, context, previous, snapshot = context?.snapshot, base }) {
   const parts = [];
   parts.push(`App: ${context.app || "web"}  URL: ${context.url}`);
   parts.push(`Page title: ${context.title}`);
@@ -57,7 +79,8 @@ export function buildMessages({ request, context, previous, snapshot = context?.
   }
   if (context.outline) parts.push("Page outline:\n" + context.outline);
   if (snapshot) parts.push(snapshotPrompt(snapshot));
-  parts.push(`Request: ${request}`);
+  if (base) parts.push(basePrompt(base, request));
+  else parts.push(`Request: ${request}`);
 
   const messages = [
     { role: "system", content: SYSTEM_PROMPT },

@@ -9,7 +9,7 @@ function installMorseKit() {
 
   function ctxFor(id) {
     if (mods.has(id)) return mods.get(id);
-    const c = { id, cleanups: [], errors: [], observers: [] };
+    const c = { id, cleanups: [], errors: [], observers: [], watches: [] };
     mods.set(id, c);
     return c;
   }
@@ -27,12 +27,22 @@ function installMorseKit() {
       watch(selector, fn) {
         const seen = new WeakSet();
         const run = guard(c, fn);
+        // Match counts for __stats: a watch that never matches means the page
+        // changed under the mod (the panel offers to fix it).
+        const w = { selector: String(selector), now: 0, total: 0 };
+        c.watches.push(w);
         const scan = () => {
           let list;
           try { list = document.querySelectorAll(selector); } catch (e) { c.errors.push(String(e)); return; }
           // Never match Morse's own elements: a mod that inserts a button next to
           // "header button" must not then match the button it inserted.
-          for (const el of list) if (!seen.has(el) && !el.closest("[data-morse-ui],[data-morse]")) { seen.add(el); run(el); }
+          let now = 0;
+          for (const el of list) {
+            if (el.closest("[data-morse-ui],[data-morse]")) continue;
+            now++;
+            if (!seen.has(el)) { seen.add(el); w.total++; run(el); }
+          }
+          w.now = now;
         };
         scan();
         let queued = false;
@@ -131,6 +141,13 @@ function installMorseKit() {
       return true;
     },
     __errors(id) { return (mods.get(id)?.errors || []).slice(0, 3); },
+    // How a running mod is doing: each watch's selector with the elements it
+    // matches now and has ever matched, plus errors so far. null if not running.
+    __stats(id) {
+      const c = mods.get(id);
+      if (!c) return null;
+      return { watches: c.watches.map(w => ({ ...w })), errors: c.errors.length, error: c.errors[0] ? String(c.errors[0]).split("\n")[0] : null };
+    },
   };
 }
 
