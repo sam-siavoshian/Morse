@@ -48,6 +48,7 @@ const { values: opt } = parseArgs({ options: {
   out: { type: "string", default: "" },
   label: { type: "string", default: "" },
   "judge-only": { type: "string", default: "" },
+  rename: { type: "string", default: "" },
   "record-sites": { type: "boolean", default: false },
   display: { type: "string", default: process.env.DISPLAY || ":99" },
 } });
@@ -78,6 +79,13 @@ const ARMS = {
   baseline: () => ({ dir: opt.baseline, polish: false }),
   context: () => ({ dir: ROOT, polish: false }),
   polish: () => ({ dir: ROOT, polish: true }),
+};
+// An arm name may add a model and an effort: "polish@low", "polish:opus@default"
+// ("default": Claude Code's own effort, no --effort).
+const armOf = name => {
+  const m = String(name).match(/^(\w+)(?::([\w.-]+))?(?:@(\w+))?$/);
+  if (!m || !ARMS[m[1]]) throw new Error("unknown arm " + name);
+  return { ...ARMS[m[1]](), model: m[2] || opt.model, effort: m[3] || "" };
 };
 // The context is read in a world of its own, as the runtime does (Morse's
 // isolated world, with its Trusted Types shim: VS Code refuses HTML strings
@@ -256,7 +264,7 @@ async function flipTheme(t, c) {
 
 // ---------------------------------------------------------------- one run
 async function runOne(c, armName) {
-  const arm = ARMS[armName]();
+  const arm = armOf(armName);
   const code = await codeFor(arm.dir);
   const rec = { id: c.id, arm: armName, app: c.app, request: c.request, target: c.target };
   const shot = name => path.join(OUT, `${c.id}--${armName}--${name}.jpg`);
@@ -306,7 +314,7 @@ async function runOne(c, armName) {
     };
     const t0 = Date.now();
     const res = await code.runMorse({
-      settings: { provider: "claude-code", model: opt.model, pinned: true, timeoutMs: 180_000 },
+      settings: { provider: "claude-code", model: arm.model, pinned: true, timeoutMs: 180_000, ...(arm.effort && { effort: arm.effort }) },
       request: c.request, context, exec, polish: arm.polish, review,
       emit: ev => {
         if (ev.type !== "css") return;
@@ -321,6 +329,8 @@ async function runOne(c, armName) {
     await cssApplied;
     Object.assign(rec, { ms: Date.now() - t0, ok: res.ok, error: res.error || null, title: res.title, css: res.css, js: res.js, attempts: res.attempts, repairs: res.repairs || [], polish: res.polish || null, model: res.model });
     await sleep(800);
+    // A change that shows on scrolling (a progress bar) is pictured half way down.
+    if (c.scroll) await page.evaluate(sel => { const el = sel === "page" ? document.scrollingElement : document.querySelector(sel); if (el) { el.scrollTop = (el.scrollHeight - el.clientHeight) * 0.4; (sel === "page" ? window : el).dispatchEvent(new Event("scroll")); } }, c.scroll).then(() => sleep(500));
     rec.shots.after = await wholeShot("after");
     rec.area = await area();
     if (await flipTheme(t, c)) {
@@ -393,7 +403,7 @@ async function judgeCase(c, recs) {
   let lastErr;
   for (let k = 0; k < 2; k++) {
     try {
-      const reply = await streamChat({ provider: "claude-code", model: opt.judge, pinned: true, timeoutMs: 300_000 }, messages, {});
+      const reply = await streamChat({ provider: "claude-code", model: opt.judge, effort: "default", pinned: true, timeoutMs: 300_000 }, messages, {});
       const v = parseVerdict(reply, labels.slice(0, order.length));
       order.forEach((r, i) => { r.judge = v[labels[i]]; r.judge.mean = +mean(v[labels[i]]).toFixed(2); r.judgeLabel = labels[i]; });
       return;
@@ -430,8 +440,17 @@ function table(rows) {
 // ---------------------------------------------------------------- main
 let results, arms;
 if (opt["judge-only"]) {
-  const saved = JSON.parse(readFileSync(opt["judge-only"], "utf8"));
-  results = saved.results; arms = saved.arms;
+  // Several saved runs judged together: a later run's (case, arm) replaces an earlier one's.
+  // --rename polish=polish@default renames an arm of the runs loaded.
+  const ren = Object.fromEntries(opt.rename.split(",").filter(Boolean).map(x => x.split("=")));
+  const byKey = new Map();
+  arms = [];
+  for (const f of opt["judge-only"].split(",")) {
+    const saved = JSON.parse(readFileSync(f, "utf8"));
+    for (const r of saved.results) { r.arm = ren[r.arm] || r.arm; delete r.judge; delete r.judgeError; byKey.set(r.id + "|" + r.arm, r); }
+    for (const a of saved.arms.map(a => ren[a] || a)) if (!arms.includes(a)) arms.push(a);
+  }
+  results = [...byKey.values()];
 } else {
   arms = opt.arms.split(",").map(s => s.trim()).filter(Boolean);
   if (arms.includes("baseline") && !opt.baseline) throw new Error("--baseline <dir>: a checkout of the code to compare against (git worktree add <dir> <commit>)");
