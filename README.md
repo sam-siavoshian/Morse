@@ -133,7 +133,8 @@ Requires Node 22+. For clips, `ffmpeg` on your PATH.
                      mod.js (format, share links, userscript export)
 ```
 
-- **One runtime, two hosts.** The same `runtime.js` runs in websites (extension) and desktop apps (CDP); only the transport differs.
+- **One runtime, two hosts.** The same runtime runs in websites (extension) and desktop apps (CDP); only the transport differs.
+- **Free until you use it.** Every page gets only a 28 KB boot (`runtime/boot.js`): it applies your mods, follows SPA navigations and listens for the hotkey, with no overlay, layout reads or timers. The UI is injected the first time you open Morse. Measured in [`docs/perf/report.md`](docs/perf/report.md) (`node demo/perf.js`), guarded by `tests/perf.test.js`.
 - **The `morse` kit is the secret sauce for small models.** `morse.watch(selector, fn)` survives React re-renders; `morse.el(...)` creates elements that are tracked for undo; errors inside callbacks are captured and fed back to the model. Short, concrete API → fewer tokens, fewer mistakes.
 - **Context, not the whole DOM.** The model gets the picked element's trimmed HTML, a stable selector that avoids hashed class names, its ancestors, a 40-line page outline, and the theme colors. Small prompts keep local models fast.
 - **Mods are data.** A mod is a JSON document (prompt, match, CSS, JS). Share links carry it in the URL fragment, so no server ever sees it.

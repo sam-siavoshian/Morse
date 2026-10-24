@@ -265,7 +265,6 @@ export async function runGeneration(page, { target = null, prompt = "make it cal
     await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2, { steps: 3 });
     await page.mouse.click(r.x + r.width / 2, r.y + r.height / 2);
     await sleep(150);
-    await page.keyboard.press("a"); // God mode toolbar: "Ask" focuses the bar
   }
   await page.keyboard.type(prompt);
   await page.keyboard.press("Enter");

@@ -60,7 +60,7 @@ const chat = await open(ctx, SITE.parley);
 const C = helpers(chat);
 await chat.keyboard.press("Alt+Space");
 await sleep(200);
-const ta = await chat.locator("textarea").boundingBox();
+const ta = await chat.locator("#composer textarea").boundingBox();
 await chat.mouse.move(ta.x + 120, ta.y + 20, { steps: 6 });
 await sleep(250);
 await C.shot("21-web-point.png");
@@ -75,7 +75,7 @@ await sleep(300);
 await C.shot("23-web-done.png");
 await chat.keyboard.press("Enter"); // Keep
 await sleep(400);
-await chat.locator("textarea").click();
+await chat.locator("#composer textarea").click();
 await chat.keyboard.type("How do CRDTs resolve two people editing the same sentence offline? Assume a text CRDT like RGA, and explain what the merged result looks like.", { delay: 4 });
 await sleep(300);
 await C.shot("24-web-word-count-works.png");
@@ -133,8 +133,9 @@ const friend = await browserWithMorse("friend");
 const install = await friend.ctx.newPage();
 await install.goto("http://127.0.0.1:8787/share/install.html");
 await install.evaluate(() => localStorage.setItem("morse:debug", "1")); // open shadow root so the script can click
+const reloaded = install.waitForEvent("load"); // the page reloads itself on hashchange; wait for that, don't race it
 await install.goto(link.replace(/^https:\/\/[^/]+\/RRAA/, "http://127.0.0.1:8787"));
-await install.reload();
+await reloaded;
 await sleep(800);
 await install.screenshot({ path: path.join(OUT, "30-share-link.png") });
 console.log("  📸 30-share-link.png");
