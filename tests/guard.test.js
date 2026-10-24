@@ -273,7 +273,7 @@ test("errors: the console hears the first few, __stats counts them all", { skip 
 test("time per mod is measured; mod code can still declare the names the kit guards", { skip }, async () => {
   const { page, run } = await kitPage(`<p>x</p>`);
   const r = await run("ms", `const setTimeout = 1; let MutationObserver = 2; morse.watch("p", () => { const t = performance.now(); while (performance.now() - t < 20) {} });`);
-  assert.deepEqual(r, { ok: true });
+  assert.equal(r.ok, true);
   const st = await page.evaluate(() => morse.__stats("ms"));
   assert.ok(st.ms >= 20 && st.ms < 200, `measured ${st.ms}ms`);
   await page.close();

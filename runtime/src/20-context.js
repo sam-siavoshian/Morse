@@ -233,11 +233,14 @@ function outline() {
       note += `, ${where}`;
       tier = 3;
     }
-    picked[tier].push({ i: i++, line: `${uniqueSelector(el)}${t ? `  "${t.replace(/"/g, "'")}"` : ""}${note ? `  (${note})` : ""}`, ways: OUTLINE_WAYS.test(t) });
+    // speed: the selector is built only for lines that make the cut below.
+    // uniqueSelector queries the whole page, so building it for every one of
+    // thousands of buttons took seconds on big pages (5,000 table rows: 27 s).
+    picked[tier].push({ i: i++, el, rest: `${t ? `  "${t.replace(/"/g, "'")}"` : ""}${note ? `  (${note})` : ""}`, ways: OUTLINE_WAYS.test(t) });
   }
   // Within a kind, the ways around (settings, account, export…) go first.
   const lines = picked.flatMap((list, k) => [...list].sort((a, b) => b.ways - a.ways || a.i - b.i).slice(0, OUTLINE_BUDGET[k]))
-    .sort((a, b) => a.i - b.i).map(x => x.line);
+    .sort((a, b) => a.i - b.i).map(x => uniqueSelector(x.el) + x.rest);
   let out = "";
   for (const l of lines) { if (out.length + l.length + 1 > 3600) break; out += (out ? "\n" : "") + l; }
   return out;
