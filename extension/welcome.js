@@ -2,9 +2,11 @@
 // itself. The practice area is practice.html in a sandboxed frame; this page
 // relays its requests to the service worker (port "morse", the same dispatch
 // websites use) and runs mod code in it for the worker (port "morse-practice",
-// see Practice in onboarding-host.js).
+// see Practice in onboarding-host.js). "Connect a model" pairs with the Morse
+// helper by itself once `morse setup --pair <code>` has run (see below).
 
 import { normalizePrefs } from "./core/prefs.js";
+import { plainError } from "./core/onboarding.js";
 import { detectPlatform, resolveHotkeys, comboParts, matchCombo } from "./core/hotkeys.js";
 
 const $ = id => document.getElementById(id);
@@ -76,8 +78,13 @@ addEventListener("message", e => {
 frame.src = "practice.html";
 $("frame").append(frame);
 
+// The whole practice frame in view while it's in use: the bar sits at its
+// bottom, and on a laptop screen Save would otherwise be below the fold.
+const showFrame = () => $("frame").scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+addEventListener("blur", () => setTimeout(() => { if (document.activeElement === frame) showFrame(); }, 0));
 function openBar() {
   frame.focus();
+  showFrame();
   frame.contentWindow.postMessage({ morseMsg: { type: "toggle" } }, "*");
 }
 $("try").onclick = openBar;
@@ -91,41 +98,144 @@ addEventListener("keydown", e => {
 const openExtensionSettings = () => chrome.tabs.create({ url: `chrome://extensions/?id=${chrome.runtime.id}` });
 $("open-ext").onclick = openExtensionSettings;
 $("open-ext-2").onclick = openExtensionSettings;
-$("open-model").onclick = async () => {
-  await chrome.storage.local.set({ "morse.popupFocus": "model" });
-  try { await chrome.action.openPopup(); }
-  catch { chrome.tabs.create({ url: "popup.html?url=" + encodeURIComponent(location.href) }); }
-};
+
+// ---- connect a model, in one command
+// This page makes a pairing code and shows `morse setup --pair <code>`. That
+// command chooses the model, starts the Morse helper and leaves the code
+// waiting there; this page sees the helper (popup.state polls its health)
+// and pairs with its own code. Nothing to type back. A helper started some
+// other way (`morse serve`) shows its own code: then the code box appears.
+const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // daemon/bridge.js CODE_ALPHABET
+const send = msg => chrome.runtime.sendMessage({ ...msg, url: location.href }).catch(e => ({ error: e.message }));
+let pairCode = "";
+async function loadCode(fresh = false) {
+  let rec = null;
+  try { rec = (await chrome.storage.local.get("morse.pairCode"))["morse.pairCode"]; } catch {}
+  if (fresh || !rec?.code) {
+    const bytes = crypto.getRandomValues(new Uint8Array(6));
+    rec = { code: [...bytes].map(b => ALPHABET[b % ALPHABET.length]).join("") };
+    await chrome.storage.local.set({ "morse.pairCode": rec }).catch(() => {});
+  }
+  pairCode = rec.code;
+  $("setup-cmd").textContent = `morse setup --pair ${pairCode}`;
+  $("node-cmd").textContent = `node daemon/cli.js setup --pair ${pairCode}`;
+}
+await loadCode();
+
+// What the model step says right now, in one line. `st` is popup.state.
+let st = null, copied = false, tried = false, triedAt = 0, pairError = "", busy = false;
+const LIVE = (text, kind = "wait") => `<span class="dot ${kind}" aria-hidden="true"></span><span>${text}</span>`;
+function render() {
+  const live = $("live"), h = st?.helper;
+  const connected = !!st && st.kind !== "none";
+  // The code box: only for a helper that's running without our code waiting.
+  const manual = !connected && !!h && !h.paired && (!h.pairing || !!pairError);
+  $("pairrow").hidden = !manual;
+  if (connected) live.innerHTML = "";
+  else if (busy) live.innerHTML = LIVE("Connecting…");
+  else if (pairError) live.innerHTML = LIVE(esc(pairError), "bad");
+  else if (h?.paired && h.provider === "none") live.innerHTML = LIVE("Connected, but no model is set up on this computer yet. Run the command above to choose one.", "bad");
+  else if (manual) live.innerHTML = LIVE("The Morse helper is running. Run the command above to connect, or type the code it shows here.", "ok");
+  else if (h) live.innerHTML = LIVE("Found the Morse helper. Connecting…");
+  else live.innerHTML = LIVE(copied ? "Waiting for the command to finish in your terminal…" : "Waiting for you to run the command…");
+  $("model-label").textContent = connected ? `Using ${st.label}` : "";
+}
+
 $("copy-setup").onclick = async e => {
   const b = e.currentTarget;
-  try { await navigator.clipboard.writeText("morse setup"); b.textContent = "Copied"; }
-  catch { b.textContent = "Run morse setup in a terminal"; }
-  setTimeout(() => (b.innerHTML = "Copy <code>morse setup</code>"), 2400);
+  copied = true;
+  try { await navigator.clipboard.writeText($("setup-cmd").textContent); b.textContent = "Copied"; }
+  catch { b.textContent = "Select it and copy"; }
+  setTimeout(() => (b.textContent = "Copy"), 2400);
+  render();
 };
+
+async function pair(code, auto) {
+  busy = true; pairError = ""; render();
+  const r = await send({ type: "popup.pair", code });
+  busy = false;
+  if (!r || r.error) {
+    // Our own code didn't match: the helper waits for a different one
+    // (started with morse serve). Ask for that one instead of retrying.
+    pairError = auto ? "The Morse helper is waiting for a different code. Type the code it shows, or run the command above again." : plainError(r?.error);
+  } else {
+    pairError = "";
+    if (auto) await loadCode(true); // a code is used once
+    st = r;
+  }
+  render();
+  refresh();
+}
+$("code").oninput = () => {
+  $("code").value = $("code").value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+  if ($("code").value.length === 6) $("pair").click();
+};
+$("code").onkeydown = e => { if (e.key === "Enter") $("pair").click(); };
+$("pair").onclick = () => {
+  const code = $("code").value.trim();
+  if (code.length !== 6) { pairError = "Type all 6 characters of the code."; return render(); }
+  pair(code, false);
+};
+// The API key's own note, under its field (pairing keeps the live line).
+const KEYNOTE = $("keynote").textContent;
+const keyNote = (text, bad) => { $("keynote").textContent = text || KEYNOTE; $("keynote").classList.toggle("bad", !!bad); };
+$("key").oninput = () => keyNote();
+$("key").onkeydown = e => { if (e.key === "Enter") $("save-key").click(); };
+$("save-key").onclick = async () => {
+  const key = $("key").value.trim();
+  if (!/^sk-ant-/.test(key)) return keyNote("That doesn't look like an Anthropic API key. It starts with sk-ant-.", true);
+  const r = await send({ type: "popup.save", anthropicKey: key, backend: "anthropic" });
+  $("key").value = "";
+  if (!r || r.error) return keyNote(plainError(r?.error), true);
+  keyNote("Key saved.");
+  st = r;
+  render();
+  refresh();
+};
+
+async function modelState() {
+  const r = await send({ type: "popup.state" });
+  if (!r || r.error) return;
+  const h = r.helper;
+  // The helper is up with a code waiting: try ours, once per waiting code.
+  if (r.kind === "none" && h && !h.paired && h.pairing && !busy && !pairError && (!tried || Date.now() - triedAt > 30000)) {
+    tried = true; triedAt = Date.now();
+    st = r;
+    return pair(pairCode, true);
+  }
+  if (!h?.pairing) tried = false;
+  st = r;
+  render();
+}
 
 // ---- the checklist: ticks itself from chrome.storage and Chrome's own state
 function userScriptsOn() {
   try { chrome.userScripts.getScripts; return !!chrome.userScripts?.execute; } catch { return false; }
 }
 async function refresh() {
-  const [st, pinned] = await Promise.all([
+  const [ob, pinned] = await Promise.all([
     chrome.runtime.sendMessage({ type: "onboarding.status" }).catch(() => null),
     chrome.action.getUserSettings ? chrome.action.getUserSettings().then(s => !!s.isOnToolbar).catch(() => false) : false,
+    modelState(),
   ]);
-  const status = st?.status || {}, state = st?.state || {};
+  const status = ob?.status || {}, state = ob?.state || {};
+  const model = st ? st.kind !== "none" : !!status.model?.connected;
   const done = {
-    pin: pinned,
+    model,
     scripts: userScriptsOn() || status.userScripts === true,
-    model: !!status.model?.connected,
     first: !!state.tips?.saved || status.mods > 0,
+    pin: pinned,
   };
   for (const [step, ok] of Object.entries(done)) document.querySelector(`[data-step="${step}"]`).classList.toggle("done", ok);
-  $("model-label").textContent = status.model?.label && !done.model ? `Now: ${status.model.label}` : "";
   const n = Object.values(done).filter(Boolean).length;
   $("progress").textContent = n === 4 ? "All done" : `${n} of 4 done`;
+  // The practice page works before a model is connected, with sample answers (onboarding-host.js).
+  $("practice-note").innerHTML = model
+    ? "This page uses your model, like any other site."
+    : "No model yet? This page has sample answers for <q>make this easier to read</q> and <q>add a word count</q>, so you can try Morse now. Connect a model to change any website.";
 }
 refresh();
 chrome.storage.onChanged.addListener(() => refresh());
 addEventListener("focus", refresh);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
-setInterval(() => { if (!document.hidden) refresh(); }, 2000); // pinning and Allow User Scripts don't fire events
+setInterval(() => { if (!document.hidden) refresh(); }, 1500); // the helper, pinning and Allow User Scripts don't fire events

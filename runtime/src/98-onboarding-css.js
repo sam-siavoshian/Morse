@@ -80,4 +80,39 @@ function ONBOARDING_CSS() { return `
     .ob-note { flex-wrap: wrap; } .ob-text { flex-basis: calc(100% - 60px); }
   }
   :host([data-fx="off"]) .ob-coach { animation: none; }
+
+  /* progressive reveal (59-onboarding.js): before the first saved change, the
+     bar keeps to the basics. The Edit tools come with their shortcut. */
+  :host([data-new]) .gm-qbtn, :host([data-new]) .gl-sug, :host([data-new]) .so-sug { display: none !important; }
+  :host([data-new]:not([data-tools])) .gm { display: none !important; }
+
+  /* the first saved change: a card where the toast goes, its mark settling into a check */
+  .ob-win { position: fixed; left: 20px; bottom: 20px; width: min(400px, calc(100vw - 40px)); display: flex; gap: 14px; padding: 16px 16px 14px;
+    background: var(--m-surface); color: var(--m-text); border: 1px solid var(--m-line-strong); border-radius: var(--m-r-lg); box-shadow: var(--m-shadow);
+    font: 400 var(--m-text-sm)/18px var(--m-font); letter-spacing: var(--m-tracking); pointer-events: auto; animation: rise2 var(--m-med) var(--m-ease); }
+  .ob-win-mark { position: relative; flex: none; width: 40px; height: 40px; display: grid; place-items: center; border-radius: var(--m-r-md); background: var(--m-raised); color: var(--m-text); }
+  .ob-win-mark .radar { position: absolute; }
+  .ob-win-mark .radar rect { animation: ob-gather 900ms var(--m-ease) both !important; }
+  .ob-win-mark .radar rect.o { opacity: .35; }
+  .ob-win-check { position: absolute; opacity: 0; stroke-dasharray: 16; stroke-dashoffset: 16; animation: ob-check 420ms var(--m-ease) 820ms forwards; }
+  @keyframes ob-gather { 0% { transform: scale(1); opacity: 1; } 60% { opacity: 1; } 100% { transform: scale(.2); opacity: 0; } }
+  .ob-win-mark .radar rect { transform-box: fill-box; transform-origin: center; }
+  @keyframes ob-check { to { opacity: 1; stroke-dashoffset: 0; } }
+  .ob-win-body { min-width: 0; flex: 1; }
+  .ob-win-body > b { display: block; font: 600 var(--m-text-md)/20px var(--m-font); margin-bottom: 4px; }
+  .ob-win-body p { margin: 0; color: var(--m-text-2); }
+  .ob-win-body h4 { margin: 12px 0 6px; font: 500 var(--m-text-xs)/16px var(--m-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--m-text-3); }
+  .ob-win-body ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .ob-win-body li { display: flex; flex-direction: column; }
+  .ob-win-body li b { font-weight: 500; color: var(--m-text); }
+  .ob-win-body li span { color: var(--m-text-2); }
+  .ob-win .caps kbd { height: 18px; min-width: 18px; padding: 0 4px; font-size: 10.5px; }
+  .ob-win .caps { gap: 3px; vertical-align: 1px; }
+  .ob-win-row { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+  .ob-win-row button { height: 28px; padding: 0 12px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: transparent; color: var(--m-text);
+    font: 500 var(--m-text-sm)/18px var(--m-font); transition: background var(--m-fast), border-color var(--m-fast); }
+  .ob-win-row button:hover { background: var(--m-hover); border-color: var(--m-signal-1); }
+  .ob-win-row > span { margin-left: auto; color: var(--m-text-3); font-size: var(--m-text-xs); }
+  :host([data-fx="off"]) .ob-win, :host([data-fx="off"]) .ob-win-mark .radar rect, :host([data-fx="off"]) .ob-win-check { animation-duration: 1ms !important; animation-delay: 0s !important; }
+  @media (prefers-reduced-motion: reduce) { .ob-win-check { animation-delay: 0s !important; } }
 `; }

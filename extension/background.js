@@ -14,11 +14,12 @@ import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_URL } from "
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf, byCreated, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
 import { asReviewed } from "../core/summary.js"; // installs keep only the reviewed code
+import { HANG_MS, FROZE_ERROR } from "../core/guard.js"; // guard hook: frozen pages
 import { clipAdd } from "../core/clipboard.js"; // God mode clipboard
 import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
 import { CONTROL_REQUESTS, handleControlRequest } from "./control-host.js"; // user control: pause, safe start, install review, backup
 import { serialized } from "./bar-host.js"; // hardening: one queue for every storage read-modify-write
-import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver } from "./onboarding-host.js"; // onboarding hook: welcome page, first-run state, practice area
+import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver, practiceSample, SAMPLE_ONLY, openSetup } from "./onboarding-host.js"; // onboarding hook: welcome page, first-run state, practice area
 import { GALLERY_REQUESTS, handleGallery } from "./gallery-host.js"; // gallery hook: Mods for this site
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
@@ -73,8 +74,10 @@ setModelResolver(async () => {
   return { connected: b.kind !== "none", provider: b.settings?.provider || "", label: b.label || "" };
 });
 
+// first-run hook: "connect a model" opens the welcome page's one-command
+// step (onboarding-host.js) rather than the settings page.
 function openSettings() {
-  return chrome.runtime.openOptionsPage().catch(() => {});
+  return openSetup("model").catch(() => chrome.runtime.openOptionsPage().catch(() => {}));
 }
 
 export function userScriptsAvailable() {
@@ -101,10 +104,24 @@ async function execIn(target, code) {
 
 // { ok } when it ran; { ok: false, waiting: "userScripts" | "practice", error }
 // when it was not run at all (not the model's mistake, so no second try).
+//
+// guard hook: mod code that doesn't finish has frozen the page. Only a
+// debugger can interrupt it (daemon/guard.js does, on the desktop), and Morse
+// doesn't ask for that permission, so here a saved mod is turned off with why
+// (it won't run on the next load) and a change being made fails its run.
+// Freezes later on, in a callback, are left to Chrome's "Page unresponsive"
+// dialog and safe start (core/control.js).
 async function exec(target, modId, js) {
   const why = cantRun(target);
   if (why) return { ok: false, waiting: why, error: NOT_RUN[why] };
-  const res = (await execIn(target, wrapModCode(modId, js))) || { ok: false, error: "The change didn't run on this page. Reload the page and try again." };
+  const hung = {};
+  const ran = await Promise.race([execIn(target, wrapModCode(modId, js)), new Promise(r => setTimeout(() => r(hung), HANG_MS))]);
+  if (ran === hung) {
+    const m = (await allMods())[modId];
+    if (m?.enabled && m.js === js) await putMod({ ...m, enabled: false, paused: { why: "froze", at: new Date().toISOString(), error: FROZE_ERROR } });
+    return { ok: false, error: FROZE_ERROR };
+  }
+  const res = ran || { ok: false, error: "The change didn't run on this page. Reload the page and try again." };
   if (!res.ok) return res;
   await new Promise(r => setTimeout(r, 600));
   const errs = (await execIn(target, `morse.__errors(${JSON.stringify(modId)})`)) || [];
@@ -139,13 +156,15 @@ async function dispatch(msg, port) {
   const here = { url: msg.url && hostOf(msg.url) === hostOf(sent) ? msg.url : sent, app: null };
   if (BAR_REQUESTS.has(msg.type)) return handleBarRequest({ ...msg, url: here.url, scope: undefined }); // history per caller's site
   if (CONTROL_REQUESTS.has(msg.type)) return handleControlRequest({ ...msg, url: here.url }, port); // user control (control-host.js)
-  if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg); // onboarding hook
+  if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { practice: Practice.has(tab.id) }); // onboarding hook
   if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, here.url); // gallery hook: Mods for this site
   switch (msg.type) {
     case "hello": {
       const b = await backend();
-      const label = b.label + (userScriptsAvailable() ? "" : " · “Allow User Scripts” off");
-      const quiet = !(await get("welcomed", false)) ? (await set("welcomed", true), false) : true;
+      const sample = b.kind === "none" && Practice.has(tab.id); // first-run hook: the practice page's sample answers
+      const label = (sample ? "Sample answers" : b.label) + (userScriptsAvailable() || sample ? "" : " · “Allow User Scripts” off");
+      // The practice area doesn't use up the "Morse is ready" toast for the first real site (first-run hook).
+      const quiet = Practice.has(tab.id) || (!(await get("welcomed", false)) ? (await set("welcomed", true), false) : true);
       return { mode: "extension", app: null, label, quiet, needsModel: b.kind === "none", connect: b.kind === "none" ? b.reason : undefined,
         settings: await getPrefs(), voice: await voiceInfo() };
     }
@@ -194,9 +213,13 @@ async function dispatch(msg, port) {
     case "generate": {
       let b = await backend();
       if (b.kind === "none") b = await backend(true);
+      if (b.kind === "none" && Practice.has(tab.id)) { // first-run hook: sample answers on the practice page, before a model is connected
+        if (!practiceSample(msg.request) || msg.base) throw new Error(SAMPLE_ONLY);
+        b = { kind: "sample", label: "Sample answers", settings: { provider: "demo" } };
+      }
       if (b.kind === "none") {
         openSettings();
-        throw new NoModelError(`No model connected yet. Settings just opened in a new tab.`);
+        throw new NoModelError(`No model connected yet. Morse's welcome page just opened to connect one.`);
       }
       // gens.run's signal aborts the model call (the helper kills the harness
       // process when the connection closes): Stop in the bar, or closing the tab.
@@ -353,8 +376,5 @@ chrome.commands.onCommand.addListener(async cmd => {
   if (tab) chrome.tabs.sendMessage(tab.id, { morseToggle: true }).catch(() => {});
 });
 
-chrome.runtime.onInstalled.addListener(async ({ reason }) => {
-  if (reason !== "install") return;
-  const b = await backend(true);
-  if (b.kind === "none") openSettings();
-});
+// first-run hook: on install only the welcome page opens (onboarding-host.js).
+// Its first step connects a model, so the settings page no longer opens too.

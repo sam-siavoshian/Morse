@@ -24,7 +24,8 @@ import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf,
 import { wrapModCode } from "../core/kit.js";
 import { asReviewed } from "../core/summary.js"; // installs keep only the reviewed code
 import { runMorse } from "../core/engine.js";
-import { settingsLabel } from "./models.js"; // also registers the Claude Code / Codex providers
+import { settingsLabel, currentSettings } from "./models.js"; // also registers the Claude Code / Codex providers
+import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
 import { Generations } from "../core/cancel.js";
@@ -34,6 +35,7 @@ import { HOME, listMods } from "./store.js";
 import { classifyTarget, describeTarget } from "./targets.js";
 import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
 import { GALLERY_REQUESTS, handleGallery } from "./gallery.js"; // gallery hook: Mods for this site
+import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
@@ -171,6 +173,7 @@ export class Connector {
     const source = how.frame ? BOOT.frame : BOOT.window;
     this.pages.set(target.id, s);
     this.windows.set(target.id, w);
+    s.hang = new HangGuard(s, { onFroze: (id, how) => this.froze(s, w, id, how) }); // guard hook: frozen pages (guard.js)
     this.everAttached = true;
     s.on("close", () => {
       this.pages.delete(target.id);
@@ -254,6 +257,10 @@ export class Connector {
     await this.boot(s, w, source).catch(() => {});
     readTitle();
     this.log(`  ✓ connected to ${title}${kind === "window" ? "" : ` (${kind})`}`);
+    if (!this.hinted && kind === "window") { // first-run hook: say what to do next, once
+      this.hinted = true;
+      configuredHotkeys().then(k => k.open && this.log(`\n  In ${this.app?.name || title || "the app"}, press ${k.open}, point at something and say what to change.\n`), () => {});
+    }
     this.changed();
   }
 
@@ -306,6 +313,14 @@ export class Connector {
 
   // Detach from every window: stop injecting into new pages, take the bar and
   // the mods off the open ones, close the sessions. The app keeps running.
+  // first-run hook: `morse launch` started before any model was set up. Once
+  // `morse setup` has run (the bar says to), pick it up without a relaunch.
+  async freshSettings() {
+    if (this.settings?.provider && this.settings.provider !== "none") return this.settings;
+    try { const s = await currentSettings(); if (s.provider !== "none") this.settings = s; } catch {}
+    return this.settings;
+  }
+
   async stop() {
     this.running = false;
     this.state = "stopped";
@@ -367,7 +382,12 @@ export class Connector {
   async exec(s, caller, modId, js) {
     const ctx = caller.main;
     if (ctx == null) return { ok: false, error: "The page isn't ready yet. Try again." };
-    const r = await s.send("Runtime.evaluate", { expression: wrapModCode(modId, js), contextId: ctx, returnByValue: true });
+    const done = s.hang?.exec(modId, ctx, js); // guard hook: while mod code is here, notice if the page freezes
+    let r;
+    try { r = await s.send("Runtime.evaluate", { expression: wrapModCode(modId, js), contextId: ctx, returnByValue: true }); }
+    catch (e) { if (!/Execution was terminated/.test(e.message) && !s.hang?.froze(modId)) throw e; r = null; }
+    finally { done?.(); }
+    if (!r || s.hang?.froze(modId)) return { ok: false, error: FROZE_ERROR };
     if (r.exceptionDetails) return { ok: false, error: r.exceptionDetails.exception?.description?.split("\n")[0] || r.exceptionDetails.text };
     const res = r.result?.value || { ok: false, error: "no result" };
     if (!res.ok) return res;
@@ -376,6 +396,21 @@ export class Connector {
     const e = await s.send("Runtime.evaluate", { expression: `morse.__errors(${JSON.stringify(modId)})`, contextId: ctx, returnByValue: true });
     const errs = e.result?.value || [];
     return errs.length ? { ok: false, error: errs[0].split("\n")[0] } : { ok: true };
+  }
+
+  // guard hook: mod code froze this window and was stopped (daemon/guard.js).
+  // A saved mod is turned off with why, and the page reloads clean; a change
+  // still being made just fails that run (the model gets its second try).
+  async froze(s, w, id, { running } = {}) {
+    const where = describeTarget(w).title;
+    const mod = id ? await getMod(id).catch(() => null) : null;
+    if (mod && mod.js === s.hang.code(id)) {
+      if (mod.enabled) await saveMod({ ...mod, enabled: false, paused: { why: "froze", at: new Date().toISOString(), error: FROZE_ERROR, reloaded: true } });
+      this.modsChanged(s);
+      this.log(`  ! “${mod.title}” froze ${where}. Morse stopped it, turned it off and reloaded the page.`);
+      await s.send("Page.reload").catch(() => {});
+    } else if (id) this.log(`  ! ${running ? "A change being made" : "A change you were trying"} froze ${where}. Morse stopped it.`);
+    else this.log(`  ! ${where} stopped responding. Morse stopped the script that was running.`);
   }
 
   // caller: { world, main, frameId } of the document whose runtime asked.
@@ -393,7 +428,7 @@ export class Connector {
     // App-wide in desktop apps, per site in a browser.
     const historyScope = async () => app || hostOf((await here()).url);
     if (CONTROL_REQUESTS.has(msg.type)) return handleControl({ ...msg, tab: `frame:${caller.frameId}` }, await here()); // user control (control.js); per window, not the page's own tab id
-    if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
+    if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: await this.freshSettings() }); // onboarding hook
     if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, await here()); // gallery hook: Mods for this site
     switch (msg.type) {
       case "hello":
@@ -443,6 +478,7 @@ export class Connector {
         if (caller.main == null) return null;
         return (await s.send("Runtime.evaluate", { expression: `globalThis.morse?.__stats?.(${JSON.stringify(msg.modId)}) ?? null`, contextId: caller.main, returnByValue: true })).result?.value ?? null;
       case "generate": {
+        if (!this.settings?.provider || this.settings.provider === "none") await this.freshSettings(); // first-run hook
         if (!this.settings?.provider || this.settings.provider === "none")
           throw new Error("No model is connected. Run morse setup in a terminal to choose one.");
         const t0 = Date.now();

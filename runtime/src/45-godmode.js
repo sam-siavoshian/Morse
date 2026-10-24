@@ -714,6 +714,7 @@ const GodMode = (() => {
     if (primaryKey && !e.altKey && !e.shiftKey && e.code === "KeyE" && G.el && !wrap.hidden) {
       e.preventDefault();
       e.stopImmediatePropagation();
+      revealEditTools(); // first-run hook: 59-onboarding.js
       tb.focus({ preventScroll: true });
       return;
     }
@@ -824,6 +825,7 @@ const GodMode = (() => {
     focusTools() {
       if (S.open && S.phase !== "idle") return; // a change is being made or shown: leave its status alone
       if (!S.open) openBar();
+      revealEditTools(); // first-run hook: 59-onboarding.js
       if (G.el && !wrap.hidden) tb.focus({ preventScroll: true });
       else hint.innerHTML = `Point at something to use the Edit tools on it`;
     },

@@ -62,10 +62,12 @@ export async function openSetup(what) {
   if (what === "userscripts" || what === "extension-settings") return chrome.tabs.create({ url: EXT_SETTINGS() }).then(() => ({ ok: true }));
   if (what === "shortcuts") return chrome.tabs.create({ url: "chrome://extensions/shortcuts" }).then(() => ({ ok: true }));
   if (what === "model") {
-    // The popup holds model settings; it opens that section when this flag is set.
-    await chrome.storage.local.set({ "morse.popupFocus": "model" });
-    try { await chrome.action.openPopup(); return { ok: true }; } catch {}
-    await chrome.tabs.create({ url: chrome.runtime.getURL(`${WELCOME}#model`) });
+    // first-run hook: the welcome page connects a model with one command (and
+    // pairs by itself), so "Connect a model" goes there, to a tab already open if any.
+    const base = chrome.runtime.getURL(WELCOME), url = `${base}#model`;
+    const open = (await chrome.tabs.query({})).find(t => t.url?.startsWith(base));
+    if (open) await chrome.tabs.update(open.id, { active: true, url });
+    else await chrome.tabs.create({ url });
     return { ok: true };
   }
   if (what === "practice" || what === "welcome") {
@@ -75,9 +77,21 @@ export async function openSetup(what) {
   throw new Error(`Unknown setup page ${what}`);
 }
 
-export async function handleOnboarding(msg) {
+// The practice area works before a model is connected: the sample answers
+// below (core/demo.js's replies for the practice page's markup), clearly
+// called sample answers on the welcome page. Anything else asks for a model.
+const SAMPLE = /\b(read|reading|clean|clutter|ads?|distract\w*|word|count)\b/i;
+export const practiceSample = request => SAMPLE.test(String(request || ""));
+export const SAMPLE_ONLY = "The practice page only knows “make this easier to read” and “add a word count”. Connect a model for more.";
+
+// `practice`: the request comes from the welcome page's practice area.
+export async function handleOnboarding(msg, { practice = false } = {}) {
   switch (msg.type) {
-    case "onboarding.get": return { state: await loadOnboarding(), status: await onboardingStatus() };
+    case "onboarding.get": {
+      const status = await onboardingStatus();
+      if (practice && !status.model.connected) status.sample = true; // first-run hook: no "connect a model" note over the sample answers
+      return { state: await loadOnboarding(), status };
+    }
     case "onboarding.set": return saveOnboarding(msg.patch);
     case "onboarding.open": return openSetup(msg.what);
   }
