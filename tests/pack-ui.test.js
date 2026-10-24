@@ -3,14 +3,17 @@
 // through the pack review (untick one, a clash asks Keep both or Replace
 // yours, a mod for every website starts unticked), the pack's mods grouped
 // under its name with one switch, and a pack from an address: Check this
-// address for updates, then Update available and the update review.
+// address for updates, then Update available and the update review. Last,
+// the Chrome extension's service worker answering the same requests.
 import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { launchBrowser, noBrowser } from "./helpers/browser.js";
+import os from "node:os";
+import { mkdtempSync } from "node:fs";
+import { launchBrowser, noBrowser, chromium } from "./helpers/browser.js";
 import { TIMEOUT, waitForReady } from "./helpers/wait.js";
 import { freePort } from "./helpers/net.js";
 
@@ -254,14 +257,14 @@ test("A pack from an address: you choose to get updates; a change shows Update a
   const upd = ui('.panel .pk-group[data-pack="board-team"] .pk-upd');
   await upd.waitFor();
   assert.equal(packHits, hits + 1);
-  assert.match(await upd.textContent(), /Update available\. 1 new, 1 changed, 1 removed/);
+  assert.match(await upd.textContent(), /Update available\. 1 changed, 1 new, 1 removed/);
   assert.equal((await readMod("lede")).css, ".lede { opacity: .7; }", "nothing changes on its own");
   assert.equal(await exists(modFile("fresh")), false);
   await upd.locator("[data-pk=update]").click();
   const rev = ui(".modal .card.pk-card");
   await rev.waitFor();
   assert.match(await rev.locator("header").textContent(), /Update “Board team”\?.*Nothing changes until you press Update/s);
-  assert.match(await rev.textContent(), /New in the pack.*Fresh title.*Changed.*Quiet lede.*No longer in the pack.*Card borders/s);
+  assert.match(await rev.textContent(), /Changed.*Quiet lede.*New in the pack.*Fresh title.*No longer in the pack.*Card borders/s);
   const changed = rev.locator('.pk-item[data-kind="change"]');
   assert.match(await changed.textContent(), /Now also:.*Sends data to another website/s);
   assert.match(await changed.locator('[data-s="wider"]').textContent(), /also run on stats\.example/);
@@ -313,4 +316,67 @@ test("A hostile pack link: too many mods, or a name with markup, can't do harm",
   await ui('.panel .pk-group[data-pack="evil"]').waitFor();
   assert.equal(await ui(".panel img, .panel script").count(), 0);
   assert.equal(await page.evaluate(() => window.__pwned), undefined);
+});
+
+// ---- the Chrome extension: the same requests, answered by its service worker
+// (extension/pack-host.js), sent the way Morse's own runtime sends them.
+
+const EXT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..", "dist", "extension");
+const skipExt = skip || (!process.env.DISPLAY && "extensions need a display (run under Xvfb)");
+async function asMorse(page, msg) {
+  const cdp = await page.context().newCDPSession(page);
+  const worlds = [];
+  cdp.on("Runtime.executionContextCreated", e => worlds.push(e.context));
+  await cdp.send("Runtime.enable");
+  const deadline = Date.now() + 5000;
+  let world;
+  while (!(world = worlds.find(c => c.auxData?.type === "isolated" && c.name === "Morse" && c.auxData?.isDefault === false)) && Date.now() < deadline) await new Promise(r => setTimeout(r, 50));
+  assert.ok(world, "Morse's content-script world");
+  const r = await cdp.send("Runtime.evaluate", {
+    contextId: world.id, awaitPromise: true, returnByValue: true,
+    expression: `new Promise(res => { const id = 900000 + Math.floor(Math.random() * 99999);
+      __morseHost.onMessage(m => { if (m.reply === id) res({ error: m.error || null, result: m.result ?? null }); });
+      __morseHost.send({ id, ...${JSON.stringify(msg)} }); })`,
+  });
+  await cdp.detach();
+  return r.result.value;
+}
+
+test("extension: a pack is previewed, installed only as reviewed, and its switch works, in the service worker", { skip: skipExt }, async () => {
+  const ctx = await chromium.launchPersistentContext(mkdtempSync(path.join(os.tmpdir(), "morse-pack-ext-")), {
+    headless: false, args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
+  });
+  try {
+    const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
+    const p = await ctx.newPage();
+    await p.goto(`http://127.0.0.1:${port}/`);
+    await p.waitForFunction(() => document.querySelector("[data-morse-ui]"));
+    const here = `127.0.0.1:${port}`;
+    await sw.evaluate(async m => chrome.storage.local.set({ mods: { [m.id]: m } }), own("ext-a", { title: "Mine" }));
+    const source = JSON.stringify({ morse: "morse-pack", version: 1, id: "ext-pack", name: "Ext pack", mods: [
+      { morse: 1, id: "ext-a", title: "A", prompt: "a", css: "h1{}", js: "", match: { hosts: [here], app: null } },
+      { morse: 1, id: "ext-b", title: "B", prompt: "b", css: "p{}", js: "", match: { hosts: [here], app: null } },
+    ] });
+    const prev = await asMorse(p, { type: "mods.preview", source });
+    assert.equal(prev.error, null);
+    assert.equal(prev.result.kind, "pack");
+    assert.deepEqual(prev.result.clash, { "ext-a": { kind: "clash", id: "ext-a", title: "Mine" } });
+    const unchosen = await asMorse(p, { type: "pack.install", source, hash: prev.result.hash, picks: [{ id: "ext-a" }, { id: "ext-b" }] });
+    assert.match(String(unchosen.error), /Choose whether to keep both/);
+    const forged = await asMorse(p, { type: "pack.install", source, hash: "0".repeat(64), picks: [{ id: "ext-b" }] });
+    assert.match(String(forged.error), /changed while you were looking/);
+    const ok = await asMorse(p, { type: "pack.install", source, hash: prev.result.hash, picks: [{ id: "ext-a", as: "copy" }, { id: "ext-b" }] });
+    assert.equal(ok.error, null);
+    let all = await sw.evaluate(async () => (await chrome.storage.local.get("mods")).mods);
+    assert.deepEqual(Object.keys(all).sort(), ["ext-a", "ext-a-2", "ext-b"]);
+    assert.equal(all["ext-a"].title, "Mine");
+    assert.equal(all["ext-b"].pack.name, "Ext pack");
+    assert.equal((await asMorse(p, { type: "pack.enable", pack: "ext-pack", on: false })).result.changed, 2);
+    all = await sw.evaluate(async () => (await chrome.storage.local.get("mods")).mods);
+    assert.equal(all["ext-b"].enabled, false);
+    assert.equal(all["ext-a"].enabled, true);
+    const insecure = await asMorse(p, { type: "pack.fetch", url: "http://team.example/p.json" });
+    assert.match(String(insecure.error), /https:\/\/ address/);
+    assert.deepEqual((await asMorse(p, { type: "pack.status" })).result, []);
+  } finally { await ctx.close(); }
 });

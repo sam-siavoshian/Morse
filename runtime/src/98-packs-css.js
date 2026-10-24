@@ -9,17 +9,17 @@ function PACKS_CSS() { return `
   /* a pack can be long: Install / Update stay in view at the bottom of the card */
   .pk-card footer { position: sticky; bottom: -20px; z-index: 1; margin: 16px -20px -20px; padding: 12px 20px 20px; background: var(--m-surface); border-top: 1px solid var(--m-line); }
   .pk-note { margin: 0 0 12px; padding: 8px 12px; border-left: 2px solid var(--m-line-strong); color: var(--m-text-2); overflow-wrap: anywhere; }
-  .pk-items { display: grid; gap: 8px; }
-  .pk-item { padding: 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-bg); transition: opacity var(--m-fast); }
+  .pk-items { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .pk-item { min-width: 0; padding: 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-bg); transition: opacity var(--m-fast); }
   .pk-item.off { background: transparent; }
   .pk-item.off .pk-body { opacity: .6; }
-  .pk-pick { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
-  .card .pk-pick { margin: 0; font: inherit; letter-spacing: var(--m-tracking); text-transform: none; color: var(--m-text); }
+  .card .pk-pick { display: flex; align-items: flex-start; gap: 12px; margin: 0; cursor: pointer; font: inherit; letter-spacing: var(--m-tracking); text-transform: none; color: var(--m-text); }
   .pk-pick input, .pk-sub input, .pk-sel input { flex: none; width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--m-primary); cursor: pointer; }
   .pk-pick > span { flex: 1; min-width: 0; }
   .pk-pick b { display: block; font-weight: 600; line-height: 20px; overflow-wrap: anywhere; }
   .pk-pick .ctl-from { display: block; margin: 0; }
-  .pk-body { margin: 4px 0 0 28px; }
+  .pk-body { min-width: 0; margin: 4px 0 0 28px; }
+  .pk-body pre { max-width: 100%; }
   .pk-body .ctl-prompt { font-size: var(--m-text-sm); line-height: 16px; }
   .pk-does { margin: 8px 0 0; color: var(--m-text); font-size: var(--m-text-sm); line-height: 20px; overflow-wrap: anywhere; }
   .pk-does b { font-weight: 600; }
@@ -32,12 +32,19 @@ function PACKS_CSS() { return `
   .card .pk-clash .seg button { height: 24px; border: 0; padding: 0 8px; }
   .card .pk-clash .seg button:hover { background: transparent; }
   .card .pk-clash .seg button[aria-checked="true"] { background: var(--m-surface); }
-  .pk-sub { display: flex; align-items: flex-start; gap: 12px; margin: 16px 0 0; padding: 12px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); cursor: pointer; }
-  .card .pk-sub { font: inherit; letter-spacing: var(--m-tracking); text-transform: none; color: var(--m-text); }
+  .card .pk-sub { display: flex; align-items: flex-start; gap: 12px; margin: 16px 0 0; padding: 12px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); cursor: pointer;
+    font: inherit; letter-spacing: var(--m-tracking); text-transform: none; color: var(--m-text); }
   .pk-sub b { display: block; font-weight: 600; line-height: 20px; }
   .pk-sub small { display: block; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 16px; }
   .pk-subbed { margin: 16px 0 0; color: var(--m-text-2); font-size: var(--m-text-sm); }
   .card .ctl-h + .pk-items { margin-top: 0; }
+  .pk-before { margin-top: 16px; }
+  .pk-before > summary { display: inline-flex; align-items: center; gap: 6px; height: 28px; cursor: pointer; list-style: none; color: var(--m-text-2); font-weight: 500; border-radius: var(--m-r-sm); }
+  .pk-before > summary::-webkit-details-marker { display: none; }
+  .pk-before > summary::before { content: ""; border-style: solid; border-width: 4px 0 4px 6px; border-color: transparent transparent transparent currentColor; transition: transform var(--m-fast); }
+  .pk-before[open] > summary::before { transform: rotate(90deg); }
+  .pk-before > summary:hover { color: var(--m-text); }
+  .pk-before .pk-items { margin-top: 8px; }
   /* Install with nothing ticked, or while it installs. Color only: no opacity or filter on a
      review's button, or the browser can't tell it's uncovered (80-modals.js settleReview). */
   .pk-card button:disabled { cursor: default; }
@@ -77,7 +84,8 @@ function PACKS_CSS() { return `
   /* ---- the Mods panel: choosing mods for a pack */
   .pk-bar { border-top: 1px solid var(--m-line); }
   .pk-bar + .ctl-backup { border-top: 0; padding-top: 0; }
-  .list.pk-picking article > label.sw { display: none; }
+  .list.pk-picking article > label.sw, .list.pk-picking article > :is(.btns, .versions, .vhint, .health, .gl-upd) { display: none; }
+  .list.pk-picking .pk-group > .pk-upd, .list.pk-picking .pk-btns, .list.pk-picking .pk-head .sw { display: none; }
   .pk-sel { display: grid; place-items: center; width: 32px; height: 20px; cursor: pointer; }
   .pk-sel input { margin: 0; }
   .pk-pickbar { position: sticky; top: -8px; z-index: 1; display: flex; align-items: center; gap: 8px; margin: -8px -8px 8px; padding: 12px; background: var(--m-surface); border-bottom: 1px solid var(--m-line); }

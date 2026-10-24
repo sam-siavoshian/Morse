@@ -114,7 +114,9 @@ export function createPacks({ store, mods, writeFile = null, fetch = globalThis.
           const { pack } = parsePack(c.text);
           const d = diffPack(all, pack);
           name = pack.name;
-          if (d.added.length || d.removed.length || d.changed.length) update = { ...d, note: pack.note, author: pack.author || "" };
+          // Mods you left out before aren't news: they come along, unticked, with a real change.
+          const fresh = d.added.filter(m => !(s.declined || []).includes(m.id));
+          if (fresh.length || d.removed.length || d.changed.length) update = { ...d, fresh: fresh.map(m => m.id), note: pack.note, author: pack.author || "" };
         } catch {}
       }
       return { url: s.url, id: s.id, name, checked: c.fetchedAt || 0, offline: !!c.failedAt, error: c.failedAt ? c.error || "" : "", hash: c.hash || "", declined: s.declined || [], update };

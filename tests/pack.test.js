@@ -319,6 +319,7 @@ test("host: a pack from an address; updates only when asked for; checked at most
   assert.deepEqual(s[0].update.changed.map(c => c.after.id), ["a"]);
   assert.deepEqual(s[0].update.added.map(x => x.id), ["b", "c"]);
   assert.deepEqual(s[0].declined, ["b"]);
+  assert.deepEqual(s[0].update.fresh, ["c"], "what you left out before isn't news");
   assert.equal(m.mods.a.css, ".a { color: red; }", "nothing changes on its own");
 
   // Offline: the copy Morse has stays, and the update is still there to review.
@@ -342,6 +343,13 @@ test("host: a pack from an address; updates only when asked for; checked at most
   assert.deepEqual(m.data.subs[ADDR].declined, ["b"]);
   s = await packs.status();
   assert.equal(s[0].update, null, "reviewed");
+  // A new copy that only has the mod you left out again: no update to show.
+  body = pack([mod("a", { css: ".a { color: green; }" }), mod("b"), mod("c")], { note: "same mods, new note" });
+  etag = '"v3"';
+  down = false;
+  now += DAY + 1;
+  s = await packs.status();
+  assert.equal(s[0].update, null, "only what you left out before: nothing new");
 
   // Stop updates: the mods stay.
   assert.equal(await packs.unsubscribe({ url: ADDR }), 1);

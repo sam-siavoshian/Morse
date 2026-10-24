@@ -180,7 +180,8 @@ function printSub(s) {
   const when = s.checked ? relativeTime(new Date(s.checked).toISOString()) : "not yet";
   out(D(`    updates from ${s.url} · checked ${when}${s.offline ? " · couldn't reach it last time" : ""}`));
   if (s.update) {
-    const u = s.update, parts = [u.added.length && `${u.added.length} new`, u.changed.length && `${u.changed.length} changed`, u.removed.length && `${u.removed.length} removed`].filter(Boolean);
+    const u = s.update, fresh = (u.fresh || u.added).length;
+    const parts = [u.changed.length && `${u.changed.length} changed`, fresh && `${fresh} new`, u.removed.length && `${u.removed.length} removed`].filter(Boolean);
     out(`    ${Y("Update available")}: ${parts.join(", ")}. Open the Mods panel where the pack runs to see what changed.`);
   }
 }

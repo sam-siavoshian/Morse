@@ -263,9 +263,23 @@ follow-up that made the current one, [`core/versions.js`](../../core/versions.js
 [`core/edits.js`](../../core/edits.js)), `from` (where a captured look came
 from), `fp` (the self-heal fingerprint, [`core/heal.js`](../../core/heal.js)),
 `paused` (why a guard turned it off, [Guards](#guards)),
-`imported`, `importedFrom` (`link`, `file` or `backup`), `importedAt` and
+`imported`, `importedFrom` (`link`, `file`, `backup` or `pack`), `importedAt` and
 `gallery`, `author` (where an installed mod came from, shown by `modOrigin()` in
-`core/summary.js`).
+`core/summary.js`), and `pack` (`{ id, name, mod, at, url? }`: the pack it came
+from, the mod's id in that pack, and the address it updates from; see
+[`core/pack.js`](../../core/pack.js)).
+
+A **pack** (`{ morse: "morse-pack", version: 1, id, name, note, author?, made,
+mods }`) is read like a stranger's file: at most 2 MB and 50 mods, broken or
+duplicate mods left out, names cleaned to one line of text, no History, on/off,
+provenance or Your style. The install review is `runtime/src/69-packs.js`;
+`pack.install` re-reads the source and checks the hash the review showed, and
+an id that clashes with one of your mods needs an explicit Keep both or
+Replace yours. Packs from an address (`core/pack-host.js`) are fetched by the
+extension or the helper with the gallery's rules: https only (or loopback),
+ETag / Last-Modified, a capped read, at most daily (max-age within a week),
+the old copy kept when offline, and updates applied only from the update
+review.
 
 `match.hosts` holds the host for web pages, or the file itself for local
 files; `match.app` names the desktop app. `modMatches()` decides where a mod

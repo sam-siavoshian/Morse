@@ -134,7 +134,8 @@ const Packs = (() => {
   function panelHtml() {
     if (!S.mods.some(m => m.kind !== "style")) return;
     const back = panel.querySelector(".ctl-backup");
-    const html = `<div class="ctl-backup pk-bar"><span class="eyebrow">Packs</span>${st.picking ? "" : `<button data-pk="make" title="Share several mods together">Make a pack…</button>`}</div>`;
+    if (st.picking) return; // the strip at the top of the list has Cancel and Next
+    const html = `<div class="ctl-backup pk-bar"><span class="eyebrow">Packs</span><button data-pk="make" title="Share several mods together">Make a pack…</button></div>`;
     if (back) back.insertAdjacentHTML("beforebegin", html);
     else panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", html);
   }
@@ -154,7 +155,7 @@ const Packs = (() => {
     const name = packOf(list[0]).name || id;
     const on = list.some(m => m.enabled);
     const sub = subFor(id), u = sub?.update;
-    const parts = u ? [u.added.length && `${u.added.length} new`, u.changed.length && `${u.changed.length} changed`, u.removed.length && `${u.removed.length} removed`].filter(Boolean) : [];
+    const parts = u ? updateParts(u) : [];
     const held = on && list.filter(m => m.enabled).every(m => modHeld(m));
     return `<section class="pk-group${on ? "" : " off"}" data-pack="${esc(id)}" aria-label="Pack “${esc(name)}”">
       <div class="pk-head">
@@ -187,6 +188,7 @@ const Packs = (() => {
   function startPicking() {
     st.picking = new Set();
     renderPanel();
+    panel.querySelector(".list")?.scrollTo({ top: 0 });
     panel.querySelector(".list [data-pk=sel]")?.focus({ preventScroll: true });
   }
   function stopPicking() { st.picking = null; if (!panel.hidden) renderPanel(); }
@@ -286,19 +288,23 @@ const Packs = (() => {
       <div class="pk-body"><p class="pk-does">It's no longer in the pack, so Update removes it. Untick it to keep it as your own mod.</p></div>
     </section>`;
   }
+  // New since you last looked, not the mods you left out then.
+  const freshOf = u => (Array.isArray(u.fresh) ? u.added.filter(m => u.fresh.includes(m.id)) : u.added);
+  const updateParts = u => [u.changed.length && `${u.changed.length} changed`, freshOf(u).length && `${freshOf(u).length} new`, u.removed.length && `${u.removed.length} removed`].filter(Boolean);
   function showUpdate(id) {
     const sub = subFor(id), u = sub?.update;
     if (!u) return;
     let site = sub.url;
     try { site = new URL(sub.url).host; } catch {}
-    const declined = new Set(sub.declined || []);
-    const parts = [u.added.length && `${u.added.length} new`, u.changed.length && `${u.changed.length} changed`, u.removed.length && `${u.removed.length} removed`].filter(Boolean);
+    const fresh = freshOf(u), before = u.added.filter(m => !fresh.includes(m));
+    const parts = updateParts(u);
     openModal(`
       <header><b>Update “${esc(sub.name)}”?</b><small>From ${esc(site)}${sub.checked ? ` · checked ${esc(relativeTime(new Date(sub.checked).toISOString()))}` : ""}. Nothing changes until you press Update.</small><button data-a="close" aria-label="Close">×</button></header>
       <div class="gl-what"><h5>What changed</h5><p>${esc(parts.join(" · "))}</p>${u.note ? `<p class="gl-note">“${esc(u.note)}”</p>` : ""}</div>
-      ${u.added.length ? `<h4 class="ctl-h eyebrow">New in the pack</h4><div class="pk-items">${u.added.map(m => itemHtml(m, { ticked: !declined.has(m.id) && !wide(m), why: "Not ticked: tick it if you want it." })).join("")}</div>` : ""}
       ${u.changed.length ? `<h4 class="ctl-h eyebrow">Changed</h4><div class="pk-items">${u.changed.map(changedHtml).join("")}</div>` : ""}
+      ${fresh.length ? `<h4 class="ctl-h eyebrow">New in the pack</h4><div class="pk-items">${fresh.map(m => itemHtml(m, { ticked: !wide(m), why: "Not ticked: tick it if you want it." })).join("")}</div>` : ""}
       ${u.removed.length ? `<h4 class="ctl-h eyebrow">No longer in the pack</h4><div class="pk-items">${u.removed.map(removedHtml).join("")}</div>` : ""}
+      ${before.length ? `<details class="pk-before"><summary>You left ${before.length === 1 ? "one mod" : `${before.length} mods`} out before</summary><div class="pk-items">${before.map(m => itemHtml(m, { ticked: false })).join("")}</div></details>` : ""}
       <p class="dim gl-hist">Your versions of changed mods stay in History, so you can go back to them.</p>
       <footer><button data-a="close">Not now</button><button class="primary" data-pk="apply" data-settle>Update</button></footer>`, { review: true }); // top layer, 80-modals.js
     modal.querySelector(".card").classList.add("ctl-card", "pk-card");

@@ -31,6 +31,8 @@ does and shows its code, and `morse rm <id>` deletes one.
 
 ## Share a mod
 
+To share several mods together, make a [mod pack](mod-packs.md).
+
 **Share** on a result or in the Mods panel gives you:
 
 - **Copy link**: a share link that carries the whole mod. Anyone with Morse
