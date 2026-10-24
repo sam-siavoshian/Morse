@@ -37,7 +37,7 @@ const notPings = calls => Object.entries(calls || {}).filter(([k]) => k !== "tim
 test("boot: the script every page loads is small and cheap next to the full runtime", { skip }, async () => {
   const pl = await payloads();
   assert.ok(pl.split, "the runtime is split into boot + UI");
-  assert.ok(pl.boot.length < 40_000, `boot is ${pl.boot.length} bytes`);
+  assert.ok(pl.boot.length < 48_000, `boot is ${pl.boot.length} bytes`); // hotkeys, user control, self-heal detection
   const ctx = await D.browser.newContext();
   const page = await ctx.newPage();
   await page.goto(srv.url("/perf/big.html"));
@@ -79,7 +79,10 @@ test("boot: until Morse is opened it builds no UI, reads no layout and runs noth
     const listeners = c("listen:window") + c("listen:document") + c("listen:node");
     assert.ok(listeners <= 8, `listeners: ${JSON.stringify(s.counts)}`);
     assert.ok(c("createElement") <= 3, `elements: ${c("createElement")}`);
-    // Idle: nothing of Morse's runs, apart from safe start's few pings.
+    // Idle: nothing of Morse's runs, apart from safe start's few pings, once
+    // the one self-heal check (after the page settles) is done.
+    await sleep(1500);
+    await until(() => t.morse(() => !globalThis[Symbol.for("morse.boot")].heal.busy()), 20000, "the self-heal check");
     await t.reset();
     await sleep(2000);
     const idle = await t.snap();
@@ -285,5 +288,30 @@ test("never throws into the page: a host that fails every request", { skip }, as
     await t.page.evaluate(() => history.pushState({}, "", "/elsewhere"));
     await sleep(300);
     await noErrors(t);
+  } finally { await t.close(); }
+});
+
+// ---------------------------------------------------------------- self-heal detection lives in the boot
+
+test("self-heal: a mod whose page changed is found after idle, with no UI loaded and nothing left running", { skip }, async () => {
+  const { modCodeHash, pagePathShape } = await import("../core/heal.js");
+  const url = srv.url("/perf/big.html");
+  const fp = (m, sel, n) => ({ v: 1, code: modCodeHash(m), path: pagePathShape(url), size: 100, at: new Date().toISOString(), sels: [[sel, n]] });
+  const gone = mod("healgone", ".album-grid { outline: 1px solid red; }", "");
+  gone.fp = fp(gone, ".album-grid", 12);
+  const fine = mod("healfine", "li.row { outline: 0; }", "");
+  fine.fp = fp(fine, "li.row", 3000);
+  await D.setMods([gone, fine]);
+  const t = await D.page();
+  try {
+    await t.page.goto(url);
+    const found = () => t.morse(() => { const H = globalThis[Symbol.for("morse.boot")].heal; return !H.busy() && H.broken().size ? [...H.broken().keys()] : null; });
+    const ids = await until(found, 25000, "the check to find it");
+    assert.deepEqual(ids, ["healgone"], "only the mod whose elements are gone");
+    assert.equal((await t.snap()).counts.shadowRoot || 0, 0, "found without loading the UI");
+    await t.reset();
+    await sleep(2000);
+    assert.equal(notPings((await t.snap()).calls), 0, "nothing keeps running after the check");
+    assert.deepEqual(t.errors, []);
   } finally { await t.close(); }
 });

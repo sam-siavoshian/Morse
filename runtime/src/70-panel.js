@@ -164,8 +164,9 @@ function rowHtml(m) {
         <div class="meta"><b>${esc(m.title)}</b><small>“${esc(m.prompt)}”</small>${m.refined ? `<small class="latest">Latest change: “${esc(m.refined)}”</small>` : ""}
           <div class="tags">${m.css.trim() ? "<span>style</span>" : ""}${m.js.trim() ? "<span>script</span>" : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : "<span>whole page</span>"}${when ? `<em class="when">${changed ? "changed" : "added"} ${esc(when)}</em>` : ""}</div>
         </div>
-        ${broken ? `<div class="health" role="status"><p><b>Not working.</b> ${esc(h.reason)}</p><button class="primary" data-a="fix">Fix it</button></div>` : ""}
+        ${broken ? `<div class="health" role="status"><p><b>${esc(h.lead || "Not working." /* self-heal hook: 71-heal.js */)}</b> ${esc(h.reason)}</p><button class="primary" data-a="fix">Fix it</button></div>` : ""}
         ${galleryRowHtml(m) /* gallery hook: Update available (68-gallery.js) */}
+        ${healRowHtml(m) /* self-heal hook: Share the fix (71-heal.js) */}
         <div class="btns"><button data-a="refine">Refine</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}">History <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">Copy link</button><button data-a="share">Share</button><button data-a="code">Edit code</button><button data-a="del">Delete</button></div>
         ${open ? versionsHtml(m, versions) : ""}
       </article>`;

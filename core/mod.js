@@ -123,7 +123,7 @@ export async function decodeShare(link) {
 
 // Links carry the current version only; the history stays on this machine.
 export function stripLocal(mod) {
-  const { enabled, history, ...rest } = mod;
+  const { enabled, history, fp, ...rest } = mod; // self-heal hook: fp describes this machine's page
   return rest;
 }
 

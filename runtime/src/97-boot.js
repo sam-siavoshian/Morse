@@ -39,6 +39,7 @@ B.adopt({
   toast, key: adoptKey, modsChanged() { if (!panel.hidden) renderPanel(); },
   health: (m, r) => Health.ran(m, r), // repair: the panel marks mods that stopped working (70-panel.js)
   controlReady, // user control: the safe-start / off-switch notice after the first sync (63-control.js)
+  healFound: () => Heal.found(), // self-heal: what boot.js found broken, for the dot, the note and Fix it (71-heal.js)
 });
 B.ready.then(hello => {
   try {

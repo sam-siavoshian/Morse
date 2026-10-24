@@ -13,6 +13,7 @@ root.innerHTML = `<style>${TOKENS_CSS.replace(/(--m-[\w-]+\s*:[^;!]+);/g, "$1 !i
 ${A11Y_CSS() /* Easier to use hook: 98-a11y-css.js */}</style>
   <style>${BAR_CSS()}${ONBOARDING_CSS() /* onboarding hook: 98-onboarding-css.js */}</style>
   <style>${GALLERY_CSS() /* gallery hook: 98-gallery-css.js */}</style>
+  <style>${HEAL_CSS() /* self-heal hook: 98-heal-css.js */}</style>
   <canvas class="fx"></canvas>
   <div class="hl" hidden><span></span></div>
   <div class="sel" hidden></div>

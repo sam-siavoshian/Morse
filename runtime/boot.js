@@ -11,8 +11,8 @@
  * the page later replaces addEventListener, MutationObserver or rAF.
  *
  * runtime/bundle.js wraps this file in an IIFE with core/hotkeys.js,
- * core/prefs.js and core/control.js inlined, inside a try/catch: Morse never
- * throws into a page. */
+ * core/prefs.js, core/control.js and the detection half of core/heal.js
+ * inlined, inside a try/catch: Morse never throws into a page. */
 
 const W = window, D = document;
 const BOOT = Symbol.for("morse.boot"), PRISTINE = Symbol.for("morse.pristine");
@@ -235,7 +235,7 @@ function syncMods() {
 // At most one re-sync per 250ms (first one immediately): some sites call
 // replaceState on every scroll frame. The timer exists only while they do.
 let urlSyncAt = -1e9, urlTimer = 0;
-function urlSync() { urlTimer = 0; urlSyncAt = pristine.now(); syncMods().catch(warn); }
+function urlSync() { urlTimer = 0; urlSyncAt = pristine.now(); syncMods().then(() => Heal.soon(), warn); }
 function urlChanged() {
   if (location.href === S.url) return;
   S.url = location.href;
@@ -279,6 +279,125 @@ function observeDom() {
   if (r && r !== watchedRoot) { watchedRoot = r; domMo.observe(r, { childList: true }); }
 }
 observeDom();
+
+// ---- self-heal: did a saved mod stop working because the site changed?
+// Detection lives here so it works before (and without) the UI: once the page
+// has loaded and gone quiet, one pass after idle counts each mod's selectors
+// against its fingerprint (core/heal.js), and a second pass a few seconds
+// later confirms. Never per frame, no observer: settling only compares the
+// element count on a short timer that stops. A mod that has no fingerprint
+// for this version learns one the first time it works here. The UI
+// (71-heal.js) shows the dot, the note and Fix it from what this found; the
+// extension's toolbar badge is asked for from here.
+const Heal = (() => {
+  const QUIET = 1200, MAX_WAIT = 15000, CONFIRM = 3000;
+  const NOT_OURS = "[data-morse-ui],[data-morse]";
+  const TRANSIENT = "dialog,[role=dialog],[role=alertdialog],[aria-modal=true],[popover],[role=menu],[role=listbox],[role=tooltip]";
+  const broken = new Map(); // mod id -> lost selectors [[selector, countBefore]]
+  let running = null, again = false, badged = -1, wantUi = false;
+  const wait = ms => new Promise(r => pristine.setTimeout(r, ms));
+  const pageSize = () => (D.body ? D.body.getElementsByTagName("*").length : 0);
+  function countOf(sel) {
+    let list;
+    try { list = D.querySelectorAll(sel); } catch { return null; }
+    let n = 0, rest = 0;
+    for (const el of list) {
+      if (el.closest(NOT_OURS)) continue;
+      n++;
+      if (!el.closest(TRANSIENT)) rest++;
+      if (n >= 9999) break;
+    }
+    return { n, rest };
+  }
+  function measure(sels) {
+    const counts = {}, transient = [];
+    for (const sel of sels) {
+      const c = countOf(sel);
+      counts[sel] = c ? c.n : 0;
+      if (c && c.n && !c.rest) transient.push(sel);
+    }
+    return { counts, transient };
+  }
+  // Loaded, the element count unchanged for QUIET ms (or MAX_WAIT passed), then idle.
+  const settle = () => new Promise(resolve => {
+    const begin = () => {
+      const start = pristine.now();
+      let size = pageSize(), since = start;
+      const tick = () => {
+        if (!live()) return;
+        const now = pristine.now(), n = pageSize();
+        if (n !== size) { size = n; since = now; }
+        if (now - since >= QUIET || now - start >= MAX_WAIT) pristine.requestIdleCallback(() => resolve(), { timeout: 2000 });
+        else pristine.setTimeout(tick, Math.max(200, QUIET - (now - since)));
+      };
+      pristine.setTimeout(tick, QUIET);
+    };
+    D.readyState === "complete" ? begin() : pristine.addEventListener(W, "load", begin, { once: true });
+  });
+  const checkable = m => m.enabled && !held(m) && !!((m.css || "").trim() || (m.js || "").trim());
+  async function learn(m, size) {
+    const { counts, transient } = measure(selectorsIn(m));
+    const fp = makeFingerprint(m, counts, { url: location.href, size, transient });
+    if (!fp) return;
+    const next = { ...m, fp };
+    const saved = (await call("mods.save", { mod: next }).catch(() => null)) || next;
+    S.mods = S.mods.map(x => (x.id === saved.id ? saved : x));
+  }
+  async function pass(only) {
+    const out = new Map();
+    const page = { path: pagePathShape(location.href), size: pageSize() };
+    for (const m of S.mods.filter(checkable)) {
+      if (only && !only.has(m.id)) continue;
+      if (!fingerprintCurrent(m)) { if (!only) await learn(m, page.size); continue; }
+      const { counts } = measure(m.fp.sels.map(x => x[0]));
+      let seen = [], errors = 0;
+      if ((m.js || "").trim()) {
+        const stats = await call("stats", { modId: m.id }).catch(() => null); // core/kit.js __stats
+        seen = (stats?.watches || []).filter(w => w.total > 0).flatMap(w => String(w.selector).split(",").map(x => x.trim()));
+        errors = stats?.errors || 0;
+      }
+      const a = assessFingerprint(m.fp, { ...page, counts, seen, errors });
+      if (a.verdict === "broken") out.set(m.id, a.lost);
+      else if (a.verdict === "ok") broken.delete(m.id); // (again: a late load)
+    }
+    return out;
+  }
+  async function run() {
+    await settle();
+    if (!live()) return;
+    const href = location.href;
+    let found = await pass(null);
+    if (found.size) {
+      await wait(CONFIRM);
+      await settle();
+      if (!live() || location.href !== href) return;
+      found = await pass(new Set(found.keys()));
+    }
+    for (const [id, lost] of found) broken.set(id, lost);
+    report();
+  }
+  function report() {
+    const n = [...broken.keys()].filter(id => S.mods.some(m => m.id === id && m.enabled)).length;
+    if (S.mode === "extension" && n !== badged) { badged = n; call("heal.badge", { count: n }).catch(() => {}); } // the toolbar button
+    if (ui) { try { ui.healFound?.(); } catch (e) { warn(e); } }
+    // Auto-fix (Settings) needs the model and the UI's review flow: load it now.
+    else if (n && prefs.autoFix) { wantUi = true; loadUI().catch(() => {}); }
+  }
+  function soon() {
+    if (!live()) return null;
+    if (running) { again = true; return running; }
+    running = run().catch(e => warn("self-heal", e)).finally(() => {
+      running = null;
+      if (again) { again = false; soon(); }
+    });
+    return running;
+  }
+  return {
+    soon, broken: () => new Map(broken), forget: id => { broken.delete(id); },
+    busy: () => !!running, // tests: a check is still on its way
+    adopted() { if (broken.size || wantUi) { wantUi = false; try { ui.healFound?.(); } catch (e) { warn(e); } } },
+  };
+})();
 
 // ---- the UI, loaded on first use
 let ui = null, uiLoading = null, pendingKey = null;
@@ -342,6 +461,7 @@ syncMods().then(() => {
   const sus = Control.suspect, m = sus && S.mods.find(x => x.id === sus.id);
   if (sus && (!m || !m.enabled)) { Control.held.delete(sus.id); Control.suspect = null; ctl("control.forgive"); }
   else if (m || (Control.off && S.mods.some(x => x.enabled))) uiTask("controlReady");
+  Heal.soon(); // self-heal: after the page settles and idles
 }).catch(e => warn("couldn't load mods", e));
 const ready = (async () => {
   let hello = {};
@@ -361,7 +481,7 @@ ready.then(hello => {
 // ---- the handoff the UI (runtime/src, 01-rpc.js) picks up
 Object.defineProperty(W, BOOT, { configurable: true, value: Object.freeze({
   v: 1, host, call, listeners, outgoing, S, pristine, on, off, live, control: Control, debug: DEBUG, platform: PLATFORM,
-  ready, prefs: () => prefs, setCss, applyMod, removeMod, syncMods, domHooks,
+  ready, prefs: () => prefs, setCss, applyMod, removeMod, syncMods, domHooks, heal: Heal,
   // The UI calls this once it is built; whatever happened before it arrived
   // (a hotkey, a host event, a toast) is handed over.
   adopt(api) {
@@ -380,6 +500,7 @@ Object.defineProperty(W, BOOT, { configurable: true, value: Object.freeze({
     for (const [m, r] of healthLog.values()) health(m, r);
     healthLog.clear();
     for (const name of tasks.splice(0)) try { ui[name]?.(); } catch (e) { warn(e); }
+    Heal.adopted();
   },
 }) });
 // For a helper kit (core/kit.js) running in this same world.

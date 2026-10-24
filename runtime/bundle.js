@@ -22,8 +22,13 @@ const guarded = (name, body) => `/* Morse ${name} (built from runtime/) */\n(() 
 // template literal; tests/perf.test.js checks the result still runs.
 const lean = src => src.replace(/^[ \t]*\/\*[\s\S]*?\*\/[ \t]*$/gm, "").replace(/^[ \t]*\/\/.*$/gm, "").replace(/\n{2,}/g, "\n");
 
+// Self-heal detection runs in the boot; it needs only the pure first half of
+// core/heal.js (selectors, fingerprints, the verdict), not the wording,
+// candidate ranking or sharing, which stay with the UI.
+const HEAL_DETECT = "// ---- what the person reads";
+
 export function bundleBoot() {
-  return lean(guarded("boot",`${inlineModule("../core/hotkeys.js")}\n${inlineModule("../core/prefs.js")}\n${inlineModule("../core/control.js")}\n// ---- runtime/boot.js\n${read("./boot.js")}`));
+  return lean(guarded("boot",`${inlineModule("../core/hotkeys.js")}\n${inlineModule("../core/prefs.js")}\n${inlineModule("../core/control.js")}\n${inlineModule("../core/heal.js", HEAL_DETECT)}\n// ---- runtime/boot.js\n${read("./boot.js")}`));
 }
 
 export function bundleUI() {
@@ -41,6 +46,7 @@ export function bundleUI() {
   shared.push(inlineModule("../core/summary.js"), inlineModule("../core/control.js")); // user control
   shared.push(inlineModule("../core/gallery.js")); // gallery hook: Mods for this site (68-gallery.js)
   shared.push(inlineModule("../core/a11y.js")); // Easier to use: page tools, Check this page, fixes
+  shared.push(inlineModule("../core/heal.js")); // self-heal hook: mods that keep working (71-heal.js)
   return guarded("ui", `const TOKENS_CSS = ${JSON.stringify(tokens)};\n${shared.join("\n")}\n${parts.join("\n")}`);
 }
 
@@ -51,8 +57,14 @@ export function bundleRuntime() {
 
 // Inlines a dependency-free ES module as a block whose exports become locals,
 // so its private helpers can't collide with runtime names.
-function inlineModule(rel) {
-  const src = read(rel);
+// until: inline only the part of the file before this line.
+function inlineModule(rel, until = null) {
+  let src = read(rel);
+  if (until) {
+    const at = src.indexOf(until);
+    if (at < 0) throw new Error(`${rel}: no "${until}" to cut at (runtime/bundle.js)`);
+    src = src.slice(0, at);
+  }
   const names = [...src.matchAll(/^export\s+(?:async\s+)?(?:function\*?|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)].map(m => m[1]);
   return `// ---- ${rel.replace("../", "")} (inlined)\nconst { ${names.join(", ")} } = (() => {\n${src.replace(/^export\s+/gm, "")}\nreturn { ${names.join(", ")} };\n})();`;
 }
