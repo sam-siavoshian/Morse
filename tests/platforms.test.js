@@ -380,7 +380,7 @@ test("Morse never changes an app's files: no write in the desktop code except to
   assert.match(code("daemon/connector.js"), /path\.join\(HOME, "mods"\);\s*mkdirSync\(dir/);
   // Files are opened for reading only.
   for (const m of code("daemon/fuses.js").matchAll(/\bopen\(([^)]*)\)/g)) assert.match(m[1], /, "r"$/, m[0]);
-  assert.match(code("daemon/apps.js"), /openSync\(real\(p\), "r"\)/);
+  assert.deepEqual([...code("daemon/apps.js").matchAll(/\bopenSync\(([^)]*\)?)\)/g)].map(m => m[1]), ["f, fsc.O_RDONLY | (fsc.O_NONBLOCK || 0)"]); // round 6: non-blocking, so a FIFO can't hang it
   // Nothing re-signs, un-quarantines, flips fuses or repacks an app.
   for (const dir of ["daemon", "core"]) for (const f of readdirSync(path.join(ROOT, dir)).filter(f => f.endsWith(".js"))) {
     const src = code(`${dir}/${f}`);
