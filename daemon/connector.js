@@ -23,7 +23,8 @@ import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putCli
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
 import { runMorse } from "../core/engine.js";
-import { settingsLabel } from "./models.js"; // also registers the Claude Code / Codex providers
+import { settingsLabel, currentSettings } from "./models.js"; // also registers the Claude Code / Codex providers
+import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
 import { Generations } from "../core/cancel.js";
@@ -259,6 +260,10 @@ export class Connector {
     await this.boot(s, w, source).catch(() => {});
     readTitle();
     this.log(`  ✓ connected to ${title}${kind === "window" ? "" : ` (${kind})`}`);
+    if (!this.hinted && kind === "window") { // first-run hook: say what to do next, once
+      this.hinted = true;
+      configuredHotkeys().then(k => k.open && this.log(`\n  In ${this.app?.name || title || "the app"}, press ${k.open}, point at something and say what to change.\n`), () => {});
+    }
     this.changed();
   }
 
@@ -311,6 +316,14 @@ export class Connector {
 
   // Detach from every window: stop injecting into new pages, take the bar and
   // the mods off the open ones, close the sessions. The app keeps running.
+  // first-run hook: `morse launch` started before any model was set up. Once
+  // `morse setup` has run (the bar says to), pick it up without a relaunch.
+  async freshSettings() {
+    if (this.settings?.provider && this.settings.provider !== "none") return this.settings;
+    try { const s = await currentSettings(); if (s.provider !== "none") this.settings = s; } catch {}
+    return this.settings;
+  }
+
   async stop() {
     this.running = false;
     this.state = "stopped";
@@ -398,7 +411,7 @@ export class Connector {
     // App-wide in desktop apps, per site in a browser.
     const historyScope = async () => app || hostOf((await here()).url);
     if (CONTROL_REQUESTS.has(msg.type)) return handleControl(msg, await here()); // user control (control.js)
-    if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
+    if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: await this.freshSettings() }); // onboarding hook
     if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, await here()); // gallery hook: Mods for this site
     switch (msg.type) {
       case "hello":
@@ -447,6 +460,7 @@ export class Connector {
         if (caller.main == null) return null;
         return (await s.send("Runtime.evaluate", { expression: `globalThis.morse?.__stats?.(${JSON.stringify(msg.modId)}) ?? null`, contextId: caller.main, returnByValue: true })).result?.value ?? null;
       case "generate": {
+        if (!this.settings?.provider || this.settings.provider === "none") await this.freshSettings(); // first-run hook
         if (!this.settings?.provider || this.settings.provider === "none")
           throw new Error("No model is connected. Run morse setup in a terminal to choose one.");
         const t0 = Date.now();

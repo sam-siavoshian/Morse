@@ -1,13 +1,19 @@
 // `morse setup`: choose what writes your changes (Claude Code, Codex, an API
-// key) by looking at what's installed, and save
-// it to ~/.morse/config.json. Also the three-line getting started that a bare
-// `morse` prints while nothing is set up.
+// key) by looking at what's installed, check that it answers, and save it to
+// ~/.morse/config.json (provider, keys: the shape daemon/models.js reads).
+// Also the three-line getting started that a bare `morse` prints while
+// nothing is set up.
 //
 // daemon/cli.js reaches this through one line: maybeRun(cmd, args).
 // Detection takes its probes as arguments so tests can fake the machine.
 //
 //   morse setup                          interactive
 //   morse setup --use claude-code|codex|api-key|demo [--key <key>]
+//   morse setup --pair <code>            first run from Chrome: the welcome page
+//                                        shows this command with its own code;
+//                                        setup then starts the Morse helper with
+//                                        that code waiting, and the page pairs
+//                                        by itself (nothing to type back)
 
 import { spawn } from "node:child_process";
 import { promises as fs, constants as FS } from "node:fs";
@@ -33,23 +39,34 @@ export const BACKENDS = [
 ];
 const KEY_ENVS = [["ANTHROPIC_API_KEY", "anthropic"], ["OPENAI_API_KEY", "openai"]];
 
-export function configFor(id, { key = "", keyEnv = "", vendor = "" } = {}) {
+// What a choice writes into config.json: { provider, keys? }. A key from the
+// environment is never written; daemon/models.js reads the environment itself.
+export function configFor(id, { key = "", vendor = "" } = {}) {
   switch (id) {
     case "claude-code": return { provider: "claude-code" };
     case "codex": return { provider: "codex" };
     case "demo": return { provider: "demo" };
     case "api-key": {
       const v = vendor || keyVendor(key);
-      const m = v === "anthropic" ? { provider: "anthropic" } : { provider: "openai", baseUrl: "https://api.openai.com" };
-      return { ...m, ...(key ? { apiKey: key } : { apiKeyEnv: keyEnv }) };
+      return { provider: v, ...(key ? { keys: { [v]: key } } : {}) };
     }
   }
   throw new Error(`Morse doesn't know “${id}”. Use one of: ${BACKENDS.map(b => b.id).join(", ")}, demo.`);
 }
 export const keyVendor = key => (/^sk-ant-/.test(String(key)) ? "anthropic" : "openai");
 
-// Something is set up once config.json names a provider (morse setup or morse model).
-export const isSetUp = cfg => !!(cfg && cfg.model && cfg.model.provider && cfg.model.provider !== "auto");
+// Writes a choice into a config, keeping everything else.
+export function applyChoice(cfg, choice) {
+  const out = { ...cfg, provider: choice.provider };
+  if (choice.keys) out.keys = { ...cfg.keys, ...choice.keys };
+  delete out.model; // the shape an older morse setup wrote, which nothing read
+  return out;
+}
+
+// Something is set up once config.json names a provider (morse setup or morse config).
+export const isSetUp = cfg => !!(cfg && (
+  (cfg.provider && cfg.provider !== "auto") ||
+  (cfg.model && typeof cfg.model === "object" && cfg.model.provider && cfg.model.provider !== "auto")));
 
 // ---- probes (real ones; tests pass fakes)
 export async function whichBin(name, { env = process.env, platform = process.platform } = {}) {
@@ -113,16 +130,26 @@ export function gettingStarted({ platform = detectPlatform({ platform: process.p
   ].join("\n");
 }
 
-function nextSteps(platform) {
+// `pairing`: Chrome is being connected right now (connectBrowser says so).
+function nextSteps(platform, { pairing = false } = {}) {
   const key = formatCombo(defaultHotkeys(platform).open, platform);
   return `  ${B("Next")}
-    ${D("websites")}  load ${extDir()} in chrome://extensions ${D("(Developer mode, Load unpacked)")}
-    ${D("apps    ")}  morse launch spotify ${D("(or slack, discord, vscode, notion, obsidian)")}
+${pairing ? "" : `    ${D("websites")}  load ${extDir()} in chrome://extensions ${D("(Developer mode, Load unpacked)")}. Its welcome page connects it\n`}    ${D("apps    ")}  morse launch spotify ${D("(or slack, discord, vscode, notion, obsidian)")}${pairing ? D(", in another terminal") : ""}
     ${D("then    ")}  press ${B(key)}, point at something, say what to change`;
 }
 
+// What to do when the model didn't answer the check, per choice.
+function fixFor(choice, vendor) {
+  if (choice === "claude-code") return `Run ${B("claude")} once in a terminal and sign in, then run ${B("morse setup")} again.`;
+  if (choice === "codex") return `Run ${B("codex")} once in a terminal and sign in, then run ${B("morse setup")} again.`;
+  if (choice === "api-key") return `Check the key at ${vendor === "anthropic" ? "console.anthropic.com" : "platform.openai.com"}, then run ${B("morse setup")} again.`;
+  return `Run ${B("morse doctor")} to see what's wrong.`;
+}
+
 // ---- the interactive walk-through
-export async function runSetup(args = [], { input = process.stdin, output = process.stdout, deps = {}, save = saveConfig, load = loadConfig, platform = detectPlatform({ platform: process.platform }) } = {}) {
+// `check(cfg)`: does the chosen model answer? Resolves { ok, ms } or
+// { ok: false, error } (plain words). Left out, nothing is checked (tests).
+export async function runSetup(args = [], { input = process.stdin, output = process.stdout, deps = {}, save = saveConfig, load = loadConfig, check = null, platform = detectPlatform({ platform: process.platform }) } = {}) {
   const say = s => output.write(s + "\n");
   const flag = name => { const i = args.indexOf(`--${name}`); return i >= 0 ? (args[i + 1] && !args[i + 1].startsWith("--") ? args[i + 1] : true) : undefined; };
   const isTTY = !!input.isTTY;
@@ -163,7 +190,7 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
       if (!key && !row?.found) key = (await lines.ask(`  Paste your API key (it stays in ${tilde(HOME)}/config.json): `, { secret: isTTY })) || "";
       key = key.trim();
       if (!key && !row?.found) { lines.close(); say(R(`\n  No key given, so nothing changed.`)); return { saved: false, rows }; }
-      model = key ? configFor("api-key", { key }) : configFor("api-key", { keyEnv: row.keyEnv, vendor: row.vendor });
+      model = key ? configFor("api-key", { key }) : configFor("api-key", { vendor: row.vendor });
     } else model = configFor(choice);
   } catch (e) { lines.close(); say(R(`  ${e.message}`)); return { saved: false, rows }; }
   lines.close();
@@ -172,14 +199,23 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
     say(`\n  ${backend.name} isn't installed yet. Install it with ${B(backend.install)}, then run ${B("morse setup")} again.`);
     return { saved: false, rows };
   }
-  const cfg = await load();
-  cfg.model = model;
+  const cfg = applyChoice(await load(), model);
   cfg.setup = { backend: choice, at: new Date().toISOString() };
   await save(cfg);
   const label = backend?.name || "the demo model";
-  say(`\n  ${G("✓")} Morse will use ${B(label)}${model.apiKeyEnv ? ` with ${model.apiKeyEnv} from your environment` : ""}. ${D(`Saved in ${tilde(HOME)}/config.json`)}\n`);
-  say(nextSteps(platform));
-  return { saved: true, rows, choice, model };
+  const fromEnv = choice === "api-key" && !model.keys ? row?.keyEnv : "";
+  say(`\n  ${G("✓")} Morse will use ${B(label)}${fromEnv ? ` with ${fromEnv} from your environment` : ""}. ${D(`Saved in ${tilde(HOME)}/config.json`)}`);
+  let checked = null;
+  if (check) {
+    output.write(`  ${D(`Checking that ${label} answers. This can take a few seconds…`)}`);
+    checked = await check(cfg).catch(e => ({ ok: false, error: e.message || String(e) }));
+    output.write(output.isTTY ? "\r\x1b[2K" : "\n");
+    if (checked.ok) say(`  ${G("✓")} ${label} answered in ${(checked.ms / 1000).toFixed(1)}s.`);
+    else say(`  ${R("✗")} ${label} didn't answer: ${checked.error}\n    ${fixFor(choice, model.provider)}`);
+  }
+  say("");
+  if (!flag("pair")) say(nextSteps(platform)); // with --pair, connectBrowser says what's next
+  return { saved: true, rows, choice, model, checked, next: () => nextSteps(platform, { pairing: true }) };
 }
 
 // Questions over readline. Piped answers are echoed so a log reads like the
@@ -212,9 +248,56 @@ function lineReader(input, output) {
   };
 }
 
+// The real model check: one short request, like `morse doctor`.
+async function checkModel(cfg) {
+  const [{ settingsFromConfig }, { streamChat }, { plainError }] = await Promise.all([import("./models.js"), import("../core/providers.js"), import("../core/onboarding.js")]);
+  const s = settingsFromConfig(cfg);
+  if (s.provider === "none") return { ok: false, error: "No model is set up." };
+  const t0 = Date.now();
+  try {
+    await streamChat({ ...s, timeoutMs: 90_000 }, [
+      { role: "system", content: "You are a connectivity check. Reply with exactly: OK" },
+      { role: "user", content: "ping" },
+    ], { maxTokens: 200, signal: AbortSignal.timeout(90_000) });
+    return { ok: true, ms: Date.now() - t0 };
+  } catch (e) { return { ok: false, error: plainError(e) }; }
+}
+
+// First run from Chrome (`morse setup --pair <code>`): the Morse helper starts
+// here with the welcome page's code waiting, so the page pairs by itself. A
+// helper that's already running just gets the code.
+export async function connectBrowser(code, { say = s => console.log(s) } = {}) {
+  const { createBridge, startPairing } = await import("./bridge.js");
+  const { HELPER_PORT } = await import("../core/providers.js");
+  const up = await fetch(`http://127.0.0.1:${HELPER_PORT}/v1/health`, { signal: AbortSignal.timeout(800) }).then(r => r.ok, () => false);
+  if (up) {
+    await startPairing(undefined, code);
+    say(`  ${G("✓")} The Morse helper is already running. Go back to Chrome: Morse connects by itself.`);
+    return null;
+  }
+  const bridge = createBridge({ port: HELPER_PORT, log: console.log });
+  try { await bridge.listen(); }
+  catch (e) { throw new Error(e.code === "EADDRINUSE" ? `Another program is using the Morse helper's place on this computer (port ${HELPER_PORT}). Close it, then run this command again.` : e.message); }
+  await startPairing(undefined, code);
+  say(`  ${G("✓")} The Morse helper is running. Go back to Chrome: Morse connects by itself.`);
+  say(D(`    Leave this window open while you use Morse in Chrome. Ctrl+C stops it, and morse serve starts it again.`));
+  const stop = async () => { await bridge.close(); process.exit(0); };
+  process.on("SIGINT", stop);
+  process.on("SIGTERM", stop);
+  return bridge;
+}
+
 // The one entry point daemon/cli.js calls. Returns true when it handled the command.
 export async function maybeRun(cmd, args = []) {
-  if (cmd === "setup") { await runSetup(args); return true; }
+  if (cmd === "setup") {
+    const i = args.indexOf("--pair");
+    const code = i >= 0 ? String(args[i + 1] || "").trim().toUpperCase() : "";
+    const { validPairingCode } = await import("./bridge.js");
+    if (i >= 0 && !validPairingCode(code)) throw new Error("That pairing code doesn't look right. Copy the whole command from Morse's welcome page again.");
+    const res = await runSetup(args, { check: process.env.MORSE_SETUP_CHECK === "0" ? null : checkModel });
+    if (res.saved && code) { await connectBrowser(code); console.log("\n" + res.next()); }
+    return true;
+  }
   if (!cmd && !isSetUp(await loadConfig())) {
     console.log(gettingStarted());
     return true;

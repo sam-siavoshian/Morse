@@ -41,6 +41,7 @@ const ALLOWED = [
   ["runtime/src/80-modals.js", "JavaScript, can use the", "the Edit code view"],
   ["runtime/src/63-control.js", "Style <span class=\"dim\">CSS</span>", "Show code, folded under the install review"],
   ["runtime/src/63-control.js", "JavaScript, runs with the", "Show code, folded under the install review"],
+  ["extension/welcome.js", "node daemon/cli.js setup --pair", "a command to type, shown in <code> like the README's install steps"],
 ];
 // Files that never show text to a person: what the model reads, styles, plumbing.
 const SKIP_FILES = new Set([

@@ -248,7 +248,7 @@ node daemon/cli.js export --all                 # back up every mod to one file
 1. Open `chrome://extensions` and turn on **Developer mode**.
 2. Click **Load unpacked** and choose the `dist/extension` folder.
 3. Open Morse's details and turn on **Allow User Scripts**. Mods that only change how a site looks work without it. Mods that add buttons or features need it on some sites.
-4. The Morse settings page opens the first time. Connect a model there (see [Models](#models)).
+4. The welcome page opens. Try Morse on its practice page right away (it has sample answers), then connect a model: the page shows one command, `morse setup --pair <code>`, to paste in a terminal. It finds Claude Code or Codex, checks that it answers, starts the Morse helper, and the page connects by itself (see [Models](#models)).
 5. Open any page and press **⌥Space** (Ctrl+Shift+Space on Windows and Linux).
 
 ## How to use
