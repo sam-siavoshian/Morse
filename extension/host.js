@@ -9,13 +9,7 @@
   // idle service workers, the extension reloads), they would never be answered:
   // fail them so the runtime's calls settle instead of hanging.
   const pending = new Map(); // request id -> the port it went out on
-  const fail = id => { pending.delete(id); sent.delete(id); emit({ reply: id, error: "Morse restarted. Try again." }); };
-  // soak: what a page asks for while it starts only reads, so it is asked
-  // again once on a new connection rather than failed: a page that loaded
-  // while the worker restarted used to stay without its mods until reloaded.
-  const AGAIN = new Set(["hello", "mods.list", "settings.get", "history.get", "control.boot", "onboarding.get"]);
-  const sent = new Map(); // request id -> the message, for those
-
+  const fail = id => { pending.delete(id); emit({ reply: id, error: "Morse restarted. Try again." }); };
   const connect = () => {
     const p = chrome.runtime.connect({ name: "morse" });
     p.onMessage.addListener(m => {
@@ -36,24 +30,18 @@
         return;
       }
       if (m && m.morseShotDone != null) { try { globalThis.__morseShotArea?.(null, null, true); } catch {} return; }
-      if (m && m.reply != null) { pending.delete(m.reply); sent.delete(m.reply); } // soak: sent
+      if (m && m.reply != null) pending.delete(m.reply);
       emit(m);
     });
     p.onDisconnect.addListener(() => {
       if (port === p) port = null;
-      for (const [id, via] of [...pending]) {
-        if (via !== p) continue;
-        const again = sent.get(id);
-        if (again && !again.retried) { again.retried = true; pending.delete(id); setTimeout(() => { try { post(again); } catch { fail(id); } }, 300); } // soak
-        else fail(id);
-      }
+      for (const [id, via] of [...pending]) if (via === p) fail(id);
     });
     port = p;
   };
   const post = msg => {
     if (!port) connect();
     if (msg.id != null) pending.set(msg.id, port);
-    if (msg.id != null && AGAIN.has(msg.type) && !sent.has(msg.id)) sent.set(msg.id, msg); // soak
     port.postMessage(msg);
   };
   globalThis.__morseHost = {

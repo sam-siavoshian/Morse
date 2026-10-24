@@ -124,46 +124,6 @@ test("a runtime that went quiet (morse stop) lets go of the page: attach and sto
   await page.close();
 });
 
-test("a page that starts while the extension's worker restarts asks again, and gets its mods", { skip }, async () => {
-  const { bundleRuntime } = await import("../runtime/bundle.js");
-  const hostJs = await fs.readFile(path.join(path.dirname(new URL(import.meta.url).pathname), "..", "extension", "host.js"), "utf8");
-  const page = await browser.newPage();
-  const server = http.createServer((q, r) => r.writeHead(200, { "Content-Type": "text/html" }).end(`<!doctype html><title>Restart</title><h1>Hello</h1>`));
-  await listen(server);
-  after(() => server.close());
-  await page.goto(`http://127.0.0.1:${server.address().port}/`);
-  // A fake extension worker: the first connection dies as soon as the page
-  // asks anything (Chrome restarting the worker); the next ones answer.
-  await page.evaluate(() => {
-    localStorage.setItem("morse:debug", "1");
-    const mod = { morse: 1, id: "red", title: "Red", prompt: "red", css: "h1 { color: rgb(200, 0, 0) }", js: "", enabled: true, match: { hosts: [location.host] } };
-    let ports = 0;
-    window.__asked = [];
-    globalThis.chrome = { runtime: {
-      onMessage: { addListener() {} },
-      connect() {
-        const n = ++ports, msgs = [], gone = [];
-        const port = {
-          onMessage: { addListener: f => msgs.push(f) }, onDisconnect: { addListener: f => gone.push(f) },
-          postMessage(m) {
-            window.__asked.push(`${n}:${m.type}`);
-            if (n === 1) return setTimeout(() => gone.forEach(f => f()), 20);
-            const result = m.type === "hello" ? { mode: "extension", label: "t", quiet: true, settings: { welcome: false } } : m.type === "mods.list" ? [mod] : null;
-            setTimeout(() => msgs.forEach(f => f({ reply: m.id, result })), 5);
-          },
-        };
-        return port;
-      },
-    } };
-  });
-  await page.addScriptTag({ content: hostJs });
-  await page.addScriptTag({ content: bundleRuntime() });
-  await page.waitForFunction(() => getComputedStyle(document.querySelector("h1")).color === "rgb(200, 0, 0)", null, { timeout: 15000 });
-  const asked = await page.evaluate(() => window.__asked);
-  assert.ok(asked.some(a => a.startsWith("1:")) && asked.includes("2:hello"), `asked again on a new connection: ${asked.join(", ")}`);
-  await page.close();
-});
-
 test("opening the bar doesn't start recording a clip; making a change does", { skip }, async () => {
   const { bundleRuntime } = await import("../runtime/bundle.js");
   const { pressOpen } = await import("./helpers/keys.js");
