@@ -1,7 +1,7 @@
-// Morse in other languages (160-171): the bar, a result, the Mods panel and
+// Morse in other languages (170-181): the bar, a result, the Mods panel and
 // Settings, on the bar playground (demo/bar-playground.html, fake host), with
 // the browser set to each language. Persian lays everything out right to left.
-//   160-163 · Spanish   164-167 · Japanese   168-171 · Persian
+//   170-173 · Spanish   174-177 · Japanese   178-181 · Persian (160-166 are mod packs)
 //
 //   node demo/shoot-i18n.js                 the three above, into docs/screenshots
 //   SHOTS=/tmp/x node demo/shoot-i18n.js de:0   any language, numbered from 0
@@ -19,7 +19,7 @@ const PLATFORM = process.platform === "darwin" ? "mac" : process.platform === "w
 const pw = combo => combo.split("+").map(k => (k === "Ctrl" ? "Control" : k.replace(/^Key|^Digit/, ""))).join("+");
 const KEYS = Object.fromEntries(Object.entries(defaultHotkeys(PLATFORM)).map(([k, v]) => [k, pw(v)]));
 const NAMES = { es: "es", ja: "ja", fa: "fa", de: "de", fr: "fr", "pt-BR": "pt", "zh-CN": "zh", ar: "ar" };
-const jobs = (process.argv.slice(2).length ? process.argv.slice(2) : ["es:160", "ja:164", "fa:168"]).map(a => { const [lang, n] = a.split(":"); return { lang, n: Number(n) }; });
+const jobs = (process.argv.slice(2).length ? process.argv.slice(2) : ["es:170", "ja:174", "fa:178"]).map(a => { const [lang, n] = a.split(":"); return { lang, n: Number(n) }; });
 
 const srv = await serveBar();
 const browser = await chromium.launch();
