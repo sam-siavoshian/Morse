@@ -55,7 +55,7 @@ Three ways to use it were weighed:
   minified code (renamed `ipcRenderer` and `contextBridge`, hoisted id and
   label constants, esbuild's kept class names).
 
-No REA code is copied; the approach (and the list of things worth finding)
+No REA code is copied. The approach (and the list of things worth finding)
 is REA's. Credit to its authors, under its MIT license.
 
 What Morse does that REA doesn't: it looks for a **command runner** in the
@@ -138,9 +138,9 @@ counts less the more commands share it, and a command with two of the
 request's words beats one with one), and lists at most 18, then the app's own
 objects, the bridge and its channels, the app's events, store actions, menu
 keys for key requests, and what the pointed-at part's handlers do. Then a few
-rules: use the app's commands, not fake key presses; wrap calls in try/catch;
-react with `morse.on` on the app's events or keys; never replace the app's
-functions; and, for keys the app already uses, listen in the capture phase.
+rules: use the app's commands, not fake key presses. Wrap calls in try/catch;
+react with `morse.on` on the app's events or keys. Never replace the app's
+functions. And, for keys the app already uses, listen in the capture phase.
 
 `AppProfiler.vet()` is the engine's `vet` hook (`core/engine.js`): a draft
 that calls `morse.app.command` with an id the app doesn't have gets a repair
@@ -173,13 +173,13 @@ part, if there is one), `--json` all of it.
 ## Read only
 
 - The app's files are opened read-only and only read (tests hash every file
-  of the sample app, unpacked and as `app.asar`, before and after; and of the
+  of the sample app, unpacked and as `app.asar`, before and after. And of the
   real packaged Tunes before `morse launch` and after it quits).
 - No native instrumentation, no hooking, no injection into native processes:
   static reads of the app's JavaScript, and CDP in its pages.
 - The runtime pass reads property descriptors, never getters, and calls no
   app function except command lists (`getCommands()` and the like) and
-  zero-argument label functions. It changes nothing on the page; the handle
+  zero-argument label functions. It changes nothing on the page. The handle
   is a symbol property.
 - `MORSE_PROFILE=off` turns profiles off entirely (no pass, no slice, no
   handle): the baseline below.
@@ -232,7 +232,7 @@ keeps every run's pictures and log).
 (4 of 11).** Six of the changes on real apps (five in VSCodium, one in
 Joplin) and the Tunes one could not be made from the page alone: they need
 the app's own commands, which the page doesn't show. Obsidian's four worked
-either way, because models already know Obsidian's `app` object; the profile
+either way, because models already know Obsidian's `app` object. The profile
 made them use its commands and events instead of typing into the page.
 
 These are the last runs of each, on the code as committed. Getting there
@@ -242,12 +242,12 @@ took earlier runs that failed, and each failure fixed something:
   `#workbench.parts.statusbar`, which matches nothing (the kit now reads it
   as the id, and the page outline gives such ids as `[id="…"]`).
 - The first ranking put `focusSecondEditorGroup` above `files.save` for
-  "save … a second after"; commands now score on how many of the request's
+  "save … a second after". Commands now score on how many of the request's
   words they have, and how rare those words are.
-- A key the app already uses has to be caught in the capture phase; the
+- A key the app already uses has to be caught in the capture phase. The
   slice now says so for key requests.
 - Joplin runs each plugin in a hidden window, and the first profile was of
-  one of those; the profiler now waits for the windows and takes the
+  one of those. The profiler now waits for the windows and takes the
   biggest.
 - Requests like "a button here that makes … upper case" weren't recognized
   as being about behavior.
@@ -270,10 +270,10 @@ used VSCodium.
   static part only: commands are listed, but as things to do through the
   app's buttons and keys.
 - VS Code's runtime command list (with extension commands) lives in the
-  bundle's outermost scope; reading it would hold the window up for seconds,
+  bundle's outermost scope. Reading it would hold the window up for seconds,
   so the list comes from the code (2,368 built-in commands, no extension
   ones).
 - The page-change check (`noEffect` in `core/engine.js`) can't tell whether a
-  behavior change works until someone uses it; the tries above used it the
+  behavior change works until someone uses it. The tries above used it the
   way a person would (`demo/try-real-app.js --click/--press/--act`).
 - Websites in Chrome don't get profiles (the extension has no app to read).

@@ -7,13 +7,13 @@ model needs a token. There are two ways to get one:
 
 | | How | Who offers it |
 |---|---|---|
-| **Ask** (one click) | The extension asks; the person clicks **Allow** on this computer | A helper started with an `ask` function: Morse Desktop (`health.ask` is `true`, `health.app` is `"desktop"`) |
+| **Ask** (one click) | The extension asks. The person clicks **Allow** on this computer | A helper started with an `ask` function: Morse Desktop (`health.ask` is `true`, `health.app` is `"desktop"`) |
 | **Code** | The person types a 6-character code shown by `morse serve`, `morse pair` or Morse Desktop's **Show a code**, or the welcome page's own code waits in the helper after `morse setup --pair <code>` | Every helper |
 
 The helper side of **Ask** is onboarding v2's, in `daemon/bridge.js`
 (`createBridge({ app, ask })`). This page is the contract between it, the
 extension and Morse Desktop. If the code and this page disagree, the code in
-`daemon/bridge.js` wins; fix this page.
+`daemon/bridge.js` wins. Fix this page.
 
 ## The requests
 
@@ -76,7 +76,7 @@ window ([How Morse works](architecture.md#morse-desktop-desktop-app)).
 - **Sign out browsers** in Morse Desktop (or `morse unpair`) removes every token.
 
 The question shows the asking extension's id in small print. Another
-extension the person installed could still ask; the wording (“Allow it only if you
+extension the person installed could still ask. The wording (“Allow it only if you
 set up Morse in Chrome a moment ago”) is what stands between that and a click. A code
 doesn't have that question: the person carries it over.
 
