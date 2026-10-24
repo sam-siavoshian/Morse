@@ -12,6 +12,7 @@ import { runMorse } from "../core/engine.js";
 import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_URL } from "../core/providers.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf, byCreated, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
+import { HANG_MS, FROZE_ERROR } from "../core/guard.js"; // guard hook: frozen pages
 import { clipAdd } from "../core/clipboard.js"; // God mode clipboard
 import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
 import { CONTROL_REQUESTS, handleControlRequest } from "./control-host.js"; // user control: pause, safe start, install review, backup
@@ -98,8 +99,21 @@ async function execIn(target, code) {
   return res;
 }
 
+// guard hook: mod code that doesn't finish has frozen the page. Only a
+// debugger can interrupt it (daemon/guard.js does, on the desktop), and Morse
+// doesn't ask for that permission, so here a saved mod is turned off with why
+// (it won't run on the next load) and a change being made fails its run.
+// Freezes later on, in a callback, are left to Chrome's "Page unresponsive"
+// dialog and safe start (core/control.js).
 async function exec(target, modId, js) {
-  const res = (await execIn(target, wrapModCode(modId, js))) || { ok: false, error: "The change didn't run on this page. Reload the page and try again." };
+  const hung = {};
+  const ran = await Promise.race([execIn(target, wrapModCode(modId, js)), new Promise(r => setTimeout(() => r(hung), HANG_MS))]);
+  if (ran === hung) {
+    const m = (await allMods())[modId];
+    if (m?.enabled && m.js === js) await putMod({ ...m, enabled: false, paused: { why: "froze", at: new Date().toISOString(), error: FROZE_ERROR } });
+    return { ok: false, error: FROZE_ERROR };
+  }
+  const res = ran || { ok: false, error: "The change didn't run on this page. Reload the page and try again." };
   if (!res.ok) return res;
   await new Promise(r => setTimeout(r, 600));
   const errs = (await execIn(target, `morse.__errors(${JSON.stringify(modId)})`)) || [];
