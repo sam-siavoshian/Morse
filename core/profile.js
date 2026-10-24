@@ -142,6 +142,25 @@ export function scanCode(text, { file = "", role = "" } = {}) {
   }
   for (const m of text.matchAll(/\b(registerCommand|addCommand|executeCommand|executeCommandById|runCommand|registerCommandAlias)\s*\(\s*(["'`])([A-Za-z][\w$.:/-]{2,89})\2/g))
     if (isCommandId(m[3])) add(cmds, m[3], "", MAX.commands);
+  // Minifiers hoist ids and labels into constants (VS Code:
+  // rTe="workbench.action.files.save",Idi=O(17647,"Save") … {id:rTe,title:Idi,…}):
+  // follow names that hold a namespaced id or a label into command objects.
+  const ids = new Map(), labels = new Map();
+  for (const m of text.matchAll(/[,;{(\s]([\w$]{1,8})\s*=\s*(["'`])([A-Za-z][\w$-]*(?:\.[\w$-]+){2,8})\2(?=\s*[,;)])/g)) if (ids.size < 50000 && isCommandId(m[3])) ids.set(m[1], m[3]);
+  for (const m of text.matchAll(/[,;{(\s]([\w$]{1,8})\s*=\s*[\w$.]{1,30}\(\s*\d+\s*,\s*(["'`])([^"'`\n]{2,80})\2\s*\)/g)) if (labels.size < 50000) labels.set(m[1], m[3]);
+  if (ids.size) {
+    for (const m of text.matchAll(/\b(?:id|command)\s*:\s*([\w$]{1,8})\s*[,}]/g)) {
+      const id = ids.get(m[1]);
+      if (!id || cmds.has(id)) continue;
+      const open = text.lastIndexOf("{", m.index);
+      if (open < 0 || m.index - open > 400) continue;
+      const body = text.slice(open, objectEnd(text, open + 1, 1200) + 1);
+      if (!RUNS.test(body) && !COMMANDISH.test(text.slice(Math.max(0, open - 160), open)) && !/\btitle\s*:/.test(body)) continue;
+      const t = /\b(?:title|label)\s*:\s*([\w$]{1,8})\s*[,}]/.exec(body);
+      add(cmds, id, (t && labels.get(t[1])) || labelIn(body.replace(m[0], "")), MAX.commands);
+    }
+    for (const m of text.matchAll(/\b(?:registerCommand|executeCommand|registerCommandAlias)\s*\(\s*([\w$]{1,8})\s*[,)]/g)) { const id = ids.get(m[1]); if (id) add(cmds, id, "", MAX.commands); }
+  }
   for (const m of text.matchAll(/\.(?:execute|register)\s*\(\s*(["'`])([A-Za-z][\w$.:/-]{2,89})\1\s*([,)])\s*(?:(["'`])([^"'`\n]{2,80})\4)?/g))
     if (isCommandId(m[2]) && (m[5] || NS_ID.test(m[2]) || CAMEL_ID.test(m[2]))) add(cmds, m[2], m[5] || "", MAX.commands);
   out.commands = [...cmds].map(([id, label]) => label ? [id, label] : [id]);
@@ -234,7 +253,7 @@ export function mergeScans(scans) {
 const LOGIC = /\b(when(ever)?|every ?time|after|before|once|on (save|open|close|start)|shortcuts?|keyboard|hot ?keys?|key ?(combo|binding)s?|press(es|ing)?|ctrl|cmd|alt\+|run(s|ning)?|commands?|actually|really|random(ly|ize)?|shuffl\w*|automatic(ally)?|auto[- ]?\w*|insert\w*|creat\w*|new (note|file|tab|window|todo|task)s?|cop(y|ies|ying)|clipboard|past(e|ing)|format\w*|toggl\w*|undo|redo|word count|counts?|remap\w*|instead|behaviou?rs?|trigger\w*|sort\w*|sav(e|es|ed|ing)|open(s|ed|ing)?|clos(e|es|ed|ing)|delet\w*|export\w*|sync\w*|play\w*|skip\w*|next|previous|repeat\w*|search\w*|replac\w*|duplicat\w*|today'?s|dates?|timestamps?|button (that|to|which)|calls?|api|functions?|actions?|does|do)\b/i;
 export const needsLogic = request => LOGIC.test(String(request || ""));
 
-const STOP = new Set("the a an and or to of in on for with that this it its me my i you your make add when then also all any be is are was do does show put use using into from at by as so if not no can just like want please button key keys shortcut press app".split(" "));
+const STOP = new Set("the a an and or to of in on for with that this it its me my i you your make add when then after also all any be is are was do does show put use using into from at by as so if not no can just like want please button key keys shortcut press app".split(" "));
 // A few everyday words and what apps call them.
 const ALSO = { today: ["date", "time", "timestamp"], date: ["date", "time", "timestamp", "today"], time: ["time", "date"], random: ["shuffle", "random"], shuffle: ["shuffle", "random"],
   copy: ["copy", "clipboard"], clipboard: ["clipboard", "copy", "paste"], save: ["save", "write", "modify"], delete: ["delete", "remove", "trash"], remove: ["remove", "delete"],
@@ -242,7 +261,8 @@ const ALSO = { today: ["date", "time", "timestamp"], date: ["date", "time", "tim
   next: ["next", "skip"], skip: ["skip", "next"], back: ["previous", "back"], previous: ["previous", "back", "prev"], search: ["search", "find"], find: ["find", "search"],
   bold: ["bold", "strong"], italic: ["italic", "emphasis"], sidebar: ["sidebar", "side", "bar"], terminal: ["terminal"], play: ["play", "pause"], pause: ["pause", "play"],
   zoom: ["zoom"], theme: ["theme", "dark", "light"], dark: ["dark", "theme"], tab: ["tab", "editor"], close: ["close"], open: ["open"], insert: ["insert", "add"] };
-const stem = w => w.length > 4 ? w.replace(/(ings?|ed|es|s)$/, "") : w;
+// "files" and "file", "formats" and "format", "saving" and "save" count as one word.
+const stem = w => w.length < 4 ? w : w.replace(/(?<=..[a-z])(ings?|ed)$/, "").replace(/(?<=..[a-z])(ies)$/, "y").replace(/(?<=..[a-z])s$/, "").replace(/(?<=...)e$/, "");
 export function requestWords(request) {
   const words = String(request || "").toLowerCase().match(/[a-z][a-z0-9]{2,}/g) || [];
   const out = new Map(); // word -> weight
@@ -255,11 +275,26 @@ export function requestWords(request) {
 }
 const wordsOf = s => String(s || "").replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase().match(/[a-z][a-z0-9]*/g) || [];
 // How well a name (an id and its label) fits the request's words.
+// `rare` (optional): word -> how much it counts, so a word many names share
+// ("word" in cursorWordLeft…) counts less than one few have ("save").
 export function fit(words, ...names) {
+  const rare = names[0] instanceof Map ? names.shift() : null;
   const have = new Set(names.flatMap(wordsOf).map(stem));
-  let score = 0;
-  for (const [w, weight] of words) if (have.has(w)) score += weight; else if (w.length > 4 && [...have].some(h => h.length > 3 && (h.startsWith(w) || w.startsWith(h)))) score += weight / 2;
-  return score;
+  let score = 0, matched = 0;
+  for (const [w, weight] of words) {
+    const k = weight * (rare ? 0.5 + 0.5 * (rare.get(w) ?? 1) : 1);
+    if (have.has(w)) { score += k; if (weight > 1) matched++; }
+    else if (w.length > 4 && [...have].some(h => h.length > 3 && (h.startsWith(w) || w.startsWith(h)))) score += k / 2;
+  }
+  // A name that has two or more of the request's own words fits better than one that has one.
+  return score + (matched > 1 ? 1.5 * (matched - 1) : 0);
+}
+// How much each request word counts among `list` (each an array of names):
+// 1 for a word few have, less the more have it.
+function rarity(words, list) {
+  const df = new Map([...words.keys()].map(w => [w, 0]));
+  for (const names of list) { const have = new Set(names.flatMap(wordsOf).map(stem)); for (const w of df.keys()) if (have.has(w)) df.set(w, df.get(w) + 1); }
+  return new Map([...df].map(([w, n]) => [w, 1 / (1 + Math.log2(1 + n / 4))]));
 }
 const best = (list, score, n) => list.map(x => [x, score(x)]).filter(([, s]) => s > 0).sort((a, b) => b[1] - a[1]).slice(0, n).map(([x]) => x);
 
@@ -279,18 +314,21 @@ export function profileSlice(profile, request, { target = null, force = false } 
   const commands = (rt.commands?.length ? rt.commands : st.commands || []).map(([id, label]) => [id, label || named.get(id) || ""]);
   const runner = rt.runner;
   if (runner && commands.length) {
-    const picks = best(commands, ([id, label]) => fit(words, id, label), 18);
+    const rare = rarity(words, commands);
+    const picks = best(commands, ([id, label]) => fit(words, rare, id, label), 18);
     const how = runner.global ? `the same as ${runner.path}.${runner.method}(id)` : "Morse found the app's own command runner";
     lines.push(`- Run the app's own commands with \`await morse.app.command(id, ...args)\` (${commands.length} commands; ${how}). A command does what the app's menu item or shortcut does. Use only ids listed here${picks.length ? "; the ones that fit this request:" : "."}`);
     for (const [id, label] of picks) lines.push(`    ${id}${label && label !== id && humanize(id) !== label.toLowerCase() ? ` (${label})` : ""}`);
     if (!picks.length) lines.push(`    for example: ${commands.slice(0, 8).map(c => c[0]).join(", ")}`);
   } else if (commands.length) {
-    const picks = best(commands, ([id, label]) => fit(words, id, label), 10);
+    const rare = rarity(words, commands);
+    const picks = best(commands, ([id, label]) => fit(words, rare, id, label), 10);
     if (picks.length) lines.push(`- The app's commands (Morse found no way to run them directly; use its buttons, menus or shortcuts for these): ${picks.map(([id, l]) => l ? `${id} (${l})` : id).join(", ")}`);
   }
   // The app's own objects in the page: window.<name> and what can be called on it.
   // The app's own object always counts; a library (moment, PIXI) only when the request names what it does.
-  const globals = (rt.globals || []).map(g => [g, fit(words, g.name, ...(g.methods || []), ...Object.keys(g.children || {}), ...Object.values(g.children || {}).flat())]);
+  const bridges = new Map((st.bridge || []).map(b => [b.name, b]));
+  const globals = (rt.globals || []).filter(g => !bridges.has(g.name)).map(g => [g, fit(words, g.name, ...(g.methods || []), ...Object.keys(g.children || {}), ...Object.values(g.children || {}).flat())]);
   const shownG = [...globals.filter(([g]) => g.app), ...globals.filter(([g, s]) => !g.app && s >= 3).sort((a, b) => b[1] - a[1]).slice(0, 2)].slice(0, 3).map(([g]) => g);
   for (const g of shownG) {
     const kids = Object.entries(g.children || {}).map(([k, ms]) => [k, ms, fit(words, k, ...ms)]).sort((a, b) => b[2] - a[2]).slice(0, g.app ? 7 : 2)
@@ -299,7 +337,11 @@ export function profileSlice(profile, request, { target = null, force = false } 
     lines.push(`- \`window.${g.name}\` is ${g.app ? "the app's own object" : "a library the app loads"}: ${[own.length ? `${g.name}.{${own.join(", ")}}` : "", ...kids].filter(Boolean).join("; ")}`.slice(0, 900));
   }
   // The preload's API (contextBridge) and the IPC channels behind it.
-  for (const b of (st.bridge || []).slice(0, 3)) lines.push(`- \`window.${b.name}\` (the app's bridge to its main process): ${b.keys.join(", ") || "(see its methods)"}`);
+  for (const b of [...bridges.values()].slice(0, 3)) {
+    const g = (rt.globals || []).find(x => x.name === b.name); // what the running window has on it
+    const what = b.keys.length ? b.keys.join(", ") : g ? [...(g.methods || []), ...Object.entries(g.children || {}).map(([k, ms]) => `${k}.{${ms.slice(0, 6).join(", ")}}`)].join(", ") : "";
+    lines.push(`- \`window.${b.name}\` (the app's bridge to its main process): ${what || "(see its methods)"}`.slice(0, 600));
+  }
   const ipc = best(st.ipc || [], c => fit(words, c.channel) + (c.side === "renderer" ? 0.5 : 0), 6);
   if (ipc.length && (st.bridge || []).length) lines.push(`- Main-process channels behind it: ${ipc.map(c => `${c.channel} (${c.op})`).join(", ")}`);
   const keys = best(st.keys || [], ([k, l]) => fit(words, l, k) + 0.01, 6);
@@ -313,8 +355,12 @@ export function profileSlice(profile, request, { target = null, force = false } 
     for (const l of target.listeners.slice(0, 4)) lines.push(`    ${l.where} on ${l.type}: ${String(l.source || "").replace(/\s+/g, " ").slice(0, 220)}`);
   }
   if (!lines.length) return "";
-  const rules = runner
-    ? "Prefer the app's own commands and objects over clicking its buttons or faking keys. Wrap calls in try/catch and morse.toast a short message if one fails. To react to the app (a save, a file opening), listen with morse.on on its events or keys; never replace or wrap the app's own functions."
-    : "Prefer the app's own objects over clicking its buttons or faking keys. Never replace or wrap the app's own functions.";
-  return `How this app works inside (Morse read its code; use this for behavior):\n${lines.join("\n")}\n${rules}`;
+  const rules = [
+    runner ? "Do it with the app's own commands and objects, not by clicking its buttons or faking key presses (keys sent from code don't reach the app's shortcuts). Wrap calls in try/catch and morse.toast a short message if one fails."
+      : "Prefer the app's own objects over clicking its buttons or faking key presses (keys sent from code don't reach the app's shortcuts).",
+    "To react to the app (a save, a note opening), listen with morse.on on its events, or on keys. Never replace or wrap the app's own functions.",
+  ];
+  // Taking over a key the app already uses: the app's own handler runs first unless the mod's runs in the capture phase.
+  if (/\b(shortcut|key|press|ctrl|cmd|alt|remap|instead)\b/i.test(request)) rules.push("A key the app already uses: listen with morse.on(window, \"keydown\", fn, true) (capture, so yours runs first), check the exact keys, then e.preventDefault() and e.stopImmediatePropagation() before running the command.");
+  return `How this app works inside (Morse read its code; use this for behavior):\n${lines.join("\n")}\n${rules.join("\n")}`;
 }

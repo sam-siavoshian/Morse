@@ -24,7 +24,7 @@ import { openSync, readSync, fstatSync, closeSync, statSync, readdirSync, readli
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
-import { scanCode, mergeScans, profileSlice, PROFILE_VERSION } from "../core/profile.js";
+import { scanCode, mergeScans, profileSlice, needsLogic, PROFILE_VERSION } from "../core/profile.js";
 import { HOME, renameOver, parseJson } from "./store.js";
 import { trace } from "./trace.js";
 
@@ -704,12 +704,12 @@ export async function saveProfile(profile) {
 }
 
 // Waits (at most `ms`) until the page is loaded and has stopped growing.
-export async function settled(s, { ms = 20000, contextId = null } = {}) {
+export async function settled(s, { ms = 12000, contextId = null } = {}) {
   const end = Date.now() + ms;
   let last = -1, still = 0;
   while (Date.now() < end && !s.closed) {
     const n = await evaluate(s, `document.readyState === "complete" ? document.getElementsByTagName("*").length : -1`, contextId).catch(() => -1);
-    if (n > 0 && Math.abs(n - last) <= Math.max(3, last * 0.02)) { if (++still >= 2) return true; } else still = 0;
+    if (n > 0 && Math.abs(n - last) <= Math.max(5, last * 0.05)) { if (++still >= 2) return true; } else still = 0;
     last = n;
     await new Promise(r => setTimeout(r, 700));
   }
@@ -749,9 +749,16 @@ export class AppProfiler {
     const roots = codeRoots(resources);
     const stamp = codeStamp(roots);
     const id = this.app?.id || "app";
+    const told = (p, how) => {
+      const n = p.runtime?.commands?.length || p.static?.commands?.length || 0;
+      this.log(`  · ${this.app?.name || "The app"}: Morse looked at how it works inside (${n} command${n === 1 ? "" : "s"}${p.runtime?.runner ? ", and how to run them" : ""}) ${how}.`);
+    };
     let p = await loadProfile(id, stamp);
-    if (p?.static && p?.runtime) { this.profile = p; trace("profile", `loaded ${fileFor(id, stamp)}`); return p; }
-    p = { version: PROFILE_VERSION, app: id, name: this.app?.name || null, appVersion: this.app?.version || null, stamp, made: new Date().toISOString(), static: p?.static || null, runtime: p?.runtime || null };
+    if (p?.static && p?.runtime?.runner) { this.profile = p; told(p, "the first time it opened with Morse"); trace("profile", `loaded ${fileFor(id, stamp)}`); return p; }
+    // A saved profile without a runner (the window was still starting) keeps
+    // its static part and looks at the running app again.
+    if (p?.static) this.profile = p;
+    p = { version: PROFILE_VERSION, app: id, name: this.app?.name || null, appVersion: this.app?.version || null, stamp, made: new Date().toISOString(), static: p?.static || null, runtime: null };
     // Apps keep starting up after their window shows (Joplin loads its notes,
     // then its UI): look once the page has stopped growing. The two passes
     // then run side by side (the static one in a worker thread).
@@ -761,14 +768,17 @@ export class AppProfiler {
     const [st, rt] = await Promise.all([p.static || (roots.length ? staticProfile(roots, { scripts }) : null), p.runtime || look()]);
     Object.assign(p, { static: st, runtime: rt });
     this.profile = p;
-    if (!p.runtime?.runner && !s.closed && !this.retried) { // still starting? one more look a little later
-      this.retried = true;
+    // No runner yet: maybe the app is still starting (Joplin shows its window
+    // long before its UI on a busy machine). Look again a few times.
+    for (let i = 0; i < 3 && !p.runtime?.runner && !s.closed; i++) {
       await new Promise(r => setTimeout(r, 15000));
-      if (!s.closed) { const again = await look(); if (again?.runner) p.runtime = again; }
+      await settled(s);
+      if (s.closed) break;
+      const again = await look();
+      if (again?.runner || (!p.runtime?.globals?.length && again?.globals?.length)) p.runtime = again;
     }
     await saveProfile(p).catch(() => {});
-    const n = p.runtime?.commands?.length || p.static?.commands?.length || 0;
-    this.log(`  · ${this.app?.name || "The app"}: Morse looked at how it works inside (${n} command${n === 1 ? "" : "s"}${p.runtime?.runner ? ", and how to run them" : ""}) in ${((Date.now() - t0) / 1000).toFixed(1)}s.`);
+    told(p, `in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
     trace("profile", `static ${p.static?.ms ?? "-"}ms (${p.static?.files?.length || 0} files) · runtime ${p.runtime?.ms ?? "-"}ms · runner ${p.runtime?.runner ? `${p.runtime.runner.path}.${p.runtime.runner.method}` : "none"} · saved under ${PROFILES}`);
     return p;
   }
@@ -818,6 +828,10 @@ export class AppProfiler {
   // The prompt's slice for a request (core/profile.js profileSlice), with
   // what the pointed-at part does when the request is about behavior.
   async slice(s, caller, request, selector) {
+    if (!needsLogic(request)) return "";
+    // The first request right after the app opened: the profile may be a few
+    // seconds from done. Worth waiting for when the request is about behavior.
+    if (!this.profile?.runtime && this.building) await Promise.race([this.building, new Promise(r => setTimeout(r, 12000))]);
     if (!this.profile) return "";
     let target = null;
     if (selector && !selector.includes(">>>")) {

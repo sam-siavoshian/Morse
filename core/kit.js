@@ -91,8 +91,17 @@ function installMorseKit() {
   }
   // Every match of a selector that may contain ">>>"; onRoot(root, host) hears
   // about each shadow root or frame document crossed.
+  // "#workbench.parts.statusbar" means id "workbench" with two classes, but
+  // models write it for VS Code's id "workbench.parts.statusbar" (its ids
+  // have dots, and "\." loses its backslash in a JS string). When the page
+  // has that id and no "workbench", read it as the id.
+  function fixIds(selector) {
+    const s = String(selector);
+    if (!/#[\w-]+\.[\w.-]/.test(s)) return s;
+    return s.replace(/#((?:[\w-]+\.)+[\w-]+)/g, (m, id) => document.getElementById(id) && !document.getElementById(id.split(".")[0]) ? `[id="${id}"]` : m);
+  }
   function query(selector, onRoot) {
-    const parts = String(selector).split(/\s*>>>\s*/);
+    const parts = fixIds(selector).split(/\s*>>>\s*/);
     let scopes = [document];
     for (let i = 0; i < parts.length; i++) {
       const found = [];
@@ -360,6 +369,7 @@ function installMorseKit() {
     const tag = el => { if (el && el.setAttribute) el.setAttribute("data-morse", c.id); return el; };
     const m = {
       watch(selector, fn, opts) {
+        selector = fixIds(selector);
         const live = !!(opts && opts.live);
         const seen = new WeakMap(); // element -> what fn did to it
         const run = el => {

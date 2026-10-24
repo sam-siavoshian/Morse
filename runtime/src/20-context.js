@@ -1,6 +1,9 @@
 const HASHED = /^(css|sc|jsx|emotion|styled|svelte|chakra|mui)-|^_?[a-z0-9]{5,}$|[A-Z][a-z]+_[a-z]+__[a-zA-Z0-9]{5}/;
 const looksHashed = s => /\d/.test(s) && /[a-z]/i.test(s) && HASHED.test(s) || /^[a-z]{1,3}[0-9][a-z0-9]{3,}$/i.test(s);
 const cssEsc = s => (globalThis.CSS && CSS.escape ? CSS.escape(s) : String(s).replace(/["\\]/g, "\\$&"));
+// An id as a selector. One that needs escapes (VS Code: "workbench.parts.statusbar")
+// as [id="…"]: the model copies selectors into JS strings, where "\\." loses its backslash.
+const idSel = id => (cssEsc(id) === id ? `#${id}` : `[id="${String(id).replace(/["\\]/g, "\\$&")}"]`);
 
 // redact: what never goes into the prompt, in one place. context() runs it on
 // the whole context object, and snippet() on every element clone before it is
@@ -133,7 +136,7 @@ function stableAttr(el) {
 const parentOf = el => el.parentElement || (el.parentNode?.nodeType === 11 ? el.parentNode : null);
 function segment(el) {
   const tag = el.tagName.toLowerCase();
-  if (el.id && !looksHashed(el.id)) return { s: `#${cssEsc(el.id)}`, anchor: true };
+  if (el.id && !looksHashed(el.id)) return { s: idSel(el.id), anchor: true };
   const attr = stableAttr(el);
   if (attr && !/^\[role=/.test(attr)) return { s: tag + attr, anchor: true };
   const classes = [...el.classList].filter(c => !looksHashed(c)).slice(0, 2).map(c => "." + cssEsc(c)).join("");
@@ -408,7 +411,7 @@ function kindOf(el) {
 const groupKey = el => kindOf(el) + "|" + [...el.classList].filter(looksHashed).sort().join(".");
 function selName(el) {
   const tag = el.tagName.toLowerCase();
-  if (el.id && !looksHashed(el.id)) return `${tag}#${cssEsc(el.id)}`;
+  if (el.id && !looksHashed(el.id)) return tag + idSel(el.id);
   const attr = stableAttr(el);
   const cls = [...el.classList].filter(c => !looksHashed(c)).slice(0, 2).map(c => "." + cssEsc(c)).join("");
   return tag + (attr && !/^\[role=/.test(attr) ? attr : cls || attr);

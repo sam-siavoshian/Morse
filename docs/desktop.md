@@ -137,6 +137,41 @@ morse attach --port 9222 --app Slack
 - When you stop Morse, it takes its bar and your changes off every open
   window. The app keeps running. Its debugging port closes when you quit it.
 
+## Changes to what an app does
+
+Most changes are about how an app looks. Some are about what it does: "add a
+button that formats my document", "when I open a note, copy its name", "make
+Ctrl+Shift+K copy the line instead of deleting it". For these, Morse needs to
+know how the app works inside, not only what is on the screen.
+
+So the first time you open a desktop app with Morse, it reads how the app is
+put together, in the background:
+
+- the app's own commands, with their names (VS Code has over two thousand:
+  Format Document, Save, Duplicate Selection…; Obsidian and Joplin have their
+  own), and how to run them;
+- how its windows talk to the rest of the app;
+- what its main buttons do.
+
+This takes a few seconds, and you can use Morse while it happens. Morse keeps
+what it learned in your Morse folder (`~/.morse/profiles`), so the next time
+it is ready at once. When the app updates, Morse reads it again.
+
+When you ask for a change to what the app does, Morse gives your model the
+few commands and parts of the app that fit your request. Your change can then
+run the app's own commands, the same ones its menus and shortcuts run,
+instead of guessing at buttons and keys.
+
+- **Morse only reads.** It never changes the app's files (the tests check
+  every file before and after), and it never replaces the app's own code. A
+  change adds to what the app does; turning it off takes that away again.
+- **Your request decides.** A change to how something looks doesn't need any
+  of this, so Morse leaves it out.
+- To see what Morse found in an app, run `morse profile code` (or any app's
+  name). To try Morse without it, start it with `MORSE_PROFILE=off`.
+
+PROFILE_TRIES
+
 ## Which apps can't work, and why
 
 **Native apps.** Morse changes web pages. Apps that aren't drawn with web

@@ -118,6 +118,10 @@ and app, never to what the message claims.
   windows, popups opened later, `<webview>`s, BrowserViews and the app's own
   out-of-process frames (VS Code webviews); third-party embeds, workers,
   DevTools and internal pages are skipped.
+- [`profile.js`](../../daemon/profile.js): app profiles, how an app works
+  inside (its commands, IPC channels, routes, its own objects and a command
+  runner), read once per app version in the background and given to the
+  model for requests about behavior. See [App profiles](rea.md).
 - `ports.js`, `fuses.js` (the Electron fuse check), `record.js` (clips with
   ffmpeg), `store.js` (mods in `~/.morse/mods`, config, settings),
   `status.js` (sessions for `morse status`), `control.js` (pause, export,
