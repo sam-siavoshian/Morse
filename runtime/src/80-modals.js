@@ -129,16 +129,17 @@ async function renderCard(m) {
     }
     g.restore();
     g.strokeStyle = accent; g.lineWidth = 2; roundRect(g, P.x, P.y, P.w, P.h, 14); g.stroke();
-    g.fillStyle = accent; g.font = "700 13px ui-monospace, Menlo, monospace";
-    g.fillText(label, P.x + 2, P.y - 10);
+    // the caption: 15px, at least 7:1 on the card (it shrinks to ~9px in the dialog and in feeds)
+    g.fillStyle = accent; g.font = "700 15px ui-monospace, Menlo, monospace";
+    g.fillText(label, P.x + 2, P.y - 12);
   };
-  draw(b, panels[0], "BEFORE", "#8e8e96");
+  draw(b, panels[0], "BEFORE", "#a0a0a8");
   draw(a, panels[1], "AFTER", "#f4f4f5", S.after.focus);
   g.fillStyle = "#f4f4f5"; g.font = "600 34px ui-sans-serif, system-ui, sans-serif";
   g.font = "600 34px ui-sans-serif, system-ui, sans-serif";
   const oneLine = g.measureText(`“${m.prompt}”`).width <= W - 80;
   wrap(g, `“${m.prompt}”`, 40, oneLine ? 92 : 70, W - 80, 42, 2);
-  g.fillStyle = "#8e8e96"; g.font = "500 17px ui-sans-serif, system-ui, sans-serif";
+  g.fillStyle = "#a0a0a8"; g.font = "500 17px ui-sans-serif, system-ui, sans-serif";
   g.fillText(`${S.appName || location.host} · ${d.secs}s · ${S.label.split(" · ")[0]}`, 40, oneLine ? 136 : 154);
   // wordmark
   const lx = W - 168, ly = 632;
@@ -149,7 +150,7 @@ async function renderCard(m) {
     roundRect(g, lx + (i % 4) * 7, ly + Math.floor(i / 4) * 7, 5.5, 5.5, 1.5); g.fill();
   }
   g.fillStyle = "#f4f4f5"; g.font = "600 22px ui-sans-serif, system-ui, sans-serif"; g.fillText("morse", lx + 34, ly + 21);
-  g.fillStyle = "#8e8e96"; g.font = "500 15px ui-sans-serif, system-ui, sans-serif"; g.fillText("change any app in your own words", 40, ly + 20);
+  g.fillStyle = "#a0a0a8"; g.font = "500 17px ui-sans-serif, system-ui, sans-serif"; g.fillText("change any app in your own words", 40, ly + 20);
   return c.toDataURL("image/png");
 }
 function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }

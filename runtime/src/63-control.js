@@ -152,8 +152,8 @@ function controlToast(msg, actions = [], { sticky = false, title = "" } = {}) {
   toastEl.hidden = true;
   ctlToast.classList.toggle("inline", actions.length <= 1 && msg.length < 60);
   ctlToast.innerHTML = `<div class="ctl-msg">${radar(12)}<span>${title ? `<b>${esc(title)}</b> ` : ""}${esc(msg)}</span></div>
-    ${actions.length ? `<div class="ctl-acts">${actions.map(([label], i) => `<button data-i="${i}"${i === actions.length - 1 ? ` class="primary"` : ""}>${esc(label)}</button>`).join("")}</div>` : ""}
-    <button class="ctl-x" data-i="-1" title="Close" aria-label="Close">×</button>`;
+    ${actions.length ? `<div class="ctl-acts">${actions.map(([label], i) => `<button class="btn${i === actions.length - 1 ? " primary" : ""}" data-i="${i}">${esc(label)}</button>`).join("")}</div>` : ""}
+    <button class="ibtn xs close ctl-x" data-i="-1" title="Close" aria-label="Close">×</button>`;
   ctlToast.hidden = false;
   ctlToast.onclick = e => {
     const b = e.target.closest("button[data-i]");
@@ -191,7 +191,7 @@ function showModCode(m) {
   openModal(`
     <header><b>${esc(m.title)}</b><small>“${esc(m.prompt)}”</small><button data-a="close" aria-label="Close">×</button></header>
     <p class="ctl-from">${esc(modOrigin(m))} · runs on ${esc(whereFor(m))}</p>
-    <h4 class="ctl-h">What it does</h4>
+    <h4 class="ctl-h eyebrow">What it does</h4>
     ${summaryHtml(m)}
     ${codeHtml(m)}
     <footer><button data-c="edit">Edit code</button><button class="primary" data-a="close">Done</button></footer>`);
@@ -218,7 +218,7 @@ async function reviewImport(source, { onDone } = {}) {
       ${many ? `<h3>${esc(m.title)}</h3>` : ""}
       <p class="ctl-prompt">“${esc(m.prompt)}”</p>
       <p class="ctl-from">For ${esc(whereFor(m))}${m.author ? ` · made by ${esc(m.author)}` : ""}${m.model ? ` · written by ${esc(m.model)}` : ""}${other(m) ? ` · <span>not this page</span>` : ""}</p>
-      <h4 class="ctl-h">What it does</h4>
+      <h4 class="ctl-h eyebrow">What it does</h4>
       ${summaryHtml(m)}
       ${everywhere(m) ? `<p class="ctl-warn" data-s="everywhere"><b>Note</b>This mod runs on every website you visit, not just one. It can see what you see on all of them.</p>` : ""}
       <details class="ctl-code"><summary>Show code</summary>${codeHtml(m)}</details>
@@ -281,7 +281,7 @@ function controlPanel() {
     <label class="ctl-row"><span class="ctl-l"><span>Pause Morse on ${esc(where)}</span><small>${site ? "Your mods here are saved but not running" : "Stops every mod on this site"}</small></span>
       <span class="sw"><input type="checkbox" data-c="pause-site" ${site ? "checked" : ""} aria-label="Pause Morse on ${esc(where)}"><span></span></span></label>
     ${notes}</div>`);
-  panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", `<div class="ctl-backup"><span>Backup</span><button data-c="export">Export all mods</button><button data-c="import-file">Install from a file…</button></div>`);
+  panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", `<div class="ctl-backup"><span class="eyebrow">Backup</span><button data-c="export">Export all mods</button><button data-c="import-file">Install from a file…</button></div>`);
 }
 // Each row in the list (re-run whenever the list is redrawn, e.g. by search).
 function controlRows() {

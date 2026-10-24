@@ -68,14 +68,14 @@ const Gallery = (() => {
     if (!list.length) return "";
     const open = st.expanded;
     return `<section class="gl-site${open ? " open" : ""}" aria-label="For this site">
-      <h4>For this site</h4>
-      <button type="button" class="gl-head" data-gl="expand" aria-expanded="${open}">
-        <span class="gl-mark" aria-hidden="true">${radar(14)}</span>
+      <h4 class="eyebrow">For this site</h4>
+      <div class="gl-head" data-gl="expand">
+        <span class="gl-mark" aria-hidden="true">${radar(16)}</span>
         <span class="gl-count"><b>${esc(countText(list.length))}</b><small>Made by other people</small></span>
-        <span class="gl-show">${open ? "Hide" : "Show"}</span>
-      </button>
+        <button type="button" class="tbtn gl-show" data-gl="expand" aria-expanded="${open}">${open ? "Hide" : "Show"}</button>
+      </div>
       ${open ? `<div class="gl-items">${list.map(itemHtml).join("")}</div>
-      <p class="gl-foot"><span>From the Morse gallery</span><button type="button" class="gl-link" data-gl="off">Stop showing these</button></p>` : ""}
+      <p class="gl-foot"><span>From the Morse gallery</span><button type="button" class="tbtn gl-link" data-gl="off">Stop showing these</button></p>` : ""}
     </section>`;
   }
   function itemHtml(e) {
@@ -110,7 +110,7 @@ const Gallery = (() => {
     renderPanel();
     if (!mine) return;
     const scope = mine.gid ? panel.querySelector(`[data-glid="${cssEsc(mine.gid)}"]`) : panel.querySelector(".gl-site");
-    const b = scope?.querySelector(`[data-gl="${mine.g}"]`) || scope?.querySelector("[data-gl]") || panel.querySelector(".gl-head");
+    const b = scope?.querySelector(`button[data-gl="${mine.g}"]`) || scope?.querySelector("button[data-gl]") || panel.querySelector(".gl-show");
     b?.focus({ preventScroll: true });
   }
   function changed() { rerender(); placeChip(); }
@@ -182,7 +182,7 @@ const Gallery = (() => {
     openModal(`
       <header><b>Update “${esc(m.title)}”?</b><small>Version ${esc(String(from))} to version ${esc(String(to))}, from the Morse gallery${e.author ? ` · by ${esc(e.author)}` : ""}</small><button data-a="close" aria-label="Close">×</button></header>
       <div class="gl-what">
-        <h5>What changed</h5>
+        <h5 class="eyebrow">What changed</h5>
         ${e.changes ? `<p class="gl-note">${esc(e.changes)}</p>` : ""}
         ${ch.added.length ? `<p><b>Now also:</b> ${ch.added.map(esc).join(" · ")}</p>` : ""}
         ${ch.removed.length ? `<p><b>No longer:</b> ${ch.removed.map(esc).join(" · ")}</p>` : ""}
@@ -263,7 +263,7 @@ const Gallery = (() => {
   strip.setAttribute("aria-label", "Trying a mod");
   root.append(strip);
   function showStrip() {
-    strip.innerHTML = `<span class="gl-mark" aria-hidden="true">${radar(12)}</span><span class="gl-txt"><b>Trying “${esc(st.trial.title)}”</b><small>Nothing is saved yet</small></span><button type="button" data-gl="remove">Remove</button><button type="button" class="primary" data-gl="keep">Keep</button>`;
+    strip.innerHTML = `<span class="gl-mark" aria-hidden="true">${radar(12)}</span><span class="gl-txt"><b>Trying “${esc(st.trial.title)}”</b><small>Nothing is saved yet</small></span><button type="button" class="btn" data-gl="remove">Remove</button><button type="button" class="btn primary" data-gl="keep">Keep</button>`;
     strip.hidden = false;
   }
   function hideStrip() { strip.hidden = true; strip.innerHTML = ""; }

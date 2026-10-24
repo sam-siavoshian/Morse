@@ -135,11 +135,11 @@ const DescribeImage = (() => {
     const busy = !d.done;
     card.innerHTML = `
       <div class="ds-head"><span class="ds-k">${busy ? radar(12) : A11y.icon("describe")}<span>Describe this picture</span></span>
-        <button type="button" class="ds-x" data-ds="close" aria-label="Close" title="Close">×</button></div>
+        <button type="button" class="ibtn xs close ds-x" data-ds="close" aria-label="Close" title="Close">×</button></div>
       ${d.error ? `<p class="ds-err">That didn't work: <i>${esc(d.error)}.</i></p>`
         : `<p class="ds-text${busy ? " busy" : ""}" aria-live="polite">${d.text ? esc(d.text) : "Looking at the picture…"}</p>`}
-      ${d.done ? `<div class="ds-foot">${d.error ? `<button type="button" class="primary" data-ds="again">Try again</button>`
-        : `<button type="button" class="primary" data-ds="save" title="Screen readers will read this description">${decoration(d.text) ? "Save as decoration" : "Save as alt text"}</button><button type="button" data-ds="copy">Copy</button>`}
+      ${d.done ? `<div class="ds-foot">${d.error ? `<button type="button" class="btn primary" data-ds="again">Try again</button>`
+        : `<button type="button" class="btn primary" data-ds="save" title="Screen readers will read this description">${decoration(d.text) ? "Save as decoration" : "Save as alt text"}</button><button type="button" class="btn" data-ds="copy">Copy</button>`}
         <small>${d.alt ? `Now: “${esc(d.alt.slice(0, 60))}”` : d.alt === "" ? "Now marked as decoration" : "It has no alt text now"}</small></div>` : ""}`;
   }
   // Beside the picture: below it if there's room, else above, else inside.

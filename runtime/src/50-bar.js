@@ -170,8 +170,17 @@ function closeBar() {
   showPane("");
   restoreFocus();
 }
-// While pointing, the bar dodges the cursor so nothing is unreachable.
-bar.addEventListener("mouseenter", () => { if (S.picking && !input.value && !paneKind && PREFS.barPosition === "auto") bar.classList.toggle("top"); });
+// While pointing, the bar steps aside so nothing under it is unreachable, but
+// only once the pointer rests on it away from its controls. A pointer heading
+// for a button, a suggestion or the page tools never makes it jump.
+let dodgeTimer = 0;
+const dodgeOk = t => S.picking && !input.value && !paneKind && PREFS.barPosition === "auto" && !S.target && !GodMode.selected &&
+  !t?.closest?.("button, .chip, .sugs, .gm-clips, .menu") && !bar.querySelector(".menu:not([hidden])");
+bar.addEventListener("pointermove", e => {
+  clearTimeout(dodgeTimer);
+  if (dodgeOk(e.target)) dodgeTimer = setTimeout(() => { if (dodgeOk(e.target) && bar.matches(":hover")) bar.classList.toggle("top"); }, 350);
+});
+bar.addEventListener("pointerleave", () => clearTimeout(dodgeTimer));
 
 // ---- sending, stopping
 function send(text) {
