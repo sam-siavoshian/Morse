@@ -114,6 +114,38 @@ function CSS() { return `
   .sw:hover input:checked + span { background: var(--m-primary-hover); }
   .sw input:focus-visible + span { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
 
+  /* ---- keep iterating (70-panel.js): search, rows you can move through,
+     versions, and the "not working" note with Fix it */
+  .psearch { padding: 8px 8px 0; }
+  .psearch .search { display: block; width: 100%; height: 32px; margin: 0; padding: 0 12px; background: var(--m-bg); color: var(--m-text); border: 1px solid var(--m-line-strong);
+    border-radius: var(--m-r-sm); font: 450 var(--m-text-md)/20px var(--m-font); letter-spacing: var(--m-tracking); outline: 0; -webkit-appearance: none; appearance: none; }
+  .psearch .search::placeholder { color: var(--m-text-3); opacity: 1; }
+  .psearch .search:focus { border-color: var(--m-signal-2); }
+  .list article { outline: none; }
+  .list article:focus-visible { background: var(--m-raised); box-shadow: inset 0 0 0 1.5px var(--m-signal-3); }
+  .meta small.latest { color: var(--m-text-3); }
+  .tags .when { font: 400 var(--m-text-xs)/16px var(--m-font); font-style: normal; color: var(--m-text-3); letter-spacing: 0; white-space: nowrap; }
+  /* a follow-up is typed: Enter refines, so Keep loses its ↵ */
+  .bar.refining .actions [data-a=keep] kbd { display: none; }
+  .panel .btns { flex-wrap: wrap; row-gap: 2px; }
+  .panel .btns em { font: 10.5px/16px var(--m-mono); font-style: normal; color: var(--m-text-3); margin-left: 2px; letter-spacing: 0; }
+  .health { grid-column: 2; display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 8px 8px 8px 12px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-bg); }
+  .health p { flex: 1; min-width: 0; margin: 0; font-size: var(--m-text-sm); line-height: 16px; color: var(--m-text-2); overflow-wrap: anywhere; }
+  .health b { color: var(--m-text); font-weight: 600; }
+  .health b::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 7px 1px 0; border-radius: 1.5px; background: var(--m-danger); vertical-align: middle; }
+  .panel .health button { flex: none; height: 24px; padding: 0 10px; }
+  .versions { grid-column: 2; list-style: none; margin: 8px 0 0 -8px; padding: 4px; border: 1px solid var(--m-line); border-radius: var(--m-r-sm); }
+  .versions li { margin: 0; }
+  .versions li.cur, .panel .versions button { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; width: 100%; height: auto; padding: 4px 6px;
+    border: 0; border-radius: 4px; text-align: left; font: 400 var(--m-text-sm)/16px var(--m-font); letter-spacing: var(--m-tracking); white-space: normal; }
+  .panel .versions button:hover { background: var(--m-hover); }
+  .versions .vn { font: 10.5px/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .versions .vp { color: var(--m-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .versions .vt { font: 11px/16px var(--m-font); color: var(--m-text-3); white-space: nowrap; letter-spacing: 0; }
+  .versions li.cur .vp, .panel .versions button:hover .vp { color: var(--m-text); }
+  .versions li.cur .vn { color: var(--m-text); }
+  .vhint { grid-column: 2; margin: 6px 0 0; font-size: var(--m-text-xs); line-height: 16px; color: var(--m-text-3); }
+
   /* ---- modals */
   .modal { position: fixed; inset: 0; background: var(--m-scrim); display: flex; align-items: center; justify-content: center; pointer-events: auto; animation: fade var(--m-fast); }
   @keyframes fade { from { opacity: 0 } }

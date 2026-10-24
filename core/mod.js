@@ -2,6 +2,11 @@
 // and the CSS/JS that implements it. This is the unit people share.
 
 import { KIT_SOURCE } from "./kit.js";
+import { versionsOf } from "./versions.js";
+
+// Version history (refine, restore, step back) lives in versions.js so the
+// runtime can inline it; it is part of this module's API.
+export { HISTORY_CAP, versionsOf, currentVersion, reviseMod, restoreVersion, stepBack, relativeTime } from "./versions.js";
 
 export const SHARE_BASE = "https://sam-siavoshian.github.io/RRAA/share/install.html";
 
@@ -9,7 +14,7 @@ export function newId() {
   return Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
 }
 
-export function createMod({ id, title, prompt, css, js, url, app, target, model, kind, edits, from }) {
+export function createMod({ id, title, prompt, css, js, url, app, target, model, kind, edits, from, history, refined }) {
   const now = new Date().toISOString();
   const manual = kind === "manual" || kind === "quick";
   return {
@@ -29,6 +34,9 @@ export function createMod({ id, title, prompt, css, js, url, app, target, model,
     // stay editable; mods rebuilt from a captured element record where it came from.
     ...(manual ? { kind, edits: Array.isArray(edits) ? edits : [] } : {}),
     ...(from && typeof from === "object" ? { from: { app: from.app || null, url: from.url || null, title: from.title || null } } : {}),
+    // A draft refined in the bar before it was kept arrives with its versions.
+    ...(Array.isArray(history) && history.length ? { history: versionsOf({ history }) } : {}),
+    ...(typeof refined === "string" && refined && refined !== prompt ? { refined } : {}),
   };
 }
 
@@ -91,8 +99,9 @@ export async function decodeShare(link) {
   return validateMod(JSON.parse(json));
 }
 
+// Links carry the current version only; the history stays on this machine.
 export function stripLocal(mod) {
-  const { enabled, ...rest } = mod;
+  const { enabled, history, ...rest } = mod;
   return rest;
 }
 

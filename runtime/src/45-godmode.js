@@ -705,6 +705,7 @@ const GodMode = (() => {
     }
     if ((e.metaKey || e.ctrlKey) && !e.altKey && (k === "z" || k === "y")) {
       if (active === input && input.value) return;
+      if (S.phase === "result") return; // keep iterating: ⌘Z after a result steps back a version (60-generate.js)
       if (active && active !== input && active.matches?.("input, textarea")) return;
       if (!GS.history.length && !GS.future.length) return;
       e.preventDefault();

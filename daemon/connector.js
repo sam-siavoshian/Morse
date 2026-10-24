@@ -323,6 +323,8 @@ export class Connector {
       case "off":
         await s.send("Runtime.evaluate", { expression: `globalThis.morse && morse.__off(${JSON.stringify(msg.modId)})`, contextId: ctx });
         return true;
+      case "stats": // repair: does a saved mod still find its elements? (core/kit.js __stats)
+        return (await s.send("Runtime.evaluate", { expression: `globalThis.morse?.__stats?.(${JSON.stringify(msg.modId)}) ?? null`, contextId: ctx, returnByValue: true })).result?.value ?? null;
       case "generate": {
         if (!this.settings?.provider || this.settings.provider === "none")
           throw new Error("No model is connected. Run morse doctor in a terminal to set one up.");
@@ -331,6 +333,7 @@ export class Connector {
           settings: this.settings,
           request: msg.request,
           context: { ...msg.context, app: this.app?.name || msg.context.app },
+          base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           exec: js => this.exec(s, ctx, msg.genId, js),
           emit: ev => { if (!signal.aborted) this.push(s, ctx, { ...ev, genId: msg.genId }); },
           signal,

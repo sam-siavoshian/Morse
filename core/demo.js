@@ -149,7 +149,20 @@ const FALLBACK = reply("Needs a real model", "", `
 morse.toast("The demo replay only knows a few requests. Connect a model for anything else.");
 `);
 
+// For the playground (demo/playground.html): a label in its toolbar.
+const NOW_PLAYING = reply("Now playing label", `
+#toolbar .morse-now { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; font-size: 14px; background: color-mix(in srgb, currentColor 10%, transparent); }
+#toolbar .morse-now b { font-weight: 600; }
+`, `
+morse.watch("#toolbar", bar => {
+  const label = morse.el("span", { class: "morse-now", html: "<b>Now playing</b> Blue in Green" });
+  const spacer = bar.querySelector("span[style]");
+  spacer ? spacer.before(label) : bar.append(label);
+});
+`);
+
 const RULES = [
+  [/now playing/i, NOW_PLAYING],
   [/word|token count|character count|count/i, WORD_COUNT],
   [/copy|markdown|export/i, COPY_MD],
   [/sleep|timer/i, null],
@@ -172,12 +185,41 @@ function rebuild(prompt) {
   return reply(`Rebuilt from ${from}`, `${sel} {\n${decls}\n  transition: background-color .2s ease, color .2s ease;\n}`, "");
 }
 
+// Keep iterating (core/prompt.js basePrompt): the demo model edits the code it
+// was given. "smaller"/"bigger" scale every px size, "icons" swaps known
+// labels for symbols, and a broken mod is fixed by writing it again from its
+// original request.
+const ICONS = [[/Now playing/g, "♪"], [/Copy as Markdown/g, "⧉"], [/Sleep timer/g, "☾"], [/ words/g, " ✎"]];
+function readBase(prompt) {
+  const code = prompt.match(/Current code:\n```css\n([\s\S]*?)\n?```\n```js\n([\s\S]*?)\n?```/);
+  if (!code) return null;
+  const line = re => (prompt.match(re) || [])[1] || "";
+  return { original: line(/^Original request: (.*)$/m), css: code[1], js: code[2], followUp: line(/^Follow-up: (.*)$/m), error: line(/^What went wrong: (.*)$/m) };
+}
+function refine(b) {
+  if (b.error) {
+    const rule = RULES.find(([re]) => re.test(b.original));
+    if (rule) return rule[1] || SLEEP;
+    return reply("Could not fix", b.css, b.js);
+  }
+  const ask = b.followUp;
+  const scale = /smaller|tighter|less|compact/i.test(ask) ? 0.8 : /bigger|larger|more/i.test(ask) ? 1.25 : 0;
+  if (scale) {
+    const css = b.css.replace(/(\d+(?:\.\d+)?)px/g, (_, n) => `${Math.max(1, Math.round(n * scale))}px`);
+    return reply(scale < 1 ? "Smaller" : "Bigger", css, b.js);
+  }
+  if (/icon|symbol/i.test(ask)) return reply("Icons", b.css, ICONS.reduce((js, [re, sym]) => js.replace(re, sym), b.js));
+  return reply("No change", `/* The demo model can only make it smaller, bigger or use icons. */\n${b.css}`, b.js);
+}
+
 export function demoResponse(messages) {
   // The page context is the last user turn that carries a request (earlier
   // Ask turns come before it; a "That failed" retry comes after).
   const users = messages.filter(m => m.role === "user");
-  const firstUser = [...users].reverse().find(m => /^Request: /m.test(m.content))?.content || users[0]?.content || "";
+  const firstUser = [...users].reverse().find(m => /^(Request: |Current code:)/m.test(m.content))?.content || users[0]?.content || "";
   if (/Captured styles \(computed, JSON\):/.test(firstUser)) return rebuild(firstUser);
+  const base = readBase(firstUser); // keep iterating: refine or fix
+  if (base) return refine(base);
   const request = [...firstUser.matchAll(/^Request: (.*)$/gm)].pop()?.[1] || "";
   const isRetry = /^That failed/.test(messages.at(-1)?.content || "");
   const answer = demoAnswer(request, firstUser, messages); // Ask and find

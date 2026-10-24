@@ -163,6 +163,8 @@ async function dispatch(msg, port) {
     case "off":
       await execIn(target, `globalThis.morse && morse.__off(${JSON.stringify(msg.modId)})`);
       return true;
+    case "stats": // repair: does a saved mod still find its elements? (core/kit.js __stats)
+      return (await execIn(target, `globalThis.morse?.__stats?.(${JSON.stringify(msg.modId)}) ?? null`)) ?? null;
     case "generate": {
       let b = await backend();
       if (b.kind === "none") b = await backend(true);
@@ -178,6 +180,7 @@ async function dispatch(msg, port) {
           settings: b.settings,
           request: msg.request,
           context: msg.context,
+          base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           signal,
           exec: js => exec(target, msg.genId, js),
           emit: ev => { if (!signal.aborted) try { port.postMessage({ ...ev, genId: msg.genId }); } catch {} },

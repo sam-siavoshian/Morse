@@ -17,7 +17,8 @@
 <body>
 <!-- Dev playground: the real runtime with a fake host that streams canned
      tokens, so the UI and effect can be iterated on without a model.
-     Open with ?light for the light theme, ?reset to forget saved mods.
+     Open with ?light for the light theme, ?reset to forget saved mods,
+     ?model=demo to generate with the real engine and the demo model.
      Mods and the God mode clipboard persist in localStorage, and mod JS runs
      through the real helper kit, so manual edits re-apply after a reload. -->
 <div class="stage">
@@ -80,13 +81,24 @@
         return reply(x);
       }
       if (m.type === "mods.delete") { const all = store.get("mods", {}); delete all[m.modId]; store.set("mods", all); return reply(true); }
-      if (m.type === "exec") {
+      const exec = (id, js) => {
         let r;
-        try { r = (0, eval)(kit.wrapModCode(m.modId, m.js)); } catch (e) { r = { ok: false, error: String(e.message || e) }; }
-        const errs = r && r.ok ? morse.__errors(m.modId) : [];
-        return reply(errs.length ? { ok: false, error: errs[0] } : r);
-      }
+        try { r = (0, eval)(kit.wrapModCode(id, js)); } catch (e) { r = { ok: false, error: String(e.message || e) }; }
+        const errs = r && r.ok ? morse.__errors(id) : [];
+        return errs.length ? { ok: false, error: errs[0] } : r;
+      };
+      if (m.type === "exec") return reply(exec(m.modId, m.js));
       if (m.type === "off") { globalThis.morse?.__off(m.modId); return reply(true); }
+      if (m.type === "stats") return reply(globalThis.morse?.__stats?.(m.modId) ?? null);
+      if (m.type === "share" && m.kind === "link") return reply({ link: await mod.encodeShare(m.mod) });
+      // ?model=demo: the real engine with the built-in demo model (core/demo.js),
+      // so refine and fix run end to end: prompt, stream, parse, exec, repair.
+      if (m.type === "generate" && new URLSearchParams(location.search).get("model") === "demo") {
+        const { runMorse } = await import("/core/engine.js");
+        const res = await runMorse({ settings: { provider: "demo" }, request: m.request, context: m.context, base: m.base,
+          exec: async js => exec(m.genId, js), emit: ev => emit({ ...ev, genId: m.genId }) }).catch(e => ({ ok: false, error: e.message }));
+        return reply({ ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts });
+      }
       if (m.type === "clipboard.list") return reply(store.get("clipboard", []));
       if (m.type === "clipboard.put") { const l = clip.clipAdd(store.get("clipboard", []), m.item); store.set("clipboard", l); return reply(l); }
       if (m.type === "generate" && ASK) {

@@ -54,3 +54,26 @@ test("errors inside callbacks are collected for the repair loop", { skip }, asyn
   assert.equal(errs.length, 1);
   assert.match(errs[0], /Cannot read properties of undefined/);
 });
+
+test("__stats reports how many elements each watch matches, now and ever", { skip }, async () => {
+  assert.equal(await page.evaluate(() => morse.__stats("nope")), null, "not running: null");
+  await page.evaluate(() => document.body.insertAdjacentHTML("beforeend", `<ol id="s"><li>a</li></ol>`));
+  await run("s1", `morse.watch("#s li", li => {}); morse.watch("#player-bar", () => {});`);
+  let s = await page.evaluate(() => morse.__stats("s1"));
+  assert.deepEqual(s.watches, [{ selector: "#s li", now: 1, total: 1 }, { selector: "#player-bar", now: 0, total: 0 }]);
+  assert.equal(s.errors, 0);
+  await page.evaluate(() => { const li = document.createElement("li"); document.getElementById("s").append(li); });
+  await page.waitForTimeout(100);
+  s = await page.evaluate(() => morse.__stats("s1"));
+  assert.deepEqual(s.watches[0], { selector: "#s li", now: 2, total: 2 });
+  await page.evaluate(() => document.querySelectorAll("#s li").forEach(li => li.remove()));
+  await page.waitForTimeout(100);
+  s = await page.evaluate(() => morse.__stats("s1"));
+  assert.deepEqual(s.watches[0], { selector: "#s li", now: 0, total: 2 }, "total remembers what it found");
+  await run("s2", `morse.watch("header", h => h.missing.thing);`);
+  s = await page.evaluate(() => morse.__stats("s2"));
+  assert.equal(s.errors, 1);
+  assert.match(s.error, /Cannot read properties of undefined/);
+  await page.evaluate(() => { morse.__off("s1"); morse.__off("s2"); });
+  assert.equal(await page.evaluate(() => morse.__stats("s1")), null);
+});
