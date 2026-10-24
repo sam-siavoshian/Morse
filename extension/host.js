@@ -4,13 +4,32 @@
   if (window.top !== window || globalThis.__morseHost) return;
   const subs = [];
   let port = null;
+  // Each port keeps the ids of requests sent on it and not answered yet. If
+  // it closes (the service worker was recycled, the extension reloaded), each
+  // gets an error reply so nothing in the runtime waits forever.
   const connect = () => {
-    port = chrome.runtime.connect({ name: "morse" });
-    port.onMessage.addListener(m => subs.forEach(f => f(m)));
-    port.onDisconnect.addListener(() => { port = null; });
+    const p = chrome.runtime.connect({ name: "morse" });
+    const inflight = new Set();
+    port = { p, inflight };
+    p.onMessage.addListener(m => {
+      if (m && m.reply != null) inflight.delete(m.reply);
+      subs.forEach(f => f(m));
+    });
+    p.onDisconnect.addListener(() => {
+      if (port?.p === p) port = null;
+      const lost = [...inflight];
+      inflight.clear();
+      for (const id of lost) subs.forEach(f => f({ reply: id, error: "message port closed" }));
+    });
   };
   globalThis.__morseHost = {
-    send(m) { if (!port) connect(); port.postMessage({ ...m, url: m.url || location.href }); },
+    send(m) {
+      const msg = { ...m, url: m.url || location.href };
+      if (!port) connect();
+      // A port can be dead before its onDisconnect has run: retry once on a fresh one.
+      try { port.p.postMessage(msg); } catch { connect(); port.p.postMessage(msg); }
+      if (m.id != null) port.inflight.add(m.id);
+    },
     onMessage(fn) { subs.push(fn); },
   };
 
