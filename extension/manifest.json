@@ -14,7 +14,7 @@
   "action": { "default_popup": "popup.html", "default_title": "Morse" },
   "options_ui": { "page": "options.html", "open_in_tab": true },
   "commands": {
-    "toggle-morse": { "suggested_key": { "default": "Ctrl+Shift+Space", "mac": "Alt+Shift+Space" }, "description": "Change this page" }
+    "toggle-morse": { "suggested_key": { "default": "Alt+Shift+Space", "mac": "Alt+Shift+Space" }, "description": "Change this page" }
   },
   "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" }
 }

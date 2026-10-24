@@ -129,8 +129,11 @@ export const Practice = {
   },
 };
 
-// The command (Ctrl+Shift+Space) where content scripts can't run: open the
+// The command (Alt+Shift+Space) where content scripts can't run: open the
 // popup, which says why. On the welcome page, it opens the practice bar.
+// It must differ from every platform's default Open Morse hotkey (core/hotkeys.js):
+// Chrome takes a command's keys before the page, so the bar would never see them
+// and hold-to-talk could not work.
 chrome.commands.onCommand.addListener(async cmd => {
   if (cmd !== "toggle-morse") return;
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
