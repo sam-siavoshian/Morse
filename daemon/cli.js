@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 // morse: customize any app in one sentence.
 
-import { Connector } from "./connector.js";
-import { resolveApp, launchApp, quitApp, KNOWN_APPS } from "./apps.js";
-import { inspectFuses, fuseVerdict, electronBinaryFor } from "./fuses.js";
-import { waitForEndpoint } from "./cdp.js";
+import { resolveApp } from "./apps.js";
+import { inspectFuses, fuseVerdict } from "./fuses.js";
+import { appsCommand, launchCommand, attachCommand, statusCommand, stopCommand } from "./desktop.js";
 import { listMods, deleteMod, saveMod, loadConfig, saveConfig, writeExport, HOME } from "./store.js";
 import { resolveSettings, settingsLabel, DEFAULT_SETTINGS } from "../core/providers.js";
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
@@ -38,13 +37,16 @@ async function settingsFrom(f) {
 const HELP = `${LOGO}
 
 ${B("Desktop apps")} (Electron / Chromium)
-  morse launch <app|path>   relaunch an app with Morse attached
-                            apps: ${Object.keys(KNOWN_APPS).join(", ")}
-      --restart             quit the app first if it's running
+  morse apps                list the apps Morse found and whether it can attach
+  morse launch <app|path>   relaunch an app with Morse attached (partial names work: code, spot)
+      --restart             quit the app first if it's open (remembered per app; --no-restart forgets)
+      --watch               keep waiting when the app quits, attach again when it's back
       --name <name>         name mods are filed under (defaults to the app)
-      --port <n>            debugging port (default 9333)
+      --port <n>            debugging port (default: a free one from 9333)
       -- <args>             extra arguments for the app
   morse attach --port <n>   attach to an app already started with --remote-debugging-port
+  morse status              apps Morse is attached to, their windows and mods
+  morse stop <app>          detach from an app (it keeps running)
   morse fuses <app|path>    show the app's Electron fuses and what they mean for Morse
 
 ${B("Mods")}
@@ -64,41 +66,18 @@ async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const f = flags(rest);
   switch (cmd) {
-    case "launch": {
-      if (!f._[0]) throw new Error("Which app? e.g. morse launch spotify");
-      const app = resolveApp(f._[0]);
-      if (f.name) Object.assign(app, { id: String(f.name).toLowerCase(), name: f.name });
-      const port = Number(f.port || 9333);
-      const settings = await settingsFrom(f);
-      console.log(LOGO + "\n");
-      console.log(`  app     ${B(app.name)} ${D(app.path)}`);
-      try {
-        const info = await inspectFuses(await electronBinaryFor(app.path));
-        if (info.electron) {
-          console.log(`  fuses   ${Object.entries(info.fuses).filter(([k]) => /Inspect|Asar|RunAsNode/.test(k)).map(([k, v]) => `${k}=${v}`).join("  ")}`);
-          for (const line of fuseVerdict(info)) console.log(D(`          ${line}`));
-        }
-      } catch {}
-      console.log(`  model   ${settingsLabel(settings)}`);
-      if (f.restart) { quitApp(app); await new Promise(r => setTimeout(r, 1500)); }
-      launchApp(app, port, f.rest);
-      await waitForEndpoint(port).catch(e => {
-        throw new Error(`${e.message}\n  If ${app.name} was already running, quit it or pass --restart.`);
-      });
-      console.log(`  port    ${port}\n`);
-      await new Connector({ port, app: app.browser ? null : app, settings }).run();
-      break;
-    }
-    case "attach": {
-      const port = Number(f.port || 9222);
-      const settings = await settingsFrom(f);
-      await waitForEndpoint(port, 3000);
-      console.log(LOGO + `\n\n  attached on port ${port} · model ${settingsLabel(settings)}\n`);
-      await new Connector({ port, app: f.app ? { id: f.app, name: f.app } : null, settings }).run();
-      break;
-    }
+    case "apps":
+      return appsCommand(f);
+    case "launch":
+      return launchCommand(f, { settingsFrom, logo: LOGO });
+    case "attach":
+      return attachCommand(f, { settingsFrom, logo: LOGO });
+    case "status":
+      return statusCommand(f);
+    case "stop":
+      return stopCommand(f);
     case "fuses": {
-      const app = resolveApp(f._[0]);
+      const app = resolveApp(f._.join(" "));
       const info = await inspectFuses(app.path);
       console.log(JSON.stringify(info, null, 2));
       for (const line of fuseVerdict(info)) console.log("- " + line);
