@@ -107,7 +107,8 @@ ${B("Desktop apps")} (Electron / Chromium)
   morse fuses <app|path>    check whether Morse can work with a desktop app
 
 ${B("Websites")} (the Chrome extension uses this helper to reach your model)
-  morse serve               start the Morse helper and show a pairing code
+  morse extension           show the Chrome extension folder and how to add it
+  morse serve              start the Morse helper and show a pairing code
   morse pair                show a new pairing code for the running helper
   morse unpair              sign out every paired browser
 
@@ -134,11 +135,14 @@ ${B("Pause")}
 
 In a connected app, press ${B(openKey)} to open Morse.${KEYS.mods ? ` Press ${B(KEYS.mods)} to see your mods.` : ""}${KEYS.off ? `
 Press ${B(KEYS.off)} to turn all your mods off (press it again to turn them back on).` : ""}
-For websites: run npm run build, load dist/extension in Chrome, then run ${B("morse serve")} and type the code into Morse.`;
+For websites: run ${B("morse extension")} to find the Chrome extension, then ${B("morse serve")} and type the code into Morse.
+morse --version shows the version.`;
 
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const f = flags(rest);
+  if (["--version", "-v", "version"].includes(cmd)) return console.log(VERSION);
+  if (["--help", "-h", "help"].includes(cmd)) return console.log(HELP);
   if (await (await import("./setup.js")).maybeRun(cmd, rest)) return; // onboarding hook: morse setup, and getting started while nothing is set up
   switch (cmd) {
     case "apps":
@@ -191,6 +195,14 @@ async function main() {
       if (f["api-key"] !== undefined) throw new Error("--api-key is gone. Use --anthropic-key or --openai-key instead.");
       if (MODEL_FLAGS.some(k => f[k] !== undefined)) await configure(f);
       await showModel();
+      break;
+    }
+    case "extension": {
+      const { EXTENSION_DIR } = await import("./setup.js");
+      const { existsSync } = await import("node:fs");
+      if (!existsSync(EXTENSION_DIR)) throw new Error(`The extension isn't built yet. Run npm run build in ${EXTENSION_DIR.replace(/[\\/]dist[\\/]extension$/, "")} first.`);
+      console.log(EXTENSION_DIR);
+      console.log(D(`In Chrome, open chrome://extensions, turn on Developer mode, click Load unpacked and choose this folder.\nThen run morse serve and type its code into Morse.`));
       break;
     }
     case "serve": {
