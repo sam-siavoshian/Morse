@@ -61,7 +61,7 @@ test("morse mods, morse code, morse install and morse status print a mod's words
   writeFileSync(file, JSON.stringify(mod("r8-inst", { title: "Calm\x1b]0;owned\x07\x1b[2K" })));
   const inst = run("install", file, "--yes");
   assert.equal(inst.status, 0, inst.stderr);
-  assert.match(inst.stdout, /Installed Calm/);
+  assert.match(inst.stdout, /Installed:? Calm/);
   assert.doesNotMatch(inst.stdout, HIDDEN, `morse install: ${JSON.stringify(inst.stdout)}`);
 
   // `morse status`: window titles come from the app's pages.

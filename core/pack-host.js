@@ -24,6 +24,7 @@ import {
 } from "./pack.js";
 import { parseImport } from "./backup.js";
 import { needsFetch, maxAgeOf } from "./gallery.js";
+import { t } from "./i18n.js"; // the words, in the language the host speaks (core/i18n.js)
 
 export const PACK_REQUESTS = new Set(["pack.fetch", "pack.install", "pack.status", "pack.update", "pack.unsubscribe", "pack.share", "pack.enable"]);
 
@@ -33,7 +34,7 @@ const MAX_SUBS = 20;
 // Reads at most `max` bytes: a huge (or endless) answer is cut off while
 // reading, never held whole (as core/gallery-host.js reads the gallery).
 export async function readCapped(res, max) {
-  const big = "This pack is too big. Morse reads packs up to 2 MB.";
+  const big = t("pk.err.tooBig");
   if (Number(res.headers.get("content-length")) > max) { res.body?.cancel?.().catch(() => {}); throw new Error(big); }
   if (!res.body?.getReader) { const text = await res.text(); if (text.length > max) throw new Error(big); return text; }
   const reader = res.body.getReader(), parts = [];
@@ -68,17 +69,17 @@ export function createPacks({ store, mods, writeFile = null, fetch = globalThis.
     else if (cache?.text && cache.lastModified) headers["If-Modified-Since"] = cache.lastModified;
     let res;
     try { res = await fetch(url, { headers, signal: AbortSignal.timeout(TIMEOUT), credentials: "omit", redirect: "follow" }); }
-    catch { throw new Error("Couldn't reach the pack's address. Check your connection and try again."); }
+    catch { throw new Error(t("pk.err.unreachable")); }
     // Redirected: the end has to be https too. http://127.0.0.1 is only for
     // an address typed as that (making a pack on this computer), never where
     // an https address sends Morse.
     if (res.url && res.url !== url && (new URL(checkPackUrl(res.url)).protocol !== "https:" && new URL(url).protocol === "https:")) {
       res.body?.cancel?.().catch(() => {});
-      throw new Error("This address sends Morse on to one that isn't https://, so Morse didn't read it. Check the address and try again.");
+      throw new Error(t("pk.err.redirect"));
     }
     const meta = { status: res.status, etag: res.headers.get("etag") || "", lastModified: res.headers.get("last-modified") || "", maxAge: maxAgeOf(res.headers.get("cache-control")) };
     if (res.status === 304) return meta;
-    if (res.status !== 200) { res.body?.cancel?.().catch(() => {}); throw new Error(`Couldn't get the pack from this address (error ${res.status}). Check the address and try again.`); }
+    if (res.status !== 200) { res.body?.cancel?.().catch(() => {}); throw new Error(t("pk.err.status", { status: res.status })); }
     return { ...meta, text: await readCapped(res, MAX_PACK_BYTES) };
   }
 
@@ -91,7 +92,7 @@ export function createPacks({ store, mods, writeFile = null, fetch = globalThis.
       if (r.status === 304 && cache.text) next = { ...cache, fetchedAt: now(), failedAt: 0, error: "", maxAge: r.maxAge || cache.maxAge || 0 };
       else {
         const { pack } = parsePack(r.text);
-        if (pack.id !== sub.id) throw new Error("The address has a different pack now. Morse kept the copy you have.");
+        if (pack.id !== sub.id) throw new Error(t("pk.err.otherPack"));
         next = { text: r.text, hash: await packHash(pack), etag: r.etag, lastModified: r.lastModified, maxAge: r.maxAge, fetchedAt: now(), failedAt: 0, error: "" };
       }
     } catch (e) {
@@ -142,14 +143,14 @@ export function createPacks({ store, mods, writeFile = null, fetch = globalThis.
   // the same pack (its hash), and clashes are decided by the person's picks.
   async function install({ source, hash, picks, url = "", subscribe = false }) {
     const r = await parseImport(String(source ?? ""));
-    if (r.kind !== "pack") throw new Error("This isn't a Morse pack. Check that you copied all of it.");
-    if (!hash || (await packHash(r.pack)) !== hash) throw new Error("This pack changed while you were looking at it. Open it again to see what's in it now.");
+    if (r.kind !== "pack") throw new Error(t("pk.err.notPack"));
+    if (!hash || (await packHash(r.pack)) !== hash) throw new Error(t("pk.err.changed"));
     const href = subscribe ? checkPackUrl(url) : "";
     const { put } = planInstall(r.pack, picks, await mods.list(), { url: href, now: new Date(now()) });
     await mods.put(put);
     if (href) {
       await editSubs(s => {
-        if (!s[href] && Object.keys(s).length >= MAX_SUBS) throw new Error(`You get updates from ${MAX_SUBS} packs already. Stop one first.`);
+        if (!s[href] && Object.keys(s).length >= MAX_SUBS) throw new Error(t("pk.err.maxSubs", { max: MAX_SUBS }));
         const chosen = new Set((picks || []).map(p => p?.id));
         s[href] = {
           url: href, id: r.pack.id, name: r.pack.name, since: new Date(now()).toISOString(), reviewed: hash,
@@ -163,10 +164,10 @@ export function createPacks({ store, mods, writeFile = null, fetch = globalThis.
 
   async function update({ url, hash, picks = {} }) {
     const sub = (await subsNow())[url];
-    if (!sub) throw new Error("You don't get updates from this pack anymore.");
+    if (!sub) throw new Error(t("pk.err.notSubbed"));
     let pack;
-    try { pack = parsePack(sub.cache?.text || "").pack; } catch { throw new Error("Morse doesn't have a copy of this pack's update. Try again later."); }
-    if (!hash || sub.cache.hash !== hash) throw new Error("This pack changed while you were looking at it. Open the update again to see what's in it now.");
+    try { pack = parsePack(sub.cache?.text || "").pack; } catch { throw new Error(t("pk.err.noCopy")); }
+    if (!hash || sub.cache.hash !== hash) throw new Error(t("pk.err.changedUpdate"));
     const all = await mods.list();
     const d = diffPack(all, pack);
     const plan = planUpdate(all, pack, picks, { url, now: new Date(now()) });
@@ -194,12 +195,12 @@ export function createPacks({ store, mods, writeFile = null, fetch = globalThis.
       name ||= chosen[0]?.pack?.name || "";
     } else {
       chosen = (Array.isArray(ids) ? ids : []).map(id => all.find(m => m.id === id));
-      if (chosen.some(m => !m)) throw new Error("Some of these mods aren't saved anymore. Choose them again.");
+      if (chosen.some(m => !m)) throw new Error(t("pk.err.gone"));
     }
     const p = makePack(chosen, { name, note, author, id: packId, now: new Date(now()) });
     if (kind === "json") return { pack: p, text: JSON.stringify(p, null, 2), filename: packFilename(p) };
     if (kind === "file") {
-      if (!writeFile) throw new Error("This version of Morse can't save files.");
+      if (!writeFile) throw new Error(t("pk.err.noFiles"));
       return { ...(await writeFile(packFilename(p), JSON.stringify(p, null, 2))), count: p.mods.length };
     }
     return { link: await encodePackLink(p), count: p.mods.length };

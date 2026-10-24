@@ -22,10 +22,10 @@ export const LINKS = {
 // frame's shape before it loads. caption is the line under it, and label is
 // what a screen reader says.
 export const DEMO_VIDEO = {
-  mp4: "../docs/launch/morse-demo.mp4",
-  poster: "../docs/launch/poster-video.jpg",
+  mp4: "../docs/launch/morse-demo-v2.mp4",
+  poster: "../docs/launch/poster-video-v2.jpg",
   width: 1280,
   height: 800,
   label: "The Morse demo",
-  caption: "The demo, 85 seconds, no sound. Recorded from real runs: Claude Code wrote the sleep timer and the word count.",
+  caption: "The demo, 92 seconds, no sound. Recorded from real runs: Claude Code wrote the sleep timer, the button, the fix and the round covers. Waits for the model are sped up, and the video says so.",
 };

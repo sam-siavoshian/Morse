@@ -18,15 +18,6 @@ const EN = CATALOGS.en;
 // Messages a language keeps in English on purpose: [lang] -> [id, why].
 // (Keep this short: a missing message shows the English one.)
 const ENGLISH_ON_PURPOSE = {};
-// New messages that show in English until they are translated, in every
-// language. Remove an id once the languages have it.
-const WAITING_FOR_TRANSLATION = [
-  // models (core/route.js): the Model setting, the setup question, the popup label
-  "gen.stronger", "settings.model", "settings.model.auto", "settings.model.fast", "settings.model.best",
-  "settings.model.note.auto", "settings.model.note.fast", "settings.model.note.best", "settings.model.pinned",
-  "popup.modelHarder", "setup.model.which", "setup.model.autoWhy", "setup.model.fastWhy", "setup.model.bestWhy",
-  "setup.model.choose", "setup.model.now", "setup.model.always", "setup.model.change", "cli.badModelMode",
-];
 
 const placeholders = s => [...String(s).matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort();
 const tags = s => [...String(s).matchAll(/<\/?([a-z][\w-]*)([^>]*)>/gi)].map(m => `${m[1].toLowerCase()}${(m[2].match(/\b(class|id|data-[\w-]+|href|type)="[^"]*"/g) || []).sort().join(" ")}`).sort();
@@ -38,7 +29,7 @@ test("every language has every message, and nothing English doesn't have", () =>
   for (const { code } of LANGUAGES) {
     if (code === "en") continue;
     const cat = CATALOGS[code];
-    const kept = new Set([...(ENGLISH_ON_PURPOSE[code] || []).map(([id]) => id), ...WAITING_FOR_TRANSLATION.filter(id => cat[id] == null)]);
+    const kept = new Set([...(ENGLISH_ON_PURPOSE[code] || []).map(([id]) => id)]);
     const missing = ids.filter(id => cat[id] == null && !kept.has(id));
     const extra = Object.keys(cat).filter(id => EN[id] == null);
     assert.deepEqual(missing, [], `${code} is missing ${missing.length} messages`);
@@ -177,4 +168,23 @@ test("the CLI speaks the terminal's language (LANG=es)", async () => {
   assert.match(start.out, /morse setup/, "commands stay as they are");
   const plain = await run(["mods"], { ...env, LANG: "C.UTF-8" });
   assert.match(plain.out, /No mods yet/);
+});
+
+test("the Mods panel shows a saved part-of-the-page label in the person's language (runtime/src/20-context.js)", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync(new URL("../runtime/src/20-context.js", import.meta.url), "utf8");
+  const fn = /function shownLabel\(label\) \{[\s\S]*?\n\}\n/.exec(src)[0];
+  const shownLabel = new Function("t", "getLanguage", "CATALOGS", `${fn}; return shownLabel;`)(t, getLanguage, CATALOGS);
+  const was = getLanguage();
+  try {
+    setLanguage("es");
+    assert.equal(shownLabel("Section"), "Sección");
+    assert.equal(shownLabel("Search field"), "Campo de búsqueda", "a two-word kind");
+    assert.equal(shownLabel("“Release notes” section"), "sección “Release notes”");
+    assert.equal(shownLabel("Save button"), "botón Save");
+    assert.equal(shownLabel("Find search field"), "campo de búsqueda Find", "the longest kind wins");
+    assert.equal(shownLabel("“Notes”"), "“Notes”", "a name alone stays as it is");
+    setLanguage("en");
+    assert.equal(shownLabel("Save button"), "Save button");
+  } finally { setLanguage(was); }
 });
