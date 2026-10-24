@@ -108,6 +108,13 @@ known issue is written down with its reason, ❌ when it fails review.
 - The welcome page, the practice page and the popup use design/tokens.css only (no fallback colors), the same control heights (28 buttons, 24 inline), 1px lines, 4px key caps and the radar-square status dot. Disabled is `--m-signal-1`, never opacity.
 - [auto] Nothing sticks out of the page or scrolls it sideways at 1100px and 390px; text that is cut ends in an ellipsis.
 
+## 7d. Languages
+
+- The bar (empty, typing, a status stage, result, error), ⋯ menu, Settings (top and bottom) and the Mods panel are shot in German (long words) and Persian (right to left), `--only=i18n`.
+- [auto] The overlay is right to left only in Persian and Arabic; every surface follows the host's `dir`.
+- Long words wrap or end in an ellipsis; a textarea's placeholder can't end in one, so it must fit (German “Was soll sich ändern…”). A button that wraps stays at the end of its row.
+- Persian and Arabic letters join: labels set in the mono face (eyebrows, Try, pills, tags, “hold”) take the UI face there, since the mono face has none of those letters. Key caps, code and the model's name stay mono and left to right.
+
 ## 8. Themes
 
 - The runtime follows the host page: a dark page gets the dark tokens, a light page the light ones. Every state is shot on both.

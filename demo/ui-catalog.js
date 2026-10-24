@@ -78,7 +78,7 @@ const SPEECH_FAILS = () => {
 };
 async function open({ theme = "dark", width = 1100, height = 720, mods = 0, url, reduced = false, extra = "", init = [] } = {}) {
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 2, reducedMotion: reduced ? "reduce" : "no-preference", colorScheme: theme });
-  ctx.setDefaultTimeout(10000);
+  ctx.setDefaultTimeout(Number(process.env.UI_TIMEOUT) || 10000); ctx.setDefaultNavigationTimeout(Number(process.env.UI_TIMEOUT) || 10000); // UI_TIMEOUT=30000 on a busy machine
   for (const fn of [SPEECH_FAILS, ...[].concat(init)]) await ctx.addInitScript(fn);
   const page = await ctx.newPage();
   page.on("pageerror", e => console.warn("  [pageerror]", e.message));
@@ -2261,6 +2261,7 @@ async function waitingStates(theme, width) {
   await p.keyboard.press("Escape"); await sleep(200);
   // the Mods panel: a tag on the mod
   await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel").waitFor(); await sleep(400); await p.mouse.move(2, 2);
+  await blur(p);
   await shot(p, "waiting", "panel-row", ui(p, ".list article").first(), { pad: 8, note: "the tag on the mod: waits for “Allow User Scripts” (the full sentence is its title)" });
   await p.keyboard.press("Escape"); await sleep(200);
   // a new change whose code waits: the result says so and offers the one click

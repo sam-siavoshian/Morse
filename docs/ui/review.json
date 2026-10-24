@@ -1046,6 +1046,72 @@
   },
   "settings/saved-flash": {
    "note": "every change saves at once; “Saved” fades. R5: the shot scrolls the sheet back to its header (the sheet got taller)"
+  },
+  "i18n/de-bar": {
+   "note": "German: the empty bar: placeholder, suggestions, hint and Mods in this language"
+  },
+  "i18n/fa-bar": {
+   "note": "Persian, right to left: the empty bar: placeholder, suggestions, hint and Mods in this language. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
+  },
+  "i18n/de-typing": {
+   "note": "German: a long request wraps at words; the chip keeps the page's own words (English) and direction"
+  },
+  "i18n/fa-typing": {
+   "note": "Persian, right to left: a long request wraps at words; the chip keeps the page's own words (English) and direction"
+  },
+  "i18n/de-working": {
+   "note": "German: a status stage (“The model is reading the page”) in this language; the timer stays"
+  },
+  "i18n/fa-working": {
+   "note": "Persian, right to left: a status stage (“The model is reading the page”) in this language; the timer stays"
+  },
+  "i18n/de-result": {
+   "note": "German: the result: title, timing, the four actions. German: the refine placeholder is “Was soll sich ändern…” (R5: “Beschreib, was sich ändern soll…” was cut mid-word in a textarea, which can't end in an ellipsis)"
+  },
+  "i18n/fa-result": {
+   "note": "Persian, right to left: the result: title, timing, the four actions. German: the refine placeholder is “Was soll sich ändern…” (R5: “Beschreib, was sich ändern soll…” was cut mid-word in a textarea, which can't end in an ellipsis)"
+  },
+  "i18n/de-error": {
+   "note": "German: the error in plain words, on two lines, Try again"
+  },
+  "i18n/fa-error": {
+   "note": "Persian, right to left: the error in plain words, on two lines, Try again"
+  },
+  "i18n/de-settings": {
+   "note": "German: Settings: the Language row also says “Language” in English, so a wrong pick can be undone; key caps stay left to right"
+  },
+  "i18n/fa-settings": {
+   "note": "Persian, right to left: Settings: the Language row also says “Language” in English, so a wrong pick can be undone; key caps stay left to right. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
+  },
+  "i18n/de-settings-bottom": {
+   "note": "German: the bottom of Settings: segments, switches, the language list"
+  },
+  "i18n/fa-settings-bottom": {
+   "note": "Persian, right to left: the bottom of Settings: segments, switches, the language list. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
+  },
+  "i18n/de-menu": {
+   "note": "German: the ⋯ menu: names, hold, key caps on the far side"
+  },
+  "i18n/fa-menu": {
+   "note": "Persian, right to left: the ⋯ menu: names, hold, key caps on the far side. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
+  },
+  "i18n/de-panel": {
+   "note": "German: the Mods panel with twelve mods; mod titles and requests are what people typed (English here)"
+  },
+  "i18n/fa-panel": {
+   "note": "Persian, right to left: the Mods panel with twelve mods; mod titles and requests are what people typed (English here)"
+  },
+  "i18n/de-panel-row": {
+   "note": "German: a row: tags and actions in this language"
+  },
+  "i18n/fa-panel-row": {
+   "note": "Persian, right to left: a row: tags and actions in this language. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
+  },
+  "i18n/de-panel-foot": {
+   "note": "German: the foot: Packs, Backup, Install a mod. R5: a backup button that wraps stays at the end, under the one before it (German pushed it to the start). Open: Packs and Make a pack… are not translated yet (69-packs.js has no t() strings)"
+  },
+  "i18n/fa-panel-foot": {
+   "note": "Persian, right to left: the foot: Packs, Backup, Install a mod. R5: a backup button that wraps stays at the end, under the one before it (German pushed it to the start). Open: Packs and Make a pack… are not translated yet (69-packs.js has no t() strings). R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
   }
  },
  "fixes": [
@@ -1493,6 +1559,31 @@
    "title": "R5-17. Pack review: the sticky footer covered the mod scrolled into view; items now clear it",
    "before": "before/r5-packs-review-wide-dark.png",
    "after": "packs/review-wide-dark.png"
+  },
+  {
+   "title": "R5-18. German: the refine placeholder was cut mid-word (a textarea's placeholder can't end in an ellipsis); a shorter one",
+   "before": "before/r5-i18n-de-result-dark.png",
+   "after": "i18n/de-result-dark.png"
+  },
+  {
+   "title": "R5-19. German: the second backup button wrapped to the start of the row; it stays at the end",
+   "before": "before/r5-i18n-de-panel-foot-dark.png",
+   "after": "i18n/de-panel-foot-dark.png"
+  },
+  {
+   "title": "R5-20. Persian: Try and other mono labels drew the letters apart (the mono face has no Persian); they take the UI face in right-to-left languages",
+   "before": "before/r5-i18n-fa-bar-dark.png",
+   "after": "i18n/fa-bar-dark.png"
+  },
+  {
+   "title": "R5-21. Persian Settings: the section labels and the Ready pill join their letters",
+   "before": "before/r5-i18n-fa-settings-dark.png",
+   "after": "i18n/fa-settings-dark.png"
+  },
+  {
+   "title": "R5-22. Persian ⋯ menu: “hold” joins its letters",
+   "before": "before/r5-i18n-fa-menu-narrow-light.png",
+   "after": "i18n/fa-menu-narrow-light.png"
   }
  ]
 }
