@@ -8,7 +8,7 @@ async function applyMod(m) {
   setCss(m.id, m.css);
   if (m.js.trim()) {
     const r = await call("exec", { modId: m.id, js: m.js });
-    if (!r.ok) toast(`“${m.title}” failed: ${r.error}`);
+    if (!r.ok) toast(`Couldn't run “${m.title}”: ${r.error}. Edit its code in Mods.`);
   }
 }
 async function removeMod(id) { setCss(id, ""); await call("off", { modId: id }); }

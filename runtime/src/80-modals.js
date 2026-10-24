@@ -9,9 +9,9 @@ function showCode(m) {
   const saved = S.mods.find(x => x.id === m.id);
   openModal(`
     <header><b>${esc(m.title)}</b><small>“${esc(m.prompt || m.request)}”</small><button data-a="close">×</button></header>
-    <label>CSS</label><textarea class="code" data-k="css" spellcheck="false">${esc(m.css)}</textarea>
-    <label>JavaScript <span class="dim">runs with the <code>morse</code> helpers</span></label><textarea class="code" data-k="js" spellcheck="false">${esc(m.js)}</textarea>
-    <footer><button data-a="close">Cancel</button><button class="primary" data-a="save">${saved ? "Save & re-run" : "Apply"}</button></footer>`);
+    <label>Style <span class="dim">CSS</span></label><textarea class="code" data-k="css" spellcheck="false">${esc(m.css)}</textarea>
+    <label>Script <span class="dim">JavaScript, can use the <code>morse</code> helpers</span></label><textarea class="code" data-k="js" spellcheck="false">${esc(m.js)}</textarea>
+    <footer><button data-a="close">Cancel</button><button class="primary" data-a="save">${saved ? "Save and run" : "Run"}</button></footer>`);
   modal.querySelector("[data-a=save]").onclick = async () => {
     const css = modal.querySelector("[data-k=css]").value, js = modal.querySelector("[data-k=js]").value;
     Object.assign(m, { css, js });
@@ -19,22 +19,22 @@ function showCode(m) {
     await removeMod(m.id);
     await applyMod({ ...m, title: m.title || "draft" });
     modal.hidden = true;
-    toast("Re-applied");
+    toast("Code updated");
   };
 }
 async function showShare(m) {
   const card = await renderCard(m);
   const link = await call("share", { mod: m, kind: "link" }).catch(() => null);
   openModal(`
-    <header><b>Share “${esc(m.title)}”</b><small>Anyone with Morse or a userscript manager can install it.</small><button data-a="close">×</button></header>
+    <header><b>Share “${esc(m.title)}”</b><small>Anyone with Morse, or with Tampermonkey, can install it.</small><button data-a="close">×</button></header>
     ${card ? `<img class="cardimg" src="${card}" alt="Before and after">` : ""}
     ${link ? `<div class="link"><input readonly value="${esc(link.link)}"><button data-a="copy" class="primary">Copy link</button></div>` : ""}
     <div class="exports">
-      ${card ? `<button data-a="png">Card image</button>` : ""}
-      ${S.draft?.id === m.id && S.draft.clip ? `<button data-a="clip">Clip (${esc(S.draft.clip.kind)})</button>` : ""}
-      <button data-a="json">.morse.json</button>
-      <button data-a="user">.user.js for Tampermonkey</button>
-      <button data-a="tweet">Post…</button>
+      ${card ? `<button data-a="png">Download image</button>` : ""}
+      ${S.draft?.id === m.id && S.draft.clip ? `<button data-a="clip">Download clip (${esc(S.draft.clip.kind)})</button>` : ""}
+      <button data-a="json">Download mod file</button>
+      <button data-a="user">Download for Tampermonkey</button>
+      <button data-a="tweet">Post on X…</button>
     </div>
     <p class="saved dim"></p>`);
   const done = r => { modal.querySelector(".saved").textContent = r?.path ? `Saved to ${r.path}` : "Downloaded"; };
@@ -46,7 +46,7 @@ async function showShare(m) {
     if (a === "user") done(await call("share", { mod: m, kind: "userscript" }));
     if (a === "clip") done(S.draft.clip);
     if (a === "tweet") {
-      const text = `I added “${m.title}” to ${S.appName || location.host} in one sentence: “${m.prompt}”\n\nMade with Morse`;
+      const text = `I changed ${S.appName || location.host} by describing it: “${m.prompt}”\n\nMade with Morse`;
       call("open", { url: `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link?.link || "")}` });
     }
   };
@@ -54,14 +54,14 @@ async function showShare(m) {
   if (copy) copy.onclick = async () => {
     const f = modal.querySelector(".link input");
     try { await navigator.clipboard.writeText(f.value); } catch { f.select(); document.execCommand?.("copy"); }
-    copy.textContent = "Copied ✓";
+    copy.textContent = "Copied";
   };
 }
 function showImport() {
   openModal(`
-    <header><b>Import a mod</b><small>Paste a Morse share link or .morse.json contents.</small><button data-a="close">×</button></header>
+    <header><b>Install a shared mod</b><small>Paste a share link, or the text of a .morse.json file.</small><button data-a="close">×</button></header>
     <textarea class="code" data-k="src" spellcheck="false" placeholder="https://…/install.html#m=…"></textarea>
-    <footer><button data-a="close">Cancel</button><button class="primary" data-a="go">Import</button></footer>`);
+    <footer><button data-a="close">Cancel</button><button class="primary" data-a="go">Install</button></footer>`);
   modal.querySelector("[data-a=go]").onclick = async () => {
     try {
       const mod = await call("mods.import", { source: modal.querySelector("[data-k=src]").value, url: location.href, app: S.app });
@@ -140,7 +140,7 @@ async function renderCard(m) {
     roundRect(g, lx + (i % 4) * 7, ly + Math.floor(i / 4) * 7, 5.5, 5.5, 1.5); g.fill();
   }
   g.fillStyle = "#f4f4f5"; g.font = "600 22px ui-sans-serif, system-ui, sans-serif"; g.fillText("morse", lx + 34, ly + 21);
-  g.fillStyle = "#8e8e96"; g.font = "500 15px ui-sans-serif, system-ui, sans-serif"; g.fillText("customize any app in one sentence", 40, ly + 20);
+  g.fillStyle = "#8e8e96"; g.font = "500 15px ui-sans-serif, system-ui, sans-serif"; g.fillText("change any app in your own words", 40, ly + 20);
   return c.toDataURL("image/png");
 }
 function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
