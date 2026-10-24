@@ -117,9 +117,11 @@ jobs:
           npm install -g --prefix "$PREFIX" "./out/morse-cli-$VERSION.tgz"
           export PATH="$PREFIX/bin:$PATH" MORSE_HOME=$(mktemp -d) MORSE_NO_UPDATE_CHECK=1
           test "$(morse --version)" = "$VERSION"
-          morse help | grep -q "morse extension"
-          morse setup --help | grep -q "morse setup --use claude-code"
-          EXT=$(morse extension | head -1)
+          # (output saved first: grep -q stops reading early, and pipefail would count that)
+          HELP=$(morse help); SETUP=$(morse setup --help); EXTOUT=$(morse extension)
+          grep -q "morse extension" <<< "$HELP"
+          grep -q "morse setup --use claude-code" <<< "$SETUP"
+          EXT=$(sed -n 1p <<< "$EXTOUT")
           test "$(node -p "require('$EXT/manifest.json').version")" = "$VERSION"
           if grep -q '"http://127.0.0.1:8787"' "$EXT/host.js"; then
             echo "::error::The extension in the package is the test build (it trusts 127.0.0.1:8787)."
