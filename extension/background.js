@@ -139,7 +139,7 @@ async function dispatch(msg, port) {
   switch (msg.type) {
     case "hello": {
       const b = await backend();
-      const label = b.label + (userScriptsAvailable() ? "" : " · user scripts off");
+      const label = b.label + (userScriptsAvailable() ? "" : " · “Allow User Scripts” off");
       const quiet = !(await get("welcomed", false)) ? (await set("welcomed", true), false) : true;
       return { mode: "extension", app: null, label, quiet, needsModel: b.kind === "none", connect: b.kind === "none" ? b.reason : undefined,
         settings: await getPrefs(), voice: await voiceInfo() };

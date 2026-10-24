@@ -163,8 +163,8 @@ async function anthropicStream(s, messages, { onToken, signal, maxTokens }) {
     }
   } catch (e) {
     if (signal?.aborted) throw abortError();
-    if (e instanceof Anthropic.AuthenticationError) throw new Error("Anthropic rejected the API key (401). Check it in Morse's settings.");
-    if (e instanceof Anthropic.RateLimitError) throw new Error("Too many requests to Anthropic right now (429). Try again in a minute.");
+    if (e instanceof Anthropic.AuthenticationError) throw new Error("Anthropic rejected the API key (error 401). Check it in Morse's settings.");
+    if (e instanceof Anthropic.RateLimitError) throw new Error("Anthropic is busy right now (error 429). Try again in a minute.");
     if (e instanceof Anthropic.APIError && e.status) throw new Error(`Anthropic couldn't answer (error ${e.status}): ${e.error?.error?.message || e.message}`);
     throw e;
   }
@@ -172,7 +172,7 @@ async function anthropicStream(s, messages, { onToken, signal, maxTokens }) {
 }
 
 // OpenAI chat completions over SSE: api.openai.com or any compatible server
-// (llama.cpp, LM Studio, vLLM, OpenRouter...). No temperature: current OpenAI
+// (OpenRouter, Azure and others). No temperature: current OpenAI
 // reasoning models reject non-default values.
 async function openaiStream(s, messages, { onToken, signal, maxTokens }) {
   const base = (s.baseUrl || "https://api.openai.com").replace(/\/$/, "").replace(/\/v1$/, "");

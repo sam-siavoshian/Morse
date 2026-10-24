@@ -6,7 +6,7 @@ const HOTKEY_HELP = {
   open: "Works anywhere in the app",
   talk: "Hold to talk, release to finish",
   mods: "See and manage the mods here",
-  godmode: "Show the edit tools",
+  godmode: "Show the Edit tools",
 };
 
 // recording: { id, partial, error } while a hotkey button is listening for keys
