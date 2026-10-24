@@ -17,7 +17,7 @@ export default {
   "bar.more": "その他",
   "bar.more.title": "設定とショートカット",
   "bar.repoint": "別のものを指す",
-  "bar.hint.pointing": "変えたいものを<b>指す</b>か、そのまま説明してください · <kbd>Esc</kbd> で閉じる",
+  "bar.hint.pointing": "変えたいものを<b>指す</b>か説明 · <kbd>Esc</kbd> で閉じる",
   "bar.hint.target": "これをどう変えるか説明してください · <kbd>Enter</kbd> で送信",
   "bar.hint.page": "このページへの変更を説明してください · <kbd>Enter</kbd> で送信",
   "bar.mods": "MOD",

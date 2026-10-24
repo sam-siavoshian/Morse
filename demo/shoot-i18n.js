@@ -46,6 +46,7 @@ try {
     page.on("pageerror", e => errors.push(e.message));
     await page.goto(srv.url + "?ms=8&keepmods");
     await until(() => page.evaluate(() => !!document.querySelector("[data-morse-ui]")?.dataset.status));
+    const isRtl = lang === "fa" || lang === "ar";
     const name = (i, what) => path.join(OUT, `${n + i}-${NAMES[lang] || lang}-${what}.png`);
     const shot = async (i, what) => { await sleep(500); await page.screenshot({ path: name(i, what) }); console.log("  📸", path.basename(name(i, what))); };
 
@@ -75,6 +76,7 @@ try {
     await page.locator(".actions [data-a=mods]").click();
     await page.locator(".panel article").first().waitFor();
     await blur(page);
+    await page.mouse.move(isRtl ? 1000 : 100, 450); // off the panel: no hover state in the picture
     await shot(2, "mods-panel");
     await page.keyboard.press("Escape");
     await page.evaluate(() => { document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".panel").hidden = true; });

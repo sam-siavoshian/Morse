@@ -41,8 +41,8 @@ function CONTROL_CSS() { return `
   .panel .ctl-link:hover { background: none; color: var(--m-text); text-decoration-color: currentColor; }
 
   /* ---- Mods panel: backup row */
-  .ctl-backup { display: flex; align-items: center; gap: 8px; padding-block: 10px; padding-inline: 16px 12px; border-top: 1px solid var(--m-line); }
-  .ctl-backup > span { flex: 1; min-width: 0; }
+  .ctl-backup { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-block: 10px; padding-inline: 16px 12px; border-top: 1px solid var(--m-line); }
+  .ctl-backup > span { flex: 1 0 auto; white-space: nowrap; } /* a longer word (other languages) moves the buttons to a line of their own */
   .ctl-backup button { flex: none; }
 
   /* ---- summary: install review and Show code */

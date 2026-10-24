@@ -584,7 +584,7 @@ export default {
   "gm.redone": "Wiederholt: {what}",
   "gm.frame": "<b>Dieser Teil ist eine andere Seite{from}.</b> Morse kann ihn ausblenden, verschieben oder seine Größe ändern, aber nicht bearbeiten, was darin ist.",
   "gm.frameFrom": " von {host}",
-  "gm.hint": "Beschreib eine Änderung · <kbd>{key}</kbd> für die Werkzeuge · <kbd>Esc</kbd> schließt",
+  "gm.hint": "Beschreib eine Änderung · <kbd>{key}</kbd> Werkzeuge · <kbd>Esc</kbd> schließt",
   "gm.hid": "{label} ausgeblendet. Drück {key} zum Rückgängigmachen.",
   "gm.formField": "Text in einem Formularfeld lässt sich hier nicht bearbeiten. Drück A und beschreib die Änderung stattdessen.",
   "gm.noText": "Hier gibt es keinen Text zum Bearbeiten",

@@ -17,7 +17,7 @@ export default {
   "bar.more": "المزيد",
   "bar.more.title": "الإعدادات والاختصارات",
   "bar.repoint": "أشِر إلى شيء آخر",
-  "bar.hint.pointing": "<b>أشِر</b> إلى أي شيء لتغييره، أو صِفه فقط · <kbd>Esc</kbd> للإغلاق",
+  "bar.hint.pointing": "<b>أشِر</b> إلى شيء أو صِفه · <kbd>Esc</kbd> للإغلاق",
   "bar.hint.target": "صِف ما تريد تغييره في هذا · <kbd>Enter</kbd> للإرسال",
   "bar.hint.page": "صِف تغييرًا في هذه الصفحة · <kbd>Enter</kbd> للإرسال",
   "bar.mods": "التعديلات",
