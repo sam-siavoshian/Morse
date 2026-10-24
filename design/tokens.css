@@ -1,0 +1,95 @@
+/* Morse design tokens. One source of truth for the in-app runtime, the
+ * extension popup, the share page and the site. Monochrome by design: the only
+ * "color" is light. Swap values here to reskin everything.
+ *
+ * Scale: 4px spacing grid, radii 6/10/14, one font family + one mono.
+ */
+:root, :host {
+  /* surfaces (dark, default) */
+  --m-bg: #0b0b0c;
+  --m-surface: #111113;
+  --m-raised: #18181b;
+  --m-hover: #1f1f23;
+  --m-overlay: rgba(11, 11, 12, 0.86);
+  --m-scrim: rgba(0, 0, 0, 0.55);
+
+  /* lines */
+  --m-line: #232327;
+  --m-line-strong: #2e2e33;
+  --m-focus: rgba(255, 255, 255, 0.24);
+
+  /* text */
+  --m-text: #ededef;
+  --m-text-2: #a0a0a8;
+  --m-text-3: #6b6b73;
+  --m-text-inverse: #0b0b0c;
+
+  /* the signal: pixels and accents are shades of one gray ramp */
+  --m-signal-0: #2a2a2e;
+  --m-signal-1: #4a4a50;
+  --m-signal-2: #7a7a82;
+  --m-signal-3: #b4b4bb;
+  --m-signal-4: #f4f4f5;
+
+  /* primary action = light on dark */
+  --m-primary: #f4f4f5;
+  --m-primary-text: #0b0b0c;
+  --m-primary-hover: #ffffff;
+
+  /* status (used sparingly, never as decoration) */
+  --m-danger: #f2555a;
+  --m-warn: #e5a54b;
+
+  /* type */
+  --m-font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --m-mono: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --m-text-xs: 11px;
+  --m-text-sm: 12px;
+  --m-text-md: 13px;
+  --m-text-lg: 15px;
+  --m-text-xl: 18px;
+  --m-tracking: -0.01em;
+
+  /* shape */
+  --m-r-sm: 6px;
+  --m-r-md: 10px;
+  --m-r-lg: 14px;
+  --m-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 40px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  /* motion */
+  --m-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --m-fast: 120ms;
+  --m-med: 220ms;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]), :host(:not([data-theme="dark"])) {
+    --m-bg: #fbfbfb;
+    --m-surface: #ffffff;
+    --m-raised: #f5f5f6;
+    --m-hover: #eeeef0;
+    --m-overlay: rgba(255, 255, 255, 0.9);
+    --m-scrim: rgba(0, 0, 0, 0.25);
+    --m-line: #e7e7ea;
+    --m-line-strong: #d9d9de;
+    --m-focus: rgba(0, 0, 0, 0.2);
+    --m-text: #111113;
+    --m-text-2: #5e5e66;
+    --m-text-3: #8e8e96;
+    --m-text-inverse: #ffffff;
+    --m-signal-0: #e4e4e7;
+    --m-signal-1: #c4c4ca;
+    --m-signal-2: #8e8e96;
+    --m-signal-3: #55555c;
+    --m-signal-4: #111113;
+    --m-primary: #111113;
+    --m-primary-text: #ffffff;
+    --m-primary-hover: #000000;
+    --m-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* The radar: OpenCode's 4x4 pixel spinner pattern. Corners off, inner four
+ * pulse bright, outer eight pulse dim, every pixel on its own random phase. */
+@keyframes m-pulse { 0%, 100% { opacity: 0.4 } 50% { opacity: 1 } }
+@keyframes m-pulse-dim { 0%, 100% { opacity: 0.15 } 50% { opacity: 0.35 } }
