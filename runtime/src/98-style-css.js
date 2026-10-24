@@ -25,7 +25,7 @@ function STYLE_CSS() {
   .srow.ys-except { align-items: flex-start; }
   .srow.ys-except .ctl { flex-direction: column; align-items: flex-end; gap: 4px; }
   .ys-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-  .ys-chip { display: inline-flex; align-items: center; gap: 2px; height: 24px; padding: 0 2px 0 8px; border: 1px solid var(--m-line-strong); border-radius: 4px;
+  .ys-chip { display: inline-flex; align-items: center; gap: 2px; height: 24px; padding-block: 0; padding-inline: 8px 2px; border: 1px solid var(--m-line-strong); border-radius: 4px;
     font: 500 var(--m-text-sm)/16px var(--m-mono); letter-spacing: 0; color: var(--m-text); background: var(--m-bg); }
   .ys-chip .ibtn.xs { width: 20px; height: 20px; font-size: 14px; color: var(--m-text-3); }
   .ys-chip .ibtn.xs:hover { color: var(--m-text); }

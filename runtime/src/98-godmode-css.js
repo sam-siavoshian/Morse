@@ -34,7 +34,7 @@ function GOD_CSS() { return `
   /* ---- the edit toolbar: tag, then 32px .ibtn tools in groups */
   .gm-tb { position: fixed; left: 0; top: 0; display: flex; align-items: center; gap: 2px; height: 40px; padding: 3px; pointer-events: auto; outline: none; }
   .gm-tb:focus-within { border-color: var(--m-signal-2); }
-  .gm-tag { max-width: 136px; padding: 0 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  .gm-tag { max-width: 136px; padding-block: 0; padding-inline: 8px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     font: 500 var(--m-text-xs)/28px var(--m-mono); letter-spacing: 0; color: var(--m-text-3); }
   .gm-sep { flex: none; width: 1px; height: 16px; margin: 0 4px; background: var(--m-line-strong); }
   .gm-tb[data-side="below"] .tip, .bar.top .gm-qbtn .tip { bottom: auto; top: calc(100% + 8px); transform: translate(-50%, -2px); }
@@ -57,13 +57,13 @@ function GOD_CSS() { return `
   .gm-sw button:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--m-text) 18%, transparent), 0 0 0 2px var(--m-surface), 0 0 0 3px var(--m-line-strong); }
   .gm-sw button[aria-pressed="true"] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--m-text) 18%, transparent), 0 0 0 2px var(--m-surface), 0 0 0 3px var(--m-text); }
   .gm-sw .none, .gm-hex i.none { background: linear-gradient(135deg, transparent calc(50% - .75px), var(--m-text-3) calc(50% - .75px) calc(50% + .75px), transparent calc(50% + .75px)), var(--m-surface); }
-  .gm-hex { display: flex; align-items: center; gap: 8px; padding: 0 3px 0 8px; }
+  .gm-hex { display: flex; align-items: center; gap: 8px; padding-block: 0; padding-inline: 8px 3px; }
   .gm-hex i { flex: none; width: 16px; height: 16px; border-radius: 4px; background: var(--c); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--m-text) 18%, transparent); }
   .gm-hex input { flex: 1; }
   .gm-field { display: flex; align-items: center; justify-content: space-between; min-height: 32px; }
   .gm-step { display: flex; align-items: center; padding: 0 3px; color: var(--m-text-3); font: 500 var(--m-text-sm)/16px var(--m-mono); }
-  .gm-step input { width: 32px; text-align: right; font-variant-numeric: tabular-nums; }
-  .gm-step span { padding: 0 4px 0 2px; }
+  .gm-step input { width: 32px; text-align: end; font-variant-numeric: tabular-nums; }
+  .gm-step span { padding-block: 0; padding-inline: 2px 4px; }
   .gm-range { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 16px; margin: 8px 0 12px; background: transparent; cursor: pointer; border-radius: 4px; }
   .gm-range::-webkit-slider-runnable-track { height: 2px; border-radius: 1px; background: linear-gradient(90deg, var(--m-text) var(--p, 0%), var(--m-line-strong) var(--p, 0%)); }
   .gm-range::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; margin-top: -5px; border-radius: 50%; background: var(--m-surface); border: 1px solid var(--m-text); }
@@ -80,20 +80,20 @@ function GOD_CSS() { return `
   .gm-cap-meta small { font: var(--m-text-xs)/16px var(--m-mono); letter-spacing: 0; color: var(--m-text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .gm-cap-note { display: block; width: 100%; padding: 0 8px; font: 400 var(--m-text-sm)/16px var(--m-font); letter-spacing: var(--m-tracking); }
   .gm-cap-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; color: var(--m-text-3); font-size: var(--m-text-xs); line-height: 16px; }
-  .gm-cap-foot button { flex: none; padding-right: 6px; }
+  .gm-cap-foot button { flex: none; padding-inline-end: 6px; }
 
   /* ---- page tools: the bar button (.ibtn) and its .menu */
-  .gm-menu { right: 8px; bottom: calc(100% + 8px); }
+  .gm-menu { inset-inline-end: 8px; bottom: calc(100% + 8px); }
   .bar.top .gm-menu { bottom: auto; top: calc(100% + 8px); }
-  .gm-menu .gm-state { margin-left: auto; display: inline-flex; color: var(--m-text-2); font: 500 var(--m-text-xs)/16px var(--m-mono); letter-spacing: 0; }
+  .gm-menu .gm-state { margin-inline-start: auto; display: inline-flex; color: var(--m-text-2); font: 500 var(--m-text-xs)/16px var(--m-mono); letter-spacing: 0; }
   .gm-menu .gm-state svg { color: var(--m-text); }
 
   /* ---- clipboard chips in the bar, on its 16px inset */
-  .gm-clips { display: flex; align-items: center; gap: 12px; padding: 0 8px 8px 16px; min-width: 0; }
+  .gm-clips { display: flex; align-items: center; gap: 12px; padding-block: 0 8px; padding-inline: 16px 8px; min-width: 0; }
   .gm-clips-l { flex: none; }
   .gm-chips { display: flex; gap: 8px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
   .gm-chips::-webkit-scrollbar { display: none; }
-  .gm-chip { flex: none; display: inline-flex; align-items: center; gap: 8px; max-width: 232px; height: 32px; padding: 0 12px 0 3px; text-align: left;
+  .gm-chip { flex: none; display: inline-flex; align-items: center; gap: 8px; max-width: 232px; height: 32px; padding-block: 0; padding-inline: 3px 12px; text-align: start;
     border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-raised); color: var(--m-text); transition: border-color var(--m-fast), background var(--m-fast); }
   .gm-chip:hover { background: var(--m-hover); border-color: var(--m-signal-1); }
   .gm-chip[aria-pressed="true"] { border-color: var(--m-text); background: var(--m-surface); }

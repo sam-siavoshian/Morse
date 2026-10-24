@@ -82,7 +82,7 @@ function CSS() {
   :is(.menu, .a11y-group) > header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 4px 8px; }
   :is(.menu, .a11y-group) > header small { min-width: 0; font-size: var(--m-text-xs); letter-spacing: 0; text-transform: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   :is(.menu, .a11y-group) > button { display: flex; align-items: center; gap: 12px; width: 100%; height: 32px; padding: 0 8px; border: 0; border-radius: var(--m-r-sm); background: transparent;
-    color: var(--m-text); font: 450 var(--m-text-md)/16px var(--m-font); letter-spacing: var(--m-tracking); text-align: left; white-space: nowrap; }
+    color: var(--m-text); font: 450 var(--m-text-md)/16px var(--m-font); letter-spacing: var(--m-tracking); text-align: start; white-space: nowrap; }
   :is(.menu, .a11y-group) > button:hover { background: var(--m-hover); }
   :is(.menu, .a11y-group) > button > span:not([class]) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   :is(.menu, .a11y-group) > button > svg { color: var(--m-text-2); }
@@ -106,10 +106,10 @@ function CSS() {
   .field::placeholder, .field input::placeholder { color: var(--m-text-3); opacity: 1; }
 
   /* ---- tooltips: name + shortcut, after a short hover or on keyboard focus */
-  .tip { position: absolute; left: 50%; bottom: calc(100% + 8px); z-index: 3; display: flex; align-items: center; gap: 8px; height: 24px; padding: 0 4px 0 8px;
+  .tip { position: absolute; left: 50%; bottom: calc(100% + 8px); z-index: 3; display: flex; align-items: center; gap: 8px; height: 24px; padding-block: 0; padding-inline: 8px 4px;
     border-radius: var(--m-r-sm); background: var(--m-text); color: var(--m-text-inverse); white-space: nowrap; font: 500 var(--m-text-xs)/16px var(--m-font); letter-spacing: 0;
     pointer-events: none; opacity: 0; transform: translate(-50%, 2px); transition: opacity var(--m-fast), transform var(--m-fast); box-shadow: var(--m-shadow); }
-  .tip:not(:has(kbd)) { padding-right: 8px; }
+  .tip:not(:has(kbd)) { padding-inline-end: 8px; }
   .tip kbd { height: 16px; border: 0; }
   :is(:hover, :focus-visible) > .tip { opacity: 1; transform: translate(-50%, 0); transition-delay: 300ms; }
   /* one tooltip at a time: hovering a sibling hides the focused one; an open menu hides its button's */
@@ -146,22 +146,22 @@ function CSS() {
   @keyframes rise { from { transform: translate(-50%, 6px); opacity: 0 } }
   .bar.working { border-color: var(--m-signal-2); }
   .bar.err { border-color: color-mix(in srgb, var(--m-danger) 60%, var(--m-line-strong)); }
-  .row { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 16px; }
-  .row .mark { margin-right: 4px; }
+  .row { display: flex; align-items: center; gap: 8px; padding-block: 8px; padding-inline: 16px 8px; }
+  .row .mark { margin-inline-end: 4px; }
   .in { flex: 1; min-width: 0; height: 32px; background: transparent; border: 0; outline: 0; color: var(--m-text); font: 450 var(--m-text-lg)/20px var(--m-font); letter-spacing: var(--m-tracking); padding: 6px 0; margin: 0; }
   .in::placeholder { color: var(--m-text-3); opacity: 1; }
   .in:disabled { color: var(--m-text-2); }
   .go { flex: none; width: 32px; height: 32px; padding: 0; display: grid; place-items: center; border-radius: var(--m-r-sm); border: 0; background: var(--m-primary); color: var(--m-primary-text); transition: background var(--m-fast); }
   .go:hover { background: var(--m-primary-hover); }
   .chip { display: inline-flex; align-items: center; gap: 2px; height: 24px; max-width: 44%; flex: none; background: var(--m-raised); color: var(--m-text);
-    border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); padding: 0 1px 0 8px; font: 500 var(--m-text-sm)/16px var(--m-mono); letter-spacing: 0; white-space: nowrap; }
+    border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); padding-block: 0; padding-inline: 8px 1px; font: 500 var(--m-text-sm)/16px var(--m-mono); letter-spacing: 0; white-space: nowrap; }
   .chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .chip .x { flex: none; width: 20px; height: 20px; display: grid; place-items: center; border: 0; border-radius: 4px; background: none; color: var(--m-text-3); padding: 0; }
   .chip .x:hover { color: var(--m-text); background: var(--m-hover); }
-  .status { display: flex; align-items: center; gap: 12px; padding: 6px 8px 6px 16px; border-top: 1px solid var(--m-line); font-size: var(--m-text-sm); line-height: 16px; color: var(--m-text-2); min-height: 40px; }
+  .status { display: flex; align-items: center; gap: 12px; padding-block: 6px; padding-inline: 16px 8px; border-top: 1px solid var(--m-line); font-size: var(--m-text-sm); line-height: 16px; color: var(--m-text-2); min-height: 40px; }
   /* one line that ends in an ellipsis, whatever it holds (hint, error, phase) */
   .hint { flex: 0 1 auto; min-width: 0; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .hint > .radar { vertical-align: -2px; margin-right: 8px; }
+  .hint > .radar { vertical-align: -2px; margin-inline-end: 8px; }
   .hint b { color: var(--m-text); font-weight: 500; } .hint i { color: var(--m-warn); font-style: normal; }
   /* the result: the title gives way, the timing stays */
   .hint:has(.ok) { display: flex; align-items: baseline; gap: 8px; }
@@ -169,8 +169,8 @@ function CSS() {
   .hint .ok + .dim { flex: none; }
   .ticker { flex: 1 1 0; min-width: 0; overflow: hidden; white-space: nowrap; font: 11.5px/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0;
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 35%); mask-image: linear-gradient(90deg, transparent, #000 35%); }
-  .actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex: none; max-width: 100%; }
-  .actions em { font-style: normal; color: var(--m-text-3); margin-left: 4px; font-variant-numeric: tabular-nums; }
+  .actions { display: flex; align-items: center; gap: 8px; margin-inline-start: auto; flex: none; max-width: 100%; }
+  .actions em { font-style: normal; color: var(--m-text-3); margin-inline-start: 4px; font-variant-numeric: tabular-nums; }
   .model { font: var(--m-text-xs)/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; min-width: 0; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ms { font: 500 var(--m-text-sm)/16px var(--m-mono); color: var(--m-text-2); font-variant-numeric: tabular-nums; letter-spacing: 0; }
   .dim { color: var(--m-text-3); }
@@ -183,11 +183,11 @@ function CSS() {
   }
 
   /* ---- mods panel */
-  .panel { position: fixed; top: 12px; right: 12px; bottom: 12px; width: 372px; max-width: calc(100vw - 24px); pointer-events: auto; display: flex; flex-direction: column;
+  .panel { position: fixed; top: 12px; inset-inline-end: 12px; bottom: 12px; width: 372px; max-width: calc(100vw - 24px); pointer-events: auto; display: flex; flex-direction: column;
     background: var(--m-surface); color: var(--m-text); border: 1px solid var(--m-line-strong); border-radius: var(--m-r-lg); box-shadow: var(--m-shadow);
     font: 400 var(--m-text-md)/1.45 var(--m-font); letter-spacing: var(--m-tracking); animation: slide var(--m-med) var(--m-ease); }
   @keyframes slide { from { transform: translateX(12px); opacity: 0 } }
-  .panel header { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 16px; border-bottom: 1px solid var(--m-line); }
+  .panel header { display: flex; align-items: center; gap: 12px; padding-block: 12px; padding-inline: 16px 12px; border-bottom: 1px solid var(--m-line); }
   .panel header div { flex: 1; min-width: 0; } .panel header b { font-size: var(--m-text-lg); line-height: 20px; font-weight: 600; display: block; }
   .panel header small { display: block; color: var(--m-text-3); font: var(--m-text-xs)/16px var(--m-mono); letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* the close buttons are .ibtn.sm in all but name */
@@ -201,16 +201,16 @@ function CSS() {
   /* a disabled mod reads as off, but stays readable (AA) */
   .list article.off .meta b { color: var(--m-text-2); } .list article.off .meta small, .list article.off .tags span { color: var(--m-text-3); }
   .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; } .tags span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-  .btns { grid-column: 2; display: flex; gap: 2px; margin: 8px 0 0 -8px; }
+  .btns { grid-column: 2; display: flex; gap: 2px; margin-block: 8px 0; margin-inline: -8px 0; }
   .panel .btns button { color: var(--m-text-3); }
   .empty { color: var(--m-text-2); text-align: center; padding: 48px 24px; line-height: 24px; margin: 0; }
   .empty .radar { color: var(--m-text-3); margin-bottom: 12px; }
-  .panel footer { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px 10px 16px; border-top: 1px solid var(--m-line); font: var(--m-text-xs)/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; }
+  .panel footer { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-block: 10px; padding-inline: 16px 12px; border-top: 1px solid var(--m-line); font: var(--m-text-xs)/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; }
   .panel footer span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .panel footer button { flex: none; }
   .sw { position: relative; flex: none; width: 32px; height: 20px; margin-top: 0; } .sw input { opacity: 0; width: 0; height: 0; position: absolute; margin: 0; }
   .sw span { position: absolute; inset: 0; background: var(--m-line-strong); border-radius: 10px; transition: var(--m-fast); cursor: pointer; }
-  .sw span::after { content: ""; position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--m-text-2); transition: var(--m-fast) var(--m-ease); }
+  .sw span::after { content: ""; position: absolute; inset-inline-start: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--m-text-2); transition: var(--m-fast) var(--m-ease); }
   .sw:hover span { background: var(--m-signal-1); }
   .sw input:checked + span { background: var(--m-primary); } .sw input:checked + span::after { transform: translateX(12px); background: var(--m-primary-text); }
   .sw:hover input:checked + span { background: var(--m-primary-hover); }
@@ -230,20 +230,20 @@ function CSS() {
   /* a follow-up is typed: Enter refines, so Keep loses its ↵ */
   .bar.refining .actions [data-a=keep] kbd { display: none; }
   .panel .btns { flex-wrap: wrap; row-gap: 2px; }
-  .panel .btns em { font: 10.5px/16px var(--m-mono); font-style: normal; color: var(--m-text-3); margin-left: 2px; letter-spacing: 0; }
-  .health { grid-column: 2; display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 8px 8px 8px 12px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-bg); }
+  .panel .btns em { font: 10.5px/16px var(--m-mono); font-style: normal; color: var(--m-text-3); margin-inline-start: 2px; letter-spacing: 0; }
+  .health { grid-column: 2; display: flex; align-items: center; gap: 12px; margin-top: 10px; padding-block: 8px; padding-inline: 12px 8px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-bg); }
   .health p { flex: 1; min-width: 0; margin: 0; font-size: var(--m-text-sm); line-height: 16px; color: var(--m-text-2); overflow-wrap: anywhere; }
   .health b { color: var(--m-text); font-weight: 600; }
-  .health b::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 7px 1px 0; border-radius: 1.5px; background: var(--m-danger); vertical-align: middle; }
+  .health b::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-block: 0 1px; margin-inline: 0 7px; border-radius: 1.5px; background: var(--m-danger); vertical-align: middle; }
   .panel .health button { flex: none; height: 24px; padding: 0 10px; }
   /* two buttons (a paused mod, 64-guard.js): the words get the whole row, the buttons go under them on the right */
   .health.guard { flex-wrap: wrap; row-gap: 8px; }
   .health.guard p { flex-basis: 100%; }
-  .health.guard p + button { margin-left: auto; }
-  .versions { grid-column: 2; list-style: none; margin: 8px 0 0 -8px; padding: 4px; border: 1px solid var(--m-line); border-radius: var(--m-r-sm); }
+  .health.guard p + button { margin-inline-start: auto; }
+  .versions { grid-column: 2; list-style: none; margin-block: 8px 0; margin-inline: -8px 0; padding: 4px; border: 1px solid var(--m-line); border-radius: var(--m-r-sm); }
   .versions li { margin: 0; }
   .versions li.cur, .panel .versions button { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; width: 100%; height: auto; padding: 4px 6px;
-    border: 0; border-radius: 4px; text-align: left; font: 400 var(--m-text-sm)/16px var(--m-font); letter-spacing: var(--m-tracking); white-space: normal; }
+    border: 0; border-radius: 4px; text-align: start; font: 400 var(--m-text-sm)/16px var(--m-font); letter-spacing: var(--m-tracking); white-space: normal; }
   .panel .versions button:hover { background: var(--m-hover); }
   .versions .vn { font: 10.5px/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; font-variant-numeric: tabular-nums; }
   .versions .vp { color: var(--m-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -259,7 +259,7 @@ function CSS() {
     border-radius: var(--m-r-lg); padding: 20px; font: 400 var(--m-text-md)/1.45 var(--m-font); letter-spacing: var(--m-tracking); box-shadow: var(--m-shadow); animation: rise2 var(--m-med) var(--m-ease); }
   .card header { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: start; margin-bottom: 16px; }
   .card header b { font-size: var(--m-text-xl); line-height: 28px; font-weight: 600; overflow-wrap: anywhere; } .card header small { grid-row: 2; color: var(--m-text-2); margin-top: 4px; overflow-wrap: anywhere; }
-  .card header > button { grid-row: 1; grid-column: 2; margin: 0 -4px 0 0; }
+  .card header > button { grid-row: 1; grid-column: 2; margin-block: 0; margin-inline: 0 -4px; }
   .card label { display: block; margin: 16px 0 8px; }
   .card label .dim, .card label code { text-transform: none; letter-spacing: 0; font: inherit; }
   .code { display: block; width: 100%; min-height: 128px; border-radius: var(--m-r-md); padding: 12px; margin: 0;
@@ -273,8 +273,8 @@ function CSS() {
   .saved { margin: 12px 0 0; font: var(--m-text-xs)/16px var(--m-mono); }
   .saved:empty { display: none; }
 
-  .toast { position: fixed; left: 20px; bottom: 20px; max-width: min(480px, calc(100vw - 40px)); pointer-events: none; display: flex; align-items: flex-start; gap: 10px; background: var(--m-surface); color: var(--m-text);
-    border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); padding: 9px 14px 9px 12px; font: 450 var(--m-text-md)/20px var(--m-font); letter-spacing: var(--m-tracking);
+  .toast { position: fixed; inset-inline-start: 20px; bottom: 20px; max-width: min(480px, calc(100vw - 40px)); pointer-events: none; display: flex; align-items: flex-start; gap: 10px; background: var(--m-surface); color: var(--m-text);
+    border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); padding-block: 9px; padding-inline: 12px 14px; font: 450 var(--m-text-md)/20px var(--m-font); letter-spacing: var(--m-tracking);
     box-shadow: var(--m-shadow); animation: rise2 var(--m-med) var(--m-ease); }
   .toast .radar { flex: none; color: var(--m-text-2); margin-top: 4px; }
   .toast span { min-width: 0; overflow-wrap: anywhere; }
@@ -287,4 +287,17 @@ function CSS() {
     .mark.live .radar rect.c, .hint .radar rect.c { opacity: 1; }
     .mark.live .radar rect.o, .hint .radar rect.o { opacity: 0.55; }
   }
+
+  /* ---- right to left (Persian, Arabic: 04-i18n.js sets dir on the host).
+     Sides are logical above; what's left: things that move or point one
+     way, and key caps, which read left to right in every language. */
+  :host([dir=rtl]) { direction: rtl; }
+  kbd, .caps { direction: ltr; unicode-bidi: isolate; }
+  .in { unicode-bidi: plaintext; } /* what you type lines up with its own language */
+  :host([dir=rtl]) .i-go { transform: scaleX(-1); }
+  :host([dir=rtl]) .panel { animation-name: slide-rtl; }
+  @keyframes slide-rtl { from { transform: translateX(-12px); opacity: 0 } }
+  :host([dir=rtl]) .sw input:checked + span::after { transform: translateX(-12px); }
+  :host([dir=rtl]) :is(.ctl-code, .i-code) summary::before { transform: scaleX(-1); }
+  :host([dir=rtl]) :is(.ctl-code, .i-code)[open] summary::before { transform: rotate(90deg); }
 `; }

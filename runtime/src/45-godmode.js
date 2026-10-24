@@ -318,7 +318,7 @@ const GodMode = (() => {
 
     const tw = tb.offsetWidth, th = tb.offsetHeight;
     const barR = bar.hidden ? null : bar.getBoundingClientRect();
-    const left = Math.round(clamp(r.left, M, vw - tw - M));
+    const left = Math.round(clamp(isRtl() ? r.right - tw : r.left, M, vw - tw - M)); // right to left: lines up with the right edge
     const fits = top => top >= M && top + th <= vh - M && !(barR && overlaps({ left, right: left + tw, top, bottom: top + th }, barR));
     let side = "above", top = r.top - th - M;
     if (!fits(top)) { side = "below"; top = r.bottom + M; }
