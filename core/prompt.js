@@ -47,6 +47,7 @@ Rules:
   morse.toast(message)              show a short notice
   Everything created through morse is removed automatically when the mod is turned off.
 - No network requests, no eval, no external scripts. Keep it short.
+- No prompt(), alert() or confirm(): Electron apps throw on prompt() and the others freeze the app. Ask for input with elements you make (morse.el).
 - Match the app's look: reuse its fonts and colors (inherit, currentColor) unless asked otherwise.
 ${ASK_FORMAT}`;
 

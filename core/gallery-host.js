@@ -24,7 +24,7 @@ export function createGallery({ store, enabled = async () => true, configured = 
 
   async function readText(res, max) {
     const text = await res.text();
-    if (text.length > max) throw new Error("too big");
+    if (text.length > max) throw new Error("The gallery file is too large.");
     return text;
   }
 
@@ -65,9 +65,9 @@ export function createGallery({ store, enabled = async () => true, configured = 
     if (hit && compareVersions(hit.mod?.version, entry.version) >= 0) return hit.mod;
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT), credentials: "omit" });
-      if (!res.ok) throw new Error(`error ${res.status}`);
+      if (!res.ok) throw new Error(`Couldn't reach the gallery (error ${res.status}). Try again later.`);
       const mod = validateMod(JSON.parse(await readText(res, MAX_MOD_BYTES)));
-      if (mod.id !== entry.id) throw new Error("the file is for another mod");
+      if (mod.id !== entry.id) throw new Error("The gallery has the wrong file for this mod.");
       const out = { ...mod, match: entry.match, version: normVersion(mod.version ?? entry.version) };
       all[url] = { mod: out, at: now() };
       await store.set("mods", all);

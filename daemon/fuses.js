@@ -45,18 +45,35 @@ export async function electronBinaryFor(appPath) {
 
 export async function inspectFuses(appPath) {
   const file = await electronBinaryFor(appPath);
+  // A bundle with no Electron Framework inside (a native Mac app) is a folder:
+  // there is no fuse wire to read.
+  if ((await fs.stat(file)).isDirectory()) return { electron: false, file };
   const buf = await fs.readFile(file);
   const wire = readFuseWire(buf);
   if (!wire) return { electron: false, file };
   return { electron: true, file, ...wire };
 }
 
-// What the fuses mean for Morse, in one line each.
+// What the fuses mean for Morse, in one line each. Checked on a real Electron
+// 45 binary with every fuse that could matter turned off (tests/electron.test.js):
+// the debugging port still opens and Morse still gets in.
 export function fuseVerdict(info) {
-  if (!info.electron) return ["No Electron fuse wire found. If this is Chromium-based, --remote-debugging-port should still work."];
+  if (!info.electron) return ["No Electron fuses in this file. If the app is built on Chromium, Morse can still connect. If it's a native app, it can't."];
   const f = info.fuses, out = [];
-  out.push("Renderer injection uses --remote-debugging-port (a Chromium switch, not gated by fuses).");
-  if (f.EnableNodeCliInspectArguments === "disabled") out.push("Main-process --inspect is fused off; deep main-process mods are unavailable (renderer mods are unaffected).");
-  if (f.EnableEmbeddedAsarIntegrityValidation === "enabled") out.push("ASAR integrity is on: patching app files would break the app. Morse never patches files, so this is fine.");
+  out.push("Morse can connect: it opens the app with --remote-debugging-port, which no Electron fuse turns off.");
+  if (f.EnableNodeCliInspectArguments === "disabled") out.push("--inspect is fused off, so the app's Node.js side can't be debugged. Morse doesn't need it: mods run in the app's windows.");
+  if (f.EnableEmbeddedAsarIntegrityValidation === "enabled") out.push("The app checks its own files (ASAR integrity). Morse never changes them, so that's fine.");
   return out;
+}
+
+// `morse fuses <app>`: the verdict, then each fuse.
+export function formatFuses(info, name = "This app") {
+  const out = [`${name}  ${info.file}`];
+  for (const line of fuseVerdict(info)) out.push(`  ${line}`);
+  if (info.electron) {
+    out.push("", `  Electron fuses (wire version ${info.version})`);
+    const word = { enabled: "on", disabled: "off", removed: "removed" };
+    for (const [k, v] of Object.entries(info.fuses)) out.push(`    ${(word[v] || v).padEnd(8)}${k}`);
+  }
+  return out.join("\n");
 }

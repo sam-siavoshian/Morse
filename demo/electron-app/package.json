@@ -1,0 +1,9 @@
+{
+  "name": "tunes",
+  "productName": "Tunes",
+  "version": "1.4.2",
+  "description": "A small but realistic Electron music app, used to prove Morse works on a real Electron app.",
+  "main": "main.js",
+  "private": true,
+  "license": "MIT"
+}

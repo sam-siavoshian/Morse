@@ -321,7 +321,7 @@ test("edit tools hotkey: leaves a running change's status alone; help shows the 
     await page.keyboard.press("F1");
     await waitFor(s => s.pane === "help");
     const help = await ui(".ob-can");
-    assert.match(help, /Use the edit toolsPoint at something, then press AltShiftG/);
+    assert.match(help, /Use the Edit toolsPoint at something, then press AltShiftG/);
     await page.keyboard.press("F1");
     await page.keyboard.type("make it airy");
     await page.keyboard.press("Enter");

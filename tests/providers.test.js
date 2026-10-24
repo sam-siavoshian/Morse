@@ -90,7 +90,7 @@ test("claude-code: generate.cancel stops the engine and the process", async () =
 });
 
 test("claude-code: rejects model names that could smuggle flags", async () => {
-  await assert.rejects(streamChat({ provider: "claude-code", model: "--dangerously-skip-permissions" }, MESSAGES), /Invalid model/);
+  await assert.rejects(streamChat({ provider: "claude-code", model: "--dangerously-skip-permissions" }, MESSAGES), /isn't a model name Morse can use/);
 });
 
 // ---- Codex

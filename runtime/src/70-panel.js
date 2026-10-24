@@ -37,7 +37,7 @@ const Health = (() => {
     if (stats?.error) return broken(id, modProblem(stats.error), stats.error);
     if (w.length && w.every(x => !x.total)) {
       const sel = w[0].selector;
-      return broken(id, `It looks for “${sel.length > 48 ? sel.slice(0, 47) + "…" : sel}”, and nothing on this page matches.`,
+      return broken(id, "It looks for a part of the page that isn't there right now.",
         `morse.watch(${JSON.stringify(sel)}) matched nothing on the page for ${WAIT / 1000} seconds` +
         (w.length > 1 ? `, and neither did ${w.slice(1).map(x => JSON.stringify(x.selector)).join(", ")}` : "") + ".");
     }
@@ -59,13 +59,12 @@ const Health = (() => {
 // core/onboarding.js covers model and connection errors). The exact error goes to the model.
 function modProblem(e) {
   const s = String(e || "").split("\n")[0].replace(/^(Uncaught )?([A-Z]\w*Error): /, "");
-  let m;
-  if ((m = s.match(/^([\w$.]+) is not defined/))) return `It uses “${m[1]}”, which doesn't exist on this page.`;
+  if (/ is not defined/.test(s)) return "It uses something this page doesn't have.";
   if (/Cannot read propert(y|ies) of (null|undefined)|Cannot set propert(y|ies) of (null|undefined)|is null$|is undefined$/.test(s)) return "It expected a part of the page that isn't there.";
-  if ((m = s.match(/^([\w$.]+) is not a function/))) return `It calls “${m[1]}”, which isn't available here.`;
-  if (/is not a valid selector/.test(s)) return "It looks for elements with a selector the browser can't read.";
-  if (/user scripts|Content Security Policy|unsafe-eval|blocks injected/i.test(s)) return s;
-  return `It stopped with an error: ${s.length > 120 ? s.slice(0, 119) + "…" : s}`;
+  if (/ is not a function/.test(s)) return "It uses something that doesn't work on this page.";
+  if (/is not a valid selector/.test(s)) return "It has a mistake in how it finds things on the page.";
+  if (/user scripts|Content Security Policy|unsafe-eval|blocks injected/i.test(s)) return explainError(s)?.text || s;
+  return "It stopped with an error.";
 }
 
 // ---- the panel
@@ -167,7 +166,7 @@ function rowHtml(m) {
         ${broken ? `<div class="health" role="status"><p><b>${esc(h.lead || "Not working." /* self-heal hook: 71-heal.js */)}</b> ${esc(h.reason)}</p><button class="primary" data-a="fix">Fix it</button></div>` : ""}
         ${galleryRowHtml(m) /* gallery hook: Update available (68-gallery.js) */}
         ${healRowHtml(m) /* self-heal hook: Share the fix (71-heal.js) */}
-        <div class="btns"><button data-a="refine">Refine</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}">History <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">Copy link</button><button data-a="share">Share</button><button data-a="code">Edit code</button><button data-a="del">Delete</button></div>
+        <div class="btns"><button data-a="refine">Change</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}">History <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">Copy link</button><button data-a="share">Share</button><button data-a="code">Edit code</button><button data-a="del">Delete</button></div>
         ${open ? versionsHtml(m, versions) : ""}
       </article>`;
 }
@@ -219,7 +218,7 @@ async function copyLink(m, btn) {
     btn.textContent = "Copied";
     setTimeout(() => { if (btn.isConnected) btn.textContent = "Copy link"; }, 1600);
     toast(`Link copied. Anyone with Morse can install “${m.title}”.`);
-  } catch (e) { toast(`Couldn't copy the link (${e.message}). Try Share instead.`); }
+  } catch (e) { console.warn("[morse] copy link", e); toast("Couldn't copy the link. Try Share instead."); }
 }
 
 panel.addEventListener("click", async e => {

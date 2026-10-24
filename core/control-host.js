@@ -61,7 +61,7 @@ export function controlHandler(store, clock = () => Date.now()) {
         return parseImport(msg.source);
       case "control.install": {
         const list = (Array.isArray(msg.mods) ? msg.mods : []).map(m => prepareInstall(m, { kind: msg.kind, where }));
-        if (!list.length) throw new Error("Nothing to install");
+        if (!list.length) throw new Error("Nothing to install in this.");
         await store.putMods(list);
         return list;
       }

@@ -105,8 +105,8 @@ const lastLine = s => (s || "").trim().split("\n").filter(Boolean).pop() || "";
 // stream_event/content_block_delta/text_delta, the final line is a `result`.
 export async function claudeCodeStream(s, messages, { onToken, signal }) {
   const bin = s.bin || which("claude");
-  if (!bin) throw new Error("Claude Code isn't installed on this computer. Install it from claude.com/claude-code, or choose another model with morse config.");
-  if (!validModel(s.model)) throw new Error(`Invalid model name "${s.model}"`);
+  if (!bin) throw new Error("Claude Code isn't installed on this computer. Install it from claude.com/claude-code, or run morse setup to choose another model.");
+  if (!validModel(s.model)) throw new Error(`"${s.model}" isn't a model name Morse can use. Check the spelling.`);
   const { system, prompt } = flattenConversation(messages);
   const dir = await runDir();
   const sysFile = path.join(dir, "system.txt");
@@ -153,8 +153,8 @@ export async function claudeCodeStream(s, messages, { onToken, signal }) {
 //   old: {"msg":{"type":"agent_message_delta","delta":...}} / {"msg":{"type":"agent_message","message":...}}
 export async function codexStream(s, messages, { onToken, signal }) {
   const bin = s.bin || which("codex");
-  if (!bin) throw new Error("Codex isn't installed on this computer. Install it with npm i -g @openai/codex, or choose another model with morse config.");
-  if (!validModel(s.model)) throw new Error(`Invalid model name "${s.model}"`);
+  if (!bin) throw new Error("Codex isn't installed on this computer. Install it with npm i -g @openai/codex, or run morse setup to choose another model.");
+  if (!validModel(s.model)) throw new Error(`"${s.model}" isn't a model name Morse can use. Check the spelling.`);
   const { system, prompt } = flattenConversation(messages);
   const dir = await runDir();
   const input = `<instructions>\n${system}\nAnswer directly in your reply. Do not run commands, read files, or edit files.\n</instructions>\n\n${prompt}`;

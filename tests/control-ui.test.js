@@ -39,7 +39,7 @@ async function context() {
 const now = new Date().toISOString();
 const MODS = {
   wide: { morse: 1, id: "wide", title: "Roomy toolbar", prompt: "give the toolbar more room", match: { hosts: ["morse.test"], app: null }, target: null,
-    css: "#toolbar { padding: 30px; }", js: "", enabled: true, created: now, updated: now, model: "qwen2.5-coder:7b" },
+    css: "#toolbar { padding: 30px; }", js: "", enabled: true, created: now, updated: now, model: "Claude Code · haiku" },
   hello: { morse: 1, id: "hello", title: "Hello button", prompt: "add a hello button", match: { hosts: ["morse.test"], app: null }, target: null,
     css: "", js: "morse.watch('#toolbar', t => t.append(morse.el('button', { text: 'hello', class: 'hb' })));", enabled: true, created: now, updated: now,
     imported: true, importedFrom: "link", importedAt: now, author: "Ana" },
@@ -156,7 +156,7 @@ test("where it came from and Show code are on every row; Show code explains befo
   await page.keyboard.press("Alt+Shift+KeyM");
   await until(() => page.evaluate(`${sr(".list")}.querySelectorAll(".ctl-origin").length === 2`));
   const rows = await page.evaluate(`[...${sr(".list")}.querySelectorAll("article")].map(a => a.querySelector(".ctl-origin").textContent)`);
-  assert.match(rows[0], /Made here with qwen2\.5-coder:7b/);
+  assert.match(rows[0], /Made here with Claude Code · haiku/);
   assert.match(rows[1], /Installed from a shared link by Ana/);
   assert.equal(await page.evaluate(`${sr(".list")}.querySelectorAll("article [data-c=show]").length`), 2, "Show code on every row");
   await page.evaluate(`${sr('article[data-id="hello"] [data-c=show]')}.click()`);
@@ -279,7 +279,9 @@ test("share page: plain-language summary first, code folded below, an explicit I
   await page.goto(`${ORIGIN}/share/install.html#m=${link.split("#m=")[1]}`);
   await page.waitForSelector("ul.i-items li");
   assert.equal(await page.locator("h1").textContent(), "Word count");
-  assert.deepEqual(await page.locator("ul.i-items li").evaluateAll(l => l.map(e => e.dataset.s)), ["looks", "text", "adds", "typing", "ongoing", "code"]);
+  // The counter writes into its own new box, so no "Changes text on the page" (core/summary.js).
+  assert.deepEqual(await page.locator("ul.i-items li").evaluateAll(l => l.map(e => e.dataset.s)), ["looks", "adds", "typing", "ongoing", "code"]);
+  assert.doesNotMatch(await page.locator("ul.i-items").textContent(), /Changes text on the page/);
   assert.match(await page.locator("ul.i-items").textContent(), /Reads what you type in this page/);
   assert.match(await page.locator('.i-note[data-s="typing"]').textContent(), /can read what you type/);
   assert.equal(await page.locator("details#code").evaluate(d => d.open), false);
