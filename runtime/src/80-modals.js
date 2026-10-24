@@ -49,6 +49,7 @@ async function showShare(m) {
       <button data-a="json">Download mod file</button>
       <button data-a="user">Download for Tampermonkey</button>
       <button data-a="tweet">Post on X…</button>
+      ${galleryShareHtml(m) /* gallery hook: Submit to the gallery (68-gallery.js) */}
     </div>
     <p class="saved dim"></p>`);
   const done = r => { modal.querySelector(".saved").textContent = r?.path ? `Saved to ${r.path}` : "Downloaded"; };
