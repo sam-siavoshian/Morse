@@ -9,7 +9,7 @@
 <meta name="color-scheme" content="dark">
 <meta property="og:title" content="Morse gallery">
 <meta property="og:description" content="Example mods for apps you already use. Read the code, then install.">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.png" type="image/png" sizes="64x64">
 <link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
@@ -18,14 +18,6 @@
 <body>
 <a class="skip-link" href="#top">Skip to content</a>
 <!-- The nav bar and footer come from site/index.html: npm run pages copies them in between these markers. -->
-<!-- chrome:sprite -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
-  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
-  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
-  <symbol id="i-drag" viewBox="0 0 24 24"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/></symbol>
-</svg>
-<!-- /chrome:sprite -->
 <!-- chrome:header -->
 <header class="nav">
   <div class="wrap">
@@ -75,8 +67,8 @@
     <div class="wrap">
       <p class="eyebrow">Gallery</p>
       <h1>Example mods</h1>
-      <p class="lede">A mod is a change you saved. Morse brings it back every time you open that site or app. These are small ones for apps you already use. See what each one does, then install it in Morse or download it for Tampermonkey.</p>
-      <p class="g-note">Most were made by Morse from the request shown, and checked on the real page in October 2026, also after a reload. Ones marked “Demo app” are for the Morse demo apps. Sites change, so a mod may stop working. If one does, open Morse there and say “fix this”.</p>
+      <p class="lede">A mod is a change you saved. Morse brings it back every time you open that site or app. Here are small mods for apps you already use. Open one to see what it does. Then install it in Morse, or download it for Tampermonkey.</p>
+      <p class="g-note">Morse made most of these from the request shown. Each was tested on the real page in October 2026, and again after a reload. Mods marked “Demo app” are for the Morse demo apps. Sites change, so a mod may stop working. If one does, open Morse on that page and say “fix this”.</p>
     </div>
   </section>
 
@@ -84,7 +76,6 @@
     <div class="wrap">
       <div class="g-tools">
         <label class="g-search">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
           <span class="sr-only">Search mods</span>
           <input id="q" type="search" placeholder="Search mods" autocomplete="off" spellcheck="false">
           <kbd aria-hidden="true">/</kbd>
@@ -95,7 +86,7 @@
       <div class="cards" id="grid"></div>
       <div class="g-empty" id="empty" hidden>
         <p>No mods match that.</p>
-        <p>Morse can make it for you: press <kbd>⌥</kbd> <kbd>Space</kbd> in the app and say what you want.</p>
+        <p>Morse can make one for you. Press <kbd>⌥</kbd> <kbd>Space</kbd> in the app and say what you want.</p>
       </div>
     </div>
   </section>
@@ -106,7 +97,7 @@
   <div class="d-top">
     <span class="card-app" id="d-app"></span>
     <button class="btn btn-secondary btn-icon" type="button" id="d-close" aria-label="Close">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8"/></svg>
+      <span aria-hidden="true">×</span>
     </button>
   </div>
   <div class="d-scroll">
@@ -119,7 +110,7 @@
       <a class="btn btn-secondary" id="d-userscript" download>Download for Tampermonkey</a>
       <button class="btn btn-secondary" type="button" id="d-copy">Copy link</button>
     </div>
-    <p class="d-safety">A mod is code that runs inside the app. The install page shows every line again before anything runs.</p>
+    <p class="d-safety">A mod is code that runs inside the app. The install page shows all of it again before anything runs.</p>
     <div class="d-code" id="d-code"></div>
   </div>
 </aside>

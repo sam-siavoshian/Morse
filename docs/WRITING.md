@@ -26,7 +26,7 @@ written for developers are listed under [Where technical words are fine](#where-
   slogans, no lists of three for the sound of it, no em dashes. Say the one
   thing that is true, and stop.
 - **Only claim what was checked.** Name the apps Morse was
-  [tested on](desktop.md#tested-on) (VSCodium, Obsidian, Joplin), not apps it
+  [tested on](desktop.md#tested-on) (Visual Studio Code, VSCodium, Obsidian, Logseq, Joplin), not apps it
   might work with.
 - **Plain, not clever.** No jokes, puns or cute names. A label says what the
   thing does. "Rewire" and "the magic moment" say nothing; "Change keys" and

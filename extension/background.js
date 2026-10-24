@@ -25,6 +25,7 @@ import { GALLERY_REQUESTS, handleGallery } from "./gallery-host.js"; // gallery 
 import { Style } from "./style-host.js"; // your-style hook: one style on every site
 import { PACK_REQUESTS, handlePack } from "./pack-host.js"; // packs hook: mod packs
 import { Take } from "./take-host.js"; // take-and-bring hook: features taken in one app, brought into another
+import { rebuilt } from "./dev-host.js"; // developers: a worker left running after npm run build
 import { t, setLanguage, pickLanguage, loadLanguage, setLanguageLoader, CATALOGS } from "../core/i18n.js"; // the words this worker says
 import { packagedWords } from "./words.js"; // languages besides English: locales/<code>.json in this package
 
@@ -212,7 +213,8 @@ async function dispatch(msg, port) {
       // The practice area doesn't use up the "Morse is ready" toast for the first real site (first-run hook).
       const quiet = Practice.has(tab.id) || (!(await get("welcomed", false)) ? (await set("welcomed", true), false) : true);
       return { mode: "extension", app: null, label, quiet, needsModel: b.kind === "none", connect: b.kind === "none" ? b.reason : undefined,
-        models: b.kind === "none" ? null : modelNames(b.settings, settingsLabel), settings: prefs, voice: await voiceInfo() };
+        models: b.kind === "none" ? null : modelNames(b.settings, settingsLabel), settings: prefs, voice: await voiceInfo(),
+        rebuilt: await rebuilt() }; // developers: this worker is older than the files on disk (dev-host.js)
     }
     case "mods.list":
       return Style.list(Object.values(await allMods()).filter(m => modMatches(m, here)).sort(byCreated), here); // hardening: caller's page; your-style hook: the style first

@@ -23,7 +23,10 @@ import { bringMisses } from "./take.js"; // take-and-bring hook: a brought featu
 // request that looks hard starts on the strong one; otherwise the fast one
 // goes first and a draft it gets wrong goes to the strong one (with what was
 // wrong) instead of failing. Each model change adds one attempt.
-export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2, probe, collapse }) {
+// `vet(draft)` (optional, from the host) returns a repair message for a draft
+// that can't work in this app, or null: app profiles (daemon/profile.js)
+// check that the commands it runs with morse.app.command exist.
+export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2, probe, collapse, vet }) {
   let previous = null;
   let last = null;
   const started = Date.now();
@@ -105,6 +108,14 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       previous = { raw, error: harm.model };
       repairs.push(harm.model);
       last = { ...last, css: "", js: "", error: harm.user };
+      advance("guard");
+      continue;
+    }
+    const wrong = more && vet ? vet(draft) : null; // app profiles: a command the app doesn't have
+    if (wrong) {
+      previous = { raw, error: wrong };
+      repairs.push(wrong);
+      last = { ...last, error: wrong };
       advance("guard");
       continue;
     }

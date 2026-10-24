@@ -18,7 +18,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, watch } from "node:fs";
 import path from "node:path";
-import { CDPSession, listTargets } from "./cdp.js";
+import { portBrowser } from "./cdp.js"; // a debugging port, or the private pipe (cdp.js pipeBrowser)
 import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putClipboard } from "./store.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode, settleMs } from "../core/kit.js";
@@ -45,6 +45,7 @@ import { Take } from "./take.js"; // take-and-bring hook: features taken in one 
 import { STYLE_ID } from "../core/style.js"; // your-style hook
 import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
 import { pageCollapse } from "../core/guard.js"; // guard hook: a change that hides most of the page
+import { AppProfiler } from "./profile.js"; // app profiles: how the app works inside (docs/dev/rea.md)
 
 // Perf: only the small boot goes into every page; the UI is evaluated on first use ("ui.load").
 import { bundleBoot, bundleUI } from "../runtime/bundle.js";
@@ -101,30 +102,49 @@ const cleanup = ids => `(() => { try {
   for (const s of document.querySelectorAll("style[data-morse-css]")) { globalThis.morse?.__off?.(s.dataset.morseCss); s.remove(); }
   for (const id of ${JSON.stringify(ids)}) globalThis.morse?.__off?.(id);
   document.querySelectorAll("[data-morse-ui]").forEach(e => e.remove());
+  delete window[Symbol.for("morse.app")]; // app profiles: the command handle (daemon/profile.js)
 } catch {} })()`;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 
 export class Connector {
+  // port: the app's debugging port; or browser: how to reach the app
+  // (cdp.js portBrowser / pipeBrowser: listTargets() and connect(target)).
   // watch: keep waiting when the app quits and attach again when it's back.
   // verify(): called before attaching again after a restart; { ok, why }.
   // onChange(connector): windows or state changed (for `morse status`).
-  constructor({ port, app = null, settings, log = console.log, watch = false, verify = null, onChange = null, interval = 1000 }) {
+  constructor({ port = null, browser = null, app = null, settings, log = console.log, watch = false, verify = null, onChange = null, interval = 1000 }) {
     // Log lines name windows (the page's own title), mods (a shared mod's
     // title) and the model's results: as text, never escape sequences that
     // could rewrite the terminal or set its clipboard.
     const shown = s => String(s).replace(/[\x00-\x09\x0b-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069]+/g, " ");
-    Object.assign(this, { port, app, settings, log: line => log(shown(line)), watch, verify, onChange, interval });
+    Object.assign(this, { app, settings, log: line => log(shown(line)), watch, verify, onChange, interval });
+    this.browser = browser || portBrowser(port);
     this.pages = new Map();   // target id -> CDPSession (null while connecting)
     this.windows = new Map(); // target id -> { id, type, kind, title, url, frame, session, since }
     this.retry = new Map();   // target id -> { at, n } after a failed attach
     this.recentSaves = new Map();
     this.gens = new Generations();
     this.state = "starting";  // starting | attached | waiting | stopped
+    // app profiles: built in the background once Morse is in the app's window
+    this.profiler = app && AppProfiler.enabled() ? new AppProfiler({ app, port, log: this.log }) : null;
   }
 
+  // app profiles: the window a session belongs to
+  windowOf(s) { for (const w of this.windows.values()) if (w.session === s) return w; return null; }
+
   get appName() { return this.app?.name || "The app"; }
+  get port() { return this.browser.port ?? null; }
+  get transport() { return this.browser.kind || "port"; }
+
+  // The app was opened again (on a new pipe, or a port): reach it this way
+  // from now on. While waiting (--watch), the next poll attaches to it.
+  useBrowser(browser, verify = null) {
+    if (this.browser !== browser) Promise.resolve(this.browser.close?.()).catch(() => {});
+    this.browser = browser;
+    this.verify = verify;
+  }
 
   changed() { try { this.onChange?.(this); } catch {} }
 
@@ -139,7 +159,7 @@ export class Connector {
     let misses = 0;
     while (this.running) {
       let list = null;
-      try { list = await listTargets(this.port); misses = 0; }
+      try { list = await this.browser.listTargets(); misses = 0; }
       catch (e) { misses += /ECONNREFUSED|ECONNRESET/.test(String(e?.cause?.code || e?.code || e?.message)) ? 3 : 1; }
       if (!this.running) break; // stop() landed during the poll: don't mark attached or attach again
       if (list && this.state === "waiting") {
@@ -157,11 +177,15 @@ export class Connector {
       if (list) {
         if (this.state !== "attached") { this.state = "attached"; this.changed(); }
         this.sync(list);
-      } else if (misses >= 3 && this.state === "attached") {
+      } else if (misses >= 3 && (this.state === "attached" || (this.state === "starting" && this.browser.closed))) {
         this.dropAll();
+        const pipe = this.transport === "pipe";
+        if (this.browser.closed) this.browser.close(); // a pipe whose app quit: let go of Morse's ends too
         if (!this.watch) { this.log(t("launch.closed", { name: this.appName })); this.state = "stopped"; break; }
         this.state = "waiting";
-        this.log(`  … ${t("launch.closedWaiting", { name: this.appName })}`);
+        // On a port the app can come back by itself (on that port); on the
+        // pipe only Morse can open it again.
+        this.log(`  … ${pipe ? t("launch.closedWaitingPipe", { name: this.appName, cmd: `morse launch ${this.app?.id || ""}`.trim() }) : t("launch.closedWaiting", { name: this.appName })}`);
         this.changed();
       }
       await sleep(this.interval);
@@ -202,7 +226,7 @@ export class Connector {
   }
 
   async attach(target, how = classifyTarget(target)) {
-    const s = await CDPSession.connect(target.webSocketDebuggerUrl);
+    const s = await this.browser.connect(target);
     if (!this.running && this.state === "stopped") { s.close(); return; }
     const { kind, title } = describeTarget(target);
     const w = { id: target.id, type: target.type, kind, title: target.title, url: target.url, frame: !!how.frame, session: s, since: Date.now() };
@@ -217,7 +241,7 @@ export class Connector {
       this.changed();
       // A window closing on its own (the app keeps running) is worth a line.
       if (!w.crashed && !w.detaching && this.state === "attached") setTimeout(() => {
-        if (this.state === "attached" && !this.pages.has(target.id)) listTargets(this.port).then(l => {
+        if (this.state === "attached" && !this.pages.has(target.id)) this.browser.listTargets().then(l => {
           if (!l.some(t => t.id === target.id)) this.log(`  − ${kind} closed: ${describeTarget(w).title}`);
         }, () => {});
       }, 600);
@@ -296,6 +320,7 @@ export class Connector {
     readTitle();
     this.log(`  ✓ ${t("launch.connected", { title })}${kind === "window" ? "" : ` (${kind})`}`);
     trace("connect", `CDP attached to "${title}": Morse's code runs in its own isolated world ("morse"), talks to this process through the __morseHostSend binding`);
+    this.profiler?.attached(s, w); // app profiles: in the background, never awaited
     if (!this.hinted && kind === "window") { // first-run hook: say what to do next, once
       this.hinted = true;
       configuredHotkeys().then(k => k.open && this.log(`\n  ${t("launch.ready", { name: this.app?.name || title || t("launch.theApp"), key: k.open })}\n`), () => {});
@@ -364,7 +389,7 @@ export class Connector {
     return this.settings;
   }
 
-  async stop() {
+  async stop({ keepBrowser = false } = {}) {
     this.running = false;
     this.state = "stopped";
     this.modWatcher?.close();
@@ -386,6 +411,10 @@ export class Connector {
     }));
     this.windows.clear();
     this.pages.clear();
+    // On the pipe, Morse lets go of its ends now (once the detaching went
+    // out); the app keeps running. A port stays open until the app quits.
+    // keepBrowser: Morse Desktop holds on to the pipe, to connect again.
+    if (!keepBrowser) await Promise.resolve(this.browser.close?.()).catch(() => {});
     this.changed();
   }
 
@@ -435,6 +464,8 @@ export class Connector {
   async exec(s, caller, modId, js) {
     const ctx = caller.main;
     if (ctx == null) return { ok: false, error: "The page isn't ready yet. Try again." };
+    // app profiles: mod code that runs the app's commands needs the handle in this document
+    if (this.profiler && /\bmorse\.app\b/.test(js || "")) { const w = this.windowOf(s); if (w) await this.profiler.ready(s, w, ctx).catch(() => {}); }
     const done = s.hang?.exec(modId, ctx, js); // guard hook: while mod code is here, notice if the page freezes
     let r;
     try { r = await s.send("Runtime.evaluate", { expression: wrapModCode(modId, js), contextId: ctx, returnByValue: true }); }
@@ -571,10 +602,14 @@ export class Connector {
         trace("bar", `"${msg.request}" · ${sel ? `pointed at ${sel}` : "the whole page"} · ${this.app?.name || "app"}`);
         trace("model", `${this.settings.provider}${this.settings.model ? ` · ${this.settings.model}` : ""}`);
         let cssPushes = 0, tokens = 0;
+        // app profiles: what the request needs to know about how the app works (core/profile.js profileSlice)
+        const appLogic = this.profiler ? await this.profiler.slice(s, caller, msg.request, sel).catch(() => "") : "";
+        if (appLogic) trace("profile", `the prompt gets ${appLogic.split("\n").length} lines about how ${this.app?.name || "the app"} works inside`);
         const res = await this.gens.run(msg.genId, signal => runMorse({
           settings: { ...this.settings, mode },
           request: msg.request,
-          context: { ...msg.context, app: this.app?.name || msg.context.app },
+          context: { ...msg.context, app: this.app?.name || msg.context.app, ...(appLogic && { appLogic }) },
+          vet: this.profiler ? d => this.profiler.vet(d) : undefined, // app profiles: commands the app has
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           exec: js => this.exec(s, caller, msg.genId, js),
           // The streamed CSS reaches the runtime first: pushes and probes go

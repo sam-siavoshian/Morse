@@ -12,6 +12,9 @@
 //   GET  /v1/taken, POST /v1/taken { item }, POST /v1/taken/remove { id }
 //                      Bearer token: the features taken in desktop apps, shared
 //                      with Chrome (daemon/take.js, core/take-host.js)
+//   GET  /v1/style     -> { style }            Bearer token: Your style as this computer keeps it
+//   POST /v1/style     { style, was }          Bearer token: put Chrome's copy in its place, only
+//                                              if this one is still `was` (409 otherwise); core/style-sync.js
 //
 // The extension runs core/engine.js itself (it has to execute mod JS in the
 // page and retry), so the helper only streams text. Closing the connection
@@ -35,6 +38,8 @@ import { detectHarnesses, validModel, TIMEOUT_MS } from "./harness.js";
 import { streamChat, abortError, prewarm, HELPER_PORT } from "../core/providers.js";
 import { handleVoice } from "./voice.js";
 import { Take } from "./take.js"; // take-and-bring hook
+import { Style } from "./style.js"; // your-style hook: shared with Chrome
+import { hasStyle } from "../core/style.js";
 import { execFile } from "node:child_process"; // onboarding v2: is Claude Code / Codex signed in?
 import { t } from "../core/i18n.js"; // onboarding v2: the Allow question, in the person's language
 
@@ -303,6 +308,17 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
         if (url.pathname === "/v1/taken/remove") return send(200, await Take.handle({ type: "taken.remove", takenId: body?.id }));
         try { return send(200, await Take.handle({ type: "taken.put", item: body?.item })); }
         catch (e) { return send(400, { error: e.message }); }
+      }
+
+      // your-style hook: one style for Chrome and the desktop apps (core/style-sync.js)
+      if (url.pathname === "/v1/style") {
+        if (req.method === "GET") return send(200, { style: await Style.shared() });
+        if (req.method !== "POST") return send(405, { error: "Use GET or POST" });
+        const body = await readJson(req);
+        const style = body?.style ?? null;
+        if (style !== null && !(typeof style === "object" && hasStyle(style))) return send(400, { error: "Expected { style, was }" });
+        if (await Style.replace(style, typeof body.was === "string" ? body.was : "")) return send(200, { ok: true });
+        return send(409, { error: "Your style changed on this computer meanwhile.", style: await Style.shared() });
       }
 
       // speed: the bar opened, so a request is likely soon (core/providers.js prewarm).

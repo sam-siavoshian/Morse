@@ -73,7 +73,9 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
   electronApp = await _electron.launch({
     executablePath: electronExe,
     args: [path.join(root, "desktop-app"), ...ROOT],
-    env: { ...process.env, MORSE_HOME: home, MORSE_DESKTOP_SCAN: "0", MORSE_PROVIDER: "demo", MORSE_HELPER_PORT: String(helperPort), ELECTRON_RUN_AS_NODE: "" },
+    // MORSE_PIPE=0: Tunes on a debugging port (the fallback), so this test can
+    // look inside it. The private pipe, the default, is the next test.
+    env: { ...process.env, MORSE_HOME: home, MORSE_DESKTOP_SCAN: "0", MORSE_PROVIDER: "demo", MORSE_HELPER_PORT: String(helperPort), ELECTRON_RUN_AS_NODE: "", MORSE_PIPE: "0" },
     timeout: 60000,
   });
   const logs = [];
@@ -206,4 +208,65 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
   await until(async () => !(await fs.stat(path.join(home, "sessions", "tunes.json")).catch(() => null)), 10000, "Tunes' session file to go");
   assert.equal(await inTunes(s2.port, `!!document.querySelector("[data-morse-ui]")`), false, "Morse is off Tunes");
   await quitTunes(s2.port);
+});
+
+// The default: Morse Desktop opens Tunes on the private pipe
+// (--remote-debugging-pipe), so Tunes has no debugging port at all. Without a
+// port this test can't look inside Tunes (that is the point); what Morse does
+// in the page over the pipe is in tests/electron.test.js. Here: no port,
+// Disconnect then Connect reuses the pipe (same Tunes, no restart), and
+// quitting Morse leaves Tunes running.
+test("Morse Desktop on the private pipe: no debugging port, Connect again without a restart, Tunes outlives Morse", { skip, timeout: 300000 }, async () => {
+  const home2 = tempDir("morse-desktop-pipe-");
+  const { exe } = await tunesApp();
+  const profile = path.join(home2, "tunes-profile");
+  await fs.writeFile(path.join(home2, "desktop.json"), JSON.stringify({ helper: false, welcomed: true, apps: [exe], appArgs: { tunes: [`--user-data-dir=${profile}`, ...ROOT] } }));
+  const env = { ...process.env, MORSE_HOME: home2, MORSE_DESKTOP_SCAN: "0", MORSE_PROVIDER: "demo", MORSE_HELPER_PORT: String(await freePort()), ELECTRON_RUN_AS_NODE: "" };
+  delete env.MORSE_PIPE;
+  electronApp = await _electron.launch({ executablePath: electronExe, args: [path.join(root, "desktop-app"), ...ROOT], env, timeout: 60000 });
+  const logs = [];
+  for (const s of [electronApp.process().stdout, electronApp.process().stderr]) s?.on("data", d => logs.push(String(d)));
+  const w = await electronApp.firstWindow();
+  const row = w.locator('li[data-app="tunes"]');
+  const rowState = async (state, timeout) => {
+    try { await w.locator(`li[data-app="tunes"].${state}`).waitFor({ timeout }); }
+    catch (e) { throw new Error(`Tunes' row never became "${state}". Morse said:\n${logs.join("").split("\n").filter(l => /\[morse\]/.test(l)).slice(-30).join("\n")}`, { cause: e }); }
+  };
+  const sessionFile = path.join(home2, "sessions", "tunes.json");
+  const readSession = async () => JSON.parse(await fs.readFile(sessionFile, "utf8"));
+  // Tunes' main process: the one with this profile and no --type=.
+  const tunesPids = () => apps.listProcesses().filter(p => p.cmd.includes(profile) && !/\s--type=/.test(p.cmd) && /tunes/i.test(p.cmd.split(/\s/)[0])).map(p => p.pid);
+
+  await w.waitForSelector("html[data-ready]", { timeout: 30000 });
+  await rowState("closed", 30000);
+  await row.getByRole("button", { name: "Open with Morse" }).click();
+  await rowState("connected", 90000);
+  const s1 = await until(async () => { const s = await readSession(); return s.state === "attached" && s.windows?.length && s; }, 30000, "the session file to show Tunes' windows");
+  assert.equal(s1.transport, "pipe");
+  assert.equal(s1.port, null, "no debugging port");
+  const [pid] = tunesPids();
+  assert.ok(pid, "Tunes is running");
+  const cmd = apps.listProcesses().find(p => p.pid === pid).cmd;
+  assert.match(cmd, /--remote-debugging-pipe/);
+  assert.doesNotMatch(cmd, /--remote-debugging-port/);
+
+  // Disconnect, then Connect: over the pipe Morse kept, to the same Tunes.
+  await row.getByRole("button", { name: "Disconnect" }).click();
+  await rowState("open-connectable", 30000);
+  await until(async () => !(await fs.stat(sessionFile).catch(() => null)), 10000, "the session file to go");
+  await row.getByRole("button", { name: "Connect" }).click();
+  await rowState("connected", 60000);
+  await until(async () => { const s = await readSession().catch(() => null); return s?.state === "attached" && s.windows?.length; }, 30000, "Tunes' windows again");
+  assert.deepEqual(tunesPids(), [pid], "the same Tunes, not restarted");
+
+  // Quit Morse while connected: Tunes keeps running, without Morse.
+  const proc = electronApp.process();
+  const exited = new Promise(r => proc.once("exit", r));
+  await electronApp.evaluate(({ app }) => { app.quit(); }).catch(() => {});
+  await Promise.race([exited, new Promise((_, no) => setTimeout(() => no(new Error("Morse didn't quit within 15 s")), 15000))]);
+  electronApp = null;
+  await until(async () => !(await fs.stat(sessionFile).catch(() => null)), 10000, "Tunes' session file to go");
+  await new Promise(r => setTimeout(r, 3000));
+  assert.deepEqual(tunesPids(), [pid], "Tunes is still running after Morse quit");
+  for (const p of apps.listProcesses()) if (p.cmd.includes(home2)) try { process.kill(p.pid, "SIGKILL"); } catch {}
 });

@@ -9,7 +9,7 @@ catch what only the real OS does: permission prompts, real binaries, real
 process lists. This checklist is what to run on a real machine. Write down
 what you see at each **Check** and send it back (see the end).
 
-What it can't check without a model is the model's change itself; step 4
+What it can't check without a model is the model's change itself. Step 4
 uses the Edit tools, which need none. With a model connected (`morse setup`),
 also describe one change.
 
@@ -43,7 +43,7 @@ node --test tests/platforms.test.js tests/core.test.js tests/real-apps.test.js
 
 **Check:** all pass. Path, line-ending and file-permission bugs that Linux
 can't show turn up here. (On Windows, one step of the fuse test needs
-symbolic links; without Developer Mode it skips that step and says so.)
+symbolic links. Without Developer Mode it skips that step and says so.)
 
 ## 2. `morse doctor` and `morse apps` (2 min)
 

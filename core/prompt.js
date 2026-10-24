@@ -112,6 +112,7 @@ export function buildMessages({ request, context, previous, snapshot = context?.
   if (context.notes) parts.push("About this page:\n" + context.notes);
   if (context.layout) parts.push("Page layout (visible blocks, px):\n" + context.layout);
   if (context.outline) parts.push((context.layout ? "Controls and headings:\n" : "Page outline:\n") + context.outline);
+  if (context.appLogic) parts.push(String(context.appLogic).slice(0, 4000)); // app profiles: how the app works inside (core/profile.js profileSlice)
   if (snapshot) parts.push(snapshotPrompt(snapshot));
   if (context.ask?.mode === "explain") parts.push("Explain this page: reply with ANSWER, a plain summary in 5 short lines of what this page is for and the main things you can do here, and a POINT line for each of those main actions."); // Ask and find
   if (context.lang && context.lang !== "en") parts.push(`If you reply with ANSWER, write the ANSWER text in ${englishName(context.lang)}.`); // the language Morse speaks to this person (core/i18n.js)

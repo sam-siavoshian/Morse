@@ -33,7 +33,7 @@ await fs.mkdir(path.join(out, "icons"), { recursive: true });
 
 // The worker's own modules import ../core and are only ever bundled into
 // background.js; copied raw they'd be dead files with broken imports.
-const BUNDLED_ONLY = ["background.js", "bar-host.js", "onboarding-host.js", "control-host.js", "gallery-host.js", "style-host.js" /* your-style hook */, "pack-host.js" /* packs hook */, "take-host.js" /* take-and-bring hook */];
+const BUNDLED_ONLY = ["background.js", "bar-host.js", "onboarding-host.js", "control-host.js", "gallery-host.js", "style-host.js" /* your-style hook */, "pack-host.js" /* packs hook */, "dev-host.js", "take-host.js" /* take-and-bring hook */];
 for (const f of await fs.readdir(path.join(root, "extension"))) {
   if (!BUNDLED_ONLY.includes(f)) await fs.copyFile(path.join(root, "extension", f), path.join(out, f));
 }
@@ -51,6 +51,11 @@ if (STORE) {
     await fs.writeFile(f, src.replace(re, to));
   }
 }
+// For people working on Morse: an id for this build, in the worker and in
+// build-id.txt, so a worker still running after a rebuild knows it is old
+// (extension/dev-host.js). A store build has neither.
+const BUILD_ID = STORE ? "" : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+if (BUILD_ID) await fs.writeFile(path.join(out, "build-id.txt"), BUILD_ID + "\n");
 // One version for everything: package.json's. extension/manifest.json has none of its own.
 const { version } = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
 const manifest = JSON.parse(await fs.readFile(path.join(root, "extension", "manifest.json"), "utf8"));
@@ -63,7 +68,7 @@ await esbuild.build({
   // the extension never takes.
   external: ["node:*"],
   // extension/gallery-host.js: the store build never reads the demo sites' local gallery list.
-  define: { "globalThis.MORSE_STORE_BUILD": String(STORE) },
+  define: { "globalThis.MORSE_STORE_BUILD": String(STORE), "globalThis.MORSE_BUILD_ID": JSON.stringify(BUILD_ID) },
   legalComments: "none", logLevel: "warning",
 });
 await fs.copyFile(path.join(root, "design", "tokens.css"), path.join(out, "tokens.css"));
@@ -97,6 +102,9 @@ const popup = await fs.readFile(path.join(root, "extension", "popup.html"), "utf
 await fs.writeFile(path.join(out, "options.html"), popup.replace("<title>Morse</title>", "<title>Morse settings</title>").replace("<body>", '<body data-page="options">'));
 await fs.writeFile(path.join(out, "runtime.js"), bundleRuntime());
 await fs.copyFile(path.join(root, "design", "tokens.css"), path.join(out, "tokens.css")); // extension pages (welcome) share the design tokens
+// The marks of the models you can choose: the one set Morse Desktop uses too.
+await fs.mkdir(path.join(out, "brand"), { recursive: true });
+for (const f of await fs.readdir(path.join(root, "desktop-app", "ui", "icons"))) await fs.copyFile(path.join(root, "desktop-app", "ui", "icons", f), path.join(out, "brand", f));
 
 // The logo: a 3x3 grid in the gray signal ramp, on a dark rounded tile so the
 // light squares show on light backgrounds too (the store page, a light
