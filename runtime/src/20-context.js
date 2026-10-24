@@ -386,7 +386,7 @@ function effectProbe(target, selectors = []) {
 function context() {
   const cs = getComputedStyle(document.body);
   const ctx = {
-    url: location.href, title: document.title, app: S.app,
+    url: location.href, title: document.title, app: S.app, lang: getLanguage(), // Ask answers in the language Morse speaks (core/prompt.js)
     theme: { bg: cs.backgroundColor, fg: cs.color, font: cs.fontFamily.split(",")[0] },
     outline: outline(),
     layout: layout(),
