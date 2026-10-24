@@ -11,7 +11,7 @@ function SHOW_ONCE_CSS() { return `
   @keyframes so-rise { from { transform: translateY(6px); opacity: 0 } }
   .so-head { display: flex; align-items: center; gap: 8px; padding-block: 8px; padding-inline: 16px 8px; }
   .so-head b { font-weight: 550; white-space: nowrap; }
-  .so-head .btn svg { width: 12px; height: 12px; margin-inline-start: -2px; }
+  .so-head .btn svg { margin-inline-start: -4px; }
   .so-dot { flex: none; width: 8px; height: 8px; margin-inline-end: 2px; border-radius: 50%; background: var(--m-text); box-shadow: 0 0 0 3px var(--m-focus); animation: so-blink 1.6s ease-in-out infinite; }
   @keyframes so-blink { 50% { opacity: .35; box-shadow: 0 0 0 1px var(--m-focus); } }
   .so-count { font: var(--m-text-xs)/16px var(--m-mono); letter-spacing: 0; color: var(--m-text-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -32,20 +32,18 @@ function SHOW_ONCE_CSS() { return `
   .so-more { color: var(--m-text-3); font: var(--m-text-xs)/16px var(--m-mono); letter-spacing: 0; padding-inline-start: 40px !important; }
   .so-more:hover { background: none !important; }
   .so-rm { opacity: 0; color: var(--m-text-3); }
-  .so-rm svg { width: 14px !important; height: 14px !important; }
   li:hover > .so-rm, .so-rm:focus-visible { opacity: 1; }
 
   /* ---- in the bar after Stop: the steps above the input */
   .so-card { border-bottom: 1px solid var(--m-line); }
   .so-ch { display: flex; align-items: center; gap: 8px; padding-block: 8px 0; padding-inline: 16px 8px; }
   .so-eyebrow { font: 500 var(--m-text-xs)/16px var(--m-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--m-text-3); }
-  .so-ch .ibtn svg { width: 14px; height: 14px; }
   .so-card .so-steps { border-top: 0; padding: 4px 8px 8px; max-height: 148px; overflow: auto; scrollbar-width: thin; }
 
   /* ---- the way in, beside the suggestions */
   .sug.so-sug { gap: 6px; padding-inline-start: 8px; margin-inline-start: 4px; position: relative; }
   .sug.so-sug::before { content: ""; position: absolute; inset-inline-start: -7px; top: 6px; bottom: 6px; width: 1px; background: var(--m-line-strong); }
-  .sug.so-sug svg { width: 14px; height: 14px; color: var(--m-text-2); }
+  .sug.so-sug svg { color: var(--m-text-2); }
   .sug.so-sug + .gl-sug::before { display: none; }
   .sug.so-sug + .gl-sug { margin-inline-start: 0; }
 

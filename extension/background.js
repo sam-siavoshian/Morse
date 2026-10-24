@@ -9,9 +9,9 @@
 // core/ and the Anthropic SDK by scripts/build.js.
 
 import { runMorse } from "../core/engine.js";
-import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_URL } from "../core/providers.js";
+import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_URL, prewarm } from "../core/providers.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf, byCreated, saveKeepsScope } from "../core/mod.js";
-import { wrapModCode } from "../core/kit.js";
+import { wrapModCode, settleMs } from "../core/kit.js";
 import { HANG_MS, FROZE_ERROR } from "../core/guard.js"; // guard hook: frozen pages
 import { clipAdd } from "../core/clipboard.js"; // God mode clipboard
 import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
@@ -118,7 +118,7 @@ async function exec(target, modId, js) {
   }
   const res = ran || { ok: false, error: "The change didn't run on this page. Reload the page and try again." };
   if (!res.ok) return res;
-  await new Promise(r => setTimeout(r, 600));
+  await new Promise(r => setTimeout(r, settleMs(res))); // speed: core/kit.js settle
   const errs = (await execIn(target, `morse.__errors(${JSON.stringify(modId)})`)) || [];
   return errs.length ? { ok: false, error: String(errs[0]).split("\n")[0] } : { ok: true };
 }
@@ -194,6 +194,11 @@ async function dispatch(msg, port) {
     // God mode: cross-app clipboard (see core/clipboard.js)
     case "clipboard.list": return get("clipboard", []);
     case "clipboard.put": return serialized(async () => { const list = clipAdd(await get("clipboard", []), msg.item); await set("clipboard", list); return list; }); // hardening: serialized
+    case "warm": { // speed: the bar opened; get the model ready (core/providers.js prewarm)
+      const b = await backend();
+      if (b.kind !== "none") prewarm(b.settings);
+      return true;
+    }
     case "exec":
       return exec(target, msg.modId, msg.js);
     case "off":

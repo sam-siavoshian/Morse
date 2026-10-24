@@ -15,6 +15,7 @@
 let AnthropicSDK = null;
 const loadAnthropic = async () => (AnthropicSDK ||= (await import("@anthropic-ai/sdk")).default);
 import { demoResponse } from "./demo.js";
+import { SYSTEM_PROMPT } from "./prompt.js"; // speed: what prewarm caches
 
 export const PROVIDERS = {
   "claude-code": { name: "Claude Code", models: ["opus", "sonnet", "haiku"], defaultModel: "" },
@@ -45,7 +46,22 @@ const impls = {
   helper: helperStream,
 };
 
-export function registerProvider(id, fn) { impls[id] = fn; }
+export function registerProvider(id, fn, { warm } = {}) { impls[id] = fn; if (warm) warmers[id] = warm; }
+
+// ---- speed: get ready before the request exists. Hosts call this when the
+// bar opens: Claude Code starts its next process (daemon/harness.js), the
+// Anthropic API reads the instructions into its cache, the helper passes it on.
+// Never throws; returns quickly and does the work in the background.
+const warmers = {
+  anthropic: anthropicWarm,
+  helper: s => fetch(`${s.baseUrl || HELPER_URL}/v1/warm`, {
+    method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.token || ""}` }, body: JSON.stringify(s.model ? { model: s.model } : {}),
+  }).catch(() => {}),
+};
+export function prewarm(settings) {
+  const s = { ...DEFAULT_SETTINGS, ...settings };
+  try { return Promise.resolve(warmers[s.provider]?.(s)).catch(() => {}); } catch { return Promise.resolve(); }
+}
 
 // ---- Pictures (Easier to use: Describe this image, core/a11y.js). A message's
 // content may be a list of blocks in the Anthropic format, { type: "text", text }
@@ -62,14 +78,16 @@ function toOpenAI(m) {
     : { type: "text", text: String(b?.text ?? "") })) };
 }
 
-export async function streamChat(settings, messages, { onToken, signal, maxTokens } = {}) {
+// onStage({ spawnMs?, warm? }) (optional): the model has the request and is
+// working on it (speed: timing, and the "Thinking" status in the bar).
+export async function streamChat(settings, messages, { onToken, signal, maxTokens, onStage } = {}) {
   const s = { ...DEFAULT_SETTINGS, ...settings };
   const impl = impls[s.provider];
   if (!s.provider || s.provider === "none") throw new NoModelError();
   if (!impl) throw new Error(`Morse doesn't know the model "${s.provider}". Choose another in Morse's settings.`);
   if (signal?.aborted) throw abortError();
   if (!SEES_IMAGES.has(s.provider) && imageBlocks(messages).length) throw new Error(`${PROVIDERS[s.provider]?.name || "This model"} can't look at pictures in Morse. Use Claude Code or an Anthropic API key for that.`); // Describe this image
-  return impl(s, messages, { onToken, signal, maxTokens });
+  return impl(s, messages, { onToken, signal, maxTokens, onStage });
 }
 
 export function settingsLabel(s) {
@@ -131,16 +149,29 @@ export async function* lines(body) {
   if (buf.trim()) yield buf.trim();
 }
 
-async function anthropicStream(s, messages, { onToken, signal, maxTokens }) {
-  if (!s.apiKey) throw new NoModelError("Add your Anthropic API key in Morse's settings.");
+// speed: one client per key and address, so requests reuse its connection.
+let anthropicClient = null;
+async function anthropicFor(s) {
   const Anthropic = await loadAnthropic();
-  const client = new Anthropic({ apiKey: s.apiKey, baseURL: s.baseUrl || undefined, dangerouslyAllowBrowser: true, maxRetries: 1 });
+  const id = `${s.apiKey}\u0000${s.baseUrl || ""}`;
+  if (anthropicClient?.id !== id) anthropicClient = { id, client: new Anthropic({ apiKey: s.apiKey, baseURL: s.baseUrl || undefined, dangerouslyAllowBrowser: true, maxRetries: 1 }) };
+  return { Anthropic, client: anthropicClient.client };
+}
+// speed: the instructions are the same for every request, so they go first and
+// are cached (prompt caching: later requests read them instead of
+// re-processing them). The page and the request vary, so they come after the
+// breakpoint and are never written to the cache.
+const cachedSystem = system => system ? [{ type: "text", text: system, cache_control: { type: "ephemeral" } }] : undefined;
+
+async function anthropicStream(s, messages, { onToken, signal, maxTokens, onStage }) {
+  if (!s.apiKey) throw new NoModelError("Add your Anthropic API key in Morse's settings.");
+  const { Anthropic, client } = await anthropicFor(s);
   const { system, rest } = splitSystem(messages);
   const model = s.model || PROVIDERS.anthropic.defaultModel;
   const params = {
     model,
     max_tokens: maxTokens || 8000,
-    ...(system && { system }),
+    ...(system && { system: cachedSystem(system) }),
     messages: rest,
     output_config: { effort: s.effort || "low" },
     // On a safety-classifier decline, the API re-runs the request on its
@@ -154,7 +185,8 @@ async function anthropicStream(s, messages, { onToken, signal, maxTokens }) {
       if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta" && ev.delta.text) {
         text += ev.delta.text;
         onToken?.(ev.delta.text);
-      }
+      } else if (ev.type === "message_start") onStage?.({ stage: "ready" });
+      else if (ev.type === "content_block_start" && ev.content_block?.type === "thinking") onStage?.({ stage: "thinking" });
     }
     const final = await stream.finalMessage();
     if (final.stop_reason === "refusal") {
@@ -171,10 +203,29 @@ async function anthropicStream(s, messages, { onToken, signal, maxTokens }) {
   return text;
 }
 
+// speed: when the bar opens, a request with max_tokens 0 reads the
+// instructions into the cache (and opens the connection), so the real request
+// starts with a cache hit. Same model and effort as real requests, since both
+// are part of what is cached; at most once per 4 minutes (the cache keeps
+// entries for 5).
+const WARM_EVERY_MS = 4 * 60_000;
+const warmedAt = new Map();
+async function anthropicWarm(s, { system = SYSTEM_PROMPT } = {}) {
+  if (!s.apiKey || !system) return;
+  const model = s.model || PROVIDERS.anthropic.defaultModel;
+  const id = `${s.baseUrl || ""}\u0000${model}\u0000${s.effort || "low"}`;
+  if (Date.now() - (warmedAt.get(id) || 0) < WARM_EVERY_MS) return;
+  warmedAt.set(id, Date.now());
+  const { client } = await anthropicFor(s);
+  try {
+    await client.messages.create({ model, max_tokens: 0, system: cachedSystem(system), messages: [{ role: "user", content: "warmup" }], output_config: { effort: s.effort || "low" } });
+  } catch { warmedAt.delete(id); }
+}
+
 // OpenAI chat completions over SSE: api.openai.com or any compatible server
 // (OpenRouter, Azure and others). No temperature: current OpenAI
 // reasoning models reject non-default values.
-async function openaiStream(s, messages, { onToken, signal, maxTokens }) {
+async function openaiStream(s, messages, { onToken, signal, maxTokens, onStage }) {
   const base = (s.baseUrl || "https://api.openai.com").replace(/\/$/, "").replace(/\/v1$/, "");
   const res = await fetch(`${base}/v1/chat/completions`, {
     method: "POST",
@@ -187,6 +238,7 @@ async function openaiStream(s, messages, { onToken, signal, maxTokens }) {
     try { detail = (await res.json()).error?.message || ""; } catch {}
     throw new Error(`The model server couldn't answer (error ${res.status})${detail ? `: ${detail}` : ". Check the model settings."}`);
   }
+  onStage?.({ stage: "ready" });
   let text = "";
   for await (const line of lines(res.body)) {
     if (!line.startsWith("data:")) continue;
@@ -203,7 +255,7 @@ async function openaiStream(s, messages, { onToken, signal, maxTokens }) {
 // The extension's client for the Morse helper: POST /v1/complete returns
 // NDJSON {type: token|done|error}. Aborting the fetch closes the connection,
 // and the helper kills the harness process.
-async function helperStream(s, messages, { onToken, signal }) {
+async function helperStream(s, messages, { onToken, signal, onStage }) {
   let res;
   try {
     res = await fetch(`${s.baseUrl || HELPER_URL}/v1/complete`, {
@@ -226,6 +278,7 @@ async function helperStream(s, messages, { onToken, signal }) {
   for await (const line of lines(res.body)) {
     const ev = JSON.parse(line);
     if (ev.type === "token") { text += ev.text; onToken?.(ev.text); }
+    else if (ev.type === "stage") onStage?.(ev); // speed: the model started, or is thinking
     else if (ev.type === "error") throw new Error(ev.message);
     else if (ev.type === "done") return typeof ev.text === "string" ? ev.text : text;
   }

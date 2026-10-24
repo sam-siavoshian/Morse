@@ -34,7 +34,10 @@ export default {
   "menu.help": "Help and examples",
 
   // ---- while the model works, and the result
+  "gen.asking": "Asking the model",
+  "gen.reading": "The model is reading the page",
   "gen.thinking": "Thinking",
+  "gen.writingVisible": "Writing the change · you can see it now",
   "gen.writing": "Writing the change",
   "gen.fixing": "Fixing a mistake and trying again",
   "gen.trying": "Trying the change",

@@ -57,32 +57,54 @@ async function submit(request, opts = {}) {
   S.draft = prev ? { ...prev, ctx: prev.ctx || ctx } : { id, request, prompt: request, ctx, title: "", css: "", js: "", history: [] };
   let stopped = false;
   const stopSignal = cancelSignal(id).then(r => { stopped = true; return r; });
-  // A refine keeps the first "before" shot, so the share card shows the whole change.
-  if (!prev || S.before?.id !== id) S.before = { id, shot: await capture(), rect: R(tr), focus: R(rect), vw: innerWidth, vh: innerHeight };
   const t0 = performance.now();
-  hint.innerHTML = `${radar(12)} ${t("gen.thinking")}`;
+  // The status says what is really happening, step by step (speed: no waiting
+  // looks the same as any other): asking, the model reading, thinking,
+  // writing, the change showing up as it's written, trying it.
+  const say = text => { hint.innerHTML = `${radar(12)} ${text}`; };
+  say(t("gen.asking"));
   actions.innerHTML = `<span class="ms">0.0s</span>`;
   const clock = setInterval(() => { const m = actions.querySelector(".ms"); if (m) m.textContent = ((performance.now() - t0) / 1000).toFixed(1) + "s"; }, 100);
   Effect.start(focus);
 
-  let wrote = false;
+  // speed: the "before" picture (for the share card) is taken while the
+  // request goes out, not before it. The first style waits for the picture;
+  // the model takes longer than that to write any. A refine keeps the first
+  // "before" picture, so the share card shows the whole change.
+  let pendingCss = null, shotDone = true;
+  const shot = !prev || S.before?.id !== id
+    ? (shotDone = false, capture().then(s => {
+      S.before = { id, shot: s, rect: R(tr), focus: R(rect), vw: innerWidth, vh: innerHeight };
+      shotDone = true;
+      if (pendingCss != null && !stopped) showCss(pendingCss);
+    }))
+    : Promise.resolve();
+  let wrote = false, showing = false, fixing = false;
+  function showCss(css) {
+    setCss(id, css);
+    if (!css.trim() || showing) return;
+    showing = true;
+    Effect.reveal(); // the change shows through while the rest is written
+    if (!fixing && wrote) say(t("gen.writingVisible"));
+  }
   const off = onEvent(msg => {
     if (msg.genId !== id) return;
     if (msg.type === "token") {
-      if (!wrote) { wrote = true; if (hint.textContent.includes(t("gen.thinking"))) hint.innerHTML = `${radar(12)} ${t("gen.writing")}`; }
+      if (!wrote) { wrote = true; if (!fixing) say(t("gen.writing")); }
       Effect.token(msg.text); tick(msg.text);
     }
-    if (msg.type === "css") setCss(id, msg.css);
+    if (msg.type === "css") { if (shotDone) showCss(msg.css); else pendingCss = msg.css; }
+    if (msg.type === "stage" && !wrote && !fixing) say(msg.stage === "thinking" ? t("gen.thinking") : t("gen.reading"));
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") { hint.innerHTML = `${radar(12)} ${t("gen.fixing")}`; hint.title = String(msg.error || ""); }
-      if (msg.phase === "applying") hint.innerHTML = `${radar(12)} ${t("gen.trying")}`;
-      if (msg.phase === "thinking") hint.innerHTML = `${radar(12)} ${t("gen.writing")}`;
+      if (msg.phase === "fixing") { fixing = true; say(t("gen.fixing")); hint.title = String(msg.error || ""); }
+      if (msg.phase === "applying") say(t("gen.trying"));
     }
   });
   let res;
   const ask = { genId: id, request, context: ctx, ...(opts.base ? { base: opts.base } : {}) };
   try { res = stopped ? await stopSignal : await Promise.race([call("generate", ask), stopSignal]); } // Stop: 50-bar.js
   catch (e) { res = { ok: false, error: e.message }; }
+  await shot;
   off();
   clearInterval(clock);
   bar.classList.remove("working");
@@ -247,6 +269,7 @@ function fixMod(m, problem) {
   if (!openOnMod(m)) return;
   const d = S.draft;
   S.phase = "result";
+  sugEl.hidden = true; // the fix is underway: no suggestions under it
   submit(m.prompt, { from: d, note: FIX_NOTE(), base: { prompt: m.prompt, css: m.css, js: m.js, error: problem } });
 }
 
