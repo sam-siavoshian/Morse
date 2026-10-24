@@ -298,6 +298,22 @@ test("desktop: mods.save can't widen by case, a trailing dot, another port, IDN 
   assert.deepEqual((await save([host])).match.hosts, [host]);
 });
 
+test("a share link that inflates to a huge size is refused while inflating, not after", async () => {
+  const { deflateRawSync } = await import("node:zlib");
+  const { decodeShare, encodeShare, createMod, SHARE_BASE, MAX_SHARE_BYTES } = await import("../core/mod.js");
+  const { parseImport } = await import("../core/backup.js");
+  const b64 = buf => buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const bomb = `${SHARE_BASE}#m=${b64(deflateRawSync(Buffer.alloc(80 * 1024 * 1024, 32), { level: 9 }))}`;
+  assert.ok(bomb.length < 200_000, "a small link");
+  const t = Date.now();
+  await assert.rejects(decodeShare(bomb), /too big/);
+  await assert.rejects(parseImport(bomb), /too big/);
+  assert.ok(Date.now() - t < 5000);
+  // A real mod still comes through, up to the limit.
+  const ok = createMod({ title: "Fine", prompt: "fine", css: `/* ${"x".repeat(MAX_SHARE_BYTES - 2000)} */`, js: "", url: "https://a.example/" });
+  assert.equal((await decodeShare(await encodeShare(ok))).title, "Fine");
+});
+
 // ---- Mods for this site: a hostile or broken gallery
 
 const GIDX = "https://g.example/site/mods/index.json";

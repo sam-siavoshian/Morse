@@ -141,12 +141,27 @@ export function stripLocal(mod) {
   return rest;
 }
 
-async function pipe(bytes, stream) {
-  const out = new Blob([bytes]).stream().pipeThrough(stream);
-  return new Uint8Array(await new Response(out).arrayBuffer());
+// A link's mod is read up to this size (the same as a backup file): a small
+// link that inflates to gigabytes stops here instead of filling memory.
+export const MAX_SHARE_BYTES = 5_000_000;
+async function pipe(bytes, stream, max = Infinity) {
+  const reader = new Blob([bytes]).stream().pipeThrough(stream).getReader();
+  const parts = [];
+  let n = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    n += value.byteLength;
+    if (n > max) { reader.cancel().catch(() => {}); throw new Error("This share link is too big to be a Morse mod."); }
+    parts.push(value);
+  }
+  const out = new Uint8Array(n);
+  let at = 0;
+  for (const p of parts) { out.set(p, at); at += p.byteLength; }
+  return out;
 }
 const deflate = b => pipe(b, new CompressionStream("deflate-raw"));
-const inflate = b => pipe(b, new DecompressionStream("deflate-raw"));
+const inflate = b => pipe(b, new DecompressionStream("deflate-raw"), MAX_SHARE_BYTES);
 
 function b64url(bytes) {
   let s = "";
