@@ -11,7 +11,7 @@
 
 import { runMorse } from "../core/engine.js";
 import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_URL } from "../core/providers.js";
-import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf } from "../core/mod.js";
+import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf, byCreated, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
 import { asReviewed } from "../core/summary.js"; // installs keep only the reviewed code
 import { clipAdd } from "../core/clipboard.js"; // God mode clipboard
@@ -140,7 +140,7 @@ async function dispatch(msg, port) {
   if (BAR_REQUESTS.has(msg.type)) return handleBarRequest({ ...msg, url: here.url, scope: undefined }); // history per caller's site
   if (CONTROL_REQUESTS.has(msg.type)) return handleControlRequest({ ...msg, url: here.url }, port); // user control (control-host.js)
   if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg); // onboarding hook
-  if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, msg.url); // gallery hook: Mods for this site
+  if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, here.url); // gallery hook: Mods for this site
   switch (msg.type) {
     case "hello": {
       const b = await backend();
@@ -150,14 +150,21 @@ async function dispatch(msg, port) {
         settings: await getPrefs(), voice: await voiceInfo() };
     }
     case "mods.list":
-      return Object.values(await allMods()).filter(m => modMatches(m, here)).sort((a, b) => a.created.localeCompare(b.created)); // hardening: caller's page
+      return Object.values(await allMods()).filter(m => modMatches(m, here)).sort(byCreated); // hardening: caller's page
     case "mods.save": {
+      // As on the desktop (daemon/connector.js): a page's Morse changes only
+      // mods for its own page, and can't widen where one runs.
+      const id = msg.draft ? msg.draft.id : validateMod(msg.mod).id;
+      const existing = id ? (await allMods())[id] : null;
+      if (existing && !modMatches(existing, here)) throw new Error("That mod belongs to another app or site");
       if (msg.draft) return putMod(createMod({ ...msg.draft, url: here.url, app: null, model: msg.draft.model || (await backend()).label })); // hardening: filed under the caller's page
+      if (!saveKeepsScope(msg.mod.match, existing?.match, here)) throw new Error("That mod is for another app or site");
       return putMod(msg.mod);
     }
     case "mods.delete": {
       await serialized(async () => { // hardening: serialized
         const all = await allMods();
+        if (all[msg.modId] && !modMatches(all[msg.modId], here)) throw new Error("That mod belongs to another app or site");
         delete all[msg.modId];
         await set("mods", all);
       });
@@ -218,8 +225,16 @@ async function dispatch(msg, port) {
         port.__gens.delete(msg.genId);
       }
     }
-    case "capture":
-      return chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
+    case "capture": {
+      // captureVisibleTab takes whatever tab is in front: only while that is
+      // the one asking, so a picture of another tab never goes to the model.
+      const showing = async () => (await chrome.tabs.query({ active: true, windowId: tab.windowId }))[0]?.id === tab.id;
+      const away = "Morse can only take a picture of this tab while it is in front. Switch back to it and try again.";
+      if (!(await showing())) throw new Error(away);
+      const shot = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
+      if (!(await showing())) throw new Error(away);
+      return shot;
+    }
     case "clip.start":
     case "clip.stop":
     case "clip.cancel":

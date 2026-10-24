@@ -43,14 +43,19 @@ export async function parseImport(source) {
 
 // What gets saved when someone installs: on, marked as imported, with where
 // it came from and when. A backup keeps each mod's on/off state and history.
-// Never an edit list (asReviewed, core/summary.js), and a link or a mod file
-// never brings older versions: what you install is the code the review showed.
+// Never an edit list (asReviewed, core/summary.js): what you install is the
+// code the review showed.
 export function prepareInstall(mod, { kind = "link", where = {}, now = new Date() } = {}) {
   const m = asReviewed(validateMod({ ...mod }));
-  if (kind !== "backup") delete m.history;
+  // Hand-written files may leave out the dates the lists sort and show by.
+  for (const k of ["created", "updated"]) if (typeof m[k] !== "string" || isNaN(Date.parse(m[k]))) m[k] = now.toISOString();
   const match = m.match && Array.isArray(m.match.hosts) ? m.match : { hosts: [hostOf(where.url)], app: where.app || null };
   if (kind === "backup") {
     return { ...m, match, enabled: m.enabled !== false, imported: true, importedFrom: m.imported ? m.importedFrom || "link" : "backup", importedAt: m.importedAt || now.toISOString() };
   }
-  return { ...m, match, enabled: true, imported: true, importedFrom: kind === "mod" ? "file" : "link", importedAt: now.toISOString() };
+  // A shared mod is the code its review showed: no earlier versions ride along
+  // (History could bring back code nobody reviewed). Links never carry one
+  // (stripLocal), so this only drops what a hand-made link or file added.
+  const { history, ...shared } = m;
+  return { ...shared, match, enabled: true, imported: true, importedFrom: kind === "mod" ? "file" : "link", importedAt: now.toISOString() };
 }

@@ -88,6 +88,7 @@ await shot("110-for-this-site.png");
 
 // ---- 111: Try it
 await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').click();
+await ui(".modal .card [data-a=install]").click(); // Try it, after the same review as Install…
 await page.locator(".morse-sleep").waitFor();
 await page.locator(".morse-sleep").click();
 await page.locator(".morse-sleep span").waitFor();
