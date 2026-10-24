@@ -1,9 +1,9 @@
 // Extension host: the same requests the desktop connector serves, backed by
 // chrome.* APIs. Mod JS runs through chrome.userScripts (exempt from page CSP);
-// without it, Morph falls back to the page's main world, which strict-CSP
+// without it, Morse falls back to the page's main world, which strict-CSP
 // sites block.
 
-import { runMorph } from "./core/engine.js";
+import { runMorse } from "./core/engine.js";
 import { resolveSettings, settingsLabel, DEFAULT_SETTINGS } from "./core/providers.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf } from "./core/mod.js";
 import { wrapModCode } from "./core/kit.js";
@@ -25,7 +25,7 @@ export function userScriptsAvailable() {
 
 async function execIn(target, code) {
   if (userScriptsAvailable()) {
-    const [r] = await chrome.userScripts.execute({ target, js: [{ code }], world: "USER_SCRIPT", worldId: "morph", injectImmediately: true });
+    const [r] = await chrome.userScripts.execute({ target, js: [{ code }], world: "USER_SCRIPT", worldId: "morse", injectImmediately: true });
     if (r?.error) return { ok: false, error: r.error };
     return r?.result;
   }
@@ -36,7 +36,7 @@ async function execIn(target, code) {
   });
   const res = r?.result;
   if (res && !res.ok && /unsafe-eval|Content Security Policy/i.test(res.error)) {
-    res.error = "This site blocks injected scripts. Turn on “Allow User Scripts” for Morph in chrome://extensions.";
+    res.error = "This site blocks injected scripts. Turn on “Allow User Scripts” for Morse in chrome://extensions.";
   }
   return res;
 }
@@ -45,7 +45,7 @@ async function exec(target, modId, js) {
   const res = (await execIn(target, wrapModCode(modId, js))) || { ok: false, error: "no result" };
   if (!res.ok) return res;
   await new Promise(r => setTimeout(r, 600));
-  const errs = (await execIn(target, `morph.__errors(${JSON.stringify(modId)})`)) || [];
+  const errs = (await execIn(target, `morse.__errors(${JSON.stringify(modId)})`)) || [];
   return errs.length ? { ok: false, error: String(errs[0]).split("\n")[0] } : { ok: true };
 }
 
@@ -53,7 +53,7 @@ async function allMods() { return get("mods", {}); }
 async function putMod(m) { validateMod(m); const all = await allMods(); all[m.id] = m; await set("mods", all); return m; }
 
 function download(filename, url) {
-  return chrome.downloads.download({ url, filename: `morph/${filename}`, saveAs: false }).then(() => ({ path: `Downloads/morph/${filename}` }));
+  return chrome.downloads.download({ url, filename: `morse/${filename}`, saveAs: false }).then(() => ({ path: `Downloads/morse/${filename}` }));
 }
 function textUrl(text, mime) {
   const bytes = new TextEncoder().encode(text);
@@ -92,10 +92,10 @@ async function dispatch(msg, port) {
     case "exec":
       return exec(target, msg.modId, msg.js);
     case "off":
-      await execIn(target, `globalThis.morph && morph.__off(${JSON.stringify(msg.modId)})`);
+      await execIn(target, `globalThis.morse && morse.__off(${JSON.stringify(msg.modId)})`);
       return true;
     case "generate": {
-      const res = await runMorph({
+      const res = await runMorse({
         settings: await settings(),
         request: msg.request,
         context: msg.context,
@@ -115,7 +115,7 @@ async function dispatch(msg, port) {
     case "share": {
       const slug = msg.mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "mod";
       if (msg.kind === "link") return { link: await encodeShare(msg.mod) };
-      if (msg.kind === "json") return download(`${slug}.morph.json`, textUrl(JSON.stringify(msg.mod, null, 2), "application/json"));
+      if (msg.kind === "json") return download(`${slug}.morse.json`, textUrl(JSON.stringify(msg.mod, null, 2), "application/json"));
       if (msg.kind === "userscript") return download(`${slug}.user.js`, textUrl(toUserscript(msg.mod), "text/javascript"));
       throw new Error(`Unknown share kind ${msg.kind}`);
     }
@@ -129,7 +129,7 @@ async function dispatch(msg, port) {
 }
 
 chrome.runtime.onConnect.addListener(port => {
-  if (port.name !== "morph") return;
+  if (port.name !== "morse") return;
   port.onMessage.addListener(async msg => {
     try { port.postMessage({ reply: msg.id, result: await dispatch(msg, port) }); }
     catch (e) { try { port.postMessage({ reply: msg.id, error: e.message || String(e) }); } catch {} }
@@ -153,7 +153,7 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
 });
 
 chrome.commands.onCommand.addListener(async cmd => {
-  if (cmd !== "toggle-morph") return;
+  if (cmd !== "toggle-morse") return;
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab) chrome.tabs.sendMessage(tab.id, { morphToggle: true }).catch(() => {});
+  if (tab) chrome.tabs.sendMessage(tab.id, { morseToggle: true }).catch(() => {});
 });

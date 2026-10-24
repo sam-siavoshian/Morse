@@ -1,11 +1,11 @@
-// One morph: prompt the model, stream CSS to the page as it arrives, run the JS,
+// One request: prompt the model, stream CSS to the page as it arrives, run the JS,
 // and if the JS throws, show the model the error and try once more.
 
 import { buildMessages } from "./prompt.js";
 import { parseModResponse, completeCssPrefix } from "./parse.js";
 import { streamChat } from "./providers.js";
 
-export async function runMorph({ settings, request, context, exec, emit, signal, maxAttempts = 2 }) {
+export async function runMorse({ settings, request, context, exec, emit, signal, maxAttempts = 2 }) {
   let previous = null;
   let last = null;
   const started = Date.now();

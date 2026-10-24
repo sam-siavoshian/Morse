@@ -1,11 +1,11 @@
-// Mods and settings on disk: ~/.morph/mods/<id>.json and ~/.morph/config.json.
+// Mods and settings on disk: ~/.morse/mods/<id>.json and ~/.morse/config.json.
 
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { modMatches, validateMod } from "../core/mod.js";
 
-export const HOME = process.env.MORPH_HOME || path.join(os.homedir(), ".morph");
+export const HOME = process.env.MORSE_HOME || path.join(os.homedir(), ".morse");
 const MODS = path.join(HOME, "mods");
 const CONFIG = path.join(HOME, "config.json");
 

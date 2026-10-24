@@ -1,17 +1,17 @@
-/* Morph runtime: the part that lives inside the app being customized.
+/* Morse runtime: the part that lives inside the app being customized.
  *
  * It is host-agnostic. Before it loads, the host defines
- * globalThis.__morphHost = { send(msg), onMessage(fn) }:
+ * globalThis.__morseHost = { send(msg), onMessage(fn) }:
  *   - the browser extension (content script <-> service worker)
  *   - the desktop connector (CDP binding <-> Node daemon), for Electron apps
  *
  * UI lives in a closed shadow root so the app's CSS can't touch it and ours
  * can't leak out. */
 (() => {
-  if (globalThis.__morphRuntime) return;
-  const host = globalThis.__morphHost;
+  if (globalThis.__morseRuntime) return;
+  const host = globalThis.__morseHost;
   if (!host) return;
-  globalThis.__morphRuntime = true;
+  globalThis.__morseRuntime = true;
 
   // ---------------------------------------------------------------- rpc
   let seq = 0;
@@ -43,10 +43,10 @@
 
   // ---------------------------------------------------------------- dom
   const hostEl = document.createElement("div");
-  hostEl.setAttribute("data-morph-ui", "");
+  hostEl.setAttribute("data-morse-ui", "");
   hostEl.style.cssText = "all:initial;position:fixed;inset:0;pointer-events:none;z-index:2147483647;";
   let DEBUG = false;
-  try { DEBUG = !!localStorage.getItem("morph:debug"); } catch {}
+  try { DEBUG = !!localStorage.getItem("morse:debug"); } catch {}
   const root = hostEl.attachShadow({ mode: DEBUG ? "open" : "closed" });
   root.innerHTML = `<style>${CSS()}</style>
     <canvas class="fx"></canvas>
@@ -57,7 +57,7 @@
         <div class="logo">${"<i></i>".repeat(9)}</div>
         <div class="chip target" hidden><span></span><button class="x" title="Clear target">×</button></div>
         <input class="in" placeholder="Describe a change…" spellcheck="false" autocomplete="off">
-        <button class="go" title="Morph (Enter)">↵</button>
+        <button class="go" title="Morse (Enter)">↵</button>
       </div>
       <div class="status">
         <span class="hint"></span>
@@ -126,7 +126,7 @@
       for (const c of [...n.childNodes]) {
         if (c.nodeType === 3) { if (c.textContent.length > 120) c.textContent = c.textContent.slice(0, 120) + "…"; continue; }
         if (c.nodeType !== 1) { c.remove(); continue; }
-        if (/^(SCRIPT|STYLE|NOSCRIPT)$/.test(c.tagName) || c.hasAttribute("data-morph-ui")) { c.remove(); continue; }
+        if (/^(SCRIPT|STYLE|NOSCRIPT)$/.test(c.tagName) || c.hasAttribute("data-morse-ui")) { c.remove(); continue; }
         if (c.tagName === "svg") { c.innerHTML = ""; }
         for (const a of [...c.attributes]) {
           if (a.name === "style" || a.name.startsWith("on")) c.removeAttribute(a.name);
@@ -147,7 +147,7 @@
     const lines = [];
     const q = "header,nav,main,aside,footer,[role=main],[role=navigation],h1,h2,h3,button,[role=button],input,textarea,form";
     for (const el of document.querySelectorAll(q)) {
-      if (el.closest("[data-morph-ui]") || !el.getClientRects().length) continue;
+      if (el.closest("[data-morse-ui]") || !el.getClientRects().length) continue;
       const t = (el.getAttribute("aria-label") || el.innerText || el.getAttribute("placeholder") || "").trim().split("\n")[0].slice(0, 40);
       lines.push(`${selectorFor(el)}${t ? `  "${t}"` : ""}`);
       if (lines.length >= 40) break;
@@ -186,9 +186,9 @@
 
   // ---------------------------------------------------------------- mods
   function setCss(id, css) {
-    let s = document.head.querySelector(`style[data-morph-css="${id}"]`);
+    let s = document.head.querySelector(`style[data-morse-css="${id}"]`);
     if (!css) { s?.remove(); return; }
-    if (!s) { s = document.createElement("style"); s.setAttribute("data-morph-css", id); document.head.append(s); }
+    if (!s) { s = document.createElement("style"); s.setAttribute("data-morse-css", id); document.head.append(s); }
     if (s.textContent !== css) s.textContent = css;
   }
   async function applyMod(m) {
@@ -318,7 +318,7 @@
     if (a === "again") { S.phase = "idle"; bar.classList.remove("err"); input.disabled = false; input.focus(); setHint(); }
   });
 
-  // ---------------------------------------------------------------- morph
+  // ---------------------------------------------------------------- morse
   async function capture() {
     const vis = hostEl.style.visibility;
     hostEl.style.visibility = "hidden";
@@ -473,7 +473,7 @@
     openModal(`
       <header><b>${esc(m.title)}</b><small>“${esc(m.prompt || m.request)}”</small><button data-a="close">×</button></header>
       <label>CSS</label><textarea class="code" data-k="css" spellcheck="false">${esc(m.css)}</textarea>
-      <label>JavaScript <span class="dim">runs with the <code>morph</code> helpers</span></label><textarea class="code" data-k="js" spellcheck="false">${esc(m.js)}</textarea>
+      <label>JavaScript <span class="dim">runs with the <code>morse</code> helpers</span></label><textarea class="code" data-k="js" spellcheck="false">${esc(m.js)}</textarea>
       <footer><button data-a="close">Cancel</button><button class="primary" data-a="save">${saved ? "Save & re-run" : "Apply"}</button></footer>`);
     modal.querySelector("[data-a=save]").onclick = async () => {
       const css = modal.querySelector("[data-k=css]").value, js = modal.querySelector("[data-k=js]").value;
@@ -489,13 +489,13 @@
     const card = await renderCard(m);
     const link = await call("share", { mod: m, kind: "link" }).catch(() => null);
     openModal(`
-      <header><b>Share “${esc(m.title)}”</b><small>Anyone with Morph or a userscript manager can install it.</small><button data-a="close">×</button></header>
+      <header><b>Share “${esc(m.title)}”</b><small>Anyone with Morse or a userscript manager can install it.</small><button data-a="close">×</button></header>
       ${card ? `<img class="cardimg" src="${card}" alt="Before and after">` : ""}
       ${link ? `<div class="link"><input readonly value="${esc(link.link)}"><button data-a="copy" class="primary">Copy link</button></div>` : ""}
       <div class="exports">
         ${card ? `<button data-a="png">Card image</button>` : ""}
         ${S.draft?.id === m.id && S.draft.clip ? `<button data-a="clip">Clip (${esc(S.draft.clip.kind)})</button>` : ""}
-        <button data-a="json">.morph.json</button>
+        <button data-a="json">.morse.json</button>
         <button data-a="user">.user.js for Tampermonkey</button>
         <button data-a="tweet">Post…</button>
       </div>
@@ -509,7 +509,7 @@
       if (a === "user") done(await call("share", { mod: m, kind: "userscript" }));
       if (a === "clip") done(S.draft.clip);
       if (a === "tweet") {
-        const text = `I added “${m.title}” to ${S.appName || location.host} in one sentence: “${m.prompt}”\n\nMade with Morph`;
+        const text = `I added “${m.title}” to ${S.appName || location.host} in one sentence: “${m.prompt}”\n\nMade with Morse`;
         call("open", { url: `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link?.link || "")}` });
       }
     };
@@ -522,7 +522,7 @@
   }
   function showImport() {
     openModal(`
-      <header><b>Import a mod</b><small>Paste a Morph share link or .morph.json contents.</small><button data-a="close">×</button></header>
+      <header><b>Import a mod</b><small>Paste a Morse share link or .morse.json contents.</small><button data-a="close">×</button></header>
       <textarea class="code" data-k="src" spellcheck="false" placeholder="https://…/install.html#m=…"></textarea>
       <footer><button data-a="close">Cancel</button><button class="primary" data-a="go">Import</button></footer>`);
     modal.querySelector("[data-a=go]").onclick = async () => {
@@ -597,7 +597,7 @@
     // wordmark
     const lx = W - 168, ly = 632;
     for (let i = 0; i < 9; i++) { g.fillStyle = ["#0e4429", "#26a641", "#39d353", "#006d32", "#39d353", "#26a641", "#39d353", "#006d32", "#0e4429"][i]; g.fillRect(lx + (i % 3) * 9, ly + Math.floor(i / 3) * 9, 7, 7); }
-    g.fillStyle = "#e6edf3"; g.font = "700 22px ui-sans-serif, system-ui, sans-serif"; g.fillText("morph", lx + 36, ly + 22);
+    g.fillStyle = "#e6edf3"; g.font = "700 22px ui-sans-serif, system-ui, sans-serif"; g.fillText("morse", lx + 36, ly + 22);
     g.fillStyle = "#8b949e"; g.font = "500 15px ui-sans-serif, system-ui, sans-serif"; g.fillText("customize any app in one sentence", 40, ly + 20);
     return c.toDataURL("image/png");
   }
@@ -749,8 +749,8 @@
 
   // ---------------------------------------------------------------- keys
   addEventListener("keydown", e => {
-    const morphKey = e.code === "Space" && ((e.altKey && !e.ctrlKey && !e.metaKey) || (e.ctrlKey && e.shiftKey));
-    if (morphKey) { e.preventDefault(); e.stopPropagation(); S.open ? closeBar() : openBar(); return; }
+    const morseKey = e.code === "Space" && ((e.altKey && !e.ctrlKey && !e.metaKey) || (e.ctrlKey && e.shiftKey));
+    if (morseKey) { e.preventDefault(); e.stopPropagation(); S.open ? closeBar() : openBar(); return; }
     if (e.code === "KeyM" && e.altKey && e.shiftKey) { e.preventDefault(); panel.hidden ? openPanel() : (panel.hidden = true); return; }
     if (e.key === "Escape") { if (!modal.hidden) modal.hidden = true; else if (!panel.hidden) panel.hidden = true; else if (S.open) closeBar(); }
   }, true);
@@ -767,8 +767,8 @@
       const hello = await call("hello", { url: location.href });
       S.label = hello.label; S.mode = hello.mode; S.app = hello.app || null; S.appName = hello.appName || hello.app || null;
       await syncMods();
-      if (!hello.quiet) toast(`Morph is ready · press ${HOTKEY}`);
-    } catch (e) { console.warn("[morph] host unavailable", e); }
+      if (!hello.quiet) toast(`Morse is ready · press ${HOTKEY}`);
+    } catch (e) { console.warn("[morse] host unavailable", e); }
     // single-page apps change URL without reloading
     setInterval(() => { if (location.href !== S.url) { S.url = location.href; syncMods().catch(() => {}); } }, 1000);
   })();

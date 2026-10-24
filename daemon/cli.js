@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// morph: customize any app in one sentence.
+// morse: customize any app in one sentence.
 
 import { Connector } from "./connector.js";
 import { resolveApp, launchApp, quitApp, KNOWN_APPS } from "./apps.js";
@@ -10,7 +10,7 @@ import { resolveSettings, settingsLabel, DEFAULT_SETTINGS } from "../core/provid
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
 
 const G = s => `\x1b[32m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`;
-const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morph")} ${D("· customize any app in one sentence")}\n${G("▪▫▪")}`;
+const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· customize any app in one sentence")}\n${G("▪▫▪")}`;
 
 function flags(argv) {
   const out = { _: [], rest: [] };
@@ -38,26 +38,26 @@ async function settingsFrom(f) {
 const HELP = `${LOGO}
 
 ${B("Desktop apps")} (Electron / Chromium)
-  morph launch <app|path>   relaunch an app with Morph attached
+  morse launch <app|path>   relaunch an app with Morse attached
                             apps: ${Object.keys(KNOWN_APPS).join(", ")}
       --restart             quit the app first if it's running
       --name <name>         name mods are filed under (defaults to the app)
       --port <n>            debugging port (default 9333)
       -- <args>             extra arguments for the app
-  morph attach --port <n>   attach to an app already started with --remote-debugging-port
-  morph fuses <app|path>    show the app's Electron fuses and what they mean for Morph
+  morse attach --port <n>   attach to an app already started with --remote-debugging-port
+  morse fuses <app|path>    show the app's Electron fuses and what they mean for Morse
 
 ${B("Mods")}
-  morph mods                list installed mods
-  morph rm <id>             delete a mod
-  morph export <id>         write .morph.json, .user.js and a share link
-  morph install <link|file> install a shared mod
+  morse mods                list installed mods
+  morse rm <id>             delete a mod
+  morse export <id>         write .morse.json, .user.js and a share link
+  morse install <link|file> install a shared mod
 
 ${B("Model")}
-  morph model               show the model Morph will use
-  morph model --provider ollama|openai|demo --model <name> [--base-url <url>] [--api-key <key>]
+  morse model               show the model Morse will use
+  morse model --provider ollama|openai|demo --model <name> [--base-url <url>] [--api-key <key>]
 
-In any attached window: ${B("Alt+Space")} to morph · ${B("Alt+Shift+M")} for your mods.
+In any attached window: ${B("Alt+Space")} to morse · ${B("Alt+Shift+M")} for your mods.
 Websites: load the browser extension (npm run build, then load dist/extension).`;
 
 async function main() {
@@ -65,7 +65,7 @@ async function main() {
   const f = flags(rest);
   switch (cmd) {
     case "launch": {
-      if (!f._[0]) throw new Error("Which app? e.g. morph launch spotify");
+      if (!f._[0]) throw new Error("Which app? e.g. morse launch spotify");
       const app = resolveApp(f._[0]);
       if (f.name) Object.assign(app, { id: String(f.name).toLowerCase(), name: f.name });
       const port = Number(f.port || 9333);
@@ -121,7 +121,7 @@ async function main() {
       const mod = (await listMods()).find(m => m.id === f._[0]);
       if (!mod) throw new Error("No mod " + f._[0]);
       const slug = mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      console.log(await writeExport(`${slug}.morph.json`, JSON.stringify(mod, null, 2)));
+      console.log(await writeExport(`${slug}.morse.json`, JSON.stringify(mod, null, 2)));
       console.log(await writeExport(`${slug}.user.js`, toUserscript(mod)));
       console.log(await encodeShare(mod));
       break;

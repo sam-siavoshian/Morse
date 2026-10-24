@@ -1,27 +1,27 @@
 // The desktop connector: attaches to every window of a Chromium/Electron app
-// over CDP, injects the Morph runtime, and serves its requests (generate, run,
+// over CDP, injects the Morse runtime, and serves its requests (generate, run,
 // save, share). CDP evaluation is exempt from the page's CSP, so mods work in
 // locked-down apps too.
 
-import { readFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { CDPSession, listTargets } from "./cdp.js";
 import { modsFor, saveMod, deleteMod, writeExport } from "./store.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
-import { runMorph } from "../core/engine.js";
+import { runMorse } from "../core/engine.js";
 import { settingsLabel } from "../core/providers.js";
 import { Recorder } from "./record.js";
 
-const RUNTIME = readFileSync(new URL("../runtime/runtime.js", import.meta.url), "utf8");
+import { bundleRuntime } from "../runtime/bundle.js";
+const RUNTIME = bundleRuntime();
 
 const SHIM = `(() => {
-  if (window.top !== window || globalThis.__morphHost) return;
-  const send = globalThis.__morphHostSend;
+  if (window.top !== window || globalThis.__morseHost) return;
+  const send = globalThis.__morseHostSend;
   if (typeof send !== "function") return;
   const subs = [];
-  globalThis.__morphHost = { send: m => send(JSON.stringify(m)), onMessage: fn => subs.push(fn) };
-  globalThis.__morphHostReceive = m => subs.forEach(f => f(m));
+  globalThis.__morseHost = { send: m => send(JSON.stringify(m)), onMessage: fn => subs.push(fn) };
+  globalThis.__morseHostReceive = m => subs.forEach(f => f(m));
 })();`;
 
 // Page.addScriptToEvaluateOnNewDocument runs before <html> exists.
@@ -55,21 +55,21 @@ export class Connector {
     s.on("close", () => this.pages.delete(target.id));
     // Listen before injecting: the runtime says hello during evaluation.
     s.on("Runtime.bindingCalled", p => {
-      if (p.name !== "__morphHostSend") return;
+      if (p.name !== "__morseHostSend") return;
       let msg;
       try { msg = JSON.parse(p.payload); } catch { return; }
       this.handle(s, p.executionContextId, msg);
     });
     await s.send("Runtime.enable");
     await s.send("Page.enable");
-    await s.send("Runtime.addBinding", { name: "__morphHostSend" });
+    await s.send("Runtime.addBinding", { name: "__morseHostSend" });
     await s.send("Page.addScriptToEvaluateOnNewDocument", { source: BOOT });
     await s.send("Runtime.evaluate", { expression: BOOT });
     this.log(`  ✓ attached to ${target.title || target.url}`);
   }
 
   push(s, ctx, msg) {
-    return s.send("Runtime.evaluate", { expression: `globalThis.__morphHostReceive && __morphHostReceive(${JSON.stringify(msg)})`, contextId: ctx }).catch(() => {});
+    return s.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive(${JSON.stringify(msg)})`, contextId: ctx }).catch(() => {});
   }
 
   async exec(s, ctx, modId, js) {
@@ -79,7 +79,7 @@ export class Connector {
     if (!res.ok) return res;
     // Errors inside watch/on callbacks surface a moment later.
     await new Promise(r2 => setTimeout(r2, 600));
-    const e = await s.send("Runtime.evaluate", { expression: `morph.__errors(${JSON.stringify(modId)})`, contextId: ctx, returnByValue: true });
+    const e = await s.send("Runtime.evaluate", { expression: `morse.__errors(${JSON.stringify(modId)})`, contextId: ctx, returnByValue: true });
     const errs = e.result?.value || [];
     return errs.length ? { ok: false, error: errs[0].split("\n")[0] } : { ok: true };
   }
@@ -111,11 +111,11 @@ export class Connector {
       case "exec":
         return this.exec(s, ctx, msg.modId, msg.js);
       case "off":
-        await s.send("Runtime.evaluate", { expression: `globalThis.morph && morph.__off(${JSON.stringify(msg.modId)})`, contextId: ctx });
+        await s.send("Runtime.evaluate", { expression: `globalThis.morse && morse.__off(${JSON.stringify(msg.modId)})`, contextId: ctx });
         return true;
       case "generate": {
         const t0 = Date.now();
-        const res = await runMorph({
+        const res = await runMorse({
           settings: this.settings,
           request: msg.request,
           context: { ...msg.context, app: this.app?.name || msg.context.app },
@@ -154,7 +154,7 @@ export class Connector {
       case "share": {
         const slug = msg.mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "mod";
         if (msg.kind === "link") return { link: await encodeShare(msg.mod) };
-        if (msg.kind === "json") return { path: await writeExport(`${slug}.morph.json`, JSON.stringify(msg.mod, null, 2)) };
+        if (msg.kind === "json") return { path: await writeExport(`${slug}.morse.json`, JSON.stringify(msg.mod, null, 2)) };
         if (msg.kind === "userscript") return { path: await writeExport(`${slug}.user.js`, toUserscript(msg.mod)) };
         throw new Error(`Unknown share kind ${msg.kind}`);
       }

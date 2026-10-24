@@ -1,9 +1,9 @@
 // Drives the desktop connector end to end and screenshots each feature.
-// Real path: `morph launch` relaunches a Chromium app window with a debugging
+// Real path: `morse launch` relaunches a Chromium app window with a debugging
 // port, attaches over CDP, injects the runtime. Playwright only plays the
 // user (keyboard + mouse) and takes screenshots.
 //
-//   DISPLAY=:99 MORPH_HOME=/tmp/mh node demo/shoot-desktop.js
+//   DISPLAY=:99 MORSE_HOME=/tmp/mh node demo/shoot-desktop.js
 
 import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
@@ -13,27 +13,27 @@ const { chromium } = createRequire(import.meta.url)("playwright"); // preinstall
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const OUT = path.join(root, "docs", "screenshots");
-const HOME = process.env.MORPH_HOME;
+const HOME = process.env.MORSE_HOME;
 const CHROME = process.env.CHROME || chromium.executablePath();
 const PORT = 9333;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 await fs.mkdir(OUT, { recursive: true });
 
 const log = [];
-const morph = spawn("node", [path.join(root, "daemon/cli.js"), "launch", CHROME, "--name", "Tunes", "--port", String(PORT), "--",
+const morse = spawn("node", [path.join(root, "daemon/cli.js"), "launch", CHROME, "--name", "Tunes", "--port", String(PORT), "--",
   "--app=http://127.0.0.1:8789/demo/sites/tunes/", `--user-data-dir=${path.join(HOME, "app-profile")}`,
   "--no-first-run", "--window-size=1280,800", "--window-position=0,0", "--no-sandbox", "--force-device-scale-factor=1"],
   { env: { ...process.env, FORCE_COLOR: "1" } });
-morph.stdout.on("data", d => { log.push(String(d)); process.stdout.write(d); });
-morph.stderr.on("data", d => process.stderr.write(d));
+morse.stdout.on("data", d => { log.push(String(d)); process.stdout.write(d); });
+morse.stderr.on("data", d => process.stderr.write(d));
 
 await sleep(2500);
 const browser = await chromium.connectOverCDP(`http://127.0.0.1:${PORT}`);
 const page = browser.contexts()[0].pages().find(p => p.url().includes("tunes"));
-await page.evaluate(() => localStorage.setItem("morph:debug", "1"));
+await page.evaluate(() => localStorage.setItem("morse:debug", "1"));
 await page.reload();
 await sleep(1500);
-const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morph-ui][data-status]")?.dataset.status || "null"));
+const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui][data-status]")?.dataset.status || "null"));
 const shot = async name => { await page.screenshot({ path: path.join(OUT, name) }); console.log("  📸", name); };
 async function waitFor(pred, ms = 15000) {
   const end = Date.now() + ms;
@@ -90,7 +90,7 @@ await page.keyboard.press("Escape");
 await sleep(300);
 
 // 8. Use the new feature
-const moon = page.locator(".morph-sleep");
+const moon = page.locator(".morse-sleep");
 await moon.click();
 await sleep(600);
 await shot("08-the-new-feature-works.png");
@@ -126,12 +126,12 @@ await page.keyboard.press("Escape");
 await browser.close();
 const cdp = await chromium.connectOverCDP(`http://127.0.0.1:${PORT}`);
 await (await cdp.newBrowserCDPSession()).send("Browser.close").catch(() => {});
-morph.kill();
+morse.kill();
 await sleep(1500);
-const morph2 = spawn("node", [path.join(root, "daemon/cli.js"), "launch", CHROME, "--name", "Tunes", "--port", String(PORT), "--",
+const morse2 = spawn("node", [path.join(root, "daemon/cli.js"), "launch", CHROME, "--name", "Tunes", "--port", String(PORT), "--",
   "--app=http://127.0.0.1:8789/demo/sites/tunes/", `--user-data-dir=${path.join(HOME, "app-profile")}`,
   "--no-first-run", "--window-size=1280,800", "--window-position=0,0", "--no-sandbox", "--force-device-scale-factor=1"]);
-morph2.stdout.on("data", d => process.stdout.write(d));
+morse2.stdout.on("data", d => process.stdout.write(d));
 await sleep(3500);
 const b2 = await chromium.connectOverCDP(`http://127.0.0.1:${PORT}`);
 const p2 = b2.contexts()[0].pages().find(p => p.url().includes("tunes"));
@@ -139,6 +139,6 @@ await sleep(1200);
 await p2.screenshot({ path: path.join(OUT, "13-still-there-after-restart.png") });
 console.log("  📸 13-still-there-after-restart.png");
 await (await b2.newBrowserCDPSession()).send("Browser.close").catch(() => {});
-morph2.kill();
+morse2.kill();
 await fs.writeFile(path.join(HOME, "desktop-log.txt"), log.join(""));
 process.exit(0);

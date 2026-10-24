@@ -3,7 +3,7 @@ import { promises as fs } from "node:fs";
 import { createRequire } from "node:module";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
-const [src, out, title = "morph"] = process.argv.slice(2);
+const [src, out, title = "morse"] = process.argv.slice(2);
 const text = await fs.readFile(src, "utf8");
 const esc = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 const COLORS = { 1: "font-weight:700;color:#f0f6fc", 2: "color:#6e7681", 31: "color:#f85149", 32: "color:#3fb950" };

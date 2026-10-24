@@ -51,12 +51,12 @@ export async function inspectFuses(appPath) {
   return { electron: true, file, ...wire };
 }
 
-// What the fuses mean for Morph, in one line each.
+// What the fuses mean for Morse, in one line each.
 export function fuseVerdict(info) {
   if (!info.electron) return ["No Electron fuse wire found. If this is Chromium-based, --remote-debugging-port should still work."];
   const f = info.fuses, out = [];
   out.push("Renderer injection uses --remote-debugging-port (a Chromium switch, not gated by fuses).");
   if (f.EnableNodeCliInspectArguments === "disabled") out.push("Main-process --inspect is fused off; deep main-process mods are unavailable (renderer mods are unaffected).");
-  if (f.EnableEmbeddedAsarIntegrityValidation === "enabled") out.push("ASAR integrity is on: patching app files would break the app. Morph never patches files, so this is fine.");
+  if (f.EnableEmbeddedAsarIntegrityValidation === "enabled") out.push("ASAR integrity is on: patching app files would break the app. Morse never patches files, so this is fine.");
   return out;
 }

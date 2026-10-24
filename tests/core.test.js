@@ -4,15 +4,15 @@ import http from "node:http";
 import { parseModResponse, completeCssPrefix } from "../core/parse.js";
 import { createMod, encodeShare, decodeShare, toUserscript, modMatches } from "../core/mod.js";
 import { streamChat, resolveSettings } from "../core/providers.js";
-import { runMorph } from "../core/engine.js";
+import { runMorse } from "../core/engine.js";
 import { buildMessages } from "../core/prompt.js";
 import { readFuseWire, fuseVerdict } from "../daemon/fuses.js";
 
 test("parses title, css and js from a full reply", () => {
-  const r = parseModResponse("TITLE: Big buttons\n```css\nbutton{font-size:20px}\n```\n```js\nmorph.toast('hi')\n```");
+  const r = parseModResponse("TITLE: Big buttons\n```css\nbutton{font-size:20px}\n```\n```js\nmorse.toast('hi')\n```");
   assert.equal(r.title, "Big buttons");
   assert.equal(r.css.trim(), "button{font-size:20px}");
-  assert.equal(r.js.trim(), "morph.toast('hi')");
+  assert.equal(r.js.trim(), "morse.toast('hi')");
   assert.ok(r.cssComplete && r.jsComplete);
 });
 
@@ -39,7 +39,7 @@ test("share links round-trip and drop local state", async () => {
 });
 
 test("rejects links that aren't mods", async () => {
-  await assert.rejects(decodeShare("https://x/install.html"), /Not a Morph share link/);
+  await assert.rejects(decodeShare("https://x/install.html"), /Not a Morse share link/);
 });
 
 test("matching by host and by app", () => {
@@ -52,7 +52,7 @@ test("matching by host and by app", () => {
 });
 
 test("userscript export is valid JS with a Tampermonkey header", () => {
-  const mod = createMod({ title: "Hi", prompt: "say hi", css: "a{}", js: "morph.toast('hi');", url: "https://example.com/" });
+  const mod = createMod({ title: "Hi", prompt: "say hi", css: "a{}", js: "morse.toast('hi');", url: "https://example.com/" });
   const us = toUserscript(mod);
   assert.match(us, /\/\/ @match {8}\*:\/\/example\.com\/\*/);
   assert.doesNotThrow(() => new Function(us));
@@ -111,7 +111,7 @@ test("auto falls back to demo when no model is running", async () => {
 test("engine streams css, runs js, and repairs a failing first attempt", async () => {
   const events = [];
   let runs = 0;
-  const res = await runMorph({
+  const res = await runMorse({
     settings: { provider: "demo" },
     request: "add a sleep timer",
     context: { url: "app://tunes", title: "Tunes" },
@@ -122,7 +122,7 @@ test("engine streams css, runs js, and repairs a failing first attempt", async (
   assert.equal(res.attempts, 2);
   assert.equal(runs, 2);
   assert.ok(events.some(e => e.type === "phase" && e.phase === "fixing"));
-  assert.ok(events.some(e => e.type === "css" && e.css.includes(".morph-sleep")));
+  assert.ok(events.some(e => e.type === "css" && e.css.includes(".morse-sleep")));
 });
 
 test("reads an Electron fuse wire", () => {

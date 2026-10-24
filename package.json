@@ -1,11 +1,11 @@
 {
-  "name": "morph",
+  "name": "morse",
   "version": "0.1.0",
   "description": "Customize any app in one sentence. Point at it, say what you want, a local model rewrites it live.",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "morph": "daemon/cli.js"
+    "morse": "daemon/cli.js"
   },
   "engines": {
     "node": ">=22"

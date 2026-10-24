@@ -4,6 +4,7 @@
 import { promises as fs } from "node:fs";
 import { deflateSync } from "node:zlib";
 import path from "node:path";
+import { bundleRuntime } from "../runtime/bundle.js";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const out = path.join(root, "dist", "extension");
@@ -14,7 +15,7 @@ await fs.mkdir(path.join(out, "icons"), { recursive: true });
 
 for (const f of await fs.readdir(path.join(root, "extension"))) await fs.copyFile(path.join(root, "extension", f), path.join(out, f));
 for (const f of await fs.readdir(path.join(root, "core"))) await fs.copyFile(path.join(root, "core", f), path.join(out, "core", f));
-await fs.copyFile(path.join(root, "runtime", "runtime.js"), path.join(out, "runtime.js"));
+await fs.writeFile(path.join(out, "runtime.js"), bundleRuntime());
 
 // The logo: a 3x3 contribution-graph grid.
 const GRID = ["0e4429", "39d353", "26a641", "006d32", "39d353", "26a641", "39d353", "26a641", "0e4429"];

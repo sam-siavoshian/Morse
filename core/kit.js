@@ -1,10 +1,10 @@
-// The `morph` helper object that generated mod code runs against. It is
+// The `morse` helper object that generated mod code runs against. It is
 // injected as source text into whichever world executes mods (the page's main
 // world over CDP, the USER_SCRIPT world in the extension, or a userscript).
 // Every resource a mod creates is tracked so turning the mod off fully undoes it.
 
-function installMorphKit() {
-  if (globalThis.morph && globalThis.morph.__kit) return;
+function installMorseKit() {
+  if (globalThis.morse && globalThis.morse.__kit) return;
   const mods = new Map();
 
   function ctxFor(id) {
@@ -17,12 +17,12 @@ function installMorphKit() {
   function guard(c, fn) {
     return function (...args) {
       try { return fn.apply(this, args); }
-      catch (e) { c.errors.push(String(e && e.stack || e)); console.warn("[morph]", c.id, e); }
+      catch (e) { c.errors.push(String(e && e.stack || e)); console.warn("[morse]", c.id, e); }
     };
   }
 
   function api(c) {
-    const tag = el => { if (el && el.setAttribute) el.setAttribute("data-morph", c.id); return el; };
+    const tag = el => { if (el && el.setAttribute) el.setAttribute("data-morse", c.id); return el; };
     const m = {
       watch(selector, fn) {
         const seen = new WeakSet();
@@ -30,9 +30,9 @@ function installMorphKit() {
         const scan = () => {
           let list;
           try { list = document.querySelectorAll(selector); } catch (e) { c.errors.push(String(e)); return; }
-          // Never match Morph's own elements: a mod that inserts a button next to
+          // Never match Morse's own elements: a mod that inserts a button next to
           // "header button" must not then match the button it inserted.
-          for (const el of list) if (!seen.has(el) && !el.closest("[data-morph-ui],[data-morph]")) { seen.add(el); run(el); }
+          for (const el of list) if (!seen.has(el) && !el.closest("[data-morse-ui],[data-morse]")) { seen.add(el); run(el); }
         };
         scan();
         let queued = false;
@@ -86,12 +86,12 @@ function installMorphKit() {
         return [...document.querySelectorAll(selector)].find(e => (e.textContent || "").toLowerCase().includes(needle)) || null;
       },
       store: {
-        get(k, d = null) { try { const v = localStorage.getItem(`morph:${c.id}:${k}`); return v == null ? d : JSON.parse(v); } catch { return d; } },
-        set(k, v) { try { localStorage.setItem(`morph:${c.id}:${k}`, JSON.stringify(v)); } catch {} },
+        get(k, d = null) { try { const v = localStorage.getItem(`morse:${c.id}:${k}`); return v == null ? d : JSON.parse(v); } catch { return d; } },
+        set(k, v) { try { localStorage.setItem(`morse:${c.id}:${k}`, JSON.stringify(v)); } catch {} },
       },
       toast(message) {
         const t = document.createElement("div");
-        t.setAttribute("data-morph-ui", "");
+        t.setAttribute("data-morse-ui", "");
         t.textContent = message;
         Object.assign(t.style, {
           position: "fixed", left: "50%", bottom: "96px", transform: "translateX(-50%)", zIndex: 2147483646,
@@ -106,7 +106,7 @@ function installMorphKit() {
     return m;
   }
 
-  globalThis.morph = {
+  globalThis.morse = {
     __kit: 1,
     // Runs mod code; returns { ok, error } synchronously.
     __run(id, fn) {
@@ -126,7 +126,7 @@ function installMorphKit() {
       if (!c) return true;
       c.observers.forEach(o => o.disconnect());
       c.cleanups.reverse().forEach(f => { try { f(); } catch {} });
-      document.querySelectorAll(`[data-morph="${id}"]`).forEach(e => e.remove());
+      document.querySelectorAll(`[data-morse="${id}"]`).forEach(e => e.remove());
       mods.delete(id);
       return true;
     },
@@ -134,9 +134,9 @@ function installMorphKit() {
   };
 }
 
-export const KIT_SOURCE = `(${installMorphKit.toString()})();`;
+export const KIT_SOURCE = `(${installMorseKit.toString()})();`;
 
 // Wraps mod code so it can run without eval (page CSP friendly).
 export function wrapModCode(id, js) {
-  return `${KIT_SOURCE}\nmorph.__run(${JSON.stringify(id)}, function (morph) {\n${js}\n});`;
+  return `${KIT_SOURCE}\nmorse.__run(${JSON.stringify(id)}, function (morse) {\n${js}\n});`;
 }

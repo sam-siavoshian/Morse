@@ -14,7 +14,7 @@ $("mods").innerHTML = st.mods.length
   : `<li class="empty">None yet.</li>`;
 for (const k of ["provider", "baseUrl", "model", "apiKey"]) if (st.saved[k]) $(k).value = st.saved[k];
 
-$("go").onclick = async () => { await chrome.tabs.sendMessage(tab.id, { morphToggle: true }).catch(() => {}); window.close(); };
+$("go").onclick = async () => { await chrome.tabs.sendMessage(tab.id, { morseToggle: true }).catch(() => {}); window.close(); };
 $("save").onclick = async () => {
   const settings = {};
   for (const k of ["provider", "baseUrl", "model", "apiKey"]) if ($(k).value) settings[k] = $(k).value;

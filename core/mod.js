@@ -12,7 +12,7 @@ export function newId() {
 export function createMod({ id, title, prompt, css, js, url, app, target, model }) {
   const now = new Date().toISOString();
   return {
-    morph: 1,
+    morse: 1,
     id: id || newId(),
     title: title || prompt.slice(0, 48),
     prompt,
@@ -42,30 +42,30 @@ export function modMatches(mod, { url, app }) {
 }
 
 export function validateMod(m) {
-  if (!m || typeof m !== "object" || m.morph !== 1) throw new Error("Not a Morph mod");
+  if (!m || typeof m !== "object" || m.morse !== 1) throw new Error("Not a Morse mod");
   for (const k of ["id", "title", "prompt"]) if (typeof m[k] !== "string") throw new Error(`Mod is missing ${k}`);
   if (typeof m.css !== "string" || typeof m.js !== "string") throw new Error("Mod has no code");
   return m;
 }
 
 // Tampermonkey / Violentmonkey compatible export: the helper kit is inlined so
-// the script runs without Morph installed.
+// the script runs without Morse installed.
 export function toUserscript(mod) {
   const matches = (mod.match?.hosts || ["*"]).map(h => h === "file" ? "file:///*" : h === "*" ? "*://*/*" : `*://${h}/*`);
   const header = [
     "// ==UserScript==",
     `// @name         ${mod.title}`,
-    `// @namespace    morph`,
+    `// @namespace    morse`,
     `// @version      1`,
     `// @description  ${mod.prompt.replace(/\n/g, " ")}`,
     ...matches.map(m => `// @match        ${m}`),
     "// @grant        none",
     "// @run-at       document-idle",
     "// ==/UserScript==",
-    "// Made with Morph: customize any app in one sentence.",
+    "// Made with Morse: customize any app in one sentence.",
   ].join("\n");
-  const css = mod.css.trim() ? `morph.css(${JSON.stringify(mod.css)});\n` : "";
-  return `${header}\n\n${KIT_SOURCE}\nmorph.__run(${JSON.stringify(mod.id)}, function (morph) {\n${css}${mod.js}\n});\n`;
+  const css = mod.css.trim() ? `morse.css(${JSON.stringify(mod.css)});\n` : "";
+  return `${header}\n\n${KIT_SOURCE}\nmorse.__run(${JSON.stringify(mod.id)}, function (morse) {\n${css}${mod.js}\n});\n`;
 }
 
 // Share links carry the whole mod in the URL fragment (never sent to a server).
@@ -77,7 +77,7 @@ export async function encodeShare(mod) {
 
 export async function decodeShare(link) {
   const frag = String(link).split("#m=")[1];
-  if (!frag) throw new Error("Not a Morph share link");
+  if (!frag) throw new Error("Not a Morse share link");
   const json = new TextDecoder().decode(await inflate(unb64url(frag)));
   return validateMod(JSON.parse(json));
 }

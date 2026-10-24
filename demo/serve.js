@@ -15,7 +15,7 @@ const server = async (req, res) => {
     const body = await fs.readFile(file);
     const headers = { "Content-Type": TYPES[path.extname(file)] || "application/octet-stream" };
     // Parley ships a strict CSP, like most real web apps: no inline or eval'd
-    // script. Morph's mods still run there (userScripts world / CDP).
+    // script. Morse's mods still run there (userScripts world / CDP).
     if (p.startsWith("/demo/sites/parley/")) headers["Content-Security-Policy"] = "script-src 'self'";
     res.writeHead(200, headers).end(body);
   } catch { res.writeHead(404).end("not found"); }

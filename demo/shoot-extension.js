@@ -16,9 +16,9 @@ const OUT = path.join(root, "docs", "screenshots");
 const EXT = path.join(root, "dist", "extension");
 const SITE = { parley: "http://127.0.0.1:8787/demo/sites/parley/", byte: "http://127.0.0.1:8788/demo/sites/byte/" };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morph-ext-"));
+const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-ext-"));
 
-async function browserWithMorph(name) {
+async function browserWithMorse(name) {
   const ctx = await chromium.launchPersistentContext(path.join(tmp, name), {
     headless: false, viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1,
     args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, "--no-sandbox"],
@@ -34,14 +34,14 @@ async function browserWithMorph(name) {
 async function open(ctx, url) {
   const page = await ctx.newPage();
   await page.goto(url);
-  await page.evaluate(() => localStorage.setItem("morph:debug", "1"));
+  await page.evaluate(() => localStorage.setItem("morse:debug", "1"));
   await page.reload();
   await sleep(900);
   return page;
 }
 const helpers = page => ({
   shot: async name => { await page.screenshot({ path: path.join(OUT, name) }); console.log("  📸", name); },
-  status: () => page.evaluate(() => JSON.parse(document.querySelector("[data-morph-ui][data-status]")?.dataset.status || "null")),
+  status: () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui][data-status]")?.dataset.status || "null")),
   async waitFor(pred, ms = 15000) {
     const end = Date.now() + ms;
     while (Date.now() < end) { const s = await this.status().catch(() => null); if (s && pred(s)) return s; await sleep(40); }
@@ -49,7 +49,7 @@ const helpers = page => ({
   },
 });
 
-const { ctx, sw, id, setup } = await browserWithMorph("main");
+const { ctx, sw, id, setup } = await browserWithMorse("main");
 
 // 20. Installed, with user scripts allowed
 await setup.screenshot({ path: path.join(OUT, "20-extension-installed.png") });
@@ -89,7 +89,7 @@ await chat.keyboard.press("Enter");
 await C.waitFor(s => s.phase === "result");
 await chat.keyboard.press("Enter");
 await sleep(400);
-await chat.locator(".morph-copy").click();
+await chat.locator(".morse-copy").click();
 await sleep(300);
 await C.shot("25-web-new-button.png");
 
@@ -129,7 +129,7 @@ const { mods } = await sw.evaluate(() => chrome.storage.local.get("mods"));
 await ctx.close();
 
 // 30-32. Someone else opens the share link in a fresh browser and installs it
-const friend = await browserWithMorph("friend");
+const friend = await browserWithMorse("friend");
 const install = await friend.ctx.newPage();
 await install.goto(link.replace(/^https:\/\/[^/]+\/RRAA/, "http://127.0.0.1:8787"));
 await sleep(800);
@@ -146,18 +146,18 @@ await theirs.screenshot({ path: path.join(OUT, "32-friend-gets-the-mod.png") });
 console.log("  📸 32-friend-gets-the-mod.png");
 await friend.ctx.close();
 
-// 33. The .user.js export runs with no Morph at all (Tampermonkey path)
+// 33. The .user.js export runs with no Morse at all (Tampermonkey path)
 const plain = await chromium.launch();
 // Userscript managers inject outside the page's CSP; bypassCSP is the equivalent here.
 const pp = await plain.newPage({ viewport: { width: 1280, height: 800 }, bypassCSP: true });
 await pp.goto(SITE.parley);
 const wc = Object.values(mods).find(m => /word/i.test(m.title));
 await pp.addScriptTag({ content: toUserscript(wc) });
-await pp.locator("textarea").fill("Userscripts exported from Morph run anywhere a userscript manager does.");
+await pp.locator("textarea").fill("Userscripts exported from Morse run anywhere a userscript manager does.");
 await pp.locator("textarea").dispatchEvent("input");
 await sleep(300);
-await pp.screenshot({ path: path.join(OUT, "33-userscript-runs-without-morph.png") });
-console.log("  📸 33-userscript-runs-without-morph.png");
+await pp.screenshot({ path: path.join(OUT, "33-userscript-runs-without-morse.png") });
+console.log("  📸 33-userscript-runs-without-morse.png");
 await plain.close();
 await fs.writeFile(path.join(tmp, "link.txt"), link);
 console.log("share link:", link.slice(0, 90) + "…");

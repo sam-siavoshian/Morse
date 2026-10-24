@@ -1,4 +1,4 @@
-// Records the morph as it happens (CDP screencast) and turns it into a GIF and
+// Records the change as it happens (CDP screencast) and turns it into a GIF and
 // an MP4 with ffmpeg: the clip people post.
 
 import { promises as fs } from "node:fs";
@@ -22,7 +22,7 @@ export class Recorder {
     this.s.on("Page.screencastFrame", this.onFrame);
     await this.s.send("Page.startScreencast", { format: "jpeg", quality: 80, maxWidth: 1280, maxHeight: 800, everyNthFrame: 1 });
   }
-  // Drop frames from a window (Morph hides its UI for before/after shots).
+  // Drop frames from a window (Morse hides its UI for before/after shots).
   drop(from, to) { this.frames = this.frames.filter(f => f.t < from || f.t > to); }
   stop() {
     this.stopped = true;
@@ -43,7 +43,7 @@ export class Recorder {
     }
     list.push(`file 'f${String(this.frames.length - 1).padStart(4, "0")}.jpg'`);
     await fs.writeFile(path.join(dir, "frames.txt"), list.join("\n"));
-    const gif = path.join(dir, "morph.gif"), mp4 = path.join(dir, "morph.mp4");
+    const gif = path.join(dir, "morse.gif"), mp4 = path.join(dir, "morse.mp4");
     const base = ["-y", "-f", "concat", "-safe", "0", "-i", "frames.txt"];
     try {
       await ffmpeg(dir, [...base, "-vf", "fps=25,scale=960:-2:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer", gif]);

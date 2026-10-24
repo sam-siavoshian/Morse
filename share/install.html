@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Install a Morph mod</title>
+<title>Install a Morse mod</title>
 <style>
   :root { --bg: #0d1117; --panel: #161b22; --line: #30363d; --fg: #e6edf3; --dim: #8b949e; --g1: #0e4429; --g2: #006d32; --g3: #26a641; --g4: #39d353; }
   * { box-sizing: border-box; }
@@ -28,7 +28,7 @@
 </head>
 <body>
 <main>
-  <div class="brand"><div class="logo"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>morph</div>
+  <div class="brand"><div class="logo"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>morse</div>
   <div id="root"><p id="status">Reading mod…</p></div>
 </main>
 <script type="module">
@@ -43,7 +43,7 @@
       <p class="prompt">“${esc(mod.prompt)}”</p>
       <div class="meta"><span>for ${esc(where)}</span>${mod.css.trim() ? "<span>css</span>" : ""}${mod.js.trim() ? "<span>js</span>" : ""}${mod.model ? `<span>made with ${esc(mod.model)}</span>` : ""}</div>
       <div class="actions">
-        <button class="primary" id="install">Install in Morph</button>
+        <button class="primary" id="install">Install in Morse</button>
         <a class="btn" id="userscript" download>Download .user.js</a>
       </div>
       <p id="status"></p>
@@ -55,19 +55,19 @@
     us.download = `${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.user.js`;
     const status = document.getElementById("status");
     document.getElementById("install").onclick = () => {
-      if (document.documentElement.dataset.morphExtension) {
-        window.postMessage({ morphInstall: location.href }, "*");
+      if (document.documentElement.dataset.morseExtension) {
+        window.postMessage({ morseInstall: location.href }, "*");
         status.textContent = "Installing…";
       } else {
         navigator.clipboard?.writeText(location.href);
         status.innerHTML = mod.match.app
-          ? `Link copied. Run <code>morph install "&lt;link&gt;"</code>, or paste it into Morph → Mods → Import.`
-          : `Morph isn't installed in this browser. Link copied: paste it into Morph → Mods → Import, or use the .user.js with Tampermonkey.`;
+          ? `Link copied. Run <code>morse install "&lt;link&gt;"</code>, or paste it into Morse → Mods → Import.`
+          : `Morse isn't installed in this browser. Link copied: paste it into Morse → Mods → Import, or use the .user.js with Tampermonkey.`;
       }
     };
     window.addEventListener("message", e => {
-      if (e.source !== window || !e.data?.morphInstalled) return;
-      const r = e.data.morphInstalled;
+      if (e.source !== window || !e.data?.morseInstalled) return;
+      const r = e.data.morseInstalled;
       status.innerHTML = r.error ? `<span class="err">${esc(r.error)}</span>` : `✓ Installed “${esc(r.title)}”. Open ${esc(where)} to see it.`;
     });
   } catch (e) {

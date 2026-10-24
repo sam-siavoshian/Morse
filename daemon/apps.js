@@ -1,4 +1,4 @@
-// Finds and relaunches desktop apps with a debugging port so Morph can attach.
+// Finds and relaunches desktop apps with a debugging port so Morse can attach.
 // Relaunching (not patching the app bundle) keeps code signatures and ASAR
 // integrity intact and survives app updates.
 
@@ -40,7 +40,7 @@ export function resolveApp(idOrPath) {
     const p = c.includes("/") || c.includes("\\") ? (existsSync(c) ? c : null) : which(c);
     if (p) return { id: idOrPath.toLowerCase(), name: known.name, path: p, browser: !!known.browser };
   }
-  throw new Error(`${known.name} isn't installed in the usual place. Pass its path instead: morph launch /path/to/${known.name}`);
+  throw new Error(`${known.name} isn't installed in the usual place. Pass its path instead: morse launch /path/to/${known.name}`);
 }
 
 export function executableFor(appPath) {
@@ -61,7 +61,7 @@ export function quitApp(app) {
 
 export function launchApp(app, port, extraArgs = []) {
   const args = [`--remote-debugging-port=${port}`, "--remote-allow-origins=http://127.0.0.1", ...extraArgs];
-  if (app.browser) args.push(`--user-data-dir=${path.join(os.homedir(), ".morph", "browser-profile")}`, "--no-first-run");
+  if (app.browser) args.push(`--user-data-dir=${path.join(os.homedir(), ".morse", "browser-profile")}`, "--no-first-run");
   // Discord on Windows starts through its updater.
   const argv = P === "win32" && /Update\.exe$/i.test(app.path) ? ["--processStart", "Discord.exe", "--process-start-args", args.join(" ")] : args;
   const child = spawn(executableFor(app.path), argv, { detached: true, stdio: "ignore" });
