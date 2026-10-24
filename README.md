@@ -1,32 +1,32 @@
 # ▦ Morse
 
-**Customize any app in one sentence.** Press a hotkey, point at something, say what you want. A local model writes the change and Morse applies it to the running app, live, while you watch.
+**Change any app or website in your own words.** Press a shortcut, point at something and say what you want. Morse makes the change right there in the app while you watch. Save it as a mod, turn it off any time, or share it with a link.
 
 ![Morse adding a sleep timer to a music player](docs/screenshots/clip-sleep-timer.gif)
 
-*Recorded automatically by Morse. The model in this clip is the built-in demo model (see [Status](#status)); everything after generation — streaming, injection, self-repair, recording — is the real pipeline.*
+*Recorded automatically by Morse. The model in this clip is the built-in demo model (see [Status](#status)). Everything after the model writes the change is real: showing it as it is written, fixing mistakes, saving and recording.*
 
-Most software you use every day is a web app or an Electron app: Chromium plus JavaScript. Morse injects a small runtime into those apps, sends what you pointed at and what you said to a local model, and runs the CSS/JS it writes back. It's Tampermonkey/Vencord/Spicetify, except you don't write the script.
+Most apps you use every day are websites, or desktop apps built from web pages (such as Slack, Spotify, Discord and VS Code). Morse adds a small layer inside those apps. It sends what you pointed at and what you said to a model on your computer, then runs the change the model writes back. It's like Tampermonkey or Vencord, except you don't write the code.
 
 ```
-press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ local model streams CSS+JS ▦▦▦ ─▶ applied live ─▶ Keep · Share
+press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the model writes the change ▦▦▦ ─▶ you see it ─▶ Save · Share
 ```
 
 ## What works today (v0.1)
 
 | | |
 |---|---|
-| **Point or describe** | Hover-highlight picker, or skip pointing and describe a page-wide change |
-| **The magic moment** | The target dissolves into a contribution-graph grid; the model's tokens rain through it as glyphs; the grid sweeps away to reveal the change |
-| **Live CSS** | CSS is applied *while the model is still writing it* (complete rules only) |
-| **Self-repair** | If the generated JS throws, Morse shows the model the error and retries once |
-| **Persistent mods** | Saved per site (web) or per app (desktop), re-applied on reload and on app restart |
-| **Undo / edit** | Every mod is fully reversible (all elements, listeners, timers, observers are tracked) and editable |
-| **Share** | Before/after share card (1200×675), auto-recorded GIF + MP4 clip (desktop), share link with the mod in the URL fragment, `.morse.json`, and a `.user.js` that runs in Tampermonkey without Morse |
-| **Web** | Chrome extension (MV3). Mod JS runs through `chrome.userScripts`, so it works on strict-CSP sites |
-| **Desktop** | `morse launch spotify` relaunches an Electron app with a debugging port and attaches over CDP. No patching of app files: code signatures and ASAR integrity stay intact, updates don't break it |
-| **Local models** | Ollama (auto-detected) or any OpenAI-compatible server (llama.cpp, LM Studio, vLLM, or a cloud key if you choose) |
-| **God mode** | Direct editing with no model call: hide, move, resize, rename, recolor, retype, duplicate. Page tools (dark/light mode, text size, hide ads, focus mode). Capture an element in one app and rebuild it in another |
+| **Point or describe** | Point at one thing to change it, or skip pointing and describe a change to the whole page |
+| **Watch it happen** | What you pointed at turns into a grid of small squares while the model writes, then the grid sweeps away to show the change |
+| **See it as it's written** | Changes to how things look show up while the model is still writing |
+| **Fixes its own mistakes** | If the new code fails, Morse shows the model what went wrong and tries once more |
+| **Mods stay** | Saved for each site or app, and back every time you open it, even after a restart |
+| **Undo and edit** | Every mod can be removed completely, and you can edit its code |
+| **Share** | A before-and-after image, a short clip (desktop apps), a share link that carries the mod, a mod file, and a version that runs in Tampermonkey without Morse |
+| **Websites** | A Chrome extension. With Allow User Scripts on, mods work even on sites with strict security settings |
+| **Desktop apps** | `morse launch spotify` reopens the app with Morse connected. Morse never changes the app's files, so app updates don't break it |
+| **Your own model** | Ollama (found automatically) or any OpenAI-compatible server (llama.cpp, LM Studio, vLLM, or a cloud key if you choose) |
+| **Edit tools** | Change things directly, with no model: hide, move, resize, rename, recolor, change text size, duplicate. Page tools for dark or light mode, text size, hiding ads and focus mode. Capture something in one app and rebuild it in another |
 
 ## Screenshots
 
@@ -37,11 +37,11 @@ All captured by [`demo/shoot-extension.js`](demo/shoot-extension.js) and [`demo/
 | | |
 |---|---|
 | ![](docs/screenshots/02-point-at-anything.png) **Point** at anything (⌥Space) | ![](docs/screenshots/03-say-what-you-want.png) **Say** what you want |
-| ![](docs/screenshots/04-the-magic-moment.png) **The magic moment**: grid + token glyphs over the target, live code in the bar | ![](docs/screenshots/05-fixes-its-own-bugs.png) **Self-repair**: first attempt threw, the error goes back to the model |
-| ![](docs/screenshots/06-done.png) **Done**, with Keep / Undo / Code / Share | ![](docs/screenshots/08-the-new-feature-works.png) **The new feature works** (sleep timer counting down) |
-| ![](docs/screenshots/09-css-applies-while-it-writes.png) **Page-wide**: CSS applies while the model writes it | ![](docs/screenshots/10-covers-done.png) Result |
-| ![](docs/screenshots/11-mods-panel.png) **Mods panel** (⌥⇧M): toggle, share, edit, delete | ![](docs/screenshots/12-edit-the-code.png) **Edit the code** |
-| ![](docs/screenshots/07-share.png) **Share** modal | ![](docs/screenshots/13-still-there-after-restart.png) **Quit and relaunch the app**: mods come back |
+| ![](docs/screenshots/04-the-magic-moment.png) **Watch it happen**: a grid over what you pointed at, the code as it is written in the bar | ![](docs/screenshots/05-fixes-its-own-bugs.png) **Fixes its own mistakes**: the first try failed, so the error goes back to the model |
+| ![](docs/screenshots/06-done.png) **Done**: save it, undo it, see the code or share it | ![](docs/screenshots/08-the-new-feature-works.png) **The new feature works** (sleep timer counting down) |
+| ![](docs/screenshots/09-css-applies-while-it-writes.png) **Whole page**: the new look shows up while the model writes it | ![](docs/screenshots/10-covers-done.png) Result |
+| ![](docs/screenshots/11-mods-panel.png) **Mods panel** (⌥⇧M): turn mods on and off, share, edit, delete | ![](docs/screenshots/12-edit-the-code.png) **Edit the code** |
+| ![](docs/screenshots/07-share.png) **Share** | ![](docs/screenshots/13-still-there-after-restart.png) **Quit and relaunch the app**: mods come back |
 
 ![](docs/screenshots/14-share-card.png)
 *The generated share card: same crop before and after, the change outlined.*
@@ -54,36 +54,36 @@ All captured by [`demo/shoot-extension.js`](demo/shoot-extension.js) and [`demo/
 |---|---|
 | ![](docs/screenshots/21-web-point.png) Point at a chat composer (the bar dodges your cursor) | ![](docs/screenshots/22-web-working.png) Working |
 | ![](docs/screenshots/24-web-word-count-works.png) Live word count, on a site with `script-src 'self'` | ![](docs/screenshots/25-web-new-button.png) "add a button that copies the conversation as markdown" |
-| ![](docs/screenshots/26-news-before.png) A cluttered news site | ![](docs/screenshots/27-news-restyling-live.png) Restyling live, mid-stream |
+| ![](docs/screenshots/26-news-before.png) A cluttered news site | ![](docs/screenshots/27-news-restyling-live.png) The new look, applied while the model writes |
 | ![](docs/screenshots/29-news-after.png) After | ![](docs/screenshots/28-news-share.png) Share |
 | ![](docs/screenshots/30-share-link.png) A friend opens the share link (code shown before install) | ![](docs/screenshots/32-friend-gets-the-mod.png) …installs it, and gets the mod |
-| ![](docs/screenshots/33-userscript-runs-without-morse.png) The `.user.js` export running **without Morse** | ![](docs/screenshots/34-popup.png) Toolbar popup: model settings |
+| ![](docs/screenshots/33-userscript-runs-without-morse.png) The Tampermonkey version running **without Morse** | ![](docs/screenshots/34-popup.png) The toolbar popup: mods on this site and model settings |
 | ![](docs/screenshots/20-extension-installed.png) Installed with "Allow User Scripts" on | |
 
-### Voice, hotkeys and the command bar
+### Voice, shortcuts and the bar
 
 Captured by [`demo/shoot-bar.js`](demo/shoot-bar.js) from [`demo/bar-playground.html`](demo/bar-playground.html) (the real runtime, a fake host, Chromium's fake microphone).
 
 | | |
 |---|---|
-| ![](docs/screenshots/60-voice.png) **Hold ⌥Space to talk**: live transcript, radar-pixel level meter | ![](docs/screenshots/61-settings.png) **Settings** (⌘, in the bar) |
-| ![](docs/screenshots/62-hotkey-recorder.png) **Hotkey recorder** refuses ⌘Q, Alt+F4 and friends | ![](docs/screenshots/63-suggestions.png) **Suggestions** for what you pointed at (Tab, ←/→) |
-| ![](docs/screenshots/64-shortcuts.png) **`?`** shows the shortcuts you actually have | ![](docs/screenshots/65-cancelled.png) **Esc** stops the model; nothing is left behind |
+| ![](docs/screenshots/60-voice.png) **Hold ⌥Space to talk**: your words appear as you speak | ![](docs/screenshots/61-settings.png) **Settings** (⌘, in the bar) |
+| ![](docs/screenshots/62-hotkey-recorder.png) **Change a shortcut**: Morse refuses ⌘Q, Alt+F4 and other keys that would cause trouble | ![](docs/screenshots/63-suggestions.png) **Suggestions** for what you pointed at (Tab, ←/→) |
+| ![](docs/screenshots/64-shortcuts.png) **`?`** shows the shortcuts you have | ![](docs/screenshots/65-cancelled.png) **Esc** stops Morse. Nothing is left behind |
 
-- **Voice.** Tap the mic, or hold the hotkey (tap opens, hold talks). The Web Speech API is used where it works (Chrome websites); everywhere else (Electron apps) Morse records and the host transcribes with OpenAI `gpt-4o-mini-transcribe` (your key: `OPENAI_API_KEY` or `"voice": { "openaiKey" }` in `~/.morse/config.json`) or a local `whisper-cli` / `whisper` on your PATH. "Send after a pause" is a setting.
-- **Hotkeys** for open, push to talk, Mods panel and God mode, recorded from `event.code`. Defaults: ⌥Space (Ctrl+Shift+Space on Windows, where Alt+Space opens the window menu). Settings live in `~/.morse/settings.json` (desktop) or Chrome sync (extension).
-- **Command-bar basics:** ↑/↓ prompt history per app, Shift+Enter for a new line, Esc or ⌘. to stop, Tab stays in the bar, focus returns to where you were, and closed means closed: only your hotkeys are ever taken from the page.
+- **Voice.** Tap the mic, or hold the shortcut (tap opens Morse, hold talks). On websites in Chrome, Chrome turns speech into text. In desktop apps, Morse records you and the Morse helper turns it into text with OpenAI `gpt-4o-mini-transcribe` (your key: `OPENAI_API_KEY` or `"voice": { "openaiKey" }` in `~/.morse/config.json`) or a local `whisper-cli` / `whisper` on your PATH. Turn on "Send after a pause" in Settings to send when you stop talking.
+- **Shortcuts** to open Morse, push to talk, open the Mods panel and show the edit tools. Change them in Settings. Defaults: ⌥Space (Ctrl+Shift+Space on Windows, where Alt+Space opens the window menu). Settings live in `~/.morse/settings.json` (desktop) or Chrome sync (extension).
+- **In the bar:** ↑/↓ for your past requests in this app, Shift+Enter for a new line, Esc or ⌘. to stop. When the bar closes, you are back where you were, and the app gets every key except your Morse shortcuts.
 
-### God mode: edit directly, no model
+### Edit tools: change things directly, no model
 
-Point at something and an edit toolbar anchors to it. Every key is a tool while it has focus: **H** hide, **M** move (drag or arrow keys, Shift locks the axis / nudges 10px), **R** resize, **T** edit text in place, **C** color (text, fill, border), **F** size and weight, **D** duplicate, **⇧C** capture, **A** ask, or just start typing to describe a change instead. A session's edits become one "Manual edits" mod with undo/redo (⌘Z / ⇧⌘Z), compiled by [`core/edits.js`](core/edits.js) into the same plain CSS/JS a model would write, so it persists, shares and exports like any mod.
+Point at something and the edit tools appear next to it. Press ⌘E (Ctrl+E) to use them from the keyboard: **H** hide, **M** move (drag or use the arrow keys; Shift keeps it straight or moves 10px), **R** resize, **T** edit text in place, **C** color (text, fill, border), **F** text size and weight, **D** duplicate, **⇧C** capture, **A** describe a change instead. Or just start typing to describe a change. Your edits are saved as one "Direct edits" mod with undo and redo (⌘Z / ⇧⌘Z). In the code this is "God mode": the edits are compiled by [`core/edits.js`](core/edits.js) into the same plain CSS/JS a model would write, so it persists, shares and exports like any mod.
 
 | | |
 |---|---|
-| ![](docs/screenshots/50-godmode-toolbar.png) The toolbar, with shortcuts in every tooltip | ![](docs/screenshots/53-rename.png) **T**: rename the headline in place |
-| ![](docs/screenshots/51-move.png) **M**: move a fixed popup out of the way (Shift locks the axis) | ![](docs/screenshots/52-recolor.png) **C**: recolor the masthead |
-| ![](docs/screenshots/54-dark-mode.png) Page tools: hide ads, then a smart-invert dark mode that keeps media and already-dark parts as they are | ![](docs/screenshots/55-capture.png) **⇧C**: capture the masthead to the Morse clipboard |
-| ![](docs/screenshots/56-reuse.png) In a different app, pick it from the bar: the model rebuilds that look natively | |
+| ![](docs/screenshots/50-godmode-toolbar.png) The edit tools, with the shortcut in every tooltip | ![](docs/screenshots/53-rename.png) **T**: rename the headline in place |
+| ![](docs/screenshots/51-move.png) **M**: move a pop-up out of the way | ![](docs/screenshots/52-recolor.png) **C**: recolor the masthead |
+| ![](docs/screenshots/54-dark-mode.png) Page tools: hide ads, then dark mode, which leaves photos, videos and already-dark parts as they are | ![](docs/screenshots/55-capture.png) **⇧C**: capture the masthead |
+| ![](docs/screenshots/56-reuse.png) In a different app, pick it from the bar and the model rebuilds that look there | |
 
 ## Status
 
@@ -95,25 +95,42 @@ Honest accounting of what was verified and how:
 
 ## Install
 
+You need Node 22 or newer. To record clips of your changes, you also need `ffmpeg`.
+
 ```bash
 git clone https://github.com/sam-siavoshian/RRAA morse && cd morse
-npm run build                       # builds dist/extension (no dependencies)
+npm run build                       # builds the Chrome extension into dist/extension (nothing to download)
 
-# a local model (optional — without one Morse runs in demo mode)
+# a model on your computer (optional: without one, Morse uses its demo model)
 ollama pull qwen2.5-coder:7b
 ```
 
-**Web:** `chrome://extensions` → Developer mode → Load unpacked → `dist/extension`. Then in Morse's details, turn on **Allow User Scripts** (needed for JS mods on sites with a strict CSP; CSS mods work without it). Press **⌥Space** (Alt+Space) on any page.
+**Websites (Chrome):**
+
+1. Open `chrome://extensions` and turn on **Developer mode**.
+2. Click **Load unpacked** and choose the `dist/extension` folder.
+3. Open Morse's details and turn on **Allow User Scripts**. Mods that only change the look work without it. Mods that add buttons or features need it on some sites.
+4. Open any page and press **⌥Space** (Alt+Space).
 
 **Desktop apps:**
 
 ```bash
-node daemon/cli.js launch spotify --restart   # or slack, discord, vscode, notion, obsidian, a path…
-node daemon/cli.js mods
-node daemon/cli.js model --provider openai --base-url http://127.0.0.1:8080 --model qwen2.5-coder
+node daemon/cli.js launch spotify --restart   # or slack, discord, vscode, notion, obsidian, or the app's path
+node daemon/cli.js mods                        # list your mods
+node daemon/cli.js model --provider openai --base-url http://127.0.0.1:8080 --model qwen2.5-coder   # use a different model
 ```
 
-Requires Node 22+. For clips, `ffmpeg` on your PATH.
+`launch` reopens the app with Morse connected. Keep the terminal open while you use it.
+
+## How to use
+
+1. Press **⌥Space** (Alt+Space; Ctrl+Shift+Space on Windows). The Morse bar opens.
+2. Point at the thing you want to change and click it. To change the whole page, skip this step.
+3. Describe what you want, like "add a sleep timer" or "make this easier to read", and press Enter. Or hold ⌥Space and say it.
+4. Watch the change happen. Click **Save** to keep it, or **Undo** to remove it.
+5. Press **⌥⇧M** to open the Mods panel. There you can turn mods on and off, share them, edit their code or delete them.
+
+Small changes don't need the model. Point at something and use the edit tools that appear next to it, or click the page tools button in the bar for dark mode, bigger text and more. Press `?` in the bar to see every shortcut.
 
 ## How it works
 
@@ -134,7 +151,9 @@ Requires Node 22+. For clips, `ffmpeg` on your PATH.
 ```
 
 - **One runtime, two hosts.** The same `runtime.js` runs in websites (extension) and desktop apps (CDP); only the transport differs.
-- **The `morse` kit is the secret sauce for small models.** `morse.watch(selector, fn)` survives React re-renders; `morse.el(...)` creates elements that are tracked for undo; errors inside callbacks are captured and fed back to the model. Short, concrete API → fewer tokens, fewer mistakes.
+- **No patching.** On the web, mod JS runs through `chrome.userScripts`, so it works on strict-CSP sites. On the desktop, `morse launch` relaunches an Electron app with `--remote-debugging-port` and attaches over CDP; app files, code signatures and ASAR integrity stay intact.
+- **Live and reversible.** CSS is applied while the model streams it (complete rules only). Every element, listener, timer and observer a mod creates is tracked, so turning it off removes all of it.
+- **The `morse` kit is what makes small models work.** `morse.watch(selector, fn)` survives React re-renders; `morse.el(...)` creates elements that are tracked for undo; errors inside callbacks are captured and fed back to the model. Short, concrete API → fewer tokens, fewer mistakes.
 - **Context, not the whole DOM.** The model gets the picked element's trimmed HTML, a stable selector that avoids hashed class names, its ancestors, a 40-line page outline, and the theme colors. Small prompts keep local models fast.
 - **Mods are data.** A mod is a JSON document (prompt, match, CSS, JS). Share links carry it in the URL fragment, so no server ever sees it.
 
