@@ -375,7 +375,10 @@ test("Morse never changes an app's files: no write in the desktop code except to
   // Each file that finds, reads, starts or connects to apps, and what it may write (all under HOME).
   assert.deepEqual(writes("daemon/apps.js"), ["mkdir", "writeFile"], "only saveAppPref, into ~/.morse/apps.json");
   assert.match(code("daemon/apps.js"), /await fs\.mkdir\(HOME, \{ recursive: true, mode: 0o700 \}\);\s*await fs\.writeFile\(PREFS\(\),/);
-  for (const f of ["daemon/fuses.js", "daemon/desktop.js", "daemon/ports.js", "daemon/cdp.js", "daemon/targets.js", "daemon/platform.js", "daemon/colors.js"]) assert.deepEqual(writes(f), [], f);
+  for (const f of ["daemon/fuses.js", "daemon/desktop.js", "daemon/ports.js", "daemon/targets.js", "daemon/platform.js", "daemon/colors.js"]) assert.deepEqual(writes(f), [], f);
+  // The private pipe's socket pair: a folder of its own from mkdtemp, removed once connected.
+  assert.deepEqual(writes("daemon/cdp.js"), ["rm"], "daemon/cdp.js");
+  assert.match(code("daemon/cdp.js"), /const dir = await fs\.mkdtemp\(path\.join\(tmp, "morse-"\)\);[\s\S]*await fs\.rm\(dir, \{ recursive: true, force: true \}\)/);
   assert.deepEqual(writes("daemon/connector.js"), ["mkdirSync"], "only ~/.morse/mods, to watch it");
   assert.match(code("daemon/connector.js"), /path\.join\(HOME, "mods"\);\s*mkdirSync\(dir/);
   // Files are opened for reading only.

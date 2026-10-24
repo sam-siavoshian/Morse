@@ -24,6 +24,7 @@
 //   --then-click   a selector, or text=/regex/i, clicked with the real mouse then (a button the change added)
 //   --then-keys    keys pressed for real then, space-separated xdotool names ("ctrl+alt+z")
 //   --then-type    text typed for real then (into what has focus)
+//   --move      a window title (xdotool --name): move those windows to 0,0 first
 //
 // For changes to what the app does (app profiles, docs/dev/rea.md), the
 // change is also used before it is checked:
@@ -151,6 +152,16 @@ let w = await mainWindow(port);
 await until(w.status, 90000, "the runtime in the main window");
 if (opt.setup) await until(() => w.ev(opt.setup), 30000, "the setup step");
 await sleep(Number(opt.settle || 3000));
+// --move: put the app's windows at the top-left corner. With no window
+// manager (Xvfb), some apps (Joplin) open in the middle of the screen and
+// report 0,0, so pointing and the pictures would miss them.
+const moveWindows = async () => {
+  if (!opt.move) return;
+  const ids = (() => { try { return x("search", "--onlyvisible", "--name", opt.move).split("\n").filter(Boolean); } catch { return []; } })();
+  for (const id of ids) try { x("windowmove", id, "0", "0"); } catch {}
+  await sleep(800);
+};
+await moveWindows();
 let win = await geometry(w);
 say(`window "${win.title}" at ${win.x},${win.y} ${win.w}x${win.h}`);
 await shot(win, "before");
@@ -230,7 +241,15 @@ let mod = null;
 async function save() {
   if (mod) return mod;
   x("key", "Return"); // the bar still has the focus: Enter saves
-  const file = await until(async () => (await fs.readdir(modsDir).catch(() => [])).find(f => f.endsWith(".json")), 15000, "the mod on disk");
+  const saved = async () => (await fs.readdir(modsDir).catch(() => [])).find(f => f.endsWith(".json"));
+  // Some apps take the keyboard back once the page changes (Logseq focuses its
+  // editor): then click Save, as a person would. (MORSE_DEBUG opens Morse's
+  // shadow root, so the button can be found.)
+  if (!(await until(saved, 4000, "the mod on disk").catch(() => null))) {
+    const r = await w.ev(`(() => { const b = document.querySelector("[data-morse-ui]")?.shadowRoot?.querySelector('[data-a="keep"]'); if (!b) return null; const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
+    if (r) { say("Enter didn't save here: clicking Save"); x("mousemove", "--sync", String(Math.round(win.left + r[0])), String(Math.round(win.top + r[1]))); x("click", "1"); }
+  }
+  const file = await until(saved, 15000, "the mod on disk");
   mod = JSON.parse(await fs.readFile(path.join(modsDir, file), "utf8"));
   Object.assign(result, { title: mod.title, match: mod.match, css: (mod.css || "").length, js: (mod.js || "").length, code: mod.js || "", style: mod.css || "" });
   say(`saved "${mod.title}" for ${JSON.stringify(mod.match)}`);
@@ -265,6 +284,7 @@ const running = `(() => { const id = ${JSON.stringify(mod.id)}; const s = global
 const back = await until(() => w.ev(`${running}${opt.check ? ` && !!(${opt.check})` : ""}`), 90000, "the saved change after relaunch").catch(e => (say(e.message), false));
 result.persisted = !!back;
 if (opt.setup) await until(() => w.ev(opt.setup), 60000, "the setup step after relaunch").catch(e => say(e.message));
+await moveWindows();
 await sleep(Number(opt.settle || 3000));
 win = await geometry(w);
 // Keys pressed first, with the window focused (Escape: close the app's own

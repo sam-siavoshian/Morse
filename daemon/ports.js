@@ -5,6 +5,7 @@
 import net from "node:net";
 import os from "node:os";
 import { readFileSync } from "node:fs";
+import { appTimeout } from "./cdp.js";
 
 // MORSE_PORT_RANGE=<from>-<to> moves the range (tests and parallel runs use it
 // so concurrent copies don't pick the same port); the default is unchanged.
@@ -103,7 +104,7 @@ export function safeExtraArgs(args = []) {
 }
 
 async function json(port, path) {
-  const res = await fetch(`http://127.0.0.1:${port}${path}`, { signal: AbortSignal.timeout(1500) });
+  const res = await fetch(`http://127.0.0.1:${port}${path}`, { signal: AbortSignal.timeout(1500) }).catch(e => { throw appTimeout(e, port); });
   return res.json();
 }
 

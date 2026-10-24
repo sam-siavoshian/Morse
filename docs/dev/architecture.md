@@ -28,8 +28,10 @@
   (`node demo/perf.js`), guarded by `tests/perf.test.js`.
 - **No patching.** On the web, mod JS runs through `chrome.userScripts`, so it
   works on strict-CSP sites. On the desktop, `morse launch` relaunches an
-  Electron app with `--remote-debugging-port` and attaches over CDP; app
-  files, code signatures and ASAR integrity stay intact.
+  Electron app with `--remote-debugging-pipe` (a private channel, see
+  [The private pipe](#the-private-pipe); `--remote-debugging-port` on
+  127.0.0.1 where that can't be used) and attaches over CDP; app files, code
+  signatures and ASAR integrity stay intact.
 - **Live and reversible.** CSS is applied while the model streams it
   (complete rules only). Every element, listener, timer and observer a mod
   creates is tracked, so turning it off removes all of it.
@@ -101,6 +103,12 @@ and app, never to what the message claims.
   `NODE_OPTIONS` are removed from the app's environment. A launcher that
   hands off (`handoff`) gets a longer grace in `waitForLaunch`, and
   `desktop.js` then finds the real app by its `--remote-debugging-port`.
+  `launchApp(app, PIPE)` starts it on the private pipe instead (`pipeFor()`
+  says which apps can be, `connectApp` / `openOnPipe` in `desktop.js` do it).
+- [`cdp.js`](../../daemon/cdp.js) is the CDP client, over either transport:
+  `portBrowser(port)` (HTTP `/json/list`, a WebSocket per target) or
+  `pipeBrowser(conn)` (one `PipeConnection` for every target, flat sessions).
+  The connector only sees `listTargets()` and `connect(target)`.
 - `desktop.js` runs `launch`, `attach`, `status` and `stop`. An app that is
   already open is quit with AppleScript on macOS (SIGTERM at once if
   `osascript` fails, as when Automation is refused), `taskkill /T` then
@@ -126,6 +134,92 @@ and app, never to what the message claims.
   ffmpeg), `store.js` (mods in `~/.morse/mods`, config, settings),
   `status.js` (sessions for `morse status`), `control.js` (pause, export,
   install, code), `cli.js` (the `morse` command), `setup.js` (`morse setup`).
+
+### The private pipe
+
+A debugging port has no password: while it is open, any local process can
+drive the app, including another account's on a shared computer, and one
+could take the port before the app binds it (round 9's `/proc` owner check
+narrows that on Linux only). Chromium's `--remote-debugging-pipe` has no
+port: CDP runs as JSON messages ending in a null byte, which the app reads on
+file descriptor 3 and writes on 4. Only the process that started the app
+holds the other ends, so Morse uses it whenever it starts the app itself.
+
+**What was tried** (round 10, Linux, Xvfb; [`tests/pipe.test.js`](../../tests/pipe.test.js),
+the pipe tests in [`tests/electron.test.js`](../../tests/electron.test.js) and
+[`tests/desktop-app-ui.test.js`](../../tests/desktop-app-ui.test.js)):
+
+| App | Electron | Answers on the pipe | When its fd 3 reads an end of file |
+|---|---|---|---|
+| Tunes (`demo/electron-app`) | 45.0.0 | yes | quits (exit 0) |
+| VSCodium 1.140 | 43.7.3 | yes | quits |
+| Obsidian 1.14.5 (AppImage, unpacked to run) | 43.8.3 | yes: the AppImage runtime passes fds 3 and 4 on | quits |
+| Joplin 3.7.21 (AppImage, unpacked to run) | 42.3.0 | yes | logs the disconnect, still running 20 s later (Joplin handles quitting itself) |
+| a minimal app on the stock runtime | 30.5.1, 20.3.12, 12.2.3 | yes | quits |
+| the same | 11.5.0, 10.4.7, 10.0.0 | yes | keeps running |
+| the same | 9.4.4 | no answer (the switch is ignored) | n/a |
+
+So Electron 10 and later honour the pipe. Each app listed its targets
+(`Target.getTargets`), flat sessions attached (`Target.attachToTarget`,
+`flatten: true`) and `Runtime.evaluate` ran in the window. Three things came
+out of trying it, and shape the code:
+
+- **Electron 12 and later quit when Morse goes.** Chromium logs "Connection
+  terminated while reading from pipe" and Electron quits the app, so closing
+  Morse (or Morse crashing) would close the person's app. A failed write on
+  fd 4 is only logged. So `spawnWithPipe()` gives the app a third descriptor,
+  fd 5: a copy of the end Morse writes to. Holding a writer itself, the app
+  never reads an end of file, and keeps running when Morse quits or is
+  killed (tried with `SIGKILL`). Morse must never `end()` that socket: a
+  shutdown reaches the app whoever else holds it.
+- **Node's sockets don't block, and the app inherits that.** Node has no
+  `socketpair()`, so the pair comes from a Unix socket in a fresh `mkdtemp`
+  folder (0700), removed at once. `O_NONBLOCK` is a property of the open
+  file, shared with every copy of the descriptor, and Chromium's reader
+  thread takes `EAGAIN` for a closed pipe: the connection dropped within a
+  second. The app's end is set to block (`setBlocking(true)`) before the
+  spawn. fd 4 is a pipe Node makes for the child, which already blocks.
+- **An app that relaunches itself** (`app.relaunch()`, as after an update)
+  keeps `--remote-debugging-pipe` in its arguments but not the descriptors:
+  fds 3 and 4 of the new process were `icudtl.dat` and
+  `v8_context_snapshot.bin`. It started and ran normally (reads fail, writes
+  to a read-only file fail), but Morse can't reach it. On a port it came back
+  on the same port, and `--watch` reattached.
+
+When the pipe is used: Electron apps (`app.engine`) that Morse starts itself,
+directly (an AppImage counts: it passes the descriptors on), on Linux and
+macOS, with a known Electron version of 10 or later or an unknown one. macOS
+uses the same POSIX descriptors but hasn't been tried. Everything else keeps
+the port, with round 9's checks: Windows (Node passes descriptors to a child
+through the C runtime there, and it hasn't been tried), browsers and CEF
+apps, launchers that hand off (Squirrel's `Update.exe`, flatpak, snap, wrapper
+scripts, which would drop the descriptors), Electron 9 and older, `--port`,
+`MORSE_PIPE=0`, `morse attach`, and an app that is already open with a port.
+An app whose version isn't known and that never answers on the pipe within
+the launch timeout is quit (it's the copy Morse just started) and opened on
+a port (`openOnPipe` returns null).
+
+What changes for people:
+
+- `morse stop`, then `morse launch` again: the app has no port to find, so
+  Morse asks to restart it, as for any app open without Morse.
+- `--watch`: the app can't come back on its own to a pipe. When it quits,
+  Morse waits and says to run `morse launch <app>`; that second command
+  writes `~/.morse/sessions/<app>.open` (`status.js requestOpen`), and the
+  waiting Morse opens the app on a pipe of its own (`startSession`'s
+  `reopen`, `Connector.useBrowser`).
+- Morse Desktop keeps the pipe of an app it disconnected from (`held` in
+  `service.js`), so Connect works without a restart while Morse Desktop is
+  open; quitting Morse Desktop closes every pipe and the apps keep running.
+- If Morse is killed, it can't detach: the app's sessions stay attached on
+  the pipe, so new documents still get the boot script, which stays idle
+  (its binding calls go nowhere) until the app restarts. A clean stop
+  detaches every session first (`Target.detachFromTarget`).
+
+What the pipe doesn't do: a process running as the same user can still read
+the app's memory or ptrace it, and the app's own child processes inherit fds
+3 to 5 (Chromium's helpers don't; processes the app starts through Node's
+`child_process` do). Neither is a boundary Morse can draw.
 
 ### Morse Desktop (`desktop-app/`)
 
@@ -413,11 +507,20 @@ Mods are code running inside apps you're signed into, so:
   in `/RRAA/share/` on Morse's site, not any other page on that address
   (every GitHub Pages project of the same owner shares it). Its Install
   button opens Morse's own review; only a click there installs.
-- `morse launch` opens a debugging port on 127.0.0.1. While it's open, **any
-  local process can attach to that app**, including one another account on
-  the same computer runs: the port has no password. Quit the app normally to
-  close it. Morse picks a free port, drops any `--remote-debugging-address`
-  or `--remote-allow-origins` you pass (however it's spelled), checks the
+- `morse launch` and Morse Desktop open Electron apps on the
+  [private pipe](#the-private-pipe) where they can (Electron 10+, started
+  directly, Linux and macOS; tried on Linux only): no port, and only Morse
+  holds the other ends of the app's descriptors, so other local processes,
+  other accounts' included, can't attach through it. Processes running as
+  the same user remain out of reach of any such boundary.
+- Everywhere else (Windows, browsers, CEF apps, launchers that hand off,
+  Electron 9 and older, `--port`, `MORSE_PIPE=0`, `morse attach`, an app
+  already open with a port) Morse uses a debugging port on 127.0.0.1. While
+  it's open, **any local process can attach to that app**, including one
+  another account on the same computer runs: the port has no password. Quit
+  the app normally to close it. Morse picks a free port, drops any
+  `--remote-debugging-address`, `--remote-debugging-pipe` or
+  `--remote-allow-origins` you pass (however it's spelled), checks the
   port can't be reached from this machine's other addresses, won't connect
   if what answers isn't the app it started (process id, then user agent),
   and on Linux won't connect when another account's program holds the port

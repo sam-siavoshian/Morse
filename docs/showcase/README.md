@@ -94,9 +94,11 @@ All eighteen are real runs on real software. None is a demo.
   that slow by itself (measured: up to 8 seconds at a time). Now, with no mod
   code being run, Morse waits 20 seconds. Fixed in `daemon/guard.js`, with a
   test in `tests/guard-ui.test.js`.
-- **The word "everywhere" turns a request into Your style.** “…black text
+- **The word "everywhere" turned a request into Your style.** “…black text
   everywhere so the file list stays readable” was taken as a style for every
-  site and app, not a change to VS Code. Use "in the file list" or similar.
+  site and app, not a change to VS Code. Now a bare "everywhere" counts only
+  when the request names no app and no part of one. Fixed in `core/style.js`,
+  with tests in `tests/style.test.js`.
 - **Spotify couldn't be tried.** Its download servers aren't reachable from
   the test machine, and it needs an account.
 

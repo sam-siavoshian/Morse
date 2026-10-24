@@ -10,8 +10,3 @@ Say it once, ending with “everywhere” or “on every site”: *Georgia font,
 
 Checked with real Claude Code (haiku) by [`demo/style-fit-real.js`](../demo/style-fit-real.js): on the Tunes demo, bigger text pushed the player bar below the bottom of the window; the fit (one try, 11 to 18 s) brought it back, and it came back on the next visit with no model call. Captured by [`demo/shoot-style.js`](../demo/shoot-style.js) on three demo sites at once; tested by [`tests/style.test.js`](../tests/style.test.js), [`tests/style-ui.test.js`](../tests/style-ui.test.js) and, for Chrome and the apps sharing it, [`tests/style-share.test.js`](../tests/style-share.test.js).
 
-| | |
-|---|---|
-| ![](screenshots/150-style-bar.png) **“…everywhere”**, shown live with Save and Undo | ![](screenshots/152-style-mods-panel.png) **The Mods panel**: Your style at the top |
-| ![](screenshots/153-style-settings.png) **Settings**: part by part, and the sites it skips | ![](screenshots/154-style-not-here.png) **Not on this site**, with Undo |
-| ![](screenshots/155-style-calmer.png) **Calmer** on the library: the video waits, the ticker stops | ![](screenshots/158-style-fit-haiku-review.png) **Fit to this site** by Claude Code (haiku): the player bar is back |

@@ -1,16 +1,15 @@
 // The website (site/): every link and asset on its pages resolves.
 //
 //   - every relative href, src, poster and srcset in the HTML points at a file
-//   - every #fragment points at an id on the page it names, and every
-//     <use href="#i-…"> at an icon in the page's sprite
+//   - every #fragment points at an id on the page it names
 //   - gallery.html#<slug> links name a mod that is in site/mods/
 //   - every url() in the stylesheets and every import in the scripts resolves
 //   - the link targets, the demo video and the real pictures in site/config.js
 //     resolve too, and every picture is labelled
 //   - the nav bar and footer of the gallery and the privacy policy are the
 //     landing page's (npm run pages copies them)
-//   - no drawn pictures: the only SVG files are the favicon, and the landing
-//     page's only inline SVGs are a few functional icons (arrows, play, pause)
+//   - no drawn pictures: no SVG at all (the favicon is a PNG, the functional
+//     icons are text), and every app icon is the app's own, as a small PNG
 //   - no analytics, and nothing of the Lanes site the first design came from
 //
 // Links to other websites are checked for shape only; nothing is fetched.
@@ -183,26 +182,33 @@ test("the gallery and the privacy policy carry the landing page's nav bar and fo
   }
 });
 
-test("no drawn pictures: real screenshots, the mark, and a few functional icons", () => {
-  // The only SVG file is the favicon (the radar mark).
-  const svgFiles = [];
+test("no drawn pictures: real screenshots, real app icons, no SVG", async () => {
+  // No SVG files, and no inline <svg> in the pages, their scripts or styles:
+  // the favicon is the Morse mark as a PNG, the few functional icons are text
+  // (→ ▶ ❚❚ ⟷ ×). Try it here (site/try/) is a live demo and keeps its own.
+  const svgFiles = [], inline = [];
   const walk = dir => {
     for (const e of readdirSync(dir, { withFileTypes: true })) {
-      if (e.isDirectory()) walk(path.join(dir, e.name));
-      else if (e.name.endsWith(".svg")) svgFiles.push(path.relative(SITE, path.join(dir, e.name)));
+      const p = path.join(dir, e.name), rel = path.relative(SITE, p);
+      if (e.isDirectory()) { if (rel !== "try" && rel !== "mods") walk(p); }
+      else if (e.name.endsWith(".svg")) svgFiles.push(rel);
+      else if (/\.(html|js|css)$/.test(e.name) && /<svg\b/.test(readFileSync(p, "utf8"))) inline.push(rel);
     }
   };
   walk(SITE);
-  assert.deepEqual(svgFiles, ["favicon.svg"]);
-  // The landing page's icon sprite holds arrows, play and pause, nothing else,
-  // and every other inline <svg> there is one of those icons.
-  const html = read("index.html");
-  const sprite = /<svg width="0"[\s\S]*?<\/svg>/.exec(html)[0];
-  const symbols = [...sprite.matchAll(/<symbol id="([\w-]+)"/g)].map(m => m[1]).sort();
-  assert.deepEqual(symbols, ["i-arrow", "i-drag", "i-pause", "i-play"]);
-  for (const svg of html.replace(sprite, "").match(/<svg\b[\s\S]*?<\/svg>/g) || []) {
-    assert.match(svg, /^<svg class="icon[\w -]*"><use href="#i-[\w-]+"\/><\/svg>$/, `only icons: ${svg}`);
+  assert.deepEqual(svgFiles, []);
+  assert.deepEqual(inline, []);
+  // Every app icon is a real PNG at most 64 pixels square, and small.
+  const { APP_ICONS } = await import("../site/config.js");
+  for (const [app, src] of Object.entries(APP_ICONS)) {
+    const buf = readFileSync(path.join(SITE, src));
+    assert.equal(buf.readUInt32BE(0), 0x89504e47, `${app}: ${src} is a PNG`);
+    assert.ok(buf.readUInt32BE(16) <= 64 && buf.readUInt32BE(20) <= 64, `${app}: ${src} is at most 64 pixels`);
+    assert.ok(buf.length < 20000, `${app}: ${src} is under 20 KB`);
   }
+  // Every file in site/icons/ is named in APP_ICONS.
+  const used = new Set(Object.values(APP_ICONS));
+  for (const f of readdirSync(path.join(SITE, "icons"))) assert.ok(used.has(`icons/${f}`), `icons/${f} is in APP_ICONS`);
 });
 
 test("no analytics, and nothing of the Lanes site", () => {

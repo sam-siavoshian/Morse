@@ -11,7 +11,7 @@ doesn't), and which apps can't work.
 Rather not use a terminal? [Morse Desktop](desktop-app.md) does the same in a
 window: it lists your apps, opens them with Morse and disconnects them.
 
-![Tunes, a real Electron app, with the Morse bar open](screenshots/121-electron-bar.png)
+![Microsoft's Visual Studio Code with the Morse bar open and a request typed](screenshots/320-vscode-ask.png)
 
 ## The short version
 
@@ -80,8 +80,8 @@ off, see their code, share them or delete them.
 
 | | |
 |---|---|
-| ![](screenshots/122-electron-working.png) Morse writes the change and shows where | ![](screenshots/123-electron-result.png) The result: a sleep timer button (☾) next to the player |
-| ![](screenshots/124-electron-mod-back.png) Quit the app and open it again: the change is back | ![](screenshots/125-electron-mods-panel.png) The Mods panel in the app |
+| ![](screenshots/324-obsidian-working.png) Obsidian: the change shows while the model writes it | ![](screenshots/325-obsidian-result.png) The result, with Save, Undo, Edit code and Share |
+| ![](screenshots/327-vscodium-synthwave.png) VSCodium after “give the editor a synthwave look” | ![](screenshots/328-vscodium-back.png) Quit the app and open it again: the change is back |
 
 ### 4. Check and stop
 
@@ -92,7 +92,15 @@ morse stop slack    # disconnect; the app keeps running, your changes come off u
 
 Pressing Ctrl+C in the terminal where `morse launch` runs does the same as
 `morse stop`. Quitting the app also ends `morse launch`. Add `--watch` to keep
-waiting and connect again when the app comes back.
+waiting: run `morse launch <app>` again and the waiting Morse opens the app and
+connects.
+
+Morse opens most apps on a private connection that only it can use (see
+[What Morse does to the app](#what-morse-does-to-the-app)). That connection
+ends when Morse disconnects, so connecting to the same app again later means
+opening it again: `morse launch` asks first, as for any app that is already
+open. In Morse Desktop, **Connect** after **Disconnect** works without a
+restart, for as long as Morse Desktop stays open.
 
 | | |
 |---|---|
@@ -125,10 +133,19 @@ morse attach --port 9222 --app Slack
 
 ## What Morse does to the app
 
-- **It restarts the app with one extra switch**, `--remote-debugging-port`,
-  which every Chromium-based app understands. The port only listens on this
-  computer. Morse checks that, and checks that what answers is the app it
-  started.
+- **It restarts the app with one extra switch.** For Electron apps that is
+  `--remote-debugging-pipe`: the app talks to Morse over a private connection
+  that Morse hands it when it starts, with no port that other programs could
+  use. Tried on VSCodium, Obsidian, Joplin and every Electron release from 10
+  on, on Linux; on a Mac it works the same way but hasn't been tried yet.
+- **A debugging port only where the private connection can't be used:**
+  Windows (not tried yet), browsers and other Chromium-based apps, apps that
+  start through a launcher (Squirrel's `Update.exe`, flatpak, snap), Electron 9
+  and older, `--port`, `MORSE_PIPE=0`, and `morse attach`. The switch is then
+  `--remote-debugging-port`, which every Chromium-based app understands. The
+  port only listens on this computer. Morse checks that, and checks that what
+  answers is the app it started. While the port is open, other programs on
+  this computer can connect to the app too.
 - **It never changes the app's files.** Signed apps stay signed, apps that
   check their own files keep passing that check, and app updates don't undo
   anything.
@@ -138,7 +155,8 @@ morse attach --port 9222 --app Slack
   each window. Your changes run in the page so they can work with it, but the
   page can't reach Morse or your model.
 - When you stop Morse, it takes its bar and your changes off every open
-  window. The app keeps running. Its debugging port closes when you quit it.
+  window. The app keeps running, also when Morse quits or crashes. A debugging
+  port, where one was used, closes when you quit the app.
 
 ## Changes to what an app does
 
@@ -442,28 +460,46 @@ port".
 
 ## Tested on
 
-Real apps, downloaded from their official releases and installed the way their
-own instructions say, on Linux (Ubuntu 24.04 in a container, running as root,
-so each had `-- --no-sandbox`). Each was opened with `morse launch`, changed
-with **Claude Code (haiku)** using the real shortcut, mouse and keyboard, saved,
-quit, and opened again with `morse launch`.
+Real apps, downloaded from their makers and installed the way their own
+instructions say, on Linux (Ubuntu 24.04 in a container, running as root, so
+each had `-- --no-sandbox`). Each was opened with `morse launch`, changed
+using the real shortcut, mouse and keyboard
+([`demo/try-real-app.js`](../demo/try-real-app.js)), saved, quit, and opened
+again with `morse launch`. The time is from pressing Enter to seeing the
+change. The test machine was shared and heavily loaded, so times vary.
 
-| App | How it was installed | What was asked | Result | Time | Back after reopening |
+October 24, 2026, with a strong model (Claude Code, sonnet or opus):
+
+| App | How it was installed | What was asked | Result | Model, time | Back after reopening |
 |---|---|---|---|---|---|
-| VSCodium 1.140 (VS Code without Microsoft's branding, Electron 43) | its `.deb` | "make the status bar bigger" (pointing at it) | The status bar got taller (22 to 36 pixels) with bigger icons | 10.3 s, and 13.7 s on a second run | Yes, both times |
-| Obsidian 1.14.5 (Electron 43) | its AppImage, in `~/Applications` | "hide this ribbon" (pointing at the left ribbon) | The ribbon is gone | 5.6 s, and 15.9 s on a second run | Yes, both times |
-| Joplin 3.7.21 (Electron 42) | its AppImage, in `~/.joplin` with a menu entry, as its install script does | "hide this button, I don't use sync" (pointing at Synchronize) | The button is gone. Its code relies on Joplin's generated names, so a Joplin update may break it | 13.0 s | Yes |
+| Visual Studio Code 1.143.1 (Microsoft's own build, Electron 43.7.7) | its `.deb`, from Microsoft's package repository | "make the whole editor look like a warm paper notebook: cream backgrounds, dark brown text, and a serif font in the sidebar and the tabs" | Cream sidebar, tabs and editor, brown text, serif file names. Some code colors are hard to read on cream | opus, 18.0 s | Yes |
+| VSCodium 1.140 (Electron 43) | its `.deb` | "give the editor a synthwave look: deep purple background, neon pink and cyan text, and a glowing purple activity bar" | All of it, as asked | opus, 22.9 s | Yes |
+| Obsidian 1.14.5 (Electron 43) | its AppImage, in `~/Applications` | "make my notes look like an old typewritten page: yellowed paper, a typewriter font, and the headings underlined in dark red" | All of it, as asked | sonnet, 7.8 s | Yes |
+| Logseq 0.10.9 (Electron 27) | its AppImage | "make the journal look like a lined paper notebook: cream ruled lines behind the text, a handwriting style font, and much bigger page titles" | Ruled cream paper with a red margin line and a big serif date (a serif, not a handwriting font) | sonnet, 6.4 to 7.3 s in three runs | Not checked: in the scripted runs the save never happened (neither Enter nor a click on Save), so reopening wasn't tried |
+| Visual Studio Code 1.143.1 | the same | Nine more, from "make VS Code look like a classic Windows 95 app…" to "when I press Ctrl+Alt+P, switch to a presentation mode…", a focus timer, a word count, a Focus button, a sticky note, the sidebar on the right ([the showcase](showcase/README.md)) | All nine. Some were asked again with other words first; the showcase says which | opus (sonnet for one), 18 to 36 s | Yes, all nine |
+| Obsidian 1.14.5 | the same | Five more: a typewriter look, a New daily note button, Hide distractions, pinned notes, large print ([the showcase](showcase/README.md)) | All five; the button really makes and opens the day's note | opus (sonnet for one), 9 to 15 s | Yes, all five |
+| Joplin 3.7.21 (Electron 42) | its AppImage, in `~/.joplin` | "turn the note list into big cards" | Not done: on the busy machine Joplin was slow to start. Once its debugging port didn't answer in time and `morse launch` said "The model took too long to answer" (wrong words, now fixed); once it quit at once because another Joplin was already open | sonnet | |
 
-`morse apps` found all three, and `morse fuses` reported each one (VSCodium's
-fuses from its binary; for the two AppImages it says it can't look inside).
-The time is from pressing Enter to seeing the change. The test machine was
-heavily loaded, so times vary a lot between runs.
+An earlier run, the same day, with Claude Code (haiku):
+
+| App | What was asked | Result | Time | Back after reopening |
+|---|---|---|---|---|
+| VSCodium 1.140 | "make the status bar bigger" (pointing at it) | The status bar got taller (22 to 36 pixels) with bigger icons | 10.3 s, and 13.7 s on a second run | Yes, both times |
+| Obsidian 1.14.5 | "hide this ribbon" (pointing at the left ribbon) | The ribbon is gone | 5.6 s, and 15.9 s on a second run | Yes, both times |
+| Joplin 3.7.21 | "hide this button, I don't use sync" (pointing at Synchronize) | The button is gone. Its code relies on Joplin's generated names, so a Joplin update may break it | 13.0 s | Yes |
+
+`morse apps` found Visual Studio Code, VSCodium, Obsidian and Joplin
+(Logseq was in a folder it doesn't search, so it was opened by its path), and
+`morse fuses` reported each one (from the binary for the two `.deb` apps; for
+the AppImages it says it can't look inside). Morse Desktop shows each of them
+with its own icon, read from the app (the icon theme for the `.deb` apps, and
+from inside the AppImage for the others).
 
 | | |
 |---|---|
-| ![](screenshots/147-vscodium-bar.png) VSCodium: pointing at the status bar | ![](screenshots/148-vscodium-status-bar-back.png) VSCodium opened again: the taller status bar is back |
-| ![](screenshots/149-obsidian-bar.png) Obsidian: pointing at the ribbon | ![](screenshots/150-obsidian-ribbon-gone.png) Obsidian opened again: no ribbon |
-| ![](screenshots/151-joplin-bar.png) Joplin: pointing at Synchronize | ![](screenshots/152-joplin-sync-hidden.png) Joplin: the Synchronize button is gone |
+| ![](screenshots/321-vscode-result.png) Visual Studio Code as a paper notebook | ![](screenshots/322-vscode-back.png) Visual Studio Code opened again: the change is back |
+| ![](screenshots/323-obsidian-ask.png) Obsidian: the request in the bar | ![](screenshots/326-obsidian-back.png) Obsidian opened again: the typewritten page is back |
+| ![](screenshots/330-logseq-working.png) Logseq while the model writes the change | ![](screenshots/329-logseq-notebook.png) Logseq as a lined notebook |
 
 What these apps turned up, now fixed:
 
@@ -482,30 +518,33 @@ What these apps turned up, now fixed:
   folder path. It now matches by the page inside the app.
 - **The Mods panel said "Stops every mod on this site"** in an app. It now
   says "in this app".
+- **Morse Desktop showed a letter for every app.** It now shows the app's own
+  icon: from the icon theme, the app's folder, or inside the AppImage, read
+  without running it. Logseq's AppImage carries Electron's default icon as
+  its main picture; Morse uses Logseq's own icon from inside the app instead.
+- **A busy app's slow debugging port read as a slow model.** When Joplin
+  didn't answer in time, `morse launch` said "The model took too long to
+  answer" before any model was asked. It now says the app didn't answer in
+  time.
+- **A request with "everywhere" in it became [Your style](your-style.md)**,
+  for every site and app, even when it named the app or a part of it ("make VS
+  Code look like Windows 95… black text everywhere so the file list stays
+  readable" did). Now "everywhere" alone means every site and app only when
+  the request names no app and no part of one ("the editor", "the file
+  list"). "On every site" and "in all apps" still always do.
+- **Morse stopped Visual Studio Code's own code while it started up.**
+  Once a mod's code had run, Morse treated a page that didn't answer for 6
+  seconds as frozen by that mod, and stopped whatever was running. VS Code
+  starting on a busy machine keeps its page busy that long by itself (up to
+  8 seconds at a time, measured), so its startup was cut off: the file list
+  without names, no syntax colors, a blank window. Now, with no mod code
+  being run, Morse waits 20 seconds before stepping in.
 
-### Microsoft's VS Code
-
-Microsoft's own VS Code 1.143.1 (Electron 43), from its `.deb` in
-packages.microsoft.com, the repository its install page points to (the
-download link on code.visualstudio.com isn't reachable from the test machine).
-`morse apps` lists it as VS Code at `/usr/share/code/code`, and
-`morse launch code -- --no-sandbox` opens and connects to it (as root, VS Code
-also wants `--user-data-dir=<folder>` when started from its `code` command; the
-app itself starts without it). Nine changes were made on it with Claude Code
-(sonnet and opus), each saved, VS Code quit and opened again with
-`morse launch`, and each was back. They are in [the showcase](showcase/README.md).
-
-What it turned up, now fixed:
-
-- **Morse stopped VS Code's own code while it started up.** Once a mod's code
-  had run, Morse treated a page that didn't answer for 6 seconds as frozen by
-  that mod, and stopped whatever was running. VS Code starting on a busy
-  machine keeps its page busy that long by itself, so its startup was cut off:
-  the file list without names, no syntax colors, a blank window. Now, with no
-  mod code being run, Morse waits 20 seconds before stepping in.
-
-Not tested: Slack, Discord, Signal and Spotify (their downloads aren't
-reachable from the test machine, or they need an account), Flatpak and Snap installs, macOS, Windows and Wayland. Signing in
+Not tested: Spotify, Slack, Discord and Signal. Spotify's downloads
+(repository.spotify.com, download.spotify.com, Snapcraft and Flathub) aren't
+reachable from the test machine, and Spotify shows nothing but a sign-in
+screen without an account; Slack, Discord and Signal need an account too. Also
+not tested: Flatpak and Snap installs, macOS, Windows and Wayland. Signing in
 to anything wasn't tested. For macOS and Windows, see what's ready and how to
 check it in [macOS](#macos) and [Windows](#windows).
 
@@ -527,6 +566,16 @@ change was saved, then the page was reloaded.
 
 Wikipedia, Hacker News, MDN, YouTube, the BBC and GitHub's pages couldn't be
 tried: the test machine's network doesn't reach them.
+
+Again on October 24, with Claude Code (sonnet) and the pictures in these docs
+([`demo/shoot-real.js`](../demo/shoot-real.js),
+`npm run store:screenshots`): nodejs.org as a printed book (13.4 s, and a
+follow-up, 9.8 s), copy buttons on pypi.org's code examples (12.7 s), and on
+hub.docker.com an answer about a tab (5.3 s), where to find the image's
+versions (7.1 s) and Explain this page (6.4 s). Page tools' Dark mode and
+Higher contrast were paused on pkg.go.dev, "because it was slowing this page
+down": a guard that may be too strict on a busy machine. Both worked on
+hub.docker.com.
 
 | | |
 |---|---|
@@ -573,13 +622,8 @@ renamed to `tunes`, with the app next to it, unpacked or as
   DISPLAY=:99 node --test tests/electron.test.js
   ```
 
-| | |
-|---|---|
-| ![](screenshots/126-electron-haiku-working.png) Claude Code (haiku) writing the change | ![](screenshots/127-electron-haiku-result.png) Its result: a sleep timer picker under the player |
-
-Real installed apps (VSCodium, Obsidian, Joplin) are under
-[Tested on](#tested-on), and so is Microsoft's VS Code. Not tested: Slack,
-Discord or Spotify, macOS and Windows, and Wayland. The macOS and Windows parts (reading
+Real installed apps (Visual Studio Code, VSCodium, Obsidian, Logseq, Joplin)
+are under [Tested on](#tested-on). Not tested: Slack, Discord or Spotify, macOS and Windows, and Wayland. The macOS and Windows parts (reading
 `.app` bundles, Squirrel installs and Start menu shortcuts, quitting with
 AppleScript or taskkill, starting apps, the fuses in a Mac app) are checked
 on Linux against copies of real app folders and real file formats
