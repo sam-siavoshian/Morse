@@ -121,6 +121,17 @@ Same hotkey, same bar: ask a question instead of describing a change ("what does
 | ![](docs/screenshots/90-ask.png) **Ask** what something does: an answer, and a marker on it | ![](docs/screenshots/91-find.png) **Find** a setting that lives behind a menu |
 | ![](docs/screenshots/92-show-me.png) **Show me**: one step at a time, you do the clicking | ![](docs/screenshots/93-explain.png) **Explain this page**, from the page tools |
 
+### Mods for this site: see what other people made
+
+When you open Morse on a site that has mods in the [gallery](site/gallery.html), the empty bar says so ("2 mods for youtube.com"), and the Mods panel lists them under **For this site**: the title, the request, what it does in a few words, and who made it. **Try it** runs a mod on the page without saving anything; **Keep** saves it, **Remove** takes it all away. **Install…** goes through the same review as a share link. When the gallery has a newer version of a mod you installed from it, its row says **Update available**, and **Update…** shows what changed (in words and line by line) before anything is replaced; your old version stays in History. Your own mods get **Submit to the gallery…** in the Share dialog, which opens a GitHub issue with the mod and a short template filled in. No account or server is involved.
+
+The list is read by the Chrome extension or the Morse helper, never by the page, and checked at most once a day (with its ETag). Turn it off with **Show mods others made** in Settings. Captured by [`demo/shoot-gallery.js`](demo/shoot-gallery.js).
+
+| | |
+|---|---|
+| ![](docs/screenshots/110-for-this-site.png) **For this site** in the Mods panel | ![](docs/screenshots/111-try-it.png) **Try it**: on the page, nothing saved yet |
+| ![](docs/screenshots/112-update.png) **Update…**: what changed in the newer version | |
+
 ## Status
 
 Honest accounting of what was verified and how:
@@ -267,6 +278,8 @@ Mods are code running inside apps you're signed into, so:
 Run it locally with `npm run demo:serve` and open `http://127.0.0.1:8787/site/`. Screenshots (1440×900 and 390×844, dark and light) are in [`docs/site/`](docs/site/).
 
 To add a mod to the gallery, export it (`morse export <id>` writes a `.morse.json`), drop it in `site/mods/`, and add an entry to `site/mods/index.json`.
+
+Morse reads the same list for **Mods for this site** ([`core/gallery.js`](core/gallery.js), fetched and cached by [`core/gallery-host.js`](core/gallery-host.js)). Each entry needs `match` (the mod's hosts and app, so Morse can tell which pages it is for) and `version`; raise `version` and add a one-line `changes` when you update a mod, and people who installed it see Update available. Entries with `"demo": true` are for the demo sites (`npm run demo:serve` serves the list at `http://127.0.0.1:8787/site/mods/index.json`, which Morse uses on those sites) and don't show on the gallery page. To read another list, set `MORSE_GALLERY_URL` or `"gallery": { "index": "…" }` in `~/.morse/config.json` (desktop), or `morse.gallery.url` in the extension's local storage.
 
 ## Repo layout
 
