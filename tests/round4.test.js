@@ -64,8 +64,17 @@ test("a page can't open Morse's shadow root by setting morse:debug in its own st
   const { page } = await desktop({ automation: false });
   await page.goto(`${origin}/`);
   assert.equal(await page.evaluate(() => navigator.webdriver), true, "the page lies to itself");
+  // The overlay is only built when Morse is opened (runtime/boot.js loads the UI then).
+  const openMorse = async () => {
+    for (let i = 0; i < 60 && !(await page.evaluate(() => !!document.querySelector("[data-morse-ui]"))); i++) {
+      await page.keyboard.press(OPEN_KEY);
+      await page.waitForTimeout(250);
+    }
+  };
+  await openMorse();
   await page.waitForFunction(() => document.querySelector("[data-morse-ui]"), null, { timeout: 15000 });
   await page.reload();
+  await openMorse();
   await page.waitForFunction(() => document.querySelector("[data-morse-ui]"), null, { timeout: 15000 });
   await page.waitForTimeout(400);
   const seen = await page.evaluate(() => { const h = document.querySelector("[data-morse-ui]"); return { open: !!h.shadowRoot, status: h.dataset.status || null }; });
@@ -125,7 +134,7 @@ test("desktop: the off switch survives a reload even when the page (or a mod) cl
   await page.waitForTimeout(300);
   await page.evaluate(() => sessionStorage.clear());
   await page.reload();
-  await page.waitForSelector("[data-morse-ui]", { state: "attached", timeout: 15000 });
+  await page.waitForLoadState("load"); // (the overlay is only built when Morse is opened)
   await page.waitForTimeout(1500);
   assert.equal(await page.locator('style[data-morse-css="r4-offable"]').count(), 0, "still off after the reload");
   // And it turns back on.
@@ -316,7 +325,7 @@ test("extension: an install and saves at the same moment don't drop each other",
   const origin = await serve((q, r) => r.writeHead(200, { "Content-Type": "text/html" }).end(`<!doctype html><title>Race</title><h1>Race</h1>`));
   const page = await ctx.newPage();
   await page.goto(`${origin}/`);
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]"));
+  await page.waitForFunction(() => document.documentElement.dataset.morseExtension === "1"); // the content script (the UI is built on first open)
   const mod = id => ({ morse: 1, id, title: id, prompt: id, css: "h1{}", js: "", match: { hosts: [new URL(origin).host], app: null }, created: "2026-01-01T00:00:00.000Z" });
   const msgs = [];
   for (let i = 0; i < 6; i++) {
@@ -338,7 +347,7 @@ test("extension: mods.save and mods.delete answer only for the caller's page, li
   await sw.evaluate(async m => { const all = (await chrome.storage.local.get("mods")).mods || {}; all[m.id] = m; await chrome.storage.local.set({ mods: all }); }, mod("r4-bank", ["bank.example"]));
   const page = await ctx.newPage();
   await page.goto(`${origin}/`);
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]"));
+  await page.waitForFunction(() => document.documentElement.dataset.morseExtension === "1"); // the content script (the UI is built on first open)
   const [wide, other, overwrite, overwriteDraft, del, own] = await asMorse(page, [
     { type: "mods.save", mod: mod("r4-wide", ["*"]) },
     { type: "mods.save", mod: mod("r4-other", ["bank.example"]) },
@@ -402,7 +411,7 @@ test("extension: the off switch and safe start are kept per Chrome tab, whatever
   const origin = await serve((q, r) => r.writeHead(200, { "Content-Type": "text/html" }).end(`<!doctype html><title>Tab</title><h1>Tab</h1>`));
   const page = await ctx.newPage();
   await page.goto(`${origin}/`);
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]"));
+  await page.waitForFunction(() => document.documentElement.dataset.morseExtension === "1"); // the content script (the UI is built on first open)
   const url = `${origin}/`;
   await asMorse(page, { type: "control.off", url, tab: "from-session-storage", on: true });
   const [boot] = await asMorse(page, [{ type: "control.boot", url, tab: "a-different-one" }]);

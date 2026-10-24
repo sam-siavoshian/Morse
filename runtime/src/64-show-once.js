@@ -32,12 +32,7 @@ const ShowOnce = (() => {
   strip.setAttribute("role", "region");
   tBind(strip, "aria-label", "menu.showonce");
   root.append(strip);
-  const srEl = document.createElement("div");
-  srEl.className = "sr";
-  srEl.setAttribute("role", "status");
-  srEl.setAttribute("aria-live", "polite");
-  root.append(srEl);
-  const say = t => { srEl.textContent = ""; setTimeout(() => { srEl.textContent = t; }, 50); };
+  const say = t => announce(t, { again: true }); // 12-focus.js
   for (const t of ["keydown", "keyup", "keypress"]) strip.addEventListener(t, ev => { if (ev.key !== "Escape") ev.stopPropagation(); });
 
   function stepRow(s, i, { remove = true, last = false } = {}) {

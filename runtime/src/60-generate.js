@@ -63,6 +63,9 @@ async function submit(request, opts = {}) {
   // writing, the change showing up as it's written, trying it.
   const say = text => { hint.innerHTML = `${radar(12)} ${text}`; };
   say(t("gen.asking"));
+  // Screen readers hear a few steps, never the streaming code: working, the
+  // first change on the page, a retry, then done or what went wrong.
+  announce(prev ? t("gen.workingAgain") : t("gen.working"));
   actions.innerHTML = `<span class="ms">0.0s</span>`;
   const clock = setInterval(() => { const m = actions.querySelector(".ms"); if (m) m.textContent = ((performance.now() - t0) / 1000).toFixed(1) + "s"; }, 100);
   Effect.start(focus);
@@ -84,6 +87,7 @@ async function submit(request, opts = {}) {
     setCss(id, css);
     if (!css.trim() || showing) return;
     showing = true;
+    announce(t("gen.firstShowing"));
     Effect.reveal(); // the change shows through while the rest is written
     if (!fixing && wrote) say(t("gen.writingVisible"));
   }
@@ -96,7 +100,7 @@ async function submit(request, opts = {}) {
     if (msg.type === "css") { if (shotDone) showCss(msg.css); else pendingCss = msg.css; }
     if (msg.type === "stage" && !wrote && !fixing) say(msg.stage === "thinking" ? t("gen.thinking") : t("gen.reading"));
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") { fixing = true; say(t("gen.fixing")); hint.title = String(msg.error || ""); }
+      if (msg.phase === "fixing") { fixing = true; say(t("gen.fixing")); hint.title = String(msg.error || ""); announce(t("gen.fixing")); }
       if (msg.phase === "applying") say(t("gen.trying"));
     }
   });
@@ -139,6 +143,7 @@ async function submit(request, opts = {}) {
       S.phase = "error";
       bar.classList.add("err");
       hint.innerHTML = guardRefusalHint(res.error) || t("result.failed", { detail: esc(plainError(res.error).slice(0, 120)) }); // guard hook: 64-guard.js
+      announce(t("result.failedSay", { text: hint.textContent }));
       hint.title = res.error || "";
       actions.innerHTML = `<button data-a="again">${t("result.again")}</button>`;
       return;
@@ -171,6 +176,10 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
     ? `<button data-a="code">${t("btn.editCode")}</button><button data-a="keep">${t("btn.done")}</button>`
     : `<button data-a="keep" class="primary">${t("btn.save")} <kbd>↵</kbd></button><button data-a="undo">${t("btn.undo")}</button><button data-a="code">${t("btn.editCode")}</button><button data-a="share">${t("btn.share")}</button>`;
   updateChips();
+  announce(error ? `${d.title}. That didn't work: ${error}`
+    : note ? `${d.title}. ${note}`
+    : d.saved ? `${d.title}. Describe what to change, or press Done.`
+    : `Done: ${d.title}${meta ? `, ${meta}` : ""}. Press Enter to save it, or describe what to change. Undo is next to Save.`);
   input.focus({ preventScroll: true });
 }
 

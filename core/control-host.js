@@ -18,19 +18,27 @@ import { packPreview } from "./pack.js"; // packs hook
 
 export const CONTROL_REQUESTS = new Set(["control.get", "control.boot", "control.applied", "control.alive", "control.forgive", "control.off", "control.pause", "mods.preview", "control.install", "control.exportAll"]);
 
-// store: { load(), save(state), listMods(), putMods(mods), onPause?(pause) }
+// store: { load(), save(state), listMods(), putMods(mods), onPause?(pause),
+//   atomic?(fn): the host's own lock, held from the read to the write }
 export function controlHandler(store, clock = () => Date.now()) {
   let queue = Promise.resolve();
   // One read-modify-write at a time, so two tabs can't lose each other's update.
   const update = fn => {
-    const run = queue.then(async () => {
+    const work = async () => {
       const before = normalizeControl(await store.load());
       const pauseBefore = JSON.stringify(before.pause);
       const { state, result } = fn(before);
+      // Safe start's pings write here several times per page load. Someone
+      // else (`morse pause` / `morse resume` in a terminal, another host) may
+      // have changed the pause meanwhile: an update that isn't about the
+      // pause keeps the one on disk, so a ping can't undo a resume.
+      const changed = pauseBefore !== JSON.stringify(state.pause);
+      if (!changed) state.pause = normalizeControl(await store.load()).pause;
       await store.save(state);
-      if (pauseBefore !== JSON.stringify(state.pause)) store.onPause?.(state.pause);
+      if (changed) store.onPause?.(state.pause);
       return result;
-    });
+    };
+    const run = queue.then(() => (store.atomic ? store.atomic(work) : work()));
     queue = run.catch(() => {});
     return run;
   };

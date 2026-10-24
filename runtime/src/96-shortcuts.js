@@ -15,6 +15,7 @@ function renderShortcuts() {
     [t("keys.inBar"), [
       [t("bar.send"), caps([enter])],
       [t("keys.newLine"), caps([PLATFORM === "mac" ? "⇧" : "Shift", enter])],
+      [t("menu.keypick"), caps(KEYPICK_COMBO)], // 41-keypick.js
       [t("keys.past"), caps(["↑", "↓"])],
       [t("bar.stop"), `${caps(["Esc"])}<small>${t("keys.or")}</small>${caps([primaryMod, "."])}`],
       [t("menu.settings"), caps([primaryMod, ","])],

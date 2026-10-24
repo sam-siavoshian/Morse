@@ -33,13 +33,13 @@ const A11y = (() => {
   // ---- the menu group (46-quick.js rebuilds the menu each time it opens)
   quickMenuGroups.push(() => {
     const r = modFor("readable");
-    const item = (k, label, on, cls = "") => `<button role="menuitemcheckbox" class="${cls}" data-a11y="${k}" aria-checked="${on}">${cls ? "" : svg(I[k])}<span>${label}</span><span class="gm-state">${on ? svg(I.on) : ""}</span></button>`;
+    const item = (k, label, on, cls = "") => `<button role="menuitemcheckbox" tabindex="-1" class="${cls}" data-a11y="${k}" aria-checked="${on}">${cls ? "" : svg(I[k])}<span>${label}</span><span class="gm-state">${on ? svg(I.on) : ""}</span></button>`;
     return `<div class="a11y-group menu" role="group" aria-label="${esc(t("a11y.title"))}">
-      <header>${t("a11y.title")}<small>${t("a11y.noModel")}</small></header>
+      <header aria-hidden="true">${t("a11y.title")}<small>${t("a11y.noModel")}</small></header>
       ${A11Y_KINDS.map(k => item(k, t(`a11y.${k}`), isOn(k)) + (k === "readable" ? item("dyslexia", t("a11y.dyslexia"), !!(r?.enabled && r.edits[0].dyslexia), "a11y-sub") : "")).join("")}
       <hr>
-      <button role="menuitem" data-a11y="read">${svg(I.read)}<span>${t("a11y.read")}</span><span class="gm-state">${ReadAloud.hasSelection() ? t("a11y.selection") : ""}</span></button>
-      <button role="menuitem" data-a11y="check">${svg(I.check)}<span>${t("a11y.check")}</span><span class="gm-state"></span></button>
+      <button role="menuitem" tabindex="-1" data-a11y="read">${svg(I.read)}<span>${t("a11y.read")}</span><span class="gm-state">${ReadAloud.hasSelection() ? t("a11y.selection") : ""}</span></button>
+      <button role="menuitem" tabindex="-1" data-a11y="check">${svg(I.check)}<span>${t("a11y.check")}</span><span class="gm-state"></span></button>
     </div>`;
   });
   const menu = bar.querySelector(".gm-menu");

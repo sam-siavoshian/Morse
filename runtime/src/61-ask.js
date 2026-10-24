@@ -173,6 +173,7 @@ const Ask = (() => {
       const head = toolsMenu.querySelector("header");
       const item = document.createElement("button");
       item.setAttribute("role", "menuitem");
+      item.tabIndex = -1;
       item.dataset.ask = "explain";
       item.innerHTML = `${svg(I_EXPLAIN)}<span>${t("ask.explain")}</span><span class="gm-state"></span>`;
       const hr = document.createElement("hr");
@@ -250,6 +251,19 @@ const Guide = (() => {
     const s = G.steps[G.i];
     Markers.show([{ n: G.i + 1, selector: s.selector, label: s.label }], { focus: true });
     render();
+    // Screen readers hear each step, and how to get there without a mouse.
+    const keys = PLATFORM === "mac" ? "Option" : "Alt";
+    announce(`${t("ask.stepOf", { i: G.i + 1, n: G.steps.length })}: ${s.label || t("so.step.marked")}. ${G.i === 0 ? t("ask.goFirst", { key: keys }) : t("ask.goNext", { key: keys })}`);
+  }
+  // Keyboard users go to the step's part of the page; Morse moves focus there, never clicks.
+  function goTo() {
+    const el = current()?.el;
+    if (!el || !Markers.visible(el)) return announce(t("ask.hidden"));
+    el.scrollIntoView({ block: "center", inline: "nearest" });
+    const FOCUS = "a[href], button, input, select, textarea, summary, [tabindex], [contenteditable=''], [contenteditable=true]";
+    const to = el.matches(FOCUS) ? el : el.querySelector(FOCUS);
+    if (to && !to.disabled) to.focus();
+    else announce(`${describe(el)} is marked on the page`);
   }
   function done() {
     Markers.clear();
@@ -273,6 +287,7 @@ const Guide = (() => {
       </div>
       <div class="g-foot">
         <span class="g-dots" aria-label="${esc(t("ask.stepOf", { i: G.i + 1, n: G.steps.length }))}">${G.steps.map((_, k) => `<i class="${k < G.i ? "past" : k === G.i ? "now" : ""}"></i>`).join("")}<span>${t("ask.stepOf", { i: G.i + 1, n: G.steps.length })}</span></span>
+        ${seen ? `<button type="button" data-g="go" title="${esc(t("ask.goToTitle", { key: PLATFORM === "mac" ? "⌥↓" : "Alt+↓" }))}">${t("ask.goTo")}</button>` : ""}
         <button type="button" data-g="back" ${G.i === 0 ? "disabled" : ""}>${t("ask.back")}</button>
         <button type="button" data-g="skip">${G.i === G.steps.length - 1 ? t("ask.finish") : t("ask.skip")}</button>
       </div>`;
@@ -333,6 +348,7 @@ const Guide = (() => {
     if (a === "stop") stop();
     if (a === "back") go(G.i - 1);
     if (a === "skip") go(G.i + 1);
+    if (a === "go") goTo();
   });
   // The user's own click on the marked element moves to the next step. Some
   // menus act on pointerup and vanish before the click, so either counts.
@@ -346,10 +362,13 @@ const Guide = (() => {
   listen("click", hit, true);
   listen("pointerup", hit, true);
   listen("keydown", e => {
-    if (!e.isTrusted || !G || S.open || e.key !== "Escape") return;
+    if (!e.isTrusted || !G || S.open || !panel.hidden || !modal.hidden) return;
+    if (matchCombo(e, KEYPICK_COMBO) && !G.done) { e.preventDefault(); e.stopImmediatePropagation(); goTo(); return; } // 41-keypick.js's keys
+    if (e.key !== "Escape") return;
     e.preventDefault();
     e.stopImmediatePropagation();
     stop();
+    announce(t("ask.stopped"));
   }, true);
 
   return { start, stop, get active() { return !!G; }, get step() { return G ? G.i : -1; } };

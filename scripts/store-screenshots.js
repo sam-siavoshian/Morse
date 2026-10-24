@@ -3,9 +3,10 @@
 //
 //   npm run store:screenshots      (DISPLAY=:99 on a machine without a screen)
 //
-// Runs demo/serve.js, then demo/shoot-extension.js, demo/shoot-godmode.js and
-// demo/shoot-gallery.js into a scratch folder, and copies the chosen frames to
-// docs/store/screenshots/. docs/store/README.md says what each one shows.
+// Runs demo/shoot-extension.js, demo/shoot-godmode.js and demo/shoot-gallery.js
+// (each starts the demo sites it needs) into a scratch folder, and copies the
+// chosen frames to docs/store/screenshots/. docs/store/README.md says what
+// each one shows.
 
 import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
@@ -14,7 +15,6 @@ import path from "node:path";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const OUT = path.join(root, "docs", "store", "screenshots");
-const PORT = Number(process.env.MORSE_DEMO_PORT || 8787);
 
 // [file the demo script writes, name in the store folder]
 export const STORE_SHOTS = [
@@ -38,12 +38,9 @@ export function pngSize(buf) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname)) {
   const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-store-"));
-  const server = spawn(process.execPath, [path.join(root, "demo/serve.js")], { cwd: root, env: { ...process.env, MORSE_DEMO_PORT: String(PORT) }, stdio: "ignore" });
-  process.on("exit", () => server.kill());
-  await new Promise(r => setTimeout(r, 800));
   try {
     // A demo script that stops after the frames we need is fine; a missing frame is not.
-    for (const s of SCRIPTS) await run(s, { SHOTS: tmp, MORSE_DEMO_PORT: String(PORT) }).catch(e => console.warn(`  ${e.message}`));
+    for (const s of SCRIPTS) await run(s, { SHOTS: tmp }).catch(e => console.warn(`  ${e.message}`));
     await fs.mkdir(OUT, { recursive: true });
     for (const [from, to] of STORE_SHOTS) {
       const buf = await fs.readFile(path.join(tmp, from)).catch(() => { throw new Error(`The demo scripts didn't take ${from}.`); });
@@ -53,7 +50,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(im
       console.log(`  ${path.relative(root, path.join(OUT, to))}  ${width}x${height}`);
     }
   } finally {
-    server.kill();
     await fs.rm(tmp, { recursive: true, force: true });
   }
 }

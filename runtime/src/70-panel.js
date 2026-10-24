@@ -93,15 +93,29 @@ new MutationObserver(() => {
   if (!panel.hidden) return;
   const back = PanelUI.back;
   PanelUI.back = null;
-  if (!S.open && back?.isConnected) try { back.focus({ preventScroll: true }); } catch {}
+  if (S.open || !modal.hidden) return;
+  if (back?.isConnected) try { back.focus({ preventScroll: true }); return; } catch {}
+  if (panel.contains(root.activeElement)) focusPageTop();
 }).observe(panel, { attributes: true, attributeFilter: ["hidden"] });
 
 const rows = () => [...panel.querySelectorAll(".list article")];
+// One Tab stop for the list: the current row and its own buttons. ↑/↓ move
+// between rows, so "Install a mod…" is a few Tabs away however many mods there are.
+function roveRows(cur) {
+  for (const r of rows()) {
+    r.tabIndex = r === cur ? 0 : -1;
+    for (const b of r.querySelectorAll("button, a[href], summary")) if (!b.matches(".sw input")) b.tabIndex = r === cur ? 0 : -1;
+  }
+}
+panel.addEventListener("focusin", e => {
+  const art = e.target.closest?.(".list article");
+  if (art && art.tabIndex !== 0) { PanelUI.focus = art.dataset.id; roveRows(art); }
+});
 function focusRow(i) {
   const list = rows();
   if (!list.length) return panel.querySelector(".search, [data-a=import]")?.focus({ preventScroll: true });
   const el = list[Math.max(0, Math.min(list.length - 1, i < 0 ? 0 : i))];
-  list.forEach(r => (r.tabIndex = r === el ? 0 : -1));
+  roveRows(el);
   PanelUI.focus = el.dataset.id;
   el.focus({ preventScroll: true });
   el.scrollIntoView({ block: "nearest" });
@@ -122,7 +136,7 @@ function renderPanel() {
   panel.innerHTML = `
     <header><span class="mark">${radar(16)}</span><div><b>${t("panel.title")}</b><small>${esc(where)}</small></div><button data-a="close" title="${esc(t("btn.close"))}" aria-label="${esc(t("btn.close"))}">×</button></header>
     ${searchable ? `<div class="psearch"><input class="search" type="search" placeholder="${esc(t("panel.search", { n: S.mods.length }))}" aria-label="${esc(t("panel.search.label"))}" spellcheck="false" autocomplete="off" value="${esc(PanelUI.q)}"></div>` : ""}
-    <div class="list" role="list" aria-label="${esc(t("panel.title"))}"></div>
+    <div class="list" role="group" aria-label="${esc(t("panel.title"))}"></div><p class="sr" id="m-row-keys">${t("panel.rowKeys")}</p>
     <footer><button data-a="import">${t("panel.install")}</button><span>${esc(S.label)}</span></footer>`;
   renderList();
   controlPanel(); // user control: pause, backup (63-control.js)
@@ -149,9 +163,9 @@ function renderList() {
   list.insertAdjacentHTML("beforeend", gallerySectionHtml()); // gallery hook: Mods for this site (68-gallery.js)
   const r = rows();
   const i = Math.max(0, r.findIndex(a => a.dataset.id === PanelUI.focus));
-  r.forEach((a, j) => (a.tabIndex = j === i ? 0 : -1));
   controlRows(); // user control: where each mod came from, Show code (63-control.js)
   packRows(); // packs hook: ticks while making a pack (69-packs.js)
+  roveRows(r[i]);
 }
 
 function rowHtml(m) {
@@ -163,7 +177,7 @@ function rowHtml(m) {
   const when = relativeTime(changed ? m.updated : m.created);
   const label = `${m.title}${m.enabled ? "" : t("panel.row.off")}${broken ? t("panel.row.broken") : ""}`;
   return `
-      <article data-id="${esc(m.id)}" class="${m.enabled ? "" : "off"}${broken ? " broken" : ""}" role="listitem" tabindex="-1" aria-label="${esc(label)}">
+      <article data-id="${esc(m.id)}" class="${m.enabled ? "" : "off"}${broken ? " broken" : ""}" tabindex="-1" aria-label="${esc(label)}" aria-describedby="m-row-keys">
         <label class="sw" title="${m.enabled ? t("btn.turnOff") : t("btn.turnOn")}"><input type="checkbox" data-a="toggle" tabindex="-1" aria-label="${esc(m.title)}" ${m.enabled ? "checked" : ""}><span></span></label>
         <div class="meta"><b>${esc(m.title)}</b><small>“${esc(m.prompt)}”</small>${m.refined ? `<small class="latest">${t("panel.latest", { text: esc(m.refined) })}</small>` : ""}
           <div class="tags">${m.css.trim() ? `<span>${t("panel.tag.style")}</span>` : ""}${m.js.trim() ? `<span>${t("panel.tag.script")}</span>` : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : `<span>${t("panel.tag.page")}</span>`}${when ? `<em class="when">${esc(changed ? t("panel.changed", { when }) : t("panel.added", { when }))}</em>` : ""}</div>
@@ -172,7 +186,7 @@ function rowHtml(m) {
         ${guardRowHtml(m) /* guard hook: Paused because it was slowing this page down (64-guard.js) */}
         ${galleryRowHtml(m) /* gallery hook: Update available (68-gallery.js) */}
         ${healRowHtml(m) /* self-heal hook: Share the fix (71-heal.js) */}
-        <div class="btns"><button data-a="refine">${t("btn.change")}</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}">${t("panel.history")} <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">${t("btn.copyLink")}</button><button data-a="share">${t("btn.share")}</button><button data-a="code">${t("btn.editCode")}</button><button data-a="del">${t("btn.delete")}</button></div>
+        <div class="btns"><button data-a="refine">${t("btn.change")}</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}"${open ? ` aria-controls="m-versions-${esc(m.id)}"` : ""}>${t("panel.history")} <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">${t("btn.copyLink")}</button><button data-a="share">${t("btn.share")}</button><button data-a="code">${t("btn.editCode")}</button><button data-a="del">${t("btn.delete")}</button></div>
         ${open ? versionsHtml(m, versions) : ""}
       </article>`;
 }
@@ -183,7 +197,7 @@ function versionsHtml(m, vs) {
   for (let i = vs.length - 1; i >= 0; i--) {
     items.push(`<li><button data-a="restore" data-v="${i}" title="${esc(t("panel.bringBack", { n: i + 1 }))}">${row(i + 1, vs[i].prompt, relativeTime(vs[i].at) || t("panel.earlier"))}</button></li>`);
   }
-  return `<ol class="versions" aria-label="${esc(t("panel.versionsOf", { title: m.title }))}">${items.join("")}</ol><p class="vhint">${t("panel.vhint")}</p>`;
+  return `<ol class="versions" id="m-versions-${esc(m.id)}" aria-label="${esc(t("panel.versionsOf", { title: m.title }))}">${items.join("")}</ol><p class="vhint">${t("panel.vhint")}</p>`;
 }
 
 // ---- actions

@@ -169,7 +169,7 @@ const DescribeImage = (() => {
     if (a === "again" && D) start(D.img, { fromAudit: D.fromAudit });
   });
   listen("keydown", e => {
-    if (!e.isTrusted || !D || S.open || e.key !== "Escape") return;
+    if (!e.isTrusted || !D || S.open || !panel.hidden || !modal.hidden || e.key !== "Escape") return; // the top layer takes Esc first
     e.preventDefault();
     e.stopImmediatePropagation();
     close();

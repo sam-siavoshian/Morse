@@ -9,18 +9,12 @@
 // (reviewImport), 95-keys.js (offSwitch), 96-shortcuts.js, 97-boot.js
 // (controlBoot, controlReady), 10-dom.js (CONTROL_CSS).
 
-const Control = {
-  pause: { all: false, sites: {} },
-  off: false,       // the off switch: every mod off in this tab until turned back on (survives reloads)
-  held: new Set(),  // safe start: mods held back on this load
-  suspect: null,
-  tab: "",          // tells this tab's loads apart from other tabs of the same site
-};
-try { Control.off = sessionStorage.getItem("morse:off") === "1"; } catch {}
-try {
-  Control.tab = sessionStorage.getItem("morse:tab") || uid();
-  sessionStorage.setItem("morse:tab", Control.tab);
-} catch {}
+// perf: boot.js applies mods before the UI exists, so it owns this state
+// (same shape: pause, off, held, suspect, tab): it reads morse:off and
+// morse:tab from sessionStorage and asks control.boot once per load (the
+// host's off switch wins over a page that cleared its storage).
+const Control = B.control;
+// (HOTKEY_HELP.off, the words for the off switch's shortcut: 56-settings.js)
 
 const here = () => ({ url: location.href, app: S.app });
 const hereName = () => S.appName || controlKey(here());
@@ -146,8 +140,8 @@ async function runAgain(m) {
 const ctlToast = document.createElement("div");
 ctlToast.className = "ctl-toast";
 ctlToast.hidden = true;
-ctlToast.setAttribute("role", "status");
-ctlToast.setAttribute("aria-live", "polite");
+ctlToast.setAttribute("role", "group");
+ctlToast.setAttribute("aria-label", "Morse");
 root.append(ctlToast);
 let ctlToastTimer = 0;
 function controlToast(msg, actions = [], { sticky = false, title = "" } = {}) {
@@ -157,6 +151,8 @@ function controlToast(msg, actions = [], { sticky = false, title = "" } = {}) {
     ${actions.length ? `<div class="ctl-acts">${actions.map(([label], i) => `<button class="btn${i === actions.length - 1 ? " primary" : ""}" data-i="${i}">${esc(label)}</button>`).join("")}</div>` : ""}
     <button class="ibtn xs close ctl-x" data-i="-1" title="${esc(t("btn.close"))}" aria-label="${esc(t("btn.close"))}">×</button>`;
   ctlToast.hidden = false;
+  // Said once, with what can be done; it stays while it has focus or the pointer.
+  announce(`${title ? title + " " : ""}${msg}${actions.length ? `. ${actions.map(([l]) => l).join(" or ")}, in Morse's message at the bottom of the page.` : ""}`, { again: true });
   ctlToast.onclick = e => {
     const b = e.target.closest("button[data-i]");
     if (!b) return;
@@ -166,8 +162,8 @@ function controlToast(msg, actions = [], { sticky = false, title = "" } = {}) {
   };
   clearTimeout(ctlToastTimer);
   const later = () => { if (!sticky) ctlToastTimer = setTimeout(() => (ctlToast.hidden = true), actions.length ? 8000 : 3200); };
-  ctlToast.onmouseenter = () => clearTimeout(ctlToastTimer);
-  ctlToast.onmouseleave = later;
+  ctlToast.onmouseenter = ctlToast.onfocusin = () => clearTimeout(ctlToastTimer);
+  ctlToast.onmouseleave = ctlToast.onfocusout = e => { if (!ctlToast.contains(e.relatedTarget) && !ctlToast.matches(":hover")) later(); };
   later();
 }
 
@@ -183,8 +179,8 @@ function summaryHtml(m) {
     ${s.notes.map(n => `<p class="ctl-warn" data-s="${n.id}"><b>${t("ctl.note")}</b>${esc(n.text)}</p>`).join("")}`;
 }
 function codeHtml(m) {
-  return `${m.css.trim() ? `<label>${t("code.style")} <span class="dim">CSS</span></label><pre class="code ctl-pre">${esc(m.css.trim())}</pre>` : ""}
-    ${m.js.trim() ? `<label>${t("code.script")} <span class="dim">${t("code.scriptRuns")}</span></label><pre class="code ctl-pre">${esc(m.js.trim())}</pre>` : ""}
+  return `${m.css.trim() ? `<label>${t("code.style")} <span class="dim">CSS</span></label><pre class="code ctl-pre" tabindex="0" role="region" aria-label="${esc(t("code.styleCode"))}">${esc(m.css.trim())}</pre>` : ""}
+    ${m.js.trim() ? `<label>${t("code.script")} <span class="dim">${t("code.scriptRuns")}</span></label><pre class="code ctl-pre" tabindex="0" role="region" aria-label="${esc(t("code.scriptCode"))}">${esc(m.js.trim())}</pre>` : ""}
     ${!m.css.trim() && !m.js.trim() ? `<p class="dim">${t("ctl.noCode")}</p>` : ""}`;
 }
 

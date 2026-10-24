@@ -1,12 +1,47 @@
+// Modals (Edit code, Share, Install a mod, the install and update reviews,
+// Show code) are real modal dialogs: the <dialog> is named by the card's
+// title, focus goes in, Tab stays in, and Esc or Close puts focus back where
+// it was (12-focus.js has the helpers).
 // { review: true }: an install or update review (63-control.js, 68-gallery.js).
+let modalBack = null;
 function openModal(html, { review = false } = {}) {
-  modal.innerHTML = `<div class="card">${html}</div>`;
+  if (modal.hidden) modalBack = nowFocused(); // a modal replacing another (Install a mod → review) keeps the first one's
+  modal.innerHTML = `<div class="card">${html}<div class="sr" role="status" aria-live="polite"></div></div>`;
+  const card = modal.querySelector(".card"), title = card.querySelector("header b"), sub = card.querySelector("header small");
+  modal.setAttribute("aria-modal", "true");
+  for (const [attr, el, id] of [["aria-labelledby", title, "m-modal-title"], ["aria-describedby", sub, "m-modal-sub"]]) {
+    if (el) { el.id = id; modal.setAttribute(attr, id); } else modal.removeAttribute(attr);
+  }
+  for (const b of card.querySelectorAll("header > button[data-a=close]")) if (!b.getAttribute("aria-label")) b.setAttribute("aria-label", "Close");
   modal.hidden = false;
+  bar.setAttribute("aria-modal", "false"); // one modal at a time for screen readers: this one
   modal.onclick = e => { if (e.target === modal || e.target.closest("[data-a=close]")) modal.hidden = true; };
+  // The first field, else the first button that isn't Close; callers may move it (the review starts on Cancel).
+  const all = tabbables(card);
+  (all.find(n => n.matches("textarea:not([readonly]), input:not([readonly])")) || all.find(n => !n.closest("header") && !n.matches("[readonly], pre")) || all[0])?.focus({ preventScroll: true });
   if (review) showReview();
 }
 // One listener for the life of the page (it used to be added on every open).
-modal.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Escape") modal.hidden = true; });
+modal.addEventListener("keydown", e => {
+  e.stopPropagation();
+  if (e.key === "Escape") modal.hidden = true;
+  if (e.key === "Tab" && !e.altKey && !e.ctrlKey && !e.metaKey) tabWithin(e, modal.querySelector(".card"));
+});
+// However it closes (Esc, Close, Cancel, a click outside, Install), focus goes
+// back to where it was, or to the bar or the panel if that is gone.
+new MutationObserver(() => {
+  if (!modal.hidden) return;
+  bar.setAttribute("aria-modal", "true");
+  const back = modalBack;
+  modalBack = null;
+  // After the <dialog> has closed (a review's close() moves focus on its own).
+  setTimeout(() => {
+    if (!modal.hidden || !(modal.contains(root.activeElement) || !root.activeElement)) return;
+    const visible = n => n?.isConnected && n.getClientRects().length && !n.closest("[hidden]");
+    const to = visible(back) ? back : !bar.hidden ? input : !panel.hidden ? panel.querySelector(".list article[tabindex='0'], [data-a=close]") : back?.isConnected ? back : null;
+    try { to?.focus({ preventScroll: true }); } catch {}
+  }, 0);
+}).observe(modal, { attributes: true, attributeFilter: ["hidden"] });
 
 // ---- reviews: on top of everything, and no click until they have been seen
 // A review is shown as a modal <dialog>: the browser draws it above the whole
@@ -81,8 +116,8 @@ function showCode(m) {
   const saved = !isDraft && S.mods.find(x => x.id === m.id);
   openModal(`
     <header><b>${esc(m.title)}</b><small>“${esc(m.refined || m.prompt || m.request)}”</small><button data-a="close">×</button></header>
-    <label>${t("code.style")} <span class="dim">CSS</span></label><textarea class="code" data-k="css" spellcheck="false">${esc(m.css)}</textarea>
-    <label>${t("code.script")} <span class="dim">${t("code.scriptHelp")}</span></label><textarea class="code" data-k="js" spellcheck="false">${esc(m.js)}</textarea>
+    <label for="m-code-css">${t("code.style")} <span class="dim">CSS</span></label><textarea class="code" id="m-code-css" data-k="css" spellcheck="false">${esc(m.css)}</textarea>
+    <label for="m-code-js">${t("code.script")} <span class="dim">${t("code.scriptHelp")}</span></label><textarea class="code" id="m-code-js" data-k="js" spellcheck="false">${esc(m.js)}</textarea>
     <footer><button data-a="close">${t("btn.cancel")}</button><button class="primary" data-a="save">${saved ? t("code.saveRun") : t("code.run")}</button></footer>`);
   modal.querySelector("[data-a=save]").onclick = async () => {
     const css = modal.querySelector("[data-k=css]").value, js = modal.querySelector("[data-k=js]").value;
@@ -109,8 +144,8 @@ async function showShare(m) {
   openModal(`
     <header><b>${t("share.title", { title: esc(m.title) })}</b><small>${t("share.sub")}</small><button data-a="close">×</button></header>
     ${card ? `<img class="cardimg" src="${card}" alt="${esc(t("share.cardAlt"))}">` : ""}
-    ${link ? `<div class="link"><input readonly value="${esc(link.link)}"><button data-a="copy" class="primary">${t("btn.copyLink")}</button></div>` : ""}
-    <div class="exports">
+    ${link ? `<div class="link"><input readonly value="${esc(link.link)}" aria-label="${esc(t("share.linkLabel"))}"><button data-a="copy" class="primary">${t("btn.copyLink")}</button></div>` : ""}
+    <div class="exports" role="group" aria-label="${esc(t("share.exports"))}">
       ${card ? `<button data-a="png">${t("share.image")}</button>` : ""}
       ${S.draft?.id === m.id && S.draft.clip ? `<button data-a="clip">${t("share.clip", { kind: esc(S.draft.clip.kind) })}</button>` : ""}
       <button data-a="json">${t("share.file")}</button>
@@ -119,7 +154,7 @@ async function showShare(m) {
       ${galleryShareHtml(m) /* gallery hook: Submit to the gallery (68-gallery.js) */}
     </div>
     <p class="saved dim"></p>`);
-  const done = r => { modal.querySelector(".saved").textContent = r?.path ? t("share.savedTo", { path: r.path }) : t("share.downloaded"); };
+  const done = r => { const said = r?.path ? t("share.savedTo", { path: r.path }) : t("share.downloaded"); modal.querySelector(".saved").textContent = said; announce(said, { again: true }); };
   const slug = m.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "mod";
   modal.querySelector(".exports").onclick = async e => {
     const a = e.target.closest("button")?.dataset.a;
@@ -137,12 +172,13 @@ async function showShare(m) {
     const f = modal.querySelector(".link input");
     try { await navigator.clipboard.writeText(f.value); } catch { f.select(); document.execCommand?.("copy"); }
     copy.textContent = t("btn.copied");
+    announce(t("share.linkCopied"), { again: true });
   };
 }
 function showImport() {
   openModal(`
     <header><b>${t("import.title")}</b><small>${t("import.sub")}</small><button data-a="close">×</button></header>
-    <textarea class="code" data-k="src" spellcheck="false" placeholder="https://…/install.html#m=…"></textarea>
+    <textarea class="code" data-k="src" spellcheck="false" placeholder="https://…/install.html#m=…" aria-label="${esc(t("import.label"))}"></textarea>
     <footer><button data-a="close">${t("btn.cancel")}</button><button class="primary" data-a="go">${t("import.next")}</button></footer>`);
   // user control: say what it does before anything is installed (63-control.js)
   modal.querySelector("[data-a=go]").onclick = () => reviewImport(modal.querySelector("[data-k=src]").value);
@@ -236,6 +272,7 @@ function wrap(g, text, x, y, maxW, lh, maxLines) {
 onHiddenError(raw => console.warn("[morse] details:", raw));
 
 function toast(msg) {
+  announce(msg, { again: true }); // screen readers hear every toast (12-focus.js)
   toastEl.innerHTML = `${radar(12)}<span>${esc(msg)}</span>`;
   toastEl.hidden = false;
   clearTimeout(toast.t);

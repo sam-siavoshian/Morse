@@ -132,7 +132,7 @@ const GodCapture = (() => {
   const row = document.createElement("div");
   row.className = "gm-clips";
   row.hidden = true;
-  row.innerHTML = `<span class="gm-clips-l">${t("cap.captured")}</span><div class="gm-chips" role="listbox" aria-label="${esc(t("cap.items"))}"></div>`;
+  row.innerHTML = `<span class="gm-clips-l">${t("cap.captured")}</span><div class="gm-chips" role="group" aria-label="${esc(t("cap.items"))}"></div>`;
   bar.insertBefore(row, bar.querySelector(".status"));
   const chips = row.querySelector(".gm-chips"), label = row.querySelector(".gm-clips-l");
 
@@ -145,7 +145,7 @@ const GodCapture = (() => {
     row.hidden = bar.hidden || !items.length || (phase !== "idle" && !used);
     if (row.hidden) return;
     label.textContent = used ? t("cap.using") : t("cap.captured");
-    chips.innerHTML = items.map(it => `<button class="gm-chip" role="option" data-id="${esc(it.id)}" aria-pressed="${!!used || st.picked?.id === it.id}" title="${esc(it.label)}${it.note ? " · " + esc(it.note) : ""}">
+    chips.innerHTML = items.map(it => `<button class="gm-chip" data-id="${esc(it.id)}" aria-pressed="${!!used || st.picked?.id === it.id}" title="${esc(it.label)}${it.note ? " · " + esc(it.note) : ""}">
       ${thumbHtml(it)}<span><b>${esc(it.label)}</b><small>${esc(it.from?.app || it.from?.title || "")}</small></span></button>`).join("");
     chips.querySelectorAll("img").forEach(i => (i.onerror = () => i.replaceWith(Object.assign(document.createElement("span"), { className: "gm-ph", innerHTML: GodMode.icon("capture", 16) }))));
   }

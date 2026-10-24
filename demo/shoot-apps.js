@@ -16,7 +16,7 @@ import { createRequire } from "node:module";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const OUT = path.join(root, "docs", "screenshots");
+const OUT = path.resolve(root, process.env.SHOTS || path.join("docs", "screenshots"));
 const HOME = process.env.MORSE_HOME || await fs.mkdtemp(path.join(os.tmpdir(), "morse-apps-"));
 process.env.MORSE_HOME = HOME;
 await fs.mkdir(HOME, { recursive: true });

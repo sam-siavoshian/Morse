@@ -1,32 +1,10 @@
-function setCss(id, css) {
-  let s = document.head.querySelector(`style[data-morse-css="${cssEsc(id)}"]`);
-  if (!css) { s?.remove(); return; }
-  if (!s) { s = document.createElement("style"); s.setAttribute("data-morse-css", id); document.head.append(s); }
-  if (s.textContent !== css) s.textContent = css;
-}
-async function applyMod(m) {
-  if (modHeld(m)) return; // user control: off switch, pause, safe start (63-control.js)
-  const look = guardBefore(m); if (!look) return; // guard hook: CSS that hides the whole page isn't applied (64-guard.js)
-  setCss(m.id, m.css);
-  if (m.js.trim()) {
-    const r = await call("exec", { modId: m.id, js: m.js });
-    if (r?.waiting) return Waiting.add(m); // waiting hook: “Allow User Scripts” is off; the style shows, the code never ran (64-waiting.js)
-    Health.ran(m, r); // repair: the panel marks mods that stopped working (70-panel.js)
-    if (!r.ok && !guardPaused(m, r) /* guard hook: 64-guard.js says why */) { console.warn("[morse]", m.title, r.error); toast(t("mod.failedHere", { title: m.title })); }
-  }
-  modRan(m); // safe start (63-control.js)
-  guardAfter(m, look); // guard hook: its code hid the page (64-guard.js)
-}
-async function removeMod(id) { setCss(id, ""); await call("off", { modId: id }); }
-async function syncMods() {
-  const list = await call("mods.list", { url: location.href, app: S.app });
-  const prev = new Map(S.mods.map(m => [m.id, m]));
-  S.mods = list;
-  for (const m of list) {
-    const was = prev.get(m.id);
-    if (m.enabled && (!was || !was.enabled || was.updated !== m.updated)) await applyMod(m);
-    if (!m.enabled && was?.enabled) await removeMod(m.id);
-  }
-  for (const id of prev.keys()) if (!list.find(m => m.id === id)) await removeMod(id);
-  if (!panel.hidden) renderPanel();
-}
+// Mods are applied by boot.js (it runs before the UI exists and keeps running
+// across navigations), with the same rules: the off switch, pauses and safe
+// start (63-control.js reads the boot's Control), repair health (70-panel.js),
+// a toast when a mod can't run, and the guards (64-guard.js: CSS that hides
+// the page, code that never ends or hides the page; the UI part is in
+// 97-boot.js guardStop), and mods waiting for “Allow User Scripts”
+// (64-waiting.js, through 97-boot.js waitingAdd). The UI uses the same functions and the
+// same S.mods; after every sync the boot calls the UI's modsChanged()
+// (97-boot.js), which re-renders the panel when it's open.
+const { setCss, applyMod, removeMod, syncMods } = B;

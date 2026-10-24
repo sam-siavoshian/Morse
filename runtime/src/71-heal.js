@@ -18,14 +18,16 @@
 //     default) fixes in the background and says so, with Undo.
 //   - a fixed gallery mod offers to share the fix (core/heal.js fixIssue).
 //
-// Hooks (one marked line each): 97-boot.js (Heal.soon after boot and on a new
-// URL), 60-generate.js keep (Heal.kept), 70-panel.js (the note's lead, and
-// healRowHtml), 56-settings.js (the switch), 10-dom.js (HEAL_CSS).
+// Hooks (one marked line each): 97-boot.js (healFound), 60-generate.js keep
+// (Heal.kept), 70-panel.js (the note's lead, and healRowHtml), 56-settings.js
+// (the switch), 10-dom.js (HEAL_CSS).
+//
+// perf: the check itself (settle, count, confirm) runs in runtime/boot.js,
+// which is on every page while this UI only loads when Morse is opened. The
+// boot hands over what it found (found() below) and asks for the toolbar
+// badge; everything people see and do about it stays here.
 
 const Heal = (() => {
-  const QUIET = 1200;     // the page counts as settled after this long with no new elements
-  const MAX_WAIT = 15000; // a page that never goes quiet is checked anyway
-  const CONFIRM = 3000;   // a mod has to look broken twice, this far apart
   const LEAD = () => t("heal.lead");
   const AUTO_NOTE = () => t("heal.autoNote");
   // A newest version that is a fix (Fix it, or the automatic one), in any language Morse speaks.
@@ -33,7 +35,7 @@ const Heal = (() => {
   const NOT_OURS = "[data-morse-ui],[data-morse]";
   const TRANSIENT = "dialog,[role=dialog],[role=alertdialog],[aria-modal=true],[popover],[role=menu],[role=listbox],[role=tooltip]";
   const st = new Map(); // id -> { state: "broken", lead, reason, error (lazy), lost, code }
-  let pending = null, badged = -1;
+  let badged = -1;
 
   // ---- counting
   function countOf(sel) {
@@ -86,28 +88,8 @@ const Heal = (() => {
     return saved;
   }
 
-  // ---- waiting for the page to settle: loaded, then no new elements for a
-  // moment, then an idle callback. A timer checks twice a second; the
-  // observer only notes the time.
+  // Later work (a new fingerprint after a save) waits for an idle moment.
   const idle = fn => (typeof requestIdleCallback === "function" ? requestIdleCallback(() => fn(), { timeout: 2000 }) : setTimeout(fn, 200));
-  function settle() {
-    return new Promise(resolve => {
-      const begin = () => {
-        const start = Date.now();
-        let last = start;
-        const mo = new MutationObserver(() => { last = Date.now(); });
-        mo.observe(document.documentElement, { childList: true, subtree: true });
-        const tick = () => {
-          const now = Date.now();
-          if (now - last >= QUIET || now - start > MAX_WAIT) { mo.disconnect(); idle(resolve); }
-          else setTimeout(tick, 500);
-        };
-        setTimeout(tick, 500);
-      };
-      if (document.readyState === "complete") begin(); else listen("load", begin, { once: true });
-    });
-  }
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   // ---- the check
   const checkable = m => m.enabled && !modHeld(m) && !!(m.css.trim() || m.js.trim()) && m.kind !== "style"; // your-style hook: never flagged
@@ -145,34 +127,19 @@ const Heal = (() => {
     return out;
   }
 
-  async function run() {
-    scrolled = false;
-    await settle();
-    if (!live()) return;
-    const href = location.href, was = [...st.keys()].join();
-    let broken = await pass();
-    if (broken.size) {
-      await sleep(CONFIRM);
-      await settle();
-      if (!live() || location.href !== href) return;
-      broken = await pass(new Set(broken.keys()), false);
-      if (location.href !== href) return;
+  // The check runs in boot.js (on every page, UI or not); this asks for one.
+  const soon = () => B.heal.soon();
+  // What the boot found broken: the dot, the note, and auto-fix if it's on.
+  function found() {
+    const now = B.heal.broken(), was = [...st.keys()].join();
+    for (const [id, lost] of now) {
+      const m = S.mods.find(x => x.id === id);
+      if (m && st.get(id)?.state !== "broken") mark(m, lost);
     }
-    for (const [id, { mod, lost }] of broken) mark(mod, lost);
+    for (const id of [...st.keys()]) if (st.get(id)?.state === "broken" && !now.has(id)) st.delete(id);
     // redraw the panel only when something changed: a redraw drops keyboard focus
     if ([...st.keys()].join() !== was) paint(); else dot();
-    if (PREFS.autoFix) for (const [id] of broken) await autoFix(id);
-  }
-  // Asked again while a check runs (a single-page app moved on): one more after it.
-  let again = false;
-  function soon() {
-    if (!live()) return null;
-    if (pending) { again = true; return pending; }
-    pending = run().catch(e => console.warn("[morse] self-heal", e)).finally(() => {
-      pending = null;
-      if (again) { again = false; soon(); }
-    });
-    return pending;
+    if (PREFS.autoFix) (async () => { for (const id of now.keys()) await autoFix(id); })().catch(e => console.warn("[morse] self-heal", e));
   }
 
   function mark(m, lost) {
@@ -225,6 +192,7 @@ const Heal = (() => {
   function kept(mod) {
     const was = st.get(mod.id);
     st.delete(mod.id);
+    B.heal.forget(mod.id);
     if (was) paint();
     const href = location.href;
     idle(async () => {
@@ -247,7 +215,7 @@ const Heal = (() => {
     const m = S.mods.find(x => x.id === id);
     const s = st.get(id);
     if (!m || !s || !checkable(m) || (S.draft?.id === id && S.open)) return;
-    if (m.refined === AUTO_NOTE || m.fp?.tried || modCodeHash(m) !== s.code) return; // the note stays: Fix it is one click
+    if (LANGUAGES.some(l => m.refined === t("heal.autoNote", {}, l.code)) /* in any language */ || m.fp?.tried || modCodeHash(m) !== s.code) return; // the note stays: Fix it is one click
     await saveFp(m, { ...m.fp, tried: true });
     const ctx = context();
     delete ctx.target; // what the bar points at has nothing to do with this mod
@@ -269,6 +237,7 @@ const Heal = (() => {
     const saved = (await call("mods.save", { mod: { ...next, fp } }).catch(() => null)) || { ...next, fp };
     S.mods = S.mods.map(x => (x.id === saved.id ? saved : x));
     st.delete(id);
+    B.heal.forget(id);
     paint();
     const undo = [t("btn.undo"), () => undoFix(saved, s)];
     controlToast(t("heal.fixed", { title: saved.title }), galleryIdOf(saved) ? [undo, [t("heal.share"), () => shareFix(saved)]] : [undo]);
@@ -326,7 +295,7 @@ const Heal = (() => {
     const before = st.size;
     pass(new Set(st.keys()), false).then(() => { if (st.size !== before) paint(); }).catch(() => {});
   }).observe(panel, { attributes: true, attributeFilter: ["hidden"] });
-  return { soon, kept, paint, rowHtml, state: () => st, AUTO_NOTE };
+  return { soon, found, kept, paint, rowHtml, state: () => st, AUTO_NOTE };
 })();
 
 function healRowHtml(m) { return Heal.rowHtml(m); } // 70-panel.js hook
