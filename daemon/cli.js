@@ -3,13 +3,16 @@
 
 import { execFile } from "node:child_process";
 import { resolveApp } from "./apps.js";
-import { inspectFuses, fuseVerdict } from "./fuses.js";
+import { inspectFuses, formatFuses } from "./fuses.js";
 import { appsCommand, launchCommand, attachCommand, statusCommand, stopCommand } from "./desktop.js";
 import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH } from "./store.js";
 import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask } from "./models.js";
 import { detectHarnesses, validModel } from "./harness.js";
 import { createBridge, startPairing, VERSION } from "./bridge.js";
-import { streamChat, HELPER_PORT } from "../core/providers.js";
+import { streamChat, HELPER_PORT as DEFAULT_HELPER_PORT } from "../core/providers.js";
+// MORSE_HELPER_PORT moves `morse serve` and its health check off 7457 (tests run
+// several helpers at once); the extension always talks to 7457.
+const HELPER_PORT = Number(process.env.MORSE_HELPER_PORT) || DEFAULT_HELPER_PORT;
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
 import { plainError } from "../core/onboarding.js";
 import { pauseCli, resumeCli, exportAllCli, importCli, codeCli } from "./control.js"; // user control
@@ -155,8 +158,10 @@ async function main() {
     case "fuses": {
       const app = resolveApp(f._.join(" "));
       const info = await inspectFuses(app.path);
-      console.log(JSON.stringify(info, null, 2));
-      for (const line of fuseVerdict(info)) console.log("- " + line);
+      if (f.json) return console.log(JSON.stringify(info, null, 2));
+      // A native app has no fuses, and Morse can't connect to it anyway: say that.
+      if (app.canAttach === false) return console.log(`${app.name}  ${app.path}\n  Morse can't connect: it's a ${app.why}.`);
+      console.log(formatFuses(info, app.name));
       break;
     }
     case "mods": {

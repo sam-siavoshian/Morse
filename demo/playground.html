@@ -66,6 +66,8 @@
     set(k, v) { localStorage.setItem("morse:playground:" + k, JSON.stringify(v)); },
   };
   const core = Promise.all([import("/core/kit.js"), import("/core/mod.js"), import("/core/clipboard.js"), import("/core/control-host.js")]);
+  // ?demoms=60 (or window.__demoMs) slows the demo model's replay, for tests that press Stop mid-stream.
+  const demo = () => ({ provider: "demo", demoMs: Number(window.__demoMs || new URLSearchParams(location.search).get("demoms")) || undefined });
   const subs = [];
   const emit = m => subs.forEach(f => f(m));
   globalThis.__fakeEmit = emit; // tests: play host events (e.g. the share page's install.request)
@@ -115,7 +117,7 @@
       // so refine and fix run end to end: prompt, stream, parse, exec, repair.
       if (m.type === "generate" && new URLSearchParams(location.search).get("model") === "demo") {
         const { runMorse } = await import("/core/engine.js");
-        const res = await runMorse({ settings: { provider: "demo" }, request: m.request, context: m.context, base: m.base,
+        const res = await runMorse({ settings: demo(), request: m.request, context: m.context, base: m.base,
           exec: async js => exec(m.genId, js), emit: ev => emit({ ...ev, genId: m.genId }) }).catch(e => ({ ok: false, error: e.message }));
         return reply({ ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts });
       }
@@ -127,7 +129,7 @@
         fake.asks.push({ request: m.request, ask: m.context.ask || null, outline: m.context.outline });
         const { runMorse } = await import("/core/engine.js");
         const res = await runMorse({
-          settings: { provider: "demo" }, request: m.request, context: m.context,
+          settings: demo(), request: m.request, context: m.context,
           emit: ev => emit({ ...ev, genId: m.genId }),
           exec: async js => {
             try { const r = (0, eval)(kit.wrapModCode(m.genId, js)); const errs = r && r.ok ? morse.__errors(m.genId) : []; return errs.length ? { ok: false, error: errs[0] } : r; }

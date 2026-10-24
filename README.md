@@ -38,6 +38,7 @@ press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the mode
 | **Edit tools** | Change things directly, no model needed: hide, move, resize, rename, recolor, change text size, duplicate. Page tools for dark or light mode, text size, hiding ads and focus mode. Capture something in one app and rebuild it in another |
 | **Ask and find** | Ask about the app instead of changing it. You get a plain answer with numbered markers on what it means. Ask where something is and Morse tells you which menu to open. **Show me** walks you through the steps while you click. **Explain this page** sums up what the screen is for |
 | **You stay in control** | One shortcut (⌥⇧0) turns off every mod on a page. Pause Morse on a site or everywhere. A mod that keeps crashing a page is held back. Before you install a shared mod, Morse says in plain words what it does. Back up all your mods to one file |
+| **Show me once** | Do a task by hand once, then say “add a button that does this”, “do this when I press Ctrl+Shift+A” or “do this to every unread email”. Passwords are never recorded |
 | **Easier to use** | Accessibility for any app, no model needed: higher contrast, bigger click targets, an easier to read font (and dyslexia-friendly letters), underlined links, no animations, a visible focus outline, a reading ruler, no distractions. Read aloud, Check this page with Fix it, and Describe this picture (the model writes a description for screen readers) |
 
 ## Screenshots
@@ -59,6 +60,15 @@ All captured by [`demo/shoot-extension.js`](demo/shoot-extension.js) and [`demo/
 *The share image Morse makes: the same spot before and after, with the change outlined.*
 
 ![](docs/screenshots/00-terminal.png)
+
+### A real Electron app
+
+[`demo/electron-app`](demo/electron-app) on a real Electron runtime, driven with real keyboard and mouse input ([`demo/shoot-electron.js`](demo/shoot-electron.js)). How to use Morse with desktop apps, and which apps can't work: [`docs/desktop.md`](docs/desktop.md).
+
+| | |
+|---|---|
+| ![](docs/screenshots/121-electron-bar.png) **The bar** in Tunes, under its own menu bar (Ctrl+Shift+Space) | ![](docs/screenshots/122-electron-working.png) **Working** on the player controls |
+| ![](docs/screenshots/123-electron-result.png) **Result**: a sleep timer (☾) | ![](docs/screenshots/127-electron-haiku-result.png) The same request with **real Claude Code (haiku)** |
 
 ### Finding and tracking desktop apps
 
@@ -180,6 +190,22 @@ Captured by [`demo/shoot-a11y.js`](demo/shoot-a11y.js) on [`demo/sites/a11y`](de
 | ![](docs/screenshots/100-easier-to-use.png) **Easier to use**, beside Page tools: three tools on | ![](docs/screenshots/101-read-aloud.png) **Read aloud**: the sentence being read is marked |
 | ![](docs/screenshots/102-check-page.png) **Check this page**: 17 places, each with a marker, and Fix it | ![](docs/screenshots/103-before-after-contrast.png) **Higher contrast**, before and after |
 
+### Show me once: do it by hand, Morse repeats it
+
+Clicking the same things over and over? Choose **Show me once** (under the input in the empty bar, or in the ⋯ menu) and do the task by hand, once: click, type, choose, press keys. A small strip lists each step in plain words as you go: *Click “Archive”*, *Type “invoice” in “Search mail”*. **Stop** opens the bar with your steps. Then say what you want: “add a button that does this”, “do this when I press Ctrl+Shift+A” or “do this to every unread email”. Morse sends the steps to the model (in order, with what each thing is called and how to find it again) and the model writes a mod that does them for you, waiting for each thing to appear. Save, refine or undo it like any change.
+
+- **Passwords and card numbers stay yours.** For a password field, or one marked for card details, the step says “(hidden)” and the value is never kept. The mod stops at that field and asks you to type it.
+- **Only what you do, only here.** Morse records your own clicks and keys on this page while the strip shows. Not the page's own scripts, not other frames, not Morse itself. <kbd>Esc</kbd> cancels. Nothing is sent until you say what to do and press Enter.
+- Steps come from [`core/showonce.js`](core/showonce.js) (plain words, names that survive a reload: ids, test ids, labels, then the words on a button) and [`runtime/src/64-show-once.js`](runtime/src/64-show-once.js). The kit gained `morse.waitFor`, `morse.type`, `morse.choose`, `morse.key` and `morse.sleep` for doing the steps.
+
+Checked with real Claude Code (haiku) by [`evals/show-once.js`](evals/show-once.js) on the mail demo: “do this to every unread email” gave an **Archive unread** button that archived all 4 unread emails and kept the 6 read ones in 10 of 12 runs (the other 2 forgot to put the button on the page), about 10 to 25 s each; “do this when I press Ctrl+Shift+A” worked every time. Captured by [`demo/shoot-show-once.js`](demo/shoot-show-once.js).
+
+| | |
+|---|---|
+| ![](docs/screenshots/129-show-once-start.png) **Show me once**, in the bar and the ⋯ menu | ![](docs/screenshots/130-show-once-recording.png) **Recording**: each step as you do it |
+| ![](docs/screenshots/131-show-once-steps.png) **Stop**: say what to do with the steps | ![](docs/screenshots/132-show-once-result.png) **The result**, live: a button for every unread email |
+| ![](docs/screenshots/133-show-once-done.png) **Done** for 3 unread emails | ![](docs/screenshots/134-show-once-hidden.png) A sign-in: the password is “(hidden)” |
+
 ## Status
 
 Honest accounting of what was verified and how:
@@ -187,7 +213,7 @@ Honest accounting of what was verified and how:
 - **Verified end to end** (in a Linux container, Chromium 153): extension on three sites including a strict-CSP one; desktop connector via `morse launch` → CDP attach → inject → generate → self-repair → save → full app restart → mods re-applied; share link → install in a second browser profile; userscript export running standalone; clip recording to GIF/MP4. `npm test` covers the parser, every model backend (fake `claude` and `codex` on PATH, a fake Anthropic API), the Morse helper (pairing, auth, origins, cancel), the engine, share links, fuses, voice, the Edit tools and the helper kit (the kit and UI ones in real Chromium).
 - **The main screenshots replay pre-written replies** from [`core/demo.js`](core/demo.js), a test fixture, so they come out the same every time. The same desktop flow was also run with **real Claude Code** (`claude` on the Claude subscription, model `haiku`): [`docs/screenshots/claude-code`](docs/screenshots/claude-code). It built a working sleep timer on the first try (no repair round needed) in about 15 s. Its "bigger album covers" change targeted `img` elements the demo app doesn't have, so that one did nothing visible: a small fast model guessing at markup. The extension was checked the same way: paired with `morse serve`, the popup's Test button, a full generation through the helper, and Stop killing the `claude` process mid-run.
 - **Codex** isn't installed in the container, so it is only tested against a fake `codex` that prints both of its JSON output formats. **The Anthropic and OpenAI APIs** are tested against fake servers speaking their streaming protocols (the Anthropic one through the official SDK), not against the real endpoints.
-- **No real Electron app was available** in the container. The "desktop app" in the screenshots is a Chromium app window (`--app=`), which speaks exactly the protocol Electron apps expose with `--remote-debugging-port`. Multi-window behavior (popups, an isolated app frame, a third-party embed, reloads, crashes, kill and restart, `--restart`, `status`, `stop`) is tested against a fake app built from that Chromium ([`demo/fake-app.js`](demo/fake-app.js), [`tests/desktop.test.js`](tests/desktop.test.js)). App discovery is tested against fixture directory trees for macOS, Windows and Linux, not real installs; AppleScript and taskkill quitting, Windows process listing, and the real Spotify/Slack/Discord/VS Code layouts are untested. `webview` targets only exist in Electron, so they are covered by unit tests only. Some apps strip or block the debugging switch; `morse fuses <app>` reads the Electron fuse wire (REA's `inspect_electron_fuses` check) to tell you what to expect.
+- **A real Electron app** (Electron 45 on Linux): [`demo/electron-app`](demo/electron-app), a small music app with a native menu, a sandboxed preload with context isolation, an `app://` UI, a `<webview>` and a second `file://` window, packaged the way apps ship (unpacked and as `app.asar`). Verified with real X keyboard and mouse input: `morse apps` finds it, `morse launch` → hotkey → point → change (test model, and once real Claude Code haiku) → Save → quit with the app's Ctrl+Q → `morse launch` again, mod back → Mods panel → second window and webview get Morse → `morse status` → `morse stop`; `morse attach --port` to a copy running as a normal user with Chromium's sandbox fully on; and the same app with its fuses locked down. [`tests/electron.test.js`](tests/electron.test.js) runs this on every `npm test` when an Electron runtime and a display are there. Details and the apps that can't work: [`docs/desktop.md`](docs/desktop.md). The older screenshots above use a Chromium app window; multi-window edge cases (crashes, kill and restart, `--restart`) are still tested against the fake Chromium app ([`demo/fake-app.js`](demo/fake-app.js), [`tests/desktop.test.js`](tests/desktop.test.js)). Not tested: real Slack/Discord/VS Code/Spotify installs, macOS and Windows (AppleScript and taskkill quitting, `.app` bundles, Squirrel installs, Windows process listing), Wayland.
 
 ## Install
 
@@ -348,5 +374,16 @@ demo/        demo apps + the scripts that produced every screenshot
 ```
 
 Regenerate the screenshots: `npm run demo:serve &` then `DISPLAY=:99 npm run screenshots` (replayed replies; add `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code` to `demo/shoot-desktop.js` for a real model) (needs Xvfb, Chromium/Playwright, ffmpeg; set `MORSE_HOME` to a scratch dir). The Edit tools' are `DISPLAY=:99 node demo/shoot-godmode.js`; `morse apps` / `morse status` are `node demo/shoot-apps.js`.
+
+## Contributing
+
+```bash
+npm ci
+npm run check      # build, node --check on every JS file, the runtime bundle (no top-level name declared twice), every file the extension references is in dist/extension
+npm test           # everything that runs headless (Playwright, installed globally, for the browser tests)
+npm run test:ui    # the tests that need a display (the built extension), under xvfb-run if there's no $DISPLAY
+```
+
+CI (`.github/workflows/ci.yml`) runs all three on every push and pull request. Tests are safe to run in parallel, several checkouts at once included: each test file gets its own `MORSE_HOME` (never your `~/.morse`), every server and debugging port is picked by the OS, and tests wait on real conditions rather than sleeping. New tests should use `tests/helpers/` (`home.js` first, then `net.js`, `wait.js`, `browser.js`, `keys.js` for the platform's default hotkeys, `demo-server.js`). `MORSE_TEST_TIMEOUT_SCALE=2` doubles every timeout on a slow machine.
 
 MIT licensed.

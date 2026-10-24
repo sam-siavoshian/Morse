@@ -36,7 +36,7 @@ Works today:
 Not yet, or not verified:
 
 - **Apps that aren't built on Electron** (Finder, most macOS and Windows system apps) don't work.
-- **Desktop apps were tested with a stand-in**: a Chrome app window, which Morse connects to the same way as Electron apps. Not with real Spotify, Slack or Discord. Some apps don't let Morse connect; `morse fuses <app>` tells you before you try.
+- **Desktop apps were tested on a real Electron app we built for it** (Electron 45 on Linux, with a menu bar, a locked-down preload, an embedded page and a second window, also packed the way apps ship). Not yet with real Spotify, Slack or Discord, and not on macOS or Windows. Some apps don't let Morse connect; `morse fuses <app>` tells you before you try. See [docs/desktop.md](../desktop.md).
 - **Codex** is only tested against a fake `codex` command. **The Anthropic and OpenAI APIs** are only tested against fake servers, not the real ones.
 - **Mods can do anything the page can.** The model is told not to send data anywhere, but nothing stops it yet. Read what a shared mod does before you install it; the install page says it in plain words, with all of its code below.
 - **No tray app yet.** On the desktop you start apps through `morse launch`.

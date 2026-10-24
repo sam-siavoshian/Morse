@@ -1,6 +1,7 @@
 // Mods for this site: the gallery list (parsing, matching, versions, when to
 // fetch again, broken lists), the host's fetch-and-cache flow with a fake
 // network, update diffs and the "Submit to the gallery" link.
+import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
