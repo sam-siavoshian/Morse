@@ -277,7 +277,7 @@ test("the share page's install request always gets an answer: Esc, the backdrop 
     assert.match(await text(page, '.modal .ctl-warn[data-s="everywhere"]'), /every website you visit/);
     await close();
     const r = await until(async () => (await replies())[n]);
-    assert.deepEqual(r, { error: "Not installed. You cancelled it." });
+    assert.deepEqual(r, { error: "Cancelled. Nothing was installed." });
     assert.equal(await page.evaluate(`${sr(".modal")}.hidden`), true);
   }
   assert.equal(Object.keys(await stored(page)).length, 2, "nothing installed");
@@ -306,7 +306,7 @@ test("share page: plain-language summary first, code folded below, an explicit I
   // The counter writes into its own new box, so no "Changes text on the page" (core/summary.js).
   assert.deepEqual(await page.locator("ul.i-items li").evaluateAll(l => l.map(e => e.dataset.s)), ["looks", "adds", "typing", "ongoing", "code"]);
   assert.doesNotMatch(await page.locator("ul.i-items").textContent(), /Changes text on the page/);
-  assert.match(await page.locator("ul.i-items").textContent(), /Reads what you type in this page/);
+  assert.match(await page.locator("ul.i-items").textContent(), /Reads what you type on this page/);
   assert.match(await page.locator('.i-note[data-s="typing"]').textContent(), /can read what you type/);
   assert.equal(await page.locator("details#code").evaluate(d => d.open), false);
   assert.equal(await page.locator("#install").textContent(), "Install");

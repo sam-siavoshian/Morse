@@ -13,7 +13,7 @@ export const DEFAULT_PREFS = {
   barPosition: "auto", // "auto" (away from what you point at) | "top" | "bottom"
   theme: "auto",       // "auto" (match the app) | "light" | "dark"
   gallery: true,       // gallery hook: "Show mods others made" (Mods for this site)
-  autoFix: false,      // self-heal hook: "Fix my mods automatically when a site changes"
+  autoFix: false,      // self-heal hook: "Fix my mods when a site changes"
   language: "",        // "" = same as my computer; else a code from core/i18n.js LANGUAGES
   modelMode: "auto",   // models: "auto" (fast model, strong one when needed) | "fast" | "best" (core/route.js)
 };

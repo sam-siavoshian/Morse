@@ -169,7 +169,7 @@ test("Esc on a result keeps it and says so, with Undo right there", { skip }, as
   await waitFor(s => !s.open);
   const toast = ui(page, ".ctl-toast");
   await toast.waitFor();
-  assert.match(await toast.textContent(), /Kept “Now playing label”\. Closing the bar keeps a change\./);
+  assert.match(await toast.textContent(), /Saved “Now playing label”\. Closing the bar saves a change\./);
   assert.equal((await saved(page)).length, 1, "it is kept");
   assert.equal(await page.locator("#toolbar .morse-now").count(), 1);
   await ui(page, ".ctl-toast .ctl-acts button", { hasText: "Undo" }).click();
@@ -198,7 +198,7 @@ test("Esc on a result keeps it and says so, with Undo right there", { skip }, as
   await page.keyboard.press("Escape");
   await waitFor(s => !s.open);
   await toast.waitFor();
-  assert.match(await toast.textContent(), /Kept “Now playing label”/);
+  assert.match(await toast.textContent(), /Saved “Now playing label”/);
   assert.equal((await saved(page))[0].history.length, 1);
   await ui(page, ".ctl-toast .ctl-acts button", { hasText: "Undo" }).click();
   await page.waitForFunction(() => getComputedStyle(document.querySelector("#toolbar .morse-now")).fontSize === "14px");
@@ -274,7 +274,7 @@ test("pointing: Alt+Up chooses the bigger part around what the mouse chose, and 
   const chip = () => ui(page, ".chip.target span").textContent();
   await page.waitForFunction(() => !document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".chip.target").hidden);
   const first = await chip();
-  assert.match(await ui(page, ".hint").textContent(), /Alt\+↑ bigger part/);
+  assert.match(await ui(page, ".hint").textContent(), /Alt\+↑ for a bigger part/);
   await page.keyboard.press("Alt+ArrowUp");
   await page.waitForFunction(f => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".chip.target span").textContent !== f, first);
   assert.match(await chip(), /toolbar|Toolbar/i, `${first} → ${await chip()}`);

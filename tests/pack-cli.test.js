@@ -60,7 +60,7 @@ test("morse pack install: says what each mod does, and asks first", async () => 
   assert.match(r.out, /The pack Team tools has 2 mods\./);
   assert.match(r.out, /“For the board team”/);
   assert.match(r.out, /Mod aa for team\.example\n {2}“make aa”\n {2}- Changes how the page looks/);
-  assert.match(r.out, /Mod bb[\s\S]*Reads what you type in this page[\s\S]*Note: This mod can read what you type/);
+  assert.match(r.out, /Mod bb[\s\S]*Reads what you type on this page[\s\S]*Note: This mod can read what you type/);
   assert.match(r.err, /Add --yes to install without being asked/);
   assert.deepEqual(await readMods(friend), {}, "nothing installed before saying yes");
 
