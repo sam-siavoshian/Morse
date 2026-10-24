@@ -160,7 +160,7 @@ test("'host >>> inside' reaches into open shadow roots and frames; css(text, whe
     frame: getComputedStyle(document.getElementById("fr").contentDocument.querySelector("p")).color,
   }));
   assert.deepEqual(await look(), { colors: ["rgb(255, 0, 0)", "rgb(255, 0, 0)"], seen: ["1", "1"], frame: "rgb(0, 128, 0)" });
-  assert.deepEqual(await run("r5", `if (morse.$$("x-card >>> .t").length !== 2 || morse.$("#fr >>> p")?.textContent !== "hi") throw new Error("deep query");`), { ok: true });
+  assert.equal((await run("r5", `if (morse.$$("x-card >>> .t").length !== 2 || morse.$("#fr >>> p")?.textContent !== "hi") throw new Error("deep query");`)).ok, true);
   await page.evaluate(() => document.querySelectorAll("x-card").forEach(x => x.render())); // the component re-renders its shadow root
   await settle(page);
   assert.deepEqual((await look()).colors, ["rgb(255, 0, 0)", "rgb(255, 0, 0)"]);

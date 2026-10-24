@@ -255,7 +255,6 @@ for (const k of ["context", "promptChars", "spawn", "modelReady", "firstToken", 
 }
 console.log("stage            n   median     p90");
 for (const [k, v] of Object.entries(summary.stages)) console.log(`${k.padEnd(14)} ${String(v.n).padStart(3)} ${String(v.median ?? "-").padStart(8)} ${String(v.p90 ?? "-").padStart(7)}`);
-console.log(`\n${pass}/${results.length} passed (${(summary.rate * 100).toFixed(0)}%), median ${(median / 1000).toFixed(1)}s`);
 console.log(`\n${pass}/${results.length} passed (${(summary.rate * 100).toFixed(0)}%), median ${(median / 1000).toFixed(1)}s, p90 ${(summary.p90Ms / 1000).toFixed(1)}s`);
 console.log(`model+apply ${(summary.genMs.median / 1000).toFixed(1)}s / p90 ${(summary.genMs.p90 / 1000).toFixed(1)}s · prompt ${summary.promptChars.median} / p90 ${summary.promptChars.p90} chars · context ${summary.ctxMs.median} / p90 ${summary.ctxMs.p90} ms · ${summary.repairs} repair rounds`);
 console.log(summary.byCategory);
