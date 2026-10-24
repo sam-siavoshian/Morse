@@ -17,6 +17,7 @@
 //       show-once (and a GIF), self-heal, desktop-app.
 //   v1  morse-demo.mp4: sleep timer, word count, Edit tools, Page tools,
 //       share. Clips: sleep-timer (and a GIF), page-tools, direct-edit.
+//   (The launch video v3, on real apps only, is demo/record-social.js.)
 //   x   morse-social-16x9/4x5/9x16.mp4: the short cut for social media. A
 //       real app (VSCodium, from its .deb) restyled and given a feature, then
 //       Show me once, Fix it and the off switch; captions burned in, no title

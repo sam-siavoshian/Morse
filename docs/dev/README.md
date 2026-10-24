@@ -102,7 +102,8 @@ for developers), privacy in two lines, a short FAQ.
   Display and JetBrains Mono, Latin subsets, OFL, in `site/fonts/`).
   `site/shots/` holds the screenshots the page shows, as WebP copies of
   `docs/screenshots/` (same numbers), frames of
-  `docs/launch/morse-social-16x9.mp4` (198, 200, 201), the Chrome Web Store
+  `docs/launch/morse-social-16x9.mp4` (200, 201) and of
+  `docs/launch/morse-v3-16x9.mp4` (202, the film's poster), the Chrome Web Store
   screenshots (180, 181) and the rest of the Obsidian run behind 149 (190,
   191).
 - **Try it here** ([`site/try/`](../../site/try/), the `#try` section between
