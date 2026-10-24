@@ -4,6 +4,8 @@
 //
 //   GET  /v1/health    status (no auth, never includes keys)
 //   POST /v1/pair      { code } -> { token }   one-time code printed by `morse serve` / `morse pair`
+//   POST /v1/pair/ask              -> { id }   onboarding v2: Chrome asks to connect, a person here
+//   POST /v1/pair/ask/<id>         -> { state: waiting|allowed|denied|expired, token? }   answers Allow or Deny
 //   POST /v1/complete  { messages, model? }    Bearer token -> NDJSON {type: token|stage|done|error}
 //   POST /v1/warm      { model? }               Bearer token: get the model ready (the bar opened)
 //   GET  /v1/voice, POST /v1/transcribe        Bearer token, see daemon/voice.js
@@ -16,7 +18,10 @@
 // chrome-extension://<id> are refused (no Origin = curl/CLI); the Host header
 // must be a loopback name (DNS rebinding); /v1/complete needs a token that was
 // issued against a pairing code, stored hashed, and bound to the pairing
-// extension's origin.
+// extension's origin. A one-click pairing (/v1/pair/ask) issues the same
+// token, only after a person on this computer clicked Allow (Morse Desktop's
+// question, or y in the terminal running `morse serve`), and hands it once to
+// the extension that asked.
 
 import http from "node:http";
 import crypto from "node:crypto";
@@ -26,6 +31,8 @@ import { settingsFromConfig, settingsLabel } from "./models.js";
 import { detectHarnesses, validModel, TIMEOUT_MS } from "./harness.js";
 import { streamChat, abortError, prewarm, HELPER_PORT } from "../core/providers.js";
 import { handleVoice } from "./voice.js";
+import { execFile } from "node:child_process"; // onboarding v2: is Claude Code / Codex signed in?
+import { t } from "../core/i18n.js"; // onboarding v2: the Allow question, in the person's language
 
 export const VERSION = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 
@@ -41,6 +48,14 @@ const LOOPBACK_HOST = /^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/i;
 
 const sha = s => crypto.createHash("sha256").update(s).digest("hex");
 const same = (a, b) => { const x = Buffer.from(String(a)), y = Buffer.from(String(b)); return x.length === y.length && crypto.timingSafeEqual(x, y); };
+
+// A new token for an extension (or a local client): stored hashed in cfg, bound to its origin.
+function addToken(cfg, origin) {
+  const token = crypto.randomBytes(32).toString("base64url");
+  const tokens = [...(cfg.bridge?.tokens || []), { id: crypto.randomBytes(4).toString("hex"), hash: sha(token), origin: origin || null, created: new Date().toISOString() }];
+  cfg.bridge = { ...cfg.bridge, tokens: tokens.slice(-MAX_TOKENS) };
+  return token;
+}
 
 export function newPairingCode() {
   let code = "";
@@ -98,16 +113,80 @@ const validBlocks = x => x.role === "user" && Array.isArray(x.content) && x.cont
   (b?.type === "text" && typeof b.text === "string" && b.text.length <= 200_000) ||
   (b?.type === "image" && b.source?.type === "base64" && /^image\/(png|jpeg|webp|gif)$/.test(b.source.media_type) && typeof b.source.data === "string"));
 
+// ---- onboarding v2: one-click pairing
+// The question a person answers when Chrome asks to connect, in one place so
+// Morse Desktop's dialog and the terminal say the same thing. Fixed words from
+// Morse: the only thing filled in is the model's label from this computer's
+// own settings. Nothing the extension or a page sends ever reaches them (the
+// ask request's body isn't read), and the browser is always called Chrome.
+//   label: what Chrome will use, like "Claude Code" (settingsLabel)
+export function askWords(label) {
+  const what = label || t("pair.ask.yourModel");
+  return { message: t("pair.ask.q", { label: what }), detail: t("pair.ask.detail", { label: what }), allow: t("pair.ask.allow"), deny: t("pair.ask.deny") };
+}
+// The question in a terminal (`morse serve`): "Allow Chrome to use your
+// Claude Code? (y/n)", answered with a line on `input`. One question at a time.
+export function terminalAsk({ input = process.stdin, output = process.stdout } = {}) {
+  let buf = "", waiting = null;
+  input.setEncoding?.("utf8");
+  input.on("data", d => {
+    buf += d;
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) { const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (waiting) { const w = waiting; waiting = null; w(line); } }
+  });
+  input.on("end", () => { if (waiting) { const w = waiting; waiting = null; w(""); } });
+  return ({ words, signal }) => new Promise(resolve => {
+    output.write(`\n  ${words.message} ${words.detail}\n  ${t("pair.ask.keys")} `);
+    waiting = line => resolve(/^(y|yes|a|allow)$/i.test(line));
+    signal?.addEventListener("abort", () => { if (waiting) { waiting = null; output.write(`\n  ${t("pair.ask.gone")}\n`); resolve(false); } });
+  });
+}
+export const ASK_TTL_MS = 2 * 60_000;     // a question nobody answers goes away
+const DENY_PAUSE_MS = 20_000;             // after Deny, that extension can't ask again at once (no question spam)
+
+// Whether Claude Code and Codex are signed in, not just installed:
+// `claude auth status` prints { loggedIn }, `codex login status` exits 0 when
+// signed in. null while unknown; checked in the background, at most every few minutes.
+const SIGNED_IN_EVERY = 5 * 60_000;
+function signedInProbe() {
+  let known = { claude: null, codex: null }, at = 0, running = false;
+  const run = (bin, args) => new Promise(resolve => {
+    if (!bin) return resolve(null);
+    try {
+      execFile(bin, args, { timeout: 8000, windowsHide: true, shell: process.platform === "win32" && /\.(cmd|bat)$/i.test(bin) }, (err, stdout) => {
+        if (args[0] === "auth") { try { return resolve(JSON.parse(stdout).loggedIn === true); } catch { return resolve(null); } }
+        resolve(err ? (err.killed || err.code === "ENOENT" ? null : false) : true);
+      });
+    } catch { resolve(null); }
+  });
+  return (h) => {
+    if (!running && Date.now() - at > SIGNED_IN_EVERY) {
+      running = true;
+      Promise.all([h.claude.found ? run(h.claude.path, ["auth", "status"]) : null, h.codex.found ? run(h.codex.path, ["login", "status"]) : null])
+        .then(([claude, codex]) => { known = { claude, codex }; at = Date.now(); }).finally(() => { running = false; });
+    }
+    return known;
+  };
+}
+
 // models: Chrome asks for the fast or the strong tier by name and effort (core/route.js).
 const effortOf = body => (["low", "medium", "high", "xhigh", "max"].includes(body?.effort) ? { effort: body.effort } : {});
 
-export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, timeoutMs = TIMEOUT_MS } = {}) {
+// onboarding v2:
+//   app   who runs this helper: "cli" (`morse serve`, `morse setup --pair`) or "desktop" (Morse Desktop)
+//   denyPauseMs  after Deny, how long that extension waits to ask again (tests shorten it)
+//   ask   async ({ origin, label, words, signal }) => true (Allow) | false (Deny): asks a person on
+//         this computer whether Chrome may connect. Without it, Chrome pairs with a code only.
+export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, timeoutMs = TIMEOUT_MS, app = "cli", ask = null, denyPauseMs = DENY_PAUSE_MS } = {}) {
   let harnessCache = null, harnessAt = 0;
   const harnesses = () => {
     if (!harnessCache || Date.now() - harnessAt > 5000) { harnessCache = detectHarnesses(); harnessAt = Date.now(); }
     return harnessCache;
   };
   const active = new Set();
+  const signedIn = signedInProbe(); // onboarding v2
+  const asks = new Map(), deniedAt = new Map(); // onboarding v2: id -> { origin, state, token, expires, ac }
+  const prune = () => { for (const [id, a] of asks) if (a.expires < Date.now() && a.state !== "allowed") { a.ac.abort(); asks.delete(id); } };
 
   const server = http.createServer(async (req, res) => {
     const origin = req.headers.origin;
@@ -139,6 +218,7 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
           tiers: s.tiers, pinned: s.pinned, // models: what Chrome's Automatic chooses between (core/route.js)
           harnesses: { claude: harnesses().claude.found, codex: harnesses().codex.found }, paired: !!rec && (!origin || !rec.origin || rec.origin === origin),
           pairing: !!cfg.bridge?.pairing && cfg.bridge.pairing.expires > Date.now(), // first run: a code is waiting (never the code itself)
+          app, ask: !!ask, signedIn: signedIn(harnesses()), // onboarding v2: Morse Desktop or the terminal; one-click pairing; signed in
         });
       }
 
@@ -154,15 +234,53 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
             result = [403, { error: p.attempts >= MAX_ATTEMPTS ? "Too many wrong codes. Run morse pair on your computer to get a new one." : "That code doesn't match. Check the code the Morse helper shows and try again." }];
             return cfg;
           }
-          const token = crypto.randomBytes(32).toString("base64url");
-          const tokens = [...(cfg.bridge.tokens || []), { id: crypto.randomBytes(4).toString("hex"), hash: sha(token), origin: origin || null, created: new Date().toISOString() }];
-          cfg.bridge = { ...cfg.bridge, tokens: tokens.slice(-MAX_TOKENS) };
+          const token = addToken(cfg, origin);
           delete cfg.bridge.pairing;
           result = [200, { token }];
           return cfg;
         });
         if (result[0] === 200) log(origin ? "  ✓ Paired with Morse in Chrome. Changes you ask for there come through here." : "  ✓ Paired a local client"); // first-run hook: plain words
         return send(...result);
+      }
+
+      // onboarding v2: one-click pairing. Only an extension may ask, one
+      // question at a time, and only a person here can answer it.
+      const askPath = /^\/v1\/pair\/ask(?:\/([A-Za-z0-9_-]{22}))?$/.exec(url.pathname);
+      if (askPath) {
+        prune();
+        if (!origin) return send(403, { error: "Only Morse in Chrome can ask to connect." });
+        if (req.method === "POST" && !askPath[1]) {
+          if (!ask) return send(404, { error: "This Morse helper connects with a code. Type the code it shows.", code: "no-ask" });
+          if (Date.now() - (deniedAt.get(origin) || 0) < denyPauseMs) return send(429, { error: "You clicked Deny a moment ago. Wait a few seconds, then try again." });
+          const mine = [...asks.entries()].find(([, a]) => a.origin === origin && a.state === "waiting");
+          if (mine) return send(202, { id: mine[0], expires: mine[1].expires });
+          if ([...asks.values()].some(a => a.state === "waiting")) return send(409, { error: "Morse is already asking about another browser. Answer that first." });
+          const cfg = await loadConfig();
+          const label = settingsLabel(settingsFromConfig(cfg, {}, { harnesses: harnesses() }));
+          const id = crypto.randomBytes(16).toString("base64url");
+          const a = { origin, state: "waiting", token: "", expires: Date.now() + ASK_TTL_MS, ac: new AbortController() };
+          asks.set(id, a);
+          setTimeout(() => { if (a.state === "waiting") { a.state = "expired"; a.ac.abort(); } }, ASK_TTL_MS).unref?.();
+          Promise.resolve().then(() => ask({ origin, label, words: askWords(label), signal: a.ac.signal })).then(async yes => {
+            if (a.state !== "waiting") return;
+            if (yes === true) {
+              let token = "";
+              await updateConfig(c => { token = addToken(c, origin); return c; });
+              a.token = token; a.state = "allowed"; a.expires = Date.now() + ASK_TTL_MS;
+              log("  ✓ Paired with Morse in Chrome. Changes you ask for there come through here.");
+            } else { a.state = "denied"; deniedAt.set(origin, Date.now()); log("  · Chrome asked to connect. You said no."); }
+          }, () => { if (a.state === "waiting") { a.state = "denied"; deniedAt.set(origin, Date.now()); } });
+          return send(202, { id, expires: a.expires });
+        }
+        if (req.method === "POST" && askPath[1]) { // POST: Chrome sends an extension's Origin on POST, not on GET
+          const a = asks.get(askPath[1]);
+          if (!a || a.state === "expired") { asks.delete(askPath[1]); return send(404, { state: "expired" }); }
+          if (a.origin !== origin) return send(403, { error: "Forbidden origin" });
+          if (a.state === "waiting") return send(200, { state: "waiting" });
+          asks.delete(askPath[1]); // the answer is handed out once
+          return send(200, a.state === "allowed" ? { state: "allowed", token: a.token } : { state: "denied" });
+        }
+        return send(404, { error: "Not found" });
       }
 
       // Everything below needs a paired token.
@@ -233,6 +351,6 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
       server.once("error", reject);
       server.listen(port, host, () => { server.off("error", reject); resolve(server.address().port); });
     }),
-    close: () => new Promise(r => { for (const ac of active) ac.abort(abortError()); server.closeAllConnections?.(); server.close(() => r()); }),
+    close: () => new Promise(r => { for (const ac of active) ac.abort(abortError()); for (const a of asks.values()) a.ac.abort(); /* onboarding v2 */ server.closeAllConnections?.(); server.close(() => r()); }),
   };
 }

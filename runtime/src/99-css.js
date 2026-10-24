@@ -257,7 +257,7 @@ function CSS() {
   .health b::before { content: ""; margin-block: 0 1px; margin-inline: 0 7px; background: var(--m-danger); vertical-align: middle; }
   /* ---- the status dot: a 6px square with 1.5px corners, one of the radar mark's squares
      (a stopped or paused mod, trying a mod, a notice under the input, a list of what's in a mod) */
-  .health b::before, .gl-trying::before, .ctl-items li::before, .ob-dot { flex: none; display: inline-block; width: 6px; height: 6px; border-radius: 1.5px; }
+  .health b::before, .gl-trying::before, .gl-upd b::before, .ctl-items li::before, .ob-dot { flex: none; display: inline-block; width: 6px; height: 6px; border-radius: 1.5px; }
   .panel .health button { flex: none; height: 24px; padding: 0 10px; }
   /* two buttons (a paused mod, 64-guard.js): the words get the whole row, the buttons go under them on the right */
   .health.guard { flex-wrap: wrap; row-gap: 8px; }
@@ -330,6 +330,11 @@ function CSS() {
   :host([dir=rtl]) .sw input:checked + span::after { transform: translateX(-12px); }
   :host([dir=rtl]) :is(.ctl-code, .i-code) summary::before { transform: scaleX(-1); }
   :host([dir=rtl]) :is(.ctl-code, .i-code)[open] summary::before { transform: rotate(90deg); }
+  /* Persian and Arabic letters join: the mono face has none of them, and its
+     fallback (or tracking) draws them apart. Labels that hold words take the
+     UI face; code, key caps and the model's name stay mono. */
+  :host([dir=rtl]) :is(.card label, .sheet h4, :is(.menu, .a11y-group) > header, .gm-field label, .gm-clips-l, .sugs .try, .eyebrow, .tags span, .pill,
+    :is(.menu, .a11y-group) > button small, .krow .k small, .panel header small, .caps.off, .sheet header .flash, .saved, .hl span, .gm-read) { font-family: var(--m-font); letter-spacing: 0; }
   /* forced colors (Windows High Contrast): shadows and fills are dropped and
      colors become the system's, so every focus ring is an outline in
      Highlight, every surface and button keeps a border, and what is on or

@@ -298,7 +298,7 @@ const Packs = (() => {
     const parts = updateParts(u);
     openModal(`
       <header><b>${esc(t("pk.updateTitle", { name: sub.name }))}</b><small>${esc(t("pk.updateSub", { site, checked: sub.checked ? t("pk.checked", { when: relativeTime(new Date(sub.checked).toISOString()) }) : "" }))}</small><button data-a="close" aria-label="${esc(t("btn.close"))}">×</button></header>
-      <div class="gl-what"><h5>${t("gl.whatChanged")}</h5><p>${esc(parts.join(" · "))}</p>${u.note ? `<p class="gl-note">“${esc(u.note)}”</p>` : ""}</div>
+      <div class="gl-what"><h5 class="eyebrow">${t("gl.whatChanged")}</h5><p>${esc(parts.join(" · "))}</p>${u.note ? `<p class="gl-note">“${esc(u.note)}”</p>` : ""}</div>
       ${u.changed.length ? `<h4 class="ctl-h eyebrow">${t("pk.changed")}</h4><div class="pk-items">${u.changed.map(changedHtml).join("")}</div>` : ""}
       ${fresh.length ? `<h4 class="ctl-h eyebrow">${t("pk.newIn")}</h4><div class="pk-items">${fresh.map(m => itemHtml(m, { ticked: !wide(m), why: t("pk.whyUnticked") })).join("")}</div>` : ""}
       ${u.removed.length ? `<h4 class="ctl-h eyebrow">${t("pk.gone")}</h4><div class="pk-items">${u.removed.map(removedHtml).join("")}</div>` : ""}

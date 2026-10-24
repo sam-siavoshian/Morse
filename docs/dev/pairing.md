@@ -51,7 +51,7 @@ Morse Desktop starts the helper with `createBridge({ app: "desktop", ask })`
 ([`desktop-app/service.js`](../../desktop-app/service.js) `askAllow`). The
 helper calls `ask({ origin, label, words, signal })` when Chrome asks; Morse
 Desktop brings its window forward and shows `words.message` (“Allow Chrome to
-use your Claude Code?”) with **Allow** and **Deny**. Allow resolves `true`,
+use your Claude Code?”) with **Allow** and **Deny**. The words are Morse's own (`askWords` in `daemon/bridge.js`): the only thing filled in is the model's label from this computer's settings, the browser is always “Chrome”, and nothing the extension sends (the request body isn't read) reaches them. Allow resolves `true`,
 Deny or Esc resolves `false`, and `signal` aborting (nobody answered in time)
 closes the question as a Deny. Turning **Let Chrome use Morse** off answers
 whatever waits with Deny.

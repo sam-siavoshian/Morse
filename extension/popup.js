@@ -42,7 +42,7 @@ function render(s) {
   // Without “Allow User Scripts” a mod's code doesn't run (background.js cantRun): say which mods here wait for it.
   const waits = m => !s.userScripts && m.enabled && !!m.js?.trim();
   const waiting = s.mods.filter(waits);
-  $("warn").hidden = s.userScripts;
+  $("warn").hidden = s.userScripts || !waiting.length; // onboarding v2: only when a mod here needs it
   $("warntext").innerHTML = waiting.length
     ? t("popup.waiting", { n: waiting.length, list: waiting.map(m => `“${esc(m.title)}”`).join(", ") })
     : t("popup.warnOff");
