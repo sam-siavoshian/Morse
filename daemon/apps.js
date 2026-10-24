@@ -35,6 +35,11 @@ export const CATALOG = {
     mac: { bundles: ["Visual Studio Code.app"], ids: ["com.microsoft.VSCode"] },
     win: ["%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\Code.exe", "%ProgramFiles%\\Microsoft VS Code\\Code.exe"],
     linux: { bin: ["code"], paths: ["/usr/share/code/code", "/opt/visual-studio-code/code"], snap: "code", flatpak: "com.visualstudio.code" } },
+  // VS Code without Microsoft's branding; its .deb puts the app in /usr/share/codium.
+  vscodium: { name: "VSCodium", engine: "electron", aliases: ["codium", "vs codium", "code oss"],
+    mac: { bundles: ["VSCodium.app"], ids: ["com.vscodium"] },
+    win: ["%LOCALAPPDATA%\\Programs\\VSCodium\\VSCodium.exe", "%ProgramFiles%\\VSCodium\\VSCodium.exe"],
+    linux: { paths: ["/usr/share/codium/codium", "/opt/vscodium-bin/codium"], snap: "codium", flatpak: "com.vscodium.codium" } },
   cursor: { name: "Cursor", engine: "electron",
     mac: { bundles: ["Cursor.app"], ids: ["com.todesktop.230313mzl4w4u92"] },
     win: ["%LOCALAPPDATA%\\Programs\\cursor\\Cursor.exe"],
@@ -47,6 +52,10 @@ export const CATALOG = {
     mac: { bundles: ["Obsidian.app"], ids: ["md.obsidian"] },
     win: ["%LOCALAPPDATA%\\Programs\\Obsidian\\Obsidian.exe", "%LOCALAPPDATA%\\Obsidian\\Obsidian.exe"],
     linux: { bin: ["obsidian"], paths: ["/opt/Obsidian/obsidian"], snap: "obsidian", flatpak: "md.obsidian.Obsidian" } },
+  joplin: { name: "Joplin", engine: "electron",
+    mac: { bundles: ["Joplin.app"], ids: ["net.cozic.joplin-desktop"] },
+    win: ["%LOCALAPPDATA%\\Programs\\Joplin\\Joplin.exe", "%ProgramFiles%\\Joplin\\Joplin.exe"],
+    linux: { paths: ["/opt/Joplin/joplin"], flatpak: "net.cozic.joplin_desktop" } },
   figma: { name: "Figma", engine: "electron",
     mac: { bundles: ["Figma.app"], ids: ["com.figma.Desktop"] },
     win: ["%LOCALAPPDATA%\\Figma\\Figma.exe"], squirrel: "Figma.exe",
@@ -191,9 +200,13 @@ export function appPackage(ctx, dir) {
       if (f && !f.unpacked && Number(f.size) < 1 << 20) text = ctx.readRange(asar, 8 + headerSize + Number(f.offset), Number(f.size)).toString("utf8");
     } catch {}
   }
+  // VS Code and its builds (VSCodium, Cursor) name themselves in product.json;
+  // their package.json says "codium.desktop" or "code-oss-dev".
+  let product = null;
+  try { product = JSON.parse(ctx.read(pp.join(dir, "resources", "app", "product.json"))?.toString("utf8")); } catch {}
   try {
     const p = JSON.parse(text);
-    const name = [p.productName, p.desktopName?.replace(/\.desktop$/, ""), p.name].find(s => typeof s === "string" && s.trim() && !/^electron$/i.test(s));
+    const name = [p.productName, product?.nameLong, p.desktopName?.replace(/\.desktop$/, ""), p.name].find(s => typeof s === "string" && s.trim() && !/^electron$/i.test(s));
     return { name: name || null, version: typeof p.version === "string" ? p.version : null };
   } catch { return { name: null, version: null }; }
 }
@@ -338,6 +351,93 @@ function discoverLinux(ctx) {
     seen.add(key);
     out.push(entry(key, null, { name: n, path: pp.join(dir, exeName), exe: pp.join(dir, exeName), processName: exeName, source: "/opt", ...engineAt(ctx, pp.join(dir, exeName)) }));
   }
+  // The app menu and AppImages: apps installed anywhere else. A .deb can put
+  // its app in /usr/share/<name>, and AppImages live wherever they were
+  // downloaded (~/Applications, ~/Downloads) or where an installer put them.
+  const have = new Set(out.flatMap(a => [a.exe, a.resolved].filter(Boolean)));
+  for (const c of [...desktopApps(ctx), ...appImages(ctx)]) {
+    if (have.has(c.exe) || have.has(c.resolved)) continue;
+    const id = catalogFor(c.name, c.stem);
+    const key = id || slug(c.name);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    have.add(c.exe);
+    out.push(entry(key, CATALOG[id], c));
+  }
+  return out;
+}
+
+// A catalog app called `name` (a .desktop Name= or an AppImage's file name).
+function catalogFor(...names) {
+  for (const n of names.filter(Boolean).map(norm))
+    for (const [id, c] of Object.entries(CATALOG)) if ([c.name, id, ...(c.aliases || [])].some(k => norm(k) === n)) return id;
+  return null;
+}
+
+// The [Desktop Entry] group of a .desktop file (localized keys like Name[de] left out).
+export function parseDesktopEntry(text) {
+  const out = {};
+  let inEntry = false;
+  for (const line of String(text).split(/\r?\n/)) {
+    const g = line.match(/^\[(.+)\]\s*$/);
+    if (g) { inEntry = g[1] === "Desktop Entry"; continue; }
+    const m = inEntry && line.match(/^([A-Za-z0-9-]+)\s*=\s*(.*)$/);
+    if (m && !(m[1] in out)) out[m[1]] = m[2].trim();
+  }
+  return out;
+}
+
+// The program an Exec= line runs: its first word (quotes and %U aside), past `env VAR=value`.
+export function execProgram(exec) {
+  const words = [...String(exec || "").matchAll(/"((?:[^"\\]|\\.)*)"|(\S+)/g)].map(m => m[1] != null ? m[1].replace(/\\(.)/g, "$1") : m[2]);
+  let i = 0;
+  if (/(^|\/)env$/.test(words[0] || "")) for (i = 1; /^-|^[A-Za-z_]\w*=/.test(words[i] || ""); i++) if (/^(-u|--unset)$/.test(words[i])) i++;
+  return words[i] && !words[i].startsWith("%") ? words[i] : null;
+}
+
+// AppImage type 1 or 2: "AI" and the type at byte 8 of the ELF file.
+export function isAppImage(ctx, p) {
+  if (/\.appimage$/i.test(p)) return true;
+  try { const b = ctx.readRange(p, 8, 3); return b[0] === 0x41 && b[1] === 0x49 && (b[2] === 1 || b[2] === 2); } catch { return false; }
+}
+
+// "Obsidian-1.14.5.AppImage" -> "Obsidian", "Logseq-linux-x64-0.10.9.AppImage" -> "Logseq".
+export function appImageName(file) {
+  const stem = String(file).split("/").pop().replace(/\.appimage$/i, "");
+  return stem.split(/[-_ ](?=v?\d|linux|x86|x64|amd64|arm|aarch|universal|latest)/i)[0] || stem;
+}
+
+// An AppImage is a compressed archive: Morse can't see what it's built on
+// without running it, unless the catalog knows the app.
+const appImageFound = (p, name, source) => ({ name, stem: appImageName(p), path: p, exe: p, resolved: p, source, appimage: true, processName: p.split("/").pop(), engine: null });
+
+function desktopApps(ctx) {
+  const pp = ctx.pp, out = [];
+  const dirs = ["/usr/share/applications", "/usr/local/share/applications", pp.join(ctx.home, ".local/share/applications")];
+  for (const d of dirs) for (const f of ctx.readdir(d)) {
+    if (!f.endsWith(".desktop")) continue;
+    const e = parseDesktopEntry(ctx.read(pp.join(d, f))?.toString("utf8") || "");
+    if ((e.Type && e.Type !== "Application") || /^true$/i.test(e.NoDisplay || "") || /^true$/i.test(e.Hidden || "")) continue;
+    let p = execProgram(e.Exec);
+    if (!p) continue;
+    if (!p.startsWith("/")) p = onPath(ctx, p);
+    if (!p || !ctx.exists(p) || ctx.isDir(p)) continue;
+    const name = e.Name || appImageName(p);
+    if (isAppImage(ctx, p)) { out.push(appImageFound(p, name, pp.dirname(p))); continue; }
+    const f2 = linuxFound(ctx, p, d);
+    if (!["electron", "cef", "chromium"].includes(f2.engine)) continue; // native apps and wrapper scripts
+    out.push({ ...f2, name: e.Name || f2.productName || pp.basename(p), processName: pp.basename(f2.resolved || p) });
+  }
+  return out;
+}
+
+function appImages(ctx) {
+  const pp = ctx.pp, out = [];
+  const dirs = ["Applications", "AppImages", "Downloads", ".local/bin", "bin"].map(d => pp.join(ctx.home, d)).concat("/opt");
+  for (const d of dirs) for (const f of ctx.readdir(d)) {
+    const p = pp.join(d, f);
+    if (/\.appimage$/i.test(f) && !ctx.isDir(p)) out.push(appImageFound(p, appImageName(f), d));
+  }
   return out;
 }
 
@@ -355,7 +455,7 @@ export function attachVerdict(app) {
     case "cef": return { canAttach: true, why: "Chromium (CEF)" };
     case "chromium": return { canAttach: true, why: app.browser ? "browser, separate profile" : "Chromium" };
     case "native": return { canAttach: false, why: "native app, not built on web technology" };
-    default: return { canAttach: null, why: "couldn't tell what it's built on" };
+    default: return { canAttach: null, why: app.appimage ? "AppImage, couldn't look inside" : "couldn't tell what it's built on" };
   }
 }
 
@@ -438,6 +538,12 @@ export function appFromPath(ctx, p) {
     return { ...entry(id, CATALOG[id], { ...b, path: p }), ...attachVerdict({ engine: b.engine, electron: b.electron }) };
   }
   const file = pp.basename(p).replace(/\.(exe|app)$/i, "");
+  // An AppImage: named from its file, and known only if the catalog knows it.
+  if (ctx.platform === "linux" && isAppImage(ctx, p)) {
+    const name = appImageName(p), id = catalogFor(name);
+    const app = entry(id || slug(name), CATALOG[id], appImageFound(p, name, pp.dirname(p)));
+    return { ...app, aliases: [...app.aliases, pp.basename(p)], ...attachVerdict(app) };
+  }
   const eng = engineAt(ctx, ctx.realpath(p));
   // An Electron app is called what its package.json says ("Tunes"), not
   // what its binary is called ("tunes"); the file name still finds it.
@@ -559,9 +665,12 @@ export async function quitApp(app, { procs = listProcesses(), platform = process
 }
 
 // ---------------------------------------------------------------- launching
+// Only the debugging port: Morse's CDP client (Node's WebSocket) sends no
+// Origin, so it needs no --remote-allow-origins, and some apps quit on any
+// switch they don't know (Joplin: "Unknown flag: --remote-allow-origins").
 export function launchArgs(app, port, extraArgs = []) {
   const extra = safeExtraArgs(extraArgs);
-  const args = [`--remote-debugging-port=${port}`, "--remote-allow-origins=http://127.0.0.1", ...extra];
+  const args = [`--remote-debugging-port=${port}`, ...extra];
   if (app.browser && !extra.some(a => a.startsWith("--user-data-dir"))) args.push(`--user-data-dir=${path.join(HOME, "browser-profile")}`, "--no-first-run");
   return args;
 }
@@ -571,13 +680,25 @@ export function launchApp(app, port, extraArgs = []) {
   const exe = executableFor(app);
   // Discord's updater stub, if that's all we found, takes the app's arguments separately.
   const argv = /Update\.exe$/i.test(exe) ? ["--processStart", app.processName || "Discord.exe", "--process-start-args", args.join(" ")] : args;
-  const child = spawn(exe, argv, { detached: true, stdio: "ignore", windowsHide: false });
+  const child = spawn(exe, argv, { detached: true, stdio: "ignore", windowsHide: false, ...(appImageEnv(app) && { env: appImageEnv(app) }) });
   // Remember how it ended, for waitForLaunch: an app that dies on start
   // should say so, not leave Morse waiting for a port that never opens.
   child.on("error", e => { child.failed = e; });
   child.on("exit", (code, signal) => { child.exited = { code, signal }; });
   child.unref();
   return child;
+}
+
+// AppImages mount themselves with FUSE. Without it (no libfuse2, as on a
+// fresh Ubuntu 24.04, or no fusermount, as in containers) older ones quit at
+// once: "AppImages require FUSE to run". APPIMAGE_EXTRACT_AND_RUN has them
+// unpack to /tmp and run from there instead (slower to start, same app).
+const FUSERMOUNT = ["/usr/bin/fusermount", "/bin/fusermount", "/usr/bin/fusermount3", "/bin/fusermount3"];
+const LIBFUSE2 = ["/usr/lib/x86_64-linux-gnu/libfuse.so.2", "/lib/x86_64-linux-gnu/libfuse.so.2", "/usr/lib/aarch64-linux-gnu/libfuse.so.2", "/usr/lib64/libfuse.so.2", "/usr/lib/libfuse.so.2"];
+export function appImageEnv(app, { env = process.env, has = existsSync } = {}) {
+  if (!app?.appimage || env.APPIMAGE_EXTRACT_AND_RUN) return null;
+  const fuse = has("/dev/fuse") && FUSERMOUNT.some(has) && LIBFUSE2.some(has);
+  return fuse ? null : { ...env, APPIMAGE_EXTRACT_AND_RUN: "1" };
 }
 
 // Why an app that quit before opening its debugging port did so, in plain
