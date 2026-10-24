@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprint 42 · Tasky</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f7f7f8; color: #18181b; font: 14px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .hdr { display: flex; align-items: center; gap: 14px; padding: 14px 28px; background: #fff; border-bottom: 1px solid #e4e4e7; }
+  .hdr h1 { font-size: 20px; margin: 0; }
+  .hdr .sync { color: #71717a; font-size: 12px; }
+  .hdr .add { margin-left: auto; border: 0; background: #18181b; color: #fff; border-radius: 8px; padding: 8px 14px; font: inherit; font-weight: 600; cursor: pointer; }
+  .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 20px 28px; }
+  .col { background: #efeff1; border-radius: 12px; padding: 12px; }
+  .col h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: #52525b; margin: 2px 4px 10px; }
+  .list { display: flex; flex-direction: column; gap: 8px; }
+  .card { background: #fff; border: 1px solid #e4e4e7; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
+  .card label { display: flex; align-items: center; gap: 8px; flex: 1; cursor: pointer; }
+  .card .pri { font-size: 11px; font-weight: 600; color: #52525b; background: #f4f4f5; border-radius: 6px; padding: 2px 6px; }
+  .card .del { border: 0; background: none; color: #a1a1aa; font-size: 18px; line-height: 1; cursor: pointer; padding: 0 2px; }
+  .card .del:hover { color: #dc2626; }
+</style>
+</head>
+<body>
+<div id="root"><header class="hdr"></header><div class="board"></div></div>
+<script>
+// A tiny React-style app: the view is a function of state and is re-rendered
+// with innerHTML. The header re-renders every second (the "Synced" clock), the
+// board on every change and on every background sync (every 3 seconds).
+// Anything a script adds inside them is wiped on the next render.
+const state = {
+  synced: Date.now(),
+  tasks: [
+    { id: 1, col: "today", title: "Fix login redirect loop", pri: "High", done: false },
+    { id: 2, col: "today", title: "Review Ana's pricing PR", pri: "Medium", done: true },
+    { id: 3, col: "today", title: "Reply to the security audit", pri: "High", done: false },
+    { id: 4, col: "today", title: "Update the status page copy", pri: "Low", done: true },
+    { id: 5, col: "week", title: "Draft Q4 hiring plan", pri: "Medium", done: false },
+    { id: 6, col: "week", title: "Migrate cron jobs to the queue", pri: "High", done: false },
+    { id: 7, col: "week", title: "Book the team offsite venue", pri: "Low", done: false },
+    { id: 8, col: "week", title: "Write the onboarding checklist", pri: "Medium", done: true },
+    { id: 9, col: "later", title: "Evaluate a new error tracker", pri: "Low", done: false },
+    { id: 10, col: "later", title: "Archive old feature flags", pri: "Medium", done: false },
+    { id: 11, col: "later", title: "Rotate the staging API keys", pri: "High", done: false },
+  ],
+};
+const COLS = [["today", "Today"], ["week", "This week"], ["later", "Later"]];
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const header = () => `<h1>Sprint 42</h1><span class="sync">Synced ${Math.round((Date.now() - state.synced) / 1000)}s ago</span><button class="add">+ New task</button>`;
+const board = () => COLS.map(([k, name]) => `<section class="col"><h2>${name}</h2><div class="list">${state.tasks.filter(t => t.col === k).map(t => `
+  <article class="card"><label><input type="checkbox"${t.done ? " checked" : ""} data-id="${t.id}"><span class="t">${esc(t.title)}</span></label><span class="pri">${t.pri}</span><button class="del" aria-label="Delete task" data-id="${t.id}">×</button></article>`).join("")}</div></section>`).join("");
+const hdr = document.querySelector(".hdr"), brd = document.querySelector(".board");
+const renderHeader = () => { hdr.innerHTML = header(); };
+const renderBoard = () => { brd.innerHTML = board(); };
+brd.addEventListener("change", e => {
+  const t = state.tasks.find(x => x.id === +e.target.dataset.id);
+  if (t) { t.done = e.target.checked; renderBoard(); renderHeader(); }
+});
+brd.addEventListener("click", e => {
+  const b = e.target.closest(".del");
+  if (!b) return;
+  state.tasks = state.tasks.filter(x => x.id !== +b.dataset.id);
+  renderBoard(); renderHeader();
+});
+hdr.addEventListener("click", e => {
+  if (!e.target.closest(".add")) return;
+  state.tasks.push({ id: Date.now(), col: "today", title: "New task", pri: "Low", done: false });
+  renderBoard(); renderHeader();
+});
+renderHeader(); renderBoard();
+setInterval(renderHeader, 1000);
+setInterval(() => { state.synced = Date.now(); renderBoard(); }, 3000);
+</script>
+</body>
+</html>

@@ -18,6 +18,7 @@ import { packPreview, encodePackLink, isPackAddress, isWide, MAX_PACK_BYTES, pac
 import { parseImport } from "../core/backup.js";
 import { relativeTime } from "../core/versions.js";
 import { describe } from "./control.js";
+import { paint } from "./colors.js";
 
 export { PACK_REQUESTS };
 
@@ -55,7 +56,7 @@ export function handlePack(msg) {
 
 // ---- CLI
 
-const D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`, Y = s => `\x1b[33m${s}\x1b[0m`, G = s => `\x1b[32m${s}\x1b[0m`;
+const { d: D, b: B, y: Y, g: G } = paint; // plain text when piped, NO_COLOR (colors.js)
 const out = (...a) => console.log(...a);
 const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 

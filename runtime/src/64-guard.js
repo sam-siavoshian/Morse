@@ -87,7 +87,7 @@ const Guard = (() => {
     toastFor(saved);
   }
   function toastFor(m) {
-    controlToast(`Paused “${m.title}” ${because(m.paused)}`, [["Turn back on", () => resume(m.id)], ["Fix it", () => fix(m.id)]]);
+    controlToast(`Paused “${m.title}” ${because(m.paused)}.`, [["Turn back on", () => resume(m.id)], ["Fix it", () => fix(m.id)]]);
   }
 
   // Turned back on by the person: no longer paused. For CSS that hides the
@@ -174,4 +174,11 @@ function guardPaused(m, r) {
 }
 function guardReady() { Guard.ready(); }
 function guardRowHtml(m) { return Guard.rowHtml(m); }
+// A change Morse refused to run (core/guard.js draftHarm's plain sentence, from
+// core/engine.js): said as Morse holding back, short enough for the one-line
+// hint ("Try other words" is what the input and Try again are for). 60-generate.js.
+function guardRefusalHint(error) {
+  const m = /^The change would have (.+?), so Morse didn't (apply|run) it\./.exec(String(error || ""));
+  return m ? `Morse didn't ${m[2]} it: <i>it would have ${esc(m[1])}</i>` : "";
+}
 function guardHeld(v) { return !!(v?.paused || v?.mod?.paused); } // a paused mod's code stays off the page

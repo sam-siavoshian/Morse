@@ -69,7 +69,13 @@ export function createPacks({ store, mods, writeFile = null, fetch = globalThis.
     let res;
     try { res = await fetch(url, { headers, signal: AbortSignal.timeout(TIMEOUT), credentials: "omit", redirect: "follow" }); }
     catch { throw new Error("Couldn't reach the pack's address. Check your connection and try again."); }
-    if (res.url && res.url !== url) checkPackUrl(res.url); // redirected: the end has to be https too
+    // Redirected: the end has to be https too. http://127.0.0.1 is only for
+    // an address typed as that (making a pack on this computer), never where
+    // an https address sends Morse.
+    if (res.url && res.url !== url && (new URL(checkPackUrl(res.url)).protocol !== "https:" && new URL(url).protocol === "https:")) {
+      res.body?.cancel?.().catch(() => {});
+      throw new Error("This address sends Morse on to one that isn't https://, so Morse didn't read it. Check the address and try again.");
+    }
     const meta = { status: res.status, etag: res.headers.get("etag") || "", lastModified: res.headers.get("last-modified") || "", maxAge: maxAgeOf(res.headers.get("cache-control")) };
     if (res.status === 304) return meta;
     if (res.status !== 200) { res.body?.cancel?.().catch(() => {}); throw new Error(`Couldn't get the pack from this address (error ${res.status}). Check the address and try again.`); }
@@ -201,7 +207,9 @@ export function createPacks({ store, mods, writeFile = null, fetch = globalThis.
 
   async function enable({ pack: id, on }) {
     const list = (await mods.list()).filter(m => fromPack(m, id));
-    const changed = list.filter(m => (m.enabled !== false) !== !!on).map(m => ({ ...m, enabled: !!on }));
+    // A mod Morse paused (it froze or blanked the page) stays off: its own
+    // "Turn back on" in the Mods panel says why first (runtime/src/64-guard.js).
+    const changed = list.filter(m => (m.enabled !== false) !== !!on && !(on && m.paused)).map(m => ({ ...m, enabled: !!on }));
     if (changed.length) await mods.put(changed);
     return { count: list.length, changed: changed.length };
   }

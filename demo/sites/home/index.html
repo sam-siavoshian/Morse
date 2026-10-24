@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hearth · Home</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #eef2f7; color: #111827; font: 14px/1.45 system-ui, "Segoe UI", Roboto, sans-serif; }
+  hearth-bar { display: block; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 18px 28px 40px; }
+  .wrap > h2 { font-size: 15px; color: #4b5563; font-weight: 600; margin: 18px 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  device-card { display: block; }
+</style>
+</head>
+<body>
+<hearth-bar></hearth-bar>
+<div class="wrap">
+  <h2 id="where">Living room · 9 devices</h2>
+  <main class="grid" aria-label="Devices"></main>
+</div>
+<script>
+// A smart-home dashboard made of web components with open shadow roots:
+//   <hearth-bar>  title + <room-tabs> (its own shadow root, re-rendered on every tab change)
+//   <device-card> one per device: name, status, an on/off switch. The card is
+//                 exposed as part="card" and reads --card-bg / --card-fg; the
+//                 switch is not exposed.
+const DEVICES = [
+  ["Ceiling light", "💡", "on", "online", "Brightness 80%"], ["Floor lamp", "🛋️", "off", "online", "Warm white"],
+  ["TV", "📺", "on", "online", "Netflix"], ["Air purifier", "🌀", "on", "offline", "Last seen 2 days ago"],
+  ["Thermostat", "🌡️", "on", "online", "21.5 °C · heating"], ["Speaker", "🔊", "off", "online", "Spotify"],
+  ["Window blinds", "🪟", "off", "offline", "Last seen 5 hours ago"], ["Fan", "🌬️", "on", "online", "Speed 2"],
+  ["Plant light", "🌱", "off", "online", "Schedule 7:00 to 19:00"],
+];
+
+class DeviceCard extends HTMLElement {
+  static observedAttributes = ["state", "status"];
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" }).innerHTML = `<style>
+      :host { display: block; }
+      .card { background: var(--card-bg, #ffffff); color: var(--card-fg, #1f2937); border-radius: 14px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 14px rgba(15,23,42,.06);
+        display: grid; grid-template-columns: 40px 1fr auto; gap: 2px 12px; align-items: center; }
+      .icon { grid-row: span 2; width: 40px; height: 40px; border-radius: 12px; background: #f3f4f6; display: grid; place-items: center; font-size: 20px; }
+      .name { font-weight: 600; }
+      .meta { grid-column: 2; color: #6b7280; font-size: 12px; }
+      .toggle { grid-row: 1 / span 2; grid-column: 3; width: 40px; height: 22px; border-radius: 11px; background: #d1d5db; border: 0; position: relative; cursor: pointer; padding: 0; }
+      .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; }
+      .toggle[aria-checked="true"] { background: #10b981; }
+      .toggle[aria-checked="true"]::after { left: calc(100% - 19px); }
+      .toggle:disabled { cursor: not-allowed; opacity: .5; }
+      :host([status="offline"]) .card { opacity: .6; }
+    </style>
+    <div class="card" part="card"><div class="icon"></div><div class="name"></div><button class="toggle" role="switch"></button><div class="meta"></div></div>`;
+    this.shadowRoot.querySelector(".toggle").addEventListener("click", () => {
+      if (this.getAttribute("status") === "offline") return;
+      this.setAttribute("state", this.getAttribute("state") === "on" ? "off" : "on");
+    });
+  }
+  connectedCallback() { this.update(); }
+  attributeChangedCallback() { this.update(); }
+  update() {
+    const r = this.shadowRoot, on = this.getAttribute("state") === "on", offline = this.getAttribute("status") === "offline";
+    r.querySelector(".icon").textContent = this.getAttribute("icon") || "";
+    r.querySelector(".name").textContent = this.getAttribute("name") || "";
+    const t = r.querySelector(".toggle");
+    t.setAttribute("aria-checked", String(on));
+    t.setAttribute("aria-label", `${this.getAttribute("name")}: ${on ? "on" : "off"}`);
+    t.disabled = offline;
+    r.querySelector(".meta").textContent = offline ? `Offline · ${this.dataset.meta}` : `${on ? "On" : "Off"} · ${this.dataset.meta}`;
+  }
+}
+customElements.define("device-card", DeviceCard);
+
+class RoomTabs extends HTMLElement {
+  constructor() { super(); this.attachShadow({ mode: "open" }); this.rooms = ["Living room", "Kitchen", "Bedroom", "Office"]; this.sel = 0; }
+  connectedCallback() { this.render(); }
+  // Re-renders from scratch on every change, like a framework would.
+  render() {
+    this.shadowRoot.innerHTML = `<style>
+      :host { display: flex; gap: 4px; }
+      button { border: 0; background: transparent; color: #cbd5e1; padding: 8px 14px; border-radius: 18px; font: inherit; font-weight: 600; cursor: pointer; }
+      button[aria-selected="true"] { background: #fff; color: #0f172a; }
+    </style>` + this.rooms.map((r, i) => `<button role="tab" aria-selected="${i === this.sel}">${r}</button>`).join("");
+    this.shadowRoot.querySelectorAll("button").forEach((b, i) => b.addEventListener("click", () => {
+      this.sel = i;
+      this.render();
+      document.getElementById("where").textContent = `${this.rooms[i]} · 9 devices`;
+    }));
+  }
+}
+customElements.define("room-tabs", RoomTabs);
+
+class HearthBar extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" }).innerHTML = `<style>
+      :host { display: block; background: #0f172a; color: #f8fafc; }
+      .in { max-width: 1100px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; gap: 24px; }
+      .lg { font-weight: 800; font-size: 18px; } .lg span { color: #f59e0b; }
+      .me { margin-left: auto; width: 32px; height: 32px; border-radius: 50%; background: #f59e0b; color: #0f172a; display: grid; place-items: center; font-weight: 700; }
+    </style><div class="in"><div class="lg"><span>◆</span> Hearth</div><room-tabs></room-tabs><div class="me" title="Account">S</div></div>`;
+  }
+}
+customElements.define("hearth-bar", HearthBar);
+
+const grid = document.querySelector("main.grid");
+for (const [name, icon, state, status, meta] of DEVICES) {
+  const d = document.createElement("device-card");
+  d.setAttribute("name", name); d.setAttribute("icon", icon); d.setAttribute("state", state); d.setAttribute("status", status);
+  d.dataset.meta = meta;
+  grid.append(d);
+}
+</script>
+</body>
+</html>

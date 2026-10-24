@@ -8,7 +8,7 @@
 // Windows and Linux on any machine.
 
 import { spawn, execFileSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, statSync, realpathSync, openSync, readSync, closeSync, promises as fs } from "node:fs";
+import { existsSync, readdirSync, statSync, realpathSync, openSync, readSync, closeSync, fstatSync, constants as fsc, promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { HOME, parseJson } from "./store.js";
@@ -83,6 +83,24 @@ export const CATALOG = {
 export const KNOWN_APPS = CATALOG; // older name
 
 // ---------------------------------------------------------------- disk access
+// The files discovery reads (Info.plist, package.json, .lnk, .desktop) are
+// small; anything bigger than this is not one of them, and is never read whole.
+export const READ_MAX = 8 * 1024 * 1024;
+// Opens a regular file only: a FIFO (or a socket, or /dev/zero) where a
+// shortcut or a program should be would block or never end. Non-blocking, so
+// opening a FIFO returns at once and fstat says what it is.
+function openFile(f) {
+  const fd = openSync(f, fsc.O_RDONLY | (fsc.O_NONBLOCK || 0));
+  try { if (!fstatSync(fd).isFile()) throw new Error("not a file"); } catch (e) { closeSync(fd); throw e; }
+  return fd;
+}
+function readAt(fd, start, length) {
+  const b = Buffer.alloc(length);
+  let n = 0;
+  while (n < length) { const got = readSync(fd, b, n, length - n, start + n); if (!got) break; n += got; }
+  return b.subarray(0, n);
+}
+
 export function hostContext(over = {}) {
   const platform = over.platform || process.platform;
   const env = over.env || process.env;
@@ -99,11 +117,17 @@ export function hostContext(over = {}) {
     exists: p => existsSync(real(p)),
     isDir: p => { try { return statSync(real(p)).isDirectory(); } catch { return false; } },
     readdir: p => { try { return readdirSync(real(p)); } catch { return []; } },
-    read: p => { try { return readFileSync(real(p)); } catch { return null; } },
+    // A whole small file, or null (missing, not a regular file, or over max).
+    read: (p, max = READ_MAX) => {
+      try {
+        const fd = openFile(real(p));
+        try { const size = fstatSync(fd).size; return size > max ? null : readAt(fd, 0, size); } finally { closeSync(fd); }
+      } catch { return null; }
+    },
     // Part of a file (app.asar headers), without reading the whole archive.
     readRange: (p, start, length) => {
-      const fd = openSync(real(p), "r");
-      try { const b = Buffer.alloc(length); return b.subarray(0, readSync(fd, b, 0, length, start)); } finally { closeSync(fd); }
+      const fd = openFile(real(p));
+      try { return readAt(fd, start, length); } finally { closeSync(fd); }
     },
     realpath: p => {
       try {
@@ -134,7 +158,10 @@ export function hostContext(over = {}) {
 // XML plists only, without a dependency; binary ones go through plutil on macOS.
 export function parsePlist(text) {
   const out = {};
-  const dict = text.match(/<dict>([\s\S]*)<\/dict>/)?.[1] || "";
+  // The first <dict> to the last </dict>, found without a regex: a file of
+  // unclosed <dict> tags made that backtrack for minutes.
+  const open = text.indexOf("<dict>"), close = text.lastIndexOf("</dict>");
+  const dict = open >= 0 && close > open ? text.slice(open + 6, close) : "";
   const re = /<key>([^<]*)<\/key>\s*(?:<string>([^<]*)<\/string>|<(true|false)\s*\/>|<integer>([^<]*)<\/integer>)/g;
   let m, depth = 0, last = 0;
   while ((m = re.exec(dict))) {
@@ -168,8 +195,11 @@ export function parseBinaryPlist(buf) {
       for (let i = 0; i < n; i++) v = v * 256 + buf[at + i];
       return v;
     };
+    // Objects can share references, so a small file can name the same ones
+    // over and over (14^30 visits): at most this many in all, then it's broken.
+    let visits = 0;
     const obj = (i, depth) => {
-      if (i >= count || depth > 32) throw new RangeError("bad reference");
+      if (i >= count || depth > 32 || ++visits > 50000) throw new RangeError("bad reference");
       const at = uint(table + i * offSize, offSize);
       const m = uint(at, 1), hi = m >> 4, lo = m & 15;
       // Length in the low 4 bits, or (15) in an integer object that follows.
@@ -485,7 +515,10 @@ function idListPath(buf, at, end) {
       let e = at + 14;
       while (e + (uni ? 1 : 0) < at + size && (buf[e] || (uni && buf[e + 1]))) e += uni ? 2 : 1;
       let name = uni ? buf.toString("utf16le", at + 14, e) : buf.toString("latin1", at + 14, e);
-      const ext = buf.indexOf(Buffer.from([0x04, 0x00, 0xef, 0xbe]), at + 14);
+      // Looked for inside this item only: searching the rest of the file for
+      // each item made a shortcut of many items take seconds.
+      const inItem = at + 14 < at + size ? buf.subarray(at + 14, at + size).indexOf(Buffer.from([0x04, 0x00, 0xef, 0xbe])) : -1;
+      const ext = inItem < 0 ? -1 : at + 14 + inItem;
       if (ext > 0 && ext - 4 >= at && ext < at + size) {
         const block = ext - 4, version = buf.readUInt16LE(block + 2), blockEnd = block + buf.readUInt16LE(block);
         const off = block + (version >= 9 ? 46 : version >= 8 ? 42 : version >= 7 ? 38 : 20);
@@ -558,7 +591,8 @@ function onPath(ctx, bin) {
 
 function linuxFound(ctx, p, source) {
   const resolved = ctx.realpath(p);
-  const head = ctx.read(resolved)?.slice(0, 2).toString();
+  let head = "";
+  try { head = ctx.readRange(resolved, 0, 2).toString(); } catch {} // two bytes, not the whole program
   const script = head === "#!";
   return { path: p, exe: p, resolved, source, script, ...(script ? { engine: null } : engineAt(ctx, resolved)) };
 }
