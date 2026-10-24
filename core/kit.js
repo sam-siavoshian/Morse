@@ -6,12 +6,89 @@
 function installMorseKit() {
   if (globalThis.morse && globalThis.morse.__kit) return;
   const mods = new Map();
+  // On the desktop the kit shares the page's world; Morse's boot captured the
+  // built-ins before the page could replace them. Elsewhere use our own.
+  const P = globalThis[Symbol.for("morse.pristine")] || {};
+  const MO = P.MutationObserver || MutationObserver;
+  const raf = P.requestAnimationFrame || (fn => requestAnimationFrame(fn));
+  const setT = P.setTimeout || ((fn, ms) => setTimeout(fn, ms));
+  const clearT = P.clearTimeout || (id => clearTimeout(id));
+  const setI = P.setInterval || ((fn, ms) => setInterval(fn, ms));
+  const clearI = P.clearInterval || (id => clearInterval(id));
+  const now = () => performance.now();
 
   function ctxFor(id) {
     if (mods.has(id)) return mods.get(id);
     const c = { id, cleanups: [], errors: [], observers: [] };
     mods.set(id, c);
     return c;
+  }
+
+  // ---- morse.watch: one MutationObserver for every watch of every mod.
+  // Mutations are batched per animation frame and each watch only checks the
+  // subtrees that were added. Matches that appear without an insertion
+  // (attribute changes, :has(), sibling selectors) are caught by a full rescan
+  // at most once a second, and only while the page keeps changing: an idle
+  // page costs nothing. Morse's own nodes (overlay, mod elements, mod styles)
+  // never trigger anything.
+  const watches = new Set();
+  const MAX_ROOTS = 64, FULL_EVERY = 1000;
+  let observer = null, queued = false, roots = [], needFull = false, lastFull = 0, fullTimer = 0;
+  const OURS = "[data-morse],[data-morse-ui],[data-morse-css]";
+  const ours = n => !!(n && n.nodeType === 1 && n.closest(OURS));
+
+  function scanAll(w) {
+    let list;
+    try { list = document.querySelectorAll(w.selector); } catch (e) { w.c.errors.push(String(e)); watches.delete(w); return; }
+    for (const el of list) w.hit(el);
+  }
+  function scanIn(w, root) {
+    try {
+      if (root.matches(w.selector)) w.hit(root);
+      if (root.firstElementChild) for (const el of root.querySelectorAll(w.selector)) w.hit(el);
+    } catch (e) { w.c.errors.push(String(e)); watches.delete(w); }
+  }
+  function flush() {
+    queued = false;
+    const full = needFull, list = roots;
+    needFull = false; roots = [];
+    if (full) lastFull = now();
+    for (const w of watches) {
+      if (w.c.dead) { watches.delete(w); continue; }
+      if (full) scanAll(w);
+      else for (const r of list) if (r.isConnected) scanIn(w, r);
+    }
+    if (!watches.size) stopWatching();
+  }
+  const schedule = () => { if (!queued) { queued = true; raf(flush); } };
+  function onMutations(recs) {
+    let changed = false;
+    for (const r of recs) {
+      if (ours(r.target)) continue;
+      for (const n of r.addedNodes) {
+        if (n.nodeType !== 1 || ours(n)) continue;
+        changed = true;
+        if (needFull) continue;
+        // Many separate insertions in one frame: one full scan is cheaper.
+        if (roots.length < MAX_ROOTS) roots.push(n); else { needFull = true; roots = []; }
+      }
+      if (!changed) for (const n of r.removedNodes) if (n.nodeType === 1 && !(n.hasAttribute("data-morse") || n.hasAttribute("data-morse-ui") || n.hasAttribute("data-morse-css"))) { changed = true; break; }
+    }
+    if (!changed) return;
+    if (roots.length || needFull) schedule();
+    if (!fullTimer) fullTimer = setT(() => { fullTimer = 0; needFull = true; roots = []; schedule(); }, Math.max(0, lastFull + FULL_EVERY - now()));
+  }
+  function startWatching() {
+    if (observer) return;
+    observer = new MO(onMutations);
+    // `document`, not <html>: watches survive document.open() and <html> swaps.
+    observer.observe(document, { childList: true, subtree: true });
+  }
+  function stopWatching() {
+    if (observer) observer.disconnect();
+    observer = null;
+    if (fullTimer) clearT(fullTimer);
+    fullTimer = 0; roots = []; needFull = false;
   }
 
   function guard(c, fn) {
@@ -28,23 +105,15 @@ function installMorseKit() {
       watch(selector, fn) {
         const seen = new WeakSet();
         const run = guard(c, fn);
-        const scan = () => {
-          if (c.dead) return;
-          let list;
-          try { list = document.querySelectorAll(selector); } catch (e) { c.errors.push(String(e)); return; }
+        const w = {
+          selector, c,
           // Never match Morse's own elements: a mod that inserts a button next to
           // "header button" must not then match the button it inserted.
-          for (const el of list) if (!seen.has(el) && !el.closest("[data-morse-ui],[data-morse]")) { seen.add(el); run(el); }
+          hit(el) { if (!seen.has(el) && !el.closest("[data-morse-ui],[data-morse]")) { seen.add(el); run(el); } },
         };
-        scan();
-        let queued = false;
-        const mo = new MutationObserver(() => {
-          if (queued) return;
-          queued = true;
-          requestAnimationFrame(() => { queued = false; scan(); });
-        });
-        mo.observe(document.documentElement, { childList: true, subtree: true });
-        c.observers.push(mo);
+        watches.add(w);
+        scanAll(w);
+        if (watches.has(w)) startWatching();
       },
       el(tagName, props, ...kids) {
         const el = tag(document.createElement(tagName));
@@ -74,13 +143,13 @@ function installMorseKit() {
         c.cleanups.push(() => target.removeEventListener(event, h, opts));
       },
       every(ms, fn) {
-        const t = setInterval(guard(c, fn), ms);
-        c.cleanups.push(() => clearInterval(t));
+        const t = setI(guard(c, fn), ms);
+        c.cleanups.push(() => clearI(t));
         return t;
       },
       after(ms, fn) {
-        const t = setTimeout(guard(c, fn), ms);
-        c.cleanups.push(() => clearTimeout(t));
+        const t = setT(guard(c, fn), ms);
+        c.cleanups.push(() => clearT(t));
         return t;
       },
       byText(selector, text) {
@@ -101,7 +170,7 @@ function installMorseKit() {
           padding: "8px 14px", borderRadius: "10px", border: "1px solid #30363d", boxShadow: "0 8px 30px rgba(0,0,0,.35)",
         });
         document.body.append(t);
-        setTimeout(() => t.remove(), 2600);
+        setT(() => t.remove(), 2600);
       },
       get id() { return c.id; },
     };
@@ -128,6 +197,8 @@ function installMorseKit() {
       if (c) {
         c.dead = true;
         c.observers.forEach(o => o.disconnect());
+        for (const w of watches) if (w.c === c) watches.delete(w);
+        if (!watches.size) stopWatching();
         c.cleanups.reverse().forEach(f => { try { f(); } catch {} });
         mods.delete(id);
       }
