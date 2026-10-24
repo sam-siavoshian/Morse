@@ -17,18 +17,18 @@ const url = q.get("url") || tab?.url || "";
 
 const style = document.createElement("style");
 style.textContent = `
-  .ps { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; padding: 10px 12px; border-radius: 8px;
-    background: var(--m-raised, #18181b); border: 1px solid var(--m-line-strong, #2e2e33); color: var(--m-text, #ededef); font-size: 12px; line-height: 17px; }
-  .ps i { flex: none; width: 6px; height: 6px; margin-top: 6px; border-radius: 1.5px; background: var(--m-warn, #e5a54b); }
+  /* the popup's .notice (popup.css), with the radar-square status dot; tokens only */
+  .ps { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; color: var(--m-text); line-height: 18px; }
+  .ps i { flex: none; width: 6px; height: 6px; margin-top: 6px; border-radius: 1.5px; background: var(--m-warn); }
   .ps div { min-width: 0; }
-  .ps button { display: block; margin-top: 8px; height: 28px; padding: 0 10px; border-radius: 6px; font-size: 12px; }
-  #go:disabled { opacity: .45; cursor: default; }
-  #warn button { display: block; margin-top: 8px; height: 26px; padding: 0 10px; font-size: 12px; }`;
+  .ps button, #warn button { display: block; margin-top: 8px; height: 28px; padding: 0 10px; font-size: var(--m-text-sm); }
+  #go:disabled { background: var(--m-raised); border-color: var(--m-line-strong); color: var(--m-signal-1); cursor: default; }
+  #go:disabled kbd { color: inherit; }`;
 document.head.append(style);
 
 function notice(text, label, run, where = document.querySelector("header")) {
   const el = document.createElement("div");
-  el.className = "ps";
+  el.className = "notice ps";
   el.setAttribute("role", "status");
   el.innerHTML = `<i aria-hidden="true"></i><div><span></span></div>`;
   el.querySelector("span").textContent = text;
