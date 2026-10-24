@@ -42,7 +42,7 @@ function applyTheme() {
   const z = parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
   hostEl.style.setProperty("zoom", String(1 / z), "important");
 }
-function mount() { if (!hostEl.isConnected) document.documentElement.append(hostEl); }
+function mount() { if (!hostEl.isConnected && live()) document.documentElement.append(hostEl); }
 mount();
 applyTheme();
 new MutationObserver(mount).observe(document.documentElement, { childList: true });

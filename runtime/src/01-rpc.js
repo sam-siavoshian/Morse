@@ -12,6 +12,10 @@ if (globalThis.__morseRuntime) return;
 const host = globalThis.__morseHost;
 if (!host) return;
 globalThis.__morseRuntime = true;
+// A host that detaches (`morse stop`) bumps __morseGen; this copy then goes
+// quiet (no UI, no hotkeys) and a later attach can start a fresh one.
+const GEN = globalThis.__morseGen = (globalThis.__morseGen || 0) + 1;
+const live = () => globalThis.__morseGen === GEN;
 
 let seq = 0;
 const pending = new Map();
