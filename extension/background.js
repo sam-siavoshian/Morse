@@ -14,7 +14,7 @@ import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatc
 import { wrapModCode } from "../core/kit.js";
 import { clipAdd } from "../core/clipboard.js"; // God mode clipboard
 import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
-import { ONBOARDING_REQUESTS, handleOnboarding, Practice } from "./onboarding-host.js"; // onboarding hook: welcome page, first-run state, practice area
+import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver } from "./onboarding-host.js"; // onboarding hook: welcome page, first-run state, practice area
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
@@ -63,6 +63,10 @@ async function backend(fresh = false) {
   cached = out; cachedAt = Date.now();
   return out;
 }
+setModelResolver(async () => {
+  const b = await backend();
+  return { connected: b.kind !== "none", provider: b.settings?.provider || "", label: b.label || "" };
+});
 
 function openSettings() {
   return chrome.runtime.openOptionsPage().catch(() => {});

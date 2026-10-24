@@ -10,7 +10,10 @@
 //   helper       the extension's client for the Morse helper (`morse serve`)
 //   demo         internal test fixture: replays canned replies (never offered to users)
 
-import Anthropic from "@anthropic-ai/sdk";
+// Loaded on first use, so code that never calls the Anthropic API (the helper,
+// the demo playground running this file in a browser) doesn't need the SDK.
+let AnthropicSDK = null;
+const loadAnthropic = async () => (AnthropicSDK ||= (await import("@anthropic-ai/sdk")).default);
 import { demoResponse } from "./demo.js";
 
 export const PROVIDERS = {
@@ -114,6 +117,7 @@ export async function* lines(body) {
 
 async function anthropicStream(s, messages, { onToken, signal, maxTokens }) {
   if (!s.apiKey) throw new NoModelError("Add your Anthropic API key in Morse's settings.");
+  const Anthropic = await loadAnthropic();
   const client = new Anthropic({ apiKey: s.apiKey, baseURL: s.baseUrl || undefined, dangerouslyAllowBrowser: true, maxRetries: 1 });
   const { system, rest } = splitSystem(messages);
   const model = s.model || PROVIDERS.anthropic.defaultModel;

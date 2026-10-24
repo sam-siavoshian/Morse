@@ -31,12 +31,20 @@ function userScriptsOn() {
 }
 
 // Whether a real model is set up. The demo model doesn't count.
-let model = null, modelAt = 0;
+// background.js registers its own backend lookup (helper / API key) here,
+// so onboarding and generation always agree on what's connected.
+let model = null, modelAt = 0, resolveModel = null;
+export function setModelResolver(fn) { resolveModel = fn; model = null; }
 async function modelStatus() {
   if (model && Date.now() - modelAt < 15000) return model;
+  if (resolveModel) {
+    try { model = await resolveModel(); } catch { model = { connected: false, provider: "", label: "" }; }
+    modelAt = Date.now();
+    return model;
+  }
   try {
     const saved = await local("settings", {});
-    const s = providers.resolveSettings ? await providers.resolveSettings({ ...providers.DEFAULT_SETTINGS, ...saved }) : saved;
+    const s = { ...providers.DEFAULT_SETTINGS, ...saved };
     model = { connected: !!s.provider && s.provider !== "demo", provider: s.provider || "", label: providers.settingsLabel ? providers.settingsLabel(s) : "" };
   } catch { model = { connected: false, provider: "", label: "" }; }
   modelAt = Date.now();
