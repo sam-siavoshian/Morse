@@ -98,6 +98,7 @@ export default {
   "toast.backToSaved": "保存したバージョンに戻しました",
   "toast.undone": "変更を元に戻しました",
   "toast.keptOnClose": "「{title}」を残しました。バーを閉じても変更は残ります。",
+  "dev.rebuilt": "Morse が再ビルドされました。chrome://extensions で再読み込みしてから、このページを再読み込みしてください。",
   "toast.backToVersion": "バージョン {n} に戻しました（「{prompt}」）",
   "toast.linkCopied": "リンクをコピーしました。Morse があれば誰でも「{title}」をインストールできます。",
   "toast.linkFailed": "リンクをコピーできませんでした。代わりに「共有」を使ってください。",

@@ -98,6 +98,7 @@ export default {
   "toast.backToSaved": "برگشت به نسخهٔ ذخیره‌شده",
   "toast.undone": "تغییر واگرد شد",
   "toast.keptOnClose": "«{title}» نگه داشته شد. بستن نوار تغییر را نگه می‌دارد.",
+  "dev.rebuilt": "Morse دوباره ساخته شد. آن را در chrome://extensions دوباره بارگذاری کنید، سپس این صفحه را.",
   "toast.backToVersion": "برگشت به نسخهٔ {n} («{prompt}»)",
   "toast.linkCopied": "پیوند کپی شد. هر کسی که Morse دارد می‌تواند «{title}» را نصب کند.",
   "toast.linkFailed": "پیوند کپی نشد. به‌جایش از اشتراک استفاده کنید.",

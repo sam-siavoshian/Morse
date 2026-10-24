@@ -98,6 +98,7 @@ export default {
   "toast.backToSaved": "عدنا إلى الإصدار المحفوظ",
   "toast.undone": "تم التراجع عن التغيير",
   "toast.keptOnClose": "تم الاحتفاظ بـ«{title}». إغلاق الشريط يُبقي التغيير.",
+  "dev.rebuilt": "أُعيد بناء Morse. أعد تحميله من chrome://extensions، ثم أعد تحميل هذه الصفحة.",
   "toast.backToVersion": "عدنا إلى الإصدار {n} («{prompt}»)",
   "toast.linkCopied": "نُسخ الرابط. يمكن لأي شخص لديه Morse تثبيت «{title}».",
   "toast.linkFailed": "تعذّر نسخ الرابط. جرّب المشاركة بدلًا من ذلك.",

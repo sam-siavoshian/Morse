@@ -31,7 +31,13 @@ npm run demo:serve           # the demo sites and the website on http://127.0.0.
 Load `dist/extension` in `chrome://extensions` (Developer mode, Load
 unpacked); `morse extension` prints that folder. After changing anything
 under `runtime/`, `core/` or `extension/`, run `npm run build` again and
-reload the extension.
+reload the extension in `chrome://extensions`: until then Chrome keeps
+running the old service worker. A build made this way notices: the next time
+you open the bar it says “Morse was rebuilt. Reload it in
+chrome://extensions, then reload this page.” (and the worker's console says
+it too). The build writes an id into the worker and into `build-id.txt`, and
+the worker compares them ([`extension/dev-host.js`](../../extension/dev-host.js));
+a store build (`MORSE_STORE=1`) has neither.
 
 People who only use Morse install it with `npm install -g morse-cli` (or,
 until the first npm release, `npm install -g github:sam-siavoshian/RRAA`);

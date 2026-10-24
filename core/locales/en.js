@@ -101,6 +101,7 @@ export default {
   "toast.backToSaved": "Back to the saved version",
   "toast.undone": "Change undone",
   "toast.keptOnClose": "Kept “{title}”. Closing the bar keeps a change.",
+  "dev.rebuilt": "Morse was rebuilt. Reload it in chrome://extensions, then reload this page.",
   "toast.backToVersion": "Back to version {n} (“{prompt}”)",
   "toast.linkCopied": "Link copied. Anyone with Morse can install “{title}”.",
   "toast.linkFailed": "Couldn't copy the link. Try Share instead.",

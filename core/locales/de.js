@@ -97,6 +97,7 @@ export default {
   "toast.backToSaved": "Zurück zur gespeicherten Version",
   "toast.undone": "Änderung rückgängig gemacht",
   "toast.keptOnClose": "„{title}“ behalten. Wenn du die Leiste schließt, bleibt die Änderung.",
+  "dev.rebuilt": "Morse wurde neu gebaut. Lade es unter chrome://extensions neu und danach diese Seite.",
   "toast.backToVersion": "Zurück zu Version {n} („{prompt}“)",
   "toast.linkCopied": "Link kopiert. Alle mit Morse können „{title}“ installieren.",
   "toast.linkFailed": "Der Link ließ sich nicht kopieren. Versuch es mit Teilen.",
