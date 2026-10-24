@@ -150,7 +150,7 @@ know how the app works inside, not only what is on the screen.
 So the first time you open a desktop app with Morse, it reads how the app is
 put together, in the background:
 
-- the app's own commands, with their names (VS Code has over two thousand:
+- the app's own commands, with their names (VSCodium, like VS Code, has over two thousand:
   Format Document, Save, Duplicate Selection…; Obsidian and Joplin have their
   own), and how to run them;
 - how its windows talk to the rest of the app;
@@ -185,7 +185,7 @@ without it, 4. The ones only this made possible:
 | ![](screenshots/231-profile-vscode-format-before.png) VSCodium: "add a button here that formats the document" | ![](screenshots/232-profile-vscode-format-after.png) The Format button in the status bar runs VS Code's own Format Document |
 | ![](screenshots/241-profile-vscode-sort-before.png) "add a button here that sorts the lines of the file alphabetically" | ![](screenshots/233-profile-vscode-sort-after.png) Sorted by VS Code's own Sort Lines |
 | ![](screenshots/234-profile-vscode-remap-without.png) "make Ctrl+Shift+K duplicate the current line instead of deleting it", without: the line is deleted | ![](screenshots/235-profile-vscode-remap-with.png) With: the line is copied |
-| ![](screenshots/237-profile-joplin-duplicate-before.png) Joplin: "add a button that makes a copy of the note I'm looking at" | ![](screenshots/238-profile-joplin-duplicate-after.png) Joplin's own Duplicate made "Welcome to Joplin! - Copy" |
+| ![](screenshots/237-profile-joplin-duplicate-before.png) Joplin: "add a button that makes a copy of the note I'm looking at" | ![](screenshots/238-profile-joplin-duplicate-after.png) Joplin's own Duplicate made a copy of the welcome note |
 | ![](screenshots/236-profile-vscode-comment-after.png) VSCodium: "add a button here that comments out the line the cursor is on" | ![](screenshots/239-profile-joplin-clipboard-after.png) Joplin: "add a keyboard shortcut Ctrl+Alt+N that creates a new note from what is in the clipboard" |
 
 In Obsidian the same kind of change worked with or without it (here "add a

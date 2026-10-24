@@ -35,7 +35,7 @@ Version 0.2.0, the first version meant for other people to install.
   how its windows talk to the rest of it, what its buttons do), keeps that in
   `~/.morse/profiles`, and gives your model the parts that fit your request.
   A change can then run the app's own commands ("add a button that formats
-  the document" in VS Code). `morse profile <app>` shows what Morse found.
+  the document" in VSCodium). `morse profile <app>` shows what Morse found.
 - Morse Desktop: an app for your computer, so you don't need a terminal or
   Node. It lists your apps and opens them with Morse, chooses and checks your
   model, runs the Morse helper for Chrome (Chrome asks once and you click
