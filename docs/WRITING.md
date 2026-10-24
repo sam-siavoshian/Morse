@@ -110,13 +110,15 @@ An error says **what went wrong, in plain words**, then **the one thing to try**
   microphone".
 - Offer one next step, not a list. If there is nothing to do, say what Morse
   did instead ("Nothing was changed").
-- In the bar, the error line starts "Couldn't make that change:" and the raw
-  detail follows in italics. The button under it is "Try again".
+- In the bar, the error line starts "That didn't work:" and the detail
+  follows in italics. The bar has room for about 60 characters of detail, so
+  keep the message and its next step short. The button next to it is "Try again".
 
 | Before | After |
 |---|---|
-| Couldn't do that: Model server returned 401 | Couldn't make that change: *The model server turned down the request (error 401). Check the model settings.* |
+| Couldn't do that: Model server returned 401 | That didn't work: *The model server refused (error 401). Check the model settings.* |
 | Ollama returned 404 | Ollama couldn't answer (error 404). Check that the model is installed. |
+| The model did not produce a usable change. | The model's answer had no change in it. Try other words. |
 | No microphone found | No microphone found. Plug one in and try again. |
 | Not a Morse share link | This isn't a Morse share link. Check that you copied the whole link. |
 | Couldn't apply that edit: x | Couldn't make that edit: x. Press ⌘Z to undo it. |
