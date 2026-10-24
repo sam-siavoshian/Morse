@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { bundleRuntime } from "../runtime/bundle.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
-import { waitFor, waitForReady, settle, TIMEOUT } from "./helpers/wait.js";
+import { waitFor, waitForReady, TIMEOUT } from "./helpers/wait.js";
 
 const skip = noBrowser;
 const ROOT = new URL("../", import.meta.url);
