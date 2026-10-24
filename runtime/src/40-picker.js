@@ -4,7 +4,16 @@ function boxTo(el, box, label) {
   const r = el.getBoundingClientRect();
   box.hidden = false;
   Object.assign(box.style, { left: r.left - 3 + "px", top: r.top - 3 + "px", width: r.width + 6 + "px", height: r.height + 6 + "px" });
-  if (label != null) box.querySelector("span").textContent = label;
+  if (label != null) {
+    // The label sits above the box; flush with the top edge it moves inside,
+    // and it never runs off the left or right of the screen.
+    const s = box.querySelector("span");
+    s.textContent = label;
+    const inside = r.top < 28;
+    s.classList.toggle("inside", inside);
+    const x = r.left - 3 + (inside ? 4 : -1.5), w = s.offsetWidth;
+    s.style.marginLeft = Math.max(4 - x, Math.min(0, innerWidth - 4 - w - x)) + "px";
+  }
 }
 const ours = e => e.composedPath().includes(hostEl);
 function onMove(e) {

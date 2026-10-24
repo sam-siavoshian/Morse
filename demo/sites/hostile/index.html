@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hostile</title>
+<style>
+  /* The worst global CSS we could think of. Morse's overlay must look exactly
+     the same here as on a plain page: nothing below may reach into it. */
+  html { zoom: 1.25; font-size: 40px !important; direction: rtl; writing-mode: horizontal-tb; }
+  body, body * { all: unset; }
+  body { display: block; transform: rotate(-1deg) translateY(8px); transform-origin: 0 0; background: #fff8e1; color: #3b2b00;
+    font: italic 900 28px/3 "Comic Sans MS", cursive !important; letter-spacing: 3px !important; text-transform: uppercase !important; }
+  div, span, button, input, textarea, label, header, footer, aside, article, p, b, small, kbd, em, i, img, canvas, svg {
+    box-sizing: content-box !important; line-height: 3 !important; letter-spacing: 4px !important; text-transform: uppercase !important;
+    border: 3px dashed #e00 !important; border-radius: 0 !important; color: #d00 !important; background-color: #ff0 !important;
+    font-family: "Comic Sans MS", cursive !important; font-size: 30px !important; text-align: right !important; filter: hue-rotate(90deg);
+    transition: all 3s !important; visibility: visible !important; zoom: 1.1; }
+  [hidden] { display: block !important; }
+  :focus { outline: 6px solid magenta !important; }
+  ::selection { background: lime !important; }
+  ::-webkit-scrollbar { width: 30px; background: red; }
+  [data-morse-ui] { display: none !important; opacity: .1 !important; transform: scale(2) !important; inset: auto !important; width: 10px !important; height: 10px !important; }
+  section { display: block; padding: 24px; margin: 24px; }
+  h1 { display: block; font-size: 64px !important; }
+  #tb { display: flex; gap: 20px; padding: 16px; margin: 0 24px; background: #ffe0b2; }
+  #tb button { cursor: pointer; padding: 4px 12px; }
+  #side { display: block; width: 260px; height: 320px; margin: 24px; background: #ffecb3; }
+</style>
+</head>
+<body>
+  <section><h1>صفحة معادية</h1><p>Global resets, huge fonts, zoom, RTL and a transformed body.</p></section>
+  <div id="tb" aria-label="Hostile toolbar"><button aria-label="Bold">B</button><button aria-label="Italic">I</button><button aria-label="Underline">U</button><button>Publish</button></div>
+  <div id="side" aria-label="Hostile sidebar">Sidebar</div>
+</body>
+</html>
