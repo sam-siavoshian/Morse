@@ -162,7 +162,7 @@ const Audit = (() => {
     if (b.dataset.n) return void Markers.scrollTo(b.dataset.n);
     if (b.dataset.au === "close") { hide(); hintNote = ""; setHint(); input.focus(); }
     if (b.dataset.au === "again") check();
-    if (b.dataset.fix) fix(+b.dataset.fix).catch(err => toast(`Couldn't fix that: ${err.message}`));
+    if (b.dataset.fix) fix(+b.dataset.fix).catch(err => toast(`Couldn't fix that. ${plainError(err)}`));
   });
   new MutationObserver(() => { if (bar.hidden) hide(); }).observe(bar, { attributes: true, attributeFilter: ["hidden"] });
   // A new question or change replaces the list.

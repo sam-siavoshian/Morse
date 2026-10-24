@@ -89,7 +89,7 @@ const Gallery = (() => {
       <small class="gl-by">${e.author ? `by ${esc(e.author)}` : "From the gallery"}${compareVersions(v, 1) > 0 ? ` · version ${esc(String(v))}` : ""}</small>
       ${trying ? `<p class="gl-trying" role="status">On this page now. Nothing is saved yet.</p>` : ""}
       <div class="gl-btns">${trying
-        ? `<button type="button" class="primary" data-gl="keep">Keep</button><button type="button" data-gl="remove">Remove</button>`
+        ? `<button type="button" class="primary" data-gl="keep">Save</button><button type="button" data-gl="remove">Undo</button>`
         : `${careful(m) ? "" : `<button type="button" data-gl="try">Try it</button>`}<button type="button" data-gl="install">Install…</button>`}</div>
     </div>`;
   }
@@ -115,7 +115,7 @@ const Gallery = (() => {
   }
   function changed() { rerender(); placeChip(); }
 
-  // ---- Try it, Keep, Remove
+  // ---- Try it, then Save or Undo
   async function tryIt(e) {
     // A mod that can send data elsewhere or read what you type goes through
     // the full review first, never straight onto the page.
@@ -136,7 +136,7 @@ const Gallery = (() => {
     await removeMod(t.id).catch(() => {});
     rerender({ g: "try", gid: t.id });
     placeChip();
-    if (!quiet) toast(`Removed “${t.title}”. Nothing was saved.`);
+    if (!quiet) toast(`Took “${t.title}” off the page. Nothing was saved.`);
   }
   async function keep() {
     const t = st.trial, e = t && byId(t.id);
@@ -224,8 +224,8 @@ const Gallery = (() => {
     try {
       await call("open", { url: r.url });
       toast(r.attached
-        ? `Opened a new GitHub issue. Your mod is too long for the link, so it was saved${file?.path ? ` to ${file.path}` : ""}. Add that file to the issue.`
-        : "Opened a new GitHub issue with your mod in it. Read it over, then submit it.");
+        ? `Opened GitHub to send your mod to the gallery. It's too long for the link, so it was saved${file?.path ? ` to ${file.path}` : ""}. Attach that file there.`
+        : "Opened GitHub with your mod filled in. Read it over, then send it.");
     } catch (err) { toast(`Couldn't open GitHub. ${plainError(err)}`); }
   }
   modal.addEventListener("click", ev => {
@@ -254,7 +254,7 @@ const Gallery = (() => {
     if (g === "update") { const m = S.mods.find(x => x.id === b.dataset.id); if (m) showUpdate(m); }
   });
 
-  // ---- while trying: a small strip at the top with Keep and Remove, so the
+  // ---- while trying: a small strip at the top with Save and Undo, so the
   // choice stays in reach with the panel closed.
   const strip = document.createElement("div");
   strip.className = "gl-trial";
@@ -263,7 +263,7 @@ const Gallery = (() => {
   strip.setAttribute("aria-label", "Trying a mod");
   root.append(strip);
   function showStrip() {
-    strip.innerHTML = `<span class="gl-mark" aria-hidden="true">${radar(12)}</span><span class="gl-txt"><b>Trying “${esc(st.trial.title)}”</b><small>Nothing is saved yet</small></span><button type="button" class="btn" data-gl="remove">Remove</button><button type="button" class="btn primary" data-gl="keep">Keep</button>`;
+    strip.innerHTML = `<span class="gl-mark" aria-hidden="true">${radar(12)}</span><span class="gl-txt"><b>Trying “${esc(st.trial.title)}”</b><small>Nothing is saved yet</small></span><button type="button" class="btn" data-gl="remove">Undo</button><button type="button" class="btn primary" data-gl="keep">Save</button>`;
     strip.hidden = false;
   }
   function hideStrip() { strip.hidden = true; strip.innerHTML = ""; }

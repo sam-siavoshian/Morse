@@ -1498,6 +1498,56 @@ async function iterateStates(theme, width) {
   await close(p);
 }
 
+// ---- self-heal (71-heal.js): a mod that stopped working after the site changed
+async function healStates(theme, width) {
+  const n = width < 600, H = n ? 844 : 720;
+  const { modCodeHash, pagePathShape } = await import("../core/heal.js");
+  const mod = { title: "Album grid spacing", prompt: "more space between the albums", css: ".album-grid { gap: 24px }", js: "", target: { label: "Album grid" },
+    gallery: { id: "cat-album-grid", version: 1 }, imported: true, importedFrom: "gallery", author: "Ana" };
+  const fp = { v: 1, code: modCodeHash(mod), path: pagePathShape(`${BASE}/demo/catalog.html`), size: 1, at: "2026-10-20T09:00:00Z", sels: [[".album-grid", 6]] };
+  const seed = new Function(`globalThis.__catHealMod = ${JSON.stringify(mod)}; globalThis.__catHealFp = ${JSON.stringify(fp)};`);
+  const openHeal = extra => open({ theme, width, height: H, extra: `&heal=1${extra}`, init: [seed] });
+  const broken = p => p.waitForFunction(() => document.querySelector(":root > [data-morse-ui]").shadowRoot.querySelector(".bar").hasAttribute("data-heal"), null, { timeout: 15000 }).then(() => "", () => "the dot never showed (no mod marked as stopped working)");
+  let p = await openHeal("");
+  const marked = await broken(p);
+  await openBar(p);
+  await shot(p, "heal", "bar-dot", ui(p, ".row"), { pad: 4, checks: [marked], note: "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up" });
+  if (!n) await shot(p, "heal", "mark-dot", ui(p, ".row .mark"), { pad: 8 });
+  await p.keyboard.press("Escape"); await sleep(150);
+  await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel").waitFor(); await sleep(400); await p.mouse.move(2, 2);
+  await shot(p, "heal", "panel-header", ui(p, ".panel header"), { pad: 4 });
+  const row = ui(p, "article[data-id=mod30]");
+  await row.scrollIntoViewIfNeeded().catch(() => {}); await sleep(100);
+  await shot(p, "heal", "stopped-row", row, { pad: 8 });
+  if (!n) await shot(p, "heal", "stopped-fix-focus", ui(p, "article[data-id=mod30] .health"), { pad: 8, checks: [await focusVisible(p, ui(p, "article[data-id=mod30] [data-a=fix]"))] });
+  await ui(p, "article[data-id=mod30] [data-a=fix]").click();
+  await p.waitForFunction(() => globalThis.__cat.gen, null, { timeout: 4000 }).catch(() => {});
+  await sleep(200); await stream(p, 10, 25);
+  await shot(p, "heal", "fixing", ui(p, ".bar"));
+  await finish(p, OK({ title: mod.title, css: "#toolbar { gap: 24px }" }));
+  await shot(p, "heal", "fixed-result", ui(p, ".bar"));
+  await ui(p, "[data-a=keep]").click(); await sleep(600);
+  await ui(p, ".ctl-toast").waitFor({ timeout: 3000 }).catch(() => {});
+  await shot(p, "heal", "share-fix-toast", ui(p, ".ctl-toast"), { pad: 16, note: "a fixed gallery mod: Share the fix…" });
+  await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel").waitFor(); await sleep(400); await p.mouse.move(2, 2);
+  await row.scrollIntoViewIfNeeded().catch(() => {}); await sleep(100);
+  await shot(p, "heal", "fixed-row", row, { pad: 8 });
+  await close(p);
+  // Settings: fix automatically, and the toast it leaves
+  p = await openHeal("&autofix=1");
+  await p.waitForFunction(() => globalThis.__cat.gen, null, { timeout: 20000 }).catch(() => {});
+  await sleep(200);
+  await p.evaluate(() => __cat.done({ ok: true, title: "Album grid spacing", css: "#toolbar { gap: 24px }", js: "" }));
+  await ui(p, ".ctl-toast").waitFor({ timeout: 6000 }).catch(() => {}); await sleep(300);
+  await shot(p, "heal", "auto-fixed-toast", ui(p, ".ctl-toast"), { pad: 16, note: "fixed in the background: Undo and Share the fix…" });
+  await openBar(p);
+  await p.keyboard.press("Control+Comma"); await sleep(300);
+  const srow = ui(p, ".pane .srow:has([data-k=autoFix])");
+  await srow.scrollIntoViewIfNeeded(); await sleep(100); await p.mouse.move(2, 2);
+  await shot(p, "heal", "setting", srow, { pad: 4 });
+  await close(p);
+}
+
 // ---- round 2 leftovers
 async function leftoverStates(theme, width) {
   const n = width < 600, H = n ? 844 : 720;
@@ -1588,6 +1638,7 @@ for (const theme of ["dark", "light"]) {
     if (want("control")) await guard("control", () => controlStates(theme, width));
     if (want("iterate")) await guard("iterate", () => iterateStates(theme, width));
     if (want("leftovers")) await guard("leftovers", () => leftoverStates(theme, width));
+    if (want("heal")) await guard("heal", () => healStates(theme, width));
   }
   if (want("popup")) await guard("popup", () => popupStates(theme));
   if (want("motion")) await guard("motion", () => reducedMotion(theme));

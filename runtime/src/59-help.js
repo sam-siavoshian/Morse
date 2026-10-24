@@ -21,9 +21,9 @@ function helpAbilities() {
   return [
     ["Describe a change", `Point at something first, or just describe a change to the whole page.`],
     hotkey("talk") && ["Talk instead of typing", `Hold ${k("talk")} and say it.`],
-    edit && ["Use the edit tools", `Point at something, then press ${edit} to hide, move, resize, recolor or rename it. No model needed.`],
-    typeof GodQuick !== "undefined" && ["Page tools", `Dark mode, bigger text, focus mode and more, from the tools button in the bar.`],
-    ["Save, undo, share", `Every change you save is a mod. ${hotkey("mods") ? `${k("mods")} opens Mods` : "Mods"} to turn them off, edit or share them.`],
+    edit && ["Use the Edit tools", `Point at something, then press ${edit} to hide, move, resize, recolor or rename it. No model needed.`],
+    typeof GodQuick !== "undefined" && ["Page tools", `Dark mode, bigger text, focus mode and more, from the Page tools button in the bar.`],
+    ["Save, undo, share", `A change you save is called a mod. Morse brings it back next time. ${hotkey("mods") ? `${k("mods")} opens the Mods panel` : "The Mods panel"} to turn mods off, edit or share them.`],
   ].filter(Boolean);
 }
 

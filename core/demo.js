@@ -146,7 +146,7 @@ article p:first-of-type::first-letter {
 `, "");
 
 const FALLBACK = reply("Needs a real model", "", `
-morse.toast("The demo replay only knows a few requests. Connect a model for anything else.");
+morse.toast("The demo model only knows a few requests. Connect a model for anything else.");
 `);
 
 // For the playground (demo/playground.html): a label in its toolbar.
@@ -196,8 +196,18 @@ function readBase(prompt) {
   const line = re => (prompt.match(re) || [])[1] || "";
   return { original: line(/^Original request: (.*)$/m), css: code[1], js: code[2], followUp: line(/^Follow-up: (.*)$/m), error: line(/^What went wrong: (.*)$/m) };
 }
-function refine(b) {
+// Self-heal (core/heal.js siteChangedNote): Tunes renamed its album grid in a
+// redesign (demo/sites/tunes/?v2). The fix points the same code at the new name
+// the note found on the page.
+function siteChanged(b, prompt) {
+  if (!/site changed its page/.test(prompt) || !/album-grid/.test(b.css + b.js) || !/release-grid/.test(prompt)) return null;
+  const swap = s => s.replaceAll("album-grid", "release-grid");
+  return reply("Bigger rounded covers", swap(b.css), swap(b.js));
+}
+function refine(b, prompt = "") {
   if (b.error) {
+    const moved = siteChanged(b, prompt); // self-heal hook
+    if (moved) return moved;
     const rule = RULES.find(([re]) => re.test(b.original));
     if (rule) return rule[1] || SLEEP;
     return reply("Could not fix", b.css, b.js);
@@ -238,7 +248,7 @@ export function demoResponse(messages) {
   const firstUser = [...users].reverse().find(m => /^(Request: |Current code:)/m.test(m.content))?.content || users[0]?.content || "";
   if (/Captured styles \(computed, JSON\):/.test(firstUser)) return rebuild(firstUser);
   const base = readBase(firstUser); // keep iterating: refine or fix
-  if (base) return refine(base);
+  if (base) return refine(base, firstUser);
   const request = [...firstUser.matchAll(/^Request: (.*)$/gm)].pop()?.[1] || "";
   const isRetry = /^That failed/.test(messages.at(-1)?.content || "");
   const answer = demoAnswer(request, firstUser, messages); // Ask and find
@@ -393,5 +403,5 @@ function demoAnswer(request, prompt, messages) {
       [[opener.selector, menu], [hit.selector, hit.label]], [[opener.selector, `Open the ${menu} menu`], [hit.selector, `Choose ${hit.label}`]]);
     return ans(`Here it is: **${hit.label}** [1].`, [[hit.selector, hit.label]]);
   }
-  return ans(`Demo mode only knows a few questions about the demo sites. With a local model (\`ollama pull qwen2.5-coder:7b\`) you can ask anything about this page.`);
+  return ans(`The demo model only knows a few questions about the demo sites. Connect a model (run \`morse setup\`) to ask anything about this page.`);
 }

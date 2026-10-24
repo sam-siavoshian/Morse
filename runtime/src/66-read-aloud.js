@@ -152,7 +152,8 @@ const ReadAloud = (() => {
     u.onerror = e => {
       if (!R || R.token !== token || /interrupted|canceled/.test(e.error || "")) return;
       stop();
-      toast(`Couldn't read aloud (${e.error || "no voice"}). Check that this computer has a voice installed.`);
+      console.warn("[morse] read aloud", e.error);
+      toast("Couldn't read aloud. Check that this computer has a voice installed.");
     };
     s.speak(u);
     render();

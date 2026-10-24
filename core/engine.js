@@ -5,6 +5,7 @@ import { buildMessages } from "./prompt.js";
 import { parseModResponse, completeCssPrefix } from "./parse.js";
 import { parseReply } from "./answer.js"; // Ask and find
 import { streamChat } from "./providers.js";
+import { selectorsIn, selectorLists } from "./heal.js"; // self-heal hook: shared selector parsing
 
 // `probe(selectors)` (optional, from the host) returns { fp, unmatched }: a
 // fingerprint of what the page renders and which of the given selectors match
@@ -99,25 +100,5 @@ async function noEffect(probe, before, draft) {
     + "Target what actually sets the property (see the CSS rules given) and use !important.";
 }
 
-// Selectors a draft relies on: every CSS rule's selector list, and string
-// selectors passed to morse.watch / querySelector(All) / morse.byText.
-export function selectorsIn(draft) {
-  const { css, js } = selectorLists(draft);
-  return [...new Set([...css, ...js])].slice(0, 40);
-}
-function selectorLists({ css = "", js = "" }) {
-  const fromCss = new Set(), fromJs = new Set();
-  const clean = s => s.replace(/::?(before|after|placeholder|selection|marker|backdrop|first-line|first-letter|-webkit-[\w-]+|-moz-[\w-]+)\b/g, "")
-    .replace(/:(hover|focus|focus-within|focus-visible|active|visited|checked|disabled|enabled|target)\b/g, "").trim();
-  const body = css.replace(/\/\*[\s\S]*?\*\//g, "").replace(/@[^{;]*[{;]/g, "{");
-  for (const m of body.matchAll(/([^{}]+)\{/g)) {
-    for (const part of m[1].split(",")) {
-      const s = clean(part);
-      if (s && !/^(from|to|[\d.]+%)$/.test(s) && !/^:root$|^html$|^body$/.test(s)) fromCss.add(s);
-    }
-  }
-  for (const m of js.matchAll(/\b(?:watch|querySelectorAll|querySelector|byText)\(\s*(["'`])((?:\\.|(?!\1)[^\\])+)\1/g)) {
-    if (!m[2].includes("${")) for (const part of m[2].replace(/\\(.)/g, "$1").split(",")) { const s = clean(part); if (s) fromJs.add(s); }
-  }
-  return { css: [...fromCss].slice(0, 30), js: [...fromJs].slice(0, 20) };
-}
+// Selectors a draft relies on: core/heal.js (the runtime's self-heal check reads them too).
+export { selectorsIn };

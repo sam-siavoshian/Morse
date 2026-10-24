@@ -164,7 +164,7 @@ const DescribeImage = (() => {
   card.addEventListener("click", e => {
     const a = e.target.closest("button")?.dataset.ds;
     if (a === "close") close();
-    if (a === "save") save().catch(err => toast(`Couldn't save that: ${err.message}`));
+    if (a === "save") save().catch(err => toast(`Couldn't save that. ${plainError(err)}`));
     if (a === "copy" && D?.text) { navigator.clipboard?.writeText(D.text).then(() => toast("Copied"), () => toast("Couldn't copy here. Select the text instead.")); }
     if (a === "again" && D) start(D.img, { fromAudit: D.fromAudit });
   });

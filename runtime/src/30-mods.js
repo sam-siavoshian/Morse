@@ -10,7 +10,7 @@ async function applyMod(m) {
   if (m.js.trim()) {
     const r = await call("exec", { modId: m.id, js: m.js });
     Health.ran(m, r); // repair: the panel marks mods that stopped working (70-panel.js)
-    if (!r.ok) { console.warn("[morse]", m.title, r.error); toast(`Couldn't run “${m.title}” here. Turn it off or edit its code in Mods.`); }
+    if (!r.ok) { console.warn("[morse]", m.title, r.error); toast(`“${m.title}” didn't work on this page. Open Mods to turn it off or fix it.`); }
   }
   modRan(m); // safe start (63-control.js)
 }

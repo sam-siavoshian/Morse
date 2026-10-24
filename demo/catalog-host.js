@@ -84,6 +84,10 @@
     { prompt: "and round the corners of the whole toolbar so it matches the cards below it", css: ".x { gap: 12px; border-radius: 12px }", js: "", at: "2026-10-23T09:00:00Z" },
   ];
   if (C.mods[0] && q.get("versions")) C.mods[0].refined = "make the icons a little larger";
+  // ?heal=1: a gallery mod whose fingerprint (globalThis.__catHealFp, worked out
+  // by the catalog with core/heal.js) points at an album grid this page no longer has
+  if (q.get("heal") && globalThis.__catHealFp) C.mods.push(fixture(30, { ...globalThis.__catHealMod, fp: globalThis.__catHealFp }));
+  if (q.get("autofix")) C.settings.autoFix = true;
   C.control = { pause: { all: !!q.get("paused"), sites: {} } };
   const b64 = s => { try { return JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g, "+").replace(/_/g, "/"))))); } catch { return null; } };
   function preview(src) {

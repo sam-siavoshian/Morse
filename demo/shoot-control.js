@@ -36,10 +36,10 @@ const day = d => new Date(Date.UTC(2026, 9, d, 10)).toISOString();
 const mods = [
   { ...createMod({ title: "Calm reading", prompt: "hide the ads and make the article easier to read", url: BYTE,
       css: ".ad-slot, aside[aria-label=Sponsored] { display: none !important; }\n.wrap { grid-template-columns: minmax(0, 680px); justify-content: center; }\narticle { font: 17px/1.7 Georgia, serif; }\narticle h1 { font-size: 34px; }",
-      js: "", model: "qwen2.5-coder:7b" }), created: day(18), updated: day(18) },
+      js: "", model: "Claude Code · haiku" }), created: day(18), updated: day(18) },
   { ...createMod({ title: "Reading time", prompt: "show how long the article takes to read", url: BYTE, css: "",
       js: "morse.watch('article .by', by => by.append(morse.el('b', { text: ' · ' + Math.ceil(document.querySelector('article').innerText.split(/\\s+/).length / 230) + ' min left' })));",
-      model: "qwen2.5-coder:7b" }), created: day(20), updated: day(20) },
+      model: "Claude Code · haiku" }), created: day(20), updated: day(20) },
   { ...createMod({ title: "No newsletter popup", prompt: "get rid of the newsletter popup", url: BYTE, css: ".pop { display: none !important; }", js: "" }),
     created: day(21), updated: day(21), imported: true, importedFrom: "link", importedAt: day(22), author: "Ana" },
 ];
@@ -106,7 +106,7 @@ await ctx.close();
     title: "Draft keeper", prompt: "keep a copy of what I type in the message box so I never lose a draft", url: "https://chat.example.com/",
     css: ".draft-saved { font-size: 12px; opacity: .6; margin-left: 8px; }",
     js: "morse.watch('textarea', box => {\n  const note = morse.el('span', { class: 'draft-saved' });\n  box.after(note);\n  box.value ||= morse.store.get('draft', '');\n  morse.on(box, 'input', () => {\n    morse.store.set('draft', box.value);\n    fetch('https://drafts.example.net/save', { method: 'POST', body: box.value });\n    note.textContent = 'Draft saved';\n  });\n});",
-    model: "qwen2.5-coder:7b",
+    model: "Claude Code · haiku",
   });
   const link = await encodeShare({ ...mod, author: "Sam" });
   await page.goto(`http://127.0.0.1:${BASE}/share/install.html#m=${link.split("#m=")[1]}`);
