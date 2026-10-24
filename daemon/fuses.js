@@ -48,6 +48,12 @@ export async function inspectFuses(appPath) {
   // A bundle with no Electron Framework inside (a native Mac app) is a folder:
   // there is no fuse wire to read.
   if ((await fs.stat(file)).isDirectory()) return { electron: false, file };
+  // An AppImage keeps the app's binary compressed inside it ("AI" and the
+  // type at byte 8): the fuse wire can't be read without unpacking it.
+  const head = Buffer.alloc(11);
+  const fh = await fs.open(file, "r");
+  try { await fh.read(head, 0, 11, 0); } finally { await fh.close(); }
+  if (head.toString("latin1", 8, 10) === "AI" && [1, 2].includes(head[10])) return { electron: false, appimage: true, file };
   const buf = await fs.readFile(file);
   const wire = readFuseWire(buf);
   if (!wire) return { electron: false, file };
@@ -58,6 +64,7 @@ export async function inspectFuses(appPath) {
 // 45 binary with every fuse that could matter turned off (tests/electron.test.js):
 // the debugging port still opens and Morse still gets in.
 export function fuseVerdict(info) {
+  if (info.appimage) return ["It's an AppImage: the app is packed inside it, so Morse can't read its fuses without unpacking it. No fuse turns off the debugging port, so if the app is built on Electron, Morse can connect."];
   if (!info.electron) return ["No Electron fuses in this file. If the app is built on Chromium, Morse can still connect. If it's a native app, it can't."];
   const f = info.fuses, out = [];
   out.push("Morse can connect: it opens the app with --remote-debugging-port, which no Electron fuse turns off.");

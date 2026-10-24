@@ -114,7 +114,9 @@ export async function launchCommand(f, { settingsFrom, logo }) {
     } else port = await pickPort({ preferred: [pref.port].filter(Boolean) });
     const child = launchApp(app, port, extra);
     pids = [child.pid];
-    await waitForLaunch(child, app, port); // says why when the app dies on start
+    // Says why when the app dies on start. An AppImage that has to unpack
+    // itself first (no FUSE, apps.js appImageEnv) can take a minute.
+    await waitForLaunch(child, app, port, app.appimage ? { timeoutMs: 120000 } : undefined);
     if (pref.port !== port) await saveAppPref(app.id, { port });
   }
 
