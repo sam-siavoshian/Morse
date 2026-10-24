@@ -2,9 +2,9 @@
 
 **Change any website or desktop app in your own words.**
 
-[![Watch the 92-second demo](https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/poster-demo-v2.png)](https://github.com/sam-siavoshian/RRAA/blob/main/docs/launch/morse-demo-v2.mp4)
+[![Microsoft's Visual Studio Code after “make the whole editor look like a warm paper notebook”: cream backgrounds, brown text, serif file names, and the Morse bar offering Save](https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/321-vscode-result.png)](docs/desktop.md#tested-on)
 
-*[Watch the 92-second demo](https://github.com/sam-siavoshian/RRAA/blob/main/docs/launch/morse-demo-v2.mp4). It was recorded from real runs: Claude Code wrote the sleep timer, the button, the fix and the round covers. A 36-second video on a real app (VSCodium) and more clips are in [`docs/launch`](docs/launch/).*
+*Visual Studio Code on Linux, after “make the whole editor look like a warm paper notebook: cream backgrounds, dark brown text, and a serif font in the sidebar and the tabs”. Claude Code (opus) wrote it in 18 seconds. It was still there when the app opened again. More real apps and sites: [Tested on](docs/desktop.md#tested-on). Videos are in [`docs/launch`](docs/launch/).*
 
 Press a shortcut, point at something and say what you want: “add a sleep timer”, “hide the ads”, “make this text bigger”. Morse makes the change while you watch. A mod is a change you saved. Morse brings it back every time you open that site or app.
 
@@ -31,7 +31,7 @@ You need [Node](https://nodejs.org) 22 or newer. For full steps and help when so
 3. Answer its one question. Then connect a model. With Morse Desktop open, click **Use Claude Code**, then **Allow**. Or paste an Anthropic API key, or run the `morse setup --pair <code>` command it shows.
 4. Make your first change on the practice page. Then press **⌥Space** on any page (Ctrl+Shift+Space on Windows and Linux). Morse asks for **“Allow User Scripts”** only when a change needs it.
 
-**Desktop apps (tested on VSCodium, Obsidian and Joplin)**
+**Desktop apps (tested on Visual Studio Code, VSCodium, Obsidian, Logseq and Joplin)**
 
 1. Install Morse as in step 1 above. Then run `morse setup` to choose your model.
 2. Run `morse apps` to see which of your apps Morse can connect to.

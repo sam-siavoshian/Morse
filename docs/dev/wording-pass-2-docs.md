@@ -9,9 +9,9 @@ developer docs got a lighter pass: fewer semicolons, no cute words.
 The rules are in [How Morse talks](../WRITING.md): short everyday words, one
 idea per sentence, active voice, lead with the action, plain labels for
 headings, no rhetorical questions, no semicolons in prose, no hype. Only
-VSCodium, Obsidian and Joplin are named as examples of desktop apps, since
-they are the ones [tested](../desktop.md#tested-on). Untested apps are named
-only where a page says they are not tested.
+apps listed under [Tested on](../desktop.md#tested-on) (Visual Studio Code,
+VSCodium, Obsidian, Logseq and Joplin) are named as examples of desktop apps.
+Untested apps are named only where a page says they are not tested.
 
 ## Biggest changes
 

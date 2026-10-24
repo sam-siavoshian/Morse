@@ -7,7 +7,7 @@ works at once, with no model.
 Each tool is a small mod that Morse makes itself. It stays on for that site.
 Click it again to turn it off. The page goes back to exactly how it was.
 
-![Easier to use, beside Page tools, with three tools on](screenshots/100-easier-to-use.png)
+![Easier to use, beside Page tools, on Docker Hub](screenshots/308-real-dark-mode.png)
 
 ## The tools
 
@@ -31,8 +31,6 @@ Click it again to turn it off. The page goes back to exactly how it was.
 - **Hide distractions**: cookie bars, chat bubbles and sticky announcements.
   Never the site's header or menus.
 
-![Higher contrast, before and after](screenshots/103-before-after-contrast.png)
-
 ## Read aloud
 
 **Read aloud** reads one sentence at a time and marks the sentence it's
@@ -42,8 +40,6 @@ choose from five speeds. **Esc** stops it.
 
 It uses your computer's own voices, so it works offline. (In Chrome, if your
 computer has no voice installed, Chrome may use an online one.)
-
-![Read aloud: the sentence being read is marked](screenshots/101-read-aloud.png)
 
 ## Check this page
 
@@ -62,7 +58,7 @@ tooltip, icon or link, makes a color darker or a size bigger. These fixes are
 saved in one mod called “Accessibility fixes”. For the rest, Morse sends one
 exact request to the model. You save or undo the result like any change.
 
-![Check this page: 17 places, each with a marker, and Fix it](screenshots/102-check-page.png)
+![Check this page on pkg.go.dev: 77 places, each with a marker, and Fix it](screenshots/310-real-check-page.png)
 
 ## Describe this picture
 

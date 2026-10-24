@@ -26,8 +26,7 @@ does and shows its code. `morse rm <id>` deletes one.
 
 | | |
 |---|---|
-| ![](screenshots/125-electron-mods-panel.png) The Mods panel in a desktop app | ![](screenshots/97-pause-site.png) Every row says where the mod came from, with **Show code** |
-| ![](screenshots/11-mods-panel.png) Turn mods on and off, share, edit, delete | ![](screenshots/12-edit-the-code.png) **Edit code** |
+| ![](screenshots/304-real-mods-panel.png) The Mods panel on nodejs.org: where each mod came from, with **Show code** | ![](screenshots/306-real-edit-code.png) **Edit code** |
 
 ## Share a mod
 
@@ -54,8 +53,7 @@ and the share link.
 
 | | |
 |---|---|
-| ![](screenshots/28-news-share.png) Share | ![](screenshots/14-share-card.png) The share image: before and after, with the change outlined |
-| ![](screenshots/33-userscript-runs-without-morse.png) The Tampermonkey version, running **without Morse** | ![](screenshots/07-share.png) Share, in a desktop app |
+| ![](screenshots/307-real-share.png) **Share**: the share image (before and after), the link and the downloads | |
 
 ## Install a shared mod
 
@@ -65,10 +63,6 @@ click there installs it. A web page can't install anything by itself.
 
 You can also install from the Mods panel with **Install a mod…** (a link or a
 file). Or run `morse install <link or file>` in a terminal.
-
-| | |
-|---|---|
-| ![](screenshots/30-share-link.png) A friend opens the share link | ![](screenshots/32-friend-gets-the-mod.png) …installs it, and gets the mod |
 
 ### What a mod does, before you install it
 
@@ -85,8 +79,6 @@ you clearly. Things a mod adds itself, like a sleep timer's own label, don't
 count as changing the page. When unsure, Morse lists a thing rather than
 leaving it out. This is a careful reading of the code, not a promise. When
 it matters, read the code too.
-
-![Before installing: what it does, in plain words, with the code folded below](screenshots/96-install-summary.png)
 
 ## Mods other people made
 
@@ -111,8 +103,7 @@ Morse checks the gallery list at most once a day. To stop that, turn off
 
 | | |
 |---|---|
-| ![](screenshots/110-for-this-site.png) **For this site** in the Mods panel | ![](screenshots/111-try-it.png) **Try it**: on the page, nothing saved yet |
-| ![](screenshots/112-update.png) **Update…**: what changed in the newer version | ![](site/gallery-desktop.png) The gallery on the website |
+| ![](store/screenshots/4-mods-others-made.png) **For this site** in the Mods panel, and **Try it**: pypi.org in dark mode, nothing saved yet | ![](site/gallery-desktop.png) The gallery on the website |
 
 ## When a site changes
 
@@ -136,12 +127,6 @@ in the background and tells you, with Undo.
 
 If the mod came from the gallery, Morse offers **Share the fix…**. Then other
 people who use it get the fix too.
-
-| | |
-|---|---|
-| ![](screenshots/113-stopped-working.png) *Stopped working after this site changed*, with **Fix it** | ![](screenshots/114-fix-it.png) The fixed version, shown with Save and Undo |
-| ![](screenshots/116-auto-fix-setting.png) The setting to fix mods automatically | ![](screenshots/117-fixed-automatically.png) Fixed in the background, with Undo |
-| ![](screenshots/115-share-fix.png) Share the fix with the gallery | ![](screenshots/42-fix-it.png) A mod that stopped working, with **Fix it** |
 
 ## Back up your mods
 

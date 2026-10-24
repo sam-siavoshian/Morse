@@ -86,9 +86,8 @@ The design is Morse's own, taken from the product: the dark grey ramp of
 and requests, and the radar's pixels as the one motif (a faint grid behind
 the headline, with a few lit squares pulsing like the mark while a model
 works). Dark only. There are no drawn pictures: every picture is a real
-screenshot or a frame of a real recording, and the only SVGs are the
-favicon and a few functional icons (arrows, play, pause);
-`tests/site.test.js` checks that. The landing page, in order: the
+screenshot or a frame of a real recording, every app icon is the app's own,
+and there is no SVG. `tests/site.test.js` checks that. The landing page, in order: the
 headline and the film, **See it change** (before and after pairs with a
 slider), **How it works** in three steps, **Try it here**, a strip of real
 apps, **Install** (two buttons, the steps by hand behind each, and one line
@@ -111,9 +110,13 @@ for developers), privacy in two lines, a short FAQ.
   Display and JetBrains Mono, Latin subsets, OFL, in `site/fonts/`).
   `site/shots/` holds the screenshots the page shows, as WebP copies of
   `docs/screenshots/` (same numbers), frames of
-  `docs/launch/morse-social-16x9.mp4` (198, 200, 201), the Chrome Web Store
-  screenshots (180, 181) and the rest of the Obsidian run behind 149 (190,
-  191).
+  `docs/launch/morse-social-16x9.mp4` (198, 200, 201) and the Chrome Web
+  Store screenshots 2 and 3 (182, 184). `site/icons/` holds the real icon of
+  each app and site the page names (`APP_ICONS` in `config.js`: from the
+  installed app, or the site's own favicon, 64 pixels at most), shown on the
+  gallery cards, the showcase and the strip; a name without one shows its
+  first letter. The site has no SVG: the favicon is the Morse mark as a PNG,
+  and the arrow, play, pause and slider icons are text.
 - **Try it here** ([`site/try/`](../../site/try/), the `#try` section between
   `<!-- try-it -->` markers in `site/index.html`): the real runtime in a demo
   app (`demo/sites/tunes` or `byte`), in an iframe sandboxed with

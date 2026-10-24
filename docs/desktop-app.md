@@ -7,7 +7,7 @@ you choose your model, connects Chrome and shows your mods.
 A mod is a change you saved. Morse brings it back every time you open that
 site or app.
 
-![Morse Desktop: your apps, with Tunes connected](screenshots/167-desktop-app-apps.png)
+![Morse Desktop: your apps, each with its own icon, with Visual Studio Code connected](screenshots/167-desktop-app-apps.png)
 
 ## Get it
 
@@ -54,7 +54,7 @@ Morse can only connect to an app when the app starts. If the app is already
 open, Morse asks first. Choose **Always restart**, and it won't ask again for
 that app.
 
-![“Tunes is open. Restart it with Morse?”](screenshots/168-desktop-app-restart.png)
+![“Visual Studio Code is open. Restart it with Morse?”](screenshots/168-desktop-app-restart.png)
 
 Morse never changes an app's files. It opens the app again with one extra
 setting, so it can connect.

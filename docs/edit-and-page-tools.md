@@ -4,11 +4,6 @@ Some changes don't need a model. The Edit tools change one thing you point
 at. Page tools change the whole page in one click. Both work at once, and you
 save them like any other change.
 
-[![Edit tools: rename a headline, move a pop-up](launch/poster-direct-edit.png)](launch/clip-direct-edit.mp4)
-
-*[Watch the clip](launch/clip-direct-edit.mp4): rename a headline and move a
-pop-up out of the way, with no model.*
-
 ## Edit tools
 
 Point at something, and the Edit tools appear next to it. Click a tool, or
@@ -41,8 +36,8 @@ any other mod. **⌥⇧G** (Alt+Shift+G) shows the Edit tools from anywhere.
 
 | | |
 |---|---|
-| ![](screenshots/50-godmode-toolbar.png) The Edit tools, with the key in every tooltip | ![](screenshots/53-rename.png) **T**: rename the headline in place |
-| ![](screenshots/51-move.png) **M**: move a pop-up out of the way | ![](screenshots/52-recolor.png) **C**: recolor the masthead |
+| ![](screenshots/314-real-edit-tools.png) The Edit tools on rubygems.org, with the key in every tooltip | ![](screenshots/315-real-rename.png) **T**: rename the heading in place |
+| ![](screenshots/316-real-recolor.png) **C**: recolor the heading from the palette | |
 
 ## Capture
 
@@ -50,10 +45,6 @@ To reuse how something looks in another app, point at it and press **⇧C**.
 Morse saves it under **Captured** in the bar. Open Morse in the other app,
 pick it from the bar, and say where you want it. The model rebuilds that
 look there.
-
-| | |
-|---|---|
-| ![](screenshots/55-capture.png) **⇧C**: capture the masthead | ![](screenshots/56-reuse.png) In another app, pick it from the bar and the model rebuilds it |
 
 ## Page tools
 
@@ -75,8 +66,6 @@ Page tools also have the **Easier to use** group: higher contrast, bigger
 click targets, easier fonts, Read aloud and more. See
 [Easier to use](easier-to-use.md).
 
-[![Page tools: hide ads, then dark mode](launch/poster-page-tools.png)](launch/clip-page-tools.mp4)
-
 | | |
 |---|---|
-| ![](screenshots/54-dark-mode.png) Hide ads, then dark mode | ![](screenshots/100-easier-to-use.png) Page tools, with Easier to use beside them |
+| ![](screenshots/308-real-dark-mode.png) Dark mode on Docker Hub, with Easier to use beside Page tools | ![](screenshots/310-real-check-page.png) Check this page on pkg.go.dev |

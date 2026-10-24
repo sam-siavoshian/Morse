@@ -46,8 +46,3 @@ The code is in [`core/style.js`](../core/style.js),
 [`core/style-host.js`](../core/style-host.js) and
 [`core/style-sync.js`](../core/style-sync.js).
 
-| | |
-|---|---|
-| ![](screenshots/150-style-bar.png) **“…everywhere”**, shown at once with Save and Undo | ![](screenshots/152-style-mods-panel.png) **The Mods panel**: Your style at the top |
-| ![](screenshots/153-style-settings.png) **Settings**: each part, and the sites it skips | ![](screenshots/154-style-not-here.png) **Not on this site**, with Undo |
-| ![](screenshots/155-style-calmer.png) **Calmer** on the library: the video waits, the ticker stops | ![](screenshots/158-style-fit-haiku-review.png) **Fit to this site** by Claude Code (haiku): the player bar is back |

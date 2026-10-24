@@ -19,8 +19,8 @@ If you're new, start with [Getting started](getting-started.md).
 | [Mods](mods.md) | The Mods panel, sharing, the gallery, Try it, what a mod does before you install it, and fixing mods when a site changes |
 | [Mod packs](mod-packs.md) | Several mods shared together: make a pack, install the ones you want, and packs that stay up to date for a team |
 | [Your controls](your-controls.md) | The off switch, pausing Morse, Safe start, mods that slow down or freeze a page, and backups |
-| [Desktop apps](desktop.md) | Apps like VSCodium, Obsidian and Joplin: how to connect, and which apps can't work |
-| [Morse Desktop](desktop-app.md) | The app for your computer: your apps, your model, Chrome and your mods, without a terminal |
+| [Desktop apps](desktop.md) | Apps like VS Code, Obsidian and Joplin: how to connect, and which apps can't work |
+| [Morse Desktop](desktop-app.md) | The app for your computer: your apps, your model, Chrome, your mods and checks, without a terminal |
 | [Models and setup](models.md) | Claude Code, Codex or an API key: how to choose, and how Chrome reaches your model |
 | [Privacy and safety](privacy-and-safety.md) | What leaves your computer, when, and what mods can do |
 | [Privacy policy](privacy.md) | The privacy policy for the extension and the `morse` command |

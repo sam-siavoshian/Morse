@@ -3,10 +3,6 @@
 Mods run inside apps you're signed into, so you decide what runs and when.
 Nothing on this page deletes a mod.
 
-| | |
-|---|---|
-| ![](screenshots/95-off-switch.png) **⌥⇧0** turns every mod on the page off at once. The message has a button to turn them back on | ![](screenshots/98-popup-pause.png) Pause from Chrome's toolbar button, on one site or everywhere |
-
 ## The off switch
 
 Press **⌥⇧0** (Alt+Shift+0) to take every mod off the page at once. They stay
@@ -28,7 +24,7 @@ Shortcuts.
 
 Paused mods stay saved. Every open tab and window follows at once.
 
-![Pause Morse on a site, from the Mods panel](screenshots/97-pause-site.png)
+![Pause Morse on a site, at the top of the Mods panel (nodejs.org)](screenshots/304-real-mods-panel.png)
 
 ## Safe start
 

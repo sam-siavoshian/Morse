@@ -24,12 +24,6 @@ Morse sends the steps to the model in order. Each step says what you used
 and how to find it again. The mod waits for each thing to appear before it
 does the next step.
 
-| | |
-|---|---|
-| ![](screenshots/129-show-once-start.png) **Show me once**, in the bar and the ⋯ menu | ![](screenshots/130-show-once-recording.png) **Recording**: each step as you do it |
-| ![](screenshots/131-show-once-steps.png) **Stop**: say what to do with the steps | ![](screenshots/132-show-once-result.png) **The result**, live: a button for every unread email |
-| ![](screenshots/133-show-once-done.png) **Done** for 3 unread emails | ![](screenshots/134-show-once-hidden.png) A sign-in: the password is “(hidden)” |
-
 ## What Morse writes down
 
 - **Passwords and card numbers stay yours.** In a password field, or a field

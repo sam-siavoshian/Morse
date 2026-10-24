@@ -1,4 +1,4 @@
-import { initPage, modCard, highlight, slugOf, esc, appGlyph, copyText, flash, toast } from "./common.js";
+import { initPage, modCard, highlight, slugOf, esc, appIcon, copyText, flash, toast } from "./common.js";
 import { encodeShare, toUserscript } from "../core/mod.js";
 import { summarizeMod } from "../core/summary.js";
 
@@ -122,7 +122,7 @@ async function open(slug, { push = true } = {}) {
   current = slug;
   lastFocus = document.activeElement;
 
-  $("d-app").innerHTML = `<span class="glyph" aria-hidden="true">${esc(appGlyph(entry.app))}</span>${esc(entry.app)}`;
+  $("d-app").innerHTML = `${appIcon(entry.app)}${esc(entry.app)}`;
   $("d-title").textContent = mod.title;
   $("d-prompt").textContent = `“${mod.prompt}”`;
   const where = mod.match?.app

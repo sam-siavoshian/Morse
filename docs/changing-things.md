@@ -7,11 +7,9 @@ what you want. Then watch it change.
 press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the model writes the change ▦▦▦ ─▶ you see it ─▶ Save · Share
 ```
 
-![Morse adding a sleep timer to a music player](screenshots/clip-sleep-timer.gif)
+![Obsidian turning into a typewritten page while the model writes the change](screenshots/324-obsidian-working.png)
 
-*Recorded by Morse. This clip plays back saved answers, so it looks the same
-every time. The same steps with real Claude Code answers are in
-[screenshots/claude-code](screenshots/claude-code).*
+*Obsidian 1.14.5 on Linux: “make my notes look like an old typewritten page”. Claude Code (sonnet) wrote it in 7.8 seconds.*
 
 ## Point
 
@@ -38,7 +36,7 @@ between them.
 
 | | |
 |---|---|
-| ![](screenshots/121-electron-bar.png) The bar, under the app's own menu bar | ![](screenshots/63-suggestions.png) Suggestions for what you pointed at |
+| ![](screenshots/320-vscode-ask.png) The bar in Visual Studio Code, with the request typed | ![](screenshots/300-real-point.png) The bar on nodejs.org: point at a part, or describe the whole page |
 
 ## Watch it happen
 
@@ -55,9 +53,7 @@ Press **Esc** at any time to stop. Nothing is left behind.
 
 | | |
 |---|---|
-| ![](screenshots/122-electron-working.png) Working on the player controls | ![](screenshots/04-the-magic-moment.png) The grid over what you pointed at, and the change as it is written in the bar |
-| ![](screenshots/05-fixes-its-own-bugs.png) The first try failed, so the model gets the error and tries again | ![](screenshots/08-the-new-feature-works.png) The new sleep timer counting down |
-| ![](screenshots/09-css-applies-while-it-writes.png) A new look for the whole page, shown while it is written | ![](screenshots/65-cancelled.png) **Esc** stops Morse. Nothing was changed |
+| ![](screenshots/301-real-working.png) nodejs.org turning into a printed book while the model writes it | ![](screenshots/324-obsidian-working.png) The same in Obsidian: the note turns yellow before the bar is done |
 
 ## Save or Undo
 
@@ -75,9 +71,8 @@ When the change is done, the bar shows what it made and how long it took.
 
 | | |
 |---|---|
-| ![](screenshots/123-electron-result.png) The result: a sleep timer button (☾) next to the player | ![](screenshots/124-electron-mod-back.png) Quit the app and open it again: the change is back |
-| ![](screenshots/27-news-restyling-live.png) A cluttered news site, restyled while the model writes | ![](screenshots/29-news-after.png) After |
-| ![](screenshots/24-web-word-count-works.png) A live word count, on a site with strict security settings | ![](screenshots/25-web-new-button.png) “add a button that copies the conversation as markdown” |
+| ![](screenshots/321-vscode-result.png) The result in Visual Studio Code, with Save, Undo, Edit code and Share | ![](screenshots/322-vscode-back.png) Quit the app and open it again: the change is back |
+| ![](screenshots/302-real-result.png) nodejs.org as a printed book (Claude Code, sonnet, 13.4 seconds) | ![](store/screenshots/2-save-what-you-like.png) A new copy button on pypi.org’s code examples |
 
 ## Keep improving it
 
@@ -99,7 +94,7 @@ You can keep changing a result.
 
 | | |
 |---|---|
-| ![](screenshots/40-refine.png) More typed under the result | ![](screenshots/41-history.png) **History**: three versions. Click one to bring it back |
+| ![](screenshots/303-real-refine.png) More typed under the result | ![](screenshots/305-real-history.png) **History**: both versions. Click one to bring it back |
 
 ## Voice
 
@@ -112,8 +107,6 @@ after a pause** in Settings.
 - **In desktop apps**, the Morse helper does it. It uses your OpenAI key, or
   Whisper if it's on your computer. To set it up, see
   [Models and setup](models.md#voice-in-desktop-apps).
-
-![Hold the shortcut to talk: your words appear as you speak](screenshots/60-voice.png)
 
 ## Shortcuts and Settings
 
@@ -140,8 +133,7 @@ except your Morse shortcuts.
 
 | | |
 |---|---|
-| ![](screenshots/61-settings.png) **Settings** | ![](screenshots/62-hotkey-recorder.png) **Change a shortcut**: Morse won't take keys that would quit the app |
-| ![](screenshots/64-shortcuts.png) **?** shows the shortcuts you have | ![](screenshots/21-web-point.png) Pointing at a chat box: the bar moves out of your way |
+| ![](screenshots/317-real-settings.png) **Settings** | ![](screenshots/318-real-shortcuts.png) **?** shows the shortcuts you have |
 
 In Chrome, Morse keeps your settings in Chrome's sync storage. For desktop
 apps, it keeps them in `~/.morse/settings.json`.
