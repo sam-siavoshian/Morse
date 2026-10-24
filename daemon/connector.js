@@ -81,8 +81,10 @@ export class Connector {
       let list = null;
       try { list = await listTargets(this.port); misses = 0; }
       catch (e) { misses += /ECONNREFUSED|ECONNRESET/.test(String(e?.cause?.code || e?.code || e?.message)) ? 3 : 1; }
+      if (!this.running) break; // stop() landed during the poll: don't mark attached or attach again
       if (list && this.state === "waiting") {
         const v = this.verify ? await this.verify().catch(e => ({ ok: false, why: e.message })) : { ok: true };
+        if (!this.running) break;
         if (!v.ok) {
           if (this.refused !== v.why) this.log(`  ! Morse didn't connect: ${v.why}.`);
           this.refused = v.why;
