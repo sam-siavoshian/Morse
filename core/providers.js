@@ -17,6 +17,7 @@ const loadAnthropic = async () => (AnthropicSDK ||= (await import("@anthropic-ai
 import { demoResponse } from "./demo.js";
 import { SYSTEM_PROMPT } from "./prompt.js"; // speed: what prewarm caches
 import { warmSettings, routable, modeOf } from "./route.js"; // models: fast and strong (docs/models.md)
+import { t } from "./i18n.js"; // the labels people read (the host sets the language)
 
 export const PROVIDERS = {
   "claude-code": { name: "Claude Code", models: ["opus", "sonnet", "haiku"], defaultModel: "" },
@@ -105,11 +106,11 @@ export function settingsLabel(s) {
   // models: "Automatic" until a model answers (then the bar shows which one did)
   const auto = s.mode && !s.tier && routable(s) && modeOf(s) === "auto";
   const name = PROVIDERS[s.provider === "helper" ? s.backend : s.provider]?.name;
-  if (auto && name) return `${name} · Automatic`;
+  if (auto && name) return `${name} · ${t("settings.model.auto")}`;
   const model = s.model || PROVIDERS[s.provider]?.defaultModel || "";
   switch (s.provider) {
     case "claude-code": return model ? `Claude Code · ${model}` : "Claude Code";
-    case "codex": { const what = [model, s.effort && `${s.effort} effort`].filter(Boolean).join(", "); return what ? `Codex · ${what}` : "Codex"; } // models: a tier may be only an effort
+    case "codex": { const what = [model, s.effort && t("model.effort", { effort: s.effort })].filter(Boolean).join(", "); return what ? `Codex · ${what}` : "Codex"; } // models: a tier may be only an effort
     case "anthropic": return `${model} · API`;
     case "openai": {
       let host = "";
@@ -118,7 +119,7 @@ export function settingsLabel(s) {
     }
     case "helper": return s.label || "Morse helper";
     case "demo": return "demo replay";
-    default: return "Connect a model";
+    default: return t("welcome.model.b");
   }
 }
 

@@ -20,7 +20,8 @@
 
 const Packs = (() => {
   const st = { picking: null, subs: [], loading: null };
-  const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  // Words: message ids "pk.*" (core/locales/en.js); "wait.many" is "{n} mods".
+  const modsN = n => t("wait.many", { n });
   const isAddress = s => /^https?:\/\/\S+$/i.test(String(s || "").trim()) && !String(s).includes("#m=");
   const packOf = m => (m?.pack && typeof m.pack.id === "string" ? m.pack : null);
   const wide = m => everywhere(m) || broadEndings(m).length > 0;
@@ -31,15 +32,13 @@ const Packs = (() => {
   const FIRST = ["network", "typing", "buttons", "adds", "hides", "text", "clicks", "acts", "storage", "cookies", "clipboard", "navigates", "loads", "device", "notify", "ongoing", "looks", "dynamic"];
   function brief(m) {
     const s = summarizeMod(m);
-    if (s.empty) return { line: "Doesn't change anything", notes: [] };
+    if (s.empty) return { line: t("sum.empty"), notes: [] };
     const rank = i => (FIRST.includes(i.id) ? FIRST.indexOf(i.id) : FIRST.length);
     const buttons = s.items.some(i => i.id === "buttons");
     const items = s.items.filter(i => i.id !== "code" && !(buttons && i.id === "adds")).sort((a, b) => rank(a) - rank(b));
     return { line: items.map(i => i.text).join(" · "), notes: s.notes };
   }
-  const wideNote = m => everywhere(m)
-    ? "This mod runs on every website you visit, not just one. It can see what you see on all of them."
-    : `This mod runs on every website whose address ends in ${broadEndings(m).join(" or ")}, not just one. It can see what you see on all of them.`;
+  const wideNote = m => everywhere(m) ? t("install.everywhere") : t("install.broad", { endings: broadEndings(m).join(t("install.or")) });
 
   // One mod in a review: a tick, what it does, where, notes, Show code.
   function itemHtml(m, { kind = "add", ticked = true, clash = null, why = "" } = {}) {
@@ -48,16 +47,16 @@ const Packs = (() => {
     const other = !m.match?.app && !(modHosts(m) || []).some(h => h === "*" || h === hostHere || (h.startsWith("*.") && hostHere.endsWith(h.slice(1))));
     return `<section class="pk-item" data-kind="${kind}" data-pkid="${esc(m.id)}">
       <label class="pk-pick"><input type="checkbox" data-pk="pick" ${ticked ? "checked" : ""}><span><b>${esc(m.title)}</b>
-        <small class="ctl-from">For ${esc(whereFor(m))}${m.author ? ` · made by ${esc(m.author)}` : ""}${other ? ` · <span>not this page</span>` : ""}</small></span></label>
+        <small class="ctl-from">${esc(t("ctl.for", { where: whereFor(m) }))}${m.author ? esc(t("ctl.madeBy", { author: m.author })) : ""}${other ? ` · <span>${t("ctl.notThisPage")}</span>` : ""}</small></span></label>
       <div class="pk-body">
         <p class="ctl-prompt">“${esc(m.prompt)}”</p>
         <p class="pk-does" data-s="does">${esc(b.line)}</p>
-        ${wide(m) ? `<p class="ctl-warn" data-s="everywhere"><b>Note</b>${esc(wideNote(m))}${why ? ` ${esc(why)}` : ""}</p>` : ""}
-        ${b.notes.map(n => `<p class="ctl-warn" data-s="${n.id}"><b>Note</b>${esc(n.text)}</p>`).join("")}
-        ${clash?.kind === "update" ? `<p class="pk-clash" data-s="update">Replaces your copy from this pack. Your version stays in History.</p>` : ""}
-        ${clash?.kind === "clash" ? `<div class="pk-clash" data-s="clash"><p>You already have a mod with this id: “${esc(clash.title)}”.</p>
-          <div class="seg" role="radiogroup" aria-label="What to do with “${esc(clash.title)}”"><button type="button" role="radio" aria-checked="true" data-pk-as="copy">Keep both</button><button type="button" role="radio" aria-checked="false" data-pk-as="replace">Replace yours</button></div></div>` : ""}
-        <details class="ctl-code"><summary>Show code</summary>${codeHtml(m)}</details>
+        ${wide(m) ? `<p class="ctl-warn" data-s="everywhere"><b>${t("ctl.note")}</b>${esc(wideNote(m))}${why ? ` ${esc(why)}` : ""}</p>` : ""}
+        ${b.notes.map(n => `<p class="ctl-warn" data-s="${n.id}"><b>${t("ctl.note")}</b>${esc(n.text)}</p>`).join("")}
+        ${clash?.kind === "update" ? `<p class="pk-clash" data-s="update">${t("pk.replaces")}</p>` : ""}
+        ${clash?.kind === "clash" ? `<div class="pk-clash" data-s="clash"><p>${esc(t("pk.clash", { title: clash.title }))}</p>
+          <div class="seg" role="radiogroup" aria-label="${esc(t("pk.clashWhat", { title: clash.title }))}"><button type="button" role="radio" aria-checked="true" data-pk-as="copy">${t("pk.keepBoth")}</button><button type="button" role="radio" aria-checked="false" data-pk-as="replace">${t("pk.replace")}</button></div></div>` : ""}
+        <details class="ctl-code"><summary>${t("ctl.showCode")}</summary>${codeHtml(m)}</details>
       </div>
     </section>`;
   }
@@ -81,28 +80,28 @@ const Packs = (() => {
     const done = x => { if (!finished) { finished = true; onDone(x); } };
     applyTheme();
     openModal(`
-      <header><b>Install the pack “${esc(pack.name)}”?</b>
-        <small>${plural(mods.length, "mod")}${pack.author ? ` by ${esc(pack.author)}` : ""}. Here is what each one does. Untick any you don't want. Nothing is installed until you press Install.</small>
-        <button data-a="close" aria-label="Close">×</button></header>
+      <header><b>${esc(t("pk.title", { name: pack.name }))}</b>
+        <small>${esc(t("pk.sub", { n: mods.length, by: pack.author ? t("pk.by", { author: pack.author }) : "" }))}</small>
+        <button data-a="close" aria-label="${esc(t("btn.close"))}">×</button></header>
       ${pack.note ? `<p class="pk-note">“${esc(pack.note)}”</p>` : ""}
-      <div class="pk-items">${mods.map(m => itemHtml(m, { ticked: !wide(m), clash: r.clash?.[m.id], why: "Not ticked: tick it if you want it." })).join("")}</div>
-      ${r.errors?.length ? `<p class="dim ctl-skip">Skipped ${esc(r.errors.join("; "))}</p>` : ""}
+      <div class="pk-items">${mods.map(m => itemHtml(m, { ticked: !wide(m), clash: r.clash?.[m.id], why: t("pk.whyUnticked") })).join("")}</div>
+      ${r.errors?.length ? `<p class="dim ctl-skip">${esc(t("ctl.skipped", { list: r.errors.join("; ") }))}</p>` : ""}
       ${r.url ? (r.subscribed
-        ? `<p class="pk-subbed">You get updates from this address already.</p>`
-        : `<label class="pk-sub"><input type="checkbox" data-pk="sub"><span><b>Check this address for updates</b><small>At most once a day. When the pack changes, Morse shows you what changed first. Nothing installs on its own.</small></span></label>`) : ""}
-      <footer><button data-a="close">Cancel</button><button class="primary" data-pk="install" data-settle>Install</button></footer>`, { review: true }); // top layer, 80-modals.js
+        ? `<p class="pk-subbed">${t("pk.subbed")}</p>`
+        : `<label class="pk-sub"><input type="checkbox" data-pk="sub"><span><b>${t("pk.subCheck")}</b><small>${t("pk.subCheck.help")}</small></span></label>`) : ""}
+      <footer><button data-a="close">${t("btn.cancel")}</button><button class="primary" data-pk="install" data-settle>${t("pk.install")}</button></footer>`, { review: true }); // top layer, 80-modals.js
     modal.querySelector(".card").classList.add("ctl-card", "pk-card");
     const go = modal.querySelector("[data-pk=install]");
     // Install turns on once the review has been seen (80-modals.js settleReview), and only with something ticked.
     const count = () => {
       const n = picked("add").length;
-      go.textContent = n ? `Install ${n}` : "Install";
+      go.textContent = n ? t("pk.installN", { n }) : t("pk.install");
       if (n) { go.dataset.settle = ""; settleReview(); } else { go.dataset.settle = "busy"; go.disabled = true; }
     };
     wireItems(count);
     count();
     modal.querySelector("footer [data-a=close]")?.focus(); // Cancel, never Install: a page could make someone press Enter
-    const watch = new MutationObserver(() => { if (modal.hidden) { watch.disconnect(); done({ error: "Not installed. You cancelled it." }); } });
+    const watch = new MutationObserver(() => { if (modal.hidden) { watch.disconnect(); done({ error: t("ctl.cancelled") }); } });
     watch.observe(modal, { attributes: true, attributeFilter: ["hidden"] });
     go.onclick = async () => {
       const picks = picked("add").map(s => ({ id: s.dataset.pkid, as: s.querySelector("[data-pk-as][aria-checked=true]")?.dataset.pkAs || "copy" }));
@@ -114,7 +113,7 @@ const Packs = (() => {
         watch.disconnect();
         modal.hidden = true;
         const n = res.saved.length;
-        toast(`Installed ${plural(n, "mod")} from “${pack.name}”${res.subscribed ? ". Morse checks it for updates once a day." : ""}`);
+        toast(`${t("pk.installed", { n, name: pack.name })}${res.subscribed ? ` ${t("pk.checksDaily")}` : ""}`);
         done({ title: pack.name, count: n, pack: true });
         await syncMods();
         load({ again: true });
@@ -135,7 +134,7 @@ const Packs = (() => {
     if (!S.mods.some(m => m.kind !== "style")) return;
     const back = panel.querySelector(".ctl-backup");
     if (st.picking) return; // the strip at the top of the list has Cancel and Next
-    const html = `<div class="ctl-backup pk-bar"><span class="eyebrow">Packs</span><button data-pk="make" title="Share several mods together">Make a pack…</button></div>`;
+    const html = `<div class="ctl-backup pk-bar"><span class="eyebrow">${t("pk.eyebrow")}</span><button data-pk="make" title="${esc(t("pk.make.title"))}">${t("pk.make")}</button></div>`;
     if (back) back.insertAdjacentHTML("beforebegin", html);
     else panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", html);
   }
@@ -157,13 +156,13 @@ const Packs = (() => {
     const sub = subFor(id), u = sub?.update;
     const parts = u ? updateParts(u) : [];
     const held = on && list.filter(m => m.enabled).every(m => modHeld(m));
-    return `<section class="pk-group${on ? "" : " off"}" data-pack="${esc(id)}" aria-label="Pack “${esc(name)}”">
+    return `<section class="pk-group${on ? "" : " off"}" data-pack="${esc(id)}" aria-label="${esc(t("pk.groupAria", { name }))}">
       <div class="pk-head">
-        <label class="sw" title="${on ? "Turn the whole pack off" : "Turn the whole pack on"}"><input type="checkbox" data-pk="toggle" aria-label="${esc(name)}, the whole pack" ${on ? "checked" : ""}><span></span></label>
-        <div class="pk-meta"><b>${esc(name)}</b><small>Pack · ${plural(list.length, "mod")} here${sub ? " · gets updates" : ""}${held ? " · not running" : ""}</small></div>
-        <div class="pk-btns"><button data-pk="share" title="Copy a link to the whole pack">Copy link</button>${sub ? `<button data-pk="unsub" title="Stop checking for updates. The mods stay.">Stop updates</button>` : ""}</div>
+        <label class="sw" title="${esc(on ? t("pk.offAll") : t("pk.onAll"))}"><input type="checkbox" data-pk="toggle" aria-label="${esc(t("pk.toggleAria", { name }))}" ${on ? "checked" : ""}><span></span></label>
+        <div class="pk-meta"><b>${esc(name)}</b><small>${esc(t("pk.meta", { n: list.length }))}${sub ? ` · ${t("pk.getsUpdates")}` : ""}${held ? ` · ${t("ctl.notRunning")}` : ""}</small></div>
+        <div class="pk-btns"><button data-pk="share" title="${esc(t("pk.share.title"))}">${t("btn.copyLink")}</button>${sub ? `<button data-pk="unsub" title="${esc(t("pk.unsub.title"))}">${t("pk.unsub")}</button>` : ""}</div>
       </div>
-      ${parts.length ? `<div class="gl-upd pk-upd" role="status"><p><b>Update available.</b> ${esc(parts.join(", "))}</p><button data-pk="update">Review…</button></div>` : ""}
+      ${parts.length ? `<div class="gl-upd pk-upd" role="status"><p><b>${t("gl.updateAvailable")}</b> ${esc(parts.join(", "))}</p><button data-pk="update">${t("pk.review")}</button></div>` : ""}
       ${list.map(rowHtml).join("")}
     </section>`;
   }
@@ -178,13 +177,13 @@ const Packs = (() => {
     for (const a of list.querySelectorAll("article[data-id]")) {
       const m = S.mods.find(x => x.id === a.dataset.id);
       if (!m) continue;
-      a.insertAdjacentHTML("afterbegin", `<label class="pk-sel" title="Put it in the pack"><input type="checkbox" data-pk="sel" aria-label="Put “${esc(m.title)}” in the pack" ${st.picking.has(m.id) ? "checked" : ""}></label>`);
+      a.insertAdjacentHTML("afterbegin", `<label class="pk-sel" title="${esc(t("pk.sel.title"))}"><input type="checkbox" data-pk="sel" aria-label="${esc(t("pk.selAria", { title: m.title }))}" ${st.picking.has(m.id) ? "checked" : ""}></label>`);
     }
-    list.insertAdjacentHTML("afterbegin", `<div class="pk-pickbar" role="region" aria-label="Make a pack">
-      <span><b>Choose mods for the pack</b><small class="pk-n">${pickedText()}</small></span>
-      <button data-pk="cancel">Cancel</button><button class="primary" data-pk="next" ${st.picking.size ? "" : "disabled"}>Next</button></div>`);
+    list.insertAdjacentHTML("afterbegin", `<div class="pk-pickbar" role="region" aria-label="${esc(t("pk.makeTitle"))}">
+      <span><b>${t("pk.choose")}</b><small class="pk-n">${pickedText()}</small></span>
+      <button data-pk="cancel">${t("btn.cancel")}</button><button class="primary" data-pk="next" ${st.picking.size ? "" : "disabled"}>${t("import.next")}</button></div>`);
   }
-  const pickedText = () => (st.picking.size ? `${st.picking.size} chosen` : "None chosen yet");
+  const pickedText = () => (st.picking.size ? t("pk.chosen", { n: st.picking.size }) : t("pk.noneChosen"));
   function startPicking() {
     st.picking = new Set();
     renderPanel();
@@ -198,23 +197,23 @@ const Packs = (() => {
     const mods = S.mods.filter(m => ids.includes(m.id)); // in the order the panel lists them
     if (!mods.length) return;
     openModal(`
-      <header><b>Make a pack</b><small>Share these mods together. Anyone with Morse can install them, and untick any they don't want.</small><button data-a="close" aria-label="Close">×</button></header>
-      <label for="pk-name">Name</label>
-      <div class="field pk-field"><input id="pk-name" data-pk="name" maxlength="80" placeholder="Team tools" autocomplete="off" spellcheck="false"></div>
-      <label for="pk-note">Note <span class="dim">optional</span></label>
-      <textarea class="pk-note-in" id="pk-note" data-pk="note" maxlength="500" rows="3" placeholder="What these mods are for"></textarea>
-      <label>In this pack <span class="dim">${plural(mods.length, "mod")}</span></label>
-      <ul class="pk-list">${mods.map(m => `<li><b>${esc(m.title)}</b><small>for ${esc(whereFor(m))}</small></li>`).join("")}</ul>
-      <div class="link pk-link" hidden><input readonly aria-label="Share link"><button data-pk="again">Copy again</button></div>
+      <header><b>${t("pk.makeTitle")}</b><small>${t("pk.makeSub")}</small><button data-a="close" aria-label="${esc(t("btn.close"))}">×</button></header>
+      <label for="pk-name">${t("pk.name")}</label>
+      <div class="field pk-field"><input id="pk-name" data-pk="name" maxlength="80" placeholder="${esc(t("pk.name.placeholder"))}" autocomplete="off" spellcheck="false"></div>
+      <label for="pk-note">${t("pk.note")} <span class="dim">${t("pk.optional")}</span></label>
+      <textarea class="pk-note-in" id="pk-note" data-pk="note" maxlength="500" rows="3" placeholder="${esc(t("pk.note.placeholder"))}"></textarea>
+      <label>${t("pk.inPack")} <span class="dim">${esc(modsN(mods.length))}</span></label>
+      <ul class="pk-list">${mods.map(m => `<li><b>${esc(m.title)}</b><small>${esc(t("pk.forWhere", { where: whereFor(m) }))}</small></li>`).join("")}</ul>
+      <div class="link pk-link" hidden><input readonly aria-label="${esc(t("share.linkLabel"))}"><button data-pk="again">${t("pk.copyAgain")}</button></div>
       <p class="pk-err" role="alert"></p>
-      <footer><button data-a="close">Cancel</button><button data-pk="file">Download pack file</button><button class="primary" data-pk="link">Copy link</button></footer>`);
+      <footer><button data-a="close">${t("btn.cancel")}</button><button data-pk="file">${t("pk.file")}</button><button class="primary" data-pk="link">${t("btn.copyLink")}</button></footer>`);
     modal.querySelector(".card").classList.add("pk-card");
     const name = modal.querySelector("[data-pk=name]"), note = modal.querySelector("[data-pk=note]");
     const err = modal.querySelector(".pk-err");
     name.focus();
     const ask = async kind => {
       err.textContent = "";
-      if (!name.value.trim()) { err.textContent = "Give the pack a name."; name.focus(); return null; }
+      if (!name.value.trim()) { err.textContent = t("pk.needName"); name.focus(); return null; }
       try { return await call("pack.share", { ids: mods.map(m => m.id), name: name.value, note: note.value, kind }); }
       catch (e) { err.textContent = plainError(e); return null; }
     };
@@ -225,18 +224,18 @@ const Packs = (() => {
       const box = modal.querySelector(".pk-link");
       box.hidden = false;
       box.querySelector("input").value = r.link;
-      try { await copyText(r.link); btn.textContent = "Copied"; } catch { box.querySelector("input").select(); }
-      modal.querySelector("footer [data-a=close]").textContent = "Done";
+      try { await copyText(r.link); btn.textContent = t("btn.copied"); } catch { box.querySelector("input").select(); }
+      modal.querySelector("footer [data-a=close]").textContent = t("btn.done");
       st.picking = null;
-      toast(`Link copied. Anyone with Morse can install the pack “${name.value.trim()}”.`);
+      toast(t("pk.linkCopied", { name: name.value.trim() }));
     };
-    modal.querySelector("[data-pk=again]").onclick = async () => { const v = modal.querySelector(".pk-link input").value; try { await copyText(v); toast("Link copied"); } catch {} };
+    modal.querySelector("[data-pk=again]").onclick = async () => { const v = modal.querySelector(".pk-link input").value; try { await copyText(v); toast(t("share.linkCopied")); } catch {} };
     modal.querySelector("[data-pk=file]").onclick = async () => {
       const r = await ask("file");
       if (!r) return;
       st.picking = null;
-      modal.querySelector("footer [data-a=close]").textContent = "Done";
-      err.textContent = r.path ? `Saved to ${r.path}` : "Downloaded";
+      modal.querySelector("footer [data-a=close]").textContent = t("btn.done");
+      err.textContent = r.path ? t("share.savedTo", { path: r.path }) : t("share.downloaded");
       err.classList.add("ok");
     };
     name.addEventListener("keydown", e => { if (e.isTrusted && e.key === "Enter" && !e.isComposing) { e.preventDefault(); modal.querySelector("[data-pk=link]").click(); } });
@@ -257,40 +256,39 @@ const Packs = (() => {
   }
 
   // ---- the update review: what's new, what changed (with diffs), what's gone
-  const lines = (n, word) => `${n} line${n === 1 ? "" : "s"} ${word}`;
-  const countLine = (name, d) => (!d.added && !d.removed ? `${name}: no change` : `${name}: ${[d.added && lines(d.added, "added"), d.removed && lines(d.removed, "removed")].filter(Boolean).join(", ")}`);
+  const countLine = (name, d) => (!d.added && !d.removed ? t("gl.noChange", { name }) : `${name}: ${[d.added && t("gl.linesAdded", { n: d.added }), d.removed && t("gl.linesRemoved", { n: d.removed })].filter(Boolean).join(", ")}`);
   function diffHtml(label, kind, d) {
     if (!d.added && !d.removed) return "";
     const rows = trimDiff(d.lines).map(l => l.op === "…"
       ? `<span class="skip">${esc(l.text)}</span>`
       : `<span class="${l.op === "+" ? "add" : l.op === "-" ? "del" : "ctx"}"><i aria-hidden="true">${l.op === " " ? "" : l.op}</i>${esc(l.text) || " "}</span>`).join("");
-    return `<label>${label} <span class="dim">${kind} · ${d.added} added, ${d.removed} removed</span></label><pre class="code gl-diff" tabindex="0">${rows}</pre>`;
+    return `<label>${label} <span class="dim">${kind} · ${t("gl.diff", { added: d.added, removed: d.removed })}</span></label><pre class="code gl-diff" tabindex="0">${rows}</pre>`;
   }
   const words = m => { const s = summarizeMod(m); return s.items.filter(i => i.id !== "code").map(i => i.text); };
   function changedHtml(c) {
     const ch = whatChanged(c.before, c.after, words);
     return `<section class="pk-item" data-kind="change" data-pkid="${esc(c.after.id)}">
-      <label class="pk-pick"><input type="checkbox" data-pk="pick" checked><span><b>${esc(c.after.title)}</b><small class="ctl-from">For ${esc(whereFor(c.after))}</small></span></label>
+      <label class="pk-pick"><input type="checkbox" data-pk="pick" checked><span><b>${esc(c.after.title)}</b><small class="ctl-from">${esc(t("ctl.for", { where: whereFor(c.after) }))}</small></span></label>
       <div class="pk-body">
-        ${c.after.title !== c.before.title ? `<p class="pk-does">Was called “${esc(c.before.title)}”</p>` : ""}
-        ${ch.added.length ? `<p class="pk-does"><b>Now also:</b> ${ch.added.map(esc).join(" · ")}</p>` : ""}
-        ${ch.removed.length ? `<p class="pk-does"><b>No longer:</b> ${ch.removed.map(esc).join(" · ")}</p>` : ""}
-        ${c.wider?.length ? `<p class="ctl-warn" data-s="wider"><b>Note</b>It will also run on ${esc(c.wider.includes("*") ? "every website" : c.wider.join(", "))}, where it doesn't run now.</p>` : c.match ? `<p class="pk-does">Runs on ${esc(whereFor(c.after))} now, not ${esc(whereFor(c.before))}.</p>` : ""}
-        ${summarizeMod(c.after).notes.filter(n => !summarizeMod(c.before).notes.some(o => o.id === n.id)).map(n => `<p class="ctl-warn" data-s="${n.id}"><b>Note</b>${esc(n.text)}</p>`).join("")}
-        <p class="dim pk-count">${esc(countLine("Style", ch.css))} · ${esc(countLine("Script", ch.js))}</p>
-        <details class="ctl-code" ${ch.css.added + ch.css.removed + ch.js.added + ch.js.removed <= 40 ? "open" : ""}><summary>Show what changed</summary>${diffHtml("Style", "CSS", ch.css)}${diffHtml("Script", "JavaScript", ch.js)}</details>
+        ${c.after.title !== c.before.title ? `<p class="pk-does">${esc(t("pk.wasCalled", { title: c.before.title }))}</p>` : ""}
+        ${ch.added.length ? `<p class="pk-does"><b>${t("gl.nowAlso")}</b> ${ch.added.map(esc).join(" · ")}</p>` : ""}
+        ${ch.removed.length ? `<p class="pk-does"><b>${t("gl.noLonger")}</b> ${ch.removed.map(esc).join(" · ")}</p>` : ""}
+        ${c.wider?.length ? `<p class="ctl-warn" data-s="wider"><b>${t("ctl.note")}</b>${esc(t("pk.wider", { where: c.wider.includes("*") ? t("pk.everyWebsite") : c.wider.join(", ") }))}</p>` : c.match ? `<p class="pk-does">${esc(t("pk.runsNow", { now: whereFor(c.after), before: whereFor(c.before) }))}</p>` : ""}
+        ${summarizeMod(c.after).notes.filter(n => !summarizeMod(c.before).notes.some(o => o.id === n.id)).map(n => `<p class="ctl-warn" data-s="${n.id}"><b>${t("ctl.note")}</b>${esc(n.text)}</p>`).join("")}
+        <p class="dim pk-count">${esc(countLine(t("code.style"), ch.css))} · ${esc(countLine(t("code.script"), ch.js))}</p>
+        <details class="ctl-code" ${ch.css.added + ch.css.removed + ch.js.added + ch.js.removed <= 40 ? "open" : ""}><summary>${t("pk.showChanges")}</summary>${diffHtml(t("code.style"), "CSS", ch.css)}${diffHtml(t("code.script"), "JavaScript", ch.js)}</details>
       </div>
     </section>`;
   }
   function removedHtml(m) {
     return `<section class="pk-item" data-kind="remove" data-pkid="${esc(m.id)}">
-      <label class="pk-pick"><input type="checkbox" data-pk="pick" checked><span><b>${esc(m.title)}</b><small class="ctl-from">For ${esc(whereFor(m))}</small></span></label>
-      <div class="pk-body"><p class="pk-does">It's no longer in the pack, so Update removes it. Untick it to keep it as your own mod.</p></div>
+      <label class="pk-pick"><input type="checkbox" data-pk="pick" checked><span><b>${esc(m.title)}</b><small class="ctl-from">${esc(t("ctl.for", { where: whereFor(m) }))}</small></span></label>
+      <div class="pk-body"><p class="pk-does">${t("pk.removedNote")}</p></div>
     </section>`;
   }
   // New since you last looked, not the mods you left out then.
   const freshOf = u => (Array.isArray(u.fresh) ? u.added.filter(m => u.fresh.includes(m.id)) : u.added);
-  const updateParts = u => [u.changed.length && `${u.changed.length} changed`, freshOf(u).length && `${freshOf(u).length} new`, u.removed.length && `${u.removed.length} removed`].filter(Boolean);
+  const updateParts = u => [u.changed.length && t("pk.changedN", { n: u.changed.length }), freshOf(u).length && t("pk.newN", { n: freshOf(u).length }), u.removed.length && t("pk.removedN", { n: u.removed.length })].filter(Boolean);
   function showUpdate(id) {
     const sub = subFor(id), u = sub?.update;
     if (!u) return;
@@ -299,14 +297,14 @@ const Packs = (() => {
     const fresh = freshOf(u), before = u.added.filter(m => !fresh.includes(m));
     const parts = updateParts(u);
     openModal(`
-      <header><b>Update “${esc(sub.name)}”?</b><small>From ${esc(site)}${sub.checked ? ` · checked ${esc(relativeTime(new Date(sub.checked).toISOString()))}` : ""}. Nothing changes until you press Update.</small><button data-a="close" aria-label="Close">×</button></header>
-      <div class="gl-what"><h5>What changed</h5><p>${esc(parts.join(" · "))}</p>${u.note ? `<p class="gl-note">“${esc(u.note)}”</p>` : ""}</div>
-      ${u.changed.length ? `<h4 class="ctl-h eyebrow">Changed</h4><div class="pk-items">${u.changed.map(changedHtml).join("")}</div>` : ""}
-      ${fresh.length ? `<h4 class="ctl-h eyebrow">New in the pack</h4><div class="pk-items">${fresh.map(m => itemHtml(m, { ticked: !wide(m), why: "Not ticked: tick it if you want it." })).join("")}</div>` : ""}
-      ${u.removed.length ? `<h4 class="ctl-h eyebrow">No longer in the pack</h4><div class="pk-items">${u.removed.map(removedHtml).join("")}</div>` : ""}
-      ${before.length ? `<details class="pk-before"><summary>You left ${before.length === 1 ? "one mod" : `${before.length} mods`} out before</summary><div class="pk-items">${before.map(m => itemHtml(m, { ticked: false })).join("")}</div></details>` : ""}
-      <p class="dim gl-hist">Your versions of changed mods stay in History, so you can go back to them.</p>
-      <footer><button data-a="close">Not now</button><button class="primary" data-pk="apply" data-settle>Update</button></footer>`, { review: true }); // top layer, 80-modals.js
+      <header><b>${esc(t("pk.updateTitle", { name: sub.name }))}</b><small>${esc(t("pk.updateSub", { site, checked: sub.checked ? t("pk.checked", { when: relativeTime(new Date(sub.checked).toISOString()) }) : "" }))}</small><button data-a="close" aria-label="${esc(t("btn.close"))}">×</button></header>
+      <div class="gl-what"><h5>${t("gl.whatChanged")}</h5><p>${esc(parts.join(" · "))}</p>${u.note ? `<p class="gl-note">“${esc(u.note)}”</p>` : ""}</div>
+      ${u.changed.length ? `<h4 class="ctl-h eyebrow">${t("pk.changed")}</h4><div class="pk-items">${u.changed.map(changedHtml).join("")}</div>` : ""}
+      ${fresh.length ? `<h4 class="ctl-h eyebrow">${t("pk.newIn")}</h4><div class="pk-items">${fresh.map(m => itemHtml(m, { ticked: !wide(m), why: t("pk.whyUnticked") })).join("")}</div>` : ""}
+      ${u.removed.length ? `<h4 class="ctl-h eyebrow">${t("pk.gone")}</h4><div class="pk-items">${u.removed.map(removedHtml).join("")}</div>` : ""}
+      ${before.length ? `<details class="pk-before"><summary>${esc(t("pk.leftOut", { n: before.length }))}</summary><div class="pk-items">${before.map(m => itemHtml(m, { ticked: false })).join("")}</div></details>` : ""}
+      <p class="dim gl-hist">${t("pk.history")}</p>
+      <footer><button data-a="close">${t("gl.notNow")}</button><button class="primary" data-pk="apply" data-settle>${t("gl.updateBtn")}</button></footer>`, { review: true }); // top layer, 80-modals.js
     modal.querySelector(".card").classList.add("ctl-card", "pk-card");
     wireItems(() => {});
     modal.querySelector("footer [data-a=close]")?.focus();
@@ -318,7 +316,7 @@ const Packs = (() => {
       try {
         const r = await call("pack.update", { url: sub.url, hash: sub.hash, picks: { add: ids("add"), change: ids("change"), remove: ids("remove") } });
         modal.hidden = true;
-        toast(`Updated “${r.name || sub.name}”. Your old versions are in History.`);
+        toast(t("pk.updated", { name: r.name || sub.name }));
         sub.update = null;
         await syncMods();
         await load({ again: true });
@@ -329,20 +327,20 @@ const Packs = (() => {
   // ---- the panel's pack buttons
   async function setPack(id, on) {
     const g = S.mods.find(m => packOf(m)?.id === id);
-    const name = packOf(g)?.name || "the pack";
+    const name = packOf(g)?.name || t("pk.thePack");
     try { await call("pack.enable", { pack: id, on }); } // "pack", not "id": a request's id is its own
     catch (e) { return toast(plainError(e)); }
     await syncMods();
     panel.querySelector(`.pk-group[data-pack="${cssEsc(id)}"] [data-pk=toggle]`)?.focus({ preventScroll: true });
-    toast(on ? `Turned on the pack “${name}”` : `Turned off the pack “${name}”`);
+    toast(on ? t("pk.turnedOn", { name }) : t("pk.turnedOff", { name }));
   }
   async function copyPackLink(id, btn) {
     try {
       const r = await call("pack.share", { pack: id, kind: "link" });
       await copyText(r.link);
-      btn.textContent = "Copied";
-      setTimeout(() => { if (btn.isConnected) btn.textContent = "Copy link"; }, 1600);
-      toast(`Link copied. It has the whole pack: ${plural(r.count, "mod")}.`);
+      btn.textContent = t("btn.copied");
+      setTimeout(() => { if (btn.isConnected) btn.textContent = t("btn.copyLink"); }, 1600);
+      toast(t("pk.linkCopiedAll", { n: r.count }));
     } catch (e) { toast(plainError(e)); }
   }
   async function stopUpdates(id) {
@@ -351,7 +349,7 @@ const Packs = (() => {
     try { await call("pack.unsubscribe", { url: sub.url }); } catch (e) { return toast(plainError(e)); }
     st.subs = st.subs.filter(s => s !== sub);
     renderPanel();
-    toast(`Stopped updates from “${sub.name}”. Its mods stay.`);
+    toast(t("pk.stopped", { name: sub.name }));
   }
   panel.addEventListener("click", ev => {
     const b = ev.target.closest("button[data-pk]");
@@ -366,11 +364,11 @@ const Packs = (() => {
     if (k === "update" && id) showUpdate(id);
   });
   panel.addEventListener("change", ev => {
-    const t = ev.target;
-    if (t.dataset?.pk === "toggle") { const id = t.closest("[data-pack]")?.dataset.pack; if (id) setPack(id, t.checked); }
-    if (t.dataset?.pk === "sel" && st.picking) {
-      const id = t.closest("article")?.dataset.id;
-      if (id) t.checked ? st.picking.add(id) : st.picking.delete(id);
+    const el = ev.target;
+    if (el.dataset?.pk === "toggle") { const id = el.closest("[data-pack]")?.dataset.pack; if (id) setPack(id, el.checked); }
+    if (el.dataset?.pk === "sel" && st.picking) {
+      const id = el.closest("article")?.dataset.id;
+      if (id) el.checked ? st.picking.add(id) : st.picking.delete(id);
       const n = panel.querySelector(".pk-pickbar .pk-n"), next = panel.querySelector(".pk-pickbar [data-pk=next]");
       if (n) n.textContent = pickedText();
       if (next) next.disabled = !st.picking.size;

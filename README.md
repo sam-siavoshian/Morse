@@ -2,9 +2,9 @@
 
 **Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like.**
 
-[![Watch the 85-second demo](https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/poster-demo.png)](https://github.com/sam-siavoshian/RRAA/blob/main/docs/launch/morse-demo.mp4)
+[![Watch the 92-second demo](https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/poster-demo-v2.png)](https://github.com/sam-siavoshian/RRAA/blob/main/docs/launch/morse-demo-v2.mp4)
 
-*[Watch the 85-second demo](https://github.com/sam-siavoshian/RRAA/blob/main/docs/launch/morse-demo.mp4), recorded from real runs: Claude Code wrote the sleep timer and the word count.*
+*[Watch the 92-second demo](https://github.com/sam-siavoshian/RRAA/blob/main/docs/launch/morse-demo-v2.mp4), recorded from real runs: Claude Code wrote the sleep timer, the button, the fix and the round covers. The 36-second cut on a real app (VS Code) and more clips are in [`docs/launch`](docs/launch/).*
 
 Press a shortcut, point at something and say what you want: “add a sleep timer”, “hide the ads”, “make this text bigger”. Morse makes the change right there while you watch. A mod is a change you saved. Morse brings it back every time you open that site or app.
 

@@ -21,6 +21,7 @@
 //
 // Pure and dependency-free: tests import it, core/style-host.js imports it, and
 // runtime/bundle.js inlines it into the runtime (exports become locals there).
+import { t } from "./i18n.js"; // the words, in the language the host speaks (core/i18n.js)
 
 export const STYLE_ID = "morse-style";
 export const STYLE_TITLE = "Your style";
@@ -254,17 +255,17 @@ export function mergeStyle(style, parsed, words, now = new Date().toISOString())
 }
 
 // Plain words for what the style does, one item per block.
-export function styleSummary(style) {
+export function styleSummary(style, lang) { // lang "en": for the model
   const s = normalizeStyle(style), b = s.blocks, out = [];
-  if (b.font) out.push(b.font === "readable" ? "Easier to read font" : b.font === "dyslexia" ? "Dyslexia-friendly letters" : `${b.font} font`);
-  if (b.size) out.push(`Text ${Math.round(Math.pow(1.1, b.size) * 100)}%`);
-  if (b.spacing) out.push(b.spacing === "roomier" ? "Much more space between lines" : "More space between lines");
-  if (b.soft) out.push("Softer colors");
-  if (b.redgreen) out.push("Red and green easier to tell apart");
-  if (b.dark) out.push("Dark pages");
-  if (b.lessMotion) out.push("Fewer animations");
-  if (b.noAutoplay) out.push("No autoplay");
-  if (b.underline) out.push("Underlined links");
+  if (b.font) out.push(b.font === "readable" ? t("a11y.readable", {}, lang) : b.font === "dyslexia" ? t("a11y.dyslexia", {}, lang) : t("ys.sum.font", { font: b.font }, lang));
+  if (b.size) out.push(t("ys.sum.size", { pct: Math.round(Math.pow(1.1, b.size) * 100) }, lang));
+  if (b.spacing) out.push(b.spacing === "roomier" ? t("ys.sum.roomier", {}, lang) : t("ys.sum.roomy", {}, lang));
+  if (b.soft) out.push(t("ys.soft", {}, lang));
+  if (b.redgreen) out.push(t("ys.redgreen", {}, lang));
+  if (b.dark) out.push(t("ys.dark", {}, lang));
+  if (b.lessMotion) out.push(t("ys.lessMotion", {}, lang));
+  if (b.noAutoplay) out.push(t("ys.noAutoplay", {}, lang));
+  if (b.underline) out.push(t("ys.sum.underline", {}, lang));
   return out;
 }
 
@@ -276,7 +277,7 @@ export const FIT_TITLE = "Nothing to fit";
 export function adaptRequest(style, css = "", facts = []) {
   const s = normalizeStyle(style);
   const parts = [
-    `Your style, for this site. The user wants this on every site and app: “${s.words || styleSummary(s).join(", ")}”.`,
+    `Your style, for this site. The user wants this on every site and app: “${s.words || styleSummary(s, "en").join(", ")}”.`,
     "Morse already adds this general style to every page, and it is on this page now:",
     "```css\n" + String(css).trim().slice(0, 3000) + "\n```",
     "Look at this page with it and fix only what it breaks here: text that overflows, overlaps or gets cut off, icons that lost their icon font, controls or headers that no longer fit, colors that became hard to read.",

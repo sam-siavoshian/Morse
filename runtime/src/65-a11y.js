@@ -69,8 +69,8 @@ const A11y = (() => {
     const old = modFor(k);
     if (old) await drop(old);
     const { css, js } = compileA11y(k, opts);
-    const title = a11yTitle(k, opts);
-    const mod = await call("mods.save", { draft: { id: uid(), title, prompt: `Page tool: ${title}`, css, js, url: location.href, app: S.app, kind: "quick", edits: [{ op: "a11y", kind: k, ...opts }] } });
+    const title = k === "readable" && opts?.dyslexia ? t("a11y.dyslexia") : t(`a11y.${k}`);
+    const mod = await call("mods.save", { draft: { id: uid(), title, prompt: t("quick.prompt", { title }), css, js, url: location.href, app: S.app, kind: "quick", edits: [{ op: "a11y", kind: k, ...opts }] } });
     S.mods.push(mod);
     await applyMod(mod);
     return mod;
@@ -93,7 +93,7 @@ const A11y = (() => {
       mod = await call("mods.save", { mod: { ...m, css, js, edits, prompt, enabled: true, updated: new Date().toISOString() } });
       S.mods = S.mods.map(x => (x.id === mod.id ? mod : x));
     } else {
-      mod = await call("mods.save", { draft: { id: uid(), title: FIX_TITLE, prompt, css, js, url: location.href, app: S.app, kind: "quick", edits } });
+      mod = await call("mods.save", { draft: { id: uid(), title: t("a11y.fixes"), prompt, css, js, url: location.href, app: S.app, kind: "quick", edits } });
       S.mods.push(mod);
     }
     await applyMod(mod);

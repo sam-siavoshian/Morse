@@ -26,13 +26,13 @@ import { paint } from "./colors.js";
 
 // The hotkeys as set in ~/.morse/settings.json (platform defaults otherwise).
 // The terminal's language (LANG, LC_ALL; MORSE_LANG overrides): what people
-// read is in it. `morse help`, doctor and model output stay English (developers).
+// read is in it, `morse help` too. doctor and model output stay English (developers).
 setLanguage(languageFromEnv(process.env));
 const KEYS = await configuredHotkeys().catch(() => ({}));
 const openKey = KEYS.open || t("cli.openKey");
 
 const { w: W, d: D, b: B, y: WARN, r: ERR } = paint; // plain text when piped, NO_COLOR (colors.js)
-const LOGO = `${W("▪▪▫")}\n${W("▫▪▪")} ${B("morse")} ${D("· change any app in your own words")}\n${W("▪▫▪")}`;
+const LOGO = `${W("▪▪▫")}\n${W("▫▪▪")} ${B("morse")} ${D(`· ${t("card.tagline")}`)}\n${W("▪▫▪")}`;
 
 function flags(argv) {
   const out = { _: [], rest: [] };
@@ -120,62 +120,63 @@ async function helperHealth() {
   try { return await (await fetch(`http://127.0.0.1:${HELPER_PORT}/v1/health`, { signal: AbortSignal.timeout(800) })).json(); } catch { return null; }
 }
 
+const h = (id, v) => t(`help.${id}`, v); // the commands and flags stay as typed
 const HELP = `${LOGO}
 
-${B("Desktop apps")} (Spotify, Slack, Discord, VS Code and other apps built on Electron)
-  morse apps                list the apps Morse found and whether it can connect to them
-  morse launch <app|path>   reopen an app with Morse connected (partial names work: code, spot)
-      --restart             quit the app first if it's open (remembered per app; --no-restart forgets)
-      --watch               keep waiting when the app quits, connect again when it's back
-      --name <name>         name mods are filed under (defaults to the app)
-      --port <n>            debugging port (default: a free one from 9333)
-      -- <args>             extra arguments for the app
-  morse attach --port <n>   connect to an app already started with --remote-debugging-port
-  morse status              apps Morse is connected to, their windows and mods
-  morse stop <app>          disconnect from an app (it keeps running)
-  morse fuses <app|path>    check whether an app lets Morse connect to it
+${B(h("desktop"))} ${h("desktop.note")}
+  morse apps                ${h("apps")}
+  morse launch <app|path>   ${h("launch")}
+      --restart             ${h("launch.restart")}
+      --watch               ${h("launch.watch")}
+      --name <name>         ${h("launch.name")}
+      --port <n>            ${h("launch.port")}
+      -- <args>             ${h("launch.args")}
+  morse attach --port <n>   ${h("attach")}
+  morse status              ${h("status")}
+  morse stop <app>          ${h("stop")}
+  morse fuses <app|path>    ${h("fuses")}
 
-${B("Websites")} (the Chrome extension uses the Morse helper to reach your model)
-  morse extension           show the Chrome extension folder and how to add it
-  morse serve               start the Morse helper and show a pairing code
-  morse pair                show a new pairing code for the running helper
-  morse unpair              sign out every paired browser
+${B(h("web"))} ${h("web.note")}
+  morse extension           ${h("extension")}
+  morse serve               ${h("serve")}
+  morse pair                ${h("pair")}
+  morse unpair              ${h("unpair")}
 
-${B("Model")} (bring your own: Claude Code, Codex, or an API key)
-  morse setup               choose Claude Code, Codex or an API key (finds what is installed)
-  morse model               show which model Morse uses
+${B(t("settings.model"))} ${h("model.note")}
+  morse setup               ${h("setup")}
+  morse model               ${h("modelCmd")}
   morse config --provider claude-code|codex|anthropic|openai|auto
-      --model-mode auto|fast|best   Automatic (recommended), always the fast model, always the best one
-      --fast-model <name> --best-model <name>   the two models Automatic uses (haiku and sonnet for Claude Code)
-      --model <name>        always this one model, for example opus · sonnet · haiku · claude-opus-5-5 · gpt-5
-                            (--model auto: let Morse choose again)
-      --anthropic-key <key> --openai-key <key> --base-url <url>   (leave empty to remove)
-  morse doctor              show what's installed and check that the model answers
+      --model-mode auto|fast|best   ${h("config.mode")}
+      --fast-model <name> --best-model <name>   ${h("config.tiers")}
+      --model <name>        ${h("config.model")}
+                            ${h("config.auto")}
+      --anthropic-key <key> --openai-key <key> --base-url <url>   ${h("config.keys")}
+  morse doctor              ${h("doctor")}
 
-${B("Mods")}
-  morse mods                list your mods
-  morse rm <id>             delete a mod
-  morse export <id>         save a mod file, a Tampermonkey file and a share link
-  morse install <link|file> install from a share link, a mod file or a backup
-                            (says what each mod does and asks first; --yes to skip asking)
-  morse code <id>           what a mod does, in plain words, and its code
-  morse export --all        back up every mod to one file  [--out <file>]
+${B(h("mods"))}
+  morse mods                ${h("modsCmd")}
+  morse rm <id>             ${h("rm")}
+  morse export <id>         ${h("export")}
+  morse install <link|file> ${h("install")}
+                            ${h("install.more")}
+  morse code <id>           ${h("code")}
+  morse export --all        ${h("exportAll")}  [--out <file>]
 
-${B("Packs")} (several mods shared and installed together)
-  morse pack make <ids…> --name <name>   put mods in one pack file and link  [--note <text>] [--out <file>]
-  morse pack install <file|link|address> say what each mod does and ask first  [--yes] [--replace]
-      --subscribe           check the address for updates, at most once a day
-  morse pack list           your packs, and the ones you get updates from  [--check]
-  morse pack unsubscribe <name>  stop getting updates (the mods stay)
+${B(h("packs"))} ${h("packs.note")}
+  morse pack make <ids…> --name <name>   ${h("pk.make")}  [--note <text>] [--out <file>]
+  morse pack install <file|link|address> ${h("pk.install")}  [--yes] [--replace]
+      --subscribe           ${h("pk.subscribe")}
+  morse pack list           ${h("pk.list")}  [--check]
+  morse pack unsubscribe <name>  ${h("pk.unsub")}
 
-${B("Pause")}
-  morse pause [site|app]    stop every mod everywhere, or on one site or app (they stay saved)
-  morse resume [site|app]   start them again  [--all also resumes every single site]
+${B(h("pause"))}
+  morse pause [site|app]    ${h("pauseCmd")}
+  morse resume [site|app]   ${h("resume")}  [${h("resume.all")}]
 
-In a connected app, press ${B(openKey)} to open Morse.${KEYS.mods ? ` Press ${B(KEYS.mods)} to see your mods.` : ""}${KEYS.off ? `
-Press ${B(KEYS.off)} to turn all your mods off (press it again to turn them back on).` : ""}
-For websites: run ${B("morse extension")} to find the Chrome extension, then ${B("morse serve")} and type its code into the Morse popup.
-morse --version shows the version.`;
+${h("foot.open", { key: B(openKey) })}${KEYS.mods ? ` ${h("foot.mods", { key: B(KEYS.mods) })}` : ""}${KEYS.off ? `
+${h("foot.off", { key: B(KEYS.off) })}` : ""}
+${h("foot.web", { ext: B("morse extension"), serve: B("morse serve") })}
+${h("foot.version", { cmd: "morse --version" })}`;
 
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
