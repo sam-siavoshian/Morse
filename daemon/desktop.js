@@ -7,7 +7,7 @@ import { Connector } from "./connector.js";
 import { waitForEndpoint } from "./cdp.js";
 import { inspectFuses, fuseVerdict, electronBinaryFor } from "./fuses.js";
 import {
-  hostContext, discoverApps, resolveApp, launchApp, quitApp, listProcesses, findAppProcesses, debugPortOf,
+  hostContext, discoverApps, resolveApp, launchApp, waitForLaunch, quitApp, listProcesses, findAppProcesses, debugPortOf,
   loadAppPrefs, saveAppPref, formatApps,
 } from "./apps.js";
 import { pickPort, portFree, portAnswers, reachableFrom, identify, checkIdentity } from "./ports.js";
@@ -114,8 +114,7 @@ export async function launchCommand(f, { settingsFrom, logo }) {
     } else port = await pickPort({ preferred: [pref.port].filter(Boolean) });
     const child = launchApp(app, port, extra);
     pids = [child.pid];
-    try { await waitForEndpoint(port, 30000); }
-    catch { throw new Error(`${app.name} started but never opened its debugging port. It may still be running in the background (try --restart), or it blocks the setting Morse needs.`); }
+    await waitForLaunch(child, app, port); // says why when the app dies on start
     if (pref.port !== port) await saveAppPref(app.id, { port });
   }
 
@@ -143,7 +142,7 @@ export async function attachCommand(f, { settingsFrom, logo }) {
   if (exposed.length) throw new Error(`Port ${port} can be reached from other computers (${exposed.join(", ")}), so Morse won't use it.`);
   const who = await identify(port);
   const name = f.app ? String(f.app) : `App on port ${port}`;
-  console.log(logo + `\n\n  connected on port ${port} · ${who.browser.replace("/", " ")} · model ${settingsLabel(settings)}\n`);
+  console.log(logo + `\n\n  connected on port ${port} · ${who.browser.replace("/", " ")}${who.electron ? ` · Electron ${who.electron}` : ""} · model ${settingsLabel(settings)}\n`);
   const app = f.app ? { id: slug(f.app), name } : null;
   return runSession({ port, app, id: app?.id || `port-${port}`, name, settings, watch: !!f.watch, who });
 }

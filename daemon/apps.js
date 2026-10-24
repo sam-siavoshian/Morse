@@ -8,11 +8,12 @@
 // Windows and Linux on any machine.
 
 import { spawn, execFileSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, statSync, realpathSync, promises as fs } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, realpathSync, openSync, readSync, closeSync, promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { HOME } from "./store.js";
 import { safeExtraArgs } from "./ports.js";
+import { waitForEndpoint } from "./cdp.js";
 
 // ---------------------------------------------------------------- catalog
 // engine: "electron" | "cef" (Chromium Embedded Framework) | "chromium" | "native"
@@ -89,6 +90,11 @@ export function hostContext(over = {}) {
     isDir: p => { try { return statSync(real(p)).isDirectory(); } catch { return false; } },
     readdir: p => { try { return readdirSync(real(p)); } catch { return []; } },
     read: p => { try { return readFileSync(real(p)); } catch { return null; } },
+    // Part of a file (app.asar headers), without reading the whole archive.
+    readRange: (p, start, length) => {
+      const fd = openSync(real(p), "r");
+      try { const b = Buffer.alloc(length); return b.subarray(0, readSync(fd, b, 0, length, start)); } finally { closeSync(fd); }
+    },
     realpath: p => {
       try {
         const r = realpathSync(real(p));
@@ -162,6 +168,32 @@ export function readBundle(ctx, bundle) {
   };
 }
 
+// An Electron app's package.json: { name, version }, where name is its
+// productName (what people call it: "Tunes", not the binary's "tunes").
+// Unpacked apps keep it in resources/app/; packed ones in app.asar, whose
+// header (a JSON file table after two 4-byte sizes) says where it is, so only
+// the header and that one file are read, not the whole archive.
+export function appPackage(ctx, dir) {
+  const pp = ctx.pp;
+  let text = ctx.read(pp.join(dir, "resources", "app", "package.json"))?.toString("utf8");
+  if (!text) {
+    const asar = pp.join(dir, "resources", "app.asar");
+    try {
+      const sizes = ctx.readRange(asar, 0, 16);
+      const headerSize = sizes.readUInt32LE(4); // pickle holding the header
+      const jsonSize = sizes.readUInt32LE(12);
+      const header = JSON.parse(ctx.readRange(asar, 16, jsonSize).toString("utf8"));
+      const f = header.files?.["package.json"];
+      if (f && !f.unpacked && Number(f.size) < 1 << 20) text = ctx.readRange(asar, 8 + headerSize + Number(f.offset), Number(f.size)).toString("utf8");
+    } catch {}
+  }
+  try {
+    const p = JSON.parse(text);
+    const name = [p.productName, p.desktopName?.replace(/\.desktop$/, ""), p.name].find(s => typeof s === "string" && s.trim() && !/^electron$/i.test(s));
+    return { name: name || null, version: typeof p.version === "string" ? p.version : null };
+  } catch { return { name: null, version: null }; }
+}
+
 // Engine of a Windows/Linux install, from the files next to its executable.
 export function engineAt(ctx, exe) {
   const dir = ctx.pp.dirname(exe);
@@ -169,7 +201,10 @@ export function engineAt(ctx, exe) {
   // Packed (app.asar) or unpacked (resources/app/, like VS Code) Electron apps.
   if (["app.asar", "electron.asar", ctx.pp.join("app", "package.json")].some(f => has(ctx.pp.join("resources", f)))) {
     const v = ctx.read(ctx.pp.join(dir, "version"))?.toString().trim();
-    return { engine: "electron", electron: v && /^\d+\.\d+/.test(v) ? v.replace(/^v/, "") : null };
+    // The app's own name and version, from its package.json.
+    const pkg = appPackage(ctx, dir);
+    return { engine: "electron", electron: v && /^\d+\.\d+/.test(v) ? v.replace(/^v/, "") : null,
+      ...(pkg.version && { version: pkg.version }), ...(pkg.name && { productName: pkg.name }) };
   }
   if (has("libcef.so") || has("libcef.dll")) return { engine: "cef" };
   if (has("chrome_100_percent.pak") || has("chrome.dll")) return { engine: "chromium" };
@@ -178,9 +213,13 @@ export function engineAt(ctx, exe) {
 
 const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
+// An Electron app folder: packed (resources/app.asar) or unpacked
+// (resources/app/package.json, like VS Code and apps built without asar).
+const hasElectronApp = (ctx, dir) => ctx.exists(ctx.pp.join(dir, "resources", "app.asar")) || ctx.exists(ctx.pp.join(dir, "resources", "app", "package.json"));
+
 function entry(id, cat, found) {
   return {
-    ...found, id, name: cat?.name || found.name, known: !!cat, browser: !!cat?.browser, aliases: cat?.aliases || [],
+    ...found, id, name: cat?.name || found.productName || found.name, known: !!cat, browser: !!cat?.browser, aliases: cat?.aliases || [],
     engine: found.engine || cat?.engine || "unknown", engineGuessed: !found.engine && !!cat?.engine,
   };
 }
@@ -236,7 +275,7 @@ function discoverWin(ctx) {
     if (!base) continue;
     for (const n of ctx.readdir(base)) {
       const dir = pp.join(base, n);
-      if (!ctx.exists(pp.join(dir, "resources", "app.asar"))) continue;
+      if (!hasElectronApp(ctx, dir)) continue;
       const exes = ctx.readdir(dir).filter(f => /\.exe$/i.test(f) && !/^(uninstall|unins|elevate|squirrel|update|crashpad)/i.test(f));
       const exeName = exes.find(f => slug(f.replace(/\.exe$/i, "")) === slug(n)) || exes[0];
       if (!exeName) continue;
@@ -285,8 +324,9 @@ function discoverLinux(ctx) {
   // Other Electron apps unpacked in /opt (AppImage-free installs).
   for (const n of ctx.readdir("/opt")) {
     const dir = pp.join("/opt", n);
-    if (!ctx.exists(pp.join(dir, "resources", "app.asar"))) continue;
-    const files = ctx.readdir(dir).filter(f => !/\.(so|pak|bin|dat|json|html|txt)$|^(chrome-sandbox|chrome_crashpad_handler|resources|locales|swiftshader|LICENSE.*|version)$/i.test(f) && !ctx.isDir(pp.join(dir, f)));
+    if (!hasElectronApp(ctx, dir)) continue;
+    // The app's own binary, not the runtime's libraries (libvulkan.so.1) and helpers.
+    const files = ctx.readdir(dir).filter(f => !/\.(so(\.\d+)*|pak|bin|dat|json|html|txt)$|^(chrome-sandbox|chrome_crashpad_handler|resources|locales|swiftshader|LICENSE.*|version)$/i.test(f) && !ctx.isDir(pp.join(dir, f)));
     const exeName = files.find(f => slug(f) === slug(n)) || files[0];
     if (!exeName) continue;
     const key = slug(n);
@@ -389,11 +429,14 @@ export function appFromPath(ctx, p) {
     const id = Object.keys(CATALOG).find(k => CATALOG[k].mac?.ids?.includes(b.bundleId)) || slug(b.name);
     return { ...entry(id, CATALOG[id], { ...b, path: p }), ...attachVerdict({ engine: b.engine, electron: b.electron }) };
   }
-  const name = pp.basename(p).replace(/\.(exe|app)$/i, "");
+  const file = pp.basename(p).replace(/\.(exe|app)$/i, "");
   const eng = engineAt(ctx, ctx.realpath(p));
-  const browser = /chrom|brave|edge/i.test(name);
-  const app = { id: slug(name), name, path: p, exe: p, processName: pp.basename(p), known: false, browser, aliases: [],
-    engine: eng.engine || (browser ? "chromium" : "unknown"), electron: eng.electron || null };
+  // An Electron app is called what its package.json says ("Tunes"), not
+  // what its binary is called ("tunes"); the file name still finds it.
+  const name = eng.productName || file;
+  const browser = /chrom|brave|edge/i.test(file);
+  const app = { id: slug(name), name, path: p, exe: p, processName: pp.basename(p), known: false, browser, aliases: name === file ? [] : [file],
+    engine: eng.engine || (browser ? "chromium" : "unknown"), electron: eng.electron || null, ...(eng.version && { version: eng.version }) };
   return { ...app, ...attachVerdict(app) };
 }
 
@@ -521,9 +564,41 @@ export function launchApp(app, port, extraArgs = []) {
   // Discord's updater stub, if that's all we found, takes the app's arguments separately.
   const argv = /Update\.exe$/i.test(exe) ? ["--processStart", app.processName || "Discord.exe", "--process-start-args", args.join(" ")] : args;
   const child = spawn(exe, argv, { detached: true, stdio: "ignore", windowsHide: false });
-  child.on("error", () => {});
+  // Remember how it ended, for waitForLaunch: an app that dies on start
+  // should say so, not leave Morse waiting for a port that never opens.
+  child.on("error", e => { child.failed = e; });
+  child.on("exit", (code, signal) => { child.exited = { code, signal }; });
   child.unref();
   return child;
+}
+
+// Why an app that quit before opening its debugging port did so, in plain
+// words. Chromium refuses to start as root on Linux while its sandbox is on,
+// and every Electron app inherits that, so root gets its own hint.
+export function launchFailure(app, { code = null, signal = null, error = null } = {}, { platform = process.platform, uid = process.getuid?.() } = {}) {
+  const name = app.name || "The app";
+  if (error) return `Morse couldn't start ${name}: ${error.code === "ENOENT" ? `there's nothing to run at ${executableFor(app)}` : error.code === "EACCES" ? "it isn't allowed to run (not executable)" : error.message}.`;
+  let msg = `${name} quit right after it started (${signal ? `stopped by ${signal}` : `exit code ${code}`}), before Morse could connect.`;
+  if (platform === "linux" && uid === 0 && app.engine !== "native")
+    msg += ` You're running as root, and Electron and Chromium apps won't start as root with their sandbox on. Run Morse as your own user. If you really must use root: morse launch ${app.id || "<app>"} -- --no-sandbox`;
+  return msg;
+}
+
+// Waits for a freshly launched app's debugging port. A launcher that hands off
+// and exits (Squirrel's Update.exe, a wrapper script) gets `grace` ms for the
+// real app to open the port; after that, its exit is the answer.
+export async function waitForLaunch(child, app, port, { timeoutMs = 30000, grace = 4000, wait = waitForEndpoint } = {}) {
+  const end = Date.now() + timeoutMs;
+  let exitedAt = null;
+  while (Date.now() < end) {
+    try { return await wait(port, 500); } catch {}
+    if (child.failed) throw Object.assign(new Error(launchFailure(app, { error: child.failed })), { failed: true });
+    if (child.exited) {
+      exitedAt ??= Date.now();
+      if (Date.now() - exitedAt >= grace) throw Object.assign(new Error(launchFailure(app, child.exited)), { failed: true });
+    }
+  }
+  throw new Error(`${app.name} started but never opened its debugging port. It may still be running in the background (try --restart), or it blocks the setting Morse needs.`);
 }
 
 // ---------------------------------------------------------------- per-app choices

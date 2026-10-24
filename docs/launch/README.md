@@ -36,7 +36,7 @@ Works today:
 Not yet, or not verified:
 
 - **Native apps that aren't Electron** (Finder, most macOS and Windows system apps) are not supported.
-- **The desktop connector was tested against a Chromium app window**, which speaks the same protocol as Electron apps, not against real Spotify, Slack or Discord. Some apps turn off the debugging switch; `morse fuses <app>` tells you before you try.
+- **The desktop connector was tested on a real Electron app we built for it** (Electron 45 on Linux, with a menu bar, a sandboxed preload, a `<webview>` and a second window, also packed as `app.asar` with its fuses locked down), not on real Spotify, Slack or Discord, and not on macOS or Windows. Some apps turn off the debugging switch; `morse fuses <app>` tells you before you try. See [docs/desktop.md](../desktop.md).
 - **Codex** is only tested against a fake `codex` command. **The Anthropic and OpenAI APIs** are only tested against fake servers, not the real ones.
 - **Mods are not sandboxed.** The model is told not to use the network, but that isn't enforced yet. Read a shared mod before you install it; the install page shows all of its code first.
 - **No tray app yet.** On the desktop you start apps through `morse launch`.
