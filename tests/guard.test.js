@@ -5,9 +5,10 @@
 //     a mod's own changes never feed back into it, an element cap, quiet errors
 // The end-to-end checks (a page with bad mods stays usable, the mod is paused,
 // the Mods panel says why, a frozen desktop page recovers) are in guard-ui.test.js.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
+import { noBrowser as skip, launchBrowser } from "./helpers/browser.js";
 import { cssHidesPage, draftHarm } from "../core/guard.js";
 import { runMorse } from "../core/engine.js";
 import { registerProvider } from "../core/providers.js";
@@ -114,11 +115,8 @@ test("share links don't carry a mod's paused state", () => {
 
 // ---------------------------------------------------------------- the kit, in Chromium
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
 let browser;
-before(async () => { if (!skip) browser = await chromium.launch(); });
+before(async () => { if (!skip) browser = await launchBrowser(); });
 after(() => browser?.close());
 
 // A fresh page with the kit, the given HTML, and a log of "morse:paused" events.

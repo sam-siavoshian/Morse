@@ -12,6 +12,9 @@
 .hero .lede kbd { vertical-align: 2px; }
 .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 40px; }
 .hero-note { margin-top: 20px; font-size: 14px; }
+.hero-video { margin: 32px 0 0; max-width: 960px; }
+.hero-video video { display: block; width: 100%; height: auto; aspect-ratio: 1280 / 800; border: 1px solid var(--m-line); border-radius: var(--m-r-sm); background: #000; }
+.hero-video figcaption { margin-top: 10px; font-size: 14px; }
 @media (max-width: 720px) {
   .hero { padding-top: 56px; }
   .hero .lede { font-size: 17px; margin-top: 20px; }

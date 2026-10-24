@@ -1,6 +1,7 @@
 // The Morse helper (`morse serve`, daemon/bridge.js): pairing, bearer auth,
 // origin and host checks, NDJSON completions through a (fake) Claude Code, and
 // aborting the model when the client disconnects.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -8,6 +9,7 @@ import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import { installFakeClis } from "./fake-clis.js";
+import { waitFor } from "./helpers/wait.js";
 
 const EXT = "chrome-extension://" + "a".repeat(32);
 let tmp, bridge, port, startPairing, updateConfig;
@@ -144,8 +146,7 @@ test("closing the connection kills the Claude Code process", async () => {
   });
   const { pid } = JSON.parse(await fs.readFile(path.join(tmp, "claude.json"), "utf8"));
   const alive = () => { try { process.kill(pid, 0); return true; } catch { return false; } };
-  for (let i = 0; i < 60 && alive(); i++) await new Promise(r => setTimeout(r, 50));
-  assert.equal(alive(), false, "claude still running after disconnect");
+  await waitFor(() => !alive(), { what: "claude to exit after the disconnect" });
 });
 
 test("voice routes are mounted behind the same auth", async () => {

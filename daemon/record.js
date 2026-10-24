@@ -64,6 +64,6 @@ function ffmpeg(cwd, args) {
   return new Promise((resolve, reject) => {
     const p = spawn("ffmpeg", ["-loglevel", "error", ...args], { cwd, stdio: "ignore" });
     p.on("error", reject);
-    p.on("exit", code => (code === 0 ? resolve() : reject(new Error(`ffmpeg exited ${code}`))));
+    p.on("exit", code => (code === 0 ? resolve() : reject(new Error(`Couldn't make the clip. Check that ffmpeg is installed and try again (ffmpeg stopped with code ${code}).`))));
   });
 }

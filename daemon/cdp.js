@@ -11,7 +11,7 @@ export async function waitForEndpoint(port, timeoutMs = 20000) {
     try { return await (await fetch(`http://127.0.0.1:${port}/json/version`, { signal: AbortSignal.timeout(800) })).json(); }
     catch { await new Promise(r => setTimeout(r, 250)); }
   }
-  throw new Error(`No debugging endpoint on port ${port}. The app may block --remote-debugging-port.`);
+  throw new Error(`Morse couldn't connect to the app on port ${port}. The app may not allow it (it blocks --remote-debugging-port).`);
 }
 
 export class CDPSession {

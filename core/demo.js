@@ -146,7 +146,7 @@ article p:first-of-type::first-letter {
 `, "");
 
 const FALLBACK = reply("Needs a real model", "", `
-morse.toast("The demo replay only knows a few requests. Connect a model for anything else.");
+morse.toast("The demo model only knows a few requests. Connect a model for anything else.");
 `);
 
 // For the playground (demo/playground.html): a label in its toolbar.
@@ -405,5 +405,5 @@ function demoAnswer(request, prompt, messages) {
       [[opener.selector, menu], [hit.selector, hit.label]], [[opener.selector, `Open the ${menu} menu`], [hit.selector, `Choose ${hit.label}`]]);
     return ans(`Here it is: **${hit.label}** [1].`, [[hit.selector, hit.label]]);
   }
-  return ans(`Demo mode only knows a few questions about the demo sites. With a local model (\`ollama pull qwen2.5-coder:7b\`) you can ask anything about this page.`);
+  return ans(`The demo model only knows a few questions about the demo sites. Connect a model (run \`morse setup\`) to ask anything about this page.`);
 }

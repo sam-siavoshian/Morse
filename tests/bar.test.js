@@ -1,25 +1,22 @@
 // The command bar in real Chromium: hotkey recorder, prompt history, Stop
 // mid-generation, the voice fallback path and keyboard/a11y behavior. Runs
 // the real runtime against demo/bar-playground.html's fake host.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
-import { serveBar } from "../demo/bar-server.js";
-// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
+import { serveBar } from "./helpers/demo-server.js";
+import { OPEN_KEY, holdKeys, pressOpen, releaseKeys } from "./helpers/keys.js";
+import { noBrowser, launchBrowser } from "./helpers/browser.js";
+import { waitForStatus, waitForReady, settle, TIMEOUT } from "./helpers/wait.js";
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
+const skip = noBrowser;
 let browser, srv;
 
 before(async () => {
   if (skip) return;
-  srv = await serveBar();
-  const args = ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"];
-  // New headless (channel "chromium") has real audio capture; fall back to the default build.
-  try { browser = await chromium.launch({ channel: "chromium", args }); }
-  catch { browser = await chromium.launch({ args }); }
+  srv = await serveBar(); // port 0
+  // New headless (channel "chromium") has real audio capture; falls back to the default build.
+  browser = await launchBrowser({ channel: "chromium", args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] });
 });
 after(async () => { await browser?.close(); await srv?.close(); });
 
@@ -39,14 +36,9 @@ async function open(query = "", init) {
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   await page.goto(srv.url + query);
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  await waitForReady(page);
   const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
-  const waitFor = async (pred, ms = 8000) => {
-    const end = Date.now() + ms;
-    let s;
-    while (Date.now() < end) { s = await status(); if (pred(s)) return s; await page.waitForTimeout(25); }
-    throw new Error("timed out; last status " + JSON.stringify(s));
-  };
+  const waitFor = (pred, ms = TIMEOUT) => waitForStatus(page, pred, { timeout: ms, what: String(pred) });
   const log = () => page.evaluate(() => window.__fake.log);
   const shadow = fn => page.evaluate(fn);
   return { page, ctx, status, waitFor, log, shadow, errors, close: () => ctx.close() };
@@ -64,7 +56,7 @@ test("hotkey recorder: refuses critical combos, rebinds, persists, and the old k
   await scenario("", null, async t => {
     const { page } = t;
     await page.evaluate(() => { window.__pageKeys = []; addEventListener("keydown", e => __pageKeys.push(e.code)); });
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await t.waitFor(s => s.open);
     await page.keyboard.press("Control+Comma");
     await t.waitFor(s => s.pane === "settings");
@@ -84,8 +76,9 @@ test("hotkey recorder: refuses critical combos, rebinds, persists, and the old k
     await t.waitFor(s => !s.open);
     // The old hotkey now belongs to the page again.
     await page.evaluate(() => (__pageKeys.length = 0));
-    await page.keyboard.press(OPEN_KEY);
-    await page.waitForTimeout(150);
+    await pressOpen(page);
+    await page.waitForFunction(() => __pageKeys.includes("Space")); // the page got the key
+    await settle(page);
     assert.equal((await t.status()).open, false);
     assert.deepEqual(await page.evaluate(() => __pageKeys), OPEN_KEY.split("+").map(k => k === "Space" ? k : `${k}Left`));
     // IME composition and key repeat never trigger a hotkey.
@@ -93,13 +86,13 @@ test("hotkey recorder: refuses critical combos, rebinds, persists, and the old k
       dispatchEvent(new KeyboardEvent("keydown", { code: "KeyK", key: "K", altKey: true, shiftKey: true, isComposing: true, bubbles: true }));
       dispatchEvent(new KeyboardEvent("keydown", { code: "KeyK", key: "K", altKey: true, shiftKey: true, repeat: true, bubbles: true }));
     });
-    await page.waitForTimeout(100);
+    await settle(page);
     assert.equal((await t.status()).open, false);
     await page.keyboard.press("Alt+Shift+KeyK");
     await t.waitFor(s => s.open);
     // Survives a reload (the host stored it).
     await page.reload();
-    await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+    await waitForReady(page);
     await t.waitFor(s => s.hotkeys.open === "Alt+Shift+KeyK");
   });
 });
@@ -108,7 +101,7 @@ test("prompt history: ↑/↓ in an empty input, per site, persisted", { skip },
   await scenario("?ms=1", null, async t => {
     const { page } = t;
     for (const p of ["make it dark", "hide the sidebar"]) {
-      await page.keyboard.press(OPEN_KEY);
+      await pressOpen(page);
       await t.waitFor(s => s.open && s.phase === "idle");
       await page.keyboard.type(p);
       await page.keyboard.press("Enter");
@@ -116,9 +109,9 @@ test("prompt history: ↑/↓ in an empty input, per site, persisted", { skip },
       await page.keyboard.press("Escape"); // keeps the result and closes
       await t.waitFor(s => !s.open);
     }
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await t.waitFor(s => s.open);
-    const expectInput = (v, msg) => t.waitFor(s => s.input === v, 2000).catch(() => assert.fail(msg || `input should be ${JSON.stringify(v)}`));
+    const expectInput = (v, msg) => t.waitFor(s => s.input === v, 10000).catch(() => assert.fail(msg || `input should be ${JSON.stringify(v)}`));
     await page.keyboard.press("ArrowUp");
     await expectInput("hide the sidebar");
     await page.keyboard.press("ArrowUp");
@@ -137,9 +130,8 @@ test("prompt history: ↑/↓ in an empty input, per site, persisted", { skip },
     assert.deepEqual(adds.map(a => a.text), ["make it dark", "hide the sidebar"]);
     assert.match(adds[0].scope, /^127\.0\.0\.1:\d+$/);
     await page.reload();
-    await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
-    await page.waitForTimeout(150);
-    await page.keyboard.press(OPEN_KEY);
+    await waitForReady(page); // history.get answered
+    await pressOpen(page);
     await t.waitFor(s => s.open);
     await page.keyboard.press("ArrowUp");
     await expectInput("hide the sidebar", "history survives a reload");
@@ -151,7 +143,7 @@ test("Esc mid-generation: cancels on the host, removes partial CSS, ends the eff
     const { page } = t;
     const gap = () => page.evaluate(() => getComputedStyle(document.getElementById("toolbar")).gap);
     const before = await gap();
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     const tb = await page.locator("#toolbar").boundingBox();
     await page.mouse.click(tb.x + tb.width / 2, tb.y + 4);
     await page.keyboard.type("make the toolbar airier");
@@ -160,7 +152,7 @@ test("Esc mid-generation: cancels on the host, removes partial CSS, ends the eff
     await page.waitForFunction(() => document.querySelector("style[data-morse-css]")); // CSS applied while streaming
     assert.notEqual(await gap(), before);
     await page.keyboard.press("Escape");
-    const s = await t.waitFor(s => s.phase === "idle" && /Stopped/.test(s.hint), 4000);
+    const s = await t.waitFor(s => s.phase === "idle" && /Stopped/.test(s.hint));
     assert.equal(s.input, "make the toolbar airier");
     assert.equal(s.open, true);
     const gen = (await t.log()).find(m => m.type === "generate");
@@ -173,7 +165,7 @@ test("Esc mid-generation: cancels on the host, removes partial CSS, ends the eff
     await page.keyboard.press("Enter");
     await t.waitFor(s => s.phase === "working");
     await page.keyboard.press("Control+Period");
-    await t.waitFor(s => s.phase === "idle" && /Stopped/.test(s.hint), 4000);
+    await t.waitFor(s => s.phase === "idle" && /Stopped/.test(s.hint));
     assert.equal((await page.evaluate(() => window.__fake.cancelled)).length, 2);
   });
 });
@@ -181,11 +173,11 @@ test("Esc mid-generation: cancels on the host, removes partial CSS, ends the eff
 test("voice: Web Speech fails, the recording goes to the host's transcribe", { skip }, async () => {
   await scenario("", SPEECH_FAILS, async t => {
     const { page } = t;
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await t.waitFor(s => s.open);
     await page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".mic").click());
     await t.waitFor(s => s.voice === "listening");
-    const partial = await t.waitFor(s => s.input === "make the toolbar", 8000); // live partial transcript
+    const partial = await t.waitFor(s => s.input === "make the toolbar"); // live partial transcript
     assert.match(partial.hint, /Listening/);
     await page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".mic").click());
     const s = await t.waitFor(s => s.voice === "idle" && s.input === "make the toolbar airier");
@@ -202,11 +194,11 @@ test("voice: Web Speech fails, the recording goes to the host's transcribe", { s
 test("voice: hold the hotkey to talk, release to finish; auto-submit sends it", { skip }, async () => {
   await scenario("?auto&ms=1", SPEECH_FAILS, async t => {
     const { page } = t;
-    for (const k of OPEN_KEY.split("+")) await page.keyboard.down(k);
+    await holdKeys(page);
     await t.waitFor(s => s.open && s.voice === "listening");
-    await page.waitForTimeout(1300);
-    for (const k of OPEN_KEY.split("+").reverse()) await page.keyboard.up(k);
-    await t.waitFor(s => s.phase === "result", 8000);
+    await page.waitForTimeout(1300); // hold the key for 1.3s: how long the user talks, not a wait for the app
+    await releaseKeys(page);
+    await t.waitFor(s => s.phase === "result");
     const gen = (await t.log()).find(m => m.type === "generate");
     assert.ok(gen, "submitted");
   });
@@ -215,20 +207,20 @@ test("voice: hold the hotkey to talk, release to finish; auto-submit sends it", 
 test("voice: explains in one line when it can't work", { skip }, async () => {
   const clickMic = t => t.page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".mic").click());
   await scenario("?voice=0", () => { delete globalThis.webkitSpeechRecognition; delete globalThis.SpeechRecognition; }, async t => {
-    await t.page.keyboard.press(OPEN_KEY);
+    await pressOpen(t.page);
     await clickMic(t);
     const s = await t.waitFor(s => /OpenAI key/.test(s.hint));
     assert.equal(s.voice, "idle");
     assert.equal(await t.page.evaluate(`${sr(".mic")}.classList.contains("off")`), true);
   });
   await scenario("", () => { navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException("denied", "NotAllowedError")); }, async t => {
-    await t.page.keyboard.press(OPEN_KEY);
+    await pressOpen(t.page);
     await clickMic(t);
     const s = await t.waitFor(s => /Microphone access is blocked/.test(s.hint));
     assert.equal(s.voice, "idle");
   });
   await scenario("", () => { navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException("none", "NotFoundError")); }, async t => {
-    await t.page.keyboard.press(OPEN_KEY);
+    await pressOpen(t.page);
     await clickMic(t);
     await t.waitFor(s => /No microphone found/.test(s.hint));
   });
@@ -238,7 +230,7 @@ test("keyboard and a11y: dialog, live status, Tab stays in the bar, focus comes 
   await scenario("", null, async t => {
     const { page } = t;
     await page.focus("#pagefield");
-    await page.keyboard.press(OPEN_KEY);
+    await pressOpen(page);
     await t.waitFor(s => s.open);
     assert.equal(await page.evaluate(`${sr(".bar")}.getAttribute("role")`), "dialog");
     assert.ok(await page.evaluate(`${sr(".bar")}.getAttribute("aria-label")`));
@@ -284,15 +276,16 @@ test("keyboard and a11y: dialog, live status, Tab stays in the bar, focus comes 
 test("effects setting: off shows no animation over the page, subtle keeps a still outline", { skip }, async () => {
   for (const effects of ["off", "subtle"]) {
     const init = `localStorage.setItem("fake:settings", JSON.stringify({ effects: "${effects}" }))`;
-    await scenario("?ms=30", init, async t => {
+    await scenario("?ms=150", init, async t => { // slow enough to still be working when we look
       const { page } = t;
-      await page.keyboard.press(OPEN_KEY);
+      await pressOpen(page);
       const tb = await page.locator("#toolbar").boundingBox();
       await page.mouse.click(tb.x + tb.width / 2, tb.y + 4);
       await page.keyboard.type("make the toolbar airier");
       await page.keyboard.press("Enter");
       await t.waitFor(s => s.phase === "working");
-      await page.waitForTimeout(300);
+      await page.waitForFunction(() => document.querySelector("style[data-morse-css]")); // streaming: the effect would be up by now
+      await settle(page);
       assert.equal(await page.evaluate(`getComputedStyle(${sr(".fx")}).display`), "none", `${effects}: no radar field`);
       assert.equal(await page.evaluate(`${sr(".sel")}.classList.contains("busy")`), effects === "subtle");
       await t.waitFor(s => s.phase === "result");

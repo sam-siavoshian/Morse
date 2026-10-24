@@ -51,7 +51,7 @@ function readJson(req) {
     const chunks = [];
     req.on("data", c => {
       size += c.length;
-      if (size > MAX_BODY) { reject(Object.assign(new Error("Recording too large"), { status: 413 })); req.destroy(); return; }
+      if (size > MAX_BODY) { reject(Object.assign(new Error("That recording is too long. Try a shorter one."), { status: 413 })); req.destroy(); return; }
       chunks.push(c);
     });
     req.on("end", () => { try { resolve(JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}")); } catch { reject(Object.assign(new Error("Bad JSON"), { status: 400 })); } });

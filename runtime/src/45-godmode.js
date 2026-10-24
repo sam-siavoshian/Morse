@@ -275,7 +275,7 @@ const GodMode = (() => {
     S.picking = true;
     // Typing describes a change (the main interaction); the tools are one
     // shortcut away so a sentence starting with "m" never triggers Move.
-    hint.innerHTML = `Describe a change · <kbd>${PLATFORM === "mac" ? "⌘" : "Ctrl+"}E</kbd> for edit tools · <kbd>Esc</kbd> to close`;
+    hint.innerHTML = `Describe a change · <kbd>${PLATFORM === "mac" ? "⌘" : "Ctrl+"}E</kbd> for Edit tools · <kbd>Esc</kbd> to close`;
     // A toolbar action that changes the selection (duplicate, Alt+↑/↓) keeps the toolbar focused.
     if (G.keepTb) { G.keepTb = false; tb.focus({ preventScroll: true }); }
     if (!G.raf) G.raf = requestAnimationFrame(loop);
@@ -564,7 +564,7 @@ const GodMode = (() => {
     if (G.el && S.open) {
       S.picking = true;
       tb.focus({ preventScroll: true });
-      hint.innerHTML = `Use the edit tools, or describe a change · <kbd>Esc</kbd> to close`;
+      hint.innerHTML = `Use the Edit tools, or describe a change · <kbd>Esc</kbd> to close`;
     }
   }
 
@@ -825,7 +825,7 @@ const GodMode = (() => {
       if (S.open && S.phase !== "idle") return; // a change is being made or shown: leave its status alone
       if (!S.open) openBar();
       if (G.el && !wrap.hidden) tb.focus({ preventScroll: true });
-      else hint.innerHTML = `Point at something to edit it directly`;
+      else hint.innerHTML = `Point at something to use the Edit tools on it`;
     },
   };
 })();

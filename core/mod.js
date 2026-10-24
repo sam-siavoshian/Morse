@@ -73,7 +73,7 @@ export function modMatches(mod, { url, app }) {
 export function validateMod(m) {
   if (!m || typeof m !== "object" || m.morse !== 1) throw new Error("This isn't a Morse mod. Check that you copied all of it.");
   for (const k of ["id", "title", "prompt"]) if (typeof m[k] !== "string") throw new Error(`This mod is incomplete (no ${k}). Ask for a new share link.`);
-  if (!/^[\w-]{1,40}$/.test(m.id)) throw new Error("This mod has an invalid id. Ask for a new share link.");
+  if (!/^[\w-]{1,40}$/.test(m.id)) throw new Error("This mod's name is broken (invalid id). Ask for a new share link.");
   if (typeof m.css !== "string" || typeof m.js !== "string") throw new Error("This mod has no code in it. Ask for a new share link.");
   const where = m.match;
   if (!where || typeof where !== "object" || Array.isArray(where)

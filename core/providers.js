@@ -39,7 +39,7 @@ export class NoModelError extends Error {
 }
 
 const impls = {
-  demo: (s, messages, o) => demoStream(messages, o),
+  demo: (s, messages, o) => demoStream(messages, { ...o, ms: s.demoMs }),
   openai: openaiStream,
   anthropic: anthropicStream,
   helper: helperStream,
@@ -163,8 +163,8 @@ async function anthropicStream(s, messages, { onToken, signal, maxTokens }) {
     }
   } catch (e) {
     if (signal?.aborted) throw abortError();
-    if (e instanceof Anthropic.AuthenticationError) throw new Error("Anthropic rejected the API key (401). Check it in Morse's settings.");
-    if (e instanceof Anthropic.RateLimitError) throw new Error("Too many requests to Anthropic right now (429). Try again in a minute.");
+    if (e instanceof Anthropic.AuthenticationError) throw new Error("Anthropic rejected the API key (error 401). Check it in Morse's settings.");
+    if (e instanceof Anthropic.RateLimitError) throw new Error("Anthropic is busy right now (error 429). Try again in a minute.");
     if (e instanceof Anthropic.APIError && e.status) throw new Error(`Anthropic couldn't answer (error ${e.status}): ${e.error?.error?.message || e.message}`);
     throw e;
   }
@@ -172,7 +172,7 @@ async function anthropicStream(s, messages, { onToken, signal, maxTokens }) {
 }
 
 // OpenAI chat completions over SSE: api.openai.com or any compatible server
-// (llama.cpp, LM Studio, vLLM, OpenRouter...). No temperature: current OpenAI
+// (OpenRouter, Azure and others). No temperature: current OpenAI
 // reasoning models reject non-default values.
 async function openaiStream(s, messages, { onToken, signal, maxTokens }) {
   const base = (s.baseUrl || "https://api.openai.com").replace(/\/$/, "").replace(/\/v1$/, "");
@@ -235,7 +235,8 @@ async function helperStream(s, messages, { onToken, signal }) {
 
 // Internal test fixture: replays pre-written replies. Used by tests and the
 // screenshot scripts; never offered in any UI.
-async function demoStream(messages, { onToken, signal }) {
+// demoMs (tests only) slows the replay so Stop has time to land under load.
+async function demoStream(messages, { onToken, signal, ms = 14 }) {
   const full = demoResponse(messages);
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   await sleep(220);
@@ -247,7 +248,7 @@ async function demoStream(messages, { onToken, signal }) {
     i += n;
     text += tok;
     onToken?.(tok);
-    await sleep(14);
+    await sleep(ms);
   }
   return text;
 }

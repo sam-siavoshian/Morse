@@ -4,6 +4,7 @@
 //   - Claude Code: one stream-json user message on stdin (fake `claude`)
 //   - Codex: refused with a clear message, nothing is run
 //   - the Morse helper accepts picture messages from the extension
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
