@@ -62,14 +62,8 @@ function showImport() {
     <header><b>Import a mod</b><small>Paste a Morse share link or .morse.json contents.</small><button data-a="close">×</button></header>
     <textarea class="code" data-k="src" spellcheck="false" placeholder="https://…/install.html#m=…"></textarea>
     <footer><button data-a="close">Cancel</button><button class="primary" data-a="go">Import</button></footer>`);
-  modal.querySelector("[data-a=go]").onclick = async () => {
-    try {
-      const mod = await call("mods.import", { source: modal.querySelector("[data-k=src]").value, url: location.href, app: S.app });
-      modal.hidden = true;
-      toast(`Installed “${mod.title}”`);
-      await syncMods();
-    } catch (e) { toast(e.message); }
-  };
+  // user control: show what it does before anything is installed (63-control.js)
+  modal.querySelector("[data-a=go]").onclick = () => reviewImport(modal.querySelector("[data-k=src]").value);
 }
 
 // Before/after share card, 1200x675 (the size X/Twitter shows inline).

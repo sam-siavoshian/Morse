@@ -37,6 +37,7 @@ function runHotkey(id) {
     return;
   }
   if (id === "mods") { panel.hidden ? openPanel() : (panel.hidden = true); return; }
+  if (id === "off") { offSwitch(); return; } // user control (63-control.js)
   // God mode lives in its own module; it listens for this.
   if (id === "godmode") listeners.forEach(fn => fn({ type: "godmode.toggle" }));
 }

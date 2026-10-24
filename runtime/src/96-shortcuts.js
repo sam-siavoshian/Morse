@@ -10,6 +10,7 @@ function renderShortcuts() {
       ["Talk", hotkey("talk") ? `${caps(hotkey("talk"))}${talkSame ? `<small>hold</small>` : ""}` : caps([])],
       ["Mods panel", caps(hotkey("mods"))],
       ["God mode", caps(hotkey("godmode"))],
+      ["Turn off all mods", caps(hotkey("off"))], // user control (63-control.js)
     ]],
     ["In the bar", [
       ["Run", caps([enter])],

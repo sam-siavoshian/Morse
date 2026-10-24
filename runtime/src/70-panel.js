@@ -19,6 +19,7 @@ function renderPanel() {
       </article>`).join("") : `<p class="empty">${radar(22)}<br>No mods here yet.<br>Press <kbd>${HOTKEY}</kbd>, point at something, and say what you want.</p>`}
     </div>
     <footer><button data-a="import">Import mod…</button><span>${esc(S.label)}</span></footer>`;
+  controlPanel(); // user control: pause, where it came from, Show code, export/import (63-control.js)
 }
 panel.addEventListener("click", async e => {
   const btn = e.target.closest("[data-a]");
