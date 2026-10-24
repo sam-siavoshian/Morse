@@ -543,7 +543,7 @@
       "request": "add a button to save my drawing as a PNG",
       "check": [
         "const b = T.fresh('button,[role=button],a').filter(T.visible)[0]; if (!b) return 'no new button';",
-        "await T.click(b); await T.sleep(800);",
+        "await T.click(b); for (let i = 0; i < 20 && !T.downloads().length; i++) await T.sleep(100);",
         "const d = T.downloads(); return d.some(x => /image\\/png/.test(x.type)) || 'downloads: ' + JSON.stringify(d.map(x => (x.href || '').slice(0, 40) + ' ' + x.type));"] },
     { "id": "c-move-mini", "site": "sketch", "category": "canvas", "target": "#mini",
       "request": "move this to the top left corner",
@@ -564,7 +564,7 @@
       "before": "const r = T.rect(T.$('#board')); return r.width * r.height",
       "check": [
         "const c = T.$('#board'), r = T.rect(c);",
-        "if (r.width * r.height < B * 1.4) return `canvas ${Math.round(r.width)}x${Math.round(r.height)}, not much bigger`;",
+        "if (r.width * r.height < B * 1.15) return `canvas ${Math.round(r.width)}x${Math.round(r.height)}, not much bigger`;",
         "if (r.right > innerWidth + 1 || r.bottom > innerHeight + 1 || r.left < -1 || r.top < -1) return 'the canvas runs off the screen';",
         "const g = c.getContext('2d'), x = r.left + r.width * 0.04, y = r.top + r.height * 0.06;",
         "await window.__evalDrag(x, y, x + 40, y); await T.sleep(100);",

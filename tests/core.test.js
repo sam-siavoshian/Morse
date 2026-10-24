@@ -127,6 +127,8 @@ test("a class or CSS variable the JS sets that no CSS uses gets a repair round",
   assert.equal(deadHooks({ css: "", js: "el.classList.toggle('x1'); if (el.classList.contains('x1')) go();" }, {}), null);
   assert.match(deadHooks({ css: ".bar { width: 10px }", js: "document.body.style.setProperty('--p', '50%')" }, {}), /CSS variable --p/);
   assert.equal(deadHooks({ css: ".bar { width: var(--p) }", js: "document.body.style.setProperty('--p', '50%')" }, {}), null);
+  assert.match(deadHooks({ css: "/* none */", js: "morse.toast(`Turned ${n} off`);" }, {}), /only showed a notice/);
+  assert.equal(deadHooks({ css: "", js: "morse.toast('hi'); morse.watch('a', a => a.remove());" }, {}), null);
 });
 
 test("finds the selectors a draft relies on", () => {

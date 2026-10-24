@@ -61,7 +61,8 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
         continue;
       }
     }
-    // ---- hooks nothing uses: JS that marks elements for CSS that isn't there
+    // ---- hooks nothing uses: JS that marks elements for CSS that isn't there,
+    // or a change that only says it happened
     const dead = attempt < maxAttempts && !signal?.aborted ? deadHooks(draft, context) : null;
     if (dead) {
       if (draft.js.trim()) await exec("").catch(() => {}); // same mod id: turns the draft off
@@ -89,6 +90,10 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
 // variables the page already has (anywhere in the context) are the page's own.
 export function deadHooks({ css = "", js = "" }, context) {
   if (!js.trim()) return null;
+  // Only a notice ("Turned all devices off") and nothing else: the change itself is missing.
+  const noCss = !css.replace(/\/\*[\s\S]*?\*\//g, "").trim();
+  if (noCss && !js.replace(/\/\/[^\n]*/g, "").replace(/morse\.toast\((?:[^()]|\([^()]*\))*\)\s*;?/g, "").trim())
+    return "It only showed a notice; nothing on the page changed. Make the change itself (add the button, element or behavior that was asked for).";
   const known = JSON.stringify(context || {}), styles = `${css}\n${js}`, out = [];
   for (const m of js.matchAll(/classList\.(?:add|toggle)\(\s*(["'`])([\w-]+)\1/g)) {
     const cls = m[2];
