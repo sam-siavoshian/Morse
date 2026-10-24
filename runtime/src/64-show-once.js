@@ -86,6 +86,7 @@ const ShowOnce = (() => {
     if (Guide.active) Guide.stop();
     detach();
     R.steps = []; R.els = []; R.on = true;
+    typedIn = new WeakMap();
     if (S.open) closeBar(); // an unsaved result is kept, as always when the bar closes
     renderStrip();
     strip.classList.remove("top");
@@ -129,11 +130,37 @@ const ShowOnce = (() => {
     if (!el || el === document.body || el === document.documentElement || isFormControl(el)) return; // fields: what follows is recorded
     record(el, "click");
   }, true);
+  // A rich editor (an email body, a document) already holds text the person
+  // didn't type for this task: only what they type while recording is kept.
+  let typedIn = new WeakMap();
+  function typedText(el, e) {
+    const was = typedIn.get(el) || "";
+    const t = e.inputType || "";
+    const add = /^insert(Text|ReplacementText)$/.test(t) ? e.data || ""
+      : /^insertFrom(Paste|Drop)$/.test(t) ? e.dataTransfer?.getData("text/plain") || ""
+      : /^insert(LineBreak|Paragraph)$/.test(t) ? "\n" : null;
+    const now = add != null ? was + add : t === "deleteContentBackward" ? was.slice(0, -1) : was;
+    typedIn.set(el, now);
+    return now;
+  }
+  listen("compositionend", e => { // a word from an input method (Japanese, Chinese, …)
+    const el = e.target;
+    if (!e.isTrusted || !recording() || ours(e) || !el?.isContentEditable || !e.data || isSecretField(el)) return;
+    typedIn.set(el, (typedIn.get(el) || "") + e.data);
+    record(el, "type", { value: typedIn.get(el) });
+  }, true);
   listen("input", e => {
     if (!e.isTrusted || !recording() || ours(e)) return;
     const el = e.target;
     if (!isTextField(el)) return;
-    record(el, "type", isSecretField(el) ? { hidden: true } : { value: el.isContentEditable ? el.innerText : el.value });
+    // The field itself may sit in a component's shadow root (a password box inside <x-input>).
+    const inner = e.composedPath?.()[0];
+    const secret = isSecretField(el) || (inner !== el && inner?.nodeType === 1 && isSecretField(inner));
+    if (secret) return record(el, "type", { hidden: true });
+    if (!el.isContentEditable) return record(el, "type", { value: el.value });
+    if (e.isComposing || e.inputType === "insertCompositionText") return; // the word lands on compositionend
+    const typed = typedText(el, e);
+    if (typed) record(el, "type", { value: typed });
   }, true);
   listen("change", e => {
     if (!e.isTrusted || !recording() || ours(e)) return;

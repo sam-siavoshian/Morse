@@ -6,13 +6,17 @@ import { parseModResponse, liveCss } from "./parse.js";
 import { parseReply } from "./answer.js"; // Ask and find
 import { streamChat } from "./providers.js";
 import { selectorsIn, selectorLists } from "./heal.js"; // self-heal hook: shared selector parsing
-import { draftHarm, cssHidesPage } from "./guard.js"; // guard hook: code that would obviously break the page
+import { cannotUndo } from "./showonce.js"; // show-once hook: ask before steps that can't be undone
+import { draftHarm, cssHidesPage, collapseHarm } from "./guard.js"; // guard hook: code that would obviously break the page
 
 // `probe(selectors)` (optional, from the host) returns { fp, unmatched }: a
 // fingerprint of what the page renders and which of the given selectors match
 // nothing (runtime/src/20-context.js effectProbe). With it, a change that ran
 // but did nothing visible gets the repair round too.
-export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2, probe }) {
+// `collapse(css)` (optional, from the host) applies the CSS in the page for a
+// moment and returns { before, after } (core/guard.js pageCollapse): a change
+// that hides most of the page gets the repair round like a guard hit.
+export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2, probe, collapse }) {
   let previous = null;
   let last = null;
   const started = Date.now();
@@ -78,6 +82,23 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       repairs.push(previous.error);
       continue;
     }
+    // guard: CSS that hides most of the page (a class the sidebar shares with the content).
+    const fell = draft.css.trim() && collapse ? collapseHarm(await collapse(draft.css).catch(() => null)) : null;
+    if (fell) {
+      emit({ type: "css", css: "" });
+      previous = { raw, error: fell.model };
+      repairs.push(fell.model);
+      last = { ...last, css: "", js: "", error: fell.user };
+      continue;
+    }
+    // Show me once: steps that can't be taken back are never done without asking.
+    const sure = unasked(context, draft.js);
+    if (sure) {
+      previous = { raw, error: sure };
+      repairs.push(sure);
+      last = { ...last, css: "", js: "", error: "The change would delete, buy or send something without asking you first, so Morse didn't keep it. Try again." };
+      continue;
+    }
     if (draft.js.trim()) {
       if (signal?.aborted) throw new Error("aborted"); // stopped: never run the JS
       emit({ type: "phase", phase: "applying" });
@@ -105,6 +126,17 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     return { ...last, ok: true };
   }
   return { ...last, ok: false, error: last?.error || "The model's answer had no change in it. Try other words." };
+}
+
+// Show me once (core/showonce.js cannotUndo): code made from steps that
+// delete, buy or send must ask the person first with morse.confirm. A repair
+// message when it doesn't, or null.
+function unasked(context, js) {
+  const steps = Array.isArray(context?.recording?.steps) ? context.recording.steps : [];
+  const sure = steps.filter(cannotUndo);
+  if (!sure.length || /\bmorse\.confirm\s*\(/.test(js || "")) return null;
+  const what = sure.map(s => `“${s.label || s.text || s.key}”`).slice(0, 3).join(", ");
+  return `${sure[0].n ? `Step ${sure[0].n}` : "A step"} (${what}) can't be undone, and the code never asks first. Before the first such step add: if (!(await morse.confirm("…what will happen…"))) return;`;
 }
 
 // ---- effect check helpers
