@@ -49,12 +49,19 @@ const Waiting = (() => {
   }
   listen("visibilitychange", () => { if (document.visibilityState === "visible") retry(); });
   listen("focus", () => retry());
-  // The result of a new change whose code waits (or, on the practice page, never runs).
+  // The result of a new change whose code waits (or, on the practice page,
+  // never runs). It never just looks done: the bar says the change needs
+  // “Allow User Scripts” and offers the one click that opens it (offer).
   function note(res, id) {
     if (res?.waiting === "practice") return { note: "This is how it looks. What it adds works on real websites" };
     if (res?.waiting !== "userScripts") return {};
     ids.add(id); // once it is saved, the Mods panel and the bar's note list it
-    return { note: "The new look shows. What it adds waits for “Allow User Scripts”" };
+    return { note: "Needs “Allow User Scripts” to work. Only its look shows until you turn it on" };
   }
-  return { add, has: id => ids.has(id), list, text, note, quiet: false };
+  function offer(res) {
+    if (res?.waiting !== "userScripts" || actions.querySelector("[data-ob=userscripts]")) return;
+    actions.insertAdjacentHTML("afterbegin", `<button type="button" class="primary" data-ob="userscripts">Turn on “Allow User Scripts”</button>`); // 59-onboarding.js opens Morse's details
+    actions.querySelector("[data-a=keep]")?.classList.remove("primary");
+  }
+  return { add, has: id => ids.has(id), list, text, note, offer, quiet: false };
 })();

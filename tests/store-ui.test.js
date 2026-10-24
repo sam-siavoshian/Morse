@@ -16,7 +16,8 @@ import path from "node:path";
 import { createMod, encodeShare } from "../core/mod.js";
 import { chromium, noDisplay } from "./helpers/browser.js";
 import { startDemoServer, routeDemoOrigins } from "./helpers/demo-server.js";
-import { waitFor, settle, TIMEOUT } from "./helpers/wait.js";
+import { waitFor, waitForStatus, settle, TIMEOUT } from "./helpers/wait.js";
+import { pressOpen } from "./helpers/keys.js";
 
 void home;
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -92,6 +93,36 @@ test("without “Allow User Scripts” a mod's style shows, its code never runs,
   await pop.close();
   await p.close();
   await noMods();
+});
+
+// Seen on pypi.org with the setting off: "add a back to top button" became an
+// arrow that doesn't scroll, and nothing said why. Now the code never runs at
+// all, and the bar says the change needs "Allow User Scripts", with the click
+// that opens it. (The playground: the real runtime and engine with the demo
+// model, and a host that answers like the extension with the setting off.)
+test("a change that needs code says so in the bar, with one click to turn on “Allow User Scripts”", { skip }, async () => {
+  const browser = await chromium.launch();
+  try {
+    const p = await browser.newPage();
+    const errors = [];
+    p.on("pageerror", e => errors.push(e.message));
+    await p.addInitScript(() => localStorage.setItem("morse:debug", "1"));
+    await p.goto(`${demo.origin("parley")}/demo/playground.html?model=demo&scriptsoff&light`);
+    await waitForStatus(p, s => s.ready, { what: "the runtime ready" });
+    await pressOpen(p);
+    await waitForStatus(p, s => s.open, { what: "the bar open" });
+    await p.keyboard.type("add a back to top button");
+    await p.keyboard.press("Enter");
+    const s = await waitForStatus(p, s => s.phase === "result", { what: "the result" });
+    assert.match(s.hint, /Back to top button.*Needs “Allow User Scripts” to work\. Only its look shows until you turn it on/);
+    const sr = sel => p.locator("[data-morse-ui]").locator(sel);
+    assert.equal((await sr(".actions [data-ob=userscripts]").textContent()).trim(), "Turn on “Allow User Scripts”");
+    assert.equal(await p.locator(".morse-top").count(), 0, "the code didn't run");
+    assert.match(await p.evaluate(() => [...document.querySelectorAll("style[data-morse-css]")].map(s => s.textContent).join("")), /\.morse-top/, "its look is on the page");
+    await sr(".actions [data-ob=userscripts]").click();
+    await waitFor(() => p.evaluate(() => window.__fake.opened === "userscripts"), { what: "Morse's details opened" });
+    assert.deepEqual(errors, []);
+  } finally { await browser.close(); }
 });
 
 test("the practice page loads under its stricter sandbox rules (no eval there either)", { skip }, async () => {
