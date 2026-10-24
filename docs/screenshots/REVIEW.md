@@ -96,7 +96,7 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 158, 159-style-fit-haiku-* | demo/style-fit-real.js (real Claude Code) | ✅ | Came with main |
 | 160–166-pack-* | shoot-packs.js | ✅ | Came with main; current words |
 | clip-sleep-timer.gif, .mp4 | shoot-desktop.js's recording (`MORSE_HOME/clips`), encoded at double speed | ✅ | Today's bar; the machine was slow, so it is played twice as fast |
-| claude-code/01 … 14 | shoot-desktop.js with `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code` | ✅ | Whole run with real Claude Code. 14-share-card.png is new |
+| claude-code/01 … 14 | shoot-desktop.js with `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code` | ✅ | Whole run with real Claude Code. 14-share-card.png is new. Taken before the last merge from main, so the Mods panel (11) has no Packs row yet; a rerun after it was worse (haiku answered in 5 s, so 04 caught the finished change) and wasn't kept |
 
 Removed, after checking that no doc, page, test or script uses them:
 00-terminal.png (no script made it), 01, 02, 03, 06, 10, 13 (steps between

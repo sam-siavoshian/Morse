@@ -5,22 +5,23 @@
 //                        MORSE_PROVIDER names a real model (e.g.
 //                        MORSE_PROVIDER=claude-code MORSE_MODEL=haiku)
 //   pairExtension(…)     pairs the extension with it through the real popup
-//   routeHelper(ctx, h)  points the extension at a helper that isn't on 7457
+//   routeHelper(ctx, h)  points the extension at that helper's port
 //   demoSites(ctx?)      the demo sites on free ports, shown to a Playwright
 //                        context at their usual addresses (127.0.0.1:8787-8790)
 //   OPEN_KEY, pressOpen  the platform's Open Morse key, and a reliable tap of it
 //
-// Ports: the demo sites never bind 8787-8790 (other runs use them); the
-// extension always looks for the helper on 7457, so the helper waits for that
-// port to be free. MORSE_HELPER_PORT=<port> runs it elsewhere and routes 7457
-// there instead; the reply then arrives in one piece, so shots of a change
-// being written may show it finished.
+// Ports: nothing binds a fixed port, so runs side by side never meet. The
+// demo sites run on free ports and show at 8787-8790; the helper runs on
+// MORSE_HELPER_PORT or a free port, and the extension is told where it is
+// (chrome.storage.local "morse.helperPort", core/providers.js HELPER_PORT_KEY).
 
 import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { serveDemo } from "./serve.js";
+import { freePort } from "../tests/helpers/net.js";
+import { HELPER_PORT_KEY } from "../core/providers.js";
 import { pressOpen } from "../tests/helpers/keys.js";
 export { OPEN_KEY, HOTKEYS, pressOpen } from "../tests/helpers/keys.js";
 
@@ -97,7 +98,7 @@ export async function pick(page, sel, fx = 0.5, fy = 0.5) {
 export async function startHelper(home) {
   await fs.mkdir(home, { recursive: true });
   const provider = process.env.MORSE_PROVIDER || "demo";
-  const port = Number(process.env.MORSE_HELPER_PORT) || EXTENSION_HELPER_PORT;
+  const port = Number(process.env.MORSE_HELPER_PORT) || await freePort();
   if (process.env.MORSE_MODEL) {
     await fs.writeFile(path.join(home, "config.json"), JSON.stringify({ models: { [provider]: process.env.MORSE_MODEL } }));
   }
@@ -127,16 +128,11 @@ export async function startHelper(home) {
   }
 }
 
-// The extension only knows 127.0.0.1:7457. A helper elsewhere is reached by
-// routing that address in the browser (the service worker's requests too).
+// Tells the extension in this browser where the helper is (its service
+// worker reads "morse.helperPort"; pages and content scripts can't set it).
 export async function routeHelper(ctx, helper) {
-  if (helper.port === EXTENSION_HELPER_PORT) return;
-  await ctx.route(`http://127.0.0.1:${EXTENSION_HELPER_PORT}/**`, async route => {
-    const url = new URL(route.request().url());
-    url.port = String(helper.port);
-    try { await route.fulfill({ response: await route.fetch({ url: url.href }) }); }
-    catch { await route.abort().catch(() => {}); }
-  });
+  const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
+  await sw.evaluate(([k, p]) => chrome.storage.local.set({ [k]: p }), [HELPER_PORT_KEY, helper.port]);
 }
 
 // Someone who has used Morse before: the first-run coach is done, the tools

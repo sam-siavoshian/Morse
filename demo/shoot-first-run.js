@@ -23,6 +23,7 @@ import net from "node:net";
 import { spawn, execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { demoSites, pressOpen } from "./helper.js";
+import { freePort } from "../tests/helpers/net.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -71,10 +72,14 @@ async function install(name) {
   await sites.route(ctx);
   const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
   const id = sw.url().split("/")[2];
+  // This browser's Morse helper gets a port of its own, so runs side by side
+  // never meet (core/providers.js HELPER_PORT_KEY; `morse` gets MORSE_HELPER_PORT).
+  const helperPort = await freePort();
+  await sw.evaluate(p => chrome.storage.local.set({ "morse.helperPort": p }), helperPort);
   const welcome = await until(() => ctx.pages().find(p => p.url().includes("/welcome.html")), 60000, "welcome page");
   await welcome.waitForLoadState();
   await welcome.bringToFront();
-  return { ctx, sw, id, welcome };
+  return { ctx, sw, id, welcome, helperPort };
 }
 // The practice frame is sandboxed: its bar's shadow root stays closed. DevTools can read it.
 async function closedText(frame, cls) {
@@ -101,8 +106,7 @@ const ONLY = process.env.ONLY || ""; // "web" or "desktop": shoot one half
 
 // ---- 135-138: the welcome page, the practice page, the command
 if (ONLY !== "desktop") {
-  await until(() => portFree(7457), 120000, "the helper's port (no helper running yet)");
-  const { ctx, welcome } = await install("profile-a");
+  const { ctx, welcome, helperPort } = await install("profile-a");
   await sleep(1500);
   await shot(welcome, "135-welcome.png");
 
@@ -132,13 +136,12 @@ if (ONLY !== "desktop") {
   const cmd = await welcome.locator("#setup-cmd").textContent();
   const code = cmd.split(" ").pop();
   await welcome.click("#copy-setup");
-  await until(() => portFree(7457), 60000, "the helper's port");
   const home = path.join(tmp, "home-a");
   await fs.mkdir(home, { recursive: true });
   // Real Claude Code when it's installed (Enter takes the recommendation; haiku keeps the check short).
   await fs.mkdir(path.join(home, ".morse"), { recursive: true });
   await fs.writeFile(path.join(home, ".morse", "config.json"), JSON.stringify({ models: { "claude-code": "haiku" } }));
-  const setup = cli(["setup", "--pair", code], { home });
+  const setup = cli(["setup", "--pair", code], { home, env: { MORSE_HELPER_PORT: String(helperPort) } });
   setup.stdin.write("\n");
   await until(() => done(welcome, "model"), 40000, "pairing");
   await sleep(600);
@@ -151,12 +154,11 @@ if (ONLY !== "desktop") {
 
 // ---- 140: error states on the welcome page
 if (ONLY !== "desktop") {
-  const { ctx, welcome } = await install("profile-b");
+  const { ctx, welcome, helperPort } = await install("profile-b");
   await welcome.locator("#alt summary").click();
   await welcome.locator("#key").fill("my-key-123");
   await welcome.locator("#save-key").click();
-  await until(() => portFree(7457), 60000, "the helper's port");
-  const serve = cli(["serve"], { home: path.join(tmp, "home-b"), env: { MORSE_PROVIDER: "demo" } });
+  const serve = cli(["serve"], { home: path.join(tmp, "home-b"), env: { MORSE_PROVIDER: "demo", MORSE_HELPER_PORT: String(helperPort) } });
   await until(() => /pair\s+(?:\x1b\[[\d;]*m)*([A-Z0-9]{6})/.test(serve.out), 15000, "morse serve");
   await until(async () => !(await welcome.locator("#pairrow").isHidden()), 15000, "the code box");
   await welcome.locator("#code").pressSequentially("ZZZZZZ");
@@ -170,11 +172,10 @@ if (ONLY !== "desktop") {
 
 // ---- 141-144: a new user straight to a site (no practice first)
 if (ONLY !== "desktop") {
-  const { ctx, id, welcome } = await install("profile-c");
+  const { ctx, id, welcome, helperPort } = await install("profile-c");
   await allowUserScripts(ctx, id);
   const code = (await welcome.locator("#setup-cmd").textContent()).split(" ").pop();
-  await until(() => portFree(7457), 60000, "the helper's port");
-  const setup = cli(["setup", "--use", "demo", "--pair", code], { home: path.join(tmp, "home-c") });
+  const setup = cli(["setup", "--use", "demo", "--pair", code], { home: path.join(tmp, "home-c"), env: { MORSE_HELPER_PORT: String(helperPort) } });
   await until(() => done(welcome, "model"), 40000, "pairing");
   const site = await ctx.newPage();
   await site.goto(BYTE);
@@ -222,6 +223,9 @@ if (ONLY !== "web") {
     "--no-default-browser-check", "--enable-automation", "--force-device-scale-factor=1", "--window-size=1280,800", `--host-resolver-rules=MAP tunes 127.0.0.1:${sites.sites.tunes}`, `--app=${TUNES}`], { home, env: { MORSE_PROVIDER: "demo", MORSE_DEBUG: "1" } }); // --enable-automation and MORSE_DEBUG: the script can read and click the bar
   await until(() => /press .*, point at something and say what to change/.test(plain(launch.out)), 60000, "morse launch");
   const port = Number(/port\s+(\d+)/.exec(plain(launch.out))[1]);
+  // Morse names the window by its title; on a busy machine it can connect
+  // before the page has one and use the address instead. Retake if so.
+  if (/connected to \S*\//.test(plain(launch.out))) throw new Error("morse launch connected before the page had a title; run again for 145");
   await terminal(`\x1b[2m$\x1b[0m morse launch tunes\n${launch.out.replace(chrome, "/Applications/Tunes.app")}`, "145-desktop-launch.png", "morse launch tunes");
   const browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
   const app = browser.contexts()[0].pages().find(p => p.url().includes("tunes"));

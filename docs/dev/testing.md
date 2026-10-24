@@ -175,9 +175,9 @@ DISPLAY=:99 npm run screenshots    # shoot-extension, shoot-desktop, shoot-contr
 
 The scripts start what they need themselves: the demo sites on free ports
 (shown to the browser at their usual addresses, 127.0.0.1:8787–8790, so other
-runs on those ports don't matter) and the Morse helper, which waits for port
-7457 because the extension always looks for it there (`MORSE_HELPER_PORT`
-runs it elsewhere and routes the extension to it). They press the platform's
+runs on those ports don't matter) and the Morse helper on a free port
+(or `MORSE_HELPER_PORT`), which the extension in the script's browser is told
+about ("morse.helperPort", as in the tests). They press the platform's
 Open Morse key (Ctrl+Shift+Space off macOS, from
 [`tests/helpers/keys.js`](../../tests/helpers/keys.js)) and start as someone
 who has used Morse before, with no first-run guide. They wait for the bar
