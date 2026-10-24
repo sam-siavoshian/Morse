@@ -1,8 +1,16 @@
 // Minimal Chrome DevTools Protocol client on Node's built-in WebSocket.
 
 export async function listTargets(port) {
-  const res = await fetch(`http://127.0.0.1:${port}/json/list`, { signal: AbortSignal.timeout(1500) });
+  const res = await fetch(`http://127.0.0.1:${port}/json/list`, { signal: AbortSignal.timeout(1500) }).catch(e => { throw appTimeout(e, port); });
   return res.json();
+}
+
+// A busy or still-starting app that doesn't answer its debugging port in time
+// says so in plain words. Left alone, "The operation was aborted due to
+// timeout" reads as the model being slow (core/onboarding.js plainError).
+export function appTimeout(e, port) {
+  if (e?.name !== "TimeoutError") return e;
+  return Object.assign(new Error(`The app didn't answer Morse in time (port ${port}). It may still be starting, or the computer is busy: try again.`), { plain: true, cause: e });
 }
 
 export async function waitForEndpoint(port, timeoutMs = 20000) {

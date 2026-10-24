@@ -56,8 +56,9 @@ extension's pages.
 ## Screenshots
 
 Spec: **1280×800**, 24-bit PNG without transparency, up to 5. All five are
-taken from the real extension with a real model (Claude Code · haiku through
-`morse serve`) on real public websites, except the gallery one:
+taken from the real extension with a real model (Claude Code · sonnet through
+`morse serve`) on real public websites (pkg.go.dev, pypi.org, rubygems.org);
+the gallery one tries the gallery's “Dark mode” mod for pypi.org:
 
 ```bash
 DISPLAY=:99 npm run store:screenshots       # ONLY=2,3 retakes some
@@ -73,7 +74,7 @@ retake the ones that don't read well.
 | `1-describe-a-change.png` | pkg.go.dev while a change is being written: the code examples already dark, the survey banner gone | Say what to change. You see it change while it is being written. |
 | `2-save-what-you-like.png` | pypi.org: copy buttons added to the code examples, with Save, Undo, Edit code and Share | Add what a site is missing. Save it, and it is there every time you come back. |
 | `3-your-mods.png` | pypi.org: the Mods panel with the three mods made a moment before | Your saved changes for a site in one place. Turn each one on or off. |
-| `4-mods-others-made.png` | The Tunes demo app: a gallery mod tried before saving, in the Mods panel | Try changes other people made. Save the ones you like. |
+| `4-mods-others-made.png` | pypi.org: the gallery's “Dark mode” for this site, tried before saving, in the Mods panel | Try changes other people made. Save the ones you like. |
 | `5-edit-tools.png` | rubygems.org: the Edit tools and the color palette on the heading | Edit tools change the page at once: hide, move, resize, recolor, rename. |
 
 The gallery picture uses a demo app because the gallery's mods for real sites

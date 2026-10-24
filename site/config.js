@@ -96,15 +96,16 @@ export const SHOWCASE = [
 ];
 
 // The strip of real apps and websites, each a real screenshot with the Morse
-// bar open. app is the name exactly as it shows on screen; ask is what was
-// asked (empty for a change made by hand with the Edit tools).
+// bar open, taken in October 2026 with Claude Code on Linux (sonnet or opus;
+// docs/desktop.md, Tested on). app is the name exactly as it shows on screen;
+// ask is what was asked; by is the model and how long it took to write.
 export const REAL_APPS = [
-  { app: "Joplin", kind: "Desktop app", ask: "hide this button, I don’t use sync", src: "shots/152-joplin-sync-hidden.webp", width: 1152, height: 720, alt: "Joplin after “hide this button, I don’t use sync”: the Synchronize button is gone and the bar offers Save." },
-  { app: "VSCodium", kind: "Desktop app", ask: "make the status bar bigger", src: "shots/148-vscodium-status-bar-back.webp", width: 1208, height: 804, alt: "VSCodium opened again after “make the status bar bigger”: the taller status bar is still there." },
-  { app: "GitLab", kind: "Website", ask: "add a back to top button in the bottom right corner", src: "shots/153-web-gitlab-back-to-top.webp", width: 1280, height: 800, alt: "A GitLab project page with a new floating back to top button, and the bar offering Save." },
-  { app: "Docker Hub", kind: "Website", ask: "make these code blocks bigger with a dark background", src: "shots/155-web-docker-hub-code.webp", width: 1280, height: 800, alt: "The nginx page on Docker Hub with larger, dark code blocks, and the bar offering Save." },
-  { app: "Go packages", kind: "Website", ask: "put the code examples on a dark background with bigger text, and hide the survey banner", src: "shots/180-web-go-packages.webp", width: 1280, height: 800, alt: "The net/http page on pkg.go.dev with code examples on a dark background while the change is written." },
-  { app: "RubyGems", kind: "Website", ask: "", by: "The Edit tools: change it by hand, no model", src: "shots/181-web-rubygems-edit.webp", width: 1280, height: 800, alt: "The rails page on RubyGems with the Edit tools open on the heading: hide, move, resize, text and color." },
+  { app: "Visual Studio Code", kind: "Desktop app", ask: "make the whole editor look like a warm paper notebook: cream backgrounds, dark brown text, and a serif font in the sidebar and the tabs", by: "Claude Code (opus), 18.0 seconds", src: "shots/321-vscode-result.webp", width: 1200, height: 750, alt: "Microsoft’s Visual Studio Code with cream backgrounds, brown text and serif file names in the sidebar. The bar offers Save, Undo, Edit code and Share." },
+  { app: "VSCodium", kind: "Desktop app", ask: "give the editor a synthwave look: deep purple background, neon pink and cyan text, and a glowing purple activity bar", by: "Claude Code (opus), 22.9 seconds", src: "shots/327-vscodium-synthwave.webp", width: 1200, height: 750, alt: "VSCodium with a deep purple editor, pink and cyan code and a purple activity bar. The bar offers Save." },
+  { app: "Logseq", kind: "Desktop app", ask: "make the journal look like a lined paper notebook: cream ruled lines behind the text, a handwriting style font, and much bigger page titles", by: "Claude Code (sonnet), 6.4 seconds", src: "shots/329-logseq-notebook.webp", width: 980, height: 700, alt: "Logseq’s journal on ruled cream paper with a red margin line and a big serif date. The bar offers Save." },
+  { app: "Node.js docs", kind: "Website", ask: "make this page look like a printed book: cream paper, a serif font for the text, and the code examples in dark boxes", by: "Claude Code (sonnet), 13.4 seconds", src: "shots/302-real-result.webp", width: 1280, height: 800, alt: "The Node.js path documentation on cream paper in a serif font. The bar offers Save, Undo, Edit code and Share." },
+  { app: "PyPI", kind: "Website", ask: "add a copy button to the top right corner of every code example", by: "Claude Code (sonnet), 12.7 seconds", src: "shots/182-web-pypi-copy-buttons.webp", width: 1280, height: 800, alt: "The requests page on PyPI with a new Copy button on the code example. The bar offers Save." },
+  { app: "Docker Hub", kind: "Website", ask: "Explain this page", by: "Claude Code (sonnet), 6.4 seconds", src: "shots/313-real-explain.webp", width: 1280, height: 800, alt: "The nginx page on Docker Hub with numbered markers on the tabs, the tag list and the copy button, and the bar explaining each one." },
 ];
 
 // The real icon of each app or website the page names, by its name as it

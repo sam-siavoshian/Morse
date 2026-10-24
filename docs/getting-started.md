@@ -95,7 +95,7 @@ restart it, because it can only connect when the app starts.
 From a terminal, `morse launch spotify` does the same. The whole story, and
 which apps can't work: [Desktop apps](desktop.md).
 
-![Pointing at the player controls in a desktop app](screenshots/120-electron-point.png)
+![The bar in Visual Studio Code, with the guide: point, describe, save](screenshots/320-vscode-ask.png)
 
 ## “Allow User Scripts”, only when a change needs it
 
@@ -117,8 +117,6 @@ Morse closes both and takes you back to your tab, where the change runs.
   bigger text and more. See [Edit tools and Page tools](edit-and-page-tools.md).
 - The first time, a short guide in the bar shows you each step.
 
-![The guide in the bar: point, describe, save](screenshots/71-coach.png)
-
 ## Shortcuts
 
 These are the defaults. Change any of them in Settings, in the bar.
@@ -133,8 +131,6 @@ These are the defaults. Change any of them in Settings, in the bar.
 
 In the bar, **F1** shows example sentences and **?** shows every shortcut
 you have.
-
-![Help in the bar](screenshots/72-help.png)
 
 ## Using Morse with the keyboard or a screen reader
 

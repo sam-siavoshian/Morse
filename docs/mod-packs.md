@@ -4,11 +4,6 @@ A pack is a few mods with a name and a note, shared and installed together. It i
 
 A pack travels the same ways a mod does: as a share link, as a file, or from an address your team keeps it at. Whoever installs it sees every mod in it first, and chooses which ones they want.
 
-| | |
-|---|---|
-| ![](screenshots/160-pack-choose.png) **Make a pack…**: tick the mods to put in it | ![](screenshots/161-pack-make.png) **Name and note**, then Copy link or Download pack file |
-| ![](screenshots/163-pack-review.png) **Installing**: every mod, what it does and where. Untick what you don't want | ![](screenshots/165-pack-panel.png) **The Mods panel**: the pack's mods under its name, with one switch |
-
 ## Make a pack
 
 1. Open the Mods panel and press **Make a pack…** (under Packs, near the bottom).
@@ -23,8 +18,6 @@ The Mods panel shows the mods for the site you're on. To put mods for several si
 ## Install a pack
 
 Open the link, or in the Mods panel press **Install a mod…** and paste the link, the text of a pack file, or the address of a pack. **Install from a file…** takes a pack file too.
-
-![The share page for a pack](screenshots/162-pack-share-page.png)
 
 Morse shows one review for the whole pack. For each mod:
 
@@ -52,16 +45,12 @@ A pack's mods are listed together under the pack's name.
 
 A team can keep its pack as a file in its own repository, and everyone gets the changes. To get updates, install the pack from its address (for a file on GitHub, the address of the raw file) and tick **Check this address for updates** at the end of the review. It is never ticked for you.
 
-![The end of the review: Check this address for updates](screenshots/164-pack-review-updates.png)
-
 - Morse checks the address at most once a day, when you open the Mods panel. It asks the server whether the file changed since last time, reads at most 2 MB, and if the address can't be reached it keeps the copy it has and tries again later.
 - When the pack changed, the pack shows **Update available** in the Mods panel. **Review…** shows what changed: mods that changed (with the lines that changed, and a note if one would now run on more sites), new mods, and mods that are no longer in the pack. Mods you left out before stay unticked.
 - Nothing installs on its own. Untick anything you don't want, then press **Update**. Your old versions stay in History. A mod that left the pack is removed, unless you untick it: then it stays as your own mod.
 - **Stop updates** in the Mods panel stops checking. The pack's mods stay installed.
 
 Updates only come from an https:// address. (While you make a pack, an address on your own computer works too.)
-
-![The update review](screenshots/166-pack-update.png)
 
 ## From the command line
 

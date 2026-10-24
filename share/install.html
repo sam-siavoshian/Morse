@@ -103,7 +103,7 @@
   addEventListener("hashchange", () => location.reload());
   const root = document.getElementById("root");
   const check = `<span class="i-glyph" aria-hidden="true">✓</span>`;
-  const warn = `<span class="i-glyph" aria-hidden="true">⚠&#xfe0e;</span>`;
+  const warn = `<span class="i-glyph" aria-hidden="true">!</span>`;
   const lines = s => t("install.lines", { n: s.trimEnd().split("\n").length });
   // packs hook: a link can carry a pack; it gets its own page (showPack, below).
   const pack = await decodeShareText(location.href).then(txt => { try { return isPack(JSON.parse(txt)) ? txt : null; } catch { return null; } }, () => null);
