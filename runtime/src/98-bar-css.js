@@ -44,11 +44,11 @@ function BAR_CSS() { return `
   .hint .note { color: var(--m-text-2); font-style: normal; overflow: hidden; text-overflow: ellipsis; }
   .hint .note::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-block: 0 1px; margin-inline: 0 8px; border-radius: 2px; background: var(--m-warn); vertical-align: middle; }
   .hint:has(.note) ~ .ticker { display: none; }
-  /* a result with a sentence for a note (“Needs “Allow User Scripts” to work…”, “Stopped…”):
+  /* a result with a sentence for a note (the waiting note, “Stopped…”):
      the note gives way before the title does, and ends in an ellipsis (the hint's title has it all) */
   .hint:has(.said) .ok { flex: 0 1 auto; }
   .hint .ok + .dim.said { flex: 0 1000 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  /* one more thing to do (Turn on “Allow User Scripts”, Model settings): the hint gets a row of its own */
+  /* one more thing to do (the waiting button, Model settings: data-ob): the hint gets a row of its own */
   .status:has(> .actions > [data-ob]) { flex-wrap: wrap; row-gap: 4px; }
   .status:has(> .actions > [data-ob]) > .hint { flex: 1 1 100%; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

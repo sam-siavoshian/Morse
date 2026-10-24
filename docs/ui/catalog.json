@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-24T19:33:47.318Z",
+ "generated": "2026-10-24T20:53:25.631Z",
  "shots": [
   {
    "area": "toast",
@@ -1194,102 +1194,6 @@
    "note": ""
   },
   {
-   "area": "suggestions",
-   "state": "page-dark",
-   "theme": "dark",
-   "file": "suggestions/page-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "media-dark",
-   "theme": "dark",
-   "file": "suggestions/media-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "chip-focus-dark",
-   "theme": "dark",
-   "file": "suggestions/chip-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "chip-focus-next-dark",
-   "theme": "dark",
-   "file": "suggestions/chip-focus-next-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "chip-hover-dark",
-   "theme": "dark",
-   "file": "suggestions/chip-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "button-rename-dark",
-   "theme": "dark",
-   "file": "suggestions/button-rename-dark.png",
-   "issues": [],
-   "note": "Rename… fills the input and leaves the caret between the quotes"
-  },
-  {
-   "area": "history",
-   "state": "previous-dark",
-   "theme": "dark",
-   "file": "history/previous-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "history",
-   "state": "oldest-dark",
-   "theme": "dark",
-   "file": "history/oldest-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "stop",
-   "state": "working-dark",
-   "theme": "dark",
-   "file": "stop/working-dark.png",
-   "issues": [],
-   "note": "focus moves to Stop, so Enter/Space stop too"
-  },
-  {
-   "area": "stop",
-   "state": "button-focus-dark",
-   "theme": "dark",
-   "file": "stop/button-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "stop",
-   "state": "button-hover-dark",
-   "theme": "dark",
-   "file": "stop/button-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "stop",
-   "state": "cancelled-dark",
-   "theme": "dark",
-   "file": "stop/cancelled-dark.png",
-   "issues": [],
-   "note": "partial CSS removed, prompt kept; any edit clears the note"
-  },
-  {
    "area": "gallery",
    "state": "chip-dark",
    "theme": "dark",
@@ -1990,38 +1894,6 @@
    "note": ""
   },
   {
-   "area": "edit-toolbar",
-   "state": "tab-walk-dark",
-   "theme": "dark",
-   "file": "edit-toolbar/tab-walk-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "shift-tab-dark",
-   "theme": "dark",
-   "file": "edit-toolbar/shift-tab-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-type",
-   "state": "no-room-above-dark",
-   "theme": "dark",
-   "file": "edit-type/no-room-above-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-color",
-   "state": "no-room-above-dark",
-   "theme": "dark",
-   "file": "edit-color/no-room-above-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
    "area": "heal",
    "state": "bar-dot-dark",
    "theme": "dark",
@@ -2702,78 +2574,6 @@
    "note": ""
   },
   {
-   "area": "suggestions",
-   "state": "page-narrow-dark",
-   "theme": "dark",
-   "file": "suggestions/page-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "media-narrow-dark",
-   "theme": "dark",
-   "file": "suggestions/media-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "chip-focus-narrow-dark",
-   "theme": "dark",
-   "file": "suggestions/chip-focus-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "chip-focus-next-narrow-dark",
-   "theme": "dark",
-   "file": "suggestions/chip-focus-next-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "button-rename-narrow-dark",
-   "theme": "dark",
-   "file": "suggestions/button-rename-narrow-dark.png",
-   "issues": [],
-   "note": "Rename… fills the input and leaves the caret between the quotes"
-  },
-  {
-   "area": "history",
-   "state": "previous-narrow-dark",
-   "theme": "dark",
-   "file": "history/previous-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "history",
-   "state": "oldest-narrow-dark",
-   "theme": "dark",
-   "file": "history/oldest-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "stop",
-   "state": "working-narrow-dark",
-   "theme": "dark",
-   "file": "stop/working-narrow-dark.png",
-   "issues": [],
-   "note": "focus moves to Stop, so Enter/Space stop too"
-  },
-  {
-   "area": "stop",
-   "state": "cancelled-narrow-dark",
-   "theme": "dark",
-   "file": "stop/cancelled-narrow-dark.png",
-   "issues": [],
-   "note": "partial CSS removed, prompt kept; any edit clears the note"
-  },
-  {
    "area": "gallery",
    "state": "chip-narrow-dark",
    "theme": "dark",
@@ -3134,38 +2934,6 @@
    "state": "fixed-result-narrow-dark",
    "theme": "dark",
    "file": "iterate/fixed-result-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "tab-walk-narrow-dark",
-   "theme": "dark",
-   "file": "edit-toolbar/tab-walk-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "shift-tab-narrow-dark",
-   "theme": "dark",
-   "file": "edit-toolbar/shift-tab-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-type",
-   "state": "no-room-above-narrow-dark",
-   "theme": "dark",
-   "file": "edit-type/no-room-above-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-color",
-   "state": "no-room-above-narrow-dark",
-   "theme": "dark",
-   "file": "edit-color/no-room-above-narrow-dark.png",
    "issues": [],
    "note": ""
   },
@@ -4714,102 +4482,6 @@
    "note": ""
   },
   {
-   "area": "suggestions",
-   "state": "page-light",
-   "theme": "light",
-   "file": "suggestions/page-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "media-light",
-   "theme": "light",
-   "file": "suggestions/media-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "chip-focus-light",
-   "theme": "light",
-   "file": "suggestions/chip-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "chip-focus-next-light",
-   "theme": "light",
-   "file": "suggestions/chip-focus-next-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "chip-hover-light",
-   "theme": "light",
-   "file": "suggestions/chip-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "button-rename-light",
-   "theme": "light",
-   "file": "suggestions/button-rename-light.png",
-   "issues": [],
-   "note": "Rename… fills the input and leaves the caret between the quotes"
-  },
-  {
-   "area": "history",
-   "state": "previous-light",
-   "theme": "light",
-   "file": "history/previous-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "history",
-   "state": "oldest-light",
-   "theme": "light",
-   "file": "history/oldest-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "stop",
-   "state": "working-light",
-   "theme": "light",
-   "file": "stop/working-light.png",
-   "issues": [],
-   "note": "focus moves to Stop, so Enter/Space stop too"
-  },
-  {
-   "area": "stop",
-   "state": "button-focus-light",
-   "theme": "light",
-   "file": "stop/button-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "stop",
-   "state": "button-hover-light",
-   "theme": "light",
-   "file": "stop/button-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "stop",
-   "state": "cancelled-light",
-   "theme": "light",
-   "file": "stop/cancelled-light.png",
-   "issues": [],
-   "note": "partial CSS removed, prompt kept; any edit clears the note"
-  },
-  {
    "area": "gallery",
    "state": "chip-light",
    "theme": "light",
@@ -5510,38 +5182,6 @@
    "note": ""
   },
   {
-   "area": "edit-toolbar",
-   "state": "tab-walk-light",
-   "theme": "light",
-   "file": "edit-toolbar/tab-walk-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "shift-tab-light",
-   "theme": "light",
-   "file": "edit-toolbar/shift-tab-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-type",
-   "state": "no-room-above-light",
-   "theme": "light",
-   "file": "edit-type/no-room-above-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-color",
-   "state": "no-room-above-light",
-   "theme": "light",
-   "file": "edit-color/no-room-above-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
    "area": "heal",
    "state": "bar-dot-light",
    "theme": "light",
@@ -6222,78 +5862,6 @@
    "note": ""
   },
   {
-   "area": "suggestions",
-   "state": "page-narrow-light",
-   "theme": "light",
-   "file": "suggestions/page-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "media-narrow-light",
-   "theme": "light",
-   "file": "suggestions/media-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "chip-focus-narrow-light",
-   "theme": "light",
-   "file": "suggestions/chip-focus-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "chip-focus-next-narrow-light",
-   "theme": "light",
-   "file": "suggestions/chip-focus-next-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "suggestions",
-   "state": "button-rename-narrow-light",
-   "theme": "light",
-   "file": "suggestions/button-rename-narrow-light.png",
-   "issues": [],
-   "note": "Rename… fills the input and leaves the caret between the quotes"
-  },
-  {
-   "area": "history",
-   "state": "previous-narrow-light",
-   "theme": "light",
-   "file": "history/previous-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "history",
-   "state": "oldest-narrow-light",
-   "theme": "light",
-   "file": "history/oldest-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "stop",
-   "state": "working-narrow-light",
-   "theme": "light",
-   "file": "stop/working-narrow-light.png",
-   "issues": [],
-   "note": "focus moves to Stop, so Enter/Space stop too"
-  },
-  {
-   "area": "stop",
-   "state": "cancelled-narrow-light",
-   "theme": "light",
-   "file": "stop/cancelled-narrow-light.png",
-   "issues": [],
-   "note": "partial CSS removed, prompt kept; any edit clears the note"
-  },
-  {
    "area": "gallery",
    "state": "chip-narrow-light",
    "theme": "light",
@@ -6654,38 +6222,6 @@
    "state": "fixed-result-narrow-light",
    "theme": "light",
    "file": "iterate/fixed-result-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "tab-walk-narrow-light",
-   "theme": "light",
-   "file": "edit-toolbar/tab-walk-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "shift-tab-narrow-light",
-   "theme": "light",
-   "file": "edit-toolbar/shift-tab-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-type",
-   "state": "no-room-above-narrow-light",
-   "theme": "light",
-   "file": "edit-type/no-room-above-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-color",
-   "state": "no-room-above-narrow-light",
-   "theme": "light",
-   "file": "edit-color/no-room-above-narrow-light.png",
    "issues": [],
    "note": ""
   },
@@ -12742,6 +12278,518 @@
    "state": "fa-panel-foot-narrow-light",
    "theme": "light",
    "file": "i18n/fa-panel-foot-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "page-dark",
+   "theme": "dark",
+   "file": "suggestions/page-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "media-dark",
+   "theme": "dark",
+   "file": "suggestions/media-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-dark",
+   "theme": "dark",
+   "file": "suggestions/chip-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-next-dark",
+   "theme": "dark",
+   "file": "suggestions/chip-focus-next-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-hover-dark",
+   "theme": "dark",
+   "file": "suggestions/chip-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "button-rename-dark",
+   "theme": "dark",
+   "file": "suggestions/button-rename-dark.png",
+   "issues": [],
+   "note": "Rename… fills the input and leaves the caret between the quotes"
+  },
+  {
+   "area": "history",
+   "state": "previous-dark",
+   "theme": "dark",
+   "file": "history/previous-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "history",
+   "state": "oldest-dark",
+   "theme": "dark",
+   "file": "history/oldest-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "working-dark",
+   "theme": "dark",
+   "file": "stop/working-dark.png",
+   "issues": [],
+   "note": "focus moves to Stop, so Enter/Space stop too"
+  },
+  {
+   "area": "stop",
+   "state": "button-focus-dark",
+   "theme": "dark",
+   "file": "stop/button-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "button-hover-dark",
+   "theme": "dark",
+   "file": "stop/button-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "cancelled-dark",
+   "theme": "dark",
+   "file": "stop/cancelled-dark.png",
+   "issues": [],
+   "note": "partial CSS removed, prompt kept; any edit clears the note"
+  },
+  {
+   "area": "suggestions",
+   "state": "page-narrow-dark",
+   "theme": "dark",
+   "file": "suggestions/page-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "media-narrow-dark",
+   "theme": "dark",
+   "file": "suggestions/media-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-narrow-dark",
+   "theme": "dark",
+   "file": "suggestions/chip-focus-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-next-narrow-dark",
+   "theme": "dark",
+   "file": "suggestions/chip-focus-next-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "button-rename-narrow-dark",
+   "theme": "dark",
+   "file": "suggestions/button-rename-narrow-dark.png",
+   "issues": [],
+   "note": "Rename… fills the input and leaves the caret between the quotes"
+  },
+  {
+   "area": "history",
+   "state": "previous-narrow-dark",
+   "theme": "dark",
+   "file": "history/previous-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "history",
+   "state": "oldest-narrow-dark",
+   "theme": "dark",
+   "file": "history/oldest-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "working-narrow-dark",
+   "theme": "dark",
+   "file": "stop/working-narrow-dark.png",
+   "issues": [],
+   "note": "focus moves to Stop, so Enter/Space stop too"
+  },
+  {
+   "area": "stop",
+   "state": "cancelled-narrow-dark",
+   "theme": "dark",
+   "file": "stop/cancelled-narrow-dark.png",
+   "issues": [],
+   "note": "partial CSS removed, prompt kept; any edit clears the note"
+  },
+  {
+   "area": "suggestions",
+   "state": "page-light",
+   "theme": "light",
+   "file": "suggestions/page-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "media-light",
+   "theme": "light",
+   "file": "suggestions/media-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-light",
+   "theme": "light",
+   "file": "suggestions/chip-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-next-light",
+   "theme": "light",
+   "file": "suggestions/chip-focus-next-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-hover-light",
+   "theme": "light",
+   "file": "suggestions/chip-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "button-rename-light",
+   "theme": "light",
+   "file": "suggestions/button-rename-light.png",
+   "issues": [],
+   "note": "Rename… fills the input and leaves the caret between the quotes"
+  },
+  {
+   "area": "history",
+   "state": "previous-light",
+   "theme": "light",
+   "file": "history/previous-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "history",
+   "state": "oldest-light",
+   "theme": "light",
+   "file": "history/oldest-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "working-light",
+   "theme": "light",
+   "file": "stop/working-light.png",
+   "issues": [],
+   "note": "focus moves to Stop, so Enter/Space stop too"
+  },
+  {
+   "area": "stop",
+   "state": "button-focus-light",
+   "theme": "light",
+   "file": "stop/button-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "button-hover-light",
+   "theme": "light",
+   "file": "stop/button-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "cancelled-light",
+   "theme": "light",
+   "file": "stop/cancelled-light.png",
+   "issues": [],
+   "note": "partial CSS removed, prompt kept; any edit clears the note"
+  },
+  {
+   "area": "suggestions",
+   "state": "page-narrow-light",
+   "theme": "light",
+   "file": "suggestions/page-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "media-narrow-light",
+   "theme": "light",
+   "file": "suggestions/media-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-narrow-light",
+   "theme": "light",
+   "file": "suggestions/chip-focus-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-next-narrow-light",
+   "theme": "light",
+   "file": "suggestions/chip-focus-next-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "button-rename-narrow-light",
+   "theme": "light",
+   "file": "suggestions/button-rename-narrow-light.png",
+   "issues": [],
+   "note": "Rename… fills the input and leaves the caret between the quotes"
+  },
+  {
+   "area": "history",
+   "state": "previous-narrow-light",
+   "theme": "light",
+   "file": "history/previous-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "history",
+   "state": "oldest-narrow-light",
+   "theme": "light",
+   "file": "history/oldest-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "working-narrow-light",
+   "theme": "light",
+   "file": "stop/working-narrow-light.png",
+   "issues": [],
+   "note": "focus moves to Stop, so Enter/Space stop too"
+  },
+  {
+   "area": "stop",
+   "state": "cancelled-narrow-light",
+   "theme": "light",
+   "file": "stop/cancelled-narrow-light.png",
+   "issues": [],
+   "note": "partial CSS removed, prompt kept; any edit clears the note"
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tab-walk-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tab-walk-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "shift-tab-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/shift-tab-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "no-room-above-dark",
+   "theme": "dark",
+   "file": "edit-type/no-room-above-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "no-room-above-dark",
+   "theme": "dark",
+   "file": "edit-color/no-room-above-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "reach-page-tools-dark",
+   "theme": "dark",
+   "file": "bar/reach-page-tools-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "reach-suggestion-dark",
+   "theme": "dark",
+   "file": "bar/reach-suggestion-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "dodge-to-point-dark",
+   "theme": "dark",
+   "file": "bar/dodge-to-point-dark.png",
+   "issues": [],
+   "note": "a quick pass over the input, away from any control: the bar still steps aside so what is under it can be pointed at"
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tab-walk-narrow-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tab-walk-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "shift-tab-narrow-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/shift-tab-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "no-room-above-narrow-dark",
+   "theme": "dark",
+   "file": "edit-type/no-room-above-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "no-room-above-narrow-dark",
+   "theme": "dark",
+   "file": "edit-color/no-room-above-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tab-walk-light",
+   "theme": "light",
+   "file": "edit-toolbar/tab-walk-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "shift-tab-light",
+   "theme": "light",
+   "file": "edit-toolbar/shift-tab-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "no-room-above-light",
+   "theme": "light",
+   "file": "edit-type/no-room-above-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "no-room-above-light",
+   "theme": "light",
+   "file": "edit-color/no-room-above-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "reach-page-tools-light",
+   "theme": "light",
+   "file": "bar/reach-page-tools-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "reach-suggestion-light",
+   "theme": "light",
+   "file": "bar/reach-suggestion-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "dodge-to-point-light",
+   "theme": "light",
+   "file": "bar/dodge-to-point-light.png",
+   "issues": [],
+   "note": "a quick pass over the input, away from any control: the bar still steps aside so what is under it can be pointed at"
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tab-walk-narrow-light",
+   "theme": "light",
+   "file": "edit-toolbar/tab-walk-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "shift-tab-narrow-light",
+   "theme": "light",
+   "file": "edit-toolbar/shift-tab-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "no-room-above-narrow-light",
+   "theme": "light",
+   "file": "edit-type/no-room-above-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "no-room-above-narrow-light",
+   "theme": "light",
+   "file": "edit-color/no-room-above-narrow-light.png",
    "issues": [],
    "note": ""
   }
