@@ -39,7 +39,7 @@ ${A11Y_CSS() /* Easier to use hook: 98-a11y-css.js */}</style>
     </div>
   </div>
   <aside class="panel" hidden></aside>
-  <div class="modal" hidden></div>
+  <dialog class="modal" hidden></dialog>
   <div class="toast" hidden></div>`;
 const $ = s => root.querySelector(s);
 const fx = $(".fx"), hl = $(".hl"), selBox = $(".sel"), bar = $(".bar"), input = $(".in");
@@ -53,7 +53,20 @@ function applyTheme() {
   hostEl.style.setProperty("zoom", String(1 / z), "important");
   hostEl.style.setProperty("filter", overlayUnfilter(), "important"); // your-style hook: 72-style.js
 }
-function mount() { if (!hostEl.isConnected && live()) document.documentElement.append(hostEl); }
+// The overlay lives in the browser's top layer (a manual popover), above
+// anything a page can stack with z-index, so a page can't draw over the bar or
+// a review to trick a click. Reviews also open as a modal <dialog> on top of it
+// (80-modals.js). TopLayer.raise() puts Morse back on top after the page adds
+// something of its own to the top layer (80-modals.js watches for that).
+const TopLayer = {
+  ok: typeof hostEl.showPopover === "function", // desktop apps on an older Chromium: z-index only
+  show() { if (this.ok && hostEl.isConnected && !hostEl.matches(":popover-open")) try { hostEl.showPopover(); } catch {} },
+  raise() { if (!this.ok || !hostEl.isConnected) return; try { if (hostEl.matches(":popover-open")) hostEl.hidePopover(); } catch {} this.show(); },
+};
+if (TopLayer.ok) hostEl.popover = "manual";
+function mount() { if (!hostEl.isConnected && live()) document.documentElement.append(hostEl); TopLayer.show(); }
 mount();
 applyTheme();
 new MutationObserver(mount).observe(document.documentElement, { childList: true });
+// The page closed the overlay's popover (it can reach the host element): open it again.
+hostEl.addEventListener("toggle", e => { if (e.newState === "closed" && live()) setTimeout(() => TopLayer.show(), 0); });

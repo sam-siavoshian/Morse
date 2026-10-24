@@ -6,6 +6,8 @@
 function PACKS_CSS() { return `
   /* ---- the reviews: one block per mod, with a tick */
   .pk-card { width: min(680px, calc(100vw - 32px)); }
+  /* a pack can be long: Install / Update stay in view at the bottom of the card */
+  .pk-card footer { position: sticky; bottom: -20px; z-index: 1; margin: 16px -20px -20px; padding: 12px 20px 20px; background: var(--m-surface); border-top: 1px solid var(--m-line); }
   .pk-note { margin: 0 0 12px; padding: 8px 12px; border-left: 2px solid var(--m-line-strong); color: var(--m-text-2); overflow-wrap: anywhere; }
   .pk-items { display: grid; gap: 8px; }
   .pk-item { padding: 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-bg); transition: opacity var(--m-fast); }
@@ -36,7 +38,10 @@ function PACKS_CSS() { return `
   .pk-sub small { display: block; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 16px; }
   .pk-subbed { margin: 16px 0 0; color: var(--m-text-2); font-size: var(--m-text-sm); }
   .card .ctl-h + .pk-items { margin-top: 0; }
-  .card button:disabled { opacity: .5; cursor: default; }
+  /* Install with nothing ticked, or while it installs. Color only: no opacity or filter on a
+     review's button, or the browser can't tell it's uncovered (80-modals.js settleReview). */
+  .pk-card button:disabled { cursor: default; }
+  .pk-card button.primary[data-settle="busy"]:disabled { background: var(--m-line-strong) !important; border-color: var(--m-line-strong) !important; color: var(--m-text-2) !important; }
 
   /* ---- Make a pack */
   .pk-field { display: flex; align-items: center; padding: 0 12px; }

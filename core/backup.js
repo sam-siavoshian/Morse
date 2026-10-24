@@ -2,6 +2,7 @@
 // hands Morse to install (a share link, a .morse.json, or a backup file).
 
 import { decodeShareText, validateMod, hostOf } from "./mod.js";
+import { asReviewed } from "./summary.js";
 import { parsePack, isPack, MAX_PACK_BYTES } from "./pack.js"; // packs hook
 
 export const BACKUP_KIND = "morse-backup";
@@ -30,7 +31,7 @@ export async function parseImport(source) {
     let data, text = ""; // packs hook: a link can carry a pack (core/pack.js)
     try { text = await decodeShareText(src); data = JSON.parse(text); } catch (e) { if (/^This /.test(e.message)) throw e; throw new Error("This share link is broken. Check that you copied the whole link."); }
     if (isPack(data)) { const p = parsePack(text); return { kind: "pack", pack: p.pack, mods: p.pack.mods, errors: p.errors }; }
-    return { kind: "link", mods: [validateMod(data)], errors: [] };
+    return { kind: "link", mods: [asReviewed(validateMod(data))], errors: [] };
   }
   let data;
   try { data = JSON.parse(src); }
@@ -44,7 +45,7 @@ export async function parseImport(source) {
   const raw = Array.isArray(data) ? data : backup ? data.mods : [data];
   const mods = [], errors = [];
   raw.forEach((m, i) => {
-    try { mods.push(validateMod(m)); }
+    try { mods.push(asReviewed(validateMod(m))); }
     catch (e) { errors.push(`Item ${i + 1}: ${e.message}`); }
   });
   if (!mods.length) throw new Error(errors[0]?.replace(/^Item 1: /, "") || "There are no mods in this file. Check that it is a Morse backup.");
@@ -53,8 +54,10 @@ export async function parseImport(source) {
 
 // What gets saved when someone installs: on, marked as imported, with where
 // it came from and when. A backup keeps each mod's on/off state and history.
+// Never an edit list (asReviewed, core/summary.js): what you install is the
+// code the review showed.
 export function prepareInstall(mod, { kind = "link", where = {}, now = new Date() } = {}) {
-  const m = validateMod({ ...mod });
+  const m = asReviewed(validateMod({ ...mod }));
   // Hand-written files may leave out the dates the lists sort and show by.
   for (const k of ["created", "updated"]) if (typeof m[k] !== "string" || isNaN(Date.parse(m[k]))) m[k] = now.toISOString();
   const match = m.match && Array.isArray(m.match.hosts) ? m.match : { hosts: [hostOf(where.url)], app: where.app || null };

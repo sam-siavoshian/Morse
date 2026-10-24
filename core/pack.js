@@ -16,7 +16,7 @@
 
 import { validateMod, stripLocal, encodeShareText, decodeShareText, newId } from "./mod.js";
 import { prepareInstall } from "./backup.js";
-import { modHosts, broadEndings } from "./summary.js";
+import { modHosts, broadEndings, asReviewed } from "./summary.js";
 import { reviseMod } from "./versions.js";
 
 export const PACK_KIND = "morse-pack";
@@ -43,13 +43,13 @@ const slug = s => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").repl
 export const isPack = d => !!d && typeof d === "object" && !Array.isArray(d) && d.morse === PACK_KIND;
 
 // A mod as it goes into a pack, or comes out of one: the shared fields only.
-// Nothing about this computer (on/off, History, where it came from), and no
-// "kind" a normal mod doesn't have: a mod can't arrive as Your style (which
-// the Mods panel lists apart) or as part of it.
+// Nothing about this computer (on/off, History, where it came from), no edit
+// list (asReviewed: the code shown is the code installed), and no "kind": a
+// mod can't arrive as Your style (which the Mods panel lists apart) or as
+// part of it.
 function packMod(m) {
-  const { imported, importedFrom, importedAt, pack, parent, kind, ...rest } = stripLocal(m);
+  const { imported, importedFrom, importedAt, pack, parent, kind, ...rest } = asReviewed(stripLocal(m));
   const out = { ...rest };
-  if (kind === "manual" || kind === "quick") out.kind = kind;
   out.title = cleanText(out.title, MAX_TITLE) || "Untitled mod";
   if (typeof out.prompt === "string" && out.prompt.length > MAX_REQUEST) out.prompt = out.prompt.slice(0, MAX_REQUEST);
   if (out.author !== undefined) { const a = cleanText(out.author, 60); if (a) out.author = a; else delete out.author; }

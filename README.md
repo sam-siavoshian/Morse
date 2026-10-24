@@ -26,7 +26,7 @@ You need [Node](https://nodejs.org) 22 or newer. Full steps, and what to do when
 
 1. Get Morse: `npm install -g morse-cli` (until the first npm release: `npm install -g github:sam-siavoshian/RRAA`).
 2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and choose the folder `morse extension` prints. The welcome page opens.
-3. In Morse's details, turn on **“Allow User Scripts”**, so mods that add buttons work on every site.
+3. In Morse's details, turn on **“Allow User Scripts”**, so mods that add buttons or features can run.
 4. Connect a model: the welcome page shows one command, `morse setup --pair <code>`. Paste it in a terminal. It finds Claude Code or Codex, checks that it answers, and the page connects by itself. Then press **⌥Space** (Ctrl+Shift+Space on Windows and Linux) on any page.
 
 **Desktop apps (Spotify, Slack, Discord, VS Code…)**

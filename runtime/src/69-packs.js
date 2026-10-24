@@ -90,10 +90,15 @@ const Packs = (() => {
       ${r.url ? (r.subscribed
         ? `<p class="pk-subbed">You get updates from this address already.</p>`
         : `<label class="pk-sub"><input type="checkbox" data-pk="sub"><span><b>Check this address for updates</b><small>At most once a day. When the pack changes, Morse shows you what changed first. Nothing installs on its own.</small></span></label>`) : ""}
-      <footer><button data-a="close">Cancel</button><button class="primary" data-pk="install">Install</button></footer>`);
+      <footer><button data-a="close">Cancel</button><button class="primary" data-pk="install" data-settle>Install</button></footer>`, { review: true }); // top layer, 80-modals.js
     modal.querySelector(".card").classList.add("ctl-card", "pk-card");
     const go = modal.querySelector("[data-pk=install]");
-    const count = () => { const n = picked("add").length; go.textContent = n ? `Install ${n}` : "Install"; go.disabled = !n; };
+    // Install turns on once the review has been seen (80-modals.js settleReview), and only with something ticked.
+    const count = () => {
+      const n = picked("add").length;
+      go.textContent = n ? `Install ${n}` : "Install";
+      if (n) { go.dataset.settle = ""; settleReview(); } else { go.dataset.settle = "busy"; go.disabled = true; }
+    };
     wireItems(count);
     count();
     modal.querySelector("footer [data-a=close]")?.focus(); // Cancel, never Install: a page could make someone press Enter
@@ -103,6 +108,7 @@ const Packs = (() => {
       const picks = picked("add").map(s => ({ id: s.dataset.pkid, as: s.querySelector("[data-pk-as][aria-checked=true]")?.dataset.pkAs || "copy" }));
       if (!picks.length) return;
       go.disabled = true;
+      go.dataset.settle = "busy"; // a review brought back on top doesn't turn it on again mid-install
       try {
         const res = await call("pack.install", { source: r.source ?? source, hash: r.hash, picks, url: r.url || "", subscribe: !!modal.querySelector("[data-pk=sub]")?.checked });
         watch.disconnect();
@@ -112,7 +118,7 @@ const Packs = (() => {
         done({ title: pack.name, count: n, pack: true });
         await syncMods();
         load({ again: true });
-      } catch (err) { go.disabled = false; toast(plainError(err)); }
+      } catch (err) { go.dataset.settle = ""; settleReview(); toast(plainError(err)); }
     };
   }
 
@@ -128,7 +134,7 @@ const Packs = (() => {
   function panelHtml() {
     if (!S.mods.some(m => m.kind !== "style")) return;
     const back = panel.querySelector(".ctl-backup");
-    const html = `<div class="ctl-backup pk-bar"><span>Packs</span>${st.picking ? "" : `<button data-pk="make" title="Share several mods together">Make a pack…</button>`}</div>`;
+    const html = `<div class="ctl-backup pk-bar"><span class="eyebrow">Packs</span>${st.picking ? "" : `<button data-pk="make" title="Share several mods together">Make a pack…</button>`}</div>`;
     if (back) back.insertAdjacentHTML("beforebegin", html);
     else panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", html);
   }
@@ -244,7 +250,7 @@ const Packs = (() => {
       const before = JSON.stringify(st.subs.map(s => [s.id, s.hash, !!s.update]));
       st.subs = Array.isArray(r) ? r.filter(s => s && typeof s.id === "string") : [];
       if (JSON.stringify(st.subs.map(s => [s.id, s.hash, !!s.update])) !== before && !panel.hidden && !st.picking) renderPanel();
-    }, () => {}).finally(() => { setTimeout(() => (st.loading = null), 2000); });
+    }, () => {}).finally(() => { st.loading = null; }); // one at a time; the host answers from its cache within the day
     return st.loading;
   }
 
@@ -290,17 +296,19 @@ const Packs = (() => {
     openModal(`
       <header><b>Update “${esc(sub.name)}”?</b><small>From ${esc(site)}${sub.checked ? ` · checked ${esc(relativeTime(new Date(sub.checked).toISOString()))}` : ""}. Nothing changes until you press Update.</small><button data-a="close" aria-label="Close">×</button></header>
       <div class="gl-what"><h5>What changed</h5><p>${esc(parts.join(" · "))}</p>${u.note ? `<p class="gl-note">“${esc(u.note)}”</p>` : ""}</div>
-      ${u.added.length ? `<h4 class="ctl-h">New in the pack</h4><div class="pk-items">${u.added.map(m => itemHtml(m, { ticked: !declined.has(m.id) && !wide(m), why: "Not ticked: tick it if you want it." })).join("")}</div>` : ""}
-      ${u.changed.length ? `<h4 class="ctl-h">Changed</h4><div class="pk-items">${u.changed.map(changedHtml).join("")}</div>` : ""}
-      ${u.removed.length ? `<h4 class="ctl-h">No longer in the pack</h4><div class="pk-items">${u.removed.map(removedHtml).join("")}</div>` : ""}
+      ${u.added.length ? `<h4 class="ctl-h eyebrow">New in the pack</h4><div class="pk-items">${u.added.map(m => itemHtml(m, { ticked: !declined.has(m.id) && !wide(m), why: "Not ticked: tick it if you want it." })).join("")}</div>` : ""}
+      ${u.changed.length ? `<h4 class="ctl-h eyebrow">Changed</h4><div class="pk-items">${u.changed.map(changedHtml).join("")}</div>` : ""}
+      ${u.removed.length ? `<h4 class="ctl-h eyebrow">No longer in the pack</h4><div class="pk-items">${u.removed.map(removedHtml).join("")}</div>` : ""}
       <p class="dim gl-hist">Your versions of changed mods stay in History, so you can go back to them.</p>
-      <footer><button data-a="close">Not now</button><button class="primary" data-pk="apply">Update</button></footer>`);
+      <footer><button data-a="close">Not now</button><button class="primary" data-pk="apply" data-settle>Update</button></footer>`, { review: true }); // top layer, 80-modals.js
     modal.querySelector(".card").classList.add("ctl-card", "pk-card");
     wireItems(() => {});
     modal.querySelector("footer [data-a=close]")?.focus();
     modal.querySelector("[data-pk=apply]").onclick = async e => {
       const ids = kind => picked(kind).map(s => s.dataset.pkid);
-      e.currentTarget.disabled = true;
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.dataset.settle = "busy";
       try {
         const r = await call("pack.update", { url: sub.url, hash: sub.hash, picks: { add: ids("add"), change: ids("change"), remove: ids("remove") } });
         modal.hidden = true;
@@ -308,7 +316,7 @@ const Packs = (() => {
         sub.update = null;
         await syncMods();
         await load({ again: true });
-      } catch (err) { e.currentTarget.disabled = false; toast(plainError(err)); }
+      } catch (err) { btn.dataset.settle = ""; settleReview(); toast(plainError(err)); }
     };
   }
 

@@ -45,10 +45,21 @@ function installMorseKit() {
   let cur = null;           // the mod whose code is running (for __hung)
   let depth = 0;            // > 0 while any mod's code is running
 
+  // speed: a mod's late errors come from its callbacks. Watch and observer
+  // callbacks for new matches run a frame after a change, so a short wait
+  // covers them; timers need until they first fire; listeners for events that
+  // can happen on their own (timeupdate, scroll, resize…) keep the full window.
+  // Input a person has to make (a click, a key) can't happen during the wait.
+  const SETTLE_MS = 150, SETTLE_MAX = 600;
+  const BY_PERSON = /^(click|dblclick|auxclick|contextmenu|mousedown|mouseup|pointerdown|pointerup|touchstart|touchend|keydown|keyup|keypress|input|change|submit|reset|focus|blur|focusin|focusout|copy|cut|paste|dragstart|drop)$/;
+  const settleFor = (c, ms) => { c.settle = Math.min(SETTLE_MAX, Math.max(c.settle, ms)); };
+  const settleOn = (c, event) => { if (!BY_PERSON.test(String(event))) settleFor(c, SETTLE_MAX); };
+
   function ctxFor(id) {
     if (mods.has(id)) return mods.get(id);
     const c = { id, cleanups: [], errors: [], nerr: 0, observers: new Set(), watches: [], timers: new Set(), frames: new Set(),
-      els: [], elsMax: 256, ms: 0, hits: 0, in: 0, t1: 0, k: 0, g: { w: now(), t: 0, n: 0, h: 0, hot: 0, bulk: 0, flood: 0 } };
+      els: [], elsMax: 256, ms: 0, hits: 0, in: 0, t1: 0, k: 0, g: { w: now(), t: 0, n: 0, h: 0, hot: 0, bulk: 0, flood: 0 },
+      settle: SETTLE_MS }; // speed: how long a host waits before reading its errors (see __run)
     mods.set(id, c);
     return c;
   }
@@ -228,6 +239,7 @@ function installMorseKit() {
   function scope(c) {
     const later = (set, clear, min) => function (fn, ms, ...args) {
       if (typeof fn !== "function") return set(fn, ms);
+      settleFor(c, (min ? Math.max(min, +ms || 0) : +ms || 0) + 60);
       const id = set(guard(c, function () { if (!min) c.timers.delete(id); fn.apply(this, args); }), min ? Math.max(min, +ms || 0) : ms);
       c.timers.add(id);
       return id;
@@ -309,7 +321,7 @@ function installMorseKit() {
           else if (k === "html") el.innerHTML = v;
           else if (k === "class" || k === "className") el.className = v;
           else if (k === "style" && typeof v === "object") Object.assign(el.style, v);
-          else if (k === "on") for (const [ev, fn] of Object.entries(v)) el.addEventListener(ev, guard(c, fn));
+          else if (k === "on") for (const [ev, fn] of Object.entries(v)) { settleOn(c, ev); el.addEventListener(ev, guard(c, fn)); }
           else el.setAttribute(k, v);
         }
         for (const kid of kids.flat()) if (kid != null) el.append(kid.nodeType ? kid : String(kid));
@@ -328,15 +340,18 @@ function installMorseKit() {
       },
       on(target, event, fn, opts) {
         const h = guard(c, fn);
+        settleOn(c, event);
         target.addEventListener(event, h, opts);
         c.cleanups.push(() => target.removeEventListener(event, h, opts));
       },
       every(ms, fn) {
+        settleFor(c, Math.max(L.MIN_EVERY, +ms || 0) + 60);
         const t = setI(guard(c, fn), Math.max(L.MIN_EVERY, +ms || 0)); // guard: a minimum interval
         c.timers.add(t);
         return t;
       },
       after(ms, fn) {
+        settleFor(c, (+ms || 0) + 60);
         const t = setT(guard(c, () => { c.timers.delete(t); fn(); }), ms);
         c.timers.add(t);
         return t;
@@ -428,7 +443,8 @@ function installMorseKit() {
   globalThis.morse = {
     __kit: 1,
     // Runs mod code; returns { ok, error } synchronously (and `paused`: why,
-    // when the guards stopped it while it started).
+    // when the guards stopped it while it started). On success, `settle` is
+    // how many ms a host waits before __errors has seen its callbacks run.
     __run(id, fn) {
       this.__off(id);
       const c = ctxFor(id);
@@ -442,6 +458,7 @@ function installMorseKit() {
       const p = paused.get(id);
       if (p) return { ok: false, error: p.error, paused: p.why };
       if (!res.ok) this.__off(id);
+      else res.settle = c.settle;
       return res;
     },
     __off(id) {
@@ -481,6 +498,10 @@ function installMorseKit() {
 }
 
 export const KIT_SOURCE = `(${installMorseKit.toString()})();`;
+
+// How long a host waits after running a mod before reading morse.__errors:
+// what the kit asked for, or 600 ms from a kit that predates settle.
+export const settleMs = res => (Number.isFinite(res?.settle) ? Math.max(0, Math.min(600, res.settle)) : 600);
 
 // The globals mod code gets the guarded versions of (core/kit.js scope()).
 const SCOPE = ["setTimeout", "setInterval", "clearTimeout", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "MutationObserver"];
