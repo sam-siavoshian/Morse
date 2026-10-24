@@ -5,8 +5,7 @@ hostEl.setAttribute("data-morse-ui", "");
 hostEl.style.cssText = "all:initial;position:fixed;inset:0;pointer-events:none;z-index:2147483647;direction:ltr;zoom:1;display:block;"
   .replace(/;/g, " !important;");
 hostEl.dir = "ltr";
-let DEBUG = false;
-try { DEBUG = !!localStorage.getItem("morse:debug"); } catch {}
+const DEBUG = B.debug; // localStorage "morse:debug": open shadow root, status attribute (tests, screenshots)
 const root = hostEl.attachShadow({ mode: DEBUG ? "open" : "closed" });
 // Tokens are custom properties, the one thing that inherits through a shadow
 // boundary. Marked !important, ours beat any `--m-*` the page sets on our host.
@@ -42,7 +41,9 @@ function applyTheme() {
   const z = parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
   hostEl.style.setProperty("zoom", String(1 / z), "important");
 }
-function mount() { if (!hostEl.isConnected) document.documentElement.append(hostEl); }
+// Built on first use, not at page load. boot.js tells us when the page swaps
+// out <html> or its children (document.open, innerHTML), so we come back.
+function mount() { if (!hostEl.isConnected) document.documentElement?.append(hostEl); }
 mount();
 applyTheme();
-new MutationObserver(mount).observe(document.documentElement, { childList: true });
+B.domHooks.add(mount);

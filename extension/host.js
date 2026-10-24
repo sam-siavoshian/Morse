@@ -17,7 +17,7 @@
   chrome.runtime.onMessage.addListener(m => { if (m && m.morseToggle) subs.forEach(f => f({ type: "toggle" })); });
 
   // The share page (share/install.html) asks to install through us.
-  document.documentElement.dataset.morseExtension = "1";
+  if (document.documentElement) document.documentElement.dataset.morseExtension = "1"; // document_start: the parser may not have made <html> yet
   // Only the official share page may ask, and it only *asks*: the runtime
   // shows the mod and installs it only if the user clicks Install.
   const SHARE_ORIGINS = ["https://sam-siavoshian.github.io", "http://127.0.0.1:8787"];

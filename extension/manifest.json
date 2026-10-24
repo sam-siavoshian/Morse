@@ -8,7 +8,7 @@
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js", "type": "module" },
   "content_scripts": [
-    { "matches": ["<all_urls>"], "js": ["host.js", "runtime.js"], "run_at": "document_idle" }
+    { "matches": ["<all_urls>"], "js": ["host.js", "boot.js"], "run_at": "document_start" }
   ],
   "action": { "default_popup": "popup.html", "default_title": "Morse" },
   "commands": {

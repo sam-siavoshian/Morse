@@ -31,20 +31,18 @@ onEvent(msg => {
   };
 }
 
-(async () => {
+// Take over from boot.js. Until now it has applied the mods, followed
+// navigations and caught the first hotkey; from here the UI's own handlers
+// run, and whatever arrived before it (that hotkey, a host event, a toast)
+// is replayed once the hello reply is in.
+B.adopt({ toast, key: adoptKey, modsChanged() { if (!panel.hidden) renderPanel(); } });
+B.ready.then(hello => {
   try {
-    const hello = await call("hello", { url: location.href });
-    S.label = hello.label; S.mode = hello.mode; S.app = hello.app || null; S.appName = hello.appName || hello.app || null;
-    // Hosts from before settings existed don't send them; ask (or use local ones).
-    if (hello.settings) setPrefs(hello.settings); else await loadPrefs();
+    setPrefs(B.prefs());
     Voice.configure(hello.voice);
     PromptHistory.load();
-    await syncMods();
-    if (!hello.quiet && PREFS.welcome) toast(`Morse is ready · press ${HOTKEY}`);
-  } catch (e) { console.warn("[morse] host unavailable", e); }
-  // single-page apps change URL without reloading
-  setInterval(() => { if (location.href !== S.url) { S.url = location.href; syncMods().catch(() => {}); } }, 1000);
-})();
+  } finally { B.started(); }
+}).catch(e => console.warn("[morse]", e));
 
 // Read-only status for automated screenshots/tests; off unless opted in.
 // Mirrored into a DOM attribute so it is readable from any JS world.

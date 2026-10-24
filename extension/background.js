@@ -105,6 +105,10 @@ async function dispatch(msg, port) {
     // God mode: cross-app clipboard (see core/clipboard.js)
     case "clipboard.list": return get("clipboard", []);
     case "clipboard.put": { const list = clipAdd(await get("clipboard", []), msg.item); await set("clipboard", list); return list; }
+    // perf: only boot.js is a content script; the UI joins it (same isolated world) on first use
+    case "ui.load":
+      await chrome.scripting.executeScript({ target, files: ["ui.js"] });
+      return true;
     case "exec":
       return exec(target, msg.modId, msg.js);
     case "off":

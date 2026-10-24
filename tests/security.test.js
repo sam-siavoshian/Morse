@@ -44,8 +44,11 @@ test("the share page only asks; nothing installs until the user clicks Install",
   const p = await ctx.newPage();
   await p.goto("http://127.0.0.1:8787/share/install.html");
   await p.evaluate(() => localStorage.setItem("morse:debug", "1")); // open shadow root so the test can click
+  // Same document with a new hash: the page reloads itself on hashchange to
+  // render the mod. Wait for that reload rather than racing it with our own.
+  const reloaded = p.waitForEvent("load");
   await p.goto(link);
-  await p.reload(); // same document with a new hash: reload so it renders the mod
+  await reloaded;
   await p.waitForTimeout(500);
   await p.locator("#install").click();
   await p.locator(".card [data-a=install]").waitFor();

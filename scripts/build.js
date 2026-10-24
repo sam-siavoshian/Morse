@@ -4,7 +4,7 @@
 import { promises as fs } from "node:fs";
 import { deflateSync } from "node:zlib";
 import path from "node:path";
-import { bundleRuntime } from "../runtime/bundle.js";
+import { bundleRuntime, bundleBoot, bundleUI } from "../runtime/bundle.js";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const out = path.join(root, "dist", "extension");
@@ -15,6 +15,10 @@ await fs.mkdir(path.join(out, "icons"), { recursive: true });
 
 for (const f of await fs.readdir(path.join(root, "extension"))) await fs.copyFile(path.join(root, "extension", f), path.join(out, f));
 for (const f of await fs.readdir(path.join(root, "core"))) await fs.copyFile(path.join(root, "core", f), path.join(out, "core", f));
+// boot.js is the content script on every page; ui.js is injected on first use;
+// runtime.js is both in one file, for the demo pages that load Morse directly.
+await fs.writeFile(path.join(out, "boot.js"), bundleBoot());
+await fs.writeFile(path.join(out, "ui.js"), bundleUI());
 await fs.writeFile(path.join(out, "runtime.js"), bundleRuntime());
 
 // The logo: a 3x3 contribution-graph grid.

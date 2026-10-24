@@ -15,8 +15,10 @@ import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
 import { Generations } from "../core/cancel.js";
 import { cachedVoiceStatus, transcribeAudio } from "./voice.js";
 
-import { bundleRuntime } from "../runtime/bundle.js";
-const RUNTIME = bundleRuntime();
+// Perf: only the small boot goes into every page; the UI is evaluated on first use ("ui.load").
+import { bundleBoot, bundleUI } from "../runtime/bundle.js";
+const RUNTIME = bundleBoot();
+const UI = bundleUI();
 
 const SHIM = `(() => {
   if (window.top !== window || globalThis.__morseHost) return;
@@ -27,8 +29,9 @@ const SHIM = `(() => {
   globalThis.__morseHostReceive = m => subs.forEach(f => f(m));
 })();`;
 
-// Page.addScriptToEvaluateOnNewDocument runs before <html> exists.
-const BOOT = `(() => { const go = () => { ${SHIM}\n${RUNTIME} }; document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go, { once: true }) : go(); })();`;
+// Page.addScriptToEvaluateOnNewDocument runs before the page's own scripts,
+// so the boot captures pristine built-ins; it waits for the DOM itself.
+const BOOT = `${SHIM}\n${RUNTIME}`;
 
 export class Connector {
   constructor({ port, app = null, settings, log = console.log }) {
@@ -114,7 +117,11 @@ export class Connector {
       case "hello":
         this.grantMic(s, msg.url);
         return { mode: "desktop", app: this.app?.id || null, appName: this.app?.name || null, label: settingsLabel(this.settings),
-          settings: await loadPrefs(), voice: await cachedVoiceStatus() };
+          settings: await loadPrefs(), voice: await cachedVoiceStatus(),
+          quiet: !!s.welcomed || !(s.welcomed = true) }; // perf: welcome once per window, not on every reload (it loads the UI)
+      case "ui.load": // perf: the overlay is evaluated on first use, not on every page load
+        await s.send("Runtime.evaluate", { expression: UI, contextId: ctx });
+        return true;
       case "mods.list":
         return modsFor({ url: msg.url, app: this.app?.id || null });
       case "mods.save": {
