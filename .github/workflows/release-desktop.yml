@@ -10,8 +10,12 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
+# Read only by default: the build runs npm packages' install scripts next to
+# the signing secrets, so only the job that drafts the release can write.
+# Actions are pinned to a commit (a tag can be moved); the comment says which
+# release that commit is.
 permissions:
-  contents: write # the draft release
+  contents: read
 
 concurrency:
   group: release-desktop-${{ github.ref }}
@@ -30,8 +34,10 @@ jobs:
           - { name: macOS dmg, os: macos-latest, flag: --mac, files: "dist/desktop-app/*.dmg" }
           - { name: Windows installer, os: windows-latest, flag: --win, files: "dist/desktop-app/*.exe" }
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false # nothing later needs the token in .git/config
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -83,7 +89,7 @@ jobs:
           done
           node desktop-app/build.js ${{ matrix.flag }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: morse-desktop-${{ runner.os }}
           path: ${{ matrix.files }}
@@ -94,8 +100,10 @@ jobs:
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # the draft release
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: out
           merge-multiple: true
