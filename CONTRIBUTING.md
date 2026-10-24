@@ -78,8 +78,8 @@ Before you open a pull request:
 The version is in `package.json` only. Raise it, add a CHANGELOG entry, then:
 
 - `npm publish` for the `morse` command (it builds the extension first).
-- `npm run package:extension` for the Chrome Web Store zip. The listing is in
-  [docs/store/](docs/store/README.md).
+- `npm run store` for the Chrome Web Store zip. How to submit it is in
+  [docs/store/SUBMIT.md](docs/store/SUBMIT.md).
 
 More: [Releasing](docs/dev/README.md#releasing).
 

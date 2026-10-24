@@ -147,9 +147,10 @@ extension's manifest, and `morse --version` prints it. See
 
 - **npm:** `npm publish` (the `prepare` script builds the extension that
   ships inside the package, also for installs from GitHub).
-- **Chrome Web Store:** `npm run package:extension` makes
-  `dist/morse-extension-<version>.zip`. The listing text, permission notes
-  and screenshots are in [`docs/store/`](../store/README.md).
+- **Chrome Web Store:** `npm run store` makes
+  `dist/morse-extension-<version>-store.zip` (a `MORSE_STORE=1` build) and
+  prints its SHA-256. The listing text, permission notes, screenshots and the
+  step-by-step guide are in [`docs/store/`](../store/SUBMIT.md).
 - **Privacy policy:** [docs/privacy.md](../privacy.md), published as
   `site/privacy.html` by `npm run pages`.
 
