@@ -24,7 +24,7 @@
 //         CUT=v2 ONLY=showonce,heal WORK=w node demo/record-launch.js
 //         CUT=x ONLY=codium WORK=w node demo/record-launch.js
 //
-// The model is real: by default the Morse helper runs Claude Code with haiku
+// The model is real: by default the Morse helper runs Claude Code with sonnet
 // (MORSE_PROVIDER / MORSE_MODEL change it; MORSE_PROVIDER=demo replays
 // core/demo.js). Waiting for the model is sped up in the video and labelled
 // "sped up N×"; the bar still shows the real time it took. Other waits that
@@ -69,7 +69,8 @@ const SITE = { parley: "http://parley.example/", byte: "http://byte.example/", t
 const SITE_DIRS = { "parley.example": "parley", "byte.example": "byte", "tunes.example": "tunes", "postbox.example": "mail" };
 const GALLERY_HOSTS = { "127.0.0.1:8787": "parley.example", "127.0.0.1:8788": "byte.example", "127.0.0.1:8789": "tunes.example" };
 process.env.MORSE_PROVIDER ||= "claude-code";
-if (process.env.MORSE_PROVIDER === "claude-code") process.env.MORSE_MODEL ||= "haiku";
+if (process.env.MORSE_PROVIDER === "claude-code") process.env.MORSE_MODEL ||= "sonnet";
+const MODEL_NAME = process.env.MORSE_PROVIDER === "claude-code" ? `Claude Code (${process.env.MORSE_MODEL})` : process.env.MORSE_PROVIDER; // named on the cards: the model that really wrote the changes
 const TRIES = Number(process.env.TRIES || 3);
 const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
 const OPEN_KEY = "Control+Shift+Space"; // Morse's default on Linux (core/hotkeys.js)
@@ -91,7 +92,7 @@ async function until(fn, ms, what = String(fn)) {
 // ---------------------------------------------------------------- the words
 // One short plain line per card (docs/WRITING.md: no hype, no emoji).
 const CARDS = {
-  open: { big: "morse", line: "Change any app or website in your own words.", foot: "Recorded from real runs. Claude Code (haiku) wrote the changes." },
+  open: { big: "morse", line: "Change any app or website in your own words.", foot: `Recorded from real runs. ${MODEL_NAME} wrote the changes.` },
   tunes: { line: "Point at something. Say what you want." },
   parley: { line: "Ask for what an app is missing." },
   edit: { line: "Or change it by hand. No model needed." },
@@ -99,7 +100,7 @@ const CARDS = {
   share: { line: "Every change is a mod you can share with a link." },
   end: { big: "morse", line: "Open source. Uses Claude Code, Codex or your own API key.", foot: "github.com/sam-siavoshian/RRAA" },
   // v2
-  open2: { big: "morse", line: "Your apps, your way. Change any website or desktop app in your own words.", foot: "Recorded from real runs, with Claude Code (haiku) as the model." },
+  open2: { big: "morse", line: "Your apps, your way. Change any website or desktop app in your own words.", foot: `Recorded from real runs, with ${MODEL_NAME} as the model.` },
   showonce: { line: "Do a chore once. Morse turns it into a button." },
   heal: { line: "When a site changes and a mod stops working, Morse can fix it." },
   desktop: { line: "The same works in desktop apps." },
@@ -146,7 +147,7 @@ const SOCIAL = [
   // folded from right after Enter, still labelled.
   { scene: "codium", from: m => m.marks.enter1 - 0.5, to: m => m.marks.saved1 + 0.5, wait: 0.9,
     adjust: m => { m.speeds = m.speeds.map(w => (w.from > m.marks.enter1 && w.from < m.marks.result1 ? { ...w, from: m.marks.enter1 + 0.3 } : w)); },
-    caption: "I asked VS Code to look like a retro terminal.", note: "VSCodium (VS Code) · Claude Code (haiku) · recorded live" },
+    caption: "I asked VS Code to look like a retro terminal.", note: `VSCodium (VS Code) · ${MODEL_NAME} · recorded live` },
   { scene: "codium", from: m => m.marks.enter2 - 1.6, to: m => m.marks.timer + 0.3, cx: 1, caption: "Then for a feature it doesn't have." },
   // Zoomed on the bar while it lists the steps and the request is typed.
   { scene: "showonce", from: m => clicks(m)[3] - 0.4, to: m => m.marks.clipEnd ?? m.marks.end, cx: 0.45,

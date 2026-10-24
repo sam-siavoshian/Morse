@@ -146,8 +146,8 @@ ${B("Model")} (bring your own: Claude Code, Codex, or an API key)
   morse model               show which model Morse uses
   morse config --provider claude-code|codex|anthropic|openai|auto
       --model-mode auto|fast|best   Automatic (recommended), always the fast model, always the best one
-      --fast-model <name> --best-model <name>   the two models Automatic uses (haiku and sonnet for Claude Code)
-      --model <name>        always this one model, for example opus · sonnet · haiku · claude-opus-5-5 · gpt-5
+      --fast-model <name> --best-model <name>   the two models Automatic uses (sonnet and opus for Claude Code)
+      --model <name>        always this one model, for example opus · sonnet · claude-opus-5-5 · gpt-5
                             (--model auto: let Morse choose again)
       --anthropic-key <key> --openai-key <key> --base-url <url>   (leave empty to remove)
   morse doctor              show what's installed and check that the model answers

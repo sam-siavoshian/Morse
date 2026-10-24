@@ -116,7 +116,7 @@ Every gallery mod has a checker in
 [`evals/gallery-cases.json`](../../evals/gallery-cases.json): a short script
 that fails on the page without the mod, and passes with it and again after a
 reload, using real clicks and keys. `node evals/gallery.js --generate` asks
-Claude Code (haiku) for each request on its real page or demo app and checks
+Claude Code (sonnet) for each request on its real page or demo app and checks
 the answer; `node evals/gallery.js --verify` checks the files in
 `site/mods/` (`SHOTS=dir` also takes the before and after pictures). The
 demo-app mods are checked again by every test run

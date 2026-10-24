@@ -174,10 +174,10 @@ export const SETUP_HELP = `morse setup: choose what writes your changes.
                                    use this Anthropic or OpenAI key (saved in ${tilde(HOME)}/config.json)
   morse setup --pair <code>        also connect Chrome: the code comes from Morse's welcome page
   morse setup --model-mode auto|fast|best
-                                   Automatic (recommended): the fast model, and the best one
-                                   for harder changes. Or always the fast one, or always the best
+                                   Automatic (recommended): the fast model for small tweaks, the best
+                                   one for new features and restyles. Or always one of them
   morse setup --fast-model <name> --best-model <name>
-                                   the two models (Claude Code: haiku and sonnet)
+                                   the two models (Claude Code: sonnet and opus)
 
 Setup checks that the model answers. Run it again any time to switch; morse doctor checks again.`;
 

@@ -24,7 +24,7 @@ const WAITING_FOR_TRANSLATION = [
   // models (core/route.js): the Model setting, the setup question, the popup label
   "gen.stronger", "settings.model", "settings.model.auto", "settings.model.fast", "settings.model.best",
   "settings.model.note.auto", "settings.model.note.fast", "settings.model.note.best", "settings.model.pinned",
-  "popup.modelHarder", "setup.model.which", "setup.model.autoWhy", "setup.model.fastWhy", "setup.model.bestWhy",
+  "popup.modelHarder", "popup.modelHint", "setup.model.which", "setup.model.autoWhy", "setup.model.fastWhy", "setup.model.bestWhy",
   "setup.model.choose", "setup.model.now", "setup.model.always", "setup.model.change", "cli.badModelMode",
 ];
 

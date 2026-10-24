@@ -3,7 +3,7 @@
 //   startHelper(home)    the Morse helper (`morse serve`) in a scratch
 //                        MORSE_HOME, replaying core/demo.js unless
 //                        MORSE_PROVIDER names a real model (e.g.
-//                        MORSE_PROVIDER=claude-code MORSE_MODEL=haiku)
+//                        MORSE_PROVIDER=claude-code MORSE_MODEL=sonnet)
 //   pairExtension(…)     pairs the extension with it through the real popup
 //   routeHelper(ctx, h)  points the extension at that helper's port
 //   demoSites(ctx?)      the demo sites on free ports, shown to a Playwright

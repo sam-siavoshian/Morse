@@ -18,7 +18,7 @@ redirect, so a symlink is followed); a file it creates is readable only by you.
 | **The connector** | Opens the app with `--remote-debugging-port` (127.0.0.1 only) and talks to each window over the Chrome DevTools Protocol (CDP, a WebSocket). | `daemon/connector.js`, `daemon/cdp.js` |
 | **The runtime** | Morse's own code inside the app's page: the bar, pointing, reading the page, applying CSS. It runs in an **isolated world** named `morse`, so the page's scripts can't see or call it. A 50 KB boot loads on every page; the full UI loads the first time you open the bar. | `runtime/boot.js`, `runtime/src/` |
 | **The engine** | Turns a request into a change: builds the prompt, streams the answer, applies CSS as it arrives, runs the JS, checks it did something, one repair round. | `core/engine.js`, `core/prompt.js`, `core/parse.js` |
-| **The harness** | Runs the model you already have: your Claude Code (`claude -p … --model haiku`) or Codex CLI, or the Anthropic / OpenAI API with your key. | `daemon/harness.js`, `core/providers.js` |
+| **The harness** | Runs the model you already have: your Claude Code (`claude -p … --model sonnet`, or `opus` for new features and restyles) or Codex CLI, or the Anthropic / OpenAI API with your key. | `daemon/harness.js`, `core/providers.js` |
 | **The kit** | Helpers the model's code uses (`morse.watch`, `morse.el`, `morse.css`…), with guards that pause a mod that slows or freezes the page. | `core/kit.js`, `core/guard.js` |
 | **Mods** | A saved change: a small JSON file with the request, CSS and JS. | `~/.morse/mods/<id>.json` |
 
@@ -30,7 +30,7 @@ sequenceDiagram
     actor You
     participant App as VSCodium window<br/>(runtime in isolated world "morse")
     participant D as morse daemon<br/>(connector + engine)
-    participant CC as claude -p<br/>(your Claude Code, haiku)
+    participant CC as claude -p<br/>(your Claude Code, sonnet or opus)
     participant Disk as ~/.morse/mods
 
     D->>App: morse launch: reopen with --remote-debugging-port (127.0.0.1)
@@ -52,7 +52,7 @@ sequenceDiagram
     Note over D,App: next launch: the boot applies every saved mod before the UI loads
 ```
 
-From the real run in the recording (`MORSE_TRACE`):
+From the real run in the recording (`MORSE_TRACE`, made when the first model was still haiku; today it starts on sonnet, and a request like this one, a new clock, on opus):
 
 ```
 16:00:04.431  bar      "add a big live clock to the status bar" · pointed at #workbench.parts.statusbar …

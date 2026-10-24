@@ -10,7 +10,7 @@
 // core/ and the Anthropic SDK by scripts/build.js.
 
 import { runMorse } from "../core/engine.js";
-import { resolveTiers, startLabel, modelNames } from "../core/route.js"; // models: fast and strong (docs/models.md)
+import { popupTiers, startLabel, modelNames } from "../core/route.js"; // models: fast and strong (docs/models.md)
 import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_PORT_KEY, prewarm } from "../core/providers.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf, byCreated, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode, settleMs } from "../core/kit.js";
@@ -69,8 +69,10 @@ async function backend(fresh = false) {
     out = { kind: "helper", label, helper, settings: { provider: "helper", baseUrl: await helperUrl(), token: p.helperToken, model: p.helperModel || "", label,
       backend: helper.provider, tiers: helper.tiers || null, pinned: !!p.helperModel || !!helper.pinned } }; // models: the helper's two models
   } else if (want !== "helper" && p.anthropicKey) {
-    // models: the popup's model is the strong one; quick changes use Haiku.
-    const settings = { provider: "anthropic", apiKey: p.anthropicKey, model: p.anthropicModel || PROVIDERS.anthropic.defaultModel, tiers: resolveTiers("anthropic", { best: p.anthropicModel || undefined }) };
+    // models: the popup's model is the strong one (claude-opus-5-5 unless
+    // chosen); small tweaks use claude-sonnet-5-5. Another model chosen there
+    // is used for everything (core/route.js popupTiers).
+    const settings = { provider: "anthropic", apiKey: p.anthropicKey, model: p.anthropicModel || PROVIDERS.anthropic.defaultModel, tiers: popupTiers("anthropic", p.anthropicModel) };
     out = { kind: "anthropic", label: settingsLabel(settings), settings, helper };
   } else {
     const reason = want === "anthropic" ? "Add your Anthropic API key below."
@@ -235,9 +237,10 @@ async function dispatch(msg, port) {
     case "ui.load":
       await chrome.scripting.executeScript({ target, files: ["ui.js"] });
       return true;
-    case "warm": { // speed: the bar opened; get the model ready (core/providers.js prewarm)
+    case "warm": { // speed: the bar opened, or the person is typing; get the model ready (core/providers.js prewarm)
       const b = await backend();
-      if (b.kind !== "none") prewarm({ ...b.settings, mode: (await getPrefs()).modelMode }); // models: warms the first model
+      const typed = typeof msg.request === "string" ? msg.request.slice(0, 500) : ""; // models: the strong model for new UI and features
+      if (b.kind !== "none") prewarm({ ...b.settings, mode: (await getPrefs()).modelMode }, typed); // models: warms the model the request starts on
       return true;
     }
     case "exec":
