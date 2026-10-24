@@ -13,6 +13,8 @@ import { deflateSync } from "node:zlib";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleRuntime, bundleBoot, bundleUI } from "../runtime/bundle.js";
+import { LANGUAGES } from "../core/i18n.js";
+import { readWords } from "../core/languages.js";
 
 // fileURLToPath, not URL.pathname: that gives /C:/… on Windows and %20 for spaces.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -76,12 +78,16 @@ async function shipCore(file) {
     const rel = path.relative(out, path.resolve(path.dirname(file), m[1] || m[2])).split(path.sep).join("/");
     if (!rel.startsWith("core/") || shipped.has(rel)) continue;
     shipped.add(rel);
-    await fs.mkdir(path.dirname(path.join(out, rel)), { recursive: true }); // core/locales/*.js, which core/i18n.js imports
+    await fs.mkdir(path.dirname(path.join(out, rel)), { recursive: true }); // core/locales/en.js, which core/i18n.js imports
     await fs.copyFile(path.join(root, rel), path.join(out, rel));
     await shipCore(path.join(out, rel));
   }
 }
 for (const f of await fs.readdir(out)) if (f.endsWith(".js") && f !== "background.js") await shipCore(path.join(out, f));
+// The languages besides English, as plain data the worker and the pages read
+// only when one is chosen (extension/words.js). Every bundle carries English only.
+await fs.mkdir(path.join(out, "locales"), { recursive: true });
+for (const { code } of LANGUAGES) if (code !== "en") await fs.writeFile(path.join(out, "locales", `${code}.json`), JSON.stringify(await readWords(code)));
 // boot.js is the content script on every page; ui.js is injected on first use;
 // runtime.js is both in one file, for the demo pages that load Morse directly.
 await fs.writeFile(path.join(out, "boot.js"), bundleBoot());

@@ -21,6 +21,7 @@ export default {
   "bar.repoint": "Point at something else",
   "bar.hint.pointing": "<b>Point</b> at anything to change it, or just describe it · <kbd>Esc</kbd> to close",
   "bar.hint.target": "Describe what to change about this · <kbd>Enter</kbd> to send",
+  "bar.hint.wider": "<kbd>{key}</kbd> bigger part", // dogfood: Alt+↑ after pointing
   "bar.hint.page": "Describe a change to this page · <kbd>Enter</kbd> to send",
   "bar.mods": "Mods",
   "bar.stopped": "<b>Stopped.</b> Nothing was changed · <kbd>Enter</kbd> to try again",
@@ -76,6 +77,7 @@ export default {
   "result.describeChange": "describe what to change",
   "result.firstVersion": "This is the first version",
   "result.backTo": "Back to version {n}",
+  "result.forwardTo": "Forward to version {n}", // dogfood: ⌘⇧Z after ⌘Z
   "result.fixNote": "Fixed it so it works again",
 
   // ---- buttons used in many places
@@ -922,9 +924,12 @@ export default {
 
   // ---- turning mods off, pausing, installing (63-control)
   "ctl.offN": { one: "Turned off {n} mod on this page", other: "Turned off {n} mods on this page" },
+  "ctl.offNApp": { one: "Turned off {n} mod in {app}", other: "Turned off {n} mods in {app}" }, // dogfood: the off switch in a desktop app names the app
   "ctl.offNone": "Mods are off on this page",
+  "ctl.offNoneApp": "Mods are off in {app}", // dogfood: the off switch in a desktop app names the app
   "ctl.turnBackOn": "Turn back on",
   "ctl.offSay": "All mods are off on this page.",
+  "ctl.offSayApp": "All mods are off in {app}.", // dogfood: the off switch in a desktop app names the app
   "ctl.stillPausedAll": "Morse is still paused everywhere.",
   "ctl.stillPausedOn": "Morse is still paused on {where}.",
   "ctl.resume": "Resume",
@@ -966,6 +971,7 @@ export default {
   "ctl.tooLarge": "That file is too large to be a Morse backup.",
   "ctl.pausedAllNote": "Morse is paused everywhere. Your mods are saved but not running.",
   "ctl.offNote": "Mods are turned off on this page.",
+  "ctl.offNoteApp": "Mods are turned off in {app}.", // dogfood: the off switch in a desktop app names the app
   "ctl.heldNote": "“{title}” is held back: this page closed or reloaded right after it ran.",
   "ctl.pausedHere2": "Your mods here are saved but not running",
   "ctl.stopsApp": "Stops every mod in this app",
@@ -1327,11 +1333,11 @@ export default {
   "ys.startHint": "Describe your style and end with <b>everywhere</b>",
   "popup.warnOff": "<b>“Allow User Scripts” is off.</b> Changes to how pages look work. Changes that add buttons or features run only when it is on.",
   "popup.warnSteps": "Click <b>Turn it on</b>, turn on <b>Allow User Scripts</b> on the page that opens, then reload this tab.",
-  "popup.waiting": { one: "<b>Waiting for “Allow User Scripts”:</b> {list}. Its new look already shows. What it adds runs once it is on.", other: "<b>Waiting for “Allow User Scripts”:</b> {list}. Their new look already shows. What they add runs once it is on." },
+  "popup.waiting": { one: "<b>Waiting for “Allow User Scripts”:</b> {list}. It stays off until then, so pages aren't left half changed.", other: "<b>Waiting for “Allow User Scripts”:</b> {list}. They stay off until then, so pages aren't left half changed." },
   "popup.waits": "Waits for “Allow User Scripts”",
   "wait.two": "“{a}” and “{b}”",
   "wait.many": { one: "{n} mod", other: "{n} mods" },
-  "wait.text": { one: "{names} adds features that wait for “Allow User Scripts”. The new look already shows.", other: "{names} add features that wait for “Allow User Scripts”. The new look already shows." },
+  "wait.text": { one: "{names} adds features that wait for “Allow User Scripts”. It stays off until then, so the page isn't left half changed.", other: "{names} add features that wait for “Allow User Scripts”. They stay off until then, so the page isn't left half changed." },
   "wait.steps": "Open Morse's details, turn on “Allow User Scripts”, then come back to this tab.",
   "wait.openDetails": "Open Morse's details",
   "wait.turnOn": "Turn on “Allow User Scripts”",
@@ -1340,7 +1346,7 @@ export default {
   "wait.notePractice": "This is how it looks. What it adds works on real websites",
   "wait.note": "Needs “Allow User Scripts” to work. Only its look shows until you turn it on",
   "wait.tag": "waits for “Allow User Scripts”",
-  "wait.tagTitle": "Its new look shows. What it adds runs once “Allow User Scripts” is on.",
+  "wait.tagTitle": "It runs, look and all, once “Allow User Scripts” is on.",
   "so.hidden": "(hidden)",
   "so.askShort": "What to do with the steps?",
   "origin.pack": "From the pack “{name}”{by}{on}",

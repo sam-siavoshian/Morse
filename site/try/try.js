@@ -25,6 +25,7 @@ import { clipAdd } from "../../core/clipboard.js";
 import { controlHandler } from "../../core/control-host.js";
 import { normalizeOnboarding, mergeOnboarding } from "../../core/onboarding.js";
 import { detectPlatform, resolveHotkeys, matchCombo, comboParts } from "../../core/hotkeys.js";
+import { readWords } from "../../core/languages.js"; // the bar's words in a language besides English, from this site
 
 const APPS = {
   tunes: { page: new URL("../../demo/sites/tunes/index.html", import.meta.url).href, title: "Tunes, a music app" },
@@ -172,6 +173,7 @@ export function startTry(section) {
       case "ui.load": case "warm": case "capture": case "heal.badge":
       case "clip.start": case "clip.stop": case "clip.cancel": case "history.get": case "history.add":
         return null;
+      case "i18n.words": return readWords(m.lang); // the runtime carries English only
       case "settings.get": return store.get("settings", {});
       case "settings.set": {
         const cur = store.get("settings", {}), next = { ...cur };

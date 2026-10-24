@@ -65,6 +65,7 @@ B.adopt({
   styleReady: () => YourStyle.ready(), // your-style hook: fit it to this site once, if turned on (72-style.js)
   waitingAdd: m => Waiting.add(m), // waiting hook: “Allow User Scripts” is off; the style shows, the code never ran (64-waiting.js)
 });
+const uiStarted = () => { B.started(); S.ready = true; /* tests: the host answered hello and the mods are on */ };
 B.ready.then(hello => {
   try {
     setPrefs(B.prefs());
@@ -73,7 +74,12 @@ B.ready.then(hello => {
     Voice.configure(hello.voice);
     PromptHistory.load();
     if (hello.debug) debugStatus(); // the host was started with MORSE_DEBUG=1
-  } finally { B.started(); S.ready = true; /* tests: the host answered hello and the mods are on */ }
+  } finally {
+    // The person's language first (04-i18n.js), so the overlay never opens in
+    // English and then changes; a host slow to send the words holds it up 1.5 s at most.
+    if (!languageReady) uiStarted();
+    else Promise.race([languageReady, new Promise(r => setTimeout(r, 1500))]).then(uiStarted).catch(e => console.warn("[morse]", e));
+  }
 }).catch(e => console.warn("[morse]", e));
 
 // boot.js applies the mods, so the guards around applyMod run there

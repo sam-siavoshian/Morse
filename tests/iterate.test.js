@@ -78,6 +78,18 @@ test("refine a result, step back with Ctrl+Z, keep, restore from History, refine
   await waitFor(s => /Back to version 2/.test(s.hint));
   assert.equal(await page.locator("#toolbar .morse-now").textContent(), "Now playing Blue in Green");
   assert.equal(await fontSize(page), "11px");
+  // dogfood: Ctrl+Shift+Z (and Ctrl+Y) forward again: the newer version isn't lost.
+  await page.keyboard.press("Control+Shift+z");
+  await waitFor(s => /Forward to version 3/.test(s.hint));
+  assert.equal(await page.locator("#toolbar .morse-now").textContent(), "♪ Blue in Green");
+  await page.keyboard.press("Control+Shift+z"); // nothing further ahead: stays
+  await page.keyboard.press("Control+z");
+  await waitFor(s => /Back to version 2/.test(s.hint));
+  await page.keyboard.press("Control+y");
+  await waitFor(s => /Forward to version 3/.test(s.hint));
+  await page.keyboard.press("Control+z");
+  await waitFor(s => /Back to version 2/.test(s.hint));
+  assert.equal(await page.locator("#toolbar .morse-now").textContent(), "Now playing Blue in Green");
 
   // Enter on an empty input keeps the latest.
   await page.keyboard.press("Enter");
@@ -191,6 +203,29 @@ test("a saved mod that stopped working says why, and Fix it repairs it", { skip 
   await settle(page);
   assert.equal(await ui(page, ".panel article[data-id=gone] .health").count(), 0, "fixed: no warning");
   assert.equal(await ui(page, ".panel article[data-id=oops] .health").count(), 1);
+  assert.deepEqual(errors, []);
+  await ctx.close();
+});
+
+// dogfood: on GitLab the mouse chose a link in one row of the file list, and
+// nothing let a person choose the list itself.
+test("pointing: Alt+Up chooses the bigger part around what the mouse chose, and the hint says so", { skip }, async () => {
+  const { ctx, page, errors, waitFor } = await playground();
+  await pressOpen(page);
+  await waitFor(s => s.open);
+  const b = await page.locator("#toolbar button").nth(2).boundingBox();
+  await page.mouse.move(b.x + b.width / 2 - 10, b.y + b.height / 2);
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 4 });
+  await page.waitForTimeout(300);
+  await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+  const chip = () => ui(page, ".chip.target span").textContent();
+  await page.waitForFunction(() => !document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".chip.target").hidden);
+  const first = await chip();
+  assert.match(await ui(page, ".hint").textContent(), /Alt\+↑ bigger part/);
+  await page.keyboard.press("Alt+ArrowUp");
+  await page.waitForFunction(f => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".chip.target span").textContent !== f, first);
+  assert.match(await chip(), /toolbar|Toolbar/i, `${first} → ${await chip()}`);
+  assert.equal((await waitFor(s => s.open)).focus, "in", "typing still goes to the bar");
   assert.deepEqual(errors, []);
   await ctx.close();
 });

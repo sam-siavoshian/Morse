@@ -93,6 +93,13 @@ test("an app that dies on start says why instead of waiting for a port that neve
   assert.match(asRoot, /^Tunes quit right after it started \(stopped by SIGTRAP\)/);
   assert.match(asRoot, /running as root/);
   assert.match(asRoot, /morse launch tunes -- --no-sandbox/);
+  // dogfood: root with --no-sandbox already given: root isn't the reason.
+  const sandboxOff = apps.launchFailure(app, { code: 1, noSandbox: true }, { platform: "linux", uid: 0 });
+  assert.doesNotMatch(sandboxOff, /root|--no-sandbox/);
+  assert.match(sandboxOff, /quit right after it started \(exit code 1\).*on its own with the same arguments/);
+  // dogfood: it opened its port, then quit while Morse was connecting: about the app, never "the model".
+  assert.match(apps.closedEarly(app, Object.assign(new TypeError("fetch failed"), { cause: { code: "ECONNREFUSED" } })), /^Tunes closed right after it started/);
+  assert.equal(apps.closedEarly(app, new Error("Port 9333 can be reached from other computers")), null);
   const asUser = apps.launchFailure(app, { code: 1 }, { platform: "linux", uid: 1000 });
   assert.match(asUser, /exit code 1/);
   assert.doesNotMatch(asUser, /root/);

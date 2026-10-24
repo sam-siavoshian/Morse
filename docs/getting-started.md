@@ -101,8 +101,9 @@ which apps can't work: [Desktop apps](desktop.md).
 
 Changes to how a site looks always work. A change that adds a button or a
 feature needs one switch in Chrome, **“Allow User Scripts”**. Morse asks for
-it only then: the bar says which change is waiting, and **Open Morse's
-details** opens the switch with a small window that shows it. Turn it on, and
+it only then: until it's on, that change waits, look and all, so a page is
+never left half changed. The bar says which change is waiting, and **Open
+Morse's details** opens the switch with a small window that shows it. Turn it on, and
 Morse closes both and takes you back to your tab, where the change runs.
 
 ![The small window that shows the “Allow User Scripts” switch](screenshots/204-start-allow-window.png)

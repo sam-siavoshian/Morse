@@ -12,6 +12,8 @@ import path from "node:path";
 export const FAKE_CLAUDE = `#!/usr/bin/env node
 const fs = require("fs"), path = require("path");
 try { fs.appendFileSync(path.join(process.env.FAKE_LOG, "claude-starts.log"), process.pid + "\\n"); } catch {}
+// FAKE_MODE=noeffort: a Claude Code too old to know --effort, which stops at once (as commander does).
+if (process.env.FAKE_MODE === "noeffort" && process.argv.includes("--effort")) { process.stderr.write("error: unknown option '--effort'\\n"); process.exit(1); }
 let input = "";
 process.stdin.on("data", d => input += d).on("end", async () => {
   if (!input) return; // started ahead of time, never used
