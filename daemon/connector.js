@@ -37,6 +37,7 @@ import { GALLERY_REQUESTS, handleGallery } from "./gallery.js"; // gallery hook:
 import { Style, onStyleChange } from "./style.js"; // your-style hook: one style on every site and app
 import { STYLE_ID } from "../core/style.js"; // your-style hook
 import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
+import { pageCollapse } from "../core/guard.js"; // guard hook: a change that hides most of the page
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
@@ -388,6 +389,14 @@ export class Connector {
     return s.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive(${JSON.stringify(msg)})`, contextId: caller.world }).catch(() => {});
   }
 
+  // guard hook: how much of the page shows with and without a draft's CSS
+  // (core/guard.js pageCollapse), in Morse's world, where the page's own
+  // scripts can't change the answer.
+  async collapse(s, caller, id, css) {
+    const r = await s.send("Runtime.evaluate", { expression: `(${pageCollapse})(${JSON.stringify(css)}, ${JSON.stringify(id)})`, contextId: caller.world, returnByValue: true });
+    return r?.result?.value ?? null;
+  }
+
   // Mod code, in the page's main world of the document that asked.
   async exec(s, caller, modId, js) {
     const ctx = caller.main;
@@ -499,6 +508,7 @@ export class Connector {
           context: { ...msg.context, app: this.app?.name || msg.context.app },
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           exec: js => this.exec(s, caller, msg.genId, js),
+          collapse: css => this.collapse(s, caller, msg.genId, css), // guard hook: hid most of the page?
           emit: ev => { if (!signal.aborted) this.push(s, caller, { ...ev, genId: msg.genId }); },
           signal,
         }));

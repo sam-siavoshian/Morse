@@ -137,7 +137,7 @@ async function healPage({ html, mods, settings = {}, gen = { ok: false, error: "
     globalThis.__morseHost = {
       onMessage: f => subs.push(f),
       send(m) {
-        log({ type: m.type, mod: m.mod || null, url: m.url || null, at: Date.now() });
+        log({ type: m.type, mod: m.mod || null, url: m.url || null, target: m.context?.target?.label ?? null, at: Date.now() });
         const reply = (result, delay = 5, error) => setTimeout(() => window.__emit({ reply: m.id, result, error }), delay);
         switch (m.type) {
           case "hello": return reply({ mode: "playground", label: "test", quiet: true, settings: { welcome: false, ...settings } });
@@ -559,6 +559,98 @@ test("morse launch: why an app quit is shown as written, not as “Something wen
     assert.equal(plainError("Paste a share link first."), "Paste a share link first.");
     assert.deepEqual(seen, ["TypeError: Cannot read properties of null (reading 'x')"]);
   } finally { onHiddenError(null); }
+});
+
+// ======================================================================
+// From real-site testing: a class the sidebar shares with the docs, and a
+// part named by a number
+
+// nodejs.org/api: the sidebar and the docs are both div.interior.
+const NODE_DOCS = `<!doctype html><title>Node.js docs</title><style>
+  body { margin: 0; font: 16px/1.5 sans-serif } #column2 { position: fixed; left: 0; top: 0; bottom: 0; width: 230px; background: #333; color: #fff; overflow: auto }
+  #column1 { margin-left: 230px; padding: 20px }</style>
+  <div id="content"><div id="column2" class="interior"><ul>${Array.from({ length: 30 }, (_, i) => `<li><a href="#m${i}">Module ${i}</a></li>`).join("")}</ul></div>
+  <div id="column1" class="interior"><h1>File system</h1>${Array.from({ length: 30 }, (_, i) => `<p id="m${i}">The node:fs module enables interacting with the file system in a way modeled on standard POSIX functions. Paragraph ${i}.</p>`).join("")}</div></div>`;
+
+test("guard: CSS that hides a class the sidebar shares with the docs is caught after it lands; hiding just the sidebar is fine", { skip }, async () => {
+  const { pageCollapse, collapseHarm } = await import("../core/guard.js");
+  const ctx = await (await browser()).newContext({ viewport: { width: 1200, height: 800 } });
+  cleanups.push(() => ctx.close());
+  const page = await ctx.newPage();
+  await page.setContent(NODE_DOCS);
+  const check = (css, id = "") => page.evaluate(([src, css, id]) => (0, eval)(`(${src})`)(css, id), [pageCollapse.toString(), css, id]);
+  const all = await check("div.interior { display: none !important; }");
+  assert.ok(collapseHarm(all), JSON.stringify(all));
+  assert.match(collapseHarm(all).user, /^That would have hidden most of the page/);
+  assert.equal(collapseHarm(await check("#column2 { display: none !important } #column1 { margin-left: 0 }")), null);
+  assert.equal(collapseHarm(await check("#column1 p { color: #444 }")), null);
+  // The draft's own style, streamed in already, is set aside for "before" (and put back).
+  await page.evaluate(() => document.head.insertAdjacentHTML("beforeend", `<style data-morse-css="d1">div.interior { display: none !important; }</style>`));
+  assert.ok(collapseHarm(await check("div.interior { display: none !important; }", "d1")));
+  assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById("column1")).display), "none", "the streamed style is back");
+});
+
+test("guard: a change that hides most of the page gets the repair round; one that keeps doing it is never kept", async () => {
+  const replies = ["TITLE: Hide sidebar\n```css\ndiv.interior { display: none !important; }\n```", "TITLE: Hide sidebar\n```css\n#column2 { display: none !important; }\n```"];
+  const prompts = [];
+  registerProvider("r5-collapse", async (s, m, { onToken }) => { prompts.push(m.at(-1).content); const r = replies[Math.min(prompts.length - 1, replies.length - 1)]; onToken(r); return r; });
+  const collapse = async css => (/interior/.test(css) ? { before: 40, after: 2 } : { before: 40, after: 31 });
+  const res = await runMorse({ settings: { provider: "r5-collapse" }, request: "hide the left sidebar", context: { url: "x", title: "x" }, emit: () => {}, exec: async () => ({ ok: true }), collapse });
+  assert.equal(res.ok, true);
+  assert.equal(res.attempts, 2);
+  assert.match(prompts[1], /your CSS hid most of the page/);
+  assert.match(res.css, /#column2/);
+  prompts.length = 0; replies.splice(1);
+  const never = await runMorse({ settings: { provider: "r5-collapse" }, request: "hide the left sidebar", context: { url: "x", title: "x" }, emit: () => {}, exec: async () => ({ ok: true }), collapse });
+  assert.equal(never.ok, false);
+  assert.equal(never.css, "");
+  assert.equal(plainError(never.error), "That would have hidden most of the page, so Morse didn't keep it. Try saying which part you mean.");
+});
+
+test("desktop: “hide the left sidebar” on a page whose sidebar shares the docs' class doesn't blank the page", { skip, timeout: 120000 }, async () => {
+  const replies = ["TITLE: Hide sidebar\n```css\ndiv.interior { display: none !important; }\n```",
+    "TITLE: Hide sidebar\n```css\n#column2 { display: none !important; }\n#column1 { margin-left: 0 !important; }\n```"];
+  const prompts = [];
+  registerProvider("r5-node", async (s, m, { onToken }) => { prompts.push(m.at(-1).content); const r = replies[Math.min(prompts.length - 1, replies.length - 1)]; onToken(r); return r; });
+  const origin = await serve((q, r) => r.writeHead(200, { "Content-Type": "text/html" }).end(NODE_DOCS));
+  const port = await freePort();
+  const b = await chromium.launch({ args: [`--remote-debugging-port=${port}`] });
+  cleanups.push(() => b.close());
+  const ctx = await b.newContext({ viewport: { width: 1200, height: 800 } });
+  await ctx.addInitScript(() => localStorage.setItem("morse:debug", "1"));
+  const page = await ctx.newPage();
+  await page.goto(origin + "/");
+  const { Connector } = await import("../daemon/connector.js");
+  const connector = new Connector({ port, app: null, settings: { provider: "r5-node", model: "x" }, log: () => {} });
+  connector.run();
+  cleanups.push(() => connector.stop());
+  await waitForReady(page);
+  await pressOpen(page);
+  await waitFor(async () => (await readStatus(page)).open);
+  await page.keyboard.type("hide the left sidebar");
+  await page.keyboard.press("Enter");
+  await waitFor(async () => (await readStatus(page)).phase === "result", { what: "the result" });
+  assert.equal(prompts.length, 2);
+  assert.match(prompts[1], /hid most of the page/);
+  assert.equal(await page.evaluate(() => [getComputedStyle(document.getElementById("column1")).display, getComputedStyle(document.getElementById("column2")).display].join()), "block,none");
+});
+
+test("a part whose first words are a number is named by its own name, not “0”", { skip, timeout: 60000 }, async () => {
+  const t = await healPage({
+    html: `<!doctype html><title>Code</title><body style="margin:0">
+      <div id="workbench.parts.statusbar" class="part statusbar" role="status" style="position:fixed;top:0;left:0;right:0;height:40px;background:#007acc;color:#fff;display:flex;gap:12px;padding:0 8px;align-items:center"><span>0</span><span>⚠ 0</span><span>Ln 1</span></div>
+      <main style="padding-top:60px">${"<p>code</p>".repeat(20)}</main></body>`,
+    mods: () => [],
+  });
+  await t.visit();
+  await pressOpen(t.page);
+  await waitFor(async () => (await readStatus(t.page)).open);
+  await t.page.mouse.move(900, 20);
+  await t.page.mouse.click(900, 20);
+  await t.page.keyboard.type("make it purple");
+  await t.page.keyboard.press("Enter");
+  const gen = await waitFor(async () => (await t.log()).find(m => m.type === "generate"), { what: "the request" });
+  assert.equal(gen.target, "Statusbar");
 });
 
 void OPEN_KEY; void modCodeHash;

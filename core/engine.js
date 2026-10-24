@@ -7,13 +7,16 @@ import { parseReply } from "./answer.js"; // Ask and find
 import { streamChat } from "./providers.js";
 import { selectorsIn, selectorLists } from "./heal.js"; // self-heal hook: shared selector parsing
 import { cannotUndo } from "./showonce.js"; // show-once hook: ask before steps that can't be undone
-import { draftHarm, cssHidesPage } from "./guard.js"; // guard hook: code that would obviously break the page
+import { draftHarm, cssHidesPage, collapseHarm } from "./guard.js"; // guard hook: code that would obviously break the page
 
 // `probe(selectors)` (optional, from the host) returns { fp, unmatched }: a
 // fingerprint of what the page renders and which of the given selectors match
 // nothing (runtime/src/20-context.js effectProbe). With it, a change that ran
 // but did nothing visible gets the repair round too.
-export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2, probe }) {
+// `collapse(css)` (optional, from the host) applies the CSS in the page for a
+// moment and returns { before, after } (core/guard.js pageCollapse): a change
+// that hides most of the page gets the repair round like a guard hit.
+export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2, probe, collapse }) {
   let previous = null;
   let last = null;
   const started = Date.now();
@@ -59,6 +62,15 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     if (!draft.css.trim() && !draft.js.trim()) {
       previous = { raw, error: "The reply had no ```css or ```js block (or ANSWER: for a question)." };
       repairs.push(previous.error);
+      continue;
+    }
+    // guard: CSS that hides most of the page (a class the sidebar shares with the content).
+    const fell = draft.css.trim() && collapse ? collapseHarm(await collapse(draft.css).catch(() => null)) : null;
+    if (fell) {
+      emit({ type: "css", css: "" });
+      previous = { raw, error: fell.model };
+      repairs.push(fell.model);
+      last = { ...last, css: "", js: "", error: fell.user };
       continue;
     }
     // Show me once: steps that can't be taken back are never done without asking.

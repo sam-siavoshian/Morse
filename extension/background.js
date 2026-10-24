@@ -12,7 +12,7 @@ import { runMorse } from "../core/engine.js";
 import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_URL } from "../core/providers.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf, byCreated, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
-import { HANG_MS, FROZE_ERROR } from "../core/guard.js"; // guard hook: frozen pages
+import { HANG_MS, FROZE_ERROR, pageCollapse } from "../core/guard.js"; // guard hook: frozen pages
 import { clipAdd } from "../core/clipboard.js"; // God mode clipboard
 import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
 import { CONTROL_REQUESTS, handleControlRequest } from "./control-host.js"; // user control: pause, safe start, install review, backup
@@ -232,6 +232,7 @@ async function dispatch(msg, port) {
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           signal,
           exec: js => exec(target, msg.genId, js),
+          collapse: css => execIn(target, `(${pageCollapse})(${JSON.stringify(css)}, ${JSON.stringify(msg.genId)})`), // guard hook: hid most of the page?
           emit: ev => { if (!signal.aborted) try { port.postMessage({ ...ev, genId: msg.genId }); } catch {} },
         }));
         if (res.cancelled) return res;
