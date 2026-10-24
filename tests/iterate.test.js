@@ -39,7 +39,7 @@ async function playground({ query = "?light&model=demo", mods = null } = {}) {
   await page.goto(`${ORIGIN}/demo/playground.html${query}`);
   await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
   const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
-  const waitFor = async (pred, ms = 10000) => {
+  const waitFor = async (pred, ms = 25000) => { // generous: `npm test` runs every browser test at once
     const end = Date.now() + ms;
     let s;
     while (Date.now() < end) { s = await status(); if (pred(s)) return s; await page.waitForTimeout(25); }
@@ -117,7 +117,7 @@ test("refine a result, step back with Ctrl+Z, keep, restore from History, refine
   // Refine from the panel: Enter on a row opens the bar on that mod.
   await page.keyboard.press("Alt+Shift+KeyM");
   await ui(page, ".panel article").waitFor();
-  assert.equal(await page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.activeElement?.tagName), "ARTICLE", "the panel takes focus on its first row");
+  await page.waitForFunction(() => document.querySelector("[data-morse-ui]").shadowRoot.activeElement?.tagName === "ARTICLE", null, { timeout: 5000 }); // the panel takes focus on its first row
   await page.keyboard.press("Enter");
   s = await waitFor(s => s.open && s.phase === "result");
   assert.equal(await ui(page, ".panel").isHidden(), true);
