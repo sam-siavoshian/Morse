@@ -356,7 +356,7 @@ Regenerate the screenshots: `npm run demo:serve &` then `DISPLAY=:99 npm run scr
 
 The version lives in `package.json` only; the build writes it into the extension's manifest, and `morse --version` prints it. See [CHANGELOG.md](CHANGELOG.md).
 
-- **npm:** `npm publish` (the `prepack` script builds the extension that ships inside the package).
+- **npm:** `npm publish` (the `prepare` script builds the extension that ships inside the package, also for installs from GitHub).
 - **Chrome Web Store:** `npm run package:extension` makes `dist/morse-extension-<version>.zip`. The listing text, permission notes and screenshots are in [`docs/store/`](docs/store/).
 
 [Privacy policy](docs/privacy.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · MIT licensed.

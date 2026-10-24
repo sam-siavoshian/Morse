@@ -38,7 +38,7 @@
   },
   "scripts": {
     "build": "node scripts/build.js",
-    "prepack": "node scripts/build.js",
+    "prepare": "node scripts/build.js",
     "package:extension": "node scripts/build.js && node scripts/package-extension.js",
     "pages": "node scripts/build-pages.js",
     "test": "node --test tests/*.test.js",
