@@ -198,8 +198,18 @@ function readBase(prompt) {
   const line = re => (prompt.match(re) || [])[1] || "";
   return { original: line(/^Original request: (.*)$/m), css: code[1], js: code[2], followUp: line(/^Follow-up: (.*)$/m), error: line(/^What went wrong: (.*)$/m) };
 }
-function refine(b) {
+// Self-heal (core/heal.js siteChangedNote): Tunes renamed its album grid in a
+// redesign (demo/sites/tunes/?v2). The fix points the same code at the new name
+// the note found on the page.
+function siteChanged(b, prompt) {
+  if (!/site changed its page/.test(prompt) || !/album-grid/.test(b.css + b.js) || !/release-grid/.test(prompt)) return null;
+  const swap = s => s.replaceAll("album-grid", "release-grid");
+  return reply("Bigger rounded covers", swap(b.css), swap(b.js));
+}
+function refine(b, prompt = "") {
   if (b.error) {
+    const moved = siteChanged(b, prompt); // self-heal hook
+    if (moved) return moved;
     const rule = RULES.find(([re]) => re.test(b.original));
     if (rule) return rule[1] || SLEEP;
     return reply("Could not fix", b.css, b.js);
@@ -241,7 +251,7 @@ export function demoResponse(messages) {
   if (/Captured styles \(computed, JSON\):/.test(firstUser)) return rebuild(firstUser);
   if (/^The user just showed you a task/m.test(firstUser) && !/^Current code:/m.test(firstUser)) return showOnceDemo(firstUser); // show-once hook
   const base = readBase(firstUser); // keep iterating: refine or fix
-  if (base) return refine(base);
+  if (base) return refine(base, firstUser);
   const request = [...firstUser.matchAll(/^Request: (.*)$/gm)].pop()?.[1] || "";
   const isRetry = /^That failed/.test(messages.at(-1)?.content || "");
   const answer = demoAnswer(request, firstUser, messages); // Ask and find

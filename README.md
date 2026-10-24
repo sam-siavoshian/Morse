@@ -189,9 +189,9 @@ Checked with real Claude Code (haiku) by [`evals/show-once.js`](evals/show-once.
 
 | | |
 |---|---|
-| ![](docs/screenshots/113-show-once-start.png) **Show me once**, in the bar and the ⋯ menu | ![](docs/screenshots/114-show-once-recording.png) **Recording**: each step as you do it |
-| ![](docs/screenshots/115-show-once-steps.png) **Stop**: say what to do with the steps | ![](docs/screenshots/116-show-once-result.png) **The result**, live: a button for every unread email |
-| ![](docs/screenshots/117-show-once-done.png) **Done** for 3 unread emails | ![](docs/screenshots/118-show-once-hidden.png) A sign-in: the password is "(hidden)" |
+| ![](docs/screenshots/118-show-once-start.png) **Show me once**, in the bar and the ⋯ menu | ![](docs/screenshots/119-show-once-recording.png) **Recording**: each step as you do it |
+| ![](docs/screenshots/120-show-once-steps.png) **Stop**: say what to do with the steps | ![](docs/screenshots/121-show-once-result.png) **The result**, live: a button for every unread email |
+| ![](docs/screenshots/122-show-once-done.png) **Done** for 3 unread emails | ![](docs/screenshots/123-show-once-hidden.png) A sign-in: the password is "(hidden)" |
 
 ## Status
 
