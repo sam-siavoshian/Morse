@@ -28,6 +28,10 @@ const YourStyle = (() => {
   const SWITCHES = ["soft", "redgreen", "dark", "lessMotion", "noAutoplay", "underline"];
 
   const whereName = () => S.appName || location.host || t("panel.thisPage");
+  // Where a saved style shows (core/style-host.js reach): Chrome and the apps
+  // share it only when Chrome is paired with the Morse helper.
+  const reachWords = r => (r?.reach === "web" ? t("ys.everySiteWeb") : r?.reach === "apps" ? t("ys.everyAppHere") : t("ys.everySiteApp"));
+  const savedWords = r => (r?.reach === "web" ? t("ys.savedWeb") : r?.reach === "apps" ? t("ys.savedApps") : t("ys.saved"));
   const entry = () => S.mods.find(m => m.kind === "style") || null;
   const plainList = a => (a.length > 1 ? t("ys.list", { first: a.slice(0, -1).join(", "), last: a.at(-1) }) : a[0] || "");
   function ask(type, payload = {}, ms = 8000) {
@@ -117,7 +121,7 @@ const YourStyle = (() => {
     if (p.notes.includes("font")) notes.push(`<p class="ys-note">${t("ys.whichFont")}</p>`);
     if (p.except.length) notes.push(`<p class="ys-note">${esc(t("ys.notOn", { list: plainList(p.except.map(exceptionName)) }))}</p>`);
     return `<div class="sheet ys-sheet" role="group" aria-label="${esc(t("ys.title"))}">
-      <header><b>${t("ys.title")}</b><span class="dim">${t("ys.everySiteApp")}</span></header>
+      <header><b>${t("ys.title")}</b><span class="dim">${reachWords(r)}</span></header>
       ${r.summary.length ? `<div class="tags ys-tags">${r.summary.map(t => `<span>${esc(t)}</span>`).join("")}</div>` : ""}
       ${notes.join("")}
       ${p.extra || r.style.extra ? `<div class="srow"><div class="lbl"><span>${t("ys.adapt")}</span><small>${t("ys.adaptFor", { extra: esc(r.style.extra.slice(0, 90)) })}</small></div>
@@ -151,7 +155,7 @@ const YourStyle = (() => {
     closeBar();
     if (!r) return restore();
     await changed(r);
-    toast(r.here?.excepted ? t("ys.savedOff", { where: whereName() }) : t("ys.saved"));
+    toast(r.here?.excepted ? t("ys.savedOff", { where: whereName() }) : savedWords(r));
     if (r.style?.adapt) ready(800);
   }
   async function undoPreview() {
@@ -400,10 +404,15 @@ const YourStyle = (() => {
   return { fromBar, rowHtml, settingsHtml, ready, fit, openSettings, leaveOut, useHere, info: () => info };
 })();
 
-// your-style hook (10-dom.js applyTheme): softer colors filter <html>, and with
-// it Morse's own overlay; the overlay takes the opposite filter. (Gray stays
-// gray under the red and green filter, so the overlay needs nothing for it.)
+// your-style hook (10-dom.js applyTheme): softer colors filter <html>. The
+// overlay lives in the top layer (10-dom.js TopLayer), which a filter on <html>
+// never reaches, so there it takes no filter at all and looks exactly as it
+// does without the style. Only where there is no top layer (older desktop
+// apps) does the page's filter reach it; there it takes the opposite filter.
+// (Gray stays gray under the red and green filter, so the overlay needs
+// nothing for it.)
 function overlayUnfilter() {
+  if (TopLayer.ok) return "none";
   const f = getComputedStyle(document.documentElement).filter;
   if (!f || f === "none" || /invert|hue-rotate|sepia|grayscale|blur|drop-shadow|opacity/.test(f)) return "none";
   const fns = [...f.matchAll(/\b(saturate|contrast|brightness)\(([\d.]+)\)/g)];

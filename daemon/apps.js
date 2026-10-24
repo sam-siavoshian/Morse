@@ -789,7 +789,7 @@ export const said = msg => Object.assign(new Error(msg), { plain: true });
 // From what the person typed to an app to launch.
 export function resolveApp(query, { ctx = hostContext(), apps } = {}) {
   const q = String(query || "").trim();
-  if (!q) throw said("Which app? For example: morse launch spotify. Run morse apps to see what's installed.");
+  if (!q) throw said("Which app? For example: morse launch obsidian. Run morse apps to see what's installed.");
   const looksLikePath = /[\\/]/.test(q) || /\.(app|exe)$/i.test(q);
   if (looksLikePath && ctx.exists(q)) return appFromPath(ctx, q);
   const installed = apps || discoverApps(ctx);

@@ -26,7 +26,7 @@ from the welcome page. Each task was watched closely on its own screen, with
 | 7 | Joplin: “add a word count to the editor” | Worked the first time (12.8 s; the model thought for 10 s first). The count goes up as you type. It says “361 words (visible)”, an odd word | Same (faster model start, see below) |
 | 8 | VSCodium: “hide the sidebar until I hover over the left edge” | 19.5 s (17 s of it thinking). The sidebar's contents went, its empty space stayed, and hovering did nothing. The follow-up took **86.7 s** (83.6 s thinking) and only half worked. Undo put everything back | 6.4 s. Still not right: haiku doesn't understand VS Code's layout. Two of its tries hid every part of the window: one is now caught and tried again, the other was a different wrong part. **Not solved** |
 | 9 | Break a mod and let self-heal fix it: GitLab's file list mod, edited by hand to look for something that isn't there | The Mods panel said “Not working. It looks for a part of the page that isn't there right now” with **Fix it**. The fix worked the first time (10.9 s) and held after a reload | Same |
-| 10 | Your style: “Georgia font, bigger text and underline links everywhere” | Instant, no model. On GitLab and the Node.js docs right away. The toast says it “follows you to every site and app”, but a style made in Chrome doesn't reach desktop apps (they keep their own) | Not changed (see below) |
+| 10 | Your style: “Georgia font, bigger text and underline links everywhere” | Instant, no model. On GitLab and the Node.js docs right away. The toast says it “follows you to every site and app”, but a style made in Chrome doesn't reach desktop apps (they keep their own) | Paired with the Morse helper, Chrome and the apps share one style. Not paired, the toast says where it goes: “every site in Chrome” |
 | 11 | Node.js docs: “add a filter box at the top of this table of contents that filters the entries as I type” | — (done after the speed fix) | Worked the first time (8.2 s). Typing “watch” leaves the matching entries and their headings. Back after a reload |
 | 12 | Open VSCodium with `morse launch codium -- --no-sandbox --user-data-dir=<a long folder>` | It quit at once (its folder path was too long for its own socket). Morse said **“Morse couldn't reach the model”** the first time, and the second time told a root user to add `--no-sandbox`, which was already there | It says the app closed right after it started and to open it once on its own to see why |
 
@@ -67,6 +67,27 @@ from the welcome page. Each task was watched closely on its own screen, with
 - `MORSE_TRACE` shows where mods are really saved (`MORSE_HOME`), and says when
   the wait is the model thinking.
 
+**Fixed later, from the first list of what wasn't**
+
+- **Your style in Chrome and the apps** (task 10). When Chrome is paired with
+  the Morse helper, they share one style: Chrome syncs its copy with
+  `~/.morse/style.json` through the helper (`core/style-sync.js`,
+  `/v1/style` in `daemon/bridge.js`), and whichever side changed since they
+  last agreed wins. Not paired, the toast and the review say exactly where it
+  goes: “every site in Chrome” or “every app you open with Morse”
+  ([Your style](your-style.md)).
+- **Esc on a result** still keeps it, but now says so: “Kept … Closing the bar
+  keeps a change.”, with Undo right there (`runtime/src/60-generate.js`).
+- **A stale extension after a rebuild.** A build from `npm run build` puts an
+  id in the service worker and in `build-id.txt`; when they differ, the bar
+  says “Morse was rebuilt. Reload it in chrome://extensions, then reload this
+  page.” Never in a store build (`extension/dev-host.js`).
+- **Disk.** `demo/perf.js` and `tests/perf.test.js` remove the
+  `/tmp/morse-perf-*` folders they make, and the packaged Tunes copies in
+  `~/.cache/morse/tunes` (up to 224 MB each; the folder had reached 4.6 GB)
+  are shared by every checkout and only the 3 most recently used of each
+  kind are kept (`demo/electron-app/build.mjs`).
+
 **Slowness**
 
 Claude Code now runs at low effort unless you choose another
@@ -82,15 +103,10 @@ Code too old to know `--effort` is asked again without it.
 
 - **VS Code's sidebar on hover** (task 8). The model hides the wrong part or
   leaves a gap. VS Code's own setting for this, or its Ctrl+B, works better.
-- **Your style from Chrome doesn't reach desktop apps**, though the toast says
-  “every site and app”. Each keeps its own; joining them needs the Morse
-  helper to share it.
 - Joplin's word count said “(visible)”: the model's own wording.
-- Pressing **Esc** on a result keeps it (it says “Saved”). That is on purpose,
-  but it surprised me once.
-- After `npm run build`, a browser profile that already had Morse kept running
-  the old background code until its cache was cleared. Reload the extension in
-  `chrome://extensions` after a build.
+- **Your style without pairing.** Chrome and the desktop apps share Your
+  style only through the Morse helper. A Chrome that uses an Anthropic key
+  and isn't paired keeps its own (and says so).
 - PyPI sometimes shows a “Client Challenge” page to the test machine, so the
   fix for task 2 was checked on PyPI's challenge page (the new notice) and by
   `tests/round7.test.js`, not on the release history again.
@@ -104,8 +120,13 @@ Each fix has a test that failed before it:
 `tests/round5.test.js` (a full-window app hidden, by its look or by its code),
 `tests/context-privacy.test.js` (the note about panes),
 `tests/iterate.test.js` (forward again, Alt+↑),
-`tests/control-ui.test.js` (the off switch in an app) and
-`tests/electron.test.js` (an app that quits on start).
+`tests/control-ui.test.js` (the off switch in an app),
+`tests/electron.test.js` (an app that quits on start, the Tunes cache),
+`tests/style.test.js`, `tests/bridge.test.js` and `tests/style-share.test.js`
+(Your style shared through the helper, and the words when it isn't),
+`tests/iterate.test.js` (Esc says it kept the change, with Undo),
+`tests/dev-build.test.js` and `tests/store.test.js` (the rebuilt note, never
+in a store build) and `tests/perf.test.js` (its temp folders).
 
 ## Pictures
 

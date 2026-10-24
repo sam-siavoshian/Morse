@@ -14,6 +14,8 @@ repository; if the two ever disagree, please
   API address you entered.
 - When you open the bar or the Mods panel, Morse may download **the gallery
   list** of mods other people made, from GitHub Pages. At most once a day.
+- When you run `morse doctor`, the `morse` command asks npm whether a newer
+  version is out. At most once a day.
 - A few things you can choose to use send data elsewhere. They are listed
   below under "Only when you use them".
 - Nothing else leaves your computer.
@@ -72,6 +74,23 @@ mod files that match the site you are on.
   that can show that you visited that site.
 - Turn it off with "Show mods others made" in Morse settings. Then nothing is
   downloaded.
+
+## Checking for a newer version
+
+`morse doctor` shows whether a newer version of the `morse` command is out.
+To know, it asks npm, where the command is published:
+`https://registry.npmjs.org/morse-cli/latest`.
+
+- Only `morse doctor` asks. Nothing else in Morse does, and the Chrome
+  extension never does.
+- At most once a day. The answer (the newest version number and when it was
+  asked) is kept in `~/.morse/update-check.json`.
+- The request carries no cookies and nothing about you, your model, your mods
+  or your pages. npm, run by GitHub, sees your IP address, as with any
+  website. If you set `MORSE_UPDATE_REGISTRY` to another address, the same
+  goes there instead.
+- Turn it off with `MORSE_NO_UPDATE_CHECK=1` in your environment. Then
+  nothing is asked and nothing is kept.
 
 ## Only when you use them
 

@@ -9,6 +9,8 @@ function BAR_CSS() { return `
   .bar[data-pos="bottom"] { top: auto !important; bottom: 28px !important; }
   /* a sheet is a reading surface: solid, not see-through */
   .bar.has-pane { background: var(--m-surface); }
+  /* the glass is for calm pages: over the page's own words it is solid too (50-bar.js Backing) */
+  :is(.bar, .so-strip, .guide, .ds).solid { background: var(--m-surface); }
   .row { align-items: flex-start; }
   .row > .mark { margin-top: 7px; }
   .row > .chip { margin-top: 4px; }
@@ -42,6 +44,13 @@ function BAR_CSS() { return `
   .hint .note { color: var(--m-text-2); font-style: normal; overflow: hidden; text-overflow: ellipsis; }
   .hint .note::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-block: 0 1px; margin-inline: 0 8px; border-radius: 2px; background: var(--m-warn); vertical-align: middle; }
   .hint:has(.note) ~ .ticker { display: none; }
+  /* a result with a sentence for a note (the waiting note, “Stopped…”):
+     the note gives way before the title does, and ends in an ellipsis (the hint's title has it all) */
+  .hint:has(.said) .ok { flex: 0 1 auto; }
+  .hint .ok + .dim.said { flex: 0 1000 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  /* one more thing to do (the waiting button, Model settings: data-ob): the hint gets a row of its own */
+  .status:has(> .actions > [data-ob]) { flex-wrap: wrap; row-gap: 4px; }
+  .status:has(> .actions > [data-ob]) > .hint { flex: 1 1 100%; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
   /* suggestion chips: .sug is a quiet .btn, on the bar's 16px inset */
@@ -101,7 +110,18 @@ function BAR_CSS() { return `
     .kbsheet .cols { grid-template-columns: 1fr; }
     /* phone width: the input needs the room more than the mark does */
     .row > .mark { display: none; }
-    .chip { max-width: 40%; }
+    /* what you pointed at gets a line of its own above the input, so the
+       input keeps the width of the row less its three buttons */
+    .row:has(> .chip:not([hidden])) { flex-wrap: wrap; row-gap: 0; }
+    .row:has(> .chip:not([hidden]))::after { content: ""; order: 1; flex: 0 0 100%; height: 8px; }
+    .row > .chip { order: 0; max-width: 100%; margin-top: 0; }
+    .row:has(> .chip:not([hidden])) > .mark { margin-top: 3px; } /* (shown at this width only for a mod that needs fixing: 98-heal-css.js) */
+    .row > :not(.chip, .mark) { order: 2; }
+    /* ⋯ ends the hint's row, so a full row of actions never pushes it onto a line of its own */
+    .status:has(> .hint:not(:empty)) > .hint { order: -2; flex-basis: calc(100% - 40px); }
+    .status:has(> .hint:not(:empty)) > .more { order: -1; }
+    /* more actions than fit: they wrap, right-aligned, inside the bar */
+    .actions { flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; }
     .srow { flex-wrap: wrap; row-gap: 8px; }
     .srow .ctl:has(.seg) { flex: 1 1 100%; justify-content: flex-start; }
   }

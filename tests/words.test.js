@@ -37,6 +37,40 @@ const BANNED = [
   [/\b(hotkey|keybinding)s?\b/i, "hotkey (say shortcut)"],
 ];
 
+// Hype, filler and AI cadence (docs/WRITING.md, "Words we don't use"): words
+// that sound big and say nothing. Say what happens, where, and how to undo it.
+// Matched as whole words, any case, in everything a person reads.
+const MARKETING = [
+  [/\bseamless(ly)?\b/i, "seamless (say what happens)"],
+  [/\bpowerful\b/i, "powerful (say what it can do)"],
+  [/\bmagic(al|ally)?\b/i, "magic (describe what you see)"],
+  [/\beffortless(ly)?\b/i, "effortless"],
+  [/\bunlock(s|ed|ing)?\b/i, "unlock (say what the person gets)"],
+  [/\bsupercharg(e|es|ed|ing)\b/i, "supercharge"],
+  [/\brevolution(ary|i[sz]es?|i[sz]ed|i[sz]ing)\b/i, "revolutionary"],
+  [/\bnext[- ](level|gen|generation)\b/i, "next-level"],
+  [/\bgame[- ]?changers?\b/i, "game-changer"],
+  [/\bAI[- ]powered\b/i, "AI-powered (say what it does)"],
+  [/\bleverag(e|es|ed|ing)\b/i, "leverage (say use)"],
+  [/\brobust(ly|ness)?\b/i, "robust (say what it survives)"],
+  [/\bcutting[- ]edge\b|\bstate[- ]of[- ]the[- ]art\b/i, "cutting-edge"],
+  [/\belevat(e|es|ed|ing)\b/i, "elevate"],
+  [/\bempower(s|ed|ing|ment)?\b/i, "empower"],
+  [/\bdelv(e|es|ed|ing)\b/i, "delve"],
+  [/\bstreamlin(e|es|ed|ing)\b/i, "streamline"],
+  [/\bintuitive(ly)?\b/i, "intuitive"],
+  [/\bblazing(ly)?\b/i, "blazing"],
+];
+const FILLER = [
+  [/\bsimply\b/i, "simply (cut it)"],
+  [/\beasily\b/i, "easily (cut it)"],
+  [/\bjust\b(?! now\b)/i, "just (cut it, or say “a moment ago”; “just now” is fine)"],
+  [/\blet['’]s\b/i, "“Let's…” (say what to do)"],
+  [/[\p{L})][!¡](?=\s|$|[”"'’<)])/u, "exclamation mark (calm, not excited)"],
+  [/\p{Extended_Pictographic}/u, "emoji (no decoration)"],
+];
+const HYPE = [...MARKETING, ...FILLER];
+
 // Developer-only or code-view text, allowed on purpose. [file, text it contains, why]
 const ALLOWED = [
   ["runtime/src/80-modals.js", "Style <span class=\"dim\">CSS</span>", "the Edit code view: people chose to look at code"],
@@ -52,7 +86,7 @@ const SKIP_FILES = new Set([
 ]);
 const allowed = (file, s) => ALLOWED.some(([f, t]) => f === file && s.includes(t));
 
-function hits(file, strings) {
+function hits(file, strings, lists = [BANNED, HYPE]) {
   const found = [];
   for (const { text, line } of strings) {
     if (/console\.|\[morse\]/.test(text)) continue;
@@ -60,7 +94,7 @@ function hits(file, strings) {
     for (const m of text.matchAll(/>\s*(Refine|Keep|Remove|Apply)\s*<\/button>/g)) found.push(`${file}:${line} button “${m[1]}” (say Save, Undo or Change)`);
     const r = readable(text);
     if (!r || allowed(file, text)) continue;
-    for (const [re, why] of BANNED) if (re.test(r)) found.push(`${file}:${line} ${why}: “${r.slice(0, 120)}”`);
+    for (const [re, why] of lists.flat()) if (re.test(r)) found.push(`${file}:${line} ${why}: “${r.slice(0, 120)}”`);
   }
   return found;
 }
@@ -174,6 +208,8 @@ const DOCS_ALLOWED = [
   ["docs/privacy.md", "API address you entered", "the privacy policy names exactly where data goes (site/privacy.html is built from it)"],
   ["docs/privacy.md", "the CSS rules that style", "the privacy policy names exactly what is sent"],
   ["docs/privacy.md", "Anthropic API key", "the privacy policy names the account whose terms apply"],
+  ["docs/changing-things.md", "sleep timer button (☾)", "the symbol on the button, as it shows on screen"],
+  ["docs/desktop.md", "sleep timer button (☾)", "the symbol on the button, as it shows on screen"],
 ];
 
 test("the user pages in docs/ show no developer jargon", () => {
@@ -192,4 +228,59 @@ test("the docs scanner reads prose, and skips code and link addresses", () => {
   const found = hits("x.md", markdownProse(src));
   assert.equal(found.length, 1, found.join("\n"));
   assert.match(found[0], /^x\.md:5 CSS/);
+});
+
+// ---- hype and filler, beyond the pages above.
+
+test("every language's catalog has no exclamation marks or emoji", async () => {
+  const dir = new URL("core/locales/", ROOT);
+  const langs = readdirSync(dir).filter(f => f.endsWith(".js"));
+  assert.ok(langs.length >= 9, `reads every language (found ${langs.length})`);
+  const found = [];
+  for (const f of langs) {
+    const { default: cat } = await import(new URL(f, dir));
+    for (const [id, v] of Object.entries(cat)) for (const text of typeof v === "object" ? Object.values(v) : [v]) {
+      const plain = String(text).replace(/<code\b[^>]*>[\s\S]*?<\/code>/g, " ").replace(/<[^>]+>/g, " ");
+      for (const [re, why] of FILLER.slice(-2)) if (re.test(plain)) found.push(`core/locales/${f} ${id} ${why}: “${plain.slice(0, 100)}”`);
+    }
+  }
+  assert.deepEqual(found, [], found.join("\n"));
+});
+
+// Markdown read as prose; with fences: true, what's inside code blocks too
+// (the store listing keeps its text in blocks, ready to paste).
+const prose = (src, { fences = false } = {}) => markdownProse(fences ? src.replace(/^\s*(```|~~~).*$/gm, "") : src);
+
+test("the README, the store listing, the launch kit and the changelog's headings have no hype or filler", () => {
+  const found = [];
+  for (const file of ["README.md", "docs/README.md", "docs/launch/README.md", "docs/store/README.md", "CONTRIBUTING.md"]) found.push(...hits(file, prose(read(file)), [HYPE]));
+  found.push(...hits("docs/store/listing.md", prose(read("docs/store/listing.md"), { fences: true }), [HYPE]));
+  const headings = read("CHANGELOG.md").split("\n").map((text, k) => ({ text, line: k + 1 })).filter(l => /^#/.test(l.text));
+  assert.ok(headings.length > 5, "reads the changelog's headings");
+  found.push(...hits("CHANGELOG.md", headings.map(h => ({ ...h, text: h.text.replace(/^#+\s*/, "") + " is a heading" })), [HYPE]));
+  for (const file of ["package.json", "extension/manifest.json", "desktop-app/package.json"]) {
+    const { description } = JSON.parse(read(file));
+    if (description) found.push(...hits(file, [{ text: description, line: "description" }], [HYPE]));
+  }
+  assert.deepEqual(found, [], `hype or filler a person would read:\n${found.join("\n")}`);
+});
+
+test("the developer docs have no marketing words", () => {
+  const files = readdirSync(new URL("docs/dev/", ROOT)).filter(f => f.endsWith(".md")).map(f => `docs/dev/${f}`);
+  assert.ok(files.length >= 5, `reads the developer docs (found ${files.length})`);
+  const found = files.flatMap(file => hits(file, prose(read(file)), [MARKETING]));
+  assert.deepEqual(found, [], `marketing words in the developer docs:\n${found.join("\n")}`);
+});
+
+test("the hype scanner finds hype and filler, and lets “just now” through", () => {
+  const src = [
+    "Morse is a powerful, seamless way to change apps.", // 1: powerful, seamless
+    "Simply point at it and it just works!",             // 2: simply, just, exclamation
+    "Saved just now. Undo puts it back.",                // 3: fine
+    "Let's make your apps work for you ✨",              // 4: let's, emoji
+    "Morse writes the change and shows it on the page.", // 5: fine
+  ].join("\n");
+  const found = hits("x.md", markdownProse(src), [HYPE]);
+  const at = n => found.filter(f => f.startsWith(`x.md:${n} `)).length;
+  assert.deepEqual([at(1), at(2), at(3), at(4), at(5)], [2, 3, 0, 2, 0], found.join("\n"));
 });
