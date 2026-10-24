@@ -131,6 +131,12 @@ Do these once, in this order.
 
 ## When something goes wrong
 
+- **`npm run release` stops on a failed test**: nothing was committed or
+  tagged, and the files are back as they were. The browser tests can time
+  out on a busy computer; run the file alone
+  (`DISPLAY=:99 node --test --test-timeout=300000 tests/<file>.test.js`). If
+  it passes, close what's busy and run `npm run release` again. If it fails
+  again, fix it first.
 - **The tag doesn't match `package.json`**: the release stops at the first
   step. Make tags with `npm run release`, not by hand.
 - **A test fails in the workflow but not on your computer**: fix it on
