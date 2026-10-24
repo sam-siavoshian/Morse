@@ -6,6 +6,56 @@
 
 [Watch the demo](morse-demo-v2.mp4) (92 seconds, no sound) · [Website](https://sam-siavoshian.github.io/RRAA/site/) · [Source](https://github.com/sam-siavoshian/RRAA)
 
+## The 36-second cut, for X
+
+[![The 36-second cut](poster-social.png)](morse-social-16x9.mp4)
+
+A short cut for social media: Morse changing a real app, VS Code, in the first two seconds, then a new feature, then three quick cuts. Captions are burned in, because most people watch with the sound off.
+
+| File | What it is | Size |
+|---|---|---|
+| [`morse-social-16x9.mp4`](morse-social-16x9.mp4) | 1920×1080, 36 s | 3.7 MB |
+| [`morse-social-4x5.mp4`](morse-social-4x5.mp4) | 1080×1350, for the timeline, 36 s | 2.6 MB |
+| [`morse-social-9x16.mp4`](morse-social-9x16.mp4) | 1080×1920, 36 s | 2.7 MB |
+| [`poster-social.png`](poster-social.png) | Poster frame: VS Code as a green terminal | 272 KB |
+
+In order:
+
+1. **VS Code as a retro terminal.** “make it look like a retro green terminal: green glowing text on black”, typed into the Morse bar in VSCodium (VS Code without Microsoft's branding, installed from its own `.deb`), opened with `morse launch codium`. Claude Code (haiku) wrote it in 11.6 seconds.
+2. **A feature it doesn't have.** “add a floating 25 minute focus timer with a start button in the top right corner”: 13.0 seconds, then Save, then Start, and it counts down.
+3. **Show me once**, from the demo above: archive one email by hand, then “Do these steps to every unread email”.
+4. **Fix it**, from the demo above: a site update broke a mod, and the model fixed it.
+5. **The off switch** in VS Code: ⌥⇧0 (Alt+Shift+0) turns off both changes at once, and pressing it again brings them back.
+
+What's real and what's sped up:
+
+- Both VS Code changes are Claude Code (haiku) answers with no edits, in a real VSCodium window. The bar shows the real time each took. Each wait is sped up in the video and says so on screen (“Waiting for the model, sped up N×”).
+- Show me once and Fix it run on the demo apps in this repo (Postbox and Tunes), not on real Gmail or Spotify. Their changes are also Claude Code (haiku).
+- Pauses where the person on screen did nothing are cut short, as in the demo above. In VS Code, typing went slowly on the recording machine, so the video starts each request when it is already typed.
+- The cursor is drawn in afterwards. The title bar says “[Superuser]” because the recording machine runs as root.
+
+Made by `CUT=x` in [`demo/record-launch.js`](../../demo/record-launch.js): it records the VS Code scene (`ONLY=codium`) next to the Show me once and Fix it recordings of the demo above, then lays out each format with its captions.
+
+### Posts
+
+Three single posts, with the 4:5 video:
+
+> I typed “make it look like a retro green terminal” into VS Code. Twelve seconds later, it was one. Morse lets you change any app in your own words. Open source.
+
+> VS Code doesn't have a focus timer. I asked for one, and Morse added it to the running app. No extension, no settings. Works in websites and desktop apps.
+
+> Your apps, your way. Point at something, say what you want changed, and your own model (Claude Code, Codex or an API key) writes it while you watch. Open source: github.com/sam-siavoshian/RRAA
+
+A short thread:
+
+> 1/ I changed VS Code by typing one sentence. This is Morse, an open-source tool that lets you change any website or desktop app in your own words. [16:9 video]
+>
+> 2/ It works on websites, and in desktop apps built on web pages, like VS Code and Obsidian. Press a shortcut, point at something, say what you want. Your own model writes the change: Claude Code, Codex or an API key.
+>
+> 3/ Do a chore once, and Morse turns it into a button. When a site update breaks one of your changes, Fix it writes a new version. One key turns every change off.
+>
+> 4/ Everything in the video is a real run, with the waits sped up and labelled. It's free and open source: github.com/sam-siavoshian/RRAA
+
 ## Who it's for
 
 People who use the same apps every day and wish one thing worked a little differently: a button that's missing, a chore they do ten times a day, text that's too small. You don't need to know how to code. If you do, you can read and edit every line Morse writes.

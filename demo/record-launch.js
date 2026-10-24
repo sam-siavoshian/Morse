@@ -17,6 +17,12 @@
 //       show-once (and a GIF), self-heal, desktop-app.
 //   v1  morse-demo.mp4: sleep timer, word count, Edit tools, Page tools,
 //       share. Clips: sleep-timer (and a GIF), page-tools, direct-edit.
+//   x   morse-social-16x9/4x5/9x16.mp4: the short cut for social media. A
+//       real app (VSCodium, from its .deb) restyled and given a feature, then
+//       Show me once, Fix it and the off switch; captions burned in, no title
+//       cards. Needs the v2 showonce and heal recordings in the same WORK:
+//         CUT=v2 ONLY=showonce,heal WORK=w node demo/record-launch.js
+//         CUT=x ONLY=codium WORK=w node demo/record-launch.js
 //
 // The model is real: by default the Morse helper runs Claude Code with haiku
 // (MORSE_PROVIDER / MORSE_MODEL change it; MORSE_PROVIDER=demo replays
@@ -125,9 +131,44 @@ const CUTS = {
     gif: "show-once",
   },
 };
+// x: the social cut (25-40 s, no title cards, captions burned in, 16:9, 4:5
+// and 9:16). Its first scene is a real app, VSCodium (VS Code without
+// Microsoft's branding), installed from its .deb; the quick cuts reuse the v2
+// recordings of Show me once and Fix it (record them into the same WORK with
+// CUT=v2 ONLY=showonce,heal, or REUSE a v2 work dir and add ONLY=codium).
+CUTS.x = {
+  social: true,
+  order: [["scene", "codium"], ["scene", "showonce"], ["scene", "heal"]],
+  clips: {},
+};
+const SOCIAL = [
+  // The hook: the change lands in the first two seconds. The model wait is
+  // folded from right after Enter, still labelled.
+  { scene: "codium", from: m => m.marks.enter1 - 0.5, to: m => m.marks.saved1 + 0.5, wait: 0.9,
+    adjust: m => { m.speeds = m.speeds.map(w => (w.from > m.marks.enter1 && w.from < m.marks.result1 ? { ...w, from: m.marks.enter1 + 0.3 } : w)); },
+    caption: "I asked VS Code to look like a retro terminal.", note: "VSCodium (VS Code) · Claude Code (haiku) · recorded live" },
+  { scene: "codium", from: m => m.marks.enter2 - 1.6, to: m => m.marks.timer + 0.3, cx: 1, caption: "Then for a feature it doesn't have." },
+  // Zoomed on the bar while it lists the steps and the request is typed.
+  { scene: "showonce", from: m => clicks(m)[3] - 0.4, to: m => m.marks.clipEnd ?? m.marks.end, cx: 0.45,
+    adjust: m => {
+      const stop = clicks(m)[3], enter = (m.cursor.find(e => e.key === "Enter" && e.t > stop) || {}).t ?? stop + 3;
+      m.zooms = [...m.zooms, { from: stop + 0.4, to: enter + 0.4, rect: { x: 290, y: 0, w: 700, h: 300 }, max: 1.8 }];
+    },
+    caption: "Do a chore once. Morse makes it a button." },
+  { scene: "heal", from: m => m.zooms[0].from - 0.2, to: m => m.marks.result + 1.4, cx: 0.6, caption: "A site update broke a mod? Fix it." },
+  { scene: "codium", from: m => m.marks.off - 0.4, to: m => m.marks.end, cx: 0, caption: "One key turns every change off. And back on." },
+];
+const SOCIAL_END = { line: "Morse: change any app in your own words", sub: "Open source · github.com/sam-siavoshian/RRAA", secs: 2.6 };
+// Each format: the canvas, where the picture goes, where the caption goes.
+const FORMATS = {
+  "16x9": { w: 1920, h: 1080, pic: { x: 192, y: 0, w: 1536, h: 960 }, cap: { y: 966, h: 114, size: 40, note: 20 }, mark: null },
+  "4x5": { w: 1080, h: 1350, crop: 4 / 3, pic: { x: 0, y: 176, w: 1080, h: 810 }, cap: { y: 1004, h: 300, size: 54, note: 26 }, mark: { y: 60 } },
+  "9x16": { w: 1080, h: 1920, crop: 4 / 3, pic: { x: 0, y: 500, w: 1080, h: 810 }, cap: { y: 1360, h: 360, size: 58, note: 28 }, mark: { y: 300 } },
+};
 const CUT = CUTS[process.env.CUT || "v2"];
 if (!CUT) throw new Error(`CUT must be one of ${Object.keys(CUTS).join(", ")}`);
 const NEEDED = [...new Set([...CUT.order.filter(o => o[0] === "scene").map(o => o[1]), ...Object.values(CUT.clips).map(c => c.scene)])];
+const OWN_RECORDERS = ["desktop", "codium"]; // scenes with their own X screen, not the browser
 const WAIT = 1.8, CLIP_WAIT = 1.2; // seconds a model wait is folded into (in the video, in the clips)
 const MODEL_WAIT = "Waiting for the model";
 
@@ -852,13 +893,204 @@ async function recordDesktop(WORK) {
   if (!process.env.DESKTOP_DISPLAY) xvfb?.kill();
 }
 
+// ---------------------------------------------------------------- a real app: VSCodium
+// VSCodium as installed from its .deb (/usr/share/codium), opened with a real
+// `morse launch codium` on an X screen of its own, a small project open in
+// it. VS Code draws its own title bar, so the page's screencast is the whole
+// window. Mouse and keys go to the page over CDP, as in the desktop scene.
+// Three things, each checked: a restyle ("a retro green terminal"), a new
+// feature (a focus timer, saved, then started), and the off switch (⌥⇧0 turns
+// every change off; again, and they're back).
+const APP_SCALE = Number(process.env.APP_SCALE || 1.5);
+const CODIUM_ASK1 = "make it look like a retro green terminal: green glowing text on black";
+const CODIUM_ASK2 = "add a floating 25 minute focus timer with a start button in the top right corner";
+const PROJECT = {
+  "README.md": "# Weather station\n\nReads the sensors every minute and posts a summary.\n",
+  "src/station.js": 'import { readSensors } from "./sensors.js";\n\n// Every minute: read the sensors and post a summary.\nexport async function tick(post) {\n  const r = await readSensors();\n  const temp = r.temperature.toFixed(1);\n  const wind = Math.round(r.wind);\n  await post(`Now ${temp}°C, wind ${wind} km/h`);\n}\n\nsetInterval(() => tick(console.log), 60_000);\n',
+  "src/sensors.js": "export async function readSensors() {\n  return { temperature: 18.4, wind: 12.6, humidity: 0.71 };\n}\n",
+};
+const CODIUM_SETTINGS = {
+  "security.workspace.trust.enabled": false, "workbench.startupEditor": "none", "window.commandCenter": false,
+  "workbench.tips.enabled": false, "update.mode": "none", "telemetry.telemetryLevel": "off", "editor.fontSize": 15,
+  "workbench.layoutControl.enabled": false, "chat.commandCenter.enabled": false, "workbench.enableExperiments": false,
+  "editor.minimap.enabled": false,
+};
+
+// One screencast of a page reached over our own CDP session: recordScene for apps.
+async function recordCdp(s, out, body) {
+  await fs.rm(out, { recursive: true, force: true });
+  await fs.mkdir(out, { recursive: true });
+  const frames = [], offsets = [], writes = [];
+  let n = 0;
+  const onFrame = p => {
+    const file = `f${String(n++).padStart(5, "0")}.jpg`;
+    offsets.push(Date.now() / 1000 - p.metadata.timestamp);
+    frames.push({ file, t: p.metadata.timestamp });
+    writes.push(fs.writeFile(path.join(out, file), Buffer.from(p.data, "base64")));
+    s.send("Page.screencastFrameAck", { sessionId: p.sessionId }).catch(() => {});
+  };
+  s.on("Page.screencastFrame", onFrame);
+  await s.send("Page.startScreencast", { format: "jpeg", quality: 88, maxWidth: Math.round(W * DPR), maxHeight: Math.round(H * DPR), everyNthFrame: 1 });
+  await sleep(400);
+  const { rec, meta: marksMeta } = marker();
+  rec.mark("start");
+  const c0 = CURSOR_LOG.length;
+  let result;
+  try { result = await body(rec); }
+  finally {
+    rec.unzoom();
+    rec.mark("end");
+    await sleep(250);
+    await s.send("Page.stopScreencast").catch(() => {});
+    s.off("Page.screencastFrame", onFrame);
+    await Promise.all(writes);
+  }
+  offsets.sort((a, b) => a - b);
+  frames.sort((a, b) => a.t - b.t);
+  const off = offsets[Math.floor(offsets.length / 2)] || 0;
+  const meta = { name: path.basename(out), frames, offset: off, ...marksMeta(off), hidden: [], cursor: cursorSince(c0, off), result };
+  await fs.writeFile(path.join(out, "meta.json"), JSON.stringify(meta, null, 1));
+  log(`${meta.name}: ${frames.length} frames, ${(meta.marks.end - meta.marks.start).toFixed(1)}s raw, ${(frames.length / (meta.marks.end - meta.marks.start)).toFixed(0)} fps`);
+  return result;
+}
+
+async function recordCodium(WORK) {
+  const D = process.env.APP_DISPLAY || await startXvfb(APP_SCALE);
+  const env = { ...process.env, DISPLAY: D };
+  const x = (...args) => execFileSync("xdotool", args, { env, encoding: "utf8" }).trim();
+  try { execFileSync("xsetroot", ["-solid", "#16161a"], { env }); } catch {}
+  for (let attempt = 1; attempt <= TRIES; attempt++) {
+    const home = path.join(WORK, `codium-home-${attempt}`);
+    await fs.rm(home, { recursive: true, force: true });
+    const morseHome = path.join(home, ".morse"), profile = path.join(home, "codium"), proj = path.join(home, "weather-station");
+    await fs.mkdir(path.join(morseHome, "mods"), { recursive: true });
+    if (process.env.MORSE_MODEL) await fs.writeFile(path.join(morseHome, "config.json"), JSON.stringify({ models: { [process.env.MORSE_PROVIDER]: process.env.MORSE_MODEL } }));
+    await fs.writeFile(path.join(morseHome, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } }));
+    await fs.mkdir(path.join(profile, "User"), { recursive: true });
+    await fs.writeFile(path.join(profile, "User", "settings.json"), JSON.stringify(CODIUM_SETTINGS, null, 1));
+    for (const [p, text] of Object.entries(PROJECT)) { await fs.mkdir(path.dirname(path.join(proj, p)), { recursive: true }); await fs.writeFile(path.join(proj, p), text); }
+    // MORSE_DEBUG: the page shows Morse's state to this script (runtime/src/10-dom.js).
+    const launch = spawn("node", [path.join(root, "daemon/cli.js"), "launch", "codium", "--", "--no-sandbox", `--user-data-dir=${profile}`,
+      `--force-device-scale-factor=${APP_SCALE}`, proj, path.join(proj, "src/station.js")],
+      { env: { ...env, MORSE_HOME: morseHome, MORSE_DEBUG: "1", FORCE_COLOR: "0" }, stdio: ["ignore", "pipe", "pipe"] });
+    launch.out = "";
+    launch.stdout.on("data", d => { launch.out += d; });
+    launch.stderr.on("data", d => { launch.out += d; });
+    const cleanup = () => {
+      try { launch.kill(); } catch {}
+      try { execFileSync("pkill", ["-9", "-f", `user-data-dir=${profile}`]); } catch {}
+    };
+    let result;
+    try {
+      await until(() => /connected to/i.test(launch.out) || launch.exitCode != null, 120000, "morse launch to connect");
+      if (launch.exitCode != null) throw new Error("morse launch ended: " + launch.out.slice(-300));
+      const port = Number(launch.out.match(/port\s+(\d+)/)[1]);
+      let s = null;
+      const connect = async () => {
+        const t = await until(async () => (await listTargets(port)).find(t => t.type === "page" && /workbench\.html/.test(t.url)), 60000, "the VSCodium window");
+        s = await CDPSession.connect(t.webSocketDebuggerUrl);
+      };
+      await connect();
+      const ev = async expr => {
+        if (s.closed) await connect();
+        const r = await s.send("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true });
+        return r.result?.value;
+      };
+      const st = async () => JSON.parse((await ev(`document.querySelector("[data-morse-ui][data-status]")?.dataset.status || "null"`)) || "null");
+      await until(async () => (await st())?.ready && await ev(`!!document.querySelector(".part.sidebar .monaco-list-row") && !!document.querySelector(".monaco-editor .view-lines")`), 90000, "VSCodium with Morse in it");
+      // The window fills the screen (there's no window manager to maximize it).
+      const win = await until(() => { try { return x("search", "--name", "VSCodium").split("\n").find(Boolean); } catch { return null; } }, 20000, "the VSCodium X window").catch(() => null);
+      if (win) { try { x("windowmove", win, "0", "0"); x("windowsize", win, String(Math.round(W * APP_SCALE)), String(Math.round(H * APP_SCALE))); } catch {} }
+      await sleep(3500); // the "Morse is ready" note goes, the editor settles
+      const io = cdpInput(s, (px, py) => [px, py]);
+      const keyed = k => { noteKey(k.key); return io.key(k); };
+      const me = human(io, { at: [W * 0.62, H * 0.45] });
+      const rectOf = expr => ev(`(() => { const e = ${expr}; const r = e?.getBoundingClientRect(); return r && r.width ? { x: r.x, y: r.y, width: r.width, height: r.height } : null; })()`);
+      const inBar = sel => rectOf(`document.querySelector("[data-morse-ui][data-status]")?.shadowRoot.querySelector(${JSON.stringify(sel)})`);
+      const green = () => ev(`(() => { const e = document.querySelector(".monaco-editor .view-line span span") || document.querySelector(".monaco-editor .view-line"); const c = getComputedStyle(e).color.match(/\\d+/g).map(Number); return c[1] > c[0] + 60 && c[1] > c[2] + 60; })()`);
+      result = await recordCdp(s, path.join(WORK, "codium"), async rec => {
+        const ask = async (text, n) => {
+          for (let i = 0; i < 3 && !(await st().catch(() => null))?.open; i++) {
+            await keyed({ key: " ", code: "Space", windowsVirtualKeyCode: 32, modifiers: 2 | 8 }); // Ctrl+Shift+Space
+            await until(async () => (await st())?.open, 3000, "the bar to open").catch(() => {});
+          }
+          await sleep(350);
+          rec.mark(`ask${n}`);
+          await me.type(text, { fast: true });
+          await sleep(300);
+          rec.mark(`enter${n}`);
+          await keyed(ENTER);
+          const t0 = rec.now();
+          await until(async () => (await st())?.phase === "working", 8000, "the model to start");
+          const done = await until(async () => { const v = await st(); return ["result", "error"].includes(v?.phase) && v; }, 240000, "a result");
+          const t1 = rec.now();
+          if (t1 - t0 > 3.5) rec.speed(t0 + 1.2, t1 - 0.4);
+          rec.mark(`result${n}`);
+          return { phase: done.phase, hint: done.hint, secs: +(t1 - t0).toFixed(1) };
+        };
+        const save = async n => {
+          const b = await inBar(".actions [data-a=keep]");
+          if (b) await me.click(b.x + b.width / 2, b.y + b.height / 2);
+          else await keyed(ENTER); // Enter saves too
+          rec.mark(`saved${n}`);
+        };
+        await me.move(W * 0.55, H * 0.4, 500);
+        // 1. the restyle
+        const r1 = await ask(CODIUM_ASK1, 1);
+        if (r1.phase !== "result" || !(await green())) return { ok: false, r1, miss: "not green" };
+        await sleep(1100);
+        await save(1);
+        await sleep(900);
+        // 2. a feature
+        await me.move(W * 0.5, H * 0.35, 500);
+        const r2 = await ask(CODIUM_ASK2, 2);
+        const timerExpr = `[...document.querySelectorAll("body *")].find(e => e.getRootNode() === document && !e.closest("[data-morse-ui]") && /\\b25:00\\b/.test(e.textContent) && e.children.length <= 3 && e.getClientRects().length)`;
+        const timer = r2.phase === "result" && await rectOf(timerExpr);
+        if (!timer) return { ok: false, r1, r2, miss: "no timer on screen" };
+        await sleep(800);
+        await save(2);
+        await sleep(500);
+        const startExpr = `[...document.querySelectorAll("button, [role=button]")].find(e => e.getRootNode() === document && !e.closest("[data-morse-ui]") && /start/i.test(e.textContent + (e.getAttribute("aria-label") || "")) && e.getClientRects().length)`;
+        const start = await rectOf(startExpr);
+        await rec.zoom({ x: timer.x - 40, y: timer.y - 20, width: Math.max(timer.width, 260) + 80, height: timer.height + 60 }, { max: 2.2, pad: 30 });
+        await sleep(600);
+        if (start) await me.click(start.x + start.width / 2, start.y + start.height / 2);
+        await sleep(1900);
+        const ticking = await ev(`(() => { const e = ${timerExpr}; return !e; })()`); // 25:00 has become 24:5x
+        rec.mark("timer");
+        rec.unzoom();
+        await me.move(W * 0.62, H * 0.55, 600);
+        await sleep(500);
+        // 3. the off switch, and back
+        rec.mark("off");
+        await keyed({ key: "0", code: "Digit0", windowsVirtualKeyCode: 48, modifiers: 1 | 8 }); // Alt+Shift+0
+        const off = await until(async () => !(await green()), 5000, "every change off").then(() => true, () => false);
+        await sleep(1500);
+        rec.mark("on");
+        await keyed({ key: "0", code: "Digit0", windowsVirtualKeyCode: 48, modifiers: 1 | 8 });
+        const on = await until(() => green(), 5000, "the changes back").then(() => true, () => false);
+        await sleep(1600);
+        return { ok: off && on && !!start, r1, r2, timer: !!timer, started: ticking, off, on };
+      });
+    } catch (e) {
+      result = { ok: false, miss: e.message.split("\n")[0] };
+    } finally { cleanup(); }
+    results.codium = { attempt, ...result };
+    log("codium", JSON.stringify(result));
+    if (result?.ok) break;
+    log(`codium: attempt ${attempt} missed, recording again`);
+    await sleep(2000);
+  }
+  if (!process.env.APP_DISPLAY) xvfb?.kill();
+}
+
 let xvfb = null;
-async function startXvfb() {
+async function startXvfb(scale = DS) {
   let n = 60;
   while (existsSync(`/tmp/.X11-unix/X${n}`) || existsSync(`/tmp/.X${n}-lock`)) n++;
   // -r: no key repeat (xset can't turn it off on Xvfb); on a busy machine a key
   // held a few hundred ms too long would type twice.
-  xvfb = spawn("Xvfb", [`:${n}`, "-screen", "0", `${Math.round(W * DS)}x${Math.round(H * DS)}x24`, "-nolisten", "tcp", "-r", "-ardelay", "60000"], { stdio: "ignore" });
+  xvfb = spawn("Xvfb", [`:${n}`, "-screen", "0", `${Math.round(W * scale)}x${Math.round(H * scale)}x24`, "-nolisten", "tcp", "-r", "-ardelay", "60000"], { stdio: "ignore" });
   process.on("exit", () => xvfb?.kill());
   await until(() => existsSync(`/tmp/.X11-unix/X${n}`), 10000, "Xvfb");
   return `:${n}`;
@@ -981,9 +1213,10 @@ async function recordAll(WORK) {
   const want = name => NEEDED.includes(name) && (!ONLY || ONLY.includes(name));
   const resultsFile = path.join(WORK, "results.json");
   Object.assign(results, JSON.parse(await fs.readFile(resultsFile, "utf8").catch(() => "{}")));
-  const browserScenes = NEEDED.filter(n => n !== "desktop" && want(n));
+  const browserScenes = NEEDED.filter(n => !OWN_RECORDERS.includes(n) && want(n));
   if (browserScenes.length) await recordBrowser(WORK, want);
   if (want("desktop")) await recordDesktop(WORK);
+  if (want("codium")) await recordCodium(WORK);
   await fs.writeFile(resultsFile, JSON.stringify({ ...results, provider: process.env.MORSE_PROVIDER, model: process.env.MORSE_MODEL || "" }, null, 1));
 }
 
@@ -1274,7 +1507,7 @@ function timeline(meta, from, to, wait = WAIT) {
 }
 
 // zoompan expressions for the zoom windows: eased in and out over R seconds.
-function zoomExpr(zs) {
+function zoomExpr(zs, OW = W, OH = H) {
   const R = 0.7, IW = Math.round(W * DPR), IH = Math.round(H * DPR);
   if (!zs.length) return null;
   const s = z => { const u = `min(clip((it-${z.a.toFixed(3)})/${R},0,1),clip((${z.b.toFixed(3)}-it)/${R},0,1))`; return `(${u})*(${u})*(3-2*(${u}))`; };
@@ -1286,7 +1519,7 @@ function zoomExpr(zs) {
   const zoom = "1" + parts.map(p => `+${(p.k - 1).toFixed(4)}*${p.s}`).join("");
   const cx = `${IW / 2}` + parts.map(p => `+${(p.cx - IW / 2).toFixed(1)}*${p.s}`).join("");
   const cy = `${IH / 2}` + parts.map(p => `+${(p.cy - IH / 2).toFixed(1)}*${p.s}`).join("");
-  return `zoompan=z='${zoom}':x='clip(${cx}-iw/zoom/2,0,iw-iw/zoom)':y='clip(${cy}-ih/zoom/2,0,ih-ih/zoom)':d=1:s=${W}x${H}:fps=${FPS}`;
+  return `zoompan=z='${zoom}':x='clip(${cx}-iw/zoom/2,0,iw-iw/zoom)':y='clip(${cy}-ih/zoom/2,0,ih-ih/zoom)':d=1:s=${OW}x${OH}:fps=${FPS}`;
 }
 
 // The cursor over [from, to] of a scene, frame by frame, as ffmpeg sendcmd
@@ -1335,7 +1568,9 @@ function cursorTrack(meta, at, from, to, dur) {
 }
 
 // Encodes [from, to] of a scene to a 30 fps H.264 file, with overlays.
-async function encodeScene(WORK, meta, from, to, out, { fade = false, caption = null, crf = 14, wait = WAIT } = {}) {
+async function encodeScene(WORK, meta, from, to, out, { fade = false, caption = null, crf = 14, wait = WAIT, full = false, pill = "bottom-left" } = {}) {
+  // full: the frames' own size (1920×1200) instead of 1280×800, for the social formats.
+  const OW = full ? Math.round(W * DPR) : W, OH = full ? Math.round(H * DPR) : H, K = OW / W;
   const dir = path.join(WORK, meta.name);
   const { at, windows, idle } = timeline(meta, from, to, wait);
   const hidden = t => meta.hidden.some(([a, b]) => t >= a && t <= b);
@@ -1374,13 +1609,16 @@ async function encodeScene(WORK, meta, from, to, out, { fade = false, caption = 
     });
     graph += `;[c${ids.length}]`;
   } else graph += ",";
-  graph += zoomExpr(zs) || `scale=${W}:${H}:flags=lanczos`;
+  graph += zoomExpr(zs, OW, OH) || `scale=${OW}:${OH}:flags=lanczos`;
   if (fade) graph += `,fade=t=in:st=0:d=0.25,fade=t=out:st=${(dur - 0.3).toFixed(2)}:d=0.3`;
   graph += "[v0]";
   let last = "v0";
   for (const w of windows) {
     inputs.push("-i", speedPng(WORK, w));
-    graph += `;[${last}][${n}:v]overlay=x=20:y=H-h-20:enable='between(t,${w.a.toFixed(2)},${w.b.toFixed(2)})'[v${n}]`;
+    // The speed label: bottom left, or (pill: "top"/"bottom") centred, which is
+    // inside every crop the social formats take, on the side away from the bar.
+    const px = pill === "bottom-left" ? Math.round(20 * K) : "(W-w)/2", py = pill === "top" ? `${Math.round(20 * K)}` : `H-h-${Math.round(20 * K)}`;
+    graph += `;[${n}:v]scale=iw*${K}:-1[s${n}];[${last}][s${n}]overlay=x=${px}:y=${py}:enable='between(t,${w.a.toFixed(2)},${w.b.toFixed(2)})'[v${n}]`;
     last = `v${n++}`;
   }
   if (caption) {
@@ -1485,6 +1723,89 @@ async function build(WORK) {
   for (const [f] of posters) log(`${path.basename(f)}: ${mb(f)}`);
 }
 
+// ---------------------------------------------------------------- the social cut
+// Segments of scenes at full size, each laid out per format with its caption
+// burned in, hard cuts, then an end card. One file per format.
+// The tall formats show a crop of the frame around the action (seg.cx, 0..1 across).
+function cropFor(F, seg) {
+  if (!F.crop) return "";
+  const IW = Math.round(W * DPR), IH = Math.round(H * DPR), cw = Math.round(IH * F.crop);
+  const x = Math.max(0, Math.min(IW - cw, Math.round((seg.cx ?? 0.5) * IW - cw / 2)));
+  return `crop=${cw}:${IH}:${x}:0,`;
+}
+async function buildSocial(WORK) {
+  await fs.mkdir(OUT, { recursive: true });
+  const metas = {};
+  for (const name of NEEDED) metas[name] = JSON.parse(await fs.readFile(path.join(WORK, name, "meta.json"), "utf8"));
+  const speeds = new Map();
+  for (const seg of SOCIAL) { const m = structuredClone(metas[seg.scene]); seg.adjust?.(m); for (const w of timeline(m, seg.from(m), seg.to(m), seg.wait ?? CLIP_WAIT).windows) speeds.set(speedPng(WORK, w), w); }
+  await renderPngs(WORK, { speeds: [...speeds.values()] });
+  await renderCursor(WORK);
+  // The segments, at 1920×1200.
+  const segs = [];
+  for (const [i, seg] of SOCIAL.entries()) {
+    const m = structuredClone(metas[seg.scene]), out = path.join(WORK, `social-${i}.mp4`);
+    seg.adjust?.(m);
+    // VSCodium's bar is at the bottom, the demo apps' at the top: the label goes the other way.
+    const r = await encodeScene(WORK, m, seg.from(m), seg.to(m), out, { full: true, crf: 14, wait: seg.wait ?? CLIP_WAIT, pill: seg.scene === "codium" ? "top" : "bottom" });
+    log(`social ${i} (${seg.scene}): ${r.dur.toFixed(1)}s${r.windows.length ? `, sped up: ${r.windows.map(w => `${w.label} ${w.factor}×`).join(", ")}` : ""}, dead air cut: ${r.idle.toFixed(1)}s`);
+    segs.push({ ...seg, file: out, dur: r.dur });
+  }
+  // The words, per format: a transparent layer over each segment, and the end card.
+  const b = await chromium.launch();
+  const p = await b.newPage({ deviceScaleFactor: 1 });
+  const layer = async (F, html, file) => {
+    await p.setViewportSize({ width: F.w, height: F.h });
+    await p.setContent(`<!doctype html><meta charset="utf-8"><body style="margin:0;background:transparent;${FONT}">${html}</body>`);
+    await p.evaluate(() => document.fonts.ready);
+    await p.screenshot({ path: file, omitBackground: true });
+  };
+  const mark = F => F.mark ? `<div style="position:absolute;top:${F.mark.y}px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:14px;color:#ededef">${RADAR(34)}<span style="font-size:40px;font-weight:600;letter-spacing:-.03em">morse</span></div>` : "";
+  const outs = {};
+  for (const [key, F] of Object.entries(FORMATS)) {
+    const parts = [];
+    for (const [i, seg] of segs.entries()) {
+      const png = path.join(WORK, `social-${key}-${i}.png`);
+      await layer(F, `${mark(F)}<div style="position:absolute;left:${Math.round(F.w * 0.06)}px;right:${Math.round(F.w * 0.06)}px;top:${F.cap.y}px;height:${F.cap.h}px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff">
+        <div style="font-size:${F.cap.size}px;font-weight:600;letter-spacing:-.02em;line-height:1.18;text-wrap:balance">${esc(seg.caption)}</div>
+        ${seg.note ? `<div style="margin-top:${Math.round(F.cap.note * 0.4)}px;font-size:${F.cap.note}px;color:#a0a0a8">${esc(seg.note)}</div>` : ""}</div>`, png);
+      const part = path.join(WORK, `social-${key}-${i}.mp4`);
+      await ffmpeg(["-i", seg.file, "-loop", "1", "-framerate", String(FPS), "-i", png, "-filter_complex",
+        `color=c=0x0b0b0c:s=${F.w}x${F.h}:r=${FPS}[bg];[0:v]${cropFor(F, seg)}scale=${F.pic.w}:${F.pic.h}:flags=lanczos[pic];[bg][pic]overlay=${F.pic.x}:${F.pic.y}:shortest=1[a];[a][1:v]overlay=0:0:shortest=1,format=yuv420p[out]`,
+        "-map", "[out]", "-t", seg.dur.toFixed(3), "-r", String(FPS), "-c:v", "libx264", "-preset", "medium", "-crf", "14", "-pix_fmt", "yuv420p", part]);
+      parts.push(part);
+    }
+    // The end card.
+    const endPng = path.join(WORK, `social-${key}-end.png`);
+    const big = Math.round(Math.min(F.w, F.h) * 0.06);
+    await layer(F, `<div style="width:${F.w}px;height:${F.h}px;background:#0b0b0c;color:#ededef;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 ${Math.round(F.w * 0.08)}px;box-sizing:border-box">
+      ${RADAR(Math.round(big * 1.6))}
+      <div style="font-size:${big}px;font-weight:600;letter-spacing:-.025em;line-height:1.2;margin-top:${Math.round(big * 0.6)}px;text-wrap:balance">${esc(SOCIAL_END.line)}</div>
+      <div style="font-size:${Math.round(big * 0.5)}px;color:#a0a0a8;margin-top:${Math.round(big * 0.5)}px;font-family:'Geist Mono',ui-monospace,monospace">${esc(SOCIAL_END.sub)}</div></div>`, endPng);
+    const endMp4 = path.join(WORK, `social-${key}-end.mp4`);
+    await ffmpeg(["-loop", "1", "-framerate", String(FPS), "-t", String(SOCIAL_END.secs), "-i", endPng, "-vf", "fade=t=in:st=0:d=0.2,format=yuv420p",
+      "-r", String(FPS), "-c:v", "libx264", "-preset", "medium", "-crf", "12", "-pix_fmt", "yuv420p", endMp4]);
+    parts.push(endMp4);
+    const list = path.join(WORK, `social-${key}.txt`);
+    await fs.writeFile(list, parts.map(f => `file '${f}'`).join("\n"));
+    const out = path.join(OUT, `morse-social-${key}.mp4`);
+    for (let crf = 20; ; crf += 2) {
+      await ffmpeg(["-f", "concat", "-safe", "0", "-i", list, "-r", String(FPS), "-c:v", "libx264", "-preset", "slow", "-crf", String(crf), "-profile:v", "high",
+        "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", out]);
+      if (statSync(out).size <= 14e6 || crf >= 32) break;
+    }
+    const dur = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", out], { encoding: "utf8" }));
+    log(`${path.basename(out)}: ${F.w}×${F.h}, ${dur.toFixed(1)}s, ${mb(out)}`);
+    outs[key] = out;
+  }
+  await b.close();
+  // A poster for the 16:9 file: the restyle, just done.
+  const first = segs[0];
+  const poster = path.join(OUT, "poster-social.png");
+  await ffmpeg(["-ss", Math.max(0, first.dur - 0.8).toFixed(2), "-i", first.file, "-frames:v", "1", "-update", "1", "-vf", "scale=1200:-2:flags=lanczos", poster]);
+  log(`poster-social.png: ${mb(poster)}`);
+}
+
 // ---------------------------------------------------------------- main
 const WORK = path.resolve(process.env.REUSE || process.env.WORK || await fs.mkdtemp(path.join(os.tmpdir(), "morse-launch-")));
 await fs.mkdir(WORK, { recursive: true });
@@ -1493,5 +1814,5 @@ if (!process.env.REUSE) await recordAll(WORK);
 const missing = [];
 for (const name of NEEDED) await fs.access(path.join(WORK, name, "meta.json")).catch(() => missing.push(name));
 if (missing.length) console.log(`not building: no recording yet for ${missing.join(", ")}`);
-else { await build(WORK); console.log(`done → ${path.relative(root, OUT)}/`); }
+else { await (CUT.social ? buildSocial(WORK) : build(WORK)); console.log(`done → ${path.relative(root, OUT)}/`); }
 process.exit(0);
