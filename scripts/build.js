@@ -5,9 +5,11 @@
 import { promises as fs } from "node:fs";
 import { deflateSync } from "node:zlib";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { bundleRuntime } from "../runtime/bundle.js";
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+// fileURLToPath, not URL.pathname: that gives /C:/… on Windows and %20 for spaces.
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, "dist", "extension");
 
 let esbuild;

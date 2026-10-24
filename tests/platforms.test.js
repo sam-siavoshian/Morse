@@ -483,6 +483,8 @@ test("starting .cmd programs on Windows (claude.cmd, codex.cmd): through cmd.exe
   assert.deepEqual(commandFor("/usr/local/bin/claude", ["--version"], { platform: "darwin" }).shell, false);
   assert.throws(() => commandFor("C:\\x\\claude.cmd", ["a & del *"], { platform: "win32" }), /safely/);
   assert.equal(systemName({ platform: "darwin", release: "25.0.0", arch: "arm64" }), "macOS 26 (Apple silicon)");
+  // Stop: ending cmd.exe would leave Claude Code running, so the whole tree goes.
+  assert.match(readFileSync(path.join(ROOT, "daemon/harness.js"), "utf8"), /process\.platform === "win32"[^\n]*\n[^\n]*spawn\("taskkill", \["\/PID", String\(h\.child\.pid\), "\/T", "\/F"\]/);
 });
 
 test("colors: only in a terminal, NO_COLOR turns them off, FORCE_COLOR on", () => {
@@ -500,6 +502,11 @@ test("colors: only in a terminal, NO_COLOR turns them off, FORCE_COLOR on", () =
   for (const f of readdirSync(path.join(ROOT, "daemon")).filter(f => f.endsWith(".js") && f !== "colors.js")) {
     assert.doesNotMatch(readFileSync(path.join(ROOT, "daemon", f), "utf8"), /`\\x1b\[\d+m\$\{/, `daemon/${f} defines its own colors`);
   }
+});
+
+test("paths from module URLs: fileURLToPath, not URL.pathname (/C:/… on Windows, %20 for spaces)", () => {
+  const shipped = [...["daemon", "core"].flatMap(d => readdirSync(path.join(ROOT, d)).filter(f => f.endsWith(".js")).map(f => `${d}/${f}`)), "runtime/bundle.js", "scripts/build.js"];
+  for (const f of shipped) assert.doesNotMatch(readFileSync(path.join(ROOT, f), "utf8"), /import\.meta\.url\)\.pathname/, f);
 });
 
 test("line endings and byte order marks: LF in the repo, files saved by Notepad still read", async () => {
