@@ -4,8 +4,9 @@
 //
 //   - while a mod's code is in the document (from its first exec until the
 //     next navigation), ping the page once a second with Runtime.evaluate
-//   - no answer for HANG_MS: Runtime.terminateExecution, which interrupts
-//     the running script from the browser side
+//   - no answer for HANG_MS while a mod's code is being run (1.5 times that
+//     later on): Runtime.terminateExecution, which interrupts the running
+//     script from the browser side
 //   - then ask the kit which mod's code was running (morse.__hung(), which
 //     also stops that mod); if the kit can't tell, the mod whose code was
 //     being run (an exec still waiting) is the one
@@ -62,7 +63,9 @@ export class HangGuard {
   tick() {
     if (!this.armed || this.s.closed || this.handling) return;
     if (this.pinging) {
-      if (Date.now() - this.pingAt >= this.hangMs) this.rescue();
+      // A mod's code being run is surely what's stuck; later on, the page's
+      // own code might be, so give it longer before stepping in.
+      if (Date.now() - this.pingAt >= (this.running.size ? this.hangMs : this.hangMs * 1.5)) this.rescue();
       return;
     }
     this.pinging = true;

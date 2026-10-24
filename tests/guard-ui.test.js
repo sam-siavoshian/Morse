@@ -21,6 +21,7 @@ import { freePort, listen } from "./helpers/net.js";
 import { waitFor, scaled } from "./helpers/wait.js";
 import * as store from "../daemon/store.js";
 import { createMod } from "../core/mod.js";
+import { openLibrary, ORIGIN as LIBRARY } from "../demo/a11y-page.js";
 
 const ROOT = new URL("../", import.meta.url);
 let browser, ctx, server, site;
@@ -83,7 +84,7 @@ async function paused(page, id, why) {
 }
 // Said: the toast, then the Mods panel row with Turn back on and Fix it.
 async function said(page, id, toast, lead, note) {
-  const t = ui(page, ".ctl-toast");
+  const t = ui(page, ".ctl-toast:not([hidden])");
   await t.waitFor({ timeout: 10000 });
   assert.equal((await t.locator(".ctl-msg span").textContent()).trim(), toast);
   assert.deepEqual(await t.locator(".ctl-acts button").allTextContents(), ["Turn back on", "Fix it"]);
@@ -170,4 +171,25 @@ test("desktop: a click handler that never returns is stopped the same way", { sk
   await usable(page);
   await said(page, id, "Paused “Spin on click” because it froze this page", "Paused because it froze this page.", "Morse stopped it and reloaded the page.");
   await page.close();
+});
+
+test("where a frozen page can't be stopped (the extension), a loop with no way out never starts", { skip, timeout: 90000 }, async () => {
+  // The real runtime with a stand-in host that isn't the desktop one (demo/a11y-host.js).
+  const { ctx: c, page, errors } = await openLibrary(browser);
+  try {
+    const mod = createMod({ title: "Spin", prompt: "spin", js: "morse.watch('main', () => { while (true) {} });", url: `${LIBRARY}/demo/sites/a11y/index.html` });
+    await page.evaluate(m => localStorage.setItem("morse:a11y-host:mods", JSON.stringify({ [m.id]: m })), mod);
+    await page.reload();
+    const saved = () => page.evaluate(id => JSON.parse(localStorage.getItem("morse:a11y-host:mods"))[id], mod.id);
+    const m = await until(async () => { const m = await saved(); return m.paused ? m : null; }, 30000, "paused");
+    assert.equal(m.enabled, false);
+    assert.equal(m.paused.why, "endless");
+    assert.match(m.paused.error, /`while \(true\)` with no break/);
+    const lag = await page.evaluate(() => new Promise(r => { const t = performance.now(); setTimeout(() => r(performance.now() - t), 0); }));
+    assert.ok(lag < 100, "the page never froze");
+    const t = ui(page, ".ctl-toast:not([hidden])");
+    await t.waitFor({ timeout: 10000 });
+    assert.equal((await t.locator(".ctl-msg span").textContent()).trim(), "Paused “Spin” because it would freeze this page");
+    assert.deepEqual(errors, []);
+  } finally { await c.close(); }
 });

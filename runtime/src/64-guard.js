@@ -25,7 +25,8 @@ const Guard = (() => {
     slow: [SLOW, "It kept this page busy most of the time."],
     loop: [SLOW, "It kept running again every time the page changed."],
     big: [SLOW, "It added too much to the page."],
-    froze: ["Paused because it froze this page.", "Morse stopped it."],
+    froze: ["Paused because it froze this page.", "Morse turned it off so the page works again."],
+    endless: ["Paused because it would freeze this page.", "Its code never stops running."],
     hid: ["Paused because it hid this page.", "It would have hidden everything on the page."],
   };
   const lead = p => (WHY[p?.why] || WHY.slow)[0];
@@ -113,6 +114,10 @@ const Guard = (() => {
     if (m.guardOk && m.guardOk === codeKey(m)) return {};
     if (cssHidesPage(m.css)) { pause(m, { why: "hid", error: `Morse paused it. ${draftHarm({ css: m.css }).model}` }); return null; }
     if (!m.js.trim()) return {};
+    // Where a frozen page can't be stopped (the extension), code that could
+    // never finish doesn't start. On the desktop the host stops it if it runs.
+    const loop = S.mode !== "desktop" && draftHarm({ js: m.js });
+    if (loop?.kind === "loop") { pause(m, { why: "endless", error: `Morse paused it. ${loop.model}` }); return null; }
     return { shown: pageShown(), html: document.documentElement.getAttribute("style"), body: document.body?.getAttribute("style") };
   }
   function after(m, look) {
