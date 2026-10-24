@@ -59,14 +59,14 @@ function ONBOARDING_CSS() { return `
   .ob-can .caps kbd { height: 18px; min-width: 18px; font-size: 10.5px; }
   .ob-help h4 { display: flex; align-items: baseline; gap: 10px; padding-top: 8px; border-top: 1px solid var(--m-line); margin: 4px 0 4px; padding-left: 8px; margin-left: 0; margin-right: 0; }
   .ob-help h4 span { color: var(--m-text-3); font: 400 var(--m-text-xs)/16px var(--m-font); text-transform: none; letter-spacing: 0; }
-  .ob-ex { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 18px; padding: 0 0 4px; }
-  .sheet .ob-ex section, .sheet .ob-ex section + section { min-width: 0; padding: 4px 0; border-top: 0; }
-  .ob-ex h5 { margin: 0 8px 2px; font: 500 var(--m-text-xs)/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; }
-  .ob-ex .ex { display: block; width: 100%; height: 28px; padding: 0 8px; border: 0; border-radius: var(--m-r-sm); background: none; color: var(--m-text); text-align: left;
-    font: 450 var(--m-text-md)/28px var(--m-font); letter-spacing: var(--m-tracking); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background var(--m-fast); }
-  .ob-ex .ex::before { content: "“"; color: var(--m-text-3); }
-  .ob-ex .ex::after { content: "”"; color: var(--m-text-3); }
-  .ob-ex .ex:hover, .bar .ob-ex .ex:focus-visible { background: var(--m-hover); }
+  /* examples: one row per category, sentences flow as chips */
+  .ob-ex { display: flex; flex-direction: column; padding: 0 8px 6px; }
+  .sheet .ob-ex section, .sheet .ob-ex section + section { display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: start; gap: 8px; min-width: 0; padding: 3px 0; border-top: 0; }
+  .ob-ex h5 { margin: 0; font: 500 var(--m-text-xs)/26px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ob-ex .chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+  .ob-ex .ex { max-width: 100%; height: 26px; padding: 0 10px; border: 1px solid var(--m-line-strong); border-radius: 999px; background: transparent; color: var(--m-text-2);
+    font: 500 var(--m-text-sm)/24px var(--m-font); letter-spacing: var(--m-tracking); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background var(--m-fast), color var(--m-fast), border-color var(--m-fast); }
+  .ob-ex .ex:hover, .bar .ob-ex .ex:focus-visible { background: var(--m-hover); color: var(--m-text); border-color: var(--m-signal-1); }
   .ob-help footer { justify-content: flex-start; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; }
   .ob-help footer > span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ob-help footer > span:not(.dim) { color: var(--m-warn); }
@@ -74,7 +74,8 @@ function ONBOARDING_CSS() { return `
   .ob-help header .tbtn { display: inline-flex; align-items: center; gap: 8px; }
 
   @media (max-width: 560px) {
-    .ob-help .ob-can, .ob-ex { grid-template-columns: 1fr; }
+    .ob-help .ob-can { grid-template-columns: 1fr; }
+    .sheet .ob-ex section, .sheet .ob-ex section + section { grid-template-columns: 1fr; gap: 2px; }
     .ob-steps { gap: 6px; } .ob-steps li + li::before { width: 8px; }
     .ob-note { flex-wrap: wrap; } .ob-text { flex-basis: calc(100% - 60px); }
   }

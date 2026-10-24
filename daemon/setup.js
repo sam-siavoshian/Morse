@@ -21,6 +21,8 @@ const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· setup")
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const EXTENSION_DIR = path.join(ROOT, "dist", "extension");
 const tilde = p => (process.env.HOME && p.startsWith(process.env.HOME) ? "~" + p.slice(process.env.HOME.length) : p);
+// The extension folder as the user can type it: relative inside the repo, else from ~.
+const extDir = () => (path.relative(process.cwd(), EXTENSION_DIR).startsWith("..") ? tilde(EXTENSION_DIR) : path.relative(process.cwd(), EXTENSION_DIR));
 
 // What each choice is, how to get it, and what it writes to config.json's
 // "model". The provider ids are core/providers.js's; keep them in step.
@@ -124,7 +126,7 @@ export function gettingStarted({ platform = detectPlatform({ platform: process.p
   const key = formatCombo(defaultHotkeys(platform).open, platform);
   return [
     `${G("▦")} Welcome to Morse. First, run ${B("morse setup")} to choose what writes your changes: Claude Code, Codex, an API key or Ollama.`,
-    `${G("▦")} Then, for websites, load ${B(tilde(EXTENSION_DIR))} in chrome://extensions (Developer mode, Load unpacked). For apps: ${B("morse launch spotify")}.`,
+    `${G("▦")} Then, for websites, load ${B(extDir())} in chrome://extensions (Developer mode, Load unpacked). For apps: ${B("morse launch spotify")}.`,
     `${G("▦")} Press ${B(key)} on any page, point at something and say what to change. ${D("morse help lists every command.")}`,
   ].join("\n");
 }
@@ -132,7 +134,7 @@ export function gettingStarted({ platform = detectPlatform({ platform: process.p
 function nextSteps(platform) {
   const key = formatCombo(defaultHotkeys(platform).open, platform);
   return `  ${B("Next")}
-    ${D("websites")}  load ${tilde(EXTENSION_DIR)} in chrome://extensions ${D("(Developer mode, Load unpacked)")}
+    ${D("websites")}  load ${extDir()} in chrome://extensions ${D("(Developer mode, Load unpacked)")}
     ${D("apps    ")}  morse launch spotify ${D("(or slack, discord, vscode, notion, obsidian)")}
     ${D("then    ")}  press ${B(key)}, point at something, say what to change`;
 }

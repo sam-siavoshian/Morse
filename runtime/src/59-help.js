@@ -43,8 +43,8 @@ function renderHelp() {
     <header><b>What you can do</b><button type="button" class="tbtn" data-act="keys">Keyboard shortcuts <span class="caps"><kbd>?</kbd></span></button></header>
     <ul class="ob-can">${helpAbilities().map(([t, d]) => `<li><b>${esc(t)}</b><span>${d}</span></li>`).join("")}</ul>
     <h4>Try saying <span>Click one to use it</span></h4>
-    <div class="ob-ex">${HELP_EXAMPLES.map(([cat, list]) => `<section><h5>${esc(cat)}</h5>${list.map(s =>
-      `<button type="button" class="ex" data-ex="${esc(s)}">${esc(s)}</button>`).join("")}</section>`).join("")}</div>
+    <div class="ob-ex">${HELP_EXAMPLES.map(([cat, list]) => `<section><h5>${esc(cat)}</h5><div class="chips">${list.map(s =>
+      `<button type="button" class="ex" data-ex="${esc(s)}" title="${esc(s)}">${esc(s)}</button>`).join("")}</div></section>`).join("")}</div>
     <footer>${helpSetup()}</footer>
   </div>`;
 }
