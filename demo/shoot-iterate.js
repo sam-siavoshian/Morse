@@ -129,7 +129,7 @@ await writeMod({
   match: { hosts: [new URL(SITE.parley).host], app: null }, target: { selector: "header[role=banner] .share", label: "button · “Share”" },
   css: ".morse-copy { border: 1px solid #424242; border-radius: 999px; padding: 6px 14px; }",
   js: `morse.watch("header[role=banner] .share-btn", share => {\n  share.before(morse.el("button", { class: "morse-copy", text: "Copy as Markdown" }));\n});`,
-  enabled: true, model: "qwen2.5-coder:7b", created: at, updated: at,
+  enabled: true, model: "Claude Code · haiku", created: at, updated: at,
 });
 await chat.reload();
 await chat.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });

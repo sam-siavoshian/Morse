@@ -26,15 +26,15 @@ export function createGallery({ store, enabled = async () => true, configured = 
   // Reads at most `max` bytes: a huge (or endless) response is cut off, not
   // held in memory whole.
   async function readText(res, max) {
-    if (Number(res.headers.get("content-length")) > max) { res.body?.cancel?.().catch(() => {}); throw new Error("too big"); }
-    if (!res.body?.getReader) { const text = await res.text(); if (text.length > max) throw new Error("too big"); return text; }
+    if (Number(res.headers.get("content-length")) > max) { res.body?.cancel?.().catch(() => {}); throw new Error("The gallery file is too large."); }
+    if (!res.body?.getReader) { const text = await res.text(); if (text.length > max) throw new Error("The gallery file is too large."); return text; }
     const reader = res.body.getReader(), parts = [];
     let n = 0;
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
       n += value.byteLength;
-      if (n > max) { reader.cancel().catch(() => {}); throw new Error("too big"); }
+      if (n > max) { reader.cancel().catch(() => {}); throw new Error("The gallery file is too large."); }
       parts.push(value);
     }
     const all = new Uint8Array(n);
@@ -84,9 +84,9 @@ export function createGallery({ store, enabled = async () => true, configured = 
     if (current && compareVersions(hit.mod.version, entry.version) === 0) return current;
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT), credentials: "omit" });
-      if (!res.ok) throw new Error(`error ${res.status}`);
+      if (!res.ok) throw new Error(`Couldn't reach the gallery (error ${res.status}). Try again later.`);
       const mod = validateMod(JSON.parse(await readText(res, MAX_MOD_BYTES)));
-      if (mod.id !== entry.id) throw new Error("the file is for another mod");
+      if (mod.id !== entry.id) throw new Error("The gallery has the wrong file for this mod.");
       const out = { ...mod, match: entry.match, version: normVersion(mod.version ?? entry.version) };
       all[url] = { mod: out, at: now() };
       for (const k of Object.keys(all).sort((a, b) => (all[b].at || 0) - (all[a].at || 0)).slice(MAX_CACHED_MODS)) delete all[k];

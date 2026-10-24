@@ -11,7 +11,7 @@ bar.setAttribute("aria-label", "Morse: describe a change to this app");
 input.setAttribute("aria-label", "Describe a change");
 goBtn.setAttribute("aria-label", "Send");
 goBtn.innerHTML = `<svg class="i-go" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9.5M8.75 4.25 12.5 8l-3.75 3.75"/></svg><svg class="i-stop" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5"/></svg>`;
-const micBtn = makeEl("button", { className: "mic ibtn", type: "button" }, { "aria-label": "Voice input" });
+const micBtn = makeEl("button", { className: "mic ibtn", type: "button" }, { "aria-label": "Talk" });
 goBtn.before(micBtn);
 const sugEl = makeEl("div", { className: "sugs", hidden: true }, { role: "toolbar", "aria-label": "Suggestions" });
 const pane = makeEl("div", { className: "pane", hidden: true });

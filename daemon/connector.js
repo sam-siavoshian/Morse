@@ -325,7 +325,7 @@ export class Connector {
   // page can't change what our world sees, and it follows pushState).
   async callerUrl(s, caller) {
     const r = await s.send("Runtime.evaluate", { expression: "location.href", contextId: caller.world, returnByValue: true });
-    if (typeof r.result?.value !== "string") throw new Error("The page went away");
+    if (typeof r.result?.value !== "string") throw new Error("The page closed or reloaded. Try again.");
     return r.result.value;
   }
 
@@ -435,7 +435,7 @@ export class Connector {
         return (await s.send("Runtime.evaluate", { expression: `globalThis.morse?.__stats?.(${JSON.stringify(msg.modId)}) ?? null`, contextId: caller.main, returnByValue: true })).result?.value ?? null;
       case "generate": {
         if (!this.settings?.provider || this.settings.provider === "none")
-          throw new Error("No model is connected. Run morse doctor in a terminal to set one up.");
+          throw new Error("No model is connected. Run morse setup in a terminal to choose one.");
         const t0 = Date.now();
         const res = await this.gens.run(msg.genId, signal => runMorse({
           settings: this.settings,

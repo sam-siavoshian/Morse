@@ -53,6 +53,58 @@ test("buttons, and other new things", () => {
   says(js("x.insertAdjacentHTML('afterend', '<b>new</b>')"), "adds");
 });
 
+test("a mod's own things don't count as changing or hiding the page", () => {
+  // The sleep timer removes and rewrites its own countdown label, nothing else.
+  const sleep = js(`morse.watch(".btns", btns => {
+  let left = 0;
+  const label = morse.el("span");
+  const btn = morse.el("button", { class: "morse-sleep", title: "Sleep timer", text: "☾", on: { click() { left = 900; render(); } } });
+  const render = () => {
+    btn.classList.toggle("on", left > 0);
+    label.textContent = left ? Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0") : "";
+    if (left) btn.append(label); else label.remove();
+  };
+  morse.every(1000, () => { if (left && --left === 0) document.querySelector("[data-testid=play-pause]").click(); render(); });
+  btns.append(btn);
+});`);
+  silent(sleep, "hides", "the sleep timer only removes its own label");
+  silent(sleep, "text", "the sleep timer only changes its own label");
+  for (const id of ["looks", "buttons", "adds", "clicks", "acts", "ongoing", "code"]) says(sleep, id, `the sleep timer (${id})`);
+  silent(js("const b = document.createElement('div'); b.innerHTML = '<b>Hi</b>'; document.body.append(b)"), "text");
+  silent(js("const b = document.createElement('div'); document.body.append(b); b.hidden = true"), "hides");
+  silent(js("let tip; tip = morse.el('div'); tip.textContent = 'Saved'; tip.remove()"), "text");
+  silent(js("let tip; tip = morse.el('div'); tip.textContent = 'Saved'; tip.remove()"), "hides");
+});
+
+test("the page's own things still count, whatever the mod also made", () => {
+  // A page element, next to one the mod made.
+  says(js("const tag = morse.el('span'); tag.textContent = 'new'; document.querySelector('h1').textContent = 'Inbox'"), "text");
+  says(js("const tag = morse.el('span'); tag.remove(); morse.watch('.ad', ad => ad.remove())"), "hides");
+  // A name that is also used for a page element is never trusted.
+  says(js("const el = morse.el('div'); el.remove(); morse.watch('.ad', el => el.remove())"), "hides", "a name reused as a callback parameter");
+  says(js("let el = morse.el('div'); el = document.querySelector('h1'); el.textContent = 'x'"), "text", "a name reassigned to a page element");
+  says(js("function f(label) { label.textContent = 'x' } const label = morse.el('i')"), "text", "a name that is also a parameter");
+  // Chains and `this` can't be traced, so they count.
+  says(js("const box = morse.el('div'); box.parentElement.remove()"), "hides");
+  says(js("document.querySelector('.x').remove()"), "hides");
+  says(js("morse.css('.ad { display: none }')"), "hides");
+  says(js("h.style.display = 'none'"), "hides");
+  says(js("this.textContent = 'x'"), "text");
+});
+
+test("the gallery's sleep timers and word count read plainly", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const load = async f => JSON.parse(await readFile(new URL(`../site/mods/${f}.morse.json`, import.meta.url), "utf8"));
+  for (const f of ["tunes-sleep-timer", "spotify-sleep-timer"]) {
+    const mod = await load(f);
+    silent(mod, "hides", f);
+    silent(mod, "text", f);
+    says(mod, "buttons", f);
+    says(mod, "acts", f); // it does press Pause for you
+  }
+  silent(await load("chatgpt-word-count"), "text", "the word count only writes into its own badge");
+});
+
 test("clicks: reacting to the pointer", () => {
   says(js("morse.on(document, 'click', e => {})"), "clicks");
   says(js("morse.el('button', { on: { click: () => go() } })"), "clicks");
@@ -166,7 +218,8 @@ test("code: any JS says it runs code, a CSS-only mod doesn't", () => {
 
 test("a typical word-count mod reads plainly, in order", () => {
   const m = { css: ".wc { opacity: .7 }", js: "morse.watch('textarea', t => { const c = morse.el('div', { class: 'wc' }); t.after(c); morse.on(t, 'input', () => c.textContent = t.value.split(/\\s+/).length + ' words'); });" };
-  assert.deepEqual(ids(m), ["looks", "text", "adds", "typing", "ongoing", "code"]);
+  // The counter's own words change, not the page's: no "Changes text on the page".
+  assert.deepEqual(ids(m), ["looks", "adds", "typing", "ongoing", "code"]);
   assert.deepEqual(notes(m), ["typing"]);
   const lines = summaryLines(m);
   assert.equal(lines[0], "Changes how the page looks");
@@ -211,5 +264,5 @@ test("where it came from, in a few words", () => {
   assert.equal(modOrigin({ imported: true }), "Installed from a shared link");
   assert.equal(modOrigin({ from: { app: "Spotify" } }), "Rebuilt from something in Spotify");
   assert.match(modOrigin({ kind: "manual" }), /^Your own edits/);
-  assert.match(modOrigin({ model: "qwen2.5-coder:7b", created: "2026-10-01T10:00:00Z" }), /^Made here with qwen2\.5-coder:7b, /);
+  assert.match(modOrigin({ model: "Claude Code · haiku", created: "2026-10-01T10:00:00Z" }), /^Made here with Claude Code · haiku, /);
 });
