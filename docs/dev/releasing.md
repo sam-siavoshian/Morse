@@ -356,3 +356,33 @@ broken, delete it from the release and say so in the notes):
   Linux. On macOS and Windows they run in the preview workflow's smoke jobs;
   the ad hoc signed Mac app and "Add to Chrome" opening Chrome weren't tried
   on a real Mac or PC.
+
+## Repository size
+
+A full `git clone` is about 430 MB, and the files themselves about 165 MB,
+almost all pictures and videos in `docs/`: `docs/ui` (93 MB, the UI catalog
+that `npm run ui` makes), `docs/screenshots` (28 MB), `docs/launch` (26 MB
+of videos and GIFs) and `docs/site` (15 MB). Nobody needs a clone to use
+Morse any more (the downloads and the one-line installers take the
+[preview release](#the-preview-release-every-push-to-main)), and people who
+work on Morse can skip the history: `git clone --depth 1`, or
+`--filter=blob:none` to fetch old pictures only when they're needed.
+
+Rewriting the history would make every clone small but breaks every fork and
+open branch, so it isn't done. The plan, safest first:
+
+1. **Stop adding weight.** The UI catalog (`docs/ui`, made again by
+   `npm run ui`) changes every run: keep it out of git and publish it with the
+   Pages site or as a workflow artifact instead, linking to it from
+   `docs/ui/CHECKLIST.md`. Screenshots that tests compare stay.
+2. **Videos as release files.** Upload `docs/launch/*.mp4` and the GIFs once
+   to a release (for example a `media` release), change the links in the
+   README, `docs/launch/README.md` and `site/config.js` to its
+   `releases/download/media/<file>` addresses, then delete them from the tree.
+   This needs someone with write access to make the release first, so the
+   links work the moment the files go.
+3. **Compress new pictures losslessly** before committing (`oxipng -o 4
+   --strip safe`; on a sample of 40 screenshots from `docs/ui` it saved 28%,
+   pixel for pixel the same). Compressing the pictures already committed
+   makes the files smaller but a full clone bigger (git keeps both copies),
+   so do it only together with step 1 or a history rewrite.
