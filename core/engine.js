@@ -107,7 +107,7 @@ export function selectorsIn(draft) {
 }
 function selectorLists({ css = "", js = "" }) {
   const fromCss = new Set(), fromJs = new Set();
-  const clean = s => s.replace(/::?(before|after|placeholder|selection|marker|backdrop|first-line|first-letter|-webkit-[\w-]+|-moz-[\w-]+)\b/g, "")
+  const clean = s => s.replace(/::(part|slotted)\([^)]*\)/g, "").replace(/::?(before|after|placeholder|selection|marker|backdrop|first-line|first-letter|-webkit-[\w-]+|-moz-[\w-]+)\b/g, "")
     .replace(/:(hover|focus|focus-within|focus-visible|active|visited|checked|disabled|enabled|target)\b/g, "").trim();
   const body = css.replace(/\/\*[\s\S]*?\*\//g, "").replace(/@[^{;]*[{;]/g, "{");
   for (const m of body.matchAll(/([^{}]+)\{/g)) {
@@ -116,7 +116,7 @@ function selectorLists({ css = "", js = "" }) {
       if (s && !/^(from|to|[\d.]+%)$/.test(s) && !/^:root$|^html$|^body$/.test(s)) fromCss.add(s);
     }
   }
-  for (const m of js.matchAll(/\b(?:watch|querySelectorAll|querySelector|byText)\(\s*(["'`])((?:\\.|(?!\1)[^\\])+)\1/g)) {
+  for (const m of js.matchAll(/(?:\b(?:watch|querySelectorAll|querySelector|byText)|\.\$\$?)\(\s*(["'`])((?:\\.|(?!\1)[^\\])+)\1/g)) {
     if (!m[2].includes("${")) for (const part of m[2].replace(/\\(.)/g, "$1").split(",")) { const s = clean(part); if (s) fromJs.add(s); }
   }
   return { css: [...fromCss].slice(0, 30), js: [...fromJs].slice(0, 20) };

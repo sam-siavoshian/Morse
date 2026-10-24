@@ -77,3 +77,79 @@ test("__stats reports how many elements each watch matches, now and ever", { ski
   await page.evaluate(() => { morse.__off("s1"); morse.__off("s2"); });
   assert.equal(await page.evaluate(() => morse.__stats("s1")), null);
 });
+
+// ---- re-renders, shadow roots, frames, recycled rows
+const settle = () => page.waitForTimeout(80);
+
+test("watch puts back what a re-render wiped: added elements, classes, styles, text", { skip }, async () => {
+  await page.evaluate(() => document.body.insertAdjacentHTML("beforeend", `<div id="app"><h1 class="t">Board</h1><ul><li class="c">A</li><li class="c">B</li></ul></div>`));
+  await run("r1", `morse.watch("#app h1", h => { h.append(morse.el("b", { class: "n", text: " 2 left" })); h.classList.add("hot"); h.style.color = "red"; });
+    morse.watch("#app li", li => { if (li.textContent === "B") li.textContent = "Bee"; });`);
+  await page.evaluate(() => { const h = document.querySelector("#app h1"); h.innerHTML = "Board"; h.className = "t"; h.removeAttribute("style"); });
+  await settle();
+  assert.deepEqual(await page.evaluate(() => { const h = document.querySelector("#app h1"); return [h.querySelectorAll("b.n").length, h.className, h.style.color]; }), [1, "t hot", "red"]);
+  await page.evaluate(() => { document.querySelectorAll("#app li")[1].textContent = "B"; }); // the app renders its text again
+  await settle();
+  assert.equal(await page.evaluate(() => document.querySelectorAll("#app li")[1].textContent), "Bee");
+  await page.evaluate(() => { document.querySelector("#app ul").innerHTML = `<li class="c">A</li><li class="c">B</li>`; }); // new elements
+  await settle();
+  assert.equal(await page.evaluate(() => document.querySelectorAll("#app li")[1].textContent), "Bee");
+  await page.evaluate(() => morse.__off("r1"));
+  assert.equal(await page.evaluate(() => document.querySelectorAll("#app b.n").length), 0);
+});
+
+test("a mod's own clicks are its new state, not something to put back", { skip }, async () => {
+  await page.evaluate(() => document.body.insertAdjacentHTML("beforeend", `<section id="p"><h2>Panel</h2><p>Body</p></section>`));
+  await run("r2", `morse.watch("#p", p => {
+    p.classList.add("open");
+    const b = morse.el("button", { class: "tg", text: "toggle", on: { click() { p.classList.toggle("open"); } } });
+    const x = morse.el("button", { class: "x", text: "dismiss", on: { click() { b.remove(); x.remove(); } } });
+    p.append(b, x);
+  });`);
+  await page.click("#p .tg");
+  await settle();
+  assert.equal(await page.evaluate(() => document.querySelector("#p").classList.contains("open")), false, "the toggle stays off");
+  await page.click("#p .x");
+  await settle();
+  assert.equal(await page.evaluate(() => document.querySelectorAll("#p button").length), 0, "dismissed stays dismissed");
+  await page.evaluate(() => morse.__off("r2"));
+});
+
+test("live watches follow rows a virtualized list reuses", { skip }, async () => {
+  await page.evaluate(() => document.body.insertAdjacentHTML("beforeend", `<div id="v"><div class="row"><span class="lv">INFO</span></div><div class="row"><span class="lv">ERROR</span></div></div>`));
+  await run("r3", `morse.watch("#v .row", r => { r.classList.toggle("bad", r.querySelector(".lv").textContent === "ERROR"); r.append(morse.el("i", { text: "!" })); }, { live: true });`);
+  const state = () => page.evaluate(() => [...document.querySelectorAll("#v .row")].map(r => `${r.className}:${r.querySelectorAll("i").length}`));
+  assert.deepEqual(await state(), ["row:1", "row bad:1"]);
+  await page.evaluate(() => { const [a, b] = document.querySelectorAll("#v .lv"); a.textContent = "ERROR"; b.textContent = "DEBUG"; }); // scrolled: rows show other lines
+  await settle();
+  assert.deepEqual(await state(), ["row bad:1", "row:1"], "re-run on the new content, old work undone");
+  await page.evaluate(() => morse.__off("r3"));
+});
+
+test("'host >>> inside' reaches into open shadow roots and frames; css(text, where) styles inside", { skip }, async () => {
+  await page.evaluate(() => {
+    class XCard extends HTMLElement {
+      constructor() { super(); this.attachShadow({ mode: "open" }); this.render(); }
+      render() { this.shadowRoot.innerHTML = `<style>.t{color:rgb(0, 0, 0)}</style><button class="t">Go</button>`; }
+    }
+    customElements.define("x-card", XCard);
+    document.body.insertAdjacentHTML("beforeend", `<x-card></x-card><x-card></x-card><iframe id="fr" srcdoc="<p>hi</p>"></iframe>`);
+  });
+  await page.waitForFunction(() => document.getElementById("fr").contentDocument?.querySelector("p"));
+  await run("r4", `morse.css(".t { color: rgb(255, 0, 0) }", "x-card");
+    morse.css("p { color: rgb(0, 128, 0) }", "#fr");
+    morse.watch("x-card >>> .t", b => b.setAttribute("data-seen", "1"));`);
+  const look = () => page.evaluate(() => ({
+    colors: [...document.querySelectorAll("x-card")].map(x => getComputedStyle(x.shadowRoot.querySelector(".t")).color),
+    seen: [...document.querySelectorAll("x-card")].map(x => x.shadowRoot.querySelector(".t").getAttribute("data-seen")),
+    frame: getComputedStyle(document.getElementById("fr").contentDocument.querySelector("p")).color,
+  }));
+  assert.deepEqual(await look(), { colors: ["rgb(255, 0, 0)", "rgb(255, 0, 0)"], seen: ["1", "1"], frame: "rgb(0, 128, 0)" });
+  assert.deepEqual(await run("r5", `if (morse.$$("x-card >>> .t").length !== 2 || morse.$("#fr >>> p")?.textContent !== "hi") throw new Error("deep query");`), { ok: true });
+  await page.evaluate(() => document.querySelectorAll("x-card").forEach(x => x.render())); // the component re-renders its shadow root
+  await settle();
+  assert.deepEqual((await look()).colors, ["rgb(255, 0, 0)", "rgb(255, 0, 0)"]);
+  assert.deepEqual((await look()).seen, ["1", "1"]);
+  await page.evaluate(() => morse.__off("r4"));
+  assert.deepEqual((await look()).colors, ["rgb(0, 0, 0)", "rgb(0, 0, 0)"], "off removes the CSS inside too");
+});

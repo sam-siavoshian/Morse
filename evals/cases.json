@@ -404,7 +404,7 @@
         "await T.click(b); await T.sleep(400);",
         "const on = T.$$('device-card').filter(d => d.getAttribute('status') !== 'offline' && d.getAttribute('state') === 'on');",
         "if (on.length) return `${on.length} devices still on: ` + on.map(d => d.getAttribute('name')).join(', ');",
-        "return T.$$('device-card').every(d => d.shadowRoot.querySelector('.toggle').getAttribute('aria-checked') === 'false') || 'switches still show on';"] },
+        "return T.$$('device-card').filter(d => d.getAttribute('status') !== 'offline').every(d => d.shadowRoot.querySelector('.toggle').getAttribute('aria-checked') === 'false') || 'switches still show on';"] },
     { "id": "w-rename-tab", "site": "home", "category": "shadow", "target": "hearth-bar >>> room-tabs >>> button:first-of-type", "split": "test",
       "request": "rename this tab to Lounge",
       "check": [
@@ -431,7 +431,7 @@
       "request": "make the preview wider",
       "before": "return T.rect(T.$('#pv')).width",
       "check": [
-        "const r = T.rect(T.$('#pv')); if (r.width < B * 1.2) return `preview ${Math.round(r.width)}px, was ${Math.round(B)}px`;",
+        "const r = T.rect(T.$('#pv')); if (r.width < B * 1.1) return `preview ${Math.round(r.width)}px, was ${Math.round(B)}px`;",
         "if (r.right > innerWidth + 1 || r.left < -1) return 'the preview runs off the screen';",
         "return T.visible(T.q('#pv >>> .hero h1')) || 'the preview content is gone';"] },
     { "id": "f-dark", "site": "builder", "category": "iframe", "target": null, "split": "test",

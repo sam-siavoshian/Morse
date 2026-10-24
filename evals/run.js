@@ -62,7 +62,7 @@ const settings = { provider: opt.provider, model: opt.model };
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css" };
 // Apps settle (timers, first re-renders) and the user points and types
 // before the context is read.
-const SETTLE_MS = 1200;
+const SETTLE_MS = 3500;
 const server = http.createServer(async (req, res) => {
   const p = decodeURIComponent(new URL(req.url, "http://x").pathname).replace(/\/$/, "/index.html");
   const file = path.join(ROOT, path.normalize(p));

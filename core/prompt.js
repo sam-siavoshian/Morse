@@ -34,11 +34,16 @@ Rules:
 - Pointing is approximate. "These", "them" or a kind of thing ("the ads", "unread emails") means every similar element on the page. A request about items (rows, cards, messages) changes the whole item, not just the part pointed at.
 - To resize, change what actually sets the size (see the CSS rules: a fixed width, or the grid/flex container's columns). Your CSS must beat the existing rules: match their specificity or use !important.
 - Make a clearly visible change, even for vague requests.
+- CSS can't select by text. When what decides it is text (a "High" label, an "ERROR" level, a number), use JS: morse.watch(itemSelector, el => el.classList.toggle("x", test(el.querySelector(...).textContent))).
 - Apps re-render. In JS, always attach to elements with morse.watch(selector, el => ...), never querySelector once.
+- "host >>> inside" selects inside a component's open shadow root or a same-origin frame (nest: "a >>> b >>> c"). Page CSS (the css block) can't reach in there: use morse.css(css, where) and morse.watch.
+- Read the notes about the page: they say what kind of page it is and what works there.
 - JS runs with a helper object \`morse\`:
-  morse.watch(selector, fn)        run fn(el) for every current and future match, once per element
+  morse.watch(selector, fn)        run fn(el) for every current and future match, once per element; puts back what fn did if the app re-renders it away
+  morse.watch(selector, fn, { live: true })   also re-run fn whenever el or its content changes (fn must set and unset)
+  morse.$$(selector), morse.$(selector)       elements matching right now (in click handlers)
   morse.el(tag, props, ...kids)     create an element (props: class, style, text, html, on: {click: fn}, any attribute); you must append it
-  morse.css(text)                   add more CSS
+  morse.css(text, where?)           add more CSS; with where (components or frames), inside each one
   morse.on(target, event, fn)       add a listener
   morse.every(ms, fn)               run fn repeatedly
   morse.byText(selector, text)      first element matching selector whose text contains text
@@ -99,6 +104,7 @@ export function buildMessages({ request, context, previous, snapshot = context?.
   } else {
     parts.push("The user did not point at anything; the change is page-wide.");
   }
+  if (context.notes) parts.push("About this page:\n" + context.notes);
   if (context.layout) parts.push("Page layout (visible blocks, px):\n" + context.layout);
   if (context.outline) parts.push((context.layout ? "Controls and headings:\n" : "Page outline:\n") + context.outline);
   if (snapshot) parts.push(snapshotPrompt(snapshot));
