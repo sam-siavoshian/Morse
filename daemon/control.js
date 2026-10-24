@@ -112,7 +112,7 @@ export async function exportAllCli(f) {
   return file;
 }
 
-function describe(mod) {
+export function describe(mod) { // packs hook: daemon/packs.js lists each mod in a pack the same way
   const s = summarizeMod(mod);
   const where = mod.match?.app || (mod.match?.hosts || []).join(", ") || "any site";
   const lines = [`${B(mod.title)} ${D(`for ${where}`)}`, D(`  “${mod.prompt}”`)];

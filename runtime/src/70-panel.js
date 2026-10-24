@@ -125,6 +125,7 @@ function renderPanel() {
     <footer><button data-a="import">Install a mod…</button><span>${esc(S.label)}</span></footer>`;
   renderList();
   controlPanel(); // user control: pause, backup (63-control.js)
+  packPanel(); // packs hook: Make a pack… (69-packs.js)
   if (!keep) return;
   if (keep.search) {
     const s = panel.querySelector(".search");
@@ -143,12 +144,13 @@ function renderList() {
   const shown = PanelUI.q ? mods.filter(m => matches(m, PanelUI.q)) : mods;
   list.innerHTML = YourStyle.rowHtml() + (!mods.length // your-style hook (72-style.js)
     ? emptyModsHtml() /* onboarding hook: 59-onboarding.js */
-    : shown.length ? shown.map(rowHtml).join("") : `<p class="empty">No mods match “${esc(PanelUI.q)}”.</p>`);
+    : shown.length ? packListHtml(shown) /* packs hook: pack mods under the pack's name (69-packs.js) */ : `<p class="empty">No mods match “${esc(PanelUI.q)}”.</p>`);
   list.insertAdjacentHTML("beforeend", gallerySectionHtml()); // gallery hook: Mods for this site (68-gallery.js)
   const r = rows();
   const i = Math.max(0, r.findIndex(a => a.dataset.id === PanelUI.focus));
   r.forEach((a, j) => (a.tabIndex = j === i ? 0 : -1));
   controlRows(); // user control: where each mod came from, Show code (63-control.js)
+  packRows(); // packs hook: ticks while making a pack (69-packs.js)
 }
 
 function rowHtml(m) {

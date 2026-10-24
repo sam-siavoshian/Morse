@@ -208,9 +208,11 @@ function showModCode(m) {
 // this site, 68-gallery.js): the same review, with Try it instead of Install.
 async function reviewImport(source, { onDone, trial = null } = {}) {
   const done = r => { const f = onDone; onDone = null; f?.(r); };
+  if (!trial && Packs.isAddress(source)) return Packs.reviewAddress(source, { onDone: done }); // packs hook: a pack's address (69-packs.js)
   let r;
   try { r = await call("mods.preview", { source }); }
   catch (e) { const msg = plainError(e); toast(msg); return done({ error: msg }); }
+  if (r?.kind === "pack" && !trial) return Packs.review(r, { source, onDone: done }); // packs hook: the pack review (69-packs.js)
   if (!r?.mods?.length) { const e = "This isn't a Morse share link or mod file. Check that you copied all of it."; toast(e); return done({ error: e }); }
   if (trial) r.mods = r.mods.slice(0, 1);
   const many = r.mods.length > 1;

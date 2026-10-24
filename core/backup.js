@@ -1,7 +1,8 @@
 // Export and import: every mod in one JSON file, and reading whatever someone
 // hands Morse to install (a share link, a .morse.json, or a backup file).
 
-import { decodeShare, validateMod, hostOf } from "./mod.js";
+import { decodeShareText, validateMod, hostOf } from "./mod.js";
+import { parsePack, isPack, MAX_PACK_BYTES } from "./pack.js"; // packs hook
 
 export const BACKUP_KIND = "morse-backup";
 
@@ -25,10 +26,20 @@ export function backupFilename(now = new Date()) {
 export async function parseImport(source) {
   const src = String(source ?? "").trim();
   if (!src) throw new Error("Paste a Morse share link, or choose a mod file or a backup.");
-  if (src.includes("#m=")) return { kind: "link", mods: [await decodeShare(src)], errors: [] };
+  if (src.includes("#m=")) {
+    let data, text = ""; // packs hook: a link can carry a pack (core/pack.js)
+    try { text = await decodeShareText(src); data = JSON.parse(text); } catch (e) { if (/^This /.test(e.message)) throw e; throw new Error("This share link is broken. Check that you copied the whole link."); }
+    if (isPack(data)) { const p = parsePack(text); return { kind: "pack", pack: p.pack, mods: p.pack.mods, errors: p.errors }; }
+    return { kind: "link", mods: [validateMod(data)], errors: [] };
+  }
   let data;
   try { data = JSON.parse(src); }
   catch { throw new Error("This isn't a Morse share link or mod file. Check that you copied all of it."); }
+  if (isPack(data)) { // packs hook: a pack file (core/pack.js)
+    if (src.length > MAX_PACK_BYTES) throw new Error("This pack is too big. Morse reads packs up to 2 MB.");
+    const p = parsePack(data);
+    return { kind: "pack", pack: p.pack, mods: p.pack.mods, errors: p.errors };
+  }
   const backup = data && (data.morse === BACKUP_KIND || Array.isArray(data.mods) || Array.isArray(data));
   const raw = Array.isArray(data) ? data : backup ? data.mods : [data];
   const mods = [], errors = [];

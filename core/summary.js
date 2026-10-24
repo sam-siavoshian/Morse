@@ -212,6 +212,7 @@ export function modOrigin(mod) {
   };
   const by = typeof mod?.author === "string" && mod.author.trim() ? ` by ${mod.author.trim().slice(0, 60)}` : "";
   if (mod?.imported && mod.gallery?.id) return `Installed from the Morse gallery${by}${mod.importedAt ? ` on ${day(mod.importedAt)}` : ""}`; // gallery hook (68-gallery.js)
+  if (mod?.imported && mod.pack && typeof mod.pack.name === "string") return `From the pack “${mod.pack.name.slice(0, 80)}”${by}${mod.importedAt ? ` on ${day(mod.importedAt)}` : ""}`; // packs hook (core/pack.js)
   if (mod?.imported) {
     const how = mod.importedFrom === "file" ? "Imported from a file" : mod.importedFrom === "backup" ? "Restored from a backup" : "Installed from a shared link";
     const when = mod.importedAt ? ` on ${day(mod.importedAt)}` : "";
