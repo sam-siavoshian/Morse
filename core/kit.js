@@ -200,6 +200,7 @@ function installMorseKit() {
       // ">>>" allowed), the CSS goes inside each one's shadow root or frame
       // document, now and for every one that appears later.
       css(text, where) {
+        const styled = new WeakMap();
         // Rules written "host >>> inside { … }" go inside each host.
         if (!where && String(text).includes(">>>")) {
           const byHost = new Map();
@@ -218,7 +219,16 @@ function installMorseKit() {
         if (where) {
           m.watch(where, host => {
             const root = inner(host);
-            if (!root) return;
+            if (!root) { // not a component or frame: plain CSS where it is
+              const at = host.getRootNode();
+              if (styled.has(at) && styled.get(at).isConnected) return;
+              const s = tag(host.ownerDocument.createElement("style"));
+              s.textContent = text;
+              (at.nodeType === 9 ? at.head || at.documentElement : at).append(s);
+              styled.set(at, s);
+              c.made.add(s);
+              return;
+            }
             const doc = root.nodeType === 9 ? root : host.ownerDocument;
             const s = tag(doc.createElement("style"));
             s.textContent = text;

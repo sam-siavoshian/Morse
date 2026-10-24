@@ -244,9 +244,15 @@ export function helpers() {
       await window.__evalMove(r.left + Math.min(r.width / 2, 200), r.top + r.height / 2);
       await T.sleep(50);
     },
+    // Like a person: scroll only when it isn't already on screen and on top.
     async click(el) {
-      el.scrollIntoView({ block: "center", inline: "center" });
-      await T.sleep(50);
+      const onTop = () => {
+        const r = el.getBoundingClientRect(), win = el.ownerDocument.defaultView;
+        if (r.top < 0 || r.left < 0 || r.bottom > win.innerHeight || r.right > win.innerWidth || !r.width) return false;
+        const hit = (el.getRootNode().elementFromPoint ? el.getRootNode() : el.ownerDocument).elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return !!hit && (hit === el || el.contains(hit));
+      };
+      if (!onTop() || el.ownerDocument !== document) { el.scrollIntoView({ block: "center", inline: "center" }); await T.sleep(50); }
       const r = el.getBoundingClientRect();
       // Inside a same-origin frame: add the frames' offsets.
       let x = r.left + r.width / 2, y = r.top + r.height / 2;

@@ -447,6 +447,9 @@ function placeFacts(el) {
     else {
       lines.push(`It shows another page of this site ("${clip(d.title, 40)}"): page CSS doesn't apply inside it. Use JS: morse.css(css, ${jsStr(f)}) adds CSS inside it (plain selectors there, like "body" or "p"); morse.watch(${jsStr(f + " >>> selector")}, fn) finds elements in it. Its page:`);
       lines.push(layout(24, d.body).split("\n").map(l => "  " + l).join("\n"));
+      // What sizes and colors its text.
+      const rules = [d.body, d.querySelector("h1,h2"), d.querySelector("p")].filter(Boolean).flatMap(e => rulesFor(e, 2));
+      if (rules.length) lines.push("CSS rules in it:\n" + [...new Set(rules)].join("\n"));
     }
   }
   if (el.localName === "canvas") lines.push(`It is a <canvas>: what it shows is pixels the app draws, not elements. CSS can only size, move or hide the box. To read or save the picture: el.toBlob(b => …, "image/png") or el.toDataURL(); the app's own buttons (in the outline) may already do what's asked.`);
@@ -486,6 +489,11 @@ function targetFacts(el) {
   if (p && p !== el.ownerDocument.documentElement) {
     const pc = styleOf(p);
     lines.push(`Parent ${selName(p)}: ${Math.round(p.getBoundingClientRect().width)}px wide, display ${pc.display}${/grid/.test(pc.display) ? `, ${pc.gridTemplateColumns.split(" ").length} columns` : ""}`);
+    // A cell's class is often shared by other columns: name the column.
+    if (/^t[dh]$/.test(el.localName)) {
+      const k = kindOf(el), cols = [...p.children].filter(c => kindOf(c) === k);
+      if (cols.length > 1) lines.push(`Careful: ${k} matches ${cols.length} cells in each row; this column is ${el.localName}:nth-child(${[...p.children].indexOf(el) + 1}).`);
+    }
   }
   const own = rulesFor(el), up = p ? rulesFor(p, 3) : [];
   if (own.length) lines.push("CSS rules on it:\n" + own.join("\n"));
@@ -609,7 +617,7 @@ function pageNotes(roots) {
   }
   for (const v of virtualLists()) notes.push(virtualNote(v));
   const churn = Churn.recent();
-  if (churn.length) notes.push(`This page re-renders: lately the app replaced what is inside ${churn.map(([el, n]) => `${selectorFor(el)} (${n}×)`).join(", ")}. Anything a script adds there, or changes on elements in there, is wiped on the next render. CSS keeps working. In JS, use morse.watch (it puts things back after a re-render), never a one-time querySelector; to react to the app, read its state from the page each time.`);
+  if (churn.length) notes.push(`This page re-renders: lately the app replaced what is inside ${churn.map(([el, n]) => `${selectorFor(el)} (${n}×)`).join(", ")}. Anything a script adds there, or changes on elements in there, is wiped on the next render. CSS keeps working. In JS, use morse.watch (it puts things back after a re-render), never a one-time querySelector. Something computed from the page (a count, a total) must be computed again when the page changes: watch it with { live: true }.`);
   const canvases = [...document.querySelectorAll("canvas")].filter(c => { const r = c.getBoundingClientRect(); return r.width >= 150 && r.height >= 100 && !c.closest("[data-morse-ui]"); });
   if (canvases.length) notes.push(`Drawn on <canvas>: ${canvases.slice(0, 3).map(c => `${selectorFor(c)} (${c.width}×${c.height})`).join(", ")}. What a canvas shows is pixels, not elements: CSS can size, move or hide it; reading or saving the picture is canvas.toBlob()/toDataURL(); drawing is the app's job (use its own buttons and shortcuts where they exist).`);
   return notes.map(n => "- " + n).join("\n");
