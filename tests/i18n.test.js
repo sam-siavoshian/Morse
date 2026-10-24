@@ -26,6 +26,7 @@ const WAITING_FOR_TRANSLATION = [
   "settings.model.note.auto", "settings.model.note.fast", "settings.model.note.best", "settings.model.pinned",
   "popup.modelHarder", "setup.model.which", "setup.model.autoWhy", "setup.model.fastWhy", "setup.model.bestWhy",
   "setup.model.choose", "setup.model.now", "setup.model.always", "setup.model.change", "cli.badModelMode",
+  ...Object.keys(EN).filter(id => /^(start|pair\.ask|allow)\./.test(id)), // onboarding v2: the new welcome page, the Allow question and window
 ];
 
 const placeholders = s => [...String(s).matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort();

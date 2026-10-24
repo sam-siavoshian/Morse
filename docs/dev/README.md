@@ -11,6 +11,9 @@ How to work on Morse itself. For using Morse, see the [docs](../README.md).
 - [Accessibility of Morse itself](accessibility.md): keyboard, screen
   readers, zoom and forced colors in Morse's own UI, and how axe-core checks
   it.
+- [Onboarding](onboarding.md): the first minutes, mapped and measured before
+  and after onboarding v2, one-click pairing with Morse Desktop, and
+  “Allow User Scripts” only when a change needs it.
 - [Checking a Mac or Windows PC](platform-testing.md): the 15-minute check
   for the desktop support that has only been tested on Linux.
 

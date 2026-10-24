@@ -23,7 +23,7 @@ morse status     # which desktop apps Morse is connected to, and the mods on in 
 | That model isn't available. Pick another one in model settings. | The model name you chose doesn't exist for this key or plan. | Choose another model: `morse config --model <name>`, or in the popup. |
 | Morse couldn't reach the model. Make sure it's running, or choose another one in model settings. | No answer from the model's server, or no internet connection. | Check your connection. If you set a server address, check that it's running. |
 | The model took too long to answer. Try again, or ask for something smaller. | The request took too long and Morse stopped it. | Ask for a smaller change, or split it in two. |
-| No model connected yet. Morse's welcome page just opened to connect one. | Chrome has no model connected. | Run the one command the welcome page shows, or paste an API key there: see [Models and setup](models.md#in-chrome). |
+| No model connected yet. Morse's welcome page just opened to connect one. | Chrome has no model connected. | On the welcome page, click **Use Claude Code** (with Morse Desktop open) and Allow it, or paste an API key there: see [Models and setup](models.md#in-chrome). |
 | No model is connected. Run morse setup in a terminal to choose one. | A desktop app is connected, but no model is chosen. | Run `morse setup`. |
 
 ## Messages about the change

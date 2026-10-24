@@ -48,7 +48,8 @@
     onMessage(fn) { subs.push(fn); },
   };
 
-  chrome.runtime.onMessage.addListener(m => { if (m && m.morseToggle) emit({ type: "toggle" }); });
+  chrome.runtime.onMessage.addListener(m => { if (m && m.morseToggle) emit({ type: "toggle", ...(typeof m.text === "string" && m.text ? { text: m.text.slice(0, 200) } : {}) }); }); // onboarding v2: the first site opens with the words typed
+  chrome.runtime.onMessage.addListener(m => { if (m && m.morseRetry) emit({ type: "waiting.retry" }); }); // onboarding v2: “Allow User Scripts” just came on (allow.js)
 
   // The share page (share/install.html) asks to install through us.
   if (document.documentElement) document.documentElement.dataset.morseExtension = "1"; // document_start: the parser may not have made <html> yet

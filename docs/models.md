@@ -122,11 +122,17 @@ plan.
 
 ## In Chrome
 
-The extension can reach your model in two ways. Pick one in the Morse popup
-(Chrome's toolbar button):
+The extension can reach your model in three ways. The welcome page sets up
+any of them ([Getting started](getting-started.md#3-connect-a-model)); the
+Morse popup (Chrome's toolbar button) changes it later:
 
-- **The Morse helper**, for Claude Code, Codex, or keys kept on your
-  computer. Run `morse serve`. It shows a 6-character code. Type the code
+- **Morse Desktop**, the easiest. It runs the Morse helper. The welcome page
+  finds it, you click **Use Claude Code** (or Codex), and Morse Desktop asks
+  **“Allow Chrome to use your Claude Code?”**. Click **Allow**.
+
+- **The Morse helper from a terminal**, for Claude Code, Codex, or keys kept
+  on your computer. Run `morse serve`. In a terminal, Connect on the welcome
+  page asks there: type `y`. Or it shows a 6-character code. Type the code
   into the popup and click **Pair**. Keep the terminal open. `morse pair`
   shows a new code, and `morse unpair` signs every browser out. When you
   press Stop or close the tab, the model on your computer stops too.

@@ -4,7 +4,7 @@
 //   npm run store && DISPLAY=:99 node scripts/store-smoke.js [zip]
 //
 //   1. the welcome page opens by itself on install
-//   2. the practice area makes and saves a sample change
+//   2. one question, then the practice area makes and saves a sample change
 //   3. `morse setup --use demo --pair <code>` (the command the welcome page
 //      shows) connects the Morse helper with the demo model, and the page
 //      says so by itself
@@ -136,10 +136,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await welcome.bringToFront();
   say("welcome page opened on install");
 
-  // 2. The practice area: a suggestion, the sample change, Save
+  // 2. One question, then the practice area (a sample answer, before any model): a suggestion, the sample change, Save
+  await welcome.click("[data-want=web]"); // onboarding v2
+  await welcome.click("#skip");
   const practice = await until(() => welcome.frames().find(f => f.url().includes("practice.html")), 20000, "the practice area");
   const sampleShown = () => practice.evaluate(() => getComputedStyle(document.querySelector('aside[aria-label="Sponsored"]')).display === "none");
-  await welcome.click("#try");
+  await welcome.click("#open-bar");
   // The suggestions are keyboard reachable: Tab, then the second ("Easier to
   // read"). On a busy machine the first keys can land before the bar is ready.
   for (let i = 0; ; i++) {
@@ -147,7 +149,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     await welcome.keyboard.press("Tab");
     await welcome.keyboard.press("ArrowRight");
     await welcome.keyboard.press("Enter");
-    try { await until(sampleShown, 30000, "the sample change in the practice area"); break; } catch (e) { if (i === 2) throw e; await welcome.keyboard.press("Escape"); await welcome.click("#try"); }
+    try { await until(sampleShown, 30000, "the sample change in the practice area"); break; } catch (e) { if (i === 2) throw e; await welcome.keyboard.press("Escape"); await welcome.click("#open-bar"); }
   }
   await sleep(1500);
   await welcome.keyboard.press("Enter"); // Save
@@ -155,7 +157,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await welcome.keyboard.press("Escape");
   say("practice area: sample change made and saved");
 
-  // 3. Connect a model with the command the page shows
+  // 3. Connect a model with the command the page shows (Use a terminal instead)
+  await welcome.click("[data-go=connect]");
+  await welcome.locator("#term summary").click();
   const cmd = (await welcome.locator("#setup-cmd").textContent()).trim();
   const code = cmd.split(" ").pop();
   const home = path.join(tmp, "home");
@@ -166,7 +170,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   let setupOut = "";
   setup.stdout.on("data", d => (setupOut += d)); setup.stderr.on("data", d => (setupOut += d));
   try {
-    await until(() => welcome.evaluate(() => document.querySelector('[data-step="model"]').classList.contains("done")), 60000, "the welcome page to show the model connected");
+    await until(() => welcome.evaluate(() => document.getElementById("app").dataset.screen === "try"), 60000, "the welcome page to connect and move on");
   } catch (e) { console.log(setupOut); throw e; }
   say(`model connected by "${cmd.replace(code, "<code>")}"`);
 

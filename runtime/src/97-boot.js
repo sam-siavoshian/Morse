@@ -1,5 +1,6 @@
 onEvent(msg => {
   if (msg.type === "toggle") S.open ? closeBar() : openBar();
+  if (msg.type === "toggle" && typeof msg.text === "string" && msg.text && S.open && !input.value) { input.value = msg.text.slice(0, 200); input.dispatchEvent(new Event("input")); } // onboarding v2: the welcome page's first site
   if (msg.type === "panel") openPanel();
   if (msg.type === "mods.changed") syncMods();
   if (msg.type === "settings.changed" && msg.settings) setPrefs(msg.settings);

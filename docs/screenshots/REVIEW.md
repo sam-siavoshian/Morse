@@ -49,7 +49,7 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 63-suggestions.png | shoot-bar.js | ✅ | |
 | 64-shortcuts.png | shoot-bar.js | ✅ | |
 | 65-cancelled.png | shoot-bar.js | ✅ | "Stopped. Nothing was changed" |
-| 70-welcome.png | shoot-onboarding.js | ✅ | Back in the docs (Getting started) |
+| 70-welcome.png | shoot-onboarding.js | ⚠️ | The welcome page before onboarding v2; Getting started now uses 190–205 |
 | 71-coach.png | shoot-onboarding.js | ✅ | Point, Describe, Save. Back in the docs |
 | 72-help.png | shoot-onboarding.js | ✅ | |
 | 73-empty-states.png | shoot-onboarding.js | ✅ | Each popup tile ends at "Change this page". Back in the docs |
@@ -90,7 +90,8 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 132-show-once-result.png | shoot-show-once.js | ✅ | |
 | 133-show-once-done.png | shoot-show-once.js | ✅ | |
 | 134-show-once-hidden.png | shoot-show-once.js | ✅ | |
-| 135-welcome.png … 146-desktop-first-save.png | shoot-first-run.js | ✅ | 12 first-run pictures; not in the docs yet. 136/137 start at "Try it here" so nothing is cut off |
+| 135-welcome.png … 146-desktop-first-save.png | shoot-first-run.js | ⚠️ | 12 first-run pictures from before onboarding v2: 135–140 show the old welcome page (141–146, sites and desktop apps, still match); not in the docs |
+| 190-start-choose.png … 205-start-first-site.png | shoot-onboarding-v2.js | ✅ | Onboarding v2, in Getting started: the question, connect (nothing found, Morse Desktop found, waiting for Allow), the first change, the win; even numbers 1280×860, odd numbers phone width (390, full page); 204 the “Allow User Scripts” window, 205 a suggested site with the words typed. Real Claude Code. 182–189 left free for work landing at the same time |
 | 147–152 (VSCodium, Obsidian, Joplin), 153–156-web-* (GitLab, PyPI, Docker Hub) | demo/try-real-app.js, demo/try-real-sites.js (real apps and sites, real Claude Code) | ✅ | Came with main during this review; current words. Not retaken: they need the real apps and network |
 | 150–157-style-* | shoot-style.js | ✅ | Came with main; current words |
 | 158, 159-style-fit-haiku-* | demo/style-fit-real.js (real Claude Code) | ✅ | Came with main |

@@ -11,7 +11,7 @@ import { startLabel, modelNames } from "../core/route.js"; // models: fast and s
 import { commandFor, platformChecks, formatChecks } from "./platform.js";
 import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask, migrateLegacy } from "./models.js";
 import { detectHarnesses, validModel } from "./harness.js";
-import { createBridge, startPairing, VERSION, helperPort } from "./bridge.js";
+import { createBridge, startPairing, VERSION, helperPort, terminalAsk } from "./bridge.js";
 import { streamChat } from "../core/providers.js";
 // MORSE_HELPER_PORT moves `morse serve`, `morse setup --pair` and the health
 // check off 7457 (tests run several helpers at once; their extension follows
@@ -138,6 +138,7 @@ ${B("Desktop apps")} (Spotify, Slack, Discord, VS Code and other apps built on E
 ${B("Websites")} (the Chrome extension uses the Morse helper to reach your model)
   morse extension           show the Chrome extension folder and how to add it
   morse serve               start the Morse helper and show a pairing code
+                            (in a terminal, Connect in Chrome asks here: press y)
   morse pair                show a new pairing code for the running helper
   morse unpair              sign out every paired browser
 
@@ -249,7 +250,9 @@ async function main() {
     }
     case "serve": {
       const port = Number(f.port || HELPER_PORT);
-      const bridge = createBridge({ port, log: console.log });
+      // onboarding v2: in a terminal (or with --ask), Chrome's Connect asks here: y to allow, no code to type.
+      const canAsk = process.stdin.isTTY || f.ask === true;
+      const bridge = createBridge({ port, log: console.log, ask: canAsk ? terminalAsk() : null });
       await bridge.listen().catch(e => {
         throw new Error(e.code === "EADDRINUSE" ? t("cli.serve.inUse", { port }) : e.message);
       });

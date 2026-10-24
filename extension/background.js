@@ -75,7 +75,7 @@ async function backend(fresh = false) {
   } else {
     const reason = want === "anthropic" ? "Add your Anthropic API key below."
       : helper ? "Pair this browser with the Morse helper below."
-      : "Run morse serve on your computer, or add an Anthropic API key.";
+      : "Connect a model on Morse's welcome page: Morse Desktop, or an Anthropic API key."; // onboarding v2: no terminal
     out = { kind: "none", label: "Connect a model", helper, reason, settings: { provider: "none" } };
   }
   cached = out; cachedAt = Date.now();
@@ -195,7 +195,7 @@ async function dispatch(msg, port) {
       const sample = b.kind === "none" && Practice.has(tab.id); // first-run hook: the practice page's sample answers
       const prefs = await getPrefs();
       const shown = b.kind === "none" ? b.label : startLabel({ ...b.settings, mode: prefs.modelMode }, settingsLabel); // models: "Claude Code · Automatic"
-      const label = (sample ? "Sample answers" : shown) + (userScriptsAvailable() || sample ? "" : " · “Allow User Scripts” off");
+      const label = sample ? "Sample answers" : shown; // onboarding v2: “Allow User Scripts” comes up only when a change needs it (64-waiting.js)
       // The practice area doesn't use up the "Morse is ready" toast for the first real site (first-run hook).
       const quiet = Practice.has(tab.id) || (!(await get("welcomed", false)) ? (await set("welcomed", true), false) : true);
       return { mode: "extension", app: null, label, quiet, needsModel: b.kind === "none", connect: b.kind === "none" ? b.reason : undefined,
@@ -387,6 +387,32 @@ async function popup(msg) {
       await saveModelPrefs({ ...p, backend: p.backend === "anthropic" ? "anthropic" : "helper" });
       cached = null;
       return popupState(msg.url);
+    }
+    // onboarding v2: one-click pairing. The helper asks a person on this
+    // computer (Morse Desktop: "Allow Chrome to use your Claude Code?"); the
+    // welcome page checks back until they answer (daemon/bridge.js /v1/pair/ask).
+    case "popup.askStart": {
+      let r;
+      try { r = await fetch(`${await helperUrl()}/v1/pair/ask`, { method: "POST", signal: AbortSignal.timeout(5000) }); }
+      catch { return { error: "Can't reach the Morse helper. Open Morse Desktop on this computer." }; }
+      const body = await r.json().catch(() => ({}));
+      return r.ok && body.id ? { id: body.id, expires: body.expires } : { error: body.error || `Morse couldn't ask (error ${r.status}).`, code: body.code || "" };
+    }
+    case "popup.askCheck": {
+      if (typeof msg.id !== "string" || !/^[A-Za-z0-9_-]{22}$/.test(msg.id)) return { error: "bad id" };
+      const base = await helperUrl();
+      let r;
+      try { r = await fetch(`${base}/v1/pair/ask/${msg.id}`, { method: "POST", signal: AbortSignal.timeout(5000) }); }
+      catch { return { state: "waiting" }; } // a moment without the helper: keep waiting
+      const body = await r.json().catch(() => ({}));
+      if (body.state === "allowed" && body.token) {
+        const p = await modelPrefs();
+        await set("helper", { token: body.token, url: base });
+        await saveModelPrefs({ ...p, backend: p.backend === "anthropic" ? "anthropic" : "helper" });
+        cached = null;
+        return { state: "allowed", status: await popupState(msg.url) };
+      }
+      return { state: ["waiting", "denied", "expired"].includes(body.state) ? body.state : "expired", error: body.error };
     }
     case "popup.unpair": {
       await chrome.storage.local.remove(["helper", "bridge", "pairing"]);
