@@ -138,8 +138,9 @@ test("SPA: every pushState navigation re-syncs mods, without a poll", { skip }, 
     const r = await t.page.evaluate(() => ({ navs: window.__navs.slice(-8), lists: window.__perf.sends.filter(s => s[0] === "mods.list").map(s => s[1]), counts: window.__perf.counts }));
     for (const n of r.navs) {
       const hit = r.lists.find(x => x >= n);
-      assert.ok(hit != null && hit - n < 200, `navigation at ${n.toFixed(0)} noticed after ${hit == null ? "never" : (hit - n).toFixed(0) + "ms"}`);
+      assert.ok(hit != null && hit - n < 400, `navigation at ${n.toFixed(0)} noticed after ${hit == null ? "never" : (hit - n).toFixed(0) + "ms"}`);
     }
+    assert.ok(r.lists.length <= 8, `${r.lists.length} re-syncs for 8 navigations`);
     assert.equal(r.counts.setInterval || 0, 0);
     assert.deepEqual(t.errors, []);
   } finally { await t.close(); }

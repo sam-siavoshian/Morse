@@ -170,10 +170,16 @@ function syncMods() {
 }
 
 // ---- single-page apps change the URL without reloading
+// At most one re-sync per 250ms (first one immediately): some sites call
+// replaceState on every scroll frame. The timer exists only while they do.
+let urlSyncAt = -1e9, urlTimer = 0;
+function urlSync() { urlTimer = 0; urlSyncAt = pristine.now(); syncMods().catch(warn); }
 function urlChanged() {
   if (location.href === S.url) return;
   S.url = location.href;
-  syncMods().catch(warn);
+  const wait = urlSyncAt + 250 - pristine.now();
+  if (wait <= 0) urlSync();
+  else if (!urlTimer) urlTimer = pristine.setTimeout(urlSync, wait);
 }
 const navApi = W.navigation;
 if (navApi && typeof navApi.addEventListener === "function") on(navApi, "currententrychange", urlChanged);
