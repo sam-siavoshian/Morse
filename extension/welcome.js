@@ -304,6 +304,7 @@ async function modelState() {
   if (was === "none" && r.kind !== "none" && screen === "connect") return afterConnect();
   renderConnect();
   renderPracticeNote();
+  renderWin(); // Morse Desktop found after the win: the apps part says so
 }
 
 // ---- the first change, on the practice page
@@ -410,10 +411,15 @@ const SITES = [
   { id: "bbc", name: "BBC News", url: "https://www.bbc.com/news", ask: "hide everything but the headlines" },
 ];
 const APPS = ["VSCodium", "Obsidian", "Joplin"]; // the apps Morse was tested on (docs/desktop.md#tested-on)
+let winKey = "";
 function renderWin() {
   if (screen !== "win") return;
   const model = st ? st.kind !== "none" : true;
   const desktop = st?.helper?.app === "desktop";
+  // drawn again only when what it shows changed (the model, Morse Desktop, the keys), so a site being typed stays
+  const key = JSON.stringify([model, desktop, want, HOTKEYS.open, HOTKEYS.mods]);
+  if (key === winKey && $("win").childElementCount) return;
+  winKey = key;
   const sites = want !== "apps" ? `<section class="next" aria-labelledby="sites-h"><h2 id="sites-h">${esc(t("start.sites.h"))}</h2>
       <p class="small">${esc(t("start.sites.d"))}</p>
       <div class="sites">${SITES.map(s => `<button type="button" class="site" data-site="${s.id}"><b>${esc(s.name)}</b><span><q>${esc(s.ask)}</q></span></button>`).join("")}</div>
