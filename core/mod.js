@@ -4,6 +4,7 @@
 import { KIT_SOURCE } from "./kit.js";
 import { versionsOf } from "./versions.js";
 import { modHosts } from "./summary.js";
+import { t } from "./i18n.js"; // the words, in the language the host speaks (core/i18n.js)
 
 // Version history (refine, restore, step back) lives in versions.js so the
 // runtime can inline it; it is part of this module's API.
@@ -89,6 +90,10 @@ export function saveKeepsScope(next, existing, where) {
     && Array.isArray(next.hosts) && next.hosts.length > 0 && next.hosts.every(h => h === hostOf(where.url));
 }
 
+// A site or app name with control, direction or zero-width characters: shown
+// reversed or with an invisible part, it reads as another site than the one
+// it runs on ("For: moc.knab.www"), and it matches no real one.
+const UNSEEN = /[\p{Cc}\p{Cf}\u2028\u2029]/u;
 export function validateMod(m) {
   if (!m || typeof m !== "object" || m.morse !== 1) throw new Error("This isn't a Morse mod. Check that you copied all of it.");
   for (const k of ["id", "title", "prompt"]) if (typeof m[k] !== "string") throw new Error(`This mod is incomplete (no ${k}). Ask for a new share link.`);
@@ -96,8 +101,8 @@ export function validateMod(m) {
   if (typeof m.css !== "string" || typeof m.js !== "string") throw new Error("This mod has no code in it. Ask for a new share link.");
   const where = m.match;
   if (!where || typeof where !== "object" || Array.isArray(where)
-    || !Array.isArray(where.hosts) || !where.hosts.length || !where.hosts.every(h => typeof h === "string" && h && h.length <= 253)
-    || !(where.app == null || typeof where.app === "string")) {
+    || !Array.isArray(where.hosts) || !where.hosts.length || !where.hosts.every(h => typeof h === "string" && h && h.length <= 253 && !UNSEEN.test(h))
+    || !(where.app == null || (typeof where.app === "string" && !UNSEEN.test(where.app)))) {
     throw new Error("This mod doesn't say where it runs. Ask for a new share link.");
   }
   return m;
@@ -144,7 +149,7 @@ export async function decodeShareText(link) {
   const frag = String(link).split("#m=")[1];
   if (!frag) throw new Error("This isn't a Morse share link. Check that you copied the whole link.");
   let bytes;
-  try { bytes = unb64url(frag.trim()); } catch { throw new Error("This share link is broken. Check that you copied the whole link."); }
+  try { bytes = unb64url(frag.trim()); } catch { throw Object.assign(new Error(t("err.shareBroken")), { plain: true }); }
   return new TextDecoder().decode(await inflate(bytes));
 }
 

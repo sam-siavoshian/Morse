@@ -36,23 +36,29 @@ const Guard = (() => {
   const codeKey = m => cssKey(`${m.css}\n${m.js}`);
 
   // ---- the kit paused a mod
+  // A page can fire the event too: it gets one check a second (as in boot.js),
+  // and the listener goes through B.on, so a detached UI lets go of it.
   const heardIds = new Set();
-  let heardTimer = 0;
-  document.addEventListener("morse:paused", e => {
-    if (!live()) return;
+  let heardTimer = 0, heardAt = -1e9;
+  B.on(document, "morse:paused", e => {
     let id = null;
     try { id = JSON.parse(e.detail).id; } catch {}
     // The detail may not cross JS worlds: then every mod with code is asked.
     const ids = id ? [String(id)] : [...S.mods.filter(m => m.enabled && m.js.trim()).map(m => m.id), S.draft?.id].filter(Boolean);
     ids.forEach(x => heardIds.add(x));
-    clearTimeout(heardTimer);
-    heardTimer = setTimeout(checkHeard, 30);
+    heardLater();
   });
+  function heardLater() {
+    if (heardTimer || !heardIds.size) return;
+    heardTimer = setTimeout(() => checkHeard().finally(() => { heardTimer = 0; heardLater(); }), Math.max(30, heardAt + 1000 - performance.now()));
+  }
   async function checkHeard() {
+    heardAt = performance.now();
     const ids = [...heardIds];
     heardIds.clear();
     for (const id of ids) {
-      const stats = await call("stats", { modId: id }).catch(() => null); // core/kit.js __stats: the page can't fake this
+      if (!live()) return;
+      const stats = await call("stats", { modId: id }).catch(() => null); // core/kit.js __stats (in the extension the page can't fake it; on the desktop mods share the page's world)
       if (stats?.paused) await heard(id, stats.paused);
     }
   }

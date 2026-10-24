@@ -84,14 +84,18 @@ const WHO = String.raw`(?:(?<![\w$.\])])(?<who>[A-Za-z_$][\w$]*)\s*\.\s*)?`;
 const HIDES_JS = new RegExp(WHO + "(?:" + [
   String.raw`remove\s*\(\s*\)`,
   String.raw`removeChild\s*\(`,
-  String.raw`hidden\s*=\s*(?:true|!0|1)`,
-  String.raw`style\s*\.\s*display\s*=\s*["'\`]none`,
-  String.raw`style\s*\.\s*visibility\s*=\s*["'\`]hidden`,
+  // hidden = anything but a plain false: `el.hidden = isDone` hides too
+  String.raw`(?<![-\w])hidden\s*=(?!=)(?!\s*(?:false|!1|0)\b)`,
+  // display = "none", or a choice that can be "none": `x ? "none" : ""`
+  String.raw`style\s*\.\s*display\s*=(?!=)[^;\n]*?["'\`]none["'\`]`,
+  String.raw`style\s*\.\s*visibility\s*=(?!=)[^;\n]*?["'\`]hidden["'\`]`,
+  String.raw`style\s*\.\s*setProperty\s*\(\s*["'\`](?:display["'\`][^)]*none|visibility["'\`][^)]*hidden)`,
   String.raw`display\s*:\s*["'\`]?none`,
   String.raw`visibility\s*:\s*["'\`]?hidden`,
   String.raw`replaceChildren\s*\(\s*\)`,
   String.raw`(?:setAttribute|toggleAttribute)\s*\(\s*["'\`]hidden`,
 ].join("|") + ")", "gi");
+const ACTS_JS = new RegExp(WHO + String.raw`(?:click\s*\(\s*\)|submit\s*\(\s*\)|requestSubmit\s*\()`, "g");
 const TEXT_JS = new RegExp(WHO + String.raw`(?:textContent|innerText|nodeValue|outerText|placeholder|innerHTML|outerHTML)\s*\+?=(?!=)`, "g");
 
 // Event names the code listens for: addEventListener("x"), morse.on(t, "x"),
@@ -143,7 +147,9 @@ export function summarizeMod(mod) {
     const evs = [...ev];
     if (evs.some(e => TYPING_EVENTS.test(e)) || has(js, /\.value\b|getSelection\s*\(|selection(Start|End)|isContentEditable|contenteditable|new\s+FormData|type\s*[=:]\s*["'`]?password|\binput\[|\btextarea\b/i)) add("typing");
     if (evs.some(e => POINTER_EVENTS.test(e))) add("clicks");
-    if (has(js, /\.click\s*\(\s*\)|\.submit\s*\(\s*\)|requestSubmit\s*\(|dispatchEvent\s*\(|new\s+(Mouse|Keyboard|Pointer|Input|Touch|Submit)Event\b/)) add("acts");
+    // Clicking a link the mod made itself (how a download starts) isn't
+    // clicking something on the page for you.
+    if (onPage(js, ACTS_JS, own) || has(js, /dispatchEvent\s*\(|new\s+(Mouse|Keyboard|Pointer|Input|Touch|Submit)Event\b/)) add("acts");
     // keeps running
     if (has(js, /morse\.(every|watch)\s*\(|setInterval\s*\(|MutationObserver|requestAnimationFrame|ResizeObserver|IntersectionObserver/)) add("ongoing");
     // remembers
@@ -248,4 +254,15 @@ export function asReviewed(mod) {
   const { edits, ...rest } = mod;
   if (rest.kind === "manual" || rest.kind === "quick") delete rest.kind;
   return rest;
+}
+
+// Code shown for review (the install review, the share page, morse code).
+// Characters that change how code reads without being seen are written out
+// as \u202e: direction overrides and isolates (they can make a line display
+// in another order than it runs, "Trojan Source"), zero-width ones, and
+// control characters (escape sequences that hide or rewrite lines in a
+// terminal). Line breaks and tabs stay; a lone \r is a line break in JS too.
+const HIDDEN_CHARS = /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\u061c\u200b-\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069\ufeff]/g;
+export function shownCode(code) {
+  return String(code ?? "").replace(/\r\n?/g, "\n").replace(HIDDEN_CHARS, c => `\\u${c.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0")}`);
 }

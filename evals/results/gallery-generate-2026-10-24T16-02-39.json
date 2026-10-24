@@ -1,0 +1,262 @@
+{
+  "startedAt": "2026-10-24T16:02:39.527Z",
+  "mode": "generate",
+  "model": "claude-code:haiku",
+  "pass": 3,
+  "total": 6,
+  "results": [
+    {
+      "id": "go-hide-banners",
+      "request": "hide the cookie notice at the bottom and the Go survey banner",
+      "url": "https://pkg.go.dev/net/http",
+      "ms": 6022,
+      "title": "",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "go-SurveyBanner still shows",
+      "mod": {
+        "morse": 1,
+        "id": "go-hide-banners",
+        "title": "No cookie notice or survey banner",
+        "prompt": "hide the cookie notice at the bottom and the Go survey banner",
+        "match": {
+          "hosts": [
+            "pkg.go.dev"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:02:59.547Z",
+        "updated": "2026-10-24T16:02:59.547Z"
+      },
+      "pass": false
+    },
+    {
+      "id": "pypi-dark-mode",
+      "request": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+      "url": "https://pypi.org/project/requests/",
+      "ms": 8134,
+      "title": "Dark page theme with readable text",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "16 of 58 are hard to read, e.g. li “Source” 1.1, a “Source” 1.9, li “Released: May 14, 2026” 1.2",
+      "mod": {
+        "morse": 1,
+        "id": "pypi-dark-mode",
+        "title": "Dark mode",
+        "prompt": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+        "match": {
+          "hosts": [
+            "pypi.org"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": ":root { color-scheme: dark; }\nhtml, body, #content, header.site-header, .banner, .banner--project,\n.horizontal-section, .horizontal-section--grey, .project-tabs,\n.site-container, .project-tabs__panel, div[data-project-tabs-target],\n.project-description, .project-description__main, .project-description__content,\n#sticky-notifications, .notification-bar__container, .site-menu,\nnav[aria-label=\"Localization\"], .dropdown, .dropdown__link {\n  background-color: #161616 !important;\n}\nbody, body * {\n  color: #e6e6e6 !important;\n  border-color: #3a3a3a !important;\n}\nh1, h2, h3, h4, h5, h6, .project-header__name, .project-header__summary {\n  color: #ffffff !important;\n}\na, a * {\n  color: #8ab4f8 !important;\n}\npre, code, kbd {\n  background-color: #1f1f1f !important;\n  color: #e6e6e6 !important;\n}\ntable, th, td, tr {\n  background-color: #1b1b1b !important;\n  border-color: #3a3a3a !important;\n}\ninput, textarea, select, #search {\n  background-color: #222222 !important;\n  color: #ffffff !important;\n  border-color: #4a4a4a !important;\n}\ninput::placeholder { color: #9a9a9a !important; }\nbutton { background-color: #262626 !important; color: #e6e6e6 !important; }\nblockquote { background-color: #1b1b1b !important; }\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:03:12.132Z",
+        "updated": "2026-10-24T16:03:12.132Z"
+      },
+      "verify": {
+        "id": "pypi-dark-mode",
+        "before": "only 0 of 49 points on the screen are dark",
+        "errors": [],
+        "first": "20 of 66 are hard to read, e.g. li “Source” 1.1, a “Source” 1.9, li “Released: May 14, 2026” 1.2",
+        "reload": "16 of 58 are hard to read, e.g. li “Source” 1.1, a “Source” 1.9, li “Released: May 14, 2026” 1.2",
+        "pass": false,
+        "why": "20 of 66 are hard to read, e.g. li “Source” 1.1, a “Source” 1.9, li “Released: May 14, 2026” 1.2",
+        "pageErrors": [
+          "Failed to fetch",
+          "Failed to fetch",
+          "Failed to fetch"
+        ]
+      },
+      "pass": false
+    },
+    {
+      "id": "pypi-hide-prereleases",
+      "request": "in the release history, hide the releases marked pre-release or yanked",
+      "url": "https://pypi.org/project/requests/#history",
+      "ms": 11612,
+      "title": "Hide pre-release and yanked releases",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "pypi-hide-prereleases",
+        "title": "Hide pre-releases and yanked versions",
+        "prompt": "in the release history, hide the releases marked pre-release or yanked",
+        "match": {
+          "hosts": [
+            "pypi.org"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "div.release.release--filtered-out {\n  display: none !important;\n}\n",
+        "js": "morse.watch(\"div.release\", el => {\n  const card = el.querySelector(\".release__card\") || el;\n  const hide = el.classList.contains(\"release--pre\")\n    || el.classList.contains(\"release--yanked\")\n    || /pre-?release|yanked/i.test(card.textContent);\n  el.classList.toggle(\"release--filtered-out\", hide);\n}, { live: true });\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:03:18.627Z",
+        "updated": "2026-10-24T16:03:18.627Z"
+      },
+      "verify": {
+        "id": "pypi-hide-prereleases",
+        "before": "3 pre-release or yanked versions still show",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true,
+        "pageErrors": [
+          "Failed to fetch",
+          "Failed to fetch",
+          "Failed to fetch"
+        ]
+      },
+      "pass": true
+    },
+    {
+      "id": "rubygems-dark-mode",
+      "request": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+      "url": "https://rubygems.org/gems/rails",
+      "ms": 10826,
+      "title": "Dark mode across the whole page",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": "17 of 82 are hard to read, e.g. a “Sign in” 1.4, a “Sign up” 1.7, a “rails” 2.0",
+      "mod": {
+        "morse": 1,
+        "id": "rubygems-dark-mode",
+        "title": "Dark mode",
+        "prompt": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+        "match": {
+          "hosts": [
+            "rubygems.org"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": ":root { color-scheme: dark; }\nbody, body > div, header, aside, main, section, dialog, dialog > div, .versions, #markup, #header-search input {\n  background-color: #111214 !important;\n}\nheader, aside[aria-label=\"Details\"], dialog, nav[aria-label=\"Gem navigation\"] {\n  background-color: #17181b !important;\n}\nbody, body * { color: #e6e6e6; }\nh1, h2, h3, h4, h5, h6, strong, b { color: #ffffff !important; }\na, a * { color: #8ab4ff; }\na:hover, a:hover * { color: #bcd4ff; }\np, li, td, th, dd, dt, label, span { color: #d4d4d8; }\n* { border-color: #2a2a2e !important; }\ntable, th, td { background-color: transparent !important; color: #e6e6e6 !important; }\nth { background-color: #1e1f23 !important; }\ninput, textarea, select {\n  background-color: #1e1f23 !important;\n  color: #f0f0f0 !important;\n  border-color: #3a3a40 !important;\n}\ninput::placeholder { color: #8b8b93 !important; }\npre, code, pre *, code * {\n  background-color: #1e1f23 !important;\n  color: #f0f0f0 !important;\n}\nsvg { color: #e6e6e6; }\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:03:30.403Z",
+        "updated": "2026-10-24T16:03:30.403Z"
+      },
+      "verify": {
+        "id": "rubygems-dark-mode",
+        "before": "only 0 of 49 points on the screen are dark",
+        "errors": [],
+        "first": "17 of 82 are hard to read, e.g. a “Sign in” 1.4, a “Sign up” 1.7, a “rails” 2.0",
+        "reload": "17 of 82 are hard to read, e.g. a “Sign in” 1.4, a “Sign up” 1.7, a “rails” 2.0",
+        "pass": false,
+        "why": "17 of 82 are hard to read, e.g. a “Sign in” 1.4, a “Sign up” 1.7, a “rails” 2.0"
+      },
+      "pass": false
+    },
+    {
+      "id": "wiki-dark-mode",
+      "request": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+      "url": "http://127.0.0.1:35921/demo/sites/wiki/",
+      "ms": 4552,
+      "title": "Dark mode for whole page",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "wiki-dark-mode",
+        "title": "Dark mode",
+        "prompt": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8795"
+          ],
+          "app": null
+        },
+        "target": null,
+        "css": "html, body, div.page, div.art, nav[aria-label=\"Contents\"], div.mast, div.foot, section[aria-label=\"Comments\"], div.c, .ibox, table, th, td, .refs, ol.refs, p, li, h1, h2, a {\n  background-color: #1e1f22 !important;\n  color: #e6e6e6 !important;\n  border-color: #3c3f44 !important;\n}\na, a:visited {\n  color: #8ab4f8 !important;\n}\n.mast, .foot, .ibox, table, th, td, div.c {\n  background-color: #26282c !important;\n}\ninput[aria-label=\"Search\\ Openpedia\"] {\n  background-color: #2a2c30 !important;\n  color: #e6e6e6 !important;\n  border: 1px solid #4a4d52 !important;\n}\nbutton {\n  background-color: #2a2c30 !important;\n  color: #e6e6e6 !important;\n  border-color: #4a4d52 !important;\n}\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:03:51.355Z",
+        "updated": "2026-10-24T16:03:51.355Z"
+      },
+      "verify": {
+        "id": "wiki-dark-mode",
+        "before": "only 0 of 49 points on the screen are dark",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    },
+    {
+      "id": "wiki-collapse-comments",
+      "request": "collapse the comments, with a button to show them",
+      "url": "http://127.0.0.1:35921/demo/sites/wiki/",
+      "ms": 7863,
+      "title": "Collapse comments behind toggle button",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "wiki-collapse-comments",
+        "title": "Collapse the comments",
+        "prompt": "collapse the comments, with a button to show them",
+        "match": {
+          "hosts": [
+            "127.0.0.1:8795"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": ".cm h2",
+          "label": "“Comments (400)” heading"
+        },
+        "css": "section[aria-label=\"Comments\"].cm-collapsed > .c { display: none; }\n",
+        "js": "morse.watch('section[aria-label=\"Comments\"]', el => {\n  el.classList.add('cm-collapsed');\n  const h2 = el.querySelector(':scope > h2');\n  const btn = morse.el('button', {\n    class: 'cm-toggle',\n    text: 'Show comments',\n    style: 'font:inherit;font-size:14px;color:currentColor;background:transparent;border:1px solid rgb(162, 169, 177);border-radius:2px;padding:4px 10px;cursor:pointer;margin:0 0 8px',\n    on: { click: () => {\n      const open = el.classList.toggle('cm-collapsed') === false;\n      btn.textContent = open ? 'Hide comments' : 'Show comments';\n    } }\n  });\n  h2.after(btn);\n});\n",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:04:02.594Z",
+        "updated": "2026-10-24T16:04:02.594Z"
+      },
+      "verify": {
+        "id": "wiki-collapse-comments",
+        "before": "400 comments still show",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    }
+  ]
+}

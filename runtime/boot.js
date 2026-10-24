@@ -239,24 +239,33 @@ function guardPaused(m, r) {
 // The kit paused a running mod ("morse:paused", core/kit.js). Once the UI is
 // here, 64-guard.js hears it; before that, the host's __stats is asked (a page
 // can fire the event, but can't fake that) and only then is the UI loaded.
+// A page firing it over and over gets one check a second, not one per event
+// (each is a round trip to the host, and in the extension a script run).
 const heardIds = new Set();
-let heardTimer = 0;
+let heardTimer = 0, heardAt = -1e9;
 on(D, "morse:paused", e => {
   if (ui || !live()) return;
   let id = null;
   try { id = JSON.parse(e.detail).id; } catch {}
   const ids = id ? [String(id)] : S.mods.filter(m => m.enabled && (m.js || "").trim()).map(m => m.id);
   ids.forEach(x => heardIds.add(x));
-  pristine.clearTimeout(heardTimer);
+  heardSoon();
+});
+function heardSoon() {
+  if (heardTimer || !heardIds.size) return;
   heardTimer = pristine.setTimeout(async () => {
+    heardAt = pristine.now();
     const list = [...heardIds];
     heardIds.clear();
-    for (const x of list) {
-      const st = await call("stats", { modId: x }).catch(() => null);
-      if (st?.paused) uiTask("guardHeard", x, st.paused);
-    }
-  }, 30);
-});
+    try {
+      for (const x of list) {
+        if (!live()) return;
+        const st = await call("stats", { modId: x }).catch(() => null);
+        if (st?.paused) uiTask("guardHeard", x, st.paused);
+      }
+    } finally { heardTimer = 0; heardSoon(); }
+  }, Math.max(30, heardAt + 1000 - pristine.now()));
+}
 
 // ---- mods waiting for “Allow User Scripts” (64-waiting.js has the UI). In
 // the extension, mod code only runs with it on; while it's off, exec answers
@@ -271,8 +280,10 @@ function waitingAdd(m) {
   if (!seen("morse:waiting-told")) loadUI().catch(() => {});
   if (waitHeard) return;
   waitHeard = true;
-  const retry = () => {
-    if (ui || D.visibilityState !== "visible" || !waiting.size) return;
+  // Only the person coming back: a page firing focus events can't make it
+  // send every waiting mod to the host again and again.
+  const retry = e => {
+    if (ui || !e.isTrusted || D.visibilityState !== "visible" || !waiting.size) return;
     const list = [...waiting.values()];
     waiting.clear();
     for (const x of list) applyMod(S.mods.find(y => y.id === x.id) || x).catch(warn);
@@ -558,7 +569,7 @@ function notify(text, idle) {
   const go = () => loadUI().catch(() => {});
   idle ? pristine.requestIdleCallback(go, { timeout: 3000 }) : go();
 }
-const UI_EVENTS = new Set(["toggle", "panel", "install.request"]);
+const UI_EVENTS = new Set(["toggle", "open", "panel", "install.request", "request"]);
 listeners.add(msg => {
   if (msg.type === "settings.changed" && msg.settings) { setBootPrefs(msg.settings); hostPrefs = true; }
   if (ui) return; // the UI handles everything else once it's here
@@ -649,6 +660,20 @@ Object.defineProperty(W, BOOT, { configurable: true, value: Object.freeze({
     for (const [name, args] of tasks.splice(0)) try { ui[name]?.(...args); } catch (e) { warn(e); }
     Heal.adopted();
   },
+  // The boot that started after this one went quiet (`morse stop`, then a new
+  // attach to the same document) lets it go: its listeners (and the UI's,
+  // which go through on()) would otherwise keep both in memory for good.
+  dispose() {
+    if (live()) return;
+    for (const r of regs.splice(0)) pristine.removeEventListener(r.target, r.type, r.wrapped, r.opts);
+    domMo.disconnect();
+    domHooks.clear();
+    listeners.clear();
+    outgoing.length = 0;
+    pending.clear();
+    ui = null;
+  },
 }) });
+try { prior?.dispose?.(); } catch {}
 // For a helper kit (core/kit.js) running in this same world.
 if (!W[PRISTINE]) Object.defineProperty(W, PRISTINE, { value: pristine });

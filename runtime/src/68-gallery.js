@@ -173,7 +173,7 @@ const Gallery = (() => {
     if (!d.added && !d.removed) return "";
     const rows = trimDiff(d.lines).map(l => l.op === "…"
       ? `<span class="skip">${esc(l.text)}</span>`
-      : `<span class="${l.op === "+" ? "add" : l.op === "-" ? "del" : "ctx"}"><i aria-hidden="true">${l.op === " " ? "" : l.op}</i>${esc(l.text) || " "}</span>`).join("");
+      : `<span class="${l.op === "+" ? "add" : l.op === "-" ? "del" : "ctx"}"><i aria-hidden="true">${l.op === " " ? "" : l.op}</i>${esc(shownCode(l.text)) || " "}</span>`).join("");
     return `<label>${label} <span class="dim">${kind} · ${t("gl.diff", { added: d.added, removed: d.removed })}</span></label><pre class="code gl-diff" tabindex="0">${rows}</pre>`;
   }
   function countLine(name, d) {

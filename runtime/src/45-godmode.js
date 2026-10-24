@@ -153,7 +153,7 @@ const GodMode = (() => {
   const sameTarget = (e, t) => e.sel === t.sel && JSON.stringify(e.shadow || null) === JSON.stringify(t.shadow || null);
   // The toolbar's short name for the selection: what kind of thing it is.
   function shortName(el) {
-    const r = roleWord(el) || (el.children.length ? "section" : "text");
+    const r = kindWord(roleWord(el) || (el.children.length ? "section" : "text")); // 20-context.js
     return r.charAt(0).toUpperCase() + r.slice(1);
   }
   function kindOf(el) {
@@ -230,7 +230,7 @@ const GodMode = (() => {
     const prompt = summarizeEdits(edits);
     s.mod = s.mod
       ? await call("mods.save", { mod: { ...s.mod, prompt, css, js, edits, enabled: true, updated: new Date().toISOString() } })
-      : await call("mods.save", { draft: { id: s.id, title: EDIT_TITLE, prompt, css, js, url: location.href, app: S.app, kind: "manual", edits } });
+      : await call("mods.save", { draft: { id: s.id, title: t("gm.editTitle"), prompt, css, js, url: location.href, app: S.app, kind: "manual", edits } });
     const i = S.mods.findIndex(m => m.id === s.id);
     if (i >= 0) S.mods[i] = s.mod; else S.mods.push(s.mod);
   }
@@ -552,7 +552,7 @@ const GodMode = (() => {
       const field = ed.field = document.createElement("input");
       field.className = "gm-svgtext field";
       field.spellcheck = false;
-      field.setAttribute("aria-label", "New text");
+      field.setAttribute("aria-label", t("gm.newText"));
       field.value = ed.was.trim();
       field.style.transform = `translate(${Math.round(r.left - 8)}px, ${Math.round(r.top + r.height / 2 - 16)}px)`;
       field.style.width = `${Math.round(Math.max(120, r.width + 48))}px`;
@@ -859,17 +859,17 @@ const GodMode = (() => {
   // takes focus away from this page.
   const FRAMES = "iframe, frame, embed, object";
   listen("pointerover", e => {
-    if (!S.picking || ours(e) || !e.target.matches?.(FRAMES)) return;
+    if (!S.picking || !e.isTrusted || ours(e) || !e.target.matches?.(FRAMES)) return;
     hoverEl = e.target;
     boxTo(e.target, hl, describe(e.target));
   }, true);
   listen("blur", () => setTimeout(() => {
     const a = document.activeElement;
-    if (S.open && S.picking && a && a !== G.el && a.matches?.(FRAMES)) setTarget(a);
+    if (S.open && S.picking && a && a !== G.el && a === hoverEl && a.matches?.(FRAMES)) setTarget(a); // the frame the pointer is on, not one the page focused
   }, 0));
   // Double-click the selection to edit its text.
   listen("dblclick", e => {
-    if (!G.el || !S.open || ours(e) || G.editing || !G.el.contains(e.target)) return;
+    if (!e.isTrusted || !G.el || !S.open || ours(e) || G.editing || !G.el.contains(e.target)) return;
     e.preventDefault();
     e.stopPropagation();
     if (G.kind !== "frame") startText();

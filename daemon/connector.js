@@ -24,6 +24,7 @@ import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf,
 import { wrapModCode, settleMs } from "../core/kit.js";
 import { asReviewed } from "../core/summary.js"; // installs keep only the reviewed code
 import { runMorse } from "../core/engine.js";
+import { startLabel, modelNames } from "../core/route.js"; // models: "Claude Code · Automatic"
 import { settingsLabel, currentSettings } from "./models.js"; // also registers the Claude Code / Codex providers
 import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
@@ -91,7 +92,7 @@ export const PRISTINE = `(() => { try {
 // bar back) and a later attach can start a fresh one.
 const QUIET = `(() => { try {
   globalThis.__morseGen = (globalThis.__morseGen || 0) + 1;
-  delete globalThis.__morseHost; delete globalThis.__morseHostReceive; delete globalThis.__morseRuntime;
+  delete globalThis.__morseHost; delete globalThis.__morseHostReceive; delete globalThis.__morseRuntime; delete globalThis.__morseProbe;
 } catch {} })()`;
 // Then in the page's main world, where the mods run.
 const cleanup = ids => `(() => { try {
@@ -108,7 +109,11 @@ export class Connector {
   // verify(): called before attaching again after a restart; { ok, why }.
   // onChange(connector): windows or state changed (for `morse status`).
   constructor({ port, app = null, settings, log = console.log, watch = false, verify = null, onChange = null, interval = 1000 }) {
-    Object.assign(this, { port, app, settings, log, watch, verify, onChange, interval });
+    // Log lines name windows (the page's own title), mods (a shared mod's
+    // title) and the model's results: as text, never escape sequences that
+    // could rewrite the terminal or set its clipboard.
+    const shown = s => String(s).replace(/[\x00-\x09\x0b-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069]+/g, " ");
+    Object.assign(this, { port, app, settings, log: line => log(shown(line)), watch, verify, onChange, interval });
     this.pages = new Map();   // target id -> CDPSession (null while connecting)
     this.windows = new Map(); // target id -> { id, type, kind, title, url, frame, session, since }
     this.retry = new Map();   // target id -> { at, n } after a failed attach
@@ -491,12 +496,15 @@ export class Connector {
     if (PACK_REQUESTS.has(msg.type)) { const r = await handlePack(msg); if (/^pack\.(install|update|enable)$/.test(msg.type)) this.modsChanged(s); return r; } // packs hook: mod packs (packs.js)
     if (Style.owns(msg)) { const r = await Style.handle(msg, await here()); if (msg.type !== "style.get" && msg.type !== "style.preview") this.modsChanged(s); return r; } // your-style hook
     switch (msg.type) {
-      case "hello":
+      case "hello": {
         this.grantMic(s, (await here()).url);
-        return { mode: "desktop", app, appName: this.app?.name || null, label: settingsLabel(this.settings),
-          settings: await loadPrefs(), voice: await cachedVoiceStatus(),
+        const prefs = await loadPrefs();
+        return { mode: "desktop", app, appName: this.app?.name || null, label: this.settings ? startLabel({ ...this.settings, mode: prefs.modelMode }, settingsLabel) : settingsLabel({}),
+          models: this.settings ? modelNames(this.settings, settingsLabel) : null, // models: the names the Settings sheet shows
+          settings: prefs, voice: await cachedVoiceStatus(),
           quiet: !!s.welcomed || !(s.welcomed = true), // perf: welcome once per window, not on every reload (it loads the UI)
           debug: process.env.MORSE_DEBUG === "1" || undefined }; // status for tests (97-boot.js debugStatus)
+      }
       case "ui.load": // perf: the overlay is evaluated on first use, into the world that asked
         await s.send("Runtime.evaluate", { expression: UI, contextId: caller.world });
         return true;
@@ -535,7 +543,7 @@ export class Connector {
         return putClipboard({ ...msg.item, from: { ...msg.item?.from, app: this.app?.name || msg.item?.from?.app || null } });
       case "warm": { // speed: the bar opened; get the model ready (core/providers.js prewarm)
         const settings = await this.freshSettings();
-        if (settings?.provider && settings.provider !== "none") prewarm(settings);
+        if (settings?.provider && settings.provider !== "none") prewarm({ ...settings, mode: (await loadPrefs()).modelMode }); // models: warms the first model
         return true;
       }
       case "exec":
@@ -552,12 +560,13 @@ export class Connector {
         if (!this.settings?.provider || this.settings.provider === "none")
           throw new Error("No model is connected. Run morse setup in a terminal to choose one.");
         const t0 = Date.now();
+        const mode = (await loadPrefs()).modelMode; // models: Automatic, Always fast, Always best
         const sel = msg.context?.target?.selector;
         trace("bar", `"${msg.request}" · ${sel ? `pointed at ${sel}` : "the whole page"} · ${this.app?.name || "app"}`);
         trace("model", `${this.settings.provider}${this.settings.model ? ` · ${this.settings.model}` : ""}`);
         let cssPushes = 0, tokens = 0;
         const res = await this.gens.run(msg.genId, signal => runMorse({
-          settings: this.settings,
+          settings: { ...this.settings, mode },
           request: msg.request,
           context: { ...msg.context, app: this.app?.name || msg.context.app },
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
@@ -575,9 +584,9 @@ export class Connector {
           signal,
         }));
         if (res.cancelled) { this.log(`  ■ "${msg.request}" stopped after ${Date.now() - t0}ms`); return res; }
-        this.log(`  ${res.ok ? "✓" : "✗"} "${msg.request}" → ${res.title || "-"} (${Date.now() - t0}ms, ${res.attempts} attempt${res.attempts > 1 ? "s" : ""})`);
-        trace("done", `${res.ok ? "✓" : "✗"} "${res.title || "-"}" in ${Date.now() - t0}ms · ${tokens} chunks streamed · css ${res.css?.length || 0} chars · js ${res.js?.length || 0} chars · ${res.attempts} attempt${res.attempts > 1 ? "s" : ""}`);
-        return { ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts };
+        this.log(`  ${res.ok ? "✓" : "✗"} "${msg.request}" → ${res.title || "-"} (${Date.now() - t0}ms, ${res.attempts} attempt${res.attempts > 1 ? "s" : ""}${res.model ? `, ${res.model}${res.escalated ? " after the fast model" : ""}` : ""})`);
+        trace("done", `${res.ok ? "✓" : "✗"} "${res.title || "-"}" in ${Date.now() - t0}ms · ${tokens} chunks streamed · css ${res.css?.length || 0} chars · js ${res.js?.length || 0} chars · ${res.attempts} attempt${res.attempts > 1 ? "s" : ""}${res.model ? ` · ${res.model}` : ""}`);
+        return { ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts, model: res.model };
       }
       case "capture": {
         const from = Date.now() / 1000 - 0.15;

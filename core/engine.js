@@ -4,7 +4,8 @@
 import { buildMessages } from "./prompt.js";
 import { parseModResponse, liveCss } from "./parse.js";
 import { parseReply } from "./answer.js"; // Ask and find
-import { streamChat } from "./providers.js";
+import { streamChat, settingsLabel } from "./providers.js";
+import { planRoute, shouldEscalate, tierLabel } from "./route.js"; // models: fast model first, the strong one when needed
 import { selectorsIn, selectorLists } from "./heal.js"; // self-heal hook: shared selector parsing
 import { cannotUndo } from "./showonce.js"; // show-once hook: ask before steps that can't be undone
 import { draftHarm, cssHidesPage, collapseHarm } from "./guard.js"; // guard hook: code that would obviously break the page
@@ -16,11 +17,25 @@ import { draftHarm, cssHidesPage, collapseHarm } from "./guard.js"; // guard hoo
 // `collapse(css)` (optional, from the host) applies the CSS in the page for a
 // moment and returns { before, after } (core/guard.js pageCollapse): a change
 // that hides most of the page gets the repair round like a guard hit.
+//
+// models (core/route.js): with a fast and a strong model to choose from, a
+// request that looks hard starts on the strong one; otherwise the fast one
+// goes first and a draft it gets wrong goes to the strong one (with what was
+// wrong) instead of failing. Each model change adds one attempt.
 export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2, probe, collapse }) {
   let previous = null;
   let last = null;
   const started = Date.now();
   const repairs = [];
+  const route = planRoute(settings, request, context);
+  const total = maxAttempts + route.steps.length - 1;
+  let step = 0, tries = 0, escalated = false;
+  const current = () => route.steps[step];
+  const answered = () => ({ model: tierLabel(current(), settingsLabel), tier: current().tier || null, escalated, hard: route.hard, routeWhy: route.why });
+  // After a failed attempt: the same model repairs, or the strong one takes over.
+  const advance = kind => {
+    if (step < route.steps.length - 1 && shouldEscalate(kind, tries)) { step++; tries = 0; escalated = true; }
+  };
   // Effect check: the page before the change. speed: measured while the model
   // starts; no CSS goes on the page until it's done.
   let before = null, beforeDone = !probe;
@@ -28,10 +43,15 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
   // speed: when each stage happened, in ms since the call (first attempt only)
   const timing = {};
   const mark = (k, v = Date.now() - started) => { if (timing[k] == null) timing[k] = v; };
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    emit({ type: "phase", phase: attempt === 1 ? "thinking" : "fixing", error: previous?.error });
+  for (let attempt = 1; attempt <= total; attempt++) {
+    const more = attempt < total;
+    tries++;
+    const stronger = escalated && tries === 1;
+    emit({ type: "phase", phase: attempt === 1 ? "thinking" : "fixing", error: previous?.error, ...(stronger && { stronger: true }) });
+    if (route.steps.length > 1 || route.hard) emit({ type: "model", label: answered().model, tier: current().tier || null });
     let raw = "", lastCss = "", lastAnswer = "";
-    raw = await streamChat(settings, buildMessages({ request, context, previous, base }), {
+    try {
+    raw = await streamChat(current(), buildMessages({ request, context, previous, base }), {
       signal,
       // The model has the request ("ready"), or is thinking: real progress for the bar.
       onStage(st) {
@@ -56,11 +76,20 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
         if (css !== lastCss && beforeDone && !cssHidesPage(css)) { lastCss = css; if (css.trim()) mark("firstCss"); emit({ type: "css", css }); } // guard hook: never show a page-hiding rule
       },
     });
+    } catch (e) {
+      // models: the fast model itself failed (a model name this plan doesn't
+      // have, a crash): the strong one tries before giving up.
+      if (signal?.aborted || e?.code === "no_model" || e?.name === "AbortError" || step >= route.steps.length - 1 || !more) throw e;
+      repairs.push(String(e?.message || e)); // previous stays: the last draft and what was wrong with it
+      last = { title: "", css: "", js: "", raw: "", attempts: attempt, ms: Date.now() - started, repairs, timing, error: String(e?.message || e) };
+      advance("model");
+      continue;
+    }
     // Ask and find: an answer is final as soon as it's written; nothing runs.
     const answer = parseReply(raw, { final: true });
     if (answer.kind === "answer" && answer.text) {
       emit({ type: "answer", ...answer });
-      return { ok: true, kind: "answer", answer, title: "", css: "", js: "", raw, attempts: attempt, ms: Date.now() - started };
+      return { ok: true, kind: "answer", answer, title: "", css: "", js: "", raw, attempts: attempt, ms: Date.now() - started, ...answered() };
     }
     const draft = parseModResponse(raw);
     await beforeP;
@@ -70,16 +99,18 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     if (draft.css.trim() && !harm) mark("firstCss");
     emit({ type: "css", css: harm ? "" : draft.css });
     mark("modelDone");
-    last = { ...draft, raw, attempts: attempt, ms: Date.now() - started, repairs, timing };
+    last = { ...draft, raw, attempts: attempt, ms: Date.now() - started, repairs, timing, ...answered() };
     if (harm) {
       previous = { raw, error: harm.model };
       repairs.push(harm.model);
       last = { ...last, css: "", js: "", error: harm.user };
+      advance("guard");
       continue;
     }
     if (!draft.css.trim() && !draft.js.trim()) {
       previous = { raw, error: "The reply had no ```css or ```js block (or ANSWER: for a question)." };
       repairs.push(previous.error);
+      advance("empty");
       continue;
     }
     // guard: CSS that hides most of the page (a class the sidebar shares with the content).
@@ -89,6 +120,7 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       previous = { raw, error: fell.model };
       repairs.push(fell.model);
       last = { ...last, css: "", js: "", error: fell.user };
+      advance("guard");
       continue;
     }
     // Show me once: steps that can't be taken back are never done without asking.
@@ -97,6 +129,7 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       previous = { raw, error: sure };
       repairs.push(sure);
       last = { ...last, css: "", js: "", error: "The change would delete, buy or send something without asking you first, so Morse didn't keep it. Try again." };
+      advance("guard");
       continue;
     }
     if (draft.js.trim()) {
@@ -110,25 +143,40 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
         previous = { raw, error: res.error };
         repairs.push(res.error);
         last.error = res.error;
+        advance("exec");
         continue;
       }
     }
+    // ---- class names the page notes call generated: it works now and stops
+    // working with the app's next release. The kind of slip a stronger model
+    // makes less (core/route.js), so it counts like a guard hit.
+    const fleeting = more && !signal?.aborted ? generatedNames(draft, context) : null;
+    if (fleeting) {
+      if (draft.js.trim()) await exec("").catch(() => {});
+      emit({ type: "css", css: "" });
+      previous = { raw, error: fleeting };
+      repairs.push(fleeting);
+      advance("guard");
+      continue;
+    }
     // ---- hooks nothing uses: JS that marks elements for CSS that isn't there,
     // or a change that only says it happened
-    const dead = attempt < maxAttempts && !signal?.aborted ? deadHooks(draft, context) : null;
+    const dead = more && !signal?.aborted ? deadHooks(draft, context) : null;
     if (dead) {
       if (draft.js.trim()) await exec("").catch(() => {}); // same mod id: turns the draft off
       previous = { raw, error: dead };
       repairs.push(dead);
+      advance("effect");
       continue;
     }
     // ---- effect check: did the change do anything visible?
-    if (before && attempt < maxAttempts && !signal?.aborted) {
+    if (before && more && !signal?.aborted) {
       const miss = await noEffect(probe, before, draft).catch(() => null);
       if (miss) {
         if (draft.js.trim()) await exec("").catch(() => {}); // same mod id: turns the inert draft off
         previous = { raw, error: miss };
         repairs.push(miss);
+        advance("effect");
         continue;
       }
     }
@@ -157,6 +205,22 @@ export function deadHooks({ css = "", js = "" }, context) {
   }
   if (!out.length) return null;
   return `It ran, but your JS ${[...new Set(out)].slice(0, 3).join(" and ")} and no CSS uses it, so nothing changes on screen. Add CSS rules for it (in the css block), or set the styles directly.`;
+}
+
+// When the page notes say class names are generated (runtime/src/20-context.js
+// pageNotes, with the same test for what looks generated), a draft that
+// selects by one of them breaks with the app's next release. A repair message,
+// or null.
+const HASHED = /^(css|sc|jsx|emotion|styled|svelte|chakra|mui)-|^_?[a-z0-9]{5,}$|[A-Z][a-z]+_[a-z]+__[a-zA-Z0-9]{5}/;
+const looksHashed = c => (/\d/.test(c) && /[a-z]/i.test(c) && HASHED.test(c)) || /^[a-z]{1,3}[0-9][a-z0-9]{3,}$/i.test(c);
+export function generatedNames(draft, context) {
+  if (!/Class names here are generated/.test(String(context?.notes || ""))) return null;
+  const { css, js } = selectorLists(draft);
+  const used = new Set();
+  for (const sel of [...css, ...js]) for (const m of sel.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) if (looksHashed(m[1])) used.add(m[1]);
+  if (!used.size) return null;
+  return `It uses class names the app generates (${[...used].slice(0, 3).map(c => `.${c}`).join(", ")}). They change with every release of the app, so the change would stop working. `
+    + "Use the selectors given (tags and structure), ids, aria-*/data-* attributes, roles or text instead.";
 }
 
 // Show me once (core/showonce.js cannotUndo): code made from steps that

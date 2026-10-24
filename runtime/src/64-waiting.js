@@ -47,8 +47,10 @@ const Waiting = (() => {
     if (ran.length) toast(ran.length === 1 ? t("wait.fullyOnOne", { title: ran[0].title }) : t("wait.fullyOnMany", { n: ran.length }));
     if (!panel.hidden) renderPanel();
   }
-  listen("visibilitychange", () => { if (document.visibilityState === "visible") retry(); });
-  listen("focus", () => retry());
+  // The person coming back, not a page firing focus events to make Morse send
+  // every waiting mod to the host over and over.
+  listen("visibilitychange", e => { if (e.isTrusted && document.visibilityState === "visible") retry(); });
+  listen("focus", e => { if (e.isTrusted) retry(); });
   // The result of a new change whose code waits (or, on the practice page,
   // never runs). It never just looks done: the bar says the change needs
   // “Allow User Scripts” and offers the one click that opens it (offer).

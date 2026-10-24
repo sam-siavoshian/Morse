@@ -1,0 +1,22 @@
+{
+  "morse": 1,
+  "id": "pypi-hide-prereleases",
+  "title": "Hide pre-releases and yanked versions",
+  "prompt": "in the release history, hide the releases marked pre-release or yanked",
+  "match": {
+    "hosts": [
+      "pypi.org"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": "div.release.release--filtered-out {\n  display: none !important;\n}\n",
+  "js": "morse.watch(\"div.release\", el => {\n  const card = el.querySelector(\".release__card\") || el;\n  const hide = el.classList.contains(\"release--pre\")\n    || el.classList.contains(\"release--yanked\")\n    || /pre-?release|yanked/i.test(card.textContent);\n  el.classList.toggle(\"release--filtered-out\", hide);\n}, { live: true });\n",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "note": "Asked twice. The first answer, to “in the release history, hide pre-releases and yanked versions”, guessed from version numbers and missed one; this request names the labels the page uses.",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

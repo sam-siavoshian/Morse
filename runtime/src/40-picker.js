@@ -16,8 +16,10 @@ function boxTo(el, box, label) {
   }
 }
 const ours = e => e.composedPath().includes(hostEl);
+// Pointing is the person's own mouse: a page's synthetic mousemove and click
+// can't choose what Morse changes (isTrusted, like every key Morse takes).
 function onMove(e) {
-  if (!S.picking) return;
+  if (!S.picking || !e.isTrusted) return;
   const el = GodMode.deepAt(e.clientX, e.clientY); // God mode hook: also points into open shadow roots
   if (!el || el === hostEl || el === document.documentElement) { hoverEl = null; hl.hidden = true; return; }
   hoverEl = el;
@@ -34,6 +36,9 @@ function swallow(e) { if (S.picking && !ours(e)) { e.preventDefault(); e.stopPro
 function onClick(e) {
   if (!S.picking || ours(e)) return;
   e.preventDefault(); e.stopPropagation();
+  if (!e.isTrusted) return;
+  // A tap on a touch screen clicks with no mouse move first: point at what is under it.
+  if (e.clientX || e.clientY) onMove(e);
   if (hoverEl) setTarget(hoverEl);
 }
 let pointerY = innerHeight / 2;

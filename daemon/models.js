@@ -1,11 +1,17 @@
 // Which model Morse uses on this computer. ~/.morse/config.json:
 //   provider   "claude-code" | "codex" | "anthropic" | "openai" (unset: auto-detect)
 //   models     { [provider]: model }    keys { anthropic, openai }    baseUrls { openai, anthropic }
+//              (a model named here is used for every request: routing is off)
+//   tiers      { [provider]: { fast, best } }   the two models Automatic chooses
+//              between (core/route.js TIERS when unset)
+// The choice "Automatic / Always fast / Always best" is a bar setting
+// (~/.morse/settings.json "modelMode", core/prefs.js).
 // Auto-detect order: Claude Code on PATH, Codex on PATH, Anthropic key, OpenAI key.
 
-import { loadConfig } from "./store.js";
+import { loadConfig, loadPrefs } from "./store.js";
 import { detectHarnesses } from "./harness.js"; // also registers the harness providers
 import { PROVIDERS, USER_PROVIDERS, settingsLabel } from "../core/providers.js";
+import { resolveTiers, MODEL_MODES } from "../core/route.js";
 
 export { settingsLabel };
 
@@ -44,14 +50,20 @@ export function settingsFromConfig(cfg, overrides = {}, { env = process.env, har
       : keys.openai ? "openai"
       : "none";
   }
+  const pinned = !!(overrides.model || cfg.models?.[provider]);
   const model = overrides.model || cfg.models?.[provider] || PROVIDERS[provider]?.defaultModel || "";
   const apiKey = provider === "anthropic" ? keys.anthropic : provider === "openai" ? keys.openai : "";
   const baseUrl = overrides.baseUrl || cfg.baseUrls?.[provider] || (provider === "openai" ? env.OPENAI_BASE_URL || "" : "");
-  return { provider, model, apiKey, baseUrl, detected };
+  const tiers = resolveTiers(provider, cfg.tiers?.[provider], { baseUrl }); // models: fast and strong
+  return { provider, model, apiKey, baseUrl, detected, pinned, tiers };
 }
 
-export async function currentSettings(overrides) {
-  return settingsFromConfig(await loadConfig(), overrides);
+// With the bar's "Model" setting (Automatic, Always fast, Always best).
+// MORSE_MODEL_MODE overrides it for one run.
+export async function currentSettings(overrides = {}, { env = process.env } = {}) {
+  const s = settingsFromConfig(await loadConfig(), overrides);
+  const want = overrides.mode || env.MORSE_MODEL_MODE;
+  return { ...s, mode: MODEL_MODES.includes(want) ? want : (await loadPrefs()).modelMode };
 }
 
 export function assertProvider(p) {
@@ -59,3 +71,4 @@ export function assertProvider(p) {
 }
 
 export const mask = k => (k ? `${k.slice(0, 7)}…${k.slice(-4)}` : "");
+
