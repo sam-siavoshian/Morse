@@ -263,7 +263,8 @@ function CSS() {
   .card label { display: block; margin: 16px 0 8px; }
   .card label .dim, .card label code { text-transform: none; letter-spacing: 0; font: inherit; }
   .code { display: block; width: 100%; min-height: 128px; border-radius: var(--m-r-md); padding: 12px; margin: 0;
-    font: 12px/20px var(--m-mono); letter-spacing: 0; resize: vertical; outline: 0; white-space: pre; overflow: auto; }
+    font: 12px/20px var(--m-mono); letter-spacing: 0; resize: vertical; outline: 0; white-space: pre; overflow: auto;
+    scrollbar-width: thin; scrollbar-color: var(--m-signal-2) transparent; /* not the system's light scrollbars on a dark box */ }
   .code[data-k="src"] { white-space: pre-wrap; word-break: break-all; }
   .code::placeholder { color: var(--m-text-3); opacity: 1; }
   .card footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }

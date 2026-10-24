@@ -18,6 +18,7 @@ import path from "node:path";
 import os from "node:os";
 import net from "node:net";
 import { createRequire } from "node:module";
+import { pressOpen } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -39,7 +40,7 @@ const ago = s => new Date(Date.now() - s * 1000).toISOString();
 // One mod of your own, and "Bigger rounded covers" from the gallery, installed last week.
 await writeMod({ morse: 1, id: "quiet-sidebar", title: "Quieter sidebar", prompt: "make the sidebar quieter so the albums stand out",
   match: { hosts: ["127.0.0.1:8789"], app: null }, target: { selector: "nav", label: "Sidebar" },
-  css: "nav { background: #0b0b0b !important; }\nnav a:not(.on) { color: #7d7d7d !important; }\n", js: "", enabled: true, model: "demo", created: ago(9 * 86400), updated: ago(9 * 86400) });
+  css: "nav { background: #0b0b0b !important; }\nnav a:not(.on) { color: #7d7d7d !important; }\n", js: "", enabled: true, model: "Claude Code · haiku", created: ago(9 * 86400), updated: ago(9 * 86400) });
 const gallery = JSON.parse(await fs.readFile(path.join(root, "site/mods/tunes-big-covers.morse.json"), "utf8"));
 const covers = { ...gallery, enabled: true, imported: true, importedFrom: "gallery", gallery: { id: "tunes-big-covers", version: 1 }, created: ago(6 * 86400), updated: ago(6 * 86400) };
 await writeMod(covers);
@@ -62,7 +63,7 @@ const page = await ctx.newPage();
 page.on("pageerror", e => console.log("  ! pageerror", e.message));
 const ui = sel => page.locator(`[data-morse-ui] ${sel}`);
 const shadow = fn => page.evaluate(fn);
-const shot = async name => { await page.mouse.move(640, 790); await sleep(350); await page.screenshot({ path: path.join(OUT, name) }); console.log("  📸", name); };
+const shot = async name => { await page.mouse.move(640, page.viewportSize().height - 10); await sleep(350); await page.screenshot({ path: path.join(OUT, name) }); console.log("  📸", name); };
 async function until(fn, ms = 30000) {
   const end = Date.now() + ms;
   while (Date.now() < end) { const v = await fn().catch(() => null); if (v) return v; await sleep(80); }
@@ -106,20 +107,22 @@ await shot("115-share-fix.png");
 // ---- 116: the setting
 await ui(".ctl-toast .ctl-x").click();
 await sleep(300);
-await page.keyboard.press(process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space");
+await page.setViewportSize({ width: 1280, height: 1000 }); // tall enough for the whole of Settings, nothing scrolled half out of view
+await pressOpen(page);
 await sleep(300);
-await page.keyboard.press("Control+Comma");
+await page.keyboard.press(process.platform === "darwin" ? "Meta+Comma" : "Control+Comma"); // Settings
 await ui('.sheet input[data-k="autoFix"]').waitFor({ state: "attached" });
 await ui('.sheet .srow:has(input[data-k="autoFix"]) .sw span').click();
 await until(async () => JSON.parse(await fs.readFile(path.join(home, "settings.json"), "utf8")).autoFix === true);
 await shadow(() => {
   const r = document.querySelector("[data-morse-ui]").shadowRoot;
-  r.querySelector('.sheet input[data-k="autoFix"]').closest(".srow").scrollIntoView({ block: "center" });
+  r.querySelector(".sheet").scrollTop = 0;
   r.activeElement?.blur();
 });
 await shot("116-auto-fix-setting.png");
 await page.keyboard.press("Escape");
 await page.keyboard.press("Escape");
+await page.setViewportSize({ width: 1280, height: 800 });
 
 // ---- 117: the same redesign with auto-fix on: fixed in the background
 await writeMod({ ...covers, fp });

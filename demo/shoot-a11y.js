@@ -9,6 +9,7 @@ import path from "node:path";
 import { promises as fs } from "node:fs";
 import { createRequire } from "node:module";
 import { openLibrary } from "./a11y-page.js";
+import { pressOpen } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -19,7 +20,7 @@ const browser = await chromium.launch();
 const shot = async (page, name, opts = {}) => { await page.screenshot({ path: path.join(OUT, name), ...opts }); console.log("  shot", name); };
 const quiet = page => page.locator(".toast").waitFor({ state: "hidden", timeout: 6000 });
 async function tools(page) {
-  if (await page.locator(".bar").isHidden()) await page.keyboard.press(process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space") /* the default Open Morse key (core/hotkeys.js) */;
+  if (await page.locator(".bar").isHidden()) await pressOpen(page); // the default Open Morse key (core/hotkeys.js)
   await page.locator(".gm-qbtn").click();
   await page.locator(".gm-menu .a11y-group").waitFor();
 }

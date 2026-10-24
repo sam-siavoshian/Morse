@@ -17,6 +17,7 @@ import os from "node:os";
 import net from "node:net";
 import http from "node:http";
 import { createRequire } from "node:module";
+import { pressOpen } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -36,7 +37,7 @@ const ago = s => new Date(Date.now() - s * 1000).toISOString();
 // One mod of your own, made a few days ago.
 await writeMod({ morse: 1, id: "quiet-sidebar", title: "Quieter sidebar", prompt: "make the sidebar quieter so the albums stand out",
   match: { hosts: ["127.0.0.1:8789"], app: null }, target: { selector: "nav", label: "Sidebar" },
-  css: "nav { background: #0b0b0b !important; }\nnav a:not(.on) { color: #7d7d7d !important; }\n", js: "", enabled: true, model: "demo", created: ago(3 * 86400), updated: ago(3 * 86400) });
+  css: "nav { background: #0b0b0b !important; }\nnav a:not(.on) { color: #7d7d7d !important; }\n", js: "", enabled: true, model: "Claude Code · haiku", created: ago(3 * 86400), updated: ago(3 * 86400) });
 
 const freePort = () => new Promise(r => { const s = net.createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => r(p)); }); });
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml" };
@@ -72,7 +73,7 @@ async function load() {
 
 // ---- 110: the chip in the empty bar leads to For this site
 await load();
-await page.keyboard.press(process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space") /* the default Open Morse key (core/hotkeys.js) */;
+await pressOpen(page); // the default Open Morse key (core/hotkeys.js)
 await ui(".sugs .gl-sug").waitFor({ timeout: 15000 });
 await page.keyboard.press("Tab");
 await page.keyboard.press("End");

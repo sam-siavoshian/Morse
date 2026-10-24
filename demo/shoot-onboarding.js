@@ -15,22 +15,30 @@ import os from "node:os";
 import { spawnSync, execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { serveBar } from "./bar-server.js";
+import { pressOpen } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const OUT = process.argv[2] || path.join(root, "docs", "screenshots");
+const OUT = path.resolve(root, process.argv[2] || process.env.SHOTS || path.join("docs", "screenshots"));
 const EXT = path.join(root, "dist", "extension");
 const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-onboarding-"));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const saved = name => console.log("  📸", name);
-const { url: PLAY, close: closeBar } = await serveBar();
-const SITE = PLAY.replace("/demo/bar-playground.html", "/demo/sites/byte/");
+const { url: PLAY_REAL, close: closeBar } = await serveBar();
+const SITE = PLAY_REAL.replace("/demo/bar-playground.html", "/demo/sites/byte/");
+// The playground shows at app.example (mapped to its real port), so the
+// pictures name a plain address, not 127.0.0.1 and a random port.
+const PLAY_PORT = new URL(PLAY_REAL).port;
+const PLAY = "http://app.example/demo/bar-playground.html";
 
 // ---- 70 + popup states: the real extension
 const ctx = await chromium.launchPersistentContext(path.join(tmp, "profile"), {
   headless: false, viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1,
   args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, "--no-sandbox"],
 });
+// No Morse helper on this computer, as on a new install, even if another run
+// has one on 7457 right now.
+await ctx.route("http://127.0.0.1:7457/**", route => route.abort("connectionrefused"));
 const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
 const id = sw.url().split("/")[2];
 // onInstalled opens the welcome page by itself.
@@ -57,22 +65,31 @@ await welcome.mouse.click(art.x + 160, art.y + 6);
 await sleep(200);
 await welcome.keyboard.type("make this easier to read", { delay: 18 });
 await welcome.keyboard.press("Enter");
-await sleep(5200); // the demo model streams, then Keep shows
+// The sample answer streams, then Save shows.
+for (let i = 0; i < 100; i++) { if (await practice().evaluate(() => getComputedStyle(document.querySelector('aside[aria-label="Sponsored"]')).display === "none").catch(() => false)) break; await sleep(200); }
+await sleep(2500);
 await welcome.mouse.move(1100, 880);
 await welcome.screenshot({ path: path.join(OUT, "70-welcome.png") });
 saved("70-welcome.png");
-await welcome.keyboard.press("Enter"); // Keep
+await welcome.keyboard.press("Enter"); // Save
 await sleep(800);
 
-// Popup states, opened as pages so they can be captured.
+// Popup states, opened as pages so they can be captured: the top of the
+// popup, down to "Change this page", where each state shows.
 async function popup(name, query) {
   const p = await ctx.newPage();
   await p.setViewportSize({ width: 348, height: 300 });
   await p.goto(`chrome-extension://${id}/popup.html?${query}`);
   await sleep(700);
-  const h = await p.evaluate(() => document.body.scrollHeight);
-  await p.setViewportSize({ width: 348, height: Math.min(h, 520) });
-  await sleep(100);
+  // Leave out what comes after it (the same in every state).
+  const h = await p.evaluate(() => {
+    for (let n = document.querySelector("#go"); n && n !== document.body; n = n.parentElement)
+      for (let s = n.nextElementSibling; s; s = s.nextElementSibling) s.style.display = "none";
+    document.documentElement.style.overflow = "hidden";
+    return Math.ceil(document.querySelector("#go").getBoundingClientRect().bottom + 16);
+  });
+  await p.setViewportSize({ width: 348, height: h });
+  await sleep(150);
   const file = path.join(tmp, name + ".png");
   await p.screenshot({ path: file });
   const state = await p.evaluate(() => document.querySelector(".ps")?.dataset.state || "");
@@ -94,7 +111,7 @@ shots.push(["The PDF viewer", await popup("p-pdf", `url=${encodeURIComponent("ht
 await ctx.close();
 
 // ---- bar states: the playground
-const browser = await chromium.launch();
+const browser = await chromium.launch({ args: [`--host-resolver-rules=MAP app.example 127.0.0.1:${PLAY_PORT}`] });
 async function scene(query, state, fn, { width = 1280, height = 800 } = {}) {
   const c = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1 });
   await c.addInitScript(s => {
@@ -132,7 +149,7 @@ async function crop(page, sel, file, pad = 24) {
 
 // 71 · the coach, on the second step
 await scene("?onboarding", null, async p => {
-  await p.keyboard.press("Alt+Space");
+  await pressOpen(p, "Alt+Space");
   await p.waitForTimeout(250);
   await pointAt(p, "#toolbar");
   await p.waitForTimeout(150);
@@ -145,7 +162,7 @@ await scene("?onboarding", null, async p => {
 
 // 72 · the help pane
 await scene("?onboarding", { coach: "done" }, async p => {
-  await p.keyboard.press("Alt+Space");
+  await pressOpen(p, "Alt+Space");
   await p.waitForTimeout(200);
   await p.keyboard.press("F1");
   await p.waitForTimeout(200);
@@ -159,19 +176,19 @@ await scene("?onboarding", { coach: "done" }, async p => {
 
 // bar states for 73
 shots.push(["No model connected", await scene("?onboarding&nomodel", { coach: "done" }, async p => {
-  await p.keyboard.press("Alt+Space");
+  await pressOpen(p, "Alt+Space");
   await p.mouse.move(640, 200);
   await p.waitForTimeout(300);
   return crop(p, ".bar", path.join(tmp, "b-model.png"));
 })]);
 shots.push(["User scripts off", await scene("?onboarding&noscripts", { coach: "done" }, async p => {
-  await p.keyboard.press("Alt+Space");
+  await pressOpen(p, "Alt+Space");
   await p.mouse.move(640, 200);
   await p.waitForTimeout(300);
   return crop(p, ".bar", path.join(tmp, "b-scripts.png"));
 })]);
 shots.push(["The model can't be reached", await scene("?onboarding&fail=" + encodeURIComponent("fetch failed: connect ECONNREFUSED 127.0.0.1:7457"), { coach: "done" }, async p => {
-  await p.keyboard.press("Alt+Space");
+  await pressOpen(p, "Alt+Space");
   await p.mouse.move(640, 200);
   await p.keyboard.type("make the toolbar airier");
   await p.keyboard.press("Enter");

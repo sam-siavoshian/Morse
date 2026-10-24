@@ -1,39 +1,38 @@
 // Keep-iterating screenshots (40-42): the real desktop connector (CDP) and
 // the demo model on the demo sites, in a scratch MORSE_HOME, with Playwright
 // playing the user. Needs no helper or paired extension.
-//   40 · refine: a follow-up typed under a fresh result
+//   40 · change: a follow-up typed under a fresh result
 //   41 · history: a mod's versions in the Mods panel
 //   42 · fix it: a saved mod that stopped working, in plain words
 //
-//   node demo/serve.js &   (MORSE_DEMO_PORT moves the ports)
-//   node demo/shoot-iterate.js
+//   node demo/shoot-iterate.js   (the demo sites run on free ports and show at their usual addresses)
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import net from "node:net";
 import { createRequire } from "node:module";
-// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
+import { demoSites, pressOpen, seasonHome } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const OUT = path.resolve(root, process.env.SHOTS || path.join("docs", "screenshots"));
-const BASE = Number(process.env.MORSE_DEMO_PORT || 8787);
-const SITE = { parley: `http://127.0.0.1:${BASE}/demo/sites/parley/`, tunes: `http://127.0.0.1:${BASE + 2}/demo/sites/tunes/` };
+const sites = await demoSites();
+const SITE = { parley: sites.url("parley"), tunes: sites.url("tunes") };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // A scratch home: mods, settings and first-run state live here, not in ~/.morse.
 const home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-iterate-"));
 process.env.MORSE_HOME = home;
-await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false }));
-await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } }));
+await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false, gallery: false }));
+await seasonHome(home);
 const MODS = path.join(home, "mods");
 const { Connector } = await import("../daemon/connector.js");
 
 const port = await new Promise(r => { const s = net.createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => r(p)); }); });
 const browser = await chromium.launch({ args: [`--remote-debugging-port=${port}`] });
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
+await sites.route(ctx);
 await ctx.addInitScript(() => localStorage.setItem("morse:debug", "1"));
 new Connector({ port, app: null, settings: { provider: "demo", model: "demo" }, log: () => {} }).run();
 
@@ -76,7 +75,7 @@ const ui = (page, sel) => page.locator(`[data-morse-ui] ${sel}`);
 
 // ---- Tunes: a sleep timer, then keep going
 const tunes = await open(SITE.tunes);
-await tunes.keyboard.press(OPEN_KEY);
+await pressOpen(tunes);
 await sleep(200);
 await pick(tunes, '[data-testid="player-controls"] .btns', 0.5, 0.5);
 await tunes.keyboard.type("add a sleep timer", { delay: 14 });
@@ -115,7 +114,7 @@ await tunes.keyboard.press("Escape");
 
 // ---- Parley: a mod saved a while ago; the app has since changed
 const chat = await open(SITE.parley);
-await chat.keyboard.press(OPEN_KEY);
+await pressOpen(chat);
 await sleep(200);
 await pick(chat, "form#composer", 0.5, 0.3);
 await chat.keyboard.type("show a live word count", { delay: 10 });
@@ -148,4 +147,5 @@ console.log("  fixed:", await chat.locator(".morse-copy").count() === 1);
 for (const m of await readMods()) console.log(`  · ${m.title}: ${m.prompt}${m.refined ? ` → ${m.refined}` : ""} (${(m.history || []).length + 1} versions)`);
 await browser.close();
 await fs.rm(home, { recursive: true, force: true });
+await sites.close();
 process.exit(0);

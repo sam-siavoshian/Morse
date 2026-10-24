@@ -33,10 +33,10 @@ globalThis.__morseHost = {
   async send(m) {
     const reply = (result, error) => setTimeout(() => emit({ reply: m.id, result, error }), 5);
     switch (m.type) {
-      case "hello": return reply({ mode: "playground", label: "demo model", quiet: true });
+      case "hello": return reply({ mode: "playground", label: "demo replay", quiet: true });
       case "mods.list": return reply(Object.values(store.get("mods", {})).filter(x => modMatches(x, { url: m.url || location.href, app: null })));
       case "mods.save": {
-        const x = m.draft ? createMod({ ...m.draft, app: null, model: "demo model" }) : m.mod;
+        const x = m.draft ? createMod({ ...m.draft, app: null, model: "demo replay" }) : m.mod;
         const all = store.get("mods", {});
         all[x.id] = x;
         store.set("mods", all);

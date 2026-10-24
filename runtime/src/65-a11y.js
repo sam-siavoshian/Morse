@@ -106,7 +106,7 @@ const A11y = (() => {
   sep.className = "gm-sep a11y-tb";
   const tbBtn = (k, label) => {
     const b = document.createElement("button");
-    b.className = "a11y-tb";
+    b.className = "ibtn a11y-tb"; // styled like the other tools (99-css.js .ibtn)
     b.dataset.a11yTb = k;
     b.setAttribute("aria-label", label);
     b.innerHTML = svg(I[k]) + GodMode.tip(label, "");

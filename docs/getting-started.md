@@ -29,6 +29,8 @@ Working on Morse itself? Set up a clone with the
 recommends the first one it finds, and saves your choice. More about each:
 [Models and setup](models.md).
 
+![morse, then morse setup: it finds Claude Code and checks that it answers](screenshots/74-cli-setup.png)
+
 ## 2. Websites: add Morse to Chrome
 
 1. Open `chrome://extensions` and turn on **Developer mode**.
@@ -49,6 +51,8 @@ recommends the first one it finds, and saves your choice. More about each:
    Linux).
 
 ![Morse installed, with “Allow User Scripts” on](screenshots/20-extension-installed.png)
+
+![The welcome page: a change on the practice page, and the one command that connects a model](screenshots/70-welcome.png)
 
 Tabs that were already open need one reload: Chrome only adds Morse to pages
 loaded after it was installed.
@@ -87,6 +91,8 @@ text and more. See [Edit tools and Page tools](edit-and-page-tools.md).
 
 The first time, a short guide in the bar shows you each step.
 
+![The guide in the bar: point, describe, save](screenshots/71-coach.png)
+
 ## Shortcuts
 
 These are the defaults. Change any of them in Settings, in the bar.
@@ -116,3 +122,5 @@ you have.
 
 When something doesn't work, [Troubleshooting](troubleshooting.md) lists the
 messages Morse shows and what to do about each.
+
+![What the Morse button and the bar say when Morse can't run or no model is connected](screenshots/73-empty-states.png)
