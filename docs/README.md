@@ -44,6 +44,7 @@ If you're new, start with [Getting started](getting-started.md).
 | [Pairing Chrome with the Morse helper](dev/pairing.md) | One-click pairing (the extension asks, the person allows in Morse Desktop) and codes: the requests, Morse Desktop's side, and why it's safe |
 | [Releasing](dev/releasing.md) | One-time setup, then `npm run release` and one push: npm, the GitHub release with the store zip, and Morse Desktop's builds and signing |
 | [How Morse talks](WRITING.md) | The style guide for every word a person reads |
+| [Wording pass 2: messages](dev/wording-pass-2.md) | Every message in Morse changed by the second plain-words pass, with before and after |
 | [Wording pass 2: docs and website](dev/wording-pass-2-docs.md) | The biggest before and after changes from the second plain-words pass over the docs and the website |
 | [Languages in the code](dev/i18n.md) | `t()`, the message catalogs, the Language setting, right-to-left layout, and text that stays English for the model |
 | [UI review checklist](ui/CHECKLIST.md) | What every screenshot in the UI catalog is checked against |
