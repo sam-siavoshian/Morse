@@ -433,17 +433,19 @@ function installMorseKit() {
           box.setAttribute("role", "alertdialog");
           box.setAttribute("aria-modal", "true");
           const shadow = box.attachShadow({ mode: "open" }); // the page's styles stay out; its scripts can't say yes (isTrusted below)
-          shadow.innerHTML = `<style>
-            .c { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 2147483647; max-width: min(420px, calc(100vw - 32px));
+          // Built node by node: apps with Trusted Types (VS Code) refuse HTML strings.
+          const make = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+          const style = make("style", "", `.c { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 2147483647; max-width: min(420px, calc(100vw - 32px));
               background: #0d1117; color: #e6edf3; font: 500 14px/1.45 ui-sans-serif, system-ui, sans-serif; padding: 16px 18px;
               border: 1px solid #30363d; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.45); }
             p { margin: 0 0 14px; } .b { display: flex; gap: 8px; justify-content: flex-end; }
             button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid #30363d; background: #161b22; color: inherit; cursor: pointer; }
-            button.y { background: #da3633; border-color: #da3633; color: #fff; }
-          </style><div class="c"><p></p><div class="b"><button class="n"></button><button class="y"></button></div></div>`;
-          shadow.querySelector("p").textContent = String(message);
-          const n = shadow.querySelector(".n"), y = shadow.querySelector(".y");
-          n.textContent = no; y.textContent = yes;
+            button.y { background: #da3633; border-color: #da3633; color: #fff; }`);
+          const n = make("button", "n", no), y = make("button", "y", yes);
+          const row = make("div", "b"), card = make("div", "c");
+          row.append(n, y);
+          card.append(make("p", "", String(message)), row);
+          shadow.append(style, card);
           let done = false;
           const finish = ok => {
             if (done) return;

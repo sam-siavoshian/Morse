@@ -457,6 +457,12 @@ test("kit: confirm resolves only on the person's own click; No, Esc and turning 
   await page.evaluate(() => morse.__off("k5"));
   await page.waitForFunction(() => window.__ans === false);
   assert.equal(await dialog.count(), 0);
+  // In an app that refuses HTML strings (Trusted Types, like VS Code's window) it still asks.
+  const tt = await kitPage(`<meta http-equiv="Content-Security-Policy" content="require-trusted-types-for 'script'"><p>app</p>`);
+  assert.equal(await tt.evaluate(() => { try { document.body.innerHTML = "<b>x</b>"; return "allowed"; } catch { return "refused"; } }), "refused");
+  assert.deepEqual(await tt.evaluate(wrapModCode("k6", `morse.confirm("Delete it?").then(v => (window.__ans = v));`)), { ok: true });
+  await tt.locator("[role=alertdialog] button.y").click();
+  await tt.waitForFunction(() => window.__ans === true);
 });
 
 // ======================================================================
