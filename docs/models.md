@@ -86,9 +86,9 @@ In the bar's Settings, under **Model**:
 
 - **Automatic** (the default). The stronger model makes the change from the
   start when it adds something or changes the whole look:
-  - new UI: a panel, a button, a badge, a count, a progress bar, a timer;
-  - new behavior: keys, search, copying, saving, asking first, sorting;
-  - a restyle: dark mode, a theme, "make it look native", "less cluttered";
+  - new parts: a panel, a button, a badge, a count, a progress bar, a timer
+  - new things it does: keys, search, copying, saving, asking first, sorting
+  - a new look: dark mode, a theme, "make it look native", "less cluttered"
   - or two of: working with the numbers, several steps, a drawing, every
     item of a list the app keeps changing.
 

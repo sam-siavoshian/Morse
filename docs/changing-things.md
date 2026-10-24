@@ -99,7 +99,7 @@ You can keep changing a result.
 
 | | |
 |---|---|
-| ![](screenshots/40-refine.png) More typed under the result | ![](screenshots/41-history.png) **History**: three versions; click one to bring it back |
+| ![](screenshots/40-refine.png) More typed under the result | ![](screenshots/41-history.png) **History**: three versions. Click one to bring it back |
 
 ## Voice
 

@@ -37,7 +37,7 @@ from the welcome page. Each task was watched closely on its own screen, with
 - **Half a mod.** With “Allow User Scripts” off, a mod's code waits, and its
   look used to show alone. For many mods the look only makes sense with the
   code: here it hid PyPI's dates and the code that adds the big ones never ran.
-  Now the look waits with the code; mods that only change how things look run
+  Now the look waits with the code. Mods that only change how things look run
   as before. `runtime/boot.js`, the words in the notice, the toolbar popup and
   [Troubleshooting](troubleshooting.md).
 - **Buttons with no words.** Show me once names an icon button by its name
