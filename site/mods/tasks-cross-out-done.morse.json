@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "tasks-cross-out-done",
+  "title": "Cross out finished tasks",
+  "prompt": "cross out the tasks I've finished",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8796"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": ".col:first-child .card:nth-child(2) .t",
+    "label": "finished task"
+  },
+  "css": "article.card:has(input[type=\"checkbox\"]:checked) span.t {\n  text-decoration: line-through;\n  text-decoration-thickness: 1px;\n  opacity: 0.55;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

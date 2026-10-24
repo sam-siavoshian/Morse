@@ -1,0 +1,21 @@
+{
+  "morse": 1,
+  "id": "notes-focus-mode",
+  "title": "Focus mode",
+  "prompt": "focus mode: hide everything except the page I'm writing",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8792"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": "aside[aria-label=\"Notes\"],\ndiv.crumbs,\ndiv[aria-label=\"Formatting\"],\ndiv.stat {\n  display: none !important;\n}\ndiv.pg {\n  padding-top: 0 !important;\n}\ndiv.doc {\n  width: 100% !important;\n  height: 100% !important;\n}\ndiv.in {\n  margin: 0 auto !important;\n  max-width: 620px !important;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

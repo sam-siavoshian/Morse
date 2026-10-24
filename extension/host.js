@@ -55,7 +55,9 @@
   // Only the official share page may ask, and it only *asks*: the runtime
   // shows Morse's own review (runtime/src/63-control.js, in the closed shadow
   // root the page can't click) and installs only if the person clicks Install.
-  const SHARE_ORIGINS = ["https://sam-siavoshian.github.io", "http://127.0.0.1:8787"];
+  // Test builds also trust the local copy of the share page the tests use
+  // (127.0.0.1:8787); store builds (MORSE_STORE=1, npm run store) leave it out.
+  const SHARE_ORIGINS = ["https://sam-siavoshian.github.io", "http://127.0.0.1:8787" /* test-only */];
   window.addEventListener("message", e => {
     if (e.source !== window || !e.data || typeof e.data.morseInstall !== "string") return;
     if (!SHARE_ORIGINS.includes(location.origin)) return;

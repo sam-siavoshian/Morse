@@ -184,7 +184,13 @@ export function mountFilm(figure, film = DEMO_VIDEO) {
 // ---------- highlighter (grays only: comments dim, strings mid, keywords bright) ----------
 const TOKENS = /(\/\*[\s\S]*?\*\/|(?<![:\w])\/\/[^\n]*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)|\b(const|let|var|if|else|return|function|new|for|of|while|true|false|null|undefined)\b|([{}();,])/g;
 
+// Characters that change how code reads without being seen (direction
+// overrides, zero-width and control characters) are written out as \u202e,
+// as in Morse's own review (core/summary.js shownCode; not imported here, so
+// the landing page doesn't load the summary and its words).
+const HIDDEN_CHARS = /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\u061c\u200b-\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069\ufeff]/g;
 export function highlight(code, lang = "js") {
+  code = String(code).replace(/\r\n?/g, "\n").replace(HIDDEN_CHARS, c => `\\u${c.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0")}`);
   let out = "", last = 0;
   for (const m of code.matchAll(TOKENS)) {
     out += esc(code.slice(last, m.index));
@@ -201,7 +207,7 @@ export function highlight(code, lang = "js") {
 
 // ---------- mod cards ----------
 export function appGlyph(app) {
-  const words = String(app).split(/\s+/);
+  const words = String(app).split(/\s+/).filter(w => /^[\p{L}\d]/u.test(w)); // "Inkwell (demo)" is I, not I(
   if (words[0].length <= 2 && words[0] === words[0].toUpperCase()) return words[0];
   if (words.length > 1) return (words[0][0] + words[1][0]).toUpperCase();
   return words[0][0].toUpperCase();

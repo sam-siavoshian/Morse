@@ -70,7 +70,7 @@ function setTarget(el) {
   updateChips();
   input.focus();
   GodMode.onTarget(el); // God mode: edit toolbar for the selection
-  if (el) announce(`Chosen: ${describe(el)}. ${hint.textContent}`); // screen readers hear what was picked, then what's next
+  if (el) announce(t("bar.chosenSay", { what: describe(el), hint: hint.textContent })); // screen readers hear what was picked, then what's next
 }
 chip.querySelector(".x").onclick = () => { setTarget(null); startPicking(); };
 tBind(chip.querySelector(".x"), "aria-label", "bar.repoint");

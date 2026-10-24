@@ -77,3 +77,21 @@ body.locked { overflow: hidden; }
   .d-actions .btn { flex: 1 1 auto; }
   .d-actions .btn-primary { flex-basis: 100%; }
 }
+
+/* ---------- pictures, badges, what it does ---------- */
+.card-shot { display: block; width: calc(100% + 40px); max-width: none; height: auto; aspect-ratio: 16 / 10; margin: -20px -20px 4px; border-bottom: 1px solid var(--line); border-radius: var(--r-panel) var(--r-panel) 0 0; object-fit: cover; object-position: top left; background: var(--soft); }
+.g-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.g-badge { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--soft); color: var(--body); font-size: 12px; font-weight: 650; line-height: 18px; }
+.g-badge.ok { border-color: var(--brand-line); background: var(--wash); color: var(--ink); }
+.g-badge.demo { border-style: dashed; background: var(--paper); }
+.g-switch { margin-left: 6px; }
+.d-shots { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+.d-shots figure { margin: 0; }
+.d-shots img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--r-card); }
+.d-shots figcaption { margin-top: 6px; font: 750 11px/1.4 var(--font); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.d-meta dd.d-does { display: block; }
+.d-meta dd.d-does span { display: block; }
+@media (max-width: 640px) {
+  .d-shots { grid-template-columns: 1fr; }
+  .g-switch { margin-left: 0; }
+}

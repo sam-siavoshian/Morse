@@ -310,6 +310,10 @@ test("claude-code: low effort unless the settings choose one, and a Claude Code 
   await streamChat({ provider: "claude-code", model: "haiku", effort: "high" }, MESSAGES);
   ({ argv } = await log("claude"));
   assert.equal(argv[argv.indexOf("--effort") + 1], "high");
+  // Automatic routing's strong tier (sonnet, for hard requests and second tries) keeps the CLI's own effort.
+  await streamChat({ provider: "claude-code", model: "sonnet", tier: "best" }, MESSAGES);
+  ({ argv } = await log("claude"));
+  assert.ok(!argv.includes("--effort"), argv.join(" "));
   // Last in this file: once a CLI says it doesn't know the flag, Morse leaves it out.
   process.env.FAKE_MODE = "noeffort";
   const text = await streamChat({ provider: "claude-code", model: "haiku" }, MESSAGES);

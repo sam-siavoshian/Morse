@@ -14,6 +14,7 @@ import crypto from "node:crypto";
 import { HOME } from "./store.js";
 import { registerProvider, flattenConversation, abortError, imageBlocks } from "../core/providers.js";
 import { SYSTEM_PROMPT } from "../core/prompt.js";
+import { warmSettings } from "../core/route.js"; // models: keep the first model warm
 
 export const TIMEOUT_MS = 120_000;
 const MODEL_RE = /^[A-Za-z0-9][\w.:/\[\]-]{0,80}$/;
@@ -163,8 +164,11 @@ const lastLine = s => (s || "").trim().split("\n").filter(Boolean).pop() || "";
 export const WARM_IDLE_MS = 5 * 60_000;
 let warm = []; // started processes waiting for a request: { key, ready, dead, timer }
 let warmMax = 1; // one person, one request at a time
+let keepOthers = false;
 // The eval runs several cases at once, like several people (evals/run.js).
-export function setWarmPoolSize(n) { warmMax = Math.max(0, n | 0); }
+// keepOthers: it also compares models side by side (--model haiku,sonnet,auto),
+// each with its own processes (settings "pool"), so starting one doesn't stop another's.
+export function setWarmPoolSize(n, { keepOthers: k = false } = {}) { warmMax = Math.max(0, n | 0); keepOthers = k; }
 
 // Background calls Claude Code makes that a one-shot answer doesn't need
 // (update checks, error reports, a summary of each turn after it ends).
@@ -176,7 +180,9 @@ const EFFORTS = new Set(["low", "medium", "high", "xhigh", "max"]);
 // times (docs/dogfood.md). A Claude Code too old to know --effort says so
 // once; Morse then leaves the flag out (noEffort).
 let noEffort = false;
-export const effortOf = s => (noEffort ? "" : EFFORTS.has(s.effort) ? s.effort : "low");
+// The strong tier of Automatic routing (core/route.js, tier "best") keeps the
+// CLI's own effort: it gets the requests that look hard, and second tries.
+export const effortOf = s => (noEffort ? "" : EFFORTS.has(s.effort) ? s.effort : s.tier === "best" ? "" : "low");
 function claudeArgs(s, sysFile) {
   const effort = effortOf(s);
   return [
@@ -188,7 +194,7 @@ function claudeArgs(s, sysFile) {
   ];
 }
 const claudeKey = (bin, s, system) => crypto.createHash("sha256")
-  .update(JSON.stringify([bin, s.model || "", effortOf(s), system, process.env])).digest("hex");
+  .update(JSON.stringify([bin, s.model || "", effortOf(s), system, process.env, s.pool || ""])).digest("hex");
 
 async function startClaude(bin, s, system) {
   const dir = await runDir();
@@ -211,7 +217,7 @@ export function prewarmClaudeCode(s = {}, system = SYSTEM_PROMPT) {
   const bin = s.bin || which("claude");
   if (!bin || !validModel(s.model)) return false;
   const key = claudeKey(bin, s, system);
-  for (const w of warm.filter(x => x.key !== key || x.dead)) dropWarm(w); // settings changed: those are no use now
+  for (const w of warm.filter(x => (x.key !== key && !keepOthers) || x.dead)) dropWarm(w); // settings changed: those are no use now
   const same = warm.filter(x => x.key === key);
   for (const w of same) { clearTimeout(w.timer); w.timer = setTimeout(() => dropWarm(w), WARM_IDLE_MS).unref(); }
   if (same.length >= warmMax) return true;
@@ -298,8 +304,9 @@ async function claudeCodeOnce(s, messages, { onToken, signal, onStage }) {
   } finally {
     // The next request starts warm (unless this one was stopped), with the
     // usual instructions: a one-off request (describing a picture) doesn't
-    // take the place of the common case.
-    if (!signal?.aborted) prewarmClaudeCode(s);
+    // take the place of the common case. models: and with the model requests
+    // start on (haiku), also after one that went to the strong model.
+    if (!signal?.aborted) prewarmClaudeCode(s.warmAs || warmSettings(s)); // warmAs: the helper, for Chrome (daemon/bridge.js)
   }
 }
 
@@ -318,6 +325,7 @@ export async function codexStream(s, messages, { onToken, signal }) {
     "exec", "--json", "--skip-git-repo-check", "--sandbox", "read-only", "-C", path.join(dir, "cwd"),
     "-c", "mcp_servers={}", "-c", "features.shell_tool=false", "-c", "features.web_search_request=false",
     ...(s.model ? ["-m", s.model] : []),
+    ...(EFFORTS.has(s.effort) ? ["-c", `model_reasoning_effort=${s.effort}`] : []), // models: Codex's fast and strong tiers
     "-",
   ];
   let text = "";           // everything emitted through onToken

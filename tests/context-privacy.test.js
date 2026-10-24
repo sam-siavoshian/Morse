@@ -7,10 +7,15 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildMessages } from "../core/prompt.js";
+import en from "../core/locales/en.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
 
 const skip = noBrowser;
-const SRC = readFileSync(new URL("../runtime/src/20-context.js", import.meta.url), "utf8");
+// core/i18n.js is inlined before this in the runtime: getLanguage() and t(), in English here.
+const SRC = `const getLanguage = () => "en";
+const __en = ${JSON.stringify(en)};
+const t = (id, v = {}) => String(__en[id] ?? id).replace(/\\{(\\w+)\\}/g, (m, k) => v[k] ?? m);
+${readFileSync(new URL("../runtime/src/20-context.js", import.meta.url), "utf8")}`;
 let browser, page;
 
 const SECRETS = {
@@ -66,7 +71,6 @@ after(() => browser?.close());
 
 const contextFor = sel => page.evaluate(`(() => {
   const S = { app: null, target: ${JSON.stringify(sel)} ? document.querySelector(${JSON.stringify(sel || "x")}) : null };
-  const getLanguage = () => "en"; // core/i18n.js, inlined before this in the runtime
   ${SRC}
   return context();
 })()`);
@@ -115,7 +119,6 @@ test("the context reaches into open shadow roots and same-origin frames", { skip
   assert.match(ctx.outline, /x-panel >>> button\[part="go"\]|x-panel >>> button/);
   const inside = await page.evaluate(`(() => {
     const S = { app: null, target: document.querySelector("x-panel").shadowRoot.querySelector("button") };
-    const getLanguage = () => "en";
     ${SRC}
     return context().target;
   })()`);

@@ -4,7 +4,7 @@
 import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import {
   parseIndex, matchEntries, indexUrlFor, modUrl, GALLERY_INDEX_URL, DEMO_INDEX_URL, normVersion, compareVersions,
   galleryIdOf, installedVersion, updateFor, maxAgeOf, needsFetch, conditionalHeaders, afterResponse, afterFailure,
@@ -24,16 +24,42 @@ const entry = (over = {}) => ({ file: "x-thing.morse.json", title: "Thing", prom
 test("the gallery list in the repo parses, and every entry has a matching mod file", () => {
   const { entries, skipped } = parseIndex(realIndex());
   assert.equal(skipped, 0);
-  assert.ok(entries.length >= 16);
+  assert.ok(entries.length >= 40);
   for (const e of entries) {
     const mod = validateMod(JSON.parse(readFileSync(new URL(e.file, SITE), "utf8")));
     assert.equal(mod.id, e.id, `${e.file}: id`);
     assert.deepEqual(mod.match, e.match, `${e.file}: match`);
     assert.equal(compareVersions(mod.version ?? 1, e.version), 0, `${e.file}: version`);
   }
-  // The demo-site mods (for `node demo/serve.js`) are in the list, flagged.
-  const demo = entries.filter(e => e.demo).map(e => e.id).sort();
-  assert.deepEqual(demo, ["byte-reading-mode", "parley-copy-markdown", "tunes-big-covers", "tunes-sleep-timer"]);
+  // The demo-site mods (for `node demo/serve.js`) are in the list, flagged,
+  // and match a demo app's own address.
+  const demo = entries.filter(e => e.demo);
+  assert.ok(demo.length >= 15);
+  for (const e of demo) assert.match(e.match.hosts.join(), /^127\.0\.0\.1:87(8[7-9]|9[0-7])$/, e.id);
+});
+
+// What the gallery page and Morse show about each mod must be true of the mod.
+test("every gallery entry is a proper one: tight match, plain title, the right badges", () => {
+  const raw = JSON.parse(realIndex());
+  const CATS = ["Reading", "Dark mode", "Declutter", "Layout", "Keyboard", "New features"];
+  for (const e of raw) {
+    const mod = JSON.parse(readFileSync(new URL(e.file, SITE), "utf8"));
+    const id = e.file;
+    assert.equal(e.author, "Morse team", `${id}: author`);
+    assert.equal(mod.author, "Morse team", `${id}: author in the mod file`);
+    assert.equal(e.title, mod.title, `${id}: title`);
+    assert.equal(e.prompt, mod.prompt, `${id}: the request as written`);
+    assert.ok(e.match.hosts.length && e.match.hosts.every(h => h && !h.includes("*")), `${id}: exact hosts, no wildcards`);
+    assert.ok(CATS.includes(e.category), `${id}: category ${e.category}`);
+    // "Works without Allow User Scripts" only when there is no code to run.
+    assert.equal(e.userScripts, !!mod.js.trim(), `${id}: userScripts`);
+    assert.match(e.title, /^[A-Z][\w ,'’“”.-]+$/, `${id}: a plain title`);
+    assert.doesNotMatch(`${e.title} ${e.prompt}`, /\b(CSS|JS|JavaScript|DOM|selector|element|script)\b/i, `${id}: no jargon`);
+    if (e.shots) for (const f of [e.shots.before, e.shots.after]) assert.ok(statSync(new URL(f, SITE)).size > 10_000, `${id}: ${f}`);
+    if (e.checked) assert.match(e.checked, /^\w{3} \d{1,2}, \d{4}, on the (real site|demo app): it works, and still works after a reload\./, id);
+  }
+  assert.equal(raw.filter(e => e.shots).length, 8, "before and after pictures for the 8 best");
+  assert.ok(raw.filter(e => e.checked).length >= 30);
 });
 
 test("the default list is on the same site as share links", () => {
@@ -91,6 +117,8 @@ test("which list a page reads", () => {
   assert.equal(indexUrlFor("https://www.youtube.com/"), GALLERY_INDEX_URL);
   assert.equal(indexUrlFor("http://127.0.0.1:8789/demo/sites/tunes/"), DEMO_INDEX_URL);
   assert.equal(indexUrlFor("http://localhost:8787/x"), DEMO_INDEX_URL);
+  assert.equal(indexUrlFor("http://127.0.0.1:8795/demo/sites/wiki/"), DEMO_INDEX_URL, "every demo app in demo/serve.js");
+  assert.equal(indexUrlFor("http://127.0.0.1:8798/"), GALLERY_INDEX_URL);
   assert.equal(indexUrlFor("http://127.0.0.1:3000/"), GALLERY_INDEX_URL);
   assert.equal(indexUrlFor("https://www.youtube.com/", "https://me.example/list.json"), "https://me.example/list.json");
   assert.equal(indexUrlFor("https://www.youtube.com/", "javascript:alert(1)"), GALLERY_INDEX_URL);

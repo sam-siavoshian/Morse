@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "packagist-copy-command",
+  "title": "Copy the install command",
+  "prompt": "add a copy button next to the composer require command",
+  "match": {
+    "hosts": [
+      "packagist.org"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": ".requireme",
+    "label": "“composer require laravel/framework” command"
+  },
+  "css": ".package .requireme input { flex: 1 1 auto; min-width: 0; }\n.package .requireme .morse-copy { flex: 0 0 auto; font: inherit; font-size: 13px; color: currentColor; background: #fff; border: 1px solid #ccc; border-radius: 4px; padding: 4px 10px; cursor: pointer; }\n.package .requireme .morse-copy:hover { background: #eee; }\n",
+  "js": "morse.watch(\".package .requireme\", el => {\n  if (el.querySelector(\".morse-copy\")) return;\n  const input = el.querySelector(\"input\");\n  if (!input) return;\n  const btn = morse.el(\"button\", {\n    type: \"button\",\n    class: \"morse-copy\",\n    text: \"Copy\",\n    on: {\n      click: () => {\n        navigator.clipboard.writeText(input.value)\n          .then(() => morse.toast(\"Command copied\"))\n          .catch(() => { input.select(); morse.toast(\"Copy failed, press Ctrl+C\"); });\n      }\n    }\n  });\n  el.appendChild(btn);\n});\n",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

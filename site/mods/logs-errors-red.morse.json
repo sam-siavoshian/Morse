@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "logs-errors-red",
+  "title": "Errors in red",
+  "prompt": "highlight the error lines in red",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8797"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": ".vp .row:nth-child(5)",
+    "label": "log line"
+  },
+  "css": "div[aria-label=\"Log\\ lines\"] > div.sz > div.row.is-error {\n  background: rgba(248, 81, 73, 0.15) !important;\n  box-shadow: inset 3px 0 0 rgb(248, 81, 73);\n}\n",
+  "js": "morse.watch('div[aria-label=\"Log\\\\ lines\"] > div.sz > div.row', (el) => {\n  const lv = el.querySelector('span.lv');\n  el.classList.toggle('is-error', !!lv && lv.textContent.trim() === 'ERROR');\n}, { live: true });\n",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

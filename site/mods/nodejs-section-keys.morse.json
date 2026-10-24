@@ -1,0 +1,21 @@
+{
+  "morse": 1,
+  "id": "nodejs-section-keys",
+  "title": "J and K to jump between sections",
+  "prompt": "let me press j and k to jump to the next and previous section",
+  "match": {
+    "hosts": [
+      "nodejs.org"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": "#apicontent > section { scroll-margin-top: 140px; }\n",
+  "js": "morse.on(window, \"keydown\", e => {\n  if (e.metaKey || e.ctrlKey || e.altKey) return;\n  const t = e.target;\n  if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;\n  if (e.key !== \"j\" && e.key !== \"k\") return;\n  const secs = morse.$$(\"#apicontent > section\");\n  if (!secs.length) return;\n  let idx = -1;\n  secs.forEach((s, i) => { if (s.getBoundingClientRect().top <= 142) idx = i; });\n  let next = e.key === \"j\" ? idx + 1 : idx - 1;\n  next = Math.max(0, Math.min(secs.length - 1, next));\n  e.preventDefault();\n  secs[next].scrollIntoView({ behavior: \"smooth\", block: \"start\" });\n});\n",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "go-bigger-code",
+  "title": "Bigger code examples",
+  "prompt": "make the code examples bigger",
+  "match": {
+    "hosts": [
+      "pkg.go.dev"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": ".Documentation pre",
+    "label": "code example"
+  },
+  "css": "section.Documentation-overview pre {\n  font-size: 1.1rem !important;\n  line-height: 1.6em !important;\n  padding: 0.9rem !important;\n}\nsection.Documentation-overview pre code {\n  font-size: inherit !important;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

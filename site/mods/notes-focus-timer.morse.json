@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "notes-focus-timer",
+  "title": "Focus timer",
+  "prompt": "add a 25 minute focus timer here that I can start and pause",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8792"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": ".crumbs .sp",
+    "label": "Share, star and more buttons"
+  },
+  "css": ".crumbs .sp .focus-timer {\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n  margin-right: 4px;\n  font: inherit;\n  color: currentColor;\n  font-variant-numeric: tabular-nums;\n}\n.crumbs .sp .focus-timer button {\n  font: inherit;\n  color: inherit;\n}\n",
+  "js": "morse.watch(\"body > div.pg > div.crumbs > span.sp\", el => {\n  if (el.querySelector(\".focus-timer\")) return;\n  let remaining = 25 * 60;\n  let running = false;\n  let handle = null;\n\n  const label = morse.el(\"span\", { text: \"25:00\" });\n  const toggle = morse.el(\"button\", { text: \"▶\", title: \"Start focus timer\" });\n\n  const fmt = s => String(Math.floor(s / 60)).padStart(2, \"0\") + \":\" + String(s % 60).padStart(2, \"0\");\n  const render = () => { label.textContent = fmt(remaining); };\n\n  const stop = () => {\n    running = false;\n    clearInterval(handle);\n    handle = null;\n    toggle.textContent = \"▶\";\n    toggle.title = \"Start focus timer\";\n  };\n\n  const start = () => {\n    if (remaining <= 0) remaining = 25 * 60;\n    running = true;\n    toggle.textContent = \"❚❚\";\n    toggle.title = \"Pause focus timer\";\n    handle = setInterval(() => {\n      remaining -= 1;\n      render();\n      if (remaining <= 0) {\n        stop();\n        morse.toast(\"Focus session complete\");\n      }\n    }, 1000);\n  };\n\n  toggle.addEventListener(\"click\", () => (running ? stop() : start()));\n\n  const wrap = morse.el(\"span\", { class: \"focus-timer\" }, label, toggle);\n  el.prepend(wrap);\n});\n",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

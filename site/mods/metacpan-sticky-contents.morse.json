@@ -1,0 +1,25 @@
+{
+  "morse": 1,
+  "id": "metacpan-sticky-contents",
+  "title": "Contents always in view",
+  "prompt": "keep the contents box in view while I scroll, in its own column on the right so it never covers the text",
+  "match": {
+    "hosts": [
+      "metacpan.org"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "nav.toc",
+    "label": "“Contents” box"
+  },
+  "css": "main { display: grid !important; grid-template-columns: minmax(0, 1fr) 260px !important; column-gap: 40px !important; align-items: start !important; overflow: visible !important; }\nmain > .pod { grid-column: 1 !important; grid-row: 1 !important; min-width: 0 !important; }\nmain .toc { grid-column: 2 !important; grid-row: 1 !important; float: none !important; margin: 0 !important; max-width: none !important; width: 260px !important; position: sticky !important; top: 60px !important; max-height: calc(100vh - 80px) !important; overflow-y: auto !important; }\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "note": "Asked three times. The answers to “keep the contents box in view while I scroll” let the box cover the text further down; the request now asks for its own column.",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

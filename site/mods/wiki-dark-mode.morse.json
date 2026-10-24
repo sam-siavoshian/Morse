@@ -1,0 +1,22 @@
+{
+  "morse": 1,
+  "id": "wiki-dark-mode",
+  "title": "Dark mode",
+  "prompt": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8795"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": "html, body, div.page, div.art, nav[aria-label=\"Contents\"], div.mast, div.foot, section[aria-label=\"Comments\"], div.c, .ibox, table, th, td, .refs, ol.refs, p, li, h1, h2, a {\n  background-color: #1e1f22 !important;\n  color: #e6e6e6 !important;\n  border-color: #3c3f44 !important;\n}\na, a:visited {\n  color: #8ab4f8 !important;\n}\n.mast, .foot, .ibox, table, th, td, div.c {\n  background-color: #26282c !important;\n}\ninput[aria-label=\"Search\\ Openpedia\"] {\n  background-color: #2a2c30 !important;\n  color: #e6e6e6 !important;\n  border: 1px solid #4a4d52 !important;\n}\nbutton {\n  background-color: #2a2c30 !important;\n  color: #e6e6e6 !important;\n  border-color: #4a4d52 !important;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "note": "Asked twice. The first answer, to “dark mode, with text that's easy to read”, left the table's striped rows light, so the request now names the tables.",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}
