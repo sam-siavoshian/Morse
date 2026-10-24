@@ -45,10 +45,13 @@ test("claude-code: streams text deltas with every tool off, prompt on stdin, in 
   const text = await streamChat({ provider: "claude-code", model: "haiku" }, MESSAGES, { onToken: t => toks.push(t) });
   assert.equal(text, "TITLE: Big\n```css\nbutton{font-size:20px}\n```");
   assert.deepEqual(toks, ["TITLE: Big\n", "```css\nbutton{font-size:20px}\n```"]);
-  const { argv, cwd, input } = await log("claude");
-  assert.equal(input, "make buttons bigger");
+  const { argv, cwd, input, env } = await log("claude");
+  // One stream-json user message, then stdin closes: one request per process.
+  assert.deepEqual(JSON.parse(input), { type: "user", message: { role: "user", content: "make buttons bigger" } });
   for (const flag of ["-p", "--verbose", "--include-partial-messages", "--strict-mcp-config", "--no-session-persistence"]) assert.ok(argv.includes(flag), flag);
   assert.equal(argv[argv.indexOf("--output-format") + 1], "stream-json");
+  assert.equal(argv[argv.indexOf("--input-format") + 1], "stream-json");
+  assert.equal(env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC, "1", "no update checks or turn summaries");
   assert.equal(argv[argv.indexOf("--tools") + 1], "", "no tools");
   assert.equal(argv[argv.indexOf("--model") + 1], "haiku");
   assert.ok(!argv.some(a => /dangerously|bypass/i.test(a)));
@@ -87,6 +90,42 @@ test("claude-code: generate.cancel stops the engine and the process", async () =
   assert.equal(ran, 0);
   const { pid } = await log("claude");
   await waitFor(() => !alive(pid), { what: "the claude process to exit" });
+});
+
+// ---- speed: the answer is done at message_stop, and the next process starts ahead of time
+
+test("claude-code: the answer returns at message_stop, not after the CLI's wrap-up", async () => {
+  process.env.FAKE_MODE = "wrapup";
+  const t0 = Date.now();
+  const text = await streamChat({ provider: "claude-code" }, MESSAGES);
+  assert.equal(text, "TITLE: Big\n```css\nbutton{font-size:20px}\n```");
+  assert.ok(Date.now() - t0 < 4500, `took ${Date.now() - t0}ms`);
+  const { pid } = await log("claude");
+  await waitFor(() => !alive(pid), { what: "the finished process to be stopped", timeout: 8000 });
+});
+
+test("claude-code: a process started ahead of time takes the next request, then exits; settings changes start fresh", async () => {
+  process.env.FAKE_MODE = "ok";
+  const { prewarmClaudeCode } = await import("../daemon/harness.js");
+  const { SYSTEM_PROMPT } = await import("../core/prompt.js");
+  const MSGS = [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: "make buttons bigger" }];
+  const starts = async () => (await fs.readFile(path.join(tmp, "claude-starts.log"), "utf8").catch(() => "")).split("\n").filter(Boolean).map(Number);
+  const s = { provider: "claude-code", model: "haiku" };
+  const before = (await starts()).length;
+  assert.equal(prewarmClaudeCode(s), true);
+  await waitFor(async () => (await starts()).length > before, { what: "the process to start" });
+  const warmPid = (await starts()).at(-1);
+  assert.equal(await streamChat(s, MSGS), "TITLE: Big\n```css\nbutton{font-size:20px}\n```");
+  assert.equal((await log("claude")).pid, warmPid, "the started process answered");
+  await waitFor(() => !alive(warmPid), { what: "the used process to exit" });
+  // After a request the next one is already starting; a different model doesn't use it.
+  await waitFor(async () => (await starts()).length > before + 1, { what: "the next process to start" });
+  const next = (await starts()).at(-1);
+  await streamChat({ ...s, model: "sonnet" }, MSGS);
+  const served = await log("claude");
+  assert.notEqual(served.pid, next);
+  assert.equal(served.argv[served.argv.indexOf("--model") + 1], "sonnet");
+  await waitFor(() => !alive(next), { what: "the unusable process to be stopped" });
 });
 
 test("claude-code: rejects model names that could smuggle flags", async () => {
@@ -168,9 +207,33 @@ test("anthropic: opus-5-5 by default, low effort, server-side fallback, no tempe
     assert.equal(body.stream, true);
     assert.deepEqual(body.output_config, { effort: "low" });
     assert.equal(body.fallbacks, "default");
-    assert.equal(body.system, "You write Morse mods.");
+    // speed: the instructions are cached; the page and the request after them never are
+    assert.deepEqual(body.system, [{ type: "text", text: "You write Morse mods.", cache_control: { type: "ephemeral" } }]);
+    assert.equal(body.cache_control, undefined, "no automatic breakpoint after the one-off request");
     assert.deepEqual(body.messages, [{ role: "user", content: "make buttons bigger" }]);
     for (const k of ["temperature", "top_p", "top_k", "thinking", "betas"]) assert.equal(body[k], undefined, k);
+  } finally { api.server.close(); }
+});
+
+test("anthropic: opening the bar reads the instructions into the cache (max_tokens 0), at most every 4 minutes", async () => {
+  const api = await fakeAnthropic((req, res, body) => {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ id: "msg_w", type: "message", role: "assistant", model: body.model, content: [], stop_reason: "max_tokens", stop_sequence: null, usage: { input_tokens: 1, output_tokens: 0, cache_creation_input_tokens: 900 } }));
+  });
+  try {
+    const { prewarm } = await import("../core/providers.js");
+    const { SYSTEM_PROMPT } = await import("../core/prompt.js");
+    const s = { provider: "anthropic", apiKey: "k", baseUrl: api.url, model: "claude-haiku-5-5" };
+    await prewarm(s);
+    await prewarm(s); // too soon: nothing sent
+    assert.equal(api.seen.length, 1);
+    const { body } = api.seen[0];
+    assert.equal(body.max_tokens, 0);
+    assert.equal(body.stream, undefined);
+    assert.equal(body.model, "claude-haiku-5-5");
+    assert.deepEqual(body.output_config, { effort: "low" }, "same effort as real requests");
+    assert.deepEqual(body.system, [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }]);
+    await prewarm({ provider: "openai" }); // no-op, never throws
   } finally { api.server.close(); }
 });
 

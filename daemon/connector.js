@@ -21,9 +21,10 @@ import path from "node:path";
 import { CDPSession, listTargets } from "./cdp.js";
 import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putClipboard } from "./store.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches } from "../core/mod.js";
-import { wrapModCode } from "../core/kit.js";
+import { wrapModCode, settleMs } from "../core/kit.js";
 import { runMorse } from "../core/engine.js";
 import { settingsLabel } from "./models.js"; // also registers the Claude Code / Codex providers
+import { prewarm } from "../core/providers.js";
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
 import { Generations } from "../core/cancel.js";
@@ -376,8 +377,9 @@ export class Connector {
     if (r.exceptionDetails) return { ok: false, error: r.exceptionDetails.exception?.description?.split("\n")[0] || r.exceptionDetails.text };
     const res = r.result?.value || { ok: false, error: "no result" };
     if (!res.ok) return res;
-    // Errors inside watch/on callbacks surface a moment later.
-    await new Promise(r2 => setTimeout(r2, 600));
+    // Errors inside watch/on callbacks surface a moment later. speed: the kit
+    // says how long that can be for this mod (core/kit.js settle).
+    await new Promise(r2 => setTimeout(r2, settleMs(res)));
     const e = await s.send("Runtime.evaluate", { expression: `morse.__errors(${JSON.stringify(modId)})`, contextId: ctx, returnByValue: true });
     const errs = e.result?.value || [];
     return errs.length ? { ok: false, error: errs[0].split("\n")[0] } : { ok: true };
@@ -437,6 +439,9 @@ export class Connector {
         return readClipboard();
       case "clipboard.put":
         return putClipboard({ ...msg.item, from: { ...msg.item?.from, app: this.app?.name || msg.item?.from?.app || null } });
+      case "warm": // speed: the bar opened; get the model ready (core/providers.js prewarm)
+        if (this.settings?.provider && this.settings.provider !== "none") prewarm(this.settings);
+        return true;
       case "exec":
         return this.exec(s, caller, msg.modId, msg.js);
       case "off":

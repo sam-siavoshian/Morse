@@ -21,10 +21,10 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { parseArgs } from "node:util";
 import { runMorse } from "../core/engine.js";
-import { wrapModCode } from "../core/kit.js";
+import { wrapModCode, settleMs } from "../core/kit.js";
 import { buildMessages } from "../core/prompt.js";
-import "../daemon/harness.js"; // registers the claude-code provider
-import { registerProvider } from "../core/providers.js";
+import { setWarmPoolSize } from "../daemon/harness.js"; // registers the claude-code provider
+import { registerProvider, prewarm } from "../core/providers.js";
 import { stubs, helpers } from "./page-helpers.js";
 
 // "noop": an empty change, to check that every checker fails on the untouched page.
@@ -45,13 +45,18 @@ const { values: opt } = parseArgs({ options: {
   "no-probe": { type: "boolean", default: false },
   "no-write": { type: "boolean", default: false },
   "dump-context": { type: "boolean", default: false },
+  // speed: like a person, the bar opens (and the model gets ready) this long
+  // before Enter. --typing-ms 0 measures a request with no head start.
+  "typing-ms": { type: "string", default: "2500" },
+  effort: { type: "string", default: "" },
 } });
 
 const all = JSON.parse(readFileSync(path.join(HERE, "cases.json"), "utf8")).cases;
 let cases = all.filter(c => opt.split === "all" || (c.split || "train") === opt.split);
 if (opt.only) { const ids = opt.only.split(","); cases = all.filter(c => ids.includes(c.id)); }
 const repeat = Math.max(1, +opt.repeat);
-const settings = { provider: opt.provider, model: opt.model };
+const settings = { provider: opt.provider, model: opt.model, ...(opt.effort && { effort: opt.effort }) };
+setWarmPoolSize(Math.min(+opt.concurrency, 4)); // each case is its own person with its own bar
 
 // ---- static server for the demo sites (CSP like demo/serve.js) -------------
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css" };
@@ -114,7 +119,9 @@ async function runCase(c, rep) {
   try {
     await page.goto(`${BASE}/demo/sites/${c.site}/`, { waitUntil: "load" });
     await page.evaluate(INSTALL_CONTEXT);
-    const tEnter = Date.now(); // speed: the moment the person presses Enter
+    // speed: the bar opens, the person points and types, then presses Enter.
+    if (+opt["typing-ms"] > 0) { prewarm(settings); await page.waitForTimeout(+opt["typing-ms"]); }
+    const tEnter = Date.now();
     const { c: context, ms: ctxMs } = await page.evaluate(sel => window.__morseEval.timedContext(sel), c.target);
     const tCtx = Date.now();
     rec.contextChars = buildMessages({ request: c.request, context }).map(m => m.content).join("").length;
@@ -144,7 +151,7 @@ async function runCase(c, rep) {
         try { r = await page.evaluate(wrapModCode(modId, js)); }
         catch (e) { return { ok: false, error: String(e.message || e).split("\n")[0].replace(/^page\.evaluate: /, "") }; }
         if (!r?.ok) return r || { ok: false, error: "no result" };
-        await page.waitForTimeout(600);
+        await page.waitForTimeout(settleMs(r)); // speed: core/kit.js settle
         const errs = await page.evaluate(id => morse.__errors(id), modId);
         return errs.length ? { ok: false, error: errs[0].split("\n")[0] } : { ok: true };
       },

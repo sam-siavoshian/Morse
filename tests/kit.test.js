@@ -22,9 +22,24 @@ const run = (id, js) => page.evaluate(wrapModCode(id, js));
 
 test("watch does not match elements the mod inserted", { skip }, async () => {
   const r = await run("m1", `morse.watch("header button", b => b.before(morse.el("button", { text: "Copy" })));`);
-  assert.deepEqual(r, { ok: true });
+  assert.deepEqual(r, { ok: true, settle: 150 });
   await settle(page); // watch rescans on the frame after a mutation; it must not match its own button
   assert.equal(await page.locator("header button").count(), 2);
+});
+
+// speed: hosts wait settle ms for late errors instead of a flat 600.
+test("settle: short for watch and clicks, until the first tick for timers, full for events that fire on their own", { skip }, async () => {
+  const at = js => run("s1", js).then(r => r.settle);
+  assert.equal(await at(`morse.watch("header button", b => b.title = "x"); morse.on(document, "keydown", () => {});`), 150);
+  assert.equal(await at(`morse.el("button", { on: { click: () => {} } });`), 150);
+  assert.equal(await at(`morse.every(300, () => {});`), 360);
+  assert.equal(await at(`morse.after(5000, () => {});`), 600);
+  assert.equal(await at(`morse.on(window, "scroll", () => {});`), 600);
+  assert.equal(await at(`morse.el("audio", { on: { timeupdate: () => {} } });`), 600);
+  await page.evaluate(() => morse.__off("s1"));
+  const { settleMs } = await import("../core/kit.js");
+  assert.equal(settleMs({ ok: true, settle: 150 }), 150);
+  assert.equal(settleMs({ ok: true }), 600, "a kit from before settle: the old wait");
 });
 
 test("watch picks up elements added later", { skip }, async () => {

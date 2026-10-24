@@ -2,7 +2,7 @@
 // and if the JS throws, show the model the error and try once more.
 
 import { buildMessages } from "./prompt.js";
-import { parseModResponse, completeCssPrefix } from "./parse.js";
+import { parseModResponse, liveCss } from "./parse.js";
 import { parseReply } from "./answer.js"; // Ask and find
 import { streamChat } from "./providers.js";
 import { selectorsIn, selectorLists } from "./heal.js"; // self-heal hook: shared selector parsing
@@ -16,7 +16,10 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
   let last = null;
   const started = Date.now();
   const repairs = [];
-  const before = probe ? await probe([]).catch(() => null) : null; // effect check
+  // Effect check: the page before the change. speed: measured while the model
+  // starts; no CSS goes on the page until it's done.
+  let before = null, beforeDone = !probe;
+  const beforeP = probe ? probe([]).catch(() => null).then(b => { before = b; beforeDone = true; }) : null;
   // speed: when each stage happened, in ms since the call (first attempt only)
   const timing = {};
   const mark = (k, v = Date.now() - started) => { if (timing[k] == null) timing[k] = v; };
@@ -25,7 +28,13 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     let raw = "", lastCss = "", lastAnswer = "";
     raw = await streamChat(settings, buildMessages({ request, context, previous, base }), {
       signal,
-      onStage(st) { if (st.spawnMs != null) mark("spawn", st.spawnMs); if (st.warm != null) mark("warm", st.warm); mark("modelReady"); },
+      // The model has the request ("ready"), or is thinking: real progress for the bar.
+      onStage(st) {
+        if (st.spawnMs != null) mark("spawn", st.spawnMs);
+        if (st.warm != null) mark("warm", st.warm);
+        mark("modelReady");
+        emit({ type: "stage", stage: st.stage === "thinking" ? "thinking" : "ready" });
+      },
       onToken(tok) {
         mark("firstToken");
         timing.lastToken = Date.now() - started;
@@ -38,8 +47,8 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
           if (key !== lastAnswer) { lastAnswer = key; emit({ type: "answer", ...a }); }
           return;
         }
-        const css = completeCssPrefix(parseModResponse(raw).css);
-        if (css !== lastCss) { lastCss = css; if (css.trim()) mark("firstCss"); emit({ type: "css", css }); }
+        const css = liveCss(parseModResponse(raw).css); // speed: each finished property, not only finished rules
+        if (css !== lastCss && beforeDone) { lastCss = css; if (css.trim()) mark("firstCss"); emit({ type: "css", css }); }
       },
     });
     // Ask and find: an answer is final as soon as it's written; nothing runs.
@@ -49,6 +58,8 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       return { ok: true, kind: "answer", answer, title: "", css: "", js: "", raw, attempts: attempt, ms: Date.now() - started };
     }
     const draft = parseModResponse(raw);
+    await beforeP;
+    if (draft.css.trim()) mark("firstCss");
     emit({ type: "css", css: draft.css });
     mark("modelDone");
     last = { ...draft, raw, attempts: attempt, ms: Date.now() - started, repairs, timing };

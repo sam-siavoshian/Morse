@@ -4,7 +4,8 @@
 //
 //   GET  /v1/health    status (no auth, never includes keys)
 //   POST /v1/pair      { code } -> { token }   one-time code printed by `morse serve` / `morse pair`
-//   POST /v1/complete  { messages, model? }    Bearer token -> NDJSON {type: token|done|error}
+//   POST /v1/complete  { messages, model? }    Bearer token -> NDJSON {type: token|stage|done|error}
+//   POST /v1/warm      { model? }               Bearer token: get the model ready (the bar opened)
 //   GET  /v1/voice, POST /v1/transcribe        Bearer token, see daemon/voice.js
 //
 // The extension runs core/engine.js itself (it has to execute mod JS in the
@@ -23,7 +24,7 @@ import { readFileSync } from "node:fs";
 import { loadConfig, updateConfig } from "./store.js";
 import { settingsFromConfig, settingsLabel } from "./models.js";
 import { detectHarnesses, validModel, TIMEOUT_MS } from "./harness.js";
-import { streamChat, abortError } from "../core/providers.js";
+import { streamChat, abortError, prewarm } from "../core/providers.js";
 import { handleVoice } from "./voice.js";
 
 export const VERSION = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
@@ -156,6 +157,15 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
 
       if (await handleVoice(req, res)) return;
 
+      // speed: the bar opened, so a request is likely soon (core/providers.js prewarm).
+      if (req.method === "POST" && url.pathname === "/v1/warm") {
+        const body = await readJson(req).catch(() => ({}));
+        const model = typeof body?.model === "string" && validModel(body.model) ? body.model : undefined;
+        const settings = settingsFromConfig(cfg, model ? { model } : {}, { harnesses: harnesses() });
+        if (settings.provider !== "none") prewarm(settings);
+        return send(200, { ok: true });
+      }
+
       if (req.method === "POST" && url.pathname === "/v1/complete") {
         const body = await readJson(req);
         if (!validMessages(body.messages)) return send(400, { error: "Expected { messages: [{ role, content }] }" });
@@ -173,7 +183,7 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
         const t0 = Date.now();
         active.add(ac);
         try {
-          const text = await streamChat({ ...settings, timeoutMs }, body.messages, { signal: ac.signal, onToken: t => write({ type: "token", text: t }) });
+          const text = await streamChat({ ...settings, timeoutMs }, body.messages, { signal: ac.signal, onToken: t => write({ type: "token", text: t }), onStage: st => write({ type: "stage", stage: st.stage }) });
           write({ type: "done", text });
           log(`  ✓ ${settingsLabel(settings)} · ${text.length} chars · ${Date.now() - t0}ms`);
         } catch (e) {

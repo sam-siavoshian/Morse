@@ -12,6 +12,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { HOME } from "./store.js";
 import { registerProvider, flattenConversation, abortError, imageBlocks } from "../core/providers.js";
+import { SYSTEM_PROMPT } from "../core/prompt.js";
 
 export const TIMEOUT_MS = 120_000;
 const MODEL_RE = /^[A-Za-z0-9][\w.:/\[\]-]{0,80}$/;
@@ -50,92 +51,214 @@ async function runDir() {
   return dir;
 }
 
-// Spawns a CLI, writes `input` to stdin, calls onLine for each stdout line.
-// Resolves { code, stderr }; rejects on abort/timeout (after killing it).
-export function runProcess({ bin, args, input, cwd, signal, timeoutMs = TIMEOUT_MS, onLine }) {
+// Starts a CLI with stdin open. Its stdout lines wait in a queue until
+// runProcess listens, so a process can start before its request exists.
+function launch({ bin, args, cwd, env = process.env }) {
+  const shell = process.platform === "win32" && /\.(cmd|bat)$/i.test(bin);
+  const child = spawn(shell ? `"${bin}"` : bin, shell ? args.map(a => `"${a.replace(/"/g, '""')}"`) : args, {
+    cwd, shell, stdio: ["pipe", "pipe", "pipe"], windowsHide: true, env,
+  });
+  const h = { child, stderr: "", queue: [], onLine: null, onClose: null, closed: false, code: null, error: null };
+  let buf = "";
+  const deliver = line => (h.onLine ? h.onLine(line) : h.queue.push(line));
+  child.stdout.setEncoding("utf8");
+  child.stdout.on("data", d => {
+    buf += d;
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) {
+      const line = buf.slice(0, i).trim();
+      buf = buf.slice(i + 1);
+      if (line) deliver(line);
+    }
+  });
+  child.stderr.setEncoding("utf8");
+  child.stderr.on("data", d => { h.stderr = (h.stderr + d).slice(-4000); });
+  child.stdin.on("error", () => {});
+  const closed = (code, error) => {
+    if (h.closed) return;
+    if (buf.trim()) { deliver(buf.trim()); buf = ""; }
+    Object.assign(h, { closed: true, code, error });
+    h.onClose?.(code, error);
+  };
+  child.on("error", e => closed(null, e));
+  child.on("close", code => closed(code, null));
+  return h;
+}
+const running = h => !h.closed && h.child.exitCode === null && h.child.signalCode === null;
+function stop(h) {
+  if (!running(h)) return;
+  try { h.child.kill("SIGTERM"); } catch {}
+  setTimeout(() => { try { if (running(h)) h.child.kill("SIGKILL"); } catch {} }, 2000).unref();
+}
+// A process that is only waiting must not keep Morse itself running.
+function hold(h, on) {
+  for (const x of [h.child, h.child.stdin, h.child.stdout, h.child.stderr]) try { on ? x?.ref?.() : x?.unref?.(); } catch {}
+}
+
+// Runs a CLI (or one started earlier, `proc`), writes `input` to stdin and
+// calls onLine(line, finish) for each stdout line. Resolves { code, stderr }
+// when it exits, or as soon as onLine calls finish(): speed, the answer is
+// complete, so Morse doesn't wait for the CLI's own wrap-up (it exits by
+// itself, or is stopped a moment later). Rejects on abort/timeout (after
+// killing it).
+export function runProcess({ bin, args, input, cwd, signal, timeoutMs = TIMEOUT_MS, onLine, proc, env }) {
   return new Promise((resolve, reject) => {
-    const shell = process.platform === "win32" && /\.(cmd|bat)$/i.test(bin);
-    const child = spawn(shell ? `"${bin}"` : bin, shell ? args.map(a => `"${a.replace(/"/g, '""')}"`) : args, {
-      cwd, shell, stdio: ["pipe", "pipe", "pipe"], windowsHide: true, env: process.env,
-    });
-    let stderr = "", buf = "", done = false, why = null;
+    const h = proc || launch({ bin, args, cwd, env });
+    hold(h, true);
+    let done = false, why = null;
     const kill = reason => {
       if (done || why) return;
       why = reason;
-      try { child.kill("SIGTERM"); } catch {}
-      setTimeout(() => { try { if (child.exitCode === null) child.kill("SIGKILL"); } catch {} }, 2000).unref();
+      stop(h);
     };
-    const timer = setTimeout(() => kill("timeout"), timeoutMs);
     const onAbort = () => kill("abort");
-    signal?.addEventListener("abort", onAbort, { once: true });
-    if (signal?.aborted) onAbort();
-
-    child.stdout.setEncoding("utf8");
-    child.stdout.on("data", d => {
-      buf += d;
-      let i;
-      while ((i = buf.indexOf("\n")) >= 0) {
-        const line = buf.slice(0, i).trim();
-        buf = buf.slice(i + 1);
-        if (line) try { onLine(line); } catch (e) { kill(e); }
-      }
-    });
-    child.stderr.setEncoding("utf8");
-    child.stderr.on("data", d => { stderr = (stderr + d).slice(-4000); });
-    child.stdin.on("error", () => {});
-    child.stdin.end(input);
-    child.on("error", e => { done = true; clearTimeout(timer); reject(e); });
-    child.on("close", code => {
+    const timer = setTimeout(() => kill("timeout"), timeoutMs);
+    const settle = fn => {
       if (done) return;
       done = true;
       clearTimeout(timer);
       signal?.removeEventListener("abort", onAbort);
-      if (buf.trim()) try { onLine(buf.trim()); } catch {}
+      fn();
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+    if (signal?.aborted) onAbort();
+    const finish = () => settle(() => {
+      resolve({ code: null, stderr: h.stderr, early: true });
+      setTimeout(() => stop(h), 3000).unref();
+    });
+    h.onLine = line => { if (!done) try { onLine(line, finish); } catch (e) { kill(e); } };
+    h.onClose = (code, error) => settle(() => {
+      if (error) return reject(error);
       if (why === "abort") return reject(abortError());
       if (why === "timeout") return reject(new Error(`The model took longer than ${Math.round(timeoutMs / 1000)}s, so Morse stopped it. Try a smaller change.`));
       if (why instanceof Error) return reject(why);
-      resolve({ code, stderr });
+      resolve({ code, stderr: h.stderr });
     });
+    for (const line of h.queue.splice(0)) h.onLine(line);
+    if (h.closed) return h.onClose(h.code, h.error);
+    h.child.stdin.end(input);
   });
 }
 
 const lastLine = s => (s || "").trim().split("\n").filter(Boolean).pop() || "";
 
-// Claude Code: `claude -p` with stream-json output; token text arrives as
-// stream_event/content_block_delta/text_delta, the final line is a `result`.
+// ---- Claude Code: `claude -p`, one request per process. The request goes in
+// as one stream-json user message; token text comes back as
+// stream_event/content_block_delta/text_delta, and the last line is a `result`.
+//
+// speed: starting `claude` takes 1 to 3 seconds before it can send anything,
+// so Morse starts the next process ahead of time (when the bar opens, and
+// after each request) and gives the next request to it. A started process
+// still answers exactly one request and exits, in its own fresh empty
+// directory with no session saved, so nothing carries over between requests.
+// It only takes a request whose settings, instructions and environment match
+// the ones it started with, and stops after WARM_IDLE_MS unused.
+// MORSE_WARM=0 turns this off.
+export const WARM_IDLE_MS = 5 * 60_000;
+let warm = []; // started processes waiting for a request: { key, ready, dead, timer }
+let warmMax = 1; // one person, one request at a time
+// The eval runs several cases at once, like several people (evals/run.js).
+export function setWarmPoolSize(n) { warmMax = Math.max(0, n | 0); }
+
+// Background calls Claude Code makes that a one-shot answer doesn't need
+// (update checks, error reports, a summary of each turn after it ends).
+const claudeEnv = () => ({ ...process.env, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: process.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC ?? "1" });
+const EFFORTS = new Set(["low", "medium", "high", "xhigh", "max"]);
+function claudeArgs(s, sysFile) {
+  return [
+    "-p", "--output-format", "stream-json", "--input-format", "stream-json", "--verbose", "--include-partial-messages",
+    "--tools", "", "--strict-mcp-config", "--disable-slash-commands", "--no-session-persistence",
+    "--system-prompt-file", sysFile,
+    ...(s.model ? ["--model", s.model] : []),
+    ...(EFFORTS.has(s.effort) ? ["--effort", s.effort] : []),
+  ];
+}
+const claudeKey = (bin, s, system) => crypto.createHash("sha256")
+  .update(JSON.stringify([bin, s.model || "", s.effort || "", system, process.env])).digest("hex");
+
+async function startClaude(bin, s, system) {
+  const dir = await runDir();
+  const sysFile = path.join(dir, "system.txt");
+  await fs.writeFile(sysFile, system);
+  const h = launch({ bin, args: claudeArgs(s, sysFile), cwd: path.join(dir, "cwd"), env: claudeEnv() });
+  const rm = () => fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+  h.child.once("close", rm);
+  h.child.once("error", rm);
+  return h;
+}
+function dropWarm(w) {
+  clearTimeout(w.timer);
+  warm = warm.filter(x => x !== w);
+  w.ready.then(h => h && stop(h));
+}
+// Starts a process for the next request, unless enough are already waiting.
+export function prewarmClaudeCode(s = {}, system = SYSTEM_PROMPT) {
+  if (process.env.MORSE_WARM === "0" || !system || !warmMax) return false;
+  const bin = s.bin || which("claude");
+  if (!bin || !validModel(s.model)) return false;
+  const key = claudeKey(bin, s, system);
+  for (const w of warm.filter(x => x.key !== key || x.dead)) dropWarm(w); // settings changed: those are no use now
+  const same = warm.filter(x => x.key === key);
+  for (const w of same) { clearTimeout(w.timer); w.timer = setTimeout(() => dropWarm(w), WARM_IDLE_MS).unref(); }
+  if (same.length >= warmMax) return true;
+  const w = { key, dead: false };
+  w.ready = startClaude(bin, s, system).then(h => {
+    hold(h, false);
+    h.onClose = () => { w.dead = true; if (warm.includes(w)) dropWarm(w); };
+    if (!warm.includes(w)) { stop(h); return null; }
+    return h;
+  }, () => { w.dead = true; warm = warm.filter(x => x !== w); return null; });
+  w.timer = setTimeout(() => dropWarm(w), WARM_IDLE_MS).unref();
+  warm.push(w);
+  return true;
+}
+// A waiting process that matches and is still running, or null.
+async function takeWarm(key) {
+  const w = warm.find(x => x.key === key && !x.dead);
+  if (!w) return null;
+  warm = warm.filter(x => x !== w);
+  clearTimeout(w.timer);
+  const h = await w.ready;
+  if (!h || !running(h) || w.dead) { if (h) stop(h); return null; }
+  h.onClose = null;
+  return h;
+}
+
 export async function claudeCodeStream(s, messages, { onToken, signal, onStage }) {
   const bin = s.bin || which("claude");
   if (!bin) throw new Error("Claude Code isn't installed on this computer. Install it from claude.com/claude-code, or run morse setup to choose another model.");
   if (!validModel(s.model)) throw new Error(`"${s.model}" isn't a model name Morse can use. Check the spelling.`);
   const { system, prompt } = flattenConversation(messages);
-  const dir = await runDir();
-  const sysFile = path.join(dir, "system.txt");
-  await fs.writeFile(sysFile, system);
-  const args = [
-    "-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
-    "--tools", "", "--strict-mcp-config", "--disable-slash-commands", "--no-session-persistence",
-    "--system-prompt-file", sysFile,
-    ...(s.model ? ["--model", s.model] : []),
-  ];
-  // Describe this image (core/a11y.js): pictures go in as one stream-json user message.
-  const images = imageBlocks(messages);
-  if (images.length) args.push("--input-format", "stream-json");
-  const input = images.length ? JSON.stringify({ type: "user", message: { role: "user", content: [...images, { type: "text", text: prompt }] } }) + "\n" : prompt;
-  let text = "", result = null;
   const t0 = Date.now();
+  const key = claudeKey(bin, s, system);
+  const reused = await takeWarm(key);
+  const h = reused || await startClaude(bin, s, system);
+  // Describe this image (core/a11y.js): pictures travel in the same user message.
+  const images = imageBlocks(messages);
+  const input = JSON.stringify({ type: "user", message: { role: "user", content: images.length ? [...images, { type: "text", text: prompt }] : prompt } }) + "\n";
+  let text = "", result = null, stopReason = null;
   try {
-    const { code, stderr } = await runProcess({
-      bin, args, input, cwd: path.join(dir, "cwd"), signal, timeoutMs: s.timeoutMs,
-      onLine(line) {
+    const { code, stderr, early } = await runProcess({
+      proc: h, input, signal, timeoutMs: s.timeoutMs,
+      onLine(line, finish) {
         let ev;
         try { ev = JSON.parse(line); } catch { return; }
-        if (ev.type === "system" && ev.subtype === "init") onStage?.({ spawnMs: Date.now() - t0, warm: false });
-        if (ev.type === "stream_event" && ev.event?.type === "content_block_delta" && ev.event.delta?.type === "text_delta") {
-          const t = ev.event.delta.text || "";
-          if (t) { text += t; onToken?.(t); }
+        if (ev.type === "system" && ev.subtype === "init") onStage?.({ stage: "ready", spawnMs: Date.now() - t0, warm: !!reused });
+        else if (ev.type === "system" && ev.subtype === "thinking_tokens") onStage?.({ stage: "thinking" });
+        else if (ev.type === "stream_event") {
+          const e = ev.event;
+          if (e?.type === "content_block_start" && e.content_block?.type === "thinking") onStage?.({ stage: "thinking" });
+          else if (e?.type === "content_block_delta" && e.delta?.type === "text_delta") {
+            const t = e.delta.text || "";
+            if (t) { text += t; onToken?.(t); }
+          } else if (e?.type === "message_delta") stopReason = e.delta?.stop_reason || stopReason;
+          // speed: the answer is complete at message_stop; the CLI's wrap-up
+          // after it (usage, a result line, exiting) can take seconds.
+          else if (e?.type === "message_stop" && text && stopReason !== "refusal") finish();
         } else if (ev.type === "result") result = ev;
       },
     });
+    if (early) return text;
     if (result && !result.is_error && (!result.subtype || result.subtype === "success")) {
       const full = typeof result.result === "string" ? result.result : text;
       // No partial messages (older CLI): emit whatever we didn't stream.
@@ -145,7 +268,8 @@ export async function claudeCodeStream(s, messages, { onToken, signal, onStage }
     const why = (typeof result?.result === "string" && result.result) || result?.errors?.join?.("; ") || result?.subtype || lastLine(stderr) || `exited with code ${code}`;
     throw new Error(`Claude Code: ${why}`);
   } finally {
-    fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+    // The next request starts warm (unless this one was stopped).
+    if (!signal?.aborted) prewarmClaudeCode(s, system);
   }
 }
 
@@ -211,5 +335,5 @@ export async function codexStream(s, messages, { onToken, signal }) {
   }
 }
 
-registerProvider("claude-code", claudeCodeStream);
+registerProvider("claude-code", claudeCodeStream, { warm: s => prewarmClaudeCode(s) });
 registerProvider("codex", codexStream);

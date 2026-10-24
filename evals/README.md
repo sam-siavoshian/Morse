@@ -103,4 +103,7 @@ Rows before "baseline (rescored checkers)" used earlier checkers. Results JSON i
 | 2026-10-24 09:12 | baseline (final checkers) | claude-code:haiku | all | 136/165 (82%) | 8.7s |
 | 2026-10-24 09:20 | ablation: effect check only (old context+prompt) | claude-code:haiku | train | 103/123 (84%) | 13.8s |
 | 2026-10-24 09:30 | final, sonnet spot check | claude-code:sonnet | all | 54/55 (98%) | 9.2s |
+| 2026-10-24 11:58 | speed: baseline subset | claude-code:haiku | only | 36/36 (100%) | 9.4s |
+| 2026-10-24 12:14 | speed: after, warm subset | claude-code:haiku | only | 36/36 (100%) | 5.2s |
+| 2026-10-24 12:19 | speed: after, cold (no head start) subset | claude-code:haiku | only | 36/36 (100%) | 5.8s |
 <!-- run-log -->
