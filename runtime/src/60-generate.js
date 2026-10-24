@@ -161,10 +161,10 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
   if (!keepInput) setInput("");
   const n = versionsOf(d).length + 1;
   const meta = note || [d.secs && !d.saved ? `${d.secs}s` : "", d.attempts > 1 && !d.saved ? "needed a second try" : "", n > 1 ? `version ${n}` : ""].filter(Boolean).join(" · ");
-  hint.title = error;
+  hint.title = error || note; // a long note ends in an ellipsis in the bar: the whole sentence is here
   hint.innerHTML = error
     ? `<b class="ok">${esc(d.title)}</b> <span class="note">That didn't work: ${esc(error).slice(0, 120)}</span>`
-    : `<b class="ok">${esc(d.title)}</b> <span class="dim">${esc(meta || (d.saved ? "describe what to change" : ""))}</span>`;
+    : `<b class="ok">${esc(d.title)}</b> <span class="dim${note ? " said" : ""}">${esc(meta || (d.saved ? "describe what to change" : ""))}</span>`;
   ticker.textContent = "";
   actions.innerHTML = d.saved
     ? `<button data-a="code">Edit code</button><button data-a="keep">Done</button>`

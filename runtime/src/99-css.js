@@ -238,7 +238,7 @@ function CSS() {
   .health b::before { content: ""; margin: 0 7px 1px 0; background: var(--m-danger); vertical-align: middle; }
   /* ---- the status dot: a 6px square with 1.5px corners, one of the radar mark's squares
      (a stopped or paused mod, trying a mod, a notice under the input, a list of what's in a mod) */
-  .health b::before, .gl-trying::before, .ctl-items li::before, .ob-dot { flex: none; display: inline-block; width: 6px; height: 6px; border-radius: 1.5px; }
+  .health b::before, .gl-trying::before, .gl-upd b::before, .ctl-items li::before, .ob-dot { flex: none; display: inline-block; width: 6px; height: 6px; border-radius: 1.5px; }
   .panel .health button { flex: none; height: 24px; padding: 0 10px; }
   /* two buttons (a paused mod, 64-guard.js): the words get the whole row, the buttons go under them on the right */
   .health.guard { flex-wrap: wrap; row-gap: 8px; }

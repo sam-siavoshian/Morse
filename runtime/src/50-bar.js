@@ -171,6 +171,45 @@ function closeBar() {
   showPane("");
   restoreFocus();
 }
+// The bar (and Morse's other see-through surfaces) let a calm page show
+// through. When the page's own words sit right under one (an article on a
+// phone), it turns solid, so its words never read over the page's.
+const Backing = (() => {
+  const SURFACES = ".bar, .so-strip, .guide, .ds";
+  let timer = 0;
+  // Is page text under this box? A few points across it, the page's topmost
+  // part of the page at each, and that part's own lines of text.
+  function textUnder(r) {
+    const seen = new Set();
+    for (const fx of [0.04, 0.25, 0.5, 0.75, 0.96]) for (const fy of [0.04, 0.35, 0.65, 0.96]) {
+      const top = document.elementsFromPoint(r.left + r.width * fx, r.top + r.height * fy).find(n => n !== hostEl && !hostEl.contains(n));
+      if (!top || seen.has(top)) continue;
+      seen.add(top);
+      for (const t of top.childNodes) {
+        if (t.nodeType !== 3 || !t.textContent.trim()) continue;
+        const range = document.createRange();
+        range.selectNodeContents(t);
+        for (const b of range.getClientRects()) if (b.right > r.left && b.left < r.right && b.bottom > r.top && b.top < r.bottom) return true;
+      }
+    }
+    return false;
+  }
+  function check() {
+    timer = 0;
+    for (const el of root.querySelectorAll(SURFACES)) {
+      if (el.hidden || !el.getClientRects().length) continue;
+      const solid = textUnder(el.getBoundingClientRect());
+      if (el.classList.contains("solid") !== solid) el.classList.toggle("solid", solid);
+    }
+  }
+  const soon = () => { if (!timer && live()) timer = setTimeout(check, 120); };
+  listen("scroll", soon, { capture: true, passive: true });
+  listen("resize", soon);
+  // a surface shown, moved (top or bottom, dragged) or grown (a row inside it shown)
+  new MutationObserver(recs => { if (recs.some(r => r.target.closest?.(SURFACES))) soon(); })
+    .observe(root, { subtree: true, attributes: true, attributeFilter: ["hidden", "style", "class", "data-pos"] });
+  return { check: soon };
+})();
 // While pointing, the bar steps aside so nothing under it is unreachable, but
 // only once the pointer rests on it away from its controls. A pointer heading
 // for a button, a suggestion or the page tools never makes it jump.

@@ -307,7 +307,7 @@ function check(loc) {
     if (!el.matches(":focus-visible")) return "focus does not match :focus-visible";
     // the indicator itself: a 2px ring (on the control, its track, or its field), or a highlighted menu row
     const ring = n => { const c = getComputedStyle(n); return (c.outlineStyle !== "none" && parseFloat(c.outlineWidth) >= 2) || /0px 0px 0px [12]px/.test(c.boxShadow); };
-    const host = el.closest(".gm-hex, .gm-step, .seg") || el.nextElementSibling;
+    const host = el.closest(".gm-hex, .gm-step, .seg, .field") || el.nextElementSibling;
     if (ring(el) || (el.matches(".sw input") && ring(el.nextElementSibling)) || (el.matches("input") && host && ring(host))) return "";
     if (el.matches("[role=menuitem], [role=menuitem] *") && getComputedStyle(el).backgroundColor !== "rgba(0, 0, 0, 0)") return "";
     return "no visible focus indicator (no 2px ring)";
@@ -373,14 +373,21 @@ async function barStates(theme, width) {
 
   // working
   await submit(p, "make the shuffle button bigger");
-  await shot(p, "bar", "thinking", ui(p, ".bar"));
+  await shot(p, "bar", "thinking", ui(p, ".bar"), { note: "stage 1: “Asking the model” as soon as Enter is pressed" });
   if (!n) await shot(p, "radar", "mark-live", ui(p, ".row .mark"), { pad: 8 });
+  // round 5, the speed work: every stage says what is really happening
+  await p.evaluate(() => __cat.stage("reading")); await sleep(80);
+  await shot(p, "bar", "stage-reading", ui(p, ".bar"), { note: "stage 2: “The model is reading the page”" });
+  await p.evaluate(() => __cat.stage("thinking")); await sleep(80);
+  await shot(p, "bar", "stage-thinking", ui(p, ".bar"), { note: "stage 2b: “Thinking”, for a model that thinks first" });
   await stream(p, 30, 25);
-  await shot(p, "bar", "writing", ui(p, ".bar"));
+  await shot(p, "bar", "writing", ui(p, ".bar"), { note: "stage 3: “Writing the change”, the ticker shows the words as they come" });
+  await p.evaluate(() => __cat.css("#small { outline: 2px solid currentColor }")); await sleep(150);
+  await shot(p, "bar", "writing-visible", ui(p, ".bar"), { note: "stage 3b: “Writing the change · you can see it now”, once the new look shows while the rest is written" });
   await p.evaluate(e => __cat.phase("fixing", e), LONG_ERROR); await sleep(80);
   await shot(p, "bar", "fixing", ui(p, ".bar"));
   await p.evaluate(() => __cat.phase("applying")); await sleep(80);
-  await shot(p, "bar", "applying", ui(p, ".bar"));
+  await shot(p, "bar", "applying", ui(p, ".bar"), { note: "stage 4: “Trying the change”" });
   await finish(p, OK());
   await shot(p, "bar", "result", ui(p, ".bar"));
   if (!n) {
@@ -1433,7 +1440,7 @@ async function popupStates(theme) {
     globalThis.chrome = { runtime: { id: "catalog", sendMessage: async m => ({ result: reply(m), ...reply(m) }) }, tabs: { query: async () => [{ id: 1, url: "https://thedailybyte.news/" }], sendMessage: async () => {} },
       storage: { sync: { get: async () => ({}) }, local: { get: async () => ({}) } } };
   }, [false]);
-  const page = await ctx.newPage();
+  let page = await ctx.newPage();
   page.on("pageerror", e => console.warn("  [pageerror]", e.message));
   await page.goto(`${BASE}/dist/extension/popup.html?url=${encodeURIComponent("https://thedailybyte.news/")}`);
   await page.waitForSelector("#ctl .ctl-row", { timeout: 5000 }).catch(() => {});
@@ -1464,6 +1471,35 @@ async function popupStates(theme) {
   const goRing = await page.locator("#go").evaluate(el => { const c = getComputedStyle(el); return c.outlineStyle !== "none" && parseFloat(c.outlineWidth) >= 2 ? "" : "no 2px focus ring"; });
   await popShot("go-focus", page.locator("#go"), { checks: [goRing] });
   await ctx.close();
+
+  // round 5: “Allow User Scripts” off, with mods here whose code waits for it
+  const wctx = await browser.newContext({ viewport: { width: 368, height: 760 }, deviceScaleFactor: 2, colorScheme: theme });
+  await wctx.addInitScript(() => {
+    const reply = msg => {
+      if (msg.type === "popup.state") return { label: "Claude Code · sonnet", userScripts: false, kind: "helper", reason: "", backend: "helper", helper: { paired: true, label: "Claude Code", provider: "claude-code" }, providers: {}, helperModel: "", anthropicModels: ["claude-sonnet"], anthropicModel: "claude-sonnet",
+        mods: [{ id: "a", title: "Calm reading", prompt: "hide the ads and make the article easier to read", css: ".ad { display: none }", js: "", enabled: true, created: "2026-10-18T10:00:00Z" },
+          { id: "b", title: "Reading time", prompt: "show how long the article takes to read", css: ".rt { opacity: .7 }", js: "morse.watch('article', a => a.prepend(morse.el('small')))", enabled: true, created: "2026-10-19T10:00:00Z" },
+          { id: "c", title: "Copy quotes with the link", prompt: "add a button to copy a quote with a link to the article", css: "", js: "morse.el('button')", enabled: true, created: "2026-10-20T10:00:00Z" }] };
+      if (msg.type === "control.get") return { info: { all: false, here: false } };
+      if (msg.type === "onboarding.status") return { state: {}, status: { model: { connected: true }, userScripts: false } };
+      return null;
+    };
+    const tab = { id: 1, url: "https://thedailybyte.news/" };
+    globalThis.chrome = { runtime: { id: "catalog", sendMessage: async m => ({ result: reply(m), ...reply(m) }) }, tabs: { query: async () => [tab], get: async () => tab, sendMessage: async () => {} },
+      extension: { isAllowedFileSchemeAccess: cb => cb(true) }, scripting: { executeScript: async () => [{ result: { morse: true, type: "text/html" } }] },
+      storage: { sync: { get: async () => ({}) }, local: { get: async () => ({}), remove: async () => {} } } };
+  });
+  const wp = await wctx.newPage();
+  wp.on("pageerror", e => console.warn("  [pageerror]", e.message));
+  await wp.goto(`${BASE}/dist/extension/popup.html?url=${encodeURIComponent("https://thedailybyte.news/")}`);
+  await wp.waitForSelector("#mods li", { timeout: 5000 }).catch(() => {}); await sleep(300);
+  const keep = page;
+  page = wp; // popShot shoots `page`
+  await popShot("waiting-warn", wp.locator("#warn"), { note: "which mods here wait for “Allow User Scripts”, and that their new look already shows" });
+  await popShot("waiting-mods", wp.locator("#mods"), { note: "“Waits for “Allow User Scripts”” under each mod whose code waits; a mod that only changes the look has none" });
+  await popShot("waiting-whole", wp.locator("body"), { note: "the whole popup with “Allow User Scripts” off" });
+  page = keep;
+  await wctx.close();
 }
 
 // ---- keep iterating: refine, version history, a broken mod and Fix it
@@ -2078,22 +2114,25 @@ async function extensionStates() {
 }
 
 // ---- Trusted Types: the same UI, built without innerHTML (00-trusted-html.js)
+// Two PNGs, pixel by pixel: { bad, total } or { size } when they differ in size.
+async function pixelDiff(a, b) {
+  const pg = await browser.newPage();
+  const r = await pg.evaluate(async ([a, b]) => {
+    const load = src => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.src = src; });
+    const [x, y] = await Promise.all([load(a), load(b)]);
+    if (x.width !== y.width || x.height !== y.height) return { size: `${x.width}×${x.height} vs ${y.width}×${y.height}` };
+    const px = img => { const c = new OffscreenCanvas(img.width, img.height), g = c.getContext("2d"); g.drawImage(img, 0, 0); return g.getImageData(0, 0, img.width, img.height).data; };
+    const p = px(x), q = px(y);
+    let bad = 0;
+    for (let i = 0; i < p.length; i += 4) if (p[i] !== q[i] || p[i + 1] !== q[i + 1] || p[i + 2] !== q[i + 2] || p[i + 3] !== q[i + 3]) bad++;
+    return { bad, total: p.length / 4 };
+  }, [a, b].map(f => "data:image/png;base64," + readFileSync(f).toString("base64")));
+  await pg.close();
+  return r;
+}
+
 async function trustedTypesStates() {
-  const diff = async (a, b) => {
-    const pg = await browser.newPage();
-    const r = await pg.evaluate(async ([a, b]) => {
-      const load = src => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.src = src; });
-      const [x, y] = await Promise.all([load(a), load(b)]);
-      if (x.width !== y.width || x.height !== y.height) return { size: `${x.width}×${x.height} vs ${y.width}×${y.height}` };
-      const px = img => { const c = new OffscreenCanvas(img.width, img.height), g = c.getContext("2d"); g.drawImage(img, 0, 0); return g.getImageData(0, 0, img.width, img.height).data; };
-      const p = px(x), q = px(y);
-      let bad = 0;
-      for (let i = 0; i < p.length; i += 4) if (p[i] !== q[i] || p[i + 1] !== q[i + 1] || p[i + 2] !== q[i + 2] || p[i + 3] !== q[i + 3]) bad++;
-      return { bad, total: p.length / 4 };
-    }, [a, b].map(f => "data:image/png;base64," + readFileSync(f).toString("base64")));
-    await pg.close();
-    return r;
-  };
+  const diff = pixelDiff;
   for (const theme of ["dark", "light"]) {
     for (const width of [1100, 390]) {
       const n = width < 600, H = n ? 844 : 720;
@@ -2146,6 +2185,25 @@ async function hostileR4States() {
       const row = ui(p, "article[data-id=mod41]");
       await row.scrollIntoViewIfNeeded(); await sleep(100);
       await shot(p, "hostile", `${site}-guard-row`, row, { pad: 8 });
+      // round 5: Your style's softer colors must not reach the overlay. The same row
+      // on the same page without the style, pixel by pixel (the --m-danger dot included)
+      {
+        const q = await open({ url, mods: 1, width: 1100, height: 720, extra: "&guard=1" });
+        await ui(q, ".ctl-toast").waitFor({ timeout: 4000 }).catch(() => {}); await sleep(300);
+        await ui(q, ".ctl-toast").evaluate(el => (el.hidden = true)).catch(() => {});
+        await q.keyboard.press("Alt+Shift+KeyM"); await ui(q, ".panel").waitFor(); await sleep(400); await q.mouse.move(2, 2);
+        const qrow = ui(q, "article[data-id=mod41]");
+        await qrow.scrollIntoViewIfNeeded(); await sleep(100);
+        await shot(q, "hostile", `${site}-guard-row-plain`, qrow, { pad: 8, note: "the same row without Your style" });
+        await close(q);
+        const theme = results.at(-1).theme;
+        const a = path.join(OUT, "hostile", `${site}-guard-row-plain-${theme}.png`), b = path.join(OUT, "hostile", `${site}-guard-row-${theme}.png`);
+        const d = await pixelDiff(a, b);
+        const r = results.find(x => x.file === path.relative(OUT, b));
+        if (r && !d.bad && !d.size) r.note = `Your style (softer colors) is on: pixel-identical to ${site}-guard-row-plain (${d.total} pixels compared)`;
+        else if (r) r.issues.push(d.size ? `size differs from the row without Your style: ${d.size}` : `${d.bad} of ${d.total} pixels differ from the row without Your style`);
+        console.log(`  ${d.bad || d.size ? "!" : "✓"} hostile/${site}-guard-row vs plain: ${JSON.stringify(d)}`);
+      }
       await p.keyboard.press("Escape"); await sleep(200);
       await openBar(p);
       await ui(p, ".so-sug").click(); await strip(p).waitFor(); await sleep(300);
@@ -2158,6 +2216,137 @@ async function hostileR4States() {
     }
     await close(p);
   }
+}
+
+// ---- round 5: mods waiting for “Allow User Scripts” (64-waiting.js)
+async function waitingStates(theme, width) {
+  const n = width < 600, H = n ? 844 : 720;
+  let p = await open({ theme, width, height: H, mods: 1, extra: "&waiting=1&onboard=done" });
+  await p.evaluate(() => sessionStorage.removeItem("morse:waiting-told"));
+  // the notice, once per site in this tab
+  await ui(p, ".ctl-toast").waitFor({ timeout: 4000 }).catch(() => {}); await sleep(300);
+  await shot(p, "waiting", "notice", ui(p, ".ctl-toast"), { pad: 16, note: "once per site in a tab: which mod waits, what already shows, and Open Morse's details" });
+  if (!n) await shot(p, "waiting", "notice-focus", ui(p, ".ctl-toast"), { pad: 16, checks: [await focusVisible(p, ui(p, ".ctl-toast [data-i='1']"))] });
+  await ui(p, ".ctl-toast").evaluate(el => (el.hidden = true));
+  // the bar's note under the input
+  await openBar(p); await p.mouse.move(5, H / 2); await sleep(200);
+  await shot(p, "waiting", "bar-note", ui(p, ".bar"), { note: "the bar's note: the same words, Turn it on, and × (for this page)" });
+  if (!n) await shot(p, "waiting", "bar-note-focus", ui(p, ".ob-note"), { pad: 8, checks: [await focusVisible(p, ui(p, ".ob-note .btn"))] });
+  await p.keyboard.press("Escape"); await sleep(200);
+  // the Mods panel: a tag on the mod
+  await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel").waitFor(); await sleep(400); await p.mouse.move(2, 2);
+  await shot(p, "waiting", "panel-row", ui(p, ".list article").first(), { pad: 8, note: "the tag on the mod: waits for “Allow User Scripts” (the full sentence is its title)" });
+  await p.keyboard.press("Escape"); await sleep(200);
+  // a new change whose code waits: the result says so and offers the one click
+  await openBar(p); await pick(p, "#card");
+  await submit(p, "add a button that copies the title");
+  await finish(p, OK({ title: "Copy the title", js: "morse.el('button')", waiting: "userScripts" }));
+  await p.mouse.move(5, H / 2); await sleep(150);
+  await shot(p, "waiting", "result", ui(p, ".bar"), { note: "the result never just looks done: the note, and Turn on “Allow User Scripts” first" });
+  await close(p);
+  // the practice page: what it adds works only on real websites
+  p = await open({ theme, width, height: H, mods: 0 });
+  await openBar(p); await pick(p, "#card");
+  await submit(p, "add a button that copies the title");
+  await finish(p, OK({ title: "Copy the title", js: "morse.el('button')", waiting: "practice" }));
+  await p.mouse.move(5, H / 2); await sleep(150);
+  await shot(p, "waiting", "result-practice", ui(p, ".bar"), { note: "on the practice page: this is how it looks, and what it adds works on real websites" });
+  await close(p);
+}
+
+// ---- round 5: mod packs (69-packs.js), with the real core/pack-host.js in the fake host
+async function packStates(theme, width) {
+  const n = width < 600, H = n ? 844 : 720;
+  const p = await open({ theme, width, height: H, mods: 12, extra: "&packs=1" });
+  const card = ui(p, ".modal .card");
+  const openPanel = async () => {
+    if (await ui(p, ".panel").isVisible()) { await p.keyboard.press("Escape"); await sleep(200); }
+    await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel").waitFor(); await sleep(400); await p.mouse.move(2, 2);
+  };
+  await openPanel();
+  await shot(p, "packs", "panel-make", [ui(p, ".pk-bar"), ui(p, ".panel footer")], { pad: 4, note: "Packs · Make a pack… sits with the backup buttons at the foot of the panel" });
+  if (!n) await shot(p, "packs", "panel-make-focus", ui(p, ".pk-bar"), { pad: 8, checks: [await focusVisible(p, ui(p, "[data-pk=make]"))] });
+  // choosing mods
+  await ui(p, "[data-pk=make]").click(); await sleep(300); await blur(p);
+  await shot(p, "packs", "choose-none", ui(p, ".panel"), { note: "a tick on every row; Next stays off until one is chosen" });
+  for (const id of ["mod1", "mod5", "mod8"]) await ui(p, `article[data-id=${id}] [data-pk=sel]`).check();
+  await ui(p, ".list").evaluate(l => l.scrollTo({ top: 0 })); await p.mouse.move(2, 2); await sleep(150); await blur(p);
+  await shot(p, "packs", "choose", ui(p, ".panel"), { note: "three chosen: the strip counts them, Next turns on" });
+  if (!n) await shot(p, "packs", "choose-tick-focus", ui(p, "article[data-id=mod1]"), { pad: 8, checks: [await focusVisible(p, ui(p, "article[data-id=mod1] [data-pk=sel]"))] });
+  // name, note, then the link
+  await ui(p, ".pk-pickbar [data-pk=next]").click(); await card.waitFor(); await sleep(300);
+  await card.locator("[data-pk=link]").click(); await sleep(200); await blur(p);
+  await shot(p, "packs", "make-no-name", card, { note: "Copy link without a name: “Give the pack a name.” and the name field has focus" });
+  await card.locator("[data-pk=name]").fill("Orders team");
+  await card.locator("[data-pk=note]").fill("What the orders team uses every day. Untick what you don't need.");
+  await blur(p);
+  await shot(p, "packs", "make", card, { note: "name, an optional note, the mods in it; Copy link is the main button" });
+  if (!n) await shot(p, "packs", "make-name-focus", card.locator(".pk-field"), { pad: 8, checks: [await focusVisible(p, card.locator("[data-pk=name]"))] });
+  await card.locator("[data-pk=link]").click();
+  await card.locator(".pk-link:not([hidden])").waitFor({ timeout: 4000 }).catch(() => {}); await sleep(300); await blur(p);
+  await shot(p, "packs", "make-link", card, { note: "the link, Copy again, and Cancel becomes Done" });
+  await card.locator("footer [data-a=close]").click(); await sleep(300);
+  await toastGone(p);
+  // the install review: a team's pack from its address
+  await openPanel();
+  await ui(p, "footer [data-a=import]").click(); await card.waitFor(); await sleep(200);
+  await card.locator("textarea").fill("https://packs.example.com/orders-team.morse-pack.json");
+  await card.locator("[data-a=go]").click();
+  await ui(p, ".modal .card.pk-card").waitFor({ timeout: 6000 }); await sleep(900); await blur(p);
+  await shot(p, "packs", "review", card, { note: "every mod with a tick, what it does and where; the one for every website and the clash need a choice; Cancel has focus" });
+  await card.locator(".pk-item[data-pkid=mod7] .pk-clash").scrollIntoViewIfNeeded(); await sleep(150);
+  await shot(p, "packs", "review-clash", card.locator(".pk-item[data-pkid=mod7]"), { pad: 8, note: "a mod with the same id as one of yours: Keep both (the default) or Replace yours" });
+  await card.locator(".pk-item[data-pkid=mod7] [data-pk-as=replace]").click(); await sleep(100);
+  if (!n) await shot(p, "packs", "review-clash-focus", card.locator(".pk-item[data-pkid=mod7] .seg"), { pad: 8, checks: [await focusVisible(p, card.locator(".pk-item[data-pkid=mod7] [data-pk-as=replace]"))] });
+  await card.locator(".pk-item[data-pkid=quiet-links]").scrollIntoViewIfNeeded(); await sleep(150); await blur(p);
+  await shot(p, "packs", "review-wide", card.locator(".pk-item[data-pkid=quiet-links]"), { pad: 8, note: "every website: not ticked, with the note in full" });
+  await card.locator(".pk-item[data-pkid=order-notes]").scrollIntoViewIfNeeded(); await sleep(150);
+  await shot(p, "packs", "review-sends", card.locator(".pk-item[data-pkid=order-notes]"), { pad: 8, note: "a mod that sends what's on the page somewhere: the note says so" });
+  await card.locator(".pk-item[data-pkid=copy-order] [data-pk=pick]").uncheck(); await sleep(150);
+  await card.locator(".pk-item[data-pkid=copy-order]").scrollIntoViewIfNeeded(); await sleep(100); await blur(p);
+  await shot(p, "packs", "review-unticked", card.locator(".pk-item[data-pkid=copy-order]"), { pad: 8, note: "unticked: the mod folds to its name, muted by color, not opacity" });
+  await card.evaluate(c => { c.scrollTop = c.scrollHeight; }); await sleep(150);
+  await card.locator("[data-pk=sub]").check(); await sleep(150); await blur(p);
+  await shot(p, "packs", "review-end", card, { note: "the end: Check this address for updates (the person's choice), Install with the count" });
+  if (!n) await shot(p, "packs", "review-install-focus", card.locator("footer"), { pad: 8, checks: [await focusVisible(p, card.locator("[data-pk=install]"))] });
+  await card.locator("[data-pk=install]").click();
+  await ui(p, ".modal").waitFor({ state: "hidden", timeout: 6000 }).catch(() => {}); await sleep(400);
+  await shot(p, "packs", "installed-toast", ui(p, ".toast"), { pad: 16 });
+  await toastGone(p);
+  // the panel: the pack's mods under its name, one switch for the pack
+  await openPanel();
+  const group = ui(p, ".pk-group");
+  const top = () => group.evaluate(g => g.scrollIntoView({ block: "start" }));
+  const head = async () => [group.locator(".pk-head"), group.locator("article").first(), ...(await group.locator(".pk-upd").count() ? [group.locator(".pk-upd")] : [])];
+  await top(); await sleep(200);
+  await shot(p, "packs", "panel-group", await head(), { pad: 8, note: "the pack's name, how many mods, “gets updates”, Copy link and Stop updates; its mods under it" });
+  if (!n) await shot(p, "packs", "panel-group-switch-focus", group.locator(".pk-head"), { pad: 8, checks: [await focusVisible(p, group.locator("[data-pk=toggle]"))] });
+  await group.locator(".pk-head .sw").click(); await sleep(500); await p.mouse.move(2, 2); await blur(p);
+  await top(); await sleep(150);
+  await shot(p, "packs", "panel-group-off", await head(), { pad: 8, note: "the whole pack off with one switch" });
+  await group.locator(".pk-head .sw").click(); await sleep(500);
+  await toastGone(p);
+  // a week later the team changed the pack: Update available, then the update review
+  await p.evaluate(() => {
+    const s = __cat.packServed;
+    s.mods[0] = { ...s.mods[0], css: "thead th { position: sticky; top: 0; background: #f9fafb; }\n.table { max-height: 420px; }" };
+    s.mods.splice(1, 1); // "Failed orders stand out" is gone
+    s.mods.push({ morse: 1, id: "pending-amber", title: "Pending orders in amber", prompt: "show pending orders in amber", css: "tr.pending td { background: #fffbeb; }", js: "", match: { hosts: [location.host], app: null } });
+    s.note = "Sticky header keeps its background now. Pending orders are amber.";
+    __cat.later(2);
+  });
+  await openPanel();
+  await ui(p, ".pk-upd").waitFor({ timeout: 6000 }).catch(() => {});
+  await top(); await sleep(200);
+  await shot(p, "packs", "panel-update", await head(), { pad: 8, note: "Update available, what changed in a few words, Review…" });
+  await group.locator("[data-pk=update]").click(); await card.waitFor(); await sleep(900); await blur(p);
+  await shot(p, "packs", "update", card, { note: "what changed, the team's note, then changed (with the lines), new and removed; nothing changes until Update" });
+  await card.locator(".pk-item[data-kind=change]").first().scrollIntoViewIfNeeded(); await sleep(150);
+  await shot(p, "packs", "update-changed", card.locator(".pk-item[data-kind=change]").first(), { pad: 8, note: "a changed mod: the line counts and the diff, open when short" });
+  await card.evaluate(c => { c.scrollTop = c.scrollHeight; }); await sleep(150);
+  await shot(p, "packs", "update-end", card, { note: "no longer in the pack (untick to keep it), the mods left out before, and History keeps your versions" });
+  await p.keyboard.press("Escape"); await sleep(200);
+  await close(p);
 }
 
 // ---------------------------------------------------------------- run
@@ -2200,6 +2389,8 @@ for (const theme of ["dark", "light"]) {
     if (want("style")) await guard("style", () => styleStates(theme, width));
     if (want("guard")) await guard("guard", () => guardStates(theme, width));
     if (want("first-run")) await guard("first-run", () => firstRunStates(theme, width));
+    if (want("waiting")) await guard("waiting", () => waitingStates(theme, width));
+    if (want("packs")) await guard("packs", () => packStates(theme, width));
   }
   if (want("popup")) await guard("popup", () => popupStates(theme));
   if (want("motion")) await guard("motion", () => reducedMotion(theme));

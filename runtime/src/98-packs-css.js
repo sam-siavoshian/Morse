@@ -8,11 +8,13 @@ function PACKS_CSS() { return `
   .pk-card { width: min(680px, calc(100vw - 32px)); }
   /* a pack can be long: Install / Update stay in view at the bottom of the card */
   .pk-card footer { position: sticky; bottom: -20px; z-index: 1; margin: 16px -20px -20px; padding: 12px 20px 20px; background: var(--m-surface); border-top: 1px solid var(--m-line); }
-  .pk-note { margin: 0 0 12px; padding: 8px 12px; border-left: 2px solid var(--m-line-strong); color: var(--m-text-2); overflow-wrap: anywhere; }
+  /* the maker's note: a quote in the box the update review's "What changed" uses (98-gallery-css.js .gl-what) */
+  .pk-note { margin: 0 0 12px; padding: 8px 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-bg); color: var(--m-text); overflow-wrap: anywhere; }
   .pk-items { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .pk-item { min-width: 0; padding: 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-bg); transition: opacity var(--m-fast); }
+  .pk-item { min-width: 0; padding: 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-bg); }
+  /* unticked: muted by color (the AA tokens), never by opacity */
   .pk-item.off { background: transparent; }
-  .pk-item.off .pk-body { opacity: .6; }
+  .pk-item.off .pk-pick b, .pk-item.off .pk-does { color: var(--m-text-2); }
   .card .pk-pick { display: flex; align-items: flex-start; gap: 12px; margin: 0; cursor: pointer; font: inherit; letter-spacing: var(--m-tracking); text-transform: none; color: var(--m-text); }
   .pk-pick input, .pk-sub input, .pk-sel input { flex: none; width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--m-primary); cursor: pointer; }
   .pk-pick > span { flex: 1; min-width: 0; }
@@ -92,5 +94,6 @@ function PACKS_CSS() { return `
   .pk-pickbar span { flex: 1; min-width: 0; }
   .pk-pickbar b { display: block; font-weight: 600; line-height: 20px; }
   .pk-pickbar small { display: block; color: var(--m-text-3); font-size: var(--m-text-sm); line-height: 16px; }
-  .panel .pk-pickbar button:disabled { opacity: .5; cursor: default; }
+  /* Next with nothing chosen: the same off look as Install with nothing ticked (color only) */
+  .panel .pk-pickbar button.primary:disabled { background: var(--m-line-strong); border-color: var(--m-line-strong); color: var(--m-text-2); cursor: default; }
 `; }

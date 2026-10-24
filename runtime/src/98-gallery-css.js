@@ -37,7 +37,7 @@ function GALLERY_CSS() { return `
   .gl-upd { grid-column: 2; display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 8px 8px 8px 12px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-bg); }
   .gl-upd p { flex: 1; min-width: 0; margin: 0; font-size: var(--m-text-sm); line-height: 16px; color: var(--m-text-2); overflow-wrap: anywhere; }
   .gl-upd b { color: var(--m-text); font-weight: 600; }
-  .gl-upd b::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 7px 1px 0; border-radius: 50%; background: var(--m-text); vertical-align: middle; }
+  .gl-upd b::before { content: ""; margin: 0 8px 1px 0; background: var(--m-text); vertical-align: middle; } /* the status dot (99-css.js) */
   .panel .gl-upd button { flex: none; height: 24px; padding: 0 10px; }
 
   /* ---- the chip in the bar */
