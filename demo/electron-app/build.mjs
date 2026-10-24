@@ -14,6 +14,7 @@
 //        node ~/.cache/morse/electron/node_modules/electron/install.js   (if dist/ is missing)
 
 import { existsSync, promises as fs, readFileSync, statSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
@@ -121,6 +122,75 @@ export async function setFuses(exe, fuses) {
   }
   await fs.rm(exe);
   await fs.writeFile(exe, buf, { mode: 0o755 });
+}
+
+// ---- the copies tests keep: ~/.cache/morse/tunes/<name>-<hash>
+//
+// Built once per Electron runtime and app source, and opened by every run,
+// side by side included. Each is built in a folder of its own and renamed into
+// place when done. The runtime is hard-linked when the disk allows, but a
+// locked copy (setFuses) or a copy on another disk is a real ~224 MB, so only
+// the KEEP most recently used of each name stay: a new hash (the app's files
+// changed) would otherwise leave one more behind every time (it reached 4.6 GB).
+export const TUNES_CACHE = path.join(os.homedir(), ".cache", "morse", "tunes");
+export const KEEP = 3;
+const BUSY_MS = 10 * 60_000; // a copy used this recently may be open in another run: never removed
+
+// Removes all but the `keep` most recently used builds of each name (and
+// half-built folders left by a run that was stopped). -> the names removed.
+export async function pruneTunesCache(cache = TUNES_CACHE, { keep = KEEP, now = Date.now(), busyMs = BUSY_MS } = {}) {
+  let entries;
+  try { entries = await fs.readdir(cache, { withFileTypes: true }); } catch { return []; }
+  const byName = new Map(), gone = [];
+  for (const e of entries) {
+    if (!e.isDirectory()) continue;
+    const st = await fs.stat(path.join(cache, e.name)).catch(() => null);
+    if (!st) continue;
+    if (/\.tmp$/.test(e.name)) { // a build that never finished
+      if (now - st.mtimeMs > 3600e3) { await fs.rm(path.join(cache, e.name), { recursive: true, force: true }).catch(() => {}); gone.push(e.name); }
+      continue;
+    }
+    const m = /^(.+)-[0-9a-f]{12}$/.exec(e.name);
+    if (!m) continue;
+    if (!byName.has(m[1])) byName.set(m[1], []);
+    byName.get(m[1]).push({ name: e.name, used: st.mtimeMs });
+  }
+  for (const list of byName.values()) {
+    list.sort((a, b) => b.used - a.used);
+    for (const old of list.slice(keep)) {
+      if (now - old.used < busyMs) continue;
+      await fs.rm(path.join(cache, old.name), { recursive: true, force: true }).catch(() => {});
+      gone.push(old.name);
+    }
+  }
+  return gone;
+}
+
+// The cached copy called `name` for this runtime and these app files, built
+// with build(outDir) when it isn't there yet. -> { dir, exe, version }
+export async function cachedTunes(name, build, { dist = findElectron(), cache = TUNES_CACHE } = {}) {
+  // By the files' names and contents, not where this checkout is: every
+  // checkout (worktrees too) with the same app shares one copy.
+  const h = createHash("sha256").update(`${dist}\0${electronVersion(dist)}\0${name}\0`);
+  for (const f of [...(await fs.readdir(here)).sort().map(f => path.join(here, f)), path.join(here, "..", "sites", "tunes", "index.html")]) h.update(path.relative(here, f)).update(await fs.readFile(f));
+  const dir = path.join(cache, `${name}-${h.digest("hex").slice(0, 12)}`);
+  const result = () => ({ dir, exe: path.join(dir, process.platform === "win32" ? "Tunes.exe" : "tunes"), version: electronVersion(dir) });
+  await fs.mkdir(cache, { recursive: true });
+  if (existsSync(path.join(dir, ".built"))) {
+    await fs.utimes(dir, new Date(), new Date()).catch(() => {}); // used now: pruning goes by last use
+    await pruneTunesCache(cache);
+    return result();
+  }
+  const tmp = `${dir}.${process.pid}.tmp`;
+  try {
+    await build(tmp);
+    await fs.writeFile(path.join(tmp, ".built"), "");
+    // Another run may have finished the same build first: theirs is as good.
+    await fs.rename(tmp, dir).catch(e => { if (!existsSync(path.join(dir, ".built"))) throw e; });
+  } finally { await fs.rm(tmp, { recursive: true, force: true }); }
+  await fs.utimes(dir, new Date(), new Date()).catch(() => {});
+  await pruneTunesCache(cache);
+  return result();
 }
 
 if (process.argv[1] &&path.resolve(process.argv[1]) === new URL(import.meta.url).pathname) {

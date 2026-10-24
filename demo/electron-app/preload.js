@@ -6,4 +6,6 @@ contextBridge.exposeInMainWorld("tunes", {
   openMiniPlayer: () => ipcRenderer.send("tunes:mini"),
   command: cmd => ipcRenderer.send("tunes:command", String(cmd)),
   onCommand: fn => ipcRenderer.on("tunes:command", (_e, cmd) => fn(cmd)),
+  queue: () => ipcRenderer.invoke("tunes:queue"),
+  like: title => ipcRenderer.send("tunes:like", String(title)),
 });

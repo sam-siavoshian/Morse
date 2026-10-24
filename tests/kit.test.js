@@ -172,3 +172,23 @@ test("'host >>> inside' reaches into open shadow roots and frames; css(text, whe
   assert.deepEqual(await look(), { colors: ["rgb(0, 0, 255)", "rgb(0, 0, 255)"], seen: ["1", "1"], frame: "rgb(0, 0, 255)" });
   await page.evaluate(() => morse.__off("r6"));
 });
+
+// VS Code's ids have dots ("workbench.parts.statusbar"); models write them as
+// "#workbench.parts.statusbar" (an id and two classes), which matches nothing.
+test("an id with dots written as #a.b.c finds the part whose id it is, and #id.class still means a class", { skip }, async () => {
+  await page.evaluate(() => {
+    const bar = document.createElement("div");
+    bar.id = "workbench.parts.statusbar";
+    bar.innerHTML = `<div class="left-items"></div>`;
+    const plain = document.createElement("p");
+    plain.id = "note";
+    plain.className = "big";
+    document.body.append(bar, plain);
+  });
+  const r = await run("ids1", `morse.watch("#workbench.parts.statusbar > .left-items", el => el.append(morse.el("button", { text: "Format" })));
+    if (!morse.$("#note.big")) throw new Error("#id.class");`);
+  assert.equal(r.ok, true);
+  await settle(page);
+  assert.equal(await page.evaluate(() => document.querySelector('[id="workbench.parts.statusbar"] button')?.textContent), "Format");
+  await page.evaluate(() => morse.__off("ids1"));
+});
