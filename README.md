@@ -1,6 +1,6 @@
 # ▦ Morse
 
-**Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like.**
+**Morse lets you change any website or desktop app by saying what you want.**
 
 [![Watch the 92-second demo](https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/poster-demo-v2.png)](https://github.com/sam-siavoshian/RRAA/blob/main/docs/launch/morse-demo-v2.mp4)
 
@@ -28,14 +28,14 @@ You need [Node](https://nodejs.org) 22 or newer. Full steps, and what to do when
 
 1. Get Morse: `npm install -g morse-cli` (until the first npm release: `npm install -g github:sam-siavoshian/RRAA`).
 2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and choose the folder `morse extension` prints. The welcome page opens.
-3. In Morse's details, turn on **“Allow User Scripts”**, so mods that add buttons or features can run.
-4. Connect a model: the welcome page shows one command, `morse setup --pair <code>`. Paste it in a terminal. It finds Claude Code or Codex, checks that it answers, and the page connects by itself. Then press **⌥Space** (Ctrl+Shift+Space on Windows and Linux) on any page.
+3. Answer its one question, then connect a model: with Morse Desktop open, click **Use Claude Code** and **Allow**. Or paste an Anthropic API key, or run the `morse setup --pair <code>` it shows.
+4. Make your first change on its practice page, then press **⌥Space** (Ctrl+Shift+Space on Windows and Linux) on any page. Morse asks for **“Allow User Scripts”** only when a change needs it.
 
-**Desktop apps (Spotify, Slack, Discord, VS Code…)**
+**Desktop apps (tested on VSCodium, Obsidian and Joplin)**
 
 1. Get Morse as in step 1 above, then run `morse setup` to choose your model.
 2. `morse apps` shows which of your apps Morse can connect to.
-3. `morse launch spotify` opens the app with Morse connected. Keep the terminal open.
+3. `morse launch obsidian` opens the app with Morse connected. Keep the terminal open.
 4. In the app, press **Ctrl+Shift+Space** (⌥Space on a Mac), point at something and say what you want. More: [Desktop apps](docs/desktop.md).
 
 To work on Morse itself from a clone, see the [developer guide](docs/dev/README.md#set-up-a-checkout).
@@ -56,7 +56,7 @@ To work on Morse itself from a clone, see the [developer guide](docs/dev/README.
 | **Mod packs** | Share several mods together with your team. Each person picks the ones they want, and the pack can stay up to date. | [Mod packs](docs/mod-packs.md) |
 | **Your controls** | One shortcut turns every mod off. Pause Morse on a site. A mod that slows down, freezes or keeps breaking a page is stopped. Back up everything to one file. | [Your controls](docs/your-controls.md) |
 | **Your style** | One look on every site and app: your font, bigger text, calmer pages, colors that are easier to tell apart. Say it once, ending with “everywhere”. | [Your style](docs/your-style.md) |
-| **Desktop apps** | `morse launch spotify` opens the app with Morse connected. The app's own files never change. | [Desktop apps](docs/desktop.md) |
+| **Desktop apps** | `morse launch obsidian` opens the app with Morse connected. The app's own files never change. | [Desktop apps](docs/desktop.md) |
 | **Morse Desktop** | An app for your computer: open your apps with Morse, choose your model and connect Chrome, all without a terminal. It waits in the tray. | [Morse Desktop](docs/desktop-app.md) |
 
 ## Which models work

@@ -89,8 +89,8 @@ To connect Chrome:
 ![“Allow Chrome to use your Claude Code?”](screenshots/171-desktop-app-allow-chrome.png)
 
 Only the Morse extension can ask, only from this computer, and nothing
-connects until you click **Allow**. Allow it only when you just clicked
-Connect in Chrome. **Sign out browsers** disconnects every browser.
+connects until you click **Allow**. Allow it only when you clicked
+Connect in Chrome a moment ago. **Sign out browsers** disconnects every browser.
 
 ## Mods
 

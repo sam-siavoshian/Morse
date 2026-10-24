@@ -184,3 +184,63 @@ test("unpair revokes tokens", async () => {
   await updateConfig(cfg => { cfg.bridge.tokens = []; });
   assert.equal((await req("POST", "/v1/complete", { body: { messages: MESSAGES }, headers: { Authorization: `Bearer ${token}` } })).status, 401);
 });
+
+// onboarding v2: one-click pairing. Chrome asks; a person on this computer
+// answers (Morse Desktop's dialog, or y in `morse serve`'s terminal).
+test("one-click pairing: only an extension may ask, a person's Allow hands that extension a token once, Deny gives nothing", async () => {
+  const { createBridge, askWords } = await import("../daemon/bridge.js");
+  const asked = [];
+  let answer = null;
+  const b = createBridge({ port: 0, app: "desktop", ask: q => new Promise(r => { asked.push(q); answer = r; }) });
+  const p = await b.listen();
+  const call = (method, path, origin) => new Promise((resolve, reject) => {
+    const r = http.request({ host: "127.0.0.1", port: p, method, path, headers: origin ? { Origin: origin } : {} }, res => {
+      let text = ""; res.on("data", d => (text += d)); res.on("end", () => resolve({ status: res.statusCode, json: JSON.parse(text || "null") }));
+    });
+    r.on("error", reject); r.end();
+  });
+  const answered = async id => waitFor(async () => { const x = await call("POST", `/v1/pair/ask/${id}`, EXT); return x.json.state !== "waiting" && x; }, { what: "the answer" });
+  try {
+    const health = (await call("GET", "/v1/health", EXT)).json;
+    assert.equal(health.app, "desktop");
+    assert.equal(health.ask, true);
+    assert.ok("signedIn" in health);
+    // No Origin (a local program) can't ask; a web page is refused like everywhere else.
+    assert.equal((await call("POST", "/v1/pair/ask")).status, 403);
+    assert.equal((await call("POST", "/v1/pair/ask", "https://evil.example")).status, 403);
+
+    const r = await call("POST", "/v1/pair/ask", EXT);
+    assert.equal(r.status, 202);
+    assert.match(r.json.id, /^[A-Za-z0-9_-]{22}$/);
+    await waitFor(() => asked.length === 1, { what: "the question" });
+    assert.equal(asked[0].origin, EXT);
+    assert.match(asked[0].words.message, /^Allow Chrome to use your Claude Code.*\?$/);
+    assert.deepEqual([asked[0].words.allow, asked[0].words.deny], ["Allow", "Deny"]);
+    // Asking again while waiting is the same question, not a second one.
+    assert.equal((await call("POST", "/v1/pair/ask", EXT)).json.id, r.json.id);
+    assert.equal(asked.length, 1);
+    // Another extension can't read this one's answer.
+    assert.equal((await call("POST", `/v1/pair/ask/${r.json.id}`, "chrome-extension://" + "b".repeat(32))).status, 403);
+    assert.deepEqual((await call("POST", `/v1/pair/ask/${r.json.id}`, EXT)).json, { state: "waiting" });
+
+    answer(true);
+    const got = await answered(r.json.id);
+    assert.equal(got.json.state, "allowed");
+    assert.ok(got.json.token.length > 30);
+    assert.equal((await call("POST", `/v1/pair/ask/${r.json.id}`, EXT)).status, 404, "handed out once");
+    const ok = await req("GET", "/v1/health", { headers: { Origin: EXT, Authorization: `Bearer ${got.json.token}` } });
+    assert.equal(ok.json.paired, true, "the token works with the helper");
+
+    // Deny: nothing, and no new question right away.
+    const d = await call("POST", "/v1/pair/ask", EXT);
+    await waitFor(() => asked.length === 2, { what: "the second question" });
+    answer(false);
+    assert.deepEqual((await answered(d.json.id)).json, { state: "denied" });
+    assert.equal((await call("POST", "/v1/pair/ask", EXT)).status, 429);
+    assert.match(askWords("Codex").detail, /If you didn't click Connect in Chrome a moment ago, choose Deny/);
+  } finally { await b.close(); }
+  // A helper with nobody to ask says so: Chrome types a code instead.
+  const quiet = await req("POST", "/v1/pair/ask", { headers: { Origin: EXT } });
+  assert.equal(quiet.status, 404);
+  assert.equal(quiet.json.code, "no-ask");
+});

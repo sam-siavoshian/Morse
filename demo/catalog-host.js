@@ -11,6 +11,7 @@
 //   ?hist=1        fixture prompt history
 //   ?gallery=1 ?suspect=1 ?paused=1 ?versions=1   see the round 3 fixtures below
 //   ?style= ?guard=1 ?onboard=   see the round 4 fixtures below
+//   ?waiting=1 ?packs=1 ?lang=de  see the round 5 fixtures below
 (() => {
   if (globalThis.__morseHost) return;
   try { localStorage.setItem("morse:debug", "1"); } catch {}
@@ -50,6 +51,7 @@
     clips: [], transcript: "make the toolbar airier", transcribeFail: null, holdTranscribe: false,
     token(text) { if (C.gen) emit({ type: "token", text, genId: C.gen.genId }); },
     phase(phase, error) { if (C.gen) emit({ type: "phase", phase, error, genId: C.gen.genId }); },
+    stage(stage) { if (C.gen) emit({ type: "stage", stage, genId: C.gen.genId }); },
     css(css) { if (C.gen) emit({ type: "css", css, genId: C.gen.genId }); },
     done(res) { const g = C.gen; C.gen = null; g?.reply(res); },
     push(m) { emit(m); },
@@ -89,6 +91,7 @@
   // by the catalog with core/heal.js) points at an album grid this page no longer has
   if (q.get("heal") && globalThis.__catHealFp) C.mods.push(fixture(30, { ...globalThis.__catHealMod, fp: globalThis.__catHealFp }));
   if (q.get("autofix")) C.settings.autoFix = true;
+  if (q.get("lang")) C.settings.language = q.get("lang"); // round 5: ?lang=de|fa, Settings → Language
   C.control = { pause: { all: !!q.get("paused"), sites: {} } };
   const b64 = s => { try { return JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g, "+").replace(/_/g, "/"))))); } catch { return null; } };
   function preview(src) {
@@ -136,6 +139,46 @@
     done: { state: { coach: "done", tips: { saved: true } }, status: { mode: "catalog", model: { connected: true }, userScripts: true } },
   }[q.get("onboard") || ""];
 
+  // ---- round 5 fixtures: “Allow User Scripts” off, mod packs
+  //   ?waiting=1   a mod's code waits for “Allow User Scripts” (exec answers { waiting })
+  //   ?packs=1     mod packs, with the real core/pack-host.js kept in memory. The team's
+  //                pack is at PACK_URL (C.packServed); __cat.later(days) moves the clock
+  //                on, so the next check fetches it again
+  const PACK_URL = "https://packs.example.com/orders-team.morse-pack.json";
+  C.clock = Date.parse(now);
+  C.later = days => { C.clock += days * 864e5; };
+  const packMod = (id, title, prompt, over = {}) => ({ morse: 1, id, title, prompt, css: "", js: "", match: { hosts: [location.host], app: null }, ...over });
+  C.packServed = {
+    morse: "morse-pack", version: 1, id: "orders-team", name: "Orders team", author: "Dana (orders team)",
+    note: "What the orders team uses every day. Untick what you don't need.",
+    mods: [
+      packMod("sticky-head", "Sticky table header", "keep the table header in view when I scroll", { css: "thead th { position: sticky; top: 0; }" }),
+      packMod("failed-red", "Failed orders stand out", "make failed orders stand out", { css: "tr.failed td { background: #fef2f2; }" }),
+      packMod("copy-order", "Copy order number", "add a button to copy the order number",
+        { js: "morse.watch('td.order', td => td.append(morse.el('button', { text: 'Copy', on: { click: () => navigator.clipboard.writeText(td.textContent) } })));" }),
+      packMod("mod7", "Bigger album art", "double the album art size", { css: ".cv { width: 120px }" }), // the same id as one of yours: Keep both or Replace yours
+      packMod("order-notes", "Notes on orders", "let me write a note on each order and keep it for the team",
+        { js: "morse.watch('tr', tr => morse.on(tr, 'click', () => fetch('https://notes.example.com/save', { method: 'POST', body: tr.id })));" }),
+      packMod("quiet-links", "Quieter links", "make links less bright on every site", { match: { hosts: ["*"], app: null }, css: "a { color: inherit; }" }),
+    ],
+  };
+  const packs = q.get("packs") ? import("/core/pack-host.js").then(({ createPacks }) => {
+    const store = {};
+    return createPacks({
+      store: { get: async k => structuredClone(store[k]), set: async (k, v) => { store[k] = structuredClone(v); } },
+      mods: {
+        list: async () => C.mods.map(m => ({ morse: 1, ...structuredClone(m) })),
+        put: async list => { for (const m of list) { const i = C.mods.findIndex(x => x.id === m.id); if (i >= 0) C.mods[i] = structuredClone(m); else C.mods.push(structuredClone(m)); } },
+        remove: async ids => { C.mods = C.mods.filter(m => !ids.includes(m.id)); },
+      },
+      writeFile: async name => ({ path: `~/Downloads/${name}` }),
+      fetch: async url => url === PACK_URL
+        ? new Response(JSON.stringify(C.packServed), { status: 200, headers: { "Content-Type": "application/json", ETag: `"${JSON.stringify(C.packServed).length}"` } })
+        : new Response("", { status: 404 }),
+      now: () => C.clock,
+    });
+  }) : null;
+
   const merge = (a, b) => { const o = { ...a }; for (const [k, v] of Object.entries(b || {})) o[k] = v && typeof v === "object" && !Array.isArray(v) ? { ...(a[k] || {}), ...v } : v; return o; };
   const voice = q.get("voice") === "none" ? null : q.get("voice") === "0"
     ? { transcribe: false, provider: null, label: "", hint: "Voice: add an OpenAI key in the Morse popup, or run the Morse helper" }
@@ -157,6 +200,13 @@
         if (m.type === "onboarding.set") { ONBOARD.state = merge(ONBOARD.state, m.patch); return reply(true); }
         if (m.type === "onboarding.open") return reply(null);
       }
+      if (packs && m.type.startsWith("pack.")) { const ph = await packs; try { return reply(await ph.handle(m)); } catch (e) { return fail(e.message); } }
+      if (m.type === "i18n.words") { // the overlay carries English only: the words of another language, from core/locales/ (as the extension and helper send them)
+        const code = String(m.lang || "");
+        if (code === "en" || !/^[a-z]{2}(-[A-Z]{2})?$/.test(code)) return reply(null);
+        try { return reply((await import(`/core/locales/${code}.js`)).default); } catch { return reply(null); }
+      }
+      if (q.get("waiting") && m.type === "exec") return reply({ waiting: "userScripts" });
       if (m.type === "stats" && C.slow?.[m.modId]) return reply({ watches: [], paused: C.slow[m.modId] });
       switch (m.type) {
         case "hello": return reply({ mode: "catalog", label: C.label, quiet: q.get("quiet") !== "0", appName: q.get("app") || null, settings: C.settings, voice });
