@@ -1064,11 +1064,14 @@ export function appImageEnv(app, { env = process.env, has = existsSync } = {}) {
 // Why an app that quit before opening its debugging port did so, in plain
 // words. Chromium refuses to start as root on Linux while its sandbox is on,
 // and every Electron app inherits that, so root gets its own hint.
-export function launchFailure(app, { code = null, signal = null, error = null } = {}, { platform = process.platform, uid = process.getuid?.() } = {}) {
+export function launchFailure(app, { code = null, signal = null, error = null, noSandbox = false } = {}, { platform = process.platform, uid = process.getuid?.() } = {}) {
   const name = app.name || "The app";
   if (error) return `Morse couldn't start ${name}${error.code === "ENOENT" ? `: there's nothing to run at ${executableFor(app)}` : error.code === "EACCES" || error.code === "EPERM" ? ": it isn't allowed to run (not executable)" : ". Check that it opens on its own"}.`;
   let msg = `${name} quit right after it started (${signal ? `stopped by ${signal}` : `exit code ${code}`}), before Morse could connect.`;
-  if (platform === "linux" && uid === 0 && app.engine !== "native")
+  // dogfood: with -- --no-sandbox already given, root isn't why. VSCodium had
+  // quit over a --user-data-dir path too long for its socket; its own words say so.
+  if (noSandbox) msg += ` Open it once on its own with the same arguments to see its message.`;
+  else if (platform === "linux" && uid === 0 && app.engine !== "native")
     msg += ` You're running as root, and Electron and Chromium apps won't start as root with their sandbox on. Run Morse as your own user. If you really must use root: morse launch ${app.id || "<app>"} -- --no-sandbox`;
   // A downloaded app macOS hasn't checked yet (Gatekeeper) is stopped before
   // it runs when started from a terminal; opening it once from Finder clears that.
@@ -1076,6 +1079,13 @@ export function launchFailure(app, { code = null, signal = null, error = null } 
   // Squirrel apps that are already open hand the new start to the open copy and quit.
   if (platform === "win32" && code === 0) msg += ` It may already be running in the tray. Quit it from the tray icon, or run morse launch ${app.id || "<app>"} --restart.`;
   return msg;
+}
+
+// dogfood: the app's debugging port went away while Morse was connecting
+// (the app quit right after it opened). Plain words, or null for any other error.
+export function closedEarly(app, e) {
+  if (!/fetch failed|ECONNREFUSED|ECONNRESET|socket hang up/i.test(`${e?.message || ""} ${e?.cause?.code || ""}`)) return null;
+  return `${app?.name || "The app"} closed right after it started, before Morse could connect. Open it once on its own to see why, then try again.`;
 }
 
 // Waits for a freshly launched app's debugging port. A launcher that hands off
@@ -1094,7 +1104,7 @@ export async function waitForLaunch(child, app, port, { timeoutMs = 30000, grace
     if (child.exited) {
       exitedAt ??= Date.now();
       const allow = child.handoff && child.exited.code === 0 ? Math.max(grace, handoffGrace) : grace;
-      if (Date.now() - exitedAt >= allow) throw Object.assign(new Error(launchFailure(app, child.exited)), { failed: true, plain: true });
+      if (Date.now() - exitedAt >= allow) throw Object.assign(new Error(launchFailure(app, { ...child.exited, noSandbox: !!child.spawnargs?.includes("--no-sandbox") })), { failed: true, plain: true });
     }
   }
   throw said(`${app.name} started but never opened its debugging port. It may still be running in the background (try --restart), or it blocks the setting Morse needs.`);

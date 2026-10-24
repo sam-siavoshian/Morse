@@ -8,7 +8,7 @@ import { waitForEndpoint } from "./cdp.js";
 import { inspectFuses, fuseVerdict, electronBinaryFor } from "./fuses.js";
 import {
   hostContext, discoverApps, resolveApp, launchApp, waitForLaunch, quitApp, listProcesses, findAppProcesses, debugPortOf,
-  loadAppPrefs, saveAppPref, formatApps, said,
+  loadAppPrefs, saveAppPref, formatApps, said, closedEarly,
 } from "./apps.js";
 import { pickPort, portFree, portAnswers, reachableFrom, identify, checkIdentity } from "./ports.js";
 import { readSessions, publishSession, stopRequested, stopSession, withMods, formatStatus } from "./status.js";
@@ -153,9 +153,12 @@ export async function connectApp(app, { extra = [], pref = null, port: wantPort 
   }
 
   // Only this computer, and only the app we meant.
-  const exposed = await reachableFrom(port);
+  // dogfood: an app that quits right after opening its port made these fail
+  // with "fetch failed", which read as "Morse couldn't reach the model".
+  const gone = e => { const m = closedEarly(app, e); return m ? said(m) : e; };
+  const exposed = await reachableFrom(port).catch(e => { throw gone(e); });
   if (exposed.length) throw said(`Port ${port} can be reached from other computers (${exposed.join(", ")}), so Morse won't use it. Quit ${app.name} to close it.`);
-  const who = await identify(port);
+  const who = await identify(port).catch(e => { throw gone(e); });
   const v = checkIdentity(who, app, pids);
   if (!v.ok) throw said(`Morse didn't connect: ${v.why}.`);
 

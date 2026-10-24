@@ -61,6 +61,8 @@
           return reply({ mode: "playground", label: "demo replay", quiet: !q.has("welcome"), settings: store.get("settings", {}), voice,
             ...(q.has("models") && { models: { fast: "sonnet", best: "opus" } }) }); // ?models: the Model setting (core/route.js)
         case "mods.list": return reply(q.has("keepmods") ? store.get("mods", []) : []); // ?keepmods: saved mods come back (demo/shoot-i18n.js)
+        // the runtime carries English only; another language's words come from core/locales/ (core/languages.js)
+        case "i18n.words": return import("/core/languages.js").then(x => x.readWords(m.lang)).then(w => reply(w), e => reply(null, String(e)));
         case "settings.get": return reply(store.get("settings", {}));
         case "settings.set": { const s = merge(store.get("settings", {}), m.settings); store.set("settings", s); return reply(s); }
         case "history.get": return reply(store.get("history", {})[m.scope] || []);

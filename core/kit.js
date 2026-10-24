@@ -560,7 +560,8 @@ function installMorseKit() {
       },
       byText(selector, text) {
         const needle = String(text).toLowerCase();
-        return query(selector).find(e => (e.textContent || "").toLowerCase().includes(needle)) || null;
+        const named = e => [e.textContent, ...["aria-label", "title", "alt"].map(a => e.getAttribute?.(a))].some(v => (v || "").toLowerCase().includes(needle)); // dogfood: icon buttons
+        return query(selector).find(named) || null;
       },
       // ---- show-once hook: doing steps for the user (core/showonce.js)
       // waitFor: the first shown match (with `text`: whose text contains it),
@@ -568,15 +569,20 @@ function installMorseKit() {
       waitFor(selector, opts = {}) {
         const { text = null, within = document, timeout = 5000 } = typeof opts === "number" ? { timeout: opts } : opts;
         const needle = text == null ? null : String(text).toLowerCase().replace(/\s+/g, " ").trim();
-        const words = e => (e.textContent || "").toLowerCase().replace(/\s+/g, " ").trim();
+        // dogfood: an element's words are its text and its name (aria-label,
+        // title, alt): Show me once calls GitLab's icon-only copy button
+        // “Copy URL”, and the model looks for those words.
+        const norm = v => (v || "").toLowerCase().replace(/\s+/g, " ").trim();
+        const words = e => [norm(e.textContent), ...["aria-label", "title", "alt"].map(a => norm(e.getAttribute?.(a)))].filter(Boolean);
         const find = () => [...within.querySelectorAll(selector)].filter(e => !e.closest("[data-morse-ui],[data-morse]")
-          && (needle == null || words(e).includes(needle)));
+          && (needle == null || words(e).some(w => w.includes(needle))));
+        const exact = e => words(e).includes(needle);
         return new Promise((resolve, reject) => {
           const t0 = Date.now();
           const tick = guard(c, () => {
             let all = find();
             // "Archive" is the button that says Archive, before one that says Unarchive.
-            if (needle != null) all = [...all.filter(e => words(e) === needle), ...all.filter(e => words(e) !== needle)];
+            if (needle != null) all = [...all.filter(exact), ...all.filter(e => !exact(e))];
             const el = all.find(e => e.getClientRects().length) || (Date.now() - t0 >= timeout ? all[0] : null);
             if (el) return resolve(el);
             if (Date.now() - t0 >= timeout) return reject(new Error(`Couldn't find ${text != null ? `“${text}”` : selector} on the page`));

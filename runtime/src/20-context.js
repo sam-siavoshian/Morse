@@ -669,6 +669,28 @@ function virtualNote(v) {
   const fields = [...v.row.children].slice(0, 6).map(selName);
   return `${selectorFor(v.list)} is a virtualized list: ${v.n} row elements (${row}) stand in for about ${v.total.toLocaleString("en-US")} items. As you scroll, the same row elements are reused for other items (their text and attributes change, the elements stay). So decide from a row's current content every time it changes: morse.watch(${jsStr(row)}, fn, { live: true }) re-runs fn whenever a row changes. fn must set and unset (classList.toggle(cls, condition), el.hidden = !condition), and read the row's text when clicked, not when a button is made.${fields.length > 1 ? ` Each row holds ${fields.join(", ")}: read a field from its own element (the row's textContent runs them together).` : ""}`;
 }
+// dogfood: VS Code's sidebar, editor and panel are absolutely placed by its
+// own code (inline left/width on each split view). "Hide the sidebar until I
+// hover" hid the sidebar and left a 300px gap twice: the model didn't know.
+// Groups of 2+ big sibling panes whose place is set inline, at most 2.
+function placedPanes() {
+  const out = [], seen = new Set();
+  const els = document.body ? document.body.getElementsByTagName("*") : [];
+  for (let i = 0; i < els.length && i < 6000 && out.length < 2; i++) {
+    const p = els[i].parentElement;
+    if (!p || seen.has(p) || els[i].closest("[data-morse-ui]")) continue;
+    const st = els[i].style;
+    if (!(st.left || st.top) || !(st.width || st.height)) continue;
+    seen.add(p);
+    const kids = [...p.children].filter(k => {
+      if (!(k.style.left || k.style.top) || !(k.style.width || k.style.height) || styleOf(k).position !== "absolute") return false;
+      const r = k.getBoundingClientRect();
+      return r.width >= 120 && r.height >= 120;
+    });
+    if (kids.length >= 2) out.push({ parent: p, n: kids.length, sel: similar(kids[0])?.sel?.split(" > ").pop() || kids[0].localName });
+  }
+  return out;
+}
 function pageNotes(roots) {
   const notes = [];
   // Generated class names (CSS modules, emotion, Tailwind JIT builds…)
@@ -711,6 +733,8 @@ function pageNotes(roots) {
   for (const v of virtualLists()) notes.push(virtualNote(v));
   const churn = Churn.recent();
   if (churn.length) notes.push(`This page re-renders: lately the app replaced what is inside ${churn.map(([el, n]) => `${selectorFor(el)} (${n}×)`).join(", ")}. Anything a script adds there, or changes on elements in there, is wiped on the next render. CSS keeps working. In JS, use morse.watch (it puts things back after a re-render), never a one-time querySelector. Something computed from the page (a count, a total) must be computed again when the page changes: watch it with { live: true }.`);
+  const panes = placedPanes();
+  if (panes.length) notes.push(`Panes placed by the app's own code: ${panes.map(p => `${selectorFor(p.parent)} > ${p.sel} (${p.n}, each with an inline left/width or top/height)`).join("; ")}. The app sets where each pane sits and how big it is, and doesn't move the others when one is hidden: hiding a pane leaves an empty gap. To give its space to the rest, also change the neighbors' left/width (or top/height) with !important. To show a hidden pane on hover, make the pane position:fixed with a z-index and put the hover strip where nothing else covers it. Panes nest (a pane holds panes): pick one by its own child, :has(> #part), never :has(#part), which also matches every pane around it.`);
   const canvases = [...document.querySelectorAll("canvas")].filter(c => { const r = c.getBoundingClientRect(); return r.width >= 150 && r.height >= 100 && !c.closest("[data-morse-ui]"); });
   if (canvases.length) notes.push(`Drawn on <canvas>: ${canvases.slice(0, 3).map(c => `${selectorFor(c)} (${c.width}×${c.height})`).join(", ")}. What a canvas shows is pixels, not elements: CSS can size, move or hide it; reading or saving the picture is canvas.toBlob()/toDataURL(); drawing is the app's job (use its own buttons and shortcuts where they exist).`);
   return notes.map(n => "- " + n).join("\n");
@@ -809,7 +833,26 @@ function effectProbe(target, selectors = []) {
     }
   }
   const unmatched = selectors.filter(sel => { try { return !deepAll(sel).length; } catch { return true; } });
-  return { fp: String(h), unmatched };
+  return { fp: String(h), unmatched, shown: spotsShown() };
+}
+// dogfood: how many of 48 spots of the window show a part of the page (the
+// same test as core/guard.js pageCollapse): words of its own, a picture, field
+// or button, or a box under a quarter of the window, not the bare backdrop.
+// The engine compares it before and after JS runs: in VSCodium a JS-only
+// "hide the sidebar" hid every part, which the CSS check can't see.
+function spotsShown() {
+  const W = innerWidth, H = innerHeight;
+  if (!W || !H || !document.body) return null;
+  let n = 0;
+  for (let i = 1; i <= 8; i++) for (let j = 1; j <= 6; j++) {
+    const el = document.elementsFromPoint(W * i / 9, H * j / 7).find(e => !e.closest("[data-morse-ui]"));
+    if (!el || el === document.body || el === document.documentElement) continue;
+    let own = /^(img|svg|video|canvas|iframe|input|textarea|select|button|picture|object|embed)$/.test(el.localName) || !!el.closest("svg");
+    for (const c of el.childNodes) if (!own && c.nodeType === 3 && c.textContent.trim()) own = true;
+    const r = el.getBoundingClientRect();
+    if (own || r.width * r.height < W * H / 4 || styleOf(el).backgroundImage !== "none") n++;
+  }
+  return n;
 }
 // The hosts' effect check asks for it from Morse's own JS world (the desktop
 // connector over CDP, the extension's content script): never the page's. A

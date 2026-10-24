@@ -126,3 +126,18 @@ test("the context reaches into open shadow roots and same-origin frames", { skip
   assert.match(inside.facts, /inside the open shadow root of <x-panel>/);
   assert.match(inside.facts, /x-panel::part\(go\)/);
 });
+
+// dogfood: in VSCodium "hide the sidebar until I hover" left a 300px gap
+// twice; the panes are placed by the app's own code, and the model now hears so.
+test("panes placed by the app's own code (VS Code's split view) get a note; a normal page doesn't", { skip }, async () => {
+  assert.doesNotMatch((await contextFor(null)).notes, /Panes placed/);
+  const p2 = await browser.newPage({ viewport: { width: 1200, height: 800 } });
+  await p2.setContent(`<div class="monaco-split-view2"><div class="split-view-container" style="position:relative;height:700px">
+    <div class="split-view-view" style="position:absolute;left:0px;width:48px;height:700px"></div>
+    <div class="split-view-view" style="position:absolute;left:48px;width:300px;height:700px"><div id="sidebar">Explorer</div></div>
+    <div class="split-view-view" style="position:absolute;left:348px;width:852px;height:700px"><div id="editor">Editor</div></div></div></div>`);
+  const notes = await p2.evaluate(`(() => { const S = { app: null, target: null }; ${SRC}; return context().notes; })()`);
+  await p2.close();
+  assert.match(notes, /Panes placed by the app's own code: .*split-view-container > [^ ]*split-view-view \(2,/);
+  assert.match(notes, /leaves an empty gap/);
+});

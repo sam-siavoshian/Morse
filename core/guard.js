@@ -165,11 +165,22 @@ export function cssKey(css) {
 export function pageCollapse(css, id = "") {
   const W = innerWidth, H = innerHeight;
   if (!W || !H || !document.body) return null;
+  // dogfood: in VSCodium a rule that hid the whole workbench left only its
+  // full-window backdrop under every spot, which still counted as "the page".
+  // A spot shows the page when what's on top there has words of its own, is a
+  // picture, field or button, or is a box smaller than a quarter of the window.
+  const REPLACED = /^(img|svg|video|canvas|iframe|input|textarea|select|button|picture|object|embed)$/;
+  const shows = el => {
+    if (REPLACED.test(el.localName) || el.closest("svg")) return true;
+    for (const n of el.childNodes) if (n.nodeType === 3 && n.textContent.trim()) return true;
+    const r = el.getBoundingClientRect();
+    return r.width * r.height < W * H / 4 || getComputedStyle(el).backgroundImage !== "none";
+  };
   const sample = () => {
     let n = 0;
     for (let i = 1; i <= 8; i++) for (let j = 1; j <= 6; j++) {
       const el = document.elementsFromPoint(W * i / 9, H * j / 7).find(e => !e.closest("[data-morse-ui]"));
-      if (el && el !== document.body && el !== document.documentElement) n++;
+      if (el && el !== document.body && el !== document.documentElement && shows(el)) n++;
     }
     return n;
   };
