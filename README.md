@@ -2,6 +2,10 @@
 
 **Change any app or website in your own words.** Press a shortcut, point at something and say what you want. Morse makes the change right there in the app while you watch. Save it as a mod, turn it off any time, or share it with a link. The change is written by a model you already have: Claude Code, Codex, or an API key.
 
+[![Watch the 85-second demo](docs/launch/poster-demo.png)](docs/launch/morse-demo.mp4)
+
+*[Watch the 85-second demo](docs/launch/morse-demo.mp4), recorded from real runs: Claude Code (haiku) wrote the sleep timer and the word count. Clips, posters and notes on how it was made: [`docs/launch`](docs/launch/).*
+
 ![Morse adding a sleep timer to a music player](docs/screenshots/clip-sleep-timer.gif)
 
 *Recorded automatically by Morse. To make the clip the same every time, the model's replies in it are replayed from a file (see [Status](#status)). Everything after the reply is real: showing the change as it is written, fixing mistakes, saving and recording. The same steps with real Claude Code replies are in [`docs/screenshots/claude-code`](docs/screenshots/claude-code).*
