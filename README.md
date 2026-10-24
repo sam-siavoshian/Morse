@@ -48,6 +48,18 @@ All captured by [`demo/shoot-extension.js`](demo/shoot-extension.js) and [`demo/
 
 ![](docs/screenshots/00-terminal.png)
 
+### Finding and tracking desktop apps
+
+| | |
+|---|---|
+| ![](docs/screenshots/80-apps.png) **`morse apps`** lists what's installed and whether Morse can attach (rendered from the macOS fixture tree in [`demo/fake-installs.js`](demo/fake-installs.js); the container has no Mac) | ![](docs/screenshots/81-status.png) **`morse status`** from real sessions: windows, popups and app frames, mods on in each, and an app started with `--watch` waiting to come back |
+
+- **`morse apps`** looks in `/Applications` and `~/Applications` (reads each `Info.plist`, checks for Electron Framework / Chromium Embedded Framework), on Windows in `%LOCALAPPDATA%\Programs`, Program Files, Roaming and Squirrel `app-<version>` folders, and on Linux on `PATH`, `/usr/share`, `/usr/lib`, `/opt`, snap and flatpak exports. Native apps (ChatGPT for Mac) are listed as "can't attach".
+- **`morse launch vs code`** — names are fuzzy: `code`, `vscode`, `spot`, `discrod` all work.
+- **Every place an app renders**: all windows, popups opened later, `<webview>`s, BrowserViews, and the app's own out-of-process frames (VS Code webviews). Third-party embeds, workers, DevTools and internal pages are skipped. Reloads, navigation and renderer crashes are followed; a mod saved in one window shows up in every window it matches.
+- **Already open?** Morse says so in one sentence and offers `--restart` (AppleScript quit on macOS, WM_CLOSE then taskkill on Windows, SIGTERM on Linux). The choice is remembered per app in `~/.morse/apps.json`; `--no-restart` forgets it.
+- **`--watch`** keeps waiting when the app quits and attaches again when it's back. **`morse stop <app>`** (or Ctrl+C) detaches: the bar and mods come off open windows and the app keeps running.
+
 ### Web (Chrome extension)
 
 | | |
@@ -91,7 +103,7 @@ Honest accounting of what was verified and how:
 
 - **Verified end to end** (in a Linux container, Chromium 153): extension on three sites including a strict-CSP one; desktop connector via `morse launch` → CDP attach → inject → generate → self-repair → save → full app restart → mods re-applied; share link → install in a second browser profile; userscript export running standalone; clip recording to GIF/MP4. `npm test` covers the parser, providers, engine, share links, fuses and the helper kit (18 tests, the kit ones in real Chromium).
 - **The model in the screenshots is the demo model.** The container had no access to model weights (ollama.com / Hugging Face were blocked), so generation was replayed from [`core/demo.js`](core/demo.js) at a local-model-like pace. The Ollama and OpenAI-compatible providers are implemented and tested against fake servers speaking those protocols, but have not been run against real weights yet. Expect a 7B coder model to nail CSS and simple DOM features and to miss more often on logic inside minified apps; the self-repair loop and the `morse` helper kit exist to raise that hit rate.
-- **No real Electron app was available** in the container. The "desktop app" in the screenshots is a Chromium app window (`--app=`), which speaks exactly the protocol Electron apps expose with `--remote-debugging-port`. Spotify/Slack/Discord/VS Code paths in [`daemon/apps.js`](daemon/apps.js) are untested. Some apps strip or block the debugging switch; `morse fuses <app>` reads the Electron fuse wire (REA's `inspect_electron_fuses` check) to tell you what to expect.
+- **No real Electron app was available** in the container. The "desktop app" in the screenshots is a Chromium app window (`--app=`), which speaks exactly the protocol Electron apps expose with `--remote-debugging-port`. Multi-window behavior (popups, an isolated app frame, a third-party embed, reloads, crashes, kill and restart, `--restart`, `status`, `stop`) is tested against a fake app built from that Chromium ([`demo/fake-app.js`](demo/fake-app.js), [`tests/desktop.test.js`](tests/desktop.test.js)). App discovery is tested against fixture directory trees for macOS, Windows and Linux, not real installs; AppleScript and taskkill quitting, Windows process listing, and the real Spotify/Slack/Discord/VS Code layouts are untested. `webview` targets only exist in Electron, so they are covered by unit tests only. Some apps strip or block the debugging switch; `morse fuses <app>` reads the Electron fuse wire (REA's `inspect_electron_fuses` check) to tell you what to expect.
 
 ## Install
 
@@ -108,7 +120,10 @@ ollama pull qwen2.5-coder:7b
 **Desktop apps:**
 
 ```bash
-node daemon/cli.js launch spotify --restart   # or slack, discord, vscode, notion, obsidian, a path…
+node daemon/cli.js apps                       # what's installed, and whether Morse can attach
+node daemon/cli.js launch spotify --restart   # or "vs code", slack, discord, notion, obsidian, a path…
+node daemon/cli.js status                     # attached apps, their windows, ports and mods
+node daemon/cli.js stop spotify               # detach; the app keeps running
 node daemon/cli.js mods
 node daemon/cli.js model --provider openai --base-url http://127.0.0.1:8080 --model qwen2.5-coder
 ```
@@ -151,7 +166,7 @@ Mods are code running inside apps you're signed into, so:
 
 - The model is told not to use the network, eval, or external scripts, but **that is not enforced yet** (see roadmap). Read shared mods before installing; the share page shows the full code first, and imported mods are marked.
 - Mods run in the renderer only. They get no Node/Electron APIs.
-- `morse launch` opens a debugging port on 127.0.0.1. While it's open, **any local process can attach to that app**, which is the same trust level as anything else running as you, but worth knowing. Quit the app normally to close it.
+- `morse launch` opens a debugging port on 127.0.0.1. While it's open, **any local process can attach to that app**, which is the same trust level as anything else running as you, but worth knowing. Quit the app normally to close it. Morse picks a free port, drops any `--remote-debugging-address` you pass, checks the port can't be reached from this machine's other addresses, and refuses to attach if what answers isn't the app it started (process id, then user agent).
 - Share links carry the mod in the URL fragment, which browsers never send to a server.
 - Page text goes to the model, so a page can try to prompt-inject it. That's one reason generated code is always shown, reversible, and never silent.
 
@@ -167,11 +182,11 @@ Mods are code running inside apps you're signed into, so:
 core/        shared brain: engine, prompt, parser, providers, mod format, helper kit, demo model
 runtime/     the in-app UI and effect (one file, injected everywhere)
 extension/   Chrome MV3 host
-daemon/      desktop connector + CLI (CDP, app launcher, fuses, clip recorder, mod store)
+daemon/      desktop connector + CLI (CDP, app finder/launcher, ports, status, fuses, clip recorder, mod store)
 share/       static install page for share links
 demo/        demo apps + the scripts that produced every screenshot
 ```
 
-Regenerate the screenshots: `npm run demo:serve &` then `DISPLAY=:99 npm run screenshots` (needs Xvfb, Chromium/Playwright, ffmpeg; set `MORSE_HOME` to a scratch dir). God mode's are `DISPLAY=:99 node demo/shoot-godmode.js`.
+Regenerate the screenshots: `npm run demo:serve &` then `DISPLAY=:99 npm run screenshots` (needs Xvfb, Chromium/Playwright, ffmpeg; set `MORSE_HOME` to a scratch dir). God mode's are `DISPLAY=:99 node demo/shoot-godmode.js`; `morse apps` / `morse status` are `node demo/shoot-apps.js`.
 
 MIT licensed.
