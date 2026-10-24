@@ -261,6 +261,7 @@ function menuItems() {
   return [
     { id: "showonce", label: t("menu.showonce"), keys: null }, // show-once hook: 64-show-once.js
     { id: "keypick", label: t("menu.keypick"), keys: comboParts(KEYPICK_COMBO, PLATFORM) }, // 41-keypick.js
+    ...takeMenuItems(), // take-and-bring hook: Take this, Bring here… (73-take.js)
     { id: "settings", label: t("menu.settings"), keys: [primaryMod, ","] },
     { id: "shortcuts", label: t("menu.shortcuts"), keys: ["?"] },
     { id: "voice", label: t("bar.talk"), keys: comboParts(hotkey("talk"), PLATFORM), sub: hotkey("talk") === hotkey("open") ? t("menu.hold") : "" },
@@ -289,6 +290,7 @@ function runMenu(id) {
   if (id === "help") toggleHelp(); // onboarding hook: 59-help.js
   if (id === "showonce") ShowOnce.start(); // show-once hook
   if (id === "keypick") KeyPick.start(); // 41-keypick.js
+  takeMenu(id); // take-and-bring hook (73-take.js)
 }
 moreBtn.addEventListener("click", () => (menuEl.hidden ? showMenu() : hideMenu()));
 menuEl.addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (b) runMenu(b.dataset.m); });

@@ -24,6 +24,7 @@ import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver, prac
 import { GALLERY_REQUESTS, handleGallery } from "./gallery-host.js"; // gallery hook: Mods for this site
 import { Style } from "./style-host.js"; // your-style hook: one style on every site
 import { PACK_REQUESTS, handlePack } from "./pack-host.js"; // packs hook: mod packs
+import { Take } from "./take-host.js"; // take-and-bring hook: features taken in one app, brought into another
 import { t, setLanguage, pickLanguage, loadLanguage, setLanguageLoader, CATALOGS } from "../core/i18n.js"; // the words this worker says
 import { packagedWords } from "./words.js"; // languages besides English: locales/<code>.json in this package
 
@@ -200,6 +201,7 @@ async function dispatch(msg, port) {
   if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, here.url); // gallery hook: Mods for this site
   if (Style.owns(msg)) return Style.handle(msg, here); // your-style hook
   if (PACK_REQUESTS.has(msg.type)) return handlePack(msg); // packs hook: mod packs (pack-host.js)
+  if (Take.owns(msg)) return Take.handle(msg); // take-and-bring hook (take-host.js)
   switch (msg.type) {
     case "hello": {
       const b = await backend();

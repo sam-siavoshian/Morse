@@ -167,6 +167,7 @@ function renderList() {
   list.innerHTML = YourStyle.rowHtml() + (!mods.length // your-style hook (72-style.js)
     ? emptyModsHtml() /* onboarding hook: 59-onboarding.js */
     : shown.length ? packListHtml(shown) /* packs hook: pack mods under the pack's name (69-packs.js) */ : `<p class="empty">${t("panel.noMatch", { q: esc(PanelUI.q) })}</p>`);
+  list.insertAdjacentHTML("beforeend", takenSectionHtml()); // take-and-bring hook: Taken from other apps (73-take.js)
   list.insertAdjacentHTML("beforeend", gallerySectionHtml()); // gallery hook: Mods for this site (68-gallery.js)
   const r = rows();
   const i = Math.max(0, r.findIndex(a => a.dataset.id === PanelUI.focus));
