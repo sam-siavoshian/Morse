@@ -155,7 +155,9 @@ function openBar() {
   startPicking();
   Voice.refresh();
   requestAnimationFrame(() => input.focus());
-  call("clip.start").catch(() => {});
+  // soak: the clip starts with the change (60-generate.js submit), not here: on
+  // the desktop it screencasts every frame, which made the bar, the Edit tools
+  // and the page tools 2 to 4 times slower for as long as the bar was open.
   warmedFor = "";
   call("warm").catch(() => {}); // speed: the model gets ready while you point and type
   refreshPrefs();
@@ -326,6 +328,10 @@ function onCancelled(id) {
 let paneKind = "";
 function showPane(kind) {
   if (paneKind === "settings" && kind !== "settings") stopRecording();
+  // soak: focus leaves the pane before it is hidden and emptied. Hidden with
+  // the focus inside, the page's document kept the pane in a table of its own
+  // (and through its listeners the whole UI, after morse stop).
+  if (kind !== paneKind && pane.contains(root.activeElement)) input.focus({ preventScroll: true });
   paneKind = kind;
   pane.hidden = !kind;
   pane.dataset.kind = kind;

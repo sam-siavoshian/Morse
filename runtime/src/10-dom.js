@@ -67,5 +67,8 @@ function mount() { if (!hostEl.isConnected && live()) document.documentElement?.
 mount();
 applyTheme();
 B.domHooks.add(mount);
+// soak: this copy went quiet and its overlay was taken off the page (`morse
+// stop`): let go of the page (01-rpc.js letGo). No timer: the removal says so.
+new MutationObserver(() => { if (!live() && !hostEl.isConnected) letGo(); }).observe(document.documentElement, { childList: true });
 // The page closed the overlay's popover (it can reach the host element): open it again.
 hostEl.addEventListener("toggle", e => { if (e.newState === "closed" && live()) setTimeout(() => TopLayer.show(), 0); });

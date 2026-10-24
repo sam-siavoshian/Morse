@@ -67,6 +67,7 @@ async function submit(request, opts = {}) {
   // The draft and its stop handle exist before the first await, so Stop
   // pressed right after Enter cancels this run, not the previous one.
   S.draft = prev ? { ...prev, ctx: prev.ctx || ctx } : { id, request, prompt: request, ctx, title: "", css: "", js: "", history: [] };
+  if (!prev) call("clip.start").catch(() => {}); // soak: recording starts with the change (50-bar.js openBar)
   let stopped = false;
   const stopSignal = cancelSignal(id).then(r => { stopped = true; return r; });
   const t0 = performance.now();

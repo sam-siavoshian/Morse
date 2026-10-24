@@ -221,6 +221,8 @@ export class Connector {
         if (n === 1) this.log(`  ! Couldn't connect to ${describeTarget(t).title}: ${e.message}`);
       });
     }
+    // soak: targets that are gone (a closed popup that never attached) don't keep a retry entry
+    for (const id of this.retry.keys()) if (!byId.has(id)) this.retry.delete(id);
     if (dirty) this.changed();
   }
 
@@ -391,6 +393,7 @@ export class Connector {
   async stop({ keepBrowser = false } = {}) {
     this.running = false;
     this.state = "stopped";
+    this.recorder?.stop(); this.recorder = null; // soak: a clip being recorded keeps its frames (and the session) otherwise
     this.modWatcher?.close();
     this.controlWatcher?.close(); this.controlWatcher = null;
     this.styleWatch?.(); this.styleWatch = null; // your-style hook

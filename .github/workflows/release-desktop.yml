@@ -31,7 +31,7 @@ jobs:
       matrix:
         include:
           - { name: Linux AppImage, os: ubuntu-latest, flag: --linux, files: "dist/desktop-app/*.AppImage" }
-          - { name: macOS dmg, os: macos-latest, flag: --mac, files: "dist/desktop-app/*.dmg" }
+          - { name: macOS dmg, os: macos-latest, flag: --mac, files: "dist/desktop-app/*.dmg\ndist/desktop-app/*.zip" }
           - { name: Windows installer, os: windows-latest, flag: --win, files: "dist/desktop-app/*.exe" }
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0

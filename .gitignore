@@ -1,4 +1,7 @@
 node_modules/
+# bun install works too (it runs the same build), but the lockfile is npm's
+bun.lock
+bun.lockb
 *.log
 .DS_Store
 dist/

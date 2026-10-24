@@ -609,7 +609,13 @@ const Churn = (() => {
         if (t.nodeType !== 1 || !r.removedNodes.length || t.closest("[data-morse-ui],[data-morse]")) continue;
         if (![...r.removedNodes].some(n => n.nodeType === 1 && !n.hasAttribute("data-morse") && !n.hasAttribute("data-morse-ui"))) continue;
         let ts = seen.get(t);
-        if (!ts) { if (seen.size > 200) seen.clear(); seen.set(t, ts = []); }
+        if (!ts) {
+          // soak: drop what the page threw away first (a chat drops old messages:
+          // each held its whole subtree here until 200 piled up)
+          if (seen.size > 50) for (const el of seen.keys()) if (!el.isConnected) seen.delete(el);
+          if (seen.size > 200) seen.clear();
+          seen.set(t, ts = []);
+        }
         if (now - (ts.at(-1) || 0) > 50) ts.push(now); // one render, many records
         if (ts.length > 30) ts.shift();
       }
