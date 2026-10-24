@@ -100,6 +100,9 @@ const validBlocks = x => x.role === "user" && Array.isArray(x.content) && x.cont
   (b?.type === "text" && typeof b.text === "string" && b.text.length <= 200_000) ||
   (b?.type === "image" && b.source?.type === "base64" && /^image\/(png|jpeg|webp|gif)$/.test(b.source.media_type) && typeof b.source.data === "string"));
 
+// models: Chrome asks for the fast or the strong tier by name and effort (core/route.js).
+const effortOf = body => (["low", "medium", "high", "xhigh", "max"].includes(body?.effort) ? { effort: body.effort } : {});
+
 // ask: pairAsks() from daemon/pair-ask.js (Morse Desktop), for one-click pairing.
 export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, timeoutMs = TIMEOUT_MS, ask = null } = {}) {
   let harnessCache = null, harnessAt = 0;
@@ -136,6 +139,7 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
         const rec = tokenRecord(cfg, bearer(req));
         return send(200, {
           ok: true, version: VERSION, provider: s.provider, model: s.model, label: settingsLabel(s),
+          tiers: s.tiers, pinned: s.pinned, // models: what Chrome's Automatic chooses between (core/route.js)
           harnesses: { claude: harnesses().claude.found, codex: harnesses().codex.found }, paired: !!rec && (!origin || !rec.origin || rec.origin === origin),
           pairing: !!cfg.bridge?.pairing && cfg.bridge.pairing.expires > Date.now(), // first run: a code is waiting (never the code itself)
           ask: !!ask, // one-click pairing: POST /v1/pair/ask and a person answers in Morse Desktop
@@ -180,7 +184,7 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
         const body = await readJson(req).catch(() => ({}));
         const model = typeof body?.model === "string" && validModel(body.model) ? body.model : undefined;
         const settings = settingsFromConfig(cfg, model ? { model } : {}, { harnesses: harnesses() });
-        if (settings.provider !== "none") prewarm(settings);
+        if (settings.provider !== "none") prewarm({ ...settings, ...effortOf(body) });
         return send(200, { ok: true });
       }
 
@@ -188,7 +192,11 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
         const body = await readJson(req);
         if (!validMessages(body.messages)) return send(400, { error: "Expected { messages: [{ role, content }] }" });
         if (body.model !== undefined && (typeof body.model !== "string" || !validModel(body.model))) return send(400, { error: "That model name isn't one Morse can use. Check the spelling in Morse's settings." });
-        const settings = settingsFromConfig(cfg, body.model ? { model: body.model } : {}, { harnesses: harnesses() });
+        if (body.effort !== undefined && !effortOf(body).effort) return send(400, { error: "Expected effort to be one of low, medium, high, xhigh, max" });
+        const settings = { ...settingsFromConfig(cfg, body.model ? { model: body.model } : {}, { harnesses: harnesses() }), ...effortOf(body) };
+        // models: the model to keep warm for the next request (the fast one, after an escalation)
+        if (body.next && typeof body.next === "object" && typeof body.next.model === "string" && validModel(body.next.model))
+          settings.warmAs = { ...settingsFromConfig(cfg, body.next.model ? { model: body.next.model } : {}, { harnesses: harnesses() }), ...effortOf(body.next) };
         if (settings.provider === "none") return send(503, { error: "No model is set up on this computer. Run morse doctor there to set one up." });
 
         res.writeHead(200, { "Content-Type": "application/x-ndjson", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });

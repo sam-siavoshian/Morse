@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "dash-dollars",
+  "title": "Amounts as dollars",
+  "prompt": "show the amounts as dollars with commas",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8793"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "tbody tr:first-child td.am",
+    "label": "amount"
+  },
+  "css": "",
+  "js": "morse.watch(\"div.tbl td.am\", el => {\n  const t = el.textContent.trim();\n  if (!/^-?\\d+(\\.\\d+)?$/.test(t)) return;\n  el.textContent = Number(t).toLocaleString(\"en-US\", { style: \"currency\", currency: \"USD\" });\n}, { live: true });\n",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

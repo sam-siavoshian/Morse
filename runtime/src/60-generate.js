@@ -100,7 +100,7 @@ async function submit(request, opts = {}) {
     if (msg.type === "css") { if (shotDone) showCss(msg.css); else pendingCss = msg.css; }
     if (msg.type === "stage" && !wrote && !fixing) say(msg.stage === "thinking" ? t("gen.thinking") : t("gen.reading"));
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") { fixing = true; say(t("gen.fixing")); hint.title = String(msg.error || ""); announce(t("gen.fixing")); }
+      if (msg.phase === "fixing") { const what = t(msg.stronger ? "gen.stronger" : "gen.fixing"); fixing = true; say(what); hint.title = String(msg.error || ""); announce(what); } // models: core/route.js
       if (msg.phase === "applying") say(t("gen.trying"));
     }
   });
@@ -113,6 +113,7 @@ async function submit(request, opts = {}) {
   clearInterval(clock);
   bar.classList.remove("working");
   const secs = ((performance.now() - t0) / 1000).toFixed(1);
+  if (res?.model) S.label = res.model; // models: the footer names the model that answered
 
   if (prev) {
     if (!res.ok || res.kind === "answer") {
@@ -176,10 +177,10 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
     ? `<button data-a="code">${t("btn.editCode")}</button><button data-a="keep">${t("btn.done")}</button>`
     : `<button data-a="keep" class="primary">${t("btn.save")} <kbd>↵</kbd></button><button data-a="undo">${t("btn.undo")}</button><button data-a="code">${t("btn.editCode")}</button><button data-a="share">${t("btn.share")}</button>`;
   updateChips();
-  announce(error ? `${d.title}. That didn't work: ${error}`
+  announce(error ? t("gen.sayFailed", { title: d.title, error })
     : note ? `${d.title}. ${note}`
-    : d.saved ? `${d.title}. Describe what to change, or press Done.`
-    : `Done: ${d.title}${meta ? `, ${meta}` : ""}. Press Enter to save it, or describe what to change. Undo is next to Save.`);
+    : d.saved ? t("gen.saySaved", { title: d.title })
+    : t("gen.sayDone", { title: d.title, meta: meta ? `, ${meta}` : "" }));
   input.focus({ preventScroll: true });
 }
 

@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "wiki-collapse-comments",
+  "title": "Collapse the comments",
+  "prompt": "collapse the comments, with a button to show them",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8795"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": ".cm h2",
+    "label": "“Comments (400)” heading"
+  },
+  "css": "section[aria-label=\"Comments\"].cm-collapsed > .c { display: none; }\n",
+  "js": "morse.watch('section[aria-label=\"Comments\"]', el => {\n  el.classList.add('cm-collapsed');\n  const h2 = el.querySelector(':scope > h2');\n  const btn = morse.el('button', {\n    class: 'cm-toggle',\n    text: 'Show comments',\n    style: 'font:inherit;font-size:14px;color:currentColor;background:transparent;border:1px solid rgb(162, 169, 177);border-radius:2px;padding:4px 10px;cursor:pointer;margin:0 0 8px',\n    on: { click: () => {\n      const open = el.classList.toggle('cm-collapsed') === false;\n      btn.textContent = open ? 'Hide comments' : 'Show comments';\n    } }\n  });\n  h2.after(btn);\n});\n",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

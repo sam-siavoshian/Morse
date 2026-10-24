@@ -12,7 +12,7 @@ function openModal(html, { review = false } = {}) {
   for (const [attr, el, id] of [["aria-labelledby", title, "m-modal-title"], ["aria-describedby", sub, "m-modal-sub"]]) {
     if (el) { el.id = id; modal.setAttribute(attr, id); } else modal.removeAttribute(attr);
   }
-  for (const b of card.querySelectorAll("header > button[data-a=close]")) if (!b.getAttribute("aria-label")) b.setAttribute("aria-label", "Close");
+  for (const b of card.querySelectorAll("header > button[data-a=close]")) if (!b.getAttribute("aria-label")) b.setAttribute("aria-label", t("btn.close"));
   modal.hidden = false;
   bar.setAttribute("aria-modal", "false"); // one modal at a time for screen readers: this one
   modal.onclick = e => { if (e.target === modal || e.target.closest("[data-a=close]")) modal.hidden = true; };

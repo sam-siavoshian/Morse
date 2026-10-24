@@ -1,0 +1,21 @@
+{
+  "morse": 1,
+  "id": "wiki-reading-mode",
+  "title": "Reading mode",
+  "prompt": "reading mode: hide the contents box and the footer, and show the article in a narrower column with bigger text",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8795"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": "div.page > nav[aria-label=\"Contents\"],\ndiv.foot { display: none !important; }\n\ndiv.page { grid-template-columns: 1fr !important; }\n\ndiv.art {\n  width: min(680px, 100%) !important;\n  max-width: 680px !important;\n  margin: 0 auto !important;\n  justify-self: center !important;\n  font-size: 19px !important;\n  line-height: 1.75 !important;\n}\n\ndiv.art h1 { font-size: 2.4em !important; }\ndiv.art p, div.art li { font-size: 1.05em !important; }\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

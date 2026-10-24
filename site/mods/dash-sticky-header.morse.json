@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "dash-sticky-header",
+  "title": "Table header stays in view",
+  "prompt": "keep the column names visible when I scroll the table",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8793"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "thead",
+    "label": "table header"
+  },
+  "css": ".tbl .sc thead th {\n  position: sticky;\n  top: 0;\n  z-index: 1;\n  background: #fff;\n  box-shadow: inset 0 -1px 0 rgba(23, 43, 77, 0.12);\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

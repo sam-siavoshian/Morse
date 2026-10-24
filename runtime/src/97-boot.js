@@ -1,9 +1,26 @@
 onEvent(msg => {
   if (msg.type === "toggle") S.open ? closeBar() : openBar();
+  if (msg.type === "open") S.open ? input.focus() : openBar(); // the website's Try it here: its Open Morse button never closes the bar
   if (msg.type === "panel") openPanel();
   if (msg.type === "mods.changed") syncMods();
   if (msg.type === "settings.changed" && msg.settings) setPrefs(msg.settings);
+  if (msg.type === "request" && typeof msg.text === "string") hostRequest(msg.text.trim().slice(0, 2000), msg.at);
 });
+
+// A request from the host, sent as if it were typed in the bar (the website's
+// Try it here section, site/try.js, has buttons for a few). `at` points at
+// that part of the page first. While a change waits for Save or Undo, it waits
+// too (the host says so).
+function hostRequest(text, at) {
+  if (!text || S.phase === "working") return;
+  if (S.open && S.phase === "result" && S.draft && !S.draft.saved) return;
+  openBar();
+  let el = null;
+  try { el = typeof at === "string" && at ? document.querySelector(at) : null; } catch {}
+  if (el) setTarget(el);
+  setInput(text);
+  send(text);
+}
 
 // Effect intensity (Settings → Effects). Full is the radar field over the
 // target; subtle keeps a still outline and the pulsing mark (the default under
@@ -50,6 +67,7 @@ B.adopt({
 B.ready.then(hello => {
   try {
     setPrefs(B.prefs());
+    S.models = hello.models || null; // models: the names the Settings sheet shows (56-settings.js)
     if (hello.settings) hostPrefs = true; // the host sent settings with its hello (03-prefs.js)
     Voice.configure(hello.voice);
     PromptHistory.load();

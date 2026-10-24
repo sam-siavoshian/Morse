@@ -36,6 +36,9 @@ Sent to the model you chose:
 - the CSS rules that style what you pointed at
 - for Refine and Fix: the code of the mod and the error it hit
 - for "Describe this picture": the picture, or a screenshot cropped to it
+- for "Show me once": the steps you did on the page while it was recording,
+  such as what you clicked and what you typed. What you type in password and
+  card number fields is never kept or sent.
 
 Where it goes depends on your choice:
 
@@ -75,8 +78,11 @@ mod files that match the site you are on.
 These send data somewhere other than your model, and only when you use them:
 
 - **Voice in Chrome.** Morse uses Chrome's own speech recognition. Chrome
-  sends your voice to Google to turn it into text. If you never use voice, no
-  audio is recorded.
+  sends your voice to Google to turn it into text. If the Morse helper is
+  paired and can turn speech into text, or you gave Morse an OpenAI key, Morse
+  also records what you say while you talk to it, and sends that recording to
+  the Morse helper (which uses OpenAI or Whisper on your computer, as below)
+  or to OpenAI. If you never use voice, no audio is recorded.
 - **Voice in desktop apps.** The Morse helper turns speech into text with
   OpenAI (when you gave it an OpenAI key) or with Whisper on your computer
   (nothing leaves your computer).
@@ -87,6 +93,11 @@ These send data somewhere other than your model, and only when you use them:
   the mod. Sending the link is up to you. The "Post" button opens x.com with
   your request and the link filled in, and the link holds the mod. Nothing is
   posted until you post it.
+- **Mod packs from an address.** When you install a pack from a web address,
+  Morse downloads it from there. If you chose to get its updates, Morse checks
+  that address at most once a day. The request carries no cookies and nothing
+  about you or the page; that server sees your IP address, as with any
+  website. "Stop updates" in the Mods panel ends it.
 - **Submitting to the gallery** opens a new GitHub issue with your mod in it,
   in your browser. Nothing is posted until you click Submit on GitHub.
 - **Settings sync.** Your Morse settings (shortcuts, bar position, theme,

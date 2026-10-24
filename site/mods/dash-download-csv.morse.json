@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "dash-download-csv",
+  "title": "Download the table as CSV",
+  "prompt": "add a button that downloads this table as a CSV file",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8793"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": ".tbl h3",
+    "label": "“Recent orders” heading"
+  },
+  "css": ".tbl .csv-btn { margin-left: 10px; font: inherit; font-size: 12px; font-weight: 600; color: rgb(23, 43, 77); background: #fff; border: 1px solid rgb(229, 231, 235); border-radius: 6px; padding: 3px 10px; cursor: pointer; }\n",
+  "js": "morse.watch(\".tbl > h3\", h => {\n  if (h.querySelector(\".csv-btn\")) return;\n  const btn = morse.el(\"button\", {\n    class: \"csv-btn\",\n    text: \"Download CSV\",\n    on: {\n      click: () => {\n        const table = h.parentElement.querySelector(\".sc table\");\n        if (!table) return morse.toast(\"No table found\");\n        const rows = [...table.querySelectorAll(\"tr\")].map(tr =>\n          [...tr.children].map(c => {\n            const t = c.textContent.trim().replace(/\"/g, '\"\"');\n            return /[\",\\n]/.test(t) ? `\"${t}\"` : t;\n          }).join(\",\")\n        );\n        const blob = new Blob([rows.join(\"\\n\")], { type: \"text/csv\" });\n        const a = morse.el(\"a\", { href: URL.createObjectURL(blob), download: \"recent-orders.csv\" });\n        document.body.appendChild(a);\n        a.click();\n        a.remove();\n        morse.toast(\"CSV downloaded\");\n      }\n    }\n  });\n  h.appendChild(btn);\n});\n",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}
