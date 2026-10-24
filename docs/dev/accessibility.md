@@ -37,7 +37,8 @@ off, because they're about the page underneath, not Morse: `region`,
 (the overlay follows whatever heading level the page ends on). Extension pages
 get every rule.
 
-`npm run ui` runs axe after each screenshot, except on the animation states
+`npm run ui` runs axe after each screenshot (whole-page rules on the
+extension's own pages), except on the animation states
 (effect, pulse, motion, radar), which are timed to the frame. Findings show
 in `docs/ui/index.html` with the other verdicts, and the run ends with a
 count per rule. `node demo/ui-catalog.js --out=/tmp/ui --theme=dark --width=1100`
@@ -61,7 +62,9 @@ the same way) and on the catalog and the extension pages:
 
 The welcome page had none. The full catalog (519 states in the dark theme,
 phone width included) found only `scrollable-region-focusable`; after that
-fix, the light theme's 519 states had no violations at all.
+fix, the light theme's 519 states had no violations at all, nor did the
+111 states of the extension's pages, the popup, Trusted Types and round 4's
+hostile hosts (`--only=extension,popup,trusted-types,hostile-r4`, under Xvfb).
 
 
 Semantics added without an axe rule asking for them:
