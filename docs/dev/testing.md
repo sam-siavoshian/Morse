@@ -43,6 +43,11 @@ A few tests read the repo itself:
 - `tests/words.test.js`: no developer jargon in what people read (the
   runtime, the extension's pages, the share page, the website, and the user
   pages in `docs/`). See [docs/WRITING.md](../WRITING.md).
+- `tests/a11y-morse.test.js`: Morse's own UI with the keyboard alone and a
+  screen reader: axe-core (vendored in `demo/vendor/`, test-only) on the key
+  states and the extension's pages, the core flows without a mouse, what is
+  announced during a generation, forced colors and 320px. `npm run ui` runs
+  axe on every catalog state. See [Accessibility](accessibility.md).
 - `tests/docs.test.js`: every relative link and image in the README and
   `docs/` exists, every `#anchor` matches a heading, every page is listed in
   [docs/README.md](../README.md), and the README stays short.

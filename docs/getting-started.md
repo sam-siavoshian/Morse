@@ -105,6 +105,35 @@ you have.
 
 ![Help in the bar](screenshots/72-help.png)
 
+## Using Morse with the keyboard or a screen reader
+
+Everything in Morse works without a mouse.
+
+- **Choose a part of the page with keys.** Open Morse, then press
+  **⌥↓** (macOS) or **Alt+↓** (Windows and Linux), or pick **Choose with
+  keys** in the **⋯** menu. **↑** and **↓** move through the page's
+  sections, headings, links, buttons, fields and pictures, with the same
+  frame the mouse draws. **←** picks the bigger part around it and **→**
+  goes back. **Enter** chooses it, **Esc** stops.
+- **Tab** moves through the bar, the Edit tools and anything open in it. In
+  menus, **↑** and **↓** move, **Home** and **End** jump to the ends, and
+  typing the first letters of an item goes to it.
+- **Esc** always closes the top thing first: a menu, a sheet, a window, then
+  the bar. Focus goes back to where you were.
+- In the **Mods panel**, **↑** and **↓** move between mods, **Space** turns
+  one on or off, **Enter** changes it, and **Tab** reaches its buttons and
+  **Install a mod…**.
+- **Show me** (after you ask where something is): **⌥↓** or **Alt+↓** goes
+  to the step's part of the page, then you use it yourself.
+- With **Show me once**, do the task with the keyboard as usual. Press the
+  Open Morse shortcut when you're done.
+
+Screen readers hear what Morse is doing in a few short messages: when it
+starts working, when the first change shows on the page, when it's done (or
+what went wrong), and every message that pops up at the bottom of the page.
+The code Morse writes is never read out. Morse also works with Windows High
+Contrast, with zoom up to 200%, and on narrow windows.
+
 ## Where Morse can't run
 
 - Chrome's own pages (new tab, settings), other extensions' pages and the

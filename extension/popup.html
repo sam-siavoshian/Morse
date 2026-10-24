@@ -1,19 +1,20 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Morse</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Morse</title>
 <link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="popup.css"></head>
 <body>
-  <header><div class="logo"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><b>morse</b><span id="label"></span></header>
+  <header><div class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><h1>morse</h1><span id="label"></span></header>
 
+  <main>
   <section id="page">
     <button id="go" class="primary">Change this page <kbd id="key"></kbd></button>
     <p id="warn" class="notice" hidden><span id="warntext"><b>“Allow User Scripts” is off.</b> Changes to how pages look work. Changes that add buttons or features run only when it is on.</span>
       <span class="steps">Click <b>Turn it on</b>, turn on <b>Allow User Scripts</b> on the page that opens, then reload this tab.</span></p>
-    <h3>Mods on this site <span id="count"></span></h3>
+    <h2>Mods on this site <span id="count"></span></h2>
     <ul id="mods"></ul>
   </section>
 
   <section id="model">
-    <h3>Model</h3>
+    <h2>Model</h2>
     <p id="connect" class="notice" hidden><b>Connect a model to start.</b> <span id="reason"></span></p>
 
     <label class="choice"><input type="radio" name="backend" value="helper">
@@ -21,7 +22,7 @@
     <div class="panel" data-for="helper">
       <div class="status"><i id="hdot" class="dot"></i><span id="hstatus">Checking…</span></div>
       <div id="pairrow" class="row">
-        <input id="code" maxlength="6" placeholder="Pairing code" autocomplete="off" spellcheck="false">
+        <input id="code" maxlength="6" placeholder="Pairing code" aria-label="Pairing code" autocomplete="off" spellcheck="false">
         <button id="pair">Pair</button>
       </div>
       <p id="hhint" class="hint">In a terminal, run <code>morse serve</code>. Type the 6-character code it shows here, then click Pair.</p>
@@ -39,9 +40,10 @@
 
     <div class="row actions">
       <button id="test">Test the model</button>
-      <span id="result" class="hint"></span>
+      <span id="result" class="hint" role="status" aria-live="polite"></span>
     </div>
   </section>
+  </main>
   <script src="popup.js" type="module"></script>
   <script src="popup-states.js" type="module"></script><!-- onboarding hook: unsupported pages, no model, user scripts off -->
 
