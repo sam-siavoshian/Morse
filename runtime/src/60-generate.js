@@ -41,7 +41,7 @@ async function submit(request) {
     }
     if (msg.type === "css") setCss(id, msg.css);
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") hint.innerHTML = `${radar(12)} Fixing <i>${esc(msg.error).slice(0, 80)}</i>`;
+      if (msg.phase === "fixing") hint.innerHTML = `${radar(12)} Fixing <i>${esc(String(msg.error).slice(0, 80))}</i>`;
       if (msg.phase === "applying") hint.innerHTML = `${radar(12)} Applying`;
       if (msg.phase === "thinking") hint.innerHTML = `${radar(12)} Writing`;
     }
@@ -58,10 +58,11 @@ async function submit(request) {
   await Effect.finish(res.ok);
   if (!res.ok) {
     setCss(id, "");
+    call("off", { modId: id }).catch(() => {}); // a failed attempt's JS may have left nodes, observers or timers
     if (res.cancelled) return onCancelled(id); // Stop: 50-bar.js
     S.phase = "error";
     bar.classList.add("err");
-    hint.innerHTML = `Couldn't do that: <i>${esc(res.error || "unknown error").slice(0, 120)}</i>`;
+    hint.innerHTML = `Couldn't do that: <i>${esc(String(res.error || "unknown error").slice(0, 120))}</i>`;
     hint.title = res.error || "";
     actions.innerHTML = `<button data-a="again">Try again</button>`;
     return;
@@ -88,7 +89,9 @@ async function keep() {
   const d = S.draft;
   if (!d) return null;
   if (d.saved) return d.saved;
-  const mod = await call("mods.save", { draft: { id: d.id, title: d.title, prompt: d.request, css: d.css, js: d.js, url: location.href, app: S.app, target: d.ctx.target, model: d.model } });
+  if (d.saving) return d.saving; // Keep then Share (or a double click) saves once
+  d.saving = call("mods.save", { draft: { id: d.id, title: d.title, prompt: d.request, css: d.css, js: d.js, url: location.href, app: S.app, target: d.ctx.target, model: d.model } });
+  const mod = await d.saving;
   d.saved = mod;
   S.mods.push(mod);
   S.phase = "idle";

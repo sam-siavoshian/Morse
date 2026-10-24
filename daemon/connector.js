@@ -123,6 +123,11 @@ export class Connector {
       }
       case "mods.delete":
         return deleteMod(msg.modId);
+      // Decode and validate a shared mod without saving it (install confirmation).
+      case "mods.preview": {
+        const src = msg.source.trim();
+        return src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
+      }
       case "mods.import": {
         const src = msg.source.trim();
         const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));

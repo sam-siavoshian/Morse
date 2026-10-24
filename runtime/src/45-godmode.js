@@ -673,7 +673,7 @@ const GodMode = (() => {
     range.oninput = () => setSize(+range.value);
     field.onkeydown = e => {
       if (e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); setSize(size + (e.key === "ArrowUp" ? 1 : -1) * (e.shiftKey ? 4 : 1)); }
-      if (e.key === "Enter" && +field.value > 0) setSize(+field.value);
+      if (e.key === "Enter" && !e.isComposing && +field.value > 0) setSize(+field.value);
     };
   }
 
@@ -686,6 +686,7 @@ const GodMode = (() => {
   // Escape first; with nothing open, Escape closes the bar as usual.
   addEventListener("keydown", e => {
     if (!S.open) return;
+    if (e.isComposing || e.keyCode === 229) return; // IME: Enter/Esc belong to the candidate window
     const active = root.activeElement;
     if (G.editing) {
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); endText(true); }

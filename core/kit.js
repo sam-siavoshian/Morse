@@ -16,6 +16,7 @@ function installMorseKit() {
 
   function guard(c, fn) {
     return function (...args) {
+      if (c.dead) return; // the mod was turned off; a queued callback must not run
       try { return fn.apply(this, args); }
       catch (e) { c.errors.push(String(e && e.stack || e)); console.warn("[morse]", c.id, e); }
     };
@@ -28,6 +29,7 @@ function installMorseKit() {
         const seen = new WeakSet();
         const run = guard(c, fn);
         const scan = () => {
+          if (c.dead) return;
           let list;
           try { list = document.querySelectorAll(selector); } catch (e) { c.errors.push(String(e)); return; }
           // Never match Morse's own elements: a mod that inserts a button next to
@@ -123,11 +125,14 @@ function installMorseKit() {
     },
     __off(id) {
       const c = mods.get(id);
-      if (!c) return true;
-      c.observers.forEach(o => o.disconnect());
-      c.cleanups.reverse().forEach(f => { try { f(); } catch {} });
-      document.querySelectorAll(`[data-morse="${id}"]`).forEach(e => e.remove());
-      mods.delete(id);
+      if (c) {
+        c.dead = true;
+        c.observers.forEach(o => o.disconnect());
+        c.cleanups.reverse().forEach(f => { try { f(); } catch {} });
+        mods.delete(id);
+      }
+      // Always sweep: elements can outlive their context (e.g. a late callback).
+      document.querySelectorAll(`[data-morse="${CSS.escape(id)}"]`).forEach(e => e.remove());
       return true;
     },
     __errors(id) { return (mods.get(id)?.errors || []).slice(0, 3); },

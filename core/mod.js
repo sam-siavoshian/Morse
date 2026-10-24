@@ -49,9 +49,13 @@ export function modMatches(mod, { url, app }) {
 export function validateMod(m) {
   if (!m || typeof m !== "object" || m.morse !== 1) throw new Error("Not a Morse mod");
   for (const k of ["id", "title", "prompt"]) if (typeof m[k] !== "string") throw new Error(`Mod is missing ${k}`);
+  if (!/^[\w-]{1,40}$/.test(m.id)) throw new Error("This mod has an invalid id");
   if (typeof m.css !== "string" || typeof m.js !== "string") throw new Error("Mod has no code");
   return m;
 }
+
+// Header values must stay on one line, or a title could add @match/@grant lines.
+const oneLine = s => String(s).replace(/[\r\n\u2028\u2029]+/g, " ");
 
 // Tampermonkey / Violentmonkey compatible export: the helper kit is inlined so
 // the script runs without Morse installed.
@@ -59,10 +63,10 @@ export function toUserscript(mod) {
   const matches = (mod.match?.hosts || ["*"]).map(h => h === "file" ? "file:///*" : h === "*" ? "*://*/*" : `*://${h}/*`);
   const header = [
     "// ==UserScript==",
-    `// @name         ${mod.title}`,
+    `// @name         ${oneLine(mod.title)}`,
     `// @namespace    morse`,
     `// @version      1`,
-    `// @description  ${mod.prompt.replace(/\n/g, " ")}`,
+    `// @description  ${oneLine(mod.prompt)}`,
     ...matches.map(m => `// @match        ${m}`),
     "// @grant        none",
     "// @run-at       document-idle",

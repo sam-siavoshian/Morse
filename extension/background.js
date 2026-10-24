@@ -66,7 +66,11 @@ function textUrl(text, mime) {
 
 async function dispatch(msg, port) {
   const tab = port.sender.tab;
-  const target = { tabId: tab.id, frameIds: [port.sender.frameId ?? 0] };
+  // Pin execution to the exact document that asked: if the tab navigates
+  // mid-generation, the code must not land on whatever page loaded next.
+  const target = port.sender.documentId
+    ? { tabId: tab.id, documentIds: [port.sender.documentId] }
+    : { tabId: tab.id, frameIds: [port.sender.frameId ?? 0] };
   if (BAR_REQUESTS.has(msg.type)) return handleBarRequest(msg);
   switch (msg.type) {
     case "hello": {
@@ -88,6 +92,11 @@ async function dispatch(msg, port) {
       await set("mods", all);
       return true;
     }
+    // Decode and validate a shared mod without saving it (install confirmation).
+    case "mods.preview": {
+      const src = msg.source.trim();
+      return src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
+    }
     case "mods.import": {
       const src = msg.source.trim();
       const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
@@ -103,6 +112,7 @@ async function dispatch(msg, port) {
       return true;
     case "generate": {
       const s = await settings();
+      (port.genIds ||= new Set()).add(msg.genId);
       const res = await gens.run(msg.genId, signal => runMorse({
         settings: s,
         request: msg.request,
@@ -140,6 +150,8 @@ async function dispatch(msg, port) {
 
 chrome.runtime.onConnect.addListener(port => {
   if (port.name !== "morse") return;
+  // The page went away (navigation, close, reload): stop its generations.
+  port.onDisconnect.addListener(() => { for (const id of port.genIds || []) gens.cancel(id); });
   port.onMessage.addListener(async msg => {
     try { port.postMessage({ reply: msg.id, result: await dispatch(msg, port) }); }
     catch (e) { try { port.postMessage({ reply: msg.id, error: e.message || String(e) }); } catch {} }

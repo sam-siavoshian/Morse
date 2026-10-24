@@ -126,7 +126,7 @@ const GodCapture = (() => {
       toast(`Captured ${item.label} · open Morse in any app to reuse it`);
     };
     el.querySelector("[data-a=save]").onclick = save;
-    field.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); save(); } };
+    field.onkeydown = e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); save(); } };
   }
 
   // ---- clipboard chips in the bar

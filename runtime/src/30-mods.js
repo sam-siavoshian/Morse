@@ -1,5 +1,5 @@
 function setCss(id, css) {
-  let s = document.head.querySelector(`style[data-morse-css="${id}"]`);
+  let s = document.head.querySelector(`style[data-morse-css="${cssEsc(id)}"]`);
   if (!css) { s?.remove(); return; }
   if (!s) { s = document.createElement("style"); s.setAttribute("data-morse-css", id); document.head.append(s); }
   if (s.textContent !== css) s.textContent = css;

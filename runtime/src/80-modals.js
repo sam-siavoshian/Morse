@@ -2,8 +2,9 @@ function openModal(html) {
   modal.innerHTML = `<div class="card">${html}</div>`;
   modal.hidden = false;
   modal.onclick = e => { if (e.target === modal || e.target.closest("[data-a=close]")) modal.hidden = true; };
-  modal.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Escape") modal.hidden = true; });
 }
+// One listener for the life of the page (it used to be added on every open).
+modal.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Escape") modal.hidden = true; });
 function showCode(m) {
   if (!m) return;
   const saved = S.mods.find(x => x.id === m.id);

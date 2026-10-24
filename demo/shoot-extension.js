@@ -131,11 +131,18 @@ await ctx.close();
 // 30-32. Someone else opens the share link in a fresh browser and installs it
 const friend = await browserWithMorse("friend");
 const install = await friend.ctx.newPage();
+await install.goto("http://127.0.0.1:8787/share/install.html");
+await install.evaluate(() => localStorage.setItem("morse:debug", "1")); // open shadow root so the script can click
 await install.goto(link.replace(/^https:\/\/[^/]+\/RRAA/, "http://127.0.0.1:8787"));
+await install.reload();
 await sleep(800);
 await install.screenshot({ path: path.join(OUT, "30-share-link.png") });
 console.log("  📸 30-share-link.png");
 await install.locator("#install").click();
+await install.locator(".card [data-a=install]").waitFor();
+await install.screenshot({ path: path.join(OUT, "30b-confirm-install.png") });
+console.log("  📸 30b-confirm-install.png");
+await install.locator(".card [data-a=install]").click();
 await sleep(800);
 await install.screenshot({ path: path.join(OUT, "31-installed.png") });
 console.log("  📸 31-installed.png");

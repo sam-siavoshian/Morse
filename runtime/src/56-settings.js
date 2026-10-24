@@ -51,7 +51,7 @@ function paintSettings() {
     const custom = PREFS.hotkeys[id] !== "";
     const shake = rec && recording.shake;
     if (shake) recording.shake = false;
-    return `<div class="srow hkrow${rec ? " recording" : ""}${shake ? " shake" : ""}" data-id="${id}">
+    return `<div class="srow hkrow${rec ? " recording" : ""}${shake ? " shake" : ""}" data-id="${esc(id)}">
       <div class="lbl"><span>${esc(label)}</span><small id="hk-${id}-msg">${msg}</small></div>
       <div class="ctl">
         ${rec && id !== "open" ? `<button type="button" class="tbtn" data-off="${id}">Turn off</button>` : ""}
