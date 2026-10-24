@@ -169,10 +169,10 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
   if (!keepInput) setInput("");
   const n = versionsOf(d).length + 1;
   const meta = note || [d.secs && !d.saved ? t("result.secs", { secs: d.secs }) : "", d.attempts > 1 && !d.saved ? t("result.secondTry") : "", n > 1 ? t("result.version", { n }) : ""].filter(Boolean).join(" · ");
-  hint.title = error;
+  hint.title = error || note; // a long note ends in an ellipsis in the bar: the whole sentence is here
   hint.innerHTML = error
     ? `<b class="ok">${esc(d.title)}</b> <span class="note">${t("result.failedNote", { detail: esc(error).slice(0, 120) })}</span>`
-    : `<b class="ok">${esc(d.title)}</b> <span class="dim">${esc(meta || (d.saved ? t("result.describeChange") : ""))}</span>`;
+    : `<b class="ok">${esc(d.title)}</b> <span class="dim${note ? " said" : ""}">${esc(meta || (d.saved ? t("result.describeChange") : ""))}</span>`;
   ticker.textContent = "";
   actions.innerHTML = d.saved
     ? `<button data-a="code">${t("btn.editCode")}</button><button data-a="keep">${t("btn.done")}</button>`
@@ -300,9 +300,11 @@ function fixMod(m, problem) {
 }
 
 // ---- keep, undo
-async function keep() {
+// opts.closed: the bar was closed on the result (Esc), not saved with Save.
+async function keep({ closed = false } = {}) {
   const d = S.draft;
   if (!d) return null;
+  const before = d.mod && !d.saved ? d.mod : null; // a follow-up on a saved mod: the version it replaces
   if (d.saved) {
     if (S.phase === "result" && S.draft === d) { S.phase = "idle"; closeBar(); } // "Done" on a saved mod
     return d.saved;
@@ -332,8 +334,26 @@ async function keep() {
   S.phase = "idle";
   closeBar();
   const n = versionsOf(mod).length + 1;
-  toast(n > 1 ? t("toast.savedVersion", { title: mod.title, n }) : t("toast.saved", { title: mod.title }));
+  // Esc keeping a change surprised people (dogfood): say it, with Undo right there.
+  if (closed) controlToast(t("toast.keptOnClose", { title: mod.title }), [[t("btn.undo"), () => undoKept(mod, before).catch(e => toast(plainError(e)))]]);
+  else toast(n > 1 ? t("toast.savedVersion", { title: mod.title, n }) : t("toast.saved", { title: mod.title }));
   return mod;
+}
+// Undo on that toast: a new change goes; a follow-up goes back to the saved version.
+async function undoKept(mod, before) {
+  if (S.phase === "working") return;
+  if (before) {
+    const back = (await call("mods.save", { mod: before })) || before;
+    S.mods = S.mods.map(x => (x.id === back.id ? back : x));
+    await showVersion(back.id, back);
+    toast(t("toast.backToSaved"));
+  } else {
+    await removeMod(mod.id);
+    await call("mods.delete", { modId: mod.id });
+    S.mods = S.mods.filter(x => x.id !== mod.id);
+    toast(t("toast.undone"));
+  }
+  if (!panel.hidden) renderPanel();
 }
 async function undo() {
   const d = S.draft;

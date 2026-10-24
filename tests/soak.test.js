@@ -221,24 +221,6 @@ test("a clip being recorded keeps a bounded number of bytes, and only the newest
   assert.equal(left[0], "c5", "the oldest went first");
 });
 
-test("packaged demo app builds: only the few most recently used stay in the cache", async () => {
-  const { pruneBuilds } = await import("../demo/electron-app/build.mjs");
-  const cache = tempDir("morse-tunes-cache-");
-  const now = Date.now();
-  const make = async (name, minutesAgo) => {
-    await fs.mkdir(path.join(cache, name));
-    await fs.writeFile(path.join(cache, name, "tunes"), "x");
-    const t = new Date(now - minutesAgo * 60e3);
-    await fs.utimes(path.join(cache, name), t, t);
-  };
-  for (let k = 0; k < 8; k++) await make(`Tunes-${k}`, 60 * (k + 1)); // Tunes-0 is the newest
-  await make("Tunes-busy", 5); // in use by a run right now
-  await make("Tunes-old.123.tmp", 120); // a build that never finished
-  await make("Tunes-new.456.tmp", 1); // one being built
-  await pruneBuilds(cache, { keep: 3, now });
-  assert.deepEqual((await fs.readdir(cache)).sort(), ["Tunes-0", "Tunes-1", "Tunes-busy", "Tunes-new.456.tmp"]);
-});
-
 test("the connector forgets retries for windows that are gone", async () => {
   const { Connector } = await import("../daemon/connector.js");
   const c = new Connector({ port: 1, log: () => {} });

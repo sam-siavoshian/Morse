@@ -126,9 +126,9 @@ Each fix is marked `// soak` in the code.
    context held up to 200 elements the page had already thrown away.
 9. **Test builds of the demo Electron app filled the disk.** Every change to
    its sources (and every worktree) left a new ~224 MB copy in
-   `~/.cache/morse/tunes` that nothing removed (4.6 GB). Only the few most
-   recently used builds stay now
-   ([`demo/electron-app/build.mjs`](../../demo/electron-app/build.mjs) `pruneBuilds`).
+   `~/.cache/morse/tunes` that nothing removed (4.6 GB). Fixed on main while
+   this ran: only the 3 most recently used builds of each name stay
+   ([`demo/electron-app/build.mjs`](../../demo/electron-app/build.mjs) `pruneTunesCache`).
 
 The service worker itself stayed level in every run (heap about 1.4 to
 2 MB, storage about 40 to 50 KB with the mods capped by the loop), and

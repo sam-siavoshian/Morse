@@ -33,7 +33,7 @@
 - **Live and reversible.** CSS is applied while the model streams it
   (complete rules only). Every element, listener, timer and observer a mod
   creates is tracked, so turning it off removes all of it.
-- **The `morse` kit keeps mods short and robust.** `morse.watch(selector, fn)`
+- **The `morse` kit keeps mods short, and keeps them working when the page re-renders.** `morse.watch(selector, fn)`
   survives React re-renders; `morse.el(...)` creates elements that are
   tracked for undo; errors inside callbacks are captured and fed back to the
   model. Short, concrete API → fewer tokens, fewer mistakes.
@@ -171,9 +171,15 @@ GET  /v1/health    status (no auth, never includes keys)
 POST /v1/pair      { code } -> { token }   one-time code printed by `morse serve` / `morse pair`
 POST /v1/complete  { messages, model? }    Bearer token -> NDJSON {type: token|done|error}
 GET  /v1/voice, POST /v1/transcribe        Bearer token, see daemon/voice.js
+GET  /v1/style     -> { style }            Bearer token: Your style as this computer keeps it
+POST /v1/style     { style, was }          Bearer token: Chrome's copy, only if this one is still `was` (409)
 ```
 
-The helper only streams text. Closing the connection aborts the generation
+The helper only streams text, and shares Your style: Chrome keeps its own
+copy and syncs it with `~/.morse/style.json` through `/v1/style`
+([`core/style-sync.js`](../../core/style-sync.js)), so a style said in
+either place shows in both. The desktop watches that file, so a change made
+by `morse serve` reaches the windows `morse launch` holds. Closing the connection aborts the generation
 and kills the Claude Code or Codex process. `MORSE_HELPER_PORT` moves it off
 7457 (tests run several helpers at once); the extension talks to 7457 unless a
 test set chrome.storage.local "morse.helperPort" ([testing](testing.md#the-extension-with-a-real-morse-helper)).
@@ -404,12 +410,16 @@ Mods are code running inside apps you're signed into, so:
   (every GitHub Pages project of the same owner shares it). Its Install
   button opens Morse's own review; only a click there installs.
 - `morse launch` opens a debugging port on 127.0.0.1. While it's open, **any
-  local process can attach to that app**, which is the same trust level as
-  anything else running as you, but worth knowing. Quit the app normally to
+  local process can attach to that app**, including one another account on
+  the same computer runs: the port has no password. Quit the app normally to
   close it. Morse picks a free port, drops any `--remote-debugging-address`
-  you pass, checks the port can't be reached from this machine's other
-  addresses, and won't connect if what answers isn't the app it started
-  (process id, then user agent).
+  or `--remote-allow-origins` you pass (however it's spelled), checks the
+  port can't be reached from this machine's other addresses, won't connect
+  if what answers isn't the app it started (process id, then user agent),
+  and on Linux won't connect when another account's program holds the port
+  (`/proc/net/tcp`, `ports.js portIsMine`), since that program could say
+  any process id and user agent. Morse Desktop doesn't count a Morse helper
+  another account started as running, for the same reason.
 - Share links carry the mod in the URL fragment, which browsers never send to
   a server.
 - Page text goes to the model, so a page can try to prompt-inject it. That's

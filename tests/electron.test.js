@@ -19,18 +19,16 @@ import { tempDir } from "./helpers/home.js"; // first: a MORSE_HOME of its own, 
 import { test, after, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import net from "node:net";
-import os from "node:os";
 import path from "node:path";
 import { spawn, execFile } from "node:child_process";
-import { promises as fs, existsSync } from "node:fs";
-import { createHash } from "node:crypto";
+import { promises as fs } from "node:fs";
 
 const home = tempDir("morse-electron-test-");
 process.env.MORSE_HOME = home;
 const apps = await import("../daemon/apps.js");
 const { inspectFuses, fuseVerdict, formatFuses } = await import("../daemon/fuses.js");
 const { CDPSession, listTargets } = await import("../daemon/cdp.js");
-const { findElectron, electronVersion, buildTunes, setFuses, packAsar, pruneBuilds } = await import("../demo/electron-app/build.mjs");
+const { findElectron, buildTunes, setFuses, packAsar, cachedTunes } = await import("../demo/electron-app/build.mjs");
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -146,6 +144,49 @@ test("fuses: the verdict is in plain words, and a native Mac app (a folder) has 
   assert.match(fuseVerdict(native)[0], /native app, it can't/);
 });
 
+// Each copy of Tunes in ~/.cache/morse/tunes can be a real ~224 MB, and a
+// new one was made for every change to the app's files (and every checkout),
+// so the cache grew to 4.6 GB. Only the 3 most recently used of each name stay.
+test("the Tunes cache keeps the 3 most recently used copies of each name, and every checkout shares them", async () => {
+  const cache = tempDir("morse-tunes-cache-");
+  const now = Date.now(), hour = 3600e3;
+  const make = async (name, ageH) => {
+    const d = path.join(cache, name);
+    await put(path.join(d, ".built"));
+    const t = new Date(now - ageH * hour);
+    await fs.utimes(d, t, t);
+  };
+  for (let i = 0; i < 6; i++) await make(`Tunes-${String(i).repeat(12)}`, 10 + i); // 0 is the newest
+  await make("TunesLocked-aaaaaaaaaaaa", 50); // another name: counted on its own
+  await make("Tunes-ffffffffffff.123.tmp", 5); // a build that never finished
+  await make("Tunes-eeeeeeeeeeee.456.tmp", 0); // one being built right now
+  const { pruneTunesCache, cachedTunes } = await import("../demo/electron-app/build.mjs");
+  const gone = await pruneTunesCache(cache, { now });
+  assert.deepEqual(gone.sort(), ["Tunes-333333333333", "Tunes-444444444444", "Tunes-555555555555", "Tunes-ffffffffffff.123.tmp"]);
+  assert.deepEqual((await fs.readdir(cache)).sort(), ["Tunes-000000000000", "Tunes-111111111111", "Tunes-222222222222", "Tunes-eeeeeeeeeeee.456.tmp", "TunesLocked-aaaaaaaaaaaa"]);
+  // A copy used minutes ago may be open in another run: it stays even when it is the 4th.
+  await make("Tunes-999999999999", 0.05);
+  await make("Tunes-888888888888", 0.04);
+  await make("Tunes-777777777777", 0.03);
+  await make("Tunes-dddddddddddd", 0.06);
+  await pruneTunesCache(cache, { now });
+  assert.ok((await fs.readdir(cache)).includes("Tunes-dddddddddddd"));
+  assert.ok(!(await fs.readdir(cache)).includes("Tunes-000000000000"), "an old one beyond the 3 newest goes");
+
+  // cachedTunes builds once, opens the same copy next time, and prunes as it goes.
+  let builds = 0;
+  const fake = async out => { builds++; await put(path.join(out, "tunes"), "#!/bin/sh\n"); };
+  const fresh = tempDir("morse-tunes-cache-");
+  const a = await cachedTunes("Fake", fake, { dist: "/nowhere", cache: fresh });
+  const b = await cachedTunes("Fake", fake, { dist: "/nowhere", cache: fresh });
+  assert.equal(builds, 1);
+  assert.equal(a.dir, b.dir);
+  assert.equal(path.dirname(a.dir), fresh);
+  assert.match(path.basename(a.dir), /^Fake-[0-9a-f]{12}$/);
+  // The key is the app's file names and contents, not this checkout's folder.
+  assert.ok(!(await fs.readFile(new URL("../demo/electron-app/build.mjs", import.meta.url), "utf8")).match(/h\.update\(f\)/));
+});
+
 // ---------------------------------------------------------------- a real Electron app
 
 const dist = findElectron();
@@ -161,30 +202,12 @@ const ENV = { ...process.env, MORSE_HOME: home, MORSE_PROVIDER: "demo", FORCE_CO
 const procs = [];
 // The packaged apps are built once per Electron runtime and app source and
 // kept in ~/.cache/morse/tunes, next to the runtime (hard links on the same
-// disk, so they take almost no room), and every run, side by side included,
+// disk, so most take almost no room), and every run, side by side included,
 // opens the same copy. Each is built in a folder of its own and renamed into
 // place when done; profiles and everything an app writes stay in this run's
-// home. Only the few most recently used builds are kept (pruneBuilds).
-const CACHE = path.join(os.homedir(), ".cache", "morse", "tunes");
-async function cachedApp(name, build) {
-  const src = path.join(root, "demo", "electron-app");
-  const h = createHash("sha256").update(`${dist}\0${electronVersion(dist)}\0${name}\0`);
-  for (const f of [...(await fs.readdir(src)).sort().map(f => path.join(src, f)), path.join(root, "demo", "sites", "tunes", "index.html")]) h.update(f).update(await fs.readFile(f));
-  const id = `${name}-${h.digest("hex").slice(0, 12)}`, dir = path.join(CACHE, id);
-  const result = () => ({ dir, exe: path.join(dir, "tunes"), version: electronVersion(dir) });
-  await fs.mkdir(CACHE, { recursive: true });
-  // soak: after this one is marked as used, only the few most recent builds stay (build.mjs pruneBuilds)
-  if (existsSync(path.join(dir, ".built"))) { await fs.utimes(dir, new Date(), new Date()).catch(() => {}); await pruneBuilds(CACHE); return result(); }
-  const tmp = `${dir}.${process.pid}.tmp`;
-  try {
-    await build(tmp);
-    await fs.writeFile(path.join(tmp, ".built"), "");
-    // Another run may have finished the same build first: theirs is as good.
-    await fs.rename(tmp, dir).catch(e => { if (!existsSync(path.join(dir, ".built"))) throw e; });
-  } finally { await fs.rm(tmp, { recursive: true, force: true }); }
-  await pruneBuilds(CACHE); // soak
-  return result();
-}
+// home. Only the 3 most recently used of each name are kept
+// (demo/electron-app/build.mjs cachedTunes).
+const cachedApp = (name, build) => cachedTunes(name, build, { dist });
 let built = null;
 const tunesApp = async () => built ||= await cachedApp("Tunes", out => buildTunes(out, { dist }));
 const lockedApp = () => cachedApp("TunesLocked", async out => {
