@@ -114,7 +114,7 @@ others made** in Settings.
 | | |
 |---|---|
 | ![](screenshots/110-for-this-site.png) **For this site** in the Mods panel | ![](screenshots/111-try-it.png) **Try it**: on the page, nothing saved yet |
-| ![](screenshots/112-update.png) **Update…**: what changed in the newer version | ![](site/gallery-desktop-light.png) The gallery on the website |
+| ![](screenshots/112-update.png) **Update…**: what changed in the newer version | ![](site/gallery-desktop.png) The gallery on the website |
 
 ## When a site changes
 

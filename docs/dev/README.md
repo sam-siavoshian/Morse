@@ -8,6 +8,9 @@ How to work on Morse itself. For using Morse, see the [docs](../README.md).
   test helpers, evals, screenshots, and what was verified for real.
 - [Adding a feature](adding-a-feature.md): the rules for runtime code, words
   people read, the UI review loop, and where docs go.
+- [Accessibility of Morse itself](accessibility.md): keyboard, screen
+  readers, zoom and forced colors in Morse's own UI, and how axe-core checks
+  it.
 - [Checking a Mac or Windows PC](platform-testing.md): the 15-minute check
   for the desktop support that has only been tested on Linux.
 
@@ -98,9 +101,10 @@ layout that share links and the gallery list depend on.
   `share/install.css` with `design/tokens.css`.
 
 Run it locally with `npm run demo:serve` and open
-`http://127.0.0.1:8787/site/`. Screenshots, with Lanes' page beside Morse's
-at 390, 768, 1280 and 1440 pixels wide (`compare-*.png`), are in
-[`docs/site/`](../site/).
+`http://127.0.0.1:8787/site/`. Screenshots are in [`docs/site/`](../site/):
+`node demo/shoot-site.js` makes the pages' own (1440×900 and 390×844), and
+the `compare-*` pictures put Lanes' page beside Morse's at 390, 768, 1280
+and 1440 pixels wide, the first screen and the whole page.
 
 To add a mod to the gallery, export it (`morse export <id>` writes a
 `.morse.json`), drop it in `site/mods/`, and add an entry to

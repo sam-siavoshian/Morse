@@ -13,11 +13,11 @@
 import path from "node:path";
 import { createRequire } from "node:module";
 import { openSite } from "./show-once-page.js";
+import { pressOpen } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const OUT = path.resolve(root, process.env.SHOTS || path.join("docs", "screenshots"));
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const status = page => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
 async function until(fn, ms = 30000) {
@@ -32,7 +32,7 @@ const shot = async (name, settle = 350) => { await sleep(settle); await page.scr
 
 // ---- 129: the chip in the empty bar, and the ⋯ menu
 await page.mouse.move(900, 600);
-await page.keyboard.press(OPEN_KEY);
+await pressOpen(page);
 await page.locator(".sugs .so-sug").waitFor();
 await page.locator(".bar .more").focus();
 await page.keyboard.press("Enter");
@@ -75,7 +75,7 @@ await ctx.close();
 
 // ---- 134: a sign-in, recorded: the password is never kept
 ({ page, ctx } = await openSite(browser, "mail", { file: "signin.html" }));
-await page.keyboard.press(OPEN_KEY);
+await pressOpen(page);
 await page.locator(".sugs .so-sug").click();
 await page.locator(".so-strip").waitFor();
 await page.locator("[name=email]").click();
