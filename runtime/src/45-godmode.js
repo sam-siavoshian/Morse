@@ -289,8 +289,8 @@ const GodMode = (() => {
     if (show) {
       place();
       if (hoverEl && (hoverEl === G.el || G.tool)) hl.hidden = true;
-    }
-    G.raf = requestAnimationFrame(loop);
+      G.raf = requestAnimationFrame(loop);
+    } else if (!G.wait) G.wait = setTimeout(() => { G.wait = 0; if (G.el && !G.raf) G.raf = requestAnimationFrame(loop); }, 200); // perf: hidden (working, result, modal): check 5x/s, not every frame
   }
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
