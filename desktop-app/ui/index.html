@@ -48,9 +48,6 @@
       <button type="button" data-tab="mods">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5l5.5 3L8 8.5l-5.5-3z"/><path d="M2.5 8.2L8 11.2l5.5-3M2.5 10.9L8 13.9l5.5-3"/></svg>
         <span>Mods</span><small id="nav-mods"></small></button>
-      <button type="button" data-tab="checks">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M5.6 8.1l1.7 1.7 3.2-3.4"/></svg>
-        <span>Checks</span><small id="nav-checks"></small></button>
     </nav>
     <div class="side-foot">
       <label class="switchrow"><span>Mods on</span><input type="checkbox" role="switch" id="mods-on" checked></label>
@@ -99,6 +96,15 @@
         <div class="row-end"><button type="button" class="btn" id="cancel-choice">Cancel</button><button type="button" class="btn primary" id="use-choice">Use this</button></div>
       </div>
       <p class="foot">Each choice is explained in <button type="button" class="link" data-link="models">Models and setup</button>.</p>
+      <!-- simplify: Checks lives here, under the model it checks (docs/dev/simplify.md) -->
+      <div class="card" id="checks" aria-labelledby="checks-h">
+        <div class="cur-main">
+          <div><span class="eyebrow" id="checks-h">Checks</span><p class="sub">What Morse found on this computer, and whether your model answers.</p></div>
+          <div class="cur-actions"><button type="button" class="btn" id="run-checks">Run checks</button></div>
+        </div>
+        <ul class="list checks" id="check-list" aria-label="Checks"></ul>
+        <p class="foot">Something wrong? <button type="button" class="link" data-link="troubleshooting">Troubleshooting</button> says what each message means.</p>
+      </div>
     </section>
 
     <!-- Chrome -->
@@ -137,16 +143,6 @@
       </div>
     </section>
 
-    <!-- Checks -->
-    <section id="checks" aria-labelledby="checks-h" hidden>
-      <header class="head two">
-        <h1 id="checks-h">Checks</h1>
-        <div class="head-actions"><button type="button" class="btn primary" id="run-checks">Run checks</button></div>
-        <p>What Morse found on this computer, and whether your model answers.</p>
-      </header>
-      <ul class="list checks" id="check-list" aria-label="Checks"></ul>
-      <p class="foot">Something wrong? <button type="button" class="link" data-link="troubleshooting">Troubleshooting</button> says what each message means.</p>
-    </section>
   </main>
 </div>
 

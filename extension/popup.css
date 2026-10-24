@@ -70,3 +70,12 @@ input, select {
 .dot.ok { background: var(--m-signal-4); box-shadow: 0 0 0 3px var(--m-signal-0); }
 .dot.warn { background: var(--m-warn); }
 [hidden] { display: none !important; }
+
+/* simplify: Model folds into one line once it works (popup.js) */
+#modelbox > summary { list-style: none; cursor: pointer; }
+#modelbox > summary::-webkit-details-marker { display: none; }
+#modelbox > summary h2 { display: flex; align-items: center; gap: 6px; }
+#modelbox > summary h2::after { content: ""; width: 5px; height: 5px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); }
+#modelbox[open] > summary h2::after { transform: translateY(1px) rotate(-135deg); }
+#modelsum { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--m-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+#modelbox > summary:focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; border-radius: var(--m-r-sm); }

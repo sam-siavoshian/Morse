@@ -29,8 +29,11 @@ async function openHotkey() {
 const url = new URLSearchParams(location.search).get("url") || tab?.url || "";
 const send = msg => chrome.runtime.sendMessage({ ...msg, url });
 
+let modelTouched = false; // the person opened or closed Model themselves: leave it
+document.getElementById("modelbox").addEventListener("toggle", e => { if (e.isTrusted !== false && document.getElementById("modelbox").dataset.ready) modelTouched = true; });
 let st = await send({ type: "popup.state" });
 render(st);
+setTimeout(() => { $("modelbox").dataset.ready = "1"; }, 0); // toggles from here on are the person's
 
 function render(s) {
   st = s;
@@ -50,6 +53,10 @@ function render(s) {
 
   $("connect").hidden = s.kind !== "none";
   $("reason").textContent = s.reason;
+  // simplify: a working model is one line; open it to change it. No model: open.
+  const ok = s.kind !== "none" && (s.kind !== "helper" || s.helper?.paired);
+  $("modelsum").textContent = ok ? `· ${s.label}` : "";
+  if (!modelTouched) $("modelbox").open = !ok || isOptions;
 
   // Auto (no explicit choice): show whichever is in use, else the helper.
   const backend = s.backend || (s.kind === "anthropic" ? "anthropic" : "helper");

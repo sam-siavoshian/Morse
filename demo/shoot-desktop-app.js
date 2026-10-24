@@ -125,10 +125,11 @@ try {
   await tab(w, "mods");
   await shot(w, "172-desktop-app-mods.png");
 
-  // 7. Checks.
-  await tab(w, "checks");
+  // 7. Checks (a card under Model).
+  await tab(w, "model");
   await w.click("#run-checks");
   await w.waitForFunction(() => !document.querySelector("#run-checks").disabled, null, { timeout: 120000 });
+  await w.locator("#checks").scrollIntoViewIfNeeded();
   await shot(w, "173-desktop-app-checks.png");
 
   // 8. The same window in light mode.

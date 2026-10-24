@@ -93,5 +93,6 @@ if (warn && !warn.querySelector("button")) {
 // Opened from "Connect a model" (the bar or the welcome page): show model settings.
 if ((await chrome.storage.local.get("morse.popupFocus"))["morse.popupFocus"] === "model") {
   await chrome.storage.local.remove("morse.popupFocus");
+  document.getElementById("modelbox")?.setAttribute("open", ""); // simplify: Model may be folded (popup.js)
   document.getElementById("model")?.scrollIntoView({ block: "start" });
 }

@@ -44,11 +44,12 @@ function show(tab) {
   for (const b of document.querySelectorAll("nav button")) {
     if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   }
+  if (tab === "checks") tab = "model"; // simplify: Checks is a card in Model now
   for (const s of document.querySelectorAll("main > section")) s.hidden = s.id !== tab;
   try { sessionStorage.setItem("tab", tab); } catch {}
   $(tab).closest("main").scrollTop = 0;
   // Checks ask the model a question, so they run only when asked.
-  if (tab === "checks" && !$("check-list").children.length) $("check-list").replaceChildren(h("li", { class: "empty" }, "Run checks to see what Morse found on this computer. It also asks your model a short question."));
+  if (tab === "model" && !$("check-list").children.length) $("check-list").replaceChildren(h("li", { class: "empty" }, "Run checks to see what Morse found on this computer. It also asks your model a short question."));
 }
 for (const b of document.querySelectorAll("nav button")) b.onclick = () => show(b.dataset.tab);
 for (const b of document.querySelectorAll("[data-go]")) b.onclick = () => show(b.dataset.go);
@@ -318,8 +319,7 @@ async function runChecks() {
       h("span", { class: "label", text: r.label }),
       h("span", { class: "text", text: r.text }))));
     const bad = rows.filter(r => r.ok === false).length;
-    $("nav-checks").textContent = bad ? String(bad) : "";
-    $("nav-checks").className = bad ? "warn" : "";
+    $("checks").classList.toggle("warn", !!bad);
   } catch (e) {
     $("check-list").replaceChildren(h("li", { class: "empty" }, e.message));
   } finally { b.disabled = false; b.textContent = "Run checks"; }

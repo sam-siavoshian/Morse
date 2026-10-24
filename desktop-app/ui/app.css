@@ -236,3 +236,9 @@ main::-webkit-scrollbar { width: 10px; }
 main::-webkit-scrollbar-thumb { background: var(--m-line-strong); border: 3px solid var(--m-bg); border-radius: 6px; }
 main::-webkit-scrollbar-thumb:hover { background: var(--m-signal-1); }
 main::-webkit-scrollbar-track { background: transparent; }
+
+/* simplify: Checks is a card under Model (index.html) */
+#checks { margin-top: 16px; }
+#checks .sub { margin: 4px 0 0; color: var(--m-text-2); font-size: var(--m-text-sm); }
+#checks .list { margin-top: 12px; }
+#checks .foot { margin-top: 12px; }

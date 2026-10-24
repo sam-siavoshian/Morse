@@ -256,15 +256,14 @@ function toggleSettings() {
   pane.querySelector(".hk")?.focus();
 }
 
-// ---- overflow menu
+// ---- overflow menu: only what has no button of its own (docs/dev/simplify.md).
+// Talk is the mic button, Mods the button beside this one, and Choose with
+// keys (Alt+↓) and the shortcut list (?) are one click away in Help; their
+// keys still work everywhere.
 function menuItems() {
   return [
     { id: "showonce", label: t("menu.showonce"), keys: null }, // show-once hook: 64-show-once.js
-    { id: "keypick", label: t("menu.keypick"), keys: comboParts(KEYPICK_COMBO, PLATFORM) }, // 41-keypick.js
     { id: "settings", label: t("menu.settings"), keys: [primaryMod, ","] },
-    { id: "shortcuts", label: t("menu.shortcuts"), keys: ["?"] },
-    { id: "voice", label: t("bar.talk"), keys: comboParts(hotkey("talk"), PLATFORM), sub: hotkey("talk") === hotkey("open") ? t("menu.hold") : "" },
-    { id: "mods", label: t("menu.mods"), keys: comboParts(hotkey("mods"), PLATFORM) },
     { id: "help", label: t("menu.help"), keys: ["F1"] }, // onboarding hook: 59-help.js
   ];
 }
@@ -283,12 +282,8 @@ function hideMenu() {
 function runMenu(id) {
   hideMenu();
   if (id === "settings") toggleSettings();
-  if (id === "shortcuts") { showPane(paneKind === "shortcuts" ? "" : "shortcuts"); input.focus(); }
-  if (id === "voice") Voice.start("tap");
-  if (id === "mods") openPanel();
   if (id === "help") toggleHelp(); // onboarding hook: 59-help.js
   if (id === "showonce") ShowOnce.start(); // show-once hook
-  if (id === "keypick") KeyPick.start(); // 41-keypick.js
 }
 moreBtn.addEventListener("click", () => (menuEl.hidden ? showMenu() : hideMenu()));
 menuEl.addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (b) runMenu(b.dataset.m); });

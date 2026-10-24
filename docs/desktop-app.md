@@ -104,7 +104,7 @@ every app, and back on again. It is the same off switch as `morse pause`.
 
 ## Checks
 
-**Run checks** shows what Morse found on this computer and asks your model a
+Under **Model**, **Run checks** shows what Morse found on this computer and asks your model a
 short question, like `morse doctor`. A row marked **!** says what to do about
 it.
 

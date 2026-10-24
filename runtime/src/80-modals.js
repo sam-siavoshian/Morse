@@ -179,9 +179,10 @@ function showImport() {
   openModal(`
     <header><b>${t("import.title")}</b><small>${t("import.sub")}</small><button data-a="close">×</button></header>
     <textarea class="code" data-k="src" spellcheck="false" placeholder="https://…/install.html#m=…" aria-label="${esc(t("import.label"))}"></textarea>
-    <footer><button data-a="close">${t("btn.cancel")}</button><button class="primary" data-a="go">${t("import.next")}</button></footer>`);
+    <footer><button data-c="import-file" class="ctl-file">${t("ctl.importFile")}</button><button data-a="close">${t("btn.cancel")}</button><button class="primary" data-a="go">${t("import.next")}</button></footer>`);
   // user control: say what it does before anything is installed (63-control.js)
   modal.querySelector("[data-a=go]").onclick = () => reviewImport(modal.querySelector("[data-k=src]").value);
+  modal.querySelector("[data-c=import-file]").onclick = () => importFile(); // simplify: one place to install from (63-control.js)
 }
 
 // Before/after share card, 1200x675 (the size X/Twitter shows inline).

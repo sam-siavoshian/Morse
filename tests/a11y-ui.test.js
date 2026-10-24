@@ -48,6 +48,7 @@ const snapshot = page => page.evaluate(() => ({
 async function openTools(page) {
   if (await page.locator(".bar").isHidden()) await pressOpen(page);
   await page.locator(".gm-qbtn").click();
+  await page.locator(".gm-menu [data-a11y=more]").click(); // the group opens from its one item (docs/dev/simplify.md)
   await page.locator(".gm-menu .a11y-group").waitFor();
 }
 async function tool(page, k) {
@@ -69,7 +70,7 @@ const ratio = (page, sel) => page.evaluate(s => {
   return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 }, sel);
 
-test("Easier to use: the group sits beside the page tools, with every tool, Read aloud and Check this page", { skip }, () => scenario(async ({ page }) => {
+test("Easier to use: the group opens beside the page tools from its one item, with every tool, Read aloud and Check this page", { skip }, () => scenario(async ({ page }) => {
   await openTools(page);
   const items = await page.locator(".gm-menu .a11y-group button").allInnerTexts();
   assert.deepEqual(items.map(s => s.trim()), ["Higher contrast", "Bigger click targets", "Easier to read font", "Dyslexia-friendly letters", "Underline links",
@@ -77,7 +78,7 @@ test("Easier to use: the group sits beside the page tools, with every tool, Read
   // Arrow keys walk the whole menu, both panels.
   const names = [];
   for (let i = 0; i < 14; i++) { await page.keyboard.press("ArrowDown"); names.push(await page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.activeElement?.innerText.trim())); }
-  assert.ok(names.includes("Higher contrast") && names.includes("Bigger text"), names.join("|"));
+  assert.ok(names.includes("Bigger click targets") && names.includes("Bigger text"), names.join("|"));
   // The two panels don't overlap.
   const a = await page.locator(".gm-menu .a11y-group").boundingBox(), m = await page.locator(".gm-menu").boundingBox();
   assert.ok(a.x + a.width <= m.x, JSON.stringify({ a, m }));

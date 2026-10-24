@@ -305,6 +305,8 @@ test("Model setting: Automatic, Always fast, Always best, saved; the footer name
       await t.waitFor(s => s.open);
       await page.keyboard.press("Control+Comma");
       await t.waitFor(s => s.pane === "settings");
+      // The model is under More settings (docs/dev/simplify.md).
+      if (await page.locator("[data-act=more]").getAttribute("aria-expanded") === "false") await page.locator("[data-act=more]").click();
     };
     await openSettings();
     assert.equal(await page.locator(seg("auto")).getAttribute("aria-checked"), "true", "Automatic unless chosen");

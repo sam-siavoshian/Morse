@@ -179,11 +179,36 @@ ${h("foot.off", { key: B(KEYS.off) })}` : ""}
 ${h("foot.web", { ext: B("morse extension"), serve: B("morse serve") })}
 ${h("foot.version", { cmd: "morse --version" })}`;
 
+// simplify: `morse help` is the few commands people use; every command and
+// option is behind `morse help --all` (docs/dev/simplify.md).
+const SHORT_HELP = `${LOGO}
+
+${B(h("desktop"))}
+  morse launch <app>        ${h("launch")}
+  morse apps                ${h("apps")}
+  morse stop <app>          ${h("stop")}
+
+${B(h("web"))}
+  morse extension           ${h("extension")}
+  morse serve               ${h("serve")}
+
+${B(t("settings.model"))}
+  morse setup               ${h("setup")}
+  morse doctor              ${h("doctor")}
+
+${B(h("mods"))}
+  morse mods                ${h("modsCmd")}
+  morse install <link|file> ${h("install")}
+  morse pause [site|app]    ${h("pauseCmd")}
+
+${h("foot.open", { key: B(openKey) })}${KEYS.off ? ` ${h("foot.off", { key: B(KEYS.off) })}` : ""}
+${h("all", { cmd: B("morse help --all") })}`;
+
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const f = flags(rest);
   if (["--version", "-v", "version"].includes(cmd)) return console.log(VERSION);
-  if (["--help", "-h", "help"].includes(cmd)) return console.log(HELP);
+  if (["--help", "-h", "help"].includes(cmd)) return console.log(f.all || f._[0] === "all" ? HELP : SHORT_HELP);
   if (await (await import("./setup.js")).maybeRun(cmd, rest)) return; // onboarding hook: morse setup, and getting started while nothing is set up
   switch (cmd) {
     case "apps":
@@ -323,7 +348,8 @@ async function main() {
       break;
     }
     default:
-      console.log(HELP);
+      if (cmd) { console.log(t("cli.unknown", { cmd: shown(cmd) }) + "\n"); process.exitCode = 1; }
+      console.log(SHORT_HELP);
   }
 }
 

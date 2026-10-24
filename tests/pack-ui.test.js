@@ -83,6 +83,7 @@ let link = "";
 
 test("Make a pack…: choose mods in the Mods panel, name it, add a note, copy its link", { skip }, async () => {
   await openPanel();
+  await ui(".panel .pmore summary").click(); // under the panel's More (docs/dev/simplify.md)
   await ui(".panel [data-pk=make]").click();
   await ui(".panel .pk-pickbar").waitFor();
   assert.match(await ui(".panel .pk-pickbar").textContent(), /Choose mods for the pack.*None chosen yet/s);
