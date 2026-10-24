@@ -28,11 +28,11 @@ const queue = serialQueue();
 let tmpSeq = 0;
 
 // Write to <file>.<pid>-<n>.tmp, then rename it into place.
-async function writeAtomic(file, data) {
+async function writeAtomic(file, data, opts) {
   await ensureHome();
   const tmp = `${file}.${process.pid}-${++tmpSeq}.tmp`;
   try {
-    await fs.writeFile(tmp, data);
+    await fs.writeFile(tmp, data, opts);
     await renameOver(tmp, file);
   } catch (e) {
     await fs.rm(tmp, { force: true }).catch(() => {});
@@ -86,9 +86,26 @@ export async function loadConfig() {
   try { return JSON.parse(await fs.readFile(CONFIG, "utf8")); } catch { return {}; }
 }
 
-export async function saveConfig(cfg) {
-  await queue(CONFIG, () => writeAtomic(CONFIG, JSON.stringify(cfg, null, 2)));
+// The config holds API keys and helper tokens: owner-only, written atomically.
+async function writeConfig(cfg) {
+  await writeAtomic(CONFIG, JSON.stringify(cfg, null, 2), { mode: 0o600 });
+  await fs.chmod(CONFIG, 0o600).catch(() => {});
 }
+export async function saveConfig(cfg) {
+  await queue(CONFIG, () => writeConfig(cfg));
+}
+
+// Read-modify-write, in the config file's queue.
+export function updateConfig(fn) {
+  return queue(CONFIG, async () => {
+    const cfg = await loadConfig();
+    const out = (await fn(cfg)) ?? cfg;
+    await writeConfig(out);
+    return out;
+  });
+}
+
+export const CONFIG_PATH = CONFIG;
 
 // Command-bar settings (hotkeys, voice, appearance): ~/.morse/settings.json
 export async function loadPrefs() {

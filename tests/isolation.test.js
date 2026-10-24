@@ -23,14 +23,20 @@ async function until(get, ms = 10000) {
   for (;;) { const v = await get(); if (v || Date.now() > end) return v; await new Promise(r => setTimeout(r, 40)); }
 }
 
+// A mod the page would like installed on every site.
+const WIDE = { morse: 1, id: "everywhere", title: "Everywhere", prompt: "p", css: "", js: "document.title = 'owned'", enabled: true,
+  match: { hosts: ["*"], app: null }, created: "2026-01-01T00:00:00.000Z", updated: "2026-01-01T00:00:00.000Z" };
+
 // The app's own script: looks for Morse's host API from the page's main world,
 // early and late, and uses it if it finds it.
 const APP = `<!doctype html><title>App</title><body><main id="main">Main</main><script>
 window.appSecret = "s3cret";
 const seen = {};
+const WIDE = ${JSON.stringify(WIDE)};
 const look = () => {
   for (const k of ["__morseHostSend", "__morseHost", "__morseHostReceive", "__morseRuntime"]) if (globalThis[k] !== undefined) seen[k] = typeof globalThis[k];
   try { if (typeof __morseHostSend === "function") { __morseHostSend(JSON.stringify({ id: 1, type: "history.add", text: "from the page" })); seen.called = true; } } catch (e) { seen.error = String(e); }
+  try { if (typeof __morseHostSend === "function") { __morseHostSend(JSON.stringify({ id: 3, type: "mods.save", mod: WIDE })); seen.called = true; } } catch (e) { seen.error = String(e); }
   try { if (globalThis.__morseHost) { __morseHost.send({ id: 2, type: "mods.delete", modId: "keepme" }); seen.called = true; } } catch (e) { seen.error = String(e); }
   document.documentElement.dataset.probe = JSON.stringify({ seen, n: (window.__n = (window.__n || 0) + 1) });
 };
@@ -75,6 +81,7 @@ async function assertIsolated() {
   const start = (await probe())?.n || 0;
   const p = await until(async () => { const v = await probe(); return v && v.n > start + 5 && v; });
   assert.deepEqual(p.seen, {}, "the page saw nothing of Morse's host API");
+  assert.ok(!(await store.listMods()).some(m => m.id === "everywhere"), "the page saved no mod");
 }
 
 test("the page's own scripts can't see or call the host API", { skip }, async () => {
@@ -106,11 +113,15 @@ test("a binding with the same name in the main world reaches nothing", { skip },
   await page.evaluate(() => {
     __morseHostSend(JSON.stringify({ id: 7, type: "history.add", text: "forged" }));
     __morseHostSend(JSON.stringify({ id: 8, type: "mods.delete", modId: "keepme" }));
-  });
+    __morseHostSend(JSON.stringify({ id: 9, type: "settings.set", settings: { hotkeys: { open: "Alt+KeyQ" } } }));
+  }).catch(() => {});
+  await page.evaluate(w => __morseHostSend(JSON.stringify({ id: 10, type: "mods.save", mod: w })), WIDE);
   await new Promise(r => setTimeout(r, 500));
   const hist = JSON.parse(await fs.readFile(path.join(home, "history.json"), "utf8"));
   assert.ok(!JSON.stringify(hist).includes("forged"));
   assert.ok((await store.listMods()).some(m => m.id === "keepme"));
+  assert.ok(!(await store.listMods()).some(m => m.id === "everywhere"), "nothing saved");
+  assert.notEqual((await store.loadPrefs()).hotkeys.open, "Alt+KeyQ");
   await cdp.detach();
 });
 
@@ -164,6 +175,32 @@ test("a page can't delete or overwrite another site's mod", { skip }, async () =
   const saved = await c.dispatch(s, caller, { type: "mods.save", draft: { prompt: "p", css: "", js: "", url: "https://other.test/" } });
   assert.deepEqual(saved.match.hosts, [new URL(origin).host]);
   await c.dispatch(s, caller, { type: "mods.delete", modId: saved.id });
+});
+
+test("even from Morse's world, mods.save can't widen where a mod runs", { skip }, async () => {
+  const c = new Connector({ port: 0, app: null, settings: { provider: "demo", model: "demo" }, log: () => {} });
+  const s = fakeSession(`${origin}/`);
+  const caller = { world: 11, main: 10, frameId: "F" };
+  const host = new URL(origin).host;
+  await assert.rejects(c.dispatch(s, caller, { type: "mods.save", mod: WIDE }), /another app or site/);
+  await assert.rejects(c.dispatch(s, caller, { type: "mods.save", mod: { ...WIDE, match: { hosts: [host, "other.test"], app: null } } }), /another app or site/);
+  const keep = (await store.listMods()).find(m => m.id === "keepme");
+  await assert.rejects(c.dispatch(s, caller, { type: "mods.save", mod: { ...keep, match: { hosts: ["*"], app: null } } }), /another app or site/);
+  assert.ok(!(await store.listMods()).some(m => m.id === "everywhere"));
+  // Saving this site's mod as it is (a toggle, an edit) works.
+  await c.dispatch(s, caller, { type: "mods.save", mod: { ...keep, enabled: false } });
+  await c.dispatch(s, caller, { type: "mods.save", mod: { ...keep, enabled: true } });
+  // An installed (confirmed) mod that runs everywhere can still be toggled; its match doesn't change.
+  await store.saveMod({ ...WIDE, id: "installed", imported: true });
+  await c.dispatch(s, caller, { type: "mods.save", mod: { ...WIDE, id: "installed", imported: true, enabled: false } });
+  assert.equal((await store.listMods()).find(m => m.id === "installed").enabled, false);
+  await store.deleteMod("installed");
+  // A desktop app: no wider than this app and this host.
+  const d = new Connector({ port: 0, app: { id: "notes", name: "Notes" }, settings: { provider: "demo", model: "demo" }, log: () => {} });
+  await assert.rejects(d.dispatch(s, caller, { type: "mods.save", mod: { ...WIDE, id: "notes1", match: { hosts: ["*"], app: "notes" } } }), /another app or site/);
+  const ok = await d.dispatch(s, caller, { type: "mods.save", mod: { ...WIDE, id: "notes2", match: { hosts: [host], app: "notes" } } });
+  assert.equal(ok.id, "notes2");
+  await store.deleteMod("notes2");
 });
 
 test("mod code goes to the main world, replies to Morse's world", { skip }, async () => {

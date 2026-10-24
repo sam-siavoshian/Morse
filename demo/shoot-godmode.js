@@ -9,12 +9,13 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { createRequire } from "node:module";
+import { startHelper, pairExtension } from "./helper.js";
 // The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
 const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const OUT = path.join(root, "docs", "screenshots");
+const OUT = path.resolve(root, process.env.SHOTS || path.join("docs", "screenshots"));
 const EXT = path.join(root, "dist", "extension");
 const BASE = Number(process.env.MORSE_DEMO_PORT || 8787);
 const SITE = { parley: `http://127.0.0.1:${BASE}/demo/sites/parley/`, byte: `http://127.0.0.1:${BASE + 1}/demo/sites/byte/` };
@@ -32,6 +33,11 @@ await setup.goto(`chrome://extensions/?id=${id}`);
 await setup.locator("#allow-user-scripts").click();
 await sleep(400);
 await setup.close();
+for (const p of ctx.pages()) if (p.url().includes("/options.html")) await p.close();
+// The model (for "rebuild it here") comes from the Morse helper; see demo/helper.js.
+await fs.mkdir(OUT, { recursive: true });
+const helper = await startHelper(path.join(tmp, "helper-home"));
+await pairExtension(ctx, id, helper.code);
 
 async function open(url) {
   const page = await ctx.newPage();
@@ -120,7 +126,7 @@ await news.locator(".gm-sw button[data-c='#262626']").hover();
 await sleep(500);
 await shot(news, "52-recolor.png");
 await news.keyboard.press("Escape");
-await news.keyboard.press("Escape"); // closes the bar: the session is saved as one "Manual edits" mod
+await news.keyboard.press("Escape"); // closes the bar: the session is saved as one "Direct edits" mod
 await sleep(600);
 
 // 54. Page tools: hide ads and popups, then dark mode
@@ -162,3 +168,4 @@ await sleep(600);
 const { mods } = await sw.evaluate(() => chrome.storage.local.get("mods"));
 for (const m of Object.values(mods)) console.log(`  · ${m.title}${m.kind ? ` [${m.kind}]` : ""}${m.from ? ` from ${m.from.app}` : ""}: ${m.prompt}`);
 await ctx.close();
+helper.stop();

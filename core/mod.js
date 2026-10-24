@@ -2,6 +2,11 @@
 // and the CSS/JS that implements it. This is the unit people share.
 
 import { KIT_SOURCE } from "./kit.js";
+import { versionsOf } from "./versions.js";
+
+// Version history (refine, restore, step back) lives in versions.js so the
+// runtime can inline it; it is part of this module's API.
+export { HISTORY_CAP, versionsOf, currentVersion, reviseMod, restoreVersion, stepBack, relativeTime } from "./versions.js";
 
 export const SHARE_BASE = "https://sam-siavoshian.github.io/RRAA/share/install.html";
 
@@ -9,7 +14,7 @@ export function newId() {
   return Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
 }
 
-export function createMod({ id, title, prompt, css, js, url, app, target, model, kind, edits, from }) {
+export function createMod({ id, title, prompt, css, js, url, app, target, model, kind, edits, from, history, refined }) {
   const now = new Date().toISOString();
   const manual = kind === "manual" || kind === "quick";
   return {
@@ -29,6 +34,9 @@ export function createMod({ id, title, prompt, css, js, url, app, target, model,
     // stay editable; mods rebuilt from a captured element record where it came from.
     ...(manual ? { kind, edits: Array.isArray(edits) ? edits : [] } : {}),
     ...(from && typeof from === "object" ? { from: { app: from.app || null, url: from.url || null, title: from.title || null } } : {}),
+    // A draft refined in the bar before it was kept arrives with its versions.
+    ...(Array.isArray(history) && history.length ? { history: versionsOf({ history }) } : {}),
+    ...(typeof refined === "string" && refined && refined !== prompt ? { refined } : {}),
   };
 }
 
@@ -42,22 +50,25 @@ export function hostOf(url) {
   } catch { return "*"; }
 }
 
+const LOOPBACK = /^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/;
+
 export function modMatches(mod, { url, app }) {
-  // Desktop apps often serve their UI from a random localhost port, so a mod
-  // made for an app follows the app, not the host it happened to load from.
-  if (mod.match?.app) return !!app && mod.match.app === app;
+  if (mod.match?.app && mod.match.app !== app) return false;
   const h = hostOf(url);
   // "file" is how mods made before per-file matching were filed: keep them
   // working on local files.
   const legacyFile = h.startsWith("file://") ? "file" : null;
-  return (mod.match?.hosts || ["*"]).some(p => p === "*" || p === h || p === legacyFile || (!legacyFile && p.startsWith("*.") && h.endsWith(p.slice(1))));
+  return (mod.match?.hosts || ["*"]).some(p => p === "*" || p === h || p === legacyFile || (!legacyFile && p.startsWith("*.") && h.endsWith(p.slice(1)))
+    // Desktop apps often serve their UI from a random localhost port: within
+    // the app, a mod follows its local UI whatever port it loads from.
+    || (!!mod.match?.app && LOOPBACK.test(p) && LOOPBACK.test(h)));
 }
 
 export function validateMod(m) {
-  if (!m || typeof m !== "object" || m.morse !== 1) throw new Error("Not a Morse mod");
-  for (const k of ["id", "title", "prompt"]) if (typeof m[k] !== "string") throw new Error(`Mod is missing ${k}`);
-  if (!/^[\w-]{1,40}$/.test(m.id)) throw new Error("This mod has an invalid id");
-  if (typeof m.css !== "string" || typeof m.js !== "string") throw new Error("Mod has no code");
+  if (!m || typeof m !== "object" || m.morse !== 1) throw new Error("This isn't a Morse mod. Check that you copied all of it.");
+  for (const k of ["id", "title", "prompt"]) if (typeof m[k] !== "string") throw new Error(`This mod is incomplete (no ${k}). Ask for a new share link.`);
+  if (!/^[\w-]{1,40}$/.test(m.id)) throw new Error("This mod has an invalid id. Ask for a new share link.");
+  if (typeof m.css !== "string" || typeof m.js !== "string") throw new Error("This mod has no code in it. Ask for a new share link.");
   return m;
 }
 
@@ -93,13 +104,14 @@ export async function encodeShare(mod) {
 
 export async function decodeShare(link) {
   const frag = String(link).split("#m=")[1];
-  if (!frag) throw new Error("Not a Morse share link");
+  if (!frag) throw new Error("This isn't a Morse share link. Check that you copied the whole link.");
   const json = new TextDecoder().decode(await inflate(unb64url(frag)));
   return validateMod(JSON.parse(json));
 }
 
+// Links carry the current version only; the history stays on this machine.
 export function stripLocal(mod) {
-  const { enabled, ...rest } = mod;
+  const { enabled, history, ...rest } = mod;
   return rest;
 }
 

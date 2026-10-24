@@ -3,29 +3,43 @@
 
 import { buildMessages } from "./prompt.js";
 import { parseModResponse, completeCssPrefix } from "./parse.js";
+import { parseReply } from "./answer.js"; // Ask and find
 import { streamChat } from "./providers.js";
 
-export async function runMorse({ settings, request, context, exec, emit, signal, maxAttempts = 2 }) {
+export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2 }) {
   let previous = null;
   let last = null;
   const started = Date.now();
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     emit({ type: "phase", phase: attempt === 1 ? "thinking" : "fixing", error: previous?.error });
-    let raw = "", lastCss = "";
-    raw = await streamChat(settings, buildMessages({ request, context, previous }), {
+    let raw = "", lastCss = "", lastAnswer = "";
+    raw = await streamChat(settings, buildMessages({ request, context, previous, base }), {
       signal,
       onToken(tok) {
         raw += tok;
         emit({ type: "token", text: tok });
+        // Ask and find: an answer streams as "answer" events, never as CSS.
+        const a = parseReply(raw);
+        if (a.kind === "answer") {
+          const key = `${a.text}\u0000${a.points.length}\u0000${a.steps.length}`;
+          if (key !== lastAnswer) { lastAnswer = key; emit({ type: "answer", ...a }); }
+          return;
+        }
         const css = completeCssPrefix(parseModResponse(raw).css);
         if (css !== lastCss) { lastCss = css; emit({ type: "css", css }); }
       },
     });
+    // Ask and find: an answer is final as soon as it's written; nothing runs.
+    const answer = parseReply(raw, { final: true });
+    if (answer.kind === "answer" && answer.text) {
+      emit({ type: "answer", ...answer });
+      return { ok: true, kind: "answer", answer, title: "", css: "", js: "", raw, attempts: attempt, ms: Date.now() - started };
+    }
     const draft = parseModResponse(raw);
     emit({ type: "css", css: draft.css });
     last = { ...draft, raw, attempts: attempt, ms: Date.now() - started };
     if (!draft.css.trim() && !draft.js.trim()) {
-      previous = { raw, error: "The reply had no ```css or ```js block." };
+      previous = { raw, error: "The reply had no ```css or ```js block (or ANSWER: for a question)." };
       continue;
     }
     if (!draft.js.trim()) return { ...last, ok: true };
@@ -36,5 +50,5 @@ export async function runMorse({ settings, request, context, exec, emit, signal,
     previous = { raw, error: res.error };
     last.error = res.error;
   }
-  return { ...last, ok: false, error: last?.error || "The model did not produce a usable change." };
+  return { ...last, ok: false, error: last?.error || "The model's answer had no change in it. Try other words." };
 }

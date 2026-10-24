@@ -7,11 +7,11 @@
 //   voice     the Morse helper (http://127.0.0.1:7457/v1/transcribe) when it's
 //             running and paired, else OpenAI with the user's key
 
-import { normalizePrefs, mergePrefs, pushHistory } from "./core/prefs.js";
-import { transcribeOpenAI, OPENAI_TRANSCRIBE_MODEL } from "./core/transcribe.js";
-import { Generations } from "./core/cancel.js";
-import { hostOf } from "./core/mod.js";
-import { serialQueue } from "./core/serial.js";
+import { normalizePrefs, mergePrefs, pushHistory } from "../core/prefs.js";
+import { transcribeOpenAI, OPENAI_TRANSCRIBE_MODEL } from "../core/transcribe.js";
+import { Generations } from "../core/cancel.js";
+import { hostOf } from "../core/mod.js";
+import { serialQueue } from "../core/serial.js";
 
 export const gens = new Generations();
 
@@ -90,7 +90,7 @@ async function openaiKey() {
 export async function voiceInfo() {
   if (await helperVoice()) return { transcribe: true, provider: "helper", label: "the Morse helper on this computer", hint: "" };
   if (await openaiKey()) return { transcribe: true, provider: "openai", label: `OpenAI ${OPENAI_TRANSCRIBE_MODEL}`, hint: "" };
-  return { transcribe: false, provider: null, label: "", hint: "Voice: add an OpenAI key in the Morse popup, or run the Morse helper" };
+  return { transcribe: false, provider: null, label: "", hint: "To use voice here, add an OpenAI key in the Morse popup or run the Morse helper" };
 }
 
 async function transcribe(msg) {

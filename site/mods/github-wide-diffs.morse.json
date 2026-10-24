@@ -11,7 +11,7 @@
   },
   "target": {
     "selector": "#files",
-    "label": "div#files"
+    "label": "File list"
   },
   "css": "/* Drop the max-width on pages that show a diff */\nbody:has(#files) .container-xl,\nbody:has(#files) .container-lg,\nbody:has([data-testid=\"progressive-diffs-list\"]) .container-xl,\nbody:has(.js-diff-progressive-container) .container-xl {\n  max-width: none !important;\n}\n\n/* Long lines wrap instead of scrolling sideways */\n.blob-code-inner,\n[data-testid=\"diff-text-cell\"] {\n  white-space: pre-wrap !important;\n  word-break: break-word;\n}\n",
   "js": "",

@@ -8,7 +8,6 @@ import path from "node:path";
 import { serialQueue } from "../core/serial.js";
 import { createMod } from "../core/mod.js";
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 let home, store;
 
 before(async () => {
@@ -82,20 +81,15 @@ function fakeArea() {
 const event = () => { const fns = []; return { fns, addListener: f => fns.push(f), removeListener() {} }; };
 
 async function loadExtension() {
-  // The layout of dist/extension: the extension's files plus core/.
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "morse-ext-"));
-  await fs.mkdir(path.join(dir, "core"));
-  for (const f of await fs.readdir(path.join(root, "extension"))) if (f.endsWith(".js")) await fs.copyFile(path.join(root, "extension", f), path.join(dir, f));
-  for (const f of await fs.readdir(path.join(root, "core"))) await fs.copyFile(path.join(root, "core", f), path.join(dir, "core", f));
-  await fs.writeFile(path.join(dir, "package.json"), '{"type":"module"}');
   const chrome = globalThis.chrome = {
-    storage: { local: fakeArea(), sync: fakeArea() },
-    runtime: { onConnect: event(), onMessage: event() },
+    storage: { local: fakeArea(), sync: fakeArea(), onChanged: event() },
+    runtime: { onConnect: event(), onMessage: event(), onInstalled: event(), id: "morse-test", getURL: p => `chrome-extension://morse-test/${p}` },
     commands: { onCommand: event() },
     tabs: {}, userScripts: undefined,
   };
-  await import(path.join(dir, "background.js"));
-  return { chrome, dir };
+  // The service worker as written (scripts/build.js bundles exactly this).
+  await import("../extension/background.js");
+  return { chrome };
 }
 
 function fakePort(url) {
@@ -106,7 +100,7 @@ function fakePort(url) {
 }
 
 test("extension: 20 concurrent adds each keep 20 (mods, history, clipboard)", async () => {
-  const { chrome, dir } = await loadExtension();
+  const { chrome } = await loadExtension();
   try {
     const port = fakePort("https://a.com/");
     chrome.runtime.onConnect.fns.forEach(f => f(port));
@@ -149,6 +143,5 @@ test("extension: 20 concurrent adds each keep 20 (mods, history, clipboard)", as
     assert.deepEqual(draft.result.match.hosts, ["a.com"]);
   } finally {
     delete globalThis.chrome;
-    await fs.rm(dir, { recursive: true, force: true });
   }
 });

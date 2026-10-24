@@ -11,7 +11,7 @@
   },
   "target": {
     "selector": "button[aria-label=\"Send a gift\"]",
-    "label": "button · “Send a gift”"
+    "label": "Send a gift button"
   },
   "css": "button[aria-label=\"Send a gift\"],\nli:has(> div > a[href=\"/store\"]),\nli:has(> div > a[href=\"/shop\"]),\na[href=\"/store\"],\na[href=\"/shop\"] {\n  display: none !important;\n}\n",
   "js": "",

@@ -50,7 +50,7 @@ function release() {
 }
 
 addEventListener("keydown", e => {
-  if (e.isComposing || e.keyCode === 229) return;
+  if (e.isComposing || e.keyCode === 229 || !live()) return;
   const id = hotkeyFor(e);
   if (id) {
     e.preventDefault();

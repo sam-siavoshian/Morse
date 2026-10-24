@@ -20,10 +20,10 @@ const GodQuick = (() => {
     { k: "light", label: "Light mode" },
     { k: "bigger", label: "Bigger text" },
     { k: "smaller", label: "Smaller text" },
-    { k: "noads", label: "Hide ads & popups" },
+    { k: "noads", label: "Hide ads and pop-ups" },
     { k: "focus", label: "Focus mode" },
     null,
-    { k: "reset", label: "Reset this page" },
+    { k: "reset", label: "Turn off all mods here" },
   ];
 
   const btn = document.createElement("button");
@@ -72,7 +72,7 @@ const GodQuick = (() => {
     const b = e.target.closest("button[data-k]");
     if (!b) return;
     close();
-    act(b.dataset.k).catch(err => toast(err.message)).finally(() => GodCapture.refresh());
+    act(b.dataset.k).catch(err => toast(plainError(err))).finally(() => GodCapture.refresh());
   });
   // Escape and arrows while the menu is open (registered before 95-keys.js).
   addEventListener("keydown", e => {
@@ -116,11 +116,11 @@ const GodQuick = (() => {
     const edit = { op: "page", kind: k };
     if (k === "focus") {
       const main = mainContent();
-      if (!main) return toast("Couldn't find the main content on this page");
+      if (!main) return toast("Couldn't find the main part of this page. Point at it and describe the change instead.");
       Object.assign(edit, GodMode.targetOf(main), { label: describe(main) });
     }
     await create([edit]);
-    toast(`${title} on · saved for ${where()}`);
+    toast(`${title} on for ${where()}`);
   }
   async function zoom(d) {
     const m = quickMod("zoom");
@@ -146,7 +146,7 @@ const GodQuick = (() => {
       await call("mods.save", { mod: m });
       await removeMod(m.id);
     }
-    toast(`Turned off ${on.length} mod${on.length === 1 ? "" : "s"} here · turn them back on in Mods`);
+    toast(`Turned off ${on.length} mod${on.length === 1 ? "" : "s"} here. Turn them back on in Mods.`);
   }
 
   // The smallest landmark holding most of the page's text, else the block

@@ -1,9 +1,23 @@
 // The system prompt is deliberately small: local 7B models follow short,
 // concrete contracts far better than long ones.
 
+import { askTurnsToMessages } from "./answer.js"; // Ask and find
+
+// ---- Ask and find: questions get an answer instead of a mod (core/answer.js
+// parses it; the runtime side is runtime/src/61-ask.js).
+const ASK_FORMAT = `
+If the user asks a question instead (what something does, why it is greyed out, where to find something, how to do something), change nothing. Reply in exactly this format:
+ANSWER: <plain, friendly answer in at most 5 short lines; "- " for lists; refer to marked things as [1], [2]>
+POINT: <selector> | <short label>
+STEP: <selector> | <what to click>
+- One POINT line per thing on the page worth looking at (at most 5). Use selectors from the element HTML or the page outline.
+- STEP lines only when the answer is clicks on this page, in order. Never claim you clicked anything.
+- If the thing is inside a closed menu, say which menu to open, and point at that menu's button first.
+- If the page doesn't show it, say so plainly. No jargon.`;
+
 export const SYSTEM_PROMPT = `You modify live apps. The user points at part of a running web or Electron app and describes a change. You reply with CSS and/or JavaScript that is injected into the page right now.
 
-Reply in exactly this format and nothing else:
+For a change, reply in exactly this format and nothing else:
 TITLE: <3-6 word name for the change>
 \`\`\`css
 <CSS, or leave empty>
@@ -27,7 +41,8 @@ Rules:
   morse.toast(message)              show a short notice
   Everything created through morse is removed automatically when the mod is turned off.
 - No network requests, no eval, no external scripts. Keep it short.
-- Match the app's look: reuse its fonts and colors (inherit, currentColor) unless asked otherwise.`;
+- Match the app's look: reuse its fonts and colors (inherit, currentColor) unless asked otherwise.
+${ASK_FORMAT}`;
 
 // A snapshot captured in another app (God mode's Capture): the model rebuilds
 // that look and behavior natively here instead of copying foreign markup.
@@ -43,7 +58,29 @@ export function snapshotPrompt(snapshot) {
   return lines.join("\n\n");
 }
 
-export function buildMessages({ request, context, previous, snapshot = context?.snapshot }) {
+// Keep iterating: `base` is the change as it is now ({ prompt, css, js }, plus
+// `error` when a saved mod stopped working). The model rewrites it whole, so
+// the reply replaces the mod in the same format.
+export function basePrompt(base, request) {
+  const fence = (lang, code) => "```" + lang + "\n" + String(code || "").trim().slice(0, 6000) + "\n```";
+  const lines = [
+    base.error
+      ? "This change was made earlier and saved. It has stopped working on the page as it is now."
+      : "You already made a change here. The user wants to adjust it.",
+    `Original request: ${base.prompt || "(none)"}`,
+    "Current code:\n" + fence("css", base.css) + "\n" + fence("js", base.js),
+  ];
+  if (base.error) {
+    lines.push(`What went wrong: ${base.error}`);
+    lines.push(`Fix it so it works on the page as it is now and still does what was asked.${request && request !== base.prompt ? ` The user adds: ${request}` : ""}`);
+  } else {
+    lines.push(`Follow-up: ${request}`);
+  }
+  lines.push("Reply with the complete new version: all of its CSS and JS, not only what changed, in the same format. Keep the parts the user didn't ask to change.");
+  return lines.join("\n\n");
+}
+
+export function buildMessages({ request, context, previous, snapshot = context?.snapshot, base }) {
   const parts = [];
   parts.push(`App: ${context.app || "web"}  URL: ${context.url}`);
   parts.push(`Page title: ${context.title}`);
@@ -57,10 +94,13 @@ export function buildMessages({ request, context, previous, snapshot = context?.
   }
   if (context.outline) parts.push("Page outline:\n" + context.outline);
   if (snapshot) parts.push(snapshotPrompt(snapshot));
-  parts.push(`Request: ${request}`);
+  if (context.ask?.mode === "explain") parts.push("Explain this page: reply with ANSWER, a plain summary in 5 short lines of what this page is for and the main things you can do here, and a POINT line for each of those main actions."); // Ask and find
+  if (base) parts.push(basePrompt(base, request)); // keep iterating: refine or fix this code
+  else parts.push(`Request: ${request}`);
 
   const messages = [
     { role: "system", content: SYSTEM_PROMPT },
+    ...askTurnsToMessages(context.ask?.turns), // Ask and find: earlier Q&A on this page
     { role: "user", content: parts.join("\n\n") },
   ];
   if (previous) {

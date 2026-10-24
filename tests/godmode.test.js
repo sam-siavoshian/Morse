@@ -64,7 +64,7 @@ test("hide, move, rename, recolor and dark mode apply live, undo, save, and come
 
   // Rename: T edits the text in place, Enter keeps it.
   await select(page, "#card h3");
-  assert.equal(await page.locator(".gm-tag").textContent(), "h3");
+  assert.equal(await page.locator(".gm-tag").textContent(), "Heading");
   await page.keyboard.press("t");
   await page.keyboard.type("What's new");
   await page.keyboard.press("Enter");
@@ -119,7 +119,7 @@ test("hide, move, rename, recolor and dark mode apply live, undo, save, and come
   await until(async () => (await savedMods(page)).length === 2);
   const mods = await savedMods(page);
   const manual = mods.find(m => m.kind === "manual");
-  assert.equal(manual.title, "Manual edits");
+  assert.equal(manual.title, "Direct edits");
   assert.deepEqual([...new Set(manual.edits.map(e => e.op))].sort(), ["hide", "move", "style", "text"]);
   assert.match(manual.prompt, /Renamed “Release notes” → “What's new”/);
   assert.equal(mods.find(m => m.kind === "quick").title, "Dark mode");
@@ -142,7 +142,7 @@ test("edge cases: shadow DOM, mixed inline text, frames, duplicates, and dark pa
 
   // Inside an open shadow root: the edit carries the host chain.
   await select(page, "#badge", 20, 8);
-  assert.equal(await page.locator(".gm-tag").textContent(), "span.label");
+  assert.equal(await page.locator(".gm-tag").textContent(), "Text");
   await page.keyboard.press("t");
   await page.keyboard.press("Control+a");
   await page.keyboard.type("Inside");
@@ -180,7 +180,7 @@ test("edge cases: shadow DOM, mixed inline text, frames, duplicates, and dark pa
   await select(page, "#card h3");
   await page.keyboard.press("d");
   await until(async () => (await page.locator("[data-morse-dup]").count()) === 1);
-  await until(async () => /data-morse-dup/.test(await page.locator(".gm-tag").getAttribute("title")));
+  await until(async () => /data-morse-dup/.test(await page.locator(".gm-tag").getAttribute("data-sel")));
   await page.keyboard.press("Shift+ArrowRight");
   await until(async () => (await style(page, "[data-morse-dup]", "transform")) === "matrix(1, 0, 0, 1, 10, 0)");
   assert.equal(await style(page, "#card h3", "transform"), "none");

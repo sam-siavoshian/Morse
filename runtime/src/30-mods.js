@@ -8,7 +8,8 @@ async function applyMod(m) {
   setCss(m.id, m.css);
   if (m.js.trim()) {
     const r = await call("exec", { modId: m.id, js: m.js });
-    if (!r.ok) toast(`“${m.title}” failed: ${r.error}`);
+    Health.ran(m, r); // repair: the panel marks mods that stopped working (70-panel.js)
+    if (!r.ok) { console.warn("[morse]", m.title, r.error); toast(`Couldn't run “${m.title}” here. Turn it off or edit its code in Mods.`); }
   }
 }
 async function removeMod(id) { setCss(id, ""); await call("off", { modId: id }); }

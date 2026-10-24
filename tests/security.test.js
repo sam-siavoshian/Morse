@@ -44,9 +44,7 @@ test("the share page only asks; nothing installs until the user clicks Install",
   const p = await ctx.newPage();
   await p.goto("http://127.0.0.1:8787/share/install.html");
   await p.evaluate(() => localStorage.setItem("morse:debug", "1")); // open shadow root so the test can click
-  // A fresh load: going straight to the link is a same-document hash change,
-  // and the page's own reload on hashchange would race a reload from here.
-  await p.goto("about:blank");
+  await p.goto("about:blank"); // a fresh document, so the share page renders this link
   await p.goto(link);
   await p.waitForTimeout(500);
   await p.locator("#install").click();

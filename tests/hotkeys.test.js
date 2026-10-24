@@ -162,8 +162,8 @@ test("the CLI help shows the hotkey actually configured", async () => {
   const re = s => s.replace(/[+]/g, "\\+");
   try {
     const platform = detectPlatform({ platform: process.platform });
-    assert.match(help(), new RegExp(`In any attached window: ${re(formatCombo(defaultHotkeys(platform).open, platform))} to morse`));
+    assert.match(help(), new RegExp(`In a connected app, press ${re(formatCombo(defaultHotkeys(platform).open, platform))} to open Morse`));
     await writeFile(path.join(home, "settings.json"), JSON.stringify({ hotkeys: { open: "Alt+KeyJ", mods: "none" } }));
-    assert.match(help(), new RegExp(`In any attached window: ${re(formatCombo("Alt+KeyJ", platform))} to morse\\.`));
+    assert.match(help(), new RegExp(`In a connected app, press ${re(formatCombo("Alt+KeyJ", platform))} to open Morse\\.`));
   } finally { await rm(home, { recursive: true, force: true }); }
 });
