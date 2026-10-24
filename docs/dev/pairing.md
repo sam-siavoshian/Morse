@@ -42,8 +42,8 @@ POST /v1/pair/ask/<id>                 the same Origin, body {}; poll about once
 ```
 
 The token is stored hashed with the asking extension's origin, exactly like
-a code-paired one, so `/v1/complete`, `/v1/warm`, `/v1/voice` and
-`/v1/transcribe` work the same way with it.
+a code-paired one, so `/v1/complete`, `/v1/warm`, `/v1/voice`,
+`/v1/transcribe` and `/v1/style` work the same way with it.
 
 ## Morse Desktop's side
 

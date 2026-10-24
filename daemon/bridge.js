@@ -7,6 +7,9 @@
 //   POST /v1/complete  { messages, model? }    Bearer token -> NDJSON {type: token|stage|done|error}
 //   POST /v1/warm      { model? }               Bearer token: get the model ready (the bar opened)
 //   GET  /v1/voice, POST /v1/transcribe        Bearer token, see daemon/voice.js
+//   GET  /v1/style     -> { style }            Bearer token: Your style as this computer keeps it
+//   POST /v1/style     { style, was }          Bearer token: put Chrome's copy in its place, only
+//                                              if this one is still `was` (409 otherwise); core/style-sync.js
 //
 // The extension runs core/engine.js itself (it has to execute mod JS in the
 // page and retry), so the helper only streams text. Closing the connection
@@ -26,6 +29,8 @@ import { settingsFromConfig, settingsLabel } from "./models.js";
 import { detectHarnesses, validModel, TIMEOUT_MS } from "./harness.js";
 import { streamChat, abortError, prewarm, HELPER_PORT } from "../core/providers.js";
 import { handleVoice } from "./voice.js";
+import { Style } from "./style.js"; // your-style hook: shared with Chrome
+import { hasStyle } from "../core/style.js";
 
 export const VERSION = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 
@@ -172,6 +177,17 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
       if (origin && rec.origin && rec.origin !== origin) return send(403, { error: "This pairing belongs to a different copy of Morse. Pair this browser again." });
 
       if (await handleVoice(req, res)) return;
+
+      // your-style hook: one style for Chrome and the desktop apps (core/style-sync.js)
+      if (url.pathname === "/v1/style") {
+        if (req.method === "GET") return send(200, { style: await Style.shared() });
+        if (req.method !== "POST") return send(405, { error: "Use GET or POST" });
+        const body = await readJson(req);
+        const style = body?.style ?? null;
+        if (style !== null && !(typeof style === "object" && hasStyle(style))) return send(400, { error: "Expected { style, was }" });
+        if (await Style.replace(style, typeof body.was === "string" ? body.was : "")) return send(200, { ok: true });
+        return send(409, { error: "Your style changed on this computer meanwhile.", style: await Style.shared() });
+      }
 
       // speed: the bar opened, so a request is likely soon (core/providers.js prewarm).
       if (req.method === "POST" && url.pathname === "/v1/warm") {

@@ -179,6 +179,42 @@ test("voice routes are mounted behind the same auth", async () => {
   assert.equal((await req("GET", "/v1/nope", { headers: { Authorization: `Bearer ${token}` } })).status, 404);
 });
 
+// Your style, shared with Chrome (core/style-sync.js): the desktop's copy in
+// ~/.morse/style.json, read and replaced behind the same auth.
+test("style: Chrome reads and replaces the desktop's style, only against the copy it read", async () => {
+  const { Style, STYLE_FILE, onStyleChange } = await import("../daemon/style.js");
+  const { existsSync, readFileSync } = await import("node:fs");
+  assert.equal((await req("GET", "/v1/style", { headers: { Origin: EXT } })).status, 401);
+  const token = await pair();
+  const auth = { Origin: EXT, Authorization: `Bearer ${token}` };
+  assert.deepEqual((await req("GET", "/v1/style", { headers: auth })).json, { style: null });
+  // Said in an app: Chrome reads it.
+  await Style.handle({ type: "style.save", add: "underline links everywhere" }, { url: "", app: "notes" });
+  const mine = (await req("GET", "/v1/style", { headers: auth })).json.style;
+  assert.equal(mine.blocks.underline, true);
+  // Said in Chrome: it replaces the desktop's, and open windows hear of it.
+  let heard = 0;
+  const stop = onStyleChange(() => heard++);
+  try {
+    const chrome = { ...mine, words: "Georgia font everywhere", blocks: { ...mine.blocks, font: "Georgia" }, updated: new Date(Date.now() + 1000).toISOString() };
+    const ok = await req("POST", "/v1/style", { body: { style: chrome, was: mine.updated }, headers: auth });
+    assert.equal(ok.status, 200, ok.text);
+    assert.equal(JSON.parse(readFileSync(STYLE_FILE, "utf8")).blocks.font, "Georgia");
+    assert.equal(heard, 1);
+    // Sent against a copy that has changed since: refused, with the copy as it is now.
+    const stale = await req("POST", "/v1/style", { body: { style: { ...chrome, words: "dark pages everywhere", blocks: { dark: true } }, was: mine.updated }, headers: auth });
+    assert.equal(stale.status, 409);
+    assert.equal(stale.json.style.blocks.font, "Georgia");
+    // Not a style: refused.
+    assert.equal((await req("POST", "/v1/style", { body: { style: { blocks: {} }, was: chrome.updated }, headers: auth })).status, 400);
+    assert.equal((await req("POST", "/v1/style", { body: { style: "x", was: chrome.updated }, headers: auth })).status, 400);
+    // Reset in Chrome: the desktop's goes too.
+    const reset = await req("POST", "/v1/style", { body: { style: null, was: chrome.updated }, headers: auth });
+    assert.equal(reset.status, 200);
+    assert.ok(!existsSync(STYLE_FILE));
+  } finally { stop(); }
+});
+
 test("unpair revokes tokens", async () => {
   const token = await pair();
   await updateConfig(cfg => { cfg.bridge.tokens = []; });
