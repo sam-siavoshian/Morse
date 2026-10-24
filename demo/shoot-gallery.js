@@ -72,7 +72,7 @@ async function load() {
 
 // ---- 110: the chip in the empty bar leads to For this site
 await load();
-await page.keyboard.press("Alt+Space");
+await page.keyboard.press(process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space") /* the default Open Morse key (core/hotkeys.js) */;
 await ui(".sugs .gl-sug").waitFor({ timeout: 15000 });
 await page.keyboard.press("Tab");
 await page.keyboard.press("End");
