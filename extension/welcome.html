@@ -8,78 +8,68 @@
 <link rel="stylesheet" href="welcome.css">
 </head>
 <body>
-<!-- Opened once on install (onboarding-host.js). The practice area is a
-     sandboxed frame (practice.html) relayed by welcome.js; the checklist ticks
-     itself from chrome.storage and the browser's own state. "Connect a model"
-     is one command: `morse setup --pair <code>` starts the Morse helper with
-     this page's code waiting, and the page pairs by itself. -->
-<main class="wrap">
-  <header class="hero">
+<!-- onboarding v2 (docs/dev/onboarding.md). Opened once on install
+     (onboarding-host.js). One screen at a time:
+       choose   one question: websites, desktop apps, or both
+       connect  finds Morse Desktop (or the Morse helper) on this computer and
+                connects with one click, which Morse Desktop asks you to Allow;
+                without it: Get Morse Desktop, or paste an Anthropic API key
+       try      the first change, on the practice page (a sandboxed frame,
+                practice.html, relayed by welcome.js), guided step by step
+       win      the first mod is saved; then a real site (or app) to change
+     welcome.js renders the parts that change. -->
+<main class="wrap" id="app" data-screen="choose">
+  <header class="top">
     <div class="brand"><span class="mark" aria-hidden="true"></span>morse</div>
-    <h1 data-i18n="welcome.h1">Morse is installed.</h1>
-    <p class="lede" data-i18n-html="welcome.lede">Morse changes any website the way you describe it: press <span class="hk" data-hk="open"></span>, point at something, and say what you want to change.</p>
+    <ol class="dots" id="dots" aria-label="Steps" data-i18n-attr="aria-label:start.steps">
+      <li data-dot="choose"><button type="button" data-go="choose" data-i18n="start.dot.choose">Choose</button></li>
+      <li data-dot="connect"><button type="button" data-go="connect" data-i18n="start.dot.connect">Connect</button></li>
+      <li data-dot="try"><button type="button" data-go="try" data-i18n="start.dot.try">Try it</button></li>
+    </ol>
   </header>
 
-  <div class="grid">
-    <section class="practice" id="practice" aria-labelledby="practice-h">
-      <div class="head">
-        <h2 id="practice-h" data-i18n="welcome.practice.h">Try it here</h2>
-        <span data-i18n="welcome.practice.sub">This practice page is yours to change. Nothing leaves your browser.</span>
-      </div>
-      <ol class="three">
-        <li><span class="n">1</span><div><b data-i18n="welcome.step1.b">Open Morse</b><span data-i18n-html="welcome.step1">Click the page below, then press <span class="hk" data-hk="open"></span>. <button type="button" class="link" id="try">Or click here</button></span></div></li>
-        <li><span class="n">2</span><div><b data-i18n="welcome.step2.b">Point</b><span data-i18n="welcome.step2">Click the article to pick it.</span></div></li>
-        <li><span class="n">3</span><div><b data-i18n="welcome.step3.b">Describe</b><span data-i18n-html="welcome.step3">Type <q>make this easier to read</q>, press Enter, then Save.</span></div></li>
-      </ol>
-      <div class="frame" id="frame"></div>
-      <p class="aside" id="practice-note" data-i18n="welcome.practice.note">This page uses the same model as any other site.</p>
-    </section>
-
-    <aside class="check" aria-labelledby="check-h">
-      <h2 id="check-h"><span data-i18n="welcome.check.h">Get set up</span> <span id="progress"></span></h2>
-      <ul>
-        <li data-step="model" id="model">
-          <span class="tick" aria-hidden="true"></span>
-          <div><b data-i18n="welcome.model.b">Connect a model</b>
-            <span data-i18n="welcome.model">Morse uses an AI you already have: Claude Code, Codex or an API key. Paste this in a terminal and press Enter.</span>
-            <span class="cmd"><code id="setup-cmd">morse setup</code><button type="button" id="copy-setup" class="quiet" data-i18n="welcome.copy">Copy</button></span>
-            <span class="live" id="live" role="status" aria-live="polite"></span>
-            <span class="pairrow" id="pairrow" hidden><input id="code" maxlength="7" placeholder="Code" autocomplete="off" spellcheck="false" aria-label="Pairing code" data-i18n-attr="placeholder:welcome.code;aria-label:welcome.code.label"><button type="button" id="pair" data-i18n="welcome.connect">Connect</button></span>
-            <small class="fallback" data-i18n-html="welcome.fallback">Says “command not found”? Run it in the Morse folder as <code id="node-cmd">node daemon/cli.js setup</code>.</small>
-            <details class="alt" id="alt"><summary data-i18n="welcome.alt">Use an Anthropic API key instead</summary>
-              <span class="pairrow"><input id="key" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" aria-label="Anthropic API key" data-i18n-attr="aria-label:welcome.key.label"><button type="button" id="save-key" data-i18n="welcome.saveKey">Save key</button></span>
-              <small id="keynote" role="status" data-i18n="welcome.keynote">The key stays in this browser. Nothing to install.</small>
-            </details>
-            <small class="now" id="model-label"></small></div>
-        </li>
-        <li data-step="scripts">
-          <span class="tick" aria-hidden="true"></span>
-          <div><b data-i18n="welcome.scripts.b">Turn on “Allow User Scripts”</b>
-            <span data-i18n="welcome.scripts">Without it, changes to how a site looks still work, but new buttons and features don't run on some sites.</span>
-            <button type="button" id="open-ext" data-i18n="welcome.openSettings">Open Morse's settings</button></div>
-        </li>
-        <li data-step="first">
-          <span class="tick" aria-hidden="true"></span>
-          <div><b data-i18n="welcome.first.b">Make your first change</b>
-            <span data-i18n="welcome.first">On the practice page, or on any website. Save it, and it's there next time.</span></div>
-        </li>
-        <li data-step="pin">
-          <span class="tick" aria-hidden="true"></span>
-          <div><b data-i18n="welcome.pin.b">Pin Morse to the toolbar</b>
-            <span data-i18n="welcome.pin">Click the puzzle piece next to the address bar, then the pin next to Morse. Its menu shows your mods and settings.</span></div>
-        </li>
-      </ul>
-    </aside>
-  </div>
-
-  <section class="know" aria-labelledby="know-h">
-    <h2 id="know-h" data-i18n="welcome.know.h">Good to know</h2>
-    <div class="cols">
-      <div><b data-i18n="welcome.know.tabs.b">Tabs that were already open</b><span data-i18n="welcome.know.tabs">Reload them once. Chrome only adds Morse to pages loaded after it was installed.</span></div>
-      <div><b data-i18n="welcome.know.where.b">Where Morse can't run</b><span data-i18n-html="welcome.know.where">Chrome's own pages, the Chrome Web Store and PDFs in Chrome's viewer. Files on your computer need “Allow access to file URLs” in <button type="button" class="link" id="open-ext-2">Morse's settings</button>.</span></div>
-      <div><b data-i18n="welcome.know.help.b">Help while you work</b><span data-i18n-html="welcome.know.help">In the Morse bar, <span class="caps"><kbd>F1</kbd></span> shows what you can do and example sentences, and <span class="caps"><kbd>?</kbd></span> shows keyboard shortcuts.</span></div>
-      <div><b data-i18n="welcome.know.mods.b">Nothing is permanent</b><span data-i18n-html="welcome.know.mods">A change you save is called a mod. Morse brings it back every time you open that site. <span class="hk" data-hk="mods"></span> opens the Mods panel, where you can turn one off, edit it or share it.</span></div>
+  <section class="screen" id="s-choose" aria-labelledby="choose-h1">
+    <h1 id="choose-h1" data-i18n="start.h1">Change any website or app in your own words.</h1>
+    <p class="lede" data-i18n="start.lede">Point at something, say what you want different, and watch it change. Your changes stay.</p>
+    <h2 id="choose-h" data-i18n="start.choose.h">What do you want to change?</h2>
+    <div class="choices" role="group" aria-labelledby="choose-h">
+      <button type="button" class="choice" data-want="web">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg>
+        <b data-i18n="start.web">Websites</b><span data-i18n="start.web.sub">Any site, here in Chrome</span></button>
+      <button type="button" class="choice" data-want="apps">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="13" rx="2"/><path d="M8.5 21h7M12 17.5V21"/></svg>
+        <b data-i18n="start.apps">Desktop apps</b><span data-i18n="start.apps.sub">Spotify, Slack, VS Code and more</span></button>
+      <button type="button" class="choice" data-want="both">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="13" height="10" rx="1.6"/><circle cx="16.5" cy="13.5" r="5"/></svg>
+        <b data-i18n="start.both">Both</b><span data-i18n="start.both.sub">Websites and desktop apps</span></button>
     </div>
+    <p class="small" data-i18n="start.choose.note">You can change your mind later. Nothing to set up yet.</p>
+  </section>
+
+  <section class="screen" id="s-connect" aria-labelledby="connect-h" hidden>
+    <h1 id="connect-h" tabindex="-1" data-i18n="start.connect.h">Connect a model</h1>
+    <p class="lede" data-i18n="start.connect.lede">Morse uses an AI you already have to make your changes.</p>
+    <div id="connect" class="connect"></div>
+    <p class="skip"><button type="button" class="link" id="skip" data-i18n="start.skip">Not now: try it with a sample answer</button></p>
+  </section>
+
+  <section class="screen" id="s-try" aria-labelledby="try-h" hidden>
+    <h1 id="try-h" tabindex="-1" data-i18n="start.try.h">Make your first change</h1>
+    <p class="lede" data-i18n="start.try.lede">This practice page is yours to change. Nothing you do here leaves your browser.</p>
+    <ol class="steps" id="steps">
+      <li data-step="open"><span class="n">1</span><div><b data-i18n="start.step.open">Open Morse</b><span id="step-open"></span></div></li>
+      <li data-step="ask"><span class="n">2</span><div><b data-i18n="start.step.ask">Point and describe</b><span data-i18n-html="start.step.ask.d">Click the article, type <q>make this easier to read</q> and press Enter.</span></div></li>
+      <li data-step="save"><span class="n">3</span><div><b data-i18n="start.step.save">Save it</b><span data-i18n="start.step.save.d">Click Save. Undo takes it away.</span></div></li>
+    </ol>
+    <div class="frame" id="frame"></div>
+    <p class="aside" id="practice-note"></p>
+  </section>
+
+  <section class="screen" id="s-win" aria-labelledby="win-h" hidden>
+    <div class="win-mark" aria-hidden="true"><svg viewBox="0 0 16 16" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg></div>
+    <h1 id="win-h" tabindex="-1" data-i18n="start.win.h">Your first mod is saved.</h1>
+    <p class="lede" data-i18n="start.win.lede">A mod is a change you saved. Morse brings it back every time you open that site or app.</p>
+    <div id="win" class="win"></div>
   </section>
 </main>
 <script src="welcome.js" type="module"></script>

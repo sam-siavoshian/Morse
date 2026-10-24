@@ -75,12 +75,16 @@ Before you open a pull request:
 
 ## Release
 
-The version is in `package.json` only. Raise it, add a CHANGELOG entry, then:
+The version is in `package.json` only. Write what changed under
+"Unreleased" in CHANGELOG.md, then:
 
-- `npm publish` for the `morse` command (it builds the extension first).
-- `npm run store` for the Chrome Web Store zip. How to submit it is in
-  [docs/store/SUBMIT.md](docs/store/SUBMIT.md).
+- `npm run release -- minor` (or `patch`, `major`, `1.4.0`; `--dry-run`
+  first to see what it does) raises the version, dates the CHANGELOG entry,
+  runs the checks and tests, commits and tags.
+- `git push --follow-tags origin main` starts the release workflow: npm and
+  the GitHub release with the Chrome Web Store zip.
+- Upload that zip as [docs/store/SUBMIT.md](docs/store/SUBMIT.md) says.
 
-More: [Releasing](docs/dev/README.md#releasing).
+The one-time setup and the details: [Releasing](docs/dev/releasing.md).
 
 By contributing you agree your work is released under the [MIT license](LICENSE).

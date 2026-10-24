@@ -404,10 +404,15 @@ const YourStyle = (() => {
   return { fromBar, rowHtml, settingsHtml, ready, fit, openSettings, leaveOut, useHere, info: () => info };
 })();
 
-// your-style hook (10-dom.js applyTheme): softer colors filter <html>, and with
-// it Morse's own overlay; the overlay takes the opposite filter. (Gray stays
-// gray under the red and green filter, so the overlay needs nothing for it.)
+// your-style hook (10-dom.js applyTheme): softer colors filter <html>. The
+// overlay lives in the top layer (10-dom.js TopLayer), which a filter on <html>
+// never reaches, so there it takes no filter at all and looks exactly as it
+// does without the style. Only where there is no top layer (older desktop
+// apps) does the page's filter reach it; there it takes the opposite filter.
+// (Gray stays gray under the red and green filter, so the overlay needs
+// nothing for it.)
 function overlayUnfilter() {
+  if (TopLayer.ok) return "none";
   const f = getComputedStyle(document.documentElement).filter;
   if (!f || f === "none" || /invert|hue-rotate|sepia|grayscale|blur|drop-shadow|opacity/.test(f)) return "none";
   const fns = [...f.matchAll(/\b(saturate|contrast|brightness)\(([\d.]+)\)/g)];
