@@ -258,6 +258,46 @@ test("extension: an install and saves at the same moment don't drop each other",
   await page.close();
 });
 
+test("extension: mods.save and mods.delete answer only for the caller's page, like the desktop", { skip: skipExt }, async () => {
+  const { ctx, sw } = await extension();
+  const origin = await serve((q, r) => r.writeHead(200, { "Content-Type": "text/html" }).end(`<!doctype html><title>Scope</title><h1>Scope</h1>`));
+  const here = new URL(origin).host;
+  const mod = (id, hosts) => ({ morse: 1, id, title: id, prompt: id, css: "h1{}", js: "", match: { hosts, app: null }, created: "2026-01-01T00:00:00.000Z" });
+  await sw.evaluate(async m => { const all = (await chrome.storage.local.get("mods")).mods || {}; all[m.id] = m; await chrome.storage.local.set({ mods: all }); }, mod("r4-bank", ["bank.example"]));
+  const page = await ctx.newPage();
+  await page.goto(`${origin}/`);
+  await page.waitForFunction(() => document.querySelector("[data-morse-ui]"));
+  const [wide, other, overwrite, overwriteDraft, del, own] = await asMorse(page, [
+    { type: "mods.save", mod: mod("r4-wide", ["*"]) },
+    { type: "mods.save", mod: mod("r4-other", ["bank.example"]) },
+    { type: "mods.save", mod: { ...mod("r4-bank", [here]), js: "steal()" } },
+    { type: "mods.save", draft: { id: "r4-bank", title: "t", prompt: "p", css: "", js: "steal()" } },
+    { type: "mods.delete", modId: "r4-bank" },
+    { type: "mods.save", mod: mod("r4-own", [here]) },
+  ]);
+  for (const r of [wide, other, overwrite, overwriteDraft, del]) assert.match(String(r.error), /another app or site/);
+  assert.equal(own.error, null);
+  const all = await sw.evaluate(async () => (await chrome.storage.local.get("mods")).mods);
+  assert.equal(all["r4-bank"].js, "", "the other site's mod is untouched");
+  assert.deepEqual(Object.keys(all).filter(k => /^r4-(wide|other)$/.test(k)), []);
+  await page.close();
+});
+
+test("desktop: mods.save can't widen by case, a trailing dot, another port, IDN spelling or a *. prefix", async () => {
+  const { Connector } = await import("../daemon/connector.js");
+  const c = new Connector({ port: 0, app: null, settings: {}, log: () => {} });
+  c.callerUrl = async () => "https://bücher.shop.example:8443/cart";
+  const host = "xn--bcher-kva.shop.example:8443";
+  let n = 0;
+  const save = (hosts, app = null) => c.dispatch(null, {}, { type: "mods.save", mod: { morse: 1, id: `r4-w${n++}`, title: "t", prompt: "p", css: "", js: "", match: { hosts, app }, created: "2026-01-01T00:00:00.000Z" } });
+  for (const hosts of [["XN--BCHER-KVA.shop.example:8443"], ["xn--bcher-kva.shop.example.:8443"], ["xn--bcher-kva.shop.example"], ["xn--bcher-kva.shop.example:443"],
+    ["bücher.shop.example:8443"], ["*.shop.example"], ["*.shop.example:8443"], ["*"], [host, "bank.example"], []]) {
+    await assert.rejects(save(hosts), /another app or site|doesn't say where/, JSON.stringify(hosts));
+  }
+  await assert.rejects(save([host], "slack"), /another app or site/);
+  assert.deepEqual((await save([host])).match.hosts, [host]);
+});
+
 // ---- Mods for this site: a hostile or broken gallery
 
 const GIDX = "https://g.example/site/mods/index.json";

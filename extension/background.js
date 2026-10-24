@@ -10,7 +10,7 @@
 
 import { runMorse } from "../core/engine.js";
 import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_URL } from "../core/providers.js";
-import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf, byCreated } from "../core/mod.js";
+import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf, byCreated, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
 import { clipAdd } from "../core/clipboard.js"; // God mode clipboard
 import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
@@ -147,12 +147,19 @@ async function dispatch(msg, port) {
     case "mods.list":
       return Object.values(await allMods()).filter(m => modMatches(m, here)).sort(byCreated); // hardening: caller's page
     case "mods.save": {
+      // As on the desktop (daemon/connector.js): a page's Morse changes only
+      // mods for its own page, and can't widen where one runs.
+      const id = msg.draft ? msg.draft.id : validateMod(msg.mod).id;
+      const existing = id ? (await allMods())[id] : null;
+      if (existing && !modMatches(existing, here)) throw new Error("That mod belongs to another app or site");
       if (msg.draft) return putMod(createMod({ ...msg.draft, url: here.url, app: null, model: msg.draft.model || (await backend()).label })); // hardening: filed under the caller's page
+      if (!saveKeepsScope(msg.mod.match, existing?.match, here)) throw new Error("That mod is for another app or site");
       return putMod(msg.mod);
     }
     case "mods.delete": {
       await serialized(async () => { // hardening: serialized
         const all = await allMods();
+        if (all[msg.modId] && !modMatches(all[msg.modId], here)) throw new Error("That mod belongs to another app or site");
         delete all[msg.modId];
         await set("mods", all);
       });

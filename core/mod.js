@@ -74,6 +74,16 @@ export function modMatches(mod, { url, app }) {
     || (!!m.app && LOOPBACK.test(p) && LOOPBACK.test(h)));
 }
 
+// A save from a page may change a mod, not widen where it runs: its match
+// stays what it was, or is exactly the caller's own site (or app). Wider
+// matches ("*", other hosts) only come in through a confirmed install.
+const matchKey = m => JSON.stringify({ app: m?.app || null, hosts: [...(Array.isArray(m?.hosts) ? m.hosts : [])].map(String).sort() });
+export function saveKeepsScope(next, existing, where) {
+  if (next && existing && matchKey(next) === matchKey(existing)) return true;
+  return !!next && (next.app || null) === (where.app || null)
+    && Array.isArray(next.hosts) && next.hosts.length > 0 && next.hosts.every(h => h === hostOf(where.url));
+}
+
 export function validateMod(m) {
   if (!m || typeof m !== "object" || m.morse !== 1) throw new Error("This isn't a Morse mod. Check that you copied all of it.");
   for (const k of ["id", "title", "prompt"]) if (typeof m[k] !== "string") throw new Error(`This mod is incomplete (no ${k}). Ask for a new share link.`);
