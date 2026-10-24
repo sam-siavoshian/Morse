@@ -10,7 +10,9 @@
 <body>
 <!-- Opened once on install (onboarding-host.js). The practice area is a
      sandboxed frame (practice.html) relayed by welcome.js; the checklist ticks
-     itself from chrome.storage and the browser's own state. -->
+     itself from chrome.storage and the browser's own state. "Connect a model"
+     is one command: `morse setup --pair <code>` starts the Morse helper with
+     this page's code waiting, and the page pairs by itself. -->
 <main class="wrap">
   <header class="hero">
     <div class="brand"><span class="mark" aria-hidden="true"></span>morse</div>
@@ -30,16 +32,25 @@
         <li><span class="n">3</span><div><b>Describe</b><span>Type <q>make this easier to read</q>, press Enter, then Save.</span></div></li>
       </ol>
       <div class="frame" id="frame"></div>
-      <p class="aside">This page uses the same model as any other site. If none is connected yet, follow “Connect a model” under Get set up first.</p>
+      <p class="aside" id="practice-note">This page uses the same model as any other site.</p>
     </section>
 
     <aside class="check" aria-labelledby="check-h">
       <h2 id="check-h">Get set up <span id="progress"></span></h2>
       <ul>
-        <li data-step="pin">
+        <li data-step="model" id="model">
           <span class="tick" aria-hidden="true"></span>
-          <div><b>Pin Morse to the toolbar</b>
-            <span>Click the puzzle piece next to the address bar, then the pin next to Morse. Its menu shows your mods and settings.</span></div>
+          <div><b>Connect a model</b>
+            <span>Morse uses an AI you already have: Claude Code, Codex or an API key. Paste this in a terminal and press Enter.</span>
+            <span class="cmd"><code id="setup-cmd">morse setup</code><button type="button" id="copy-setup" class="quiet">Copy</button></span>
+            <span class="live" id="live" role="status" aria-live="polite"></span>
+            <span class="pairrow" id="pairrow" hidden><input id="code" maxlength="7" placeholder="Code" autocomplete="off" spellcheck="false" aria-label="Pairing code"><button type="button" id="pair">Connect</button></span>
+            <small class="fallback">Says “command not found”? Run it in the Morse folder as <code id="node-cmd">node daemon/cli.js setup</code>.</small>
+            <details class="alt" id="alt"><summary>Use an Anthropic API key instead</summary>
+              <span class="pairrow"><input id="key" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" aria-label="Anthropic API key"><button type="button" id="save-key">Save key</button></span>
+              <small id="keynote" role="status">The key stays in this browser. Nothing to install.</small>
+            </details>
+            <small class="now" id="model-label"></small></div>
         </li>
         <li data-step="scripts">
           <span class="tick" aria-hidden="true"></span>
@@ -47,17 +58,15 @@
             <span>Without it, changes to how a site looks still work, but new buttons and features don't run on some sites.</span>
             <button type="button" id="open-ext">Open Morse's settings</button></div>
         </li>
-        <li data-step="model" id="model">
-          <span class="tick" aria-hidden="true"></span>
-          <div><b>Connect a model</b>
-            <span>Morse needs an AI model to write changes. Run <code>morse setup</code> in a terminal to use your Claude Code or Codex subscription, or an Anthropic or OpenAI API key. Or add an Anthropic API key in model settings.</span>
-            <span class="row"><button type="button" id="open-model">Open model settings</button><button type="button" id="copy-setup" class="quiet">Copy <code>morse setup</code></button></span>
-            <small id="model-label"></small></div>
-        </li>
         <li data-step="first">
           <span class="tick" aria-hidden="true"></span>
           <div><b>Make your first change</b>
             <span>On the practice page, or on any website. Save it, and it's there next time.</span></div>
+        </li>
+        <li data-step="pin">
+          <span class="tick" aria-hidden="true"></span>
+          <div><b>Pin Morse to the toolbar</b>
+            <span>Click the puzzle piece next to the address bar, then the pin next to Morse. Its menu shows your mods and settings.</span></div>
         </li>
       </ul>
     </aside>
@@ -68,7 +77,7 @@
     <div class="cols">
       <div><b>Tabs that were already open</b><span>Reload them once. Chrome only adds Morse to pages loaded after it was installed.</span></div>
       <div><b>Where Morse can't run</b><span>Chrome's own pages, the Chrome Web Store and PDFs in Chrome's viewer. Files on your computer need “Allow access to file URLs” in <button type="button" class="link" id="open-ext-2">Morse's settings</button>.</span></div>
-      <div><b>Help while you work</b><span>In the Morse bar, <span class="caps"><kbd>F1</kbd></span> shows example sentences and <span class="caps"><kbd>?</kbd></span> shows keyboard shortcuts.</span></div>
+      <div><b>Help while you work</b><span>In the Morse bar, <span class="caps"><kbd>F1</kbd></span> shows what you can do and example sentences, and <span class="caps"><kbd>?</kbd></span> shows keyboard shortcuts.</span></div>
       <div><b>Nothing is permanent</b><span>A change you save is called a mod. Morse brings it back every time you open that site. <span class="hk" data-hk="mods"></span> opens the Mods panel, where you can turn one off, edit it or share it.</span></div>
     </div>
   </section>

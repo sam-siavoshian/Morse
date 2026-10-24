@@ -77,9 +77,13 @@ test("coach: shows the first time, follows point, describe, keep, then never aga
 
     await page.keyboard.press("Enter"); // Keep
     await t.waitFor(s => !s.open);
-    await page.waitForFunction(ui(".toast") + "?.includes('It comes back every time')");
-    assert.match(await t.q(".toast"), /Saved “Airier toolbar”.*open Mods \(Alt\+Shift\+M\)/);
+    // The first saved change: a card, not the toast (it explains "mod" once).
+    await page.waitForFunction(ui(".ob-win", "visible"));
+    assert.equal(await t.q(".toast", "visible"), false);
+    assert.match(await t.q(".ob-win"), /Your first mod is saved.*A mod is a change you saved\. Morse brings “Airier toolbar” back every time you open .*Alt\s*Shift\s*M\s*opens the Mods panel/s);
     assert.deepEqual(await t.stored(), { coach: "done", tips: { saved: true } });
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(ui(".ob-win", "hidden"));
 
     // Same session and after a reload: the coach is gone for good.
     await t.open();

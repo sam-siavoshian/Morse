@@ -9,6 +9,7 @@ all welcome.
 pick "Something doesn't work". Say what you did, what Morse did, and on which
 site or app. `morse --version` gives the version. Please leave out API keys,
 pairing codes and anything private from the page.
+[Troubleshooting](docs/troubleshooting.md) may already have the answer.
 
 ## Add a mod to the gallery
 
@@ -24,9 +25,21 @@ Someone reads every line before a mod goes in the gallery. A good gallery mod:
   names like `css-1x2y3`
 
 To add one yourself, put the `.morse.json` file in `site/mods/` and add an
-entry to `site/mods/index.json` (see "Site" in the README).
+entry to `site/mods/index.json` (see
+[The website and the gallery](docs/dev/README.md#the-website-and-the-gallery)).
 
 ## Work on the code
+
+Start with the [developer guide](docs/dev/README.md):
+
+- [Set up a checkout](docs/dev/README.md#set-up-a-checkout) and the repo layout
+- [How Morse works](docs/dev/architecture.md): hosts, the runtime, the kit,
+  the engine, models, the mod format, security
+- [Testing](docs/dev/testing.md): `npm run check`, `npm test`,
+  `npm run test:ui`, the test helpers, evals, screenshots
+- [Adding a feature](docs/dev/adding-a-feature.md): the runtime rules (no
+  duplicate top-level names, `listen()`, `isTrusted`), plain words, the UI
+  review loop, and where docs go
 
 You need Node 22 or newer.
 
@@ -45,17 +58,19 @@ Xvfb :99 &
 DISPLAY=:99 npm test
 ```
 
-`npm run demo:serve` serves the demo sites and the website on
-`http://127.0.0.1:8787`. The README's "Repo layout" says where things live.
-
 Before you open a pull request:
 
-- `DISPLAY=:99 npm test` passes.
+- `npm run check` and `DISPLAY=:99 npm test` pass.
 - Words people read follow [docs/WRITING.md](docs/WRITING.md): short
   sentences, everyday words, the glossary's names for things.
 - Colors and spacing come from [design/tokens.css](design/tokens.css).
+- A new feature gets a page (or a section) in [docs/](docs/README.md) and one
+  row in the README's “What you can do” table. Nothing more goes in the
+  README. Developer detail goes in [docs/dev/](docs/dev/README.md).
 - A change to what leaves the computer also changes
-  [docs/privacy.md](docs/privacy.md). Run `npm run pages` after editing it.
+  [docs/privacy.md](docs/privacy.md) and
+  [Privacy and safety](docs/privacy-and-safety.md). Run `npm run pages` after
+  editing the policy.
 - Note anything people will notice in [CHANGELOG.md](CHANGELOG.md).
 
 ## Release
@@ -64,6 +79,8 @@ The version is in `package.json` only. Raise it, add a CHANGELOG entry, then:
 
 - `npm publish` for the `morse` command (it builds the extension first).
 - `npm run package:extension` for the Chrome Web Store zip. The listing is in
-  [docs/store/](docs/store/).
+  [docs/store/](docs/store/README.md).
+
+More: [Releasing](docs/dev/README.md#releasing).
 
 By contributing you agree your work is released under the [MIT license](LICENSE).

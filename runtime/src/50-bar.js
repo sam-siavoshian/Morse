@@ -183,6 +183,7 @@ function send(text) {
   showPane("");
   sugEl.hidden = true;
   PromptHistory.add(text);
+  if (YourStyle.fromBar(text)) return; // your-style hook: "…everywhere" and "not on this site" (72-style.js)
   submit(text);
 }
 

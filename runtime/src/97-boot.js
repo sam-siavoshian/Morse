@@ -42,6 +42,7 @@ onEvent(msg => {
     await controlBoot(); await syncMods(); controlReady(); // user control: pause, safe start (63-control.js)
     guardReady(); // guard hook: a mod that froze the page was turned off (64-guard.js)
     Heal.soon(); // self-heal hook: after idle, did a saved mod stop working? (71-heal.js)
+    YourStyle.ready(); // your-style hook: fit it to this site once, if turned on (72-style.js)
     if (hello.debug) debugStatus(); // the host was started with MORSE_DEBUG=1
     S.ready = true; // tests: the host answered hello and the mods are on
     if (!hello.quiet && PREFS.welcome) toast(`Morse is ready. Press ${HOTKEY} to change this page.`);

@@ -291,7 +291,7 @@ async function keep() {
       return saved;
     }
     const saved = await call("mods.save", { draft: { id: d.id, title: d.title, prompt: d.request, css: d.css, js: d.js, url: location.href, app: S.app, target: d.ctx?.target, model: d.model,
-      ...(d.history?.length ? { history: d.history } : {}), ...(d.refined ? { refined: d.refined } : {}) } });
+      ...(d.history?.length ? { history: d.history } : {}), ...(d.refined ? { refined: d.refined } : {}), ...(d.style || {}) /* your-style hook: a fit for this site (72-style.js) */ } });
     S.mods.push(saved);
     return saved;
   })();
