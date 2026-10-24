@@ -38,6 +38,9 @@
   .rd .bd { font-size: 12px; line-height: 1.5; color: #333; max-width: 640px; }
   .rd .acts { display: flex; gap: 8px; margin-top: 22px; }
   .rd .acts button { border: 1px solid #747775; background: #fff; border-radius: 18px; padding: 8px 18px; font: inherit; font-weight: 500; }
+  .rd .gone { display: none; color: #5f6368; font-size: 14px; padding-top: 40px; text-align: center; }
+  .rd.empty > :not(.gone) { display: none; }
+  .rd.empty .gone { display: block; }
 </style>
 </head>
 <body>
@@ -61,6 +64,7 @@
     <div class="meta"><div class="av"></div><div><b class="from"></b><br><span class="addr"></span></div><span class="when" style="margin-left:auto"></span></div>
     <div class="bd"></div>
     <div class="acts"><button>↩ Reply</button><button>↪ Forward</button><button>Archive</button><button>Delete</button></div>
+    <p class="gone"></p>
   </section>
 <script>
   const mails = [
@@ -77,7 +81,23 @@
   ];
   const lst = document.querySelector(".lst"), rd = document.querySelector(".rd");
   const initials = n => n.split(" ").map(w => w[0]).join("").slice(0, 2);
+  let current = null;
+  // Archive and Delete take the open email out of the list (Show me once uses them).
+  function drop(word) {
+    if (!current) return;
+    current.remove();
+    current = null;
+    rd.classList.add("empty");
+    rd.querySelector(".gone").textContent = `Conversation ${word}. Pick another email to read it.`;
+    const n = lst.querySelectorAll('.r9[data-unread="true"]').length;
+    document.querySelector(".fd2 a.on span").textContent = n || "";
+  }
+  const [, , archive, del] = rd.querySelectorAll(".acts button");
+  archive.onclick = () => drop("archived");
+  del.onclick = () => drop("deleted");
   function open(row) {
+    current = row;
+    rd.classList.remove("empty");
     lst.querySelectorAll(".r9").forEach(r => r.setAttribute("aria-selected", "false"));
     row.setAttribute("aria-selected", "true");
     row.dataset.unread = "false";
