@@ -111,6 +111,7 @@ test("claude-code: a process started ahead of time takes the next request, then 
   const MSGS = [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: "make buttons bigger" }];
   const starts = async () => (await fs.readFile(path.join(tmp, "claude-starts.log"), "utf8").catch(() => "")).split("\n").filter(Boolean).map(Number);
   const s = { provider: "claude-code", model: "haiku" };
+  process.env.FAKE_WARM_TAG = String(Date.now()); // nothing from an earlier test matches
   const before = (await starts()).length;
   assert.equal(prewarmClaudeCode(s), true);
   await waitFor(async () => (await starts()).length > before, { what: "the process to start" });

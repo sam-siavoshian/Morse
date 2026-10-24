@@ -130,6 +130,9 @@ test("warm starts Claude Code ahead of time, behind the same auth", async () => 
   const token = await pair();
   const starts = async () => (await fs.readFile(path.join(tmp, "claude-starts.log"), "utf8").catch(() => "")).split("\n").filter(Boolean).length;
   assert.equal((await req("POST", "/v1/warm", { body: {} })).status, 401);
+  // A process from an earlier request may already be waiting; a changed
+  // environment means it can't be used, so this warm must start a new one.
+  process.env.FAKE_WARM_TAG = String(Date.now());
   const before = await starts();
   const r = await req("POST", "/v1/warm", { body: {}, headers: { Origin: EXT, Authorization: `Bearer ${token}` } });
   assert.equal(r.status, 200);

@@ -268,8 +268,10 @@ export async function claudeCodeStream(s, messages, { onToken, signal, onStage }
     const why = (typeof result?.result === "string" && result.result) || result?.errors?.join?.("; ") || result?.subtype || lastLine(stderr) || `exited with code ${code}`;
     throw new Error(`Claude Code: ${why}`);
   } finally {
-    // The next request starts warm (unless this one was stopped).
-    if (!signal?.aborted) prewarmClaudeCode(s, system);
+    // The next request starts warm (unless this one was stopped), with the
+    // usual instructions: a one-off request (describing a picture) doesn't
+    // take the place of the common case.
+    if (!signal?.aborted) prewarmClaudeCode(s);
   }
 }
 
