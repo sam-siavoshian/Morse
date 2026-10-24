@@ -31,7 +31,7 @@ const mod = createMod({
   title: "Sleep timer", prompt: "add a sleep timer that pauses the music after a while", url: "https://open.spotify.com/",
   css: ".morse-sleep { background: none; border: 0; color: inherit; font-size: 16px; }",
   js: "morse.watch('[data-testid=\"player-controls\"]', bar => {\n  const btn = morse.el('button', { class: 'morse-sleep', text: '☾', title: 'Sleep timer' });\n  bar.append(btn);\n});",
-  model: "Claude Code · haiku",
+  model: "Claude Code · sonnet",
 });
 const link = await encodeShare({ ...mod, author: "Sam" });
 const SHARE = at(`/share/install.html#m=${link.split("#m=")[1]}`);

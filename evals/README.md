@@ -3,11 +3,11 @@
 How often does Morse actually do what people ask? Each case is a realistic request on a demo app ("make the album covers bigger", "hide the ads", "let me sort by this column"). The runner sends it through the real pipeline and then checks the result in the page.
 
 ```bash
-node evals/run.js                                  # train split, Claude Code haiku, 4 at a time
+node evals/run.js                                  # train split, Claude Code, Automatic (sonnet, then opus), 4 at a time
 node evals/run.js --repeat 3                       # the numbers below are 3 runs per case
 node evals/run.js --split test                     # held-out cases: only for final reports
 node evals/run.js --sites hard                     # only the harder apps (--sites easy: the first six)
-node evals/run.js --split all --model sonnet       # spot check with another model
+node evals/run.js --split all --model opus         # spot check with one model (sonnet, opus, haiku…)
 node evals/run.js --only t-covers-bigger --dump-context   # print exactly what the model sees
 node evals/run.js --only w-dark-cards --dump-context --context-only --provider noop   # ...without calling a model
 node evals/run.js --provider noop --split all      # sanity: every checker must fail on the untouched page
@@ -153,7 +153,48 @@ Tried and left out: `--effort low` for Claude Code (no faster on haiku: 2946 vs 
 
 ## Fast and strong models (Automatic)
 
-`core/route.js` picks the model per request, within the backend the person chose (docs/models.md, "Quick and harder changes"). With Claude Code: haiku first; sonnet when the request looks hard (two or more of: new behavior, working with the data, several steps, a canvas, a page the notes say keeps changing, judged from the words and the page notes, no model call), or when haiku's draft fails a guard, the effect check, or still throws after its own repair round. Each move to sonnet adds one attempt. The runner compares models side by side, interleaved case by case so every arm sees the same machine load, each with its own warm processes:
+### Now: sonnet, then opus
+
+Haiku is no longer a default anywhere. The changes people care most about (new UI, new features, restyles) are judged by how they look, and a small model's UI rarely looks like it belongs to the app. So both of Automatic's models are strong ones (`core/route.js` `TIERS`):
+
+| Backend | First model (small tweaks) | Strong model |
+|---|---|---|
+| Claude Code | `sonnet` | `opus` |
+| Anthropic API | `claude-sonnet-5-5` | `claude-opus-5-5` |
+| OpenAI API | `gpt-5` | `gpt-5`, `reasoning_effort: "high"` |
+| Codex | the plan's model, medium effort | the same, high effort |
+
+Haiku (or any other model) can still be named: `morse config --fast-model haiku`. Names saved in `config.json` are kept, so someone who chose haiku keeps it; a `config.json` without names gets these defaults.
+
+**What goes to the strong model up front.** Any one of: new behavior (a button that does something, a key, a search, saving, asking first…), **new UI** (`add a … panel / badge / count / progress bar`, `show how many …`), or a **restyle** (a theme or dark mode, "make it look native", "less cluttered", "match the app"). The weaker signals (working with the data, several steps, a canvas, a page the notes say keeps changing) still need two. Small tweaks stay on the first model: hiding, bigger text, a color, spacing, sticky, renaming, highlighting. As before, a first draft that fails a guard or the effect check, or still throws after its own repair, goes to the strong model.
+
+**The warm process.** A waiting `claude` process holds about 180 MB whichever the model, and saves 1 to 2 s before the first token (measured here: 1.9 to 3.1 s cold, 0.9 to 1.2 s started ahead of time). When the bar opens Morse starts the first model, as before. Now, when typing pauses, the bar tells the host the words so far (`runtime/src/50-bar.js`, `call("warm", { request })`; they go only to the local helper or the extension's worker), and Automatic starts the model those words would start on (`warmSettings(settings, request)`). So a request for new UI finds opus starting or started, while only one process waits at a time; after each request the first model is started again. Warming both models every time the bar opens would make the strong model fully ready but double the memory for every open bar, most of which end in a tweak or nothing; left out.
+
+**Before and after.** 51 cases: 20 on the first six apps (a mix of tweaks and features: `t-covers-bigger, t-sleep-timer, t-space, t-play-green, p-word-count, p-copy-md, p-bigger-text, b-hide-ads, b-dark, b-progress, b-clutter, m-title-count, m-search, m-unread, n-word-count, n-dark, n-date, d-sort, d-filter, d-zebra`) and all 31 on the harder apps. Claude Code, ×1, the real `claude` CLI, Automatic. *Before* ran from a copy of the code before this change (commit 61afab7: haiku, then sonnet, two signals to start strong, no warm while typing); *after* is this change. Both ran at the same time, one case at a time each (2 at a time in all), on a machine with load 15 to 47 from other work, so the absolute times are high; the comparison is what counts. (The eval runner needed one fix first: `context()` now asks for the runtime's language, `getLanguage`, which the eval page didn't define, so every case errored.)
+
+| | Before: haiku, then sonnet | **After: sonnet, then opus** |
+|---|---|---|
+| Passed, all 51 | 47/51 (92%) | **48/51 (94%)** |
+| Total time from Enter, median / p90 | 4.4 s / 9.4 s | 5.9 s / 13.2 s |
+| First six apps (20) | 20/20, 4.1 s / 7.7 s | 19/20, 8.6 s / 13.5 s |
+| Harder apps (31) | 27/31, 4.4 s / 11.1 s | **29/31**, 4.8 s / 13.2 s |
+| Started on the strong model | 8/51 (16%) | 24/51 (47%) |
+| … those cases | 6/8, 9.4 s / 11.5 s (process started at Enter: 4.7 s median) | 21/24, 9.7 s / 14.2 s (started while typing: 2.4 s median left at Enter) |
+| … the rest, on the first model | 41/43, 3.9 s / 7.7 s (haiku) | **27/27**, 3.3 s / 5.9 s (sonnet) |
+| Moved to the strong model after a failed draft | 0 | 0 |
+
+Failures. Before: v-jump (both), r-left (haiku's count missed a finished task), r-confirm (both), c-save-png (sonnet: no download). After: b-progress (opus's reading-progress bar stayed 0 px), v-jump, r-confirm. v-jump and r-confirm failed on every arm in earlier rounds too.
+
+What this says:
+- **Success** is the same or better (48 vs 47 of 51). Small tweaks on sonnet passed 27/27 and were as quick as haiku's (3.3 s against 3.9 s median, within this machine's noise). The cases where a model's taste shows (new UI and restyles) now get opus.
+- **Speed.** The median grows by about 1.5 s, all of it from the requests that now start on opus (about half of this subset, which leans towards features: 31 of the 86 cases are new UI, behavior or restyles by their words alone). Starting opus while the person types hid about 2 s of its start; at Enter it still had 2.4 s to go (median), since the eval's words arrive only a second before Enter.
+- **Usage.** Claude Code maps `sonnet` to claude-sonnet-5-5 and `opus` to claude-opus-5-5. At API prices sonnet costs 20 times haiku per token and opus 40 times. With these 51 cases that is roughly 7 times the old Automatic's share of a Claude plan (27 sonnet and 24 opus requests against 43 haiku and 8 sonnet), assuming similar lengths. **Always fast** (sonnet only) would use about two thirds of Automatic's.
+
+Results: `results/2026-10-24T17-59-02-models-before-haiku-sonnet.json`, `results/2026-10-24T17-59-04-models-after-sonnet-opus.json`.
+
+### Before: haiku, then sonnet
+
+Until this change, `core/route.js` picked the model per request like this, within the backend the person chose. With Claude Code: haiku first; sonnet when the request looks hard (two or more of: new behavior, working with the data, several steps, a canvas, a page the notes say keeps changing, judged from the words and the page notes, no model call), or when haiku's draft fails a guard, the effect check, or still throws after its own repair round. Each move to sonnet adds one attempt. The runner compares models side by side, interleaved case by case so every arm sees the same machine load, each with its own warm processes:
 
 ```bash
 node evals/run.js --model haiku,sonnet,auto --concurrency 2     # "auto" = Automatic; "fast"/"best" = the two tiers
@@ -236,4 +277,6 @@ Rows before "baseline (rescored checkers)" used earlier checkers. "dev" rows are
 | 2026-10-24 16:35 | routing: held-out shop case after the generated-names check | claude-code:haiku | only | 2/2 (100%) | 3.9s (p90 3.9s) |
 | 2026-10-24 16:35 | routing: held-out shop case after the generated-names check | claude-code:sonnet | only | 2/2 (100%) | 2.5s (p90 2.5s) |
 | 2026-10-24 16:35 | routing: held-out shop case after the generated-names check | claude-code:auto | only | 2/2 (100%) | 2.7s (p90 2.7s) |
+| 2026-10-24 17:59 | models: before, Automatic haiku then sonnet (copy of 61afab7) | claude-code:auto | only | 47/51 (92%) | 4.4s (p90 9.4s) |
+| 2026-10-24 17:59 | models: after, Automatic sonnet then opus | claude-code:auto | only | 48/51 (94%) | 5.9s (p90 13.2s) |
 <!-- run-log -->
