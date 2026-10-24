@@ -115,7 +115,10 @@ const validBlocks = x => x.role === "user" && Array.isArray(x.content) && x.cont
 
 // ---- onboarding v2: one-click pairing
 // The question a person answers when Chrome asks to connect, in one place so
-// Morse Desktop's dialog and the terminal say the same thing.
+// Morse Desktop's dialog and the terminal say the same thing. Fixed words from
+// Morse: the only thing filled in is the model's label from this computer's
+// own settings. Nothing the extension or a page sends ever reaches them (the
+// ask request's body isn't read), and the browser is always called Chrome.
 //   label: what Chrome will use, like "Claude Code" (settingsLabel)
 export function askWords(label) {
   const what = label || t("pair.ask.yourModel");
