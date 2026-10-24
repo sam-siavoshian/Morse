@@ -11,6 +11,7 @@ const root = hostEl.attachShadow({ mode: DEBUG ? "open" : "closed" });
 // Tokens are custom properties, the one thing that inherits through a shadow
 // boundary. Marked !important, ours beat any `--m-*` the page sets on our host.
 root.innerHTML = `<style>${TOKENS_CSS.replace(/(--m-[\w-]+\s*:[^;!]+);/g, "$1 !important;")}\n${CSS()}</style>
+  <style>${BAR_CSS()}</style>
   <canvas class="fx"></canvas>
   <div class="hl" hidden><span></span></div>
   <div class="sel" hidden></div>
@@ -18,7 +19,7 @@ root.innerHTML = `<style>${TOKENS_CSS.replace(/(--m-[\w-]+\s*:[^;!]+);/g, "$1 !i
     <div class="row">
       <span class="mark">${radar(18)}</span>
       <div class="chip target" hidden><span></span><button class="x" title="Clear target">×</button></div>
-      <input class="in" placeholder="Describe a change…" spellcheck="false" autocomplete="off">
+      <textarea class="in" rows="1" placeholder="Describe a change…" spellcheck="false" autocomplete="off"></textarea>
       <button class="go" title="Run (Enter)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"/></svg></button>
     </div>
     <div class="status">
@@ -36,7 +37,7 @@ const chip = $(".chip.target"), hint = $(".hint"), ticker = $(".ticker"), action
 const panel = $(".panel"), modal = $(".modal"), toastEl = $(".toast"), logo = $(".mark");
 
 function applyTheme() {
-  hostEl.dataset.theme = pageTheme();
+  hostEl.dataset.theme = themeOverride() || pageTheme();
   // CSS zoom on <html> would scale the overlay and misplace the highlight boxes.
   const z = parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
   hostEl.style.setProperty("zoom", String(1 / z), "important");

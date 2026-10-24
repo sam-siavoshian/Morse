@@ -20,8 +20,12 @@ async function submit(request) {
   const rect = focus ? focus.getBoundingClientRect() : null;
   const tr = S.target ? S.target.getBoundingClientRect() : null;
   const R = r => r && { x: r.x, y: r.y, w: r.width, h: r.height };
-  S.before = { shot: await capture(), rect: R(tr), focus: R(rect), vw: innerWidth, vh: innerHeight };
+  // The draft and its stop handle exist before the first await, so Stop
+  // pressed right after Enter cancels this run, not the previous one.
   S.draft = { id, request, ctx, title: "", css: "", js: "" };
+  let stopped = false;
+  const stopSignal = cancelSignal(id).then(r => { stopped = true; return r; });
+  S.before = { shot: await capture(), rect: R(tr), focus: R(rect), vw: innerWidth, vh: innerHeight };
   const t0 = performance.now();
   hint.innerHTML = `${radar(12)} Thinking`;
   actions.innerHTML = `<span class="ms">0.0s</span>`;
@@ -43,7 +47,7 @@ async function submit(request) {
     }
   });
   let res;
-  try { res = await call("generate", { genId: id, request, context: ctx }); }
+  try { res = stopped ? await stopSignal : await Promise.race([call("generate", { genId: id, request, context: ctx }), stopSignal]); } // Stop: 50-bar.js
   catch (e) { res = { ok: false, error: e.message }; }
   off();
   clearInterval(clock);
@@ -54,6 +58,7 @@ async function submit(request) {
   await Effect.finish(res.ok);
   if (!res.ok) {
     setCss(id, "");
+    if (res.cancelled) return onCancelled(id); // Stop: 50-bar.js
     S.phase = "error";
     bar.classList.add("err");
     hint.innerHTML = `Couldn't do that: <i>${esc(res.error || "unknown error").slice(0, 120)}</i>`;
