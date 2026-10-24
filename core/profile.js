@@ -250,10 +250,10 @@ export function mergeScans(scans) {
 
 // ---------------------------------------------------------------- the prompt
 // Requests about what the app does, not how it looks: they get the profile.
-const LOGIC = /\b(when(ever)?|every ?time|after|before|once|on (save|open|close|start)|shortcuts?|keyboard|hot ?keys?|key ?(combo|binding)s?|press(es|ing)?|ctrl|cmd|alt\+|run(s|ning)?|commands?|actually|really|random(ly|ize)?|shuffl\w*|automatic(ally)?|auto[- ]?\w*|insert\w*|creat\w*|new (note|file|tab|window|todo|task)s?|cop(y|ies|ying)|clipboard|past(e|ing)|format\w*|toggl\w*|undo|redo|word count|counts?|remap\w*|instead|behaviou?rs?|trigger\w*|sort\w*|sav(e|es|ed|ing)|open(s|ed|ing)?|clos(e|es|ed|ing)|delet\w*|export\w*|sync\w*|play\w*|skip\w*|next|previous|repeat\w*|search\w*|replac\w*|duplicat\w*|today'?s|dates?|timestamps?|button (that|to|which)|calls?|api|functions?|actions?|does|do)\b/i;
+const LOGIC = /\b(when(ever)?|every ?time|after|before|once|on (save|open|close|start)|shortcuts?|keyboard|hot ?keys?|key ?(combo|binding)s?|press(es|ing)?|ctrl|cmd|alt\+|run(s|ning)?|commands?|actually|really|random(ly|ize)?|shuffl\w*|automatic(ally)?|auto[- ]?\w*|insert\w*|creat\w*|new (note|file|tab|window|todo|task)s?|cop(y|ies|ying)|clipboard|past(e|ing)|format\w*|toggl\w*|undo|redo|word count|counts?|remap\w*|instead|behaviou?rs?|trigger\w*|sort\w*|sav(e|es|ed|ing)|open(s|ed|ing)?|clos(e|es|ed|ing)|delet\w*|export\w*|sync\w*|play\w*|skip\w*|next|previous|repeat\w*|search\w*|replac\w*|duplicat\w*|today'?s|dates?|timestamps?|buttons?\b[^.]{0,30}\b(that|to|which|for)|upper ?case|lower ?case|capitali[sz]\w*|comment\w*|indent\w*|convert\w*|select(ed|ion)?|calls?|api|functions?|actions?|does|do)\b/i;
 export const needsLogic = request => LOGIC.test(String(request || ""));
 
-const STOP = new Set("the a an and or to of in on for with that this it its me my i you your make add when then after also all any be is are was do does show put use using into from at by as so if not no can just like want please button key keys shortcut press app".split(" "));
+const STOP = new Set("the a an and or to of in on for with that this here there it its me my i you your make makes made add when then after also all any be is are was do does show put use using into from at by as so if not no can just like want please button key keys shortcut press app".split(" "));
 // A few everyday words and what apps call them.
 const ALSO = { today: ["date", "time", "timestamp"], date: ["date", "time", "timestamp", "today"], time: ["time", "date"], random: ["shuffle", "random"], shuffle: ["shuffle", "random"],
   copy: ["copy", "clipboard"], clipboard: ["clipboard", "copy", "paste"], save: ["save", "write", "modify"], delete: ["delete", "remove", "trash"], remove: ["remove", "delete"],
@@ -271,6 +271,8 @@ export function requestWords(request) {
     out.set(stem(w), Math.max(out.get(stem(w)) || 0, 3));
     for (const a of ALSO[w] || ALSO[stem(w)] || []) if (!out.has(stem(a))) out.set(stem(a), 1);
   }
+  // Two words people write apart that names write as one: "upper case", "word wrap", "side bar".
+  for (let i = 0; i + 1 < words.length; i++) if (!STOP.has(words[i]) && !STOP.has(words[i + 1])) out.set(stem(words[i] + words[i + 1]), 5);
   return out;
 }
 const wordsOf = s => String(s || "").replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase().match(/[a-z][a-z0-9]*/g) || [];

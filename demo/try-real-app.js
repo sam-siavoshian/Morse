@@ -23,7 +23,7 @@
 // For changes to what the app does (app profiles, docs/dev/rea.md), the
 // change is also used before it is checked:
 //   --act       JS run in the page after the change, before --check (open a note, fill the clipboard)
-//   --press     real keys after that, for xdotool key (ctrl+shift+k); spaces between presses
+//   --press     real keys (before --click), for xdotool key (ctrl+shift+k); spaces between presses
 //   --type      real typing after that
 //   --click     click the first part the change added ([data-morse]) with the real mouse (yes), or a CSS selector
 //   --focus-act CSS selector clicked with the real mouse before the keys (the editor)
@@ -184,6 +184,7 @@ async function act() {
     x("click", "1");
     await sleep(400);
   }
+  if (opt.press) for (const k of opt.press.split(" ")) { x("key", k); await sleep(250); }
   if (opt.click) {
     const sel = opt.click === "yes" ? null : opt.click;
     const all = sel ? `[...document.querySelectorAll(${JSON.stringify(sel)})]` : `[...document.querySelectorAll("[data-morse]")].flatMap(e => [e, ...e.querySelectorAll("*")])`;
@@ -200,7 +201,6 @@ async function act() {
     }
     await sleep(500);
   }
-  if (opt.press) for (const k of opt.press.split(" ")) { x("key", k); await sleep(250); }
   if (opt.type) x("type", "--delay", "40", opt.type);
   await sleep(Number(opt.wait || 1500));
 }

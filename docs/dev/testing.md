@@ -221,7 +221,10 @@ macOS fixture tree in [`demo/fake-installs.js`](../../demo/fake-installs.js))
 and `shoot-site.js` (the website and share page, into
 [`docs/site/`](../site/)). `shoot-style.js` and `shoot-packs.js` make
 150–166; the pictures of real apps and sites (147–156) come from
-`demo/try-real-app.js` and `demo/try-real-sites.js`. The launch videos are made by
+`demo/try-real-app.js` and `demo/try-real-sites.js`, and 191–201 (changes
+to what an app does, with and without its profile) from
+[`demo/try-app-logic.js`](../../demo/try-app-logic.js), which also writes the
+numbers in [App profiles](rea.md#measurements). The launch videos are made by
 [`demo/record-launch.js`](../../demo/record-launch.js); see the
 [launch kit](../launch/README.md).
 

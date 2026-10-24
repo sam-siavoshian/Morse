@@ -734,13 +734,29 @@ export class AppProfiler {
   // starts the profile; every window gets the handle once there is one.
   attached(s, w) {
     if (w.kind !== "window" || !/^(https?|file|app|vscode-file|[\w-]+):/.test(w.url || "") || /^(devtools|chrome|about):/.test(w.url || "")) return;
-    (async () => {
-      const visible = await evaluate(s, `document.visibilityState === "visible" && innerWidth > 300 && innerHeight > 200`).catch(() => false);
-      if (!visible) return;
-      if (!this.building) this.building = this.build(s, w).catch(e => { trace("profile", `failed: ${e.message}`); return null; });
-      await this.building;
-      await this.ensure(s, w).catch(() => {});
-    })();
+    (this.seen ||= []).push({ s, w });
+    // Apps open helper windows too (Joplin runs each plugin in a hidden
+    // one): wait a moment for the windows to come, then profile the app's
+    // main window, the biggest page among them.
+    if (!this.building) {
+      this.building = new Promise(r => setTimeout(r, 2000)).then(() => this.pickMain()).then(m => m ? this.build(m.s, m.w) : null)
+        .catch(e => { trace("profile", `failed: ${e.message}`); return null; });
+      this.building.then(() => this.profile && this.seen.forEach(x => this.ensure(x.s, x.w).catch(() => {})));
+    } else this.building.then(() => this.ensure(s, w).catch(() => {}));
+  }
+
+  // The app's main window: visible, big enough, with the most on it.
+  async pickMain() {
+    let best = null;
+    for (let tries = 0; tries < 20 && !best; tries++) {
+      for (const x of this.seen) {
+        if (x.s.closed) continue;
+        const n = await evaluate(x.s, `document.visibilityState === "visible" && innerWidth > 300 && innerHeight > 200 ? document.getElementsByTagName("*").length : 0`).catch(() => 0);
+        if (n > 20 && (!best || n > best.n)) best = { ...x, n };
+      }
+      if (!best) await new Promise(r => setTimeout(r, 1500));
+    }
+    return best;
   }
 
   async build(s, w) {

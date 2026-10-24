@@ -200,7 +200,68 @@ The longest the page was held up while the runtime pass ran (a probe
 evaluating `1` every 50 ms): about 130 ms in Obsidian, 400 ms to 1 s in
 Joplin, and 1.2 s in VSCodium (reading closure scopes).
 
-RESULTS_TABLE
+### Changes to what the app does, with and without a profile
+
+Real apps installed here (VSCodium from its `.deb`, Obsidian and Joplin as
+AppImages), opened with `morse launch` and driven with real X input by
+`demo/try-real-app.js`: the real shortcut, pointing, typing the request,
+then **using** the change (`--click` on what it added, `--press` real keys,
+`--act` to open a note or fill the clipboard) and checking the result in the
+app. Claude Code with haiku (pinned), each request once with the profile and
+once with `MORSE_PROFILE=off`. Each request, how it was used and how it
+was checked are in [`demo/try-app-logic.js`](../../demo/try-app-logic.js)
+(`DISPLAY=:99 node demo/try-app-logic.js all both haiku` runs them all and
+keeps every run's pictures and log).
+
+| Request | App | Profile | Without | With the profile it… | Without it… |
+|---|---|---|---|---|---|
+| "add a button here that formats the document" (pointing at the status bar) | VSCodium | ✓ | ✗ | ran `editor.action.formatDocument` | sent a fake Shift+Alt+F, which VS Code ignores |
+| "add a button here that sorts the lines of the file alphabetically" | VSCodium | ✓ | ✗ | ran `editor.action.sortLinesAscending` | sent a fake Ctrl+Shift+P and told the person what to type |
+| "make Ctrl+Shift+K duplicate the current line instead of deleting it" | VSCodium | ✓ | ✗ | took the key in the capture phase and ran `editor.action.duplicateSelection` | sent a fake Shift+Alt+Down; VS Code deleted the line |
+| "add a button here that makes the selected text upper case" | VSCodium | ✓ | ✗ | ran `editor.action.transformToUppercase` | sent a fake F1 and told the person what to type |
+| "add a button here that comments out the line the cursor is on" | VSCodium | ✓ | ✗ | ran `editor.action.commentLine` | sent a fake Ctrl+/ |
+| "save the file automatically a second after I stop typing, then show a toast with the word count" | VSCodium | ✗ | ✗ | ran `workbench.action.files.save`, but on `input` events VS Code's editor doesn't send | the same, with a fake Ctrl+S |
+| "add a button that makes a copy of the note I'm looking at" | Joplin | ✓ | ✗ | ran `duplicateNote` | made an empty note with the same title |
+| "add a keyboard shortcut Ctrl+Alt+N that creates a new note from what is in the clipboard" | Joplin | ✓ | ✓ | ran `newNote`, then typed the text in | clicked New note, then pasted |
+| "add a button that inserts today's date into the note where my cursor is" | Obsidian | ✓ | ✓ | ran `insert-current-date` | typed the date with `execCommand` |
+| "whenever I open a note, copy its name to the clipboard" | Obsidian | ✓ | ✓ | listened to `app.workspace`'s `file-open` | watched the title for changes |
+| "add a button that creates a new note named with today's date and opens it" | Obsidian | ✓ | ✓ | `app.fileManager.createNewMarkdownFile` | `app.vault.create` (the model knows Obsidian's API) |
+| "make shuffle actually random" (pointing at Shuffle) | Tunes (`demo/electron-app`) | ✓ | ✗ | shuffled the queue from `tunes.queue()` into `tunesApp.player.setQueue` | clicked a random album |
+
+**With a profile: 11 of 12 (10 of 11 on the real apps). Without: 4 of 12
+(4 of 11).** Six of the changes on real apps (five in VSCodium, one in
+Joplin) and the Tunes one could not be made from the page alone: they need
+the app's own commands, which the page doesn't show. Obsidian's four worked
+either way, because models already know Obsidian's `app` object; the profile
+made them use its commands and events instead of typing into the page.
+
+These are the last runs of each, on the code as committed. Getting there
+took earlier runs that failed, and each failure fixed something:
+
+- VS Code's ids have dots (`workbench.parts.statusbar`), and the model wrote
+  `#workbench.parts.statusbar`, which matches nothing (the kit now reads it
+  as the id, and the page outline gives such ids as `[id="…"]`).
+- The first ranking put `focusSecondEditorGroup` above `files.save` for
+  "save … a second after"; commands now score on how many of the request's
+  words they have, and how rare those words are.
+- A key the app already uses has to be caught in the capture phase; the
+  slice now says so for key requests.
+- Joplin runs each plugin in a hidden window, and the first profile was of
+  one of those; the profiler now waits for the windows and takes the
+  biggest.
+- Requests like "a button here that makes … upper case" weren't recognized
+  as being about behavior.
+- And the driver's own checks (Monaco's line nodes aren't in line order;
+  Tunes' shuffle runs after an `await`).
+
+About a third of all runs ended early for reasons outside Morse: the machine
+was shared with other agents (load average 15 to 73), apps didn't open
+within the driver's time limits, and VSCodium refused a profile folder whose
+path was too long for its socket.
+
+Microsoft's VS Code (`/usr/share/code`) was installed too: `morse profile
+code` reads its 22 MB bundles the same way as VSCodium's; the tries above
+used VSCodium.
 
 ## What doesn't work yet
 
