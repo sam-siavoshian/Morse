@@ -7,10 +7,10 @@
 //   voice     the Morse helper (http://127.0.0.1:7457/v1/transcribe) when it's
 //             running and paired, else OpenAI with the user's key
 
-import { normalizePrefs, mergePrefs, pushHistory } from "./core/prefs.js";
-import { transcribeOpenAI, OPENAI_TRANSCRIBE_MODEL } from "./core/transcribe.js";
-import { Generations } from "./core/cancel.js";
-import { hostOf } from "./core/mod.js";
+import { normalizePrefs, mergePrefs, pushHistory } from "../core/prefs.js";
+import { transcribeOpenAI, OPENAI_TRANSCRIBE_MODEL } from "../core/transcribe.js";
+import { Generations } from "../core/cancel.js";
+import { hostOf } from "../core/mod.js";
 
 export const gens = new Generations();
 export const BAR_REQUESTS = new Set(["generate.cancel", "settings.get", "settings.set", "history.get", "history.add", "transcribe"]);

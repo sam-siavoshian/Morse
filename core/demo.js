@@ -1,5 +1,5 @@
-// Demo mode: pre-written model replies for a handful of requests, so Morse can
-// be tried (and screenshotted) without a local model. Everything downstream
+// Demo replay (internal test fixture): pre-written model replies for a handful
+// of requests, so tests and screenshot scripts run without a model. Everything downstream
 // is real: the reply is streamed, parsed, injected and run like model output.
 // One reply ships a deliberate bug on the first try to exercise self-repair.
 
@@ -146,7 +146,7 @@ article p:first-of-type::first-letter {
 `, "");
 
 const FALLBACK = reply("Needs a real model", "", `
-morse.toast("Demo mode only knows a few requests. Run Ollama (ollama pull qwen2.5-coder:7b) for anything else.");
+morse.toast("The demo replay only knows a few requests. Connect a model for anything else.");
 `);
 
 const RULES = [

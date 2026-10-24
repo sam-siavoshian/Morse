@@ -12,15 +12,16 @@ import { loadConfig } from "./store.js";
 
 // ~/.morse/config.json { "voice": { "openaiKey", "openaiBaseUrl", "provider": "auto"|"openai"|"whisper",
 //   "whisperBin", "whisperModel", "language" } }, then OPENAI_API_KEY, then the
-// model key if the model itself is OpenAI's.
+// OpenAI key from `morse config`.
 export async function voiceOptions(env = process.env) {
   const cfg = await loadConfig();
   const v = cfg.voice || {};
-  const m = cfg.model || {};
-  const modelIsOpenAI = m.provider === "openai" && /(^|\.)openai\.com/.test(safeHost(m.baseUrl));
+  // The model's OpenAI key (`morse config --openai-key`) works too, unless it
+  // points at another OpenAI-compatible server.
+  const modelKey = cfg.keys?.openai && (!cfg.baseUrls?.openai || /(^|\.)openai\.com$/.test(safeHost(cfg.baseUrls.openai))) ? cfg.keys.openai : "";
   return {
     provider: v.provider || "auto",
-    openaiKey: v.openaiKey || env.OPENAI_API_KEY || (modelIsOpenAI ? m.apiKey : "") || "",
+    openaiKey: v.openaiKey || env.OPENAI_API_KEY || modelKey || "",
     openaiBaseUrl: v.openaiBaseUrl || env.MORSE_OPENAI_BASE_URL || "https://api.openai.com",
     whisperBin: v.whisperBin || "",
     whisperModel: v.whisperModel || "",
