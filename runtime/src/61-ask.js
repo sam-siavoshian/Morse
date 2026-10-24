@@ -190,8 +190,8 @@ const Ask = (() => {
   // browsers send disabled controls no mouse or click events, only pointer
   // events. Feed those to the picker (40-picker.js).
   const disabledAt = e => (S.picking && !ours(e) && e.target?.closest?.(":disabled")) || null;
-  addEventListener("pointermove", e => { if (disabledAt(e)) onMove(e); }, true);
-  addEventListener("pointerup", e => {
+  listen("pointermove", e => { if (disabledAt(e)) onMove(e); }, true);
+  listen("pointerup", e => {
     const el = disabledAt(e);
     if (!el) return;
     e.preventDefault();
@@ -344,10 +344,10 @@ const Guide = (() => {
     const at = G.i;
     setTimeout(() => { if (G && G.i === at) go(at + 1); }, 220); // let the page react first
   }
-  addEventListener("click", hit, true);
-  addEventListener("pointerup", hit, true);
-  addEventListener("keydown", e => {
-    if (!G || S.open || e.key !== "Escape") return;
+  listen("click", hit, true);
+  listen("pointerup", hit, true);
+  listen("keydown", e => {
+    if (!e.isTrusted || !G || S.open || e.key !== "Escape") return;
     e.preventDefault();
     e.stopImmediatePropagation();
     stop();

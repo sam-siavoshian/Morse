@@ -175,17 +175,29 @@ const GodMode = (() => {
     setCss(s.id, css);
     syncButtons();
     if (s.preview.length) return s.chain;
-    s.chain = s.chain.then(async () => {
+    queue(s, async () => {
       if (js === s.lastJs) return;
       s.lastJs = js;
       const r = js ? await call("exec", { modId: s.id, js }) : await call("off", { modId: s.id });
       if (js && r && !r.ok) toast(`Couldn't make that edit (${plainError(r.error)}). Press ${MOD}Z to undo it.`);
       relink();
-    }).catch(e => console.warn("[morse] god mode", e));
+    }, e => { s.lastJs = null; console.warn("[morse] god mode", e); }); // a lost step runs again with the next edit
     clearTimeout(s.saveTimer);
-    s.saveTimer = setTimeout(() => { s.chain = s.chain.then(() => persist(s)).catch(e => toast(`Couldn't save your edits. ${plainError(e)}`)); }, 250);
+    s.saveTimer = setTimeout(() => queue(s, () => persist(s), saveFailed), 250);
     return s.chain;
   }
+  // Steps run one at a time. One that fails, or never hears back from the
+  // host, must not hold up every edit after it: each gets STEP_MS at most.
+  const STEP_MS = 15000;
+  function queue(s, step, onError) {
+    const run = () => {
+      let timer;
+      const late = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("Morse didn't hear back in time. Try again.")), STEP_MS); });
+      return Promise.race([Promise.resolve().then(step), late]).finally(() => clearTimeout(timer));
+    };
+    return (s.chain = s.chain.then(run).catch(onError));
+  }
+  const saveFailed = e => toast(`Couldn't save your edits. ${plainError(e)}`);
   async function persist(s) {
     const edits = allEdits(s);
     if (!edits.length) {
@@ -684,8 +696,9 @@ const GodMode = (() => {
 
   // ---- keys. Registered before 95-keys.js, so an open tool or popover gets
   // Escape first; with nothing open, Escape closes the bar as usual.
-  addEventListener("keydown", e => {
-    if (!S.open) return;
+  listen("keydown", e => {
+    if (!e.isTrusted || !S.open) return;
+    if (recording) return; // Settings is recording a new shortcut: every key is for it (56-settings.js)
     if (e.isComposing || e.keyCode === 229) return; // IME: Enter/Esc belong to the candidate window
     const active = root.activeElement;
     if (G.editing) {
@@ -748,22 +761,22 @@ const GodMode = (() => {
     if (e.key.length === 1) { e.stopPropagation(); input.focus(); }
   }, true);
 
-  addEventListener("pointermove", e => { G.pointer = { x: e.clientX, y: e.clientY }; }, true);
+  listen("pointermove", e => { G.pointer = { x: e.clientX, y: e.clientY }; }, true);
   // Frames swallow pointer events, so the picker never sees them: highlight a
   // frame when the pointer enters it, and select it when a click inside it
   // takes focus away from this page.
   const FRAMES = "iframe, frame, embed, object";
-  addEventListener("pointerover", e => {
+  listen("pointerover", e => {
     if (!S.picking || ours(e) || !e.target.matches?.(FRAMES)) return;
     hoverEl = e.target;
     boxTo(e.target, hl, describe(e.target));
   }, true);
-  addEventListener("blur", () => setTimeout(() => {
+  listen("blur", () => setTimeout(() => {
     const a = document.activeElement;
     if (S.open && S.picking && a && a !== G.el && a.matches?.(FRAMES)) setTarget(a);
   }, 0));
   // Double-click the selection to edit its text.
-  addEventListener("dblclick", e => {
+  listen("dblclick", e => {
     if (!G.el || !S.open || ours(e) || G.editing || !G.el.contains(e.target)) return;
     e.preventDefault();
     e.stopPropagation();
@@ -791,7 +804,7 @@ const GodMode = (() => {
     const s = GS;
     if (s.history.length || s.mod) {
       clearTimeout(s.saveTimer);
-      s.chain = s.chain.then(() => persist(s)).catch(e => toast(`Couldn't save your edits. ${plainError(e)}`));
+      queue(s, () => persist(s), saveFailed);
     }
     GS = newSession();
   }
@@ -808,6 +821,7 @@ const GodMode = (() => {
     // The edit-tools shortcut: open the bar if needed, then focus the toolbar
     // when something is selected, or ask the user to point at something.
     focusTools() {
+      if (S.open && S.phase !== "idle") return; // a change is being made or shown: leave its status alone
       if (!S.open) openBar();
       if (G.el && !wrap.hidden) tb.focus({ preventScroll: true });
       else hint.innerHTML = `Point at something to edit it directly`;

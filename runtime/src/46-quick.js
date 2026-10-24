@@ -75,8 +75,8 @@ const GodQuick = (() => {
     act(b.dataset.k).catch(err => toast(plainError(err))).finally(() => GodCapture.refresh());
   });
   // Escape and arrows while the menu is open (registered before 95-keys.js).
-  addEventListener("keydown", e => {
-    if (menu.hidden) return;
+  listen("keydown", e => {
+    if (!e.isTrusted || menu.hidden) return;
     if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); close(true); return; }
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
@@ -85,7 +85,7 @@ const GodQuick = (() => {
       items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
     }
   }, true);
-  addEventListener("pointerdown", e => {
+  listen("pointerdown", e => {
     if (!menu.hidden && !e.composedPath().some(n => n === menu || n === btn)) close();
   }, true);
   new MutationObserver(() => { if (bar.hidden) close(); }).observe(bar, { attributes: true, attributeFilter: ["hidden"] });

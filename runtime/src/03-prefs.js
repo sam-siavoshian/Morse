@@ -45,7 +45,7 @@ function refreshPrefs() {
   prefsAt = Date.now();
   loadPrefs().catch(() => {});
 }
-addEventListener("focus", refreshPrefs);
+listen("focus", refreshPrefs);
 
 async function savePrefs(patch) {
   setPrefs(mergePrefs(PREFS, patch));

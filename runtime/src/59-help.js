@@ -17,7 +17,7 @@ const HELP_EXAMPLES = [
 function helpAbilities() {
   const k = id => (hotkey(id) ? caps(hotkey(id)) : "");
   // The edit toolbar: its own hotkey if one is set, else the primary key + E on a picked element (45-godmode.js).
-  const edit = typeof GodMode === "undefined" ? "" : hotkey("edit") ? caps(hotkey("edit")) : caps([primaryMod, "E"]);
+  const edit = typeof GodMode === "undefined" ? "" : hotkey("godmode") ? caps(hotkey("godmode")) : caps([primaryMod, "E"]);
   return [
     ["Describe a change", `Point at something first, or just describe a change to the whole page.`],
     hotkey("talk") && ["Talk instead of typing", `Hold ${k("talk")} and say it.`],
@@ -68,8 +68,8 @@ pane.addEventListener("click", e => {
 });
 
 // F1 toggles help while the bar is open; the page keeps F1 otherwise.
-addEventListener("keydown", e => {
-  if (e.key !== "F1" || !S.open || !modal.hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+listen("keydown", e => {
+  if (!e.isTrusted || e.key !== "F1" || !S.open || !modal.hidden || e.ctrlKey || e.metaKey || e.altKey) return;
   e.preventDefault();
   e.stopImmediatePropagation();
   toggleHelp();

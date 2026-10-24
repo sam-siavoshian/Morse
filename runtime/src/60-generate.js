@@ -193,8 +193,8 @@ goBtn.addEventListener("click", () => {
 
 // ⌘Z / Ctrl+Z after a result: one version back. Typing in the input keeps the
 // usual text undo; God mode's own ⌘Z only runs while nothing is showing a result.
-addEventListener("keydown", e => {
-  if (!S.open || S.phase !== "result" || !modal.hidden) return;
+listen("keydown", e => {
+  if (!e.isTrusted || !S.open || S.phase !== "result" || !modal.hidden) return;
   if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey || e.key.toLowerCase() !== "z") return;
   if (root.activeElement === input && input.value) return;
   e.preventDefault();

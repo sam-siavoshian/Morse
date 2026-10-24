@@ -16,6 +16,9 @@ globalThis.__morseRuntime = true;
 // quiet (no UI, no hotkeys) and a later attach can start a fresh one.
 const GEN = globalThis.__morseGen = (globalThis.__morseGen || 0) + 1;
 const live = () => globalThis.__morseGen === GEN;
+// Every listener on the page's window goes through this, so a detached copy
+// keeps none of the page's keys, clicks or focus.
+const listen = (type, fn, opts) => addEventListener(type, e => { if (live()) fn(e); }, opts);
 
 let seq = 0;
 const pending = new Map();
