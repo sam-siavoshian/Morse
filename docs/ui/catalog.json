@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-24T07:44:13.015Z",
+ "generated": "2026-10-24T09:27:05.679Z",
  "shots": [
   {
    "area": "bar",
@@ -882,12 +882,1532 @@
    "note": ""
   },
   {
+   "area": "edit-toolbar",
+   "state": "selected-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/selected-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "bar-hint-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/bar-hint-dark.png",
+   "issues": [],
+   "note": "after pointing, typing goes to the bar; Ctrl+E (⌘E) moves focus to the toolbar"
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-hide-hover-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-hide-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-hide-focus-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-hide-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-move-hover-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-move-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-move-focus-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-move-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-resize-hover-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-resize-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-resize-focus-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-resize-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-text-hover-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-text-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-text-focus-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-text-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-color-hover-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-color-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-color-focus-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-color-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-type-hover-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-type-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-type-focus-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-type-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-dup-hover-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-dup-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-dup-focus-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-dup-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-capture-hover-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-capture-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-capture-focus-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-capture-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-ask-hover-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-ask-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-ask-focus-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-ask-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-undo-disabled-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-undo-disabled-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-redo-disabled-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-redo-disabled-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "ctrl-e-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/ctrl-e-dark.png",
+   "issues": [],
+   "note": "the toolbar holds focus: its border lights; H M R T C F D A act on the selection"
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "move-active-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/move-active-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "move-dragging-dark",
+   "theme": "dark",
+   "file": "edit-frame/move-dragging-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "resize-handles-dark",
+   "theme": "dark",
+   "file": "edit-frame/resize-handles-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "resize-dragging-dark",
+   "theme": "dark",
+   "file": "edit-frame/resize-dragging-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-undo-hover-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-undo-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-undo-focus-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-undo-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "text-editing-dark",
+   "theme": "dark",
+   "file": "edit-frame/text-editing-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "text-typed-dark",
+   "theme": "dark",
+   "file": "edit-frame/text-typed-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "text-hint-dark",
+   "theme": "dark",
+   "file": "edit-frame/text-hint-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "text-tab-dark",
+   "theme": "dark",
+   "file": "edit-color/text-tab-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "fill-tab-dark",
+   "theme": "dark",
+   "file": "edit-color/fill-tab-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "border-tab-dark",
+   "theme": "dark",
+   "file": "edit-color/border-tab-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "tab-focus-dark",
+   "theme": "dark",
+   "file": "edit-color/tab-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "swatch-hover-dark",
+   "theme": "dark",
+   "file": "edit-color/swatch-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "swatch-focus-dark",
+   "theme": "dark",
+   "file": "edit-color/swatch-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "swatch-picked-dark",
+   "theme": "dark",
+   "file": "edit-color/swatch-picked-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "hex-focus-dark",
+   "theme": "dark",
+   "file": "edit-color/hex-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "hex-invalid-dark",
+   "theme": "dark",
+   "file": "edit-color/hex-invalid-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "eyedropper-hover-dark",
+   "theme": "dark",
+   "file": "edit-color/eyedropper-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "eyedropper-focus-dark",
+   "theme": "dark",
+   "file": "edit-color/eyedropper-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "default-dark",
+   "theme": "dark",
+   "file": "edit-type/default-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "bigger-bold-dark",
+   "theme": "dark",
+   "file": "edit-type/bigger-bold-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "step-hover-dark",
+   "theme": "dark",
+   "file": "edit-type/step-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "step-focus-dark",
+   "theme": "dark",
+   "file": "edit-type/step-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "size-focus-dark",
+   "theme": "dark",
+   "file": "edit-type/size-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "range-focus-dark",
+   "theme": "dark",
+   "file": "edit-type/range-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "weight-hover-dark",
+   "theme": "dark",
+   "file": "edit-type/weight-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "weight-focus-dark",
+   "theme": "dark",
+   "file": "edit-type/weight-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "popover-dark",
+   "theme": "dark",
+   "file": "capture/popover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "with-note-dark",
+   "theme": "dark",
+   "file": "capture/with-note-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "save-hover-dark",
+   "theme": "dark",
+   "file": "capture/save-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "save-focus-dark",
+   "theme": "dark",
+   "file": "capture/save-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "captured-toast-dark",
+   "theme": "dark",
+   "file": "capture/captured-toast-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "hidden-toast-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/hidden-toast-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "below-top-edge-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/below-top-edge-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "svg-fill-stroke-dark",
+   "theme": "dark",
+   "file": "edit-color/svg-fill-stroke-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "svg-text-field-dark",
+   "theme": "dark",
+   "file": "edit-frame/svg-text-field-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "embedded-note-dark",
+   "theme": "dark",
+   "file": "edit-frame/embedded-note-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-text-disabled-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tool-text-disabled-dark.png",
+   "issues": [],
+   "note": "frames: tools that reach inside are disabled; no tooltip, not focusable"
+  },
+  {
+   "area": "page-tools",
+   "state": "button-hover-dark",
+   "theme": "dark",
+   "file": "page-tools/button-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "button-focus-dark",
+   "theme": "dark",
+   "file": "page-tools/button-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "menu-dark",
+   "theme": "dark",
+   "file": "page-tools/menu-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "item-hover-dark",
+   "theme": "dark",
+   "file": "page-tools/item-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "menu-with-state-dark",
+   "theme": "dark",
+   "file": "page-tools/menu-with-state-dark.png",
+   "issues": [],
+   "note": "Bigger text shows its level, Hide ads its check; keyboard focus is the row highlight"
+  },
+  {
+   "area": "clipboard",
+   "state": "chips-dark",
+   "theme": "dark",
+   "file": "clipboard/chips-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "clipboard",
+   "state": "chip-hover-dark",
+   "theme": "dark",
+   "file": "clipboard/chip-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "clipboard",
+   "state": "chip-focus-dark",
+   "theme": "dark",
+   "file": "clipboard/chip-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "clipboard",
+   "state": "picked-dark",
+   "theme": "dark",
+   "file": "clipboard/picked-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "clipboard",
+   "state": "rebuilt-from-dark",
+   "theme": "dark",
+   "file": "clipboard/rebuilt-from-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "mic-idle-dark",
+   "theme": "dark",
+   "file": "voice/mic-idle-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "mic-hover-dark",
+   "theme": "dark",
+   "file": "voice/mic-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "mic-focus-dark",
+   "theme": "dark",
+   "file": "voice/mic-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "listening-dark",
+   "theme": "dark",
+   "file": "voice/listening-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "level-meter-dark",
+   "theme": "dark",
+   "file": "voice/level-meter-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "partial-transcript-dark",
+   "theme": "dark",
+   "file": "voice/partial-transcript-dark.png",
+   "issues": [],
+   "note": "interim words in --m-text-2 until the final transcript"
+  },
+  {
+   "area": "voice",
+   "state": "transcribing-dark",
+   "theme": "dark",
+   "file": "voice/transcribing-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "transcribed-dark",
+   "theme": "dark",
+   "file": "voice/transcribed-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-insecure-page-dark",
+   "theme": "dark",
+   "file": "voice/error-insecure-page-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-policy-blocked-dark",
+   "theme": "dark",
+   "file": "voice/error-policy-blocked-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-no-microphone-api-dark",
+   "theme": "dark",
+   "file": "voice/error-no-microphone-api-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-not-set-up-dark",
+   "theme": "dark",
+   "file": "voice/error-not-set-up-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "mic-unavailable-dark",
+   "theme": "dark",
+   "file": "voice/mic-unavailable-dark.png",
+   "issues": [],
+   "note": "no voice here: the mic is dimmed (--m-text-3) and its title says why"
+  },
+  {
+   "area": "voice",
+   "state": "error-mic-blocked-dark",
+   "theme": "dark",
+   "file": "voice/error-mic-blocked-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-no-mic-dark",
+   "theme": "dark",
+   "file": "voice/error-no-mic-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-mic-busy-dark",
+   "theme": "dark",
+   "file": "voice/error-mic-busy-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-mic-other-dark",
+   "theme": "dark",
+   "file": "voice/error-mic-other-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-speech-unavailable-dark",
+   "theme": "dark",
+   "file": "voice/error-speech-unavailable-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-transcription-failed-dark",
+   "theme": "dark",
+   "file": "voice/error-transcription-failed-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-didnt-catch-dark",
+   "theme": "dark",
+   "file": "voice/error-didnt-catch-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "more-hover-dark",
+   "theme": "dark",
+   "file": "menu/more-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "more-focus-dark",
+   "theme": "dark",
+   "file": "menu/more-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "open-dark",
+   "theme": "dark",
+   "file": "menu/open-dark.png",
+   "issues": [],
+   "note": "the first item takes focus (row highlight); ↑/↓ move"
+  },
+  {
+   "area": "menu",
+   "state": "item-focus-dark",
+   "theme": "dark",
+   "file": "menu/item-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "item-hover-dark",
+   "theme": "dark",
+   "file": "menu/item-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "sheet-dark",
+   "theme": "dark",
+   "file": "settings/sheet-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "sheet-bottom-dark",
+   "theme": "dark",
+   "file": "settings/sheet-bottom-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "idle-dark",
+   "theme": "dark",
+   "file": "hotkeys/idle-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "button-hover-dark",
+   "theme": "dark",
+   "file": "hotkeys/button-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "button-focus-dark",
+   "theme": "dark",
+   "file": "hotkeys/button-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "done-hover-dark",
+   "theme": "dark",
+   "file": "settings/done-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "done-focus-dark",
+   "theme": "dark",
+   "file": "settings/done-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "segment-hover-dark",
+   "theme": "dark",
+   "file": "settings/segment-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "segment-focus-dark",
+   "theme": "dark",
+   "file": "settings/segment-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "switch-focus-dark",
+   "theme": "dark",
+   "file": "settings/switch-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "voice-ready-dark",
+   "theme": "dark",
+   "file": "settings/voice-ready-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "saved-flash-dark",
+   "theme": "dark",
+   "file": "settings/saved-flash-dark.png",
+   "issues": [],
+   "note": "every change saves at once; “Saved” fades"
+  },
+  {
+   "area": "settings",
+   "state": "footer-hover-dark",
+   "theme": "dark",
+   "file": "settings/footer-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-dark",
+   "theme": "dark",
+   "file": "hotkeys/recording-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-held-dark",
+   "theme": "dark",
+   "file": "hotkeys/recording-held-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "rejected-dark",
+   "theme": "dark",
+   "file": "hotkeys/rejected-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "warning-dark",
+   "theme": "dark",
+   "file": "hotkeys/warning-dark.png",
+   "issues": [],
+   "note": "accepted with a warning: Reset appears for a custom key"
+  },
+  {
+   "area": "settings",
+   "state": "voice-off-dark",
+   "theme": "dark",
+   "file": "settings/voice-off-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "sheet-dark",
+   "theme": "dark",
+   "file": "shortcuts/sheet-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "row-hover-dark",
+   "theme": "dark",
+   "file": "shortcuts/row-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "change-hover-dark",
+   "theme": "dark",
+   "file": "shortcuts/change-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "change-focus-dark",
+   "theme": "dark",
+   "file": "shortcuts/change-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "page-dark",
+   "theme": "dark",
+   "file": "suggestions/page-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "media-dark",
+   "theme": "dark",
+   "file": "suggestions/media-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-dark",
+   "theme": "dark",
+   "file": "suggestions/chip-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-next-dark",
+   "theme": "dark",
+   "file": "suggestions/chip-focus-next-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-hover-dark",
+   "theme": "dark",
+   "file": "suggestions/chip-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "button-rename-dark",
+   "theme": "dark",
+   "file": "suggestions/button-rename-dark.png",
+   "issues": [],
+   "note": "Rename… fills the input and leaves the caret between the quotes"
+  },
+  {
+   "area": "history",
+   "state": "previous-dark",
+   "theme": "dark",
+   "file": "history/previous-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "history",
+   "state": "oldest-dark",
+   "theme": "dark",
+   "file": "history/oldest-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "working-dark",
+   "theme": "dark",
+   "file": "stop/working-dark.png",
+   "issues": [],
+   "note": "focus moves to Stop, so Enter/Space stop too"
+  },
+  {
+   "area": "stop",
+   "state": "button-focus-dark",
+   "theme": "dark",
+   "file": "stop/button-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "button-hover-dark",
+   "theme": "dark",
+   "file": "stop/button-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "cancelled-dark",
+   "theme": "dark",
+   "file": "stop/cancelled-dark.png",
+   "issues": [],
+   "note": "partial CSS removed, prompt kept; any edit clears the note"
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "selected-narrow-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/selected-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "bar-hint-narrow-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/bar-hint-narrow-dark.png",
+   "issues": [],
+   "note": "after pointing, typing goes to the bar; Ctrl+E (⌘E) moves focus to the toolbar"
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "move-active-narrow-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/move-active-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "move-dragging-narrow-dark",
+   "theme": "dark",
+   "file": "edit-frame/move-dragging-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "resize-handles-narrow-dark",
+   "theme": "dark",
+   "file": "edit-frame/resize-handles-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "resize-dragging-narrow-dark",
+   "theme": "dark",
+   "file": "edit-frame/resize-dragging-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "text-editing-narrow-dark",
+   "theme": "dark",
+   "file": "edit-frame/text-editing-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "text-typed-narrow-dark",
+   "theme": "dark",
+   "file": "edit-frame/text-typed-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "text-hint-narrow-dark",
+   "theme": "dark",
+   "file": "edit-frame/text-hint-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "text-tab-narrow-dark",
+   "theme": "dark",
+   "file": "edit-color/text-tab-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "fill-tab-narrow-dark",
+   "theme": "dark",
+   "file": "edit-color/fill-tab-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "border-tab-narrow-dark",
+   "theme": "dark",
+   "file": "edit-color/border-tab-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "swatch-picked-narrow-dark",
+   "theme": "dark",
+   "file": "edit-color/swatch-picked-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "hex-focus-narrow-dark",
+   "theme": "dark",
+   "file": "edit-color/hex-focus-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "hex-invalid-narrow-dark",
+   "theme": "dark",
+   "file": "edit-color/hex-invalid-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "default-narrow-dark",
+   "theme": "dark",
+   "file": "edit-type/default-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "bigger-bold-narrow-dark",
+   "theme": "dark",
+   "file": "edit-type/bigger-bold-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "popover-narrow-dark",
+   "theme": "dark",
+   "file": "capture/popover-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "with-note-narrow-dark",
+   "theme": "dark",
+   "file": "capture/with-note-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "captured-toast-narrow-dark",
+   "theme": "dark",
+   "file": "capture/captured-toast-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "hidden-toast-narrow-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/hidden-toast-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "below-top-edge-narrow-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/below-top-edge-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "svg-fill-stroke-narrow-dark",
+   "theme": "dark",
+   "file": "edit-color/svg-fill-stroke-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "svg-text-field-narrow-dark",
+   "theme": "dark",
+   "file": "edit-frame/svg-text-field-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "embedded-note-narrow-dark",
+   "theme": "dark",
+   "file": "edit-frame/embedded-note-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "button-hover-narrow-dark",
+   "theme": "dark",
+   "file": "page-tools/button-hover-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "button-focus-narrow-dark",
+   "theme": "dark",
+   "file": "page-tools/button-focus-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "menu-narrow-dark",
+   "theme": "dark",
+   "file": "page-tools/menu-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "item-hover-narrow-dark",
+   "theme": "dark",
+   "file": "page-tools/item-hover-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "menu-with-state-narrow-dark",
+   "theme": "dark",
+   "file": "page-tools/menu-with-state-narrow-dark.png",
+   "issues": [],
+   "note": "Bigger text shows its level, Hide ads its check; keyboard focus is the row highlight"
+  },
+  {
+   "area": "clipboard",
+   "state": "chips-narrow-dark",
+   "theme": "dark",
+   "file": "clipboard/chips-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "clipboard",
+   "state": "picked-narrow-dark",
+   "theme": "dark",
+   "file": "clipboard/picked-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "clipboard",
+   "state": "rebuilt-from-narrow-dark",
+   "theme": "dark",
+   "file": "clipboard/rebuilt-from-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "mic-idle-narrow-dark",
+   "theme": "dark",
+   "file": "voice/mic-idle-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "listening-narrow-dark",
+   "theme": "dark",
+   "file": "voice/listening-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "partial-transcript-narrow-dark",
+   "theme": "dark",
+   "file": "voice/partial-transcript-narrow-dark.png",
+   "issues": [],
+   "note": "interim words in --m-text-2 until the final transcript"
+  },
+  {
+   "area": "voice",
+   "state": "transcribing-narrow-dark",
+   "theme": "dark",
+   "file": "voice/transcribing-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "transcribed-narrow-dark",
+   "theme": "dark",
+   "file": "voice/transcribed-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-not-set-up-narrow-dark",
+   "theme": "dark",
+   "file": "voice/error-not-set-up-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-mic-blocked-narrow-dark",
+   "theme": "dark",
+   "file": "voice/error-mic-blocked-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-transcription-failed-narrow-dark",
+   "theme": "dark",
+   "file": "voice/error-transcription-failed-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "open-narrow-dark",
+   "theme": "dark",
+   "file": "menu/open-narrow-dark.png",
+   "issues": [],
+   "note": "the first item takes focus (row highlight); ↑/↓ move"
+  },
+  {
+   "area": "settings",
+   "state": "sheet-narrow-dark",
+   "theme": "dark",
+   "file": "settings/sheet-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "sheet-bottom-narrow-dark",
+   "theme": "dark",
+   "file": "settings/sheet-bottom-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-narrow-dark",
+   "theme": "dark",
+   "file": "hotkeys/recording-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-held-narrow-dark",
+   "theme": "dark",
+   "file": "hotkeys/recording-held-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "rejected-narrow-dark",
+   "theme": "dark",
+   "file": "hotkeys/rejected-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "warning-narrow-dark",
+   "theme": "dark",
+   "file": "hotkeys/warning-narrow-dark.png",
+   "issues": [],
+   "note": "accepted with a warning: Reset appears for a custom key"
+  },
+  {
+   "area": "settings",
+   "state": "voice-off-narrow-dark",
+   "theme": "dark",
+   "file": "settings/voice-off-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "sheet-narrow-dark",
+   "theme": "dark",
+   "file": "shortcuts/sheet-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "page-narrow-dark",
+   "theme": "dark",
+   "file": "suggestions/page-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "media-narrow-dark",
+   "theme": "dark",
+   "file": "suggestions/media-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-narrow-dark",
+   "theme": "dark",
+   "file": "suggestions/chip-focus-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-next-narrow-dark",
+   "theme": "dark",
+   "file": "suggestions/chip-focus-next-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "button-rename-narrow-dark",
+   "theme": "dark",
+   "file": "suggestions/button-rename-narrow-dark.png",
+   "issues": [],
+   "note": "Rename… fills the input and leaves the caret between the quotes"
+  },
+  {
+   "area": "history",
+   "state": "previous-narrow-dark",
+   "theme": "dark",
+   "file": "history/previous-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "history",
+   "state": "oldest-narrow-dark",
+   "theme": "dark",
+   "file": "history/oldest-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "working-narrow-dark",
+   "theme": "dark",
+   "file": "stop/working-narrow-dark.png",
+   "issues": [],
+   "note": "focus moves to Stop, so Enter/Space stop too"
+  },
+  {
+   "area": "stop",
+   "state": "cancelled-narrow-dark",
+   "theme": "dark",
+   "file": "stop/cancelled-narrow-dark.png",
+   "issues": [],
+   "note": "partial CSS removed, prompt kept; any edit clears the note"
+  },
+  {
    "area": "motion",
    "state": "reduced-effect-dark",
    "theme": "dark",
    "file": "motion/reduced-effect-dark.png",
    "issues": [],
-   "note": ""
+   "note": "Effects default to Subtle here: a still outline on the target, no field"
   },
   {
    "area": "motion",
@@ -1786,12 +3306,1532 @@
    "note": ""
   },
   {
+   "area": "edit-toolbar",
+   "state": "selected-light",
+   "theme": "light",
+   "file": "edit-toolbar/selected-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "bar-hint-light",
+   "theme": "light",
+   "file": "edit-toolbar/bar-hint-light.png",
+   "issues": [],
+   "note": "after pointing, typing goes to the bar; Ctrl+E (⌘E) moves focus to the toolbar"
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-hide-hover-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-hide-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-hide-focus-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-hide-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-move-hover-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-move-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-move-focus-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-move-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-resize-hover-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-resize-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-resize-focus-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-resize-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-text-hover-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-text-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-text-focus-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-text-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-color-hover-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-color-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-color-focus-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-color-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-type-hover-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-type-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-type-focus-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-type-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-dup-hover-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-dup-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-dup-focus-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-dup-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-capture-hover-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-capture-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-capture-focus-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-capture-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-ask-hover-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-ask-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-ask-focus-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-ask-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-undo-disabled-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-undo-disabled-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-redo-disabled-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-redo-disabled-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "ctrl-e-light",
+   "theme": "light",
+   "file": "edit-toolbar/ctrl-e-light.png",
+   "issues": [],
+   "note": "the toolbar holds focus: its border lights; H M R T C F D A act on the selection"
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "move-active-light",
+   "theme": "light",
+   "file": "edit-toolbar/move-active-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "move-dragging-light",
+   "theme": "light",
+   "file": "edit-frame/move-dragging-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "resize-handles-light",
+   "theme": "light",
+   "file": "edit-frame/resize-handles-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "resize-dragging-light",
+   "theme": "light",
+   "file": "edit-frame/resize-dragging-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-undo-hover-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-undo-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-undo-focus-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-undo-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "text-editing-light",
+   "theme": "light",
+   "file": "edit-frame/text-editing-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "text-typed-light",
+   "theme": "light",
+   "file": "edit-frame/text-typed-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "text-hint-light",
+   "theme": "light",
+   "file": "edit-frame/text-hint-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "text-tab-light",
+   "theme": "light",
+   "file": "edit-color/text-tab-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "fill-tab-light",
+   "theme": "light",
+   "file": "edit-color/fill-tab-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "border-tab-light",
+   "theme": "light",
+   "file": "edit-color/border-tab-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "tab-focus-light",
+   "theme": "light",
+   "file": "edit-color/tab-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "swatch-hover-light",
+   "theme": "light",
+   "file": "edit-color/swatch-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "swatch-focus-light",
+   "theme": "light",
+   "file": "edit-color/swatch-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "swatch-picked-light",
+   "theme": "light",
+   "file": "edit-color/swatch-picked-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "hex-focus-light",
+   "theme": "light",
+   "file": "edit-color/hex-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "hex-invalid-light",
+   "theme": "light",
+   "file": "edit-color/hex-invalid-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "eyedropper-hover-light",
+   "theme": "light",
+   "file": "edit-color/eyedropper-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "eyedropper-focus-light",
+   "theme": "light",
+   "file": "edit-color/eyedropper-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "default-light",
+   "theme": "light",
+   "file": "edit-type/default-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "bigger-bold-light",
+   "theme": "light",
+   "file": "edit-type/bigger-bold-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "step-hover-light",
+   "theme": "light",
+   "file": "edit-type/step-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "step-focus-light",
+   "theme": "light",
+   "file": "edit-type/step-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "size-focus-light",
+   "theme": "light",
+   "file": "edit-type/size-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "range-focus-light",
+   "theme": "light",
+   "file": "edit-type/range-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "weight-hover-light",
+   "theme": "light",
+   "file": "edit-type/weight-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "weight-focus-light",
+   "theme": "light",
+   "file": "edit-type/weight-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "popover-light",
+   "theme": "light",
+   "file": "capture/popover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "with-note-light",
+   "theme": "light",
+   "file": "capture/with-note-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "save-hover-light",
+   "theme": "light",
+   "file": "capture/save-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "save-focus-light",
+   "theme": "light",
+   "file": "capture/save-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "captured-toast-light",
+   "theme": "light",
+   "file": "capture/captured-toast-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "hidden-toast-light",
+   "theme": "light",
+   "file": "edit-toolbar/hidden-toast-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "below-top-edge-light",
+   "theme": "light",
+   "file": "edit-toolbar/below-top-edge-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "svg-fill-stroke-light",
+   "theme": "light",
+   "file": "edit-color/svg-fill-stroke-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "svg-text-field-light",
+   "theme": "light",
+   "file": "edit-frame/svg-text-field-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "embedded-note-light",
+   "theme": "light",
+   "file": "edit-frame/embedded-note-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tool-text-disabled-light",
+   "theme": "light",
+   "file": "edit-toolbar/tool-text-disabled-light.png",
+   "issues": [],
+   "note": "frames: tools that reach inside are disabled; no tooltip, not focusable"
+  },
+  {
+   "area": "page-tools",
+   "state": "button-hover-light",
+   "theme": "light",
+   "file": "page-tools/button-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "button-focus-light",
+   "theme": "light",
+   "file": "page-tools/button-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "menu-light",
+   "theme": "light",
+   "file": "page-tools/menu-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "item-hover-light",
+   "theme": "light",
+   "file": "page-tools/item-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "menu-with-state-light",
+   "theme": "light",
+   "file": "page-tools/menu-with-state-light.png",
+   "issues": [],
+   "note": "Bigger text shows its level, Hide ads its check; keyboard focus is the row highlight"
+  },
+  {
+   "area": "clipboard",
+   "state": "chips-light",
+   "theme": "light",
+   "file": "clipboard/chips-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "clipboard",
+   "state": "chip-hover-light",
+   "theme": "light",
+   "file": "clipboard/chip-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "clipboard",
+   "state": "chip-focus-light",
+   "theme": "light",
+   "file": "clipboard/chip-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "clipboard",
+   "state": "picked-light",
+   "theme": "light",
+   "file": "clipboard/picked-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "clipboard",
+   "state": "rebuilt-from-light",
+   "theme": "light",
+   "file": "clipboard/rebuilt-from-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "mic-idle-light",
+   "theme": "light",
+   "file": "voice/mic-idle-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "mic-hover-light",
+   "theme": "light",
+   "file": "voice/mic-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "mic-focus-light",
+   "theme": "light",
+   "file": "voice/mic-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "listening-light",
+   "theme": "light",
+   "file": "voice/listening-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "level-meter-light",
+   "theme": "light",
+   "file": "voice/level-meter-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "partial-transcript-light",
+   "theme": "light",
+   "file": "voice/partial-transcript-light.png",
+   "issues": [],
+   "note": "interim words in --m-text-2 until the final transcript"
+  },
+  {
+   "area": "voice",
+   "state": "transcribing-light",
+   "theme": "light",
+   "file": "voice/transcribing-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "transcribed-light",
+   "theme": "light",
+   "file": "voice/transcribed-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-insecure-page-light",
+   "theme": "light",
+   "file": "voice/error-insecure-page-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-policy-blocked-light",
+   "theme": "light",
+   "file": "voice/error-policy-blocked-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-no-microphone-api-light",
+   "theme": "light",
+   "file": "voice/error-no-microphone-api-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-not-set-up-light",
+   "theme": "light",
+   "file": "voice/error-not-set-up-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "mic-unavailable-light",
+   "theme": "light",
+   "file": "voice/mic-unavailable-light.png",
+   "issues": [],
+   "note": "no voice here: the mic is dimmed (--m-text-3) and its title says why"
+  },
+  {
+   "area": "voice",
+   "state": "error-mic-blocked-light",
+   "theme": "light",
+   "file": "voice/error-mic-blocked-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-no-mic-light",
+   "theme": "light",
+   "file": "voice/error-no-mic-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-mic-busy-light",
+   "theme": "light",
+   "file": "voice/error-mic-busy-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-mic-other-light",
+   "theme": "light",
+   "file": "voice/error-mic-other-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-speech-unavailable-light",
+   "theme": "light",
+   "file": "voice/error-speech-unavailable-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-transcription-failed-light",
+   "theme": "light",
+   "file": "voice/error-transcription-failed-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-didnt-catch-light",
+   "theme": "light",
+   "file": "voice/error-didnt-catch-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "more-hover-light",
+   "theme": "light",
+   "file": "menu/more-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "more-focus-light",
+   "theme": "light",
+   "file": "menu/more-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "open-light",
+   "theme": "light",
+   "file": "menu/open-light.png",
+   "issues": [],
+   "note": "the first item takes focus (row highlight); ↑/↓ move"
+  },
+  {
+   "area": "menu",
+   "state": "item-focus-light",
+   "theme": "light",
+   "file": "menu/item-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "item-hover-light",
+   "theme": "light",
+   "file": "menu/item-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "sheet-light",
+   "theme": "light",
+   "file": "settings/sheet-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "sheet-bottom-light",
+   "theme": "light",
+   "file": "settings/sheet-bottom-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "idle-light",
+   "theme": "light",
+   "file": "hotkeys/idle-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "button-hover-light",
+   "theme": "light",
+   "file": "hotkeys/button-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "button-focus-light",
+   "theme": "light",
+   "file": "hotkeys/button-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "done-hover-light",
+   "theme": "light",
+   "file": "settings/done-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "done-focus-light",
+   "theme": "light",
+   "file": "settings/done-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "segment-hover-light",
+   "theme": "light",
+   "file": "settings/segment-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "segment-focus-light",
+   "theme": "light",
+   "file": "settings/segment-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "switch-focus-light",
+   "theme": "light",
+   "file": "settings/switch-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "voice-ready-light",
+   "theme": "light",
+   "file": "settings/voice-ready-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "saved-flash-light",
+   "theme": "light",
+   "file": "settings/saved-flash-light.png",
+   "issues": [],
+   "note": "every change saves at once; “Saved” fades"
+  },
+  {
+   "area": "settings",
+   "state": "footer-hover-light",
+   "theme": "light",
+   "file": "settings/footer-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-light",
+   "theme": "light",
+   "file": "hotkeys/recording-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-held-light",
+   "theme": "light",
+   "file": "hotkeys/recording-held-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "rejected-light",
+   "theme": "light",
+   "file": "hotkeys/rejected-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "warning-light",
+   "theme": "light",
+   "file": "hotkeys/warning-light.png",
+   "issues": [],
+   "note": "accepted with a warning: Reset appears for a custom key"
+  },
+  {
+   "area": "settings",
+   "state": "voice-off-light",
+   "theme": "light",
+   "file": "settings/voice-off-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "sheet-light",
+   "theme": "light",
+   "file": "shortcuts/sheet-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "row-hover-light",
+   "theme": "light",
+   "file": "shortcuts/row-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "change-hover-light",
+   "theme": "light",
+   "file": "shortcuts/change-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "change-focus-light",
+   "theme": "light",
+   "file": "shortcuts/change-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "page-light",
+   "theme": "light",
+   "file": "suggestions/page-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "media-light",
+   "theme": "light",
+   "file": "suggestions/media-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-light",
+   "theme": "light",
+   "file": "suggestions/chip-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-next-light",
+   "theme": "light",
+   "file": "suggestions/chip-focus-next-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-hover-light",
+   "theme": "light",
+   "file": "suggestions/chip-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "button-rename-light",
+   "theme": "light",
+   "file": "suggestions/button-rename-light.png",
+   "issues": [],
+   "note": "Rename… fills the input and leaves the caret between the quotes"
+  },
+  {
+   "area": "history",
+   "state": "previous-light",
+   "theme": "light",
+   "file": "history/previous-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "history",
+   "state": "oldest-light",
+   "theme": "light",
+   "file": "history/oldest-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "working-light",
+   "theme": "light",
+   "file": "stop/working-light.png",
+   "issues": [],
+   "note": "focus moves to Stop, so Enter/Space stop too"
+  },
+  {
+   "area": "stop",
+   "state": "button-focus-light",
+   "theme": "light",
+   "file": "stop/button-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "button-hover-light",
+   "theme": "light",
+   "file": "stop/button-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "cancelled-light",
+   "theme": "light",
+   "file": "stop/cancelled-light.png",
+   "issues": [],
+   "note": "partial CSS removed, prompt kept; any edit clears the note"
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "selected-narrow-light",
+   "theme": "light",
+   "file": "edit-toolbar/selected-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "bar-hint-narrow-light",
+   "theme": "light",
+   "file": "edit-toolbar/bar-hint-narrow-light.png",
+   "issues": [],
+   "note": "after pointing, typing goes to the bar; Ctrl+E (⌘E) moves focus to the toolbar"
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "move-active-narrow-light",
+   "theme": "light",
+   "file": "edit-toolbar/move-active-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "move-dragging-narrow-light",
+   "theme": "light",
+   "file": "edit-frame/move-dragging-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "resize-handles-narrow-light",
+   "theme": "light",
+   "file": "edit-frame/resize-handles-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "resize-dragging-narrow-light",
+   "theme": "light",
+   "file": "edit-frame/resize-dragging-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "text-editing-narrow-light",
+   "theme": "light",
+   "file": "edit-frame/text-editing-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "text-typed-narrow-light",
+   "theme": "light",
+   "file": "edit-frame/text-typed-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "text-hint-narrow-light",
+   "theme": "light",
+   "file": "edit-frame/text-hint-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "text-tab-narrow-light",
+   "theme": "light",
+   "file": "edit-color/text-tab-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "fill-tab-narrow-light",
+   "theme": "light",
+   "file": "edit-color/fill-tab-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "border-tab-narrow-light",
+   "theme": "light",
+   "file": "edit-color/border-tab-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "swatch-picked-narrow-light",
+   "theme": "light",
+   "file": "edit-color/swatch-picked-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "hex-focus-narrow-light",
+   "theme": "light",
+   "file": "edit-color/hex-focus-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "hex-invalid-narrow-light",
+   "theme": "light",
+   "file": "edit-color/hex-invalid-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "default-narrow-light",
+   "theme": "light",
+   "file": "edit-type/default-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "bigger-bold-narrow-light",
+   "theme": "light",
+   "file": "edit-type/bigger-bold-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "popover-narrow-light",
+   "theme": "light",
+   "file": "capture/popover-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "with-note-narrow-light",
+   "theme": "light",
+   "file": "capture/with-note-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "capture",
+   "state": "captured-toast-narrow-light",
+   "theme": "light",
+   "file": "capture/captured-toast-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "hidden-toast-narrow-light",
+   "theme": "light",
+   "file": "edit-toolbar/hidden-toast-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "below-top-edge-narrow-light",
+   "theme": "light",
+   "file": "edit-toolbar/below-top-edge-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "svg-fill-stroke-narrow-light",
+   "theme": "light",
+   "file": "edit-color/svg-fill-stroke-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "svg-text-field-narrow-light",
+   "theme": "light",
+   "file": "edit-frame/svg-text-field-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-frame",
+   "state": "embedded-note-narrow-light",
+   "theme": "light",
+   "file": "edit-frame/embedded-note-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "button-hover-narrow-light",
+   "theme": "light",
+   "file": "page-tools/button-hover-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "button-focus-narrow-light",
+   "theme": "light",
+   "file": "page-tools/button-focus-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "menu-narrow-light",
+   "theme": "light",
+   "file": "page-tools/menu-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "item-hover-narrow-light",
+   "theme": "light",
+   "file": "page-tools/item-hover-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "page-tools",
+   "state": "menu-with-state-narrow-light",
+   "theme": "light",
+   "file": "page-tools/menu-with-state-narrow-light.png",
+   "issues": [],
+   "note": "Bigger text shows its level, Hide ads its check; keyboard focus is the row highlight"
+  },
+  {
+   "area": "clipboard",
+   "state": "chips-narrow-light",
+   "theme": "light",
+   "file": "clipboard/chips-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "clipboard",
+   "state": "picked-narrow-light",
+   "theme": "light",
+   "file": "clipboard/picked-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "clipboard",
+   "state": "rebuilt-from-narrow-light",
+   "theme": "light",
+   "file": "clipboard/rebuilt-from-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "mic-idle-narrow-light",
+   "theme": "light",
+   "file": "voice/mic-idle-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "listening-narrow-light",
+   "theme": "light",
+   "file": "voice/listening-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "partial-transcript-narrow-light",
+   "theme": "light",
+   "file": "voice/partial-transcript-narrow-light.png",
+   "issues": [],
+   "note": "interim words in --m-text-2 until the final transcript"
+  },
+  {
+   "area": "voice",
+   "state": "transcribing-narrow-light",
+   "theme": "light",
+   "file": "voice/transcribing-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "transcribed-narrow-light",
+   "theme": "light",
+   "file": "voice/transcribed-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-not-set-up-narrow-light",
+   "theme": "light",
+   "file": "voice/error-not-set-up-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-mic-blocked-narrow-light",
+   "theme": "light",
+   "file": "voice/error-mic-blocked-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "voice",
+   "state": "error-transcription-failed-narrow-light",
+   "theme": "light",
+   "file": "voice/error-transcription-failed-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "menu",
+   "state": "open-narrow-light",
+   "theme": "light",
+   "file": "menu/open-narrow-light.png",
+   "issues": [],
+   "note": "the first item takes focus (row highlight); ↑/↓ move"
+  },
+  {
+   "area": "settings",
+   "state": "sheet-narrow-light",
+   "theme": "light",
+   "file": "settings/sheet-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "settings",
+   "state": "sheet-bottom-narrow-light",
+   "theme": "light",
+   "file": "settings/sheet-bottom-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-narrow-light",
+   "theme": "light",
+   "file": "hotkeys/recording-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "recording-held-narrow-light",
+   "theme": "light",
+   "file": "hotkeys/recording-held-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "rejected-narrow-light",
+   "theme": "light",
+   "file": "hotkeys/rejected-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hotkeys",
+   "state": "warning-narrow-light",
+   "theme": "light",
+   "file": "hotkeys/warning-narrow-light.png",
+   "issues": [],
+   "note": "accepted with a warning: Reset appears for a custom key"
+  },
+  {
+   "area": "settings",
+   "state": "voice-off-narrow-light",
+   "theme": "light",
+   "file": "settings/voice-off-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "shortcuts",
+   "state": "sheet-narrow-light",
+   "theme": "light",
+   "file": "shortcuts/sheet-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "page-narrow-light",
+   "theme": "light",
+   "file": "suggestions/page-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "media-narrow-light",
+   "theme": "light",
+   "file": "suggestions/media-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-narrow-light",
+   "theme": "light",
+   "file": "suggestions/chip-focus-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "chip-focus-next-narrow-light",
+   "theme": "light",
+   "file": "suggestions/chip-focus-next-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "suggestions",
+   "state": "button-rename-narrow-light",
+   "theme": "light",
+   "file": "suggestions/button-rename-narrow-light.png",
+   "issues": [],
+   "note": "Rename… fills the input and leaves the caret between the quotes"
+  },
+  {
+   "area": "history",
+   "state": "previous-narrow-light",
+   "theme": "light",
+   "file": "history/previous-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "history",
+   "state": "oldest-narrow-light",
+   "theme": "light",
+   "file": "history/oldest-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "stop",
+   "state": "working-narrow-light",
+   "theme": "light",
+   "file": "stop/working-narrow-light.png",
+   "issues": [],
+   "note": "focus moves to Stop, so Enter/Space stop too"
+  },
+  {
+   "area": "stop",
+   "state": "cancelled-narrow-light",
+   "theme": "light",
+   "file": "stop/cancelled-narrow-light.png",
+   "issues": [],
+   "note": "partial CSS removed, prompt kept; any edit clears the note"
+  },
+  {
    "area": "motion",
    "state": "reduced-effect-light",
    "theme": "light",
    "file": "motion/reduced-effect-light.png",
    "issues": [],
-   "note": ""
+   "note": "Effects default to Subtle here: a still outline on the target, no field"
   },
   {
    "area": "motion",
@@ -1814,6 +4854,46 @@
    "state": "parley-hover-dark",
    "theme": "dark",
    "file": "hostile/parley-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "parley-toolbar-dark",
+   "theme": "dark",
+   "file": "hostile/parley-toolbar-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "parley-color-dark",
+   "theme": "dark",
+   "file": "hostile/parley-color-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "parley-text-edit-dark",
+   "theme": "dark",
+   "file": "hostile/parley-text-edit-dark.png",
+   "issues": [],
+   "note": "T edits the text in place (a form field toasts that it keeps its own text)"
+  },
+  {
+   "area": "hostile",
+   "state": "parley-settings-dark",
+   "theme": "dark",
+   "file": "hostile/parley-settings-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "parley-page-tools-dark",
+   "theme": "dark",
+   "file": "hostile/parley-page-tools-dark.png",
    "issues": [],
    "note": ""
   },
@@ -1875,6 +4955,46 @@
   },
   {
    "area": "hostile",
+   "state": "byte-toolbar-light",
+   "theme": "light",
+   "file": "hostile/byte-toolbar-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "byte-color-light",
+   "theme": "light",
+   "file": "hostile/byte-color-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "byte-text-edit-light",
+   "theme": "light",
+   "file": "hostile/byte-text-edit-light.png",
+   "issues": [],
+   "note": "T edits the text in place (a form field toasts that it keeps its own text)"
+  },
+  {
+   "area": "hostile",
+   "state": "byte-settings-light",
+   "theme": "light",
+   "file": "hostile/byte-settings-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "byte-page-tools-light",
+   "theme": "light",
+   "file": "hostile/byte-page-tools-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
    "state": "byte-bar-light",
    "theme": "light",
    "file": "hostile/byte-bar-light.png",
@@ -1926,6 +5046,46 @@
    "state": "tunes-hover-dark",
    "theme": "dark",
    "file": "hostile/tunes-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "tunes-toolbar-dark",
+   "theme": "dark",
+   "file": "hostile/tunes-toolbar-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "tunes-color-dark",
+   "theme": "dark",
+   "file": "hostile/tunes-color-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "tunes-text-edit-dark",
+   "theme": "dark",
+   "file": "hostile/tunes-text-edit-dark.png",
+   "issues": [],
+   "note": "T edits the text in place (a form field toasts that it keeps its own text)"
+  },
+  {
+   "area": "hostile",
+   "state": "tunes-settings-dark",
+   "theme": "dark",
+   "file": "hostile/tunes-settings-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "tunes-page-tools-dark",
+   "theme": "dark",
+   "file": "hostile/tunes-page-tools-dark.png",
    "issues": [],
    "note": ""
   },
@@ -1987,6 +5147,46 @@
   },
   {
    "area": "hostile",
+   "state": "hostile-toolbar-light",
+   "theme": "light",
+   "file": "hostile/hostile-toolbar-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "hostile-color-light",
+   "theme": "light",
+   "file": "hostile/hostile-color-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "hostile-text-edit-light",
+   "theme": "light",
+   "file": "hostile/hostile-text-edit-light.png",
+   "issues": [],
+   "note": "T edits the text in place (a form field toasts that it keeps its own text)"
+  },
+  {
+   "area": "hostile",
+   "state": "hostile-settings-light",
+   "theme": "light",
+   "file": "hostile/hostile-settings-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "hostile-page-tools-light",
+   "theme": "light",
+   "file": "hostile/hostile-page-tools-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
    "state": "hostile-bar-light",
    "theme": "light",
    "file": "hostile/hostile-bar-light.png",
@@ -2038,6 +5238,46 @@
    "state": "hostile-noise-hover-light",
    "theme": "light",
    "file": "hostile/hostile-noise-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "hostile-noise-toolbar-light",
+   "theme": "light",
+   "file": "hostile/hostile-noise-toolbar-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "hostile-noise-color-light",
+   "theme": "light",
+   "file": "hostile/hostile-noise-color-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "hostile-noise-text-edit-light",
+   "theme": "light",
+   "file": "hostile/hostile-noise-text-edit-light.png",
+   "issues": [],
+   "note": "T edits the text in place (a form field toasts that it keeps its own text)"
+  },
+  {
+   "area": "hostile",
+   "state": "hostile-noise-settings-light",
+   "theme": "light",
+   "file": "hostile/hostile-noise-settings-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "hostile",
+   "state": "hostile-noise-page-tools-light",
+   "theme": "light",
+   "file": "hostile/hostile-noise-page-tools-light.png",
    "issues": [],
    "note": ""
   },

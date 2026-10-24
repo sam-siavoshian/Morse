@@ -266,8 +266,8 @@ async function stream(page, n = 24, gap = 35) {
 }
 async function finish(page, res) {
   await page.evaluate(r => __cat.done(r), res);
-  if (res.ok) await ui(page, "[data-a=keep]").waitFor({ timeout: 4000 });
-  else await ui(page, "[data-a=again]").waitFor({ timeout: 4000 });
+  if (res.ok) await ui(page, "[data-a=keep]").waitFor({ timeout: 8000 });
+  else await ui(page, "[data-a=again]").waitFor({ timeout: 8000 });
   await sleep(150);
 }
 const OK = (over = {}) => ({ ok: true, title: "Airier toolbar", css: "#toolbar { gap: 20px }", js: "", attempts: 1, ...over });
@@ -1144,7 +1144,7 @@ async function writeIndex() {
   <div class="pair"><p>${esc(f.title)}</p><a href="${esc(f.before)}"><img loading="lazy" src="${esc(f.before)}" alt="before"></a><a href="${esc(f.after)}"><img loading="lazy" src="${esc(f.after)}" alt="after"></a></div>`).join("")}</div></section>
 <section id="contrast"><h2>Contrast (WCAG AA, worst case over the host page) <span>${contrast.rows.filter(r => r.pass).length}/${contrast.rows.length} pass</span></h2>
 <table>${contrast.rows.map(r => `<tr><td>${r.pass ? "✅" : "❌"}</td><td>${r.theme}</td><td>${esc(r.what)}</td><td><code>${r.fg}</code> on <code>${r.bg}</code></td><td>${r.ratio.toFixed(2)} ≥ ${r.min}</td></tr>`).join("")}</table>
-${contrast.literals?.length ? `<p>❌ non-token colors: ${contrast.literals.map(l => `line ${l.line} ${esc(l.literal)}`).join(", ")}</p>` : "<p>✅ runtime/src/99-css.js uses token colors only</p>"}</section>
+${contrast.literals?.length ? `<p>❌ non-token colors: ${contrast.literals.map(l => `line ${l.line} ${esc(l.literal)}`).join(", ")}</p>` : "<p>✅ runtime/src/99-css.js, 98-bar-css.js and 98-godmode-css.js use token colors only</p>"}</section>
 ${sections}
 </body></html>`;
   await fs.writeFile(path.join(OUT, "index.html"), html);
