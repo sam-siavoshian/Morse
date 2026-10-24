@@ -41,6 +41,8 @@ li { padding: 8px 0; border-bottom: 1px solid var(--m-line); }
 li i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 8px; background: var(--m-signal-1); }
 li i.on { background: var(--m-signal-4); }
 li small { display: block; color: var(--m-text-3); margin-left: 16px; }
+li small.waiting { color: var(--m-warn, #e5a54b); }
+#warn .steps { display: block; margin-top: 6px; }
 li.empty { color: var(--m-text-3); border: 0; }
 
 .choice { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; padding: 8px 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); cursor: pointer; color: var(--m-text); font-size: var(--m-text-md); }

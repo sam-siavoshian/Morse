@@ -22,6 +22,7 @@ import { CDPSession, listTargets } from "./cdp.js";
 import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putClipboard } from "./store.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode, settleMs } from "../core/kit.js";
+import { asReviewed } from "../core/summary.js"; // installs keep only the reviewed code
 import { runMorse } from "../core/engine.js";
 import { settingsLabel, currentSettings } from "./models.js"; // also registers the Claude Code / Codex providers
 import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
@@ -468,7 +469,7 @@ export class Connector {
         const src = msg.source.trim();
         const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
         const where = await here(); // the user confirmed this install in the runtime (64-install.js, 80-modals.js)
-        return saveMod({ ...mod, enabled: true, imported: true, match: mod.match || { hosts: [hostOf(where.url)], app: where.app } });
+        return saveMod({ ...asReviewed(mod), enabled: true, imported: true, match: mod.match || { hosts: [hostOf(where.url)], app: where.app } });
       }
       // God mode: cross-app clipboard (Capture in one app, rebuild in another)
       case "clipboard.list":
