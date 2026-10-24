@@ -145,6 +145,12 @@ test("site/config.js: the button targets and the demo video resolve", async () =
     const problem = check("index.html", DEMO_VIDEO[key], index);
     assert.equal(problem, null, `DEMO_VIDEO.${key} = ${DEMO_VIDEO[key]}: ${problem}`);
   }
+  // The autoplay loop is a small copy (the page's speed): each file resolves and stays under 2 MB.
+  for (const [key, ref] of Object.entries(DEMO_VIDEO.loop || {})) {
+    const problem = check("index.html", ref, index);
+    assert.equal(problem, null, `DEMO_VIDEO.loop.${key} = ${ref}: ${problem}`);
+    assert.ok(statSync(path.resolve(SITE, ref)).size < 2e6, `DEMO_VIDEO.loop.${key} is under 2 MB`);
+  }
   assert.ok(DEMO_VIDEO.width > 0 && DEMO_VIDEO.height > 0 && DEMO_VIDEO.label && DEMO_VIDEO.caption);
   // The Pages build publishes what the video slot points at.
   assert.match(readFileSync(path.join(root, "scripts", "build-pages.js"), "utf8"), /"docs\/launch"/, "docs/launch is published");

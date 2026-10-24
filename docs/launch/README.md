@@ -16,7 +16,8 @@
 | [`morse-v3-4x5.mp4`](morse-v3-4x5.mp4) | 1080×1350, for the X and Instagram feed, with music | 4.0 MB |
 | [`morse-v3-9x16.mp4`](morse-v3-9x16.mp4) | 1080×1920, for Reels, Shorts and TikTok, with music | 4.1 MB |
 | [`morse-v3-16x9-nomusic.mp4`](morse-v3-16x9-nomusic.mp4), [`-4x5-nomusic`](morse-v3-4x5-nomusic.mp4), [`-9x16-nomusic`](morse-v3-9x16-nomusic.mp4) | The same cuts with no sound, to add a trending sound inside X, TikTok or Instagram | 4.1, 3.2 and 3.4 MB |
-| [`poster-v3.png`](poster-v3.png) | Poster: VS Code, just turned Synthwave ’84 | 311 KB |
+| [`poster-v3.png`](poster-v3.png) | Poster: VS Code, the moment it turned Synthwave ’84 | 311 KB |
+| [`morse-v3-web.webm`](morse-v3-web.webm), [`morse-v3-web.mp4`](morse-v3-web.mp4) | The website's muted loop: 1280×720, no sound, small for page speed (the play button on the site plays the full 16:9 file with music) | 1.4 and 0.9 MB |
 | [`morse-v3-hook.gif`](morse-v3-hook.gif) | The first 6.6 seconds as a GIF, 720 px wide | 1.5 MB |
 | [`MUSIC.md`](MUSIC.md) | The track, its license and the credit to paste | |
 

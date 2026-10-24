@@ -18,12 +18,15 @@ export const LINKS = {
   docs: "https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs",
 };
 
-// The film under the headline. To swap in a new video, put the file in
-// docs/launch/ (or site/) and change mp4 and poster; width and height set the
-// frame's shape before it loads. caption is the line under it, label is what a
-// screen reader says, and strip is the short line above it.
+// The film under the headline. To swap in a new video, put the files in
+// docs/launch/ (or site/) and change them here. loop is the muted autoplay
+// copy (1280 wide, WebM and MP4, about 1 MB, made from the full file with
+// ffmpeg); mp4 is the full-quality file with sound the press plays. width
+// and height set the frame's shape before it loads. caption is the line under
+// it, label is what a screen reader says, and strip is the short line above it.
 export const DEMO_VIDEO = {
   mp4: "../docs/launch/morse-v3-16x9.mp4",
+  loop: { webm: "../docs/launch/morse-v3-web.webm", mp4: "../docs/launch/morse-v3-web.mp4" },
   poster: "shots/202-film-poster.webp",
   width: 1920,
   height: 1080,
