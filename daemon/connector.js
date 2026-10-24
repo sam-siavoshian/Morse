@@ -493,6 +493,25 @@ export class Connector {
     return r.exceptionDetails ? null : r.result?.value ?? null;
   }
 
+  // polish (core/polish.js): a picture of the changed part of the window,
+  // without Morse's own UI (runtime/src/60-generate.js __morseShotArea), as a
+  // JPEG clip at most 1280×900. Only the top document; null when it can't.
+  async shoot(s, caller, target, modId) {
+    if (caller.world == null) return null;
+    const ev = expression => s.send("Runtime.evaluate", { expression, contextId: caller.world, returnByValue: true, awaitPromise: true });
+    const a = (await ev(`globalThis.__morseShotArea ? __morseShotArea(${JSON.stringify(target || null)}, ${JSON.stringify(modId)}) : null`).catch(() => null))?.result?.value;
+    if (!a) return null;
+    const from = Date.now() / 1000 - 0.15;
+    try {
+      const r = await s.send("Page.captureScreenshot", { format: "jpeg", quality: 85, clip: { x: a.x + a.scrollX, y: a.y + a.scrollY, width: a.width, height: a.height, scale: a.scale } });
+      return r?.data ? { mediaType: "image/jpeg", data: r.data } : null;
+    } catch { return null; }
+    finally {
+      await ev("globalThis.__morseShotArea && __morseShotArea(null, null, true)").catch(() => {});
+      this.recorder?.drop(from, Date.now() / 1000 + 0.1); // the clip never shows Morse's UI blinking out
+    }
+  }
+
   // guard hook: mod code froze this window and was stopped (daemon/guard.js).
   // A saved mod is turned off with why, and the page reloads clean; a change
   // still being made just fails that run (the model gets its second try).
@@ -595,7 +614,8 @@ export class Connector {
         if (!this.settings?.provider || this.settings.provider === "none")
           throw new Error("No model is connected. Run morse setup in a terminal to choose one.");
         const t0 = Date.now();
-        const mode = (await loadPrefs()).modelMode; // models: Automatic, Always fast, Always best
+        const prefs = await loadPrefs();
+        const mode = prefs.modelMode; // models: Automatic, Always fast, Always best
         const sel = msg.context?.target?.selector;
         trace("bar", `"${msg.request}" · ${sel ? `pointed at ${sel}` : "the whole page"} · ${this.app?.name || "app"}`);
         trace("model", `${this.settings.provider}${this.settings.model ? ` · ${this.settings.model}` : ""}`);
@@ -614,6 +634,7 @@ export class Connector {
           // over the same session, in order.
           probe: sels => this.probe(s, caller, msg.context?.target?.selector, sels),
           collapse: css => this.collapse(s, caller, msg.genId, css), // guard hook: hid most of the page?
+          polish: prefs.polish, review: () => this.shoot(s, caller, msg.context?.target?.selector, msg.genId), // polish: a look at the change (core/polish.js)
           emit: ev => {
             if (ev.type === "token" && !tokens++) trace("stream", `first words from the model after ${Date.now() - t0}ms`);
             if (ev.type === "css" && ev.css && !cssPushes++) trace("page", `CSS reaches the page while the model is still writing (${Date.now() - t0}ms), pushed over CDP to Morse's world`);
@@ -624,6 +645,7 @@ export class Connector {
         }));
         if (res.cancelled) { this.log(`  ■ "${msg.request}" stopped after ${Date.now() - t0}ms`); return res; }
         this.log(`  ${res.ok ? "✓" : "✗"} "${msg.request}" → ${res.title || "-"} (${Date.now() - t0}ms, ${res.attempts} attempt${res.attempts > 1 ? "s" : ""}${res.model ? `, ${res.model}${res.escalated ? " after the fast model" : ""}` : ""})`);
+        if (res.polish) trace("polish", `looked at the change: ${res.polish.verdict} in ${res.polish.ms}ms${res.polish.fixes?.length ? ` (${res.polish.fixes.join("; ").slice(0, 160)})` : ""}`);
         trace("done", `${res.ok ? "✓" : "✗"} "${res.title || "-"}" in ${Date.now() - t0}ms · ${tokens} chunks streamed · css ${res.css?.length || 0} chars · js ${res.js?.length || 0} chars · ${res.attempts} attempt${res.attempts > 1 ? "s" : ""}${res.model ? ` · ${res.model}` : ""}`);
         return { ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts, model: res.model };
       }

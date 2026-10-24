@@ -7,7 +7,7 @@ A real, unedited recording of everything on this page: [`docs/launch/how-it-work
 desktop session with `MORSE_TRACE=1` (or a file path) to see the same lines.
 The lines hold your requests, what you pointed at and the model's results, never
 keys, tokens or settings. A file path is appended to as given (like a shell
-redirect, so a symlink is followed); a file it creates is readable only by you.
+redirect, so a symlink is followed). A file it creates is readable only by you.
 `0`, `false`, `off` and `no` turn it off.
 
 ## The pieces
@@ -16,7 +16,7 @@ redirect, so a symlink is followed); a file it creates is readable only by you.
 |---|---|---|
 | **`morse` (daemon)** | A Node.js process on your computer. The CLI today; Morse Desktop runs the same code. | `daemon/` |
 | **The connector** | Opens the app with `--remote-debugging-pipe`, a private channel over the app's file descriptors 3 and 4 that only Morse holds (a `--remote-debugging-port` on 127.0.0.1 where that can't be used), and talks to each window over the Chrome DevTools Protocol (CDP). | `daemon/connector.js`, `daemon/cdp.js` |
-| **The runtime** | Morse's own code inside the app's page: the bar, pointing, reading the page, applying CSS. It runs in an **isolated world** named `morse`, so the page's scripts can't see or call it. A 50 KB boot loads on every page; the full UI loads the first time you open the bar. | `runtime/boot.js`, `runtime/src/` |
+| **The runtime** | Morse's own code inside the app's page: the bar, pointing, reading the page, applying CSS. It runs in an **isolated world** named `morse`, so the page's scripts can't see or call it. A 50 KB boot loads on every page. The full UI loads the first time you open the bar. | `runtime/boot.js`, `runtime/src/` |
 | **The engine** | Turns a request into a change: builds the prompt, streams the answer, applies CSS as it arrives, runs the JS, checks it did something, one repair round. | `core/engine.js`, `core/prompt.js`, `core/parse.js` |
 | **The harness** | Runs the model you already have: your Claude Code (`claude -p … --model sonnet`, or `opus` for new features and restyles) or Codex CLI, or the Anthropic / OpenAI API with your key. | `daemon/harness.js`, `core/providers.js` |
 | **The kit** | Helpers the model's code uses (`morse.watch`, `morse.el`, `morse.css`…), with guards that pause a mod that slows or freezes the page. | `core/kit.js`, `core/guard.js` |
@@ -88,7 +88,7 @@ flowchart LR
 ```
 
 - CSS is applied by the runtime as a `<style data-morse-css>` element while the model writes.
-- JS only ever runs through Chrome's user scripts (Allow User Scripts on); without it, a mod's look
+- JS only ever runs through Chrome's user scripts (Allow User Scripts on). Without it, a mod's look
   still applies and the JS waits.
 - The helper only accepts the extension, with the pairing token, from 127.0.0.1.
 

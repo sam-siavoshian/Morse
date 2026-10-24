@@ -19,6 +19,12 @@
 //               after the change and again after the app is opened a second time
 //   --setup     JS run in the page once Morse is connected (open a view, close a dialog)
 //   --port      debugging port (default: morse picks one)
+//   --then      JS run in the page after the app is opened again, before its picture
+//   --then-prekeys keys pressed first, with the window focused (Escape closes VS Code's notifications)
+//   --then-click   a selector, or text=/regex/i, clicked with the real mouse then (a button the change added)
+//   --then-keys    keys pressed for real then, space-separated xdotool names ("ctrl+alt+z")
+//   --then-type    text typed for real then (into what has focus)
+//   --move      a window title (xdotool --name): move those windows to 0,0 first
 //
 // For changes to what the app does (app profiles, docs/dev/rea.md), the
 // change is also used before it is checked:
@@ -36,7 +42,7 @@
 // Prints one JSON line at the end: { ok, ms, persisted, title, ... }.
 
 import { spawn, execFileSync } from "node:child_process";
-import { promises as fs } from "node:fs";
+import { promises as fs, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { CDPSession, listTargets } from "../daemon/cdp.js";
@@ -48,6 +54,7 @@ const appArgs = dash < 0 ? [] : argv.slice(dash + 1);
 const opt = {};
 for (let i = 0; i < (dash < 0 ? argv.length : dash); i += 2) opt[argv[i].replace(/^--/, "")] = argv[i + 1];
 const HOME = process.env.MORSE_HOME || await fs.mkdtemp(path.join(os.tmpdir(), "morse-real-"));
+const ownHome = !process.env.MORSE_HOME;
 // MORSE_DEBUG: the runtime's status attribute, read here to know what the bar shows.
 const ENV = { ...process.env, MORSE_HOME: HOME, FORCE_COLOR: "0", MORSE_DEBUG: "1" };
 const T = Number(opt.timeout || 300000);
@@ -60,7 +67,13 @@ const modelArgs = process.env.MORSE_MODEL ? ["--model", process.env.MORSE_MODEL]
 const result = { app: opt.app, ask: opt.ask, profile: process.env.MORSE_PROFILE !== "off" };
 
 const children = [];
-const done = code => { for (const c of children) try { c.kill(); } catch {} console.log(JSON.stringify(result)); process.exit(code); };
+// Synchronous, so nothing after a done() call runs.
+const done = code => {
+  for (const c of children) try { c.kill(); } catch {}
+  if (ownHome) try { rmSync(HOME, { recursive: true, force: true }); } catch {}
+  console.log(JSON.stringify(result));
+  process.exit(code);
+};
 process.on("uncaughtException", e => { console.error(e); result.error = e.message; done(1); });
 process.on("unhandledRejection", e => { console.error(e); result.error = e.message; done(1); });
 
@@ -96,8 +109,17 @@ async function geometry(w) {
   const g = await w.ev(`({ x: screenX, y: screenY, ow: outerWidth, oh: outerHeight, iw: innerWidth, ih: innerHeight, title: document.title })`);
   return { x: g.x, y: g.y, w: g.ow, h: g.oh, left: g.x + (g.ow - g.iw), top: g.y + (g.oh - g.ih), title: g.title };
 }
+// selector: CSS, or text=/regex/ for the smallest visible element whose text matches
+// (a button the model added, whatever it named its classes).
 async function centerOf(w, win, selector) {
-  const r = await w.ev(`(() => { const r = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
+  const text = /^text=\/(.+)\/([a-z]*)$/.exec(selector);
+  const find = text
+    ? `[...document.querySelectorAll("body *")].filter(e => !e.closest("[data-morse-ui]") && new RegExp(${JSON.stringify(text[1])}, ${JSON.stringify(text[2])}).test((e.innerText || e.getAttribute("aria-label") || e.title || "").trim()) && e.getBoundingClientRect().width > 0)
+        // a button over a tooltip that only repeats its name, then the smallest
+        .map(e => [e, e.matches("button, [role=button], a, .clickable-icon") ? 0 : 1, e.getBoundingClientRect().width * e.getBoundingClientRect().height])
+        .sort((a, b) => a[1] - b[1] || a[2] - b[2])[0]?.[0]`
+    : `document.querySelector(${JSON.stringify(selector)})`;
+  const r = await w.ev(`(() => { const r = (${find}).getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
   return [Math.round(win.left + r[0]), Math.round(win.top + r[1])];
 }
 async function shot(win, name) {
@@ -130,6 +152,16 @@ let w = await mainWindow(port);
 await until(w.status, 90000, "the runtime in the main window");
 if (opt.setup) await until(() => w.ev(opt.setup), 30000, "the setup step");
 await sleep(Number(opt.settle || 3000));
+// --move: put the app's windows at the top-left corner. With no window
+// manager (Xvfb), some apps (Joplin) open in the middle of the screen and
+// report 0,0, so pointing and the pictures would miss them.
+const moveWindows = async () => {
+  if (!opt.move) return;
+  const ids = (() => { try { return x("search", "--onlyvisible", "--name", opt.move).split("\n").filter(Boolean); } catch { return []; } })();
+  for (const id of ids) try { x("windowmove", id, "0", "0"); } catch {}
+  await sleep(800);
+};
+await moveWindows();
 let win = await geometry(w);
 say(`window "${win.title}" at ${win.x},${win.y} ${win.w}x${win.h}`);
 await shot(win, "before");
@@ -209,7 +241,15 @@ let mod = null;
 async function save() {
   if (mod) return mod;
   x("key", "Return"); // the bar still has the focus: Enter saves
-  const file = await until(async () => (await fs.readdir(modsDir).catch(() => [])).find(f => f.endsWith(".json")), 15000, "the mod on disk");
+  const saved = async () => (await fs.readdir(modsDir).catch(() => [])).find(f => f.endsWith(".json"));
+  // Some apps take the keyboard back once the page changes (Logseq focuses its
+  // editor): then click Save, as a person would. (MORSE_DEBUG opens Morse's
+  // shadow root, so the button can be found.)
+  if (!(await until(saved, 4000, "the mod on disk").catch(() => null))) {
+    const r = await w.ev(`(() => { const b = document.querySelector("[data-morse-ui]")?.shadowRoot?.querySelector('[data-a="keep"]'); if (!b) return null; const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
+    if (r) { say("Enter didn't save here: clicking Save"); x("mousemove", "--sync", String(Math.round(win.left + r[0])), String(Math.round(win.top + r[1]))); x("click", "1"); }
+  }
+  const file = await until(saved, 15000, "the mod on disk");
   mod = JSON.parse(await fs.readFile(path.join(modsDir, file), "utf8"));
   Object.assign(result, { title: mod.title, match: mod.match, css: (mod.css || "").length, js: (mod.js || "").length, code: mod.js || "", style: mod.css || "" });
   say(`saved "${mod.title}" for ${JSON.stringify(mod.match)}`);
@@ -243,9 +283,31 @@ const running = `(() => { const id = ${JSON.stringify(mod.id)}; const s = global
   return ${mod.js?.trim() ? "!!s && !s.errors" : `!!document.querySelector('style[data-morse-css="' + id + '"]')`}; })()`;
 const back = await until(() => w.ev(`${running}${opt.check ? ` && !!(${opt.check})` : ""}`), 90000, "the saved change after relaunch").catch(e => (say(e.message), false));
 result.persisted = !!back;
-if (opt.setup) await w.ev(opt.setup).catch(() => {});
+if (opt.setup) await until(() => w.ev(opt.setup), 60000, "the setup step after relaunch").catch(e => say(e.message));
+await moveWindows();
 await sleep(Number(opt.settle || 3000));
 win = await geometry(w);
+// Keys pressed first, with the window focused (Escape: close the app's own
+// notifications, as a person would before taking a picture).
+if (opt["then-prekeys"]) {
+  const [fx2, fy2] = opt.focus ? await centerOf(w, win, opt.focus) : [win.left + Math.round(win.w / 2), win.top + Math.round(win.h / 2)];
+  x("mousemove", "--sync", String(fx2), String(fy2));
+  x("click", "1");
+  await sleep(500);
+  for (const k of opt["then-prekeys"].split(/\s+/).filter(Boolean)) { x("key", k); await sleep(500); }
+}
+// Use what the change added, for real, so the picture shows it working.
+if (opt["then-click"] || opt["then-keys"] || opt["then-type"]) {
+  const [cx, cy] = opt["then-click"] ? await centerOf(w, win, opt["then-click"]) : opt.focus ? await centerOf(w, win, opt.focus) : [win.left + Math.round(win.w / 2), win.top + Math.round(win.h / 2)];
+  x("mousemove", "--sync", String(cx), String(cy));
+  x("click", "1");
+  await sleep(600);
+  for (const k of (opt["then-keys"] || "").split(/\s+/).filter(Boolean)) { x("key", k); await sleep(500); }
+  if (opt["then-type"]) x("type", "--delay", "20", opt["then-type"]);
+  await sleep(1200);
+}
+await sleep(Number(opt["then-settle"] || 0));
+if (opt.then) { result.then = await w.ev(opt.then).catch(e => "threw: " + e.message); await sleep(700); }
 await shot(win, "after-relaunch");
 say(`after relaunch: ${back ? "the change is back" : "the change is NOT back"}`);
 w.s.close();
