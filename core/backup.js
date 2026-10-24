@@ -67,6 +67,6 @@ export function prepareInstall(mod, { kind = "link", where = {}, now = new Date(
   // A shared mod is the code its review showed: no earlier versions ride along
   // (History could bring back code nobody reviewed). Links never carry one
   // (stripLocal), so this only drops what a hand-made link or file added.
-  const { history, ...shared } = m;
+  const { history, pack, ...shared } = m; // packs hook: a single mod can't claim to be part of one of your packs
   return { ...shared, match, enabled: true, imported: true, importedFrom: kind === "mod" ? "file" : "link", importedAt: now.toISOString() };
 }

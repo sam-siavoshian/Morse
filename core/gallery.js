@@ -320,7 +320,7 @@ export function whatChanged(before, after, summarize = briefSummary) {
 export const SUBMIT_MAX_URL = 7500;
 
 export function forGallery(mod) {
-  const { enabled, history, imported, gallery, refined, fp, ...rest } = mod || {}; // self-heal hook: fp
+  const { enabled, history, imported, gallery, refined, fp, pack, ...rest } = mod || {}; // self-heal hook: fp; packs hook: pack
   return rest;
 }
 

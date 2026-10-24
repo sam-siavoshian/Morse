@@ -150,7 +150,7 @@ export async function decodeShareText(link) {
 
 // Links carry the current version only; the history stays on this machine.
 export function stripLocal(mod) {
-  const { enabled, history, fp, paused, guardOk, ...rest } = mod; // self-heal hook: fp describes this machine's page; guard hook: so do paused, guardOk
+  const { enabled, history, fp, paused, guardOk, pack, ...rest } = mod; // self-heal hook: fp describes this machine's page; guard hook: so do paused, guardOk; packs hook: pack (its address can be a team's private one)
   return rest;
 }
 

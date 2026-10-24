@@ -166,6 +166,20 @@ test("installing marks each mod with its pack; unticked or unknown ids are left 
   assert.deepEqual(packGroups(put), [{ id: "team", name: "Team tools", count: 2, on: 2, url: "" }]);
 });
 
+test("hostile: a single shared mod can't claim to be part of one of your packs, and its link never carries the pack's address", async () => {
+  const { prepareInstall } = await import("../core/backup.js");
+  const { stripLocal } = await import("../core/mod.js");
+  const { forGallery } = await import("../core/gallery.js");
+  const spoof = mod("x", { pack: { id: "team", name: "Team tools", mod: "x", url: "https://raw.example/private/pack.json" } });
+  assert.equal(prepareInstall(spoof, { kind: "link" }).pack, undefined);
+  assert.equal(prepareInstall(spoof, { kind: "mod" }).pack, undefined);
+  assert.ok(prepareInstall(spoof, { kind: "backup" }).pack, "your own backup keeps it");
+  assert.equal(stripLocal(spoof).pack, undefined);
+  assert.equal(forGallery(spoof).pack, undefined);
+  const r = await parseImport(await (await import("../core/mod.js")).encodeShare(spoof));
+  assert.equal(r.mods[0].pack, undefined);
+});
+
 test("installing the same pack again updates your copies from it, old versions in History", () => {
   const p = parsePack(pack([mod("a")])).pack;
   const first = planInstall(p, [{ id: "a" }], []).put;
