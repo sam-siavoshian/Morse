@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Morse: change any app in your own words</title>
-<meta name="description" content="Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like. Free and open source.">
+<title>Morse: change any website or desktop app in your own words</title>
+<meta name="description" content="Change any website in Chrome, or desktop apps like VSCodium and Obsidian, by saying what you want. Your own AI makes the change. Free and open source.">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="color-scheme" content="dark">
-<meta property="og:title" content="Morse: change any app in your own words">
-<meta property="og:description" content="Press a shortcut, point at something and say the change. Your own model makes it in the running app while you watch.">
-<meta property="og:image" content="https://sam-siavoshian.github.io/RRAA/docs/launch/poster-social.png">
+<!-- seo: npm run pages puts the canonical address, link previews and structured data here (scripts/build-pages.js) -->
+<link rel="icon" href="icons/icon-32.png" type="image/png" sizes="32x32">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
 <link rel="preload" as="image" href="shots/198-film-poster.webp" fetchpriority="high">
@@ -89,7 +90,7 @@
       <figure class="film" id="demo" data-film>
         <p class="film-strip"><span class="film-dot" aria-hidden="true"></span><span data-film-strip>VSCodium on Linux · Claude Code (haiku) · real runs</span></p>
         <div class="film-frame">
-          <img class="film-poster" src="shots/198-film-poster.webp" width="1280" height="720" alt="" fetchpriority="high">
+          <img class="film-poster" src="shots/198-film-poster.webp" width="1280" height="720" alt="VSCodium with the Morse bar open at the bottom, and the request “make it look like a retro green terminal” being typed in." fetchpriority="high">
           <button type="button" class="film-play" aria-label="Play the video from the start, with controls"><span class="film-disc" aria-hidden="true"><svg class="icon"><use href="#i-play"/></svg></span></button>
           <button type="button" class="film-toggle" aria-label="Pause or play the loop"><svg class="icon icon-pause"><use href="#i-pause"/></svg><svg class="icon icon-play"><use href="#i-play"/></svg></button>
         </div>

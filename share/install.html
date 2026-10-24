@@ -3,16 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Install a Morse mod</title>
+<title>Install a shared Morse mod</title>
 <meta name="description" content="Someone shared a Morse mod with you. Read its code, then install it in Morse or download it for Tampermonkey.">
 <meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0a0a0b">
+<!-- seo: npm run pages puts the canonical address, link previews and structured data here (scripts/build-pages.js) -->
+<link rel="icon" href="../site/icons/icon-32.png" type="image/png" sizes="32x32">
 <link rel="icon" href="../site/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="apple-touch-icon" href="../site/icons/apple-touch-icon.png">
+<link rel="preload" as="font" type="font/woff2" href="../site/fonts/inter-regular.woff2" crossorigin>
 <link rel="stylesheet" href="../design/tokens.css">
 <link rel="stylesheet" href="install.css">
 <style>
+  /* The site's own copies of the fonts: nothing is fetched from another server. */
+  @font-face { font-family: "Inter"; src: url("../site/fonts/inter-regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "Inter"; src: url("../site/fonts/inter-medium.woff2") format("woff2"); font-weight: 500 600; font-display: swap; }
+  @font-face { font-family: "JetBrains Mono"; src: url("../site/fonts/jetbrainsmono-regular.woff2") format("woff2"); font-weight: 400 500; font-display: swap; }
   .i-main { max-width: calc(760px + 2 * var(--s-gutter)); padding-top: 64px; padding-bottom: 96px; }
   .i-main h1 { font-size: clamp(32px, 5vw, 44px); line-height: 1.1; letter-spacing: -0.035em; }
   .i-prompt { margin-top: 12px; color: var(--m-text-2); font-size: 19px; line-height: 1.5; }

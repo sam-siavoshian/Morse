@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Morse gallery: example mods</title>
-<meta name="description" content="Morse mods for PyPI, Node.js docs, Docker Hub, GitLab, RubyGems, YouTube, GitHub, Spotify, Slack and more: dark modes, reading modes, keyboard shortcuts and new buttons. Read the code, install it in Morse, or download it for Tampermonkey.">
+<title>Morse gallery: free mods for websites and apps</title>
+<meta name="description" content="Ready-made mods for PyPI, GitHub, YouTube, Gmail, Slack, Node.js docs and more: dark mode, reading mode, bigger text and new buttons. Read the code first.">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="color-scheme" content="dark">
-<meta property="og:title" content="Morse gallery">
-<meta property="og:description" content="Example mods for apps you already use. Read the code, then install.">
+<!-- seo: npm run pages puts the canonical address, link previews and structured data here (scripts/build-pages.js) -->
+<link rel="icon" href="icons/icon-32.png" type="image/png" sizes="32x32">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
@@ -80,8 +82,9 @@
     </div>
   </section>
 
-  <section class="g-body">
+  <section class="g-body" aria-labelledby="g-all">
     <div class="wrap">
+      <h2 class="sr-only" id="g-all">All mods</h2>
       <div class="g-tools">
         <label class="g-search">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
