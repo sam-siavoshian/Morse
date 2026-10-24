@@ -96,6 +96,7 @@ export default {
   "toast.savedVersion": "已保存“{title}”。这是第 {n} 版。",
   "toast.backToSaved": "已回到保存的版本",
   "toast.undone": "改动已撤销",
+  "toast.keptOnClose": "已保留“{title}”。关闭输入栏会保留改动。",
   "toast.backToVersion": "已回到第 {n} 版（“{prompt}”）",
   "toast.linkCopied": "链接已复制。装了 Morse 的人都能安装“{title}”。",
   "toast.linkFailed": "无法复制链接。请改用“分享”。",

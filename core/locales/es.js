@@ -96,6 +96,7 @@ export default {
   "toast.savedVersion": "Se guardó “{title}”. Es la versión {n}.",
   "toast.backToSaved": "De vuelta a la versión guardada",
   "toast.undone": "Cambio deshecho",
+  "toast.keptOnClose": "Se quedó “{title}”. Al cerrar la barra, el cambio se queda.",
   "toast.backToVersion": "De vuelta a la versión {n} (“{prompt}”)",
   "toast.linkCopied": "Enlace copiado. Cualquiera con Morse puede instalar “{title}”.",
   "toast.linkFailed": "No se pudo copiar el enlace. Prueba con Compartir.",

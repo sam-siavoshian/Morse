@@ -163,8 +163,9 @@ function openBar() {
 }
 function closeBar() {
   if (S.phase === "working") return;
-  // Dismissing a result keeps it; Undo is always one click away in Mods.
-  if (S.phase === "result" && S.draft && !S.draft.saved) { keep(); return; }
+  // Dismissing a result (Esc, the hotkey, a click away) keeps it, and its
+  // toast says so, with Undo (60-generate.js keep).
+  if (S.phase === "result" && S.draft && !S.draft.saved) { keep({ closed: true }); return; }
   if (S.phase !== "result") call("clip.cancel").catch(() => {});
   Voice.cancel();
   stopRecording();

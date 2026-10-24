@@ -100,6 +100,7 @@ export default {
   "toast.savedVersion": "Saved “{title}”. This is version {n}.",
   "toast.backToSaved": "Back to the saved version",
   "toast.undone": "Change undone",
+  "toast.keptOnClose": "Kept “{title}”. Closing the bar keeps a change.",
   "toast.backToVersion": "Back to version {n} (“{prompt}”)",
   "toast.linkCopied": "Link copied. Anyone with Morse can install “{title}”.",
   "toast.linkFailed": "Couldn't copy the link. Try Share instead.",

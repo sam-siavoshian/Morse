@@ -97,6 +97,7 @@ export default {
   "toast.savedVersion": "حُفظ «{title}». هذا هو الإصدار {n}.",
   "toast.backToSaved": "عدنا إلى الإصدار المحفوظ",
   "toast.undone": "تم التراجع عن التغيير",
+  "toast.keptOnClose": "تم الاحتفاظ بـ«{title}». إغلاق الشريط يُبقي التغيير.",
   "toast.backToVersion": "عدنا إلى الإصدار {n} («{prompt}»)",
   "toast.linkCopied": "نُسخ الرابط. يمكن لأي شخص لديه Morse تثبيت «{title}».",
   "toast.linkFailed": "تعذّر نسخ الرابط. جرّب المشاركة بدلًا من ذلك.",
