@@ -18,11 +18,12 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
 import { existsSync, rmSync } from "node:fs";
-import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { serveBar } from "../demo/bar-server.js";
+import { serveDemo } from "../demo/serve.js";
 import { freePort } from "./helpers/net.js";
+import { SCALE } from "./helpers/wait.js";
 
 let chromium;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
@@ -37,12 +38,11 @@ const tmp = tempDir("morse-first-run-");
 after(() => rmSync(tmp, { recursive: true, force: true }));
 
 async function until(fn, ms = 20000, what = "condition") {
-  const end = Date.now() + ms;
+  const end = Date.now() + Math.max(ms, 15000) * SCALE; // a busy machine (several runs at once) is slow, not broken
   let last;
   while (Date.now() < end) { try { last = await fn(); if (last) return last; } catch (e) { last = e; } await sleep(100); }
   throw new Error(`timed out waiting for ${what}; last: ${last instanceof Error ? last.message : JSON.stringify(last)}`);
 }
-const portFree = port => new Promise(r => { const s = net.createServer().once("error", () => r(false)).listen(port, "127.0.0.1", () => s.close(() => r(true))); });
 
 // `morse`, with its Morse helper on `port` (MORSE_HELPER_PORT).
 function run(args, env = {}, port) {
@@ -97,10 +97,9 @@ const stepDone = (page, step) => page.evaluate(s => document.querySelector(`[dat
 let sites = null;
 async function demoSites() {
   if (sites) return sites;
-  const base = 21000 + Math.floor(Math.random() * 20000);
-  const p = spawn(process.execPath, [path.join(root, "demo/serve.js")], { env: { ...process.env, MORSE_DEMO_PORT: String(base) }, stdio: "ignore" });
-  await until(async () => !(await portFree(base + 1)), 10000, "the demo sites");
-  sites = { byte: `http://127.0.0.1:${base + 1}/demo/sites/byte/`, stop: () => p.kill() };
+  // Every site on a port the OS picked (a random fixed range could be taken).
+  const demo = await serveDemo();
+  sites = { byte: `${demo.origin("byte")}/demo/sites/byte/`, stop: () => demo.close() };
   return sites;
 }
 after(() => sites?.stop());
@@ -204,7 +203,7 @@ test("welcome page errors say what to do: another code waiting, a wrong code, a 
     helper = run(["serve"], { MORSE_HOME: path.join(tmp, "home-errors"), MORSE_PROVIDER: "demo" }, port);
     const code = (await until(() => /pair\s+(?:\x1b\[[\d;]*m)*([A-Z0-9]{6})/.exec(helper.out), 15000, () => "morse serve's code: " + helper.out))[1];
     await until(async () => !(await welcome.locator("#pairrow").isHidden()), 15000, "the code box");
-    assert.match(await welcome.locator("#live").textContent(), /waiting for a different code\. Type the code it shows/);
+    await until(async () => /waiting for a different code\. Type the code it shows/.test(await welcome.locator("#live").textContent()), 15000, "the note about the helper's own code");
     // A wrong code, then the right one (typing six characters connects).
     await welcome.locator("#code").fill("");
     await welcome.locator("#code").pressSequentially(code === "ZZZZZZ" ? "YYYYYY" : "ZZZZZZ");
