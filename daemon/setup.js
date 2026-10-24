@@ -226,9 +226,7 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
     say(`\n  ${backend.name} isn't installed yet. Install it with ${B(backend.install)}, then run ${B("morse setup")} again.`);
     return { saved: false, rows };
   }
-  const cfg = applyChoice(await load(), model);
-  cfg.setup = { backend: choice, at: new Date().toISOString() };
-  await save(cfg);
+  const cfg = await saveChoice(choice, model, { load, save });
   const label = backend?.name || "the demo model";
   const fromEnv = choice === "api-key" && !model.keys ? row?.keyEnv : "";
   say(`\n  ${G("✓")} Morse will use ${B(label)}${fromEnv ? ` with ${fromEnv} from your environment` : ""}. ${D(`Saved in ${tilde(HOME)}/config.json`)}`);
@@ -243,6 +241,16 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
   say("");
   if (!flag("pair")) say(nextSteps(platform)); // with --pair, connectBrowser says what's next
   return { saved: true, rows, choice, model, checked, next: () => nextSteps(platform, { pairing: true }) };
+}
+
+// What setup saves for a choice, without the questions (Morse Desktop saves
+// its choice the same way): the choice in config.json, and which one and when.
+//   choice: a BACKENDS id (or "demo"); model: what configFor() made for it
+export async function saveChoice(choice, model, { load = loadConfig, save = saveConfig } = {}) {
+  const cfg = applyChoice(await load(), model);
+  cfg.setup = { backend: choice, at: new Date().toISOString() };
+  await save(cfg);
+  return cfg;
 }
 
 // Questions over readline. Piped answers are echoed so a log reads like the
@@ -275,8 +283,9 @@ function lineReader(input, output) {
   };
 }
 
-// The real model check: one short request, like `morse doctor`.
-async function checkModel(cfg) {
+// The real model check: one short request, like `morse doctor`. Morse Desktop
+// runs it for its Check button.
+export async function checkModel(cfg) {
   const [{ settingsFromConfig }, { streamChat }, { plainError }] = await Promise.all([import("./models.js"), import("../core/providers.js"), import("../core/onboarding.js")]);
   const s = settingsFromConfig(cfg);
   if (s.provider === "none") return { ok: false, error: "No model is set up." };
