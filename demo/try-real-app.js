@@ -20,6 +20,7 @@
 //   --setup     JS run in the page once Morse is connected (open a view, close a dialog)
 //   --port      debugging port (default: morse picks one)
 //   --then      JS run in the page after the app is opened again, before its picture
+//   --then-prekeys keys pressed first, with the window focused (Escape closes VS Code's notifications)
 //   --then-click   a selector, or text=/regex/i, clicked with the real mouse then (a button the change added)
 //   --then-keys    keys pressed for real then, space-separated xdotool names ("ctrl+alt+z")
 //   --then-type    text typed for real then (into what has focus)
@@ -100,7 +101,10 @@ async function geometry(w) {
 async function centerOf(w, win, selector) {
   const text = /^text=\/(.+)\/([a-z]*)$/.exec(selector);
   const find = text
-    ? `[...document.querySelectorAll("body *")].filter(e => !e.closest("[data-morse-ui]") && new RegExp(${JSON.stringify(text[1])}, ${JSON.stringify(text[2])}).test((e.innerText || e.getAttribute("aria-label") || e.title || "").trim()) && e.getBoundingClientRect().width > 0).sort((a, b) => a.getBoundingClientRect().width * a.getBoundingClientRect().height - b.getBoundingClientRect().width * b.getBoundingClientRect().height)[0]`
+    ? `[...document.querySelectorAll("body *")].filter(e => !e.closest("[data-morse-ui]") && new RegExp(${JSON.stringify(text[1])}, ${JSON.stringify(text[2])}).test((e.innerText || e.getAttribute("aria-label") || e.title || "").trim()) && e.getBoundingClientRect().width > 0)
+        // a button over a tooltip that only repeats its name, then the smallest
+        .map(e => [e, e.matches("button, [role=button], a, .clickable-icon") ? 0 : 1, e.getBoundingClientRect().width * e.getBoundingClientRect().height])
+        .sort((a, b) => a[1] - b[1] || a[2] - b[2])[0]?.[0]`
     : `document.querySelector(${JSON.stringify(selector)})`;
   const r = await w.ev(`(() => { const r = (${find}).getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
   return [Math.round(win.left + r[0]), Math.round(win.top + r[1])];
@@ -199,6 +203,15 @@ result.persisted = !!back;
 if (opt.setup) await until(() => w.ev(opt.setup), 60000, "the setup step after relaunch").catch(e => say(e.message));
 await sleep(Number(opt.settle || 3000));
 win = await geometry(w);
+// Keys pressed first, with the window focused (Escape: close the app's own
+// notifications, as a person would before taking a picture).
+if (opt["then-prekeys"]) {
+  const [fx2, fy2] = opt.focus ? await centerOf(w, win, opt.focus) : [win.left + Math.round(win.w / 2), win.top + Math.round(win.h / 2)];
+  x("mousemove", "--sync", String(fx2), String(fy2));
+  x("click", "1");
+  await sleep(500);
+  for (const k of opt["then-prekeys"].split(/\s+/).filter(Boolean)) { x("key", k); await sleep(500); }
+}
 // Use what the change added, for real, so the picture shows it working.
 if (opt["then-click"] || opt["then-keys"] || opt["then-type"]) {
   const [cx, cy] = opt["then-click"] ? await centerOf(w, win, opt["then-click"]) : opt.focus ? await centerOf(w, win, opt.focus) : [win.left + Math.round(win.w / 2), win.top + Math.round(win.h / 2)];
@@ -209,8 +222,8 @@ if (opt["then-click"] || opt["then-keys"] || opt["then-type"]) {
   if (opt["then-type"]) x("type", "--delay", "20", opt["then-type"]);
   await sleep(1200);
 }
-if (opt.then) result.then = await w.ev(opt.then).catch(e => "threw: " + e.message);
 await sleep(Number(opt["then-settle"] || 0));
+if (opt.then) { result.then = await w.ev(opt.then).catch(e => "threw: " + e.message); await sleep(700); }
 await shot(win, "after-relaunch");
 say(`after relaunch: ${back ? "the change is back" : "the change is NOT back"}`);
 w.s.close();

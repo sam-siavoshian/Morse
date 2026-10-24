@@ -426,9 +426,29 @@ What these apps turned up, now fixed:
 - **The Mods panel said "Stops every mod on this site"** in an app. It now
   says "in this app".
 
-Not tested: Microsoft's own VS Code build, Slack, Discord, Signal and Spotify
-(their downloads aren't reachable from the test machine, or they need
-an account), Flatpak and Snap installs, macOS, Windows and Wayland. Signing in
+### Microsoft's VS Code
+
+Microsoft's own VS Code 1.143.1 (Electron 43), from its `.deb` in
+packages.microsoft.com, the repository its install page points to (the
+download link on code.visualstudio.com isn't reachable from the test machine).
+`morse apps` lists it as VS Code at `/usr/share/code/code`, and
+`morse launch code -- --no-sandbox` opens and connects to it (as root, VS Code
+also wants `--user-data-dir=<folder>` when started from its `code` command; the
+app itself starts without it). Nine changes were made on it with Claude Code
+(sonnet and opus), each saved, VS Code quit and opened again with
+`morse launch`, and each was back. They are in [the showcase](showcase/README.md).
+
+What it turned up, now fixed:
+
+- **Morse stopped VS Code's own code while it started up.** Once a mod's code
+  had run, Morse treated a page that didn't answer for 6 seconds as frozen by
+  that mod, and stopped whatever was running. VS Code starting on a busy
+  machine keeps its page busy that long by itself, so its startup was cut off:
+  the file list without names, no syntax colors, a blank window. Now, with no
+  mod code being run, Morse waits 20 seconds before stepping in.
+
+Not tested: Slack, Discord, Signal and Spotify (their downloads aren't
+reachable from the test machine, or they need an account), Flatpak and Snap installs, macOS, Windows and Wayland. Signing in
 to anything wasn't tested. For macOS and Windows, see what's ready and how to
 check it in [macOS](#macos) and [Windows](#windows).
 
@@ -501,8 +521,8 @@ renamed to `tunes`, with the app next to it, unpacked or as
 | ![](screenshots/126-electron-haiku-working.png) Claude Code (haiku) writing the change | ![](screenshots/127-electron-haiku-result.png) Its result: a sleep timer picker under the player |
 
 Real installed apps (VSCodium, Obsidian, Joplin) are under
-[Tested on](#tested-on). Not tested: Slack, Discord, Microsoft's VS Code or
-Spotify, macOS and Windows, and Wayland. The macOS and Windows parts (reading
+[Tested on](#tested-on), and so is Microsoft's VS Code. Not tested: Slack,
+Discord or Spotify, macOS and Windows, and Wayland. The macOS and Windows parts (reading
 `.app` bundles, Squirrel installs and Start menu shortcuts, quitting with
 AppleScript or taskkill, starting apps, the fuses in a Mac app) are checked
 on Linux against copies of real app folders and real file formats

@@ -113,10 +113,9 @@ for (const site of sites) {
     await page.keyboard.press("Enter");
     await until(async () => (await status())?.mods > 0, 15000, "the mod to be saved");
     // What was saved: CSS only works with "Allow User Scripts" off; code needs it on.
-    const modsDir = path.join(tmp, "helper-home", "mods");
-    const saved = (await fs.readdir(modsDir).catch(() => [])).filter(f => f.endsWith(".json"));
-    const mod = (await Promise.all(saved.map(async f => JSON.parse(await fs.readFile(path.join(modsDir, f), "utf8")))))
-      .filter(m => m.prompt === site.ask).at(-1);
+    // (The extension keeps mods in its own storage, extension/background.js allMods.)
+    const all = await sw.evaluate(() => chrome.storage.local.get("mods").then(r => r.mods || {})).catch(() => ({}));
+    const mod = Object.values(all).filter(m => m.prompt === site.ask).sort((a, b) => String(a.created).localeCompare(String(b.created))).at(-1);
     if (mod) Object.assign(result, { title: mod.title, cssChars: (mod.css || "").length, jsChars: (mod.js || "").trim().length });
     await page.keyboard.press("Escape");
     await sleep(500);
