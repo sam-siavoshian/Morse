@@ -6,9 +6,10 @@
 //                                screenshots: VSCodium before and after
 //                                "make it look like a retro green terminal"
 //                                (site/shots/200-… and 201-…).
-//   site/icons/icon-32.png       favicon for browsers without SVG favicons
-//   site/icons/apple-touch-icon.png  180x180, iOS home screen
-//   site/icons/icon-192.png, icon-512.png  the web app manifest's icons
+//   site/mark/apple-touch-icon.png  180x180, iOS home screen
+//   site/mark/icon-192.png, icon-512.png  the web app manifest's icons
+//
+// (The favicon is site/favicon.png; site/icons/ holds the apps' own icons.)
 //
 //   node scripts/site-images.js     (needs Playwright; commit the PNGs)
 
@@ -24,9 +25,9 @@ const file = p => pathToFileURL(path.join(SITE, p)).href;
 
 // The radar (site/radar.js): a 4x4 grid of rounded squares without its
 // corners, the inner four bright and the rest dim.
-export const radarSvg = (size, color = "#f4f4f5") => `<svg width="${size}" height="${size}" viewBox="-1 -1 17 17" fill="${color}">${
-  Array.from({ length: 16 }, (_, i) => [0, 3, 12, 15].includes(i) ? "" : `<rect x="${(i % 4) * 4}" y="${Math.floor(i / 4) * 4}" width="3" height="3" rx=".75" opacity="${[5, 6, 9, 10].includes(i) ? 1 : 0.35}"/>`).join("")
-}</svg>`;
+export const radar = size => `<span style="display:inline-grid;grid-template-columns:repeat(4,1fr);gap:${size / 15}px;width:${size}px;height:${size}px;padding:${size / 17}px;flex:none">${
+  Array.from({ length: 16 }, (_, i) => `<i style="border-radius:25%;background:#f4f4f5;opacity:${[0, 3, 12, 15].includes(i) ? 0 : [5, 6, 9, 10].includes(i) ? 1 : 0.35}"></i>`).join("")
+}</span>`;
 
 const FONTS = `
   @font-face { font-family: "Inter"; src: url("${file("fonts/inter-regular.woff2")}"); font-weight: 400; }
@@ -67,7 +68,7 @@ const ogHtml = () => `<!doctype html><html><head><meta charset="utf-8"><style>${
 </style></head><body>
   <div class="grid"></div><div class="fade"></div>
   <div class="text">
-    <div class="brand">${radarSvg(28)}Morse</div>
+    <div class="brand">${radar(28)}Morse</div>
     <h1>Change any app <span>in your own words.</span></h1>
     <p>Websites in Chrome and desktop apps like VSCodium and Obsidian. Say the change, and your AI makes it.</p>
   </div>
@@ -87,13 +88,12 @@ const iconHtml = (size, { round = true } = {}) => `<!doctype html><html><head><s
   body { display: grid; place-items: center; background: transparent; }
   .tile { width: ${size}px; height: ${size}px; display: grid; place-items: center; background: #0a0a0b;
           border-radius: ${round ? Math.round(size * 0.22) : 0}px; }
-</style></head><body><div class="tile">${radarSvg(Math.round(size * 0.68))}</div></body></html>`;
+</style></head><body><div class="tile">${radar(Math.round(size * 0.68))}</div></body></html>`;
 
 export const ICONS = [
-  { file: "icons/icon-32.png", size: 32 },
-  { file: "icons/apple-touch-icon.png", size: 180, round: false },
-  { file: "icons/icon-192.png", size: 192 },
-  { file: "icons/icon-512.png", size: 512 },
+  { file: "mark/apple-touch-icon.png", size: 180, round: false },
+  { file: "mark/icon-192.png", size: 192 },
+  { file: "mark/icon-512.png", size: 512 },
 ];
 
 async function shoot(browser, html, width, height, out, omitBackground = false) {
@@ -113,7 +113,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const { chromium } = createRequire(import.meta.url)("playwright");
   const browser = await chromium.launch();
   try {
-    await fs.mkdir(path.join(SITE, "icons"), { recursive: true });
+    await fs.mkdir(path.join(SITE, "mark"), { recursive: true });
     await shoot(browser, ogHtml(), OG.width, OG.height, OG.file);
     for (const i of ICONS) await shoot(browser, iconHtml(i.size, i), i.size, i.size, i.file, i.round !== false);
   } finally {

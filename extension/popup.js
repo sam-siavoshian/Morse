@@ -64,6 +64,9 @@ function render(s) {
   $("pairrow").hidden = !!h?.paired;
   $("hhint").hidden = !!h?.paired;
   $("unpair").hidden = !h?.paired;
+  // The helper's mark: what it uses (Claude Code, Codex, a key), both while that's unknown.
+  const marks = { "claude-code": ["claude"], codex: ["openai"], anthropic: ["anthropic"], openai: ["openai"] }[h?.provider] || ["claude", "openai"];
+  $("hmark").innerHTML = marks.map(n => `<img src="brand/${n}.png" alt=""${n === "claude" ? "" : ' class="mono"'}>`).join("");
   const hp = h?.provider && s.providers[h.provider];
   $("helperModels").innerHTML = (hp?.models || []).map(m => `<option value="${esc(m)}">`).join("");
   $("helperModel").placeholder = h?.model ? t("popup.helperChoice.model", { model: h.model }) : t("popup.helperChoice");

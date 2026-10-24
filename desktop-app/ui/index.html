@@ -14,7 +14,7 @@
      itself; the only thing to do is open an app. -->
 <div class="first" id="first" hidden>
   <div class="first-card">
-    <svg class="radar" viewBox="0 0 15 15" width="36" height="36" fill="currentColor" aria-hidden="true"><rect x="4" y="0" width="3" height="3" rx="1" class="o"/><rect x="8" y="0" width="3" height="3" rx="1" class="o"/><rect x="0" y="4" width="3" height="3" rx="1" class="o"/><rect x="4" y="4" width="3" height="3" rx="1" class="c"/><rect x="8" y="4" width="3" height="3" rx="1" class="c"/><rect x="12" y="4" width="3" height="3" rx="1" class="o"/><rect x="0" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="8" width="3" height="3" rx="1" class="c"/><rect x="8" y="8" width="3" height="3" rx="1" class="c"/><rect x="12" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="12" width="3" height="3" rx="1" class="o"/><rect x="8" y="12" width="3" height="3" rx="1" class="o"/></svg>
+    <svg class="radar" viewBox="0 0 15 15" width="32" height="32" fill="currentColor" aria-hidden="true"><rect x="4" y="0" width="3" height="3" rx="1" class="o"/><rect x="8" y="0" width="3" height="3" rx="1" class="o"/><rect x="0" y="4" width="3" height="3" rx="1" class="o"/><rect x="4" y="4" width="3" height="3" rx="1" class="c"/><rect x="8" y="4" width="3" height="3" rx="1" class="c"/><rect x="12" y="4" width="3" height="3" rx="1" class="o"/><rect x="0" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="8" width="3" height="3" rx="1" class="c"/><rect x="8" y="8" width="3" height="3" rx="1" class="c"/><rect x="12" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="12" width="3" height="3" rx="1" class="o"/><rect x="8" y="12" width="3" height="3" rx="1" class="o"/></svg>
     <h1>Welcome to Morse</h1>
     <p class="lede">Change any app in your own words.</p>
     <p class="live" id="first-model" role="status"></p>
@@ -24,7 +24,7 @@
     </div>
     <h2>Open an app with Morse</h2>
     <ul class="list" id="first-apps" aria-label="Apps"></ul>
-    <p class="foot">Then press <span class="caps" id="first-key-caps"></span> in the app, point at something and say what to change. Chrome connects when you click Connect in Morse's welcome page there.</p>
+    <p class="foot">Then press <span class="caps" id="first-key-caps"></span> in the app. Point at something and say what to change. To connect Chrome, click Connect on Morse's welcome page in Chrome.</p>
     <button type="button" class="link" id="first-skip">Skip for now</button>
   </div>
 </div>
@@ -68,35 +68,38 @@
           <button type="button" class="ibtn" id="refresh" aria-label="Look again" title="Look again"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.6"/><path d="M13 2.8v2.6h-2.6"/></svg></button>
           <button type="button" class="btn" id="add-app">Add an app…</button>
         </div>
-        <p>Open an app with Morse, then press <span class="caps" id="open-key"></span> in it, point at something and say what to change.</p>
+        <p>Open an app with Morse. Then press <span class="caps" id="open-key"></span> in it, point at something and say what to change.</p>
       </header>
       <div class="notice" id="no-model" hidden><span><b>Choose a model first.</b> Morse needs one to write your changes.</span><button type="button" class="btn primary" data-go="model">Choose a model</button></div>
       <p class="error" id="apps-error" role="alert" hidden></p>
       <ul class="list" id="app-list" aria-label="Apps"></ul>
-      <p class="foot">Morse opens the app again with one extra setting so it can connect. It never changes the app's files. Disconnect, or quit the app, and your mods come off until next time.</p>
+      <p class="foot">Morse opens the app again with one extra setting, so it can connect. It never changes the app's files. When you disconnect or quit the app, your mods come off until next time.</p>
     </section>
 
     <!-- Model -->
     <section id="model" aria-labelledby="model-h" hidden>
       <header class="head"><div>
         <h1 id="model-h">Model</h1>
-        <p>Morse has no model of its own. It uses one you already have to write your changes.</p>
+        <p>Morse has no model of its own. It uses one you already have.</p>
       </div></header>
       <div class="card current">
         <div class="cur-main">
-          <div><span class="eyebrow">Morse uses</span><div class="cur-name"><b id="model-name">…</b><span class="pill" id="model-pill" hidden></span></div></div>
+          <span class="mark-tile big" id="model-mark" aria-hidden="true"></span>
+          <div class="grow">
+            <div class="cur-name"><b id="model-name">…</b><span class="pill" id="model-pill" hidden></span></div>
+            <p class="live" id="model-live" role="status"></p>
+          </div>
           <div class="cur-actions"><button type="button" class="btn" id="check-model">Check</button><button type="button" class="btn" id="change-model">Change…</button></div>
         </div>
-        <p class="live" id="model-live" role="status"></p>
       </div>
       <div class="card choices" id="choices" hidden>
-        <span class="eyebrow">Choose what writes your changes</span>
-        <div id="choice-list" role="radiogroup" aria-label="Models"></div>
+        <h2 id="choices-h">Choose what writes your changes</h2>
+        <div id="choice-list" role="radiogroup" aria-labelledby="choices-h"></div>
         <div class="keyrow" id="keyrow" hidden>
           <input id="api-key" type="password" placeholder="Paste an Anthropic or OpenAI API key" autocomplete="off" spellcheck="false" aria-label="API key">
           <small>It stays on this computer, in your Morse folder.</small>
         </div>
-        <div class="row-end"><button type="button" class="btn" id="cancel-choice">Cancel</button><button type="button" class="btn primary" id="use-choice">Use this</button></div>
+        <div class="row-end"><button type="button" class="btn quiet" id="cancel-choice">Cancel</button><button type="button" class="btn primary" id="use-choice">Use this</button></div>
       </div>
       <p class="foot">Each choice is explained in <button type="button" class="link" data-link="models">Models and setup</button>.</p>
     </section>
@@ -105,18 +108,18 @@
     <section id="chrome" aria-labelledby="chrome-h" hidden>
       <header class="head"><div>
         <h1 id="chrome-h">Chrome</h1>
-        <p>Use Morse on websites too. The Morse extension in Chrome uses the model you chose here.</p>
+        <p>Use Morse on websites too. Morse in Chrome uses the model you chose here.</p>
       </div></header>
       <div class="card">
         <label class="switchrow big"><span><b>Let Chrome use Morse</b><small>Runs the Morse helper in the background while Morse is open</small></span><input type="checkbox" role="switch" id="helper-on"></label>
         <p class="live" id="helper-live" role="status"></p>
       </div>
       <div class="card">
-        <span class="eyebrow">Connect Chrome</span>
+        <h2>Connect Chrome</h2>
         <ol class="steps">
           <li><span class="n">1</span><div><b>Add Morse to Chrome</b><span>Open <code>chrome://extensions</code>, turn on Developer mode, click Load unpacked and choose the extension folder.</span><button type="button" class="btn" id="show-ext">Show the extension folder</button></div></li>
           <li><span class="n">2</span><div><b>Allow it here</b><span>On the welcome page Chrome opens, click Connect. Morse asks whether Chrome may use your model. Click Allow. There's no code to type.</span></div></li>
-          <li><span class="n">3</span><div><b>Or type a code</b><span>In Chrome, click Morse in the toolbar and type this code under Morse helper.</span>
+          <li><span class="n">3</span><div><b>Or type a code</b><span>In Chrome, click Morse in the toolbar. Type this code under Morse helper.</span>
             <div class="coderow"><button type="button" class="btn" id="new-code">Show a code</button><output class="code" id="pair-code" hidden></output><small id="code-note"></small></div></div></li>
         </ol>
       </div>
@@ -133,7 +136,7 @@
       <div class="empty" id="no-mods" hidden>
         <svg class="radar" viewBox="0 0 15 15" width="28" height="28" fill="currentColor" aria-hidden="true"><rect x="4" y="0" width="3" height="3" rx="1" class="o"/><rect x="8" y="0" width="3" height="3" rx="1" class="o"/><rect x="0" y="4" width="3" height="3" rx="1" class="o"/><rect x="4" y="4" width="3" height="3" rx="1" class="c"/><rect x="8" y="4" width="3" height="3" rx="1" class="c"/><rect x="12" y="4" width="3" height="3" rx="1" class="o"/><rect x="0" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="8" width="3" height="3" rx="1" class="c"/><rect x="8" y="8" width="3" height="3" rx="1" class="c"/><rect x="12" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="12" width="3" height="3" rx="1" class="o"/><rect x="8" y="12" width="3" height="3" rx="1" class="o"/></svg>
         <b>No mods yet</b>
-        <span>Open an app with Morse, point at something and say what to change. Save it, and it shows up here.</span>
+        <span>Open an app with Morse, point at something and say what to change. When you save it, it shows up here.</span>
       </div>
     </section>
 
@@ -145,7 +148,7 @@
         <p>What Morse found on this computer, and whether your model answers.</p>
       </header>
       <ul class="list checks" id="check-list" aria-label="Checks"></ul>
-      <p class="foot">Something wrong? <button type="button" class="link" data-link="troubleshooting">Troubleshooting</button> says what each message means.</p>
+      <p class="foot">If something is wrong, <button type="button" class="link" data-link="troubleshooting">Troubleshooting</button> says what each message means.</p>
     </section>
   </main>
 </div>
@@ -160,8 +163,9 @@
 
 <!-- Asked when the Morse extension in Chrome asks to connect (daemon/pair-ask.js) -->
 <dialog id="ask-pair" aria-labelledby="ask-pair-h">
+  <span class="mark-tile" id="ask-mark" aria-hidden="true"></span>
   <h2 id="ask-pair-h">Allow Chrome to use your model?</h2>
-  <p>Morse in Chrome asked to use your model. Allow it only if you set up Morse in Chrome a moment ago.</p>
+  <p>Morse in Chrome asked to use your model. Click Allow only if you set up Morse in Chrome a moment ago.</p>
   <small class="ext" id="ask-ext"></small>
   <div class="row-end"><button type="button" class="btn" id="pair-no">Deny</button><button type="button" class="btn primary" id="pair-yes">Allow</button></div>
 </dialog>

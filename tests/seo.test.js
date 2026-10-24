@@ -62,8 +62,8 @@ test("every page: a short, unique title and description, one <h1>, lang, viewpor
     assert.match(html, /^<!doctype html>\n<html lang="en">/i, `${page.file}: lang`);
     assert.match(head(html), /<meta name="viewport" content="width=device-width, initial-scale=1">/, `${page.file}: viewport`);
     assert.match(head(html), /<meta name="theme-color" content="#[0-9a-f]{6}">/, `${page.file}: theme-color`);
-    for (const rel of ["icon", "apple-touch-icon"]) assert.match(head(html), new RegExp(`<link rel="${rel}" href="[^"]+\\.png"`), `${page.file}: a PNG ${rel}`);
-    assert.match(head(html), /<link rel="icon" href="[^"]*favicon\.svg" type="image\/svg\+xml">/, `${page.file}: the SVG favicon`);
+    assert.match(head(html), /<link rel="apple-touch-icon" href="[^"]*mark\/apple-touch-icon\.png">/, `${page.file}: an apple-touch-icon`);
+    assert.match(head(html), /<link rel="icon" href="[^"]*favicon\.png" type="image\/png" sizes="64x64">/, `${page.file}: the favicon`);
     assert.doesNotMatch(html, /<!-- seo:/, `${page.file}: the seo comment was filled in`);
     // The share page's heading is drawn by its script, after the link is read.
     if (page.file !== "share/install.html") assert.equal((html.match(/<h1[\s>]/g) || []).length, 1, `${page.file}: one <h1>`);
@@ -101,7 +101,7 @@ test("the share picture is a 1200x630 PNG", () => {
   assert.equal(png.toString("latin1", 1, 4), "PNG");
   assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [OG.width, OG.height]);
   assert.deepEqual([OG.width, OG.height], [1200, 630]);
-  for (const [f, size] of [["icons/icon-32.png", 32], ["icons/apple-touch-icon.png", 180], ["icons/icon-192.png", 192], ["icons/icon-512.png", 512]]) {
+  for (const [f, size] of [["favicon.png", 64], ["mark/apple-touch-icon.png", 180], ["mark/icon-192.png", 192], ["mark/icon-512.png", 512]]) {
     const icon = readFileSync(path.join(root, "site", f));
     assert.deepEqual([icon.readUInt32BE(16), icon.readUInt32BE(20)], [size, size], f);
   }

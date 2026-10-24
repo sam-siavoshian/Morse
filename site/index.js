@@ -1,7 +1,7 @@
 // The landing page: the nav, the links and the film from config.js, the
 // before and after pairs and the real-apps strip (also from config.js), the
 // three steps, and the radar's pixels behind the headline.
-import { initPage, esc } from "./common.js";
+import { initPage, esc, appIcon } from "./common.js";
 import { SHOWCASE, REAL_APPS } from "./config.js";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -17,7 +17,7 @@ function pairHtml(p, i) {
     <article class="pair">
       <div class="pair-text">
         <p class="pair-n">${n} / ${total}</p>
-        <h3 class="pair-app">${esc(p.app)}</h3>
+        <h3 class="pair-app">${appIcon(p.app, 28)}${esc(p.app)}</h3>
         <p class="pair-kind">${esc(p.kind)}</p>
         <p class="pair-ask"><span class="sr-only">Asked: </span>${esc(p.ask)}</p>
         <p class="pair-by">${esc(p.by)}</p>
@@ -30,7 +30,7 @@ function pairHtml(p, i) {
         <span class="compare-tag is-after" aria-hidden="true">After</span>
         <input class="compare-range" type="range" min="0" max="100" value="50" step="1" aria-label="${esc(p.app)}: slide to compare before and after">
         <span class="compare-line" aria-hidden="true"></span>
-        <span class="compare-knob" aria-hidden="true"><svg class="icon"><use href="#i-drag"/></svg></span>
+        <span class="compare-knob" aria-hidden="true"><span class="icon">⟷</span></span>
       </figure>
     </article>`;
 }
@@ -77,8 +77,9 @@ function mountApps(root) {
       <figure class="app-card">
         <div class="shot"><img src="${esc(a.src)}" width="${a.width}" height="${a.height}" alt="${esc(a.alt)}" loading="lazy" decoding="async"></div>
         <figcaption>
-          <span class="app-name"><strong>${esc(a.app)}</strong><span>${esc(a.kind)}</span></span>
-          ${a.ask ? `<q class="app-ask">${esc(a.ask)}</q>` : `<span class="app-by">${esc(a.by || "")}</span>`}
+          <span class="app-name"><strong>${appIcon(a.app, 22)}${esc(a.app)}</strong><span>${esc(a.kind)}</span></span>
+          ${a.ask ? `<q class="app-ask">${esc(a.ask)}</q>` : ""}
+          ${a.by ? `<span class="app-by">${esc(a.by)}</span>` : ""}
         </figcaption>
       </figure>
     </li>`).join("");

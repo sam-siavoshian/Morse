@@ -32,7 +32,7 @@ export const STORE_SHOTS = [
   ["1-describe-a-change.png", "pkg.go.dev: the bar while a change is being written; the code examples already dark and the survey banner gone", "Say what to change. You see it change while it is being written."],
   ["2-save-what-you-like.png", "pypi.org: copy buttons added to the code examples, with Save, Undo, Edit code and Share", "Add what a site is missing. Save it, and it is there every time you come back."],
   ["3-your-mods.png", "pypi.org: the Mods panel with three saved mods", "Your saved changes for a site in one place. Turn each one on or off."],
-  ["4-mods-others-made.png", "The Tunes demo app: a mod from the gallery, tried before saving", "Try changes other people made. Save the ones you like."],
+  ["4-mods-others-made.png", "pypi.org: a mod from the gallery (Dark mode), tried before saving", "Try changes other people made. Save the ones you like."],
   ["5-edit-tools.png", "rubygems.org: the Edit tools on the heading, recolored from the palette; no model needed", "Edit tools change the page at once: hide, move, resize, recolor, rename."],
 ];
 
@@ -44,7 +44,7 @@ export function pngSize(buf) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   process.env.MORSE_PROVIDER ||= "claude-code";
   process.env.MORSE_MODEL ||= "sonnet";
-  const { startHelper, pairExtension, routeHelper, seasonExtension, openBar, pick, demoSites } = await import("../demo/helper.js");
+  const { startHelper, pairExtension, routeHelper, seasonExtension, openBar, pick } = await import("../demo/helper.js");
   const { chromium } = createRequire(import.meta.url)("playwright");
   const EXT = path.join(root, "dist", "extension");
   const ONLY = process.env.ONLY ? new Set(process.env.ONLY.split(",").map(Number)) : null;
@@ -200,25 +200,14 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     await page.close();
   }
 
-  // ---- 4. The Tunes demo app: a mod from the gallery, tried before saving.
-  // (The gallery's mods for real sites are for sites that need an account,
-  // or that the machine taking these pictures may not reach.)
+  // ---- 4. pypi.org: a mod from the gallery (site/mods: "Dark mode", made for
+  // this page and checked on it), tried before saving.
   if (want(4)) {
-    const sites = await demoSites();
-    await sites.route(ctx);
-    // One mod of your own on this app, made a few days ago.
-    const made = new Date(Date.now() - 3 * 86400e3).toISOString();
-    await sw.evaluate(async m => chrome.storage.local.set({ mods: { ...(await chrome.storage.local.get("mods")).mods, [m.id]: m } }), {
-      morse: 1, id: "quiet-sidebar", title: "Quieter sidebar", prompt: "make the sidebar quieter so the albums stand out",
-      match: { hosts: ["127.0.0.1:8789"], app: null }, target: { selector: "nav", label: "Sidebar" },
-      css: "nav { background: #0b0b0b !important; }\nnav a:not(.on) { color: #7d7d7d !important; }\n", js: "",
-      enabled: true, model: "Claude Code · sonnet", created: made, updated: made,
-    });
-    const page = await open(sites.url("tunes"));
+    const page = await open("https://pypi.org/project/requests/");
     await page.keyboard.press("Alt+Shift+KeyM");
     await ui(page, ".panel .gl-site").first().waitFor({ timeout: 30000 });
     if (!(await ui(page, ".panel .gl-site .gl-item").count())) await ui(page, ".panel .gl-site .gl-show").first().click();
-    await ui(page, '.gl-item[data-glid="tunes-big-covers"] [data-gl=try]').click();
+    await ui(page, '.gl-item[data-glid="pypi-dark-mode"] [data-gl=try]').click();
     await ui(page, ".modal .card [data-a=install]").click(); // Try it, after the same review as Install…
     await ui(page, ".gl-item.trying").waitFor();
     await sleep(1200);
@@ -231,7 +220,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     await sleep(400);
     await shot(page, 4);
     await page.close();
-    await sites.close();
   }
 
   // ---- 5. rubygems.org: the Edit tools

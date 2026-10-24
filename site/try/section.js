@@ -44,8 +44,8 @@ function markup() {
   <div class="try-wrap">
     <header class="try-head">
       <p class="try-eyebrow">Try it here</p>
-      <h2>Try Morse right here. Nothing to install.</h2>
-      <p class="try-lede">This is the real Morse, running in a small music app and a news site. Open it, point at something, and pick a change.</p>
+      <h2>Try Morse here, with nothing to install.</h2>
+      <p class="try-lede">This is the real Morse, in a small music app and a news site. Open it, point at something and pick a change.</p>
     </header>
     <div class="try-stage">
       <div class="try-window">
@@ -75,7 +75,7 @@ function markup() {
             <h3><span class="try-n" aria-hidden="true">2</span>Pick a change</h3>
             <div class="try-asks" data-asks="tunes">${ask("Add a sleep timer", '[data-testid="player-controls"]')}${ask("Make the covers bigger", '[data-testid="album-grid"]')}${ask("Light mode")}</div>
             <div class="try-asks" data-asks="byte" hidden>${ask("Hide the ads")}${ask("Make this easier to read", "article")}${ask("Dark mode")}</div>
-            <p>Or point at something in the app and say what you want. The Edit tools and Page tools are there too.</p>
+            <p>Or point at something in the app and say what you want. The Edit tools and Page tools work here too.</p>
           </li>
           <li>
             <h3><span class="try-n" aria-hidden="true">3</span>Save it, then reload</h3>
@@ -85,6 +85,6 @@ function markup() {
         <p class="try-status" role="status" aria-live="polite"></p>
       </div>
     </div>
-    <p class="try-note">Sample answers in this demo. With Morse installed, your own AI writes any change you ask for.</p>
+    <p class="try-note">This demo uses sample answers. Install Morse, and your own model writes any change you ask for.</p>
   </div>`;
 }

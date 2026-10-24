@@ -91,8 +91,17 @@ function installMorseKit() {
   }
   // Every match of a selector that may contain ">>>"; onRoot(root, host) hears
   // about each shadow root or frame document crossed.
+  // "#workbench.parts.statusbar" means id "workbench" with two classes, but
+  // models write it for VS Code's id "workbench.parts.statusbar" (its ids
+  // have dots, and "\." loses its backslash in a JS string). When the page
+  // has that id and no "workbench", read it as the id.
+  function fixIds(selector) {
+    const s = String(selector);
+    if (!/#[\w-]+\.[\w.-]/.test(s)) return s;
+    return s.replace(/#((?:[\w-]+\.)+[\w-]+)/g, (m, id) => document.getElementById(id) && !document.getElementById(id.split(".")[0]) ? `[id="${id}"]` : m);
+  }
   function query(selector, onRoot) {
-    const parts = String(selector).split(/\s*>>>\s*/);
+    const parts = fixIds(selector).split(/\s*>>>\s*/);
     let scopes = [document];
     for (let i = 0; i < parts.length; i++) {
       const found = [];
@@ -360,6 +369,7 @@ function installMorseKit() {
     const tag = el => { if (el && el.setAttribute) el.setAttribute("data-morse", c.id); return el; };
     const m = {
       watch(selector, fn, opts) {
+        selector = fixIds(selector);
         const live = !!(opts && opts.live);
         const seen = new WeakMap(); // element -> what fn did to it
         const run = el => {
@@ -523,8 +533,39 @@ function installMorseKit() {
       on(target, event, fn, opts) {
         const h = guard(c, fn);
         settleOn(c, event);
+        // app profiles: an app's own event emitter (app.vault.on("modify", …),
+        // an EventEmitter) is listened to the same way, and let go when the
+        // mod is turned off: dispose(), offref(), off() or removeListener().
+        if (typeof target?.addEventListener !== "function" && typeof target?.on === "function") {
+          const ref = target.on(event, h);
+          c.cleanups.push(() => {
+            if (ref && typeof ref.dispose === "function") ref.dispose();
+            else if (typeof target.offref === "function" && ref) target.offref(ref);
+            else if (typeof target.off === "function") target.off(event, h);
+            else if (typeof target.removeListener === "function") target.removeListener(event, h);
+          });
+          return ref;
+        }
         target.addEventListener(event, h, opts);
         c.cleanups.push(() => target.removeEventListener(event, h, opts));
+      },
+      // app profiles (daemon/profile.js): the app's own commands, through the
+      // runner Morse found in this app (a frozen handle on the page's window).
+      // command() resolves to what the app's command returns; a failure is
+      // the mod's error (the repair round sees it) and rejects.
+      app: {
+        get ready() { return !!globalThis[Symbol.for("morse.app")]; },
+        command(id, ...args) {
+          const h = globalThis[Symbol.for("morse.app")];
+          if (!h) { const e = new Error("morse.app.command: Morse found no way to run this app's commands here. Use the app's own objects or its buttons instead."); fail(c, e); return Promise.reject(e); }
+          return (async () => {
+            const r = await h.run(String(id), ...args);
+            // Some apps answer false for a command they don't have or can't run now (Obsidian).
+            if (r === false) fail(c, new Error(`morse.app.command("${id}"): the app didn't run it (no such command, or it can't run right now)`));
+            return r;
+          })().catch(e => { fail(c, e); throw e; });
+        },
+        commands() { const h = globalThis[Symbol.for("morse.app")]; try { return h && h.list ? h.list() : []; } catch { return []; } },
       },
       every(ms, fn) {
         settleFor(c, Math.max(L.MIN_EVERY, +ms || 0) + 60);
