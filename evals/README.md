@@ -62,6 +62,8 @@ Claude Code `haiku`, 3 runs per case, all 86 cases. **Baseline** is the code bef
 
 The earlier pair ran before the last few fixes and the merge of main, with two canvas checkers that were later fixed (below), so its baseline on the harder apps is lower.
 
+Afterwards main's guarded kit was merged in, and the watch behavior described below was rebuilt inside it. A sanity run of that (×1, all splits): first six apps 54/55, harder apps 29/31 (s-sort, c-bigger).
+
 By kind of app (harder apps, train and held-out together, baseline → final): virtualized list 4/12 → **12/12**, iframes 8/12 → **12/12**, shadow DOM 12/15 → **15/15**, re-rendering app 12/15 → 13/15, hashed classes 14/15 → 15/15, 11k-element page 12/12 → 11/12, canvas 12/12 → 11/12.
 
 **Latency and prompt size** (all 258 runs per side; the CLI was much slower during the second pair, so both pairs are shown):
