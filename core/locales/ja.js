@@ -19,7 +19,7 @@ export default {
   "bar.repoint": "別のものを指す",
   "bar.hint.pointing": "変えたいものを<b>指す</b>か説明 · <kbd>Esc</kbd> で閉じる",
   "bar.hint.target": "これをどう変えるか書く · <kbd>Enter</kbd> で送信",
-  "bar.hint.wider": "<kbd>{key}</kbd> でもっと大きな部分", // dogfood: Alt+↑ after pointing
+  "bar.hint.wider": "<kbd>{key}</kbd> で外側の大きな部分", // dogfood: Alt+↑ after pointing
   "bar.hint.page": "このページへの変更を説明してください · <kbd>Enter</kbd> で送信",
   "bar.mods": "MOD",
   "bar.stopped": "<b>停止しました。</b>何も変わっていません · <kbd>Enter</kbd> でもう一度",

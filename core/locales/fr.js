@@ -18,7 +18,7 @@ export default {
   "bar.repoint": "Pointer autre chose",
   "bar.hint.pointing": "<b>Pointez</b> ou décrivez · <kbd>Esc</kbd> pour fermer",
   "bar.hint.target": "Décrivez un changement ici · <kbd>Enter</kbd> pour envoyer",
-  "bar.hint.wider": "<kbd>{key}</kbd> pour une partie plus grande", // dogfood: Alt+↑ after pointing
+  "bar.hint.wider": "<kbd>{key}</kbd> partie plus grande", // dogfood: Alt+↑ after pointing
   "bar.hint.page": "Décrivez un changement sur cette page · <kbd>Enter</kbd> pour envoyer",
   "bar.mods": "Mods",
   "bar.stopped": "<b>Arrêté.</b> Rien n'a changé · <kbd>Enter</kbd> pour réessayer",

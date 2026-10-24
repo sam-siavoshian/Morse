@@ -19,7 +19,7 @@ export default {
   "bar.repoint": "به چیز دیگری اشاره کنید",
   "bar.hint.pointing": "به چیزی <b>اشاره کنید</b> یا توصیفش کنید · <kbd>Esc</kbd> برای بستن",
   "bar.hint.target": "تغییری برای این بگویید · <kbd>Enter</kbd> برای ارسال",
-  "bar.hint.wider": "<kbd>{key}</kbd> برای بخش بزرگ‌تر", // dogfood: Alt+↑ after pointing
+  "bar.hint.wider": "<kbd>{key}</kbd> بخش بزرگ‌تر", // dogfood: Alt+↑ after pointing
   "bar.hint.page": "تغییری در این صفحه را توصیف کنید · <kbd>Enter</kbd> برای ارسال",
   "bar.mods": "مادها",
   "bar.stopped": "<b>متوقف شد.</b> چیزی عوض نشد · <kbd>Enter</kbd> برای تلاش دوباره",

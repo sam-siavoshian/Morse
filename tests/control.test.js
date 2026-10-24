@@ -274,7 +274,7 @@ test("CLI: morse pause / resume, export --all, import", async () => {
     logs.length = 0;
     if (!process.stdin.isTTY) await assert.rejects(ctl.importCli({ _: [out] }), /--yes/);
     assert.match(logs.join("\n"), /Sends data to another website/);
-    assert.match(logs.join("\n"), /Note: This mod can send information/);
+    assert.match(logs.join("\n"), /Note: This mod can send what you see or type/);
     assert.equal((await store.listMods()).length, 0, "nothing installed before saying yes");
     const saved = await ctl.importCli({ _: [out], yes: true });
     assert.equal(saved.length, 2);

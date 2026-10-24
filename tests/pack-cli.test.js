@@ -86,7 +86,7 @@ test("morse pack install: an id that clashes with your own mod is never overwrit
   // Installing into the home the pack was made in: aa and bb are your own mods there.
   const r = await morse(["pack", "install", file, "--yes"], made);
   assert.equal(r.code, 0, r.err);
-  assert.match(r.out, /You already have a mod with this id: “Mod aa”/);
+  assert.match(r.out, /You already have this mod: “Mod aa”/);
   let mods = await readMods(made);
   assert.deepEqual(Object.keys(mods).sort(), ["aa", "aa-2", "bb", "bb-2", "cc"], "--yes keeps both");
   assert.equal(mods.aa.pack, undefined, "yours is untouched");

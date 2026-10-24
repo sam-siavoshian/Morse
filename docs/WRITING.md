@@ -125,6 +125,21 @@ Every first stop (the welcome page, the website, the README, the first Save
 tip) explains "mod" once, in these words or close: **"A mod is a change you
 saved. Morse brings it back every time you open that site or app."**
 
+**Which word in a sentence.** Decide by whether it is saved:
+
+- Write **change** for anything not saved yet: what you ask for, what the
+  model is making, what you see on the page now. "The change didn't run on
+  this page." "Closing the bar saves a change."
+- Write **mod** only for a saved one, and always when the sentence names a
+  place or action that holds saved ones: the Mods panel, a share link, a
+  pack, install, back up, turn on or off. "Turn off every mod on this page."
+  "Install a mod…" "Back up all mods."
+- Don't switch words for variety inside one message. The one place both
+  words meet is the sentence that explains them.
+- In other languages, use that language's word for mod everywhere (Mod, mod,
+  MOD, 模组, ماد, تعديل), never the English "mod" inside Persian, Arabic,
+  Chinese or Japanese text.
+
 ### Save and Undo
 
 One rule for anything on the page that isn't saved yet, whether the model
@@ -274,3 +289,15 @@ in one or two short sentences.
 | CLI | In any attached window: Alt+Space to morse | In a connected app, press Alt+Space to open Morse |
 | README | Customize any app in one sentence. | Change any app or website in your own words. |
 | Website | Mods are data. Share them as a link. | Share a mod with a link. |
+| Bar, first tip | Like it? Save keeps it for next time… | Save keeps it for next time. Undo puts the page back. |
+| Ask, Show me | You do the clicking; Morse points the way. | Morse shows where to click. You do the clicking. |
+| Settings | Push to talk | Hold to talk |
+| Settings | Effects: Full · Subtle · Off | Effects: Full · Less · Off |
+| Settings | Small tweaks use sonnet. New features, restyles and second tries use opus | Small changes use sonnet. New features, new looks and second tries use opus |
+| Mods panel | Export all mods | Back up all mods |
+| Error | The change the model wrote didn't work on this page. Try again, or describe it differently. | The model's change didn't work on this page. Try again, or try other words. |
+| Welcome | Already have it? Open Morse Desktop. | If you have it, open Morse Desktop. |
+| Safe start | “Loopy” is held back: this page closed or reloaded right after it ran. | “Loopy” is off for now. This page closed or reloaded right after it ran. |
+
+The full list from the second pass over every message is in
+[docs/dev/wording-pass-2.md](dev/wording-pass-2.md).

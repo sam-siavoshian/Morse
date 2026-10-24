@@ -21,7 +21,7 @@ export default {
   "bar.repoint": "Point at something else",
   "bar.hint.pointing": "<b>Point</b> at something, or describe a change · <kbd>Esc</kbd> to close",
   "bar.hint.target": "Describe a change to this · <kbd>Enter</kbd> to send",
-  "bar.hint.wider": "<kbd>{key}</kbd> for a bigger part", // dogfood: Alt+↑ after pointing
+  "bar.hint.wider": "<kbd>{key}</kbd> bigger part", // dogfood: Alt+↑ after pointing
   "bar.hint.page": "Describe a change to this page · <kbd>Enter</kbd> to send",
   "bar.mods": "Mods",
   "bar.stopped": "<b>Stopped.</b> Nothing was changed · <kbd>Enter</kbd> to try again",
@@ -54,7 +54,7 @@ export default {
   "voice.noMic": "No microphone found. Plug one in and try again.",
   "voice.inUse": "Another app is using the microphone. Close it and try again.",
   "voice.cantStart": "Couldn't start the microphone. Try again.",
-  "voice.unavailable": "Voice isn't available in this app. Type your change instead.",
+  "voice.unavailable": "Voice doesn't work in this app. Type your change instead.",
   "voice.didntCatch": "Morse didn't hear any words. Try again.",
 
   // ---- while the model works, and the result

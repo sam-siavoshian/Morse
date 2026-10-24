@@ -254,7 +254,7 @@ test("a page can't draw over the install review, and Install waits until the rev
   // A page that keeps covering it gets the review closed; nothing installed.
   await cover(p, "popover", { again: true });
   await waitFor(() => p.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".modal").hidden), { what: "the review closed" });
-  assert.match(await shadowText(p), /kept covering Morse's review/);
+  assert.match(await shadowText(p), /kept covering Morse's window/);
   await uncover(p);
   assert.deepEqual(await stored(), []);
 

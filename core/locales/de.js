@@ -18,7 +18,7 @@ export default {
   "bar.repoint": "Auf etwas anderes zeigen",
   "bar.hint.pointing": "<b>Zeig</b> auf etwas oder beschreib es · <kbd>Esc</kbd> schließt",
   "bar.hint.target": "Beschreib eine Änderung daran · <kbd>Enter</kbd> zum Senden",
-  "bar.hint.wider": "<kbd>{key}</kbd> für einen größeren Teil", // dogfood: Alt+↑ after pointing
+  "bar.hint.wider": "<kbd>{key}</kbd> größerer Teil", // dogfood: Alt+↑ after pointing
   "bar.hint.page": "Beschreib eine Änderung an dieser Seite · <kbd>Enter</kbd> zum Senden",
   "bar.mods": "Mods",
   "bar.stopped": "<b>Gestoppt.</b> Nichts wurde geändert · <kbd>Enter</kbd> für einen neuen Versuch",
@@ -44,7 +44,7 @@ export default {
   "voice.pageBlocks": "Diese Seite erlaubt kein Mikrofon. Tipp deine Änderung stattdessen.",
   "voice.appBlocks": "Diese App erlaubt kein Mikrofon. Tipp deine Änderung stattdessen ein.",
   "voice.notSetUp": "Spracheingabe ist hier noch nicht eingerichtet. Tipp deine Änderung stattdessen ein.",
-  "voice.chrome": "die Sprache-zu-Text-Funktion von Chrome",
+  "voice.chrome": "die Spracherkennung von Chrome",
   "voice.helper": "der Morse-Helfer",
   "voice.or": "oder {what}",
   "voice.blocked": "Das Mikrofon ist blockiert. Erlaube es für diese Seite und versuch es noch einmal.",

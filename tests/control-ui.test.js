@@ -226,7 +226,7 @@ test("import: the in-app review shows what it does, folds the code, and installs
   assert.deepEqual(items, ["typing", "network", "code"]);
   assert.match(await text(page, ".modal"), /Install “Draft saver”\?/);
   assert.match(await text(page, ".modal"), /made by Sam/);
-  assert.match(await text(page, '.modal .ctl-warn[data-s="network"]'), /send information from this page to another website/);
+  assert.match(await text(page, '.modal .ctl-warn[data-s="network"]'), /send what you see or type on this page to another website/);
   assert.match(await text(page, '.modal .ctl-warn[data-s="typing"]'), /read what you type/);
   assert.equal(await page.evaluate(`${sr(".modal details.ctl-code")}.open`), false, "code is folded");
   assert.equal(await page.evaluate(`document.querySelector("[data-morse-ui]").shadowRoot.activeElement?.textContent`), "Cancel", "focus starts on Cancel, never on Install");

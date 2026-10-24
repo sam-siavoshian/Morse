@@ -274,7 +274,7 @@ test("pointing: Alt+Up chooses the bigger part around what the mouse chose, and 
   const chip = () => ui(page, ".chip.target span").textContent();
   await page.waitForFunction(() => !document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".chip.target").hidden);
   const first = await chip();
-  assert.match(await ui(page, ".hint").textContent(), /Alt\+↑ for a bigger part/);
+  assert.match(await ui(page, ".hint").textContent(), /Alt\+↑ bigger part/);
   await page.keyboard.press("Alt+ArrowUp");
   await page.waitForFunction(f => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".chip.target span").textContent !== f, first);
   assert.match(await chip(), /toolbar|Toolbar/i, `${first} → ${await chip()}`);

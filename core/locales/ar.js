@@ -19,7 +19,7 @@ export default {
   "bar.repoint": "أشِر إلى شيء آخر",
   "bar.hint.pointing": "<b>أشِر</b> إلى شيء أو صِفه · <kbd>Esc</kbd> للإغلاق",
   "bar.hint.target": "صِف تغييرًا لهذا · <kbd>Enter</kbd> للإرسال",
-  "bar.hint.wider": "<kbd>{key}</kbd> لجزء أكبر", // dogfood: Alt+↑ after pointing
+  "bar.hint.wider": "<kbd>{key}</kbd> جزء أكبر", // dogfood: Alt+↑ after pointing
   "bar.hint.page": "صِف تغييرًا في هذه الصفحة · <kbd>Enter</kbd> للإرسال",
   "bar.mods": "التعديلات",
   "bar.stopped": "<b>توقّف.</b> لم يتغيّر شيء · <kbd>Enter</kbd> للمحاولة مجددًا",
