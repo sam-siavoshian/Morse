@@ -149,13 +149,16 @@ async function withRuntime(html, fn) {
   await page.evaluate(() => {
     const subs = [];
     window.__sent = [];
+    window.__emit = m => subs.forEach(f => f(m)); // host events (install.request)
+    localStorage.setItem("morse:debug", "1"); // tests read the UI (webdriver is on)
     globalThis.__morseHost = {
       onMessage: f => subs.push(f),
       send(m) {
         window.__sent.push(m);
         if (m.type === "capture") m.morseVisible = getComputedStyle(document.querySelector("[data-morse-ui]")).visibility; // what a screenshot now would show
         const result = m.type === "hello" ? { mode: "playground", label: "test", quiet: true, settings: { welcome: false } }
-          : m.type === "mods.list" ? [] : m.type === "generate" ? { ok: false, error: "test" } : null;
+          : m.type === "mods.list" ? [] : m.type === "generate" ? { ok: false, error: "test" }
+          : m.type === "mods.preview" ? { kind: "link", mods: [JSON.parse(m.source)], errors: [] } : null;
         setTimeout(() => subs.forEach(f => f({ reply: m.id, result })), 5);
       },
     };
@@ -216,6 +219,19 @@ test("screenshots leave Morse's own UI out even when the page's CSS insists it s
     assert.deepEqual([...new Set(shots)], ["hidden"]);
     await page.waitForTimeout(200);
     assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-morse-ui]")).visibility), "visible", "and back afterwards");
+  });
+});
+
+test("the install review warns about a mod for every .com (or .co.uk) site, as it does for every site", { skip }, async () => {
+  const { broadEndings } = await import("../core/summary.js");
+  assert.deepEqual(broadEndings({ match: { hosts: ["*.com", "*.co.uk", "*.example.com", "a.com", "*"] } }), [".com", ".co.uk"]);
+  assert.deepEqual(broadEndings({ match: { hosts: ["*.com"], app: "slack" } }), []);
+  await withRuntime(`<!doctype html><title>Review</title><h1>Review</h1>`, async page => {
+    const mod = { morse: 1, id: "r4-broad", title: "Everywhere-ish", prompt: "p", css: "a{}", js: "", match: { hosts: ["*.com", "*.co.uk"], app: null } };
+    await page.evaluate(m => window.__emit({ type: "install.request", source: JSON.stringify(m) }), mod);
+    const card = page.locator("[data-morse-ui] .modal .card");
+    await card.waitFor();
+    assert.match(await card.locator('[data-s="everywhere"]').textContent(), /every website whose address ends in \.com or \.co\.uk/);
   });
 });
 

@@ -139,6 +139,18 @@ export function modHosts(mod) {
   return h;
 }
 
+// Wildcards that cover a whole top-level domain ("*.com", "*.co.uk"): close to
+// every website, though not written as "*". -> the endings, e.g. [".com"].
+const SUFFIX2 = /^(co|com|net|org|gov|edu|ac|or|ne|go|gob|nic|mil|ltd|plc)\.[a-z]{2}$/i;
+export function broadEndings(mod) {
+  if (mod?.match?.app) return [];
+  return (modHosts(mod) || []).filter(h => {
+    if (!h.startsWith("*.")) return false;
+    const rest = h.slice(2).replace(/:\d+$/, "").replace(/\.$/, "");
+    return !rest.includes(".") || SUFFIX2.test(rest);
+  }).map(h => h.slice(1));
+}
+
 // "Where it runs", in words, from the same rule.
 export function whereRuns(mod) {
   const app = mod?.match?.app;

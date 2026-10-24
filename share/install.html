@@ -82,7 +82,7 @@
   import { decodeShare, toUserscript } from "../core/mod.js";
   import { initPage, highlight, esc } from "../site/common.js";
   import { mountAll } from "../site/radar.js";
-  import { summarizeMod, whereRuns, modHosts } from "../core/summary.js";
+  import { summarizeMod, whereRuns, modHosts, broadEndings } from "../core/summary.js";
 
   initPage();
   addEventListener("hashchange", () => location.reload());
@@ -108,7 +108,8 @@
       <section class="i-does" aria-labelledby="does">
         <h2 id="does">What this mod does</h2>
         <ul class="i-items">${items}</ul>
-        ${everywhere ? `<p class="i-note" data-s="everywhere">${warn}<span>This mod runs on every website you visit, not just one. It can see what you see on all of them.</span></p>` : ""}
+        ${everywhere ? `<p class="i-note" data-s="everywhere">${warn}<span>This mod runs on every website you visit, not just one. It can see what you see on all of them.</span></p>`
+          : broadEndings(mod).length ? `<p class="i-note" data-s="everywhere">${warn}<span>This mod runs on every website whose address ends in ${esc(broadEndings(mod).join(" or "))}, not just one. It can see what you see on all of them.</span></p>` : ""}
         ${sum.notes.map(n => `<p class="i-note" data-s="${n.id}">${warn}<span>${esc(n.text)}</span></p>`).join("")}
       </section>
       <div class="i-actions">

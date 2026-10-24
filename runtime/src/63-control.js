@@ -227,7 +227,8 @@ async function reviewImport(source, { onDone, trial = null } = {}) {
       <p class="ctl-from">For ${esc(whereFor(m))}${m.author ? ` · made by ${esc(m.author)}` : ""}${m.model ? ` · written by ${esc(m.model)}` : ""}${other(m) ? ` · <span>not this page</span>` : ""}</p>
       <h4 class="ctl-h">What it does</h4>
       ${summaryHtml(m)}
-      ${everywhere(m) ? `<p class="ctl-warn" data-s="everywhere"><b>Note</b>This mod runs on every website you visit, not just one. It can see what you see on all of them.</p>` : ""}
+      ${everywhere(m) ? `<p class="ctl-warn" data-s="everywhere"><b>Note</b>This mod runs on every website you visit, not just one. It can see what you see on all of them.</p>`
+        : broadEndings(m).length ? `<p class="ctl-warn" data-s="everywhere"><b>Note</b>This mod runs on every website whose address ends in ${esc(broadEndings(m).join(" or "))}, not just one. It can see what you see on all of them.</p>` : ""}
       <details class="ctl-code"><summary>Show code</summary>${codeHtml(m)}</details>
     </section>`).join("")}
     ${r.errors?.length ? `<p class="dim ctl-skip">Skipped ${esc(r.errors.join("; "))}</p>` : ""}
