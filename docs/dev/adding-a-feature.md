@@ -56,6 +56,14 @@ rules are checked by tests:
   `keyup` handler starts by ignoring events the page made up
   (`if (!e.isTrusted || …) return;`), so a page can't open the bar, talk or
   act inside it. Checked by `tests/hardening.test.js`.
+- **Nothing per key, per pointer move or per frame that reads layout.** Hit
+  tests (`elementsFromPoint`), rects and `getComputedStyle` cost a few ms
+  each on a big page. Do them when something actually moved, and after a
+  scroll once the page rests; with nothing of Morse's showing, a page's
+  scrolling runs nothing of Morse's. The bar's solid backing
+  (`50-bar.js` Backing) is the pattern. A feature that runs while the bar is
+  open gets a count budget in `tests/perf.test.js` and a row in
+  [`docs/perf/budgets.md`](../perf/budgets.md).
 - **UI lives in the shadow root** created in `10-dom.js`. Anything that has to
   live in the page (text being edited in place, a mod's own elements) is
   marked `data-morse-ui` or `data-morse`.

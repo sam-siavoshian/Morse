@@ -170,8 +170,11 @@ const Onboarding = (() => {
   // and names what just showed up in the bar (progressive reveal, above).
   const winEl = makeEl("div", { className: "ob-win", hidden: true }, { role: "status", "aria-live": "polite" });
   root.append(winEl);
-  let winMod = null;
+  let winMod = null, winLater = null;
   function celebrate(m) {
+    // the bar is open again (Esc kept the change, then a new one): the card waits until it closes, never covers it
+    if (S.open && !bar.hidden) { winLater = m || null; return; }
+    winLater = null;
     toastEl.hidden = true;
     clearTimeout(toast.t);
     winMod = m || null;
@@ -202,7 +205,10 @@ const Onboarding = (() => {
     if (a === "share" && winMod) showShare(S.mods.find(x => x.id === winMod.id) || winMod);
   });
   listen("keydown", e => { if (e.isTrusted && e.key === "Escape" && !winEl.hidden && !S.open && modal.hidden) { e.stopPropagation(); closeWin(); } }, true);
-  new MutationObserver(() => { if (!bar.hidden && !winEl.hidden) closeWin(); }).observe(bar, { attributes: true, attributeFilter: ["hidden"] });
+  new MutationObserver(() => {
+    if (!bar.hidden && !winEl.hidden) closeWin();
+    if (bar.hidden && winLater) celebrate(winLater);
+  }).observe(bar, { attributes: true, attributeFilter: ["hidden"] });
   outgoing.push(m => {
     if (!st) return;
     // Only a change the model made and you saved counts: edit-tool sessions

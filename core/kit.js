@@ -381,11 +381,44 @@ function installMorseKit() {
         };
         const styles = el => { const o = {}; for (let i = 0; i < el.style.length; i++) { const p = el.style[i]; o[p] = [el.style.getPropertyValue(p), el.style.getPropertyPriority(p)]; } return o; };
         const attrs = el => { const o = {}; for (const a of el.attributes) if (a.name !== "class" && a.name !== "style") o[a.name] = a.value; return o; };
+        // What fn puts next to el. A short list of siblings is copied before
+        // and compared after; a long one (a feed, the lines of a file) isn't,
+        // since copying it for each of its items is quadratic: only el's
+        // neighbours and the list's two ends are noted, which is where fn puts
+        // things (before, after, prepend, append). A walk whose note fn
+        // removed, or that goes on for more than a few dozen (el moved), finds
+        // nothing, so a page node is never taken for the mod's.
+        const SIBS_COPY = 200, WALK_MAX = 64;
+        const sibsBefore = el => {
+          const p = el.parentNode;
+          if (!p) return null;
+          return p.childNodes.length <= SIBS_COPY ? { all: new Set(p.childNodes) } : { p, prev: el.previousSibling, next: el.nextSibling, first: p.firstChild, last: p.lastChild };
+        };
+        const sibsAdded = (el, s, out) => {
+          const p = el.parentNode;
+          if (!s || !p) return;
+          if (s.all) { for (const k of p.childNodes) if (!s.all.has(k) && k.nodeType === 1) out.push(k); return; }
+          if (p !== s.p) return;
+          const walk = (from, stop, step) => {
+            if (stop && stop.parentNode !== p) return;
+            const found = [];
+            let n = 0;
+            for (let k = from; k && k !== stop; k = k[step]) {
+              if (++n > WALK_MAX) return;
+              if (k !== el && k.nodeType === 1) found.push(k);
+            }
+            out.push(...found);
+          };
+          walk(el.previousSibling, s.prev, "previousSibling");
+          walk(el.nextSibling, s.next, "nextSibling");
+          if (s.first) walk(p.firstChild, s.first, "nextSibling");
+          if (s.last) walk(p.lastChild, s.last, "previousSibling");
+        };
         // Runs fn on el and remembers what it did: the elements it made or put
         // in or next to el, and the classes, inline styles, attributes and text it set.
         const apply = (el, prev) => {
           const cl0 = new Set(el.classList), st0 = styles(el), at0 = attrs(el), tx0 = el.textContent;
-          const kids0 = new Set(el.childNodes), sibs0 = el.parentNode ? new Set(el.parentNode.childNodes) : null;
+          const kids0 = new Set(el.childNodes), sibs0 = sibsBefore(el);
           // A burst of re-runs means fn and the page are fighting over el: then leave it alone.
           const t = now(), burst = prev && t - prev.at < 100 ? prev.burst + 1 : 0;
           const r = { created: [], at: t, burst, root: inner(el) };
@@ -393,7 +426,7 @@ function installMorseKit() {
           c.current = r;
           try { run(el); } finally { c.current = outer; }
           for (const k of el.childNodes) if (!kids0.has(k) && k.nodeType === 1) r.created.push(k);
-          if (sibs0 && el.parentNode) for (const k of el.parentNode.childNodes) if (!sibs0.has(k) && k.nodeType === 1) r.created.push(k);
+          sibsAdded(el, sibs0, r.created);
           r.created = [...new Set(r.created)].filter(n => n.isConnected && n.parentNode !== n.ownerDocument.head);
           for (const n of r.created) madeBy.set(n, r);
           const cl1 = new Set(el.classList), st1 = styles(el), at1 = attrs(el);

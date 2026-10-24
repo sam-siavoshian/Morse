@@ -9,6 +9,8 @@ export const REPO = LINKS.github;
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Phones, touch screens and Save-Data: nothing heavy loads by itself.
+const lightOnly = () => !!navigator.connection?.saveData || matchMedia("(max-width: 700px), (hover: none) and (pointer: coarse)").matches;
 
 export function initPage() {
   mountAll();
@@ -168,10 +170,11 @@ export function initNav(nav = document.querySelector("header.nav")) {
 
 // ---------- the film ----------
 // The poster shows at once (it is an <img> in the page, so the first screen
-// is fast). The video file loads only after the page has loaded and the film
-// is near the screen; then it plays muted on a loop. The press starts it from
-// the beginning, with sound and controls. Reduced motion: no autoplay, the
-// poster stays until the press. The loop has its own pause control, apart from
+// is fast). The loop (a small 1280-wide copy, WebM or MP4, no sound) loads
+// only after the page has loaded and the film is near the screen; then it
+// plays muted. The press starts the full-quality file from the beginning,
+// with sound and controls. No autoplay with reduced motion, on phones and
+// touch screens, or with Save-Data on: the poster stays until the press. The loop has its own pause control, apart from
 // the play press (WCAG 2.2.2).
 export function mountFilm(figure, film = DEMO_VIDEO) {
   const frame = figure.querySelector(".film-frame");
@@ -195,11 +198,14 @@ export function mountFilm(figure, film = DEMO_VIDEO) {
   video.height = film.height;
   frame.prepend(video);
 
-  let loaded = false;
-  const load = () => {
-    if (loaded) return;
-    loaded = true;
-    video.append(Object.assign(document.createElement("source"), { src: film.mp4, type: "video/mp4" }));
+  let loaded = null;
+  // "loop": the small web copies; "full": the file with sound, for the press.
+  const load = (kind = "loop") => {
+    if (loaded === kind || (kind === "loop" && loaded)) return;
+    loaded = kind;
+    video.replaceChildren();
+    const files = kind === "loop" && film.loop ? [[film.loop.webm, "video/webm"], [film.loop.mp4, "video/mp4"]] : [[film.mp4, "video/mp4"]];
+    for (const [src, type] of files) if (src) video.append(Object.assign(document.createElement("source"), { src, type }));
     video.load();
   };
   const state = () => {
@@ -211,7 +217,7 @@ export function mountFilm(figure, film = DEMO_VIDEO) {
   video.addEventListener("playing", state);
 
   // Autoplay the loop once the page is in, and only while it is on screen.
-  if (!reducedMotion()) {
+  if (!reducedMotion() && !lightOnly()) {
     const start = () => {
       const io = new IntersectionObserver(([e]) => {
         if (figure.classList.contains("is-started")) return;
@@ -226,7 +232,7 @@ export function mountFilm(figure, film = DEMO_VIDEO) {
 
   toggle?.addEventListener("click", () => { video.paused ? video.play().catch(() => {}) : video.pause(); });
   play?.addEventListener("click", () => {
-    load();
+    load("full");
     figure.classList.add("is-started");
     video.loop = false;
     video.muted = false;
