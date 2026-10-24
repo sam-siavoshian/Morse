@@ -127,7 +127,7 @@ const Heal = (() => {
   async function run() {
     await settle();
     if (!live()) return;
-    const href = location.href;
+    const href = location.href, was = [...st.keys()].join();
     let broken = await pass();
     if (broken.size) {
       await sleep(CONFIRM);
@@ -136,7 +136,8 @@ const Heal = (() => {
       broken = await pass(new Set(broken.keys()), false);
     }
     for (const [id, { mod, lost }] of broken) mark(mod, lost);
-    paint();
+    // redraw the panel only when something changed: a redraw drops keyboard focus
+    if ([...st.keys()].join() !== was) paint(); else dot();
     if (PREFS.autoFix) for (const [id] of broken) await autoFix(id);
   }
   // Asked again while a check runs (a single-page app moved on): one more after it.

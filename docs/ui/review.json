@@ -40,7 +40,7 @@
    "note": "the title gives way first; the timing and 'repaired once' and all four actions stay"
   },
   "bar/result": {
-   "note": "Keep is focused after a keyboard submit, so its ring shows; Enter keeps"
+   "note": "Save is focused after a keyboard submit, so its ring shows; Enter saves"
   },
   "effect/*": {
    "note": "radar field in --m-signal-1..4 over --m-overlay; follows the target's shape. Cosmetic: when the target is not a multiple of 8px the last row/column of cells is cut by the canvas edge"
@@ -241,10 +241,10 @@
    "note": "shared ring"
   },
   "gallery/trying-strip": {
-   "note": "top-center strip while trying: radar 12, “Trying …”, Nothing is saved yet, Remove (.btn) and Keep (.btn.primary). At 390px it moves to the bottom and drops the second line"
+   "note": "top-center strip while trying: radar 12, “Trying …”, Nothing is saved yet, Undo (.btn) and Save (.btn.primary). At 390px it moves to the bottom and drops the second line"
   },
   "gallery/trying-item": {
-   "note": "the item being tried: raised well, a still dot (it used to pulse forever; only “a model is working” loops), Keep / Remove"
+   "note": "the item being tried: raised well, a still dot (it used to pulse forever; only “a model is working” loops), Save / Undo"
   },
   "gallery/strip-hover": {
    "note": "shared .btn hover"
@@ -307,7 +307,8 @@
    "note": "Paused, play icon; nothing else changes size"
   },
   "a11y/audit": {
-   "note": "Check this page in the bar: eyebrow + summary, Check again (.tbtn) and × (.ibtn.close); each kind is a title, plain help, its numbered markers (20px), and Fix it as a plain 28px .btn with what it will do under it. It was five 40px white primary blocks with 70%-opacity notes inside"
+   "note": "Check this page in the bar: eyebrow + summary, Check again (.tbtn) and × (.ibtn.close); each kind is a title, plain help, its numbered markers (20px), and Fix it as a plain 28px .btn with what it will do under it. It was five 40px white primary blocks with 70%-opacity notes inside",
+   "accept": "the marker badges (62-markers.js, shared with Ask) carry a 2px --m-bg halo so they read on any page content, like the picker's 1.5px outline"
   },
   "a11y/audit-markers": {
    "accept": "the marker badges (62-markers.js, shared with Ask) carry a 2px --m-bg halo so they read on any page content, like the picker's 1.5px outline",
@@ -326,7 +327,8 @@
    "note": "shared ring"
   },
   "a11y/fix-it-done": {
-   "note": "Fix it on faint text: fixed at once, the list is checked again, the toast says what was saved. The toast now shows at the top while the bar is open at the bottom (it used to cover the status row)"
+   "note": "Fix it on faint text: fixed at once, the list is checked again, the toast says what was saved. The toast now shows at the top while the bar is open at the bottom (it used to cover the status row)",
+   "accept": "the marker badges (62-markers.js, shared with Ask) carry a 2px --m-bg halo so they read on any page content, like the picker's 1.5px outline"
   },
   "a11y/describe-busy": {
    "note": "a ring on the picture, the card beside it: working radar, “Looking at the picture…” in --m-text-2"
@@ -535,6 +537,39 @@
   },
   "bar/dodge-to-point": {
    "note": "a pointer that rests on the bar away from its controls for 350ms: the bar steps aside so what is under it can be pointed at"
+  },
+  "heal/bar-dot": {
+   "note": "a mod here stopped working after the site changed: a 7px --m-danger dot on the Morse mark with a 2px surface ring, nothing pops up. At phone width the mark (normally hidden there for room) stays while the dot is on, so the sign isn't lost"
+  },
+  "heal/mark-dot": {
+   "note": "the dot at the mark's top-right corner"
+  },
+  "heal/panel-header": {
+   "note": "the same dot on the panel header's mark"
+  },
+  "heal/stopped-row": {
+   "note": "the row's note leads with “Stopped working after this site changed.” and says what it can't find, by its label; Fix it is the primary"
+  },
+  "heal/stopped-fix-focus": {
+   "note": "shared ring"
+  },
+  "heal/fixing": {
+   "note": "Fix it: the bar works on the mod, no suggestions under it"
+  },
+  "heal/fixed-result": {
+   "note": "the fix shows for review with Save and Undo"
+  },
+  "heal/share-fix-toast": {
+   "note": "a fixed gallery mod: the toast offers Share the fix… (.btn.primary, shared ×)"
+  },
+  "heal/fixed-row": {
+   "note": "until shared: “Fixed after this site changed” with Share the fix…, a gray dot (not red: nothing is wrong)"
+  },
+  "heal/auto-fixed-toast": {
+   "note": "Settings → fix automatically: done in the background, a toast with Undo and Share the fix…"
+  },
+  "heal/setting": {
+   "note": "Fix my mods automatically when a site changes: the shared switch"
   }
  },
  "fixes": [
@@ -634,7 +669,7 @@
    "after": "control/off-switch-close-focus-dark.png"
   },
   {
-   "title": "R3-20. Trying a mod: Remove/Keep were copies of .btn, the dot pulsed forever; now .btn and a still dot",
+   "title": "R3-20. Trying a mod: its two buttons (now Save/Undo) were copies of .btn, the dot pulsed forever; now .btn and a still dot",
    "before": "before/gallery-trying-strip-light.png",
    "after": "gallery/trying-strip-light.png"
   },
@@ -647,6 +682,11 @@
    "title": "R3-22. Popup: where each mod came from and Show code sat flush left under the status dot; now aligned under the title",
    "before": "before/popup-whole-dark.png",
    "after": "popup/whole-dark.png"
+  },
+  {
+   "title": "R3-23. Self-heal at phone width: the bar hides its mark there, so the “stopped working” dot vanished from the bar. The mark stays while the dot is on",
+   "before": "before/heal-bar-dot-narrow-light.png",
+   "after": "heal/bar-dot-narrow-light.png"
   },
   {
    "title": "1. A page rule (`[data-morse-ui] { display: none !important }`) hid the whole overlay; zoom, dir=rtl and --m-* variables also leaked in. Host styles are now !important, direction is pinned, html zoom is countered, tokens are !important inside the shadow root",

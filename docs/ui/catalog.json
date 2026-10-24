@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-24T10:49:55.611Z",
+ "generated": "2026-10-24T12:00:05.262Z",
  "shots": [
   {
    "area": "bar",
@@ -458,6 +458,110 @@
    "note": ""
   },
   {
+   "area": "modal",
+   "state": "code-dark",
+   "theme": "dark",
+   "file": "modal/code-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "code-textarea-focus-dark",
+   "theme": "dark",
+   "file": "modal/code-textarea-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "code-footer-hover-dark",
+   "theme": "dark",
+   "file": "modal/code-footer-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "code-footer-focus-dark",
+   "theme": "dark",
+   "file": "modal/code-footer-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "close-hover-dark",
+   "theme": "dark",
+   "file": "modal/close-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "close-focus-dark",
+   "theme": "dark",
+   "file": "modal/close-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "share-dark",
+   "theme": "dark",
+   "file": "modal/share-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "share-actions-hover-dark",
+   "theme": "dark",
+   "file": "modal/share-actions-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "share-export-focus-dark",
+   "theme": "dark",
+   "file": "modal/share-export-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "code-long-dark",
+   "theme": "dark",
+   "file": "modal/code-long-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "import-empty-dark",
+   "theme": "dark",
+   "file": "modal/import-empty-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "import-filled-dark",
+   "theme": "dark",
+   "file": "modal/import-filled-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "import-error-dark",
+   "theme": "dark",
+   "file": "modal/import-error-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
    "area": "bar",
    "state": "picking-narrow-dark",
    "theme": "dark",
@@ -630,6 +734,54 @@
    "state": "mods-12-scrolled-narrow-dark",
    "theme": "dark",
    "file": "panel/mods-12-scrolled-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "code-narrow-dark",
+   "theme": "dark",
+   "file": "modal/code-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "share-narrow-dark",
+   "theme": "dark",
+   "file": "modal/share-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "code-long-narrow-dark",
+   "theme": "dark",
+   "file": "modal/code-long-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "import-empty-narrow-dark",
+   "theme": "dark",
+   "file": "modal/import-empty-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "import-filled-narrow-dark",
+   "theme": "dark",
+   "file": "modal/import-filled-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "import-error-narrow-dark",
+   "theme": "dark",
+   "file": "modal/import-error-narrow-dark.png",
    "issues": [],
    "note": ""
   },
@@ -1778,6 +1930,402 @@
    "note": "partial CSS removed, prompt kept; any edit clears the note"
   },
   {
+   "area": "gallery",
+   "state": "chip-dark",
+   "theme": "dark",
+   "file": "gallery/chip-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "chip-hover-dark",
+   "theme": "dark",
+   "file": "gallery/chip-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "chip-focus-dark",
+   "theme": "dark",
+   "file": "gallery/chip-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "section-open-dark",
+   "theme": "dark",
+   "file": "gallery/section-open-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "section-items-dark",
+   "theme": "dark",
+   "file": "gallery/section-items-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "head-hover-dark",
+   "theme": "dark",
+   "file": "gallery/head-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "head-focus-dark",
+   "theme": "dark",
+   "file": "gallery/head-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "item-hover-dark",
+   "theme": "dark",
+   "file": "gallery/item-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "item-focus-dark",
+   "theme": "dark",
+   "file": "gallery/item-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "stop-showing-hover-dark",
+   "theme": "dark",
+   "file": "gallery/stop-showing-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "section-collapsed-dark",
+   "theme": "dark",
+   "file": "gallery/section-collapsed-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-row-dark",
+   "theme": "dark",
+   "file": "gallery/update-row-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-row-focus-dark",
+   "theme": "dark",
+   "file": "gallery/update-row-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "trying-strip-dark",
+   "theme": "dark",
+   "file": "gallery/trying-strip-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "trying-item-dark",
+   "theme": "dark",
+   "file": "gallery/trying-item-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "strip-hover-dark",
+   "theme": "dark",
+   "file": "gallery/strip-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "strip-focus-dark",
+   "theme": "dark",
+   "file": "gallery/strip-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "install-review-dark",
+   "theme": "dark",
+   "file": "gallery/install-review-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-review-dark",
+   "theme": "dark",
+   "file": "gallery/update-review-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-diff-focus-dark",
+   "theme": "dark",
+   "file": "gallery/update-diff-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-footer-focus-dark",
+   "theme": "dark",
+   "file": "gallery/update-footer-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "share-submit-dark",
+   "theme": "dark",
+   "file": "gallery/share-submit-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "share-submit-hover-dark",
+   "theme": "dark",
+   "file": "gallery/share-submit-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "submit-toast-dark",
+   "theme": "dark",
+   "file": "gallery/submit-toast-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "setting-dark",
+   "theme": "dark",
+   "file": "gallery/setting-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "setting-focus-dark",
+   "theme": "dark",
+   "file": "gallery/setting-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "menu-dark",
+   "theme": "dark",
+   "file": "a11y/menu-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "menu-on-hover-dark",
+   "theme": "dark",
+   "file": "a11y/menu-on-hover-dark.png",
+   "issues": [],
+   "note": "Underline links and Easier to read font are on (check); Dyslexia-friendly letters is their sub-option"
+  },
+  {
+   "area": "a11y",
+   "state": "menu-item-focus-dark",
+   "theme": "dark",
+   "file": "a11y/menu-item-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-dark",
+   "theme": "dark",
+   "file": "a11y/read-aloud-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-mark-dark",
+   "theme": "dark",
+   "file": "a11y/read-aloud-mark-dark.png",
+   "issues": [],
+   "note": "the sentence being read: an 18% wash with a 2px underline in --m-signal-4"
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-hover-dark",
+   "theme": "dark",
+   "file": "a11y/read-aloud-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-focus-dark",
+   "theme": "dark",
+   "file": "a11y/read-aloud-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-paused-dark",
+   "theme": "dark",
+   "file": "a11y/read-aloud-paused-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-dark",
+   "theme": "dark",
+   "file": "a11y/audit-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-markers-dark",
+   "theme": "dark",
+   "file": "a11y/audit-markers-dark.png",
+   "issues": [
+    "button.mk-badge border-top is 2px, not 1px"
+   ],
+   "note": "numbered markers on each place; the bar goes to the end that covers fewer of them"
+  },
+  {
+   "area": "a11y",
+   "state": "audit-fix-hover-dark",
+   "theme": "dark",
+   "file": "a11y/audit-fix-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-fix-focus-dark",
+   "theme": "dark",
+   "file": "a11y/audit-fix-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-marker-focus-dark",
+   "theme": "dark",
+   "file": "a11y/audit-marker-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-again-focus-dark",
+   "theme": "dark",
+   "file": "a11y/audit-again-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "fix-it-done-dark",
+   "theme": "dark",
+   "file": "a11y/fix-it-done-dark.png",
+   "issues": [
+    "button.mk-badge border-top is 2px, not 1px"
+   ],
+   "note": "Fix it: the toast says what was saved; the list is checked again"
+  },
+  {
+   "area": "a11y",
+   "state": "describe-busy-dark",
+   "theme": "dark",
+   "file": "a11y/describe-busy-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "describe-done-dark",
+   "theme": "dark",
+   "file": "a11y/describe-done-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "describe-hover-dark",
+   "theme": "dark",
+   "file": "a11y/describe-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "describe-focus-dark",
+   "theme": "dark",
+   "file": "a11y/describe-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "describe-close-focus-dark",
+   "theme": "dark",
+   "file": "a11y/describe-close-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "describe-error-dark",
+   "theme": "dark",
+   "file": "a11y/describe-error-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "toolbar-describe-hover-dark",
+   "theme": "dark",
+   "file": "a11y/toolbar-describe-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "toolbar-read-hover-dark",
+   "theme": "dark",
+   "file": "a11y/toolbar-read-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
    "area": "edit-toolbar",
    "state": "selected-narrow-dark",
    "theme": "dark",
@@ -2250,6 +2798,258 @@
    "note": "partial CSS removed, prompt kept; any edit clears the note"
   },
   {
+   "area": "gallery",
+   "state": "chip-narrow-dark",
+   "theme": "dark",
+   "file": "gallery/chip-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "section-open-narrow-dark",
+   "theme": "dark",
+   "file": "gallery/section-open-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "section-items-narrow-dark",
+   "theme": "dark",
+   "file": "gallery/section-items-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "section-collapsed-narrow-dark",
+   "theme": "dark",
+   "file": "gallery/section-collapsed-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-row-narrow-dark",
+   "theme": "dark",
+   "file": "gallery/update-row-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "trying-strip-narrow-dark",
+   "theme": "dark",
+   "file": "gallery/trying-strip-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "trying-item-narrow-dark",
+   "theme": "dark",
+   "file": "gallery/trying-item-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "install-review-narrow-dark",
+   "theme": "dark",
+   "file": "gallery/install-review-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-review-narrow-dark",
+   "theme": "dark",
+   "file": "gallery/update-review-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "share-submit-narrow-dark",
+   "theme": "dark",
+   "file": "gallery/share-submit-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "submit-toast-narrow-dark",
+   "theme": "dark",
+   "file": "gallery/submit-toast-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "setting-narrow-dark",
+   "theme": "dark",
+   "file": "gallery/setting-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "menu-narrow-dark",
+   "theme": "dark",
+   "file": "a11y/menu-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "menu-on-narrow-dark",
+   "theme": "dark",
+   "file": "a11y/menu-on-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-narrow-dark",
+   "theme": "dark",
+   "file": "a11y/read-aloud-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-mark-narrow-dark",
+   "theme": "dark",
+   "file": "a11y/read-aloud-mark-narrow-dark.png",
+   "issues": [],
+   "note": "the sentence being read: an 18% wash with a 2px underline in --m-signal-4"
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-paused-narrow-dark",
+   "theme": "dark",
+   "file": "a11y/read-aloud-paused-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-narrow-dark",
+   "theme": "dark",
+   "file": "a11y/audit-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-markers-narrow-dark",
+   "theme": "dark",
+   "file": "a11y/audit-markers-narrow-dark.png",
+   "issues": [
+    "button.mk-badge border-top is 2px, not 1px"
+   ],
+   "note": "numbered markers on each place; the bar goes to the end that covers fewer of them"
+  },
+  {
+   "area": "a11y",
+   "state": "fix-it-done-narrow-dark",
+   "theme": "dark",
+   "file": "a11y/fix-it-done-narrow-dark.png",
+   "issues": [
+    "button.mk-badge border-top is 2px, not 1px"
+   ],
+   "note": "Fix it: the toast says what was saved; the list is checked again"
+  },
+  {
+   "area": "a11y",
+   "state": "describe-done-narrow-dark",
+   "theme": "dark",
+   "file": "a11y/describe-done-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "describe-error-narrow-dark",
+   "theme": "dark",
+   "file": "a11y/describe-error-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "pause-off-dark",
+   "theme": "dark",
+   "file": "popup/pause-off-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "pause-hover-dark",
+   "theme": "dark",
+   "file": "popup/pause-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "pause-focus-dark",
+   "theme": "dark",
+   "file": "popup/pause-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "pause-site-on-dark",
+   "theme": "dark",
+   "file": "popup/pause-site-on-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "whole-dark",
+   "theme": "dark",
+   "file": "popup/whole-dark.png",
+   "issues": [],
+   "note": "the whole popup with this site paused"
+  },
+  {
+   "area": "popup",
+   "state": "go-focus-dark",
+   "theme": "dark",
+   "file": "popup/go-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "motion",
+   "state": "reduced-effect-dark",
+   "theme": "dark",
+   "file": "motion/reduced-effect-dark.png",
+   "issues": [],
+   "note": "Effects default to Subtle here: a still outline on the target, no field"
+  },
+  {
+   "area": "motion",
+   "state": "reduced-mark-live-dark",
+   "theme": "dark",
+   "file": "motion/reduced-mark-live-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "motion",
+   "state": "reduced-landing-dark",
+   "theme": "dark",
+   "file": "motion/reduced-landing-dark.png",
+   "issues": [],
+   "note": "no sweep: the field fades out, the bar shows the result"
+  },
+  {
    "area": "bar",
    "state": "picking-light",
    "theme": "light",
@@ -2706,6 +3506,110 @@
    "note": ""
   },
   {
+   "area": "modal",
+   "state": "code-light",
+   "theme": "light",
+   "file": "modal/code-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "code-textarea-focus-light",
+   "theme": "light",
+   "file": "modal/code-textarea-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "code-footer-hover-light",
+   "theme": "light",
+   "file": "modal/code-footer-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "code-footer-focus-light",
+   "theme": "light",
+   "file": "modal/code-footer-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "close-hover-light",
+   "theme": "light",
+   "file": "modal/close-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "close-focus-light",
+   "theme": "light",
+   "file": "modal/close-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "share-light",
+   "theme": "light",
+   "file": "modal/share-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "share-actions-hover-light",
+   "theme": "light",
+   "file": "modal/share-actions-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "share-export-focus-light",
+   "theme": "light",
+   "file": "modal/share-export-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "code-long-light",
+   "theme": "light",
+   "file": "modal/code-long-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "import-empty-light",
+   "theme": "light",
+   "file": "modal/import-empty-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "import-filled-light",
+   "theme": "light",
+   "file": "modal/import-filled-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "import-error-light",
+   "theme": "light",
+   "file": "modal/import-error-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
    "area": "bar",
    "state": "picking-narrow-light",
    "theme": "light",
@@ -2878,6 +3782,54 @@
    "state": "mods-12-scrolled-narrow-light",
    "theme": "light",
    "file": "panel/mods-12-scrolled-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "code-narrow-light",
+   "theme": "light",
+   "file": "modal/code-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "share-narrow-light",
+   "theme": "light",
+   "file": "modal/share-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "code-long-narrow-light",
+   "theme": "light",
+   "file": "modal/code-long-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "import-empty-narrow-light",
+   "theme": "light",
+   "file": "modal/import-empty-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "import-filled-narrow-light",
+   "theme": "light",
+   "file": "modal/import-filled-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "modal",
+   "state": "import-error-narrow-light",
+   "theme": "light",
+   "file": "modal/import-error-narrow-light.png",
    "issues": [],
    "note": ""
   },
@@ -4026,6 +4978,402 @@
    "note": "partial CSS removed, prompt kept; any edit clears the note"
   },
   {
+   "area": "gallery",
+   "state": "chip-light",
+   "theme": "light",
+   "file": "gallery/chip-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "chip-hover-light",
+   "theme": "light",
+   "file": "gallery/chip-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "chip-focus-light",
+   "theme": "light",
+   "file": "gallery/chip-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "section-open-light",
+   "theme": "light",
+   "file": "gallery/section-open-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "section-items-light",
+   "theme": "light",
+   "file": "gallery/section-items-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "head-hover-light",
+   "theme": "light",
+   "file": "gallery/head-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "head-focus-light",
+   "theme": "light",
+   "file": "gallery/head-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "item-hover-light",
+   "theme": "light",
+   "file": "gallery/item-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "item-focus-light",
+   "theme": "light",
+   "file": "gallery/item-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "stop-showing-hover-light",
+   "theme": "light",
+   "file": "gallery/stop-showing-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "section-collapsed-light",
+   "theme": "light",
+   "file": "gallery/section-collapsed-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-row-light",
+   "theme": "light",
+   "file": "gallery/update-row-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-row-focus-light",
+   "theme": "light",
+   "file": "gallery/update-row-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "trying-strip-light",
+   "theme": "light",
+   "file": "gallery/trying-strip-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "trying-item-light",
+   "theme": "light",
+   "file": "gallery/trying-item-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "strip-hover-light",
+   "theme": "light",
+   "file": "gallery/strip-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "strip-focus-light",
+   "theme": "light",
+   "file": "gallery/strip-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "install-review-light",
+   "theme": "light",
+   "file": "gallery/install-review-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-review-light",
+   "theme": "light",
+   "file": "gallery/update-review-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-diff-focus-light",
+   "theme": "light",
+   "file": "gallery/update-diff-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-footer-focus-light",
+   "theme": "light",
+   "file": "gallery/update-footer-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "share-submit-light",
+   "theme": "light",
+   "file": "gallery/share-submit-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "share-submit-hover-light",
+   "theme": "light",
+   "file": "gallery/share-submit-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "submit-toast-light",
+   "theme": "light",
+   "file": "gallery/submit-toast-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "setting-light",
+   "theme": "light",
+   "file": "gallery/setting-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "setting-focus-light",
+   "theme": "light",
+   "file": "gallery/setting-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "menu-light",
+   "theme": "light",
+   "file": "a11y/menu-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "menu-on-hover-light",
+   "theme": "light",
+   "file": "a11y/menu-on-hover-light.png",
+   "issues": [],
+   "note": "Underline links and Easier to read font are on (check); Dyslexia-friendly letters is their sub-option"
+  },
+  {
+   "area": "a11y",
+   "state": "menu-item-focus-light",
+   "theme": "light",
+   "file": "a11y/menu-item-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-light",
+   "theme": "light",
+   "file": "a11y/read-aloud-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-mark-light",
+   "theme": "light",
+   "file": "a11y/read-aloud-mark-light.png",
+   "issues": [],
+   "note": "the sentence being read: an 18% wash with a 2px underline in --m-signal-4"
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-hover-light",
+   "theme": "light",
+   "file": "a11y/read-aloud-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-focus-light",
+   "theme": "light",
+   "file": "a11y/read-aloud-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-paused-light",
+   "theme": "light",
+   "file": "a11y/read-aloud-paused-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-light",
+   "theme": "light",
+   "file": "a11y/audit-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-markers-light",
+   "theme": "light",
+   "file": "a11y/audit-markers-light.png",
+   "issues": [
+    "button.mk-badge border-top is 2px, not 1px"
+   ],
+   "note": "numbered markers on each place; the bar goes to the end that covers fewer of them"
+  },
+  {
+   "area": "a11y",
+   "state": "audit-fix-hover-light",
+   "theme": "light",
+   "file": "a11y/audit-fix-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-fix-focus-light",
+   "theme": "light",
+   "file": "a11y/audit-fix-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-marker-focus-light",
+   "theme": "light",
+   "file": "a11y/audit-marker-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-again-focus-light",
+   "theme": "light",
+   "file": "a11y/audit-again-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "fix-it-done-light",
+   "theme": "light",
+   "file": "a11y/fix-it-done-light.png",
+   "issues": [
+    "button.mk-badge border-top is 2px, not 1px"
+   ],
+   "note": "Fix it: the toast says what was saved; the list is checked again"
+  },
+  {
+   "area": "a11y",
+   "state": "describe-busy-light",
+   "theme": "light",
+   "file": "a11y/describe-busy-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "describe-done-light",
+   "theme": "light",
+   "file": "a11y/describe-done-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "describe-hover-light",
+   "theme": "light",
+   "file": "a11y/describe-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "describe-focus-light",
+   "theme": "light",
+   "file": "a11y/describe-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "describe-close-focus-light",
+   "theme": "light",
+   "file": "a11y/describe-close-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "describe-error-light",
+   "theme": "light",
+   "file": "a11y/describe-error-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "toolbar-describe-hover-light",
+   "theme": "light",
+   "file": "a11y/toolbar-describe-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "toolbar-read-hover-light",
+   "theme": "light",
+   "file": "a11y/toolbar-read-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
    "area": "edit-toolbar",
    "state": "selected-narrow-light",
    "theme": "light",
@@ -4496,6 +5844,1810 @@
    "file": "stop/cancelled-narrow-light.png",
    "issues": [],
    "note": "partial CSS removed, prompt kept; any edit clears the note"
+  },
+  {
+   "area": "gallery",
+   "state": "chip-narrow-light",
+   "theme": "light",
+   "file": "gallery/chip-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "section-open-narrow-light",
+   "theme": "light",
+   "file": "gallery/section-open-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "section-items-narrow-light",
+   "theme": "light",
+   "file": "gallery/section-items-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "section-collapsed-narrow-light",
+   "theme": "light",
+   "file": "gallery/section-collapsed-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-row-narrow-light",
+   "theme": "light",
+   "file": "gallery/update-row-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "trying-strip-narrow-light",
+   "theme": "light",
+   "file": "gallery/trying-strip-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "trying-item-narrow-light",
+   "theme": "light",
+   "file": "gallery/trying-item-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "install-review-narrow-light",
+   "theme": "light",
+   "file": "gallery/install-review-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "update-review-narrow-light",
+   "theme": "light",
+   "file": "gallery/update-review-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "share-submit-narrow-light",
+   "theme": "light",
+   "file": "gallery/share-submit-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "submit-toast-narrow-light",
+   "theme": "light",
+   "file": "gallery/submit-toast-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "gallery",
+   "state": "setting-narrow-light",
+   "theme": "light",
+   "file": "gallery/setting-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "menu-narrow-light",
+   "theme": "light",
+   "file": "a11y/menu-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "menu-on-narrow-light",
+   "theme": "light",
+   "file": "a11y/menu-on-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-narrow-light",
+   "theme": "light",
+   "file": "a11y/read-aloud-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-mark-narrow-light",
+   "theme": "light",
+   "file": "a11y/read-aloud-mark-narrow-light.png",
+   "issues": [],
+   "note": "the sentence being read: an 18% wash with a 2px underline in --m-signal-4"
+  },
+  {
+   "area": "a11y",
+   "state": "read-aloud-paused-narrow-light",
+   "theme": "light",
+   "file": "a11y/read-aloud-paused-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-narrow-light",
+   "theme": "light",
+   "file": "a11y/audit-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "audit-markers-narrow-light",
+   "theme": "light",
+   "file": "a11y/audit-markers-narrow-light.png",
+   "issues": [
+    "button.mk-badge border-top is 2px, not 1px"
+   ],
+   "note": "numbered markers on each place; the bar goes to the end that covers fewer of them"
+  },
+  {
+   "area": "a11y",
+   "state": "fix-it-done-narrow-light",
+   "theme": "light",
+   "file": "a11y/fix-it-done-narrow-light.png",
+   "issues": [
+    "button.mk-badge border-top is 2px, not 1px"
+   ],
+   "note": "Fix it: the toast says what was saved; the list is checked again"
+  },
+  {
+   "area": "a11y",
+   "state": "describe-done-narrow-light",
+   "theme": "light",
+   "file": "a11y/describe-done-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "a11y",
+   "state": "describe-error-narrow-light",
+   "theme": "light",
+   "file": "a11y/describe-error-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "pause-off-light",
+   "theme": "light",
+   "file": "popup/pause-off-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "pause-hover-light",
+   "theme": "light",
+   "file": "popup/pause-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "pause-focus-light",
+   "theme": "light",
+   "file": "popup/pause-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "pause-site-on-light",
+   "theme": "light",
+   "file": "popup/pause-site-on-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "popup",
+   "state": "whole-light",
+   "theme": "light",
+   "file": "popup/whole-light.png",
+   "issues": [],
+   "note": "the whole popup with this site paused"
+  },
+  {
+   "area": "popup",
+   "state": "go-focus-light",
+   "theme": "light",
+   "file": "popup/go-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "motion",
+   "state": "reduced-effect-light",
+   "theme": "light",
+   "file": "motion/reduced-effect-light.png",
+   "issues": [],
+   "note": "Effects default to Subtle here: a still outline on the target, no field"
+  },
+  {
+   "area": "motion",
+   "state": "reduced-mark-live-light",
+   "theme": "light",
+   "file": "motion/reduced-mark-live-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "motion",
+   "state": "reduced-landing-light",
+   "theme": "light",
+   "file": "motion/reduced-landing-light.png",
+   "issues": [],
+   "note": "no sweep: the field fades out, the bar shows the result"
+  },
+  {
+   "area": "a11y-site",
+   "state": "before-light",
+   "theme": "light",
+   "file": "a11y-site/before-light.png",
+   "issues": [],
+   "note": "the Riverside Library as it ships: faint text, tiny targets, no underlines, a ticker, a cookie bar and a chat bubble"
+  },
+  {
+   "area": "a11y-site",
+   "state": "contrast-light",
+   "theme": "light",
+   "file": "a11y-site/contrast-light.png",
+   "issues": [],
+   "note": "Higher contrast"
+  },
+  {
+   "area": "a11y-site",
+   "state": "targets-light",
+   "theme": "light",
+   "file": "a11y-site/targets-light.png",
+   "issues": [],
+   "note": "Bigger click targets"
+  },
+  {
+   "area": "a11y-site",
+   "state": "readable-light",
+   "theme": "light",
+   "file": "a11y-site/readable-light.png",
+   "issues": [],
+   "note": "Easier to read font"
+  },
+  {
+   "area": "a11y-site",
+   "state": "underline-light",
+   "theme": "light",
+   "file": "a11y-site/underline-light.png",
+   "issues": [],
+   "note": "Underline links"
+  },
+  {
+   "area": "a11y-site",
+   "state": "still-light",
+   "theme": "light",
+   "file": "a11y-site/still-light.png",
+   "issues": [],
+   "note": "Stop animations"
+  },
+  {
+   "area": "a11y-site",
+   "state": "outline-light",
+   "theme": "light",
+   "file": "a11y-site/outline-light.png",
+   "issues": [],
+   "note": "Focus outline everywhere"
+  },
+  {
+   "area": "a11y-site",
+   "state": "ruler-light",
+   "theme": "light",
+   "file": "a11y-site/ruler-light.png",
+   "issues": [],
+   "note": "Reading ruler"
+  },
+  {
+   "area": "a11y-site",
+   "state": "calm-light",
+   "theme": "light",
+   "file": "a11y-site/calm-light.png",
+   "issues": [],
+   "note": "Hide distractions"
+  },
+  {
+   "area": "a11y-site",
+   "state": "dyslexia-light",
+   "theme": "light",
+   "file": "a11y-site/dyslexia-light.png",
+   "issues": [],
+   "note": "Easier to read font with Dyslexia-friendly letters"
+  },
+  {
+   "area": "a11y-site",
+   "state": "before-narrow-light",
+   "theme": "light",
+   "file": "a11y-site/before-narrow-light.png",
+   "issues": [],
+   "note": "the Riverside Library as it ships: faint text, tiny targets, no underlines, a ticker, a cookie bar and a chat bubble"
+  },
+  {
+   "area": "a11y-site",
+   "state": "contrast-narrow-light",
+   "theme": "light",
+   "file": "a11y-site/contrast-narrow-light.png",
+   "issues": [],
+   "note": "Higher contrast"
+  },
+  {
+   "area": "a11y-site",
+   "state": "readable-narrow-light",
+   "theme": "light",
+   "file": "a11y-site/readable-narrow-light.png",
+   "issues": [],
+   "note": "Easier to read font"
+  },
+  {
+   "area": "a11y-site",
+   "state": "calm-narrow-light",
+   "theme": "light",
+   "file": "a11y-site/calm-narrow-light.png",
+   "issues": [],
+   "note": "Hide distractions"
+  },
+  {
+   "area": "control",
+   "state": "panel-strip-dark",
+   "theme": "dark",
+   "file": "control/panel-strip-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "panel-backup-dark",
+   "theme": "dark",
+   "file": "control/panel-backup-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "pause-row-hover-dark",
+   "theme": "dark",
+   "file": "control/pause-row-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "pause-row-focus-dark",
+   "theme": "dark",
+   "file": "control/pause-row-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "backup-hover-dark",
+   "theme": "dark",
+   "file": "control/backup-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "backup-focus-dark",
+   "theme": "dark",
+   "file": "control/backup-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "origin-show-code-dark",
+   "theme": "dark",
+   "file": "control/origin-show-code-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "paused-site-dark",
+   "theme": "dark",
+   "file": "control/paused-site-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "paused-toast-dark",
+   "theme": "dark",
+   "file": "control/paused-toast-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "toast-action-focus-dark",
+   "theme": "dark",
+   "file": "control/toast-action-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "show-code-dark",
+   "theme": "dark",
+   "file": "control/show-code-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "install-review-dark",
+   "theme": "dark",
+   "file": "control/install-review-dark.png",
+   "issues": [],
+   "note": "one mod from a link that runs on every website: the note says so; Cancel has focus, never Install"
+  },
+  {
+   "area": "control",
+   "state": "install-cancel-focus-dark",
+   "theme": "dark",
+   "file": "control/install-cancel-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "install-showcode-focus-dark",
+   "theme": "dark",
+   "file": "control/install-showcode-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "install-review-code-dark",
+   "theme": "dark",
+   "file": "control/install-review-code-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "install-review-backup-dark",
+   "theme": "dark",
+   "file": "control/install-review-backup-dark.png",
+   "issues": [],
+   "note": "a backup: one section per mod, a mod for another site says “not this page”, skipped items at the end"
+  },
+  {
+   "area": "control",
+   "state": "off-switch-toast-dark",
+   "theme": "dark",
+   "file": "control/off-switch-toast-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "off-switch-hover-dark",
+   "theme": "dark",
+   "file": "control/off-switch-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "off-switch-close-focus-dark",
+   "theme": "dark",
+   "file": "control/off-switch-close-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "off-panel-note-dark",
+   "theme": "dark",
+   "file": "control/off-panel-note-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "paused-everywhere-dark",
+   "theme": "dark",
+   "file": "control/paused-everywhere-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "safe-start-dark",
+   "theme": "dark",
+   "file": "control/safe-start-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "safe-start-focus-dark",
+   "theme": "dark",
+   "file": "control/safe-start-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "safe-start-note-dark",
+   "theme": "dark",
+   "file": "control/safe-start-note-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "refining-dark",
+   "theme": "dark",
+   "file": "iterate/refining-dark.png",
+   "issues": [],
+   "note": "a follow-up is typed: Enter refines, so Save drops its ↵"
+  },
+  {
+   "area": "iterate",
+   "state": "refine-working-dark",
+   "theme": "dark",
+   "file": "iterate/refine-working-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "refined-result-dark",
+   "theme": "dark",
+   "file": "iterate/refined-result-dark.png",
+   "issues": [],
+   "note": "the result says which version this is; ⌘Z steps back one"
+  },
+  {
+   "area": "iterate",
+   "state": "stepped-back-dark",
+   "theme": "dark",
+   "file": "iterate/stepped-back-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "history-rows-dark",
+   "theme": "dark",
+   "file": "iterate/history-rows-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "history-row-hover-dark",
+   "theme": "dark",
+   "file": "iterate/history-row-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "history-row-focus-dark",
+   "theme": "dark",
+   "file": "iterate/history-row-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "history-restored-dark",
+   "theme": "dark",
+   "file": "iterate/history-restored-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "broken-row-dark",
+   "theme": "dark",
+   "file": "iterate/broken-row-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "fix-hover-dark",
+   "theme": "dark",
+   "file": "iterate/fix-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "fix-focus-dark",
+   "theme": "dark",
+   "file": "iterate/fix-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "fixing-broken-dark",
+   "theme": "dark",
+   "file": "iterate/fixing-broken-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "fixed-result-dark",
+   "theme": "dark",
+   "file": "iterate/fixed-result-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tab-walk-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tab-walk-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "shift-tab-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/shift-tab-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "no-room-above-dark",
+   "theme": "dark",
+   "file": "edit-type/no-room-above-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "no-room-above-dark",
+   "theme": "dark",
+   "file": "edit-color/no-room-above-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "reach-page-tools-dark",
+   "theme": "dark",
+   "file": "bar/reach-page-tools-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "reach-suggestion-dark",
+   "theme": "dark",
+   "file": "bar/reach-suggestion-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "dodge-to-point-dark",
+   "theme": "dark",
+   "file": "bar/dodge-to-point-dark.png",
+   "issues": [],
+   "note": "a quick pass over the input, away from any control: the bar still steps aside so what is under it can be pointed at"
+  },
+  {
+   "area": "heal",
+   "state": "bar-dot-dark",
+   "theme": "dark",
+   "file": "heal/bar-dot-dark.png",
+   "issues": [],
+   "note": "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up"
+  },
+  {
+   "area": "heal",
+   "state": "mark-dot-dark",
+   "theme": "dark",
+   "file": "heal/mark-dot-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "panel-header-dark",
+   "theme": "dark",
+   "file": "heal/panel-header-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "stopped-row-dark",
+   "theme": "dark",
+   "file": "heal/stopped-row-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "stopped-fix-focus-dark",
+   "theme": "dark",
+   "file": "heal/stopped-fix-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixing-dark",
+   "theme": "dark",
+   "file": "heal/fixing-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixed-result-dark",
+   "theme": "dark",
+   "file": "heal/fixed-result-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "share-fix-toast-dark",
+   "theme": "dark",
+   "file": "heal/share-fix-toast-dark.png",
+   "issues": [],
+   "note": "a fixed gallery mod: Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "fixed-row-dark",
+   "theme": "dark",
+   "file": "heal/fixed-row-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "auto-fixed-toast-dark",
+   "theme": "dark",
+   "file": "heal/auto-fixed-toast-dark.png",
+   "issues": [],
+   "note": "fixed in the background: Undo and Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "setting-dark",
+   "theme": "dark",
+   "file": "heal/setting-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "panel-strip-narrow-dark",
+   "theme": "dark",
+   "file": "control/panel-strip-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "panel-backup-narrow-dark",
+   "theme": "dark",
+   "file": "control/panel-backup-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "paused-site-narrow-dark",
+   "theme": "dark",
+   "file": "control/paused-site-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "paused-toast-narrow-dark",
+   "theme": "dark",
+   "file": "control/paused-toast-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "show-code-narrow-dark",
+   "theme": "dark",
+   "file": "control/show-code-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "install-review-narrow-dark",
+   "theme": "dark",
+   "file": "control/install-review-narrow-dark.png",
+   "issues": [],
+   "note": "one mod from a link that runs on every website: the note says so; Cancel has focus, never Install"
+  },
+  {
+   "area": "control",
+   "state": "install-review-code-narrow-dark",
+   "theme": "dark",
+   "file": "control/install-review-code-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "install-review-backup-narrow-dark",
+   "theme": "dark",
+   "file": "control/install-review-backup-narrow-dark.png",
+   "issues": [],
+   "note": "a backup: one section per mod, a mod for another site says “not this page”, skipped items at the end"
+  },
+  {
+   "area": "control",
+   "state": "off-switch-toast-narrow-dark",
+   "theme": "dark",
+   "file": "control/off-switch-toast-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "off-panel-note-narrow-dark",
+   "theme": "dark",
+   "file": "control/off-panel-note-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "paused-everywhere-narrow-dark",
+   "theme": "dark",
+   "file": "control/paused-everywhere-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "safe-start-narrow-dark",
+   "theme": "dark",
+   "file": "control/safe-start-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "safe-start-note-narrow-dark",
+   "theme": "dark",
+   "file": "control/safe-start-note-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "refining-narrow-dark",
+   "theme": "dark",
+   "file": "iterate/refining-narrow-dark.png",
+   "issues": [],
+   "note": "a follow-up is typed: Enter refines, so Save drops its ↵"
+  },
+  {
+   "area": "iterate",
+   "state": "refine-working-narrow-dark",
+   "theme": "dark",
+   "file": "iterate/refine-working-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "refined-result-narrow-dark",
+   "theme": "dark",
+   "file": "iterate/refined-result-narrow-dark.png",
+   "issues": [],
+   "note": "the result says which version this is; ⌘Z steps back one"
+  },
+  {
+   "area": "iterate",
+   "state": "stepped-back-narrow-dark",
+   "theme": "dark",
+   "file": "iterate/stepped-back-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "history-rows-narrow-dark",
+   "theme": "dark",
+   "file": "iterate/history-rows-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "history-restored-narrow-dark",
+   "theme": "dark",
+   "file": "iterate/history-restored-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "broken-row-narrow-dark",
+   "theme": "dark",
+   "file": "iterate/broken-row-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "fixing-broken-narrow-dark",
+   "theme": "dark",
+   "file": "iterate/fixing-broken-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "fixed-result-narrow-dark",
+   "theme": "dark",
+   "file": "iterate/fixed-result-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tab-walk-narrow-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/tab-walk-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "shift-tab-narrow-dark",
+   "theme": "dark",
+   "file": "edit-toolbar/shift-tab-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "no-room-above-narrow-dark",
+   "theme": "dark",
+   "file": "edit-type/no-room-above-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "no-room-above-narrow-dark",
+   "theme": "dark",
+   "file": "edit-color/no-room-above-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "bar-dot-narrow-dark",
+   "theme": "dark",
+   "file": "heal/bar-dot-narrow-dark.png",
+   "issues": [],
+   "note": "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up"
+  },
+  {
+   "area": "heal",
+   "state": "panel-header-narrow-dark",
+   "theme": "dark",
+   "file": "heal/panel-header-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "stopped-row-narrow-dark",
+   "theme": "dark",
+   "file": "heal/stopped-row-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixing-narrow-dark",
+   "theme": "dark",
+   "file": "heal/fixing-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixed-result-narrow-dark",
+   "theme": "dark",
+   "file": "heal/fixed-result-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "share-fix-toast-narrow-dark",
+   "theme": "dark",
+   "file": "heal/share-fix-toast-narrow-dark.png",
+   "issues": [],
+   "note": "a fixed gallery mod: Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "fixed-row-narrow-dark",
+   "theme": "dark",
+   "file": "heal/fixed-row-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "auto-fixed-toast-narrow-dark",
+   "theme": "dark",
+   "file": "heal/auto-fixed-toast-narrow-dark.png",
+   "issues": [],
+   "note": "fixed in the background: Undo and Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "setting-narrow-dark",
+   "theme": "dark",
+   "file": "heal/setting-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "panel-strip-light",
+   "theme": "light",
+   "file": "control/panel-strip-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "panel-backup-light",
+   "theme": "light",
+   "file": "control/panel-backup-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "pause-row-hover-light",
+   "theme": "light",
+   "file": "control/pause-row-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "pause-row-focus-light",
+   "theme": "light",
+   "file": "control/pause-row-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "backup-hover-light",
+   "theme": "light",
+   "file": "control/backup-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "backup-focus-light",
+   "theme": "light",
+   "file": "control/backup-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "origin-show-code-light",
+   "theme": "light",
+   "file": "control/origin-show-code-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "paused-site-light",
+   "theme": "light",
+   "file": "control/paused-site-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "paused-toast-light",
+   "theme": "light",
+   "file": "control/paused-toast-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "toast-action-focus-light",
+   "theme": "light",
+   "file": "control/toast-action-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "show-code-light",
+   "theme": "light",
+   "file": "control/show-code-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "install-review-light",
+   "theme": "light",
+   "file": "control/install-review-light.png",
+   "issues": [],
+   "note": "one mod from a link that runs on every website: the note says so; Cancel has focus, never Install"
+  },
+  {
+   "area": "control",
+   "state": "install-cancel-focus-light",
+   "theme": "light",
+   "file": "control/install-cancel-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "install-showcode-focus-light",
+   "theme": "light",
+   "file": "control/install-showcode-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "install-review-code-light",
+   "theme": "light",
+   "file": "control/install-review-code-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "install-review-backup-light",
+   "theme": "light",
+   "file": "control/install-review-backup-light.png",
+   "issues": [],
+   "note": "a backup: one section per mod, a mod for another site says “not this page”, skipped items at the end"
+  },
+  {
+   "area": "control",
+   "state": "off-switch-toast-light",
+   "theme": "light",
+   "file": "control/off-switch-toast-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "off-switch-hover-light",
+   "theme": "light",
+   "file": "control/off-switch-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "off-switch-close-focus-light",
+   "theme": "light",
+   "file": "control/off-switch-close-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "off-panel-note-light",
+   "theme": "light",
+   "file": "control/off-panel-note-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "paused-everywhere-light",
+   "theme": "light",
+   "file": "control/paused-everywhere-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "safe-start-light",
+   "theme": "light",
+   "file": "control/safe-start-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "safe-start-focus-light",
+   "theme": "light",
+   "file": "control/safe-start-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "safe-start-note-light",
+   "theme": "light",
+   "file": "control/safe-start-note-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "refining-light",
+   "theme": "light",
+   "file": "iterate/refining-light.png",
+   "issues": [],
+   "note": "a follow-up is typed: Enter refines, so Save drops its ↵"
+  },
+  {
+   "area": "iterate",
+   "state": "refine-working-light",
+   "theme": "light",
+   "file": "iterate/refine-working-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "refined-result-light",
+   "theme": "light",
+   "file": "iterate/refined-result-light.png",
+   "issues": [],
+   "note": "the result says which version this is; ⌘Z steps back one"
+  },
+  {
+   "area": "iterate",
+   "state": "stepped-back-light",
+   "theme": "light",
+   "file": "iterate/stepped-back-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "history-rows-light",
+   "theme": "light",
+   "file": "iterate/history-rows-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "history-row-hover-light",
+   "theme": "light",
+   "file": "iterate/history-row-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "history-row-focus-light",
+   "theme": "light",
+   "file": "iterate/history-row-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "history-restored-light",
+   "theme": "light",
+   "file": "iterate/history-restored-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "broken-row-light",
+   "theme": "light",
+   "file": "iterate/broken-row-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "fix-hover-light",
+   "theme": "light",
+   "file": "iterate/fix-hover-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "fix-focus-light",
+   "theme": "light",
+   "file": "iterate/fix-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "fixing-broken-light",
+   "theme": "light",
+   "file": "iterate/fixing-broken-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "fixed-result-light",
+   "theme": "light",
+   "file": "iterate/fixed-result-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tab-walk-light",
+   "theme": "light",
+   "file": "edit-toolbar/tab-walk-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "shift-tab-light",
+   "theme": "light",
+   "file": "edit-toolbar/shift-tab-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "no-room-above-light",
+   "theme": "light",
+   "file": "edit-type/no-room-above-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "no-room-above-light",
+   "theme": "light",
+   "file": "edit-color/no-room-above-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "reach-page-tools-light",
+   "theme": "light",
+   "file": "bar/reach-page-tools-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "reach-suggestion-light",
+   "theme": "light",
+   "file": "bar/reach-suggestion-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "bar",
+   "state": "dodge-to-point-light",
+   "theme": "light",
+   "file": "bar/dodge-to-point-light.png",
+   "issues": [],
+   "note": "a quick pass over the input, away from any control: the bar still steps aside so what is under it can be pointed at"
+  },
+  {
+   "area": "heal",
+   "state": "bar-dot-light",
+   "theme": "light",
+   "file": "heal/bar-dot-light.png",
+   "issues": [],
+   "note": "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up"
+  },
+  {
+   "area": "heal",
+   "state": "mark-dot-light",
+   "theme": "light",
+   "file": "heal/mark-dot-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "panel-header-light",
+   "theme": "light",
+   "file": "heal/panel-header-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "stopped-row-light",
+   "theme": "light",
+   "file": "heal/stopped-row-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "stopped-fix-focus-light",
+   "theme": "light",
+   "file": "heal/stopped-fix-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixing-light",
+   "theme": "light",
+   "file": "heal/fixing-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixed-result-light",
+   "theme": "light",
+   "file": "heal/fixed-result-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "share-fix-toast-light",
+   "theme": "light",
+   "file": "heal/share-fix-toast-light.png",
+   "issues": [],
+   "note": "a fixed gallery mod: Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "fixed-row-light",
+   "theme": "light",
+   "file": "heal/fixed-row-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "auto-fixed-toast-light",
+   "theme": "light",
+   "file": "heal/auto-fixed-toast-light.png",
+   "issues": [],
+   "note": "fixed in the background: Undo and Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "setting-light",
+   "theme": "light",
+   "file": "heal/setting-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "panel-strip-narrow-light",
+   "theme": "light",
+   "file": "control/panel-strip-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "panel-backup-narrow-light",
+   "theme": "light",
+   "file": "control/panel-backup-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "paused-site-narrow-light",
+   "theme": "light",
+   "file": "control/paused-site-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "paused-toast-narrow-light",
+   "theme": "light",
+   "file": "control/paused-toast-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "show-code-narrow-light",
+   "theme": "light",
+   "file": "control/show-code-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "install-review-narrow-light",
+   "theme": "light",
+   "file": "control/install-review-narrow-light.png",
+   "issues": [],
+   "note": "one mod from a link that runs on every website: the note says so; Cancel has focus, never Install"
+  },
+  {
+   "area": "control",
+   "state": "install-review-code-narrow-light",
+   "theme": "light",
+   "file": "control/install-review-code-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "install-review-backup-narrow-light",
+   "theme": "light",
+   "file": "control/install-review-backup-narrow-light.png",
+   "issues": [],
+   "note": "a backup: one section per mod, a mod for another site says “not this page”, skipped items at the end"
+  },
+  {
+   "area": "control",
+   "state": "off-switch-toast-narrow-light",
+   "theme": "light",
+   "file": "control/off-switch-toast-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "off-panel-note-narrow-light",
+   "theme": "light",
+   "file": "control/off-panel-note-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "paused-everywhere-narrow-light",
+   "theme": "light",
+   "file": "control/paused-everywhere-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "safe-start-narrow-light",
+   "theme": "light",
+   "file": "control/safe-start-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "control",
+   "state": "safe-start-note-narrow-light",
+   "theme": "light",
+   "file": "control/safe-start-note-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "refining-narrow-light",
+   "theme": "light",
+   "file": "iterate/refining-narrow-light.png",
+   "issues": [],
+   "note": "a follow-up is typed: Enter refines, so Save drops its ↵"
+  },
+  {
+   "area": "iterate",
+   "state": "refine-working-narrow-light",
+   "theme": "light",
+   "file": "iterate/refine-working-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "refined-result-narrow-light",
+   "theme": "light",
+   "file": "iterate/refined-result-narrow-light.png",
+   "issues": [],
+   "note": "the result says which version this is; ⌘Z steps back one"
+  },
+  {
+   "area": "iterate",
+   "state": "stepped-back-narrow-light",
+   "theme": "light",
+   "file": "iterate/stepped-back-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "history-rows-narrow-light",
+   "theme": "light",
+   "file": "iterate/history-rows-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "history-restored-narrow-light",
+   "theme": "light",
+   "file": "iterate/history-restored-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "broken-row-narrow-light",
+   "theme": "light",
+   "file": "iterate/broken-row-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "fixing-broken-narrow-light",
+   "theme": "light",
+   "file": "iterate/fixing-broken-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "iterate",
+   "state": "fixed-result-narrow-light",
+   "theme": "light",
+   "file": "iterate/fixed-result-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "tab-walk-narrow-light",
+   "theme": "light",
+   "file": "edit-toolbar/tab-walk-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-toolbar",
+   "state": "shift-tab-narrow-light",
+   "theme": "light",
+   "file": "edit-toolbar/shift-tab-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-type",
+   "state": "no-room-above-narrow-light",
+   "theme": "light",
+   "file": "edit-type/no-room-above-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "edit-color",
+   "state": "no-room-above-narrow-light",
+   "theme": "light",
+   "file": "edit-color/no-room-above-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "bar-dot-narrow-light",
+   "theme": "light",
+   "file": "heal/bar-dot-narrow-light.png",
+   "issues": [],
+   "note": "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up"
+  },
+  {
+   "area": "heal",
+   "state": "panel-header-narrow-light",
+   "theme": "light",
+   "file": "heal/panel-header-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "stopped-row-narrow-light",
+   "theme": "light",
+   "file": "heal/stopped-row-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixing-narrow-light",
+   "theme": "light",
+   "file": "heal/fixing-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixed-result-narrow-light",
+   "theme": "light",
+   "file": "heal/fixed-result-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "share-fix-toast-narrow-light",
+   "theme": "light",
+   "file": "heal/share-fix-toast-narrow-light.png",
+   "issues": [],
+   "note": "a fixed gallery mod: Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "fixed-row-narrow-light",
+   "theme": "light",
+   "file": "heal/fixed-row-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "auto-fixed-toast-narrow-light",
+   "theme": "light",
+   "file": "heal/auto-fixed-toast-narrow-light.png",
+   "issues": [],
+   "note": "fixed in the background: Undo and Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "setting-narrow-light",
+   "theme": "light",
+   "file": "heal/setting-narrow-light.png",
+   "issues": [],
+   "note": ""
   },
   {
    "area": "hostile",
@@ -4974,2830 +8126,6 @@
    "state": "hostile-noise-panel-light",
    "theme": "light",
    "file": "hostile/hostile-noise-panel-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "code-dark",
-   "theme": "dark",
-   "file": "modal/code-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "code-textarea-focus-dark",
-   "theme": "dark",
-   "file": "modal/code-textarea-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "code-footer-hover-dark",
-   "theme": "dark",
-   "file": "modal/code-footer-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "code-footer-focus-dark",
-   "theme": "dark",
-   "file": "modal/code-footer-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "close-hover-dark",
-   "theme": "dark",
-   "file": "modal/close-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "close-focus-dark",
-   "theme": "dark",
-   "file": "modal/close-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "share-dark",
-   "theme": "dark",
-   "file": "modal/share-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "share-actions-hover-dark",
-   "theme": "dark",
-   "file": "modal/share-actions-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "share-export-focus-dark",
-   "theme": "dark",
-   "file": "modal/share-export-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "code-long-dark",
-   "theme": "dark",
-   "file": "modal/code-long-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "import-empty-dark",
-   "theme": "dark",
-   "file": "modal/import-empty-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "import-filled-dark",
-   "theme": "dark",
-   "file": "modal/import-filled-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "import-error-dark",
-   "theme": "dark",
-   "file": "modal/import-error-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "code-narrow-dark",
-   "theme": "dark",
-   "file": "modal/code-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "share-narrow-dark",
-   "theme": "dark",
-   "file": "modal/share-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "code-long-narrow-dark",
-   "theme": "dark",
-   "file": "modal/code-long-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "import-empty-narrow-dark",
-   "theme": "dark",
-   "file": "modal/import-empty-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "import-filled-narrow-dark",
-   "theme": "dark",
-   "file": "modal/import-filled-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "import-error-narrow-dark",
-   "theme": "dark",
-   "file": "modal/import-error-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "refining-dark",
-   "theme": "dark",
-   "file": "iterate/refining-dark.png",
-   "issues": [],
-   "note": "a follow-up is typed: Enter refines, so Save drops its ↵"
-  },
-  {
-   "area": "iterate",
-   "state": "refine-working-dark",
-   "theme": "dark",
-   "file": "iterate/refine-working-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "refined-result-dark",
-   "theme": "dark",
-   "file": "iterate/refined-result-dark.png",
-   "issues": [],
-   "note": "the result says which version this is; ⌘Z steps back one"
-  },
-  {
-   "area": "iterate",
-   "state": "stepped-back-dark",
-   "theme": "dark",
-   "file": "iterate/stepped-back-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "history-rows-dark",
-   "theme": "dark",
-   "file": "iterate/history-rows-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "history-row-hover-dark",
-   "theme": "dark",
-   "file": "iterate/history-row-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "history-row-focus-dark",
-   "theme": "dark",
-   "file": "iterate/history-row-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "history-restored-dark",
-   "theme": "dark",
-   "file": "iterate/history-restored-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "broken-row-dark",
-   "theme": "dark",
-   "file": "iterate/broken-row-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "fix-hover-dark",
-   "theme": "dark",
-   "file": "iterate/fix-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "fix-focus-dark",
-   "theme": "dark",
-   "file": "iterate/fix-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "fixing-broken-dark",
-   "theme": "dark",
-   "file": "iterate/fixing-broken-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "fixed-result-dark",
-   "theme": "dark",
-   "file": "iterate/fixed-result-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "refining-narrow-dark",
-   "theme": "dark",
-   "file": "iterate/refining-narrow-dark.png",
-   "issues": [],
-   "note": "a follow-up is typed: Enter refines, so Save drops its ↵"
-  },
-  {
-   "area": "iterate",
-   "state": "refine-working-narrow-dark",
-   "theme": "dark",
-   "file": "iterate/refine-working-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "refined-result-narrow-dark",
-   "theme": "dark",
-   "file": "iterate/refined-result-narrow-dark.png",
-   "issues": [],
-   "note": "the result says which version this is; ⌘Z steps back one"
-  },
-  {
-   "area": "iterate",
-   "state": "stepped-back-narrow-dark",
-   "theme": "dark",
-   "file": "iterate/stepped-back-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "history-rows-narrow-dark",
-   "theme": "dark",
-   "file": "iterate/history-rows-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "history-restored-narrow-dark",
-   "theme": "dark",
-   "file": "iterate/history-restored-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "broken-row-narrow-dark",
-   "theme": "dark",
-   "file": "iterate/broken-row-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "fixing-broken-narrow-dark",
-   "theme": "dark",
-   "file": "iterate/fixing-broken-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "fixed-result-narrow-dark",
-   "theme": "dark",
-   "file": "iterate/fixed-result-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "motion",
-   "state": "reduced-effect-dark",
-   "theme": "dark",
-   "file": "motion/reduced-effect-dark.png",
-   "issues": [],
-   "note": "Effects default to Subtle here: a still outline on the target, no field"
-  },
-  {
-   "area": "motion",
-   "state": "reduced-mark-live-dark",
-   "theme": "dark",
-   "file": "motion/reduced-mark-live-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "motion",
-   "state": "reduced-landing-dark",
-   "theme": "dark",
-   "file": "motion/reduced-landing-dark.png",
-   "issues": [],
-   "note": "no sweep: the field fades out, the bar shows the result"
-  },
-  {
-   "area": "modal",
-   "state": "code-light",
-   "theme": "light",
-   "file": "modal/code-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "code-textarea-focus-light",
-   "theme": "light",
-   "file": "modal/code-textarea-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "code-footer-hover-light",
-   "theme": "light",
-   "file": "modal/code-footer-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "code-footer-focus-light",
-   "theme": "light",
-   "file": "modal/code-footer-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "close-hover-light",
-   "theme": "light",
-   "file": "modal/close-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "close-focus-light",
-   "theme": "light",
-   "file": "modal/close-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "share-light",
-   "theme": "light",
-   "file": "modal/share-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "share-actions-hover-light",
-   "theme": "light",
-   "file": "modal/share-actions-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "share-export-focus-light",
-   "theme": "light",
-   "file": "modal/share-export-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "code-long-light",
-   "theme": "light",
-   "file": "modal/code-long-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "import-empty-light",
-   "theme": "light",
-   "file": "modal/import-empty-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "import-filled-light",
-   "theme": "light",
-   "file": "modal/import-filled-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "import-error-light",
-   "theme": "light",
-   "file": "modal/import-error-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "code-narrow-light",
-   "theme": "light",
-   "file": "modal/code-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "share-narrow-light",
-   "theme": "light",
-   "file": "modal/share-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "code-long-narrow-light",
-   "theme": "light",
-   "file": "modal/code-long-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "import-empty-narrow-light",
-   "theme": "light",
-   "file": "modal/import-empty-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "import-filled-narrow-light",
-   "theme": "light",
-   "file": "modal/import-filled-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "modal",
-   "state": "import-error-narrow-light",
-   "theme": "light",
-   "file": "modal/import-error-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "refining-light",
-   "theme": "light",
-   "file": "iterate/refining-light.png",
-   "issues": [],
-   "note": "a follow-up is typed: Enter refines, so Save drops its ↵"
-  },
-  {
-   "area": "iterate",
-   "state": "refine-working-light",
-   "theme": "light",
-   "file": "iterate/refine-working-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "refined-result-light",
-   "theme": "light",
-   "file": "iterate/refined-result-light.png",
-   "issues": [],
-   "note": "the result says which version this is; ⌘Z steps back one"
-  },
-  {
-   "area": "iterate",
-   "state": "stepped-back-light",
-   "theme": "light",
-   "file": "iterate/stepped-back-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "history-rows-light",
-   "theme": "light",
-   "file": "iterate/history-rows-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "history-row-hover-light",
-   "theme": "light",
-   "file": "iterate/history-row-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "history-row-focus-light",
-   "theme": "light",
-   "file": "iterate/history-row-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "history-restored-light",
-   "theme": "light",
-   "file": "iterate/history-restored-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "broken-row-light",
-   "theme": "light",
-   "file": "iterate/broken-row-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "fix-hover-light",
-   "theme": "light",
-   "file": "iterate/fix-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "fix-focus-light",
-   "theme": "light",
-   "file": "iterate/fix-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "fixing-broken-light",
-   "theme": "light",
-   "file": "iterate/fixing-broken-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "fixed-result-light",
-   "theme": "light",
-   "file": "iterate/fixed-result-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "refining-narrow-light",
-   "theme": "light",
-   "file": "iterate/refining-narrow-light.png",
-   "issues": [],
-   "note": "a follow-up is typed: Enter refines, so Save drops its ↵"
-  },
-  {
-   "area": "iterate",
-   "state": "refine-working-narrow-light",
-   "theme": "light",
-   "file": "iterate/refine-working-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "refined-result-narrow-light",
-   "theme": "light",
-   "file": "iterate/refined-result-narrow-light.png",
-   "issues": [],
-   "note": "the result says which version this is; ⌘Z steps back one"
-  },
-  {
-   "area": "iterate",
-   "state": "stepped-back-narrow-light",
-   "theme": "light",
-   "file": "iterate/stepped-back-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "history-rows-narrow-light",
-   "theme": "light",
-   "file": "iterate/history-rows-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "history-restored-narrow-light",
-   "theme": "light",
-   "file": "iterate/history-restored-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "broken-row-narrow-light",
-   "theme": "light",
-   "file": "iterate/broken-row-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "fixing-broken-narrow-light",
-   "theme": "light",
-   "file": "iterate/fixing-broken-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "iterate",
-   "state": "fixed-result-narrow-light",
-   "theme": "light",
-   "file": "iterate/fixed-result-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "motion",
-   "state": "reduced-effect-light",
-   "theme": "light",
-   "file": "motion/reduced-effect-light.png",
-   "issues": [],
-   "note": "Effects default to Subtle here: a still outline on the target, no field"
-  },
-  {
-   "area": "motion",
-   "state": "reduced-mark-live-light",
-   "theme": "light",
-   "file": "motion/reduced-mark-live-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "motion",
-   "state": "reduced-landing-light",
-   "theme": "light",
-   "file": "motion/reduced-landing-light.png",
-   "issues": [],
-   "note": "no sweep: the field fades out, the bar shows the result"
-  },
-  {
-   "area": "a11y-site",
-   "state": "before-light",
-   "theme": "light",
-   "file": "a11y-site/before-light.png",
-   "issues": [],
-   "note": "the Riverside Library as it ships: faint text, tiny targets, no underlines, a ticker, a cookie bar and a chat bubble"
-  },
-  {
-   "area": "a11y-site",
-   "state": "contrast-light",
-   "theme": "light",
-   "file": "a11y-site/contrast-light.png",
-   "issues": [],
-   "note": "Higher contrast"
-  },
-  {
-   "area": "a11y-site",
-   "state": "targets-light",
-   "theme": "light",
-   "file": "a11y-site/targets-light.png",
-   "issues": [],
-   "note": "Bigger click targets"
-  },
-  {
-   "area": "a11y-site",
-   "state": "readable-light",
-   "theme": "light",
-   "file": "a11y-site/readable-light.png",
-   "issues": [],
-   "note": "Easier to read font"
-  },
-  {
-   "area": "a11y-site",
-   "state": "underline-light",
-   "theme": "light",
-   "file": "a11y-site/underline-light.png",
-   "issues": [],
-   "note": "Underline links"
-  },
-  {
-   "area": "a11y-site",
-   "state": "still-light",
-   "theme": "light",
-   "file": "a11y-site/still-light.png",
-   "issues": [],
-   "note": "Stop animations"
-  },
-  {
-   "area": "a11y-site",
-   "state": "outline-light",
-   "theme": "light",
-   "file": "a11y-site/outline-light.png",
-   "issues": [],
-   "note": "Focus outline everywhere"
-  },
-  {
-   "area": "a11y-site",
-   "state": "ruler-light",
-   "theme": "light",
-   "file": "a11y-site/ruler-light.png",
-   "issues": [],
-   "note": "Reading ruler"
-  },
-  {
-   "area": "a11y-site",
-   "state": "calm-light",
-   "theme": "light",
-   "file": "a11y-site/calm-light.png",
-   "issues": [],
-   "note": "Hide distractions"
-  },
-  {
-   "area": "a11y-site",
-   "state": "dyslexia-light",
-   "theme": "light",
-   "file": "a11y-site/dyslexia-light.png",
-   "issues": [],
-   "note": "Easier to read font with Dyslexia-friendly letters"
-  },
-  {
-   "area": "a11y-site",
-   "state": "before-narrow-light",
-   "theme": "light",
-   "file": "a11y-site/before-narrow-light.png",
-   "issues": [],
-   "note": "the Riverside Library as it ships: faint text, tiny targets, no underlines, a ticker, a cookie bar and a chat bubble"
-  },
-  {
-   "area": "a11y-site",
-   "state": "contrast-narrow-light",
-   "theme": "light",
-   "file": "a11y-site/contrast-narrow-light.png",
-   "issues": [],
-   "note": "Higher contrast"
-  },
-  {
-   "area": "a11y-site",
-   "state": "readable-narrow-light",
-   "theme": "light",
-   "file": "a11y-site/readable-narrow-light.png",
-   "issues": [],
-   "note": "Easier to read font"
-  },
-  {
-   "area": "a11y-site",
-   "state": "calm-narrow-light",
-   "theme": "light",
-   "file": "a11y-site/calm-narrow-light.png",
-   "issues": [],
-   "note": "Hide distractions"
-  },
-  {
-   "area": "gallery",
-   "state": "chip-dark",
-   "theme": "dark",
-   "file": "gallery/chip-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "chip-hover-dark",
-   "theme": "dark",
-   "file": "gallery/chip-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "chip-focus-dark",
-   "theme": "dark",
-   "file": "gallery/chip-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "section-open-dark",
-   "theme": "dark",
-   "file": "gallery/section-open-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "section-items-dark",
-   "theme": "dark",
-   "file": "gallery/section-items-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "head-hover-dark",
-   "theme": "dark",
-   "file": "gallery/head-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "head-focus-dark",
-   "theme": "dark",
-   "file": "gallery/head-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "item-hover-dark",
-   "theme": "dark",
-   "file": "gallery/item-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "item-focus-dark",
-   "theme": "dark",
-   "file": "gallery/item-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "stop-showing-hover-dark",
-   "theme": "dark",
-   "file": "gallery/stop-showing-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "section-collapsed-dark",
-   "theme": "dark",
-   "file": "gallery/section-collapsed-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-row-dark",
-   "theme": "dark",
-   "file": "gallery/update-row-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-row-focus-dark",
-   "theme": "dark",
-   "file": "gallery/update-row-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "trying-strip-dark",
-   "theme": "dark",
-   "file": "gallery/trying-strip-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "trying-item-dark",
-   "theme": "dark",
-   "file": "gallery/trying-item-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "strip-hover-dark",
-   "theme": "dark",
-   "file": "gallery/strip-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "strip-focus-dark",
-   "theme": "dark",
-   "file": "gallery/strip-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "install-review-dark",
-   "theme": "dark",
-   "file": "gallery/install-review-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-review-dark",
-   "theme": "dark",
-   "file": "gallery/update-review-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-diff-focus-dark",
-   "theme": "dark",
-   "file": "gallery/update-diff-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-footer-focus-dark",
-   "theme": "dark",
-   "file": "gallery/update-footer-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "share-submit-dark",
-   "theme": "dark",
-   "file": "gallery/share-submit-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "share-submit-hover-dark",
-   "theme": "dark",
-   "file": "gallery/share-submit-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "submit-toast-dark",
-   "theme": "dark",
-   "file": "gallery/submit-toast-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "setting-dark",
-   "theme": "dark",
-   "file": "gallery/setting-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "setting-focus-dark",
-   "theme": "dark",
-   "file": "gallery/setting-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "menu-dark",
-   "theme": "dark",
-   "file": "a11y/menu-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "menu-on-hover-dark",
-   "theme": "dark",
-   "file": "a11y/menu-on-hover-dark.png",
-   "issues": [],
-   "note": "Underline links and Easier to read font are on (check); Dyslexia-friendly letters is their sub-option"
-  },
-  {
-   "area": "a11y",
-   "state": "menu-item-focus-dark",
-   "theme": "dark",
-   "file": "a11y/menu-item-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-dark",
-   "theme": "dark",
-   "file": "a11y/read-aloud-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-mark-dark",
-   "theme": "dark",
-   "file": "a11y/read-aloud-mark-dark.png",
-   "issues": [],
-   "note": "the sentence being read: an 18% wash with a 2px underline in --m-signal-4"
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-hover-dark",
-   "theme": "dark",
-   "file": "a11y/read-aloud-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-focus-dark",
-   "theme": "dark",
-   "file": "a11y/read-aloud-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-paused-dark",
-   "theme": "dark",
-   "file": "a11y/read-aloud-paused-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-dark",
-   "theme": "dark",
-   "file": "a11y/audit-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-markers-dark",
-   "theme": "dark",
-   "file": "a11y/audit-markers-dark.png",
-   "issues": [
-    "button.mk-badge border-top is 2px, not 1px"
-   ],
-   "note": "numbered markers on each place; the bar goes to the end that covers fewer of them"
-  },
-  {
-   "area": "a11y",
-   "state": "audit-fix-hover-dark",
-   "theme": "dark",
-   "file": "a11y/audit-fix-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-fix-focus-dark",
-   "theme": "dark",
-   "file": "a11y/audit-fix-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-marker-focus-dark",
-   "theme": "dark",
-   "file": "a11y/audit-marker-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-again-focus-dark",
-   "theme": "dark",
-   "file": "a11y/audit-again-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "fix-it-done-dark",
-   "theme": "dark",
-   "file": "a11y/fix-it-done-dark.png",
-   "issues": [],
-   "note": "Fix it: the toast says what was saved; the list is checked again"
-  },
-  {
-   "area": "a11y",
-   "state": "describe-busy-dark",
-   "theme": "dark",
-   "file": "a11y/describe-busy-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "describe-done-dark",
-   "theme": "dark",
-   "file": "a11y/describe-done-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "describe-hover-dark",
-   "theme": "dark",
-   "file": "a11y/describe-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "describe-focus-dark",
-   "theme": "dark",
-   "file": "a11y/describe-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "describe-close-focus-dark",
-   "theme": "dark",
-   "file": "a11y/describe-close-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "describe-error-dark",
-   "theme": "dark",
-   "file": "a11y/describe-error-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "toolbar-describe-hover-dark",
-   "theme": "dark",
-   "file": "a11y/toolbar-describe-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "toolbar-read-hover-dark",
-   "theme": "dark",
-   "file": "a11y/toolbar-read-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "panel-strip-dark",
-   "theme": "dark",
-   "file": "control/panel-strip-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "panel-backup-dark",
-   "theme": "dark",
-   "file": "control/panel-backup-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "pause-row-hover-dark",
-   "theme": "dark",
-   "file": "control/pause-row-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "pause-row-focus-dark",
-   "theme": "dark",
-   "file": "control/pause-row-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "backup-hover-dark",
-   "theme": "dark",
-   "file": "control/backup-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "backup-focus-dark",
-   "theme": "dark",
-   "file": "control/backup-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "origin-show-code-dark",
-   "theme": "dark",
-   "file": "control/origin-show-code-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "paused-site-dark",
-   "theme": "dark",
-   "file": "control/paused-site-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "paused-toast-dark",
-   "theme": "dark",
-   "file": "control/paused-toast-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "toast-action-focus-dark",
-   "theme": "dark",
-   "file": "control/toast-action-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "show-code-dark",
-   "theme": "dark",
-   "file": "control/show-code-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "install-review-dark",
-   "theme": "dark",
-   "file": "control/install-review-dark.png",
-   "issues": [],
-   "note": "one mod from a link that runs on every website: the note says so; Cancel has focus, never Install"
-  },
-  {
-   "area": "control",
-   "state": "install-cancel-focus-dark",
-   "theme": "dark",
-   "file": "control/install-cancel-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "install-showcode-focus-dark",
-   "theme": "dark",
-   "file": "control/install-showcode-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "install-review-code-dark",
-   "theme": "dark",
-   "file": "control/install-review-code-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "install-review-backup-dark",
-   "theme": "dark",
-   "file": "control/install-review-backup-dark.png",
-   "issues": [],
-   "note": "a backup: one section per mod, a mod for another site says “not this page”, skipped items at the end"
-  },
-  {
-   "area": "control",
-   "state": "off-switch-toast-dark",
-   "theme": "dark",
-   "file": "control/off-switch-toast-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "off-switch-hover-dark",
-   "theme": "dark",
-   "file": "control/off-switch-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "off-switch-close-focus-dark",
-   "theme": "dark",
-   "file": "control/off-switch-close-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "off-panel-note-dark",
-   "theme": "dark",
-   "file": "control/off-panel-note-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "paused-everywhere-dark",
-   "theme": "dark",
-   "file": "control/paused-everywhere-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "safe-start-dark",
-   "theme": "dark",
-   "file": "control/safe-start-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "safe-start-focus-dark",
-   "theme": "dark",
-   "file": "control/safe-start-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "safe-start-note-dark",
-   "theme": "dark",
-   "file": "control/safe-start-note-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "tab-walk-dark",
-   "theme": "dark",
-   "file": "edit-toolbar/tab-walk-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "shift-tab-dark",
-   "theme": "dark",
-   "file": "edit-toolbar/shift-tab-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-type",
-   "state": "no-room-above-dark",
-   "theme": "dark",
-   "file": "edit-type/no-room-above-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-color",
-   "state": "no-room-above-dark",
-   "theme": "dark",
-   "file": "edit-color/no-room-above-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "reach-page-tools-dark",
-   "theme": "dark",
-   "file": "bar/reach-page-tools-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "reach-suggestion-dark",
-   "theme": "dark",
-   "file": "bar/reach-suggestion-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "dodge-to-point-dark",
-   "theme": "dark",
-   "file": "bar/dodge-to-point-dark.png",
-   "issues": [],
-   "note": "a quick pass over the input, away from any control: the bar still steps aside so what is under it can be pointed at"
-  },
-  {
-   "area": "gallery",
-   "state": "chip-narrow-dark",
-   "theme": "dark",
-   "file": "gallery/chip-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "section-open-narrow-dark",
-   "theme": "dark",
-   "file": "gallery/section-open-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "section-items-narrow-dark",
-   "theme": "dark",
-   "file": "gallery/section-items-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "section-collapsed-narrow-dark",
-   "theme": "dark",
-   "file": "gallery/section-collapsed-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-row-narrow-dark",
-   "theme": "dark",
-   "file": "gallery/update-row-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "trying-strip-narrow-dark",
-   "theme": "dark",
-   "file": "gallery/trying-strip-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "trying-item-narrow-dark",
-   "theme": "dark",
-   "file": "gallery/trying-item-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "install-review-narrow-dark",
-   "theme": "dark",
-   "file": "gallery/install-review-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-review-narrow-dark",
-   "theme": "dark",
-   "file": "gallery/update-review-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "share-submit-narrow-dark",
-   "theme": "dark",
-   "file": "gallery/share-submit-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "submit-toast-narrow-dark",
-   "theme": "dark",
-   "file": "gallery/submit-toast-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "setting-narrow-dark",
-   "theme": "dark",
-   "file": "gallery/setting-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "menu-narrow-dark",
-   "theme": "dark",
-   "file": "a11y/menu-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "menu-on-narrow-dark",
-   "theme": "dark",
-   "file": "a11y/menu-on-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-narrow-dark",
-   "theme": "dark",
-   "file": "a11y/read-aloud-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-mark-narrow-dark",
-   "theme": "dark",
-   "file": "a11y/read-aloud-mark-narrow-dark.png",
-   "issues": [],
-   "note": "the sentence being read: an 18% wash with a 2px underline in --m-signal-4"
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-paused-narrow-dark",
-   "theme": "dark",
-   "file": "a11y/read-aloud-paused-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-narrow-dark",
-   "theme": "dark",
-   "file": "a11y/audit-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-markers-narrow-dark",
-   "theme": "dark",
-   "file": "a11y/audit-markers-narrow-dark.png",
-   "issues": [
-    "button.mk-badge border-top is 2px, not 1px"
-   ],
-   "note": "numbered markers on each place; the bar goes to the end that covers fewer of them"
-  },
-  {
-   "area": "a11y",
-   "state": "fix-it-done-narrow-dark",
-   "theme": "dark",
-   "file": "a11y/fix-it-done-narrow-dark.png",
-   "issues": [],
-   "note": "Fix it: the toast says what was saved; the list is checked again"
-  },
-  {
-   "area": "a11y",
-   "state": "describe-done-narrow-dark",
-   "theme": "dark",
-   "file": "a11y/describe-done-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "describe-error-narrow-dark",
-   "theme": "dark",
-   "file": "a11y/describe-error-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "panel-strip-narrow-dark",
-   "theme": "dark",
-   "file": "control/panel-strip-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "panel-backup-narrow-dark",
-   "theme": "dark",
-   "file": "control/panel-backup-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "paused-site-narrow-dark",
-   "theme": "dark",
-   "file": "control/paused-site-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "paused-toast-narrow-dark",
-   "theme": "dark",
-   "file": "control/paused-toast-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "show-code-narrow-dark",
-   "theme": "dark",
-   "file": "control/show-code-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "install-review-narrow-dark",
-   "theme": "dark",
-   "file": "control/install-review-narrow-dark.png",
-   "issues": [],
-   "note": "one mod from a link that runs on every website: the note says so; Cancel has focus, never Install"
-  },
-  {
-   "area": "control",
-   "state": "install-review-code-narrow-dark",
-   "theme": "dark",
-   "file": "control/install-review-code-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "install-review-backup-narrow-dark",
-   "theme": "dark",
-   "file": "control/install-review-backup-narrow-dark.png",
-   "issues": [],
-   "note": "a backup: one section per mod, a mod for another site says “not this page”, skipped items at the end"
-  },
-  {
-   "area": "control",
-   "state": "off-switch-toast-narrow-dark",
-   "theme": "dark",
-   "file": "control/off-switch-toast-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "off-panel-note-narrow-dark",
-   "theme": "dark",
-   "file": "control/off-panel-note-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "paused-everywhere-narrow-dark",
-   "theme": "dark",
-   "file": "control/paused-everywhere-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "safe-start-narrow-dark",
-   "theme": "dark",
-   "file": "control/safe-start-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "safe-start-note-narrow-dark",
-   "theme": "dark",
-   "file": "control/safe-start-note-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "tab-walk-narrow-dark",
-   "theme": "dark",
-   "file": "edit-toolbar/tab-walk-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "shift-tab-narrow-dark",
-   "theme": "dark",
-   "file": "edit-toolbar/shift-tab-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-type",
-   "state": "no-room-above-narrow-dark",
-   "theme": "dark",
-   "file": "edit-type/no-room-above-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-color",
-   "state": "no-room-above-narrow-dark",
-   "theme": "dark",
-   "file": "edit-color/no-room-above-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "popup",
-   "state": "pause-off-dark",
-   "theme": "dark",
-   "file": "popup/pause-off-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "popup",
-   "state": "pause-hover-dark",
-   "theme": "dark",
-   "file": "popup/pause-hover-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "popup",
-   "state": "pause-focus-dark",
-   "theme": "dark",
-   "file": "popup/pause-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "popup",
-   "state": "pause-site-on-dark",
-   "theme": "dark",
-   "file": "popup/pause-site-on-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "popup",
-   "state": "whole-dark",
-   "theme": "dark",
-   "file": "popup/whole-dark.png",
-   "issues": [],
-   "note": "the whole popup with this site paused"
-  },
-  {
-   "area": "popup",
-   "state": "go-focus-dark",
-   "theme": "dark",
-   "file": "popup/go-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "chip-light",
-   "theme": "light",
-   "file": "gallery/chip-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "chip-hover-light",
-   "theme": "light",
-   "file": "gallery/chip-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "chip-focus-light",
-   "theme": "light",
-   "file": "gallery/chip-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "section-open-light",
-   "theme": "light",
-   "file": "gallery/section-open-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "section-items-light",
-   "theme": "light",
-   "file": "gallery/section-items-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "head-hover-light",
-   "theme": "light",
-   "file": "gallery/head-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "head-focus-light",
-   "theme": "light",
-   "file": "gallery/head-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "item-hover-light",
-   "theme": "light",
-   "file": "gallery/item-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "item-focus-light",
-   "theme": "light",
-   "file": "gallery/item-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "stop-showing-hover-light",
-   "theme": "light",
-   "file": "gallery/stop-showing-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "section-collapsed-light",
-   "theme": "light",
-   "file": "gallery/section-collapsed-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-row-light",
-   "theme": "light",
-   "file": "gallery/update-row-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-row-focus-light",
-   "theme": "light",
-   "file": "gallery/update-row-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "trying-strip-light",
-   "theme": "light",
-   "file": "gallery/trying-strip-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "trying-item-light",
-   "theme": "light",
-   "file": "gallery/trying-item-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "strip-hover-light",
-   "theme": "light",
-   "file": "gallery/strip-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "strip-focus-light",
-   "theme": "light",
-   "file": "gallery/strip-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "install-review-light",
-   "theme": "light",
-   "file": "gallery/install-review-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-review-light",
-   "theme": "light",
-   "file": "gallery/update-review-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-diff-focus-light",
-   "theme": "light",
-   "file": "gallery/update-diff-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-footer-focus-light",
-   "theme": "light",
-   "file": "gallery/update-footer-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "share-submit-light",
-   "theme": "light",
-   "file": "gallery/share-submit-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "share-submit-hover-light",
-   "theme": "light",
-   "file": "gallery/share-submit-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "submit-toast-light",
-   "theme": "light",
-   "file": "gallery/submit-toast-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "setting-light",
-   "theme": "light",
-   "file": "gallery/setting-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "setting-focus-light",
-   "theme": "light",
-   "file": "gallery/setting-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "menu-light",
-   "theme": "light",
-   "file": "a11y/menu-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "menu-on-hover-light",
-   "theme": "light",
-   "file": "a11y/menu-on-hover-light.png",
-   "issues": [],
-   "note": "Underline links and Easier to read font are on (check); Dyslexia-friendly letters is their sub-option"
-  },
-  {
-   "area": "a11y",
-   "state": "menu-item-focus-light",
-   "theme": "light",
-   "file": "a11y/menu-item-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-light",
-   "theme": "light",
-   "file": "a11y/read-aloud-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-mark-light",
-   "theme": "light",
-   "file": "a11y/read-aloud-mark-light.png",
-   "issues": [],
-   "note": "the sentence being read: an 18% wash with a 2px underline in --m-signal-4"
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-hover-light",
-   "theme": "light",
-   "file": "a11y/read-aloud-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-focus-light",
-   "theme": "light",
-   "file": "a11y/read-aloud-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-paused-light",
-   "theme": "light",
-   "file": "a11y/read-aloud-paused-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-light",
-   "theme": "light",
-   "file": "a11y/audit-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-markers-light",
-   "theme": "light",
-   "file": "a11y/audit-markers-light.png",
-   "issues": [
-    "button.mk-badge border-top is 2px, not 1px"
-   ],
-   "note": "numbered markers on each place; the bar goes to the end that covers fewer of them"
-  },
-  {
-   "area": "a11y",
-   "state": "audit-fix-hover-light",
-   "theme": "light",
-   "file": "a11y/audit-fix-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-fix-focus-light",
-   "theme": "light",
-   "file": "a11y/audit-fix-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-marker-focus-light",
-   "theme": "light",
-   "file": "a11y/audit-marker-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-again-focus-light",
-   "theme": "light",
-   "file": "a11y/audit-again-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "fix-it-done-light",
-   "theme": "light",
-   "file": "a11y/fix-it-done-light.png",
-   "issues": [],
-   "note": "Fix it: the toast says what was saved; the list is checked again"
-  },
-  {
-   "area": "a11y",
-   "state": "describe-busy-light",
-   "theme": "light",
-   "file": "a11y/describe-busy-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "describe-done-light",
-   "theme": "light",
-   "file": "a11y/describe-done-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "describe-hover-light",
-   "theme": "light",
-   "file": "a11y/describe-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "describe-focus-light",
-   "theme": "light",
-   "file": "a11y/describe-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "describe-close-focus-light",
-   "theme": "light",
-   "file": "a11y/describe-close-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "describe-error-light",
-   "theme": "light",
-   "file": "a11y/describe-error-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "toolbar-describe-hover-light",
-   "theme": "light",
-   "file": "a11y/toolbar-describe-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "toolbar-read-hover-light",
-   "theme": "light",
-   "file": "a11y/toolbar-read-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "panel-strip-light",
-   "theme": "light",
-   "file": "control/panel-strip-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "panel-backup-light",
-   "theme": "light",
-   "file": "control/panel-backup-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "pause-row-hover-light",
-   "theme": "light",
-   "file": "control/pause-row-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "pause-row-focus-light",
-   "theme": "light",
-   "file": "control/pause-row-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "backup-hover-light",
-   "theme": "light",
-   "file": "control/backup-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "backup-focus-light",
-   "theme": "light",
-   "file": "control/backup-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "origin-show-code-light",
-   "theme": "light",
-   "file": "control/origin-show-code-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "paused-site-light",
-   "theme": "light",
-   "file": "control/paused-site-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "paused-toast-light",
-   "theme": "light",
-   "file": "control/paused-toast-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "toast-action-focus-light",
-   "theme": "light",
-   "file": "control/toast-action-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "show-code-light",
-   "theme": "light",
-   "file": "control/show-code-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "install-review-light",
-   "theme": "light",
-   "file": "control/install-review-light.png",
-   "issues": [],
-   "note": "one mod from a link that runs on every website: the note says so; Cancel has focus, never Install"
-  },
-  {
-   "area": "control",
-   "state": "install-cancel-focus-light",
-   "theme": "light",
-   "file": "control/install-cancel-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "install-showcode-focus-light",
-   "theme": "light",
-   "file": "control/install-showcode-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "install-review-code-light",
-   "theme": "light",
-   "file": "control/install-review-code-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "install-review-backup-light",
-   "theme": "light",
-   "file": "control/install-review-backup-light.png",
-   "issues": [],
-   "note": "a backup: one section per mod, a mod for another site says “not this page”, skipped items at the end"
-  },
-  {
-   "area": "control",
-   "state": "off-switch-toast-light",
-   "theme": "light",
-   "file": "control/off-switch-toast-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "off-switch-hover-light",
-   "theme": "light",
-   "file": "control/off-switch-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "off-switch-close-focus-light",
-   "theme": "light",
-   "file": "control/off-switch-close-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "off-panel-note-light",
-   "theme": "light",
-   "file": "control/off-panel-note-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "paused-everywhere-light",
-   "theme": "light",
-   "file": "control/paused-everywhere-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "safe-start-light",
-   "theme": "light",
-   "file": "control/safe-start-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "safe-start-focus-light",
-   "theme": "light",
-   "file": "control/safe-start-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "safe-start-note-light",
-   "theme": "light",
-   "file": "control/safe-start-note-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "tab-walk-light",
-   "theme": "light",
-   "file": "edit-toolbar/tab-walk-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "shift-tab-light",
-   "theme": "light",
-   "file": "edit-toolbar/shift-tab-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-type",
-   "state": "no-room-above-light",
-   "theme": "light",
-   "file": "edit-type/no-room-above-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-color",
-   "state": "no-room-above-light",
-   "theme": "light",
-   "file": "edit-color/no-room-above-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "reach-page-tools-light",
-   "theme": "light",
-   "file": "bar/reach-page-tools-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "reach-suggestion-light",
-   "theme": "light",
-   "file": "bar/reach-suggestion-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "bar",
-   "state": "dodge-to-point-light",
-   "theme": "light",
-   "file": "bar/dodge-to-point-light.png",
-   "issues": [],
-   "note": "a quick pass over the input, away from any control: the bar still steps aside so what is under it can be pointed at"
-  },
-  {
-   "area": "gallery",
-   "state": "chip-narrow-light",
-   "theme": "light",
-   "file": "gallery/chip-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "section-open-narrow-light",
-   "theme": "light",
-   "file": "gallery/section-open-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "section-items-narrow-light",
-   "theme": "light",
-   "file": "gallery/section-items-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "section-collapsed-narrow-light",
-   "theme": "light",
-   "file": "gallery/section-collapsed-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-row-narrow-light",
-   "theme": "light",
-   "file": "gallery/update-row-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "trying-strip-narrow-light",
-   "theme": "light",
-   "file": "gallery/trying-strip-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "trying-item-narrow-light",
-   "theme": "light",
-   "file": "gallery/trying-item-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "install-review-narrow-light",
-   "theme": "light",
-   "file": "gallery/install-review-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "update-review-narrow-light",
-   "theme": "light",
-   "file": "gallery/update-review-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "share-submit-narrow-light",
-   "theme": "light",
-   "file": "gallery/share-submit-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "submit-toast-narrow-light",
-   "theme": "light",
-   "file": "gallery/submit-toast-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "gallery",
-   "state": "setting-narrow-light",
-   "theme": "light",
-   "file": "gallery/setting-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "menu-narrow-light",
-   "theme": "light",
-   "file": "a11y/menu-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "menu-on-narrow-light",
-   "theme": "light",
-   "file": "a11y/menu-on-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-narrow-light",
-   "theme": "light",
-   "file": "a11y/read-aloud-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-mark-narrow-light",
-   "theme": "light",
-   "file": "a11y/read-aloud-mark-narrow-light.png",
-   "issues": [],
-   "note": "the sentence being read: an 18% wash with a 2px underline in --m-signal-4"
-  },
-  {
-   "area": "a11y",
-   "state": "read-aloud-paused-narrow-light",
-   "theme": "light",
-   "file": "a11y/read-aloud-paused-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-narrow-light",
-   "theme": "light",
-   "file": "a11y/audit-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "audit-markers-narrow-light",
-   "theme": "light",
-   "file": "a11y/audit-markers-narrow-light.png",
-   "issues": [
-    "button.mk-badge border-top is 2px, not 1px"
-   ],
-   "note": "numbered markers on each place; the bar goes to the end that covers fewer of them"
-  },
-  {
-   "area": "a11y",
-   "state": "fix-it-done-narrow-light",
-   "theme": "light",
-   "file": "a11y/fix-it-done-narrow-light.png",
-   "issues": [],
-   "note": "Fix it: the toast says what was saved; the list is checked again"
-  },
-  {
-   "area": "a11y",
-   "state": "describe-done-narrow-light",
-   "theme": "light",
-   "file": "a11y/describe-done-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "a11y",
-   "state": "describe-error-narrow-light",
-   "theme": "light",
-   "file": "a11y/describe-error-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "panel-strip-narrow-light",
-   "theme": "light",
-   "file": "control/panel-strip-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "panel-backup-narrow-light",
-   "theme": "light",
-   "file": "control/panel-backup-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "paused-site-narrow-light",
-   "theme": "light",
-   "file": "control/paused-site-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "paused-toast-narrow-light",
-   "theme": "light",
-   "file": "control/paused-toast-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "show-code-narrow-light",
-   "theme": "light",
-   "file": "control/show-code-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "install-review-narrow-light",
-   "theme": "light",
-   "file": "control/install-review-narrow-light.png",
-   "issues": [],
-   "note": "one mod from a link that runs on every website: the note says so; Cancel has focus, never Install"
-  },
-  {
-   "area": "control",
-   "state": "install-review-code-narrow-light",
-   "theme": "light",
-   "file": "control/install-review-code-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "install-review-backup-narrow-light",
-   "theme": "light",
-   "file": "control/install-review-backup-narrow-light.png",
-   "issues": [],
-   "note": "a backup: one section per mod, a mod for another site says “not this page”, skipped items at the end"
-  },
-  {
-   "area": "control",
-   "state": "off-switch-toast-narrow-light",
-   "theme": "light",
-   "file": "control/off-switch-toast-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "off-panel-note-narrow-light",
-   "theme": "light",
-   "file": "control/off-panel-note-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "paused-everywhere-narrow-light",
-   "theme": "light",
-   "file": "control/paused-everywhere-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "safe-start-narrow-light",
-   "theme": "light",
-   "file": "control/safe-start-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "control",
-   "state": "safe-start-note-narrow-light",
-   "theme": "light",
-   "file": "control/safe-start-note-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "tab-walk-narrow-light",
-   "theme": "light",
-   "file": "edit-toolbar/tab-walk-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-toolbar",
-   "state": "shift-tab-narrow-light",
-   "theme": "light",
-   "file": "edit-toolbar/shift-tab-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-type",
-   "state": "no-room-above-narrow-light",
-   "theme": "light",
-   "file": "edit-type/no-room-above-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "edit-color",
-   "state": "no-room-above-narrow-light",
-   "theme": "light",
-   "file": "edit-color/no-room-above-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "popup",
-   "state": "pause-off-light",
-   "theme": "light",
-   "file": "popup/pause-off-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "popup",
-   "state": "pause-hover-light",
-   "theme": "light",
-   "file": "popup/pause-hover-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "popup",
-   "state": "pause-focus-light",
-   "theme": "light",
-   "file": "popup/pause-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "popup",
-   "state": "pause-site-on-light",
-   "theme": "light",
-   "file": "popup/pause-site-on-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "popup",
-   "state": "whole-light",
-   "theme": "light",
-   "file": "popup/whole-light.png",
-   "issues": [],
-   "note": "the whole popup with this site paused"
-  },
-  {
-   "area": "popup",
-   "state": "go-focus-light",
-   "theme": "light",
-   "file": "popup/go-focus-light.png",
    "issues": [],
    "note": ""
   }

@@ -249,8 +249,17 @@ async function openBar(page) {
 }
 async function hover(page, sel) {
   const b = await page.locator(sel).first().boundingBox();
-  await page.mouse.move(b.x + Math.min(12, b.width / 2), b.y + b.height / 2, { steps: 2 });
+  const x = b.x + Math.min(12, b.width / 2), y = b.y + b.height / 2;
+  await page.mouse.move(x, y, { steps: 2 });
   await sleep(150);
+  // a target under the bar: the bar steps aside once the pointer rests on it (350ms), then point again
+  const bar = await ui(page, ".bar").boundingBox().catch(() => null);
+  // (resting on a control never moves it, so rest on the input, as a person would)
+  if (bar && x >= bar.x && x <= bar.x + bar.width && y >= bar.y && y <= bar.y + bar.height) {
+    const inp = await ui(page, ".in").boundingBox();
+    await page.mouse.move(inp.x + inp.width / 2, inp.y + inp.height / 2, { steps: 2 }); await sleep(550);
+    await page.mouse.move(x, y, { steps: 2 }); await sleep(150);
+  }
 }
 async function pick(page, sel) {
   await hover(page, sel);
@@ -1484,6 +1493,7 @@ async function iterateStates(theme, width) {
   await broken.scrollIntoViewIfNeeded().catch(() => {}); await sleep(150); await p.mouse.move(2, 2);
   await shot(p, "iterate", "broken-row", broken, { pad: 8, checks: [await broken.count() ? "" : "no row is marked broken"] });
   if (!n) {
+    await ui(p, ".health").waitFor({ timeout: 3000 }).catch(() => {});
     await ui(p, ".health [data-a=fix]").hover(); await sleep(150);
     await shot(p, "iterate", "fix-hover", ui(p, ".health"), { pad: 8 });
     await shot(p, "iterate", "fix-focus", ui(p, ".health"), { pad: 8, checks: [await focusVisible(p, ui(p, ".health [data-a=fix]"))] });
@@ -1558,9 +1568,9 @@ async function leftoverStates(theme, width) {
   await editFocus(p);
   for (let i = 0; i < 3; i++) { await p.keyboard.press("Tab"); await sleep(60); }
   const onTool = await shadowEval(p, r => r.activeElement?.dataset?.t || r.activeElement?.className || "");
-  await sleep(250);
+  await sleep(550); // the tooltip's 300ms delay and its fade
   await shot(p, "edit-toolbar", "tab-walk", [tb(p), ui(p, ".gm-tb button:focus .tip")], { pad: 8, checks: [onTool === "resize" ? "" : `Tab ×3 from the toolbar lands on “${onTool}”, not Resize`] });
-  await p.keyboard.press("Shift+Tab"); await sleep(250);
+  await p.keyboard.press("Shift+Tab"); await sleep(550);
   const back = await shadowEval(p, r => r.activeElement?.dataset?.t || "");
   await shot(p, "edit-toolbar", "shift-tab", [tb(p), ui(p, ".gm-tb button:focus .tip")], { pad: 8, checks: [back === "move" ? "" : `Shift+Tab lands on “${back}”, not Move`] });
   await close(p);
