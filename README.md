@@ -161,6 +161,19 @@ Mods are code running inside apps you're signed into, so:
 - **Weeks:** REA-powered app profiles for logic-level changes; mod auto-repair when an app update breaks selectors; a static-site gallery of shared mods; enforce the no-network rule with a CSP/proxy for mod code.
 - **Native apps (honest version):** macOS Accessibility / Windows UI Automation can read and drive native UIs and draw overlays *on top*, not add buttons *inside* Finder. That's "overlay + automation" mods, a v3 item.
 
+## Site
+
+[`site/`](site/) is the public website: static HTML, CSS and ES modules, no build step, so GitHub Pages can serve the repo root as is (`/site/` for the site, `/share/install.html` for share links).
+
+- **`site/index.html`**: the landing page, with an in-browser demo of the pixel effect (simulated, no model runs).
+- **`site/gallery.html`**: example mods from [`site/mods/`](site/mods/) (`index.json` lists them; each `*.morse.json` is a normal mod). Search, filter by app, read the code, then **Install in Morse** (a share link built exactly like `encodeShare` in `core/mod.js`), **Download .user.js** or **Copy link**. The mods were written by hand against each app in October 2026, so a selector may need a refresh.
+- **`site/radar.js`**: the radar mark (OpenCode's 4×4 pixel spinner) as a tiny module.
+- **`share/install.html`** uses the same styles.
+
+Run it locally with `npm run demo:serve` and open `http://127.0.0.1:8787/site/`. Screenshots (1440×900 and 390×844, dark and light) are in [`docs/site/`](docs/site/).
+
+To add a mod to the gallery, export it (`morse export <id>` writes a `.morse.json`), drop it in `site/mods/`, and add an entry to `site/mods/index.json`.
+
 ## Repo layout
 
 ```
@@ -169,6 +182,7 @@ runtime/     the in-app UI and effect (one file, injected everywhere)
 extension/   Chrome MV3 host
 daemon/      desktop connector + CLI (CDP, app launcher, fuses, clip recorder, mod store)
 share/       static install page for share links
+site/        public website: landing page, mod gallery, example mods
 demo/        demo apps + the scripts that produced every screenshot
 ```
 

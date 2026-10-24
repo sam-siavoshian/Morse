@@ -1,0 +1,22 @@
+{
+  "morse": 1,
+  "id": "discord-no-upsells",
+  "title": "No Nitro upsells",
+  "prompt": "remove the gift button, the Nitro tab and the shop",
+  "match": {
+    "hosts": [
+      "discord.com"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "button[aria-label=\"Send a gift\"]",
+    "label": "button · “Send a gift”"
+  },
+  "css": "button[aria-label=\"Send a gift\"],\nli:has(> div > a[href=\"/store\"]),\nli:has(> div > a[href=\"/shop\"]),\na[href=\"/store\"],\na[href=\"/shop\"] {\n  display: none !important;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": null,
+  "created": "2026-10-20T20:41:00.000Z",
+  "updated": "2026-10-20T20:41:00.000Z"
+}

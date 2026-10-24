@@ -1,0 +1,22 @@
+{
+  "morse": 1,
+  "id": "chatgpt-word-count",
+  "title": "Composer word count",
+  "prompt": "show a live word count under the message box",
+  "match": {
+    "hosts": [
+      "chatgpt.com"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "#prompt-textarea",
+    "label": "div#prompt-textarea"
+  },
+  "css": ".morse-wc {\n  min-height: 16px;\n  padding: 4px 14px 0;\n  text-align: right;\n  font-size: 12px;\n  font-variant-numeric: tabular-nums;\n  color: var(--text-tertiary, #8f8f8f);\n}\n",
+  "js": "morse.watch(\"#prompt-textarea\", box => {\n  const form = box.closest(\"form\");\n  if (!form) return;\n  const badge = morse.el(\"div\", { class: \"morse-wc\", \"aria-live\": \"polite\" });\n  const count = () => {\n    const text = (box.value ?? box.innerText ?? \"\").trim();\n    const words = text ? text.split(/\\s+/).length : 0;\n    badge.textContent = words\n      ? words + (words === 1 ? \" word\" : \" words\") + \" · \" + text.length + \" chars\"\n      : \"\";\n  };\n  morse.on(box, \"input\", count);\n  form.after(badge);\n  count();\n});\n",
+  "enabled": true,
+  "model": null,
+  "created": "2026-10-05T21:03:00.000Z",
+  "updated": "2026-10-05T21:03:00.000Z"
+}

@@ -1,0 +1,22 @@
+{
+  "morse": 1,
+  "id": "gmail-reading-pane",
+  "title": "Comfortable reading",
+  "prompt": "make emails easier to read: bigger text and a narrower column",
+  "match": {
+    "hosts": [
+      "mail.google.com"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "[data-message-id] .a3s",
+    "label": "div · message body"
+  },
+  "css": "/* Open conversation: centered column, comfortable measure */\n[role=\"main\"] [role=\"list\"] {\n  max-width: 920px;\n  margin-inline: auto;\n}\n[data-message-id] .a3s {\n  max-width: 72ch;\n  font-size: 15px !important;\n  line-height: 1.6 !important;\n}\n[data-message-id] .a3s img {\n  max-width: 100%;\n  height: auto;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": null,
+  "created": "2026-10-18T13:22:00.000Z",
+  "updated": "2026-10-18T13:22:00.000Z"
+}

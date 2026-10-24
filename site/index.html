@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morse: change any app in your own words</title>
+<meta name="description" content="Press Alt+Space, point at anything in a website or desktop app, and say what you want. Your coding model writes the CSS and JavaScript; Morse applies it live. Open source.">
+<meta property="og:title" content="Morse: change any app in your own words">
+<meta property="og:description" content="Point at anything, describe a change, watch it happen. Claude Code, Codex, or your own API key.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../design/tokens.css">
+<link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="Morse home"><span data-radar="20"></span>Morse</a>
+    <nav class="nav" aria-label="Main">
+      <a class="hide-sm" href="#how">How it works</a>
+      <a class="hide-sm" href="#examples">Examples</a>
+      <a class="hide-sm" href="#godmode">God mode</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="#install">Install</a>
+      <a class="gh" href="https://github.com/sam-siavoshian/RRAA" aria-label="Source on GitHub">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span class="hide-sm">GitHub</span>
+      </a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ============ hero ============ -->
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow"><span data-signal="morse" class="live"></span><span>Open source · MIT</span></p>
+      <h1>Change any app<br class="br-lg"> in your own words.</h1>
+      <p class="lede">Press <kbd>⌥</kbd> <kbd>Space</kbd>, point at something, and say what you want. Morse makes the change while you watch, and keeps it as a mod you can share with a link.</p>
+      <div class="hero-cta">
+        <a class="btn primary lg" href="#install">Install Morse</a>
+        <a class="btn lg" href="gallery.html">Browse mods</a>
+      </div>
+      <p class="hero-note faint">Works in websites and Electron desktop apps. Uses Claude Code, Codex, or your own API key.</p>
+    </div>
+
+    <div class="wrap">
+      <figure class="demo" id="demo">
+        <div class="demo-label">
+          <span class="chip">Demo</span>
+          <span class="faint">Simulated in your browser. No model is running.</span>
+          <button class="btn sm demo-replay" type="button" id="demo-replay">Replay</button>
+        </div>
+
+        <div class="win" aria-hidden="true">
+          <div class="win-bar"><i></i><i></i><i></i><span>Tunes</span></div>
+          <div class="app">
+            <aside class="app-side">
+              <div class="app-logo"><span class="app-dot"></span>Tunes</div>
+              <ul>
+                <li class="on">Home</li><li>Search</li><li>Your Library</li>
+              </ul>
+              <p class="app-cap">Playlists</p>
+              <ul class="dim">
+                <li>Deep Focus</li><li>Night Drive</li><li>Liked Songs</li><li>Discover Weekly</li>
+              </ul>
+            </aside>
+            <div class="app-main">
+              <p class="app-h">Recently played</p>
+              <div class="tiles">
+                <div class="tile"><div class="art a1"></div><b>Neon Tides</b><span>Hollow Coast</span></div>
+                <div class="tile"><div class="art a2"></div><b>Paper Satellites</b><span>Mira Vale</span></div>
+                <div class="tile"><div class="art a3"></div><b>Slow Bloom</b><span>Juniper Lane</span></div>
+                <div class="tile"><div class="art a4"></div><b>Static Hearts</b><span>The Lowlights</span></div>
+                <div class="tile"><div class="art a5"></div><b>Glass Animals of Fog</b><span>Oda Rhee</span></div>
+              </div>
+            </div>
+            <div class="app-player">
+              <div class="now"><div class="art a1"></div><div><b>Neon Tides</b><span>Hollow Coast</span></div></div>
+              <div class="controls" id="demo-target">
+                <div class="btns">
+                  <svg viewBox="0 0 16 16" class="ic"><path d="M2 4h3l6 8h3M11 4h3M2 12h3" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+                  <svg viewBox="0 0 16 16" class="ic"><path d="M4 3v10M13 3L6 8l7 5z" fill="currentColor"/></svg>
+                  <span class="play"><svg viewBox="0 0 16 16"><path d="M5 3h2v10H5zM9 3h2v10H9z" fill="currentColor"/></svg></span>
+                  <svg viewBox="0 0 16 16" class="ic"><path d="M12 3v10M3 3l7 5-7 5z" fill="currentColor"/></svg>
+                  <svg viewBox="0 0 16 16" class="ic"><path d="M3 7V5h9l-2-2M13 9v2H4l2 2" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+                  <span class="sleep" id="demo-sleep"><svg viewBox="0 0 16 16" class="ic"><path d="M6.5 2a6 6 0 1 0 7.5 7.5A5 5 0 0 1 6.5 2z" fill="currentColor"/></svg><em id="demo-left">15:00</em></span>
+                </div>
+                <div class="progress"><span>1:12</span><div class="track"><i></i></div><span>3:48</span></div>
+              </div>
+              <div class="vol"><svg viewBox="0 0 16 16" class="ic"><path d="M2 6h3l4-3v10l-4-3H2z" fill="currentColor"/></svg><div class="track"><i></i></div></div>
+            </div>
+          </div>
+
+          <!-- Morse overlay -->
+          <div class="hl" id="demo-hl"><span>div · controls</span></div>
+          <canvas class="fx" id="demo-fx"></canvas>
+          <div class="mbar" id="demo-bar">
+            <div class="mbar-row">
+              <span class="mbar-mark" data-radar="16"></span>
+              <span class="mbar-chip">div · controls</span>
+              <span class="mbar-input"><span id="demo-typed"></span><span class="caret"></span><span class="ph" id="demo-ph">Describe a change…</span></span>
+              <kbd class="mbar-enter" id="demo-enter">↵</kbd>
+            </div>
+            <div class="mbar-status" id="demo-status">
+              <span class="st-work"><span data-radar="12"></span>writing code</span>
+              <span class="st-done"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Sleep timer</span>
+              <code class="st-code" id="demo-code"></code>
+              <span class="st-time" id="demo-time">0.0s</span>
+              <span class="st-actions"><b>Keep</b><b>Undo</b><b>Code</b><b>Share</b></span>
+            </div>
+          </div>
+          <div class="app-toast" id="demo-toast">Pausing in 15 minutes</div>
+          <svg class="cursor" id="demo-cursor" width="20" height="20" viewBox="0 0 20 20"><path d="M3 2l13 7.5-6 1.5-2.5 6z" fill="#fff" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        </div>
+        <figcaption class="sr-only">An animation of Morse adding a sleep timer button to a music player: the user points at the player controls, types “add a sleep timer”, a grid of pixels covers the controls while code streams in, and the controls reappear with a new sleep timer button.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============ how it works ============ -->
+  <section class="block" id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">How it works</p>
+        <h2>Point. Say it. Watch it change.</h2>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-art"><kbd>⌥</kbd><kbd class="wide">Space</kbd></div>
+          <span class="step-n mono">01</span>
+          <h3>Point at anything</h3>
+          <p class="muted">Press <kbd>⌥</kbd> <kbd>Space</kbd> in any page or app and hover to highlight a button, a sidebar, a feed. Or skip pointing and describe a page-wide change.</p>
+        </li>
+        <li>
+          <div class="step-art"><span class="step-quote">“hide Shorts”</span></div>
+          <span class="step-n mono">02</span>
+          <h3>Say what you want</h3>
+          <p class="muted">One sentence. Restyle it, hide it, or add something that wasn’t there: a word count, a sleep timer, a focus mode.</p>
+        </li>
+        <li>
+          <div class="step-art"><span class="step-px" id="step-px" aria-hidden="true"></span></div>
+          <span class="step-n mono">03</span>
+          <h3>Watch it change</h3>
+          <p class="muted">CSS applies while the model is still writing it. If the JavaScript throws, Morse shows the model the error and it fixes itself. Keep it, undo it, or edit the code.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ examples ============ -->
+  <section class="block" id="examples">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">What you can do</p>
+        <h2>If you can say it, you can change it.</h2>
+        <p class="lede">Hide what you never use. Restyle what tires your eyes. Add the button the app forgot.</p>
+      </div>
+      <div class="examples">
+        <article class="ex">
+          <p class="ex-kind mono">Hide</p>
+          <p class="ex-say">“hide Shorts everywhere”</p>
+          <p class="ex-app mono">YouTube</p>
+        </article>
+        <article class="ex">
+          <p class="ex-kind mono">Restyle</p>
+          <p class="ex-say">“dark mode, keep a hint of the orange”</p>
+          <p class="ex-app mono">Hacker News</p>
+        </article>
+        <article class="ex">
+          <p class="ex-kind mono">Add</p>
+          <p class="ex-say">“add a sleep timer that pauses the music”</p>
+          <p class="ex-app mono">Spotify</p>
+        </article>
+        <article class="ex">
+          <p class="ex-kind mono">Rewire</p>
+          <p class="ex-say">“make Enter add a new line, Ctrl+Enter send”</p>
+          <p class="ex-app mono">Claude</p>
+        </article>
+        <article class="ex">
+          <p class="ex-kind mono">Resize</p>
+          <p class="ex-say">“use the full width for pull request diffs”</p>
+          <p class="ex-app mono">GitHub</p>
+        </article>
+        <article class="ex">
+          <p class="ex-kind mono">Focus</p>
+          <p class="ex-say">“fade every channel with nothing unread”</p>
+          <p class="ex-app mono">Slack</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ god mode ============ -->
+  <section class="block" id="godmode">
+    <div class="wrap split">
+      <div class="section-head">
+        <p class="eyebrow">God mode</p>
+        <h2>Or just grab it and edit.</h2>
+        <p class="lede">Some changes don’t need a model. Point at something and a toolbar appears. Every key is a tool. Your edits are saved as a mod, with undo and redo, like everything else.</p>
+      </div>
+      <div class="god">
+        <div class="god-stage" aria-hidden="true">
+          <div class="god-bar">
+            <span class="god-tag mono">h1</span><i class="god-sep"></i>
+            <span class="god-tool" data-k="H"><svg viewBox="0 0 16 16"><path d="M2 8s2.2-4 6-4 6 4 6 4-2.2 4-6 4-6-4-6-4z M3 13L13 3" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="1.8" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span>
+            <span class="god-tool on" data-k="M"><svg viewBox="0 0 16 16"><path d="M8 1.5v13M1.5 8h13M8 1.5L6 3.5M8 1.5l2 2M8 14.5l-2-2M8 14.5l2-2M1.5 8l2-2M1.5 8l2 2M14.5 8l-2-2M14.5 8l-2 2" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span>
+            <span class="god-tool" data-k="R"><svg viewBox="0 0 16 16"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5l-4.5 4.5M2.5 13.5L7 9" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span>
+            <span class="god-tool" data-k="T"><svg viewBox="0 0 16 16"><path d="M3 3.5h10M8 3.5v10" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+            <span class="god-tool" data-k="C"><svg viewBox="0 0 16 16"><path d="M8 2s4 4.4 4 7.2A4 4 0 0 1 4 9.2C4 6.4 8 2 8 2z" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span>
+            <span class="god-tool" data-k="D"><svg viewBox="0 0 16 16"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M3 10.5V3.8C3 3.3 3.3 3 3.8 3h6.7" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span>
+            <i class="god-sep"></i>
+            <span class="god-tool" data-k="A"><svg viewBox="0 0 16 16"><path d="M8 2v3M8 11v3M2 8h3M11 8h3M4 4l1.5 1.5M10.5 10.5L12 12M12 4l-1.5 1.5M5.5 10.5L4 12" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span>
+          </div>
+          <div class="god-tip"><span>Move</span><kbd>M</kbd></div>
+          <div class="god-page">
+            <div class="god-mast"><b>The Daily Byte</b><span></span><span></span><span></span></div>
+            <div class="god-h"><span>Why every app is secretly a web page</span></div>
+            <div class="god-lines"><i></i><i></i><i></i><i style="width:62%"></i></div>
+            <div class="god-popup"><b>Don’t miss a byte</b><i></i><span>Subscribe</span></div>
+          </div>
+        </div>
+        <dl class="keys">
+          <div><dt><kbd>H</kbd></dt><dd>Hide</dd></div>
+          <div><dt><kbd>M</kbd></dt><dd>Move</dd></div>
+          <div><dt><kbd>R</kbd></dt><dd>Resize</dd></div>
+          <div><dt><kbd>T</kbd></dt><dd>Edit text</dd></div>
+          <div><dt><kbd>C</kbd></dt><dd>Color</dd></div>
+          <div><dt><kbd>F</kbd></dt><dd>Font size</dd></div>
+          <div><dt><kbd>D</kbd></dt><dd>Duplicate</dd></div>
+          <div><dt><kbd>⇧</kbd><kbd>C</kbd></dt><dd>Capture</dd></div>
+        </dl>
+        <p class="muted small">Page tools do the common things in one click: dark mode, text size, hide ads, focus. Capture copies an element’s look so you can rebuild it in another app.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ voice ============ -->
+  <section class="block" id="voice">
+    <div class="wrap split flip">
+      <div class="section-head">
+        <p class="eyebrow">Voice</p>
+        <h2>Hold the hotkey and talk.</h2>
+        <p class="lede">Tap <kbd>⌥</kbd> <kbd>Space</kbd> to type. Hold it to speak. Let go, and Morse starts on the change.</p>
+        <ul class="ticks">
+          <li>In Chrome, speech is transcribed by the browser.</li>
+          <li>In desktop apps, use your OpenAI key or a local Whisper.</li>
+          <li>Hotkeys are yours to change. Morse refuses the ones that would quit your app.</li>
+        </ul>
+      </div>
+      <div class="voice" aria-hidden="true">
+        <div class="voice-bar">
+          <span class="voice-meter" id="voice-meter"></span>
+          <span class="voice-text"><span id="voice-said"></span><span class="voice-caret"></span></span>
+          <span class="voice-hint mono">release to send</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ models ============ -->
+  <section class="block" id="models">
+    <div class="wrap split">
+      <div class="section-head">
+        <p class="eyebrow">Models</p>
+        <h2>Bring your own model.</h2>
+        <p class="lede">Morse has no backend and no account. It hands what you pointed at and what you said to the coding model you already use, and runs what comes back.</p>
+      </div>
+      <ul class="rows">
+        <li>
+          <span class="row-k">Claude Code</span>
+          <span class="row-v muted">Uses your existing Claude Code sign-in.</span>
+        </li>
+        <li>
+          <span class="row-k">Codex</span>
+          <span class="row-v muted">Uses your existing Codex CLI sign-in.</span>
+        </li>
+        <li>
+          <span class="row-k">An API key</span>
+          <span class="row-v muted">Any OpenAI-compatible endpoint, cloud or local: Ollama, llama.cpp, LM Studio, vLLM.</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ surfaces ============ -->
+  <section class="block" id="apps">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Where it works</p>
+        <h2>Websites and desktop apps.</h2>
+        <p class="lede">Most software you use every day is Chromium running JavaScript. Morse injects one small runtime into it, in the browser or in the app.</p>
+      </div>
+      <div class="surfaces">
+        <article class="surface">
+          <div class="surface-head">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="3.5" width="16" height="13" rx="2.5"/><path d="M2 7.5h16"/><circle cx="5" cy="5.5" r=".6" fill="currentColor"/><circle cx="7" cy="5.5" r=".6" fill="currentColor"/></svg>
+            <h3>Any website</h3>
+          </div>
+          <p class="muted">A Chrome extension. Mod JavaScript runs through <code>chrome.userScripts</code>, so it works on sites with a strict Content-Security-Policy too.</p>
+          <div class="surface-foot">
+            <span class="chip">youtube.com</span><span class="chip">github.com</span><span class="chip">chatgpt.com</span><span class="chip">claude.ai</span><span class="chip">mail.google.com</span><span class="chip faint-chip">…</span>
+          </div>
+        </article>
+        <article class="surface">
+          <div class="surface-head">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="3" width="16" height="11" rx="2"/><path d="M7 17h6M10 14v3"/></svg>
+            <h3>Electron desktop apps</h3>
+          </div>
+          <p class="muted"><code>morse launch spotify</code> restarts the app with a local debugging port and attaches over CDP. App files are never patched, so code signatures stay intact and updates don’t break it.</p>
+          <div class="surface-foot">
+            <span class="chip">Spotify</span><span class="chip">Slack</span><span class="chip">Discord</span><span class="chip">VS Code</span><span class="chip">Notion</span><span class="chip">Obsidian</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ sharing ============ -->
+  <section class="block" id="share">
+    <div class="wrap">
+      <div class="split share-split">
+        <div class="section-head">
+          <p class="eyebrow">Sharing</p>
+          <h2>Mods are data.<br>Share them as a link.</h2>
+          <p class="lede">A mod is a small JSON document: the sentence, where it applies, and the code. Send it three ways.</p>
+          <dl class="formats">
+            <div><dt>Link</dt><dd class="muted">The whole mod rides in the URL fragment, which browsers never send to a server. The install page shows every line before anything runs.</dd></div>
+            <div><dt><code>.morse.json</code></dt><dd class="muted">Import it into Morse on another machine.</dd></div>
+            <div><dt><code>.user.js</code></dt><dd class="muted">Runs in Tampermonkey or Violentmonkey, without Morse.</dd></div>
+          </dl>
+        </div>
+        <div class="share-art">
+          <div class="linkbar mono"><span class="faint">…/share/install.html</span><span>#m=</span><span class="linkbar-data" id="share-frag">jVPBbtswDP0VQZddJMN20</span></div>
+          <pre class="code" id="share-json"></pre>
+        </div>
+      </div>
+
+      <div class="from-gallery">
+        <div class="from-gallery-head">
+          <h3>From the gallery</h3>
+          <a class="more" href="gallery.html">Browse all mods <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+        </div>
+        <div class="cards" id="featured"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ privacy ============ -->
+  <section class="block" id="privacy">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Privacy</p>
+        <h2>Your mods stay on your computer.</h2>
+        <p class="lede">There is no Morse account and no Morse server. Nothing you make is uploaded unless you share it.</p>
+      </div>
+      <div class="facts">
+        <div class="fact">
+          <h3>Stored locally</h3>
+          <p class="muted">Desktop mods live in <code>~/.morse/mods</code>. Website mods live in the extension’s own storage.</p>
+        </div>
+        <div class="fact">
+          <h3>Links carry the mod</h3>
+          <p class="muted">A share link holds the whole mod after the <code>#</code>. Browsers never send that part to a server.</p>
+        </div>
+        <div class="fact">
+          <h3>You see the code</h3>
+          <p class="muted">Every change shows its code, can be undone, and is never applied silently. Shared mods show every line before install.</p>
+        </div>
+        <div class="fact">
+          <h3>You pick the model</h3>
+          <p class="muted">What you pointed at, a short outline of the page and your sentence go to the model you chose. Nothing else.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ install ============ -->
+  <section class="block" id="install">
+    <div class="wrap split">
+      <div class="section-head">
+        <p class="eyebrow">Install</p>
+        <h2>Two minutes, no dependencies.</h2>
+        <p class="lede">Requires Node 22 or newer. Morse is early: the <a href="https://github.com/sam-siavoshian/RRAA#status">status notes</a> say exactly what has been verified.</p>
+      </div>
+      <ol class="install">
+        <li>
+          <h3><span class="mono faint">1</span>Build</h3>
+          <div class="codebox">
+            <pre class="code" id="cmd-build">$ git clone https://github.com/sam-siavoshian/RRAA morse
+$ cd morse && npm run build</pre>
+            <button class="btn sm copy" type="button" data-copy="cmd-build">Copy</button>
+          </div>
+        </li>
+        <li>
+          <h3><span class="mono faint">2</span>Websites</h3>
+          <p class="muted">Open <code>chrome://extensions</code>, turn on Developer mode, <b>Load unpacked</b> and pick <code>dist/extension</code>. In the extension’s details, turn on <b>Allow User Scripts</b>. Then press <kbd>⌥</kbd> <kbd>Space</kbd> on any page.</p>
+        </li>
+        <li>
+          <h3><span class="mono faint">3</span>Desktop apps</h3>
+          <div class="codebox">
+            <pre class="code" id="cmd-launch">$ node daemon/cli.js launch spotify --restart</pre>
+            <button class="btn sm copy" type="button" data-copy="cmd-launch">Copy</button>
+          </div>
+          <p class="muted small">Also <code>slack</code>, <code>discord</code>, <code>vscode</code>, <code>notion</code>, <code>obsidian</code>, or a path to the app.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ open source ============ -->
+  <section class="block closing" id="source">
+    <div class="wrap">
+      <span data-radar="40"></span>
+      <p class="eyebrow">Open source</p>
+      <h2>MIT licensed. Read every line.</h2>
+      <p class="lede">Morse is a small codebase with no dependencies. Fork it, audit it, or send a mod to the gallery.</p>
+      <div class="hero-cta">
+        <a class="btn primary lg" href="https://github.com/sam-siavoshian/RRAA">View source</a>
+        <a class="btn lg" href="#install">Install Morse</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <a class="brand" href="./"><span data-radar="16" data-still></span>Morse</a>
+    <span data-signal="your own words"></span>
+    <nav aria-label="Footer">
+      <a href="gallery.html">Gallery</a>
+      <a href="https://github.com/sam-siavoshian/RRAA">GitHub</a>
+      <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/LICENSE">MIT license</a>
+    </nav>
+  </div>
+</footer>
+
+<script type="module" src="index.js"></script>
+</body>
+</html>

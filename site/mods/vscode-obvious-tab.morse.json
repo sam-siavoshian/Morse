@@ -1,0 +1,22 @@
+{
+  "morse": 1,
+  "id": "vscode-obvious-tab",
+  "title": "Obvious active tab",
+  "prompt": "make the active editor tab obvious and fade the others",
+  "match": {
+    "hosts": [
+      "vscode-app"
+    ],
+    "app": "vscode"
+  },
+  "target": {
+    "selector": ".tabs-container > .tab.active",
+    "label": "div.tab · active"
+  },
+  "css": ".monaco-workbench .tabs-container > .tab.active {\n  box-shadow: inset 0 -2px 0 currentColor;\n  font-weight: 600;\n}\n.monaco-workbench .tabs-container > .tab:not(.active) {\n  opacity: .55;\n}\n.monaco-workbench .tabs-container > .tab:not(.active):hover {\n  opacity: 1;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": null,
+  "created": "2026-10-22T10:10:00.000Z",
+  "updated": "2026-10-22T10:10:00.000Z"
+}
