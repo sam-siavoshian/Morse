@@ -22,6 +22,7 @@ import { serialized } from "./bar-host.js"; // hardening: one queue for every st
 import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver, practiceSample, SAMPLE_ONLY, openSetup } from "./onboarding-host.js"; // onboarding hook: welcome page, first-run state, practice area
 import { GALLERY_REQUESTS, handleGallery } from "./gallery-host.js"; // gallery hook: Mods for this site
 import { Style } from "./style-host.js"; // your-style hook: one style on every site
+import { PACK_REQUESTS, handlePack } from "./pack-host.js"; // packs hook: mod packs
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
@@ -160,6 +161,7 @@ async function dispatch(msg, port) {
   if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { practice: Practice.has(tab.id) }); // onboarding hook
   if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, here.url); // gallery hook: Mods for this site
   if (Style.owns(msg)) return Style.handle(msg, here); // your-style hook
+  if (PACK_REQUESTS.has(msg.type)) return handlePack(msg); // packs hook: mod packs (pack-host.js)
   switch (msg.type) {
     case "hello": {
       const b = await backend();
