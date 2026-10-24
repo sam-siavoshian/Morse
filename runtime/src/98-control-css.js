@@ -12,7 +12,7 @@ function CONTROL_CSS() { return `
   .ctl-msg { grid-column: 1; grid-row: 1; display: flex; align-items: flex-start; gap: 10px; padding-block: 9px; padding-inline: 12px 4px; min-width: 0; }
   .ctl-msg .radar { flex: none; color: var(--m-text-2); margin-top: 4px; }
   .ctl-msg span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-  .ctl-msg b { display: block; font-weight: 600; } /* the title (Safe start, the waiting notice) is a line of its own */
+  .ctl-msg b { font-weight: 600; display: block; margin-bottom: 2px; } /* dogfood: a title on its own line, not run into the sentence */
   .ctl-toast .ctl-x { grid-column: 2; grid-row: 1; margin-block: 8px 0; margin-inline: 0 8px; }
   .ctl-acts { grid-column: 1 / -1; grid-row: 2; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 0 12px 12px; }
   /* one short message and one action: a single 40px row */
