@@ -55,6 +55,7 @@ To work on Morse itself from a clone, see the [developer guide](docs/dev/README.
 | **Your controls** | One shortcut turns every mod off. Pause Morse on a site. A mod that slows down, freezes or keeps breaking a page is stopped. Back up everything to one file. | [Your controls](docs/your-controls.md) |
 | **Your style** | One look on every site and app: your font, bigger text, calmer pages, colors that are easier to tell apart. Say it once, ending with “everywhere”. | [Your style](docs/your-style.md) |
 | **Desktop apps** | `morse launch spotify` opens the app with Morse connected. The app's own files never change. | [Desktop apps](docs/desktop.md) |
+| **Morse Desktop** | An app for your computer: open your apps with Morse, choose your model and connect Chrome, all without a terminal. It waits in the tray. | [Morse Desktop](docs/desktop-app.md) |
 
 ## Which models work
 
@@ -88,6 +89,7 @@ Version 0.2, not released yet ([changelog](CHANGELOG.md)). What was checked for 
 - **Claude Code (haiku)**, the default before, as the model: the demo video, the Electron app, Describe this picture, Show me once (10 of 12 runs), and 55 everyday requests on 6 demo apps, 3 runs each: 163 of 165 worked ([evals](evals/README.md)).
 - **Real apps on Linux**, with Claude Code (haiku) and real keyboard and mouse: VSCodium 1.140 (its `.deb`), Obsidian 1.14 and Joplin 3.7 (AppImages). `morse apps` found them and `morse launch` opened them. One change each (a bigger status bar, no ribbon, no Synchronize button) took 6 to 16 seconds and was back after quitting and opening the app again. [Tested on](docs/desktop.md#tested-on).
 - **Real websites** with the extension and Claude Code (haiku): pypi.org, gitlab.com, pkg.go.dev, rubygems.org, hub.docker.com and nodejs.org. Five changes worked and were still there after a reload. On the Node.js docs, “hide the left sidebar” blanked the whole page every time. With “Allow User Scripts” off, PyPI blocked a new button; GitLab didn't. [Details](docs/desktop.md#websites).
+- **Morse Desktop on Linux:** it lists your apps, opens a real Electron app with Morse, disconnects and connects again, asks before restarting an open app, and keeps running when its window closes. Its AppImage starts and lists this computer's apps. [Morse Desktop](docs/desktop-app.md).
 - `npm test` covers every model connection against stand-ins, the Morse helper, the engine, sharing, and the UI in real Chromium.
 
 **Not verified yet**
@@ -95,7 +97,7 @@ Version 0.2, not released yet ([changelog](CHANGELOG.md)). What was checked for 
 - Microsoft's VS Code, Spotify, Slack or Discord, Flatpak and Snap installs, macOS, Windows and Wayland. Wikipedia, YouTube, GitHub's pages and other sites the test machine couldn't reach. Apps that aren't built from web pages (Finder, most system apps) can't work. See [Desktop apps](docs/desktop.md#which-apps-cant-work-and-why).
 - **Codex** is only tested against a stand-in `codex` command, and **the Anthropic and OpenAI APIs** only against stand-in servers.
 - **Mods can do anything the page can.** The model is told not to send data anywhere, but nothing stops it yet. Morse says what a shared mod does before you install it.
-- The extension isn't in the Chrome Web Store, and there is no tray app: on the desktop, you start apps with `morse launch`.
+- The extension isn't in the Chrome Web Store. Morse Desktop's macOS and Windows builds, their signing, its tray menu and connecting Chrome with one click weren't tried yet ([Releasing](docs/dev/releasing.md#what-was-checked)).
 - Most screenshots replay pre-written answers so they come out the same every time; one set uses [real Claude Code](docs/screenshots/claude-code). How each part was checked: [Testing](docs/dev/testing.md#what-was-verified-and-how).
 
 ## More

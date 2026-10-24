@@ -97,6 +97,15 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 160–166-pack-* | shoot-packs.js | ✅ | Came with main; current words |
 | clip-sleep-timer.gif, .mp4 | shoot-desktop.js's recording (`MORSE_HOME/clips`), encoded at double speed | ✅ | Today's bar; the machine was slow, so it is played twice as fast |
 | claude-code/01 … 14 | shoot-desktop.js with `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code` | ✅ | Whole run with real Claude Code. 14-share-card.png is new. Taken before the last merge from main, so the Mods panel (11) has no Packs row yet; a rerun after it was worse (haiku answered in 5 s, so 04 caught the finished change) and wasn't kept |
+| 167-desktop-app-apps.png | shoot-desktop-app.js | ✅ | Morse Desktop: this machine's apps, Tunes really connected (2 windows) |
+| 168-desktop-app-restart.png | shoot-desktop-app.js | ✅ | “Tunes is open. Restart it with Morse?”, with Always restart |
+| 169-desktop-app-model.png | shoot-desktop-app.js | ✅ | Real Claude Code (haiku) answered the check; the three choices |
+| 170-desktop-app-chrome.png | shoot-desktop-app.js | ✅ | The Morse helper on, the three ways to connect Chrome, a code |
+| 171-desktop-app-allow-chrome.png | shoot-desktop-app.js | ✅ | “Allow Chrome to use your Claude Code?”: a request made the way the extension makes it. Retaken only with a helper that can ask (onboarding v2) |
+| 172-desktop-app-mods.png | shoot-desktop-app.js | ✅ | Mods per app with switches; one turned off |
+| 173-desktop-app-checks.png | shoot-desktop-app.js | ✅ | The checks, with the model answering for real; “You're root” is this test machine |
+| 174-desktop-app-light.png | shoot-desktop-app.js | ✅ | Light mode; Tunes open and ready to connect |
+| 175-desktop-app-first-run.png | shoot-desktop-app.js | ✅ | The first run: Claude Code found and checked for real, the apps to open |
 
 Removed, after checking that no doc, page, test or script uses them:
 00-terminal.png (no script made it), 01, 02, 03, 06, 10, 13 (steps between
