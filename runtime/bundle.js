@@ -24,6 +24,7 @@ export function bundleRuntime() {
   shared.push(inlineModule("../core/showonce.js")); // show-once hook: steps, selectors, words (64-show-once.js)
   shared.push(inlineModule("../core/heal.js")); // self-heal hook: mods that keep working (71-heal.js)
   shared.push(inlineModule("../core/style.js")); // your-style hook: one style on every site (72-style.js)
+  shared.push(inlineModule("../core/guard.js")); // guard hook: CSS that would hide the whole page (64-guard.js)
   return `/* Morse runtime (built from runtime/src) */\n(() => {\nconst TOKENS_CSS = ${JSON.stringify(tokens)};\n${shared.join("\n")}\n${parts.join("\n")}\n})();\n`;
 }
 

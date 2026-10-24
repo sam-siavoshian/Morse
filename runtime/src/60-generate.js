@@ -27,6 +27,7 @@ const FIX_NOTE = "Fixed it so it works again";
 
 // Puts a version's code on the page under the mod's id (the old JS is undone first).
 async function showVersion(id, v) {
+  if (guardHeld(v)) { await removeMod(id).catch(() => {}); return { ok: true }; } // guard hook: a paused mod's code stays off (64-guard.js)
   setCss(id, v.css);
   if (v.js.trim()) return call("exec", { modId: id, js: v.js }).catch(e => ({ ok: false, error: e.message }));
   await call("off", { modId: id }).catch(() => {});
@@ -262,6 +263,7 @@ async function keep() {
       // Refined a saved mod: same mod, new version.
       const m = { ...d.mod, title: d.title || d.mod.title, css: d.css, js: d.js, history: versionsOf(d), updated: d.updated || new Date().toISOString() };
       if (d.refined) m.refined = d.refined; else delete m.refined;
+      if (m.paused) { delete m.paused; m.enabled = true; } // guard hook: a fixed paused mod runs again (64-guard.js)
       const saved = (await call("mods.save", { mod: m })) || m;
       S.mods = S.mods.map(x => (x.id === saved.id ? saved : x));
       return saved;
