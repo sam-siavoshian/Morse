@@ -37,11 +37,14 @@ recommends the first one it finds, and saves your choice. More about each:
 3. Open Morse's details and turn on **“Allow User Scripts”**. Mods that only
    change how a site looks work without it. Mods that add buttons or
    features need it on some sites.
-4. The welcome page opens. It has a practice page you can change right away,
-   and a short list to get set up.
-5. Connect a model. Either run `morse serve` and type the 6-character code it
-   shows into the Morse popup, or paste an Anthropic API key in the popup.
-   [Models and setup](models.md#in-chrome) explains both.
+4. The welcome page opens. Its practice page has sample answers, so you can
+   try a change right away, before connecting anything.
+5. Connect a model. The welcome page shows one command,
+   `morse setup --pair <code>`. Paste it in a terminal: it finds Claude Code
+   or Codex, checks that it answers, starts the Morse helper, and the page
+   connects by itself. You can also run `morse serve` and type its code into
+   the Morse popup, or paste an Anthropic API key in the popup.
+   [Models and setup](models.md#in-chrome) explains all three.
 6. Open any website and press **⌥Space** (Ctrl+Shift+Space on Windows and
    Linux).
 
