@@ -11,6 +11,7 @@ import { controlHandler, CONTROL_REQUESTS } from "../core/control-host.js";
 import { normalizeControl, setPause, pauseInfo } from "../core/control.js";
 import { exportBundle, backupFilename, parseImport, prepareInstall } from "../core/backup.js";
 import { summarizeMod, modOrigin } from "../core/summary.js";
+import { paint } from "./colors.js";
 
 export { CONTROL_REQUESTS };
 
@@ -65,7 +66,7 @@ export function watchControl(connector) {
 
 // ---- CLI
 
-const G = s => `\x1b[32m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`, Y = s => `\x1b[33m${s}\x1b[0m`;
+const { g: G, d: D, b: B, y: Y } = paint;
 const out = (...a) => console.log(...a);
 
 function printPause(s) {
