@@ -89,11 +89,10 @@ try {
   // 2. Already open: the question before restarting it.
   await row.getByRole("button", { name: "Disconnect" }).click();
   await w.locator(`li[data-app="${APP}"].open-connectable`).waitFor({ timeout: 30000 });
-  const port = JSON.parse(await fs.readFile(path.join(home, "apps.json"), "utf8"))[APP].port;
-  await fetch(`http://127.0.0.1:${port}/json/version`).then(r => r.json()).then(async v => {
-    const { CDPSession } = await import("../daemon/cdp.js");
-    const b = await CDPSession.connect(v.webSocketDebuggerUrl); await b.send("Browser.close").catch(() => {}); b.close();
-  });
+  // Quit it (Morse connects over a private pipe now, so there's no port to
+  // ask): the processes with this run's own profile.
+  const { listProcesses } = await import("../daemon/apps.js");
+  for (const p of listProcesses()) if (p.cmd.includes(profile)) try { process.kill(p.pid, "SIGTERM"); } catch {}
   await w.locator(`li[data-app="${APP}"].closed`).waitFor({ timeout: 30000 });
   kids.push(spawn(exe, appArgs, { stdio: "ignore", env: { ...process.env, ELECTRON_RUN_AS_NODE: "" } }));
   await w.locator(`li[data-app="${APP}"].open`).waitFor({ timeout: 60000 });
