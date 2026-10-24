@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Morse playground</title>
+<style>
+  body { margin: 0; min-height: 100vh; font: 15px/1.5 Inter, system-ui, sans-serif; background: var(--bg, #0e0e10); color: var(--fg, #e7e7ea); display: grid; place-items: center; }
+  body.light { --bg: #f6f6f7; --fg: #1a1a1d; }
+  .stage { display: grid; gap: 24px; width: 720px; }
+  .toolbar { display: flex; gap: 12px; align-items: center; padding: 12px 16px; border-radius: 12px; background: color-mix(in srgb, var(--fg) 6%, transparent); }
+  .toolbar button { background: none; border: 0; color: inherit; font: inherit; opacity: .7; }
+  .card { padding: 20px; border-radius: 14px; background: color-mix(in srgb, var(--fg) 5%, transparent); height: 220px; }
+</style>
+</head>
+<body>
+<!-- Dev playground: the real runtime with a fake host that streams canned
+     tokens, so the UI and effect can be iterated on without a model.
+     Open with ?light for the light theme. -->
+<div class="stage">
+  <div class="toolbar" id="toolbar"><button>⤮</button><button>⏮</button><button>▶</button><button>⏭</button><button>↻</button><span style="flex:1"></span><button>Settings</button></div>
+  <div class="card" id="card"><h3 style="margin:0 0 8px">Release notes</h3><p style="margin:0;opacity:.7">Pointing at things and describing what you want is the whole interface.</p></div>
+</div>
+<script>
+  if (location.search.includes("light")) document.body.classList.add("light");
+  localStorage.setItem("morse:debug", "1");
+  const TEXT = "TITLE: Demo\n```css\n#toolbar { gap: 20px; letter-spacing: .02em; }\n#toolbar button { opacity: .9; }\n```\n```js\nmorse.watch('#toolbar', t => t.append(morse.el('span', { text: 'hello' })));\n```\n";
+  const subs = [];
+  const emit = m => subs.forEach(f => f(m));
+  globalThis.__morseHost = {
+    onMessage: fn => subs.push(fn),
+    send(m) {
+      const reply = result => setTimeout(() => emit({ reply: m.id, result }), 10);
+      if (m.type === "hello") return reply({ mode: "playground", label: "playground · fake host", quiet: true });
+      if (m.type === "mods.list") return reply([]);
+      if (m.type === "generate") {
+        let i = 0;
+        const speed = Number(new URLSearchParams(location.search).get("ms") || 30);
+        const t = setInterval(() => {
+          const tok = TEXT.slice(i, i += 4);
+          emit({ type: "token", text: tok, genId: m.genId });
+          if (i >= TEXT.length) { clearInterval(t); reply({ ok: true, title: "Demo", css: "", js: "", attempts: 1 }); }
+        }, speed);
+        return;
+      }
+      reply(null);
+    },
+  };
+</script>
+<script src="/dist/extension/runtime.js"></script>
+</body>
+</html>

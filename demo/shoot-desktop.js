@@ -67,7 +67,7 @@ await sleep(500);
 await shot("04-the-magic-moment.png");
 
 // 5. First attempt throws; it shows the model the error and fixes itself
-await waitFor(s => /fixing/.test(s.hint));
+await waitFor(s => /fixing/i.test(s.hint));
 await sleep(500);
 await shot("05-fixes-its-own-bugs.png");
 

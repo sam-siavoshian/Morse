@@ -89,6 +89,32 @@
   }
 }
 
+/* Explicit light theme (the runtime matches the host app's theme). */
+:root[data-theme="light"], :host([data-theme="light"]) {
+    --m-bg: #fbfbfb;
+    --m-surface: #ffffff;
+    --m-raised: #f5f5f6;
+    --m-hover: #eeeef0;
+    --m-overlay: rgba(255, 255, 255, 0.9);
+    --m-scrim: rgba(0, 0, 0, 0.25);
+    --m-line: #e7e7ea;
+    --m-line-strong: #d9d9de;
+    --m-focus: rgba(0, 0, 0, 0.2);
+    --m-text: #111113;
+    --m-text-2: #5e5e66;
+    --m-text-3: #8e8e96;
+    --m-text-inverse: #ffffff;
+    --m-signal-0: #e4e4e7;
+    --m-signal-1: #c4c4ca;
+    --m-signal-2: #8e8e96;
+    --m-signal-3: #55555c;
+    --m-signal-4: #111113;
+    --m-primary: #111113;
+    --m-primary-text: #ffffff;
+    --m-primary-hover: #000000;
+    --m-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+
 /* The radar: OpenCode's 4x4 pixel spinner pattern. Corners off, inner four
  * pulse bright, outer eight pulse dim, every pixel on its own random phase. */
 @keyframes m-pulse { 0%, 100% { opacity: 0.4 } 50% { opacity: 1 } }
