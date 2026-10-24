@@ -7,6 +7,10 @@
 // whose stack holds no http(s)/file frame is Morse's (runtime, kit or a mod);
 // anything with a page frame is the page's. The instrumentation itself uses
 // the originals, so it never counts itself.
+//
+// Two worlds: on the desktop the runtime lives in an isolated world ("morse")
+// and mod code in the page's main world, so the same instrumentation runs in
+// both and a page's snapshot (t.snap()) adds them up.
 
 import http from "node:http";
 import net from "node:net";
@@ -20,6 +24,8 @@ let chromium = null;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
 export { chromium };
 
+// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
+export const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
 export const median = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor((s.length - 1) / 2)] : NaN; };
 export const freePort = () => new Promise(r => { const s = net.createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => r(p)); }); });
@@ -130,7 +136,7 @@ export function instrument() {
   const P = window.__perf = {
     counts: {}, calls: {}, ms: {}, max: {}, marks: {}, roots: [], sends: [], keydown: 0, frames: 0,
     reset() { this.counts = {}; this.calls = {}; this.ms = {}; this.max = {}; this.frames = 0; this.canvas = { fills: 0, shapes: 0 }; },
-    snap() { return JSON.parse(JSON.stringify({ counts: this.counts, calls: this.calls, ms: this.ms, max: this.max, marks: this.marks, sends: this.sends, frames: this.frames, canvas: this.canvas })); },
+    snap() { return JSON.parse(JSON.stringify({ counts: this.counts, calls: this.calls, ms: this.ms, max: this.max, marks: this.marks, sends: this.sends, frames: this.frames, canvas: this.canvas, pageErrors: this.pageErrors || [], keydown: this.keydown })); },
   };
   const RE = /\b(https?|file):\/\/|UtilityScript/; // page frames, or Playwright's own evaluate
   const ours = () => { const l = Error.stackTraceLimit; Error.stackTraceLimit = 60; const s = new O.Error().stack; Error.stackTraceLimit = l; return !RE.test(s); };
@@ -183,7 +189,8 @@ export function instrument() {
     if (n.matches("[data-morse-ui]")) mark("ui");
   };
   new O.MO(recs => { for (const r of recs) for (const n of r.addedNodes) seen(n); }).observe(document, { childList: true, subtree: true });
-  O.ael.call(window, "keydown", e => { if (e.code === "Space" && e.altKey) P.keydown = O.now(); }, true);
+  // The default Open Morse hotkey (Alt+Space on macOS, Ctrl+Shift+Space elsewhere).
+  O.ael.call(window, "keydown", e => { if (e.code === "Space" && (e.altKey || e.ctrlKey)) P.keydown = O.now(); }, true);
   // Anything that reaches the page's own error handlers.
   P.pageErrors = [];
   O.ael.call(window, "error", e => P.pageErrors.push(String(e.message || e.error)));
@@ -205,7 +212,8 @@ export async function desktop({ home, headless = true, args = [] } = {}) {
   let browser;
   try { browser = await chromium.launch({ channel: "chromium", headless, args: launchArgs }); }
   catch { browser = await chromium.launch({ headless, args: launchArgs }); }
-  const { Connector } = await import(`${ROOT}/daemon/connector.js`);
+  const conn = await import(`${ROOT}/daemon/connector.js`);
+  const { Connector } = conn, WORLD = conn.WORLD || null;
   const { listTargets } = await import(`${ROOT}/daemon/cdp.js`);
   const connector = new Connector({ port, app: null, settings: { provider: "demo", model: "demo" }, log: () => {} });
   return {
@@ -217,7 +225,8 @@ export async function desktop({ home, headless = true, args = [] } = {}) {
     },
     // A fresh page, instrumented; with morse=true the connector is attached
     // before the first navigation, exactly as `morse launch` does it.
-    async page({ morse = true, viewport = { width: 1280, height: 800 }, init = [], debug = false } = {}) {
+    // init: scripts for the page's world; morseInit: for Morse's world, before its boot.
+    async page({ morse = true, viewport = { width: 1280, height: 800 }, init = [], morseInit = [], debug = false } = {}) {
       const ctx = await browser.newContext({ viewport });
       await ctx.addInitScript(instrument);
       if (debug) await ctx.addInitScript(() => { try { localStorage.setItem("morse:debug", "1"); } catch {} });
@@ -227,12 +236,53 @@ export async function desktop({ home, headless = true, args = [] } = {}) {
       await cdp.send("Performance.enable");
       const errors = [];
       page.on("pageerror", e => errors.push(e.message));
+      // Morse's own world, instrumented before the connector's boot script.
+      let world = null;
+      if (WORLD) {
+        const frameId = (await cdp.send("Page.getFrameTree")).frameTree.frame.id;
+        cdp.on("Runtime.executionContextCreated", ({ context: c }) => { if (c.name === WORLD && c.auxData?.frameId === frameId) world = c.id; });
+        cdp.on("Runtime.executionContextsCleared", () => { world = null; });
+        await cdp.send("Runtime.enable");
+        await cdp.send("Page.enable");
+        await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: `(${instrument})()`, worldName: WORLD });
+        for (const fn of morseInit) await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: `(${fn})()`, worldName: WORLD });
+      }
       if (morse) {
         const { targetInfo } = await cdp.send("Target.getTargetInfo");
         const t = (await listTargets(port)).find(x => x.id === targetInfo.targetId);
         await connector.attach(t);
       }
-      return { ctx, page, cdp, errors, close: () => ctx.close() };
+      const main = fn => page.evaluate(`(${fn})(window.__perf)`);
+      // In Morse's world (the main world on older checkouts, where it ran there).
+      const inMorse = async fn => {
+        if (!WORLD) return main(fn);
+        if (world == null) return null;
+        const r = await cdp.send("Runtime.evaluate", { expression: `(${fn})(window.__perf)`, contextId: world, returnByValue: true, awaitPromise: true }).catch(() => null);
+        return r?.result?.value ?? null;
+      };
+      const both = async fn => { const a = await main(fn); if (WORLD) await inMorse(fn); return a; };
+      const sum = (x = {}, y = {}) => { const o = { ...x }; for (const [k, v] of Object.entries(y)) o[k] = (o[k] || 0) + v; return o; };
+      // One snapshot of everything Morse did in this page, both worlds.
+      async function snap() {
+        const a = await main(P => P.snap());
+        const b = WORLD ? await inMorse(P => P.snap()) : null;
+        if (!b) return a;
+        const max = { ...a.max };
+        for (const [k, v] of Object.entries(b.max)) max[k] = Math.max(max[k] || 0, v);
+        return { ...a, counts: sum(a.counts, b.counts), calls: sum(a.calls, b.calls), ms: sum(a.ms, b.ms), max,
+          marks: { ...b.marks, ...a.marks }, sends: b.sends.length ? b.sends : a.sends, canvas: sum(a.canvas, b.canvas) };
+      }
+      return {
+        ctx, page, cdp, errors, close: () => ctx.close(),
+        main, morse: inMorse, both, snap,
+        reset: () => both(P => P.reset()),
+        barVisible: () => inMorse(P => P.barVisible()),
+        barClass: () => inMorse(P => P.barClass()),
+        fxOn: () => inMorse(P => P.roots.some(r => r.querySelector(".fx")?.style.display === "block")),
+        // Morse's host requests (the binding lives in Morse's world), on the page's clock.
+        sends: async () => (await inMorse(P => P.sends)) || [],
+        clearSends: () => inMorse(P => { P.sends.length = 0; }),
+      };
     },
     close: () => browser.close(),
   };
@@ -257,9 +307,11 @@ export const THIRTY_MODS = WATCH_SELECTORS.map((sel, i) => mod(`perf${String(i).
   `morse.watch(${JSON.stringify(sel)}, el => { el.dataset.p${i} = ""; });`));
 
 // Morse's own trace of the effect: drives the real bar, page-wide or on a target.
-export async function runGeneration(page, { target = null, prompt = "make it calmer" } = {}) {
-  await page.keyboard.press("Alt+Space");
-  await page.waitForFunction(() => window.__perf.barVisible(), null, { timeout: 15000 });
+export async function runGeneration(t, { target = null, prompt = "make it calmer" } = {}) {
+  const page = t.page;
+  await page.keyboard.press(OPEN_KEY);
+  const end = Date.now() + 15000;
+  while (!(await t.barVisible())) { if (Date.now() > end) throw new Error("the bar didn't open"); await sleep(25); }
   if (target) {
     const r = await page.locator(target).boundingBox();
     await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2, { steps: 3 });

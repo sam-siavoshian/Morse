@@ -14,7 +14,8 @@ export const HOTKEY_ACTIONS = [
   { id: "open", label: "Open Morse" },
   { id: "talk", label: "Push to talk", hold: true },
   { id: "mods", label: "Mods panel" },
-  { id: "godmode", label: "God mode" },
+  { id: "godmode", label: "Edit tools" },
+  { id: "off", label: "Turn off all mods" }, // the off switch (runtime/src/63-control.js)
 ];
 
 export function detectPlatform(nav = globalThis.navigator) {
@@ -24,11 +25,12 @@ export function detectPlatform(nav = globalThis.navigator) {
   return "linux";
 }
 
-// Alt+Space opens the window menu on Windows, so Windows gets Ctrl+Shift+Space.
+// Alt+Space opens the window menu on Windows and on GNOME/Xfce, and KRunner on
+// KDE, so only macOS gets ⌥Space; everywhere else it's Ctrl+Shift+Space.
 // Push to talk defaults to holding the open hotkey: tap to open, hold to talk.
 export function defaultHotkeys(platform) {
-  const open = platform === "win" ? "Ctrl+Shift+Space" : "Alt+Space";
-  return { open, talk: open, mods: "Alt+Shift+KeyM", godmode: "Alt+Shift+KeyG" };
+  const open = platform === "mac" ? "Alt+Space" : "Ctrl+Shift+Space";
+  return { open, talk: open, mods: "Alt+Shift+KeyM", godmode: "Alt+Shift+KeyG", off: "Alt+Shift+Digit0" };
 }
 
 const HK_MOD_ALIASES = {
@@ -189,7 +191,7 @@ const HK_COMMON = {
 export function checkCombo(str, platform, { self = "", others = {} } = {}) {
   if (str === "none") return { level: "ok", message: "" };
   const c = parseCombo(str);
-  if (!c) return { level: "error", message: "Add a key, not just modifiers." };
+  if (!c) return { level: "error", message: "Add a letter or another key, not just Shift, Ctrl or Alt." };
   const combo = stringifyCombo(c);
   const shown = formatCombo(combo, platform);
   const fkey = /^F(1[3-9]|2[0-4])$/.test(c.code);
@@ -209,8 +211,9 @@ export function checkCombo(str, platform, { self = "", others = {} } = {}) {
   }
   const primary = platform === "mac" ? c.meta && !c.ctrl : c.ctrl && !c.meta;
   if (primary && !c.alt && HK_COMMON[c.code]) return { level: "warn", message: `${shown} is ${HK_COMMON[c.code]} in most apps. Morse will take it over.` };
-  if (platform === "mac" && c.ctrl && !c.alt && !c.meta && c.code === "Space") return { level: "warn", message: "⌃Space switches input sources on many Macs." };
-  if (platform !== "mac" && c.ctrl && !c.alt && !c.shift && c.code === "Space") return { level: "warn", message: "Ctrl+Space triggers autocomplete in many editors." };
+  if (platform === "mac" && c.ctrl && !c.alt && !c.meta && c.code === "Space") return { level: "warn", message: "⌃Space switches the keyboard language on many Macs." };
+  if (platform !== "mac" && c.ctrl && !c.alt && !c.shift && c.code === "Space") return { level: "warn", message: "Ctrl+Space opens suggestions in many code editors." };
+  if (platform === "linux" && combo === "Alt+Space") return { level: "warn", message: "Alt+Space opens the window menu on GNOME and Xfce, and KRunner on KDE." };
   if (platform === "mac" && c.alt && !c.ctrl && !c.meta && /^(Key|Digit)/.test(c.code)) return { level: "warn", message: `${shown} types a special character in text fields. Morse will take it over.` };
   if (platform !== "mac" && c.alt && !c.ctrl && !c.meta && !c.shift && /^Key/.test(c.code)) return { level: "warn", message: `${shown} opens a menu in many desktop apps.` };
   return { level: "ok", message: "" };

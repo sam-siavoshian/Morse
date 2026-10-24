@@ -6,6 +6,9 @@
 // photographed. Load it before runtime.js. Query params:
 //   ?mods=0|1|12   fixture mods for the panel
 //   ?label=...     model label shown in the bar and panel footer
+//   ?voice=0|none  host can't transcribe (0: with a setup hint, none: no hint)
+//   ?clips=1       fixture snapshots on the Morse clipboard
+//   ?hist=1        fixture prompt history
 (() => {
   if (globalThis.__morseHost) return;
   try { localStorage.setItem("morse:debug", "1"); } catch {}
@@ -39,8 +42,10 @@
   };
   const C = globalThis.__cat = {
     mods: structuredClone(MODS[q.get("mods") || "0"] || []),
-    label: q.get("label") || "qwen2.5-coder:7b · ollama",
+    label: q.get("label") || "Claude Code · sonnet",
     gen: null, execFail: null, importFail: null, calls: [],
+    settings: {}, history: q.get("hist") ? ["make the toolbar airier", "hide the cookie banner on every page", "add a sleep timer to the player"] : [],
+    clips: [], transcript: "make the toolbar airier", transcribeFail: null, holdTranscribe: false,
     token(text) { if (C.gen) emit({ type: "token", text, genId: C.gen.genId }); },
     phase(phase, error) { if (C.gen) emit({ type: "phase", phase, error, genId: C.gen.genId }); },
     css(css) { if (C.gen) emit({ type: "css", css, genId: C.gen.genId }); },
@@ -49,6 +54,17 @@
   };
   const card = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675"><rect width="1200" height="675" fill="#0b0b0c"/><text x="40" y="92" fill="#f4f4f5" font-family="sans-serif" font-size="34">“make the toolbar airier”</text><rect x="40" y="206" width="548" height="400" rx="14" fill="#18181b" stroke="#3a3a40" stroke-width="2"/><rect x="612" y="206" width="548" height="400" rx="14" fill="#18181b" stroke="#f4f4f5" stroke-width="2"/></svg>')}`;
 
+  const thumb = (w, h, bg, fg) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="${w}" height="${h}" fill="${bg}"/><rect x="12" y="${h / 2 - 6}" width="${w / 2}" height="12" rx="3" fill="${fg}"/></svg>`)}`;
+  if (q.get("clips")) C.clips = [
+    { id: "c1", label: "div · “The Daily Byte”", note: "red masthead, bold white type", thumb: thumb(240, 64, "#c8102e", "#fff"), from: { app: "The Daily Byte", url: "http://byte/", title: "The Daily Byte" }, created: now },
+    { id: "c2", label: "button · “Subscribe to the weekly newsletter for product designers”", note: "", from: { app: "Parley", url: "http://parley/", title: "Parley" }, created: now },
+    { id: "c3", label: "nav · “Library”", note: "", thumb: thumb(120, 140, "#18181b", "#a0a0a8"), from: { app: "Tunes", url: "http://tunes/", title: "Tunes" }, created: now },
+  ];
+  const merge = (a, b) => { const o = { ...a }; for (const [k, v] of Object.entries(b || {})) o[k] = v && typeof v === "object" && !Array.isArray(v) ? { ...(a[k] || {}), ...v } : v; return o; };
+  const voice = q.get("voice") === "none" ? null : q.get("voice") === "0"
+    ? { transcribe: false, provider: null, label: "", hint: "Voice: add an OpenAI key in the Morse popup, or run the Morse helper" }
+    : { transcribe: true, provider: "openai", label: "OpenAI gpt-4o-mini-transcribe", hint: "" };
+
   globalThis.__morseHost = {
     onMessage: fn => subs.push(fn),
     async send(m) {
@@ -56,7 +72,21 @@
       const reply = result => emit({ reply: m.id, result });
       const fail = error => emit({ reply: m.id, error });
       switch (m.type) {
-        case "hello": return reply({ mode: "catalog", label: C.label, quiet: q.get("quiet") !== "0", appName: q.get("app") || null });
+        case "hello": return reply({ mode: "catalog", label: C.label, quiet: q.get("quiet") !== "0", appName: q.get("app") || null, settings: C.settings, voice });
+        case "settings.get": return reply(C.settings);
+        case "settings.set": C.settings = merge(C.settings, m.settings); return reply(structuredClone(C.settings));
+        case "history.get": return reply(C.history.slice());
+        case "history.add": C.history = C.history.filter(x => x !== m.text).concat(m.text).slice(-50); return reply(C.history.slice());
+        case "clipboard.list": return reply(structuredClone(C.clips));
+        case "clipboard.put": C.clips = [m.item, ...C.clips]; return reply(structuredClone(C.clips));
+        case "transcribe": {
+          if (!voice?.transcribe) return fail("Unknown request transcribe");
+          if (m.partial) return reply({ text: C.transcript.split(" ").slice(0, 3).join(" ") });
+          const answer = () => C.transcribeFail ? fail(C.transcribeFail) : reply({ text: C.transcript });
+          if (C.holdTranscribe) { C.release = answer; return; }
+          return setTimeout(answer, 200);
+        }
+        case "generate.cancel": return reply(true);
         case "mods.list": return reply(structuredClone(C.mods));
         case "mods.save": {
           if (m.draft) {

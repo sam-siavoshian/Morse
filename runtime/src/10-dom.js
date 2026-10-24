@@ -9,17 +9,19 @@ const DEBUG = B.debug; // localStorage "morse:debug": open shadow root, status a
 const root = hostEl.attachShadow({ mode: DEBUG ? "open" : "closed" });
 // Tokens are custom properties, the one thing that inherits through a shadow
 // boundary. Marked !important, ours beat any `--m-*` the page sets on our host.
-root.innerHTML = `<style>${TOKENS_CSS.replace(/(--m-[\w-]+\s*:[^;!]+);/g, "$1 !important;")}\n${CSS()}\n${GOD_CSS() /* God mode hook */}</style>
-  <style>${BAR_CSS()}</style>
+root.innerHTML = `<style>${TOKENS_CSS.replace(/(--m-[\w-]+\s*:[^;!]+);/g, "$1 !important;")}\n${CSS()}\n${GOD_CSS() /* God mode hook */}\n${ASK_CSS() /* Ask and find hook */}\n${CONTROL_CSS() /* user control hook */}
+${A11Y_CSS() /* Easier to use hook: 98-a11y-css.js */}</style>
+  <style>${BAR_CSS()}${ONBOARDING_CSS() /* onboarding hook: 98-onboarding-css.js */}</style>
+  <style>${GALLERY_CSS() /* gallery hook: 98-gallery-css.js */}</style>
   <canvas class="fx"></canvas>
   <div class="hl" hidden><span></span></div>
   <div class="sel" hidden></div>
   <div class="bar" hidden>
     <div class="row">
       <span class="mark">${radar(18)}</span>
-      <div class="chip target" hidden><span></span><button class="x" title="Clear target">×</button></div>
+      <div class="chip target" hidden><span></span><button class="x" title="Point at something else">×</button></div>
       <textarea class="in" rows="1" placeholder="Describe a change…" spellcheck="false" autocomplete="off"></textarea>
-      <button class="go" title="Run (Enter)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"/></svg></button>
+      <button class="go" title="Send (Enter)"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9.5M8.75 4.25 12.5 8l-3.75 3.75"/></svg></button>
     </div>
     <div class="status">
       <span class="hint"></span>
@@ -43,7 +45,7 @@ function applyTheme() {
 }
 // Built on first use, not at page load. boot.js tells us when the page swaps
 // out <html> or its children (document.open, innerHTML), so we come back.
-function mount() { if (!hostEl.isConnected) document.documentElement?.append(hostEl); }
+function mount() { if (!hostEl.isConnected && live()) document.documentElement?.append(hostEl); }
 mount();
 applyTheme();
 B.domHooks.add(mount);

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inkwell</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; display: flex; background: #fff; color: #37352f; font: 14px/1.5 -apple-system, "Segoe UI", Helvetica, sans-serif; overflow: hidden; }
+  .sb_k2 { width: 250px; background: #f7f7f5; border-right: 1px solid #ececea; display: flex; flex-direction: column; padding: 12px 8px; gap: 2px; }
+  .sb_k2 .ws { display: flex; align-items: center; gap: 8px; padding: 6px 8px; font-weight: 600; }
+  .sb_k2 .ws i { width: 20px; height: 20px; border-radius: 4px; background: #e16259; color: #fff; font: 600 12px/20px sans-serif; text-align: center; font-style: normal; }
+  .sb_k2 .new { margin: 6px 0 10px; text-align: left; border: 0; background: none; color: #91918e; padding: 6px 8px; font: inherit; border-radius: 4px; }
+  .sb_k2 .nt { padding: 6px 8px; border-radius: 4px; color: #5f5e5b; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sb_k2 .nt small { display: block; color: #a5a4a1; font-size: 11px; }
+  .sb_k2 .nt.cur { background: #ebebea; color: #37352f; }
+  .sb_k2 .grp { color: #a5a4a1; font-size: 11px; font-weight: 600; margin: 14px 8px 4px; text-transform: uppercase; letter-spacing: .04em; }
+  .pg { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .crumbs { display: flex; align-items: center; gap: 6px; padding: 10px 16px; color: #73726e; font-size: 13px; }
+  .crumbs .sp { margin-left: auto; display: flex; gap: 4px; } .crumbs button { border: 0; background: none; color: #73726e; font: inherit; padding: 4px 8px; border-radius: 4px; }
+  .fmt { display: flex; gap: 2px; padding: 4px 12px; margin: 0 auto; width: 620px; border-bottom: 1px solid #f1f1ef; }
+  .fmt button { border: 0; background: none; width: 30px; height: 28px; border-radius: 4px; color: #73726e; font: 600 13px/1 Georgia, serif; }
+  .doc { flex: 1; overflow: auto; }
+  .doc .in { width: 620px; margin: 0 auto; padding: 28px 0 80px; }
+  .doc h1 { font-size: 32px; font-weight: 700; margin: 0 0 6px; outline: 0; }
+  .doc .props { color: #a5a4a1; font-size: 12px; margin-bottom: 22px; }
+  .ed_9f { outline: 0; font-size: 13px; color: #9b9a97; min-height: 300px; }
+  .ed_9f p { margin: 0 0 12px; } .ed_9f h3 { color: #6b6a66; font-size: 15px; margin: 22px 0 8px; }
+  .stat { padding: 6px 16px; color: #a5a4a1; font-size: 11px; border-top: 1px solid #f1f1ef; display: flex; gap: 16px; }
+</style>
+</head>
+<body>
+  <aside class="sb_k2" aria-label="Notes">
+    <div class="ws"><i>S</i> Sam's notes</div>
+    <button class="new">+ New note</button>
+    <div class="grp">Pinned</div>
+    <div class="nt cur">Morse launch plan<small>Edited 2m ago</small></div>
+    <div class="nt">Reading list<small>Oct 22</small></div>
+    <div class="grp">All notes</div>
+    <div class="nt">Interview questions<small>Oct 20</small></div>
+    <div class="nt">Lisbon itinerary<small>Oct 18</small></div>
+    <div class="nt">Sourdough log<small>Oct 12</small></div>
+    <div class="nt">Gift ideas<small>Oct 02</small></div>
+  </aside>
+  <div class="pg">
+    <div class="crumbs">Sam's notes / Pinned / Morse launch plan<span class="sp"><button>Share</button><button>☆</button><button>⋯</button></span></div>
+    <div class="fmt" role="toolbar" aria-label="Formatting">
+      <button title="Bold"><b>B</b></button><button title="Italic"><i>I</i></button><button title="Underline"><u>U</u></button><button title="Heading">H</button><button title="Bulleted list">•</button><button title="Link">⌁</button>
+    </div>
+    <div class="doc"><div class="in">
+      <h1 contenteditable="true">Morse launch plan</h1>
+      <div class="props">Created Oct 14 · Last edited by Sam</div>
+      <div class="ed_9f" contenteditable="true" role="textbox" aria-multiline="true">
+        <p>The goal for launch week is simple: get twenty people to make a change to an app they use every day, and record what they asked for.</p>
+        <h3>Before launch</h3>
+        <p>Finish the share card, make the first-run flow shorter, and write the README section about bringing your own model. Test on at least three real Electron apps.</p>
+        <h3>Launch day</h3>
+        <p>Post the clip of the sleep timer, answer every comment in the first two hours, and keep a list of every request that failed so we can turn them into evals.</p>
+        <h3>After</h3>
+        <p>Read every failed request. Group them. Fix the biggest group first.</p>
+      </div>
+    </div></div>
+    <div class="stat"><span>All changes synced</span><span>Markdown</span></div>
+  </div>
+<script>
+  document.querySelectorAll(".sb_k2 .nt").forEach(n => n.onclick = () => {
+    document.querySelectorAll(".sb_k2 .nt").forEach(m => m.classList.toggle("cur", m === n));
+    document.querySelector(".doc h1").textContent = n.firstChild.textContent;
+  });
+  document.querySelector(".fmt").addEventListener("mousedown", e => e.preventDefault());
+  document.querySelectorAll(".fmt button").forEach(b => b.onclick = () => {
+    const cmd = { Bold: "bold", Italic: "italic", Underline: "underline" }[b.title];
+    if (cmd) document.execCommand(cmd);
+  });
+</script>
+</body>
+</html>

@@ -24,9 +24,10 @@ const Voice = (() => {
   let sr = null, srText = "", srFailed = false, srEnded = null;
   let base = "", startedAt = 0, heardAt = 0, heard = false, floorDb = -60;
   let partialTimer = 0, partialBusy = false, partialSize = 0, lastBackend = "";
+  let resultHint = null;           // talking over a result (to refine it): its status line, put back after
 
   // ---- the button: mic glyph, level meter, or a radar while transcribing
-  micBtn.innerHTML = `<svg class="i-mic" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="5.5" y="1.75" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg><canvas class="lvl" aria-hidden="true"></canvas><span class="spin" aria-hidden="true">${radar(14)}</span>`;
+  micBtn.innerHTML = `<svg class="i-mic" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.5" y="1.75" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg><canvas class="lvl" aria-hidden="true"></canvas><span class="spin" aria-hidden="true">${radar(14)}</span>`;
   const meter = micBtn.querySelector(".lvl");
   const mg = meter.getContext("2d");
   const COLS = 7, ROWS = 4, CELL = 4, SQ = 3;
@@ -38,12 +39,16 @@ const Voice = (() => {
     micBtn.setAttribute("aria-pressed", String(st === "listening" || st === "starting"));
     const talk = hotkey("talk"), same = talk && talk === hotkey("open");
     const how = talk ? ` · ${same ? "hold" : "press"} ${hotkeyText("talk")}` : "";
-    micBtn.title = st === "listening" ? "Stop listening" : st === "transcribing" ? "Transcribing…" : (availability().why || `Voice input${how}`);
+    micBtn.title = st === "listening" ? "Stop listening" : st === "transcribing" ? "Turning speech into text…" : (availability().why || `Voice input${how}`);
     bar.classList.toggle("listening", st === "listening" || st === "starting");
-    input.placeholder = st === "listening" ? "Listening…" : st === "transcribing" ? "Transcribing…" : "Describe a change…";
+    input.placeholder = st === "listening" ? "Listening…" : st === "transcribing" ? "Turning speech into text…" : S.phase === "result" ? "Refine…" : "Describe a change…";
     if (st === "listening") stickyHint(`${radar(12)} Listening · ${mode === "hold" ? "release to finish" : `pause or <kbd>Esc</kbd> to finish`}`);
-    else if (st === "transcribing") stickyHint(`${radar(12)} Transcribing`);
+    else if (st === "transcribing") stickyHint(`${radar(12)} Turning speech into text`);
     else if (hintSticky) stickyHint("");
+    // setHint leaves a result's status line alone, so show (and later restore) it here.
+    if (resultHint === null) return;
+    if (st !== "idle") { if (S.phase === "result") hint.innerHTML = hintSticky; }
+    else { if (S.phase === "result") hint.innerHTML = resultHint; resultHint = null; }
   }
 
   // ---- what's possible on this page
@@ -54,10 +59,10 @@ const Voice = (() => {
   const canRecord = () => !!(navigator.mediaDevices?.getUserMedia && globalThis.MediaRecorder && hostVoice?.transcribe);
   const canSpeech = () => !!SR && !speechBroken;
   function availability() {
-    if (!globalThis.isSecureContext) return { ok: false, why: "Voice needs a secure (https) page" };
-    if (policyBlocked()) return { ok: false, why: "This page's permissions policy blocks the microphone" };
+    if (!globalThis.isSecureContext) return { ok: false, why: "Voice only works on secure (https) pages" };
+    if (policyBlocked()) return { ok: false, why: "This page doesn't allow the microphone" };
     if (!canSpeech() && !canRecord()) {
-      if (!navigator.mediaDevices?.getUserMedia) return { ok: false, why: "This app doesn't give pages a microphone" };
+      if (!navigator.mediaDevices?.getUserMedia) return { ok: false, why: "This app doesn't allow the microphone. Type your change instead." };
       return { ok: false, why: hostVoice?.hint || "Voice isn't set up for this app yet" };
     }
     return { ok: true, why: "" };
@@ -71,22 +76,23 @@ const Voice = (() => {
     const a = availability();
     if (!a.ok) return { ok: false, text: a.why };
     const parts = [];
-    if (canSpeech()) parts.push("Chrome speech recognition");
-    if (canRecord()) parts.push(`${parts.length ? "falls back to " : ""}${hostVoice.label || "the Morse host"}`);
+    if (canSpeech()) parts.push("Chrome's speech recognition");
+    if (canRecord()) parts.push(`${parts.length ? "or " : ""}${hostVoice.label || "the Morse helper"}`);
     return { ok: true, text: parts.join(", ") };
   }
 
   function explain(why) {
-    note(`<i class="note">${esc(why)}</i>`, 8000);
+    if (S.phase === "result" && S.draft) showResult(S.draft, { note: why, keepInput: true }); // setHint leaves a result alone
+    else note(`<i class="note">${esc(why)}</i>`, 8000);
     micBtn.classList.add("nudge");
     setTimeout(() => micBtn.classList.remove("nudge"), 400);
   }
   function micError(e) {
     const n = e?.name || "";
-    if (n === "NotAllowedError" || n === "SecurityError") return policyBlocked() ? "This page's permissions policy blocks the microphone" : "Microphone access is blocked. Allow it for this site, then try again";
-    if (n === "NotFoundError" || n === "OverconstrainedError" || n === "DevicesNotFoundError") return "No microphone found";
-    if (n === "NotReadableError" || n === "AbortError" || n === "TrackStartError") return "The microphone is busy in another app";
-    return `Couldn't start the microphone${n ? ` (${n})` : ""}`;
+    if (n === "NotAllowedError" || n === "SecurityError") return policyBlocked() ? "This page doesn't allow the microphone" : "Microphone access is blocked. Allow it for this site, then try again.";
+    if (n === "NotFoundError" || n === "OverconstrainedError" || n === "DevicesNotFoundError") return "No microphone found. Plug one in and try again.";
+    if (n === "NotReadableError" || n === "AbortError" || n === "TrackStartError") return "The microphone is in use by another app. Close it and try again.";
+    return `Couldn't start the microphone${n ? ` (${n})` : ""}. Try again.`;
   }
 
   // ---- start / stop
@@ -94,11 +100,13 @@ const Voice = (() => {
     if (st === "starting" || st === "listening") { if (m === "tap") stop({ submit: PREFS.voice.autoSubmit }); return; }
     if (st === "transcribing") return;
     if (!S.open) openBar();
-    if (S.phase !== "idle") return;
+    // In a result, what you say refines it (60-generate.js).
+    if (S.phase !== "idle" && S.phase !== "result") return;
     const a = availability();
     if (!a.ok) { explain(a.why); return; }
     const my = ++session;
     mode = m; pendingStop = null;
+    resultHint = S.phase === "result" ? hint.innerHTML : null;
     st = "starting"; render();
     base = input.value.replace(/\s+$/, "");
     srText = ""; srFailed = false; chunks = []; heard = false; heardAt = 0; partialSize = 0; floorDb = -60;
@@ -146,15 +154,16 @@ const Voice = (() => {
     else if (chunks.length) {
       try { text = await transcribeBlob(new Blob(chunks, { type: mime })); }
       catch (e) { error = e.message || String(e); }
-    } else if (srFailed && !canRecord()) error = hostVoice?.hint || "Speech recognition isn't available in this app";
+    } else if (srFailed && !canRecord()) error = hostVoice?.hint || "Voice isn't available in this app. Type your change instead.";
     if (my !== session) return;
     teardown();
     st = "idle"; render();
     if (error) { showText(""); explain(error); return; }
-    if (!text) { showText(""); explain("Didn't catch that. Try again?"); return; }
+    if (!text) { showText(""); explain("Didn't catch that. Try again."); return; }
     showText(text, true);
     input.focus();
-    if (submit && input.value.trim()) send(input.value.trim());
+    const said = input.value.trim();
+    if (submit && said) S.phase === "result" ? refine(said) : send(said);
   }
 
   // Throw away whatever is in flight (bar closed, prompt sent).

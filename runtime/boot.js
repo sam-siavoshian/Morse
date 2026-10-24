@@ -10,14 +10,20 @@
  * script), so the built-ins captured here are the page's originals even when
  * the page later replaces addEventListener, MutationObserver or rAF.
  *
- * runtime/bundle.js wraps this file in an IIFE with core/hotkeys.js and
- * core/prefs.js inlined, inside a try/catch: Morse never throws into a page. */
+ * runtime/bundle.js wraps this file in an IIFE with core/hotkeys.js,
+ * core/prefs.js and core/control.js inlined, inside a try/catch: Morse never
+ * throws into a page. */
 
 const W = window, D = document;
 const BOOT = Symbol.for("morse.boot"), PRISTINE = Symbol.for("morse.pristine");
-if (W[BOOT] || W.__morseRuntime) return;
+// A detached host (`morse stop`) bumps __morseGen: that copy goes quiet and a
+// later attach starts a fresh one here.
+const prior = W[BOOT];
+if (prior ? prior.live() : W.__morseRuntime) return;
 const host = W.__morseHost;
 if (!host || typeof host.send !== "function" || typeof host.onMessage !== "function") return;
+const GEN = W.__morseGen = (W.__morseGen || 0) + 1;
+const live = () => W.__morseGen === GEN;
 
 // ---- the page's own built-ins, before it can replace them
 const apply = Reflect.apply;
@@ -54,6 +60,7 @@ function on(target, type, fn, opts) {
   const forget = () => { const i = regs.indexOf(reg); if (i >= 0) regs.splice(i, 1); };
   reg.wrapped = function (e) {
     if (opts && opts.once) forget();
+    if (!live()) return; // detached: keep none of the page's events
     try { return apply(fn, this, [e]); } catch (err) { warn(err); }
   };
   if (opts && opts.signal) { if (opts.signal.aborted) return; pristine.addEventListener(opts.signal, "abort", forget, { once: true }); }
@@ -75,7 +82,7 @@ const pending = new Map();
 const listeners = new Set();
 const outgoing = []; // hook: fns that may decorate a request before it is sent (God mode capture)
 host.onMessage(msg => {
-  if (!msg || typeof msg !== "object") return;
+  if (!msg || typeof msg !== "object" || !live()) return;
   if (msg.reply != null && pending.has(msg.reply)) {
     const { resolve, reject } = pending.get(msg.reply);
     pending.delete(msg.reply);
@@ -101,6 +108,7 @@ const S = {
   draft: null, before: null, after: null, label: "", mode: "", app: null, appName: null,
   mods: [], url: location.href,
 };
+const newId = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
 let DEBUG = false;
 try { DEBUG = !!W.localStorage.getItem("morse:debug"); } catch {}
 
@@ -133,12 +141,60 @@ function setCss(id, css) {
 // still wins ties the way it did when it was applied last.
 domReady.then(() => { const p = styleParent(); if (p) for (const s of styles.values()) if (s.parentNode !== p || s.nextElementSibling) p.append(s); });
 
+// ---- user control (63-control.js has the UI; the rules are core/control.js):
+// the off switch (per tab, survives reloads), pauses (here or everywhere) and
+// safe start (a mod that keeps ending the page right after it runs is held
+// back). Mods are applied here, before any UI, so the rules live here too.
+const Control = { pause: { all: false, sites: {} }, off: false, held: new Set(), suspect: null, tab: "" };
+try { Control.off = W.sessionStorage.getItem("morse:off") === "1"; } catch {}
+try { Control.tab = W.sessionStorage.getItem("morse:tab") || newId(); W.sessionStorage.setItem("morse:tab", Control.tab); } catch {}
+// Requests older (and demo) hosts may not answer.
+function ctl(type, payload = {}, ms = 4000) {
+  return new Promise(resolve => {
+    const t = pristine.setTimeout(() => resolve(null), ms);
+    call(type, { url: location.href, app: S.app, tab: Control.tab, ...payload })
+      .then(r => resolve(r), () => resolve(null)).finally(() => pristine.clearTimeout(t));
+  });
+}
+const held = m => Control.off || isPaused({ pause: Control.pause }, { url: location.href, app: S.app }) || Control.held.has(m.id);
+// Once per page load: pauses and the safe-start suspect, before any mod runs.
+const controlled = ctl("control.boot", {}, 2500).then(r => {
+  if (r?.pause) Control.pause = normalizeControl({ pause: r.pause }).pause;
+  if (r?.suspect?.id) { Control.suspect = r.suspect; Control.held.add(r.suspect.id); }
+});
+let aliveTimers = [];
+function ran(m) {
+  ctl("control.applied", { mod: { id: m.id, title: m.title, updated: m.updated || "", js: !!(m.js || "").trim() } });
+  aliveTimers.forEach(pristine.clearTimeout);
+  aliveTimers = [2000, 5000, SAFE_WINDOW + 1000].map(ms => pristine.setTimeout(() => ctl("control.alive"), ms));
+}
+// Pause changes while the UI isn't here (the UI has its own, with toasts).
+function changeHeld(fn) {
+  const running = m => !!m.enabled && !held(m);
+  const before = new Map(S.mods.map(m => [m.id, running(m)]));
+  fn();
+  for (const m of S.mods) {
+    const now = running(m);
+    if (before.get(m.id) && !now) { setCss(m.id, ""); if ((m.js || "").trim()) call("off", { modId: m.id }).catch(() => {}); }
+    else if (!before.get(m.id) && now) applyMod(m).catch(warn);
+  }
+}
+// Repair health for the Mods panel (70-panel.js), kept until the UI is here.
+const healthLog = new Map();
+function health(m, r) { if (ui?.health) { try { ui.health(m, r); } catch (e) { warn(e); } } else healthLog.set(m.id, [m, r]); }
+
 async function applyMod(m) {
+  await controlled;
+  if (held(m) || !live()) return;
   setCss(m.id, m.css);
-  if (!m.js || !m.js.trim()) return;
-  await domReady;
-  const r = await call("exec", { modId: m.id, js: m.js });
-  if (r && !r.ok) notify(`“${m.title}” failed: ${r.error}`);
+  if ((m.js || "").trim()) {
+    await domReady;
+    if (!live()) return;
+    const r = await call("exec", { modId: m.id, js: m.js });
+    health(m, r);
+    if (r && !r.ok) { warn(m.title, r.error); notify(`Couldn't run “${m.title}” here. Turn it off or edit its code in Mods.`); }
+  }
+  ran(m);
 }
 async function removeMod(id) { setCss(id, ""); await call("off", { modId: id }); }
 
@@ -210,6 +266,7 @@ on(W, "pageshow", e => {
 const domHooks = new Set();
 let watchedRoot = null;
 const domMo = new pristine.MutationObserver(() => {
+  if (!live()) { domMo.disconnect(); return; }
   const swapped = watchedRoot && D.documentElement !== watchedRoot; // document.open() erased our window listeners
   observeDom();
   for (const s of styles.values()) if (!s.isConnected) styleParent()?.append(s);
@@ -225,7 +282,13 @@ observeDom();
 
 // ---- the UI, loaded on first use
 let ui = null, uiLoading = null, pendingKey = null;
-const queued = [], toasts = [];
+const queued = [], toasts = [], tasks = [];
+// Work only the UI can do (a toast with buttons): load it, then run.
+function uiTask(name) {
+  if (ui) { try { ui[name]?.(); } catch (e) { warn(e); } return; }
+  tasks.push(name);
+  loadUI().catch(() => {});
+}
 function loadUI() {
   if (ui) return Promise.resolve(ui);
   return (uiLoading ||= call("ui.load")
@@ -243,12 +306,14 @@ listeners.add(msg => {
   if (msg.type === "settings.changed" && msg.settings) setBootPrefs(msg.settings);
   if (ui) return; // the UI handles everything else once it's here
   if (msg.type === "mods.changed") syncMods().catch(warn);
+  else if (msg.type === "control.changed" && msg.pause && typeof msg.pause === "object") changeHeld(() => { Control.pause = normalizeControl({ pause: msg.pause }).pause; });
   else if (UI_EVENTS.has(msg.type)) { queued.push(msg); loadUI().catch(() => {}); }
 });
 
 // Hotkeys: the only keys Morse ever takes from the page while it's closed.
 on(W, "keydown", e => {
-  if (ui || e.isComposing || e.keyCode === 229) return;
+  // Only real key presses: a page can't open Morse with a synthetic KeyboardEvent.
+  if (ui || !e.isTrusted || e.isComposing || e.keyCode === 229) return;
   const id = hotkeyFor(e);
   if (!id) return;
   e.preventDefault();
@@ -258,7 +323,7 @@ on(W, "keydown", e => {
   loadUI().catch(() => {});
 }, true);
 on(W, "keyup", e => {
-  if (ui || !pendingKey || pendingKey.up || !releasesCombo(e, pendingKey.combo)) return;
+  if (ui || !e.isTrusted || !pendingKey || pendingKey.up || !releasesCombo(e, pendingKey.combo)) return;
   pendingKey.up = true;
   e.preventDefault();
   e.stopImmediatePropagation();
@@ -271,8 +336,13 @@ on(W, "focus", () => {
   loadPrefs().catch(() => {});
 });
 
-// ---- start: hello and the mods in parallel
-syncMods().catch(e => warn("couldn't load mods", e));
+// ---- start: hello, safe start and the mods in parallel
+syncMods().then(() => {
+  // What the UI's controlReady() (63-control.js) would say after the first sync.
+  const sus = Control.suspect, m = sus && S.mods.find(x => x.id === sus.id);
+  if (sus && (!m || !m.enabled)) { Control.held.delete(sus.id); Control.suspect = null; ctl("control.forgive"); }
+  else if (m || (Control.off && S.mods.some(x => x.enabled))) uiTask("controlReady");
+}).catch(e => warn("couldn't load mods", e));
 const ready = (async () => {
   let hello = {};
   try {
@@ -284,18 +354,18 @@ const ready = (async () => {
   return hello;
 })();
 ready.then(hello => {
-  if (!hello.quiet && hello.mode && prefs.welcome) notify(`Morse is ready · press ${formatCombo(keys.open, PLATFORM) || "the Morse hotkey"}`, true);
+  if (!hello.quiet && hello.mode && prefs.welcome) notify(`Morse is ready. Press ${formatCombo(keys.open, PLATFORM) || "the Morse hotkey"} to change this page.`, true);
   if (DEBUG) loadUI().catch(() => {}); // screenshots and tests read the overlay's status
 }).catch(warn);
 
 // ---- the handoff the UI (runtime/src, 01-rpc.js) picks up
-Object.defineProperty(W, BOOT, { value: Object.freeze({
-  v: 1, host, call, listeners, outgoing, S, pristine, on, off, debug: DEBUG, platform: PLATFORM,
+Object.defineProperty(W, BOOT, { configurable: true, value: Object.freeze({
+  v: 1, host, call, listeners, outgoing, S, pristine, on, off, live, control: Control, debug: DEBUG, platform: PLATFORM,
   ready, prefs: () => prefs, setCss, applyMod, removeMod, syncMods, domHooks,
   // The UI calls this once it is built; whatever happened before it arrived
   // (a hotkey, a host event, a toast) is handed over.
   adopt(api) {
-    if (ui) return false;
+    if (ui || !live()) return false;
     ui = api;
     W.__morseRuntime = true;
     return true;
@@ -307,7 +377,10 @@ Object.defineProperty(W, BOOT, { value: Object.freeze({
     if (key) try { ui.key(key); } catch (e) { warn(e); }
     for (const m of queued.splice(0)) listeners.forEach(fn => { try { fn(m); } catch (e) { warn(e); } });
     for (const t of toasts.splice(0)) try { ui.toast(t); } catch (e) { warn(e); }
+    for (const [m, r] of healthLog.values()) health(m, r);
+    healthLog.clear();
+    for (const name of tasks.splice(0)) try { ui[name]?.(); } catch (e) { warn(e); }
   },
 }) });
-// The helper kit (core/kit.js) runs in this world on the desktop; it uses these too.
+// For a helper kit (core/kit.js) running in this same world.
 if (!W[PRISTINE]) Object.defineProperty(W, PRISTINE, { value: pristine });

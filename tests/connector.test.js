@@ -9,6 +9,8 @@ import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import { createRequire } from "node:module";
+// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
+const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 
 let chromium;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
@@ -22,6 +24,10 @@ async function waitFor(pred, ms = 10000) {
   let s;
   while (Date.now() < end) { s = await status(); if (s && pred(s)) return s; await page.waitForTimeout(30); }
   throw new Error("timed out; last status " + JSON.stringify(s));
+}
+async function until(get, ms = 5000) {
+  const end = Date.now() + ms;
+  for (;;) { const v = await get(); if (v || Date.now() > end) return v; await new Promise(r => setTimeout(r, 30)); }
 }
 
 before(async () => {
@@ -46,7 +52,7 @@ before(async () => {
   const ctx = await browser.newContext({ viewport: { width: 1000, height: 700 } });
   await ctx.addInitScript(() => {
     localStorage.setItem("morse:debug", "1");
-    globalThis.webkitSpeechRecognition = class extends EventTarget { // as inside Electron
+    globalThis.webkitSpeechRecognition = class extends EventTarget { // as inside Electron (page world only: Morse's isolated world gets Chromium's own, which fails the same way here)
       start() { setTimeout(() => { this.onerror?.(Object.assign(new Event("error"), { error: "network" })); const e = new Event("end"); this.onend?.(e); this.dispatchEvent(e); }, 20); }
       stop() {} abort() {}
     };
@@ -64,14 +70,16 @@ after(async () => {
 });
 
 test("settings round-trip through ~/.morse/settings.json", { skip }, async () => {
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await waitFor(s => s.open);
   await page.keyboard.press("Control+Comma");
   await waitFor(s => s.pane === "settings");
   await page.keyboard.press("Enter");
   await page.keyboard.press("Alt+KeyJ");
   await waitFor(s => s.hotkeys.open === "Alt+KeyJ");
-  const onDisk = JSON.parse(await fs.readFile(path.join(home, "settings.json"), "utf8"));
+  // The bar updates at once; the host's write lands a moment later (slow under a parallel `npm test`).
+  let onDisk = null;
+  for (let i = 0; i < 100 && !onDisk; i++) { try { onDisk = JSON.parse(await fs.readFile(path.join(home, "settings.json"), "utf8")); } catch { await page.waitForTimeout(50); } }
   assert.equal(onDisk.hotkeys.open, "Alt+KeyJ");
   await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
@@ -92,7 +100,7 @@ test("Stop mid-generation aborts the model on the desktop host", { skip }, async
   assert.equal(s.input, "add a sleep timer");
   await page.waitForTimeout(300);
   assert.equal(await page.locator("style[data-morse-css]").count(), 0);
-  const hist = JSON.parse(await fs.readFile(path.join(home, "history.json"), "utf8"));
+  const hist = await until(async () => JSON.parse(await fs.readFile(path.join(home, "history.json"), "utf8").catch(() => "null")));
   assert.deepEqual(hist.testapp, ["add a sleep timer"], "history is filed per app");
 });
 

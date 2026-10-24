@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Morse",
-  "version": "0.1.0",
-  "description": "Customize any website in one sentence. Point at it, say what you want, a local model rewrites it live.",
+  "version": "0.2.0",
+  "description": "Change any website in your own words. Point at something, describe the change, and your model makes it while you watch.",
   "minimum_chrome_version": "135",
   "permissions": ["storage", "scripting", "userScripts", "tabs", "downloads"],
   "host_permissions": ["<all_urls>"],
@@ -10,9 +10,11 @@
   "content_scripts": [
     { "matches": ["<all_urls>"], "js": ["host.js", "boot.js"], "run_at": "document_start" }
   ],
+  "sandbox": { "pages": ["practice.html"] },
   "action": { "default_popup": "popup.html", "default_title": "Morse" },
+  "options_ui": { "page": "options.html", "open_in_tab": true },
   "commands": {
-    "toggle-morse": { "suggested_key": { "default": "Ctrl+Shift+Space", "mac": "Alt+Shift+Space" }, "description": "Customize this page" }
+    "toggle-morse": { "suggested_key": { "default": "Ctrl+Shift+Y", "mac": "Command+Shift+Y" }, "description": "Change this page" }
   },
   "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" }
 }

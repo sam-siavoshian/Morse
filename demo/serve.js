@@ -4,7 +4,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
+const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml", ".gif": "image/gif", ".webm": "video/webm", ".jpg": "image/jpeg" };
 
 const server = async (req, res) => {
   let p = decodeURIComponent(new URL(req.url, "http://x").pathname);
@@ -24,7 +24,7 @@ const server = async (req, res) => {
 // Each demo app gets its own origin, like real apps do (mods are scoped per host).
 // MORSE_DEMO_PORT moves all three (e.g. 9787 → 9787/9788/9789) so parallel runs don't collide.
 const BASE = Number(process.env.MORSE_DEMO_PORT || 8787);
-const SITES = { [BASE]: "parley", [BASE + 1]: "byte", [BASE + 2]: "tunes" };
+const SITES = { [BASE]: "parley", [BASE + 1]: "byte", [BASE + 2]: "tunes", [BASE + 3]: "a11y" }; // a11y: Easier to use and Check this page
 for (const [port, site] of Object.entries(SITES)) {
   http.createServer(server).listen(Number(port), "127.0.0.1", () => console.log(`${site.padEnd(7)} http://127.0.0.1:${port}/demo/sites/${site}/`));
 }

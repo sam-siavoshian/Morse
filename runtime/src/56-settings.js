@@ -3,10 +3,10 @@
 // Every change saves immediately through savePrefs().
 
 const HOTKEY_HELP = {
-  open: "Anywhere in the app",
+  open: "Works anywhere in the app",
   talk: "Hold to talk, release to finish",
-  mods: "Show and manage this page's mods",
-  godmode: "Toggle God mode",
+  mods: "See and manage the mods here",
+  godmode: "Show the edit tools",
 };
 
 // recording: { id, partial, error } while a hotkey button is listening for keys
@@ -43,7 +43,7 @@ function paintSettings() {
     const rec = recording?.id === id;
     const n = rec ? recording : hkNotes[id];
     const msg = rec
-      ? (recording.error ? `<span class="bad">${esc(recording.error)}</span>` : `Press the new shortcut · <kbd>Esc</kbd> cancel · <kbd>${PLATFORM === "mac" ? "⌫" : "Backspace"}</kbd> default`)
+      ? (recording.error ? `<span class="bad">${esc(recording.error)}</span>` : `Press the new shortcut · <kbd>Esc</kbd> to cancel · <kbd>${PLATFORM === "mac" ? "⌫" : "Backspace"}</kbd> to reset`)
       : n?.message ? `<span class="${n.level === "warn" ? "warn" : ""}">${esc(n.message)}</span>` : esc(HOTKEY_HELP[id]);
     const shown = rec
       ? `<span class="rec">${recording.partial ? caps(comboParts({ ...flagsOf(recording.partial), code: "X" }, PLATFORM).slice(0, -1)) : ""}<span class="dots">${radar(12)}</span></span>`
@@ -56,7 +56,7 @@ function paintSettings() {
       <div class="ctl">
         ${rec && id !== "open" ? `<button type="button" class="tbtn" data-off="${id}">Turn off</button>` : ""}
         ${!rec && custom ? `<button type="button" class="tbtn" data-reset="${id}" title="Back to ${esc(formatCombo(resolveHotkeys({}, PLATFORM)[id], PLATFORM))}">Reset</button>` : ""}
-        <button type="button" class="hk" data-hk="${id}" aria-describedby="hk-${id}-msg" aria-label="${esc(label)} shortcut: ${esc(hotkeyText(id) || "off")}. Press to change.">${shown}</button>
+        <button type="button" class="hk field" data-hk="${id}" aria-describedby="hk-${id}-msg" aria-label="${esc(label)} shortcut: ${esc(hotkeyText(id) || "off")}. Press to change.">${shown}</button>
       </div>
     </div>`;
   }).join("");
@@ -65,18 +65,19 @@ function paintSettings() {
       <header><b>Settings</b><span class="flash" aria-hidden="true"></span><button type="button" class="tbtn" data-act="done">Done</button></header>
       <section><h4>Shortcuts</h4>${keyRows}</section>
       <section><h4>Voice</h4>
-        <div class="srow"><div class="lbl"><span>Send after a pause</span><small>Runs the request when you stop talking</small></div><div class="ctl">${switchHtml("autoSubmit", PREFS.voice.autoSubmit, "Send after a pause")}</div></div>
+        <div class="srow"><div class="lbl"><span>Send after a pause</span><small>Sends when you stop talking</small></div><div class="ctl">${switchHtml("autoSubmit", PREFS.voice.autoSubmit, "Send after a pause")}</div></div>
         <div class="srow"><div class="lbl"><span>Speech to text</span><small class="${v.ok ? "" : "warn"}">${esc(v.text)}</small></div><div class="ctl"><span class="pill ${v.ok ? "on" : ""}">${v.ok ? "Ready" : "Off"}</span></div></div>
       </section>
       <section><h4>Appearance</h4>
-        <div class="srow"><div class="lbl"><span>Effects</span><small>${PREFS.effects ? "While the model works" : `Following your system's motion setting`}</small></div><div class="ctl">${segHtml("effects", "Effects", [["full", "Full"], ["subtle", "Subtle"], ["off", "Off"]], fx)}</div></div>
+        <div class="srow"><div class="lbl"><span>Effects</span><small>${PREFS.effects ? "The animation while Morse works" : `Follows your system's motion setting`}</small></div><div class="ctl">${segHtml("effects", "Effects", [["full", "Full"], ["subtle", "Subtle"], ["off", "Off"]], fx)}</div></div>
         <div class="srow"><div class="lbl"><span>Bar position</span><small>Auto moves away from what you point at</small></div><div class="ctl">${segHtml("barPosition", "Bar position", [["auto", "Auto"], ["top", "Top"], ["bottom", "Bottom"]], PREFS.barPosition)}</div></div>
         <div class="srow"><div class="lbl"><span>Theme</span></div><div class="ctl">${segHtml("theme", "Theme", [["auto", "Match app"], ["light", "Light"], ["dark", "Dark"]], PREFS.theme)}</div></div>
       </section>
       <section><h4>General</h4>
         <div class="srow"><div class="lbl"><span>Welcome message</span><small>“Morse is ready” when an app or page loads</small></div><div class="ctl">${switchHtml("welcome", PREFS.welcome, "Welcome message")}</div></div>
+        <div class="srow"><div class="lbl"><span>Show mods others made</span><small>Mods from the Morse gallery for the site you're on</small></div><div class="ctl">${switchHtml("gallery", PREFS.gallery, "Show mods others made")}</div></div><!-- gallery hook: 68-gallery.js -->
       </section>
-      <footer><button type="button" class="tbtn" data-act="reset-all">Reset all to defaults</button><span class="dim">${esc(S.mode === "extension" ? "Synced with your Chrome profile" : S.mode === "desktop" ? "Saved in ~/.morse/settings.json" : "")}</span></footer>
+      <footer><button type="button" class="tbtn" data-act="reset-all">Reset all settings</button><span class="dim">${esc(S.mode === "extension" ? "Synced with your Chrome profile" : S.mode === "desktop" ? "Saved on this computer" : "")}</span></footer>
     </div>`;
 }
 const flagsOf = partial => ({ ctrl: /Ctrl/.test(partial), alt: /Alt/.test(partial), shift: /Shift/.test(partial), meta: /Meta/.test(partial) });
@@ -115,8 +116,8 @@ async function commitHotkey(id, value, verdict) {
   announce(`${HOTKEY_ACTIONS.find(a => a.id === id).label}: ${hotkeyText(id) || "off"}. ${verdict?.message || ""}`);
 }
 
-addEventListener("keydown", e => {
-  if (!recording) return;
+listen("keydown", e => {
+  if (!e.isTrusted || !recording) return;
   if (e.isComposing || e.keyCode === 229) return;
   // The recorder owns the keyboard while armed: nothing reaches the page or our hotkeys.
   e.preventDefault();
@@ -142,8 +143,8 @@ addEventListener("keydown", e => {
   }
   commitHotkey(id, combo, verdict);
 }, true);
-addEventListener("keyup", e => {
-  if (!recording) return;
+listen("keyup", e => {
+  if (!e.isTrusted || !recording) return;
   e.preventDefault();
   e.stopImmediatePropagation();
   recording.partial = comboFromEvent(e).partial;
@@ -151,7 +152,7 @@ addEventListener("keyup", e => {
 }, true);
 // Click away (or blur the window) and the recorder gives up.
 root.addEventListener("pointerdown", e => { if (recording && !e.composedPath().some(n => n?.dataset?.hk || n?.dataset?.off)) stopRecording(false); });
-addEventListener("blur", () => stopRecording(false));
+listen("blur", () => stopRecording(false));
 
 pane.addEventListener("click", e => {
   const t = e.target;
@@ -171,6 +172,7 @@ pane.addEventListener("change", e => {
   const k = e.target.dataset?.k;
   if (k === "autoSubmit") saveSetting({ voice: { autoSubmit: e.target.checked } }, `[data-k="autoSubmit"]`);
   if (k === "welcome") saveSetting({ welcome: e.target.checked }, `[data-k="welcome"]`);
+  if (k === "gallery") saveSetting({ gallery: e.target.checked }, `[data-k="gallery"]`); // gallery hook: 68-gallery.js
 });
 // Radio groups: arrows move and select, like native radios.
 pane.addEventListener("keydown", e => {

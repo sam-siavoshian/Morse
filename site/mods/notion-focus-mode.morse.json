@@ -11,7 +11,7 @@
   },
   "target": {
     "selector": ".notion-topbar-action-buttons",
-    "label": "div · top bar actions"
+    "label": "Top bar buttons"
   },
   "css": "html.morse-focus .notion-sidebar-container,\nhtml.morse-focus .notion-help-button,\nhtml.morse-focus .notion-page-controls {\n  display: none !important;\n}\nhtml.morse-focus .notion-topbar {\n  opacity: 0;\n  transition: opacity .2s;\n}\nhtml.morse-focus .notion-topbar:hover {\n  opacity: 1;\n}\nhtml.morse-focus .notion-page-content {\n  max-width: 680px;\n  margin-inline: auto;\n}\n.morse-focus-btn {\n  height: 28px;\n  padding: 0 8px;\n  border: 0;\n  border-radius: 6px;\n  background: none;\n  color: inherit;\n  font: inherit;\n  font-size: 14px;\n  cursor: pointer;\n}\n.morse-focus-btn:hover { background: rgba(55, 53, 47, .08); }\n",
   "js": "const root = document.documentElement;\nconst btn = morse.el(\"button\", { class: \"morse-focus-btn\", title: \"Focus mode (Ctrl+Shift+.)\" });\nconst set = on => {\n  root.classList.toggle(\"morse-focus\", on);\n  btn.textContent = on ? \"Exit focus\" : \"Focus\";\n  morse.store.set(\"on\", on);\n};\nmorse.on(btn, \"click\", () => set(!root.classList.contains(\"morse-focus\")));\nmorse.on(document, \"keydown\", e => {\n  if (e.key === \".\" && e.shiftKey && (e.ctrlKey || e.metaKey)) {\n    e.preventDefault();\n    set(!root.classList.contains(\"morse-focus\"));\n  }\n});\nmorse.watch(\".notion-topbar-action-buttons\", bar => bar.prepend(btn));\nset(morse.store.get(\"on\", false));\n\nreturn () => root.classList.remove(\"morse-focus\");\n",

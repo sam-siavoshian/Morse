@@ -1,5 +1,10 @@
 // Mods and settings on disk: ~/.morse/mods/<id>.json, ~/.morse/config.json
 // (model), ~/.morse/settings.json (command bar) and ~/.morse/history.json.
+//
+// Every update to a file goes through that file's queue (one read-modify-write
+// at a time, so concurrent requests can't drop each other's changes) and is
+// written to a temp file that is renamed over the old one (a crash or a
+// concurrent reader never sees half a file).
 
 import { promises as fs } from "node:fs";
 import os from "node:os";
@@ -7,7 +12,8 @@ import path from "node:path";
 import { modMatches, validateMod } from "../core/mod.js";
 import { normalizePrefs, mergePrefs, pushHistory } from "../core/prefs.js";
 import { clipAdd } from "../core/clipboard.js";
-
+import { serialQueue } from "../core/serial.js";
+import { resolveHotkeys, formatCombo, detectPlatform } from "../core/hotkeys.js";
 export const HOME = process.env.MORSE_HOME || path.join(os.homedir(), ".morse");
 const MODS = path.join(HOME, "mods");
 const CONFIG = path.join(HOME, "config.json");
@@ -16,6 +22,34 @@ const HISTORY = path.join(HOME, "history.json");
 
 export async function ensureHome() {
   for (const d of [HOME, MODS, path.join(HOME, "exports"), path.join(HOME, "clips")]) await fs.mkdir(d, { recursive: true });
+}
+
+const queue = serialQueue();
+let tmpSeq = 0;
+
+// Write to <file>.<pid>-<n>.tmp, then rename it into place.
+async function writeAtomic(file, data, opts) {
+  await ensureHome();
+  const tmp = `${file}.${process.pid}-${++tmpSeq}.tmp`;
+  try {
+    await fs.writeFile(tmp, data, opts);
+    await renameOver(tmp, file);
+  } catch (e) {
+    await fs.rm(tmp, { force: true }).catch(() => {});
+    throw e;
+  }
+}
+
+// Windows refuses to replace a file that another process (an antivirus, an
+// indexer, a reader) has open for a moment; try again briefly.
+async function renameOver(from, to) {
+  for (let i = 0; ; i++) {
+    try { return await fs.rename(from, to); }
+    catch (e) {
+      if (i >= 6 || !["EPERM", "EACCES", "EBUSY"].includes(e.code)) throw e;
+      await new Promise(r => setTimeout(r, 15 * (i + 1)));
+    }
+  }
 }
 
 export async function listMods() {
@@ -34,34 +68,63 @@ export async function modsFor(where) {
 
 export async function saveMod(mod) {
   validateMod(mod);
-  await ensureHome();
-  await fs.writeFile(path.join(MODS, `${safe(mod.id)}.json`), JSON.stringify(mod, null, 2));
+  const file = path.join(MODS, `${safe(mod.id)}.json`);
+  await queue(file, () => writeAtomic(file, JSON.stringify(mod, null, 2)));
   return mod;
 }
 
 export async function deleteMod(id) {
-  await fs.rm(path.join(MODS, `${safe(id)}.json`), { force: true });
+  const file = path.join(MODS, `${safe(id)}.json`);
+  await queue(file, () => fs.rm(file, { force: true }));
+}
+
+export async function getMod(id) {
+  try { return JSON.parse(await fs.readFile(path.join(MODS, `${safe(id)}.json`), "utf8")); } catch { return null; }
 }
 
 export async function loadConfig() {
   try { return JSON.parse(await fs.readFile(CONFIG, "utf8")); } catch { return {}; }
 }
 
-export async function saveConfig(cfg) {
-  await ensureHome();
-  await fs.writeFile(CONFIG, JSON.stringify(cfg, null, 2));
+// The config holds API keys and helper tokens: owner-only, written atomically.
+async function writeConfig(cfg) {
+  await writeAtomic(CONFIG, JSON.stringify(cfg, null, 2), { mode: 0o600 });
+  await fs.chmod(CONFIG, 0o600).catch(() => {});
 }
+export async function saveConfig(cfg) {
+  await queue(CONFIG, () => writeConfig(cfg));
+}
+
+// Read-modify-write, in the config file's queue.
+export function updateConfig(fn) {
+  return queue(CONFIG, async () => {
+    const cfg = await loadConfig();
+    const out = (await fn(cfg)) ?? cfg;
+    await writeConfig(out);
+    return out;
+  });
+}
+
+export const CONFIG_PATH = CONFIG;
 
 // Command-bar settings (hotkeys, voice, appearance): ~/.morse/settings.json
 export async function loadPrefs() {
   try { return normalizePrefs(JSON.parse(await fs.readFile(PREFS, "utf8"))); } catch { return normalizePrefs({}); }
 }
 
-export async function savePrefs(patch) {
-  const next = mergePrefs(await loadPrefs(), patch);
-  await ensureHome();
-  await fs.writeFile(PREFS, JSON.stringify(next, null, 2));
-  return next;
+export function savePrefs(patch) {
+  return queue(PREFS, async () => {
+    const next = mergePrefs(await loadPrefs(), patch);
+    await writeAtomic(PREFS, JSON.stringify(next, null, 2));
+    return next;
+  });
+}
+
+// The hotkeys in effect on this computer as people read them ("Ctrl+Shift+Space",
+// "⌥Space"); "" for one that's turned off.
+export async function configuredHotkeys(platform = detectPlatform({ platform: process.platform })) {
+  const keys = resolveHotkeys((await loadPrefs()).hotkeys, platform);
+  return Object.fromEntries(Object.entries(keys).map(([id, combo]) => [id, combo ? formatCombo(combo, platform) : ""]));
 }
 
 // Prompt history per app (or per site): ~/.morse/history.json
@@ -74,18 +137,18 @@ export async function loadHistory(scope) {
   return Array.isArray(all[scope]) ? all[scope] : [];
 }
 
-export async function addHistory(scope, text) {
-  const all = await readHistory();
-  all[scope] = pushHistory(all[scope], text);
-  await ensureHome();
-  await fs.writeFile(HISTORY, JSON.stringify(all, null, 2));
-  return all[scope];
+export function addHistory(scope, text) {
+  return queue(HISTORY, async () => {
+    const all = await readHistory();
+    all[scope] = pushHistory(all[scope], text);
+    await writeAtomic(HISTORY, JSON.stringify(all, null, 2));
+    return all[scope];
+  });
 }
 
 export async function writeExport(filename, data) {
-  await ensureHome();
   const p = path.join(HOME, "exports", path.basename(filename));
-  await fs.writeFile(p, data);
+  await queue(p, () => writeAtomic(p, data));
   return p;
 }
 
@@ -94,11 +157,12 @@ const CLIPBOARD = path.join(HOME, "clipboard.json");
 export async function readClipboard() {
   try { const l = JSON.parse(await fs.readFile(CLIPBOARD, "utf8")); return Array.isArray(l) ? l : []; } catch { return []; }
 }
-export async function putClipboard(item) {
-  const list = clipAdd(await readClipboard(), item);
-  await ensureHome();
-  await fs.writeFile(CLIPBOARD, JSON.stringify(list));
-  return list;
+export function putClipboard(item) {
+  return queue(CLIPBOARD, async () => {
+    const list = clipAdd(await readClipboard(), item);
+    await writeAtomic(CLIPBOARD, JSON.stringify(list));
+    return list;
+  });
 }
 
 const safe = id => String(id).replace(/[^a-zA-Z0-9_-]/g, "");

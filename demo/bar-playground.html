@@ -22,7 +22,8 @@
      messages: settings.get/set, history.get/add, transcribe, generate.cancel.
      Used by tests/bar.test.js and demo/shoot-bar.js.
        ?ms=30       token interval        ?light       light page
-       ?voice=0     no transcription      ?auto        auto-submit voice -->
+       ?voice=0     no transcription      ?auto        auto-submit voice
+       ?onboarding  first run (coach, tips, notices; see the onboarding cases below) -->
 <div class="stage">
   <div class="toolbar" id="toolbar" data-testid="player-controls" aria-label="Player controls"><button aria-label="Shuffle">⤮</button><button aria-label="Previous">⏮</button><button aria-label="Play">▶</button><button aria-label="Next">⏭</button><button aria-label="Repeat">↻</button><span class="now">Now playing · Low Light — Kiasmos</span><span style="flex:1"></span><button>Settings</button></div>
   <div class="card" id="card">
@@ -47,7 +48,7 @@
   const emit = m => subs.forEach(f => f(m));
   const merge = (a, b) => { const o = { ...a }; for (const [k, v] of Object.entries(b || {})) o[k] = v && typeof v === "object" && !Array.isArray(v) ? { ...(a[k] || {}), ...v } : v; return o; };
   const voice = q.get("voice") === "0"
-    ? { transcribe: false, provider: null, label: "", hint: "Voice: add an OpenAI key in the Morse popup, or run the Morse helper" }
+    ? { transcribe: false, provider: null, label: "", hint: "Voice isn't available here. Type your change instead, or set up voice in the Morse helper on this computer (an OpenAI key or whisper)." }
     : { transcribe: true, provider: "openai", label: "OpenAI gpt-4o-mini-transcribe", hint: "" };
   globalThis.__morseHost = {
     onMessage: fn => subs.push(fn),
@@ -80,6 +81,7 @@
           return reply(true);
         }
         case "generate": {
+          if (q.has("fail")) return setTimeout(() => reply({ ok: false, error: q.get("fail") }), 300); // onboarding: error states
           let i = 0, css = "";
           const speed = Number(q.get("ms") || 30);
           const g = { id: m.id };
@@ -96,6 +98,11 @@
           }, speed);
           return;
         }
+        // first run and help (runtime/src/59-onboarding.js): ?onboarding is a fresh install,
+        // ?nomodel / ?noscripts report no model / user scripts off, ?fail=<error> fails generation
+        case "onboarding.get": return reply(q.has("onboarding") ? { state: store.get("onboarding", {}), status: { mode: "playground", model: { connected: !q.has("nomodel") }, userScripts: !q.has("noscripts") } } : null);
+        case "onboarding.set": { const s = merge(store.get("onboarding", {}), m.patch); store.set("onboarding", s); return reply(s); }
+        case "onboarding.open": fake.opened = m.what; return reply({ ok: true });
         case "mods.save": return reply({ ...(m.draft || m.mod), enabled: true, created: new Date().toISOString(), updated: new Date().toISOString() });
         case "exec": return reply({ ok: true });
         default: return reply(null);

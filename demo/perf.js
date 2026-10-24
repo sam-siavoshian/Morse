@@ -14,7 +14,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import { ROOT, chromium, serve, desktop, metrics, payloads, median, sleep, ONE_MOD, THIRTY_MODS, runGeneration } from "./perf-lib.js";
+import { ROOT, chromium, serve, desktop, metrics, payloads, median, sleep, OPEN_KEY, ONE_MOD, THIRTY_MODS, runGeneration } from "./perf-lib.js";
 
 const argv = process.argv.slice(2);
 const arg = (k, d) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : d; };
@@ -80,11 +80,11 @@ async function bootOnce(url, morse) {
   if (morse) await settle(t.page); else await sleep(300);
   await sleep(700);
   const m = await metrics(t.cdp);
-  const snap = await t.page.evaluate(() => window.__perf.snap());
+  const snap = await t.snap();
   const dcl = await t.page.evaluate(() => performance.getEntriesByType("navigation")[0]?.domContentLoadedEventEnd || 0);
-  await t.page.evaluate(() => window.__perf.reset());
+  await t.reset();
   await sleep(3000);
-  const idle = await t.page.evaluate(() => window.__perf.snap());
+  const idle = await t.snap();
   await t.close();
   return { m, snap, idle, dcl, errors: t.errors };
 }
@@ -123,11 +123,15 @@ async function openLatency() {
     await t.page.goto(srv.url("/perf/big.html"));
     await settle(t.page);
     await sleep(300);
-    await t.page.evaluate(() => window.__perf.watchBar());
-    await t.page.keyboard.press("Alt+Space");
+    await t.morse(P => P.watchBar());
+    await t.page.keyboard.press(OPEN_KEY);
     const end = Date.now() + 8000;
     let v = null;
-    while (Date.now() < end && v == null) { v = await t.page.evaluate(() => window.__perf.marks.bar != null ? window.__perf.marks.bar - window.__perf.keydown : null); await sleep(20); }
+    while (Date.now() < end && v == null) {
+      const bar = await t.morse(P => P.marks.bar), key = await t.main(P => P.keydown); // one clock: same document
+      v = bar != null && key ? bar - key : null;
+      await sleep(20);
+    }
     lat.push(v ?? NaN);
     await t.close();
   }
@@ -152,12 +156,14 @@ async function modsAtScale() {
       if (applied != null) break;
       await sleep(25);
     }
-    const boot = await t.page.evaluate(() => window.__perf.snap());
+    const boot = await t.snap();
     await sleep(500);
-    await t.page.evaluate(() => { window.__perf.reset(); window.__perf.countFrames(true); });
+    await t.reset();
+    await t.main(P => P.countFrames(true));
     const tokens = await t.page.evaluate(() => window.__stream(4000));
     await sleep(100);
-    const s = await t.page.evaluate(() => { window.__perf.countFrames(false); return window.__perf.snap(); });
+    await t.main(P => P.countFrames(false));
+    const s = await t.snap();
     const ms = (s.ms.mo || 0) + (s.ms.raf || 0) + (s.ms.timeout || 0) + (s.ms.interval || 0);
     res.push({ allAppliedMs: applied, observers: boot.counts.observer || 0, subtreeObserves: boot.counts["observe:subtree"] || 0,
       moCallbacks: s.calls.mo || 0, rafCallbacks: s.calls.raf || 0, morseMsPerSec: ms / 4, frames: s.frames, msPerFrame: ms / Math.max(1, s.frames), maxCallbackMs: Math.max(s.max.mo || 0, s.max.raf || 0), tokens, errors: t.errors });
@@ -177,12 +183,13 @@ async function spa() {
   await t.page.goto(srv.url("/perf/spa.html"));
   await settle(t.page);
   await sleep(500);
-  const before = await t.page.evaluate(() => window.__perf.snap());
-  await t.page.evaluate(() => { window.__perf.reset(); window.__perf.sends.length = 0; });
+  const before = await t.snap();
+  await t.reset();
+  await t.clearSends();
   const N = 60;
   await t.page.evaluate(n => window.__nav(n, 40), N);
   await sleep(1500);
-  const after = await t.page.evaluate(() => ({ ...window.__perf.snap(), navs: window.__navs }));
+  const after = { ...(await t.snap()), sends: await t.sends(), navs: await t.page.evaluate(() => window.__navs) };
   const lists = after.sends.filter(s => s[0] === "mods.list").map(s => s[1]);
   const lat = after.navs.map(t0 => { const hit = lists.find(t => t >= t0); return hit == null ? NaN : hit - t0; });
   const listeners = Object.entries(after.counts).filter(([k]) => k.startsWith("listen:")).reduce((n, [, v]) => n + v, 0);
@@ -200,8 +207,8 @@ async function spa() {
 async function effect() {
   await D.setMods([]);
   const out = {};
-  const fxOn = page => page.evaluate(() => window.__perf.roots.some(r => r.querySelector(".fx")?.style.display === "block"));
-  const working = page => page.evaluate(() => /working/.test(window.__perf.barClass()));
+  const fxOn = t => t.fxOn();
+  const working = async t => /working/.test(await t.barClass());
   const CASES = [["target 3840x2160", "#huge", 3840, 2160], ["page-wide 3840x2160", null, 3840, 2160], ["target 1920x1080", "#huge", 1920, 1080]];
   for (const [name, target, width, height] of CASES) {
     const runs = [];
@@ -210,9 +217,9 @@ async function effect() {
       const t = await D.page({ viewport: { width, height } });
       await t.page.goto(srv.url("/perf/effect.html"));
       await sleep(800);
-      await runGeneration(t.page, { target, prompt: "clean up the clutter" });
+      await runGeneration(t, { target, prompt: "clean up the clutter" });
       let end = Date.now() + 10000;
-      while (Date.now() < end && !(await fxOn(t.page))) await sleep(20);
+      while (Date.now() < end && !(await fxOn(t))) await sleep(20);
       await sleep(300); // past the first frame, which builds the grid
       // ThreadTime is the main thread's CPU time: it holds up on a loaded machine where wall time doesn't.
       const cpu0 = (await metrics(t.cdp)).ThreadTime;
@@ -220,29 +227,31 @@ async function effect() {
       // calls it makes), apart from everything else the machine is doing.
       await t.cdp.send("Profiler.enable");
       await t.cdp.send("Profiler.setSamplingInterval", { interval: 200 });
-      await t.page.evaluate(() => { window.__perf.reset(); window.__perf.countFrames(true); });
+      await t.reset();
+      await t.main(P => P.countFrames(true));
       await t.cdp.send("Profiler.start");
       await sleep(1500);
       const { profile } = await t.cdp.send("Profiler.stop");
-      const s = await t.page.evaluate(() => { window.__perf.countFrames(false); return window.__perf.snap(); });
+      await t.main(P => P.countFrames(false));
+      const s = await t.snap();
       const cpu1 = (await metrics(t.cdp)).ThreadTime;
       const fxMs = profileMs(profile, /^(draw|fill|fillRect|rect|roundRect|arcTo|clearRect|createPattern)$/);
-      const valid = await fxOn(t.page), f = Math.max(1, s.frames);
+      const valid = await fxOn(t), f = Math.max(1, s.frames);
       runs.push({ valid, frames: s.frames, rafCallbacks: s.calls.raf || 0, msPerFrame: (s.ms.raf || 0) / f, maxFrameMs: s.max.raf || 0,
         cpuMsPerFrame: ((cpu1 - cpu0) * 1000) / f, effectMsPerFrame: fxMs / f, drawCallsPerFrame: Math.round(s.canvas.fills / f), shapesPerFrame: Math.round(s.canvas.shapes / f), errors: t.errors });
       if (!idle) {
         end = Date.now() + 30000;
-        while (Date.now() < end && (await working(t.page))) await sleep(50);
+        while (Date.now() < end && (await working(t))) await sleep(50);
         await sleep(1500);
-        await t.page.evaluate(() => window.__perf.reset());
+        await t.reset();
         await sleep(2000);
-        const open = await t.page.evaluate(() => window.__perf.snap());
+        const open = await t.snap();
         await t.page.keyboard.press("Escape");
         await t.page.keyboard.press("Escape");
         await sleep(500);
-        await t.page.evaluate(() => window.__perf.reset());
+        await t.reset();
         await sleep(2000);
-        const closed = await t.page.evaluate(() => window.__perf.snap());
+        const closed = await t.snap();
         idle = { rafPerSecIdleOpen: r1((open.calls.raf || 0) / 2), callbacksPerSecIdleClosed: r1(Object.values(closed.calls).reduce((a, b) => a + b, 0) / 2) };
       }
       await t.close();

@@ -108,8 +108,8 @@ const GodCapture = (() => {
     el.innerHTML = `
       <div class="gm-cap-shot">${fallbackThumb}</div>
       <div class="gm-cap-meta"><b>${esc(describe(target))}</b><small>${esc(siteName())} · ${Math.round(target.getBoundingClientRect().width)}×${Math.round(target.getBoundingClientRect().height)}</small></div>
-      <input class="gm-cap-note" placeholder="Note for later (optional)" spellcheck="false" aria-label="Note">
-      <div class="gm-cap-foot"><span>Reuse it from the bar in any app</span><button class="primary" data-a="save">Capture <kbd>↵</kbd></button></div>`;
+      <input class="gm-cap-note field" placeholder="Add a note (optional)" spellcheck="false" aria-label="Note">
+      <div class="gm-cap-foot"><span>Use it later in any app</span><button class="btn primary" data-a="save">Capture <kbd>↵</kbd></button></div>`;
     const shot = el.querySelector(".gm-cap-shot"), field = el.querySelector(".gm-cap-note");
     thumbOf(target).then(t => {
       thumb = t;
@@ -120,10 +120,10 @@ const GodCapture = (() => {
       if (thumb) item.thumb = thumb;
       try {
         st.list = (await call("clipboard.put", { item })) || [item];
-      } catch (e) { return toast(`Couldn't capture: ${e.message}`); }
+      } catch (e) { return toast(`Couldn't capture this. ${plainError(e)}`); }
       close();
       render();
-      toast(`Captured ${item.label} · open Morse in any app to reuse it`);
+      toast(`Captured ${item.label}. Open Morse in another app to use it.`);
     };
     el.querySelector("[data-a=save]").onclick = save;
     field.onkeydown = e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); save(); } };
@@ -133,7 +133,7 @@ const GodCapture = (() => {
   const row = document.createElement("div");
   row.className = "gm-clips";
   row.hidden = true;
-  row.innerHTML = `<span class="gm-clips-l">Clipboard</span><div class="gm-chips" role="listbox" aria-label="Captured elements"></div>`;
+  row.innerHTML = `<span class="gm-clips-l">Captured</span><div class="gm-chips" role="listbox" aria-label="Captured items"></div>`;
   bar.insertBefore(row, bar.querySelector(".status"));
   const chips = row.querySelector(".gm-chips"), label = row.querySelector(".gm-clips-l");
   const placeholder = input.placeholder;
@@ -146,14 +146,14 @@ const GodCapture = (() => {
     const items = used ? [st.used] : st.list.slice(0, 8);
     row.hidden = bar.hidden || !items.length || (phase !== "idle" && !used);
     if (row.hidden) return;
-    label.textContent = used ? "Rebuilt from" : "Clipboard";
+    label.textContent = used ? "Using" : "Captured";
     chips.innerHTML = items.map(it => `<button class="gm-chip" role="option" data-id="${esc(it.id)}" aria-pressed="${!!used || st.picked?.id === it.id}" title="${esc(it.label)}${it.note ? " · " + esc(it.note) : ""}">
       ${thumbHtml(it)}<span><b>${esc(it.label)}</b><small>${esc(it.from?.app || it.from?.title || "")}</small></span></button>`).join("");
     chips.querySelectorAll("img").forEach(i => (i.onerror = () => i.replaceWith(Object.assign(document.createElement("span"), { className: "gm-ph", innerHTML: GodMode.icon("capture", 16) }))));
   }
   function pick(item) {
     st.picked = st.picked?.id === item?.id ? null : item;
-    input.placeholder = st.picked ? "Say where and how to use it here…" : placeholder;
+    input.placeholder = st.picked ? "Describe where and how to use it here…" : placeholder;
     render();
     input.focus();
   }
@@ -186,6 +186,7 @@ const GodCapture = (() => {
       st.used = st.picked;
       st.picked = null;
       input.placeholder = placeholder;
+      queueMicrotask(render); // the bar turned "working" before this request went out
     } else if (msg.type === "mods.save" && msg.draft && st.used && S.draft?.id === msg.draft.id && S.draft.ctx?.snapshot) {
       msg.draft.from = st.used.from;
       st.used = null;

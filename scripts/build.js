@@ -1,5 +1,6 @@
-// Assembles the unpacked extension into dist/extension: the extension's own
-// files plus the shared core and runtime, and generated icons.
+// Assembles the unpacked extension into dist/extension: the service worker
+// bundled with core/ and the Anthropic SDK (esbuild), the extension's own
+// files, the design tokens, the injected runtime, an options page, and icons.
 
 import { promises as fs } from "node:fs";
 import { deflateSync } from "node:zlib";
@@ -9,20 +10,49 @@ import { bundleRuntime, bundleBoot, bundleUI } from "../runtime/bundle.js";
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const out = path.join(root, "dist", "extension");
 
+let esbuild;
+try { esbuild = await import("esbuild"); } catch {
+  console.error("esbuild is missing: run `npm install` first.");
+  process.exit(1);
+}
+
 await fs.rm(out, { recursive: true, force: true });
-await fs.mkdir(path.join(out, "core"), { recursive: true });
 await fs.mkdir(path.join(out, "icons"), { recursive: true });
 
-for (const f of await fs.readdir(path.join(root, "extension"))) await fs.copyFile(path.join(root, "extension", f), path.join(out, f));
+// The worker's own modules import ../core and are only ever bundled into
+// background.js; copied raw they'd be dead files with broken imports.
+const BUNDLED_ONLY = ["background.js", "bar-host.js", "onboarding-host.js", "control-host.js", "gallery-host.js"];
+for (const f of await fs.readdir(path.join(root, "extension"))) {
+  if (!BUNDLED_ONLY.includes(f)) await fs.copyFile(path.join(root, "extension", f), path.join(out, f));
+}
+await esbuild.build({
+  entryPoints: [path.join(root, "extension", "background.js")],
+  outfile: path.join(out, "background.js"),
+  bundle: true, format: "esm", platform: "browser", target: "chrome135",
+  // core/transcribe.js lazily imports node: modules for local whisper, a path
+  // the extension never takes.
+  external: ["node:*"],
+  legalComments: "none", logLevel: "warning",
+});
+await fs.copyFile(path.join(root, "design", "tokens.css"), path.join(out, "tokens.css"));
+// Extension pages (popup, welcome) import ./core/*.js directly; only the worker is bundled.
+await fs.mkdir(path.join(out, "core"), { recursive: true });
 for (const f of await fs.readdir(path.join(root, "core"))) await fs.copyFile(path.join(root, "core", f), path.join(out, "core", f));
 // boot.js is the content script on every page; ui.js is injected on first use;
 // runtime.js is both in one file, for the demo pages that load Morse directly.
 await fs.writeFile(path.join(out, "boot.js"), bundleBoot());
 await fs.writeFile(path.join(out, "ui.js"), bundleUI());
+// The options page is the popup's model section, full-page.
+const popup = await fs.readFile(path.join(root, "extension", "popup.html"), "utf8");
+await fs.writeFile(path.join(out, "options.html"), popup.replace("<title>Morse</title>", "<title>Morse settings</title>").replace("<body>", '<body data-page="options">'));
 await fs.writeFile(path.join(out, "runtime.js"), bundleRuntime());
+await fs.copyFile(path.join(root, "design", "tokens.css"), path.join(out, "tokens.css")); // extension pages (welcome) share the design tokens
+// Extension pages (popup, welcome) import these dependency-free core modules as ./core/*.js.
+await fs.mkdir(path.join(out, "core"), { recursive: true });
+for (const f of ["onboarding.js", "prefs.js", "hotkeys.js"]) await fs.copyFile(path.join(root, "core", f), path.join(out, "core", f));
 
-// The logo: a 3x3 contribution-graph grid.
-const GRID = ["0e4429", "39d353", "26a641", "006d32", "39d353", "26a641", "39d353", "26a641", "0e4429"];
+// The logo: a 3x3 grid in the gray signal ramp.
+const GRID = ["4a4a50", "f4f4f5", "7a7a82", "b4b4bb", "f4f4f5", "7a7a82", "f4f4f5", "7a7a82", "4a4a50"];
 for (const size of [16, 48, 128]) await fs.writeFile(path.join(out, "icons", `${size}.png`), logoPng(size));
 
 function logoPng(n) {

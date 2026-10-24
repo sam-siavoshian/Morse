@@ -19,7 +19,7 @@ function installMorseKit() {
 
   function ctxFor(id) {
     if (mods.has(id)) return mods.get(id);
-    const c = { id, cleanups: [], errors: [], observers: [] };
+    const c = { id, cleanups: [], errors: [], observers: [], watches: [] };
     mods.set(id, c);
     return c;
   }
@@ -40,7 +40,9 @@ function installMorseKit() {
   function scanAll(w) {
     let list;
     try { list = document.querySelectorAll(w.selector); } catch (e) { w.c.errors.push(String(e)); watches.delete(w); return; }
-    for (const el of list) w.hit(el);
+    let now = 0;
+    for (const el of list) if (w.hit(el)) now++;
+    w.st.now = now;
   }
   function scanIn(w, root) {
     try {
@@ -105,11 +107,20 @@ function installMorseKit() {
       watch(selector, fn) {
         const seen = new WeakSet();
         const run = guard(c, fn);
+        // Match counts for __stats: a watch that never matches means the page
+        // changed under the mod (the panel offers to fix it). `now` is exact
+        // after each full scan and counts new matches in between.
+        const st = { selector: String(selector), now: 0, total: 0 };
+        c.watches.push(st);
         const w = {
-          selector, c,
+          selector, c, st,
           // Never match Morse's own elements: a mod that inserts a button next to
           // "header button" must not then match the button it inserted.
-          hit(el) { if (!seen.has(el) && !el.closest("[data-morse-ui],[data-morse]")) { seen.add(el); run(el); } },
+          hit(el) {
+            if (el.closest("[data-morse-ui],[data-morse]")) return false;
+            if (!seen.has(el)) { seen.add(el); st.total++; st.now++; run(el); }
+            return true;
+          },
         };
         watches.add(w);
         scanAll(w);
@@ -207,6 +218,17 @@ function installMorseKit() {
       return true;
     },
     __errors(id) { return (mods.get(id)?.errors || []).slice(0, 3); },
+    // How a running mod is doing: each watch's selector with the elements it
+    // matches now and has ever matched, plus errors so far. null if not running.
+    __stats(id) {
+      const c = mods.get(id);
+      if (!c) return null;
+      // Exact counts on demand, rather than a rescan on every removal.
+      for (const w of watches) if (w.c === c) {
+        try { w.st.now = [...document.querySelectorAll(w.selector)].filter(el => !el.closest("[data-morse-ui],[data-morse]")).length; } catch {}
+      }
+      return { watches: c.watches.map(w => ({ ...w })), errors: c.errors.length, error: c.errors[0] ? String(c.errors[0]).split("\n")[0] : null };
+    },
   };
 }
 

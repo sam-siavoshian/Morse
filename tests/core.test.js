@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import http from "node:http";
 import { parseModResponse, completeCssPrefix } from "../core/parse.js";
 import { createMod, encodeShare, decodeShare, toUserscript, modMatches } from "../core/mod.js";
-import { streamChat, resolveSettings } from "../core/providers.js";
-import { runMorse } from "../core/engine.js";
+import { streamChat, registerProvider } from "../core/providers.js";
+import { runMorse, selectorsIn } from "../core/engine.js";
 import { buildMessages } from "../core/prompt.js";
 import { readFuseWire, fuseVerdict } from "../daemon/fuses.js";
 
@@ -39,7 +39,7 @@ test("share links round-trip and drop local state", async () => {
 });
 
 test("rejects links that aren't mods", async () => {
-  await assert.rejects(decodeShare("https://x/install.html"), /Not a Morse share link/);
+  await assert.rejects(decodeShare("https://x/install.html"), /isn't a Morse share link/);
 });
 
 test("matching by host and by app", () => {
@@ -69,43 +69,21 @@ function serve(handler) {
   return new Promise(r => { const s = http.createServer(handler).listen(0, "127.0.0.1", () => r(s)); });
 }
 
-test("ollama provider streams NDJSON tokens", async () => {
-  let body;
-  const s = await serve((req, res) => {
-    if (req.url === "/api/tags") return res.end(JSON.stringify({ models: [{ name: "llama3.2" }, { name: "qwen2.5-coder:7b" }] }));
-    let b = ""; req.on("data", d => (b += d)); req.on("end", () => {
-      body = JSON.parse(b);
-      res.write(JSON.stringify({ message: { content: "TITLE: A\n" } }) + "\n");
-      res.write(JSON.stringify({ message: { content: "```css\na{}\n```" } }) + "\n");
-      res.end(JSON.stringify({ done: true }) + "\n");
-    });
-  });
-  const baseUrl = `http://127.0.0.1:${s.address().port}`;
-  const resolved = await resolveSettings({ provider: "auto", baseUrl, model: "nope" });
-  assert.equal(resolved.provider, "ollama");
-  assert.equal(resolved.model, "qwen2.5-coder:7b");
-  const toks = [];
-  const text = await streamChat(resolved, [{ role: "user", content: "x" }], { onToken: t => toks.push(t) });
-  assert.equal(toks.length, 2);
-  assert.equal(parseModResponse(text).css.trim(), "a{}");
-  assert.equal(body.stream, true);
-  s.close();
-});
-
 test("openai-compatible provider streams SSE tokens", async () => {
-  const s = await serve((req, res) => {
+  let body;
+  const s = await serve(async (req, res) => {
     assert.equal(req.headers.authorization, "Bearer k");
+    assert.equal(req.url, "/v1/chat/completions");
+    let b = ""; for await (const d of req) b += d;
+    body = JSON.parse(b);
     res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: "TITLE: B" } }] })}\n\n`);
     res.end("data: [DONE]\n\n");
   });
   const text = await streamChat({ provider: "openai", baseUrl: `http://127.0.0.1:${s.address().port}`, model: "m", apiKey: "k" }, []);
   assert.equal(text, "TITLE: B");
+  assert.equal(body.stream, true);
+  assert.equal(body.temperature, undefined);
   s.close();
-});
-
-test("auto falls back to demo when no model is running", async () => {
-  const s = await resolveSettings({ provider: "auto", baseUrl: "http://127.0.0.1:9" });
-  assert.equal(s.provider, "demo");
 });
 
 test("engine streams css, runs js, and repairs a failing first attempt", async () => {
@@ -123,6 +101,52 @@ test("engine streams css, runs js, and repairs a failing first attempt", async (
   assert.equal(runs, 2);
   assert.ok(events.some(e => e.type === "phase" && e.phase === "fixing"));
   assert.ok(events.some(e => e.type === "css" && e.css.includes(".morse-sleep")));
+});
+
+test("finds the selectors a draft relies on", () => {
+  const sels = selectorsIn({
+    css: "/* x */ @media (max-width: 600px) { .a img, .b:hover::after { color: red } }\n@keyframes k { from { opacity: 0 } 50% { opacity: 1 } }\n:root { --x: 1 }\n[data-testid=\"grid\"] > .cv { width: 2px }",
+    js: "morse.watch('section[aria-label=\"Message\\\\ list\"] > div.tb', tb => {}); document.querySelector(`#x-${id}`); el.querySelectorAll(\"tr, td\");",
+  });
+  assert.deepEqual(sels, [".a img", ".b", "[data-testid=\"grid\"] > .cv", "section[aria-label=\"Message\\ list\"] > div.tb", "tr", "td"]);
+});
+
+test("a change with no visible effect gets a repair round naming the dead selectors", async () => {
+  const replies = ["TITLE: Big\n```css\n.covers img { width: 300px }\n```", "TITLE: Big\n```css\n.cv { width: 300px }\n```"];
+  const prompts = [];
+  registerProvider("script", async (s, messages, { onToken }) => { prompts.push(messages.at(-1).content); const r = replies.shift(); onToken(r); return r; });
+  let css = "";
+  const res = await runMorse({
+    settings: { provider: "script" }, request: "make the covers bigger", context: { url: "x", title: "x" },
+    emit: e => { if (e.type === "css") css = e.css; }, exec: async () => ({ ok: true }),
+    probe: async sels => ({ fp: css.includes(".cv") ? "changed" : "same", unmatched: sels.filter(s => s.includes("img")) }),
+  });
+  assert.equal(res.ok, true);
+  assert.equal(res.attempts, 2);
+  assert.match(prompts[1], /nothing on the page changed/);
+  assert.match(prompts[1], /`\.covers img`/);
+});
+
+test("behavior-only JS (selectors all match, nothing visible yet) is not sent back", async () => {
+  registerProvider("script", async (s, m, { onToken }) => { const r = "TITLE: Keys\n```js\nmorse.on(document, 'keydown', () => {});\n```"; onToken(r); return r; });
+  const res = await runMorse({
+    settings: { provider: "script" }, request: "space to play", context: { url: "x", title: "x" },
+    emit: () => {}, exec: async () => ({ ok: true }), probe: async () => ({ fp: "same", unmatched: [] }),
+  });
+  assert.equal(res.attempts, 1);
+});
+
+test("CSS for state that appears on interaction doesn't count as a miss when the JS found its targets", async () => {
+  registerProvider("script", async (s, m, { onToken }) => {
+    const r = "TITLE: Sort\n```css\nth[data-sort=asc]::after { content: '▲' }\n```\n```js\nmorse.watch('th.am', th => morse.on(th, 'click', () => {}));\n```";
+    onToken(r); return r;
+  });
+  const res = await runMorse({
+    settings: { provider: "script" }, request: "sort by this", context: { url: "x", title: "x" },
+    emit: () => {}, exec: async () => ({ ok: true }),
+    probe: async sels => ({ fp: "same", unmatched: sels.filter(s => s.includes("data-sort")) }),
+  });
+  assert.equal(res.attempts, 1);
 });
 
 test("reads an Electron fuse wire", () => {

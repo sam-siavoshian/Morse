@@ -9,21 +9,22 @@ function renderShortcuts() {
       ["Open or close Morse", hotkey("open") ? caps(hotkey("open")) : caps([])],
       ["Talk", hotkey("talk") ? `${caps(hotkey("talk"))}${talkSame ? `<small>hold</small>` : ""}` : caps([])],
       ["Mods panel", caps(hotkey("mods"))],
-      ["God mode", caps(hotkey("godmode"))],
+      ["Edit tools", caps(hotkey("godmode"))],
+      ["Turn off all mods", caps(hotkey("off"))], // user control (63-control.js)
     ]],
     ["In the bar", [
-      ["Run", caps([enter])],
+      ["Send", caps([enter])],
       ["New line", caps([PLATFORM === "mac" ? "⇧" : "Shift", enter])],
-      ["Previous prompts", caps(["↑", "↓"])],
-      ["Stop the model", `${caps(["Esc"])}<small>or</small>${caps([primaryMod, "."])}`],
+      ["Past requests", caps(["↑", "↓"])],
+      ["Stop", `${caps(["Esc"])}<small>or</small>${caps([primaryMod, "."])}`],
       ["Settings", caps([primaryMod, ","])],
       ["Suggestions", caps([PLATFORM === "mac" ? "⇥" : "Tab"])],
-      ["This sheet", caps(["?"])],
+      ["This list", caps(["?"])],
       ["Close", caps(["Esc"])],
     ]],
   ];
   pane.innerHTML = `<div class="sheet kbsheet" role="group" aria-label="Keyboard shortcuts">
-    <header><b>Keyboard shortcuts</b><button type="button" class="tbtn" data-act="settings">Change…</button></header>
+    <header><b>Keyboard shortcuts</b><button type="button" class="tbtn" data-act="help">Examples</button><!-- onboarding hook: 59-help.js --><button type="button" class="tbtn" data-act="settings">Change…</button></header>
     <div class="cols">${groups.map(([title, rows]) => `<section><h4>${title}</h4>${rows.map(([l, k]) => `<div class="krow"><span>${esc(l)}</span><span class="k">${k}</span></div>`).join("")}</section>`).join("")}</div>
   </div>`;
   pane.querySelector("[data-act=settings]").onclick = () => toggleSettings();

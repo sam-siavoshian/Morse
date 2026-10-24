@@ -1,6 +1,6 @@
 // Assembles the in-app runtime. Morse ships it in two parts:
 //
-//   boot  runtime/boot.js (+ core/hotkeys.js, core/prefs.js): every page, as
+//   boot  runtime/boot.js (+ core/hotkeys, prefs, control): every page, as
 //         early as possible. Applies mods, follows navigations, owns the
 //         hotkeys. A few KB, nothing built until it's needed.
 //   ui    runtime/src/*.js (sorted by filename): the bar, panel, effect, God
@@ -17,8 +17,13 @@ const read = rel => readFileSync(new URL(rel, import.meta.url), "utf8");
 // Never throw into the page: a failure stays a console warning.
 const guarded = (name, body) => `/* Morse ${name} (built from runtime/) */\n(() => {\nconst run = () => {\n${body}\n};\ntry { run(); } catch (e) { try { console.warn("[morse] ${name} failed", e); } catch {} }\n})();\n`;
 
+// Every page parses the boot, so its whole-line comments are dropped (the
+// sources keep them). Safe because none of its sources has a multi-line
+// template literal; tests/perf.test.js checks the result still runs.
+const lean = src => src.replace(/^[ \t]*\/\*[\s\S]*?\*\/[ \t]*$/gm, "").replace(/^[ \t]*\/\/.*$/gm, "").replace(/\n{2,}/g, "\n");
+
 export function bundleBoot() {
-  return guarded("boot", `${inlineModule("../core/hotkeys.js")}\n${inlineModule("../core/prefs.js")}\n// ---- runtime/boot.js\n${read("./boot.js")}`);
+  return lean(guarded("boot",`${inlineModule("../core/hotkeys.js")}\n${inlineModule("../core/prefs.js")}\n${inlineModule("../core/control.js")}\n// ---- runtime/boot.js\n${read("./boot.js")}`));
 }
 
 export function bundleUI() {
@@ -30,6 +35,12 @@ export function bundleUI() {
   const shared = ["hotkeys.js", "prefs.js"]
     .map(f => `// ---- core/${f}\n${read(`../core/${f}`).replace(/^export /gm, "")}`);
   shared.push(inlineModule("../core/edits.js"));
+  shared.push(inlineModule("../core/versions.js")); // keep iterating: mod version history (60/70)
+  shared.push(inlineModule("../core/onboarding.js")); // first run and help (runtime/src/59-onboarding.js)
+  shared.push(inlineModule("../core/answer.js")); // Ask and find: reply parser + markdown subset
+  shared.push(inlineModule("../core/summary.js"), inlineModule("../core/control.js")); // user control
+  shared.push(inlineModule("../core/gallery.js")); // gallery hook: Mods for this site (68-gallery.js)
+  shared.push(inlineModule("../core/a11y.js")); // Easier to use: page tools, Check this page, fixes
   return guarded("ui", `const TOKENS_CSS = ${JSON.stringify(tokens)};\n${shared.join("\n")}\n${parts.join("\n")}`);
 }
 

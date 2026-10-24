@@ -2,7 +2,7 @@
 // Select something (⌥Space, click) and an edit toolbar anchors to it: hide,
 // move, resize, rename, recolor, type, duplicate, capture, ask. Each edit is a
 // small object; core/edits.js (inlined by runtime/bundle.js) compiles the list
-// into ordinary mod CSS/JS, saved as one "Manual edits" mod per session with
+// into ordinary mod CSS/JS, saved as one "Direct edits" mod per session with
 // undo/redo. Everything lives in this IIFE so names can't collide; other files
 // reach it through GodMode (hooks in 40-picker.js; 46-quick.js, 47-capture.js).
 
@@ -30,7 +30,7 @@ const GodMode = (() => {
     frame: '<rect x="2.25" y="3.25" width="11.5" height="9.5" rx="1.5"/><path d="M2.25 6h11.5"/>',
   };
   const icon = (n, s = 16) => `<svg viewBox="0 0 16 16" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
-  const tip = (label, key) => `<span class="gm-tip" role="tooltip">${esc(label)}${key ? `<kbd>${esc(key)}</kbd>` : ""}</span>`;
+  const tip = (label, key) => `<span class="tip" role="tooltip">${esc(label)}${key ? `<kbd>${esc(key)}</kbd>` : ""}</span>`;
 
   const TOOLS = [
     { t: "hide", tip: "Hide", key: "H" },
@@ -38,11 +38,11 @@ const GodMode = (() => {
     { t: "resize", tip: "Resize", key: "R" },
     { t: "text", tip: "Edit text", key: "T" },
     { t: "color", tip: "Color", key: "C" },
-    { t: "type", tip: "Size & weight", key: "F" },
+    { t: "type", tip: "Text size", key: "F" },
     { t: "dup", tip: "Duplicate", key: "D" },
     null,
-    { t: "capture", tip: "Capture for another app", key: SHIFT + "C" },
-    { t: "ask", tip: "Ask Morse", key: "A" },
+    { t: "capture", tip: "Capture to use in another app", key: SHIFT + "C" },
+    { t: "ask", tip: "Describe a change", key: "A" },
     null,
     { t: "undo", tip: "Undo", key: MOD + "Z" },
     { t: "redo", tip: "Redo", key: SHIFT + MOD + "Z" },
@@ -59,9 +59,9 @@ const GodMode = (() => {
   wrap.hidden = true;
   wrap.innerHTML = `
     <div class="gm-frame">${["nw", "n", "ne", "e", "se", "s", "sw", "w"].map(h => `<i data-h="${h}"></i>`).join("")}<span class="gm-read" hidden></span></div>
-    <div class="gm-tb" role="toolbar" aria-label="Edit element" tabindex="-1">
+    <div class="gm-tb" role="toolbar" aria-label="Edit tools" tabindex="-1">
       <span class="gm-tag"></span><span class="gm-sep"></span>
-      ${TOOLS.map(x => x ? `<button data-t="${x.t}" aria-label="${esc(x.tip)}">${icon(x.t)}${tip(x.tip, x.key)}</button>` : `<span class="gm-sep"></span>`).join("")}
+      ${TOOLS.map(x => x ? `<button class="ibtn" data-t="${x.t}" aria-label="${esc(x.tip)}">${icon(x.t)}${tip(x.tip, x.key)}</button>` : `<span class="gm-sep"></span>`).join("")}
     </div>
     <div class="gm-note" hidden></div>
     <div class="gm-pop" hidden></div>`;
@@ -133,11 +133,10 @@ const GodMode = (() => {
   }
   const tgt = () => ({ sel: G.t.sel, ...(G.t.shadow ? { shadow: G.t.shadow } : {}) });
   const sameTarget = (e, t) => e.sel === t.sel && JSON.stringify(e.shadow || null) === JSON.stringify(t.shadow || null);
+  // The toolbar's short name for the selection: what kind of thing it is.
   function shortName(el) {
-    const n = el.localName;
-    if (el.id && !looksHashed(el.id)) return `${n}#${el.id}`;
-    const c = [...el.classList].find(c => !looksHashed(c) && !c.startsWith("morse"));
-    return c ? `${n}.${c}` : n;
+    const r = roleWord(el) || (el.children.length ? "section" : "text");
+    return r.charAt(0).toUpperCase() + r.slice(1);
   }
   function kindOf(el) {
     if (el.matches("iframe, frame, embed, object")) return "frame";
@@ -176,17 +175,29 @@ const GodMode = (() => {
     setCss(s.id, css);
     syncButtons();
     if (s.preview.length) return s.chain;
-    s.chain = s.chain.then(async () => {
+    queue(s, async () => {
       if (js === s.lastJs) return;
       s.lastJs = js;
       const r = js ? await call("exec", { modId: s.id, js }) : await call("off", { modId: s.id });
-      if (js && r && !r.ok) toast(`Couldn't apply that edit: ${r.error}`);
+      if (js && r && !r.ok) toast(`Couldn't make that edit (${plainError(r.error)}). Press ${MOD}Z to undo it.`);
       relink();
-    }).catch(e => console.warn("[morse] god mode", e));
+    }, e => { s.lastJs = null; console.warn("[morse] god mode", e); }); // a lost step runs again with the next edit
     clearTimeout(s.saveTimer);
-    s.saveTimer = setTimeout(() => { s.chain = s.chain.then(() => persist(s)).catch(e => toast(`Couldn't save: ${e.message}`)); }, 250);
+    s.saveTimer = setTimeout(() => queue(s, () => persist(s), saveFailed), 250);
     return s.chain;
   }
+  // Steps run one at a time. One that fails, or never hears back from the
+  // host, must not hold up every edit after it: each gets STEP_MS at most.
+  const STEP_MS = 15000;
+  function queue(s, step, onError) {
+    const run = () => {
+      let timer;
+      const late = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("Morse didn't hear back in time. Try again.")), STEP_MS); });
+      return Promise.race([Promise.resolve().then(step), late]).finally(() => clearTimeout(timer));
+    };
+    return (s.chain = s.chain.then(run).catch(onError));
+  }
+  const saveFailed = e => toast(`Couldn't save your edits. ${plainError(e)}`);
   async function persist(s) {
     const edits = allEdits(s);
     if (!edits.length) {
@@ -211,7 +222,7 @@ const GodMode = (() => {
     if (!h) return toast("Nothing to undo");
     GS.future.push(h);
     apply();
-    toast(`Undid ${describeEdit(h.edits[0])}`);
+    toast(`Undone: ${describeEdit(h.edits[0])}`);
   }
   function redo() {
     finishTool();
@@ -219,7 +230,7 @@ const GodMode = (() => {
     if (!h) return toast("Nothing to redo");
     GS.history.push(h);
     apply();
-    toast(`Redid ${describeEdit(h.edits[0])}`);
+    toast(`Redone: ${describeEdit(h.edits[0])}`);
   }
   // Re-running mod JS recreates duplicates and apps re-render: find the selection again.
   function relink() {
@@ -248,14 +259,15 @@ const GodMode = (() => {
     G.kind = kindOf(el);
     hostEl.setAttribute("data-gm", "");
     tag.textContent = shortName(el);
-    tag.title = `${G.t.shadow ? G.t.shadow.join(" ⟩ ") + " ⟩ " : ""}${G.t.sel}`;
+    tag.title = G.t.label;
+    tag.dataset.sel = `${G.t.shadow ? G.t.shadow.join(" ⟩ ") + " ⟩ " : ""}${G.t.sel}`; // for tests and debugging
     for (const b of tb.querySelectorAll("button[data-t]")) b.disabled = G.kind === "frame" && INSIDE.has(b.dataset.t);
     note.hidden = G.kind !== "frame";
     if (G.kind === "frame") {
       let from = "";
       const src = el.getAttribute("src") || el.getAttribute("data");
       try { if (src) from = new URL(src, location.href).host; } catch {}
-      note.innerHTML = `${icon("frame", 14)}<span><b>Embedded frame${from ? ` from ${esc(from)}` : ""}.</b> Morse can hide, move or resize it, but can't edit what's inside.</span>`;
+      note.innerHTML = `${icon("frame")}<span><b>This part is another page${from ? ` from ${esc(from)}` : ""}.</b> Morse can hide, move or resize it, but can't edit what's inside.</span>`;
     }
     syncButtons();
     wrap.hidden = false;
@@ -263,7 +275,7 @@ const GodMode = (() => {
     S.picking = true;
     // Typing describes a change (the main interaction); the tools are one
     // shortcut away so a sentence starting with "m" never triggers Move.
-    hint.innerHTML = `Type to describe a change · <kbd>${PLATFORM === "mac" ? "⌘" : "Ctrl+"}E</kbd> to edit directly · <kbd>Esc</kbd> to close`;
+    hint.innerHTML = `Describe a change · <kbd>${PLATFORM === "mac" ? "⌘" : "Ctrl+"}E</kbd> for edit tools · <kbd>Esc</kbd> to close`;
     // A toolbar action that changes the selection (duplicate, Alt+↑/↓) keeps the toolbar focused.
     if (G.keepTb) { G.keepTb = false; tb.focus({ preventScroll: true }); }
     if (!G.raf) G.raf = requestAnimationFrame(loop);
@@ -378,7 +390,7 @@ const GodMode = (() => {
     const label = G.t.label;
     commit([{ op: "hide", ...tgt(), label }]);
     deselect();
-    toast(`Hidden ${label} · ${MOD}Z to undo`);
+    toast(`Hid ${label}. Press ${MOD}Z to undo.`);
   }
 
   function readout(text) { read.textContent = text; read.hidden = false; }
@@ -483,11 +495,11 @@ const GodMode = (() => {
   function startText() {
     finishTool();
     closePop();
-    if (G.el.matches("input, textarea, select")) return toast("Form fields keep their own text. Try Ask to change them.");
+    if (G.el.matches("input, textarea, select")) return toast("Text in a form field can't be edited here. Press A to describe the change instead.");
     const node = textNodeIn(G.el);
-    if (!node) return toast("There's no text to edit here");
+    if (!node) return toast("There's no text here to edit");
     const parent = node.parentElement;
-    if (parent.closest("[data-morse]") && !parent.closest("[data-morse-dup]")) return toast("That text comes from a mod. Edit it in Mods → Code.");
+    if (parent.closest("[data-morse]") && !parent.closest("[data-morse-dup]")) return toast("That text comes from a mod. Change it in Mods → Edit code.");
     const ed = { node, i: runs(parent).indexOf(node), was: node.nodeValue, target: targetOf(parent), label: describe(parent) };
     const [, before, , after] = /^(\s*)([\s\S]*?)(\s*)$/.exec(ed.was);
     ed.onBlur = () => setTimeout(() => { if (G.editing === ed) endText(true); }, 0);
@@ -497,7 +509,7 @@ const GodMode = (() => {
       rg.selectNodeContents(node);
       const r = rg.getBoundingClientRect();
       const field = ed.field = document.createElement("input");
-      field.className = "gm-svgtext";
+      field.className = "gm-svgtext field";
       field.spellcheck = false;
       field.value = ed.was.trim();
       field.style.transform = `translate(${Math.round(r.left - 8)}px, ${Math.round(r.top + r.height / 2 - 16)}px)`;
@@ -509,7 +521,8 @@ const GodMode = (() => {
     } else {
       const span = ed.span = document.createElement("span");
       span.setAttribute("data-morse-ui", "");
-      span.style.cssText = "outline: none; caret-color: currentColor; cursor: text;";
+      // !important: page rules aimed at [data-morse-ui] (or at every span) must not hide the text being edited
+      span.style.cssText = "display: inline !important; visibility: visible !important; opacity: 1 !important; transform: none !important; outline: none !important; caret-color: currentColor; cursor: text;";
       span.spellcheck = false;
       node.before(span);
       span.append(node);
@@ -530,7 +543,7 @@ const GodMode = (() => {
       sel.removeAllRanges();
       sel.addRange(rg);
     }
-    hint.innerHTML = `Type the new text · <kbd>↵</kbd> save · <kbd>Esc</kbd> cancel`;
+    hint.innerHTML = `Type the new text · <kbd>↵</kbd> to save · <kbd>Esc</kbd> to cancel`;
   }
   function endText(ok) {
     const ed = G.editing;
@@ -551,7 +564,7 @@ const GodMode = (() => {
     if (G.el && S.open) {
       S.picking = true;
       tb.focus({ preventScroll: true });
-      hint.innerHTML = `<b>Edit</b> with the toolbar, or type to describe a change · <kbd>Esc</kbd> to close`;
+      hint.innerHTML = `Use the edit tools, or describe a change · <kbd>Esc</kbd> to close`;
     }
   }
 
@@ -562,7 +575,7 @@ const GodMode = (() => {
     await commit([{ op: "duplicate", ...tgt(), key, label: G.t.label }]);
     const copy = find({ sel: `[data-morse-dup="${key}"]`, shadow });
     if (copy) { G.keepTb = true; setTarget(copy); }
-    toast(`Duplicated · press M to move the copy`);
+    toast(`Duplicated. Press M to move the copy.`);
   }
 
   // ---- popovers: color, type (here) and capture (47-capture.js)
@@ -606,7 +619,7 @@ const GodMode = (() => {
   const validColor = v => /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v) || v === "transparent";
   function colorPop() {
     const el = G.el, cs = getComputedStyle(el), svg = G.kind === "svg";
-    const chans = svg ? [["fill", "Fill"], ["stroke", "Stroke"]] : [["color", "Text"], ["background", "Fill"], ["border", "Border"]];
+    const chans = svg ? [["fill", "Fill"], ["stroke", "Outline"]] : [["color", "Text"], ["background", "Fill"], ["border", "Border"]];
     const noBorder = !svg && !(parseFloat(cs.borderTopWidth) > 0 && cs.borderTopStyle !== "none");
     const gradient = !svg && /gradient/.test(cs.backgroundImage);
     let ch = chans[0][0];
@@ -618,9 +631,9 @@ const GodMode = (() => {
     const edit = v => [{ op: "style", ...tgt(), props: propsFor(ch, v), label: G.t.label }];
     const set = v => { commit(edit(v), `color:${G.popSeq}:${ch}`); paint(v); };
     pop.innerHTML = `
-      <div class="gm-seg" role="tablist">${chans.map(([k, l]) => `<button data-ch="${k}" role="tab">${l}</button>`).join("")}</div>
+      <div class="seg" role="tablist">${chans.map(([k, l]) => `<button data-ch="${k}" role="tab">${l}</button>`).join("")}</div>
       <div class="gm-sw">${PALETTE.map(c => `<button data-c="${c}" title="${c}" aria-label="${c}"${c === "transparent" ? ' class="none"' : ` style="--c:${c}"`}></button>`).join("")}</div>
-      <div class="gm-hex"><i></i><input spellcheck="false" maxlength="11" aria-label="Hex color">${globalThis.EyeDropper ? `<button data-a="pick" title="Pick a color from the screen">${icon("drop", 14)}</button>` : ""}</div>`;
+      <div class="gm-hex field"><i></i><input spellcheck="false" maxlength="11" pattern="#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})|transparent" aria-label="Color code">${globalThis.EyeDropper ? `<button class="ibtn xs" data-a="pick" title="Pick a color from the screen" aria-label="Pick a color from the screen">${icon("drop")}</button>` : ""}</div>`;
     const field = pop.querySelector("input"), dot = pop.querySelector(".gm-hex i");
     const paint = v => {
       field.value = v;
@@ -652,10 +665,10 @@ const GodMode = (() => {
     let size = Math.round(parseFloat(cs.fontSize) || 16), weight = Math.round(+cs.fontWeight / 100) * 100 || 400;
     pop.innerHTML = `
       <div class="gm-field"><label>Size</label>
-        <div class="gm-step"><button data-d="-1" aria-label="Smaller">${icon("minus", 14)}</button><input inputmode="numeric" aria-label="Font size in px"><span>px</span><button data-d="1" aria-label="Bigger">${icon("plus", 14)}</button></div></div>
-      <input class="gm-range" type="range" min="8" max="72" step="1" aria-label="Font size">
+        <div class="gm-step field"><button class="ibtn xs" data-d="-1" aria-label="Smaller">${icon("minus")}</button><input inputmode="numeric" aria-label="Text size in pixels"><span>px</span><button class="ibtn xs" data-d="1" aria-label="Bigger">${icon("plus")}</button></div></div>
+      <input class="gm-range" type="range" min="8" max="72" step="1" aria-label="Text size">
       <div class="gm-field"><label>Weight</label></div>
-      <div class="gm-seg gm-weights">${WEIGHTS.map(([w, l]) => `<button data-w="${w}" style="font-weight:${w}" title="${w}">${l}</button>`).join("")}</div>`;
+      <div class="seg gm-weights">${WEIGHTS.map(([w, l]) => `<button data-w="${w}" style="font-weight:${w}" title="${w}">${l}</button>`).join("")}</div>`;
     const field = pop.querySelector(".gm-step input"), range = pop.querySelector(".gm-range");
     const paint = () => {
       field.value = size;
@@ -684,8 +697,9 @@ const GodMode = (() => {
 
   // ---- keys. Registered before 95-keys.js, so an open tool or popover gets
   // Escape first; with nothing open, Escape closes the bar as usual.
-  addEventListener("keydown", e => {
-    if (!S.open) return;
+  listen("keydown", e => {
+    if (!e.isTrusted || !S.open) return;
+    if (recording) return; // Settings is recording a new shortcut: every key is for it (56-settings.js)
     if (e.isComposing || e.keyCode === 229) return; // IME: Enter/Esc belong to the candidate window
     const active = root.activeElement;
     if (G.editing) {
@@ -705,6 +719,7 @@ const GodMode = (() => {
     }
     if ((e.metaKey || e.ctrlKey) && !e.altKey && (k === "z" || k === "y")) {
       if (active === input && input.value) return;
+      if (S.phase === "result") return; // keep iterating: ⌘Z after a result steps back a version (60-generate.js)
       if (active && active !== input && active.matches?.("input, textarea")) return;
       if (!GS.history.length && !GS.future.length) return;
       e.preventDefault();
@@ -747,22 +762,22 @@ const GodMode = (() => {
     if (e.key.length === 1) { e.stopPropagation(); input.focus(); }
   }, true);
 
-  addEventListener("pointermove", e => { G.pointer = { x: e.clientX, y: e.clientY }; }, true);
+  listen("pointermove", e => { G.pointer = { x: e.clientX, y: e.clientY }; }, true);
   // Frames swallow pointer events, so the picker never sees them: highlight a
   // frame when the pointer enters it, and select it when a click inside it
   // takes focus away from this page.
   const FRAMES = "iframe, frame, embed, object";
-  addEventListener("pointerover", e => {
+  listen("pointerover", e => {
     if (!S.picking || ours(e) || !e.target.matches?.(FRAMES)) return;
     hoverEl = e.target;
-    boxTo(e.target, hl, `${e.target.localName} · embedded frame`);
+    boxTo(e.target, hl, describe(e.target));
   }, true);
-  addEventListener("blur", () => setTimeout(() => {
+  listen("blur", () => setTimeout(() => {
     const a = document.activeElement;
     if (S.open && S.picking && a && a !== G.el && a.matches?.(FRAMES)) setTarget(a);
   }, 0));
   // Double-click the selection to edit its text.
-  addEventListener("dblclick", e => {
+  listen("dblclick", e => {
     if (!G.el || !S.open || ours(e) || G.editing || !G.el.contains(e.target)) return;
     e.preventDefault();
     e.stopPropagation();
@@ -790,7 +805,7 @@ const GodMode = (() => {
     const s = GS;
     if (s.history.length || s.mod) {
       clearTimeout(s.saveTimer);
-      s.chain = s.chain.then(() => persist(s)).catch(e => toast(`Couldn't save: ${e.message}`));
+      queue(s, () => persist(s), saveFailed);
     }
     GS = newSession();
   }
@@ -804,5 +819,14 @@ const GodMode = (() => {
     resetSession() { const s = GS; clearTimeout(s.saveTimer); GS = newSession(); syncButtons(); return s; },
     get session() { return GS; },
     get selected() { return G.el; },
+    // The edit-tools shortcut: open the bar if needed, then focus the toolbar
+    // when something is selected, or ask the user to point at something.
+    focusTools() {
+      if (S.open && S.phase !== "idle") return; // a change is being made or shown: leave its status alone
+      if (!S.open) openBar();
+      if (G.el && !wrap.hidden) tb.focus({ preventScroll: true });
+      else hint.innerHTML = `Point at something to edit it directly`;
+    },
   };
 })();
+listeners.add(m => { if (m.type === "godmode.toggle") GodMode.focusTools(); }); // onEvent is defined later in the bundle
