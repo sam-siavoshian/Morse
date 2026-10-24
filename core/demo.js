@@ -169,6 +169,16 @@ morse.watch("#toolbar", bar => {
 const GOLD_MISS = reply("Gold page", `.morse-demo-nothing-here { background: gold !important; }`, "");
 const GOLD = reply("Gold page", `body { background: rgb(255, 215, 0) !important; }`, "");
 
+// Your style (core/style.js adaptRequest): the demo model's fit for a site.
+const STYLE_FIT = reply("Buttons keep their words on one line", `
+:where(button, [role=button], nav a) {
+  white-space: nowrap !important;
+}
+:where(h1, h2, h3) {
+  overflow-wrap: break-word !important;
+}
+`, "");
+
 const RULES = [
   [/now playing/i, NOW_PLAYING],
   [/word|token count|character count|count/i, WORD_COUNT],
@@ -267,6 +277,7 @@ export function demoResponse(messages) {
   const fixes = fixesDemo(request); // Easier to use: Check this page
   if (fixes) return fixes;
   if (/\bgold\b/i.test(request)) return isRetry ? GOLD : GOLD_MISS;
+  if (/^Your style, for this site\./.test(request)) return STYLE_FIT; // your-style hook: fit it to this site
   for (const [re, resp] of RULES) {
     if (!re.test(request)) continue;
     if (resp === null) return isRetry ? SLEEP : SLEEP_BROKEN;

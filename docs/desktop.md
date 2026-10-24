@@ -33,8 +33,10 @@ morse apps
 ```
 
 Morse looks where apps are usually installed: `/Applications` on a Mac,
-Program Files and your user's app folders on Windows, and `PATH`, `/usr/share`,
-`/usr/lib`, `/opt`, snap and flatpak on Linux. Each app gets one line:
+Program Files and your user's app folders on Windows, and `PATH`, `/opt`, snap,
+flatpak and the app menu on Linux. On Linux it also finds AppImages in
+`~/Applications`, `~/Downloads` and `~/.local/bin`, and ones an installer added
+to the app menu. Each app gets one line:
 
 - **●** Morse can connect to it.
 - **○ can't connect** and why, for example "native app, not built on web technology".
@@ -148,6 +150,12 @@ Store apps on Windows). Then `morse launch` says the app "never opened its
 debugging port". There is nothing Morse can safely do about that, because the
 only other way in would be changing the app's files.
 
+**AppImages on Linux.** An AppImage is the whole app packed into one file.
+Morse opens it the same way as any other app. If your computer can't mount
+AppImages (it has no FUSE, as on a fresh Ubuntu 24.04), Morse has the AppImage
+unpack itself first. It then takes longer to open. `morse fuses` can't look
+inside an AppImage, and says so.
+
 **Electron fuses.** Electron apps can switch off some features when they are
 built, using "fuses". Run this to see an app's fuses:
 
@@ -191,6 +199,83 @@ files on disk, because those live outside the windows.
 - `morse pause slack` turns off every change in Slack without deleting them.
   `morse resume slack` turns them back on.
 
+## Tested on
+
+Real apps, downloaded from their official releases and installed the way their
+own instructions say, on Linux (Ubuntu 24.04 in a container, running as root,
+so each had `-- --no-sandbox`). Each was opened with `morse launch`, changed
+with **Claude Code (haiku)** using the real shortcut, mouse and keyboard, saved,
+quit, and opened again with `morse launch`.
+
+| App | How it was installed | What was asked | Result | Time | Back after reopening |
+|---|---|---|---|---|---|
+| VSCodium 1.140 (VS Code without Microsoft's branding, Electron 43) | its `.deb` | "make the status bar bigger" (pointing at it) | The status bar got taller (22 to 36 pixels) with bigger icons | 10.3 s, and 13.7 s on a second run | Yes, both times |
+| Obsidian 1.14.5 (Electron 43) | its AppImage, in `~/Applications` | "hide this ribbon" (pointing at the left ribbon) | The ribbon is gone | 5.6 s, and 15.9 s on a second run | Yes, both times |
+| Joplin 3.7.21 (Electron 42) | its AppImage, in `~/.joplin` with a menu entry, as its install script does | "hide this button, I don't use sync" (pointing at Synchronize) | The button is gone. Its code relies on Joplin's generated names, so a Joplin update may break it | 13.0 s | Yes |
+
+`morse apps` found all three, and `morse fuses` reported each one (VSCodium's
+fuses from its binary; for the two AppImages it says it can't look inside).
+The time is from pressing Enter to seeing the change. The test machine was
+heavily loaded, so times vary a lot between runs.
+
+| | |
+|---|---|
+| ![](screenshots/147-vscodium-bar.png) VSCodium: pointing at the status bar | ![](screenshots/148-vscodium-status-bar-back.png) VSCodium opened again: the taller status bar is back |
+| ![](screenshots/149-obsidian-bar.png) Obsidian: pointing at the ribbon | ![](screenshots/150-obsidian-ribbon-gone.png) Obsidian opened again: no ribbon |
+| ![](screenshots/151-joplin-bar.png) Joplin: pointing at Synchronize | ![](screenshots/152-joplin-sync-hidden.png) Joplin: the Synchronize button is gone |
+
+What these apps turned up, now fixed:
+
+- **VS Code's window refused Morse's bar.** VS Code only lets its own code put
+  HTML into its window ("Trusted Types"), and that rule reached Morse too, so
+  the bar never appeared. Morse now builds its bar piece by piece there. The
+  rule still protects VS Code's own code.
+- **`morse apps` didn't find VSCodium or the AppImages.** It now reads the app
+  menu and looks for AppImages, and VSCodium is in its list of known apps.
+- **Obsidian's AppImage quit at once**, because the computer had no FUSE.
+  Morse now has it unpack first.
+- **Joplin quit with "Unknown flag"**, because Morse passed a second switch it
+  didn't need. Morse now passes only the debugging port.
+- **A saved change in an AppImage app wouldn't have come back**: an AppImage
+  runs from a new folder each time, and Morse matched changes by the whole
+  folder path. It now matches by the page inside the app.
+- **The Mods panel said "Stops every mod on this site"** in an app. It now
+  says "in this app".
+
+Not tested: Microsoft's own VS Code build, Slack, Discord, Signal and Spotify
+(their downloads aren't reachable from the test machine, or they need
+an account), Flatpak and Snap installs, macOS, Windows and Wayland. Signing in
+to anything wasn't tested.
+
+### Websites
+
+The same check on public websites, with the built Chrome extension in
+Chromium 153 on Linux, paired with `morse serve` and Claude Code (haiku). Each
+change was saved, then the page was reloaded.
+
+| Site | What was asked | Result | Time | Back after a reload |
+|---|---|---|---|---|
+| pypi.org (strict rules for scripts) | "add a back to top button in the bottom right corner" | A round ↑ button. With “Allow User Scripts” off, the site blocked Morse's code and the model's second try was an arrow that only looks like a button (32 s) | 12.6 s | Yes |
+| gitlab.com (strict rules, but code is allowed) | the same | The button works, with “Allow User Scripts” on or off | 12.3 s | Yes |
+| gitlab.com | "hide this project information box" | Partly: it hid the description in the box, not the whole box | 7.8 s | Yes |
+| pkg.go.dev | "make the code examples bigger" (pointing at one) | Bigger code text | 7.6 s | Yes |
+| rubygems.org | "make the download numbers much bigger" (pointing at them) | The first try changed nothing. The second made the total downloads big | 8.3 s | Yes |
+| hub.docker.com | "make these code blocks bigger with a dark background" | Bigger text on dark blocks | 11.6 s | Yes |
+| nodejs.org (the docs) | "hide the left sidebar so the docs use the full width" | Failed, three times: the whole page went blank. The model hid a style the sidebar and the docs share. Undo puts the page back | 10 to 26 s | (blank) |
+
+Wikipedia, Hacker News, MDN, YouTube, the BBC and GitHub's pages couldn't be
+tried: the test machine's network doesn't reach them.
+
+| | |
+|---|---|
+| ![](screenshots/153-web-gitlab-back-to-top.png) GitLab: the back to top button (bottom right) | ![](screenshots/154-web-pypi-after-reload.png) PyPI after a reload: the button is still there |
+| ![](screenshots/155-web-docker-hub-code.png) Docker Hub: bigger code on dark blocks | ![](screenshots/156-web-pypi-user-scripts-off.png) PyPI with “Allow User Scripts” off: only an arrow, which doesn't scroll |
+
+The same flow can be run on any installed app with
+[`demo/try-real-app.js`](../demo/try-real-app.js), and on websites with
+[`demo/try-real-sites.js`](../demo/try-real-sites.js) and
+[`demo/real-sites.json`](../demo/real-sites.json).
+
 ## How this was tested
 
 On a real Electron 45 on Linux, with a small music app built for it,
@@ -229,6 +314,7 @@ renamed to `tunes`, with the app next to it, unpacked or as
 |---|---|
 | ![](screenshots/126-electron-haiku-working.png) Claude Code (haiku) writing the change | ![](screenshots/127-electron-haiku-result.png) Its result: a sleep timer picker under the player |
 
-Not tested: real Slack, Discord, VS Code or Spotify installs, macOS and
-Windows (quitting with AppleScript or taskkill, `.app` bundles, Squirrel
-installs), and Wayland.
+Real installed apps (VSCodium, Obsidian, Joplin) are under
+[Tested on](#tested-on). Not tested: Slack, Discord, Microsoft's VS Code or
+Spotify, macOS and Windows (quitting with AppleScript or taskkill, `.app`
+bundles, Squirrel installs), and Wayland.

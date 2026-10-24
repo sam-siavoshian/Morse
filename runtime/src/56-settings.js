@@ -24,7 +24,7 @@ function switchHtml(key, on, label) {
 // Re-rendering keeps keyboard focus on the same control.
 function focusKeyOf(n) {
   if (!n || !pane.contains(n)) return "";
-  for (const a of ["hk", "off", "reset", "act"]) if (n.dataset[a]) return `[data-${a}="${n.dataset[a]}"]`;
+  for (const a of ["hk", "off", "reset", "act", "ys" /* your-style hook */]) if (n.dataset[a]) return `[data-${a}="${n.dataset[a]}"]`;
   if (n.dataset.v) return `.seg[data-k="${n.closest(".seg").dataset.k}"] [data-v="${n.dataset.v}"]`;
   if (n.dataset.k) return `[data-k="${n.dataset.k}"]`;
   return "";
@@ -63,6 +63,7 @@ function paintSettings() {
   pane.innerHTML = `
     <div class="sheet" role="group" aria-label="Settings">
       <header><b>Settings</b><span class="flash" aria-hidden="true"></span><button type="button" class="tbtn" data-act="done">Done</button></header>
+      ${YourStyle.settingsHtml() /* your-style hook: 72-style.js */}
       <section><h4>Shortcuts</h4>${keyRows}</section>
       <section><h4>Voice</h4>
         <div class="srow"><div class="lbl"><span>Send after a pause</span><small>Sends when you stop talking</small></div><div class="ctl">${switchHtml("autoSubmit", PREFS.voice.autoSubmit, "Send after a pause")}</div></div>
