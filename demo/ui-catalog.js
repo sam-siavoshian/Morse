@@ -43,7 +43,8 @@ await new Promise(r => server.listen(0, "127.0.0.1", r));
 const BASE = `http://127.0.0.1:${server.address().port}`;
 
 const results = [];
-const browser = await chromium.launch();
+// a fake microphone (a tone) for the voice states; Web Speech is stubbed per page
+const browser = await chromium.launch({ args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const LONG_ERROR = "TypeError: Cannot read properties of null (reading 'addEventListener') at morse.watch callback (mod.js:14:22) — the selector #toolbar > div.controls:nth-of-type(2) matched nothing after the app re-rendered the player";
@@ -52,9 +53,18 @@ const LONG_TITLE = "Sleep timer in the player bar that fades the volume out over
 const CODE_TOKENS = "TITLE: Airier toolbar\n```css\n#toolbar { gap: 20px; letter-spacing: .02em; padding: 12px 20px; }\n#toolbar button { opacity: .9; }\n```\n```js\nmorse.watch('#toolbar', t => t.append(morse.el('span', { text: 'hello' })));\n```\n".match(/.{1,4}/gs);
 
 // ---------------------------------------------------------------- helpers
-async function open({ theme = "dark", width = 1100, height = 720, mods = 0, url, reduced = false, extra = "" } = {}) {
+// Web Speech needs Google's servers: make it fail at once ("network"), as it
+// does inside Electron apps, so voice falls back to the host's transcription.
+const SPEECH_FAILS = () => {
+  globalThis.webkitSpeechRecognition = class extends EventTarget {
+    start() { setTimeout(() => { this.onerror?.(Object.assign(new Event("error"), { error: "network" })); const end = new Event("end"); this.onend?.(end); this.dispatchEvent(end); }, 30); }
+    stop() {} abort() {}
+  };
+};
+async function open({ theme = "dark", width = 1100, height = 720, mods = 0, url, reduced = false, extra = "", init = [] } = {}) {
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 2, reducedMotion: reduced ? "reduce" : "no-preference", colorScheme: theme });
   ctx.setDefaultTimeout(10000);
+  for (const fn of [SPEECH_FAILS, ...[].concat(init)]) await ctx.addInitScript(fn);
   const page = await ctx.newPage();
   page.on("pageerror", e => console.warn("  [pageerror]", e.message));
   await page.exposeFunction("__catCapture", async () => "data:image/png;base64," + (await page.screenshot()).toString("base64"));
@@ -70,7 +80,7 @@ async function open({ theme = "dark", width = 1100, height = 720, mods = 0, url,
   page.vp = width < 600 ? "narrow" : "";
   return page;
 }
-const ui = (page, sel) => page.locator("[data-morse-ui]").locator(sel).first();
+const ui = (page, sel) => page.locator(":root > [data-morse-ui]").locator(sel).first();
 const close = page => page.context().close();
 
 // One screenshot, cropped to the union of the given elements plus padding.
@@ -88,7 +98,7 @@ async function shot(page, area, state, targets, { pad = 12, theme, note, checks 
     const x = Math.max(0, Math.floor(x1 - pad)), y = Math.max(0, Math.floor(y1 - pad));
     clip = { x, y, width: Math.min(vw, Math.ceil(x2 + pad)) - x, height: Math.min(vh, Math.ceil(y2 + pad)) - y };
   }
-  theme ??= await page.evaluate(() => document.querySelector("[data-morse-ui]")?.dataset.theme || "dark");
+  theme ??= await page.evaluate(() => document.querySelector(":root > [data-morse-ui]")?.dataset.theme || "dark");
   const name = `${state}${page.vp ? "-" + page.vp : ""}-${theme}`;
   const file = path.join(OUT, area, `${name}.png`);
   await fs.mkdir(path.dirname(file), { recursive: true });
@@ -104,7 +114,7 @@ async function shot(page, area, state, targets, { pad = 12, theme, note, checks 
 async function audit(page, clip) {
   return page.evaluate(clip => {
     const out = [];
-    const host = document.querySelector("[data-morse-ui]");
+    const host = document.querySelector(":root > [data-morse-ui]");
     if (!host) return ["overlay host element missing"];
     const hs = getComputedStyle(host);
     if (hs.display === "none" || hs.visibility === "hidden" || +hs.opacity < 1) out.push(`host page hides the overlay (display:${hs.display}, opacity:${hs.opacity})`);
@@ -137,7 +147,8 @@ async function audit(page, clip) {
     const opacityOf = el => { let o = 1; for (let n = el; n && n.nodeType === 1; n = n.parentElement) o *= +getComputedStyle(n).opacity; return o; };
     const name = el => `${el.tagName.toLowerCase()}${el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : ""}`;
     for (const el of root.querySelectorAll("*")) {
-      if (!visible(el) || el.closest("svg") || el.tagName === "STYLE") continue;
+      if (!visible(el) || el.closest("svg, .sr") || el.tagName === "STYLE") continue;
+      if (opacityOf(el) < 0.02) continue; // faded out (a tooltip that isn't showing)
       // the rect as painted: cut by ancestors that hide their overflow
       const cs = getComputedStyle(el), br = el.getBoundingClientRect();
       const r = { left: br.left, top: br.top, right: br.right, bottom: br.bottom };
@@ -157,8 +168,8 @@ async function audit(page, clip) {
       } else if (r.right > W + 0.5 || r.left < -0.5 || r.top < -0.5 || r.bottom > H + 0.5) out.push(`${name(el)} is outside the viewport (${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}×${Math.round(r.height)})`);
       if (clip && !(r.right > clip.x && r.left < clip.x + clip.width && r.bottom > clip.y && r.top < clip.y + clip.height)) continue;
       // anything that sticks out of the bar / panel / card / toast it belongs to
-      const box = el.parentElement && el.closest(".bar, .panel, .card, .toast");
-      if (box && box !== el && !el.closest(".list, .card textarea")) {
+      const box = el.parentElement && el.closest(".bar, .panel, .card, .toast, .gm-tb, .gm-pop, .gm-note, .gm-menu, .bmenu");
+      if (box && box !== el && !el.closest(".list, .card textarea, .gm-tip, .gm-chips, .pane")) {
         const b = box.getBoundingClientRect();
         if (r.right > b.right + 0.5 || r.left < b.left - 0.5) out.push(`${name(el)} sticks out of ${name(box)}`);
       }
@@ -177,13 +188,31 @@ async function audit(page, clip) {
           if (c < (big ? 3 : 4.5)) out.push(`contrast ${c.toFixed(2)} < ${big ? 3 : 4.5} on ${name(el)} “${el.textContent.trim().slice(0, 24)}”`);
         }
       }
-      if (el.matches(".go, .actions button, .card footer button, .exports button, .link button, .panel footer button")) {
+      // every control is 20/24/28/32 tall (swatches 20, inline 24, buttons 28, the bar row and tool buttons 32)
+      if (el.matches("button, .hk, .gm-hex, .gm-step, .link input, .gm-cap-note, .seg")) {
         const h = Math.round(br.height * 100) / 100;
-        if (![28, 30, 32].includes(h)) out.push(`${name(el)} height ${h}px is not 28/30/32`);
+        if (![20, 24, 28, 32].includes(h)) out.push(`${name(el)} height ${h}px is not 20/24/28/32`);
+      }
+      // radii: 6/10/14 from the tokens; 4 for kbd, tags and controls nested in a 6px control; 2 for the selection frame; round for switch, swatches, dots
+      const rad = parseFloat(cs.borderTopLeftRadius);
+      if (rad && ![2, 4, 6, 10, 14].includes(rad) && !(rad >= br.height / 2 - 0.5) && !/%/.test(cs.borderTopLeftRadius)) out.push(`${name(el)} radius ${rad}px is not 4/6/10/14`);
+      // 1px lines (the picker outline is 1.5 on purpose and is an outline, not a border)
+      for (const side of ["Top", "Right", "Bottom", "Left"]) {
+        const w = parseFloat(cs[`border${side}Width`]);
+        if (cs[`border${side}Style`] !== "none" && w && w !== 1) { out.push(`${name(el)} border-${side.toLowerCase()} is ${w}px, not 1px`); break; }
       }
     }
+    // icons: one set, 16px, 1.5px strokes, round caps (the radar mark has its own sizes)
+    for (const svg of root.querySelectorAll("svg:not(.radar)")) {
+      if (!visible(svg) || opacityOf(svg.parentElement) < 0.02) continue;
+      const b = svg.getBoundingClientRect();
+      if (clip && !(b.right > clip.x && b.left < clip.x + clip.width && b.bottom > clip.y && b.top < clip.y + clip.height)) continue;
+      if (Math.round(b.width) !== 16 || Math.round(b.height) !== 16) out.push(`icon in ${name(svg.parentElement)} is ${Math.round(b.width)}×${Math.round(b.height)}, not 16×16`);
+      const cs = getComputedStyle(svg);
+      if (cs.stroke !== "none" && parseFloat(cs.strokeWidth) !== 1.5) out.push(`icon in ${name(svg.parentElement)} has a ${cs.strokeWidth} stroke, not 1.5px`);
+    }
     // host-style leakage: the overlay must look the same on any page
-    for (const sel of [".bar", ".panel", ".card", ".toast", ".hl span"]) {
+    for (const sel of [".bar", ".panel", ".card", ".toast", ".hl span", ".gm-tb", ".gm-pop", ".gm-menu", ".bmenu", ".pane"]) {
       const el = root.querySelector(sel);
       if (!el || !visible(el)) continue;
       const cs = getComputedStyle(el);
@@ -246,7 +275,15 @@ async function focusVisible(page, loc) {
   await page.keyboard.press("Shift");
   await loc.focus();
   await sleep(60);
-  return (await loc.evaluate(el => el.matches(":focus-visible"))) ? "" : "focus does not match :focus-visible";
+  return loc.evaluate(el => {
+    if (!el.matches(":focus-visible")) return "focus does not match :focus-visible";
+    // the indicator itself: a 2px ring (on the control, its track, or its field), or a highlighted menu row
+    const ring = n => { const c = getComputedStyle(n); return (c.outlineStyle !== "none" && parseFloat(c.outlineWidth) >= 2) || /0px 0px 0px [12]px/.test(c.boxShadow); };
+    const host = el.closest(".gm-hex, .gm-step, .seg") || el.nextElementSibling;
+    if (ring(el) || (el.matches(".sw input") && ring(el.nextElementSibling)) || (el.matches("input") && host && ring(host))) return "";
+    if (el.matches("[role=menuitem], [role=menuitem] *") && getComputedStyle(el).backgroundColor !== "rgba(0, 0, 0, 0)") return "";
+    return "no visible focus indicator (no 2px ring)";
+  });
 }
 
 // ---------------------------------------------------------------- areas
@@ -509,6 +546,429 @@ async function modalStates(theme, width) {
   await close(p);
 }
 
+// ---------------------------------------------------------------- God mode
+const EYEDROPPER = () => { globalThis.EyeDropper = class { open() { return new Promise(() => {}); } }; };
+const TOOLS = ["hide", "move", "resize", "text", "color", "type", "dup", "capture", "ask", "undo", "redo"];
+const tb = p => ui(p, ".gm-tb");
+async function select(p, sel, fx = 0.5, fy = 0.5) {
+  const b = await p.locator(sel).first().boundingBox();
+  const x = b.x + Math.min(b.width * fx, b.width - 2), y = b.y + b.height * fy;
+  await p.mouse.move(x - 8, y - 4); await p.mouse.move(x, y, { steps: 2 }); await sleep(120);
+  await p.mouse.click(x, y); await sleep(200);
+  await tb(p).waitFor({ state: "visible" }); await sleep(150);
+}
+async function editFocus(p) { await p.keyboard.press("Control+KeyE"); await sleep(80); }
+// a mouse that rests on the selection, so the picker draws nothing else
+const restOn = async (p, sel) => { const b = await p.locator(sel).first().boundingBox(); await p.mouse.move(b.x + 10, b.y + 10); await sleep(120); };
+
+async function godStates(theme, width) {
+  const n = width < 600, H = n ? 844 : 720;
+  let p = await open({ theme, width, height: H, init: EYEDROPPER });
+  await openBar(p);
+  await select(p, "#card", 0.3, 0.6);
+  await shot(p, "edit-toolbar", "selected", [tb(p), ui(p, ".gm-frame")], { pad: 12 });
+  await shot(p, "edit-toolbar", "bar-hint", ui(p, ".bar"), { note: "after pointing, typing goes to the bar; Ctrl+E (⌘E) moves focus to the toolbar" });
+  if (!n) {
+    for (const t of TOOLS) {
+      const b = ui(p, `.gm-tb button[data-t=${t}]`);
+      await b.hover(); await sleep(520);
+      const disabled = await b.isDisabled();
+      await shot(p, "edit-toolbar", `tool-${t}-${disabled ? "disabled" : "hover"}`, [tb(p), ui(p, `.gm-tb button[data-t=${t}] .gm-tip`)], { pad: 8 });
+      if (!disabled) await shot(p, "edit-toolbar", `tool-${t}-focus`, [tb(p), ui(p, `.gm-tb button[data-t=${t}] .gm-tip`)], { pad: 8, checks: [await focusVisible(p, b)] });
+    }
+    await restOn(p, "#card");
+    await ui(p, ".in").focus();
+    await editFocus(p);
+    await shot(p, "edit-toolbar", "ctrl-e", tb(p), { pad: 8, note: "the toolbar holds focus: its border lights; H M R T C F D A act on the selection" });
+  } else { await editFocus(p); }
+  // move: the tool, then a drag with the readout
+  await p.keyboard.press("m"); await sleep(150);
+  await shot(p, "edit-toolbar", "move-active", [tb(p), ui(p, ".gm-frame")], { pad: 12 });
+  const fr = await ui(p, ".gm-frame").boundingBox();
+  await p.mouse.move(fr.x + fr.width / 2, fr.y + fr.height / 2); await p.mouse.down();
+  await p.mouse.move(fr.x + fr.width / 2 + 40, fr.y + fr.height / 2 + 12, { steps: 6 }); await sleep(150);
+  await shot(p, "edit-frame", "move-dragging", [ui(p, ".gm-frame"), ui(p, ".gm-read")], { pad: 12 });
+  await p.mouse.up(); await sleep(150);
+  await p.keyboard.press("Escape"); await sleep(100);
+  // resize: eight handles, then a drag with the size readout
+  await editFocus(p);
+  await p.keyboard.press("r"); await sleep(150);
+  await shot(p, "edit-frame", "resize-handles", ui(p, ".gm-frame"), { pad: 16 });
+  const se = await ui(p, ".gm-frame i[data-h=se]").boundingBox();
+  await p.mouse.move(se.x + se.width / 2, se.y + se.height / 2); await p.mouse.down();
+  await p.mouse.move(se.x + 34, se.y + 24, { steps: 6 }); await sleep(150);
+  await shot(p, "edit-frame", "resize-dragging", [ui(p, ".gm-frame"), ui(p, ".gm-read")], { pad: 16 });
+  await p.mouse.up(); await sleep(150);
+  await p.keyboard.press("Escape"); await sleep(100);
+  if (!n) {
+    const u = ui(p, ".gm-tb button[data-t=undo]");
+    await u.hover(); await sleep(520);
+    await shot(p, "edit-toolbar", "tool-undo-hover", [tb(p), ui(p, ".gm-tb button[data-t=undo] .gm-tip")], { pad: 8 });
+    await shot(p, "edit-toolbar", "tool-undo-focus", [tb(p), ui(p, ".gm-tb button[data-t=undo] .gm-tip")], { pad: 8, checks: [await focusVisible(p, u)] });
+    await restOn(p, "#card");
+  }
+  // text: edit in place
+  await editFocus(p);
+  await p.keyboard.press("t"); await sleep(200);
+  await shot(p, "edit-frame", "text-editing", [ui(p, ".gm-frame"), tb(p)], { pad: 12 });
+  await p.keyboard.type("Release notes, v2", { delay: 10 }); await sleep(100);
+  await shot(p, "edit-frame", "text-typed", [ui(p, ".gm-frame")], { pad: 12 });
+  await shot(p, "edit-frame", "text-hint", ui(p, ".status"), { pad: 4 });
+  await p.keyboard.press("Escape"); await sleep(150);
+  // color
+  await editFocus(p);
+  await p.keyboard.press("c"); await sleep(200);
+  const pop = ui(p, ".gm-pop");
+  await shot(p, "edit-color", "text-tab", [pop, tb(p)], { pad: 12 });
+  await ui(p, ".gm-pop [data-ch=background]").click(); await sleep(100);
+  await shot(p, "edit-color", "fill-tab", pop, { pad: 12 });
+  await ui(p, ".gm-pop [data-ch=border]").click(); await sleep(100);
+  await shot(p, "edit-color", "border-tab", pop, { pad: 12 });
+  if (!n) {
+    await shot(p, "edit-color", "tab-focus", pop, { pad: 12, checks: [await focusVisible(p, ui(p, ".gm-pop [data-ch=color]"))] });
+    await ui(p, ".gm-pop [data-c='#3b82f6']").hover(); await sleep(150);
+    await shot(p, "edit-color", "swatch-hover", pop, { pad: 12 });
+    await shot(p, "edit-color", "swatch-focus", pop, { pad: 12, checks: [await focusVisible(p, ui(p, ".gm-pop [data-c='#3b82f6']"))] });
+  }
+  await ui(p, ".gm-pop [data-ch=background]").click(); await sleep(100);
+  await ui(p, ".gm-pop [data-c='#3b82f6']").click(); await sleep(150);
+  await p.mouse.move(2, 2); await sleep(100);
+  await shot(p, "edit-color", "swatch-picked", [pop, ui(p, ".gm-frame")], { pad: 12 });
+  await ui(p, ".gm-pop .gm-hex input").click(); await sleep(60);
+  await shot(p, "edit-color", "hex-focus", pop, { pad: 12, checks: [await focusVisible(p, ui(p, ".gm-pop .gm-hex input"))] });
+  await ui(p, ".gm-pop .gm-hex input").fill("#12zz"); await sleep(80);
+  await ui(p, ".gm-pop .gm-hex input").press("Enter"); await sleep(80);
+  await shot(p, "edit-color", "hex-invalid", pop, { pad: 12 });
+  if (!n) {
+    await ui(p, ".gm-pop [data-a=pick]").hover(); await sleep(150);
+    await shot(p, "edit-color", "eyedropper-hover", pop, { pad: 12 });
+    await shot(p, "edit-color", "eyedropper-focus", pop, { pad: 12, checks: [await focusVisible(p, ui(p, ".gm-pop [data-a=pick]"))] });
+  }
+  await p.keyboard.press("Escape"); await sleep(100);
+  // type
+  await editFocus(p);
+  await p.keyboard.press("f"); await sleep(200);
+  await shot(p, "edit-type", "default", [pop, tb(p)], { pad: 12 });
+  await ui(p, ".gm-pop [data-d='1']").click(); await sleep(60);
+  await ui(p, ".gm-pop [data-d='1']").click(); await sleep(60);
+  await ui(p, ".gm-pop [data-w='700']").click(); await sleep(100);
+  await shot(p, "edit-type", "bigger-bold", pop, { pad: 12 });
+  if (!n) {
+    await ui(p, ".gm-pop [data-d='1']").hover(); await sleep(150);
+    await shot(p, "edit-type", "step-hover", pop, { pad: 12 });
+    await shot(p, "edit-type", "step-focus", pop, { pad: 12, checks: [await focusVisible(p, ui(p, ".gm-pop [data-d='1']"))] });
+    await shot(p, "edit-type", "size-focus", pop, { pad: 12, checks: [await focusVisible(p, ui(p, ".gm-pop .gm-step input"))] });
+    await shot(p, "edit-type", "range-focus", pop, { pad: 12, checks: [await focusVisible(p, ui(p, ".gm-pop .gm-range"))] });
+    await ui(p, ".gm-pop [data-w='300']").hover(); await sleep(150);
+    await shot(p, "edit-type", "weight-hover", pop, { pad: 12 });
+    await shot(p, "edit-type", "weight-focus", pop, { pad: 12, checks: [await focusVisible(p, ui(p, ".gm-pop [data-w='300']"))] });
+  }
+  await p.keyboard.press("Escape"); await sleep(100);
+  // capture
+  await editFocus(p);
+  await p.keyboard.press("Shift+KeyC"); await sleep(900);
+  await shot(p, "capture", "popover", [pop, tb(p)], { pad: 12 });
+  await p.keyboard.type("airy card, soft corners", { delay: 5 }); await sleep(80);
+  await shot(p, "capture", "with-note", pop, { pad: 12 });
+  if (!n) {
+    await ui(p, ".gm-pop [data-a=save]").hover(); await sleep(150);
+    await shot(p, "capture", "save-hover", pop, { pad: 12 });
+    await shot(p, "capture", "save-focus", pop, { pad: 12, checks: [await focusVisible(p, ui(p, ".gm-pop [data-a=save]"))] });
+  }
+  await ui(p, ".gm-pop .gm-cap-note").press("Enter"); await sleep(400);
+  await shot(p, "capture", "captured-toast", ui(p, ".toast"), { pad: 16 });
+  // hide, with the toast that says how to undo
+  await select(p, "#toolbar", 0.5, 0.15);
+  await editFocus(p);
+  await p.keyboard.press("h"); await sleep(350);
+  await shot(p, "edit-toolbar", "hidden-toast", ui(p, ".toast"), { pad: 16 });
+  await close(p);
+
+  // a selection flush with the top edge: toolbar and tooltips open below
+  p = await open({ theme, width, height: H });
+  await openBar(p);
+  await select(p, "#topEdge", 0.3, 0.5);
+  if (!n) {
+    await ui(p, ".gm-tb button[data-t=move]").hover(); await sleep(520);
+    await shot(p, "edit-toolbar", "below-top-edge", [tb(p), ui(p, ".gm-frame"), ui(p, ".gm-tb button[data-t=move] .gm-tip")], { pad: 8 });
+  } else await shot(p, "edit-toolbar", "below-top-edge", [tb(p), ui(p, ".gm-frame")], { pad: 8 });
+  // SVG: Fill/Stroke, and a field over SVG text
+  await p.evaluate(() => {
+    const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    s.id = "logo"; s.setAttribute("width", "200"); s.setAttribute("height", "56");
+    s.innerHTML = `<rect width="200" height="56" rx="10" fill="#3b82f6"/><text x="16" y="36" fill="#fff" font-size="20" font-family="system-ui">Morse Radio</text>`;
+    document.querySelector("main").prepend(s);
+  });
+  await sleep(200);
+  await select(p, "#logo rect", 0.9, 0.2);
+  await editFocus(p);
+  await p.keyboard.press("c"); await sleep(200);
+  await shot(p, "edit-color", "svg-fill-stroke", [pop, tb(p)], { pad: 12 });
+  await p.keyboard.press("Escape"); await sleep(100);
+  await select(p, "#logo text", 0.3, 0.5);
+  await editFocus(p);
+  await p.keyboard.press("t"); await sleep(200);
+  await shot(p, "edit-frame", "svg-text-field", [ui(p, ".gm-svgtext"), ui(p, ".gm-frame")], { pad: 12 });
+  await p.keyboard.press("Escape"); await sleep(100);
+  // an embedded frame: the note, and the tools that can't reach inside
+  await p.evaluate(() => {
+    const f = document.createElement("iframe");
+    f.id = "embed"; f.srcdoc = "<body style='margin:0;font:14px system-ui;background:#2a2a2e;color:#ddd;display:grid;place-items:center;height:100vh'><button>Embedded player</button></body>";
+    f.style.cssText = "width:280px;height:120px;border:0;border-radius:10px;display:block";
+    document.querySelector("main").prepend(f);
+  });
+  await sleep(300);
+  await p.locator("#embed").hover(); await sleep(150);
+  await p.locator("#embed").click(); await sleep(400);
+  await tb(p).waitFor({ state: "visible" }).catch(() => {});
+  await shot(p, "edit-frame", "embedded-note", [tb(p), ui(p, ".gm-note"), ui(p, ".gm-frame")], { pad: 12 });
+  if (!n) {
+    await ui(p, ".gm-tb button[data-t=text]").hover({ force: true }); await sleep(520);
+    await shot(p, "edit-toolbar", "tool-text-disabled", tb(p), { pad: 8, note: "frames: tools that reach inside are disabled; no tooltip, not focusable" });
+  }
+  await close(p);
+
+  // page tools: the bar button and its menu
+  p = await open({ theme, width, height: H });
+  await openBar(p);
+  const q = ui(p, ".gm-qbtn");
+  await q.hover(); await sleep(520);
+  await shot(p, "page-tools", "button-hover", [q, ui(p, ".gm-qbtn .gm-tip")], { pad: 8 });
+  await shot(p, "page-tools", "button-focus", [q, ui(p, ".gm-qbtn .gm-tip")], { pad: 8, checks: [await focusVisible(p, q)] });
+  await q.click(); await sleep(250);
+  await shot(p, "page-tools", "menu", [ui(p, ".gm-menu"), q], { pad: 12 });
+  await ui(p, ".gm-menu [data-k=bigger]").hover(); await sleep(150);
+  await shot(p, "page-tools", "item-hover", ui(p, ".gm-menu"), { pad: 12 });
+  await ui(p, ".gm-menu [data-k=bigger]").click(); await sleep(400);
+  await q.click(); await sleep(250);
+  await ui(p, ".gm-menu [data-k=noads]").click(); await sleep(400);
+  await q.click(); await sleep(250);
+  await p.keyboard.press("ArrowDown"); await sleep(80);
+  await shot(p, "page-tools", "menu-with-state", [ui(p, ".gm-menu"), q], { pad: 12, note: "Bigger text shows its level, Hide ads its check; keyboard focus is the row highlight" });
+  await p.keyboard.press("Escape"); await sleep(100);
+  await close(p);
+
+  // the Morse clipboard: chips in the bar, picked, then "Rebuilt from" while working
+  p = await open({ theme, width, height: H, extra: "&clips=1" });
+  await openBar(p);
+  await ui(p, ".gm-clips").waitFor({ state: "visible" }); await sleep(150);
+  await shot(p, "clipboard", "chips", ui(p, ".bar"));
+  if (!n) {
+    await ui(p, ".gm-chip[data-id=c2]").hover(); await sleep(150);
+    await shot(p, "clipboard", "chip-hover", ui(p, ".gm-clips"), { pad: 8 });
+    await shot(p, "clipboard", "chip-focus", ui(p, ".gm-clips"), { pad: 8, checks: [await focusVisible(p, ui(p, ".gm-chip[data-id=c2]"))] });
+  }
+  await ui(p, ".gm-chip[data-id=c1]").click(); await sleep(150);
+  await shot(p, "clipboard", "picked", ui(p, ".bar"));
+  await submit(p, "make the header look like it");
+  await shot(p, "clipboard", "rebuilt-from", ui(p, ".bar"));
+  await close(p);
+}
+
+// ---------------------------------------------------------------- voice
+const statusOf = p => p.evaluate(() => JSON.parse(document.querySelector(":root > [data-morse-ui]").dataset.status || "{}"));
+async function voiceStates(theme, width) {
+  const n = width < 600, H = n ? 844 : 720;
+  let p = await open({ theme, width, height: H });
+  await openBar(p);
+  await pick(p, "#card"); // with a target the bar stops dodging the pointer
+  const mic = ui(p, ".mic");
+  await shot(p, "voice", "mic-idle", ui(p, ".row"), { pad: 4 });
+  if (!n) {
+    await mic.hover(); await sleep(150);
+    await shot(p, "voice", "mic-hover", mic, { pad: 8 });
+    await shot(p, "voice", "mic-focus", mic, { pad: 8, checks: [await focusVisible(p, mic)] });
+  }
+  await mic.click();
+  await p.waitForFunction(() => JSON.parse(document.querySelector(":root > [data-morse-ui]").dataset.status || "{}").voice === "listening");
+  await p.waitForFunction(() => JSON.parse(document.querySelector(":root > [data-morse-ui]").dataset.status || "{}").level > 0.3, null, { timeout: 5000 }).catch(() => {});
+  await shot(p, "voice", "listening", ui(p, ".bar"));
+  if (!n) await shot(p, "voice", "level-meter", mic, { pad: 8 });
+  await p.waitForFunction(() => /make the/.test(document.querySelector(":root > [data-morse-ui]").shadowRoot.querySelector(".in").value), null, { timeout: 9000 }).catch(() => {});
+  await shot(p, "voice", "partial-transcript", ui(p, ".bar"), { note: "partial words in --m-text-2 until the final transcript" });
+  await p.evaluate(() => (__cat.holdTranscribe = true));
+  await mic.click(); await sleep(250);
+  await shot(p, "voice", "transcribing", ui(p, ".bar"));
+  await p.evaluate(() => __cat.release?.()); await sleep(300);
+  await shot(p, "voice", "transcribed", ui(p, ".bar"));
+  await close(p);
+
+  // every line voice can leave in the status row
+  const ERR = {
+    "insecure-page": [() => Object.defineProperty(globalThis, "isSecureContext", { get: () => false })],
+    "policy-blocked": [() => Object.defineProperty(Document.prototype, "permissionsPolicy", { get: () => ({ allowsFeature: () => false }) })],
+    "no-microphone-api": [() => { delete globalThis.webkitSpeechRecognition; Object.defineProperty(Navigator.prototype, "mediaDevices", { get: () => undefined }); }, "&voice=0"],
+    "not-set-up": [() => { globalThis.webkitSpeechRecognition = undefined; }, "&voice=0"],
+    "mic-blocked": [() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error("x"), { name: "NotAllowedError" })); }],
+    "no-mic": [() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error("x"), { name: "NotFoundError" })); }],
+    "mic-busy": [() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error("x"), { name: "NotReadableError" })); }],
+    "mic-other": [() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error("x"), { name: "TypeError" })); }],
+    "speech-unavailable": [() => {}, "&voice=none"],
+    "transcription-failed": [() => {}, "", "OpenAI transcription failed: 401 Incorrect API key provided: sk-proj-…a1b2. You can find your API key at platform.openai.com"],
+    "didnt-catch": [() => {}, "", ""],
+  };
+  for (const [state, [init, extra = "", fail]] of Object.entries(ERR)) {
+    if (n && !["mic-blocked", "transcription-failed", "not-set-up"].includes(state)) continue;
+    p = await open({ theme, width, height: H, init, extra });
+    await openBar(p);
+    if (fail !== undefined) await p.evaluate(f => { if (f) __cat.transcribeFail = f; else __cat.transcript = ""; }, fail);
+    await ui(p, ".mic").click();
+    if (fail !== undefined) {
+      await p.waitForFunction(() => JSON.parse(document.querySelector(":root > [data-morse-ui]").dataset.status || "{}").voice === "listening", null, { timeout: 4000 }).catch(() => {});
+      await sleep(2600); // the recorder needs a chunk of audio
+      await ui(p, ".mic").click();
+    }
+    await p.waitForFunction(() => document.querySelector(":root > [data-morse-ui]").shadowRoot.querySelector(".hint .note"), null, { timeout: 6000 }).catch(() => {});
+    await sleep(450);
+    await shot(p, "voice", `error-${state}`, ui(p, ".bar"), { checks: [await p.evaluate(() => document.querySelector(":root > [data-morse-ui]").shadowRoot.querySelector(".hint .note") ? "" : "no error line")] });
+    if (!n && state === "not-set-up") await shot(p, "voice", "mic-unavailable", ui(p, ".mic"), { pad: 8, note: "no voice here: the mic is dimmed (--m-text-3) and its title says why" });
+    await close(p);
+  }
+}
+
+// ---------------------------------------------------------------- bar sheets
+async function sheetStates(theme, width) {
+  const n = width < 600, H = n ? 844 : 720;
+  let p = await open({ theme, width, height: H });
+  await openBar(p);
+  await pick(p, "#card"); // with a target the bar stops dodging the pointer
+  // the overflow menu
+  const more = ui(p, ".more");
+  if (!n) {
+    await more.hover(); await sleep(150);
+    await shot(p, "menu", "more-hover", more, { pad: 8 });
+    await shot(p, "menu", "more-focus", more, { pad: 8, checks: [await focusVisible(p, more)] });
+  }
+  await more.click(); await sleep(200);
+  await shot(p, "menu", "open", [ui(p, ".bmenu"), more], { pad: 12, note: "the first item takes focus (row highlight); ↑/↓ move" });
+  if (!n) {
+    await p.keyboard.press("ArrowDown"); await sleep(80);
+    await shot(p, "menu", "item-focus", ui(p, ".bmenu"), { pad: 12 });
+    await ui(p, ".bmenu [data-m=mods]").hover(); await sleep(150);
+    await shot(p, "menu", "item-hover", ui(p, ".bmenu"), { pad: 12 });
+  }
+  await p.keyboard.press("Escape"); await sleep(100);
+
+  // settings
+  await ui(p, ".in").focus();
+  await p.keyboard.press("Control+Comma"); await sleep(300);
+  await p.mouse.move(2, 2);
+  await shot(p, "settings", "sheet", ui(p, ".bar"));
+  const pane = ui(p, ".pane");
+  await pane.evaluate(el => (el.scrollTop = el.scrollHeight)); await sleep(100);
+  await shot(p, "settings", "sheet-bottom", ui(p, ".bar"));
+  await pane.evaluate(el => (el.scrollTop = 0)); await sleep(100);
+  if (!n) {
+    const hk = ui(p, ".hk[data-hk=open]");
+    await shot(p, "hotkeys", "idle", ui(p, ".hkrow[data-id=open]"), { pad: 8 });
+    await hk.hover(); await sleep(150);
+    await shot(p, "hotkeys", "button-hover", ui(p, ".hkrow[data-id=open]"), { pad: 8 });
+    await shot(p, "hotkeys", "button-focus", ui(p, ".hkrow[data-id=open]"), { pad: 8, checks: [await focusVisible(p, hk)] });
+    await ui(p, ".sheet header [data-act=done]").hover(); await sleep(150);
+    await shot(p, "settings", "done-hover", ui(p, ".sheet header"), { pad: 8 });
+    await shot(p, "settings", "done-focus", ui(p, ".sheet header"), { pad: 8, checks: [await focusVisible(p, ui(p, ".sheet header [data-act=done]"))] });
+    const seg = ui(p, ".seg[data-k=barPosition]");
+    await seg.scrollIntoViewIfNeeded();
+    await ui(p, ".seg[data-k=barPosition] [data-v=top]").hover(); await sleep(150);
+    await shot(p, "settings", "segment-hover", seg, { pad: 8 });
+    await shot(p, "settings", "segment-focus", seg, { pad: 8, checks: [await focusVisible(p, ui(p, ".seg[data-k=barPosition] [aria-checked=true]"))] });
+    const sw = ui(p, ".pane .sw");
+    await sw.scrollIntoViewIfNeeded();
+    await shot(p, "settings", "switch-focus", ui(p, ".pane .srow:has(.sw)"), { pad: 4, checks: [await focusVisible(p, ui(p, ".pane .sw input"))] });
+    await shot(p, "settings", "voice-ready", ui(p, ".pane .srow:has(.pill)"), { pad: 4 });
+    await ui(p, ".seg[data-k=effects] [data-v=subtle]").click(); await sleep(200);
+    await shot(p, "settings", "saved-flash", ui(p, ".sheet header"), { pad: 8, note: "every change saves at once; “Saved” fades" });
+    await pane.evaluate(el => (el.scrollTop = el.scrollHeight)); await sleep(100);
+    await ui(p, "[data-act=reset-all]").hover(); await sleep(150);
+    await shot(p, "settings", "footer-hover", ui(p, ".sheet footer"), { pad: 8 });
+    await pane.evaluate(el => (el.scrollTop = 0)); await sleep(100);
+  }
+  // hotkey recorder: recording, held modifiers, rejected, warning (then a custom key with Reset)
+  await ui(p, ".hk[data-hk=mods]").scrollIntoViewIfNeeded();
+  await ui(p, ".hk[data-hk=mods]").click(); await sleep(200);
+  await shot(p, "hotkeys", "recording", ui(p, ".hkrow[data-id=mods]"), { pad: 8 });
+  await p.keyboard.down("Control"); await p.keyboard.down("Shift"); await sleep(200);
+  await shot(p, "hotkeys", "recording-held", ui(p, ".hkrow[data-id=mods]"), { pad: 8 });
+  await p.keyboard.up("Shift"); await p.keyboard.up("Control"); await sleep(100);
+  await p.keyboard.press("KeyK"); await sleep(120);
+  await shot(p, "hotkeys", "rejected", ui(p, ".hkrow[data-id=mods]"), { pad: 8 });
+  await sleep(300);
+  await p.keyboard.press("Control+KeyS"); await sleep(250);
+  await shot(p, "hotkeys", "warning", ui(p, ".hkrow[data-id=mods]"), { pad: 8, note: "accepted with a warning: Reset appears for a custom key" });
+  await p.keyboard.press("Escape"); await sleep(100);
+  await close(p);
+
+  // voice off in settings
+  p = await open({ theme, width, height: H, extra: "&voice=0", init: () => { globalThis.webkitSpeechRecognition = undefined; } });
+  await openBar(p);
+  await p.keyboard.press("Control+Comma"); await sleep(300);
+  await shot(p, "settings", "voice-off", ui(p, ".pane .srow:has(.pill)"), { pad: 4 });
+  await close(p);
+
+  // the cheat sheet
+  p = await open({ theme, width, height: H });
+  await openBar(p);
+  await p.keyboard.type("?"); await sleep(250);
+  await p.mouse.move(2, 2);
+  await shot(p, "shortcuts", "sheet", ui(p, ".bar"));
+  if (!n) {
+    await ui(p, ".krow").first().hover(); await sleep(150);
+    await shot(p, "shortcuts", "row-hover", ui(p, ".kbsheet section").first(), { pad: 8 });
+    await ui(p, ".kbsheet [data-act=settings]").hover(); await sleep(150);
+    await shot(p, "shortcuts", "change-hover", ui(p, ".kbsheet header"), { pad: 8 });
+    await shot(p, "shortcuts", "change-focus", ui(p, ".kbsheet header"), { pad: 8, checks: [await focusVisible(p, ui(p, ".kbsheet [data-act=settings]"))] });
+  }
+  await close(p);
+}
+
+// ---------------------------------------------------------------- suggestions, history, stop
+async function flowStates(theme, width) {
+  const n = width < 600, H = n ? 844 : 720;
+  let p = await open({ theme, width, height: H, extra: "&hist=1" });
+  await openBar(p);
+  await shot(p, "suggestions", "page", ui(p, ".bar"));
+  await pick(p, "#toolbar");
+  await sleep(100);
+  await shot(p, "suggestions", "media", ui(p, ".bar"));
+  await p.keyboard.press("Tab"); await sleep(80);
+  await shot(p, "suggestions", "chip-focus", ui(p, ".sugs"), { pad: 8, checks: [await ui(p, ".sug").first().evaluate(el => el.matches(":focus-visible") ? "" : "focused chip shows no :focus-visible")] });
+  await p.keyboard.press("ArrowRight"); await sleep(80);
+  await shot(p, "suggestions", "chip-focus-next", ui(p, ".sugs"), { pad: 8 });
+  if (!n) {
+    await ui(p, ".sug").last().hover(); await sleep(150);
+    await shot(p, "suggestions", "chip-hover", ui(p, ".sugs"), { pad: 8 });
+  }
+  await ui(p, ".chip .x").click(); await sleep(100);
+  await pick(p, "#long");
+  await shot(p, "suggestions", "button-rename", ui(p, ".sugs"), { pad: 8, note: "Rename… fills the input and leaves the caret between the quotes" });
+  await close(p);
+
+  // history: ↑ in an empty input walks earlier prompts
+  p = await open({ theme, width, height: H, extra: "&hist=1" });
+  await openBar(p);
+  await ui(p, ".in").press("ArrowUp"); await sleep(100);
+  await shot(p, "history", "previous", ui(p, ".bar"));
+  await ui(p, ".in").press("ArrowUp"); await sleep(100);
+  await ui(p, ".in").press("ArrowUp"); await sleep(100);
+  await shot(p, "history", "oldest", ui(p, ".bar"));
+  await close(p);
+
+  // Stop: Run turns into Stop while the model works; Esc or Ctrl+. cancels
+  p = await open({ theme, width, height: H });
+  await openBar(p); await pick(p, "#card");
+  await submit(p, "make the card airier and add a sleep timer");
+  await stream(p, 10, 25);
+  await shot(p, "stop", "working", ui(p, ".bar"), { note: "focus moves to Stop, so Enter/Space stop too" });
+  if (!n) {
+    await shot(p, "stop", "button-focus", ui(p, ".go"), { pad: 8, checks: [await focusVisible(p, ui(p, ".go"))] });
+    await ui(p, ".go").hover(); await sleep(150);
+    await shot(p, "stop", "button-hover", ui(p, ".go"), { pad: 8 });
+  }
+  await p.keyboard.press("Escape"); await sleep(600);
+  await shot(p, "stop", "cancelled", ui(p, ".bar"), { note: "partial CSS removed, prompt kept; any edit clears the note" });
+  await close(p);
+}
+
 async function hostileStates() {
   const SITES = [["parley", "/demo/sites/parley/", "textarea, [contenteditable], form"], ["byte", "/demo/sites/byte/", ".tb"], ["tunes", "/demo/sites/tunes/", "[data-testid=player-controls]"], ["hostile", "/demo/sites/hostile/", "#tb"], ["hostile-noise", "/demo/sites/hostile/", "#tb"]];
   for (const [site, url, sel] of SITES) {
@@ -558,6 +1018,12 @@ for (const theme of ["dark", "light"]) {
     if (want("modal")) await modalStates(theme, width);
   }
   if (want("effect")) await effectStates(theme);
+  for (const width of [1100, 390]) {
+    if (want("god")) await godStates(theme, width);
+    if (want("voice")) await voiceStates(theme, width);
+    if (want("sheets")) await sheetStates(theme, width);
+    if (want("flow")) await flowStates(theme, width);
+  }
   if (want("motion")) await reducedMotion(theme);
 }
 if (want("hostile")) { console.log("— hostile hosts"); await hostileStates(); }
@@ -568,7 +1034,9 @@ server.close();
 const prevFile = path.join(OUT, "catalog.json");
 let all = results;
 if (ONLY && existsSync(prevFile)) {
-  const prev = JSON.parse(readFileSync(prevFile, "utf8")).shots.filter(s => !ONLY.has(s.area));
+  // an --only group (god, voice, sheets, flow) reshoots several areas
+  const redone = new Set(results.map(r => r.area));
+  const prev = JSON.parse(readFileSync(prevFile, "utf8")).shots.filter(s => !ONLY.has(s.area) && !redone.has(s.area));
   all = prev.concat(results);
 }
 await fs.writeFile(prevFile, JSON.stringify({ generated: new Date().toISOString(), shots: all }, null, 1));
