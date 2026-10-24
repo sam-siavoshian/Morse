@@ -4,6 +4,9 @@ How to work on Morse itself. For using Morse, see the [docs](../README.md).
 
 - [How Morse works](architecture.md): hosts, the in-app runtime, the `morse`
   kit, the engine, model providers, the mod format, security.
+- [App profiles](rea.md): how Morse reads how a desktop app works inside
+  (its commands, channels and objects) so changes can use the app's own
+  logic; what was taken from REA and why it isn't a dependency.
 - [Testing](testing.md): `npm run check`, `npm test`, `npm run test:ui`, the
   test helpers, evals, screenshots, and what was verified for real.
 - [Adding a feature](adding-a-feature.md): the rules for runtime code, words
@@ -209,15 +212,19 @@ read-only investigation toolkit for coding agents: it analyzes Electron/JS
 bundles statically, reads Electron fuses, observes runtime execution over
 CDP, and drives Ghidra/Hopper/IDA/Frida for native code. It deliberately never
 modifies a target and is built for careful evidence, not latency, so it is
-the wrong tool for Morse's instant loop. Morse borrows its approach where it
-helps:
+the wrong tool for Morse's instant loop. Morse reimplements the small parts it
+needs, in plain JavaScript with no new dependencies:
 
-- **Now:** the Electron fuse check (`daemon/fuses.js`, a reimplementation of
-  REA's `inspect_electron_fuses`) before relaunching an app.
-- **Next:** a one-time "app profile" pass with REA's static JS analysis
-  (modules, IPC channels, routes) and `inspect_web_event_listeners`, cached
-  and fed to the model as context for requests that need the app's *logic*,
-  not just its DOM ("make shuffle actually random").
+- the Electron fuse check (`daemon/fuses.js`, REA's `inspect_electron_fuses`)
+  before relaunching an app;
+- **app profiles** (`daemon/profile.js`, `core/profile.js`): a one-time,
+  read-only pass over the app's code (IPC channels, contextBridge APIs,
+  commands, routes, store actions) and over the running window (its own
+  objects, a command runner, `inspect_web_event_listeners`-style listener
+  reads), cached per app version and given to the model for requests about
+  what the app *does*. Mods run the app's commands with
+  `morse.app.command(id)`. The design, the choice not to depend on REA, and
+  the measurements are in [App profiles](rea.md).
 
 ## Roadmap
 
@@ -225,7 +232,8 @@ helps:
   Spotify, Slack, Discord, VS Code, Notion and ChatGPT; a tray app with a
   global hotkey (Tauri) so `morse launch` isn't needed; clip recording in the
   extension (`tabCapture`).
-- **Weeks:** REA-powered app profiles for logic-level changes; enforce the
+- **Weeks:** app profiles for apps whose command runner Morse can't find yet
+  (see [App profiles](rea.md#what-doesnt-work-yet)); enforce the
   no-network rule with a CSP or proxy for mod code. (Mod repair when an app
   update breaks selectors, and a static-site gallery of shared mods, have
   shipped: see [Mods](../mods.md).)

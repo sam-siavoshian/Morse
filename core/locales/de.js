@@ -1641,6 +1641,7 @@ export default {
   "help.status": "Apps, mit denen Morse verbunden ist, ihre Fenster und Mods",
   "help.stop": "trennt die Verbindung zu einer App (sie läuft weiter)",
   "help.fuses": "prüft, ob eine App Morse eine Verbindung erlaubt",
+  "help.profile": "was Morse darüber gelesen hat, wie eine App innen arbeitet: ihre Befehle, Kanäle und Seiten  [--json]",
   "help.web": "Websites",
   "help.web.note": "(die Chrome-Erweiterung erreicht dein Modell über den Morse-Helfer)",
   "help.extension": "zeigt den Ordner der Chrome-Erweiterung und wie man sie hinzufügt",

@@ -11,6 +11,9 @@
 //   - a second window (Mini Player, from the menu or Ctrl+Shift+M) loaded
 //     from a file:// page
 //   - an application menu with accelerators, and a single-instance lock
+//   - IPC channels (tunes:info, tunes:queue, tunes:like…) behind the preload's
+//     API, and a command registry in the renderer (window.tunesApp.commands),
+//     for Morse's app profile to find (daemon/profile.js)
 //
 // Run it unpacked:   electron demo/electron-app
 // Or packaged:       node demo/electron-app/build.js /opt/Tunes  →  /opt/Tunes/tunes
@@ -35,6 +38,11 @@ protocol.registerSchemesAsPrivileged([{ scheme: "app", privileges: { standard: t
 if (!app.requestSingleInstanceLock()) app.quit();
 
 let main = null, mini = null, lyricsUrl = null;
+
+// The play queue the window asks for (tunes:queue), and the songs liked (tunes:like).
+const QUEUE = [["Neon Tides", "Hollow Coast"], ["Paper Satellites", "Mira Vale"], ["Slow Bloom", "Juniper Lane"], ["Static Hearts", "The Lowlights"],
+  ["Overgrown", "Fern & Wire"], ["Midnight Atlas", "Kairo"], ["Low Sun", "Amberline"], ["Driftwood", "Sea Glass"]];
+const liked = new Set();
 
 // The Lyrics panel's page, served on a random localhost port.
 function lyricsServer() {
@@ -108,6 +116,8 @@ app.whenReady().then(async () => {
   ipcMain.handle("tunes:info", () => ({ version: app.getVersion(), electron: process.versions.electron, lyricsUrl }));
   ipcMain.on("tunes:mini", openMini);
   ipcMain.on("tunes:command", (_e, cmd) => main?.webContents.send("tunes:command", cmd));
+  ipcMain.handle("tunes:queue", () => QUEUE.map(s => [...s]));
+  ipcMain.on("tunes:like", (_e, title) => { liked.add(String(title)); });
   Menu.setApplicationMenu(menu());
   openMain();
   app.on("activate", () => { if (!main) openMain(); });

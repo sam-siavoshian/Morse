@@ -30,6 +30,12 @@ Version 0.2.0, the first version meant for other people to install.
 - Desktop apps built from web pages (Spotify, Slack, Discord, VS Code, Notion,
   Obsidian and others): `morse launch spotify` reopens the app with Morse
   connected. Morse never changes the app's files.
+- Changes to what a desktop app does, not only how it looks: the first time
+  an app opens with Morse, Morse reads how it works inside (its commands,
+  how its windows talk to the rest of it, what its buttons do), keeps that in
+  `~/.morse/profiles`, and gives your model the parts that fit your request.
+  A change can then run the app's own commands ("add a button that formats
+  the document" in VSCodium). `morse profile <app>` shows what Morse found.
 - Morse Desktop: an app for your computer, so you don't need a terminal or
   Node. It lists your apps and opens them with Morse, chooses and checks your
   model, runs the Morse helper for Chrome (Chrome asks once and you click

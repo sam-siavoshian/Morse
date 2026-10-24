@@ -1642,6 +1642,7 @@ export default {
   "help.status": "Morse がつながっているアプリ、そのウィンドウと MOD",
   "help.stop": "アプリとの接続を切る（アプリは動いたまま）",
   "help.fuses": "アプリが Morse の接続を許すか確かめる",
+  "help.profile": "アプリの中の仕組みについて Morse が読み取ったこと：コマンド、チャンネル、ページ  [--json]",
   "help.web": "Web サイト",
   "help.web.note": "（Chrome 拡張機能は Morse ヘルパーを通してモデルにつなぎます）",
   "help.extension": "Chrome 拡張機能のフォルダと追加方法を表示",

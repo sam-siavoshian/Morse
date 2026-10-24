@@ -1641,6 +1641,7 @@ export default {
   "help.status": "Morse 已连接的应用、它们的窗口和模组",
   "help.stop": "断开与应用的连接（应用继续运行）",
   "help.fuses": "检查应用是否允许 Morse 连接",
+  "help.profile": "Morse 读到的应用内部工作方式：它的命令、通道和页面  [--json]",
   "help.web": "网站",
   "help.web.note": "（Chrome 扩展通过 Morse 助手连接你的模型）",
   "help.extension": "显示 Chrome 扩展的文件夹以及添加方法",

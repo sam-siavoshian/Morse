@@ -1647,6 +1647,7 @@ export default {
   "help.status": "apps Morse is connected to, their windows and mods",
   "help.stop": "disconnect from an app (it keeps running)",
   "help.fuses": "check whether an app lets Morse connect to it",
+  "help.profile": "what Morse read about how an app works inside: its commands, channels and pages  [--json]",
   "help.web": "Websites",
   "help.web.note": "(the Chrome extension uses the Morse helper to reach your model)",
   "help.extension": "show the Chrome extension folder and how to add it",
