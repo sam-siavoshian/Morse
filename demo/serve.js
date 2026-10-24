@@ -1,4 +1,6 @@
 // Serves the repo root so the demo sites and share/install.html work locally.
+//   node demo/serve.js                       parley/byte/tunes on 8787/8788/8789
+//   import { serveDemo } from "./serve.js"   the same servers on free ports (tests)
 import http from "node:http";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -6,7 +8,7 @@ import path from "node:path";
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
 
-const server = async (req, res) => {
+const handler = async (req, res) => {
   let p = decodeURIComponent(new URL(req.url, "http://x").pathname);
   if (p.endsWith("/")) p += "index.html";
   const file = path.join(root, path.normalize(p));
@@ -22,9 +24,25 @@ const server = async (req, res) => {
 };
 
 // Each demo app gets its own origin, like real apps do (mods are scoped per host).
-// MORSE_DEMO_PORT moves all three (e.g. 9787 → 9787/9788/9789) so parallel runs don't collide.
-const BASE = Number(process.env.MORSE_DEMO_PORT || 8787);
-const SITES = { [BASE]: "parley", [BASE + 1]: "byte", [BASE + 2]: "tunes" };
-for (const [port, site] of Object.entries(SITES)) {
-  http.createServer(server).listen(Number(port), "127.0.0.1", () => console.log(`${site.padEnd(7)} http://127.0.0.1:${port}/demo/sites/${site}/`));
+// base 0: every site on its own free port. Resolves { sites: { parley: port, … },
+// origin(site), close() }.
+export const SITE_NAMES = ["parley", "byte", "tunes"];
+export async function serveDemo({ base = 0, host = "127.0.0.1" } = {}) {
+  const servers = await Promise.all(SITE_NAMES.map((site, i) => new Promise((resolve, reject) => {
+    const s = http.createServer(handler);
+    s.once("error", reject);
+    s.listen(base ? base + i : 0, host, () => resolve(s));
+  })));
+  const sites = Object.fromEntries(SITE_NAMES.map((site, i) => [site, servers[i].address().port]));
+  return {
+    sites,
+    origin: site => `http://${host}:${sites[site]}`,
+    close: () => Promise.all(servers.map(s => new Promise(r => { s.closeAllConnections?.(); s.close(r); }))),
+  };
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  // MORSE_DEMO_PORT moves all three (e.g. 9787 → 9787/9788/9789) so parallel runs don't collide.
+  const demo = await serveDemo({ base: Number(process.env.MORSE_DEMO_PORT || 8787) });
+  for (const site of SITE_NAMES) console.log(`${site.padEnd(7)} ${demo.origin(site)}/demo/sites/${site}/`);
 }

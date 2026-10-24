@@ -9,7 +9,10 @@ import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CO
 import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask } from "./models.js";
 import { detectHarnesses, validModel } from "./harness.js";
 import { createBridge, startPairing, VERSION } from "./bridge.js";
-import { streamChat, HELPER_PORT } from "../core/providers.js";
+import { streamChat, HELPER_PORT as DEFAULT_HELPER_PORT } from "../core/providers.js";
+// MORSE_HELPER_PORT moves `morse serve` and its health check off 7457 (tests run
+// several helpers at once); the extension always talks to 7457.
+const HELPER_PORT = Number(process.env.MORSE_HELPER_PORT) || DEFAULT_HELPER_PORT;
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
 
 const W = s => `\x1b[97m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`;
