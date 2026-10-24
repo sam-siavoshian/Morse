@@ -63,7 +63,7 @@ async function history(scope, text) {
 
 // The pairing record the helper's pairing flow leaves in storage.local. The
 // address is always helperUrl(), never one kept in the record.
-async function pairing() {
+export async function pairing() { // also Your style (style-host.js)
   for (const k of ["helper", "bridge", "pairing"]) {
     const v = await local(k, null);
     if (v && typeof v === "object" && (v.token || v.paired)) return { url: await helperUrl(), token: v.token || "" };

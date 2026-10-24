@@ -1,7 +1,7 @@
 # Ask and find
 
-Morse can help you understand an app, not just change it. Use the same
-shortcut and the same bar, and ask a question instead of describing a change:
+Morse can also answer questions about an app. Use the same shortcut and the
+same bar, and ask a question instead of describing a change:
 
 - “what does this button do?”
 - “why is this greyed out?”

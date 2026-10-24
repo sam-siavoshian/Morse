@@ -60,7 +60,7 @@ test("coach: shows the first time, follows point, describe, keep, then never aga
     await t.open();
     assert.equal(await t.q(".ob-coach", "visible"), true);
     assert.match(await t.q(".ob-steps .now"), /Point/);
-    assert.match(await t.q(".ob-say"), /Click the part of the page/);
+    assert.match(await t.q(".ob-say"), /Click the part you want to change/);
 
     await pointAt(page, "#toolbar");
     await page.waitForFunction(ui(".ob-steps .now") + "?.includes('Describe')");

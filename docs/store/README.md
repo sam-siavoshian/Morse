@@ -72,7 +72,7 @@ retake the ones that don't read well.
 |---|---|---|
 | `1-describe-a-change.png` | pkg.go.dev while a change is being written: the code examples already dark, the survey banner gone | Say what to change. You see it change while it is being written. |
 | `2-save-what-you-like.png` | pypi.org: copy buttons added to the code examples, with Save, Undo, Edit code and Share | Add what a site is missing. Save it, and it is there every time you come back. |
-| `3-your-mods.png` | pypi.org: the Mods panel with the three mods just made | Your saved changes for a site in one place. Turn each one on or off. |
+| `3-your-mods.png` | pypi.org: the Mods panel with the three mods made a moment before | Your saved changes for a site in one place. Turn each one on or off. |
 | `4-mods-others-made.png` | The Tunes demo app: a gallery mod tried before saving, in the Mods panel | Try changes other people made. Save the ones you like. |
 | `5-edit-tools.png` | rubygems.org: the Edit tools and the color palette on the heading | Edit tools change the page at once: hide, move, resize, recolor, rename. |
 
