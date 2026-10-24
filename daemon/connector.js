@@ -33,6 +33,7 @@ import { HOME, listMods } from "./store.js";
 import { classifyTarget, describeTarget } from "./targets.js";
 import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
 import { GALLERY_REQUESTS, handleGallery } from "./gallery.js"; // gallery hook: Mods for this site
+import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
@@ -174,6 +175,7 @@ export class Connector {
     const source = how.frame ? BOOT.frame : BOOT.window;
     this.pages.set(target.id, s);
     this.windows.set(target.id, w);
+    s.hang = new HangGuard(s, { onFroze: (id, how) => this.froze(s, w, id, how) }); // guard hook: frozen pages (guard.js)
     this.everAttached = true;
     s.on("close", () => {
       this.pages.delete(target.id);
@@ -365,7 +367,12 @@ export class Connector {
   async exec(s, caller, modId, js) {
     const ctx = caller.main;
     if (ctx == null) return { ok: false, error: "The page isn't ready yet. Try again." };
-    const r = await s.send("Runtime.evaluate", { expression: wrapModCode(modId, js), contextId: ctx, returnByValue: true });
+    const done = s.hang?.exec(modId, ctx, js); // guard hook: while mod code is here, notice if the page freezes
+    let r;
+    try { r = await s.send("Runtime.evaluate", { expression: wrapModCode(modId, js), contextId: ctx, returnByValue: true }); }
+    catch (e) { if (!/Execution was terminated/.test(e.message) && !s.hang?.froze(modId)) throw e; r = null; }
+    finally { done?.(); }
+    if (!r || s.hang?.froze(modId)) return { ok: false, error: FROZE_ERROR };
     if (r.exceptionDetails) return { ok: false, error: r.exceptionDetails.exception?.description?.split("\n")[0] || r.exceptionDetails.text };
     const res = r.result?.value || { ok: false, error: "no result" };
     if (!res.ok) return res;
@@ -374,6 +381,21 @@ export class Connector {
     const e = await s.send("Runtime.evaluate", { expression: `morse.__errors(${JSON.stringify(modId)})`, contextId: ctx, returnByValue: true });
     const errs = e.result?.value || [];
     return errs.length ? { ok: false, error: errs[0].split("\n")[0] } : { ok: true };
+  }
+
+  // guard hook: mod code froze this window and was stopped (daemon/guard.js).
+  // A saved mod is turned off with why, and the page reloads clean; a change
+  // still being made just fails that run (the model gets its second try).
+  async froze(s, w, id, { running } = {}) {
+    const where = describeTarget(w).title;
+    const mod = id ? await getMod(id).catch(() => null) : null;
+    if (mod && mod.js === s.hang.code(id)) {
+      if (mod.enabled) await saveMod({ ...mod, enabled: false, paused: { why: "froze", at: new Date().toISOString(), error: FROZE_ERROR, reloaded: true } });
+      this.modsChanged(s);
+      this.log(`  ! “${mod.title}” froze ${where}. Morse stopped it, turned it off and reloaded the page.`);
+      await s.send("Page.reload").catch(() => {});
+    } else if (id) this.log(`  ! ${running ? "A change being made" : "A change you were trying"} froze ${where}. Morse stopped it.`);
+    else this.log(`  ! ${where} stopped responding. Morse stopped the script that was running.`);
   }
 
   // caller: { world, main, frameId } of the document whose runtime asked.

@@ -208,6 +208,8 @@ function refine(b, prompt = "") {
   if (b.error) {
     const moved = siteChanged(b, prompt); // self-heal hook
     if (moved) return moved;
+    // guard hook: Morse paused it for slowing down, freezing or hiding the page (core/kit.js): a light version
+    if (/^Morse (paused|stopped) it\b/.test(b.error)) return reply("Lighter version", ".item { border-color: #8aa4c8 }", "");
     const rule = RULES.find(([re]) => re.test(b.original));
     if (rule) return rule[1] || SLEEP;
     return reply("Could not fix", b.css, b.js);

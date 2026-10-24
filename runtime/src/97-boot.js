@@ -40,6 +40,7 @@ onEvent(msg => {
     Voice.configure(hello.voice);
     PromptHistory.load();
     await controlBoot(); await syncMods(); controlReady(); // user control: pause, safe start (63-control.js)
+    guardReady(); // guard hook: a mod that froze the page was turned off (64-guard.js)
     Heal.soon(); // self-heal hook: after idle, did a saved mod stop working? (71-heal.js)
     if (!hello.quiet && PREFS.welcome) toast(`Morse is ready. Press ${HOTKEY} to change this page.`);
   } catch (e) { console.warn("[morse] host unavailable", e); }
