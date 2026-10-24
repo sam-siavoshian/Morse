@@ -181,12 +181,17 @@ async function takeInApp(c) {
     await until(() => statusOf(page), 90000, "Morse in the app");
     await sleep(4000);
     const before = (await takenNow()).length;
-    await page.mouse.click(640, 400);
-    await openMorse(page);
     // Take this, with the keyboard (Morse's own panel is closed to scripts here): Tab to the suggestions, then along them.
-    await page.keyboard.press("Tab");
-    for (let i = 0; i < 12 && !/tk-take/.test((await statusOf(page))?.focus || ""); i++) await page.keyboard.press("ArrowRight");
-    if (!/tk-take/.test((await statusOf(page))?.focus || "")) throw new Error("couldn't reach Take this");
+    const onTake = async () => /tk-take/.test((await statusOf(page))?.focus || "");
+    for (let tries = 0; tries < 4 && !(await onTake()); tries++) {
+      if ((await statusOf(page))?.open) { await page.keyboard.press("Escape"); await sleep(400); }
+      await page.mouse.click(640, 400);
+      await openMorse(page);
+      await sleep(800); // the suggestions show once the bar has settled
+      await page.keyboard.press("Tab");
+      for (let i = 0; i < 12 && !(await onTake()); i++) { await page.keyboard.press("ArrowRight"); await sleep(80); }
+    }
+    if (!(await onTake())) throw new Error("couldn't reach Take this");
     await page.keyboard.press("Enter");
     await until(async () => !(await statusOf(page))?.open, 5000, "the bar to step aside");
     for (const a of c.from.open || []) await act(page, a);

@@ -37,6 +37,8 @@ function TAKE_CSS() { return `
   /* ---- the chips beside the suggestions */
   .sug.tk-sug { gap: 6px; padding-inline-start: 8px; }
   .sug.tk-sug svg { color: var(--m-text-2); }
+  /* progressive reveal (59-onboarding.js): like Show me once, they wait until the first saved change; the ⋯ menu has them */
+  :host([data-new]) .sug.tk-sug { display: none !important; }
 
   /* ---- the Mods panel: Taken from other apps */
   .tk-site { margin: 8px 4px 4px; padding-top: 12px; border-top: 1px solid var(--m-line); }

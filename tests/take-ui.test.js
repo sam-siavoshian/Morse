@@ -164,7 +164,16 @@ test("pointing and taking keeps no email address, and the Mods panel can delete 
     await until(async () => (await taken(page)).length === 1);
     const json = JSON.stringify(await taken(page));
     assert.doesNotMatch(json, /[\w.+-]+@[\w-]+\.[a-z]{2,}/i, "no email address is kept");
-    await until(async () => (await page.locator(".tk-card").count()) && /Taken/.test(await page.locator(".tk-card").innerText()));
+    await until(async () => (await page.locator(".tk-card").count()) && /Taken/i.test(await page.locator(".tk-card").innerText()));
+    // Show how it opens: the same strip, then the steps join what was taken.
+    await page.locator(".tk-card [data-tk=how]").click();
+    await page.locator(".so-strip").waitFor();
+    assert.match(await page.locator(".so-strip").innerText(), /Show how it opens/);
+    await page.locator(".r9", { hasText: "Maya" }).first().click();
+    await page.locator(".so-strip [data-so=stop]").click();
+    await until(async () => (await taken(page))[0]?.steps.length === 1);
+    await until(async () => (await status(page)).open);
+    assert.equal(await page.locator(".tk-card [data-tk=how]").count(), 0, "it knows how it opens now");
     await page.keyboard.press("Escape");
     await openBar(page);
     await page.locator(".actions [data-a=mods]").click();

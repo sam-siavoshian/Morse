@@ -28,7 +28,22 @@ menu.
 Then the model gives it a name and says in a few lines what it does. The bar
 shows both.
 
-<!-- pictures -->
+| | |
+|---|---|
+| ![](screenshots/bring-14-vscodium-take.png) **Take this** in VSCodium: open the command palette while Morse watches | ![](screenshots/bring-15-vscodium-taken.png) **Taken**: the model named it and wrote what it does |
+| ![](screenshots/bring-16-rubygems-before.png) **RubyGems.org in Chrome**, before | ![](screenshots/bring-17-rubygems-palette.png) **Brought**: Ctrl+Shift+P opens a palette of this page's own things, and a **Commands** button sits in the header, in RubyGems' own font, red and corners |
+
+These pictures are real: VSCodium and RubyGems.org, Claude Code (sonnet named
+it, opus built it). The palette was taken in the desktop app and brought into
+Chrome, which shares the list through the Morse helper.
+
+More, from real sites:
+
+| | |
+|---|---|
+| ![](screenshots/bring-08-go-take.png) **pkg.go.dev**: its “Jump to” box (press F), taken while Morse watches | ![](screenshots/bring-09-node-before.png) **The Node.js docs**, before |
+| ![](screenshots/bring-10-node-jump-to.png) **Brought**: F opens “Jump to” in Node's green and font, and a “Jump to…” link joins the page's own links | ![](screenshots/bring-11-node-jumped.png) **It works**: Enter goes to `filehandle.readFile()` |
+| ![](screenshots/bring-12-pypi-switch.png) **The Node.js docs' dark mode switch**, brought into PyPI: the moon sits in PyPI's top bar | ![](screenshots/bring-13-pypi-dark.png) **Clicked**: PyPI in dark colors of its own, not a filter over the page |
 
 ## Bring here
 
@@ -60,9 +75,37 @@ came from: “Taken from VSCodium”.
   looking values. The picture stays on your computer: it never goes to the
   model.
 
+## Without a model, on the demo apps
+
+The same steps on two demo apps, with the stand-in model Morse's tests use:
+Codepad (a small code editor) and Inkwell (a notes app).
+
+| | |
+|---|---|
+| ![](screenshots/bring-01-take-this.png) **Take this**, under the box | ![](screenshots/bring-02-watching.png) **Watching**: each step in the strip |
+| ![](screenshots/bring-03-taken.png) **Taken**, with what to do next | ![](screenshots/bring-04-bring-here.png) **Bring here…** in Inkwell |
+| ![](screenshots/bring-05-bringing.png) **Bringing**: press Enter | ![](screenshots/bring-06-brought.png) **Brought**: Ctrl+Shift+P in Inkwell, in its font and corners |
+| ![](screenshots/bring-07-mods-panel.png) **The Mods panel**: “Taken from Codepad”, and Taken from other apps | |
+
 ## How well it works
 
-<!-- results -->
+Checked on October 24, 2026 with real Claude Code (Automatic: sonnet names
+what you took, opus builds it) by [`evals/bring.js`](../evals/bring.js), which
+checks that the brought feature opens and works, and that its fonts, colors
+and corners are ones the page already uses:
+
+- **pkg.go.dev's “Jump to” → the Node.js docs**: works, fits (about 60 s,
+  one second try).
+- **The Node.js docs' dark mode switch → PyPI**: works, fits (about 20 s).
+- **VSCodium's command palette → RubyGems.org** (desktop app to Chrome):
+  works, fits (about 45 s, one second try).
+
+What to expect: the model builds it from what it can see on the page. The
+first try at “Jump to” looked for links the Node.js docs write differently;
+Morse noticed the list would be empty and the model fixed it. A dark mode
+built by an earlier version was a filter over the whole page; it now uses
+the app's own colors. Give it a moment, and say what to change if it isn't
+right (“make the list taller”).
 
 For developers: [How Morse works](dev/architecture.md#take-this-bring-here).
 The check with a real model is [`evals/bring.js`](../evals/bring.js) (cases
