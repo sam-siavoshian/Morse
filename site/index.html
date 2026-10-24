@@ -58,7 +58,7 @@
                 <li><a class="nav-card" href="#self-heal"><span class="nav-card-icon"><svg class="icon"><use href="#i-refresh"/></svg></span><span class="nav-card-text"><strong>Fixes itself</strong><span>When a site changes, your mods catch up.</span></span></a></li>
                 <li><a class="nav-card" href="#your-style"><span class="nav-card-icon"><svg class="icon"><use href="#i-pen"/></svg></span><span class="nav-card-text"><strong>Your style</strong><span>One look, on every site and app.</span></span></a></li>
                 <li><a class="nav-card" href="#packs"><span class="nav-card-icon"><svg class="icon"><use href="#i-layers"/></svg></span><span class="nav-card-text"><strong>Mod packs</strong><span>Share a set of mods with your team.</span></span></a></li>
-                <li><a class="nav-card" href="#desktop"><span class="nav-card-icon"><svg class="icon"><use href="#i-monitor"/></svg></span><span class="nav-card-text"><strong>Desktop apps</strong><span>VS Code, Obsidian, Slack and more.</span></span></a></li>
+                <li><a class="nav-card" href="#desktop"><span class="nav-card-icon"><svg class="icon"><use href="#i-monitor"/></svg></span><span class="nav-card-text"><strong>Desktop apps</strong><span>Tried on VSCodium, Obsidian and Joplin.</span></span></a></li>
               </ul>
             </div>
           </li>
@@ -137,7 +137,7 @@
         </div>
         <div class="start-item">
           <a class="start-opt is-soft" href="./#install-desktop" data-link="desktop"><svg class="icon"><use href="#i-laptop"/></svg>Get the desktop app</a>
-          <p class="start-caption"><strong>Desktop apps</strong><span>VS Code, Obsidian, Slack, Spotify and more.</span></p>
+          <p class="start-caption"><strong>Desktop apps</strong><span>Apps built from web pages, like VSCodium, Obsidian and Joplin.</span></p>
         </div>
       </div>
       <p class="hero-note"><span class="note-line">No account</span><span class="note-line">Uses Claude Code, Codex or your own API key</span></p>
@@ -158,7 +158,7 @@
 
     <div class="wrap">
       <div class="hero-channels">
-        <p id="hero-apps-label">Mods in the gallery for these, and Morse works on any website</p>
+        <p id="hero-apps-label">The gallery has example mods for these, written by hand</p>
         <ul aria-labelledby="hero-apps-label">
           <li class="channel-tile"><img src="logos/youtube.svg" alt="YouTube" width="22" height="22"></li>
           <li class="channel-tile"><img src="logos/github.svg" alt="GitHub" width="22" height="22"></li>
@@ -207,11 +207,11 @@
             <p>Your model writes the change and you see it right away. Save keeps it as a mod: a change you saved. Morse brings it back every time you open that site or app.</p>
           </li>
         </ol>
-        <p class="goal-line"><span>Or try:</span> <span class="goal">“hide Shorts everywhere”</span> · <span class="goal">“add a sleep timer that pauses the music”</span> · <span class="goal">“show a live word count under the message box”</span> · <span class="goal">“use the full width for pull request diffs”</span></p>
+        <p class="goal-line"><span>Ideas to ask for:</span> <span class="goal">“hide Shorts everywhere”</span> · <span class="goal">“add a sleep timer that pauses the music”</span> · <span class="goal">“show a live word count under the message box”</span> · <span class="goal">“use the full width for pull request diffs”</span></p>
       </div>
 
       <div class="gtm">
-        <h3 class="gtm-title">If you can say it, you can change it.</h3>
+        <h3 class="gtm-title">Ideas, with an example mod for each in the gallery.</h3>
         <ul class="plain-grid">
           <li><h4>Hide what’s in the way</h4><p>Shorts on <a href="gallery.html#youtube-hide-shorts">YouTube</a>, trends on <a href="gallery.html#x-hide-trending">X</a>, upsells in <a href="gallery.html#discord-no-upsells">Discord</a>.</p></li>
           <li><h4>Add what’s missing</h4><p>A sleep timer in <a href="gallery.html#spotify-sleep-timer">Spotify</a>, a word count in <a href="gallery.html#chatgpt-word-count">ChatGPT</a>.</p></li>
@@ -220,6 +220,7 @@
           <li><h4>Help you focus</h4><p>Fade the channels with nothing new in <a href="gallery.html#slack-quiet-sidebar">Slack</a>, a focus mode for <a href="gallery.html#notion-focus-mode">Notion</a>.</p></li>
           <li><h4>Or edit it by hand</h4><p>Point at something and the Edit tools appear: hide, move, resize, edit text, recolor. No model, no waiting.</p></li>
         </ul>
+        <p class="guard-note">The gallery’s mods were written by hand for each site and app, not each tried on the live site. Sites change, so one may need a fix.</p>
         <p class="gtm-more"><a class="text-link" href="gallery.html">See every mod in the gallery<svg class="icon"><use href="#i-arrow"/></svg></a></p>
       </div>
     </div>
@@ -313,13 +314,13 @@
         <div class="scale-text">
           <p class="eyebrow">Desktop apps</p>
           <h2><span>Not just websites.</span> <span>Desktop apps too.</span></h2>
-          <p>Many desktop apps are web pages inside a window: VS Code, Obsidian, Slack, Discord, Spotify. <code>morse launch</code> opens the app with Morse connected. Point, say the change, save it.</p>
+          <p>Many desktop apps are web pages inside a window. <code>morse launch</code> opens one with Morse connected: point, say the change, save it. Tried so far on Linux with VSCodium, Obsidian, Joplin and a sample app made for testing.</p>
           <p class="scale-number"><strong>0</strong><span>files in the app are changed. Morse connects while the app runs, so updates install as usual.</span></p>
-          <p class="scale-note">It works with desktop apps built from web pages. A few block the connection, and <code>morse fuses</code> tells you before you try. Apps like Finder or Word don’t work.</p>
+          <p class="scale-note">It is made for desktop apps built from web pages. Not tried yet: Microsoft’s VS Code, Slack, Discord, Spotify, macOS and Windows. A few apps block the connection, and <code>morse fuses</code> tells you before you try. Apps like Finder or Word can’t work.</p>
         </div>
         <figure class="frame scale-hero">
           <div class="frame-body"><img src="shots/127-electron-haiku-result.webp" width="1280" height="800" loading="lazy" decoding="async" alt="A desktop music app with the bar open: “Sleep timer pauses playback”, written in 9.5 seconds, with Save and Undo."></div>
-          <figcaption>A sleep timer added to a desktop music app, written by Claude Code.</figcaption>
+          <figcaption>Tunes, the sample app Morse is tested on: a sleep timer, written by Claude Code.</figcaption>
         </figure>
       </div>
 
@@ -400,10 +401,10 @@ $ morse setup</pre>
           </div>
           <p><code>morse setup</code> finds Claude Code, Codex or an API key and asks which to use. Then open an app with Morse:</p>
           <div class="codebox">
-            <pre id="cmd-launch">$ morse launch spotify</pre>
+            <pre id="cmd-launch">$ morse launch obsidian</pre>
             <button class="btn btn-secondary" type="button" data-copy="cmd-launch">Copy</button>
           </div>
-          <p class="get-small">Also <code>slack</code>, <code>discord</code>, <code>vscode</code>, <code>notion</code>, <code>obsidian</code>, or a path to the app.</p>
+          <p class="get-small"><code>morse apps</code> lists the apps it found on this computer. You can also give a path to the app.</p>
         </article>
         <article class="get-card" id="install-chrome">
           <h3><span class="ico-tile"><svg class="icon"><use href="#i-chrome"/></svg></span>Chrome</h3>
@@ -438,7 +439,7 @@ $ morse setup</pre>
         </details>
         <details class="faq-item">
           <summary>Which models can I use?</summary>
-          <p>Claude Code or Codex, if you have them. Or an Anthropic or OpenAI API key. Or any server that works like OpenAI’s, including one on your own computer, such as LM Studio or llama.cpp. <code>morse setup</code> finds what you have.</p>
+          <p>Claude Code or Codex, if you have them. Or an Anthropic or OpenAI API key. Or any server that works like OpenAI’s, including one on your own computer, such as LM Studio or llama.cpp. <code>morse setup</code> finds what you have. Claude Code is the one tried for real so far; the others are tested against stand-ins.</p>
         </details>
         <details class="faq-item">
           <summary>What does it cost?</summary>
@@ -446,7 +447,7 @@ $ morse setup</pre>
         </details>
         <details class="faq-item">
           <summary>Which apps work?</summary>
-          <p>Any website in Chrome. Desktop apps built from web pages, like VS Code, Obsidian, Slack, Discord, Notion and Spotify. A few apps block the connection Morse needs; <code>morse fuses &lt;app&gt;</code> tells you before you try. Apps that are not built from web pages, like Finder or Word, don’t work.</p>
+          <p>Websites in Chrome: tried on sites such as PyPI, GitLab and Docker Hub. Desktop apps built from web pages: tried on VSCodium, Obsidian and Joplin, on Linux. Microsoft’s VS Code, Slack, Discord, Spotify, macOS and Windows aren’t tried yet. A few apps block the connection Morse needs; <code>morse fuses &lt;app&gt;</code> tells you before you try. Apps that are not built from web pages, like Finder or Word, don’t work.</p>
         </details>
         <details class="faq-item">
           <summary>Do I need to know how to code?</summary>
@@ -478,7 +479,7 @@ $ morse setup</pre>
         </div>
         <div class="start-item">
           <a class="start-opt is-soft" href="./#install-desktop" data-link="desktop"><svg class="icon"><use href="#i-laptop"/></svg>Get the desktop app</a>
-          <p class="start-caption"><strong>Desktop apps</strong><span>VS Code, Obsidian, Slack, Spotify and more.</span></p>
+          <p class="start-caption"><strong>Desktop apps</strong><span>Apps built from web pages, like VSCodium, Obsidian and Joplin.</span></p>
         </div>
       </div>
       <p class="cta-note">Free and open source · MIT license · No account</p>
