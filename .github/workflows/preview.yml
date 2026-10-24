@@ -1,0 +1,298 @@
+# The "preview" pre-release: always the newest main, built and tried.
+#
+# Every push to main (and a run by hand from the Actions tab) builds:
+#   package   morse-cli.tgz (npm pack, about 2 MB: the morse command with the
+#             Chrome extension inside) and morse-extension.zip (the extension
+#             as the Chrome Web Store gets it)
+#   desktop   Morse Desktop: Morse-mac-arm64.dmg / -x64.dmg (and .zip),
+#             Morse-Setup.exe (Windows), Morse-linux-x86_64.AppImage.
+#             Signed only when the signing secrets are set (docs/dev/releasing.md);
+#             otherwise the Mac app is signed ad hoc, so it opens after one
+#             "Open Anyway"
+#   smoke     the one-line installers (install.sh, install.ps1) run against the
+#             package just built, on macOS, Windows and Linux: morse --version,
+#             morse doctor --offline, the extension folder, a second run
+#             (an update), morse uninstall
+#   release   the GitHub pre-release tagged "preview": the tag moves to this
+#             commit and the files are replaced, with SHA256SUMS
+#
+# The names never change, so these addresses always give the newest build
+# (README.md, site/config.js and the installers use them):
+#   https://github.com/sam-siavoshian/RRAA/releases/download/preview/<file>
+#
+# Nothing is published unless the package, every Morse Desktop build and every
+# smoke test worked: until then the last good preview stays. Workflows run
+# from the commit that was pushed, so this works whatever the default branch is.
+name: Preview
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "site/**", "evals/**", "**/*.md"]
+  workflow_dispatch:
+
+# Read only by default: the builds run npm packages' install scripts (next to
+# the signing secrets), so only the release job can write. Actions are pinned
+# to a commit; the comment says which release that is.
+permissions:
+  contents: read
+
+# One at a time; a newer push waits, and replaces any run still waiting.
+concurrency:
+  group: preview
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: morse package and extension zip
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - name: Chrome extension zip (the store build)
+        run: npm run store
+      - name: The morse package, with the store build of the extension inside
+        shell: bash
+        env:
+          MORSE_STORE: "1" # read by scripts/build.js, which npm pack runs (prepare)
+        run: |
+          VERSION=$(node -p 'require("./package.json").version')
+          mkdir -p out
+          npm pack --pack-destination out
+          mv "out/morse-cli-$VERSION.tgz" out/morse-cli.tgz
+          mv "dist/morse-extension-$VERSION-store.zip" out/morse-extension.zip
+          if tar -xzOf out/morse-cli.tgz package/dist/extension/host.js | grep -q '"http://127.0.0.1:8787'; then
+            echo "::error::The extension in the package is the test build (it trusts 127.0.0.1:8787)."
+            exit 1
+          fi
+          ls -l out
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: preview-package
+          path: out/
+          if-no-files-found: error
+
+  desktop:
+    name: Morse Desktop, ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Linux, os: ubuntu-latest, flag: --linux }
+          - { name: macOS, os: macos-latest, flag: --mac }
+          - { name: Windows, os: windows-latest, flag: --win }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix desktop-app
+      # The same signing steps as release-desktop.yml: each only when its secrets are there.
+      - name: Signing
+        shell: bash
+        env:
+          MAC_CSC_LINK: ${{ runner.os == 'macOS' && secrets.MAC_CSC_LINK || '' }}
+          WIN_CSC_LINK: ${{ runner.os == 'Windows' && secrets.WIN_CSC_LINK || '' }}
+          AZURE_TENANT_ID: ${{ runner.os == 'Windows' && secrets.AZURE_TENANT_ID || '' }}
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            echo "AppImages aren't signed."
+          elif [ -n "$MAC_CSC_LINK$WIN_CSC_LINK$AZURE_TENANT_ID" ]; then
+            echo "Signing with the secrets that are set."
+          else
+            echo "::warning::No signing secrets for $RUNNER_OS: the Mac app is signed ad hoc (people click Open Anyway once); Windows SmartScreen warns once (More info, Run anyway)."
+            echo "CSC_IDENTITY_AUTO_DISCOVERY=false" >> "$GITHUB_ENV"
+          fi
+      - name: Build
+        shell: bash
+        env:
+          CSC_LINK: ${{ runner.os == 'macOS' && secrets.MAC_CSC_LINK || '' }}
+          CSC_KEY_PASSWORD: ${{ runner.os == 'macOS' && secrets.MAC_CSC_KEY_PASSWORD || '' }}
+          APPLE_ID: ${{ runner.os == 'macOS' && secrets.APPLE_ID || '' }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ runner.os == 'macOS' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ runner.os == 'macOS' && secrets.APPLE_TEAM_ID || '' }}
+          WIN_CSC_LINK: ${{ runner.os == 'Windows' && secrets.WIN_CSC_LINK || '' }}
+          WIN_CSC_KEY_PASSWORD: ${{ runner.os == 'Windows' && secrets.WIN_CSC_KEY_PASSWORD || '' }}
+          AZURE_TENANT_ID: ${{ runner.os == 'Windows' && secrets.AZURE_TENANT_ID || '' }}
+          AZURE_CLIENT_ID: ${{ runner.os == 'Windows' && secrets.AZURE_CLIENT_ID || '' }}
+          AZURE_CLIENT_SECRET: ${{ runner.os == 'Windows' && secrets.AZURE_CLIENT_SECRET || '' }}
+          AZURE_SIGNING_ENDPOINT: ${{ runner.os == 'Windows' && secrets.AZURE_SIGNING_ENDPOINT || '' }}
+          AZURE_SIGNING_ACCOUNT: ${{ runner.os == 'Windows' && secrets.AZURE_SIGNING_ACCOUNT || '' }}
+          AZURE_CERT_PROFILE: ${{ runner.os == 'Windows' && secrets.AZURE_CERT_PROFILE || '' }}
+          AZURE_PUBLISHER_NAME: ${{ runner.os == 'Windows' && secrets.AZURE_PUBLISHER_NAME || '' }}
+        run: |
+          # An empty secret is the same as none.
+          for v in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID WIN_CSC_LINK WIN_CSC_KEY_PASSWORD AZURE_TENANT_ID AZURE_CLIENT_ID AZURE_CLIENT_SECRET AZURE_SIGNING_ENDPOINT AZURE_SIGNING_ACCOUNT AZURE_CERT_PROFILE AZURE_PUBLISHER_NAME; do
+            [ -z "${!v}" ] && unset "$v"
+          done
+          node desktop-app/build.js ${{ matrix.flag }}
+      - name: The Mac app is signed (ad hoc or with the Developer ID) and starts
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          for APP in dist/desktop-app/mac*/Morse.app; do
+            codesign --verify --deep --strict --verbose=2 "$APP"
+          done
+          APP=$(ls -d dist/desktop-app/mac-arm64/Morse.app 2>/dev/null || ls -d dist/desktop-app/mac*/Morse.app | head -n 1)
+          "$APP/Contents/MacOS/morse-desktop" > desktop.log 2>&1 &
+          PID=$!
+          sleep 10
+          if kill -0 "$PID" 2>/dev/null; then echo "Morse Desktop started."; kill "$PID"; else cat desktop.log; echo "::error::Morse Desktop quit right after starting."; exit 1; fi
+      - name: Names that don't change
+        shell: bash
+        run: |
+          VERSION=$(node -p 'require("./package.json").version')
+          mkdir -p out
+          for f in dist/desktop-app/*; do
+            case "$f" in *.dmg|*.zip|*.exe|*.AppImage) ;; *) continue ;; esac
+            name=$(basename "$f" | sed "s/-$VERSION//")
+            mv "$f" "out/$name"
+          done
+          ls -l out
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: preview-desktop-${{ runner.os }}
+          path: out/
+          if-no-files-found: error
+
+  smoke:
+    name: Installer on ${{ matrix.os }}
+    needs: package
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      MORSE_INSTALL_BASE: http://127.0.0.1:8765
+      MORSE_NO_UPDATE_CHECK: "1"
+      MORSE_SETUP_CHECK: "0"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: preview-package
+          path: assets
+      - name: SHA256SUMS, as the release has it
+        shell: bash
+        run: node -e 'const fs=require("fs"),c=require("crypto");fs.writeFileSync("assets/SHA256SUMS",fs.readdirSync("assets").map(f=>c.createHash("sha256").update(fs.readFileSync("assets/"+f)).digest("hex")+"  "+f).join("\n")+"\n")' && cat assets/SHA256SUMS
+
+      - name: install.sh (macOS, Linux)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          node scripts/serve-files.js assets 8765 &
+          sleep 1
+          # Piped into sh, the way people run it.
+          sh install.sh < /dev/null
+          sh -s -- --no-setup < install.sh | tee second.log
+          grep -q "already up to date" second.log
+          export PATH="$HOME/.local/bin:$PATH"
+          command -v morse
+          test "$(morse --version)" = "$(node -p 'require("./package.json").version')"
+          morse doctor --offline
+          test -f "$HOME/.morse/chrome-extension/manifest.json"
+          test "$(morse extension | head -n 1)" = "$HOME/.morse/chrome-extension"
+          morse uninstall --yes
+          test ! -e "$HOME/.morse/app"
+          hash -r
+          ! command -v morse || { echo "::error::morse is still there after morse uninstall"; exit 1; }
+
+      - name: install.ps1 through irm | iex (Windows PowerShell 5.1)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Start-Process node -ArgumentList 'scripts/serve-files.js', 'assets', '8765' -WindowStyle Hidden
+          Start-Sleep -Seconds 2
+          Get-Content -Raw install.ps1 | Invoke-Expression
+          $env:Path = $env:Path + ';' + [Environment]::GetEnvironmentVariable('Path', 'User') # in case it added ~\.morse\bin
+          $v = (morse --version | Out-String).Trim()
+          if ($v -ne (Get-Content -Raw package.json | ConvertFrom-Json).version) { throw "morse --version said $v" }
+          morse doctor --offline
+          if ($LASTEXITCODE -ne 0) { throw 'morse doctor --offline failed' }
+          if (-not (Test-Path "$HOME\.morse\chrome-extension\manifest.json")) { throw 'no extension folder' }
+      - name: install.ps1 as a file, again (an update), then morse uninstall (PowerShell 7)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Start-Process node -ArgumentList 'scripts/serve-files.js', 'assets', '8765' -WindowStyle Hidden
+          Start-Sleep -Seconds 2
+          $out = ./install.ps1 -NoSetup *>&1 | Out-String
+          Write-Host $out
+          if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw 'install.ps1 failed' }
+          if ($out -notmatch 'already up to date') { throw 'the second run should be up to date' }
+          $env:Path = $env:Path + ';' + [Environment]::GetEnvironmentVariable('Path', 'User') # in case it added ~\.morse\bin
+          morse uninstall --yes
+          if ($LASTEXITCODE -ne 0) { throw 'morse uninstall failed' }
+          if (Test-Path "$HOME\.morse\app") { throw 'Morse is still there' }
+
+  release:
+    name: Update the preview release
+    needs: [package, desktop, smoke]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # the preview tag and release
+    env:
+      GH_TOKEN: ${{ github.token }}
+      R: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: preview-*
+          path: out
+          merge-multiple: true
+      - name: SHA256SUMS and notes
+        shell: bash
+        run: |
+          (cd out && sha256sum -- *) > SHA256SUMS
+          mv SHA256SUMS out/
+          cat out/SHA256SUMS
+          {
+            echo "The newest Morse from \`main\` ($GITHUB_SHA), built $(date -u +'%Y-%m-%d %H:%M UTC'). Not a release: it changes with every push."
+            echo
+            echo "**Morse Desktop:** Mac: \`Morse-mac-arm64.dmg\` (Apple silicon) or \`Morse-mac-x64.dmg\` (Intel). Windows: \`Morse-Setup.exe\`. Linux: \`Morse-linux-x86_64.AppImage\`."
+            echo
+            echo "Not signed yet, so the first time: on a Mac, open Morse, then System Settings, Privacy & Security, **Open Anyway** (on macOS 14 and older: right-click Morse, Open). On Windows: **More info**, then **Run anyway**."
+            echo
+            echo "**Or one line in a terminal** (needs Node 22): \`curl -fsSL https://raw.githubusercontent.com/$R/main/install.sh | sh\` (macOS, Linux) or \`irm https://raw.githubusercontent.com/$R/main/install.ps1 | iex\` (Windows PowerShell)."
+            echo
+            echo "\`morse-cli.tgz\` is what the line installs; \`morse-extension.zip\` is the Chrome extension. \`SHA256SUMS\` has every file's SHA-256."
+          } > notes.md
+      - name: Move the preview tag here and replace the files
+        shell: bash
+        run: |
+          # The tag first: an existing one moves, a missing one is made.
+          gh api -X PATCH "repos/$R/git/refs/tags/preview" -f sha="$GITHUB_SHA" -F force=true > /dev/null 2>&1 \
+            || gh api -X POST "repos/$R/git/refs" -f ref=refs/tags/preview -f sha="$GITHUB_SHA" > /dev/null
+          if gh release view preview --repo "$R" > /dev/null 2>&1; then
+            gh release edit preview --repo "$R" --prerelease --title "Morse preview" --notes-file notes.md
+          else
+            gh release create preview --repo "$R" --prerelease --verify-tag --title "Morse preview" --notes-file notes.md
+          fi
+          gh release upload preview out/* --repo "$R" --clobber
+          # Files from an older build that this one doesn't have.
+          gh release view preview --repo "$R" --json assets --jq '.assets[].name' | while read -r name; do
+            [ -e "out/$name" ] || gh release delete-asset preview "$name" --repo "$R" --yes
+          done
+          echo "::notice title=Preview updated::https://github.com/$R/releases/tag/preview"

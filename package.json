@@ -37,6 +37,10 @@
   },
   "scripts": {
     "build": "node scripts/build.js",
+    "setup": "node daemon/cli.js setup",
+    "morse": "node daemon/cli.js",
+    "doctor": "node daemon/cli.js doctor",
+    "extension": "node daemon/cli.js extension",
     "check": "node scripts/check.js",
     "test": "node tests/helpers/disk.js && node --test --test-timeout=300000 tests/*.test.js",
     "test:ui": "node tests/helpers/disk.js && node scripts/build.js && node scripts/test-ui.js",

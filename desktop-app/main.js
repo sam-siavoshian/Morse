@@ -14,7 +14,7 @@
 //   node desktop-app/run.js          start it from a clone
 //   node desktop-app/build.js        package it (docs/dev/releasing.md)
 
-import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, ipcMain, dialog, shell, session, protocol } from "electron";
+import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, ipcMain, dialog, shell, session, protocol, clipboard } from "electron";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { execFile } from "node:child_process";
@@ -24,6 +24,7 @@ import { registerIpc, PUSH, isOpenLink } from "./ipc.js";
 import { markPng } from "./mark.js";
 import { linuxIconFor } from "./icons.js";
 import { setAutostart, writeMenuEntry } from "./linux.js";
+import { openChromeExtensions } from "./chrome.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // The window's page is served from morse-app://ui/, a scheme of Morse's own
@@ -278,7 +279,14 @@ app.whenReady().then(async () => {
         });
         return r.canceled ? null : r.filePaths[0];
       },
-      showFolder: async dir => { if (dir) { const e = await shell.openPath(dir); return e ? { error: "Morse couldn't open that folder." } : { ok: true }; } return { error: "The Chrome extension isn't built yet." }; },
+      // "Add to Chrome": the folder, shown and selected so it can be dragged into
+      // Chrome; its place copied for Load unpacked; and Chrome on chrome://extensions.
+      showFolder: async dir => {
+        if (!dir) return { error: "The Chrome extension isn't built yet." };
+        shell.showItemInFolder(dir);
+        clipboard.writeText(dir);
+        return { ok: true, chrome: await openChromeExtensions().catch(() => false) };
+      },
       openExternal: async url => { await shell.openExternal(url); return { ok: true }; },
       setLoginItem,
     },

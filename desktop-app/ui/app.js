@@ -309,7 +309,14 @@ async function answerAsk(allow) {
 }
 $("helper-on").onchange = e => morse.setHelper(e.target.checked);
 $("new-code").onclick = () => morse.newPairingCode();
-$("show-ext").onclick = async () => { const r = await morse.showExtensionFolder(); if (r?.error) $("code-note").textContent = r.error; };
+// "Add to Chrome": Morse shows the folder, copies its place and opens Chrome's
+// extensions page (main.js); the picture says what to do there.
+$("show-ext").onclick = async () => {
+  const r = await morse.showExtensionFolder();
+  if (r?.error) { $("code-note").textContent = r.error; return; }
+  $("add-how").hidden = false;
+  $("add-note").textContent = r?.chrome ? "Chrome is open on its extensions page." : "Open Chrome and type chrome://extensions in the address bar.";
+};
 $("pair-yes").onclick = () => answerAsk(true);
 $("pair-no").onclick = () => answerAsk(false);
 $("ask-pair").addEventListener("cancel", e => { e.preventDefault(); answerAsk(false); }); // Esc is Deny
