@@ -76,6 +76,7 @@ function paintSettings() {
       <section><h4>General</h4>
         <div class="srow"><div class="lbl"><span>Welcome message</span><small>“Morse is ready” when an app or page loads</small></div><div class="ctl">${switchHtml("welcome", PREFS.welcome, "Welcome message")}</div></div>
         <div class="srow"><div class="lbl"><span>Show mods others made</span><small>Mods from the Morse gallery for the site you're on</small></div><div class="ctl">${switchHtml("gallery", PREFS.gallery, "Show mods others made")}</div></div><!-- gallery hook: 68-gallery.js -->
+        <div class="srow"><div class="lbl"><span>Fix my mods automatically when a site changes</span><small>Fixes them in the background and tells you, with Undo</small></div><div class="ctl">${switchHtml("autoFix", PREFS.autoFix, "Fix my mods automatically when a site changes")}</div></div><!-- self-heal hook: 71-heal.js -->
       </section>
       <footer><button type="button" class="tbtn" data-act="reset-all">Reset all settings</button><span class="dim">${esc(S.mode === "extension" ? "Synced with your Chrome profile" : S.mode === "desktop" ? "Saved on this computer" : "")}</span></footer>
     </div>`;
@@ -173,6 +174,7 @@ pane.addEventListener("change", e => {
   if (k === "autoSubmit") saveSetting({ voice: { autoSubmit: e.target.checked } }, `[data-k="autoSubmit"]`);
   if (k === "welcome") saveSetting({ welcome: e.target.checked }, `[data-k="welcome"]`);
   if (k === "gallery") saveSetting({ gallery: e.target.checked }, `[data-k="gallery"]`); // gallery hook: 68-gallery.js
+  if (k === "autoFix") saveSetting({ autoFix: e.target.checked }, `[data-k="autoFix"]`); // self-heal hook: 71-heal.js
 });
 // Radio groups: arrows move and select, like native radios.
 pane.addEventListener("keydown", e => {

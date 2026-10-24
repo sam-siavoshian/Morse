@@ -275,6 +275,7 @@ async function keep() {
   d.saved = mod;
   d.mod = mod;
   Health.ran(mod, { ok: true }); // it ran fine just now; check it keeps finding its elements
+  Heal.kept(mod); // self-heal hook: remember what it changes (71-heal.js)
   S.phase = "idle";
   closeBar();
   const n = versionsOf(mod).length + 1;
