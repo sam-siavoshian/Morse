@@ -31,7 +31,7 @@ You need [Node](https://nodejs.org) 22 or newer. Full steps, and what to do when
 3. Answer its one question, then connect a model: with Morse Desktop open, click **Use Claude Code** and **Allow**. Or paste an Anthropic API key, or run the `morse setup --pair <code>` it shows.
 4. Make your first change on its practice page, then press **⌥Space** (Ctrl+Shift+Space on Windows and Linux) on any page. Morse asks for **“Allow User Scripts”** only when a change needs it.
 
-**Desktop apps (tested on VSCodium, Obsidian and Joplin)**
+**Desktop apps (tested on Visual Studio Code, VSCodium, Obsidian, Logseq and Joplin)**
 
 1. Get Morse as in step 1 above, then run `morse setup` to choose your model.
 2. `morse apps` shows which of your apps Morse can connect to.
