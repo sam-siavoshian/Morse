@@ -1,8 +1,30 @@
 {
   "label": "before-real",
-  "date": "2026-10-24T22:47:04.368Z",
+  "date": "2026-10-24T23:44:37.316Z",
   "split": true,
   "runs": 3,
+  "flat": {
+    "1000": {
+      "allRows": false,
+      "morseMs": 324.4,
+      "maxMs": 322.8
+    },
+    "2000": {
+      "allRows": false,
+      "morseMs": 0,
+      "maxMs": 0
+    },
+    "4000": {
+      "allRows": false,
+      "morseMs": 0,
+      "maxMs": 0
+    },
+    "8000": {
+      "allRows": false,
+      "morseMs": 0,
+      "maxMs": 0
+    }
+  },
   "realbar": {
     "nodejs.org fs docs": {
       "typing": {

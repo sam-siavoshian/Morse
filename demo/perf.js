@@ -12,20 +12,21 @@
 // costs before anyone opens it), idle (what still runs), open (hotkey to bar),
 // mods at scale (30 watch mods on a streaming chat), SPA (URL-change
 // detection), effect (frame cost on a 4K target), extension (content script);
-// lang (English vs another language on the bar's first open); on request,
+// lang (English vs another language on the bar's first open), flat (a watch
+// over a long flat list of rows); on request,
 // realbar (the bar open on big real pages: typing, pointing, scrolling) and
 // realboot (5 real sites, with 0 and with 20 saved mods).
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import { ROOT, chromium, serve, desktop, metrics, payloads, median, sleep, OPEN_KEY, ONE_MOD, THIRTY_MODS, runGeneration } from "./perf-lib.js";
+import { ROOT, chromium, serve, desktop, metrics, payloads, median, sleep, mod, OPEN_KEY, ONE_MOD, THIRTY_MODS, runGeneration } from "./perf-lib.js";
 
 const argv = process.argv.slice(2);
 const arg = (k, d) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : d; };
 const LABEL = arg("--label", "current");
 const RUNS = Number(arg("--runs", 3));
-const ONLY = new Set(String(arg("--only", "payload,boot,open,lang,mods,spa,effect,extension")).split(","));
+const ONLY = new Set(String(arg("--only", "payload,boot,open,lang,mods,flat,spa,effect,extension")).split(","));
 const OUT = path.join(ROOT, "docs", "perf");
 // --report: rebuild report.md from docs/perf/<label>.json and before.json, no measuring.
 if (argv.includes("--report")) {
@@ -325,6 +326,34 @@ async function extension() {
   } finally { await ctx.close(); await plain.close(); await fs.rm(profile, { recursive: true, force: true }).catch(() => {}); }
 }
 
+// ---------------------------------------------------------------- a watch over a long flat list
+// A feed, a long table, the lines of a file: every row a sibling of the
+// others. One mod with `morse.watch("p.flat", el => el.dataset.seen = "")`,
+// the rows added at once.
+async function flat() {
+  await D.setMods([mod("flat", "", `morse.watch("p.flat", el => { el.dataset.seen = ""; });`)]);
+  const out = {};
+  for (const n of [1000, 2000, 4000, 8000]) {
+    const runs = [];
+    for (let i = 0; i < RUNS; i++) {
+      const t = await D.page();
+      await t.page.goto(srv.url("/perf/spa.html"));
+      await sleep(1500);
+      await t.reset();
+      await t.page.evaluate(n => { const f = document.createDocumentFragment(); for (let i = 0; i < n; i++) { const p = document.createElement("p"); p.className = "flat"; p.textContent = "row " + i; f.append(p); } document.body.append(f); }, n);
+      const t0 = Date.now();
+      let done = false;
+      while (!(done = await t.page.evaluate(n => document.querySelectorAll("p.flat[data-seen]").length === n, n)) && Date.now() - t0 < 15000) await sleep(50);
+      const s = await t.snap();
+      runs.push({ done, morseMs: ["mo", "raf", "timeout", "idle"].reduce((a, k) => a + (s.ms[k] || 0), 0), maxMs: Math.max(0, ...Object.values(s.max)) });
+      await t.close();
+    }
+    out[n] = { allRows: runs.filter(r => r.done).length === runs.length, morseMs: r1(median(runs.map(r => r.morseMs))), maxMs: r1(median(runs.map(r => r.maxMs))) };
+    log(`  flat ${n}: ${JSON.stringify(out[n])}`);
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------- languages
 // The bar's words: English ships in the UI bundle; another language is one
 // host request ("i18n.words") the first time the bar opens on a page, and the
@@ -493,7 +522,7 @@ async function realBoot() {
 }
 
 // ---------------------------------------------------------------- run
-const steps = { payload: payloadCost, boot, open: openLatency, mods: modsAtScale, spa, effect, extension, lang, realbar: realBar, realboot: realBoot };
+const steps = { payload: payloadCost, boot, open: openLatency, mods: modsAtScale, spa, effect, extension, lang, flat, realbar: realBar, realboot: realBoot };
 for (const [k, fn] of Object.entries(steps)) {
   if (!ONLY.has(k)) continue;
   log(`▸ ${k}`);
@@ -579,6 +608,15 @@ function report(now, was, wasReal = null) {
         ["… closing and opening again", fmt(L2.en.wordsRequestsReopen), fmt(L2.de.wordsRequestsReopen)],
       ]), "");
   }
+  if (now.flat && !now.flat.error) {
+    const ns = Object.keys(now.flat), F = wasReal?.flat;
+    L.push("## A watch over a long flat list", "", `One mod, \`morse.watch("p.flat", el => el.dataset.seen = "")\`, and that many rows added to one parent at once (a feed, a long table, the lines of a file).${F ? ` The baseline (\`docs/perf/before-real.json\`, ${wasReal.date.slice(0, 10)}) copied all of a row's siblings before and after its callback, which is quadratic: from 2,000 rows on it was paused as slow before it got through them.` : ""}`, "",
+      table(["Rows", ...ns], [
+        ["Every row handled (within 15 s)", ...ns.map(n => cell(now.flat[n].allRows, F?.[n]?.allRows))],
+        ["Morse ms", ...ns.map(n => cell(now.flat[n].morseMs, F?.[n]?.morseMs))],
+        ["Slowest Morse callback (ms)", ...ns.map(n => cell(now.flat[n].maxMs, F?.[n]?.maxMs))],
+      ]), "");
+  }
   if (now.realbar && !now.realbar.error) {
     const sites = Object.keys(now.realbar).filter(s => now.realbar[s].runs);
     const k = [["Typing 48 keys: hit tests", "typing", "hitTests"], ["… ms in hit tests and text rects", "typing", "hitMs"], ["… long tasks (any script)", "typing", "longTasks"],
@@ -590,10 +628,10 @@ function report(now, was, wasReal = null) {
   }
   if (now.realboot && !now.realboot.error) {
     const sites = Object.keys(now.realboot);
-    const k = [["Main-thread script (ms)", "scriptMs"], ["Main-thread tasks (ms)", "taskMs"], ["JS heap (KB)", "heapKB"], ["Morse's own callbacks (ms)", "morseMs"], ["Extra layouts", "layouts"], ["Layout reads by Morse", "layoutReads"], ["First mod CSS applied (ms after navigation)", "firstCssMs"]];
+    const k = [["JS heap (KB)", "heapKB"], ["Morse's own callbacks (ms)", "morseMs"], ["Extra layouts", "layouts"], ["Layout reads by Morse", "layoutReads"], ["First mod CSS applied (ms after navigation)", "firstCssMs"]];
     const rows = [["Elements on the page", ...sites.map(s => fmt(now.realboot[s].nodes))], ["JS heap without Morse (KB)", ...sites.map(s => fmt(now.realboot[s].heapKBWithout))]];
     for (const [n, w] of [["0 mods", "zero"], ["20 mods", "twenty"]]) for (const [l, key] of k) if (w === "twenty" || key !== "firstCssMs") rows.push([`${n}: ${l}`, ...sites.map(s => cell(v(now.realboot, s, w, key), v(wasReal, "realboot", s, w, key)))]);
-    L.push("## Boot on real sites, with 0 and with 20 saved mods", "", `Nobody opens Morse. Deltas against the same page without Morse (medians of ${now.runs}); network time differs on every load, so these are main-thread and memory costs, not load times. The 20 mods each add CSS and a \`morse.watch\` on every site.`, "", table(["", ...sites], rows), "");
+    L.push("## Boot on real sites, with 0 and with 20 saved mods", "", `Nobody opens Morse. Deltas against the same page without Morse (medians of ${now.runs}); network time differs on every load, so these are memory and Morse's own work, not load times (the page's own script time on a real site varies by a few hundred ms from load to load, more than Morse's whole cost; \`docs/perf/*.json\` keep it anyway). The 20 mods each add CSS and a \`morse.watch\` on every site; most of their heap is the page's elements those watches touch.`, "", table(["", ...sites], rows), "");
   }
   return L.join("\n");
 }

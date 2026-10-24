@@ -1,8 +1,394 @@
 {
   "label": "after",
-  "date": "2026-10-24T15:12:31.093Z",
+  "date": "2026-10-24T23:20:47.046Z",
   "split": true,
   "runs": 3,
+  "payload": {
+    "bootBytes": 51971,
+    "fullBytes": 986717,
+    "compileMs": 6.07,
+    "compileRunMs": 7.81
+  },
+  "boot": {
+    "parley": {
+      "nodes": 8,
+      "jsListeners": 7,
+      "heapKB": 408.9,
+      "scriptMs": 0.4,
+      "layouts": 1,
+      "styleRecalcs": 2,
+      "listeners": 8,
+      "observers": 2,
+      "timers": 7,
+      "intervals": 0,
+      "getComputedStyle": 4,
+      "layoutReads": 0,
+      "elements": 4,
+      "shadowRoots": 0,
+      "firstCssMs": 105.9,
+      "firstJsMs": 142.4,
+      "uiMountedAtBoot": false,
+      "dclMs": 91.5,
+      "idleCallbacks3s": 3,
+      "idleMs3s": 0.9,
+      "errors": []
+    },
+    "byte": {
+      "nodes": 2,
+      "jsListeners": 7,
+      "heapKB": 435,
+      "scriptMs": 1.2,
+      "layouts": 0,
+      "styleRecalcs": 1,
+      "listeners": 8,
+      "observers": 2,
+      "timers": 9,
+      "intervals": 0,
+      "getComputedStyle": 4,
+      "layoutReads": 0,
+      "elements": 1,
+      "shadowRoots": 0,
+      "firstCssMs": 284,
+      "firstJsMs": null,
+      "uiMountedAtBoot": false,
+      "dclMs": 56.2,
+      "idleCallbacks3s": 2,
+      "idleMs3s": 1.2,
+      "errors": []
+    },
+    "tunes": {
+      "nodes": 3,
+      "jsListeners": 7,
+      "heapKB": 408.6,
+      "scriptMs": -1,
+      "layouts": 1,
+      "styleRecalcs": 2,
+      "listeners": 8,
+      "observers": 2,
+      "timers": 7,
+      "intervals": 0,
+      "getComputedStyle": 4,
+      "layoutReads": 0,
+      "elements": 2,
+      "shadowRoots": 0,
+      "firstCssMs": 229.7,
+      "firstJsMs": 238.5,
+      "uiMountedAtBoot": false,
+      "dclMs": 197.5,
+      "idleCallbacks3s": 3,
+      "idleMs3s": 0.9,
+      "errors": []
+    },
+    "big (10k nodes)": {
+      "nodes": 4,
+      "jsListeners": 7,
+      "heapKB": 450.5,
+      "scriptMs": 106.3,
+      "layouts": 1,
+      "styleRecalcs": 1,
+      "listeners": 8,
+      "observers": 2,
+      "timers": 7,
+      "intervals": 0,
+      "getComputedStyle": 4,
+      "layoutReads": 0,
+      "elements": 3,
+      "shadowRoots": 0,
+      "firstCssMs": 761.9,
+      "firstJsMs": 841.8,
+      "uiMountedAtBoot": false,
+      "dclMs": 789.8,
+      "idleCallbacks3s": 3,
+      "idleMs3s": 0.8,
+      "errors": []
+    }
+  },
+  "lang": {
+    "en": {
+      "hotkeyToBarMs": 1361.8,
+      "runs": [
+        1026.8,
+        1421.2,
+        1361.8
+      ],
+      "wordsRequests": 0,
+      "wordsRequestsReopen": 0
+    },
+    "de": {
+      "hotkeyToBarMs": 1476.3,
+      "runs": [
+        2541.7,
+        740.1,
+        1476.3
+      ],
+      "wordsRequests": 1,
+      "wordsRequestsReopen": 0
+    }
+  },
+  "realbar": {
+    "nodejs.org fs docs": {
+      "typing": {
+        "hitTests": 5,
+        "hitMs": 12.4,
+        "morseMs": 16,
+        "maxMs": 12.8,
+        "calls": 396,
+        "longTasks": 2
+      },
+      "pointing": {
+        "hitTests": 1,
+        "hitMs": 8.8,
+        "morseMs": 99.7,
+        "maxMs": 65.3,
+        "calls": 483,
+        "longTasks": 24
+      },
+      "stepping": {
+        "hitTests": 0,
+        "hitMs": 0,
+        "morseMs": 3.2,
+        "maxMs": 0.5,
+        "calls": 182,
+        "longTasks": 2
+      },
+      "scrolling": {
+        "hitTests": 12,
+        "hitMs": 274.8,
+        "morseMs": 290.5,
+        "maxMs": 132.6,
+        "calls": 43,
+        "longTasks": 3
+      },
+      "closed": {
+        "hitTests": 0,
+        "hitMs": 0,
+        "morseMs": 0,
+        "maxMs": 0,
+        "calls": 0,
+        "longTasks": 0
+      },
+      "runs": 3,
+      "errors": []
+    },
+    "pkg.go.dev net/http": {
+      "typing": {
+        "hitTests": 1,
+        "hitMs": 0.7,
+        "morseMs": 5.3,
+        "maxMs": 1,
+        "calls": 396,
+        "longTasks": 3
+      },
+      "pointing": {
+        "hitTests": 0,
+        "hitMs": 0,
+        "morseMs": 37.4,
+        "maxMs": 29.5,
+        "calls": 480,
+        "longTasks": 13
+      },
+      "stepping": {
+        "hitTests": 2,
+        "hitMs": 1.9,
+        "morseMs": 27.7,
+        "maxMs": 21.6,
+        "calls": 193,
+        "longTasks": 4
+      },
+      "scrolling": {
+        "hitTests": 28,
+        "hitMs": 83.9,
+        "morseMs": 95.4,
+        "maxMs": 52.8,
+        "calls": 44,
+        "longTasks": 1
+      },
+      "closed": {
+        "hitTests": 0,
+        "hitMs": 0,
+        "morseMs": 0,
+        "maxMs": 0,
+        "calls": 0,
+        "longTasks": 0
+      },
+      "runs": 3,
+      "errors": []
+    },
+    "GitHub file view": {
+      "typing": {
+        "hitTests": 20,
+        "hitMs": 9.1,
+        "morseMs": 12.8,
+        "maxMs": 9.9,
+        "calls": 396,
+        "longTasks": 0
+      },
+      "pointing": {
+        "hitTests": 20,
+        "hitMs": 41.3,
+        "morseMs": 64,
+        "maxMs": 42.2,
+        "calls": 493,
+        "longTasks": 17
+      },
+      "stepping": {
+        "hitTests": 0,
+        "hitMs": 0,
+        "morseMs": 4.6,
+        "maxMs": 1.4,
+        "calls": 193,
+        "longTasks": 2
+      },
+      "scrolling": {
+        "hitTests": 81,
+        "hitMs": 82.2,
+        "morseMs": 89.2,
+        "maxMs": 50.2,
+        "calls": 55,
+        "longTasks": 1
+      },
+      "closed": {
+        "hitTests": 0,
+        "hitMs": 0,
+        "morseMs": 0,
+        "maxMs": 0,
+        "calls": 0,
+        "longTasks": 0
+      },
+      "runs": 3,
+      "errors": []
+    }
+  },
+  "realboot": {
+    "nodejs.org fs docs": {
+      "nodes": 53278,
+      "heapKBWithout": 1290.8,
+      "zero": {
+        "scriptMs": -232.8,
+        "taskMs": -1106.5,
+        "heapKB": 268.7,
+        "morseMs": 0.5,
+        "layouts": 0,
+        "layoutReads": 0,
+        "firstCssMs": null,
+        "errors": []
+      },
+      "twenty": {
+        "scriptMs": -282.8,
+        "taskMs": -257.8,
+        "heapKB": 3705.1,
+        "morseMs": 1.7,
+        "layouts": 0,
+        "layoutReads": 8,
+        "firstCssMs": 563.9,
+        "errors": []
+      }
+    },
+    "pkg.go.dev net/http": {
+      "nodes": 19353,
+      "heapKBWithout": 1517.6,
+      "zero": {
+        "scriptMs": 46.8,
+        "taskMs": 365.6,
+        "heapKB": 240.3,
+        "morseMs": 0.6,
+        "layouts": 0,
+        "layoutReads": 0,
+        "firstCssMs": null,
+        "errors": []
+      },
+      "twenty": {
+        "scriptMs": -61.3,
+        "taskMs": 598.9,
+        "heapKB": 3382.3,
+        "morseMs": 6.4,
+        "layouts": 3,
+        "layoutReads": 26,
+        "firstCssMs": 643.4,
+        "errors": []
+      }
+    },
+    "GitHub file view": {
+      "nodes": 17431,
+      "heapKBWithout": 1258.4,
+      "zero": {
+        "scriptMs": -44.1,
+        "taskMs": 111.1,
+        "heapKB": 196.7,
+        "morseMs": 0.5,
+        "layouts": -1,
+        "layoutReads": 0,
+        "firstCssMs": null,
+        "errors": []
+      },
+      "twenty": {
+        "scriptMs": 150.3,
+        "taskMs": 612.3,
+        "heapKB": 2250.6,
+        "morseMs": 1.4,
+        "layouts": -1,
+        "layoutReads": 15,
+        "firstCssMs": 1623,
+        "errors": []
+      }
+    },
+    "pypi.org project": {
+      "nodes": 12298,
+      "heapKBWithout": 2542.3,
+      "zero": {
+        "scriptMs": -44.1,
+        "taskMs": 370.8,
+        "heapKB": 218.8,
+        "morseMs": 0.7,
+        "layouts": -6,
+        "layoutReads": 0,
+        "firstCssMs": null,
+        "errors": [
+          "Failed to fetch",
+          "Failed to fetch",
+          "Failed to fetch"
+        ]
+      },
+      "twenty": {
+        "scriptMs": 65.8,
+        "taskMs": 772,
+        "heapKB": 2761.5,
+        "morseMs": 6.7,
+        "layouts": -6,
+        "layoutReads": 25,
+        "firstCssMs": 782.5,
+        "errors": [
+          "Failed to fetch",
+          "Failed to fetch",
+          "Failed to fetch"
+        ]
+      }
+    },
+    "rubygems.org gem": {
+      "nodes": 1651,
+      "heapKBWithout": 2381.1,
+      "zero": {
+        "scriptMs": -106.8,
+        "taskMs": -431.7,
+        "heapKB": 226.1,
+        "morseMs": 0.4,
+        "layouts": 1,
+        "layoutReads": 0,
+        "firstCssMs": null,
+        "errors": []
+      },
+      "twenty": {
+        "scriptMs": -51.9,
+        "taskMs": -76.3,
+        "heapKB": 2326.9,
+        "morseMs": 3.6,
+        "layouts": 1,
+        "layoutReads": 22,
+        "firstCssMs": 726,
+        "errors": []
+      }
+    }
+  },
   "extension": {
     "parley": {
       "nodes": 2,
@@ -39,106 +425,6 @@
       "layouts": 0,
       "firstCssMs": 192.2,
       "uiMountedAtBoot": false
-    }
-  },
-  "payload": {
-    "bootBytes": 49224,
-    "fullBytes": 801735,
-    "compileMs": 3.96,
-    "compileRunMs": 0.27
-  },
-  "boot": {
-    "parley": {
-      "nodes": 5,
-      "jsListeners": 7,
-      "heapKB": 353,
-      "scriptMs": 7.4,
-      "layouts": 1,
-      "styleRecalcs": 2,
-      "listeners": 8,
-      "observers": 2,
-      "timers": 7,
-      "intervals": 0,
-      "getComputedStyle": 4,
-      "layoutReads": 0,
-      "elements": 4,
-      "shadowRoots": 0,
-      "firstCssMs": 281,
-      "firstJsMs": 294.7,
-      "uiMountedAtBoot": false,
-      "dclMs": 186.4,
-      "idleCallbacks3s": 3,
-      "idleMs3s": 0.9,
-      "errors": []
-    },
-    "byte": {
-      "nodes": 2,
-      "jsListeners": 7,
-      "heapKB": 395.9,
-      "scriptMs": 1.6,
-      "layouts": 0,
-      "styleRecalcs": 1,
-      "listeners": 8,
-      "observers": 2,
-      "timers": 9,
-      "intervals": 0,
-      "getComputedStyle": 4,
-      "layoutReads": 0,
-      "elements": 1,
-      "shadowRoots": 0,
-      "firstCssMs": 215.1,
-      "firstJsMs": null,
-      "uiMountedAtBoot": false,
-      "dclMs": 114.6,
-      "idleCallbacks3s": 2,
-      "idleMs3s": 1.4,
-      "errors": []
-    },
-    "tunes": {
-      "nodes": 3,
-      "jsListeners": 7,
-      "heapKB": 356.7,
-      "scriptMs": -0.1,
-      "layouts": 1,
-      "styleRecalcs": 2,
-      "listeners": 8,
-      "observers": 2,
-      "timers": 7,
-      "intervals": 0,
-      "getComputedStyle": 4,
-      "layoutReads": 0,
-      "elements": 2,
-      "shadowRoots": 0,
-      "firstCssMs": 487.9,
-      "firstJsMs": 521.7,
-      "uiMountedAtBoot": false,
-      "dclMs": 414.4,
-      "idleCallbacks3s": 3,
-      "idleMs3s": 1,
-      "errors": []
-    },
-    "big (10k nodes)": {
-      "nodes": 4,
-      "jsListeners": 7,
-      "heapKB": 355.7,
-      "scriptMs": 10.3,
-      "layouts": 0,
-      "styleRecalcs": 1,
-      "listeners": 8,
-      "observers": 2,
-      "timers": 7,
-      "intervals": 0,
-      "getComputedStyle": 4,
-      "layoutReads": 0,
-      "elements": 3,
-      "shadowRoots": 0,
-      "firstCssMs": 416.8,
-      "firstJsMs": 666.4,
-      "uiMountedAtBoot": false,
-      "dclMs": 533.6,
-      "idleCallbacks3s": 3,
-      "idleMs3s": 1,
-      "errors": []
     }
   },
   "open": {
