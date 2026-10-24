@@ -21,7 +21,7 @@ import assert from "node:assert/strict";
 import net from "node:net";
 import path from "node:path";
 import { spawn, execFile } from "node:child_process";
-import { promises as fs } from "node:fs";
+import { promises as fs, readFileSync, readdirSync, readlinkSync } from "node:fs";
 
 const home = tempDir("morse-electron-test-");
 process.env.MORSE_HOME = home;
@@ -427,4 +427,122 @@ test("real Electron: as root without --no-sandbox, the app dies on start and mor
   const code = await Promise.race([m.done, sleep(25000).then(() => "still waiting")]);
   assert.equal(code, 1, m.out);
   assert.match(m.out, /Tunes quit right after it started[\s\S]*running as root[\s\S]*-- --no-sandbox/);
+});
+
+// ---------------------------------------------------------------- the private pipe
+// Opened by Morse, the app gets --remote-debugging-pipe instead of a port
+// (daemon/cdp.js): CDP over its file descriptors 3 and 4, which only Morse
+// holds. These look inside the app over that same pipe (a session of the
+// test's own beside Morse's), since there is no port to look through.
+
+// The TCP ports these processes listen on (Linux: /proc).
+function listeningPorts(pids) {
+  const inodes = new Set();
+  for (const pid of pids) {
+    let fds = [];
+    try { fds = readdirSync(`/proc/${pid}/fd`); } catch { continue; }
+    for (const fd of fds) { try { const m = /^socket:\[(\d+)\]$/.exec(readlinkSync(`/proc/${pid}/fd/${fd}`)); if (m) inodes.add(m[1]); } catch {} }
+  }
+  const out = [];
+  for (const f of ["/proc/net/tcp", "/proc/net/tcp6"]) {
+    let text = "";
+    try { text = readFileSync(f, "utf8"); } catch { continue; }
+    for (const line of text.split("\n").slice(1)) { const c = line.trim().split(/\s+/); if (c[3] === "0A" && inodes.has(c[9])) out.push(parseInt(c[1].split(":").pop(), 16)); }
+  }
+  return out;
+}
+// Does a DevTools endpoint answer on this port?
+const devtoolsOn = port => fetch(`http://127.0.0.1:${port}/json/version`, { signal: AbortSignal.timeout(1500) }).then(r => r.json()).then(v => !!v.webSocketDebuggerUrl, () => false);
+// Tunes' main process for this profile (not its helpers, not morse).
+const tunesMain = profile => apps.listProcesses().filter(p => p.cmd.includes(profile) && !/\s--type=/.test(p.cmd) && /[\\/]tunes$/i.test(p.cmd.split(/\s+/)[0])).map(p => p.pid);
+
+test("real Electron: on the private pipe Morse is in every window (runtime, saved mod, second window, <webview>), stop takes it off, and the app outlives Morse", { skip, timeout: 120000 }, async () => {
+  const { exe } = await tunesApp();
+  const { connectApp, startSession } = await import("../daemon/desktop.js");
+  const { saveMod } = await import("../daemon/store.js");
+  const { createMod } = await import("../core/mod.js");
+  const mod = await saveMod(createMod({ prompt: "outline the page", title: "Outline", css: "body { outline: 3px solid rgb(63, 185, 80) }", js: "", url: "app://tunes/index.html", app: "tunes" }));
+  const profile = path.join(home, "profile-pipe");
+  const app = apps.resolveApp(exe);
+  const ready = await connectApp(app, { extra: [`--user-data-dir=${profile}`, ...(ROOT ? ["--no-sandbox"] : [])] });
+  assert.equal(ready.port, null, "no debugging port");
+  assert.equal(ready.browser.kind, "pipe");
+  assert.match(ready.who.electron, /^\d+\./);
+  assert.equal(ready.verify, null);
+  const [pid] = tunesMain(profile);
+  assert.ok(pid);
+  assert.match(apps.listProcesses().find(p => p.pid === pid).cmd, /--remote-debugging-pipe/);
+  if (process.platform === "linux") for (const port of listeningPorts([pid])) assert.equal(await devtoolsOn(port), false, `nothing answers DevTools on port ${port}`);
+
+  // Morse's sessions, and ours to look with, share the pipe; ours stays open after Morse stops.
+  const keep = Object.create(ready.browser, { close: { value: () => {} } });
+  const s = startSession({ browser: keep, app, settings: { provider: "demo", model: "demo" }, who: ready.who, log: () => {} });
+  const look = async match => {
+    const t = await until(async () => (await ready.browser.listTargets()).find(match), 15000, "the window");
+    const ss = await ready.browser.connect(t);
+    return { t, ev: async expr => (await ss.send("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true })).result?.value, close: () => ss.close() };
+  };
+  const main = await look(t => t.type === "page" && t.url === "app://tunes/index.html");
+  await until(() => main.ev(`!!document.querySelector("[data-morse-ui]")`), 20000, "the runtime in the main window");
+  await until(() => main.ev(`!!document.querySelector('style[data-morse-css="${mod.id}"]')`), 15000, "the saved mod");
+  assert.equal(await main.ev(`typeof __morseHostSend`), "undefined", "the page can't reach Morse's host");
+  await main.ev(`window.tunes.openMiniPlayer()`);
+  const mini = await look(t => t.type === "page" && t.url.endsWith("/mini.html"));
+  await until(() => mini.ev(`!!document.querySelector("[data-morse-ui]")`), 15000, "the runtime in the Mini Player");
+  const guest = await look(t => t.type === "webview");
+  await until(() => guest.ev(`!!document.querySelector("[data-morse-ui]")`), 15000, "the runtime in the webview");
+  await until(() => s.connector.windows.size >= 3, 10000, "three windows in the session");
+  assert.deepEqual([...s.connector.windows.values()].map(w => w.kind).sort(), ["webview", "window", "window"]);
+
+  // Morse stops: off the page, and a new document stays clean.
+  await s.stop();
+  assert.equal(await s.done, "stopped");
+  await until(async () => !(await main.ev(`!!document.querySelector("style[data-morse-css], [data-morse-ui]")`)), 10000, "Morse gone from the page");
+  await main.ev(`window.__before = 1; location.reload(); 1`);
+  await until(() => main.ev(`!window.__before && document.readyState === "complete"`), 15000, "the reloaded page");
+  await sleep(500);
+  assert.equal(await main.ev(`!!document.querySelector("[data-morse-ui]")`), false, "no runtime in a new document");
+  for (const x of [main, mini, guest]) x.close();
+
+  // Morse lets go of the pipe: Electron 12+ would quit on an end of file, but the app holds its own copy of Morse's end.
+  await ready.browser.close();
+  await sleep(3000);
+  assert.deepEqual(tunesMain(profile), [pid], "the app keeps running without Morse");
+});
+
+test("real Electron: morse launch without --port uses the pipe; --watch opens it again when asked; killing morse leaves the app running", { skip, timeout: 180000 }, async () => {
+  const { exe } = await tunesApp();
+  const profile = path.join(home, "profile-pipe-cli");
+  const args = ["--", `--user-data-dir=${profile}`, ...(ROOT ? ["--no-sandbox"] : [])];
+  const m = morse("launch", exe, "--watch", ...args);
+  await until(() => /✓ connected to tunes/i.test(m.out) || m.exitCode != null, 40000, () => "morse launch to connect: " + m.out);
+  assert.match(m.out, /channel private pipe/);
+  assert.doesNotMatch(m.out, /port {4}\d+/);
+  const st = JSON.parse(await morseOut("status", "--json"));
+  assert.equal(st[0].transport, "pipe");
+  assert.equal(st[0].port, null);
+  assert.match(await morseOut("status"), /Tunes +● connected · private pipe \(no debugging port\)/);
+  const [pid] = tunesMain(profile);
+  const cmd = apps.listProcesses().find(p => p.pid === pid).cmd;
+  assert.match(cmd, /--remote-debugging-pipe/);
+  assert.doesNotMatch(cmd, /--remote-debugging-port/);
+  if (process.platform === "linux") for (const port of listeningPorts([pid])) assert.equal(await devtoolsOn(port), false, `nothing answers DevTools on port ${port}`);
+
+  // The app quits: with --watch, Morse waits and says how to open it again.
+  process.kill(pid, "SIGTERM");
+  await until(() => /Tunes closed\. Run morse launch tunes to open it again with Morse/.test(m.out), 20000, () => "morse to wait: " + m.out);
+  // `morse launch` again: the waiting Morse opens it on a new pipe of its own.
+  const again = morse("launch", exe, ...args);
+  assert.equal(await again.done, 0, again.out);
+  assert.match(again.out, /Morse is already waiting for Tunes\. It opens it now and connects\./);
+  await until(() => (m.out.match(/✓ connected to tunes/gi) || []).length >= 2, 40000, () => "morse to connect again: " + m.out);
+  assert.match(m.out, /Tunes is open again/);
+  const [pid2] = await until(async () => { const p = tunesMain(profile); return p.length && p; }, 10000, "the new Tunes");
+  assert.notEqual(pid2, pid);
+
+  // Morse killed outright: the app keeps running.
+  m.kill("SIGKILL");
+  await m.done;
+  await sleep(3000);
+  assert.deepEqual(tunesMain(profile), [pid2], "Tunes outlives a killed morse");
 });

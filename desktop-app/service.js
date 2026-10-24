@@ -63,6 +63,12 @@ export function createService({
 } = {}) {
   const SETTINGS = path.join(d.HOME, "desktop.json");
   const own = new Map();     // app id -> a session this process runs (daemon/desktop.js startSession)
+  // app id -> { browser, who }: the private pipe of an app Morse opened and
+  // then disconnected from. The app has no debugging port, so this is the
+  // only way back in without restarting it: Connect uses it. Closed when
+  // Morse quits (the app keeps running) or found closed when the app quit.
+  const held = new Map();
+  const heldOpen = id => { const h = held.get(id); if (h && h.browser.closed) held.delete(id); return held.has(id); };
   const pending = new Map(); // app id -> "opening" | "disconnecting"
   const icons = new Map();   // app id -> data URL or null
   let found = null, foundAt = 0;
@@ -132,6 +138,7 @@ export function createService({
       const port = p.map(x => d.debugPortOf(x.cmd)).find(Boolean) || null;
       const state = pending.get(a.id)
         || (s ? (s.state === "attached" ? "connected" : s.state === "waiting" ? "waiting" : "connecting")
+          : heldOpen(a.id) ? "open-connectable"
           : p.length ? (port ? "open-connectable" : "open") : "closed");
       rows.push({
         id: a.id, name: a.name, version: (a.version || "").split(".").slice(0, 3).join("."), why: a.why, canAttach: a.canAttach,
@@ -162,14 +169,26 @@ export function createService({
     pending.set(id, "opening");
     changed();
     try {
-      const ready = await d.connectApp(app, { extra: argsFor(await loadSettings(), id), ask: answer ? async () => answer : null, say: line => log(`${app.name}: ${plain(line)}`) });
+      // Connect again over the pipe Morse kept from an earlier Disconnect;
+      // otherwise open (or find) the app.
+      const ready = heldOpen(id) ? { port: null, verify: null, ...held.get(id) }
+        : await d.connectApp(app, { extra: argsFor(await loadSettings(), id), ask: answer ? async () => answer : null, say: line => log(`${app.name}: ${plain(line)}`) });
+      held.delete(id);
       const cfg = await d.loadConfig();
+      // ready.browser: the app's private pipe (Morse started it). Disconnect
+      // keeps it (keep: true) for Connect; when Morse quits, its ends close
+      // and the app keeps running without mods.
       const s = d.startSession({
-        port: ready.port, app, settings: d.settingsFromConfig(cfg), verify: ready.verify, who: ready.who,
-        log: line => log(`${app.name}: ${plain(line).trim()}`), onChange: changed,
+        port: ready.port, browser: ready.browser, app, settings: d.settingsFromConfig(cfg), verify: ready.verify, who: ready.who,
+        log: line => log(`${app.name}: ${plain(line).trim()}`), onChange: changed, keep: true,
       });
       own.set(id, s);
-      s.done.catch(e => log(`${app.name}: the connection ended with an error: ${e?.stack || e}`)).finally(() => { if (own.get(id) === s) own.delete(id); changed(); });
+      s.done.catch(e => log(`${app.name}: the connection ended with an error: ${e?.stack || e}`)).finally(() => {
+        if (own.get(id) === s) own.delete(id);
+        const b = s.connector?.browser;
+        if (b?.kind === "pipe" && !b.closed) { if (quitting) b.close(); else held.set(id, { browser: b, who: ready.who }); }
+        changed();
+      });
       await s.flushed;
       // Until the first window is connected, the row says "Opening".
       const end = now() + 15000;
@@ -441,10 +460,18 @@ export function createService({
   }
 
   // On quit: every app this window connected is disconnected (its mods come
-  // off and it keeps running), and the helper stops.
+  // off and it keeps running), every pipe Morse holds is let go (the apps
+  // hold their own copy of the pipe's input, so they don't quit), and the
+  // helper stops.
+  let quitting = false;
   async function shutdown() {
+    quitting = true;
+    const pipes = [...own.values()].map(s => s.connector?.browser).filter(b => b?.kind === "pipe");
     await Promise.all([...own.values()].map(s => s.stop().catch(() => {})));
     own.clear();
+    pipes.push(...[...held.values()].map(h => h.browser));
+    held.clear();
+    await Promise.all(pipes.map(b => Promise.resolve(b.close()).catch(() => {})));
     await stopHelper();
   }
 

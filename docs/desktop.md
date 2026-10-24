@@ -92,7 +92,15 @@ morse stop slack    # disconnect; the app keeps running, your changes come off u
 
 Pressing Ctrl+C in the terminal where `morse launch` runs does the same as
 `morse stop`. Quitting the app also ends `morse launch`. Add `--watch` to keep
-waiting and connect again when the app comes back.
+waiting: run `morse launch <app>` again and the waiting Morse opens the app and
+connects.
+
+Morse opens most apps on a private connection that only it can use (see
+[What Morse does to the app](#what-morse-does-to-the-app)). That connection
+ends when Morse disconnects, so connecting to the same app again later means
+opening it again: `morse launch` asks first, as for any app that is already
+open. In Morse Desktop, **Connect** after **Disconnect** works without a
+restart, for as long as Morse Desktop stays open.
 
 | | |
 |---|---|
@@ -125,10 +133,19 @@ morse attach --port 9222 --app Slack
 
 ## What Morse does to the app
 
-- **It restarts the app with one extra switch**, `--remote-debugging-port`,
-  which every Chromium-based app understands. The port only listens on this
-  computer. Morse checks that, and checks that what answers is the app it
-  started.
+- **It restarts the app with one extra switch.** For Electron apps that is
+  `--remote-debugging-pipe`: the app talks to Morse over a private connection
+  that Morse hands it when it starts, with no port that other programs could
+  use. Tried on VSCodium, Obsidian, Joplin and every Electron release from 10
+  on, on Linux; on a Mac it works the same way but hasn't been tried yet.
+- **A debugging port only where the private connection can't be used:**
+  Windows (not tried yet), browsers and other Chromium-based apps, apps that
+  start through a launcher (Squirrel's `Update.exe`, flatpak, snap), Electron 9
+  and older, `--port`, `MORSE_PIPE=0`, and `morse attach`. The switch is then
+  `--remote-debugging-port`, which every Chromium-based app understands. The
+  port only listens on this computer. Morse checks that, and checks that what
+  answers is the app it started. While the port is open, other programs on
+  this computer can connect to the app too.
 - **It never changes the app's files.** Signed apps stay signed, apps that
   check their own files keep passing that check, and app updates don't undo
   anything.
@@ -138,7 +155,8 @@ morse attach --port 9222 --app Slack
   each window. Your changes run in the page so they can work with it, but the
   page can't reach Morse or your model.
 - When you stop Morse, it takes its bar and your changes off every open
-  window. The app keeps running. Its debugging port closes when you quit it.
+  window. The app keeps running, also when Morse quits or crashes. A debugging
+  port, where one was used, closes when you quit the app.
 
 ## Changes to what an app does
 

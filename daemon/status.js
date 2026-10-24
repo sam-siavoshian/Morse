@@ -2,7 +2,7 @@
 // process keeps a small file in ~/.morse/sessions/<app>.json up to date;
 // `morse status` reads them and `morse stop <app>` asks one to detach.
 
-import { promises as fs, existsSync, rmSync } from "node:fs";
+import { promises as fs, existsSync, rmSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { HOME, modsFor, renameOver } from "./store.js";
 import { describeTarget } from "./targets.js";
@@ -12,6 +12,7 @@ import { paint, shown } from "./colors.js";
 const DIR = () => path.join(HOME, "sessions");
 const file = id => path.join(DIR(), `${String(id).replace(/[^a-z0-9_-]/gi, "")}.json`);
 const stopFile = id => file(id).replace(/\.json$/, ".stop");
+const openFile = id => file(id).replace(/\.json$/, ".open");
 
 export const isAlive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === "EPERM"; } };
 
@@ -23,7 +24,7 @@ export async function writeSession(s) {
 }
 
 export function removeSession(id) {
-  for (const f of [file(id), stopFile(id)]) { try { rmSync(f, { force: true }); } catch {} }
+  for (const f of [file(id), stopFile(id), openFile(id)]) { try { rmSync(f, { force: true }); } catch {} }
 }
 
 // Sessions whose Morse process is still running. Leftovers from a crash are removed.
@@ -42,13 +43,30 @@ export async function readSessions() {
 
 export function stopRequested(id) { return existsSync(stopFile(id)); }
 
+// `morse launch <app>` while a session on the private pipe waits for that app
+// (--watch): only the waiting Morse can open it on a pipe of its own, so the
+// second `morse launch` asks it to. { restart, extra } come along.
+export async function requestOpen(id, req = {}) {
+  await fs.mkdir(DIR(), { recursive: true });
+  await fs.writeFile(openFile(id), JSON.stringify({ restart: !!req.restart, extra: Array.isArray(req.extra) ? req.extra.map(String) : [] }));
+}
+// The request, once (the file is removed), or null.
+export function takeOpenRequest(id) {
+  if (!existsSync(openFile(id))) return null;
+  let req = {};
+  try { req = JSON.parse(readFileSync(openFile(id), "utf8")) || {}; } catch {}
+  try { rmSync(openFile(id), { force: true }); } catch {}
+  return { restart: req.restart === true, extra: Array.isArray(req.extra) ? req.extra.map(String) : [] };
+}
+
 // Keeps the session file in step with a Connector.
 export function publishSession(connector, info) {
   let timer = null, writing = Promise.resolve(), closed = false;
   const snapshot = () => ({
     ...info,
     pid: process.pid,
-    port: connector.port,
+    port: connector.port,          // null on the private pipe
+    transport: connector.transport, // "pipe" or "port"
     state: connector.state,
     watch: !!connector.watch,
     windows: [...connector.windows.values()].map(w => ({
@@ -115,7 +133,7 @@ export function formatStatus(sessions) {
   if (!sessions.length) return `Morse isn't connected to any app. Start one with ${C.b("morse launch <app>")} (see ${C.b("morse apps")}).`;
   const out = [];
   for (const s of sessions) {
-    const where = `port ${s.port} ${C.d("(this computer only)")}`;
+    const where = s.port ? `port ${s.port} ${C.d("(this computer only)")}` : `private pipe ${C.d("(no debugging port)")}`;
     const state = s.state === "attached" ? C.g("● connected") : s.state === "waiting" ? C.d(`○ waiting for ${s.name} to open again`) : C.d(`○ ${s.state}`);
     out.push(`${C.b(s.name)}  ${state} · ${where}${s.started ? C.d(` · ${ago(s.started)}`) : ""}`);
     if (s.browser) out.push(C.d(`  ${String(s.browser).replace("/", " ")}${s.electron ? ` · Electron ${s.electron}` : ""}${s.watch ? " · --watch" : ""}`));
