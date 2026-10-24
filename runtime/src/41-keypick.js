@@ -46,16 +46,14 @@ const KeyPick = (() => {
     try { el.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch {}
     boxTo(el, hl, describe(el));
     placeBar(el.getBoundingClientRect());
-    const where = K.wider.length ? "bigger part" : `${K.i + 1} of ${K.list.length}`;
-    announce(first
-      ? `Choose with keys. ${describe(el)}, ${where}. Up and down arrows move, left arrow picks a bigger part, Enter chooses it, Escape stops.`
-      : `${describe(el)}, ${where}`);
+    const where = K.wider.length ? t("kp.bigger") : t("kp.nOf", { i: K.i + 1, n: K.list.length });
+    announce(first ? t("kp.first", { what: describe(el), where }) : `${describe(el)}, ${where}`);
   }
 
   function start() {
     if (!S.open || S.phase !== "idle") return;
     K.list = collect();
-    if (!K.list.length) { note(`Nothing on this page to choose with keys · just describe the change`); return; }
+    if (!K.list.length) { note(t("kp.nothing")); return; }
     hideMenu();
     if (paneKind) showPane("");
     // From what's chosen now, or the top of the page.
@@ -66,7 +64,7 @@ const KeyPick = (() => {
     K.wider = [];
     K.i = Math.max(0, from);
     input.focus({ preventScroll: true });
-    note(`<b>Choose with keys</b> · <kbd>↑</kbd> <kbd>↓</kbd> move · <kbd>←</kbd> bigger · <kbd>Enter</kbd> choose · <kbd>Esc</kbd> stop`, 0);
+    note(t("kp.hint"), 0);
     show(K.list[K.i], { first: true });
   }
   function stop({ quiet = false } = {}) {
@@ -97,7 +95,7 @@ const KeyPick = (() => {
       const q = p.getBoundingClientRect();
       if (q.width * q.height > r.width * r.height + 4 && shown(p)) { K.wider.push(K.el); return show(p); }
     }
-    announce("This is the biggest part");
+    announce(t("kp.biggest"));
   }
   function smaller() {
     if (K.wider.length) return show(K.wider.pop());

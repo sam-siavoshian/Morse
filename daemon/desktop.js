@@ -13,6 +13,7 @@ import {
 import { pickPort, portFree, portAnswers, reachableFrom, identify, checkIdentity } from "./ports.js";
 import { readSessions, publishSession, stopRequested, stopSession, withMods, formatStatus } from "./status.js";
 import { settingsLabel } from "../core/providers.js";
+import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
 import { paint } from "./colors.js";
 
 const { g: G, d: D, b: B } = paint;
@@ -47,14 +48,14 @@ export async function stopCommand(f) {
   const query = f._.join(" ") || (f.all ? "all" : "");
   const r = await stopSession(query);
   if (!r.stopped.length) { console.log(r.message); return; }
-  for (const s of r.stopped) console.log(`Disconnected from ${B(s.name)}. It keeps running without Morse. Its debugging port closes when you quit it.`);
+  for (const s of r.stopped) console.log(t("launch.stopped", { name: B(s.name) }));
 }
 
 export async function launchCommand(f, { settingsFrom, logo }) {
   const ctx = hostContext();
   const app = resolveApp(f._.join(" "), { ctx });
   if (f.name) Object.assign(app, { id: slug(f.name), name: String(f.name), aliases: [...(app.aliases || []), app.name] });
-  if (app.canAttach === false) throw said(`${app.name} is a ${app.why}, so Morse can't connect to it.`);
+  if (app.canAttach === false) throw said(t("launch.cant", { name: app.name, why: app.why }));
   const extra = f.rest || [];
   const pref = (await loadAppPrefs())[app.id] || {};
   const settings = await settingsFrom(f);
@@ -74,18 +75,18 @@ export async function launchCommand(f, { settingsFrom, logo }) {
   const existing = (await readSessions()).find(s => s.id === app.id);
   if (existing?.state === "waiting") {
     launchApp(app, existing.port, extra);
-    console.log(`\n  Opening ${app.name}. Morse is already waiting for it on port ${existing.port} and will connect.`);
+    console.log(`\n  ${t("launch.waiting", { name: app.name, port: existing.port })}`);
     return;
   }
   if (existing) {
-    console.log(`\n  Morse is already connected to ${app.name} on port ${existing.port}. Run ${B("morse status")} to see its windows, or ${B(`morse stop ${app.id}`)} to disconnect.`);
+    console.log(`\n  ${t("launch.already", { name: app.name, port: existing.port, status: B("morse status"), stop: B(`morse stop ${app.id}`) })}`);
     return;
   }
 
   const ready = await connectApp(app, {
     extra, pref, port: f.port, restart: f.restart === true, noRestart: !!f["no-restart"],
     ask: process.stdin.isTTY && process.stdout.isTTY
-      ? () => ask(`\n  ${app.name} is already open. Morse can only connect to an app when it starts.\n  Quit it and open it again with Morse? ${D("[y]es  [n]o  [a]lways for " + app.name)} `)
+      ? () => ask(`\n  ${t("launch.isOpen", { name: app.name })}\n  ${t("launch.restartAsk")} ${D(t("launch.restartKeys", { name: app.name }))} `)
       : null,
     say: line => console.log(`  ${line}`),
   });
@@ -114,7 +115,7 @@ export async function connectApp(app, { extra = [], pref = null, port: wantPort 
     const open = running.map(p => ({ pid: p.pid, port: debugPortOf(p.cmd) })).find(p => p.port);
     if (open && await portAnswers(open.port)) {
       const v = checkIdentity(await identify(open.port), app, running.map(p => p.pid));
-      if (v.ok) { port = open.port; pids = running.map(p => p.pid); say(`${app.name} is already open with a debugging port. Connecting to it.`); }
+      if (v.ok) { port = open.port; pids = running.map(p => p.pid); say(t("launch.openWithPort", { name: app.name })); }
     }
     if (!port) {
       let restart = restartFlag || (pref.restart === true && !noRestart);
@@ -123,9 +124,9 @@ export async function connectApp(app, { extra = [], pref = null, port: wantPort 
         if (a === "a") await saveAppPref(app.id, { restart: true });
         restart = a === "y" || a === "a";
       }
-      if (!restart) throw Object.assign(said(`${app.name} is already open. Morse can only connect to an app when it starts. Run ${B(`morse launch ${app.id} --restart`)} to quit it and open it again. Morse remembers that choice.`), { running: true });
-      say(`quitting ${app.name}…`);
-      if (!await quitApp(app, { procs, extraArgs: extra })) throw said(`${app.name} didn't quit. Close it yourself, then run this again.`);
+      if (!restart) throw Object.assign(said(`${t("launch.isOpen", { name: app.name })} ${t("launch.restartHow", { cmd: B(`morse launch ${app.id} --restart`) })}`), { running: true });
+      say(t("launch.quitting", { name: app.name }));
+      if (!await quitApp(app, { procs, extraArgs: extra })) throw said(t("launch.didntQuit", { name: app.name }));
     }
   }
   if (restartFlag && !pref.restart) await saveAppPref(app.id, { restart: true });
@@ -188,8 +189,8 @@ async function runSession({ port, app, id = app.id, name = app.name, settings, w
     if (ending) return;
     ending = true;
     await session.stop();
-    if (how === "stop") console.log(`Disconnected from ${name}.`);
-    else console.log(`\nDisconnected from ${name}. It keeps running without Morse.`);
+    if (how === "stop") console.log(t("launch.disconnected", { name }));
+    else console.log(`\n${t("launch.disconnectedRunning", { name })}`);
     process.exit(0);
   };
   session.onStopRequested = () => finish("stop");

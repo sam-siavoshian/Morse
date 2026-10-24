@@ -89,7 +89,7 @@ function coveredUI() {
   Review.covers = Review.covers.filter(t => now - t < 3000).concat(now);
   if (modal.open && Review.covers.length > 5) {
     modal.hidden = true;
-    return toast("This page kept covering Morse's review, so Morse closed it. Nothing was installed.");
+    return toast(t("modal.covered"));
   }
   if (Review.covers.length > 10) return; // stop taking turns with a page that won't stop
   if (modal.open) showReview(); else TopLayer.raise();
@@ -109,52 +109,52 @@ listen("toggle", pageTopLayer, true);
 listen("fullscreenchange", pageTopLayer, true);
 // Editing the code by hand makes a new version, like a refine (⌘Z or the
 // panel's History bring the old one back).
-const HAND_EDIT = "Edited the code by hand";
+const HAND_EDIT = () => t("code.handEdit");
 function showCode(m) {
   if (!m) return;
   const isDraft = m === S.draft && S.phase === "result";
   const saved = !isDraft && S.mods.find(x => x.id === m.id);
   openModal(`
     <header><b>${esc(m.title)}</b><small>“${esc(m.refined || m.prompt || m.request)}”</small><button data-a="close">×</button></header>
-    <label for="m-code-css">Style <span class="dim">CSS</span></label><textarea class="code" id="m-code-css" data-k="css" spellcheck="false">${esc(m.css)}</textarea>
-    <label for="m-code-js">Script <span class="dim">JavaScript, can use the <code>morse</code> helpers</span></label><textarea class="code" id="m-code-js" data-k="js" spellcheck="false">${esc(m.js)}</textarea>
-    <footer><button data-a="close">Cancel</button><button class="primary" data-a="save">${saved ? "Save and run" : "Run"}</button></footer>`);
+    <label for="m-code-css">${t("code.style")} <span class="dim">CSS</span></label><textarea class="code" id="m-code-css" data-k="css" spellcheck="false">${esc(m.css)}</textarea>
+    <label for="m-code-js">${t("code.script")} <span class="dim">${t("code.scriptHelp")}</span></label><textarea class="code" id="m-code-js" data-k="js" spellcheck="false">${esc(m.js)}</textarea>
+    <footer><button data-a="close">${t("btn.cancel")}</button><button class="primary" data-a="save">${saved ? t("code.saveRun") : t("code.run")}</button></footer>`);
   modal.querySelector("[data-a=save]").onclick = async () => {
     const css = modal.querySelector("[data-k=css]").value, js = modal.querySelector("[data-k=js]").value;
     modal.hidden = true;
     if (css === m.css && js === m.js) return;
     if (isDraft) {
-      S.draft = Object.assign(reviseMod(m, { prompt: HAND_EDIT, css, js }), { saved: null, saving: null });
+      S.draft = Object.assign(reviseMod(m, { prompt: HAND_EDIT(), css, js }), { saved: null, saving: null });
       await showVersion(m.id, S.draft);
-      showResult(S.draft, { note: `Your edit · version ${versionsOf(S.draft).length + 1}` });
+      showResult(S.draft, { note: t("code.yourEdit", { n: versionsOf(S.draft).length + 1 }) });
       return;
     }
-    const next = saved ? reviseMod(m, { prompt: HAND_EDIT, css, js }) : { ...m, css, js };
+    const next = saved ? reviseMod(m, { prompt: HAND_EDIT(), css, js }) : { ...m, css, js };
     Object.assign(m, next);
     if (saved) await call("mods.save", { mod: m });
     await removeMod(m.id);
     await applyMod({ ...m, title: m.title || "draft" });
     if (!panel.hidden) renderPanel();
-    toast(saved ? `Code updated. This is version ${versionsOf(m).length + 1}.` : "Code updated");
+    toast(saved ? t("code.updatedVersion", { n: versionsOf(m).length + 1 }) : t("code.updated"));
   };
 }
 async function showShare(m) {
   const card = await renderCard(m);
   const link = await call("share", { mod: m, kind: "link" }).catch(() => null);
   openModal(`
-    <header><b>Share “${esc(m.title)}”</b><small>Anyone with Morse, or with Tampermonkey, can install it.</small><button data-a="close">×</button></header>
-    ${card ? `<img class="cardimg" src="${card}" alt="Before and after">` : ""}
-    ${link ? `<div class="link"><input readonly value="${esc(link.link)}" aria-label="Share link"><button data-a="copy" class="primary">Copy link</button></div>` : ""}
-    <div class="exports" role="group" aria-label="Download or post">
-      ${card ? `<button data-a="png">Download image</button>` : ""}
-      ${S.draft?.id === m.id && S.draft.clip ? `<button data-a="clip">Download clip (${esc(S.draft.clip.kind)})</button>` : ""}
-      <button data-a="json">Download mod file</button>
-      <button data-a="user">Download for Tampermonkey</button>
-      <button data-a="tweet">Post on X…</button>
+    <header><b>${t("share.title", { title: esc(m.title) })}</b><small>${t("share.sub")}</small><button data-a="close">×</button></header>
+    ${card ? `<img class="cardimg" src="${card}" alt="${esc(t("share.cardAlt"))}">` : ""}
+    ${link ? `<div class="link"><input readonly value="${esc(link.link)}" aria-label="${esc(t("share.linkLabel"))}"><button data-a="copy" class="primary">${t("btn.copyLink")}</button></div>` : ""}
+    <div class="exports" role="group" aria-label="${esc(t("share.exports"))}">
+      ${card ? `<button data-a="png">${t("share.image")}</button>` : ""}
+      ${S.draft?.id === m.id && S.draft.clip ? `<button data-a="clip">${t("share.clip", { kind: esc(S.draft.clip.kind) })}</button>` : ""}
+      <button data-a="json">${t("share.file")}</button>
+      <button data-a="user">${t("install.tampermonkey")}</button>
+      <button data-a="tweet">${t("share.x")}</button>
       ${galleryShareHtml(m) /* gallery hook: Submit to the gallery (68-gallery.js) */}
     </div>
     <p class="saved dim"></p>`);
-  const done = r => { const t = r?.path ? `Saved to ${r.path}` : "Downloaded"; modal.querySelector(".saved").textContent = t; announce(t, { again: true }); };
+  const done = r => { const said = r?.path ? t("share.savedTo", { path: r.path }) : t("share.downloaded"); modal.querySelector(".saved").textContent = said; announce(said, { again: true }); };
   const slug = m.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "mod";
   modal.querySelector(".exports").onclick = async e => {
     const a = e.target.closest("button")?.dataset.a;
@@ -163,7 +163,7 @@ async function showShare(m) {
     if (a === "user") done(await call("share", { mod: m, kind: "userscript" }));
     if (a === "clip") done(S.draft.clip);
     if (a === "tweet") {
-      const text = `I changed ${S.appName || location.host} by describing it: “${m.prompt}”\n\nMade with Morse`;
+      const text = t("share.post", { where: S.appName || location.host, prompt: m.prompt });
       call("open", { url: `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link?.link || "")}` });
     }
   };
@@ -171,15 +171,15 @@ async function showShare(m) {
   if (copy) copy.onclick = async () => {
     const f = modal.querySelector(".link input");
     try { await navigator.clipboard.writeText(f.value); } catch { f.select(); document.execCommand?.("copy"); }
-    copy.textContent = "Copied";
-    announce("Link copied", { again: true });
+    copy.textContent = t("btn.copied");
+    announce(t("share.linkCopied"), { again: true });
   };
 }
 function showImport() {
   openModal(`
-    <header><b>Install a shared mod</b><small>Paste a share link, the address of a pack, or the text of a mod file.</small><button data-a="close">×</button></header>
-    <textarea class="code" data-k="src" spellcheck="false" placeholder="https://…/install.html#m=…" aria-label="Share link, pack address or mod file"></textarea>
-    <footer><button data-a="close">Cancel</button><button class="primary" data-a="go">Next</button></footer>`);
+    <header><b>${t("import.title")}</b><small>${t("import.sub")}</small><button data-a="close">×</button></header>
+    <textarea class="code" data-k="src" spellcheck="false" placeholder="https://…/install.html#m=…" aria-label="${esc(t("import.label"))}"></textarea>
+    <footer><button data-a="close">${t("btn.cancel")}</button><button class="primary" data-a="go">${t("import.next")}</button></footer>`);
   // user control: say what it does before anything is installed (63-control.js)
   modal.querySelector("[data-a=go]").onclick = () => reviewImport(modal.querySelector("[data-k=src]").value);
 }
@@ -236,8 +236,8 @@ async function renderCard(m) {
     g.fillStyle = accent; g.font = "700 15px ui-monospace, Menlo, monospace";
     g.fillText(label, P.x + 2, P.y - 12);
   };
-  draw(b, panels[0], "BEFORE", "#a0a0a8");
-  draw(a, panels[1], "AFTER", "#f4f4f5", S.after.focus);
+  draw(b, panels[0], t("card.before"), "#a0a0a8");
+  draw(a, panels[1], t("card.after"), "#f4f4f5", S.after.focus);
   g.fillStyle = "#f4f4f5"; g.font = "600 34px ui-sans-serif, system-ui, sans-serif";
   g.font = "600 34px ui-sans-serif, system-ui, sans-serif";
   const oneLine = g.measureText(`“${m.prompt}”`).width <= W - 80;
@@ -253,7 +253,7 @@ async function renderCard(m) {
     roundRect(g, lx + (i % 4) * 7, ly + Math.floor(i / 4) * 7, 5.5, 5.5, 1.5); g.fill();
   }
   g.fillStyle = "#f4f4f5"; g.font = "600 22px ui-sans-serif, system-ui, sans-serif"; g.fillText("morse", lx + 34, ly + 21);
-  g.fillStyle = "#a0a0a8"; g.font = "500 17px ui-sans-serif, system-ui, sans-serif"; g.fillText("change any app in your own words", 40, ly + 20);
+  g.fillStyle = "#a0a0a8"; g.font = "500 17px ui-sans-serif, system-ui, sans-serif"; g.fillText(t("card.tagline"), 40, ly + 20);
   return c.toDataURL("image/png");
 }
 function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
