@@ -113,6 +113,7 @@ export function hiddenBy({ css = "", js = "" } = {}) {
 //   page later is not the page the mod was made for).
 // null when nothing the mod relies on is on the page now.
 export function makeFingerprint(mod, counts, { url = "", size = 0, at = new Date().toISOString(), transient = [], tops = null, fold = 0, signin = false } = {}) {
+  if (mod?.kind === "style") return null; // your-style hook: Your style is generic; a site without links or videos is no sign it broke
   const skip = new Set([...transient, ...hiddenBy(mod)]);
   const sels = selectorsIn(mod)
     .filter(s => s.length <= 200 && !skip.has(s) && Number(counts?.[s]) > 0)

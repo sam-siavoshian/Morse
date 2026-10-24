@@ -23,7 +23,8 @@ import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putCli
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
 import { runMorse } from "../core/engine.js";
-import { settingsLabel } from "./models.js"; // also registers the Claude Code / Codex providers
+import { settingsLabel, currentSettings } from "./models.js"; // also registers the Claude Code / Codex providers
+import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
 import { Generations } from "../core/cancel.js";
@@ -33,6 +34,8 @@ import { HOME, listMods } from "./store.js";
 import { classifyTarget, describeTarget } from "./targets.js";
 import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
 import { GALLERY_REQUESTS, handleGallery } from "./gallery.js"; // gallery hook: Mods for this site
+import { Style, onStyleChange } from "./style.js"; // your-style hook: one style on every site and app
+import { STYLE_ID } from "../core/style.js"; // your-style hook
 import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
 
 import { bundleRuntime } from "../runtime/bundle.js";
@@ -100,6 +103,7 @@ export class Connector {
     this.running = true;
     this.watchMods();
     this.controlWatcher ||= watchControl(this); // user control: tell windows when Morse is paused or resumed
+    this.styleWatch ||= onStyleChange(() => this.modsChanged()); // your-style hook: a style change reaches every window
     let misses = 0;
     while (this.running) {
       let list = null;
@@ -133,6 +137,7 @@ export class Connector {
     this.running = false;
     this.modWatcher?.close();
     this.controlWatcher?.close(); this.controlWatcher = null;
+    this.styleWatch?.(); this.styleWatch = null; // your-style hook
     return this.state;
   }
 
@@ -257,6 +262,10 @@ export class Connector {
     if (w.detaching || this.state === "stopped") return; // stopped meanwhile: nothing was connected
     readTitle();
     this.log(`  ✓ connected to ${title}${kind === "window" ? "" : ` (${kind})`}`);
+    if (!this.hinted && kind === "window") { // first-run hook: say what to do next, once
+      this.hinted = true;
+      configuredHotkeys().then(k => k.open && this.log(`\n  In ${this.app?.name || title || "the app"}, press ${k.open}, point at something and say what to change.\n`), () => {});
+    }
     this.changed();
   }
 
@@ -313,12 +322,21 @@ export class Connector {
 
   // Detach from every window: stop injecting into new pages, take the bar and
   // the mods off the open ones, close the sessions. The app keeps running.
+  // first-run hook: `morse launch` started before any model was set up. Once
+  // `morse setup` has run (the bar says to), pick it up without a relaunch.
+  async freshSettings() {
+    if (this.settings?.provider && this.settings.provider !== "none") return this.settings;
+    try { const s = await currentSettings(); if (s.provider !== "none") this.settings = s; } catch {}
+    return this.settings;
+  }
+
   async stop() {
     this.running = false;
     this.state = "stopped";
     this.modWatcher?.close();
     this.controlWatcher?.close(); this.controlWatcher = null;
-    const ids = (await listMods().catch(() => [])).map(m => m.id);
+    this.styleWatch?.(); this.styleWatch = null; // your-style hook
+    const ids = (await listMods().catch(() => [])).map(m => m.id).concat(STYLE_ID); // your-style hook: its code goes too
     await Promise.all([...this.windows.values()].map(async w => {
       w.detaching = true;
       const s = w.session;
@@ -420,8 +438,9 @@ export class Connector {
     // App-wide in desktop apps, per site in a browser.
     const historyScope = async () => app || hostOf((await here()).url);
     if (CONTROL_REQUESTS.has(msg.type)) return handleControl({ ...msg, tab: `frame:${caller.frameId}` }, await here()); // user control (control.js); per window, not the page's own tab id
-    if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
+    if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: await this.freshSettings() }); // onboarding hook
     if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, await here()); // gallery hook: Mods for this site
+    if (Style.owns(msg)) { const r = await Style.handle(msg, await here()); if (msg.type !== "style.get" && msg.type !== "style.preview") this.modsChanged(s); return r; } // your-style hook
     switch (msg.type) {
       case "hello":
         this.grantMic(s, (await here()).url);
@@ -429,7 +448,7 @@ export class Connector {
           settings: await loadPrefs(), voice: await cachedVoiceStatus(),
           debug: process.env.MORSE_DEBUG === "1" || undefined }; // status for tests (97-boot.js debugStatus)
       case "mods.list":
-        return modsFor(await here());
+        return Style.list(await modsFor(await here()), await here()); // your-style hook: the style first
       case "mods.save": {
         const where = await here();
         if (msg.draft) {
@@ -470,6 +489,7 @@ export class Connector {
         if (caller.main == null) return null;
         return (await s.send("Runtime.evaluate", { expression: `globalThis.morse?.__stats?.(${JSON.stringify(msg.modId)}) ?? null`, contextId: caller.main, returnByValue: true })).result?.value ?? null;
       case "generate": {
+        if (!this.settings?.provider || this.settings.provider === "none") await this.freshSettings(); // first-run hook
         if (!this.settings?.provider || this.settings.provider === "none")
           throw new Error("No model is connected. Run morse setup in a terminal to choose one.");
         const t0 = Date.now();

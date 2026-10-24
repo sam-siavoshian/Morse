@@ -6,7 +6,7 @@ import { resolveApp } from "./apps.js";
 import { inspectFuses, formatFuses } from "./fuses.js";
 import { appsCommand, launchCommand, attachCommand, statusCommand, stopCommand } from "./desktop.js";
 import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH } from "./store.js";
-import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask } from "./models.js";
+import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask, migrateLegacy } from "./models.js";
 import { detectHarnesses, validModel } from "./harness.js";
 import { createBridge, startPairing, VERSION } from "./bridge.js";
 import { streamChat, HELPER_PORT as DEFAULT_HELPER_PORT } from "../core/providers.js";
@@ -54,6 +54,7 @@ async function configure(f) {
   if (f.provider && f.provider !== "auto") assertProvider(f.provider);
   if (typeof f.model === "string" && !validModel(f.model)) throw new Error(`"${f.model}" isn't a model name Morse can use. Check the spelling.`);
   await updateConfig(cfg => {
+    migrateLegacy(cfg); // first-run hook: keep what an older morse setup chose
     if (f.provider === "auto") delete cfg.provider;
     else if (typeof f.provider === "string") cfg.provider = f.provider;
     for (const [flag, k] of [["anthropic-key", "anthropic"], ["openai-key", "openai"]]) {
@@ -218,7 +219,7 @@ async function main() {
         throw new Error(e.code === "EADDRINUSE" ? `Port ${port} is already in use, probably by a Morse helper that is already running. Run morse pair to get a new code for it.` : e.message);
       });
       const s = await currentSettings();
-      const { code } = await startPairing();
+      const { code } = await startPairing(undefined, typeof f.pair === "string" ? f.pair.trim().toUpperCase() : ""); // first-run hook: --pair <code from the welcome page>
       console.log(LOGO + "\n");
       console.log(`  helper  http://127.0.0.1:${port}  ${D("v" + VERSION)}`);
       console.log(`  model   ${s.provider === "none" ? `${WARN("none")} ${D("(run morse setup to choose one)")}` : settingsLabel(s)}`);
