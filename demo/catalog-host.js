@@ -201,6 +201,11 @@
         if (m.type === "onboarding.open") return reply(null);
       }
       if (packs && m.type.startsWith("pack.")) { const ph = await packs; try { return reply(await ph.handle(m)); } catch (e) { return fail(e.message); } }
+      if (m.type === "i18n.words") { // the overlay carries English only: the words of another language, from core/locales/ (as the extension and helper send them)
+        const code = String(m.lang || "");
+        if (code === "en" || !/^[a-z]{2}(-[A-Z]{2})?$/.test(code)) return reply(null);
+        try { return reply((await import(`/core/locales/${code}.js`)).default); } catch { return reply(null); }
+      }
       if (q.get("waiting") && m.type === "exec") return reply({ waiting: "userScripts" });
       if (m.type === "stats" && C.slow?.[m.modId]) return reply({ watches: [], paused: C.slow[m.modId] });
       switch (m.type) {
