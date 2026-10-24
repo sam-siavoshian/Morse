@@ -46,6 +46,15 @@ sweeps away and you see the result.
 If the change doesn't work the first time, Morse shows the model what went
 wrong and it tries once more. The bar then says “needed a second try”.
 
+New buttons, panels and restyles should look like they came with the app.
+The model sees the app's own colors, fonts, icons and a few of its buttons
+and lists, and is asked to reuse them, in light and dark mode. Then, with
+**Polish changes** on, Morse looks at what it added or restyled once more:
+the bar says “Checking that it fits the app”, and anything that looks out of
+place is fixed before you see the result. This takes a few seconds more. Turn
+it off in Settings, under Changes. Small changes, like hiding something or
+making text bigger, skip it.
+
 Press **Esc** at any time to stop. Nothing is left behind.
 
 | | |

@@ -271,6 +271,7 @@ function fixesDemo(request) {
 
 export function demoResponse(messages) {
   const pic = messages.find(m => Array.isArray(m.content) && m.content.some(b => b?.type === "image"));
+  if (pic && pic.content.some(b => /Does it look like it shipped with the app/.test(b?.text || ""))) return "OK"; // polish (core/polish.js): the canned changes look fine
   if (pic) return describeDemo(pic.content.filter(b => b.type === "text").map(b => b.text).join("\n"));
   // The page context is the last user turn that carries a request (earlier
   // Ask turns come before it; a "That failed" retry comes after).

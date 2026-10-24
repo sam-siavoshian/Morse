@@ -33,7 +33,13 @@ Sent to the model you chose:
 - the HTML of what you pointed at, and the page's layout, headings and button
   labels around it. This can include text that is on the screen, such as
   message previews or names.
-- the CSS rules that style what you pointed at
+- the CSS rules that style what you pointed at, and the app's look: its
+  colors, fonts and sizes, a few of its buttons, fields and lists near what
+  you pointed at, and which icons it uses
+- with "Polish changes" on (it is on unless you turn it off), after a change
+  that adds or restyles something: a screenshot of that part of the page or
+  window with the change applied, without Morse's own bar, so the model can
+  check the change fits the app and fix it once
 - for Refine and Fix: the code of the mod and the error it hit
 - for "Describe this picture": the picture, or a screenshot cropped to it
 - for "Show me once": the steps you did on the page while it was recording,

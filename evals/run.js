@@ -57,6 +57,7 @@ const { values: opt } = parseArgs({ options: {
   // before Enter. --typing-ms 0 measures a request with no head start.
   "typing-ms": { type: "string", default: "2500" },
   effort: { type: "string", default: "" },
+  polish: { type: "boolean", default: false }, // "Polish changes" on: one look at a change that adds or restyles something (core/polish.js)
 } });
 
 // Named groups for --sites.
@@ -99,8 +100,10 @@ const BASE = `http://127.0.0.1:${server.address().port}`;
 const CONTEXT_SRC = readFileSync(path.join(ROOT, "runtime", "src", "20-context.js"), "utf8")
   // Only the pure functions: the file's tail mounts the overlay UI.
   .split(/\nconst hostEl\b/)[0];
+// The runtime defines these before 20-context.js (01-rpc.js, 04-i18n.js).
 const INSTALL_CONTEXT = `(() => {
   const S = { app: null, target: null };
+  const live = () => true, getLanguage = () => "en";
   ${CONTEXT_SRC}
   window.__morseEval = {
     context(sel) {
@@ -112,6 +115,7 @@ const INSTALL_CONTEXT = `(() => {
     },
     timedContext(sel) { const t = performance.now(); const c = this.context(sel); return { c, ms: performance.now() - t }; }, // speed
     probe: typeof effectProbe === "function" ? effectProbe : null,
+    area: typeof shotArea === "function" ? shotArea : null, // polish: the part of the page to show the model
   };
 })()`;
 
@@ -191,6 +195,14 @@ async function runCase(c, rep, arm = arms[0]) {
         const errs = await page.evaluate(id => morse.__errors(id), modId);
         return errs.length ? { ok: false, error: errs[0].split("\n")[0] } : { ok: true };
       },
+      polish: opt.polish,
+      review: async () => {
+        await cssApplied;
+        const a = await page.evaluate(([t, id]) => window.__morseEval.area?.(t, id) ?? null, [c.target, modId]);
+        if (!a) return null;
+        const buf = await page.screenshot({ type: "jpeg", quality: 85, clip: { x: a.x, y: a.y, width: a.width, height: a.height } });
+        return { mediaType: "image/jpeg", data: buf.toString("base64") };
+      },
       probe: hasProbe ? async sels => { await cssApplied; await page.waitForTimeout(80); return page.evaluate(([t, s]) => window.__morseEval.probe(t, s), [c.target, sels]); } : undefined,
     });
     await cssApplied;
@@ -201,7 +213,7 @@ async function runCase(c, rep, arm = arms[0]) {
     rec.stages = { context: Math.round(ctxMs), contextRoundTrip: off, promptChars: rec.contextChars, spawn: tm.spawn ?? null, warm: tm.warm ?? null,
       modelReady: at(tm.modelReady), firstToken: at(tm.firstToken), firstCss: firstCssAt == null ? null : firstCssAt - tEnter,
       lastToken: at(tm.lastToken), modelDone: at(tm.modelDone), total: Date.now() - tEnter };
-    Object.assign(rec, { model: res.model || settingsLabel(settings), escalated: !!res.escalated, startedStrong: !!res.hard, routeWhy: res.routeWhy || [], attempts: res.attempts, title: res.title, css: res.css, js: res.js, engineOk: res.ok, engineError: res.error || null, repairs: res.repairs || [] });
+    Object.assign(rec, { model: res.model || settingsLabel(settings), escalated: !!res.escalated, startedStrong: !!res.hard, routeWhy: res.routeWhy || [], attempts: res.attempts, polish: res.polish || null, title: res.title, css: res.css, js: res.js, engineOk: res.ok, engineError: res.error || null, repairs: res.repairs || [] });
     await page.waitForTimeout(300);
     const verdict = await Promise.race([
       page.evaluate(`(async () => { const B = ${JSON.stringify(B)}; ${[].concat(c.check).join("\n")} })()`),
