@@ -319,16 +319,22 @@ export function whatChanged(before, after, summarize = briefSummary) {
 // left out of the link and the person attaches the downloaded file instead.
 export const SUBMIT_MAX_URL = 7500;
 
+// What goes into a public issue: the mod, not this machine's page. `target`
+// names what was pointed at with the page's own words, and `from` the page a
+// captured element came from (its full address and title).
 export function forGallery(mod) {
-  const { enabled, history, imported, gallery, refined, fp, pack, ...rest } = mod || {}; // self-heal hook: fp; packs hook: pack
+  const { enabled, history, imported, gallery, refined, fp, fixShared, target, from, pack, ...rest } = mod || {}; // self-heal hook: fp, fixShared; packs hook: pack
   return rest;
 }
 
-export function submitIssue(mod, { site = "", summary = [], repo = GALLERY_REPO } = {}) {
+// title / intro: a different title, and lines before the usual body (core/heal.js
+// fixIssue), counted in the length like everything else.
+export function submitIssue(mod, { site = "", summary = [], repo = GALLERY_REPO, title: asTitle = "", intro = [] } = {}) {
   const m = forGallery(mod);
   const where = site || m.match?.app || (m.match?.hosts || []).join(", ") || "any site";
-  const title = `Gallery: “${m.title}” for ${where}`;
+  const title = asTitle || `Gallery: “${m.title}” for ${where}`;
   const head = [
+    ...intro,
     "### What it does",
     m.prompt || m.title,
     "",

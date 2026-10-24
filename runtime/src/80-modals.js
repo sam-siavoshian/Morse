@@ -231,6 +231,10 @@ function wrap(g, text, x, y, maxW, lh, maxLines) {
   g.fillText(line, x, y);
 }
 
+// People read plain words (core/onboarding.js plainError); developers find
+// the error it stood for in the console.
+onHiddenError(raw => console.warn("[morse] details:", raw));
+
 function toast(msg) {
   toastEl.innerHTML = `${radar(12)}<span>${esc(msg)}</span>`;
   toastEl.hidden = false;
