@@ -3,6 +3,8 @@
 // is real: the reply is streamed, parsed, injected and run like model output.
 // One reply ships a deliberate bug on the first try to exercise self-repair.
 
+import { showOnceDemo } from "./showonce-demo.js"; // show-once hook
+
 const fence = (lang, body) => "```" + lang + "\n" + body.trim() + "\n```";
 const reply = (title, css, js) => `TITLE: ${title}\n${fence("css", css || "")}\n${fence("js", js || "")}\n`;
 
@@ -237,6 +239,7 @@ export function demoResponse(messages) {
   const users = messages.filter(m => m.role === "user");
   const firstUser = [...users].reverse().find(m => /^(Request: |Current code:)/m.test(m.content))?.content || users[0]?.content || "";
   if (/Captured styles \(computed, JSON\):/.test(firstUser)) return rebuild(firstUser);
+  if (/^The user just showed you a task/m.test(firstUser) && !/^Current code:/m.test(firstUser)) return showOnceDemo(firstUser); // show-once hook
   const base = readBase(firstUser); // keep iterating: refine or fix
   if (base) return refine(base);
   const request = [...firstUser.matchAll(/^Request: (.*)$/gm)].pop()?.[1] || "";

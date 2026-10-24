@@ -78,6 +78,7 @@ in the CLI and in the README.
 | **Check this page** | A quick look for common problems (pictures with no description, unnamed buttons, unlabeled fields, faint text, tiny targets, autoplay). Each kind has a **Fix it** button. | audit, scan, lint |
 | **alt text** | The description of a picture that screen readers read. "Save as alt text". | alt attribute, image label |
 | **Accessibility fixes** | The one mod per site that holds what Fix it and Describe this picture saved. | |
+| **Show me once** | Do a task by hand once so Morse can write down the steps; then say what to do with them (a button, a shortcut, every item). Each one is a **step**: "Click “Archive”". A password's value shows as "(hidden)". | record a macro, automation, workflow |
 | **capture** | Save the look of something so you can rebuild it in another app. Captured things show under "Captured" in the bar. | copy, clip, clipboard |
 | **voice** | Talking to Morse instead of typing. "Hold ⌥Space to talk." | dictation, speech input |
 | **shortcut** | A keyboard shortcut. | hotkey, keybinding (fine in developer docs) |
