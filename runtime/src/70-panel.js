@@ -80,9 +80,16 @@ async function openPanel() {
     PanelUI.back = a && a !== document.body && a !== document.documentElement && a !== hostEl ? a : null;
   }
   panel.hidden = false;
-  await syncMods().catch(() => {});
+  // Focus lands as the panel shows, on the mods known now, so the first key
+  // pressed is the panel's (not the page's); the fresh list then replaces the
+  // rows in place and renderPanel keeps focus on the same one.
+  const focusCurrent = () => focusRow(PanelUI.focus ? rows().findIndex(r => r.dataset.id === PanelUI.focus) : 0);
   renderPanel();
-  focusRow(PanelUI.focus ? rows().findIndex(r => r.dataset.id === PanelUI.focus) : 0);
+  focusCurrent();
+  await syncMods().catch(() => {});
+  if (panel.hidden) return;
+  renderPanel();
+  if (!panel.contains(root.activeElement)) focusCurrent();
   Health.recheck().catch(() => {});
 }
 panel.setAttribute("role", "dialog");
