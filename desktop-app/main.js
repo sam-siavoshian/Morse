@@ -212,7 +212,7 @@ async function setLoginItem(on) {
 // ---------------------------------------------------------------- morse:// links
 // morse://open (from Chrome's welcome page, say) starts Morse or brings its
 // window forward. A link carries nothing else: connecting Chrome goes through
-// the Morse helper and the person's Allow (daemon/pair-ask.js).
+// the Morse helper and the person's Allow (createBridge's ask, service.js askAllow).
 function handleLink(url) {
   if (isOpenLink(url)) app.whenReady().then(showWindow);
 }

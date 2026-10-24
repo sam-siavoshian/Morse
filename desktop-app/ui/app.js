@@ -255,7 +255,7 @@ function renderChrome() {
   const d = $("ask-pair");
   if (c.ask && d.dataset.id !== c.ask.id) {
     d.dataset.id = c.ask.id;
-    $("ask-pair-h").textContent = `Allow Chrome to use ${modelPhrase()}?`;
+    $("ask-pair-h").textContent = c.ask.words?.message || `Allow Chrome to use ${modelPhrase()}?`; // the helper's own words (askWords), when it has them
     $("ask-ext").textContent = `Extension ${c.ask.extension.slice(0, 12)}…`;
     if (!d.open) d.showModal();
     $("pair-yes").focus();

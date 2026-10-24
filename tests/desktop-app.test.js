@@ -76,13 +76,8 @@ function fakeDaemon(over = {}) {
     configFor: (id, { key } = {}) => (id === "api-key" ? { provider: /^sk-ant-/.test(key) ? "anthropic" : "openai", keys: { x: key } } : { provider: id }),
     saveChoice: rec("saveChoice", async (choice, m) => { cfg = { ...cfg, provider: m.provider, setup: { backend: choice } }; return cfg; }),
     checkModel: rec("checkModel", async () => ({ ok: true, ms: 1200 })),
-    createBridge: rec("createBridge", () => ({ listen: async () => 7457, close: async () => {} })),
-    // daemon/pair-ask.js: the test plays the extension through d.ask(origin).
-    pairAsks: ({ onAsk }) => {
-      const list = [];
-      d.ask = origin => { const a = { id: `ask${"x".repeat(12)}${list.length}`, origin, extension: origin.slice(19), at: Date.now() }; list.push(a); onAsk([...list]); return a.id; };
-      return { answer: rec("answerAsk", async (id, allow) => { const i = list.findIndex(a => a.id === id); if (i < 0) return false; list.splice(i, 1); onAsk([...list]); return allow; }), close() {} };
-    },
+    // createBridge's options are kept, so a test can play the helper asking (onboarding v2's ask).
+    createBridge: rec("createBridge", opts => { d.bridgeOpts = opts; return { listen: async () => 7457, close: async () => {} }; }),
     startPairing: rec("startPairing", async (_ttl, code = "NEWCDE") => { cfg = { ...cfg, bridge: { ...cfg.bridge, pairing: { code, expires: Date.now() + 600000 } } }; return { code }; }),
     helperPort: () => 1,
     validPairingCode: c => /^[A-HJ-NP-Z2-9]{6}$/.test(c),
@@ -230,7 +225,7 @@ test("the model: choices from what's installed, a choice saved the way morse set
   assert.deepEqual(daemon.calls.filter(c => c[0] === "saveChoice").at(-1).slice(1), ["api-key", { provider: "anthropic", keys: { x: "sk-ant-abc" } }]);
 });
 
-test("Chrome asks to connect: Morse Desktop shows it, and only Allow here answers it", async () => {
+test("Chrome asks to connect: the helper's question waits for Allow or Deny in the window", async () => {
   const asked = [];
   const daemon = fakeDaemon();
   const service = createService({ daemon, fetchHealth: async () => null, onAsk: list => asked.push(list.length) });
@@ -238,19 +233,31 @@ test("Chrome asks to connect: Morse Desktop shows it, and only Allow here answer
   registerIpc({ ipcMain, service, native: {}, isTrusted: e => e === TRUSTED });
   const call = (name, ...args) => ipcMain.handlers.get(CHANNEL(name))(TRUSTED, ...args);
   await call("setHelper", true);
-  const id = daemon.ask("chrome-extension://abcdefghijklmnopabcdefghijklmnop");
+  assert.equal(daemon.bridgeOpts.app, "desktop", "the helper says it's Morse Desktop's");
+  assert.equal(typeof daemon.bridgeOpts.ask, "function", "and that it can ask");
+  const words = { message: "Allow Chrome to use your Claude Code?", detail: "…", allow: "Allow", deny: "Deny" };
+  const origin = "chrome-extension://abcdefghijklmnopabcdefghijklmnop";
+  const answer = daemon.bridgeOpts.ask({ origin, label: "Claude Code", words, signal: new AbortController().signal });
   let c = (await call("state")).chrome;
-  assert.deepEqual(c.ask, { id, extension: "abcdefghijklmnopabcdefghijklmnop" });
+  assert.deepEqual({ ...c.ask, id: "x" }, { id: "x", extension: "abcdefghijklmnopabcdefghijklmnop", words });
   assert.deepEqual(asked, [1], "the window is brought forward");
-  assert.equal(daemon.calls.some(x => x[0] === "answerAsk"), false, "nothing is answered by itself");
-  c = await call("answerAsk", id, true);
-  assert.deepEqual(daemon.calls.find(x => x[0] === "answerAsk").slice(1), [id, true]);
+  c = await call("answerAsk", (await call("state")).chrome.ask.id, true);
+  assert.equal(await answer, true, "Allow");
   assert.equal(c.ask, null);
+  // Deny, and a question nobody answers in time.
+  const no = daemon.bridgeOpts.ask({ origin, words, signal: new AbortController().signal });
+  await call("answerAsk", (await call("state")).chrome.ask.id, false);
+  assert.equal(await no, false);
+  const ac = new AbortController();
+  const gone = daemon.bridgeOpts.ask({ origin, words, signal: ac.signal });
+  const id = (await call("state")).chrome.ask.id;
+  ac.abort();
+  assert.equal(await gone, false);
   assert.match((await call("answerAsk", id, true)).error, /stopped asking/);
-  // Turning the helper off forgets what was waiting.
-  daemon.ask("chrome-extension://abcdefghijklmnopabcdefghijklmnop");
-  c = await call("setHelper", false);
-  assert.equal(c.ask, null);
+  // Turning the helper off says no to what's waiting.
+  const off = daemon.bridgeOpts.ask({ origin, words });
+  await call("setHelper", false);
+  assert.equal(await off, false);
 });
 
 test("the first run: shown until an app is opened or Skip, then never again", async () => {

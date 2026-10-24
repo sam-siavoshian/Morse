@@ -108,14 +108,18 @@ try {
   await shot(w, "170-desktop-app-chrome.png");
 
   // 5. The Morse extension asks to connect (the request it makes, docs/dev/pairing.md).
-  await new Promise((resolve, reject) => {
-    const req = http.request({ host: "127.0.0.1", port: Number(env.MORSE_HELPER_PORT), method: "POST", path: "/v1/pair/ask", headers: { Origin: `chrome-extension://${"lkbmdfnoigeajfhc".repeat(2)}` } }, res => { res.resume(); res.on("end", resolve); });
-    req.on("error", reject);
-    req.end("{}");
-  });
-  await w.waitForSelector("dialog#ask-pair[open]", { timeout: 30000 });
-  await shot(w, "171-desktop-app-allow-chrome.png");
-  await w.click("#pair-no");
+  // Only a helper that can ask (onboarding v2's daemon/bridge.js) answers it.
+  const helperSays = await fetch(`http://127.0.0.1:${env.MORSE_HELPER_PORT}/v1/health`).then(r => r.json(), () => ({}));
+  if (helperSays.ask) {
+    await new Promise((resolve, reject) => {
+      const req = http.request({ host: "127.0.0.1", port: Number(env.MORSE_HELPER_PORT), method: "POST", path: "/v1/pair/ask", headers: { Origin: `chrome-extension://${"lkbmdfnoigeajfhc".repeat(2)}`, "Content-Type": "application/json" } }, res => { res.resume(); res.on("end", resolve); });
+      req.on("error", reject);
+      req.end("{}");
+    });
+    await w.waitForSelector("dialog#ask-pair[open]", { timeout: 30000 });
+    await shot(w, "171-desktop-app-allow-chrome.png");
+    await w.click("#pair-no");
+  } else console.log("skipped 171-desktop-app-allow-chrome.png: this Morse helper can't ask yet");
 
   // 6. Mods, per app, with switches.
   await tab(w, "mods");
