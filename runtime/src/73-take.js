@@ -21,7 +21,7 @@
 // (thumbOf), 70-panel.js (takenSectionHtml).
 
 const TakeBring = (() => {
-  const st = { list: [], shared: null, card: null, bring: null, used: null, watch: null, describing: new Set() };
+  const st = { list: [], shared: null, card: null, bring: null, used: null, watch: null, describing: new Set(), gone: new Set() };
   const css = document.createElement("style");
   css.textContent = TAKE_CSS();
   root.append(css);
@@ -32,13 +32,16 @@ const TakeBring = (() => {
 
   // ---- the list, from the host (it may have been taken in another app)
   let loading = null;
+  // rev: a list read that started before a put or a delete is old news when it lands.
+  let rev = 0;
   function load() {
+    const at = rev;
     loading ||= call("taken.list").then(r => {
-      if (r && Array.isArray(r.items)) { st.list = r.items; st.shared = !!r.shared; }
+      if (at === rev && r && Array.isArray(r.items)) { st.list = r.items; st.shared = !!r.shared; }
     }, () => {}).finally(() => { loading = null; placeEntries(); if (!panel.hidden) renderPanel(); });
     return loading;
   }
-  const took = r => { if (r && Array.isArray(r.items)) { st.list = r.items; st.shared = !!r.shared; } };
+  const took = r => { rev++; if (r && Array.isArray(r.items)) { st.list = r.items; st.shared = !!r.shared; } };
 
   // ---- names people read
   // A site's name is usually the last part of its title ("net/http - Go Packages"), sometimes the first ("GitHub - …").
@@ -95,6 +98,7 @@ const TakeBring = (() => {
     off();
     st.describing.delete(item.id);
     const { name, about } = parseDescription(text);
+    if (st.gone.has(item.id)) return; // deleted while the model was writing: it stays deleted
     if (name || about) { try { item = await keep({ ...item, name: name || item.name, about }); } catch {} }
     if (st.card?.item.id === item.id) st.card.item = item;
     renderCard();
@@ -348,6 +352,7 @@ const TakeBring = (() => {
     if (!it) return;
     if (b.dataset.tk === "bring") { panel.hidden = true; bringIt(it); }
     if (b.dataset.tk === "del") {
+      st.gone.add(it.id);
       try { took(await call("taken.remove", { takenId: it.id })); } catch (err) { return toast(plainError(err)); }
       st.list = st.list.filter(i => i.id !== it.id);
       renderPanel();

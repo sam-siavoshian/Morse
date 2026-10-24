@@ -71,7 +71,7 @@ test("Take this in one app, Bring here in another: the palette works there, in t
     await until(async () => (await status(page)).open);
     await until(async () => /Command palette/.test(await page.locator(".tk-card").innerText()));
     assert.match(await page.locator(".tk-card").innerText(), /Taken[\s\S]*Command palette[\s\S]*Taken from Codepad/i);
-    assert.match((await status(page)).hint, /Bring here…/);
+    await until(async () => /Bring here…/.test((await status(page)).hint));
     await page.locator(".tk-card [data-tk=done]").click();
     assert.equal(await page.locator(".tk-card").isHidden(), true);
     // The describe request carried no picture and no Morse UI.
@@ -86,7 +86,7 @@ test("Take this in one app, Bring here in another: the palette works there, in t
     await page.locator(".tk-pick .tk-it").first().waitFor();
     assert.match(await page.locator(".tk-pick").innerText(), /Command palette[\s\S]*Taken from Codepad/);
     await page.locator(".tk-pick .tk-it").first().click();
-    assert.equal((await status(page)).input, "Add “Command palette” from Codepad here");
+    await until(async () => (await status(page)).input === "Add “Command palette” from Codepad here");
     assert.match(await page.locator(".tk-card.bring").innerText(), /Bringing[\s\S]*Command palette/i);
     await page.keyboard.press("Enter");
     await until(async () => (await status(page)).phase === "result", 30000);
@@ -179,6 +179,6 @@ test("pointing and taking keeps no email address, and the Mods panel can delete 
     await page.locator(".actions [data-a=mods]").click();
     await page.locator(".panel .tk-site [data-tk=del]").click();
     await until(async () => (await taken(page)).length === 0);
-    assert.equal(await page.locator(".panel .tk-site").count(), 0);
+    await until(async () => (await page.locator(".panel .tk-site").count()) === 0, 5000);
   } finally { await ctx.close(); }
 });
