@@ -31,7 +31,7 @@ const ReadAloud = (() => {
 
   // ---- what to read: the last selection on the page, kept while the bar opens
   let lastSel = null;
-  document.addEventListener("selectionchange", () => {
+  B.on(document, "selectionchange", () => { // through the boot: quiet once detached, and let go of (boot.js dispose)
     const s = document.getSelection();
     if (!s || s.isCollapsed || !s.rangeCount) return;
     const r = s.getRangeAt(0);

@@ -90,7 +90,7 @@ export const PRISTINE = `(() => { try {
 // bar back) and a later attach can start a fresh one.
 const QUIET = `(() => { try {
   globalThis.__morseGen = (globalThis.__morseGen || 0) + 1;
-  delete globalThis.__morseHost; delete globalThis.__morseHostReceive; delete globalThis.__morseRuntime;
+  delete globalThis.__morseHost; delete globalThis.__morseHostReceive; delete globalThis.__morseRuntime; delete globalThis.__morseProbe;
 } catch {} })()`;
 // Then in the page's main world, where the mods run.
 const cleanup = ids => `(() => { try {
@@ -107,7 +107,11 @@ export class Connector {
   // verify(): called before attaching again after a restart; { ok, why }.
   // onChange(connector): windows or state changed (for `morse status`).
   constructor({ port, app = null, settings, log = console.log, watch = false, verify = null, onChange = null, interval = 1000 }) {
-    Object.assign(this, { port, app, settings, log, watch, verify, onChange, interval });
+    // Log lines name windows (the page's own title), mods (a shared mod's
+    // title) and the model's results: as text, never escape sequences that
+    // could rewrite the terminal or set its clipboard.
+    const shown = s => String(s).replace(/[\x00-\x09\x0b-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069]+/g, " ");
+    Object.assign(this, { port, app, settings, log: line => log(shown(line)), watch, verify, onChange, interval });
     this.pages = new Map();   // target id -> CDPSession (null while connecting)
     this.windows = new Map(); // target id -> { id, type, kind, title, url, frame, session, since }
     this.retry = new Map();   // target id -> { at, n } after a failed attach

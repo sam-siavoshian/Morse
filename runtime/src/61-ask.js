@@ -355,7 +355,7 @@ const Guide = (() => {
   // menus act on pointerup and vanish before the click, so either counts.
   function hit(e) {
     const it = current();
-    if (!it || !it.el || G.hit === G.i || !e.composedPath().includes(it.el)) return;
+    if (!e.isTrusted || !it || !it.el || G.hit === G.i || !e.composedPath().includes(it.el)) return;
     G.hit = G.i;
     const at = G.i;
     setTimeout(() => { if (G && G.i === at) go(at + 1); }, 220); // let the page react first
