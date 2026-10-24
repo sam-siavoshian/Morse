@@ -237,7 +237,7 @@ async function copyText(text) {
   ta.select();
   const ok = document.execCommand?.("copy");
   ta.remove();
-  if (!ok) throw new Error("this page blocks the clipboard");
+  if (!ok) throw new Error(t("panel.clipboardBlocked"));
 }
 async function copyLink(m, btn) {
   try {

@@ -221,19 +221,22 @@ function namedBy(el) {
   }
   return "";
 }
-function describe(el) {
+// The kind word in the person's language: message ids "kind.<word>" ("kind.menu-item").
+// lang "en" for what the model reads (the target's label in context()).
+const kindWord = (k, lang) => t(`kind.${k.replace(/ /g, "-")}`, {}, lang);
+function describe(el, lang) {
   const role = roleWord(el);
   const { name, from } = nameOf(el);
   const short = name.length > 28 ? name.slice(0, 27).trimEnd() + "…" : name;
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
-  if (!short) return cap(role || (el.children.length ? "section" : "text"));
+  if (!short) return cap(kindWord(role || (el.children.length ? "section" : "text"), lang));
   if (from === "class") return cap(short); // "Statusbar", "Side panel": its own name for itself
   // A container named by its first line of text is "“Release notes” section", not "Release notes".
   const kind = role || (from === "text" && el.children.length ? "section" : "");
-  if (!kind || short.toLowerCase().endsWith(kind)) return from === "text" && !kind ? `“${short}”` : short;
+  if (!kind || short.toLowerCase().endsWith(kind) || short.toLowerCase().endsWith(kindWord(kind, lang).toLowerCase())) return from === "text" && !kind ? `“${short}”` : short;
   const words = short.split(" ").length;
   const plain = words <= 3 && !short.endsWith("…") && (from === "label" || /button|link|tab|menu item|option|checkbox|switch/.test(kind));
-  return plain ? `${short} ${kind}` : `“${short}” ${kind}`;
+  return t(plain ? "kind.named" : "kind.quoted", { name: short, kind: kindWord(kind, lang) }, lang);
 }
 function snippet(el, { styles = false } = {}) {
   const clone = el.cloneNode(true);
@@ -799,7 +802,7 @@ function context() {
     const path = [], t = S.target, outer = outerOf(t);
     for (let n = t.parentElement, i = 0; n && n !== t.ownerDocument.body && i < 5; n = n.parentElement, i++) path.unshift(segment(n).s);
     if (outer) path.unshift(`${selectorFor(outer)} >>>`);
-    ctx.target = { selector: selectorFor(t), label: describe(t), html: snippet(t, { styles: true }), path: path.join(" > ").replace(">>> >", ">>>"), facts: targetFacts(t) };
+    ctx.target = { selector: selectorFor(t), label: describe(t, "en"), html: snippet(t, { styles: true }), path: path.join(" > ").replace(">>> >", ">>>"), facts: targetFacts(t) };
   }
   return redact(ctx); // redact: nothing secret leaves the page
 }

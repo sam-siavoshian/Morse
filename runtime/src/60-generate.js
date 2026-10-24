@@ -176,10 +176,10 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
     ? `<button data-a="code">${t("btn.editCode")}</button><button data-a="keep">${t("btn.done")}</button>`
     : `<button data-a="keep" class="primary">${t("btn.save")} <kbd>↵</kbd></button><button data-a="undo">${t("btn.undo")}</button><button data-a="code">${t("btn.editCode")}</button><button data-a="share">${t("btn.share")}</button>`;
   updateChips();
-  announce(error ? `${d.title}. That didn't work: ${error}`
+  announce(error ? t("gen.sayFailed", { title: d.title, error })
     : note ? `${d.title}. ${note}`
-    : d.saved ? `${d.title}. Describe what to change, or press Done.`
-    : `Done: ${d.title}${meta ? `, ${meta}` : ""}. Press Enter to save it, or describe what to change. Undo is next to Save.`);
+    : d.saved ? t("gen.saySaved", { title: d.title })
+    : t("gen.sayDone", { title: d.title, meta: meta ? `, ${meta}` : "" }));
   input.focus({ preventScroll: true });
 }
 
