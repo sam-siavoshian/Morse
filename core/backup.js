@@ -4,6 +4,7 @@
 import { decodeShareText, validateMod, hostOf } from "./mod.js";
 import { asReviewed } from "./summary.js";
 import { parsePack, isPack, MAX_PACK_BYTES } from "./pack.js"; // packs hook
+import { t } from "./i18n.js"; // the words, in the language the host speaks (core/i18n.js)
 
 export const BACKUP_KIND = "morse-backup";
 
@@ -26,18 +27,18 @@ export function backupFilename(now = new Date()) {
 // Throws when nothing in it is a mod.
 export async function parseImport(source) {
   const src = String(source ?? "").trim();
-  if (!src) throw new Error("Paste a Morse share link, or choose a mod file or a backup.");
+  if (!src) throw new Error(t("backup.err.empty"));
   if (src.includes("#m=")) {
     let data, text = ""; // packs hook: a link can carry a pack (core/pack.js)
-    try { text = await decodeShareText(src); data = JSON.parse(text); } catch (e) { if (/^This /.test(e.message)) throw e; throw new Error("This share link is broken. Check that you copied the whole link."); }
+    try { text = await decodeShareText(src); data = JSON.parse(text); } catch (e) { if (e.plain || /^This /.test(e.message)) throw e; throw Object.assign(new Error(t("err.shareBroken")), { plain: true }); }
     if (isPack(data)) { const p = parsePack(text); return { kind: "pack", pack: p.pack, mods: p.pack.mods, errors: p.errors }; }
     return { kind: "link", mods: [asReviewed(validateMod(data))], errors: [] };
   }
   let data;
   try { data = JSON.parse(src); }
-  catch { throw new Error("This isn't a Morse share link or mod file. Check that you copied all of it."); }
+  catch { throw new Error(t("ctl.notShare")); }
   if (isPack(data)) { // packs hook: a pack file (core/pack.js)
-    if (src.length > MAX_PACK_BYTES) throw new Error("This pack is too big. Morse reads packs up to 2 MB.");
+    if (src.length > MAX_PACK_BYTES) throw new Error(t("pk.err.tooBig"));
     const p = parsePack(data);
     return { kind: "pack", pack: p.pack, mods: p.pack.mods, errors: p.errors };
   }
@@ -46,9 +47,9 @@ export async function parseImport(source) {
   const mods = [], errors = [];
   raw.forEach((m, i) => {
     try { mods.push(asReviewed(validateMod(m))); }
-    catch (e) { errors.push(`Item ${i + 1}: ${e.message}`); }
+    catch (e) { errors.push(`${t("backup.itemN", { n: i + 1 })}: ${e.message}`); }
   });
-  if (!mods.length) throw new Error(errors[0]?.replace(/^Item 1: /, "") || "There are no mods in this file. Check that it is a Morse backup.");
+  if (!mods.length) throw new Error(errors[0]?.replace(`${t("backup.itemN", { n: 1 })}: `, "") || t("backup.err.none"));
   return { kind: backup ? "backup" : "mod", mods, errors };
 }
 

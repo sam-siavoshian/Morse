@@ -18,6 +18,7 @@ import { validateMod, stripLocal, encodeShareText, decodeShareText, newId } from
 import { prepareInstall } from "./backup.js";
 import { modHosts, broadEndings, asReviewed } from "./summary.js";
 import { reviseMod } from "./versions.js";
+import { t } from "./i18n.js"; // the words, in the language the host speaks (core/i18n.js)
 
 export const PACK_KIND = "morse-pack";
 export const PACK_FORMAT = 1;
@@ -50,7 +51,7 @@ export const isPack = d => !!d && typeof d === "object" && !Array.isArray(d) && 
 function packMod(m) {
   const { imported, importedFrom, importedAt, pack, parent, kind, ...rest } = asReviewed(stripLocal(m));
   const out = { ...rest };
-  out.title = cleanText(out.title, MAX_TITLE) || "Untitled mod";
+  out.title = cleanText(out.title, MAX_TITLE) || t("pk.untitledMod");
   if (typeof out.prompt === "string" && out.prompt.length > MAX_REQUEST) out.prompt = out.prompt.slice(0, MAX_REQUEST);
   if (out.author !== undefined) { const a = cleanText(out.author, 60); if (a) out.author = a; else delete out.author; }
   return out;
@@ -63,10 +64,10 @@ function packMod(m) {
 export function makePack(mods, { name, note = "", author = "", id = "", now = new Date() } = {}) {
   const list = (Array.isArray(mods) ? mods : []).filter(m => m && typeof m === "object");
   const n = cleanText(name, MAX_NAME);
-  if (!n) throw new Error("Give the pack a name.");
-  if (!list.length) throw new Error("Choose at least one mod for the pack.");
-  if (list.length > MAX_PACK_MODS) throw new Error(`A pack holds up to ${MAX_PACK_MODS} mods. Choose fewer.`);
-  if (list.some(m => m.kind === "style" || m.id === "morse-style")) throw new Error("Your style can't go in a pack. Choose other mods.");
+  if (!n) throw new Error(t("pk.needName"));
+  if (!list.length) throw new Error(t("pk.err.none"));
+  if (list.length > MAX_PACK_MODS) throw new Error(t("pk.err.tooMany", { max: MAX_PACK_MODS }));
+  if (list.some(m => m.kind === "style" || m.id === "morse-style")) throw new Error(t("pk.err.style"));
   const seen = new Set();
   const out = [];
   for (const m of list) {
@@ -92,7 +93,7 @@ export const packFilename = pack => `${slug(pack?.name) || "pack"}.morse-pack.js
 // The share link: the whole pack in the fragment, like a mod's link.
 export async function encodePackLink(pack) {
   const link = await encodeShareText(JSON.stringify(pack));
-  if (link.length > MAX_PACK_LINK) throw new Error("This pack is too big for a link. Share it as a file instead.");
+  if (link.length > MAX_PACK_LINK) throw new Error(t("pk.err.linkTooBig"));
   return link;
 }
 export async function decodePackLink(link) {
@@ -107,20 +108,20 @@ export async function decodePackLink(link) {
 export function parsePack(input) {
   let data = input;
   if (typeof data === "string") {
-    if (data.length > MAX_PACK_BYTES) throw new Error("This pack is too big. Morse reads packs up to 2 MB.");
-    try { data = JSON.parse(data); } catch { throw new Error("This isn't a Morse pack. Check that you copied all of it."); }
+    if (data.length > MAX_PACK_BYTES) throw new Error(t("pk.err.tooBig"));
+    try { data = JSON.parse(data); } catch { throw new Error(t("pk.err.notPack")); }
   }
-  if (!isPack(data)) throw new Error("This isn't a Morse pack. Check that you copied all of it.");
-  if (!Array.isArray(data.mods) || !data.mods.length) throw new Error("This pack has no mods in it.");
-  if (data.mods.length > MAX_PACK_MODS) throw new Error(`This pack has ${data.mods.length} mods. Morse installs up to ${MAX_PACK_MODS} from one pack.`);
-  const name = cleanText(data.name, MAX_NAME) || "Untitled pack";
+  if (!isPack(data)) throw new Error(t("pk.err.notPack"));
+  if (!Array.isArray(data.mods) || !data.mods.length) throw new Error(t("pk.err.empty"));
+  if (data.mods.length > MAX_PACK_MODS) throw new Error(t("pk.err.hasTooMany", { n: data.mods.length, max: MAX_PACK_MODS }));
+  const name = cleanText(data.name, MAX_NAME) || t("pk.untitled");
   const mods = [], errors = [], seen = new Set();
   data.mods.forEach((raw, i) => {
-    const label = `Mod ${i + 1}`;
+    const label = t("pk.modN", { n: i + 1 });
     try {
       const m = validateMod(raw && typeof raw === "object" ? { ...raw } : raw);
-      if (m.kind === "style" || m.id === "morse-style" || m.parent) throw new Error("Your style can't come in a pack, so Morse left it out.");
-      if (seen.has(m.id.toLowerCase())) throw new Error(`It has the same id as another mod in this pack (${m.id}), so Morse left it out.`);
+      if (m.kind === "style" || m.id === "morse-style" || m.parent) throw new Error(t("pk.err.styleIn"));
+      if (seen.has(m.id.toLowerCase())) throw new Error(t("pk.err.sameId", { id: m.id }));
       seen.add(m.id.toLowerCase()); // "A" and "a" are one file on macOS and Windows
       const clean = packMod(m);
       delete clean.history; // a pack brings the code its review shows, never earlier versions
@@ -129,7 +130,7 @@ export function parsePack(input) {
       errors.push(`${label}: ${e.message}`);
     }
   });
-  if (!mods.length) throw new Error(errors[0]?.replace(/^Mod 1: /, "") || "This pack has no mods in it.");
+  if (!mods.length) throw new Error(errors[0]?.replace(`${t("pk.modN", { n: 1 })}: `, "") || t("pk.err.empty"));
   const author = cleanText(data.author, 60);
   const made = typeof data.made === "string" && !isNaN(Date.parse(data.made)) ? data.made : "";
   return {
@@ -211,14 +212,14 @@ export function planInstall(pack, picks, existing, { now = new Date(), url = "" 
     let id = m.id;
     if (c?.kind === "clash") {
       const as = want.get(m.id);
-      if (!as) throw new Error(`You already have a mod with the id ${m.id} (“${c.title}”). Choose whether to keep both or replace yours.`);
+      if (!as) throw new Error(t("pk.err.clash", { id: m.id, title: c.title }));
       id = as === "copy" ? freeId(m.id, taken) : c.id; // Replace yours: that very mod
     }
     taken.add(id.toLowerCase());
     const saved = prepareInstall({ ...m, id }, { kind: "link", now });
     put.push({ ...saved, importedFrom: "pack", pack: tag });
   }
-  if (!put.length) throw new Error("Nothing to install. Tick at least one mod.");
+  if (!put.length) throw new Error(t("pk.err.nothing"));
   return { put };
 }
 
@@ -233,7 +234,7 @@ function freeId(id, taken) {
 // A newer copy of a mod from the pack replaces yours; your version stays in
 // History (the code you saw before), the pack's own History never comes in.
 function updated(before, m, tag, now) {
-  const next = reviseMod(before, { prompt: `Updated from the pack “${tag.name}”`, css: m.css, js: m.js }, now.toISOString());
+  const next = reviseMod(before, { prompt: t("pk.updatedFrom", { name: tag.name }), css: m.css, js: m.js }, now.toISOString());
   return { ...next, title: m.title, prompt: m.prompt, match: { hosts: [...m.match.hosts], app: m.match.app ?? null }, pack: { ...before.pack, ...tag }, imported: true, importedFrom: "pack" };
 }
 
@@ -301,11 +302,11 @@ export function planUpdate(installed, next, picks = {}, { now = new Date(), url 
 // No user name or password in it. -> the address, or throws.
 export function checkPackUrl(url) {
   let u;
-  try { u = new URL(String(url || "").trim()); } catch { throw new Error("That isn't a web address. Check it and try again."); }
+  try { u = new URL(String(url || "").trim()); } catch { throw new Error(t("pk.err.notAddress")); }
   const local = /^(127\.0\.0\.1|localhost|\[::1\])$/.test(u.hostname);
-  if (u.protocol !== "https:" && !(u.protocol === "http:" && local)) throw new Error("A pack that updates has to come from an https:// address. Check the address and try again.");
-  if (u.username || u.password) throw new Error("Take the name and password out of the address, then try again.");
-  if (u.href.length > 2048) throw new Error("That address is too long.");
+  if (u.protocol !== "https:" && !(u.protocol === "http:" && local)) throw new Error(t("pk.err.https"));
+  if (u.username || u.password) throw new Error(t("pk.err.password"));
+  if (u.href.length > 2048) throw new Error(t("pk.err.long"));
   u.hash = "";
   return u.href;
 }
