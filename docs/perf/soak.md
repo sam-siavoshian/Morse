@@ -63,18 +63,22 @@ during these runs). Times are therefore slow and noisy; the counts are not.
 
 Each fix is marked `// soak` in the code.
 
-1. **`morse stop` + attach left a whole runtime behind in every open window**
+1. **`morse stop` + attach left a whole Morse behind in every open window**
    (desktop). The old copy went quiet (no UI, no keys) but kept its window
-   listeners, its MutationObservers (one watches every change to the page)
-   and its intervals, and through them its whole UI. Each cycle added one:
-   in the main window, listeners went 170 → 314 → 460, runtime observers
-   22 → 62 → 95 and the heap 6.0 → 9.9 → 12.9 MB over two cycles. Now a copy
-   that goes quiet lets go of the page within a second: every listener goes
-   through `listen()` (which now records it, also for `document`), the
-   runtime's MutationObservers are tracked while observing, and the URL timer
-   calls `letGo()` ([`runtime/src/01-rpc.js`](../../runtime/src/01-rpc.js),
-   [`97-boot.js`](../../runtime/src/97-boot.js)). Listeners and observers stay
-   level across every cycle.
+   listeners, its MutationObservers and its intervals, and through them its
+   whole UI. Each cycle added one: in the main window, listeners went
+   170 → 314 → 460, runtime observers 22 → 62 → 95 and the heap
+   6.0 → 9.9 → 12.9 MB over two cycles. The boot split that landed meanwhile
+   (`runtime/boot.js`) now has the next boot dispose of the old one's
+   listeners; the soak showed that this wasn't enough: the UI's own
+   MutationObservers still held it (runtime observers 25 → 101 over three
+   cycles), and the document held each old overlay through the bar's
+   `aria-owns` (60 detached elements after two cycles). Now the UI's
+   observers are tracked while they observe and disconnected when the boot
+   disposes of that copy, the old overlay is emptied
+   ([`runtime/src/01-rpc.js`](../../runtime/src/01-rpc.js) `letGo`,
+   [`runtime/boot.js`](../../runtime/boot.js) `dispose`), and the debug
+   status timer of a quiet copy stops. Detached elements stay at 1.
 2. **The mod kit kept every element a streaming page had dropped**
    ([`core/kit.js`](../../core/kit.js)). `morse.on(el, …)` kept a clean-up
    holding each element and its handler; an observer made per element stayed
@@ -89,9 +93,11 @@ Each fix is marked `// soak` in the code.
    elements** (kit). A watch that had run on an element stayed in that
    element's set after its mod stopped, and with it everything its callback
    made. Every refine, Undo, off and on of the word-count mod on Parley's
-   composer left its counter behind: detached elements in the runtime's
-   world grew 37 → 162 over 120 iterations. Stopped mods now release their
-   watches, and dead ones are dropped from the element's set: level at 4.
+   composer left its counter behind: detached elements held in Parley's
+   three JS worlds grew from 6 to 335 over 120 iterations (Morse's world
+   4 → 166, the mods' world 2 → 99, the page's 0 → 70). Stopped mods now
+   release their watches, and dead ones are dropped from the element's set:
+   4, 0 and 0 after 529 iterations.
 4. **Clips on the desktop filled the disk.** Every change made in an app
    left a GIF and an MP4 (or, without ffmpeg, up to 1,800 JPEG frames) in
    `~/.morse/clips`, never removed: 30 MB after 21 iterations, about 1.4 MB
@@ -107,10 +113,10 @@ Each fix is marked `// soak` in the code.
    ([`runtime/src/60-generate.js`](../../runtime/src/60-generate.js)); the
    clip still shows the change being made.
 6. **A page that started while the extension's worker restarted stayed
-   without its mods.** Its first request failed ("Morse restarted") and the
-   runtime never asked again, so no mods ran and the bar had no model until
+   without its mods.** Its first request failed ("Morse restarted") and
+   Morse never asked again, so no mods ran and the bar had no model until
    the next reload. It now asks again a few times
-   ([`97-boot.js`](../../runtime/src/97-boot.js) `askAgain`).
+   ([`runtime/boot.js`](../../runtime/boot.js) `askAgain`).
 7. **The hang guard remembered the code of every change made in a window**
    for as long as the window lived (every draft has its own id). Now at most
    64, and none from an earlier document ([`daemon/guard.js`](../../daemon/guard.js)).
@@ -118,11 +124,17 @@ Each fix is marked `// soak` in the code.
    gone; `stop()` left a clip being recorded running; the Mods panel's health
    map kept entries for deleted mods; the "re-renders" map in the page
    context held up to 200 elements the page had already thrown away.
+9. **Test builds of the demo Electron app filled the disk.** Every change to
+   its sources (and every worktree) left a new ~224 MB copy in
+   `~/.cache/morse/tunes` that nothing removed (4.6 GB). Only the few most
+   recently used builds stay now
+   ([`demo/electron-app/build.mjs`](../../demo/electron-app/build.mjs) `pruneBuilds`).
 
 The service worker itself stayed level in every run (heap about 1.4 to
-1.8 MB, storage about 40 KB with the mods capped by the loop), and
-restarting it never wedged anything: a change being made when it stops ends
-with "Morse restarted. Try again." and the next one works.
+2 MB, storage about 40 to 50 KB with the mods capped by the loop), and
+restarting it never wedged anything: in 150 iterations with 45 restarts (30
+of them on purpose while a change was being made), each interrupted change
+ended with "Morse restarted. Try again." and the next one worked.
 
 ## Seen, not fixed
 
@@ -136,8 +148,16 @@ with "Morse restarted. Try again." and the next one works.
   were paused during the 30-minute run. Never for looping or adding too much.
 - **MutationObserver counts in an isolated world, before the fixes, are
   low**: an observer whose wrapper JS no longer references can be collected
-  while it still observes. After fix 1 the runtime holds its observers, so
-  the numbers are exact.
+  while it still observes. After fix 1 the UI holds its observers, so the
+  numbers are exact.
+- **Node and listener counts are per renderer process**: on the desktop the
+  main window shares one with the second window and the popups, so those two
+  rise and fall with whatever the other windows do. The detached-element
+  counts are per page and per JS world, and are the ones to trust.
+- **Near the end of the 110-minute extension run, the Morse helper stopped
+  recognizing the browser** (iterations 525 to 528: "Pair again"). Its home
+  folder, a temp folder, was most likely removed from outside while the disk
+  was being cleaned; it isn't counted as a wedge.
 
 ## Results
 

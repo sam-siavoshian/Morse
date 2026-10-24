@@ -14,10 +14,10 @@ export const SERIES = {
       "parley.winListeners": 2, "parley.docListeners": 2, "parley.worlds.runtime.mo": 6, "parley.worlds.runtime.detached": 60, "parley.worlds.mods.mo": 4, "sw.heapMB": 1, "sw.storageKB": 40, "sw.mods": 12 },
   },
   desktop: {
-    series: ["main.heapMB", "main.nodes", "main.listeners", "main.winListeners", "main.worlds.runtime.mo", "main.worlds.runtime.detached", "second.heapMB", "second.nodes",
+    series: ["main.heapMB", "main.nodes", "main.listeners", "main.winListeners", "main.worlds.runtime.mo", "main.worlds.runtime.detached", "main.main.detached", "second.heapMB", "second.nodes",
       "daemon.rssMB", "daemon.heapMB", "daemon.cdpOpen", "daemon.windows", "daemon.pendingCdp", "daemon.hangLast", "daemon.handles", "daemon.clips.files", "daemon.clips.kb"],
     tolerance: { "*": 0, "main.heapMB": 1.5, "second.heapMB": 1.5, "main.nodes": 400, "second.nodes": 400, "main.listeners": 30, "main.winListeners": 2, "main.worlds.runtime.mo": 6,
-      "main.worlds.runtime.detached": 60, "daemon.rssMB": 25, "daemon.heapMB": 4, "daemon.pendingCdp": 3, "daemon.hangLast": 4, "daemon.handles": 4, "daemon.clips.files": 60, "daemon.clips.kb": 12000, "daemon.cdpOpen": 1, "daemon.windows": 1 },
+      "main.worlds.runtime.detached": 60, "main.main.detached": 60, "daemon.rssMB": 25, "daemon.heapMB": 4, "daemon.pendingCdp": 3, "daemon.hangLast": 4, "daemon.handles": 4, "daemon.clips.files": 60, "daemon.clips.kb": 12000, "daemon.cdpOpen": 1, "daemon.windows": 1 },
   },
   "mods at scale": {
     series: ["page.heapMB", "page.nodes", "page.listeners", "page.main.mo", "page.main.detached", "page.worlds.runtime.mo", "page.worlds.runtime.detached", "kit.paused", "kit.errors", "pulse.lagMs", "daemon.rssMB", "daemon.heapMB"],
