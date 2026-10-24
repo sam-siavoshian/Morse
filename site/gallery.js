@@ -37,10 +37,14 @@ const notesHtml = e => [
   e.demo ? `<span class="g-badge demo">Demo app</span>` : "",
 ].join("");
 
+// The card's picture is the mod's after shot. Its alt is empty on purpose:
+// the card already says the app and the change, and the drawer's pictures
+// describe both sides. The first row loads at once (it is on the first screen).
+let shown = 0;
 for (const entry of entries) {
   const card = modCard(entry, { onOpen: e => open(slugOf(e)) });
   card.setAttribute("aria-haspopup", "dialog");
-  if (entry.shots?.after) card.insertAdjacentHTML("afterbegin", `<img class="card-shot" src="mods/${esc(entry.shots.after)}" alt="" loading="lazy" width="640" height="400">`);
+  if (entry.shots?.after) card.insertAdjacentHTML("afterbegin", `<img class="card-shot" src="mods/${esc(entry.shots.after)}" alt="" ${shown++ < 3 ? "" : 'loading="lazy" '}decoding="async" width="640" height="400">`);
   const notes = notesHtml(entry);
   if (notes) card.querySelector(".tags").insertAdjacentHTML("beforebegin", `<p class="g-badges">${notes}</p>`);
   cards.set(slugOf(entry), card);
@@ -136,8 +140,8 @@ async function open(slug, { push = true } = {}) {
     ? "“Allow User Scripts” in Chrome. Without it, only the change in looks shows."
     : "Nothing else. It only changes how the page looks, so it doesn't need “Allow User Scripts”.";
   $("d-shots").innerHTML = entry.shots?.before && entry.shots?.after
-    ? `<figure><img src="mods/${esc(entry.shots.before)}" alt="${esc(entry.app)} before the mod" loading="lazy"><figcaption>Before</figcaption></figure>
-       <figure><img src="mods/${esc(entry.shots.after)}" alt="${esc(entry.app)} with “${esc(mod.title)}”" loading="lazy"><figcaption>After</figcaption></figure>`
+    ? `<figure><img src="mods/${esc(entry.shots.before)}" alt="${esc(entry.app)} before the mod “${esc(mod.title)}”" width="1280" height="800" loading="lazy"><figcaption>Before</figcaption></figure>
+       <figure><img src="mods/${esc(entry.shots.after)}" alt="${esc(entry.app)} after the mod “${esc(mod.title)}”: ${esc(entry.prompt)}" width="1280" height="800" loading="lazy"><figcaption>After</figcaption></figure>`
     : "";
   $("d-shots").hidden = !$("d-shots").innerHTML;
   $("d-meta").innerHTML = `
