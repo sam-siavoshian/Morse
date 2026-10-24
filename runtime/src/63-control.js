@@ -54,8 +54,11 @@ async function changeHeld(fn) {
 
 // ---- the off switch (⌥⇧0 / Alt+Shift+0 by default)
 
+// The host keeps it (control.off), where the page can't clear it; the
+// sessionStorage copy is for hosts that don't.
 function rememberOff() {
   try { Control.off ? sessionStorage.setItem("morse:off", "1") : sessionStorage.removeItem("morse:off"); } catch {}
+  ctl("control.off", { on: Control.off });
 }
 async function offSwitch() {
   if (Control.off) return turnBackOn();
@@ -109,6 +112,7 @@ async function controlBoot() {
   const r = await ctl("control.boot", {}, 2500);
   if (!r) return;
   if (r.pause) Control.pause = normalizeControl({ pause: r.pause }).pause;
+  if (typeof r.off === "boolean") Control.off = r.off;
   if (r.suspect?.id) { Control.suspect = r.suspect; Control.held.add(r.suspect.id); }
 }
 function controlReady() {

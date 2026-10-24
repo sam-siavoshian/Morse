@@ -37,7 +37,10 @@ const handle = controlHandler({
 });
 
 export function handleControlRequest(msg, port) {
-  return handle(msg, { url: msg.url || port?.sender?.tab?.url, app: null });
+  // Safe start and the off switch are per tab: Chrome's tab id, not one the
+  // page could change in its sessionStorage.
+  const tab = port?.sender?.tab?.id;
+  return handle(tab == null ? msg : { ...msg, tab: `tab${tab}` }, { url: msg.url || port?.sender?.tab?.url, app: null });
 }
 
 // Every tab's runtime connects on the "morse" port; keep them to broadcast to.

@@ -3,7 +3,8 @@
 // supplies storage; this answers the runtime's control.* requests.
 //
 //   control.get       pause state here, and a safe-start suspect if any
-//   control.boot      a page loaded (safe start); -> { pause, suspect }
+//   control.boot      a page loaded (safe start); -> { pause, suspect, off }
+//   control.off       { on } the off switch for this site in this tab
 //   control.applied   a mod ran       control.alive   the page is still there
 //   control.forgive   the person decided about a suspect
 //   control.pause     { scope: "site" | "all", on, key? }
@@ -11,10 +12,10 @@
 //   control.install   { mods, kind } -> the saved mods
 //   control.exportAll -> { filename, content, count }
 
-import { normalizeControl, isPaused, pauseInfo, setPause, safeKey, safeBoot, safeApplied, safeAlive, safeForgive } from "./control.js";
+import { normalizeControl, isPaused, pauseInfo, setPause, safeKey, safeBoot, safeApplied, safeAlive, safeForgive, safeOff } from "./control.js";
 import { exportBundle, backupFilename, parseImport, prepareInstall } from "./backup.js";
 
-export const CONTROL_REQUESTS = new Set(["control.get", "control.boot", "control.applied", "control.alive", "control.forgive", "control.pause", "mods.preview", "control.install", "control.exportAll"]);
+export const CONTROL_REQUESTS = new Set(["control.get", "control.boot", "control.applied", "control.alive", "control.forgive", "control.off", "control.pause", "mods.preview", "control.install", "control.exportAll"]);
 
 // store: { load(), save(state), listMods(), putMods(mods), onPause?(pause) }
 export function controlHandler(store, clock = () => Date.now()) {
@@ -43,8 +44,8 @@ export function controlHandler(store, clock = () => Date.now()) {
       }
       case "control.boot":
         return update(s => {
-          const { state, suspect } = safeBoot(s, sk, clock());
-          return { state, result: { pause: state.pause, info: pauseInfo(state, where), suspect } };
+          const { state, suspect, off } = safeBoot(s, sk, clock());
+          return { state, result: { pause: state.pause, info: pauseInfo(state, where), suspect, off } };
         });
       case "control.applied":
         return update(s => ({ state: safeApplied(s, sk, msg.mod, clock()), result: true }));
@@ -52,6 +53,8 @@ export function controlHandler(store, clock = () => Date.now()) {
         return update(s => ({ state: safeAlive(s, sk, clock()), result: true }));
       case "control.forgive":
         return update(s => ({ state: safeForgive(s, sk), result: true }));
+      case "control.off":
+        return update(s => ({ state: safeOff(s, sk, !!msg.on), result: true }));
       case "control.pause":
         return update(s => {
           const state = msg.scope === "all" ? setPause(s, { all: !!msg.on }) : setPause(s, { key: msg.key || pauseInfo(s, where).key, on: !!msg.on });

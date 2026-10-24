@@ -384,7 +384,7 @@ export class Connector {
     const here = async () => ({ url: await (at ||= this.callerUrl(s, caller)), app });
     // App-wide in desktop apps, per site in a browser.
     const historyScope = async () => app || hostOf((await here()).url);
-    if (CONTROL_REQUESTS.has(msg.type)) return handleControl(msg, await here()); // user control (control.js)
+    if (CONTROL_REQUESTS.has(msg.type)) return handleControl({ ...msg, tab: `frame:${caller.frameId}` }, await here()); // user control (control.js); per window, not the page's own tab id
     if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
     if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, await here()); // gallery hook: Mods for this site
     switch (msg.type) {
