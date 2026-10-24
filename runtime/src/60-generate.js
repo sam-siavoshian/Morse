@@ -43,7 +43,7 @@ async function submit(request) {
     }
   });
   let res;
-  try { res = await call("generate", { genId: id, request, context: ctx }); }
+  try { res = await Promise.race([call("generate", { genId: id, request, context: ctx }), cancelSignal(id)]); } // Stop: 50-bar.js
   catch (e) { res = { ok: false, error: e.message }; }
   off();
   clearInterval(clock);
@@ -54,6 +54,7 @@ async function submit(request) {
   await Effect.finish(res.ok);
   if (!res.ok) {
     setCss(id, "");
+    if (res.cancelled) return onCancelled(id); // Stop: 50-bar.js
     S.phase = "error";
     bar.classList.add("err");
     hint.innerHTML = `Couldn't do that: <i>${esc(res.error || "unknown error").slice(0, 120)}</i>`;

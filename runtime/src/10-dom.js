@@ -5,6 +5,7 @@ let DEBUG = false;
 try { DEBUG = !!localStorage.getItem("morse:debug"); } catch {}
 const root = hostEl.attachShadow({ mode: DEBUG ? "open" : "closed" });
 root.innerHTML = `<style>${TOKENS_CSS}\n${CSS()}</style>
+  <style>${BAR_CSS()}</style>
   <canvas class="fx"></canvas>
   <div class="hl" hidden><span></span></div>
   <div class="sel" hidden></div>
@@ -12,7 +13,7 @@ root.innerHTML = `<style>${TOKENS_CSS}\n${CSS()}</style>
     <div class="row">
       <span class="mark">${radar(18)}</span>
       <div class="chip target" hidden><span></span><button class="x" title="Clear target">×</button></div>
-      <input class="in" placeholder="Describe a change…" spellcheck="false" autocomplete="off">
+      <textarea class="in" rows="1" placeholder="Describe a change…" spellcheck="false" autocomplete="off"></textarea>
       <button class="go" title="Run (Enter)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"/></svg></button>
     </div>
     <div class="status">
@@ -29,7 +30,7 @@ const fx = $(".fx"), hl = $(".hl"), selBox = $(".sel"), bar = $(".bar"), input =
 const chip = $(".chip.target"), hint = $(".hint"), ticker = $(".ticker"), actions = $(".actions");
 const panel = $(".panel"), modal = $(".modal"), toastEl = $(".toast"), logo = $(".mark");
 
-function applyTheme() { hostEl.dataset.theme = pageTheme(); }
+function applyTheme() { hostEl.dataset.theme = themeOverride() || pageTheme(); }
 function mount() { if (!hostEl.isConnected) document.documentElement.append(hostEl); }
 mount();
 applyTheme();
