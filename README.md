@@ -144,7 +144,6 @@ extension/   Chrome MV3 host
 daemon/      desktop connector + CLI (CDP, app launcher, fuses, clip recorder, mod store)
 share/       static install page for share links
 demo/        demo apps + the scripts that produced every screenshot
-legacy/      Ember, the previous local chat app (its Ollama code seeded providers.js)
 ```
 
 Regenerate the screenshots: `npm run demo:serve &` then `DISPLAY=:99 npm run screenshots` (needs Xvfb, Chromium/Playwright, ffmpeg; set `MORSE_HOME` to a scratch dir).
