@@ -59,7 +59,8 @@ test("rejects critical OS and browser shortcuts", () => {
   assert.match(checkCombo("Meta+KeyQ", "mac").message, /⌘Q quits the app/);
   assert.match(checkCombo("Alt+Space", "win").message, /window menu/);
   assert.equal(checkCombo("Alt+Space", "mac").level, "ok");
-  assert.equal(checkCombo("Alt+Space", "linux").level, "ok");
+  assert.equal(checkCombo("Alt+Space", "linux").level, "warn", "allowed, but it opens the window menu or KRunner");
+  assert.match(checkCombo("Alt+Space", "linux").message, /KRunner/);
 });
 
 test("needs a real modifier so typing never triggers it", () => {
@@ -92,7 +93,8 @@ test("refuses a combo another action already uses, except talk sharing open", ()
 
 test("defaults per platform, and push to talk follows open until changed", () => {
   assert.equal(defaultHotkeys("mac").open, "Alt+Space");
-  assert.equal(defaultHotkeys("linux").open, "Alt+Space");
+  assert.equal(defaultHotkeys("linux").open, "Ctrl+Shift+Space", "Alt+Space is the window menu / KRunner on Linux desktops");
+  assert.equal(checkCombo(defaultHotkeys("linux").open, "linux").level, "ok");
   assert.equal(defaultHotkeys("win").open, "Ctrl+Shift+Space");
   const r = resolveHotkeys({ open: "Alt+KeyK", godmode: "none" }, "mac");
   assert.equal(r.open, "Alt+KeyK");
@@ -133,4 +135,35 @@ test("history keeps the newest 50, a repeat moves to the end", () => {
   assert.equal(h.at(-1), "p20");
   assert.equal(h.filter(x => x === "p20").length, 1);
   assert.deepEqual(pushHistory(["a"], "  "), ["a"]);
+});
+
+test("the extension's toolbar shortcut never collides with the in-page hotkeys", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const manifest = JSON.parse(await readFile(new URL("../extension/manifest.json", import.meta.url), "utf8"));
+  const keys = manifest.commands["toggle-morse"].suggested_key;
+  // Chrome's names: Ctrl (which is ⌘ on a Mac), Command, MacCtrl, Alt, Shift.
+  const asCombo = (s, mac) => normalizeCombo(s.replace(/\bCtrl\b/, mac ? "Meta" : "Ctrl").replace(/\bCommand\b/, "Meta").replace(/\bMacCtrl\b/, "Ctrl"));
+  for (const [platform, key] of [["win", keys.windows || keys.default], ["linux", keys.linux || keys.default], ["mac", keys.mac || keys.default]]) {
+    const combo = asCombo(key, platform === "mac");
+    assert.ok(combo, `${platform}: ${key}`);
+    for (const [id, own] of Object.entries(defaultHotkeys(platform))) assert.notEqual(combo, own, `${platform}: ${key} is also the ${id} hotkey`);
+    assert.notEqual(checkCombo(combo, platform).level, "error", `${platform}: ${key}`);
+  }
+});
+
+test("the CLI help shows the hotkey actually configured", async () => {
+  const { mkdtemp, writeFile, rm } = await import("node:fs/promises");
+  const { execFileSync } = await import("node:child_process");
+  const os = await import("node:os");
+  const path = await import("node:path");
+  const home = await mkdtemp(path.join(os.tmpdir(), "morse-cli-"));
+  const cli = new URL("../daemon/cli.js", import.meta.url).pathname;
+  const help = () => execFileSync(process.execPath, [cli, "help"], { env: { ...process.env, MORSE_HOME: home }, encoding: "utf8" }).replace(/\x1b\[\d+m/g, "");
+  const re = s => s.replace(/[+]/g, "\\+");
+  try {
+    const platform = detectPlatform({ platform: process.platform });
+    assert.match(help(), new RegExp(`In any attached window: ${re(formatCombo(defaultHotkeys(platform).open, platform))} to morse`));
+    await writeFile(path.join(home, "settings.json"), JSON.stringify({ hotkeys: { open: "Alt+KeyJ", mods: "none" } }));
+    assert.match(help(), new RegExp(`In any attached window: ${re(formatCombo("Alt+KeyJ", platform))} to morse\\.`));
+  } finally { await rm(home, { recursive: true, force: true }); }
 });

@@ -8,6 +8,11 @@ import { waitForEndpoint } from "./cdp.js";
 import { listMods, deleteMod, saveMod, loadConfig, saveConfig, writeExport, HOME } from "./store.js";
 import { resolveSettings, settingsLabel, DEFAULT_SETTINGS } from "../core/providers.js";
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
+import { configuredHotkeys } from "./store.js";
+
+// The hotkeys as set in ~/.morse/settings.json (platform defaults otherwise).
+const KEYS = await configuredHotkeys().catch(() => ({}));
+const openKey = KEYS.open || "the Open Morse hotkey";
 
 const G = s => `\x1b[32m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`;
 const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· customize any app in one sentence")}\n${G("▪▫▪")}`;
@@ -57,7 +62,7 @@ ${B("Model")}
   morse model               show the model Morse will use
   morse model --provider ollama|openai|demo --model <name> [--base-url <url>] [--api-key <key>]
 
-In any attached window: ${B("Alt+Space")} to morse · ${B("Alt+Shift+M")} for your mods.
+In any attached window: ${B(openKey)} to morse${KEYS.mods ? ` · ${B(KEYS.mods)} for your mods` : ""}.
 Websites: load the browser extension (npm run build, then load dist/extension).`;
 
 async function main() {
@@ -106,7 +111,7 @@ async function main() {
     }
     case "mods": {
       const mods = await listMods();
-      if (!mods.length) return console.log(D("No mods yet. Press Alt+Space in an attached app."));
+      if (!mods.length) return console.log(D(`No mods yet. Press ${openKey} in an attached app.`));
       for (const m of mods) {
         const where = m.match.app || m.match.hosts.join(",");
         console.log(`${m.enabled ? G("●") : D("○")} ${B(m.title)} ${D(m.id)}  ${where}\n    ${D("“" + m.prompt + "”")}`);

@@ -71,7 +71,7 @@ Captured by [`demo/shoot-bar.js`](demo/shoot-bar.js) from [`demo/bar-playground.
 | ![](docs/screenshots/64-shortcuts.png) **`?`** shows the shortcuts you actually have | ![](docs/screenshots/65-cancelled.png) **Esc** stops the model; nothing is left behind |
 
 - **Voice.** Tap the mic, or hold the hotkey (tap opens, hold talks). The Web Speech API is used where it works (Chrome websites); everywhere else (Electron apps) Morse records and the host transcribes with OpenAI `gpt-4o-mini-transcribe` (your key: `OPENAI_API_KEY` or `"voice": { "openaiKey" }` in `~/.morse/config.json`) or a local `whisper-cli` / `whisper` on your PATH. "Send after a pause" is a setting.
-- **Hotkeys** for open, push to talk, Mods panel and God mode, recorded from `event.code`. Defaults: ⌥Space (Ctrl+Shift+Space on Windows, where Alt+Space opens the window menu). Settings live in `~/.morse/settings.json` (desktop) or Chrome sync (extension).
+- **Hotkeys** for open, push to talk, Mods panel and God mode, recorded from `event.code`. Defaults: ⌥Space on macOS, Ctrl+Shift+Space on Windows and Linux (where Alt+Space opens the window menu, or KRunner on KDE). The toolbar shortcut for the extension is Ctrl+Shift+Y (⌘⇧Y), so it never collides with the in-page hotkey. Settings live in `~/.morse/settings.json` (desktop) or Chrome sync (extension).
 - **Command-bar basics:** ↑/↓ prompt history per app, Shift+Enter for a new line, Esc or ⌘. to stop, Tab stays in the bar, focus returns to where you were, and closed means closed: only your hotkeys are ever taken from the page.
 
 ### God mode: edit directly, no model
@@ -103,7 +103,7 @@ npm run build                       # builds dist/extension (no dependencies)
 ollama pull qwen2.5-coder:7b
 ```
 
-**Web:** `chrome://extensions` → Developer mode → Load unpacked → `dist/extension`. Then in Morse's details, turn on **Allow User Scripts** (needed for JS mods on sites with a strict CSP; CSS mods work without it). Press **⌥Space** (Alt+Space) on any page.
+**Web:** `chrome://extensions` → Developer mode → Load unpacked → `dist/extension`. Then in Morse's details, turn on **Allow User Scripts** (needed for JS mods on sites with a strict CSP; CSS mods work without it). Press **⌥Space** (Ctrl+Shift+Space on Windows and Linux) on any page.
 
 **Desktop apps:**
 

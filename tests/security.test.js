@@ -44,8 +44,10 @@ test("the share page only asks; nothing installs until the user clicks Install",
   const p = await ctx.newPage();
   await p.goto("http://127.0.0.1:8787/share/install.html");
   await p.evaluate(() => localStorage.setItem("morse:debug", "1")); // open shadow root so the test can click
+  // A fresh load: going straight to the link is a same-document hash change,
+  // and the page's own reload on hashchange would race a reload from here.
+  await p.goto("about:blank");
   await p.goto(link);
-  await p.reload(); // same document with a new hash: reload so it renders the mod
   await p.waitForTimeout(500);
   await p.locator("#install").click();
   await p.locator(".card [data-a=install]").waitFor();
@@ -57,6 +59,20 @@ test("the share page only asks; nothing installs until the user clicks Install",
   await p.locator(".card [data-a=install]").click();
   await p.waitForFunction(() => /Installed/.test(document.body.innerText));
   assert.deepEqual(await stored(), [mod.id]);
+  await p.close();
+});
+
+test("the popup shows the Open Morse hotkey as configured", { skip }, async () => {
+  const id = new URL(sw.url()).host;
+  const p = await ctx.newPage();
+  await p.goto(`chrome-extension://${id}/popup.html?url=https://example.com/`);
+  await p.waitForFunction(() => document.getElementById("key").textContent);
+  assert.equal(await p.locator("#key").textContent(), process.platform === "darwin" ? "⌥Space" : "Ctrl+Shift+Space");
+  await sw.evaluate(() => chrome.storage.sync.set({ "morse.settings": { hotkeys: { open: "Alt+KeyJ" } } }));
+  await p.reload();
+  await p.waitForFunction(() => document.getElementById("key").textContent);
+  assert.equal(await p.locator("#key").textContent(), process.platform === "darwin" ? "⌥J" : "Alt+J");
+  await sw.evaluate(() => chrome.storage.sync.remove("morse.settings"));
   await p.close();
 });
 

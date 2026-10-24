@@ -1,6 +1,8 @@
 // Frames of the working effect from the playground, for design iteration.
 //   node demo/shoot-effect.js [outDir] [light]
 import { createRequire } from "node:module";
+// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
+const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 const { chromium } = createRequire(import.meta.url)("playwright");
 const out = process.argv[2] || "docs/screenshots";
 const light = process.argv[3] === "light";
@@ -8,7 +10,7 @@ const b = await chromium.launch();
 const p = await b.newPage({ viewport: { width: 900, height: 560 }, deviceScaleFactor: 2 });
 await p.goto(`http://127.0.0.1:8787/demo/playground.html?ms=60${light ? "&light" : ""}`);
 await p.waitForTimeout(500);
-await p.keyboard.press("Alt+Space");
+await p.keyboard.press(OPEN_KEY);
 const tb = await p.locator("#toolbar").boundingBox();
 await p.mouse.move(tb.x + 30, tb.y + tb.height / 2);
 await p.mouse.click(tb.x + tb.width / 2, tb.y + 4);

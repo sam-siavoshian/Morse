@@ -13,6 +13,7 @@ import { modMatches, validateMod } from "../core/mod.js";
 import { normalizePrefs, mergePrefs, pushHistory } from "../core/prefs.js";
 import { clipAdd } from "../core/clipboard.js";
 import { serialQueue } from "../core/serial.js";
+import { resolveHotkeys, formatCombo, detectPlatform } from "../core/hotkeys.js";
 export const HOME = process.env.MORSE_HOME || path.join(os.homedir(), ".morse");
 const MODS = path.join(HOME, "mods");
 const CONFIG = path.join(HOME, "config.json");
@@ -100,6 +101,13 @@ export function savePrefs(patch) {
     await writeAtomic(PREFS, JSON.stringify(next, null, 2));
     return next;
   });
+}
+
+// The hotkeys in effect on this computer as people read them ("Ctrl+Shift+Space",
+// "⌥Space"); "" for one that's turned off.
+export async function configuredHotkeys(platform = detectPlatform({ platform: process.platform })) {
+  const keys = resolveHotkeys((await loadPrefs()).hotkeys, platform);
+  return Object.fromEntries(Object.entries(keys).map(([id, combo]) => [id, combo ? formatCombo(combo, platform) : ""]));
 }
 
 // Prompt history per app (or per site): ~/.morse/history.json

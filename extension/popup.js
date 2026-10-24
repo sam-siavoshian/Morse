@@ -1,7 +1,13 @@
+import { resolveHotkeys, formatCombo, detectPlatform } from "./core/hotkeys.js";
+import { getPrefs } from "./bar-host.js";
+
 const $ = id => document.getElementById(id);
 const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-const isMac = navigator.platform.includes("Mac");
-$("key").textContent = isMac ? "⌥ Space" : "Alt+Space";
+// The in-page Open Morse hotkey as the user has it set (Settings in the bar).
+const platform = detectPlatform(navigator);
+const openKey = resolveHotkeys((await getPrefs().catch(() => ({}))).hotkeys || {}, platform).open;
+$("key").textContent = openKey ? formatCombo(openKey, platform) : "";
+$("key").hidden = !openKey;
 
 // ?url= lets the popup be opened as a page (screenshots, debugging).
 const url = new URLSearchParams(location.search).get("url") || tab?.url || "";
