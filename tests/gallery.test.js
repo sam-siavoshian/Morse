@@ -12,6 +12,7 @@ import {
 import { createGallery } from "../core/gallery-host.js";
 import { modMatches, validateMod, SHARE_BASE } from "../core/mod.js";
 import { normalizePrefs, mergePrefs } from "../core/prefs.js";
+import { modOrigin } from "../core/summary.js";
 
 const SITE = new URL("../site/mods/", import.meta.url);
 const realIndex = () => readFileSync(new URL("index.json", SITE), "utf8");
@@ -124,6 +125,9 @@ test("an installed mod knows where it came from and whether there's a newer one"
   // Made here: never a gallery mod, whatever its id.
   assert.equal(galleryIdOf({ id: "other" }), null);
   assert.equal(updateFor({ id: "other", version: 0 }, entries), null);
+  // The Mods panel says so.
+  assert.match(modOrigin({ ...fromPanel, author: "june", importedAt: "2026-10-01T10:00:00Z" }), /^Installed from the Morse gallery by june on /);
+  assert.match(modOrigin(fromLink), /^Installed from a shared link/);
 });
 
 // ---- when to fetch again

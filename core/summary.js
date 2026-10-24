@@ -159,6 +159,7 @@ export function modOrigin(mod) {
     } catch { return ""; }
   };
   const by = typeof mod?.author === "string" && mod.author.trim() ? ` by ${mod.author.trim().slice(0, 60)}` : "";
+  if (mod?.imported && mod.gallery?.id) return `Installed from the Morse gallery${by}${mod.importedAt ? ` on ${day(mod.importedAt)}` : ""}`; // gallery hook (68-gallery.js)
   if (mod?.imported) {
     const how = mod.importedFrom === "file" ? "Imported from a file" : mod.importedFrom === "backup" ? "Restored from a backup" : "Installed from a shared link";
     const when = mod.importedAt ? ` on ${day(mod.importedAt)}` : "";

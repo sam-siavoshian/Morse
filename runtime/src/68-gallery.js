@@ -22,11 +22,17 @@ const Gallery = (() => {
   const where = () => S.appName || st.site || location.host || "this site";
   const countText = n => `${n} mod${n === 1 ? "" : "s"} for ${where()}`;
 
-  // What a mod does, in a few words. core/summary.js (the install review's
-  // summary) when the runtime has it, else core/gallery.js briefSummary.
+  // What a mod does, in a few words: core/summary.js (the same lines as the
+  // install review), the ones that say most first; core/gallery.js
+  // briefSummary for a runtime without it.
+  const FIRST = ["network", "typing", "buttons", "adds", "hides", "text", "clicks", "acts", "storage", "cookies", "clipboard", "navigates", "loads", "device", "notify", "ongoing", "looks", "dynamic"];
   function summarize(mod) {
     if (typeof summarizeMod === "function") {
-      try { return summarizeMod(mod).items.filter(i => i.id !== "code").map(i => i.text); } catch {}
+      try {
+        const rank = i => (FIRST.includes(i.id) ? FIRST.indexOf(i.id) : FIRST.length);
+        const items = summarizeMod(mod).items, buttons = items.some(i => i.id === "buttons");
+        return items.filter(i => i.id !== "code" && !(buttons && i.id === "adds")).sort((a, b) => rank(a) - rank(b)).map(i => i.text);
+      } catch {}
     }
     return briefSummary(mod);
   }
@@ -53,7 +59,7 @@ const Gallery = (() => {
   const installedOf = e => S.mods.find(m => galleryIdOf(m) === e.id);
   const fresh = () => (PREFS.gallery ? st.items.filter(e => !installedOf(e)) : []);
   const byId = id => st.items.find(e => e.id === id);
-  const installable = e => ({ ...e.mod, enabled: true, imported: true, gallery: { id: e.id, version: e.mod.version ?? e.version } });
+  const installable = e => ({ ...e.mod, ...(e.mod.author || !e.author ? {} : { author: e.author }), enabled: true, imported: true, gallery: { id: e.id, version: e.mod.version ?? e.version } });
 
   // ---- the Mods panel (70-panel.js hooks)
   function sectionHtml() {
@@ -136,7 +142,7 @@ const Gallery = (() => {
     const t = st.trial, e = t && byId(t.id);
     if (!e) return endTrial({ quiet: true });
     const now = new Date().toISOString();
-    const mod = { ...installable(e), created: now, updated: now };
+    const mod = { ...installable(e), importedFrom: "gallery", importedAt: now, created: now, updated: now };
     try { await call("mods.save", { mod }); }
     catch (err) { return toast(`Couldn't save “${t.title}”. ${plainError(err)}`); }
     st.trial = null;
@@ -291,7 +297,7 @@ const Gallery = (() => {
     await openPanel();
     const sec = panel.querySelector(".gl-site");
     if (!sec) return;
-    sec.scrollIntoView({ block: "nearest" });
+    sec.scrollIntoView({ block: "start" });
     sec.querySelector("[data-gl=try], [data-gl=install]")?.focus({ preventScroll: true });
   }
 

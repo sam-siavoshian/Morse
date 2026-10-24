@@ -79,6 +79,10 @@ await page.keyboard.press("End");
 await sleep(150);
 await page.keyboard.press("Enter");
 await ui(".panel .gl-site.open .gl-item").first().waitFor();
+// The chip scrolls the panel to the section; the shot shows it under your own mods.
+await ui(".panel header [data-a=close]").click();
+await page.keyboard.press("Alt+Shift+KeyM");
+await ui(".panel .gl-site.open .gl-item").first().waitFor();
 await page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.activeElement?.blur());
 await shot("110-for-this-site.png");
 

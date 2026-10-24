@@ -102,7 +102,7 @@ test("the empty bar suggests the mods others made for this site; nothing is fetc
   await ui(".panel .gl-site.open").waitFor();
   const items = ui(".panel .gl-item");
   assert.equal(await items.count(), 2);
-  assert.match(await items.nth(0).textContent(), /Sleep timer.*“add a sleep timer that pauses the music after 15, 30 or 60 minutes”.*Adds buttons.*by june · version 2/s);
+  assert.match(await items.nth(0).textContent(), /Sleep timer.*“add a sleep timer that pauses the music after 15, 30 or 60 minutes”.*Adds buttons to the page.*by june · version 2/s);
   assert.match(await items.nth(1).textContent(), /Bigger rounded covers.*Changes how the page looks.*by kairo/s);
   assert.equal(indexHits, 1);
 });
@@ -141,6 +141,7 @@ test("Keep saves a tried mod, with where it came from", { skip }, async () => {
   assert.equal(mod.imported, true);
   assert.deepEqual(mod.match.hosts, [`127.0.0.1:${port}`]);
   await ui('.panel article[data-id="tunes-big-covers"]').waitFor();
+  assert.match(await ui('.panel article[data-id="tunes-big-covers"]').textContent(), /Installed from the Morse gallery by kairo/);
   assert.equal(await ui('.gl-item[data-glid="tunes-big-covers"]').count(), 0, "installed mods leave For this site");
   assert.match(await ui(".gl-head").textContent(), new RegExp(`1 mod for 127\\.0\\.0\\.1:${port}`));
   assert.equal(await grid.evaluate(e => getComputedStyle(e).columnGap), "24px", "still applied, now as a saved mod");
@@ -150,9 +151,10 @@ test("Install… goes through the install review, and nothing installs until you
   await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=install]').click();
   const card = ui(".modal .card");
   await card.waitFor();
-  assert.match(await card.locator("header").textContent(), /Install “Sleep timer”\?/);
-  assert.match(await card.textContent(), new RegExp(`It will run on 127\\.0\\.0\\.1:${port}`));
-  assert.ok(await card.locator("textarea.code").count() >= 1, "the code is shown before installing");
+  assert.match(await card.locator("header").textContent(), /Install “Sleep timer”\?.*Nothing is installed until you press Install/s);
+  assert.match(await card.textContent(), /What it does.*Adds buttons to the page/s);
+  assert.match(await card.textContent(), /made by june/);
+  assert.equal(await card.locator(".ctl-code pre").count(), 2, "the code is there before installing");
   assert.equal(await exists(modFile("tunes-sleep-timer")), false);
   await card.locator("[data-a=install]").click();
   await until(() => exists(modFile("tunes-sleep-timer")));
@@ -160,6 +162,7 @@ test("Install… goes through the install review, and nothing installs until you
   assert.deepEqual(mod.gallery, { id: "tunes-sleep-timer", version: 2 });
   await page.locator(".morse-sleep").waitFor();
   await ui('.panel article[data-id="tunes-sleep-timer"]').waitFor();
+  assert.match(await ui('.panel article[data-id="tunes-sleep-timer"]').textContent(), /Installed from the Morse gallery by june/);
   assert.equal(await ui(".gl-site").count(), 0, "every mod for this site is installed");
 });
 
