@@ -2788,7 +2788,7 @@ async function welcomeStates() {
           // the practice page's bar, with the sample suggestions
           await at({ screen: "try", state: "none", width });
           await w.locator("#open-bar").click().catch(() => {}); await sleep(1800);
-          await shoot("try-bar", { target: w.locator("#frame"), note: "the practice bar, opened from step 1" });
+          await pageShot(w, "practice", "sample-bar", theme, w.locator("#frame"), { note: "the practice bar, opened from step 1: the coach, sample suggestions" });
         }
       }
       // the “Allow User Scripts” window, as Chrome shows it beside Morse's details
