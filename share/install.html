@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Install a Morse mod</title>
-<meta name="description" content="Someone shared a Morse mod with you. Read its code, then install it in Morse or download it as a userscript.">
+<meta name="description" content="Someone shared a Morse mod with you. Read its code, then install it in Morse or download it for Tampermonkey.">
 <meta name="referrer" content="no-referrer">
 <link rel="icon" href="../site/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -59,7 +59,7 @@
   </div>
 </header>
 <main class="wrap i-main">
-  <div id="root"><p id="status" class="i-loading"><span data-radar="16"></span>Reading mod…</p></div>
+  <div id="root"><p id="status" class="i-loading"><span data-radar="16"></span>Opening the mod…</p></div>
 </main>
 <script type="module">
   import { decodeShare, toUserscript } from "../core/mod.js";
@@ -79,19 +79,19 @@
       <p class="eyebrow"><span data-radar="14" data-still></span>Shared mod</p>
       <h1>${esc(mod.title)}</h1>
       <p class="i-prompt">“${esc(mod.prompt)}”</p>
-      <div class="i-meta"><span class="chip">for ${esc(where)}</span>${mod.css.trim() ? `<span class="chip">css</span>` : ""}${mod.js.trim() ? `<span class="chip">js</span>` : ""}${mod.model ? `<span class="chip">made with ${esc(mod.model)}</span>` : ""}</div>
+      <div class="i-meta"><span class="chip">for ${esc(where)}</span>${mod.css.trim() ? `<span class="chip">style</span>` : ""}${mod.js.trim() ? `<span class="chip">script</span>` : ""}${mod.model ? `<span class="chip">made with ${esc(mod.model)}</span>` : ""}</div>
       <div class="i-actions">
         <button class="btn primary" type="button" id="install">Install in Morse</button>
-        <a class="btn" id="userscript" download>Download .user.js</a>
+        <a class="btn" id="userscript" download>Download for Tampermonkey</a>
       </div>
       <p id="status" role="status"></p>
       <div class="i-warn">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 1.75l6.5 11.5h-13z" stroke-linejoin="round"/><path d="M8 6.5v3"/><circle cx="8" cy="11.5" r=".5" fill="currentColor"/></svg>
-        <p><b>Mods are code that runs inside ${esc(where)}.</b> Read it below before installing: it can see what you see in that app.</p>
+        <p><b>This mod is code that runs inside ${esc(where)}.</b> It can see what you see there, so read it below before you install it.</p>
       </div>
       <div class="i-code">
-        ${mod.css.trim() ? `<h2>CSS <span>${lines(mod.css)}</span></h2><pre class="code">${highlight(mod.css.trimEnd(), "css")}</pre>` : ""}
-        ${mod.js.trim() ? `<h2>JavaScript <span>${lines(mod.js)}</span></h2><pre class="code">${highlight(mod.js.trimEnd(), "js")}</pre>` : ""}
+        ${mod.css.trim() ? `<h2>Style (CSS) <span>${lines(mod.css)}</span></h2><pre class="code">${highlight(mod.css.trimEnd(), "css")}</pre>` : ""}
+        ${mod.js.trim() ? `<h2>Script (JavaScript) <span>${lines(mod.js)}</span></h2><pre class="code">${highlight(mod.js.trimEnd(), "js")}</pre>` : ""}
       </div>
       <p class="i-foot">This whole mod is in the link, after the <code>#</code>. Browsers never send that part to a server, so nobody but you and the sender has seen it.</p>`;
     mountAll(root);
@@ -102,12 +102,12 @@
     document.getElementById("install").onclick = () => {
       if (document.documentElement.dataset.morseExtension) {
         window.postMessage({ morseInstall: location.href }, "*");
-        status.textContent = "Installing…";
+        status.textContent = "Check the Morse window on this page to finish installing.";
       } else {
         navigator.clipboard?.writeText(location.href).catch(() => {});
         status.innerHTML = mod.match.app
-          ? `Link copied. Run <code>morse install "&lt;link&gt;"</code>, or paste it into Morse → Mods → Import.`
-          : `Morse isn't installed in this browser. Link copied: paste it into Morse → Mods → Import, or use the .user.js with Tampermonkey.`;
+          ? `Link copied. In Morse, open Mods and choose Install a mod, then paste it. Or run <code>morse install "&lt;link&gt;"</code>.`
+          : `Morse isn't installed in this browser. The link is copied: paste it into Morse under Mods → Install a mod, or download the mod for Tampermonkey.`;
       }
     };
     window.addEventListener("message", e => {
@@ -118,9 +118,9 @@
   } catch (e) {
     root.innerHTML = `
       <p class="eyebrow">Shared mod</p>
-      <h1>That link doesn't contain a mod.</h1>
+      <h1>This link doesn't have a mod in it.</h1>
       <p class="i-prompt">It may have been cut off when it was copied. Ask for the link again, or browse the <a href="../site/gallery.html">gallery</a>.</p>
-      <p class="err" style="margin-top:16px;font-size:14px">${esc(e.message)}</p>`;
+      ${/^This /.test(e.message) ? `<p class="err" style="margin-top:16px;font-size:14px">${esc(e.message)}</p>` : ""}`;
   }
 </script>
 </body>

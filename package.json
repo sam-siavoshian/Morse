@@ -1,7 +1,7 @@
 {
   "name": "morse",
   "version": "0.1.0",
-  "description": "Customize any app in one sentence. Point at it, say what you want, your model (Claude Code, Codex or an API key) rewrites it live.",
+  "description": "Change any app or website in your own words. Point at something, describe the change, and your model (Claude Code, Codex or an API key) makes it while you watch.",
   "license": "MIT",
   "type": "module",
   "bin": {

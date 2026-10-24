@@ -11,7 +11,7 @@
   },
   "target": {
     "selector": ".p-channel_sidebar__list",
-    "label": "div · channel list"
+    "label": "Channel list"
   },
   "css": "/* Read channels and DMs recede; unread, mentions and the open one stay bright */\n.p-channel_sidebar__channel:not(.p-channel_sidebar__channel--unread):not(.p-channel_sidebar__channel--selected) {\n  opacity: .45;\n  transition: opacity .15s;\n}\n.p-channel_sidebar__channel--muted:not(.p-channel_sidebar__channel--selected) {\n  opacity: .25;\n}\n.p-channel_sidebar__list:hover .p-channel_sidebar__channel {\n  opacity: 1;\n}\n.p-channel_sidebar__channel--unread .p-channel_sidebar__name {\n  font-weight: 800;\n}\n",
   "js": "",

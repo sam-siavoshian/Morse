@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Morse: change any app in your own words</title>
-<meta name="description" content="Press Alt+Space, point at anything in a website or desktop app, and say what you want. Your coding model writes the CSS and JavaScript; Morse applies it live. Open source.">
+<meta name="description" content="Press Alt+Space, point at anything in a website or desktop app, and say what you want. Your model writes the change and you see it right away. Open source.">
 <meta property="og:title" content="Morse: change any app in your own words">
 <meta property="og:description" content="Point at anything, describe a change, watch it happen. Claude Code, Codex, or your own API key.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -23,7 +23,7 @@
     <nav class="nav" aria-label="Main">
       <a class="hide-sm" href="#how">How it works</a>
       <a class="hide-sm" href="#examples">Examples</a>
-      <a class="hide-sm" href="#godmode">God mode</a>
+      <a class="hide-sm" href="#godmode">Edit tools</a>
       <a href="gallery.html">Gallery</a>
       <a href="#install">Install</a>
       <a class="gh" href="https://github.com/sam-siavoshian/RRAA" aria-label="Source on GitHub">
@@ -97,21 +97,21 @@
           </div>
 
           <!-- Morse overlay -->
-          <div class="hl" id="demo-hl"><span>div · controls</span></div>
+          <div class="hl" id="demo-hl"><span>Player controls</span></div>
           <canvas class="fx" id="demo-fx"></canvas>
           <div class="mbar" id="demo-bar">
             <div class="mbar-row">
               <span class="mbar-mark" data-radar="16"></span>
-              <span class="mbar-chip">div · controls</span>
+              <span class="mbar-chip">Player controls</span>
               <span class="mbar-input"><span id="demo-typed"></span><span class="caret"></span><span class="ph" id="demo-ph">Describe a change…</span></span>
               <kbd class="mbar-enter" id="demo-enter">↵</kbd>
             </div>
             <div class="mbar-status" id="demo-status">
-              <span class="st-work"><span data-radar="12"></span>writing code</span>
+              <span class="st-work"><span data-radar="12"></span>Writing the change</span>
               <span class="st-done"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Sleep timer</span>
               <code class="st-code" id="demo-code"></code>
               <span class="st-time" id="demo-time">0.0s</span>
-              <span class="st-actions"><b>Keep</b><b>Undo</b><b>Code</b><b>Share</b></span>
+              <span class="st-actions"><b>Save</b><b>Undo</b><b>Edit code</b><b>Share</b></span>
             </div>
           </div>
           <div class="app-toast" id="demo-toast">Pausing in 15 minutes</div>
@@ -134,7 +134,7 @@
           <div class="step-art"><kbd>⌥</kbd><kbd class="wide">Space</kbd></div>
           <span class="step-n mono">01</span>
           <h3>Point at anything</h3>
-          <p class="muted">Press <kbd>⌥</kbd> <kbd>Space</kbd> in any page or app and hover to highlight a button, a sidebar, a feed. Or skip pointing and describe a page-wide change.</p>
+          <p class="muted">Press <kbd>⌥</kbd> <kbd>Space</kbd> in any page or app and click a button, a sidebar or a feed. Or skip pointing and describe a change to the whole page.</p>
         </li>
         <li>
           <div class="step-art"><span class="step-quote">“hide Shorts”</span></div>
@@ -146,7 +146,7 @@
           <div class="step-art"><span class="step-px" id="step-px" aria-hidden="true"></span></div>
           <span class="step-n mono">03</span>
           <h3>Watch it change</h3>
-          <p class="muted">CSS applies while the model is still writing it. If the JavaScript throws, Morse shows the model the error and it fixes itself. Keep it, undo it, or edit the code.</p>
+          <p class="muted">The new look shows up while the model is still writing. If the new code fails, Morse shows the model what went wrong and it fixes it. Save it, undo it, or edit the code.</p>
         </li>
       </ol>
     </div>
@@ -199,9 +199,9 @@
   <section class="block" id="godmode">
     <div class="wrap split">
       <div class="section-head">
-        <p class="eyebrow">God mode</p>
+        <p class="eyebrow">Edit tools</p>
         <h2>Or just grab it and edit.</h2>
-        <p class="lede">Some changes don’t need a model. Point at something and a toolbar appears. Every key is a tool. Your edits are saved as a mod, with undo and redo, like everything else.</p>
+        <p class="lede">Some changes don’t need a model. Point at something and the edit tools appear next to it. Each tool has its own key. Your edits are saved as a mod, with undo and redo, like everything else.</p>
       </div>
       <div class="god">
         <div class="god-stage" aria-hidden="true">
@@ -230,11 +230,11 @@
           <div><dt><kbd>R</kbd></dt><dd>Resize</dd></div>
           <div><dt><kbd>T</kbd></dt><dd>Edit text</dd></div>
           <div><dt><kbd>C</kbd></dt><dd>Color</dd></div>
-          <div><dt><kbd>F</kbd></dt><dd>Font size</dd></div>
+          <div><dt><kbd>F</kbd></dt><dd>Text size</dd></div>
           <div><dt><kbd>D</kbd></dt><dd>Duplicate</dd></div>
           <div><dt><kbd>⇧</kbd><kbd>C</kbd></dt><dd>Capture</dd></div>
         </dl>
-        <p class="muted small">Page tools do the common things in one click: dark mode, text size, hide ads, focus. Capture copies an element’s look so you can rebuild it in another app.</p>
+        <p class="muted small">Page tools do the common things in one click: dark mode, text size, hide ads, focus. Capture saves how something looks, so you can rebuild it in another app.</p>
       </div>
     </div>
   </section>
@@ -244,12 +244,12 @@
     <div class="wrap split flip">
       <div class="section-head">
         <p class="eyebrow">Voice</p>
-        <h2>Hold the hotkey and talk.</h2>
+        <h2>Hold the shortcut and talk.</h2>
         <p class="lede">Tap <kbd>⌥</kbd> <kbd>Space</kbd> to type. Hold it to speak. Let go, and Morse starts on the change.</p>
         <ul class="ticks">
-          <li>In Chrome, speech is transcribed by the browser.</li>
-          <li>In desktop apps, use your OpenAI key or a local Whisper.</li>
-          <li>Hotkeys are yours to change. Morse refuses the ones that would quit your app.</li>
+          <li>In Chrome, the browser turns your speech into text.</li>
+          <li>In desktop apps, Morse uses your OpenAI key or Whisper on your computer.</li>
+          <li>Shortcuts are yours to change. Morse refuses the ones that would quit your app.</li>
         </ul>
       </div>
       <div class="voice" aria-hidden="true">
@@ -268,7 +268,7 @@
       <div class="section-head">
         <p class="eyebrow">Models</p>
         <h2>Bring your own model.</h2>
-        <p class="lede">Morse has no backend and no account. It hands what you pointed at and what you said to the coding model you already use, and runs what comes back.</p>
+        <p class="lede">Morse has no server and no account. It hands what you pointed at and what you said to the coding model you already use, and runs what comes back.</p>
       </div>
       <ul class="rows">
         <li>
@@ -281,7 +281,7 @@
         </li>
         <li>
           <span class="row-k">An API key</span>
-          <span class="row-v muted">Any OpenAI-compatible endpoint, cloud or local: Ollama, llama.cpp, LM Studio, vLLM.</span>
+          <span class="row-v muted">Anthropic or OpenAI, or any OpenAI-compatible server in the cloud or on your computer (llama.cpp, LM Studio, vLLM).</span>
         </li>
       </ul>
     </div>
@@ -293,7 +293,7 @@
       <div class="section-head">
         <p class="eyebrow">Where it works</p>
         <h2>Websites and desktop apps.</h2>
-        <p class="lede">Most software you use every day is Chromium running JavaScript. Morse injects one small runtime into it, in the browser or in the app.</p>
+        <p class="lede">Most apps you use every day are built from web pages. Morse adds one small layer inside them, in the browser or in the app.</p>
       </div>
       <div class="surfaces">
         <article class="surface">
@@ -301,7 +301,7 @@
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="3.5" width="16" height="13" rx="2.5"/><path d="M2 7.5h16"/><circle cx="5" cy="5.5" r=".6" fill="currentColor"/><circle cx="7" cy="5.5" r=".6" fill="currentColor"/></svg>
             <h3>Any website</h3>
           </div>
-          <p class="muted">A Chrome extension. Mod JavaScript runs through <code>chrome.userScripts</code>, so it works on sites with a strict Content-Security-Policy too.</p>
+          <p class="muted">A Chrome extension. With Allow User Scripts on, mods work even on sites with strict security settings.</p>
           <div class="surface-foot">
             <span class="chip">youtube.com</span><span class="chip">github.com</span><span class="chip">chatgpt.com</span><span class="chip">claude.ai</span><span class="chip">mail.google.com</span><span class="chip faint-chip">…</span>
           </div>
@@ -311,7 +311,7 @@
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="3" width="16" height="11" rx="2"/><path d="M7 17h6M10 14v3"/></svg>
             <h3>Electron desktop apps</h3>
           </div>
-          <p class="muted"><code>morse launch spotify</code> restarts the app with a local debugging port and attaches over CDP. App files are never patched, so code signatures stay intact and updates don’t break it.</p>
+          <p class="muted"><code>morse launch spotify</code> reopens the app with Morse connected. Morse never changes the app’s files, so updates don’t break it.</p>
           <div class="surface-foot">
             <span class="chip">Spotify</span><span class="chip">Slack</span><span class="chip">Discord</span><span class="chip">VS Code</span><span class="chip">Notion</span><span class="chip">Obsidian</span>
           </div>
@@ -327,10 +327,10 @@
         <div class="section-head">
           <p class="eyebrow">Sharing</p>
           <h2>Mods are data.<br>Share them as a link.</h2>
-          <p class="lede">A mod is a small JSON document: the sentence, where it applies, and the code. Send it three ways.</p>
+          <p class="lede">A mod is a small file: what you said, where it applies, and the code. Send it three ways.</p>
           <dl class="formats">
-            <div><dt>Link</dt><dd class="muted">The whole mod rides in the URL fragment, which browsers never send to a server. The install page shows every line before anything runs.</dd></div>
-            <div><dt><code>.morse.json</code></dt><dd class="muted">Import it into Morse on another machine.</dd></div>
+            <div><dt>Link</dt><dd class="muted">The whole mod is in the link, after the <code>#</code>. Browsers never send that part to a server. The install page shows every line before anything runs.</dd></div>
+            <div><dt><code>.morse.json</code></dt><dd class="muted">Install it in Morse on another computer.</dd></div>
             <div><dt><code>.user.js</code></dt><dd class="muted">Runs in Tampermonkey or Violentmonkey, without Morse.</dd></div>
           </dl>
         </div>
@@ -384,7 +384,7 @@
     <div class="wrap split">
       <div class="section-head">
         <p class="eyebrow">Install</p>
-        <h2>Two minutes, no dependencies.</h2>
+        <h2>Set up in a few minutes.</h2>
         <p class="lede">Requires Node 22 or newer. Morse is early: the <a href="https://github.com/sam-siavoshian/RRAA#status">status notes</a> say exactly what has been verified.</p>
       </div>
       <ol class="install">
@@ -392,13 +392,13 @@
           <h3><span class="mono faint">1</span>Build</h3>
           <div class="codebox">
             <pre class="code" id="cmd-build">$ git clone https://github.com/sam-siavoshian/RRAA morse
-$ cd morse && npm run build</pre>
+$ cd morse && npm install && npm run build</pre>
             <button class="btn sm copy" type="button" data-copy="cmd-build">Copy</button>
           </div>
         </li>
         <li>
           <h3><span class="mono faint">2</span>Websites</h3>
-          <p class="muted">Open <code>chrome://extensions</code>, turn on Developer mode, <b>Load unpacked</b> and pick <code>dist/extension</code>. In the extension’s details, turn on <b>Allow User Scripts</b>. Then press <kbd>⌥</kbd> <kbd>Space</kbd> on any page.</p>
+          <p class="muted">Open <code>chrome://extensions</code>, turn on Developer mode, <b>Load unpacked</b> and pick <code>dist/extension</code>. In the extension’s details, turn on <b>Allow User Scripts</b>. Connect a model on the settings page that opens, then press <kbd>⌥</kbd> <kbd>Space</kbd> on any page.</p>
         </li>
         <li>
           <h3><span class="mono faint">3</span>Desktop apps</h3>
@@ -418,7 +418,7 @@ $ cd morse && npm run build</pre>
       <span data-radar="40"></span>
       <p class="eyebrow">Open source</p>
       <h2>MIT licensed. Read every line.</h2>
-      <p class="lede">Morse is a small codebase with no dependencies. Fork it, audit it, or send a mod to the gallery.</p>
+      <p class="lede">Morse is small enough to read. Fork it, check it, or send a mod to the gallery.</p>
       <div class="hero-cta">
         <a class="btn primary lg" href="https://github.com/sam-siavoshian/RRAA">View source</a>
         <a class="btn lg" href="#install">Install Morse</a>
