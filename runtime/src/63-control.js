@@ -171,9 +171,9 @@ function controlToast(msg, actions = [], { sticky = false, title = "" } = {}) {
 
 // ---- plain-language summary (install review, Show code)
 
-function whereFor(m) {
-  return m.match?.app || (m.match?.hosts || []).map(h => (h === "*" ? "every site" : h === "file" ? "local files" : h)).join(", ") || "this page";
-}
+// Same rule as modMatches (core/summary.js modHosts): no host list means every website.
+const whereFor = m => whereRuns(m);
+const everywhere = m => !m.match?.app && !!modHosts(m)?.includes("*");
 function summaryHtml(m) {
   const s = summarizeMod(m);
   if (s.empty) return `<ul class="ctl-items"><li><b>Doesn't change anything</b><small>It has no code.</small></li></ul>`;
@@ -208,7 +208,7 @@ async function reviewImport(source, { onDone } = {}) {
   if (!r?.mods?.length) { const e = "This isn't a Morse share link or mod file. Check that you copied all of it."; toast(e); return done({ error: e }); }
   const many = r.mods.length > 1;
   const hostHere = controlKey(here());
-  const other = m => !m.match?.app && !(m.match?.hosts || []).some(h => h === "*" || h === hostHere || (h.startsWith("*.") && hostHere.endsWith(h.slice(1))));
+  const other = m => !m.match?.app && !(modHosts(m) || []).some(h => h === "*" || h === hostHere || (h.startsWith("*.") && hostHere.endsWith(h.slice(1))));
   applyTheme();
   openModal(`
     <header><b>${many ? `Install ${r.mods.length} mods?` : `Install “${esc(r.mods[0].title)}”?`}</b>
@@ -220,6 +220,7 @@ async function reviewImport(source, { onDone } = {}) {
       <p class="ctl-from">For ${esc(whereFor(m))}${m.author ? ` · made by ${esc(m.author)}` : ""}${m.model ? ` · written by ${esc(m.model)}` : ""}${other(m) ? ` · <span>not this page</span>` : ""}</p>
       <h4 class="ctl-h">What it does</h4>
       ${summaryHtml(m)}
+      ${everywhere(m) ? `<p class="ctl-warn" data-s="everywhere"><b>Note</b>This mod runs on every website you visit, not just one. It can see what you see on all of them.</p>` : ""}
       <details class="ctl-code"><summary>Show code</summary>${codeHtml(m)}</details>
     </section>`).join("")}
     ${r.errors?.length ? `<p class="dim ctl-skip">Skipped ${esc(r.errors.join("; "))}</p>` : ""}

@@ -68,6 +68,7 @@
   const core = Promise.all([import("/core/kit.js"), import("/core/mod.js"), import("/core/clipboard.js"), import("/core/control-host.js")]);
   const subs = [];
   const emit = m => subs.forEach(f => f(m));
+  globalThis.__fakeEmit = emit; // tests: play host events (e.g. the share page's install.request)
   globalThis.__morseHost = {
     onMessage: fn => subs.push(fn),
     async send(m) {

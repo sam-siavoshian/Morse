@@ -2,7 +2,8 @@
 // category, plus the notes and the cases that must not cry wolf.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { summarizeMod, summaryLines, modOrigin, SUMMARY_ITEMS, SUMMARY_NOTES } from "../core/summary.js";
+import { summarizeMod, summaryLines, modOrigin, modHosts, whereRuns, SUMMARY_ITEMS, SUMMARY_NOTES } from "../core/summary.js";
+import { modMatches } from "../core/mod.js";
 
 const ids = mod => summarizeMod(mod).items.map(i => i.id);
 const notes = mod => summarizeMod(mod).notes.map(n => n.id);
@@ -175,6 +176,32 @@ test("a typical word-count mod reads plainly, in order", () => {
 test("an empty mod says so", () => {
   assert.equal(summarizeMod({ css: " ", js: "" }).empty, true);
   assert.deepEqual(summaryLines({}), ["Doesn't change anything (it has no code)"]);
+});
+
+test("where it runs: the words follow the same rule as modMatches", () => {
+  const url = "https://news.example/a", other = "https://mail.example/";
+  for (const [match, words, hostsBack] of [
+    [undefined, "every website", ["*"]],
+    [{}, "every website", ["*"]],                // no host list means everywhere, not "this site"
+    [{ hosts: ["*"] }, "every website", ["*"]],
+    [{ hosts: ["news.example"] }, "news.example", ["news.example"]],
+    [{ hosts: ["file"] }, "files on this computer", ["file"]],
+    [{ hosts: [null] }, /nowhere/, null],
+    [{ hosts: [1] }, /nowhere/, null],
+    [{ hosts: [] }, /nowhere/, null],
+    [{ hosts: "news.example" }, /nowhere/, null],
+    ["news.example", /nowhere/, null],
+    [{ hosts: ["x"], app: "spotify" }, "spotify", ["x"]],
+  ]) {
+    const mod = { match };
+    assert.deepEqual(modHosts(mod), hostsBack, JSON.stringify(match));
+    if (words instanceof RegExp) assert.match(whereRuns(mod), words); else assert.equal(whereRuns(mod), words);
+    // What the words say is what happens.
+    if (match?.app) continue;
+    const runsElsewhere = modMatches(mod, { url: other, app: null });
+    assert.equal(runsElsewhere, whereRuns(mod) === "every website", `${JSON.stringify(match)} on another site`);
+    assert.equal(modMatches(mod, { url, app: null }), !!hostsBack && (hostsBack.includes("*") || hostsBack.includes("news.example")), `${JSON.stringify(match)} here`);
+  }
 });
 
 test("where it came from, in a few words", () => {

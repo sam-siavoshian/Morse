@@ -229,6 +229,44 @@ test("import: the in-app review shows what it does, folds the code, and installs
   await ctx.close();
 });
 
+test("the share page's install request always gets an answer: Esc, the backdrop and Cancel say it wasn't installed", { skip }, async () => {
+  const ctx = await context();
+  const { page, errors } = await playground(ctx);
+  const everywhere = createMod({ title: "Big text", prompt: "make text bigger", url: "http://morse.test/", css: "body{font-size:20px}" });
+  everywhere.match = { hosts: ["*"], app: null };
+  const link = await encodeShare(everywhere);
+  await page.evaluate(() => { window.__replies = []; addEventListener("message", e => e.data?.morseInstalled && __replies.push(e.data.morseInstalled)); });
+  const ask = async () => {
+    await page.evaluate(l => __fakeEmit({ type: "install.request", source: l }), link);
+    await until(() => page.evaluate(`!${sr(".modal")}.hidden`)); // the new review, not the last one's leftovers
+  };
+  const replies = () => page.evaluate(() => __replies);
+  for (const close of [
+    () => page.keyboard.press("Escape"),
+    () => page.evaluate(`${sr(".modal")}.dispatchEvent(new MouseEvent("click", { bubbles: true }))`), // the backdrop
+    () => click(page, ".modal footer [data-a=close]"),
+  ]) {
+    const n = (await replies()).length;
+    await ask();
+    await until(() => text(page, ".modal .ctl-items"));
+    // Where it runs comes from the same rule as matching: every website, with a note.
+    assert.match(await text(page, ".modal .ctl-from"), /For every website/);
+    assert.match(await text(page, '.modal .ctl-warn[data-s="everywhere"]'), /every website you visit/);
+    await close();
+    const r = await until(async () => (await replies())[n]);
+    assert.deepEqual(r, { error: "Not installed. You cancelled it." });
+    assert.equal(await page.evaluate(`${sr(".modal")}.hidden`), true);
+  }
+  assert.equal(Object.keys(await stored(page)).length, 2, "nothing installed");
+  // And Install answers with the title.
+  assert.equal((await replies()).length, 3, "one answer per request");
+  await ask();
+  await until(() => text(page, ".modal .ctl-items"));
+  await click(page, ".modal [data-a=install]");
+  assert.deepEqual(await until(async () => (await replies())[3]), { title: "Big text" });
+  assert.deepEqual(errors, []);
+});
+
 test("share page: plain-language summary first, code folded below, an explicit Install", { skip }, async () => {
   const ctx = await context();
   const page = await ctx.newPage();

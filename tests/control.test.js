@@ -12,7 +12,7 @@ import {
 } from "../core/control.js";
 import { exportBundle, parseImport, prepareInstall, backupFilename } from "../core/backup.js";
 import { controlHandler } from "../core/control-host.js";
-import { createMod, encodeShare } from "../core/mod.js";
+import { createMod, encodeShare, validateMod, modMatches } from "../core/mod.js";
 
 const NEWS = { url: "https://news.example/today", app: null };
 const MAIL = { url: "https://mail.example/inbox", app: null };
@@ -121,6 +121,19 @@ test("safe start: a suspect that later runs fine is let go, and records stay bou
 });
 
 const mod = (title, extra = {}) => ({ ...createMod({ title, prompt: `make ${title}`, css: "a{}", js: "", url: "https://news.example/" }), ...extra });
+
+test("a mod must say where it runs; a broken one is skipped, never thrown on", () => {
+  const ok = createMod({ title: "x", prompt: "x", css: "a{}", url: "https://news.example/" });
+  assert.equal(validateMod(ok), ok);
+  assert.ok(validateMod({ ...ok, match: { hosts: ["a.example"], app: "spotify" } }));
+  assert.ok(validateMod({ ...ok, match: { hosts: ["*"] } }), "app may be left out");
+  for (const match of [undefined, null, "x", [], {}, { hosts: [] }, { hosts: [1] }, { hosts: [null] }, { hosts: [""] }, { hosts: "a" }, { hosts: ["a"], app: 3 }, { hosts: ["a"], app: {} }]) {
+    assert.throws(() => validateMod({ ...ok, match }), /doesn't say where it runs/, JSON.stringify(match));
+  }
+  const broken = [{ ...ok, id: "b1", match: { hosts: [1] } }, { ...ok, id: "b2", match: { hosts: [null] } }, { ...ok, id: "b3", match: "x" }, null, 7];
+  const where = { url: "https://news.example/", app: null };
+  assert.deepEqual([...broken, ok].filter(m => modMatches(m, where)).map(m => m.id), [ok.id], "the good mod still loads");
+});
 
 test("export bundle and import: backup, single mod, share link, junk", async () => {
   const a = mod("one"), b = mod("two", { enabled: false });
@@ -241,6 +254,12 @@ test("CLI: morse pause / resume, export --all, import", async () => {
     // The connector's own requests go to the same file.
     await ctl.handleControl({ type: "control.pause", scope: "site", on: true }, { url: "x", app: "spotify" });
     assert.ok((await ctl.loadControl()).pause.sites.spotify);
+
+    // A broken mod file on disk doesn't stop the others from loading.
+    await writeFile(path.join(home, "mods", "broken.json"), JSON.stringify({ ...mod("broken"), id: "broken", match: { hosts: [1] } }));
+    await store.saveMod(mod("good"));
+    assert.deepEqual((await store.modsFor({ url: "https://news.example/", app: null })).map(m => m.title), ["good"]);
+    for (const m of await store.listMods()) await store.deleteMod(m.id);
 
     await store.saveMod(mod("one"));
     await store.saveMod(mod("two", { js: "fetch('https://x.example', { body: document.body.innerText })" }));

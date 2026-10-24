@@ -126,6 +126,29 @@ export function summaryLines(mod) {
   return [...s.items.map(i => i.text), ...s.notes.map(n => `Note: ${n.text}`)];
 }
 
+// The sites a mod runs on, exactly as modMatches (core/mod.js) reads them:
+// no host list means every site; a list that isn't non-empty strings is
+// broken (null), and a broken mod runs nowhere.
+export function modHosts(mod) {
+  const m = mod?.match;
+  if (m === undefined || m === null) return ["*"];
+  if (typeof m !== "object" || Array.isArray(m)) return null;
+  const h = m.hosts;
+  if (h === undefined || h === null) return ["*"];
+  if (!Array.isArray(h) || !h.length || !h.every(x => typeof x === "string" && x)) return null;
+  return h;
+}
+
+// "Where it runs", in words, from the same rule.
+export function whereRuns(mod) {
+  const app = mod?.match?.app;
+  if (typeof app === "string" && app) return app;
+  const h = modHosts(mod);
+  if (!h) return "nowhere (its list of sites is broken)";
+  if (h.includes("*")) return "every website";
+  return h.map(x => (x === "file" ? "files on this computer" : x)).join(", ");
+}
+
 // Where a mod came from, in a few words (Mods panel, popup, CLI).
 export function modOrigin(mod) {
   const day = iso => {
