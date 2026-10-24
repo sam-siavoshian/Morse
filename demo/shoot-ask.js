@@ -10,6 +10,8 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { createRequire } from "node:module";
+// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
+const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -66,7 +68,7 @@ async function pick(page, sel, fx = 0.5, fy = 0.5) {
 
 // 90. Ask: point at a control, ask what it does
 const tunes = await open(SITE.tunes);
-await tunes.keyboard.press("Alt+Space");
+await tunes.keyboard.press(OPEN_KEY);
 await sleep(200);
 await pick(tunes, '[aria-label="Repeat"]');
 await tunes.keyboard.type("what does this button do?", { delay: 14 });
@@ -79,7 +81,7 @@ await tunes.close();
 
 // 91. Find: a setting that lives behind a menu
 const chat = await open(SITE.parley);
-await chat.keyboard.press("Alt+Space");
+await chat.keyboard.press(OPEN_KEY);
 await sleep(200);
 await chat.mouse.move(640, 520);
 await chat.keyboard.type("where do I change notification settings?", { delay: 14 });
@@ -104,7 +106,7 @@ await chat.close();
 
 // 93. Explain this page, from the page tools
 const news = await open(SITE.byte);
-await news.keyboard.press("Alt+Space");
+await news.keyboard.press(OPEN_KEY);
 await sleep(200);
 await news.mouse.move(1000, 120);
 await news.locator(".gm-qbtn").click();

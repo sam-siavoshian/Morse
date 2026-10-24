@@ -63,6 +63,20 @@ test("the share page only asks; nothing installs until the user clicks Install",
   await p.close();
 });
 
+test("the popup shows the Open Morse hotkey as configured", { skip }, async () => {
+  const id = new URL(sw.url()).host;
+  const p = await ctx.newPage();
+  await p.goto(`chrome-extension://${id}/popup.html?url=https://example.com/`);
+  await p.waitForFunction(() => document.getElementById("key").textContent);
+  assert.equal(await p.locator("#key").textContent(), process.platform === "darwin" ? "⌥Space" : "Ctrl+Shift+Space");
+  await sw.evaluate(() => chrome.storage.sync.set({ "morse.settings": { hotkeys: { open: "Alt+KeyJ" } } }));
+  await p.reload();
+  await p.waitForFunction(() => document.getElementById("key").textContent);
+  assert.equal(await p.locator("#key").textContent(), process.platform === "darwin" ? "⌥J" : "Alt+J");
+  await sw.evaluate(() => chrome.storage.sync.remove("morse.settings"));
+  await p.close();
+});
+
 test("mods with unsafe ids are rejected", () => {
   const bad = { ...createMod({ title: "t", prompt: "p", url: "https://a.com/" }), id: 'x"><img src=x onerror=alert(1)>' };
   assert.throws(() => validateMod(bad), /invalid id/);

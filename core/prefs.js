@@ -6,12 +6,13 @@
 // Pure and dependency-free: runtime/bundle.js inlines it into the runtime.
 
 export const DEFAULT_PREFS = {
-  hotkeys: { open: "", talk: "", mods: "", godmode: "" }, // "" = platform default, "none" = off
+  hotkeys: { open: "", talk: "", mods: "", godmode: "", off: "" }, // "" = platform default, "none" = off
   voice: { autoSubmit: false },
   welcome: true,
   effects: "",        // "" = follow prefers-reduced-motion (full, or subtle when reduced); "full" | "subtle" | "off"
   barPosition: "auto", // "auto" (away from what you point at) | "top" | "bottom"
   theme: "auto",       // "auto" (match the app) | "light" | "dark"
+  gallery: true,       // gallery hook: "Show mods others made" (Mods for this site)
 };
 
 const PREF_COMBO = /^((Ctrl|Alt|Shift|Meta)\+){0,4}[A-Za-z0-9]{1,24}$/;
@@ -32,6 +33,7 @@ export function normalizePrefs(p) {
     effects: pickPref(src.effects, ["", "full", "subtle", "off"], ""),
     barPosition: pickPref(src.barPosition, ["auto", "top", "bottom"], "auto"),
     theme: pickPref(src.theme, ["auto", "light", "dark"], "auto"),
+    gallery: src.gallery !== false, // gallery hook
   };
 }
 

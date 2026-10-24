@@ -60,14 +60,25 @@ function evalInFrame(code) {
   });
 }
 
-let port = null;
+let port = null; // { p, inflight }: requests the practice bar still waits on (see host.js)
 function relay(m) {
   if (!port) {
-    port = chrome.runtime.connect({ name: "morse" });
-    port.onMessage.addListener(r => frame.contentWindow?.postMessage({ morseMsg: r }, "*"));
-    port.onDisconnect.addListener(() => { port = null; });
+    const p = chrome.runtime.connect({ name: "morse" });
+    const inflight = new Set();
+    port = { p, inflight };
+    p.onMessage.addListener(r => {
+      if (r && r.reply != null) inflight.delete(r.reply);
+      frame.contentWindow?.postMessage({ morseMsg: r }, "*");
+    });
+    p.onDisconnect.addListener(() => {
+      if (port?.p === p) port = null;
+      const lost = [...inflight];
+      inflight.clear();
+      for (const id of lost) frame.contentWindow?.postMessage({ morseMsg: { reply: id, error: "message port closed" } }, "*");
+    });
   }
-  port.postMessage(m);
+  port.p.postMessage(m);
+  if (m && m.id != null) port.inflight.add(m.id);
 }
 addEventListener("message", e => {
   if (e.source !== frame.contentWindow || !e.data) return;

@@ -37,10 +37,10 @@ function onClick(e) {
   if (hoverEl) setTarget(hoverEl);
 }
 let pointerY = innerHeight / 2;
-addEventListener("mousemove", e => { pointerY = e.clientY; }, true);
-addEventListener("mousemove", onMove, true);
-for (const t of ["pointerdown", "mousedown", "pointerup", "mouseup"]) addEventListener(t, swallow, true);
-addEventListener("click", onClick, true);
-addEventListener("scroll", () => { if (S.target) boxTo(S.target, selBox); }, true);
+listen("mousemove", e => { pointerY = e.clientY; }, true);
+listen("mousemove", onMove, true);
+for (const t of ["pointerdown", "mousedown", "pointerup", "mouseup"]) listen(t, swallow, true);
+listen("click", onClick, true);
+listen("scroll", () => { if (S.target) boxTo(S.target, selBox); }, true);
 
 // setTarget lives in 50-bar.js (one definition; it calls the God mode hook).

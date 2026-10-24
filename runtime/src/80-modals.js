@@ -49,6 +49,7 @@ async function showShare(m) {
       <button data-a="json">Download mod file</button>
       <button data-a="user">Download for Tampermonkey</button>
       <button data-a="tweet">Post on X…</button>
+      ${galleryShareHtml(m) /* gallery hook: Submit to the gallery (68-gallery.js) */}
     </div>
     <p class="saved dim"></p>`);
   const done = r => { modal.querySelector(".saved").textContent = r?.path ? `Saved to ${r.path}` : "Downloaded"; };
@@ -75,15 +76,9 @@ function showImport() {
   openModal(`
     <header><b>Install a shared mod</b><small>Paste a share link, or the text of a .morse.json file.</small><button data-a="close">×</button></header>
     <textarea class="code" data-k="src" spellcheck="false" placeholder="https://…/install.html#m=…"></textarea>
-    <footer><button data-a="close">Cancel</button><button class="primary" data-a="go">Install</button></footer>`);
-  modal.querySelector("[data-a=go]").onclick = async () => {
-    try {
-      const mod = await call("mods.import", { source: modal.querySelector("[data-k=src]").value, url: location.href, app: S.app });
-      modal.hidden = true;
-      toast(`Installed “${mod.title}”`);
-      await syncMods();
-    } catch (e) { toast(plainError(e)); }
-  };
+    <footer><button data-a="close">Cancel</button><button class="primary" data-a="go">Next</button></footer>`);
+  // user control: say what it does before anything is installed (63-control.js)
+  modal.querySelector("[data-a=go]").onclick = () => reviewImport(modal.querySelector("[data-k=src]").value);
 }
 
 // Before/after share card, 1200x675 (the size X/Twitter shows inline).

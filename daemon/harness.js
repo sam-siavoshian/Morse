@@ -11,7 +11,7 @@ import { promises as fs, statSync, accessSync, constants } from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { HOME } from "./store.js";
-import { registerProvider, flattenConversation, abortError } from "../core/providers.js";
+import { registerProvider, flattenConversation, abortError, imageBlocks } from "../core/providers.js";
 
 export const TIMEOUT_MS = 120_000;
 const MODEL_RE = /^[A-Za-z0-9][\w.:/\[\]-]{0,80}$/;
@@ -117,10 +117,14 @@ export async function claudeCodeStream(s, messages, { onToken, signal }) {
     "--system-prompt-file", sysFile,
     ...(s.model ? ["--model", s.model] : []),
   ];
+  // Describe this image (core/a11y.js): pictures go in as one stream-json user message.
+  const images = imageBlocks(messages);
+  if (images.length) args.push("--input-format", "stream-json");
+  const input = images.length ? JSON.stringify({ type: "user", message: { role: "user", content: [...images, { type: "text", text: prompt }] } }) + "\n" : prompt;
   let text = "", result = null;
   try {
     const { code, stderr } = await runProcess({
-      bin, args, input: prompt, cwd: path.join(dir, "cwd"), signal, timeoutMs: s.timeoutMs,
+      bin, args, input, cwd: path.join(dir, "cwd"), signal, timeoutMs: s.timeoutMs,
       onLine(line) {
         let ev;
         try { ev = JSON.parse(line); } catch { return; }

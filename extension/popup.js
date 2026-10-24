@@ -1,9 +1,27 @@
 // Toolbar popup, and (with <body data-page="options">) the options page.
 import { plainError } from "./core/onboarding.js";
+import { normalizePrefs } from "./core/prefs.js";
+import { detectPlatform, resolveHotkeys, formatCombo } from "./core/hotkeys.js";
+import { modExtras } from "./popup-control.js"; // user control: pause switches, where each mod came from, Show code
 const $ = id => document.getElementById(id);
 const isOptions = document.body.dataset.page === "options";
 const [tab] = isOptions ? [null] : await chrome.tabs.query({ active: true, currentWindow: true });
-$("key").textContent = navigator.platform.includes("Mac") ? "⌥ Space" : "Alt+Space";
+
+// The Open Morse shortcut as set in the bar's settings (bar-host.js keeps them
+// in chrome.storage.sync, or local when sync is unavailable).
+async function openHotkey() {
+  let stored;
+  try { stored = (await chrome.storage.sync.get("morse.settings"))["morse.settings"]; } catch {}
+  if (stored === undefined) stored = (await chrome.storage.local.get("morse.settings"))["morse.settings"];
+  const platform = detectPlatform(navigator);
+  const open = resolveHotkeys(normalizePrefs(stored).hotkeys, platform).open;
+  return open && open !== "none" ? formatCombo(open, platform) : "";
+}
+{
+  const key = await openHotkey().catch(() => "");
+  $("key").textContent = key;
+  $("key").hidden = !key;
+}
 
 // ?url= lets the popup be opened as a page (screenshots, debugging).
 const url = new URLSearchParams(location.search).get("url") || tab?.url || "";
@@ -19,7 +37,7 @@ function render(s) {
   $("warn").hidden = s.userScripts;
   $("count").textContent = s.mods.length ? `· ${s.mods.length}` : "";
   $("mods").innerHTML = s.mods.length
-    ? s.mods.map(m => `<li><i class="${m.enabled ? "on" : ""}"></i>${esc(m.title)}<small>“${esc(m.prompt)}”</small></li>`).join("")
+    ? s.mods.map(m => `<li><i class="${m.enabled ? "on" : ""}"></i>${esc(m.title)}<small>“${esc(m.prompt)}”</small>${modExtras(m)}</li>`).join("")
     : `<li class="empty">No mods on this site yet.</li>`;
 
   $("connect").hidden = s.kind !== "none";

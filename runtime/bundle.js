@@ -18,6 +18,9 @@ export function bundleRuntime() {
   shared.push(inlineModule("../core/versions.js")); // keep iterating: mod version history (60/70)
   shared.push(inlineModule("../core/onboarding.js")); // first run and help (runtime/src/59-onboarding.js)
   shared.push(inlineModule("../core/answer.js")); // Ask and find: reply parser + markdown subset
+  shared.push(inlineModule("../core/summary.js"), inlineModule("../core/control.js")); // user control
+  shared.push(inlineModule("../core/gallery.js")); // gallery hook: Mods for this site (68-gallery.js)
+  shared.push(inlineModule("../core/a11y.js")); // Easier to use: page tools, Check this page, fixes
   return `/* Morse runtime (built from runtime/src) */\n(() => {\nconst TOKENS_CSS = ${JSON.stringify(tokens)};\n${shared.join("\n")}\n${parts.join("\n")}\n})();\n`;
 }
 

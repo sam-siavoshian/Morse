@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import http from "node:http";
 import path from "node:path";
 import { promises as fs } from "node:fs";
+import { OPEN_KEY } from "./helpers/keys.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
 import { freePort, listen } from "./helpers/net.js";
 import { waitFor, waitForStatus, waitForReady } from "./helpers/wait.js";
@@ -37,7 +38,7 @@ before(async () => {
   const ctx = await browser.newContext({ viewport: { width: 1000, height: 700 } });
   await ctx.addInitScript(() => {
     localStorage.setItem("morse:debug", "1");
-    globalThis.webkitSpeechRecognition = class extends EventTarget { // as inside Electron
+    globalThis.webkitSpeechRecognition = class extends EventTarget { // as inside Electron (page world only: Morse's isolated world gets Chromium's own, which fails the same way here)
       start() { setTimeout(() => { this.onerror?.(Object.assign(new Event("error"), { error: "network" })); const e = new Event("end"); this.onend?.(e); this.dispatchEvent(e); }, 20); }
       stop() {} abort() {}
     };
@@ -58,7 +59,7 @@ after(async () => {
 });
 
 test("settings round-trip through ~/.morse/settings.json", { skip }, async () => {
-  await page.keyboard.press("Alt+Space");
+  await page.keyboard.press(OPEN_KEY);
   await status(s => s.open, "the bar to open");
   await page.keyboard.press("Control+Comma");
   await status(s => s.pane === "settings", "the settings sheet");

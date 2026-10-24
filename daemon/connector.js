@@ -3,13 +3,24 @@
 // crash), injects the Morse runtime, and serves its requests (generate, run,
 // save, share). CDP evaluation is exempt from the page's CSP, so mods work in
 // locked-down apps too.
+//
+// Two JS worlds per page:
+//   - Morse's isolated world ("morse"): the runtime and the __morseHostSend
+//     binding live here, so the app's own scripts (or a website loaded in an
+//     attached browser) can't see or call the host API. The runtime only
+//     needs the DOM, which both worlds share.
+//   - the page's main world: mod code runs here (Runtime.evaluate with the
+//     main context id), because mods need the page's own JS objects.
+// Host requests are answered for the page that asked: mods, history and
+// saves are scoped to the calling document's URL (read from Morse's world)
+// and app, never to what the message claims.
 
 import { spawn } from "node:child_process";
 import { mkdirSync, watch } from "node:fs";
 import path from "node:path";
 import { CDPSession, listTargets } from "./cdp.js";
-import { modsFor, saveMod, deleteMod, writeExport, readClipboard, putClipboard } from "./store.js";
-import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf } from "../core/mod.js";
+import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putClipboard } from "./store.js";
+import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
 import { runMorse } from "../core/engine.js";
 import { settingsLabel } from "./models.js"; // also registers the Claude Code / Codex providers
@@ -17,20 +28,25 @@ import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
 import { Generations } from "../core/cancel.js";
 import { cachedVoiceStatus, transcribeAudio } from "./voice.js";
+import { CONTROL_REQUESTS, handleControl, watchControl } from "./control.js"; // user control: pause, safe start, install review, backup
 import { HOME, listMods } from "./store.js";
 import { classifyTarget, describeTarget } from "./targets.js";
 import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
+import { GALLERY_REQUESTS, handleGallery } from "./gallery.js"; // gallery hook: Mods for this site
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
 
-// Shim + boot: the runtime starts once per document. In a window it runs in the
-// top frame only; in an iframe target (an app webview) it runs in that frame
-// but not in frames nested inside it.
+export const WORLD = "morse";            // the isolated world's name
+export const BINDING = "__morseHostSend"; // exists only in that world
+
+// Shim + boot, run in Morse's world: the runtime starts once per document. In
+// a window it runs in the top frame only; in an iframe target (an app webview)
+// it runs in that frame but not in frames nested inside it.
 const shim = frame => `(() => {
   const nested = ${frame ? "(() => { try { return window.parent !== window && !!window.parent.document; } catch { return false; } })()" : "window.top !== window"};
   if (nested || globalThis.__morseHost) return;
-  const send = globalThis.__morseHostSend;
+  const send = globalThis.${BINDING};
   if (typeof send !== "function") return;
   const subs = [];
   globalThis.__morseHost = { send: m => send(JSON.stringify(m)), onMessage: fn => subs.push(fn) };
@@ -39,18 +55,30 @@ const shim = frame => `(() => {
 
 // Page.addScriptToEvaluateOnNewDocument runs before <html> exists.
 const boot = frame => `(() => { const go = () => { ${shim(frame)}\n${RUNTIME} }; document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go, { once: true }) : go(); })();`;
-const BOOT = { window: boot(false), frame: boot(true) };
+export const BOOT = { window: boot(false), frame: boot(true) };
 
 // What `morse stop` leaves behind: no bar, no mods, no hooks for new pages.
+// In Morse's world, first: the runtime there goes quiet (so it won't put the
+// bar back) and a later attach can start a fresh one.
+const QUIET = `(() => { try {
+  globalThis.__morseGen = (globalThis.__morseGen || 0) + 1;
+  delete globalThis.__morseHost; delete globalThis.__morseHostReceive; delete globalThis.__morseRuntime;
+} catch {} })()`;
+// Then in the page's main world, where the mods run.
 const cleanup = ids => `(() => { try {
-  globalThis.__morseGen = (globalThis.__morseGen || 0) + 1; // the runtime here goes quiet
   for (const s of document.querySelectorAll("style[data-morse-css]")) { globalThis.morse?.__off?.(s.dataset.morseCss); s.remove(); }
   for (const id of ${JSON.stringify(ids)}) globalThis.morse?.__off?.(id);
   document.querySelectorAll("[data-morse-ui]").forEach(e => e.remove());
-  delete globalThis.__morseHost; delete globalThis.__morseHostReceive; delete globalThis.__morseRuntime;
 } catch {} })()`;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// Where a mod applies, compared: same app, same set of hosts.
+const matchKey = m => JSON.stringify({ app: m?.app || null, hosts: [...(Array.isArray(m?.hosts) ? m.hosts : [])].map(String).sort() });
+const sameMatch = (a, b) => !!a && !!b && matchKey(a) === matchKey(b);
+// A match no wider than the caller's own site, in the caller's own app.
+const onlyHere = (m, where) => !!m && (m.app || null) === (where.app || null)
+  && Array.isArray(m.hosts) && m.hosts.length > 0 && m.hosts.every(h => h === hostOf(where.url));
 
 export class Connector {
   // watch: keep waiting when the app quits and attach again when it's back.
@@ -76,6 +104,7 @@ export class Connector {
   async run() {
     this.running = true;
     this.watchMods();
+    this.controlWatcher ||= watchControl(this); // user control: tell windows when Morse is paused or resumed
     let misses = 0;
     while (this.running) {
       let list = null;
@@ -108,6 +137,7 @@ export class Connector {
     }
     this.running = false;
     this.modWatcher?.close();
+    this.controlWatcher?.close(); this.controlWatcher = null;
     return this.state;
   }
 
@@ -166,25 +196,48 @@ export class Connector {
       this.log(`  ! ${describeTarget(w).title} stopped working. Morse will connect again when it reloads.`);
       s.close();
     });
+
+    // Execution contexts per frame: the page's main world and Morse's world.
+    // Each document gets new ones, so these follow navigations.
+    const frames = w.frames = new Map(); // frameId -> { main, world }
+    const worlds = new Map();             // Morse world context id -> frameId
+    const frame = id => frames.get(id) || frames.set(id, { main: null, world: null }).get(id);
+    s.on("Runtime.executionContextCreated", ({ context: c }) => {
+      const frameId = c.auxData?.frameId;
+      if (!frameId) return;
+      if (c.auxData.isDefault) {
+        frame(frameId).main = c.id;
+        // Belt and braces for documents the new-document script misses (a
+        // renderer that came back after a crash, or one whose world came up
+        // without the binding): boot() makes the world if there's none and
+        // starts the runtime unless it's already running there.
+        if (w.ready && frameId === w.frameId) setTimeout(() => {
+          const f = frames.get(frameId);
+          if (f && f.main === c.id) this.boot(s, w, source).catch(() => {});
+        }, 400);
+      } else if (c.name === WORLD) { frame(frameId).world = c.id; worlds.set(c.id, frameId); }
+    });
+    s.on("Runtime.executionContextDestroyed", ({ executionContextId: id }) => {
+      worlds.delete(id);
+      for (const f of frames.values()) { if (f.main === id) f.main = null; if (f.world === id) f.world = null; }
+    });
+    s.on("Runtime.executionContextsCleared", () => { frames.clear(); worlds.clear(); });
+    s.on("Page.frameDetached", ({ frameId }) => frames.delete(frameId));
+
     // Listen before injecting: the runtime says hello during evaluation.
     s.on("Runtime.bindingCalled", p => {
-      if (p.name !== "__morseHostSend") return;
+      if (p.name !== BINDING) return;
+      // Only Morse's own world can reach the host. (The binding exists only
+      // there; this also refuses any context we don't know.)
+      const frameId = worlds.get(p.executionContextId);
+      if (!frameId) return;
       let msg;
       try { msg = JSON.parse(p.payload); } catch { return; }
-      const done = this.handle(s, p.executionContextId, msg);
+      if (!msg || typeof msg !== "object") return;
+      // Pin the caller's documents now: if the page navigates mid-request,
+      // these contexts die with it and nothing lands on the next page.
+      const done = this.handle(s, { world: p.executionContextId, main: frames.get(frameId)?.main ?? null, frameId }, msg);
       if (/^mods\.(save|delete|import)$/.test(msg.type)) Promise.resolve(done).finally(() => this.modsChanged(s));
-    });
-    // Belt and braces for documents the new-document script misses (a renderer
-    // that came back after a crash): boot again; the shim makes it a no-op twice.
-    // A document that committed in a new renderer while we were attaching (an
-    // app still starting up) can come without the binding: add it back first.
-    const bootIn = async contextId => {
-      const has = await s.send("Runtime.evaluate", { expression: "typeof globalThis.__morseHostSend", contextId, returnByValue: true }).catch(() => null);
-      if (has && has.result?.value !== "function") await s.send("Runtime.addBinding", { name: "__morseHostSend" }).catch(() => {});
-      await s.send("Runtime.evaluate", { expression: source, ...(contextId && { contextId }) }).catch(() => {});
-    };
-    s.on("Runtime.executionContextCreated", ({ context }) => {
-      if (context.auxData?.isDefault && w.frameId && context.auxData.frameId === w.frameId) bootIn(context.id);
     });
     s.on("Page.frameNavigated", ({ frame }) => {
       if (frame.id === w.frameId && frame.url !== w.url) { w.url = frame.url; this.changed(); }
@@ -196,14 +249,31 @@ export class Connector {
     await s.send("Inspector.enable").catch(() => {});
     await s.send("Page.enable");
     w.frameId = (await s.send("Page.getFrameTree").catch(() => null))?.frameTree?.frame?.id || target.id;
-    await s.send("Runtime.addBinding", { name: "__morseHostSend" });
-    w.script = (await s.send("Page.addScriptToEvaluateOnNewDocument", { source }))?.identifier;
-    await s.send("Runtime.enable");
-    // A page that is mid-crash or mid-navigation gets the runtime from its next document.
-    await bootIn();
+    await s.send("Runtime.addBinding", { name: BINDING, executionContextName: WORLD });
+    // Every new document: Chromium creates Morse's world and runs the runtime in it.
+    w.script = (await s.send("Page.addScriptToEvaluateOnNewDocument", { source, worldName: WORLD }))?.identifier;
+    await s.send("Runtime.enable"); // reports existing contexts, including a Morse world left by an earlier session
+    w.ready = true;
+    // The document that's already loaded. A page that is mid-crash or
+    // mid-navigation gets the runtime from its next document.
+    await this.boot(s, w, source).catch(() => {});
     readTitle();
     this.log(`  ✓ connected to ${title}${kind === "window" ? "" : ` (${kind})`}`);
     this.changed();
+  }
+
+  // Runs the runtime in Morse's world of the target's top frame: the one
+  // that's there (left by an earlier session: its runtime keeps going, or a
+  // stopped one starts fresh) or a new one.
+  async boot(s, w, source) {
+    let ctx = w.frames.get(w.frameId)?.world;
+    if (ctx == null) ctx = (await s.send("Page.createIsolatedWorld", { frameId: w.frameId, worldName: WORLD })).executionContextId;
+    const probe = (await s.send("Runtime.evaluate", { expression: `[!!globalThis.__morseHost, typeof globalThis.${BINDING}]`, contextId: ctx, returnByValue: true }).catch(() => null))?.result?.value;
+    if (probe?.[0]) return; // already running in this document
+    // A document that committed in a new renderer while we were attaching (an
+    // app still starting up) can come without the binding: add it back first.
+    if (probe && probe[1] !== "function") await s.send("Runtime.addBinding", { name: BINDING, executionContextName: WORLD }).catch(() => {});
+    await s.send("Runtime.evaluate", { expression: source, contextId: ctx });
   }
 
   // Tell every other window to re-read its mods, so a mod saved in one window
@@ -215,7 +285,9 @@ export class Connector {
       const now = Date.now();
       for (const w of this.windows.values()) {
         if (!w.session || now - (this.recentSaves.get(w.session) || 0) < 1500) continue;
-        w.session.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive({ type: "mods.changed" })` }).catch(() => {});
+        const world = w.frames?.get(w.frameId)?.world;
+        if (world == null) continue;
+        w.session.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive({ type: "mods.changed" })`, contextId: world }).catch(() => {});
       }
       for (const [s, t] of this.recentSaves) if (now - t > 5000) this.recentSaves.delete(s);
     }, 300);
@@ -243,20 +315,38 @@ export class Connector {
     this.running = false;
     this.state = "stopped";
     this.modWatcher?.close();
+    this.controlWatcher?.close(); this.controlWatcher = null;
     const ids = (await listMods().catch(() => [])).map(m => m.id);
     await Promise.all([...this.windows.values()].map(async w => {
       w.detaching = true;
       const s = w.session;
       try {
         if (w.script) await s.send("Page.removeScriptToEvaluateOnNewDocument", { identifier: w.script });
+        const world = w.frames?.get(w.frameId)?.world;
+        if (world != null) await s.send("Runtime.evaluate", { expression: QUIET, contextId: world }).catch(() => {});
         await s.send("Runtime.evaluate", { expression: cleanup(ids) });
-        await s.send("Runtime.removeBinding", { name: "__morseHostSend" });
+        await s.send("Runtime.removeBinding", { name: BINDING });
       } catch {}
       s.close();
     }));
     this.windows.clear();
     this.pages.clear();
     this.changed();
+  }
+
+  // The URL of the document that called, read from Morse's own world (the
+  // page can't change what our world sees, and it follows pushState).
+  async callerUrl(s, caller) {
+    const r = await s.send("Runtime.evaluate", { expression: "location.href", contextId: caller.world, returnByValue: true });
+    if (typeof r.result?.value !== "string") throw new Error("The page went away");
+    return r.result.value;
+  }
+
+  // A mod the caller may change: one that applies to the caller's page.
+  async ownMod(id, where) {
+    const existing = await getMod(id);
+    if (existing && !modMatches(existing, where)) throw new Error("That mod belongs to another app or site");
+    return existing;
   }
 
   // Voice input records in the page; let it use the microphone without a
@@ -273,11 +363,15 @@ export class Connector {
     } catch {}
   }
 
-  push(s, ctx, msg) {
-    return s.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive(${JSON.stringify(msg)})`, contextId: ctx }).catch(() => {});
+  // To the runtime, in Morse's world.
+  push(s, caller, msg) {
+    return s.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive(${JSON.stringify(msg)})`, contextId: caller.world }).catch(() => {});
   }
 
-  async exec(s, ctx, modId, js) {
+  // Mod code, in the page's main world of the document that asked.
+  async exec(s, caller, modId, js) {
+    const ctx = caller.main;
+    if (ctx == null) return { ok: false, error: "The page isn't ready yet. Try again." };
     const r = await s.send("Runtime.evaluate", { expression: wrapModCode(modId, js), contextId: ctx, returnByValue: true });
     if (r.exceptionDetails) return { ok: false, error: r.exceptionDetails.exception?.description?.split("\n")[0] || r.exceptionDetails.text };
     const res = r.result?.value || { ok: false, error: "no result" };
@@ -289,36 +383,53 @@ export class Connector {
     return errs.length ? { ok: false, error: errs[0].split("\n")[0] } : { ok: true };
   }
 
-  async handle(s, ctx, msg) {
-    const reply = (result, error) => this.push(s, ctx, { reply: msg.id, result, error });
-    try { reply(await this.dispatch(s, ctx, msg)); }
+  // caller: { world, main, frameId } of the document whose runtime asked.
+  async handle(s, caller, msg) {
+    const reply = (result, error) => this.push(s, caller, { reply: msg.id, result, error });
+    try { reply(await this.dispatch(s, caller, msg)); }
     catch (e) { reply(null, e.message || String(e)); }
   }
 
-  async dispatch(s, ctx, msg) {
-    const where = { url: msg.url, app: this.app?.id || null };
+  async dispatch(s, caller, msg) {
+    const app = this.app?.id || null;
+    // Where the caller is, from the caller's document, not from the message.
+    let at;
+    const here = async () => ({ url: await (at ||= this.callerUrl(s, caller)), app });
+    // App-wide in desktop apps, per site in a browser.
+    const historyScope = async () => app || hostOf((await here()).url);
+    if (CONTROL_REQUESTS.has(msg.type)) return handleControl(msg, await here()); // user control (control.js)
     if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
+    if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, await here()); // gallery hook: Mods for this site
     switch (msg.type) {
       case "hello":
-        this.grantMic(s, msg.url);
-        return { mode: "desktop", app: this.app?.id || null, appName: this.app?.name || null, label: settingsLabel(this.settings),
+        this.grantMic(s, (await here()).url);
+        return { mode: "desktop", app, appName: this.app?.name || null, label: settingsLabel(this.settings),
           settings: await loadPrefs(), voice: await cachedVoiceStatus() };
       case "mods.list":
-        return modsFor({ url: msg.url, app: this.app?.id || null });
+        return modsFor(await here());
       case "mods.save": {
-        if (msg.draft) return saveMod(createMod({ ...msg.draft, app: this.app?.id || null, model: msg.draft.model || settingsLabel(this.settings) }));
+        const where = await here();
+        if (msg.draft) {
+          await this.ownMod(msg.draft.id, where);
+          return saveMod(createMod({ ...msg.draft, url: where.url, app, model: msg.draft.model || settingsLabel(this.settings) }));
+        }
+        validateMod(msg.mod);
+        const existing = await this.ownMod(msg.mod.id, where);
+        // A saved mod can be changed, not widened: its match stays what it
+        // was, or is exactly this app (or this site). Wider matches ("*",
+        // other hosts) only come in through a confirmed install (mods.import).
+        if (!sameMatch(msg.mod.match, existing?.match) && !onlyHere(msg.mod.match, where))
+          throw new Error("That mod is for another app or site");
         return saveMod(msg.mod);
       }
       case "mods.delete":
+        await this.ownMod(msg.modId, await here());
         return deleteMod(msg.modId);
       // Decode and validate a shared mod without saving it (install confirmation).
-      case "mods.preview": {
-        const src = msg.source.trim();
-        return src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
-      }
       case "mods.import": {
         const src = msg.source.trim();
         const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
+        const where = await here(); // the user confirmed this install in the runtime (64-install.js, 80-modals.js)
         return saveMod({ ...mod, enabled: true, imported: true, match: mod.match || { hosts: [hostOf(where.url)], app: where.app } });
       }
       // God mode: cross-app clipboard (Capture in one app, rebuild in another)
@@ -327,12 +438,14 @@ export class Connector {
       case "clipboard.put":
         return putClipboard({ ...msg.item, from: { ...msg.item?.from, app: this.app?.name || msg.item?.from?.app || null } });
       case "exec":
-        return this.exec(s, ctx, msg.modId, msg.js);
+        return this.exec(s, caller, msg.modId, msg.js);
       case "off":
-        await s.send("Runtime.evaluate", { expression: `globalThis.morse && morse.__off(${JSON.stringify(msg.modId)})`, contextId: ctx });
+        if (caller.main == null) return true;
+        await s.send("Runtime.evaluate", { expression: `globalThis.morse && morse.__off(${JSON.stringify(msg.modId)})`, contextId: caller.main });
         return true;
       case "stats": // repair: does a saved mod still find its elements? (core/kit.js __stats)
-        return (await s.send("Runtime.evaluate", { expression: `globalThis.morse?.__stats?.(${JSON.stringify(msg.modId)}) ?? null`, contextId: ctx, returnByValue: true })).result?.value ?? null;
+        if (caller.main == null) return null;
+        return (await s.send("Runtime.evaluate", { expression: `globalThis.morse?.__stats?.(${JSON.stringify(msg.modId)}) ?? null`, contextId: caller.main, returnByValue: true })).result?.value ?? null;
       case "generate": {
         if (!this.settings?.provider || this.settings.provider === "none")
           throw new Error("No model is connected. Run morse doctor in a terminal to set one up.");
@@ -342,8 +455,8 @@ export class Connector {
           request: msg.request,
           context: { ...msg.context, app: this.app?.name || msg.context.app },
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
-          exec: js => this.exec(s, ctx, msg.genId, js),
-          emit: ev => { if (!signal.aborted) this.push(s, ctx, { ...ev, genId: msg.genId }); },
+          exec: js => this.exec(s, caller, msg.genId, js),
+          emit: ev => { if (!signal.aborted) this.push(s, caller, { ...ev, genId: msg.genId }); },
           signal,
         }));
         if (res.cancelled) { this.log(`  ■ "${msg.request}" stopped after ${Date.now() - t0}ms`); return res; }
@@ -397,9 +510,9 @@ export class Connector {
       case "settings.set":
         return savePrefs(msg.settings);
       case "history.get":
-        return loadHistory(String(msg.scope || where.app || hostOf(msg.url)));
+        return loadHistory(await historyScope());
       case "history.add":
-        return addHistory(String(msg.scope || where.app || hostOf(msg.url)), msg.text);
+        return addHistory(await historyScope(), msg.text);
       case "transcribe":
         return transcribeAudio({ audio: msg.audio, mime: msg.mime });
       default:

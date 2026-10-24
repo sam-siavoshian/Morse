@@ -1,0 +1,21 @@
+{
+  "morse": 1,
+  "id": "byte-reading-mode",
+  "title": "Reading mode",
+  "prompt": "hide the ads and pop-ups and make the article easy to read",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8788"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": "[data-ad], .ad-slot, aside[aria-label=\"Sponsored\"] {\n  display: none !important;\n}\n.wrap {\n  grid-template-columns: 1fr;\n  max-width: 720px;\n}\nbody {\n  background: #fbf8f1;\n  color: #2b2b2b;\n}\narticle h1 {\n  font: 700 42px/1.15 Georgia, \"Iowan Old Style\", serif;\n  letter-spacing: -0.5px;\n  margin: 40px 0 14px;\n}\narticle .by {\n  font-size: 14px;\n  color: #8a8172;\n  margin-bottom: 28px;\n}\narticle p {\n  font: 20px/1.75 Georgia, \"Iowan Old Style\", serif;\n  margin: 0 0 22px;\n}\narticle p:first-of-type::first-letter {\n  float: left;\n  font-size: 64px;\n  line-height: .9;\n  padding: 6px 8px 0 0;\n  color: #c8102e;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": null,
+  "version": 1,
+  "author": "dana",
+  "created": "2026-10-18T08:45:00.000Z",
+  "updated": "2026-10-18T08:45:00.000Z"
+}

@@ -14,7 +14,10 @@ import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatc
 import { wrapModCode } from "../core/kit.js";
 import { clipAdd } from "../core/clipboard.js"; // God mode clipboard
 import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
+import { CONTROL_REQUESTS, handleControlRequest } from "./control-host.js"; // user control: pause, safe start, install review, backup
+import { serialized } from "./bar-host.js"; // hardening: one queue for every storage read-modify-write
 import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver } from "./onboarding-host.js"; // onboarding hook: welcome page, first-run state, practice area
+import { GALLERY_REQUESTS, handleGallery } from "./gallery-host.js"; // gallery hook: Mods for this site
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
@@ -104,7 +107,8 @@ async function exec(target, modId, js) {
 }
 
 async function allMods() { return get("mods", {}); }
-async function putMod(m) { validateMod(m); const all = await allMods(); all[m.id] = m; await set("mods", all); return m; }
+// hardening: serialized so concurrent saves/deletes can't drop each other
+async function putMod(m) { validateMod(m); await serialized(async () => { const all = await allMods(); all[m.id] = m; await set("mods", all); }); return m; }
 
 function download(filename, url) {
   return chrome.downloads.download({ url, filename: `morse/${filename}`, saveAs: false }).then(() => ({ path: `Downloads/morse/${filename}` }));
@@ -123,8 +127,15 @@ async function dispatch(msg, port) {
   const target = port.sender.documentId
     ? { tabId: tab.id, documentIds: [port.sender.documentId] }
     : { tabId: tab.id, frameIds: [port.sender.frameId ?? 0] };
-  if (BAR_REQUESTS.has(msg.type)) return handleBarRequest(msg);
+  // hardening: reads and saves answer for the page that asked, not for what
+  // the message claims. The content script reports location.href (it follows
+  // pushState); it's trusted only within the sender document's own site.
+  const sent = port.sender.url || tab?.url || "";
+  const here = { url: msg.url && hostOf(msg.url) === hostOf(sent) ? msg.url : sent, app: null };
+  if (BAR_REQUESTS.has(msg.type)) return handleBarRequest({ ...msg, url: here.url, scope: undefined }); // history per caller's site
+  if (CONTROL_REQUESTS.has(msg.type)) return handleControlRequest({ ...msg, url: here.url }, port); // user control (control-host.js)
   if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg); // onboarding hook
+  if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, msg.url); // gallery hook: Mods for this site
   switch (msg.type) {
     case "hello": {
       const b = await backend();
@@ -134,30 +145,28 @@ async function dispatch(msg, port) {
         settings: await getPrefs(), voice: await voiceInfo() };
     }
     case "mods.list":
-      return Object.values(await allMods()).filter(m => modMatches(m, { url: msg.url, app: null })).sort((a, b) => a.created.localeCompare(b.created));
+      return Object.values(await allMods()).filter(m => modMatches(m, here)).sort((a, b) => a.created.localeCompare(b.created)); // hardening: caller's page
     case "mods.save": {
-      if (msg.draft) return putMod(createMod({ ...msg.draft, app: null, model: msg.draft.model || (await backend()).label }));
+      if (msg.draft) return putMod(createMod({ ...msg.draft, url: here.url, app: null, model: msg.draft.model || (await backend()).label })); // hardening: filed under the caller's page
       return putMod(msg.mod);
     }
     case "mods.delete": {
-      const all = await allMods();
-      delete all[msg.modId];
-      await set("mods", all);
+      await serialized(async () => { // hardening: serialized
+        const all = await allMods();
+        delete all[msg.modId];
+        await set("mods", all);
+      });
       return true;
     }
     // Decode and validate a shared mod without saving it (install confirmation).
-    case "mods.preview": {
-      const src = msg.source.trim();
-      return src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
-    }
     case "mods.import": {
       const src = msg.source.trim();
       const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
-      return putMod({ ...mod, enabled: true, imported: true, match: mod.match || { hosts: [hostOf(msg.url)], app: null } });
+      return putMod({ ...mod, enabled: true, imported: true, match: mod.match || { hosts: [hostOf(here.url)], app: null } }); // hardening: caller's page
     }
     // God mode: cross-app clipboard (see core/clipboard.js)
     case "clipboard.list": return get("clipboard", []);
-    case "clipboard.put": { const list = clipAdd(await get("clipboard", []), msg.item); await set("clipboard", list); return list; }
+    case "clipboard.put": return serialized(async () => { const list = clipAdd(await get("clipboard", []), msg.item); await set("clipboard", list); return list; }); // hardening: serialized
     case "exec":
       return exec(target, msg.modId, msg.js);
     case "off":
@@ -175,6 +184,10 @@ async function dispatch(msg, port) {
       // gens.run's signal aborts the model call (the helper kills the harness
       // process when the connection closes): Stop in the bar, or closing the tab.
       port.__gens.add(msg.genId);
+      // Chrome stops an idle service worker after about 30 seconds, and a
+      // model can think longer than that without a word. Waiting on fetch
+      // doesn't count as activity; calling an extension API does.
+      const keepAlive = setInterval(() => chrome.runtime.getPlatformInfo().catch(() => {}), 20000);
       try {
         const res = await gens.run(msg.genId, signal => runMorse({
           settings: b.settings,
@@ -191,6 +204,7 @@ async function dispatch(msg, port) {
         if (e.code === "no_model") { cached = null; openSettings(); }
         throw e;
       } finally {
+        clearInterval(keepAlive);
         port.__gens.delete(msg.genId);
       }
     }
@@ -254,10 +268,12 @@ async function popup(msg) {
     case "popup.state":
       return popupState(msg.url);
     case "popup.save": {
-      const p = await modelPrefs();
-      for (const k of ["backend", "helperModel", "anthropicModel"]) if (typeof msg[k] === "string") p[k] = msg[k].trim();
-      if (typeof msg.anthropicKey === "string") p.anthropicKey = msg.anthropicKey.trim();
-      await saveModelPrefs(p);
+      await serialized(async () => { // hardening: serialized
+        const p = await modelPrefs();
+        for (const k of ["backend", "helperModel", "anthropicModel"]) if (typeof msg[k] === "string") p[k] = msg[k].trim();
+        if (typeof msg.anthropicKey === "string") p.anthropicKey = msg.anthropicKey.trim();
+        await saveModelPrefs(p);
+      });
       cached = null;
       return popupState(msg.url);
     }

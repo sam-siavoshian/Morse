@@ -14,6 +14,8 @@ import os from "node:os";
 import { createRequire } from "node:module";
 import { toUserscript } from "../core/mod.js";
 import { startHelper, pairExtension } from "./helper.js";
+// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
+const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -69,7 +71,7 @@ console.log("  📸 20-extension-installed.png");
 // 21. Point at the composer of a chat app with a strict CSP
 const chat = await open(ctx, SITE.parley);
 const C = helpers(chat);
-await chat.keyboard.press("Alt+Space");
+await chat.keyboard.press(OPEN_KEY);
 await sleep(200);
 const ta = await chat.locator("textarea[aria-label=\"Message Parley\"]").boundingBox();
 await chat.mouse.move(ta.x + 120, ta.y + 20, { steps: 6 });
@@ -92,7 +94,7 @@ await sleep(300);
 await C.shot("24-web-word-count-works.png");
 
 // 25. Page-wide request: a new button
-await chat.keyboard.press("Alt+Space");
+await chat.keyboard.press(OPEN_KEY);
 await sleep(150);
 await chat.mouse.move(640, 400);
 await chat.keyboard.type("add a button that copies the whole conversation as markdown", { delay: 10 });
@@ -108,7 +110,7 @@ await C.shot("25-web-new-button.png");
 const news = await open(ctx, SITE.byte);
 const N = helpers(news);
 await N.shot("26-news-before.png");
-await news.keyboard.press("Alt+Space");
+await news.keyboard.press(OPEN_KEY);
 await sleep(150);
 await news.mouse.move(640, 300);
 await news.keyboard.type("hide the ads and make the article easier to read", { delay: 10 });

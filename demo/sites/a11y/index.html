@@ -1,0 +1,158 @@
+<!doctype html>
+<!-- Riverside Library: a demo site with deliberate accessibility problems, for
+     Morse's "Easier to use" page tools and "Check this page"
+     (tests/a11y-ui.test.js, demo/shoot-a11y.js). Planted on purpose:
+       - icon-only buttons and links with no name (6), one with no hint at all
+       - pictures with no alt text (2) and one decorative picture in a link
+       - form fields with no label (3): placeholder only, text beside it, nothing
+       - light gray text (3 places), faint borders, links with no underline
+       - tiny click targets, focus outline turned off, small tight text
+       - an autoplaying video, an animated GIF, a pulsing badge, a ticker
+       - a sticky announcement bar, a cookie bar and a chat bubble -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Riverside Library · Summer reading</title>
+<style>
+  * { box-sizing: border-box; }
+  *:focus { outline: none; }
+  html { background: #fff; }
+  body { margin: 0; font: 15px/1.3 Georgia, "Times New Roman", serif; color: #2b2b2b; background: #fff; }
+  a { color: #2d63c8; text-decoration: none; }
+  button { font: inherit; cursor: pointer; transition: background .3s, transform .3s; }
+  button:hover { transform: translateY(-1px); }
+  svg { display: block; }
+
+  .announce-bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 8px 16px; background: #213a3f; color: #f6f1e4; font: 13px/1.3 Arial, sans-serif; }
+  .announce-bar a { color: #f6d58e; }
+  .announce-close { position: absolute; right: 14px; top: 50%; margin-top: -7px; width: 14px; height: 14px; padding: 0; border: 0; background: none; color: #f6f1e4; font-size: 13px; line-height: 14px; }
+
+  header { display: flex; align-items: center; gap: 28px; padding: 14px 40px; border-bottom: 1px solid #efefef; font-family: Arial, sans-serif; }
+  .logo { font: 700 20px/1 Georgia, serif; color: #213a3f; letter-spacing: -.01em; }
+  .logo span { color: #2f6f6a; }
+  header nav { display: flex; gap: 4px; font-size: 14px; }
+  header nav a { padding: 8px 10px; color: #333; }
+  .tools { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+  .icon-btn { width: 20px; height: 20px; padding: 0; border: 0; background: none; color: #444; display: grid; place-items: center; }
+  .live { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 99px; background: #fbe9e4; color: #9d2f16; font: 700 11px/1.4 Arial, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+  .live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #c4573e; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.7); opacity: .4; } }
+
+  .ticker { overflow: hidden; white-space: nowrap; border-bottom: 1px solid #efefef; background: #faf7ef; font: 13px/34px Arial, sans-serif; color: #555; }
+  .ticker span { display: inline-block; padding-left: 100%; animation: ticker 18s linear infinite; }
+  @keyframes ticker { to { transform: translateX(-100%); } }
+
+  .page { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 48px; padding: 32px 40px 80px; }
+  article h1 { margin: 8px 0 6px; font-size: 34px; line-height: 1.1; color: #1f2a2e; }
+  .meta { margin: 0 0 22px; color: #b0b0b0; font: 13px/1.3 Arial, sans-serif; }
+  article p { margin: 0 0 14px; text-align: justify; }
+  .light { color: #a0a0a0; }
+  figure { margin: 22px 0; }
+  figure img { display: block; width: 100%; max-width: 560px; height: auto; border-radius: 6px; }
+  figcaption { margin-top: 8px; color: #6b6b6b; font: 13px/1.3 Arial, sans-serif; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 26px 0; font-family: Arial, sans-serif; }
+  .card { position: relative; padding: 14px 16px; border: 1px solid #f0f0f0; border-radius: 8px; }
+  .card h3 { margin: 0 0 4px; font-size: 15px; }
+  .card p { margin: 0; text-align: left; font-size: 13px; color: #555; }
+  .heart { position: absolute; right: 12px; top: 12px; width: 18px; height: 18px; padding: 0; border: 0; background: none; color: #a8402a; font-size: 15px; line-height: 18px; }
+
+  aside { font-family: Arial, sans-serif; font-size: 14px; }
+  aside h2 { margin: 6px 0 12px; font: 700 18px/1.2 Georgia, serif; }
+  .box { padding: 18px; border: 1px solid #ececec; border-radius: 10px; margin-bottom: 22px; }
+  .arrivals { display: flex; align-items: center; gap: 12px; color: #555; }
+  .signup input, .signup select { display: block; width: 100%; margin: 4px 0 10px; padding: 7px 9px; border: 1px solid #ececec; border-radius: 6px; font: inherit; background: #fff; }
+  .signup span { font-size: 13px; color: #555; }
+  .signup button { padding: 8px 16px; border: 0; border-radius: 6px; background: #2f6f6a; color: #fff; }
+  video { display: block; width: 100%; border-radius: 8px; background: #213a3f; }
+  .more { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 6px 0; }
+  .more img { width: 14px; height: 14px; }
+
+  footer { padding: 26px 40px 120px; background: #f6f6f6; color: #a8a8a8; font: 13px/1.5 Arial, sans-serif; }
+  footer .social { display: flex; gap: 14px; margin-top: 10px; }
+  footer .social a { display: block; width: 18px; height: 18px; color: #666; }
+
+  .cookie-bar { position: fixed; left: 16px; right: 96px; bottom: 16px; z-index: 6; display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-radius: 10px; background: #1f2a2e; color: #f3efe6; font: 13px/1.4 Arial, sans-serif; box-shadow: 0 6px 24px rgba(0,0,0,.2); }
+  .cookie-bar button { margin-left: auto; padding: 7px 14px; border: 0; border-radius: 6px; background: #f6d58e; color: #1f2a2e; font-weight: 700; }
+  .chat-launcher { position: fixed; right: 20px; bottom: 16px; z-index: 6; width: 56px; height: 56px; border: 0; border-radius: 50%; background: #2f6f6a; color: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.25); display: grid; place-items: center; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-instagram" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+</svg>
+
+<div class="announce-bar" role="region" aria-label="Announcement">
+  <span>Summer hours start June 3: open until 9 pm on weekdays.</span><a href="#hours">See all hours</a>
+  <button class="announce-close">×</button>
+</div>
+
+<header>
+  <div class="logo">Riverside <span>Library</span></div>
+  <nav aria-label="Main">
+    <a href="#catalog">Catalog</a><a href="#events">Events</a><a href="#kids">Kids</a><a href="#visit">Visit</a>
+  </nav>
+  <div class="tools">
+    <span class="live">Live</span>
+    <button class="icon-btn icon-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
+    <a class="icon-btn" href="account.html"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></a>
+    <button class="icon-btn" id="m7"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  </div>
+</header>
+
+<div class="ticker" aria-hidden="true"><span>New this week: 214 books, 36 films and 12 board games · Story time every Saturday at 10 am · Free museum passes with your library card</span></div>
+
+<div class="page">
+  <main>
+    <article>
+      <h1>Summer reading starts June 3</h1>
+      <p class="meta">Posted May 20 by Dana Ortiz, children's librarian · 4 minute read</p>
+      <p>Every summer, thousands of children in Riverside read their way through the long weeks between school years. This year the program starts on June 3 and runs until the end of August. Anyone under eighteen can join, and so can grown-ups who want to keep a reading log of their own. Sign up at any branch, or online with your library card.</p>
+      <p>Each book you finish earns a stamp in your reading passport. Ten stamps get you a free book to keep, chosen from our summer shelf. Twenty stamps put your name on the wall of readers in the children's room. There is no limit to the number of stamps, and audiobooks, comics and picture books all count. <a href="#rules">Read the full rules</a> before you start.</p>
+      <figure>
+        <img src="chart.png" width="960" height="520">
+        <figcaption>Visitors by month at Riverside Library this year.</figcaption>
+      </figure>
+      <p class="light">Last summer more than four thousand readers took part, and visits to the library kept growing all spring. We expect this to be the busiest summer yet, so the reading room will stay open late on weekdays.</p>
+      <p>Story time moves outside to the garden when the weather is good. Bring a blanket and a snack. On rainy days we meet in the reading corner on the second floor, next to the picture books.</p>
+      <figure>
+        <img src="reading.png" width="960" height="560">
+        <figcaption>Story time in the reading corner.</figcaption>
+      </figure>
+      <div class="cards">
+        <div class="card"><h3>Teen book club</h3><p>Tuesdays at 6 pm. This month: graphic novels.</p><button class="heart">♥</button></div>
+        <div class="card"><h3>Learn to code</h3><p>Saturdays at 2 pm. Laptops provided.</p></div>
+      </div>
+      <a class="more" href="#events"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8h9M8.5 4.5 12 8l-3.5 3.5' fill='none' stroke='%232d63c8' stroke-width='1.8'/%3E%3C/svg%3E">All events this summer</a>
+    </article>
+  </main>
+
+  <aside>
+    <div class="box">
+      <h2>Inside the new reading room</h2>
+      <video src="clip.webm" autoplay muted loop playsinline></video>
+    </div>
+    <div class="box arrivals"><img src="spinner.gif" width="32" height="32" alt="Loading"><span>Loading new arrivals</span></div>
+    <form class="box signup" onsubmit="return false">
+      <h2>Get the newsletter</h2>
+      <input type="email" placeholder="Email address">
+      <span>Your name</span>
+      <input type="text">
+      <select><option>Main branch</option><option>East branch</option><option>Hillside branch</option></select>
+      <button type="submit">Sign up</button>
+    </form>
+  </aside>
+</div>
+
+<footer>
+  <div>Riverside Library · 120 River Street · Open every day. Library cards are free for everyone who lives, works or studies in Riverside.</div>
+  <div class="social">
+    <a href="https://www.facebook.com/riversidelibrary"><svg class="icon icon-facebook" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M14 8h3V4h-3c-2.8 0-4 1.8-4 4.2V10H7v4h3v8h4v-8h3l1-4h-4V8.6c0-.4.3-.6.6-.6Z"/></svg></a>
+    <a href="https://www.instagram.com/riversidelibrary"><svg width="18" height="18"><use href="#i-instagram"/></svg></a>
+  </div>
+</footer>
+
+<div id="cookie-notice" class="cookie-bar"><span>We use cookies to remember your card number on this computer.</span><button>Accept</button></div>
+<button class="chat-launcher" aria-label="Chat with a librarian"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
+</body>
+</html>

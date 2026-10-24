@@ -124,6 +124,7 @@ function renderPanel() {
     <div class="list" role="list" aria-label="Mods"></div>
     <footer><button data-a="import">Install a mod…</button><span>${esc(S.label)}</span></footer>`;
   renderList();
+  controlPanel(); // user control: pause, backup (63-control.js)
   if (!keep) return;
   if (keep.search) {
     const s = panel.querySelector(".search");
@@ -142,9 +143,11 @@ function renderList() {
   list.innerHTML = !S.mods.length
     ? emptyModsHtml() /* onboarding hook: 59-onboarding.js */
     : shown.length ? shown.map(rowHtml).join("") : `<p class="empty">No mods match “${esc(PanelUI.q)}”.</p>`;
+  list.insertAdjacentHTML("beforeend", gallerySectionHtml()); // gallery hook: Mods for this site (68-gallery.js)
   const r = rows();
   const i = Math.max(0, r.findIndex(a => a.dataset.id === PanelUI.focus));
   r.forEach((a, j) => (a.tabIndex = j === i ? 0 : -1));
+  controlRows(); // user control: where each mod came from, Show code (63-control.js)
 }
 
 function rowHtml(m) {
@@ -162,6 +165,7 @@ function rowHtml(m) {
           <div class="tags">${m.css.trim() ? "<span>style</span>" : ""}${m.js.trim() ? "<span>script</span>" : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : "<span>whole page</span>"}${when ? `<em class="when">${changed ? "changed" : "added"} ${esc(when)}</em>` : ""}</div>
         </div>
         ${broken ? `<div class="health" role="status"><p><b>Not working.</b> ${esc(h.reason)}</p><button class="primary" data-a="fix">Fix it</button></div>` : ""}
+        ${galleryRowHtml(m) /* gallery hook: Update available (68-gallery.js) */}
         <div class="btns"><button data-a="refine">Refine</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}">History <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">Copy link</button><button data-a="share">Share</button><button data-a="code">Edit code</button><button data-a="del">Delete</button></div>
         ${open ? versionsHtml(m, versions) : ""}
       </article>`;

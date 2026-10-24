@@ -9,8 +9,7 @@
 import { execFile, execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import path from "node:path";
-import vm from "node:vm";
-import { bundleRuntime } from "../runtime/bundle.js";
+import { runtimeBundleProblems } from "./bundle-check.js";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const rel = f => path.relative(root, f);
@@ -48,51 +47,11 @@ for (let i = 0; i < files.length; i += 8) {
 }
 console.log(`  ${files.length} files`);
 
-// ---- 2. runtime bundle
+// ---- 2. runtime bundle (also run by `npm test`: tests/bundle.test.js)
 step("runtime bundle: duplicate top-level names, and it parses");
-// Top-level declarations in this codebase start at column 0.
-function topLevelNames(src) {
-  const names = [];
-  const add = (n, line) => n && names.push({ name: n, line });
-  src.split("\n").forEach((l, i) => {
-    let m;
-    if ((m = /^(?:export\s+)?(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)/.exec(l))) add(m[1], i + 1);
-    else if ((m = /^(?:export\s+)?class\s+([A-Za-z_$][\w$]*)/.exec(l))) add(m[1], i + 1);
-    else if ((m = /^(?:export\s+)?(?:const|let|var)\s+\{([^}]*)\}\s*=/.exec(l))) {
-      for (const part of m[1].split(",")) { const n = part.split(":").pop().split("=")[0].trim(); if (/^[A-Za-z_$][\w$]*$/.test(n)) add(n, i + 1); }
-    } else if ((m = /^(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)/.exec(l))) {
-      add(m[1], i + 1);
-      // let a = 1, b = 2; on one line
-      for (const extra of l.matchAll(/,\s*([A-Za-z_$][\w$]*)\s*=(?!=)/g)) if (!/[([{]/.test(l.slice(0, extra.index).replace(/^[^=]*=/, ""))) add(extra[1], i + 1);
-    }
-  });
-  return names;
-}
-const seen = new Map(); // name -> "file:line"
-const declare = (where, src) => {
-  for (const { name, line } of topLevelNames(src)) {
-    const at = `${where}:${line}`;
-    if (seen.has(name)) fail("runtime bundle", `"${name}" is declared at top level in both ${seen.get(name)} and ${at}`);
-    else seen.set(name, at);
-  }
-};
-// What bundleRuntime() puts in the same scope: TOKENS_CSS, core/hotkeys.js and
-// core/prefs.js with `export` dropped, the exports of the inlined core modules,
-// then runtime/src/*.js in filename order.
-seen.set("TOKENS_CSS", "runtime/bundle.js");
-for (const f of ["hotkeys.js", "prefs.js"]) declare(`core/${f}`, readFileSync(path.join(root, "core", f), "utf8"));
-const bundleSrc = readFileSync(path.join(root, "runtime", "bundle.js"), "utf8");
-for (const [, mod] of bundleSrc.matchAll(/inlineModule\("\.\.\/core\/([\w.-]+)"\)/g)) {
-  const src = readFileSync(path.join(root, "core", mod), "utf8");
-  for (const [, name] of src.matchAll(/^export\s+(?:async\s+)?(?:function\*?|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)) {
-    if (seen.has(name)) fail("runtime bundle", `"${name}" (exported by core/${mod}, inlined) is also declared in ${seen.get(name)}`);
-    else seen.set(name, `core/${mod} (inlined)`);
-  }
-}
-for (const f of readdirSync(SRC).filter(f => f.endsWith(".js")).sort()) declare(`runtime/src/${f}`, readFileSync(path.join(SRC, f), "utf8"));
-try { new vm.Script(bundleRuntime(), { filename: "runtime.js" }); }
-catch (e) { fail("runtime bundle", `doesn't parse: ${e.message}`); }
-console.log(`  ${seen.size} top-level names`);
+const bundle = runtimeBundleProblems();
+for (const p of bundle.problems) fail("runtime bundle", p);
+console.log(`  ${bundle.names} top-level names`);
 
 // ---- 3. built extension
 step("dist/extension has every file the manifest and pages reference");

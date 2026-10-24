@@ -2,6 +2,7 @@
 // concrete contracts far better than long ones.
 
 import { askTurnsToMessages } from "./answer.js"; // Ask and find
+import { imageMessages } from "./a11y.js"; // Easier to use: Describe this image
 
 // ---- Ask and find: questions get an answer instead of a mod (core/answer.js
 // parses it; the runtime side is runtime/src/61-ask.js).
@@ -28,11 +29,15 @@ TITLE: <3-6 word name for the change>
 
 Rules:
 - Prefer CSS when CSS alone can do it. Put CSS first; it is applied while you write.
+- Use only selectors that match the HTML, layout and CSS rules you are given. Never assume elements that aren't shown (an image may be a div with a background, not an <img>).
 - Never use hashed class names like "css-1x2y3" or "_a8f3k". Target ids, data-* attributes, aria-*, roles, tag structure, or text.
+- Pointing is approximate. "These", "them" or a kind of thing ("the ads", "unread emails") means every similar element on the page. A request about items (rows, cards, messages) changes the whole item, not just the part pointed at.
+- To resize, change what actually sets the size (see the CSS rules: a fixed width, or the grid/flex container's columns). Your CSS must beat the existing rules: match their specificity or use !important.
+- Make a clearly visible change, even for vague requests.
 - Apps re-render. In JS, always attach to elements with morse.watch(selector, el => ...), never querySelector once.
 - JS runs with a helper object \`morse\`:
   morse.watch(selector, fn)        run fn(el) for every current and future match, once per element
-  morse.el(tag, props, ...kids)     create an element (props: class, style, text, html, on: {click: fn}, any attribute)
+  morse.el(tag, props, ...kids)     create an element (props: class, style, text, html, on: {click: fn}, any attribute); you must append it
   morse.css(text)                   add more CSS
   morse.on(target, event, fn)       add a listener
   morse.every(ms, fn)               run fn repeatedly
@@ -81,6 +86,7 @@ export function basePrompt(base, request) {
 }
 
 export function buildMessages({ request, context, previous, snapshot = context?.snapshot, base }) {
+  if (context?.a11y?.image) return imageMessages({ request, context }); // Easier to use: Describe this image (core/a11y.js)
   const parts = [];
   parts.push(`App: ${context.app || "web"}  URL: ${context.url}`);
   parts.push(`Page title: ${context.title}`);
@@ -89,10 +95,12 @@ export function buildMessages({ request, context, previous, snapshot = context?.
     parts.push(`The user pointed at this element. Best selector: ${context.target.selector}`);
     if (context.target.path) parts.push(`Ancestors: ${context.target.path}`);
     parts.push("Element HTML:\n" + context.target.html);
+    if (context.target.facts) parts.push(context.target.facts);
   } else {
     parts.push("The user did not point at anything; the change is page-wide.");
   }
-  if (context.outline) parts.push("Page outline:\n" + context.outline);
+  if (context.layout) parts.push("Page layout (visible blocks, px):\n" + context.layout);
+  if (context.outline) parts.push((context.layout ? "Controls and headings:\n" : "Page outline:\n") + context.outline);
   if (snapshot) parts.push(snapshotPrompt(snapshot));
   if (context.ask?.mode === "explain") parts.push("Explain this page: reply with ANSWER, a plain summary in 5 short lines of what this page is for and the main things you can do here, and a POINT line for each of those main actions."); // Ask and find
   if (base) parts.push(basePrompt(base, request)); // keep iterating: refine or fix this code

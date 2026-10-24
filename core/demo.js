@@ -212,7 +212,26 @@ function refine(b) {
   return reply("No change", `/* The demo model can only make it smaller, bigger or use icons. */\n${b.css}`, b.js);
 }
 
+// Easier to use: Describe this image (core/a11y.js). The demo model can't
+// see; it answers from the text sent along with the picture.
+function describeDemo(text) {
+  if (/visitors|chart/i.test(text)) return "ANSWER: A bar chart of library visitors from January to June. Visits grow every month, from about 1,200 in January to about 3,400 in June.\n";
+  if (/garden|reading/i.test(text)) return "ANSWER: Children sitting on cushions in a sunny library corner, listening to a story being read aloud.\n";
+  return "ANSWER: A small picture with no text in it.\n";
+}
+// Check this page's requests to the model ("Give these 2 icon buttons
+// accessible names ...: `#a`, `#b`"): names for the selectors it lists.
+function fixesDemo(request) {
+  const kind = /accessible name/.test(request) ? "name" : /form field/.test(request) ? "label" : /alt text/.test(request) ? "alt" : "";
+  if (!kind) return null;
+  const sels = [...request.matchAll(/`([^`]+)`/g)].map(m => m[1]);
+  const [title, attr, word] = { name: ["Name the menu button", "aria-label", "Menu"], label: ["Label the branch list", "aria-label", "Branch"], alt: ["Describe the pictures", "alt", "Picture"] }[kind];
+  return reply(title, "", sels.map(s => `morse.watch(${JSON.stringify(s)}, el => el.setAttribute("${attr}", "${word}"));`).join("\n"));
+}
+
 export function demoResponse(messages) {
+  const pic = messages.find(m => Array.isArray(m.content) && m.content.some(b => b?.type === "image"));
+  if (pic) return describeDemo(pic.content.filter(b => b.type === "text").map(b => b.text).join("\n"));
   // The page context is the last user turn that carries a request (earlier
   // Ask turns come before it; a "That failed" retry comes after).
   const users = messages.filter(m => m.role === "user");
@@ -224,6 +243,8 @@ export function demoResponse(messages) {
   const isRetry = /^That failed/.test(messages.at(-1)?.content || "");
   const answer = demoAnswer(request, firstUser, messages); // Ask and find
   if (answer) return answer;
+  const fixes = fixesDemo(request); // Easier to use: Check this page
+  if (fixes) return fixes;
   for (const [re, resp] of RULES) {
     if (!re.test(request)) continue;
     if (resp === null) return isRetry ? SLEEP : SLEEP_BROKEN;

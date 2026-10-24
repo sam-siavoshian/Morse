@@ -22,8 +22,10 @@ function runHotkey(id) {
     if (!wasOpen) openBar();
     if (talkSame) {
       held = { combo: hotkey("open"), closeOnUp: wasOpen, talking: false };
+      // Holding talks, also over a result (what you say refines it); a tap
+      // on an open bar closes it.
       held.timer = setTimeout(() => {
-        if (!held || S.phase !== "idle") return;
+        if (!held || !live() || (S.phase !== "idle" && S.phase !== "result")) return;
         held.closeOnUp = false;
         held.talking = true;
         Voice.start("hold");
@@ -37,6 +39,7 @@ function runHotkey(id) {
     return;
   }
   if (id === "mods") { panel.hidden ? openPanel() : (panel.hidden = true); return; }
+  if (id === "off") { offSwitch(); return; } // user control (63-control.js)
   // God mode lives in its own module; it listens for this.
   if (id === "godmode") listeners.forEach(fn => fn({ type: "godmode.toggle" }));
 }
@@ -49,8 +52,10 @@ function release() {
   else if (h.closeOnUp) closeBar();
 }
 
-addEventListener("keydown", e => {
-  if (e.isComposing || e.keyCode === 229 || !live()) return;
+// Only real key presses count: page scripts can't open the bar or start
+// listening by dispatching fake KeyboardEvents (isTrusted is false for those).
+listen("keydown", e => {
+  if (!e.isTrusted || e.isComposing || e.keyCode === 229) return;
   const id = hotkeyFor(e);
   if (id) {
     e.preventDefault();
@@ -74,11 +79,11 @@ addEventListener("keydown", e => {
   if (e.key === "Tab" && S.open && modal.hidden && panel.hidden && !e.altKey && !e.ctrlKey && !e.metaKey) trapTab(e);
 }, true);
 
-addEventListener("keyup", e => {
-  if (!held || !releasesCombo(e, held.combo)) return;
+listen("keyup", e => {
+  if (!e.isTrusted || !held || !releasesCombo(e, held.combo)) return;
   e.preventDefault();
   e.stopImmediatePropagation();
   release();
 }, true);
 // Switching windows mid-hold never delivers the keyup.
-addEventListener("blur", () => { if (held) release(); });
+listen("blur", () => { if (held) release(); });

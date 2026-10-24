@@ -69,7 +69,7 @@ const Onboarding = (() => {
   function noteNow() {
     if (!st || coachOn() || !S.open || bar.hidden || S.phase !== "idle" || paneKind) return null;
     if (modelMissing(status, S.label) && !st.dismissed.model)
-      return { id: "model", text: "No model connected yet, so Morse is using a demo that only knows a few requests.", btn: "Connect a model", act: "model" };
+      return { id: "model", text: "No model connected yet. Connect one so Morse can make changes.", btn: "Connect a model", act: "model" };
     if (status.userScripts === false && !st.dismissed.userScripts)
       return { id: "userScripts", text: "“Allow User Scripts” is off, so added buttons and features won't run on some sites.", btn: "Turn it on", act: "userscripts" };
     return null;
@@ -149,7 +149,9 @@ const Onboarding = (() => {
   }
   outgoing.push(m => {
     if (!st) return;
-    if (m.type === "mods.save" && m.draft) {
+    // Only a change the model made and you saved counts: edit-tool sessions
+    // ("manual") and page tools ("quick") save on their own and keep their own undo toast.
+    if (m.type === "mods.save" && m.draft && m.draft.kind !== "manual" && m.draft.kind !== "quick") {
       if (!st.tips.saved) { tipSaved = true; setTimeout(() => tipSaved && savedTip(), 3000); }
       if (st.coach !== "done" || !st.tips.saved) save({ coach: "done", tips: { saved: true } });
     }

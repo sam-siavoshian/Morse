@@ -65,16 +65,36 @@
     get(k, d) { try { return JSON.parse(localStorage.getItem("morse:playground:" + k)) ?? d; } catch { return d; } },
     set(k, v) { localStorage.setItem("morse:playground:" + k, JSON.stringify(v)); },
   };
-  const core = Promise.all([import("/core/kit.js"), import("/core/mod.js"), import("/core/clipboard.js")]);
+  const core = Promise.all([import("/core/kit.js"), import("/core/mod.js"), import("/core/clipboard.js"), import("/core/control-host.js")]);
   // ?demoms=60 (or window.__demoMs) slows the demo model's replay, for tests that press Stop mid-stream.
   const demo = () => ({ provider: "demo", demoMs: Number(window.__demoMs || new URLSearchParams(location.search).get("demoms")) || undefined });
   const subs = [];
   const emit = m => subs.forEach(f => f(m));
+  globalThis.__fakeEmit = emit; // tests: play host events (e.g. the share page's install.request)
   globalThis.__morseHost = {
     onMessage: fn => subs.push(fn),
     async send(m) {
       const reply = result => setTimeout(() => emit({ reply: m.id, result }), 10);
-      const [kit, mod, clip] = await core;
+      const [kit, mod, clip, control] = await core;
+      // User control (pause, safe start, install review, backup) through the real host logic.
+      if (m.type.startsWith("control.") || m.type === "mods.preview") {
+        globalThis.__ctl ||= control.controlHandler({
+          load: () => store.get("control", {}), save: s => store.set("control", s),
+          listMods: () => Object.values(store.get("mods", {})),
+          putMods: list => { const all = store.get("mods", {}); for (const x of list) all[x.id] = x; store.set("mods", all); },
+          onPause: pause => setTimeout(() => emit({ type: "control.changed", pause }), 0),
+        });
+        try { return reply(await __ctl(m, { url: m.url || location.href, app: null })); }
+        catch (e) { return setTimeout(() => emit({ reply: m.id, error: e.message }), 10); }
+      }
+      if (m.type === "export") return reply({ path: "Downloads/morse/" + m.filename });
+      if (m.type === "settings.get") return reply(store.get("settings", {}));
+      if (m.type === "settings.set") {
+        const cur = store.get("settings", {}), next = { ...cur };
+        for (const [k, v] of Object.entries(m.settings || {})) next[k] = v && typeof v === "object" && !Array.isArray(v) ? { ...(cur[k] || {}), ...v } : v;
+        store.set("settings", next);
+        return reply(next);
+      }
       if (m.type === "hello") return reply({ mode: "playground", label: "playground · fake host", quiet: true });
       if (m.type === "mods.list") return reply(Object.values(store.get("mods", {})).filter(x => mod.modMatches(x, { url: m.url || location.href, app: null })));
       if (m.type === "mods.save") {

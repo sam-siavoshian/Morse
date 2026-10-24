@@ -7,6 +7,7 @@ import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { serveBar } from "./helpers/demo-server.js";
+import { OPEN_KEY } from "./helpers/keys.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
 import { waitForStatus, waitForReady, settle, TIMEOUT } from "./helpers/wait.js";
 
@@ -37,7 +38,7 @@ async function install(query, state) {
     await waitForReady(page); // onboarding.get is answered before hello
   };
   const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem("fake:onboarding") || "null"));
-  const open = async () => { await page.keyboard.press("Alt+Space"); await waitFor(s => s.open); await settle(page); };
+  const open = async () => { await page.keyboard.press(OPEN_KEY); await waitFor(s => s.open); await settle(page); };
   await load();
   return { page, ctx, status, waitFor, load, stored, open, errors, q: (sel, prop) => page.evaluate(ui(sel, prop)), click: sel => page.evaluate(click(sel)) };
 }

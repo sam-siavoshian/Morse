@@ -2,6 +2,10 @@
 
 **Change any app or website in your own words.** Press a shortcut, point at something and say what you want. Morse makes the change right there in the app while you watch. Save it as a mod, turn it off any time, or share it with a link. The change is written by a model you already have: Claude Code, Codex, or an API key.
 
+[![Watch the 85-second demo](docs/launch/poster-demo.png)](docs/launch/morse-demo.mp4)
+
+*[Watch the 85-second demo](docs/launch/morse-demo.mp4), recorded from real runs: Claude Code (haiku) wrote the sleep timer and the word count. Clips, posters and notes on how it was made: [`docs/launch`](docs/launch/).*
+
 ![Morse adding a sleep timer to a music player](docs/screenshots/clip-sleep-timer.gif)
 
 *Recorded automatically by Morse. To make the clip the same every time, the model's replies in it are replayed from a file (see [Status](#status)). Everything after the reply is real: showing the change as it is written, fixing mistakes, saving and recording. The same steps with real Claude Code replies are in [`docs/screenshots/claude-code`](docs/screenshots/claude-code).*
@@ -29,6 +33,8 @@ press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the mode
 | **Your model** | Claude Code or Codex (your own subscription, no API key), or an Anthropic or OpenAI API key. See [Models](#models) |
 | **Edit tools** | Change things directly, with no model: hide, move, resize, rename, recolor, change text size, duplicate. Page tools for dark or light mode, text size, hiding ads and focus mode. Capture something in one app and rebuild it in another |
 | **Ask and find** | Ask about the app instead of changing it. You get a plain answer with numbered markers on what it means. Ask where something is and Morse tells you which menu to open. **Show me** walks you through the steps while you click. **Explain this page** sums up what the screen is for |
+| **You stay in control** | One shortcut (⌥⇧0) turns off every mod on a page. Pause Morse on a site or everywhere. A mod that keeps crashing a page is held back. Before you install a shared mod, Morse says in plain words what it does. Back up all your mods to one file |
+| **Easier to use** | Accessibility for any app, no model needed: higher contrast, bigger click targets, an easier to read font (and dyslexia-friendly letters), underlined links, no animations, a visible focus outline, a reading ruler, no distractions. Read aloud, Check this page with Fix it, and Describe this picture (the model writes the alt text) |
 
 ## Screenshots
 
@@ -85,7 +91,7 @@ Captured by [`demo/shoot-bar.js`](demo/shoot-bar.js) from [`demo/bar-playground.
 | ![](docs/screenshots/64-shortcuts.png) **`?`** shows the shortcuts you have | ![](docs/screenshots/65-cancelled.png) **Esc** stops Morse. Nothing is left behind |
 
 - **Voice.** Tap the mic, or hold the shortcut (tap opens Morse, hold talks). On websites in Chrome, Chrome turns speech into text. In desktop apps, Morse records you and the Morse helper turns it into text with OpenAI `gpt-4o-mini-transcribe` (your key: `OPENAI_API_KEY` or `"voice": { "openaiKey" }` in `~/.morse/config.json`) or a local `whisper-cli` / `whisper` on your PATH. Turn on "Send after a pause" in Settings to send when you stop talking.
-- **Shortcuts** to open Morse, push to talk, open the Mods panel and show the edit tools. Change them in Settings. Defaults: ⌥Space (Ctrl+Shift+Space on Windows, where Alt+Space opens the window menu). Settings live in `~/.morse/settings.json` (desktop) or Chrome sync (extension).
+- **Shortcuts** to open Morse, push to talk, open the Mods panel and show the edit tools. Change them in Settings. Defaults: ⌥Space on macOS, Ctrl+Shift+Space on Windows and Linux (where Alt+Space opens the window menu, or KRunner on KDE). The extension's toolbar shortcut is Ctrl+Shift+Y (⌘⇧Y), so it never takes the in-page one. Settings live in `~/.morse/settings.json` (desktop) or Chrome sync (extension).
 - **In the bar:** ↑/↓ for your past requests in this app, Shift+Enter for a new line, Esc or ⌘. to stop. When the bar closes, you are back where you were, and the app gets every key except your Morse shortcuts.
 
 ### Edit tools: change things directly, no model
@@ -121,6 +127,55 @@ Same hotkey, same bar: ask a question instead of describing a change ("what does
 | ![](docs/screenshots/90-ask.png) **Ask** what something does: an answer, and a marker on it | ![](docs/screenshots/91-find.png) **Find** a setting that lives behind a menu |
 | ![](docs/screenshots/92-show-me.png) **Show me**: one step at a time, you do the clicking | ![](docs/screenshots/93-explain.png) **Explain this page**, from the page tools |
 
+### You stay in control
+
+Captured by [`demo/shoot-control.js`](demo/shoot-control.js) driving the real extension.
+
+| | |
+|---|---|
+| ![](docs/screenshots/95-off-switch.png) **⌥⇧0** (Alt+Shift+0) turns every mod on the page off at once; the toast turns them back on | ![](docs/screenshots/96-install-summary.png) **Before installing** a shared mod: what it does, in plain words, with a note when it sends data elsewhere or reads what you type. The code is folded below |
+| ![](docs/screenshots/97-pause-site.png) **Pause Morse on a site** from the Mods panel; every row says where the mod came from and has **Show code** | ![](docs/screenshots/98-popup-pause.png) The same from the toolbar popup, plus **Pause everywhere** |
+
+- **Off switch.** A shortcut like the others (Settings → Shortcuts, default ⌥⇧0 / Alt+Shift+0). It removes every mod's CSS at once, then undoes their code. It stays off in that tab, even across reloads, until you press it again or click Turn back on. Nothing is deleted.
+- **Pause.** "Pause Morse on <site>" in the Mods panel and the popup, "Pause everywhere" in the popup (the toolbar icon then says *off*), and in a terminal `morse pause [site|app]` / `morse resume`. Paused mods stay saved; every open tab and window follows at once.
+- **Safe start.** If a page closes, crashes or reloads within seconds after a mod ran, three times in a row, Morse holds that mod back on the next load and asks: *Keep it off* or *Turn it back on*. Tracked per tab by the host (`chrome.storage.local`, `~/.morse/control.json`).
+- **What a mod does, before you install it.** [`core/summary.js`](core/summary.js) reads the mod's code and lists what it changes and can do: *Changes how the page looks*, *Adds buttons to the page*, *Reads what you type in this page*, *Sends data to another website*, *Remembers settings on this site*, and so on. It errs on the side of mentioning things. The share page, Install a mod… in the Mods panel and `morse install` all show it first, with the code below, and install only on an explicit Install. On the web, a page can't install anything by itself: the share page's Install button opens Morse's own review, and only a click there installs.
+- **Where it came from.** Each mod in the panel and popup says how it got there (made here with which model, your own edits, installed from a shared link and by whom, restored from a backup), with **Show code** next to it. `morse code <id>` does the same in a terminal.
+- **Backups.** *Export all mods* and *Install from a file…* at the bottom of the Mods panel; `morse export --all [--out file]` and `morse install <backup file>`.
+
+### Mods for this site: see what other people made
+
+When you open Morse on a site that has mods in the [gallery](site/gallery.html), the empty bar says so ("2 mods for youtube.com"), and the Mods panel lists them under **For this site**: the title, the request, what it does in a few words, and who made it. **Try it** runs a mod on the page without saving anything; **Keep** saves it, **Remove** takes it all away. **Install…** goes through the same review as a share link. When the gallery has a newer version of a mod you installed from it, its row says **Update available**, and **Update…** shows what changed (in words and line by line) before anything is replaced; your old version stays in History. Your own mods get **Submit to the gallery…** in the Share dialog, which opens a GitHub issue with the mod and a short template filled in. No account or server is involved.
+
+The list is read by the Chrome extension or the Morse helper, never by the page, and checked at most once a day (with its ETag). Turn it off with **Show mods others made** in Settings. Captured by [`demo/shoot-gallery.js`](demo/shoot-gallery.js).
+
+| | |
+|---|---|
+| ![](docs/screenshots/110-for-this-site.png) **For this site** in the Mods panel | ![](docs/screenshots/111-try-it.png) **Try it**: on the page, nothing saved yet |
+| ![](docs/screenshots/112-update.png) **Update…**: what changed in the newer version | |
+
+### Easier to use: accessibility for any app
+
+Some apps are hard to read, hard to click, or never stop moving. The page tools have an **Easier to use** group that changes that for the site or app you're on, at once and with no model. Morse writes each one itself ([`core/a11y.js`](core/a11y.js)) as a small mod: it stays on for that site, and clicking it again turns it off and puts the page back exactly as it was.
+
+- **Higher contrast**: text darker, to at least 7 to 1 against its background; faint borders stronger; faded text back to full strength.
+- **Bigger click targets**: buttons, links and fields at least 44 × 44 pixels. Links inside sentences stay as they are.
+- **Easier to read font**: a plain sans-serif with a little more space between letters, words and lines, lines that stop at about 70 characters, no justified text. **Dyslexia-friendly letters** uses OpenDyslexic, Atkinson Hyperlegible or Lexend if they're on your computer, else Verdana. Nothing is downloaded.
+- **Underline links**. **Stop animations**: animations jump to their end, video and sound that start by themselves pause, GIFs show their first frame. **Focus outline everywhere**: a ring you can see on any background when you use the keyboard. **Reading ruler**: a band that follows the pointer and dims the rest. **Hide distractions**: cookie bars, chat bubbles and sticky announcements, never the site's header or navigation.
+
+**Read aloud** reads what you selected, what you pointed at, or the main text of the page, a sentence at a time, and marks the sentence it's reading. Play, pause, previous and next sentence, five speeds, <kbd>Esc</kbd> to stop. It uses your computer's own voices, so it works offline.
+
+**Check this page** looks for common problems: pictures with no description, buttons and links with no name, form fields with no label, text too light to read (measured, not guessed), things too small to click, and video or sound that plays by itself. Every place gets a numbered marker, and each kind of problem a **Fix it** button. What Morse can work out itself is fixed at once and saved in one "Accessibility fixes" mod: a name from a tooltip, an icon or where a link goes, a darker color, a bigger size. What needs judgment becomes one precise request to the model, with the exact places in it, which you save or undo like any change.
+
+**Describe this picture**: point at a picture and press the picture button on the edit toolbar. The model says in a sentence or two what it shows, and **Save as alt text** keeps that for screen readers. This needs a model that can look at pictures: Claude Code, the Anthropic API or the OpenAI API (Codex says it can't). Checked once with real Claude Code (haiku) on the demo site's chart: "A bar chart titled “Visitors by month” for Riverside Library from January to June shows visitor counts rising each month: 1,200 in January, … 3,400 in June", in about 6 s.
+
+Captured by [`demo/shoot-a11y.js`](demo/shoot-a11y.js) on [`demo/sites/a11y`](demo/sites/a11y/index.html), a library site with problems planted on purpose (the real runtime, a stand-in host with the demo model, speech recorded instead of spoken).
+
+| | |
+|---|---|
+| ![](docs/screenshots/100-easier-to-use.png) **Easier to use**, beside the page tools: three tools on | ![](docs/screenshots/101-read-aloud.png) **Read aloud**: the sentence being read is marked |
+| ![](docs/screenshots/102-check-page.png) **Check this page**: 17 places, each with a marker, and Fix it | ![](docs/screenshots/103-before-after-contrast.png) **Higher contrast**, before and after |
+
 ## Status
 
 Honest accounting of what was verified and how:
@@ -151,6 +206,8 @@ node daemon/cli.js launch spotify --restart   # or "vs code", slack, discord, no
 node daemon/cli.js status                     # connected apps, their windows, ports and mods
 node daemon/cli.js stop spotify               # disconnect; the app keeps running
 node daemon/cli.js mods
+node daemon/cli.js pause                        # stop every mod everywhere (morse resume to undo)
+node daemon/cli.js export --all                 # back up every mod to one file
 ```
 
 `launch` reopens the app with Morse connected. Keep the terminal open while you use it.
@@ -161,11 +218,11 @@ node daemon/cli.js mods
 2. Click **Load unpacked** and choose the `dist/extension` folder.
 3. Open Morse's details and turn on **Allow User Scripts**. Mods that only change the look work without it. Mods that add buttons or features need it on some sites.
 4. The Morse settings page opens the first time. Connect a model there (see [Models](#models)).
-5. Open any page and press **⌥Space** (Alt+Space).
+5. Open any page and press **⌥Space** (Ctrl+Shift+Space on Windows and Linux).
 
 ## How to use
 
-1. Press **⌥Space** (Alt+Space; Ctrl+Shift+Space on Windows). The Morse bar opens.
+1. Press **⌥Space** (Ctrl+Shift+Space on Windows and Linux). The Morse bar opens.
 2. Point at the thing you want to change and click it. To change the whole page, skip this step.
 3. Describe what you want, like "add a sleep timer" or "make this easier to read", and press Enter. Or hold ⌥Space and say it.
 4. Watch the change happen. Click **Save** to keep it, or **Undo** to remove it.
@@ -242,8 +299,10 @@ The popup's **Test the model** button sends a small real request and shows the r
 
 Mods are code running inside apps you're signed into, so:
 
-- The model is told not to use the network, eval, or external scripts, but **that is not enforced yet** (see roadmap). Read shared mods before installing; the share page shows the full code first, and imported mods are marked.
+- The model is told not to use the network, eval, or external scripts, but **that is not enforced yet** (see roadmap). Before a shared mod is installed, Morse says in plain words what its code can do (sending data elsewhere and reading what you type get a clear note) and shows the code; imported mods say where they came from. The summary is pattern matching, not a guarantee, so it errs on the side of mentioning things and flags code that builds code while it runs.
+- One key (⌥⇧0) turns every mod on a page off; Morse can be paused per site or everywhere; a mod that keeps crashing a page is held back on the next load.
 - Mods run in the renderer only. They get no Node/Electron APIs.
+- Morse's own UI runs in an isolated JS world (a content script on the web, a CDP isolated world on desktop), so the app's or website's scripts can't reach Morse's host API: your prompt history, the clipboard, other sites' mods, exports or your model. Mod code runs in the page's main world, because it needs the page's own objects. Host requests are answered for the page that asked.
 - `morse launch` opens a debugging port on 127.0.0.1. While it's open, **any local process can attach to that app**, which is the same trust level as anything else running as you, but worth knowing. Quit the app normally to close it. Morse picks a free port, drops any `--remote-debugging-address` you pass, checks the port can't be reached from this machine's other addresses, and won't connect if what answers isn't the app it started (process id, then user agent).
 - Share links carry the mod in the URL fragment, which browsers never send to a server.
 - Page text goes to the model, so a page can try to prompt-inject it. That's one reason generated code is always shown, reversible, and never silent, and why Claude Code and Codex run with no tools, no MCP servers and an empty working folder: the model can only write text.
@@ -267,6 +326,8 @@ Mods are code running inside apps you're signed into, so:
 Run it locally with `npm run demo:serve` and open `http://127.0.0.1:8787/site/`. Screenshots (1440×900 and 390×844, dark and light) are in [`docs/site/`](docs/site/).
 
 To add a mod to the gallery, export it (`morse export <id>` writes a `.morse.json`), drop it in `site/mods/`, and add an entry to `site/mods/index.json`.
+
+Morse reads the same list for **Mods for this site** ([`core/gallery.js`](core/gallery.js), fetched and cached by [`core/gallery-host.js`](core/gallery-host.js)). Each entry needs `match` (the mod's hosts and app, so Morse can tell which pages it is for) and `version`; raise `version` and add a one-line `changes` when you update a mod, and people who installed it see Update available. Entries with `"demo": true` are for the demo sites (`npm run demo:serve` serves the list at `http://127.0.0.1:8787/site/mods/index.json`, which Morse uses on those sites) and don't show on the gallery page. To read another list, set `MORSE_GALLERY_URL` or `"gallery": { "index": "…" }` in `~/.morse/config.json` (desktop), or `morse.gallery.url` in the extension's local storage.
 
 ## Repo layout
 

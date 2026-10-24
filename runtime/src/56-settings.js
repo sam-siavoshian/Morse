@@ -56,7 +56,7 @@ function paintSettings() {
       <div class="ctl">
         ${rec && id !== "open" ? `<button type="button" class="tbtn" data-off="${id}">Turn off</button>` : ""}
         ${!rec && custom ? `<button type="button" class="tbtn" data-reset="${id}" title="Back to ${esc(formatCombo(resolveHotkeys({}, PLATFORM)[id], PLATFORM))}">Reset</button>` : ""}
-        <button type="button" class="hk" data-hk="${id}" aria-describedby="hk-${id}-msg" aria-label="${esc(label)} shortcut: ${esc(hotkeyText(id) || "off")}. Press to change.">${shown}</button>
+        <button type="button" class="hk field" data-hk="${id}" aria-describedby="hk-${id}-msg" aria-label="${esc(label)} shortcut: ${esc(hotkeyText(id) || "off")}. Press to change.">${shown}</button>
       </div>
     </div>`;
   }).join("");
@@ -75,6 +75,7 @@ function paintSettings() {
       </section>
       <section><h4>General</h4>
         <div class="srow"><div class="lbl"><span>Welcome message</span><small>“Morse is ready” when an app or page loads</small></div><div class="ctl">${switchHtml("welcome", PREFS.welcome, "Welcome message")}</div></div>
+        <div class="srow"><div class="lbl"><span>Show mods others made</span><small>Mods from the Morse gallery for the site you're on</small></div><div class="ctl">${switchHtml("gallery", PREFS.gallery, "Show mods others made")}</div></div><!-- gallery hook: 68-gallery.js -->
       </section>
       <footer><button type="button" class="tbtn" data-act="reset-all">Reset all settings</button><span class="dim">${esc(S.mode === "extension" ? "Synced with your Chrome profile" : S.mode === "desktop" ? "Saved on this computer" : "")}</span></footer>
     </div>`;
@@ -115,8 +116,8 @@ async function commitHotkey(id, value, verdict) {
   announce(`${HOTKEY_ACTIONS.find(a => a.id === id).label}: ${hotkeyText(id) || "off"}. ${verdict?.message || ""}`);
 }
 
-addEventListener("keydown", e => {
-  if (!recording) return;
+listen("keydown", e => {
+  if (!e.isTrusted || !recording) return;
   if (e.isComposing || e.keyCode === 229) return;
   // The recorder owns the keyboard while armed: nothing reaches the page or our hotkeys.
   e.preventDefault();
@@ -142,8 +143,8 @@ addEventListener("keydown", e => {
   }
   commitHotkey(id, combo, verdict);
 }, true);
-addEventListener("keyup", e => {
-  if (!recording) return;
+listen("keyup", e => {
+  if (!e.isTrusted || !recording) return;
   e.preventDefault();
   e.stopImmediatePropagation();
   recording.partial = comboFromEvent(e).partial;
@@ -151,7 +152,7 @@ addEventListener("keyup", e => {
 }, true);
 // Click away (or blur the window) and the recorder gives up.
 root.addEventListener("pointerdown", e => { if (recording && !e.composedPath().some(n => n?.dataset?.hk || n?.dataset?.off)) stopRecording(false); });
-addEventListener("blur", () => stopRecording(false));
+listen("blur", () => stopRecording(false));
 
 pane.addEventListener("click", e => {
   const t = e.target;
@@ -171,6 +172,7 @@ pane.addEventListener("change", e => {
   const k = e.target.dataset?.k;
   if (k === "autoSubmit") saveSetting({ voice: { autoSubmit: e.target.checked } }, `[data-k="autoSubmit"]`);
   if (k === "welcome") saveSetting({ welcome: e.target.checked }, `[data-k="welcome"]`);
+  if (k === "gallery") saveSetting({ gallery: e.target.checked }, `[data-k="gallery"]`); // gallery hook: 68-gallery.js
 });
 // Radio groups: arrows move and select, like native radios.
 pane.addEventListener("keydown", e => {

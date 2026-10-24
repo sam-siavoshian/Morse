@@ -11,6 +11,7 @@ const prefsSubs = new Set();
 
 const hotkey = id => HOTKEYS[id] || "";
 const hotkeyText = id => formatCombo(hotkey(id), PLATFORM);
+HOTKEY = hotkeyText("open") || HOTKEY; // the platform default until settings arrive
 const primaryMod = PLATFORM === "mac" ? "⌘" : "Ctrl";
 // Key caps for a combo or a list of key names.
 function caps(keys) {
@@ -45,7 +46,7 @@ function refreshPrefs() {
   prefsAt = Date.now();
   loadPrefs().catch(() => {});
 }
-addEventListener("focus", refreshPrefs);
+listen("focus", refreshPrefs);
 
 async function savePrefs(patch) {
   setPrefs(mergePrefs(PREFS, patch));

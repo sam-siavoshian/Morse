@@ -5,12 +5,14 @@ function setCss(id, css) {
   if (s.textContent !== css) s.textContent = css;
 }
 async function applyMod(m) {
+  if (modHeld(m)) return; // user control: off switch, pause, safe start (63-control.js)
   setCss(m.id, m.css);
   if (m.js.trim()) {
     const r = await call("exec", { modId: m.id, js: m.js });
     Health.ran(m, r); // repair: the panel marks mods that stopped working (70-panel.js)
     if (!r.ok) { console.warn("[morse]", m.title, r.error); toast(`Couldn't run “${m.title}” here. Turn it off or edit its code in Mods.`); }
   }
+  modRan(m); // safe start (63-control.js)
 }
 async function removeMod(id) { setCss(id, ""); await call("off", { modId: id }); }
 async function syncMods() {

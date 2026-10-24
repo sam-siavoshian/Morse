@@ -12,7 +12,7 @@ export const startDemoServer = () => serveDemo({ base: 0 });
 
 // Routes http://127.0.0.1:<8787|8788|8789>/… in a Playwright context to the
 // demo server's real ports, passing the response (headers included) through.
-export async function routeDemoOrigins(ctx, demo, fixed = { parley: 8787, byte: 8788, tunes: 8789 }) {
+export async function routeDemoOrigins(ctx, demo, fixed = { parley: 8787, byte: 8788, tunes: 8789, a11y: 8790 }) {
   for (const [site, port] of Object.entries(fixed)) {
     await ctx.route(`http://127.0.0.1:${port}/**`, async route => {
       const url = new URL(route.request().url());
