@@ -17,12 +17,18 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
   const started = Date.now();
   const repairs = [];
   const before = probe ? await probe([]).catch(() => null) : null; // effect check
+  // speed: when each stage happened, in ms since the call (first attempt only)
+  const timing = {};
+  const mark = (k, v = Date.now() - started) => { if (timing[k] == null) timing[k] = v; };
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     emit({ type: "phase", phase: attempt === 1 ? "thinking" : "fixing", error: previous?.error });
     let raw = "", lastCss = "", lastAnswer = "";
     raw = await streamChat(settings, buildMessages({ request, context, previous, base }), {
       signal,
+      onStage(st) { if (st.spawnMs != null) mark("spawn", st.spawnMs); if (st.warm != null) mark("warm", st.warm); mark("modelReady"); },
       onToken(tok) {
+        mark("firstToken");
+        timing.lastToken = Date.now() - started;
         raw += tok;
         emit({ type: "token", text: tok });
         // Ask and find: an answer streams as "answer" events, never as CSS.
@@ -33,7 +39,7 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
           return;
         }
         const css = completeCssPrefix(parseModResponse(raw).css);
-        if (css !== lastCss) { lastCss = css; emit({ type: "css", css }); }
+        if (css !== lastCss) { lastCss = css; if (css.trim()) mark("firstCss"); emit({ type: "css", css }); }
       },
     });
     // Ask and find: an answer is final as soon as it's written; nothing runs.
@@ -44,7 +50,8 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     }
     const draft = parseModResponse(raw);
     emit({ type: "css", css: draft.css });
-    last = { ...draft, raw, attempts: attempt, ms: Date.now() - started, repairs };
+    mark("modelDone");
+    last = { ...draft, raw, attempts: attempt, ms: Date.now() - started, repairs, timing };
     if (!draft.css.trim() && !draft.js.trim()) {
       previous = { raw, error: "The reply had no ```css or ```js block (or ANSWER: for a question)." };
       repairs.push(previous.error);

@@ -83,6 +83,7 @@ const INSTALL_CONTEXT = `(() => {
       if (sel && !S.target) throw new Error("target not found: " + sel);
       return context();
     },
+    timedContext(sel) { const t = performance.now(); const c = this.context(sel); return { c, ms: performance.now() - t }; }, // speed
     probe: typeof effectProbe === "function" ? effectProbe : null,
   };
 })()`;
@@ -113,7 +114,9 @@ async function runCase(c, rep) {
   try {
     await page.goto(`${BASE}/demo/sites/${c.site}/`, { waitUntil: "load" });
     await page.evaluate(INSTALL_CONTEXT);
-    const context = await page.evaluate(sel => window.__morseEval.context(sel), c.target);
+    const tEnter = Date.now(); // speed: the moment the person presses Enter
+    const { c: context, ms: ctxMs } = await page.evaluate(sel => window.__morseEval.timedContext(sel), c.target);
+    const tCtx = Date.now();
     rec.contextChars = buildMessages({ request: c.request, context }).map(m => m.content).join("").length;
     if (opt["dump-context"]) console.log(`---- ${c.id}\n` + buildMessages({ request: c.request, context })[1].content);
     // Everything that exists now is "original"; checkers can tell new elements apart.
@@ -123,7 +126,7 @@ async function runCase(c, rep) {
     const B = c.before ? await page.evaluate(`(async () => { ${c.before} })()`) : null;
 
     const modId = `eval-${c.id}`;
-    let cssApplied = Promise.resolve();
+    let cssApplied = Promise.resolve(), firstCssAt = null;
     const hasProbe = !opt["no-probe"] && await page.evaluate(() => !!window.__morseEval.probe);
     const res = await runMorse({
       settings, request: c.request, context,
@@ -133,7 +136,7 @@ async function runCase(c, rep) {
           let s = document.head.querySelector(`style[data-morse-css="${id}"]`);
           if (!s) { s = document.createElement("style"); s.setAttribute("data-morse-css", id); document.head.append(s); }
           s.textContent = css;
-        }, [modId, ev.css]).catch(() => {});
+        }, [modId, ev.css]).then(() => { if (firstCssAt == null && ev.css.trim()) firstCssAt = Date.now(); }, () => {});
       },
       // Same as daemon/connector.js exec: run, then collect late callback errors.
       exec: async js => {
@@ -149,6 +152,11 @@ async function runCase(c, rep) {
     });
     await cssApplied;
     rec.ms = Date.now() - t0;
+    // speed: per-stage latency, ms from Enter (context, model, first style on the page, done)
+    const tm = res.timing || {}, off = tCtx - tEnter, at = v => (v == null ? null : Math.round(v + off));
+    rec.stages = { context: Math.round(ctxMs), contextRoundTrip: off, promptChars: rec.contextChars, spawn: tm.spawn ?? null,
+      modelReady: at(tm.modelReady), firstToken: at(tm.firstToken), firstCss: firstCssAt == null ? null : firstCssAt - tEnter,
+      lastToken: at(tm.lastToken), modelDone: at(tm.modelDone), total: Date.now() - tEnter };
     Object.assign(rec, { attempts: res.attempts, title: res.title, css: res.css, js: res.js, engineOk: res.ok, engineError: res.error || null, repairs: res.repairs || [] });
     await page.waitForTimeout(300);
     const verdict = await Promise.race([
@@ -201,6 +209,15 @@ const summary = {
     return [k, `${rs.filter(r => r.pass).length}/${rs.length}`];
   })),
 };
+// speed: median and p90 per stage
+const pct = (xs, p) => xs.length ? xs[Math.min(xs.length - 1, Math.floor(xs.length * p))] : null;
+summary.stages = {};
+for (const k of ["context", "promptChars", "spawn", "modelReady", "firstToken", "firstCss", "lastToken", "modelDone", "total"]) {
+  const xs = results.map(r => r.stages?.[k]).filter(v => v != null).sort((a, b) => a - b);
+  summary.stages[k] = { n: xs.length, median: pct(xs, 0.5), p90: pct(xs, 0.9) };
+}
+console.log("stage            n   median     p90");
+for (const [k, v] of Object.entries(summary.stages)) console.log(`${k.padEnd(14)} ${String(v.n).padStart(3)} ${String(v.median ?? "-").padStart(8)} ${String(v.p90 ?? "-").padStart(7)}`);
 console.log(`\n${pass}/${results.length} passed (${(summary.rate * 100).toFixed(0)}%), median ${(median / 1000).toFixed(1)}s`);
 console.log(summary.byCategory);
 

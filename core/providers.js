@@ -62,14 +62,16 @@ function toOpenAI(m) {
     : { type: "text", text: String(b?.text ?? "") })) };
 }
 
-export async function streamChat(settings, messages, { onToken, signal, maxTokens } = {}) {
+// onStage({ spawnMs?, warm? }) (optional): the model has the request and is
+// working on it (speed: timing, and the "Thinking" status in the bar).
+export async function streamChat(settings, messages, { onToken, signal, maxTokens, onStage } = {}) {
   const s = { ...DEFAULT_SETTINGS, ...settings };
   const impl = impls[s.provider];
   if (!s.provider || s.provider === "none") throw new NoModelError();
   if (!impl) throw new Error(`Morse doesn't know the model "${s.provider}". Choose another in Morse's settings.`);
   if (signal?.aborted) throw abortError();
   if (!SEES_IMAGES.has(s.provider) && imageBlocks(messages).length) throw new Error(`${PROVIDERS[s.provider]?.name || "This model"} can't look at pictures in Morse. Use Claude Code or an Anthropic API key for that.`); // Describe this image
-  return impl(s, messages, { onToken, signal, maxTokens });
+  return impl(s, messages, { onToken, signal, maxTokens, onStage });
 }
 
 export function settingsLabel(s) {

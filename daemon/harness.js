@@ -103,7 +103,7 @@ const lastLine = s => (s || "").trim().split("\n").filter(Boolean).pop() || "";
 
 // Claude Code: `claude -p` with stream-json output; token text arrives as
 // stream_event/content_block_delta/text_delta, the final line is a `result`.
-export async function claudeCodeStream(s, messages, { onToken, signal }) {
+export async function claudeCodeStream(s, messages, { onToken, signal, onStage }) {
   const bin = s.bin || which("claude");
   if (!bin) throw new Error("Claude Code isn't installed on this computer. Install it from claude.com/claude-code, or run morse setup to choose another model.");
   if (!validModel(s.model)) throw new Error(`"${s.model}" isn't a model name Morse can use. Check the spelling.`);
@@ -122,12 +122,14 @@ export async function claudeCodeStream(s, messages, { onToken, signal }) {
   if (images.length) args.push("--input-format", "stream-json");
   const input = images.length ? JSON.stringify({ type: "user", message: { role: "user", content: [...images, { type: "text", text: prompt }] } }) + "\n" : prompt;
   let text = "", result = null;
+  const t0 = Date.now();
   try {
     const { code, stderr } = await runProcess({
       bin, args, input, cwd: path.join(dir, "cwd"), signal, timeoutMs: s.timeoutMs,
       onLine(line) {
         let ev;
         try { ev = JSON.parse(line); } catch { return; }
+        if (ev.type === "system" && ev.subtype === "init") onStage?.({ spawnMs: Date.now() - t0, warm: false });
         if (ev.type === "stream_event" && ev.event?.type === "content_block_delta" && ev.event.delta?.type === "text_delta") {
           const t = ev.event.delta.text || "";
           if (t) { text += t; onToken?.(t); }
