@@ -20,7 +20,7 @@ press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the mode
 
 *Recorded automatically by Morse. To make this clip come out the same every time, the model's answers in it are played back from a file (see [Status](#status)). Everything else is real. The same steps with real Claude Code answers are in [`docs/screenshots/claude-code`](docs/screenshots/claude-code).*
 
-## What works today (v0.1)
+## What works today (v0.2)
 
 | | |
 |---|---|
@@ -38,6 +38,7 @@ press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the mode
 | **Edit tools** | Change things directly, no model needed: hide, move, resize, rename, recolor, change text size, duplicate. Page tools for dark or light mode, text size, hiding ads and focus mode. Capture something in one app and rebuild it in another |
 | **Ask and find** | Ask about the app instead of changing it. You get a plain answer with numbered markers on what it means. Ask where something is and Morse tells you which menu to open. **Show me** walks you through the steps while you click. **Explain this page** sums up what the screen is for |
 | **You stay in control** | One shortcut (⌥⇧0) turns off every mod on a page. Pause Morse on a site or everywhere. A mod that keeps crashing a page is held back. Before you install a shared mod, Morse says in plain words what it does. Back up all your mods to one file |
+| **Show me once** | Do a task by hand once, then say “add a button that does this”, “do this when I press Ctrl+Shift+A” or “do this to every unread email”. Passwords are never recorded |
 | **Easier to use** | Accessibility for any app, no model needed: higher contrast, bigger click targets, an easier to read font (and dyslexia-friendly letters), underlined links, no animations, a visible focus outline, a reading ruler, no distractions. Read aloud, Check this page with Fix it, and Describe this picture (the model writes a description for screen readers) |
 
 ## Screenshots
@@ -189,6 +190,22 @@ Captured by [`demo/shoot-a11y.js`](demo/shoot-a11y.js) on [`demo/sites/a11y`](de
 | ![](docs/screenshots/100-easier-to-use.png) **Easier to use**, beside Page tools: three tools on | ![](docs/screenshots/101-read-aloud.png) **Read aloud**: the sentence being read is marked |
 | ![](docs/screenshots/102-check-page.png) **Check this page**: 17 places, each with a marker, and Fix it | ![](docs/screenshots/103-before-after-contrast.png) **Higher contrast**, before and after |
 
+### Show me once: do it by hand, Morse repeats it
+
+Clicking the same things over and over? Choose **Show me once** (under the input in the empty bar, or in the ⋯ menu) and do the task by hand, once: click, type, choose, press keys. A small strip lists each step in plain words as you go: *Click “Archive”*, *Type “invoice” in “Search mail”*. **Stop** opens the bar with your steps. Then say what you want: “add a button that does this”, “do this when I press Ctrl+Shift+A” or “do this to every unread email”. Morse sends the steps to the model (in order, with what each thing is called and how to find it again) and the model writes a mod that does them for you, waiting for each thing to appear. Save, refine or undo it like any change.
+
+- **Passwords and card numbers stay yours.** For a password field, or one marked for card details, the step says “(hidden)” and the value is never kept. The mod stops at that field and asks you to type it.
+- **Only what you do, only here.** Morse records your own clicks and keys on this page while the strip shows. Not the page's own scripts, not other frames, not Morse itself. <kbd>Esc</kbd> cancels. Nothing is sent until you say what to do and press Enter.
+- Steps come from [`core/showonce.js`](core/showonce.js) (plain words, names that survive a reload: ids, test ids, labels, then the words on a button) and [`runtime/src/64-show-once.js`](runtime/src/64-show-once.js). The kit gained `morse.waitFor`, `morse.type`, `morse.choose`, `morse.key` and `morse.sleep` for doing the steps.
+
+Checked with real Claude Code (haiku) by [`evals/show-once.js`](evals/show-once.js) on the mail demo: “do this to every unread email” gave an **Archive unread** button that archived all 4 unread emails and kept the 6 read ones in 10 of 12 runs (the other 2 forgot to put the button on the page), about 10 to 25 s each; “do this when I press Ctrl+Shift+A” worked every time. Captured by [`demo/shoot-show-once.js`](demo/shoot-show-once.js).
+
+| | |
+|---|---|
+| ![](docs/screenshots/129-show-once-start.png) **Show me once**, in the bar and the ⋯ menu | ![](docs/screenshots/130-show-once-recording.png) **Recording**: each step as you do it |
+| ![](docs/screenshots/131-show-once-steps.png) **Stop**: say what to do with the steps | ![](docs/screenshots/132-show-once-result.png) **The result**, live: a button for every unread email |
+| ![](docs/screenshots/133-show-once-done.png) **Done** for 3 unread emails | ![](docs/screenshots/134-show-once-hidden.png) A sign-in: the password is “(hidden)” |
+
 ## Status
 
 Honest accounting of what was verified and how:
@@ -203,25 +220,32 @@ Honest accounting of what was verified and how:
 You need Node 22 or newer. To record clips of your changes, you also need `ffmpeg`.
 
 ```bash
-git clone https://github.com/sam-siavoshian/RRAA morse && cd morse
-npm install                         # the Anthropic SDK and esbuild
-npm run build                       # builds the Chrome extension into dist/extension
-node daemon/cli.js setup            # choose Claude Code, Codex or an API key
-node daemon/cli.js doctor           # checks that the model answers
+npm install -g morse-cli   # adds the morse command (about 700 KB)
+morse setup                # choose Claude Code, Codex or an API key
+morse doctor               # checks that the model answers
 ```
 
-Below, `morse` means `node daemon/cli.js`. Run `npm link` once to type just `morse`.
+Until the first npm release, install from GitHub instead: `npm install -g github:sam-siavoshian/RRAA`.
+To try it without installing, `npx morse-cli setup` works too.
+
+From a clone, for working on Morse itself:
+
+```bash
+git clone https://github.com/sam-siavoshian/RRAA morse && cd morse
+npm install && npm run build   # builds the Chrome extension into dist/extension
+npm link                       # so morse runs this checkout
+```
 
 **Desktop apps:**
 
 ```bash
-node daemon/cli.js apps                       # what's installed, and whether Morse can connect
-node daemon/cli.js launch spotify --restart   # or "vs code", slack, discord, notion, obsidian, a path…
-node daemon/cli.js status                     # connected apps, their windows, ports and mods
-node daemon/cli.js stop spotify               # disconnect; the app keeps running
-node daemon/cli.js mods
-node daemon/cli.js pause                        # stop every mod everywhere (morse resume to undo)
-node daemon/cli.js export --all                 # back up every mod to one file
+morse apps                       # what's installed, and whether Morse can connect
+morse launch spotify --restart   # or "vs code", slack, discord, notion, obsidian, a path…
+morse status                     # connected apps, their windows, ports and mods
+morse stop spotify               # disconnect; the app keeps running
+morse mods
+morse pause                        # stop every mod everywhere (morse resume to undo)
+morse export --all                 # back up every mod to one file
 ```
 
 `launch` reopens the app with Morse connected. Keep the terminal open while you use it.
@@ -229,9 +253,9 @@ node daemon/cli.js export --all                 # back up every mod to one file
 **Websites (Chrome):**
 
 1. Open `chrome://extensions` and turn on **Developer mode**.
-2. Click **Load unpacked** and choose the `dist/extension` folder.
+2. Click **Load unpacked** and choose the folder `morse extension` prints (`dist/extension` in a clone).
 3. Open Morse's details and turn on **Allow User Scripts**. Mods that only change how a site looks work without it. Mods that add buttons or features need it on some sites.
-4. The Morse settings page opens the first time. Connect a model there (see [Models](#models)).
+4. The Morse settings page opens the first time. Connect a model there: run `morse serve` and type its code, or paste an Anthropic API key (see [Models](#models)).
 5. Open any page and press **⌥Space** (Ctrl+Shift+Space on Windows and Linux).
 
 ## How to use
@@ -258,19 +282,19 @@ Morse doesn't come with a model. It uses one you already have.
 On a computer, Morse uses the first one it finds, in that order. To choose yourself:
 
 ```bash
-node daemon/cli.js model                                   # which model Morse will use
-node daemon/cli.js config --provider claude-code --model haiku    # opus · sonnet · haiku
-node daemon/cli.js config --provider anthropic --anthropic-key sk-ant-…
-node daemon/cli.js config --provider openai --openai-key sk-…
-node daemon/cli.js config --provider auto                  # let Morse choose again
-node daemon/cli.js doctor                                  # what's installed, plus a real test call
+morse model                                   # which model Morse will use
+morse config --provider claude-code --model haiku    # opus · sonnet · haiku
+morse config --provider anthropic --anthropic-key sk-ant-…
+morse config --provider openai --openai-key sk-…
+morse config --provider auto                  # let Morse choose again
+morse doctor                                  # what's installed, plus a real test call
 ```
 
 Keys are saved in `~/.morse/config.json`, which only you can read. Morse also reads `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`.
 
 **In Chrome** there are two ways to connect a model. Pick one in the toolbar popup:
 
-- **Morse helper** (for Claude Code, Codex, or keys kept on your computer). Run `node daemon/cli.js serve`. It shows a 6-character code. Type the code into the popup and click Pair. `morse pair` shows a new code, and `morse unpair` signs every browser out. The helper only listens on 127.0.0.1:7457, only answers Chrome extensions (and local tools like curl, which send no Origin), and needs the token it gave out at pairing. When you press Stop or close the tab, the model on your computer stops too.
+- **Morse helper** (for Claude Code, Codex, or keys kept on your computer). Run `morse serve`. It shows a 6-character code. Type the code into the popup and click Pair. `morse pair` shows a new code, and `morse unpair` signs every browser out. The helper only listens on 127.0.0.1:7457, only answers Chrome extensions (and local tools like curl, which send no Origin), and needs the token it gave out at pairing. When you press Stop or close the tab, the model on your computer stops too.
 - **Anthropic API key (nothing to install).** Paste a key in the popup and pick a model. The key stays in this browser's extension storage, and requests go straight from the extension to Anthropic.
 
 The popup's **Test the model** button sends a small real request and shows the reply.
@@ -330,7 +354,7 @@ Mods are code running inside apps you're signed into, so:
 
 ## Site
 
-[`site/`](site/) is the public website: static HTML, CSS and ES modules, no build step, so GitHub Pages can serve the repo root as is (`/site/` for the site, `/share/install.html` for share links).
+[`site/`](site/) is the public website: static HTML, CSS and ES modules, no build step. The Pages workflow ([`.github/workflows/pages.yml`](.github/workflows/pages.yml)) publishes it laid out like the repo (`/site/` for the site, `/share/install.html` for share links, `/site/mods/index.json` for the gallery list); `npm run pages` builds the same thing into `dist/pages` and fails on a broken link.
 
 - **`site/index.html`**: the landing page, with an in-browser demo of the pixel effect (simulated, no model runs).
 - **`site/gallery.html`**: example mods from [`site/mods/`](site/mods/) (`index.json` lists them; each `*.morse.json` is a normal mod). Search, filter by app, read the code, then **Install in Morse** (a share link built exactly like `encodeShare` in `core/mod.js`), **Download for Tampermonkey** or **Copy link**. The mods were written by hand against each app in October 2026, so a selector may need a refresh.
@@ -369,4 +393,12 @@ npm run test:ui    # the tests that need a display (the built extension), under 
 
 CI (`.github/workflows/ci.yml`) runs all three on every push and pull request. Tests are safe to run in parallel, several checkouts at once included: each test file gets its own `MORSE_HOME` (never your `~/.morse`), every server and debugging port is picked by the OS, and tests wait on real conditions rather than sleeping. New tests should use `tests/helpers/` (`home.js` first, then `net.js`, `wait.js`, `browser.js`, `keys.js` for the platform's default hotkeys, `demo-server.js`). `MORSE_TEST_TIMEOUT_SCALE=2` doubles every timeout on a slow machine.
 
-MIT licensed.
+
+## Releasing
+
+The version lives in `package.json` only; the build writes it into the extension's manifest, and `morse --version` prints it. See [CHANGELOG.md](CHANGELOG.md).
+
+- **npm:** `npm publish` (the `prepare` script builds the extension that ships inside the package, also for installs from GitHub).
+- **Chrome Web Store:** `npm run package:extension` makes `dist/morse-extension-<version>.zip`. The listing text, permission notes and screenshots are in [`docs/store/`](docs/store/).
+
+[Privacy policy](docs/privacy.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · MIT licensed.

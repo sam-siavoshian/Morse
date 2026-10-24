@@ -42,6 +42,7 @@ onEvent(msg => {
     await controlBoot(); await syncMods(); controlReady(); // user control: pause, safe start (63-control.js)
     Heal.soon(); // self-heal hook: after idle, did a saved mod stop working? (71-heal.js)
     YourStyle.ready(); // your-style hook: fit it to this site once, if turned on (72-style.js)
+    if (hello.debug) debugStatus(); // the host was started with MORSE_DEBUG=1
     S.ready = true; // tests: the host answered hello and the mods are on
     if (!hello.quiet && PREFS.welcome) toast(`Morse is ready. Press ${HOTKEY} to change this page.`);
   } catch (e) { console.warn("[morse] host unavailable", e); }
@@ -49,12 +50,20 @@ onEvent(msg => {
   setInterval(() => { if (live() && location.href !== S.url) { S.url = location.href; syncMods().catch(() => {}); Heal.soon(); /* self-heal hook */ } }, 1000);
 })();
 
-// Read-only status for automated screenshots/tests; off unless opted in.
-// Mirrored into a DOM attribute so it is readable from any JS world.
-if (DEBUG) setInterval(() => {
+// Read-only status for automated screenshots/tests; off unless opted in
+// (Playwright with morse:debug, or a desktop host started with MORSE_DEBUG=1,
+// which a web page can't set). Mirrored into a DOM attribute so it is readable
+// from any JS world.
+let statusOn = false;
+function debugStatus() {
+  if (statusOn) return;
+  statusOn = true;
+  setInterval(() => {
   hostEl.dataset.status = JSON.stringify({
     ready: !!S.ready, phase: S.phase, hint: hint.textContent, ticker: ticker.textContent, mods: S.mods.length,
     open: S.open, input: input.value, voice: Voice.state(), backend: Voice.backend(), level: Voice.level(), db: Voice.db(), pane: paneKind,
     focus: root.activeElement?.className || root.activeElement?.tagName || "", hotkeys: HOTKEYS,
   });
-}, 40);
+  }, 40);
+}
+if (DEBUG) debugStatus();

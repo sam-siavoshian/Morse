@@ -42,6 +42,10 @@ export function createMod({ id, title, prompt, css, js, url, app, target, model,
   };
 }
 
+// Saved mods in the order they were made. Installed files may lack "created"
+// (or have it as a number): that must not break the list for every site.
+export const byCreated = (a, b) => String(a?.created ?? "").localeCompare(String(b?.created ?? ""));
+
 // What a mod is filed under: the host for web pages, and the file itself
 // (file://<dir>/<name>, no query or hash) for local files, so a mod made on
 // one local page doesn't follow you to every other one.
@@ -69,6 +73,16 @@ export function modMatches(mod, { url, app }) {
     // Desktop apps often serve their UI from a random localhost port: within
     // the app, a mod follows its local UI whatever port it loads from.
     || (!!m.app && LOOPBACK.test(p) && LOOPBACK.test(h)));
+}
+
+// A save from a page may change a mod, not widen where it runs: its match
+// stays what it was, or is exactly the caller's own site (or app). Wider
+// matches ("*", other hosts) only come in through a confirmed install.
+const matchKey = m => JSON.stringify({ app: m?.app || null, hosts: [...(Array.isArray(m?.hosts) ? m.hosts : [])].map(String).sort() });
+export function saveKeepsScope(next, existing, where) {
+  if (next && existing && matchKey(next) === matchKey(existing)) return true;
+  return !!next && (next.app || null) === (where.app || null)
+    && Array.isArray(next.hosts) && next.hosts.length > 0 && next.hosts.every(h => h === hostOf(where.url));
 }
 
 export function validateMod(m) {
@@ -128,12 +142,27 @@ export function stripLocal(mod) {
   return rest;
 }
 
-async function pipe(bytes, stream) {
-  const out = new Blob([bytes]).stream().pipeThrough(stream);
-  return new Uint8Array(await new Response(out).arrayBuffer());
+// A link's mod is read up to this size (the same as a backup file): a small
+// link that inflates to gigabytes stops here instead of filling memory.
+export const MAX_SHARE_BYTES = 5_000_000;
+async function pipe(bytes, stream, max = Infinity) {
+  const reader = new Blob([bytes]).stream().pipeThrough(stream).getReader();
+  const parts = [];
+  let n = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    n += value.byteLength;
+    if (n > max) { reader.cancel().catch(() => {}); throw new Error("This share link is too big to be a Morse mod."); }
+    parts.push(value);
+  }
+  const out = new Uint8Array(n);
+  let at = 0;
+  for (const p of parts) { out.set(p, at); at += p.byteLength; }
+  return out;
 }
 const deflate = b => pipe(b, new CompressionStream("deflate-raw"));
-const inflate = b => pipe(b, new DecompressionStream("deflate-raw"));
+const inflate = b => pipe(b, new DecompressionStream("deflate-raw"), MAX_SHARE_BYTES);
 
 function b64url(bytes) {
   let s = "";

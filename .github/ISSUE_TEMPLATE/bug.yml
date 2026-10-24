@@ -1,0 +1,66 @@
+name: Something doesn't work
+description: Morse did something wrong, or didn't do what it said.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for telling us. Please don't paste API keys, pairing codes or anything private from the page.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, and what Morse did.
+      placeholder: I pointed at the sidebar on youtube.com and asked to hide it. The bar said "Done" but the sidebar is still there.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Which site or app
+      placeholder: youtube.com, or Spotify on macOS
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where you use Morse
+      options:
+        - Chrome extension
+        - Desktop app (morse launch)
+        - The morse command itself
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Morse version
+      description: Run `morse --version`, or look at Morse in chrome://extensions.
+      placeholder: 0.2.0
+  - type: dropdown
+    id: model
+    attributes:
+      label: Model
+      options:
+        - Claude Code
+        - Codex
+        - Anthropic API key
+        - OpenAI API key
+        - Other OpenAI-compatible server
+        - No model connected
+  - type: input
+    id: system
+    attributes:
+      label: Computer and browser
+      placeholder: macOS 15, Chrome 141
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: The error Morse showed, a screenshot, or the mod's code (Edit code in the Mods panel).

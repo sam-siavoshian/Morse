@@ -20,7 +20,7 @@ import { mkdirSync, watch } from "node:fs";
 import path from "node:path";
 import { CDPSession, listTargets } from "./cdp.js";
 import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putClipboard } from "./store.js";
-import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches } from "../core/mod.js";
+import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
 import { runMorse } from "../core/engine.js";
 import { settingsLabel } from "./models.js"; // also registers the Claude Code / Codex providers
@@ -75,12 +75,6 @@ const cleanup = ids => `(() => { try {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// Where a mod applies, compared: same app, same set of hosts.
-const matchKey = m => JSON.stringify({ app: m?.app || null, hosts: [...(Array.isArray(m?.hosts) ? m.hosts : [])].map(String).sort() });
-const sameMatch = (a, b) => !!a && !!b && matchKey(a) === matchKey(b);
-// A match no wider than the caller's own site, in the caller's own app.
-const onlyHere = (m, where) => !!m && (m.app || null) === (where.app || null)
-  && Array.isArray(m.hosts) && m.hosts.length > 0 && m.hosts.every(h => h === hostOf(where.url));
 
 export class Connector {
   // watch: keep waiting when the app quits and attach again when it's back.
@@ -402,7 +396,7 @@ export class Connector {
     const here = async () => ({ url: await (at ||= this.callerUrl(s, caller)), app });
     // App-wide in desktop apps, per site in a browser.
     const historyScope = async () => app || hostOf((await here()).url);
-    if (CONTROL_REQUESTS.has(msg.type)) return handleControl(msg, await here()); // user control (control.js)
+    if (CONTROL_REQUESTS.has(msg.type)) return handleControl({ ...msg, tab: `frame:${caller.frameId}` }, await here()); // user control (control.js); per window, not the page's own tab id
     if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
     if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, await here()); // gallery hook: Mods for this site
     if (Style.owns(msg)) { const r = await Style.handle(msg, await here()); if (msg.type !== "style.get" && msg.type !== "style.preview") this.modsChanged(s); return r; } // your-style hook
@@ -410,7 +404,8 @@ export class Connector {
       case "hello":
         this.grantMic(s, (await here()).url);
         return { mode: "desktop", app, appName: this.app?.name || null, label: settingsLabel(this.settings),
-          settings: await loadPrefs(), voice: await cachedVoiceStatus() };
+          settings: await loadPrefs(), voice: await cachedVoiceStatus(),
+          debug: process.env.MORSE_DEBUG === "1" || undefined }; // status for tests (97-boot.js debugStatus)
       case "mods.list":
         return Style.list(await modsFor(await here()), await here()); // your-style hook: the style first
       case "mods.save": {
@@ -424,7 +419,7 @@ export class Connector {
         // A saved mod can be changed, not widened: its match stays what it
         // was, or is exactly this app (or this site). Wider matches ("*",
         // other hosts) only come in through a confirmed install (mods.import).
-        if (!sameMatch(msg.mod.match, existing?.match) && !onlyHere(msg.mod.match, where))
+        if (!saveKeepsScope(msg.mod.match, existing?.match, where))
           throw new Error("That mod is for another app or site");
         return saveMod(msg.mod);
       }

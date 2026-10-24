@@ -19,7 +19,7 @@ import { defaultHotkeys, formatCombo, detectPlatform } from "../core/hotkeys.js"
 const G = s => `\x1b[32m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`, R = s => `\x1b[31m${s}\x1b[0m`;
 const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· setup")}\n${G("▪▫▪")}`;
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const EXTENSION_DIR = path.join(ROOT, "dist", "extension");
+export const EXTENSION_DIR = path.join(ROOT, "dist", "extension");
 const tilde = p => (process.env.HOME && p.startsWith(process.env.HOME) ? "~" + p.slice(process.env.HOME.length) : p);
 // The extension folder as the user can type it: relative inside the repo, else from ~.
 const extDir = () => (path.relative(process.cwd(), EXTENSION_DIR).startsWith("..") ? tilde(EXTENSION_DIR) : path.relative(process.cwd(), EXTENSION_DIR));
@@ -48,8 +48,19 @@ export function configFor(id, { key = "", keyEnv = "", vendor = "" } = {}) {
 }
 export const keyVendor = key => (/^sk-ant-/.test(String(key)) ? "anthropic" : "openai");
 
-// Something is set up once config.json names a provider (morse setup or morse model).
-export const isSetUp = cfg => !!(cfg && cfg.model && cfg.model.provider && cfg.model.provider !== "auto");
+// Writes a choice into config.json the way daemon/models.js reads it:
+// "provider", plus the key under "keys" when one was pasted. A key from the
+// environment is never written; models.js reads the environment itself.
+export function applyChoice(cfg, model) {
+  const next = { ...cfg, provider: model.provider };
+  delete next.model; // pre-0.2 shape, and what early `morse setup` wrote
+  if (model.apiKey) next.keys = { ...cfg.keys, [model.provider]: model.apiKey };
+  if (model.provider === "openai" && model.baseUrl && model.baseUrl !== "https://api.openai.com" && !cfg.baseUrls?.openai) next.baseUrls = { ...cfg.baseUrls, openai: model.baseUrl };
+  return next;
+}
+
+// Something is set up once config.json names a provider (morse setup or morse config).
+export const isSetUp = cfg => !!(cfg && ((cfg.provider && cfg.provider !== "auto") || (cfg.model?.provider && cfg.model.provider !== "auto")));
 
 // ---- probes (real ones; tests pass fakes)
 export async function whichBin(name, { env = process.env, platform = process.platform } = {}) {
@@ -116,10 +127,23 @@ export function gettingStarted({ platform = detectPlatform({ platform: process.p
 function nextSteps(platform) {
   const key = formatCombo(defaultHotkeys(platform).open, platform);
   return `  ${B("Next")}
+    ${D("check   ")}  morse doctor ${D("(asks the model to answer once)")}
     ${D("websites")}  load ${extDir()} in chrome://extensions ${D("(Developer mode, Load unpacked)")}
+    ${D("        ")}  then run morse serve and type its code into Morse
     ${D("apps    ")}  morse launch spotify ${D("(or slack, discord, vscode, notion, obsidian)")}
     ${D("then    ")}  press ${B(key)}, point at something, say what to change`;
 }
+
+export const SETUP_HELP = `morse setup: choose what writes your changes.
+
+  morse setup                      asks which to use, and finds what is installed
+  morse setup --use claude-code    use Claude Code (your Claude subscription)
+  morse setup --use codex          use Codex (your ChatGPT plan)
+  morse setup --use api-key        use ANTHROPIC_API_KEY or OPENAI_API_KEY from your environment
+  morse setup --use api-key --key <key>
+                                   use this Anthropic or OpenAI key (saved in ${tilde(HOME)}/config.json)
+
+Run it again any time to switch. morse doctor checks that the model answers.`;
 
 // ---- the interactive walk-through
 export async function runSetup(args = [], { input = process.stdin, output = process.stdout, deps = {}, save = saveConfig, load = loadConfig, platform = detectPlatform({ platform: process.platform }) } = {}) {
@@ -172,8 +196,7 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
     say(`\n  ${backend.name} isn't installed yet. Install it with ${B(backend.install)}, then run ${B("morse setup")} again.`);
     return { saved: false, rows };
   }
-  const cfg = await load();
-  cfg.model = model;
+  const cfg = applyChoice(await load(), model);
   cfg.setup = { backend: choice, at: new Date().toISOString() };
   await save(cfg);
   const label = backend?.name || "the demo model";
@@ -214,6 +237,7 @@ function lineReader(input, output) {
 
 // The one entry point daemon/cli.js calls. Returns true when it handled the command.
 export async function maybeRun(cmd, args = []) {
+  if (cmd === "setup" && args.some(a => a === "--help" || a === "-h" || a === "help")) { console.log(SETUP_HELP); return true; }
   if (cmd === "setup") { await runSetup(args); return true; }
   if (!cmd && !isSetUp(await loadConfig())) {
     console.log(gettingStarted());

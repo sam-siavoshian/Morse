@@ -244,6 +244,7 @@ function toggleSettings() {
 // ---- overflow menu
 function menuItems() {
   return [
+    { id: "showonce", label: "Show me once", keys: null }, // show-once hook: 64-show-once.js
     { id: "settings", label: "Settings", keys: [primaryMod, ","] },
     { id: "shortcuts", label: "Keyboard shortcuts", keys: ["?"] },
     { id: "voice", label: "Talk", keys: comboParts(hotkey("talk"), PLATFORM), sub: hotkey("talk") === hotkey("open") ? "hold" : "" },
@@ -252,7 +253,7 @@ function menuItems() {
   ];
 }
 function showMenu() {
-  menuEl.innerHTML = menuItems().map(m => `<button role="menuitem" tabindex="-1" data-m="${m.id}"><span>${esc(m.label)}</span>${m.sub ? `<small>${esc(m.sub)}</small>` : ""}${caps(m.keys)}</button>`).join("");
+  menuEl.innerHTML = menuItems().map(m => `<button role="menuitem" tabindex="-1" data-m="${m.id}"><span>${esc(m.label)}</span>${m.sub ? `<small>${esc(m.sub)}</small>` : ""}${m.keys ? caps(m.keys) : ""}</button>`).join(""); // show-once hook: no keys
   menuEl.hidden = false;
   menuEl.classList.toggle("below", barIsTop());
   moreBtn.setAttribute("aria-expanded", "true");
@@ -270,6 +271,7 @@ function runMenu(id) {
   if (id === "voice") Voice.start("tap");
   if (id === "mods") openPanel();
   if (id === "help") toggleHelp(); // onboarding hook: 59-help.js
+  if (id === "showonce") ShowOnce.start(); // show-once hook
 }
 moreBtn.addEventListener("click", () => (menuEl.hidden ? showMenu() : hideMenu()));
 menuEl.addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (b) runMenu(b.dataset.m); });
