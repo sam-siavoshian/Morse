@@ -607,7 +607,7 @@ export default {
   "setup.start1": "欢迎使用 Morse。先运行 {cmd}，选择用什么来写你的改动：Claude Code、Codex 或 API 密钥。",
   "setup.start2": "然后，网站：在 chrome://extensions 里加载 {dir}（开发者模式，“Load unpacked”）。应用：{cmd}。",
   "setup.start3": "在任意页面按 {key}，指向某个东西，说出要改什么。",
-  "setup.start3.help": "morse help 列出所有命令。",
+  "setup.start3.help": "morse help 列出最常用的命令。",
   "setup.next": "下一步",
   "setup.next.websites": "网站",
   "setup.next.load": "在 chrome://extensions 里加载 {dir} {how}。它的欢迎页会完成连接",

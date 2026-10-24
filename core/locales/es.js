@@ -607,7 +607,7 @@ export default {
   "setup.start1": "Te damos la bienvenida a Morse. Primero, ejecuta {cmd} para elegir qué escribe tus cambios: Claude Code, Codex o una clave de API.",
   "setup.start2": "Después, para sitios web, carga {dir} en chrome://extensions (modo de desarrollador, “Load unpacked”). Para apps: {cmd}.",
   "setup.start3": "Pulsa {key} en cualquier página, señala algo y di qué cambiar.",
-  "setup.start3.help": "morse help muestra todos los comandos.",
+  "setup.start3.help": "morse help muestra los comandos más usados.",
   "setup.next": "Siguiente",
   "setup.next.websites": "webs",
   "setup.next.load": "carga {dir} en chrome://extensions {how}. Su página de bienvenida lo conecta",

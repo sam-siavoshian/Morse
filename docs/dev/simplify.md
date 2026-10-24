@@ -25,7 +25,7 @@ How often: **always** (every use), **often** (most weeks), **sometimes**
 | The Mods panel's own buttons | 4 (Make a pack…, Export all mods, Install from a file…, Install a mod…) | Install a mod… and **More** (2) |
 | Toolbar popup, a model that works | 9 controls (two choices, code, Pair, model, Sign out, key, model for harder changes, Test) | one line, "Model · Claude Code · …", that opens to all of them |
 | Morse Desktop's sections | 5 (Apps, Model, Chrome, Mods, Checks) | 4 (Checks is a card under Model) |
-| `morse help` | 27 commands and options | 10 commands; `morse help --all` has every one |
+| `morse help` | 36 lines of commands and options | 10 commands; `morse help --all` has every one |
 
 ## The bar (`runtime/src/*`)
 
@@ -166,4 +166,41 @@ nodejs.org, rubygems.org, pkg.go.dev. Real apps: VSCodium 1.140, Obsidian
 1.14.5, Joplin 3.7.21, each with its own fresh profile, driven with the real
 shortcut and mouse (xdotool, or CDP input for Morse Desktop).
 
-<!-- e2e-table -->
+| # | Step | Result | Notes |
+|---|---|---|---|
+| 1 | `morse serve` in a terminal with nothing set up | passed | Found Claude Code by itself: "Claude Code · Automatic" |
+| 2 | Install the extension in a fresh profile | passed | The welcome page opens by itself |
+| 3 | Welcome → Websites → Connect | passed | "Found the Morse helper on this computer", **Use Claude Code**, `y` in the terminal; no code to type |
+| 4 | Allow User Scripts | passed | The switch on Chrome's details page |
+| 5 | nodejs.org: point, "add a small Back to top button fixed at the bottom right corner of the page" | passed | 24.3 s (code, so the strong model); Save; back after a reload |
+| 6 | rubygems.org: point at the footer, "hide this footer" | passed | 6.3 s; Save; back after a reload |
+| 7 | pkg.go.dev: point at the title, "make this title red" | passed | 7.0 s; Save; back after a reload |
+| 8 | Undo a change that isn't saved | passed | The page is as it was, nothing saved, still so after a reload |
+| 9 | Share link from the Mods panel | passed | Mods panel → Share → the link in its box |
+| 10 | The share link in a second fresh profile with no model | passed | The share page, Morse's own review ("Install “Hide page footer”?"), Install; the footer is hidden on rubygems.org |
+| 11 | Mods panel switch off and on | passed | The footer comes back, then goes again |
+| 12 | Off switch, Alt+Shift+0, twice | passed | Every mod off, then on |
+| 13 | Self-heal: the Back to top mod edited to hang on a part that isn't there | passed | Reload → the Mods panel says "Not working. It looks for a part of the page that isn't there right now." → **Fix it** → fixed in 17.4 s, and after a reload |
+| 14 | Uninstall | passed | No Morse UI, no mod, no Morse keys left in the sites' storage. The Morse helper still lists the browser as paired (it can't hear about an uninstall); the token only works for that extension, and `morse unpair` removes it |
+| 15 | VSCodium: `morse launch codium`, point at the status bar, "make the status bar taller with bigger text", Enter to Save, quit, `morse launch` again | **fixed**, then passed | The second `morse launch` failed with "The model took too long to answer", though no model was asked: VSCodium, just opened on a busy machine, took over 1.5 s to answer on its debugging port. Morse now waits longer each try and says the app didn't answer (`daemon/ports.js` `identify`, test in `tests/simplify.test.js`). Then: 5.9 s, back after reopening |
+| 16 | Obsidian (fresh profile, its starter screen): point at Quick start, "make this button green", Save, quit, launch again | passed | 5.0 s, back after reopening |
+| 17 | Joplin (fresh profile): point at Synchronize, "hide this button, I don't use sync", Save, quit, launch again | passed | 12.2 s, back after reopening. Its CSS uses Joplin's generated class names, so a Joplin update may break it (self-heal is there for that) |
+| 18 | Disconnect (`morse stop`) on VSCodium, Obsidian and Joplin | passed | "Disconnected from …. It keeps running without Morse." The app keeps running; its mod and Morse's UI are gone (checked in VSCodium and Obsidian); `morse status` agrees |
+| 19 | Morse Desktop (`npm run desktop`), fresh: first run | passed | "Morse will use Claude Code", Obsidian offered |
+| 20 | Morse Desktop: Open with Morse → change ("make this button green", 4.7 s) → Save → quit Obsidian → Open with Morse again | passed | The change is back |
+| 21 | Morse Desktop: Disconnect | passed | Morse comes off, Obsidian keeps running |
+| 22 | Every command in `morse help --all`, three ways: nothing set up, a `config.json` that isn't JSON, no model (no `claude` or `codex` on PATH, no keys) | **fixed** | `morse rm` with no id said "Deleted {id}."; `morse rm <id that isn't there>` said "Deleted …" though nothing was; `morse export` with no id said "Something went wrong. Try again. (There's no mod called {id}…)"; `morse code` with no id said "No mod . List them…". Now each asks "Which mod?" or names the id that isn't there, and exits 1. A broken `config.json` was ignored without a word and overwritten by the next change: now every command says Morse can't read it, and a copy is kept before a new one is written. An unknown command printed the whole help and exited 0: now it says so and exits 1. Everything else said something useful in all three setups. Tests: `tests/simplify.test.js` |
+| 23 | The popup after pairing in it | **fixed** | With the Model box folding whenever a model worked, pairing in the popup folded away its own "Paired" note. It now folds only as the popup opens |
+
+Still not perfect:
+
+- The Morse helper keeps a paired browser's token after the extension is
+  removed (step 14). Harmless, but it is something left behind.
+- `demo/try-real-app.js` can wait forever to quit Joplin the second time
+  (Joplin doesn't always close on `Browser.close`); the check itself passed.
+
+Screenshots of each simplified surface, before and after, were looked at one
+by one: the ⋯ menu, Settings (closed and with More settings open), Page tools
+(and Easier to use open), the Mods panel (and each More open), the popup, and
+Morse Desktop's Model with Checks. The ones the docs use are retaken:
+`docs/screenshots/11`, `12`, `34`, `61`, `62`, `100` and `167` to `175`.
