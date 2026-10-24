@@ -362,8 +362,10 @@ Mods are code running inside apps you're signed into, so:
   CDP isolated world on the desktop), so the app's or website's scripts can't
   reach Morse's host API: your prompt history, the clipboard, other sites'
   mods, exports or your model. Host requests are answered for the page that
-  asked. The share page's Install button opens Morse's own review; only a
-  click there installs.
+  asked. Only Morse's share page can ask for an install: a page that loaded
+  in `/RRAA/share/` on Morse's site, not any other page on that address
+  (every GitHub Pages project of the same owner shares it). Its Install
+  button opens Morse's own review; only a click there installs.
 - `morse launch` opens a debugging port on 127.0.0.1. While it's open, **any
   local process can attach to that app**, which is the same trust level as
   anything else running as you, but worth knowing. Quit the app normally to

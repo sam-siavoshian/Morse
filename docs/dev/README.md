@@ -153,7 +153,8 @@ and `version`; raise `version` and add a one-line `changes` when you update a
 mod, and people who installed it see Update available. Entries with
 `"demo": true` are for the demo sites (`npm run demo:serve` serves the list at
 `http://127.0.0.1:8787/site/mods/index.json`, which Morse uses on those
-sites). The gallery page shows them with a “Demo app” badge. To read another list, set
+sites in a test build and in the Morse helper; the store build never reads
+it). The gallery page shows them with a “Demo app” badge. To read another list, set
 `MORSE_GALLERY_URL` or `"gallery": { "index": "…" }` in `~/.morse/config.json`
 (desktop), or `morse.gallery.url` in the extension's local storage.
 
