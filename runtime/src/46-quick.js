@@ -32,12 +32,16 @@ const GodQuick = (() => {
   btn.className = "gm-qbtn ibtn";
   btn.setAttribute("aria-label", "Page tools");
   btn.setAttribute("aria-haspopup", "menu");
+  btn.setAttribute("aria-expanded", "false");
+  btn.setAttribute("aria-controls", "m-page-tools");
   btn.innerHTML = svg(I.tools) + GodMode.tip("Page tools", "");
   const row = bar.querySelector(".row");
   row.insertBefore(btn, row.querySelector(".go"));
   const menu = document.createElement("div");
   menu.className = "gm-menu menu";
+  menu.id = "m-page-tools";
   menu.setAttribute("role", "menu");
+  menu.setAttribute("aria-label", "Page tools");
   menu.hidden = true;
   bar.append(menu);
 
@@ -53,9 +57,14 @@ const GodQuick = (() => {
       if (k === "reset") return "";
       return quickMod(k)?.enabled ? svg(I.check) : "";
     };
-    menu.innerHTML = `<header>Page tools<small>${esc(where())}</small></header>` + ITEMS.map(it => it
-      ? `<button role="menuitem" data-k="${it.k}" aria-checked="${!!quickMod(it.k)?.enabled}">${svg(I[it.k])}<span>${it.label}</span><span class="gm-state">${state(it.k)}</span></button>`
+    // On/off tools are checkboxes in the menu; Bigger, Smaller and Turn off all are plain actions (they say their level).
+    const ONOFF = new Set(["dark", "light", "noads", "focus"]);
+    menu.innerHTML = `<header aria-hidden="true">Page tools<small>${esc(where())}</small></header>` + ITEMS.map(it => it
+      ? `<button ${ONOFF.has(it.k) ? `role="menuitemcheckbox" aria-checked="${!!quickMod(it.k)?.enabled}"` : `role="menuitem"`} tabindex="-1" data-k="${it.k}">${svg(I[it.k])}<span>${it.label}</span><span class="gm-state">${state(it.k)}</span></button>`
       : `<hr>`).join("") + quickMenuGroups.map(g => g()).join(""); // hook: 65-a11y.js
+    for (const b of menu.querySelectorAll("button")) b.tabIndex = -1; // one Tab stop: the menu's arrows do the rest
+    const first = menu.querySelector("[role^=menuitem]");
+    if (first) first.tabIndex = 0; // (a menu that scrolls on a small screen still has a way in)
   }
   function open() {
     render();
@@ -76,16 +85,12 @@ const GodQuick = (() => {
     close();
     act(b.dataset.k).catch(err => toast(plainError(err))).finally(() => GodCapture.refresh());
   });
-  // Escape and arrows while the menu is open (registered before 95-keys.js).
+  // Escape, Tab, arrows, Home/End and type-ahead while the menu is open (registered before 95-keys.js).
   listen("keydown", e => {
     if (!e.isTrusted || menu.hidden) return;
-    if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); close(true); return; }
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      const items = [...menu.querySelectorAll("button")], i = items.indexOf(root.activeElement);
-      items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
-    }
+    if (e.key === "Escape" || e.key === "Tab") { e.preventDefault(); e.stopImmediatePropagation(); close(true); return; }
+    if (!menu.contains(root.activeElement)) return;
+    if (menuKeys(e, menu)) e.stopImmediatePropagation();
   }, true);
   listen("pointerdown", e => {
     if (!menu.hidden && !e.composedPath().some(n => n === menu || n === btn)) close();

@@ -5,6 +5,7 @@
 //      top-level name, and the bundle must parse
 //   3. every file extension/manifest.json and extension/*.html point at (and the
 //      modules those import) exists in dist/extension after the build
+//   4. axe-core (demo/vendor, test-only) is not in the built extension
 // Exits non-zero and lists every problem.
 import { execFile, execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
@@ -37,8 +38,10 @@ function jsFiles(dir) {
   return out;
 }
 const SRC = path.join(root, "runtime", "src");
-// runtime/src files are fragments of one function body (top-level `return`); check 2 parses them as the bundle.
-const files = jsFiles(root).filter(f => !f.startsWith(SRC + path.sep));
+// runtime/src files and runtime/boot.js are fragments of a function body
+// (top-level `return`); check 2 parses them as the bundle.
+const BOOT = path.join(root, "runtime", "boot.js");
+const files = jsFiles(root).filter(f => !f.startsWith(SRC + path.sep) && f !== BOOT);
 const nodeCheck = f => new Promise(resolve => execFile(process.execPath, ["--check", f], (e, so, se) => resolve(e ? String(se).trim().split("\n").slice(0, 5).join("\n") : null)));
 for (let i = 0; i < files.length; i += 8) {
   const batch = files.slice(i, i + 8);
@@ -93,6 +96,13 @@ else for (const [p, from] of refs) {
   if (!existsSync(full) || !statSync(full).isFile()) fail("dist/extension", `${p} is missing (referenced by ${from})`);
 }
 console.log(`  ${refs.size} files referenced`);
+
+// ---- 4. axe-core (demo/vendor, for tests and `npm run ui`) never ships
+step("axe-core is not in the built extension or the runtime");
+const shipped = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? shipped(path.join(dir, e.name)) : [path.join(dir, e.name)]);
+const AXE_MARK = /Deque Systems|axe-core|\baxe\.run\(/;
+for (const f of existsSync(DIST) ? shipped(DIST).filter(f => /\.(m?js|html|json)$/.test(f)) : []) if (AXE_MARK.test(readFileSync(f, "utf8"))) fail("dist/extension", `${path.relative(DIST, f)} contains axe-core (test-only, demo/vendor)`);
+if (AXE_MARK.test(readFileSync(path.join(root, "package.json"), "utf8").replace(/"devDependencies"[\s\S]*?\}/, ""))) fail("package.json", "axe-core is only for tests (demo/vendor), not a dependency");
 
 if (problems.length) {
   console.error(`\n✗ ${problems.length} problem${problems.length > 1 ? "s" : ""}:\n` + problems.map(p => "  - " + p.replace(/\n/g, "\n    ")).join("\n"));

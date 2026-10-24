@@ -5,34 +5,27 @@
  *   - the browser extension (content script <-> service worker)
  *   - the desktop connector (CDP binding <-> Node daemon), for Electron apps
  *
+ * runtime/boot.js is always on the page first: it applies mods, follows
+ * navigations and owns the hotkeys. This half (the overlay, bar, panel,
+ * effect, God mode) is loaded on first use and picks up the boot's host
+ * connection, state and mods through the handoff object below.
+ *
  * UI lives in a closed shadow root so the app's CSS can't touch it and ours
  * can't leak out. */
 
-if (globalThis.__morseRuntime) return;
-const host = globalThis.__morseHost;
-if (!host) return;
-globalThis.__morseRuntime = true;
-// A host that detaches (`morse stop`) bumps __morseGen; this copy then goes
-// quiet (no UI, no hotkeys) and a later attach can start a fresh one.
-const GEN = globalThis.__morseGen = (globalThis.__morseGen || 0) + 1;
-const live = () => globalThis.__morseGen === GEN;
+const B = globalThis[Symbol.for("morse.boot")];
+if (!B || !B.live() || globalThis.__morseRuntime) return;
+const { host, call, listeners, outgoing } = B;
+// A host that detaches (`morse stop`) bumps __morseGen; boot.js and this copy
+// then go quiet (no UI, no hotkeys) and a later attach can start fresh ones.
+const live = B.live;
 // Every listener on the page's window goes through this, so a detached copy
 // keeps none of the page's keys, clicks or focus.
 const listen = (type, fn, opts) => addEventListener(type, e => { if (live()) fn(e); }, opts);
 
-let seq = 0;
-const pending = new Map();
-const listeners = new Set();
-host.onMessage(msg => {
-  if (msg.reply != null && pending.has(msg.reply)) {
-    const { resolve, reject } = pending.get(msg.reply);
-    pending.delete(msg.reply);
-    msg.error ? reject(new Error(msg.error)) : resolve(msg.result);
-  } else listeners.forEach(fn => fn(msg));
-});
-const outgoing = []; // hook: fns that may decorate a request before it is sent (God mode capture)
-const call = (type, payload = {}) => new Promise((resolve, reject) => {
-  const id = ++seq;
-  pending.set(id, { resolve, reject });
-  host.send(outgoing.reduce((m, f) => f(m) || m, { id, type, ...payload }));
-});
+// The page may have replaced these globals since boot captured them; bare
+// calls in the UI (window listeners, new MutationObserver, timers)
+// resolve to the originals here. Window listeners also survive document.open().
+const addEventListener = (type, fn, opts) => B.on(window, type, fn, opts);
+const removeEventListener = (type, fn, opts) => B.off(window, type, fn, opts);
+const { MutationObserver, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, getComputedStyle } = B.pristine;

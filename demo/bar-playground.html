@@ -57,7 +57,7 @@
       const reply = (result, error) => setTimeout(() => emit({ reply: m.id, result, error }), 10);
       switch (m.type) {
         case "hello":
-          return reply({ mode: "playground", label: "playground · fake host", quiet: !q.has("welcome"), settings: store.get("settings", {}), voice,
+          return reply({ mode: "playground", label: "demo replay", quiet: !q.has("welcome"), settings: store.get("settings", {}), voice,
             ...(q.has("models") && { models: { fast: "haiku", best: "sonnet" } }) }); // ?models: the Model setting (core/route.js)
         case "mods.list": return reply([]);
         case "settings.get": return reply(store.get("settings", {}));

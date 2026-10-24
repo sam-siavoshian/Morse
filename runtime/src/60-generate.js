@@ -62,6 +62,9 @@ async function submit(request, opts = {}) {
   // writing, the change showing up as it's written, trying it.
   const say = text => { hint.innerHTML = `${radar(12)} ${text}`; };
   say("Asking the model");
+  // Screen readers hear a few steps, never the streaming code: working, the
+  // first change on the page, a retry, then done or what went wrong.
+  announce(prev ? "Working on the change" : "Working on your change");
   actions.innerHTML = `<span class="ms">0.0s</span>`;
   const clock = setInterval(() => { const m = actions.querySelector(".ms"); if (m) m.textContent = ((performance.now() - t0) / 1000).toFixed(1) + "s"; }, 100);
   Effect.start(focus);
@@ -83,6 +86,7 @@ async function submit(request, opts = {}) {
     setCss(id, css);
     if (!css.trim() || showing) return;
     showing = true;
+    announce("The first change is showing on the page");
     Effect.reveal(); // the change shows through while the rest is written
     if (!fixing && wrote) say("Writing the change · you can see it now");
   }
@@ -95,7 +99,7 @@ async function submit(request, opts = {}) {
     if (msg.type === "css") { if (shotDone) showCss(msg.css); else pendingCss = msg.css; }
     if (msg.type === "stage" && !wrote && !fixing) say(msg.stage === "thinking" ? "Thinking" : "The model is reading the page");
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") { fixing = true; say(msg.stronger ? "Asking a stronger model" : "Fixing a mistake and trying again"); hint.title = String(msg.error || ""); } // models: core/route.js
+      if (msg.phase === "fixing") { const what = msg.stronger ? "Asking a stronger model" : "Fixing a mistake and trying again"; fixing = true; say(what); hint.title = String(msg.error || ""); announce(what); } // models: core/route.js
       if (msg.phase === "applying") say("Trying the change");
     }
   });
@@ -139,6 +143,7 @@ async function submit(request, opts = {}) {
       S.phase = "error";
       bar.classList.add("err");
       hint.innerHTML = guardRefusalHint(res.error) || `That didn't work: <i>${esc(plainError(res.error).slice(0, 120))}</i>`; // guard hook: 64-guard.js
+      announce(`${hint.textContent}. Press Try again, or Escape to close.`);
       hint.title = res.error || "";
       actions.innerHTML = `<button data-a="again">Try again</button>`;
       return;
@@ -171,6 +176,10 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
     ? `<button data-a="code">Edit code</button><button data-a="keep">Done</button>`
     : `<button data-a="keep" class="primary">Save <kbd>↵</kbd></button><button data-a="undo">Undo</button><button data-a="code">Edit code</button><button data-a="share">Share</button>`;
   updateChips();
+  announce(error ? `${d.title}. That didn't work: ${error}`
+    : note ? `${d.title}. ${note}`
+    : d.saved ? `${d.title}. Describe what to change, or press Done.`
+    : `Done: ${d.title}${meta ? `, ${meta}` : ""}. Press Enter to save it, or describe what to change. Undo is next to Save.`);
   input.focus({ preventScroll: true });
 }
 

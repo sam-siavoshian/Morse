@@ -231,6 +231,10 @@ async function dispatch(msg, port) {
     // God mode: cross-app clipboard (see core/clipboard.js)
     case "clipboard.list": return get("clipboard", []);
     case "clipboard.put": return serialized(async () => { const list = clipAdd(await get("clipboard", []), msg.item); await set("clipboard", list); return list; }); // hardening: serialized
+    // perf: only boot.js is a content script; the UI joins it (same isolated world) on first use
+    case "ui.load":
+      await chrome.scripting.executeScript({ target, files: ["ui.js"] });
+      return true;
     case "warm": { // speed: the bar opened; get the model ready (core/providers.js prewarm)
       const b = await backend();
       if (b.kind !== "none") prewarm({ ...b.settings, mode: (await getPrefs()).modelMode }); // models: warms the first model

@@ -29,6 +29,8 @@ Working on Morse itself? Set up a clone with the
 recommends the first one it finds, and saves your choice. More about each:
 [Models and setup](models.md).
 
+![morse, then morse setup: it finds Claude Code and checks that it answers](screenshots/74-cli-setup.png)
+
 ## 2. Websites: add Morse to Chrome
 
 1. Open `chrome://extensions` and turn on **Developer mode**.
@@ -50,6 +52,8 @@ recommends the first one it finds, and saves your choice. More about each:
    Linux).
 
 ![Morse installed, with “Allow User Scripts” on](screenshots/20-extension-installed.png)
+
+![The welcome page: a change on the practice page, and the one command that connects a model](screenshots/70-welcome.png)
 
 Tabs that were already open need one reload: Chrome only adds Morse to pages
 loaded after it was installed.
@@ -88,6 +92,8 @@ text and more. See [Edit tools and Page tools](edit-and-page-tools.md).
 
 The first time, a short guide in the bar shows you each step.
 
+![The guide in the bar: point, describe, save](screenshots/71-coach.png)
+
 ## Shortcuts
 
 These are the defaults. Change any of them in Settings, in the bar.
@@ -105,6 +111,35 @@ you have.
 
 ![Help in the bar](screenshots/72-help.png)
 
+## Using Morse with the keyboard or a screen reader
+
+Everything in Morse works without a mouse.
+
+- **Choose a part of the page with keys.** Open Morse, then press
+  **⌥↓** (macOS) or **Alt+↓** (Windows and Linux), or pick **Choose with
+  keys** in the **⋯** menu. **↑** and **↓** move through the page's
+  sections, headings, links, buttons, fields and pictures, with the same
+  frame the mouse draws. **←** picks the bigger part around it and **→**
+  goes back. **Enter** chooses it, **Esc** stops.
+- **Tab** moves through the bar, the Edit tools and anything open in it. In
+  menus, **↑** and **↓** move, **Home** and **End** jump to the ends, and
+  typing the first letters of an item goes to it.
+- **Esc** always closes the top thing first: a menu, a sheet, a window, then
+  the bar. Focus goes back to where you were.
+- In the **Mods panel**, **↑** and **↓** move between mods, **Space** turns
+  one on or off, **Enter** changes it, and **Tab** reaches its buttons and
+  **Install a mod…**.
+- **Show me** (after you ask where something is): **⌥↓** or **Alt+↓** goes
+  to the step's part of the page, then you use it yourself.
+- With **Show me once**, do the task with the keyboard as usual. Press the
+  Open Morse shortcut when you're done.
+
+Screen readers hear what Morse is doing in a few short messages: when it
+starts working, when the first change shows on the page, when it's done (or
+what went wrong), and every message that pops up at the bottom of the page.
+The code Morse writes is never read out. Morse also works with Windows High
+Contrast, with zoom up to 200%, and on narrow windows.
+
 ## Where Morse can't run
 
 - Chrome's own pages (new tab, settings), other extensions' pages and the
@@ -117,3 +152,5 @@ you have.
 
 When something doesn't work, [Troubleshooting](troubleshooting.md) lists the
 messages Morse shows and what to do about each.
+
+![What the Morse button and the bar say when Morse can't run or no model is connected](screenshots/73-empty-states.png)

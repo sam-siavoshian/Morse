@@ -15,6 +15,7 @@ function renderShortcuts() {
     ["In the bar", [
       ["Send", caps([enter])],
       ["New line", caps([PLATFORM === "mac" ? "⇧" : "Shift", enter])],
+      ["Choose a part with keys", caps(KEYPICK_COMBO)], // 41-keypick.js
       ["Past requests", caps(["↑", "↓"])],
       ["Stop", `${caps(["Esc"])}<small>or</small>${caps([primaryMod, "."])}`],
       ["Settings", caps([primaryMod, ","])],
