@@ -90,6 +90,24 @@ Pressing Ctrl+C in the terminal where `morse launch` runs does the same as
 `morse stop`. Quitting the app also ends `morse launch`. Add `--watch` to keep
 waiting and connect again when the app comes back.
 
+| | |
+|---|---|
+| ![](screenshots/80-apps.png) **`morse apps`**: what's installed, and whether Morse can connect to it | ![](screenshots/81-status.png) **`morse status`**: windows, pop-ups and the mods on in each, and an app started with `--watch` waiting to come back |
+
+### What Morse follows in an app
+
+Morse connects to every place the app shows a page: all its windows, pop-ups
+that open later, side panels and embedded views (like VS Code's panels). It
+keeps up when a window reloads, goes to another page or crashes. A mod saved
+in one window shows up in every window it fits.
+
+It leaves alone what isn't the app's own: embedded pages from other sites,
+the developer tools, and the app's internal pages.
+
+When the app is already open, Morse says so in one sentence and offers
+`--restart`. Your answer is remembered for that app (in `~/.morse/apps.json`);
+`--no-restart` forgets it.
+
 ### An app that is already running with a debugging port
 
 If you (or a script) started the app yourself with
@@ -191,19 +209,20 @@ quit, and opened again with `morse launch`.
 
 | App | How it was installed | What was asked | Result | Time | Back after reopening |
 |---|---|---|---|---|---|
-| VSCodium 1.140 (VS Code without Microsoft's branding, Electron 43) | its `.deb` | "make the status bar bigger" (pointing at it) | The status bar got taller (22 to 36 pixels) with bigger icons | 10.3 s | Yes |
-| Obsidian 1.14.5 (Electron 43) | its AppImage, in `~/Applications` | "hide this ribbon" (pointing at the left ribbon) | The ribbon is gone | 5.6 s | Yes |
+| VSCodium 1.140 (VS Code without Microsoft's branding, Electron 43) | its `.deb` | "make the status bar bigger" (pointing at it) | The status bar got taller (22 to 36 pixels) with bigger icons | 10.3 s, and 13.7 s on a second run | Yes, both times |
+| Obsidian 1.14.5 (Electron 43) | its AppImage, in `~/Applications` | "hide this ribbon" (pointing at the left ribbon) | The ribbon is gone | 5.6 s, and 15.9 s on a second run | Yes, both times |
 | Joplin 3.7.21 (Electron 42) | its AppImage, in `~/.joplin` with a menu entry, as its install script does | "hide this button, I don't use sync" (pointing at Synchronize) | The button is gone. Its code relies on Joplin's generated names, so a Joplin update may break it | 13.0 s | Yes |
 
 `morse apps` found all three, and `morse fuses` reported each one (VSCodium's
 fuses from its binary; for the two AppImages it says it can't look inside).
-The time is from pressing Enter to seeing the change.
+The time is from pressing Enter to seeing the change. The test machine was
+heavily loaded, so times vary a lot between runs.
 
 | | |
 |---|---|
-| ![](screenshots/135-vscodium-bar.png) VSCodium: pointing at the status bar | ![](screenshots/136-vscodium-status-bar-back.png) VSCodium opened again: the taller status bar is back |
-| ![](screenshots/137-obsidian-bar.png) Obsidian: pointing at the ribbon | ![](screenshots/138-obsidian-ribbon-gone.png) Obsidian opened again: no ribbon |
-| ![](screenshots/139-joplin-bar.png) Joplin: pointing at Synchronize | ![](screenshots/140-joplin-sync-hidden.png) Joplin: the Synchronize button is gone |
+| ![](screenshots/147-vscodium-bar.png) VSCodium: pointing at the status bar | ![](screenshots/148-vscodium-status-bar-back.png) VSCodium opened again: the taller status bar is back |
+| ![](screenshots/149-obsidian-bar.png) Obsidian: pointing at the ribbon | ![](screenshots/150-obsidian-ribbon-gone.png) Obsidian opened again: no ribbon |
+| ![](screenshots/151-joplin-bar.png) Joplin: pointing at Synchronize | ![](screenshots/152-joplin-sync-hidden.png) Joplin: the Synchronize button is gone |
 
 What these apps turned up, now fixed:
 
@@ -228,26 +247,49 @@ Element (their downloads aren't reachable from the test machine, or they need
 an account), Flatpak and Snap installs, macOS, Windows and Wayland. Signing in
 to anything wasn't tested.
 
+### Websites
+
+The same check on public websites, with the built Chrome extension in
+Chromium 153 on Linux, paired with `morse serve` and Claude Code (haiku). Each
+change was saved, then the page was reloaded.
+
+| Site | What was asked | Result | Time | Back after a reload |
+|---|---|---|---|---|
+| pypi.org (strict rules for scripts) | "add a back to top button in the bottom right corner" | A round ↑ button. With “Allow User Scripts” off, the site blocked Morse's code and the model's second try was an arrow that only looks like a button (32 s) | 12.6 s | Yes |
+| gitlab.com (strict rules, but code is allowed) | the same | The button works, with “Allow User Scripts” on or off | 12.3 s | Yes |
+| gitlab.com | "hide this project information box" | Partly: it hid the description in the box, not the whole box | 7.8 s | Yes |
+| pkg.go.dev | "make the code examples bigger" (pointing at one) | Bigger code text | 7.6 s | Yes |
+| rubygems.org | "make the download numbers much bigger" (pointing at them) | The first try changed nothing. The second made the total downloads big | 8.3 s | Yes |
+| hub.docker.com | "make these code blocks bigger with a dark background" | Bigger text on dark blocks | 11.6 s | Yes |
+| nodejs.org (the docs) | "hide the left sidebar so the docs use the full width" | Failed, three times: the whole page went blank. The model hid a style the sidebar and the docs share. Undo puts the page back | 10 to 26 s | (blank) |
+
+Wikipedia, Hacker News, MDN, YouTube, the BBC and GitHub's pages couldn't be
+tried: the test machine's network doesn't reach them.
+
+| | |
+|---|---|
+| ![](screenshots/153-web-gitlab-back-to-top.png) GitLab: the back to top button (bottom right) | ![](screenshots/154-web-pypi-after-reload.png) PyPI after a reload: the button is still there |
+| ![](screenshots/155-web-docker-hub-code.png) Docker Hub: bigger code on dark blocks | ![](screenshots/156-web-pypi-user-scripts-off.png) PyPI with “Allow User Scripts” off: only an arrow, which doesn't scroll |
+
 The same flow can be run on any installed app with
 [`demo/try-real-app.js`](../demo/try-real-app.js), and on websites with
 [`demo/try-real-sites.js`](../demo/try-real-sites.js) and
-[`demo/real-sites.json`](../demo/real-sites.json). The websites that were
-tried are in the README's [Status](../README.md#status).
+[`demo/real-sites.json`](../demo/real-sites.json).
 
 ## How this was tested
 
-On a real Electron 45 runtime in Linux, with a small music app built for it,
+On a real Electron 45 on Linux, with a small music app built for it,
 [`demo/electron-app`](../demo/electron-app) ("Tunes"). It has what real apps
 have: a native menu bar, a preload script with context isolation and the
 renderer sandbox on, its UI on a custom `app://` address, a `<webview>` side
 panel served from a random local port, a second window from a `file://` page,
-and a single-instance lock. It is packaged the way apps ship: the Electron
-runtime renamed to `tunes`, with the app next to it, unpacked or as
+and a single-instance lock. It is packaged the way apps ship: Electron
+renamed to `tunes`, with the app next to it, unpacked or as
 `app.asar`.
 
 - [`demo/shoot-electron.js`](../demo/shoot-electron.js) drives the whole flow
   with real keyboard and mouse input from the X server (xdotool) and takes the
-  screenshots above: `morse launch`, the hotkey, pointing, a change, Save,
+  screenshots above: `morse launch`, the shortcut, pointing, a change, Save,
   quitting with the app's own Ctrl+Q, `morse launch` again (the change is
   back), the Mods panel, the second window, `morse status`, `morse stop` and
   `morse fuses`.
@@ -259,7 +301,7 @@ runtime renamed to `tunes`, with the app next to it, unpacked or as
 - The same app was run as a normal user with Chromium's sandbox fully on and
   connected with `morse attach --port`.
 - [`tests/electron.test.js`](../tests/electron.test.js) runs the flow on every
-  `npm test` when an Electron runtime and a display are there, and skips with
+  `npm test` when Electron and a display are there, and skips with
   a message otherwise. To set it up:
 
   ```bash

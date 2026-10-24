@@ -25,7 +25,7 @@ function CSS() {
      (offset -2) on menu rows, which also take the hover background. */
   :focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
   :is(.gm-tb, .seg, .gm-sw) button:focus-visible { outline-offset: 0; }
-  .menu > button:focus-visible { outline-offset: -2px; background: var(--m-hover); }
+  :is(.menu, .a11y-group) > button:focus-visible { outline-offset: -2px; background: var(--m-hover); }
 
   /* ---- icons: one set, drawn on a 16px grid with 1.5px round strokes */
   button > svg:not(.radar), .menu svg, .gm-note > svg { flex: none; width: 16px; height: 16px; }
@@ -65,7 +65,7 @@ function CSS() {
   :is(button.primary, .tip) kbd { background: color-mix(in srgb, currentColor 14%, transparent); border-color: color-mix(in srgb, currentColor 24%, transparent); color: inherit; }
 
   /* ---- eyebrow labels: section names in sheets, menus, popovers and modals */
-  .card label, .sheet h4, .menu > header, .gm-field label, .gm-clips-l, .sugs .try {
+  .card label, .sheet h4, :is(.menu, .a11y-group) > header, .gm-field label, .gm-clips-l, .sugs .try {
     font: 500 var(--m-text-xs)/16px var(--m-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--m-text-3); }
 
   /* ---- tags: small mono labels in a hairline box */
@@ -77,15 +77,16 @@ function CSS() {
     border-radius: var(--m-r-md); box-shadow: var(--m-shadow); }
 
   /* ---- menus: 32px rows, icon or label, then what it shows on the right */
+  /* :is(.menu, .a11y-group): the Easier to use group in Page tools is a second menu panel inside the first (first-run fix: it showed bare buttons) */
   .menu { position: absolute; z-index: 2; min-width: 248px; padding: 4px; animation: rise2 var(--m-fast) var(--m-ease); }
-  .menu > header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 4px 8px; }
-  .menu > header small { min-width: 0; font-size: var(--m-text-xs); letter-spacing: 0; text-transform: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .menu > button { display: flex; align-items: center; gap: 12px; width: 100%; height: 32px; padding: 0 8px; border: 0; border-radius: var(--m-r-sm); background: transparent;
+  :is(.menu, .a11y-group) > header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 4px 8px; }
+  :is(.menu, .a11y-group) > header small { min-width: 0; font-size: var(--m-text-xs); letter-spacing: 0; text-transform: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :is(.menu, .a11y-group) > button { display: flex; align-items: center; gap: 12px; width: 100%; height: 32px; padding: 0 8px; border: 0; border-radius: var(--m-r-sm); background: transparent;
     color: var(--m-text); font: 450 var(--m-text-md)/16px var(--m-font); letter-spacing: var(--m-tracking); text-align: left; white-space: nowrap; }
-  .menu > button:hover { background: var(--m-hover); }
-  .menu > button > span:not([class]) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  .menu > button > svg { color: var(--m-text-2); }
-  .menu > button small { color: var(--m-text-3); font: var(--m-text-xs)/16px var(--m-mono); letter-spacing: 0; }
+  :is(.menu, .a11y-group) > button:hover { background: var(--m-hover); }
+  :is(.menu, .a11y-group) > button > span:not([class]) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  :is(.menu, .a11y-group) > button > svg { color: var(--m-text-2); }
+  :is(.menu, .a11y-group) > button small { color: var(--m-text-3); font: var(--m-text-xs)/16px var(--m-mono); letter-spacing: 0; }
   .menu hr { height: 1px; margin: 4px; border: 0; background: var(--m-line); }
 
   /* ---- segmented control (radio group / tabs): 28 tall, 24px segments */
