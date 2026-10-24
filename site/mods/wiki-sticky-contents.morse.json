@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "wiki-sticky-contents",
+  "title": "Contents always in view",
+  "prompt": "keep the contents visible while I scroll",
+  "match": {
+    "hosts": [
+      "127.0.0.1:8795"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": ".toc",
+    "label": "“Contents” box"
+  },
+  "css": ".toc { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

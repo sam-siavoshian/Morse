@@ -32,6 +32,10 @@ The first version meant for other people to install.
 - Claude Code or Codex, with your own subscription, or an Anthropic or OpenAI
   API key. `morse setup` finds what you have and asks which to use.
 - No Morse account and no Morse server.
+- Quick changes use a fast model and harder ones a stronger one, from what
+  you chose (Claude Code: haiku, then sonnet). When the fast model's change
+  doesn't work, the stronger one tries before Morse gives up. Settings has
+  Model: Automatic, Always fast or Always best.
 
 ### Without a model
 
@@ -58,7 +62,12 @@ The first version meant for other people to install.
   without Morse. Before you install a shared mod, Morse says in plain words
   what it does.
 - The gallery: example mods for apps people use every day, and "Mods for this
-  site" in the bar and the Mods panel.
+  site" in the bar and the Mods panel. 38 of them were checked on the real
+  page or demo app: they work, and still work after a reload. Dark modes,
+  reading modes, contents that stay in view, keyboard shortcuts, a focus
+  timer, copy and download buttons and more. The gallery page has
+  categories, search, before and after pictures, and shows which mods work
+  without Chrome's “Allow User Scripts”.
 - One shortcut (⌥⇧0) turns off every mod on a page. Pause Morse on one site
   or everywhere. Back up every mod to one file.
 - Mod packs: share several mods together as a link or a file. Installing one
@@ -70,7 +79,12 @@ The first version meant for other people to install.
 
 - `npm install -g morse-cli` adds the `morse` command, with the Chrome
   extension inside (`morse extension` shows where).
-- `npm run package:extension` makes the zip for the Chrome Web Store.
+- `npm run store` makes the zip for the Chrome Web Store (a store build,
+  without the address only tests use) and prints its SHA-256;
+  `npm run store:smoke` tries that zip in a fresh browser.
+  [docs/store/SUBMIT.md](docs/store/SUBMIT.md) goes through the submission.
+- The Morse icon sits on a dark tile, so it shows on light backgrounds too.
+- Needs Chrome 138 or later, the first with the "Allow User Scripts" switch.
 - A privacy policy that says exactly what leaves your computer:
   [docs/privacy.md](docs/privacy.md).
 - Try it on the website first, with nothing to install: the real Morse runs

@@ -1,0 +1,22 @@
+{
+  "morse": 1,
+  "id": "go-hide-banners",
+  "title": "No cookie notice or survey banner",
+  "prompt": "hide the cookie notice at the bottom and the Go survey banner",
+  "match": {
+    "hosts": [
+      "pkg.go.dev"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": "section.go-SurveyBanner,\nsection[aria-label$=\"Go Developer Survey\"] {\n  display: none !important;\n}\n",
+  "js": "morse.watch(\"body div, body section, body aside, body footer\", el => {\n  const pos = getComputedStyle(el).position;\n  if (pos !== \"fixed\") return;\n  const text = el.textContent || \"\";\n  if (/cookie/i.test(text) && text.length < 500) {\n    el.style.setProperty(\"display\", \"none\", \"important\");\n  }\n});\n",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "note": "Asked twice. The first answer, to “hide the cookie notice and the survey banner”, only hid the survey banner. Hand-fixed: the survey banner was found by its 2026 title; it is now found by its own name, so next year's survey is hidden too.",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

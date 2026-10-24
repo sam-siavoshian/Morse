@@ -1,0 +1,53 @@
+{
+  "startedAt": "2026-10-24T16:23:27.526Z",
+  "mode": "generate",
+  "model": "claude-code:haiku",
+  "pass": 1,
+  "total": 1,
+  "results": [
+    {
+      "id": "metacpan-sticky-contents",
+      "request": "keep the contents box in view while I scroll, in its own column on the right so it never covers the text",
+      "url": "https://metacpan.org/pod/Moose",
+      "ms": 12358,
+      "title": "Sticky contents column on right",
+      "attempts": 1,
+      "engineOk": true,
+      "engineError": null,
+      "live": true,
+      "mod": {
+        "morse": 1,
+        "id": "metacpan-sticky-contents",
+        "title": "Contents always in view",
+        "prompt": "keep the contents box in view while I scroll, in its own column on the right so it never covers the text",
+        "match": {
+          "hosts": [
+            "metacpan.org"
+          ],
+          "app": null
+        },
+        "target": {
+          "selector": "nav.toc",
+          "label": "“Contents” box"
+        },
+        "css": "main { display: grid !important; grid-template-columns: minmax(0, 1fr) 260px !important; column-gap: 40px !important; align-items: start !important; overflow: visible !important; }\nmain > .pod { grid-column: 1 !important; grid-row: 1 !important; min-width: 0 !important; }\nmain .toc { grid-column: 2 !important; grid-row: 1 !important; float: none !important; margin: 0 !important; max-width: none !important; width: 260px !important; position: sticky !important; top: 60px !important; max-height: calc(100vh - 80px) !important; overflow-y: auto !important; }\n",
+        "js": "",
+        "enabled": true,
+        "model": "claude-code:haiku",
+        "version": 1,
+        "author": "Morse team",
+        "created": "2026-10-24T16:23:45.521Z",
+        "updated": "2026-10-24T16:23:45.521Z"
+      },
+      "verify": {
+        "id": "metacpan-sticky-contents",
+        "before": "the contents are not in view after scrolling (0 links)",
+        "errors": [],
+        "first": true,
+        "reload": true,
+        "pass": true
+      },
+      "pass": true
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "morse": 1,
+  "id": "nodejs-bigger-code",
+  "title": "Bigger code examples",
+  "prompt": "make the code examples bigger",
+  "match": {
+    "hosts": [
+      "nodejs.org"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "#apicontent pre",
+    "label": "code example"
+  },
+  "css": "pre.shiki, pre.shiki code {\n  font-size: 1.1em !important;\n  line-height: 1.7rem !important;\n}\npre.shiki {\n  padding: 1.25rem 1.25rem 0.75rem !important;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

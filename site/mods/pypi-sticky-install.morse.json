@@ -1,0 +1,25 @@
+{
+  "morse": 1,
+  "id": "pypi-sticky-install",
+  "title": "Install command always in view",
+  "prompt": "keep the pip install command visible at the top while I scroll",
+  "match": {
+    "hosts": [
+      "pypi.org"
+    ],
+    "app": null
+  },
+  "target": {
+    "selector": "#pip-command",
+    "label": "“pip install requests” command"
+  },
+  "css": "p.project-header__pip-instructions.pip-stuck {\n  position: fixed;\n  top: 0;\n  left: 50%;\n  transform: translateX(-50%);\n  width: min(1090px, calc(100% - 40px));\n  z-index: 999;\n  margin: 0;\n  padding: 8px 0;\n  background: rgb(253, 253, 253);\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);\n}\n.pip-spacer { height: 0; }\n.project-header__pip-instructions.pip-stuck + .pip-spacer { height: 48px; }\n",
+  "js": "morse.watch('.project-header__pip-instructions', el => {\n  if (!el.nextElementSibling || !el.nextElementSibling.classList.contains('pip-spacer')) {\n    el.after(morse.el('div', { class: 'pip-spacer' }));\n  }\n});\nmorse.on(window, 'scroll', () => {\n  morse.$$('.project-header__pip-instructions').forEach(el => {\n    const sp = el.nextElementSibling;\n    if (!sp || !sp.classList.contains('pip-spacer')) return;\n    const top = el.classList.contains('pip-stuck')\n      ? sp.getBoundingClientRect().top\n      : el.getBoundingClientRect().top;\n    el.classList.toggle('pip-stuck', top < 0);\n  });\n});\n",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "note": "Asked twice with the same words. The first answer pinned the whole header and turned its title white on white.",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

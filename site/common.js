@@ -201,7 +201,7 @@ export function highlight(code, lang = "js") {
 
 // ---------- mod cards ----------
 export function appGlyph(app) {
-  const words = String(app).split(/\s+/);
+  const words = String(app).split(/\s+/).filter(w => /^[\p{L}\d]/u.test(w)); // "Inkwell (demo)" is I, not I(
   if (words[0].length <= 2 && words[0] === words[0].toUpperCase()) return words[0];
   if (words.length > 1) return (words[0][0] + words[1][0]).toUpperCase();
   return words[0][0].toUpperCase();

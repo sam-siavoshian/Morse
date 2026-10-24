@@ -22,11 +22,11 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 12-edit-the-code.png | shoot-desktop.js | ✅ | Code boxes now have dark scrollbars (runtime fix in 99-css.js) |
 | 14-share-card.png | shoot-desktop.js | ✅ | Was made by no script; now saved from the share dialog |
 | 20-extension-installed.png | shoot-extension.js | ✅ | Chrome's details page, "Allow User Scripts" on |
-| 21-web-point.png | shoot-extension.js | ✅ | Also the store's 1-point-and-describe.png |
-| 23-web-done.png | shoot-extension.js | ✅ | Save, Undo, Edit code, Share. Also the store's 3rd picture |
+| 21-web-point.png | shoot-extension.js | ✅ | |
+| 23-web-done.png | shoot-extension.js | ✅ | Save, Undo, Edit code, Share. |
 | 24-web-word-count-works.png | shoot-extension.js | ✅ | |
 | 25-web-new-button.png | shoot-extension.js | ✅ | |
-| 27-news-restyling-live.png | shoot-extension.js | ✅ | Also the store's 2nd picture |
+| 27-news-restyling-live.png | shoot-extension.js | ✅ | |
 | 28-news-share.png | shoot-extension.js | ✅ | |
 | 29-news-after.png | shoot-extension.js | ✅ | |
 | 30-share-link.png | shoot-extension.js | ✅ | The share page in a second browser |
@@ -36,7 +36,7 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 40-refine.png | shoot-iterate.js | ✅ | A follow-up under the result, "needed a second try" (name kept: docs link it) |
 | 41-history.png | shoot-iterate.js | ✅ | Three versions |
 | 42-fix-it.png | shoot-iterate.js | ✅ | "Not working" with Fix it |
-| 50-godmode-toolbar.png | shoot-godmode.js | ✅ | Edit tools; the Read aloud button now matches the others (runtime fix in 65-a11y.js). Also the store's 4th picture |
+| 50-godmode-toolbar.png | shoot-godmode.js | ✅ | Edit tools; the Read aloud button now matches the others (runtime fix in 65-a11y.js). |
 | 51-move.png | shoot-godmode.js | ✅ | |
 | 52-recolor.png | shoot-godmode.js | ✅ | |
 | 53-rename.png | shoot-godmode.js | ✅ | |
@@ -68,7 +68,7 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 101-read-aloud.png | shoot-a11y.js | ✅ | |
 | 102-check-page.png | shoot-a11y.js | ✅ | |
 | 103-before-after-contrast.png | shoot-a11y.js | ✅ | |
-| 110-for-this-site.png | shoot-gallery.js | ✅ | Also the store's 5th picture |
+| 110-for-this-site.png | shoot-gallery.js | ✅ | |
 | 111-try-it.png | shoot-gallery.js | ✅ | |
 | 112-update.png | shoot-gallery.js | ✅ | |
 | 113-stopped-working.png | shoot-heal.js | ✅ | |
@@ -126,3 +126,14 @@ video now) and install-installed-desktop-dark.png; nothing uses them.
 | poster-page-tools.png | record-launch.js | ⚠️ | Shows "Dark mode on for 127.0.0.1:9878" |
 | poster-video.jpg (website) | no script (cut from the video by hand) | ⚠️ | Old bar: "Describe a change · Ctrl+E for edit tools" in lowercase, no Page tools button |
 | morse-demo.mp4 and the clips | record-launch.js | ⚠️ | Recorded from real Claude Code runs before the plain-words pass. Needs a new recording |
+
+## docs/store (the Chrome Web Store)
+
+| File | Made by | | Note |
+|---|---|---|---|
+| screenshots/1-describe-a-change.png | store-screenshots.js | ✅ | pkg.go.dev, a real model (Claude Code · haiku) while it writes |
+| screenshots/2-save-what-you-like.png | store-screenshots.js | ✅ | pypi.org: copy buttons on the code examples, with Save |
+| screenshots/3-your-mods.png | store-screenshots.js | ✅ | pypi.org: the Mods panel with the three mods made just before |
+| screenshots/4-mods-others-made.png | store-screenshots.js | ✅ | The Tunes demo app: the gallery's mods for real sites are for sites that need an account or that the machine taking the pictures can't reach |
+| screenshots/5-edit-tools.png | store-screenshots.js | ✅ | rubygems.org: the Edit tools and the color palette |
+| promo/small-tile-440x280.png, promo/marquee-1400x560.png | store-promo.js | ✅ | The marquee shows part of screenshot 2 |

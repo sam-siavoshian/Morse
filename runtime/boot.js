@@ -239,24 +239,33 @@ function guardPaused(m, r) {
 // The kit paused a running mod ("morse:paused", core/kit.js). Once the UI is
 // here, 64-guard.js hears it; before that, the host's __stats is asked (a page
 // can fire the event, but can't fake that) and only then is the UI loaded.
+// A page firing it over and over gets one check a second, not one per event
+// (each is a round trip to the host, and in the extension a script run).
 const heardIds = new Set();
-let heardTimer = 0;
+let heardTimer = 0, heardAt = -1e9;
 on(D, "morse:paused", e => {
   if (ui || !live()) return;
   let id = null;
   try { id = JSON.parse(e.detail).id; } catch {}
   const ids = id ? [String(id)] : S.mods.filter(m => m.enabled && (m.js || "").trim()).map(m => m.id);
   ids.forEach(x => heardIds.add(x));
-  pristine.clearTimeout(heardTimer);
+  heardSoon();
+});
+function heardSoon() {
+  if (heardTimer || !heardIds.size) return;
   heardTimer = pristine.setTimeout(async () => {
+    heardAt = pristine.now();
     const list = [...heardIds];
     heardIds.clear();
-    for (const x of list) {
-      const st = await call("stats", { modId: x }).catch(() => null);
-      if (st?.paused) uiTask("guardHeard", x, st.paused);
-    }
-  }, 30);
-});
+    try {
+      for (const x of list) {
+        if (!live()) return;
+        const st = await call("stats", { modId: x }).catch(() => null);
+        if (st?.paused) uiTask("guardHeard", x, st.paused);
+      }
+    } finally { heardTimer = 0; heardSoon(); }
+  }, Math.max(30, heardAt + 1000 - pristine.now()));
+}
 
 // ---- mods waiting for “Allow User Scripts” (64-waiting.js has the UI). In
 // the extension, mod code only runs with it on; while it's off, exec answers
@@ -271,8 +280,10 @@ function waitingAdd(m) {
   if (!seen("morse:waiting-told")) loadUI().catch(() => {});
   if (waitHeard) return;
   waitHeard = true;
-  const retry = () => {
-    if (ui || D.visibilityState !== "visible" || !waiting.size) return;
+  // Only the person coming back: a page firing focus events can't make it
+  // send every waiting mod to the host again and again.
+  const retry = e => {
+    if (ui || !e.isTrusted || D.visibilityState !== "visible" || !waiting.size) return;
     const list = [...waiting.values()];
     waiting.clear();
     for (const x of list) applyMod(S.mods.find(y => y.id === x.id) || x).catch(warn);
@@ -294,7 +305,7 @@ async function applyMod(m) {
     const r = await call("exec", { modId: m.id, js: m.js });
     if (r?.waiting) return waitingAdd(m);
     health(m, r);
-    if (r && !r.ok && !guardPaused(m, r)) { warn(m.title, r.error); notify(`“${m.title}” didn't work on this page. Open Mods to turn it off or fix it.`); }
+    if (r && !r.ok && !guardPaused(m, r)) { warn(m.title, r.error); notify({ id: "mod.failedHere", vars: { title: m.title } }); }
   }
   ran(m);
   guardAfter(m, look);
@@ -519,7 +530,7 @@ const Heal = (() => {
     if (ui) { try { ui.healFound?.(); } catch (e) { warn(e); } }
     // Auto-fix (Settings) needs the model and the UI's review flow: load it now,
     // for a mod it would try (once per version, never on its own fix: 71-heal.js autoFix).
-    else if (prefs.autoFix && [...broken.keys()].some(id => { const m = S.mods.find(x => x.id === id); return m?.enabled && !m.fp?.tried && m.refined !== "Fixed after this site changed" && modCodeHash(m) === m.fp?.code; })) { wantUi = true; loadUI().catch(() => {}); }
+    else if (prefs.autoFix && [...broken.keys()].some(id => { const m = S.mods.find(x => x.id === id); return m?.enabled && !m.fp?.tried && !AUTO_FIX_NOTES.includes(m.refined) /* in any language Morse speaks (runtime/bundle.js) */ && modCodeHash(m) === m.fp?.code; })) { wantUi = true; loadUI().catch(() => {}); }
   }
   function soon() {
     if (!live()) return null;
@@ -617,7 +628,7 @@ const ready = (async () => {
   return hello;
 })();
 ready.then(hello => {
-  if (!hello.quiet && hello.mode && prefs.welcome) notify(`Morse is ready. Press ${formatCombo(keys.open, PLATFORM) || "the Morse hotkey"} to change this page.`, true);
+  if (!hello.quiet && hello.mode && prefs.welcome) notify(formatCombo(keys.open, PLATFORM) ? { id: "boot.ready", vars: { key: formatCombo(keys.open, PLATFORM) } } : { id: "boot.readyNoKey" }, true);
   // Screenshots and tests read the overlay's status: the UI comes at once (a
   // desktop host started with MORSE_DEBUG=1 says so in its hello).
   if (DEBUG || hello.debug) loadUI().catch(() => {});
@@ -649,6 +660,20 @@ Object.defineProperty(W, BOOT, { configurable: true, value: Object.freeze({
     for (const [name, args] of tasks.splice(0)) try { ui[name]?.(...args); } catch (e) { warn(e); }
     Heal.adopted();
   },
+  // The boot that started after this one went quiet (`morse stop`, then a new
+  // attach to the same document) lets it go: its listeners (and the UI's,
+  // which go through on()) would otherwise keep both in memory for good.
+  dispose() {
+    if (live()) return;
+    for (const r of regs.splice(0)) pristine.removeEventListener(r.target, r.type, r.wrapped, r.opts);
+    domMo.disconnect();
+    domHooks.clear();
+    listeners.clear();
+    outgoing.length = 0;
+    pending.clear();
+    ui = null;
+  },
 }) });
+try { prior?.dispose?.(); } catch {}
 // For a helper kit (core/kit.js) running in this same world.
 if (!W[PRISTINE]) Object.defineProperty(W, PRISTINE, { value: pristine });

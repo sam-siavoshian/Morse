@@ -1,0 +1,22 @@
+{
+  "morse": 1,
+  "id": "rubygems-dark-mode",
+  "title": "Dark mode",
+  "prompt": "dark mode for the whole page, including the side boxes and tables, with text that's easy to read",
+  "match": {
+    "hosts": [
+      "rubygems.org"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": ":root { color-scheme: dark; }\n\nbody, .min-h-screen, header, aside, main, .flex-1,\n[class*=\"bg-white\"], [class*=\"bg-neutral-0\"], [class*=\"bg-neutral-1\"], [class*=\"bg-black\"] {\n  background-color: #0f1115 !important;\n}\n\nheader, aside, .versions, [class*=\"bg-white\"] { background-color: #171a21 !important; }\n\nbody, p, span, div, li, td, th, dt, dd, label, h1, h2, h3, h4, h5, h6,\nnav a, aside a, main a, .text-h3, .text-b1, .text-b2, .text-b3, .text-b4, .text-h4 {\n  color: #e6e8ec !important;\n}\n\na, a:visited { color: #7cb8ff !important; }\nnav a:hover, aside a:hover, main a:hover { color: #b3d7ff !important; }\n\n[class*=\"border-\"], table, th, td, hr, li, ol, ul { border-color: #2c313b !important; }\n\ntable, th, td { background-color: transparent !important; }\nth { background-color: #1c2029 !important; }\n\ninput, textarea, select, #query {\n  background-color: #1c2029 !important;\n  color: #e6e8ec !important;\n  border-color: #2c313b !important;\n}\ninput::placeholder, textarea::placeholder { color: #8a909c !important; }\n\npre, code, [class*=\"bg-neutral-1\"] {\n  background-color: #1c2029 !important;\n  color: #e6e8ec !important;\n}\n\n\n/* Version and requirement badges keep their light backgrounds otherwise. */\n[class*=\"bg-neutral-200\"] { background-color: #262b35 !important; }\n[class*=\"bg-green-200\"] { background-color: #1d3b2a !important; }\n",
+  "js": "",
+  "enabled": true,
+  "model": "haiku",
+  "version": 1,
+  "author": "Morse team",
+  "note": "Hand-fixed: the model made the text dark on anything with \"bg-neutral-800\" in its classes, which on this site includes the light buttons and badges (their dark-mode class names), so they were unreadable. That rule is gone, and two lines give the light version badges dark backgrounds.",
+  "created": "2026-10-24T12:00:00.000Z",
+  "updated": "2026-10-24T12:00:00.000Z"
+}

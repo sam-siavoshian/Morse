@@ -25,7 +25,7 @@ git clone https://github.com/sam-siavoshian/RRAA morse && cd morse
 npm ci                       # the Anthropic SDK and esbuild
 npm run build                # builds the Chrome extension into dist/extension
 npm link                     # so `morse` runs this checkout
-npm run demo:serve           # the demo sites and the website on http://127.0.0.1:8787-8790
+npm run demo:serve           # the demo sites and the website on http://127.0.0.1:8787-8797
 ```
 
 Load `dist/extension` in `chrome://extensions` (Developer mode, Load
@@ -130,6 +130,21 @@ To add a mod to the gallery, export it (`morse export <id>` writes a
 what, it sends nothing over the network, and it uses stable selectors (ids,
 `aria-*`, `data-*`, roles), not generated class names like `css-1x2y3`.
 
+Every gallery mod has a checker in
+[`evals/gallery-cases.json`](../../evals/gallery-cases.json): a short script
+that fails on the page without the mod, and passes with it and again after a
+reload, using real clicks and keys. `node evals/gallery.js --generate` asks
+Claude Code (haiku) for each request on its real page or demo app and checks
+the answer; `node evals/gallery.js --verify` checks the files in
+`site/mods/` (`SHOTS=dir` also takes the before and after pictures). The
+demo-app mods are checked again by every test run
+(`tests/gallery-mods.test.js`); the real-site results are in
+[`site/mods/VERIFIED.md`](../../site/mods/VERIFIED.md). Each entry also has a
+`category` (the gallery page's filters), `userScripts` (true when the mod has
+code, so it needs Chrome's “Allow User Scripts”), `checked` (when and where it
+was checked) and, for the best few, `shots` (before and after pictures in
+`site/mods/shots/`).
+
 Morse reads the same list for **Mods for this site**
 ([`core/gallery.js`](../../core/gallery.js), fetched and cached by
 [`core/gallery-host.js`](../../core/gallery-host.js)). Each entry needs
@@ -138,7 +153,7 @@ and `version`; raise `version` and add a one-line `changes` when you update a
 mod, and people who installed it see Update available. Entries with
 `"demo": true` are for the demo sites (`npm run demo:serve` serves the list at
 `http://127.0.0.1:8787/site/mods/index.json`, which Morse uses on those
-sites) and don't show on the gallery page. To read another list, set
+sites). The gallery page shows them with a “Demo app” badge. To read another list, set
 `MORSE_GALLERY_URL` or `"gallery": { "index": "…" }` in `~/.morse/config.json`
 (desktop), or `morse.gallery.url` in the extension's local storage.
 
@@ -150,9 +165,10 @@ extension's manifest, and `morse --version` prints it. See
 
 - **npm:** `npm publish` (the `prepare` script builds the extension that
   ships inside the package, also for installs from GitHub).
-- **Chrome Web Store:** `npm run package:extension` makes
-  `dist/morse-extension-<version>.zip`. The listing text, permission notes
-  and screenshots are in [`docs/store/`](../store/README.md).
+- **Chrome Web Store:** `npm run store` makes
+  `dist/morse-extension-<version>-store.zip` (a `MORSE_STORE=1` build) and
+  prints its SHA-256. The listing text, permission notes, screenshots and the
+  step-by-step guide are in [`docs/store/`](../store/SUBMIT.md).
 - **Privacy policy:** [docs/privacy.md](../privacy.md), published as
   `site/privacy.html` by `npm run pages`.
 

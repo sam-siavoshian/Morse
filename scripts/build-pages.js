@@ -3,6 +3,7 @@
 //
 //   /RRAA/                         -> redirects to site/
 //   /RRAA/site/                    landing page, gallery, privacy policy
+//   /RRAA/privacy.html             redirects to site/privacy.html
 //   /RRAA/site/mods/index.json     the gallery list (core/gallery.js GALLERY_INDEX_URL)
 //   /RRAA/share/install.html       share links (core/mod.js SHARE_BASE)
 //   /RRAA/core/, /RRAA/design/     modules and tokens the pages import
@@ -225,6 +226,14 @@ export async function buildPages({ out = OUT, refresh = true } = {}) {
 <meta http-equiv="refresh" content="0; url=site/">
 <link rel="canonical" href="site/"></head>
 <body><a href="site/">Morse</a></body></html>
+`);
+  // The policy's address is site/privacy.html (the Chrome Web Store listing
+  // gives that one); /RRAA/privacy.html sends people there too.
+  await fs.writeFile(path.join(out, "privacy.html"), `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Morse privacy policy</title>
+<meta http-equiv="refresh" content="0; url=site/privacy.html">
+<link rel="canonical" href="site/privacy.html"></head>
+<body><a href="site/privacy.html">Morse privacy policy</a></body></html>
 `);
   const broken = await brokenLinks(out);
   if (broken.length) throw new Error(`Links to files that aren't published:\n  ${broken.join("\n  ")}`);
