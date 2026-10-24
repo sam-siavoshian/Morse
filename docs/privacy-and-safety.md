@@ -97,9 +97,10 @@ mod by itself: only your click in Morse's own review does.
 
 `morse launch` opens the app with a debugging port, which is how Morse
 connects. While the app is open, other programs on your computer could
-connect to it too, the same as anything else running as you. Quit the app to
-close it. Morse makes sure the port can't be reached from other computers,
-and only connects when what answers is the app it started.
+connect to it too, also ones another account on the same computer runs. Quit
+the app to close it. Morse makes sure the port can't be reached from other
+computers, and only connects when what answers is the app it started (on
+Linux it also checks that no other account's program holds the port).
 
 The Morse helper (`morse serve`) only answers on this computer, only to the
 Morse extension, and only to a browser you paired with its one-time code.

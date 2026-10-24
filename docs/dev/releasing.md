@@ -106,6 +106,12 @@ Morse's own page, which is what the sandbox would protect.
   doesn't.
 - The files are attached to a draft GitHub release for the tag. Check them,
   then publish the release by hand.
+- The builds can only read the repo (they run npm packages' install scripts
+  next to the signing secrets); only the job that drafts the release can
+  write. Each action is pinned to a commit, with its version in a comment: to
+  update one, look up the new tag's commit (`git ls-remote
+  https://github.com/actions/checkout refs/tags/v4`) and change both.
+  `tests/round9.test.js` fails on an action pinned to a tag.
 
 Add the secrets above under Settings, Secrets and variables, Actions.
 

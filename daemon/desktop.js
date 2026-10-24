@@ -10,7 +10,7 @@ import {
   hostContext, discoverApps, resolveApp, launchApp, waitForLaunch, quitApp, listProcesses, findAppProcesses, debugPortOf,
   loadAppPrefs, saveAppPref, formatApps, said, closedEarly,
 } from "./apps.js";
-import { pickPort, portFree, portAnswers, reachableFrom, identify, checkIdentity } from "./ports.js";
+import { pickPort, portFree, portAnswers, reachableFrom, identify, checkIdentity, portIsMine } from "./ports.js";
 import { readSessions, publishSession, stopRequested, stopSession, withMods, formatStatus } from "./status.js";
 import { settingsLabel } from "../core/providers.js";
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
@@ -103,9 +103,10 @@ export async function launchCommand(f, { settingsFrom, logo }) {
 //   restart, noRestart  the --restart and --no-restart flags
 //   ask(app)            asks whether to quit the open app: "y", "n" or "a" (always); null: don't ask
 //   say(line)           progress, one line at a time
+//   mine(port)          false: another account's program holds the port (ports.js portIsMine; tests pass their own)
 // Throws a plain error (said) when the app is open and may not be restarted
 // (with .running = true), or when Morse can't connect to it.
-export async function connectApp(app, { extra = [], pref = null, port: wantPort = null, restart: restartFlag = false, noRestart = false, ask: askRestart = null, say = () => {} } = {}) {
+export async function connectApp(app, { extra = [], pref = null, port: wantPort = null, restart: restartFlag = false, noRestart = false, ask: askRestart = null, say = () => {}, mine = portIsMine } = {}) {
   pref ??= (await loadAppPrefs())[app.id] || {};
   // Already open?
   let port = null, pids = [];
@@ -158,16 +159,22 @@ export async function connectApp(app, { extra = [], pref = null, port: wantPort 
   const gone = e => { const m = closedEarly(app, e); return m ? said(m) : e; };
   const exposed = await reachableFrom(port).catch(e => { throw gone(e); });
   if (exposed.length) throw said(`Port ${port} can be reached from other computers (${exposed.join(", ")}), so Morse won't use it. Quit ${app.name} to close it.`);
+  // A program another account started can take the port before the app does
+  // and answer as the app (it says what user agent and process id it has),
+  // so who holds the port is asked of the system where it tells (Linux).
+  if (mine(port) === false) throw said(otherAccount(port, app.name));
   const who = await identify(port).catch(e => { throw gone(e); });
   const v = checkIdentity(who, app, pids);
   if (!v.ok) throw said(`Morse didn't connect: ${v.why}.`);
 
   const verify = async () => {
-    const mine = findAppProcesses(app, listProcesses(), { extraArgs: extra }).filter(p => debugPortOf(p.cmd) === port).map(p => p.pid);
-    return checkIdentity(await identify(port), app, mine);
+    if (mine(port) === false) return { ok: false, why: `another account on this computer has a program on port ${port}` };
+    const ours = findAppProcesses(app, listProcesses(), { extraArgs: extra }).filter(p => debugPortOf(p.cmd) === port).map(p => p.pid);
+    return checkIdentity(await identify(port), app, ours);
   };
   return { port, pids, who, verify };
 }
+const otherAccount = (port, name) => `Another account on this computer has a program on port ${port}, so Morse won't connect to it. Quit ${name}, then open it with Morse again.`;
 
 export async function attachCommand(f, { settingsFrom, logo }) {
   const port = Number(f.port || 9222);
@@ -175,6 +182,7 @@ export async function attachCommand(f, { settingsFrom, logo }) {
   await waitForEndpoint(port, 3000);
   const exposed = await reachableFrom(port);
   if (exposed.length) throw said(`Port ${port} can be reached from other computers (${exposed.join(", ")}), so Morse won't use it.`);
+  if (portIsMine(port) === false) throw said(otherAccount(port, f.app ? String(f.app) : "the app"));
   const who = await identify(port);
   const name = f.app ? String(f.app) : `App on port ${port}`;
   console.log(logo + `\n\n  connected on port ${port} · ${who.browser.replace("/", " ")}${who.electron ? ` · Electron ${who.electron}` : ""} · model ${settingsLabel(settings)}\n`);
