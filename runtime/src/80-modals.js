@@ -18,7 +18,7 @@ function openModal(html, { review = false } = {}) {
   modal.onclick = e => { if (e.target === modal || e.target.closest("[data-a=close]")) modal.hidden = true; };
   // The first field, else the first button that isn't Close; callers may move it (the review starts on Cancel).
   const all = tabbables(card);
-  (all.find(n => n.matches("textarea:not([readonly]), input:not([readonly])")) || all.find(n => !n.closest("header") && !n.matches("[readonly]")) || all[0])?.focus({ preventScroll: true });
+  (all.find(n => n.matches("textarea:not([readonly]), input:not([readonly])")) || all.find(n => !n.closest("header") && !n.matches("[readonly], pre")) || all[0])?.focus({ preventScroll: true });
   if (review) showReview();
 }
 // One listener for the life of the page (it used to be added on every open).

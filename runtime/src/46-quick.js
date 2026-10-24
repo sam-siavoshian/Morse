@@ -63,6 +63,8 @@ const GodQuick = (() => {
       ? `<button ${ONOFF.has(it.k) ? `role="menuitemcheckbox" aria-checked="${!!quickMod(it.k)?.enabled}"` : `role="menuitem"`} tabindex="-1" data-k="${it.k}">${svg(I[it.k])}<span>${it.label}</span><span class="gm-state">${state(it.k)}</span></button>`
       : `<hr>`).join("") + quickMenuGroups.map(g => g()).join(""); // hook: 65-a11y.js
     for (const b of menu.querySelectorAll("button")) b.tabIndex = -1; // one Tab stop: the menu's arrows do the rest
+    const first = menu.querySelector("[role^=menuitem]");
+    if (first) first.tabIndex = 0; // (a menu that scrolls on a small screen still has a way in)
   }
   function open() {
     render();

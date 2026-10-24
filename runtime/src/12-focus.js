@@ -44,6 +44,7 @@ function menuKeys(e, menu) {
   }
   if (n < 0) return false;
   e.preventDefault();
+  for (const b of items) b.tabIndex = b === items[n] ? 0 : -1; // the current item is the menu's one Tab stop
   items[n].focus();
   return true;
 }

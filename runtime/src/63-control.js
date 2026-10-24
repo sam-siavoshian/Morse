@@ -187,8 +187,8 @@ function summaryHtml(m) {
     ${s.notes.map(n => `<p class="ctl-warn" data-s="${n.id}"><b>Note</b>${esc(n.text)}</p>`).join("")}`;
 }
 function codeHtml(m) {
-  return `${m.css.trim() ? `<label>Style <span class="dim">CSS</span></label><pre class="code ctl-pre">${esc(m.css.trim())}</pre>` : ""}
-    ${m.js.trim() ? `<label>Script <span class="dim">JavaScript, runs with the <code>morse</code> helpers</span></label><pre class="code ctl-pre">${esc(m.js.trim())}</pre>` : ""}
+  return `${m.css.trim() ? `<label>Style <span class="dim">CSS</span></label><pre class="code ctl-pre" tabindex="0" role="region" aria-label="Style code">${esc(m.css.trim())}</pre>` : ""}
+    ${m.js.trim() ? `<label>Script <span class="dim">JavaScript, runs with the <code>morse</code> helpers</span></label><pre class="code ctl-pre" tabindex="0" role="region" aria-label="Script code">${esc(m.js.trim())}</pre>` : ""}
     ${!m.css.trim() && !m.js.trim() ? `<p class="dim">No code.</p>` : ""}`;
 }
 
