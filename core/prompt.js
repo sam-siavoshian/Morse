@@ -2,6 +2,7 @@
 // concrete contracts far better than long ones.
 
 import { askTurnsToMessages } from "./answer.js"; // Ask and find
+import { imageMessages } from "./a11y.js"; // Easier to use: Describe this image
 
 // ---- Ask and find: questions get an answer instead of a mod (core/answer.js
 // parses it; the runtime side is runtime/src/61-ask.js).
@@ -59,6 +60,7 @@ export function snapshotPrompt(snapshot) {
 }
 
 export function buildMessages({ request, context, previous, snapshot = context?.snapshot }) {
+  if (context?.a11y?.image) return imageMessages({ request, context }); // Easier to use: Describe this image (core/a11y.js)
   const parts = [];
   parts.push(`App: ${context.app || "web"}  URL: ${context.url}`);
   parts.push(`Page title: ${context.title}`);
