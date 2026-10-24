@@ -5,6 +5,7 @@
 //   GET  /v1/health    status (no auth, never includes keys)
 //   POST /v1/pair      { code } -> { token }   one-time code printed by `morse serve` / `morse pair`
 //   POST /v1/complete  { messages, model? }    Bearer token -> NDJSON {type: token|done|error}
+//   GET  /v1/voice, POST /v1/transcribe        Bearer token, see daemon/voice.js
 //
 // The extension runs core/engine.js itself (it has to execute mod JS in the
 // page and retry), so the helper only streams text. Closing the connection
@@ -23,6 +24,7 @@ import { loadConfig, updateConfig } from "./store.js";
 import { settingsFromConfig, settingsLabel } from "./models.js";
 import { detectHarnesses, validModel, TIMEOUT_MS } from "./harness.js";
 import { streamChat, abortError } from "../core/providers.js";
+import { handleVoice } from "./voice.js";
 
 export const VERSION = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 export const PAIR_TTL_MS = 10 * 60_000;
@@ -142,11 +144,15 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
         return send(...result);
       }
 
+      // Everything below needs a paired token.
+      const cfg = await loadConfig();
+      const rec = tokenRecord(cfg, bearer(req));
+      if (!rec) return send(401, { error: "Not paired. Enter the code from `morse pair` in Morse's settings." });
+      if (origin && rec.origin && rec.origin !== origin) return send(403, { error: "This token was issued to a different extension." });
+
+      if (await handleVoice(req, res)) return;
+
       if (req.method === "POST" && url.pathname === "/v1/complete") {
-        const cfg = await loadConfig();
-        const rec = tokenRecord(cfg, bearer(req));
-        if (!rec) return send(401, { error: "Not paired. Enter the code from `morse pair` in Morse's settings." });
-        if (origin && rec.origin && rec.origin !== origin) return send(403, { error: "This token was issued to a different extension." });
         const body = await readJson(req);
         if (!validMessages(body.messages)) return send(400, { error: "Expected { messages: [{ role, content }] }" });
         if (body.model !== undefined && (typeof body.model !== "string" || !validModel(body.model))) return send(400, { error: "Invalid model name" });

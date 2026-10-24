@@ -12,13 +12,25 @@ import { runMorse } from "../core/engine.js";
 import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_URL } from "../core/providers.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
+import { clipAdd } from "../core/clipboard.js"; // God mode clipboard
+import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
 
 // chrome.storage.local "model": { backend: "helper"|"anthropic"|"" (auto),
-//   helperToken, helperModel, anthropicKey, anthropicModel }
-const modelPrefs = () => get("model", {});
+//   helperModel, anthropicKey, anthropicModel }
+// chrome.storage.local "helper": { token, url } once paired with the Morse
+// helper (bar-host.js reads the same record for voice).
+async function modelPrefs() {
+  const p = await get("model", {});
+  const h = await get("helper", null);
+  return { ...p, helperToken: h?.token || "" };
+}
+async function saveModelPrefs(p) {
+  const { helperToken, ...rest } = p;
+  await set("model", rest);
+}
 
 async function helperHealth(token) {
   try {
@@ -101,12 +113,14 @@ function textUrl(text, mime) {
 async function dispatch(msg, port) {
   const tab = port.sender.tab;
   const target = { tabId: tab.id, frameIds: [port.sender.frameId ?? 0] };
+  if (BAR_REQUESTS.has(msg.type)) return handleBarRequest(msg);
   switch (msg.type) {
     case "hello": {
       const b = await backend();
       const label = b.label + (userScriptsAvailable() ? "" : " · user scripts off");
       const quiet = !(await get("welcomed", false)) ? (await set("welcomed", true), false) : true;
-      return { mode: "extension", app: null, label, quiet, needsModel: b.kind === "none", connect: b.kind === "none" ? b.reason : undefined };
+      return { mode: "extension", app: null, label, quiet, needsModel: b.kind === "none", connect: b.kind === "none" ? b.reason : undefined,
+        settings: await getPrefs(), voice: await voiceInfo() };
     }
     case "mods.list":
       return Object.values(await allMods()).filter(m => modMatches(m, { url: msg.url, app: null })).sort((a, b) => a.created.localeCompare(b.created));
@@ -125,6 +139,9 @@ async function dispatch(msg, port) {
       const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
       return putMod({ ...mod, enabled: true, imported: true, match: mod.match || { hosts: [hostOf(msg.url)], app: null } });
     }
+    // God mode: cross-app clipboard (see core/clipboard.js)
+    case "clipboard.list": return get("clipboard", []);
+    case "clipboard.put": { const list = clipAdd(await get("clipboard", []), msg.item); await set("clipboard", list); return list; }
     case "exec":
       return exec(target, msg.modId, msg.js);
     case "off":
@@ -137,23 +154,25 @@ async function dispatch(msg, port) {
         openSettings();
         throw new NoModelError(`No model connected. ${b.reason} Morse's settings are open in a new tab.`);
       }
-      const ac = new AbortController();
-      port.__aborts.add(ac);
+      // gens.run's signal aborts the model call (the helper kills the harness
+      // process when the connection closes): Stop in the bar, or closing the tab.
+      port.__gens.add(msg.genId);
       try {
-        const res = await runMorse({
+        const res = await gens.run(msg.genId, signal => runMorse({
           settings: b.settings,
           request: msg.request,
           context: msg.context,
-          signal: ac.signal,
+          signal,
           exec: js => exec(target, msg.genId, js),
-          emit: ev => { try { port.postMessage({ ...ev, genId: msg.genId }); } catch {} },
-        });
+          emit: ev => { if (!signal.aborted) try { port.postMessage({ ...ev, genId: msg.genId }); } catch {} },
+        }));
+        if (res.cancelled) return res;
         return { ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts };
       } catch (e) {
         if (e.code === "no_model") { cached = null; openSettings(); }
         throw e;
       } finally {
-        port.__aborts.delete(ac);
+        port.__gens.delete(msg.genId);
       }
     }
     case "capture":
@@ -185,8 +204,8 @@ async function dispatch(msg, port) {
 chrome.runtime.onConnect.addListener(port => {
   if (port.name !== "morse") return;
   // Closing the tab aborts its generations (and the helper kills the harness).
-  port.__aborts = new Set();
-  port.onDisconnect.addListener(() => { for (const ac of port.__aborts) ac.abort(); });
+  port.__gens = new Set();
+  port.onDisconnect.addListener(() => { for (const id of port.__gens) gens.cancel(id); });
   port.onMessage.addListener(async msg => {
     try { port.postMessage({ reply: msg.id, result: await dispatch(msg, port) }); }
     catch (e) { try { port.postMessage({ reply: msg.id, error: e.message || String(e) }); } catch {} }
@@ -219,7 +238,7 @@ async function popup(msg) {
       const p = await modelPrefs();
       for (const k of ["backend", "helperModel", "anthropicModel"]) if (typeof msg[k] === "string") p[k] = msg[k].trim();
       if (typeof msg.anthropicKey === "string") p.anthropicKey = msg.anthropicKey.trim();
-      await set("model", p);
+      await saveModelPrefs(p);
       cached = null;
       return popupState(msg.url);
     }
@@ -233,14 +252,13 @@ async function popup(msg) {
       const body = await r.json().catch(() => ({}));
       if (!r.ok || !body.token) return { error: body.error || `Pairing failed (${r.status})` };
       const p = await modelPrefs();
-      await set("model", { ...p, helperToken: body.token, backend: p.backend === "anthropic" ? "anthropic" : "helper" });
+      await set("helper", { token: body.token, url: HELPER_URL });
+      await saveModelPrefs({ ...p, backend: p.backend === "anthropic" ? "anthropic" : "helper" });
       cached = null;
       return popupState(msg.url);
     }
     case "popup.unpair": {
-      const p = await modelPrefs();
-      delete p.helperToken;
-      await set("model", p);
+      await chrome.storage.local.remove(["helper", "bridge", "pairing"]);
       cached = null;
       return popupState(msg.url);
     }

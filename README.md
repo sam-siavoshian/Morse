@@ -26,6 +26,7 @@ press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ local mo
 | **Web** | Chrome extension (MV3). Mod JS runs through `chrome.userScripts`, so it works on strict-CSP sites |
 | **Desktop** | `morse launch spotify` relaunches an Electron app with a debugging port and attaches over CDP. No patching of app files: code signatures and ASAR integrity stay intact, updates don't break it |
 | **Local models** | Ollama (auto-detected) or any OpenAI-compatible server (llama.cpp, LM Studio, vLLM, or a cloud key if you choose) |
+| **God mode** | Direct editing with no model call: hide, move, resize, rename, recolor, retype, duplicate. Page tools (dark/light mode, text size, hide ads, focus mode). Capture an element in one app and rebuild it in another |
 
 ## Screenshots
 
@@ -58,6 +59,31 @@ All captured by [`demo/shoot-extension.js`](demo/shoot-extension.js) and [`demo/
 | ![](docs/screenshots/30-share-link.png) A friend opens the share link (code shown before install) | ![](docs/screenshots/32-friend-gets-the-mod.png) …installs it, and gets the mod |
 | ![](docs/screenshots/33-userscript-runs-without-morse.png) The `.user.js` export running **without Morse** | ![](docs/screenshots/34-popup.png) Toolbar popup: model settings |
 | ![](docs/screenshots/20-extension-installed.png) Installed with "Allow User Scripts" on | |
+
+### Voice, hotkeys and the command bar
+
+Captured by [`demo/shoot-bar.js`](demo/shoot-bar.js) from [`demo/bar-playground.html`](demo/bar-playground.html) (the real runtime, a fake host, Chromium's fake microphone).
+
+| | |
+|---|---|
+| ![](docs/screenshots/60-voice.png) **Hold ⌥Space to talk**: live transcript, radar-pixel level meter | ![](docs/screenshots/61-settings.png) **Settings** (⌘, in the bar) |
+| ![](docs/screenshots/62-hotkey-recorder.png) **Hotkey recorder** refuses ⌘Q, Alt+F4 and friends | ![](docs/screenshots/63-suggestions.png) **Suggestions** for what you pointed at (Tab, ←/→) |
+| ![](docs/screenshots/64-shortcuts.png) **`?`** shows the shortcuts you actually have | ![](docs/screenshots/65-cancelled.png) **Esc** stops the model; nothing is left behind |
+
+- **Voice.** Tap the mic, or hold the hotkey (tap opens, hold talks). The Web Speech API is used where it works (Chrome websites); everywhere else (Electron apps) Morse records and the host transcribes with OpenAI `gpt-4o-mini-transcribe` (your key: `OPENAI_API_KEY` or `"voice": { "openaiKey" }` in `~/.morse/config.json`) or a local `whisper-cli` / `whisper` on your PATH. "Send after a pause" is a setting.
+- **Hotkeys** for open, push to talk, Mods panel and God mode, recorded from `event.code`. Defaults: ⌥Space (Ctrl+Shift+Space on Windows, where Alt+Space opens the window menu). Settings live in `~/.morse/settings.json` (desktop) or Chrome sync (extension).
+- **Command-bar basics:** ↑/↓ prompt history per app, Shift+Enter for a new line, Esc or ⌘. to stop, Tab stays in the bar, focus returns to where you were, and closed means closed: only your hotkeys are ever taken from the page.
+
+### God mode: edit directly, no model
+
+Point at something and an edit toolbar anchors to it. Every key is a tool while it has focus: **H** hide, **M** move (drag or arrow keys, Shift locks the axis / nudges 10px), **R** resize, **T** edit text in place, **C** color (text, fill, border), **F** size and weight, **D** duplicate, **⇧C** capture, **A** ask, or just start typing to describe a change instead. A session's edits become one "Manual edits" mod with undo/redo (⌘Z / ⇧⌘Z), compiled by [`core/edits.js`](core/edits.js) into the same plain CSS/JS a model would write, so it persists, shares and exports like any mod.
+
+| | |
+|---|---|
+| ![](docs/screenshots/50-godmode-toolbar.png) The toolbar, with shortcuts in every tooltip | ![](docs/screenshots/53-rename.png) **T**: rename the headline in place |
+| ![](docs/screenshots/51-move.png) **M**: move a fixed popup out of the way (Shift locks the axis) | ![](docs/screenshots/52-recolor.png) **C**: recolor the masthead |
+| ![](docs/screenshots/54-dark-mode.png) Page tools: hide ads, then a smart-invert dark mode that keeps media and already-dark parts as they are | ![](docs/screenshots/55-capture.png) **⇧C**: capture the masthead to the Morse clipboard |
+| ![](docs/screenshots/56-reuse.png) In a different app, pick it from the bar: the model rebuilds that look natively | |
 
 ## Status
 
@@ -144,9 +170,8 @@ extension/   Chrome MV3 host
 daemon/      desktop connector + CLI (CDP, app launcher, fuses, clip recorder, mod store)
 share/       static install page for share links
 demo/        demo apps + the scripts that produced every screenshot
-legacy/      Ember, the previous local chat app (its Ollama code seeded providers.js)
 ```
 
-Regenerate the screenshots: `npm run demo:serve &` then `DISPLAY=:99 npm run screenshots` (needs Xvfb, Chromium/Playwright, ffmpeg; set `MORSE_HOME` to a scratch dir).
+Regenerate the screenshots: `npm run demo:serve &` then `DISPLAY=:99 npm run screenshots` (needs Xvfb, Chromium/Playwright, ffmpeg; set `MORSE_HOME` to a scratch dir). God mode's are `DISPLAY=:99 node demo/shoot-godmode.js`.
 
 MIT licensed.

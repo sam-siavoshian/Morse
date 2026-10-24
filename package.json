@@ -14,6 +14,7 @@
     "build": "node scripts/build.js",
     "test": "node --test tests/*.test.js",
     "demo:serve": "node demo/serve.js",
+    "ui": "node scripts/build.js && node demo/ui-catalog.js && node demo/contrast.js",
     "screenshots": "node scripts/build.js && node demo/shoot-extension.js && node demo/shoot-desktop.js"
   },
   "dependencies": {

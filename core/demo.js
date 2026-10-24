@@ -157,8 +157,24 @@ const RULES = [
   [/ads?\b|read|clean|clutter/i, READER],
 ];
 
+// A captured element from another app (God mode): carry its visual styles over
+// to whatever the user pointed at, the way a model would when it "rebuilds the
+// look natively" (this app's DOM stays, the design changes).
+const REBUILD_PROPS = ["background-color", "background-image", "color", "border", "border-radius", "box-shadow", "font-weight", "letter-spacing", "text-transform", "padding", "gap"];
+function rebuild(prompt) {
+  const json = (prompt.match(/Captured styles \(computed, JSON\):\n(\{.*\})/) || [])[1];
+  let styles = {};
+  try { styles = JSON.parse(json).root || {}; } catch {}
+  const sel = (prompt.match(/Best selector: (.+)$/m) || [])[1] || "body";
+  const from = (prompt.match(/captured in another app \(([^,)]+)/) || [])[1] || "another app";
+  const decls = REBUILD_PROPS.filter(p => styles[p] && !/^(none|normal|0px|rgba\(0, 0, 0, 0\))$/.test(styles[p]))
+    .map(p => `  ${p}: ${styles[p]};`).join("\n");
+  return reply(`Rebuilt from ${from}`, `${sel} {\n${decls}\n  transition: background-color .2s ease, color .2s ease;\n}`, "");
+}
+
 export function demoResponse(messages) {
   const firstUser = messages.find(m => m.role === "user")?.content || "";
+  if (/Captured styles \(computed, JSON\):/.test(firstUser)) return rebuild(firstUser);
   const request = (firstUser.match(/Request: (.*)$/m) || [])[1] || "";
   const isRetry = messages.length > 2;
   for (const [re, resp] of RULES) {

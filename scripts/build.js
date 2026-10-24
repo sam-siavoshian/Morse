@@ -20,12 +20,15 @@ await fs.rm(out, { recursive: true, force: true });
 await fs.mkdir(path.join(out, "icons"), { recursive: true });
 
 for (const f of await fs.readdir(path.join(root, "extension"))) {
-  if (f !== "background.js") await fs.copyFile(path.join(root, "extension", f), path.join(out, f));
+  if (!["background.js", "bar-host.js"].includes(f)) await fs.copyFile(path.join(root, "extension", f), path.join(out, f));
 }
 await esbuild.build({
   entryPoints: [path.join(root, "extension", "background.js")],
   outfile: path.join(out, "background.js"),
   bundle: true, format: "esm", platform: "browser", target: "chrome135",
+  // core/transcribe.js lazily imports node: modules for local whisper, a path
+  // the extension never takes.
+  external: ["node:*"],
   legalComments: "none", logLevel: "warning",
 });
 await fs.copyFile(path.join(root, "design", "tokens.css"), path.join(out, "tokens.css"));

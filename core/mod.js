@@ -9,8 +9,9 @@ export function newId() {
   return Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
 }
 
-export function createMod({ id, title, prompt, css, js, url, app, target, model }) {
+export function createMod({ id, title, prompt, css, js, url, app, target, model, kind, edits, from }) {
   const now = new Date().toISOString();
+  const manual = kind === "manual" || kind === "quick";
   return {
     morse: 1,
     id: id || newId(),
@@ -21,9 +22,13 @@ export function createMod({ id, title, prompt, css, js, url, app, target, model 
     css: css || "",
     js: js || "",
     enabled: true,
-    model: model || null,
+    model: manual ? null : model || null,
     created: now,
     updated: now,
+    // God mode: manual/quick mods keep their edit list (core/edits.js) so they
+    // stay editable; mods rebuilt from a captured element record where it came from.
+    ...(manual ? { kind, edits: Array.isArray(edits) ? edits : [] } : {}),
+    ...(from && typeof from === "object" ? { from: { app: from.app || null, url: from.url || null, title: from.title || null } } : {}),
   };
 }
 
