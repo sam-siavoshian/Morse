@@ -260,7 +260,7 @@ test("CLI: morse pause / resume, export --all, import", async () => {
     assert.equal(saved.length, 2);
     assert.deepEqual((await store.listMods()).map(m => m.importedFrom), ["backup", "backup"]);
     logs.length = 0;
-    await ctl.codeCli({ _: [saved[1].id] });
+    await ctl.codeCli({ _: [saved.find(m => m.title === "two").id] });
     assert.match(logs.join("\n"), /Restored from a backup/);
     assert.match(logs.join("\n"), /fetch\('https:\/\/x\.example'/);
     await writeFile(path.join(home, "junk.json"), "{}");
