@@ -103,7 +103,7 @@ async function open(slug, { push = true } = {}) {
   $("d-meta").innerHTML = `
     <dt>Runs in</dt><dd>${where}</dd>
     <dt>Works in</dt><dd>${esc(entry.surface || "web")}</dd>
-    ${mod.target ? `<dt>Pointed at</dt><dd><code>${esc(mod.target.label || mod.target.selector)}</code></dd>` : ""}
+    ${mod.target?.label ? `<dt>Pointed at</dt><dd>${esc(mod.target.label)}</dd>` : ""}
     <dt>Tags</dt><dd>${(entry.tags || []).map(t => `<span class="chip">${esc(t)}</span>`).join("")}</dd>
     <dt>File</dt><dd><a href="mods/${esc(entry.file)}" download>${esc(entry.file)}</a></dd>`;
 

@@ -1,5 +1,6 @@
 // Keep iterating, the pure parts: the refine/fix prompt, version history
 // helpers, relative times, and the demo model's refine and fix replies.
+import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildMessages } from "../core/prompt.js";

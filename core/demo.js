@@ -3,6 +3,8 @@
 // is real: the reply is streamed, parsed, injected and run like model output.
 // One reply ships a deliberate bug on the first try to exercise self-repair.
 
+import { showOnceDemo } from "./showonce-demo.js"; // show-once hook
+
 const fence = (lang, body) => "```" + lang + "\n" + body.trim() + "\n```";
 const reply = (title, css, js) => `TITLE: ${title}\n${fence("css", css || "")}\n${fence("js", js || "")}\n`;
 
@@ -146,7 +148,7 @@ article p:first-of-type::first-letter {
 `, "");
 
 const FALLBACK = reply("Needs a real model", "", `
-morse.toast("The demo replay only knows a few requests. Connect a model for anything else.");
+morse.toast("The demo model only knows a few requests. Connect a model for anything else.");
 `);
 
 // For the playground (demo/playground.html): a label in its toolbar.
@@ -247,6 +249,7 @@ export function demoResponse(messages) {
   const users = messages.filter(m => m.role === "user");
   const firstUser = [...users].reverse().find(m => /^(Request: |Current code:)/m.test(m.content))?.content || users[0]?.content || "";
   if (/Captured styles \(computed, JSON\):/.test(firstUser)) return rebuild(firstUser);
+  if (/^The user just showed you a task/m.test(firstUser) && !/^Current code:/m.test(firstUser)) return showOnceDemo(firstUser); // show-once hook
   const base = readBase(firstUser); // keep iterating: refine or fix
   if (base) return refine(base, firstUser);
   const request = [...firstUser.matchAll(/^Request: (.*)$/gm)].pop()?.[1] || "";
@@ -403,5 +406,5 @@ function demoAnswer(request, prompt, messages) {
       [[opener.selector, menu], [hit.selector, hit.label]], [[opener.selector, `Open the ${menu} menu`], [hit.selector, `Choose ${hit.label}`]]);
     return ans(`Here it is: **${hit.label}** [1].`, [[hit.selector, hit.label]]);
   }
-  return ans(`Demo mode only knows a few questions about the demo sites. With a local model (\`ollama pull qwen2.5-coder:7b\`) you can ask anything about this page.`);
+  return ans(`The demo model only knows a few questions about the demo sites. Connect a model (run \`morse setup\`) to ask anything about this page.`);
 }

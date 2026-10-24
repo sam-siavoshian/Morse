@@ -126,7 +126,10 @@ test("mods at scale: 30 watch mods share one observer and stay cheap on a stream
     await t.page.evaluate(() => window.__stream(2000));
     const run = await t.snap();
     const ms = (run.ms.mo || 0) + (run.ms.raf || 0) + (run.ms.timeout || 0);
-    assert.ok(ms / 2 < 25, `Morse spent ${(ms / 2).toFixed(1)} ms per second of streaming`);
+    // Wall clock, so generous (a loaded machine stretches it; 30 observers took 66-78 ms/s);
+    // the counts below are the strict part.
+    assert.ok(ms / 2 < 40, `Morse spent ${(ms / 2).toFixed(1)} ms per second of streaming`);
+    assert.ok((run.calls.mo || 0) <= 200, `observer callbacks: ${run.calls.mo} (30 observers made ~2,000 in 2 s)`);
     assert.ok((run.calls.raf || 0) <= 130, `rAF callbacks: ${run.calls.raf} (one batch per frame at most)`);
     // the newest message got every matching mod
     assert.ok(await t.page.evaluate(() => document.querySelector("#log > .msg:last-child").hasAttribute("data-p0")));
@@ -221,6 +224,7 @@ test("hostile page: frozen intrinsics, filtered listeners, broken MutationObserv
     await t.page.evaluate(() => window.__hostile.add(3));
     await until(() => allSeen(t.page), 4000, "watch to see new items (pristine MutationObserver and rAF)");
     await opensAndCloses(t);
+    await t.page.click("h1"); // focus back on the page (Morse's own UI keeps the keys it has focus for)
     await t.page.keyboard.press("KeyX");
     assert.ok((await t.page.evaluate(() => window.__hostile.keys || [])).includes("KeyX"), "the page still gets its own keys");
     await noErrors(t);

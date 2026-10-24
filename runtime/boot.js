@@ -192,7 +192,7 @@ async function applyMod(m) {
     if (!live()) return;
     const r = await call("exec", { modId: m.id, js: m.js });
     health(m, r);
-    if (r && !r.ok) { warn(m.title, r.error); notify(`Couldn't run “${m.title}” here. Turn it off or edit its code in Mods.`); }
+    if (r && !r.ok) { warn(m.title, r.error); notify(`“${m.title}” didn't work on this page. Open Mods to turn it off or fix it.`); }
   }
   ran(m);
 }

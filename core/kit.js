@@ -96,8 +96,12 @@ function installMorseKit() {
   function guard(c, fn) {
     return function (...args) {
       if (c.dead) return; // the mod was turned off; a queued callback must not run
-      try { return fn.apply(this, args); }
-      catch (e) { c.errors.push(String(e && e.stack || e)); console.warn("[morse]", c.id, e); }
+      const fail = e => { c.errors.push(String(e && e.stack || e)); console.warn("[morse]", c.id, e); };
+      try {
+        const r = fn.apply(this, args);
+        if (r && typeof r.then === "function") r.then(null, fail); // async handlers (show-once hook)
+        return r;
+      } catch (e) { fail(e); }
     };
   }
 
@@ -166,6 +170,65 @@ function installMorseKit() {
       byText(selector, text) {
         const needle = String(text).toLowerCase();
         return [...document.querySelectorAll(selector)].find(e => (e.textContent || "").toLowerCase().includes(needle)) || null;
+      },
+      // ---- show-once hook: doing steps for the user (core/showonce.js)
+      // waitFor: the first shown match (with `text`: whose text contains it),
+      // once it appears; throws after `timeout` ms.
+      waitFor(selector, opts = {}) {
+        const { text = null, within = document, timeout = 5000 } = typeof opts === "number" ? { timeout: opts } : opts;
+        const needle = text == null ? null : String(text).toLowerCase().replace(/\s+/g, " ").trim();
+        const find = () => [...within.querySelectorAll(selector)].filter(e => !e.closest("[data-morse-ui],[data-morse]")
+          && (needle == null || (e.textContent || "").toLowerCase().replace(/\s+/g, " ").includes(needle)));
+        return new Promise((resolve, reject) => {
+          const t0 = Date.now();
+          const tick = guard(c, () => {
+            const all = find();
+            const el = all.find(e => e.getClientRects().length) || (Date.now() - t0 >= timeout ? all[0] : null);
+            if (el) return resolve(el);
+            if (Date.now() - t0 >= timeout) return reject(new Error(`Couldn't find ${text != null ? `“${text}”` : selector} on the page`));
+            m.after(100, tick);
+          });
+          tick();
+        });
+      },
+      sleep(ms) { return new Promise(r => m.after(ms, r)); },
+      // type: puts text in a field the way typing does (frameworks see input and change)
+      type(el, text) {
+        el.focus?.();
+        if (el.isContentEditable) {
+          el.textContent = String(text);
+          el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: String(text) }));
+          return el;
+        }
+        const proto = Object.getPrototypeOf(el);
+        const set = Object.getOwnPropertyDescriptor(proto, "value")?.set;
+        set ? set.call(el, String(text)) : (el.value = String(text));
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        return el;
+      },
+      // choose: an option of a <select> by its text or value; a checkbox or radio on (true) or off
+      choose(el, want) {
+        if (el.localName === "select") {
+          const w = String(want).toLowerCase();
+          const opt = [...el.options].find(o => o.value === String(want)) || [...el.options].find(o => o.text.trim().toLowerCase() === w)
+            || [...el.options].find(o => o.text.toLowerCase().includes(w));
+          if (!opt) throw new Error(`No option “${want}”`);
+          el.value = opt.value;
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+          el.dispatchEvent(new Event("change", { bubbles: true }));
+        } else if (el.checked !== (want !== false)) el.click();
+        return el;
+      },
+      // key: a key press on el; Enter in a form field submits its form like a real one
+      key(el, key, mods = {}) {
+        el = el || document.activeElement || document.body;
+        const init = { key, code: key.length === 1 ? (/[a-z]/i.test(key) ? "Key" + key.toUpperCase() : /\d/.test(key) ? "Digit" + key : "") : key,
+          bubbles: true, cancelable: true, ctrlKey: !!mods.ctrl, shiftKey: !!mods.shift, altKey: !!mods.alt, metaKey: !!mods.meta };
+        const go = el.dispatchEvent(new KeyboardEvent("keydown", init));
+        el.dispatchEvent(new KeyboardEvent("keyup", init));
+        if (go && key === "Enter" && el.form && el.localName === "input") el.form.requestSubmit ? el.form.requestSubmit() : el.form.submit();
+        return el;
       },
       store: {
         get(k, d = null) { try { const v = localStorage.getItem(`morse:${c.id}:${k}`); return v == null ? d : JSON.parse(v); } catch { return d; } },

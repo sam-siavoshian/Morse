@@ -1,6 +1,7 @@
 // Ask and find: the reply parser (mod vs answer vs malformed, streaming
 // partials), the markdown subset, follow-up turns in the prompt, and the
 // engine's answer branch (no JS runs, answers stream as events).
+import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { replyKind, parseAnswer, parseReply, renderMarkdown, askTurnsToMessages } from "../core/answer.js";

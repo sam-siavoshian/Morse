@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Playwright is not an npm dependency: it's installed globally, the way the
+  # tests expect it (createRequire(import.meta.url)("playwright") via NODE_PATH).
+  PLAYWRIGHT_VERSION: "1.63.0"
+
+jobs:
+  check:
+    name: Build and check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # build + node --check on every JS file + runtime bundle duplicate names + extension files present
+      - run: npm run check
+
+  test:
+    name: Tests (headless)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+      - name: Install Playwright (global) and Chromium
+        run: |
+          npm install -g "playwright@${PLAYWRIGHT_VERSION}"
+          echo "NODE_PATH=$(npm root -g)" >> "$GITHUB_ENV"
+          playwright install --with-deps chromium
+      - name: npm test
+        shell: bash
+        run: npm test 2>&1 | tee test.log
+      - name: Upload test log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-log
+          path: test.log
+          if-no-files-found: ignore
+
+  test-ui:
+    name: Extension tests (Xvfb)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+      - name: Install Playwright (global), Chromium and Xvfb
+        run: |
+          npm install -g "playwright@${PLAYWRIGHT_VERSION}"
+          echo "NODE_PATH=$(npm root -g)" >> "$GITHUB_ENV"
+          playwright install --with-deps chromium
+          sudo apt-get install -y --no-install-recommends xvfb
+      # builds dist/extension, then runs the display tests under xvfb-run
+      - name: npm run test:ui
+        shell: bash
+        run: npm run test:ui 2>&1 | tee test-ui.log
+      - name: Upload docs/ui and the log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui
+          path: |
+            docs/ui
+            test-ui.log
+          if-no-files-found: ignore

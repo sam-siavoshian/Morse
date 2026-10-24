@@ -46,6 +46,7 @@ export function bundleUI() {
   shared.push(inlineModule("../core/summary.js"), inlineModule("../core/control.js")); // user control
   shared.push(inlineModule("../core/gallery.js")); // gallery hook: Mods for this site (68-gallery.js)
   shared.push(inlineModule("../core/a11y.js")); // Easier to use: page tools, Check this page, fixes
+  shared.push(inlineModule("../core/showonce.js")); // show-once hook: steps, selectors, words (64-show-once.js)
   shared.push(inlineModule("../core/heal.js")); // self-heal hook: mods that keep working (71-heal.js)
   return guarded("ui", `const TOKENS_CSS = ${JSON.stringify(tokens)};\n${shared.join("\n")}\n${parts.join("\n")}`);
 }

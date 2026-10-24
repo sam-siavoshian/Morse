@@ -39,9 +39,9 @@ const Voice = (() => {
     micBtn.setAttribute("aria-pressed", String(st === "listening" || st === "starting"));
     const talk = hotkey("talk"), same = talk && talk === hotkey("open");
     const how = talk ? ` · ${same ? "hold" : "press"} ${hotkeyText("talk")}` : "";
-    micBtn.title = st === "listening" ? "Stop listening" : st === "transcribing" ? "Turning speech into text…" : (availability().why || `Voice input${how}`);
+    micBtn.title = st === "listening" ? "Stop listening" : st === "transcribing" ? "Turning speech into text…" : (availability().why || `Talk${how}`);
     bar.classList.toggle("listening", st === "listening" || st === "starting");
-    input.placeholder = st === "listening" ? "Listening…" : st === "transcribing" ? "Turning speech into text…" : S.phase === "result" ? "Refine…" : "Describe a change…";
+    input.placeholder = st === "listening" ? "Listening…" : st === "transcribing" ? "Turning speech into text…" : S.phase === "result" ? "Describe what to change…" : "Describe a change…";
     if (st === "listening") stickyHint(`${radar(12)} Listening · ${mode === "hold" ? "release to finish" : `pause or <kbd>Esc</kbd> to finish`}`);
     else if (st === "transcribing") stickyHint(`${radar(12)} Turning speech into text`);
     else if (hintSticky) stickyHint("");
@@ -59,11 +59,11 @@ const Voice = (() => {
   const canRecord = () => !!(navigator.mediaDevices?.getUserMedia && globalThis.MediaRecorder && hostVoice?.transcribe);
   const canSpeech = () => !!SR && !speechBroken;
   function availability() {
-    if (!globalThis.isSecureContext) return { ok: false, why: "Voice only works on secure (https) pages" };
+    if (!globalThis.isSecureContext) return { ok: false, why: "Voice only works on pages whose address starts with https" };
     if (policyBlocked()) return { ok: false, why: "This page doesn't allow the microphone" };
     if (!canSpeech() && !canRecord()) {
       if (!navigator.mediaDevices?.getUserMedia) return { ok: false, why: "This app doesn't allow the microphone. Type your change instead." };
-      return { ok: false, why: hostVoice?.hint || "Voice isn't set up for this app yet" };
+      return { ok: false, why: hostVoice?.hint || "Voice isn't set up here yet. Type your change instead." };
     }
     return { ok: true, why: "" };
   }
@@ -92,7 +92,8 @@ const Voice = (() => {
     if (n === "NotAllowedError" || n === "SecurityError") return policyBlocked() ? "This page doesn't allow the microphone" : "Microphone access is blocked. Allow it for this site, then try again.";
     if (n === "NotFoundError" || n === "OverconstrainedError" || n === "DevicesNotFoundError") return "No microphone found. Plug one in and try again.";
     if (n === "NotReadableError" || n === "AbortError" || n === "TrackStartError") return "The microphone is in use by another app. Close it and try again.";
-    return `Couldn't start the microphone${n ? ` (${n})` : ""}. Try again.`;
+    if (n) console.warn("[morse] microphone", n);
+    return "Couldn't start the microphone. Try again.";
   }
 
   // ---- start / stop
@@ -153,7 +154,7 @@ const Voice = (() => {
     if (srText && !srFailed) text = srText;
     else if (chunks.length) {
       try { text = await transcribeBlob(new Blob(chunks, { type: mime })); }
-      catch (e) { error = e.message || String(e); }
+      catch (e) { console.warn("[morse] voice", e); error = plainError(e); }
     } else if (srFailed && !canRecord()) error = hostVoice?.hint || "Voice isn't available in this app. Type your change instead.";
     if (my !== session) return;
     teardown();

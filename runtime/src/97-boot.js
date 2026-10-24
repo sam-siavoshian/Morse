@@ -46,14 +46,14 @@ B.ready.then(hello => {
     setPrefs(B.prefs());
     Voice.configure(hello.voice);
     PromptHistory.load();
-  } finally { B.started(); }
+  } finally { B.started(); S.ready = true; /* tests: the host answered hello and the mods are on */ }
 }).catch(e => console.warn("[morse]", e));
 
 // Read-only status for automated screenshots/tests; off unless opted in.
 // Mirrored into a DOM attribute so it is readable from any JS world.
 if (DEBUG) setInterval(() => {
   hostEl.dataset.status = JSON.stringify({
-    phase: S.phase, hint: hint.textContent, ticker: ticker.textContent, mods: S.mods.length,
+    ready: !!S.ready, phase: S.phase, hint: hint.textContent, ticker: ticker.textContent, mods: S.mods.length,
     open: S.open, input: input.value, voice: Voice.state(), backend: Voice.backend(), level: Voice.level(), db: Voice.db(), pane: paneKind,
     focus: root.activeElement?.className || root.activeElement?.tagName || "", hotkeys: HOTKEYS,
   });

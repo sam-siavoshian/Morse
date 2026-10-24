@@ -1,5 +1,6 @@
 // extension/host.js (the content-script bridge) with a fake service-worker
 // port: calls in flight when the worker restarts settle with an error.
+import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
