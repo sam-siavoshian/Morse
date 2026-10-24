@@ -2,9 +2,9 @@
 
 **Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like.**
 
-[![The {{V2}}-second demo](poster-demo-v2.png)](morse-demo-v2.mp4)
+[![The 92-second demo](poster-demo-v2.png)](morse-demo-v2.mp4)
 
-[Watch the demo](morse-demo-v2.mp4) ({{V2}} seconds, no sound) · [Website](https://sam-siavoshian.github.io/RRAA/site/) · [Source](https://github.com/sam-siavoshian/RRAA)
+[Watch the demo](morse-demo-v2.mp4) (92 seconds, no sound) · [Website](https://sam-siavoshian.github.io/RRAA/site/) · [Source](https://github.com/sam-siavoshian/RRAA)
 
 ## Who it's for
 
@@ -51,7 +51,7 @@ Everything here was recorded from real runs, by [`demo/record-launch.js`](../../
 
 **The apps.** Tunes (a music app), Postbox (an email app) and The Daily Byte (a news site) are the demo apps in this repo ([`demo/sites/`](../../demo/sites/)). They stand in for real apps so the recording can be made again. In the browser they get made-up addresses (tunes.example, postbox.example, byte.example) instead of this computer's address and a port number. The desktop app is Tunes packed as a real Electron app ([`demo/electron-app`](../../demo/electron-app)), opened with a real `morse launch` typed into a terminal.
 
-**The model.** Every change in the new video was written by **Claude Code with the `haiku` model**, with no edits: the sleep timer, the button from Show me once, the fixed covers mod, and the round covers in the desktop app. The bar shows the real time each one took: {{T_TUNES}} for the sleep timer, {{T_SO}} for the button, {{T_HEAL}} for the fix, {{T_DESK}} for the round covers. Runs that failed or added nothing visible were thrown away and recorded again ({{RETRIES}}).
+**The model.** Every change in the new video was written by **Claude Code with the `haiku` model**, with no edits: the sleep timer, the button from Show me once, the fixed covers mod, and the round covers in the desktop app. The bar shows the real time each one took: 24.7 s for the sleep timer, 18.2 s for the button, 13.1 s for the fix, 14.6 s for the round covers. The script throws away a run that fails or adds nothing visible and records it again. In the takes used here, each change was the model's first answer. (While the edit was being worked out, one earlier Show me once take was thrown away: the model's button didn't say “archive”, so the script couldn't find it. One desktop take was recorded again because the app didn't start.)
 
 **What is sped up.** Each sped-up part says so on screen:
 
@@ -83,15 +83,15 @@ The new video and its clips:
 
 | File | What it is | Size |
 |---|---|---|
-| [`morse-demo-v2.mp4`](morse-demo-v2.mp4) | The demo: sleep timer, Show me once, a mod fixed after a site update, a desktop app, the gallery. 1280×800, 30 fps, H.264, {{V2}} s | {{S_V2}} |
-| [`poster-demo-v2.png`](poster-demo-v2.png) | Poster frame for the demo, 1200×675 | {{S_PV2}} |
-| [`clip-show-once.mp4`](clip-show-once.mp4) | Clip: archive one email by hand, get a button for all of them, {{D_SO}} s | {{S_SO}} |
-| [`clip-show-once.gif`](clip-show-once.gif) | The same clip as a GIF, {{GIF_W}} px wide | {{S_GIF}} |
-| [`poster-show-once.png`](poster-show-once.png) | Poster frame, 1200×675 | {{S_PSO}} |
-| [`clip-self-heal.mp4`](clip-self-heal.mp4) | Clip: a site update breaks a mod, Fix it, {{D_HEAL}} s | {{S_HEAL}} |
-| [`poster-self-heal.png`](poster-self-heal.png) | Poster frame, 1200×675 | {{S_PHEAL}} |
-| [`clip-desktop-app.mp4`](clip-desktop-app.mp4) | Clip: `morse launch`, then “make the covers round” in the desktop app, {{D_DESK}} s | {{S_DESK}} |
-| [`poster-desktop-app.png`](poster-desktop-app.png) | Poster frame, 1200×675 | {{S_PDESK}} |
+| [`morse-demo-v2.mp4`](morse-demo-v2.mp4) | The demo: sleep timer, Show me once, a mod fixed after a site update, a desktop app, the gallery. 1280×800, 30 fps, H.264, 92 s | 4.6 MB |
+| [`poster-demo-v2.png`](poster-demo-v2.png) | Poster frame for the demo, 1200×675 | 159 KB |
+| [`clip-show-once.mp4`](clip-show-once.mp4) | Clip: archive one email by hand, get a button for all of them, 15 s | 0.6 MB |
+| [`clip-show-once.gif`](clip-show-once.gif) | The same clip as a GIF, 720 px wide | 1.5 MB |
+| [`poster-show-once.png`](poster-show-once.png) | Poster frame, 1200×675 | 214 KB |
+| [`clip-self-heal.mp4`](clip-self-heal.mp4) | Clip: a site update breaks a mod, Fix it, 13 s | 1.0 MB |
+| [`poster-self-heal.png`](poster-self-heal.png) | Poster frame, 1200×675 | 215 KB |
+| [`clip-desktop-app.mp4`](clip-desktop-app.mp4) | Clip: `morse launch`, then “make the covers round” in the desktop app, 15 s | 0.8 MB |
+| [`poster-desktop-app.png`](poster-desktop-app.png) | Poster frame, 1200×675 | 202 KB |
 
 The first video and its clips (sleep timer, word count, Edit tools, Page tools, share):
 
