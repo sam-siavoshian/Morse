@@ -244,7 +244,10 @@ test("keyboard and a11y: dialog, live status, Tab stays in the bar, focus comes 
     await page.keyboard.press("Tab");
     await t.waitFor(s => s.focus === "sug");
     await page.keyboard.press("ArrowRight");
-    assert.equal(await page.evaluate(`document.querySelector("[data-morse-ui]").shadowRoot.activeElement.textContent`), "Hide distractions");
+    // The page's own suggestions (58-suggest.js): the second chip, whatever this page offers.
+    const second = await page.evaluate(`[...document.querySelector("[data-morse-ui]").shadowRoot.querySelectorAll(".sug")][1].textContent`);
+    assert.ok(second);
+    assert.equal(await page.evaluate(`document.querySelector("[data-morse-ui]").shadowRoot.activeElement.textContent`), second);
     await page.keyboard.press("Escape");
     await t.waitFor(s => s.focus === "in"); // Esc from a chip goes back to the input
     await page.keyboard.type("?");

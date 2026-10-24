@@ -9,10 +9,24 @@ import { PROVIDERS, USER_PROVIDERS, settingsLabel } from "../core/providers.js";
 
 export { settingsLabel };
 
+// `morse setup` before 0.2.1 wrote its choice as config.json "model":
+// { provider, apiKey? }, which nothing read. Honor it (first-run hook).
+const legacy = cfg => (cfg.model && typeof cfg.model === "object" ? cfg.model : {});
+
+// Moves that old "model" record into the shape above (before it is dropped).
+export function migrateLegacy(cfg) {
+  const old = legacy(cfg);
+  if (old.provider && old.provider !== "auto" && !cfg.provider) cfg.provider = old.provider;
+  if (old.apiKey && (old.provider === "anthropic" || old.provider === "openai")) cfg.keys = { [old.provider]: old.apiKey, ...cfg.keys };
+  if (old.baseUrl && old.provider === "openai" && old.baseUrl !== "https://api.openai.com") cfg.baseUrls = { openai: old.baseUrl, ...cfg.baseUrls };
+  return cfg;
+}
+
 export function keysFrom(cfg, env = process.env) {
+  const old = legacy(cfg);
   return {
-    anthropic: cfg.keys?.anthropic || env.ANTHROPIC_API_KEY || "",
-    openai: cfg.keys?.openai || env.OPENAI_API_KEY || "",
+    anthropic: cfg.keys?.anthropic || (old.provider === "anthropic" && old.apiKey) || env.ANTHROPIC_API_KEY || "",
+    openai: cfg.keys?.openai || (old.provider === "openai" && old.apiKey) || env.OPENAI_API_KEY || "",
   };
 }
 
@@ -20,7 +34,7 @@ export function settingsFromConfig(cfg, overrides = {}, { env = process.env, har
   const keys = keysFrom(cfg, env);
   // MORSE_PROVIDER overrides the config for one run (scripts and tests; it is
   // also the only way to pick the internal "demo" replay fixture).
-  let provider = overrides.provider || env.MORSE_PROVIDER || cfg.provider || "";
+  let provider = overrides.provider || env.MORSE_PROVIDER || cfg.provider || legacy(cfg).provider || "";
   let detected = false;
   if (!provider) {
     detected = true;

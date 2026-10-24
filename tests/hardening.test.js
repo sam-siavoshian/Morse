@@ -371,6 +371,11 @@ test("first-run coach: page tools saving on their own don't finish it or show th
   await scenario({ query: "?onboarding&light" }, async ({ page, waitFor }) => {
     await pressOpen(page);
     await waitFor(s => s.open);
+    // A new user's bar keeps Page tools back until the first save; Help shows everything (first run).
+    await page.keyboard.press("F1");
+    await waitFor(s => s.pane === "help");
+    await page.keyboard.press("F1");
+    await waitFor(s => s.pane === "");
     await page.locator(".gm-qbtn").click();
     await page.locator(".gm-menu button[data-k=dark]").click();
     await page.waitForFunction(() => window.__fake.log.some(m => m.type === "mods.save"));

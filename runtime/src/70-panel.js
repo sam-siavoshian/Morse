@@ -33,6 +33,7 @@ const Health = (() => {
     let stats = null;
     try { stats = await call("stats", { modId: id }); } catch {} // an older host can't tell; assume fine
     if (st.get(id) !== s) return;
+    if (stats?.paused) { st.delete(id); return Guard.heard(id, stats.paused); } // guard hook: the kit paused it (64-guard.js)
     const w = stats?.watches || [];
     if (stats?.error) return broken(id, modProblem(stats.error), stats.error);
     if (w.length && w.every(x => !x.total)) {
@@ -138,10 +139,11 @@ function renderPanel() {
 
 function renderList() {
   const list = panel.querySelector(".list");
-  const shown = PanelUI.q ? S.mods.filter(m => matches(m, PanelUI.q)) : S.mods;
-  list.innerHTML = !S.mods.length
+  const mods = S.mods.filter(m => m.kind !== "style"); // your-style hook: Your style has its own row at the top
+  const shown = PanelUI.q ? mods.filter(m => matches(m, PanelUI.q)) : mods;
+  list.innerHTML = YourStyle.rowHtml() + (!mods.length // your-style hook (72-style.js)
     ? emptyModsHtml() /* onboarding hook: 59-onboarding.js */
-    : shown.length ? shown.map(rowHtml).join("") : `<p class="empty">No mods match “${esc(PanelUI.q)}”.</p>`;
+    : shown.length ? shown.map(rowHtml).join("") : `<p class="empty">No mods match “${esc(PanelUI.q)}”.</p>`);
   list.insertAdjacentHTML("beforeend", gallerySectionHtml()); // gallery hook: Mods for this site (68-gallery.js)
   const r = rows();
   const i = Math.max(0, r.findIndex(a => a.dataset.id === PanelUI.focus));
@@ -164,6 +166,7 @@ function rowHtml(m) {
           <div class="tags">${m.css.trim() ? "<span>style</span>" : ""}${m.js.trim() ? "<span>script</span>" : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : "<span>whole page</span>"}${when ? `<em class="when">${changed ? "changed" : "added"} ${esc(when)}</em>` : ""}</div>
         </div>
         ${broken ? `<div class="health" role="status"><p><b>${esc(h.lead || "Not working." /* self-heal hook: 71-heal.js */)}</b> ${esc(h.reason)}</p><button class="primary" data-a="fix">Fix it</button></div>` : ""}
+        ${guardRowHtml(m) /* guard hook: Paused because it was slowing this page down (64-guard.js) */}
         ${galleryRowHtml(m) /* gallery hook: Update available (68-gallery.js) */}
         ${healRowHtml(m) /* self-heal hook: Share the fix (71-heal.js) */}
         <div class="btns"><button data-a="refine">Change</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}">History <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">Copy link</button><button data-a="share">Share</button><button data-a="code">Edit code</button><button data-a="del">Delete</button></div>
@@ -183,6 +186,7 @@ function versionsHtml(m, vs) {
 // ---- actions
 async function toggleMod(m, on) {
   m.enabled = on;
+  if (on) Guard.clear(m); // guard hook: turned back on by hand (64-guard.js)
   await call("mods.save", { mod: m });
   m.enabled ? await applyMod(m) : await removeMod(m.id);
   renderPanel();

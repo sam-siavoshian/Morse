@@ -21,7 +21,7 @@ await fs.mkdir(path.join(out, "icons"), { recursive: true });
 
 // The worker's own modules import ../core and are only ever bundled into
 // background.js; copied raw they'd be dead files with broken imports.
-const BUNDLED_ONLY = ["background.js", "bar-host.js", "onboarding-host.js", "control-host.js", "gallery-host.js"];
+const BUNDLED_ONLY = ["background.js", "bar-host.js", "onboarding-host.js", "control-host.js", "gallery-host.js", "style-host.js" /* your-style hook */];
 for (const f of await fs.readdir(path.join(root, "extension"))) {
   if (!BUNDLED_ONLY.includes(f)) await fs.copyFile(path.join(root, "extension", f), path.join(out, f));
 }

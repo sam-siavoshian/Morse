@@ -153,6 +153,7 @@ domReady.then(() => { const p = styleParent(); if (p) for (const s of styles.val
 const Control = { pause: { all: false, sites: {} }, off: false, held: new Set(), suspect: null, tab: "" };
 try { Control.off = W.sessionStorage.getItem("morse:off") === "1"; } catch {}
 try { Control.tab = W.sessionStorage.getItem("morse:tab") || newId(); W.sessionStorage.setItem("morse:tab", Control.tab); } catch {}
+const seen = key => { try { return !!W.sessionStorage.getItem(key); } catch { return false; } };
 // Requests older (and demo) hosts may not answer.
 function ctl(type, payload = {}, ms = 4000) {
   return new Promise(resolve => {
@@ -189,18 +190,85 @@ function changeHeld(fn) {
 const healthLog = new Map();
 function health(m, r) { if (ui?.health) { try { ui.health(m, r); } catch (e) { warn(e); } } else healthLog.set(m.id, [m, r]); }
 
+// ---- guards (64-guard.js has the UI; the rules are core/guard.js): CSS that
+// would hide the whole page is never applied, code that could never finish
+// doesn't start where the page can't be rescued (the extension), and code that
+// hides <html> or <body> is undone. The UI turns the mod off and says why.
+const guardKey = m => cssKey(`${m.css}\n${m.js}`);
+const shown = el => { if (!el) return true; const s = pristine.getComputedStyle(el); return s.display !== "none" && !(+s.opacity < 0.05); };
+const pageShown = () => shown(D.documentElement) && shown(D.body);
+const styleOf = el => (el ? el.getAttribute("style") : null);
+async function guardBefore(m) {
+  if (m.guardOk && m.guardOk === guardKey(m)) return { ok: true };
+  if (cssHidesPage(m.css)) { uiTask("guardStop", m.id, "hid"); return null; }
+  if (!(m.js || "").trim()) return {};
+  if (endlessLoop(codeOnly(String(m.js)))) {
+    await ready; // on the desktop the host stops a frozen page (daemon/guard.js)
+    if (S.mode !== "desktop") { uiTask("guardStop", m.id, "endless"); return null; }
+  }
+  return {};
+}
+// Taken right before its code runs, and again after: the only style reads the
+// boot makes (two each, and mods sent in one go share the first look).
+let lookNow = null;
+const guardLook = () => {
+  if (!lookNow) {
+    lookNow = { shown: pageShown(), html: styleOf(D.documentElement), body: styleOf(D.body) };
+    pristine.setTimeout(() => { lookNow = null; }, 0);
+  }
+  return lookNow;
+};
+function guardAfter(m, look) {
+  if (!look?.shown || pageShown()) return;
+  const put = (el, v) => { if (el && el.getAttribute("style") !== v) v == null ? el.removeAttribute("style") : el.setAttribute("style", v); };
+  put(D.documentElement, look.html);
+  put(D.body, look.body);
+  uiTask("guardStop", m.id, "hid-js");
+}
+// An exec result the guards produced: said by the guard, not as an error.
+function guardPaused(m, r) {
+  if (!/^Morse (paused|stopped) it\b/.test(String(r?.error || ""))) return false;
+  if (r.paused) uiTask("guardHeard", m.id, { why: r.paused, error: r.error });
+  return true;
+}
+// The kit paused a running mod ("morse:paused", core/kit.js). Once the UI is
+// here, 64-guard.js hears it; before that, the host's __stats is asked (a page
+// can fire the event, but can't fake that) and only then is the UI loaded.
+const heardIds = new Set();
+let heardTimer = 0;
+on(D, "morse:paused", e => {
+  if (ui || !live()) return;
+  let id = null;
+  try { id = JSON.parse(e.detail).id; } catch {}
+  const ids = id ? [String(id)] : S.mods.filter(m => m.enabled && (m.js || "").trim()).map(m => m.id);
+  ids.forEach(x => heardIds.add(x));
+  pristine.clearTimeout(heardTimer);
+  heardTimer = pristine.setTimeout(async () => {
+    const list = [...heardIds];
+    heardIds.clear();
+    for (const x of list) {
+      const st = await call("stats", { modId: x }).catch(() => null);
+      if (st?.paused) uiTask("guardHeard", x, st.paused);
+    }
+  }, 30);
+});
+
 async function applyMod(m) {
   await controlled;
   if (held(m) || !live()) return;
+  const guard = await guardBefore(m); if (!guard || !live()) return;
   setCss(m.id, m.css);
+  let look = null;
   if ((m.js || "").trim()) {
     await domReady;
     if (!live()) return;
+    if (!guard.ok) look = guardLook();
     const r = await call("exec", { modId: m.id, js: m.js });
     health(m, r);
-    if (r && !r.ok) { warn(m.title, r.error); notify(`“${m.title}” didn't work on this page. Open Mods to turn it off or fix it.`); }
+    if (r && !r.ok && !guardPaused(m, r)) { warn(m.title, r.error); notify(`“${m.title}” didn't work on this page. Open Mods to turn it off or fix it.`); }
   }
   ran(m);
+  guardAfter(m, look);
 }
 async function removeMod(id) { setCss(id, ""); await call("off", { modId: id }); }
 
@@ -340,7 +408,7 @@ const Heal = (() => {
     };
     D.readyState === "complete" ? begin() : pristine.addEventListener(W, "load", begin, { once: true });
   });
-  const checkable = m => m.enabled && !held(m) && !!((m.css || "").trim() || (m.js || "").trim());
+  const checkable = m => m.enabled && !held(m) && !!((m.css || "").trim() || (m.js || "").trim()) && m.kind !== "style"; // Your style is never flagged
   async function learn(m, size) {
     const { counts, transient } = measure(selectorsIn(m));
     const fp = makeFingerprint(m, counts, { url: location.href, size, transient });
@@ -409,9 +477,9 @@ const Heal = (() => {
 let ui = null, uiLoading = null, pendingKey = null;
 const queued = [], toasts = [], tasks = [];
 // Work only the UI can do (a toast with buttons): load it, then run.
-function uiTask(name) {
-  if (ui) { try { ui[name]?.(); } catch (e) { warn(e); } return; }
-  tasks.push(name);
+function uiTask(name, ...args) {
+  if (ui) { try { ui[name]?.(...args); } catch (e) { warn(e); } return; }
+  tasks.push([name, args]);
   loadUI().catch(() => {});
 }
 function loadUI() {
@@ -467,6 +535,11 @@ syncMods().then(() => {
   const sus = Control.suspect, m = sus && S.mods.find(x => x.id === sus.id);
   if (sus && (!m || !m.enabled)) { Control.held.delete(sus.id); Control.suspect = null; ctl("control.forgive"); }
   else if (m || (Control.off && S.mods.some(x => x.enabled))) uiTask("controlReady");
+  // A mod that froze the page was turned off by the host: 64-guard.js says so once.
+  if (S.mods.some(x => !x.enabled && x.paused?.why === "froze" && Date.now() - Date.parse(x.paused.at) < 5 * 60000 && !seen(`morse:guard:${x.id}:${x.paused.at}`))) uiTask("guardReady");
+  // Your style, fitted to this site once with the model, when the person turned that on (72-style.js).
+  const ys = S.mods.find(x => x.kind === "style");
+  if (ys?.enabled && ys.adapt && !ys.fitted && !S.mods.some(x => x.parent === "morse-style") && W.top === W && !held(ys)) uiTask("styleReady");
   Heal.soon(); // self-heal: after the page settles and idles
 }).catch(e => warn("couldn't load mods", e));
 const ready = (async () => {
@@ -507,7 +580,7 @@ Object.defineProperty(W, BOOT, { configurable: true, value: Object.freeze({
     for (const t of toasts.splice(0)) try { ui.toast(t); } catch (e) { warn(e); }
     for (const [m, r] of healthLog.values()) health(m, r);
     healthLog.clear();
-    for (const name of tasks.splice(0)) try { ui[name]?.(); } catch (e) { warn(e); }
+    for (const [name, args] of tasks.splice(0)) try { ui[name]?.(...args); } catch (e) { warn(e); }
     Heal.adopted();
   },
 }) });

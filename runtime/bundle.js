@@ -26,9 +26,13 @@ const lean = src => src.replace(/^[ \t]*\/\*[\s\S]*?\*\/[ \t]*$/gm, "").replace(
 // core/heal.js (selectors, fingerprints, the verdict), not the wording,
 // candidate ranking or sharing, which stay with the UI.
 const HEAL_DETECT = "// ---- what the person reads";
+// The boot needs only what spots harm in core/guard.js (the words for the
+// model are added by the UI, 97-boot.js guardStop): from the page selectors
+// to endlessLoop, and cssKey.
+const GUARD_DETECT = { parts: [["// Selectors that mean", "// Requests where reloading"], ["// A short fingerprint of CSS", null]], also: ["endlessLoop", "codeOnly"] };
 
 export function bundleBoot() {
-  return lean(guarded("boot",`${inlineModule("../core/hotkeys.js")}\n${inlineModule("../core/prefs.js")}\n${inlineModule("../core/control.js")}\n${inlineModule("../core/heal.js", HEAL_DETECT)}\n// ---- runtime/boot.js\n${read("./boot.js")}`));
+  return lean(guarded("boot",`${inlineModule("../core/hotkeys.js")}\n${inlineModule("../core/prefs.js")}\n${inlineModule("../core/control.js")}\n${inlineModule("../core/heal.js", HEAL_DETECT)}\n${inlineModule("../core/guard.js", null, GUARD_DETECT)}\n// ---- runtime/boot.js\n${read("./boot.js")}`));
 }
 
 export function bundleUI() {
@@ -48,6 +52,8 @@ export function bundleUI() {
   shared.push(inlineModule("../core/a11y.js")); // Easier to use: page tools, Check this page, fixes
   shared.push(inlineModule("../core/showonce.js")); // show-once hook: steps, selectors, words (64-show-once.js)
   shared.push(inlineModule("../core/heal.js")); // self-heal hook: mods that keep working (71-heal.js)
+  shared.push(inlineModule("../core/style.js")); // your-style hook: one style on every site (72-style.js)
+  shared.push(inlineModule("../core/guard.js")); // guard hook: CSS that would hide the whole page (64-guard.js)
   return guarded("ui", `const TOKENS_CSS = ${JSON.stringify(tokens)};\n${shared.join("\n")}\n${parts.join("\n")}`);
 }
 
@@ -59,13 +65,18 @@ export function bundleRuntime() {
 // Inlines a dependency-free ES module as a block whose exports become locals,
 // so its private helpers can't collide with runtime names.
 // until: inline only the part of the file before this line.
-function inlineModule(rel, until = null) {
+// parts: only these [from, to] slices of it (null: its start or end), and
+// also: private names to hand out as well.
+function inlineModule(rel, until = null, { parts = null, also = [] } = {}) {
   let src = read(rel);
-  if (until) {
-    const at = src.indexOf(until);
-    if (at < 0) throw new Error(`${rel}: no "${until}" to cut at (runtime/bundle.js)`);
-    src = src.slice(0, at);
-  }
-  const names = [...src.matchAll(/^export\s+(?:async\s+)?(?:function\*?|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)].map(m => m[1]);
+  const at = (marker, dflt) => {
+    if (marker == null) return dflt;
+    const i = src.indexOf(marker);
+    if (i < 0) throw new Error(`${rel}: no "${marker}" to cut at (runtime/bundle.js)`);
+    return i;
+  };
+  if (until) src = src.slice(0, at(until));
+  if (parts) src = parts.map(([a, b]) => src.slice(at(a, 0), at(b, src.length))).join("\n");
+  const names = [...src.matchAll(/^export\s+(?:async\s+)?(?:function\*?|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)].map(m => m[1]).concat(also);
   return `// ---- ${rel.replace("../", "")} (inlined)\nconst { ${names.join(", ")} } = (() => {\n${src.replace(/^export\s+/gm, "")}\nreturn { ${names.join(", ")} };\n})();`;
 }

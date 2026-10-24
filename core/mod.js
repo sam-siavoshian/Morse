@@ -15,7 +15,7 @@ export function newId() {
   return Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
 }
 
-export function createMod({ id, title, prompt, css, js, url, app, target, model, kind, edits, from, history, refined }) {
+export function createMod({ id, title, prompt, css, js, url, app, target, model, kind, edits, from, history, refined, parent }) {
   const now = new Date().toISOString();
   const manual = kind === "manual" || kind === "quick";
   return {
@@ -38,6 +38,7 @@ export function createMod({ id, title, prompt, css, js, url, app, target, model,
     // A draft refined in the bar before it was kept arrives with its versions.
     ...(Array.isArray(history) && history.length ? { history: versionsOf({ history }) } : {}),
     ...(typeof refined === "string" && refined && refined !== prompt ? { refined } : {}),
+    ...(parent === "morse-style" ? { parent } : {}), // your-style hook: fits Your style to this site (core/style.js)
   };
 }
 
@@ -137,7 +138,7 @@ export async function decodeShare(link) {
 
 // Links carry the current version only; the history stays on this machine.
 export function stripLocal(mod) {
-  const { enabled, history, fp, ...rest } = mod; // self-heal hook: fp describes this machine's page
+  const { enabled, history, fp, paused, guardOk, ...rest } = mod; // self-heal hook: fp describes this machine's page; guard hook: so do paused, guardOk
   return rest;
 }
 

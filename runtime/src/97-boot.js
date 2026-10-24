@@ -40,6 +40,10 @@ B.adopt({
   health: (m, r) => Health.ran(m, r), // repair: the panel marks mods that stopped working (70-panel.js)
   controlReady, // user control: the safe-start / off-switch notice after the first sync (63-control.js)
   healFound: () => Heal.found(), // self-heal: what boot.js found broken, for the dot, the note and Fix it (71-heal.js)
+  guardHeard: (id, p) => Guard.heard(id, p), // guard hook: the kit paused a mod (64-guard.js)
+  guardStop, // guard hook: boot.js didn't apply a mod, or undid it (64-guard.js)
+  guardReady, // guard hook: a mod that froze the page was turned off (64-guard.js)
+  styleReady: () => YourStyle.ready(), // your-style hook: fit it to this site once, if turned on (72-style.js)
 });
 B.ready.then(hello => {
   try {
@@ -49,6 +53,18 @@ B.ready.then(hello => {
     if (hello.debug) debugStatus(); // the host was started with MORSE_DEBUG=1
   } finally { B.started(); S.ready = true; /* tests: the host answered hello and the mods are on */ }
 }).catch(e => console.warn("[morse]", e));
+
+// boot.js applies the mods, so the guards around applyMod run there
+// (core/guard.js finds the harm); the reason the model gets for Fix it is
+// worded here, as 64-guard.js before() and after() word it.
+function guardStop(id, why) {
+  const m = S.mods.find(x => x.id === id);
+  if (!m) return;
+  const error = why === "hid-js"
+    ? "Morse paused it because after it ran the whole page was hidden (html or body ended up with display: none or opacity: 0). Never hide html, body, :root or *. Hide or change only the parts the user asked about."
+    : `Morse paused it. ${draftHarm(why === "endless" ? { js: m.js } : { css: m.css })?.model || ""}`;
+  Guard.heard(id, { why: why === "endless" ? "endless" : "hid", error });
+}
 
 // Read-only status for automated screenshots/tests; off unless opted in
 // (Playwright with morse:debug, or a desktop host started with MORSE_DEBUG=1,

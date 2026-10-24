@@ -72,7 +72,10 @@ test("boot: until Morse is opened it builds no UI, reads no layout and runs noth
     const c = k => s.counts[k] || 0;
     assert.equal(c("shadowRoot"), 0, "no overlay at boot");
     assert.equal(s.marks.ui, undefined, "nothing mounted");
-    assert.equal(c("getComputedStyle"), 0, "no style reads (theme detection waits for opening)");
+    // The only style reads: the guard's "is the page still shown" before and
+    // after a mod's code runs (runtime/boot.js guardLook); theme detection
+    // waits for opening.
+    assert.ok(c("getComputedStyle") <= 4, `style reads: ${c("getComputedStyle")}`);
     assert.equal(c("layoutRead"), 0, "no layout reads");
     assert.equal(c("setInterval"), 0, "no polling");
     assert.ok(c("observer") <= 2, `observers: ${c("observer")} (boot's document watcher + the kit's shared one)`);
@@ -319,6 +322,44 @@ test("self-heal: a mod whose page changed is found after idle, with no UI loaded
     await t.reset();
     await sleep(2000);
     assert.equal(notPings((await t.snap()).calls), 0, "nothing keeps running after the check");
+    assert.deepEqual(t.errors, []);
+  } finally { await t.close(); }
+});
+
+// ---------------------------------------------------------------- guards live in the boot too
+
+test("guards: with no UI loaded, CSS that hides the page never lands and a runaway mod is paused; then the UI says so", { skip }, async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { join } = await import("node:path");
+  const saved = async id => JSON.parse(await readFile(join(D.home, "mods", `${id}.json`), "utf8"));
+  const pausedMod = id => until(async () => { const m = await saved(id); return !m.enabled && m.paused ? m : null; }, 20000, `${id} to be paused`);
+  const toast = (t, id) => until(() => t.morse(P => P.roots.some(r => (r.querySelector(".ctl-toast:not([hidden])")?.textContent || "").includes("Paused")))
+    .then(v => v && id), 8000, "the toast");
+  // 1. Busy for over a second at once, after it started fine: the kit pauses
+  // it and fires "morse:paused", which only the boot is there to hear.
+  await D.setMods([mod("guardslow", "", `morse.after(1500, () => { const t = performance.now(); while (performance.now() - t < 1100) {} });`)]);
+  let t = await D.page();
+  try {
+    await t.page.goto(srv.url("/perf/big.html"));
+    await until(() => t.main(() => globalThis.morse?.__stats("guardslow")), 8000, "the mod to run");
+    assert.ok(!(await t.sends()).some(s => s[0] === "ui.load"), "no UI while it runs fine");
+    assert.equal((await pausedMod("guardslow")).paused.why, "slow");
+    const sends = (await t.sends()).map(s => s[0]);
+    assert.ok(sends.includes("stats") && sends.indexOf("stats") < sends.indexOf("ui.load"), `the boot asked the host before loading the UI: ${sends.join(" ")}`);
+    await toast(t, "guardslow");
+    assert.deepEqual(t.errors, []);
+  } finally { await t.close(); }
+  // 2. CSS that hides the whole page is never applied.
+  await D.setMods([mod("guardhide", "* { display: none !important; }", "")]);
+  t = await D.page();
+  try {
+    await t.page.goto(srv.url("/perf/big.html"));
+    const hide = await pausedMod("guardhide");
+    assert.equal(hide.paused.why, "hid");
+    assert.match(hide.paused.error, /^Morse paused it\. Your CSS hides the whole page/);
+    assert.equal(await t.main(() => document.querySelectorAll("style[data-morse-css]").length), 0, "its CSS never landed");
+    assert.equal(await t.main(() => getComputedStyle(document.body).display), "block", "the page shows");
+    await toast(t, "guardhide");
     assert.deepEqual(t.errors, []);
   } finally { await t.close(); }
 });
