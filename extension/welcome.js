@@ -35,6 +35,13 @@ const PLATFORM = detectPlatform(navigator);
 const send = msg => chrome.runtime.sendMessage({ ...msg, url: location.href }).catch(e => ({ error: e.message }));
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const DESKTOP_URL = "https://github.com/sam-siavoshian/RRAA/releases/latest"; // Morse Desktop's downloads (docs/desktop-app.md)
+// The marks of the models (brand/: desktop-app/ui/icons, one set for Morse
+// Desktop and the extension; its NOTICE says where they came from).
+const MARKS = { "claude-code": ["claude"], codex: ["openai"], anthropic: ["anthropic"], openai: ["openai"] };
+const mark = (provider, cls = "pmark") => {
+  const names = MARKS[provider];
+  return names ? `<span class="${cls}" aria-hidden="true">${names.map(n => `<img src="brand/${n}.png" alt=""${n === "claude" ? "" : ' class="mono"'}>`).join("")}</span>` : "";
+};
 const CHECK = `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg>`;
 
 // ---- the mark: the radar's still frame
@@ -154,14 +161,15 @@ function renderConnect() {
   let html = "";
   if (view === "looking") html = `<div class="card quiet">${LIVE(esc(t("start.looking")))}</div>`;
   else if (view === "connected") {
-    html = `<div class="card ok" data-view="connected"><div class="head"><span class="badge">${CHECK}</span><div><b>${esc(t("start.connected"))}</b><span>${esc(t("welcome.using", { label: st.label }))}</span></div></div>
+    const using = st.kind === "anthropic" ? "anthropic" : st.helper?.provider;
+    html = `<div class="card ok" data-view="connected"><div class="head">${mark(using, "mtile") || `<span class="badge">${CHECK}</span>`}<div><b>${esc(t("start.connected"))}</b><span>${esc(t("welcome.using", { label: st.label }))}</span></div></div>
       ${arrived ? `<button type="button" class="primary big" id="next">${esc(t("start.next"))}</button>` : ""}</div>`;
   } else if (view === "ask") {
     const name = providerName(h);
     const waiting = asking?.state === "waiting";
     html = `<div class="card found" data-view="ask"><div class="head"><span class="badge">${CHECK}</span><div><b>${esc(t("start.found", { where }))}</b><span>${esc(t("start.canUse", { name }))}</span></div></div>
       ${signedOut(h) ? `<p class="note bad">${esc(t("start.signedOut", { name }))}</p>` : ""}
-      <button type="button" class="primary big" id="use"${waiting ? " disabled" : ""}>${esc(t("start.use", { name }))}</button>
+      <button type="button" class="primary big" id="use"${waiting ? " disabled" : ""}>${mark(h.provider)}${esc(t("start.use", { name }))}</button>
       ${waiting ? LIVE(esc(h.app === "desktop" ? t("start.allowDesktop") : t("start.allowTerminal")))
         : askError ? LIVE(esc(askError), "bad")
         : `<p class="small">${esc(h.app === "desktop" ? t("start.askNote") : t("start.askNoteTerminal"))}</p>`}</div>`;
@@ -175,7 +183,7 @@ function renderConnect() {
       <div class="row"><input id="code" maxlength="7" placeholder="${esc(t("welcome.code"))}" aria-label="${esc(t("welcome.code.label"))}" autocomplete="off" spellcheck="false"><button type="button" class="primary" id="pair">${esc(t("welcome.connect"))}</button></div>
       ${pairError ? LIVE(esc(pairError), "bad") : busy ? LIVE(esc(t("welcome.live.connecting"))) : ""}</div>`;
   } else { // none: Morse Desktop, an API key, or a terminal
-    const keyCard = `<div class="card" data-view="key"><b>${esc(t("start.key.h"))}</b><p>${esc(t("start.key.d"))}</p>
+    const keyCard = `<div class="card" data-view="key"><b class="with-mark">${mark("anthropic")}${esc(t("start.key.h"))}</b><p>${esc(t("start.key.d"))}</p>
       <div class="row"><input id="key" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" aria-label="${esc(t("welcome.key.label"))}"><button type="button" class="primary" id="save-key">${esc(t("welcome.connect"))}</button></div>
       <p class="small${keyError ? " bad" : ""}" id="keynote" role="status">${keyError ? esc(keyError) : t("start.key.where")}</p></div>`;
     html = `<div class="cards${want === "web" ? " two" : ""}">
