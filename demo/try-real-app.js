@@ -37,7 +37,8 @@ const appArgs = dash < 0 ? [] : argv.slice(dash + 1);
 const opt = {};
 for (let i = 0; i < (dash < 0 ? argv.length : dash); i += 2) opt[argv[i].replace(/^--/, "")] = argv[i + 1];
 const HOME = process.env.MORSE_HOME || await fs.mkdtemp(path.join(os.tmpdir(), "morse-real-"));
-const ENV = { ...process.env, MORSE_HOME: HOME, FORCE_COLOR: "0" };
+// MORSE_DEBUG: the runtime's status attribute, read here to know what the bar shows.
+const ENV = { ...process.env, MORSE_HOME: HOME, FORCE_COLOR: "0", MORSE_DEBUG: "1" };
 const T = Number(opt.timeout || 300000);
 const OUT = opt.shots ? path.resolve(root, opt.shots) : null;
 let n = Number(opt.first || 130);
@@ -112,23 +113,10 @@ async function launch() {
 if (OUT) await fs.mkdir(OUT, { recursive: true });
 say(`Morse home ${HOME} · ${opt.app} · model ${process.env.MORSE_PROVIDER || "(configured)"} ${process.env.MORSE_MODEL || ""}`);
 
-// ---- 1. launch, turn on the debug status (read when the runtime starts: quit
-// and open the app again rather than reload, which Joplin doesn't survive: its
-// window stays hidden), wait for the runtime
+// ---- 1. launch, wait for the runtime (no reloading: Joplin's window stays hidden after one)
 let { m, port } = await launch();
 let w = await mainWindow(port);
-await until(() => w.ev(`!!document.querySelector("[data-morse-ui]")`), 60000, "the runtime in the main window");
-if (!(await w.ev(`localStorage.getItem("morse:debug")`))) {
-  await w.ev(`localStorage.setItem("morse:debug", "1")`);
-  await sleep(1500); // let the app write it to disk
-  w.s.close();
-  await quit(port);
-  await until(() => m.exitCode != null || /closed, so Morse stopped/.test(m.out), 30000, "morse to notice the app quit");
-  await sleep(2000);
-  ({ m, port } = await launch());
-  w = await mainWindow(port);
-}
-await until(w.status, 90000, "the runtime after reload");
+await until(w.status, 90000, "the runtime in the main window");
 if (opt.setup) await until(() => w.ev(opt.setup), 30000, "the setup step");
 await sleep(Number(opt.settle || 3000));
 let win = await geometry(w);
