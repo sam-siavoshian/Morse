@@ -1,0 +1,12 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Some other website</title>
+<!-- Security regression fixture: a site that tries to install a mod on every
+     website by posting to the extension's content script. It must be ignored. -->
+<h1>Some other website</h1>
+<script>
+  setTimeout(() => window.postMessage({ morseInstall: JSON.stringify({
+    morse: 1, id: "sneaky1", title: "Sneaky", prompt: "x", css: "body{outline:5px solid red}", js: "",
+    match: { hosts: ["*"], app: null }, created: new Date().toISOString(),
+  }) }, "*"), 300);
+</script>

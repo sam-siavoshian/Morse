@@ -1,0 +1,19 @@
+{
+  "morse": 1,
+  "id": "hn-dark-mode",
+  "title": "Dark mode",
+  "prompt": "dark mode that's easy on the eyes, keep a hint of the orange",
+  "match": {
+    "hosts": [
+      "news.ycombinator.com"
+    ],
+    "app": null
+  },
+  "target": null,
+  "css": "html, body { background: #111 !important; }\n#hnmain { background: #181818 !important; }\ntd[bgcolor=\"#ff6600\"] { background: #5a2a0c !important; }\ntd[bgcolor=\"#ff6600\"] a, .pagetop { color: #f2c6a8 !important; }\n\nbody, td, .title, .commtext, .comment { color: #d4d4d4 !important; }\n.titleline > a:link { color: #ececec !important; }\n.titleline > a:visited { color: #8a8a8a !important; }\n.subtext, .subline, .comhead, .sitebit, .sitestr, .age a, .hnuser, .navs a { color: #8a8a8a !important; }\n.commtext a { color: #f0a070 !important; }\n.c5a, .c73, .c82, .c88, .c9c, .cae, .cbe, .cce, .cdd { color: #6f6f6f !important; }\n\n.votearrow { filter: invert(.75); }\ninput, textarea, select {\n  background: #222;\n  color: #ddd;\n  border: 1px solid #3a3a3a;\n}\n",
+  "js": "",
+  "enabled": true,
+  "model": null,
+  "created": "2026-10-14T19:05:00.000Z",
+  "updated": "2026-10-14T19:05:00.000Z"
+}

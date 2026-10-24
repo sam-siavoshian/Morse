@@ -14,7 +14,9 @@ export class Recorder {
     this.frames = [];
     this.onFrame = p => {
       if (this.stopped) return;
-      if (this.frames.length < MAX_FRAMES) this.frames.push({ data: p.data, t: p.metadata.timestamp });
+      // Keep the most recent frames: the change happens at the end, not the start.
+      this.frames.push({ data: p.data, t: p.metadata.timestamp });
+      if (this.frames.length > MAX_FRAMES) this.frames.shift();
       this.s.send("Page.screencastFrameAck", { sessionId: p.sessionId }).catch(() => {});
     };
   }
@@ -26,6 +28,7 @@ export class Recorder {
   drop(from, to) { this.frames = this.frames.filter(f => f.t < from || f.t > to); }
   stop() {
     this.stopped = true;
+    this.s.off("Page.screencastFrame", this.onFrame);
     this.s.send("Page.stopScreencast").catch(() => {});
   }
   async finish(name) {
@@ -49,6 +52,7 @@ export class Recorder {
       await ffmpeg(dir, [...base, "-vf", "fps=25,scale=960:-2:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer", gif]);
       await ffmpeg(dir, [...base, "-vf", "fps=30,scale=trunc(iw/2)*2:trunc(ih/2)*2", "-pix_fmt", "yuv420p", "-movflags", "+faststart", mp4]);
       for (const f of await fs.readdir(dir)) if (/^f\d+\.jpg$/.test(f)) await fs.rm(path.join(dir, f));
+      this.frames = [];
       return { kind: "gif + mp4", path: gif, mp4 };
     } catch {
       return { kind: "frames", path: dir };

@@ -3,20 +3,28 @@
 // as a user would; Playwright only plays the user and takes screenshots.
 //
 //   npm run build && DISPLAY=:99 node demo/shoot-extension.js
+//
+// The extension gets its model from the Morse helper, started here in a
+// scratch home and paired through the popup (replayed replies by default,
+// see demo/helper.js). MORSE_DEMO_PORT moves the demo sites, SHOTS the output.
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { createRequire } from "node:module";
 import { toUserscript } from "../core/mod.js";
+import { startHelper, pairExtension } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const OUT = path.join(root, "docs", "screenshots");
+const OUT = path.resolve(root, process.env.SHOTS || path.join("docs", "screenshots"));
 const EXT = path.join(root, "dist", "extension");
-const SITE = { parley: "http://127.0.0.1:8787/demo/sites/parley/", byte: "http://127.0.0.1:8788/demo/sites/byte/" };
+const BASE = Number(process.env.MORSE_DEMO_PORT || 8787);
+const SITE = { parley: `http://127.0.0.1:${BASE}/demo/sites/parley/`, byte: `http://127.0.0.1:${BASE + 1}/demo/sites/byte/` };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-ext-"));
+await fs.mkdir(OUT, { recursive: true });
+const helper = await startHelper(path.join(tmp, "helper-home"));
 
 async function browserWithMorse(name) {
   const ctx = await chromium.launchPersistentContext(path.join(tmp, name), {
@@ -29,6 +37,8 @@ async function browserWithMorse(name) {
   await p.goto(`chrome://extensions/?id=${id}`);
   await p.locator("#allow-user-scripts").click();
   await sleep(500);
+  // Morse's settings open by themselves on install, since no model is connected yet.
+  for (const other of ctx.pages()) if (other.url().includes("/options.html")) await other.close();
   return { ctx, sw, id, setup: p };
 }
 async function open(ctx, url) {
@@ -50,6 +60,7 @@ const helpers = page => ({
 });
 
 const { ctx, sw, id, setup } = await browserWithMorse("main");
+await pairExtension(ctx, id, helper.code);
 
 // 20. Installed, with user scripts allowed
 await setup.screenshot({ path: path.join(OUT, "20-extension-installed.png") });
@@ -60,7 +71,7 @@ const chat = await open(ctx, SITE.parley);
 const C = helpers(chat);
 await chat.keyboard.press("Alt+Space");
 await sleep(200);
-const ta = await chat.locator("textarea").boundingBox();
+const ta = await chat.locator("textarea[aria-label=\"Message Parley\"]").boundingBox();
 await chat.mouse.move(ta.x + 120, ta.y + 20, { steps: 6 });
 await sleep(250);
 await C.shot("21-web-point.png");
@@ -75,7 +86,7 @@ await sleep(300);
 await C.shot("23-web-done.png");
 await chat.keyboard.press("Enter"); // Keep
 await sleep(400);
-await chat.locator("textarea").click();
+await chat.locator("textarea[aria-label=\"Message Parley\"]").click();
 await chat.keyboard.type("How do CRDTs resolve two people editing the same sentence offline? Assume a text CRDT like RGA, and explain what the merged result looks like.", { delay: 4 });
 await sleep(300);
 await C.shot("24-web-word-count-works.png");
@@ -117,10 +128,9 @@ await N.shot("29-news-after.png");
 
 // 34. Toolbar popup: model settings and this site's mods
 const pop = await ctx.newPage();
-await pop.setViewportSize({ width: 348, height: 470 });
+await pop.setViewportSize({ width: 360, height: 620 });
 await pop.goto(`chrome-extension://${id}/popup.html?url=${encodeURIComponent(SITE.parley)}`);
-await pop.locator("details").evaluate(d => (d.open = true));
-await sleep(500);
+await sleep(800);
 await pop.screenshot({ path: path.join(OUT, "34-popup.png") });
 console.log("  📸 34-popup.png");
 
@@ -131,16 +141,19 @@ await ctx.close();
 // 30-32. Someone else opens the share link in a fresh browser and installs it
 const friend = await browserWithMorse("friend");
 const install = await friend.ctx.newPage();
-await install.goto(link.replace(/^https:\/\/[^/]+\/RRAA/, "http://127.0.0.1:8787"));
-await install.evaluate(() => localStorage.setItem("morse:debug", "1")); // open shadow root, so the script can press Install
-await install.reload();
+await install.goto(`http://127.0.0.1:${BASE}/share/install.html`);
+await install.evaluate(() => localStorage.setItem("morse:debug", "1")); // open shadow root so the script can click
+await install.goto(link.replace(/^https:\/\/[^/]+\/RRAA/, `http://127.0.0.1:${BASE}`));
+await install.goto("about:blank");
+await install.goto(link.replace(/^https:\/\/[^/]+\/RRAA/, `http://127.0.0.1:${BASE}`));
 await sleep(800);
 await install.screenshot({ path: path.join(OUT, "30-share-link.png") });
 console.log("  📸 30-share-link.png");
 await install.locator("#install").click();
-// Morse shows its own review on the page; nothing is installed until Install is pressed there.
-await install.waitForFunction(() => document.querySelector("[data-morse-ui]")?.shadowRoot?.querySelector(".modal:not([hidden]) [data-c=install]"));
-await install.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".modal [data-c=install]").click());
+await install.locator(".card [data-a=install]").waitFor();
+await install.screenshot({ path: path.join(OUT, "30b-confirm-install.png") });
+console.log("  📸 30b-confirm-install.png");
+await install.locator(".card [data-a=install]").click();
 await sleep(800);
 await install.screenshot({ path: path.join(OUT, "31-installed.png") });
 console.log("  📸 31-installed.png");
@@ -158,11 +171,12 @@ const pp = await plain.newPage({ viewport: { width: 1280, height: 800 }, bypassC
 await pp.goto(SITE.parley);
 const wc = Object.values(mods).find(m => /word/i.test(m.title));
 await pp.addScriptTag({ content: toUserscript(wc) });
-await pp.locator("textarea").fill("Userscripts exported from Morse run anywhere a userscript manager does.");
-await pp.locator("textarea").dispatchEvent("input");
+await pp.locator("textarea[aria-label=\"Message Parley\"]").fill("Userscripts exported from Morse run anywhere a userscript manager does.");
+await pp.locator("textarea[aria-label=\"Message Parley\"]").dispatchEvent("input");
 await sleep(300);
 await pp.screenshot({ path: path.join(OUT, "33-userscript-runs-without-morse.png") });
 console.log("  📸 33-userscript-runs-without-morse.png");
 await plain.close();
 await fs.writeFile(path.join(tmp, "link.txt"), link);
 console.log("share link:", link.slice(0, 90) + "…");
+helper.stop();

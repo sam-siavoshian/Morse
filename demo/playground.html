@@ -33,6 +33,32 @@
   customElements.define("x-badge", class extends HTMLElement {
     constructor() { super(); this.attachShadow({ mode: "open" }).innerHTML = `<style>span{padding:2px 8px;border-radius:99px;border:1px solid currentColor;opacity:.8}</style><span class="label">Shadow badge</span>`; }
   });
+  // ?ask: a small notes app for Ask and find (tests/ask.test.js): tabs, a
+  // greyed-out button, and a More menu that hides Export. Every click on the
+  // page is logged with isTrusted, to prove Morse never clicks for the user.
+  const ASK = location.search.includes("ask");
+  const fake = window.__fake = { asks: [], clicks: [] };
+  if (ASK) {
+    document.querySelector(".stage").insertAdjacentHTML("beforeend", `
+      <div class="toolbar" id="appbar" style="position:relative">
+        <b>Notes</b>
+        <div role="tablist" aria-label="Views" style="display:flex;gap:4px"><button role="tab" aria-selected="true">All notes</button><button role="tab" aria-selected="false">Shared</button></div>
+        <span style="flex:1"></span>
+        <button id="publish" disabled title="Add a title first">Publish</button>
+        <button id="more" aria-label="More options" aria-haspopup="menu" aria-expanded="false" aria-controls="more-menu">⋯</button>
+        <style>#more-menu:not([hidden]) { display: grid; } #more-menu button { text-align: left; padding: 6px 10px; opacity: 1; }</style>
+        <div id="more-menu" role="menu" aria-label="More options" hidden style="position:absolute;right:8px;top:48px;padding:6px;border-radius:10px;background:var(--bg);box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:2">
+          <button role="menuitem" id="export">Export as PDF</button>
+          <button role="menuitem" data-item="notifications">Notification settings</button>
+          <button role="menuitem">Help</button>
+        </div>
+      </div>`);
+    const more = document.getElementById("more"), menu = document.getElementById("more-menu");
+    const setOpen = open => { menu.hidden = !open; more.setAttribute("aria-expanded", String(open)); };
+    more.addEventListener("click", () => setOpen(menu.hidden));
+    document.getElementById("export").addEventListener("click", () => { setOpen(false); fake.exported = (fake.exported || 0) + 1; });
+    document.addEventListener("click", e => fake.clicks.push({ id: e.target.id || e.target.textContent.trim().slice(0, 20), trusted: e.isTrusted }), true);
+  }
   const TEXT = "TITLE: Demo\n```css\n#toolbar { gap: 20px; letter-spacing: .02em; }\n#toolbar button { opacity: .9; }\n```\n```js\nmorse.watch('#toolbar', t => t.append(morse.el('span', { text: 'hello' })));\n```\n";
   const store = {
     get(k, d) { try { return JSON.parse(localStorage.getItem("morse:playground:" + k)) ?? d; } catch { return d; } },
@@ -47,7 +73,7 @@
       const reply = result => setTimeout(() => emit({ reply: m.id, result }), 10);
       const [kit, mod, clip, control] = await core;
       // User control (pause, safe start, install review, backup) through the real host logic.
-      if (m.type.startsWith("control.")) {
+      if (m.type.startsWith("control.") || m.type === "mods.preview") {
         globalThis.__ctl ||= control.controlHandler({
           load: () => store.get("control", {}), save: s => store.set("control", s),
           listMods: () => Object.values(store.get("mods", {})),
@@ -82,6 +108,21 @@
       if (m.type === "off") { globalThis.morse?.__off(m.modId); return reply(true); }
       if (m.type === "clipboard.list") return reply(store.get("clipboard", []));
       if (m.type === "clipboard.put") { const l = clip.clipAdd(store.get("clipboard", []), m.item); store.set("clipboard", l); return reply(l); }
+      if (m.type === "generate" && ASK) {
+        // ?ask: the real engine + parser with the demo model (core/demo.js),
+        // replying the way the real hosts do (answers travel as events only).
+        fake.asks.push({ request: m.request, ask: m.context.ask || null, outline: m.context.outline });
+        const { runMorse } = await import("/core/engine.js");
+        const res = await runMorse({
+          settings: { provider: "demo" }, request: m.request, context: m.context,
+          emit: ev => emit({ ...ev, genId: m.genId }),
+          exec: async js => {
+            try { const r = (0, eval)(kit.wrapModCode(m.genId, js)); const errs = r && r.ok ? morse.__errors(m.genId) : []; return errs.length ? { ok: false, error: errs[0] } : r; }
+            catch (e) { return { ok: false, error: String(e.message || e) }; }
+          },
+        });
+        return reply({ ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts });
+      }
       if (m.type === "generate") {
         let i = 0;
         const speed = Number(new URLSearchParams(location.search).get("ms") || 30);

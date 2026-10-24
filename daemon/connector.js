@@ -9,12 +9,13 @@ import { modsFor, saveMod, deleteMod, writeExport, readClipboard, putClipboard }
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf } from "../core/mod.js";
 import { wrapModCode } from "../core/kit.js";
 import { runMorse } from "../core/engine.js";
-import { settingsLabel } from "../core/providers.js";
+import { settingsLabel } from "./models.js"; // also registers the Claude Code / Codex providers
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
 import { Generations } from "../core/cancel.js";
 import { cachedVoiceStatus, transcribeAudio } from "./voice.js";
 import { CONTROL_REQUESTS, handleControl, watchControl } from "./control.js"; // user control: pause, safe start, install review, backup
+import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
 
 import { bundleRuntime } from "../runtime/bundle.js";
 const RUNTIME = bundleRuntime();
@@ -48,7 +49,7 @@ export class Connector {
           this.attach(t).catch(e => { this.pages.delete(t.id); this.log(`  ! ${t.title || t.url}: ${e.message}`); });
         }
       } catch {
-        if (this.everAttached) { this.log("App closed. Bye."); return; }
+        if (this.everAttached) { this.log("The app closed, so Morse stopped."); return; }
       }
       await new Promise(r => setTimeout(r, 1000));
     }
@@ -71,7 +72,7 @@ export class Connector {
     await s.send("Runtime.addBinding", { name: "__morseHostSend" });
     await s.send("Page.addScriptToEvaluateOnNewDocument", { source: BOOT });
     await s.send("Runtime.evaluate", { expression: BOOT });
-    this.log(`  ✓ attached to ${target.title || target.url}`);
+    this.log(`  ✓ connected to ${target.title || target.url}`);
   }
 
   // Voice input records in the page; let it use the microphone without a
@@ -113,6 +114,7 @@ export class Connector {
   async dispatch(s, ctx, msg) {
     const where = { url: msg.url, app: this.app?.id || null };
     if (CONTROL_REQUESTS.has(msg.type)) return handleControl(msg, where); // user control (control.js)
+    if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
     switch (msg.type) {
       case "hello":
         this.grantMic(s, msg.url);
@@ -121,11 +123,12 @@ export class Connector {
       case "mods.list":
         return modsFor({ url: msg.url, app: this.app?.id || null });
       case "mods.save": {
-        if (msg.draft) return saveMod(createMod({ ...msg.draft, app: this.app?.id || null, model: this.settings.model }));
+        if (msg.draft) return saveMod(createMod({ ...msg.draft, app: this.app?.id || null, model: msg.draft.model || settingsLabel(this.settings) }));
         return saveMod(msg.mod);
       }
       case "mods.delete":
         return deleteMod(msg.modId);
+      // Decode and validate a shared mod without saving it (install confirmation).
       case "mods.import": {
         const src = msg.source.trim();
         const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
@@ -142,6 +145,8 @@ export class Connector {
         await s.send("Runtime.evaluate", { expression: `globalThis.morse && morse.__off(${JSON.stringify(msg.modId)})`, contextId: ctx });
         return true;
       case "generate": {
+        if (!this.settings?.provider || this.settings.provider === "none")
+          throw new Error("No model connected. Run `morse doctor` in a terminal to set one up (Claude Code, Codex or an API key).");
         const t0 = Date.now();
         const res = await this.gens.run(msg.genId, signal => runMorse({
           settings: this.settings,

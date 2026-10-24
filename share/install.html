@@ -4,111 +4,149 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Install a Morse mod</title>
+<meta name="description" content="Someone shared a Morse mod with you. Read its code, then install it in Morse or download it for Tampermonkey.">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="../site/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="../design/tokens.css">
+<link rel="stylesheet" href="../site/site.css">
 <style>
-  /* Tokens only (design/tokens.css): monochrome, 4px grid, radii 6/10/14. */
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--m-bg); color: var(--m-text); font: 400 15px/1.55 var(--m-font); letter-spacing: var(--m-tracking); }
-  main { max-width: 760px; margin: 0 auto; padding: 40px 16px 64px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: var(--m-text-xl); }
-  .logo { display: grid; grid-template-columns: repeat(4, 5px); gap: 2px; }
-  .logo i { width: 5px; height: 5px; border-radius: 1.5px; background: var(--m-signal-4); }
-  .logo i.o { opacity: .3; } .logo i.c { visibility: hidden; }
-  h1 { font-size: 32px; line-height: 40px; font-weight: 650; letter-spacing: -0.02em; margin: 32px 0 8px; overflow-wrap: anywhere; }
-  .prompt { font-size: 19px; line-height: 28px; color: var(--m-text-2); margin: 0 0 8px; overflow-wrap: anywhere; }
-  .meta { margin: 0 0 24px; color: var(--m-text-3); font: 12px/18px var(--m-mono); letter-spacing: 0; overflow-wrap: anywhere; }
-  section.does { border: 1px solid var(--m-line-strong); border-radius: var(--m-r-lg); background: var(--m-surface); padding: 20px 24px 24px; }
-  h2 { font: 500 var(--m-text-xs)/16px var(--m-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--m-text-3); margin: 0 0 16px; }
-  ul.items { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px 24px; }
-  ul.items li { position: relative; padding-left: 22px; }
-  ul.items li::before { content: ""; position: absolute; left: 4px; top: 9px; width: 7px; height: 7px; border-radius: 2px; background: var(--m-signal-3); }
-  ul.items b { display: block; font-weight: 550; line-height: 24px; }
-  ul.items small { display: block; color: var(--m-text-2); font-size: var(--m-text-md); line-height: 20px; }
-  .note { margin: 20px 0 0; padding: 12px 16px; border: 1px solid var(--m-line-strong); border-left: 2px solid var(--m-warn); border-radius: var(--m-r-sm); background: var(--m-raised); line-height: 22px; }
-  .note b { display: block; color: var(--m-warn); font: 600 var(--m-text-xs)/16px var(--m-mono); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
-  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 24px 0 8px; }
-  button, a.btn { font: 500 14px/20px var(--m-font); padding: 10px 16px; border-radius: var(--m-r-md); border: 1px solid var(--m-line-strong); background: transparent; color: var(--m-text); cursor: pointer; text-decoration: none; transition: background var(--m-fast), border-color var(--m-fast); }
-  button:hover, a.btn:hover { background: var(--m-hover); border-color: var(--m-signal-1); }
-  button.primary { background: var(--m-primary); border-color: var(--m-primary); color: var(--m-primary-text); font-weight: 600; min-width: 120px; }
-  button.primary:hover { background: var(--m-primary-hover); }
-  :focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
-  #status { color: var(--m-text-2); font-size: 14px; min-height: 22px; margin: 0 0 24px; }
-  #status code { font: 13px var(--m-mono); }
+  .i-main { max-width: calc(760px + 2 * var(--s-gutter)); padding-top: 64px; padding-bottom: 96px; }
+  .i-main h1 { font-size: clamp(32px, 5vw, 44px); line-height: 1.1; letter-spacing: -0.035em; }
+  .i-prompt { margin-top: 12px; color: var(--m-text-2); font-size: 19px; line-height: 1.5; }
+  .i-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 24px; }
+  .i-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; }
+  #status { min-height: 24px; margin-top: 16px; color: var(--m-text-2); font-size: 14px; line-height: 22px; }
+  #status:empty { min-height: 0; margin-top: 0; }
+  #status .ok { display: inline-flex; align-items: center; gap: 8px; vertical-align: top; color: var(--m-text); font-weight: 500; }
   .err { color: var(--m-danger); }
-  details.code { margin-top: 8px; border-top: 1px solid var(--m-line); padding-top: 16px; }
-  details.code summary { cursor: pointer; color: var(--m-text-2); font-weight: 500; display: inline-flex; align-items: center; gap: 8px; list-style: none; border-radius: var(--m-r-sm); }
-  details.code summary::-webkit-details-marker { display: none; }
-  details.code summary::before { content: ""; border-style: solid; border-width: 5px 0 5px 7px; border-color: transparent transparent transparent currentColor; transition: transform var(--m-fast); }
-  details.code[open] summary::before { transform: rotate(90deg); }
-  details.code summary:hover { color: var(--m-text); }
-  h3 { font: 500 var(--m-text-xs)/16px var(--m-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--m-text-3); margin: 20px 0 8px; }
-  pre { background: var(--m-surface); color: var(--m-text); border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); padding: 14px; overflow: auto; font: 12.5px/1.6 var(--m-mono); letter-spacing: 0; max-height: 360px; margin: 0; }
-  .fine { margin-top: 32px; color: var(--m-text-3); font-size: 13px; line-height: 20px; }
-  .fine kbd { font: 11px/14px var(--m-mono); border: 1px solid var(--m-line-strong); border-radius: 4px; padding: 0 4px; color: var(--m-text-2); background: var(--m-raised); }
-  @media (max-width: 560px) { main { padding-top: 32px; } h1 { font-size: 26px; line-height: 32px; } section.does { padding: 16px; } }
+  .i-warn {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding: 12px 16px;
+    border: 1px solid var(--m-line-strong);
+    border-radius: var(--m-r-md);
+    background: var(--m-surface);
+    color: var(--m-text-2);
+    font-size: 14px;
+    line-height: 22px;
+  }
+  .i-warn svg { flex: none; margin-top: 3px; color: var(--m-warn); }
+  .i-warn b { color: var(--m-text); font-weight: 600; }
+  .i-code h2 { display: flex; justify-content: space-between; margin: 40px 0 8px; color: var(--m-text-3); font: 500 12px/16px var(--m-mono); letter-spacing: .08em; text-transform: uppercase; }
+  .i-code h2 span { letter-spacing: 0; text-transform: none; }
+  .i-code pre.code { max-height: 420px; font-size: 12px; line-height: 20px; white-space: pre; }
+  /* What this mod does (core/summary.js) */
+  .i-does { margin-top: 32px; padding: 20px 24px 24px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-lg); background: var(--m-surface); }
+  .i-does h2, .i-code summary { margin: 0 0 16px; color: var(--m-text-3); font: 500 12px/16px var(--m-mono); letter-spacing: .08em; text-transform: uppercase; }
+  .i-items { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px 24px; }
+  .i-items li { position: relative; padding-left: 20px; }
+  .i-items li::before { content: ""; position: absolute; left: 3px; top: 9px; width: 7px; height: 7px; border-radius: 2px; background: var(--m-signal-3); }
+  .i-items b { display: block; color: var(--m-text); font-weight: 500; line-height: 24px; }
+  .i-items small { display: block; color: var(--m-text-2); font-size: 13px; line-height: 20px; }
+  .i-note { display: flex; gap: 12px; margin: 20px 0 0; padding: 12px 16px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); background: var(--m-raised); color: var(--m-text); font-size: 14px; line-height: 22px; }
+  .i-note svg { flex: none; margin-top: 3px; color: var(--m-warn); }
+  .i-code { margin-top: 32px; }
+  .i-code summary { display: inline-flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; list-style: none; color: var(--m-text-2); }
+  .i-code summary::-webkit-details-marker { display: none; }
+  .i-code summary::before { content: ""; border-style: solid; border-width: 5px 0 5px 7px; border-color: transparent transparent transparent currentColor; transition: transform var(--m-fast); }
+  .i-code[open] summary::before { transform: rotate(90deg); }
+  .i-code summary:hover { color: var(--m-text); }
+  .i-foot kbd { font: 11px/14px var(--m-mono); border: 1px solid var(--m-line-strong); border-radius: 4px; padding: 0 4px; color: var(--m-text-2); background: var(--m-raised); }
+  .i-foot { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--m-line); color: var(--m-text-3); font-size: 13px; line-height: 20px; }
+  .i-loading { display: flex; align-items: center; gap: 12px; color: var(--m-text-2); }
+  @media (max-width: 720px) {
+    .i-main { padding-top: 40px; padding-bottom: 64px; }
+    .i-prompt { font-size: 17px; }
+    .i-actions .btn { flex: 1 1 auto; }
+  }
 </style>
 </head>
 <body>
-<main>
-  <div class="brand"><span class="logo" aria-hidden="true"><i class="c"></i><i class="o"></i><i class="o"></i><i class="c"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="c"></i><i class="o"></i><i class="o"></i><i class="c"></i></span>morse</div>
-  <div id="root"><p id="status">Reading mod…</p></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="../site/" aria-label="Morse home"><span data-radar="20"></span>Morse</a>
+    <nav class="nav" aria-label="Main">
+      <a href="../site/gallery.html">Gallery</a>
+      <a href="../site/">What is Morse?</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap i-main">
+  <div id="root"><p id="status" class="i-loading"><span data-radar="16"></span>Opening the mod…</p></div>
 </main>
 <script type="module">
   import { decodeShare, toUserscript } from "../core/mod.js";
+  import { initPage, highlight, esc } from "../site/common.js";
+  import { mountAll } from "../site/radar.js";
   import { summarizeMod } from "../core/summary.js";
+
+  initPage();
+  addEventListener("hashchange", () => location.reload());
   const root = document.getElementById("root");
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const check = `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
+  const warn = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 1.75l6.5 11.5h-13z" stroke-linejoin="round"/><path d="M8 6.5v3"/><circle cx="8" cy="11.5" r=".5" fill="currentColor"/></svg>`;
+  const lines = s => { const n = s.trimEnd().split("\n").length; return `${n} line${n === 1 ? "" : "s"}`; };
   try {
     const mod = await decodeShare(location.href);
-    const where = mod.match?.app || (mod.match?.hosts || []).map(h => h === "*" ? "every website" : h).join(", ") || "any site";
+    const where = mod.match.app || mod.match.hosts.join(", ");
+    document.title = `${mod.title} · Morse mod`;
+    // What it does, in plain words, worked out from the code itself.
     const sum = summarizeMod(mod);
     const items = sum.empty
       ? `<li><b>Doesn't change anything</b><small>It has no code.</small></li>`
       : sum.items.map(i => `<li data-s="${i.id}"><b>${esc(i.text)}</b>${i.detail ? `<small>${esc(i.detail)}</small>` : ""}</li>`).join("");
-    document.title = `Install “${mod.title}” · Morse`;
     root.innerHTML = `
+      <p class="eyebrow"><span data-radar="14" data-still></span>Shared mod</p>
       <h1>${esc(mod.title)}</h1>
-      <p class="prompt">“${esc(mod.prompt)}”</p>
-      <p class="meta">For ${esc(where)}${mod.author ? ` · made by ${esc(mod.author)}` : ""}${mod.model ? ` · written by ${esc(mod.model)}` : ""}</p>
-      <section class="does" aria-labelledby="does-h">
-        <h2 id="does-h">What this mod does</h2>
-        <ul class="items">${items}</ul>
-        ${sum.notes.map(n => `<p class="note" data-s="${n.id}"><b>Note</b>${esc(n.text)}</p>`).join("")}
+      <p class="i-prompt">“${esc(mod.prompt)}”</p>
+      <div class="i-meta"><span class="chip">for ${esc(where)}</span>${mod.css.trim() ? `<span class="chip">style</span>` : ""}${mod.js.trim() ? `<span class="chip">script</span>` : ""}${mod.model ? `<span class="chip">made with ${esc(mod.model)}</span>` : ""}</div>
+      <section class="i-does" aria-labelledby="does">
+        <h2 id="does">What this mod does</h2>
+        <ul class="i-items">${items}</ul>
+        ${sum.notes.map(n => `<p class="i-note" data-s="${n.id}">${warn}<span>${esc(n.text)}</span></p>`).join("")}
       </section>
-      <div class="actions">
-        <button class="primary" id="install">Install</button>
-        <a class="btn" id="userscript" download>Download .user.js</a>
+      <div class="i-actions">
+        <button class="btn primary" type="button" id="install">Install</button>
+        <a class="btn" id="userscript" download>Download for Tampermonkey</a>
       </div>
       <p id="status" role="status"></p>
-      <details class="code" id="code">
+      <details class="i-code" id="code">
         <summary>Show code</summary>
-        ${mod.css.trim() ? `<h3>CSS</h3><pre>${esc(mod.css)}</pre>` : ""}
-        ${mod.js.trim() ? `<h3>JavaScript</h3><pre>${esc(mod.js)}</pre>` : ""}
+        ${mod.css.trim() ? `<h2>Style (CSS) <span>${lines(mod.css)}</span></h2><pre class="code">${highlight(mod.css.trimEnd(), "css")}</pre>` : ""}
+        ${mod.js.trim() ? `<h2>Script (JavaScript) <span>${lines(mod.js)}</span></h2><pre class="code">${highlight(mod.js.trimEnd(), "js")}</pre>` : ""}
       </details>
-      <p class="fine">A mod is code that runs inside ${esc(where)}, where it can see what you see. The list above is worked out from the code itself, and it errs on the side of mentioning things. Once installed, every mod can be turned off at once with <kbd>⌥⇧0</kbd> (Alt+Shift+0), and Morse can be paused on any site.</p>`;
+      <p class="i-foot">This whole mod is in the link, after the <code>#</code>. Browsers never send that part to a server, so nobody but you and the sender has seen it. The list above is worked out from the code, and it errs on the side of mentioning things. Once it's installed, <kbd>⌥⇧0</kbd> (Alt+Shift+0) turns off every mod on a page at once.</p>`;
+    mountAll(root);
     const us = document.getElementById("userscript");
     us.href = URL.createObjectURL(new Blob([toUserscript(mod)], { type: "text/javascript" }));
-    us.download = `${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "mod"}.user.js`;
+    us.download = `${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.user.js`;
     const status = document.getElementById("status");
     document.getElementById("install").onclick = () => {
       if (document.documentElement.dataset.morseExtension) {
-        // Morse shows its own copy of this review; it installs only from there.
         window.postMessage({ morseInstall: location.href }, "*");
-        status.textContent = "Morse opened its install window on this page. Press Install there to finish.";
+        status.textContent = "Check the Morse window on this page to finish installing.";
       } else {
         navigator.clipboard?.writeText(location.href).catch(() => {});
-        status.innerHTML = mod.match?.app
-          ? `Link copied. In a terminal run <code>morse import "&lt;link&gt;"</code>, or paste it into Morse → Mods → Import.`
-          : `Morse isn't installed in this browser. Link copied: paste it into Morse → Mods → Import, or use the .user.js with Tampermonkey.`;
+        status.innerHTML = mod.match.app
+          ? `Link copied. In Morse, open Mods and choose Install a mod, then paste it. Or run <code>morse install "&lt;link&gt;"</code>.`
+          : `Morse isn't installed in this browser. The link is copied: paste it into Morse under Mods → Install a mod, or download the mod for Tampermonkey.`;
       }
     };
     window.addEventListener("message", e => {
       if (e.source !== window || !e.data?.morseInstalled) return;
       const r = e.data.morseInstalled;
-      status.innerHTML = r.error ? `<span class="${/Not installed/.test(r.error) ? "" : "err"}">${esc(r.error)}</span>` : `Installed “${esc(r.title)}”. Open ${esc(where)} to see it.`;
+      status.innerHTML = r.error ? `<span class="err">${esc(r.error)}</span>` : `<span class="ok">${check}Installed “${esc(r.title)}”.</span> Open ${esc(where)} to see it.`;
     });
   } catch (e) {
-    root.innerHTML = `<h1>That link doesn't contain a mod</h1><p class="err">${esc(e.message)}</p>`;
+    root.innerHTML = `
+      <p class="eyebrow">Shared mod</p>
+      <h1>This link doesn't have a mod in it.</h1>
+      <p class="i-prompt">It may have been cut off when it was copied. Ask for the link again, or browse the <a href="../site/gallery.html">gallery</a>.</p>
+      ${/^This /.test(e.message) ? `<p class="err" style="margin-top:16px;font-size:14px">${esc(e.message)}</p>` : ""}`;
   }
 </script>
 </body>

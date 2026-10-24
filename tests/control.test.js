@@ -138,10 +138,10 @@ test("export bundle and import: backup, single mod, share link, junk", async () 
   assert.equal(link.mods[0].title, "one");
   const mixed = await parseImport(JSON.stringify({ mods: [a, { nope: 1 }] }));
   assert.equal(mixed.mods.length, 1);
-  assert.match(mixed.errors[0], /Item 2: Not a Morse mod/);
+  assert.match(mixed.errors[0], /Item 2: This isn't a Morse mod/);
   await assert.rejects(parseImport("hello"), /isn't a Morse share link/);
   await assert.rejects(parseImport(""), /Paste a Morse share link/);
-  await assert.rejects(parseImport("{}"), /Not a Morse mod/);
+  await assert.rejects(parseImport("{}"), /isn't a Morse mod/);
 });
 
 test("installing marks where a mod came from; a backup keeps on/off", () => {
@@ -204,7 +204,7 @@ test("control host: safe start over requests, install and export", async () => {
   assert.equal((await req("control.boot")).suspect, null);
 
   const link = await encodeShare(mod("shared", { author: "Ana" }));
-  const preview = await req("control.preview", { source: link });
+  const preview = await req("mods.preview", { source: link });
   assert.equal(Object.keys(h.db.mods).length, 0, "preview saves nothing");
   const saved = await req("control.install", { mods: preview.mods, kind: preview.kind });
   assert.equal(saved[0].importedFrom, "link");
@@ -264,7 +264,7 @@ test("CLI: morse pause / resume, export --all, import", async () => {
     assert.match(logs.join("\n"), /Restored from a backup/);
     assert.match(logs.join("\n"), /fetch\('https:\/\/x\.example'/);
     await writeFile(path.join(home, "junk.json"), "{}");
-    await assert.rejects(ctl.importCli({ _: [path.join(home, "junk.json")], yes: true }), /Not a Morse mod/);
+    await assert.rejects(ctl.importCli({ _: [path.join(home, "junk.json")], yes: true }), /isn't a Morse mod/);
   } finally {
     console.log = log;
   }

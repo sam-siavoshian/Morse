@@ -4,7 +4,7 @@
 // the pause state changes. background.js routes CONTROL_REQUESTS here; the
 // popup talks to it directly (control.* messages).
 
-import { controlHandler, CONTROL_REQUESTS } from "./core/control-host.js";
+import { controlHandler, CONTROL_REQUESTS } from "../core/control-host.js";
 
 export { CONTROL_REQUESTS };
 

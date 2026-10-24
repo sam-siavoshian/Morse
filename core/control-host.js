@@ -7,14 +7,14 @@
 //   control.applied   a mod ran       control.alive   the page is still there
 //   control.forgive   the person decided about a suspect
 //   control.pause     { scope: "site" | "all", on, key? }
-//   control.preview   { source } -> { kind, mods, errors } (nothing is saved)
+//   mods.preview      { source } -> { kind, mods, errors } (nothing is saved; the one install review uses it)
 //   control.install   { mods, kind } -> the saved mods
 //   control.exportAll -> { filename, content, count }
 
 import { normalizeControl, isPaused, pauseInfo, setPause, safeKey, safeBoot, safeApplied, safeAlive, safeForgive } from "./control.js";
 import { exportBundle, backupFilename, parseImport, prepareInstall } from "./backup.js";
 
-export const CONTROL_REQUESTS = new Set(["control.get", "control.boot", "control.applied", "control.alive", "control.forgive", "control.pause", "control.preview", "control.install", "control.exportAll"]);
+export const CONTROL_REQUESTS = new Set(["control.get", "control.boot", "control.applied", "control.alive", "control.forgive", "control.pause", "mods.preview", "control.install", "control.exportAll"]);
 
 // store: { load(), save(state), listMods(), putMods(mods), onPause?(pause) }
 export function controlHandler(store, clock = () => Date.now()) {
@@ -57,7 +57,7 @@ export function controlHandler(store, clock = () => Date.now()) {
           const state = msg.scope === "all" ? setPause(s, { all: !!msg.on }) : setPause(s, { key: msg.key || pauseInfo(s, where).key, on: !!msg.on });
           return { state, result: { pause: state.pause, info: pauseInfo(state, where) } };
         });
-      case "control.preview":
+      case "mods.preview":
         return parseImport(msg.source);
       case "control.install": {
         const list = (Array.isArray(msg.mods) ? msg.mods : []).map(m => prepareInstall(m, { kind: msg.kind, where }));

@@ -1,15 +1,15 @@
 # ▦ Morse
 
-**Customize any app in one sentence.** Press a hotkey, point at something, say what you want. A local model writes the change and Morse applies it to the running app, live, while you watch.
+**Customize any app in one sentence.** Press a hotkey, point at something, say what you want. Your model (Claude Code, Codex, or an API key) writes the change and Morse applies it to the running app, live, while you watch.
 
 ![Morse adding a sleep timer to a music player](docs/screenshots/clip-sleep-timer.gif)
 
-*Recorded automatically by Morse. The model in this clip is the built-in demo model (see [Status](#status)); everything after generation — streaming, injection, self-repair, recording — is the real pipeline.*
+*Recorded automatically by Morse. The model in this clip is a replay of pre-written replies, so the clip is reproducible (see [Status](#status)); everything after generation (streaming, injection, self-repair, recording) is the real pipeline. The same flow with real Claude Code output is in [`docs/screenshots/claude-code`](docs/screenshots/claude-code).*
 
-Most software you use every day is a web app or an Electron app: Chromium plus JavaScript. Morse injects a small runtime into those apps, sends what you pointed at and what you said to a local model, and runs the CSS/JS it writes back. It's Tampermonkey/Vencord/Spicetify, except you don't write the script.
+Most software you use every day is a web app or an Electron app: Chromium plus JavaScript. Morse injects a small runtime into those apps, sends what you pointed at and what you said to your model, and runs the CSS/JS it writes back. It's Tampermonkey/Vencord/Spicetify, except you don't write the script.
 
 ```
-press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ local model streams CSS+JS ▦▦▦ ─▶ applied live ─▶ Keep · Share
+press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the model streams CSS+JS ▦▦▦ ─▶ applied live ─▶ Keep · Share
 ```
 
 ## What works today (v0.1)
@@ -25,8 +25,9 @@ press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ local mo
 | **Share** | Before/after share card (1200×675), auto-recorded GIF + MP4 clip (desktop), share link with the mod in the URL fragment, `.morse.json`, and a `.user.js` that runs in Tampermonkey without Morse |
 | **Web** | Chrome extension (MV3). Mod JS runs through `chrome.userScripts`, so it works on strict-CSP sites |
 | **Desktop** | `morse launch spotify` relaunches an Electron app with a debugging port and attaches over CDP. No patching of app files: code signatures and ASAR integrity stay intact, updates don't break it |
-| **Local models** | Ollama (auto-detected) or any OpenAI-compatible server (llama.cpp, LM Studio, vLLM, or a cloud key if you choose) |
+| **Your model** | Claude Code or Codex (your own subscription, no API key), or an Anthropic or OpenAI API key. See [Models](#models) |
 | **God mode** | Direct editing with no model call: hide, move, resize, rename, recolor, retype, duplicate. Page tools (dark/light mode, text size, hide ads, focus mode). Capture an element in one app and rebuild it in another |
+| **Ask and find** | Ask about the app instead of changing it: plain answers with numbered markers, "where is X" names the menu to open, Show me walks the steps while you click, Explain this page, follow-ups |
 | **You stay in control** | An off switch for every mod on a page (⌥⇧0), Pause Morse on a site or everywhere, safe start for mods that crash a page, a plain-language summary before anything shared is installed, and one-file backups |
 
 ## Screenshots
@@ -86,6 +87,15 @@ Point at something and an edit toolbar anchors to it. Every key is a tool while 
 | ![](docs/screenshots/54-dark-mode.png) Page tools: hide ads, then a smart-invert dark mode that keeps media and already-dark parts as they are | ![](docs/screenshots/55-capture.png) **⇧C**: capture the masthead to the Morse clipboard |
 | ![](docs/screenshots/56-reuse.png) In a different app, pick it from the bar: the model rebuilds that look natively | |
 
+### Ask and find: understand the app, not just change it
+
+Same hotkey, same bar: ask a question instead of describing a change ("what does this button do?", "why is this greyed out?", "where do I change my password?"). The model decides which it is; a question gets a short, plain answer in the bar and numbered markers on what it's talking about (click a number to scroll there). If the thing is inside a closed menu, the answer says which menu to open: the page outline the model sees now includes menu buttons, tabs, settings links and what's inside closed menus. When the answer is a few clicks on this page, **Show me** walks through them one at a time, marking each step and waiting for *you* to click it. Morse never clicks or types for you. Follow-ups work ("and how do I undo that?"): the page's questions and answers are kept in memory, never saved. **Explain this page** in the page tools gives a five-line summary of what the screen is for. Captured by [`demo/shoot-ask.js`](demo/shoot-ask.js).
+
+| | |
+|---|---|
+| ![](docs/screenshots/90-ask.png) **Ask** what something does: an answer, and a marker on it | ![](docs/screenshots/91-find.png) **Find** a setting that lives behind a menu |
+| ![](docs/screenshots/92-show-me.png) **Show me**: one step at a time, you do the clicking | ![](docs/screenshots/93-explain.png) **Explain this page**, from the page tools |
+
 ### You stay in control
 
 Captured by [`demo/shoot-control.js`](demo/shoot-control.js) driving the real extension.
@@ -95,32 +105,32 @@ Captured by [`demo/shoot-control.js`](demo/shoot-control.js) driving the real ex
 | ![](docs/screenshots/95-off-switch.png) **⌥⇧0** (Alt+Shift+0) turns every mod on the page off at once; the toast turns them back on | ![](docs/screenshots/96-install-summary.png) **Before installing** a shared mod: what it does, in plain words, with a note when it sends data elsewhere or reads what you type. The code is folded below |
 | ![](docs/screenshots/97-pause-site.png) **Pause Morse on a site** from the Mods panel; every row says where the mod came from and has **Show code** | ![](docs/screenshots/98-popup-pause.png) The same from the toolbar popup, plus **Pause everywhere** |
 
-- **Off switch.** A hotkey like the others (Settings → Shortcuts, default ⌥⇧0 / Alt+Shift+0). It removes every mod's CSS at once, then undoes their code. It stays off in that tab, even across reloads, until you press it again or click Turn back on. Nothing is deleted.
+- **Off switch.** A shortcut like the others (Settings → Shortcuts, default ⌥⇧0 / Alt+Shift+0). It removes every mod's CSS at once, then undoes their code. It stays off in that tab, even across reloads, until you press it again or click Turn back on. Nothing is deleted.
 - **Pause.** "Pause Morse on <site>" in the Mods panel and the popup, "Pause everywhere" in the popup (the toolbar icon then says *off*), and in a terminal `morse pause [site|app]` / `morse resume`. Paused mods stay saved; every open tab and window follows at once.
 - **Safe start.** If a page closes, crashes or reloads within seconds after a mod ran, three times in a row, Morse holds that mod back on the next load and asks: *Keep it off* or *Turn it back on*. Tracked per tab by the host (`chrome.storage.local`, `~/.morse/control.json`).
-- **What a mod does, before you install it.** [`core/summary.js`](core/summary.js) reads the mod's code and lists what it changes and can do: *Changes how the page looks*, *Adds buttons to the page*, *Reads what you type in this page*, *Sends data to another website*, *Remembers settings on this site*, and so on. It errs on the side of mentioning things. The share page, the Import dialog and `morse import` all show it first, with the code below, and install only on an explicit Install. On the web, a page can't install anything by itself: the share page's Install button opens Morse's own review, and only a click there installs.
+- **What a mod does, before you install it.** [`core/summary.js`](core/summary.js) reads the mod's code and lists what it changes and can do: *Changes how the page looks*, *Adds buttons to the page*, *Reads what you type in this page*, *Sends data to another website*, *Remembers settings on this site*, and so on. It errs on the side of mentioning things. The share page, Install a mod… in the Mods panel and `morse install` all show it first, with the code below, and install only on an explicit Install. On the web, a page can't install anything by itself: the share page's Install button opens Morse's own review, and only a click there installs.
 - **Where it came from.** Each mod in the panel and popup says how it got there (made here with which model, your own edits, installed from a shared link and by whom, restored from a backup), with **Show code** next to it. `morse code <id>` does the same in a terminal.
-- **Backups.** *Export all mods* and *Import from file* at the bottom of the Mods panel; `morse export --all [--out file]` and `morse import <file|link>`.
+- **Backups.** *Export all mods* and *Install from a file…* at the bottom of the Mods panel; `morse export --all [--out file]` and `morse install <backup file>`.
 
 ## Status
 
 Honest accounting of what was verified and how:
 
-- **Verified end to end** (in a Linux container, Chromium 153): extension on three sites including a strict-CSP one; desktop connector via `morse launch` → CDP attach → inject → generate → self-repair → save → full app restart → mods re-applied; share link → install in a second browser profile; userscript export running standalone; clip recording to GIF/MP4. `npm test` covers the parser, providers, engine, share links, fuses and the helper kit (18 tests, the kit ones in real Chromium).
-- **The model in the screenshots is the demo model.** The container had no access to model weights (ollama.com / Hugging Face were blocked), so generation was replayed from [`core/demo.js`](core/demo.js) at a local-model-like pace. The Ollama and OpenAI-compatible providers are implemented and tested against fake servers speaking those protocols, but have not been run against real weights yet. Expect a 7B coder model to nail CSS and simple DOM features and to miss more often on logic inside minified apps; the self-repair loop and the `morse` helper kit exist to raise that hit rate.
+- **Verified end to end** (in a Linux container, Chromium 153): extension on three sites including a strict-CSP one; desktop connector via `morse launch` → CDP attach → inject → generate → self-repair → save → full app restart → mods re-applied; share link → install in a second browser profile; userscript export running standalone; clip recording to GIF/MP4. `npm test` covers the parser, every model backend (fake `claude` and `codex` on PATH, a fake Anthropic API), the Morse helper (pairing, auth, origins, cancel), the engine, share links, fuses, voice, God mode and the helper kit (the kit and UI ones in real Chromium).
+- **The main screenshots replay pre-written replies** from [`core/demo.js`](core/demo.js), a test fixture, so they come out the same every time. The same desktop flow was also run with **real Claude Code** (`claude` on the Claude subscription, model `haiku`): [`docs/screenshots/claude-code`](docs/screenshots/claude-code). It built a working sleep timer on the first try (no repair round needed) in about 15 s. Its "bigger album covers" change targeted `img` elements the demo app doesn't have, so that one did nothing visible: a small fast model guessing at markup. The extension was checked the same way: paired with `morse serve`, the popup's Test button, a full generation through the helper, and Stop killing the `claude` process mid-run.
+- **Codex** isn't installed in the container, so it is only tested against a fake `codex` that prints both of its JSON output formats. **The Anthropic and OpenAI APIs** are tested against fake servers speaking their streaming protocols (the Anthropic one through the official SDK), not against the real endpoints.
 - **No real Electron app was available** in the container. The "desktop app" in the screenshots is a Chromium app window (`--app=`), which speaks exactly the protocol Electron apps expose with `--remote-debugging-port`. Spotify/Slack/Discord/VS Code paths in [`daemon/apps.js`](daemon/apps.js) are untested. Some apps strip or block the debugging switch; `morse fuses <app>` reads the Electron fuse wire (REA's `inspect_electron_fuses` check) to tell you what to expect.
 
 ## Install
 
 ```bash
 git clone https://github.com/sam-siavoshian/RRAA morse && cd morse
-npm run build                       # builds dist/extension (no dependencies)
-
-# a local model (optional — without one Morse runs in demo mode)
-ollama pull qwen2.5-coder:7b
+npm install                         # the Anthropic SDK and esbuild
+npm run build                       # builds dist/extension
+node daemon/cli.js doctor           # finds your model and makes a test call
 ```
 
-**Web:** `chrome://extensions` → Developer mode → Load unpacked → `dist/extension`. Then in Morse's details, turn on **Allow User Scripts** (needed for JS mods on sites with a strict CSP; CSS mods work without it). Press **⌥Space** (Alt+Space) on any page.
+Requires Node 22+. For clips, `ffmpeg` on your PATH. `morse` below means `node daemon/cli.js` (or run `npm link` once).
 
 **Desktop apps:**
 
@@ -129,10 +139,40 @@ node daemon/cli.js launch spotify --restart   # or slack, discord, vscode, notio
 node daemon/cli.js mods
 node daemon/cli.js pause                        # stop every mod everywhere (morse resume to undo)
 node daemon/cli.js export --all                 # back up every mod to one file
-node daemon/cli.js model --provider openai --base-url http://127.0.0.1:8080 --model qwen2.5-coder
 ```
 
-Requires Node 22+. For clips, `ffmpeg` on your PATH.
+**Websites:** `chrome://extensions` → Developer mode → Load unpacked → `dist/extension`. Then in Morse's details, turn on **Allow User Scripts** (needed for JS mods on sites with a strict CSP; CSS mods work without it). The settings page opens by itself the first time; connect a model there (below). Press **⌥Space** (Alt+Space) on any page.
+
+## Models
+
+Morse doesn't ship a model. It uses one you already have.
+
+| | What you need | How Morse runs it |
+|---|---|---|
+| **Claude Code** | The `claude` command, signed in with your Claude plan | `claude -p` with every tool turned off, no MCP servers, no saved session, in an empty folder under `~/.morse`. It only writes text back. |
+| **Codex** | The `codex` command, signed in | `codex exec` in a read-only sandbox, in an empty folder |
+| **Anthropic API** | An API key | `claude-opus-5-5` at low effort by default; `claude-sonnet-5-5` and `claude-haiku-5-5` to choose from. If Claude declines a request, you get a clear message. |
+| **OpenAI API** | An API key (or any OpenAI-compatible server via `--base-url`) | Chat completions, streamed |
+
+On a computer, Morse picks the first one it finds in that order. To choose yourself:
+
+```bash
+node daemon/cli.js model                                   # what Morse will use
+node daemon/cli.js config --provider claude-code --model haiku    # opus · sonnet · haiku
+node daemon/cli.js config --provider anthropic --anthropic-key sk-ant-…
+node daemon/cli.js config --provider openai --openai-key sk-…
+node daemon/cli.js config --provider auto                  # back to auto-detect
+node daemon/cli.js doctor                                  # what's installed + a real test call
+```
+
+Keys live in `~/.morse/config.json` (readable only by you), or come from `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`.
+
+**In Chrome** there are two ways, picked in the toolbar popup:
+
+- **Morse helper** (Claude Code, Codex, or keys kept on your computer). Run `node daemon/cli.js serve`. It prints a 6-character code; type it into the popup and press Pair. `morse pair` prints a new code, `morse unpair` signs every browser out. The helper listens only on 127.0.0.1:7457, only answers Chrome extensions (and local tools like curl, which send no Origin), and needs the token it handed out at pairing. Pressing Stop, or closing the tab, stops the model on your computer too.
+- **Anthropic API key (no install).** Paste a key in the popup and pick a model. The key stays in this browser's extension storage and requests go straight from the extension to Anthropic.
+
+The popup's **Test** button makes a small real call and shows the reply.
 
 ## How it works
 
@@ -146,15 +186,17 @@ Requires Node 22+. For clips, `ffmpeg` on your PATH.
                  │ extension/background.js │   │ daemon/connector.js        │
                  │ chrome.userScripts       │   │ morse launch / attach      │
                  └──────────────┬─────────┘   └─────────────┬──────────────┘
+                                │  daemon/bridge.js          │  daemon/harness.js
+                                │  (morse serve, 127.0.0.1)──┤  claude -p · codex exec
                                 └────────── core/ ──────────┘
                      engine.js (stream → live CSS → run JS → repair)
-                     prompt.js · parse.js · providers.js (Ollama / OpenAI-compatible)
+                     prompt.js · parse.js · providers.js (Anthropic SDK / OpenAI / helper)
                      mod.js (format, share links, userscript export)
 ```
 
 - **One runtime, two hosts.** The same `runtime.js` runs in websites (extension) and desktop apps (CDP); only the transport differs.
-- **The `morse` kit is the secret sauce for small models.** `morse.watch(selector, fn)` survives React re-renders; `morse.el(...)` creates elements that are tracked for undo; errors inside callbacks are captured and fed back to the model. Short, concrete API → fewer tokens, fewer mistakes.
-- **Context, not the whole DOM.** The model gets the picked element's trimmed HTML, a stable selector that avoids hashed class names, its ancestors, a 40-line page outline, and the theme colors. Small prompts keep local models fast.
+- **The `morse` kit keeps mods short and robust.** `morse.watch(selector, fn)` survives React re-renders; `morse.el(...)` creates elements that are tracked for undo; errors inside callbacks are captured and fed back to the model. Short, concrete API → fewer tokens, fewer mistakes.
+- **Context, not the whole DOM.** The model gets the picked element's trimmed HTML, a stable selector that avoids hashed class names, its ancestors, a capped page outline (landmarks, controls, menu buttons, tabs, settings links and what sits inside closed menus), and the theme colors. Small prompts keep local models fast.
 - **Mods are data.** A mod is a JSON document (prompt, match, CSS, JS). Share links carry it in the URL fragment, so no server ever sees it.
 
 ## Where REA fits
@@ -173,25 +215,41 @@ Mods are code running inside apps you're signed into, so:
 - Mods run in the renderer only. They get no Node/Electron APIs.
 - `morse launch` opens a debugging port on 127.0.0.1. While it's open, **any local process can attach to that app**, which is the same trust level as anything else running as you, but worth knowing. Quit the app normally to close it.
 - Share links carry the mod in the URL fragment, which browsers never send to a server.
-- Page text goes to the model, so a page can try to prompt-inject it. That's one reason generated code is always shown, reversible, and never silent.
+- Page text goes to the model, so a page can try to prompt-inject it. That's one reason generated code is always shown, reversible, and never silent, and why Claude Code and Codex run with no tools, no MCP servers and an empty working folder: the model can only write text.
+- The Morse helper (`morse serve`) binds to 127.0.0.1 only, refuses web-page origins and non-loopback Host headers, and serves completions only to a browser that paired with a one-time code. Tokens are stored hashed.
 
 ## Roadmap
 
-- **Days:** test against real Ollama models and tune the prompt/kit on real Spotify, Slack, Discord, VS Code, Notion, ChatGPT; tray app with a global hotkey (Tauri) so `morse launch` isn't needed; clip recording in the extension (`tabCapture`).
+- **Days:** tune the prompt/kit with Claude Code and Codex on real Spotify, Slack, Discord, VS Code, Notion, ChatGPT; tray app with a global hotkey (Tauri) so `morse launch` isn't needed; clip recording in the extension (`tabCapture`).
 - **Weeks:** REA-powered app profiles for logic-level changes; mod auto-repair when an app update breaks selectors; a static-site gallery of shared mods; enforce the no-network rule with a CSP/proxy for mod code.
 - **Native apps (honest version):** macOS Accessibility / Windows UI Automation can read and drive native UIs and draw overlays *on top*, not add buttons *inside* Finder. That's "overlay + automation" mods, a v3 item.
+
+## Site
+
+[`site/`](site/) is the public website: static HTML, CSS and ES modules, no build step, so GitHub Pages can serve the repo root as is (`/site/` for the site, `/share/install.html` for share links).
+
+- **`site/index.html`**: the landing page, with an in-browser demo of the pixel effect (simulated, no model runs).
+- **`site/gallery.html`**: example mods from [`site/mods/`](site/mods/) (`index.json` lists them; each `*.morse.json` is a normal mod). Search, filter by app, read the code, then **Install in Morse** (a share link built exactly like `encodeShare` in `core/mod.js`), **Download .user.js** or **Copy link**. The mods were written by hand against each app in October 2026, so a selector may need a refresh.
+- **`site/radar.js`**: the radar mark (OpenCode's 4×4 pixel spinner) as a tiny module.
+- **`share/install.html`** uses the same styles.
+
+Run it locally with `npm run demo:serve` and open `http://127.0.0.1:8787/site/`. Screenshots (1440×900 and 390×844, dark and light) are in [`docs/site/`](docs/site/).
+
+To add a mod to the gallery, export it (`morse export <id>` writes a `.morse.json`), drop it in `site/mods/`, and add an entry to `site/mods/index.json`.
 
 ## Repo layout
 
 ```
-core/        shared brain: engine, prompt, parser, providers, mod format, helper kit, demo model
-runtime/     the in-app UI and effect (one file, injected everywhere)
+core/        shared brain: engine, prompt, parser, model providers, mod format, helper kit, demo replay (tests)
+runtime/     the in-app UI and effect (src/ bundled into one file, injected everywhere)
 extension/   Chrome MV3 host
-daemon/      desktop connector + CLI (CDP, app launcher, fuses, clip recorder, mod store)
+daemon/      desktop connector + CLI (CDP, app launcher, fuses, clip recorder, mod store),
+             the Morse helper for the extension, Claude Code / Codex runners
 share/       static install page for share links
+site/        public website: landing page, mod gallery, example mods
 demo/        demo apps + the scripts that produced every screenshot
 ```
 
-Regenerate the screenshots: `npm run demo:serve &` then `DISPLAY=:99 npm run screenshots` (needs Xvfb, Chromium/Playwright, ffmpeg; set `MORSE_HOME` to a scratch dir). God mode's are `DISPLAY=:99 node demo/shoot-godmode.js`.
+Regenerate the screenshots: `npm run demo:serve &` then `DISPLAY=:99 npm run screenshots` (replayed replies; add `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code` to `demo/shoot-desktop.js` for a real model) (needs Xvfb, Chromium/Playwright, ffmpeg; set `MORSE_HOME` to a scratch dir). God mode's are `DISPLAY=:99 node demo/shoot-godmode.js`.
 
 MIT licensed.

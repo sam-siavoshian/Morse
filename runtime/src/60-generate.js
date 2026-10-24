@@ -36,14 +36,14 @@ async function submit(request) {
   const off = onEvent(msg => {
     if (msg.genId !== id) return;
     if (msg.type === "token") {
-      if (!wrote) { wrote = true; if (/Thinking/.test(hint.textContent)) hint.innerHTML = `${radar(12)} Writing`; }
+      if (!wrote) { wrote = true; if (/Thinking/.test(hint.textContent)) hint.innerHTML = `${radar(12)} Writing the change`; }
       Effect.token(msg.text); tick(msg.text);
     }
     if (msg.type === "css") setCss(id, msg.css);
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") hint.innerHTML = `${radar(12)} Fixing <i>${esc(msg.error).slice(0, 80)}</i>`;
-      if (msg.phase === "applying") hint.innerHTML = `${radar(12)} Applying`;
-      if (msg.phase === "thinking") hint.innerHTML = `${radar(12)} Writing`;
+      if (msg.phase === "fixing") hint.innerHTML = `${radar(12)} Fixing a problem: <i>${esc(String(msg.error).slice(0, 80))}</i>`;
+      if (msg.phase === "applying") hint.innerHTML = `${radar(12)} Trying the change`;
+      if (msg.phase === "thinking") hint.innerHTML = `${radar(12)} Writing the change`;
     }
   });
   let res;
@@ -56,12 +56,14 @@ async function submit(request) {
   Object.assign(S.draft, { title: res.title || request.slice(0, 40), css: res.css || "", js: res.js || "", secs, attempts: res.attempts, model: S.label });
   setCss(id, S.draft.css);
   await Effect.finish(res.ok);
+  if (Ask.handle(id, res)) return; // Ask and find: an answer, not a mod (61-ask.js)
   if (!res.ok) {
     setCss(id, "");
+    call("off", { modId: id }).catch(() => {}); // a failed attempt's JS may have left nodes, observers or timers
     if (res.cancelled) return onCancelled(id); // Stop: 50-bar.js
     S.phase = "error";
     bar.classList.add("err");
-    hint.innerHTML = `Couldn't do that: <i>${esc(res.error || "unknown error").slice(0, 120)}</i>`;
+    hint.innerHTML = `That didn't work: <i>${esc(String(res.error || "Something went wrong. Try again.").slice(0, 120))}</i>`;
     hint.title = res.error || "";
     actions.innerHTML = `<button data-a="again">Try again</button>`;
     return;
@@ -72,9 +74,9 @@ async function submit(request) {
   call("clip.stop", { modId: id }).then(c => { if (c) S.draft.clip = c; }).catch(() => {});
   S.phase = "result";
   bar.classList.add("done");
-  hint.innerHTML = `<b class="ok">${esc(S.draft.title)}</b> <span class="dim">${secs}s${res.attempts > 1 ? " · repaired once" : ""}</span>`;
+  hint.innerHTML = `<b class="ok">${esc(S.draft.title)}</b> <span class="dim">${secs}s${res.attempts > 1 ? " · needed a second try" : ""}</span>`;
   ticker.textContent = "";
-  actions.innerHTML = `<button data-a="keep" class="primary">Keep <kbd>↵</kbd></button><button data-a="undo">Undo</button><button data-a="code">Code</button><button data-a="share">Share</button>`;
+  actions.innerHTML = `<button data-a="keep" class="primary">Save <kbd>↵</kbd></button><button data-a="undo">Undo</button><button data-a="code">Edit code</button><button data-a="share">Share</button>`;
   actions.querySelector("[data-a=keep]").focus();
 }
 const onEvent = fn => { listeners.add(fn); return () => listeners.delete(fn); };
@@ -88,12 +90,14 @@ async function keep() {
   const d = S.draft;
   if (!d) return null;
   if (d.saved) return d.saved;
-  const mod = await call("mods.save", { draft: { id: d.id, title: d.title, prompt: d.request, css: d.css, js: d.js, url: location.href, app: S.app, target: d.ctx.target, model: d.model } });
+  if (d.saving) return d.saving; // Keep then Share (or a double click) saves once
+  d.saving = call("mods.save", { draft: { id: d.id, title: d.title, prompt: d.request, css: d.css, js: d.js, url: location.href, app: S.app, target: d.ctx.target, model: d.model } });
+  const mod = await d.saving;
   d.saved = mod;
   S.mods.push(mod);
   S.phase = "idle";
   closeBar();
-  toast(`Saved “${mod.title}” · it'll be here next time`);
+  toast(`Saved “${mod.title}”. It will be here next time.`);
   return mod;
 }
 async function undo() {
@@ -101,5 +105,5 @@ async function undo() {
   await removeMod(S.draft.id);
   S.draft = null;
   closeBar();
-  toast("Undone");
+  toast("Change undone");
 }

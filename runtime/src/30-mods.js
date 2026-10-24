@@ -1,5 +1,5 @@
 function setCss(id, css) {
-  let s = document.head.querySelector(`style[data-morse-css="${id}"]`);
+  let s = document.head.querySelector(`style[data-morse-css="${cssEsc(id)}"]`);
   if (!css) { s?.remove(); return; }
   if (!s) { s = document.createElement("style"); s.setAttribute("data-morse-css", id); document.head.append(s); }
   if (s.textContent !== css) s.textContent = css;
@@ -9,7 +9,7 @@ async function applyMod(m) {
   setCss(m.id, m.css);
   if (m.js.trim()) {
     const r = await call("exec", { modId: m.id, js: m.js });
-    if (!r.ok) toast(`“${m.title}” failed: ${r.error}`);
+    if (!r.ok) toast(`Couldn't run “${m.title}”: ${r.error}. Edit its code in Mods.`);
   }
   modRan(m); // safe start (63-control.js)
 }

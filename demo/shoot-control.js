@@ -87,7 +87,7 @@ async function openByte() {
   // the toolbar popup says so too (the real popup, opened as a page)
   const id = sw.url().split("/")[2];
   const pop = await ctx.newPage();
-  await pop.setViewportSize({ width: 348, height: 560 });
+  await pop.setViewportSize({ width: 348, height: 680 });
   await pop.goto(`chrome-extension://${id}/popup.html?url=${encodeURIComponent(BYTE)}`);
   await sleep(500);
   await shot(pop, "98-popup-pause.png");
@@ -101,7 +101,7 @@ await ctx.close();
 // 96 · the share page: what a shared mod does, before anything is installed
 {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, colorScheme: "dark" });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 1000 }, colorScheme: "dark" }); // tall enough to show Install under the summary
   const mod = createMod({
     title: "Draft keeper", prompt: "keep a copy of what I type in the message box so I never lose a draft", url: "https://chat.example.com/",
     css: ".draft-saved { font-size: 12px; opacity: .6; margin-left: 8px; }",
@@ -110,7 +110,7 @@ await ctx.close();
   });
   const link = await encodeShare({ ...mod, author: "Sam" });
   await page.goto(`http://127.0.0.1:${BASE}/share/install.html#m=${link.split("#m=")[1]}`);
-  await page.waitForSelector("ul.items li");
+  await page.waitForSelector("ul.i-items li");
   await sleep(300);
   await shot(page, "96-install-summary.png");
   await browser.close();

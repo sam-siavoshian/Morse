@@ -211,7 +211,7 @@ test("import: the in-app review shows what it does, folds the code, and installs
   assert.equal(await page.evaluate(`${sr(".modal details.ctl-code")}.open`), false, "code is folded");
   assert.equal(await page.evaluate(`document.querySelector("[data-morse-ui]").shadowRoot.activeElement?.textContent`), "Cancel", "focus starts on Cancel, never on Install");
   assert.equal(Object.keys(await stored(page)).length, 2, "nothing installed yet");
-  await click(page, ".modal [data-c=install]");
+  await click(page, ".modal [data-a=install]");
   await until(async () => Object.keys(await stored(page)).length === 3);
   const m = (await stored(page))[spy.id];
   assert.equal(m.imported, true);
@@ -239,11 +239,11 @@ test("share page: plain-language summary first, code folded below, an explicit I
     js: "morse.watch('textarea', t => { const c = morse.el('div', { class: 'wc' }); t.after(c); morse.on(t, 'input', () => c.textContent = t.value.split(/\\s+/).length + ' words'); });" });
   const link = await encodeShare(mod);
   await page.goto(`${ORIGIN}/share/install.html#m=${link.split("#m=")[1]}`);
-  await page.waitForSelector("ul.items li");
+  await page.waitForSelector("ul.i-items li");
   assert.equal(await page.locator("h1").textContent(), "Word count");
-  assert.deepEqual(await page.locator("ul.items li").evaluateAll(l => l.map(e => e.dataset.s)), ["looks", "text", "adds", "typing", "ongoing", "code"]);
-  assert.match(await page.locator("ul.items").textContent(), /Reads what you type in this page/);
-  assert.match(await page.locator('.note[data-s="typing"]').textContent(), /can read what you type/);
+  assert.deepEqual(await page.locator("ul.i-items li").evaluateAll(l => l.map(e => e.dataset.s)), ["looks", "text", "adds", "typing", "ongoing", "code"]);
+  assert.match(await page.locator("ul.i-items").textContent(), /Reads what you type in this page/);
+  assert.match(await page.locator('.i-note[data-s="typing"]').textContent(), /can read what you type/);
   assert.equal(await page.locator("details#code").evaluate(d => d.open), false);
   assert.equal(await page.locator("#install").textContent(), "Install");
   // Nothing happens without the click; with the extension the click hands off to Morse's own review.
@@ -254,7 +254,7 @@ test("share page: plain-language summary first, code folded below, an explicit I
   assert.equal(posted.length, 0);
   await page.locator("#install").click();
   await until(() => posted.length === 1);
-  assert.match(await page.locator("#status").textContent(), /Press Install there/);
+  assert.match(await page.locator("#status").textContent(), /finish installing/);
   // Colors come from the design tokens, not literals.
   assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(251, 251, 251)");
   assert.deepEqual(errors, []);

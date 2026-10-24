@@ -1,0 +1,158 @@
+[
+  {
+    "file": "vscode-obvious-tab.morse.json",
+    "title": "Obvious active tab",
+    "prompt": "make the active editor tab obvious and fade the others",
+    "app": "VS Code",
+    "author": "morse",
+    "tags": [
+      "theme",
+      "editor"
+    ],
+    "created": "2026-10-22T10:10:00.000Z",
+    "surface": "desktop"
+  },
+  {
+    "file": "discord-no-upsells.morse.json",
+    "title": "No Nitro upsells",
+    "prompt": "remove the gift button, the Nitro tab and the shop",
+    "app": "Discord",
+    "author": "morse",
+    "tags": [
+      "declutter"
+    ],
+    "created": "2026-10-20T20:41:00.000Z",
+    "surface": "web, desktop"
+  },
+  {
+    "file": "gmail-reading-pane.morse.json",
+    "title": "Comfortable reading",
+    "prompt": "make emails easier to read: bigger text and a narrower column",
+    "app": "Gmail",
+    "author": "morse",
+    "tags": [
+      "reading",
+      "layout"
+    ],
+    "created": "2026-10-18T13:22:00.000Z",
+    "surface": "web"
+  },
+  {
+    "file": "x-hide-trending.morse.json",
+    "title": "Hide trends",
+    "prompt": "hide trending, who to follow and the premium upsell from the sidebar",
+    "app": "X",
+    "author": "morse",
+    "tags": [
+      "declutter",
+      "focus"
+    ],
+    "created": "2026-10-16T07:50:00.000Z",
+    "surface": "web"
+  },
+  {
+    "file": "hn-dark-mode.morse.json",
+    "title": "Dark mode",
+    "prompt": "dark mode that's easy on the eyes, keep a hint of the orange",
+    "app": "Hacker News",
+    "author": "morse",
+    "tags": [
+      "theme",
+      "dark mode"
+    ],
+    "created": "2026-10-14T19:05:00.000Z",
+    "surface": "web"
+  },
+  {
+    "file": "notion-focus-mode.morse.json",
+    "title": "Focus mode",
+    "prompt": "add a focus button that hides the sidebar and everything except the page",
+    "app": "Notion",
+    "author": "morse",
+    "tags": [
+      "focus",
+      "writing",
+      "new feature"
+    ],
+    "created": "2026-10-13T11:30:00.000Z",
+    "surface": "web, desktop"
+  },
+  {
+    "file": "slack-quiet-sidebar.morse.json",
+    "title": "Quiet sidebar",
+    "prompt": "fade every channel without unread messages so the unread ones stand out",
+    "app": "Slack",
+    "author": "morse",
+    "tags": [
+      "focus",
+      "declutter"
+    ],
+    "created": "2026-10-11T08:15:00.000Z",
+    "surface": "desktop"
+  },
+  {
+    "file": "spotify-sleep-timer.morse.json",
+    "title": "Sleep timer",
+    "prompt": "add a sleep timer that pauses the music after a while",
+    "app": "Spotify",
+    "author": "morse",
+    "tags": [
+      "new feature",
+      "playback"
+    ],
+    "created": "2026-10-09T23:48:00.000Z",
+    "surface": "desktop"
+  },
+  {
+    "file": "claude-enter-newline.morse.json",
+    "title": "Enter for newline",
+    "prompt": "make Enter add a new line and Ctrl+Enter send the message",
+    "app": "Claude",
+    "author": "morse",
+    "tags": [
+      "keyboard",
+      "writing"
+    ],
+    "created": "2026-10-07T15:26:00.000Z",
+    "surface": "web"
+  },
+  {
+    "file": "chatgpt-word-count.morse.json",
+    "title": "Composer word count",
+    "prompt": "show a live word count under the message box",
+    "app": "ChatGPT",
+    "author": "morse",
+    "tags": [
+      "writing",
+      "new feature"
+    ],
+    "created": "2026-10-05T21:03:00.000Z",
+    "surface": "web"
+  },
+  {
+    "file": "github-wide-diffs.morse.json",
+    "title": "Full-width diffs",
+    "prompt": "use the full width of the screen for pull request diffs",
+    "app": "GitHub",
+    "author": "morse",
+    "tags": [
+      "layout",
+      "code review"
+    ],
+    "created": "2026-10-04T09:40:00.000Z",
+    "surface": "web"
+  },
+  {
+    "file": "youtube-hide-shorts.morse.json",
+    "title": "Hide Shorts",
+    "prompt": "hide Shorts everywhere, and open any Shorts link as a normal video",
+    "app": "YouTube",
+    "author": "morse",
+    "tags": [
+      "declutter",
+      "redirect"
+    ],
+    "created": "2026-10-02T17:12:00.000Z",
+    "surface": "web"
+  }
+]

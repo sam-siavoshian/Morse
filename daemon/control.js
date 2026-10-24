@@ -100,7 +100,7 @@ export async function exportAllCli(f) {
   if (typeof f.out === "string") { file = path.resolve(f.out); await fs.writeFile(file, content); }
   else file = await writeExport(backupFilename(), content);
   out(`Saved ${mods.length} mod${mods.length === 1 ? "" : "s"} to ${file}`);
-  out(D(`Restore with: morse import ${file}`));
+  out(D(`Restore with: morse install ${file}`));
   return file;
 }
 
@@ -114,16 +114,16 @@ function describe(mod) {
   return lines.join("\n");
 }
 
-// morse import <file|link> [--yes]
+// morse install <file|link> [--yes] (also `morse import`)
 export async function importCli(f) {
   const src = f._[0];
-  if (!src) throw new Error("What should Morse import? e.g. morse import morse-mods.json");
+  if (!src) throw new Error("What should Morse install? For example: morse install morse-mods.json");
   const text = src.includes("#m=") ? src : await fs.readFile(src, "utf8");
   const { kind, mods, errors } = await parseImport(text);
   out(`${kind === "backup" ? "This backup has" : "This is"} ${mods.length} mod${mods.length === 1 ? "" : "s"}. What ${mods.length === 1 ? "it does" : "they do"}:\n`);
   for (const m of mods) out(describe(m) + "\n");
   for (const e of errors) out(D(`Skipped ${e}`));
-  out(D(`See the code first: open the file, or after installing run morse code <id>.`));
+  out(D(`To read the code first, open the file, or install and run morse code <id>.`));
   if (!f.yes) {
     if (!process.stdin.isTTY) throw new Error("Add --yes to install without being asked.");
     const rl = createInterface({ input: process.stdin, output: process.stdout });

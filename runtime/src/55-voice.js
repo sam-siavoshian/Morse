@@ -38,11 +38,11 @@ const Voice = (() => {
     micBtn.setAttribute("aria-pressed", String(st === "listening" || st === "starting"));
     const talk = hotkey("talk"), same = talk && talk === hotkey("open");
     const how = talk ? ` · ${same ? "hold" : "press"} ${hotkeyText("talk")}` : "";
-    micBtn.title = st === "listening" ? "Stop listening" : st === "transcribing" ? "Transcribing…" : (availability().why || `Voice input${how}`);
+    micBtn.title = st === "listening" ? "Stop listening" : st === "transcribing" ? "Turning speech into text…" : (availability().why || `Voice input${how}`);
     bar.classList.toggle("listening", st === "listening" || st === "starting");
-    input.placeholder = st === "listening" ? "Listening…" : st === "transcribing" ? "Transcribing…" : "Describe a change…";
+    input.placeholder = st === "listening" ? "Listening…" : st === "transcribing" ? "Turning speech into text…" : "Describe a change…";
     if (st === "listening") stickyHint(`${radar(12)} Listening · ${mode === "hold" ? "release to finish" : `pause or <kbd>Esc</kbd> to finish`}`);
-    else if (st === "transcribing") stickyHint(`${radar(12)} Transcribing`);
+    else if (st === "transcribing") stickyHint(`${radar(12)} Turning speech into text`);
     else if (hintSticky) stickyHint("");
   }
 
@@ -54,10 +54,10 @@ const Voice = (() => {
   const canRecord = () => !!(navigator.mediaDevices?.getUserMedia && globalThis.MediaRecorder && hostVoice?.transcribe);
   const canSpeech = () => !!SR && !speechBroken;
   function availability() {
-    if (!globalThis.isSecureContext) return { ok: false, why: "Voice needs a secure (https) page" };
-    if (policyBlocked()) return { ok: false, why: "This page's permissions policy blocks the microphone" };
+    if (!globalThis.isSecureContext) return { ok: false, why: "Voice only works on secure (https) pages" };
+    if (policyBlocked()) return { ok: false, why: "This page doesn't allow the microphone" };
     if (!canSpeech() && !canRecord()) {
-      if (!navigator.mediaDevices?.getUserMedia) return { ok: false, why: "This app doesn't give pages a microphone" };
+      if (!navigator.mediaDevices?.getUserMedia) return { ok: false, why: "This app doesn't allow the microphone. Type your change instead." };
       return { ok: false, why: hostVoice?.hint || "Voice isn't set up for this app yet" };
     }
     return { ok: true, why: "" };
@@ -71,8 +71,8 @@ const Voice = (() => {
     const a = availability();
     if (!a.ok) return { ok: false, text: a.why };
     const parts = [];
-    if (canSpeech()) parts.push("Chrome speech recognition");
-    if (canRecord()) parts.push(`${parts.length ? "falls back to " : ""}${hostVoice.label || "the Morse host"}`);
+    if (canSpeech()) parts.push("Chrome's speech recognition");
+    if (canRecord()) parts.push(`${parts.length ? "or " : ""}${hostVoice.label || "the Morse helper"}`);
     return { ok: true, text: parts.join(", ") };
   }
 
@@ -83,10 +83,10 @@ const Voice = (() => {
   }
   function micError(e) {
     const n = e?.name || "";
-    if (n === "NotAllowedError" || n === "SecurityError") return policyBlocked() ? "This page's permissions policy blocks the microphone" : "Microphone access is blocked. Allow it for this site, then try again";
-    if (n === "NotFoundError" || n === "OverconstrainedError" || n === "DevicesNotFoundError") return "No microphone found";
-    if (n === "NotReadableError" || n === "AbortError" || n === "TrackStartError") return "The microphone is busy in another app";
-    return `Couldn't start the microphone${n ? ` (${n})` : ""}`;
+    if (n === "NotAllowedError" || n === "SecurityError") return policyBlocked() ? "This page doesn't allow the microphone" : "Microphone access is blocked. Allow it for this site, then try again.";
+    if (n === "NotFoundError" || n === "OverconstrainedError" || n === "DevicesNotFoundError") return "No microphone found. Plug one in and try again.";
+    if (n === "NotReadableError" || n === "AbortError" || n === "TrackStartError") return "The microphone is in use by another app. Close it and try again.";
+    return `Couldn't start the microphone${n ? ` (${n})` : ""}. Try again.`;
   }
 
   // ---- start / stop
@@ -146,12 +146,12 @@ const Voice = (() => {
     else if (chunks.length) {
       try { text = await transcribeBlob(new Blob(chunks, { type: mime })); }
       catch (e) { error = e.message || String(e); }
-    } else if (srFailed && !canRecord()) error = hostVoice?.hint || "Speech recognition isn't available in this app";
+    } else if (srFailed && !canRecord()) error = hostVoice?.hint || "Voice isn't available in this app. Type your change instead.";
     if (my !== session) return;
     teardown();
     st = "idle"; render();
     if (error) { showText(""); explain(error); return; }
-    if (!text) { showText(""); explain("Didn't catch that. Try again?"); return; }
+    if (!text) { showText(""); explain("Didn't catch that. Try again."); return; }
     showText(text, true);
     input.focus();
     if (submit && input.value.trim()) send(input.value.trim());

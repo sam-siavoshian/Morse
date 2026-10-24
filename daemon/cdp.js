@@ -47,6 +47,10 @@ export class CDPSession {
     if (!this.handlers.has(event)) this.handlers.set(event, []);
     this.handlers.get(event).push(fn);
   }
+  off(event, fn) {
+    const list = this.handlers.get(event);
+    if (list) this.handlers.set(event, list.filter(f => f !== fn));
+  }
   close() { try { this.ws.close(); } catch {} }
   #onMessage(msg) {
     if (msg.id != null) {

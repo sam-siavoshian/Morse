@@ -24,11 +24,11 @@ export function backupFilename(now = new Date()) {
 // Throws when nothing in it is a mod.
 export async function parseImport(source) {
   const src = String(source ?? "").trim();
-  if (!src) throw new Error("Paste a Morse share link, or choose a .morse.json or backup file.");
+  if (!src) throw new Error("Paste a Morse share link, or choose a mod file or a backup.");
   if (src.includes("#m=")) return { kind: "link", mods: [await decodeShare(src)], errors: [] };
   let data;
   try { data = JSON.parse(src); }
-  catch { throw new Error("That isn't a Morse share link or mod file."); }
+  catch { throw new Error("This isn't a Morse share link or mod file. Check that you copied all of it."); }
   const backup = data && (data.morse === BACKUP_KIND || Array.isArray(data.mods) || Array.isArray(data));
   const raw = Array.isArray(data) ? data : backup ? data.mods : [data];
   const mods = [], errors = [];
@@ -36,7 +36,7 @@ export async function parseImport(source) {
     try { mods.push(validateMod(m)); }
     catch (e) { errors.push(`Item ${i + 1}: ${e.message}`); }
   });
-  if (!mods.length) throw new Error(errors[0]?.replace(/^Item 1: /, "") || "There are no mods in that file.");
+  if (!mods.length) throw new Error(errors[0]?.replace(/^Item 1: /, "") || "There are no mods in this file. Check that it is a Morse backup.");
   return { kind: backup ? "backup" : "mod", mods, errors };
 }
 

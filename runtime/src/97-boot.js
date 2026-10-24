@@ -40,7 +40,7 @@ onEvent(msg => {
     Voice.configure(hello.voice);
     PromptHistory.load();
     await controlBoot(); await syncMods(); controlReady(); // user control: pause, safe start (63-control.js)
-    if (!hello.quiet && PREFS.welcome) toast(`Morse is ready · press ${HOTKEY}`);
+    if (!hello.quiet && PREFS.welcome) toast(`Morse is ready. Press ${HOTKEY} to change this page.`);
   } catch (e) { console.warn("[morse] host unavailable", e); }
   // single-page apps change URL without reloading
   setInterval(() => { if (location.href !== S.url) { S.url = location.href; syncMods().catch(() => {}); } }, 1000);

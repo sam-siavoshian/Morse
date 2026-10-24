@@ -3,10 +3,10 @@
 // Every change saves immediately through savePrefs().
 
 const HOTKEY_HELP = {
-  open: "Anywhere in the app",
+  open: "Works anywhere in the app",
   talk: "Hold to talk, release to finish",
-  mods: "Show and manage this page's mods",
-  godmode: "Toggle God mode",
+  mods: "See and manage the mods here",
+  godmode: "Show the edit tools",
 };
 
 // recording: { id, partial, error } while a hotkey button is listening for keys
@@ -43,7 +43,7 @@ function paintSettings() {
     const rec = recording?.id === id;
     const n = rec ? recording : hkNotes[id];
     const msg = rec
-      ? (recording.error ? `<span class="bad">${esc(recording.error)}</span>` : `Press the new shortcut · <kbd>Esc</kbd> cancel · <kbd>${PLATFORM === "mac" ? "⌫" : "Backspace"}</kbd> default`)
+      ? (recording.error ? `<span class="bad">${esc(recording.error)}</span>` : `Press the new shortcut · <kbd>Esc</kbd> to cancel · <kbd>${PLATFORM === "mac" ? "⌫" : "Backspace"}</kbd> to reset`)
       : n?.message ? `<span class="${n.level === "warn" ? "warn" : ""}">${esc(n.message)}</span>` : esc(HOTKEY_HELP[id]);
     const shown = rec
       ? `<span class="rec">${recording.partial ? caps(comboParts({ ...flagsOf(recording.partial), code: "X" }, PLATFORM).slice(0, -1)) : ""}<span class="dots">${radar(12)}</span></span>`
@@ -51,7 +51,7 @@ function paintSettings() {
     const custom = PREFS.hotkeys[id] !== "";
     const shake = rec && recording.shake;
     if (shake) recording.shake = false;
-    return `<div class="srow hkrow${rec ? " recording" : ""}${shake ? " shake" : ""}" data-id="${id}">
+    return `<div class="srow hkrow${rec ? " recording" : ""}${shake ? " shake" : ""}" data-id="${esc(id)}">
       <div class="lbl"><span>${esc(label)}</span><small id="hk-${id}-msg">${msg}</small></div>
       <div class="ctl">
         ${rec && id !== "open" ? `<button type="button" class="tbtn" data-off="${id}">Turn off</button>` : ""}
@@ -65,18 +65,18 @@ function paintSettings() {
       <header><b>Settings</b><span class="flash" aria-hidden="true"></span><button type="button" class="tbtn" data-act="done">Done</button></header>
       <section><h4>Shortcuts</h4>${keyRows}</section>
       <section><h4>Voice</h4>
-        <div class="srow"><div class="lbl"><span>Send after a pause</span><small>Runs the request when you stop talking</small></div><div class="ctl">${switchHtml("autoSubmit", PREFS.voice.autoSubmit, "Send after a pause")}</div></div>
+        <div class="srow"><div class="lbl"><span>Send after a pause</span><small>Sends when you stop talking</small></div><div class="ctl">${switchHtml("autoSubmit", PREFS.voice.autoSubmit, "Send after a pause")}</div></div>
         <div class="srow"><div class="lbl"><span>Speech to text</span><small class="${v.ok ? "" : "warn"}">${esc(v.text)}</small></div><div class="ctl"><span class="pill ${v.ok ? "on" : ""}">${v.ok ? "Ready" : "Off"}</span></div></div>
       </section>
       <section><h4>Appearance</h4>
-        <div class="srow"><div class="lbl"><span>Effects</span><small>${PREFS.effects ? "While the model works" : `Following your system's motion setting`}</small></div><div class="ctl">${segHtml("effects", "Effects", [["full", "Full"], ["subtle", "Subtle"], ["off", "Off"]], fx)}</div></div>
+        <div class="srow"><div class="lbl"><span>Effects</span><small>${PREFS.effects ? "The animation while Morse works" : `Follows your system's motion setting`}</small></div><div class="ctl">${segHtml("effects", "Effects", [["full", "Full"], ["subtle", "Subtle"], ["off", "Off"]], fx)}</div></div>
         <div class="srow"><div class="lbl"><span>Bar position</span><small>Auto moves away from what you point at</small></div><div class="ctl">${segHtml("barPosition", "Bar position", [["auto", "Auto"], ["top", "Top"], ["bottom", "Bottom"]], PREFS.barPosition)}</div></div>
         <div class="srow"><div class="lbl"><span>Theme</span></div><div class="ctl">${segHtml("theme", "Theme", [["auto", "Match app"], ["light", "Light"], ["dark", "Dark"]], PREFS.theme)}</div></div>
       </section>
       <section><h4>General</h4>
         <div class="srow"><div class="lbl"><span>Welcome message</span><small>“Morse is ready” when an app or page loads</small></div><div class="ctl">${switchHtml("welcome", PREFS.welcome, "Welcome message")}</div></div>
       </section>
-      <footer><button type="button" class="tbtn" data-act="reset-all">Reset all to defaults</button><span class="dim">${esc(S.mode === "extension" ? "Synced with your Chrome profile" : S.mode === "desktop" ? "Saved in ~/.morse/settings.json" : "")}</span></footer>
+      <footer><button type="button" class="tbtn" data-act="reset-all">Reset all settings</button><span class="dim">${esc(S.mode === "extension" ? "Synced with your Chrome profile" : S.mode === "desktop" ? "Saved on this computer" : "")}</span></footer>
     </div>`;
 }
 const flagsOf = partial => ({ ctrl: /Ctrl/.test(partial), alt: /Alt/.test(partial), shift: /Shift/.test(partial), meta: /Meta/.test(partial) });

@@ -21,7 +21,7 @@ try {
   Control.tab = sessionStorage.getItem("morse:tab") || uid();
   sessionStorage.setItem("morse:tab", Control.tab);
 } catch {}
-if (typeof HOTKEY_HELP === "object") HOTKEY_HELP.off = "Every mod on this page, at once";
+if (typeof HOTKEY_HELP === "object") HOTKEY_HELP.off = "Turn off every mod on this page at once";
 
 const here = () => ({ url: location.href, app: S.app });
 const hereName = () => S.appName || controlKey(here());
@@ -60,13 +60,13 @@ function rememberOff() {
 async function offSwitch() {
   if (Control.off) return turnBackOn();
   const { off } = await changeHeld(() => { Control.off = true; rememberOff(); });
-  controlToast(off ? `Turned off ${plural(off, "mod")} on this page.` : "Mods are off on this page.", [["Turn back on", turnBackOn]]);
+  controlToast(off ? `Turned off ${plural(off, "mod")} on this page` : "Mods are off on this page", [["Turn back on", turnBackOn]]);
   announce?.("All mods are off on this page.");
 }
 async function turnBackOn() {
   const { on } = await changeHeld(() => { Control.off = false; rememberOff(); });
   if (pausedHere()) return controlToast(`Morse is still paused ${Control.pause.all ? "everywhere" : `on ${hereName()}`}.`, [["Resume", resumeHere]]);
-  controlToast(on ? `Turned ${plural(on, "mod")} back on.` : "Mods are back on.");
+  controlToast(on ? `Turned ${plural(on, "mod")} back on` : "Mods are back on");
 }
 
 // ---- pause here / everywhere
@@ -77,12 +77,12 @@ async function applyPause(pause) {
 async function setPauseHere(on) {
   const r = await ctl("control.pause", { scope: "site", on });
   await applyPause(r?.pause || setPause({ pause: Control.pause }, { key: controlKey(here()), on }).pause);
-  controlToast(on ? `Paused Morse on ${hereName()}. Your mods are saved.` : `Morse is back on for ${hereName()}.`, on ? [["Undo", () => setPauseHere(false)]] : []);
+  controlToast(on ? `Paused Morse on ${hereName()}. Your mods are saved.` : `Morse is back on for ${hereName()}`, on ? [["Undo", () => setPauseHere(false)]] : []);
 }
 async function setPauseAll(on) {
   const r = await ctl("control.pause", { scope: "all", on });
   await applyPause(r?.pause || setPause({ pause: Control.pause }, { all: on }).pause);
-  controlToast(on ? "Paused Morse everywhere." : "Morse is back on everywhere.");
+  controlToast(on ? "Paused Morse everywhere" : "Morse is back on everywhere");
 }
 async function resumeHere() {
   if (Control.pause.all) await setPauseAll(false);
@@ -116,7 +116,7 @@ function controlReady() {
   const m = sus && S.mods.find(x => x.id === sus.id);
   if (sus && (!m || !m.enabled)) { forgive(sus.id); }
   else if (m) showSuspect(m);
-  else if (Control.off && S.mods.some(x => x.enabled)) controlToast("Mods are off on this page.", [["Turn back on", turnBackOn]]);
+  else if (Control.off && S.mods.some(x => x.enabled)) controlToast("Mods are off on this page", [["Turn back on", turnBackOn]]);
 }
 function forgive(id) {
   Control.held.delete(id);
@@ -136,7 +136,7 @@ async function keepOff(m) {
 }
 async function runAgain(m) {
   await changeHeld(() => forgive(m.id));
-  controlToast(`“${m.title}” is back on.`);
+  controlToast(`“${m.title}” is back on`);
 }
 
 // ---- toast with actions (the plain toast() can't hold buttons)
@@ -153,7 +153,7 @@ function controlToast(msg, actions = [], { sticky = false, title = "" } = {}) {
   ctlToast.classList.toggle("inline", actions.length <= 1 && msg.length < 60);
   ctlToast.innerHTML = `<div class="ctl-msg">${radar(12)}<span>${title ? `<b>${esc(title)}</b> ` : ""}${esc(msg)}</span></div>
     ${actions.length ? `<div class="ctl-acts">${actions.map(([label], i) => `<button data-i="${i}"${i === actions.length - 1 ? ` class="primary"` : ""}>${esc(label)}</button>`).join("")}</div>` : ""}
-    <button class="ctl-x" data-i="-1" title="Dismiss" aria-label="Dismiss">×</button>`;
+    <button class="ctl-x" data-i="-1" title="Close" aria-label="Close">×</button>`;
   ctlToast.hidden = false;
   ctlToast.onclick = e => {
     const b = e.target.closest("button[data-i]");
@@ -203,9 +203,9 @@ function showModCode(m) {
 async function reviewImport(source, { onDone } = {}) {
   const done = r => { const f = onDone; onDone = null; f?.(r); };
   let r;
-  try { r = await call("control.preview", { source }); }
+  try { r = await call("mods.preview", { source }); }
   catch (e) { toast(e.message); return done({ error: e.message }); }
-  if (!r?.mods?.length) { toast("Couldn't read a mod from that."); return done({ error: "Couldn't read a mod from that." }); }
+  if (!r?.mods?.length) { const e = "This isn't a Morse share link or mod file. Check that you copied all of it."; toast(e); return done({ error: e }); }
   const many = r.mods.length > 1;
   const hostHere = controlKey(here());
   const other = m => !m.match?.app && !(m.match?.hosts || []).some(h => h === "*" || h === hostHere || (h.startsWith("*.") && hostHere.endsWith(h.slice(1))));
@@ -223,12 +223,12 @@ async function reviewImport(source, { onDone } = {}) {
       <details class="ctl-code"><summary>Show code</summary>${codeHtml(m)}</details>
     </section>`).join("")}
     ${r.errors?.length ? `<p class="dim ctl-skip">Skipped ${esc(r.errors.join("; "))}</p>` : ""}
-    <footer><button data-a="close">Cancel</button><button class="primary" data-c="install">Install${many ? ` ${r.mods.length}` : ""}</button></footer>`);
+    <footer><button data-a="close">Cancel</button><button class="primary" data-a="install">Install${many ? ` ${r.mods.length}` : ""}</button></footer>`);
   modal.querySelector(".card").classList.add("ctl-card");
   modal.querySelector("[data-a=close]:not(header [data-a])")?.focus(); // Cancel, never Install: a page could make someone press Enter
   const watch = new MutationObserver(() => { if (modal.hidden) { watch.disconnect(); done({ error: "Not installed." }); } });
   watch.observe(modal, { attributes: true, attributeFilter: ["hidden"] });
-  modal.querySelector("[data-c=install]").onclick = async e => {
+  modal.querySelector("[data-a=install]").onclick = async e => {
     e.currentTarget.disabled = true;
     try {
       const saved = await call("control.install", { url: location.href, app: S.app, mods: r.mods, kind: r.kind });
@@ -245,7 +245,7 @@ async function reviewImport(source, { onDone } = {}) {
 
 async function exportAll() {
   const r = await ctl("control.exportAll");
-  if (!r) return toast("This version of Morse can't export yet.");
+  if (!r) return toast("This version of Morse can't back up mods. Update Morse and try again.");
   try {
     const saved = await call("export", { filename: r.filename, content: r.content });
     toast(`Saved ${plural(r.count, "mod")} to ${saved?.path || r.filename}`);
@@ -289,7 +289,7 @@ function controlPanel() {
     if (tags) tags.insertAdjacentHTML("beforeend", show); else meta.insertAdjacentHTML("beforeend", show);
     if (m.enabled && modHeld(m)) tags?.insertAdjacentHTML("afterbegin", `<span>not running</span>`);
   }
-  panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", `<div class="ctl-backup"><span>Backup</span><button data-c="export">Export all mods</button><button data-c="import-file">Import from file</button></div>`);
+  panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", `<div class="ctl-backup"><span>Backup</span><button data-c="export">Export all mods</button><button data-c="import-file">Install from a file…</button></div>`);
 }
 panel.addEventListener("click", e => {
   const b = e.target.closest("button[data-c]");
@@ -311,6 +311,6 @@ panel.addEventListener("change", e => {
   // Turning a held-back mod on by hand is a decision: let it run.
   if (t.dataset?.a === "toggle" && t.checked) {
     const id = t.closest("article")?.dataset.id;
-    if (id && Control.held.has(id)) { const m = S.mods.find(x => x.id === id); changeHeld(() => forgive(id)).then(() => m && controlToast(`“${m.title}” is back on.`)); }
+    if (id && Control.held.has(id)) { const m = S.mods.find(x => x.id === id); changeHeld(() => forgive(id)).then(() => m && controlToast(`“${m.title}” is back on`)); }
   }
 });
