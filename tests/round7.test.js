@@ -85,9 +85,9 @@ const CODE_MOD = ({ morse: 1, id: "r7-code", title: "Cart badge", prompt: "badge
 test("pointing: a page's synthetic mousemove and click can't choose what Morse changes; the person's own click still does", { skip, timeout: 60000 }, async () => {
   const { page } = await bootPage({ debug: true });
   await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.shadowRoot);
-  await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status || "{}").ready);
+  await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status || "{}").ready);
   await pressOpen(page);
-  await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status || "{}").open);
+  await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status || "{}").open);
   const chosen = () => page.evaluate(() => { const c = document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".chip.target"); return c.hidden ? null : c.textContent; });
 
   // The page points at "Delete account" for the person, and clicks it.

@@ -26,7 +26,7 @@ const ROOT = new URL("../", import.meta.url);
 let home, bin, browser, page, server, port, tunes;
 const freePort = () => new Promise(r => { const s = net.createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => r(p)); }); });
 const ui = sel => page.locator(`[data-morse-ui] ${sel}`);
-const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "null"));
+const status = () => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status || "null"));
 async function waitFor(pred, ms = 15000) {
   const end = Date.now() + ms;
   let s;
@@ -49,7 +49,7 @@ async function load(query = "") {
   if (wait > 0) await page.waitForTimeout(wait);
   await page.goto(tunes + query);
   loadedAt = Date.now();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
+  await page.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status, null, { timeout: 15000 });
 }
 // The first album card's width: about 150px as the site draws it, about 210px with the mod.
 const cardWidth = () => page.evaluate(() => Math.round(document.querySelector(".q8c, .rl-card").getBoundingClientRect().width));
@@ -88,7 +88,7 @@ before(async () => {
   await page.goto(tunes);
   const { Connector } = await import("../daemon/connector.js");
   new Connector({ port: cdp, app: null, settings: { provider: "demo", model: "demo" }, log: () => {} }).run();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
+  await page.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status, null, { timeout: 15000 });
 });
 after(async () => {
   await browser?.close();

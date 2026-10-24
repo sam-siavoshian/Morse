@@ -21,7 +21,7 @@ import { bundleBoot, bundleUI } from "../runtime/bundle.js";
 import { chromium, noBrowser, noDisplay, launchBrowser } from "./helpers/browser.js";
 import { startDemoServer, routeDemoOrigins } from "./helpers/demo-server.js";
 import { freePort, listen } from "./helpers/net.js";
-import { waitFor, waitForStatus, waitForReady, TIMEOUT } from "./helpers/wait.js";
+import { waitFor, waitForStatus, waitForReady, settle, TIMEOUT } from "./helpers/wait.js";
 import { pressOpen } from "./helpers/keys.js";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -108,10 +108,12 @@ const ui = page => page.evaluate(() => {
   const panel = r.querySelector(".panel");
   return { lang: host.getAttribute("lang"), dir: host.getAttribute("dir"), placeholder: r.querySelector(".in")?.placeholder, hint: r.querySelector(".hint")?.textContent || "", panel: panel && !panel.hidden ? panel.innerText : "" };
 });
-// Every placeholder the bar showed while it was open, from the first frame.
+// Every placeholder the bar showed while it was open, from the first frame
+// (the status read fresh each frame: tests/helpers/wait.js readStatus).
 const watchBar = () => {
   globalThis.__shown = [];
   const look = () => {
+    document.dispatchEvent(new Event("morse:status"));
     const host = document.querySelector("[data-morse-ui]");
     const s = host?.dataset.status && JSON.parse(host.dataset.status);
     const p = host?.shadowRoot?.querySelector(".in")?.placeholder;
@@ -175,6 +177,7 @@ test("extension: German from the bar's first paint, Persian right to left from S
   assert.equal(de.dir, "ltr");
   assert.equal(de.placeholder, WORDS.de["bar.placeholder"]);
   assert.ok(de.hint.includes(text(WORDS.de["bar.hint.pointing"]).split("·")[0].trim()), de.hint);
+  await settle(page); // frames ran with the bar open, so the watcher has seen it
   assert.deepEqual(await page.evaluate(() => globalThis.__shown), [WORDS.de["bar.placeholder"]], "the bar never showed English first");
 
   await chooseLanguage(page, "fa");
@@ -221,6 +224,7 @@ test("desktop: the connector sends the chosen language's words from core/locales
     const de = await ui(page);
     assert.equal(de.lang, "de");
     assert.equal(de.placeholder, WORDS.de["bar.placeholder"]);
+    await settle(page); // frames ran with the bar open, so the watcher has seen it
     assert.deepEqual(await page.evaluate(() => globalThis.__shown), [WORDS.de["bar.placeholder"]], "the bar never showed English first");
     await chooseLanguage(page, "fa");
     await seesPersian(page);

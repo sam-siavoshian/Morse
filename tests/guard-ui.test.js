@@ -60,7 +60,7 @@ async function open(mod, query = "") {
   const page = await ctx.newPage();
   page.on("pageerror", e => console.log("pageerror", e.message));
   await page.goto(site + query);
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: scaled(30000) });
+  await page.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status, null, { timeout: scaled(30000) });
   return { page, id: saved.id };
 }
 const ui = (page, sel) => page.locator(`[data-morse-ui] ${sel}`);
@@ -130,7 +130,7 @@ test("a heavy watch on a live feed: paused; Fix it asks the model with the reaso
   await usable(page);
   const row = await said(page, id, "Paused “Bold new tasks” because it was slowing this page down.", SLOW, "It kept this page busy most of the time.");
   await row.locator("button", { hasText: "Fix it" }).click();
-  const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "null"));
+  const status = () => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status || "null"));
   await until(async () => { const s = await status(); return s.open && s.phase === "result"; }, 30000, "the fix");
   await page.keyboard.press("Enter"); // Save
   const m = await until(async () => { const m = await readMod(id); return m.enabled ? m : null; }, 10000, "saved");
@@ -156,7 +156,7 @@ test("desktop: `while (true) {}` in a mod freezes the page; Morse stops it, turn
   const { page, id } = await open({ title: "Spin", js: "while (true) {}" });
   const m = await paused(page, id, "froze");
   assert.equal(m.paused.reloaded, true);
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: scaled(30000) });
+  await page.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status, null, { timeout: scaled(30000) });
   await usable(page);
   await said(page, id, "Paused “Spin” because it froze this page.", "Paused because it froze this page.", "Morse stopped it and reloaded the page.");
   await page.close();
@@ -169,7 +169,7 @@ test("desktop: a click handler that never returns is stopped the same way", { sk
   await page.click("#done", { noWaitAfter: true }).catch(() => {}); // the page freezes here
   await paused(page, id, "froze");
   assert.ok(Date.now() - t0 < 15000, "recovered within seconds");
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: scaled(30000) });
+  await page.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status, null, { timeout: scaled(30000) });
   await usable(page);
   await said(page, id, "Paused “Spin on click” because it froze this page.", "Paused because it froze this page.", "Morse stopped it and reloaded the page.");
   await page.close();

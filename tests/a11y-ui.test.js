@@ -33,7 +33,7 @@ async function until(fn, ms = TIMEOUT) {
     await new Promise(r => setTimeout(r, 40));
   }
 }
-const status = page => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
+const status = page => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status));
 const mods = page => page.evaluate(() => Object.values(JSON.parse(localStorage.getItem("morse:a11y-host:mods") || "{}")));
 const css = (page, sel, prop, pseudo) => page.evaluate(([s, p, ps]) => getComputedStyle(document.querySelector(s), ps || null)[p], [sel, prop, pseudo]);
 const box = (page, sel) => page.evaluate(s => { const r = document.querySelector(s).getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; }, sel);

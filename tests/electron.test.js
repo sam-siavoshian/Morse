@@ -246,7 +246,7 @@ async function open(port, match) {
     if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);
     return r.result?.value;
   };
-  const status = async () => JSON.parse((await ev(`document.querySelector("[data-morse-ui][data-status]")?.dataset.status || "null"`)) || "null");
+  const status = async () => JSON.parse((await ev(`(document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui][data-status]"))?.dataset.status || "null"`)) || "null");
   const key = async (key, code, { mods = 0, text, vk } = {}) => {
     const base = { key, code, modifiers: mods, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk };
     await s.send("Input.dispatchKeyEvent", { type: text ? "keyDown" : "rawKeyDown", ...base, ...(text && { text, unmodifiedText: text }) });

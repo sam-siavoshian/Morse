@@ -39,7 +39,7 @@ async function playground({ query = "?light&model=demo", mods = null } = {}) {
   page.on("pageerror", e => errors.push(e.message));
   await page.goto(`${ORIGIN}/demo/playground.html${query}`);
   await waitForReady(page);
-  const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
+  const status = () => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status));
   const waitFor = (pred, ms = TIMEOUT) => waitForStatus(page, pred, { timeout: ms, what: String(pred) });
   return { ctx, page, errors, status, waitFor };
 }

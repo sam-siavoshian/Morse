@@ -88,12 +88,11 @@ test("without “Allow User Scripts” a mod with code waits whole (its style to
   assert.equal(await p.evaluate(() => document.documentElement.dataset.wordCount), undefined, "the code never ran, in any world");
 
   // One click opens Morse's details page in Chrome.
-  const opened = ctx.waitForEvent("page", { timeout: TIMEOUT });
+  // (Two open: the details tab, and allow.html beside it, in either order.)
   await p.locator("[data-morse-ui] button", { hasText: "Open Morse's details" }).click();
-  const details = await opened;
-  await waitFor(() => details.url().startsWith("chrome://extensions"), { what: "chrome://extensions" });
+  const details = await waitFor(() => ctx.pages().find(x => x.url().startsWith("chrome://extensions")), { what: "chrome://extensions" });
   assert.equal(new URL(details.url()).searchParams.get("id"), extId);
-  await details.close();
+  await details.close(); // allow.html closes with it
 
   // The toolbar popup lists it too.
   const pop = await ctx.newPage();

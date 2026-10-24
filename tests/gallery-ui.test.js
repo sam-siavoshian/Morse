@@ -22,7 +22,7 @@ const skip = noBrowser;
 const ROOT = new URL("../", import.meta.url);
 let home, browser, page, server, port, connector, running, indexHits = 0;
 const ui = sel => page.locator(`[data-morse-ui] ${sel}`);
-const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "null"));
+const status = () => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status || "null"));
 async function waitFor(pred, ms = TIMEOUT) {
   const end = Date.now() + ms;
   let s;

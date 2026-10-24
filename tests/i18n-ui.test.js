@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import { serveBar } from "./helpers/demo-server.js";
 import { pressOpen } from "./helpers/keys.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
-import { waitForStatus, waitForReady, TIMEOUT } from "./helpers/wait.js";
+import { waitForStatus, waitForReady, readStatus, TIMEOUT } from "./helpers/wait.js";
 import { CATALOGS, LANGUAGES, loadLanguage } from "../core/i18n.js";
 import "../core/languages.js";
 await Promise.all(LANGUAGES.map(l => loadLanguage(l.code)));
@@ -55,7 +55,7 @@ async function open(locale) {
 // Settings → Language, the way a person picks it.
 async function chooseLanguage(t, code) {
   const { page } = t;
-  if (!(await page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).open))) {
+  if (!(await readStatus(page)).open) {
     await pressOpen(page);
     await t.waitFor(s => s.open, "bar open");
   }
@@ -69,7 +69,7 @@ async function chooseLanguage(t, code) {
 
 async function openPanel(t) {
   const { page } = t;
-  if (!(await page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).open))) {
+  if (!(await readStatus(page)).open) {
     await pressOpen(page);
     await t.waitFor(s => s.open, "bar open");
   }

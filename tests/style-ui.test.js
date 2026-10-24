@@ -14,7 +14,7 @@ import path from "node:path";
 import { launchBrowser, noBrowser } from "./helpers/browser.js";
 import { axeCheck, axeLines } from "../demo/axe.js"; // axe-core on Morse's own UI (tests/a11y-morse.test.js)
 import { pressOpen, HOTKEYS } from "./helpers/keys.js";
-import { waitFor, waitForStatus, settle, TIMEOUT } from "./helpers/wait.js";
+import { waitFor, waitForStatus, readStatus, settle, TIMEOUT } from "./helpers/wait.js";
 import { openStyleWorld } from "../demo/style-world.js";
 
 const skip = noBrowser;
@@ -42,7 +42,7 @@ const until = (fn, what) => waitFor(fn, { what, timeout: TIMEOUT });
 const shadowText = (page, sel) => page.evaluate(s => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(s)?.textContent || "", sel);
 
 async function say(page, words) {
-  if (!(await page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).open))) await pressOpen(page);
+  if (!(await readStatus(page)).open) await pressOpen(page);
   await status(page, s => s.open && s.phase === "idle", "the bar");
   await page.keyboard.type(words);
   await page.keyboard.press("Enter");
