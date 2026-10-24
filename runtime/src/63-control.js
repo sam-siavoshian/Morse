@@ -224,13 +224,15 @@ async function reviewImport(source, { onDone } = {}) {
       <details class="ctl-code"><summary>Show code</summary>${codeHtml(m)}</details>
     </section>`).join("")}
     ${r.errors?.length ? `<p class="dim ctl-skip">Skipped ${esc(r.errors.join("; "))}</p>` : ""}
-    <footer><button data-a="close">Cancel</button><button class="primary" data-a="install">Install${many ? ` ${r.mods.length}` : ""}</button></footer>`);
+    <footer><button data-a="close">Cancel</button><button class="primary" data-a="install" data-settle>Install${many ? ` ${r.mods.length}` : ""}</button></footer>`, { review: true }); // top layer, 80-modals.js
   modal.querySelector(".card").classList.add("ctl-card");
   modal.querySelector("[data-a=close]:not(header [data-a])")?.focus(); // Cancel, never Install: a page could make someone press Enter
   const watch = new MutationObserver(() => { if (modal.hidden) { watch.disconnect(); done({ error: "Not installed. You cancelled it." }); } });
   watch.observe(modal, { attributes: true, attributeFilter: ["hidden"] });
   modal.querySelector("[data-a=install]").onclick = async e => {
-    e.currentTarget.disabled = true;
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.dataset.settle = "busy"; // a review brought back on top doesn't turn it on again mid-install (80-modals.js)
     try {
       const saved = await call("control.install", { url: location.href, app: S.app, mods: r.mods, kind: r.kind });
       watch.disconnect();
@@ -238,7 +240,7 @@ async function reviewImport(source, { onDone } = {}) {
       toast(saved.length === 1 ? `Installed “${saved[0].title}”` : `Installed ${saved.length} mods`);
       done({ title: saved.map(m => m.title).join(", ") });
       await syncMods();
-    } catch (err) { e.currentTarget.disabled = false; toast(plainError(err)); }
+    } catch (err) { btn.disabled = false; btn.dataset.settle = ""; toast(plainError(err)); }
   };
 }
 
@@ -294,6 +296,7 @@ function controlRows() {
     (tags || meta).insertAdjacentHTML("beforebegin", `<small class="ctl-origin">${esc(modOrigin(m))}</small>`);
     if (tags) tags.insertAdjacentHTML("beforeend", show); else meta.insertAdjacentHTML("beforeend", show);
     if (m.enabled && modHeld(m)) tags?.insertAdjacentHTML("afterbegin", `<span>not running</span>`);
+    else if (m.enabled && Waiting.has(m.id)) tags?.insertAdjacentHTML("afterbegin", `<span class="waiting" title="Its new look shows. What it adds runs once “Allow User Scripts” is on.">waits for “Allow User Scripts”</span>`); // waiting hook (64-waiting.js)
   }
 }
 panel.addEventListener("click", e => {

@@ -70,8 +70,11 @@ const Onboarding = (() => {
     if (!st || coachOn() || !S.open || bar.hidden || S.phase !== "idle" || paneKind) return null;
     if (modelMissing(status, S.label) && !st.dismissed.model)
       return { id: "model", text: "No model connected yet. Connect one so Morse can make changes.", btn: "Connect a model", act: "model" };
+    const waiting = Waiting.list(); // waiting hook: mods here whose code waits for “Allow User Scripts” (64-waiting.js)
+    if (waiting.length && !Waiting.quiet)
+      return { id: `waiting:${waiting.length}`, text: Waiting.text(waiting), btn: "Turn it on", act: "userscripts" };
     if (status.userScripts === false && !st.dismissed.userScripts)
-      return { id: "userScripts", text: "“Allow User Scripts” is off, so added buttons and features won't run on some sites.", btn: "Turn it on", act: "userscripts" };
+      return { id: "userScripts", text: "“Allow User Scripts” is off, so changes that add buttons or features won't run. Changes to how pages look still work.", btn: "Turn it on", act: "userscripts" };
     return null;
   }
   function renderNote() {
@@ -109,6 +112,7 @@ const Onboarding = (() => {
   }
   async function act(what, btn) {
     if (what === "skip") return save({ coach: "done" });
+    if (what === "dismiss" && btn.dataset.id.startsWith("waiting")) { Waiting.quiet = true; return sync(); } // waiting hook: for this page only
     if (what === "dismiss") return save({ dismissed: { [btn.dataset.id]: true } });
     if (what === "help") return toggleHelp();
     if (what === "start") { panel.hidden = true; return openBar(); }

@@ -65,6 +65,7 @@ function CONTROL_CSS() { return `
   .ctl-items small { display: block; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 16px; }
   .ctl-warn { margin: 12px 0 0; padding: 10px 12px; border: 1px solid var(--m-line-strong); border-left: 2px solid var(--m-warn); border-radius: var(--m-r-sm);
     background: var(--m-raised); color: var(--m-text); line-height: 20px; overflow-wrap: anywhere; }
+  .tags .waiting { color: var(--m-warn); }
   .ctl-warn b { display: block; color: var(--m-warn); font: 600 var(--m-text-xs)/16px var(--m-mono); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
   .ctl-code { margin-top: 12px; }
   .ctl-code summary { display: inline-flex; align-items: center; gap: 6px; height: 28px; cursor: pointer; color: var(--m-text-2); font-weight: 500; border-radius: var(--m-r-sm); list-style: none; }

@@ -1,10 +1,77 @@
-function openModal(html) {
+// { review: true }: an install or update review (63-control.js, 68-gallery.js).
+function openModal(html, { review = false } = {}) {
   modal.innerHTML = `<div class="card">${html}</div>`;
   modal.hidden = false;
   modal.onclick = e => { if (e.target === modal || e.target.closest("[data-a=close]")) modal.hidden = true; };
+  if (review) showReview();
 }
 // One listener for the life of the page (it used to be added on every open).
 modal.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Escape") modal.hidden = true; });
+
+// ---- reviews: on top of everything, and no click until they have been seen
+// A review is shown as a modal <dialog>: the browser draws it above the whole
+// page (top layer) and the page can't be clicked under it. Its main button
+// ([data-settle]: Install, Update) turns on only after the review has been on
+// top, uncovered, for REVIEW_SETTLE ms, so a page can't uncover it just as
+// someone clicks. If the page draws something of its own over it (a popover,
+// a modal dialog, full screen), the review comes back on top and waits again;
+// a page that keeps doing it gets the review closed.
+const REVIEW_SETTLE = 500;
+// IntersectionObserver v2 (Chrome) reports whether anything at all is drawn
+// over the button, a popover hidden in the page's own shadow root included.
+const SEES_COVERS = "isVisible" in (globalThis.IntersectionObserverEntry?.prototype || {});
+const Review = { clearSince: null, covers: [], io: null, timer: 0 };
+function showReview() {
+  if (typeof modal.showModal !== "function") return;
+  const focused = root.activeElement;
+  TopLayer.raise();
+  try { if (modal.open) modal.close(); modal.showModal(); } catch { return; }
+  if (focused && modal.contains(focused)) focused.focus({ preventScroll: true });
+  Review.clearSince = SEES_COVERS ? null : performance.now(); // with v2: from when it reports the button uncovered
+  Review.io?.disconnect();
+  if (SEES_COVERS) {
+    Review.io = new IntersectionObserver(seen, { trackVisibility: true, delay: 100 });
+    for (const b of modal.querySelectorAll("[data-settle]")) Review.io.observe(b);
+  }
+  settleReview();
+}
+function seen(entries) {
+  if (!modal.open) return;
+  if (entries[entries.length - 1].isVisible) Review.clearSince ??= performance.now();
+  else if (Review.clearSince != null) { Review.clearSince = null; return coveredUI(); }
+  settleReview();
+}
+function settleReview() {
+  clearTimeout(Review.timer);
+  const t = Review.clearSince == null ? -1 : performance.now() - Review.clearSince;
+  const ok = modal.open && t >= REVIEW_SETTLE;
+  for (const b of modal.querySelectorAll("[data-settle]")) if (b.dataset.settle !== "busy") b.disabled = !ok;
+  if (modal.open && t >= 0 && !ok) Review.timer = setTimeout(settleReview, REVIEW_SETTLE - t + 10);
+}
+// Something of the page's is drawn over Morse: back on top.
+function coveredUI() {
+  const now = performance.now();
+  Review.covers = Review.covers.filter(t => now - t < 3000).concat(now);
+  if (modal.open && Review.covers.length > 5) {
+    modal.hidden = true;
+    return toast("This page kept covering Morse's review, so Morse closed it. Nothing was installed.");
+  }
+  if (Review.covers.length > 10) return; // stop taking turns with a page that won't stop
+  if (modal.open) showReview(); else TopLayer.raise();
+}
+new MutationObserver(() => {
+  if (!modal.hidden) return;
+  Review.io?.disconnect();
+  if (modal.open) modal.close();
+}).observe(modal, { attributes: true, attributeFilter: ["hidden"] });
+modal.addEventListener("cancel", e => { e.preventDefault(); modal.hidden = true; }); // Escape: closed the usual way
+function pageTopLayer(e) {
+  if (e.type === "toggle" && (e.newState !== "open" || e.target === hostEl)) return;
+  if (bar.hidden && panel.hidden && modal.hidden) return;
+  coveredUI();
+}
+listen("toggle", pageTopLayer, true);
+listen("fullscreenchange", pageTopLayer, true);
 // Editing the code by hand makes a new version, like a refine (⌘Z or the
 // panel's History bring the old one back).
 const HAND_EDIT = "Edited the code by hand";

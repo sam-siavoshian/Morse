@@ -34,10 +34,16 @@ function render(s) {
   st = s;
   $("label").textContent = s.label;
   $("page").hidden = isOptions;
+  // Without “Allow User Scripts” a mod's code doesn't run (background.js cantRun): say which mods here wait for it.
+  const waits = m => !s.userScripts && m.enabled && !!m.js?.trim();
+  const waiting = s.mods.filter(waits);
   $("warn").hidden = s.userScripts;
+  $("warntext").innerHTML = waiting.length
+    ? `<b>Waiting for “Allow User Scripts”:</b> ${waiting.map(m => `“${esc(m.title)}”`).join(", ")}. ${waiting.length === 1 ? "Its" : "Their"} new look already shows. What ${waiting.length === 1 ? "it adds runs" : "they add runs"} once it is on.`
+    : `<b>“Allow User Scripts” is off.</b> Changes to how pages look work. Changes that add buttons or features run only when it is on.`;
   $("count").textContent = s.mods.length ? `· ${s.mods.length}` : "";
   $("mods").innerHTML = s.mods.length
-    ? s.mods.map(m => `<li><i class="${m.enabled ? "on" : ""}"></i>${esc(m.title)}<small>“${esc(m.prompt)}”</small>${modExtras(m)}</li>`).join("")
+    ? s.mods.map(m => `<li><i class="${m.enabled ? "on" : ""}"></i>${esc(m.title)}<small>“${esc(m.prompt)}”</small>${waits(m) ? `<small class="waiting">Waits for “Allow User Scripts”</small>` : ""}${modExtras(m)}</li>`).join("")
     : `<li class="empty">No mods on this site yet.</li>`;
 
   $("connect").hidden = s.kind !== "none";

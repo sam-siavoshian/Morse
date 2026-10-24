@@ -123,7 +123,7 @@ async function submit(request, opts = {}) {
   selBox.hidden = true;
   S.after = { shot: await capture(), rect: S.target?.isConnected ? R(S.target.getBoundingClientRect()) : null, focus: focus?.isConnected ? R(focus.getBoundingClientRect()) : null };
   if (!prev) call("clip.stop", { modId: id }).then(c => { if (c) S.draft.clip = c; }).catch(() => {});
-  showResult(S.draft);
+  showResult(S.draft, Waiting.note(res, id)); // waiting hook: code that waits for “Allow User Scripts” (64-waiting.js)
 }
 
 // The result: the title, how it went, and what you can do next. The input

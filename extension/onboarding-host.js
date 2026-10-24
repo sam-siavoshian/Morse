@@ -1,13 +1,13 @@
 // First run and help, extension side. Imported by background.js, which routes
-// ONBOARDING_REQUESTS here and asks Practice before running mod code.
+// ONBOARDING_REQUESTS here and asks Practice whether a tab is the practice area.
 //
 //   - opens the welcome page on install
 //   - progress in chrome.storage.local "morse.onboarding" (see core/onboarding.js)
 //   - onboarding.get / .set / .open for the runtime; "onboarding.status" for
 //     the popup and the welcome page (runtime.sendMessage)
-//   - Practice: the welcome page's practice area is a sandboxed frame (it can
-//     run mod code; extension pages can't), so mod code for that tab goes
-//     through the welcome page instead of chrome.userScripts
+//   - Practice: the tabs showing the welcome page's practice area, a
+//     sandboxed sample article where changes show their CSS only (mod code
+//     never runs there; background.js cantRun)
 //   - the keyboard command on a page Chrome keeps extensions out of opens the
 //     popup, which says why
 
@@ -103,30 +103,15 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
 
 // ---- the practice area: tabs showing welcome.html, keyed by tab id
 const practice = new Map();
-const waiting = new Map();
-let evalSeq = 0;
 chrome.runtime.onConnect.addListener(port => {
   if (port.name !== "morse-practice") return;
   const tabId = port.sender?.tab?.id;
   if (tabId == null || port.sender.url?.split("#")[0] !== chrome.runtime.getURL(WELCOME)) return port.disconnect();
   practice.set(tabId, port);
-  port.onMessage.addListener(m => {
-    const done = waiting.get(m?.evalReply);
-    if (done) { waiting.delete(m.evalReply); done(m.result); }
-  });
   port.onDisconnect.addListener(() => { if (practice.get(tabId) === port) practice.delete(tabId); });
 });
 export const Practice = {
   has: tabId => practice.has(tabId),
-  // Runs code in the practice frame; resolves with what it evaluated to.
-  exec(tabId, code) {
-    return new Promise(resolve => {
-      const id = ++evalSeq;
-      waiting.set(id, resolve);
-      practice.get(tabId).postMessage({ eval: code, id });
-      setTimeout(() => { if (waiting.delete(id)) resolve({ ok: false, error: "The practice area didn't answer" }); }, 5000);
-    });
-  },
 };
 
 // The command (Ctrl+Shift+Y) where content scripts can't run: open the

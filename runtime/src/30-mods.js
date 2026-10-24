@@ -9,8 +9,9 @@ async function applyMod(m) {
   setCss(m.id, m.css);
   if (m.js.trim()) {
     const r = await call("exec", { modId: m.id, js: m.js });
-    Health.ran(m, r); // repair: the panel marks mods that stopped working (70-panel.js)
-    if (!r.ok) { console.warn("[morse]", m.title, r.error); toast(`“${m.title}” didn't work on this page. Open Mods to turn it off or fix it.`); }
+    if (r?.waiting) Waiting.add(m); // waiting hook: “Allow User Scripts” is off, the style shows and the code waits (64-waiting.js)
+    else Health.ran(m, r); // repair: the panel marks mods that stopped working (70-panel.js)
+    if (!r.ok && !r.waiting) { console.warn("[morse]", m.title, r.error); toast(`“${m.title}” didn't work on this page. Open Mods to turn it off or fix it.`); }
   }
   modRan(m); // safe start (63-control.js)
 }
