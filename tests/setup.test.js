@@ -85,7 +85,8 @@ async function setup(answers, { args = [], ...m } = {}) {
 test("setup: Enter takes the recommendation and saves it", async () => {
   const { res, saved, out } = await setup([""], { bins: { claude: "2.1.3" } });
   assert.equal(res.saved, true);
-  assert.deepEqual(saved.model, { provider: "claude-code" });
+  assert.equal(saved.provider, "claude-code", "written where daemon/models.js reads it");
+  assert.equal(saved.model, undefined);
   assert.equal(saved.keep, 1, "keeps the rest of config.json");
   assert.equal(saved.setup.backend, "claude-code");
   assert.match(out, /✓ Claude Code {2}2\.1\.3/);
@@ -96,9 +97,12 @@ test("setup: Enter takes the recommendation and saves it", async () => {
 
 test("setup: an API key is pasted, or taken from the environment", async () => {
   const pasted = await setup(["3", "sk-ant-secret"]);
-  assert.deepEqual(pasted.saved.model, { provider: "anthropic", apiKey: "sk-ant-secret" });
+  assert.equal(pasted.saved.provider, "anthropic");
+  assert.deepEqual(pasted.saved.keys, { anthropic: "sk-ant-secret" });
   const fromEnv = await setup(["3"], { env: { OPENAI_API_KEY: "sk-env" } });
-  assert.deepEqual(fromEnv.saved.model, { provider: "openai", baseUrl: "https://api.openai.com", apiKeyEnv: "OPENAI_API_KEY" });
+  assert.equal(fromEnv.saved.provider, "openai");
+  assert.equal(fromEnv.saved.keys, undefined);
+  assert.equal(fromEnv.saved.baseUrls, undefined);
   assert.match(fromEnv.out, /with OPENAI_API_KEY from your environment/);
   assert.ok(!JSON.stringify(fromEnv.saved).includes("sk-env"), "a key from the environment is never written to disk");
 });
@@ -115,7 +119,7 @@ test("setup: choosing something that isn't installed says how to install it and 
 
 test("setup: --use picks without questions; no answer saves nothing", async () => {
   const { saved } = await setup([], { args: ["--use", "codex"], bins: { codex: "0.46.0" } });
-  assert.equal(saved.model.provider, "codex");
+  assert.equal(saved.provider, "codex");
   const none = await setup([]);
   assert.equal(none.res.saved, false);
   assert.match(none.out, /Run morse setup --use api-key to pick without questions/);
