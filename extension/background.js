@@ -14,6 +14,7 @@ import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatc
 import { wrapModCode } from "../core/kit.js";
 import { clipAdd } from "../core/clipboard.js"; // God mode clipboard
 import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo } from "./bar-host.js"; // command bar: stop, settings, history, voice
+import { CONTROL_REQUESTS, handleControlRequest } from "./control-host.js"; // user control: pause, safe start, install review, backup
 import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver } from "./onboarding-host.js"; // onboarding hook: welcome page, first-run state, practice area
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
@@ -124,6 +125,7 @@ async function dispatch(msg, port) {
     ? { tabId: tab.id, documentIds: [port.sender.documentId] }
     : { tabId: tab.id, frameIds: [port.sender.frameId ?? 0] };
   if (BAR_REQUESTS.has(msg.type)) return handleBarRequest(msg);
+  if (CONTROL_REQUESTS.has(msg.type)) return handleControlRequest(msg, port); // user control (control-host.js)
   if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg); // onboarding hook
   switch (msg.type) {
     case "hello": {
@@ -146,10 +148,6 @@ async function dispatch(msg, port) {
       return true;
     }
     // Decode and validate a shared mod without saving it (install confirmation).
-    case "mods.preview": {
-      const src = msg.source.trim();
-      return src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
-    }
     case "mods.import": {
       const src = msg.source.trim();
       const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));

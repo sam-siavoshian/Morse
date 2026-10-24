@@ -124,6 +124,7 @@ function renderPanel() {
     <div class="list" role="list" aria-label="Mods"></div>
     <footer><button data-a="import">Install a mod…</button><span>${esc(S.label)}</span></footer>`;
   renderList();
+  controlPanel(); // user control: pause, backup (63-control.js)
   if (!keep) return;
   if (keep.search) {
     const s = panel.querySelector(".search");
@@ -145,6 +146,7 @@ function renderList() {
   const r = rows();
   const i = Math.max(0, r.findIndex(a => a.dataset.id === PanelUI.focus));
   r.forEach((a, j) => (a.tabIndex = j === i ? 0 : -1));
+  controlRows(); // user control: where each mod came from, Show code (63-control.js)
 }
 
 function rowHtml(m) {

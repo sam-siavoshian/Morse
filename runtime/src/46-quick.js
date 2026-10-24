@@ -27,14 +27,14 @@ const GodQuick = (() => {
   ];
 
   const btn = document.createElement("button");
-  btn.className = "gm-qbtn";
+  btn.className = "gm-qbtn ibtn";
   btn.setAttribute("aria-label", "Page tools");
   btn.setAttribute("aria-haspopup", "menu");
   btn.innerHTML = svg(I.tools) + GodMode.tip("Page tools", "");
   const row = bar.querySelector(".row");
   row.insertBefore(btn, row.querySelector(".go"));
   const menu = document.createElement("div");
-  menu.className = "gm-menu";
+  menu.className = "gm-menu menu";
   menu.setAttribute("role", "menu");
   menu.hidden = true;
   bar.append(menu);

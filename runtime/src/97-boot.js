@@ -39,7 +39,7 @@ onEvent(msg => {
     if (hello.settings) setPrefs(hello.settings); else await loadPrefs();
     Voice.configure(hello.voice);
     PromptHistory.load();
-    await syncMods();
+    await controlBoot(); await syncMods(); controlReady(); // user control: pause, safe start (63-control.js)
     if (!hello.quiet && PREFS.welcome) toast(`Morse is ready. Press ${HOTKEY} to change this page.`);
   } catch (e) { console.warn("[morse] host unavailable", e); }
   // single-page apps change URL without reloading

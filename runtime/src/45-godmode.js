@@ -30,7 +30,7 @@ const GodMode = (() => {
     frame: '<rect x="2.25" y="3.25" width="11.5" height="9.5" rx="1.5"/><path d="M2.25 6h11.5"/>',
   };
   const icon = (n, s = 16) => `<svg viewBox="0 0 16 16" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
-  const tip = (label, key) => `<span class="gm-tip" role="tooltip">${esc(label)}${key ? `<kbd>${esc(key)}</kbd>` : ""}</span>`;
+  const tip = (label, key) => `<span class="tip" role="tooltip">${esc(label)}${key ? `<kbd>${esc(key)}</kbd>` : ""}</span>`;
 
   const TOOLS = [
     { t: "hide", tip: "Hide", key: "H" },
@@ -61,7 +61,7 @@ const GodMode = (() => {
     <div class="gm-frame">${["nw", "n", "ne", "e", "se", "s", "sw", "w"].map(h => `<i data-h="${h}"></i>`).join("")}<span class="gm-read" hidden></span></div>
     <div class="gm-tb" role="toolbar" aria-label="Edit tools" tabindex="-1">
       <span class="gm-tag"></span><span class="gm-sep"></span>
-      ${TOOLS.map(x => x ? `<button data-t="${x.t}" aria-label="${esc(x.tip)}">${icon(x.t)}${tip(x.tip, x.key)}</button>` : `<span class="gm-sep"></span>`).join("")}
+      ${TOOLS.map(x => x ? `<button class="ibtn" data-t="${x.t}" aria-label="${esc(x.tip)}">${icon(x.t)}${tip(x.tip, x.key)}</button>` : `<span class="gm-sep"></span>`).join("")}
     </div>
     <div class="gm-note" hidden></div>
     <div class="gm-pop" hidden></div>`;
@@ -267,7 +267,7 @@ const GodMode = (() => {
       let from = "";
       const src = el.getAttribute("src") || el.getAttribute("data");
       try { if (src) from = new URL(src, location.href).host; } catch {}
-      note.innerHTML = `${icon("frame", 14)}<span><b>This part is another page${from ? ` from ${esc(from)}` : ""}.</b> Morse can hide, move or resize it, but can't edit what's inside.</span>`;
+      note.innerHTML = `${icon("frame")}<span><b>This part is another page${from ? ` from ${esc(from)}` : ""}.</b> Morse can hide, move or resize it, but can't edit what's inside.</span>`;
     }
     syncButtons();
     wrap.hidden = false;
@@ -509,7 +509,7 @@ const GodMode = (() => {
       rg.selectNodeContents(node);
       const r = rg.getBoundingClientRect();
       const field = ed.field = document.createElement("input");
-      field.className = "gm-svgtext";
+      field.className = "gm-svgtext field";
       field.spellcheck = false;
       field.value = ed.was.trim();
       field.style.transform = `translate(${Math.round(r.left - 8)}px, ${Math.round(r.top + r.height / 2 - 16)}px)`;
@@ -521,7 +521,8 @@ const GodMode = (() => {
     } else {
       const span = ed.span = document.createElement("span");
       span.setAttribute("data-morse-ui", "");
-      span.style.cssText = "outline: none; caret-color: currentColor; cursor: text;";
+      // !important: page rules aimed at [data-morse-ui] (or at every span) must not hide the text being edited
+      span.style.cssText = "display: inline !important; visibility: visible !important; opacity: 1 !important; transform: none !important; outline: none !important; caret-color: currentColor; cursor: text;";
       span.spellcheck = false;
       node.before(span);
       span.append(node);
@@ -630,9 +631,9 @@ const GodMode = (() => {
     const edit = v => [{ op: "style", ...tgt(), props: propsFor(ch, v), label: G.t.label }];
     const set = v => { commit(edit(v), `color:${G.popSeq}:${ch}`); paint(v); };
     pop.innerHTML = `
-      <div class="gm-seg" role="tablist">${chans.map(([k, l]) => `<button data-ch="${k}" role="tab">${l}</button>`).join("")}</div>
+      <div class="seg" role="tablist">${chans.map(([k, l]) => `<button data-ch="${k}" role="tab">${l}</button>`).join("")}</div>
       <div class="gm-sw">${PALETTE.map(c => `<button data-c="${c}" title="${c}" aria-label="${c}"${c === "transparent" ? ' class="none"' : ` style="--c:${c}"`}></button>`).join("")}</div>
-      <div class="gm-hex"><i></i><input spellcheck="false" maxlength="11" aria-label="Color code">${globalThis.EyeDropper ? `<button data-a="pick" title="Pick a color from the screen">${icon("drop", 14)}</button>` : ""}</div>`;
+      <div class="gm-hex field"><i></i><input spellcheck="false" maxlength="11" pattern="#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})|transparent" aria-label="Color code">${globalThis.EyeDropper ? `<button class="ibtn xs" data-a="pick" title="Pick a color from the screen" aria-label="Pick a color from the screen">${icon("drop")}</button>` : ""}</div>`;
     const field = pop.querySelector("input"), dot = pop.querySelector(".gm-hex i");
     const paint = v => {
       field.value = v;
@@ -664,10 +665,10 @@ const GodMode = (() => {
     let size = Math.round(parseFloat(cs.fontSize) || 16), weight = Math.round(+cs.fontWeight / 100) * 100 || 400;
     pop.innerHTML = `
       <div class="gm-field"><label>Size</label>
-        <div class="gm-step"><button data-d="-1" aria-label="Smaller">${icon("minus", 14)}</button><input inputmode="numeric" aria-label="Text size in pixels"><span>px</span><button data-d="1" aria-label="Bigger">${icon("plus", 14)}</button></div></div>
+        <div class="gm-step field"><button class="ibtn xs" data-d="-1" aria-label="Smaller">${icon("minus")}</button><input inputmode="numeric" aria-label="Text size in pixels"><span>px</span><button class="ibtn xs" data-d="1" aria-label="Bigger">${icon("plus")}</button></div></div>
       <input class="gm-range" type="range" min="8" max="72" step="1" aria-label="Text size">
       <div class="gm-field"><label>Weight</label></div>
-      <div class="gm-seg gm-weights">${WEIGHTS.map(([w, l]) => `<button data-w="${w}" style="font-weight:${w}" title="${w}">${l}</button>`).join("")}</div>`;
+      <div class="seg gm-weights">${WEIGHTS.map(([w, l]) => `<button data-w="${w}" style="font-weight:${w}" title="${w}">${l}</button>`).join("")}</div>`;
     const field = pop.querySelector(".gm-step input"), range = pop.querySelector(".gm-range");
     const paint = () => {
       field.value = size;

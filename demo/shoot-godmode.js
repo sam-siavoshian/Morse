@@ -117,7 +117,7 @@ await sleep(200);
 await pick(news, ".tb", 0.62, 0.5);
 await news.keyboard.press("c");
 await sleep(200);
-await news.locator(".gm-seg button[data-ch=background]").click();
+await news.locator(".seg button[data-ch=background]").click();
 await news.locator(".gm-sw button[data-c='#262626']").click();
 await sleep(150);
 await news.locator(".gm-sw button[data-c='#262626']").hover();

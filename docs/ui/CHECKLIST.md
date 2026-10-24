@@ -2,7 +2,9 @@
 
 Every screenshot in `docs/ui/` is reviewed against this list. `npm run ui`
 rebuilds the runtime, shoots every state (dark + light host, 1100px + 390px,
-four hostile host pages), runs the automated checks marked **[auto]** on each
+four hostile host pages) of the bar, picker, effect, panel, modals, toast,
+God mode (edit toolbar, popovers, frame, page tools, capture, clipboard),
+voice, settings, hotkey recorder, cheat sheet, suggestions, history and Stop, runs the automated checks marked **[auto]** on each
 shot, and writes `docs/ui/index.html`. The rest are checked by eye; verdicts
 and notes live in `docs/ui/review.json`.
 
@@ -18,16 +20,16 @@ known issue is written down with its reason, ❌ when it fails review.
 
 ## 2. Tokens only
 
-- [auto] `runtime/src/99-css.js` has no color literals: every color is a `var(--m-*)` (the `#000` in the ticker's mask-image is an alpha mask, not a color).
+- [auto] `runtime/src/99-css.js`, `98-bar-css.js` and `98-godmode-css.js` have no color literals: every color is a `var(--m-*)` (the `#000` in the ticker's mask-image and the close icon's mask are alpha masks, not colors).
 - Fonts: `--m-font` for UI, `--m-mono` for code, labels, kbd, model names. Sizes from `--m-text-*` (10.5/11.5px only for kbd, tags, ticker).
-- Radii: `--m-r-sm` 6 (controls, chip, picker box and label), `--m-r-md` 10 (rows, toast, code fields, effect canvas), `--m-r-lg` 14 (bar, panel, modal). 4px only for kbd, tags and the chip's × hit box; the switch is a pill.
-- Borders are 1px `--m-line` / `--m-line-strong` (the picker outline is 1.5px on purpose: it sits on arbitrary app content).
+- [auto] Radii: `--m-r-sm` 6 (controls, chip, picker box and label, fields, menu rows), `--m-r-md` 10 (rows, toast, code fields, effect canvas, popovers, menus, the edit toolbar), `--m-r-lg` 14 (bar, panel, modal). 4px only for kbd, tags and controls nested inside a 6px control (segments, the ± and eyedropper buttons, the chip's ×); 2px for the edit frame and its handles (a hairline hugging arbitrary content); round for the switch, swatches and status dots.
+- [auto] Borders are 1px `--m-line` / `--m-line-strong` (the picker outline is 1.5px on purpose: it sits on arbitrary app content). Rings that mean "selected" or "focused" are box-shadows on top of the 1px border, never thicker borders.
 
 ## 3. Geometry (4px grid)
 
-- [auto] Buttons are 28px (`.actions`, modal footers, exports, copy link, panel footer); the bar's input and Run button are 32px; inline controls (chip, panel row buttons, × in the chip) are 24/20px.
+- [auto] Every control is 20, 24, 28 or 32px tall. 32: the bar's input row (input, page tools, mic, Run/Stop), edit-toolbar tools, popover fields, menu rows, clipboard chips. 28: text buttons (`.btn`: actions, modal footers, exports, suggestion chips), segmented controls, the hotkey field, header icon buttons (close, ⋯). 24: ghost text buttons (`.tbtn`), segments, inline icon buttons inside fields. 20: swatches, key caps in sheets, the chip's ×.
 - Bar: row 48 (8 + 32 + 8), status ≥ 40, 16px left inset shared by both rows. Panel/modal paddings 12/16/20. Toast 40 tall for one line.
-- Icons: radar marks at 12 (inline), 16 (panel), 18 (bar), 22 (empty state); the Run arrow is a 14px SVG at 1.8 stroke; close is the × glyph at 14/18px, centered in a square hit box.
+- [auto] Icons: one set on a 16px grid, drawn at 16×16 with 1.5px round strokes (Run arrow, Stop, mic, ⋯, every God mode and page-tools icon). Close is the same × drawn as a 16px mask (14px in the 20px chip ×), so the glyph in any markup renders identically. Radar marks keep their sizes: 12 (inline), 16 (panel), 18 (bar), 22 (empty state).
 
 ## 4. Text never breaks the layout
 
@@ -39,23 +41,36 @@ known issue is written down with its reason, ❌ when it fails review.
 
 ## 5. States
 
-- Every button has a hover state that is visible but subtle (one step: `--m-hover` background, `--m-signal-1` border; primary goes to `--m-primary-hover`).
-- [auto] Every focusable control shows a focus ring when focused from the keyboard (`:focus-visible` is checked on each `*-focus` shot): 2px `--m-signal-3`, 2px offset. The text input has no ring by design (the caret and the bar are the focus).
+- Every button has a hover state that is visible but subtle (one step: `--m-hover` background, `--m-signal-1` border; primary goes to `--m-primary-hover`). Pressed tools (`aria-pressed`) are primary; a button whose menu is open (`aria-expanded`) keeps the hover look.
+- [auto] Every focusable control shows a focus ring when focused from the keyboard (`:focus-visible`, and a real 2px indicator, are checked on each `*-focus` shot): 2px `--m-signal-3`, 2px offset for standalone controls, flush (offset 0) in tight groups (edit toolbar, segments, swatches), inset (−2px) on menu rows, which also take the hover background. Fields light their border into a 2px `--m-signal-3` ring. The bar's text input has no ring by design (the caret and the bar are the focus).
+- Disabled controls use `--m-signal-1`, never opacity, show no tooltip and take no focus.
+- One tooltip at a time: hovering a sibling hides the focused one's; an open menu hides its button's. Tooltips show after 300ms, name + key cap.
+- Invalid input (hex color) turns the field's border and text `--m-danger`; a rejected hotkey shakes and turns red; a warning is `--m-warn` text under the row.
 - The radar mark is static (the logo) everywhere except while a model is working (bar mark + phase hint).
 - Picker: hover = solid outline + soft ring + label; selected = dashed outline. The label stays on screen at every edge (inside the box at the top edge, shifted in at the sides).
 
 ## 6. Motion
 
-- [auto] With `prefers-reduced-motion: reduce` the effect canvas is static (two frames 450ms apart are pixel-identical) and the working mark does not pulse.
+- [auto] With `prefers-reduced-motion: reduce` the working indicator is static (two frames 450ms apart are pixel-identical; Effects default to Subtle there, so that is the still outline on the target) and the working mark does not pulse.
 - Reduced motion: no slide/rise/fade, no success ping, the field fades out instead of being swept away.
 - Default motion: 120ms (hover), 220ms (enter), ease `--m-ease`; nothing loops except "a model is working".
+
+## 6b. One product
+
+- Shared parts live once in `runtime/src/99-css.js`: focus ring, `.ibtn` (icon buttons), `.btn` / `.tbtn` (text buttons), `.pop` surfaces, `.menu`, `.seg`, `.field`, `kbd` / `.caps`, `.tip`, eyebrow labels, tags, the close icon. `98-bar-css.js` and `98-godmode-css.js` only place and size them.
+- Section labels everywhere (sheets, menus, popovers, modals, Try, Clipboard) are the same eyebrow: 11px mono, uppercase, .06em, `--m-text-3`.
+- The picker label and the edit frame's size/offset readout are the same inverse mono label.
+- Both menus (⋯ and Page tools) have 32px rows, the same hover and focus, and right-aligned detail (key caps, state, check).
+- New bar rows (suggestions, clipboard) share the 16px left inset of the input and status rows.
+- A sheet open in the bar is solid (`--m-surface`), pauses the picker's hover box and hides the edit toolbar, so nothing draws through or over it.
 
 ## 7. Isolation from the host page
 
 - [auto] On every host (catalog page, Parley with a strict CSP, The Daily Byte, Tunes, and `demo/sites/hostile/`): the overlay host is visible, `position: fixed`, untransformed; `.bar/.panel/.card/.toast/label` have `direction: ltr`, no text-transform, normal style, our font; the bar is exactly `min(680px, 100vw - 32px)` wide (no zoom leak); the hover box sits within 2px of its target.
+- On every hostile host the edit toolbar, color popover, in-place text editing, settings sheet and page-tools menu are shot too. Text being edited in place lives in the page (a span marked `data-morse-ui`), so it carries `!important` inline display/visibility: `[data-morse-ui] { display: none !important }` must not hide it.
 - The hostile page applies `* { all: unset }`, `!important` rules on `div, span, button, input…`, `[data-morse-ui] { display: none !important; transform: scale(2) !important }`, `html { zoom: 1.25; font-size: 40px }`, `dir="rtl"`, a rotated body, `[hidden] { display: block !important }`, and (the "-noise" run) `--m-*` custom properties on every `div` and on the overlay host. The overlay must look identical to the plain catalog page.
 
 ## 8. Themes
 
 - The runtime follows the host page: a dark page gets the dark tokens, a light page the light ones. Every state is shot on both.
-- Light theme status colors (`--m-warn`) are darker than the dark theme's so they pass on white.
+- Light theme status colors (`--m-warn`, `--m-danger`) are darker than the dark theme's so they pass on white.

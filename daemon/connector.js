@@ -17,6 +17,7 @@ import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
 import { Generations } from "../core/cancel.js";
 import { cachedVoiceStatus, transcribeAudio } from "./voice.js";
+import { CONTROL_REQUESTS, handleControl, watchControl } from "./control.js"; // user control: pause, safe start, install review, backup
 import { HOME, listMods } from "./store.js";
 import { classifyTarget, describeTarget } from "./targets.js";
 import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
@@ -76,6 +77,7 @@ export class Connector {
   async run() {
     this.running = true;
     this.watchMods();
+    this.controlWatcher ||= watchControl(this); // user control: tell windows when Morse is paused or resumed
     let misses = 0;
     while (this.running) {
       let list = null;
@@ -106,6 +108,7 @@ export class Connector {
     }
     this.running = false;
     this.modWatcher?.close();
+    this.controlWatcher?.close(); this.controlWatcher = null;
     return this.state;
   }
 
@@ -235,6 +238,7 @@ export class Connector {
     this.running = false;
     this.state = "stopped";
     this.modWatcher?.close();
+    this.controlWatcher?.close(); this.controlWatcher = null;
     const ids = (await listMods().catch(() => [])).map(m => m.id);
     await Promise.all([...this.windows.values()].map(async w => {
       w.detaching = true;
@@ -289,6 +293,7 @@ export class Connector {
 
   async dispatch(s, ctx, msg) {
     const where = { url: msg.url, app: this.app?.id || null };
+    if (CONTROL_REQUESTS.has(msg.type)) return handleControl(msg, where); // user control (control.js)
     if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: this.settings }); // onboarding hook
     switch (msg.type) {
       case "hello":
@@ -304,10 +309,6 @@ export class Connector {
       case "mods.delete":
         return deleteMod(msg.modId);
       // Decode and validate a shared mod without saving it (install confirmation).
-      case "mods.preview": {
-        const src = msg.source.trim();
-        return src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));
-      }
       case "mods.import": {
         const src = msg.source.trim();
         const mod = src.includes("#m=") ? await decodeShare(src) : validateMod(JSON.parse(src));

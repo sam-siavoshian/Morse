@@ -3,6 +3,7 @@
 
 import { KIT_SOURCE } from "./kit.js";
 import { versionsOf } from "./versions.js";
+import { modHosts } from "./summary.js";
 
 // Version history (refine, restore, step back) lives in versions.js so the
 // runtime can inline it; it is part of this module's API.
@@ -47,11 +48,16 @@ export function hostOf(url) {
   } catch { return "*"; }
 }
 
+// A broken mod (bad match) matches nothing, so it can't stop the others loading.
 export function modMatches(mod, { url, app }) {
-  if (mod.match?.app && app && mod.match.app !== app) return false;
-  if (mod.match?.app && !app) return false;
+  if (!mod || typeof mod !== "object") return false;
+  const m = mod.match && typeof mod.match === "object" ? mod.match : {};
+  if (m.app && app && m.app !== app) return false;
+  if (m.app && !app) return false;
+  const hosts = modHosts(mod);
+  if (!hosts) return false;
   const h = hostOf(url);
-  return (mod.match?.hosts || ["*"]).some(p => p === "*" || p === h || (p.startsWith("*.") && h.endsWith(p.slice(1))));
+  return hosts.some(p => p === "*" || p === h || (p.startsWith("*.") && h.endsWith(p.slice(1))));
 }
 
 export function validateMod(m) {
@@ -59,6 +65,12 @@ export function validateMod(m) {
   for (const k of ["id", "title", "prompt"]) if (typeof m[k] !== "string") throw new Error(`This mod is incomplete (no ${k}). Ask for a new share link.`);
   if (!/^[\w-]{1,40}$/.test(m.id)) throw new Error("This mod has an invalid id. Ask for a new share link.");
   if (typeof m.css !== "string" || typeof m.js !== "string") throw new Error("This mod has no code in it. Ask for a new share link.");
+  const where = m.match;
+  if (!where || typeof where !== "object" || Array.isArray(where)
+    || !Array.isArray(where.hosts) || !where.hosts.length || !where.hosts.every(h => typeof h === "string" && h && h.length <= 253)
+    || !(where.app == null || typeof where.app === "string")) {
+    throw new Error("This mod doesn't say where it runs. Ask for a new share link.");
+  }
   return m;
 }
 

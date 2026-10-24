@@ -2,6 +2,7 @@
 import { plainError } from "./core/onboarding.js";
 import { normalizePrefs } from "./core/prefs.js";
 import { detectPlatform, resolveHotkeys, formatCombo } from "./core/hotkeys.js";
+import { modExtras } from "./popup-control.js"; // user control: pause switches, where each mod came from, Show code
 const $ = id => document.getElementById(id);
 const isOptions = document.body.dataset.page === "options";
 const [tab] = isOptions ? [null] : await chrome.tabs.query({ active: true, currentWindow: true });
@@ -36,7 +37,7 @@ function render(s) {
   $("warn").hidden = s.userScripts;
   $("count").textContent = s.mods.length ? `· ${s.mods.length}` : "";
   $("mods").innerHTML = s.mods.length
-    ? s.mods.map(m => `<li><i class="${m.enabled ? "on" : ""}"></i>${esc(m.title)}<small>“${esc(m.prompt)}”</small></li>`).join("")
+    ? s.mods.map(m => `<li><i class="${m.enabled ? "on" : ""}"></i>${esc(m.title)}<small>“${esc(m.prompt)}”</small>${modExtras(m)}</li>`).join("")
     : `<li class="empty">No mods on this site yet.</li>`;
 
   $("connect").hidden = s.kind !== "none";
