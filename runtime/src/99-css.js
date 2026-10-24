@@ -314,6 +314,11 @@ function CSS() {
   :host([dir=rtl]) .sw input:checked + span::after { transform: translateX(-12px); }
   :host([dir=rtl]) :is(.ctl-code, .i-code) summary::before { transform: scaleX(-1); }
   :host([dir=rtl]) :is(.ctl-code, .i-code)[open] summary::before { transform: rotate(90deg); }
+  /* Persian and Arabic letters join: the mono face has none of them, and its
+     fallback (or tracking) draws them apart. Labels that hold words take the
+     UI face; code, key caps and the model's name stay mono. */
+  :host([dir=rtl]) :is(.card label, .sheet h4, :is(.menu, .a11y-group) > header, .gm-field label, .gm-clips-l, .sugs .try, .eyebrow, .tags span, .pill,
+    :is(.menu, .a11y-group) > button small, .krow .k small, .panel header small, .caps.off, .sheet header .flash, .saved, .hl span, .gm-read) { font-family: var(--m-font); letter-spacing: 0; }
   /* forced colors (Windows High Contrast): shadows and fills are dropped and
      colors become the system's, so every focus ring is an outline in
      Highlight, every surface and button keeps a border, and what is on or

@@ -6,7 +6,7 @@ export default {
   "bar.dialog": "Morse: Beschreib eine Änderung an dieser App",
   "bar.input": "Beschreib eine Änderung",
   "bar.placeholder": "Beschreib eine Änderung…",
-  "bar.placeholder.refine": "Beschreib, was sich ändern soll…",
+  "bar.placeholder.refine": "Was soll sich ändern…",
   "bar.send": "Senden",
   "bar.send.title": "Senden (Enter)",
   "bar.stop": "Stopp",

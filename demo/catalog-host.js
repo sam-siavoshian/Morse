@@ -11,7 +11,7 @@
 //   ?hist=1        fixture prompt history
 //   ?gallery=1 ?suspect=1 ?paused=1 ?versions=1   see the round 3 fixtures below
 //   ?style= ?guard=1 ?onboard=   see the round 4 fixtures below
-//   ?waiting=1 ?packs=1          see the round 5 fixtures below
+//   ?waiting=1 ?packs=1 ?lang=de  see the round 5 fixtures below
 (() => {
   if (globalThis.__morseHost) return;
   try { localStorage.setItem("morse:debug", "1"); } catch {}
@@ -91,6 +91,7 @@
   // by the catalog with core/heal.js) points at an album grid this page no longer has
   if (q.get("heal") && globalThis.__catHealFp) C.mods.push(fixture(30, { ...globalThis.__catHealMod, fp: globalThis.__catHealFp }));
   if (q.get("autofix")) C.settings.autoFix = true;
+  if (q.get("lang")) C.settings.language = q.get("lang"); // round 5: ?lang=de|fa, Settings → Language
   C.control = { pause: { all: !!q.get("paused"), sites: {} } };
   const b64 = s => { try { return JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g, "+").replace(/_/g, "/"))))); } catch { return null; } };
   function preview(src) {

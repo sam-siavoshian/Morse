@@ -240,7 +240,7 @@ async function audit(page, clip) {
       const el = root.querySelector(sel);
       if (!el || !visible(el)) continue;
       const cs = getComputedStyle(el);
-      if (cs.direction !== "ltr") out.push(`${sel} inherits direction:${cs.direction}`);
+      if (cs.direction !== (host.dir === "rtl" ? "rtl" : "ltr")) out.push(`${sel} inherits direction:${cs.direction}`); // right to left only in Persian and Arabic (04-i18n.js)
       if (cs.textTransform !== "none") out.push(`${sel} inherits text-transform:${cs.textTransform}`);
       if (!/Inter|Geist Mono/.test(cs.fontFamily)) out.push(`${sel} font is ${cs.fontFamily.slice(0, 30)}`);
       if (cs.fontStyle !== "normal") out.push(`${sel} inherits font-style:${cs.fontStyle}`);
@@ -2280,6 +2280,54 @@ async function waitingStates(theme, width) {
   await close(p);
 }
 
+// ---- round 5: the overlay in German (long words) and Persian (right to left), core/i18n.js
+async function i18nStates(theme, width) {
+  const n = width < 600, H = n ? 844 : 720;
+  for (const lang of ["de", "fa"]) {
+    let p = await open({ theme, width, height: H, mods: 1, extra: `&lang=${lang}` });
+    await openBar(p); await p.mouse.move(5, H / 2); await sleep(200);
+    const dir = await p.evaluate(() => document.querySelector(":root > [data-morse-ui]").dir);
+    const rtl = lang === "fa" ? (dir === "rtl" ? "" : "Persian is not laid out right to left") : (dir === "ltr" ? "" : "German is laid out right to left");
+    await shot(p, "i18n", `${lang}-bar`, ui(p, ".bar"), { checks: [rtl], note: `${lang}: the empty bar, suggestions and hint` });
+    await pick(p, "#long");
+    await ui(p, ".in").fill(lang === "de" ? "Mach die Wiedergabeliste übersichtlicher und zeig die Gesamtdauer" : "فهرست پخش را مرتب‌تر کن و مدت کل را نشان بده");
+    await shot(p, "i18n", `${lang}-typing`, ui(p, ".bar"));
+    await ui(p, ".in").press("Enter"); await p.waitForFunction(() => globalThis.__cat.gen); await sleep(100);
+    await p.evaluate(() => __cat.stage("reading")); await sleep(100);
+    await shot(p, "i18n", `${lang}-working`, ui(p, ".bar"), { note: "a status stage in this language" });
+    await finish(p, OK({ title: lang === "de" ? "Übersichtlichere Wiedergabeliste" : "فهرست پخش مرتب‌تر" }));
+    await p.mouse.move(5, H / 2); await sleep(150);
+    await shot(p, "i18n", `${lang}-result`, ui(p, ".bar"), { note: "the result: title, timing, Save Undo Edit code Share" });
+    await ui(p, "[data-a=undo]").click(); await ui(p, ".bar").waitFor({ state: "hidden" });
+    await openBar(p); await pick(p, "#card");
+    await submit(p, "x");
+    await finish(p, { ok: false, error: LONG_ERROR });
+    await p.mouse.move(5, H / 2); await sleep(150);
+    await shot(p, "i18n", `${lang}-error`, ui(p, ".bar"));
+    await p.keyboard.press("Escape"); await sleep(150);
+    if (await ui(p, ".bar").isVisible()) { await p.keyboard.press("Escape"); await sleep(200); }
+    // settings: the top (Language, Your style, shortcuts) and the bottom
+    await openBar(p); await p.keyboard.press("Control+Comma"); await sleep(400); await blur(p); await p.mouse.move(5, H / 2); await sleep(150);
+    await shot(p, "i18n", `${lang}-settings`, ui(p, ".bar"), { note: "Settings: the Language row says “Language” in English too, so a mistake can be undone" });
+    await ui(p, ".pane").evaluate(e => { e.scrollTop = e.scrollHeight; }); await sleep(200);
+    await shot(p, "i18n", `${lang}-settings-bottom`, ui(p, ".bar"));
+    await p.keyboard.press("Escape"); await sleep(150);
+    if (await ui(p, ".bar").isVisible()) { await p.keyboard.press("Escape"); await sleep(200); }
+    await openBar(p); await ui(p, ".more").click(); await sleep(200);
+    await shot(p, "i18n", `${lang}-menu`, [ui(p, ".bmenu"), ui(p, ".more")], { pad: 8 });
+    await close(p);
+    // the Mods panel, with twelve mods (long titles, a broken one, off ones)
+    p = await open({ theme, width, height: H, mods: 12, extra: `&lang=${lang}` });
+    await ui(p, ".ctl-toast").waitFor({ timeout: 3000 }).catch(() => {}); await ui(p, ".ctl-toast").evaluate(el => (el.hidden = true)).catch(() => {});
+    await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel").waitFor(); await sleep(400); await p.mouse.move(2, 2); await blur(p);
+    await shot(p, "i18n", `${lang}-panel`, ui(p, ".panel"));
+    await shot(p, "i18n", `${lang}-panel-row`, p.locator(":root > [data-morse-ui]").locator(".list article").nth(1), { pad: 8 });
+    await ui(p, ".list").evaluate(l => { l.scrollTop = l.scrollHeight; }); await sleep(150);
+    await shot(p, "i18n", `${lang}-panel-foot`, [ui(p, ".ctl-backup"), ui(p, ".panel footer")], { pad: 4 });
+    await close(p);
+  }
+}
+
 // ---- round 5: mod packs (69-packs.js), with the real core/pack-host.js in the fake host
 async function packStates(theme, width) {
   const n = width < 600, H = n ? 844 : 720;
@@ -2421,6 +2469,7 @@ for (const theme of THEMES) {
     if (want("first-run")) await guard("first-run", () => firstRunStates(theme, width));
     if (want("waiting")) await guard("waiting", () => waitingStates(theme, width));
     if (want("packs")) await guard("packs", () => packStates(theme, width));
+    if (want("i18n")) await guard("i18n", () => i18nStates(theme, width));
   }
   if (want("popup")) await guard("popup", () => popupStates(theme));
   if (want("motion")) await guard("motion", () => reducedMotion(theme));

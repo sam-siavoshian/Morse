@@ -44,6 +44,7 @@ function CONTROL_CSS() { return `
   .ctl-backup { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-block: 10px; padding-inline: 16px 12px; border-top: 1px solid var(--m-line); }
   .ctl-backup > span { flex: 1 0 auto; white-space: nowrap; } /* a longer word (other languages) moves the buttons to a line of their own */
   .ctl-backup button { flex: none; }
+  @media (min-width: 561px) { .ctl-backup > button:last-child { margin-inline-start: auto; } } /* a button that wraps (a longer word) stays at the end, under the one before it */
 
   /* ---- summary: install review and Show code */
   .ctl-card { width: min(640px, calc(100vw - 32px)); }
