@@ -285,3 +285,43 @@ test("install.ps1 installs, updates, refuses a bad checksum and uninstalls (Powe
     assert.doesNotMatch(readFileSync(path.join(home2, ".morse", "chrome-extension", "host.js"), "utf8"), /"http:\/\/127\.0\.0\.1:8787/, "the store build");
   }
 });
+
+test("preview.yml: on pushes to main, pinned actions, only the release job can write, the smoke tests gate it", () => {
+  const yml = readFileSync(path.join(root, ".github", "workflows", "preview.yml"), "utf8");
+  assert.match(yml, /on:\s*\n\s+push:\s*\n\s+branches: \[main\]/);
+  assert.match(yml, /workflow_dispatch:/);
+  for (const [, u] of yml.matchAll(/uses:\s*(\S+)/g)) assert.match(u, /^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/, `${u} is pinned to a commit`);
+  assert.match(yml, /^permissions:\n\s+contents: read$/m);
+  const jobs = yml.slice(yml.indexOf("\njobs:"));
+  const release = jobs.slice(jobs.indexOf("\n  release:"));
+  assert.equal((jobs.match(/contents:\s*write/g) || []).length, 1, "one job can write");
+  assert.match(release, /contents:\s*write/);
+  assert.match(release, /needs: \[package, desktop, smoke\]/);
+  for (const os of ["ubuntu-latest", "macos-latest", "windows-latest"]) assert.ok(jobs.includes(os), os);
+  for (const step of ["install.sh", "install.ps1", "morse --version", "morse doctor --offline", "chrome-extension", "morse uninstall", "SHA256SUMS", "--prerelease", "codesign --verify", "morse-cli.tgz", "morse-extension.zip"]) assert.ok(yml.includes(step), `preview.yml has ${step}`);
+  // The names the README and the site link to.
+  for (const f of ["Morse-mac-arm64.dmg", "Morse-mac-x64.dmg", "Morse-Setup.exe", "Morse-linux-x86_64.AppImage"]) {
+    assert.ok(readFileSync(path.join(root, "README.md"), "utf8").includes(`releases/download/preview/${f}`), `README links ${f}`);
+    assert.ok(readFileSync(path.join(root, "site", "config.js"), "utf8").includes(`releases/download/preview/${f}`), `site/config.js links ${f}`);
+  }
+});
+
+test("Add to Chrome opens Chrome on chrome://extensions, on each system", async () => {
+  const { chromeCommands, openChromeExtensions } = await import("../desktop-app/chrome.js");
+  assert.deepEqual(chromeCommands({ platform: "darwin" })[0], ["open", ["-a", "Google Chrome", "chrome://extensions"]]);
+  assert.equal(chromeCommands({ platform: "linux" })[0][0], "google-chrome");
+  const win = chromeCommands({ platform: "win32", env: { ProgramFiles: "C:\\Program Files", LOCALAPPDATA: "C:\\Users\\a\\AppData\\Local" }, has: f => f.startsWith("C:\\Users") });
+  assert.deepEqual(win, [["C:\\Users\\a\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe", ["chrome://extensions"]]]);
+  const tried = [];
+  assert.equal(await openChromeExtensions({ platform: "linux", run: async f => { tried.push(f); return f === "chromium"; } }), true);
+  assert.deepEqual(tried, ["google-chrome", "google-chrome-stable", "chromium"]);
+  assert.equal(await openChromeExtensions({ platform: "linux", run: async () => false }), false, "no Chrome: Morse Desktop says to open it by hand");
+});
+
+test("the site's Download Morse button is this visitor's download", async () => {
+  const { desktopLink } = await import("../site/common.js");
+  assert.match(desktopLink({ platform: "MacIntel", userAgent: "Mozilla/5.0 (Macintosh)" }), /Morse-mac-arm64\.dmg$/);
+  assert.match(desktopLink({ platform: "Win32", userAgent: "Windows NT 10.0" }), /Morse-Setup\.exe$/);
+  assert.match(desktopLink({ platform: "Linux x86_64", userAgent: "X11; Linux x86_64" }), /AppImage$/);
+  assert.match(desktopLink({ platform: "iPhone", userAgent: "iPhone OS like Mac OS X" }), /releases\/tag\/preview$/);
+});

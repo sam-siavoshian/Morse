@@ -22,6 +22,12 @@ Press a shortcut, point at something and say what you want: “add a sleep timer
 
 ## Install
 
+**Download Morse Desktop:** [Mac (Apple silicon)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) · [Mac (Intel)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg) · [Windows](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) · [Linux](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage)
+
+These are [preview builds](https://github.com/sam-siavoshian/RRAA/releases/tag/preview) of the newest `main`, not signed yet. The first time, on a Mac: open Morse, then System Settings, Privacy & Security, **Open Anyway**. On Windows: **More info**, then **Run anyway**. More in [Morse Desktop](docs/desktop-app.md#get-it).
+
+For developers, one line installs the `morse` command (needs Node 22): `curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install.sh | sh` on macOS and Linux, `irm https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install.ps1 | iex` in Windows PowerShell. Run it again to update; `morse uninstall` removes it.
+
 You need [Node](https://nodejs.org) 22 or newer. For full steps and help when something goes wrong, see [Getting started](docs/getting-started.md).
 
 **Websites (Chrome)**

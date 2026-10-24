@@ -34,9 +34,21 @@ export function initPage() {
 
 // Buttons name a key in LINKS (data-link="chrome"); the HTML carries the same
 // placeholder so they work before this runs.
+// "desktop" (Download Morse) is this visitor's own download when the browser
+// says which system it is on (a Mac gets the Apple silicon one; the steps
+// under the button list every download).
+export function desktopLink(nav = globalThis.navigator) {
+  const p = `${nav?.userAgentData?.platform || ""} ${nav?.platform || ""} ${nav?.userAgent || ""}`;
+  if (/android|iphone|ipad|cros/i.test(p)) return LINKS.desktop;
+  if (/mac/i.test(p)) return LINKS.desktopMac;
+  if (/win/i.test(p)) return LINKS.desktopWindows;
+  if (/linux/i.test(p)) return LINKS.desktopLinux;
+  return LINKS.desktop;
+}
+
 export function applyLinks(root = document) {
   for (const a of root.querySelectorAll("a[data-link]")) {
-    const href = LINKS[a.dataset.link];
+    const href = a.dataset.link === "desktop" ? desktopLink() : LINKS[a.dataset.link];
     if (!href) continue;
     // A link to this same page stays a fragment, so it scrolls instead of
     // loading the page again (/site/ and /site/index.html are one page).

@@ -4,6 +4,57 @@ How a version of Morse gets to people: the setup you do once, then the three
 commands for every release after it. [Morse Desktop](#morse-desktop), at the
 end, covers building and signing the desktop app.
 
+## The preview release (every push to main)
+
+Before any version is released, people download Morse from the GitHub
+pre-release tagged `preview`. The
+[preview workflow](../../.github/workflows/preview.yml) makes it again on
+every push to `main` (pushes that only change `docs/`, `site/`, `evals/` or
+Markdown are skipped; run it by hand from the Actions tab any time):
+
+1. **package**: `npm run check`, then `morse-cli.tgz` (`npm pack` with the
+   store build of the extension inside, about 2 MB) and
+   `morse-extension.zip` (`npm run store`).
+2. **desktop**: Morse Desktop on `ubuntu-latest`, `macos-latest` and
+   `windows-latest`, signed when the secrets in
+   [What signing needs](#what-signing-needs) are set. Without them the Mac
+   app is signed ad hoc (Apple silicon won't open an app with no signature
+   at all) and the job checks it with `codesign --verify` and starts it once.
+3. **smoke**: `install.sh` (piped into `sh`, as people run it) and
+   `install.ps1` (through `irm | iex` in Windows PowerShell 5.1, then as a
+   file in PowerShell 7) against the package just built, served from the
+   runner: `morse --version`, `morse doctor --offline`, the extension folder,
+   a second run that says "already up to date", then `morse uninstall`.
+4. **release**: only when all of that worked. The `preview` tag moves to the
+   commit, and the release's files are replaced, with `SHA256SUMS`. It stays
+   a pre-release, so it never shows as the latest release.
+
+The file names never change, so these addresses always give the newest
+build (the README, `site/config.js`, `docs/desktop-app.md` and the
+installers use them):
+
+| File | What it is |
+|---|---|
+| `Morse-mac-arm64.dmg`, `Morse-mac-x64.dmg` (and `.zip`) | Morse Desktop for Macs with Apple silicon, and with Intel |
+| `Morse-Setup.exe` | Morse Desktop for Windows (x64 and arm64) |
+| `Morse-linux-x86_64.AppImage` | Morse Desktop for Linux |
+| `morse-cli.tgz` | the `morse` command; what `install.sh` and `install.ps1` install |
+| `morse-extension.zip` | the Chrome extension, as the Chrome Web Store gets it |
+| `SHA256SUMS` | the SHA-256 of each; the installers check `morse-cli.tgz` against it |
+
+at `https://github.com/sam-siavoshian/RRAA/releases/download/preview/<file>`.
+
+The installers (developer path): `install.sh` (macOS, Linux) and
+`install.ps1` (Windows) need Node 22, download `morse-cli.tgz`, check it,
+put Morse in `~/.morse/app`, the extension in `~/.morse/chrome-extension`
+and a `morse` command on the PATH, then run `morse setup --auto`. Running
+one again updates; `morse uninstall` (or `--uninstall`, `-Uninstall`)
+removes what it added. With no preview release yet, they build the package
+from `main` instead. Try them against files on your computer:
+`node scripts/serve-files.js <folder> 8765` and
+`MORSE_INSTALL_BASE=http://127.0.0.1:8765 sh install.sh`;
+`tests/install.test.js` does that for every case.
+
 ## What one release makes
 
 You push one tag, such as `v0.3.0`. The
@@ -279,7 +330,7 @@ broken, delete it from the release and say so in the notes):
 2. Choose a model and click **Check**.
 3. **Open with Morse** on an app, make a change, Save; **Disconnect**. Quit
    Morse from the tray.
-4. In Chrome, load the extension from **Show the extension folder** and click
+4. In Chrome, load the extension with **Add to Chrome** and click
    **Connect** on the welcome page, then **Allow** in Morse Desktop.
 5. Turn on **Open at login**, log out and in: Morse is in the tray, without
    the window.
@@ -297,3 +348,11 @@ broken, delete it from the release and say so in the notes):
 - The tray menu and **Open at login** were not tried on a real desktop.
 - One-click pairing from the real extension: the extension side isn't on
   this branch yet ([Pairing](pairing.md) is the contract it follows).
+- **The installers**: `install.sh` ran end to end on Linux in a fresh home
+  against a package served from this computer (install, "already up to
+  date", update, a bad checksum refused, no Node, `--uninstall`, `morse
+  uninstall`, and the build from `main` when there is no release), checked
+  with shellcheck. `install.ps1` ran the same cases in PowerShell 7 on
+  Linux. On macOS and Windows they run in the preview workflow's smoke jobs;
+  the ad hoc signed Mac app and "Add to Chrome" opening Chrome weren't tried
+  on a real Mac or PC.
