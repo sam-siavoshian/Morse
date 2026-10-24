@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// morse: customize any app in one sentence.
+// morse: change any app in your own words.
 
 import { execFile } from "node:child_process";
 import { Connector } from "./connector.js";
@@ -15,7 +15,7 @@ import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
 
 const W = s => `\x1b[97m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`;
 const WARN = s => `\x1b[33m${s}\x1b[0m`, ERR = s => `\x1b[31m${s}\x1b[0m`;
-const LOGO = `${W("▪▪▫")}\n${W("▫▪▪")} ${B("morse")} ${D("· customize any app in one sentence")}\n${W("▪▫▪")}`;
+const LOGO = `${W("▪▪▫")}\n${W("▫▪▪")} ${B("morse")} ${D("· change any app in your own words")}\n${W("▪▫▪")}`;
 
 function flags(argv) {
   const out = { _: [], rest: [] };
@@ -35,7 +35,7 @@ function flags(argv) {
 async function settingsFrom(f) {
   if (f.provider) assertProvider(f.provider);
   const s = await currentSettings({ ...(f.provider && { provider: f.provider }), ...(f.model && { model: f.model }) });
-  if (s.provider === "none") console.log(`${WARN("!")} No model connected. Run ${B("morse doctor")}, or ${B("morse config --provider claude-code")}.`);
+  if (s.provider === "none") console.log(`${WARN("!")} No model is connected. Run ${B("morse doctor")} to set one up.`);
   return s;
 }
 
@@ -43,7 +43,7 @@ const MODEL_FLAGS = ["provider", "model", "anthropic-key", "openai-key", "base-u
 
 async function configure(f) {
   if (f.provider && f.provider !== "auto") assertProvider(f.provider);
-  if (typeof f.model === "string" && !validModel(f.model)) throw new Error(`Invalid model name "${f.model}"`);
+  if (typeof f.model === "string" && !validModel(f.model)) throw new Error(`"${f.model}" isn't a model name Morse can use. Check the spelling.`);
   await updateConfig(cfg => {
     if (f.provider === "auto") delete cfg.provider;
     else if (typeof f.provider === "string") cfg.provider = f.provider;
@@ -89,42 +89,42 @@ async function helperHealth() {
 const HELP = `${LOGO}
 
 ${B("Desktop apps")} (Electron / Chromium)
-  morse launch <app|path>   relaunch an app with Morse attached
+  morse launch <app|path>   open an app with Morse connected
                             apps: ${Object.keys(KNOWN_APPS).join(", ")}
-      --restart             quit the app first if it's running
-      --name <name>         name mods are filed under (defaults to the app)
+      --restart             quit the app first if it's open
+      --name <name>         name to save mods under (default: the app)
       --port <n>            debugging port (default 9333)
-      -- <args>             extra arguments for the app
-  morse attach --port <n>   attach to an app already started with --remote-debugging-port
-  morse fuses <app|path>    show the app's Electron fuses and what they mean for Morse
+      -- <args>             pass extra arguments to the app
+  morse attach --port <n>   connect to an app already started with --remote-debugging-port
+  morse fuses <app|path>    check whether Morse can work with a desktop app
 
-${B("Websites")} (the Chrome extension talks to this helper)
-  morse serve               run the helper on 127.0.0.1:${HELPER_PORT} and print a pairing code
-  morse pair                print a fresh pairing code for a running helper
-  morse unpair              revoke every paired browser
+${B("Websites")} (the Chrome extension uses this helper to reach your model)
+  morse serve               start the Morse helper and show a pairing code
+  morse pair                show a new pairing code for the running helper
+  morse unpair              sign out every paired browser
 
 ${B("Model")} (bring your own: Claude Code, Codex, or an API key)
-  morse model               show the model Morse will use
+  morse model               show which model Morse uses
   morse config --provider claude-code|codex|anthropic|openai|auto
-      --model <name>        e.g. opus · sonnet · haiku · claude-opus-5-5 · gpt-5
-      --anthropic-key <key> --openai-key <key> --base-url <url>   (an empty value clears)
-  morse doctor              show what's installed and make a real test call
+      --model <name>        for example opus · sonnet · haiku · claude-opus-5-5 · gpt-5
+      --anthropic-key <key> --openai-key <key> --base-url <url>   (leave empty to remove)
+  morse doctor              show what's installed and check that the model answers
 
 ${B("Mods")}
-  morse mods                list installed mods
+  morse mods                list your mods
   morse rm <id>             delete a mod
-  morse export <id>         write .morse.json, .user.js and a share link
-  morse install <link|file> install a shared mod
+  morse export <id>         save a mod file, a Tampermonkey file and a share link
+  morse install <link|file> install a mod from a share link or file
 
-In any attached window: ${B("Alt+Space")} to morse · ${B("Alt+Shift+M")} for your mods.
-Websites: npm run build, load dist/extension, then run ${B("morse serve")} and enter the code.`;
+In a connected app, press ${B("Alt+Space")} to open Morse and ${B("Alt+Shift+M")} to see your mods.
+For websites: run npm run build, load dist/extension in Chrome, then run ${B("morse serve")} and type the code into Morse.`;
 
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const f = flags(rest);
   switch (cmd) {
     case "launch": {
-      if (!f._[0]) throw new Error("Which app? e.g. morse launch spotify");
+      if (!f._[0]) throw new Error("Name an app to open, for example: morse launch spotify");
       const app = resolveApp(f._[0]);
       if (f.name) Object.assign(app, { id: String(f.name).toLowerCase(), name: f.name });
       const port = Number(f.port || 9333);
@@ -142,7 +142,7 @@ async function main() {
       if (f.restart) { quitApp(app); await new Promise(r => setTimeout(r, 1500)); }
       launchApp(app, port, f.rest);
       await waitForEndpoint(port).catch(e => {
-        throw new Error(`${e.message}\n  If ${app.name} was already running, quit it or pass --restart.`);
+        throw new Error(`${e.message}\n  If ${app.name} was already open, quit it first or add --restart.`);
       });
       console.log(`  port    ${port}\n`);
       await new Connector({ port, app: app.browser ? null : app, settings }).run();
@@ -152,7 +152,7 @@ async function main() {
       const port = Number(f.port || 9222);
       const settings = await settingsFrom(f);
       await waitForEndpoint(port, 3000);
-      console.log(LOGO + `\n\n  attached on port ${port} · model ${settingsLabel(settings)}\n`);
+      console.log(LOGO + `\n\n  connected on port ${port} · model ${settingsLabel(settings)}\n`);
       await new Connector({ port, app: f.app ? { id: f.app, name: f.app } : null, settings }).run();
       break;
     }
@@ -165,7 +165,7 @@ async function main() {
     }
     case "mods": {
       const mods = await listMods();
-      if (!mods.length) return console.log(D("No mods yet. Press Alt+Space in an attached app."));
+      if (!mods.length) return console.log(D("No mods yet. Open an app with morse launch, then press Alt+Space."));
       for (const m of mods) {
         const where = m.match.app || m.match.hosts.join(",");
         console.log(`${m.enabled ? W("●") : D("○")} ${B(m.title)} ${D(m.id)}  ${where}\n    ${D("“" + m.prompt + "”")}`);
@@ -178,7 +178,7 @@ async function main() {
       break;
     case "export": {
       const mod = (await listMods()).find(m => m.id === f._[0]);
-      if (!mod) throw new Error("No mod " + f._[0]);
+      if (!mod) throw new Error(`No mod with the id ${f._[0]}. Run morse mods to see them.`);
       const slug = mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       console.log(await writeExport(`${slug}.morse.json`, JSON.stringify(mod, null, 2)));
       console.log(await writeExport(`${slug}.user.js`, toUserscript(mod)));
@@ -195,7 +195,7 @@ async function main() {
     }
     case "model":
     case "config": {
-      if (f["api-key"] !== undefined) throw new Error("Use --anthropic-key or --openai-key.");
+      if (f["api-key"] !== undefined) throw new Error("--api-key is gone. Use --anthropic-key or --openai-key instead.");
       if (MODEL_FLAGS.some(k => f[k] !== undefined)) await configure(f);
       await showModel();
       break;
@@ -204,14 +204,14 @@ async function main() {
       const port = Number(f.port || HELPER_PORT);
       const bridge = createBridge({ port, log: console.log });
       await bridge.listen().catch(e => {
-        throw new Error(e.code === "EADDRINUSE" ? `Port ${port} is in use. Is the Morse helper already running? (\`morse pair\` prints a new code for it.)` : e.message);
+        throw new Error(e.code === "EADDRINUSE" ? `Port ${port} is already in use, probably by a Morse helper that is already running. Run morse pair to get a new code for it.` : e.message);
       });
       const s = await currentSettings();
       const { code } = await startPairing();
       console.log(LOGO + "\n");
       console.log(`  helper  http://127.0.0.1:${port}  ${D("v" + VERSION)}`);
-      console.log(`  model   ${s.provider === "none" ? `${WARN("none")} ${D("(morse config --provider …)")}` : settingsLabel(s)}`);
-      console.log(`  pair    ${B(code)}  ${D("enter it in the Morse extension · valid 10 min · `morse pair` for another")}\n`);
+      console.log(`  model   ${s.provider === "none" ? `${WARN("none")} ${D("(run morse doctor to set one up)")}` : settingsLabel(s)}`);
+      console.log(`  pair    ${B(code)}  ${D("type it into the Morse extension · works for 10 minutes · morse pair for a new one")}\n`);
       const stop = async () => { await bridge.close(); process.exit(0); };
       process.on("SIGINT", stop);
       process.on("SIGTERM", stop);
@@ -219,14 +219,14 @@ async function main() {
     }
     case "pair": {
       const { code } = await startPairing();
-      console.log(`Pairing code ${B(code)} ${D("(valid 10 minutes, one use)")}`);
-      if (!(await helperHealth())) console.log(D(`The helper isn't running on port ${HELPER_PORT}: start it with \`morse serve\`.`));
+      console.log(`Pairing code ${B(code)} ${D("(works once, for 10 minutes)")}`);
+      if (!(await helperHealth())) console.log(D(`The Morse helper isn't running. Start it with morse serve.`));
       break;
     }
     case "unpair": {
       let n = 0;
       await updateConfig(cfg => { n = cfg.bridge?.tokens?.length || 0; if (cfg.bridge) cfg.bridge.tokens = []; });
-      console.log(`Revoked ${n} paired browser${n === 1 ? "" : "s"}.`);
+      console.log(`Signed out ${n} paired browser${n === 1 ? "" : "s"}.`);
       break;
     }
     case "doctor": {
@@ -244,11 +244,11 @@ async function main() {
       }
       row("keys", `anthropic ${keys.anthropic ? mask(keys.anthropic) : D("-")} · openai ${keys.openai ? mask(keys.openai) : D("-")}`);
       const health = await helperHealth();
-      row("helper", health ? `running on 127.0.0.1:${HELPER_PORT} ${D(`v${health.version} · ${health.label}`)}` : D("not running (morse serve)"));
+      row("helper", health ? `running on 127.0.0.1:${HELPER_PORT} ${D(`v${health.version} · ${health.label}`)}` : D("not running (start it with morse serve)"));
       const s = settingsFromConfig(cfg, { ...(f.provider && { provider: f.provider }), ...(f.model && { model: f.model }) });
       row("model", s.provider === "none" ? WARN("none") : `${B(settingsLabel(s))}${s.detected ? D("  (auto-detected)") : ""}`);
       if (s.provider === "none") {
-        console.log(`\n  Connect a model: install Claude Code (claude.com/claude-code) or Codex,\n  or run morse config --provider anthropic --anthropic-key sk-ant-…`);
+        console.log(`\n  No model is connected. Install Claude Code (claude.com/claude-code) or Codex,\n  or add an API key: morse config --provider anthropic --anthropic-key sk-ant-…`);
         process.exitCode = 1;
         break;
       }

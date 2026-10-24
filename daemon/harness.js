@@ -92,7 +92,7 @@ export function runProcess({ bin, args, input, cwd, signal, timeoutMs = TIMEOUT_
       signal?.removeEventListener("abort", onAbort);
       if (buf.trim()) try { onLine(buf.trim()); } catch {}
       if (why === "abort") return reject(abortError());
-      if (why === "timeout") return reject(new Error(`The model took longer than ${Math.round(timeoutMs / 1000)}s and was stopped.`));
+      if (why === "timeout") return reject(new Error(`The model took longer than ${Math.round(timeoutMs / 1000)}s, so Morse stopped it. Try a smaller change.`));
       if (why instanceof Error) return reject(why);
       resolve({ code, stderr });
     });
@@ -105,7 +105,7 @@ const lastLine = s => (s || "").trim().split("\n").filter(Boolean).pop() || "";
 // stream_event/content_block_delta/text_delta, the final line is a `result`.
 export async function claudeCodeStream(s, messages, { onToken, signal }) {
   const bin = s.bin || which("claude");
-  if (!bin) throw new Error("Claude Code isn't installed (no `claude` on PATH). Install it from claude.com/claude-code, or pick another provider with `morse config`.");
+  if (!bin) throw new Error("Claude Code isn't installed on this computer. Install it from claude.com/claude-code, or choose another model with morse config.");
   if (!validModel(s.model)) throw new Error(`Invalid model name "${s.model}"`);
   const { system, prompt } = flattenConversation(messages);
   const dir = await runDir();
@@ -149,7 +149,7 @@ export async function claudeCodeStream(s, messages, { onToken, signal }) {
 //   old: {"msg":{"type":"agent_message_delta","delta":...}} / {"msg":{"type":"agent_message","message":...}}
 export async function codexStream(s, messages, { onToken, signal }) {
   const bin = s.bin || which("codex");
-  if (!bin) throw new Error("Codex isn't installed (no `codex` on PATH). Install it with `npm i -g @openai/codex`, or pick another provider with `morse config`.");
+  if (!bin) throw new Error("Codex isn't installed on this computer. Install it with npm i -g @openai/codex, or choose another model with morse config.");
   if (!validModel(s.model)) throw new Error(`Invalid model name "${s.model}"`);
   const { system, prompt } = flattenConversation(messages);
   const dir = await runDir();

@@ -145,7 +145,7 @@ export class Connector {
         return true;
       case "generate": {
         if (!this.settings?.provider || this.settings.provider === "none")
-          throw new Error("No model connected. Run `morse doctor` in a terminal to set one up (Claude Code, Codex or an API key).");
+          throw new Error("No model is connected. Run morse doctor in a terminal to set one up.");
         const t0 = Date.now();
         const res = await this.gens.run(msg.genId, signal => runMorse({
           settings: this.settings,
