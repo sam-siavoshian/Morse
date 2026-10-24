@@ -252,13 +252,12 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
     say(`\n  ${t("setup.notYet", { name: backend.name, cmd: B(backend.install), setup: B("morse setup") })}`);
     return { saved: false, rows };
   }
-  const cfg = applyChoice(await load(), model);
-  cfg.setup = { backend: choice, at: new Date().toISOString() };
-  for (const k of ["fast", "best"]) { // models: names given with --fast-model / --best-model
-    const v = str(flag(`${k}-model`));
-    if (v) cfg.tiers = { ...cfg.tiers, [model.provider]: { ...cfg.tiers?.[model.provider], [k]: v } };
-  }
-  await save(cfg);
+  const cfg = await saveChoice(choice, model, { load, save, edit: cfg => {
+    for (const k of ["fast", "best"]) { // models: names given with --fast-model / --best-model
+      const v = str(flag(`${k}-model`));
+      if (v) cfg.tiers = { ...cfg.tiers, [model.provider]: { ...cfg.tiers?.[model.provider], [k]: v } };
+    }
+  } });
   if (mode) await savePrefs({ modelMode: mode });
   const label = backend?.name || t("setup.demo");
   const fromEnv = choice === "api-key" && !model.keys ? row?.keyEnv : "";
@@ -275,6 +274,18 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
   say("");
   if (!flag("pair")) say(nextSteps(platform)); // with --pair, connectBrowser says what's next
   return { saved: true, rows, choice, model, checked, next: () => nextSteps(platform, { pairing: true }) };
+}
+
+// What setup saves for a choice, without the questions (Morse Desktop saves
+// its choice the same way): the choice in config.json, and which one and when.
+//   choice: a BACKENDS id (or "demo"); model: what configFor() made for it
+//   edit(cfg): more to change before it is saved (runSetup's model tiers)
+export async function saveChoice(choice, model, { load = loadConfig, save = saveConfig, edit = null } = {}) {
+  const cfg = applyChoice(await load(), model);
+  cfg.setup = { backend: choice, at: new Date().toISOString() };
+  edit?.(cfg);
+  await save(cfg);
+  return cfg;
 }
 
 // models
@@ -312,8 +323,9 @@ function lineReader(input, output) {
   };
 }
 
-// The real model check: one short request, like `morse doctor`.
-async function checkModel(cfg) {
+// The real model check: one short request, like `morse doctor`. Morse Desktop
+// runs it for its Check button.
+export async function checkModel(cfg) {
   const [{ settingsFromConfig }, { streamChat }, { plainError }] = await Promise.all([import("./models.js"), import("../core/providers.js"), import("../core/onboarding.js")]);
   const s = settingsFromConfig(cfg);
   if (s.provider === "none") return { ok: false, error: t("setup.noModelSet") };
