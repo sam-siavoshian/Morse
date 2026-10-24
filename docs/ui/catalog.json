@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-24T12:45:00.159Z",
+ "generated": "2026-10-24T12:48:48.182Z",
  "shots": [
   {
    "area": "bar",
@@ -2678,94 +2678,6 @@
    "note": "a quick pass over the input, away from any control: the bar still steps aside so what is under it can be pointed at"
   },
   {
-   "area": "heal",
-   "state": "bar-dot-dark",
-   "theme": "dark",
-   "file": "heal/bar-dot-dark.png",
-   "issues": [],
-   "note": "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up"
-  },
-  {
-   "area": "heal",
-   "state": "mark-dot-dark",
-   "theme": "dark",
-   "file": "heal/mark-dot-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "panel-header-dark",
-   "theme": "dark",
-   "file": "heal/panel-header-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "stopped-row-dark",
-   "theme": "dark",
-   "file": "heal/stopped-row-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "stopped-fix-focus-dark",
-   "theme": "dark",
-   "file": "heal/stopped-fix-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "fixing-dark",
-   "theme": "dark",
-   "file": "heal/fixing-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "fixed-result-dark",
-   "theme": "dark",
-   "file": "heal/fixed-result-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "share-fix-toast-dark",
-   "theme": "dark",
-   "file": "heal/share-fix-toast-dark.png",
-   "issues": [],
-   "note": "a fixed gallery mod: Share the fix…"
-  },
-  {
-   "area": "heal",
-   "state": "fixed-row-dark",
-   "theme": "dark",
-   "file": "heal/fixed-row-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "auto-fixed-toast-dark",
-   "theme": "dark",
-   "file": "heal/auto-fixed-toast-dark.png",
-   "issues": [],
-   "note": "fixed in the background: Undo and Share the fix…"
-  },
-  {
-   "area": "heal",
-   "state": "setting-dark",
-   "theme": "dark",
-   "file": "heal/setting-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
    "area": "edit-toolbar",
    "state": "selected-narrow-dark",
    "theme": "dark",
@@ -3626,78 +3538,6 @@
    "note": ""
   },
   {
-   "area": "heal",
-   "state": "bar-dot-narrow-dark",
-   "theme": "dark",
-   "file": "heal/bar-dot-narrow-dark.png",
-   "issues": [],
-   "note": "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up"
-  },
-  {
-   "area": "heal",
-   "state": "panel-header-narrow-dark",
-   "theme": "dark",
-   "file": "heal/panel-header-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "stopped-row-narrow-dark",
-   "theme": "dark",
-   "file": "heal/stopped-row-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "fixing-narrow-dark",
-   "theme": "dark",
-   "file": "heal/fixing-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "fixed-result-narrow-dark",
-   "theme": "dark",
-   "file": "heal/fixed-result-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "share-fix-toast-narrow-dark",
-   "theme": "dark",
-   "file": "heal/share-fix-toast-narrow-dark.png",
-   "issues": [],
-   "note": "a fixed gallery mod: Share the fix…"
-  },
-  {
-   "area": "heal",
-   "state": "fixed-row-narrow-dark",
-   "theme": "dark",
-   "file": "heal/fixed-row-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "auto-fixed-toast-narrow-dark",
-   "theme": "dark",
-   "file": "heal/auto-fixed-toast-narrow-dark.png",
-   "issues": [],
-   "note": "fixed in the background: Undo and Share the fix…"
-  },
-  {
-   "area": "heal",
-   "state": "setting-narrow-dark",
-   "theme": "dark",
-   "file": "heal/setting-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
    "area": "popup",
    "state": "pause-off-dark",
    "theme": "dark",
@@ -3744,30 +3584,6 @@
    "file": "popup/go-focus-dark.png",
    "issues": [],
    "note": ""
-  },
-  {
-   "area": "motion",
-   "state": "reduced-effect-dark",
-   "theme": "dark",
-   "file": "motion/reduced-effect-dark.png",
-   "issues": [],
-   "note": "Effects default to Subtle here: a still outline on the target, no field"
-  },
-  {
-   "area": "motion",
-   "state": "reduced-mark-live-dark",
-   "theme": "dark",
-   "file": "motion/reduced-mark-live-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "motion",
-   "state": "reduced-landing-dark",
-   "theme": "dark",
-   "file": "motion/reduced-landing-dark.png",
-   "issues": [],
-   "note": "no sweep: the field fades out, the bar shows the result"
   },
   {
    "area": "bar",
@@ -6446,94 +6262,6 @@
    "note": "a quick pass over the input, away from any control: the bar still steps aside so what is under it can be pointed at"
   },
   {
-   "area": "heal",
-   "state": "bar-dot-light",
-   "theme": "light",
-   "file": "heal/bar-dot-light.png",
-   "issues": [],
-   "note": "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up"
-  },
-  {
-   "area": "heal",
-   "state": "mark-dot-light",
-   "theme": "light",
-   "file": "heal/mark-dot-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "panel-header-light",
-   "theme": "light",
-   "file": "heal/panel-header-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "stopped-row-light",
-   "theme": "light",
-   "file": "heal/stopped-row-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "stopped-fix-focus-light",
-   "theme": "light",
-   "file": "heal/stopped-fix-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "fixing-light",
-   "theme": "light",
-   "file": "heal/fixing-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "fixed-result-light",
-   "theme": "light",
-   "file": "heal/fixed-result-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "share-fix-toast-light",
-   "theme": "light",
-   "file": "heal/share-fix-toast-light.png",
-   "issues": [],
-   "note": "a fixed gallery mod: Share the fix…"
-  },
-  {
-   "area": "heal",
-   "state": "fixed-row-light",
-   "theme": "light",
-   "file": "heal/fixed-row-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "auto-fixed-toast-light",
-   "theme": "light",
-   "file": "heal/auto-fixed-toast-light.png",
-   "issues": [],
-   "note": "fixed in the background: Undo and Share the fix…"
-  },
-  {
-   "area": "heal",
-   "state": "setting-light",
-   "theme": "light",
-   "file": "heal/setting-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
    "area": "edit-toolbar",
    "state": "selected-narrow-light",
    "theme": "light",
@@ -7394,78 +7122,6 @@
    "note": ""
   },
   {
-   "area": "heal",
-   "state": "bar-dot-narrow-light",
-   "theme": "light",
-   "file": "heal/bar-dot-narrow-light.png",
-   "issues": [],
-   "note": "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up"
-  },
-  {
-   "area": "heal",
-   "state": "panel-header-narrow-light",
-   "theme": "light",
-   "file": "heal/panel-header-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "stopped-row-narrow-light",
-   "theme": "light",
-   "file": "heal/stopped-row-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "fixing-narrow-light",
-   "theme": "light",
-   "file": "heal/fixing-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "fixed-result-narrow-light",
-   "theme": "light",
-   "file": "heal/fixed-result-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "share-fix-toast-narrow-light",
-   "theme": "light",
-   "file": "heal/share-fix-toast-narrow-light.png",
-   "issues": [],
-   "note": "a fixed gallery mod: Share the fix…"
-  },
-  {
-   "area": "heal",
-   "state": "fixed-row-narrow-light",
-   "theme": "light",
-   "file": "heal/fixed-row-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "heal",
-   "state": "auto-fixed-toast-narrow-light",
-   "theme": "light",
-   "file": "heal/auto-fixed-toast-narrow-light.png",
-   "issues": [],
-   "note": "fixed in the background: Undo and Share the fix…"
-  },
-  {
-   "area": "heal",
-   "state": "setting-narrow-light",
-   "theme": "light",
-   "file": "heal/setting-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
    "area": "popup",
    "state": "pause-off-light",
    "theme": "light",
@@ -7512,30 +7168,6 @@
    "file": "popup/go-focus-light.png",
    "issues": [],
    "note": ""
-  },
-  {
-   "area": "motion",
-   "state": "reduced-effect-light",
-   "theme": "light",
-   "file": "motion/reduced-effect-light.png",
-   "issues": [],
-   "note": "Effects default to Subtle here: a still outline on the target, no field"
-  },
-  {
-   "area": "motion",
-   "state": "reduced-mark-live-light",
-   "theme": "light",
-   "file": "motion/reduced-mark-live-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "motion",
-   "state": "reduced-landing-light",
-   "theme": "light",
-   "file": "motion/reduced-landing-light.png",
-   "issues": [],
-   "note": "no sweep: the field fades out, the bar shows the result"
   },
   {
    "area": "hostile",
@@ -8128,6 +7760,374 @@
    "file": "a11y-site/calm-narrow-light.png",
    "issues": [],
    "note": "Hide distractions"
+  },
+  {
+   "area": "heal",
+   "state": "bar-dot-dark",
+   "theme": "dark",
+   "file": "heal/bar-dot-dark.png",
+   "issues": [],
+   "note": "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up"
+  },
+  {
+   "area": "heal",
+   "state": "mark-dot-dark",
+   "theme": "dark",
+   "file": "heal/mark-dot-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "panel-header-dark",
+   "theme": "dark",
+   "file": "heal/panel-header-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "stopped-row-dark",
+   "theme": "dark",
+   "file": "heal/stopped-row-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "stopped-fix-focus-dark",
+   "theme": "dark",
+   "file": "heal/stopped-fix-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixing-dark",
+   "theme": "dark",
+   "file": "heal/fixing-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixed-result-dark",
+   "theme": "dark",
+   "file": "heal/fixed-result-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "share-fix-toast-dark",
+   "theme": "dark",
+   "file": "heal/share-fix-toast-dark.png",
+   "issues": [],
+   "note": "a fixed gallery mod: Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "fixed-row-dark",
+   "theme": "dark",
+   "file": "heal/fixed-row-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "auto-fixed-toast-dark",
+   "theme": "dark",
+   "file": "heal/auto-fixed-toast-dark.png",
+   "issues": [],
+   "note": "fixed in the background: Undo and Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "setting-dark",
+   "theme": "dark",
+   "file": "heal/setting-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "bar-dot-narrow-dark",
+   "theme": "dark",
+   "file": "heal/bar-dot-narrow-dark.png",
+   "issues": [],
+   "note": "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up"
+  },
+  {
+   "area": "heal",
+   "state": "panel-header-narrow-dark",
+   "theme": "dark",
+   "file": "heal/panel-header-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "stopped-row-narrow-dark",
+   "theme": "dark",
+   "file": "heal/stopped-row-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixing-narrow-dark",
+   "theme": "dark",
+   "file": "heal/fixing-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixed-result-narrow-dark",
+   "theme": "dark",
+   "file": "heal/fixed-result-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "share-fix-toast-narrow-dark",
+   "theme": "dark",
+   "file": "heal/share-fix-toast-narrow-dark.png",
+   "issues": [],
+   "note": "a fixed gallery mod: Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "fixed-row-narrow-dark",
+   "theme": "dark",
+   "file": "heal/fixed-row-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "auto-fixed-toast-narrow-dark",
+   "theme": "dark",
+   "file": "heal/auto-fixed-toast-narrow-dark.png",
+   "issues": [],
+   "note": "fixed in the background: Undo and Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "setting-narrow-dark",
+   "theme": "dark",
+   "file": "heal/setting-narrow-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "motion",
+   "state": "reduced-effect-dark",
+   "theme": "dark",
+   "file": "motion/reduced-effect-dark.png",
+   "issues": [],
+   "note": "Effects default to Subtle here: a still outline on the target, no field"
+  },
+  {
+   "area": "motion",
+   "state": "reduced-mark-live-dark",
+   "theme": "dark",
+   "file": "motion/reduced-mark-live-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "motion",
+   "state": "reduced-landing-dark",
+   "theme": "dark",
+   "file": "motion/reduced-landing-dark.png",
+   "issues": [],
+   "note": "no sweep: the field fades out, the bar shows the result"
+  },
+  {
+   "area": "heal",
+   "state": "bar-dot-light",
+   "theme": "light",
+   "file": "heal/bar-dot-light.png",
+   "issues": [],
+   "note": "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up"
+  },
+  {
+   "area": "heal",
+   "state": "mark-dot-light",
+   "theme": "light",
+   "file": "heal/mark-dot-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "panel-header-light",
+   "theme": "light",
+   "file": "heal/panel-header-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "stopped-row-light",
+   "theme": "light",
+   "file": "heal/stopped-row-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "stopped-fix-focus-light",
+   "theme": "light",
+   "file": "heal/stopped-fix-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixing-light",
+   "theme": "light",
+   "file": "heal/fixing-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixed-result-light",
+   "theme": "light",
+   "file": "heal/fixed-result-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "share-fix-toast-light",
+   "theme": "light",
+   "file": "heal/share-fix-toast-light.png",
+   "issues": [],
+   "note": "a fixed gallery mod: Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "fixed-row-light",
+   "theme": "light",
+   "file": "heal/fixed-row-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "auto-fixed-toast-light",
+   "theme": "light",
+   "file": "heal/auto-fixed-toast-light.png",
+   "issues": [],
+   "note": "fixed in the background: Undo and Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "setting-light",
+   "theme": "light",
+   "file": "heal/setting-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "bar-dot-narrow-light",
+   "theme": "light",
+   "file": "heal/bar-dot-narrow-light.png",
+   "issues": [],
+   "note": "a mod here stopped working after the site changed: a small --m-danger dot on the mark, nothing pops up"
+  },
+  {
+   "area": "heal",
+   "state": "panel-header-narrow-light",
+   "theme": "light",
+   "file": "heal/panel-header-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "stopped-row-narrow-light",
+   "theme": "light",
+   "file": "heal/stopped-row-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixing-narrow-light",
+   "theme": "light",
+   "file": "heal/fixing-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "fixed-result-narrow-light",
+   "theme": "light",
+   "file": "heal/fixed-result-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "share-fix-toast-narrow-light",
+   "theme": "light",
+   "file": "heal/share-fix-toast-narrow-light.png",
+   "issues": [],
+   "note": "a fixed gallery mod: Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "fixed-row-narrow-light",
+   "theme": "light",
+   "file": "heal/fixed-row-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "heal",
+   "state": "auto-fixed-toast-narrow-light",
+   "theme": "light",
+   "file": "heal/auto-fixed-toast-narrow-light.png",
+   "issues": [],
+   "note": "fixed in the background: Undo and Share the fix…"
+  },
+  {
+   "area": "heal",
+   "state": "setting-narrow-light",
+   "theme": "light",
+   "file": "heal/setting-narrow-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "motion",
+   "state": "reduced-effect-light",
+   "theme": "light",
+   "file": "motion/reduced-effect-light.png",
+   "issues": [],
+   "note": "Effects default to Subtle here: a still outline on the target, no field"
+  },
+  {
+   "area": "motion",
+   "state": "reduced-mark-live-light",
+   "theme": "light",
+   "file": "motion/reduced-mark-live-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "motion",
+   "state": "reduced-landing-light",
+   "theme": "light",
+   "file": "motion/reduced-landing-light.png",
+   "issues": [],
+   "note": "no sweep: the field fades out, the bar shows the result"
   }
  ]
 }
