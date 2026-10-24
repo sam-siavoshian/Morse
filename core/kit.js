@@ -351,12 +351,15 @@ function installMorseKit() {
       waitFor(selector, opts = {}) {
         const { text = null, within = document, timeout = 5000 } = typeof opts === "number" ? { timeout: opts } : opts;
         const needle = text == null ? null : String(text).toLowerCase().replace(/\s+/g, " ").trim();
+        const words = e => (e.textContent || "").toLowerCase().replace(/\s+/g, " ").trim();
         const find = () => [...within.querySelectorAll(selector)].filter(e => !e.closest("[data-morse-ui],[data-morse]")
-          && (needle == null || (e.textContent || "").toLowerCase().replace(/\s+/g, " ").includes(needle)));
+          && (needle == null || words(e).includes(needle)));
         return new Promise((resolve, reject) => {
           const t0 = Date.now();
           const tick = guard(c, () => {
-            const all = find();
+            let all = find();
+            // "Archive" is the button that says Archive, before one that says Unarchive.
+            if (needle != null) all = [...all.filter(e => words(e) === needle), ...all.filter(e => words(e) !== needle)];
             const el = all.find(e => e.getClientRects().length) || (Date.now() - t0 >= timeout ? all[0] : null);
             if (el) return resolve(el);
             if (Date.now() - t0 >= timeout) return reject(new Error(`Couldn't find ${text != null ? `“${text}”` : selector} on the page`));
@@ -381,8 +384,15 @@ function installMorseKit() {
         el.dispatchEvent(new Event("change", { bubbles: true }));
         return el;
       },
-      // choose: an option of a <select> by its text or value; a checkbox or radio on (true) or off
+      // choose: an option of a <select> by its text or value; a checkbox or radio on (true) or off.
+      // Anything else (a button, a link) is not a choice: clicking it could submit or buy.
       choose(el, want) {
+        const checkable = (el.localName === "input" && /^(checkbox|radio)$/i.test(el.type)) || /^(checkbox|radio|switch|menuitemcheckbox|menuitemradio)$/.test(el.getAttribute?.("role") || "");
+        if (el.localName !== "select" && !checkable) throw new Error("morse.choose works on a menu, a checkbox or an option; use el.click() for anything else");
+        if (el.localName !== "select" && el.checked === undefined) { // role=checkbox and friends
+          if ((el.getAttribute("aria-checked") === "true") !== (want !== false)) el.click();
+          return el;
+        }
         if (el.localName === "select") {
           const w = String(want).toLowerCase();
           const opt = [...el.options].find(o => o.value === String(want)) || [...el.options].find(o => o.text.trim().toLowerCase() === w)
@@ -394,15 +404,63 @@ function installMorseKit() {
         } else if (el.checked !== (want !== false)) el.click();
         return el;
       },
-      // key: a key press on el; Enter in a form field submits its form like a real one
+      // key: a key press on el; Enter in a form field submits its form only
+      // when a real one would: through its submit button (not when that is
+      // turned off), or, with none, when the field is the form's only one.
       key(el, key, mods = {}) {
         el = el || document.activeElement || document.body;
         const init = { key, code: key.length === 1 ? (/[a-z]/i.test(key) ? "Key" + key.toUpperCase() : /\d/.test(key) ? "Digit" + key : "") : key,
           bubbles: true, cancelable: true, ctrlKey: !!mods.ctrl, shiftKey: !!mods.shift, altKey: !!mods.alt, metaKey: !!mods.meta };
         const go = el.dispatchEvent(new KeyboardEvent("keydown", init));
         el.dispatchEvent(new KeyboardEvent("keyup", init));
-        if (go && key === "Enter" && el.form && el.localName === "input") el.form.requestSubmit ? el.form.requestSubmit() : el.form.submit();
+        const f = el.form;
+        if (go && key === "Enter" && f && el.localName === "input" && !mods.ctrl && !mods.alt && !mods.meta) {
+          const all = [...f.elements];
+          const btn = all.find(b => b.matches("button:not([type]),button[type=submit],input[type=submit],input[type=image]"));
+          const fields = all.filter(x => x.localName === "input" && /^(text|search|url|tel|email|password|date|datetime-local|month|week|time|number)$/i.test(x.type));
+          if (btn) { if (!btn.disabled) btn.click(); }
+          else if (fields.length === 1) f.requestSubmit ? f.requestSubmit() : f.submit();
+        }
         return el;
+      },
+      // confirm: asks the person on the page, in Morse's own words, before a
+      // step that can't be taken back. Resolves true only for their own click
+      // (or Enter) on the yes button; No, Esc or turning the mod off is false.
+      confirm(message, { yes = "Yes", no = "Cancel" } = {}) {
+        return new Promise(resolve => {
+          const box = document.createElement("div");
+          box.setAttribute("data-morse-ui", "");
+          box.setAttribute("role", "alertdialog");
+          box.setAttribute("aria-modal", "true");
+          const shadow = box.attachShadow({ mode: "open" }); // the page's styles stay out; its scripts can't say yes (isTrusted below)
+          shadow.innerHTML = `<style>
+            .c { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 2147483647; max-width: min(420px, calc(100vw - 32px));
+              background: #0d1117; color: #e6edf3; font: 500 14px/1.45 ui-sans-serif, system-ui, sans-serif; padding: 16px 18px;
+              border: 1px solid #30363d; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.45); }
+            p { margin: 0 0 14px; } .b { display: flex; gap: 8px; justify-content: flex-end; }
+            button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid #30363d; background: #161b22; color: inherit; cursor: pointer; }
+            button.y { background: #da3633; border-color: #da3633; color: #fff; }
+          </style><div class="c"><p></p><div class="b"><button class="n"></button><button class="y"></button></div></div>`;
+          shadow.querySelector("p").textContent = String(message);
+          const n = shadow.querySelector(".n"), y = shadow.querySelector(".y");
+          n.textContent = no; y.textContent = yes;
+          let done = false;
+          const finish = ok => {
+            if (done) return;
+            done = true;
+            box.remove();
+            document.removeEventListener("keydown", onKey, true);
+            resolve(ok);
+          };
+          // A page script can click a button too: only a real click counts.
+          y.addEventListener("click", e => { if (e.isTrusted) finish(true); });
+          n.addEventListener("click", () => finish(false));
+          const onKey = e => { if (e.isTrusted && e.key === "Escape") { e.preventDefault(); e.stopPropagation(); finish(false); } };
+          document.addEventListener("keydown", onKey, true);
+          c.cleanups.push(() => finish(false));
+          document.body.append(box);
+          n.focus();
+        });
       },
       store: {
         get(k, d = null) { try { const v = localStorage.getItem(`morse:${c.id}:${k}`); return v == null ? d : JSON.parse(v); } catch { return d; } },

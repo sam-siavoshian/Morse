@@ -6,6 +6,7 @@ import { parseModResponse, completeCssPrefix } from "./parse.js";
 import { parseReply } from "./answer.js"; // Ask and find
 import { streamChat } from "./providers.js";
 import { selectorsIn, selectorLists } from "./heal.js"; // self-heal hook: shared selector parsing
+import { cannotUndo } from "./showonce.js"; // show-once hook: ask before steps that can't be undone
 import { draftHarm, cssHidesPage } from "./guard.js"; // guard hook: code that would obviously break the page
 
 // `probe(selectors)` (optional, from the host) returns { fp, unmatched }: a
@@ -60,6 +61,14 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       repairs.push(previous.error);
       continue;
     }
+    // Show me once: steps that can't be taken back are never done without asking.
+    const sure = unasked(context, draft.js);
+    if (sure) {
+      previous = { raw, error: sure };
+      repairs.push(sure);
+      last = { ...last, css: "", js: "", error: "The change would delete, buy or send something without asking you first, so Morse didn't keep it. Try again." };
+      continue;
+    }
     if (draft.js.trim()) {
       if (signal?.aborted) throw new Error("aborted"); // stopped: never run the JS
       emit({ type: "phase", phase: "applying" });
@@ -84,6 +93,17 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     return { ...last, ok: true };
   }
   return { ...last, ok: false, error: last?.error || "The model's answer had no change in it. Try other words." };
+}
+
+// Show me once (core/showonce.js cannotUndo): code made from steps that
+// delete, buy or send must ask the person first with morse.confirm. A repair
+// message when it doesn't, or null.
+function unasked(context, js) {
+  const steps = Array.isArray(context?.recording?.steps) ? context.recording.steps : [];
+  const sure = steps.filter(cannotUndo);
+  if (!sure.length || /\bmorse\.confirm\s*\(/.test(js || "")) return null;
+  const what = sure.map(s => `“${s.label || s.text || s.key}”`).slice(0, 3).join(", ");
+  return `${sure[0].n ? `Step ${sure[0].n}` : "A step"} (${what}) can't be undone, and the code never asks first. Before the first such step add: if (!(await morse.confirm("…what will happen…"))) return;`;
 }
 
 // ---- effect check helpers

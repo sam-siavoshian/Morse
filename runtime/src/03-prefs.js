@@ -35,9 +35,14 @@ function setPrefs(p) {
 const PREFS_LS = "morse:settings";
 const lsPrefs = () => { try { return JSON.parse(localStorage.getItem(PREFS_LS) || "null"); } catch { return null; } };
 
+// The page's localStorage is the page's to write: it only stands in for a
+// host that has no settings at all, never after a host has answered (a call
+// that fails once, a lost connection, keeps what the host said), and it never
+// turns on fixing mods by itself (that sends the page to the model).
+let hostPrefs = false; // set once the host has sent settings (here, or with hello in 97-boot.js)
 async function loadPrefs() {
-  try { setPrefs(await call("settings.get")); }
-  catch { setPrefs(lsPrefs() || {}); }
+  try { setPrefs(await call("settings.get")); hostPrefs = true; }
+  catch { if (!hostPrefs) setPrefs({ ...(lsPrefs() || {}), autoFix: false }); }
 }
 // Picks up changes made in another tab or window when this one regains focus.
 let prefsAt = 0;

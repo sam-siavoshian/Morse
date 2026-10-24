@@ -8,7 +8,7 @@ import { waitForEndpoint } from "./cdp.js";
 import { inspectFuses, fuseVerdict, electronBinaryFor } from "./fuses.js";
 import {
   hostContext, discoverApps, resolveApp, launchApp, waitForLaunch, quitApp, listProcesses, findAppProcesses, debugPortOf,
-  loadAppPrefs, saveAppPref, formatApps,
+  loadAppPrefs, saveAppPref, formatApps, said,
 } from "./apps.js";
 import { pickPort, portFree, portAnswers, reachableFrom, identify, checkIdentity } from "./ports.js";
 import { readSessions, publishSession, stopRequested, stopSession, withMods, formatStatus } from "./status.js";
@@ -53,7 +53,7 @@ export async function launchCommand(f, { settingsFrom, logo }) {
   const ctx = hostContext();
   const app = resolveApp(f._.join(" "), { ctx });
   if (f.name) Object.assign(app, { id: slug(f.name), name: String(f.name), aliases: [...(app.aliases || []), app.name] });
-  if (app.canAttach === false) throw new Error(`${app.name} is a ${app.why}, so Morse can't connect to it.`);
+  if (app.canAttach === false) throw said(`${app.name} is a ${app.why}, so Morse can't connect to it.`);
   const extra = f.rest || [];
   const pref = (await loadAppPrefs())[app.id] || {};
   const settings = await settingsFrom(f);
@@ -98,9 +98,9 @@ export async function launchCommand(f, { settingsFrom, logo }) {
         if (a === "a") await saveAppPref(app.id, { restart: true });
         restart = a === "y" || a === "a";
       }
-      if (!restart) throw new Error(`${app.name} is already open. Morse can only connect to an app when it starts. Run ${B(`morse launch ${app.id} --restart`)} to quit it and open it again. Morse remembers that choice.`);
+      if (!restart) throw said(`${app.name} is already open. Morse can only connect to an app when it starts. Run ${B(`morse launch ${app.id} --restart`)} to quit it and open it again. Morse remembers that choice.`);
       console.log(`  quitting ${app.name}…`);
-      if (!await quitApp(app, { procs, extraArgs: extra })) throw new Error(`${app.name} didn't quit. Close it yourself, then run this again.`);
+      if (!await quitApp(app, { procs, extraArgs: extra })) throw said(`${app.name} didn't quit. Close it yourself, then run this again.`);
     }
   }
   if (f.restart === true && !pref.restart) await saveAppPref(app.id, { restart: true });
@@ -110,7 +110,7 @@ export async function launchCommand(f, { settingsFrom, logo }) {
   if (!port) {
     if (f.port) {
       port = Number(f.port);
-      if (!await portFree(port)) throw new Error(`Port ${port} is already used by another program. Leave out --port and Morse picks a free one.`);
+      if (!await portFree(port)) throw said(`Port ${port} is already used by another program. Leave out --port and Morse picks a free one.`);
     } else port = await pickPort({ preferred: [pref.port].filter(Boolean) });
     const child = launchApp(app, port, extra);
     pids = [child.pid];
@@ -120,10 +120,10 @@ export async function launchCommand(f, { settingsFrom, logo }) {
 
   // Only this computer, and only the app we meant.
   const exposed = await reachableFrom(port);
-  if (exposed.length) throw new Error(`Port ${port} can be reached from other computers (${exposed.join(", ")}), so Morse won't use it. Quit ${app.name} to close it.`);
+  if (exposed.length) throw said(`Port ${port} can be reached from other computers (${exposed.join(", ")}), so Morse won't use it. Quit ${app.name} to close it.`);
   const who = await identify(port);
   const v = checkIdentity(who, app, pids);
-  if (!v.ok) throw new Error(`Morse didn't connect: ${v.why}.`);
+  if (!v.ok) throw said(`Morse didn't connect: ${v.why}.`);
   console.log(`  port    ${port} ${D("(127.0.0.1 only)")}`);
   console.log(`  engine  ${who.browser.replace("/", " ")}${who.electron ? ` · Electron ${who.electron}` : ""}\n`);
 
@@ -139,7 +139,7 @@ export async function attachCommand(f, { settingsFrom, logo }) {
   const settings = await settingsFrom(f);
   await waitForEndpoint(port, 3000);
   const exposed = await reachableFrom(port);
-  if (exposed.length) throw new Error(`Port ${port} can be reached from other computers (${exposed.join(", ")}), so Morse won't use it.`);
+  if (exposed.length) throw said(`Port ${port} can be reached from other computers (${exposed.join(", ")}), so Morse won't use it.`);
   const who = await identify(port);
   const name = f.app ? String(f.app) : `App on port ${port}`;
   console.log(logo + `\n\n  connected on port ${port} · ${who.browser.replace("/", " ")}${who.electron ? ` · Electron ${who.electron}` : ""} · model ${settingsLabel(settings)}\n`);

@@ -25,7 +25,8 @@ export function readFuseWire(buf) {
   const at = buf.indexOf(SENTINEL);
   if (at < 0) return null;
   const o = at + SENTINEL.length;
-  const version = buf[o], length = buf[o + 1];
+  if (o + 2 > buf.length) return null; // cut off right after the sentinel
+  const version = buf[o], length = Math.min(buf[o + 1], buf.length - o - 2); // a wire cut short says no more than it has
   const fuses = {};
   for (let i = 0; i < length; i++) {
     const b = String.fromCharCode(buf[o + 2 + i]);
@@ -48,10 +49,29 @@ export async function inspectFuses(appPath) {
   // A bundle with no Electron Framework inside (a native Mac app) is a folder:
   // there is no fuse wire to read.
   if ((await fs.stat(file)).isDirectory()) return { electron: false, file };
-  const buf = await fs.readFile(file);
-  const wire = readFuseWire(buf);
+  const wire = await findFuseWire(file);
   if (!wire) return { electron: false, file };
   return { electron: true, file, ...wire };
+}
+
+// The file a piece at a time: an Electron binary is a few hundred MB, and a
+// path can name a file of any size (reading it whole fails past 2 GB).
+const CHUNK = 8 << 20, KEEP = SENTINEL.length + 2 + 256;
+async function findFuseWire(file) {
+  const fh = await fs.open(file, "r");
+  try {
+    let pos = 0, tail = Buffer.alloc(0);
+    for (;;) {
+      const b = Buffer.alloc(CHUNK);
+      const { bytesRead } = await fh.read(b, 0, CHUNK, pos);
+      if (!bytesRead) return readFuseWire(tail);
+      pos += bytesRead;
+      const buf = Buffer.concat([tail, b.subarray(0, bytesRead)]);
+      const at = buf.indexOf(SENTINEL);
+      if (at >= 0 && buf.length - at >= KEEP) return readFuseWire(buf.subarray(at));
+      tail = Buffer.from(at >= 0 ? buf.subarray(at) : buf.subarray(Math.max(0, buf.length - KEEP))); // a sentinel across two pieces
+    }
+  } finally { await fh.close(); }
 }
 
 // What the fuses mean for Morse, in one line each. Checked on a real Electron

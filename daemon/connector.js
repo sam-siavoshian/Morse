@@ -155,6 +155,7 @@ export class Connector {
         this.pages.delete(t.id);
         this.windows.get(t.id)?.session?.close();
         this.windows.delete(t.id);
+        if (this.state === "stopped") return; // `morse stop` closed it mid-attach: not a failure to report
         const n = (r?.n || 0) + 1;
         this.retry.set(t.id, { at: Date.now() + Math.min(30000, 500 * 2 ** n), n });
         if (n === 1) this.log(`  ! Couldn't connect to ${describeTarget(t).title}: ${e.message}`);
@@ -253,6 +254,7 @@ export class Connector {
     // The document that's already loaded. A page that is mid-crash or
     // mid-navigation gets the runtime from its next document.
     await this.boot(s, w, source).catch(() => {});
+    if (w.detaching || this.state === "stopped") return; // stopped meanwhile: nothing was connected
     readTitle();
     this.log(`  ✓ connected to ${title}${kind === "window" ? "" : ` (${kind})`}`);
     this.changed();
@@ -266,9 +268,13 @@ export class Connector {
     if (ctx == null) ctx = (await s.send("Page.createIsolatedWorld", { frameId: w.frameId, worldName: WORLD })).executionContextId;
     const probe = (await s.send("Runtime.evaluate", { expression: `[!!globalThis.__morseHost, typeof globalThis.${BINDING}]`, contextId: ctx, returnByValue: true }).catch(() => null))?.result?.value;
     if (probe?.[0]) return; // already running in this document
+    // `morse stop` came while this was on its way: its clean-up may already
+    // have run, and a runtime started now would be left on the page.
+    if (w.detaching || this.state === "stopped") return;
     // A document that committed in a new renderer while we were attaching (an
     // app still starting up) can come without the binding: add it back first.
     if (probe && probe[1] !== "function") await s.send("Runtime.addBinding", { name: BINDING, executionContextName: WORLD }).catch(() => {});
+    if (w.detaching || this.state === "stopped") return;
     await s.send("Runtime.evaluate", { expression: source, contextId: ctx });
   }
 
