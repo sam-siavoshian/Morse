@@ -8,10 +8,10 @@ Measured in headless Chromium through the real desktop connector (CDP, main worl
 
 |  | value |
 |---|---|
-| Script injected at page load (bytes) | 234550 → **32311** |
-| Compile (ms, median of 15, cache busted) | 15.68 → **8.16** |
-| Compile + top-level run on a 10k-node page (ms) | 34.84 → **5.68** |
-| Full UI, loaded on first open (bytes) | 564279 |
+| Script injected at page load (bytes) | 234550 → **49224** |
+| Compile (ms, median of 15, cache busted) | 15.68 → **3.96** |
+| Compile + top-level run on a 10k-node page (ms) | 34.84 → **0.27** |
+| Full UI, loaded on first open (bytes) | 801735 |
 
 ## Boot: what Morse does on a page nobody opened it on
 
@@ -20,32 +20,32 @@ One saved mod (CSS + a `morse.watch`) applies on each site.
 |  | parley | byte | tunes | big (10k nodes) |
 |---|---|---|---|---|
 | DOM nodes added | 238 → **5** | 235 → **2** | 236 → **3** | 237 → **4** |
-| Listeners Morse adds | 56 → **6** | 56 → **6** | 56 → **6** | 56 → **6** |
+| Listeners Morse adds | 56 → **8** | 56 → **8** | 56 → **8** | 56 → **8** |
 | MutationObservers | 8 → **2** | 8 → **2** | 8 → **2** | 8 → **2** |
-| Timers / rAF scheduled | 2 → **5** | 2 → **6** | 2 → **5** | 2 → **5** |
+| Timers / rAF scheduled | 2 → **7** | 2 → **9** | 2 → **7** | 2 → **7** |
 | setInterval | 1 → **0** | 1 → **0** | 1 → **0** | 1 → **0** |
-| getComputedStyle calls | 4 → **0** | 4 → **0** | 4 → **0** | 6 → **0** |
+| getComputedStyle calls | 4 → **4** | 4 → **4** | 4 → **4** | 6 → **4** |
 | Layout reads (rects, offsets) | 0 → **0** | 0 → **0** | 0 → **0** | 0 → **0** |
 | Elements created | 15 → **4** | 12 → **1** | 13 → **2** | 14 → **3** |
 | Shadow roots | 1 → **0** | 1 → **0** | 1 → **0** | 1 → **0** |
 | Overlay mounted | yes → **no** | yes → **no** | yes → **no** | yes → **no** |
-| Main-thread script (ms) | 8 → **0.2** | 58.8 → **3** | 9.6 → **0** | -9.1 → **17.9** |
+| Main-thread script (ms) | 8 → **7.4** | 58.8 → **1.6** | 9.6 → **-0.1** | -9.1 → **10.3** |
 | Extra layouts | 2 → **1** | 2 → **0** | 2 → **1** | 2 → **0** |
 | Extra style recalcs | 7 → **2** | 12 → **1** | 9 → **2** | 9 → **1** |
-| JS heap (KB) | 732.4 → **230.3** | 766 → **265.4** | 736.1 → **240.5** | 704.9 → **271.7** |
-| First mod CSS applied (ms after navigation) | 139.3 → **638.5** | 149.7 → **436.7** | 101 → **355.4** | 431.4 → **889.4** |
-| First mod JS applied (ms after navigation) | 154.5 → **649** | – | 104.9 → **468.5** | 446.5 → **1393.3** |
-| (DOMContentLoaded, ms) | 76.7 → **243.7** | 114.3 → **312.5** | 90.6 → **164.4** | 365.7 → **1060.1** |
-| Idle: Morse callbacks in 3 s | 4 → **1** | 3 → **2** | 4 → **1** | 4 → **1** |
-| Idle: Morse ms in 3 s | 0.3 → **0.6** | 0.2 → **0.8** | 0.4 → **0.7** | 0.3 → **0.5** |
+| JS heap (KB) | 732.4 → **353** | 766 → **395.9** | 736.1 → **356.7** | 704.9 → **355.7** |
+| First mod CSS applied (ms after navigation) | 139.3 → **281** | 149.7 → **215.1** | 101 → **487.9** | 431.4 → **416.8** |
+| First mod JS applied (ms after navigation) | 154.5 → **294.7** | – | 104.9 → **521.7** | 446.5 → **666.4** |
+| (DOMContentLoaded, ms) | 76.7 → **186.4** | 114.3 → **114.6** | 90.6 → **414.4** | 365.7 → **533.6** |
+| Idle: Morse callbacks in 3 s | 4 → **3** | 3 → **2** | 4 → **3** | 4 → **3** |
+| Idle: Morse ms in 3 s | 0.3 → **0.9** | 0.2 → **1.4** | 0.4 → **1** | 0.3 → **1** |
 
 ## Opening Morse
 
-The price of a free boot: the first open on a page fetches and builds the UI (~230 KB) from the host. Later opens are instant, as before.
+The price of a free boot: the first open on a page fetches and builds the UI (~783 KB) from the host. Later opens are instant, as before.
 
 |  | value |
 |---|---|
-| Hotkey to bar visible, 10k-node page (ms) | 18.9 → **251.9** |
+| Hotkey to bar visible, 10k-node page (ms) | 18.9 → **286** |
 
 ## Mods at scale: 30 `morse.watch` mods on a chat app streaming a reply
 
@@ -53,22 +53,22 @@ A token every 30 ms and a new message every 300 ms for 4 s, 300 messages already
 
 |  | value |
 |---|---|
-| All 30 mods applied (ms after navigation) | 19620.8 → **933.2** |
+| All 30 mods applied (ms after navigation) | 19620.8 → **538.5** |
 | MutationObservers | 37 → **2** |
 | Subtree observe() calls | 31 → **1** |
-| Observer callbacks | 4170 → **139** |
-| rAF callbacks | 3600 → **37** |
-| Morse ms per second of streaming | 78.27 → **6.22** |
-| Morse ms per frame | 1.45 → **0.11** |
-| Slowest callback (ms) | 13.6 → **4.5** |
+| Observer callbacks | 4170 → **145** |
+| rAF callbacks | 3600 → **42** |
+| Morse ms per second of streaming | 78.27 → **8.15** |
+| Morse ms per frame | 1.45 → **0.14** |
+| Slowest callback (ms) | 13.6 → **5.1** |
 
 ## Long SPA session: 60 pushState navigations, 40 ms apart
 
 |  | value |
 |---|---|
-| mods.list requests | 3 → **10** |
-| URL change noticed after (median ms) | 597.6 → **188.3** |
-| … worst case (ms) | 1053 → **991.6** |
+| mods.list requests | 3 → **11** |
+| URL change noticed after (median ms) | 597.6 → **141.9** |
+| … worst case (ms) | 1053 → **627.5** |
 | Navigations never noticed | 0 → **0** |
 | Listeners added during the session | 0 → **0** |
 | Observers added during the session | 0 → **0** |
@@ -79,27 +79,27 @@ Wall-clock frame times depend on how loaded the machine is (headless, software r
 
 |  | target 3840x2160 | page-wide 3840x2160 | target 1920x1080 |
 |---|---|---|---|
-| Frames drawn in 1.5 s | 4 → **3** | 8 → **4** | 10 → **8** |
-| Canvas draw calls per frame | 127360 → **21** | 2984 → **18** | 31285 → **27** |
-| Shapes per frame | 509440 → **6361** | 11936 → **2984** | 125140 → **7037** |
-| Effect JS + canvas calls per frame (CPU profile, ms) | 342 → **7.45** | 19.57 → **3.7** | 86.36 → **7.2** |
-| Morse rAF ms per frame, wall clock (median run) | 348.6 → **8.73** | 34.46 → **19.05** | 104.17 → **16.8** |
-| … best run | 348.6 → **8.73** | 25.79 → **10.37** | 104.17 → **16.8** |
-| Slowest frame (ms) | 362.3 → **15.5** | 63 → **66.4** | 154.9 → **44.1** |
-| Main-thread CPU ms per frame (all work) | 462.04 → **39.87** | 39.33 → **27.04** | 117.18 → **35.77** |
-| rAF callbacks/s with the result showing | 50.5 → **2.5** | 0 → **1.5** | 60 → **5** |
-| Callbacks/s after closing | 1 → **1.5** | 1 → **5** | 1 → **0** |
+| Frames drawn in 1.5 s | 4 → **8** | 8 → **11** | 10 → **13** |
+| Canvas draw calls per frame | 127360 → **23** | 2984 → **15** | 31285 → **11** |
+| Shapes per frame | 509440 → **6361** | 11936 → **2984** | 125140 → **7147** |
+| Effect JS + canvas calls per frame (CPU profile, ms) | 342 → **2.62** | 19.57 → **1.48** | 86.36 → **2.96** |
+| Morse rAF ms per frame, wall clock (median run) | 348.6 → **18.75** | 34.46 → **4.99** | 104.17 → **12.61** |
+| … best run | 348.6 → **10.39** | 25.79 → **3.66** | 104.17 → **12.61** |
+| Slowest frame (ms) | 362.3 → **57.4** | 63 → **13.6** | 154.9 → **38.9** |
+| Main-thread CPU ms per frame (all work) | 462.04 → **29.51** | 39.33 → **13.47** | 117.18 → **33.16** |
+| rAF callbacks/s with the result showing | 50.5 → **4.5** | 0 → **0** | 60 → **5.5** |
+| Callbacks/s after closing | 1 → **0** | 1 → **0** | 1 → **0** |
 
 ## Extension (content script, isolated world)
 
-Parley has a strict CSP and this run doesn't turn on Allow User Scripts, so the mod's JS is refused and Morse loads its UI to show that error, as it should; the other sites never load it.
+Playwright's Chromium has Allow User Scripts off, so this section runs the mod's CSS only: with its code, Morse would load its UI once per tab to say the code waits for Allow User Scripts (64-waiting.js). The baseline ran the mod with its code; the old runtime built its UI on every page either way.
 
 |  | parley | byte | tunes | big (10k nodes) |
 |---|---|---|---|---|
-| DOM nodes added | 235 → **267** | 220 → **2** | 221 → **3** | 222 → **4** |
-| Event listeners added | 58 → **110** | 58 → **6** | 58 → **6** | 58 → **6** |
-| Main-thread script (ms) | 26.3 → **126.9** | 53.4 → **27.8** | 14.8 → **33.8** | 13.4 → **-58.7** |
-| Extra layouts | 2 → **2** | 1 → **0** | 2 → **1** | 2 → **4** |
-| JS heap (KB) | 462.3 → **677.5** | 493.8 → **375.6** | 497.5 → **373.3** | 494.8 → **324** |
-| First mod CSS applied (ms) | 189.5 → **132.5** | 270.4 → **293.9** | 96.2 → **163** | 209 → **200** |
-| Overlay mounted | yes → **yes** | yes → **no** | yes → **no** | yes → **no** |
+| DOM nodes added | 235 → **2** | 220 → **2** | 221 → **2** | 222 → **2** |
+| Event listeners added | 58 → **8** | 58 → **8** | 58 → **8** | 58 → **8** |
+| Main-thread script (ms) | 26.3 → **14.1** | 53.4 → **13.6** | 14.8 → **41.4** | 13.4 → **24.1** |
+| Extra layouts | 2 → **0** | 1 → **1** | 2 → **0** | 2 → **0** |
+| JS heap (KB) | 462.3 → **354.4** | 493.8 → **354.5** | 497.5 → **350.4** | 494.8 → **373.5** |
+| First mod CSS applied (ms) | 189.5 → **96.1** | 270.4 → **168.3** | 96.2 → **201.4** | 209 → **192.2** |
+| Overlay mounted | yes → **no** | yes → **no** | yes → **no** | yes → **no** |

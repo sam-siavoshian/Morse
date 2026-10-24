@@ -287,7 +287,10 @@ async function extension() {
   const plain = await chromium.launch({ channel: "chromium", headless: true }).catch(() => chromium.launch());
   try {
     const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker", { timeout: 10000 });
-    await sw.evaluate(mods => chrome.storage.local.set({ mods: Object.fromEntries(mods.map(m => [m.id, m])), welcomed: true }), ONE_MOD);
+    // Its CSS only: this browser has “Allow User Scripts” off, so mod code would
+    // wait for it and Morse would load its UI once per tab to say so (64-waiting.js).
+    const cssOnly = ONE_MOD.map(m => ({ ...m, js: "" }));
+    await sw.evaluate(mods => chrome.storage.local.set({ mods: Object.fromEntries(mods.map(m => [m.id, m])), welcomed: true }), cssOnly);
     const { instrument } = await import("./perf-lib.js");
     const one = async (c, url) => {
       const page = await c.newPage();
@@ -370,7 +373,7 @@ function report(now, was) {
     for (const [label, k] of keys) rows.push([label, ...sites.map(s => cell(v(now.boot, s, k), v(was, "boot", s, k)))]);
     L.push(table(["", ...sites], rows), "");
   }
-  if (now.open) L.push("## Opening Morse", "", "The price of a free boot: the first open on a page fetches and builds the UI (~230 KB) from the host. Later opens are instant, as before.", "", table(["", "value"], [["Hotkey to bar visible, 10k-node page (ms)", cell(now.open.hotkeyToBarMs, was?.open?.hotkeyToBarMs)]]), "");
+  if (now.open) L.push("## Opening Morse", "", `The price of a free boot: the first open on a page fetches and builds the UI${now.payload?.fullBytes ? ` (~${Math.round(now.payload.fullBytes / 1024)} KB)` : ""} from the host. Later opens are instant, as before.`, "", table(["", "value"], [["Hotkey to bar visible, 10k-node page (ms)", cell(now.open.hotkeyToBarMs, was?.open?.hotkeyToBarMs)]]), "");
   if (now.mods && !now.mods.error) {
     L.push("## Mods at scale: 30 `morse.watch` mods on a chat app streaming a reply", "", "A token every 30 ms and a new message every 300 ms for 4 s, 300 messages already on screen.", "");
     const k = [["All 30 mods applied (ms after navigation)", "allAppliedMs"], ["MutationObservers", "observers"], ["Subtree observe() calls", "subtreeObserves"], ["Observer callbacks", "moCallbacks"], ["rAF callbacks", "rafCallbacks"],
@@ -390,7 +393,7 @@ function report(now, was) {
   if (now.extension && !now.extension.error && !now.extension.skipped) {
     const sites = Object.keys(now.extension);
     const k = [["DOM nodes added", "nodes"], ["Event listeners added", "jsListeners"], ["Main-thread script (ms)", "scriptMs"], ["Extra layouts", "layouts"], ["JS heap (KB)", "heapKB"], ["First mod CSS applied (ms)", "firstCssMs"], ["Overlay mounted", "uiMountedAtBoot"]];
-    L.push("## Extension (content script, isolated world)", "", "Parley has a strict CSP and this run doesn't turn on Allow User Scripts, so the mod's JS is refused and Morse loads its UI to show that error, as it should; the other sites never load it.", "", table(["", ...sites], k.map(([l, key]) => [l, ...sites.map(s => cell(v(now.extension, s, key), v(was, "extension", s, key)))])), "");
+    L.push("## Extension (content script, isolated world)", "", "Playwright's Chromium has Allow User Scripts off, so this section runs the mod's CSS only: with its code, Morse would load its UI once per tab to say the code waits for Allow User Scripts (64-waiting.js). The baseline ran the mod with its code; the old runtime built its UI on every page either way.", "", table(["", ...sites], k.map(([l, key]) => [l, ...sites.map(s => cell(v(now.extension, s, key), v(was, "extension", s, key)))])), "");
   }
   return L.join("\n");
 }
