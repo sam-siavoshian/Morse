@@ -338,7 +338,7 @@ test("Describe this picture: point at it, read the description, save it as alt t
   assert.deepEqual(sent.keys, ["a11y", "app", "title", "url"]);
   await page.locator(".ds [data-ds=save]").click();
   await until(() => page.evaluate(t => document.querySelector('img[src="chart.png"]').alt === t, text));
-  assert.equal(await page.locator(".ds").isHidden(), true);
+  await page.locator(".ds").waitFor({ state: "hidden" }); // the card closes once the save is answered
   assert.deepEqual((await mods(page)).map(m => [m.title, m.edits[0].fixes.length]), [["Accessibility fixes", 1]]);
   // Still there after a reload.
   await page.reload();

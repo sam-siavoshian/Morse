@@ -125,9 +125,9 @@ test("Try it runs the mod without saving it, and Remove takes it all away", { sk
   await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=remove]').click();
   await page.locator(".morse-sleep").waitFor({ state: "detached" });
   assert.equal(await page.locator('style[data-morse-css="tunes-sleep-timer"]').count(), 0);
-  assert.equal(await ui(".gl-trial").isHidden(), true);
+  await ui(".gl-trial").waitFor({ state: "hidden" });
   assert.equal(await exists(modFile("tunes-sleep-timer")), false);
-  assert.ok(await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').isVisible(), "back to Try it");
+  await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').waitFor(); // back to Try it once the panel redraws
 });
 
 test("Keep saves a tried mod, with where it came from", { skip }, async () => {
