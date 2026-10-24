@@ -401,7 +401,7 @@ const SITES = [
   { id: "yt", name: "YouTube", url: "https://www.youtube.com/", ask: "hide Shorts" },
   { id: "bbc", name: "BBC News", url: "https://www.bbc.com/news", ask: "hide everything but the headlines" },
 ];
-const APPS = ["Spotify", "Slack", "VS Code", "Discord", "Obsidian", "Notion"];
+const APPS = ["VSCodium", "Obsidian", "Joplin"]; // the apps Morse was tested on (docs/desktop.md#tested-on)
 function renderWin() {
   if (screen !== "win") return;
   const model = st ? st.kind !== "none" : true;
