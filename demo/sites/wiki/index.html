@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>List of largest cities - Openpedia</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f8f9fa; color: #202122; font: 14px/1.6 sans-serif; }
+  .mast { display: flex; align-items: center; gap: 18px; height: 54px; padding: 0 24px; background: #fff; border-bottom: 1px solid #c8ccd1; }
+  .mast b { font: 22px Georgia, serif; } .mast input { width: 380px; border: 1px solid #a2a9b1; border-radius: 2px; padding: 6px 8px; font: inherit; }
+  .page { display: grid; grid-template-columns: 240px 1fr; gap: 24px; max-width: 1240px; margin: 0 auto; padding: 18px 24px; }
+  .toc { background: #fff; border: 1px solid #c8ccd1; padding: 12px 14px; font-size: 13px; align-self: start; }
+  .toc h2 { font-size: 14px; margin: 0 0 6px; } .toc ol { margin: 0; padding-left: 18px; } .toc a { color: #3366cc; text-decoration: none; }
+  .art { background: #fff; border: 1px solid #c8ccd1; padding: 18px 28px; min-width: 0; }
+  .art h1 { font: 30px/1.3 Georgia, serif; margin: 0 0 4px; border-bottom: 1px solid #a2a9b1; }
+  .art .sub { color: #54595d; font-size: 12px; margin-bottom: 14px; }
+  .art h2 { font: 22px Georgia, serif; border-bottom: 1px solid #a2a9b1; margin: 26px 0 8px; }
+  .art a { color: #3366cc; text-decoration: none; }
+  .ibox { float: right; width: 270px; margin: 0 0 12px 18px; border: 1px solid #a2a9b1; background: #f8f9fa; font-size: 12px; padding: 6px; }
+  .ibox table { width: 100%; } .ibox th { text-align: left; vertical-align: top; padding: 2px 6px 2px 0; }
+  .wt { border-collapse: collapse; width: 100%; font-size: 13px; margin: 8px 0 16px; }
+  .wt th, .wt td { border: 1px solid #a2a9b1; padding: 3px 8px; }
+  .wt th { background: #eaecf0; } .wt tbody tr:nth-child(even) { background: #f8f9fa; }
+  .wt td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .refs { columns: 1; font-size: 12px; }
+  .cm { border-top: 1px solid #c8ccd1; margin-top: 24px; padding-top: 6px; }
+  .cm .c { display: grid; grid-template-columns: 32px 1fr; gap: 2px 10px; padding: 10px 0; border-bottom: 1px solid #eaecf0; }
+  .cm .av { width: 32px; height: 32px; border-radius: 50%; grid-row: span 3; }
+  .cm .who { font-weight: 600; font-size: 13px; } .cm .who span { color: #72777d; font-weight: 400; margin-left: 6px; }
+  .cm .acts button { border: 0; background: none; color: #3366cc; font: inherit; font-size: 12px; padding: 0 8px 0 0; cursor: pointer; }
+  .foot { max-width: 1240px; margin: 0 auto; padding: 18px 24px 40px; color: #54595d; font-size: 12px; columns: 4; }
+  .foot a { display: block; color: #3366cc; text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="mast"><b>Openpedia</b><input placeholder="Search Openpedia" aria-label="Search Openpedia"><a href="#">Log in</a></div>
+  <div class="page">
+    <nav class="toc" aria-label="Contents"><h2>Contents</h2><ol></ol></nav>
+    <div class="art" role="main">
+      <h1>List of largest cities</h1>
+      <div class="sub">From Openpedia, the free encyclopedia</div>
+      <div class="body"></div>
+    </div>
+  </div>
+  <div class="foot"></div>
+<script>
+// A very large page (well over 10,000 elements), generated: long article
+// sections, a 700-row table, 500 references, 400 comments and a link-heavy footer.
+let seed = 11;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const pick = a => a[Math.floor(rnd() * a.length)];
+const W = "city population urban area density growth river port capital province metropolitan census district region historic center trade railway industry university".split(" ");
+const sentence = () => { const n = 9 + Math.floor(rnd() * 10); const w = Array.from({ length: n }, () => pick(W)); w[0] = w[0][0].toUpperCase() + w[0].slice(1); return w.join(" ") + "."; };
+const para = n => `<p>${Array.from({ length: n }, (_, i) => i % 4 === 2 ? `${sentence().slice(0, -1)} <a href="#cite-${Math.floor(rnd() * 300) + 1}">[${Math.floor(rnd() * 300) + 1}]</a>.` : sentence()).join(" ")}</p>`;
+const SECTIONS = ["Definitions", "Methodology", "Data sources", "Largest cities", "Africa", "Asia", "Europe", "North America", "South America", "Oceania",
+  "Historical rankings", "Growth since 1950", "Megacities", "Density", "Urban agglomerations", "Metropolitan areas", "Capital cities", "Port cities",
+  "Disputed figures", "Projections", "See also", "Notes", "References", "Further reading"];
+const toc = document.querySelector(".toc ol"), body = document.querySelector(".body");
+toc.innerHTML = SECTIONS.map((s, i) => `<li><a href="#s${i}">${s}</a></li>`).join("");
+const NAMES = ["Port", "San", "New", "Lake", "North", "East", "Saint", "Fort", "Mount", "Bay"], ENDS = ["ville", "burg", "polis", "ton", "abad", "grad", "pur", "haven", "field", "stad"];
+const COUNTRIES = ["Aurelia", "Borovia", "Caldera", "Drovnia", "Estmark", "Feroz", "Galdor", "Halvaria"];
+const cities = Array.from({ length: 700 }, (_, i) => {
+  const pop = Math.round(Math.exp(11.2 + rnd() * 5.4));
+  return { name: `${pick(NAMES)} ${pick(NAMES).toLowerCase()}${pick(ENDS)}`, country: pick(COUNTRIES), pop, area: Math.round(50 + rnd() * 3000), year: 1700 + Math.floor(rnd() * 300) };
+}).sort((a, b) => b.pop - a.pop);
+const table = `<table class="wt"><thead><tr><th>Rank</th><th>City</th><th>Country</th><th>Population</th><th>Area (km²)</th><th>Founded</th></tr></thead><tbody>${cities.map((c, i) =>
+  `<tr><td class="n">${i + 1}</td><td><a href="#">${c.name}</a></td><td>${c.country}</td><td class="n">${c.pop.toLocaleString("en-US")}</td><td class="n">${c.area.toLocaleString("en-US")}</td><td class="n">${c.year}</td></tr>`).join("")}</tbody></table>`;
+let html = `<div class="ibox"><table><tr><th>Cities listed</th><td>700</td></tr><tr><th>Largest</th><td>${cities[0].name}</td></tr><tr><th>Population</th><td>${cities[0].pop.toLocaleString("en-US")}</td></tr><tr><th>Updated</th><td>October 2026</td></tr></table></div>`;
+html += para(5) + para(4);
+SECTIONS.forEach((s, i) => {
+  html += `<h2 id="s${i}">${s}</h2>`;
+  if (s === "Largest cities") html += para(2) + table;
+  else if (s === "References") html += `<ol class="refs">${Array.from({ length: 500 }, (_, k) => `<li id="cite-${k + 1}"><a href="#">^</a> <i>${sentence()}</i> Openpedia Press. Retrieved ${1 + (k % 28)} March 2026.</li>`).join("")}</ol>`;
+  else html += para(4 + Math.floor(rnd() * 3)) + para(3);
+});
+const PEOPLE = ["Mara K.", "Tobias", "lin_w", "R. Okafor", "geo_nerd", "Priya S.", "J. Alvarez", "Henrik", "user4471", "Dana"];
+const COLORS = ["#c2410c", "#0e7490", "#7c3aed", "#15803d", "#be123c", "#1d4ed8"];
+html += `<section class="cm" aria-label="Comments"><h2>Comments (400)</h2>${Array.from({ length: 400 }, (_, k) =>
+  `<div class="c"><div class="av" style="background:${pick(COLORS)}"></div><div class="who">${pick(PEOPLE)}<span>${1 + (k % 23)} days ago</span></div><div class="tx">${sentence()} ${sentence()}</div><div class="acts"><button>Reply</button><button>Like</button><button>Report</button></div></div>`).join("")}</section>`;
+body.innerHTML = html;
+document.querySelector(".foot").innerHTML = Array.from({ length: 400 }, (_, k) => `<a href="#">${pick(W)} ${pick(W)} ${k}</a>`).join("");
+</script>
+</body>
+</html>

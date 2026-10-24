@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shoply · Fall essentials</title>
+<style id="app-css"></style>
+</head>
+<body>
+<div id="__next"></div>
+<script>
+// A storefront built like a modern React app: every class name is generated.
+// The header uses CSS-module names (Header_cart__k3J9x), the rest emotion
+// names (css-1q2w3e). window.__rehash() simulates the next deploy: every
+// generated name changes, in the DOM and in the stylesheet.
+(() => {
+  let salt = 1;
+  const hash = s => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0).toString(36); };
+  const withDigit = s => /\d/.test(s) ? s : s.slice(0, -1) + (s.length % 10);
+  const NAMES = {};
+  const name = key => {
+    const [comp, part] = key.split(".");
+    if (part) return `${comp}_${part}__${withDigit(hash(key + salt).slice(0, 5))}`; // CSS modules
+    return `css-${withDigit(hash(key + salt).slice(0, 6))}`;                         // emotion
+  };
+  const c = key => (NAMES[key] ||= name(key));
+  const CSS = () => `
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #fafaf9; color: #1c1917; font: 14px/1.45 "Helvetica Neue", Arial, sans-serif; }
+    .${c("Header.root")} { display: flex; align-items: center; gap: 20px; height: 60px; padding: 0 28px; background: #fff; border-bottom: 1px solid #e7e5e4; position: sticky; top: 0; z-index: 5; }
+    .${c("Header.logo")} { font-weight: 800; font-size: 20px; letter-spacing: -.5px; color: #1c1917; text-decoration: none; }
+    .${c("Header.search")} { flex: 1; max-width: 520px; height: 38px; border: 1px solid #d6d3d1; border-radius: 19px; padding: 0 16px; font: inherit; background: #f5f5f4; }
+    .${c("Header.cart")} { margin-left: auto; position: relative; border: 0; background: none; font-size: 20px; cursor: pointer; }
+    .${c("Header.badge")} { position: absolute; top: -4px; right: -8px; background: #ea580c; color: #fff; font-size: 11px; font-weight: 700; border-radius: 9px; padding: 1px 6px; }
+    .${c("promo")} { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 10px; background: linear-gradient(90deg, #7c2d12, #c2410c); color: #ffedd5; font-weight: 600; }
+    .${c("promo")} button { border: 0; background: none; color: inherit; font-size: 18px; cursor: pointer; }
+    .${c("layout")} { display: grid; grid-template-columns: 220px 1fr; gap: 28px; max-width: 1200px; margin: 0 auto; padding: 24px 28px; }
+    .${c("filters")} h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #78716c; margin: 0 0 10px; }
+    .${c("filters")} label { display: flex; gap: 8px; align-items: center; padding: 4px 0; }
+    .${c("filters")} section { margin-bottom: 22px; }
+    .${c("toolbar")} { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; color: #57534e; }
+    .${c("grid")} { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .${c("card")} { background: #fff; border: 1px solid #e7e5e4; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+    .${c("img")} { height: 150px; }
+    .${c("body")} { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .${c("name")} { font-weight: 600; }
+    .${c("rating")} { color: #ca8a04; font-size: 12px; } .${c("rating")} span { color: #78716c; }
+    .${c("price")} { font-size: 14px; font-weight: 400; color: #1c1917; margin-top: 2px; }
+    .${c("stock")} { color: #b91c1c; font-size: 12px; font-weight: 600; }
+    .${c("add")} { margin-top: auto; border: 0; border-radius: 8px; padding: 9px; background: #1c1917; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+    .${c("add")}[disabled] { background: #e7e5e4; color: #78716c; cursor: default; }
+  `;
+  const products = [
+    ["Wool beanie", 24, 4, 128, "#a16207,#78350f", true], ["Merino crew sweater", 89, 5, 342, "#365314,#1a2e05", true],
+    ["Canvas tote", 32, 4, 87, "#d6d3d1,#78716c", false], ["Leather gloves", 58, 4, 64, "#7c2d12,#431407", true],
+    ["Flannel shirt", 46, 3, 210, "#991b1b,#450a0a", true], ["Rain shell jacket", 149, 5, 98, "#0e7490,#164e63", false],
+    ["Thermal socks (3 pack)", 18, 4, 531, "#57534e,#292524", true], ["Corduroy cap", 28, 3, 45, "#b45309,#78350f", true],
+    ["Down vest", 119, 4, 76, "#1e3a8a,#172554", false], ["Chunky scarf", 39, 5, 158, "#9f1239,#4c0519", true],
+    ["Hiking boots", 165, 4, 289, "#44403c,#1c1917", true], ["Fleece pullover", 64, 4, 133, "#3f6212,#1a2e05", true],
+  ];
+  const stars = n => "★".repeat(n) + "☆".repeat(5 - n);
+  const render = () => `
+    <header class="${c("Header.root")}">
+      <a class="${c("Header.logo")}" href="#">Shoply</a>
+      <input class="${c("Header.search")}" placeholder="Search products" aria-label="Search">
+      <button class="${c("Header.cart")}" aria-label="Cart">🛒<span class="${c("Header.badge")}">2</span></button>
+    </header>
+    <div class="${c("promo")}">Free shipping on orders over $50 · Use code FALL20 at checkout<button aria-label="Dismiss">×</button></div>
+    <div class="${c("layout")}">
+      <aside class="${c("filters")}">
+        <section><h3>Category</h3>${["Hats", "Sweaters", "Jackets", "Accessories", "Shoes"].map(x => `<label><input type="checkbox">${x}</label>`).join("")}</section>
+        <section><h3>Price</h3>${["Under $25", "$25 to $50", "$50 to $100", "Over $100"].map(x => `<label><input type="radio" name="p">${x}</label>`).join("")}</section>
+      </aside>
+      <main>
+        <div class="${c("toolbar")}"><span>${products.length} results</span><span>·</span><span>Fall essentials</span></div>
+        <div class="${c("grid")}">${products.map(([n, p, r, k, g, ok]) => `
+          <div class="${c("card")}">
+            <div class="${c("img")}" style="background: linear-gradient(135deg, ${g})"></div>
+            <div class="${c("body")}">
+              <div class="${c("name")}">${n}</div>
+              <div class="${c("rating")}">${stars(r)} <span>(${k})</span></div>
+              <div class="${c("price")}">$${p.toFixed(2)}</div>
+              ${ok ? "" : `<div class="${c("stock")}">Out of stock</div>`}
+              <button class="${c("add")}"${ok ? "" : " disabled"}>${ok ? "Add to cart" : "Notify me"}</button>
+            </div>
+          </div>`).join("")}
+        </div>
+      </main>
+    </div>`;
+  document.getElementById("app-css").textContent = CSS();
+  document.getElementById("__next").innerHTML = render();
+  document.addEventListener("click", e => {
+    const add = e.target.closest("button");
+    if (add && add.textContent === "Add to cart") { const b = document.querySelector("header button span"); b.textContent = String(+b.textContent + 1); }
+    if (add && add.getAttribute("aria-label") === "Dismiss") add.parentElement.remove();
+  });
+  window.__cls = key => NAMES[key]; // for the eval's checkers: today's name for a part
+  window.__rehash = () => {
+    const old = { ...NAMES };
+    salt++;
+    for (const k of Object.keys(NAMES)) NAMES[k] = name(k);
+    const map = new Map(Object.keys(old).map(k => [old[k], NAMES[k]]));
+    for (const el of document.querySelectorAll("[class]")) {
+      const next = [...el.classList].map(x => map.get(x) || x).join(" ");
+      if (next !== el.className) el.className = next;
+    }
+    document.getElementById("app-css").textContent = CSS();
+  };
+})();
+</script>
+</body>
+</html>

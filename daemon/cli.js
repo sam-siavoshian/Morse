@@ -9,13 +9,15 @@ import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CO
 import { commandFor, platformChecks, formatChecks } from "./platform.js";
 import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask, migrateLegacy } from "./models.js";
 import { detectHarnesses, validModel } from "./harness.js";
-import { createBridge, startPairing, VERSION } from "./bridge.js";
-import { streamChat, HELPER_PORT as DEFAULT_HELPER_PORT } from "../core/providers.js";
-// MORSE_HELPER_PORT moves `morse serve` and its health check off 7457 (tests run
-// several helpers at once); the extension always talks to 7457.
-const HELPER_PORT = Number(process.env.MORSE_HELPER_PORT) || DEFAULT_HELPER_PORT;
+import { createBridge, startPairing, VERSION, helperPort } from "./bridge.js";
+import { streamChat } from "../core/providers.js";
+// MORSE_HELPER_PORT moves `morse serve`, `morse setup --pair` and the health
+// check off 7457 (tests run several helpers at once; their extension follows
+// with chrome.storage.local "morse.helperPort", docs/dev/testing.md).
+const HELPER_PORT = helperPort();
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
-import { plainError } from "../core/onboarding.js";
+import { plainError, setHelperPort } from "../core/onboarding.js";
+setHelperPort(HELPER_PORT); // "can't reach 127.0.0.1:<port>" reads as "the helper isn't running"
 import { pauseCli, resumeCli, exportAllCli, importCli, codeCli } from "./control.js"; // user control
 import { configuredHotkeys } from "./store.js";
 import { paint } from "./colors.js";

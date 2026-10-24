@@ -2,7 +2,7 @@
 //   - fake `claude` and `codex` executables on PATH (stream-json / JSONL)
 //   - a fake Anthropic Messages API (SSE) reached through the SDK's baseURL
 // plus model selection from ~/.morse/config.json.
-import "./helpers/home.js";
+import { tempDir } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -20,7 +20,7 @@ const MESSAGES = [
 ];
 
 before(async () => {
-  tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-providers-"));
+  tmp = tempDir("morse-providers-");
   bin = path.join(tmp, "bin");
   await installFakeClis(bin);
   process.env.MORSE_HOME = path.join(tmp, "home");

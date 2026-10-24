@@ -1,4 +1,4 @@
-import "./helpers/home.js";
+import { tempDir } from "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -153,11 +153,11 @@ test("the extension's toolbar shortcut never collides with the in-page hotkeys",
 });
 
 test("the CLI help shows the hotkey actually configured", async () => {
-  const { mkdtemp, writeFile, rm } = await import("node:fs/promises");
+  const { writeFile, rm } = await import("node:fs/promises");
   const { execFileSync } = await import("node:child_process");
   const os = await import("node:os");
   const path = await import("node:path");
-  const home = await mkdtemp(path.join(os.tmpdir(), "morse-cli-"));
+  const home = tempDir("morse-cli-");
   const cli = new URL("../daemon/cli.js", import.meta.url).pathname;
   const help = () => execFileSync(process.execPath, [cli, "help"], { env: { ...process.env, MORSE_HOME: home }, encoding: "utf8" }).replace(/\x1b\[\d+m/g, "");
   const re = s => s.replace(/[+]/g, "\\+");

@@ -19,12 +19,18 @@
   const SVG = "http://www.w3.org/2000/svg";
   const VOID = new Set("area base br col embed hr img input link meta source track wbr".split(" "));
   const RAW = new Set(["style", "textarea", "title"]);
-  const BANNED = new Set(["script", "iframe", "object", "embed", "frame", "frameset", "base", "meta"]);
+  // SVG's animate and set can turn a link's href into javascript: after it is
+  // built, and use can pull in another document; Morse's UI uses none of them.
+  const BANNED = new Set(["script", "iframe", "object", "embed", "frame", "frameset", "base", "meta", "portal", "fencedframe", "animate", "set", "use"]);
   // Tags that close an open one of the same kind (`<li>a<li>b`), as the parser would.
   const SELF_CLOSING = new Set(["li", "option", "p", "tr", "td", "th", "dt", "dd"]);
   const ENT = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", middot: "·", times: "×", hellip: "…", mdash: "—", ndash: "–", larr: "←", rarr: "→", uarr: "↑", darr: "↓", copy: "©", check: "✓" };
+  const code = n => (n >= 0 && n <= 0x10ffff ? String.fromCodePoint(n) : "\ufffd"); // as the parser does, never a throw
   const decode = s => s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e) =>
-    e[0] === "#" ? String.fromCodePoint(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENT[e.toLowerCase()] ?? m);
+    e[0] === "#" ? code(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENT[e.toLowerCase()] ?? m);
+  // What a browser reads as the scheme: it drops tabs and line breaks anywhere,
+  // and control characters and spaces at the start ("java&#9;script:").
+  const scriptUrl = v => /^(javascript|vbscript):/i.test(v.replace(/[\x00-\x20]+/g, ""));
 
   // HTML text -> a DocumentFragment of `doc`, for content inside `context`.
   function build(html, context) {
@@ -53,12 +59,15 @@
       attrRe.lastIndex = 0;
       while ((a = attrRe.exec(attrs))) {
         const key = a[1], val = decode(a[2] ?? a[3] ?? a[4] ?? "");
-        if (/^on/i.test(key) || (/^(href|src|action|formaction|xlink:href)$/i.test(key) && /^\s*javascript:/i.test(val))) continue;
+        if (/^(on|srcdoc$|http-equiv$)/i.test(key) || (/^(href|src|action|formaction|xlink:href)$/i.test(key) && scriptUrl(val))) continue;
         try { el.setAttribute(key, val); } catch {}
       }
       const banned = BANNED.has(name);
       if (RAW.has(name) && !svg && !selfClose) {
-        const end = html.toLowerCase().indexOf(`</${name}`, re.lastIndex);
+        // Searched in the text itself: lower-casing first can change its length ("İ"), and the offsets with it.
+        const endRe = new RegExp(`</${name}`, "gi");
+        endRe.lastIndex = re.lastIndex;
+        const end = endRe.exec(html)?.index ?? -1;
         const text = html.slice(re.lastIndex, end < 0 ? html.length : end);
         el.textContent = name === "style" ? text : decode(text);
         re.lastIndex = end < 0 ? html.length : html.indexOf(">", end) + 1;

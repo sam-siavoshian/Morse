@@ -120,8 +120,8 @@ export function parsePack(input) {
     try {
       const m = validateMod(raw && typeof raw === "object" ? { ...raw } : raw);
       if (m.kind === "style" || m.id === "morse-style" || m.parent) throw new Error("Your style can't come in a pack, so Morse left it out.");
-      if (seen.has(m.id)) throw new Error(`It has the same id as another mod in this pack (${m.id}), so Morse left it out.`);
-      seen.add(m.id);
+      if (seen.has(m.id.toLowerCase())) throw new Error(`It has the same id as another mod in this pack (${m.id}), so Morse left it out.`);
+      seen.add(m.id.toLowerCase()); // "A" and "a" are one file on macOS and Windows
       const clean = packMod(m);
       delete clean.history; // a pack brings the code its review shows, never earlier versions
       mods.push(clean);
@@ -174,7 +174,8 @@ export function clashesFor(pack, existing) {
   for (const m of pack.mods) {
     const own = mine.find(x => fromPack(x, pack.id) && x.pack.mod === m.id);
     if (own) { out[m.id] = { kind: "update", id: own.id, title: cleanText(own.title, MAX_TITLE) }; continue; }
-    const same = mine.find(x => x.id === m.id);
+    // Ids that differ only in case are one file on macOS and Windows (~/.morse/mods/<id>.json).
+    const same = mine.find(x => x.id.toLowerCase() === m.id.toLowerCase());
     if (same) out[m.id] = { kind: "clash", id: same.id, title: cleanText(same.title, MAX_TITLE) };
   }
   return out;
@@ -193,8 +194,10 @@ export function planInstall(pack, picks, existing, { now = new Date(), url = "" 
   const want = new Map();
   for (const p of Array.isArray(picks) ? picks : []) if (p && typeof p.id === "string") want.set(p.id, p.as === "replace" ? "replace" : p.as === "copy" ? "copy" : "");
   const mine = (Array.isArray(existing) ? existing : []).filter(m => m && typeof m.id === "string");
-  const taken = new Set(mine.map(m => m.id));
   const clash = clashesFor(pack, mine);
+  // Lower case (one file on macOS and Windows), and every id this pack brings
+  // as it is: a copy named "a-2" can't land on the pack's own "a-2".
+  const taken = new Set([...mine.map(m => m.id), ...pack.mods.filter(m => !clash[m.id]).map(m => m.id)].map(id => id.toLowerCase()));
   const put = [];
   for (const m of pack.mods) {
     if (!want.has(m.id)) continue;
@@ -209,9 +212,9 @@ export function planInstall(pack, picks, existing, { now = new Date(), url = "" 
     if (c?.kind === "clash") {
       const as = want.get(m.id);
       if (!as) throw new Error(`You already have a mod with the id ${m.id} (“${c.title}”). Choose whether to keep both or replace yours.`);
-      if (as === "copy") id = freeId(m.id, taken);
+      id = as === "copy" ? freeId(m.id, taken) : c.id; // Replace yours: that very mod
     }
-    taken.add(id);
+    taken.add(id.toLowerCase());
     const saved = prepareInstall({ ...m, id }, { kind: "link", now });
     put.push({ ...saved, importedFrom: "pack", pack: tag });
   }
@@ -222,7 +225,7 @@ export function planInstall(pack, picks, existing, { now = new Date(), url = "" 
 function freeId(id, taken) {
   for (let i = 2; i < 1000; i++) {
     const next = `${id.slice(0, 36)}-${i}`;
-    if (!taken.has(next)) return next;
+    if (!taken.has(next.toLowerCase())) return next;
   }
   return newId();
 }

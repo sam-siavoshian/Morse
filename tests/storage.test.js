@@ -1,6 +1,6 @@
 // Concurrent updates to Morse's storage keep every change: the daemon's files
 // in ~/.morse and the extension's chrome.storage.
-import "./helpers/home.js";
+import { tempDir } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { promises as fs } from "node:fs";
@@ -12,7 +12,7 @@ import { createMod } from "../core/mod.js";
 let home, store;
 
 before(async () => {
-  home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-store-"));
+  home = tempDir("morse-store-");
   process.env.MORSE_HOME = home;
   store = await import("../daemon/store.js");
 });

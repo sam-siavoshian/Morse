@@ -132,7 +132,8 @@ GET  /v1/voice, POST /v1/transcribe        Bearer token, see daemon/voice.js
 
 The helper only streams text. Closing the connection aborts the generation
 and kills the Claude Code or Codex process. `MORSE_HELPER_PORT` moves it off
-7457 (tests run several helpers at once); the extension always talks to 7457.
+7457 (tests run several helpers at once); the extension talks to 7457 unless a
+test set chrome.storage.local "morse.helperPort" ([testing](testing.md#the-extension-with-a-real-morse-helper)).
 
 ## The runtime (`runtime/`)
 
