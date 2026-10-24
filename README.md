@@ -2,9 +2,9 @@
 
 **Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like.**
 
-[![Watch the 85-second demo](docs/launch/poster-demo.png)](docs/launch/morse-demo.mp4)
+[![Watch the {{V2}}-second demo](docs/launch/poster-demo-v2.png)](docs/launch/morse-demo-v2.mp4)
 
-*[Watch the 85-second demo](docs/launch/morse-demo.mp4). It was recorded from real runs: Claude Code wrote the sleep timer and the word count. More clips, and how they were made: [`docs/launch`](docs/launch/).*
+*[Watch the {{V2}}-second demo](docs/launch/morse-demo-v2.mp4): a sleep timer, Show me once, a mod fixed after a site update, a desktop app and the gallery. It was recorded from real runs: Claude Code wrote the sleep timer, the button, the fix and the round covers, and waits for the model are sped up and labelled. More clips, the first video, and how they were made: [`docs/launch`](docs/launch/).*
 
 Press a shortcut, point at something and say what you want: “add a sleep timer”, “hide the ads”, “make this text bigger”. Morse makes the change right there in the app while you watch. If you like it, save it.
 
