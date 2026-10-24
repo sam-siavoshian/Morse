@@ -22,7 +22,7 @@
    "note": "row 48px (8 + 32 + 8), status 40px; placeholder, model label and counts use --m-text-3 (now AA)"
   },
   "bar/chip-x-hover": {
-   "note": "close glyphs are the × character, not an SVG: 14px in a 20px hit box in the chip, 18px in 28px boxes in the panel and modals. Consistent, but swapping them for a 1.8-stroke SVG like the Run arrow would need markup in 70-panel.js/80-modals.js"
+   "note": "close glyphs are the \u00d7 character, not an SVG: 14px in a 20px hit box in the chip, 18px in 28px boxes in the panel and modals. Consistent, but swapping them for a 1.8-stroke SVG like the Run arrow would need markup in 70-panel.js/80-modals.js"
   },
   "bar/chip-x-focus": {
    "note": "focus ring: 2px --m-signal-3, 2px offset, everywhere (was 24% white, ~2:1)"
@@ -40,7 +40,7 @@
    "note": "the title gives way first; the timing and 'repaired once' and all four actions stay"
   },
   "bar/result": {
-   "note": "Save is focused after a keyboard submit, so its ring shows; Enter saves. R5: at 390px ⋯ ends the hint's row"
+   "note": "Save is focused after a keyboard submit, so its ring shows; Enter saves. R5: at 390px \u22ef ends the hint's row"
   },
   "effect/*": {
    "note": "radar field in --m-signal-1..4 over --m-overlay; follows the target's shape. Cosmetic: when the target is not a multiple of 8px the last row/column of cells is cut by the canvas edge"
@@ -85,7 +85,7 @@
    "note": "code is not wrapped (white-space: pre) and scrolls horizontally"
   },
   "modal/code-long": {
-   "note": "long title wraps; × stays top-right instead of floating mid-title"
+   "note": "long title wraps; \u00d7 stays top-right instead of floating mid-title"
   },
   "modal/share": {
    "note": "the share card is a fixed dark PNG (renderCard() in 80-modals.js, not tokens: it is posted outside the app). Captions are now 15px bold mono #a0a0a8 on #0b0b0c (7.4:1, was 13px #8e8e96, ~8px once the card is scaled into the dialog); the footer line is 17px #a0a0a8"
@@ -106,7 +106,7 @@
    "note": "tag (mono 11, --m-text-3), then 32px .ibtn tools in three groups split by 1px lines; 40px toolbar (3 + 32 + 3 + 1px border), r-md, the shared .pop surface"
   },
   "edit-toolbar/bar-hint": {
-   "note": "after pointing, typing goes to the bar; Ctrl+E (⌘E) moves focus to the toolbar"
+   "note": "after pointing, typing goes to the bar; Ctrl+E (\u2318E) moves focus to the toolbar"
   },
   "edit-toolbar/*": {
    "note": "tooltips: name + key cap after 300ms, one at a time; focus is a flush 2px ring; pressed tools are primary; disabled tools are --m-signal-1 with no tooltip"
@@ -133,7 +133,7 @@
    "note": "invalid hex: --m-danger border ring and text (the input has a pattern); Enter keeps the text selected to retype"
   },
   "edit-type/*": {
-   "note": "Size: a .field stepper with 24px ± buttons; Weight: the shared .seg, each label in its own weight"
+   "note": "Size: a .field stepper with 24px \u00b1 buttons; Weight: the shared .seg, each label in its own weight"
   },
   "edit-type/default": {
    "note": "the popover goes to the toolbar's far side, then the element's other side, then beside it: it no longer covers the selection (edit-type/no-room-above)"
@@ -148,10 +148,10 @@
    "note": "a .menu: 32px rows, 16px icons, detail on the right (level, check); the button's tooltip hides while its menu is open"
   },
   "clipboard/chips": {
-   "note": "32px chips on the bar's 16px inset: 40×24 thumbnail, label, app; the row scrolls sideways"
+   "note": "32px chips on the bar's 16px inset: 40\u00d724 thumbnail, label, app; the row scrolls sideways"
   },
   "clipboard/rebuilt-from": {
-   "note": "while working, the snapshot that rides along with the request is shown as “Rebuilt from”"
+   "note": "while working, the snapshot that rides along with the request is shown as \u201cRebuilt from\u201d"
   },
   "voice/*": {
    "note": "errors are one line in the status row (warn dot + --m-text-2), ellipsis when long; the mic nudges"
@@ -160,10 +160,10 @@
    "note": "the mic widens to a 48px well with the level meter in radar pixels; the bar border lights"
   },
   "voice/transcribing": {
-   "note": "the mic shows the working radar; placeholder says Transcribing…"
+   "note": "the mic shows the working radar; placeholder says Transcribing\u2026"
   },
   "menu/*": {
-   "note": "the ⋯ menu is the same .menu as Page tools: 32px rows, key caps right-aligned, row highlight + inset ring for focus"
+   "note": "the \u22ef menu is the same .menu as Page tools: 32px rows, key caps right-aligned, row highlight + inset ring for focus"
   },
   "settings/*": {
    "note": "a solid sheet (--m-surface) inside the bar; rows 40px min, label 13/16 + help 11/16; controls right; eyebrow section labels"
@@ -187,22 +187,22 @@
    "note": "two columns of 32px rows; every key is the same 20px cap"
   },
   "suggestions/*": {
-   "note": "chips are quiet .btn (28px, r-sm) on the 16px inset; Tab reaches them, ←/→ move"
+   "note": "chips are quiet .btn (28px, r-sm) on the 16px inset; Tab reaches them, \u2190/\u2192 move"
   },
   "history/*": {
-   "note": "↑ in an empty input recalls earlier prompts; nothing else changes"
+   "note": "\u2191 in an empty input recalls earlier prompts; nothing else changes"
   },
   "stop/working": {
    "note": "Run turns into Stop (raised well, 8px square); focus moves to it"
   },
   "stop/cancelled": {
-   "note": "Stopped · nothing was changed · Enter to run again; the prompt stays"
+   "note": "Stopped \u00b7 nothing was changed \u00b7 Enter to run again; the prompt stays"
   },
   "hostile/hostile-text-edit": {
    "note": "the page's `[data-morse-ui] { display: none !important }` used to hide the text being edited; the edit span now carries !important inline display/visibility"
   },
   "gallery/chip": {
-   "note": "the last suggestion chip: radar 12 + “2 mods for <site>”, set apart by a 1px --m-line-strong rule; the same .sug as the other chips"
+   "note": "the last suggestion chip: radar 12 + \u201c2 mods for <site>\u201d, set apart by a 1px --m-line-strong rule; the same .sug as the other chips"
   },
   "gallery/chip-hover": {
    "note": "reached with the mouse straight down through the input row: the bar stays put (it used to jump to the top as soon as the pointer entered it, so the chip could not be clicked)"
@@ -211,10 +211,10 @@
    "note": "Tab from the input reaches it like any suggestion; shared 2px ring"
   },
   "gallery/section-open": {
-   "note": "For this site sits under your own mods: an eyebrow, then a row (radar 16, count, “Made by other people”) whose Show/Hide is a .tbtn; items are title, request, what it does, author, then .btn Try it / Install…"
+   "note": "For this site sits under your own mods: an eyebrow, then a row (radar 16, count, \u201cMade by other people\u201d) whose Show/Hide is a .tbtn; items are title, request, what it does, author, then .btn Try it / Install\u2026"
   },
   "gallery/section-items": {
-   "note": "every button is a 28px .btn (were 26px copies); a mod that can send data or read typing has no Try it, only Install… (the full review)"
+   "note": "every button is a 28px .btn (were 26px copies); a mod that can send data or read typing has no Try it, only Install\u2026 (the full review)"
   },
   "gallery/section-collapsed": {
    "note": "collapsed: one 52px row; the whole row toggles, the Show .tbtn is the keyboard control"
@@ -232,7 +232,7 @@
    "note": "shared ring"
   },
   "gallery/stop-showing-hover": {
-   "note": "“Stop showing these” is a .tbtn (was its own ghost-button copy)"
+   "note": "\u201cStop showing these\u201d is a .tbtn (was its own ghost-button copy)"
   },
   "gallery/update-row": {
    "note": "R5: Update available carries the radar-square status dot like every other status line (it was round)"
@@ -241,10 +241,10 @@
    "note": "shared ring"
   },
   "gallery/trying-strip": {
-   "note": "top-center strip while trying: radar 12, “Trying …”, Nothing is saved yet, Undo (.btn) and Save (.btn.primary). At 390px it moves to the bottom and drops the second line"
+   "note": "top-center strip while trying: radar 12, \u201cTrying \u2026\u201d, Nothing is saved yet, Undo (.btn) and Save (.btn.primary). At 390px it moves to the bottom and drops the second line"
   },
   "gallery/trying-item": {
-   "note": "the item being tried: raised well, a still dot (it used to pulse forever; only “a model is working” loops), Save / Undo"
+   "note": "the item being tried: raised well, a still dot (it used to pulse forever; only \u201ca model is working\u201d loops), Save / Undo"
   },
   "gallery/strip-hover": {
    "note": "shared .btn hover"
@@ -253,10 +253,10 @@
    "note": "shared ring on the primary"
   },
   "gallery/install-review": {
-   "note": "Install… goes through the one install review (reviewImport): what it does, notes, Show code folded, Cancel focused. The two notes now read as one box with one Note label"
+   "note": "Install\u2026 goes through the one install review (reviewImport): what it does, notes, Show code folded, Cancel focused. The two notes now read as one box with one Note label"
   },
   "gallery/update-review": {
-   "note": "What changed (the author's note, counts), then the CSS and JS diffs: + lines on a 9% wash, − lines in --m-text-3; no resize grip on the diff (was a textarea grip on a pre); ligatures off so => reads as typed"
+   "note": "What changed (the author's note, counts), then the CSS and JS diffs: + lines on a 9% wash, \u2212 lines in --m-text-3; no resize grip on the diff (was a textarea grip on a pre); ligatures off so => reads as typed"
   },
   "gallery/update-diff-focus": {
    "note": "the diff scrolls and takes focus like the code field: border lights into the 2px ring"
@@ -265,7 +265,7 @@
    "note": "Not now is focused on open; Update is the primary"
   },
   "gallery/share-submit": {
-   "note": "Submit to the gallery… is one more .btn in the Share dialog's exports (only for a mod that isn't from the gallery)"
+   "note": "Submit to the gallery\u2026 is one more .btn in the Share dialog's exports (only for a mod that isn't from the gallery)"
   },
   "gallery/share-submit-hover": {
    "note": "shared hover"
@@ -292,7 +292,7 @@
    "note": "phone width: the group folds under Page tools in the same scrolling menu, split by a 1px line"
   },
   "a11y/read-aloud": {
-   "note": "a 48px card: play (32px round primary, was 36), previous/next (.ibtn, disabled is --m-signal-1, was 35% opacity), sentence n of N in mono, speed (.btn, 28), close (.ibtn.close, the shared × glyph, was an 18px character)"
+   "note": "a 48px card: play (32px round primary, was 36), previous/next (.ibtn, disabled is --m-signal-1, was 35% opacity), sentence n of N in mono, speed (.btn, 28), close (.ibtn.close, the shared \u00d7 glyph, was an 18px character)"
   },
   "a11y/read-aloud-mark": {
    "note": "the sentence being read: an 18% --m-signal-4 wash with a 2px underline, one mark per line, r 4"
@@ -307,7 +307,7 @@
    "note": "Paused, play icon; nothing else changes size"
   },
   "a11y/audit": {
-   "note": "Check this page in the bar: eyebrow + summary, Check again (.tbtn) and × (.ibtn.close); each kind is a title, plain help, its numbered markers (20px), and Fix it as a plain 28px .btn with what it will do under it. It was five 40px white primary blocks with 70%-opacity notes inside",
+   "note": "Check this page in the bar: eyebrow + summary, Check again (.tbtn) and \u00d7 (.ibtn.close); each kind is a title, plain help, its numbered markers (20px), and Fix it as a plain 28px .btn with what it will do under it. It was five 40px white primary blocks with 70%-opacity notes inside",
    "accept": "the marker badges (62-markers.js, shared with Ask) carry a 2px --m-bg halo so they read on any page content, like the picker's 1.5px outline"
   },
   "a11y/audit-markers": {
@@ -331,10 +331,10 @@
    "accept": "the marker badges (62-markers.js, shared with Ask) carry a 2px --m-bg halo so they read on any page content, like the picker's 1.5px outline"
   },
   "a11y/describe-busy": {
-   "note": "a ring on the picture, the card beside it: working radar, “Looking at the picture…” in --m-text-2"
+   "note": "a ring on the picture, the card beside it: working radar, \u201cLooking at the picture\u2026\u201d in --m-text-2"
   },
   "a11y/describe-done": {
-   "note": "the description in 15px, Save as alt text (.btn.primary) and Copy (.btn), what the picture has now on the right; × is the shared glyph"
+   "note": "the description in 15px, Save as alt text (.btn.primary) and Copy (.btn), what the picture has now on the right; \u00d7 is the shared glyph"
   },
   "a11y/describe-error": {
    "note": "That didn't work: the reason in --m-warn, Try again"
@@ -361,7 +361,7 @@
    "note": "Higher contrast: every line dark enough (the light meta line and the faint captions)"
   },
   "a11y-site/targets": {
-   "note": "Bigger click targets: the header icons and the × get 24px+ boxes; the layout shifts by a few pixels"
+   "note": "Bigger click targets: the header icons and the \u00d7 get 24px+ boxes; the layout shifts by a few pixels"
   },
   "a11y-site/readable": {
    "note": "Easier to read font: a sans with more line height and spacing"
@@ -403,16 +403,16 @@
    "note": "R5: the shot finds the backup row again (Packs now sits above it with the same class); hover on Export all mods"
   },
   "control/backup-focus": {
-   "note": "2px ring on Install from a file…"
+   "note": "2px ring on Install from a file\u2026"
   },
   "control/origin-show-code": {
    "note": "where the mod came from, then Show code: an underlined text link, 20px tall now (was 16, off the control grid)"
   },
   "control/paused-site": {
-   "note": "paused: the switch is on, the help says the mods are saved but not running, each mod gets a “not running” tag"
+   "note": "paused: the switch is on, the help says the mods are saved but not running, each mod gets a \u201cnot running\u201d tag"
   },
   "control/paused-toast": {
-   "note": "a toast with an action: Undo as .btn.primary, the shared × (both were copies)"
+   "note": "a toast with an action: Undo as .btn.primary, the shared \u00d7 (both were copies)"
   },
   "control/toast-action-focus": {
    "note": "shared ring"
@@ -433,16 +433,16 @@
    "note": "Show code open: Style and Script in the shared code field, scrolling sideways"
   },
   "control/install-review-backup": {
-   "note": "a backup: one section per mod, “not this page” for another site's mod, an unbroken 80-character title wraps, skipped items at the end"
+   "note": "a backup: one section per mod, \u201cnot this page\u201d for another site's mod, an unbroken 80-character title wraps, skipped items at the end"
   },
   "control/off-switch-toast": {
-   "note": "the off switch (⌥⇧0): one 40px row, Turn back on (.btn.primary) and the shared ×"
+   "note": "the off switch (\u2325\u21e70): one 40px row, Turn back on (.btn.primary) and the shared \u00d7"
   },
   "control/off-switch-hover": {
    "note": "shared hover on the primary"
   },
   "control/off-switch-close-focus": {
-   "note": "the × is .ibtn.close now (was an 18px × character in its own button)"
+   "note": "the \u00d7 is .ibtn.close now (was an 18px \u00d7 character in its own button)"
   },
   "control/off-panel-note": {
    "note": "the panel says mods are off on this page, with Turn back on"
@@ -478,7 +478,7 @@
    "note": "popup buttons and fields take the shared 2px --m-signal-3 ring, offset 2 (was --m-focus, 24% white, ~2:1)"
   },
   "iterate/refining": {
-   "note": "a follow-up is typed after a result: Enter refines, so Save drops its ↵"
+   "note": "a follow-up is typed after a result: Enter refines, so Save drops its \u21b5"
   },
   "iterate/refine-working": {
    "note": "the refine works like a first change: Stop, phase, ticker"
@@ -517,7 +517,7 @@
    "note": "the fixed version is a result like any other: Save, Undo, Edit code, Share"
   },
   "edit-toolbar/tab-walk": {
-   "note": "Ctrl+E then Tab ×3: Hide, Move, Resize, with the focused tool's tooltip. Tab used to leave the toolbar for the bar's suggestion chips"
+   "note": "Ctrl+E then Tab \u00d73: Hide, Move, Resize, with the focused tool's tooltip. Tab used to leave the toolbar for the bar's suggestion chips"
   },
   "edit-toolbar/shift-tab": {
    "note": "Shift+Tab steps back; the walk wraps at both ends, skipping disabled and hidden tools"
@@ -547,7 +547,7 @@
    "note": "the same dot on the panel header's mark"
   },
   "heal/stopped-row": {
-   "note": "the row's note leads with “Stopped working after this site changed.” and says what it can't find, by its label; Fix it is the primary"
+   "note": "the row's note leads with \u201cStopped working after this site changed.\u201d and says what it can't find, by its label; Fix it is the primary"
   },
   "heal/stopped-fix-focus": {
    "note": "shared ring"
@@ -559,13 +559,13 @@
    "note": "the fix shows for review with Save and Undo"
   },
   "heal/share-fix-toast": {
-   "note": "a fixed gallery mod: the toast offers Share the fix… (.btn.primary, shared ×)"
+   "note": "a fixed gallery mod: the toast offers Share the fix\u2026 (.btn.primary, shared \u00d7)"
   },
   "heal/fixed-row": {
-   "note": "until shared: “Fixed after this site changed” with Share the fix…, a gray dot (not red: nothing is wrong)"
+   "note": "until shared: \u201cFixed after this site changed\u201d with Share the fix\u2026, a gray dot (not red: nothing is wrong)"
   },
   "heal/auto-fixed-toast": {
-   "note": "Settings → fix automatically: done in the background, a toast with Undo and Share the fix…"
+   "note": "Settings \u2192 fix automatically: done in the background, a toast with Undo and Share the fix\u2026"
   },
   "heal/setting": {
    "note": "Fix my mods automatically when a site changes: the shared switch"
@@ -580,7 +580,7 @@
    "note": "2px --m-signal-3 ring, 2px offset"
   },
   "show-once/menu-item": {
-   "note": "the first ⋯ menu row: 32px, the shared row hover and focus; no key cap (it has no shortcut)"
+   "note": "the first \u22ef menu row: 32px, the shared row hover and focus; no key cap (it has no shortcut)"
   },
   "show-once/strip-empty": {
    "note": "watching, before the first step: the bar's glass, 14px corners, Stop is .btn.primary, Cancel .tbtn; the dot pulses on purpose (recording) and is still with reduced motion"
@@ -595,7 +595,7 @@
    "note": "the four newest steps and a mono count of the earlier ones; a long label ends in an ellipsis"
   },
   "show-once/strip-remove-hover": {
-   "note": "the × shows on hover (and keyboard focus) only, so the list stays calm"
+   "note": "the \u00d7 shows on hover (and keyboard focus) only, so the list stays calm"
   },
   "show-once/strip-remove-focus": {
    "note": ".ibtn.xs with the shared ring"
@@ -610,7 +610,7 @@
    "note": "after Stop: the steps above the input under the shared .eyebrow (it was a private copy, .so-eyebrow); five and a half rows show, so a longer list reads as one that scrolls (it used to cut off exactly at a row, hiding step 6 with no cue)"
   },
   "show-once/steps-forget-focus": {
-   "note": "× is .ibtn.xs with the shared ring"
+   "note": "\u00d7 is .ibtn.xs with the shared ring"
   },
   "show-once/steps-again-focus": {
    "note": "Show again is .tbtn"
@@ -634,7 +634,7 @@
    "note": "Esc cancels and says nothing was kept"
   },
   "style/review": {
-   "note": "“…everywhere”: shown live, with Save and Undo; the sheet header is the shared .sheet header; summary tags are the shared .tags; “except figma” is a note"
+   "note": "\u201c\u2026everywhere\u201d: shown live, with Save and Undo; the sheet header is the shared .sheet header; summary tags are the shared .tags; \u201cexcept figma\u201d is a note"
   },
   "style/review-save-focus": {
    "note": "Save is primary with the ring"
@@ -691,7 +691,7 @@
    "note": "each switch with one line of help"
   },
   "style/settings-sites": {
-   "note": "the sites it skips are the bar's .chip with the shared × (it was a private chip with a text ×); Not on this site is .tbtn"
+   "note": "the sites it skips are the bar's .chip with the shared \u00d7 (it was a private chip with a text \u00d7); Not on this site is .tbtn"
   },
   "style/settings-font-focus": {
    "note": "fields light their border into the 2px ring"
@@ -700,7 +700,7 @@
    "note": "segments: flush ring"
   },
   "style/settings-chip-focus": {
-   "note": "the × ring is flush inside the chip (it used to cover the site name)"
+   "note": "the \u00d7 ring is flush inside the chip (it used to cover the site name)"
   },
   "style/settings-site-added": {
    "note": "Enter adds a site"
@@ -709,13 +709,13 @@
    "note": "none: it runs everywhere"
   },
   "style/settings-none": {
-   "note": "no style yet: Set up… (.btn)"
+   "note": "no style yet: Set up\u2026 (.btn)"
   },
   "style/fit-working": {
    "note": "fitting it to this site is an ordinary change in the bar"
   },
   "style/fit-review": {
-   "note": "the fix for review; a title that already says Your style no longer gets a second “Your style ·” in the meta"
+   "note": "the fix for review; a title that already says Your style no longer gets a second \u201cYour style \u00b7\u201d in the meta"
   },
   "guard/froze-toast": {
    "note": "on the next load after a mod froze the page: why, Turn back on, Fix it (a full sentence now, with its period)"
@@ -748,7 +748,7 @@
    "note": "Turn back on says so"
   },
   "guard/refused-hide": {
-   "note": "a refusal is Morse holding back, not a failure: “Morse didn't apply it: it would have hidden this whole page” fits the one-line hint (it was “That didn't work: The change would have … Try other words.” cut off by the ellipsis); the full sentence is the hint's title"
+   "note": "a refusal is Morse holding back, not a failure: \u201cMorse didn't apply it: it would have hidden this whole page\u201d fits the one-line hint (it was \u201cThat didn't work: The change would have \u2026 Try other words.\u201d cut off by the ellipsis); the full sentence is the hint's title"
   },
   "guard/refused-loop": {
    "note": "the same for code that would freeze the page. R5: at 390px the chip has a line of its own above the input, which keeps the row less its three buttons (~60% of the bar) and wraps at words"
@@ -778,7 +778,7 @@
    "note": "done steps show the 16px check at 1.5px (it was a 10px check at 2.2px)"
   },
   "first-run/first-save-card": {
-   "note": "the first saved change: a card instead of the toast; “Now in your bar” is the shared .eyebrow; Share it and Done are .btn / .btn.primary (were copies); the check settles over the mark"
+   "note": "the first saved change: a card instead of the toast; \u201cNow in your bar\u201d is the shared .eyebrow; Share it and Done are .btn / .btn.primary (were copies); the check settles over the mark"
   },
   "first-run/first-save-share-focus": {
    "note": "shared ring"
@@ -787,52 +787,22 @@
    "note": "after the first save: Page tools and Show me once are in the bar; Mods shows its count"
   },
   "first-run/note-no-model": {
-   "note": "one notice under the input: the status dot, .btn, and the shared 16px × mask (it was a text × in a private button)"
+   "note": "one notice under the input: the status dot, .btn, and the shared 16px \u00d7 mask (it was a text \u00d7 in a private button)"
   },
   "first-run/note-no-model-close-focus": {
    "note": "shared ring"
   },
   "first-run/note-user-scripts": {
-   "note": "at phone width the sentence wraps with the dot on its first line, the button under the words and × at the end (the dot used to sit halfway down and × floated)"
+   "note": "at phone width the sentence wraps with the dot on its first line, the button under the words and \u00d7 at the end (the dot used to sit halfway down and \u00d7 floated)"
   },
   "first-run/error-with-action": {
    "note": "an error in plain words, with a button that does something about it"
   },
-  "welcome/page": {
-   "note": "the welcome page at 1100 and 390: try it here, and the checklist that ticks itself. Key caps are the bar's cap (1px line, 4px corners; they had a 2px bottom border and 5px corners), numbered steps are round like the bar's, the checkbox has a 1px line"
-  },
-  "welcome/model-waiting": {
-   "note": "one command connects a model; the status dot pulses only while waiting"
-  },
-  "welcome/copy-focus": {
-   "note": "Copy: the ring; 24px inside the command box (was 26)"
-  },
-  "welcome/key-not-a-key": {
-   "note": "a key that is not one: --m-warn note under the field"
-  },
-  "welcome/key-refused": {
-   "note": "a refused key: the plain error under the field"
-  },
-  "welcome/model-found": {
-   "note": "a helper running without our code: the code box; a wrong code says so"
-  },
-  "welcome/model-wrong": {
-   "note": "the helper waits for a different code"
-  },
-  "welcome/model-nomodel": {
-   "note": "paired, but no model set up"
-  },
-  "welcome/model-connected": {
-   "note": "connected: the step ticks itself"
-  },
-  "welcome/checklist-connected": {
-   "note": "the checklist after connecting"
-  },
   "practice/sample-bar": {
-   "note": "the practice page before any model: the real bar with sample answers and the coach (shown at 1x: the sandboxed frame). R5: at phone width the practice article's text sits under the bar at phone width, so the bar is solid (--m-surface): the coach and input read over nothing (50-bar.js Backing). On a calm page it stays glass"
+   "note": "R6: the practice bar opened from step 1 of the welcome page: the coach and sample suggestions"
   },
   "practice/first-save": {
-   "note": "the first saved change on the practice page: the card. R5: solid over the article at phone width (Backing); ⋯ ends the hint's row, so the four actions fit on the second row in the 340px frame (⋯ used to fall onto a line of its own)"
+   "note": "the first saved change on the practice page: the card. R5: solid over the article at phone width (Backing); \u22ef ends the hint's row, so the four actions fit on the second row in the 340px frame (\u22ef used to fall onto a line of its own)"
   },
   "popup/first-run-no-model": {
    "note": "no model: one notice with the button that opens the welcome page; the notice is the popup's .notice (it was a copy with 8px corners and hard-coded fallback colors)"
@@ -919,22 +889,22 @@
    "note": "at 390px the chip is on its own line: 8 + 24 + 8 + 32 + 8"
   },
   "bar/thinking": {
-   "note": "stage 1, “Asking the model”, the moment Enter is pressed; the working mark pulses, the timer runs"
+   "note": "stage 1, \u201cAsking the model\u201d, the moment Enter is pressed; the working mark pulses, the timer runs"
   },
   "bar/stage-reading": {
-   "note": "stage 2: “The model is reading the page” (a host that reports it); one line, the timer stays"
+   "note": "stage 2: \u201cThe model is reading the page\u201d (a host that reports it); one line, the timer stays"
   },
   "bar/stage-thinking": {
-   "note": "stage 2b: “Thinking”, for a model that thinks before it writes"
+   "note": "stage 2b: \u201cThinking\u201d, for a model that thinks before it writes"
   },
   "bar/writing": {
-   "note": "stage 3: “Writing the change”; the ticker shows the words as they come and fades in from the left"
+   "note": "stage 3: \u201cWriting the change\u201d; the ticker shows the words as they come and fades in from the left"
   },
   "bar/writing-visible": {
-   "note": "stage 3b: “Writing the change · you can see it now” once the new look shows while the rest is written; at 390px it fits on the hint's row with ⋯, the ticker and timer below"
+   "note": "stage 3b: \u201cWriting the change \u00b7 you can see it now\u201d once the new look shows while the rest is written; at 390px it fits on the hint's row with \u22ef, the ticker and timer below"
   },
   "bar/applying": {
-   "note": "stage 4: “Trying the change”"
+   "note": "stage 4: \u201cTrying the change\u201d"
   },
   "waiting/notice": {
    "note": "once per site in a tab: the title on a line of its own (R5: it used to run into the sentence), which mod waits, that its look already shows, Not now / Open Morse's details"
@@ -943,46 +913,46 @@
    "note": "the ring on Open Morse's details"
   },
   "waiting/bar-note": {
-   "note": "the bar's note under the input: the warn dot (radar square), the same words, Turn it on, × for this page; on the 16px inset"
+   "note": "the bar's note under the input: the warn dot (radar square), the same words, Turn it on, \u00d7 for this page; on the 16px inset"
   },
   "waiting/bar-note-focus": {
    "note": "Turn it on: 2px ring"
   },
   "waiting/panel-row": {
-   "note": "the tag on the mod: “waits for “Allow User Scripts”” in --m-warn mono, the full sentence is its title"
+   "note": "the tag on the mod: \u201cwaits for \u201cAllow User Scripts\u201d\u201d in --m-warn mono, the full sentence is its title"
   },
   "waiting/result": {
-   "note": "R5: the result's note is a sentence; it gives way before the title and ends in an ellipsis (it used to push the title out and clip without one). With Turn on “Allow User Scripts” the hint gets its own row; at 390px the actions wrap inside the bar (they used to stick out of it)"
+   "note": "R5: the result's note is a sentence; it gives way before the title and ends in an ellipsis (it used to push the title out and clip without one). With Turn on \u201cAllow User Scripts\u201d the hint gets its own row; at 390px the actions wrap inside the bar (they used to stick out of it)"
   },
   "waiting/result-practice": {
-   "note": "the practice page: “This is how it looks. What it adds works on real websites”, after the title, ending in an ellipsis when long"
+   "note": "the practice page: \u201cThis is how it looks. What it adds works on real websites\u201d, after the title, ending in an ellipsis when long"
   },
   "popup/waiting-warn": {
-   "note": "the popup with “Allow User Scripts” off: which mods here wait, that their look already shows, the steps and Turn it on (28px)"
+   "note": "the popup with \u201cAllow User Scripts\u201d off: which mods here wait, that their look already shows, the steps and Turn it on (28px)"
   },
   "popup/waiting-mods": {
-   "note": "“Waits for “Allow User Scripts”” in --m-warn under each mod whose code waits; a mod that only changes the look has none"
+   "note": "\u201cWaits for \u201cAllow User Scripts\u201d\u201d in --m-warn under each mod whose code waits; a mod that only changes the look has none"
   },
   "popup/waiting-whole": {
    "note": "the whole popup in that state"
   },
   "packs/panel-make": {
-   "note": "Packs · Make a pack… with the backup buttons at the foot of the panel; the same eyebrow and 28px buttons"
+   "note": "Packs \u00b7 Make a pack\u2026 with the backup buttons at the foot of the panel; the same eyebrow and 28px buttons"
   },
   "packs/panel-make-focus": {
-   "note": "2px ring on Make a pack…"
+   "note": "2px ring on Make a pack\u2026"
   },
   "packs/choose-none": {
    "note": "a tick on every row, the strip with Cancel and Next; R5: Next with nothing chosen is --m-line-strong / --m-text-2 like Install with nothing ticked (it looked like an enabled primary: the shared primary rule is !important)"
   },
   "packs/choose": {
-   "note": "three chosen: “3 chosen”, Next on; the switches and row buttons step aside while choosing"
+   "note": "three chosen: \u201c3 chosen\u201d, Next on; the switches and row buttons step aside while choosing"
   },
   "packs/choose-tick-focus": {
    "note": "2px ring on the tick"
   },
   "packs/make-no-name": {
-   "note": "Copy link without a name: “Give the pack a name.” in --m-danger, the name field focused"
+   "note": "Copy link without a name: \u201cGive the pack a name.\u201d in --m-danger, the name field focused"
   },
   "packs/make": {
    "note": "name (32px field), an optional note, the mods in it with where they run; Copy link is the main button"
@@ -1009,7 +979,7 @@
    "note": "sends what's on the page somewhere: the note says so"
   },
   "packs/review-unticked": {
-   "note": "R5: unticked is muted by color (--m-text-2), not opacity (was 2.4–3.4:1)"
+   "note": "R5: unticked is muted by color (--m-text-2), not opacity (was 2.4\u20133.4:1)"
   },
   "packs/review-end": {
    "note": "Check this address for updates is the person's choice; Install sticks to the bottom of the card"
@@ -1018,10 +988,10 @@
    "note": "2px ring on Install"
   },
   "packs/installed-toast": {
-   "note": "Installed N mods from “Orders team”, and that Morse checks it once a day"
+   "note": "Installed N mods from \u201cOrders team\u201d, and that Morse checks it once a day"
   },
   "packs/panel-group": {
-   "note": "the pack's name, Pack · 4 mods here · gets updates, Copy link and Stop updates; its mods under it"
+   "note": "the pack's name, Pack \u00b7 4 mods here \u00b7 gets updates, Copy link and Stop updates; its mods under it"
   },
   "packs/panel-group-switch-focus": {
    "note": "2px ring on the pack's switch"
@@ -1030,7 +1000,7 @@
    "note": "the whole pack off: one switch, the rows off"
   },
   "packs/panel-update": {
-   "note": "R5: Update available with the radar-square dot (it was round, like nothing else), what changed in a few words, Review…"
+   "note": "R5: Update available with the radar-square dot (it was round, like nothing else), what changed in a few words, Review\u2026"
   },
   "packs/update": {
    "note": "R5: What changed is the eyebrow the gallery's update review uses (it was a bold heading). Then the team's note, Changed / New in the pack / No longer in the pack; nothing changes until Update"
@@ -1045,7 +1015,7 @@
    "note": "Try it shows what the mod does first (since bug hunt 4): nothing runs until Try it, nothing is saved; the same review as Install with Try it as the main button. New in the catalog this round"
   },
   "settings/saved-flash": {
-   "note": "every change saves at once; “Saved” fades. R5: the shot scrolls the sheet back to its header (the sheet got taller)"
+   "note": "every change saves at once; \u201cSaved\u201d fades. R5: the shot scrolls the sheet back to its header (the sheet got taller)"
   },
   "i18n/de-bar": {
    "note": "German: the empty bar: placeholder, suggestions, hint and Mods in this language"
@@ -1060,16 +1030,16 @@
    "note": "Persian, right to left: a long request wraps at words; the chip keeps the page's own words (English) and direction"
   },
   "i18n/de-working": {
-   "note": "German: a status stage (“The model is reading the page”) in this language; the timer stays"
+   "note": "German: a status stage (\u201cThe model is reading the page\u201d) in this language; the timer stays"
   },
   "i18n/fa-working": {
-   "note": "Persian, right to left: a status stage (“The model is reading the page”) in this language; the timer stays"
+   "note": "Persian, right to left: a status stage (\u201cThe model is reading the page\u201d) in this language; the timer stays"
   },
   "i18n/de-result": {
-   "note": "German: the result: title, timing, the four actions. German: the refine placeholder is “Was soll sich ändern…” (R5: “Beschreib, was sich ändern soll…” was cut mid-word in a textarea, which can't end in an ellipsis)"
+   "note": "German: the result: title, timing, the four actions. German: the refine placeholder is \u201cWas soll sich \u00e4ndern\u2026\u201d (R5: \u201cBeschreib, was sich \u00e4ndern soll\u2026\u201d was cut mid-word in a textarea, which can't end in an ellipsis)"
   },
   "i18n/fa-result": {
-   "note": "Persian, right to left: the result: title, timing, the four actions. German: the refine placeholder is “Was soll sich ändern…” (R5: “Beschreib, was sich ändern soll…” was cut mid-word in a textarea, which can't end in an ellipsis)"
+   "note": "Persian, right to left: the result: title, timing, the four actions. German: the refine placeholder is \u201cWas soll sich \u00e4ndern\u2026\u201d (R5: \u201cBeschreib, was sich \u00e4ndern soll\u2026\u201d was cut mid-word in a textarea, which can't end in an ellipsis)"
   },
   "i18n/de-error": {
    "note": "German: the error in plain words, on two lines, Try again"
@@ -1078,10 +1048,10 @@
    "note": "Persian, right to left: the error in plain words, on two lines, Try again"
   },
   "i18n/de-settings": {
-   "note": "German: Settings: the Language row also says “Language” in English, so a wrong pick can be undone; key caps stay left to right"
+   "note": "German: Settings: the Language row also says \u201cLanguage\u201d in English, so a wrong pick can be undone; key caps stay left to right"
   },
   "i18n/fa-settings": {
-   "note": "Persian, right to left: Settings: the Language row also says “Language” in English, so a wrong pick can be undone; key caps stay left to right. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
+   "note": "Persian, right to left: Settings: the Language row also says \u201cLanguage\u201d in English, so a wrong pick can be undone; key caps stay left to right. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
   },
   "i18n/de-settings-bottom": {
    "note": "German: the bottom of Settings: segments, switches, the language list"
@@ -1090,10 +1060,10 @@
    "note": "Persian, right to left: the bottom of Settings: segments, switches, the language list. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
   },
   "i18n/de-menu": {
-   "note": "German: the ⋯ menu: names, hold, key caps on the far side"
+   "note": "German: the \u22ef menu: names, hold, key caps on the far side"
   },
   "i18n/fa-menu": {
-   "note": "Persian, right to left: the ⋯ menu: names, hold, key caps on the far side. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
+   "note": "Persian, right to left: the \u22ef menu: names, hold, key caps on the far side. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
   },
   "i18n/de-panel": {
    "note": "German: the Mods panel with twelve mods; mod titles and requests are what people typed (English here)"
@@ -1108,10 +1078,279 @@
    "note": "Persian, right to left: a row: tags and actions in this language. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
   },
   "i18n/de-panel-foot": {
-   "note": "German: the foot: Packs, Backup, Install a mod. R5: a backup button that wraps stays at the end, under the one before it (German pushed it to the start); Packs and Make a pack… are translated now too"
+   "note": "German: the foot: Packs, Backup, Install a mod. R5: a backup button that wraps stays at the end, under the one before it (German pushed it to the start); Packs and Make a pack\u2026 are translated now too"
   },
   "i18n/fa-panel-foot": {
-   "note": "Persian, right to left: the foot: Packs, Backup, Install a mod. R5: a backup button that wraps stays at the end, under the one before it (German pushed it to the start); Packs and Make a pack… are translated now too. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
+   "note": "Persian, right to left: the foot: Packs, Backup, Install a mod. R5: a backup button that wraps stays at the end, under the one before it (German pushed it to the start); Packs and Make a pack\u2026 are translated now too. R5: labels in the mono face (eyebrows, Try, the Ready pill, tags, hold) take the UI face in Persian and Arabic: the mono fallback drew the letters apart"
+  },
+  "desktop/first-run": {
+   "note": "R6: the first run, one column: Claude Code \u00b7 sonnet found and answering (the Ready badge), the apps with their own icons; role=main, so it is a landmark like the window's <main>"
+  },
+  "desktop/first-run-checking": {
+   "note": "R6: checking the model it found: the radar pulses at the end of the line"
+  },
+  "desktop/first-run-no-model": {
+   "note": "R6: nothing found: the key field, Other ways and Use this key on one row"
+  },
+  "desktop/first-run-focus": {
+   "note": "R6: 2px --m-signal-3 ring, 2px offset"
+  },
+  "desktop/first-run-key-focus": {
+   "note": "R6: the key field lights its border into the ring"
+  },
+  "desktop/apps": {
+   "note": "R6: each app's own icon (VSCodium from its menu entry, Obsidian and Joplin from inside their AppImages); Tunes has none, so it gets the sidebar's Apps glyph instead of a letter. Joplin and VSCodium read \u201cOpen, ready to connect\u201d because other sessions on this machine have them open"
+  },
+  "desktop/apps-connected": {
+   "note": "R6: Tunes connected for real; the sidebar count is --m-text-2 on the selected row (was 4.3:1 in light)"
+  },
+  "desktop/apps-opening": {
+   "note": "R6: opening: the radar pulses in the row, the button is disabled"
+  },
+  "desktop/apps-error": {
+   "note": "R6: Morse's own words for an app that wouldn't start, selectable, in a danger-tinted box"
+  },
+  "desktop/apps-empty": {
+   "note": "R6: no model: one notice with Choose a model; an app Morse couldn't look inside still offers Open with Morse"
+  },
+  "desktop/apps-row-hover": {
+   "note": "R6: the row's hover is one step, the hairlines next to it hide"
+  },
+  "desktop/apps-button-focus": {
+   "note": "R6: the ring on Disconnect"
+  },
+  "desktop/restart": {
+   "note": "R6: the question before restarting an open app (the real dialog; its words set the way askRestart sets them)"
+  },
+  "desktop/model": {
+   "note": "R6: Claude Code \u00b7 sonnet with the real Claude mark"
+  },
+  "desktop/model-choices": {
+   "note": "R6: real marks (Claude, OpenAI, both for a key); Ready / Not installed; the selected row is a ring inside, not a thicker border. At 760 \u00d7 560 the model card's buttons go under the name instead of cutting it"
+  },
+  "desktop/model-howto": {
+   "note": "R6: How to install: the command and Look again; at the window's smallest Look again wraps under the command instead of splitting it"
+  },
+  "desktop/model-key": {
+   "note": "R6: API key chosen: the field and where the key stays"
+  },
+  "desktop/model-checking": {
+   "note": "R6: checking: the radar and the sentence"
+  },
+  "desktop/model-failed": {
+   "note": "R6: the model's own words once (was \u201cDidn't answer: Claude Code: \u2026\u201d), the dot on the first line"
+  },
+  "desktop/model-none": {
+   "note": "R6: no model yet: Choose\u2026, the nav shows !"
+  },
+  "desktop/model-howto-focus": {
+   "note": "R6: the ring on How to install"
+  },
+  "desktop/model-choice-focus": {
+   "note": "R6: the radio is the row: its ring is the row's"
+  },
+  "desktop/chrome": {
+   "note": "R6: the helper switch, then the three ways to connect; each step's button at the step's end"
+  },
+  "desktop/chrome-code": {
+   "note": "R6: a code, how long it works"
+  },
+  "desktop/chrome-off": {
+   "note": "R6: off: what that means"
+  },
+  "desktop/chrome-helper-off": {
+   "note": "R6: helper off from the start"
+  },
+  "desktop/chrome-switch-focus": {
+   "note": "R6: the ring on the switch"
+  },
+  "desktop/allow": {
+   "note": "R6: \u201cAllow Chrome to use your Claude Code \u00b7 sonnet?\u201d: the real helper asking, the Claude mark, Deny and Allow"
+  },
+  "desktop/mods": {
+   "note": "R6: mods per app with each app's icon (Tunes: the Apps glyph, was nothing); an off mod is --m-text-2, not faded"
+  },
+  "desktop/mods-paused": {
+   "note": "R6: every mod off: the notice, the sidebar switch, the nav says off"
+  },
+  "desktop/mods-empty": {
+   "note": "R6: No mods yet"
+  },
+  "desktop/mods-switch-focus": {
+   "note": "R6: the ring on a mod's switch"
+  },
+  "desktop/checks": {
+   "note": "R6: checks after a run; \u201cFolder \u2026 can be listed by other users\u201d and \u201cYou're root\u201d are this test machine"
+  },
+  "desktop/checks-idle": {
+   "note": "R6: a list's empty row is a line in the list (was a second bordered box inside it)"
+  },
+  "desktop/checks-running": {
+   "note": "R6: running: the radar and the sentence on one line, centered (was a box in a box, radar above the text)"
+  },
+  "desktop/nav-focus": {
+   "note": "R6: the ring on a sidebar row"
+  },
+  "welcome/choose": {
+   "note": "R6: one question; Both is the two glyphs it means (globe and screen; was a drawn rectangle and circle). At 390 the glyphs sit in one 52px column, so the titles line up, in Persian too"
+  },
+  "welcome/choose-hover": {
+   "note": "R6: a choice under the pointer: --m-raised, --m-signal-1 border"
+  },
+  "welcome/choose-focus": {
+   "note": "R6: the ring"
+  },
+  "welcome/connect": {
+   "note": "R6: nothing found: Get Morse Desktop (recommended) and the key side by side; buttons 32, the big one 40 (were 34 and 42)"
+  },
+  "welcome/connect-both": {
+   "note": "R6: websites and apps: the key folds away"
+  },
+  "welcome/connect-both-open": {
+   "note": "R6: the key and the terminal, opened"
+  },
+  "welcome/connect-found": {
+   "note": "R6: Morse Desktop found, one button with the Claude mark"
+  },
+  "welcome/connect-key-bad": {
+   "note": "R6: a key that isn't one: --m-warn under the field. Connect is the primary button it was meant to be (the row's rule had outranked .primary, so on hover it went light on light)"
+  },
+  "welcome/connect-key-refused": {
+   "note": "R6: the API's refusal, in plain words"
+  },
+  "welcome/connect-key-focus": {
+   "note": "R6: the field's ring"
+  },
+  "welcome/connect-looking": {
+   "note": "R6: looking for Morse Desktop"
+  },
+  "welcome/connect-ask-signed-out": {
+   "note": "R6: Claude Code found but signed out: the warning above the button"
+  },
+  "welcome/connect-ask-waiting": {
+   "note": "R6: waiting for Allow: the button disabled with --m-line-strong and --m-text-2, its mark gray (was faded to 55% opacity)"
+  },
+  "welcome/connect-ask-denied": {
+   "note": "R6: Denied in Morse Desktop, said in the live line"
+  },
+  "welcome/connect-code": {
+   "note": "R6: a helper from a terminal: the code box and the mismatch"
+  },
+  "welcome/connect-no-model": {
+   "note": "R6: Morse Desktop without a model"
+  },
+  "welcome/connect-connected": {
+   "note": "R6: connected, the mark beside it"
+  },
+  "welcome/connect-use-focus": {
+   "note": "R6: the ring on the one button"
+  },
+  "welcome/try": {
+   "note": "R6: three steps, the practice page, sample answers until a model is connected; a done step is muted by color (was 62% opacity, 3.9:1)"
+  },
+  "welcome/win": {
+   "note": "R6: the win, then sites and apps. With Morse Desktop connected the apps part says what to click in it (it showed Get Morse Desktop: the screen wasn't drawn again when the model state came)"
+  },
+  "welcome/win-web": {
+   "note": "R6: websites only"
+  },
+  "welcome/win-apps-no-model": {
+   "note": "R6: apps first, tried with a sample answer: connect a model"
+  },
+  "welcome/allow-window": {
+   "note": "R6: \u201cAllow User Scripts\u201d: a picture of the switch, Morse waits for it"
+  },
+  "welcome/de-choose": {
+   "note": "R6: German"
+  },
+  "welcome/de-connect": {
+   "note": "R6: German: the long key heading wraps; at 390 nothing widens the page (grid columns are minmax(0, 1fr))"
+  },
+  "welcome/de-connect-found": {
+   "note": "R6: German"
+  },
+  "welcome/de-try": {
+   "note": "R6: German"
+  },
+  "welcome/de-win": {
+   "note": "R6: German"
+  },
+  "welcome/de-allow-window": {
+   "note": "R6: German"
+  },
+  "welcome/fa-choose": {
+   "note": "R6: Persian, right to left"
+  },
+  "welcome/fa-connect": {
+   "note": "R6: Persian"
+  },
+  "welcome/fa-connect-found": {
+   "note": "R6: Persian"
+  },
+  "welcome/fa-try": {
+   "note": "R6: Persian"
+  },
+  "welcome/fa-win": {
+   "note": "R6: Persian: an English example keeps its quotes in order (q is unicode-bidi: plaintext)"
+  },
+  "welcome/fa-allow-window": {
+   "note": "R6: Persian"
+  },
+  "site/landing": {
+   "note": "the hero video and the See it change pairs say \u201cClaude Code (haiku)\u201d: they are real runs recorded with haiku (site/config.js); a sonnet recording needs real runs. R6: the landing page whole at 1440, 768 and 390; every picture loaded, nothing scrolls sideways. At 390 the rows that scroll sideways (Tested apps, Your first minute) take keyboard focus (axe scrollable-region-focusable)",
+   "verdict": "residual"
+  },
+  "site/first-screen": {
+   "verdict": "residual",
+   "note": "the video's strip reads \u201cVSCodium on Linux \u00b7 Claude Code (haiku) \u00b7 real runs\u201d: true for that recording; retake it with sonnet"
+  },
+  "site/nav-open": {
+   "note": "R6: the nav sheet on a phone, the ring on its first link"
+  },
+  "site/nav-focus": {
+   "note": "R6: the ring on a nav link"
+  },
+  "site/try": {
+   "note": "R6: Try it here, ready"
+  },
+  "site/try-focus": {
+   "note": "R6: the ring on a suggestion"
+  },
+  "site/try-working": {
+   "note": "R6: the real runtime writing the sleep timer"
+  },
+  "site/try-result": {
+   "note": "R6: the result: Save, Undo, Edit code, Share"
+  },
+  "site/try-unknown": {
+   "note": "R6: a request with no sample answer: the note in the bar. The first-save card waits until the bar closes (it used to land on top of the reopened bar)"
+  },
+  "new-bar/kept-toast": {
+   "note": "R6: Esc keeps the change and says so, with Undo"
+  },
+  "new-bar/kept-undo-focus": {
+   "note": "R6: the ring on Undo"
+  },
+  "new-bar/rebuilt": {
+   "note": "R6: for people working on Morse: reload the extension, then the page"
+  },
+  "new-bar/style-web": {
+   "note": "R6: \u201cEvery site in Chrome\u201d in the sheet's header; the status line says only how many changes (it said \u201cevery site\u201d under a header that said otherwise)"
+  },
+  "new-bar/style-all": {
+   "note": "R6: \u201cEvery site and app\u201d"
+  },
+  "new-bar/hint-wider": {
+   "note": "R6: with a part chosen, the hint is Describe \u00b7 Ctrl+E Edit tools \u00b7 Alt+\u2191 bigger part (Esc to close gave way; Alt+\u2191 was cut off at 1100 and gone at 390). At 390 it still ends in an ellipsis"
+  },
+  "new-bar/wider-picked": {
+   "note": "R6: Alt+\u2191 picked the player toolbar around the shuffle button"
+  },
+  "new-bar/redone-toast": {
+   "note": "R6: \u201cRedone: hide\u201d"
+  },
+  "new-bar/redo-tool": {
+   "note": "R6: Redo in the edit toolbar, disabled (--m-signal-1) with nothing to redo"
   }
  },
  "fixes": [
@@ -1141,17 +1380,17 @@
    "after": "edit-color/no-room-above-light.png"
   },
   {
-   "title": "R3-6. Tab did not walk the edit toolbar (round 2 residual): Ctrl+E, Tab ×3 landed on a suggestion chip. Now Hide, Move, Resize, with the tooltip",
+   "title": "R3-6. Tab did not walk the edit toolbar (round 2 residual): Ctrl+E, Tab \u00d73 landed on a suggestion chip. Now Hide, Move, Resize, with the tooltip",
    "before": "before/edit-toolbar-tab-walk-dark.png",
    "after": "edit-toolbar/tab-walk-dark.png"
   },
   {
-   "title": "R3-7. The bar jumped away from a pointer heading for the “mods for this site” chip (and any suggestion), so it could not be clicked. It now steps aside only when the pointer rests on it away from its controls",
+   "title": "R3-7. The bar jumped away from a pointer heading for the \u201cmods for this site\u201d chip (and any suggestion), so it could not be clicked. It now steps aside only when the pointer rests on it away from its controls",
    "before": "before/gallery-chip-hover-dark.png",
    "after": "gallery/chip-hover-dark.png"
   },
   {
-   "title": "R3-8. Check this page: five 40px white primary blocks with 70%-opacity notes inside, 18px markers, a × character. Now a 28px .btn per kind with what it does under it, 20px markers, .tbtn and the shared ×",
+   "title": "R3-8. Check this page: five 40px white primary blocks with 70%-opacity notes inside, 18px markers, a \u00d7 character. Now a 28px .btn per kind with what it does under it, 20px markers, .tbtn and the shared \u00d7",
    "before": "before/a11y-audit-dark.png",
    "after": "a11y/audit-dark.png"
   },
@@ -1176,7 +1415,7 @@
    "after": "gallery/section-items-dark.png"
   },
   {
-   "title": "R3-13. Read aloud: a 36px play button, disabled at 35% opacity, a ×-character close, a 32px outlined speed box. Now 32px .ibtn (disabled --m-signal-1), .btn speed, the shared ×",
+   "title": "R3-13. Read aloud: a 36px play button, disabled at 35% opacity, a \u00d7-character close, a 32px outlined speed box. Now 32px .ibtn (disabled --m-signal-1), .btn speed, the shared \u00d7",
    "before": "before/a11y-read-aloud-dark.png",
    "after": "a11y/read-aloud-dark.png"
   },
@@ -1206,7 +1445,7 @@
    "after": "control/show-code-dark.png"
   },
   {
-   "title": "R3-19. Toast close was a 16px × character in its own button copy; now the shared .ibtn.close",
+   "title": "R3-19. Toast close was a 16px \u00d7 character in its own button copy; now the shared .ibtn.close",
    "before": "before/control-off-switch-close-focus-dark.png",
    "after": "control/off-switch-close-focus-dark.png"
   },
@@ -1226,7 +1465,7 @@
    "after": "popup/whole-dark.png"
   },
   {
-   "title": "R3-23. Self-heal at phone width: the bar hides its mark there, so the “stopped working” dot vanished from the bar. The mark stays while the dot is on",
+   "title": "R3-23. Self-heal at phone width: the bar hides its mark there, so the \u201cstopped working\u201d dot vanished from the bar. The mark stays while the dot is on",
    "before": "before/heal-bar-dot-narrow-light.png",
    "after": "heal/bar-dot-narrow-light.png"
   },
@@ -1281,7 +1520,7 @@
    "after": "bar/fixing-narrow-light.png"
   },
   {
-   "title": "10. --m-text-3 failed AA in both themes (2.9–3.6:1): placeholder, model label, timings, field labels, row buttons. Now #86868e / #6a6a72 (≥4.5:1 worst case)",
+   "title": "10. --m-text-3 failed AA in both themes (2.9\u20133.6:1): placeholder, model label, timings, field labels, row buttons. Now #86868e / #6a6a72 (\u22654.5:1 worst case)",
    "before": "before/bar-picking-dark.png",
    "after": "bar/picking-dark.png"
   },
@@ -1301,7 +1540,7 @@
    "after": "panel/row-unbroken-title-narrow-light.png"
   },
   {
-   "title": "14. Code modal wrapped code and floated × mid-title",
+   "title": "14. Code modal wrapped code and floated \u00d7 mid-title",
    "before": "before/modal-code-long-narrow-light.png",
    "after": "modal/code-long-narrow-light.png"
   },
@@ -1341,12 +1580,12 @@
    "after": "edit-color/hex-invalid-light.png"
   },
   {
-   "title": "22. Page tools: the button's tooltip covered its own open menu, and the menu used a different focus style than the ⋯ menu",
+   "title": "22. Page tools: the button's tooltip covered its own open menu, and the menu used a different focus style than the \u22ef menu",
    "before": "before/page-tools-menu-with-state-light.png",
    "after": "page-tools/menu-with-state-light.png"
   },
   {
-   "title": "23. Two menus, two designs: the ⋯ menu had 34px rows, 5px padding and 2px-bottom key caps. Both are one .menu now (32px rows, 4px padding, shared caps)",
+   "title": "23. Two menus, two designs: the \u22ef menu had 34px rows, 5px padding and 2px-bottom key caps. Both are one .menu now (32px rows, 4px padding, shared caps)",
    "before": "before/menu-open-dark.png",
    "after": "menu/open-dark.png"
   },
@@ -1356,7 +1595,7 @@
    "after": "hotkeys/rejected-light.png"
   },
   {
-   "title": "25. “Rebuilt from” never showed: the bar turned working before the request picked up the snapshot, so the chip row hid. One re-render after the hook",
+   "title": "25. \u201cRebuilt from\u201d never showed: the bar turned working before the request picked up the snapshot, so the chip row hid. One re-render after the hook",
    "before": "before/clipboard-rebuilt-from-dark.png",
    "after": "clipboard/rebuilt-from-dark.png"
   },
@@ -1381,7 +1620,7 @@
    "after": "capture/with-note-dark.png"
   },
   {
-   "title": "30. Phone width: the input was squeezed to “Des” (with a stray scrollbar) and segmented controls crowded their labels. The mark gives way, the chip caps at 40%, segments drop under their label",
+   "title": "30. Phone width: the input was squeezed to \u201cDes\u201d (with a stray scrollbar) and segmented controls crowded their labels. The mark gives way, the chip caps at 40%, segments drop under their label",
    "before": "before/settings-sheet-narrow-dark.png",
    "after": "settings/sheet-narrow-dark.png"
   },
@@ -1401,7 +1640,7 @@
    "after": "a11y-site/calm-light.png"
   },
   {
-   "title": "R4-2. A refusal read as a failure and lost its point to the ellipsis (“That didn't work: The change would have hidden this whole page, so Morse didn't apply it. …”). Now Morse says it held back: “Morse didn't apply it: it would have hidden this whole page”",
+   "title": "R4-2. A refusal read as a failure and lost its point to the ellipsis (\u201cThat didn't work: The change would have hidden this whole page, so Morse didn't apply it. \u2026\u201d). Now Morse says it held back: \u201cMorse didn't apply it: it would have hidden this whole page\u201d",
    "before": "before/r4-guard-refused-hide-dark.png",
    "after": "guard/refused-hide-dark.png"
   },
@@ -1411,7 +1650,7 @@
    "after": "show-once/steps-in-bar-dark.png"
   },
   {
-   "title": "R4-4. Show me once: “(hidden)” read like something typed. It is set apart in muted mono, as Morse's own word",
+   "title": "R4-4. Show me once: \u201c(hidden)\u201d read like something typed. It is set apart in muted mono, as Morse's own word",
    "before": "before/r4-show-once-strip-hidden-dark.png",
    "after": "show-once/strip-hidden-dark.png"
   },
@@ -1421,22 +1660,22 @@
    "after": "show-once/steps-in-bar-narrow-light.png"
   },
   {
-   "title": "R4-6. Your style's row: the switch and words sat 1px off the mod rows (the extra line), and “where it runs” hung beside the last tag, off its baseline. 11px padding, and the state always gets its own line",
+   "title": "R4-6. Your style's row: the switch and words sat 1px off the mod rows (the extra line), and \u201cwhere it runs\u201d hung beside the last tag, off its baseline. 11px padding, and the state always gets its own line",
    "before": "before/r4-style-row-off-light.png",
    "after": "style/row-off-light.png"
   },
   {
-   "title": "R4-7. Your style's sites were a private chip with a text ×, and the × ring covered the site name. They are the bar's .chip with the shared mask ×, ring flush inside the chip (the bar's chip too)",
+   "title": "R4-7. Your style's sites were a private chip with a text \u00d7, and the \u00d7 ring covered the site name. They are the bar's .chip with the shared mask \u00d7, ring flush inside the chip (the bar's chip too)",
    "before": "before/r4-style-settings-chip-focus-dark.png",
    "after": "style/settings-chip-focus-dark.png"
   },
   {
-   "title": "R4-8. Your style at phone width: “Not on this site” stretched across the whole row as a centred ghost button. It sits at the end, like every other .tbtn",
+   "title": "R4-8. Your style at phone width: \u201cNot on this site\u201d stretched across the whole row as a centred ghost button. It sits at the end, like every other .tbtn",
    "before": "before/r4-style-settings-sites-narrow-light.png",
    "after": "style/settings-sites-narrow-light.png"
   },
   {
-   "title": "R4-9. Fit to this site said “Your style” twice (“Your style for host · Your style · 3.0s”)",
+   "title": "R4-9. Fit to this site said \u201cYour style\u201d twice (\u201cYour style for host \u00b7 Your style \u00b7 3.0s\u201d)",
    "before": "before/r4-style-fit-review-dark.png",
    "after": "style/fit-review-dark.png"
   },
@@ -1446,17 +1685,17 @@
    "after": "first-run/coach-keep-light.png"
   },
   {
-   "title": "R4-11. The first-run notice at phone width: the dot sat halfway down the sentence and × floated alone. Dot on the first line, button under the words, × at the end; the buttons are .btn and the shared .ibtn.close (were copies, with a text ×)",
+   "title": "R4-11. The first-run notice at phone width: the dot sat halfway down the sentence and \u00d7 floated alone. Dot on the first line, button under the words, \u00d7 at the end; the buttons are .btn and the shared .ibtn.close (were copies, with a text \u00d7)",
    "before": "before/r4-first-run-note-user-scripts-narrow-light.png",
    "after": "first-run/note-user-scripts-narrow-light.png"
   },
   {
-   "title": "R4-12. The first saved change card: its buttons and “Now in your bar” label were private copies of .btn and the eyebrow; the check over the mark is on the 1.5px stroke",
+   "title": "R4-12. The first saved change card: its buttons and \u201cNow in your bar\u201d label were private copies of .btn and the eyebrow; the check over the mark is on the 1.5px stroke",
    "before": "before/r4-first-run-first-save-card-dark.png",
    "after": "first-run/first-save-card-dark.png"
   },
   {
-   "title": "R4-13. The guard toast was a sentence without its period (“…because it froze this page”)",
+   "title": "R4-13. The guard toast was a sentence without its period (\u201c\u2026because it froze this page\u201d)",
    "before": "before/r4-guard-froze-toast-dark.png",
    "after": "guard/froze-toast-dark.png"
   },
@@ -1468,7 +1707,7 @@
   {
    "title": "R4-15. The welcome page's key caps had the old 2px bottom border and 5px corners, numbered steps were rounded squares, the checkbox a 1.5px line and Copy 26px tall. One key cap, round step numbers, 1px lines, 24px Copy; the practice page goes to one column at phone width",
    "before": "before/r4-welcome-page-dark.png",
-   "after": "welcome/page-dark.png"
+   "after": "welcome/try-dark.png"
   },
   {
    "title": "R4-16. Show me once at phone width: the hairline before the chip started a line of its own when the chips wrapped",
@@ -1506,17 +1745,17 @@
    "after": "practice/sample-bar-narrow-light.png"
   },
   {
-   "title": "R5-7. The first save on the practice page: solid over the article, and ⋯ ends the hint's row so it no longer falls onto a line of its own",
+   "title": "R5-7. The first save on the practice page: solid over the article, and \u22ef ends the hint's row so it no longer falls onto a line of its own",
    "before": "before/r5-practice-first-save-narrow-dark.png",
    "after": "practice/first-save-narrow-dark.png"
   },
   {
-   "title": "R5-8. Waiting for “Allow User Scripts”: the notice's title ran into its sentence; it is a line of its own (Safe start too)",
+   "title": "R5-8. Waiting for \u201cAllow User Scripts\u201d: the notice's title ran into its sentence; it is a line of its own (Safe start too)",
    "before": "before/r5-waiting-notice-dark.png",
    "after": "waiting/notice-dark.png"
   },
   {
-   "title": "R5-9. A new change whose code waits: the long note pushed the title out and was clipped without an ellipsis; now the note gives way first, ends in an ellipsis (the whole sentence is the hint's title) and gets its own row next to Turn on “Allow User Scripts”",
+   "title": "R5-9. A new change whose code waits: the long note pushed the title out and was clipped without an ellipsis; now the note gives way first, ends in an ellipsis (the whole sentence is the hint's title) and gets its own row next to Turn on \u201cAllow User Scripts\u201d",
    "before": "before/r5-waiting-result-dark.png",
    "after": "waiting/result-dark.png"
   },
@@ -1531,7 +1770,7 @@
    "after": "packs/review-dark.png"
   },
   {
-   "title": "R5-12. Pack review: unticked mods were muted with 60% opacity (2.4–3.4:1); muted by color now",
+   "title": "R5-12. Pack review: unticked mods were muted with 60% opacity (2.4\u20133.4:1); muted by color now",
    "before": "before/r5-packs-review-end-light.png",
    "after": "packs/review-end-light.png"
   },
@@ -1581,9 +1820,89 @@
    "after": "i18n/fa-settings-dark.png"
   },
   {
-   "title": "R5-22. Persian ⋯ menu: “hold” joins its letters",
+   "title": "R5-22. Persian \u22ef menu: \u201chold\u201d joins its letters",
    "before": "before/r5-i18n-fa-menu-narrow-light.png",
    "after": "i18n/fa-menu-narrow-light.png"
+  },
+  {
+   "title": "R6-1. Morse Desktop: an app without an icon showed a letter tile (before: 167 as it was); it gets the sidebar's Apps glyph",
+   "before": "before/r6-desktop-apps-dark.png",
+   "after": "desktop/apps-dark.png"
+  },
+  {
+   "title": "R6-2. Morse Desktop: a list's empty row was a bordered box inside the list, the radar above its text",
+   "before": "before/r6-desktop-checks-running-dark.png",
+   "after": "desktop/checks-running-dark.png"
+  },
+  {
+   "title": "R6-3. Morse Desktop: Checks before a run, the same box in a box",
+   "before": "before/r6-desktop-checks-idle-light.png",
+   "after": "desktop/checks-idle-light.png"
+  },
+  {
+   "title": "R6-4. Morse Desktop at 760 \u00d7 560: \u201cClaude\u2026\u201d cut; the buttons go under the name now, and Look again under the command",
+   "before": "before/r6-desktop-model-choices-min-dark.png",
+   "after": "desktop/model-choices-min-dark.png"
+  },
+  {
+   "title": "R6-5. Morse Desktop: \u201cDidn't answer: Claude Code: \u2026\u201d said the name twice; the dot sits on the first line",
+   "before": "before/r6-desktop-model-failed-dark.png",
+   "after": "desktop/model-failed-dark.png"
+  },
+  {
+   "title": "R6-6. Morse Desktop, light: \u201c1 on\u201d beside Apps was 4.3:1 on the selected row (axe); --m-text-2 there",
+   "before": "before/r6-desktop-apps-connected-light.png",
+   "after": "desktop/apps-connected-light.png"
+  },
+  {
+   "title": "R6-7. Morse Desktop: Tunes' group had no icon in Mods; key caps had a 2px bottom border",
+   "before": "before/r6-desktop-mods-dark.png",
+   "after": "desktop/mods-dark.png"
+  },
+  {
+   "title": "R6-8. Welcome: Both was a drawn rectangle and circle; now the globe and the screen it means",
+   "before": "before/r6-welcome-choose-dark.png",
+   "after": "welcome/choose-dark.png"
+  },
+  {
+   "title": "R6-9. Welcome at 390: the titles line up beside the glyphs (Both's two glyphs set the column)",
+   "before": "before/r6-welcome-choose-narrow-dark.png",
+   "after": "welcome/choose-narrow-dark.png"
+  },
+  {
+   "title": "R6-10. Welcome: the disabled button while Morse Desktop asks was faded to 55% opacity; tokens now",
+   "before": "before/r6-welcome-connect-ask-waiting-light.png",
+   "after": "welcome/connect-ask-waiting-light.png"
+  },
+  {
+   "title": "R6-11. Welcome: Connect in a row lost its primary look, and on hover went light on light (axe color-contrast)",
+   "before": "before/r6-welcome-connect-key-bad-light.png",
+   "after": "welcome/connect-key-bad-light.png"
+  },
+  {
+   "title": "R6-12. Welcome: with Morse Desktop connected the win still said Get Morse Desktop",
+   "before": "before/r6-welcome-win-dark.png",
+   "after": "welcome/win-dark.png"
+  },
+  {
+   "title": "R6-13. Welcome, Persian: an English example's quotes came out reversed",
+   "before": "before/r6-welcome-fa-win-narrow-light.png",
+   "after": "welcome/fa-win-narrow-light.png"
+  },
+  {
+   "title": "R6-14. Bar: with a part chosen, \u201cAlt+\u2191 bigger part\u201d was cut off; Esc to close gives way to it",
+   "before": "before/r6-new-bar-hint-wider-dark.png",
+   "after": "new-bar/hint-wider-dark.png"
+  },
+  {
+   "title": "R6-15. Your style: the status said \u201cevery site\u201d under a header that says \u201cEvery site and app\u201d",
+   "before": "before/r6-new-bar-style-all-narrow-light.png",
+   "after": "new-bar/style-all-narrow-light.png"
+  },
+  {
+   "title": "R6-16. Try it here: the first-save card landed on top of the reopened bar; it waits until the bar closes",
+   "before": "before/r6-site-try-unknown-1440-dark.png",
+   "after": "site/try-unknown-1440-dark.png"
   }
  ]
 }

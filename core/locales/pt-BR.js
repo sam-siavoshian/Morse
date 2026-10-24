@@ -199,7 +199,7 @@ export default {
   "hk.off": "Desligar todos os mods",
   "hk.offShort": "Desligado",
   "hk.help.open": "Funciona em qualquer lugar do app",
-  "hk.help.talk": "Segure para falar, solte para terminar",
+  "hk.help.talk": "Solte para terminar",
   "hk.help.mods": "Ver os mods daqui e ligar ou desligar",
   "hk.help.godmode": "Mostrar as Ferramentas de edição",
   "hk.help.off": "Desliga de uma vez todos os mods desta página",

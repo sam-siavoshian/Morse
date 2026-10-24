@@ -14,6 +14,8 @@
 //   node demo/ui-catalog.js --no-axe                     skip axe-core (demo/axe.js) on each state
 //   DISPLAY=:99 node demo/ui-catalog.js --only=extension   the extension's own pages
 //                                   (welcome, practice, popup) need the real extension, headful
+//   DISPLAY=:99 node demo/ui-catalog.js --only=desktop,welcome,site,new-bar   round 6: Morse Desktop
+//                                   (the real Electron app), onboarding v2, the website and Try it here, newer bar states
 //
 // Needs Playwright (resolved from the global install).
 import { createRequire } from "node:module";
@@ -48,7 +50,8 @@ const server = http.createServer(async (req, res) => {
     if (p.startsWith("/demo/sites/parley/")) headers["Content-Security-Policy"] = "script-src 'self'";
     // round 4: a page that enforces Trusted Types, as VS Code's window does
     if (/[?&]tt=1/.test(req.url)) headers["Content-Security-Policy"] = "require-trusted-types-for 'script'";
-    res.writeHead(200, headers).end(await fs.readFile(file));
+    const body = await fs.readFile(file); // read first: a missing file is a 404, not a second writeHead
+    res.writeHead(200, headers).end(body);
   } catch { res.writeHead(404).end("not found"); }
 });
 await new Promise(r => server.listen(0, "127.0.0.1", r));
@@ -2490,7 +2493,9 @@ async function desktopStates() {
   // One state in both themes (the window follows the system's light or dark; nativeTheme stands in for it).
   async function both(app, w, state, target, opts = {}) {
     for (const t of opts.themes || ["dark", "light"]) {
-      await setTheme(app, t); await w.emulateMedia({ colorScheme: t }); await sleep(350);
+      await setTheme(app, t); await w.emulateMedia({ colorScheme: t });
+      if (!opts.keepPointer) { await w.mouse.move(480, 8); await w.mouse.move(4, 710); } // no row left looking hovered
+      await sleep(350);
       await pageShot(w, "desktop", state, t, target ? target() : null, { suffix: "", wake: () => setTheme(app, t), ...opts });
     }
     await setTheme(app, "dark"); await w.emulateMedia({ colorScheme: "dark" }); await sleep(200);
@@ -2536,7 +2541,7 @@ async function desktopStates() {
     await w.mouse.move(4, 710); await sleep(400);
     await both(app, w, "apps-connected", null, { note: "Tunes connected: 1 window, 2 mods on; the nav says 1 on" });
     await w.locator('li[data-app="tunes"] button').hover(); await sleep(200);
-    await both(app, w, "apps-row-hover", () => w.locator('li[data-app="tunes"]'), { themes: ["dark"], pad: 8 });
+    await both(app, w, "apps-row-hover", () => w.locator('li[data-app="tunes"]'), { themes: ["dark"], pad: 8, keepPointer: true });
     await both(app, w, "apps-button-focus", () => w.locator('li[data-app="tunes"]'), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator('li[data-app="tunes"] button'))] });
     await w.mouse.move(4, 710);
     // a launch that failed says why, in the window (the real words: daemon/apps.js launchFailure)

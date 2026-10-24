@@ -211,7 +211,7 @@ export default {
   "hk.off": "Turn off all mods",
   "hk.offShort": "Off",
   "hk.help.open": "Works anywhere in the app",
-  "hk.help.talk": "Hold to talk, let go to finish",
+  "hk.help.talk": "Let go to finish",
   "hk.help.mods": "See the mods here and turn them on or off",
   "hk.help.godmode": "Show the Edit tools",
   "hk.help.off": "Turn off every mod on this page at once",

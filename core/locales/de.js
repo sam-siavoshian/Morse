@@ -199,7 +199,7 @@ export default {
   "hk.off": "Alle Mods ausschalten",
   "hk.offShort": "Aus",
   "hk.help.open": "Funktioniert überall in der App",
-  "hk.help.talk": "Halten zum Sprechen, loslassen zum Beenden",
+  "hk.help.talk": "Loslassen zum Beenden",
   "hk.help.mods": "Die Mods hier sehen und ein- oder ausschalten",
   "hk.help.godmode": "Die Bearbeiten-Werkzeuge zeigen",
   "hk.help.off": "Alle Mods auf dieser Seite auf einmal ausschalten",

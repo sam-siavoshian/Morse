@@ -199,7 +199,7 @@ export default {
   "hk.off": "Désactiver tous les mods",
   "hk.offShort": "Non",
   "hk.help.open": "Fonctionne partout dans l'app",
-  "hk.help.talk": "Maintenez pour parler, lâchez pour terminer",
+  "hk.help.talk": "Lâchez pour terminer",
   "hk.help.mods": "Voir les mods d'ici et les activer ou les désactiver",
   "hk.help.godmode": "Afficher les Outils d'édition",
   "hk.help.off": "Désactive d'un coup tous les mods de cette page",

@@ -200,7 +200,7 @@ export default {
   "hk.off": "すべての MOD をオフ",
   "hk.offShort": "オフ",
   "hk.help.open": "アプリのどこでも使えます",
-  "hk.help.talk": "押している間に話し、離すと終わります",
+  "hk.help.talk": "離すと終わります",
   "hk.help.mods": "ここの MOD を見て、オンやオフにします",
   "hk.help.godmode": "編集ツールを表示します",
   "hk.help.off": "このページの MOD をまとめてオフにします",

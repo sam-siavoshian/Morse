@@ -199,7 +199,7 @@ export default {
   "hk.off": "关闭所有模组",
   "hk.offShort": "关",
   "hk.help.open": "在应用里任何地方都能用",
-  "hk.help.talk": "按住说话，松开结束",
+  "hk.help.talk": "松开结束",
   "hk.help.mods": "查看这里的模组，打开或关闭它们",
   "hk.help.godmode": "显示编辑工具",
   "hk.help.off": "一次关闭这个页面上的所有模组",
