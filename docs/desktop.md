@@ -480,7 +480,7 @@ renamed to `tunes`, with the app next to it, unpacked or as
   seconds. That run found a real problem: haiku's first try asked for the
   minutes with `prompt()`, which Electron doesn't support. Morse now tells the
   model not to use it. Run again for the pictures below (October 24), haiku
-  added a sleep timer button (☾) to the player in about 13 seconds.
+  built a sleep timer picker under the player in about 4 seconds.
 - The same app was run as a normal user with Chromium's sandbox fully on and
   connected with `morse attach --port`.
 - [`tests/electron.test.js`](../tests/electron.test.js) runs the flow on every
@@ -495,7 +495,7 @@ renamed to `tunes`, with the app next to it, unpacked or as
 
 | | |
 |---|---|
-| ![](screenshots/126-electron-haiku-working.png) Claude Code (haiku) writing the change | ![](screenshots/127-electron-haiku-result.png) Its result: a sleep timer button (☾) in the player |
+| ![](screenshots/126-electron-haiku-working.png) Claude Code (haiku) writing the change | ![](screenshots/127-electron-haiku-result.png) Its result: a sleep timer picker under the player |
 
 Real installed apps (VSCodium, Obsidian, Joplin) are under
 [Tested on](#tested-on). Not tested: Slack, Discord, Microsoft's VS Code or

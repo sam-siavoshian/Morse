@@ -12,7 +12,7 @@ import path from "node:path";
 import os from "node:os";
 import net from "node:net";
 import { createRequire } from "node:module";
-import { demoSites, pressOpen, seasonHome } from "./helper.js";
+import { demoSites, openBar, pick, seasonHome } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -51,15 +51,6 @@ async function waitFor(page, pred, ms = 20000) {
   while (Date.now() < end) { const s = await status(page).catch(() => null); if (s && pred(s)) return s; await sleep(40); }
   throw new Error("timeout; last " + JSON.stringify(await status(page)));
 }
-async function pick(page, sel, fx = 0.5, fy = 0.5) {
-  const r = await page.locator(sel).first().boundingBox();
-  const x = r.x + r.width * fx, y = r.y + r.height * fy;
-  await page.mouse.move(x - 40, y - 20);
-  await page.mouse.move(x, y, { steps: 6 });
-  await sleep(120);
-  await page.mouse.click(x, y);
-  await sleep(250);
-}
 const readMods = async () => Promise.all((await fs.readdir(MODS)).map(async f => JSON.parse(await fs.readFile(path.join(MODS, f), "utf8"))));
 const writeMod = m => fs.writeFile(path.join(MODS, `${m.id}.json`), JSON.stringify(m, null, 2));
 // Spreads a mod's version times over the past days, the way a mod people
@@ -75,7 +66,7 @@ const ui = (page, sel) => page.locator(`[data-morse-ui] ${sel}`);
 
 // ---- Tunes: a sleep timer, then keep going
 const tunes = await open(SITE.tunes);
-await pressOpen(tunes);
+await openBar(tunes);
 await sleep(200);
 await pick(tunes, '[data-testid="player-controls"] .btns', 0.5, 0.5);
 await tunes.keyboard.type("add a sleep timer", { delay: 14 });
@@ -114,7 +105,7 @@ await tunes.keyboard.press("Escape");
 
 // ---- Parley: a mod saved a while ago; the app has since changed
 const chat = await open(SITE.parley);
-await pressOpen(chat);
+await openBar(chat);
 await sleep(200);
 await pick(chat, "form#composer", 0.5, 0.3);
 await chat.keyboard.type("show a live word count", { delay: 10 });

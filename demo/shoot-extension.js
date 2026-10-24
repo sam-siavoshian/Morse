@@ -14,7 +14,7 @@ import path from "node:path";
 import os from "node:os";
 import { createRequire } from "node:module";
 import { toUserscript } from "../core/mod.js";
-import { startHelper, pairExtension, routeHelper, demoSites, pressOpen, seasonExtension } from "./helper.js";
+import { startHelper, pairExtension, routeHelper, demoSites, openBar, pick, clearBar, seasonExtension } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -74,14 +74,19 @@ console.log("  📸 20-extension-installed.png");
 // 21. Point at the composer of a chat app with a strict CSP
 const chat = await open(ctx, SITE.parley);
 const C = helpers(chat);
-await pressOpen(chat);
+await openBar(chat);
 await sleep(200);
 const ta = await chat.locator("textarea[aria-label=\"Message Parley\"]").boundingBox();
+await clearBar(chat, ta.x + 120, ta.y + 20);
 await chat.mouse.move(ta.x + 120, ta.y + 20, { steps: 6 });
 await sleep(250);
 await C.shot("21-web-point.png");
-await chat.mouse.click(ta.x + 120, ta.y + 20);
-await chat.keyboard.type("show a live word count and reading time under the message box", { delay: 12 });
+await pick(chat, 'textarea[aria-label="Message Parley"]', 120 / ta.width, 20 / ta.height);
+// One input event for the whole request: on a busy machine single keys can
+// arrive late, and the bar shows the request exactly as typed either way.
+await C.waitFor(s => s.focus === "in");
+await chat.keyboard.insertText("show a live word count and reading time under the message box");
+await C.waitFor(s => /under the message box$/.test(s.input)); // all of it reached the bar
 await chat.keyboard.press("Enter");
 await C.waitFor(s => s.phase === "result");
 await sleep(300);
@@ -94,7 +99,7 @@ await sleep(300);
 await C.shot("24-web-word-count-works.png");
 
 // 25. Page-wide request: a new button
-await pressOpen(chat);
+await openBar(chat);
 await sleep(150);
 await chat.mouse.move(640, 400);
 await chat.keyboard.type("add a button that copies the whole conversation as markdown", { delay: 10 });
@@ -109,7 +114,7 @@ await C.shot("25-web-new-button.png");
 // 27-29. A cluttered news site: live CSS, share card
 const news = await open(ctx, SITE.byte);
 const N = helpers(news);
-await pressOpen(news);
+await openBar(news);
 await sleep(150);
 await news.mouse.move(640, 300);
 await news.keyboard.type("hide the ads and make the article easier to read", { delay: 10 });

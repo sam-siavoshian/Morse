@@ -12,7 +12,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { createRequire } from "node:module";
-import { startHelper, pairExtension, routeHelper, demoSites, pressOpen, seasonExtension } from "./helper.js";
+import { startHelper, pairExtension, routeHelper, demoSites, openBar, pick, seasonExtension } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -59,20 +59,10 @@ async function waitFor(page, pred, ms = 15000) {
   throw new Error("timeout; last " + JSON.stringify(await status(page)));
 }
 const answered = page => waitFor(page, s => s.phase === "idle" && /Answered/.test(s.hint));
-async function pick(page, sel, fx = 0.5, fy = 0.5) {
-  const r = await page.locator(sel).first().boundingBox();
-  const x = r.x + r.width * fx, y = r.y + r.height * fy;
-  await page.mouse.move(x - 40, y - 20);
-  await page.mouse.move(x, y, { steps: 6 });
-  await sleep(120);
-  await page.mouse.click(x, y);
-  await sleep(250);
-  return r;
-}
 
 // 90. Ask: point at a control, ask what it does
 const tunes = await open(SITE.tunes);
-await pressOpen(tunes);
+await openBar(tunes);
 await sleep(200);
 await pick(tunes, '[aria-label="Repeat"]');
 await tunes.keyboard.type("what does this button do?", { delay: 14 });
@@ -85,7 +75,7 @@ await tunes.close();
 
 // 91. Find: a setting that lives behind a menu
 const chat = await open(SITE.parley);
-await pressOpen(chat);
+await openBar(chat);
 await sleep(200);
 await chat.mouse.move(640, 520);
 await chat.keyboard.type("where do I change notification settings?", { delay: 14 });
@@ -110,7 +100,7 @@ await chat.close();
 
 // 93. Explain this page, from the page tools
 const news = await open(SITE.byte);
-await pressOpen(news);
+await openBar(news);
 await sleep(200);
 await news.mouse.move(1000, 120);
 await news.locator(".gm-qbtn").click();

@@ -44,7 +44,7 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 55-capture.png | shoot-godmode.js | ✅ | |
 | 56-reuse.png | shoot-godmode.js | ✅ | |
 | 60-voice.png | shoot-bar.js | ✅ | |
-| 61-settings.png | shoot-bar.js | ✅ | Ends at the General heading (the pane scrolls) |
+| 61-settings.png | shoot-bar.js | ✅ | Your style, Shortcuts, Voice, Appearance; the rest scrolls |
 | 62-hotkey-recorder.png | shoot-bar.js | ✅ | "⌘Q quits the app. Pick another." |
 | 63-suggestions.png | shoot-bar.js | ✅ | |
 | 64-shortcuts.png | shoot-bar.js | ✅ | |
@@ -82,7 +82,7 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 123-electron-result.png | shoot-electron.js | ✅ | Was "Refine…" |
 | 124-electron-mod-back.png | shoot-electron.js | ✅ | |
 | 125-electron-mods-panel.png | shoot-electron.js | ✅ | |
-| 126-electron-haiku-working.png | shoot-electron.js (`FIRST=126`, Claude Code haiku) | ✅ | Real model; it built a ☾ button this time, docs updated |
+| 126-electron-haiku-working.png | shoot-electron.js (`FIRST=126`, Claude Code haiku) | ✅ | Real model; a "Sleep" picker under the player, docs say so |
 | 127-electron-haiku-result.png | shoot-electron.js (`FIRST=126`, Claude Code haiku) | ✅ | |
 | 129-show-once-start.png | shoot-show-once.js | ✅ | |
 | 130-show-once-recording.png | shoot-show-once.js | ✅ | |
@@ -91,6 +91,10 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 133-show-once-done.png | shoot-show-once.js | ✅ | |
 | 134-show-once-hidden.png | shoot-show-once.js | ✅ | |
 | 135-welcome.png … 146-desktop-first-save.png | shoot-first-run.js | ✅ | 12 first-run pictures; not in the docs yet. 136/137 start at "Try it here" so nothing is cut off |
+| 147–152 (VSCodium, Obsidian, Joplin), 153–156-web-* (GitLab, PyPI, Docker Hub) | demo/try-real-app.js, demo/try-real-sites.js (real apps and sites, real Claude Code) | ✅ | Came with main during this review; current words. Not retaken: they need the real apps and network |
+| 150–157-style-* | shoot-style.js | ✅ | Came with main; current words |
+| 158, 159-style-fit-haiku-* | demo/style-fit-real.js (real Claude Code) | ✅ | Came with main |
+| 160–166-pack-* | shoot-packs.js | ✅ | Came with main; current words |
 | clip-sleep-timer.gif, .mp4 | shoot-desktop.js's recording (`MORSE_HOME/clips`), encoded at double speed | ✅ | Today's bar; the machine was slow, so it is played twice as fast |
 | claude-code/01 … 14 | shoot-desktop.js with `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code` | ✅ | Whole run with real Claude Code. 14-share-card.png is new |
 

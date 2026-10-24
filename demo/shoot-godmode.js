@@ -10,7 +10,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { createRequire } from "node:module";
-import { startHelper, pairExtension, routeHelper, demoSites, pressOpen, seasonExtension } from "./helper.js";
+import { startHelper, pairExtension, routeHelper, demoSites, openBar, pick, seasonExtension } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -57,16 +57,6 @@ async function waitFor(page, pred, ms = 15000) {
   while (Date.now() < end) { const s = await status(page).catch(() => null); if (s && pred(s)) return s; await sleep(40); }
   throw new Error("timeout; last " + JSON.stringify(await status(page)));
 }
-async function pick(page, sel, fx = 0.5, fy = 0.5) {
-  const r = await page.locator(sel).first().boundingBox();
-  const x = r.x + r.width * fx, y = r.y + r.height * fy;
-  await page.mouse.move(x - 40, y - 20);
-  await page.mouse.move(x, y, { steps: 6 });
-  await sleep(120);
-  await page.mouse.click(x, y);
-  await sleep(250);
-  return r;
-}
 
 // After pointing, typing describes a change; Ctrl+E (⌘E) moves to the Edit
 // tools, where single keys pick a tool (T rename, M move, C recolor, ⇧C capture).
@@ -74,7 +64,7 @@ const editTools = page => page.keyboard.press(process.platform === "darwin" ? "M
 
 // ---- The Daily Byte: direct edits
 const news = await open(SITE.byte);
-await pressOpen(news);
+await openBar(news);
 await sleep(200);
 
 // 50. Select the headline: the toolbar anchors to it; hover shows name + shortcut
@@ -140,7 +130,7 @@ await news.keyboard.press("Escape"); // closes the bar: the session is saved as 
 await sleep(600);
 
 // 54. Page tools: hide ads and popups, then dark mode
-await pressOpen(news);
+await openBar(news);
 await sleep(200);
 await news.mouse.move(1000, 120);
 await news.locator(".gm-qbtn").click();
@@ -162,7 +152,7 @@ await sleep(300);
 
 // ---- Parley (another app, strict CSP): rebuild the captured masthead here
 const chat = await open(SITE.parley);
-await pressOpen(chat);
+await openBar(chat);
 await sleep(500);
 await pick(chat, 'header[role="banner"]', 0.45, 0.5);
 await chat.locator(".gm-chip").first().click();

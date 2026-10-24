@@ -17,7 +17,7 @@ import os from "node:os";
 import net from "node:net";
 import http from "node:http";
 import { createRequire } from "node:module";
-import { pressOpen } from "./helper.js";
+import { openBar } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -73,7 +73,7 @@ async function load() {
 
 // ---- 110: the chip in the empty bar leads to For this site
 await load();
-await pressOpen(page); // the default Open Morse key (core/hotkeys.js)
+await openBar(page); // the default Open Morse key (core/hotkeys.js)
 await ui(".sugs .gl-sug").waitFor({ timeout: 15000 });
 await page.keyboard.press("Tab");
 await page.keyboard.press("End");

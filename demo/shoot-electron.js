@@ -87,6 +87,20 @@ async function mainWindow(port) {
   return { s, ev, status: async () => JSON.parse((await ev(`document.querySelector("[data-morse-ui][data-status]")?.dataset.status || "null"`)) || "null") };
 }
 
+// Whether a part of Morse's UI is showing (<tag class=cls> without hidden).
+// The bar's shadow root is closed in a real app (no navigator.webdriver);
+// DevTools can still read it.
+async function uiShowing(w, tag, cls) {
+  const { root } = await w.s.send("DOM.getDocument", { depth: -1, pierce: true });
+  const find = n => {
+    const a = n.attributes || [];
+    const c = a.includes("class") ? a[a.indexOf("class") + 1] : "";
+    if (n.localName === tag && c.split(" ").includes(cls) && !a.includes("hidden")) return true;
+    return [...(n.children || []), ...(n.shadowRoots || [])].some(find);
+  };
+  return find(root);
+}
+
 // The X window of the app's main window, and where its web content starts
 // (below the native menu bar).
 async function xWindow(w) {
@@ -141,15 +155,24 @@ await until(async () => (await w.status())?.open, 15000, `the bar to open on ${O
 say(`the bar opened from a real ${OPEN_X}`);
 
 // ---- 3. point at the player controls, pick them, describe the change
+// On a busy machine the app can miss a quick hover or click: wait for the
+// outline before the picture, and for the pick before typing.
 const [cx, cy] = await centerOf(w, win, '[data-testid="player-controls"] .btns');
-x("mousemove", "--sync", String(cx - 30), String(cy));
-await sleep(200);
-x("mousemove", "--sync", String(cx), String(cy));
-await sleep(400);
-await shot(win, "electron-point");
-x("click", "1");
-await sleep(300);
+let shotPoint = false;
+const picked = async () => !/^Point at anything/.test((await w.status())?.hint || "Point at anything");
+for (let i = 0; i < 4 && !(await picked()); i++) {
+  x("mousemove", "--sync", String(cx - 30), String(cy));
+  await sleep(300);
+  x("mousemove", "--sync", String(cx), String(cy));
+  const outlined = await until(() => uiShowing(w, "div", "hl"), 5000, "the outline").catch(() => false);
+  await sleep(300);
+  if (outlined && !shotPoint) { await shot(win, "electron-point"); shotPoint = true; }
+  x("click", "1");
+  await until(async () => (await picked()) || null, 4000, "the pick").catch(() => {});
+}
+if (!(await picked()) || !shotPoint) throw new Error("couldn't point at the player controls");
 x("type", "--delay", "15", "add a sleep timer that pauses the music after a while");
+await until(async () => /after a while$/.test((await w.status())?.input || ""), 15000, "the request in the bar");
 await sleep(300);
 await shot(win, "electron-bar");
 x("key", "Return");
@@ -197,17 +220,7 @@ say("after relaunch the mod is back: it runs again and finds its elements" + (RE
 // ---- 6b. the Mods panel hotkey (Alt+Shift+M) works with the native menu bar there
 await focusApp(win);
 x("key", "alt+shift+m");
-// The bar's shadow root is closed in a real app (no navigator.webdriver); DevTools can still read it.
-const panelOpen = async () => {
-  const { root } = await w.s.send("DOM.getDocument", { depth: -1, pierce: true });
-  const find = n => {
-    const a = n.attributes || [];
-    const cls = a.includes("class") ? a[a.indexOf("class") + 1] : "";
-    if (n.localName === "aside" && cls.split(" ").includes("panel") && !a.includes("hidden")) return true;
-    return [...(n.children || []), ...(n.shadowRoots || [])].some(find);
-  };
-  return find(root);
-};
+const panelOpen = () => uiShowing(w, "aside", "panel");
 await until(panelOpen, 15000, "the Mods panel on Alt+Shift+M");
 say("the Mods panel opened from a real Alt+Shift+M");
 await sleep(400);

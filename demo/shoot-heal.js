@@ -18,7 +18,7 @@ import path from "node:path";
 import os from "node:os";
 import net from "node:net";
 import { createRequire } from "node:module";
-import { pressOpen } from "./helper.js";
+import { openBar } from "./helper.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -108,7 +108,7 @@ await shot("115-share-fix.png");
 await ui(".ctl-toast .ctl-x").click();
 await sleep(300);
 await page.setViewportSize({ width: 1280, height: 1000 }); // tall enough for the whole of Settings, nothing scrolled half out of view
-await pressOpen(page);
+await openBar(page);
 await sleep(300);
 await page.keyboard.press(process.platform === "darwin" ? "Meta+Comma" : "Control+Comma"); // Settings
 await ui('.sheet input[data-k="autoFix"]').waitFor({ state: "attached" });

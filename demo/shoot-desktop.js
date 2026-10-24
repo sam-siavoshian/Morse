@@ -21,7 +21,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { createRequire } from "node:module";
-import { demoSites, pressOpen, seasonHome } from "./helper.js";
+import { demoSites, openBar, seasonHome } from "./helper.js";
 import { freePort } from "../tests/helpers/net.js";
 const { chromium } = createRequire(import.meta.url)("playwright"); // preinstalled globally
 
@@ -88,7 +88,7 @@ async function waitFor(pred, ms = 15000) {
 await shot("01-desktop-ready.png", { story: true });
 
 // 2. Hotkey + point
-await pressOpen(page);
+await openBar(page);
 await sleep(300);
 const controls = page.locator('[data-testid="player-controls"] .btns');
 const box = await controls.boundingBox();
@@ -147,7 +147,7 @@ await shot("08-the-new-feature-works.png");
 
 // 9. Page-wide CSS change, applied live while the model is still writing
 await page.mouse.move(640, 200);
-await pressOpen(page);
+await openBar(page);
 await sleep(200);
 await page.keyboard.type("make the album covers bigger with rounder corners", { delay: 14 });
 await page.keyboard.press("Enter");

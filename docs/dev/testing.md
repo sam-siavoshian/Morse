@@ -135,7 +135,9 @@ runs on those ports don't matter) and the Morse helper, which waits for port
 runs it elsewhere and routes the extension to it). They press the platform's
 Open Morse key (Ctrl+Shift+Space off macOS, from
 [`tests/helpers/keys.js`](../../tests/helpers/keys.js)) and start as someone
-who has used Morse before, with no first-run guide. Shared pieces are in
+who has used Morse before, with no first-run guide. They wait for the bar
+to say it is open and that something was picked before they type, so a slow
+machine makes them slower, not wrong. Shared pieces are in
 [`demo/helper.js`](../../demo/helper.js).
 
 They replay pre-written replies ([`core/demo.js`](../../core/demo.js)) so they
@@ -156,12 +158,14 @@ from [`demo/bar-playground.html`](../../demo/bar-playground.html)),
 126–127), `shoot-apps.js` (`morse apps` and `morse status`, rendered from the
 macOS fixture tree in [`demo/fake-installs.js`](../../demo/fake-installs.js))
 and `shoot-site.js` (the website and share page, into
-[`docs/site/`](../site/)). The launch videos are made by
+[`docs/site/`](../site/)). `shoot-style.js` and `shoot-packs.js` make
+150–166; the pictures of real apps and sites (147–156) come from
+`demo/try-real-app.js` and `demo/try-real-sites.js`. The launch videos are made by
 [`demo/record-launch.js`](../../demo/record-launch.js); see the
 [launch kit](../launch/README.md).
 
-Every picture was retaken on October 24, 2026, after the plain-words pass
-(Save, Change, Edit tools, no local models). The launch video and its poster
+Every picture up to 146 was retaken on October 24, 2026, after the
+plain-words pass (Save, Change, Edit tools, no local models). The launch video and its poster
 frames (`docs/launch/`) are older: they come from real Claude Code runs and
 still show the bar before the plain-words pass in places, until the video is
 recorded again.
