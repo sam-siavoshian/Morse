@@ -21,7 +21,6 @@ try {
   Control.tab = sessionStorage.getItem("morse:tab") || uid();
   sessionStorage.setItem("morse:tab", Control.tab);
 } catch {}
-if (typeof HOTKEY_HELP === "object") HOTKEY_HELP.off = "Turn off every mod on this page at once";
 
 const here = () => ({ url: location.href, app: S.app });
 const hereName = () => S.appName || controlKey(here());

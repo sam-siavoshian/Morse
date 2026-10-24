@@ -1,11 +1,14 @@
 // First run and help: the pure parts, shared by the runtime (inlined by
 // runtime/bundle.js), the extension (background, popup, welcome page) and the
-// desktop host. No imports and no globals, so node tests can load it as is.
+// desktop host. No globals, and no imports besides core/i18n.js (the words,
+// in the person's language), so node tests can load it as is.
 //
 //   onboarding state   { coach: "" | "done", tips: { saved, share }, dismissed: { model, userScripts } }
 //   pageSupport(url)   why Morse can't run on a page, in one plain sentence, or null
 //   explainError(msg)  a raw error in plain words, with a button to offer, or null
 //   plainError(msg)    the one string to show for any error (plain words, never raw jargon)
+
+import { t } from "./i18n.js";
 
 export const ONBOARDING_DEFAULT = { coach: "", tips: { saved: false, share: false }, dismissed: { model: false, userScripts: false } };
 
@@ -32,60 +35,61 @@ export function mergeOnboarding(base, patch) {
 // Returns { id, text, action? } or null when the page is fine.
 export function pageSupport(url, { fileAccess = true, extensionId = "" } = {}) {
   let u;
-  try { u = new URL(String(url || "")); } catch { return { id: "blank", text: "Open any website, then press the Morse shortcut there." }; }
+  try { u = new URL(String(url || "")); } catch { return { id: "blank", text: t("page.blank") }; }
   const host = u.hostname.toLowerCase();
   if (u.protocol === "chrome-extension:" && host === extensionId && /\/welcome\.html$/.test(u.pathname)) return null;
   if (u.protocol === "chrome:" && /^(newtab|new-tab-page)$/.test(host) || u.protocol === "about:" || u.href === "chrome-search://local-ntp/local-ntp.html")
-    return { id: "newtab", text: "This is a new tab. Open any website, then press the Morse shortcut there.", action: "practice" };
+    return { id: "newtab", text: t("page.newtab"), action: "practice" };
   if (/^(chrome|edge|brave|opera|vivaldi|devtools|chrome-search|chrome-untrusted|view-source):$/.test(u.protocol))
-    return { id: "browser", text: "Chrome doesn't let extensions change its own pages. Any website works.", action: "practice" };
+    return { id: "browser", text: t("page.browser"), action: "practice" };
   if (u.protocol === "chrome-extension:")
-    return { id: "extension", text: "Chrome doesn't let extensions change other extensions' pages. Any website works.", action: "practice" };
+    return { id: "extension", text: t("page.extension"), action: "practice" };
   if (host === "chromewebstore.google.com" || host === "chrome.google.com" && u.pathname.startsWith("/webstore"))
-    return { id: "webstore", text: "Chrome doesn't let extensions change the Chrome Web Store. Any other site works.", action: "practice" };
+    return { id: "webstore", text: t("page.webstore"), action: "practice" };
   if (u.protocol === "file:" && !fileAccess)
-    return { id: "file", text: "To use Morse on files from your computer, turn on “Allow access to file URLs” for Morse.", action: "extension-settings" };
+    return { id: "file", text: t("page.file"), action: "extension-settings" };
   if (/\.pdf$/i.test(u.pathname) && /^(https?|file):$/.test(u.protocol))
-    return { id: "pdf", text: "Morse can't change PDFs in Chrome's PDF viewer. Web pages work." };
+    return { id: "pdf", text: t("page.pdf") };
   if (!/^(https?|file):$/.test(u.protocol))
-    return { id: "other", text: "Morse works on websites (http and https). Open one, then press the Morse shortcut." };
+    return { id: "other", text: t("page.other") };
   return null;
 }
 
 // Generation errors in plain words. `action` names a button the runtime can
 // offer: "userscripts" (open Morse's extension settings), "model" (model
 // settings, or `morse setup` on the desktop), "setup" (copy `morse setup`).
+// The words are message ids (core/locales/en.js), shown in the person's language.
 const ERROR_RULES = [
   [/user ?scripts|unsafe-eval|content.security.policy|blocks injected scripts/i,
-    "This site blocks scripts that Morse adds. Turn on “Allow User Scripts” for Morse, then try again.", "userscripts"],
+    "err.userScripts", "userscripts"],
   [/127\.0\.0\.1:7457|can't reach the morse helper|helper (is )?not running|helper.*(unreachable|offline)/i,
-    "The Morse helper isn't running on this computer. Run morse setup in a terminal to start it.", "setup"],
+    "err.helper", "setup"],
   [/(claude|codex)\b.*(ENOENT|not found|not installed)|(ENOENT|command not found).*(claude|codex)/i,
-    "Claude Code or Codex isn't installed here. Run morse setup in a terminal to pick what Morse uses.", "setup"],
+    "err.notInstalled", "setup"],
   [/\b401\b|unauthori[sz]ed|invalid.{0,20}(api.?key|token|x-api-key)|incorrect api key|authentication|not logged in|please (log|sign) ?in/i,
-    "The model didn't accept the sign-in or API key. Check it in model settings.", "model"],
+    "err.signIn", "model"],
   [/\b429\b|rate.?limit|quota|overloaded|insufficient.{0,10}(credit|balance)|credit balance/i,
-    "The model is busy or has run out of credit. Wait a minute and try again.", ""],
+    "err.busy", ""],
   [/\b(500|502|503|504|529)\b|internal server error|bad gateway|service unavailable/i,
-    "The model's server had a problem. Wait a minute and try again.", ""],
+    "err.server", ""],
   [/model.{0,40}(not found|does not exist|unknown)|no such model|\b404\b/i,
-    "That model isn't available. Pick another one in model settings.", "model"],
+    "err.noModel", "model"],
   [/could not establish connection|receiving end does not exist|extension context invalidated|message port closed/i,
-    "Morse lost touch with this page. Reload the page and try again.", ""],
+    "err.lostPage", ""],
   [/ECONNREFUSED|ECONNRESET|failed to fetch|fetch failed|connection error|networkerror|network request failed|ERR_(CONNECTION|NAME_NOT_RESOLVED|INTERNET|NETWORK)|ENOTFOUND|EAI_AGAIN|socket hang up|could not connect|connection refused/i,
-    "Morse couldn't reach the model. Make sure it's running, or choose another one in model settings.", "model"],
+    "err.unreachable", "model"],
   [/timed? ?out|ETIMEDOUT|deadline/i,
-    "The model took too long to answer. Try again, or ask for something smaller.", ""],
+    "err.slow", ""],
   [/no ```css or ```js block|did not produce a usable change|unusable/i,
-    "The model's answer had no change in it. Try saying it another way.", ""],
+    "err.noChange", ""],
   [/nothing on the page changed/i,
-    "The change didn't do anything you can see here. Point at the part you mean, or say it another way.", ""],
+    "err.nothingVisible", ""],
   [/^no result$/i,
-    "The change didn't run on this page. Reload the page and try again.", ""],
+    "err.didntRun", ""],
   [/^Unexpected end of JSON|is not valid JSON|JSON\.parse/i,
-    "Morse got an answer it couldn't read. Try again.", ""],
+    "err.unreadable", ""],
   [/TypeError|ReferenceError|SyntaxError|is not a function|is not defined|Cannot read prop|Cannot set prop|is not iterable|is not a valid selector|Failed to execute|null \(reading/i,
-    "The change the model wrote didn't work on this page. Try again, or describe it differently.", ""],
+    "err.badCode", ""],
 ];
 
 // Words and shapes that only make sense to a developer. A raw message with
@@ -94,7 +98,7 @@ const TECHNICAL = /\b[A-Z][A-Za-z]*(Error|Exception)\b|\bE[A-Z]{4,}\b|=>|[{}]|\b
 export function explainError(message) {
   const m = String(message || "");
   if (!m || /^stopped$/i.test(m)) return null;
-  for (const [re, text, action] of ERROR_RULES) if (re.test(m)) return { text, action };
+  for (const [re, id, action] of ERROR_RULES) if (re.test(m)) return { text: t(id), action, id };
   return null;
 }
 
@@ -104,11 +108,11 @@ export function explainError(message) {
 // technical message nobody could act on. Never an empty line.
 export function plainError(err) {
   const raw = String((err && err.message) || err || "").trim();
-  if (!raw) return "Something went wrong. Try again.";
-  if (/^(stopped|aborted|AbortError.*|The (user|operation) aborted.*|signal is aborted.*)$/i.test(raw)) return "Stopped. Nothing was changed.";
+  if (!raw) return t("err.generic");
+  if (/^(stopped|aborted|AbortError.*|The (user|operation) aborted.*|signal is aborted.*)$/i.test(raw)) return t("err.stopped");
   const known = explainError(raw)?.text;
   if (known) return known;
-  if (TECHNICAL.test(raw) || raw.length > 200) return "Something went wrong. Try again.";
+  if (TECHNICAL.test(raw) || raw.length > 200) return t("err.generic");
   return raw;
 }
 

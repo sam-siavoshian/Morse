@@ -13,7 +13,9 @@ export function bundleRuntime() {
   // Pure core modules shared with the hosts: hotkeys/prefs inlined with `export`
   // dropped; the edit compiler inlined in its own scope (God mode).
   const shared = ["hotkeys.js", "prefs.js"]
-    .map(f => `// ---- core/${f}\n${readFileSync(new URL(`../core/${f}`, import.meta.url), "utf8").replace(/^export /gm, "")}`);
+    .map(f => `// ---- core/${f}\n${dropImports(readFileSync(new URL(`../core/${f}`, import.meta.url), "utf8")).replace(/^export /gm, "")}`);
+  // i18n first: the modules after it use t() (their `import … from "./i18n.js"` is dropped).
+  shared.unshift(inlineModule("../core/i18n.js"));
   shared.push(inlineModule("../core/edits.js"));
   shared.push(inlineModule("../core/versions.js")); // keep iterating: mod version history (60/70)
   shared.push(inlineModule("../core/onboarding.js")); // first run and help (runtime/src/59-onboarding.js)
@@ -30,8 +32,18 @@ export function bundleRuntime() {
 
 // Inlines a dependency-free ES module as a block whose exports become locals,
 // so its private helpers can't collide with runtime names.
+// A default import of a data module (a language catalog) becomes a local
+// const; a named import from another inlined module is dropped, since its
+// names are already in scope.
 function inlineModule(rel) {
-  const src = readFileSync(new URL(rel, import.meta.url), "utf8");
+  const src = dropImports(readFileSync(new URL(rel, import.meta.url), "utf8"), new URL(rel, import.meta.url));
   const names = [...src.matchAll(/^export\s+(?:async\s+)?(?:function\*?|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)].map(m => m[1]);
   return `// ---- ${rel.replace("../", "")} (inlined)\nconst { ${names.join(", ")} } = (() => {\n${src.replace(/^export\s+/gm, "")}\nreturn { ${names.join(", ")} };\n})();`;
+}
+
+function dropImports(src, base) {
+  return src
+    .replace(/^import\s+([A-Za-z_$][\w$]*)\s+from\s+"(\.[^"]+)";?[^\n]*$/gm, (_, name, spec) =>
+      `const ${name} = ${readFileSync(new URL(spec, base), "utf8").replace(/^\s*export\s+default\s+/m, "").replace(/^\s*\/\/.*$/gm, "").trim().replace(/;$/, "")};`)
+    .replace(/^import\s*\{[^}]*\}\s*from\s*"\.\/[^"]+";?[^\n]*$/gm, "");
 }

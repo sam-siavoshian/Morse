@@ -153,7 +153,7 @@ const YourStyle = (() => {
     preview = null;
     const r = await ask("style.save", { add: p.words, adapt: p.adapt }).catch(e => { toast(plainError(e)); return null; });
     S.phase = "idle";
-    input.placeholder = PLACEHOLDER;
+    input.placeholder = PLACEHOLDER();
     closeBar();
     if (!r) return restore();
     await changed(r);
@@ -164,7 +164,7 @@ const YourStyle = (() => {
     if (!preview) return;
     preview = null;
     S.phase = "idle";
-    input.placeholder = PLACEHOLDER;
+    input.placeholder = PLACEHOLDER();
     closeBar();
     await restore();
     toast("Change undone");
