@@ -174,8 +174,10 @@ test("desktop: a click handler that never returns is stopped the same way", { sk
 });
 
 test("where a frozen page can't be stopped (the extension), a loop with no way out never starts", { skip, timeout: 90000 }, async () => {
-  // The real runtime with a stand-in host that isn't the desktop one (demo/a11y-host.js).
-  const { ctx: c, page, errors } = await openLibrary(browser);
+  // The real runtime with a stand-in host that isn't the desktop one (demo/a11y-host.js),
+  // in a browser of its own: the desktop connector attaches to everything in the other one.
+  const own = await launchBrowser();
+  const { ctx: c, page, errors } = await openLibrary(own);
   try {
     const mod = createMod({ title: "Spin", prompt: "spin", js: "morse.watch('main', () => { while (true) {} });", url: `${LIBRARY}/demo/sites/a11y/index.html` });
     await page.evaluate(m => localStorage.setItem("morse:a11y-host:mods", JSON.stringify({ [m.id]: m })), mod);
@@ -191,5 +193,5 @@ test("where a frozen page can't be stopped (the extension), a loop with no way o
     await t.waitFor({ timeout: 10000 });
     assert.equal((await t.locator(".ctl-msg span").textContent()).trim(), "Paused “Spin” because it would freeze this page");
     assert.deepEqual(errors, []);
-  } finally { await c.close(); }
+  } finally { await c.close(); await own.close(); }
 });
