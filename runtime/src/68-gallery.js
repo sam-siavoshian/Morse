@@ -116,10 +116,16 @@ const Gallery = (() => {
   function changed() { rerender(); placeChip(); }
 
   // ---- Try it, then Save or Undo
-  async function tryIt(e) {
-    // A mod that can send data elsewhere or read what you type goes through
-    // the full review first, never straight onto the page.
+  // Try it shows the install review first (what it does, where it runs, the
+  // code), with Try it in place of Install: nothing runs before that click.
+  // A mod that can send data elsewhere or read what you type goes to Install…
+  // instead, never onto the page on a trial.
+  function tryIt(e) {
     if (careful(e.mod)) return install(e);
+    if (typeof reviewImport !== "function") return install(e);
+    return reviewImport(JSON.stringify(installable(e)), { trial: { run: () => startTrial(e) } });
+  }
+  async function startTrial(e) {
     if (st.trial) await endTrial({ quiet: true });
     st.trial = { id: e.id, title: e.mod.title || e.title };
     st.expanded = true;
@@ -143,7 +149,9 @@ const Gallery = (() => {
     if (!e) return endTrial({ quiet: true });
     const now = new Date().toISOString();
     const mod = { ...installable(e), importedFrom: "gallery", importedAt: now, created: now, updated: now };
-    try { await call("mods.save", { mod }); }
+    // Kept after its review: saved the way Install… saves (the host keeps the
+    // gallery's match, which mods.save would refuse to widen to).
+    try { await call("control.install", { url: location.href, app: S.app, mods: [mod], kind: "mod" }); }
     catch (err) { return toast(`Couldn't save “${t.title}”. ${plainError(err)}`); }
     st.trial = null;
     hideStrip();

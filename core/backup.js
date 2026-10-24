@@ -44,9 +44,15 @@ export async function parseImport(source) {
 // it came from and when. A backup keeps each mod's on/off state and history.
 export function prepareInstall(mod, { kind = "link", where = {}, now = new Date() } = {}) {
   const m = validateMod({ ...mod });
+  // Hand-written files may leave out the dates the lists sort and show by.
+  for (const k of ["created", "updated"]) if (typeof m[k] !== "string" || isNaN(Date.parse(m[k]))) m[k] = now.toISOString();
   const match = m.match && Array.isArray(m.match.hosts) ? m.match : { hosts: [hostOf(where.url)], app: where.app || null };
   if (kind === "backup") {
     return { ...m, match, enabled: m.enabled !== false, imported: true, importedFrom: m.imported ? m.importedFrom || "link" : "backup", importedAt: m.importedAt || now.toISOString() };
   }
-  return { ...m, match, enabled: true, imported: true, importedFrom: kind === "mod" ? "file" : "link", importedAt: now.toISOString() };
+  // A shared mod is the code its review showed: no earlier versions ride along
+  // (History could bring back code nobody reviewed). Links never carry one
+  // (stripLocal), so this only drops what a hand-made link or file added.
+  const { history, ...shared } = m;
+  return { ...shared, match, enabled: true, imported: true, importedFrom: kind === "mod" ? "file" : "link", importedAt: now.toISOString() };
 }

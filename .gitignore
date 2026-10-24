@@ -3,3 +3,7 @@ node_modules/
 .DS_Store
 dist/
 .claude/worktrees/
+
+# release artifacts
+/morse-cli-*.tgz
+*.zip

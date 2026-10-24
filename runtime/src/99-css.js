@@ -235,6 +235,10 @@ function CSS() {
   .health b { color: var(--m-text); font-weight: 600; }
   .health b::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 7px 1px 0; border-radius: 1.5px; background: var(--m-danger); vertical-align: middle; }
   .panel .health button { flex: none; height: 24px; padding: 0 10px; }
+  /* two buttons (a paused mod, 64-guard.js): the words get the whole row, the buttons go under them on the right */
+  .health.guard { flex-wrap: wrap; row-gap: 8px; }
+  .health.guard p { flex-basis: 100%; }
+  .health.guard p + button { margin-left: auto; }
   .versions { grid-column: 2; list-style: none; margin: 8px 0 0 -8px; padding: 4px; border: 1px solid var(--m-line); border-radius: var(--m-r-sm); }
   .versions li { margin: 0; }
   .versions li.cur, .panel .versions button { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; width: 100%; height: 24px; padding: 4px 6px;
