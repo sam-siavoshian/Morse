@@ -1,0 +1,50 @@
+# Publishes the site, the share page and the gallery list to GitHub Pages:
+# https://sam-siavoshian.github.io/RRAA/site/ and .../RRAA/share/install.html.
+# The layout mirrors the repo (see scripts/build-pages.js), because share links
+# (core/mod.js SHARE_BASE), the gallery list (core/gallery.js) and the
+# extension's install handshake (extension/host.js SHARE_ORIGINS) use those paths.
+#
+# One-time setup: Settings -> Pages -> Build and deployment -> Source: GitHub Actions.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", "share/**", "core/**", "design/**", "docs/launch/**", "docs/privacy.md", "scripts/build-pages.js", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build dist/pages (fails on a broken link or an out-of-date privacy page)
+        run: |
+          node scripts/build-pages.js
+          git diff --exit-code -- site/privacy.html || (echo "site/privacy.html is out of date with docs/privacy.md. Run npm run pages and commit." && exit 1)
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/pages
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}site/
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

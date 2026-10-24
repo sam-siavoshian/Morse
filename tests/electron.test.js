@@ -148,7 +148,7 @@ const skip = noRuntime || (process.platform === "linux" && !process.env.DISPLAY 
 if (skip) console.log(`electron.test.js: skipping the real Electron app: ${skip}`);
 
 const ROOT = process.getuid?.() === 0;
-const ENV = { ...process.env, MORSE_HOME: home, MORSE_PROVIDER: "demo", FORCE_COLOR: "0" };
+const ENV = { ...process.env, MORSE_HOME: home, MORSE_PROVIDER: "demo", FORCE_COLOR: "0", MORSE_DEBUG: "1" }; // MORSE_DEBUG: the runtime's status attribute (the app has no navigator.webdriver)
 const procs = [];
 let built = null;
 const tunesApp = async () => built ||= await buildTunes(path.join(home, "Tunes"));

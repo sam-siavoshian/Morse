@@ -82,7 +82,7 @@ function prune(safe) {
   return out;
 }
 
-// A page loaded. -> { state, suspect }
+// A page loaded. -> { state, suspect, off }
 export function safeBoot(c, key, now) {
   const s = normalizeControl(c);
   const r = { strikes: 0, blame: null, suspect: null, ...s.safe[key] };
@@ -95,7 +95,17 @@ export function safeBoot(c, key, now) {
   if (r.strikes >= SAFE_STRIKES && r.blame) r.suspect = { id: r.blame.id, title: r.blame.title || "", strikes: r.strikes };
   r.s = { boot: now, at: 0, alive: now, applied: [] };
   s.safe = prune({ ...s.safe, [key]: r });
-  return { state: s, suspect: r.suspect };
+  return { state: s, suspect: r.suspect, off: r.off === true };
+}
+
+// The off switch for this site in this tab: kept by the host, so the page
+// (or a mod running in it) can't clear it from its own storage.
+export function safeOff(c, key, on) {
+  const s = normalizeControl(c);
+  const r = { strikes: 0, blame: null, suspect: null, ...s.safe[key] };
+  if (on) r.off = true; else delete r.off;
+  s.safe = { ...s.safe, [key]: r };
+  return s;
 }
 
 // A mod ran on the page.

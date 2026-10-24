@@ -6,6 +6,7 @@ import { parseModResponse, liveCss } from "./parse.js";
 import { parseReply } from "./answer.js"; // Ask and find
 import { streamChat } from "./providers.js";
 import { selectorsIn, selectorLists } from "./heal.js"; // self-heal hook: shared selector parsing
+import { draftHarm, cssHidesPage } from "./guard.js"; // guard hook: code that would obviously break the page
 
 // `probe(selectors)` (optional, from the host) returns { fp, unmatched }: a
 // fingerprint of what the page renders and which of the given selectors match
@@ -48,7 +49,7 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
           return;
         }
         const css = liveCss(parseModResponse(raw).css); // speed: each finished property, not only finished rules
-        if (css !== lastCss && beforeDone) { lastCss = css; if (css.trim()) mark("firstCss"); emit({ type: "css", css }); }
+        if (css !== lastCss && beforeDone && !cssHidesPage(css)) { lastCss = css; if (css.trim()) mark("firstCss"); emit({ type: "css", css }); } // guard hook: never show a page-hiding rule
       },
     });
     // Ask and find: an answer is final as soon as it's written; nothing runs.
@@ -59,10 +60,19 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     }
     const draft = parseModResponse(raw);
     await beforeP;
-    if (draft.css.trim()) mark("firstCss");
-    emit({ type: "css", css: draft.css });
+    // ---- guard: code that would obviously break the page never runs; the
+    // model gets one more try with what was wrong (core/guard.js)
+    const harm = draftHarm(draft, `${request} ${base?.prompt || ""}`);
+    if (draft.css.trim() && !harm) mark("firstCss");
+    emit({ type: "css", css: harm ? "" : draft.css });
     mark("modelDone");
     last = { ...draft, raw, attempts: attempt, ms: Date.now() - started, repairs, timing };
+    if (harm) {
+      previous = { raw, error: harm.model };
+      repairs.push(harm.model);
+      last = { ...last, css: "", js: "", error: harm.user };
+      continue;
+    }
     if (!draft.css.trim() && !draft.js.trim()) {
       previous = { raw, error: "The reply had no ```css or ```js block (or ANSWER: for a question)." };
       repairs.push(previous.error);
