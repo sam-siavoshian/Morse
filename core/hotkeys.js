@@ -15,6 +15,7 @@ export const HOTKEY_ACTIONS = [
   { id: "talk", label: "Push to talk", hold: true },
   { id: "mods", label: "Mods panel" },
   { id: "godmode", label: "Edit tools" },
+  { id: "off", label: "Turn off all mods" }, // the off switch (runtime/src/63-control.js)
 ];
 
 export function detectPlatform(nav = globalThis.navigator) {
@@ -28,7 +29,7 @@ export function detectPlatform(nav = globalThis.navigator) {
 // Push to talk defaults to holding the open hotkey: tap to open, hold to talk.
 export function defaultHotkeys(platform) {
   const open = platform === "win" ? "Ctrl+Shift+Space" : "Alt+Space";
-  return { open, talk: open, mods: "Alt+Shift+KeyM", godmode: "Alt+Shift+KeyG" };
+  return { open, talk: open, mods: "Alt+Shift+KeyM", godmode: "Alt+Shift+KeyG", off: "Alt+Shift+Digit0" };
 }
 
 const HK_MOD_ALIASES = {

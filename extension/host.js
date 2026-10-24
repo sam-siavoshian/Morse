@@ -19,11 +19,12 @@
   // The share page (share/install.html) asks to install through us.
   document.documentElement.dataset.morseExtension = "1";
   // Only the official share page may ask, and it only *asks*: the runtime
-  // shows the mod and installs it only if the user clicks Install.
+  // shows Morse's own review (runtime/src/63-control.js, in the closed shadow
+  // root the page can't click) and installs only if the person clicks Install.
   const SHARE_ORIGINS = ["https://sam-siavoshian.github.io", "http://127.0.0.1:8787"];
   window.addEventListener("message", e => {
     if (e.source !== window || !e.data || typeof e.data.morseInstall !== "string") return;
     if (!SHARE_ORIGINS.includes(location.origin)) return;
-    subs.forEach(f => f({ type: "install.request", source: e.data.morseInstall }));
+    subs.forEach(f => f({ type: "install.request", source: e.data.morseInstall.slice(0, 2_000_000) }));
   });
 })();

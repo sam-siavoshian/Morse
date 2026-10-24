@@ -32,6 +32,9 @@ await esbuild.build({
   legalComments: "none", logLevel: "warning",
 });
 await fs.copyFile(path.join(root, "design", "tokens.css"), path.join(out, "tokens.css"));
+// Extension pages (popup, welcome) import ./core/*.js directly; only the worker is bundled.
+await fs.mkdir(path.join(out, "core"), { recursive: true });
+for (const f of await fs.readdir(path.join(root, "core"))) await fs.copyFile(path.join(root, "core", f), path.join(out, "core", f));
 // The options page is the popup's model section, full-page.
 const popup = await fs.readFile(path.join(root, "extension", "popup.html"), "utf8");
 await fs.writeFile(path.join(out, "options.html"), popup.replace("<title>Morse</title>", "<title>Morse settings</title>").replace("<body>", '<body data-page="options">'));

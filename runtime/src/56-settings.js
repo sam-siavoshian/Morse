@@ -56,7 +56,7 @@ function paintSettings() {
       <div class="ctl">
         ${rec && id !== "open" ? `<button type="button" class="tbtn" data-off="${id}">Turn off</button>` : ""}
         ${!rec && custom ? `<button type="button" class="tbtn" data-reset="${id}" title="Back to ${esc(formatCombo(resolveHotkeys({}, PLATFORM)[id], PLATFORM))}">Reset</button>` : ""}
-        <button type="button" class="hk" data-hk="${id}" aria-describedby="hk-${id}-msg" aria-label="${esc(label)} shortcut: ${esc(hotkeyText(id) || "off")}. Press to change.">${shown}</button>
+        <button type="button" class="hk field" data-hk="${id}" aria-describedby="hk-${id}-msg" aria-label="${esc(label)} shortcut: ${esc(hotkeyText(id) || "off")}. Press to change.">${shown}</button>
       </div>
     </div>`;
   }).join("");

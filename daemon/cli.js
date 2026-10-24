@@ -11,6 +11,7 @@ import { detectHarnesses, validModel } from "./harness.js";
 import { createBridge, startPairing, VERSION } from "./bridge.js";
 import { streamChat, HELPER_PORT } from "../core/providers.js";
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
+import { pauseCli, resumeCli, exportAllCli, importCli, codeCli } from "./control.js"; // user control
 
 const W = s => `\x1b[97m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`;
 const WARN = s => `\x1b[33m${s}\x1b[0m`, ERR = s => `\x1b[31m${s}\x1b[0m`;
@@ -117,9 +118,17 @@ ${B("Mods")}
   morse mods                list your mods
   morse rm <id>             delete a mod
   morse export <id>         save a mod file, a Tampermonkey file and a share link
-  morse install <link|file> install a mod from a share link or file
+  morse install <link|file> install from a share link, a mod file or a backup
+                            (says what each mod does and asks first; --yes to skip asking)
+  morse code <id>           what a mod does, in plain words, and its code
+  morse export --all        back up every mod to one file  [--out <file>]
 
-In a connected app, press ${B("Alt+Space")} to open Morse and ${B("Alt+Shift+M")} to see your mods.
+${B("Pause")}
+  morse pause [site|app]    stop every mod everywhere, or on one site or app (they stay saved)
+  morse resume [site|app]   start them again  [--all also resumes every single site]
+
+In a connected app, press ${B("Alt+Space")} to open Morse, ${B("Alt+Shift+M")} to see your mods
+and ${B("Alt+Shift+0")} to turn them all off.
 For websites: run npm run build, load dist/extension in Chrome, then run ${B("morse serve")} and type the code into Morse.`;
 
 async function main() {
@@ -158,6 +167,7 @@ async function main() {
       console.log("Deleted " + f._[0]);
       break;
     case "export": {
+      if (f.all) return exportAllCli(f); // user control: back up everything
       const mod = (await listMods()).find(m => m.id === f._[0]);
       if (!mod) throw new Error(`No mod with the id ${f._[0]}. Run morse mods to see them.`);
       const slug = mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -166,14 +176,11 @@ async function main() {
       console.log(await encodeShare(mod));
       break;
     }
-    case "install": {
-      const src = f._[0];
-      const { readFile } = await import("node:fs/promises");
-      const mod = src.includes("#m=") ? await decodeShare(src) : JSON.parse(await readFile(src, "utf8"));
-      await saveMod({ ...mod, enabled: true, imported: true });
-      console.log(`Installed ${B(mod.title)} for ${mod.match.app || mod.match.hosts.join(", ")}`);
-      break;
-    }
+    case "install": // user control (control.js): says what it does, then asks
+    case "import": await importCli(f); break;
+    case "pause": await pauseCli(f); break;
+    case "resume": await resumeCli(f); break;
+    case "code": await codeCli(f); break;
     case "model":
     case "config": {
       if (f["api-key"] !== undefined) throw new Error("--api-key is gone. Use --anthropic-key or --openai-key instead.");

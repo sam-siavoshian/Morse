@@ -6,7 +6,7 @@
 // Pure and dependency-free: runtime/bundle.js inlines it into the runtime.
 
 export const DEFAULT_PREFS = {
-  hotkeys: { open: "", talk: "", mods: "", godmode: "" }, // "" = platform default, "none" = off
+  hotkeys: { open: "", talk: "", mods: "", godmode: "", off: "" }, // "" = platform default, "none" = off
   voice: { autoSubmit: false },
   welcome: true,
   effects: "",        // "" = follow prefers-reduced-motion (full, or subtle when reduced); "full" | "subtle" | "off"
