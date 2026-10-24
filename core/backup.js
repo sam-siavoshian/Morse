@@ -58,6 +58,9 @@ export async function parseImport(source) {
 // code the review showed.
 export function prepareInstall(mod, { kind = "link", where = {}, now = new Date() } = {}) {
   const m = asReviewed(validateMod({ ...mod }));
+  // Your style is never a mod in a file: one marked so would be left out of
+  // the Mods panel's list (it lists Your style apart), running where nobody sees it.
+  if (m.kind === "style") delete m.kind;
   // Hand-written files may leave out the dates the lists sort and show by.
   for (const k of ["created", "updated"]) if (typeof m[k] !== "string" || isNaN(Date.parse(m[k]))) m[k] = now.toISOString();
   const match = m.match && Array.isArray(m.match.hosts) ? m.match : { hosts: [hostOf(where.url)], app: where.app || null };
@@ -66,7 +69,10 @@ export function prepareInstall(mod, { kind = "link", where = {}, now = new Date(
   }
   // A shared mod is the code its review showed: no earlier versions ride along
   // (History could bring back code nobody reviewed). Links never carry one
-  // (stripLocal), so this only drops what a hand-made link or file added.
-  const { history, pack, ...shared } = m; // packs hook: a single mod can't claim to be part of one of your packs
+  // (stripLocal), so this only drops what a hand-made link or file added; the
+  // same for what describes this computer (guard: paused, guardOk would skip
+  // the check for code that hides the whole page; self-heal: fp) and a fit of
+  // Your style (parent), which only the person's own style makes.
+  const { history, pack, paused, guardOk, fp, parent, ...shared } = m; // packs hook: a single mod can't claim to be part of one of your packs
   return { ...shared, match, enabled: true, imported: true, importedFrom: kind === "mod" ? "file" : "link", importedAt: now.toISOString() };
 }

@@ -285,14 +285,23 @@ test("real Electron: launch, hotkey, point, change, save, quit, relaunch, second
   await w.key(" ", "Space", { mods: 2 | 8, vk: 32 });
   await until(async () => (await w.status())?.open, 5000, "the bar to open on Ctrl+Shift+Space");
 
-  // Point at the player controls and pick them.
+  // Point at the player controls and pick them. Chromium delivers mouse moves
+  // on animation frames, and right after the bar opens on a busy machine the
+  // first ones can be lost: the click then lands with nothing pointed at and
+  // the bar still says "Point at anything". Like a person would, move and
+  // click again until the bar has something picked (its input then has focus).
   const [x, y] = await w.center('[data-testid="player-controls"] .btns');
-  await w.mouse("mouseMoved", x - 40, y);
-  await w.mouse("mouseMoved", x, y);
-  await sleep(300);
-  await w.mouse("mousePressed", x, y);
-  await w.mouse("mouseReleased", x, y);
-  await sleep(200);
+  for (let i = 0; ; i++) {
+    await w.mouse("mouseMoved", x - 40, y);
+    await w.mouse("mouseMoved", x, y);
+    await sleep(300);
+    await w.mouse("mousePressed", x, y);
+    await w.mouse("mouseReleased", x, y);
+    try {
+      await until(async () => { const s = await w.status(); return s && !/^Point at/.test(s.hint || "") && s.focus; }, 2000, "something picked");
+      break;
+    } catch (e) { if (i >= 5) throw e; }
+  }
   await w.type("add a sleep timer that pauses the music after a while");
   await until(async () => /sleep timer/.test((await w.status())?.input || ""), 5000, "the request in the bar");
   await w.key("Enter", "Enter", { text: "\r", vk: 13 });

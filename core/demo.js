@@ -172,6 +172,12 @@ morse.watch("#toolbar", bar => {
 });
 `);
 
+// The effect check (core/engine.js): the first draft's selector matches
+// nothing, so it changes nothing; the repair round names it and the second
+// draft paints the page.
+const GOLD_MISS = reply("Gold page", `.morse-demo-nothing-here { background: gold !important; }`, "");
+const GOLD = reply("Gold page", `body { background: rgb(255, 215, 0) !important; }`, "");
+
 // Your style (core/style.js adaptRequest): the demo model's fit for a site.
 const STYLE_FIT = reply("Buttons keep their words on one line", `
 :where(button, [role=button], nav a) {
@@ -280,6 +286,7 @@ export function demoResponse(messages) {
   if (answer) return answer;
   const fixes = fixesDemo(request); // Easier to use: Check this page
   if (fixes) return fixes;
+  if (/\bgold\b/i.test(request)) return isRetry ? GOLD : GOLD_MISS;
   if (/^Your style, for this site\./.test(request)) return STYLE_FIT; // your-style hook: fit it to this site
   for (const [re, resp] of RULES) {
     if (!re.test(request)) continue;
