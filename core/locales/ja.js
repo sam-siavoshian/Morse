@@ -691,6 +691,7 @@ export default {
   "gm.frame": "<b>この部分は別のページです{from}。</b>Morse は隠す・移動・サイズ変更はできますが、中身の編集はできません。",
   "gm.frameFrom": "（{host}）",
   "gm.hint": "変更を説明 · <kbd>{key}</kbd> で編集ツール · <kbd>Esc</kbd> で閉じる",
+  "gm.hintTarget": "変更を説明 · <kbd>{key}</kbd> で編集ツール", // with a part chosen, Alt+↑ takes the place of Esc in the hint (45-godmode.js)
   "gm.hid": "{label} を隠しました。{key} で元に戻せます。",
   "gm.formField": "入力欄の文字はここでは編集できません。A を押して変更を説明してください。",
   "gm.noText": "ここには編集できる文字がありません",
@@ -1272,7 +1273,6 @@ export default {
   "ys.alsoDoes": "「{extra}」もします。",
   "ys.addMore": "スタイルに追加…",
   "ys.changes": { other: "{n} 件の変更" },
-  "ys.everySite": "すべてのサイト",
   "ys.saved": "スタイルを保存しました。すべてのサイトとアプリで使われます。",
   "ys.savedWeb": "スタイルを保存しました。Chrome のすべてのサイトで使われます。",
   "ys.savedApps": "スタイルを保存しました。Morse で開くすべてのアプリで使われます。",

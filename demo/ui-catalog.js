@@ -2403,6 +2403,7 @@ async function pageShot(page, area, state, theme, target, opts = {}) {
     for (const el of document.querySelectorAll("body *")) {
       const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
       if (!r.width || cs.visibility === "hidden" || el.closest("[hidden]")) continue;
+      if (r.width <= 1 && /rect\(0px/.test(cs.clip)) continue; // visually hidden, for screen readers (.sr-only)
       if (r.right > W + 0.5 && cs.position !== "fixed" && !el.closest("[data-morse-ui]")) {
         // inside something that scrolls or clips sideways, it's that thing's business
         let a = el.parentElement, held = false;
@@ -2439,13 +2440,12 @@ async function pageFocus(page, loc) {
 // ---- Morse Desktop (desktop-app/): the real app under Xvfb, driven the way
 // tests/desktop-app-ui.test.js and demo/shoot-desktop-app.js drive it. Tunes
 // (demo/electron-app) opens with Morse for real; the apps this machine has are
-// listed with their own icons (a home with their menu entries, as an AppImage
-// integration leaves them); `claude` is demo/fake-claude (Claude Code · sonnet,
+// listed with their own icons (desktop-app/icons.js finds them, inside AppImages
+// too); `claude` is demo/fake-claude (Claude Code · sonnet,
 // answering the check at once, late, or not at all, so each shot is the same).
 async function desktopStates() {
   if (!process.env.DISPLAY) { console.warn("  ! Morse Desktop needs DISPLAY (Xvfb :99)"); return; }
   const os = await import("node:os");
-  const { execFileSync } = await import("node:child_process");
   const { _electron } = createRequire(import.meta.url)("playwright");
   const { electronExe, tunesApp } = await import("../tests/helpers/tunes.js");
   if (!electronExe) { console.warn("  ! no Electron runtime (npm install --prefix ~/.cache/morse/electron electron)"); return; }
@@ -2456,22 +2456,8 @@ async function desktopStates() {
   const { exe: tunes } = await tunesApp();
   // The apps on this machine, by their files; their icons from their own packages.
   const found = [["vscodium", "/usr/share/codium/codium"], ["obsidian", path.join(realHome, "Applications/Obsidian-1.14.5.AppImage")], ["joplin", path.join(realHome, ".joplin/Joplin.AppImage")]].filter(([, f]) => existsSync(f));
-  const fakeHome = path.join(tmp, "home");
+  const fakeHome = path.join(tmp, "home"); // a home of its own: no menu entries or icons but the apps' own (desktop-app/icons.js reads them, AppImages too)
   await fs.mkdir(fakeHome, { recursive: true });
-  for (const [id, file] of found) {
-    if (!/\.AppImage$/.test(file)) continue;
-    const dir = path.join(tmp, "x-" + id);
-    await fs.mkdir(dir, { recursive: true });
-    try { execFileSync(file, ["--appimage-extract", `usr/share/icons/hicolor/256x256/apps/${id}.png`], { cwd: dir, stdio: "ignore", timeout: 120000 }); } catch {}
-    const png = path.join(dir, "squashfs-root/usr/share/icons/hicolor/256x256/apps", `${id}.png`);
-    if (existsSync(png)) {
-      const icons = path.join(fakeHome, ".local/share/icons/hicolor/256x256/apps"), menu = path.join(fakeHome, ".local/share/applications");
-      await fs.mkdir(icons, { recursive: true }); await fs.mkdir(menu, { recursive: true });
-      await fs.copyFile(png, path.join(icons, `${id}.png`));
-      await fs.writeFile(path.join(menu, `appimagekit-${id}.desktop`), `[Desktop Entry]\nType=Application\nName=${id[0].toUpperCase() + id.slice(1)}\nExec=${file} %u\nIcon=${id}\n`);
-    }
-    await fs.rm(dir, { recursive: true, force: true });
-  }
   const ctl = path.join(tmp, "fake-claude.json");
   const say = o => fs.writeFile(ctl, JSON.stringify(o));
   await say({});
@@ -2510,7 +2496,7 @@ async function desktopStates() {
     await setTheme(app, "dark"); await w.emulateMedia({ colorScheme: "dark" }); await sleep(200);
     if (/focus/.test(state)) await w.evaluate(() => document.activeElement?.blur());
   }
-  const tab = async (w, name) => { await w.click(`nav button[data-tab="${name}"]`); await sleep(350); await w.mouse.move(2, 500); };
+  const tab = async (w, name) => { await w.click(`nav button[data-tab="${name}"]`); await sleep(350); await w.mouse.move(4, 710); };
   async function quit(app) {
     const pid = app.process().pid;
     await Promise.race([app.evaluate(({ app }) => app.quit()).catch(() => {}), sleep(8000)]);
@@ -2524,7 +2510,7 @@ async function desktopStates() {
     let { app, w, port } = await launch("check", { desktop: { helper: false, apps: [tunes] }, config: { provider: "claude-code", models: { "claude-code": "sonnet" } } });
     await w.locator("#first").waitFor();
     await w.waitForFunction(() => /Checking/.test(document.querySelector("#first-model")?.textContent || ""), null, { timeout: 60000 });
-    await w.mouse.move(2, 500);
+    await w.mouse.move(4, 710);
     await pageShot(w, "desktop", "first-run-checking", "dark", null, { suffix: "", note: "the model found by itself, checked once: the radar pulses while it answers" });
     await quit(app);
     await say({ delay: 1200 });
@@ -2540,19 +2526,19 @@ async function desktopStates() {
     await w.click("#first-skip");
     await w.locator(".app").waitFor();
     await w.locator('li[data-app="tunes"]').waitFor();
-    await w.mouse.move(2, 500); await sleep(500);
+    await w.mouse.move(4, 710); await sleep(500);
     await both(app, w, "apps", null, { note: "Your apps: each app's own icon (an app without one gets the apps glyph, never a letter)" });
     // Tunes, opened with Morse for real
     await w.locator('li[data-app="tunes"]').getByRole("button", { name: "Open with Morse" }).click();
     await w.waitForFunction(() => /Opening|Connecting/.test(document.querySelector('li[data-app="tunes"]')?.textContent || ""), null, { timeout: 20000 }).catch(() => {});
     await pageShot(w, "desktop", "apps-opening", "dark", w.locator("#app-list"), { suffix: "", note: "opening Tunes with Morse: the radar pulses in its row" });
     await w.locator('li[data-app="tunes"].connected').waitFor({ timeout: 120000 });
-    await w.mouse.move(2, 500); await sleep(400);
+    await w.mouse.move(4, 710); await sleep(400);
     await both(app, w, "apps-connected", null, { note: "Tunes connected: 1 window, 2 mods on; the nav says 1 on" });
     await w.locator('li[data-app="tunes"] button').hover(); await sleep(200);
     await both(app, w, "apps-row-hover", () => w.locator('li[data-app="tunes"]'), { themes: ["dark"], pad: 8 });
     await both(app, w, "apps-button-focus", () => w.locator('li[data-app="tunes"]'), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator('li[data-app="tunes"] button'))] });
-    await w.mouse.move(2, 500);
+    await w.mouse.move(4, 710);
     // a launch that failed says why, in the window (the real words: daemon/apps.js launchFailure)
     await w.evaluate(() => { const e = document.getElementById("apps-error"); e.textContent = "Joplin quit right after it started (exit code 1), before Morse could connect. You're running as root, and Electron and Chromium apps won't start as root with their sandbox on. Run Morse as your own user. If you really must use root: morse launch joplin -- --no-sandbox"; e.hidden = false; });
     await both(app, w, "apps-error", null, { note: "an app that wouldn't start: Morse's own words for why (daemon/apps.js launchFailure)" });
@@ -2568,12 +2554,12 @@ async function desktopStates() {
     await both(app, w, "model", null, { note: "Claude Code · sonnet, answered; the real Claude mark" });
     await w.click("#change-model");
     await w.waitForSelector("#choice-list .choice");
-    await w.mouse.move(2, 500); await sleep(500);
+    await w.mouse.move(4, 710); await sleep(500);
     await both(app, w, "model-choices", null, { note: "three choices with their real marks: Ready, Not installed, and nothing for a key" });
-    await w.click('[data-howto="codex"]'); await w.mouse.move(2, 500); await sleep(300);
+    await w.click('[data-howto="codex"]'); await w.mouse.move(4, 710); await sleep(300);
     await both(app, w, "model-howto", () => w.locator("#choices"), { note: "How to install: the one command, and Look again" });
     await both(app, w, "model-howto-focus", () => w.locator('[data-choice="codex"]'), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator('[data-howto="codex"]'))] });
-    await w.click('[data-choice="api-key"]'); await w.mouse.move(2, 500); await sleep(300);
+    await w.click('[data-choice="api-key"]'); await w.mouse.move(4, 710); await sleep(300);
     await both(app, w, "model-key", () => w.locator("#choices"), { note: "API key: the field, and where it stays" });
     await both(app, w, "model-choice-focus", () => w.locator('[data-choice="api-key"]'), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator('[data-choice="api-key"] input'))] });
     await w.click("#cancel-choice");
@@ -2585,7 +2571,7 @@ async function desktopStates() {
     await say({ fail: "You've hit your usage limit. It resets at 4pm." });
     await w.click("#check-model");
     await w.waitForFunction(() => /Didn't answer/.test(document.querySelector("#model-live").textContent), null, { timeout: 60000 });
-    await w.mouse.move(2, 500);
+    await w.mouse.move(4, 710);
     await both(app, w, "model-failed", () => w.locator(".card.current"), { note: "a check that failed says why, in the model's own words; the nav shows !" });
     await say({});
     await w.click("#check-model");
@@ -2596,7 +2582,7 @@ async function desktopStates() {
     await both(app, w, "chrome", null, { note: "the Morse helper on, the ways to connect Chrome" });
     await w.click("#new-code");
     await w.waitForSelector("#pair-code:not([hidden])");
-    await w.mouse.move(2, 500);
+    await w.mouse.move(4, 710);
     await both(app, w, "chrome-code", null, { note: "a code to type in Chrome, for a few minutes" });
     await w.click("#helper-on"); await sleep(1500);
     await both(app, w, "chrome-off", () => w.locator("section#chrome .card").first(), { note: "the helper off: Chrome can't use the model" });
@@ -2632,7 +2618,7 @@ async function desktopStates() {
     await pageShot(w, "desktop", "checks-running", "dark", null, { suffix: "" });
     await w.waitForFunction(() => !document.querySelector("#run-checks").disabled, null, { timeout: 120000 });
     await say({});
-    await w.mouse.move(2, 500);
+    await w.mouse.move(4, 710);
     await both(app, w, "checks", null, { note: "what Morse found; “You're root” is this test machine" });
     await both(app, w, "nav-focus", () => w.locator("nav"), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator('nav button[data-tab="apps"]'))] });
 
@@ -2655,11 +2641,11 @@ async function desktopStates() {
     // ---- 2. a computer with no model and no app Morse can open
     ({ app, w } = await launch("empty", { desktop: { helper: false, apps: ["/bin/true"] }, config: { provider: "none" } }));
     await w.locator("#first").waitFor();
-    await w.mouse.move(2, 500); await sleep(500);
+    await w.mouse.move(4, 710); await sleep(500);
     await both(app, w, "first-run-no-model", null, { note: "nothing found: paste a key, or other ways to connect a model" });
     await both(app, w, "first-run-key-focus", () => w.locator("#first-key"), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator("#first-key-input"))] });
     await w.click("#first-skip");
-    await w.locator(".app").waitFor(); await w.mouse.move(2, 500); await sleep(500);
+    await w.locator(".app").waitFor(); await w.mouse.move(4, 710); await sleep(500);
     await both(app, w, "apps-empty", null, { note: "Choose a model first; an app Morse can't connect to says why" });
     await tab(w, "model");
     await both(app, w, "model-none", null, { note: "no model yet: Choose…" });
@@ -2851,7 +2837,7 @@ async function siteStates() {
         await pageShot(p, "site", "nav-open", "dark", null, { suffix: `-${width}`, checks: [await pageFocus(p, p.locator(".nav.is-open a").first())], note: "the nav sheet on a phone" });
         await p.click(".nav-toggle"); await sleep(300);
       } else {
-        await pageShot(p, "site", "nav-focus", "dark", p.locator("header.nav"), { suffix: `-${width}`, pad: 4, axe: false, checks: [await pageFocus(p, p.locator("header.nav a[href]").nth(1))] });
+        await pageShot(p, "site", "nav-focus", "dark", p.locator("header.nav"), { suffix: `-${width}`, pad: 4, axe: false, checks: [await pageFocus(p, p.locator("header.nav a[href]:visible").nth(1))] });
       }
       // Try it here
       await p.evaluate(() => document.querySelector("#try .try-window").scrollIntoView({ block: "center" }));

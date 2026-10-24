@@ -690,6 +690,7 @@ export default {
   "gm.frame": "<b>这部分是另一个页面{from}。</b>Morse 可以隐藏、移动或调整它的大小，但不能编辑里面的内容。",
   "gm.frameFrom": "（来自 {host}）",
   "gm.hint": "描述一个改动 · <kbd>{key}</kbd> 打开编辑工具 · <kbd>Esc</kbd> 关闭",
+  "gm.hintTarget": "描述一个改动 · <kbd>{key}</kbd> 打开编辑工具", // with a part chosen, Alt+↑ takes the place of Esc in the hint (45-godmode.js)
   "gm.hid": "已隐藏 {label}。按 {key} 撤销。",
   "gm.formField": "表单输入框里的文字不能在这里编辑。按 A 来描述改动。",
   "gm.noText": "这里没有可编辑的文字",
@@ -1271,7 +1272,6 @@ export default {
   "ys.alsoDoes": "还会做“{extra}”。",
   "ys.addMore": "给你的风格加点东西…",
   "ys.changes": { other: "{n} 处改动" },
-  "ys.everySite": "所有网站",
   "ys.saved": "你的风格已保存。它会跟着你到每个网站和应用。",
   "ys.savedWeb": "你的风格已保存。它会跟着你到 Chrome 中的每个网站。",
   "ys.savedApps": "你的风格已保存。它会跟着你到你用 Morse 打开的每个应用。",

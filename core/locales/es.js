@@ -690,6 +690,7 @@ export default {
   "gm.frame": "<b>Esta parte es otra página{from}.</b> Morse puede ocultarla, moverla o cambiar su tamaño, pero no editar lo que hay dentro.",
   "gm.frameFrom": " de {host}",
   "gm.hint": "Describe un cambio · <kbd>{key}</kbd> herramientas · <kbd>Esc</kbd> cierra",
+  "gm.hintTarget": "Describe un cambio · <kbd>{key}</kbd> herramientas", // with a part chosen, Alt+↑ takes the place of Esc in the hint (45-godmode.js)
   "gm.hid": "Se ocultó {label}. Pulsa {key} para deshacerlo.",
   "gm.formField": "El texto de un campo de formulario no se puede editar aquí. Pulsa A para describir el cambio.",
   "gm.noText": "Aquí no hay texto que editar",
@@ -1271,7 +1272,6 @@ export default {
   "ys.alsoDoes": "También hace “{extra}”.",
   "ys.addMore": "Añade algo a tu estilo…",
   "ys.changes": { one: "{n} cambio", other: "{n} cambios" },
-  "ys.everySite": "cada sitio",
   "ys.saved": "Se guardó tu estilo. Te acompaña en cada sitio y app.",
   "ys.savedWeb": "Se guardó tu estilo. Te acompaña en cada sitio en Chrome.",
   "ys.savedApps": "Se guardó tu estilo. Te acompaña en cada app que abres con Morse.",

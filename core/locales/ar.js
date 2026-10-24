@@ -691,6 +691,7 @@ export default {
   "gm.frame": "<b>هذا الجزء صفحة أخرى{from}.</b> يستطيع Morse إخفاءه أو نقله أو تغيير حجمه، لكن لا يستطيع تحرير ما بداخله.",
   "gm.frameFrom": " من {host}",
   "gm.hint": "صِف تغييرًا · <kbd>{key}</kbd> لأدوات التحرير · <kbd>Esc</kbd> للإغلاق",
+  "gm.hintTarget": "صِف تغييرًا · <kbd>{key}</kbd> لأدوات التحرير", // with a part chosen, Alt+↑ takes the place of Esc in the hint (45-godmode.js)
   "gm.hid": "أُخفي {label}. اضغط {key} للتراجع.",
   "gm.formField": "لا يمكن تحرير النص داخل حقل نموذج هنا. اضغط A لتصف التغيير بدلًا من ذلك.",
   "gm.noText": "لا يوجد نص لتحريره هنا",
@@ -1272,7 +1273,6 @@ export default {
   "ys.alsoDoes": "يفعل أيضًا «{extra}».",
   "ys.addMore": "أضف إلى أسلوبك…",
   "ys.changes": { one: "تغيير واحد", two: "تغييران", few: "{n} تغييرات", other: "{n} تغييرًا" },
-  "ys.everySite": "كل موقع",
   "ys.saved": "حُفظ أسلوبك. يرافقك في كل موقع وتطبيق.",
   "ys.savedWeb": "حُفظ أسلوبك. يرافقك في كل موقع في Chrome.",
   "ys.savedApps": "حُفظ أسلوبك. يرافقك في كل تطبيق تفتحه باستخدام Morse.",

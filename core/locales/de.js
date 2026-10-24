@@ -690,6 +690,7 @@ export default {
   "gm.frame": "<b>Dieser Teil ist eine andere Seite{from}.</b> Morse kann ihn ausblenden, verschieben oder seine Größe ändern, aber nicht bearbeiten, was darin ist.",
   "gm.frameFrom": " von {host}",
   "gm.hint": "Beschreib eine Änderung · <kbd>{key}</kbd> Werkzeuge · <kbd>Esc</kbd> schließt",
+  "gm.hintTarget": "Beschreib eine Änderung · <kbd>{key}</kbd> Werkzeuge", // with a part chosen, Alt+↑ takes the place of Esc in the hint (45-godmode.js)
   "gm.hid": "{label} ausgeblendet. Drück {key} zum Rückgängigmachen.",
   "gm.formField": "Text in einem Formularfeld lässt sich hier nicht bearbeiten. Drück A und beschreib die Änderung stattdessen.",
   "gm.noText": "Hier gibt es keinen Text zum Bearbeiten",
@@ -1271,7 +1272,6 @@ export default {
   "ys.alsoDoes": "Macht auch „{extra}“.",
   "ys.addMore": "Zu deinem Stil hinzufügen…",
   "ys.changes": { one: "{n} Änderung", other: "{n} Änderungen" },
-  "ys.everySite": "jede Seite",
   "ys.saved": "Dein Stil ist gespeichert. Er begleitet dich auf jede Seite und in jede App.",
   "ys.savedWeb": "Dein Stil ist gespeichert. Er begleitet dich auf jede Seite in Chrome.",
   "ys.savedApps": "Dein Stil ist gespeichert. Er begleitet dich in jede App, die du mit Morse öffnest.",

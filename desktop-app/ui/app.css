@@ -150,7 +150,7 @@ input[role="switch"]:disabled::after { background: var(--m-signal-1); box-shadow
 .list.mods > li + li::before, .list.checks > li + li::before { inset-inline-start: var(--s-3); }
 .list > li:hover { background: var(--row-hover); }
 .list > li:hover::before, .list > li:hover + li::before { opacity: 0; }
-.list > li.empty { justify-content: center; gap: var(--s-2); min-height: 112px; color: var(--m-text-3); text-align: center; }
+.list > li.empty { justify-content: center; align-items: center; gap: var(--s-2); min-height: 112px; color: var(--m-text-3); text-align: center; }
 .list > li.empty:hover { background: transparent; }
 .grow { flex: 1; min-width: 0; }
 .grow b { display: block; font-weight: 600; font-size: 14px; line-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

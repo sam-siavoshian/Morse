@@ -299,6 +299,7 @@ export default {
   "gm.frame": "<b>This part is another page{from}.</b> Morse can hide, move or resize it, but can't edit what's inside.",
   "gm.frameFrom": " from {host}",
   "gm.hint": "Describe a change · <kbd>{key}</kbd> for Edit tools · <kbd>Esc</kbd> to close",
+  "gm.hintTarget": "Describe a change · <kbd>{key}</kbd> for Edit tools", // with a part chosen, Alt+↑ takes the place of Esc in the hint (45-godmode.js)
   "gm.hid": "Hid {label}. Press {key} to undo.",
   "gm.formField": "Text in a form field can't be edited here. Press A to describe the change instead.",
   "gm.noText": "There's no text here to edit",
@@ -1297,7 +1298,6 @@ export default {
   "ys.alsoDoes": "Also does “{extra}”.",
   "ys.addMore": "Add to your style…",
   "ys.changes": { one: "{n} change", other: "{n} changes" },
-  "ys.everySite": "every site",
   "ys.saved": "Saved your style. It follows you to every site and app.",
   "ys.savedWeb": "Saved your style. It follows you to every site in Chrome.",
   "ys.savedApps": "Saved your style. It follows you to every app you open with Morse.",
