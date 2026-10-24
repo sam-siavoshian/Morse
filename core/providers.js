@@ -39,7 +39,7 @@ export class NoModelError extends Error {
 }
 
 const impls = {
-  demo: (s, messages, o) => demoStream(messages, o),
+  demo: (s, messages, o) => demoStream(messages, { ...o, ms: s.demoMs }),
   openai: openaiStream,
   anthropic: anthropicStream,
   helper: helperStream,
@@ -219,7 +219,8 @@ async function helperStream(s, messages, { onToken, signal }) {
 
 // Internal test fixture: replays pre-written replies. Used by tests and the
 // screenshot scripts; never offered in any UI.
-async function demoStream(messages, { onToken, signal }) {
+// demoMs (tests only) slows the replay so Stop has time to land under load.
+async function demoStream(messages, { onToken, signal, ms = 14 }) {
   const full = demoResponse(messages);
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   await sleep(220);
@@ -231,7 +232,7 @@ async function demoStream(messages, { onToken, signal }) {
     i += n;
     text += tok;
     onToken?.(tok);
-    await sleep(14);
+    await sleep(ms);
   }
   return text;
 }

@@ -40,6 +40,7 @@ onEvent(msg => {
     Voice.configure(hello.voice);
     PromptHistory.load();
     await syncMods();
+    S.ready = true; // tests: the host answered hello and the mods are on
     if (!hello.quiet && PREFS.welcome) toast(`Morse is ready. Press ${HOTKEY} to change this page.`);
   } catch (e) { console.warn("[morse] host unavailable", e); }
   // single-page apps change URL without reloading
@@ -50,7 +51,7 @@ onEvent(msg => {
 // Mirrored into a DOM attribute so it is readable from any JS world.
 if (DEBUG) setInterval(() => {
   hostEl.dataset.status = JSON.stringify({
-    phase: S.phase, hint: hint.textContent, ticker: ticker.textContent, mods: S.mods.length,
+    ready: !!S.ready, phase: S.phase, hint: hint.textContent, ticker: ticker.textContent, mods: S.mods.length,
     open: S.open, input: input.value, voice: Voice.state(), backend: Voice.backend(), level: Voice.level(), db: Voice.db(), pane: paneKind,
     focus: root.activeElement?.className || root.activeElement?.tagName || "", hotkeys: HOTKEYS,
   });
