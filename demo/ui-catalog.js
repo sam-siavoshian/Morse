@@ -469,8 +469,8 @@ async function reducedMotion(theme) {
   await submit(p, "make it airier");
   await stream(p, 12, 30);
   await sleep(300);
-  // Settings → Effects defaults to Subtle under reduced motion: no radar field
-  // (Subtle draws no canvas at all), a still outline on the target instead.
+  // Settings → Effects defaults to Less under reduced motion: no radar field
+  // (Less draws no canvas at all), a still outline on the target instead.
   const canvas = await ui(p, ".fx").isVisible();
   const fx = ui(p, ".sel.busy");
   const still = await fx.isVisible();
@@ -478,8 +478,8 @@ async function reducedMotion(theme) {
   const b = still ? await fx.screenshot() : null;
   const mark1 = await ui(p, ".row .mark").screenshot(); await sleep(450);
   const mark2 = await ui(p, ".row .mark").screenshot();
-  await shot(p, "motion", "reduced-effect", still ? [fx, p.locator("#card")] : ui(p, ".bar"), { pad: 16, note: "Effects default to Subtle here: a still outline on the target, no field", checks: [
-    canvas ? "the radar field is drawn under prefers-reduced-motion (Subtle draws no canvas)" : "",
+  await shot(p, "motion", "reduced-effect", still ? [fx, p.locator("#card")] : ui(p, ".bar"), { pad: 16, note: "Effects default to Less here: a still outline on the target, no field", checks: [
+    canvas ? "the radar field is drawn under prefers-reduced-motion (Less draws no canvas)" : "",
     still ? "" : "no still outline on the target while working",
     still && !a.equals(b) ? "the outline animates under prefers-reduced-motion" : ""] });
   await shot(p, "motion", "reduced-mark-live", ui(p, ".row .mark"), { pad: 8, checks: [mark1.equals(mark2) ? "" : "radar mark still pulses under prefers-reduced-motion"] });
@@ -1928,7 +1928,7 @@ async function guardStates(theme, width) {
 
   // refusals in the bar: code that would obviously break the page never runs (core/guard.js)
   const REFUSE = [
-    ["hide", "The change would have hidden this whole page, so Morse didn't apply it. Try other words."],
+    ["hide", "The change would have hidden this whole page, so Morse didn't run it. Try other words."],
     ["loop", "The change would have frozen this page, so Morse didn't run it. Try other words."],
     ["wipe", "The change would have replaced this whole page, so Morse didn't run it. Try other words."],
     ["nav", "The change would have reloaded or left this page, so Morse didn't run it. Try other words."],

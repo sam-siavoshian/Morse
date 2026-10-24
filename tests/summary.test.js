@@ -279,7 +279,7 @@ test("where it runs: the words follow the same rule as modMatches", () => {
 test("where it came from, in a few words", () => {
   assert.match(modOrigin({ imported: true, importedFrom: "link", importedAt: "2026-10-01T10:00:00Z", author: "Ana" }), /^Installed from a shared link by Ana on /);
   assert.match(modOrigin({ imported: true, importedFrom: "backup" }), /^Restored from a backup/);
-  assert.match(modOrigin({ imported: true, importedFrom: "file" }), /^Imported from a file/);
+  assert.match(modOrigin({ imported: true, importedFrom: "file" }), /^Installed from a file/);
   assert.equal(modOrigin({ imported: true }), "Installed from a shared link");
   assert.equal(modOrigin({ from: { app: "Spotify" } }), "Rebuilt from something in Spotify");
   assert.match(modOrigin({ kind: "manual" }), /^Your own edits/);

@@ -21,6 +21,18 @@ async function capture() {
   return shot;
 }
 
+// polish (core/polish.js): the host takes a picture of the change for the
+// model's look at it. This says where, and keeps Morse's own UI out of the
+// picture until the host calls it again with done.
+globalThis.__morseShotArea = async (selector, modId, done) => {
+  if (done) { hostEl.style.setProperty("visibility", "initial"); return null; } // as 10-dom.js set it (all: initial)
+  const area = shotArea(selector, modId);
+  if (!area) return null;
+  hostEl.style.setProperty("visibility", "hidden", "important");
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  return area;
+};
+
 const PLACEHOLDER = () => t("bar.placeholder");
 const REFINE_PLACEHOLDER = () => t("bar.placeholder.refine");
 const FIX_NOTE = () => t("result.fixNote");
@@ -102,6 +114,7 @@ async function submit(request, opts = {}) {
     if (msg.type === "phase") {
       if (msg.phase === "fixing") { const what = t(msg.stronger ? "gen.stronger" : "gen.fixing"); fixing = true; say(what); hint.title = String(msg.error || ""); announce(what); } // models: core/route.js
       if (msg.phase === "applying") say(t("gen.trying"));
+      if (msg.phase === "polishing") { say(t("gen.polishing")); announce(t("gen.polishing")); } // polish: core/polish.js
     }
   });
   let res;

@@ -534,7 +534,7 @@ test("real Electron: morse launch without --port uses the pipe; --watch opens it
   // `morse launch` again: the waiting Morse opens it on a new pipe of its own.
   const again = morse("launch", exe, ...args);
   assert.equal(await again.done, 0, again.out);
-  assert.match(again.out, /Morse is already waiting for Tunes\. It opens it now and connects\./);
+  assert.match(again.out, /Morse is already waiting for Tunes\. Opening it now and connecting\./);
   await until(() => (m.out.match(/✓ connected to tunes/gi) || []).length >= 2, 40000, () => "morse to connect again: " + m.out);
   assert.match(m.out, /Tunes is open again/);
   const [pid2] = await until(async () => { const p = tunesMain(profile); return p.length && p; }, 10000, "the new Tunes");
