@@ -62,8 +62,8 @@ All captured by [`demo/shoot-extension.js`](demo/shoot-extension.js) and [`demo/
 
 | | |
 |---|---|
-| ![](docs/screenshots/114-electron-bar.png) **The bar** in Tunes, under its own menu bar (Ctrl+Shift+Space) | ![](docs/screenshots/115-electron-working.png) **Working** on the player controls |
-| ![](docs/screenshots/116-electron-result.png) **Result**: a sleep timer (☾) | ![](docs/screenshots/120-electron-haiku-result.png) The same request with **real Claude Code (haiku)** |
+| ![](docs/screenshots/121-electron-bar.png) **The bar** in Tunes, under its own menu bar (Ctrl+Shift+Space) | ![](docs/screenshots/122-electron-working.png) **Working** on the player controls |
+| ![](docs/screenshots/123-electron-result.png) **Result**: a sleep timer (☾) | ![](docs/screenshots/127-electron-haiku-result.png) The same request with **real Claude Code (haiku)** |
 
 ### Finding and tracking desktop apps
 

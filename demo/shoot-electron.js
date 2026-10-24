@@ -11,7 +11,7 @@
 //   DISPLAY=:97 node demo/shoot-electron.js
 //     TUNES=/opt/Tunes/tunes     use an already packaged app (default: build one in a temp dir)
 //     MORSE_PROVIDER=claude-code MORSE_MODEL=haiku   a real model instead of the demo replay
-//     SHOTS=docs/screenshots  FIRST=113               where the pictures go, and their first number
+//     SHOTS=docs/screenshots  FIRST=120               where the pictures go, and their first number
 //     NO_SHOTS=1                                      drive it without writing pictures
 //
 // Needs xdotool and ImageMagick's `import` for real input and screenshots;
@@ -32,7 +32,7 @@ const PROVIDER = process.env.MORSE_PROVIDER || "demo";
 const REAL = PROVIDER !== "demo";
 const T = REAL ? 240000 : 20000;
 const OUT = path.resolve(root, process.env.SHOTS || "docs/screenshots");
-let n = Number(process.env.FIRST || 113);
+let n = Number(process.env.FIRST || 120);
 const HOME = process.env.MORSE_HOME || await fs.mkdtemp(path.join(os.tmpdir(), "morse-electron-"));
 const ENV = { ...process.env, MORSE_HOME: HOME, MORSE_PROVIDER: PROVIDER, FORCE_COLOR: "0" };
 const sleep = ms => new Promise(r => setTimeout(r, ms));

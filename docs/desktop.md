@@ -8,7 +8,7 @@ changes websites: you point at something, say what you want, and keep it.
 This page explains how to do that, what Morse does to the app (and what it
 doesn't), and which apps can't work.
 
-![Tunes, a real Electron app, with the Morse bar open](screenshots/114-electron-bar.png)
+![Tunes, a real Electron app, with the Morse bar open](screenshots/121-electron-bar.png)
 
 ## The short version
 
@@ -74,8 +74,8 @@ off, see their code, share them or delete them.
 
 | | |
 |---|---|
-| ![](screenshots/115-electron-working.png) Morse writes the change and shows where | ![](screenshots/116-electron-result.png) The result: a sleep timer button (☾) next to the player |
-| ![](screenshots/117-electron-mod-back.png) Quit the app and open it again: the change is back | ![](screenshots/118-electron-mods-panel.png) The Mods panel in the app |
+| ![](screenshots/122-electron-working.png) Morse writes the change and shows where | ![](screenshots/123-electron-result.png) The result: a sleep timer button (☾) next to the player |
+| ![](screenshots/124-electron-mod-back.png) Quit the app and open it again: the change is back | ![](screenshots/125-electron-mods-panel.png) The Mods panel in the app |
 
 ### 4. Check and stop
 
@@ -209,7 +209,7 @@ runtime renamed to `tunes`, with the app next to it, unpacked or as
 
 | | |
 |---|---|
-| ![](screenshots/119-electron-haiku-working.png) Claude Code (haiku) writing the change | ![](screenshots/120-electron-haiku-result.png) Its result: a sleep timer picker under the player |
+| ![](screenshots/126-electron-haiku-working.png) Claude Code (haiku) writing the change | ![](screenshots/127-electron-haiku-result.png) Its result: a sleep timer picker under the player |
 
 Not tested: real Slack, Discord, VS Code or Spotify installs, macOS and
 Windows (quitting with AppleScript or taskkill, `.app` bundles, Squirrel
