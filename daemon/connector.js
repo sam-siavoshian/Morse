@@ -176,9 +176,15 @@ export class Connector {
     });
     // Belt and braces for documents the new-document script misses (a renderer
     // that came back after a crash): boot again; the shim makes it a no-op twice.
+    // A document that committed in a new renderer while we were attaching (an
+    // app still starting up) can come without the binding: add it back first.
+    const bootIn = async contextId => {
+      const has = await s.send("Runtime.evaluate", { expression: "typeof globalThis.__morseHostSend", contextId, returnByValue: true }).catch(() => null);
+      if (has && has.result?.value !== "function") await s.send("Runtime.addBinding", { name: "__morseHostSend" }).catch(() => {});
+      await s.send("Runtime.evaluate", { expression: source, ...(contextId && { contextId }) }).catch(() => {});
+    };
     s.on("Runtime.executionContextCreated", ({ context }) => {
-      if (context.auxData?.isDefault && w.frameId && context.auxData.frameId === w.frameId)
-        s.send("Runtime.evaluate", { expression: source, contextId: context.id }).catch(() => {});
+      if (context.auxData?.isDefault && w.frameId && context.auxData.frameId === w.frameId) bootIn(context.id);
     });
     s.on("Page.frameNavigated", ({ frame }) => {
       if (frame.id === w.frameId && frame.url !== w.url) { w.url = frame.url; this.changed(); }
@@ -194,7 +200,7 @@ export class Connector {
     w.script = (await s.send("Page.addScriptToEvaluateOnNewDocument", { source }))?.identifier;
     await s.send("Runtime.enable");
     // A page that is mid-crash or mid-navigation gets the runtime from its next document.
-    await s.send("Runtime.evaluate", { expression: source }).catch(() => {});
+    await bootIn();
     readTitle();
     this.log(`  ✓ connected to ${title}${kind === "window" ? "" : ` (${kind})`}`);
     this.changed();
