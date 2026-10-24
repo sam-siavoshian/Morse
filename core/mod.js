@@ -4,6 +4,7 @@
 import { KIT_SOURCE } from "./kit.js";
 import { versionsOf } from "./versions.js";
 import { modHosts } from "./summary.js";
+import { t } from "./i18n.js"; // the words, in the language the host speaks (core/i18n.js)
 
 // Version history (refine, restore, step back) lives in versions.js so the
 // runtime can inline it; it is part of this module's API.
@@ -144,7 +145,7 @@ export async function decodeShareText(link) {
   const frag = String(link).split("#m=")[1];
   if (!frag) throw new Error("This isn't a Morse share link. Check that you copied the whole link.");
   let bytes;
-  try { bytes = unb64url(frag.trim()); } catch { throw new Error("This share link is broken. Check that you copied the whole link."); }
+  try { bytes = unb64url(frag.trim()); } catch { throw Object.assign(new Error(t("err.shareBroken")), { plain: true }); }
   return new TextDecoder().decode(await inflate(bytes));
 }
 

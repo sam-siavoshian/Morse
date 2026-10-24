@@ -13,6 +13,7 @@
 //
 // Pure and dependency-free: core/providers.js and the extension worker use it.
 
+import { t } from "./i18n.js"; // the model names people read
 export const MODEL_MODES = ["auto", "fast", "best"];
 
 // The first ("fast") and the strong ("best") model of each backend. Both are
@@ -175,6 +176,6 @@ export function modelNames(s, label) {
   if (!s || !s.provider || s.provider === "none") return null;
   const tiers = routable(s);
   if (!tiers) return { pinned: tierLabel({ ...s, mode: "" }, label) };
-  const name = t => [t.model, t.effort && `${t.effort} effort`].filter(Boolean).join(", ") || "its usual model";
+  const name = x => [x.model, x.effort && t("model.effort", { effort: x.effort })].filter(Boolean).join(", ") || t("model.usual");
   return { fast: name(tiers.fast), best: name(tiers.best) };
 }

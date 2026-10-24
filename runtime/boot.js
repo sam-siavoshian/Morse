@@ -569,7 +569,7 @@ function notify(text, idle) {
   const go = () => loadUI().catch(() => {});
   idle ? pristine.requestIdleCallback(go, { timeout: 3000 }) : go();
 }
-const UI_EVENTS = new Set(["toggle", "panel", "install.request"]);
+const UI_EVENTS = new Set(["toggle", "open", "panel", "install.request", "request"]);
 listeners.add(msg => {
   if (msg.type === "settings.changed" && msg.settings) { setBootPrefs(msg.settings); hostPrefs = true; }
   if (ui) return; // the UI handles everything else once it's here

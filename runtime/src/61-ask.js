@@ -21,7 +21,7 @@ const Ask = (() => {
   const card = document.createElement("section");
   card.className = "ask";
   card.hidden = true;
-  card.setAttribute("aria-label", "Answer");
+  tBind(card, "aria-label", "ask.answer");
   bar.insertBefore(card, bar.querySelector(".status"));
 
   function forgetIfMoved() {
@@ -263,7 +263,7 @@ const Guide = (() => {
     const FOCUS = "a[href], button, input, select, textarea, summary, [tabindex], [contenteditable=''], [contenteditable=true]";
     const to = el.matches(FOCUS) ? el : el.querySelector(FOCUS);
     if (to && !to.disabled) to.focus();
-    else announce(`${describe(el)} is marked on the page`);
+    else announce(t("ask.markedSay", { what: describe(el) }));
   }
   function done() {
     Markers.clear();

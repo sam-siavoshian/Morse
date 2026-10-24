@@ -30,6 +30,21 @@
   .pr { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 520px; color: #a7a7a7; font-size: 11px; }
   .pr .bar { flex: 1; height: 4px; background: #4d4d4d; border-radius: 2px; } .pr .bar i { display: block; height: 100%; width: 37%; background: #fff; border-radius: 2px; }
   .vol { justify-self: end; color: #b3b3b3; display: flex; gap: 10px; align-items: center; } .vol .bar { width: 90px; height: 4px; background: #4d4d4d; border-radius: 2px; } .vol .bar i { display: block; width: 70%; height: 100%; background: #fff; border-radius: 2px; }
+  /* A phone-sized window (the website's Try it here): no sidebar, two covers a row, the player without its progress and volume. */
+  @media (max-width: 600px) {
+    body { grid-template-columns: 1fr; grid-template-rows: 1fr 72px; }
+    nav { display: none; }
+    .vw { padding: 18px 16px; }
+    .vw h1 { font-size: 24px; }
+    [data-testid="album-grid"], [data-testid="release-grid"] { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    footer { grid-template-columns: 1fr auto; gap: 10px; padding: 0 12px; }
+    .np .cv { width: 40px; height: 40px; }
+    .np { min-width: 0; } .np > div:last-child { min-width: 0; }
+    .np b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .np small { display: none; }
+    .pr, .vol { display: none; }
+    .btns { gap: 14px; }
+  }
 </style>
 </head>
 <body>
@@ -48,7 +63,7 @@
   </section>
   <footer>
     <div class="np"><div class="cv"></div><div><b>Neon Tides</b><small>Hollow Coast</small></div></div>
-    <div data-testid="player-controls">
+    <div data-testid="player-controls" aria-label="Player controls">
       <div class="btns">
         <button aria-label="Shuffle">⤮</button><button aria-label="Previous">⏮</button>
         <button data-testid="play-pause" aria-label="Pause">❚❚</button>
