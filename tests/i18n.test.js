@@ -26,6 +26,8 @@ const WAITING_FOR_TRANSLATION = [
   "settings.model.note.auto", "settings.model.note.fast", "settings.model.note.best", "settings.model.pinned",
   "popup.modelHarder", "setup.model.which", "setup.model.autoWhy", "setup.model.fastWhy", "setup.model.bestWhy",
   "setup.model.choose", "setup.model.now", "setup.model.always", "setup.model.change", "cli.badModelMode",
+  // morse doctor: is there a newer version (daemon/update-check.js)
+  "cli.update.newer", "cli.update.current", "cli.update.off", "cli.update.unknown",
 ];
 
 const placeholders = s => [...String(s).matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort();

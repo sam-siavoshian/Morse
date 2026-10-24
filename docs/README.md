@@ -38,6 +38,7 @@ New here? Start with [Getting started](getting-started.md).
 | [Adding a feature](dev/adding-a-feature.md) | Rules for the in-app code, words, the UI review, docs |
 | [Accessibility of Morse itself](dev/accessibility.md) | Keyboard, screen readers, zoom and forced colors in Morse's own UI; the axe-core audit |
 | [Checking a Mac or Windows PC](dev/platform-testing.md) | The 15-minute check for desktop apps on a real Mac or Windows PC |
+| [Releasing](dev/releasing.md) | One-time setup, then `npm run release` and one push: npm, the GitHub release and the store zip |
 | [How Morse talks](WRITING.md) | The style guide for every word a person reads |
 | [Languages in the code](dev/i18n.md) | `t()`, the message catalogs, the Language setting, right-to-left layout, and text that stays English for the model |
 | [UI review checklist](ui/CHECKLIST.md) | What every screenshot in the UI catalog is checked against |

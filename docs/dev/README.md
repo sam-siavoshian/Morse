@@ -145,8 +145,12 @@ The version lives in `package.json` only; the build writes it into the
 extension's manifest, and `morse --version` prints it. See
 [CHANGELOG.md](../../CHANGELOG.md).
 
-- **npm:** `npm publish` (the `prepare` script builds the extension that
-  ships inside the package, also for installs from GitHub).
+`npm run release -- minor`, then `git push --follow-tags origin main`: the
+tag's workflow tests, publishes to npm and makes the GitHub release with the
+store zip. The one-time setup and every step: [Releasing](releasing.md).
+
+- **npm:** the `prepare` script builds the extension that ships inside the
+  package, also for installs from GitHub.
 - **Chrome Web Store:** `npm run store` makes
   `dist/morse-extension-<version>-store.zip` (a `MORSE_STORE=1` build) and
   prints its SHA-256. The listing text, permission notes, screenshots and the

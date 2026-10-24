@@ -2,6 +2,8 @@
 // unpacks it, in a fresh Chromium profile, the way a new user meets it.
 //
 //   npm run store && DISPLAY=:99 node scripts/store-smoke.js [zip]
+//   DISPLAY=:99 node scripts/store-smoke.js "$(morse extension | head -1)" --cli "$(command -v morse)"
+//                                    the same, for an installed npm package
 //
 //   1. the welcome page opens by itself on install
 //   2. the practice area makes and saves a sample change
@@ -93,16 +95,23 @@ async function watchWorker(port, extId, log) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  // [zip | folder] [--cli <morse>]: a folder is loaded as it is (the npm
+  // package's: `morse extension` prints it), and --cli is the morse command
+  // step 3 runs (an installed package's; this checkout's daemon/cli.js otherwise).
+  const args = process.argv.slice(2);
+  const cliAt = args.indexOf("--cli");
+  const cli = cliAt >= 0 ? path.resolve(args.splice(cliAt, 2)[1]) : path.join(root, "daemon", "cli.js");
   const { version } = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
-  const zip = path.resolve(process.argv[2] || path.join(root, "dist", `morse-extension-${version}-store.zip`));
+  const zip = path.resolve(args[0] || path.join(root, "dist", `morse-extension-${version}-store.zip`));
   const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-store-smoke-"));
-  const ext = path.join(tmp, "extension");
-  for (const f of unzip(await fs.readFile(zip))) {
+  let ext = path.join(tmp, "extension");
+  if ((await fs.stat(zip)).isDirectory()) ext = zip;
+  else for (const f of unzip(await fs.readFile(zip))) {
     await fs.mkdir(path.dirname(path.join(ext, f.name)), { recursive: true });
     await fs.writeFile(path.join(ext, f.name), f.data);
   }
   const manifest = JSON.parse(await fs.readFile(path.join(ext, "manifest.json"), "utf8"));
-  say(`unpacked ${path.relative(root, zip)}: ${manifest.name} ${manifest.version}`);
+  say(`${ext === zip ? "loading" : "unpacked"} ${path.relative(root, zip)}: ${manifest.name} ${manifest.version}${cliAt >= 0 ? `, with ${cli}` : ""}`);
 
   const procs = [];
   process.on("exit", () => procs.forEach(p => { try { p.kill(); } catch {} }));
@@ -160,7 +169,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const code = cmd.split(" ").pop();
   const home = path.join(tmp, "home");
   await fs.mkdir(home, { recursive: true });
-  const setup = spawn(process.execPath, [path.join(root, "daemon", "cli.js"), "setup", "--use", "demo", "--pair", code],
+  const setup = spawn(process.execPath, [cli, "setup", "--use", "demo", "--pair", code],
     { env: { ...process.env, HOME: home, MORSE_HOME: "", MORSE_HELPER_PORT: String(helperPort) }, stdio: ["pipe", "pipe", "pipe"] });
   procs.push(setup);
   let setupOut = "";

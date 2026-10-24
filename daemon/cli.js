@@ -282,7 +282,13 @@ async function main() {
       const h = detectHarnesses();
       const keys = keysFrom(cfg);
       const row = (k, v) => console.log(`  ${k.padEnd(9)} ${v}`);
+      // Is a newer morse-cli on npm? At most once a day; MORSE_NO_UPDATE_CHECK=1 turns it off (docs/privacy.md).
+      const update = (await import("./update-check.js")).checkForUpdate(VERSION).catch(() => ({ state: "unknown" }));
       console.log(LOGO + "\n");
+      const u = await update;
+      // "unpublished": morse-cli isn't on npm (yet), so there is nothing to compare with.
+      const note = { newer: () => WARN(t("cli.update.newer", { latest: u.latest, cmd: B("npm install -g morse-cli") })), current: () => D(t("cli.update.current")), off: () => D(t("cli.update.off")), unknown: () => D(t("cli.update.unknown")) }[u.state];
+      row("morse", `${VERSION}${note ? `  ${note()}` : ""}`);
       row("node", process.version);
       row("config", CONFIG_PATH);
       // This computer: system, the Morse folder's permissions, shortcut, colors, platform specifics.

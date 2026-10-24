@@ -133,6 +133,7 @@
 <li>There is no Morse account and no Morse server. Morse collects nothing about you and sends nothing to the people who make it.</li>
 <li>When you ask for a change, Morse sends what it needs to write that change to <strong>the model you chose</strong>: Claude Code, Codex, or an Anthropic, OpenAI or other API address you entered.</li>
 <li>When you open the bar or the Mods panel, Morse may download <strong>the gallery list</strong> of mods other people made, from GitHub Pages. At most once a day.</li>
+<li>When you run <code>morse doctor</code>, the <code>morse</code> command asks npm whether a newer version is out. At most once a day.</li>
 <li>A few things you can choose to use send data elsewhere. They are listed below under &quot;Only when you use them&quot;.</li>
 <li>Nothing else leaves your computer.</li>
 </ul>
@@ -166,6 +167,14 @@
 <li>It happens only when you open the bar or the Mods panel, and the list is downloaded at most once a day.</li>
 <li>The request carries no cookies and nothing about you or the page. If you set a different list address in settings, the same goes to that address instead. GitHub, which hosts the files, sees your IP address and which mod files were asked for, as with any website. A mod file is named after the site it is for, so that can show that you visited that site.</li>
 <li>Turn it off with &quot;Show mods others made&quot; in Morse settings. Then nothing is downloaded.</li>
+</ul>
+<h2>Checking for a newer version</h2>
+<p><code>morse doctor</code> shows whether a newer version of the <code>morse</code> command is out. To know, it asks npm, where the command is published: <code>https://registry.npmjs.org/morse-cli/latest</code>.</p>
+<ul>
+<li>Only <code>morse doctor</code> asks. Nothing else in Morse does, and the Chrome extension never does.</li>
+<li>At most once a day. The answer (the newest version number and when it was asked) is kept in <code>~/.morse/update-check.json</code>.</li>
+<li>The request carries no cookies and nothing about you, your model, your mods or your pages. npm, run by GitHub, sees your IP address, as with any website. If you set <code>MORSE_UPDATE_REGISTRY</code> to another address, the same goes there instead.</li>
+<li>Turn it off with <code>MORSE_NO_UPDATE_CHECK=1</code> in your environment. Then nothing is asked and nothing is kept.</li>
 </ul>
 <h2>Only when you use them</h2>
 <p>These send data somewhere other than your model, and only when you use them:</p>
