@@ -19,6 +19,7 @@ export default {
   "bar.repoint": "به چیز دیگری اشاره کنید",
   "bar.hint.pointing": "به چیزی <b>اشاره کنید</b> یا توصیفش کنید · <kbd>Esc</kbd> برای بستن",
   "bar.hint.target": "بگویید چه چیزی در این عوض شود · <kbd>Enter</kbd> برای ارسال",
+  "bar.hint.wider": "<kbd>{key}</kbd> بخش بزرگ‌تر", // dogfood: Alt+↑ after pointing
   "bar.hint.page": "تغییری در این صفحه را توصیف کنید · <kbd>Enter</kbd> برای ارسال",
   "bar.mods": "مادها",
   "bar.stopped": "<b>متوقف شد.</b> چیزی عوض نشد · <kbd>Enter</kbd> برای تلاش دوباره",
@@ -73,6 +74,7 @@ export default {
   "result.describeChange": "بگویید چه چیزی عوض شود",
   "result.firstVersion": "این نسخهٔ اول است",
   "result.backTo": "برگشت به نسخهٔ {n}",
+  "result.forwardTo": "جلو رفتن به نسخهٔ {n}", // dogfood: ⌘⇧Z after ⌘Z
   "result.fixNote": "درستش کردم تا دوباره کار کند",
 
   // ---- دکمه‌ها
@@ -808,9 +810,12 @@ export default {
 
   // ---- خاموش کردن، توقف، نصب
   "ctl.offN": { one: "{n} ماد در این صفحه خاموش شد", other: "{n} ماد در این صفحه خاموش شد" },
+  "ctl.offNApp": { one: "{n} ماد در {app} خاموش شد", other: "{n} ماد در {app} خاموش شد" }, // dogfood: the off switch in a desktop app names the app
   "ctl.offNone": "مادها در این صفحه خاموش‌اند",
+  "ctl.offNoneApp": "مادها در {app} خاموش‌اند", // dogfood: the off switch in a desktop app names the app
   "ctl.turnBackOn": "روشن کردن دوباره",
   "ctl.offSay": "همهٔ مادها در این صفحه خاموش‌اند.",
+  "ctl.offSayApp": "همهٔ مادها در {app} خاموش‌اند.", // dogfood: the off switch in a desktop app names the app
   "ctl.stillPausedAll": "Morse هنوز همه‌جا متوقف است.",
   "ctl.stillPausedOn": "Morse هنوز در {where} متوقف است.",
   "ctl.resume": "ادامه",
@@ -852,6 +857,7 @@ export default {
   "ctl.tooLarge": "این فایل برای پشتیبان Morse بودن خیلی بزرگ است.",
   "ctl.pausedAllNote": "Morse همه‌جا متوقف است. مادهایتان ذخیره‌اند اما اجرا نمی‌شوند.",
   "ctl.offNote": "مادها در این صفحه خاموش شده‌اند.",
+  "ctl.offNoteApp": "مادها در {app} خاموش شده‌اند.", // dogfood: the off switch in a desktop app names the app
   "ctl.heldNote": "«{title}» نگه داشته شده: این صفحه درست پس از اجرای آن بسته یا دوباره بارگذاری شد.",
   "ctl.pausedHere2": "مادهای شما اینجا ذخیره‌اند اما اجرا نمی‌شوند",
   "ctl.stopsApp": "همهٔ مادهای این برنامه را متوقف می‌کند",
@@ -1213,11 +1219,11 @@ export default {
   "ys.startHint": "سبکتان را توصیف کنید و با <b>everywhere</b> تمام کنید",
   "popup.warnOff": "<b>«Allow User Scripts» خاموش است.</b> تغییرهای ظاهری کار می‌کنند. تغییرهایی که دکمه یا قابلیت اضافه می‌کنند فقط وقتی روشن باشد اجرا می‌شوند.",
   "popup.warnSteps": "روی <b>روشنش کنید</b> بزنید، در صفحه‌ای که باز می‌شود <b>Allow User Scripts</b> را روشن کنید، بعد این زبانه را دوباره بارگذاری کنید.",
-  "popup.waiting": { one: "<b>در انتظار «Allow User Scripts»:</b> {list}. ظاهر تازه‌اش از الان دیده می‌شود. چیزی که اضافه می‌کند وقتی روشن شود اجرا می‌شود.", other: "<b>در انتظار «Allow User Scripts»:</b> {list}. ظاهر تازه‌شان از الان دیده می‌شود. چیزهایی که اضافه می‌کنند وقتی روشن شود اجرا می‌شوند." },
+  "popup.waiting": { one: "<b>در انتظار «Allow User Scripts»:</b> {list}. تا آن موقع خاموش می‌ماند تا صفحه‌ها نیمه‌کاره عوض نشوند.", other: "<b>در انتظار «Allow User Scripts»:</b> {list}. تا آن موقع خاموش می‌مانند تا صفحه‌ها نیمه‌کاره عوض نشوند." },
   "popup.waits": "در انتظار «Allow User Scripts»",
   "wait.two": "«{a}» و «{b}»",
   "wait.many": { one: "{n} ماد", other: "{n} ماد" },
-  "wait.text": { one: "{names} قابلیت‌هایی اضافه می‌کند که منتظر «Allow User Scripts» هستند. ظاهر تازه از الان دیده می‌شود.", other: "{names} قابلیت‌هایی اضافه می‌کنند که منتظر «Allow User Scripts» هستند. ظاهر تازه از الان دیده می‌شود." },
+  "wait.text": { one: "{names} قابلیت‌هایی اضافه می‌کند که منتظر «Allow User Scripts» هستند. تا آن موقع خاموش می‌ماند تا صفحه نیمه‌کاره عوض نشود.", other: "{names} قابلیت‌هایی اضافه می‌کنند که منتظر «Allow User Scripts» هستند. تا آن موقع خاموش می‌مانند تا صفحه نیمه‌کاره عوض نشود." },
   "wait.steps": "جزئیات Morse را باز کنید، «Allow User Scripts» را روشن کنید، بعد به این زبانه برگردید.",
   "wait.openDetails": "باز کردن جزئیات Morse",
   "wait.turnOn": "روشن کردن «Allow User Scripts»",
@@ -1226,7 +1232,7 @@ export default {
   "wait.notePractice": "ظاهرش این‌طور است. چیزهایی که اضافه می‌کند در سایت‌های واقعی کار می‌کنند",
   "wait.note": "برای کار کردن به «Allow User Scripts» نیاز دارد. تا روشنش نکنید فقط ظاهرش دیده می‌شود",
   "wait.tag": "منتظر «Allow User Scripts»",
-  "wait.tagTitle": "ظاهر تازه‌اش دیده می‌شود. چیزی که اضافه می‌کند وقتی «Allow User Scripts» روشن شود اجرا می‌شود.",
+  "wait.tagTitle": "وقتی «Allow User Scripts» روشن شود، همه‌اش همراه با ظاهرش اجرا می‌شود.",
   "so.hidden": "(پنهان)",
   "so.askShort": "با این مرحله‌ها چه کنم؟",
   "origin.pack": "از بستهٔ «{name}»{by}{on}",

@@ -2,7 +2,8 @@
 // morse: change any app in your own words.
 
 import { execFile } from "node:child_process";
-import { setLanguage, languageFromEnv, t } from "../core/i18n.js";
+import { setLanguage, languageFromEnv, loadLanguage, t } from "../core/i18n.js";
+import "../core/languages.js"; // the other languages' words, read from core/locales/ when needed
 import { resolveApp } from "./apps.js";
 import { inspectFuses, formatFuses } from "./fuses.js";
 import { appsCommand, launchCommand, attachCommand, statusCommand, stopCommand } from "./desktop.js";
@@ -27,7 +28,7 @@ import { paint, shown } from "./colors.js";
 // The hotkeys as set in ~/.morse/settings.json (platform defaults otherwise).
 // The terminal's language (LANG, LC_ALL; MORSE_LANG overrides): what people
 // read is in it, `morse help` too. doctor and model output stay English (developers).
-setLanguage(languageFromEnv(process.env));
+setLanguage(await loadLanguage(languageFromEnv(process.env)));
 const KEYS = await configuredHotkeys().catch(() => ({}));
 const openKey = KEYS.open || t("cli.openKey");
 

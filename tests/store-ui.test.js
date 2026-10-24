@@ -66,19 +66,22 @@ async function open(url) {
 const noMods = () => sw.evaluate(() => chrome.storage.local.set({ mods: {} }));
 const shadowText = p => p.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.textContent);
 
-test("without “Allow User Scripts” a mod's style shows, its code never runs, and Morse says it waits", { skip }, async () => {
+// dogfood: a mod's style alone can leave a page worse than before (a shared
+// PyPI mod hid the small release dates; its code, which adds big ones, waited).
+// A mod with code now waits whole; a mod that only changes the look still shows.
+test("without “Allow User Scripts” a mod with code waits whole (its style too), a style-only mod shows, and Morse says it waits", { skip }, async () => {
   assert.equal(await sw.evaluate(() => { try { return !!chrome.userScripts?.execute; } catch { return false; } }), false, "this browser has “Allow User Scripts” off");
   const mod = createMod({ title: "Word count", prompt: "count words", url: BYTE, css: "h1 { outline: 3px solid rgb(1, 2, 3) !important; }", js: "document.documentElement.dataset.wordCount = 'ran';" });
   const look = createMod({ title: "Calm colors", prompt: "calm colors", url: BYTE, css: "body { outline: 1px solid rgb(4, 5, 6) !important; }", js: "" });
   await sw.evaluate(mods => chrome.storage.local.set({ mods }), { [mod.id]: mod, [look.id]: look });
   const p = await open(BYTE);
-  await p.waitForFunction(() => getComputedStyle(document.querySelector("h1")).outlineColor === "rgb(1, 2, 3)");
-  assert.equal(await p.evaluate(() => getComputedStyle(document.body).outlineColor), "rgb(4, 5, 6)");
+  await p.waitForFunction(() => getComputedStyle(document.body).outlineColor === "rgb(4, 5, 6)");
 
   // The notice: which mod waits, and how to turn it on.
   await waitFor(async () => /Turn on “Allow User Scripts”/.test(await shadowText(p)), { what: "the notice" });
+  assert.notEqual(await p.evaluate(() => getComputedStyle(document.querySelector("h1")).outlineColor), "rgb(1, 2, 3)", "the waiting mod's style waits too");
   const notice = await shadowText(p);
-  assert.match(notice, /“Word count” adds features that wait for “Allow User Scripts”\. The new look already shows\./);
+  assert.match(notice, /“Word count” adds features that wait for “Allow User Scripts”\. It stays off until then, so the page isn't left half changed\./);
   assert.match(notice, /Open Morse's details, turn on “Allow User Scripts”, then come back to this tab\./);
   assert.doesNotMatch(notice, /Calm colors/, "a mod with no code doesn't wait for anything");
   await settle(p);
@@ -122,13 +125,12 @@ test("with no UI loaded yet, a waiting mod brings the UI in once per tab to say 
     // No debug flag left from the other tests (it builds the UI at once), and a fresh tab.
     await p.evaluate(() => { localStorage.removeItem("morse:debug"); sessionStorage.clear(); });
     await p.reload();
-    await p.waitForFunction(() => getComputedStyle(document.querySelector("h1")).outlineColor === "rgb(1, 2, 3)");
     await p.waitForFunction(() => document.querySelector("[data-morse-ui]"), null, { timeout: TIMEOUT });
     assert.equal(await p.evaluate(() => document.documentElement.dataset.wordCount), undefined, "the code never ran");
+    assert.notEqual(await p.evaluate(() => getComputedStyle(document.querySelector("h1")).outlineColor), "rgb(1, 2, 3)", "nor its style (dogfood)");
     await waitFor(() => p.evaluate(() => sessionStorage.getItem("morse:waiting-told") === "1"), { what: "the notice" });
     await p.reload();
-    await p.waitForFunction(() => getComputedStyle(document.querySelector("h1")).outlineColor === "rgb(1, 2, 3)");
-    await p.waitForTimeout(1500);
+    await p.waitForTimeout(3000);
     assert.equal(await p.evaluate(() => !!document.querySelector("[data-morse-ui]")), false, "told once in this tab: no UI after the reload");
   } finally { await p.close(); await noMods(); }
 });

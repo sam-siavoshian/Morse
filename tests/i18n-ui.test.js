@@ -10,7 +10,9 @@ import { serveBar } from "./helpers/demo-server.js";
 import { pressOpen } from "./helpers/keys.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
 import { waitForStatus, waitForReady, TIMEOUT } from "./helpers/wait.js";
-import { CATALOGS } from "../core/i18n.js";
+import { CATALOGS, LANGUAGES, loadLanguage } from "../core/i18n.js";
+import "../core/languages.js";
+await Promise.all(LANGUAGES.map(l => loadLanguage(l.code)));
 
 const skip = noBrowser;
 let browser, srv;

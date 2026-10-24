@@ -19,6 +19,7 @@ export default {
   "bar.repoint": "أشِر إلى شيء آخر",
   "bar.hint.pointing": "<b>أشِر</b> إلى شيء أو صِفه · <kbd>Esc</kbd> للإغلاق",
   "bar.hint.target": "صِف ما تريد تغييره في هذا · <kbd>Enter</kbd> للإرسال",
+  "bar.hint.wider": "<kbd>{key}</kbd> جزء أكبر", // dogfood: Alt+↑ after pointing
   "bar.hint.page": "صِف تغييرًا في هذه الصفحة · <kbd>Enter</kbd> للإرسال",
   "bar.mods": "التعديلات",
   "bar.stopped": "<b>توقّف.</b> لم يتغيّر شيء · <kbd>Enter</kbd> للمحاولة مجددًا",
@@ -73,6 +74,7 @@ export default {
   "result.describeChange": "صِف ما تريد تغييره",
   "result.firstVersion": "هذا هو الإصدار الأول",
   "result.backTo": "عدنا إلى الإصدار {n}",
+  "result.forwardTo": "تقدمنا إلى الإصدار {n}", // dogfood: ⌘⇧Z after ⌘Z
   "result.fixNote": "أصلحته ليعمل من جديد",
 
   // ---- الأزرار
@@ -808,9 +810,12 @@ export default {
 
   // ---- الإيقاف والإيقاف المؤقت والتثبيت
   "ctl.offN": { one: "أُوقف تعديل واحد في هذه الصفحة", two: "أُوقف تعديلان في هذه الصفحة", few: "أُوقفت {n} تعديلات في هذه الصفحة", other: "أُوقف {n} تعديلًا في هذه الصفحة" },
+  "ctl.offNApp": { one: "أُوقف تعديل واحد في {app}", two: "أُوقف تعديلان في {app}", few: "أُوقفت {n} تعديلات في {app}", other: "أُوقف {n} تعديلًا في {app}" }, // dogfood: the off switch in a desktop app names the app
   "ctl.offNone": "التعديلات متوقفة في هذه الصفحة",
+  "ctl.offNoneApp": "التعديلات متوقفة في {app}", // dogfood: the off switch in a desktop app names the app
   "ctl.turnBackOn": "إعادة التشغيل",
   "ctl.offSay": "كل التعديلات متوقفة في هذه الصفحة.",
+  "ctl.offSayApp": "كل التعديلات متوقفة في {app}.", // dogfood: the off switch in a desktop app names the app
   "ctl.stillPausedAll": "ما زال Morse متوقفًا مؤقتًا في كل مكان.",
   "ctl.stillPausedOn": "ما زال Morse متوقفًا مؤقتًا في {where}.",
   "ctl.resume": "استئناف",
@@ -852,6 +857,7 @@ export default {
   "ctl.tooLarge": "هذا الملف أكبر من أن يكون نسخة احتياطية من Morse.",
   "ctl.pausedAllNote": "Morse متوقف مؤقتًا في كل مكان. تعديلاتك محفوظة لكنها لا تعمل.",
   "ctl.offNote": "التعديلات متوقفة في هذه الصفحة.",
+  "ctl.offNoteApp": "التعديلات متوقفة في {app}.", // dogfood: the off switch in a desktop app names the app
   "ctl.heldNote": "«{title}» موقوف: أُغلقت هذه الصفحة أو أُعيد تحميلها مباشرة بعد تشغيله.",
   "ctl.pausedHere2": "تعديلاتك هنا محفوظة لكنها لا تعمل",
   "ctl.stopsApp": "يوقف كل تعديل في هذا التطبيق",
@@ -1213,11 +1219,11 @@ export default {
   "ys.startHint": "صِف أسلوبك واختم بـ <b>everywhere</b>",
   "popup.warnOff": "<b>«Allow User Scripts» متوقف.</b> تعمل تغييرات المظهر. أما التغييرات التي تضيف أزرارًا أو ميزات فلا تعمل إلا عند تشغيله.",
   "popup.warnSteps": "انقر <b>شغّله</b>، وشغّل <b>Allow User Scripts</b> في الصفحة التي تُفتح، ثم أعد تحميل علامة التبويب هذه.",
-  "popup.waiting": { one: "<b>بانتظار «Allow User Scripts»:</b> {list}. مظهره الجديد ظاهر بالفعل. ما يضيفه يعمل بعد تشغيله.", other: "<b>بانتظار «Allow User Scripts»:</b> {list}. مظهرها الجديد ظاهر بالفعل. ما تضيفه يعمل بعد تشغيله." },
+  "popup.waiting": { one: "<b>بانتظار «Allow User Scripts»:</b> {list}. يبقى متوقفًا حتى ذلك الحين كي لا تتغير الصفحات نصف تغيير.", other: "<b>بانتظار «Allow User Scripts»:</b> {list}. تبقى متوقفة حتى ذلك الحين كي لا تتغير الصفحات نصف تغيير." },
   "popup.waits": "بانتظار «Allow User Scripts»",
   "wait.two": "«{a}» و«{b}»",
   "wait.many": { one: "تعديل واحد", two: "تعديلان", few: "{n} تعديلات", other: "{n} تعديلًا" },
-  "wait.text": { one: "{names} يضيف ميزات تنتظر «Allow User Scripts». المظهر الجديد ظاهر بالفعل.", other: "{names} تضيف ميزات تنتظر «Allow User Scripts». المظهر الجديد ظاهر بالفعل." },
+  "wait.text": { one: "{names} يضيف ميزات تنتظر «Allow User Scripts». يبقى متوقفًا حتى ذلك الحين كي لا تتغير الصفحة نصف تغيير.", other: "{names} تضيف ميزات تنتظر «Allow User Scripts». تبقى متوقفة حتى ذلك الحين كي لا تتغير الصفحة نصف تغيير." },
   "wait.steps": "افتح تفاصيل Morse، وشغّل «Allow User Scripts»، ثم ارجع إلى علامة التبويب هذه.",
   "wait.openDetails": "فتح تفاصيل Morse",
   "wait.turnOn": "شغّل «Allow User Scripts»",
@@ -1226,7 +1232,7 @@ export default {
   "wait.notePractice": "هكذا يبدو. ما يضيفه يعمل في المواقع الحقيقية",
   "wait.note": "يحتاج إلى «Allow User Scripts» ليعمل. لا يظهر إلا مظهره حتى تشغّله",
   "wait.tag": "بانتظار «Allow User Scripts»",
-  "wait.tagTitle": "مظهره الجديد ظاهر. ما يضيفه يعمل بعد تشغيل «Allow User Scripts».",
+  "wait.tagTitle": "يعمل كاملًا، بمظهره، بعد تشغيل «Allow User Scripts».",
   "so.hidden": "(مخفي)",
   "so.askShort": "ماذا أفعل بالخطوات؟",
   "origin.pack": "من الحزمة «{name}»{by}{on}",

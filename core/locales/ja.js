@@ -19,6 +19,7 @@ export default {
   "bar.repoint": "別のものを指す",
   "bar.hint.pointing": "変えたいものを<b>指す</b>か説明 · <kbd>Esc</kbd> で閉じる",
   "bar.hint.target": "これをどう変えるか説明してください · <kbd>Enter</kbd> で送信",
+  "bar.hint.wider": "<kbd>{key}</kbd> で外側の大きな部分", // dogfood: Alt+↑ after pointing
   "bar.hint.page": "このページへの変更を説明してください · <kbd>Enter</kbd> で送信",
   "bar.mods": "MOD",
   "bar.stopped": "<b>停止しました。</b>何も変わっていません · <kbd>Enter</kbd> でもう一度",
@@ -73,6 +74,7 @@ export default {
   "result.describeChange": "何を変えるか説明してください",
   "result.firstVersion": "これが最初のバージョンです",
   "result.backTo": "バージョン {n} に戻しました",
+  "result.forwardTo": "バージョン {n} に進めました", // dogfood: ⌘⇧Z after ⌘Z
   "result.fixNote": "また動くように直しました",
 
   // ---- ボタン
@@ -808,9 +810,12 @@ export default {
 
   // ---- オフ、一時停止、インストール
   "ctl.offN": { other: "このページで {n} 個の MOD をオフにしました" },
+  "ctl.offNApp": { other: "{app} で {n} 個の MOD をオフにしました" }, // dogfood: the off switch in a desktop app names the app
   "ctl.offNone": "このページの MOD はオフです",
+  "ctl.offNoneApp": "{app} の MOD はオフです", // dogfood: the off switch in a desktop app names the app
   "ctl.turnBackOn": "オンに戻す",
   "ctl.offSay": "このページの MOD はすべてオフです。",
+  "ctl.offSayApp": "{app} の MOD はすべてオフです。", // dogfood: the off switch in a desktop app names the app
   "ctl.stillPausedAll": "Morse はまだすべての場所で一時停止中です。",
   "ctl.stillPausedOn": "Morse はまだ {where} で一時停止中です。",
   "ctl.resume": "再開",
@@ -852,6 +857,7 @@ export default {
   "ctl.tooLarge": "このファイルは大きすぎて、Morse のバックアップではありません。",
   "ctl.pausedAllNote": "Morse はすべての場所で一時停止中です。MOD は保存されていますが、動いていません。",
   "ctl.offNote": "このページの MOD はオフになっています。",
+  "ctl.offNoteApp": "{app} の MOD はオフになっています。", // dogfood: the off switch in a desktop app names the app
   "ctl.heldNote": "「{title}」は止めています：実行した直後にこのページが閉じるか再読み込みされました。",
   "ctl.pausedHere2": "ここの MOD は保存されていますが、動いていません",
   "ctl.stopsApp": "このアプリのすべての MOD を止めます",
@@ -1213,11 +1219,11 @@ export default {
   "ys.startHint": "スタイルを説明して、最後に <b>everywhere</b> を付けてください",
   "popup.warnOff": "<b>「Allow User Scripts」がオフです。</b>見た目の変更は動きます。ボタンや機能を追加する変更は、オンのときだけ動きます。",
   "popup.warnSteps": "<b>オンにする</b>をクリックし、開いたページで <b>Allow User Scripts</b> をオンにしてから、このタブを再読み込みしてください。",
-  "popup.waiting": { other: "<b>「Allow User Scripts」待ち：</b>{list}。新しい見た目はもう表示されています。追加する機能は、オンにすると動きます。" },
+  "popup.waiting": { other: "<b>「Allow User Scripts」待ち：</b>{list}。ページが中途半端に変わらないよう、それまではオフのままです。" },
   "popup.waits": "「Allow User Scripts」待ち",
   "wait.two": "「{a}」と「{b}」",
   "wait.many": { other: "{n} 個の MOD" },
-  "wait.text": { other: "{names}が追加する機能は「Allow User Scripts」待ちです。新しい見た目はもう表示されています。" },
+  "wait.text": { other: "{names}が追加する機能は「Allow User Scripts」待ちです。ページが中途半端に変わらないよう、それまではオフのままです。" },
   "wait.steps": "Morse の詳細を開いて「Allow User Scripts」をオンにし、このタブに戻ってください。",
   "wait.openDetails": "Morse の詳細を開く",
   "wait.turnOn": "「Allow User Scripts」をオンにする",
@@ -1226,7 +1232,7 @@ export default {
   "wait.notePractice": "見た目はこうなります。追加する機能は実際のサイトで動きます",
   "wait.note": "動かすには「Allow User Scripts」が必要です。オンにするまでは見た目だけが表示されます",
   "wait.tag": "「Allow User Scripts」待ち",
-  "wait.tagTitle": "新しい見た目は表示されています。追加する機能は「Allow User Scripts」をオンにすると動きます。",
+  "wait.tagTitle": "「Allow User Scripts」をオンにすると、見た目も含めて全部動きます。",
   "so.hidden": "（非表示）",
   "so.askShort": "このステップで何をしますか？",
   "origin.pack": "パック「{name}」から{by}{on}",
