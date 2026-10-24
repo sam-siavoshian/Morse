@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-24T21:29:34.632Z",
+ "generated": "2026-10-24T23:44:11.735Z",
  "shots": [
   {
    "area": "toast",
@@ -6466,180 +6466,12 @@
    "note": ""
   },
   {
-   "area": "welcome",
-   "state": "page-dark",
-   "theme": "dark",
-   "file": "welcome/page-dark.png",
-   "issues": [],
-   "note": "the welcome page: try it here, and the checklist that ticks itself"
-  },
-  {
-   "area": "welcome",
-   "state": "model-waiting-dark",
-   "theme": "dark",
-   "file": "welcome/model-waiting-dark.png",
-   "issues": [],
-   "note": "one command connects a model"
-  },
-  {
-   "area": "welcome",
-   "state": "copy-focus-dark",
-   "theme": "dark",
-   "file": "welcome/copy-focus-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "welcome",
-   "state": "key-not-a-key-dark",
-   "theme": "dark",
-   "file": "welcome/key-not-a-key-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "welcome",
-   "state": "key-refused-dark",
-   "theme": "dark",
-   "file": "welcome/key-refused-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "practice",
-   "state": "sample-bar-dark",
-   "theme": "dark",
-   "file": "practice/sample-bar-dark.png",
-   "issues": [],
-   "note": "the practice page before any model: suggestions with sample answers"
-  },
-  {
-   "area": "welcome",
-   "state": "model-found-dark",
-   "theme": "dark",
-   "file": "welcome/model-found-dark.png",
-   "issues": [],
-   "note": "a helper running without our code: the code box"
-  },
-  {
-   "area": "welcome",
-   "state": "model-wrong-dark",
-   "theme": "dark",
-   "file": "welcome/model-wrong-dark.png",
-   "issues": [],
-   "note": "the helper waits for a different code"
-  },
-  {
-   "area": "welcome",
-   "state": "model-nomodel-dark",
-   "theme": "dark",
-   "file": "welcome/model-nomodel-dark.png",
-   "issues": [],
-   "note": "paired, but no model set up"
-  },
-  {
-   "area": "welcome",
-   "state": "model-connected-dark",
-   "theme": "dark",
-   "file": "welcome/model-connected-dark.png",
-   "issues": [],
-   "note": "connected: the step ticks itself"
-  },
-  {
-   "area": "welcome",
-   "state": "checklist-connected-dark",
-   "theme": "dark",
-   "file": "welcome/checklist-connected-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
    "area": "practice",
    "state": "first-save-dark",
    "theme": "dark",
    "file": "practice/first-save-dark.png",
    "issues": [],
    "note": "the first saved change on the practice page: the card"
-  },
-  {
-   "area": "welcome",
-   "state": "page-narrow-dark",
-   "theme": "dark",
-   "file": "welcome/page-narrow-dark.png",
-   "issues": [],
-   "note": "the welcome page: try it here, and the checklist that ticks itself"
-  },
-  {
-   "area": "welcome",
-   "state": "model-waiting-narrow-dark",
-   "theme": "dark",
-   "file": "welcome/model-waiting-narrow-dark.png",
-   "issues": [],
-   "note": "one command connects a model"
-  },
-  {
-   "area": "welcome",
-   "state": "key-not-a-key-narrow-dark",
-   "theme": "dark",
-   "file": "welcome/key-not-a-key-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "welcome",
-   "state": "key-refused-narrow-dark",
-   "theme": "dark",
-   "file": "welcome/key-refused-narrow-dark.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "practice",
-   "state": "sample-bar-narrow-dark",
-   "theme": "dark",
-   "file": "practice/sample-bar-narrow-dark.png",
-   "issues": [],
-   "note": "the practice page before any model: suggestions with sample answers"
-  },
-  {
-   "area": "welcome",
-   "state": "model-found-narrow-dark",
-   "theme": "dark",
-   "file": "welcome/model-found-narrow-dark.png",
-   "issues": [],
-   "note": "a helper running without our code: the code box"
-  },
-  {
-   "area": "welcome",
-   "state": "model-wrong-narrow-dark",
-   "theme": "dark",
-   "file": "welcome/model-wrong-narrow-dark.png",
-   "issues": [],
-   "note": "the helper waits for a different code"
-  },
-  {
-   "area": "welcome",
-   "state": "model-nomodel-narrow-dark",
-   "theme": "dark",
-   "file": "welcome/model-nomodel-narrow-dark.png",
-   "issues": [],
-   "note": "paired, but no model set up"
-  },
-  {
-   "area": "welcome",
-   "state": "model-connected-narrow-dark",
-   "theme": "dark",
-   "file": "welcome/model-connected-narrow-dark.png",
-   "issues": [],
-   "note": "connected: the step ticks itself"
-  },
-  {
-   "area": "welcome",
-   "state": "checklist-connected-narrow-dark",
-   "theme": "dark",
-   "file": "welcome/checklist-connected-narrow-dark.png",
-   "issues": [],
-   "note": ""
   },
   {
    "area": "practice",
@@ -6698,180 +6530,12 @@
    "note": ""
   },
   {
-   "area": "welcome",
-   "state": "page-light",
-   "theme": "light",
-   "file": "welcome/page-light.png",
-   "issues": [],
-   "note": "the welcome page: try it here, and the checklist that ticks itself"
-  },
-  {
-   "area": "welcome",
-   "state": "model-waiting-light",
-   "theme": "light",
-   "file": "welcome/model-waiting-light.png",
-   "issues": [],
-   "note": "one command connects a model"
-  },
-  {
-   "area": "welcome",
-   "state": "copy-focus-light",
-   "theme": "light",
-   "file": "welcome/copy-focus-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "welcome",
-   "state": "key-not-a-key-light",
-   "theme": "light",
-   "file": "welcome/key-not-a-key-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "welcome",
-   "state": "key-refused-light",
-   "theme": "light",
-   "file": "welcome/key-refused-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "practice",
-   "state": "sample-bar-light",
-   "theme": "light",
-   "file": "practice/sample-bar-light.png",
-   "issues": [],
-   "note": "the practice page before any model: suggestions with sample answers"
-  },
-  {
-   "area": "welcome",
-   "state": "model-found-light",
-   "theme": "light",
-   "file": "welcome/model-found-light.png",
-   "issues": [],
-   "note": "a helper running without our code: the code box"
-  },
-  {
-   "area": "welcome",
-   "state": "model-wrong-light",
-   "theme": "light",
-   "file": "welcome/model-wrong-light.png",
-   "issues": [],
-   "note": "the helper waits for a different code"
-  },
-  {
-   "area": "welcome",
-   "state": "model-nomodel-light",
-   "theme": "light",
-   "file": "welcome/model-nomodel-light.png",
-   "issues": [],
-   "note": "paired, but no model set up"
-  },
-  {
-   "area": "welcome",
-   "state": "model-connected-light",
-   "theme": "light",
-   "file": "welcome/model-connected-light.png",
-   "issues": [],
-   "note": "connected: the step ticks itself"
-  },
-  {
-   "area": "welcome",
-   "state": "checklist-connected-light",
-   "theme": "light",
-   "file": "welcome/checklist-connected-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
    "area": "practice",
    "state": "first-save-light",
    "theme": "light",
    "file": "practice/first-save-light.png",
    "issues": [],
    "note": "the first saved change on the practice page: the card"
-  },
-  {
-   "area": "welcome",
-   "state": "page-narrow-light",
-   "theme": "light",
-   "file": "welcome/page-narrow-light.png",
-   "issues": [],
-   "note": "the welcome page: try it here, and the checklist that ticks itself"
-  },
-  {
-   "area": "welcome",
-   "state": "model-waiting-narrow-light",
-   "theme": "light",
-   "file": "welcome/model-waiting-narrow-light.png",
-   "issues": [],
-   "note": "one command connects a model"
-  },
-  {
-   "area": "welcome",
-   "state": "key-not-a-key-narrow-light",
-   "theme": "light",
-   "file": "welcome/key-not-a-key-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "welcome",
-   "state": "key-refused-narrow-light",
-   "theme": "light",
-   "file": "welcome/key-refused-narrow-light.png",
-   "issues": [],
-   "note": ""
-  },
-  {
-   "area": "practice",
-   "state": "sample-bar-narrow-light",
-   "theme": "light",
-   "file": "practice/sample-bar-narrow-light.png",
-   "issues": [],
-   "note": "the practice page before any model: suggestions with sample answers"
-  },
-  {
-   "area": "welcome",
-   "state": "model-found-narrow-light",
-   "theme": "light",
-   "file": "welcome/model-found-narrow-light.png",
-   "issues": [],
-   "note": "a helper running without our code: the code box"
-  },
-  {
-   "area": "welcome",
-   "state": "model-wrong-narrow-light",
-   "theme": "light",
-   "file": "welcome/model-wrong-narrow-light.png",
-   "issues": [],
-   "note": "the helper waits for a different code"
-  },
-  {
-   "area": "welcome",
-   "state": "model-nomodel-narrow-light",
-   "theme": "light",
-   "file": "welcome/model-nomodel-narrow-light.png",
-   "issues": [],
-   "note": "paired, but no model set up"
-  },
-  {
-   "area": "welcome",
-   "state": "model-connected-narrow-light",
-   "theme": "light",
-   "file": "welcome/model-connected-narrow-light.png",
-   "issues": [],
-   "note": "connected: the step ticks itself"
-  },
-  {
-   "area": "welcome",
-   "state": "checklist-connected-narrow-light",
-   "theme": "light",
-   "file": "welcome/checklist-connected-narrow-light.png",
-   "issues": [],
-   "note": ""
   },
   {
    "area": "popup",
@@ -12792,6 +12456,1982 @@
    "file": "i18n/fa-panel-foot-narrow-light.png",
    "issues": [],
    "note": ""
+  },
+  {
+   "area": "new-bar",
+   "state": "kept-toast-dark",
+   "theme": "dark",
+   "file": "new-bar/kept-toast-dark.png",
+   "issues": [],
+   "note": "Esc keeps the change and says so, with Undo"
+  },
+  {
+   "area": "new-bar",
+   "state": "kept-undo-focus-dark",
+   "theme": "dark",
+   "file": "new-bar/kept-undo-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "new-bar",
+   "state": "rebuilt-dark",
+   "theme": "dark",
+   "file": "new-bar/rebuilt-dark.png",
+   "issues": [],
+   "note": "for people working on Morse: reload the extension, then the page"
+  },
+  {
+   "area": "new-bar",
+   "state": "style-web-dark",
+   "theme": "dark",
+   "file": "new-bar/style-web-dark.png",
+   "issues": [],
+   "note": "“Every site in Chrome”: Chrome on its own"
+  },
+  {
+   "area": "new-bar",
+   "state": "style-all-dark",
+   "theme": "dark",
+   "file": "new-bar/style-all-dark.png",
+   "issues": [],
+   "note": "“Every site and app”: Chrome paired with Morse Desktop"
+  },
+  {
+   "area": "new-bar",
+   "state": "hint-wider-dark",
+   "theme": "dark",
+   "file": "new-bar/hint-wider-dark.png",
+   "issues": [],
+   "note": "after pointing, the hint names Alt+↑ for a bigger part"
+  },
+  {
+   "area": "new-bar",
+   "state": "wider-picked-dark",
+   "theme": "dark",
+   "file": "new-bar/wider-picked-dark.png",
+   "issues": [],
+   "note": "Alt+↑ picked the part around it"
+  },
+  {
+   "area": "new-bar",
+   "state": "redone-toast-dark",
+   "theme": "dark",
+   "file": "new-bar/redone-toast-dark.png",
+   "issues": [],
+   "note": "Redo: “Redone: …”"
+  },
+  {
+   "area": "new-bar",
+   "state": "redo-tool-dark",
+   "theme": "dark",
+   "file": "new-bar/redo-tool-dark.png",
+   "issues": [],
+   "note": "the Redo tool, off when there is nothing to redo, with its key"
+  },
+  {
+   "area": "new-bar",
+   "state": "kept-toast-narrow-dark",
+   "theme": "dark",
+   "file": "new-bar/kept-toast-narrow-dark.png",
+   "issues": [],
+   "note": "Esc keeps the change and says so, with Undo"
+  },
+  {
+   "area": "new-bar",
+   "state": "rebuilt-narrow-dark",
+   "theme": "dark",
+   "file": "new-bar/rebuilt-narrow-dark.png",
+   "issues": [],
+   "note": "for people working on Morse: reload the extension, then the page"
+  },
+  {
+   "area": "new-bar",
+   "state": "style-web-narrow-dark",
+   "theme": "dark",
+   "file": "new-bar/style-web-narrow-dark.png",
+   "issues": [],
+   "note": "“Every site in Chrome”: Chrome on its own"
+  },
+  {
+   "area": "new-bar",
+   "state": "style-all-narrow-dark",
+   "theme": "dark",
+   "file": "new-bar/style-all-narrow-dark.png",
+   "issues": [],
+   "note": "“Every site and app”: Chrome paired with Morse Desktop"
+  },
+  {
+   "area": "new-bar",
+   "state": "hint-wider-narrow-dark",
+   "theme": "dark",
+   "file": "new-bar/hint-wider-narrow-dark.png",
+   "issues": [],
+   "note": "after pointing, the hint names Alt+↑ for a bigger part"
+  },
+  {
+   "area": "new-bar",
+   "state": "wider-picked-narrow-dark",
+   "theme": "dark",
+   "file": "new-bar/wider-picked-narrow-dark.png",
+   "issues": [],
+   "note": "Alt+↑ picked the part around it"
+  },
+  {
+   "area": "new-bar",
+   "state": "redone-toast-narrow-dark",
+   "theme": "dark",
+   "file": "new-bar/redone-toast-narrow-dark.png",
+   "issues": [],
+   "note": "Redo: “Redone: …”"
+  },
+  {
+   "area": "new-bar",
+   "state": "kept-toast-light",
+   "theme": "light",
+   "file": "new-bar/kept-toast-light.png",
+   "issues": [],
+   "note": "Esc keeps the change and says so, with Undo"
+  },
+  {
+   "area": "new-bar",
+   "state": "kept-undo-focus-light",
+   "theme": "light",
+   "file": "new-bar/kept-undo-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "new-bar",
+   "state": "rebuilt-light",
+   "theme": "light",
+   "file": "new-bar/rebuilt-light.png",
+   "issues": [],
+   "note": "for people working on Morse: reload the extension, then the page"
+  },
+  {
+   "area": "new-bar",
+   "state": "style-web-light",
+   "theme": "light",
+   "file": "new-bar/style-web-light.png",
+   "issues": [],
+   "note": "“Every site in Chrome”: Chrome on its own"
+  },
+  {
+   "area": "new-bar",
+   "state": "style-all-light",
+   "theme": "light",
+   "file": "new-bar/style-all-light.png",
+   "issues": [],
+   "note": "“Every site and app”: Chrome paired with Morse Desktop"
+  },
+  {
+   "area": "new-bar",
+   "state": "hint-wider-light",
+   "theme": "light",
+   "file": "new-bar/hint-wider-light.png",
+   "issues": [],
+   "note": "after pointing, the hint names Alt+↑ for a bigger part"
+  },
+  {
+   "area": "new-bar",
+   "state": "wider-picked-light",
+   "theme": "light",
+   "file": "new-bar/wider-picked-light.png",
+   "issues": [],
+   "note": "Alt+↑ picked the part around it"
+  },
+  {
+   "area": "new-bar",
+   "state": "redone-toast-light",
+   "theme": "light",
+   "file": "new-bar/redone-toast-light.png",
+   "issues": [],
+   "note": "Redo: “Redone: …”"
+  },
+  {
+   "area": "new-bar",
+   "state": "redo-tool-light",
+   "theme": "light",
+   "file": "new-bar/redo-tool-light.png",
+   "issues": [],
+   "note": "the Redo tool, off when there is nothing to redo, with its key"
+  },
+  {
+   "area": "new-bar",
+   "state": "kept-toast-narrow-light",
+   "theme": "light",
+   "file": "new-bar/kept-toast-narrow-light.png",
+   "issues": [],
+   "note": "Esc keeps the change and says so, with Undo"
+  },
+  {
+   "area": "new-bar",
+   "state": "rebuilt-narrow-light",
+   "theme": "light",
+   "file": "new-bar/rebuilt-narrow-light.png",
+   "issues": [],
+   "note": "for people working on Morse: reload the extension, then the page"
+  },
+  {
+   "area": "new-bar",
+   "state": "style-web-narrow-light",
+   "theme": "light",
+   "file": "new-bar/style-web-narrow-light.png",
+   "issues": [],
+   "note": "“Every site in Chrome”: Chrome on its own"
+  },
+  {
+   "area": "new-bar",
+   "state": "style-all-narrow-light",
+   "theme": "light",
+   "file": "new-bar/style-all-narrow-light.png",
+   "issues": [],
+   "note": "“Every site and app”: Chrome paired with Morse Desktop"
+  },
+  {
+   "area": "new-bar",
+   "state": "hint-wider-narrow-light",
+   "theme": "light",
+   "file": "new-bar/hint-wider-narrow-light.png",
+   "issues": [],
+   "note": "after pointing, the hint names Alt+↑ for a bigger part"
+  },
+  {
+   "area": "new-bar",
+   "state": "wider-picked-narrow-light",
+   "theme": "light",
+   "file": "new-bar/wider-picked-narrow-light.png",
+   "issues": [],
+   "note": "Alt+↑ picked the part around it"
+  },
+  {
+   "area": "new-bar",
+   "state": "redone-toast-narrow-light",
+   "theme": "light",
+   "file": "new-bar/redone-toast-narrow-light.png",
+   "issues": [],
+   "note": "Redo: “Redone: …”"
+  },
+  {
+   "area": "site",
+   "state": "landing-1440-dark",
+   "theme": "dark",
+   "file": "site/landing-1440-dark.png",
+   "issues": [],
+   "note": "the landing page, whole"
+  },
+  {
+   "area": "site",
+   "state": "first-screen-1440-dark",
+   "theme": "dark",
+   "file": "site/first-screen-1440-dark.png",
+   "issues": [],
+   "note": "what someone arriving sees first"
+  },
+  {
+   "area": "site",
+   "state": "nav-focus-1440-dark",
+   "theme": "dark",
+   "file": "site/nav-focus-1440-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "site",
+   "state": "try-1440-dark",
+   "theme": "dark",
+   "file": "site/try-1440-dark.png",
+   "issues": [],
+   "note": "Try it here, ready: the suggestions to tap"
+  },
+  {
+   "area": "site",
+   "state": "try-focus-1440-dark",
+   "theme": "dark",
+   "file": "site/try-focus-1440-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "site",
+   "state": "try-working-1440-dark",
+   "theme": "dark",
+   "file": "site/try-working-1440-dark.png",
+   "issues": [],
+   "note": "the real runtime writing the sleep timer (a sample answer)"
+  },
+  {
+   "area": "site",
+   "state": "try-result-1440-dark",
+   "theme": "dark",
+   "file": "site/try-result-1440-dark.png",
+   "issues": [],
+   "note": "the sleep timer in the player, Save and Undo"
+  },
+  {
+   "area": "site",
+   "state": "try-unknown-1440-dark",
+   "theme": "dark",
+   "file": "site/try-unknown-1440-dark.png",
+   "issues": [],
+   "note": "a request with no sample answer: how to get Morse"
+  },
+  {
+   "area": "site",
+   "state": "landing-768-dark",
+   "theme": "dark",
+   "file": "site/landing-768-dark.png",
+   "issues": [],
+   "note": "the landing page, whole"
+  },
+  {
+   "area": "site",
+   "state": "first-screen-768-dark",
+   "theme": "dark",
+   "file": "site/first-screen-768-dark.png",
+   "issues": [],
+   "note": "what someone arriving sees first"
+  },
+  {
+   "area": "site",
+   "state": "nav-focus-768-dark",
+   "theme": "dark",
+   "file": "site/nav-focus-768-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "site",
+   "state": "try-768-dark",
+   "theme": "dark",
+   "file": "site/try-768-dark.png",
+   "issues": [],
+   "note": "Try it here, ready: the suggestions to tap"
+  },
+  {
+   "area": "site",
+   "state": "try-focus-768-dark",
+   "theme": "dark",
+   "file": "site/try-focus-768-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "site",
+   "state": "try-working-768-dark",
+   "theme": "dark",
+   "file": "site/try-working-768-dark.png",
+   "issues": [],
+   "note": "the real runtime writing the sleep timer (a sample answer)"
+  },
+  {
+   "area": "site",
+   "state": "try-result-768-dark",
+   "theme": "dark",
+   "file": "site/try-result-768-dark.png",
+   "issues": [],
+   "note": "the sleep timer in the player, Save and Undo"
+  },
+  {
+   "area": "site",
+   "state": "landing-390-dark",
+   "theme": "dark",
+   "file": "site/landing-390-dark.png",
+   "issues": [],
+   "note": "the landing page, whole"
+  },
+  {
+   "area": "site",
+   "state": "first-screen-390-dark",
+   "theme": "dark",
+   "file": "site/first-screen-390-dark.png",
+   "issues": [],
+   "note": "what someone arriving sees first"
+  },
+  {
+   "area": "site",
+   "state": "nav-open-390-dark",
+   "theme": "dark",
+   "file": "site/nav-open-390-dark.png",
+   "issues": [],
+   "note": "the nav sheet on a phone"
+  },
+  {
+   "area": "site",
+   "state": "try-390-dark",
+   "theme": "dark",
+   "file": "site/try-390-dark.png",
+   "issues": [],
+   "note": "Try it here, ready: the suggestions to tap"
+  },
+  {
+   "area": "site",
+   "state": "try-working-390-dark",
+   "theme": "dark",
+   "file": "site/try-working-390-dark.png",
+   "issues": [],
+   "note": "the real runtime writing the sleep timer (a sample answer)"
+  },
+  {
+   "area": "site",
+   "state": "try-result-390-dark",
+   "theme": "dark",
+   "file": "site/try-result-390-dark.png",
+   "issues": [],
+   "note": "the sleep timer in the player, Save and Undo"
+  },
+  {
+   "area": "site",
+   "state": "try-unknown-390-dark",
+   "theme": "dark",
+   "file": "site/try-unknown-390-dark.png",
+   "issues": [],
+   "note": "a request with no sample answer: how to get Morse"
+  },
+  {
+   "area": "desktop",
+   "state": "first-run-checking-dark",
+   "theme": "dark",
+   "file": "desktop/first-run-checking-dark.png",
+   "issues": [],
+   "note": "the model found by itself, checked once: the radar pulses while it answers"
+  },
+  {
+   "area": "desktop",
+   "state": "first-run-dark",
+   "theme": "dark",
+   "file": "desktop/first-run-dark.png",
+   "issues": [],
+   "note": "the first run: Claude Code · sonnet found and answering, the apps to open, with their own icons"
+  },
+  {
+   "area": "desktop",
+   "state": "first-run-light",
+   "theme": "light",
+   "file": "desktop/first-run-light.png",
+   "issues": [],
+   "note": "the first run: Claude Code · sonnet found and answering, the apps to open, with their own icons"
+  },
+  {
+   "area": "desktop",
+   "state": "first-run-focus-dark",
+   "theme": "dark",
+   "file": "desktop/first-run-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "apps-dark",
+   "theme": "dark",
+   "file": "desktop/apps-dark.png",
+   "issues": [],
+   "note": "Your apps: each app's own icon (an app without one gets the apps glyph, never a letter)"
+  },
+  {
+   "area": "desktop",
+   "state": "apps-light",
+   "theme": "light",
+   "file": "desktop/apps-light.png",
+   "issues": [],
+   "note": "Your apps: each app's own icon (an app without one gets the apps glyph, never a letter)"
+  },
+  {
+   "area": "desktop",
+   "state": "apps-opening-dark",
+   "theme": "dark",
+   "file": "desktop/apps-opening-dark.png",
+   "issues": [],
+   "note": "opening Tunes with Morse: the radar pulses in its row"
+  },
+  {
+   "area": "desktop",
+   "state": "apps-connected-dark",
+   "theme": "dark",
+   "file": "desktop/apps-connected-dark.png",
+   "issues": [],
+   "note": "Tunes connected: 1 window, 2 mods on; the nav says 1 on"
+  },
+  {
+   "area": "desktop",
+   "state": "apps-connected-light",
+   "theme": "light",
+   "file": "desktop/apps-connected-light.png",
+   "issues": [],
+   "note": "Tunes connected: 1 window, 2 mods on; the nav says 1 on"
+  },
+  {
+   "area": "desktop",
+   "state": "apps-row-hover-dark",
+   "theme": "dark",
+   "file": "desktop/apps-row-hover-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "apps-button-focus-dark",
+   "theme": "dark",
+   "file": "desktop/apps-button-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "apps-error-dark",
+   "theme": "dark",
+   "file": "desktop/apps-error-dark.png",
+   "issues": [],
+   "note": "an app that wouldn't start: Morse's own words for why (daemon/apps.js launchFailure)"
+  },
+  {
+   "area": "desktop",
+   "state": "apps-error-light",
+   "theme": "light",
+   "file": "desktop/apps-error-light.png",
+   "issues": [],
+   "note": "an app that wouldn't start: Morse's own words for why (daemon/apps.js launchFailure)"
+  },
+  {
+   "area": "desktop",
+   "state": "restart-dark",
+   "theme": "dark",
+   "file": "desktop/restart-dark.png",
+   "issues": [],
+   "note": "“Obsidian is open. Restart it with Morse?”, with Always restart"
+  },
+  {
+   "area": "desktop",
+   "state": "restart-light",
+   "theme": "light",
+   "file": "desktop/restart-light.png",
+   "issues": [],
+   "note": "“Obsidian is open. Restart it with Morse?”, with Always restart"
+  },
+  {
+   "area": "desktop",
+   "state": "model-dark",
+   "theme": "dark",
+   "file": "desktop/model-dark.png",
+   "issues": [],
+   "note": "Claude Code · sonnet, answered; the real Claude mark"
+  },
+  {
+   "area": "desktop",
+   "state": "model-light",
+   "theme": "light",
+   "file": "desktop/model-light.png",
+   "issues": [],
+   "note": "Claude Code · sonnet, answered; the real Claude mark"
+  },
+  {
+   "area": "desktop",
+   "state": "model-choices-dark",
+   "theme": "dark",
+   "file": "desktop/model-choices-dark.png",
+   "issues": [],
+   "note": "three choices with their real marks: Ready, Not installed, and nothing for a key"
+  },
+  {
+   "area": "desktop",
+   "state": "model-choices-light",
+   "theme": "light",
+   "file": "desktop/model-choices-light.png",
+   "issues": [],
+   "note": "three choices with their real marks: Ready, Not installed, and nothing for a key"
+  },
+  {
+   "area": "desktop",
+   "state": "model-howto-dark",
+   "theme": "dark",
+   "file": "desktop/model-howto-dark.png",
+   "issues": [],
+   "note": "How to install: the one command, and Look again"
+  },
+  {
+   "area": "desktop",
+   "state": "model-howto-light",
+   "theme": "light",
+   "file": "desktop/model-howto-light.png",
+   "issues": [],
+   "note": "How to install: the one command, and Look again"
+  },
+  {
+   "area": "desktop",
+   "state": "model-howto-focus-dark",
+   "theme": "dark",
+   "file": "desktop/model-howto-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "model-key-dark",
+   "theme": "dark",
+   "file": "desktop/model-key-dark.png",
+   "issues": [],
+   "note": "API key: the field, and where it stays"
+  },
+  {
+   "area": "desktop",
+   "state": "model-key-light",
+   "theme": "light",
+   "file": "desktop/model-key-light.png",
+   "issues": [],
+   "note": "API key: the field, and where it stays"
+  },
+  {
+   "area": "desktop",
+   "state": "model-choice-focus-dark",
+   "theme": "dark",
+   "file": "desktop/model-choice-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "model-checking-dark",
+   "theme": "dark",
+   "file": "desktop/model-checking-dark.png",
+   "issues": [],
+   "note": "checking that the model answers"
+  },
+  {
+   "area": "desktop",
+   "state": "model-failed-dark",
+   "theme": "dark",
+   "file": "desktop/model-failed-dark.png",
+   "issues": [],
+   "note": "a check that failed says why, in the model's own words; the nav shows !"
+  },
+  {
+   "area": "desktop",
+   "state": "model-failed-light",
+   "theme": "light",
+   "file": "desktop/model-failed-light.png",
+   "issues": [],
+   "note": "a check that failed says why, in the model's own words; the nav shows !"
+  },
+  {
+   "area": "desktop",
+   "state": "chrome-dark",
+   "theme": "dark",
+   "file": "desktop/chrome-dark.png",
+   "issues": [],
+   "note": "the Morse helper on, the ways to connect Chrome"
+  },
+  {
+   "area": "desktop",
+   "state": "chrome-light",
+   "theme": "light",
+   "file": "desktop/chrome-light.png",
+   "issues": [],
+   "note": "the Morse helper on, the ways to connect Chrome"
+  },
+  {
+   "area": "desktop",
+   "state": "chrome-code-dark",
+   "theme": "dark",
+   "file": "desktop/chrome-code-dark.png",
+   "issues": [],
+   "note": "a code to type in Chrome, for a few minutes"
+  },
+  {
+   "area": "desktop",
+   "state": "chrome-code-light",
+   "theme": "light",
+   "file": "desktop/chrome-code-light.png",
+   "issues": [],
+   "note": "a code to type in Chrome, for a few minutes"
+  },
+  {
+   "area": "desktop",
+   "state": "chrome-off-dark",
+   "theme": "dark",
+   "file": "desktop/chrome-off-dark.png",
+   "issues": [],
+   "note": "the helper off: Chrome can't use the model"
+  },
+  {
+   "area": "desktop",
+   "state": "chrome-off-light",
+   "theme": "light",
+   "file": "desktop/chrome-off-light.png",
+   "issues": [],
+   "note": "the helper off: Chrome can't use the model"
+  },
+  {
+   "area": "desktop",
+   "state": "chrome-switch-focus-dark",
+   "theme": "dark",
+   "file": "desktop/chrome-switch-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "allow-dark",
+   "theme": "dark",
+   "file": "desktop/allow-dark.png",
+   "issues": [],
+   "note": "“Allow Chrome to use your Claude Code · sonnet?”: the real helper asking"
+  },
+  {
+   "area": "desktop",
+   "state": "allow-light",
+   "theme": "light",
+   "file": "desktop/allow-light.png",
+   "issues": [],
+   "note": "“Allow Chrome to use your Claude Code · sonnet?”: the real helper asking"
+  },
+  {
+   "area": "desktop",
+   "state": "mods-dark",
+   "theme": "dark",
+   "file": "desktop/mods-dark.png",
+   "issues": [],
+   "note": "mods per app, each app's icon, a switch each; one off"
+  },
+  {
+   "area": "desktop",
+   "state": "mods-light",
+   "theme": "light",
+   "file": "desktop/mods-light.png",
+   "issues": [],
+   "note": "mods per app, each app's icon, a switch each; one off"
+  },
+  {
+   "area": "desktop",
+   "state": "mods-switch-focus-dark",
+   "theme": "dark",
+   "file": "desktop/mods-switch-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "mods-paused-dark",
+   "theme": "dark",
+   "file": "desktop/mods-paused-dark.png",
+   "issues": [],
+   "note": "every mod off: the notice, and the switch in the sidebar"
+  },
+  {
+   "area": "desktop",
+   "state": "mods-paused-light",
+   "theme": "light",
+   "file": "desktop/mods-paused-light.png",
+   "issues": [],
+   "note": "every mod off: the notice, and the switch in the sidebar"
+  },
+  {
+   "area": "desktop",
+   "state": "checks-idle-dark",
+   "theme": "dark",
+   "file": "desktop/checks-idle-dark.png",
+   "issues": [],
+   "note": "checks run only when asked: they ask the model a question"
+  },
+  {
+   "area": "desktop",
+   "state": "checks-idle-light",
+   "theme": "light",
+   "file": "desktop/checks-idle-light.png",
+   "issues": [],
+   "note": "checks run only when asked: they ask the model a question"
+  },
+  {
+   "area": "desktop",
+   "state": "checks-running-dark",
+   "theme": "dark",
+   "file": "desktop/checks-running-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "checks-dark",
+   "theme": "dark",
+   "file": "desktop/checks-dark.png",
+   "issues": [],
+   "note": "what Morse found; “You're root” is this test machine"
+  },
+  {
+   "area": "desktop",
+   "state": "checks-light",
+   "theme": "light",
+   "file": "desktop/checks-light.png",
+   "issues": [],
+   "note": "what Morse found; “You're root” is this test machine"
+  },
+  {
+   "area": "desktop",
+   "state": "nav-focus-dark",
+   "theme": "dark",
+   "file": "desktop/nav-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "apps-min-dark",
+   "theme": "dark",
+   "file": "desktop/apps-min-dark.png",
+   "issues": [],
+   "note": "the window at its smallest, 760 × 560"
+  },
+  {
+   "area": "desktop",
+   "state": "apps-min-light",
+   "theme": "light",
+   "file": "desktop/apps-min-light.png",
+   "issues": [],
+   "note": "the window at its smallest, 760 × 560"
+  },
+  {
+   "area": "desktop",
+   "state": "model-choices-min-dark",
+   "theme": "dark",
+   "file": "desktop/model-choices-min-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "chrome-min-dark",
+   "theme": "dark",
+   "file": "desktop/chrome-min-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "checks-min-dark",
+   "theme": "dark",
+   "file": "desktop/checks-min-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "first-run-no-model-dark",
+   "theme": "dark",
+   "file": "desktop/first-run-no-model-dark.png",
+   "issues": [],
+   "note": "nothing found: paste a key, or other ways to connect a model"
+  },
+  {
+   "area": "desktop",
+   "state": "first-run-no-model-light",
+   "theme": "light",
+   "file": "desktop/first-run-no-model-light.png",
+   "issues": [],
+   "note": "nothing found: paste a key, or other ways to connect a model"
+  },
+  {
+   "area": "desktop",
+   "state": "first-run-key-focus-dark",
+   "theme": "dark",
+   "file": "desktop/first-run-key-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "apps-empty-dark",
+   "theme": "dark",
+   "file": "desktop/apps-empty-dark.png",
+   "issues": [],
+   "note": "Choose a model first; an app Morse can't connect to says why"
+  },
+  {
+   "area": "desktop",
+   "state": "apps-empty-light",
+   "theme": "light",
+   "file": "desktop/apps-empty-light.png",
+   "issues": [],
+   "note": "Choose a model first; an app Morse can't connect to says why"
+  },
+  {
+   "area": "desktop",
+   "state": "model-none-dark",
+   "theme": "dark",
+   "file": "desktop/model-none-dark.png",
+   "issues": [],
+   "note": "no model yet: Choose…"
+  },
+  {
+   "area": "desktop",
+   "state": "model-none-light",
+   "theme": "light",
+   "file": "desktop/model-none-light.png",
+   "issues": [],
+   "note": "no model yet: Choose…"
+  },
+  {
+   "area": "desktop",
+   "state": "chrome-helper-off-dark",
+   "theme": "dark",
+   "file": "desktop/chrome-helper-off-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "desktop",
+   "state": "mods-empty-dark",
+   "theme": "dark",
+   "file": "desktop/mods-empty-dark.png",
+   "issues": [],
+   "note": "No mods yet"
+  },
+  {
+   "area": "desktop",
+   "state": "mods-empty-light",
+   "theme": "light",
+   "file": "desktop/mods-empty-light.png",
+   "issues": [],
+   "note": "No mods yet"
+  },
+  {
+   "area": "welcome",
+   "state": "choose-dark",
+   "theme": "dark",
+   "file": "welcome/choose-dark.png",
+   "issues": [],
+   "note": "one question: websites, desktop apps or both"
+  },
+  {
+   "area": "welcome",
+   "state": "choose-hover-dark",
+   "theme": "dark",
+   "file": "welcome/choose-hover-dark.png",
+   "issues": [],
+   "note": "a choice under the pointer: one step lighter"
+  },
+  {
+   "area": "welcome",
+   "state": "choose-focus-dark",
+   "theme": "dark",
+   "file": "welcome/choose-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "welcome",
+   "state": "connect-dark",
+   "theme": "dark",
+   "file": "welcome/connect-dark.png",
+   "issues": [],
+   "note": "nothing found yet: Get Morse Desktop, or an API key"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-found-dark",
+   "theme": "dark",
+   "file": "welcome/connect-found-dark.png",
+   "issues": [],
+   "note": "Morse Desktop is open, with Claude Code · sonnet: one button"
+  },
+  {
+   "area": "welcome",
+   "state": "try-dark",
+   "theme": "dark",
+   "file": "welcome/try-dark.png",
+   "issues": [],
+   "note": "the first change: three steps, the practice page, sample answers until a model is connected"
+  },
+  {
+   "area": "welcome",
+   "state": "win-dark",
+   "theme": "dark",
+   "file": "welcome/win-dark.png",
+   "issues": [],
+   "note": "the first mod is saved: a real site next, and the apps"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-both-dark",
+   "theme": "dark",
+   "file": "welcome/connect-both-dark.png",
+   "issues": [],
+   "note": "websites and apps: Morse Desktop first, the key folded away"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-both-open-dark",
+   "theme": "dark",
+   "file": "welcome/connect-both-open-dark.png",
+   "issues": [],
+   "note": "the key and the terminal, opened"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-key-bad-dark",
+   "theme": "dark",
+   "file": "welcome/connect-key-bad-dark.png",
+   "issues": [],
+   "note": "a key that isn't one"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-key-refused-dark",
+   "theme": "dark",
+   "file": "welcome/connect-key-refused-dark.png",
+   "issues": [],
+   "note": "a key the API refused"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-key-focus-dark",
+   "theme": "dark",
+   "file": "welcome/connect-key-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "welcome",
+   "state": "connect-looking-dark",
+   "theme": "dark",
+   "file": "welcome/connect-looking-dark.png",
+   "issues": [],
+   "note": "looking for Morse Desktop"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-ask-signed-out-dark",
+   "theme": "dark",
+   "file": "welcome/connect-ask-signed-out-dark.png",
+   "issues": [],
+   "note": "Claude Code found but signed out"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-code-dark",
+   "theme": "dark",
+   "file": "welcome/connect-code-dark.png",
+   "issues": [],
+   "note": "a helper started from a terminal: type its code"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-no-model-dark",
+   "theme": "dark",
+   "file": "welcome/connect-no-model-dark.png",
+   "issues": [],
+   "note": "Morse Desktop without a model"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-connected-dark",
+   "theme": "dark",
+   "file": "welcome/connect-connected-dark.png",
+   "issues": [],
+   "note": "connected: on to the first change"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-ask-waiting-dark",
+   "theme": "dark",
+   "file": "welcome/connect-ask-waiting-dark.png",
+   "issues": [],
+   "note": "waiting for Allow in Morse Desktop"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-ask-denied-dark",
+   "theme": "dark",
+   "file": "welcome/connect-ask-denied-dark.png",
+   "issues": [],
+   "note": "Denied in Morse Desktop"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-use-focus-dark",
+   "theme": "dark",
+   "file": "welcome/connect-use-focus-dark.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "welcome",
+   "state": "win-web-dark",
+   "theme": "dark",
+   "file": "welcome/win-web-dark.png",
+   "issues": [],
+   "note": "websites only"
+  },
+  {
+   "area": "welcome",
+   "state": "win-apps-no-model-dark",
+   "theme": "dark",
+   "file": "welcome/win-apps-no-model-dark.png",
+   "issues": [],
+   "note": "apps only, tried with a sample answer: connect a model next"
+  },
+  {
+   "area": "practice",
+   "state": "sample-bar-dark",
+   "theme": "dark",
+   "file": "practice/sample-bar-dark.png",
+   "issues": [],
+   "note": "the practice bar, opened from step 1: the coach, sample suggestions"
+  },
+  {
+   "area": "welcome",
+   "state": "de-choose-dark",
+   "theme": "dark",
+   "file": "welcome/de-choose-dark.png",
+   "issues": [],
+   "note": "one question: websites, desktop apps or both"
+  },
+  {
+   "area": "welcome",
+   "state": "de-connect-dark",
+   "theme": "dark",
+   "file": "welcome/de-connect-dark.png",
+   "issues": [],
+   "note": "nothing found yet: Get Morse Desktop, or an API key"
+  },
+  {
+   "area": "welcome",
+   "state": "de-connect-found-dark",
+   "theme": "dark",
+   "file": "welcome/de-connect-found-dark.png",
+   "issues": [],
+   "note": "Morse Desktop is open, with Claude Code · sonnet: one button"
+  },
+  {
+   "area": "welcome",
+   "state": "de-try-dark",
+   "theme": "dark",
+   "file": "welcome/de-try-dark.png",
+   "issues": [],
+   "note": "the first change: three steps, the practice page, sample answers until a model is connected"
+  },
+  {
+   "area": "welcome",
+   "state": "de-win-dark",
+   "theme": "dark",
+   "file": "welcome/de-win-dark.png",
+   "issues": [],
+   "note": "the first mod is saved: a real site next, and the apps"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-choose-dark",
+   "theme": "dark",
+   "file": "welcome/fa-choose-dark.png",
+   "issues": [],
+   "note": "one question: websites, desktop apps or both"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-connect-dark",
+   "theme": "dark",
+   "file": "welcome/fa-connect-dark.png",
+   "issues": [],
+   "note": "nothing found yet: Get Morse Desktop, or an API key"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-connect-found-dark",
+   "theme": "dark",
+   "file": "welcome/fa-connect-found-dark.png",
+   "issues": [],
+   "note": "Morse Desktop is open, with Claude Code · sonnet: one button"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-try-dark",
+   "theme": "dark",
+   "file": "welcome/fa-try-dark.png",
+   "issues": [],
+   "note": "the first change: three steps, the practice page, sample answers until a model is connected"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-win-dark",
+   "theme": "dark",
+   "file": "welcome/fa-win-dark.png",
+   "issues": [],
+   "note": "the first mod is saved: a real site next, and the apps"
+  },
+  {
+   "area": "welcome",
+   "state": "choose-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/choose-narrow-dark.png",
+   "issues": [],
+   "note": "one question: websites, desktop apps or both"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/connect-narrow-dark.png",
+   "issues": [],
+   "note": "nothing found yet: Get Morse Desktop, or an API key"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-found-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/connect-found-narrow-dark.png",
+   "issues": [],
+   "note": "Morse Desktop is open, with Claude Code · sonnet: one button"
+  },
+  {
+   "area": "welcome",
+   "state": "try-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/try-narrow-dark.png",
+   "issues": [],
+   "note": "the first change: three steps, the practice page, sample answers until a model is connected"
+  },
+  {
+   "area": "welcome",
+   "state": "win-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/win-narrow-dark.png",
+   "issues": [],
+   "note": "the first mod is saved: a real site next, and the apps"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-both-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/connect-both-narrow-dark.png",
+   "issues": [],
+   "note": "websites and apps: Morse Desktop first, the key folded away"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-both-open-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/connect-both-open-narrow-dark.png",
+   "issues": [],
+   "note": "the key and the terminal, opened"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-key-bad-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/connect-key-bad-narrow-dark.png",
+   "issues": [],
+   "note": "a key that isn't one"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-key-refused-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/connect-key-refused-narrow-dark.png",
+   "issues": [],
+   "note": "a key the API refused"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-looking-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/connect-looking-narrow-dark.png",
+   "issues": [],
+   "note": "looking for Morse Desktop"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-ask-signed-out-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/connect-ask-signed-out-narrow-dark.png",
+   "issues": [],
+   "note": "Claude Code found but signed out"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-code-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/connect-code-narrow-dark.png",
+   "issues": [],
+   "note": "a helper started from a terminal: type its code"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-no-model-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/connect-no-model-narrow-dark.png",
+   "issues": [],
+   "note": "Morse Desktop without a model"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-connected-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/connect-connected-narrow-dark.png",
+   "issues": [],
+   "note": "connected: on to the first change"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-ask-waiting-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/connect-ask-waiting-narrow-dark.png",
+   "issues": [],
+   "note": "waiting for Allow in Morse Desktop"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-ask-denied-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/connect-ask-denied-narrow-dark.png",
+   "issues": [],
+   "note": "Denied in Morse Desktop"
+  },
+  {
+   "area": "welcome",
+   "state": "win-web-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/win-web-narrow-dark.png",
+   "issues": [],
+   "note": "websites only"
+  },
+  {
+   "area": "welcome",
+   "state": "win-apps-no-model-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/win-apps-no-model-narrow-dark.png",
+   "issues": [],
+   "note": "apps only, tried with a sample answer: connect a model next"
+  },
+  {
+   "area": "practice",
+   "state": "sample-bar-narrow-dark",
+   "theme": "dark",
+   "file": "practice/sample-bar-narrow-dark.png",
+   "issues": [],
+   "note": "the practice bar, opened from step 1: the coach, sample suggestions"
+  },
+  {
+   "area": "welcome",
+   "state": "de-choose-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/de-choose-narrow-dark.png",
+   "issues": [],
+   "note": "one question: websites, desktop apps or both"
+  },
+  {
+   "area": "welcome",
+   "state": "de-connect-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/de-connect-narrow-dark.png",
+   "issues": [],
+   "note": "nothing found yet: Get Morse Desktop, or an API key"
+  },
+  {
+   "area": "welcome",
+   "state": "de-connect-found-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/de-connect-found-narrow-dark.png",
+   "issues": [],
+   "note": "Morse Desktop is open, with Claude Code · sonnet: one button"
+  },
+  {
+   "area": "welcome",
+   "state": "de-try-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/de-try-narrow-dark.png",
+   "issues": [],
+   "note": "the first change: three steps, the practice page, sample answers until a model is connected"
+  },
+  {
+   "area": "welcome",
+   "state": "de-win-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/de-win-narrow-dark.png",
+   "issues": [],
+   "note": "the first mod is saved: a real site next, and the apps"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-choose-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/fa-choose-narrow-dark.png",
+   "issues": [],
+   "note": "one question: websites, desktop apps or both"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-connect-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/fa-connect-narrow-dark.png",
+   "issues": [],
+   "note": "nothing found yet: Get Morse Desktop, or an API key"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-connect-found-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/fa-connect-found-narrow-dark.png",
+   "issues": [],
+   "note": "Morse Desktop is open, with Claude Code · sonnet: one button"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-try-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/fa-try-narrow-dark.png",
+   "issues": [],
+   "note": "the first change: three steps, the practice page, sample answers until a model is connected"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-win-narrow-dark",
+   "theme": "dark",
+   "file": "welcome/fa-win-narrow-dark.png",
+   "issues": [],
+   "note": "the first mod is saved: a real site next, and the apps"
+  },
+  {
+   "area": "welcome",
+   "state": "allow-window-dark",
+   "theme": "dark",
+   "file": "welcome/allow-window-dark.png",
+   "issues": [],
+   "note": "“Allow User Scripts”: a picture of the switch, and Morse waits for it"
+  },
+  {
+   "area": "welcome",
+   "state": "de-allow-window-dark",
+   "theme": "dark",
+   "file": "welcome/de-allow-window-dark.png",
+   "issues": [],
+   "note": "“Allow User Scripts”: a picture of the switch, and Morse waits for it"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-allow-window-dark",
+   "theme": "dark",
+   "file": "welcome/fa-allow-window-dark.png",
+   "issues": [],
+   "note": "“Allow User Scripts”: a picture of the switch, and Morse waits for it"
+  },
+  {
+   "area": "welcome",
+   "state": "choose-light",
+   "theme": "light",
+   "file": "welcome/choose-light.png",
+   "issues": [],
+   "note": "one question: websites, desktop apps or both"
+  },
+  {
+   "area": "welcome",
+   "state": "choose-hover-light",
+   "theme": "light",
+   "file": "welcome/choose-hover-light.png",
+   "issues": [],
+   "note": "a choice under the pointer: one step lighter"
+  },
+  {
+   "area": "welcome",
+   "state": "choose-focus-light",
+   "theme": "light",
+   "file": "welcome/choose-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "welcome",
+   "state": "connect-light",
+   "theme": "light",
+   "file": "welcome/connect-light.png",
+   "issues": [],
+   "note": "nothing found yet: Get Morse Desktop, or an API key"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-found-light",
+   "theme": "light",
+   "file": "welcome/connect-found-light.png",
+   "issues": [],
+   "note": "Morse Desktop is open, with Claude Code · sonnet: one button"
+  },
+  {
+   "area": "welcome",
+   "state": "try-light",
+   "theme": "light",
+   "file": "welcome/try-light.png",
+   "issues": [],
+   "note": "the first change: three steps, the practice page, sample answers until a model is connected"
+  },
+  {
+   "area": "welcome",
+   "state": "win-light",
+   "theme": "light",
+   "file": "welcome/win-light.png",
+   "issues": [],
+   "note": "the first mod is saved: a real site next, and the apps"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-both-light",
+   "theme": "light",
+   "file": "welcome/connect-both-light.png",
+   "issues": [],
+   "note": "websites and apps: Morse Desktop first, the key folded away"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-both-open-light",
+   "theme": "light",
+   "file": "welcome/connect-both-open-light.png",
+   "issues": [],
+   "note": "the key and the terminal, opened"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-key-bad-light",
+   "theme": "light",
+   "file": "welcome/connect-key-bad-light.png",
+   "issues": [],
+   "note": "a key that isn't one"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-key-refused-light",
+   "theme": "light",
+   "file": "welcome/connect-key-refused-light.png",
+   "issues": [],
+   "note": "a key the API refused"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-key-focus-light",
+   "theme": "light",
+   "file": "welcome/connect-key-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "welcome",
+   "state": "connect-looking-light",
+   "theme": "light",
+   "file": "welcome/connect-looking-light.png",
+   "issues": [],
+   "note": "looking for Morse Desktop"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-ask-signed-out-light",
+   "theme": "light",
+   "file": "welcome/connect-ask-signed-out-light.png",
+   "issues": [],
+   "note": "Claude Code found but signed out"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-code-light",
+   "theme": "light",
+   "file": "welcome/connect-code-light.png",
+   "issues": [],
+   "note": "a helper started from a terminal: type its code"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-no-model-light",
+   "theme": "light",
+   "file": "welcome/connect-no-model-light.png",
+   "issues": [],
+   "note": "Morse Desktop without a model"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-connected-light",
+   "theme": "light",
+   "file": "welcome/connect-connected-light.png",
+   "issues": [],
+   "note": "connected: on to the first change"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-ask-waiting-light",
+   "theme": "light",
+   "file": "welcome/connect-ask-waiting-light.png",
+   "issues": [],
+   "note": "waiting for Allow in Morse Desktop"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-ask-denied-light",
+   "theme": "light",
+   "file": "welcome/connect-ask-denied-light.png",
+   "issues": [],
+   "note": "Denied in Morse Desktop"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-use-focus-light",
+   "theme": "light",
+   "file": "welcome/connect-use-focus-light.png",
+   "issues": [],
+   "note": ""
+  },
+  {
+   "area": "welcome",
+   "state": "win-web-light",
+   "theme": "light",
+   "file": "welcome/win-web-light.png",
+   "issues": [],
+   "note": "websites only"
+  },
+  {
+   "area": "welcome",
+   "state": "win-apps-no-model-light",
+   "theme": "light",
+   "file": "welcome/win-apps-no-model-light.png",
+   "issues": [],
+   "note": "apps only, tried with a sample answer: connect a model next"
+  },
+  {
+   "area": "practice",
+   "state": "sample-bar-light",
+   "theme": "light",
+   "file": "practice/sample-bar-light.png",
+   "issues": [],
+   "note": "the practice bar, opened from step 1: the coach, sample suggestions"
+  },
+  {
+   "area": "welcome",
+   "state": "de-choose-light",
+   "theme": "light",
+   "file": "welcome/de-choose-light.png",
+   "issues": [],
+   "note": "one question: websites, desktop apps or both"
+  },
+  {
+   "area": "welcome",
+   "state": "de-connect-light",
+   "theme": "light",
+   "file": "welcome/de-connect-light.png",
+   "issues": [],
+   "note": "nothing found yet: Get Morse Desktop, or an API key"
+  },
+  {
+   "area": "welcome",
+   "state": "de-connect-found-light",
+   "theme": "light",
+   "file": "welcome/de-connect-found-light.png",
+   "issues": [],
+   "note": "Morse Desktop is open, with Claude Code · sonnet: one button"
+  },
+  {
+   "area": "welcome",
+   "state": "de-try-light",
+   "theme": "light",
+   "file": "welcome/de-try-light.png",
+   "issues": [],
+   "note": "the first change: three steps, the practice page, sample answers until a model is connected"
+  },
+  {
+   "area": "welcome",
+   "state": "de-win-light",
+   "theme": "light",
+   "file": "welcome/de-win-light.png",
+   "issues": [],
+   "note": "the first mod is saved: a real site next, and the apps"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-choose-light",
+   "theme": "light",
+   "file": "welcome/fa-choose-light.png",
+   "issues": [],
+   "note": "one question: websites, desktop apps or both"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-connect-light",
+   "theme": "light",
+   "file": "welcome/fa-connect-light.png",
+   "issues": [],
+   "note": "nothing found yet: Get Morse Desktop, or an API key"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-connect-found-light",
+   "theme": "light",
+   "file": "welcome/fa-connect-found-light.png",
+   "issues": [],
+   "note": "Morse Desktop is open, with Claude Code · sonnet: one button"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-try-light",
+   "theme": "light",
+   "file": "welcome/fa-try-light.png",
+   "issues": [],
+   "note": "the first change: three steps, the practice page, sample answers until a model is connected"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-win-light",
+   "theme": "light",
+   "file": "welcome/fa-win-light.png",
+   "issues": [],
+   "note": "the first mod is saved: a real site next, and the apps"
+  },
+  {
+   "area": "welcome",
+   "state": "choose-narrow-light",
+   "theme": "light",
+   "file": "welcome/choose-narrow-light.png",
+   "issues": [],
+   "note": "one question: websites, desktop apps or both"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-narrow-light",
+   "theme": "light",
+   "file": "welcome/connect-narrow-light.png",
+   "issues": [],
+   "note": "nothing found yet: Get Morse Desktop, or an API key"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-found-narrow-light",
+   "theme": "light",
+   "file": "welcome/connect-found-narrow-light.png",
+   "issues": [],
+   "note": "Morse Desktop is open, with Claude Code · sonnet: one button"
+  },
+  {
+   "area": "welcome",
+   "state": "try-narrow-light",
+   "theme": "light",
+   "file": "welcome/try-narrow-light.png",
+   "issues": [],
+   "note": "the first change: three steps, the practice page, sample answers until a model is connected"
+  },
+  {
+   "area": "welcome",
+   "state": "win-narrow-light",
+   "theme": "light",
+   "file": "welcome/win-narrow-light.png",
+   "issues": [],
+   "note": "the first mod is saved: a real site next, and the apps"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-both-narrow-light",
+   "theme": "light",
+   "file": "welcome/connect-both-narrow-light.png",
+   "issues": [],
+   "note": "websites and apps: Morse Desktop first, the key folded away"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-both-open-narrow-light",
+   "theme": "light",
+   "file": "welcome/connect-both-open-narrow-light.png",
+   "issues": [],
+   "note": "the key and the terminal, opened"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-key-bad-narrow-light",
+   "theme": "light",
+   "file": "welcome/connect-key-bad-narrow-light.png",
+   "issues": [],
+   "note": "a key that isn't one"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-key-refused-narrow-light",
+   "theme": "light",
+   "file": "welcome/connect-key-refused-narrow-light.png",
+   "issues": [],
+   "note": "a key the API refused"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-looking-narrow-light",
+   "theme": "light",
+   "file": "welcome/connect-looking-narrow-light.png",
+   "issues": [],
+   "note": "looking for Morse Desktop"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-ask-signed-out-narrow-light",
+   "theme": "light",
+   "file": "welcome/connect-ask-signed-out-narrow-light.png",
+   "issues": [],
+   "note": "Claude Code found but signed out"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-code-narrow-light",
+   "theme": "light",
+   "file": "welcome/connect-code-narrow-light.png",
+   "issues": [],
+   "note": "a helper started from a terminal: type its code"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-no-model-narrow-light",
+   "theme": "light",
+   "file": "welcome/connect-no-model-narrow-light.png",
+   "issues": [],
+   "note": "Morse Desktop without a model"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-connected-narrow-light",
+   "theme": "light",
+   "file": "welcome/connect-connected-narrow-light.png",
+   "issues": [],
+   "note": "connected: on to the first change"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-ask-waiting-narrow-light",
+   "theme": "light",
+   "file": "welcome/connect-ask-waiting-narrow-light.png",
+   "issues": [],
+   "note": "waiting for Allow in Morse Desktop"
+  },
+  {
+   "area": "welcome",
+   "state": "connect-ask-denied-narrow-light",
+   "theme": "light",
+   "file": "welcome/connect-ask-denied-narrow-light.png",
+   "issues": [],
+   "note": "Denied in Morse Desktop"
+  },
+  {
+   "area": "welcome",
+   "state": "win-web-narrow-light",
+   "theme": "light",
+   "file": "welcome/win-web-narrow-light.png",
+   "issues": [],
+   "note": "websites only"
+  },
+  {
+   "area": "welcome",
+   "state": "win-apps-no-model-narrow-light",
+   "theme": "light",
+   "file": "welcome/win-apps-no-model-narrow-light.png",
+   "issues": [],
+   "note": "apps only, tried with a sample answer: connect a model next"
+  },
+  {
+   "area": "practice",
+   "state": "sample-bar-narrow-light",
+   "theme": "light",
+   "file": "practice/sample-bar-narrow-light.png",
+   "issues": [],
+   "note": "the practice bar, opened from step 1: the coach, sample suggestions"
+  },
+  {
+   "area": "welcome",
+   "state": "de-choose-narrow-light",
+   "theme": "light",
+   "file": "welcome/de-choose-narrow-light.png",
+   "issues": [],
+   "note": "one question: websites, desktop apps or both"
+  },
+  {
+   "area": "welcome",
+   "state": "de-connect-narrow-light",
+   "theme": "light",
+   "file": "welcome/de-connect-narrow-light.png",
+   "issues": [],
+   "note": "nothing found yet: Get Morse Desktop, or an API key"
+  },
+  {
+   "area": "welcome",
+   "state": "de-connect-found-narrow-light",
+   "theme": "light",
+   "file": "welcome/de-connect-found-narrow-light.png",
+   "issues": [],
+   "note": "Morse Desktop is open, with Claude Code · sonnet: one button"
+  },
+  {
+   "area": "welcome",
+   "state": "de-try-narrow-light",
+   "theme": "light",
+   "file": "welcome/de-try-narrow-light.png",
+   "issues": [],
+   "note": "the first change: three steps, the practice page, sample answers until a model is connected"
+  },
+  {
+   "area": "welcome",
+   "state": "de-win-narrow-light",
+   "theme": "light",
+   "file": "welcome/de-win-narrow-light.png",
+   "issues": [],
+   "note": "the first mod is saved: a real site next, and the apps"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-choose-narrow-light",
+   "theme": "light",
+   "file": "welcome/fa-choose-narrow-light.png",
+   "issues": [],
+   "note": "one question: websites, desktop apps or both"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-connect-narrow-light",
+   "theme": "light",
+   "file": "welcome/fa-connect-narrow-light.png",
+   "issues": [],
+   "note": "nothing found yet: Get Morse Desktop, or an API key"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-connect-found-narrow-light",
+   "theme": "light",
+   "file": "welcome/fa-connect-found-narrow-light.png",
+   "issues": [],
+   "note": "Morse Desktop is open, with Claude Code · sonnet: one button"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-try-narrow-light",
+   "theme": "light",
+   "file": "welcome/fa-try-narrow-light.png",
+   "issues": [],
+   "note": "the first change: three steps, the practice page, sample answers until a model is connected"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-win-narrow-light",
+   "theme": "light",
+   "file": "welcome/fa-win-narrow-light.png",
+   "issues": [],
+   "note": "the first mod is saved: a real site next, and the apps"
+  },
+  {
+   "area": "welcome",
+   "state": "allow-window-light",
+   "theme": "light",
+   "file": "welcome/allow-window-light.png",
+   "issues": [],
+   "note": "“Allow User Scripts”: a picture of the switch, and Morse waits for it"
+  },
+  {
+   "area": "welcome",
+   "state": "de-allow-window-light",
+   "theme": "light",
+   "file": "welcome/de-allow-window-light.png",
+   "issues": [],
+   "note": "“Allow User Scripts”: a picture of the switch, and Morse waits for it"
+  },
+  {
+   "area": "welcome",
+   "state": "fa-allow-window-light",
+   "theme": "light",
+   "file": "welcome/fa-allow-window-light.png",
+   "issues": [],
+   "note": "“Allow User Scripts”: a picture of the switch, and Morse waits for it"
   }
  ]
 }

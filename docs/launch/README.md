@@ -2,59 +2,72 @@
 
 **Change any website or desktop app in your own words.**
 
-[![The 92-second demo](poster-demo-v2.png)](morse-demo-v2.mp4)
+[![The 34-second launch video](poster-v3.png)](morse-v3-16x9.mp4)
 
-[Watch the demo](morse-demo-v2.mp4) (92 seconds, no sound) · [Website](https://sam-siavoshian.github.io/RRAA/site/) · [Source](https://github.com/sam-siavoshian/RRAA)
+[Watch the launch video](morse-v3-16x9.mp4) (34 seconds, real apps and sites, with music) · [The longer demo](morse-demo-v2.mp4) (92 seconds, on this repo's demo apps) · [Website](https://sam-siavoshian.github.io/RRAA/site/) · [Source](https://github.com/sam-siavoshian/RRAA)
 
-## The 36-second cut, for X
+## The launch video (v3), for X
 
-[![The 36-second cut](poster-social.png)](morse-social-16x9.mp4)
-
-A short video for social media. It opens with Morse changing a real app, VSCodium. Then it adds a new feature, then shows three quick cuts. Captions are part of the picture, because most people watch with the sound off.
+34 seconds, only real apps and real websites: Microsoft's VS Code, Obsidian, Logseq, nodejs.org and Docker Hub. Claude Code with Opus wrote every change that needed a model, live; Your style needs none. It opens on the change itself, cuts on the beat of a human-made track, and has big captions burned in for people who watch with the sound off.
 
 | File | What it is | Size |
 |---|---|---|
-| [`morse-social-16x9.mp4`](morse-social-16x9.mp4) | 1920×1080, 36 s | 3.7 MB |
-| [`morse-social-4x5.mp4`](morse-social-4x5.mp4) | 1080×1350, for the timeline, 36 s | 2.6 MB |
-| [`morse-social-9x16.mp4`](morse-social-9x16.mp4) | 1080×1920, 36 s | 2.7 MB |
-| [`poster-social.png`](poster-social.png) | Poster frame: VSCodium as a green terminal | 272 KB |
+| [`morse-v3-16x9.mp4`](morse-v3-16x9.mp4) | 1920×1080, 33.9 s, with music | 4.8 MB |
+| [`morse-v3-4x5.mp4`](morse-v3-4x5.mp4) | 1080×1350, for the X and Instagram feed, with music | 4.0 MB |
+| [`morse-v3-9x16.mp4`](morse-v3-9x16.mp4) | 1080×1920, for Reels, Shorts and TikTok, with music | 4.1 MB |
+| [`morse-v3-16x9-nomusic.mp4`](morse-v3-16x9-nomusic.mp4), [`-4x5-nomusic`](morse-v3-4x5-nomusic.mp4), [`-9x16-nomusic`](morse-v3-9x16-nomusic.mp4) | The same cuts with no sound, to add a trending sound inside X, TikTok or Instagram | 4.1, 3.2 and 3.4 MB |
+| [`poster-v3.png`](poster-v3.png) | Poster: VS Code, the moment it turned Synthwave ’84 | 311 KB |
+| [`morse-v3-web.webm`](morse-v3-web.webm), [`morse-v3-web.mp4`](morse-v3-web.mp4) | The website's muted loop: 1280×720, no sound, small for page speed (the play button on the site plays the full 16:9 file with music) | 1.4 and 0.9 MB |
+| [`morse-v3-hook.gif`](morse-v3-hook.gif) | The first 6.6 seconds as a GIF, 720 px wide | 1.5 MB |
+| [`MUSIC.md`](MUSIC.md) | The track, its license and the credit to paste | |
 
 In order:
 
-1. **VSCodium as a retro terminal.** “make it look like a retro green terminal: green glowing text on black”, typed into the Morse bar in VSCodium. VSCodium is VS Code without Microsoft's name and logo, installed from its own `.deb` and opened with `morse launch codium`. Claude Code (haiku) wrote the change in 11.6 seconds.
-2. **A feature it doesn't have.** “add a floating 25 minute focus timer with a start button in the top right corner”. It took 13.0 seconds. Then Save, then Start, and it counts down.
-3. **Show me once**, from the demo above: archive one email by hand, then “Do these steps to every unread email”.
-4. **Fix it**, from the demo above: a site update broke a mod, and the model fixed it.
-5. **The off switch** in VSCodium: ⌥⇧0 (Alt+Shift+0) turns off both changes at once. Pressing it again brings them back.
+1. **VS Code, rethemed** (0 to 5 s). “make VS Code look like Synthwave '84: bright violet editor, side bar, tabs, title bar and status bar with a neon pink glow line under the tabs, hot pink keywords, cyan strings, yellow functions”, typed into the Morse bar in Microsoft's VS Code 1.143 (from Microsoft's `.deb`). Claude Code (Opus) wrote it in 23 seconds; the new look streams in while it writes, and lands on the music's drop.
+2. **A dark reading mode for nodejs.org** (5 to 9 s). “turn this into a calm dark reading mode: hide both sidebars and the light gradient, one centered column, serif text”, on the real Node.js “Introduction to Node.js” page, in Chromium with the Morse extension. 30 seconds.
+3. **A feature Obsidian doesn't have** (9 to 18 s). “add a focus panel on the right with this note's reading time and a 25 minute pomodoro timer”, in Obsidian 1.14.5 (its AppImage). 17 seconds. Then Start, and it counts down (25:00, 24:59).
+4. **Show me once on Docker Hub** (18 to 26 s). On nginx's Tags page: Show me once, type “alpine” in the filter by hand, Stop, then “add a button next to the filter that does these steps”. Claude Code (Opus) made a “Show Alpine” button in 10 seconds. Saved, then on redis's Tags page the same button fills in the filter there.
+5. **Your style, in two apps** (26 to 31 s). “Caladea font, bigger text and dark pages everywhere”, said once in Obsidian. Your style needs no model: Morse makes those changes itself. Logseq 0.10.9 (its AppImage, from Logseq's GitHub releases), opened after, already has it.
+6. **End card**: “Morse: change any app in your own words”, “Open source”, github.com/sam-siavoshian/RRAA.
 
-What's real and what's sped up:
+What's real, and what the edit changed:
 
-- Both VSCodium changes are Claude Code (haiku) answers with no edits, in a real VSCodium window. The bar shows the real time each took. Each wait is sped up in the video, and the video says so (“Waiting for the model, sped up N×”).
-- Show me once and Fix it run on the demo apps in this repo (Postbox and Tunes), not on a real mail or music app. Their changes are also by Claude Code (haiku).
-- Pauses where the person on screen did nothing are cut short, as in the demo above. In VSCodium, typing was slow on the recording machine, so the video starts each request already typed.
-- The cursor is drawn in afterwards. The title bar says “[Superuser]” because the recording machine runs as root.
+- **Real apps and sites only.** VS Code is Microsoft's own build, not VSCodium. Obsidian and Logseq are their official AppImages. nodejs.org and hub.docker.com are the live sites, as they were on 24 October 2026. No demo apps, mockups or drawings. Each app ran as a normal user (so no “[Superuser]” in the title bar), started with a debugging port, and Morse connected with a real `morse attach`.
+- **Every change is a first answer from the model, with no edits.** VS Code, nodejs.org, Obsidian and Docker Hub: Claude Code with Opus. A take whose change failed, didn't show, or looked cheap was thrown away and recorded again with a better request: an earlier, subtler Synthwave take, a reading mode that left a gray gradient box over the article, a Docker take where a click landed on the wrong thing, and a style take in VS Code, which Your style doesn't restyle (its own font settings win), were all dropped.
+- **Sped up, and labelled.** Waiting for the model is folded to under 1.3 seconds and the picture says so (“Waiting for the model, sped up 34×”). In the style scene, the recording machine painted the new look 3.5 seconds after Morse applied it; that wait is labelled too (“Applying the style, sped up 5×”).
+- **Shortened without a label.** Pauses where the person did nothing are cut to 0.3 s (never within 0.6 s of a click or key, or 1.8 s of a change landing). The recording machine was heavily loaded, so a few mouse moves took seconds to deliver; they play at a normal hand's speed. Each request is shown already typed (typing was slow on that machine). Each scene starts with the request in the bar, so you can read it.
+- **The cursor is drawn in afterwards** from the logged moves (screen recordings don't include it): eased, slightly curved paths with a small overshoot, a soft ripple on each click. The camera's zooms are the edit's.
+- **Music**: “Voxel Revolution” by Kevin MacLeod (incompetech.com), CC BY 4.0. Human-made, not AI. See [MUSIC.md](MUSIC.md).
 
-Made by `CUT=x` in [`demo/record-launch.js`](../../demo/record-launch.js). It records the VSCodium scene (`ONLY=codium`) and reuses the Show me once and Fix it recordings of the demo above. Then it lays out each format with its captions.
+Made by [`demo/record-social.js`](../../demo/record-social.js) (recording) with [`demo/social-edit.js`](../../demo/social-edit.js) (the cut: beats, camera, captions, music) and [`demo/compose-social.py`](../../demo/compose-social.py) (draws each frame). `REUSE=<work dir> MUSIC=<track>` cuts it again from the saved recordings.
+
+Tried and not used: Spotify, Signal, Discord and Slack couldn’t be downloaded on the recording machine (its network blocks their download hosts, the Snap Store and Flathub), and Spotify, Discord and Slack open on a sign-in screen anyway; with an account, Spotify (a web app inside, like Spicetify uses) is worth a try. Joplin’s AppImage started but never drew its window there.
 
 ### Posts
 
-Three single posts, with the 4:5 video:
+Three single posts, with the 4:5 video. Add the music credit from [MUSIC.md](MUSIC.md) as a reply or at the end.
 
-> I typed “make it look like a retro green terminal” into VSCodium (VS Code without Microsoft's name and logo). It took about 12 seconds. Morse lets you change websites and desktop apps in your own words. It's open source.
+> I typed one sentence into VS Code and it became Synthwave ’84. Then I gave Obsidian a focus timer it doesn't have. Morse changes any app in your own words. Open source.
 
-> VSCodium doesn't have a focus timer. I asked for one, and Morse added it to the running app. There was no extension to install. Morse works on websites too.
+> Do a chore once on Docker Hub, and Morse turns it into a button. It works on the next image too. Your own model writes it while you watch.
 
-> Point at something in an app and say what you want changed. Your own model (Claude Code, Codex or an API key) writes the change while you watch. Open source: github.com/sam-siavoshian/RRAA
+> VS Code, Obsidian, Logseq, nodejs.org, Docker Hub. Real apps, one sentence each. Morse is free and open source: github.com/sam-siavoshian/RRAA
 
 A short thread:
 
-> 1/ I changed VSCodium (VS Code without Microsoft's name and logo) by typing one sentence. This is Morse. It's open source, and it lets you change any website or desktop app in your own words. [16:9 video]
+> 1/ I changed five real apps and sites with one sentence each. This is Morse, an open-source tool that changes any website or desktop app in your own words. [16:9 video]
 >
-> 2/ It works on websites, and in desktop apps built from web pages, like VSCodium and Obsidian. Press a shortcut, point at something and say what you want. Your own model writes the change: Claude Code, Codex or an API key.
+> 2/ Press a shortcut, say what you want. Your own model writes the change (in the video: Claude Code with Opus) and you see it before you save it. Desktop apps built on web pages, like VS Code and Obsidian, work too.
 >
-> 3/ Do a chore once, and Morse turns it into a button. When a site update breaks one of your changes, Fix it writes a new version. One key turns every change off.
+> 3/ Show me once: do a chore by hand one time, and Morse turns it into a button. Your style: say “bigger text and dark pages everywhere” once, and the next app you open has it, no model needed.
 >
-> 4/ Everything in the video is a real run. The waits are sped up, and the video says so. It's free and open source: github.com/sam-siavoshian/RRAA
+> 4/ Every change in the video is a real run in a real app. The waits for the model are sped up, and the video says so. github.com/sam-siavoshian/RRAA
+>
+> Music: "Voxel Revolution" by Kevin MacLeod (incompetech.com), CC BY 4.0, http://creativecommons.org/licenses/by/4.0/
+
+## The 36-second cut (v2)
+
+[`morse-social-16x9.mp4`](morse-social-16x9.mp4), [`-4x5`](morse-social-4x5.mp4), [`-9x16`](morse-social-9x16.mp4) and [`poster-social.png`](poster-social.png) are the earlier cut: VSCodium (VS Code without Microsoft's branding) as a green terminal and with a focus timer, by Claude Code (haiku), then Show me once and Fix it on this repo's demo apps (Postbox and Tunes), not real ones. Made by `CUT=x` in [`demo/record-launch.js`](../../demo/record-launch.js). The title bar says “[Superuser]” because that machine ran apps as root.
 
 ## Who it's for
 
@@ -97,7 +110,7 @@ Not yet, or not verified:
 
 ## About the recordings
 
-Everything here was recorded from real runs, by [`demo/record-launch.js`](../../demo/record-launch.js). Here is what's real and what was changed in the edit.
+This section is about the 92-second demo, the first demo and their clips (the launch video above has its own notes). They were recorded from real runs, by [`demo/record-launch.js`](../../demo/record-launch.js). Here is what's real and what was changed in the edit.
 
 **The apps.** Tunes (a music app), Postbox (an email app) and The Daily Byte (a news site) are the demo apps in this repo ([`demo/sites/`](../../demo/sites/)). They stand in for real apps so the recording can be made again. In the browser they get made-up addresses (tunes.example, postbox.example, byte.example) instead of this computer's address and a port number. The desktop app is Tunes packed as a real Electron app ([`demo/electron-app`](../../demo/electron-app)), opened with a real `morse launch` typed into a terminal.
 

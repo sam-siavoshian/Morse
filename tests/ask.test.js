@@ -162,7 +162,7 @@ test("Follow-ups carry the page's earlier questions; New topic forgets them", { 
   await ask(page, "where is the export button?");
   await ask(page, "and how do I undo that?");
   assert.match(await cardText(page), /nothing on the page to undo/);
-  assert.match(await page.locator(".ask-ctx").innerText(), /follows 1 earlier question/);
+  assert.match(await page.locator(".ask-ctx").innerText(), /remembers 1 earlier question/);
   let { asks } = await fake(page);
   assert.equal(asks[0].ask, null);
   assert.equal(asks[1].ask.turns.length, 1);

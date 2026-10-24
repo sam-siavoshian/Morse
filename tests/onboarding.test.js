@@ -170,7 +170,7 @@ test("notices: no model has a button and can be dismissed for good; “Allow Use
     // The help pane still offers both.
     await t.page.keyboard.press("F1");
     await t.waitFor(s => s.pane === "help");
-    assert.match(await t.q(".ob-help footer"), /No model connected.*Connect a model.*Turn on Allow User Scripts/s);
+    assert.match(await t.q(".ob-help footer"), /No model connected.*Connect a model.*Turn on “Allow User Scripts”/s);
   });
 });
 

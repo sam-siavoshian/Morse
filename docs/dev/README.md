@@ -110,7 +110,8 @@ for developers), privacy in two lines, a short FAQ.
   Display and JetBrains Mono, Latin subsets, OFL, in `site/fonts/`).
   `site/shots/` holds the screenshots the page shows, as WebP copies of
   `docs/screenshots/` (same numbers), frames of
-  `docs/launch/morse-social-16x9.mp4` (198, 200, 201) and the Chrome Web
+  `docs/launch/morse-social-16x9.mp4` (200, 201) and of
+  `docs/launch/morse-v3-16x9.mp4` (202, the film's poster), and the Chrome Web
   Store screenshots 2 and 3 (182, 184). `site/icons/` holds the real icon of
   each app and site the page names (`APP_ICONS` in `config.js`: from the
   installed app, or the site's own favicon, 64 pixels at most), shown on the

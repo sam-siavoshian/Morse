@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+// A stand-in for the `claude` CLI, for the UI catalog's Morse Desktop states
+// (demo/ui-catalog.js --only=desktop): it answers the model check the way
+// Claude Code does (stream-json on stdout), so each shot comes out the same
+// and no request leaves the machine. Put its folder first on PATH.
+//
+//   FAKE_CLAUDE_CTL=<file>   a JSON file read on each request:
+//                            { "delay": ms, "fail": "words" }  (answer late, or fail)
+import fs from "node:fs";
+const args = process.argv.slice(2);
+if (args[0] === "--version") { console.log("2.1.30 (Claude Code)"); process.exit(0); }
+if (args[0] === "auth") { console.log(JSON.stringify({ loggedIn: true })); process.exit(0); }
+const ctl = () => { try { return JSON.parse(fs.readFileSync(process.env.FAKE_CLAUDE_CTL, "utf8")); } catch { return {}; } };
+const model = args[args.indexOf("--model") + 1] || "sonnet";
+const out = o => process.stdout.write(JSON.stringify(o) + "\n");
+out({ type: "system", subtype: "init", model });
+let buf = "";
+process.stdin.setEncoding("utf8");
+process.stdin.on("data", d => {
+  buf += d;
+  if (!buf.includes("\n")) return;
+  const { delay = 0, fail = "" } = ctl();
+  setTimeout(() => {
+    if (fail) { out({ type: "result", subtype: "error_during_execution", is_error: true, result: fail }); process.exit(1); }
+    const ev = event => out({ type: "stream_event", event });
+    ev({ type: "content_block_start", index: 0, content_block: { type: "text", text: "" } });
+    ev({ type: "content_block_delta", index: 0, delta: { type: "text_delta", text: "OK" } });
+    ev({ type: "message_delta", delta: { stop_reason: "end_turn" } });
+    ev({ type: "message_stop" });
+    out({ type: "result", subtype: "success", is_error: false, result: "OK" });
+    process.exit(0);
+  }, delay);
+});

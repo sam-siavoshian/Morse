@@ -120,8 +120,8 @@ function trayIcon() {
   return img;
 }
 
-// An app's own icon, as a data: URL for the list (or null: the list shows a
-// letter). icons.js finds the app's real icon file (the icon theme, the app's
+// An app's own icon, as a data: URL for the list (or null: the list shows the
+// Apps glyph, never a letter). icons.js finds the app's real icon file (the icon theme, the app's
 // folder, inside an AppImage, the .icns in a Mac app); Electron's
 // app.getFileIcon is the fallback on macOS and the way on Windows. On Linux it
 // gives a generic "program" picture, not the app's, so it isn't used there.

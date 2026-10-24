@@ -177,14 +177,14 @@ test("auto-fix (off by default) fixes a gallery mod in the background, with Undo
   const fp = await until(async () => (await readMod("tunes-big-covers")).fp, 20000);
   assert.equal(fp.sels[0][0], '[data-testid="album-grid"]');
 
-  // Turn on "Fix my mods automatically when a site changes".
+  // Turn on "Fix my mods when a site changes".
   await page.keyboard.press(OPEN_KEY);
   await waitFor(s => s.open);
   await page.keyboard.press("Control+Comma");
   const sw = ui('.sheet input[data-k="autoFix"]');
   await sw.waitFor({ state: "attached" });
   assert.equal(await sw.isChecked(), false, "off by default");
-  assert.equal((await ui('.sheet .srow:has(input[data-k="autoFix"]) .lbl span').textContent()), "Fix my mods automatically when a site changes");
+  assert.equal((await ui('.sheet .srow:has(input[data-k="autoFix"]) .lbl span').textContent()), "Fix my mods when a site changes");
   await ui('.sheet .srow:has(input[data-k="autoFix"]) .sw span').click();
   await until(async () => JSON.parse(await fs.readFile(path.join(home, "settings.json"), "utf8")).autoFix === true);
   await page.keyboard.press("Escape");

@@ -47,8 +47,9 @@ export function createStyleSync({ load, save, base, remote, onPulled = () => {} 
     const r = await remote.get();
     if (r === undefined) return "offline";
     const local = await load();
-    const step = syncStep({ local, remote: r.style, base: (await base.get()) || "" });
-    if (!step) { await base.set(styleStamp(local)); return null; }
+    const agreed = (await base.get()) || "";
+    const step = syncStep({ local, remote: r.style, base: agreed });
+    if (!step) { if (agreed !== styleStamp(local)) await base.set(styleStamp(local)); return null; } // perf: no write when nothing changed (every page load, at most every 5 s)
     if (step === "pull") {
       const next = taken(r.style, local);
       await save(next);

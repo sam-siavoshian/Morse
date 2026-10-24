@@ -55,7 +55,8 @@ function hostRequest(text, at) {
 // is replayed once the hello reply is in.
 B.adopt({
   // boot.js has no words of its own: it hands over message ids ({ id, vars }) for t()
-  toast: x => toast(x && typeof x === "object" ? t(x.id, x.vars) : x), key: adoptKey, modsChanged() { if (!panel.hidden) renderPanel(); },
+  toast: x => toast(x && typeof x === "object" ? t(x.id, x.vars) : x), key: adoptKey,
+  modsChanged() { Health.prune(new Set(S.mods.map(m => m.id))); if (!panel.hidden) renderPanel(); }, // soak: prune
   health: (m, r) => Health.ran(m, r), // repair: the panel marks mods that stopped working (70-panel.js)
   controlReady, // user control: the safe-start / off-switch notice after the first sync (63-control.js)
   healFound: () => Heal.found(), // self-heal: what boot.js found broken, for the dot, the note and Fix it (71-heal.js)
@@ -121,7 +122,10 @@ function debugStatus() {
       focus: root.activeElement?.className || root.activeElement?.tagName || "", hotkeys: HOTKEYS,
     });
   };
-  setInterval(write, 40);
-  B.on(document, "morse:status", write);
+  const timer = setInterval(() => {
+    if (!live()) return clearInterval(timer); // soak: a copy that went quiet (morse stop) stops, and can be let go
+    write();
+  }, 40);
+  B.on(document, "morse:status", write); // B.on drops it once this copy isn't live
 }
 if (DEBUG) debugStatus();

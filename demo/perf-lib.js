@@ -172,6 +172,17 @@ export function instrument() {
     const d = Object.getOwnPropertyDescriptor(HTMLElement.prototype, k);
     Object.defineProperty(HTMLElement.prototype, k, { ...d, get() { if (ours()) inc(P.counts, "layoutRead"); return d.get.call(this); } });
   }
+  // Hit tests and text-range rects: each one needs layout up to date. "hitTests" are the
+  // list kind (elementsFromPoint: the bar's solid backing, 50-bar.js Backing; the page
+  // outline); "hitTest" the single one (the picker, on each pointer move).
+  for (const [proto, k, kind] of [[Document.prototype, "elementsFromPoint", "hitTests"], [Document.prototype, "elementFromPoint", "hitTest"], [Range.prototype, "getClientRects", "rangeRead"], [Range.prototype, "getBoundingClientRect", "rangeRead"]]) {
+    const f = proto[k];
+    proto[k] = function (...a) {
+      if (!ours()) return f.apply(this, a);
+      const t = O.now();
+      try { return f.apply(this, a); } finally { inc(P.counts, kind); inc(P.ms, kind, O.now() - t); }
+    };
+  }
   Document.prototype.createElement = function (...a) { if (ours()) inc(P.counts, "createElement"); return O.ce.apply(this, a); };
   // Canvas work (no attribution: too hot to take a stack; the effect page has no canvas of its own).
   P.canvas = { fills: 0, shapes: 0 };

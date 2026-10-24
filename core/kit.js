@@ -177,7 +177,7 @@ function installMorseKit() {
       // A change in or on an element a watch handled: check it next frame.
       if (trackedAny) for (let x = r.target; x; x = r.type === "attributes" ? null : x.parentNode || x.host) {
         const ws = tracked.get(x);
-        if (ws) for (const w of ws) { w.dirty.add(x); dirty = true; }
+        if (ws) for (const w of ws) { if (w.c.dead) { ws.delete(w); continue; } w.dirty.add(x); dirty = true; } // soak: drop stopped mods' watches
       }
       if (r.type !== "childList") continue;
       for (const n of r.addedNodes) {
@@ -291,11 +291,12 @@ function installMorseKit() {
   function stop(c) {
     c.dead = true;
     c.observers.forEach(o => { own.delete(o); o.disconnect(); });
-    for (const w of watches) if (w.c === c) watches.delete(w);
+    for (const w of watches) if (w.c === c) { w.release?.(); watches.delete(w); } // soak: release
     if (!watches.size) stopWatching();
     c.timers.forEach(id => { clearT(id); clearI(id); });
     c.frames.forEach(id => caf(id));
     c.cleanups.reverse().forEach(f => { try { f(); } catch {} });
+    for (const w of c.weak || []) try { w.undo(); } catch {} // soak
     for (const r of c.els) r.deref()?.remove();
     mods.delete(c.id);
     // Always sweep: elements can outlive their context (e.g. a late callback).
@@ -341,10 +342,11 @@ function installMorseKit() {
           return run.call(this, recs, obs);
         });
         this.deliver = recs => run.call(this, recs, this);
-        c.observers.add(this);
       }
-      observe(...a) { if (c.dead) return; own.add(this); return super.observe(...a); }
-      disconnect() { own.delete(this); return super.disconnect(); }
+      // soak: held while observing only. An observer per element (made in a
+      // watch callback) used to stay in c.observers after its disconnect.
+      observe(...a) { if (c.dead) return; own.add(this); c.observers.add(this); return super.observe(...a); }
+      disconnect() { own.delete(this); c.observers.delete(this); return super.disconnect(); }
     }
     return [
       later(setT, clearT, 0),
@@ -355,6 +357,14 @@ function installMorseKit() {
       cancel(caf, c.frames),
       Observer,
     ];
+  }
+
+  // soak: clean-ups for things the page may drop (a handler on an element, a
+  // style inside a part): kept with a WeakRef to the thing, and pruned once
+  // it's gone, so a mod that runs on every streamed message stays level.
+  function weak(c, thing, undo) {
+    (c.weak ||= []).push({ ref: new WeakRef(thing), undo });
+    if (c.weak.length > (c.weakMax ||= 256)) { c.weak = c.weak.filter(w => w.ref.deref()); c.weakMax = Math.max(256, c.weak.length * 2); }
   }
 
   // Elements a mod makes count toward its size budget; past it the mod is
@@ -371,7 +381,7 @@ function installMorseKit() {
       watch(selector, fn, opts) {
         selector = fixIds(selector);
         const live = !!(opts && opts.live);
-        const seen = new WeakMap(); // element -> what fn did to it
+        let seen = new WeakMap(); // element -> what fn did to it
         const run = el => {
           if (c.dead) return;
           if (!c.t1) c.t1 = now();
@@ -381,11 +391,44 @@ function installMorseKit() {
         };
         const styles = el => { const o = {}; for (let i = 0; i < el.style.length; i++) { const p = el.style[i]; o[p] = [el.style.getPropertyValue(p), el.style.getPropertyPriority(p)]; } return o; };
         const attrs = el => { const o = {}; for (const a of el.attributes) if (a.name !== "class" && a.name !== "style") o[a.name] = a.value; return o; };
+        // What fn puts next to el. A short list of siblings is copied before
+        // and compared after; a long one (a feed, the lines of a file) isn't,
+        // since copying it for each of its items is quadratic: only el's
+        // neighbours and the list's two ends are noted, which is where fn puts
+        // things (before, after, prepend, append). A walk whose note fn
+        // removed, or that goes on for more than a few dozen (el moved), finds
+        // nothing, so a page node is never taken for the mod's.
+        const SIBS_COPY = 200, WALK_MAX = 64;
+        const sibsBefore = el => {
+          const p = el.parentNode;
+          if (!p) return null;
+          return p.childNodes.length <= SIBS_COPY ? { all: new Set(p.childNodes) } : { p, prev: el.previousSibling, next: el.nextSibling, first: p.firstChild, last: p.lastChild };
+        };
+        const sibsAdded = (el, s, out) => {
+          const p = el.parentNode;
+          if (!s || !p) return;
+          if (s.all) { for (const k of p.childNodes) if (!s.all.has(k) && k.nodeType === 1) out.push(k); return; }
+          if (p !== s.p) return;
+          const walk = (from, stop, step) => {
+            if (stop && stop.parentNode !== p) return;
+            const found = [];
+            let n = 0;
+            for (let k = from; k && k !== stop; k = k[step]) {
+              if (++n > WALK_MAX) return;
+              if (k !== el && k.nodeType === 1) found.push(k);
+            }
+            out.push(...found);
+          };
+          walk(el.previousSibling, s.prev, "previousSibling");
+          walk(el.nextSibling, s.next, "nextSibling");
+          if (s.first) walk(p.firstChild, s.first, "nextSibling");
+          if (s.last) walk(p.lastChild, s.last, "previousSibling");
+        };
         // Runs fn on el and remembers what it did: the elements it made or put
         // in or next to el, and the classes, inline styles, attributes and text it set.
         const apply = (el, prev) => {
           const cl0 = new Set(el.classList), st0 = styles(el), at0 = attrs(el), tx0 = el.textContent;
-          const kids0 = new Set(el.childNodes), sibs0 = el.parentNode ? new Set(el.parentNode.childNodes) : null;
+          const kids0 = new Set(el.childNodes), sibs0 = sibsBefore(el);
           // A burst of re-runs means fn and the page are fighting over el: then leave it alone.
           const t = now(), burst = prev && t - prev.at < 100 ? prev.burst + 1 : 0;
           const r = { created: [], at: t, burst, root: inner(el) };
@@ -393,7 +436,7 @@ function installMorseKit() {
           c.current = r;
           try { run(el); } finally { c.current = outer; }
           for (const k of el.childNodes) if (!kids0.has(k) && k.nodeType === 1) r.created.push(k);
-          if (sibs0 && el.parentNode) for (const k of el.parentNode.childNodes) if (!sibs0.has(k) && k.nodeType === 1) r.created.push(k);
+          sibsAdded(el, sibs0, r.created);
           r.created = [...new Set(r.created)].filter(n => n.isConnected && n.parentNode !== n.ownerDocument.head);
           for (const n of r.created) madeBy.set(n, r);
           const cl1 = new Set(el.classList), st1 = styles(el), at1 = attrs(el);
@@ -438,6 +481,7 @@ function installMorseKit() {
               apply(el, null);
               let ws = tracked.get(el);
               if (!ws) tracked.set(el, ws = new Set());
+              for (const x of ws) if (x.c.dead) ws.delete(x); // soak: watches of mods that stopped
               ws.add(w); trackedAny = true;
             }
             return true;
@@ -453,6 +497,9 @@ function installMorseKit() {
               if (ok) apply(el, r); else seen.delete(el);
             } else reassert(el, r);
           },
+          // soak: the mod stopped. What its callbacks made stays reachable from
+          // the elements they ran on (tracked) until those change again: let go now.
+          release() { seen = new WeakMap(); this.dirty.clear(); },
           // The mod's own code changed el: its new state.
           accept(el, name) {
             const r = seen.get(el);
@@ -520,7 +567,8 @@ function installMorseKit() {
             (at.nodeType === 9 ? at.head || at.documentElement : at).append(s);
             styled.set(at, s);
             if (root && c.current) c.current.created.push(s);
-            c.cleanups.push(() => s.remove());
+            const ref = new WeakRef(s);
+            weak(c, s, () => ref.deref()?.remove()); // soak: one per matched part, weakly held
           });
           return null;
         }
@@ -547,7 +595,12 @@ function installMorseKit() {
           return ref;
         }
         target.addEventListener(event, h, opts);
-        c.cleanups.push(() => target.removeEventListener(event, h, opts));
+        // soak: weakly held, like el(): a handler on every streamed message
+        // used to keep each message (and the handler) alive after the page
+        // dropped it. The target keeps its own handler; turning the mod off
+        // removes those still there.
+        const ref = new WeakRef(target), fref = new WeakRef(h);
+        weak(c, target, () => { const t = ref.deref(), f = fref.deref(); if (t && f) t.removeEventListener(event, f, opts); });
       },
       // app profiles (daemon/profile.js): the app's own commands, through the
       // runner Morse found in this app (a frozen handle on the page's window).

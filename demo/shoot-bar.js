@@ -73,7 +73,7 @@ await scene("62-hotkey-recorder.png", "", async p => {
   await p.keyboard.press("Meta+Comma");
   await p.mouse.move(640, 500);
   await p.waitForTimeout(200);
-  await p.keyboard.press("Tab"); // Open Morse -> Push to talk
+  await p.keyboard.press("Tab"); // Open Morse -> Hold to talk
   await p.keyboard.press("Enter");
   await p.waitForTimeout(150);
   await p.keyboard.press("Meta+KeyQ");

@@ -561,7 +561,7 @@ test("morse launch: why an app quit is shown as written, not as “Something wen
   const seen = [];
   onHiddenError(raw => seen.push(raw));
   try {
-    assert.equal(plainError(new Error("TypeError: Cannot read properties of null (reading 'x')")), "The change the model wrote didn't work on this page. Try again, or describe it differently.");
+    assert.equal(plainError(new Error("TypeError: Cannot read properties of null (reading 'x')")), "The model's change didn't work on this page. Try again, or try other words.");
     assert.equal(plainError("Paste a share link first."), "Paste a share link first.");
     assert.deepEqual(seen, ["TypeError: Cannot read properties of null (reading 'x')"]);
   } finally { onHiddenError(null); }

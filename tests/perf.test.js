@@ -119,6 +119,107 @@ test("open: the UI loads on first use, opens from the hotkey, and goes quiet whe
   } finally { await t.close(); }
 });
 
+// The bar's words (04-i18n.js, 97-boot.js): English ships in the UI and its
+// first open waits for nothing; another language is one host request per
+// page, on the first open only (the host reads its file once per process).
+test("languages: English opens without asking for words; German asks once per page, not again on reopening", { skip }, async () => {
+  const { writeFile } = await import("node:fs/promises");
+  const settings = path.join(D.home, "settings.json");
+  await D.setMods([]);
+  try {
+    for (const [code, want] of [["en", 0], ["de", 1]]) {
+      await writeFile(settings, JSON.stringify({ welcome: false, language: code }));
+      const t = await D.page();
+      try {
+        await t.page.goto(srv.url("/perf/big.html"));
+        await sleep(500);
+        const words = async () => (await t.sends()).filter(s => s[0] === "i18n.words").length;
+        for (let i = 0; i < 2; i++) {
+          await t.page.keyboard.press(OPEN_KEY);
+          await until(() => t.barVisible(), 8000, "the bar");
+          await sleep(300);
+          assert.equal(await words(), want, `${code}: word requests after opening ${i + 1} time(s)`);
+          await t.page.keyboard.press("Escape");
+          await until(async () => !(await t.barVisible()), 4000, "the bar to close");
+        }
+        assert.equal(await t.morse(P => P.roots.map(r => r.host.lang).join("")), code);
+        assert.deepEqual(t.errors, []);
+      } finally { await t.close(); }
+    }
+  } finally { await writeFile(settings, JSON.stringify({ welcome: false })); }
+});
+
+// The bar turns solid over the page's words (50-bar.js Backing). Each look is
+// up to 20 hit tests (document.elementsFromPoint, a few ms each on a big page),
+// so it looks only somewhere new, or once the page under it has scrolled and
+// rests: never on a key, a pointer move over the page, the bar stepping back to
+// where it already looked, or every scroll tick, and never while closed.
+test("bar open: the solid backing looks when the bar or the page moves, not on every key, pointer move or scroll tick", { skip }, async () => {
+  await D.setMods([]);
+  const t = await D.page({ viewport: { width: 390, height: 800 } }); // a phone: the list's words sit under the bar
+  const solid = () => t.morse(P => P.roots.some(r => r.querySelector(".bar")?.classList.contains("solid")));
+  const counts = async () => (await t.snap()).counts;
+  try {
+    await t.page.goto(srv.url("/perf/big.html"));
+    await sleep(300);
+    await t.page.mouse.move(200, 200);
+    await t.page.keyboard.press(OPEN_KEY);
+    await until(() => t.barVisible(), 8000, "the bar");
+    await until(solid, 4000, "the bar to turn solid over the page's words");
+    await sleep(600);
+    await t.reset();
+    await t.clearSends();
+    await t.page.keyboard.type("make every second row a little lighter", { delay: 40 });
+    await sleep(800);
+    const typing = await counts();
+    // One look at most: the suggestions row goes away with the first key, so the bar gets shorter.
+    assert.ok((typing.hitTests || 0) <= 20, `hit tests while typing 39 keys: ${typing.hitTests}`);
+    // Warm as you type (speed): one request to the host once typing pauses, not one per key
+    // (a busy machine can stall the keys long enough for one more).
+    const warms = (await t.sends()).filter(s => s[0] === "warm").length;
+    assert.ok(warms >= 1 && warms <= 3, `warm requests while typing 39 keys: ${warms}`);
+    await t.reset();
+    for (let i = 0; i < 30; i++) { await t.page.mouse.move(20 + i * 12, 120 + (i % 8) * 20); await sleep(30); }
+    await sleep(500);
+    assert.equal((await counts()).hitTests || 0, 0, "the backing's hit tests while pointing at the page (the picker's own one per move aside)");
+    // Pointing low and high in turn: the bar steps to the top and back each time.
+    await t.reset();
+    for (let i = 0; i < 24; i++) { await t.page.mouse.move(60 + i * 10, i % 2 ? 560 : 120); await sleep(80); }
+    await sleep(500);
+    const stepping = await t.snap();
+    assert.ok((stepping.counts.hitTests || 0) <= 40, `hit tests while the bar stepped between top and bottom: ${stepping.counts.hitTests}`);
+    await t.reset();
+    for (let i = 0; i < 20; i++) { await t.page.mouse.wheel(0, 100); await sleep(60); }
+    await sleep(800);
+    const scrolling = await counts();
+    // Once the page rests (twice if a busy machine paused the scroll for a moment).
+    assert.ok((scrolling.hitTests || 0) <= 40, `hit tests for 20 scroll ticks: ${scrolling.hitTests}`);
+    assert.ok(await solid(), "still solid over the page's words");
+    // Closed: scrolling the page runs nothing of Morse's.
+    await t.page.keyboard.press("Escape");
+    await t.page.keyboard.press("Escape");
+    await until(async () => !(await t.barVisible()), 4000, "the bar to close");
+    await sleep(1500);
+    await t.reset();
+    for (let i = 0; i < 20; i++) { await t.page.mouse.wheel(0, -100); await sleep(60); }
+    await sleep(800);
+    const closed = await t.snap();
+    assert.equal((closed.counts.hitTests || 0) + (closed.counts.hitTest || 0), 0, "hit tests with the bar closed");
+    assert.equal(total(closed.calls), 0, `Morse callbacks while scrolling with the bar closed: ${JSON.stringify(closed.calls)}`);
+    assert.deepEqual(t.errors, []);
+  } finally { await t.close(); }
+  // A calm page (no words under the bar) keeps the glass.
+  const c = await D.page();
+  try {
+    await c.page.goto(srv.url("/perf/effect.html"));
+    await sleep(300);
+    await c.page.keyboard.press(OPEN_KEY);
+    await until(() => c.barVisible(), 8000, "the bar");
+    await sleep(1000);
+    assert.equal(await c.morse(P => P.roots.some(r => r.querySelector(".bar")?.classList.contains("solid"))), false, "glass over a calm page");
+  } finally { await c.close(); }
+});
+
 test("mods at scale: 30 watch mods share one observer and stay cheap on a streaming chat", { skip }, async () => {
   await D.setMods(THIRTY_MODS);
   const t = await D.page();

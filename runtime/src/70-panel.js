@@ -53,7 +53,9 @@ const Health = (() => {
       if (stats?.watches?.some(x => x.total) && st.get(id) === s) { st.set(id, { state: "ok" }); changed(); }
     }
   }
-  return { ran, recheck, get: id => st.get(id) };
+  // soak: only mods still on this page keep an entry (deleted ones used to stay)
+  function prune(ids) { for (const [id, s] of st) if (!ids.has(id)) { clearTimeout(s.timer); st.delete(id); } }
+  return { ran, recheck, prune, get: id => st.get(id) };
 })();
 
 // Why a saved mod's own code failed, in plain words (the shared plainError in
