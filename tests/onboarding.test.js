@@ -3,20 +3,20 @@
 // the empty Mods panel. The real runtime against demo/bar-playground.html's
 // fake host with ?onboarding (a fresh install whose progress persists in the
 // page's localStorage, like chrome.storage would).
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
-import { serveBar } from "../demo/bar-server.js";
+import { serveBar } from "./helpers/demo-server.js";
+import { noBrowser, launchBrowser } from "./helpers/browser.js";
+import { waitForStatus, waitForReady, settle, TIMEOUT } from "./helpers/wait.js";
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
+const skip = noBrowser;
 let browser, srv;
 
 before(async () => {
   if (skip) return;
-  srv = await serveBar();
-  try { browser = await chromium.launch({ channel: "chromium" }); } catch { browser = await chromium.launch(); }
+  srv = await serveBar(); // port 0
+  browser = await launchBrowser({ channel: "chromium" });
 });
 after(async () => { await browser?.close(); await srv?.close(); });
 
@@ -31,19 +31,13 @@ async function install(query, state) {
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
-  const waitFor = async (pred, ms = 8000) => {
-    const end = Date.now() + ms;
-    let s;
-    while (Date.now() < end) { s = await status(); if (pred(s)) return s; await page.waitForTimeout(25); }
-    throw new Error("timed out; last status " + JSON.stringify(s));
-  };
+  const waitFor = (pred, ms = TIMEOUT) => waitForStatus(page, pred, { timeout: ms, what: String(pred) });
   const load = async () => {
     await page.goto(srv.url + query);
-    await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
-    await page.waitForTimeout(150); // onboarding.get
+    await waitForReady(page); // onboarding.get is answered before hello
   };
   const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem("fake:onboarding") || "null"));
-  const open = async () => { await page.keyboard.press("Alt+Space"); await waitFor(s => s.open); await page.waitForTimeout(60); };
+  const open = async () => { await page.keyboard.press("Alt+Space"); await waitFor(s => s.open); await settle(page); };
   await load();
   return { page, ctx, status, waitFor, load, stored, open, errors, q: (sel, prop) => page.evaluate(ui(sel, prop)), click: sel => page.evaluate(click(sel)) };
 }

@@ -4,17 +4,17 @@
 // preinstalled Chromium: popups, frames, reloads, navigation, renderer
 // crashes, the app being killed and restarted, `morse stop`, and the CLI's
 // launch / status / stop / --restart flow.
+import { home, tempDir } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
-import os from "node:os";
 import path from "node:path";
 import { spawn, execFile } from "node:child_process";
 import { promises as fs, existsSync } from "node:fs";
-import { createRequire } from "node:module";
+import { chromium, noBrowser } from "./helpers/browser.js";
+import { waitFor, TIMEOUT } from "./helpers/wait.js";
+import { devToolsPort, freeRange } from "./helpers/net.js";
 
-const home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-desktop-"));
-process.env.MORSE_HOME = home;
 const apps = await import("../daemon/apps.js");
 const targets = await import("../daemon/targets.js");
 const ports = await import("../daemon/ports.js");
@@ -24,18 +24,14 @@ const { createMod } = await import("../core/mod.js");
 const { buildMac, buildWindows, buildLinux } = await import("../demo/fake-installs.js");
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-async function until(fn, ms = 15000, what = "condition") {
-  const end = Date.now() + ms;
-  let last;
-  while (Date.now() < end) { try { last = await fn(); if (last) return last; } catch (e) { last = e; } await sleep(100); }
-  throw new Error(`timed out waiting for ${typeof what === "function" ? what() : what}; last: ${last instanceof Error ? last.message : JSON.stringify(last)}`);
-}
+// Every wait gets at least the shared generous timeout: Chromium starting,
+// crashing and reloading is slow when several test runs share the machine.
+const until = (fn, ms, what = "condition") => waitFor(fn, { timeout: Math.max(ms || 0, TIMEOUT), interval: 100, what });
 const byId = list => Object.fromEntries(list.map(a => [a.id, a]));
 
 // ---------------------------------------------------------------- discovery
 async function fixture(build) {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "morse-fx-"));
+  const dir = tempDir("morse-fx-");
   return apps.hostContext(await build(dir));
 }
 
@@ -220,9 +216,7 @@ test("per-app choices are remembered in ~/.morse/apps.json", async () => {
 });
 
 // ---------------------------------------------------------------- live: fake multi-window app
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
+const skip = noBrowser;
 const CHROME = chromium?.executablePath();
 
 let fake, server, port, profile, proc, conn, logs = [], running;
@@ -234,7 +228,7 @@ async function evalIn(match, expression) {
   const t = (await listTargets(port)).find(x => x.type !== "service_worker" && match.test(x.url));
   if (!t) throw new Error("no target " + match);
   const s = await CDPSession.connect(t.webSocketDebuggerUrl);
-  try { return (await s.send("Runtime.evaluate", { expression, returnByValue: true, userGesture: true })).result?.value; }
+  try { return (await s.send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true, userGesture: true })).result?.value; }
   finally { s.close(); }
 }
 const hasRuntime = re => evalIn(re, "!!globalThis.__morseHost && !!document.querySelector('[data-morse-ui]')").catch(() => false);
@@ -242,10 +236,12 @@ const hasRuntime = re => evalIn(re, "!!globalThis.__morseHost && !!document.quer
 before(async () => {
   if (skip) return;
   server = await serveFakeApp();
-  port = await ports.pickPort({ range: [9600, 9700] });
   profile = path.join(home, "fake-app-profile");
-  proc = launchFakeApp({ chrome: CHROME, port, server, profile });
-  await waitForEndpoint(port);
+  // Port 0: Chromium binds a free port itself and writes it to the profile, so
+  // concurrent runs can't pick the same one. Restarts reuse that port.
+  proc = launchFakeApp({ chrome: CHROME, port: 0, server, profile });
+  port = await devToolsPort(profile);
+  await waitForEndpoint(port, TIMEOUT);
   const { Connector } = await import("../daemon/connector.js");
   conn = new Connector({
     port, app: { id: "fakemail", name: "Fake Mail" }, settings: { provider: "demo", model: "demo" }, log: l => logs.push(l), watch: true, interval: 200,
@@ -295,7 +291,7 @@ test("a renderer crash: Morse notices, and the runtime is back once the page rel
   const s = await CDPSession.connect(t.webSocketDebuggerUrl);
   s.send("Page.crash").catch(() => {});
   await until(() => logs.some(l => /stopped working/.test(l)), 10000, "crash noticed");
-  await sleep(300);
+  await until(() => ![...conn.windows.values()].some(w => w.crashed), 10000, "the crashed session dropped");
   await s.send("Page.reload").catch(async () => {
     const s2 = await CDPSession.connect(t.webSocketDebuggerUrl);
     await s2.send("Page.reload"); s2.close();
@@ -320,7 +316,9 @@ test("stop() detaches: bar and mods come off, new pages stay clean, the app keep
   const leftovers = () => evalIn(MAIN, "!!globalThis.__morseHost || !!document.querySelector('[data-morse-ui], style[data-morse-css]')");
   await conn.stop();
   assert.equal(await running, "stopped");
-  await sleep(300); // the runtime's own observer must not put the bar back
+  // The runtime's own observer must not put the bar back: give the page a few
+  // frames (it re-adds the bar from a MutationObserver), then look.
+  await evalIn(MAIN, "new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 50))))");
   assert.equal(await leftovers(), false);
   // attaching again to the same, never reloaded document brings Morse back
   const { Connector } = await import("../daemon/connector.js");
@@ -330,11 +328,13 @@ test("stop() detaches: bar and mods come off, new pages stay clean, the app keep
   await until(() => evalIn(MAIN, "!!document.querySelector('style[data-morse-css]')"), 10000, "mods after attaching again");
   await again.stop();
   await r2;
-  await sleep(300);
+  await evalIn(MAIN, "new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 50))))");
   assert.equal(await leftovers(), false);
-  await evalIn(MAIN, "location.reload()");
-  await sleep(1200);
-  assert.equal(await evalIn(/app\.fake\.test:\d+\/$/, "!!globalThis.__morseHost"), false);
+  // A new document after detaching stays clean: once it has fully loaded (the
+  // runtime would have booted at DOMContentLoaded), there's no Morse in it.
+  await evalIn(MAIN, "window.__beforeReload = 1; location.reload()");
+  await until(() => evalIn(MAIN, "!window.__beforeReload && document.readyState === 'complete'"), 10000, "the reloaded page");
+  assert.equal(await evalIn(MAIN, "!!globalThis.__morseHost || !!document.querySelector('[data-morse-ui]')"), false);
 });
 
 test("without --watch, the app quitting ends the session cleanly", { skip }, async () => {
@@ -348,34 +348,39 @@ test("without --watch, the app quitting ends the session cleanly", { skip }, asy
 });
 
 // ---------------------------------------------------------------- live: the CLI
+// The CLI picks debugging ports from MORSE_PORT_RANGE: a small OS-chosen range
+// per run instead of 9333-9399, which concurrent runs would race for.
+const range = await freeRange(8);
+const cliEnv = { MORSE_HOME: home, MORSE_PORT_RANGE: range.join("-") };
 function cli(args, env = {}) {
-  const p = spawn(process.execPath, [path.join(root, "daemon/cli.js"), ...args], { env: { ...process.env, MORSE_HOME: home, FORCE_COLOR: "0", ...env }, stdio: ["ignore", "pipe", "pipe"] });
+  const p = spawn(process.execPath, [path.join(root, "daemon/cli.js"), ...args], { env: { ...process.env, ...cliEnv, FORCE_COLOR: "0", ...env }, stdio: ["ignore", "pipe", "pipe"] });
   p.out = "";
   p.stdout.on("data", d => { p.out += d; });
   p.stderr.on("data", d => { p.out += d; });
   p.done = new Promise(r => p.on("exit", code => r(code)));
   return p;
 }
-const cliOut = args => new Promise(r => execFile(process.execPath, [path.join(root, "daemon/cli.js"), ...args], { env: { ...process.env, MORSE_HOME: home } }, (e, so, se) => r({ code: e?.code || 0, out: so + se })));
+const cliOut = args => new Promise(r => execFile(process.execPath, [path.join(root, "daemon/cli.js"), ...args], { env: { ...process.env, ...cliEnv } }, (e, so, se) => r({ code: e?.code || 0, out: so + se })));
 const strip = s => s.replace(/\x1b\[\d+m/g, "");
 
-test("CLI: already open → one plain sentence; --restart quits it, relaunches on a free port, status and stop work", { skip, timeout: 90000 }, async () => {
+test("CLI: already open → one plain sentence; --restart quits it, relaunches on a free port, status and stop work", { skip, timeout: 240000 }, async () => {
   const prof = path.join(home, "cli-profile");
   const extra = fakeAppArgs({ server, profile: prof }).filter(a => !a.startsWith("http"));
   // the app is open without a debugging port
   const plain = spawn(CHROME, [...extra, server.url()], { stdio: "ignore" });
-  await sleep(1500);
+  const chromeApp = { id: "x", name: "x", path: CHROME, browser: true, processName: "chrome" };
+  await until(() => apps.findAppProcesses(chromeApp, apps.listProcesses(), { extraArgs: [`--user-data-dir=${prof}`] }).length, 10000, "the app to be running");
   const refused = await cliOut(["launch", CHROME, "--name", "Fake Mail", "--", ...extra, `--app=${server.url()}`]);
   assert.equal(refused.code, 1);
   assert.match(strip(refused.out), /Fake Mail is already open\. Morse can only connect to an app when it starts\. Run morse launch fake-mail --restart/);
 
   const m = cli(["launch", CHROME, "--name", "Fake Mail", "--restart", "--", ...extra, `--app=${server.url()}`]);
   try {
-    await until(() => /connected to (Inbox|app\.fake\.test)/.test(m.out), 30000, () => "CLI attached: " + m.out);
+    await until(() => /connected to (Inbox|app\.fake\.test)/.test(m.out), 60000, () => "CLI attached: " + m.out);
     assert.match(m.out, /quitting Fake Mail/);
     assert.equal(plain.exitCode !== null || plain.signalCode !== null, true, "the old instance quit");
     const used = Number(m.out.match(/port +(\d+)/)[1]);
-    assert.ok(used >= 9333 && used <= 9399, "a port from Morse's range");
+    assert.ok(used >= range[0] && used <= range[1], `a port from Morse's range (${range.join("-")}), got ${used}`);
     assert.equal((await apps.loadAppPrefs())["fake-mail"].restart, true, "--restart remembered");
     await store.saveMod(createMod({ prompt: "x", title: "Compact list", css: "main{gap:4px}", js: "", url: server.url(), app: null }));
     const st = await until(async () => { const o = strip((await cliOut(["status"])).out); return /Attachment preview/.test(o) && /mods on/.test(o) && o; }, 15000, "status with the frame");
@@ -395,7 +400,7 @@ test("CLI: already open → one plain sentence; --restart quits it, relaunches o
     m.kill("SIGKILL");
     plain.kill("SIGKILL");
     // quit the relaunched instance
-    for (const p of apps.findAppProcesses({ id: "x", name: "x", path: CHROME, browser: true, processName: "chrome" }, apps.listProcesses(), { extraArgs: [`--user-data-dir=${prof}`] })) try { process.kill(p.pid, "SIGKILL"); } catch {}
+    for (const p of apps.findAppProcesses(chromeApp, apps.listProcesses(), { extraArgs: [`--user-data-dir=${prof}`] })) try { process.kill(p.pid, "SIGKILL"); } catch {}
   }
 });
 

@@ -1,6 +1,7 @@
 // First run without a browser: `morse setup` detection and choices, the
 // getting started a bare `morse` prints, and the shared onboarding rules
 // (state, unsupported pages, errors in plain words).
+import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PassThrough } from "node:stream";

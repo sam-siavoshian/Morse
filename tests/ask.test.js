@@ -3,20 +3,20 @@
 // parser against the demo model (core/demo.js), so replies are deterministic.
 // Ask with markers, Find behind a closed menu, Show me stepping (the user
 // clicks, Morse never does), follow-up context, and Explain this page.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
 import { bundleRuntime } from "../runtime/bundle.js";
+import { noBrowser, launchBrowser } from "./helpers/browser.js";
+import { waitFor, waitForReady, settle, TIMEOUT } from "./helpers/wait.js";
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
+const skip = noBrowser;
 const ROOT = new URL("../", import.meta.url);
 const ORIGIN = "http://morse.test";
 let browser;
 
-before(async () => { if (!skip) browser = await chromium.launch(); });
+before(async () => { if (!skip) browser = await launchBrowser(); });
 after(() => browser?.close());
 
 async function playground() {
@@ -34,7 +34,7 @@ async function playground() {
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   await page.goto(`${ORIGIN}/demo/playground.html?ask&light&reset`);
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  await waitForReady(page);
   return { ctx, page, errors };
 }
 async function scenario(fn) {
@@ -43,23 +43,14 @@ async function scenario(fn) {
   finally { await t.ctx.close(); }
 }
 const status = page => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
-async function until(fn, ms = 6000) {
-  const end = Date.now() + ms;
-  for (;;) {
-    let v;
-    try { v = await fn(); } catch (e) { if (Date.now() > end) throw e; }
-    if (v) return v;
-    if (Date.now() > end) throw new Error("timed out waiting for " + fn);
-    await new Promise(r => setTimeout(r, 40));
-  }
-}
+const until = (fn, ms = TIMEOUT) => waitFor(fn, { timeout: ms, interval: 40, what: String(fn) });
 // Types a question and waits for this question's answer (not the last one's).
 async function ask(page, text) {
   const n = (await fake(page)).asks.length;
   await page.keyboard.type(text);
   await page.keyboard.press("Enter");
   await until(async () => (await fake(page)).asks.length > n);
-  await until(async () => { const s = await status(page); return s.phase === "idle" && /Answered/.test(s.hint); }, 10000);
+  await until(async () => { const s = await status(page); return s.phase === "idle" && /Answered/.test(s.hint); });
 }
 const fake = page => page.evaluate(() => window.__fake);
 const cardText = page => page.locator(".ask .ask-body").innerText();
@@ -73,8 +64,8 @@ test("Ask: a question about what you point at gets an answer and a marker, not a
   await page.keyboard.type("why is this greyed out?");
   await page.keyboard.press("Enter");
   // The answer streams into the card while the model writes it.
-  await page.locator(".ask.streaming").waitFor({ timeout: 5000 });
-  await until(async () => /Answered/.test((await status(page)).hint), 10000);
+  await page.locator(".ask.streaming").waitFor({ timeout: TIMEOUT });
+  await until(async () => /Answered/.test((await status(page)).hint));
   assert.match(await cardText(page), /Publish 1 is turned off right now: “Add a title first”/);
   assert.equal(await page.locator(".ask-q").innerText(), "why is this greyed out?");
   assert.deepEqual(await badges(page), [{ n: "1", shown: true }]);
@@ -125,7 +116,8 @@ test("Show me: each step waits for the user's own click; Morse never clicks", { 
   await until(async () => /Open the More menu/.test(await guide.innerText()));
   await until(async () => (await status(page)).open === false); // the bar steps aside
   assert.match(await guide.innerText(), /Step 1 of 2/);
-  // Waiting is all it does.
+  // Waiting is all it does: watch for most of a second (an observation window,
+  // not a wait for the app; a slow machine only makes it stricter).
   await page.waitForTimeout(900);
   assert.equal(await page.locator("#more-menu").isHidden(), true);
   assert.match(await guide.innerText(), /Step 1 of 2/);
@@ -149,7 +141,7 @@ test("Show me: each step waits for the user's own click; Morse never clicks", { 
   // Every click on the page came from the user (Playwright's mouse), none from script.
   assert.ok(f.clicks.length >= 3);
   assert.ok(f.clicks.every(c => c.trusted), JSON.stringify(f.clicks));
-  await until(async () => await guide.isHidden(), 6000);
+  await until(async () => await guide.isHidden());
   // Esc stops a walk-through.
   await page.keyboard.press("Alt+Space");
   await ask(page, "where is the export button?");
@@ -194,7 +186,7 @@ test("Explain this page from the page tools: a plain summary with markers", { sk
   await page.locator(".gm-qbtn").click();
   assert.equal(await page.locator(".gm-menu button").first().getAttribute("data-ask"), "explain");
   await item.click();
-  await until(async () => /Answered/.test((await status(page)).hint), 10000);
+  await until(async () => /Answered/.test((await status(page)).hint));
   assert.match(await cardText(page), /^This is a small notes app\./);
   assert.equal((await cardText(page)).split("\n").filter(Boolean).length, 4);
   assert.equal(await page.locator(".ask-q").innerText(), "Explain this page");
@@ -205,14 +197,16 @@ test("Explain this page from the page tools: a plain summary with markers", { sk
 
 test("Stopping mid-answer leaves no card, no markers and no turn behind", { skip }, () => scenario(async ({ page }) => {
   await page.keyboard.press("Alt+Space");
+  await page.evaluate(() => { window.__demoMs = 80; }); // a slow answer, so Esc lands mid-stream
   await page.keyboard.type("where is the export button?");
   await page.keyboard.press("Enter");
-  await page.locator(".ask.streaming").waitFor({ timeout: 5000 });
+  await page.locator(".ask.streaming").waitFor({ timeout: TIMEOUT });
   await page.keyboard.press("Escape");
   await until(async () => /Stopped/.test((await status(page)).hint));
   assert.equal(await page.locator(".ask").isHidden(), true);
   assert.equal(await page.locator(".mk-badge").count(), 0);
   // The next question starts fresh: the stopped one isn't a turn.
+  await page.evaluate(() => { window.__demoMs = 0; });
   await page.keyboard.press("Control+a");
   await ask(page, "and how do I undo that?");
   const { asks } = await fake(page);

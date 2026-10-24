@@ -1,48 +1,39 @@
 // The desktop connector over real CDP: settings in ~/.morse/settings.json,
 // history, Stop mid-generation, the microphone grant, and voice going
 // MediaRecorder -> CDP binding -> core/transcribe.js -> (fake) OpenAI.
+import { home } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
-import net from "node:net";
-import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { createRequire } from "node:module";
+import { noBrowser, launchBrowser } from "./helpers/browser.js";
+import { freePort, listen } from "./helpers/net.js";
+import { waitFor, waitForStatus, waitForReady } from "./helpers/wait.js";
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
-
-let home, browser, page, site, openai, transcribed = [];
-const freePort = () => new Promise(r => { const s = net.createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => r(p)); }); });
-const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "null"));
-async function waitFor(pred, ms = 10000) {
-  const end = Date.now() + ms;
-  let s;
-  while (Date.now() < end) { s = await status(); if (s && pred(s)) return s; await page.waitForTimeout(30); }
-  throw new Error("timed out; last status " + JSON.stringify(s));
-}
+const skip = noBrowser;
+let browser, page, site, openai, conn, running, transcribed = [];
+const status = (pred, what) => waitForStatus(page, pred, { what });
+const readJson = async f => JSON.parse(await fs.readFile(path.join(home, f), "utf8"));
 
 before(async () => {
   if (skip) return;
-  home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-home-"));
-  process.env.MORSE_HOME = home;
   openai = http.createServer(async (req, res) => {
     let n = 0;
     for await (const c of req) n += c.length;
     transcribed.push({ auth: req.headers.authorization, bytes: n });
     res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ text: "hide the sidebar" }));
-  }).listen(0, "127.0.0.1");
-  await new Promise(r => openai.on("listening", r));
+  });
   process.env.OPENAI_API_KEY = "sk-desktop";
-  process.env.MORSE_OPENAI_BASE_URL = `http://127.0.0.1:${openai.address().port}`;
-  site = http.createServer((q, r) => r.writeHead(200, { "Content-Type": "text/html" }).end(`<!doctype html><title>App</title><body style="background:#111;color:#eee"><div id="sidebar">Sidebar</div><main>Main</main></body>`)).listen(0, "127.0.0.1");
-  await new Promise(r => site.on("listening", r));
+  process.env.MORSE_OPENAI_BASE_URL = `http://127.0.0.1:${await listen(openai)}`;
+  site = http.createServer((q, r) => r.writeHead(200, { "Content-Type": "text/html" }).end(`<!doctype html><title>App</title><body style="background:#111;color:#eee"><div id="sidebar">Sidebar</div><main>Main</main></body>`));
+  const sitePort = await listen(site);
 
+  // Playwright owns the browser, so it can't use port 0 + DevToolsActivePort:
+  // take an OS-picked free port (never a fixed one).
   const port = await freePort();
   const args = [`--remote-debugging-port=${port}`, "--use-fake-device-for-media-stream"]; // no fake UI: the connector's grant has to work
-  try { browser = await chromium.launch({ channel: "chromium", args }); } catch { browser = await chromium.launch({ args }); }
+  browser = await launchBrowser({ channel: "chromium", args });
   const ctx = await browser.newContext({ viewport: { width: 1000, height: 700 } });
   await ctx.addInitScript(() => {
     localStorage.setItem("morse:debug", "1");
@@ -52,64 +43,67 @@ before(async () => {
     };
   });
   page = await ctx.newPage();
-  await page.goto(`http://127.0.0.1:${site.address().port}/`);
+  await page.goto(`http://127.0.0.1:${sitePort}/`);
   const { Connector } = await import("../daemon/connector.js");
-  new Connector({ port, app: { id: "testapp", name: "Test App" }, settings: { provider: "demo", model: "demo" }, log: () => {} }).run();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
+  // demoMs: a slower demo reply, so Stop reliably lands mid-stream on a busy machine.
+  conn = new Connector({ port, app: { id: "testapp", name: "Test App" }, settings: { provider: "demo", model: "demo", demoMs: 60 }, log: () => {} });
+  running = conn.run();
+  await waitForReady(page);
 });
 after(async () => {
+  await conn?.stop().catch(() => {});
+  await running;
   await browser?.close();
   site?.close(); openai?.close();
-  if (home) await fs.rm(home, { recursive: true, force: true });
 });
 
 test("settings round-trip through ~/.morse/settings.json", { skip }, async () => {
   await page.keyboard.press("Alt+Space");
-  await waitFor(s => s.open);
+  await status(s => s.open, "the bar to open");
   await page.keyboard.press("Control+Comma");
-  await waitFor(s => s.pane === "settings");
+  await status(s => s.pane === "settings", "the settings sheet");
   await page.keyboard.press("Enter");
   await page.keyboard.press("Alt+KeyJ");
-  await waitFor(s => s.hotkeys.open === "Alt+KeyJ");
-  // The bar updates at once; the host's write lands a moment later (slow under a parallel `npm test`).
-  let onDisk = null;
-  for (let i = 0; i < 100 && !onDisk; i++) { try { onDisk = JSON.parse(await fs.readFile(path.join(home, "settings.json"), "utf8")); } catch { await page.waitForTimeout(50); } }
-  assert.equal(onDisk.hotkeys.open, "Alt+KeyJ");
+  await status(s => s.hotkeys.open === "Alt+KeyJ", "the new hotkey in the bar");
+  // The bar updates at once; the host's write lands a moment later.
+  await waitFor(async () => (await readJson("settings.json")).hotkeys?.open === "Alt+KeyJ", { what: "settings.json to hold Alt+KeyJ" });
   await page.keyboard.press("Escape");
+  await status(s => s.pane === "", "the sheet to close");
   await page.keyboard.press("Escape");
-  await waitFor(s => !s.open);
+  await status(s => !s.open, "the bar to close");
   await page.reload();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
-  await waitFor(s => s.hotkeys.open === "Alt+KeyJ"); // from the hello reply
+  await waitForReady(page);
+  await status(s => s.hotkeys.open === "Alt+KeyJ", "the hotkey from the hello reply");
 });
 
 test("Stop mid-generation aborts the model on the desktop host", { skip }, async () => {
   await page.keyboard.press("Alt+KeyJ");
-  await waitFor(s => s.open);
+  await status(s => s.open, "the bar to open");
   await page.keyboard.type("add a sleep timer");
   await page.keyboard.press("Enter");
-  await waitFor(s => s.phase === "working" && /Writing/.test(s.hint));
+  await status(s => s.phase === "working" && /Writing/.test(s.hint), "the model to be writing");
   await page.keyboard.press("Escape");
-  const s = await waitFor(s => s.phase === "idle" && /Stopped/.test(s.hint));
+  const s = await status(s => s.phase === "idle" && /Stopped/.test(s.hint), "Stopped");
   assert.equal(s.input, "add a sleep timer");
-  await page.waitForTimeout(300);
-  assert.equal(await page.locator("style[data-morse-css]").count(), 0);
-  const hist = JSON.parse(await fs.readFile(path.join(home, "history.json"), "utf8"));
+  await waitFor(async () => (await page.locator("style[data-morse-css]").count()) === 0, { what: "partial CSS to be removed" });
+  const hist = await waitFor(async () => { const h = await readJson("history.json"); return h.testapp?.length && h; }, { what: "history.json" });
   assert.deepEqual(hist.testapp, ["add a sleep timer"], "history is filed per app");
 });
 
 test("grants the microphone and transcribes through the connector", { skip }, async () => {
-  assert.equal(await page.evaluate(async () => (await navigator.permissions.query({ name: "microphone" })).state), "granted");
-  await waitFor(s => s.open);
+  await waitFor(() => page.evaluate(async () => (await navigator.permissions.query({ name: "microphone" })).state === "granted"), { what: "the microphone grant" });
+  await status(s => s.open, "the bar to be open");
   await page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".in").select());
   await page.keyboard.press("Backspace");
   await page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".mic").click());
-  await waitFor(s => s.voice === "listening");
-  await page.waitForTimeout(1200);
+  await status(s => s.voice === "listening", "listening");
+  await status(s => s.db > -100, "sound from the fake microphone");
+  await page.waitForTimeout(1200); // talk for 1.2s: the recording's length, not a wait for the app
   await page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".mic").click());
-  const s = await waitFor(s => s.voice === "idle" && s.input === "hide the sidebar");
+  const s = await status(s => s.voice === "idle" && s.input === "hide the sidebar", "the transcript");
   assert.equal(s.backend, "recorder");
   assert.ok(transcribed.length >= 1);
   assert.equal(transcribed.at(-1).auth, "Bearer sk-desktop");
   assert.ok(transcribed.at(-1).bytes > 500, "real audio was uploaded");
 });
+
