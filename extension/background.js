@@ -14,7 +14,7 @@ import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_PORT_KEY, pr
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf, byCreated, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode, settleMs } from "../core/kit.js";
 import { asReviewed } from "../core/summary.js"; // installs keep only the reviewed code
-import { HANG_MS, FROZE_ERROR } from "../core/guard.js"; // guard hook: frozen pages
+import { HANG_MS, FROZE_ERROR, pageCollapse } from "../core/guard.js"; // guard hook: frozen pages, a change that hides most of the page
 import { clipAdd } from "../core/clipboard.js"; // God mode clipboard
 import { BAR_REQUESTS, handleBarRequest, gens, getPrefs, voiceInfo, helperUrl } from "./bar-host.js"; // command bar: stop, settings, history, voice
 import { CONTROL_REQUESTS, handleControlRequest } from "./control-host.js"; // user control: pause, safe start, install review, backup
@@ -22,6 +22,7 @@ import { serialized } from "./bar-host.js"; // hardening: one queue for every st
 import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver, practiceSample, SAMPLE_ONLY, openSetup } from "./onboarding-host.js"; // onboarding hook: welcome page, first-run state, practice area
 import { GALLERY_REQUESTS, handleGallery } from "./gallery-host.js"; // gallery hook: Mods for this site
 import { Style } from "./style-host.js"; // your-style hook: one style on every site
+import { PACK_REQUESTS, handlePack } from "./pack-host.js"; // packs hook: mod packs
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
@@ -167,6 +168,7 @@ async function dispatch(msg, port) {
   if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { practice: Practice.has(tab.id) }); // onboarding hook
   if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, here.url); // gallery hook: Mods for this site
   if (Style.owns(msg)) return Style.handle(msg, here); // your-style hook
+  if (PACK_REQUESTS.has(msg.type)) return handlePack(msg); // packs hook: mod packs (pack-host.js)
   switch (msg.type) {
     case "hello": {
       const b = await backend();
@@ -250,6 +252,7 @@ async function dispatch(msg, port) {
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
           signal,
           exec: js => exec(target, msg.genId, js),
+          collapse: css => execIn(target, `(${pageCollapse})(${JSON.stringify(css)}, ${JSON.stringify(msg.genId)})`), // guard hook: hid most of the page?
           emit: ev => { if (!signal.aborted) try { port.postMessage({ ...ev, genId: msg.genId }); } catch {} },
         }));
         if (res.cancelled) return res;

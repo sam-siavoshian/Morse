@@ -1,0 +1,14 @@
+# Line endings: every text file is checked out with LF, on Windows too.
+# `morse` starts with #!/usr/bin/env node (a CR there breaks it on macOS and
+# Linux once the package is published from a Windows checkout), and tests
+# compare text and snapshots byte for byte.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.gif binary
+*.mp4 binary
+*.webm binary
+*.zip binary
+*.crx binary
+*.lnk binary

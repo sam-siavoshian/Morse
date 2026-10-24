@@ -18,13 +18,17 @@
 import { spawn } from "node:child_process";
 import { promises as fs, constants as FS } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import readline from "node:readline";
 import { loadConfig, saveConfig, HOME } from "./store.js";
 import { defaultHotkeys, formatCombo, detectPlatform } from "../core/hotkeys.js";
+import { paint } from "./colors.js";
+import { commandFor } from "./platform.js";
 
-const G = s => `\x1b[32m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`, R = s => `\x1b[31m${s}\x1b[0m`;
+const { g: G, d: D, b: B, r: R } = paint;
 const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· setup")}\n${G("▪▫▪")}`;
-const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+// fileURLToPath, not URL.pathname: that gives /C:/… on Windows and %20 for spaces.
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const EXTENSION_DIR = path.join(ROOT, "dist", "extension");
 const tilde = p => (process.env.HOME && p.startsWith(process.env.HOME) ? "~" + p.slice(process.env.HOME.length) : p);
 // The extension folder as the user can type it: relative inside the repo, else from ~.
@@ -93,7 +97,8 @@ export function binVersion(file, ms = 4000) {
   return new Promise(resolve => {
     let out = "";
     let child;
-    try { child = spawn(file, ["--version"], { stdio: ["ignore", "pipe", "pipe"] }); } catch { return resolve(""); }
+    // Windows starts claude.cmd / codex.cmd only through cmd.exe, quoted (platform.js).
+    try { const c = commandFor(file, ["--version"]); child = spawn(c.file, c.args, { stdio: ["ignore", "pipe", "pipe"], shell: c.shell, windowsHide: true }); } catch { return resolve(""); }
     const t = setTimeout(() => { child.kill(); resolve(""); }, ms);
     child.stdout.on("data", d => (out += d));
     child.stderr.on("data", d => (out += d));

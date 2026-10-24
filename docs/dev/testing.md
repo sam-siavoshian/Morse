@@ -239,6 +239,19 @@ made each one retakes it.
 - **Evals**: 55 cases on 6 demo apps with Claude Code haiku, 3 runs each:
   122/123 on the train split, 41/42 held out
   ([results](../../evals/README.md#results)).
+- **macOS and Windows, from Linux only:**
+  [`tests/platforms.test.js`](../../tests/platforms.test.js) checks the code
+  for both against fake install trees ([`demo/fake-installs.js`](../../demo/fake-installs.js))
+  written in the real formats: binary `Info.plist`s (and one made by
+  Python's plistlib), `app.asar`, universal Mach-O fuse wires, `.lnk`
+  shortcuts (and one made by pylnk3, with only an item list). Fake process
+  tables and fake `osascript` / `taskkill` runners cover `--restart`;
+  `morse apps` has a snapshot per platform in
+  [`tests/snapshots/`](../../tests/snapshots/) (`UPDATE_SNAPSHOTS=1` rewrites
+  them); hashing every fixture file before and after shows nothing Morse
+  does to find, read or plan a launch changes an app's files.
 - **Not tested:** real Slack, Discord, VS Code or Spotify installs; macOS and
-  Windows (AppleScript and taskkill quitting, `.app` bundles, Squirrel
-  installs, Windows process listing); Wayland.
+  Windows on real hardware (permission prompts, Gatekeeper, real Squirrel
+  hand-offs, PowerShell's process list, the firewall, terminal colors);
+  Wayland. [Checking a Mac or Windows PC](platform-testing.md) is the
+  15-minute check to run there.

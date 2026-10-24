@@ -141,7 +141,7 @@ async function showShare(m) {
 }
 function showImport() {
   openModal(`
-    <header><b>Install a shared mod</b><small>Paste a share link, or the text of a mod file.</small><button data-a="close">×</button></header>
+    <header><b>Install a shared mod</b><small>Paste a share link, the address of a pack, or the text of a mod file.</small><button data-a="close">×</button></header>
     <textarea class="code" data-k="src" spellcheck="false" placeholder="https://…/install.html#m=…"></textarea>
     <footer><button data-a="close">Cancel</button><button class="primary" data-a="go">Next</button></footer>`);
   // user control: say what it does before anything is installed (63-control.js)
@@ -230,6 +230,10 @@ function wrap(g, text, x, y, maxW, lh, maxLines) {
   }
   g.fillText(line, x, y);
 }
+
+// People read plain words (core/onboarding.js plainError); developers find
+// the error it stood for in the console.
+onHiddenError(raw => console.warn("[morse] details:", raw));
 
 function toast(msg) {
   toastEl.innerHTML = `${radar(12)}<span>${esc(msg)}</span>`;

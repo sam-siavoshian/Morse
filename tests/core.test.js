@@ -175,7 +175,7 @@ test("reads an Electron fuse wire", () => {
   assert.equal(w.fuses.EnableNodeCliInspectArguments, "disabled");
   assert.equal(w.fuses.EnableEmbeddedAsarIntegrityValidation, "enabled");
   assert.equal(w.fuses.LoadBrowserProcessSpecificV8Snapshot, "removed");
-  assert.equal(fuseVerdict({ electron: true, ...w }).length, 3);
+  assert.equal(fuseVerdict({ electron: true, ...w }).length, 4, "connect, --inspect off, ASAR integrity, RunAsNode");
   assert.equal(readFuseWire(Buffer.from("no fuses here")), null);
 });
 
