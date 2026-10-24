@@ -182,16 +182,16 @@ without it, 4. The ones only this made possible:
 
 | | |
 |---|---|
-| ![](screenshots/191-profile-vscode-format-before.png) VSCodium: "add a button here that formats the document" | ![](screenshots/192-profile-vscode-format-after.png) The Format button in the status bar runs VS Code's own Format Document |
-| ![](screenshots/201-profile-vscode-sort-before.png) "add a button here that sorts the lines of the file alphabetically" | ![](screenshots/193-profile-vscode-sort-after.png) Sorted by VS Code's own Sort Lines |
-| ![](screenshots/194-profile-vscode-remap-without.png) "make Ctrl+Shift+K duplicate the current line instead of deleting it", without: the line is deleted | ![](screenshots/195-profile-vscode-remap-with.png) With: the line is copied |
-| ![](screenshots/197-profile-joplin-duplicate-before.png) Joplin: "add a button that makes a copy of the note I'm looking at" | ![](screenshots/198-profile-joplin-duplicate-after.png) Joplin's own Duplicate made "Welcome to Joplin! - Copy" |
-| ![](screenshots/196-profile-vscode-comment-after.png) VSCodium: "add a button here that comments out the line the cursor is on" | ![](screenshots/199-profile-joplin-clipboard-after.png) Joplin: "add a keyboard shortcut Ctrl+Alt+N that creates a new note from what is in the clipboard" |
+| ![](screenshots/231-profile-vscode-format-before.png) VSCodium: "add a button here that formats the document" | ![](screenshots/232-profile-vscode-format-after.png) The Format button in the status bar runs VS Code's own Format Document |
+| ![](screenshots/241-profile-vscode-sort-before.png) "add a button here that sorts the lines of the file alphabetically" | ![](screenshots/233-profile-vscode-sort-after.png) Sorted by VS Code's own Sort Lines |
+| ![](screenshots/234-profile-vscode-remap-without.png) "make Ctrl+Shift+K duplicate the current line instead of deleting it", without: the line is deleted | ![](screenshots/235-profile-vscode-remap-with.png) With: the line is copied |
+| ![](screenshots/237-profile-joplin-duplicate-before.png) Joplin: "add a button that makes a copy of the note I'm looking at" | ![](screenshots/238-profile-joplin-duplicate-after.png) Joplin's own Duplicate made "Welcome to Joplin! - Copy" |
+| ![](screenshots/236-profile-vscode-comment-after.png) VSCodium: "add a button here that comments out the line the cursor is on" | ![](screenshots/239-profile-joplin-clipboard-after.png) Joplin: "add a keyboard shortcut Ctrl+Alt+N that creates a new note from what is in the clipboard" |
 
 In Obsidian the same kind of change worked with or without it (here "add a
 button that inserts today's date into the note where my cursor is"), and with
 it the change used Obsidian's own Insert current date:
-![](screenshots/200-profile-obsidian-date-after.png)
+![](screenshots/240-profile-obsidian-date-after.png)
 
 Not yet: "save the file automatically a second after I stop typing" in
 VS Code. The change waited for typing in a way VS Code's editor doesn't

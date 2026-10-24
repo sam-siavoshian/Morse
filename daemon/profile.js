@@ -34,6 +34,9 @@ export const HANDLE = "morse.app"; // Symbol.for(HANDLE) on the page's window (c
 // ---------------------------------------------------------------- reading the app's files
 // Read only: files are opened O_RDONLY and only read. The tests hash an
 // app's files before and after a profile to prove it (tests/profile.test.js).
+// Waits that never keep Morse running: when the app quits, `morse launch`
+// ends at once, whatever the profile was waiting for.
+const pause = (ms, value) => new Promise(r => setTimeout(r, ms, value).unref?.());
 const LIMIT = { file: 32 << 20, total: 96 << 20, header: 64 << 20, walk: 40000, html: 40 };
 
 function readRange(file, start, length) {
@@ -261,7 +264,9 @@ export function staticProfile(roots, { scripts = [], timeoutMs = 90000 } = {}) {
     let w;
     try { w = new Worker(new URL(import.meta.url), { workerData: { morseProfile: true, roots, scripts } }); }
     catch { try { return resolve(scanApp(roots, { scripts })); } catch { return resolve(null); } }
+    w.unref(); // a scan still running never keeps Morse from ending
     const timer = setTimeout(() => { w.terminate(); resolve(null); }, timeoutMs);
+    timer.unref?.();
     w.once("message", m => { clearTimeout(timer); resolve(m?.ok ? m.profile : null); w.terminate(); });
     w.once("error", () => { clearTimeout(timer); resolve(null); });
     w.once("exit", () => { clearTimeout(timer); resolve(null); });
@@ -711,7 +716,7 @@ export async function settled(s, { ms = 12000, contextId = null } = {}) {
     const n = await evaluate(s, `document.readyState === "complete" ? document.getElementsByTagName("*").length : -1`, contextId).catch(() => -1);
     if (n > 0 && Math.abs(n - last) <= Math.max(5, last * 0.05)) { if (++still >= 2) return true; } else still = 0;
     last = n;
-    await new Promise(r => setTimeout(r, 700));
+    await pause(700);
   }
   return false;
 }
@@ -739,7 +744,7 @@ export class AppProfiler {
     // one): wait a moment for the windows to come, then profile the app's
     // main window, the biggest page among them.
     if (!this.building) {
-      this.building = new Promise(r => setTimeout(r, 2000)).then(() => this.pickMain()).then(m => m ? this.build(m.s, m.w) : null)
+      this.building = pause(2000).then(() => this.pickMain()).then(m => m ? this.build(m.s, m.w) : null)
         .catch(e => { trace("profile", `failed: ${e.message}`); return null; });
       this.building.then(() => this.profile && this.seen.forEach(x => this.ensure(x.s, x.w).catch(() => {})));
     } else this.building.then(() => this.ensure(s, w).catch(() => {}));
@@ -754,7 +759,7 @@ export class AppProfiler {
         const n = await evaluate(x.s, `document.visibilityState === "visible" && innerWidth > 300 && innerHeight > 200 ? document.getElementsByTagName("*").length : 0`).catch(() => 0);
         if (n > 20 && (!best || n > best.n)) best = { ...x, n };
       }
-      if (!best) await new Promise(r => setTimeout(r, 1500));
+      if (!best) await pause(1500);
     }
     return best;
   }
@@ -787,7 +792,7 @@ export class AppProfiler {
     // No runner yet: maybe the app is still starting (Joplin shows its window
     // long before its UI on a busy machine). Look again a few times.
     for (let i = 0; i < 3 && !p.runtime?.runner && !s.closed; i++) {
-      await new Promise(r => setTimeout(r, 15000));
+      await pause(15000);
       await settled(s);
       if (s.closed) break;
       const again = await look();
@@ -810,7 +815,7 @@ export class AppProfiler {
   // Before mod code that uses morse.app runs: wait for the profile (at most
   // `timeoutMs`), then make sure the handle is there.
   async ready(s, w, contextId, timeoutMs = 15000) {
-    const timeout = new Promise(r => setTimeout(r, timeoutMs, null));
+    const timeout = pause(timeoutMs, null);
     if (!this.profile && this.building) await Promise.race([this.building, timeout]);
     if (!this.profile && !this.building) await Promise.race([this.loadCached(), timeout]);
     return Promise.race([this.ensure(s, w, contextId), timeout]);
@@ -847,12 +852,12 @@ export class AppProfiler {
     if (!needsLogic(request)) return "";
     // The first request right after the app opened: the profile may be a few
     // seconds from done. Worth waiting for when the request is about behavior.
-    if (!this.profile?.runtime && this.building) await Promise.race([this.building, new Promise(r => setTimeout(r, 12000))]);
+    if (!this.profile?.runtime && this.building) await Promise.race([this.building, pause(12000)]);
     if (!this.profile) return "";
     let target = null;
     if (selector && !selector.includes(">>>")) {
       const t = elementLogic(s, { contextId: caller?.main, selector, max: 8 });
-      target = { listeners: (await Promise.race([t, new Promise(r => setTimeout(r, 800, []))])).filter(l => l.source) };
+      target = { listeners: (await Promise.race([t, pause(800, [])])).filter(l => l.source) };
     }
     return profileSlice(this.profile, request, { target });
   }
