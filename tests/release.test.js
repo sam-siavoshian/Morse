@@ -75,7 +75,7 @@ test("the npm package ships only what the morse command needs", () => {
   // No build here: other tests read dist/extension while this runs.
   const out = execFileSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], env: { ...process.env, npm_config_ignore_scripts: "true" } });
   const files = JSON.parse(out.slice(out.indexOf("[")))[0].files.map(f => f.path);
-  for (const need of ["daemon/cli.js", "daemon/setup.js", "core/providers.js", "runtime/bundle.js", "design/tokens.css", "LICENSE", "README.md", "CHANGELOG.md"]) assert.ok(files.includes(need), `ships ${need}`);
+  for (const need of ["daemon/cli.js", "daemon/setup.js", "core/providers.js", "runtime/bundle.js", "runtime/boot.js", "design/tokens.css", "LICENSE", "README.md", "CHANGELOG.md"]) assert.ok(files.includes(need), `ships ${need}`);
   assert.ok(files.some(f => f.startsWith("runtime/src/")), "ships the runtime sources the desktop connector bundles");
   for (const f of files) assert.doesNotMatch(f, /^(tests|demo|docs|site|share|evals|scripts|extension)\//, `doesn't ship ${f}`);
 });

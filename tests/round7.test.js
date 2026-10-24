@@ -129,6 +129,19 @@ test("waiting mods: a page firing focus events doesn't send them to the host aga
   }
 });
 
+// dogfood: a shared PyPI mod hid the small release date (style) and added a
+// big one (code). In a profile with “Allow User Scripts” off, only the style
+// ran: every date was gone. Now the style waits with the code.
+test("waiting mods: while the code waits for “Allow User Scripts”, the style waits too; a mod with no code still shows", { skip, timeout: 60000 }, async () => {
+  const LOOK = { ...CODE_MOD, id: "r7-look", js: "", css: "#b { outline: 3px solid blue }" };
+  const { page, count } = await bootPage({ mods: [CODE_MOD, LOOK], exec: { ok: false, waiting: "userScripts", error: "waiting" }, told: true });
+  await waitFor(async () => (await count("exec")) >= 1, { what: "the code mod's try" });
+  await page.waitForTimeout(300);
+  const outline = sel => page.evaluate(s => getComputedStyle(document.querySelector(s)).outlineStyle, sel);
+  assert.equal(await outline("#a"), "none", "the waiting mod's style is held back");
+  assert.equal(await outline("#b"), "solid", "a style-only mod needs nothing and shows");
+});
+
 test("morse:paused: a page firing it over and over gets one check a second, not one per event (boot, and once the UI is here)", { skip, timeout: 60000 }, async () => {
   for (const ui of [false, true]) {
     const { page, count } = await bootPage({ mods: [CODE_MOD], debug: ui });

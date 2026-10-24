@@ -24,7 +24,8 @@ import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver, prac
 import { GALLERY_REQUESTS, handleGallery } from "./gallery-host.js"; // gallery hook: Mods for this site
 import { Style } from "./style-host.js"; // your-style hook: one style on every site
 import { PACK_REQUESTS, handlePack } from "./pack-host.js"; // packs hook: mod packs
-import { t, setLanguage, pickLanguage } from "../core/i18n.js"; // the words this worker says
+import { t, setLanguage, pickLanguage, loadLanguage, setLanguageLoader, CATALOGS } from "../core/i18n.js"; // the words this worker says
+import { packagedWords } from "./words.js"; // languages besides English: locales/<code>.json in this package
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
@@ -37,7 +38,9 @@ try { chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" }).c
 chrome.storage.onChanged.addListener(c => { if (c[HELPER_PORT_KEY]) cached = null; });
 // The words this worker says (labels, reasons, errors) follow Settings → Language,
 // else the browser's, like the pages and the bar (core/i18n.js).
-async function followLanguage() { try { setLanguage((await getPrefs()).language || pickLanguage(navigator.languages?.length ? navigator.languages : [navigator.language])); } catch {} }
+// Only English is built in; another language's words are read from the package when it's chosen.
+setLanguageLoader(packagedWords);
+async function followLanguage() { try { setLanguage(await loadLanguage((await getPrefs()).language || pickLanguage(navigator.languages?.length ? navigator.languages : [navigator.language]))); } catch {} }
 followLanguage();
 chrome.storage.onChanged.addListener(() => { followLanguage().then(() => { cached = null; }); });
 
@@ -274,6 +277,10 @@ async function dispatch(msg, port) {
     case "ui.load":
       await chrome.scripting.executeScript({ target, files: ["ui.js"] });
       return true;
+    case "i18n.words": { // ui.js carries English only: the words of the language the bar shows, from this package
+      const lang = await loadLanguage(msg.lang);
+      return lang === "en" ? null : CATALOGS[lang];
+    }
     case "warm": { // speed: the bar opened, or the person is typing; get the model ready (core/providers.js prewarm)
       const b = await backend();
       const typed = typeof msg.request === "string" ? msg.request.slice(0, 500) : ""; // models: the strong model for new UI and features

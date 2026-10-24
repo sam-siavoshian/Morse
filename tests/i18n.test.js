@@ -2,16 +2,16 @@
 // language has every message (or says on purpose which ones stay English),
 // the {placeholders} and markup match English, t() falls back to English,
 // the language comes from the browser or the terminal, and the CLI speaks it.
-import "./helpers/home.js";
+import { tempDir } from "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
 import path from "node:path";
 import {
-  t, setLanguage, getLanguage, pickLanguage, matchLanguage, languageFromEnv, isRtl, LANGUAGES, CATALOGS, englishName,
+  t, setLanguage, getLanguage, pickLanguage, matchLanguage, languageFromEnv, isRtl, LANGUAGES, CATALOGS, englishName, loadLanguage,
 } from "../core/i18n.js";
+import "../core/languages.js"; // English is built in; the others are read from core/locales/
+await Promise.all(LANGUAGES.map(l => loadLanguage(l.code)));
 import { PREF_LANGUAGES, normalizePrefs } from "../core/prefs.js";
 
 const EN = CATALOGS.en;
@@ -159,7 +159,7 @@ const CLI = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../da
 const run = (args, env) => new Promise(resolve => execFile(process.execPath, [CLI, ...args], { env: { ...process.env, ...env }, timeout: 60000 }, (e, out, err) => resolve({ code: e?.code || 0, out: String(out) + String(err) })));
 
 test("the CLI speaks the terminal's language (LANG=es)", async () => {
-  const home = mkdtempSync(path.join(tmpdir(), "morse-i18n-"));
+  const home = tempDir("morse-i18n-"); // removed when the test ends
   const env = { HOME: home, MORSE_HOME: path.join(home, ".morse"), LC_ALL: "", LC_MESSAGES: "", LANGUAGE: "", MORSE_LANG: "" };
   const es = await run(["mods"], { ...env, LANG: "es_ES.UTF-8" });
   assert.match(es.out, /Aún no hay mods/);

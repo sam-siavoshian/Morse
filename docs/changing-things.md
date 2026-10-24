@@ -20,6 +20,10 @@ Morse waits for you to point. Move the mouse over the part you want to change
 and click it. The bar names what you pointed at, the way a person would say
 it: “Player controls”, “Send button”.
 
+The mouse chooses the smallest thing under it, like one link in a list. To
+choose the bigger part around it (the whole list), press **⌥↑** (Alt+↑);
+press it again for a bigger part still.
+
 To change the whole page, don't point. Just describe the change.
 
 ## Describe
@@ -89,7 +93,8 @@ A result isn't final.
 - **Follow-ups.** Type under the result, like “make it bigger” or “use icons
   instead”, and press **Enter**. The model gets your first request, the code
   as it is now and your follow-up, and changes the same mod.
-- **Step back.** **⌘Z** (Ctrl+Z) goes back one version.
+- **Step back.** **⌘Z** (Ctrl+Z) goes back one version, and **⌘⇧Z**
+  (Ctrl+Shift+Z or Ctrl+Y) goes forward again, until you ask for something new.
 - **History.** Every saved mod keeps its last 20 versions. Open the Mods panel
   (**⌥⇧M**) and choose **History** on a mod. Click a version to bring it back.
 - **Change.** On a saved mod in the Mods panel, **Change** opens the bar on it,

@@ -221,3 +221,4 @@ pane.addEventListener("keydown", e => {
 // Enter on a switch toggles it, as Space does.
 pane.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches?.(".sw input")) { e.preventDefault(); e.target.click(); } });
 prefsSubs.add(() => { if (paneKind === "settings" && !recording) renderSettings(); });
+langSubs.add(() => { if (paneKind === "settings" && !recording) renderSettings(); }); // a language whose words came after the change (04-i18n.js)
