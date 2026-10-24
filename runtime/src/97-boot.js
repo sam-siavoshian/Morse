@@ -45,7 +45,7 @@ onEvent(msg => {
     YourStyle.ready(); // your-style hook: fit it to this site once, if turned on (72-style.js)
     if (hello.debug) debugStatus(); // the host was started with MORSE_DEBUG=1
     S.ready = true; // tests: the host answered hello and the mods are on
-    if (!hello.quiet && PREFS.welcome) toast(`Morse is ready. Press ${HOTKEY} to change this page.`);
+    if (!hello.quiet && PREFS.welcome) toast(t("boot.ready", { key: HOTKEY }));
   } catch (e) { console.warn("[morse] host unavailable", e); }
   // single-page apps change URL without reloading
   setInterval(() => { if (live() && location.href !== S.url) { S.url = location.href; syncMods().catch(() => {}); Heal.soon(); /* self-heal hook */ } }, 1000);

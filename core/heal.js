@@ -23,6 +23,8 @@
 // Pure and dependency-free: core/engine.js imports the selector parsing, and
 // runtime/bundle.js inlines the whole file into the in-app runtime.
 
+import { t } from "./i18n.js"; // siteChangedReason in the person's language (the runtime inlines i18n first)
+
 export const HEAL_MAX_SELECTORS = 12;
 export const HEAL_MIN_SIZE = 0.3; // a page under 30% of the elements it had is not comparable
 
@@ -118,7 +120,7 @@ export function assessFingerprint(fp, page = {}) {
 // "It can't find “Album grid” any more." The selector never reaches the person.
 export function siteChangedReason(mod) {
   const label = String(mod?.target?.label || "").trim();
-  return label ? `It can't find “${label.length > 40 ? label.slice(0, 39) + "…" : label}” any more.` : "It can't find the part of the page it changes.";
+  return label ? t("heal.cantFind", { label: label.length > 40 ? label.slice(0, 39) + "…" : label }) : t("heal.cantFindPart");
 }
 
 // For core/prompt.js basePrompt ("What went wrong"): what used to match, that

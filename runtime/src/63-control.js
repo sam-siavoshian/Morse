@@ -27,7 +27,6 @@ const hereName = () => S.appName || controlKey(here());
 const pausedHere = () => isPaused({ pause: Control.pause }, here());
 function modHeld(m) { return Control.off || pausedHere() || Control.held.has(m.id); }
 const running = m => !!m.enabled && !modHeld(m);
-const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 // Requests that older hosts (and demo hosts) may not answer.
 function ctl(type, payload = {}, ms = 4000) {
@@ -62,13 +61,13 @@ function rememberOff() {
 async function offSwitch() {
   if (Control.off) return turnBackOn();
   const { off } = await changeHeld(() => { Control.off = true; rememberOff(); });
-  controlToast(off ? `Turned off ${plural(off, "mod")} on this page` : "Mods are off on this page", [["Turn back on", turnBackOn]]);
-  announce?.("All mods are off on this page.");
+  controlToast(off ? t("ctl.offN", { n: off }) : t("ctl.offNone"), [[t("ctl.turnBackOn"), turnBackOn]]);
+  announce?.(t("ctl.offSay"));
 }
 async function turnBackOn() {
   const { on } = await changeHeld(() => { Control.off = false; rememberOff(); });
-  if (pausedHere()) return controlToast(`Morse is still paused ${Control.pause.all ? "everywhere" : `on ${hereName()}`}.`, [["Resume", resumeHere]]);
-  controlToast(on ? `Turned ${plural(on, "mod")} back on` : "Mods are back on");
+  if (pausedHere()) return controlToast(Control.pause.all ? t("ctl.stillPausedAll") : t("ctl.stillPausedOn", { where: hereName() }), [[t("ctl.resume"), resumeHere]]);
+  controlToast(on ? t("ctl.onN", { n: on }) : t("ctl.backOn"));
 }
 
 // ---- pause here / everywhere
@@ -79,12 +78,12 @@ async function applyPause(pause) {
 async function setPauseHere(on) {
   const r = await ctl("control.pause", { scope: "site", on });
   await applyPause(r?.pause || setPause({ pause: Control.pause }, { key: controlKey(here()), on }).pause);
-  controlToast(on ? `Paused Morse on ${hereName()}. Your mods are saved.` : `Morse is back on for ${hereName()}`, on ? [["Undo", () => setPauseHere(false)]] : []);
+  controlToast(on ? t("ctl.pausedOnToast", { where: hereName() }) : t("ctl.backOnFor", { where: hereName() }), on ? [[t("btn.undo"), () => setPauseHere(false)]] : []);
 }
 async function setPauseAll(on) {
   const r = await ctl("control.pause", { scope: "all", on });
   await applyPause(r?.pause || setPause({ pause: Control.pause }, { all: on }).pause);
-  controlToast(on ? "Paused Morse everywhere" : "Morse is back on everywhere");
+  controlToast(on ? t("ctl.pausedAllToast") : t("ctl.backAll"));
 }
 async function resumeHere() {
   if (Control.pause.all) await setPauseAll(false);
@@ -119,7 +118,7 @@ function controlReady() {
   const m = sus && S.mods.find(x => x.id === sus.id);
   if (sus && (!m || !m.enabled)) { forgive(sus.id); }
   else if (m) showSuspect(m);
-  else if (Control.off && S.mods.some(x => x.enabled)) controlToast("Mods are off on this page", [["Turn back on", turnBackOn]]);
+  else if (Control.off && S.mods.some(x => x.enabled)) controlToast(t("ctl.offNone"), [[t("ctl.turnBackOn"), turnBackOn]]);
 }
 function forgive(id) {
   Control.held.delete(id);
@@ -127,19 +126,19 @@ function forgive(id) {
   ctl("control.forgive");
 }
 function showSuspect(m) {
-  controlToast(`“${m.title}” is off for now. This page closed or reloaded within seconds after it ran, more than once.`,
-    [["Keep it off", () => keepOff(m)], ["Turn it back on", () => runAgain(m)]], { sticky: true, title: "Safe start" });
+  controlToast(t("ctl.suspect", { title: m.title }),
+    [[t("ctl.keepOff"), () => keepOff(m)], [t("ctl.turnItBackOn"), () => runAgain(m)]], { sticky: true, title: t("ctl.safeStart") });
 }
 async function keepOff(m) {
   m.enabled = false;
   await call("mods.save", { mod: m }).catch(() => {});
   forgive(m.id);
   if (!panel.hidden) renderPanel();
-  controlToast(`“${m.title}” is turned off. You can turn it on again in the Mods panel.`);
+  controlToast(t("ctl.keptOff", { title: m.title }));
 }
 async function runAgain(m) {
   await changeHeld(() => forgive(m.id));
-  controlToast(`“${m.title}” is back on`);
+  controlToast(t("ctl.isBackOn", { title: m.title }));
 }
 
 // ---- toast with actions (the plain toast() can't hold buttons)
@@ -156,7 +155,7 @@ function controlToast(msg, actions = [], { sticky = false, title = "" } = {}) {
   ctlToast.classList.toggle("inline", actions.length <= 1 && msg.length < 60);
   ctlToast.innerHTML = `<div class="ctl-msg">${radar(12)}<span>${title ? `<b>${esc(title)}</b> ` : ""}${esc(msg)}</span></div>
     ${actions.length ? `<div class="ctl-acts">${actions.map(([label], i) => `<button class="btn${i === actions.length - 1 ? " primary" : ""}" data-i="${i}">${esc(label)}</button>`).join("")}</div>` : ""}
-    <button class="ibtn xs close ctl-x" data-i="-1" title="Close" aria-label="Close">×</button>`;
+    <button class="ibtn xs close ctl-x" data-i="-1" title="${esc(t("btn.close"))}" aria-label="${esc(t("btn.close"))}">×</button>`;
   ctlToast.hidden = false;
   ctlToast.onclick = e => {
     const b = e.target.closest("button[data-i]");
@@ -179,25 +178,25 @@ const whereFor = m => whereRuns(m);
 const everywhere = m => !m.match?.app && !!modHosts(m)?.includes("*");
 function summaryHtml(m) {
   const s = summarizeMod(m);
-  if (s.empty) return `<ul class="ctl-items"><li><b>Doesn't change anything</b><small>It has no code.</small></li></ul>`;
+  if (s.empty) return `<ul class="ctl-items"><li><b>${t("sum.empty")}</b><small>${t("install.noCode")}</small></li></ul>`;
   return `<ul class="ctl-items">${s.items.map(i => `<li data-s="${i.id}"><b>${esc(i.text)}</b>${i.detail ? `<small>${esc(i.detail)}</small>` : ""}</li>`).join("")}</ul>
-    ${s.notes.map(n => `<p class="ctl-warn" data-s="${n.id}"><b>Note</b>${esc(n.text)}</p>`).join("")}`;
+    ${s.notes.map(n => `<p class="ctl-warn" data-s="${n.id}"><b>${t("ctl.note")}</b>${esc(n.text)}</p>`).join("")}`;
 }
 function codeHtml(m) {
-  return `${m.css.trim() ? `<label>Style <span class="dim">CSS</span></label><pre class="code ctl-pre">${esc(m.css.trim())}</pre>` : ""}
-    ${m.js.trim() ? `<label>Script <span class="dim">JavaScript, runs with the <code>morse</code> helpers</span></label><pre class="code ctl-pre">${esc(m.js.trim())}</pre>` : ""}
-    ${!m.css.trim() && !m.js.trim() ? `<p class="dim">No code.</p>` : ""}`;
+  return `${m.css.trim() ? `<label>${t("code.style")} <span class="dim">CSS</span></label><pre class="code ctl-pre">${esc(m.css.trim())}</pre>` : ""}
+    ${m.js.trim() ? `<label>${t("code.script")} <span class="dim">${t("code.scriptRuns")}</span></label><pre class="code ctl-pre">${esc(m.js.trim())}</pre>` : ""}
+    ${!m.css.trim() && !m.js.trim() ? `<p class="dim">${t("ctl.noCode")}</p>` : ""}`;
 }
 
 // Read-only: what it does, where it came from, then the code.
 function showModCode(m) {
   openModal(`
-    <header><b>${esc(m.title)}</b><small>“${esc(m.prompt)}”</small><button data-a="close" aria-label="Close">×</button></header>
-    <p class="ctl-from">${esc(modOrigin(m))} · runs on ${esc(whereFor(m))}</p>
-    <h4 class="ctl-h eyebrow">What it does</h4>
+    <header><b>${esc(m.title)}</b><small>“${esc(m.prompt)}”</small><button data-a="close" aria-label="${esc(t("btn.close"))}">×</button></header>
+    <p class="ctl-from">${esc(t("ctl.runsOn", { origin: modOrigin(m), where: whereFor(m) }))}</p>
+    <h4 class="ctl-h eyebrow">${t("ctl.whatItDoes")}</h4>
     ${summaryHtml(m)}
     ${codeHtml(m)}
-    <footer><button data-c="edit">Edit code</button><button class="primary" data-a="close">Done</button></footer>`);
+    <footer><button data-c="edit">${t("btn.editCode")}</button><button class="primary" data-a="close">${t("btn.done")}</button></footer>`);
   modal.querySelector("[data-c=edit]").onclick = () => showCode(m);
 }
 
@@ -210,31 +209,31 @@ async function reviewImport(source, { onDone, trial = null } = {}) {
   let r;
   try { r = await call("mods.preview", { source }); }
   catch (e) { const msg = plainError(e); toast(msg); return done({ error: msg }); }
-  if (!r?.mods?.length) { const e = "This isn't a Morse share link or mod file. Check that you copied all of it."; toast(e); return done({ error: e }); }
+  if (!r?.mods?.length) { const e = t("ctl.notShare"); toast(e); return done({ error: e }); }
   if (trial) r.mods = r.mods.slice(0, 1);
   const many = r.mods.length > 1;
   const hostHere = controlKey(here());
   const other = m => !m.match?.app && !(modHosts(m) || []).some(h => h === "*" || h === hostHere || (h.startsWith("*.") && hostHere.endsWith(h.slice(1))));
   applyTheme();
   openModal(`
-    <header><b>${trial ? `Try “${esc(r.mods[0].title)}”?` : many ? `Install ${r.mods.length} mods?` : `Install “${esc(r.mods[0].title)}”?`}</b>
-      <small>${trial ? "Here is what it does. Nothing runs until you press Try it, and nothing is saved." : `${r.kind === "backup" ? "From a backup file. " : ""}Here is what ${many ? "they do" : "it does"}. Nothing is installed until you press Install.`}</small>
-      <button data-a="close" aria-label="Close">×</button></header>
+    <header><b>${trial ? t("ctl.tryTitle", { title: esc(r.mods[0].title) }) : many ? t("ctl.installMany", { n: r.mods.length }) : t("ctl.installOne", { title: esc(r.mods[0].title) })}</b>
+      <small>${trial ? t("ctl.trySub") : `${r.kind === "backup" ? t("ctl.fromBackup") : ""}${t("ctl.installSub", { n: r.mods.length })}`}</small>
+      <button data-a="close" aria-label="${esc(t("btn.close"))}">×</button></header>
     ${r.mods.map(m => `<section class="ctl-review">
       ${many ? `<h3>${esc(m.title)}</h3>` : ""}
       <p class="ctl-prompt">“${esc(m.prompt)}”</p>
-      <p class="ctl-from">For ${esc(whereFor(m))}${m.author ? ` · made by ${esc(m.author)}` : ""}${m.model ? ` · written by ${esc(m.model)}` : ""}${other(m) ? ` · <span>not this page</span>` : ""}</p>
-      <h4 class="ctl-h eyebrow">What it does</h4>
+      <p class="ctl-from">${esc(t("ctl.for", { where: whereFor(m) }))}${m.author ? esc(t("ctl.madeBy", { author: m.author })) : ""}${m.model ? esc(t("ctl.writtenBy", { model: m.model })) : ""}${other(m) ? ` · <span>${t("ctl.notThisPage")}</span>` : ""}</p>
+      <h4 class="ctl-h eyebrow">${t("ctl.whatItDoes")}</h4>
       ${summaryHtml(m)}
-      ${everywhere(m) ? `<p class="ctl-warn" data-s="everywhere"><b>Note</b>This mod runs on every website you visit, not just one. It can see what you see on all of them.</p>`
-        : broadEndings(m).length ? `<p class="ctl-warn" data-s="everywhere"><b>Note</b>This mod runs on every website whose address ends in ${esc(broadEndings(m).join(" or "))}, not just one. It can see what you see on all of them.</p>` : ""}
-      <details class="ctl-code"><summary>Show code</summary>${codeHtml(m)}</details>
+      ${everywhere(m) ? `<p class="ctl-warn" data-s="everywhere"><b>${t("ctl.note")}</b>${esc(t("install.everywhere"))}</p>`
+        : broadEndings(m).length ? `<p class="ctl-warn" data-s="everywhere"><b>${t("ctl.note")}</b>${esc(t("install.broad", { endings: broadEndings(m).join(t("install.or")) }))}</p>` : ""}
+      <details class="ctl-code"><summary>${t("ctl.showCode")}</summary>${codeHtml(m)}</details>
     </section>`).join("")}
-    ${r.errors?.length ? `<p class="dim ctl-skip">Skipped ${esc(r.errors.join("; "))}</p>` : ""}
-    <footer><button data-a="close">Cancel</button><button class="primary" data-a="install">${trial ? "Try it" : `Install${many ? ` ${r.mods.length}` : ""}`}</button></footer>`);
+    ${r.errors?.length ? `<p class="dim ctl-skip">${esc(t("ctl.skipped", { list: r.errors.join("; ") }))}</p>` : ""}
+    <footer><button data-a="close">${t("btn.cancel")}</button><button class="primary" data-a="install">${trial ? t("ctl.tryIt") : t("ctl.installN", { n: r.mods.length })}</button></footer>`);
   modal.querySelector(".card").classList.add("ctl-card");
   modal.querySelector("[data-a=close]:not(header [data-a])")?.focus(); // Cancel, never Install: a page could make someone press Enter
-  const watch = new MutationObserver(() => { if (modal.hidden) { watch.disconnect(); done({ error: "Not installed. You cancelled it." }); } });
+  const watch = new MutationObserver(() => { if (modal.hidden) { watch.disconnect(); done({ error: t("ctl.cancelled") }); } });
   watch.observe(modal, { attributes: true, attributeFilter: ["hidden"] });
   modal.querySelector("[data-a=install]").onclick = async e => {
     if (trial) { watch.disconnect(); modal.hidden = true; done({ title: r.mods[0].title }); return trial.run(r.mods[0]); }
@@ -243,7 +242,7 @@ async function reviewImport(source, { onDone, trial = null } = {}) {
       const saved = await call("control.install", { url: location.href, app: S.app, mods: r.mods, kind: r.kind });
       watch.disconnect();
       modal.hidden = true;
-      toast(saved.length === 1 ? `Installed “${saved[0].title}”` : `Installed ${saved.length} mods`);
+      toast(saved.length === 1 ? t("ctl.installedOne", { title: saved[0].title }) : t("ctl.installedMany", { n: saved.length }));
       done({ title: saved.map(m => m.title).join(", ") });
       await syncMods();
     } catch (err) { e.currentTarget.disabled = false; toast(plainError(err)); }
@@ -254,10 +253,10 @@ async function reviewImport(source, { onDone, trial = null } = {}) {
 
 async function exportAll() {
   const r = await ctl("control.exportAll");
-  if (!r) return toast("This version of Morse can't back up mods. Update Morse and try again.");
+  if (!r) return toast(t("ctl.noBackup"));
   try {
     const saved = await call("export", { filename: r.filename, content: r.content });
-    toast(`Saved ${plural(r.count, "mod")} to ${saved?.path || r.filename}`);
+    toast(t("ctl.savedN", { n: r.count, path: saved?.path || r.filename }));
   } catch (e) { toast(plainError(e)); }
 }
 function importFile() {
@@ -267,7 +266,7 @@ function importFile() {
   input.onchange = async () => {
     const f = input.files?.[0];
     if (!f) return;
-    if (f.size > 5_000_000) return toast("That file is too large to be a Morse backup.");
+    if (f.size > 5_000_000) return toast(t("ctl.tooLarge"));
     reviewImport(await f.text());
   };
   input.click();
@@ -281,15 +280,15 @@ function controlPanel() {
   const site = !!Control.pause.sites?.[controlKey(here())];
   const sus = Control.suspect && S.mods.find(m => m.id === Control.suspect.id && Control.held.has(m.id));
   const notes = [
-    Control.pause.all && `<div class="ctl-note"><span>Morse is paused everywhere. Your mods are saved but not running.</span><button data-c="resume-all">Resume</button></div>`,
-    Control.off && `<div class="ctl-note"><span>Mods are turned off on this page.</span><button data-c="back-on">Turn back on</button></div>`,
-    sus && `<div class="ctl-note"><span>“${esc(sus.title)}” is held back: this page closed or reloaded right after it ran.</span><button data-c="keep-off">Keep it off</button><button data-c="run-again">Turn on</button></div>`,
+    Control.pause.all && `<div class="ctl-note"><span>${t("ctl.pausedAllNote")}</span><button data-c="resume-all">${t("ctl.resume")}</button></div>`,
+    Control.off && `<div class="ctl-note"><span>${t("ctl.offNote")}</span><button data-c="back-on">${t("ctl.turnBackOn")}</button></div>`,
+    sus && `<div class="ctl-note"><span>${t("ctl.heldNote", { title: esc(sus.title) })}</span><button data-c="keep-off">${t("ctl.keepOff")}</button><button data-c="run-again">${t("btn.turnOn")}</button></div>`,
   ].filter(Boolean).join("");
   panel.querySelector("header")?.insertAdjacentHTML("afterend", `<div class="ctl-strip">
-    <label class="ctl-row"><span class="ctl-l"><span>Pause Morse on ${esc(where)}</span><small>${site ? "Your mods here are saved but not running" : `Stops every mod ${S.mode === "desktop" && S.app ? "in this app" : "on this site"}`}</small></span>
-      <span class="sw"><input type="checkbox" data-c="pause-site" ${site ? "checked" : ""} aria-label="Pause Morse on ${esc(where)}"><span></span></span></label>
+    <label class="ctl-row"><span class="ctl-l"><span>${esc(t("ctl.pauseOn", { site: where }))}</span><small>${site ? t("ctl.pausedHere2") : S.mode === "desktop" && S.app ? t("ctl.stopsApp") : t("ctl.pauseHere.help")}</small></span>
+      <span class="sw"><input type="checkbox" data-c="pause-site" ${site ? "checked" : ""} aria-label="${esc(t("ctl.pauseOn", { site: where }))}"><span></span></span></label>
     ${notes}</div>`);
-  panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", `<div class="ctl-backup"><span class="eyebrow">Backup</span><button data-c="export">Export all mods</button><button data-c="import-file">Install from a file…</button></div>`);
+  panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", `<div class="ctl-backup"><span class="eyebrow">${t("ctl.backup")}</span><button data-c="export">${t("ctl.exportAll")}</button><button data-c="import-file">${t("ctl.importFile")}</button></div>`);
 }
 // Each row in the list (re-run whenever the list is redrawn, e.g. by search).
 function controlRows() {
@@ -298,10 +297,10 @@ function controlRows() {
     const meta = a.querySelector(".meta");
     if (!m || !meta) continue;
     const tags = meta.querySelector(".tags");
-    const show = `<button class="ctl-link" data-c="show" title="What it does, and its code">Show code</button>`;
+    const show = `<button class="ctl-link" data-c="show" title="${esc(t("ctl.showTitle"))}">${t("ctl.showCode")}</button>`;
     (tags || meta).insertAdjacentHTML("beforebegin", `<small class="ctl-origin">${esc(modOrigin(m))}</small>`);
     if (tags) tags.insertAdjacentHTML("beforeend", show); else meta.insertAdjacentHTML("beforeend", show);
-    if (m.enabled && modHeld(m)) tags?.insertAdjacentHTML("afterbegin", `<span>not running</span>`);
+    if (m.enabled && modHeld(m)) tags?.insertAdjacentHTML("afterbegin", `<span>${t("ctl.notRunning")}</span>`);
   }
 }
 panel.addEventListener("click", e => {
@@ -319,11 +318,11 @@ panel.addEventListener("click", e => {
   if (c === "run-again" && sus) runAgain(sus);
 });
 panel.addEventListener("change", e => {
-  const t = e.target;
-  if (t.dataset?.c === "pause-site") setPauseHere(t.checked);
+  const el = e.target;
+  if (el.dataset?.c === "pause-site") setPauseHere(el.checked);
   // Turning a held-back mod on by hand is a decision: let it run.
-  if (t.dataset?.a === "toggle" && t.checked) {
-    const id = t.closest("article")?.dataset.id;
-    if (id && Control.held.has(id)) { const m = S.mods.find(x => x.id === id); changeHeld(() => forgive(id)).then(() => m && controlToast(`“${m.title}” is back on`)); }
+  if (el.dataset?.a === "toggle" && el.checked) {
+    const id = el.closest("article")?.dataset.id;
+    if (id && Control.held.has(id)) { const m = S.mods.find(x => x.id === id); changeHeld(() => forgive(id)).then(() => m && controlToast(t("ctl.isBackOn", { title: m.title }))); }
   }
 });

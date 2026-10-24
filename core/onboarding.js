@@ -60,6 +60,11 @@ export function pageSupport(url, { fileAccess = true, extensionId = "" } = {}) {
 // settings, or `morse setup` on the desktop), "setup" (copy `morse setup`).
 // The words are message ids (core/locales/en.js), shown in the person's language.
 const ERROR_RULES = [
+  // Morse's own refusals (core/guard.js draftHarm), said by a host in English: in the person's words here.
+  [/^The change would have frozen this page/, "err.harmLoop", ""],
+  [/^The change would have replaced this whole page/, "err.harmWipe", ""],
+  [/^The change would have reloaded or left this page/, "err.harmNav", ""],
+  [/^The change would have hidden this whole page/, "err.harmHide", ""],
   [/user ?scripts|unsafe-eval|content.security.policy|blocks injected scripts/i,
     "err.userScripts", "userscripts"],
   [/127\.0\.0\.1:7457|can't reach the morse helper|helper (is )?not running|helper.*(unreachable|offline)/i,

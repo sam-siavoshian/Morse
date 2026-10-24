@@ -173,6 +173,8 @@ test("the runtime shows no developer jargon", () => {
 const CATALOG_ALLOWED = new Set([
   "install.code.style", // "Style (CSS)": the share page's code view
   "install.code.script", // "Script (JavaScript)": the share page's code view
+  "code.scriptHelp", // the Edit code view, under its Script heading
+  "code.scriptRuns", // the Show code view, under its Script heading
 ]);
 function catalogStrings() {
   return Object.entries(en).flatMap(([id, v]) => (typeof v === "object" ? Object.values(v) : [v]).map(text => ({

@@ -18,6 +18,8 @@
 //   item?             when it sits in a list of similar things (emails, rows):
 //                     { selector, count, index, label, attrs } }
 
+import { t } from "./i18n.js"; // stepWords in the person's language (the runtime inlines i18n first)
+
 export const SO_MAX_STEPS = 40;
 const MAX_VALUE = 200;
 
@@ -276,18 +278,20 @@ export function addStep(steps, step, els = null, el = null, now = Date.now()) {
   return steps;
 }
 
-// ---- in plain words: Click “Archive”, Type “invoice” in “Search mail”
+// ---- in plain words: Click “Archive”, Type “invoice” in “Search mail”.
+// In the person's language (core/i18n.js); the model always gets English (lang "en").
 const q = s => `“${s}”`;
-export function stepWords(s) {
+export function stepWords(s, lang) {
+  const w = (id, vars) => t(`so.step.${id}`, vars, lang);
   const what = s.label || s.text || s.item?.label || "";
-  const it = what ? q(what) : s.role ? `the ${s.role}` : "the marked spot";
+  const it = what ? q(what) : s.role ? w("the", { role: s.role }) : w("marked");
   switch (s.do) {
-    case "click": return `Click ${it}`;
-    case "type": return s.hidden ? `Type (hidden) in ${it}` : s.value ? `Type ${q(short(s.value, 28))} in ${it}` : `Clear ${it}`;
-    case "choose": return s.hidden ? `Choose (hidden) in ${it}` : s.role === "option" ? `Choose ${it}` : `Choose ${q(short(String(s.value || ""), 28))} in ${it}`;
-    case "check": return `Turn on ${it}`;
-    case "uncheck": return `Turn off ${it}`;
-    case "key": return s.selector && s.label && s.role && /field/.test(s.role) ? `Press ${s.key} in ${it}` : `Press ${s.key}`;
+    case "click": return w("click", { it });
+    case "type": return s.hidden ? w("typeHidden", { it }) : s.value ? w("type", { value: q(short(s.value, 28)), it }) : w("clear", { it });
+    case "choose": return s.hidden ? w("chooseHidden", { it }) : s.role === "option" ? w("choose", { it }) : w("chooseValue", { value: q(short(String(s.value || ""), 28)), it });
+    case "check": return w("check", { it });
+    case "uncheck": return w("uncheck", { it });
+    case "key": return s.selector && s.label && s.role && /field/.test(s.role) ? w("keyIn", { key: s.key, it }) : w("key", { key: s.key });
     default: return `${s.do} ${it}`;
   }
 }
@@ -309,7 +313,7 @@ export function recordingPrompt(rec) {
   const steps = stepsForModel(rec?.steps || []);
   if (!steps.length) return "";
   const words = steps.map(s => {
-    let line = `${s.n}. ${stepWords(s)}`;
+    let line = `${s.n}. ${stepWords(s, "en")}`;
     if (s.item) {
       const attrs = Object.entries(s.item.attrs || {}).map(([k, v]) => `${k}="${v}"`).join(" ");
       line += ` (item ${s.item.index + 1} of ${s.item.count} matching \`${s.item.selector}\`${attrs ? `; it had ${attrs}` : ""})`;

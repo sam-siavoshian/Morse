@@ -153,7 +153,8 @@ before(async () => {
   page = await browser.newPage();
   await page.setContent(FIXTURE);
   // core/showonce.js as a plain script: its exports become window.SO.
-  const src = readFileSync(new URL("../core/showonce.js", import.meta.url), "utf8");
+  // (Its one import, i18n's t(), is for stepWords, which this page doesn't call.)
+  const src = readFileSync(new URL("../core/showonce.js", import.meta.url), "utf8").replace(/^import .*$/gm, "");
   const names = [...src.matchAll(/^export\s+(?:function|const)\s+(\w+)/gm)].map(m => m[1]);
   await page.addScriptTag({ content: `(() => {${src.replace(/^export\s+/gm, "")}\nwindow.SO = { ${names.join(", ")} };})();` });
   await page.evaluate(KIT_SOURCE);

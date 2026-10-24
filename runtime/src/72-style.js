@@ -22,24 +22,18 @@ const YourStyle = (() => {
   let info = null, infoAt = 0;  // the last style.get reply
   let preview = null;           // the bar, while a style change shows and isn't saved: { words, r, adapt }
   let fitting = false;
-  const SIZES = [[-2, "Smaller"], [0, "As is"], [2, "Bigger"], [4, "Biggest"]];
-  const SPACINGS = [["", "As is"], ["roomy", "More"], ["roomier", "Most"]];
-  const SWITCHES = [
-    ["soft", "Softer colors", "Calmer, less bright colors"],
-    ["redgreen", "Red and green easier to tell apart", "For red-green color blindness"],
-    ["dark", "Dark pages", "Light pages turn dark; dark ones stay as they are"],
-    ["lessMotion", "Fewer animations", "Things on the page stop moving and sliding"],
-    ["noAutoplay", "No autoplay", "Video and sound wait until you press play"],
-    ["underline", "Underline links", "Links stand out from the text around them"],
-  ];
+  // Words are message ids (core/locales/en.js): "ys.<block>" and "ys.<block>.help".
+  const SIZES = () => [[-2, t("ys.smaller")], [0, t("ys.asIs")], [2, t("ys.bigger")], [4, t("ys.biggest")]];
+  const SPACINGS = () => [["", t("ys.asIs")], ["roomy", t("ys.more")], ["roomier", t("ys.most")]];
+  const SWITCHES = ["soft", "redgreen", "dark", "lessMotion", "noAutoplay", "underline"];
 
-  const whereName = () => S.appName || location.host || "this page";
+  const whereName = () => S.appName || location.host || t("panel.thisPage");
   const entry = () => S.mods.find(m => m.kind === "style") || null;
-  const plainList = a => (a.length > 1 ? `${a.slice(0, -1).join(", ")} and ${a.at(-1)}` : a[0] || "");
+  const plainList = a => (a.length > 1 ? t("ys.list", { first: a.slice(0, -1).join(", "), last: a.at(-1) }) : a[0] || "");
   function ask(type, payload = {}, ms = 8000) {
     return Promise.race([
       call(type, { url: location.href, app: S.app, ...payload }),
-      new Promise((_, no) => setTimeout(() => no(new Error("Morse didn't answer. Try again.")), ms)),
+      new Promise((_, no) => setTimeout(() => no(new Error(t("ys.noAnswer"))), ms)),
     ]);
   }
   async function refresh() {
@@ -92,7 +86,7 @@ const YourStyle = (() => {
     input.disabled = true;
     bar.classList.remove("done", "err");
     bar.classList.add("working");
-    hint.innerHTML = `${radar(12)} Making your style`;
+    hint.innerHTML = `${radar(12)} ${t("ys.making")}`;
     actions.innerHTML = "";
     let r;
     try { r = await ask("style.preview", { words }); }
@@ -102,8 +96,8 @@ const YourStyle = (() => {
       bar.classList.add("err");
       S.phase = "error";
       input.disabled = false;
-      hint.innerHTML = `That didn't work: <i>${esc(plainError(e).slice(0, 120))}</i>`;
-      actions.innerHTML = `<button data-a="again">Try again</button>`;
+      hint.innerHTML = t("result.failed", { detail: esc(plainError(e).slice(0, 120)) });
+      actions.innerHTML = `<button data-a="again">${t("result.again")}</button>`;
       return;
     }
     bar.classList.remove("working");
@@ -120,14 +114,14 @@ const YourStyle = (() => {
     const { r, adapt } = preview;
     const p = r.parsed;
     const notes = [];
-    if (p.notes.includes("font")) notes.push(`<p class="ys-note"><b>Which font?</b> Type its name under Your style in Settings, or say it here: “Georgia font everywhere”.</p>`);
-    if (p.except.length) notes.push(`<p class="ys-note">Not on ${esc(plainList(p.except.map(exceptionName)))}</p>`);
-    return `<div class="sheet ys-sheet" role="group" aria-label="Your style">
-      <header><b>Your style</b><span class="dim">Every site and app</span></header>
+    if (p.notes.includes("font")) notes.push(`<p class="ys-note">${t("ys.whichFont")}</p>`);
+    if (p.except.length) notes.push(`<p class="ys-note">${esc(t("ys.notOn", { list: plainList(p.except.map(exceptionName)) }))}</p>`);
+    return `<div class="sheet ys-sheet" role="group" aria-label="${esc(t("ys.title"))}">
+      <header><b>${t("ys.title")}</b><span class="dim">${t("ys.everySiteApp")}</span></header>
       ${r.summary.length ? `<div class="tags ys-tags">${r.summary.map(t => `<span>${esc(t)}</span>`).join("")}</div>` : ""}
       ${notes.join("")}
-      ${p.extra || r.style.extra ? `<div class="srow"><div class="lbl"><span>Fit it to each site with the model</span><small>For “${esc(r.style.extra.slice(0, 90))}”. Once per site, and you review each change</small></div>
-        <div class="ctl"><label class="sw"><input type="checkbox" data-ys="adapt-new" ${adapt ? "checked" : ""} aria-label="Fit it to each site with the model"><span></span></label></div></div>` : ""}
+      ${p.extra || r.style.extra ? `<div class="srow"><div class="lbl"><span>${t("ys.adapt")}</span><small>${t("ys.adaptFor", { extra: esc(r.style.extra.slice(0, 90)) })}</small></div>
+        <div class="ctl"><label class="sw"><input type="checkbox" data-ys="adapt-new" ${adapt ? "checked" : ""} aria-label="${esc(t("ys.adapt"))}"><span></span></label></div></div>` : ""}
     </div>`;
   }
   function showPreview() {
@@ -135,10 +129,10 @@ const YourStyle = (() => {
     bar.classList.add("done");
     input.disabled = false;
     setInput("");
-    input.placeholder = "Add to your style…";
+    input.placeholder = t("ys.addMore");
     const n = preview.r.summary.length;
-    hint.innerHTML = `<b class="ok">Your style</b> <span class="dim">${n ? `${n} change${n === 1 ? "" : "s"} · ` : ""}every site</span>`;
-    actions.innerHTML = `<button data-a="ys-save" class="primary">Save <kbd>↵</kbd></button><button data-a="ys-undo">Undo</button>`;
+    hint.innerHTML = `<b class="ok">${t("ys.title")}</b> <span class="dim">${n ? `${t("ys.changes", { n })} · ` : ""}${t("ys.everySite")}</span>`;
+    actions.innerHTML = `<button data-a="ys-save" class="primary">${t("btn.save")} <kbd>↵</kbd></button><button data-a="ys-undo">${t("btn.undo")}</button>`;
     showPane("");
     paneKind = "ys";
     pane.dataset.kind = "ys";
@@ -157,7 +151,7 @@ const YourStyle = (() => {
     closeBar();
     if (!r) return restore();
     await changed(r);
-    toast(r.here?.excepted ? `Saved your style. It is off on ${whereName()}.` : "Saved your style. It follows you to every site and app.");
+    toast(r.here?.excepted ? t("ys.savedOff", { where: whereName() }) : t("ys.saved"));
     if (r.style?.adapt) ready(800);
   }
   async function undoPreview() {
@@ -167,7 +161,7 @@ const YourStyle = (() => {
     input.placeholder = PLACEHOLDER();
     closeBar();
     await restore();
-    toast("Change undone");
+    toast(t("toast.undone"));
   }
   async function addMore(text) {
     const words = `${preview.words}, ${text}`;
@@ -203,17 +197,17 @@ const YourStyle = (() => {
     const r = await ask("style.except", { on: true });
     if (S.open && S.phase === "idle") closeBar();
     await changed(r);
-    controlToast(`Your style is off on ${whereName()}`, [["Undo", useHere]]);
+    controlToast(t("ys.offOn", { where: whereName() }), [[t("btn.undo"), useHere]]);
   }
   async function useHere() {
     const r = await ask("style.except", { on: false });
     await changed(r);
-    controlToast(`Your style is back on ${whereName()}`);
+    controlToast(t("ys.backOn", { where: whereName() }));
   }
   async function setOn(on) {
     const r = await ask("style.save", { patch: { enabled: on } });
     await changed(r);
-    controlToast(on ? "Your style is on everywhere" : "Your style is off everywhere", on ? [] : [["Undo", () => setOn(true)]]);
+    controlToast(on ? t("ys.onAll") : t("ys.offAll"), on ? [] : [[t("btn.undo"), () => setOn(true)]]);
   }
 
   // ---- fitting it to this site (the model; only when turned on)
@@ -230,16 +224,16 @@ const YourStyle = (() => {
       showPane("");
       const run = submit(adaptRequest(style, e.css, fitFacts()));
       // The fix is saved as a mod for this site that belongs to the style (60-generate.js keep).
-      if (S.draft) S.draft.style = { parent: STYLE_ID, title: `Your style for ${whereName()}`, prompt: "Fit Your style to this site" };
+      if (S.draft) S.draft.style = { parent: STYLE_ID, title: t("ys.forSite", { where: whereName() }), prompt: t("ys.fitPrompt") };
       await run;
       const meta = S.phase === "result" && hint.querySelector(".dim");
-      if (meta) meta.textContent = ["Your style", meta.textContent].filter(Boolean).join(" · ");
+      if (meta) meta.textContent = [t("ys.title"), meta.textContent].filter(Boolean).join(" · ");
       if (S.phase === "error") {
         const fine = S.draft?.title === FIT_TITLE;
         S.phase = "idle";
         bar.classList.remove("err");
         closeBar();
-        toast(fine ? `Your style already fits ${whereName()}` : `Couldn't fit your style to ${whereName()}. Try again with Fit to this site in the Mods panel.`);
+        toast(fine ? t("ys.fits", { where: whereName() }) : t("ys.fitFailed", { where: whereName() }));
       }
     } finally { fitting = false; }
   }
@@ -282,16 +276,16 @@ const YourStyle = (() => {
     if (!e) return "";
     const fitted = S.mods.some(m => isStyleChild(m) && m.enabled);
     const but = (e.except || []).map(exceptionName);
-    const state = !e.on ? "Off everywhere" : e.excepted ? `Off on ${whereName()}` : modHeld(e) ? "Not running on this page"
-      : `On every site${but.length ? ` except ${plainList(but.slice(0, 3))}${but.length > 3 ? ` and ${but.length - 3} more` : ""}` : ""}`;
-    const label = `Your style, ${state.toLowerCase()}`;
+    const state = !e.on ? t("ys.state.off") : e.excepted ? t("ys.state.offOn", { where: whereName() }) : modHeld(e) ? t("ys.state.notRunning")
+      : but.length ? t("ys.state.onExcept", { list: plainList(but.slice(0, 3)), more: but.length > 3 ? t("ys.andMore", { n: but.length - 3 }) : "" }) : t("ys.state.on");
+    const label = t("ys.rowLabel", { state });
     return `<section class="ys-row${e.enabled ? "" : " off"}" aria-label="${esc(label)}">
-      <label class="sw" title="${e.on ? "Turn off everywhere" : "Turn on everywhere"}"><input type="checkbox" data-y="on" aria-label="Your style, on every site" ${e.on ? "checked" : ""}><span></span></label>
-      <div class="meta"><b>Your style</b><small>“${esc(e.prompt)}”</small>
-        <div class="tags">${e.summary.map(t => `<span>${esc(t)}</span>`).join("")}${fitted ? "<span>fitted to this site</span>" : ""}<em class="when">${esc(state)}</em></div>
+      <label class="sw" title="${esc(e.on ? t("ys.turnOffAll") : t("ys.turnOnAll"))}"><input type="checkbox" data-y="on" aria-label="${esc(t("ys.onEverySite"))}" ${e.on ? "checked" : ""}><span></span></label>
+      <div class="meta"><b>${t("ys.title")}</b><small>“${esc(e.prompt)}”</small>
+        <div class="tags">${e.summary.map(s => `<span>${esc(s)}</span>`).join("")}${fitted ? `<span>${t("ys.fitted")}</span>` : ""}<em class="when">${esc(state)}</em></div>
       </div>
-      <div class="btns"><button data-y="change">Change</button>${e.excepted ? `<button data-y="use-here">Use on this site</button>`
-        : e.on ? `<button data-y="not-here">Not on this site</button>` : ""}${e.enabled && !fitted ? `<button data-y="fit" title="The model fixes what your style breaks here">Fit to this site</button>` : ""}</div>
+      <div class="btns"><button data-y="change">${t("btn.change")}</button>${e.excepted ? `<button data-y="use-here">${t("ys.useHere")}</button>`
+        : e.on ? `<button data-y="not-here">${t("ys.notHere")}</button>` : ""}${e.enabled && !fitted ? `<button data-y="fit" title="${esc(t("ys.fitTitle"))}">${t("ys.fit")}</button>` : ""}</div>
     </section>`;
   }
   panel.addEventListener("click", e => {
@@ -321,32 +315,32 @@ const YourStyle = (() => {
     });
   }
   const sw = (k, on, label) => `<label class="sw"><input type="checkbox" data-ys="${k}" ${on ? "checked" : ""} aria-label="${esc(label)}"><span></span></label>`;
-  const seg = (k, label, options, value) => `<div class="seg" role="radiogroup" aria-label="${esc(label)}">${options.map(([v, t]) =>
-    `<button type="button" role="radio" aria-checked="${v === value}" tabindex="${v === value ? 0 : -1}" data-ys="${k}:${v}">${esc(t)}</button>`).join("")}</div>`;
+  const seg = (k, label, options, value) => `<div class="seg" role="radiogroup" aria-label="${esc(label)}">${options.map(([v, words]) =>
+    `<button type="button" role="radio" aria-checked="${v === value}" tabindex="${v === value ? 0 : -1}" data-ys="${k}:${v}">${esc(words)}</button>`).join("")}</div>`;
 
   function settingsHtml() {
     if (Date.now() - infoAt > 4000) { infoAt = Date.now(); refresh().then(() => { if (paneKind === "settings") renderSettings(); }); }
     const s = info?.style;
     if (!s) {
-      return `<section data-ys-sec><h4>Your style</h4>
-        <div class="srow"><div class="lbl"><span>Your style</span><small>One look for every site and app: your font, text size, calmer colors and more</small></div>
-          <div class="ctl"><button type="button" class="btn" data-ys="start">Set up…</button></div></div></section>`;
+      return `<section data-ys-sec><h4>${t("ys.title")}</h4>
+        <div class="srow"><div class="lbl"><span>${t("ys.title")}</span><small>${t("ys.intro")}</small></div>
+          <div class="ctl"><button type="button" class="btn" data-ys="start">${t("ys.setUp")}</button></div></div></section>`;
     }
     const b = s.blocks;
     const hereKey = info.here?.key || "";
-    return `<section data-ys-sec><h4>Your style</h4>
-      <div class="srow"><div class="lbl"><span>Your style</span><small>${s.words ? `“${esc(s.words.slice(0, 140))}”` : "On every site and app"}</small></div><div class="ctl">${sw("enabled", s.enabled, "Your style, on every site")}</div></div>
-      <div class="srow"><div class="lbl"><span>Font</span><small>Fonts on this computer, like Georgia or Atkinson Hyperlegible</small></div>
-        <div class="ctl"><input class="field ys-field" data-ys="font" value="${esc(b.font === "readable" ? "Easier to read" : b.font === "dyslexia" ? "Dyslexia-friendly" : b.font)}" placeholder="As each site has it" spellcheck="false" autocomplete="off" aria-label="Font"></div></div>
-      <div class="srow"><div class="lbl"><span>Text size</span></div><div class="ctl">${seg("size", "Text size", SIZES, b.size)}</div></div>
-      <div class="srow"><div class="lbl"><span>Space between lines</span></div><div class="ctl">${seg("spacing", "Space between lines", SPACINGS, b.spacing)}</div></div>
-      ${SWITCHES.map(([k, label, help]) => `<div class="srow"><div class="lbl"><span>${esc(label)}</span><small>${esc(help)}</small></div><div class="ctl">${sw(k, b[k], label)}</div></div>`).join("")}
-      <div class="srow"><div class="lbl"><span>Fit it to each site with the model</span><small>${s.extra ? `Also does “${esc(s.extra.slice(0, 80))}”. ` : ""}Once per site, and you review each change</small></div><div class="ctl">${sw("adapt", s.adapt, "Fit it to each site with the model")}</div></div>
-      <div class="srow ys-except"><div class="lbl"><span>Not on these sites and apps</span>
-          <div class="ys-chips">${s.except.length ? s.except.map(x => `<span class="ys-chip">${esc(exceptionName(x))}<button type="button" class="ibtn xs" data-ys="rm:${esc(x)}" aria-label="Use your style on ${esc(exceptionName(x))} again" title="Use it here again">×</button></span>`).join("") : `<small>None. It runs everywhere.</small>`}</div></div>
-        <div class="ctl"><input class="field ys-field" data-ys="add-except" placeholder="Add a site or app" spellcheck="false" autocomplete="off" aria-label="Add a site or app where your style stays off">
-          ${hereKey && !info.here.excepted ? `<button type="button" class="tbtn" data-ys="not-here">Not on this site</button>` : ""}</div></div>
-      <div class="srow"><div class="lbl"><span>Start over</span><small>Your mods stay as they are</small></div><div class="ctl"><button type="button" class="tbtn" data-ys="delete">Delete your style</button></div></div>
+    return `<section data-ys-sec><h4>${t("ys.title")}</h4>
+      <div class="srow"><div class="lbl"><span>${t("ys.title")}</span><small>${s.words ? `“${esc(s.words.slice(0, 140))}”` : t("ys.everySiteAppOn")}</small></div><div class="ctl">${sw("enabled", s.enabled, t("ys.onEverySite"))}</div></div>
+      <div class="srow"><div class="lbl"><span>${t("ys.font")}</span><small>${t("ys.font.help")}</small></div>
+        <div class="ctl"><input class="field ys-field" data-ys="font" value="${esc(b.font === "readable" ? t("ys.fontReadable") : b.font === "dyslexia" ? t("ys.fontDyslexia") : b.font)}" placeholder="${esc(t("ys.fontAsIs"))}" spellcheck="false" autocomplete="off" aria-label="${esc(t("ys.font"))}"></div></div>
+      <div class="srow"><div class="lbl"><span>${t("gm.type")}</span></div><div class="ctl">${seg("size", t("gm.type"), SIZES(), b.size)}</div></div>
+      <div class="srow"><div class="lbl"><span>${t("ys.spacing")}</span></div><div class="ctl">${seg("spacing", t("ys.spacing"), SPACINGS(), b.spacing)}</div></div>
+      ${SWITCHES.map(k => `<div class="srow"><div class="lbl"><span>${esc(t(`ys.${k}`))}</span><small>${esc(t(`ys.${k}.help`))}</small></div><div class="ctl">${sw(k, b[k], t(`ys.${k}`))}</div></div>`).join("")}
+      <div class="srow"><div class="lbl"><span>${t("ys.adapt")}</span><small>${s.extra ? `${t("ys.alsoDoes", { extra: esc(s.extra.slice(0, 80)) })} ` : ""}${t("ys.adapt.help")}</small></div><div class="ctl">${sw("adapt", s.adapt, t("ys.adapt"))}</div></div>
+      <div class="srow ys-except"><div class="lbl"><span>${t("ys.except")}</span>
+          <div class="ys-chips">${s.except.length ? s.except.map(x => `<span class="ys-chip">${esc(exceptionName(x))}<button type="button" class="ibtn xs" data-ys="rm:${esc(x)}" aria-label="${esc(t("ys.useAgainOn", { where: exceptionName(x) }))}" title="${esc(t("ys.useAgain"))}">×</button></span>`).join("") : `<small>${t("ys.noExcept")}</small>`}</div></div>
+        <div class="ctl"><input class="field ys-field" data-ys="add-except" placeholder="${esc(t("ys.addExcept"))}" spellcheck="false" autocomplete="off" aria-label="${esc(t("ys.addExcept.label"))}">
+          ${hereKey && !info.here.excepted ? `<button type="button" class="tbtn" data-ys="not-here">${t("ys.notHere")}</button>` : ""}</div></div>
+      <div class="srow"><div class="lbl"><span>${t("ys.startOver")}</span><small>${t("ys.startOver.help")}</small></div><div class="ctl"><button type="button" class="tbtn" data-ys="delete">${t("ys.delete")}</button></div></div>
     </section>`;
   }
 
@@ -359,8 +353,9 @@ const YourStyle = (() => {
     } catch (e) { toast(plainError(e)); }
   }
   function fontValue(v) {
-    const t = v.trim().toLowerCase();
-    return t === "easier to read" ? "readable" : t === "dyslexia-friendly" ? "dyslexia" : v.trim();
+    const low = v.trim().toLowerCase();
+    const is = id => [t(id), t(id, {}, "en")].some(w => w.toLowerCase() === low); // what the field showed, or the English
+    return is("ys.fontReadable") ? "readable" : is("ys.fontDyslexia") ? "dyslexia" : v.trim();
   }
   pane.addEventListener("click", e => {
     const b = e.target.closest("button[data-ys]");
@@ -368,15 +363,15 @@ const YourStyle = (() => {
     const [k, v] = b.dataset.ys.split(/:(.*)/s);
     if (k === "start") {
       closePane();
-      input.placeholder = "Your style, like “bigger text and softer colors everywhere”";
-      note("Describe your style and end with <b>everywhere</b>", 12000);
+      input.placeholder = t("ys.startPlaceholder");
+      note(t("ys.startHint"), 12000);
       input.focus();
     }
     if (k === "size") patch({ blocks: { size: Number(v) } }, `[data-ys="size:${v}"]`);
     if (k === "spacing") patch({ blocks: { spacing: v } }, `[data-ys="spacing:${v}"]`);
     if (k === "rm") ask("style.except", { on: false, key: v }).then(r => changed(r)).then(flashSaved, err => toast(plainError(err)));
     if (k === "not-here") ask("style.except", { on: true }).then(r => changed(r)).then(flashSaved, err => toast(plainError(err)));
-    if (k === "delete") ask("style.save", { reset: true }).then(r => changed(r)).then(() => toast("Deleted your style"), err => toast(plainError(err)));
+    if (k === "delete") ask("style.save", { reset: true }).then(r => changed(r)).then(() => toast(t("ys.deleted")), err => toast(plainError(err)));
   });
   pane.addEventListener("change", e => {
     const k = e.target.dataset?.ys;
@@ -388,7 +383,7 @@ const YourStyle = (() => {
       if (v) ask("style.except", { on: true, key: v }).then(r => changed(r)).then(() => { flashSaved(); pane.querySelector('[data-ys="add-except"]')?.focus(); }, err => toast(plainError(err)));
       return;
     }
-    if (SWITCHES.some(([s]) => s === k)) patch({ blocks: { [k]: e.target.checked } }, `[data-ys="${k}"]`);
+    if (SWITCHES.includes(k)) patch({ blocks: { [k]: e.target.checked } }, `[data-ys="${k}"]`);
   });
   // Enter in a field saves it; arrows move through a choice like radio buttons.
   pane.addEventListener("keydown", e => {
