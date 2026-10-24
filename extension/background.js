@@ -174,6 +174,11 @@ async function dispatch(msg, port) {
       return true;
     case "stats": // repair: does a saved mod still find its elements? (core/kit.js __stats)
       return (await execIn(target, `globalThis.morse?.__stats?.(${JSON.stringify(msg.modId)}) ?? null`)) ?? null;
+    case "heal.badge": // self-heal hook: a dot on the toolbar button while a mod here stopped working (runtime/src/71-heal.js)
+      await chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: "#f2555a" }).catch(() => {});
+      await chrome.action.setBadgeText({ tabId: tab.id, text: msg.count > 0 ? " " : "" }).catch(() => {});
+      await chrome.action.setTitle({ tabId: tab.id, title: msg.count > 0 ? "Morse: a mod stopped working after this site changed" : "Morse" }).catch(() => {});
+      return true;
     case "generate": {
       let b = await backend();
       if (b.kind === "none") b = await backend(true);

@@ -13,6 +13,7 @@ export const DEFAULT_PREFS = {
   barPosition: "auto", // "auto" (away from what you point at) | "top" | "bottom"
   theme: "auto",       // "auto" (match the app) | "light" | "dark"
   gallery: true,       // gallery hook: "Show mods others made" (Mods for this site)
+  autoFix: false,      // self-heal hook: "Fix my mods automatically when a site changes"
 };
 
 const PREF_COMBO = /^((Ctrl|Alt|Shift|Meta)\+){0,4}[A-Za-z0-9]{1,24}$/;
@@ -34,6 +35,7 @@ export function normalizePrefs(p) {
     barPosition: pickPref(src.barPosition, ["auto", "top", "bottom"], "auto"),
     theme: pickPref(src.theme, ["auto", "light", "dark"], "auto"),
     gallery: src.gallery !== false, // gallery hook
+    autoFix: src.autoFix === true, // self-heal hook
   };
 }
 

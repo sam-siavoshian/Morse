@@ -15,10 +15,11 @@
   .vw { background: linear-gradient(#2a2440 0, #121212 280px); margin: 8px 8px 0; border-radius: 8px; overflow: auto; padding: 24px 28px; }
   .vw h1 { font-size: 30px; margin: 4px 0 4px; } .vw p.sub { color: #b3b3b3; margin: 0 0 20px; }
   .vw h2 { font-size: 20px; margin: 26px 0 12px; }
-  [data-testid="album-grid"] { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; }
-  .q8c { background: #181818; padding: 12px; border-radius: 8px; }
-  .q8c .cv { aspect-ratio: 1; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.5); display: grid; place-items: end start; padding: 10px; font-weight: 800; font-size: 13px; color: rgba(255,255,255,.9); }
-  .q8c b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .q8c small { color: #a7a7a7; }
+  /* ?v2 is the same page after a redesign: renamed classes and test ids (tests/heal.test.js) */
+  [data-testid="album-grid"], [data-testid="release-grid"] { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; }
+  .q8c, .rl-card { background: #181818; padding: 12px; border-radius: 8px; }
+  .q8c .cv, .rl-card .rl-art { aspect-ratio: 1; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.5); display: grid; place-items: end start; padding: 10px; font-weight: 800; font-size: 13px; color: rgba(255,255,255,.9); }
+  .q8c b, .rl-card b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .q8c small, .rl-card small { color: #a7a7a7; }
   footer { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.4fr 1fr; align-items: center; padding: 0 16px; }
   .np { display: flex; gap: 12px; align-items: center; } .np .cv { width: 56px; height: 56px; border-radius: 4px; background: linear-gradient(135deg, #ff6b6b, #7a3cff); }
   .np b { display: block; } .np small { color: #b3b3b3; }
@@ -64,11 +65,13 @@
     ["Midnight Atlas", "Kairo", "#3a0ca3,#f72585"], ["Low Sun", "Amberline", "#ffb703,#fb8500"], ["Driftwood", "Sea Glass", "#8ecae6,#219ebc"],
     ["Quiet Machines", "Lumen", "#adb5bd,#343a40"], ["Firefly Season", "June Park", "#e9c46a,#2a9d8f"], ["Velvet Hour", "Noor", "#9d4edd,#240046"],
   ];
-  const grids = document.querySelectorAll('[data-testid="album-grid"]');
+  const v2 = new URLSearchParams(location.search).has("v2");
+  if (v2) document.querySelectorAll('[data-testid="album-grid"]').forEach(g => g.setAttribute("data-testid", "release-grid"));
+  const grids = document.querySelectorAll(v2 ? '[data-testid="release-grid"]' : '[data-testid="album-grid"]');
   albums.forEach(([t, a, c], i) => {
     const d = document.createElement("div");
-    d.className = "q8c";
-    d.innerHTML = `<div class="cv" style="background:linear-gradient(135deg,${c})">${t.split(" ")[0]}</div><b>${t}</b><small>${a}</small>`;
+    d.className = v2 ? "rl-card" : "q8c";
+    d.innerHTML = `<div class="${v2 ? "rl-art" : "cv"}" style="background:linear-gradient(135deg,${c})">${t.split(" ")[0]}</div><b>${t}</b><small>${a}</small>`;
     grids[i < 6 ? 0 : 1].append(d);
   });
   const pp = document.querySelector('[data-testid="play-pause"]');
