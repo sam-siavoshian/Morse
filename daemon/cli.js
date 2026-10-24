@@ -3,7 +3,7 @@
 
 import { execFile } from "node:child_process";
 import { resolveApp } from "./apps.js";
-import { inspectFuses, fuseVerdict } from "./fuses.js";
+import { inspectFuses, formatFuses } from "./fuses.js";
 import { appsCommand, launchCommand, attachCommand, statusCommand, stopCommand } from "./desktop.js";
 import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH } from "./store.js";
 import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask } from "./models.js";
@@ -155,8 +155,10 @@ async function main() {
     case "fuses": {
       const app = resolveApp(f._.join(" "));
       const info = await inspectFuses(app.path);
-      console.log(JSON.stringify(info, null, 2));
-      for (const line of fuseVerdict(info)) console.log("- " + line);
+      if (f.json) return console.log(JSON.stringify(info, null, 2));
+      // A native app has no fuses, and Morse can't connect to it anyway: say that.
+      if (app.canAttach === false) return console.log(`${app.name}  ${app.path}\n  Morse can't connect: it's a ${app.why}.`);
+      console.log(formatFuses(info, app.name));
       break;
     }
     case "mods": {

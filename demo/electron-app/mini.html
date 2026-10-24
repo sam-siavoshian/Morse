@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Mini Player</title>
+<style>
+  body { margin: 0; height: 100vh; display: flex; gap: 14px; align-items: center; padding: 0 18px; background: #121212; color: #fff; font: 14px/1.4 ui-sans-serif, system-ui, sans-serif; box-sizing: border-box; }
+  .cv { width: 72px; height: 72px; border-radius: 6px; background: linear-gradient(135deg, #ff6b6b, #7a3cff); flex: none; }
+  b { display: block; } small { color: #b3b3b3; }
+  .ctl { display: flex; gap: 12px; margin-top: 8px; }
+  button { background: none; border: 0; color: #b3b3b3; font-size: 16px; cursor: pointer; }
+  button.pp { width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #000; font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="cv"></div>
+  <div class="np">
+    <b>Neon Tides</b><small>Hollow Coast</small>
+    <div class="ctl" data-testid="mini-controls">
+      <button aria-label="Previous">⏮</button>
+      <button class="pp" aria-label="Play or pause" onclick="tunes.command('play-pause')">❚❚</button>
+      <button aria-label="Next" onclick="tunes.command('next')">⏭</button>
+    </div>
+  </div>
+</body>
+</html>
