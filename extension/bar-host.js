@@ -79,7 +79,7 @@ async function openaiKey() {
 export async function voiceInfo() {
   if (await helperVoice()) return { transcribe: true, provider: "helper", label: "the Morse helper on this computer", hint: "" };
   if (await openaiKey()) return { transcribe: true, provider: "openai", label: `OpenAI ${OPENAI_TRANSCRIBE_MODEL}`, hint: "" };
-  return { transcribe: false, provider: null, label: "", hint: "Voice: add an OpenAI key in the Morse popup, or run the Morse helper" };
+  return { transcribe: false, provider: null, label: "", hint: "To use voice here, add an OpenAI key in the Morse popup or run the Morse helper" };
 }
 
 async function transcribe(msg) {

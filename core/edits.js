@@ -19,13 +19,13 @@
 //   { op: "duplicate", sel, key }                copy inserted after sel, tagged data-morse-dup=key
 //   { op: "page",      kind: "dark" | "light" | "zoom" | "noads" | "focus", level?, sel? }
 
-export const EDIT_TITLE = "Manual edits";
+export const EDIT_TITLE = "Direct edits";
 
 export const PAGE_TOOLS = {
   dark: { title: "Dark mode" },
   light: { title: "Light mode" },
   zoom: { title: "Text size" },
-  noads: { title: "Hide ads & popups" },
+  noads: { title: "Hide ads and pop-ups" },
   focus: { title: "Focus mode" },
 };
 

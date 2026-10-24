@@ -84,7 +84,7 @@ async function execIn(target, code) {
   });
   const res = r?.result;
   if (res && !res.ok && /unsafe-eval|Content Security Policy/i.test(res.error)) {
-    res.error = "This site blocks injected scripts. Turn on “Allow User Scripts” for Morse in chrome://extensions.";
+    res.error = "This site blocks mods that add features. To allow them, turn on “Allow User Scripts” for Morse in chrome://extensions.";
   }
   return res;
 }

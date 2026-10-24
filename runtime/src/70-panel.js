@@ -13,12 +13,12 @@ function renderPanel() {
       <article data-id="${esc(m.id)}" class="${m.enabled ? "" : "off"}">
         <label class="sw"><input type="checkbox" data-a="toggle" ${m.enabled ? "checked" : ""}><span></span></label>
         <div class="meta"><b>${esc(m.title)}</b><small>“${esc(m.prompt)}”</small>
-          <div class="tags">${m.css.trim() ? "<span>css</span>" : ""}${m.js.trim() ? "<span>js</span>" : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : "<span>page</span>"}</div>
+          <div class="tags">${m.css.trim() ? "<span>style</span>" : ""}${m.js.trim() ? "<span>script</span>" : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : "<span>whole page</span>"}</div>
         </div>
-        <div class="btns"><button data-a="share" title="Share">Share</button><button data-a="code" title="Edit code">Code</button><button data-a="del" title="Delete">Delete</button></div>
-      </article>`).join("") : `<p class="empty">${radar(22)}<br>No mods here yet.<br>Press <kbd>${HOTKEY}</kbd>, point at something, and say what you want.</p>`}
+        <div class="btns"><button data-a="share" title="Share">Share</button><button data-a="code" title="Edit code">Edit code</button><button data-a="del" title="Delete">Delete</button></div>
+      </article>`).join("") : `<p class="empty">${radar(22)}<br>No mods here yet.<br>Press <kbd>${HOTKEY}</kbd>, point at something and describe what you want.</p>`}
     </div>
-    <footer><button data-a="import">Import mod…</button><span>${esc(S.label)}</span></footer>`;
+    <footer><button data-a="import">Install a mod…</button><span>${esc(S.label)}</span></footer>`;
 }
 panel.addEventListener("click", async e => {
   const btn = e.target.closest("[data-a]");
