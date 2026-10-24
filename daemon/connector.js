@@ -398,7 +398,8 @@ export class Connector {
       case "hello":
         this.grantMic(s, (await here()).url);
         return { mode: "desktop", app, appName: this.app?.name || null, label: settingsLabel(this.settings),
-          settings: await loadPrefs(), voice: await cachedVoiceStatus() };
+          settings: await loadPrefs(), voice: await cachedVoiceStatus(),
+          debug: process.env.MORSE_DEBUG === "1" || undefined }; // status for tests (97-boot.js debugStatus)
       case "mods.list":
         return modsFor(await here());
       case "mods.save": {
