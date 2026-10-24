@@ -233,7 +233,7 @@ export function startTry(section) {
         emit: ev => event({ ...ev, genId: m.genId }),
       }).catch(e => ({ ok: false, error: e?.name === "AbortError" ? "Stopped" : e.message }));
       if (unknown) {
-        say(`This demo only has answers for the suggested changes. <a href="${esc(section.dataset.install || "#install")}">Get Morse</a> to ask for anything, on any site or app.`, "unknown");
+        say(`This demo only has sample answers for the suggested changes. <a href="${esc(section.dataset.install || "#install")}">Get Morse</a> to ask for anything, on any site or app.`, "unknown");
       } else if (res.ok && res.kind === "answer") {
         say("Answered in the app.", "");
       } else if (res.ok) {

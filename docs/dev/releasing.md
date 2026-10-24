@@ -21,7 +21,7 @@ You push one tag, such as `v0.3.0`. The
 4. makes the GitHub release, with the notes from that version's section of
    `CHANGELOG.md`, the store zip, the npm package and their SHA-256. When
    `.github/workflows/release-desktop.yml` is there (Morse Desktop), the tag
-   starts it too; the release waits for it and adds its AppImage, dmg and
+   starts it too. The release waits for it and adds its AppImage, dmg and
    Windows installer.
 
 The Chrome Web Store upload stays a manual step: Google reviews every
@@ -64,12 +64,12 @@ Do these once, in this order.
    - On GitHub: **Settings → Secrets and variables → Actions → New
      repository secret**, name `NPM_TOKEN`, paste the token.
    - npm tokens that can publish expire. Write down the date and make a new
-     one before then; the release only skips npm when the secret is missing,
+     one before then. The release only skips npm when the secret is missing,
      so an expired token fails the npm step (re-run it after replacing the
      secret).
 4. **Optional: signing for Morse Desktop.** Unsigned builds work, but macOS
    and Windows warn people the first time they open them. Add the secrets in
-   [What signing needs](#what-signing-needs) as repository secrets; each
+   [What signing needs](#what-signing-needs) as repository secrets. Each
    platform signs only when its own are there.
 5. **The first release, 0.2.0.** `package.json` already says 0.2.0 and the
    notes are under "Unreleased" in `CHANGELOG.md`. Before releasing, change
@@ -102,7 +102,7 @@ Do these once, in this order.
    copies it into the extension), moves the "Unreleased" notes under
    `## <version> (<date>)`, runs `npm run check` and `npm test`, commits
    `Release v<version>` and makes the tag. It stops, and puts the files
-   back, if the checks fail. It never pushes; it prints the command.
+   back, if the checks fail. It never pushes. It prints the command.
    Changed your mind before pushing? `git tag -d v<version> && git reset
    --hard HEAD~1`.
 3. Push the commit and the tag:
@@ -124,7 +124,7 @@ Do these once, in this order.
 
 - **`npm run release` stops on a failed test**: nothing was committed or
   tagged, and the files are back as they were. The browser tests can time
-  out on a busy computer; run the file alone
+  out on a busy computer. Run the file alone
   (`DISPLAY=:99 node --test --test-timeout=300000 tests/<file>.test.js`). If
   it passes, close what's busy and run `npm run release` again. If it fails
   again, fix it first.
@@ -147,7 +147,7 @@ Do these once, in this order.
 `https://registry.npmjs.org/morse-cli/latest`, at most once a day, kept in
 `~/.morse/update-check.json`. `MORSE_NO_UPDATE_CHECK=1` turns it off and
 `MORSE_UPDATE_REGISTRY` points it at another registry (the tests use a fake
-one). Nothing else in Morse makes this request; the
+one). Nothing else in Morse makes this request. The
 [privacy policy](../privacy.md#checking-for-a-newer-version) says so.
 
 ## Morse Desktop
@@ -179,7 +179,7 @@ node desktop-app/build.js --mac  # or --win, --linux; --dir for the unpacked app
 Everything lands in `dist/`, which git ignores. On Linux the build uses the
 Electron runtime already on the machine (`~/.cache/morse/electron`, the one
 the tests use) when it's the pinned version (`ELECTRON_VERSION` in
-`build.js`); elsewhere electron-builder downloads it.
+`build.js`). Elsewhere electron-builder downloads it.
 
 The package is locked down with Electron's fuses: it can't run as plain Node
 (`ELECTRON_RUN_AS_NODE`), ignores `NODE_OPTIONS` and `--inspect`, and only
@@ -222,7 +222,7 @@ its Build step to use a key instead).
 The app is signed with the hardened runtime and these entitlements: JIT and
 unsigned executable memory (Electron's JavaScript engine) and Apple Events
 (Morse quits an open app through AppleScript before opening it again with
-Morse; macOS asks once). `NSAppleEventsUsageDescription` says why.
+Morse. macOS asks once). `NSAppleEventsUsageDescription` says why.
 
 #### Windows: a code signing certificate
 
@@ -237,14 +237,14 @@ Any of these:
   `AZURE_SIGNING_ACCOUNT`, `AZURE_CERT_PROFILE` and `AZURE_PUBLISHER_NAME`.
 
 Unsigned, SmartScreen says “Windows protected your PC” until the installer has
-been downloaded enough times; signed with a new certificate, it can still say
+been downloaded enough times. Signed with a new certificate, it can still say
 so for a while.
 
 #### Linux
 
 AppImages aren't signed. electron-builder's AppImage starts the app with
 `--no-sandbox`, because Chromium's sandbox helper can't run from an AppImage's
-mount and many distributions limit the other kind; the window only ever loads
+mount and many distributions limit the other kind. The window only ever loads
 Morse's own page, which is what the sandbox would protect.
 
 ### The release workflow
@@ -261,7 +261,7 @@ Morse's own page, which is what the sandbox would protect.
   files too, and publishes the release with the notes, the store zip and the
   npm package.
 - The builds can only read the repo (they run npm packages' install scripts
-  next to the signing secrets); only the job that drafts the release can
+  next to the signing secrets). Only the job that drafts the release can
   write. Each action is pinned to a commit, with its version in a comment: to
   update one, look up the new tag's commit (`git ls-remote
   https://github.com/actions/checkout refs/tags/v4`) and change both.
@@ -275,9 +275,9 @@ Add the secrets above under Settings, Secrets and variables, Actions.
 After a release, on each platform, with the downloaded file (if one is
 broken, delete it from the release and say so in the notes):
 
-1. Open it. The window lists your apps; nothing asks for permissions.
+1. Open it. The window lists your apps. Nothing asks for permissions.
 2. Choose a model and click **Check**.
-3. **Open with Morse** on an app, make a change, Save; **Disconnect**; quit
+3. **Open with Morse** on an app, make a change, Save; **Disconnect**. Quit
    Morse from the tray.
 4. In Chrome, load the extension from **Show the extension folder** and click
    **Connect** on the welcome page, then **Allow** in Morse Desktop.

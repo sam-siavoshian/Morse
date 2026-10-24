@@ -79,7 +79,7 @@ from the welcome page. Each task was watched closely on its own screen, with
 - **Esc on a result** still keeps it, but now says so: “Kept … Closing the bar
   keeps a change.”, with Undo right there (`runtime/src/60-generate.js`).
 - **A stale extension after a rebuild.** A build from `npm run build` puts an
-  id in the service worker and in `build-id.txt`; when they differ, the bar
+  id in the extension and in `build-id.txt`. When they differ, the bar
   says “Morse was rebuilt. Reload it in chrome://extensions, then reload this
   page.” Never in a store build (`extension/dev-host.js`).
 - **Disk.** `demo/perf.js` and `tests/perf.test.js` remove the
