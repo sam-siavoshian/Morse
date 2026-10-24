@@ -32,6 +32,7 @@ New here? Start with [Getting started](getting-started.md).
 | Page | What's in it |
 |---|---|
 | [Developer guide](dev/README.md) | Set up a checkout, where things live, the website and gallery, roadmap |
+| [Dogfood: 12 real tasks](dogfood.md) | Morse used for real on VSCodium, Obsidian, Joplin, PyPI, GitLab and the Node.js docs: what worked, what didn't, and what was fixed |
 | [How a change really happens](dev/how-it-works.md) | A real recording, the live trace, and every step from your words to the change on screen |
 | [How Morse works](dev/architecture.md) | Hosts, the in-app code, the `morse` kit, the engine, models, the mod format, security |
 | [Testing](dev/testing.md) | `npm run check`, `npm test`, `npm run test:ui`, test helpers, evals, screenshots, what was verified |

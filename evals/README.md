@@ -149,7 +149,7 @@ What moved the numbers:
 - **The page outline** built a page-wide selector for every button before trimming to 50 lines. On a page with 5,000 table rows that took 27 s; now 0.35 s, with byte-identical context on all 55 cases.
 - **Anthropic API** (measured against a local mock; no key here): the instructions go in a cached `system` block, and opening the bar sends a `max_tokens: 0` request that writes the cache and loads the SDK. The first request's own overhead went from 1.1 to 1.5 s to 25 to 120 ms.
 
-Tried and left out: `--effort low` for Claude Code (no faster on haiku: 2946 vs 2655 ms total), and trimming the context (reading the page is under 30 ms on these apps, and the model's thinking, not the prompt length, is what remains).
+Tried and left out at first: `--effort low` for Claude Code (no faster on haiku on the demo apps: 2946 vs 2655 ms total). On real apps it was: haiku thought for 11 to 21 s before writing at Claude Code's own effort, so low is now the default ([dogfood](../docs/dogfood.md)), and trimming the context (reading the page is under 30 ms on these apps, and the model's thinking, not the prompt length, is what remains).
 
 ## Fast and strong models (Automatic)
 
