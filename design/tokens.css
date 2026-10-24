@@ -21,7 +21,7 @@
   /* text */
   --m-text: #ededef;
   --m-text-2: #a0a0a8;
-  --m-text-3: #6b6b73;
+  --m-text-3: #86868e; /* was #6b6b73: 3.6:1 on surface, below WCAG AA */
   --m-text-inverse: #0b0b0c;
 
   /* the signal: pixels and accents are shades of one gray ramp */
@@ -75,7 +75,8 @@
     --m-focus: rgba(0, 0, 0, 0.2);
     --m-text: #111113;
     --m-text-2: #5e5e66;
-    --m-text-3: #8e8e96;
+    --m-text-3: #6a6a72; /* was #8e8e96: 3.3:1 on white, below WCAG AA */
+    --m-warn: #8a5300; /* #e5a54b is 2:1 on white */
     --m-text-inverse: #ffffff;
     --m-signal-0: #e4e4e7;
     --m-signal-1: #c4c4ca;
@@ -102,7 +103,8 @@
     --m-focus: rgba(0, 0, 0, 0.2);
     --m-text: #111113;
     --m-text-2: #5e5e66;
-    --m-text-3: #8e8e96;
+    --m-text-3: #6a6a72;
+    --m-warn: #8a5300;
     --m-text-inverse: #ffffff;
     --m-signal-0: #e4e4e7;
     --m-signal-1: #c4c4ca;

@@ -14,6 +14,9 @@ const Effect = (() => {
   const CELL = 8, SQ = 6;
   let target = null, running = false, mode = "thinking", rect = null, cols = 0, rows = 0, cells = [];
   let t0 = 0, end0 = 0, endResolve = null, ok = true, frame = 0, pal = null, blips = [];
+  // prefers-reduced-motion: a calm, static field (no pulse, ping, scan or
+  // blips) that simply fades out when the change lands.
+  const calm = matchMedia("(prefers-reduced-motion: reduce)");
 
   function palette() {
     const cs = getComputedStyle(hostEl);
@@ -55,6 +58,7 @@ const Effect = (() => {
   function token(text) {
     if (!running) return;
     mode = "streaming";
+    if (calm.matches) return;
     // one blip per token, a handful on screen at once: signal, not noise
     const ch = [...text.toLowerCase()].find(c => MORSE_CODE[c]);
     if (ch && blips.length < 10) {
@@ -92,7 +96,7 @@ const Effect = (() => {
     if (!running) return;
     frame++;
     if (frame % 6 === 0) layout();
-    const t = (now - t0) / 1000;
+    const still = calm.matches, t = still ? 0 : (now - t0) / 1000;
     g.clearRect(0, 0, rect.w, rect.h);
     const endP = mode === "end" ? Math.min(1, (now - end0) / 650) : 0;
     // Radar geometry in coordinates normalized to the target's shape, so the
@@ -125,10 +129,10 @@ const Effect = (() => {
       let a, color = pal.lo;
       if (mode === "end") {
         const front = endP * (maxR + 0.2);
-        if (dist < front - tol * 2) continue;       // cleared
+        if (!still && dist < front - tol * 2) continue; // cleared
         if (dist < front) { a = 1; color = pal.top; } // the ring
         else a = 0.25 * (1 - endP);
-        if (!ok) { a = 0.25 * (1 - endP); color = pal.lo; }
+        if (!ok || still) { a = 0.25 * (1 - endP); color = pal.lo; }
       } else {
         a = 0.1 + wave(c, t) * 0.14;                // dim field, every pixel alive
         if (target) {
@@ -140,14 +144,15 @@ const Effect = (() => {
           if (rCell < core) { a = 0.3 + wave(c, t) * 0.5; color = rCell < core * 0.6 ? pal.hi : pal.mid; }
           // the radar ping: a thin ring sweeping outward, fading with distance
           const ring = Math.abs(rCell - ellR);
-          if (ring < 0.75) { a = Math.max(a, 0.6 * (1 - ping / maxR) + 0.15); color = pal.hi; }
+          if (still) { /* no ping */ }
+          else if (ring < 0.75) { a = Math.max(a, 0.6 * (1 - ping / maxR) + 0.15); color = pal.hi; }
           else if (ring < 2.2 && rCell < ellR) { a += 0.1 * (1 - ping / maxR); }
         } else {
           // page-wide: a scan travels the perimeter
           const per = 2 * (cols + rows), pos = (t * 40) % per;
           const p = y < 2 ? x : x >= cols - 2 ? cols + y : y >= rows - 2 ? cols + rows + (cols - x) : 2 * cols + rows + (rows - y);
           const d = (pos - p + per) % per;
-          if (d < 14) { a += (1 - d / 14) * 0.6; color = pal.hi; }
+          if (d < 14 && !still) { a += (1 - d / 14) * 0.6; color = pal.hi; }
         }
         const l = lit.get(i);
         if (l) { a = Math.max(a, 0.35 + l * 0.65); color = l > 0.5 ? pal.top : pal.hi; }

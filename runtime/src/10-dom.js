@@ -1,10 +1,16 @@
 const hostEl = document.createElement("div");
 hostEl.setAttribute("data-morse-ui", "");
-hostEl.style.cssText = "all:initial;position:fixed;inset:0;pointer-events:none;z-index:2147483647;";
+// Every declaration is !important so no page rule (`div { display: none !important }`,
+// `* { all: unset }`, `dir=rtl`, zoom, filters) can reach the overlay's host.
+hostEl.style.cssText = "all:initial;position:fixed;inset:0;pointer-events:none;z-index:2147483647;direction:ltr;zoom:1;display:block;"
+  .replace(/;/g, " !important;");
+hostEl.dir = "ltr";
 let DEBUG = false;
 try { DEBUG = !!localStorage.getItem("morse:debug"); } catch {}
 const root = hostEl.attachShadow({ mode: DEBUG ? "open" : "closed" });
-root.innerHTML = `<style>${TOKENS_CSS}\n${CSS()}</style>
+// Tokens are custom properties, the one thing that inherits through a shadow
+// boundary. Marked !important, ours beat any `--m-*` the page sets on our host.
+root.innerHTML = `<style>${TOKENS_CSS.replace(/(--m-[\w-]+\s*:[^;!]+);/g, "$1 !important;")}\n${CSS()}</style>
   <canvas class="fx"></canvas>
   <div class="hl" hidden><span></span></div>
   <div class="sel" hidden></div>
@@ -29,7 +35,12 @@ const fx = $(".fx"), hl = $(".hl"), selBox = $(".sel"), bar = $(".bar"), input =
 const chip = $(".chip.target"), hint = $(".hint"), ticker = $(".ticker"), actions = $(".actions");
 const panel = $(".panel"), modal = $(".modal"), toastEl = $(".toast"), logo = $(".mark");
 
-function applyTheme() { hostEl.dataset.theme = pageTheme(); }
+function applyTheme() {
+  hostEl.dataset.theme = pageTheme();
+  // CSS zoom on <html> would scale the overlay and misplace the highlight boxes.
+  const z = parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+  hostEl.style.setProperty("zoom", String(1 / z), "important");
+}
 function mount() { if (!hostEl.isConnected) document.documentElement.append(hostEl); }
 mount();
 applyTheme();
