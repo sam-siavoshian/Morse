@@ -9,11 +9,19 @@ import path from "node:path";
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml", ".gif": "image/gif", ".webm": "video/webm", ".jpg": "image/jpeg" };
 
+// Only for this computer's own addresses (and one-word names the demo
+// scripts map here, like http://tunes/): a website whose name an attacker
+// points at 127.0.0.1 (DNS rebinding) would otherwise read the repo through
+// the browser. Dotfiles (.git, with a remote's token in its config, .env)
+// are never served, and an address that isn't valid is a 400, not a crash.
+const LOCAL_HOST = /^(127\.0\.0\.1|\[::1\]|[a-z0-9-]+)(:\d+)?$/i;
 const handler = async (req, res) => {
-  let p = decodeURIComponent(new URL(req.url, "http://x").pathname);
+  if (!LOCAL_HOST.test(req.headers.host || "")) { res.writeHead(403).end(); return; }
+  let p;
+  try { p = decodeURIComponent(new URL(req.url, "http://x").pathname); } catch { res.writeHead(400).end(); return; }
   if (p.endsWith("/")) p += "index.html";
   const file = path.join(root, path.normalize(p));
-  if (!file.startsWith(root)) { res.writeHead(403).end(); return; }
+  if (!file.startsWith(root + path.sep) || path.relative(root, file).split(path.sep).some(part => part.startsWith("."))) { res.writeHead(403).end(); return; }
   try {
     const body = await fs.readFile(file);
     const headers = { "Content-Type": TYPES[path.extname(file)] || "application/octet-stream" };

@@ -179,8 +179,8 @@ function summaryHtml(m) {
     ${s.notes.map(n => `<p class="ctl-warn" data-s="${n.id}"><b>${t("ctl.note")}</b>${esc(n.text)}</p>`).join("")}`;
 }
 function codeHtml(m) {
-  return `${m.css.trim() ? `<label>${t("code.style")} <span class="dim">CSS</span></label><pre class="code ctl-pre" tabindex="0" role="region" aria-label="${esc(t("code.styleCode"))}">${esc(m.css.trim())}</pre>` : ""}
-    ${m.js.trim() ? `<label>${t("code.script")} <span class="dim">${t("code.scriptRuns")}</span></label><pre class="code ctl-pre" tabindex="0" role="region" aria-label="${esc(t("code.scriptCode"))}">${esc(m.js.trim())}</pre>` : ""}
+  return `${m.css.trim() ? `<label>${t("code.style")} <span class="dim">CSS</span></label><pre class="code ctl-pre" tabindex="0" role="region" aria-label="${esc(t("code.styleCode"))}">${esc(shownCode(m.css.trim()))}</pre>` : ""}
+    ${m.js.trim() ? `<label>${t("code.script")} <span class="dim">${t("code.scriptRuns")}</span></label><pre class="code ctl-pre" tabindex="0" role="region" aria-label="${esc(t("code.scriptCode"))}">${esc(shownCode(m.js.trim()))}</pre>` : ""}
     ${!m.css.trim() && !m.js.trim() ? `<p class="dim">${t("ctl.noCode")}</p>` : ""}`;
 }
 

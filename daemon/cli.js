@@ -22,7 +22,7 @@ import { plainError, setHelperPort } from "../core/onboarding.js";
 setHelperPort(HELPER_PORT); // "can't reach 127.0.0.1:<port>" reads as "the helper isn't running"
 import { pauseCli, resumeCli, exportAllCli, importCli, codeCli } from "./control.js"; // user control
 import { configuredHotkeys } from "./store.js";
-import { paint } from "./colors.js";
+import { paint, shown } from "./colors.js";
 
 // The hotkeys as set in ~/.morse/settings.json (platform defaults otherwise).
 // The terminal's language (LANG, LC_ALL; MORSE_LANG overrides): what people
@@ -208,8 +208,8 @@ async function main() {
       const mods = await listMods();
       if (!mods.length) return console.log(D(t("cli.mods.none", { key: openKey })));
       for (const m of mods) {
-        const where = m.match.app || m.match.hosts.join(",");
-        console.log(`${m.enabled ? W("●") : D("○")} ${B(m.title)} ${D(m.id)}  ${where}\n    ${D("“" + m.prompt + "”")}`);
+        const where = shown(m.match.app || m.match.hosts.join(","));
+        console.log(`${m.enabled ? W("●") : D("○")} ${B(shown(m.title))} ${D(m.id)}  ${where}\n    ${D("“" + shown(m.prompt) + "”")}`);
       }
       break;
     }
