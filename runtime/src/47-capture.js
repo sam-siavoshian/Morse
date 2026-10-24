@@ -108,8 +108,8 @@ const GodCapture = (() => {
     el.innerHTML = `
       <div class="gm-cap-shot">${fallbackThumb}</div>
       <div class="gm-cap-meta"><b>${esc(describe(target))}</b><small>${esc(siteName())} · ${Math.round(target.getBoundingClientRect().width)}×${Math.round(target.getBoundingClientRect().height)}</small></div>
-      <input class="gm-cap-note" placeholder="Note for later (optional)" spellcheck="false" aria-label="Note">
-      <div class="gm-cap-foot"><span>Reuse it from the bar in any app</span><button class="primary" data-a="save">Capture <kbd>↵</kbd></button></div>`;
+      <input class="gm-cap-note field" placeholder="Note for later (optional)" spellcheck="false" aria-label="Note">
+      <div class="gm-cap-foot"><span>Reuse it in any app</span><button class="btn primary" data-a="save">Capture <kbd>↵</kbd></button></div>`;
     const shot = el.querySelector(".gm-cap-shot"), field = el.querySelector(".gm-cap-note");
     thumbOf(target).then(t => {
       thumb = t;
@@ -186,6 +186,7 @@ const GodCapture = (() => {
       st.used = st.picked;
       st.picked = null;
       input.placeholder = placeholder;
+      queueMicrotask(render); // the bar turned "working" before this request went out
     } else if (msg.type === "mods.save" && msg.draft && st.used && S.draft?.id === msg.draft.id && S.draft.ctx?.snapshot) {
       msg.draft.from = st.used.from;
       st.used = null;

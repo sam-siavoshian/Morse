@@ -70,6 +70,30 @@ const PAIRS = [
   ["switch on: track vs surface (non-text)", "--m-primary", "--m-surface", 3],
   ["switch off: knob vs track (non-text)", "--m-text-2", "--m-line-strong", 3],
   ["picker outline vs page (non-text)", "--m-signal-4", "--m-bg", 3],
+  // round 2: God mode, voice, settings, suggestions
+  ["tooltip", "--m-text-inverse", "--m-text", 4.5],
+  ["picker label / edit readout", "--m-text-inverse", "--m-signal-4", 4.5],
+  ["toolbar tag, menu detail, eyebrows", "--m-text-3", "--m-surface", 4.5],
+  ["toolbar/icon buttons", "--m-text-2", "--m-surface", 4.5],
+  ["icon buttons on the bar", "--m-text-2", "--m-overlay", 4.5],
+  ["icon button hover", "--m-text", "--m-hover", 4.5],
+  ["pressed tool", "--m-primary-text", "--m-primary", 4.5],
+  ["menu rows", "--m-text", "--m-surface", 4.5],
+  ["menu row hover/focus", "--m-text", "--m-hover", 4.5],
+  ["segment", "--m-text-2", "--m-raised", 4.5],
+  ["segment (selected)", "--m-text", "--m-surface", 4.5],
+  ["field text", "--m-text", "--m-bg", 4.5],
+  ["field placeholder", "--m-text-3", "--m-bg", 4.5],
+  ["invalid field / rejected hotkey", "--m-danger", "--m-raised", 4.5],
+  ["hotkey warning", "--m-warn", "--m-surface", 4.5],
+  ["voice note line", "--m-text-2", "--m-overlay", 4.5],
+  ["suggestion chip", "--m-text-2", "--m-overlay", 4.5],
+  ["key caps in sheets", "--m-text-2", "--m-raised", 4.5],
+  ["clipboard chip detail", "--m-text-3", "--m-raised", 4.5],
+  ["settings help text", "--m-text-3", "--m-surface", 4.5],
+  ["field focus ring (non-text)", "--m-signal-3", "--m-bg", 3],
+  ["invalid field border (non-text)", "--m-danger", "--m-bg", 3],
+  ["selection frame vs page (non-text)", "--m-signal-4", "--m-bg", 3],
 ];
 
 function check(theme, T) {
@@ -88,13 +112,15 @@ function check(theme, T) {
 }
 const rows = [...check("dark", dark), ...check("light", light)];
 
-// ---- every color literal in the overlay CSS must be a token
-const css = readFileSync(new URL("runtime/src/99-css.js", ROOT), "utf8");
+// ---- every color literal in the overlay CSS (all three files) must be a token
 const literals = [];
-css.split("\n").forEach((line, i) => {
-  const clean = line.replace(/mask-image:[^;]+;/g, "").replace(/\/\*.*?\*\//g, "");
-  for (const m of clean.matchAll(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)|\b(?:white|black|red|gray|grey)\b(?![-\w])/gi)) literals.push({ line: i + 1, literal: m[0] });
-});
+for (const f of ["99-css.js", "98-bar-css.js", "98-godmode-css.js"]) {
+  const css = readFileSync(new URL(`runtime/src/${f}`, ROOT), "utf8");
+  css.split("\n").forEach((line, i) => {
+    const clean = line.replace(/mask-image:[^;]+;/g, "").replace(/\/\*.*?\*\//g, "").replace(/^\s*\/\/.*$/, "");
+    for (const m of clean.matchAll(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)|\b(?:white|black|red|gray|grey)\b(?![-\w])/gi)) literals.push({ line: `${f}:${i + 1}`, literal: m[0] });
+  });
+}
 
 if (process.argv.includes("--json")) {
   console.log(JSON.stringify({ rows, literals }, null, 1));
@@ -104,7 +130,7 @@ if (process.argv.includes("--json")) {
     for (const r of rows.filter(r => r.theme === theme))
       console.log(`  ${r.pass ? "✓" : "✗"} ${r.ratio.toFixed(2).padStart(5)} ≥ ${r.min}  ${r.what.padEnd(40)} ${r.fg} on ${r.bg}`);
   }
-  console.log(literals.length ? `\n✗ non-token colors in 99-css.js:\n${literals.map(l => `  line ${l.line}: ${l.literal}`).join("\n")}` : "\n✓ 99-css.js uses token colors only");
+  console.log(literals.length ? `\n✗ non-token colors in the overlay CSS:\n${literals.map(l => `  line ${l.line}: ${l.literal}`).join("\n")}` : "\n✓ 99-css.js, 98-bar-css.js and 98-godmode-css.js use token colors only");
 }
 const failed = rows.filter(r => !r.pass).length + literals.length;
 if (!process.argv.includes("--json")) console.log(`\n${rows.length} pairs × worst-case host page · ${rows.filter(r => !r.pass).length} below WCAG AA · ${literals.length} non-token colors`);

@@ -56,7 +56,7 @@ const CODE_TOKENS = "TITLE: Airier toolbar\n```css\n#toolbar { gap: 20px; letter
 // Web Speech needs Google's servers: make it fail at once ("network"), as it
 // does inside Electron apps, so voice falls back to the host's transcription.
 const SPEECH_FAILS = () => {
-  globalThis.webkitSpeechRecognition = class extends EventTarget {
+  globalThis.SpeechRecognition = globalThis.webkitSpeechRecognition = class extends EventTarget {
     start() { setTimeout(() => { this.onerror?.(Object.assign(new Event("error"), { error: "network" })); const end = new Event("end"); this.onend?.(end); this.dispatchEvent(end); }, 30); }
     stop() {} abort() {}
   };
@@ -169,7 +169,7 @@ async function audit(page, clip) {
       if (clip && !(r.right > clip.x && r.left < clip.x + clip.width && r.bottom > clip.y && r.top < clip.y + clip.height)) continue;
       // anything that sticks out of the bar / panel / card / toast it belongs to
       const box = el.parentElement && el.closest(".bar, .panel, .card, .toast, .gm-tb, .gm-pop, .gm-note, .gm-menu, .bmenu");
-      if (box && box !== el && !el.closest(".list, .card textarea, .gm-tip, .gm-chips, .pane")) {
+      if (box && box !== el && !el.closest(".list, .card textarea, .tip, .gm-chips, .pane")) {
         const b = box.getBoundingClientRect();
         if (r.right > b.right + 0.5 || r.left < b.left - 0.5) out.push(`${name(el)} sticks out of ${name(box)}`);
       }
@@ -274,7 +274,7 @@ const OK = (over = {}) => ({ ok: true, title: "Airier toolbar", css: "#toolbar {
 async function focusVisible(page, loc) {
   await page.keyboard.press("Shift");
   await loc.focus();
-  await sleep(60);
+  await sleep(200); // past the 120ms transition
   return loc.evaluate(el => {
     if (!el.matches(":focus-visible")) return "focus does not match :focus-visible";
     // the indicator itself: a 2px ring (on the control, its track, or its field), or a highlighted menu row
@@ -420,12 +420,13 @@ async function reducedMotion(theme) {
   await submit(p, "make it airier");
   await stream(p, 12, 30);
   await sleep(300);
-  const fx = ui(p, ".fx");
+  // Settings → Effects defaults to Subtle under reduced motion: a still outline instead of the radar field
+  const fx = (await ui(p, ".fx").isVisible()) ? ui(p, ".fx") : ui(p, ".sel");
   const a = await fx.screenshot(); await sleep(450);
   const b = await fx.screenshot();
   const mark1 = await ui(p, ".row .mark").screenshot(); await sleep(450);
   const mark2 = await ui(p, ".row .mark").screenshot();
-  await shot(p, "motion", "reduced-effect", fx, { pad: 16, checks: [a.equals(b) ? "" : "effect still animates under prefers-reduced-motion"] });
+  await shot(p, "motion", "reduced-effect", fx, { pad: 16, note: "Effects default to Subtle here: a still outline on the target, no field", checks: [a.equals(b) ? "" : "effect still animates under prefers-reduced-motion"] });
   await shot(p, "motion", "reduced-mark-live", ui(p, ".row .mark"), { pad: 8, checks: [mark1.equals(mark2) ? "" : "radar mark still pulses under prefers-reduced-motion"] });
   await p.evaluate(r => __cat.done(r), OK());
   await sleep(300);
@@ -573,8 +574,8 @@ async function godStates(theme, width) {
       const b = ui(p, `.gm-tb button[data-t=${t}]`);
       await b.hover(); await sleep(520);
       const disabled = await b.isDisabled();
-      await shot(p, "edit-toolbar", `tool-${t}-${disabled ? "disabled" : "hover"}`, [tb(p), ui(p, `.gm-tb button[data-t=${t}] .gm-tip`)], { pad: 8 });
-      if (!disabled) await shot(p, "edit-toolbar", `tool-${t}-focus`, [tb(p), ui(p, `.gm-tb button[data-t=${t}] .gm-tip`)], { pad: 8, checks: [await focusVisible(p, b)] });
+      await shot(p, "edit-toolbar", `tool-${t}-${disabled ? "disabled" : "hover"}`, [tb(p), ui(p, `.gm-tb button[data-t=${t}] .tip`)], { pad: 8 });
+      if (!disabled) await shot(p, "edit-toolbar", `tool-${t}-focus`, [tb(p), ui(p, `.gm-tb button[data-t=${t}] .tip`)], { pad: 8, checks: [await focusVisible(p, b)] });
     }
     await restOn(p, "#card");
     await ui(p, ".in").focus();
@@ -603,8 +604,8 @@ async function godStates(theme, width) {
   if (!n) {
     const u = ui(p, ".gm-tb button[data-t=undo]");
     await u.hover(); await sleep(520);
-    await shot(p, "edit-toolbar", "tool-undo-hover", [tb(p), ui(p, ".gm-tb button[data-t=undo] .gm-tip")], { pad: 8 });
-    await shot(p, "edit-toolbar", "tool-undo-focus", [tb(p), ui(p, ".gm-tb button[data-t=undo] .gm-tip")], { pad: 8, checks: [await focusVisible(p, u)] });
+    await shot(p, "edit-toolbar", "tool-undo-hover", [tb(p), ui(p, ".gm-tb button[data-t=undo] .tip")], { pad: 8 });
+    await shot(p, "edit-toolbar", "tool-undo-focus", [tb(p), ui(p, ".gm-tb button[data-t=undo] .tip")], { pad: 8, checks: [await focusVisible(p, u)] });
     await restOn(p, "#card");
   }
   // text: edit in place
@@ -690,7 +691,7 @@ async function godStates(theme, width) {
   await select(p, "#topEdge", 0.3, 0.5);
   if (!n) {
     await ui(p, ".gm-tb button[data-t=move]").hover(); await sleep(520);
-    await shot(p, "edit-toolbar", "below-top-edge", [tb(p), ui(p, ".gm-frame"), ui(p, ".gm-tb button[data-t=move] .gm-tip")], { pad: 8 });
+    await shot(p, "edit-toolbar", "below-top-edge", [tb(p), ui(p, ".gm-frame"), ui(p, ".gm-tb button[data-t=move] .tip")], { pad: 8 });
   } else await shot(p, "edit-toolbar", "below-top-edge", [tb(p), ui(p, ".gm-frame")], { pad: 8 });
   // SVG: Fill/Stroke, and a field over SVG text
   await p.evaluate(() => {
@@ -718,8 +719,9 @@ async function godStates(theme, width) {
     document.querySelector("main").prepend(f);
   });
   await sleep(300);
-  await p.locator("#embed").hover(); await sleep(150);
-  await p.locator("#embed").click(); await sleep(400);
+  const eb = await p.locator("#embed").boundingBox();
+  await p.mouse.move(eb.x + eb.width - 12, eb.y + eb.height - 12, { steps: 2 }); await sleep(150);
+  await p.mouse.click(eb.x + eb.width - 12, eb.y + eb.height - 12); await sleep(400);
   await tb(p).waitFor({ state: "visible" }).catch(() => {});
   await shot(p, "edit-frame", "embedded-note", [tb(p), ui(p, ".gm-note"), ui(p, ".gm-frame")], { pad: 12 });
   if (!n) {
@@ -733,8 +735,8 @@ async function godStates(theme, width) {
   await openBar(p);
   const q = ui(p, ".gm-qbtn");
   await q.hover(); await sleep(520);
-  await shot(p, "page-tools", "button-hover", [q, ui(p, ".gm-qbtn .gm-tip")], { pad: 8 });
-  await shot(p, "page-tools", "button-focus", [q, ui(p, ".gm-qbtn .gm-tip")], { pad: 8, checks: [await focusVisible(p, q)] });
+  await shot(p, "page-tools", "button-hover", [q, ui(p, ".gm-qbtn .tip")], { pad: 8 });
+  await shot(p, "page-tools", "button-focus", [q, ui(p, ".gm-qbtn .tip")], { pad: 8, checks: [await focusVisible(p, q)] });
   await q.click(); await sleep(250);
   await shot(p, "page-tools", "menu", [ui(p, ".gm-menu"), q], { pad: 12 });
   await ui(p, ".gm-menu [data-k=bigger]").hover(); await sleep(150);
@@ -784,10 +786,29 @@ async function voiceStates(theme, width) {
   await p.waitForFunction(() => JSON.parse(document.querySelector(":root > [data-morse-ui]").dataset.status || "{}").level > 0.3, null, { timeout: 5000 }).catch(() => {});
   await shot(p, "voice", "listening", ui(p, ".bar"));
   if (!n) await shot(p, "voice", "level-meter", mic, { pad: 8 });
-  await p.waitForFunction(() => /make the/.test(document.querySelector(":root > [data-morse-ui]").shadowRoot.querySelector(".in").value), null, { timeout: 9000 }).catch(() => {});
-  await shot(p, "voice", "partial-transcript", ui(p, ".bar"), { note: "partial words in --m-text-2 until the final transcript" });
+  await close(p);
+  // live words: Web Speech hears an interim phrase
+  p = await open({ theme, width, height: H, init: () => {
+    globalThis.SpeechRecognition = globalThis.webkitSpeechRecognition = class extends EventTarget {
+      start() { setTimeout(() => this.onresult?.({ results: [Object.assign([{ transcript: "make the toolbar a little" }], { isFinal: false })] }), 300); }
+      stop() {} abort() {}
+    };
+  } });
+  await openBar(p);
+  await pick(p, "#card");
+  await ui(p, ".mic").click();
+  await p.waitForFunction(() => /make the/.test(document.querySelector(":root > [data-morse-ui]").shadowRoot.querySelector(".in").value), null, { timeout: 6000 }).catch(() => {});
+  await sleep(150);
+  await shot(p, "voice", "partial-transcript", ui(p, ".bar"), { note: "interim words in --m-text-2 until the final transcript" });
+  await close(p);
+  p = await open({ theme, width, height: H });
+  await openBar(p);
+  await pick(p, "#card");
+  await ui(p, ".mic").click();
+  await p.waitForFunction(() => JSON.parse(document.querySelector(":root > [data-morse-ui]").dataset.status || "{}").voice === "listening");
+  await sleep(2600);
   await p.evaluate(() => (__cat.holdTranscribe = true));
-  await mic.click(); await sleep(250);
+  await ui(p, ".mic").click(); await sleep(250);
   await shot(p, "voice", "transcribing", ui(p, ".bar"));
   await p.evaluate(() => __cat.release?.()); await sleep(300);
   await shot(p, "voice", "transcribed", ui(p, ".bar"));
@@ -797,8 +818,8 @@ async function voiceStates(theme, width) {
   const ERR = {
     "insecure-page": [() => Object.defineProperty(globalThis, "isSecureContext", { get: () => false })],
     "policy-blocked": [() => Object.defineProperty(Document.prototype, "permissionsPolicy", { get: () => ({ allowsFeature: () => false }) })],
-    "no-microphone-api": [() => { delete globalThis.webkitSpeechRecognition; Object.defineProperty(Navigator.prototype, "mediaDevices", { get: () => undefined }); }, "&voice=0"],
-    "not-set-up": [() => { globalThis.webkitSpeechRecognition = undefined; }, "&voice=0"],
+    "no-microphone-api": [() => { globalThis.SpeechRecognition = globalThis.webkitSpeechRecognition = undefined; Object.defineProperty(Navigator.prototype, "mediaDevices", { get: () => undefined }); }, "&voice=0"],
+    "not-set-up": [() => { globalThis.SpeechRecognition = globalThis.webkitSpeechRecognition = undefined; }, "&voice=0"],
     "mic-blocked": [() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error("x"), { name: "NotAllowedError" })); }],
     "no-mic": [() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error("x"), { name: "NotFoundError" })); }],
     "mic-busy": [() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error("x"), { name: "NotReadableError" })); }],
@@ -811,6 +832,7 @@ async function voiceStates(theme, width) {
     if (n && !["mic-blocked", "transcription-failed", "not-set-up"].includes(state)) continue;
     p = await open({ theme, width, height: H, init, extra });
     await openBar(p);
+    await pick(p, "#card");
     if (fail !== undefined) await p.evaluate(f => { if (f) __cat.transcribeFail = f; else __cat.transcript = ""; }, fail);
     await ui(p, ".mic").click();
     if (fail !== undefined) {
@@ -899,7 +921,7 @@ async function sheetStates(theme, width) {
   await close(p);
 
   // voice off in settings
-  p = await open({ theme, width, height: H, extra: "&voice=0", init: () => { globalThis.webkitSpeechRecognition = undefined; } });
+  p = await open({ theme, width, height: H, extra: "&voice=0", init: () => { globalThis.SpeechRecognition = globalThis.webkitSpeechRecognition = undefined; } });
   await openBar(p);
   await p.keyboard.press("Control+Comma"); await sleep(300);
   await shot(p, "settings", "voice-off", ui(p, ".pane .srow:has(.pill)"), { pad: 4 });
@@ -964,7 +986,9 @@ async function flowStates(theme, width) {
     await ui(p, ".go").hover(); await sleep(150);
     await shot(p, "stop", "button-hover", ui(p, ".go"), { pad: 8 });
   }
-  await p.keyboard.press("Escape"); await sleep(600);
+  await p.keyboard.press("Escape");
+  await p.waitForFunction(() => /Stopped/.test(JSON.parse(document.querySelector(":root > [data-morse-ui]").dataset.status || "{}").hint), null, { timeout: 6000 }).catch(() => {});
+  await sleep(200);
   await shot(p, "stop", "cancelled", ui(p, ".bar"), { note: "partial CSS removed, prompt kept; any edit clears the note" });
   await close(p);
 }
@@ -983,6 +1007,24 @@ async function hostileStates() {
       await hover(p, sel);
       await shot(p, "hostile", `${site}-hover`, [ui(p, ".hl"), ui(p, ".hl span")], { pad: 16, checks: [await alignCheck(p, target)] });
       await pick(p, sel);
+      // round 2: God mode, page tools and the settings sheet on the same page
+      await ui(p, ".gm-tb").waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
+      await shot(p, "hostile", `${site}-toolbar`, [ui(p, ".gm-tb"), ui(p, ".gm-frame")], { pad: 12 });
+      await p.keyboard.press("Control+KeyE"); await sleep(80);
+      await p.keyboard.press("c"); await sleep(250);
+      await shot(p, "hostile", `${site}-color`, [ui(p, ".gm-pop"), ui(p, ".gm-tb")], { pad: 12 });
+      await p.keyboard.press("Escape"); await sleep(100);
+      await p.keyboard.press("t"); await sleep(250);
+      await shot(p, "hostile", `${site}-text-edit`, [ui(p, ".gm-frame"), ui(p, ".gm-tb")], { pad: 12, note: "T edits the text in place (a form field toasts that it keeps its own text)" });
+      await p.keyboard.press("Escape"); await sleep(150);
+      await ui(p, ".in").focus();
+      await p.keyboard.press("Control+Comma"); await sleep(300);
+      await shot(p, "hostile", `${site}-settings`, ui(p, ".bar"));
+      await p.keyboard.press("Escape"); await sleep(150);
+      await ui(p, ".gm-qbtn").click(); await sleep(250);
+      await shot(p, "hostile", `${site}-page-tools`, [ui(p, ".gm-menu"), ui(p, ".gm-qbtn")], { pad: 12 });
+      await p.keyboard.press("Escape"); await sleep(100);
+      await hover(p, sel); // off the page-tools button, so its tooltip isn't in the next shots
       await ui(p, ".in").fill("make it airier");
       await shot(p, "hostile", `${site}-bar`, ui(p, ".bar"));
       await ui(p, ".in").press("Enter");

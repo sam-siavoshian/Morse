@@ -26,7 +26,7 @@ const Voice = (() => {
   let partialTimer = 0, partialBusy = false, partialSize = 0, lastBackend = "";
 
   // ---- the button: mic glyph, level meter, or a radar while transcribing
-  micBtn.innerHTML = `<svg class="i-mic" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="5.5" y="1.75" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg><canvas class="lvl" aria-hidden="true"></canvas><span class="spin" aria-hidden="true">${radar(14)}</span>`;
+  micBtn.innerHTML = `<svg class="i-mic" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.5" y="1.75" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg><canvas class="lvl" aria-hidden="true"></canvas><span class="spin" aria-hidden="true">${radar(14)}</span>`;
   const meter = micBtn.querySelector(".lvl");
   const mg = meter.getContext("2d");
   const COLS = 7, ROWS = 4, CELL = 4, SQ = 3;
