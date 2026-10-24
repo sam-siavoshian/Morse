@@ -9,7 +9,7 @@
 <meta name="color-scheme" content="dark">
 <meta property="og:title" content="Morse gallery">
 <meta property="og:description" content="Example mods for apps you already use. Read the code, then install.">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.png" type="image/png" sizes="64x64">
 <link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
@@ -18,14 +18,6 @@
 <body>
 <a class="skip-link" href="#top">Skip to content</a>
 <!-- The nav bar and footer come from site/index.html: npm run pages copies them in between these markers. -->
-<!-- chrome:sprite -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
-  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
-  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
-  <symbol id="i-drag" viewBox="0 0 24 24"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/></symbol>
-</svg>
-<!-- /chrome:sprite -->
 <!-- chrome:header -->
 <header class="nav">
   <div class="wrap">
@@ -84,7 +76,6 @@
     <div class="wrap">
       <div class="g-tools">
         <label class="g-search">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
           <span class="sr-only">Search mods</span>
           <input id="q" type="search" placeholder="Search mods" autocomplete="off" spellcheck="false">
           <kbd aria-hidden="true">/</kbd>
@@ -106,7 +97,7 @@
   <div class="d-top">
     <span class="card-app" id="d-app"></span>
     <button class="btn btn-secondary btn-icon" type="button" id="d-close" aria-label="Close">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8"/></svg>
+      <span aria-hidden="true">×</span>
     </button>
   </div>
   <div class="d-scroll">

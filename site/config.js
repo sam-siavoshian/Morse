@@ -106,3 +106,31 @@ export const REAL_APPS = [
   { app: "Go packages", kind: "Website", ask: "put the code examples on a dark background with bigger text, and hide the survey banner", src: "shots/180-web-go-packages.webp", width: 1280, height: 800, alt: "The net/http page on pkg.go.dev with code examples on a dark background while the change is written." },
   { app: "RubyGems", kind: "Website", ask: "", by: "The Edit tools: change it by hand, no model", src: "shots/181-web-rubygems-edit.webp", width: 1280, height: 800, alt: "The rails page on RubyGems with the Edit tools open on the heading: hide, move, resize, text and color." },
 ];
+
+// The real icon of each app or website the page names, by its name as it
+// shows on screen. Each file in icons/ is the app's own icon, taken from the
+// installed app (the icon VS Code, VSCodium, Obsidian, Joplin and Logseq ship)
+// or the site's own favicon, downloaded from it in October 2026, at 64 pixels
+// or the size the site has. They are there only to name the app or site a
+// picture or a mod is about (nominative use): they aren't Morse's, and Morse
+// isn't affiliated with any of them. A name with no entry shows its first
+// letter instead; that is only for sites whose icon couldn't be fetched.
+export const APP_ICONS = {
+  "VS Code": "icons/vscode.png",
+  "Visual Studio Code": "icons/vscode.png",
+  "VSCodium": "icons/vscodium.png",
+  "Obsidian": "icons/obsidian.png",
+  "Joplin": "icons/joplin.png",
+  "Logseq": "icons/logseq.png",
+  "PyPI": "icons/pypi.png",
+  "Node.js docs": "icons/nodejs.png",
+  "Go packages": "icons/go.png",
+  "RubyGems": "icons/rubygems.png",
+  "Docker Hub": "icons/docker.png",
+  "GitLab": "icons/gitlab.png",
+  "Ubuntu": "icons/ubuntu.png",
+  "NuGet": "icons/nuget.png",
+  "Packagist": "icons/packagist.png",
+  "MetaCPAN": "icons/metacpan.png",
+  "Claude": "icons/claude.png",
+};

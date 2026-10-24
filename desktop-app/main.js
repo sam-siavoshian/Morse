@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 import { createService, loadDaemon } from "./service.js";
 import { registerIpc, PUSH, isOpenLink } from "./ipc.js";
 import { markPng } from "./mark.js";
-import { linuxIconFor } from "./icons.js";
+import { iconSource } from "./icons.js";
 import { setAutostart, writeMenuEntry } from "./linux.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -117,16 +117,16 @@ function trayIcon() {
   return img;
 }
 
-// An app's own icon, as a data: URL for the list (or null: the list shows a letter).
+// An app's own icon, as a data: URL for the list (or null: the list shows a
+// letter). icons.js finds the app's real icon file (the icon theme, the app's
+// folder, inside an AppImage, the .icns in a Mac app); Electron's
+// app.getFileIcon is the fallback on macOS and the way on Windows. On Linux it
+// gives a generic "program" picture, not the app's, so it isn't used there.
 async function iconFor(a) {
-  if (MAC || WIN) {
-    const img = await app.getFileIcon(a.path || a.exe, { size: MAC ? "large" : "normal" });
-    return img.isEmpty() ? null : img.resize({ width: 64, height: 64, quality: "best" }).toDataURL();
-  }
-  const file = linuxIconFor(a);
-  if (!file) return null;
-  const img = nativeImage.createFromPath(file);
-  return img.isEmpty() ? null : img.resize({ width: 64, height: 64, quality: "best" }).toDataURL();
+  const src = iconSource(a);
+  let img = src?.png ? nativeImage.createFromBuffer(src.png) : src?.file ? nativeImage.createFromPath(src.file) : null;
+  if ((!img || img.isEmpty()) && (MAC || WIN)) img = await app.getFileIcon(a.path || a.exe, { size: "large" });
+  return !img || img.isEmpty() ? null : img.resize({ width: 64, height: 64, quality: "best" }).toDataURL();
 }
 
 // ---------------------------------------------------------------- the window
