@@ -224,6 +224,25 @@ function namedBy(el) {
 // The kind word in the person's language: message ids "kind.<word>" ("kind.menu-item").
 // lang "en" for what the model reads (the target's label in context()).
 const kindWord = (k, lang) => t(`kind.${k.replace(/ /g, "-")}`, {}, lang);
+// A saved mod keeps the English label the model read ("Section", "“Release
+// notes” section", "Save button"); the Mods panel shows it in the person's
+// language. Names stay as they are; a label it can't take apart stays English.
+function shownLabel(label) {
+  const s = String(label || "");
+  if (!s || getLanguage() === "en") return s;
+  const kinds = Object.keys(CATALOGS.en).filter(id => /^kind\./.test(id) && id !== "kind.named" && id !== "kind.quoted").map(id => [CATALOGS.en[id], id.slice(5)]);
+  const word = w => kinds.find(([en]) => en.toLowerCase() === w.toLowerCase())?.[1];
+  const cap = x => x.charAt(0).toUpperCase() + x.slice(1);
+  const alone = word(s);
+  if (alone) return cap(t(`kind.${alone}`));
+  for (const [en, k] of [...kinds].sort((x, y) => y[0].length - x[0].length)) {
+    if (!s.toLowerCase().endsWith(` ${en.toLowerCase()}`)) continue;
+    const name = s.slice(0, -en.length - 1).trim();
+    const q = /^“(.*)”$/.exec(name);
+    return t(q ? "kind.quoted" : "kind.named", { name: q ? q[1] : name, kind: t(`kind.${k}`) });
+  }
+  return s;
+}
 function describe(el, lang) {
   const role = roleWord(el);
   const { name, from } = nameOf(el);

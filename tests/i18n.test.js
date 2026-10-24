@@ -169,3 +169,22 @@ test("the CLI speaks the terminal's language (LANG=es)", async () => {
   const plain = await run(["mods"], { ...env, LANG: "C.UTF-8" });
   assert.match(plain.out, /No mods yet/);
 });
+
+test("the Mods panel shows a saved part-of-the-page label in the person's language (runtime/src/20-context.js)", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync(new URL("../runtime/src/20-context.js", import.meta.url), "utf8");
+  const fn = /function shownLabel\(label\) \{[\s\S]*?\n\}\n/.exec(src)[0];
+  const shownLabel = new Function("t", "getLanguage", "CATALOGS", `${fn}; return shownLabel;`)(t, getLanguage, CATALOGS);
+  const was = getLanguage();
+  try {
+    setLanguage("es");
+    assert.equal(shownLabel("Section"), "Sección");
+    assert.equal(shownLabel("Search field"), "Campo de búsqueda", "a two-word kind");
+    assert.equal(shownLabel("“Release notes” section"), "sección “Release notes”");
+    assert.equal(shownLabel("Save button"), "botón Save");
+    assert.equal(shownLabel("Find search field"), "campo de búsqueda Find", "the longest kind wins");
+    assert.equal(shownLabel("“Notes”"), "“Notes”", "a name alone stays as it is");
+    setLanguage("en");
+    assert.equal(shownLabel("Save button"), "Save button");
+  } finally { setLanguage(was); }
+});
