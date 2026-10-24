@@ -20,7 +20,7 @@ q { quotes: "“" "”"; font-family: inherit; color: var(--m-text); }
 /* key caps */
 .caps { display: inline-flex; gap: 3px; vertical-align: 1px; }
 .caps kbd { min-width: 20px; height: 20px; display: inline-grid; place-items: center; padding: 0 5px; font: 500 11px/1 var(--m-mono); color: var(--m-text-2);
-  background: var(--m-raised); border: 1px solid var(--m-line-strong); border-bottom-width: 2px; border-radius: 5px; }
+  background: var(--m-raised); border: 1px solid var(--m-line-strong); border-radius: 4px; } /* the bar's key cap: 1px line, 4px corners */
 
 /* layout */
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 28px; align-items: start; margin-top: 40px; }
@@ -32,6 +32,7 @@ h2 { margin: 0; font: 600 var(--m-text-lg)/22px var(--m-font); }
 .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 0 14px; padding: 0; list-style: none; }
 .three li { display: flex; gap: 10px; padding: 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-surface); }
 .three .n, .tick { flex: none; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 6px; font: 500 11px/1 var(--m-mono); }
+.three .n { border-radius: 10px; } /* a numbered step: round, like the steps in the bar (the coach, Show me once) */
 .three .n { background: var(--m-primary); color: var(--m-primary-text); }
 .three b { display: block; font-weight: 600; font-size: var(--m-text-md); line-height: 20px; }
 .three div > span { display: block; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 18px; margin-top: 2px; }
@@ -52,7 +53,7 @@ h2 { margin: 0; font: 600 var(--m-text-lg)/22px var(--m-font); }
 .check li div > span:not(.row) { display: block; margin-top: 2px; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 18px; }
 .check small { display: block; margin-top: 8px; color: var(--m-text-3); font: 11px/16px var(--m-mono); letter-spacing: 0; overflow-wrap: anywhere; }
 .check small:empty { display: none; }
-.tick { margin-top: 0; border: 1.5px solid var(--m-line-strong); transition: background var(--m-fast), border-color var(--m-fast); }
+.tick { margin-top: 0; border: 1px solid var(--m-line-strong); transition: background var(--m-fast), border-color var(--m-fast); }
 .check li.done .tick { background: var(--m-primary); border-color: var(--m-primary); color: var(--m-primary-text); }
 .check li.done .tick::after { content: ""; width: 10px; height: 6px; margin-top: -2px; border: 2px solid currentColor; border-top: 0; border-right: 0; transform: rotate(-45deg); }
 .check li.done b { color: var(--m-text-2); }
@@ -91,7 +92,7 @@ button.link:hover { text-decoration-color: var(--m-text); }
 /* connect a model: one command, then a live line that follows it */
 .cmd { display: flex !important; align-items: center; gap: 6px; margin-top: 10px; padding: 4px 4px 4px 10px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-bg); }
 .cmd code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 12px; line-height: 18px; color: var(--m-text); user-select: all; }
-.check .cmd button { margin-top: 0; height: 26px; }
+.check .cmd button { margin-top: 0; height: 24px; }
 .live { display: flex !important; gap: 8px; align-items: flex-start; margin-top: 10px; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 18px; }
 .live:empty { display: none !important; }
 .live .dot { flex: none; width: 6px; height: 6px; margin-top: 6px; border-radius: 1.5px; background: var(--m-signal-2); }

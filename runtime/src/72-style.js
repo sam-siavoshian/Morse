@@ -233,7 +233,8 @@ const YourStyle = (() => {
       if (S.draft) S.draft.style = { parent: STYLE_ID, title: `Your style for ${whereName()}`, prompt: "Fit Your style to this site" };
       await run;
       const meta = S.phase === "result" && hint.querySelector(".dim");
-      if (meta) meta.textContent = ["Your style", meta.textContent].filter(Boolean).join(" · ");
+      // (a title that already says "Your style for …" needs no second "Your style")
+      if (meta && !/^Your style\b/.test(S.draft?.title || "")) meta.textContent = ["Your style", meta.textContent].filter(Boolean).join(" · ");
       if (S.phase === "error") {
         const fine = S.draft?.title === FIT_TITLE;
         S.phase = "idle";
@@ -343,7 +344,7 @@ const YourStyle = (() => {
       ${SWITCHES.map(([k, label, help]) => `<div class="srow"><div class="lbl"><span>${esc(label)}</span><small>${esc(help)}</small></div><div class="ctl">${sw(k, b[k], label)}</div></div>`).join("")}
       <div class="srow"><div class="lbl"><span>Fit it to each site with the model</span><small>${s.extra ? `Also does “${esc(s.extra.slice(0, 80))}”. ` : ""}Once per site, and you review each change</small></div><div class="ctl">${sw("adapt", s.adapt, "Fit it to each site with the model")}</div></div>
       <div class="srow ys-except"><div class="lbl"><span>Not on these sites and apps</span>
-          <div class="ys-chips">${s.except.length ? s.except.map(x => `<span class="ys-chip">${esc(exceptionName(x))}<button type="button" class="ibtn xs" data-ys="rm:${esc(x)}" aria-label="Use your style on ${esc(exceptionName(x))} again" title="Use it here again">×</button></span>`).join("") : `<small>None. It runs everywhere.</small>`}</div></div>
+          <div class="ys-chips">${s.except.length ? s.except.map(x => `<span class="chip ys-chip"><span>${esc(exceptionName(x))}</span><button type="button" class="x" data-ys="rm:${esc(x)}" aria-label="Use your style on ${esc(exceptionName(x))} again" title="Use it here again">×</button></span>`).join("") : `<small>None. It runs everywhere.</small>`}</div></div>
         <div class="ctl"><input class="field ys-field" data-ys="add-except" placeholder="Add a site or app" spellcheck="false" autocomplete="off" aria-label="Add a site or app where your style stays off">
           ${hereKey && !info.here.excepted ? `<button type="button" class="tbtn" data-ys="not-here">Not on this site</button>` : ""}</div></div>
       <div class="srow"><div class="lbl"><span>Start over</span><small>Your mods stay as they are</small></div><div class="ctl"><button type="button" class="tbtn" data-ys="delete">Delete your style</button></div></div>

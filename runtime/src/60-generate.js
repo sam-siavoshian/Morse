@@ -137,7 +137,7 @@ async function submit(request, opts = {}) {
       if (res.cancelled) return onCancelled(id); // Stop: 50-bar.js
       S.phase = "error";
       bar.classList.add("err");
-      hint.innerHTML = `That didn't work: <i>${esc(plainError(res.error).slice(0, 120))}</i>`;
+      hint.innerHTML = guardRefusalHint(res.error) || `That didn't work: <i>${esc(plainError(res.error).slice(0, 120))}</i>`; // guard hook: 64-guard.js
       hint.title = res.error || "";
       actions.innerHTML = `<button data-a="again">Try again</button>`;
       return;

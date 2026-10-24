@@ -137,6 +137,13 @@ ${B("Mods")}
   morse code <id>           what a mod does, in plain words, and its code
   morse export --all        back up every mod to one file  [--out <file>]
 
+${B("Packs")} (several mods shared and installed together)
+  morse pack make <ids…> --name <name>   put mods in one pack file and link  [--note <text>] [--out <file>]
+  morse pack install <file|link|address> say what each mod does and ask first  [--yes] [--replace]
+      --subscribe           check the address for updates, at most once a day
+  morse pack list           your packs, and the ones you get updates from  [--check]
+  morse pack unsubscribe <name>  stop getting updates (the mods stay)
+
 ${B("Pause")}
   morse pause [site|app]    stop every mod everywhere, or on one site or app (they stay saved)
   morse resume [site|app]   start them again  [--all also resumes every single site]
@@ -200,6 +207,7 @@ async function main() {
     case "pause": await pauseCli(f); break;
     case "resume": await resumeCli(f); break;
     case "code": await codeCli(f); break;
+    case "pack": await (await import("./packs.js")).packCli(f); break; // packs hook: morse pack make | install | list | unsubscribe
     case "model":
     case "config": {
       if (f["api-key"] !== undefined) throw new Error("--api-key is gone. Use --anthropic-key or --openai-key instead.");
