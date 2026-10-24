@@ -710,6 +710,8 @@ async function godStates(theme, width) {
     document.querySelector("main").prepend(s);
   });
   await sleep(200);
+  // let go of the header first: its toolbar sits over the logo
+  await ui(p, ".chip .x").click(); await sleep(150);
   await select(p, "#logo rect", 0.9, 0.2);
   await editFocus(p);
   await p.keyboard.press("c"); await sleep(200);
@@ -1570,17 +1572,17 @@ const t0 = Date.now();
 for (const theme of ["dark", "light"]) {
   console.log(`— ${theme}`);
   for (const width of [1100, 390]) {
-    if (want("bar")) await barStates(theme, width);
-    if (want("toast")) await toastStates(theme, width);
-    if (want("panel")) await panelStates(theme, width);
-    if (want("modal")) await modalStates(theme, width);
+    if (want("bar")) await guard("bar", () => barStates(theme, width));
+    if (want("toast")) await guard("toast", () => toastStates(theme, width));
+    if (want("panel")) await guard("panel", () => panelStates(theme, width));
+    if (want("modal")) await guard("modal", () => modalStates(theme, width));
   }
-  if (want("effect")) await effectStates(theme);
+  if (want("effect")) await guard("effect", () => effectStates(theme));
   for (const width of [1100, 390]) {
-    if (want("god")) await godStates(theme, width);
-    if (want("voice")) await voiceStates(theme, width);
-    if (want("sheets")) await sheetStates(theme, width);
-    if (want("flow")) await flowStates(theme, width);
+    if (want("god")) await guard("god", () => godStates(theme, width));
+    if (want("voice")) await guard("voice", () => voiceStates(theme, width));
+    if (want("sheets")) await guard("sheets", () => sheetStates(theme, width));
+    if (want("flow")) await guard("flow", () => flowStates(theme, width));
     if (want("gallery")) await guard("gallery", () => galleryStates(theme, width));
     if (want("a11y")) await guard("a11y", () => a11yStates(theme, width));
     if (want("control")) await guard("control", () => controlStates(theme, width));
@@ -1588,7 +1590,7 @@ for (const theme of ["dark", "light"]) {
     if (want("leftovers")) await guard("leftovers", () => leftoverStates(theme, width));
   }
   if (want("popup")) await guard("popup", () => popupStates(theme));
-  if (want("motion")) await reducedMotion(theme);
+  if (want("motion")) await guard("motion", () => reducedMotion(theme));
 }
 if (want("hostile")) { console.log("— hostile hosts"); await hostileStates(); }
 if (want("a11y-site")) { console.log("— Riverside Library (page tools)"); for (const w of [1100, 390]) await a11ySiteStates(w); }

@@ -4,7 +4,11 @@ Every screenshot in `docs/ui/` is reviewed against this list. `npm run ui`
 rebuilds the runtime, shoots every state (dark + light host, 1100px + 390px,
 four hostile host pages) of the bar, picker, effect, panel, modals, toast,
 God mode (edit toolbar, popovers, frame, page tools, capture, clipboard),
-voice, settings, hotkey recorder, cheat sheet, suggestions, history and Stop, runs the automated checks marked **[auto]** on each
+voice, settings, hotkey recorder, cheat sheet, suggestions, history and Stop,
+and (round 3) Mods for this site, Easier to use (with each page tool on the
+demo/sites/a11y library), user control (install review, off switch, pause,
+safe start, Show code, backup, the popup's pause switches), refine, version
+history and a broken mod with Fix it, runs the automated checks marked **[auto]** on each
 shot, and writes `docs/ui/index.html`. The rest are checked by eye; verdicts
 and notes live in `docs/ui/review.json`.
 
@@ -47,11 +51,16 @@ known issue is written down with its reason, ❌ when it fails review.
 - One tooltip at a time: hovering a sibling hides the focused one's; an open menu hides its button's. Tooltips show after 300ms, name + key cap.
 - Invalid input (hex color) turns the field's border and text `--m-danger`; a rejected hotkey shakes and turns red; a warning is `--m-warn` text under the row.
 - The radar mark is static (the logo) everywhere except while a model is working (bar mark + phase hint).
+- [auto] Popovers and notes never cover what they edit: the toolbar's far side first, then the element's other side, then beside it (only a selection that fills the screen is covered).
+- [auto] Tab and Shift+Tab walk the edit toolbar's tools (arrows nudge the selection).
+- [auto] While pointing, the bar steps aside only when the pointer rests on it away from its controls (350ms); a pointer heading for a suggestion, the page tools or any button never makes it jump.
+- Toasts never cover the open bar: with the bar at the bottom they show at the top.
 - Picker: hover = solid outline + soft ring + label; selected = dashed outline. The label stays on screen at every edge (inside the box at the top edge, shifted in at the sides).
 
 ## 6. Motion
 
-- [auto] With `prefers-reduced-motion: reduce` the working indicator is static (two frames 450ms apart are pixel-identical; Effects default to Subtle there, so that is the still outline on the target) and the working mark does not pulse.
+- [auto] With `prefers-reduced-motion: reduce` the working indicator is static (two frames 450ms apart are pixel-identical; Effects default to Subtle there, which draws no canvas: the still `.sel.busy` outline on the target) and the working mark does not pulse.
+- Nothing else loops: "Trying a mod" and similar states are a still dot.
 - Reduced motion: no slide/rise/fade, no success ping, the field fades out instead of being swept away.
 - Default motion: 120ms (hover), 220ms (enter), ease `--m-ease`; nothing loops except "a model is working".
 
@@ -62,6 +71,8 @@ known issue is written down with its reason, ❌ when it fails review.
 - The picker label and the edit frame's size/offset readout are the same inverse mono label.
 - Both menus (⋯ and Page tools) have 32px rows, the same hover and focus, and right-aligned detail (key caps, state, check).
 - New bar rows (suggestions, clipboard) share the 16px left inset of the input and status rows.
+- New features use the shared parts by class, never copies: `.btn` / `.btn.primary` (toasts with actions, the trial strip, Describe, Fix it), `.tbtn` (Check again, Show/Hide, Stop showing these; works inside the panel too), `.ibtn` (Read aloud, the toolbar's Read aloud and Describe), `.ibtn.close` (every × outside the panel and modal headers: the same 16px mask glyph), `.menu` (the Easier to use group is a second `.menu`), `.eyebrow` (section labels).
+- Notes in a row (install review) read as one box with one "Note" label; the warn edge is a 2px inset shadow inside the 1px border.
 - A sheet open in the bar is solid (`--m-surface`), pauses the picker's hover box and hides the edit toolbar, so nothing draws through or over it.
 
 ## 7. Isolation from the host page
