@@ -72,8 +72,12 @@ export function modMatches(mod, { url, app }) {
   return hosts.some(p => p === "*" || p === h || p === legacyFile || (!legacyFile && p.startsWith("*.") && h.endsWith(p.slice(1)))
     // Desktop apps often serve their UI from a random localhost port: within
     // the app, a mod follows its local UI whatever port it loads from.
-    || (!!m.app && LOOPBACK.test(p) && LOOPBACK.test(h)));
+    || (!!m.app && LOOPBACK.test(p) && LOOPBACK.test(h))
+    // An AppImage runs from a new folder every launch (/tmp/.mount_JoplinAbC123/):
+    // within the app, a file:// UI is matched by its path inside the app.
+    || (!!m.app && !!inApp(p) && inApp(p) === inApp(h)));
 }
+const inApp = h => h.startsWith("file://") ? h.match(/\/resources\/(app(?:\.asar)?\/.+)$/i)?.[1] || null : null;
 
 // A save from a page may change a mod, not widen where it runs: its match
 // stays what it was, or is exactly the caller's own site (or app). Wider

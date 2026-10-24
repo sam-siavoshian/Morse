@@ -102,8 +102,21 @@ export function explainError(message) {
 // install page: explainError's sentence when there is one, Morse's own
 // message when it already reads well, and "Something went wrong" for a raw
 // technical message nobody could act on. Never an empty line.
+//
+// An error Morse wrote for a person (plain: true, like `morse launch` saying
+// why an app quit) shows as it is, however long. Whatever plainError hides
+// still reaches developers: onHiddenError(fn) is called with the raw message
+// (the runtime logs it to the console; the terminal prints it dimmed).
+let hiddenTo = null;
+export function onHiddenError(fn) { hiddenTo = typeof fn === "function" ? fn : null; }
 export function plainError(err) {
   const raw = String((err && err.message) || err || "").trim();
+  if (raw && err && typeof err === "object" && err.plain === true) return raw;
+  const out = plainWords(raw);
+  if (out !== raw && raw && hiddenTo && !/^Stopped\./.test(out)) try { hiddenTo(raw); } catch {}
+  return out;
+}
+function plainWords(raw) {
   if (!raw) return "Something went wrong. Try again.";
   if (/^(stopped|aborted|AbortError.*|The (user|operation) aborted.*|signal is aborted.*)$/i.test(raw)) return "Stopped. Nothing was changed.";
   const known = explainError(raw)?.text;

@@ -22,7 +22,19 @@ export const SO_MAX_STEPS = 40;
 const MAX_VALUE = 200;
 
 // ---- fields whose values are never kept: passwords, card details, codes
-const SECRET_WORDS = /pass(word|wd|code|phrase)?\b|passwd|pwd|secret|\bpin\b|cvv|cvc|csc|card.?(num|no)|cc.?(num|no)|security.?code|\bssn\b|\botp\b|one.?time/i;
+const SECRET_WORDS = /pass(word|wd|code|phrase)?\b|passwd|pwd|secret|\bpin\b|cvv|cvc|csc|card.?(num|no)|cc.?(num|no)|security.?code|\bssn\b|\botp\b|one.?time|\btoken\b|api.?key|\biban\b|routing.?(num|no)|account.?(num|no)|social.?security|tax.?id|verification.?code|auth(entication)?.?code|recovery.?(code|key)|\b[2m]fa\b/i;
+
+// ---- what never goes to the model from the page's markup in a step: values
+// the person never sees (an email or a token in an attribute, a data-*
+// attribute named like a secret). What they see in the strip, they chose.
+const EMAIL = /[\w.+-]+@[\w-]+(\.[\w-]+)+/;
+const TOKENISH = v => /^eyJ[\w-]{8,}\.[\w-]{8,}/.test(v) || /^[a-f0-9]{32,}$/i.test(v)
+  || (/^[A-Za-z0-9+/=_-]{24,}$/.test(v) && /\d/.test(v) && /[a-z]/.test(v) && /[A-Z]/.test(v));
+const SECRET_ATTR = /token|secret|csrf|xsrf|nonce|session|auth|passw|api.?key|signature|\botp\b|\bemail\b/i;
+export function privateAttr(name, value) {
+  const v = String(value ?? "");
+  return EMAIL.test(v) || TOKENISH(v) || SECRET_ATTR.test(String(name).replace(/^(data|aria)-/, ""));
+}
 export function isSecretField(el) {
   if (!el || !el.getAttribute) return false;
   if ((el.getAttribute("type") || "").toLowerCase() === "password") return true;
@@ -118,10 +130,10 @@ function anchorOf(el) {
   const doc = el.ownerDocument;
   for (let n = el.parentElement, i = 0; n && n !== doc.body && i < 8; n = n.parentElement, i++) {
     const tries = [];
-    if (n.id && !looksHashed(n.id)) tries.push(`#${idEsc(n.id)}`);
+    if (n.id && !looksHashed(n.id) && !privateAttr("id", n.id)) tries.push(`#${idEsc(n.id)}`);
     for (const a of ["data-testid", "data-test", "aria-label"]) {
       const v = n.getAttribute(a);
-      if (v && v.length <= 60 && !looksHashed(v)) tries.push(`${n.localName}[${a}="${cssEsc(v)}"]`);
+      if (v && v.length <= 60 && !looksHashed(v) && !privateAttr(a, v)) tries.push(`${n.localName}[${a}="${cssEsc(v)}"]`);
     }
     if (LANDMARK.test(n.localName)) tries.push(n.localName);
     const role = n.getAttribute("role");
@@ -166,12 +178,12 @@ export function pickSelector(el, scope = null) {
   const only = s => { const l = q(s); return l.length === 1 && l[0] === el; };
   const tag = el.localName;
   const cands = [];
-  if (el.id && !looksHashed(el.id) && !scope) cands.push(`#${idEsc(el.id)}`);
+  if (el.id && !looksHashed(el.id) && !privateAttr("id", el.id) && !scope) cands.push(`#${idEsc(el.id)}`);
   for (const a of ATTRS) {
     const v = el.getAttribute(a);
-    if (v && v.length <= 60 && !looksHashed(v)) cands.push(`${tag}[${a}="${cssEsc(v)}"]`);
+    if (v && v.length <= 60 && !looksHashed(v) && !privateAttr(a, v)) cands.push(`${tag}[${a}="${cssEsc(v)}"]`);
   }
-  if (el.getAttribute("role") && el.getAttribute("aria-label")) cands.push(`[role="${cssEsc(el.getAttribute("role"))}"][aria-label="${cssEsc(el.getAttribute("aria-label"))}"]`);
+  if (el.getAttribute("role") && el.getAttribute("aria-label") && !privateAttr("aria-label", el.getAttribute("aria-label"))) cands.push(`[role="${cssEsc(el.getAttribute("role"))}"][aria-label="${cssEsc(el.getAttribute("aria-label"))}"]`);
   for (const s of cands) if (only(s)) return { selector: s, text: null };
   const kind = kindSelector(el);
   if (only(kind)) return { selector: kind, text: null };
@@ -213,7 +225,7 @@ function stateAttrs(el) {
   for (const a of el.attributes || []) {
     if (Object.keys(out).length >= 6) break;
     if (!/^(data-(?!morse)|aria-(selected|checked|expanded|pressed|current|disabled|hidden))/.test(a.name)) continue;
-    if (a.value.length > 30) continue;
+    if (a.value.length > 30 || privateAttr(a.name, a.value)) continue;
     out[a.name] = a.value;
   }
   return out;
@@ -292,14 +304,30 @@ export function stepWords(s) {
   }
 }
 
+// ---- steps that can't be taken back
+// The rule, in plain words: a button or shortcut made from your steps asks
+// you first ("Delete 12 emails?") when one of the steps deletes or removes
+// something, buys or pays for something, or sends, posts or submits
+// something to other people. Everything else just runs.
+const FOR_GOOD = /\b(delete|remove|discard|erase|trash|destroy|empty|wipe|clear all|buy|purchase|order|check ?out|pay|donate|transfer|send|post|publish|submit|reply|forward|unsubscribe|deactivate|close account|cancel (my )?(order|subscription|plan|membership|account|booking))\b/i;
+export function cannotUndo(s) {
+  if (!s || s.hidden) return false;
+  if (s.do === "key") return /^(Delete|(Ctrl|⌘)\+Enter)$/.test(String(s.key || ""));
+  if (s.do !== "click") return false;
+  return FOR_GOOD.test([s.label, s.text, s.item?.insideText].filter(Boolean).join(" "));
+}
+
 // What leaves the page on Send: the steps without the bookkeeping, and no
-// value of a hidden field (there never is one; this makes sure).
+// value of a hidden field (there never is one; this makes sure). Steps that
+// can't be taken back are marked confirm.
 export function stepsForModel(steps) {
   return steps.slice(0, SO_MAX_STEPS).map((s, i) => {
     const o = { n: i + 1, do: s.do, selector: s.selector };
     for (const k of ["text", "label", "role", "key", "item"]) if (s[k] != null && s[k] !== "") o[k] = s[k];
+    if (o.item?.attrs) o.item = { ...o.item, attrs: Object.fromEntries(Object.entries(o.item.attrs).filter(([k, v]) => !privateAttr(k, v))) };
     if (s.hidden) o.hidden = true;
     else if (s.value != null) o.value = String(s.value).slice(0, MAX_VALUE);
+    if (cannotUndo(s)) o.confirm = true;
     return o;
   });
 }
@@ -314,6 +342,7 @@ export function recordingPrompt(rec) {
       const attrs = Object.entries(s.item.attrs || {}).map(([k, v]) => `${k}="${v}"`).join(" ");
       line += ` (item ${s.item.index + 1} of ${s.item.count} matching \`${s.item.selector}\`${attrs ? `; it had ${attrs}` : ""})`;
     }
+    if (s.confirm) line += " [confirm: can't be undone]";
     return line;
   });
   return [
@@ -328,6 +357,7 @@ export function recordingPrompt(rec) {
 - "Every"/"all" requests: first collect the items (the item selector, narrowed by the attributes that fit the request, e.g. [data-unread="true"]), then do the steps for each item in turn, finding things inside the item with { within: item }. Say how many in the button label or a toast.
 - A shortcut: morse.on(document, "keydown", e => { ... }) matching e.key and e.ctrlKey/e.shiftKey/e.altKey/e.metaKey, with e.preventDefault(). Ignore plain keys typed into fields.
 - A step marked hidden is private and was not recorded. Never type it: focus that field and stop with morse.toast("Type your password, then …").
+- A step marked confirm can't be taken back (it deletes, buys or pays, or sends something). Before the first such step, ask once and stop on No: if (!(await morse.confirm("Delete 12 emails?"))) return; Say in plain words what will happen, with the count for "every" requests.
 - Wrap the run in try/catch; on a problem show morse.toast with what it couldn't find. When done, morse.toast what it did.
 - A button must be put on the page: morse.watch("<where it goes>", spot => spot.append(button)). Put it next to the controls it belongs with (for list items, the list's toolbar), in the app's own style, with a short verb label.`,
   ].join("\n\n");

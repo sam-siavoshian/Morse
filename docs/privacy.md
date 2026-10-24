@@ -112,6 +112,10 @@ request. Before you install a mod from someone else, Morse shows what it does
 in plain words and lets you read its code. Morse does not check what a mod sends over the
 network; read it, or don't install it.
 
+In Chrome, a mod's code runs only when you turn on “Allow User Scripts” for
+Morse. Until you do, Morse only changes how pages look, and says which of your
+mods are waiting for it.
+
 ## Things Morse never does
 
 - No analytics, tracking, crash reports or ads.

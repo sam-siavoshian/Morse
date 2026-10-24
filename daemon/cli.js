@@ -5,7 +5,8 @@ import { execFile } from "node:child_process";
 import { resolveApp } from "./apps.js";
 import { inspectFuses, formatFuses } from "./fuses.js";
 import { appsCommand, launchCommand, attachCommand, statusCommand, stopCommand } from "./desktop.js";
-import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH } from "./store.js";
+import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH, HOME } from "./store.js";
+import { commandFor, platformChecks, formatChecks } from "./platform.js";
 import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask, migrateLegacy } from "./models.js";
 import { detectHarnesses, validModel } from "./harness.js";
 import { createBridge, startPairing, VERSION } from "./bridge.js";
@@ -17,13 +18,13 @@ import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
 import { plainError } from "../core/onboarding.js";
 import { pauseCli, resumeCli, exportAllCli, importCli, codeCli } from "./control.js"; // user control
 import { configuredHotkeys } from "./store.js";
+import { paint } from "./colors.js";
 
 // The hotkeys as set in ~/.morse/settings.json (platform defaults otherwise).
 const KEYS = await configuredHotkeys().catch(() => ({}));
 const openKey = KEYS.open || "the Open Morse shortcut";
 
-const W = s => `\x1b[97m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`;
-const WARN = s => `\x1b[33m${s}\x1b[0m`, ERR = s => `\x1b[31m${s}\x1b[0m`;
+const { w: W, d: D, b: B, y: WARN, r: ERR } = paint; // plain text when piped, NO_COLOR (colors.js)
 const LOGO = `${W("▪▪▫")}\n${W("▫▪▪")} ${B("morse")} ${D("· change any app in your own words")}\n${W("▪▫▪")}`;
 
 function flags(argv) {
@@ -88,8 +89,10 @@ async function showModel() {
 }
 
 function version(bin) {
-  return new Promise(r => execFile(bin, ["--version"], { timeout: 8000, windowsHide: true, shell: process.platform === "win32" && /\.(cmd|bat)$/i.test(bin) },
-    (e, out) => r(e ? "" : String(out).trim().split("\n")[0])));
+  // claude.cmd in "C:\Program Files\nodejs" has to be quoted for cmd.exe (platform.js).
+  const c = commandFor(bin, ["--version"]);
+  return new Promise(r => execFile(c.file, c.args, { timeout: 8000, windowsHide: true, shell: c.shell },
+    (e, out) => r(e ? "" : String(out).trim().split(/\r?\n/)[0])));
 }
 
 async function helperHealth() {
@@ -250,6 +253,8 @@ async function main() {
       console.log(LOGO + "\n");
       row("node", process.version);
       row("config", CONFIG_PATH);
+      // This computer: system, the Morse folder's permissions, shortcut, colors, platform specifics.
+      console.log(formatChecks(await platformChecks({ home: HOME, shortcut: KEYS.open }), { paint }));
       for (const name of ["claude", "codex"]) {
         const p = h[name].path;
         row(name, p ? `${p} ${D(await version(p))}` : D("not found"));
@@ -284,6 +289,7 @@ async function main() {
 
 main().catch(e => {
   const plain = plainError(e);
-  console.error(`${ERR("✗")} ${plain}${plain !== e.message && e.message ? D(`  (${e.message})`) : ""}`);
+  const details = e?.details || (plain !== e?.message && e?.message) || "";
+  console.error(`${ERR("✗")} ${plain}${details ? D(`  (${details})`) : ""}`);
   process.exit(1);
 });

@@ -29,10 +29,12 @@ const HEAL_DETECT = "// ---- what the person reads";
 // The boot needs only what spots harm in core/guard.js (the words for the
 // model are added by the UI, 97-boot.js guardStop): from the page selectors
 // to endlessLoop, and cssKey.
+// Settings checks a new shortcut (checkCombo); the boot only reads them.
+const HOTKEYS_BOOT = { parts: [[null, "// ---- vetting"], ["export function resolveHotkeys", null]] };
 const GUARD_DETECT = { parts: [["// Selectors that mean", "// Requests where reloading"], ["// A short fingerprint of CSS", null]], also: ["endlessLoop", "codeOnly"] };
 
 export function bundleBoot() {
-  return lean(guarded("boot",`${inlineModule("../core/hotkeys.js")}\n${inlineModule("../core/prefs.js")}\n${inlineModule("../core/control.js")}\n${inlineModule("../core/heal.js", HEAL_DETECT)}\n${inlineModule("../core/guard.js", null, GUARD_DETECT)}\n// ---- runtime/boot.js\n${read("./boot.js")}`));
+  return lean(guarded("boot",`${inlineModule("../core/hotkeys.js", null, HOTKEYS_BOOT)}\n${inlineModule("../core/prefs.js")}\n${inlineModule("../core/control.js")}\n${inlineModule("../core/heal.js", HEAL_DETECT)}\n${inlineModule("../core/guard.js", null, GUARD_DETECT)}\n// ---- runtime/boot.js\n${read("./boot.js")}`));
 }
 
 export function bundleUI() {

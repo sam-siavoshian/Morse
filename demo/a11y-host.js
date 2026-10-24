@@ -10,6 +10,7 @@
 import { wrapModCode } from "../core/kit.js";
 import { createMod, modMatches } from "../core/mod.js";
 import { runMorse } from "../core/engine.js";
+import { pageCollapse } from "../core/guard.js";
 
 const fake = window.__fake = { requests: [] };
 const KEY = "morse:a11y-host:";
@@ -56,6 +57,7 @@ globalThis.__morseHost = {
             settings: { provider: "demo" }, request: m.request, context: m.context, signal: ac.signal,
             emit: ev => { if (!ac.signal.aborted) emit({ ...ev, genId: m.genId }); },
             exec: async js => run(m.genId, js),
+            collapse: async css => pageCollapse(css, m.genId), // guard hook
           });
           return reply({ ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts });
         } catch (e) {

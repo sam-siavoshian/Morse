@@ -121,7 +121,22 @@ test("complete streams NDJSON tokens from Claude Code, then done", async () => {
   assert.deepEqual(events.at(-1), { type: "done", text: "TITLE: Big\n```css\nbutton{font-size:20px}\n```" });
   const { argv, input } = JSON.parse(await fs.readFile(path.join(tmp, "claude.json"), "utf8"));
   assert.equal(argv[argv.indexOf("--model") + 1], "haiku");
-  assert.equal(input, "make buttons bigger");
+  assert.equal(JSON.parse(input).message.content, "make buttons bigger");
+  assert.deepEqual(events.filter(e => e.type === "stage"), [{ type: "stage", stage: "ready" }], "the model started (speed: real progress in the bar)");
+});
+
+test("warm starts Claude Code ahead of time, behind the same auth", async () => {
+  process.env.FAKE_MODE = "ok";
+  const token = await pair();
+  const starts = async () => (await fs.readFile(path.join(tmp, "claude-starts.log"), "utf8").catch(() => "")).split("\n").filter(Boolean).length;
+  assert.equal((await req("POST", "/v1/warm", { body: {} })).status, 401);
+  // A process from an earlier request may already be waiting; a changed
+  // environment means it can't be used, so this warm must start a new one.
+  process.env.FAKE_WARM_TAG = String(Date.now());
+  const before = await starts();
+  const r = await req("POST", "/v1/warm", { body: {}, headers: { Origin: EXT, Authorization: `Bearer ${token}` } });
+  assert.equal(r.status, 200);
+  await waitFor(async () => (await starts()) > before, { what: "a claude process to start" });
 });
 
 test("model errors arrive as an error event", async () => {
@@ -141,7 +156,13 @@ test("closing the connection kills the Claude Code process", async () => {
     body: { messages: MESSAGES }, headers: { Authorization: `Bearer ${token}` },
     onResponse(res, r, resolve) {
       res.setEncoding("utf8");
-      res.once("data", d => { assert.equal(JSON.parse(d.split("\n")[0]).type, "token"); r.destroy(); resolve(); });
+      let seen = "";
+      res.on("data", d => {
+        seen += d;
+        if (!seen.split("\n").filter(Boolean).some(l => JSON.parse(l).type === "token")) return; // a "stage" line may come first
+        r.destroy();
+        resolve();
+      });
     },
   });
   const { pid } = JSON.parse(await fs.readFile(path.join(tmp, "claude.json"), "utf8"));

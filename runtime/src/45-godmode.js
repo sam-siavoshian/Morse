@@ -333,15 +333,29 @@ const GodMode = (() => {
     // tooltips open away from the element, unless that runs off screen
     tb.dataset.side = side === "below" || top < 40 ? "below" : "above";
 
-    // note and popover stack on the toolbar's far side from the element when there's room
+    // note and popover stack on the toolbar's far side from the element when
+    // there's room; else on the element's other side, else beside it, so they
+    // never cover what they edit (unless it fills the screen)
     let up = top, down = top + th;
+    const taken = [{ left: r.left - 2, right: r.right + 2, top: r.top - 2, bottom: r.bottom + 2 }, { left, right: left + tw, top, bottom: top + th }];
+    if (barR) taken.push(barR);
     for (const x of [note, pop]) {
       if (x.hidden) continue;
-      const h = x.offsetHeight, w = x.offsetWidth;
-      let py;
-      if (side !== "below" && up - 6 - h >= M) up = py = up - 6 - h;
-      else { py = down + 6; down = py + h; }
-      x.style.transform = `translate(${Math.round(clamp(left, M, vw - w - M))}px, ${Math.round(clamp(py, M, vh - h - M))}px)`;
+      const h = x.offsetHeight, w = x.offsetWidth, px = clamp(left, M, vw - w - M);
+      const free = (cx, cy) => cy >= M && cy + h <= vh - M && cx >= M && cx + w <= vw - M &&
+        !taken.some(t => overlaps({ left: cx, right: cx + w, top: cy, bottom: cy + h }, t));
+      const far = side !== "below" ? up - 6 - h : down + 6;
+      const tries = [[px, far], [px, side !== "below" ? r.bottom + 6 : r.top - 6 - h],
+        [r.right + 8, clamp(r.top, M, vh - h - M)], [r.left - 8 - w, clamp(r.top, M, vh - h - M)]];
+      let [cx, cy] = tries.find(([a, b]) => free(a, b)) || [];
+      if (cx === undefined) { // nowhere clear: the old stacking, clamped on screen
+        if (side !== "below" && up - 6 - h >= M) cy = up - 6 - h; else cy = down + 6;
+        cx = px;
+      }
+      if (cx === px && cy + h <= up) up = cy;
+      else if (cx === px && cy >= down) down = cy + h;
+      taken.push({ left: cx, right: cx + w, top: cy, bottom: cy + h });
+      x.style.transform = `translate(${Math.round(clamp(cx, M, vw - w - M))}px, ${Math.round(clamp(cy, M, vh - h - M))}px)`;
     }
   }
 
@@ -738,6 +752,16 @@ const GodMode = (() => {
     if (!G.el || S.phase !== "idle" || wrap.hidden) return;
     const onTb = active && (active === tb || tb.contains(active) || (pop.contains(active) && !active.matches("input, textarea")));
     if (!onTb) return;
+    // Tab and Shift+Tab walk the tools (arrows nudge the selection)
+    if (e.key === "Tab" && !e.altKey && !e.ctrlKey && !e.metaKey && (active === tb || tb.contains(active))) {
+      const list = [...tb.querySelectorAll("button")].filter(b => !b.disabled && !b.hidden && b.getClientRects().length);
+      if (!list.length) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const i = list.indexOf(active);
+      list[e.shiftKey ? (i <= 0 ? list.length - 1 : i - 1) : (i < 0 || i === list.length - 1 ? 0 : i + 1)].focus({ preventScroll: true });
+      return;
+    }
     if (e.key.startsWith("Arrow") && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
       e.stopImmediatePropagation();
@@ -784,18 +808,6 @@ const GodMode = (() => {
     e.stopPropagation();
     if (G.kind !== "frame") startText();
   }, true);
-  // The bar dodges the pointer while picking; not once something is selected,
-  // or when heading for its own controls (page tools, clipboard chips).
-  root.addEventListener("mouseenter", e => {
-    if (e.target !== bar || !S.picking) return;
-    const near = [...bar.querySelectorAll(".gm-qbtn, .gm-clips:not([hidden])")].some(c => {
-      const r = c.getBoundingClientRect();
-      return e.clientX >= r.left - 24 && e.clientX <= r.right + 24 && e.clientY >= r.top - 24 && e.clientY <= r.bottom + 24;
-    });
-    const menu = bar.querySelector(".gm-menu");
-    if (G.el || near || (menu && !menu.hidden)) e.stopPropagation();
-  }, true);
-
   // Closing the bar ends the session: flush its save and start fresh next time.
   function exit() {
     if (G.editing) endText(true);

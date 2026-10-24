@@ -56,32 +56,54 @@ async function submit(request, opts = {}) {
   S.draft = prev ? { ...prev, ctx: prev.ctx || ctx } : { id, request, prompt: request, ctx, title: "", css: "", js: "", history: [] };
   let stopped = false;
   const stopSignal = cancelSignal(id).then(r => { stopped = true; return r; });
-  // A refine keeps the first "before" shot, so the share card shows the whole change.
-  if (!prev || S.before?.id !== id) S.before = { id, shot: await capture(), rect: R(tr), focus: R(rect), vw: innerWidth, vh: innerHeight };
   const t0 = performance.now();
-  hint.innerHTML = `${radar(12)} Thinking`;
+  // The status says what is really happening, step by step (speed: no waiting
+  // looks the same as any other): asking, the model reading, thinking,
+  // writing, the change showing up as it's written, trying it.
+  const say = text => { hint.innerHTML = `${radar(12)} ${text}`; };
+  say("Asking the model");
   actions.innerHTML = `<span class="ms">0.0s</span>`;
   const clock = setInterval(() => { const m = actions.querySelector(".ms"); if (m) m.textContent = ((performance.now() - t0) / 1000).toFixed(1) + "s"; }, 100);
   Effect.start(focus);
 
-  let wrote = false;
+  // speed: the "before" picture (for the share card) is taken while the
+  // request goes out, not before it. The first style waits for the picture;
+  // the model takes longer than that to write any. A refine keeps the first
+  // "before" picture, so the share card shows the whole change.
+  let pendingCss = null, shotDone = true;
+  const shot = !prev || S.before?.id !== id
+    ? (shotDone = false, capture().then(s => {
+      S.before = { id, shot: s, rect: R(tr), focus: R(rect), vw: innerWidth, vh: innerHeight };
+      shotDone = true;
+      if (pendingCss != null && !stopped) showCss(pendingCss);
+    }))
+    : Promise.resolve();
+  let wrote = false, showing = false, fixing = false;
+  function showCss(css) {
+    setCss(id, css);
+    if (!css.trim() || showing) return;
+    showing = true;
+    Effect.reveal(); // the change shows through while the rest is written
+    if (!fixing && wrote) say("Writing the change · you can see it now");
+  }
   const off = onEvent(msg => {
     if (msg.genId !== id) return;
     if (msg.type === "token") {
-      if (!wrote) { wrote = true; if (/Thinking/.test(hint.textContent)) hint.innerHTML = `${radar(12)} Writing the change`; }
+      if (!wrote) { wrote = true; if (!fixing) say("Writing the change"); }
       Effect.token(msg.text); tick(msg.text);
     }
-    if (msg.type === "css") setCss(id, msg.css);
+    if (msg.type === "css") { if (shotDone) showCss(msg.css); else pendingCss = msg.css; }
+    if (msg.type === "stage" && !wrote && !fixing) say(msg.stage === "thinking" ? "Thinking" : "The model is reading the page");
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") { hint.innerHTML = `${radar(12)} Fixing a mistake and trying again`; hint.title = String(msg.error || ""); }
-      if (msg.phase === "applying") hint.innerHTML = `${radar(12)} Trying the change`;
-      if (msg.phase === "thinking") hint.innerHTML = `${radar(12)} Writing the change`;
+      if (msg.phase === "fixing") { fixing = true; say("Fixing a mistake and trying again"); hint.title = String(msg.error || ""); }
+      if (msg.phase === "applying") say("Trying the change");
     }
   });
   let res;
   const ask = { genId: id, request, context: ctx, ...(opts.base ? { base: opts.base } : {}) };
   try { res = stopped ? await stopSignal : await Promise.race([call("generate", ask), stopSignal]); } // Stop: 50-bar.js
   catch (e) { res = { ok: false, error: e.message }; }
+  await shot;
   off();
   clearInterval(clock);
   bar.classList.remove("working");
@@ -125,7 +147,7 @@ async function submit(request, opts = {}) {
   selBox.hidden = true;
   S.after = { shot: await capture(), rect: S.target?.isConnected ? R(S.target.getBoundingClientRect()) : null, focus: focus?.isConnected ? R(focus.getBoundingClientRect()) : null };
   if (!prev) call("clip.stop", { modId: id }).then(c => { if (c) S.draft.clip = c; }).catch(() => {});
-  showResult(S.draft);
+  showResult(S.draft, Waiting.note(res, id)); Waiting.offer(res); // waiting hook: code that waits for “Allow User Scripts” (64-waiting.js)
 }
 
 // The result: the title, how it went, and what you can do next. The input
@@ -246,6 +268,7 @@ function fixMod(m, problem) {
   if (!openOnMod(m)) return;
   const d = S.draft;
   S.phase = "result";
+  sugEl.hidden = true; // the fix is underway: no suggestions under it
   submit(m.prompt, { from: d, note: FIX_NOTE, base: { prompt: m.prompt, css: m.css, js: m.js, error: problem } });
 }
 

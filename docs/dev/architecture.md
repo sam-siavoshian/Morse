@@ -20,7 +20,7 @@
 
 - **One runtime, two hosts.** The same runtime runs in websites (extension)
   and desktop apps (CDP); only the transport differs.
-- **Free until you use it.** Every page gets only a ~43 KB boot
+- **Free until you use it.** Every page gets only a ~49 KB boot
   (`runtime/boot.js`): it applies your mods (with the guards and safe start),
   follows SPA navigations, checks for broken mods after idle and listens for
   the hotkey, with no overlay, layout reads or timers. The UI is injected the
@@ -79,16 +79,42 @@ and app, never to what the message claims.
   CDP evaluation is exempt from the page's CSP, so mods work in locked-down
   apps too.
 - [`apps.js`](../../daemon/apps.js) finds apps: `/Applications` and
-  `~/Applications` on macOS (reads each `Info.plist`, checks for Electron
-  Framework or Chromium Embedded Framework), `%LOCALAPPDATA%\Programs`,
-  Program Files, Roaming and Squirrel `app-<version>` folders on Windows, and
-  `PATH`, `/usr/share`, `/usr/lib`, `/opt`, snap and flatpak exports on Linux.
-  Native apps (ChatGPT for Mac) are listed as "can't connect". Names are
-  fuzzy: `code`, `vscode`, `spot`, `discrod` all work.
+  `~/Applications` on macOS (reads each `Info.plist`, XML or binary, without
+  `plutil`; checks for Electron Framework, whose own plist has the Electron
+  version, or Chromium Embedded Framework; reads `package.json` from
+  `Contents/Resources/app.asar`), `%LOCALAPPDATA%\Programs`, Program Files,
+  Roaming, Squirrel `app-<version>` folders (newest wins) and Start menu
+  `.lnk` shortcuts (`parseLnk`: LinkInfo, the item list, the
+  `%VARIABLE%` target block, and `Update.exe --processStart X.exe`) on
+  Windows, and `PATH`, `/usr/share`, `/usr/lib`, `/opt`, snap and flatpak
+  exports on Linux. Native apps (ChatGPT for Mac) are listed as "can't
+  connect". Names are fuzzy: `code`, `vscode`, `spot`, `discrod` all work.
+  All disk access goes through `hostContext({ platform, root, home, env })`
+  and `ctx.pp` (`path.win32` for Windows), so every platform's discovery runs
+  against fixture trees on any machine.
+- `launchCommand()` (apps.js) is the launch plan, `{ file, args, env, handoff }`:
+  always a program and an argument list, never a shell string. macOS runs
+  `Contents/MacOS/<exe>` (not `open -a`, which drops `--args` for a running
+  app and hides the pid); Windows runs the newest `app-<version>\X.exe`, or
+  `Update.exe --processStart X.exe --process-start-args "<args quoted for
+  CommandLineToArgvW>"` when that's all there is. `ELECTRON_RUN_AS_NODE` and
+  `NODE_OPTIONS` are removed from the app's environment. A launcher that
+  hands off (`handoff`) gets a longer grace in `waitForLaunch`, and
+  `desktop.js` then finds the real app by its `--remote-debugging-port`.
 - `desktop.js` runs `launch`, `attach`, `status` and `stop`. An app that is
-  already open is quit with AppleScript on macOS, WM_CLOSE then taskkill on
-  Windows, SIGTERM on Linux, when you pass `--restart`; the choice is kept per
-  app in `~/.morse/apps.json`. `targets.js` decides which targets get Morse:
+  already open is quit with AppleScript on macOS (SIGTERM at once if
+  `osascript` fails, as when Automation is refused), `taskkill /T` then
+  `/T /F` on Windows, SIGTERM on Linux, when you pass `--restart`; the choice
+  is kept per app in `~/.morse/apps.json`. Windows processes come from
+  PowerShell's `Get-CimInstance Win32_Process` with UTF-8 output.
+- [`platform.js`](../../daemon/platform.js) holds `morse doctor`'s platform
+  rows (system, the Morse folder's permissions: mode bits on macOS and Linux,
+  "inside your user folder" on Windows, where ACLs inherited from the
+  profile do that job and Morse doesn't touch them; shortcut; colors;
+  Automation, PowerShell, firewall, display, root) and `commandFor()` for
+  starting `.cmd` files through cmd.exe with the path quoted.
+  [`colors.js`](../../daemon/colors.js): ANSI colors only on a TTY,
+  `NO_COLOR` / `FORCE_COLOR` respected; every CLI file takes its colors there. `targets.js` decides which targets get Morse:
   windows, popups opened later, `<webview>`s, BrowserViews and the app's own
   out-of-process frames (VS Code webviews); third-party embeds, workers,
   DevTools and internal pages are skipped.

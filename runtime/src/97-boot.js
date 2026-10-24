@@ -44,10 +44,12 @@ B.adopt({
   guardStop, // guard hook: boot.js didn't apply a mod, or undid it (64-guard.js)
   guardReady, // guard hook: a mod that froze the page was turned off (64-guard.js)
   styleReady: () => YourStyle.ready(), // your-style hook: fit it to this site once, if turned on (72-style.js)
+  waitingAdd: m => Waiting.add(m), // waiting hook: “Allow User Scripts” is off; the style shows, the code never ran (64-waiting.js)
 });
 B.ready.then(hello => {
   try {
     setPrefs(B.prefs());
+    if (hello.settings) hostPrefs = true; // the host sent settings with its hello (03-prefs.js)
     Voice.configure(hello.voice);
     PromptHistory.load();
     if (hello.debug) debugStatus(); // the host was started with MORSE_DEBUG=1

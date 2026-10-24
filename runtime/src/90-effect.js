@@ -21,7 +21,7 @@ const Effect = (() => {
   const BASE = 8, GAP = 2, MAX_CELLS = 6000, MAX_PX = 2.1e6, LEVELS = 16, BAND = 2;
   let CELL = BASE, SQ = BASE - GAP, OFF = GAP / 2, RAD = 1.5, mask = null, maskKey = "";
   let target = null, running = false, mode = "thinking", rect = null, cols = 0, rows = 0;
-  let t0 = 0, end0 = 0, endResolve = null, ok = true, frame = 0, pal = null, blips = [];
+  let t0 = 0, end0 = 0, endResolve = null, ok = true, frame = 0, pal = null, blips = [], shown0 = 0;
   // Per-cell constants, rebuilt when the grid changes, and the cells drawn at
   // all (every cell over a target; only the edge band page-wide).
   let delay, dur, rc, ell, dist, core, per, active = new Int32Array(0);
@@ -105,7 +105,7 @@ const Effect = (() => {
     active = Int32Array.from(on);
   }
   function start(el) {
-    target = el; rect = null; cols = rows = 0; mode = "thinking"; running = true; ok = true; blips = [];
+    target = el; rect = null; cols = rows = 0; mode = "thinking"; running = true; ok = true; blips = []; shown0 = 0;
     pal = palette();
     t0 = performance.now();
     logo.classList.add("live");
@@ -137,6 +137,11 @@ const Effect = (() => {
       blips.push({ x: Math.max(0, Math.min(cols - len, x)), y: Math.max(0, Math.min(rows - 1, y)), code, born: performance.now() });
     }
   }
+  // speed: the first part of the change is on the page. The cover over the
+  // target fades and the field dims, so you watch the change come in.
+  function reveal() {
+    if (running && mode !== "end" && !shown0) shown0 = performance.now();
+  }
   function finish(success) {
     ok = success;
     mode = "end";
@@ -164,6 +169,7 @@ const Effect = (() => {
     const end = mode === "end", endP = end ? Math.min(1, (now - end0) / 650) : 0;
     const maxR = Math.SQRT2, tol = 1.1 / Math.max(2, Math.min(cols / 2, rows / 2));
     const ping = ringRadius(now), pingFade = 1 - ping / maxR;
+    const veil = shown0 ? Math.max(0, 1 - (now - shown0) / 300) : 1; // 1 = covered, 0 = the change shows through (reveal)
     // Morse blips light cells; collect them per frame.
     let lit = null;
     blips = blips.filter(b => now - b.born < 750);
@@ -210,6 +216,7 @@ const Effect = (() => {
         const l = lit && lit.get(i);
         if (l) { a = Math.max(a, 0.35 + l * 0.65); color = l > 0.5 ? 3 : 2; }
       }
+      if (!end) a *= 0.35 + 0.65 * veil;
       const q = a >= 1 ? LEVELS - 1 : Math.round(a * (LEVELS - 1));
       if (q > 0) buckets[color * LEVELS + q].push(i);
     }
@@ -234,10 +241,10 @@ const Effect = (() => {
         g.fillRect(0, 0, bw, rect.h); g.fillRect((cols - BAND) * CELL, 0, bw, rect.h);
       }
     }
-    if (target) {
+    if (target && veil > 0) {
       // the scrim goes behind the cells
       g.globalCompositeOperation = "destination-over";
-      g.globalAlpha = end ? 1 - endP : 1;
+      g.globalAlpha = (end ? 1 - endP : 1) * veil;
       g.fillStyle = pal.scrim;
       g.beginPath(); g.roundRect ? g.roundRect(0, 0, rect.w, rect.h, 10) : g.rect(0, 0, rect.w, rect.h); g.fill();
       g.globalAlpha = 1;
@@ -258,5 +265,5 @@ const Effect = (() => {
     root.append(p);
     setTimeout(() => p.remove(), 900);
   }
-  return { start, token, finish };
+  return { start, token, reveal, finish };
 })();

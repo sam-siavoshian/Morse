@@ -37,7 +37,8 @@ const notPings = calls => Object.entries(calls || {}).filter(([k]) => k !== "tim
 test("boot: the script every page loads is small and cheap next to the full runtime", { skip }, async () => {
   const pl = await payloads();
   assert.ok(pl.split, "the runtime is split into boot + UI");
-  assert.ok(pl.boot.length < 48_000, `boot is ${pl.boot.length} bytes`); // hotkeys, user control, self-heal detection
+  // hotkeys, user control and safe start, self-heal detection, the guards, mods waiting for Allow User Scripts
+  assert.ok(pl.boot.length < 52_000, `boot is ${pl.boot.length} bytes`);
   const ctx = await D.browser.newContext();
   const page = await ctx.newPage();
   await page.goto(srv.url("/perf/big.html"));

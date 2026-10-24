@@ -123,8 +123,13 @@ let prefs = normalizePrefs({});
 let keys = resolveHotkeys(prefs.hotkeys, PLATFORM);
 function setBootPrefs(p) { prefs = normalizePrefs(p); keys = resolveHotkeys(prefs.hotkeys, PLATFORM); }
 const lsPrefs = () => { try { return JSON.parse(W.localStorage.getItem("morse:settings") || "null"); } catch { return null; } };
+// The page's localStorage only stands in for a host with no settings at all,
+// never after the host has answered, and never turns on fixing mods by itself
+// (03-prefs.js has the same rule).
+let hostPrefs = false;
 async function loadPrefs() {
-  try { setBootPrefs(await call("settings.get")); } catch { setBootPrefs(lsPrefs() || {}); }
+  try { setBootPrefs(await call("settings.get")); hostPrefs = true; }
+  catch { if (!hostPrefs) setBootPrefs({ ...(lsPrefs() || {}), autoFix: false }); }
 }
 function hotkeyFor(e) {
   for (const { id } of HOTKEY_ACTIONS) { const c = keys[id]; if (c && matchCombo(e, c)) return id; }
@@ -253,6 +258,29 @@ on(D, "morse:paused", e => {
   }, 30);
 });
 
+// ---- mods waiting for “Allow User Scripts” (64-waiting.js has the UI). In
+// the extension, mod code only runs with it on; while it's off, exec answers
+// { waiting: "userScripts" }: the style shows, the code never ran, and it
+// doesn't count as run for safe start. The UI is loaded to say so once per
+// tab; coming back to the tab tries the waiting mods again.
+const waiting = new Map();
+let waitHeard = false;
+function waitingAdd(m) {
+  if (ui) { try { ui.waitingAdd?.(m); } catch (e) { warn(e); } return; }
+  waiting.set(m.id, m);
+  if (!seen("morse:waiting-told")) loadUI().catch(() => {});
+  if (waitHeard) return;
+  waitHeard = true;
+  const retry = () => {
+    if (ui || D.visibilityState !== "visible" || !waiting.size) return;
+    const list = [...waiting.values()];
+    waiting.clear();
+    for (const x of list) applyMod(S.mods.find(y => y.id === x.id) || x).catch(warn);
+  };
+  on(D, "visibilitychange", retry);
+  on(W, "focus", retry);
+}
+
 async function applyMod(m) {
   await controlled;
   if (held(m) || !live()) return;
@@ -264,6 +292,7 @@ async function applyMod(m) {
     if (!live()) return;
     if (!guard.ok) look = guardLook();
     const r = await call("exec", { modId: m.id, js: m.js });
+    if (r?.waiting) return waitingAdd(m);
     health(m, r);
     if (r && !r.ok && !guardPaused(m, r)) { warn(m.title, r.error); notify(`“${m.title}” didn't work on this page. Open Mods to turn it off or fix it.`); }
   }
@@ -374,24 +403,34 @@ const Heal = (() => {
   function countOf(sel) {
     let list;
     try { list = D.querySelectorAll(sel); } catch { return null; }
-    let n = 0, rest = 0;
+    let n = 0, rest = 0, top = Infinity;
     for (const el of list) {
       if (el.closest(NOT_OURS)) continue;
       n++;
       if (!el.closest(TRANSIENT)) rest++;
+      if (n <= 5) { // how far down the page: a hidden match counts as on the first screen
+        const r = el.getBoundingClientRect();
+        top = r.width || r.height ? Math.min(top, r.top + W.scrollY) : 0;
+      }
       if (n >= 9999) break;
     }
-    return { n, rest };
+    return { n, rest, top };
   }
   function measure(sels) {
-    const counts = {}, transient = [];
+    const counts = {}, transient = [], tops = {};
     for (const sel of sels) {
       const c = countOf(sel);
       counts[sel] = c ? c.n : 0;
+      if (c && c.n) tops[sel] = c.top;
       if (c && c.n && !c.rest) transient.push(sel);
     }
-    return { counts, transient };
+    return { counts, transient, tops };
   }
+  // A password field on show: a sign-in page (signed out, or the session ended).
+  const signin = () => [...D.querySelectorAll("input[type=password]")].some(el => !el.closest(NOT_OURS) && el.getClientRects().length > 0);
+  // Lazy loading: what sits further down may not be there until someone scrolls.
+  let scrolled = false, scrollHeard = false;
+  const hearScroll = () => { if (!scrollHeard) { scrollHeard = true; on(W, "scroll", () => { scrolled = true; }, { capture: true, passive: true }); } };
   // Loaded, the element count unchanged for QUIET ms (or MAX_WAIT passed), then idle.
   const settle = () => new Promise(resolve => {
     const begin = () => {
@@ -409,18 +448,24 @@ const Heal = (() => {
     D.readyState === "complete" ? begin() : pristine.addEventListener(W, "load", begin, { once: true });
   });
   const checkable = m => m.enabled && !held(m) && !!((m.css || "").trim() || (m.js || "").trim()) && m.kind !== "style"; // Your style is never flagged
+  // Saved onto the mod as it is now (the person may have changed it meanwhile),
+  // and only for the code it was taken for.
   async function learn(m, size) {
-    const { counts, transient } = measure(selectorsIn(m));
-    const fp = makeFingerprint(m, counts, { url: location.href, size, transient });
-    if (!fp) return;
-    const next = { ...m, fp };
+    const { counts, transient, tops } = measure(selectorsIn(m));
+    const fp = makeFingerprint(m, counts, { url: location.href, size, transient, tops, fold: W.innerHeight, signin: signin() });
+    const cur = S.mods.find(x => x.id === m.id);
+    if (!fp || !cur || fp.code !== modCodeHash(cur)) return;
+    const next = { ...cur, fp };
     const saved = (await call("mods.save", { mod: next }).catch(() => null)) || next;
     S.mods = S.mods.map(x => (x.id === saved.id ? saved : x));
   }
   async function pass(only) {
     const out = new Map();
-    const page = { path: pagePathShape(location.href), size: pageSize() };
+    const href = location.href;
+    const page = { path: pagePathShape(href), size: pageSize(), signin: signin(), scrolled };
+    const moved = () => location.href !== href && (out.clear(), true); // a single-page app moved on: this pass can't tell
     for (const m of S.mods.filter(checkable)) {
+      if (moved()) break;
       if (only && !only.has(m.id)) continue;
       if (!fingerprintCurrent(m)) { if (!only) await learn(m, page.size); continue; }
       const { counts } = measure(m.fp.sels.map(x => x[0]));
@@ -429,6 +474,7 @@ const Heal = (() => {
         const stats = await call("stats", { modId: m.id }).catch(() => null); // core/kit.js __stats
         seen = (stats?.watches || []).filter(w => w.total > 0).flatMap(w => String(w.selector).split(",").map(x => x.trim()));
         errors = stats?.errors || 0;
+        if (moved()) break;
       }
       const a = assessFingerprint(m.fp, { ...page, counts, seen, errors });
       if (a.verdict === "broken") out.set(m.id, a.lost);
@@ -437,6 +483,8 @@ const Heal = (() => {
     return out;
   }
   async function run() {
+    hearScroll();
+    scrolled = false;
     await settle();
     if (!live()) return;
     const href = location.href;
@@ -446,6 +494,7 @@ const Heal = (() => {
       await settle();
       if (!live() || location.href !== href) return;
       found = await pass(new Set(found.keys()));
+      if (location.href !== href) return;
     }
     for (const [id, lost] of found) broken.set(id, lost);
     report();
@@ -454,8 +503,9 @@ const Heal = (() => {
     const n = [...broken.keys()].filter(id => S.mods.some(m => m.id === id && m.enabled)).length;
     if (S.mode === "extension" && n !== badged) { badged = n; call("heal.badge", { count: n }).catch(() => {}); } // the toolbar button
     if (ui) { try { ui.healFound?.(); } catch (e) { warn(e); } }
-    // Auto-fix (Settings) needs the model and the UI's review flow: load it now.
-    else if (n && prefs.autoFix) { wantUi = true; loadUI().catch(() => {}); }
+    // Auto-fix (Settings) needs the model and the UI's review flow: load it now,
+    // for a mod it would try (once per version, never on its own fix: 71-heal.js autoFix).
+    else if (prefs.autoFix && [...broken.keys()].some(id => { const m = S.mods.find(x => x.id === id); return m?.enabled && !m.fp?.tried && m.refined !== "Fixed after this site changed" && modCodeHash(m) === m.fp?.code; })) { wantUi = true; loadUI().catch(() => {}); }
   }
   function soon() {
     if (!live()) return null;
@@ -496,7 +546,7 @@ function notify(text, idle) {
 }
 const UI_EVENTS = new Set(["toggle", "panel", "install.request"]);
 listeners.add(msg => {
-  if (msg.type === "settings.changed" && msg.settings) setBootPrefs(msg.settings);
+  if (msg.type === "settings.changed" && msg.settings) { setBootPrefs(msg.settings); hostPrefs = true; }
   if (ui) return; // the UI handles everything else once it's here
   if (msg.type === "mods.changed") syncMods().catch(warn);
   else if (msg.type === "control.changed" && msg.pause && typeof msg.pause === "object") changeHeld(() => { Control.pause = normalizeControl({ pause: msg.pause }).pause; });
@@ -548,7 +598,7 @@ const ready = (async () => {
     hello = (await call("hello", { url: location.href })) || {};
     S.label = hello.label || ""; S.mode = hello.mode || ""; S.app = hello.app || null; S.appName = hello.appName || hello.app || null;
     // Hosts from before settings existed don't send them; ask (or use local ones).
-    if (hello.settings) setBootPrefs(hello.settings); else await loadPrefs();
+    if (hello.settings) { setBootPrefs(hello.settings); hostPrefs = true; } else await loadPrefs();
   } catch (e) { warn("host unavailable", e); }
   return hello;
 })();
@@ -580,6 +630,8 @@ Object.defineProperty(W, BOOT, { configurable: true, value: Object.freeze({
     for (const t of toasts.splice(0)) try { ui.toast(t); } catch (e) { warn(e); }
     for (const [m, r] of healthLog.values()) health(m, r);
     healthLog.clear();
+    for (const m of waiting.values()) waitingAdd(m);
+    waiting.clear();
     for (const [name, args] of tasks.splice(0)) try { ui[name]?.(...args); } catch (e) { warn(e); }
     Heal.adopted();
   },
