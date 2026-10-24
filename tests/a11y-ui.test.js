@@ -237,7 +237,7 @@ test("Read aloud: point at text and use the edit toolbar; with nothing chosen it
 }));
 
 const groups = page => page.locator(".au-item").evaluateAll(items => items.map(li => ({
-  title: li.querySelector("b").textContent, fix: li.querySelector(".au-fix").innerText.replace(/\s+/g, " ").trim(), marks: li.querySelectorAll(".ask-n").length,
+  title: li.querySelector("b").textContent, fix: li.querySelector(".au-act").innerText.replace(/\s+/g, " ").trim(), marks: li.querySelectorAll(".ask-n").length,
 })));
 
 test("Check this page: finds every planted problem, marks each place once, and lists them in plain words", { skip }, () => scenario(async ({ page }) => {

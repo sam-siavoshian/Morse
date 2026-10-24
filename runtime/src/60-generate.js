@@ -246,6 +246,7 @@ function fixMod(m, problem) {
   if (!openOnMod(m)) return;
   const d = S.draft;
   S.phase = "result";
+  sugEl.hidden = true; // the fix is underway: no suggestions under it
   submit(m.prompt, { from: d, note: FIX_NOTE, base: { prompt: m.prompt, css: m.css, js: m.js, error: problem } });
 }
 

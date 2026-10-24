@@ -87,10 +87,10 @@ const Audit = (() => {
     bar.classList.add("has-audit");
     card.innerHTML = `
       <header class="au-head">
-        <span class="au-k">Check this page</span>
+        <span class="eyebrow au-k">Check this page</span>
         <span class="au-sum">${total ? `${groups.length} kind${groups.length > 1 ? "s" : ""} of problem · ${total} place${total > 1 ? "s" : ""}` : "Nothing to fix"}</span>
-        <button type="button" class="au-again" data-au="again" title="Check again">Check again</button>
-        <button type="button" class="ask-x" data-au="close" aria-label="Close" title="Close">×</button>
+        <button type="button" class="tbtn au-again" data-au="again" title="Check again">Check again</button>
+        <button type="button" class="ibtn xs close" data-au="close" aria-label="Close" title="Close">×</button>
       </header>
       ${total ? `<ol class="au-list">${groups.map((g, gi) => {
         const s = auditSummary(g.rule, g.items.length, g.items), p = plan(g);
@@ -101,7 +101,7 @@ const Audit = (() => {
             <div class="au-sub"><small>${esc(s.help)}</small>
             <span class="au-marks">${g.items.map(it => `<button type="button" class="ask-n" data-n="${it.n}" title="${esc(label(it))}" aria-label="${it.n}: ${esc(label(it))}. Scroll to it">${it.n}</button>`).join("")}</span></div>
           </div>
-          <button type="button" class="au-fix" data-fix="${gi}">${fixLabel}<small>${esc(fixNote(p))}</small></button>
+          <div class="au-act"><button type="button" class="btn au-fix" data-fix="${gi}">${fixLabel}</button><small>${esc(fixNote(p))}</small></div>
         </li>`;
       }).join("")}</ol>` : `<p class="au-ok">No pictures without descriptions, unnamed buttons, unlabeled fields, faint text, tiny targets or autoplaying media found.</p>`}`;
   }
