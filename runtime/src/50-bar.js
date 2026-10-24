@@ -70,7 +70,7 @@ function setTarget(el) {
   updateChips();
   input.focus();
   GodMode.onTarget(el); // God mode: edit toolbar for the selection
-  if (el) announce(`Chosen: ${describe(el)}. ${hint.textContent}`); // screen readers hear what was picked, then what's next
+  if (el) announce(t("bar.chosenSay", { what: describe(el), hint: hint.textContent })); // screen readers hear what was picked, then what's next
 }
 chip.querySelector(".x").onclick = () => { setTarget(null); startPicking(); };
 tBind(chip.querySelector(".x"), "aria-label", "bar.repoint");
@@ -91,7 +91,7 @@ function setHint() {
   if (S.phase !== "idle") return;
   hint.innerHTML = hintSticky || hintNote || (S.picking
     ? `${t("bar.hint.pointing")}<span class="sr"> · ${t("bar.hint.keys", { key: PLATFORM === "mac" ? "Option" : "Alt" })}</span>`
-    : S.target ? t("bar.hint.target") : t("bar.hint.page"));
+    : S.target ? `${t("bar.hint.target")} · ${t("bar.hint.wider", { key: PLATFORM === "mac" ? "⌥↑" : "Alt+↑" })}` : t("bar.hint.page")); // dogfood: Alt+↑
   ticker.textContent = "";
   actions.innerHTML = `<button data-a="mods">${t("bar.mods")}${S.mods.length ? ` <em>${S.mods.length}</em>` : ""}</button><span class="model">${esc(S.label)}</span>`;
 }
@@ -156,6 +156,7 @@ function openBar() {
   Voice.refresh();
   requestAnimationFrame(() => input.focus());
   call("clip.start").catch(() => {});
+  warmedFor = "";
   call("warm").catch(() => {}); // speed: the model gets ready while you point and type
   refreshPrefs();
   PromptHistory.load();
@@ -190,6 +191,7 @@ bar.addEventListener("pointerleave", () => clearTimeout(dodgeTimer));
 function send(text) {
   if (S.phase !== "idle" || !text) return;
   hintNote = "";
+  clearTimeout(warmTimer); warmedFor = ""; // models: the request itself picks the model now
   Voice.cancel();
   hideMenu();
   showPane("");
@@ -327,11 +329,26 @@ input.addEventListener("keydown", e => {
     if (PromptHistory.browse(e.key === "ArrowUp" ? -1 : 1)) e.preventDefault();
   }
 });
+// speed, models: a pause in typing tells the host what the request looks like
+// so far; under Automatic it gets the model that request would start on ready
+// (the strong one for new UI and features, core/route.js warmSettings). The
+// words go only to the host on this computer or the extension's worker.
+let warmTimer = 0, warmedFor = "";
+function warmAsYouType() {
+  clearTimeout(warmTimer);
+  warmTimer = setTimeout(() => {
+    const v = input.value.trim();
+    if (!v || v === warmedFor || S.phase === "working") return;
+    warmedFor = v;
+    call("warm", { request: v.slice(0, 500) }).catch(() => {});
+  }, 500);
+}
 input.addEventListener("input", () => {
   autosize();
   PromptHistory.edited();
   if (paneKind === "shortcuts") showPane("");
   input.classList.remove("interim");
+  warmAsYouType();
   updateChips();
 });
 for (const t of ["keyup", "keypress", "input"]) input.addEventListener(t, e => e.stopPropagation());

@@ -1,0 +1,418 @@
+// Morse Desktop without Electron: the IPC handlers (desktop-app/ipc.js) over
+// the service (desktop-app/service.js) with a fake daemon, the preload's
+// exposed API, morse:// pairing links, the Linux desktop files and the icon.
+// The real window is tests/desktop-app-ui.test.js.
+import { home, tempDir } from "./helpers/home.js";
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync, existsSync, promises as fs } from "node:fs";
+import path from "node:path";
+import vm from "node:vm";
+
+const { API, CHANNEL, LINKS, registerIpc, isOpenLink } = await import("../desktop-app/ipc.js");
+const { createService } = await import("../desktop-app/service.js");
+const { desktopEntry, setAutostart, AUTOSTART } = await import("../desktop-app/linux.js");
+const { markPng, markPixels } = await import("../desktop-app/mark.js");
+const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+
+// ---------------------------------------------------------------- a fake daemon
+// The same names service.js uses from daemon/ (loadDaemon), recording calls.
+function fakeDaemon(over = {}) {
+  const calls = [];
+  const rec = (name, ret) => (...args) => { calls.push([name, ...args]); return typeof ret === "function" ? ret(...args) : ret; };
+  let cfg = { bridge: { tokens: [{ hash: "x" }] } };
+  let control = { pause: { all: false, sites: {} } };
+  const mods = new Map([["m1", { id: "m1", title: "Sleep timer", prompt: "add a sleep timer", match: { app: "tunes", hosts: ["tunes"] }, enabled: true }]]);
+  const apps = [
+    { id: "tunes", name: "Tunes", exe: "/opt/Tunes/tunes", path: "/opt/Tunes/tunes", canAttach: true, why: "Electron 45", known: false, version: "1.4.2" },
+    { id: "slack", name: "Slack", exe: "/usr/lib/slack/slack", path: "/usr/lib/slack/slack", canAttach: true, why: "Electron", known: true },
+    { id: "notes", name: "Notes", exe: "/x/notes", path: "/x/notes", canAttach: false, why: "native app, not built on web technology", known: true },
+  ];
+  let sessions = [];
+  const d = {
+    calls, mods, apps, get sessions() { return sessions; }, set sessions(v) { sessions = v; }, get cfg() { return cfg; }, get control() { return control; },
+    HOME: tempDir("morse-desktop-fake-"), VERSION: "9.9.9", EXTENSION_DIR: "/repo/dist/extension",
+    hostContext: () => ({ platform: "linux" }),
+    discoverApps: rec("discoverApps", () => apps.map(a => ({ ...a }))),
+    appFromPath: rec("appFromPath", (_ctx, p) => {
+      if (p === "/apps/native") return { id: "nat", name: "Nat", canAttach: false, why: "native app, not built on web technology" };
+      if (p === "/apps/acme") return { id: "acme", name: "Acme", exe: "/apps/acme", path: "/apps/acme", canAttach: true, why: "Electron" };
+      throw new Error(`Nothing at ${p}.`);
+    }),
+    listProcesses: () => [{ pid: 11, cmd: "/usr/lib/slack/slack" }],
+    findAppProcesses: (a, procs) => procs.filter(p => p.cmd.startsWith(a.exe)),
+    debugPortOf: cmd => Number(/--remote-debugging-port=(\d+)/.exec(cmd)?.[1]) || null,
+    readSessions: async () => sessions,
+    stopSession: rec("stopSession", async id => { const s = sessions.find(x => x.id === id); sessions = sessions.filter(x => x.id !== id); return s ? { stopped: [s] } : { stopped: [], message: `Morse isn't connected to "${id}".` }; }),
+    connectApp: rec("connectApp", async (app, { ask }) => {
+      if (app.id === "slack") {
+        const a = ask ? await ask(app) : null;
+        if (a !== "y" && a !== "a") throw Object.assign(new Error("Slack is already open. \x1b[1mmorse launch slack --restart\x1b[22m"), { plain: true, running: true });
+      }
+      return { port: 9444, pids: [1], who: { browser: "Chrome/140", electron: "45.0.0" }, verify: async () => ({ ok: true }) };
+    }),
+    startSession: rec("startSession", ({ app }) => {
+      const connector = { state: "attached" };
+      let resolveDone;
+      const s = {
+        id: app.id, name: app.name, connector, flushed: Promise.resolve(),
+        done: new Promise(r => { resolveDone = r; }),
+        stop: async () => { connector.state = "stopped"; sessions = sessions.filter(x => x.id !== app.id); resolveDone("stopped"); },
+      };
+      sessions = [...sessions, { id: app.id, name: app.name, pid: process.pid, state: "attached", windows: [{ id: "w1" }] }];
+      return s;
+    }),
+    loadConfig: async () => structuredClone(cfg),
+    updateConfig: async fn => { cfg = (await fn(structuredClone(cfg))) ?? cfg; return cfg; },
+    settingsFromConfig: c => c.provider ? { provider: c.provider, model: c.provider === "claude-code" ? "haiku" : "", detected: false } : { provider: "none", model: "", detected: true },
+    settingsLabel: s => s.provider === "none" ? "none" : `\x1b[1m${s.provider}\x1b[22m`,
+    detectBackends: async () => [
+      { id: "claude-code", name: "Claude Code", found: true, detail: "2.1.0  ~/bin/claude" },
+      { id: "codex", name: "Codex", found: false, detail: "not installed" },
+      { id: "api-key", name: "API key", found: false, detail: "none" },
+    ],
+    recommend: rows => rows.find(r => r.found) || null,
+    BACKENDS: [{ id: "claude-code", name: "Claude Code", why: "uses your Claude subscription", install: "npm i -g claude" }, { id: "codex", name: "Codex", why: "uses your ChatGPT plan", install: "npm i -g codex" }, { id: "api-key", name: "API key", why: "paid per use", install: "console" }],
+    configFor: (id, { key } = {}) => (id === "api-key" ? { provider: /^sk-ant-/.test(key) ? "anthropic" : "openai", keys: { x: key } } : { provider: id }),
+    saveChoice: rec("saveChoice", async (choice, m) => { cfg = { ...cfg, provider: m.provider, setup: { backend: choice } }; return cfg; }),
+    checkModel: rec("checkModel", async () => ({ ok: true, ms: 1200 })),
+    // createBridge's options are kept, so a test can play the helper asking (onboarding v2's ask).
+    createBridge: rec("createBridge", opts => { d.bridgeOpts = opts; return { listen: async () => 7457, close: async () => {} }; }),
+    startPairing: rec("startPairing", async (_ttl, code = "NEWCDE") => { cfg = { ...cfg, bridge: { ...cfg.bridge, pairing: { code, expires: Date.now() + 600000 } } }; return { code }; }),
+    helperPort: () => 1,
+    validPairingCode: c => /^[A-HJ-NP-Z2-9]{6}$/.test(c),
+    listMods: async () => [...mods.values()].map(m => ({ ...m })),
+    getMod: async id => (mods.has(id) ? { ...mods.get(id) } : null),
+    saveMod: rec("saveMod", async m => { mods.set(m.id, m); return m; }),
+    loadControl: async () => structuredClone(control),
+    saveControl: rec("saveControl", async s => { control = s; }),
+    setPause: (c, { all }) => ({ ...c, pause: { ...c.pause, all } }),
+    pauseInfo: c => ({ all: c.pause.all, sites: Object.keys(c.pause.sites) }),
+    platformChecks: async () => [{ label: "system", ok: null, text: "Linux" }, { label: "colors", ok: null, text: "on" }, { label: "display", ok: false, text: "No DISPLAY" }],
+    configuredHotkeys: async () => ({ open: "Ctrl+Shift+Space" }),
+    plainError: e => (e?.plain ? e.message : "Something went wrong. Try again."),
+    ...over,
+  };
+  return d;
+}
+
+// ipcMain as Electron's: handle(channel, fn); invoke as a window would.
+function fakeIpc() {
+  const handlers = new Map();
+  return { handlers, handle: (ch, fn) => handlers.set(ch, fn) };
+}
+const TRUSTED = { trusted: true };
+function setup(over) {
+  const daemon = fakeDaemon(over);
+  const emitted = [];
+  const service = createService({ daemon, emit: () => emitted.push(1), scan: true, fetchHealth: async () => null });
+  const ipcMain = fakeIpc();
+  const native = { opened: [], pickApp: async () => "/apps/acme", showFolder: async dir => ({ ok: true, dir }), openExternal: async url => { native.opened.push(url); return { ok: true }; }, setLoginItem: async on => { native.login = on; } };
+  const channels = registerIpc({ ipcMain, service, native, isTrusted: e => e === TRUSTED });
+  const call = (name, ...args) => ipcMain.handlers.get(CHANNEL(name))(TRUSTED, ...args);
+  return { daemon, service, ipcMain, native, channels, call, emitted };
+}
+
+// ---------------------------------------------------------------- the IPC handlers
+
+test("every request in the API has one channel, and only Morse's own window may use it", async () => {
+  const { ipcMain, channels } = setup();
+  assert.deepEqual(channels.sort(), Object.keys(API).map(CHANNEL).sort());
+  assert.deepEqual([...ipcMain.handlers.keys()].sort(), channels.sort());
+  for (const ch of channels) assert.deepEqual(await ipcMain.handlers.get(ch)({ sender: "a web page" }), { error: "Not allowed." }, ch);
+});
+
+test("arguments are checked: ids, answers, switches, choices, keys, link names, and no extra arguments", async () => {
+  const { call, daemon } = setup();
+  for (const [name, args] of [
+    ["openApp", ["../etc"]], ["openApp", [{ id: "tunes" }]], ["openApp", ["tunes", "yes please"]], ["openApp", ["tunes", "y", "extra"]],
+    ["disconnectApp", [""]], ["setModOn", ["m1", "true"]], ["setAllModsOff", [1]], ["chooseModel", ["gpt", ""]],
+    ["chooseModel", ["api-key", "sk-ant key with spaces"]], ["openLink", ["https://evil.example"]], ["answerAsk", ["short", true]], ["answerAsk", ["abcdefghijkl", "yes"]],
+    ["setStartAtLogin", [null]], ["state", ["x", "y"]],
+  ]) assert.deepEqual(await call(name, ...args), { error: "Not allowed." }, `${name}(${JSON.stringify(args)})`);
+  assert.equal(daemon.calls.filter(c => c[0] === "connectApp").length, 0, "nothing ran");
+});
+
+test("state: each app says whether it's open and connected, with its mods; the model, Chrome and the off switch", async () => {
+  const { call, daemon } = setup();
+  daemon.sessions = [{ id: "port-9222", name: "App on port 9222", pid: 1, state: "attached", windows: [] }];
+  const st = await call("state");
+  assert.equal(st.version, "9.9.9");
+  const by = Object.fromEntries(st.apps.map(a => [a.id, a]));
+  assert.equal(by.tunes.state, "closed");
+  assert.equal(by.tunes.mods, 1);
+  assert.equal(by.tunes.modsOn, 1);
+  assert.equal(by.slack.state, "open", "running without a debugging port");
+  assert.equal(by.notes.canAttach, false);
+  assert.equal(by["port-9222"].external, true, "an app a terminal attached to is listed too");
+  assert.equal(st.apps.at(-1).id, "notes", "apps Morse can't connect to go last");
+  assert.equal(st.model.none, true);
+  assert.deepEqual(st.chrome.browsers, 1);
+  assert.equal(st.pause.all, false);
+  assert.equal(st.keys.open, "Ctrl+Shift+Space");
+  assert.deepEqual(st.settings, { startAtLogin: false, helper: true, welcomed: false }, "login start is off until the person turns it on; the first run shows");
+});
+
+test("Open with Morse runs the launch steps and holds the session; Disconnect stops it", async () => {
+  const { call, daemon, service } = setup();
+  assert.deepEqual(await call("openApp", "tunes"), { ok: true });
+  const [, app, opts] = daemon.calls.find(c => c[0] === "connectApp");
+  assert.equal(app.id, "tunes");
+  assert.equal(opts.ask, null, "nothing answered yet, so connectApp must not restart anything");
+  assert.ok(service.sessions.has("tunes"));
+  assert.equal((await call("state")).apps.find(a => a.id === "tunes").state, "connected");
+  assert.deepEqual(await call("disconnectApp", "tunes"), { ok: true });
+  assert.equal(service.sessions.has("tunes"), false);
+  assert.equal(daemon.calls.filter(c => c[0] === "stopSession").length, 0, "its own session is stopped directly, not through a stop file");
+  assert.equal((await call("state")).apps.find(a => a.id === "tunes").state, "closed");
+});
+
+test("an app that is already open asks first: Restart once (y) or always (a), the way morse launch asks", async () => {
+  const { call, daemon, service } = setup();
+  assert.deepEqual(await call("openApp", "slack"), { needsRestart: true, name: "Slack" });
+  assert.equal(service.sessions.has("slack"), false);
+  assert.deepEqual(await call("openApp", "slack", "a"), { ok: true });
+  const last = daemon.calls.filter(c => c[0] === "connectApp").at(-1)[2];
+  assert.equal(await last.ask(), "a", "the answer is handed to connectApp's question");
+  assert.ok(service.sessions.has("slack"));
+});
+
+test("an app Morse can't connect to, and errors, come back in plain words without terminal colors", async () => {
+  const { call } = setup({ connectApp: async () => { throw Object.assign(new Error("Tunes quit right after it started (exit code 1), before Morse could connect."), { plain: true }); } });
+  assert.match((await call("openApp", "notes")).error, /^Notes is a native app/);
+  assert.deepEqual(await call("openApp", "tunes"), { error: "Tunes quit right after it started (exit code 1), before Morse could connect." });
+  assert.match((await call("openApp", "nothere")).error, /can't find that app/);
+});
+
+test("Disconnect for an app a terminal connected asks that terminal's session to stop (morse stop)", async () => {
+  const { call, daemon } = setup();
+  daemon.sessions = [{ id: "tunes", name: "Tunes", pid: 999999, state: "attached", windows: [] }];
+  assert.deepEqual(await call("disconnectApp", "tunes"), { ok: true });
+  assert.deepEqual(daemon.calls.find(c => c[0] === "stopSession").slice(1), ["tunes"]);
+  assert.match((await call("disconnectApp", "tunes")).error, /isn't connected/);
+});
+
+test("Add an app… keeps the file in desktop.json, and refuses native apps", async () => {
+  const { call, daemon, native } = setup();
+  assert.deepEqual(await call("addApp"), { ok: true, id: "acme", name: "Acme" });
+  const saved = JSON.parse(readFileSync(path.join(daemon.HOME, "desktop.json"), "utf8"));
+  assert.deepEqual(saved.apps, ["/apps/acme"]);
+  assert.ok((await call("state")).apps.some(a => a.id === "acme" && a.added));
+  native.pickApp = async () => "/apps/native";
+  assert.match((await call("addApp")).error, /Nat is a native app/);
+  native.pickApp = async () => null;
+  assert.deepEqual(await call("addApp"), { cancelled: true });
+});
+
+test("the model: choices from what's installed, a choice saved the way morse setup saves it, then checked", async () => {
+  const { call, daemon, service } = setup();
+  const choices = await call("modelChoices");
+  assert.deepEqual(choices.map(c => [c.id, c.found, c.recommended]), [["claude-code", true, true], ["codex", false, false], ["api-key", false, false]]);
+  await call("openApp", "tunes");
+  assert.match((await call("chooseModel", "codex")).error, /isn't installed/);
+  assert.match((await call("chooseModel", "api-key")).error, /Paste your API key/);
+  const r = await call("chooseModel", "claude-code");
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.check, { ok: true, ms: 1200, error: "", at: r.check.at, label: "\x1b[1mclaude-code\x1b[22m" });
+  assert.deepEqual(daemon.calls.find(c => c[0] === "saveChoice").slice(1), ["claude-code", { provider: "claude-code" }]);
+  assert.equal(service.sessions.get("tunes").connector.settings.provider, "claude-code", "a connected app uses the new model from now on");
+  const m = (await call("state")).model;
+  assert.equal(m.name, "Claude Code");
+  assert.equal(m.model, "haiku");
+  assert.equal(m.label, "claude-code", "no terminal colors");
+  assert.equal(m.check.ok, true, "the last check shows until the model changes");
+  await call("chooseModel", "api-key", "sk-ant-abc");
+  assert.deepEqual(daemon.calls.filter(c => c[0] === "saveChoice").at(-1).slice(1), ["api-key", { provider: "anthropic", keys: { x: "sk-ant-abc" } }]);
+});
+
+test("Chrome asks to connect: the helper's question waits for Allow or Deny in the window", async () => {
+  const asked = [];
+  const daemon = fakeDaemon();
+  const service = createService({ daemon, fetchHealth: async () => null, onAsk: list => asked.push(list.length) });
+  const ipcMain = fakeIpc();
+  registerIpc({ ipcMain, service, native: {}, isTrusted: e => e === TRUSTED });
+  const call = (name, ...args) => ipcMain.handlers.get(CHANNEL(name))(TRUSTED, ...args);
+  await call("setHelper", true);
+  assert.equal(daemon.bridgeOpts.app, "desktop", "the helper says it's Morse Desktop's");
+  assert.equal(typeof daemon.bridgeOpts.ask, "function", "and that it can ask");
+  const words = { message: "Allow Chrome to use your Claude Code?", detail: "…", allow: "Allow", deny: "Deny" };
+  const origin = "chrome-extension://abcdefghijklmnopabcdefghijklmnop";
+  const answer = daemon.bridgeOpts.ask({ origin, label: "Claude Code", words, signal: new AbortController().signal });
+  let c = (await call("state")).chrome;
+  assert.deepEqual({ ...c.ask, id: "x" }, { id: "x", extension: "abcdefghijklmnopabcdefghijklmnop", words });
+  assert.deepEqual(asked, [1], "the window is brought forward");
+  c = await call("answerAsk", (await call("state")).chrome.ask.id, true);
+  assert.equal(await answer, true, "Allow");
+  assert.equal(c.ask, null);
+  // Deny, and a question nobody answers in time.
+  const no = daemon.bridgeOpts.ask({ origin, words, signal: new AbortController().signal });
+  await call("answerAsk", (await call("state")).chrome.ask.id, false);
+  assert.equal(await no, false);
+  const ac = new AbortController();
+  const gone = daemon.bridgeOpts.ask({ origin, words, signal: ac.signal });
+  const id = (await call("state")).chrome.ask.id;
+  ac.abort();
+  assert.equal(await gone, false);
+  assert.match((await call("answerAsk", id, true)).error, /stopped asking/);
+  // Turning the helper off says no to what's waiting.
+  const off = daemon.bridgeOpts.ask({ origin, words });
+  await call("setHelper", false);
+  assert.equal(await off, false);
+});
+
+test("the first run: shown until an app is opened or Skip, then never again", async () => {
+  const { call } = setup();
+  assert.equal((await call("state")).settings.welcomed, false);
+  await call("finishWelcome");
+  assert.equal((await call("state")).settings.welcomed, true);
+});
+
+test("Chrome: the helper runs here unless one is already running; Show a code; Sign out browsers", async () => {
+  const { call, daemon } = setup();
+  let c = await call("setHelper", true);
+  assert.equal(c.running, true);
+  assert.equal(c.ours, true);
+  c = await call("newPairingCode");
+  assert.equal(c.waiting.code, "NEWCDE");
+  c = await call("signOutBrowsers");
+  assert.equal(c.browsers, 0);
+  c = await call("setHelper", false);
+  assert.equal(c.running, false);
+  // A helper started from a terminal (morse serve) is used, not fought.
+  const other = setup();
+  const svc = createService({ daemon: other.daemon, fetchHealth: async () => ({ ok: true }) });
+  const r = await svc.startHelper();
+  assert.equal(r.running, true);
+  assert.equal(r.ours, false);
+  assert.equal(other.daemon.calls.some(x => x[0] === "createBridge"), false);
+});
+
+test("mods: listed per app with switches, and the off switch pauses every mod everywhere", async () => {
+  const { call, daemon } = setup();
+  await call("state"); // learns the apps' names
+  const groups = (await call("state")).mods;
+  assert.deepEqual(groups.map(g => [g.name, g.mods.map(m => [m.title, m.on])]), [["Tunes", [["Sleep timer", true]]]]);
+  assert.deepEqual(await call("setModOn", "m1", false), { ok: true });
+  assert.equal(daemon.mods.get("m1").enabled, false);
+  assert.match((await call("setModOn", "gone", true)).error, /isn't there/);
+  assert.deepEqual(await call("setAllModsOff", true), { all: true, sites: [] });
+  assert.equal(daemon.control.pause.all, true);
+  assert.equal((await call("state")).pause.all, true);
+});
+
+test("checks: the platform rows (without terminal colors), what's installed, the helper, the model and its answer", async () => {
+  const { call } = setup();
+  await call("chooseModel", "claude-code");
+  const rows = await call("runChecks");
+  assert.deepEqual(rows.map(r => r.label), ["System", "Display", "Claude Code", "Codex", "API key", "Morse helper", "Model", "Answers"]);
+  assert.equal(rows.find(r => r.label === "Display").ok, false);
+  assert.equal(rows.at(-1).ok, true);
+});
+
+test("links open only by name, and login start goes through the native side", async () => {
+  const { call, native } = setup();
+  for (const name of Object.keys(LINKS)) await call("openLink", name);
+  assert.deepEqual(native.opened, Object.values(LINKS));
+  assert.ok(native.opened.every(u => u.startsWith("https://github.com/sam-siavoshian/RRAA/")));
+  await call("setStartAtLogin", true);
+  assert.equal(native.login, true);
+  assert.equal((await call("state")).settings.startAtLogin, true);
+});
+
+test("a handler that throws gives a plain error, not its internals", async () => {
+  const { call } = setup({ listMods: async () => { throw new Error("EACCES: /secret/path"); } });
+  assert.deepEqual(await call("state"), { error: "Something went wrong. Try again." });
+});
+
+// ---------------------------------------------------------------- the preload
+
+test("the preload exposes window.morse only: the API's names plus onChange, frozen, nothing from Electron", () => {
+  const exposed = {}, invoked = [], listeners = [];
+  const electron = {
+    contextBridge: { exposeInMainWorld: (name, api) => { exposed[name] = api; } },
+    ipcRenderer: {
+      invoke: (ch, ...args) => { invoked.push([ch, ...args]); return Promise.resolve(); },
+      on: (ch, fn) => listeners.push([ch, fn]), removeListener: (ch, fn) => { const i = listeners.findIndex(l => l[1] === fn); if (i >= 0) listeners.splice(i, 1); },
+    },
+  };
+  const src = readFileSync(path.join(root, "desktop-app/preload.cjs"), "utf8");
+  const required = [];
+  vm.runInNewContext(src, { require: m => { required.push(m); if (m !== "electron") throw new Error(`preload required ${m}`); return electron; } });
+  assert.deepEqual(required, ["electron"]);
+  assert.deepEqual(Object.keys(exposed), ["morse"], "one name in the page");
+  const api = exposed.morse;
+  assert.ok(Object.isFrozen(api));
+  assert.deepEqual(Object.keys(api), [...Object.keys(API), "onChange"], "the same names as ipc.js API, in order");
+  for (const [k, v] of Object.entries(api)) assert.equal(typeof v, "function", k);
+  // Each function calls its own channel and passes only plain values.
+  for (const name of Object.keys(API)) api[name]("a", true, { evil: 1 }, () => {});
+  assert.deepEqual(invoked.map(c => c[0]), Object.keys(API).map(CHANNEL));
+  assert.deepEqual(invoked[0].slice(1), ["a", true, undefined, undefined], "objects and functions don't cross");
+  // onChange: the state only, never the event (which carries the sender).
+  const got = [];
+  const off = api.onChange(s => got.push(s));
+  assert.deepEqual(listeners.map(l => l[0]), ["morse:changed"]);
+  listeners[0][1]({ sender: "ipcRenderer event" }, { apps: [] });
+  assert.deepEqual(got, [{ apps: [] }]);
+  off();
+  assert.equal(listeners.length, 0);
+  assert.equal(typeof api.onChange("not a function"), "function");
+});
+
+test("the window's page: a strict CSP, no inline code, only its own files", () => {
+  const html = readFileSync(path.join(root, "desktop-app/ui/index.html"), "utf8");
+  const csp = /http-equiv="Content-Security-Policy" content="([^"]+)"/.exec(html)?.[1] || "";
+  assert.match(csp, /default-src 'none'/);
+  assert.match(csp, /script-src 'self'(;|$)/);
+  assert.match(csp, /connect-src 'none'/);
+  assert.match(csp, /frame-src 'none'/);
+  assert.doesNotMatch(csp, /unsafe-inline|unsafe-eval|https?:/);
+  assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)/, "no inline scripts");
+  assert.doesNotMatch(html, /\son[a-z]+=/i, "no inline handlers");
+  assert.doesNotMatch(html, /\sstyle=/, "no inline styles");
+  for (const [, url] of html.matchAll(/\b(?:src|href)="([^"]+)"/g)) assert.doesNotMatch(url, /^(https?:)?\/\//, url);
+  const main = readFileSync(path.join(root, "desktop-app/main.js"), "utf8");
+  for (const s of ["contextIsolation: true", "sandbox: true", "nodeIntegration: false", "webviewTag: false", "setWindowOpenHandler(() => ({ action: \"deny\" }))", "will-navigate", "setPermissionRequestHandler"]) assert.ok(main.includes(s), s);
+});
+
+// ---------------------------------------------------------------- links, desktop files, the icon
+
+test("morse:// links: only morse://open, which shows the window", () => {
+  assert.equal(isOpenLink("morse://open"), true);
+  assert.equal(isOpenLink("morse://open/"), true);
+  for (const bad of ["morse://pair?code=ABC234", "https://open", "morse://evil", "not a url", null]) assert.equal(isOpenLink(bad), false, String(bad));
+});
+
+test("Linux desktop files: quoted Exec lines, the login one starts hidden, the menu one takes morse:// links", async () => {
+  const entry = desktopEntry({ exec: "/home/sam/Apps/Morse 0.2.AppImage", url: true, icon: "morse" });
+  assert.match(entry, /^Exec="\/home\/sam\/Apps\/Morse 0\.2\.AppImage" %u$/m);
+  assert.match(entry, /^MimeType=x-scheme-handler\/morse;$/m);
+  assert.doesNotMatch(entry, /--hidden/);
+  const login = desktopEntry({ exec: "/opt/electron", args: ["/repo/desktop-app"], hidden: true });
+  assert.match(login, /^Exec=\/opt\/electron \/repo\/desktop-app --hidden$/m);
+  assert.match(desktopEntry({ exec: '/x/$(rm -rf)/"a"' }), /^Exec="\/x\/\\\$\(rm -rf\)\/\\"a\\""$/m);
+  const h = tempDir("morse-autostart-");
+  await setAutostart(true, { exec: "/x/morse", home: h });
+  assert.ok(existsSync(AUTOSTART(h)));
+  await setAutostart(false, { home: h });
+  assert.equal(existsSync(AUTOSTART(h)), false);
+});
+
+test("the Morse mark as a PNG: the right size, see-through around the mark", () => {
+  const buf = markPng(32);
+  assert.deepEqual([...buf.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+  assert.equal(buf.readUInt32BE(16), 32);
+  const px = markPixels(32);
+  assert.equal(px[3], 0, "corner pixel is see-through");
+  const tile = markPixels(64, { tile: true });
+  assert.equal(tile[(32 * 64 + 4) * 4 + 3], 255, "the app icon's tile is solid");
+});
+
+test("desktop.json lives in the Morse folder; unknown settings are refused", async () => {
+  const { service, daemon } = setup();
+  assert.deepEqual(await service.setSetting("apps", true), { error: "There's no such setting." });
+  assert.deepEqual(await service.setSetting("appArgs", true), { error: "There's no such setting." });
+  await service.setSetting("startAtLogin", true);
+  assert.equal(JSON.parse(await fs.readFile(path.join(daemon.HOME, "desktop.json"), "utf8")).startAtLogin, true);
+  assert.ok(home);
+});

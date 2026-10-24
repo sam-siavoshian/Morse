@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Only this page's own files. No inline code, no other sites, no frames. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="color-scheme" content="dark light">
+<title>Morse</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<!-- The first run: one screen, nothing to decide. The model is found by
+     itself; the only thing to do is open an app. -->
+<div class="first" id="first" hidden>
+  <div class="first-card">
+    <svg class="radar" viewBox="0 0 15 15" width="36" height="36" fill="currentColor" aria-hidden="true"><rect x="4" y="0" width="3" height="3" rx="1" class="o"/><rect x="8" y="0" width="3" height="3" rx="1" class="o"/><rect x="0" y="4" width="3" height="3" rx="1" class="o"/><rect x="4" y="4" width="3" height="3" rx="1" class="c"/><rect x="8" y="4" width="3" height="3" rx="1" class="c"/><rect x="12" y="4" width="3" height="3" rx="1" class="o"/><rect x="0" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="8" width="3" height="3" rx="1" class="c"/><rect x="8" y="8" width="3" height="3" rx="1" class="c"/><rect x="12" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="12" width="3" height="3" rx="1" class="o"/><rect x="8" y="12" width="3" height="3" rx="1" class="o"/></svg>
+    <h1>Welcome to Morse</h1>
+    <p class="lede">Change any app in your own words.</p>
+    <p class="live" id="first-model" role="status"></p>
+    <div class="keyrow" id="first-key" hidden>
+      <input id="first-key-input" type="password" placeholder="Paste an Anthropic or OpenAI API key" autocomplete="off" spellcheck="false" aria-label="API key">
+      <div class="row-end"><button type="button" class="link" data-link="models">Other ways to connect a model</button><button type="button" class="btn" id="first-key-use">Use this key</button></div>
+    </div>
+    <h2>Open an app with Morse</h2>
+    <ul class="list" id="first-apps" aria-label="Apps"></ul>
+    <p class="foot">Then press <span class="caps" id="first-key-caps"></span> in the app, point at something and say what to change. Chrome connects when you click Connect in Morse's welcome page there.</p>
+    <button type="button" class="link" id="first-skip">Skip for now</button>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <svg class="radar" viewBox="0 0 15 15" width="18" height="18" fill="currentColor" aria-hidden="true"><rect x="4" y="0" width="3" height="3" rx="1" class="o"/><rect x="8" y="0" width="3" height="3" rx="1" class="o"/><rect x="0" y="4" width="3" height="3" rx="1" class="o"/><rect x="4" y="4" width="3" height="3" rx="1" class="c"/><rect x="8" y="4" width="3" height="3" rx="1" class="c"/><rect x="12" y="4" width="3" height="3" rx="1" class="o"/><rect x="0" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="8" width="3" height="3" rx="1" class="c"/><rect x="8" y="8" width="3" height="3" rx="1" class="c"/><rect x="12" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="12" width="3" height="3" rx="1" class="o"/><rect x="8" y="12" width="3" height="3" rx="1" class="o"/></svg>
+      <b>Morse</b>
+    </div>
+    <nav aria-label="Sections">
+      <button type="button" data-tab="apps" aria-current="page">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1.2"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1.2"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1.2"/><rect x="9" y="9" width="4.5" height="4.5" rx="1.2"/></svg>
+        <span>Apps</span><small id="nav-apps"></small></button>
+      <button type="button" data-tab="model">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 4.5h10M3 8h10M3 11.5h6"/></svg>
+        <span>Model</span><small id="nav-model"></small></button>
+      <button type="button" data-tab="chrome">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M2.5 8h11M8 2.5c1.6 1.6 2.4 3.4 2.4 5.5S9.6 11.9 8 13.5M8 2.5C6.4 4.1 5.6 5.9 5.6 8s.8 3.9 2.4 5.5"/></svg>
+        <span>Chrome</span><small id="nav-chrome"></small></button>
+      <button type="button" data-tab="mods">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5l5.5 3L8 8.5l-5.5-3z"/><path d="M2.5 8.2L8 11.2l5.5-3M2.5 10.9L8 13.9l5.5-3"/></svg>
+        <span>Mods</span><small id="nav-mods"></small></button>
+      <button type="button" data-tab="checks">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M5.6 8.1l1.7 1.7 3.2-3.4"/></svg>
+        <span>Checks</span><small id="nav-checks"></small></button>
+    </nav>
+    <div class="side-foot">
+      <label class="switchrow"><span>Mods on</span><input type="checkbox" role="switch" id="mods-on" checked></label>
+      <label class="switchrow"><span>Open at login</span><input type="checkbox" role="switch" id="at-login"></label>
+      <p class="ver" id="version"></p>
+    </div>
+  </aside>
+
+  <main>
+    <!-- Your apps -->
+    <section id="apps" aria-labelledby="apps-h">
+      <header class="head two">
+        <h1 id="apps-h">Your apps</h1>
+        <div class="head-actions">
+          <button type="button" class="ibtn" id="refresh" aria-label="Look again" title="Look again"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.6"/><path d="M13 2.8v2.6h-2.6"/></svg></button>
+          <button type="button" class="btn" id="add-app">Add an app…</button>
+        </div>
+        <p>Open an app with Morse, then press <span class="caps" id="open-key"></span> in it, point at something and say what to change.</p>
+      </header>
+      <div class="notice" id="no-model" hidden><span><b>Choose a model first.</b> Morse needs one to write your changes.</span><button type="button" class="btn primary" data-go="model">Choose a model</button></div>
+      <p class="error" id="apps-error" role="alert" hidden></p>
+      <ul class="list" id="app-list" aria-label="Apps"></ul>
+      <p class="foot">Morse opens the app again with one extra setting so it can connect. It never changes the app's files. Disconnect, or quit the app, and your mods come off until next time.</p>
+    </section>
+
+    <!-- Model -->
+    <section id="model" aria-labelledby="model-h" hidden>
+      <header class="head"><div>
+        <h1 id="model-h">Model</h1>
+        <p>Morse has no model of its own. It uses one you already have to write your changes.</p>
+      </div></header>
+      <div class="card current">
+        <div class="cur-main">
+          <div><span class="eyebrow">Morse uses</span><div class="cur-name"><b id="model-name">…</b><span class="pill" id="model-pill" hidden></span></div></div>
+          <div class="cur-actions"><button type="button" class="btn" id="check-model">Check</button><button type="button" class="btn" id="change-model">Change…</button></div>
+        </div>
+        <p class="live" id="model-live" role="status"></p>
+      </div>
+      <div class="card choices" id="choices" hidden>
+        <span class="eyebrow">Choose what writes your changes</span>
+        <div id="choice-list" role="radiogroup" aria-label="Models"></div>
+        <div class="keyrow" id="keyrow" hidden>
+          <input id="api-key" type="password" placeholder="Paste an Anthropic or OpenAI API key" autocomplete="off" spellcheck="false" aria-label="API key">
+          <small>It stays on this computer, in your Morse folder.</small>
+        </div>
+        <div class="row-end"><button type="button" class="btn" id="cancel-choice">Cancel</button><button type="button" class="btn primary" id="use-choice">Use this</button></div>
+      </div>
+      <p class="foot">Each choice is explained in <button type="button" class="link" data-link="models">Models and setup</button>.</p>
+    </section>
+
+    <!-- Chrome -->
+    <section id="chrome" aria-labelledby="chrome-h" hidden>
+      <header class="head"><div>
+        <h1 id="chrome-h">Chrome</h1>
+        <p>Use Morse on websites too. The Morse extension in Chrome uses the model you chose here.</p>
+      </div></header>
+      <div class="card">
+        <label class="switchrow big"><span><b>Let Chrome use Morse</b><small>Runs the Morse helper in the background while Morse is open</small></span><input type="checkbox" role="switch" id="helper-on"></label>
+        <p class="live" id="helper-live" role="status"></p>
+      </div>
+      <div class="card">
+        <span class="eyebrow">Connect Chrome</span>
+        <ol class="steps">
+          <li><span class="n">1</span><div><b>Add Morse to Chrome</b><span>Open <code>chrome://extensions</code>, turn on Developer mode, click Load unpacked and choose the extension folder.</span><button type="button" class="btn" id="show-ext">Show the extension folder</button></div></li>
+          <li><span class="n">2</span><div><b>Allow it here</b><span>On the welcome page Chrome opens, click Connect. Morse asks whether Chrome may use your model. Click Allow. There's no code to type.</span></div></li>
+          <li><span class="n">3</span><div><b>Or type a code</b><span>In Chrome, click Morse in the toolbar and type this code under Morse helper.</span>
+            <div class="coderow"><button type="button" class="btn" id="new-code">Show a code</button><output class="code" id="pair-code" hidden></output><small id="code-note"></small></div></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Mods -->
+    <section id="mods" aria-labelledby="mods-h" hidden>
+      <header class="head"><div>
+        <h1 id="mods-h">Mods</h1>
+        <p>A mod is a change you saved. Morse brings it back every time you open that app.</p>
+      </div></header>
+      <div class="notice" id="paused" hidden><span><b>All mods are off.</b> They are saved, and come back when you turn them on.</span><button type="button" class="btn" id="resume">Turn them on</button></div>
+      <div id="mod-groups"></div>
+      <div class="empty" id="no-mods" hidden>
+        <svg class="radar" viewBox="0 0 15 15" width="28" height="28" fill="currentColor" aria-hidden="true"><rect x="4" y="0" width="3" height="3" rx="1" class="o"/><rect x="8" y="0" width="3" height="3" rx="1" class="o"/><rect x="0" y="4" width="3" height="3" rx="1" class="o"/><rect x="4" y="4" width="3" height="3" rx="1" class="c"/><rect x="8" y="4" width="3" height="3" rx="1" class="c"/><rect x="12" y="4" width="3" height="3" rx="1" class="o"/><rect x="0" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="8" width="3" height="3" rx="1" class="c"/><rect x="8" y="8" width="3" height="3" rx="1" class="c"/><rect x="12" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="12" width="3" height="3" rx="1" class="o"/><rect x="8" y="12" width="3" height="3" rx="1" class="o"/></svg>
+        <b>No mods yet</b>
+        <span>Open an app with Morse, point at something and say what to change. Save it, and it shows up here.</span>
+      </div>
+    </section>
+
+    <!-- Checks -->
+    <section id="checks" aria-labelledby="checks-h" hidden>
+      <header class="head two">
+        <h1 id="checks-h">Checks</h1>
+        <div class="head-actions"><button type="button" class="btn primary" id="run-checks">Run checks</button></div>
+        <p>What Morse found on this computer, and whether your model answers.</p>
+      </header>
+      <ul class="list checks" id="check-list" aria-label="Checks"></ul>
+      <p class="foot">Something wrong? <button type="button" class="link" data-link="troubleshooting">Troubleshooting</button> says what each message means.</p>
+    </section>
+  </main>
+</div>
+
+<!-- Asked when an app is already open -->
+<dialog id="ask-restart" aria-labelledby="ask-restart-h">
+  <h2 id="ask-restart-h"></h2>
+  <p>Morse can only connect to an app when it starts. Save your work in it first.</p>
+  <label class="check"><input type="checkbox" id="always-restart"><span id="always-label"></span></label>
+  <div class="row-end"><button type="button" class="btn" value="cancel" id="restart-cancel">Cancel</button><button type="button" class="btn primary" id="restart-ok">Restart</button></div>
+</dialog>
+
+<!-- Asked when the Morse extension in Chrome asks to connect (daemon/pair-ask.js) -->
+<dialog id="ask-pair" aria-labelledby="ask-pair-h">
+  <h2 id="ask-pair-h">Allow Chrome to use your model?</h2>
+  <p>Morse in Chrome asked to connect to this computer. Allow it if you just set up Morse in Chrome. Then the changes you ask for on websites are written by your model too.</p>
+  <small class="ext" id="ask-ext"></small>
+  <div class="row-end"><button type="button" class="btn" id="pair-no">Deny</button><button type="button" class="btn primary" id="pair-yes">Allow</button></div>
+</dialog>
+
+<script src="app.js" type="module"></script>
+</body>
+</html>

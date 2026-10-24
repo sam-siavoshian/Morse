@@ -251,6 +251,27 @@ test("kit: waitFor waits for an element to appear, by words; type, choose and ke
   assert.deepEqual(got, { found: "Done later", waited: true, missing: "Couldn't find #nothing on the page", input: "sam@example.com", key: "Ctrl+k", ship: "Express", gift: true });
 });
 
+// dogfood: on GitLab, Show me once named the icon-only copy button “Copy URL”
+// (its aria-label); the model's waitFor(…, { text: "Copy URL" }) never found it.
+// And the Code menu's id, dropdown-toggle-btn-45, is a counter that changes.
+test("kit: waitFor and byText find an icon button by its name; a counter id is not a selector", { skip }, async () => {
+  await page.evaluate(() => document.body.insertAdjacentHTML("beforeend", `<div id="dog"><button aria-label="Copy URL" data-x="ssh"><svg></svg></button>
+    <button id="dropdown-toggle-btn-45" class="gl-button">Code</button><button title="Copy commit SHA"></button></div>`));
+  const r = await page.evaluate(wrapModCode("so9", `
+    window.__dog = {};
+    (async () => {
+      __dog.copy = (await morse.waitFor("#dog button", { text: "Copy URL", timeout: 500 })).dataset.x;
+      __dog.sha = morse.byText("#dog button", "commit sha")?.title;
+    })();`));
+  assert.equal(r.ok, true);
+  await page.waitForFunction(() => window.__dog.sha, null, { timeout: 3000 });
+  assert.deepEqual(await page.evaluate(() => window.__dog), { copy: "ssh", sha: "Copy commit SHA" });
+  const sel = await page.evaluate(() => SO.pickSelector(document.querySelector("#dropdown-toggle-btn-45")));
+  assert.ok(!sel.selector.includes("45"), sel.selector);
+  assert.equal(await page.evaluate(s => document.querySelectorAll(s.selector).length === 1 || [...document.querySelectorAll(s.selector)].filter(e => e.textContent.includes(s.text)).length === 1, sel), true);
+  await page.evaluate(() => document.querySelector("#dog").remove());
+});
+
 test("kit: an async handler's error is collected, and a mod turned off stops waiting", { skip }, async () => {
   await page.evaluate(wrapModCode("so2", `morse.on(document, "so-test", async () => { await morse.sleep(10); throw new Error("boom"); });`));
   await page.evaluate(() => document.dispatchEvent(new Event("so-test")));

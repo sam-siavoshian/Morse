@@ -76,7 +76,7 @@
 <body>
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="../site/" aria-label="Morse home"><span data-radar="20"></span>Morse</a>
+    <a class="brand" href="../site/" aria-label="Morse home" data-i18n-attr="aria-label:install.home"><span data-radar="20"></span>Morse</a>
     <nav class="nav" aria-label="Main">
       <a href="../site/gallery.html" data-i18n="install.nav.gallery">Gallery</a>
       <a href="../site/" data-i18n="install.nav.what">What is Morse?</a>
@@ -92,10 +92,11 @@
   import { initPage, highlight, esc } from "../site/common.js";
   import { mountAll } from "../site/radar.js";
   import { summarizeMod, whereRuns, modHosts, broadEndings } from "../core/summary.js";
-  import { t, setLanguage, pickLanguage, translatePage } from "../core/i18n.js";
+  import { t, setLanguage, pickLanguage, translatePage, loadLanguage } from "../core/i18n.js";
+  import "../core/languages.js"; // a language besides English is read from core/locales/ on this site
 
   // This page has no Morse settings to read: it follows the browser's language.
-  setLanguage(pickLanguage(navigator.languages?.length ? navigator.languages : [navigator.language]));
+  setLanguage(await loadLanguage(pickLanguage(navigator.languages?.length ? navigator.languages : [navigator.language])));
   translatePage(document);
   initPage();
   addEventListener("hashchange", () => location.reload());
@@ -171,42 +172,42 @@
     let p;
     try { p = parsePack(text); }
     catch (e) {
-      root.innerHTML = `<p class="eyebrow">Shared pack</p><h1>This pack can't be installed.</h1><p class="i-prompt">${esc(e.message)}</p>`;
+      root.innerHTML = `<p class="eyebrow">${esc(t("install.pk.eyebrow"))}</p><h1>${esc(t("install.pk.bad"))}</h1><p class="i-prompt">${esc(e.message)}</p>`;
       return;
     }
     const { pack, errors } = p;
-    document.title = `${pack.name} · Morse pack`;
+    document.title = t("install.pk.docTitle", { name: pack.name });
     const modHtml = m => {
       const sum = summarizeMod(m), wide = !m.match?.app && !!modHosts(m)?.includes("*");
-      const does = sum.empty ? "Doesn't change anything" : sum.items.filter(i => i.id !== "code").map(i => i.text).join(" · ");
+      const does = sum.empty ? t("sum.empty") : sum.items.filter(i => i.id !== "code").map(i => i.text).join(" · ");
       return `<section class="p-mod">
         <h2>${esc(m.title)}</h2>
         <p class="i-prompt">“${esc(m.prompt)}”</p>
-        <div class="i-meta"><span class="chip">for ${esc(whereRuns(m))}</span>${m.css.trim() ? `<span class="chip">style</span>` : ""}${m.js.trim() ? `<span class="chip">script</span>` : ""}</div>
+        <div class="i-meta"><span class="chip">${esc(t("install.for", { where: whereRuns(m) }))}</span>${m.css.trim() ? `<span class="chip">${esc(t("panel.tag.style"))}</span>` : ""}${m.js.trim() ? `<span class="chip">${esc(t("panel.tag.script"))}</span>` : ""}</div>
         <p class="p-does">${esc(does)}</p>
-        ${wide ? `<p class="i-note" data-s="everywhere">${warn}<span>This mod runs on every website you visit, not just one. It can see what you see on all of them.</span></p>`
-          : broadEndings(m).length ? `<p class="i-note" data-s="everywhere">${warn}<span>This mod runs on every website whose address ends in ${esc(broadEndings(m).join(" or "))}, not just one. It can see what you see on all of them.</span></p>` : ""}
+        ${wide ? `<p class="i-note" data-s="everywhere">${warn}<span>${esc(t("install.everywhere"))}</span></p>`
+          : broadEndings(m).length ? `<p class="i-note" data-s="everywhere">${warn}<span>${esc(t("install.broad", { endings: broadEndings(m).join(t("install.or")) }))}</span></p>` : ""}
         ${sum.notes.map(n => `<p class="i-note" data-s="${n.id}">${warn}<span>${esc(n.text)}</span></p>`).join("")}
-        <details class="i-code"><summary>Show code</summary>
-          ${m.css.trim() ? `<h2>Style (CSS) <span>${lines(m.css)}</span></h2><pre class="code">${highlight(m.css.trimEnd(), "css")}</pre>` : ""}
-          ${m.js.trim() ? `<h2>Script (JavaScript) <span>${lines(m.js)}</span></h2><pre class="code">${highlight(m.js.trimEnd(), "js")}</pre>` : ""}
+        <details class="i-code"><summary>${esc(t("ctl.showCode"))}</summary>
+          ${m.css.trim() ? `<h2>${esc(t("install.code.style"))} <span>${lines(m.css)}</span></h2><pre class="code">${highlight(m.css.trimEnd(), "css")}</pre>` : ""}
+          ${m.js.trim() ? `<h2>${esc(t("install.code.script"))} <span>${lines(m.js)}</span></h2><pre class="code">${highlight(m.js.trimEnd(), "js")}</pre>` : ""}
         </details>
       </section>`;
     };
     const n = pack.mods.length;
     root.innerHTML = `
-      <p class="eyebrow"><span data-radar="14" data-still></span>Shared pack</p>
+      <p class="eyebrow"><span data-radar="14" data-still></span>${esc(t("install.pk.eyebrow"))}</p>
       <h1>${esc(pack.name)}</h1>
       ${pack.note ? `<p class="i-prompt">“${esc(pack.note)}”</p>` : ""}
-      <div class="i-meta"><span class="chip">${n} mod${n === 1 ? "" : "s"}</span>${pack.author ? `<span class="chip">by ${esc(pack.author)}</span>` : ""}</div>
+      <div class="i-meta"><span class="chip">${esc(t("wait.many", { n }))}</span>${pack.author ? `<span class="chip">${esc(t("gl.by", { author: pack.author }))}</span>` : ""}</div>
       <div class="i-actions">
-        <button class="btn primary" type="button" id="install">Install…</button>
-        <a class="btn" id="file" download>Download pack file</a>
+        <button class="btn primary" type="button" id="install">${esc(t("gl.install"))}</button>
+        <a class="btn" id="file" download>${esc(t("pk.file"))}</a>
       </div>
       <p id="status" role="status"></p>
       <div class="p-mods">${pack.mods.map(modHtml).join("")}</div>
-      ${errors.length ? `<p class="i-foot">Left out: ${esc(errors.join("; "))}</p>` : ""}
-      <p class="i-foot">A pack is a few mods shared together. A mod is a change to a website or app, made with Morse. When you install the pack, Morse shows each mod again, and you can untick the ones you don't want. The whole pack is in the link, after the <code>#</code>. Browsers never send that part to a server. The lists above come from reading the code, and they mention anything the code might do.</p>`;
+      ${errors.length ? `<p class="i-foot">${esc(t("install.pk.leftOut", { list: errors.join("; ") }))}</p>` : ""}
+      <p class="i-foot">${t("install.pk.foot")}</p>`;
     mountAll(root);
     const file = document.getElementById("file");
     file.href = URL.createObjectURL(new Blob([JSON.stringify(pack, null, 2)], { type: "application/json" }));
@@ -215,16 +216,16 @@
     document.getElementById("install").onclick = () => {
       if (document.documentElement.dataset.morseExtension) {
         window.postMessage({ morseInstall: location.href }, "*");
-        status.textContent = "Check the Morse window on this page: choose the mods you want, then press Install.";
+        status.textContent = t("install.pk.checkWindow");
       } else {
         navigator.clipboard?.writeText(location.href).catch(() => {});
-        status.innerHTML = `Morse isn't installed in this browser. The link is copied: paste it into Morse under Mods → Install a mod…, or run <code>morse pack install "&lt;link&gt;"</code> in a terminal.`;
+        status.innerHTML = t("install.pk.copied");
       }
     };
     window.addEventListener("message", e => {
       if (e.source !== window || !e.data?.morseInstalled) return;
       const r = e.data.morseInstalled;
-      status.innerHTML = r.error ? `<span class="err">${esc(r.error)}</span>` : `<span class="ok">${check}Installed ${esc(String(r.count ?? ""))} mod${r.count === 1 ? "" : "s"} from “${esc(r.title)}”.</span>`;
+      status.innerHTML = r.error ? `<span class="err">${esc(r.error)}</span>` : `<span class="ok">${check}${esc(t("pk.installed", { n: r.count ?? 0, name: r.title }))}</span>`;
     });
   }
 </script>

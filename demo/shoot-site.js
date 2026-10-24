@@ -1,10 +1,9 @@
 // Screenshots of the website (site/) and the share page (share/install.html)
-// for docs/site/: the landing page, its nav menu (wide) and nav sheet (phone),
-// the gallery and a mod's drawer, at 1440×900 and 390×844 (the site is light
-// only), and the share page for a mod and for a broken link, dark and light.
-// Full pages are whole; the menu, the drawer and the broken link are one
-// screen. The pictures of Lanes beside Morse (compare-*) are made separately,
-// from a local build of the Lanes site.
+// for docs/site/: the landing page whole at 390, 768, 1280 and 1440 pixels
+// wide (and a check that none of them scrolls sideways), each of its sections
+// at 1440 and 390, its first screen, its nav sheet on a phone, the gallery and
+// a mod's drawer, the privacy policy, and the share page for a mod and for a
+// broken link, dark and light. The site is dark only.
 //
 //   node demo/shoot-site.js            (SHOTS=dir to write elsewhere)
 //
@@ -24,6 +23,9 @@ await fs.mkdir(OUT, { recursive: true });
 const sites = await demoSites();
 const at = p => sites.url("parley", p);
 const SIZES = { desktop: { width: 1440, height: 900 }, mobile: { width: 390, height: 844 } };
+const WIDTHS = [390, 768, 1280, 1440];
+// The landing page's sections, top to bottom.
+const SECTIONS = { hero: ".hero", change: "#change", how: "#how", try: "#try", apps: "#apps", install: "#install", privacy: "#privacy", faq: "#faq", footer: "footer.foot" };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // A shared mod for the share page, like one a friend sends.
@@ -31,14 +33,15 @@ const mod = createMod({
   title: "Sleep timer", prompt: "add a sleep timer that pauses the music after a while", url: "https://open.spotify.com/",
   css: ".morse-sleep { background: none; border: 0; color: inherit; font-size: 16px; }",
   js: "morse.watch('[data-testid=\"player-controls\"]', bar => {\n  const btn = morse.el('button', { class: 'morse-sleep', text: '☾', title: 'Sleep timer' });\n  bar.append(btn);\n});",
-  model: "Claude Code · haiku",
+  model: "Claude Code · sonnet",
 });
 const link = await encodeShare({ ...mod, author: "Sam" });
 const SHARE = at(`/share/install.html#m=${link.split("#m=")[1]}`);
 
 const browser = await chromium.launch();
 async function page(size, scheme) {
-  const ctx = await browser.newContext({ viewport: SIZES[size], colorScheme: scheme, deviceScaleFactor: 1, reducedMotion: "reduce" });
+  const viewport = typeof size === "number" ? { width: size, height: 900 } : SIZES[size];
+  const ctx = await browser.newContext({ viewport, colorScheme: scheme, deviceScaleFactor: 1, reducedMotion: "reduce" });
   await sites.route(ctx);
   const p = await ctx.newPage();
   p.on("pageerror", e => console.log("  ! pageerror", e.message));
@@ -69,28 +72,56 @@ async function loadEveryPicture(p) {
   await sleep(300);
 }
 
-for (const size of ["desktop", "mobile"]) {
-  // The landing page, top to bottom, every picture loaded.
-  let p = await page(size, "light");
+// The landing page, whole, at each width: every picture loaded, and nothing
+// wider than the screen.
+const wide = [];
+for (const width of WIDTHS) {
+  const p = await page(width, "dark");
   await p.goto(at("/site/"));
   await p.waitForLoadState("networkidle");
   await loadEveryPicture(p);
+  const over = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  if (over > 0) wide.push(`${width}px: ${over}px too wide`);
+  await shot(p, `landing-${width}.png`, true);
+  await p.context().close();
+}
+if (wide.length) throw new Error(`the landing page scrolls sideways: ${wide.join("; ")}`);
+
+for (const size of ["desktop", "mobile"]) {
+  // Each section of the landing page on its own.
+  let p = await page(size, "dark");
+  await p.goto(at("/site/"));
+  await p.waitForLoadState("networkidle");
+  await loadEveryPicture(p);
+  // A tall section is shot in one piece, so the sticky nav would land on it.
+  const hideNav = await p.addStyleTag({ content: "header.nav, .skip-link { visibility: hidden !important; }" });
+  for (const [name, sel] of Object.entries(SECTIONS)) {
+    await p.locator(sel).first().screenshot({ path: path.join(OUT, `section-${name}-${size}.png`), animations: "disabled" });
+    console.log("  📸", `section-${name}-${size}.png`);
+  }
+  await hideNav.evaluate(el => el.remove());
+  // The first screen, as someone arriving sees it.
+  await p.evaluate(() => window.scrollTo(0, 0));
   await sleep(300);
-  await shot(p, `landing-${size}.png`, true);
-  // The nav: a menu panel on a wide screen, the sheet on a phone.
-  if (size === "desktop") {
-    await p.hover(".nav-item[data-menu] .nav-trigger");
-    await p.waitForSelector("#nav-panel-product:not([hidden])");
-  } else {
+  await shot(p, `landing-first-screen-${size}.png`, false);
+  // The nav sheet on a phone.
+  if (size === "mobile") {
     await p.click(".nav-toggle");
     await p.waitForSelector(".nav.is-open");
+    await sleep(400);
+    await shot(p, `landing-nav-${size}.png`, false);
   }
-  await sleep(400);
-  await shot(p, `landing-nav-${size}.png`, false);
+  await p.context().close();
+
+  // The privacy policy.
+  p = await page(size, "dark");
+  await p.goto(at("/site/privacy.html"));
+  await p.waitForLoadState("networkidle");
+  await shot(p, `privacy-${size}.png`, false);
   await p.context().close();
 
   // The gallery, and one mod opened in its drawer.
-  p = await page(size, "light");
+  p = await page(size, "dark");
   await p.goto(at("/site/gallery.html"));
   await p.waitForSelector("#grid .card");
   await loadEveryPicture(p);

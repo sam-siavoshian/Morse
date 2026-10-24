@@ -1,9 +1,26 @@
 onEvent(msg => {
   if (msg.type === "toggle") S.open ? closeBar() : openBar();
+  if (msg.type === "open") S.open ? input.focus() : openBar(); // the website's Try it here: its Open Morse button never closes the bar
   if (msg.type === "panel") openPanel();
   if (msg.type === "mods.changed") syncMods();
   if (msg.type === "settings.changed" && msg.settings) setPrefs(msg.settings);
+  if (msg.type === "request" && typeof msg.text === "string") hostRequest(msg.text.trim().slice(0, 2000), msg.at);
 });
+
+// A request from the host, sent as if it were typed in the bar (the website's
+// Try it here section, site/try.js, has buttons for a few). `at` points at
+// that part of the page first. While a change waits for Save or Undo, it waits
+// too (the host says so).
+function hostRequest(text, at) {
+  if (!text || S.phase === "working") return;
+  if (S.open && S.phase === "result" && S.draft && !S.draft.saved) return;
+  openBar();
+  let el = null;
+  try { el = typeof at === "string" && at ? document.querySelector(at) : null; } catch {}
+  if (el) setTarget(el);
+  setInput(text);
+  send(text);
+}
 
 // Effect intensity (Settings → Effects). Full is the radar field over the
 // target; subtle keeps a still outline and the pulsing mark (the default under
@@ -47,6 +64,7 @@ B.adopt({
   styleReady: () => YourStyle.ready(), // your-style hook: fit it to this site once, if turned on (72-style.js)
   waitingAdd: m => Waiting.add(m), // waiting hook: “Allow User Scripts” is off; the style shows, the code never ran (64-waiting.js)
 });
+const uiStarted = () => { B.started(); S.ready = true; /* tests: the host answered hello and the mods are on */ };
 B.ready.then(hello => {
   try {
     setPrefs(B.prefs());
@@ -55,7 +73,12 @@ B.ready.then(hello => {
     Voice.configure(hello.voice);
     PromptHistory.load();
     if (hello.debug) debugStatus(); // the host was started with MORSE_DEBUG=1
-  } finally { B.started(); S.ready = true; /* tests: the host answered hello and the mods are on */ }
+  } finally {
+    // The person's language first (04-i18n.js), so the overlay never opens in
+    // English and then changes; a host slow to send the words holds it up 1.5 s at most.
+    if (!languageReady) uiStarted();
+    else Promise.race([languageReady, new Promise(r => setTimeout(r, 1500))]).then(uiStarted).catch(e => console.warn("[morse]", e));
+  }
 }).catch(e => console.warn("[morse]", e));
 
 // boot.js applies the mods, so the guards around applyMod run there

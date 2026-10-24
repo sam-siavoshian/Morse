@@ -153,7 +153,7 @@ const GodMode = (() => {
   const sameTarget = (e, t) => e.sel === t.sel && JSON.stringify(e.shadow || null) === JSON.stringify(t.shadow || null);
   // The toolbar's short name for the selection: what kind of thing it is.
   function shortName(el) {
-    const r = roleWord(el) || (el.children.length ? "section" : "text");
+    const r = kindWord(roleWord(el) || (el.children.length ? "section" : "text")); // 20-context.js
     return r.charAt(0).toUpperCase() + r.slice(1);
   }
   function kindOf(el) {
@@ -230,7 +230,7 @@ const GodMode = (() => {
     const prompt = summarizeEdits(edits);
     s.mod = s.mod
       ? await call("mods.save", { mod: { ...s.mod, prompt, css, js, edits, enabled: true, updated: new Date().toISOString() } })
-      : await call("mods.save", { draft: { id: s.id, title: EDIT_TITLE, prompt, css, js, url: location.href, app: S.app, kind: "manual", edits } });
+      : await call("mods.save", { draft: { id: s.id, title: t("gm.editTitle"), prompt, css, js, url: location.href, app: S.app, kind: "manual", edits } });
     const i = S.mods.findIndex(m => m.id === s.id);
     if (i >= 0) S.mods[i] = s.mod; else S.mods.push(s.mod);
   }
@@ -293,7 +293,7 @@ const GodMode = (() => {
     S.picking = true;
     // Typing describes a change (the main interaction); the tools are one
     // shortcut away so a sentence starting with "m" never triggers Move.
-    hint.innerHTML = t("gm.hint", { key: `${PLATFORM === "mac" ? "⌘" : "Ctrl+"}E` });
+    hint.innerHTML = `${t("gm.hint", { key: `${PLATFORM === "mac" ? "⌘" : "Ctrl+"}E` })} · ${t("bar.hint.wider", { key: PLATFORM === "mac" ? "⌥↑" : "Alt+↑" })}`; // dogfood: Alt+↑ (41-keypick.js)
     // A toolbar action that changes the selection (duplicate, Alt+↑/↓) keeps the toolbar focused.
     if (G.keepTb) { G.keepTb = false; tb.focus({ preventScroll: true }); }
     if (!G.raf) G.raf = requestAnimationFrame(loop);
@@ -552,7 +552,7 @@ const GodMode = (() => {
       const field = ed.field = document.createElement("input");
       field.className = "gm-svgtext field";
       field.spellcheck = false;
-      field.setAttribute("aria-label", "New text");
+      field.setAttribute("aria-label", t("gm.newText"));
       field.value = ed.was.trim();
       field.style.transform = `translate(${Math.round(r.left - 8)}px, ${Math.round(r.top + r.height / 2 - 16)}px)`;
       field.style.width = `${Math.round(Math.max(120, r.width + 48))}px`;

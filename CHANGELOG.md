@@ -26,16 +26,24 @@ The first version meant for other people to install.
 - Desktop apps built from web pages (Spotify, Slack, Discord, VS Code, Notion,
   Obsidian and others): `morse launch spotify` reopens the app with Morse
   connected. Morse never changes the app's files.
+- Morse Desktop: an app for your computer, so you don't need a terminal or
+  Node. It lists your apps and opens them with Morse, chooses and checks your
+  model, runs the Morse helper for Chrome (Chrome asks once and you click
+  Allow, no code to type), and shows your mods and checks. Its first run is one
+  screen: the model it found, and your apps to open. It waits in the tray or menu bar, and
+  opens at login only if you turn that on. Built as a Linux AppImage; the macOS
+  and Windows builds are set up but not tried yet.
 
 ### Your model
 
 - Claude Code or Codex, with your own subscription, or an Anthropic or OpenAI
   API key. `morse setup` finds what you have and asks which to use.
 - No Morse account and no Morse server.
-- Quick changes use a fast model and harder ones a stronger one, from what
-  you chose (Claude Code: haiku, then sonnet). When the fast model's change
-  doesn't work, the stronger one tries before Morse gives up. Settings has
-  Model: Automatic, Always fast or Always best.
+- Two strong models from what you chose, and never a small one unless you
+  name it: small tweaks use the first (Claude Code: sonnet), and new UI, new
+  features and restyles go straight to the strongest (Claude Code: opus).
+  When the first model's change doesn't work, the stronger one tries before
+  Morse gives up. Settings has Model: Automatic, Always fast or Always best.
 
 ### Without a model
 
@@ -87,6 +95,9 @@ The first version meant for other people to install.
 - Needs Chrome 138 or later, the first with the "Allow User Scripts" switch.
 - A privacy policy that says exactly what leaves your computer:
   [docs/privacy.md](docs/privacy.md).
+- Try it on the website first, with nothing to install: the real Morse runs
+  in a small music app and a news site on the page, with sample answers for a
+  few changes. Save one, reload the app, and it comes back.
 
 ## 0.1.0
 

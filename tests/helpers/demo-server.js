@@ -1,6 +1,6 @@
 // The demo sites (demo/serve.js) on free ports, and a way to show them to a
 // browser at their usual addresses: the extension trusts the share page only
-// on http://127.0.0.1:8787, so tests route those origins to the random ports
+// on http://127.0.0.1:8787/share/, so tests route those origins to the random ports
 // instead of binding the fixed ones (which concurrent runs would fight over).
 import { serveDemo } from "../../demo/serve.js";
 import { serveBar } from "../../demo/bar-server.js";

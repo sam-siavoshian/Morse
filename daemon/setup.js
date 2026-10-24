@@ -26,6 +26,7 @@ import { defaultHotkeys, formatCombo, detectPlatform } from "../core/hotkeys.js"
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
 import { paint } from "./colors.js";
 import { commandFor } from "./platform.js";
+import { validModel } from "./harness.js"; // models: names Morse can pass to claude and codex
 
 const { g: G, d: D, b: B, r: R } = paint;
 const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· setup")}\n${G("▪▫▪")}`;
@@ -164,22 +165,22 @@ function fixFor(choice, vendor) {
   return t("setup.fix.doctor", { cmd: B("morse doctor") });
 }
 
-export const SETUP_HELP = `morse setup: choose what writes your changes.
+// `morse setup --help`, in the terminal's language (the commands stay as typed).
+export const setupHelp = (h = (id, v) => t(`setup.help.${id}`, v)) => `${h("title", { cmd: "morse setup" })}
 
-  morse setup                      asks which to use, and finds what is installed
-  morse setup --use claude-code    use Claude Code (your Claude subscription)
-  morse setup --use codex          use Codex (your ChatGPT plan)
-  morse setup --use api-key        use ANTHROPIC_API_KEY or OPENAI_API_KEY from your environment
+  morse setup                      ${h("ask")}
+  morse setup --use claude-code    ${h("cc")}
+  morse setup --use codex          ${h("codex")}
+  morse setup --use api-key        ${h("env", { a: "ANTHROPIC_API_KEY", o: "OPENAI_API_KEY" })}
   morse setup --use api-key --key <key>
-                                   use this Anthropic or OpenAI key (saved in ${tilde(HOME)}/config.json)
-  morse setup --pair <code>        also connect Chrome: the code comes from Morse's welcome page
+                                   ${h("key", { path: `${tilde(HOME)}/config.json` })}
+  morse setup --pair <code>        ${h("pair")}
   morse setup --model-mode auto|fast|best
-                                   Automatic (recommended): the fast model, and the best one
-                                   for harder changes. Or always the fast one, or always the best
+                                   ${h("mode")}
   morse setup --fast-model <name> --best-model <name>
-                                   the two models (Claude Code: haiku and sonnet)
+                                   ${h("tiers")}
 
-Setup checks that the model answers. Run it again any time to switch; morse doctor checks again.`;
+${h("foot", { doctor: "morse doctor" })}`;
 
 // ---- the interactive walk-through
 // `check(cfg)`: does the chosen model answer? Resolves { ok, ms } or
@@ -189,6 +190,12 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
   const flag = name => { const i = args.indexOf(`--${name}`); return i >= 0 ? (args[i + 1] && !args[i + 1].startsWith("--") ? args[i + 1] : true) : undefined; };
   const isTTY = !!input.isTTY;
   say(LOGO + "\n");
+  // models: the names go to claude or codex as an argument (--model), so the
+  // same check as morse config: never one that reads as another option.
+  for (const k of ["fast-model", "best-model"]) {
+    const v = str(flag(k));
+    if (v && !validModel(v)) { say(R(`  ${t("cli.badModel", { model: v })}`)); return { saved: false, rows: [] }; }
+  }
   say(`  ${t("setup.looking")}\n`);
   const rows = await detectBackends(deps);
   for (const r of rows) say(`  ${r.found ? G("✓") : D("✗")} ${r.name.padEnd(12)} ${r.found ? r.detail : D(r.detail)}`);
@@ -245,13 +252,12 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
     say(`\n  ${t("setup.notYet", { name: backend.name, cmd: B(backend.install), setup: B("morse setup") })}`);
     return { saved: false, rows };
   }
-  const cfg = applyChoice(await load(), model);
-  cfg.setup = { backend: choice, at: new Date().toISOString() };
-  for (const k of ["fast", "best"]) { // models: names given with --fast-model / --best-model
-    const v = str(flag(`${k}-model`));
-    if (v) cfg.tiers = { ...cfg.tiers, [model.provider]: { ...cfg.tiers?.[model.provider], [k]: v } };
-  }
-  await save(cfg);
+  const cfg = await saveChoice(choice, model, { load, save, edit: cfg => {
+    for (const k of ["fast", "best"]) { // models: names given with --fast-model / --best-model
+      const v = str(flag(`${k}-model`));
+      if (v) cfg.tiers = { ...cfg.tiers, [model.provider]: { ...cfg.tiers?.[model.provider], [k]: v } };
+    }
+  } });
   if (mode) await savePrefs({ modelMode: mode });
   const label = backend?.name || t("setup.demo");
   const fromEnv = choice === "api-key" && !model.keys ? row?.keyEnv : "";
@@ -268,6 +274,18 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
   say("");
   if (!flag("pair")) say(nextSteps(platform)); // with --pair, connectBrowser says what's next
   return { saved: true, rows, choice, model, checked, next: () => nextSteps(platform, { pairing: true }) };
+}
+
+// What setup saves for a choice, without the questions (Morse Desktop saves
+// its choice the same way): the choice in config.json, and which one and when.
+//   choice: a BACKENDS id (or "demo"); model: what configFor() made for it
+//   edit(cfg): more to change before it is saved (runSetup's model tiers)
+export async function saveChoice(choice, model, { load = loadConfig, save = saveConfig, edit = null } = {}) {
+  const cfg = applyChoice(await load(), model);
+  cfg.setup = { backend: choice, at: new Date().toISOString() };
+  edit?.(cfg);
+  await save(cfg);
+  return cfg;
 }
 
 // models
@@ -305,8 +323,9 @@ function lineReader(input, output) {
   };
 }
 
-// The real model check: one short request, like `morse doctor`.
-async function checkModel(cfg) {
+// The real model check: one short request, like `morse doctor`. Morse Desktop
+// runs it for its Check button.
+export async function checkModel(cfg) {
   const [{ settingsFromConfig }, { streamChat }, { plainError }] = await Promise.all([import("./models.js"), import("../core/providers.js"), import("../core/onboarding.js")]);
   const s = settingsFromConfig(cfg);
   if (s.provider === "none") return { ok: false, error: t("setup.noModelSet") };
@@ -346,7 +365,7 @@ export async function connectBrowser(code, { say = s => console.log(s) } = {}) {
 
 // The one entry point daemon/cli.js calls. Returns true when it handled the command.
 export async function maybeRun(cmd, args = []) {
-  if (cmd === "setup" && args.some(a => a === "--help" || a === "-h" || a === "help")) { console.log(SETUP_HELP); return true; }
+  if (cmd === "setup" && args.some(a => a === "--help" || a === "-h" || a === "help")) { console.log(setupHelp()); return true; }
   if (cmd === "setup") {
     const i = args.indexOf("--pair");
     const code = i >= 0 ? String(args[i + 1] || "").trim().toUpperCase() : "";

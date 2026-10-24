@@ -10,7 +10,13 @@
 // bundleRuntime() is both, back to back, for pages that load Morse in one go
 // (the playgrounds, the UI catalog, tests).
 import { readFileSync, readdirSync, existsSync } from "node:fs";
-import { CATALOGS } from "../core/i18n.js";
+import { LANGUAGES, CATALOGS } from "../core/i18n.js";
+import { readWords } from "../core/languages.js";
+
+// Every language's words, for the few the boot compares against. The UI
+// carries English only (core/i18n.js): another language comes from the host
+// when it is chosen (runtime/src/04-i18n.js).
+const ALL_WORDS = await Promise.all(LANGUAGES.map(l => (l.code === "en" ? CATALOGS.en : readWords(l.code))));
 
 const SRC = new URL("./src/", import.meta.url);
 const read = rel => readFileSync(new URL(rel, import.meta.url), "utf8");
@@ -37,7 +43,7 @@ const GUARD_DETECT = { parts: [["// Selectors that mean", "// Requests where rel
 // The boot shows no words of its own (core/i18n.js and its catalogs are the
 // UI's): t() here only satisfies the hotkey labels, which the boot never
 // reads. What the boot compares against is in every language.
-const BOOT_WORDS = `const t = id => id;\nconst AUTO_FIX_NOTES = ${JSON.stringify([...new Set(Object.values(CATALOGS).map(c => c["heal.autoNote"]))])};\n`;
+const BOOT_WORDS = `const t = id => id;\nconst AUTO_FIX_NOTES = ${JSON.stringify([...new Set(ALL_WORDS.map(c => c["heal.autoNote"]))])};\n`;
 
 export function bundleBoot() {
   return lean(guarded("boot",`${BOOT_WORDS}${inlineModule("../core/hotkeys.js", null, HOTKEYS_BOOT)}\n${inlineModule("../core/prefs.js")}\n${inlineModule("../core/control.js")}\n${inlineModule("../core/heal.js", HEAL_DETECT)}\n${inlineModule("../core/guard.js", null, GUARD_DETECT)}\n// ---- runtime/boot.js\n${read("./boot.js")}`));

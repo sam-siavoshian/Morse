@@ -36,7 +36,10 @@ function swallow(e) { if (S.picking && !ours(e)) { e.preventDefault(); e.stopPro
 function onClick(e) {
   if (!S.picking || ours(e)) return;
   e.preventDefault(); e.stopPropagation();
-  if (hoverEl && e.isTrusted) setTarget(hoverEl);
+  if (!e.isTrusted) return;
+  // A tap on a touch screen clicks with no mouse move first: point at what is under it.
+  if (e.clientX || e.clientY) onMove(e);
+  if (hoverEl) setTarget(hoverEl);
 }
 let pointerY = innerHeight / 2;
 listen("mousemove", e => { pointerY = e.clientY; }, true);

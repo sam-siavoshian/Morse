@@ -129,7 +129,7 @@ function focusRow(i) {
 }
 
 function matches(m, q) {
-  const hay = [m.title, m.prompt, m.refined, m.target?.label].filter(Boolean).join(" ").toLowerCase();
+  const hay = [m.title, m.prompt, m.refined, m.target?.label, shownLabel(m.target?.label)].filter(Boolean).join(" ").toLowerCase();
   return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
 }
 
@@ -187,7 +187,7 @@ function rowHtml(m) {
       <article data-id="${esc(m.id)}" class="${m.enabled ? "" : "off"}${broken ? " broken" : ""}" tabindex="-1" aria-label="${esc(label)}" aria-describedby="m-row-keys">
         <label class="sw" title="${m.enabled ? t("btn.turnOff") : t("btn.turnOn")}"><input type="checkbox" data-a="toggle" tabindex="-1" aria-label="${esc(m.title)}" ${m.enabled ? "checked" : ""}><span></span></label>
         <div class="meta"><b>${esc(m.title)}</b><small>“${esc(m.prompt)}”</small>${m.refined ? `<small class="latest">${t("panel.latest", { text: esc(m.refined) })}</small>` : ""}
-          <div class="tags">${m.css.trim() ? `<span>${t("panel.tag.style")}</span>` : ""}${m.js.trim() ? `<span>${t("panel.tag.script")}</span>` : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : `<span>${t("panel.tag.page")}</span>`}${when ? `<em class="when">${esc(changed ? t("panel.changed", { when }) : t("panel.added", { when }))}</em>` : ""}</div>
+          <div class="tags">${m.css.trim() ? `<span>${t("panel.tag.style")}</span>` : ""}${m.js.trim() ? `<span>${t("panel.tag.script")}</span>` : ""}${m.target ? `<span>${esc(shownLabel(m.target.label))}</span>` : `<span>${t("panel.tag.page")}</span>`}${when ? `<em class="when">${esc(changed ? t("panel.changed", { when }) : t("panel.added", { when }))}</em>` : ""}</div>
         </div>
         ${broken ? `<div class="health" role="status"><p><b>${esc(h.lead || t("panel.notWorking") /* self-heal hook: 71-heal.js */)}</b> ${esc(h.reason)}</p><button class="primary" data-a="fix">${t("btn.fixIt")}</button></div>` : ""}
         ${guardRowHtml(m) /* guard hook: Paused because it was slowing this page down (64-guard.js) */}
@@ -237,7 +237,7 @@ async function copyText(text) {
   ta.select();
   const ok = document.execCommand?.("copy");
   ta.remove();
-  if (!ok) throw new Error("this page blocks the clipboard");
+  if (!ok) throw new Error(t("panel.clipboardBlocked"));
 }
 async function copyLink(m, btn) {
   try {

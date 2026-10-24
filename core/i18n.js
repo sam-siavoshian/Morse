@@ -5,22 +5,21 @@
 //
 //   t("panel.deleted", { title })          "Deleted “Sleep timer”"
 //   t("panel.search", { n: 7 })            plural: { one: "…", other: "…" }, picked by n
-//   setLanguage(pickLanguage(navigator.languages))   or languageFromEnv(process.env)
+//   setLanguage(await loadLanguage(pickLanguage(navigator.languages)))   or languageFromEnv(process.env)
 //   translatePage(document)                data-i18n / data-i18n-html / data-i18n-attr
 //
-// No dependencies besides the catalogs, which are plain data: runtime/bundle.js
-// inlines this file and the catalogs into the in-page runtime; the extension
-// pages, the share page and the CLI import it as a module.
+// Only English is built in. Another language's words are loaded when that
+// language is chosen (loadLanguage), from where the caller says
+// (setLanguageLoader): core/languages.js reads core/locales/ (the CLI, the
+// desktop connector, the website), the extension reads locales/<code>.json
+// from its own package (extension/words.js), and the in-page runtime asks its
+// host (runtime/src/04-i18n.js). So no build carries every language.
+//
+// No dependencies besides the English catalog, which is plain data:
+// runtime/bundle.js inlines this file and it into the in-page runtime; the
+// extension pages, the share page and the CLI import it as a module.
 
 import en from "./locales/en.js";
-import es from "./locales/es.js";
-import de from "./locales/de.js";
-import fr from "./locales/fr.js";
-import ptBR from "./locales/pt-BR.js";
-import zhCN from "./locales/zh-CN.js";
-import ja from "./locales/ja.js";
-import fa from "./locales/fa.js";
-import ar from "./locales/ar.js";
 
 // The order Settings lists them in; each name is in its own language.
 export const LANGUAGES = [
@@ -34,10 +33,14 @@ export const LANGUAGES = [
   { code: "fa", name: "فارسی" },
   { code: "ar", name: "العربية" },
 ];
-export const CATALOGS = { en, es, de, fr, "pt-BR": ptBR, "zh-CN": zhCN, ja, fa, ar };
+// The words of each language that is here: English always, another one once
+// loadLanguage() or addLanguage() has brought it.
+export const CATALOGS = { en };
 const RTL_LANGS = ["fa", "ar"];
 
 let current = "en";
+let loader = null; // code -> that language's words, or a promise of them
+const loading = {};
 
 // A language tag ("es-MX", "pt", "zh-Hans-CN", "fa_IR.UTF-8") to one Morse
 // has, or "" when there is none. Traditional Chinese is not Simplified.
@@ -63,8 +66,31 @@ export function languageFromEnv(env = {}) {
   return pickLanguage([...(env.LANGUAGE ? env.LANGUAGE.split(":") : []), locale]);
 }
 
+// Where the words of the languages besides English come from.
+export function setLanguageLoader(fn) { loader = typeof fn === "function" ? fn : null; }
+// Keeps a language's words that came some other way (a host's reply).
+export function addLanguage(code, words) {
+  if (code !== "en" && LANGUAGES.some(l => l.code === code) && words && typeof words === "object" && !Array.isArray(words)) CATALOGS[code] = words;
+  return !!CATALOGS[code];
+}
+// Brings a language's words if they aren't here yet. Resolves with the
+// language Morse can show now: the one asked for, or English when Morse has
+// no such language or its words couldn't be read (a later call tries again).
+export function loadLanguage(code) {
+  const lang = matchLanguage(code) || "en";
+  if (CATALOGS[lang]) return Promise.resolve(lang);
+  if (!loader) return Promise.resolve("en");
+  return (loading[lang] ||= Promise.resolve()
+    .then(() => loader(lang))
+    .then(words => addLanguage(lang, words), () => false)
+    .then(ok => { delete loading[lang]; return ok ? lang : "en"; }));
+}
+
+// Shows a language whose words are here; any other shows English (bring it
+// first with loadLanguage).
 export function setLanguage(code) {
-  current = CATALOGS[code] ? code : matchLanguage(code) || "en";
+  const lang = matchLanguage(code) || "en";
+  current = CATALOGS[lang] ? lang : "en";
   return current;
 }
 export const getLanguage = () => current;

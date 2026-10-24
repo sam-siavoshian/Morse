@@ -136,6 +136,16 @@ node ~/.cache/morse/electron/node_modules/electron/install.js   # only if dist/ 
 DISPLAY=:99 node --test tests/electron.test.js
 ```
 
+Morse Desktop has two test files.
+[`tests/desktop-app.test.js`](../../tests/desktop-app.test.js) needs nothing
+extra: it covers the IPC handlers over the service with a fake daemon, the
+preload's exposed API, `morse://` links, the Linux desktop files and the icon.
+[`tests/desktop-app-ui.test.js`](../../tests/desktop-app-ui.test.js) drives the
+real app with Playwright's `_electron`, with the same runtime and display as
+above. It lists Tunes, opens it with Morse, disconnects, connects again,
+answers the restart question, closes the window and quits. Its app list is
+only Tunes (`MORSE_DESKTOP_SCAN=0` and `apps` in `desktop.json`).
+
 Multi-window edge cases (crashes, kill and restart, `--restart`) are tested
 against a fake Chromium app ([`demo/fake-app.js`](../../demo/fake-app.js),
 [`tests/desktop.test.js`](../../tests/desktop.test.js)).
@@ -148,7 +158,7 @@ with Claude Code and checked in the page. Run it after changing the prompt,
 the context builder or the engine:
 
 ```bash
-node evals/run.js                  # train split, Claude Code haiku
+node evals/run.js                  # train split, Claude Code, Automatic (sonnet, then opus)
 node evals/run.js --split test     # held-out cases: only for final reports
 ```
 
@@ -176,6 +186,7 @@ script that makes it, and whether it was checked and passed.
 
 ```bash
 DISPLAY=:99 npm run screenshots    # shoot-extension, shoot-desktop, shoot-control
+DISPLAY=:99 node demo/shoot-desktop-app.js   # Morse Desktop (167-175): Tunes for real, Claude Code checked for real if installed
 ```
 
 The scripts start what they need themselves: the demo sites on free ports
@@ -192,7 +203,7 @@ machine makes them slower, not wrong. Shared pieces are in
 
 They replay pre-written replies ([`core/demo.js`](../../core/demo.js)) so they
 come out the same every time. For a real model, run `demo/shoot-desktop.js`
-with `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku
+with `MORSE_PROVIDER=claude-code MORSE_MODEL=sonnet
 SHOTS=docs/screenshots/claude-code`; with `SHOTS` set it also keeps the steps
 between the pictures the docs use. They need Xvfb, Chromium through
 Playwright and ffmpeg. On a busy machine, rerun a script if a picture caught

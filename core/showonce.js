@@ -111,6 +111,8 @@ export function soRoleOf(el) {
 // ---- selectors that survive re-renders: ids, test ids, names, labels, text
 const HASHED = /^(css|sc|jsx|emotion|styled|svelte|chakra|mui)-|^_?[a-z0-9]{5,}$|[A-Z][a-z]+_[a-z]+__[a-zA-Z0-9]{5}/;
 const looksHashed = s => (/\d/.test(s) && /[a-z]/i.test(s) && HASHED.test(s)) || /^[a-z]{1,3}[0-9][a-z0-9]{3,}$/i.test(s);
+// dogfood: an id that ends in a counter (GitLab's dropdown-toggle-btn-45, React's :r5:) changes on reload
+const looksMadeId = s => looksHashed(s) || /[-_:]\d{2,}:?$/.test(s) || /^:r[0-9a-z]+:$/.test(s);
 const STATE = /^(is-|has-)?(active|selected|open|on|cur|current|hover|focus|focused|show|visible|checked|unread|read|new)$/;
 const cssEsc = s => String(s).replace(/["\\]/g, "\\$&").replace(/\n/g, "\\a ");
 const idEsc = s => (globalThis.CSS?.escape ? globalThis.CSS.escape(s) : String(s).replace(/[^\w-]/g, c => "\\" + c));
@@ -132,7 +134,7 @@ function anchorOf(el) {
   const doc = el.ownerDocument;
   for (let n = el.parentElement, i = 0; n && n !== doc.body && i < 8; n = n.parentElement, i++) {
     const tries = [];
-    if (n.id && !looksHashed(n.id) && !privateAttr("id", n.id)) tries.push(`#${idEsc(n.id)}`);
+    if (n.id && !looksMadeId(n.id) && !privateAttr("id", n.id)) tries.push(`#${idEsc(n.id)}`);
     for (const a of ["data-testid", "data-test", "aria-label"]) {
       const v = n.getAttribute(a);
       if (v && v.length <= 60 && !looksHashed(v) && !privateAttr(a, v)) tries.push(`${n.localName}[${a}="${cssEsc(v)}"]`);
@@ -159,7 +161,7 @@ function structural(el, scope) {
   const doc = el.ownerDocument;
   const parts = [];
   for (let n = el; n && n.nodeType === 1 && n !== doc.documentElement && n !== scope && parts.length < 6; n = n.parentElement) {
-    if (n.id && !looksHashed(n.id)) { parts.unshift(`#${idEsc(n.id)}`); break; }
+    if (n.id && !looksMadeId(n.id)) { parts.unshift(`#${idEsc(n.id)}`); break; }
     let s = kindSelector(n);
     const p = n.parentElement;
     if (p) {
@@ -180,7 +182,7 @@ export function pickSelector(el, scope = null) {
   const only = s => { const l = q(s); return l.length === 1 && l[0] === el; };
   const tag = el.localName;
   const cands = [];
-  if (el.id && !looksHashed(el.id) && !privateAttr("id", el.id) && !scope) cands.push(`#${idEsc(el.id)}`);
+  if (el.id && !looksMadeId(el.id) && !privateAttr("id", el.id) && !scope) cands.push(`#${idEsc(el.id)}`);
   for (const a of ATTRS) {
     const v = el.getAttribute(a);
     if (v && v.length <= 60 && !looksHashed(v) && !privateAttr(a, v)) cands.push(`${tag}[${a}="${cssEsc(v)}"]`);
