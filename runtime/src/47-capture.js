@@ -81,12 +81,11 @@ const GodCapture = (() => {
     if (w < 4 || h < 4) return null;
     w = Math.min(w, h * 3);
     h = Math.min(h, w * 1.25);
-    const vis = hostEl.style.visibility;
-    hostEl.style.visibility = "hidden";
+    hostEl.style.setProperty("visibility", "hidden", "important"); // as capture() in 60-generate.js
     await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
     let shot = null;
     try { shot = await call("capture"); } catch {}
-    hostEl.style.visibility = vis;
+    hostEl.style.removeProperty("visibility");
     if (!shot) return null;
     const img = await new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = shot; });
     if (!img) return null;

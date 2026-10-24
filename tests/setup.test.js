@@ -100,7 +100,8 @@ async function setup(answers, { args = [], ...m } = {}) {
 test("setup: Enter takes the recommendation and saves it", async () => {
   const { res, saved, out } = await setup([""], { bins: { claude: "2.1.3" } });
   assert.equal(res.saved, true);
-  assert.equal(saved.provider, "claude-code");
+  assert.equal(saved.provider, "claude-code", "written where daemon/models.js reads it");
+  assert.equal(saved.model, undefined);
   assert.equal(saved.keep, 1, "keeps the rest of config.json");
   assert.equal(saved.setup.backend, "claude-code");
   assert.match(out, /✓ Claude Code {2}2\.1\.3/);
@@ -116,6 +117,7 @@ test("setup: an API key is pasted, or taken from the environment", async () => {
   const fromEnv = await setup(["3"], { env: { OPENAI_API_KEY: "sk-env" } });
   assert.equal(fromEnv.saved.provider, "openai");
   assert.equal(fromEnv.saved.keys, undefined);
+  assert.equal(fromEnv.saved.baseUrls, undefined);
   assert.match(fromEnv.out, /with OPENAI_API_KEY from your environment/);
   assert.ok(!JSON.stringify(fromEnv.saved).includes("sk-env"), "a key from the environment is never written to disk");
 });

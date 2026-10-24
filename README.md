@@ -20,7 +20,7 @@ press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the mode
 
 *Recorded automatically by Morse. To make this clip come out the same every time, the model's answers in it are played back from a file (see [Status](#status)). Everything else is real. The same steps with real Claude Code answers are in [`docs/screenshots/claude-code`](docs/screenshots/claude-code).*
 
-## What works today (v0.1)
+## What works today (v0.2)
 
 | | |
 |---|---|
@@ -153,6 +153,7 @@ Captured by [`demo/shoot-control.js`](demo/shoot-control.js) driving the real ex
 - **Off switch.** A shortcut like the others (Settings → Shortcuts, default ⌥⇧0 / Alt+Shift+0). It takes every mod off the page at once. They stay off in that tab, even when you reload, until you press it again or click Turn back on. Nothing is deleted.
 - **Pause.** "Pause Morse on <site>" in the Mods panel and the popup, "Pause everywhere" in the popup (the toolbar icon then says *off*), and in a terminal `morse pause [site|app]` / `morse resume`. Paused mods stay saved; every open tab and window follows at once.
 - **Safe start.** If a page closes, crashes or reloads within seconds after a mod ran, three times in a row, Morse holds that mod back the next time and asks: *Keep it off* or *Turn it back on*.
+- **A mod can't freeze or slow down the page.** A mod that keeps the page busy, keeps reacting to its own changes through the page, or adds too much is paused, and the Mods panel says *Paused because it was slowing this page down*, with **Turn back on** and **Fix it** (the model gets the reason). CSS that would hide the whole page is never applied. In a desktop app, a mod whose code never finishes (`while (true) {}`) is stopped within seconds, turned off, and the page reloads. Details under [How it works](#how-it-works).
 - **What a mod does, before you install it.** Morse reads the mod's code ([`core/summary.js`](core/summary.js)) and lists what it changes and can do: *Changes how the page looks*, *Adds buttons to the page*, *Reads what you type in this page*, *Sends data to another website*, *Remembers settings on this site*, and so on. Things a mod adds itself, like a sleep timer's own label, don't count as changing the page. When in doubt, it mentions things rather than leaving them out. The share page, Install a mod… in the Mods panel and `morse install` all show it first, with the code below, and install only when you press Install. A web page can't install anything by itself: the share page's Install button opens Morse's own review, and only a click there installs.
 - **Where it came from.** Each mod in the panel and popup says how it got there (made here with which model, your own edits, installed from a shared link and by whom, restored from a backup), with **Show code** next to it. `morse code <id>` does the same in a terminal.
 - **Backups.** *Export all mods* and *Install from a file…* at the bottom of the Mods panel; `morse export --all [--out file]` and `morse install <backup file>`.
@@ -220,25 +221,32 @@ Honest accounting of what was verified and how:
 You need Node 22 or newer. To record clips of your changes, you also need `ffmpeg`.
 
 ```bash
-git clone https://github.com/sam-siavoshian/RRAA morse && cd morse
-npm install                         # the Anthropic SDK and esbuild
-npm run build                       # builds the Chrome extension into dist/extension
-node daemon/cli.js setup            # choose Claude Code, Codex or an API key
-node daemon/cli.js doctor           # checks that the model answers
+npm install -g morse-cli   # adds the morse command (about 700 KB)
+morse setup                # choose Claude Code, Codex or an API key
+morse doctor               # checks that the model answers
 ```
 
-Below, `morse` means `node daemon/cli.js`. Run `npm link` once to type just `morse`.
+Until the first npm release, install from GitHub instead: `npm install -g github:sam-siavoshian/RRAA`.
+To try it without installing, `npx morse-cli setup` works too.
+
+From a clone, for working on Morse itself:
+
+```bash
+git clone https://github.com/sam-siavoshian/RRAA morse && cd morse
+npm install && npm run build   # builds the Chrome extension into dist/extension
+npm link                       # so morse runs this checkout
+```
 
 **Desktop apps:**
 
 ```bash
-node daemon/cli.js apps                       # what's installed, and whether Morse can connect
-node daemon/cli.js launch spotify --restart   # or "vs code", slack, discord, notion, obsidian, a path…
-node daemon/cli.js status                     # connected apps, their windows, ports and mods
-node daemon/cli.js stop spotify               # disconnect; the app keeps running
-node daemon/cli.js mods
-node daemon/cli.js pause                        # stop every mod everywhere (morse resume to undo)
-node daemon/cli.js export --all                 # back up every mod to one file
+morse apps                       # what's installed, and whether Morse can connect
+morse launch spotify --restart   # or "vs code", slack, discord, notion, obsidian, a path…
+morse status                     # connected apps, their windows, ports and mods
+morse stop spotify               # disconnect; the app keeps running
+morse mods
+morse pause                        # stop every mod everywhere (morse resume to undo)
+morse export --all                 # back up every mod to one file
 ```
 
 `launch` reopens the app with Morse connected. Keep the terminal open while you use it.
@@ -246,7 +254,7 @@ node daemon/cli.js export --all                 # back up every mod to one file
 **Websites (Chrome):**
 
 1. Open `chrome://extensions` and turn on **Developer mode**.
-2. Click **Load unpacked** and choose the `dist/extension` folder.
+2. Click **Load unpacked** and choose the folder `morse extension` prints (`dist/extension` in a clone).
 3. Open Morse's details and turn on **Allow User Scripts**. Mods that only change how a site looks work without it. Mods that add buttons or features need it on some sites.
 4. The welcome page opens. Try Morse on its practice page right away (it has sample answers), then connect a model: the page shows one command, `morse setup --pair <code>`, to paste in a terminal. It finds Claude Code or Codex, checks that it answers, starts the Morse helper, and the page connects by itself (see [Models](#models)).
 5. Open any page and press **⌥Space** (Ctrl+Shift+Space on Windows and Linux).
@@ -275,19 +283,19 @@ Morse doesn't come with a model. It uses one you already have.
 On a computer, Morse uses the first one it finds, in that order. To choose yourself:
 
 ```bash
-node daemon/cli.js model                                   # which model Morse will use
-node daemon/cli.js config --provider claude-code --model haiku    # opus · sonnet · haiku
-node daemon/cli.js config --provider anthropic --anthropic-key sk-ant-…
-node daemon/cli.js config --provider openai --openai-key sk-…
-node daemon/cli.js config --provider auto                  # let Morse choose again
-node daemon/cli.js doctor                                  # what's installed, plus a real test call
+morse model                                   # which model Morse will use
+morse config --provider claude-code --model haiku    # opus · sonnet · haiku
+morse config --provider anthropic --anthropic-key sk-ant-…
+morse config --provider openai --openai-key sk-…
+morse config --provider auto                  # let Morse choose again
+morse doctor                                  # what's installed, plus a real test call
 ```
 
 Keys are saved in `~/.morse/config.json`, which only you can read. Morse also reads `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`.
 
 **In Chrome** there are two ways to connect a model. Pick one in the toolbar popup:
 
-- **Morse helper** (for Claude Code, Codex, or keys kept on your computer). Run `node daemon/cli.js serve`. It shows a 6-character code. Type the code into the popup and click Pair. `morse pair` shows a new code, and `morse unpair` signs every browser out. The helper only listens on 127.0.0.1:7457, only answers Chrome extensions (and local tools like curl, which send no Origin), and needs the token it gave out at pairing. When you press Stop or close the tab, the model on your computer stops too.
+- **Morse helper** (for Claude Code, Codex, or keys kept on your computer). Run `morse serve`. It shows a 6-character code. Type the code into the popup and click Pair. `morse pair` shows a new code, and `morse unpair` signs every browser out. The helper only listens on 127.0.0.1:7457, only answers Chrome extensions (and local tools like curl, which send no Origin), and needs the token it gave out at pairing. When you press Stop or close the tab, the model on your computer stops too.
 - **Anthropic API key (nothing to install).** Paste a key in the popup and pick a model. The key stays in this browser's extension storage, and requests go straight from the extension to Anthropic.
 
 The popup's **Test the model** button sends a small real request and shows the reply.
@@ -315,6 +323,8 @@ The popup's **Test the model** button sends a small real request and shows the r
 - **One runtime, two hosts.** The same `runtime.js` runs in websites (extension) and desktop apps (CDP); only the transport differs.
 - **No patching.** On the web, mod JS runs through `chrome.userScripts`, so it works on strict-CSP sites. On the desktop, `morse launch` relaunches an Electron app with `--remote-debugging-port` and attaches over CDP; app files, code signatures and ASAR integrity stay intact.
 - **Live and reversible.** CSS is applied while the model streams it (complete rules only). Every element, listener, timer and observer a mod creates is tracked, so turning it off removes all of it.
+- **Guards, so a mod can't hurt the page.** Before anything runs, [`core/guard.js`](core/guard.js) refuses code that would obviously break the page (CSS hiding `html`, `body` or `*`, `pointer-events: none` on the page, a `while (true)` with no way out, reloading or leaving the page when you didn't ask) and gives the model one more try with what was wrong. While a mod runs, [`core/kit.js`](core/kit.js) times every callback it hands Morse, and the `setTimeout`, `setInterval`, `requestAnimationFrame` and `MutationObserver` it uses directly: over 200 ms of every second for 3 seconds, one burst over a second, more than 1,000 new matches a second for 3 seconds (a feedback loop through the page), an observer called back over 250 times in a second, or more than 20,000 new elements in a second, and the mod is paused and turned off with the reason saved (`mod.paused`). `every()` and `setInterval` run at most every 100 ms; changes a mod makes never trigger its own watches or observers; only its first few errors reach the console. This costs about 2 µs per callback and nothing measurable for watches (30 watch mods on a streaming chat: same main-thread time as without guards).
+- **Frozen pages.** Code that never returns can't be stopped from inside the page. On the desktop, [`daemon/guard.js`](daemon/guard.js) pings each page that runs mod code once a second; after 4 seconds without an answer (6 once the mod's code has started), it interrupts the script over CDP (`Runtime.terminateExecution`), asks the kit whose code was running, turns that mod off and reloads the page. Pages where no mod code ran are never interrupted. In the extension only a debugger could interrupt a page, and Morse doesn't ask for that permission. There, a saved mod with a loop that has no way out never starts, a mod whose code doesn't finish within 4 seconds of starting is turned off so the next load is clean, and a freeze later on is left to Chrome's *Page unresponsive* dialog and safe start.
 - **The `morse` kit keeps mods short and robust.** `morse.watch(selector, fn)` survives React re-renders; `morse.el(...)` creates elements that are tracked for undo; errors inside callbacks are captured and fed back to the model. Short, concrete API → fewer tokens, fewer mistakes.
 - **Context, not the whole DOM.** The model gets the picked element's trimmed HTML, a stable selector that avoids hashed class names, its ancestors, a capped page outline (landmarks, controls, menu buttons, tabs, settings links and what sits inside closed menus), and the theme colors. Small prompts keep answers fast.
 - **Mods are data.** A mod is a JSON document (prompt, match, CSS, JS). Share links carry it in the URL fragment, so no server ever sees it.
@@ -331,7 +341,7 @@ The popup's **Test the model** button sends a small real request and shows the r
 Mods are code running inside apps you're signed into, so:
 
 - The model is told not to use the network, eval, or external scripts, but **that is not enforced yet** (see roadmap). Before a shared mod is installed, Morse says in plain words what its code can do (sending data elsewhere and reading what you type get a clear note) and shows the code; imported mods say where they came from. The summary is pattern matching, not a guarantee, so it errs on the side of mentioning things and flags code that builds code while it runs.
-- One key (⌥⇧0) turns every mod on a page off; Morse can be paused per site or everywhere; a mod that keeps crashing a page is held back on the next load.
+- One key (⌥⇧0) turns every mod on a page off; Morse can be paused per site or everywhere; a mod that keeps crashing a page is held back on the next load; a mod that slows down, freezes or hides the page is paused (see Guards above).
 - Mods run in the renderer only. They get no Node/Electron APIs.
 - Morse's own UI runs in an isolated JS world (a content script on the web, a CDP isolated world on desktop), so the app's or website's scripts can't reach Morse's host API: your prompt history, the clipboard, other sites' mods, exports or your model. Mod code runs in the page's main world, because it needs the page's own objects. Host requests are answered for the page that asked.
 - `morse launch` opens a debugging port on 127.0.0.1. While it's open, **any local process can attach to that app**, which is the same trust level as anything else running as you, but worth knowing. Quit the app normally to close it. Morse picks a free port, drops any `--remote-debugging-address` you pass, checks the port can't be reached from this machine's other addresses, and won't connect if what answers isn't the app it started (process id, then user agent).
@@ -347,7 +357,7 @@ Mods are code running inside apps you're signed into, so:
 
 ## Site
 
-[`site/`](site/) is the public website: static HTML, CSS and ES modules, no build step, so GitHub Pages can serve the repo root as is (`/site/` for the site, `/share/install.html` for share links).
+[`site/`](site/) is the public website: static HTML, CSS and ES modules, no build step. The Pages workflow ([`.github/workflows/pages.yml`](.github/workflows/pages.yml)) publishes it laid out like the repo (`/site/` for the site, `/share/install.html` for share links, `/site/mods/index.json` for the gallery list); `npm run pages` builds the same thing into `dist/pages` and fails on a broken link.
 
 - **`site/index.html`**: the landing page, with an in-browser demo of the pixel effect (simulated, no model runs).
 - **`site/gallery.html`**: example mods from [`site/mods/`](site/mods/) (`index.json` lists them; each `*.morse.json` is a normal mod). Search, filter by app, read the code, then **Install in Morse** (a share link built exactly like `encodeShare` in `core/mod.js`), **Download for Tampermonkey** or **Copy link**. The mods were written by hand against each app in October 2026, so a selector may need a refresh.
@@ -386,4 +396,12 @@ npm run test:ui    # the tests that need a display (the built extension), under 
 
 CI (`.github/workflows/ci.yml`) runs all three on every push and pull request. Tests are safe to run in parallel, several checkouts at once included: each test file gets its own `MORSE_HOME` (never your `~/.morse`), every server and debugging port is picked by the OS, and tests wait on real conditions rather than sleeping. New tests should use `tests/helpers/` (`home.js` first, then `net.js`, `wait.js`, `browser.js`, `keys.js` for the platform's default hotkeys, `demo-server.js`). `MORSE_TEST_TIMEOUT_SCALE=2` doubles every timeout on a slow machine.
 
-MIT licensed.
+
+## Releasing
+
+The version lives in `package.json` only; the build writes it into the extension's manifest, and `morse --version` prints it. See [CHANGELOG.md](CHANGELOG.md).
+
+- **npm:** `npm publish` (the `prepare` script builds the extension that ships inside the package, also for installs from GitHub).
+- **Chrome Web Store:** `npm run package:extension` makes `dist/morse-extension-<version>.zip`. The listing text, permission notes and screenshots are in [`docs/store/`](docs/store/).
+
+[Privacy policy](docs/privacy.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · MIT licensed.

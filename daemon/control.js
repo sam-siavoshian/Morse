@@ -50,9 +50,13 @@ export function watchControl(connector) {
     if (now === last) return;
     last = now;
     const msg = JSON.stringify({ type: "control.changed", pause: s.pause });
-    const sessions = connector.windows ? [...connector.windows.values()].map(w => w.session) : [...connector.pages.values()];
-    for (const session of sessions) {
-      session?.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive(${msg})` }).catch(() => {});
+    // To Morse's own world in each window, where the runtime is: never the
+    // page's main world (which has no runtime, and whose scripts could define
+    // __morseHostReceive to listen in).
+    for (const w of connector.windows?.values() || []) {
+      const world = w.frames?.get(w.frameId)?.world;
+      if (world == null) continue;
+      w.session?.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive(${msg})`, contextId: world }).catch(() => {});
     }
   };
   watchFile(CONTROL_FILE, { interval: 700 }, onChange).unref?.();

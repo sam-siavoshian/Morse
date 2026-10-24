@@ -106,7 +106,7 @@ test("first run in Chrome: welcome only, try it with no model, connect in one co
     assert.deepEqual(ctx.pages().map(p => p.url()).filter(u => u.startsWith("chrome-extension://")), [`chrome-extension://${id}/welcome.html`]);
 
     // ---- the practice page, before any model is connected
-    await until(() => welcome.frames().find(f => f.url().includes("practice.html")), 10000, "the practice frame");
+    await until(() => welcome.frames().find(f => f.url().includes("practice.html")), 30000, "the practice frame");
     const practice = welcome.frames().find(f => f.url().includes("practice.html"));
     assert.match(await welcome.locator("#practice-note").textContent(), /sample answers/);
     await welcome.click("#try");

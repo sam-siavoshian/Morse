@@ -9,7 +9,7 @@
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { modMatches, validateMod } from "../core/mod.js";
+import { modMatches, validateMod, byCreated } from "../core/mod.js";
 import { normalizePrefs, mergePrefs, pushHistory } from "../core/prefs.js";
 import { clipAdd } from "../core/clipboard.js";
 import { serialQueue } from "../core/serial.js";
@@ -57,9 +57,9 @@ export async function listMods() {
   const out = [];
   for (const f of await fs.readdir(MODS)) {
     if (!f.endsWith(".json")) continue;
-    try { out.push(JSON.parse(await fs.readFile(path.join(MODS, f), "utf8"))); } catch {}
+    try { const m = JSON.parse(await fs.readFile(path.join(MODS, f), "utf8")); if (m && typeof m === "object") out.push(m); } catch {}
   }
-  return out.sort((a, b) => a.created.localeCompare(b.created));
+  return out.sort(byCreated);
 }
 
 export async function modsFor(where) {

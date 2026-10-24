@@ -25,7 +25,7 @@ import { defaultHotkeys, formatCombo, detectPlatform } from "../core/hotkeys.js"
 const G = s => `\x1b[32m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`, R = s => `\x1b[31m${s}\x1b[0m`;
 const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· setup")}\n${G("▪▫▪")}`;
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const EXTENSION_DIR = path.join(ROOT, "dist", "extension");
+export const EXTENSION_DIR = path.join(ROOT, "dist", "extension");
 const tilde = p => (process.env.HOME && p.startsWith(process.env.HOME) ? "~" + p.slice(process.env.HOME.length) : p);
 // The extension folder as the user can type it: relative inside the repo, else from ~.
 const extDir = () => (path.relative(process.cwd(), EXTENSION_DIR).startsWith("..") ? tilde(EXTENSION_DIR) : path.relative(process.cwd(), EXTENSION_DIR));
@@ -55,18 +55,28 @@ export function configFor(id, { key = "", vendor = "" } = {}) {
 }
 export const keyVendor = key => (/^sk-ant-/.test(String(key)) ? "anthropic" : "openai");
 
-// Writes a choice into a config, keeping everything else.
+// Writes a choice into config.json the way daemon/models.js reads it:
+// "provider", plus the key under "keys" when one was pasted. A key from the
+// environment is never written; models.js reads the environment itself.
+// Takes either shape of a choice: { provider, keys } (configFor) or
+// { provider, apiKey, baseUrl }. The record an older `morse setup` wrote
+// ("model": { provider, apiKey }), which nothing read, is dropped, and its key
+// carried over when there is no other.
 export function applyChoice(cfg, choice) {
-  const out = { ...cfg, provider: choice.provider };
-  if (choice.keys) out.keys = { ...cfg.keys, ...choice.keys };
-  delete out.model; // the shape an older morse setup wrote, which nothing read
-  return out;
+  const next = { ...cfg, provider: choice.provider };
+  const old = cfg.model && typeof cfg.model === "object" ? cfg.model : null;
+  delete next.model; // pre-0.2 shape, and what early `morse setup` wrote
+  const keys = { ...(choice.keys || {}) };
+  if (choice.apiKey) keys[choice.provider] = choice.apiKey;
+  if (old?.apiKey && (old.provider === "anthropic" || old.provider === "openai") && !cfg.keys?.[old.provider] && !keys[old.provider]) keys[old.provider] = old.apiKey;
+  if (Object.keys(keys).length) next.keys = { ...cfg.keys, ...keys };
+  const baseUrl = choice.baseUrls?.openai || (choice.provider === "openai" ? choice.baseUrl : "");
+  if (baseUrl && baseUrl !== "https://api.openai.com" && !cfg.baseUrls?.openai) next.baseUrls = { ...cfg.baseUrls, openai: baseUrl };
+  return next;
 }
 
 // Something is set up once config.json names a provider (morse setup or morse config).
-export const isSetUp = cfg => !!(cfg && (
-  (cfg.provider && cfg.provider !== "auto") ||
-  (cfg.model && typeof cfg.model === "object" && cfg.model.provider && cfg.model.provider !== "auto")));
+export const isSetUp = cfg => !!(cfg && ((cfg.provider && cfg.provider !== "auto") || (cfg.model?.provider && cfg.model.provider !== "auto")));
 
 // ---- probes (real ones; tests pass fakes)
 export async function whichBin(name, { env = process.env, platform = process.platform } = {}) {
@@ -145,6 +155,18 @@ function fixFor(choice, vendor) {
   if (choice === "api-key") return `Check the key at ${vendor === "anthropic" ? "console.anthropic.com" : "platform.openai.com"}, then run ${B("morse setup")} again.`;
   return `Run ${B("morse doctor")} to see what's wrong.`;
 }
+
+export const SETUP_HELP = `morse setup: choose what writes your changes.
+
+  morse setup                      asks which to use, and finds what is installed
+  morse setup --use claude-code    use Claude Code (your Claude subscription)
+  morse setup --use codex          use Codex (your ChatGPT plan)
+  morse setup --use api-key        use ANTHROPIC_API_KEY or OPENAI_API_KEY from your environment
+  morse setup --use api-key --key <key>
+                                   use this Anthropic or OpenAI key (saved in ${tilde(HOME)}/config.json)
+  morse setup --pair <code>        also connect Chrome: the code comes from Morse's welcome page
+
+Setup checks that the model answers. Run it again any time to switch; morse doctor checks again.`;
 
 // ---- the interactive walk-through
 // `check(cfg)`: does the chosen model answer? Resolves { ok, ms } or
@@ -289,6 +311,7 @@ export async function connectBrowser(code, { say = s => console.log(s) } = {}) {
 
 // The one entry point daemon/cli.js calls. Returns true when it handled the command.
 export async function maybeRun(cmd, args = []) {
+  if (cmd === "setup" && args.some(a => a === "--help" || a === "-h" || a === "help")) { console.log(SETUP_HELP); return true; }
   if (cmd === "setup") {
     const i = args.indexOf("--pair");
     const code = i >= 0 ? String(args[i + 1] || "").trim().toUpperCase() : "";
