@@ -14,9 +14,11 @@
 //   node desktop-app/run.js          start it from a clone
 //   node desktop-app/build.js        package it (docs/dev/releasing.md)
 
-import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, ipcMain, dialog, shell, session } from "electron";
+import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, ipcMain, dialog, shell, session, protocol } from "electron";
+import { promises as fs } from "node:fs";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { execFile } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { createService, loadDaemon } from "./service.js";
 import { registerIpc, PUSH, pairCodeFromLink } from "./ipc.js";
 import { markPng } from "./mark.js";
@@ -24,8 +26,18 @@ import { linuxIconFor } from "./icons.js";
 import { setAutostart, writeMenuEntry } from "./linux.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const PAGE = path.join(HERE, "ui", "index.html");
-const PAGE_URL = pathToFileURL(PAGE).href;
+// The window's page is served from morse-app://ui/, a scheme of Morse's own
+// (Electron's advice over file://): only the files listed here exist there.
+const SCHEME = "morse-app";
+const PAGE_URL = `${SCHEME}://ui/index.html`;
+const UI_FILES = {
+  "/index.html": [path.join(HERE, "ui", "index.html"), "text/html; charset=utf-8"],
+  "/app.css": [path.join(HERE, "ui", "app.css"), "text/css; charset=utf-8"],
+  "/app.js": [path.join(HERE, "ui", "app.js"), "text/javascript; charset=utf-8"],
+  "/tokens.css": [path.join(HERE, "..", "design", "tokens.css"), "text/css; charset=utf-8"],
+};
+const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+protocol.registerSchemesAsPrivileged([{ scheme: SCHEME, privileges: { standard: true, secure: true } }]);
 // Morse's page, whatever its query (?platform=…) says.
 const isPage = url => { try { const u = new URL(url); u.search = ""; u.hash = ""; return u.href === PAGE_URL; } catch { return false; } };
 const MAC = process.platform === "darwin", WIN = process.platform === "win32";
@@ -33,8 +45,24 @@ const log = (...a) => { if (!app.isPackaged || process.env.MORSE_DEBUG) console.
 
 app.setName("Morse");
 
+// Run from an AppImage, this process has the AppImage's own variables. The apps
+// Morse opens must not inherit them (a library path into Morse's mount would
+// break them), so they are kept here and taken out of the environment.
+const APPIMAGE = process.env.APPIMAGE || "";
+if (APPIMAGE) {
+  const dir = process.env.APPDIR || "";
+  for (const k of ["APPIMAGE", "APPDIR", "ARGV0", "OWD"]) delete process.env[k];
+  for (const k of ["LD_LIBRARY_PATH", "PATH", "XDG_DATA_DIRS", "GSETTINGS_SCHEMA_DIR"]) {
+    if (!dir || !process.env[k]) continue;
+    const kept = process.env[k].split(":").filter(p => p && !p.startsWith(dir));
+    if (kept.length) process.env[k] = kept.join(":"); else delete process.env[k];
+  }
+}
+
 // One Morse at a time: a second start shows this window (and hands over a
 // morse:// link Chrome opened).
+// A Morse folder of its own (MORSE_HOME, as tests use) is a Morse of its own.
+if (process.env.MORSE_HOME) app.setPath("userData", path.join(process.env.MORSE_HOME, "desktop-profile"));
 if (!app.requestSingleInstanceLock()) { app.quit(); process.exit(0); }
 
 let win = null, tray = null, service = null, quitting = false, lastState = null;
@@ -58,9 +86,17 @@ function lockSession() {
   // model and to the Morse helper, come from Node in this process, not from
   // the page, and don't pass through here.)
   s.webRequest.onBeforeRequest((details, done) => {
-    const ok = details.url.startsWith(pathToFileURL(HERE).href + "/") || details.url.startsWith(pathToFileURL(path.join(HERE, "..", "design")).href + "/") || details.url.startsWith("devtools://");
+    const ok = details.url.startsWith(`${SCHEME}://ui/`) || details.url.startsWith("devtools://") || details.url.startsWith("data:");
     if (!ok) log("blocked", details.url);
     done({ cancel: !ok });
+  });
+  // The page's files, from inside the app, with the CSP as a header too.
+  s.protocol.handle(SCHEME, async req => {
+    const u = new URL(req.url);
+    const hit = u.host === "ui" && UI_FILES[u.pathname];
+    if (!hit || req.method !== "GET") return new Response("Not found", { status: 404 });
+    const body = await fs.readFile(hit[0]);
+    return new Response(body, { headers: { "content-type": hit[1], "content-security-policy": CSP, "x-content-type-options": "nosniff", "cache-control": "no-store" } });
   });
 }
 
@@ -109,7 +145,7 @@ function createWindow() {
     },
   });
   win.removeMenu?.();
-  win.loadFile(PAGE, { query: { platform: process.platform } });
+  win.loadURL(`${PAGE_URL}?platform=${process.platform}`);
   win.once("ready-to-show", () => { if (!startHidden) win.show(); });
   // Closing the window keeps Morse in the tray; Quit (tray menu, ⌘Q) ends it.
   win.on("close", e => { if (!quitting) { e.preventDefault(); win.hide(); if (MAC) app.dock?.hide(); } });
@@ -167,8 +203,8 @@ function rebuildTray() {
 // ---------------------------------------------------------------- start at login
 async function setLoginItem(on) {
   if (process.platform === "linux") {
-    const exec = process.env.APPIMAGE || process.execPath;
-    const args = process.env.APPIMAGE || app.isPackaged ? [] : [app.getAppPath()];
+    const exec = APPIMAGE || process.execPath;
+    const args = APPIMAGE || app.isPackaged ? [] : [app.getAppPath()];
     await setAutostart(on, { exec, args });
   } else app.setLoginItemSettings({ openAtLogin: on, args: ["--hidden"] });
   return { ok: true };
@@ -193,8 +229,8 @@ function registerLinks() {
   if (process.platform === "linux") {
     // The AppImage has no installer: Morse adds its own app menu entry, which
     // is what lets Chrome hand it morse:// links.
-    const exec = process.env.APPIMAGE || process.execPath;
-    writeMenuEntry({ exec }).then(() => app.setAsDefaultProtocolClient("morse")).catch(e => log("menu entry", e.message));
+    const exec = APPIMAGE || process.execPath;
+    writeMenuEntry({ exec }).then(() => new Promise(r => execFile("xdg-mime", ["default", "morse-desktop.desktop", "x-scheme-handler/morse"], () => r()))).catch(e => log("menu entry", e.message));
   } else app.setAsDefaultProtocolClient("morse");
 }
 
@@ -228,7 +264,7 @@ app.whenReady().then(async () => {
   lockSession();
   if (["dark", "light"].includes(process.env.MORSE_DESKTOP_THEME)) nativeTheme.themeSource = process.env.MORSE_DESKTOP_THEME; // screenshots
   if (MAC) app.dock?.setIcon(appIcon());
-  service = createService({ daemon: await loadDaemon(), emit: changed, log, iconFor });
+  service = createService({ daemon: await loadDaemon(), emit: changed, log, iconFor, copyExtension: app.isPackaged, self: [process.execPath, APPIMAGE] });
   registerIpc({
     ipcMain, service, isTrusted, log,
     native: {

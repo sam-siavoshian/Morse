@@ -44,7 +44,7 @@ export function stopRequested(id) { return existsSync(stopFile(id)); }
 
 // Keeps the session file in step with a Connector.
 export function publishSession(connector, info) {
-  let timer = null, writing = Promise.resolve();
+  let timer = null, writing = Promise.resolve(), closed = false;
   const snapshot = () => ({
     ...info,
     pid: process.pid,
@@ -56,14 +56,16 @@ export function publishSession(connector, info) {
       title: w.title && w.title !== w.url ? w.title : w.docTitle || w.title,
     })),
   });
-  const flush = () => { writing = writing.then(() => writeSession(snapshot())).catch(() => {}); return writing; };
-  const schedule = () => { clearTimeout(timer); timer = setTimeout(flush, 150); };
+  // Nothing is written once closed: a window that detaches late (Morse Desktop
+  // keeps running after a disconnect) must not bring the file back.
+  const flush = () => { if (!closed) writing = writing.then(() => (closed ? null : writeSession(snapshot()))).catch(() => {}); return writing; };
+  const schedule = () => { if (closed) return; clearTimeout(timer); timer = setTimeout(flush, 150); };
   const beat = setInterval(flush, 5000);
   beat.unref?.();
   return {
     changed: schedule,
     flush,
-    async close() { clearInterval(beat); clearTimeout(timer); await writing; removeSession(info.id); },
+    async close() { closed = true; clearInterval(beat); clearTimeout(timer); await writing; removeSession(info.id); },
   };
 }
 

@@ -45,7 +45,7 @@ export const API = {
   newPairingCode:     [[none], (s) => s.newCode()],
   answerPairLink:     [[bool], (s, n, yes) => s.answerPairLink(yes)],
   signOutBrowsers:    [[none], (s) => s.signOutBrowsers()],
-  showExtensionFolder:[[none], async (s, n) => { const c = await s.chrome(); return n.showFolder(c.extensionDir); }],
+  showExtensionFolder:[[none], async (s, n) => n.showFolder(await s.extensionFolder())],
   setModOn:           [[id, bool], (s, n, modId, on) => s.setModOn(modId, on)],
   setAllModsOff:      [[bool], (s, n, off) => s.setAllModsOff(off)],
   runChecks:          [[none], (s) => s.doctor()],

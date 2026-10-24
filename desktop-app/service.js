@@ -55,6 +55,8 @@ export function createService({
   daemon: d, emit = () => {}, log = () => {}, iconFor = async () => null,
   scan = process.env.MORSE_DESKTOP_SCAN !== "0", // tests and screenshots: only the apps added by file
   fetchHealth = defaultHealth, now = () => Date.now(),
+  copyExtension = false, // packaged: the extension lives inside the app, so Chrome gets a copy in the Morse folder
+  self = [], // Morse Desktop's own program: never listed as an app to open with Morse
 } = {}) {
   const SETTINGS = path.join(d.HOME, "desktop.json");
   const own = new Map();     // app id -> a session this process runs (daemon/desktop.js startSession)
@@ -93,7 +95,8 @@ export function createService({
       found = scan ? d.discoverApps(ctx) : [];
       foundAt = now();
     }
-    const list = [...found];
+    const mine = new Set(self.filter(Boolean));
+    const list = found.filter(a => ![a.exe, a.resolved, a.path].some(p => mine.has(p)));
     for (const p of (await loadSettings()).apps) {
       let a;
       try { a = d.appFromPath(ctx, p); } catch { continue; }
@@ -117,7 +120,7 @@ export function createService({
   async function apps({ fresh = false } = {}) {
     const list = await appList({ fresh });
     const procs = d.listProcesses();
-    const sessions = await d.readSessions();
+    const sessions = (await d.readSessions()).filter(s => s.state !== "stopped");
     const mods = await d.listMods().catch(() => []);
     const rows = [];
     for (const a of list) {
@@ -148,10 +151,11 @@ export function createService({
   // answer: "y" (quit it and open it again) or "a" (and always for this
   // app), after { needsRestart } asked. Resolves { ok } or { needsRestart, name }.
   async function openApp(id, { answer } = {}) {
-    if (pending.has(id)) return { ok: true };
+    log(`open ${id}${answer ? ` (${answer})` : ""}`);
+    if (pending.has(id)) { log(`${id} is already ${pending.get(id)}`); return { ok: true }; }
     const app = await findApp(id);
     if (app.canAttach === false) return { error: `${app.name} is a ${app.why}, so Morse can't connect to it.` };
-    if ((await d.readSessions()).some(s => s.id === id)) return { ok: true };
+    if ((await d.readSessions()).some(s => s.id === id && s.state !== "stopped")) { log(`${id} is already connected`); return { ok: true }; }
     pending.set(id, "opening");
     changed();
     try {
@@ -289,8 +293,27 @@ export function createService({
     return {
       running, ours: helper.ours, error: helper.error, browsers: (cfg.bridge?.tokens || []).length, waiting,
       link: pairLink && !pairLink.accepted ? { code: pairLink.code } : null,
-      extensionDir: d.EXTENSION_DIR,
+      extensionDir: copyExtension ? path.join(d.HOME, "chrome-extension") : d.EXTENSION_DIR,
     };
+  }
+
+  // "Show the extension folder": the folder Chrome's Load unpacked takes. A
+  // packaged Morse keeps the extension inside its own app file (and an AppImage
+  // moves on every start), so Chrome gets a copy in the Morse folder, made again
+  // each time so it matches this version.
+  async function extensionFolder() {
+    if (!copyExtension) return d.EXTENSION_DIR;
+    const to = path.join(d.HOME, "chrome-extension");
+    const copyTree = async (from, dest) => {
+      await fs.mkdir(dest, { recursive: true });
+      for (const e of await fs.readdir(from, { withFileTypes: true })) {
+        if (e.isDirectory()) await copyTree(path.join(from, e.name), path.join(dest, e.name));
+        else await fs.writeFile(path.join(dest, e.name), await fs.readFile(path.join(from, e.name)));
+      }
+    };
+    await fs.rm(to, { recursive: true, force: true });
+    await copyTree(d.EXTENSION_DIR, to);
+    return to;
   }
 
   // "Show a code": a new code to type into Morse's popup in Chrome (morse pair).
@@ -414,7 +437,7 @@ export function createService({
 
   return {
     state, apps, openApp, disconnectApp, addApp, model, modelChoices, chooseModel, check, chrome, startHelper, stopHelper, newCode,
-    pairRequest, answerPairLink, signOutBrowsers, mods, setModOn, pause, setAllModsOff, doctor, setSetting, loadSettings, shutdown,
+    extensionFolder, pairRequest, answerPairLink, signOutBrowsers, mods, setModOn, pause, setAllModsOff, doctor, setSetting, loadSettings, shutdown,
     get sessions() { return own; },
   };
 }
