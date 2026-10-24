@@ -30,7 +30,7 @@ process.env.MORSE_HOME = home;
 const apps = await import("../daemon/apps.js");
 const { inspectFuses, fuseVerdict, formatFuses } = await import("../daemon/fuses.js");
 const { CDPSession, listTargets } = await import("../daemon/cdp.js");
-const { findElectron, electronVersion, buildTunes, setFuses, packAsar } = await import("../demo/electron-app/build.mjs");
+const { findElectron, electronVersion, buildTunes, setFuses, packAsar, pruneBuilds } = await import("../demo/electron-app/build.mjs");
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -164,7 +164,7 @@ const procs = [];
 // disk, so they take almost no room), and every run, side by side included,
 // opens the same copy. Each is built in a folder of its own and renamed into
 // place when done; profiles and everything an app writes stay in this run's
-// home. A build for older sources is removed after a day.
+// home. Only the few most recently used builds are kept (pruneBuilds).
 const CACHE = path.join(os.homedir(), ".cache", "morse", "tunes");
 async function cachedApp(name, build) {
   const src = path.join(root, "demo", "electron-app");
@@ -173,12 +173,8 @@ async function cachedApp(name, build) {
   const id = `${name}-${h.digest("hex").slice(0, 12)}`, dir = path.join(CACHE, id);
   const result = () => ({ dir, exe: path.join(dir, "tunes"), version: electronVersion(dir) });
   await fs.mkdir(CACHE, { recursive: true });
-  for (const old of await fs.readdir(CACHE)) {
-    if (!old.startsWith(`${name}-`) || old === id) continue;
-    const st = await fs.stat(path.join(CACHE, old)).catch(() => null);
-    if (st && Date.now() - st.mtimeMs > 86400e3) await fs.rm(path.join(CACHE, old), { recursive: true, force: true }).catch(() => {});
-  }
-  if (existsSync(path.join(dir, ".built"))) { await fs.utimes(dir, new Date(), new Date()).catch(() => {}); return result(); }
+  // soak: after this one is marked as used, only the few most recent builds stay (build.mjs pruneBuilds)
+  if (existsSync(path.join(dir, ".built"))) { await fs.utimes(dir, new Date(), new Date()).catch(() => {}); await pruneBuilds(CACHE); return result(); }
   const tmp = `${dir}.${process.pid}.tmp`;
   try {
     await build(tmp);
@@ -186,6 +182,7 @@ async function cachedApp(name, build) {
     // Another run may have finished the same build first: theirs is as good.
     await fs.rename(tmp, dir).catch(e => { if (!existsSync(path.join(dir, ".built"))) throw e; });
   } finally { await fs.rm(tmp, { recursive: true, force: true }); }
+  await pruneBuilds(CACHE); // soak
   return result();
 }
 let built = null;

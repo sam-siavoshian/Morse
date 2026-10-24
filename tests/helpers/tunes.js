@@ -7,7 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { existsSync, promises as fs } from "node:fs";
 import { createHash } from "node:crypto";
-import { findElectron, electronVersion, buildTunes } from "../../demo/electron-app/build.mjs";
+import { findElectron, electronVersion, buildTunes, pruneBuilds } from "../../demo/electron-app/build.mjs";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..", "..");
 export const electronDist = findElectron();
@@ -20,7 +20,8 @@ export async function tunesApp(name = "TunesDesktop") {
   const cache = path.join(os.homedir(), ".cache", "morse", "tunes");
   const dir = path.join(cache, `${name}-${h.digest("hex").slice(0, 12)}`);
   const result = { dir, exe: path.join(dir, process.platform === "win32" ? "Tunes.exe" : "tunes") };
-  if (existsSync(path.join(dir, ".built"))) return result;
+  // soak: marked as used, then only the few most recent builds stay (build.mjs pruneBuilds)
+  if (existsSync(path.join(dir, ".built"))) { await fs.utimes(dir, new Date(), new Date()).catch(() => {}); await pruneBuilds(cache); return result; }
   await fs.mkdir(cache, { recursive: true });
   const tmp = `${dir}.${process.pid}.tmp`;
   try {
@@ -28,5 +29,6 @@ export async function tunesApp(name = "TunesDesktop") {
     await fs.writeFile(path.join(tmp, ".built"), "");
     await fs.rename(tmp, dir).catch(e => { if (!existsSync(path.join(dir, ".built"))) throw e; });
   } finally { await fs.rm(tmp, { recursive: true, force: true }); }
+  await pruneBuilds(cache); // soak
   return result;
 }

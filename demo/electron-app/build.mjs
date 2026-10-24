@@ -84,6 +84,26 @@ export async function packAsar(dir, out) {
 
 // Builds the packaged app in outDir; returns { dir, exe, version }.
 //   asar: ship the app as resources/app.asar instead of resources/app/
+// soak: packaged builds are cached per runtime and app source (tests/helpers/tunes.js,
+// tests/electron.test.js), and every source change or worktree made a new
+// ~224 MB copy (hard links fail across disks) that nobody removed: 4.6 GB.
+// Keeps the `keep` most recently used builds (and anything used in the last
+// `busyMs`, which a run side by side may have open); a build left half-done
+// (`*.tmp`) goes once it is that old too.
+export async function pruneBuilds(cache, { keep = 4, busyMs = 15 * 60e3, now = Date.now() } = {}) {
+  let names = [];
+  try { names = await fs.readdir(cache); } catch { return []; }
+  const all = [];
+  for (const n of names) {
+    const st = await fs.stat(path.join(cache, n)).catch(() => null);
+    if (st?.isDirectory()) all.push({ n, t: st.mtimeMs, tmp: n.endsWith(".tmp") });
+  }
+  const builds = all.filter(b => !b.tmp).sort((a, b) => b.t - a.t);
+  const drop = [...builds.slice(keep), ...all.filter(b => b.tmp)].filter(b => now - b.t > busyMs);
+  for (const b of drop) await fs.rm(path.join(cache, b.n), { recursive: true, force: true }).catch(() => {});
+  return drop.map(b => b.n);
+}
+
 export async function buildTunes(outDir = "/opt/Tunes", { dist = findElectron(), asar = false } = {}) {
   if (!dist) throw new Error("No Electron runtime found. Install one: npm install --prefix ~/.cache/morse/electron electron");
   if (process.platform === "darwin") throw new Error("build.mjs packages for Linux and Windows; on a Mac, run: npx electron demo/electron-app");
