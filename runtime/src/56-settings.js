@@ -74,6 +74,7 @@ function paintSettings() {
         <div class="srow"><div class="lbl"><span>Bar position</span><small>Auto moves away from what you point at</small></div><div class="ctl">${segHtml("barPosition", "Bar position", [["auto", "Auto"], ["top", "Top"], ["bottom", "Bottom"]], PREFS.barPosition)}</div></div>
         <div class="srow"><div class="lbl"><span>Theme</span></div><div class="ctl">${segHtml("theme", "Theme", [["auto", "Match app"], ["light", "Light"], ["dark", "Dark"]], PREFS.theme)}</div></div>
       </section>
+      ${modelSection()}
       <section><h4>General</h4>
         <div class="srow"><div class="lbl"><span>Welcome message</span><small>“Morse is ready” when an app or page loads</small></div><div class="ctl">${switchHtml("welcome", PREFS.welcome, "Welcome message")}</div></div>
         <div class="srow"><div class="lbl"><span>Show mods others made</span><small>Mods from the Morse gallery for the site you're on</small></div><div class="ctl">${switchHtml("gallery", PREFS.gallery, "Show mods others made")}</div></div><!-- gallery hook: 68-gallery.js -->
@@ -81,6 +82,18 @@ function paintSettings() {
       </section>
       <footer><button type="button" class="tbtn" data-act="reset-all">Reset all settings</button><span class="dim">${esc(S.mode === "extension" ? "Synced with your Chrome profile" : S.mode === "desktop" ? "Saved on this computer" : "")}</span></footer>
     </div>`;
+}
+// models (core/route.js): Automatic, Always fast, Always best, and the two
+// names. The names are set with morse setup / morse config, or in the popup.
+function modelSection() {
+  const m = S.models;
+  if (!m) return "";
+  if (m.pinned) return `<section><h4>Model</h4><div class="srow"><div class="lbl"><span>Model</span><small>Always ${esc(m.pinned)}, as chosen in morse config</small></div></div></section>`;
+  const mode = PREFS.modelMode || "auto";
+  const note = mode === "fast" ? `Every change uses ${m.fast}` : mode === "best" ? `Every change uses ${m.best}. Slower, and uses more of your plan` : `Quick changes use ${m.fast}. Harder ones, and ones it gets wrong, go to ${m.best}`;
+  return `<section><h4>Model</h4>
+        <div class="srow"><div class="lbl"><span>Model</span><small>${esc(note)}</small></div><div class="ctl">${segHtml("modelMode", "Model", [["auto", "Automatic"], ["fast", "Always fast"], ["best", "Always best"]], mode)}</div></div>
+      </section>`;
 }
 const flagsOf = partial => ({ ctrl: /Ctrl/.test(partial), alt: /Alt/.test(partial), shift: /Shift/.test(partial), meta: /Meta/.test(partial) });
 

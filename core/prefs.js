@@ -14,6 +14,7 @@ export const DEFAULT_PREFS = {
   theme: "auto",       // "auto" (match the app) | "light" | "dark"
   gallery: true,       // gallery hook: "Show mods others made" (Mods for this site)
   autoFix: false,      // self-heal hook: "Fix my mods automatically when a site changes"
+  modelMode: "auto",   // models: "auto" (fast model, strong one when needed) | "fast" | "best" (core/route.js)
 };
 
 const PREF_COMBO = /^((Ctrl|Alt|Shift|Meta)\+){0,4}[A-Za-z0-9]{1,24}$/;
@@ -36,6 +37,7 @@ export function normalizePrefs(p) {
     theme: pickPref(src.theme, ["auto", "light", "dark"], "auto"),
     gallery: src.gallery !== false, // gallery hook
     autoFix: src.autoFix === true, // self-heal hook
+    modelMode: pickPref(src.modelMode, ["auto", "fast", "best"], "auto"), // models
   };
 }
 

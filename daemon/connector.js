@@ -24,6 +24,7 @@ import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf,
 import { wrapModCode, settleMs } from "../core/kit.js";
 import { asReviewed } from "../core/summary.js"; // installs keep only the reviewed code
 import { runMorse } from "../core/engine.js";
+import { startLabel, modelNames } from "../core/route.js"; // models: "Claude Code · Automatic"
 import { settingsLabel, currentSettings } from "./models.js"; // also registers the Claude Code / Codex providers
 import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
 import { prewarm } from "../core/providers.js";
@@ -466,11 +467,14 @@ export class Connector {
     if (PACK_REQUESTS.has(msg.type)) { const r = await handlePack(msg); if (/^pack\.(install|update|enable)$/.test(msg.type)) this.modsChanged(s); return r; } // packs hook: mod packs (packs.js)
     if (Style.owns(msg)) { const r = await Style.handle(msg, await here()); if (msg.type !== "style.get" && msg.type !== "style.preview") this.modsChanged(s); return r; } // your-style hook
     switch (msg.type) {
-      case "hello":
+      case "hello": {
         this.grantMic(s, (await here()).url);
-        return { mode: "desktop", app, appName: this.app?.name || null, label: settingsLabel(this.settings),
-          settings: await loadPrefs(), voice: await cachedVoiceStatus(),
+        const prefs = await loadPrefs();
+        return { mode: "desktop", app, appName: this.app?.name || null, label: this.settings ? startLabel({ ...this.settings, mode: prefs.modelMode }, settingsLabel) : settingsLabel({}),
+          models: this.settings ? modelNames(this.settings, settingsLabel) : null, // models: the names the Settings sheet shows
+          settings: prefs, voice: await cachedVoiceStatus(),
           debug: process.env.MORSE_DEBUG === "1" || undefined }; // status for tests (97-boot.js debugStatus)
+      }
       case "mods.list":
         return Style.list(await modsFor(await here()), await here()); // your-style hook: the style first
       case "mods.save": {
@@ -505,7 +509,7 @@ export class Connector {
         return putClipboard({ ...msg.item, from: { ...msg.item?.from, app: this.app?.name || msg.item?.from?.app || null } });
       case "warm": { // speed: the bar opened; get the model ready (core/providers.js prewarm)
         const settings = await this.freshSettings();
-        if (settings?.provider && settings.provider !== "none") prewarm(settings);
+        if (settings?.provider && settings.provider !== "none") prewarm({ ...settings, mode: (await loadPrefs()).modelMode }); // models: warms the first model
         return true;
       }
       case "exec":
@@ -522,8 +526,9 @@ export class Connector {
         if (!this.settings?.provider || this.settings.provider === "none")
           throw new Error("No model is connected. Run morse setup in a terminal to choose one.");
         const t0 = Date.now();
+        const mode = (await loadPrefs()).modelMode; // models: Automatic, Always fast, Always best
         const res = await this.gens.run(msg.genId, signal => runMorse({
-          settings: this.settings,
+          settings: { ...this.settings, mode },
           request: msg.request,
           context: { ...msg.context, app: this.app?.name || msg.context.app },
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
@@ -536,8 +541,8 @@ export class Connector {
           signal,
         }));
         if (res.cancelled) { this.log(`  ■ "${msg.request}" stopped after ${Date.now() - t0}ms`); return res; }
-        this.log(`  ${res.ok ? "✓" : "✗"} "${msg.request}" → ${res.title || "-"} (${Date.now() - t0}ms, ${res.attempts} attempt${res.attempts > 1 ? "s" : ""})`);
-        return { ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts };
+        this.log(`  ${res.ok ? "✓" : "✗"} "${msg.request}" → ${res.title || "-"} (${Date.now() - t0}ms, ${res.attempts} attempt${res.attempts > 1 ? "s" : ""}${res.model ? `, ${res.model}${res.escalated ? " after the fast model" : ""}` : ""})`);
+        return { ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts, model: res.model };
       }
       case "capture": {
         const from = Date.now() / 1000 - 0.15;

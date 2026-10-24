@@ -20,7 +20,8 @@ import { promises as fs, constants as FS } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import readline from "node:readline";
-import { loadConfig, saveConfig, HOME } from "./store.js";
+import { loadConfig, saveConfig, HOME, savePrefs as savePrefsFile } from "./store.js";
+import { resolveTiers } from "../core/route.js"; // models: fast and strong
 import { defaultHotkeys, formatCombo, detectPlatform } from "../core/hotkeys.js";
 import { paint } from "./colors.js";
 import { commandFor } from "./platform.js";
@@ -170,13 +171,18 @@ export const SETUP_HELP = `morse setup: choose what writes your changes.
   morse setup --use api-key --key <key>
                                    use this Anthropic or OpenAI key (saved in ${tilde(HOME)}/config.json)
   morse setup --pair <code>        also connect Chrome: the code comes from Morse's welcome page
+  morse setup --model-mode auto|fast|best
+                                   Automatic (recommended): the fast model, and the best one
+                                   for harder changes. Or always the fast one, or always the best
+  morse setup --fast-model <name> --best-model <name>
+                                   the two models (Claude Code: haiku and sonnet)
 
 Setup checks that the model answers. Run it again any time to switch; morse doctor checks again.`;
 
 // ---- the interactive walk-through
 // `check(cfg)`: does the chosen model answer? Resolves { ok, ms } or
 // { ok: false, error } (plain words). Left out, nothing is checked (tests).
-export async function runSetup(args = [], { input = process.stdin, output = process.stdout, deps = {}, save = saveConfig, load = loadConfig, check = null, platform = detectPlatform({ platform: process.platform }) } = {}) {
+export async function runSetup(args = [], { input = process.stdin, output = process.stdout, deps = {}, save = saveConfig, load = loadConfig, savePrefs = savePrefsFile, check = null, platform = detectPlatform({ platform: process.platform }) } = {}) {
   const say = s => output.write(s + "\n");
   const flag = name => { const i = args.indexOf(`--${name}`); return i >= 0 ? (args[i + 1] && !args[i + 1].startsWith("--") ? args[i + 1] : true) : undefined; };
   const isTTY = !!input.isTTY;
@@ -220,6 +226,16 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
       model = key ? configFor("api-key", { key }) : configFor("api-key", { vendor: row.vendor });
     } else model = configFor(choice);
   } catch (e) { lines.close(); say(R(`  ${e.message}`)); return { saved: false, rows }; }
+  // models: Automatic / Always fast / Always best, and the two names (core/route.js)
+  const tiers = resolveTiers(model.provider, { fast: str(flag("fast-model")), best: str(flag("best-model")) });
+  let mode = MODES[String(flag("model-mode") || "").toLowerCase()] || "";
+  if (!mode && tiers && isTTY && !flag("use")) {
+    say(`\n  Which model should write your changes?`);
+    say(`    ${B("1")}  Automatic     ${D(`${tierName(tiers.fast)} for quick changes, ${tierName(tiers.best)} for harder ones`)}  ${G("recommended")}`);
+    say(`    ${B("2")}  Always fast   ${D(`always ${tierName(tiers.fast)}`)}`);
+    say(`    ${B("3")}  Always best   ${D(`always ${tierName(tiers.best)}: slower, and uses more of your plan`)}`);
+    mode = ["auto", "fast", "best"][Number((await lines.ask(`  Choose 1-3 [1]: `) || "1").trim()) - 1] || "auto";
+  }
   lines.close();
 
   if (backend && row && !row.found && choice !== "api-key") {
@@ -228,10 +244,16 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
   }
   const cfg = applyChoice(await load(), model);
   cfg.setup = { backend: choice, at: new Date().toISOString() };
+  for (const k of ["fast", "best"]) { // models: names given with --fast-model / --best-model
+    const v = str(flag(`${k}-model`));
+    if (v) cfg.tiers = { ...cfg.tiers, [model.provider]: { ...cfg.tiers?.[model.provider], [k]: v } };
+  }
   await save(cfg);
+  if (mode) await savePrefs({ modelMode: mode });
   const label = backend?.name || "the demo model";
   const fromEnv = choice === "api-key" && !model.keys ? row?.keyEnv : "";
   say(`\n  ${G("✓")} Morse will use ${B(label)}${fromEnv ? ` with ${fromEnv} from your environment` : ""}. ${D(`Saved in ${tilde(HOME)}/config.json`)}`);
+  if (tiers) say(`  ${D(mode === "fast" ? `Always ${tierName(tiers.fast)}.` : mode === "best" ? `Always ${tierName(tiers.best)}.` : `Quick changes use ${tierName(tiers.fast)}, harder ones ${tierName(tiers.best)}.`)} ${D("Change it in the bar's Settings, or with morse config --model-mode.")}`);
   let checked = null;
   if (check) {
     output.write(`  ${D(`Checking that ${label} answers. This can take a few seconds…`)}`);
@@ -244,6 +266,11 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
   if (!flag("pair")) say(nextSteps(platform)); // with --pair, connectBrowser says what's next
   return { saved: true, rows, choice, model, checked, next: () => nextSteps(platform, { pairing: true }) };
 }
+
+// models
+const MODES = { auto: "auto", automatic: "auto", fast: "fast", best: "best" };
+const str = v => (typeof v === "string" ? v.trim() : "");
+const tierName = t => [t.model, t.effort && `${t.effort} effort`].filter(Boolean).join(", ") || "its usual model";
 
 // Questions over readline. Piped answers are echoed so a log reads like the
 // session did; a secret isn't echoed at all.

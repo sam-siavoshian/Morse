@@ -34,7 +34,7 @@ onEvent(msg => {
 (async () => {
   try {
     const hello = await call("hello", { url: location.href });
-    S.label = hello.label; S.mode = hello.mode; S.app = hello.app || null; S.appName = hello.appName || hello.app || null;
+    S.label = hello.label; S.models = hello.models || null; S.mode = hello.mode; S.app = hello.app || null; S.appName = hello.appName || hello.app || null;
     // Hosts from before settings existed don't send them; ask (or use local ones).
     if (hello.settings) { setPrefs(hello.settings); hostPrefs = true; } else await loadPrefs();
     Voice.configure(hello.voice);

@@ -57,7 +57,8 @@
       const reply = (result, error) => setTimeout(() => emit({ reply: m.id, result, error }), 10);
       switch (m.type) {
         case "hello":
-          return reply({ mode: "playground", label: "playground · fake host", quiet: !q.has("welcome"), settings: store.get("settings", {}), voice });
+          return reply({ mode: "playground", label: "playground · fake host", quiet: !q.has("welcome"), settings: store.get("settings", {}), voice,
+            ...(q.has("models") && { models: { fast: "haiku", best: "sonnet" } }) }); // ?models: the Model setting (core/route.js)
         case "mods.list": return reply([]);
         case "settings.get": return reply(store.get("settings", {}));
         case "settings.set": { const s = merge(store.get("settings", {}), m.settings); store.set("settings", s); return reply(s); }
@@ -87,6 +88,7 @@
           const g = { id: m.id };
           fake.gens.set(m.genId, g);
           emit({ type: "stage", stage: "ready", genId: m.genId }); // the model has the request (the bar says so)
+          if (q.has("models")) emit({ type: "phase", phase: "fixing", stronger: true, genId: m.genId }); // ?models: the strong model took over
           g.t = setInterval(() => {
             const tok = TEXT.slice(i, i += 4);
             emit({ type: "token", text: tok, genId: m.genId });
@@ -95,7 +97,7 @@
               const done = block.split("```")[0].match(/[^}]*\}/g)?.join("") || "";
               if (done !== css) { css = done; emit({ type: "css", css, genId: m.genId }); }
             }
-            if (i >= TEXT.length) { clearInterval(g.t); fake.gens.delete(m.genId); reply({ ok: true, title: "Airier toolbar", css, js: "", attempts: 1 }); }
+            if (i >= TEXT.length) { clearInterval(g.t); fake.gens.delete(m.genId); reply({ ok: true, title: "Airier toolbar", css, js: "", attempts: 1, ...(q.has("models") && { model: "Claude Code · sonnet" }) }); }
           }, speed);
           return;
         }

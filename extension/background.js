@@ -10,6 +10,7 @@
 // core/ and the Anthropic SDK by scripts/build.js.
 
 import { runMorse } from "../core/engine.js";
+import { resolveTiers, startLabel, modelNames } from "../core/route.js"; // models: fast and strong (docs/models.md)
 import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_PORT_KEY, prewarm } from "../core/providers.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf, byCreated, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode, settleMs } from "../core/kit.js";
@@ -65,9 +66,11 @@ async function backend(fresh = false) {
   let out;
   if (want !== "anthropic" && helper?.paired) {
     const label = p.helperModel ? settingsLabel({ provider: helper.provider, model: p.helperModel }) : helper.label;
-    out = { kind: "helper", label, helper, settings: { provider: "helper", baseUrl: await helperUrl(), token: p.helperToken, model: p.helperModel || "", label } };
+    out = { kind: "helper", label, helper, settings: { provider: "helper", baseUrl: await helperUrl(), token: p.helperToken, model: p.helperModel || "", label,
+      backend: helper.provider, tiers: helper.tiers || null, pinned: !!p.helperModel || !!helper.pinned } }; // models: the helper's two models
   } else if (want !== "helper" && p.anthropicKey) {
-    const settings = { provider: "anthropic", apiKey: p.anthropicKey, model: p.anthropicModel || PROVIDERS.anthropic.defaultModel };
+    // models: the popup's model is the strong one; quick changes use Haiku.
+    const settings = { provider: "anthropic", apiKey: p.anthropicKey, model: p.anthropicModel || PROVIDERS.anthropic.defaultModel, tiers: resolveTiers("anthropic", { best: p.anthropicModel || undefined }) };
     out = { kind: "anthropic", label: settingsLabel(settings), settings, helper };
   } else {
     const reason = want === "anthropic" ? "Add your Anthropic API key below."
@@ -190,11 +193,13 @@ async function dispatch(msg, port) {
     case "hello": {
       const b = await backend();
       const sample = b.kind === "none" && Practice.has(tab.id); // first-run hook: the practice page's sample answers
-      const label = (sample ? "Sample answers" : b.label) + (userScriptsAvailable() || sample ? "" : " · “Allow User Scripts” off");
+      const prefs = await getPrefs();
+      const shown = b.kind === "none" ? b.label : startLabel({ ...b.settings, mode: prefs.modelMode }, settingsLabel); // models: "Claude Code · Automatic"
+      const label = (sample ? "Sample answers" : shown) + (userScriptsAvailable() || sample ? "" : " · “Allow User Scripts” off");
       // The practice area doesn't use up the "Morse is ready" toast for the first real site (first-run hook).
       const quiet = Practice.has(tab.id) || (!(await get("welcomed", false)) ? (await set("welcomed", true), false) : true);
       return { mode: "extension", app: null, label, quiet, needsModel: b.kind === "none", connect: b.kind === "none" ? b.reason : undefined,
-        settings: await getPrefs(), voice: await voiceInfo() };
+        models: b.kind === "none" ? null : modelNames(b.settings, settingsLabel), settings: prefs, voice: await voiceInfo() };
     }
     case "mods.list":
       return Style.list(Object.values(await allMods()).filter(m => modMatches(m, here)).sort(byCreated), here); // hardening: caller's page; your-style hook: the style first
@@ -228,7 +233,7 @@ async function dispatch(msg, port) {
     case "clipboard.put": return serialized(async () => { const list = clipAdd(await get("clipboard", []), msg.item); await set("clipboard", list); return list; }); // hardening: serialized
     case "warm": { // speed: the bar opened; get the model ready (core/providers.js prewarm)
       const b = await backend();
-      if (b.kind !== "none") prewarm(b.settings);
+      if (b.kind !== "none") prewarm({ ...b.settings, mode: (await getPrefs()).modelMode }); // models: warms the first model
       return true;
     }
     case "exec":
@@ -262,8 +267,9 @@ async function dispatch(msg, port) {
       // doesn't count as activity; calling an extension API does.
       const keepAlive = setInterval(() => chrome.runtime.getPlatformInfo().catch(() => {}), 20000);
       try {
+        const mode = (await getPrefs()).modelMode; // models: Automatic, Always fast, Always best
         const res = await gens.run(msg.genId, signal => runMorse({
-          settings: b.settings,
+          settings: { ...b.settings, mode },
           request: msg.request,
           context: msg.context,
           base: msg.base, // refine / fix: the mod as it is now (core/prompt.js)
@@ -274,7 +280,7 @@ async function dispatch(msg, port) {
           emit: ev => { if (!signal.aborted) try { port.postMessage({ ...ev, genId: msg.genId }); } catch {} },
         }));
         if (res.cancelled) return res;
-        return { ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts, waiting: res.waiting };
+        return { ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts, waiting: res.waiting, model: res.model };
       } catch (e) {
         if (e.code === "no_model") { cached = null; openSettings(); }
         throw e;

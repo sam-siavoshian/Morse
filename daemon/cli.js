@@ -5,7 +5,8 @@ import { execFile } from "node:child_process";
 import { resolveApp } from "./apps.js";
 import { inspectFuses, formatFuses } from "./fuses.js";
 import { appsCommand, launchCommand, attachCommand, statusCommand, stopCommand } from "./desktop.js";
-import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH, HOME } from "./store.js";
+import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH, HOME, savePrefs } from "./store.js";
+import { startLabel, modelNames } from "../core/route.js"; // models: fast and strong
 import { commandFor, platformChecks, formatChecks } from "./platform.js";
 import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask, migrateLegacy } from "./models.js";
 import { detectHarnesses, validModel } from "./harness.js";
@@ -51,11 +52,17 @@ async function settingsFrom(f) {
   return s;
 }
 
-const MODEL_FLAGS = ["provider", "model", "anthropic-key", "openai-key", "base-url"];
+const MODEL_FLAGS = ["provider", "model", "anthropic-key", "openai-key", "base-url", "model-mode", "fast-model", "best-model"];
 
 async function configure(f) {
   if (f.provider && f.provider !== "auto") assertProvider(f.provider);
-  if (typeof f.model === "string" && !validModel(f.model)) throw new Error(`"${f.model}" isn't a model name Morse can use. Check the spelling.`);
+  for (const k of ["model", "fast-model", "best-model"]) if (typeof f[k] === "string" && f[k] !== "auto" && !validModel(f[k])) throw new Error(`"${f[k]}" isn't a model name Morse can use. Check the spelling.`);
+  // models: Automatic / Always fast / Always best is a bar setting (settings.json)
+  if (f["model-mode"] !== undefined) {
+    const mode = { automatic: "auto", auto: "auto", fast: "fast", best: "best" }[String(f["model-mode"]).toLowerCase()];
+    if (!mode) throw new Error(`--model-mode takes auto, fast or best.`);
+    await savePrefs({ modelMode: mode });
+  }
   await updateConfig(cfg => {
     migrateLegacy(cfg); // first-run hook: keep what an older morse setup chose
     if (f.provider === "auto") delete cfg.provider;
@@ -68,7 +75,13 @@ async function configure(f) {
     const target = settingsFromConfig(cfg).provider;
     if (typeof f.model === "string") {
       cfg.models = { ...cfg.models };
-      if (f.model) cfg.models[target] = f.model; else delete cfg.models[target];
+      // --model auto (or empty): no fixed model, Morse chooses (core/route.js)
+      if (f.model && f.model !== "auto") cfg.models[target] = f.model; else delete cfg.models[target];
+    }
+    for (const [flag, tier] of [["fast-model", "fast"], ["best-model", "best"]]) { // models: the two names Automatic uses
+      if (typeof f[flag] !== "string") continue;
+      cfg.tiers = { ...cfg.tiers, [target]: { ...cfg.tiers?.[target] } };
+      if (f[flag]) cfg.tiers[target][tier] = f[flag]; else delete cfg.tiers[target][tier];
     }
     if (typeof f["base-url"] === "string") {
       const p = target === "anthropic" ? "anthropic" : "openai";
@@ -82,10 +95,12 @@ async function configure(f) {
 
 async function showModel() {
   const cfg = await loadConfig();
-  const s = settingsFromConfig(cfg);
+  const s = await currentSettings();
   const keys = keysFrom(cfg);
-  console.log(`${B(settingsLabel(s))}${s.detected && s.provider !== "none" ? D("  (auto-detected)") : ""}`);
-  console.log(D(`provider ${s.provider}${s.model ? ` · model ${s.model}` : ""}${s.baseUrl ? ` · ${s.baseUrl}` : ""}`));
+  console.log(`${B(startLabel(s, settingsLabel))}${s.detected && s.provider !== "none" ? D("  (auto-detected)") : ""}`);
+  console.log(D(`provider ${s.provider}${s.pinned && s.model ? ` · model ${s.model}` : ""}${s.baseUrl ? ` · ${s.baseUrl}` : ""}`));
+  const names = s.provider === "none" ? null : modelNames(s, settingsLabel); // models
+  if (names?.fast) console.log(D(`models   ${{ auto: "Automatic", fast: "always fast", best: "always best" }[s.mode] || "Automatic"} · fast ${names.fast} · best ${names.best}`));
   console.log(D(`keys     anthropic ${keys.anthropic ? "set" : "-"} · openai ${keys.openai ? "set" : "-"}`));
   console.log(D(`config   ${CONFIG_PATH}`));
 }
@@ -126,7 +141,10 @@ ${B("Model")} (bring your own: Claude Code, Codex, or an API key)
   morse setup               choose Claude Code, Codex or an API key (finds what is installed)
   morse model               show which model Morse uses
   morse config --provider claude-code|codex|anthropic|openai|auto
-      --model <name>        for example opus · sonnet · haiku · claude-opus-5-5 · gpt-5
+      --model-mode auto|fast|best   Automatic (recommended), always the fast model, always the best one
+      --fast-model <name> --best-model <name>   the two models Automatic uses (haiku and sonnet for Claude Code)
+      --model <name>        always this one model, for example opus · sonnet · haiku · claude-opus-5-5 · gpt-5
+                            (--model auto: let Morse choose again)
       --anthropic-key <key> --openai-key <key> --base-url <url>   (leave empty to remove)
   morse doctor              show what's installed and check that the model answers
 

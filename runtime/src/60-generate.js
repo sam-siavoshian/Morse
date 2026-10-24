@@ -95,7 +95,7 @@ async function submit(request, opts = {}) {
     if (msg.type === "css") { if (shotDone) showCss(msg.css); else pendingCss = msg.css; }
     if (msg.type === "stage" && !wrote && !fixing) say(msg.stage === "thinking" ? "Thinking" : "The model is reading the page");
     if (msg.type === "phase") {
-      if (msg.phase === "fixing") { fixing = true; say("Fixing a mistake and trying again"); hint.title = String(msg.error || ""); }
+      if (msg.phase === "fixing") { fixing = true; say(msg.stronger ? "Asking a stronger model" : "Fixing a mistake and trying again"); hint.title = String(msg.error || ""); } // models: core/route.js
       if (msg.phase === "applying") say("Trying the change");
     }
   });
@@ -108,6 +108,7 @@ async function submit(request, opts = {}) {
   clearInterval(clock);
   bar.classList.remove("working");
   const secs = ((performance.now() - t0) / 1000).toFixed(1);
+  if (res?.model) S.label = res.model; // models: the footer names the model that answered
 
   if (prev) {
     if (!res.ok || res.kind === "answer") {
