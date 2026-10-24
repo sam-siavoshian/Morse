@@ -32,7 +32,7 @@ function which(cmd) {
 export function resolveApp(idOrPath) {
   const known = KNOWN_APPS[idOrPath.toLowerCase()];
   if (!known) {
-    if (!existsSync(idOrPath)) throw new Error(`Unknown app "${idOrPath}". Use one of: ${Object.keys(KNOWN_APPS).join(", ")}, or a path.`);
+    if (!existsSync(idOrPath)) throw new Error(`Morse doesn't know an app called "${idOrPath}". Use one of: ${Object.keys(KNOWN_APPS).join(", ")}, or the app's path.`);
     return { id: path.basename(idOrPath).replace(/\.(app|exe)$/i, "").toLowerCase(), name: path.basename(idOrPath), path: idOrPath };
   }
   const list = known[P === "darwin" ? "mac" : P === "win32" ? "win" : "linux"] || [];
@@ -40,7 +40,7 @@ export function resolveApp(idOrPath) {
     const p = c.includes("/") || c.includes("\\") ? (existsSync(c) ? c : null) : which(c);
     if (p) return { id: idOrPath.toLowerCase(), name: known.name, path: p, browser: !!known.browser };
   }
-  throw new Error(`${known.name} isn't installed in the usual place. Pass its path instead: morse launch /path/to/${known.name}`);
+  throw new Error(`Couldn't find ${known.name} in the usual place. Give its path instead: morse launch /path/to/${known.name}`);
 }
 
 export function executableFor(appPath) {

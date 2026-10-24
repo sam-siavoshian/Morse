@@ -11,7 +11,7 @@ $("warn").hidden = st.userScripts;
 $("count").textContent = st.mods.length ? `· ${st.mods.length}` : "";
 $("mods").innerHTML = st.mods.length
   ? st.mods.map(m => `<li>${m.enabled ? "●" : "○"} ${esc(m.title)}<small>“${esc(m.prompt)}”</small></li>`).join("")
-  : `<li class="empty">None yet.</li>`;
+  : `<li class="empty">No mods on this site yet.</li>`;
 for (const k of ["provider", "baseUrl", "model", "apiKey"]) if (st.saved[k]) $(k).value = st.saved[k];
 
 $("go").onclick = async () => { await chrome.tabs.sendMessage(tab.id, { morseToggle: true }).catch(() => {}); window.close(); };

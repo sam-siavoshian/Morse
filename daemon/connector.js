@@ -46,7 +46,7 @@ export class Connector {
           this.attach(t).catch(e => { this.pages.delete(t.id); this.log(`  ! ${t.title || t.url}: ${e.message}`); });
         }
       } catch {
-        if (this.everAttached) { this.log("App closed. Bye."); return; }
+        if (this.everAttached) { this.log("The app closed, so Morse stopped."); return; }
       }
       await new Promise(r => setTimeout(r, 1000));
     }
@@ -69,7 +69,7 @@ export class Connector {
     await s.send("Runtime.addBinding", { name: "__morseHostSend" });
     await s.send("Page.addScriptToEvaluateOnNewDocument", { source: BOOT });
     await s.send("Runtime.evaluate", { expression: BOOT });
-    this.log(`  ✓ attached to ${target.title || target.url}`);
+    this.log(`  ✓ connected to ${target.title || target.url}`);
   }
 
   // Voice input records in the page; let it use the microphone without a

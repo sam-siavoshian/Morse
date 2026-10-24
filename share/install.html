@@ -29,7 +29,7 @@
 <body>
 <main>
   <div class="brand"><div class="logo"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>morse</div>
-  <div id="root"><p id="status">Reading mod…</p></div>
+  <div id="root"><p id="status">Opening the mod…</p></div>
 </main>
 <script type="module">
   import { decodeShare, toUserscript } from "../core/mod.js";
@@ -41,15 +41,15 @@
     root.innerHTML = `
       <h1>${esc(mod.title)}</h1>
       <p class="prompt">“${esc(mod.prompt)}”</p>
-      <div class="meta"><span>for ${esc(where)}</span>${mod.css.trim() ? "<span>css</span>" : ""}${mod.js.trim() ? "<span>js</span>" : ""}${mod.model ? `<span>made with ${esc(mod.model)}</span>` : ""}</div>
+      <div class="meta"><span>for ${esc(where)}</span>${mod.css.trim() ? "<span>style</span>" : ""}${mod.js.trim() ? "<span>script</span>" : ""}${mod.model ? `<span>made with ${esc(mod.model)}</span>` : ""}</div>
       <div class="actions">
         <button class="primary" id="install">Install in Morse</button>
-        <a class="btn" id="userscript" download>Download .user.js</a>
+        <a class="btn" id="userscript" download>Download for Tampermonkey</a>
       </div>
       <p id="status"></p>
-      <div class="warn">Mods are code that runs inside ${esc(where)}. Read it below before installing: it can see what you see in that app.</div>
-      ${mod.css.trim() ? `<h2>CSS</h2><pre>${esc(mod.css)}</pre>` : ""}
-      ${mod.js.trim() ? `<h2>JavaScript</h2><pre>${esc(mod.js)}</pre>` : ""}`;
+      <div class="warn">This mod is code that runs inside ${esc(where)}. It can see what you see there, so read it below before you install it.</div>
+      ${mod.css.trim() ? `<h2>Style (CSS)</h2><pre>${esc(mod.css)}</pre>` : ""}
+      ${mod.js.trim() ? `<h2>Script (JavaScript)</h2><pre>${esc(mod.js)}</pre>` : ""}`;
     const us = document.getElementById("userscript");
     us.href = URL.createObjectURL(new Blob([toUserscript(mod)], { type: "text/javascript" }));
     us.download = `${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.user.js`;
@@ -61,17 +61,17 @@
       } else {
         navigator.clipboard?.writeText(location.href);
         status.innerHTML = mod.match.app
-          ? `Link copied. Run <code>morse install "&lt;link&gt;"</code>, or paste it into Morse → Mods → Import.`
-          : `Morse isn't installed in this browser. Link copied: paste it into Morse → Mods → Import, or use the .user.js with Tampermonkey.`;
+          ? `Link copied. In Morse, open Mods and choose Install a mod, then paste it. Or run <code>morse install "&lt;link&gt;"</code>.`
+          : `Morse isn't installed in this browser. The link is copied: paste it into Morse under Mods → Install a mod, or download the mod for Tampermonkey.`;
       }
     };
     window.addEventListener("message", e => {
       if (e.source !== window || !e.data?.morseInstalled) return;
       const r = e.data.morseInstalled;
-      status.innerHTML = r.error ? `<span class="err">${esc(r.error)}</span>` : `✓ Installed “${esc(r.title)}”. Open ${esc(where)} to see it.`;
+      status.innerHTML = r.error ? `<span class="err">${esc(r.error)}</span>` : `Installed “${esc(r.title)}”. Open ${esc(where)} to see it.`;
     });
   } catch (e) {
-    root.innerHTML = `<h1>That link doesn't contain a mod</h1><p class="err">${esc(e.message)}</p>`;
+    root.innerHTML = `<h1>This link doesn't have a mod in it</h1><p class="err">${esc(e.message)}</p>`;
   }
 </script>
 </body>

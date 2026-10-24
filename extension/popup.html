@@ -2,16 +2,16 @@
 <html><head><meta charset="utf-8"><link rel="stylesheet" href="popup.css"></head>
 <body>
   <header><div class="logo"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><b>morse</b><span id="label"></span></header>
-  <button id="go" class="primary">Customize this page <kbd id="key"></kbd></button>
-  <p id="warn" hidden>Turn on <b>Allow User Scripts</b> for Morse in <code>chrome://extensions</code> so mods can run on sites with strict security policies. CSS mods work either way.</p>
+  <button id="go" class="primary">Change this page <kbd id="key"></kbd></button>
+  <p id="warn" hidden>Some sites block mods that add buttons or features. To allow them, turn on <b>Allow User Scripts</b> for Morse in <code>chrome://extensions</code>. Mods that only change the look work either way.</p>
   <h3>Mods on this site <span id="count"></span></h3>
   <ul id="mods"></ul>
   <details>
     <summary>Model</summary>
-    <label>Provider <select id="provider"><option value="auto">Auto (Ollama if running)</option><option value="ollama">Ollama</option><option value="openai">OpenAI-compatible</option><option value="demo">Demo (no model)</option></select></label>
-    <label>Base URL <input id="baseUrl" placeholder="http://127.0.0.1:11434"></label>
-    <label>Model <input id="model" placeholder="qwen2.5-coder:7b"></label>
-    <label>API key <input id="apiKey" type="password" placeholder="only for OpenAI-compatible servers"></label>
+    <label>Provider <select id="provider"><option value="auto">Automatic (Ollama if it's running)</option><option value="ollama">Ollama</option><option value="openai">OpenAI-compatible</option><option value="demo">Demo (no real model)</option></select></label>
+    <label>Server address <input id="baseUrl" placeholder="http://127.0.0.1:11434"></label>
+    <label>Model name <input id="model" placeholder="qwen2.5-coder:7b"></label>
+    <label>API key <input id="apiKey" type="password" placeholder="Only for OpenAI-compatible servers"></label>
     <button id="save">Save</button>
   </details>
   <script src="popup.js" type="module"></script>

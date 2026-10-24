@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// morse: customize any app in one sentence.
+// morse: change any app in your own words.
 
 import { Connector } from "./connector.js";
 import { resolveApp, launchApp, quitApp, KNOWN_APPS } from "./apps.js";
@@ -10,7 +10,7 @@ import { resolveSettings, settingsLabel, DEFAULT_SETTINGS } from "../core/provid
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
 
 const G = s => `\x1b[32m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`;
-const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· customize any app in one sentence")}\n${G("▪▫▪")}`;
+const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· change any app in your own words")}\n${G("▪▫▪")}`;
 
 function flags(argv) {
   const out = { _: [], rest: [] };
@@ -38,34 +38,34 @@ async function settingsFrom(f) {
 const HELP = `${LOGO}
 
 ${B("Desktop apps")} (Electron / Chromium)
-  morse launch <app|path>   relaunch an app with Morse attached
+  morse launch <app|path>   open an app with Morse connected
                             apps: ${Object.keys(KNOWN_APPS).join(", ")}
-      --restart             quit the app first if it's running
-      --name <name>         name mods are filed under (defaults to the app)
+      --restart             quit the app first if it's open
+      --name <name>         name to save mods under (default: the app)
       --port <n>            debugging port (default 9333)
-      -- <args>             extra arguments for the app
-  morse attach --port <n>   attach to an app already started with --remote-debugging-port
-  morse fuses <app|path>    show the app's Electron fuses and what they mean for Morse
+      -- <args>             pass extra arguments to the app
+  morse attach --port <n>   connect to an app already started with --remote-debugging-port
+  morse fuses <app|path>    check whether Morse can work with a desktop app
 
 ${B("Mods")}
-  morse mods                list installed mods
+  morse mods                list your mods
   morse rm <id>             delete a mod
-  morse export <id>         write .morse.json, .user.js and a share link
-  morse install <link|file> install a shared mod
+  morse export <id>         save a mod file, a Tampermonkey file and a share link
+  morse install <link|file> install a mod from a share link or file
 
 ${B("Model")}
-  morse model               show the model Morse will use
+  morse model               show which model Morse uses
   morse model --provider ollama|openai|demo --model <name> [--base-url <url>] [--api-key <key>]
 
-In any attached window: ${B("Alt+Space")} to morse · ${B("Alt+Shift+M")} for your mods.
-Websites: load the browser extension (npm run build, then load dist/extension).`;
+In a connected app, press ${B("Alt+Space")} to open Morse and ${B("Alt+Shift+M")} to see your mods.
+For websites, use the Chrome extension (run npm run build, then load dist/extension).`;
 
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const f = flags(rest);
   switch (cmd) {
     case "launch": {
-      if (!f._[0]) throw new Error("Which app? e.g. morse launch spotify");
+      if (!f._[0]) throw new Error("Name an app to open, for example: morse launch spotify");
       const app = resolveApp(f._[0]);
       if (f.name) Object.assign(app, { id: String(f.name).toLowerCase(), name: f.name });
       const port = Number(f.port || 9333);
@@ -83,7 +83,7 @@ async function main() {
       if (f.restart) { quitApp(app); await new Promise(r => setTimeout(r, 1500)); }
       launchApp(app, port, f.rest);
       await waitForEndpoint(port).catch(e => {
-        throw new Error(`${e.message}\n  If ${app.name} was already running, quit it or pass --restart.`);
+        throw new Error(`${e.message}\n  If ${app.name} was already open, quit it first or add --restart.`);
       });
       console.log(`  port    ${port}\n`);
       await new Connector({ port, app: app.browser ? null : app, settings }).run();
@@ -93,7 +93,7 @@ async function main() {
       const port = Number(f.port || 9222);
       const settings = await settingsFrom(f);
       await waitForEndpoint(port, 3000);
-      console.log(LOGO + `\n\n  attached on port ${port} · model ${settingsLabel(settings)}\n`);
+      console.log(LOGO + `\n\n  connected on port ${port} · model ${settingsLabel(settings)}\n`);
       await new Connector({ port, app: f.app ? { id: f.app, name: f.app } : null, settings }).run();
       break;
     }
@@ -106,7 +106,7 @@ async function main() {
     }
     case "mods": {
       const mods = await listMods();
-      if (!mods.length) return console.log(D("No mods yet. Press Alt+Space in an attached app."));
+      if (!mods.length) return console.log(D("No mods yet. Open an app with morse launch, then press Alt+Space."));
       for (const m of mods) {
         const where = m.match.app || m.match.hosts.join(",");
         console.log(`${m.enabled ? G("●") : D("○")} ${B(m.title)} ${D(m.id)}  ${where}\n    ${D("“" + m.prompt + "”")}`);
@@ -119,7 +119,7 @@ async function main() {
       break;
     case "export": {
       const mod = (await listMods()).find(m => m.id === f._[0]);
-      if (!mod) throw new Error("No mod " + f._[0]);
+      if (!mod) throw new Error(`No mod with the id ${f._[0]}. Run morse mods to see them.`);
       const slug = mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       console.log(await writeExport(`${slug}.morse.json`, JSON.stringify(mod, null, 2)));
       console.log(await writeExport(`${slug}.user.js`, toUserscript(mod)));
