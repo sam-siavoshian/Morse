@@ -136,7 +136,7 @@ test("panes placed by the app's own code (VS Code's split view) get a note; a no
     <div class="split-view-view" style="position:absolute;left:0px;width:48px;height:700px"></div>
     <div class="split-view-view" style="position:absolute;left:48px;width:300px;height:700px"><div id="sidebar">Explorer</div></div>
     <div class="split-view-view" style="position:absolute;left:348px;width:852px;height:700px"><div id="editor">Editor</div></div></div></div>`);
-  const notes = await p2.evaluate(`(() => { const S = { app: null, target: null }; const getLanguage = () => "en"; ${SRC}; return context().notes; })()`);
+  const notes = await p2.evaluate(`(() => { const S = { app: null, target: null }; ${SRC}; return context().notes; })()`);
   await p2.close();
   assert.match(notes, /Panes placed by the app's own code: .*split-view-container > [^ ]*split-view-view \(2,/);
   assert.match(notes, /leaves an empty gap/);
