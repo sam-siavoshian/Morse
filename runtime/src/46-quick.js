@@ -2,6 +2,8 @@
 // size, hide ads, focus mode, reset). Each tool is a small "quick" mod whose
 // code comes from core/edits.js, so it persists and shares like any mod.
 
+const quickMenuGroups = []; // hook: more groups for the menu, as functions returning HTML (65-a11y.js)
+
 const GodQuick = (() => {
   const svg = d => `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const I = {
@@ -53,7 +55,7 @@ const GodQuick = (() => {
     };
     menu.innerHTML = `<header>Page tools<small>${esc(where())}</small></header>` + ITEMS.map(it => it
       ? `<button role="menuitem" data-k="${it.k}" aria-checked="${!!quickMod(it.k)?.enabled}">${svg(I[it.k])}<span>${it.label}</span><span class="gm-state">${state(it.k)}</span></button>`
-      : `<hr>`).join("");
+      : `<hr>`).join("") + quickMenuGroups.map(g => g()).join(""); // hook: 65-a11y.js
   }
   function open() {
     render();

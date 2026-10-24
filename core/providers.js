@@ -47,12 +47,28 @@ const impls = {
 
 export function registerProvider(id, fn) { impls[id] = fn; }
 
+// ---- Pictures (Easier to use: Describe this image, core/a11y.js). A message's
+// content may be a list of blocks in the Anthropic format, { type: "text", text }
+// and { type: "image", source: { type: "base64", media_type, data } }. The
+// Anthropic API takes them as they are; OpenAI and Claude Code convert them
+// (toOpenAI, daemon/harness.js); Codex here only reads text.
+export const imageBlocks = messages => messages.flatMap(m => (Array.isArray(m.content) ? m.content.filter(b => b?.type === "image") : []));
+export const textOf = content => (Array.isArray(content) ? content.filter(b => b?.type === "text").map(b => b.text).join("\n\n") : String(content ?? ""));
+const SEES_IMAGES = new Set(["anthropic", "openai", "claude-code", "helper", "demo"]);
+function toOpenAI(m) {
+  if (!Array.isArray(m.content)) return m;
+  return { role: m.role, content: m.content.map(b => (b?.type === "image"
+    ? { type: "image_url", image_url: { url: `data:${b.source.media_type};base64,${b.source.data}` } }
+    : { type: "text", text: String(b?.text ?? "") })) };
+}
+
 export async function streamChat(settings, messages, { onToken, signal, maxTokens } = {}) {
   const s = { ...DEFAULT_SETTINGS, ...settings };
   const impl = impls[s.provider];
   if (!s.provider || s.provider === "none") throw new NoModelError();
   if (!impl) throw new Error(`Morse doesn't know the model "${s.provider}". Choose another in Morse's settings.`);
   if (signal?.aborted) throw abortError();
+  if (!SEES_IMAGES.has(s.provider) && imageBlocks(messages).length) throw new Error(`${PROVIDERS[s.provider]?.name || "This model"} can't look at pictures in Morse. Use Claude Code or an Anthropic API key for that.`); // Describe this image
   return impl(s, messages, { onToken, signal, maxTokens });
 }
 
@@ -84,10 +100,10 @@ export function splitSystem(messages) {
 // user prompt (the engine's retry turn is "here's what you wrote, it failed").
 export function flattenConversation(messages) {
   const { system, rest } = splitSystem(messages);
-  if (rest.length === 1) return { system, prompt: rest[0].content };
+  if (rest.length === 1) return { system, prompt: textOf(rest[0].content) }; // textOf: pictures travel separately (harness.js)
   const prompt = rest.map(m => m.role === "assistant"
-    ? `<your_previous_reply>\n${m.content}\n</your_previous_reply>`
-    : m.content).join("\n\n");
+    ? `<your_previous_reply>\n${textOf(m.content)}\n</your_previous_reply>`
+    : textOf(m.content)).join("\n\n");
   return { system, prompt };
 }
 
@@ -163,7 +179,7 @@ async function openaiStream(s, messages, { onToken, signal, maxTokens }) {
   const res = await fetch(`${base}/v1/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(s.apiKey ? { Authorization: `Bearer ${s.apiKey}` } : {}) },
-    body: JSON.stringify({ model: s.model || PROVIDERS.openai.defaultModel, messages, stream: true, ...(maxTokens && { max_completion_tokens: maxTokens }) }),
+    body: JSON.stringify({ model: s.model || PROVIDERS.openai.defaultModel, messages: messages.map(toOpenAI), stream: true, ...(maxTokens && { max_completion_tokens: maxTokens }) }),
     signal,
   });
   if (!res.ok) {
