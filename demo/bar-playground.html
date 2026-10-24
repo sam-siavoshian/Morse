@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Morse command bar playground</title>
+<style>
+  body { margin: 0; min-height: 100vh; font: 15px/1.5 Inter, system-ui, sans-serif; background: var(--bg, #0e0e10); color: var(--fg, #e7e7ea); display: grid; place-items: center; }
+  body.light { --bg: #f6f6f7; --fg: #1a1a1d; }
+  .stage { display: grid; gap: 20px; width: 760px; max-width: calc(100vw - 40px); margin: 40px 0 200px; }
+  .toolbar { display: flex; gap: 14px; align-items: center; padding: 12px 16px; border-radius: 12px; background: color-mix(in srgb, var(--fg) 6%, transparent); }
+  .toolbar button { background: none; border: 0; color: inherit; font: inherit; opacity: .75; }
+  .toolbar .now { font-size: 13px; opacity: .6; }
+  .card { padding: 20px 22px; border-radius: 14px; background: color-mix(in srgb, var(--fg) 5%, transparent); }
+  .card h3 { margin: 0 0 8px; }
+  .card p { margin: 0 0 14px; opacity: .72; max-width: 60ch; }
+  .card .cta { font: 500 14px Inter, system-ui, sans-serif; padding: 8px 14px; border-radius: 9px; border: 1px solid color-mix(in srgb, var(--fg) 18%, transparent); background: color-mix(in srgb, var(--fg) 8%, transparent); color: inherit; }
+  input.page { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--fg) 18%, transparent); background: transparent; color: inherit; width: 260px; }
+</style>
+</head>
+<body>
+<!-- The real runtime against a fake host that also speaks the command-bar
+     messages: settings.get/set, history.get/add, transcribe, generate.cancel.
+     Used by tests/bar.test.js and demo/shoot-bar.js.
+       ?ms=30       token interval        ?light       light page
+       ?voice=0     no transcription      ?auto        auto-submit voice -->
+<div class="stage">
+  <div class="toolbar" id="toolbar" data-testid="player-controls" aria-label="Player controls"><button aria-label="Shuffle">⤮</button><button aria-label="Previous">⏮</button><button aria-label="Play">▶</button><button aria-label="Next">⏭</button><button aria-label="Repeat">↻</button><span class="now">Now playing · Low Light — Kiasmos</span><span style="flex:1"></span><button>Settings</button></div>
+  <div class="card" id="card">
+    <h3>Release notes</h3>
+    <p id="notes">Pointing at things and describing what you want is the whole interface. Morse writes the change, applies it while you watch, and keeps it for next time.</p>
+    <button class="cta" id="share">Share</button>
+    <input class="page" id="pagefield" placeholder="A field on the page">
+  </div>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  if (q.has("light")) document.body.classList.add("light");
+  localStorage.setItem("morse:debug", "1");
+  const store = {
+    get: (k, d) => { try { return JSON.parse(localStorage.getItem("fake:" + k)) ?? d; } catch { return d; } },
+    set: (k, v) => localStorage.setItem("fake:" + k, JSON.stringify(v)),
+  };
+  const TEXT = "TITLE: Airier toolbar\n```css\n#toolbar { gap: 22px; letter-spacing: .02em; }\n#toolbar button { opacity: .95; transform: scale(1.06); }\n#toolbar .now { opacity: .8; }\n```\n```js\nmorse.watch('#toolbar', t => t.append(morse.el('span', { text: '' })));\n```\n";
+  const fake = window.__fake = { log: [], cancelled: [], gens: new Map() };
+  if (q.has("auto")) store.set("settings", { ...store.get("settings", {}), voice: { autoSubmit: true } });
+  const subs = [];
+  const emit = m => subs.forEach(f => f(m));
+  const merge = (a, b) => { const o = { ...a }; for (const [k, v] of Object.entries(b || {})) o[k] = v && typeof v === "object" && !Array.isArray(v) ? { ...(a[k] || {}), ...v } : v; return o; };
+  const voice = q.get("voice") === "0"
+    ? { transcribe: false, provider: null, label: "", hint: "Voice: add an OpenAI key in the Morse popup, or run the Morse helper" }
+    : { transcribe: true, provider: "openai", label: "OpenAI gpt-4o-mini-transcribe", hint: "" };
+  globalThis.__morseHost = {
+    onMessage: fn => subs.push(fn),
+    send(m) {
+      fake.log.push({ type: m.type, genId: m.genId, scope: m.scope, text: m.text, settings: m.settings, mime: m.mime, size: m.audio ? m.audio.length : undefined, partial: m.partial });
+      const reply = (result, error) => setTimeout(() => emit({ reply: m.id, result, error }), 10);
+      switch (m.type) {
+        case "hello":
+          return reply({ mode: "playground", label: "playground · fake host", quiet: !q.has("welcome"), settings: store.get("settings", {}), voice });
+        case "mods.list": return reply([]);
+        case "settings.get": return reply(store.get("settings", {}));
+        case "settings.set": { const s = merge(store.get("settings", {}), m.settings); store.set("settings", s); return reply(s); }
+        case "history.get": return reply(store.get("history", {})[m.scope] || []);
+        case "history.add": {
+          const all = store.get("history", {});
+          const l = (all[m.scope] || []).filter(x => x !== m.text); l.push(m.text); all[m.scope] = l.slice(-50);
+          store.set("history", all);
+          return reply(all[m.scope]);
+        }
+        case "transcribe": {
+          if (!voice.transcribe) return reply(null, "Unknown request transcribe");
+          const words = "make the toolbar airier".split(" ");
+          const t = m.partial ? words.slice(0, 3).join(" ") : words.join(" ");
+          return setTimeout(() => emit({ reply: m.id, result: { text: t, provider: "openai" } }), m.partial ? 120 : 260);
+        }
+        case "generate.cancel": {
+          fake.cancelled.push(m.genId);
+          const g = fake.gens.get(m.genId);
+          if (g) { clearInterval(g.t); fake.gens.delete(m.genId); setTimeout(() => emit({ reply: g.id, result: { ok: false, cancelled: true, error: "Stopped" } }), 10); }
+          return reply(true);
+        }
+        case "generate": {
+          let i = 0, css = "";
+          const speed = Number(q.get("ms") || 30);
+          const g = { id: m.id };
+          fake.gens.set(m.genId, g);
+          g.t = setInterval(() => {
+            const tok = TEXT.slice(i, i += 4);
+            emit({ type: "token", text: tok, genId: m.genId });
+            const sofar = TEXT.slice(0, i), block = sofar.split("```css\n")[1];
+            if (block) {
+              const done = block.split("```")[0].match(/[^}]*\}/g)?.join("") || "";
+              if (done !== css) { css = done; emit({ type: "css", css, genId: m.genId }); }
+            }
+            if (i >= TEXT.length) { clearInterval(g.t); fake.gens.delete(m.genId); reply({ ok: true, title: "Airier toolbar", css, js: "", attempts: 1 }); }
+          }, speed);
+          return;
+        }
+        case "mods.save": return reply({ ...(m.draft || m.mod), enabled: true, created: new Date().toISOString(), updated: new Date().toISOString() });
+        case "exec": return reply({ ok: true });
+        default: return reply(null);
+      }
+    },
+  };
+</script>
+<script src="/dist/extension/runtime.js"></script>
+</body>
+</html>

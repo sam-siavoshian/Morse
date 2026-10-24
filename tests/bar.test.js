@@ -1,0 +1,301 @@
+// The command bar in real Chromium: hotkey recorder, prompt history, Stop
+// mid-generation, the voice fallback path and keyboard/a11y behavior. Runs
+// the real runtime against demo/bar-playground.html's fake host.
+import { test, before, after } from "node:test";
+import assert from "node:assert/strict";
+import { createRequire } from "node:module";
+import { serveBar } from "../demo/bar-server.js";
+
+let chromium;
+try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
+const skip = !chromium && "playwright not installed";
+let browser, srv;
+
+before(async () => {
+  if (skip) return;
+  srv = await serveBar();
+  const args = ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"];
+  // New headless (channel "chromium") has real audio capture; fall back to the default build.
+  try { browser = await chromium.launch({ channel: "chromium", args }); }
+  catch { browser = await chromium.launch({ args }); }
+});
+after(async () => { await browser?.close(); await srv?.close(); });
+
+// Web Speech needs Google's servers; inside Electron it fails like this. Make
+// that deterministic so the fallback path is what runs.
+const SPEECH_FAILS = () => {
+  globalThis.webkitSpeechRecognition = class extends EventTarget {
+    start() { setTimeout(() => { this.onerror?.(Object.assign(new Event("error"), { error: "network" })); const e = new Event("end"); this.onend?.(e); this.dispatchEvent(e); }, 20); }
+    stop() {} abort() {}
+  };
+};
+
+async function open(query = "", init) {
+  const ctx = await browser.newContext({ viewport: { width: 1100, height: 760 } });
+  if (init) await ctx.addInitScript(init);
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on("pageerror", e => errors.push(e.message));
+  await page.goto(srv.url + query);
+  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
+  const waitFor = async (pred, ms = 8000) => {
+    const end = Date.now() + ms;
+    let s;
+    while (Date.now() < end) { s = await status(); if (pred(s)) return s; await page.waitForTimeout(25); }
+    throw new Error("timed out; last status " + JSON.stringify(s));
+  };
+  const log = () => page.evaluate(() => window.__fake.log);
+  const shadow = fn => page.evaluate(fn);
+  return { page, ctx, status, waitFor, log, shadow, errors, close: () => ctx.close() };
+}
+// Opens a page, runs the test, and always closes the context (a leaked page
+// would keep keyboard focus from the next test).
+async function scenario(query, init, fn) {
+  const t = await open(query, init);
+  try { await fn(t); assert.deepEqual(t.errors, []); }
+  finally { await t.close(); }
+}
+const sr = sel => `document.querySelector("[data-morse-ui]").shadowRoot.querySelector(${JSON.stringify(sel)})`;
+
+test("hotkey recorder: refuses critical combos, rebinds, persists, and the old key goes back to the page", { skip }, async () => {
+  await scenario("", null, async t => {
+    const { page } = t;
+    await page.evaluate(() => { window.__pageKeys = []; addEventListener("keydown", e => __pageKeys.push(e.code)); });
+    await page.keyboard.press("Alt+Space");
+    await t.waitFor(s => s.open);
+    await page.keyboard.press("Control+Comma");
+    await t.waitFor(s => s.pane === "settings");
+    assert.equal(await page.evaluate(`${sr(".hk[data-hk=open]")} === document.querySelector("[data-morse-ui]").shadowRoot.activeElement`), true, "focus moves into the sheet");
+    await page.keyboard.press("Enter"); // arm the recorder
+    await page.waitForFunction(`${sr(".hkrow.recording")}`);
+    await page.keyboard.press("Control+KeyW");
+    assert.match(await page.evaluate(`${sr("#hk-open-msg")}.textContent`), /Ctrl\+W closes the tab/);
+    assert.ok(!(await t.log()).some(m => m.type === "settings.set"), "a refused combo is not saved");
+    await page.keyboard.press("Alt+Shift+KeyK");
+    const s = await t.waitFor(s => s.hotkeys.open === "Alt+Shift+KeyK");
+    assert.equal(s.hotkeys.talk, "Alt+Shift+KeyK", "push to talk follows Open until changed");
+    assert.deepEqual((await t.log()).filter(m => m.type === "settings.set").at(-1).settings, { hotkeys: { open: "Alt+Shift+KeyK" } });
+    await page.keyboard.press("Escape"); // closes the sheet
+    await t.waitFor(s => s.pane === "");
+    await page.keyboard.press("Escape"); // closes the bar
+    await t.waitFor(s => !s.open);
+    // The old hotkey now belongs to the page again.
+    await page.evaluate(() => (__pageKeys.length = 0));
+    await page.keyboard.press("Alt+Space");
+    await page.waitForTimeout(150);
+    assert.equal((await t.status()).open, false);
+    assert.deepEqual(await page.evaluate(() => __pageKeys), ["AltLeft", "Space"]);
+    // IME composition and key repeat never trigger a hotkey.
+    await page.evaluate(() => {
+      dispatchEvent(new KeyboardEvent("keydown", { code: "KeyK", key: "K", altKey: true, shiftKey: true, isComposing: true, bubbles: true }));
+      dispatchEvent(new KeyboardEvent("keydown", { code: "KeyK", key: "K", altKey: true, shiftKey: true, repeat: true, bubbles: true }));
+    });
+    await page.waitForTimeout(100);
+    assert.equal((await t.status()).open, false);
+    await page.keyboard.press("Alt+Shift+KeyK");
+    await t.waitFor(s => s.open);
+    // Survives a reload (the host stored it).
+    await page.reload();
+    await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+    await t.waitFor(s => s.hotkeys.open === "Alt+Shift+KeyK");
+  });
+});
+
+test("prompt history: ↑/↓ in an empty input, per site, persisted", { skip }, async () => {
+  await scenario("?ms=1", null, async t => {
+    const { page } = t;
+    for (const p of ["make it dark", "hide the sidebar"]) {
+      await page.keyboard.press("Alt+Space");
+      await t.waitFor(s => s.open && s.phase === "idle");
+      await page.keyboard.type(p);
+      await page.keyboard.press("Enter");
+      await t.waitFor(s => s.phase === "result");
+      await page.keyboard.press("Escape"); // keeps the result and closes
+      await t.waitFor(s => !s.open);
+    }
+    await page.keyboard.press("Alt+Space");
+    await t.waitFor(s => s.open);
+    const expectInput = (v, msg) => t.waitFor(s => s.input === v, 2000).catch(() => assert.fail(msg || `input should be ${JSON.stringify(v)}`));
+    await page.keyboard.press("ArrowUp");
+    await expectInput("hide the sidebar");
+    await page.keyboard.press("ArrowUp");
+    await expectInput("make it dark");
+    await page.keyboard.press("ArrowUp");
+    await expectInput("make it dark", "stops at the oldest");
+    await page.keyboard.press("ArrowDown");
+    await expectInput("hide the sidebar");
+    await page.keyboard.press("ArrowDown");
+    await expectInput("", "past the newest is a fresh prompt");
+    // Typed text is never replaced by history.
+    await page.keyboard.type("draft");
+    await page.keyboard.press("ArrowUp");
+    await expectInput("draft");
+    const adds = (await t.log()).filter(m => m.type === "history.add");
+    assert.deepEqual(adds.map(a => a.text), ["make it dark", "hide the sidebar"]);
+    assert.match(adds[0].scope, /^127\.0\.0\.1:\d+$/);
+    await page.reload();
+    await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+    await page.waitForTimeout(150);
+    await page.keyboard.press("Alt+Space");
+    await t.waitFor(s => s.open);
+    await page.keyboard.press("ArrowUp");
+    await expectInput("hide the sidebar", "history survives a reload");
+  });
+});
+
+test("Esc mid-generation: cancels on the host, removes partial CSS, ends the effect, keeps the prompt", { skip }, async () => {
+  await scenario("?ms=45", null, async t => {
+    const { page } = t;
+    const gap = () => page.evaluate(() => getComputedStyle(document.getElementById("toolbar")).gap);
+    const before = await gap();
+    await page.keyboard.press("Alt+Space");
+    const tb = await page.locator("#toolbar").boundingBox();
+    await page.mouse.click(tb.x + tb.width / 2, tb.y + 4);
+    await page.keyboard.type("make the toolbar airier");
+    await page.keyboard.press("Enter");
+    await t.waitFor(s => s.phase === "working" && /Writing/.test(s.hint));
+    await page.waitForFunction(() => document.querySelector("style[data-morse-css]")); // CSS applied while streaming
+    assert.notEqual(await gap(), before);
+    await page.keyboard.press("Escape");
+    const s = await t.waitFor(s => s.phase === "idle" && /Stopped/.test(s.hint), 4000);
+    assert.equal(s.input, "make the toolbar airier");
+    assert.equal(s.open, true);
+    const gen = (await t.log()).find(m => m.type === "generate");
+    assert.deepEqual(await page.evaluate(() => window.__fake.cancelled), [gen.genId]);
+    assert.equal(await page.locator("style[data-morse-css]").count(), 0, "partial CSS removed");
+    assert.equal(await gap(), before);
+    assert.equal(await page.evaluate(`getComputedStyle(${sr(".fx")}).display`), "none", "effect ended");
+    assert.equal(await page.evaluate(`${sr(".in")}.disabled`), false);
+    // ⌘. / Ctrl+. stops too, and Enter runs it again.
+    await page.keyboard.press("Enter");
+    await t.waitFor(s => s.phase === "working");
+    await page.keyboard.press("Control+Period");
+    await t.waitFor(s => s.phase === "idle" && /Stopped/.test(s.hint), 4000);
+    assert.equal((await page.evaluate(() => window.__fake.cancelled)).length, 2);
+  });
+});
+
+test("voice: Web Speech fails, the recording goes to the host's transcribe", { skip }, async () => {
+  await scenario("", SPEECH_FAILS, async t => {
+    const { page } = t;
+    await page.keyboard.press("Alt+Space");
+    await t.waitFor(s => s.open);
+    await page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".mic").click());
+    await t.waitFor(s => s.voice === "listening");
+    const partial = await t.waitFor(s => s.input === "make the toolbar", 8000); // live partial transcript
+    assert.match(partial.hint, /Listening/);
+    await page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".mic").click());
+    const s = await t.waitFor(s => s.voice === "idle" && s.input === "make the toolbar airier");
+    assert.equal(s.backend, "recorder");
+    assert.equal(s.phase, "idle", "not auto-submitted by default");
+    const tr = (await t.log()).filter(m => m.type === "transcribe");
+    assert.ok(tr.length >= 2, "partials and a final");
+    assert.match(tr.at(-1).mime, /^audio\/webm/);
+    assert.ok(tr.at(-1).size > 100);
+    assert.equal(tr.at(-1).partial, false);
+  });
+});
+
+test("voice: hold the hotkey to talk, release to finish; auto-submit sends it", { skip }, async () => {
+  await scenario("?auto&ms=1", SPEECH_FAILS, async t => {
+    const { page } = t;
+    await page.keyboard.down("Alt");
+    await page.keyboard.down("Space");
+    await t.waitFor(s => s.open && s.voice === "listening");
+    await page.waitForTimeout(1300);
+    await page.keyboard.up("Space");
+    await page.keyboard.up("Alt");
+    await t.waitFor(s => s.phase === "result", 8000);
+    const gen = (await t.log()).find(m => m.type === "generate");
+    assert.ok(gen, "submitted");
+  });
+});
+
+test("voice: explains in one line when it can't work", { skip }, async () => {
+  const clickMic = t => t.page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".mic").click());
+  await scenario("?voice=0", () => { delete globalThis.webkitSpeechRecognition; delete globalThis.SpeechRecognition; }, async t => {
+    await t.page.keyboard.press("Alt+Space");
+    await clickMic(t);
+    const s = await t.waitFor(s => /OpenAI key/.test(s.hint));
+    assert.equal(s.voice, "idle");
+    assert.equal(await t.page.evaluate(`${sr(".mic")}.classList.contains("off")`), true);
+  });
+  await scenario("", () => { navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException("denied", "NotAllowedError")); }, async t => {
+    await t.page.keyboard.press("Alt+Space");
+    await clickMic(t);
+    const s = await t.waitFor(s => /Microphone access is blocked/.test(s.hint));
+    assert.equal(s.voice, "idle");
+  });
+  await scenario("", () => { navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException("none", "NotFoundError")); }, async t => {
+    await t.page.keyboard.press("Alt+Space");
+    await clickMic(t);
+    await t.waitFor(s => /No microphone found/.test(s.hint));
+  });
+});
+
+test("keyboard and a11y: dialog, live status, Tab stays in the bar, focus comes back, cheat sheet", { skip }, async () => {
+  await scenario("", null, async t => {
+    const { page } = t;
+    await page.focus("#pagefield");
+    await page.keyboard.press("Alt+Space");
+    await t.waitFor(s => s.open);
+    assert.equal(await page.evaluate(`${sr(".bar")}.getAttribute("role")`), "dialog");
+    assert.ok(await page.evaluate(`${sr(".bar")}.getAttribute("aria-label")`));
+    assert.equal(await page.evaluate(`${sr(".sr")}.getAttribute("aria-live")`), "polite");
+    for (let i = 0; i < 12; i++) {
+      await page.keyboard.press(i % 3 ? "Tab" : "Shift+Tab");
+      assert.equal(await page.evaluate(() => document.activeElement?.hasAttribute("data-morse-ui")), true, `Tab #${i} left the bar`);
+    }
+    // Tab from the empty input lands on the first suggestion; arrows move between them.
+    await page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".in").focus());
+    await page.keyboard.press("Tab");
+    await t.waitFor(s => s.focus === "sug");
+    await page.keyboard.press("ArrowRight");
+    assert.equal(await page.evaluate(`document.querySelector("[data-morse-ui]").shadowRoot.activeElement.textContent`), "Hide distractions");
+    await page.keyboard.press("Escape");
+    await t.waitFor(s => s.focus === "in"); // Esc from a chip goes back to the input
+    await page.keyboard.type("?");
+    await t.waitFor(s => s.pane === "shortcuts" && s.input === "");
+    const sheet = await page.evaluate(`${sr(".pane")}.textContent`);
+    assert.match(sheet, /Open or close Morse/);
+    assert.match(sheet, /Alt.*Space/);
+    await page.keyboard.type("x"); // typing closes it and types
+    await t.waitFor(s => s.pane === "" && s.input === "x");
+    // Shift+Enter is a newline; the input grows.
+    const h0 = await page.evaluate(`${sr(".in")}.offsetHeight`);
+    await page.keyboard.press("Shift+Enter");
+    await page.keyboard.type("second line");
+    await t.waitFor(s => s.input === "x\nsecond line");
+    assert.ok((await page.evaluate(`${sr(".in")}.offsetHeight`)) > h0);
+    assert.equal((await t.status()).phase, "idle", "Shift+Enter did not submit");
+    await page.keyboard.press("Escape");
+    await t.waitFor(s => !s.open);
+    assert.equal(await page.evaluate(() => document.activeElement.id), "pagefield", "focus returned to the page");
+    // Closed: Escape and typing belong to the page.
+    await page.evaluate(() => { window.__k = []; addEventListener("keydown", e => __k.push(e.key)); });
+    await page.keyboard.type("ab");
+    await page.keyboard.press("Escape");
+    assert.deepEqual(await page.evaluate(() => __k), ["a", "b", "Escape"]);
+    assert.equal(await page.inputValue("#pagefield"), "ab");
+  });
+});
+
+test("effects setting: off shows no animation over the page, subtle keeps a still outline", { skip }, async () => {
+  for (const effects of ["off", "subtle"]) {
+    const init = `localStorage.setItem("fake:settings", JSON.stringify({ effects: "${effects}" }))`;
+    await scenario("?ms=30", init, async t => {
+      const { page } = t;
+      await page.keyboard.press("Alt+Space");
+      const tb = await page.locator("#toolbar").boundingBox();
+      await page.mouse.click(tb.x + tb.width / 2, tb.y + 4);
+      await page.keyboard.type("make the toolbar airier");
+      await page.keyboard.press("Enter");
+      await t.waitFor(s => s.phase === "working");
+      await page.waitForTimeout(300);
+      assert.equal(await page.evaluate(`getComputedStyle(${sr(".fx")}).display`), "none", `${effects}: no radar field`);
+      assert.equal(await page.evaluate(`${sr(".sel")}.classList.contains("busy")`), effects === "subtle");
+      await t.waitFor(s => s.phase === "result");
+    });
+  }
+});
