@@ -272,21 +272,35 @@ async function asMorse(page, msg) {
 }
 
 test("extension: Describe's screenshot is never of another tab", { skip: skipExt }, async () => {
-  const { ctx } = await extension();
+  const { ctx, sw } = await extension();
+  // In front as far as Chrome's tabs API is concerned. Morse's welcome and
+  // settings tabs open on install and can take the front back for a moment.
+  const front = async page => {
+    const url = page.url();
+    for (let i = 0; i < 50; i++) {
+      await page.bringToFront();
+      await page.waitForTimeout(100);
+      if (await sw.evaluate(async u => (await chrome.tabs.query({ active: true })).some(t => t.url === u), url)) return;
+    }
+  };
   const origin = await serve((q, r) => r.writeHead(200, { "Content-Type": "text/html" }).end(`<!doctype html><title>${q.url}</title><body style="background:${q.url === "/secret" ? "#d00" : "#0a0"}"><h1>${q.url}</h1>`));
   const mine = await ctx.newPage();
   await mine.goto(`${origin}/mine`);
   await mine.waitForFunction(() => document.querySelector("[data-morse-ui]"));
-  await mine.bringToFront();
-  const shot = await asMorse(mine, { type: "capture" });
-  assert.match(String(shot.result), /^data:image\/png;base64,/, "the tab's own screenshot works while it is showing");
+  await front(mine);
+  let shot;
+  for (let i = 0; i < 6; i++) { // Chrome under Xvfb sometimes can't read the frame back right after a switch
+    shot = await asMorse(mine, { type: "capture" });
+    if (!/readback/.test(shot.error || "")) break;
+    await mine.waitForTimeout(300);
+  }
+  assert.match(String(shot.result), /^data:image\/png;base64,/, `the tab's own screenshot works while it is showing (${shot.error})`);
   const other = await ctx.newPage();
   await other.goto(`${origin}/secret`);
-  await other.bringToFront();
-  await other.waitForTimeout(300);
+  await front(other);
   const r = await asMorse(mine, { type: "capture" });
   assert.equal(r.result, null, "no picture of the tab in front");
-  assert.match(String(r.error), /tab/i);
+  assert.match(String(r.error), /in front/);
   await other.close();
   await mine.close();
 });
