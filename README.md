@@ -40,6 +40,7 @@ press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the mode
 | **You stay in control** | One shortcut (⌥⇧0) turns off every mod on a page. Pause Morse on a site or everywhere. A mod that keeps crashing a page is held back. Before you install a shared mod, Morse says in plain words what it does. Back up all your mods to one file |
 | **Show me once** | Do a task by hand once, then say “add a button that does this”, “do this when I press Ctrl+Shift+A” or “do this to every unread email”. Passwords are never recorded |
 | **Easier to use** | Accessibility for any app, no model needed: higher contrast, bigger click targets, an easier to read font (and dyslexia-friendly letters), underlined links, no animations, a visible focus outline, a reading ruler, no distractions. Read aloud, Check this page with Fix it, and Describe this picture (the model writes a description for screen readers) |
+| **Your style** | One look on every site and app: “Georgia font and bigger text everywhere”, “everything calmer: no autoplay, fewer animations, softer colors”, “make red and green easy to tell apart on every site except Figma”. No model needed for the basics; the model can fit it to each site if you turn that on |
 
 ## Screenshots
 
@@ -205,6 +206,23 @@ Checked with real Claude Code (haiku) by [`evals/show-once.js`](evals/show-once.
 | ![](docs/screenshots/129-show-once-start.png) **Show me once**, in the bar and the ⋯ menu | ![](docs/screenshots/130-show-once-recording.png) **Recording**: each step as you do it |
 | ![](docs/screenshots/131-show-once-steps.png) **Stop**: say what to do with the steps | ![](docs/screenshots/132-show-once-result.png) **The result**, live: a button for every unread email |
 | ![](docs/screenshots/133-show-once-done.png) **Done** for 3 unread emails | ![](docs/screenshots/134-show-once-hidden.png) A sign-in: the password is “(hidden)” |
+
+### Your style: one look, on every site and app
+
+Say it once, ending with “everywhere” or “on every site”: *Georgia font, bigger text and underline links everywhere except Figma*. Morse shows it at once on the page you're on, with Save and Undo, and from then on every site and app you open has it, before you open anything. Say more later and it adds to it. You can also set it, part by part, under **Your style** in Settings.
+
+- **No model for the basics.** Your words become building blocks Morse makes itself ([`core/style.js`](core/style.js), [`core/style-host.js`](core/style-host.js)): a font, text size, space between lines, softer colors, red and green easier to tell apart, dark pages, fewer animations, no autoplay, underlined links. They reuse Easier to use and Page tools. It is style only, so it costs next to nothing when a page loads; only no autoplay and dark pages add a little code.
+- **Not on this site.** Say “not on this site” in the bar, press **Not on this site** in the Mods panel, or keep a list in Settings. “except Figma” in your words leaves out figma.com and the Figma app.
+- **Stays in your hands.** It sits at the top of the Mods panel with its own switch. The off switch and pausing Morse turn it off like any mod, and self-heal never flags it.
+- **Fit to each site (off until you turn it on).** A general style can break a layout. With **Fit it to each site with the model** on, the first time you open a site the model gets your style and what Morse measured it broke there, and its fix shows in the bar for review, like any change. Saved, it belongs to your style for that site. Once per site.
+
+Checked with real Claude Code (haiku) by [`demo/style-fit-real.js`](demo/style-fit-real.js): on the Tunes demo, bigger text pushed the player bar below the bottom of the window; the fit (one try, 11 to 18 s) brought it back, and it came back on the next visit with no model call. Captured by [`demo/shoot-style.js`](demo/shoot-style.js) on three demo sites at once; tested by [`tests/style.test.js`](tests/style.test.js) and [`tests/style-ui.test.js`](tests/style-ui.test.js).
+
+| | |
+|---|---|
+| ![](docs/screenshots/150-style-bar.png) **“…everywhere”**, shown live with Save and Undo | ![](docs/screenshots/152-style-mods-panel.png) **The Mods panel**: Your style at the top |
+| ![](docs/screenshots/153-style-settings.png) **Settings**: part by part, and the sites it skips | ![](docs/screenshots/154-style-not-here.png) **Not on this site**, with Undo |
+| ![](docs/screenshots/155-style-calmer.png) **Calmer** on the library: the video waits, the ticker stops | ![](docs/screenshots/158-style-fit-haiku-review.png) **Fit to this site** by Claude Code (haiku): the player bar is back |
 
 ## Status
 
