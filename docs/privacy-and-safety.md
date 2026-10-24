@@ -56,6 +56,9 @@ this page run on your computer and send nothing to the model.
   in. Nothing is posted until you post it.
 - **Settings sync.** In Chrome, your Morse settings (shortcuts, bar position
   and the like) are kept in Chrome's sync storage. Your keys and mods are not.
+- **Newer version.** `morse doctor` asks npm (registry.npmjs.org) whether a
+  newer Morse is out, at most once a day. Nothing about you goes with it.
+  Turn it off with `MORSE_NO_UPDATE_CHECK=1`.
 
 ## What stays on your computer
 

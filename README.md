@@ -2,9 +2,9 @@
 
 **Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like.**
 
-[![Watch the 92-second demo](docs/launch/poster-demo-v2.png)](docs/launch/morse-demo-v2.mp4)
+[![Watch the 92-second demo](https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/poster-demo-v2.png)](https://github.com/sam-siavoshian/RRAA/blob/main/docs/launch/morse-demo-v2.mp4)
 
-*[Watch the 92-second demo](docs/launch/morse-demo-v2.mp4), recorded from real runs: Claude Code wrote the sleep timer, the button, the fix and the round covers. The 36-second cut on a real app (VS Code) and more clips are in [`docs/launch`](docs/launch/).*
+*[Watch the 92-second demo](https://github.com/sam-siavoshian/RRAA/blob/main/docs/launch/morse-demo-v2.mp4), recorded from real runs: Claude Code wrote the sleep timer, the button, the fix and the round covers. The 36-second cut on a real app (VS Code) and more clips are in [`docs/launch`](docs/launch/).*
 
 Press a shortcut, point at something and say what you want: “add a sleep timer”, “hide the ads”, “make this text bigger”. Morse makes the change right there while you watch. A mod is a change you saved. Morse brings it back every time you open that site or app.
 
@@ -16,6 +16,8 @@ Press a shortcut, point at something and say what you want: “add a sleep timer
     and a link to its docs page. Nothing else.
   - Keep "Status" honest and in step with docs/desktop.md and docs/launch/README.md.
   - Words follow docs/WRITING.md. `npm test` checks every link (tests/docs.test.js).
+  - Images use full https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/... addresses:
+    npmjs.com shows this README too, and can't follow a relative image path.
 -->
 
 ## Install

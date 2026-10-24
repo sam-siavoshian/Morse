@@ -3,9 +3,13 @@
 Morse's version lives in `package.json`. The build copies it into the Chrome
 extension, and `morse --version` prints it.
 
-## 0.2.0 (not released yet)
+Add what people will notice under "Unreleased". `npm run release` moves it
+under the new version number with the date
+([Releasing](docs/dev/releasing.md)).
 
-The first version meant for other people to install.
+## Unreleased
+
+Version 0.2.0, the first version meant for other people to install.
 
 ### Change apps in your own words
 

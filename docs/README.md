@@ -42,7 +42,7 @@ New here? Start with [Getting started](getting-started.md).
 | [Onboarding](dev/onboarding.md) | The first minutes mapped and measured before and after, one-click pairing with Morse Desktop, “Allow User Scripts” only when needed |
 | [Checking a Mac or Windows PC](dev/platform-testing.md) | The 15-minute check for desktop apps on a real Mac or Windows PC |
 | [Pairing Chrome with the Morse helper](dev/pairing.md) | One-click pairing (the extension asks, the person allows in Morse Desktop) and codes: the requests, Morse Desktop's side, and why it's safe |
-| [Releasing Morse Desktop](dev/releasing.md) | Building the AppImage, dmg and Windows installer, what signing needs, and the release workflow |
+| [Releasing](dev/releasing.md) | One-time setup, then `npm run release` and one push: npm, the GitHub release with the store zip, and Morse Desktop's builds and signing |
 | [How Morse talks](WRITING.md) | The style guide for every word a person reads |
 | [Languages in the code](dev/i18n.md) | `t()`, the message catalogs, the Language setting, right-to-left layout, and text that stays English for the model |
 | [UI review checklist](ui/CHECKLIST.md) | What every screenshot in the UI catalog is checked against |
