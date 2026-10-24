@@ -12,7 +12,7 @@ import { startLabel, modelNames } from "../core/route.js"; // models: fast and s
 import { commandFor, platformChecks, formatChecks } from "./platform.js";
 import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask, migrateLegacy } from "./models.js";
 import { detectHarnesses, validModel } from "./harness.js";
-import { createBridge, startPairing, VERSION, helperPort } from "./bridge.js";
+import { createBridge, startPairing, VERSION, helperPort, terminalAsk } from "./bridge.js";
 import { streamChat } from "../core/providers.js";
 // MORSE_HELPER_PORT moves `morse serve`, `morse setup --pair` and the health
 // check off 7457 (tests run several helpers at once; their extension follows
@@ -260,7 +260,9 @@ async function main() {
     }
     case "serve": {
       const port = Number(f.port || HELPER_PORT);
-      const bridge = createBridge({ port, log: console.log });
+      // onboarding v2: in a terminal (or with --ask), Chrome's Connect asks here: y to allow, no code to type.
+      const canAsk = process.stdin.isTTY || f.ask === true;
+      const bridge = createBridge({ port, log: console.log, ask: canAsk ? terminalAsk() : null });
       await bridge.listen().catch(e => {
         throw new Error(e.code === "EADDRINUSE" ? t("cli.serve.inUse", { port }) : e.message);
       });
@@ -293,7 +295,13 @@ async function main() {
       const h = detectHarnesses();
       const keys = keysFrom(cfg);
       const row = (k, v) => console.log(`  ${k.padEnd(9)} ${v}`);
+      // Is a newer morse-cli on npm? At most once a day; MORSE_NO_UPDATE_CHECK=1 turns it off (docs/privacy.md).
+      const update = (await import("./update-check.js")).checkForUpdate(VERSION).catch(() => ({ state: "unknown" }));
       console.log(LOGO + "\n");
+      const u = await update;
+      // "unpublished": morse-cli isn't on npm (yet), so there is nothing to compare with.
+      const note = { newer: () => WARN(t("cli.update.newer", { latest: u.latest, cmd: B("npm install -g morse-cli") })), current: () => D(t("cli.update.current")), off: () => D(t("cli.update.off")), unknown: () => D(t("cli.update.unknown")) }[u.state];
+      row("morse", `${VERSION}${note ? `  ${note()}` : ""}`);
       row("node", process.version);
       row("config", CONFIG_PATH);
       // This computer: system, the Morse folder's permissions, shortcut, colors, platform specifics.

@@ -87,6 +87,22 @@ test("every relative link and image in the README and docs/ exists", () => {
   assert.deepEqual(broken, [], `broken links:\n${broken.join("\n")}`);
 });
 
+// npmjs.com shows the README from the package and can't follow relative image
+// paths, so the README's images are full addresses on main, and those (and
+// links to files on main) must name files that exist.
+test("the README's images work on npm: full addresses to files that exist", () => {
+  const src = readFileSync(path.join(root, "README.md"), "utf8");
+  const all = links(src);
+  // links() sees [![alt](img)](href) as one link; pick the images out on their own.
+  const images = [...withoutCode(src).matchAll(/!\[[^\]]*\]\(\s*<?([^)\s>]+)|<img\b[^>]*?\bsrc="([^"]+)"/gi)].map(m => m[1] || m[2]);
+  assert.ok(images.length > 0);
+  for (const target of images) assert.match(target, /^https:\/\//, `README.md: ${target}: use https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/<path>`);
+  for (const { target, line } of all) {
+    const m = /^https:\/\/(?:raw\.githubusercontent\.com\/sam-siavoshian\/RRAA\/main|github\.com\/sam-siavoshian\/RRAA\/(?:blob|tree|raw)\/main)\/([^#?]+)/.exec(target);
+    if (m) assert.ok(existsSync(path.join(root, decodeURIComponent(m[1]))), `README.md:${line} ${target}: no such file`);
+  }
+});
+
 test("the README stays short: depth lives in docs/", () => {
   const lines = readFileSync(path.join(root, "README.md"), "utf8").split("\n").length;
   assert.ok(lines <= 180, `README.md is ${lines} lines. Move the detail to a page in docs/ and keep one row in “What you can do”.`);

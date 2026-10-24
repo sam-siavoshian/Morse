@@ -2,9 +2,9 @@
 
 **Morse lets you change any website or desktop app just by saying what you want, so the apps you use every day work the way you like.**
 
-[![Watch the 92-second demo](docs/launch/poster-demo-v2.png)](docs/launch/morse-demo-v2.mp4)
+[![Watch the 92-second demo](https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/poster-demo-v2.png)](https://github.com/sam-siavoshian/RRAA/blob/main/docs/launch/morse-demo-v2.mp4)
 
-*[Watch the 92-second demo](docs/launch/morse-demo-v2.mp4), recorded from real runs: Claude Code wrote the sleep timer, the button, the fix and the round covers. The 36-second cut on a real app (VS Code) and more clips are in [`docs/launch`](docs/launch/).*
+*[Watch the 92-second demo](https://github.com/sam-siavoshian/RRAA/blob/main/docs/launch/morse-demo-v2.mp4), recorded from real runs: Claude Code wrote the sleep timer, the button, the fix and the round covers. The 36-second cut on a real app (VS Code) and more clips are in [`docs/launch`](docs/launch/).*
 
 Press a shortcut, point at something and say what you want: “add a sleep timer”, “hide the ads”, “make this text bigger”. Morse makes the change right there while you watch. A mod is a change you saved. Morse brings it back every time you open that site or app.
 
@@ -16,6 +16,8 @@ Press a shortcut, point at something and say what you want: “add a sleep timer
     and a link to its docs page. Nothing else.
   - Keep "Status" honest and in step with docs/desktop.md and docs/launch/README.md.
   - Words follow docs/WRITING.md. `npm test` checks every link (tests/docs.test.js).
+  - Images use full https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/... addresses:
+    npmjs.com shows this README too, and can't follow a relative image path.
 -->
 
 ## Install
@@ -26,8 +28,8 @@ You need [Node](https://nodejs.org) 22 or newer. Full steps, and what to do when
 
 1. Get Morse: `npm install -g morse-cli` (until the first npm release: `npm install -g github:sam-siavoshian/RRAA`).
 2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and choose the folder `morse extension` prints. The welcome page opens.
-3. In Morse's details, turn on **“Allow User Scripts”**, so mods that add buttons or features can run.
-4. Connect a model: the welcome page shows one command, `morse setup --pair <code>`. Paste it in a terminal. It finds Claude Code or Codex, checks that it answers, and the page connects by itself. Then press **⌥Space** (Ctrl+Shift+Space on Windows and Linux) on any page.
+3. Answer its one question, then connect a model: with Morse Desktop open, click **Use Claude Code** and **Allow**. Or paste an Anthropic API key, or run the `morse setup --pair <code>` it shows.
+4. Make your first change on its practice page, then press **⌥Space** (Ctrl+Shift+Space on Windows and Linux) on any page. Morse asks for **“Allow User Scripts”** only when a change needs it.
 
 **Desktop apps (Spotify, Slack, Discord, VS Code…)**
 

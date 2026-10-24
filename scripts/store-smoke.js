@@ -2,9 +2,11 @@
 // unpacks it, in a fresh Chromium profile, the way a new user meets it.
 //
 //   npm run store && DISPLAY=:99 node scripts/store-smoke.js [zip]
+//   DISPLAY=:99 node scripts/store-smoke.js "$(morse extension | head -1)" --cli "$(command -v morse)"
+//                                    the same, for an installed npm package
 //
 //   1. the welcome page opens by itself on install
-//   2. the practice area makes and saves a sample change
+//   2. one question, then the practice area makes and saves a sample change
 //   3. `morse setup --use demo --pair <code>` (the command the welcome page
 //      shows) connects the Morse helper with the demo model, and the page
 //      says so by itself
@@ -93,16 +95,23 @@ async function watchWorker(port, extId, log) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  // [zip | folder] [--cli <morse>]: a folder is loaded as it is (the npm
+  // package's: `morse extension` prints it), and --cli is the morse command
+  // step 3 runs (an installed package's; this checkout's daemon/cli.js otherwise).
+  const args = process.argv.slice(2);
+  const cliAt = args.indexOf("--cli");
+  const cli = cliAt >= 0 ? path.resolve(args.splice(cliAt, 2)[1]) : path.join(root, "daemon", "cli.js");
   const { version } = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
-  const zip = path.resolve(process.argv[2] || path.join(root, "dist", `morse-extension-${version}-store.zip`));
+  const zip = path.resolve(args[0] || path.join(root, "dist", `morse-extension-${version}-store.zip`));
   const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-store-smoke-"));
-  const ext = path.join(tmp, "extension");
-  for (const f of unzip(await fs.readFile(zip))) {
+  let ext = path.join(tmp, "extension");
+  if ((await fs.stat(zip)).isDirectory()) ext = zip;
+  else for (const f of unzip(await fs.readFile(zip))) {
     await fs.mkdir(path.dirname(path.join(ext, f.name)), { recursive: true });
     await fs.writeFile(path.join(ext, f.name), f.data);
   }
   const manifest = JSON.parse(await fs.readFile(path.join(ext, "manifest.json"), "utf8"));
-  say(`unpacked ${path.relative(root, zip)}: ${manifest.name} ${manifest.version}`);
+  say(`${ext === zip ? "loading" : "unpacked"} ${path.relative(root, zip)}: ${manifest.name} ${manifest.version}${cliAt >= 0 ? `, with ${cli}` : ""}`);
 
   const procs = [];
   process.on("exit", () => procs.forEach(p => { try { p.kill(); } catch {} }));
@@ -136,10 +145,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await welcome.bringToFront();
   say("welcome page opened on install");
 
-  // 2. The practice area: a suggestion, the sample change, Save
+  // 2. One question, then the practice area (a sample answer, before any model): a suggestion, the sample change, Save
+  await welcome.click("[data-want=web]"); // onboarding v2
+  await welcome.click("#skip");
   const practice = await until(() => welcome.frames().find(f => f.url().includes("practice.html")), 20000, "the practice area");
   const sampleShown = () => practice.evaluate(() => getComputedStyle(document.querySelector('aside[aria-label="Sponsored"]')).display === "none");
-  await welcome.click("#try");
+  await welcome.click("#open-bar");
   // The suggestions are keyboard reachable: Tab, then the second ("Easier to
   // read"). On a busy machine the first keys can land before the bar is ready.
   for (let i = 0; ; i++) {
@@ -147,7 +158,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     await welcome.keyboard.press("Tab");
     await welcome.keyboard.press("ArrowRight");
     await welcome.keyboard.press("Enter");
-    try { await until(sampleShown, 30000, "the sample change in the practice area"); break; } catch (e) { if (i === 2) throw e; await welcome.keyboard.press("Escape"); await welcome.click("#try"); }
+    try { await until(sampleShown, 30000, "the sample change in the practice area"); break; } catch (e) { if (i === 2) throw e; await welcome.keyboard.press("Escape"); await welcome.click("#open-bar"); }
   }
   await sleep(1500);
   await welcome.keyboard.press("Enter"); // Save
@@ -155,18 +166,20 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await welcome.keyboard.press("Escape");
   say("practice area: sample change made and saved");
 
-  // 3. Connect a model with the command the page shows
+  // 3. Connect a model with the command the page shows (Use a terminal instead)
+  await welcome.click("[data-go=connect]");
+  await welcome.locator("#term summary").click();
   const cmd = (await welcome.locator("#setup-cmd").textContent()).trim();
   const code = cmd.split(" ").pop();
   const home = path.join(tmp, "home");
   await fs.mkdir(home, { recursive: true });
-  const setup = spawn(process.execPath, [path.join(root, "daemon", "cli.js"), "setup", "--use", "demo", "--pair", code],
+  const setup = spawn(process.execPath, [cli, "setup", "--use", "demo", "--pair", code],
     { env: { ...process.env, HOME: home, MORSE_HOME: "", MORSE_HELPER_PORT: String(helperPort) }, stdio: ["pipe", "pipe", "pipe"] });
   procs.push(setup);
   let setupOut = "";
   setup.stdout.on("data", d => (setupOut += d)); setup.stderr.on("data", d => (setupOut += d));
   try {
-    await until(() => welcome.evaluate(() => document.querySelector('[data-step="model"]').classList.contains("done")), 60000, "the welcome page to show the model connected");
+    await until(() => welcome.evaluate(() => document.getElementById("app").dataset.screen === "try"), 60000, "the welcome page to connect and move on");
   } catch (e) { console.log(setupOut); throw e; }
   say(`model connected by "${cmd.replace(code, "<code>")}"`);
 

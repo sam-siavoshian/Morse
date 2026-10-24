@@ -51,6 +51,7 @@ const Waiting = (() => {
   // every waiting mod to the host over and over.
   listen("visibilitychange", e => { if (e.isTrusted && document.visibilityState === "visible") retry(); });
   listen("focus", e => { if (e.isTrusted) retry(); });
+  onEvent(msg => { if (msg.type === "waiting.retry") retry(); }); // onboarding v2: the “Allow User Scripts” window saw it come on (extension/allow.js)
   // The result of a new change whose code waits (or, on the practice page,
   // never runs). It never just looks done: the bar says the change needs
   // “Allow User Scripts” and offers the one click that opens it (offer).
