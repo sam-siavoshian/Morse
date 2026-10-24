@@ -1,105 +1,857 @@
 {
  "states": {
-  "radar/mark-static": {"note": "the Morse mark: inner four at .9, outer eight at .3, no animation. Same static frame in the toast, panel header and empty state (they used to pulse as if a model were working)"},
-  "radar/mark-live": {"note": "pulses only while a model works (bar mark + phase hint)"},
-  "picker/hover-small": {"note": "label 20px tall on the 4px grid, mono 11px, r-sm; box sits 3px outside the target"},
-  "picker/hover-top-edge": {"note": "flush with the top edge the label moves inside the box instead of off-screen"},
-  "picker/hover-right-edge": {"note": "label is shifted left to stay 4px inside the viewport"},
-  "picker/selected": {"note": "dashed outline = selected, solid + ring = hover"},
-  "bar/picking": {"note": "row 48px (8 + 32 + 8), status 40px; placeholder, model label and counts use --m-text-3 (now AA)"},
-  "bar/chip-x-hover": {"note": "close glyphs are the × character, not an SVG: 14px in a 20px hit box in the chip, 18px in 28px boxes in the panel and modals. Consistent, but swapping them for a 1.8-stroke SVG like the Run arrow would need markup in 70-panel.js/80-modals.js"},
-  "bar/chip-x-focus": {"note": "focus ring: 2px --m-signal-3, 2px offset, everywhere (was 24% white, ~2:1)"},
-  "bar/typing-long": {"note": "the input scrolls; the chip keeps its 44% cap and ellipsis"},
-  "bar/fixing": {"note": "the error is one line with an ellipsis; the phase word and timer always stay visible"},
-  "bar/error": {"note": "long errors end in an ellipsis inside the hint (was clipped mid-glyph). The full text is not reachable from the bar: a title attribute on the hint would need a one-line change in 60-generate.js"},
-  "bar/result-long-repaired": {"note": "the title gives way first; the timing and 'repaired once' and all four actions stay"},
-  "bar/result": {"note": "Keep is focused after a keyboard submit, so its ring shows; Enter keeps"},
-  "effect/*": {"note": "radar field in --m-signal-1..4 over --m-overlay; follows the target's shape. Cosmetic: when the target is not a multiple of 8px the last row/column of cells is cut by the canvas edge"},
-  "effect/page-thinking": {"note": "page-wide: a scan runs around a 2-cell band at the viewport edge"},
-  "effect/page-writing": {"note": "page-wide: Morse blips appear in the top and bottom bands"},
-  "pulse/success": {"note": "one 900ms ring, r-md; with reduced motion it is skipped"},
-  "motion/reduced-effect": {"note": "prefers-reduced-motion: Effects default to Subtle, a still outline on the target (it was hidden by God mode's selection rule, now kept); two frames 450ms apart are pixel-identical"},
-  "motion/reduced-mark-live": {"note": "prefers-reduced-motion: the working mark is a brighter static frame (inner 1, outer .55) instead of pulsing"},
-  "toast/long": {"note": "capped at 480px, wraps; mark aligned to the first line"},
-  "panel/mods-0": {"note": "empty state: static mark, 24px line rhythm"},
-  "panel/mods-12": {"verdict": "residual", "note": "there is no 'broken mod' state in the runtime: a mod whose JS throws on apply only raises a toast, the row looks healthy (the fixture's `broken` field is ignored). Needs data from the host and a row style; out of scope for CSS"},
-  "panel/row-unbroken-title": {"note": "an 80-character unbroken title and prompt wrap anywhere instead of pushing the row wider than the panel; disabled rows use --m-text-2/3 instead of 50% opacity, so they stay AA"},
-  "panel/row-off": {"note": "off = muted text and gray switch; still AA"},
-  "switch/on-focus": {"note": "the hidden checkbox now draws a focus ring on its track (there was none)"},
-  "switch/off-focus": {"note": "the hidden checkbox now draws a focus ring on its track (there was none)"},
-  "modal/code": {"note": "code is not wrapped (white-space: pre) and scrolls horizontally"},
-  "modal/code-long": {"note": "long title wraps; × stays top-right instead of floating mid-title"},
-  "modal/share": {"verdict": "residual", "note": "the share card is a fixed dark PNG drawn by renderCard() in 80-modals.js (not tokens, by design: it is posted outside the app). Its 'BEFORE' caption is #3a3a40 on #0b0b0c (1.6:1) and the footer line #8e8e96 at 15px; suggest #8e8e96 for the caption. Left to the 80-modals.js owner"},
-  "modal/import-error": {"note": "import errors surface as a toast above the scrim"},
-  "hostile/hostile-hover": {"note": "page: * {all: unset}, [data-morse-ui] {display:none !important; transform: scale(2) !important}, html zoom 1.25 + font-size 40px, dir=rtl, rotated body, Comic Sans everywhere. Overlay unchanged; the box is the rotated element's bounding box"},
-  "hostile/hostile-noise-hover": {"note": "same page, plus `div { --m-text: #f0f !important; ... }` and `[data-morse-ui] { --m-bg: red !important }`: the overlay's own tokens win"},
-  "hostile/parley-hover": {"note": "Parley ships `script-src 'self'`; runtime injected same-origin"},
-  "edit-toolbar/selected": {"note": "tag (mono 11, --m-text-3), then 32px .ibtn tools in three groups split by 1px lines; 40px toolbar (3 + 32 + 3 + 1px border), r-md, the shared .pop surface"},
-  "edit-toolbar/bar-hint": {"note": "after pointing, typing goes to the bar; Ctrl+E (⌘E) moves focus to the toolbar"},
-  "edit-toolbar/*": {"note": "tooltips: name + key cap after 300ms, one at a time; focus is a flush 2px ring; pressed tools are primary; disabled tools are --m-signal-1 with no tooltip"},
-  "edit-toolbar/ctrl-e": {"verdict": "residual", "note": "the toolbar takes focus as a whole (its border lights) and H M R T C F D A act on the selection, but Tab does not walk its buttons: 50-bar.js's Tab trap only cycles the bar. Needs a few lines of key handling in 45-godmode.js (arrow keys are taken by nudging); out of scope for a CSS pass"},
-  "edit-frame/resize-handles": {"note": "eight 8px handles centered on the 1px frame (r 2, the frame's hairline radius)"},
-  "edit-frame/move-dragging": {"note": "the readout is the picker's label: inverse mono 11px, r-sm, under the frame"},
-  "edit-frame/embedded-note": {"note": "frames: the note says what works; tools that reach inside are disabled"},
-  "edit-frame/text-editing": {"note": "dashed frame while editing; the text itself is selected"},
-  "edit-color/*": {"note": "tabs are the shared .seg; swatches 20px round with a 2px gap ring when picked; the hex input is a .field with an inline 24px eyedropper"},
-  "edit-color/hex-invalid": {"note": "invalid hex: --m-danger border ring and text (the input has a pattern); Enter keeps the text selected to retype"},
-  "edit-type/*": {"note": "Size: a .field stepper with 24px ± buttons; Weight: the shared .seg, each label in its own weight"},
-  "edit-type/default": {"verdict": "residual", "note": "the popover opens under the toolbar and covers the selection when there is no room above it; placement lives in place() in 45-godmode.js (logic, not CSS). Esc closes it"},
-  "capture/popover": {"note": "thumbnail 112px tall in a raised r-sm well; the note is a .field; Capture is a .btn.primary with the inverse key cap"},
-  "capture/*": {"note": "the thumbnail in the catalog comes from the fake host's page screenshot"},
-  "page-tools/*": {"note": "a .menu: 32px rows, 16px icons, detail on the right (level, check); the button's tooltip hides while its menu is open"},
-  "clipboard/chips": {"note": "32px chips on the bar's 16px inset: 40×24 thumbnail, label, app; the row scrolls sideways"},
-  "clipboard/rebuilt-from": {"note": "while working, the snapshot that rides along with the request is shown as “Rebuilt from”"},
-  "voice/*": {"note": "errors are one line in the status row (warn dot + --m-text-2), ellipsis when long; the mic nudges"},
-  "voice/listening": {"note": "the mic widens to a 48px well with the level meter in radar pixels; the bar border lights"},
-  "voice/transcribing": {"note": "the mic shows the working radar; placeholder says Transcribing…"},
-  "menu/*": {"note": "the ⋯ menu is the same .menu as Page tools: 32px rows, key caps right-aligned, row highlight + inset ring for focus"},
-  "settings/*": {"note": "a solid sheet (--m-surface) inside the bar; rows 40px min, label 13/16 + help 11/16; controls right; eyebrow section labels"},
-  "settings/sheet-narrow": {"note": "phone width: segmented controls drop under their label"},
-  "hotkeys/*": {"note": "the hotkey control is a .field (28px) holding 20px key caps"},
-  "hotkeys/recording-held": {"note": "held modifiers show as caps next to the listening radar; Turn off appears"},
-  "hotkeys/rejected": {"note": "rejected: shake + --m-danger ring and message (light --m-danger is now #c4262e, 5.6:1)"},
-  "hotkeys/warning": {"note": "accepted with a warning in --m-warn; Reset appears for a custom key"},
-  "shortcuts/*": {"note": "two columns of 32px rows; every key is the same 20px cap"},
-  "suggestions/*": {"note": "chips are quiet .btn (28px, r-sm) on the 16px inset; Tab reaches them, ←/→ move"},
-  "history/*": {"note": "↑ in an empty input recalls earlier prompts; nothing else changes"},
-  "stop/working": {"note": "Run turns into Stop (raised well, 8px square); focus moves to it"},
-  "stop/cancelled": {"note": "Stopped · nothing was changed · Enter to run again; the prompt stays"},
-  "hostile/hostile-text-edit": {"note": "the page's `[data-morse-ui] { display: none !important }` used to hide the text being edited; the edit span now carries !important inline display/visibility"}
+  "radar/mark-static": {
+   "note": "the Morse mark: inner four at .9, outer eight at .3, no animation. Same static frame in the toast, panel header and empty state (they used to pulse as if a model were working)"
+  },
+  "radar/mark-live": {
+   "note": "pulses only while a model works (bar mark + phase hint)"
+  },
+  "picker/hover-small": {
+   "note": "label 20px tall on the 4px grid, mono 11px, r-sm; box sits 3px outside the target"
+  },
+  "picker/hover-top-edge": {
+   "note": "flush with the top edge the label moves inside the box instead of off-screen"
+  },
+  "picker/hover-right-edge": {
+   "note": "label is shifted left to stay 4px inside the viewport"
+  },
+  "picker/selected": {
+   "note": "dashed outline = selected, solid + ring = hover"
+  },
+  "bar/picking": {
+   "note": "row 48px (8 + 32 + 8), status 40px; placeholder, model label and counts use --m-text-3 (now AA)"
+  },
+  "bar/chip-x-hover": {
+   "note": "close glyphs are the × character, not an SVG: 14px in a 20px hit box in the chip, 18px in 28px boxes in the panel and modals. Consistent, but swapping them for a 1.8-stroke SVG like the Run arrow would need markup in 70-panel.js/80-modals.js"
+  },
+  "bar/chip-x-focus": {
+   "note": "focus ring: 2px --m-signal-3, 2px offset, everywhere (was 24% white, ~2:1)"
+  },
+  "bar/typing-long": {
+   "note": "the input scrolls; the chip keeps its 44% cap and ellipsis"
+  },
+  "bar/fixing": {
+   "note": "the error is one line with an ellipsis; the phase word and timer always stay visible"
+  },
+  "bar/error": {
+   "note": "long errors end in an ellipsis inside the hint (was clipped mid-glyph). The full text is not reachable from the bar: a title attribute on the hint would need a one-line change in 60-generate.js"
+  },
+  "bar/result-long-repaired": {
+   "note": "the title gives way first; the timing and 'repaired once' and all four actions stay"
+  },
+  "bar/result": {
+   "note": "Save is focused after a keyboard submit, so its ring shows; Enter saves"
+  },
+  "effect/*": {
+   "note": "radar field in --m-signal-1..4 over --m-overlay; follows the target's shape. Cosmetic: when the target is not a multiple of 8px the last row/column of cells is cut by the canvas edge"
+  },
+  "effect/page-thinking": {
+   "note": "page-wide: a scan runs around a 2-cell band at the viewport edge"
+  },
+  "effect/page-writing": {
+   "note": "page-wide: Morse blips appear in the top and bottom bands"
+  },
+  "pulse/success": {
+   "note": "one 900ms ring, r-md; with reduced motion it is skipped"
+  },
+  "motion/reduced-effect": {
+   "note": "prefers-reduced-motion: Effects default to Subtle, which draws no canvas at all. The catalog now expects exactly that: no .fx, a still .sel.busy outline on the target, two frames 450ms apart pixel-identical (it used to fall back between .fx and .sel and failed when the outline wasn't drawn yet)"
+  },
+  "motion/reduced-mark-live": {
+   "note": "prefers-reduced-motion: the working mark is a brighter static frame (inner 1, outer .55) instead of pulsing"
+  },
+  "toast/long": {
+   "note": "capped at 480px, wraps; mark aligned to the first line"
+  },
+  "panel/mods-0": {
+   "note": "empty state: static mark, 24px line rhythm"
+  },
+  "panel/mods-12": {
+   "note": "the fixture's broken mod now fails when it runs (the catalog host honours `broken`), so the list shows the Not working row with Fix it (iterate/broken-row)"
+  },
+  "panel/row-unbroken-title": {
+   "note": "an 80-character unbroken title and prompt wrap anywhere instead of pushing the row wider than the panel; disabled rows use --m-text-2/3 instead of 50% opacity, so they stay AA"
+  },
+  "panel/row-off": {
+   "note": "off = muted text and gray switch; still AA"
+  },
+  "switch/on-focus": {
+   "note": "the hidden checkbox now draws a focus ring on its track (there was none)"
+  },
+  "switch/off-focus": {
+   "note": "the hidden checkbox now draws a focus ring on its track (there was none)"
+  },
+  "modal/code": {
+   "note": "code is not wrapped (white-space: pre) and scrolls horizontally"
+  },
+  "modal/code-long": {
+   "note": "long title wraps; × stays top-right instead of floating mid-title"
+  },
+  "modal/share": {
+   "note": "the share card is a fixed dark PNG (renderCard() in 80-modals.js, not tokens: it is posted outside the app). Captions are now 15px bold mono #a0a0a8 on #0b0b0c (7.4:1, was 13px #8e8e96, ~8px once the card is scaled into the dialog); the footer line is 17px #a0a0a8"
+  },
+  "modal/import-error": {
+   "note": "import errors surface as a toast above the scrim"
+  },
+  "hostile/hostile-hover": {
+   "note": "page: * {all: unset}, [data-morse-ui] {display:none !important; transform: scale(2) !important}, html zoom 1.25 + font-size 40px, dir=rtl, rotated body, Comic Sans everywhere. Overlay unchanged; the box is the rotated element's bounding box"
+  },
+  "hostile/hostile-noise-hover": {
+   "note": "same page, plus `div { --m-text: #f0f !important; ... }` and `[data-morse-ui] { --m-bg: red !important }`: the overlay's own tokens win"
+  },
+  "hostile/parley-hover": {
+   "note": "Parley ships `script-src 'self'`; runtime injected same-origin"
+  },
+  "edit-toolbar/selected": {
+   "note": "tag (mono 11, --m-text-3), then 32px .ibtn tools in three groups split by 1px lines; 40px toolbar (3 + 32 + 3 + 1px border), r-md, the shared .pop surface"
+  },
+  "edit-toolbar/bar-hint": {
+   "note": "after pointing, typing goes to the bar; Ctrl+E (⌘E) moves focus to the toolbar"
+  },
+  "edit-toolbar/*": {
+   "note": "tooltips: name + key cap after 300ms, one at a time; focus is a flush 2px ring; pressed tools are primary; disabled tools are --m-signal-1 with no tooltip"
+  },
+  "edit-toolbar/ctrl-e": {
+   "note": "the toolbar takes focus as a whole (its border lights); Tab and Shift+Tab now walk its tools (edit-toolbar/tab-walk), H M R T C F D A act on the selection"
+  },
+  "edit-frame/resize-handles": {
+   "note": "eight 8px handles centered on the 1px frame (r 2, the frame's hairline radius)"
+  },
+  "edit-frame/move-dragging": {
+   "note": "the readout is the picker's label: inverse mono 11px, r-sm, under the frame"
+  },
+  "edit-frame/embedded-note": {
+   "note": "frames: the note says what works; tools that reach inside are disabled"
+  },
+  "edit-frame/text-editing": {
+   "note": "dashed frame while editing; the text itself is selected"
+  },
+  "edit-color/*": {
+   "note": "tabs are the shared .seg; swatches 20px round with a 2px gap ring when picked; the hex input is a .field with an inline 24px eyedropper"
+  },
+  "edit-color/hex-invalid": {
+   "note": "invalid hex: --m-danger border ring and text (the input has a pattern); Enter keeps the text selected to retype"
+  },
+  "edit-type/*": {
+   "note": "Size: a .field stepper with 24px ± buttons; Weight: the shared .seg, each label in its own weight"
+  },
+  "edit-type/default": {
+   "note": "the popover goes to the toolbar's far side, then the element's other side, then beside it: it no longer covers the selection (edit-type/no-room-above)"
+  },
+  "capture/popover": {
+   "note": "thumbnail 112px tall in a raised r-sm well; the note is a .field; Capture is a .btn.primary with the inverse key cap"
+  },
+  "capture/*": {
+   "note": "the thumbnail in the catalog comes from the fake host's page screenshot"
+  },
+  "page-tools/*": {
+   "note": "a .menu: 32px rows, 16px icons, detail on the right (level, check); the button's tooltip hides while its menu is open"
+  },
+  "clipboard/chips": {
+   "note": "32px chips on the bar's 16px inset: 40×24 thumbnail, label, app; the row scrolls sideways"
+  },
+  "clipboard/rebuilt-from": {
+   "note": "while working, the snapshot that rides along with the request is shown as “Rebuilt from”"
+  },
+  "voice/*": {
+   "note": "errors are one line in the status row (warn dot + --m-text-2), ellipsis when long; the mic nudges"
+  },
+  "voice/listening": {
+   "note": "the mic widens to a 48px well with the level meter in radar pixels; the bar border lights"
+  },
+  "voice/transcribing": {
+   "note": "the mic shows the working radar; placeholder says Transcribing…"
+  },
+  "menu/*": {
+   "note": "the ⋯ menu is the same .menu as Page tools: 32px rows, key caps right-aligned, row highlight + inset ring for focus"
+  },
+  "settings/*": {
+   "note": "a solid sheet (--m-surface) inside the bar; rows 40px min, label 13/16 + help 11/16; controls right; eyebrow section labels"
+  },
+  "settings/sheet-narrow": {
+   "note": "phone width: segmented controls drop under their label"
+  },
+  "hotkeys/*": {
+   "note": "the hotkey control is a .field (28px) holding 20px key caps"
+  },
+  "hotkeys/recording-held": {
+   "note": "held modifiers show as caps next to the listening radar; Turn off appears"
+  },
+  "hotkeys/rejected": {
+   "note": "rejected: shake + --m-danger ring and message (light --m-danger is now #c4262e, 5.6:1)"
+  },
+  "hotkeys/warning": {
+   "note": "accepted with a warning in --m-warn; Reset appears for a custom key"
+  },
+  "shortcuts/*": {
+   "note": "two columns of 32px rows; every key is the same 20px cap"
+  },
+  "suggestions/*": {
+   "note": "chips are quiet .btn (28px, r-sm) on the 16px inset; Tab reaches them, ←/→ move"
+  },
+  "history/*": {
+   "note": "↑ in an empty input recalls earlier prompts; nothing else changes"
+  },
+  "stop/working": {
+   "note": "Run turns into Stop (raised well, 8px square); focus moves to it"
+  },
+  "stop/cancelled": {
+   "note": "Stopped · nothing was changed · Enter to run again; the prompt stays"
+  },
+  "hostile/hostile-text-edit": {
+   "note": "the page's `[data-morse-ui] { display: none !important }` used to hide the text being edited; the edit span now carries !important inline display/visibility"
+  },
+  "gallery/chip": {
+   "note": "the last suggestion chip: radar 12 + “2 mods for <site>”, set apart by a 1px --m-line-strong rule; the same .sug as the other chips"
+  },
+  "gallery/chip-hover": {
+   "note": "reached with the mouse straight down through the input row: the bar stays put (it used to jump to the top as soon as the pointer entered it, so the chip could not be clicked)"
+  },
+  "gallery/chip-focus": {
+   "note": "Tab from the input reaches it like any suggestion; shared 2px ring"
+  },
+  "gallery/section-open": {
+   "note": "For this site sits under your own mods: an eyebrow, then a row (radar 16, count, “Made by other people”) whose Show/Hide is a .tbtn; items are title, request, what it does, author, then .btn Try it / Install…"
+  },
+  "gallery/section-items": {
+   "note": "every button is a 28px .btn (were 26px copies); a mod that can send data or read typing has no Try it, only Install… (the full review)"
+  },
+  "gallery/section-collapsed": {
+   "note": "collapsed: one 52px row; the whole row toggles, the Show .tbtn is the keyboard control"
+  },
+  "gallery/head-hover": {
+   "note": "row hover: --m-hover background, --m-line-strong border"
+  },
+  "gallery/head-focus": {
+   "note": "the Show/Hide .tbtn takes the ring (the row itself is not a 54px button any more)"
+  },
+  "gallery/item-hover": {
+   "note": "shared .btn hover"
+  },
+  "gallery/item-focus": {
+   "note": "shared ring"
+  },
+  "gallery/stop-showing-hover": {
+   "note": "“Stop showing these” is a .tbtn (was its own ghost-button copy)"
+  },
+  "gallery/update-row": {
+   "note": "Update available: the same note box as Not working (white dot instead of red), Update… a 24px button like Fix it"
+  },
+  "gallery/update-row-focus": {
+   "note": "shared ring"
+  },
+  "gallery/trying-strip": {
+   "note": "top-center strip while trying: radar 12, “Trying …”, Nothing is saved yet, Undo (.btn) and Save (.btn.primary). At 390px it moves to the bottom and drops the second line"
+  },
+  "gallery/trying-item": {
+   "note": "the item being tried: raised well, a still dot (it used to pulse forever; only “a model is working” loops), Save / Undo"
+  },
+  "gallery/strip-hover": {
+   "note": "shared .btn hover"
+  },
+  "gallery/strip-focus": {
+   "note": "shared ring on the primary"
+  },
+  "gallery/install-review": {
+   "note": "Install… goes through the one install review (reviewImport): what it does, notes, Show code folded, Cancel focused. The two notes now read as one box with one Note label"
+  },
+  "gallery/update-review": {
+   "note": "What changed (the author's note, counts), then the CSS and JS diffs: + lines on a 9% wash, − lines in --m-text-3; no resize grip on the diff (was a textarea grip on a pre); ligatures off so => reads as typed"
+  },
+  "gallery/update-diff-focus": {
+   "note": "the diff scrolls and takes focus like the code field: border lights into the 2px ring"
+  },
+  "gallery/update-footer-focus": {
+   "note": "Not now is focused on open; Update is the primary"
+  },
+  "gallery/share-submit": {
+   "note": "Submit to the gallery… is one more .btn in the Share dialog's exports (only for a mod that isn't from the gallery)"
+  },
+  "gallery/share-submit-hover": {
+   "note": "shared hover"
+  },
+  "gallery/submit-toast": {
+   "note": "says what happened (a GitHub issue opened) and what to do next"
+  },
+  "gallery/setting": {
+   "note": "Show mods others made: a settings row with the shared switch"
+  },
+  "gallery/setting-focus": {
+   "note": "the switch's track takes the ring"
+  },
+  "a11y/menu": {
+   "note": "Easier to use is a second .menu beside Page tools: same eyebrow header, 32px rows, 16px icons, hover and focus. It was completely unstyled (raw browser buttons, 1.02:1 text) because its rows were not direct children of .menu"
+  },
+  "a11y/menu-on-hover": {
+   "note": "tools that are on show the check on the right; Dyslexia-friendly letters is a 28px sub-row under Easier to read font (deliberately smaller: it is an option of the row above)"
+  },
+  "a11y/menu-item-focus": {
+   "note": "row highlight + inset ring, as in every menu"
+  },
+  "a11y/menu-on": {
+   "note": "phone width: the group folds under Page tools in the same scrolling menu, split by a 1px line"
+  },
+  "a11y/read-aloud": {
+   "note": "a 48px card: play (32px round primary, was 36), previous/next (.ibtn, disabled is --m-signal-1, was 35% opacity), sentence n of N in mono, speed (.btn, 28), close (.ibtn.close, the shared × glyph, was an 18px character)"
+  },
+  "a11y/read-aloud-mark": {
+   "note": "the sentence being read: an 18% --m-signal-4 wash with a 2px underline, one mark per line, r 4"
+  },
+  "a11y/read-aloud-hover": {
+   "note": "shared .ibtn hover"
+  },
+  "a11y/read-aloud-focus": {
+   "note": "shared ring"
+  },
+  "a11y/read-aloud-paused": {
+   "note": "Paused, play icon; nothing else changes size"
+  },
+  "a11y/audit": {
+   "note": "Check this page in the bar: eyebrow + summary, Check again (.tbtn) and × (.ibtn.close); each kind is a title, plain help, its numbered markers (20px), and Fix it as a plain 28px .btn with what it will do under it. It was five 40px white primary blocks with 70%-opacity notes inside",
+   "accept": "the marker badges (62-markers.js, shared with Ask) carry a 2px --m-bg halo so they read on any page content, like the picker's 1.5px outline"
+  },
+  "a11y/audit-markers": {
+   "accept": "the marker badges (62-markers.js, shared with Ask) carry a 2px --m-bg halo so they read on any page content, like the picker's 1.5px outline",
+   "note": "numbered markers on each place; the bar goes to the end that covers fewer"
+  },
+  "a11y/audit-fix-hover": {
+   "note": "shared .btn hover"
+  },
+  "a11y/audit-fix-focus": {
+   "note": "shared ring"
+  },
+  "a11y/audit-marker-focus": {
+   "note": "the marker buttons take the shared ring"
+  },
+  "a11y/audit-again-focus": {
+   "note": "shared ring"
+  },
+  "a11y/fix-it-done": {
+   "note": "Fix it on faint text: fixed at once, the list is checked again, the toast says what was saved. The toast now shows at the top while the bar is open at the bottom (it used to cover the status row)",
+   "accept": "the marker badges (62-markers.js, shared with Ask) carry a 2px --m-bg halo so they read on any page content, like the picker's 1.5px outline"
+  },
+  "a11y/describe-busy": {
+   "note": "a ring on the picture, the card beside it: working radar, “Looking at the picture…” in --m-text-2"
+  },
+  "a11y/describe-done": {
+   "note": "the description in 15px, Save as alt text (.btn.primary) and Copy (.btn), what the picture has now on the right; × is the shared glyph"
+  },
+  "a11y/describe-error": {
+   "note": "That didn't work: the reason in --m-warn, Try again"
+  },
+  "a11y/describe-hover": {
+   "note": "shared hover"
+  },
+  "a11y/describe-focus": {
+   "note": "Save takes focus when the description lands"
+  },
+  "a11y/describe-close-focus": {
+   "note": "shared ring on the 24px close"
+  },
+  "a11y/toolbar-describe-hover": {
+   "note": "Describe this picture on the edit toolbar (pictures only). Both a11y tools were raw browser buttons (26.8px, 2px border, light grey) on the toolbar; now .ibtn like every tool"
+  },
+  "a11y/toolbar-read-hover": {
+   "note": "Read aloud on the edit toolbar, for anything with text"
+  },
+  "a11y-site/before": {
+   "note": "the Riverside Library as it ships (demo/sites/a11y): faint text, tiny targets, no underlines, a ticker, a cookie bar, a chat bubble"
+  },
+  "a11y-site/contrast": {
+   "note": "Higher contrast: every line dark enough (the light meta line and the faint captions)"
+  },
+  "a11y-site/targets": {
+   "note": "Bigger click targets: the header icons and the × get 24px+ boxes; the layout shifts by a few pixels"
+  },
+  "a11y-site/readable": {
+   "note": "Easier to read font: a sans with more line height and spacing"
+  },
+  "a11y-site/dyslexia": {
+   "note": "plus Dyslexia-friendly letters: wider letter and word spacing"
+  },
+  "a11y-site/underline": {
+   "note": "Underline links"
+  },
+  "a11y-site/still": {
+   "note": "Stop animations: the ticker, the LIVE pulse and the spinner stop (a still frame)"
+  },
+  "a11y-site/outline": {
+   "note": "Focus outline everywhere: a strong ring on whatever has focus (the page had outline: none)"
+  },
+  "a11y-site/ruler": {
+   "note": "Reading ruler: a clear band at the pointer, the rest dimmed"
+  },
+  "a11y-site/calm": {
+   "verdict": "residual",
+   "note": "Hide distractions removes the announcement bar, cookie bar and chat bubble; the scrolling ticker stays (Stop animations stops it). Whether calm should take the ticker too is a rule in core/a11y.js, not UI"
+  },
+  "a11y-site/*": {
+   "note": "phone width: the demo site's own layout is not responsive (a fixed 300px sidebar), so the narrow shots are crowded before any tool runs; the tools themselves behave the same"
+  },
+  "control/panel-strip": {
+   "note": "Pause Morse on <site>: a label row with the shared switch, under the panel header"
+  },
+  "control/panel-backup": {
+   "note": "Backup: an eyebrow and two .btn, above the panel footer"
+  },
+  "control/pause-row-hover": {
+   "note": "row hover --m-raised"
+  },
+  "control/pause-row-focus": {
+   "note": "the switch's track takes the ring"
+  },
+  "control/backup-hover": {
+   "note": "shared hover"
+  },
+  "control/backup-focus": {
+   "note": "shared ring"
+  },
+  "control/origin-show-code": {
+   "note": "where the mod came from, then Show code: an underlined text link, 20px tall now (was 16, off the control grid)"
+  },
+  "control/paused-site": {
+   "note": "paused: the switch is on, the help says the mods are saved but not running, each mod gets a “not running” tag"
+  },
+  "control/paused-toast": {
+   "note": "a toast with an action: Undo as .btn.primary, the shared × (both were copies)"
+  },
+  "control/toast-action-focus": {
+   "note": "shared ring"
+  },
+  "control/show-code": {
+   "note": "read only: where it came from and where it runs, What it does, then the code (ligatures off, so => shows as typed)"
+  },
+  "control/install-review": {
+   "note": "one mod from a link: request, for where, who made it; What it does; the every-website note; Show code folded; Cancel has focus, never Install"
+  },
+  "control/install-cancel-focus": {
+   "note": "shared ring on Cancel"
+  },
+  "control/install-showcode-focus": {
+   "note": "the summary takes the shared ring"
+  },
+  "control/install-review-code": {
+   "note": "Show code open: Style and Script in the shared code field, scrolling sideways"
+  },
+  "control/install-review-backup": {
+   "note": "a backup: one section per mod, “not this page” for another site's mod, an unbroken 80-character title wraps, skipped items at the end"
+  },
+  "control/off-switch-toast": {
+   "note": "the off switch (⌥⇧0): one 40px row, Turn back on (.btn.primary) and the shared ×"
+  },
+  "control/off-switch-hover": {
+   "note": "shared hover on the primary"
+  },
+  "control/off-switch-close-focus": {
+   "note": "the × is .ibtn.close now (was an 18px × character in its own button)"
+  },
+  "control/off-panel-note": {
+   "note": "the panel says mods are off on this page, with Turn back on"
+  },
+  "control/paused-everywhere": {
+   "note": "paused everywhere: a note with Resume"
+  },
+  "control/safe-start": {
+   "note": "safe start: the title in bold, why, and two choices (Keep it off .btn, Turn it back on .btn.primary); it stays until answered"
+  },
+  "control/safe-start-focus": {
+   "note": "shared ring"
+  },
+  "control/safe-start-note": {
+   "note": "the panel says which mod is held back, with Keep it off / Turn on"
+  },
+  "popup/pause-off": {
+   "note": "the popup's pause rows: Pause Morse on <site>, Pause everywhere, the off-switch hint"
+  },
+  "popup/pause-hover": {
+   "note": "row hover --m-hover"
+  },
+  "popup/pause-focus": {
+   "note": "the switch's track takes the 2px --m-signal-3 ring"
+  },
+  "popup/pause-site-on": {
+   "note": "on: the help changes to what it means"
+  },
+  "popup/whole": {
+   "note": "the whole popup; where each mod came from and Show code now line up under its title (were flush left, under the dot)"
+  },
+  "popup/go-focus": {
+   "note": "popup buttons and fields take the shared 2px --m-signal-3 ring, offset 2 (was --m-focus, 24% white, ~2:1)"
+  },
+  "iterate/refining": {
+   "note": "a follow-up is typed after a result: Enter refines, so Save drops its ↵"
+  },
+  "iterate/refine-working": {
+   "note": "the refine works like a first change: Stop, phase, ticker"
+  },
+  "iterate/refined-result": {
+   "note": "the result says which version this is"
+  },
+  "iterate/stepped-back": {
+   "note": "⌘Z after a result: back one version, said in the hint"
+  },
+  "iterate/history-rows": {
+   "note": "History opens the versions under the row: number, request (ellipsis), when; the current one on top. Rows are 24px (were 25px: the baseline of the mono number pushed them off the grid)"
+  },
+  "iterate/history-row-hover": {
+   "note": "row hover --m-hover"
+  },
+  "iterate/history-row-focus": {
+   "note": "shared ring"
+  },
+  "iterate/history-restored": {
+   "note": "bringing back version 1: the toast says so, the list keeps every version"
+  },
+  "iterate/broken-row": {
+   "note": "the new broken-mod state: a mod whose code throws when it runs gets a Not working note (red dot, the reason in plain words) with Fix it as .btn.primary"
+  },
+  "iterate/fix-hover": {
+   "note": "shared hover"
+  },
+  "iterate/fix-focus": {
+   "note": "shared ring"
+  },
+  "iterate/fixing-broken": {
+   "note": "Fix it opens the bar on the mod and sends the error to the model. The suggestion chips used to stay under the working bar (fixMod skipped what send() does); now hidden"
+  },
+  "iterate/fixed-result": {
+   "note": "the fixed version is a result like any other: Save, Undo, Edit code, Share"
+  },
+  "edit-toolbar/tab-walk": {
+   "note": "Ctrl+E then Tab ×3: Hide, Move, Resize, with the focused tool's tooltip. Tab used to leave the toolbar for the bar's suggestion chips"
+  },
+  "edit-toolbar/shift-tab": {
+   "note": "Shift+Tab steps back; the walk wraps at both ends, skipping disabled and hidden tools"
+  },
+  "edit-type/no-room-above": {
+   "note": "a selection near the top: the toolbar sits above, the popover goes below the selection instead of on top of it"
+  },
+  "edit-color/no-room-above": {
+   "note": "same for Color"
+  },
+  "bar/reach-page-tools": {
+   "note": "a diagonal approach to Page tools: the bar stays put"
+  },
+  "bar/reach-suggestion": {
+   "note": "straight down through the input row to a suggestion: the bar stays put (it used to jump on mouseenter)"
+  },
+  "bar/dodge-to-point": {
+   "note": "a pointer that rests on the bar away from its controls for 350ms: the bar steps aside so what is under it can be pointed at"
+  },
+  "heal/bar-dot": {
+   "note": "a mod here stopped working after the site changed: a 7px --m-danger dot on the Morse mark with a 2px surface ring, nothing pops up. At phone width the mark (normally hidden there for room) stays while the dot is on, so the sign isn't lost"
+  },
+  "heal/mark-dot": {
+   "note": "the dot at the mark's top-right corner"
+  },
+  "heal/panel-header": {
+   "note": "the same dot on the panel header's mark"
+  },
+  "heal/stopped-row": {
+   "note": "the row's note leads with “Stopped working after this site changed.” and says what it can't find, by its label; Fix it is the primary"
+  },
+  "heal/stopped-fix-focus": {
+   "note": "shared ring"
+  },
+  "heal/fixing": {
+   "note": "Fix it: the bar works on the mod, no suggestions under it"
+  },
+  "heal/fixed-result": {
+   "note": "the fix shows for review with Save and Undo"
+  },
+  "heal/share-fix-toast": {
+   "note": "a fixed gallery mod: the toast offers Share the fix… (.btn.primary, shared ×)"
+  },
+  "heal/fixed-row": {
+   "note": "until shared: “Fixed after this site changed” with Share the fix…, a gray dot (not red: nothing is wrong)"
+  },
+  "heal/auto-fixed-toast": {
+   "note": "Settings → fix automatically: done in the background, a toast with Undo and Share the fix…"
+  },
+  "heal/setting": {
+   "note": "Fix my mods automatically when a site changes: the shared switch"
+  }
  },
  "fixes": [
-  {"title": "1. A page rule (`[data-morse-ui] { display: none !important }`) hid the whole overlay; zoom, dir=rtl and --m-* variables also leaked in. Host styles are now !important, direction is pinned, html zoom is countered, tokens are !important inside the shadow root", "before": "before/hostile-hostile-broken-light.png", "after": "hostile/hostile-bar-light.png"},
-  {"title": "2. Hover label off-screen for elements flush with the top edge (every app header)", "before": "before/picker-hover-top-edge-dark.png", "after": "picker/hover-top-edge-dark.png"},
-  {"title": "3. Same on a real site: The Daily Byte's top bar", "before": "before/hostile-byte-hover-light.png", "after": "hostile/byte-hover-light.png"},
-  {"title": "4. Hover label ran off the right edge", "before": "before/picker-hover-right-edge-dark.png", "after": "picker/hover-right-edge-dark.png"},
-  {"title": "5. 390px: result actions ran off the screen (Share cut)", "before": "before/bar-result-narrow-dark.png", "after": "bar/result-narrow-dark.png"},
-  {"title": "6. 390px: hint clipped mid-word, model label off-screen", "before": "before/bar-picking-narrow-light.png", "after": "bar/picking-narrow-light.png"},
-  {"title": "7. Long result title pushed Share out of the bar and hid the timing", "before": "before/bar-result-long-repaired-light.png", "after": "bar/result-long-repaired-light.png"},
-  {"title": "8. Long error clipped mid-glyph with no ellipsis (text-overflow on a flex box)", "before": "before/bar-error-dark.png", "after": "bar/error-dark.png"},
-  {"title": "9. Light theme: warning text #e5a54b on white was 2.0:1 (new light --m-warn #8a5300, 5.5:1)", "before": "before/bar-fixing-narrow-light.png", "after": "bar/fixing-narrow-light.png"},
-  {"title": "10. --m-text-3 failed AA in both themes (2.9–3.6:1): placeholder, model label, timings, field labels, row buttons. Now #86868e / #6a6a72 (≥4.5:1 worst case)", "before": "before/bar-picking-dark.png", "after": "bar/picking-dark.png"},
-  {"title": "11. Focus ring was 24% white (~2:1); now --m-signal-3, 2px, offset 2", "before": "before/bar-result-keep-focus-dark.png", "after": "bar/result-keep-focus-dark.png"},
-  {"title": "12. Switch had no focus indicator at all", "before": "before/switch-on-focus-dark.png", "after": "switch/on-focus-dark.png"},
-  {"title": "13. Unbroken titles overflowed the panel; disabled rows dropped to 50% opacity (below AA)", "before": "before/panel-mods-12-narrow-light.png", "after": "panel/row-unbroken-title-narrow-light.png"},
-  {"title": "14. Code modal wrapped code and floated × mid-title", "before": "before/modal-code-long-narrow-light.png", "after": "modal/code-long-narrow-light.png"},
-  {"title": "15. Toast had no max width (one 950px line)", "before": "before/toast-long-dark.png", "after": "toast/long-dark.png"},
-  {"title": "16. prefers-reduced-motion was ignored: the effect pinged, scanned and blinked; now a calm static field that fades", "before": "before/motion-reduced-effect-dark.png", "after": "motion/reduced-effect-dark.png"},
-  {"title": "17. Phone width: the edit toolbar ran 130px off screen. Now the tag and group lines drop and the eleven 32px tools fit in one 360px row (wrapping if narrower)", "before": "before/edit-toolbar-selected-narrow-dark.png", "after": "edit-toolbar/selected-narrow-dark.png"},
-  {"title": "18. Toolbar focus was a 1px inset line, and a focused tool's tooltip stayed up while hovering another (two tooltips). Now the shared 2px ring, one tooltip at a time", "before": "before/edit-toolbar-tool-move-hover-dark.png", "after": "edit-toolbar/tool-move-hover-dark.png"},
-  {"title": "19. Same in light: the 1px ring is now the 2px --m-signal-3 ring every control uses", "before": "before/edit-toolbar-tool-move-focus-light.png", "after": "edit-toolbar/tool-move-focus-light.png"},
-  {"title": "20. Settings sheet: the edit toolbar sat on top of the bar, the picker's hover box drew through the sheet and the page showed through it. The sheet is solid now, the toolbar steps aside and pointing pauses", "before": "before/settings-sheet-dark.png", "after": "settings/sheet-dark.png"},
-  {"title": "21. An invalid hex color looked exactly like a valid one. The field now turns --m-danger (pattern + :invalid)", "before": "before/edit-color-hex-invalid-light.png", "after": "edit-color/hex-invalid-light.png"},
-  {"title": "22. Page tools: the button's tooltip covered its own open menu, and the menu used a different focus style than the ⋯ menu", "before": "before/page-tools-menu-with-state-light.png", "after": "page-tools/menu-with-state-light.png"},
-  {"title": "23. Two menus, two designs: the ⋯ menu had 34px rows, 5px padding and 2px-bottom key caps. Both are one .menu now (32px rows, 4px padding, shared caps)", "before": "before/menu-open-dark.png", "after": "menu/open-dark.png"},
-  {"title": "24. Light theme: a rejected hotkey's message was #f2555a on white (3.4:1). Light --m-danger is #c4262e (5.6:1), and the field gets the same red ring as other invalid fields", "before": "before/hotkeys-rejected-light.png", "after": "hotkeys/rejected-light.png"},
-  {"title": "25. “Rebuilt from” never showed: the bar turned working before the request picked up the snapshot, so the chip row hid. One re-render after the hook", "before": "before/clipboard-rebuilt-from-dark.png", "after": "clipboard/rebuilt-from-dark.png"},
-  {"title": "26. The bar row mixed three icon sizes (14/15/16px), three strokes (1.8/1.6/1.5) and three button sizes (30/32 with r 8). Now 32px .ibtn squares, 16px icons, 1.5px strokes", "before": "before/voice-listening-dark.png", "after": "voice/listening-dark.png"},
-  {"title": "27. Suggestion chips were 26px pills inset 42px; now quiet 28px .btn on the bar's 16px inset", "before": "before/suggestions-chip-focus-dark.png", "after": "suggestions/chip-focus-dark.png"},
-  {"title": "28. Type popover: 30px stepper buttons with 14px icons, a second segmented-control design. Now 24px .ibtn in a .field, and the shared .seg", "before": "before/edit-type-default-light.png", "after": "edit-type/default-light.png"},
-  {"title": "29. Capture: the footer hint wrapped to two lines and the key cap was a third style. Shorter hint, shared .btn.primary with the inverse cap", "before": "before/capture-with-note-dark.png", "after": "capture/with-note-dark.png"},
-  {"title": "30. Phone width: the input was squeezed to “Des” (with a stray scrollbar) and segmented controls crowded their labels. The mark gives way, the chip caps at 40%, segments drop under their label", "before": "before/settings-sheet-narrow-dark.png", "after": "settings/sheet-narrow-dark.png"},
-  {"title": "31. Hostile page: `[data-morse-ui] { display: none !important }` hid the text being edited in place (Publish vanished). The edit span now holds its display with !important", "before": "before/hostile-hostile-text-edit-light.png", "after": "hostile/hostile-text-edit-light.png"},
-  {"title": "32. Key caps had three designs (16px inline, 20px with a 2px bottom border and r 5, borderless in tooltips). One cap: 1px line, r 4, 16px inline / 20px in sheets and menus", "before": "before/shortcuts-sheet-light.png", "after": "shortcuts/sheet-light.png"}
+  {
+   "title": "R3-1. Easier to use, the menu group, was completely unstyled: raw browser buttons with 1.02:1 text, because its rows were not direct children of .menu. It is a second .menu now (shared header, rows, icons, hover, focus)",
+   "before": "before/a11y-menu-dark.png",
+   "after": "a11y/menu-dark.png"
+  },
+  {
+   "title": "R3-2. Same at phone width, where the group folds under Page tools",
+   "before": "before/a11y-menu-narrow-light.png",
+   "after": "a11y/menu-narrow-light.png"
+  },
+  {
+   "title": "R3-3. Read aloud and Describe on the edit toolbar were raw browser buttons (26.8px, 2px border, light fill); now .ibtn like every tool",
+   "before": "before/a11y-toolbar-describe-hover-dark.png",
+   "after": "a11y/toolbar-describe-hover-dark.png"
+  },
+  {
+   "title": "R3-4. The Type popover covered the selection when there was no room above (round 2 residual). place() now tries the toolbar's far side, the element's other side, then beside it",
+   "before": "before/edit-type-no-room-above-dark.png",
+   "after": "edit-type/no-room-above-dark.png"
+  },
+  {
+   "title": "R3-5. Same for the Color popover",
+   "before": "before/edit-color-no-room-above-light.png",
+   "after": "edit-color/no-room-above-light.png"
+  },
+  {
+   "title": "R3-6. Tab did not walk the edit toolbar (round 2 residual): Ctrl+E, Tab ×3 landed on a suggestion chip. Now Hide, Move, Resize, with the tooltip",
+   "before": "before/edit-toolbar-tab-walk-dark.png",
+   "after": "edit-toolbar/tab-walk-dark.png"
+  },
+  {
+   "title": "R3-7. The bar jumped away from a pointer heading for the “mods for this site” chip (and any suggestion), so it could not be clicked. It now steps aside only when the pointer rests on it away from its controls",
+   "before": "before/gallery-chip-hover-dark.png",
+   "after": "gallery/chip-hover-dark.png"
+  },
+  {
+   "title": "R3-8. Check this page: five 40px white primary blocks with 70%-opacity notes inside, 18px markers, a × character. Now a 28px .btn per kind with what it does under it, 20px markers, .tbtn and the shared ×",
+   "before": "before/a11y-audit-dark.png",
+   "after": "a11y/audit-dark.png"
+  },
+  {
+   "title": "R3-9. Same at phone width: the eyebrow broke over two lines",
+   "before": "before/a11y-audit-narrow-dark.png",
+   "after": "a11y/audit-narrow-dark.png"
+  },
+  {
+   "title": "R3-10. Install review: notes stacked as separate boxes with a 2px border. Notes in a row now read as one box with one label (the 2px warn edge is an inset shadow inside the 1px border)",
+   "before": "before/gallery-install-review-light.png",
+   "after": "gallery/install-review-light.png"
+  },
+  {
+   "title": "R3-11. Fix it on a broken mod left the suggestion chips under the working bar",
+   "before": "before/iterate-fixing-broken-dark.png",
+   "after": "iterate/fixing-broken-dark.png"
+  },
+  {
+   "title": "R3-12. For this site: the head was a 54px button and every item button was a 26px copy of .btn; radar at 14px. Now a row with a Show/Hide .tbtn, 28px .btn, radar 16",
+   "before": "before/gallery-section-items-dark.png",
+   "after": "gallery/section-items-dark.png"
+  },
+  {
+   "title": "R3-13. Read aloud: a 36px play button, disabled at 35% opacity, a ×-character close, a 32px outlined speed box. Now 32px .ibtn (disabled --m-signal-1), .btn speed, the shared ×",
+   "before": "before/a11y-read-aloud-dark.png",
+   "after": "a11y/read-aloud-dark.png"
+  },
+  {
+   "title": "R3-14. Update review: the diff showed a textarea resize grip and turned => into an arrow ligature. No grip, ligatures off in every code view",
+   "before": "before/gallery-update-review-dark.png",
+   "after": "gallery/update-review-dark.png"
+  },
+  {
+   "title": "R3-15. Share card caption (round 2 residual): 13px #8e8e96, about 8px once the card sits in the dialog. Now 15px #a0a0a8 (7.4:1), footer 17px",
+   "before": "before/modal-share-dark.png",
+   "after": "modal/share-dark.png"
+  },
+  {
+   "title": "R3-16. A toast covered the open bar's status row (Fix it, Capture, Save). With the bar at the bottom, toasts show at the top",
+   "before": "before/a11y-fix-it-done-dark.png",
+   "after": "a11y/fix-it-done-dark.png"
+  },
+  {
+   "title": "R3-17. Version history rows were 25px (off the grid); now 24px",
+   "before": "before/iterate-history-rows-light.png",
+   "after": "iterate/history-rows-light.png"
+  },
+  {
+   "title": "R3-18. Show code drew => as an arrow ligature",
+   "before": "before/control-show-code-dark.png",
+   "after": "control/show-code-dark.png"
+  },
+  {
+   "title": "R3-19. Toast close was a 16px × character in its own button copy; now the shared .ibtn.close",
+   "before": "before/control-off-switch-close-focus-dark.png",
+   "after": "control/off-switch-close-focus-dark.png"
+  },
+  {
+   "title": "R3-20. Trying a mod: its two buttons (now Save/Undo) were copies of .btn, the dot pulsed forever; now .btn and a still dot",
+   "before": "before/gallery-trying-strip-light.png",
+   "after": "gallery/trying-strip-light.png"
+  },
+  {
+   "title": "R3-21. Popup: the focus ring was --m-focus (24% white, about 2:1) at offset 1; now the shared 2px --m-signal-3 ring at offset 2",
+   "before": "before/popup-go-focus-dark.png",
+   "after": "popup/go-focus-dark.png"
+  },
+  {
+   "title": "R3-22. Popup: where each mod came from and Show code sat flush left under the status dot; now aligned under the title",
+   "before": "before/popup-whole-dark.png",
+   "after": "popup/whole-dark.png"
+  },
+  {
+   "title": "R3-23. Self-heal at phone width: the bar hides its mark there, so the “stopped working” dot vanished from the bar. The mark stays while the dot is on",
+   "before": "before/heal-bar-dot-narrow-light.png",
+   "after": "heal/bar-dot-narrow-light.png"
+  },
+  {
+   "title": "R3-24. Show me once (new on main) drew its chip icon at 14px (and 12/14px in its strip), off the one 16px set; flagged on every empty-bar shot. Now 16px",
+   "before": "before/suggestions-page-dark.png",
+   "after": "suggestions/page-dark.png"
+  },
+  {
+   "title": "1. A page rule (`[data-morse-ui] { display: none !important }`) hid the whole overlay; zoom, dir=rtl and --m-* variables also leaked in. Host styles are now !important, direction is pinned, html zoom is countered, tokens are !important inside the shadow root",
+   "before": "before/hostile-hostile-broken-light.png",
+   "after": "hostile/hostile-bar-light.png"
+  },
+  {
+   "title": "2. Hover label off-screen for elements flush with the top edge (every app header)",
+   "before": "before/picker-hover-top-edge-dark.png",
+   "after": "picker/hover-top-edge-dark.png"
+  },
+  {
+   "title": "3. Same on a real site: The Daily Byte's top bar",
+   "before": "before/hostile-byte-hover-light.png",
+   "after": "hostile/byte-hover-light.png"
+  },
+  {
+   "title": "4. Hover label ran off the right edge",
+   "before": "before/picker-hover-right-edge-dark.png",
+   "after": "picker/hover-right-edge-dark.png"
+  },
+  {
+   "title": "5. 390px: result actions ran off the screen (Share cut)",
+   "before": "before/bar-result-narrow-dark.png",
+   "after": "bar/result-narrow-dark.png"
+  },
+  {
+   "title": "6. 390px: hint clipped mid-word, model label off-screen",
+   "before": "before/bar-picking-narrow-light.png",
+   "after": "bar/picking-narrow-light.png"
+  },
+  {
+   "title": "7. Long result title pushed Share out of the bar and hid the timing",
+   "before": "before/bar-result-long-repaired-light.png",
+   "after": "bar/result-long-repaired-light.png"
+  },
+  {
+   "title": "8. Long error clipped mid-glyph with no ellipsis (text-overflow on a flex box)",
+   "before": "before/bar-error-dark.png",
+   "after": "bar/error-dark.png"
+  },
+  {
+   "title": "9. Light theme: warning text #e5a54b on white was 2.0:1 (new light --m-warn #8a5300, 5.5:1)",
+   "before": "before/bar-fixing-narrow-light.png",
+   "after": "bar/fixing-narrow-light.png"
+  },
+  {
+   "title": "10. --m-text-3 failed AA in both themes (2.9–3.6:1): placeholder, model label, timings, field labels, row buttons. Now #86868e / #6a6a72 (≥4.5:1 worst case)",
+   "before": "before/bar-picking-dark.png",
+   "after": "bar/picking-dark.png"
+  },
+  {
+   "title": "11. Focus ring was 24% white (~2:1); now --m-signal-3, 2px, offset 2",
+   "before": "before/bar-result-keep-focus-dark.png",
+   "after": "bar/result-keep-focus-dark.png"
+  },
+  {
+   "title": "12. Switch had no focus indicator at all",
+   "before": "before/switch-on-focus-dark.png",
+   "after": "switch/on-focus-dark.png"
+  },
+  {
+   "title": "13. Unbroken titles overflowed the panel; disabled rows dropped to 50% opacity (below AA)",
+   "before": "before/panel-mods-12-narrow-light.png",
+   "after": "panel/row-unbroken-title-narrow-light.png"
+  },
+  {
+   "title": "14. Code modal wrapped code and floated × mid-title",
+   "before": "before/modal-code-long-narrow-light.png",
+   "after": "modal/code-long-narrow-light.png"
+  },
+  {
+   "title": "15. Toast had no max width (one 950px line)",
+   "before": "before/toast-long-dark.png",
+   "after": "toast/long-dark.png"
+  },
+  {
+   "title": "16. prefers-reduced-motion was ignored: the effect pinged, scanned and blinked; now a calm static field that fades",
+   "before": "before/motion-reduced-effect-dark.png",
+   "after": "motion/reduced-effect-dark.png"
+  },
+  {
+   "title": "17. Phone width: the edit toolbar ran 130px off screen. Now the tag and group lines drop and the eleven 32px tools fit in one 360px row (wrapping if narrower)",
+   "before": "before/edit-toolbar-selected-narrow-dark.png",
+   "after": "edit-toolbar/selected-narrow-dark.png"
+  },
+  {
+   "title": "18. Toolbar focus was a 1px inset line, and a focused tool's tooltip stayed up while hovering another (two tooltips). Now the shared 2px ring, one tooltip at a time",
+   "before": "before/edit-toolbar-tool-move-hover-dark.png",
+   "after": "edit-toolbar/tool-move-hover-dark.png"
+  },
+  {
+   "title": "19. Same in light: the 1px ring is now the 2px --m-signal-3 ring every control uses",
+   "before": "before/edit-toolbar-tool-move-focus-light.png",
+   "after": "edit-toolbar/tool-move-focus-light.png"
+  },
+  {
+   "title": "20. Settings sheet: the edit toolbar sat on top of the bar, the picker's hover box drew through the sheet and the page showed through it. The sheet is solid now, the toolbar steps aside and pointing pauses",
+   "before": "before/settings-sheet-dark.png",
+   "after": "settings/sheet-dark.png"
+  },
+  {
+   "title": "21. An invalid hex color looked exactly like a valid one. The field now turns --m-danger (pattern + :invalid)",
+   "before": "before/edit-color-hex-invalid-light.png",
+   "after": "edit-color/hex-invalid-light.png"
+  },
+  {
+   "title": "22. Page tools: the button's tooltip covered its own open menu, and the menu used a different focus style than the ⋯ menu",
+   "before": "before/page-tools-menu-with-state-light.png",
+   "after": "page-tools/menu-with-state-light.png"
+  },
+  {
+   "title": "23. Two menus, two designs: the ⋯ menu had 34px rows, 5px padding and 2px-bottom key caps. Both are one .menu now (32px rows, 4px padding, shared caps)",
+   "before": "before/menu-open-dark.png",
+   "after": "menu/open-dark.png"
+  },
+  {
+   "title": "24. Light theme: a rejected hotkey's message was #f2555a on white (3.4:1). Light --m-danger is #c4262e (5.6:1), and the field gets the same red ring as other invalid fields",
+   "before": "before/hotkeys-rejected-light.png",
+   "after": "hotkeys/rejected-light.png"
+  },
+  {
+   "title": "25. “Rebuilt from” never showed: the bar turned working before the request picked up the snapshot, so the chip row hid. One re-render after the hook",
+   "before": "before/clipboard-rebuilt-from-dark.png",
+   "after": "clipboard/rebuilt-from-dark.png"
+  },
+  {
+   "title": "26. The bar row mixed three icon sizes (14/15/16px), three strokes (1.8/1.6/1.5) and three button sizes (30/32 with r 8). Now 32px .ibtn squares, 16px icons, 1.5px strokes",
+   "before": "before/voice-listening-dark.png",
+   "after": "voice/listening-dark.png"
+  },
+  {
+   "title": "27. Suggestion chips were 26px pills inset 42px; now quiet 28px .btn on the bar's 16px inset",
+   "before": "before/suggestions-chip-focus-dark.png",
+   "after": "suggestions/chip-focus-dark.png"
+  },
+  {
+   "title": "28. Type popover: 30px stepper buttons with 14px icons, a second segmented-control design. Now 24px .ibtn in a .field, and the shared .seg",
+   "before": "before/edit-type-default-light.png",
+   "after": "edit-type/default-light.png"
+  },
+  {
+   "title": "29. Capture: the footer hint wrapped to two lines and the key cap was a third style. Shorter hint, shared .btn.primary with the inverse cap",
+   "before": "before/capture-with-note-dark.png",
+   "after": "capture/with-note-dark.png"
+  },
+  {
+   "title": "30. Phone width: the input was squeezed to “Des” (with a stray scrollbar) and segmented controls crowded their labels. The mark gives way, the chip caps at 40%, segments drop under their label",
+   "before": "before/settings-sheet-narrow-dark.png",
+   "after": "settings/sheet-narrow-dark.png"
+  },
+  {
+   "title": "31. Hostile page: `[data-morse-ui] { display: none !important }` hid the text being edited in place (Publish vanished). The edit span now holds its display with !important",
+   "before": "before/hostile-hostile-text-edit-light.png",
+   "after": "hostile/hostile-text-edit-light.png"
+  },
+  {
+   "title": "32. Key caps had three designs (16px inline, 20px with a 2px bottom border and r 5, borderless in tooltips). One cap: 1px line, r 4, 16px inline / 20px in sheets and menus",
+   "before": "before/shortcuts-sheet-light.png",
+   "after": "shortcuts/sheet-light.png"
+  }
  ]
 }

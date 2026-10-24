@@ -31,8 +31,8 @@ function CSS() {
   button > svg:not(.radar), .menu svg, .gm-note > svg { flex: none; width: 16px; height: 16px; }
   button > svg[stroke], .menu svg[stroke], .gm-note > svg[stroke] { stroke-width: 1.5px; }
   /* the close icon (×) as a mask, so the glyph in any markup draws the same */
-  .chip .x, .panel header > button, .card header > button { font-size: 0 !important; display: flex !important; align-items: center; justify-content: center; }
-  .chip .x::before, .panel header > button::before, .card header > button::before { content: ""; width: 16px; height: 16px; background: currentColor;
+  .chip .x, .panel header > button, .card header > button, .ibtn.close { font-size: 0 !important; display: flex !important; align-items: center; justify-content: center; }
+  .chip .x::before, .panel header > button::before, .card header > button::before, .ibtn.close::before { content: ""; width: 16px; height: 16px; background: currentColor;
     -webkit-mask-image: ${ICON_CLOSE}; mask-image: ${ICON_CLOSE}; -webkit-mask-size: 16px; mask-size: 16px; }
   .chip .x::before { width: 14px; height: 14px; -webkit-mask-size: 14px; mask-size: 14px; }
 
@@ -50,9 +50,9 @@ function CSS() {
     border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); height: 28px; padding: 0 10px; font: 500 var(--m-text-sm)/18px var(--m-font);
     letter-spacing: var(--m-tracking); white-space: nowrap; transition: background var(--m-fast), border-color var(--m-fast), color var(--m-fast); }
   .btn:hover, .actions button:hover, .panel button:hover, .card button:hover, .sug:hover { background: var(--m-hover); border-color: var(--m-signal-1); }
-  .tbtn, .panel .btns button { height: 24px; padding: 0 8px; border: 0; border-radius: var(--m-r-sm); background: none; color: var(--m-text-2);
+  .tbtn, .panel .tbtn, .panel .btns button { height: 24px; padding: 0 8px; border: 0; border-radius: var(--m-r-sm); background: none; color: var(--m-text-2);
     font: 500 var(--m-text-sm)/16px var(--m-font); letter-spacing: var(--m-tracking); white-space: nowrap; transition: background var(--m-fast), color var(--m-fast); }
-  .tbtn:hover, .panel .btns button:hover { color: var(--m-text); background: var(--m-hover); }
+  .tbtn:hover, .panel .tbtn:hover, .panel .btns button:hover { color: var(--m-text); background: var(--m-hover); }
   button.primary { background: var(--m-primary) !important; border-color: var(--m-primary) !important; color: var(--m-primary-text) !important; }
   button.primary:hover { background: var(--m-primary-hover) !important; }
 
@@ -65,7 +65,7 @@ function CSS() {
   :is(button.primary, .tip) kbd { background: color-mix(in srgb, currentColor 14%, transparent); border-color: color-mix(in srgb, currentColor 24%, transparent); color: inherit; }
 
   /* ---- eyebrow labels: section names in sheets, menus, popovers and modals */
-  .card label, .sheet h4, :is(.menu, .a11y-group) > header, .gm-field label, .gm-clips-l, .sugs .try {
+  .card label, .sheet h4, :is(.menu, .a11y-group) > header, .gm-field label, .gm-clips-l, .sugs .try, .eyebrow {
     font: 500 var(--m-text-xs)/16px var(--m-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--m-text-3); }
 
   /* ---- tags: small mono labels in a hairline box */
@@ -242,7 +242,7 @@ function CSS() {
   .health.guard p + button { margin-left: auto; }
   .versions { grid-column: 2; list-style: none; margin: 8px 0 0 -8px; padding: 4px; border: 1px solid var(--m-line); border-radius: var(--m-r-sm); }
   .versions li { margin: 0; }
-  .versions li.cur, .panel .versions button { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; width: 100%; height: auto; padding: 4px 6px;
+  .versions li.cur, .panel .versions button { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; width: 100%; height: 24px; padding: 4px 6px;
     border: 0; border-radius: 4px; text-align: left; font: 400 var(--m-text-sm)/16px var(--m-font); letter-spacing: var(--m-tracking); white-space: normal; }
   .panel .versions button:hover { background: var(--m-hover); }
   .versions .vn { font: 10.5px/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; font-variant-numeric: tabular-nums; }
@@ -254,6 +254,9 @@ function CSS() {
 
   /* ---- modals */
   .modal { position: fixed; inset: 0; background: var(--m-scrim); display: flex; align-items: center; justify-content: center; pointer-events: auto; animation: fade var(--m-fast); }
+  /* a <dialog> (shown modally for reviews, 80-modals.js): none of the browser's dialog look */
+  dialog.modal { margin: 0; padding: 0; border: 0; width: auto; height: auto; max-width: none; max-height: none; color: inherit; overflow: visible; }
+  dialog.modal::backdrop { background: transparent; }
   @keyframes fade { from { opacity: 0 } }
   .card { width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 40px); overflow: auto; background: var(--m-surface); color: var(--m-text); border: 1px solid var(--m-line-strong);
     border-radius: var(--m-r-lg); padding: 20px; font: 400 var(--m-text-md)/1.45 var(--m-font); letter-spacing: var(--m-tracking); box-shadow: var(--m-shadow); animation: rise2 var(--m-med) var(--m-ease); }
@@ -263,7 +266,7 @@ function CSS() {
   .card label { display: block; margin: 16px 0 8px; }
   .card label .dim, .card label code { text-transform: none; letter-spacing: 0; font: inherit; }
   .code { display: block; width: 100%; min-height: 128px; border-radius: var(--m-r-md); padding: 12px; margin: 0;
-    font: 12px/20px var(--m-mono); letter-spacing: 0; resize: vertical; outline: 0; white-space: pre; overflow: auto;
+    font: 12px/20px var(--m-mono); letter-spacing: 0; font-variant-ligatures: none; resize: vertical; outline: 0; white-space: pre; overflow: auto;
     scrollbar-width: thin; scrollbar-color: var(--m-signal-2) transparent; /* not the system's light scrollbars on a dark box */ }
   .code[data-k="src"] { white-space: pre-wrap; word-break: break-all; }
   .code::placeholder { color: var(--m-text-3); opacity: 1; }
@@ -277,6 +280,8 @@ function CSS() {
   .toast { position: fixed; left: 20px; bottom: 20px; max-width: min(480px, calc(100vw - 40px)); pointer-events: none; display: flex; align-items: flex-start; gap: 10px; background: var(--m-surface); color: var(--m-text);
     border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); padding: 9px 14px 9px 12px; font: 450 var(--m-text-md)/20px var(--m-font); letter-spacing: var(--m-tracking);
     box-shadow: var(--m-shadow); animation: rise2 var(--m-med) var(--m-ease); }
+  /* while the bar is open at the bottom, toasts go to the top so they never cover it */
+  .bar:not([hidden]):not(.top) ~ :is(.toast, .ctl-toast) { bottom: auto; top: 20px; }
   .toast .radar { flex: none; color: var(--m-text-2); margin-top: 4px; }
   .toast span { min-width: 0; overflow-wrap: anywhere; }
   @keyframes rise2 { from { transform: translateY(6px); opacity: 0 } }

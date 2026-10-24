@@ -43,7 +43,6 @@ let practicePort = null;
 function connectPractice() {
   practicePort = chrome.runtime.connect({ name: "morse-practice" });
   practicePort.onMessage.addListener(m => {
-    if (typeof m.eval === "string") evalInFrame(m.eval).then(result => practicePort?.postMessage({ evalReply: m.id, result }));
     if (m.toggle) openBar();
   });
   // The service worker can be recycled; the practice area keeps working.
@@ -51,16 +50,6 @@ function connectPractice() {
 }
 connectPractice();
 
-const evals = new Map();
-let evalSeq = 0;
-function evalInFrame(code) {
-  return new Promise(resolve => {
-    const id = ++evalSeq;
-    evals.set(id, resolve);
-    frame.contentWindow.postMessage({ morseEval: code, id }, "*");
-    setTimeout(() => { if (evals.delete(id)) resolve({ ok: false, error: "The practice page didn't answer. Reload this page and try again." }); }, 4000);
-  });
-}
 
 let port = null; // { p, inflight }: requests the practice bar still waits on (see host.js)
 function relay(m) {
@@ -85,7 +74,6 @@ function relay(m) {
 addEventListener("message", e => {
   if (e.source !== frame.contentWindow || !e.data) return;
   if (e.data.morsePractice) relay(e.data.morsePractice);
-  if (e.data.morseEvalReply != null) { const done = evals.get(e.data.morseEvalReply); evals.delete(e.data.morseEvalReply); done?.(e.data.result); }
 });
 frame.src = "practice.html";
 $("frame").append(frame);
@@ -243,8 +231,8 @@ async function refresh() {
   $("progress").textContent = n === 4 ? "All done" : `${n} of 4 done`;
   // The practice page works before a model is connected, with sample answers (onboarding-host.js).
   $("practice-note").innerHTML = model
-    ? "This page uses your model, like any other site."
-    : "No model yet? This page has sample answers for <q>make this easier to read</q> and <q>add a word count</q>, so you can try Morse now. Connect a model to change any website.";
+    ? "This page uses your model. It shows how a change looks; changes that add features work on real websites."
+    : "No model yet? This page has sample answers for <q>make this easier to read</q>, so you can try Morse now. Connect a model to change any website.";
 }
 refresh();
 chrome.storage.onChanged.addListener(() => refresh());

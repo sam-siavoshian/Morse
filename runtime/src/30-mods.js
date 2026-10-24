@@ -10,6 +10,7 @@ async function applyMod(m) {
   setCss(m.id, m.css);
   if (m.js.trim()) {
     const r = await call("exec", { modId: m.id, js: m.js });
+    if (r?.waiting) return Waiting.add(m); // waiting hook: “Allow User Scripts” is off; the style shows, the code never ran (64-waiting.js)
     Health.ran(m, r); // repair: the panel marks mods that stopped working (70-panel.js)
     if (!r.ok && !guardPaused(m, r) /* guard hook: 64-guard.js says why */) { console.warn("[morse]", m.title, r.error); toast(`“${m.title}” didn't work on this page. Open Mods to turn it off or fix it.`); }
   }

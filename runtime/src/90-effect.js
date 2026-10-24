@@ -13,7 +13,7 @@ const Effect = (() => {
   const g = fx.getContext("2d");
   const CELL = 8, SQ = 6;
   let target = null, running = false, mode = "thinking", rect = null, cols = 0, rows = 0, cells = [];
-  let t0 = 0, end0 = 0, endResolve = null, ok = true, frame = 0, pal = null, blips = [];
+  let t0 = 0, end0 = 0, endResolve = null, ok = true, frame = 0, pal = null, blips = [], shown0 = 0;
   // prefers-reduced-motion: a calm, static field (no pulse, ping, scan or
   // blips) that simply fades out when the change lands.
   const calm = matchMedia("(prefers-reduced-motion: reduce)");
@@ -47,7 +47,7 @@ const Effect = (() => {
     return x < b || y < b || x >= cols - b || y >= rows - b;
   }
   function start(el) {
-    target = el; rect = null; cols = rows = 0; mode = "thinking"; running = true; ok = true; blips = [];
+    target = el; rect = null; cols = rows = 0; mode = "thinking"; running = true; ok = true; blips = []; shown0 = 0;
     pal = palette();
     t0 = performance.now();
     logo.classList.add("live");
@@ -79,6 +79,11 @@ const Effect = (() => {
       blips.push({ x: Math.max(0, Math.min(cols - len, x)), y: Math.max(0, Math.min(rows - 1, y)), code, born: performance.now() });
     }
   }
+  // speed: the first part of the change is on the page. The cover over the
+  // target fades and the field dims, so you watch the change come in.
+  function reveal() {
+    if (running && mode !== "end" && !shown0) shown0 = performance.now();
+  }
   function finish(success) {
     ok = success;
     mode = "end";
@@ -103,8 +108,9 @@ const Effect = (() => {
     // rings follow the target's shape on wide toolbars and tall sidebars.
     const cx = cols / 2, cy = rows / 2, maxR = Math.SQRT2;
     const tol = 1.1 / Math.max(2, Math.min(cx, cy));
-    if (target) {
-      g.globalAlpha = mode === "end" ? 1 - endP : 1;
+    const veil = shown0 ? Math.max(0, 1 - (now - shown0) / 300) : 1; // 1 = covered, 0 = the change shows through
+    if (target && veil > 0) {
+      g.globalAlpha = (mode === "end" ? 1 - endP : 1) * veil;
       g.fillStyle = pal.scrim;
       roundRect(g, 0, 0, rect.w, rect.h, 10); g.fill();
     }
@@ -157,6 +163,7 @@ const Effect = (() => {
         const l = lit.get(i);
         if (l) { a = Math.max(a, 0.35 + l * 0.65); color = l > 0.5 ? pal.top : pal.hi; }
       }
+      if (mode !== "end") a *= 0.35 + 0.65 * veil;
       g.globalAlpha = Math.max(0, Math.min(1, a));
       g.fillStyle = color;
       roundRect(g, x * CELL + 1, y * CELL + 1, SQ, SQ, 1.5); g.fill();
@@ -180,5 +187,5 @@ const Effect = (() => {
     root.append(p);
     setTimeout(() => p.remove(), 900);
   }
-  return { start, token, finish };
+  return { start, token, reveal, finish };
 })();

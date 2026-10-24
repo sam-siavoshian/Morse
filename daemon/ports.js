@@ -65,9 +65,10 @@ export async function reachableFrom(port, addresses = externalAddresses(), answe
   return open;
 }
 
-// Strip switches that would widen who can reach the port.
+// Strip switches that would widen who can reach the port (an allowed origin
+// lets web pages with that origin drive the app).
 export function safeExtraArgs(args = []) {
-  return args.filter(a => !/^--remote-debugging-(address|port|pipe)\b/.test(a));
+  return args.filter(a => !/^--remote-(debugging-(address|port|pipe)|allow-origins)\b/.test(a));
 }
 
 async function json(port, path) {

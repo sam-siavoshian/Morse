@@ -38,7 +38,8 @@ recommends the first one it finds, and saves your choice. More about each:
    prints (`dist/extension` in a clone).
 3. Open Morse's details and turn on **“Allow User Scripts”**. Mods that only
    change how a site looks work without it. Mods that add buttons or
-   features need it on some sites.
+   features need it; until it is on, Morse shows their new look and tells
+   you which ones are waiting.
 4. The welcome page opens. Its practice page has sample answers, so you can
    try a change right away, before connecting anything.
 5. Connect a model. The welcome page shows one command,

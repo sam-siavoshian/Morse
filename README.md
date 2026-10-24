@@ -26,7 +26,7 @@ You need [Node](https://nodejs.org) 22 or newer. Full steps, and what to do when
 
 1. Get Morse: `npm install -g morse-cli` (until the first npm release: `npm install -g github:sam-siavoshian/RRAA`).
 2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and choose the folder `morse extension` prints. The welcome page opens.
-3. In Morse's details, turn on **“Allow User Scripts”**, so mods that add buttons work on every site.
+3. In Morse's details, turn on **“Allow User Scripts”**, so mods that add buttons or features can run.
 4. Connect a model: the welcome page shows one command, `morse setup --pair <code>`. Paste it in a terminal. It finds Claude Code or Codex, checks that it answers, and the page connects by itself. Then press **⌥Space** (Ctrl+Shift+Space on Windows and Linux) on any page.
 
 **Desktop apps (Spotify, Slack, Discord, VS Code…)**
@@ -51,7 +51,9 @@ To work on Morse itself from a clone, see the [developer guide](docs/dev/README.
 | **Show me once** | Do a task by hand once, then turn it into a button, a shortcut, or “do this to every one”. | [Show me once](docs/show-me-once.md) |
 | **Easier to use** | Higher contrast, bigger click targets, an easier font, Read aloud, and Check this page with Fix it. | [Easier to use](docs/easier-to-use.md) |
 | **Mods** | Turn mods on and off, share them with a link, try mods other people made, and fix one when a site changes. | [Mods](docs/mods.md) |
+| **Mod packs** | Share several mods together with your team. Each person picks the ones they want, and the pack can stay up to date. | [Mod packs](docs/mod-packs.md) |
 | **Your controls** | One shortcut turns every mod off. Pause Morse on a site. A mod that slows down, freezes or keeps breaking a page is stopped. Back up everything to one file. | [Your controls](docs/your-controls.md) |
+| **Your style** | One look on every site and app: your font, bigger text, calmer pages, colors that are easier to tell apart. Say it once, ending with “everywhere”. | [Your style](docs/your-style.md) |
 | **Desktop apps** | `morse launch spotify` opens the app with Morse connected. The app's own files never change. | [Desktop apps](docs/desktop.md) |
 
 ## Which models work
@@ -81,11 +83,13 @@ Version 0.2, not released yet ([changelog](CHANGELOG.md)). What was checked for 
 - **Websites:** the Chrome extension on three sites, one with strict security settings, in Chromium on Linux. Share links installed in a second browser profile; the Tampermonkey version runs without Morse.
 - **Desktop apps:** a real Electron app built for testing (Electron 45 on Linux, with a menu bar, a locked-down preload, an embedded page and a second window, packed the way apps ship), driven with real keyboard and mouse: launch, change, save, quit, launch again, and the mod is back. Fuses locked down and Chromium's sandbox on: Morse still connects.
 - **Claude Code (haiku)** as the model: the demo video, the Electron app, Describe this picture, Show me once (10 of 12 runs), and 55 everyday requests on 6 demo apps, 3 runs each: 163 of 165 worked ([evals](evals/README.md)).
+- **Real apps on Linux**, with Claude Code (haiku) and real keyboard and mouse: VSCodium 1.140 (its `.deb`), Obsidian 1.14 and Joplin 3.7 (AppImages). `morse apps` found them and `morse launch` opened them. One change each (a bigger status bar, no ribbon, no Synchronize button) took 6 to 16 seconds and was back after quitting and opening the app again. [Tested on](docs/desktop.md#tested-on).
+- **Real websites** with the extension and Claude Code (haiku): pypi.org, gitlab.com, pkg.go.dev, rubygems.org, hub.docker.com and nodejs.org. Five changes worked and were still there after a reload. On the Node.js docs, “hide the left sidebar” blanked the whole page every time. With “Allow User Scripts” off, PyPI blocked a new button; GitLab didn't. [Details](docs/desktop.md#websites).
 - `npm test` covers every model connection against stand-ins, the Morse helper, the engine, sharing, and the UI in real Chromium.
 
 **Not verified yet**
 
-- Real Spotify, Slack, Discord or VS Code installs, macOS, Windows and Wayland. Apps that aren't built from web pages (Finder, most system apps) can't work. See [Desktop apps](docs/desktop.md#which-apps-cant-work-and-why).
+- Microsoft's VS Code, Spotify, Slack or Discord, Flatpak and Snap installs, macOS, Windows and Wayland. Wikipedia, YouTube, GitHub's pages and other sites the test machine couldn't reach. Apps that aren't built from web pages (Finder, most system apps) can't work. See [Desktop apps](docs/desktop.md#which-apps-cant-work-and-why).
 - **Codex** is only tested against a stand-in `codex` command, and **the Anthropic and OpenAI APIs** only against stand-in servers.
 - **Mods can do anything the page can.** The model is told not to send data anywhere, but nothing stops it yet. Morse says what a shared mod does before you install it.
 - The extension isn't in the Chrome Web Store, and there is no tray app: on the desktop, you start apps with `morse launch`.

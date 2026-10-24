@@ -147,6 +147,15 @@ article p:first-of-type::first-letter {
 }
 `, "");
 
+// A change that is mostly code: its look alone does nothing (tests/store-ui.test.js,
+// the bar without "Allow User Scripts").
+const BACK_TO_TOP = reply("Back to top button", `
+.morse-top { position: fixed; right: 20px; bottom: 20px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #333; color: #fff; font-size: 18px; cursor: pointer; }
+`, `
+const btn = morse.el("button", { class: "morse-top", text: "↑", title: "Back to top", on: { click() { scrollTo({ top: 0, behavior: "smooth" }); } } });
+document.body.append(btn);
+`);
+
 const FALLBACK = reply("Needs a real model", "", `
 morse.toast("The demo model only knows a few requests. Connect a model for anything else.");
 `);
@@ -163,8 +172,19 @@ morse.watch("#toolbar", bar => {
 });
 `);
 
+// Your style (core/style.js adaptRequest): the demo model's fit for a site.
+const STYLE_FIT = reply("Buttons keep their words on one line", `
+:where(button, [role=button], nav a) {
+  white-space: nowrap !important;
+}
+:where(h1, h2, h3) {
+  overflow-wrap: break-word !important;
+}
+`, "");
+
 const RULES = [
   [/now playing/i, NOW_PLAYING],
+  [/back to (the )?top/i, BACK_TO_TOP],
   [/word|token count|character count|count/i, WORD_COUNT],
   [/copy|markdown|export/i, COPY_MD],
   [/sleep|timer/i, null],
@@ -260,6 +280,7 @@ export function demoResponse(messages) {
   if (answer) return answer;
   const fixes = fixesDemo(request); // Easier to use: Check this page
   if (fixes) return fixes;
+  if (/^Your style, for this site\./.test(request)) return STYLE_FIT; // your-style hook: fit it to this site
   for (const [re, resp] of RULES) {
     if (!re.test(request)) continue;
     if (resp === null) return isRetry ? SLEEP : SLEEP_BROKEN;

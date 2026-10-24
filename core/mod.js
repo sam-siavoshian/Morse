@@ -15,7 +15,7 @@ export function newId() {
   return Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
 }
 
-export function createMod({ id, title, prompt, css, js, url, app, target, model, kind, edits, from, history, refined }) {
+export function createMod({ id, title, prompt, css, js, url, app, target, model, kind, edits, from, history, refined, parent }) {
   const now = new Date().toISOString();
   const manual = kind === "manual" || kind === "quick";
   return {
@@ -38,6 +38,7 @@ export function createMod({ id, title, prompt, css, js, url, app, target, model,
     // A draft refined in the bar before it was kept arrives with its versions.
     ...(Array.isArray(history) && history.length ? { history: versionsOf({ history }) } : {}),
     ...(typeof refined === "string" && refined && refined !== prompt ? { refined } : {}),
+    ...(parent === "morse-style" ? { parent } : {}), // your-style hook: fits Your style to this site (core/style.js)
   };
 }
 
@@ -71,8 +72,12 @@ export function modMatches(mod, { url, app }) {
   return hosts.some(p => p === "*" || p === h || p === legacyFile || (!legacyFile && p.startsWith("*.") && h.endsWith(p.slice(1)))
     // Desktop apps often serve their UI from a random localhost port: within
     // the app, a mod follows its local UI whatever port it loads from.
-    || (!!m.app && LOOPBACK.test(p) && LOOPBACK.test(h)));
+    || (!!m.app && LOOPBACK.test(p) && LOOPBACK.test(h))
+    // An AppImage runs from a new folder every launch (/tmp/.mount_JoplinAbC123/):
+    // within the app, a file:// UI is matched by its path inside the app.
+    || (!!m.app && !!inApp(p) && inApp(p) === inApp(h)));
 }
+const inApp = h => h.startsWith("file://") ? h.match(/\/resources\/(app(?:\.asar)?\/.+)$/i)?.[1] || null : null;
 
 // A save from a page may change a mod, not widen where it runs: its match
 // stays what it was, or is exactly the caller's own site (or app). Wider
@@ -123,21 +128,29 @@ export function toUserscript(mod) {
 
 // Share links carry the whole mod in the URL fragment (never sent to a server).
 export async function encodeShare(mod) {
-  const json = JSON.stringify(stripLocal(mod));
-  const bytes = await deflate(new TextEncoder().encode(json));
-  return `${SHARE_BASE}#m=${b64url(bytes)}`;
+  return encodeShareText(JSON.stringify(stripLocal(mod)));
 }
 
 export async function decodeShare(link) {
+  return validateMod(JSON.parse(await decodeShareText(link)));
+}
+
+// packs hook (core/pack.js): the same #m= scheme carries a pack's JSON.
+export async function encodeShareText(json) {
+  const bytes = await deflate(new TextEncoder().encode(json));
+  return `${SHARE_BASE}#m=${b64url(bytes)}`;
+}
+export async function decodeShareText(link) {
   const frag = String(link).split("#m=")[1];
   if (!frag) throw new Error("This isn't a Morse share link. Check that you copied the whole link.");
-  const json = new TextDecoder().decode(await inflate(unb64url(frag)));
-  return validateMod(JSON.parse(json));
+  let bytes;
+  try { bytes = unb64url(frag.trim()); } catch { throw new Error("This share link is broken. Check that you copied the whole link."); }
+  return new TextDecoder().decode(await inflate(bytes));
 }
 
 // Links carry the current version only; the history stays on this machine.
 export function stripLocal(mod) {
-  const { enabled, history, fp, paused, guardOk, ...rest } = mod; // self-heal hook: fp describes this machine's page; guard hook: so do paused, guardOk
+  const { enabled, history, fp, paused, guardOk, pack, ...rest } = mod; // self-heal hook: fp describes this machine's page; guard hook: so do paused, guardOk; packs hook: pack (its address can be a team's private one)
   return rest;
 }
 

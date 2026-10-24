@@ -1,0 +1,16 @@
+# Your style: one look, on every site and app
+
+Say it once, ending with “everywhere” or “on every site”: *Georgia font, bigger text and underline links everywhere except Figma*. Morse shows it at once on the page you're on, with Save and Undo, and from then on every site and app you open has it, before you open anything. Say more later and it adds to it. You can also set it, part by part, under **Your style** in Settings.
+
+- **No model for the basics.** Your words become building blocks Morse makes itself ([`core/style.js`](../core/style.js), [`core/style-host.js`](../core/style-host.js)): a font, text size, space between lines, softer colors, red and green easier to tell apart, dark pages, fewer animations, no autoplay, underlined links. They reuse Easier to use and Page tools. It is style only, so it costs next to nothing when a page loads; only no autoplay and dark pages add a little code.
+- **Not on this site.** Say “not on this site” in the bar, press **Not on this site** in the Mods panel, or keep a list in Settings. “except Figma” in your words leaves out figma.com and the Figma app.
+- **Stays in your hands.** It sits at the top of the Mods panel with its own switch. The off switch and pausing Morse turn it off like any mod, and self-heal never flags it.
+- **Fit to each site (off until you turn it on).** A general style can break a layout. With **Fit it to each site with the model** on, the first time you open a site the model gets your style and what Morse measured it broke there, and its fix shows in the bar for review, like any change. Saved, it belongs to your style for that site. Once per site.
+
+Checked with real Claude Code (haiku) by [`demo/style-fit-real.js`](../demo/style-fit-real.js): on the Tunes demo, bigger text pushed the player bar below the bottom of the window; the fit (one try, 11 to 18 s) brought it back, and it came back on the next visit with no model call. Captured by [`demo/shoot-style.js`](../demo/shoot-style.js) on three demo sites at once; tested by [`tests/style.test.js`](../tests/style.test.js) and [`tests/style-ui.test.js`](../tests/style-ui.test.js).
+
+| | |
+|---|---|
+| ![](screenshots/150-style-bar.png) **“…everywhere”**, shown live with Save and Undo | ![](screenshots/152-style-mods-panel.png) **The Mods panel**: Your style at the top |
+| ![](screenshots/153-style-settings.png) **Settings**: part by part, and the sites it skips | ![](screenshots/154-style-not-here.png) **Not on this site**, with Undo |
+| ![](screenshots/155-style-calmer.png) **Calmer** on the library: the video waits, the ticker stops | ![](screenshots/158-style-fit-haiku-review.png) **Fit to this site** by Claude Code (haiku): the player bar is back |
