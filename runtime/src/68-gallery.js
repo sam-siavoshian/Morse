@@ -6,8 +6,8 @@
 //     and as the last suggestion chip in the empty bar
 //   - Try it: runs the mod on this page without saving it, with Keep and
 //     Remove (applyMod / removeMod, the same path saved mods take)
-//   - Install…: the install review (64-install.js, or reviewImport once the
-//     review in 63-control.js is there), nothing installs without it
+//   - Install…: the install review (reviewImport, 63-control.js); nothing
+//     installs without it
 //   - Update available on a panel row when the gallery has a newer version;
 //     Update… shows what changed before anything is replaced
 //   - Submit to the gallery… in the Share dialog: a prefilled GitHub issue
@@ -156,7 +156,7 @@ const Gallery = (() => {
   function install(e) {
     const source = JSON.stringify(installable(e));
     if (typeof reviewImport === "function") return reviewImport(source, { onDone: () => {} }); // 63-control.js
-    listeners.forEach(fn => fn({ type: "install.request", source })); // 64-install.js
+    listeners.forEach(fn => fn({ type: "install.request", source })); // a runtime without reviewImport: its install.request review
   }
 
   // ---- Update…: what changed, then the new version replaces the old one
