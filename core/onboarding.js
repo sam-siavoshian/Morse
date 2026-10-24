@@ -65,7 +65,9 @@ const ERROR_RULES = [
   [/\b401\b|unauthori[sz]ed|invalid.{0,20}(api.?key|token|x-api-key)|incorrect api key|authentication|not logged in|please (log|sign) ?in/i,
     "The model didn't accept the sign-in or API key. Check it in model settings.", "model"],
   [/\b429\b|rate.?limit|quota|overloaded|insufficient.{0,10}(credit|balance)|credit balance/i,
-    "The model is busy or out of quota. Wait a minute and try again.", ""],
+    "The model is busy or has run out of credit. Wait a minute and try again.", ""],
+  [/\b(500|502|503|504|529)\b|internal server error|bad gateway|service unavailable/i,
+    "The model's server had a problem. Wait a minute and try again.", ""],
   [/model.{0,40}(not found|does not exist|unknown)|no such model|\b404\b/i,
     "That model isn't available. Pick another one in model settings.", "model"],
   [/could not establish connection|receiving end does not exist|extension context invalidated|message port closed/i,
@@ -75,14 +77,20 @@ const ERROR_RULES = [
   [/timed? ?out|ETIMEDOUT|deadline/i,
     "The model took too long to answer. Try again, or ask for something smaller.", ""],
   [/no ```css or ```js block|did not produce a usable change|unusable/i,
-    "The model's answer wasn't a change Morse could apply. Try saying it another way.", ""],
+    "The model's answer had no change in it. Try saying it another way.", ""],
+  [/nothing on the page changed/i,
+    "The change didn't do anything you can see here. Point at the part you mean, or say it another way.", ""],
   [/^no result$/i,
     "The change didn't run on this page. Reload the page and try again.", ""],
   [/^Unexpected end of JSON|is not valid JSON|JSON\.parse/i,
     "Morse got an answer it couldn't read. Try again.", ""],
   [/TypeError|ReferenceError|SyntaxError|is not a function|is not defined|Cannot read prop|Cannot set prop|is not iterable|is not a valid selector|Failed to execute|null \(reading/i,
-    "The code the model wrote didn't work on this page. Try again, or describe it differently.", ""],
+    "The change the model wrote didn't work on this page. Try again, or describe it differently.", ""],
 ];
+
+// Words and shapes that only make sense to a developer. A raw message with
+// any of these never reaches a person as is (plainError).
+const TECHNICAL = /\b[A-Z][A-Za-z]*(Error|Exception)\b|\bE[A-Z]{4,}\b|=>|[{}]|\b(undefined|null|NaN|stack|selector|DOM|CDP|userScripts|service worker|runtime|stdout|stderr|exit code|errno|spawn|JSON|HTTP|status \d{3})\b/;
 export function explainError(message) {
   const m = String(message || "");
   if (!m || /^stopped$/i.test(m)) return null;
@@ -92,12 +100,16 @@ export function explainError(message) {
 
 // The one string to show for any error, in the bar, toasts, the popup and the
 // install page: explainError's sentence when there is one, Morse's own
-// message when it already reads well, never an empty line.
+// message when it already reads well, and "Something went wrong" for a raw
+// technical message nobody could act on. Never an empty line.
 export function plainError(err) {
   const raw = String((err && err.message) || err || "").trim();
   if (!raw) return "Something went wrong. Try again.";
   if (/^(stopped|aborted|AbortError.*|The (user|operation) aborted.*|signal is aborted.*)$/i.test(raw)) return "Stopped. Nothing was changed.";
-  return explainError(raw)?.text || raw;
+  const known = explainError(raw)?.text;
+  if (known) return known;
+  if (TECHNICAL.test(raw) || raw.length > 200) return "Something went wrong. Try again.";
+  return raw;
 }
 
 // "No model connected" from what a host reports, or from its label when it

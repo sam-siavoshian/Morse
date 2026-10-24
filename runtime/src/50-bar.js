@@ -11,7 +11,7 @@ bar.setAttribute("aria-label", "Morse: describe a change to this app");
 input.setAttribute("aria-label", "Describe a change");
 goBtn.setAttribute("aria-label", "Send");
 goBtn.innerHTML = `<svg class="i-go" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9.5M8.75 4.25 12.5 8l-3.75 3.75"/></svg><svg class="i-stop" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5"/></svg>`;
-const micBtn = makeEl("button", { className: "mic ibtn", type: "button" }, { "aria-label": "Voice input" });
+const micBtn = makeEl("button", { className: "mic ibtn", type: "button" }, { "aria-label": "Talk" });
 goBtn.before(micBtn);
 const sugEl = makeEl("div", { className: "sugs", hidden: true }, { role: "toolbar", "aria-label": "Suggestions" });
 const pane = makeEl("div", { className: "pane", hidden: true });
@@ -243,6 +243,7 @@ function toggleSettings() {
 // ---- overflow menu
 function menuItems() {
   return [
+    { id: "showonce", label: "Show me once", keys: null }, // show-once hook: 64-show-once.js
     { id: "settings", label: "Settings", keys: [primaryMod, ","] },
     { id: "shortcuts", label: "Keyboard shortcuts", keys: ["?"] },
     { id: "voice", label: "Talk", keys: comboParts(hotkey("talk"), PLATFORM), sub: hotkey("talk") === hotkey("open") ? "hold" : "" },
@@ -251,7 +252,7 @@ function menuItems() {
   ];
 }
 function showMenu() {
-  menuEl.innerHTML = menuItems().map(m => `<button role="menuitem" tabindex="-1" data-m="${m.id}"><span>${esc(m.label)}</span>${m.sub ? `<small>${esc(m.sub)}</small>` : ""}${caps(m.keys)}</button>`).join("");
+  menuEl.innerHTML = menuItems().map(m => `<button role="menuitem" tabindex="-1" data-m="${m.id}"><span>${esc(m.label)}</span>${m.sub ? `<small>${esc(m.sub)}</small>` : ""}${m.keys ? caps(m.keys) : ""}</button>`).join(""); // show-once hook: no keys
   menuEl.hidden = false;
   menuEl.classList.toggle("below", barIsTop());
   moreBtn.setAttribute("aria-expanded", "true");
@@ -269,6 +270,7 @@ function runMenu(id) {
   if (id === "voice") Voice.start("tap");
   if (id === "mods") openPanel();
   if (id === "help") toggleHelp(); // onboarding hook: 59-help.js
+  if (id === "showonce") ShowOnce.start(); // show-once hook
 }
 moreBtn.addEventListener("click", () => (menuEl.hidden ? showMenu() : hideMenu()));
 menuEl.addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (b) runMenu(b.dataset.m); });

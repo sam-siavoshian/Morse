@@ -2,15 +2,14 @@
 // core/prompt.js) never carries input values, secrets or email addresses, even
 // though the context now includes CSS rules, inline styles and a layout tree.
 // Also: the context reaches into open shadow roots and same-origin frames.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import { buildMessages } from "../core/prompt.js";
+import { noBrowser, launchBrowser } from "./helpers/browser.js";
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
+const skip = noBrowser;
 const SRC = readFileSync(new URL("../runtime/src/20-context.js", import.meta.url), "utf8");
 let browser, page;
 
@@ -57,7 +56,7 @@ const PAGE = `<!doctype html><title>Billing</title>
 
 before(async () => {
   if (skip) return;
-  browser = await chromium.launch();
+  browser = await launchBrowser();
   page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
   await page.route("http://app.test/**", r => r.fulfill({ contentType: "text/html", body: PAGE }));
   await page.goto(`http://app.test/account?session=${SECRETS.session}&tab=billing`);

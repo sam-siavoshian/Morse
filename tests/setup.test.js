@@ -1,6 +1,7 @@
 // First run without a browser: `morse setup` detection and choices, the
 // getting started a bare `morse` prints, and the shared onboarding rules
 // (state, unsupported pages, errors in plain words).
+import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PassThrough } from "node:stream";
@@ -9,7 +10,7 @@ import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { detectBackends, recommend, configFor, isSetUp, runSetup, whichBin, gettingStarted } from "../daemon/setup.js";
-import { pageSupport, explainError, mergeOnboarding, normalizeOnboarding, modelMissing } from "../core/onboarding.js";
+import { pageSupport, explainError, plainError, mergeOnboarding, normalizeOnboarding, modelMissing } from "../core/onboarding.js";
 
 const plain = s => s.replace(/\x1b\[\d+m/g, "");
 const CLI = new URL("../daemon/cli.js", import.meta.url).pathname;
@@ -183,7 +184,9 @@ test("generation errors in plain words, each with something to do", () => {
     ["Model server returned 401", "model"],
     ["Invalid API key provided", "model"],
     ["Failed to fetch", "model"],
-    ["model 'qwen9' not found, try pulling it first", "model"],
+    ["model 'gpt-9-turbo' not found", "model"],
+    ["Model server returned 503", ""],
+    ["It ran, but nothing on the page changed. These selectors match no element: .x", ""],
     ["Model server returned 429", ""],
     ["The reply had no ```css or ```js block.", ""],
     ["TypeError: Cannot read properties of null (reading 'append')", ""],
@@ -196,7 +199,28 @@ test("generation errors in plain words, each with something to do", () => {
   }
   assert.equal(explainError("Stopped"), null);
   assert.equal(explainError("something nobody has seen before"), null, "unknown errors keep their own words");
-  assert.equal(modelMissing({}, "demo model · no local model found"), true);
+  assert.equal(modelMissing({}, "demo model · no model found"), true);
   assert.equal(modelMissing({ model: { connected: true } }, "demo model"), false, "the host's answer wins over the label");
-  assert.equal(modelMissing({}, "qwen2.5-coder:7b · local"), false);
+  assert.equal(modelMissing({}, "Claude Code · haiku"), false);
+});
+
+test("plainError: plain words for a person, never raw jargon", () => {
+  // Morse's own sentences pass through as they are.
+  assert.equal(plainError("No mod with that name."), "No mod with that name.");
+  assert.equal(plainError(new Error("Paste a share link first.")), "Paste a share link first.");
+  // Known errors get their sentence.
+  assert.match(plainError(new Error("Failed to fetch")), /^Morse couldn't reach the model\./);
+  // Raw technical messages nobody can act on become one plain line.
+  for (const raw of [
+    "Uncaught DOMException: The operation is insecure.",
+    "RangeError: Maximum call stack size exceeded",
+    "EPIPE: broken pipe",
+    "400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\"}}",
+    "x => y",
+    "status 418 from helper",
+  ]) assert.equal(plainError(raw), "Something went wrong. Try again.", raw);
+  // Morse's own sentences may show a command to type.
+  assert.equal(plainError("Morse isn't connected to any app. Start one with morse launch <app>."), "Morse isn't connected to any app. Start one with morse launch <app>.");
+  assert.equal(plainError(""), "Something went wrong. Try again.");
+  assert.equal(plainError("AbortError: signal is aborted without reason"), "Stopped. Nothing was changed.");
 });

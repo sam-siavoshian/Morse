@@ -104,4 +104,13 @@ Rows before "baseline (rescored checkers)" used earlier checkers. Results JSON i
 | 2026-10-24 09:20 | ablation: effect check only (old context+prompt) | claude-code:haiku | train | 103/123 (84%) | 13.8s |
 | 2026-10-24 09:30 | final, sonnet spot check | claude-code:sonnet | all | 54/55 (98%) | 9.2s |
 | 2026-10-24 10:57 | dev | claude-code:haiku | only | 5/8 (63%) | 20.7s |
+| 2026-10-24 10:59 | dev: old cases | claude-code:haiku | train | 40/41 (98%) | 26.2s |
+| 2026-10-24 11:02 | dev2 hard x3 | claude-code:haiku | train | 64/72 (89%) | 29.8s |
+| 2026-10-24 11:16 | dev3 hard x3 | claude-code:haiku | train (hard) | 61/72 (85%) | 26.7s (p90 38.7s) |
+| 2026-10-24 11:31 | dev4 easy | claude-code:haiku | train (easy) | 40/41 (98%) | 20.6s (p90 35.4s) |
+| 2026-10-24 11:31 | dev4 hard x3 | claude-code:haiku | train (hard) | 66/72 (92%) | 18.6s (p90 36.5s) |
+| 2026-10-24 11:39 | dev5 easy x2 | claude-code:haiku | train (easy) | 81/82 (99%) | 14.6s (p90 25.3s) |
+| 2026-10-24 11:39 | dev5 hard x3 | claude-code:haiku | train (hard) | 67/72 (93%) | 16.9s (p90 28.4s) |
+| 2026-10-24 11:47 | dev6 shop | claude-code:haiku | only | 11/12 (92%) | 13.8s (p90 18.9s) |
+| 2026-10-24 11:48 | final, all apps | claude-code:haiku | all | 251/258 (97%) | 13.9s (p90 23.9s) |
 <!-- run-log -->

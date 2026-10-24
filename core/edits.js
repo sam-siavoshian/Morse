@@ -361,9 +361,9 @@ export function describeEdit(e) {
     case "duplicate": return "duplicate";
     case "style": {
       const p = Object.keys(e.props || {});
-      if (p.some(k => /^font-size/.test(k))) return "font size";
-      if (p.some(k => /^font-weight/.test(k))) return "font weight";
-      if (p.some(k => /^(background|fill)/.test(k))) return "fill color";
+      if (p.some(k => /^font-size/.test(k))) return "text size";
+      if (p.some(k => /^font-weight/.test(k))) return "text weight";
+      if (p.some(k => /^(background|fill)/.test(k))) return "background color";
       if (p.some(k => /^(border|stroke)/.test(k))) return "border color";
       return "text color";
     }
@@ -377,11 +377,11 @@ export function summarizeEdits(edits = []) {
   const n = {};
   let lastRename = null;
   for (const e of edits) {
-    const k = e.op === "style" ? (/font/.test(describeEdit(e)) ? "restyled" : "recolored") : e.op;
+    const k = e.op === "style" ? (/^text (size|weight)$/.test(describeEdit(e)) ? "restyled" : "recolored") : e.op;
     n[k] = (n[k] || 0) + 1;
     if (e.op === "text") lastRename = e;
   }
-  const words = { hide: "hid", move: "moved", resize: "resized", text: "renamed", duplicate: "duplicated", recolored: "recolored", restyled: "restyled", page: "page tools" };
+  const words = { hide: "hid", move: "moved", resize: "resized", text: "renamed", duplicate: "duplicated", recolored: "recolored", restyled: "restyled", page: "Page tools" };
   const parts = Object.entries(n).map(([k, c]) => (k === "text" && c === 1 && lastRename)
     ? `renamed ${quote(lastRename.was, 18)} → ${quote(lastRename.text, 18)}`
     : `${words[k] || k} ${c}`);

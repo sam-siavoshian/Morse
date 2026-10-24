@@ -2,6 +2,7 @@
 //   - fake `claude` and `codex` executables on PATH (stream-json / JSONL)
 //   - a fake Anthropic Messages API (SSE) reached through the SDK's baseURL
 // plus model selection from ~/.morse/config.json.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -9,6 +10,7 @@ import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import { installFakeClis } from "./fake-clis.js";
+import { waitFor } from "./helpers/wait.js";
 
 let tmp, bin, streamChat, settingsFromConfig, detectHarnesses, runMorse, Generations;
 
@@ -68,8 +70,7 @@ test("claude-code: aborting kills the process", async () => {
   const p = streamChat({ provider: "claude-code" }, MESSAGES, { signal: ac.signal, onToken: () => ac.abort() });
   await assert.rejects(p, e => e.name === "AbortError");
   const { pid } = await log("claude");
-  for (let i = 0; i < 50 && alive(pid); i++) await new Promise(r => setTimeout(r, 50));
-  assert.equal(alive(pid), false, "claude process still running");
+  await waitFor(() => !alive(pid), { what: "the claude process to exit" });
 });
 
 test("claude-code: generate.cancel stops the engine and the process", async () => {
@@ -85,12 +86,11 @@ test("claude-code: generate.cancel stops the engine and the process", async () =
   assert.equal(res.cancelled, true);
   assert.equal(ran, 0);
   const { pid } = await log("claude");
-  for (let i = 0; i < 50 && alive(pid); i++) await new Promise(r => setTimeout(r, 50));
-  assert.equal(alive(pid), false);
+  await waitFor(() => !alive(pid), { what: "the claude process to exit" });
 });
 
 test("claude-code: rejects model names that could smuggle flags", async () => {
-  await assert.rejects(streamChat({ provider: "claude-code", model: "--dangerously-skip-permissions" }, MESSAGES), /Invalid model/);
+  await assert.rejects(streamChat({ provider: "claude-code", model: "--dangerously-skip-permissions" }, MESSAGES), /isn't a model name Morse can use/);
 });
 
 // ---- Codex

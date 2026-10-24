@@ -1,5 +1,6 @@
 // God mode: the pure edit compiler (core/edits.js), the clipboard helper and
 // the snapshot prompt. The in-page behavior is covered by godmode.test.js.
+import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { compileEdits, summarizeEdits, describeEdit, zoomFor, EDIT_TITLE } from "../core/edits.js";
@@ -157,12 +158,12 @@ test("summaries read like a changelog", () => {
   assert.equal(summarizeEdits([{ op: "hide" }, { op: "hide" }, { op: "move" }]), "Hid 2 · moved 1");
   assert.equal(summarizeEdits([{ op: "text", text: "Mail", was: "Inbox" }]), "Renamed “Inbox” → “Mail”");
   assert.equal(summarizeEdits([{ op: "style", props: { color: "red" } }, { op: "style", props: { "font-size": "2px" } }]), "Recolored 1 · restyled 1");
-  assert.equal(describeEdit({ op: "style", props: { "background-color": "red" } }), "fill color");
+  assert.equal(describeEdit({ op: "style", props: { "background-color": "red" } }), "background color");
   assert.equal(describeEdit({ op: "page", kind: "dark" }), "dark mode");
 });
 
 test("manual mods keep their edit list; snapshot mods record where they came from", () => {
-  const manual = createMod({ title: "Direct edits", prompt: "Hid 1", css: "a{}", js: "", url: "https://x.com/", kind: "manual", edits: [{ op: "hide", sel: "a" }], model: "qwen" });
+  const manual = createMod({ title: "Direct edits", prompt: "Hid 1", css: "a{}", js: "", url: "https://x.com/", kind: "manual", edits: [{ op: "hide", sel: "a" }], model: "Claude Code · haiku" });
   assert.equal(manual.kind, "manual");
   assert.equal(manual.edits.length, 1);
   assert.equal(manual.model, null, "no model wrote it");

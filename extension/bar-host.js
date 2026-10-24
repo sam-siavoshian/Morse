@@ -90,7 +90,7 @@ async function openaiKey() {
 export async function voiceInfo() {
   if (await helperVoice()) return { transcribe: true, provider: "helper", label: "the Morse helper on this computer", hint: "" };
   if (await openaiKey()) return { transcribe: true, provider: "openai", label: `OpenAI ${OPENAI_TRANSCRIBE_MODEL}`, hint: "" };
-  return { transcribe: false, provider: null, label: "", hint: "Voice isn't available here. Type your change instead, or set up voice in the Morse helper on this computer (an OpenAI key or whisper)." };
+  return { transcribe: false, provider: null, label: "", hint: "Voice isn't set up here yet. Type your change instead." };
 }
 
 async function transcribe(msg) {
@@ -101,7 +101,7 @@ async function transcribe(msg) {
       body: JSON.stringify({ audio: msg.audio, mime: msg.mime }), signal: AbortSignal.timeout(120000),
     });
     const body = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(body.error || `The Morse helper returned ${r.status}`);
+    if (!r.ok) throw new Error(body.error || `The Morse helper couldn't turn that into text (error ${r.status}). Try again.`);
     return body;
   }
   const key = await openaiKey();

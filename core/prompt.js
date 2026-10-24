@@ -3,6 +3,7 @@
 
 import { askTurnsToMessages } from "./answer.js"; // Ask and find
 import { imageMessages } from "./a11y.js"; // Easier to use: Describe this image
+import { recordingPrompt } from "./showonce.js"; // show-once hook: steps the user showed
 
 // ---- Ask and find: questions get an answer instead of a mod (core/answer.js
 // parses it; the runtime side is runtime/src/61-ask.js).
@@ -51,6 +52,7 @@ Rules:
   morse.toast(message)              show a short notice
   Everything created through morse is removed automatically when the mod is turned off.
 - No network requests, no eval, no external scripts. Keep it short.
+- No prompt(), alert() or confirm(): Electron apps throw on prompt() and the others freeze the app. Ask for input with elements you make (morse.el).
 - Match the app's look: reuse its fonts and colors (inherit, currentColor) unless asked otherwise.
 ${ASK_FORMAT}`;
 
@@ -109,6 +111,7 @@ export function buildMessages({ request, context, previous, snapshot = context?.
   if (context.outline) parts.push((context.layout ? "Controls and headings:\n" : "Page outline:\n") + context.outline);
   if (snapshot) parts.push(snapshotPrompt(snapshot));
   if (context.ask?.mode === "explain") parts.push("Explain this page: reply with ANSWER, a plain summary in 5 short lines of what this page is for and the main things you can do here, and a POINT line for each of those main actions."); // Ask and find
+  if (context.recording) parts.push(recordingPrompt(context.recording)); // show-once hook
   if (base) parts.push(basePrompt(base, request)); // keep iterating: refine or fix this code
   else parts.push(`Request: ${request}`);
 
