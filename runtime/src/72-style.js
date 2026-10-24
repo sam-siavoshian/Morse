@@ -76,7 +76,8 @@ const YourStyle = (() => {
       leaveOut().catch(e => toast(plainError(e)));
       return true;
     }
-    if (!isEverywhere(text)) return false;
+    // Naming this app or site ("make VS Code…, black text everywhere") keeps it a change here.
+    if (!isEverywhere(text, { here: [S.appName, location.hostname.replace(/^www\./, "").split(".")[0]] })) return false;
     const p = parseStyleWords(text);
     // Pointing at something and asking for something no block covers: a change
     // for this page, as usual.
