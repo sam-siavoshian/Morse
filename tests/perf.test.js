@@ -8,6 +8,9 @@
 // the few timings are generous and compared against the full runtime.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { chromium, serve, desktop, payloads, sleep, mod, OPEN_KEY, ONE_MOD, THIRTY_MODS, runGeneration } from "../demo/perf-lib.js";
 
 const skip = !chromium && "playwright not installed";
@@ -363,4 +366,22 @@ test("guards: with no UI loaded, CSS that hides the page never lands and a runaw
     await toast(t, "guardhide");
     assert.deepEqual(t.errors, []);
   } finally { await t.close(); }
+});
+
+// demo/perf.js and this file used to leave a /tmp/morse-perf-* folder behind
+// on every run (a home with mods, settings and sessions, and a browser profile).
+test("the measuring setup removes the folders it made", { skip }, async () => {
+  const d = await desktop();
+  assert.ok(existsSync(d.home));
+  await d.close();
+  assert.ok(!existsSync(d.home), `${d.home} is removed`);
+  const given = mkdtempSync(path.join(os.tmpdir(), "morse-perf-given-"));
+  try {
+    await (await desktop({ home: given })).close();
+    assert.ok(existsSync(given), "a home it was given stays");
+  } finally { rmSync(given, { recursive: true, force: true }); }
+  // demo/perf.js: the extension's browser profile goes when it is done.
+  const src = readFileSync(new URL("../demo/perf.js", import.meta.url), "utf8");
+  assert.deepEqual([...src.matchAll(/const (\w+) = await fs\.mkdtemp\(/g)].map(m => m[1]), ["profile"]);
+  assert.match(src, /finally \{[^\n]*fs\.rm\(profile, \{ recursive: true, force: true \}\)/);
 });
