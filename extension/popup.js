@@ -1,4 +1,6 @@
 // Toolbar popup, and (with <body data-page="options">) the options page.
+import "./i18n-page.js"; // the page in the person's language, before anything below runs
+import { t } from "./core/i18n.js";
 import { plainError } from "./core/onboarding.js";
 import { normalizePrefs } from "./core/prefs.js";
 import { detectPlatform, resolveHotkeys, formatCombo } from "./core/hotkeys.js";
@@ -38,7 +40,7 @@ function render(s) {
   $("count").textContent = s.mods.length ? `· ${s.mods.length}` : "";
   $("mods").innerHTML = s.mods.length
     ? s.mods.map(m => `<li><i class="${m.enabled ? "on" : ""}"></i>${esc(m.title)}<small>“${esc(m.prompt)}”</small>${modExtras(m)}</li>`).join("")
-    : `<li class="empty">No mods on this site yet.</li>`;
+    : `<li class="empty">${esc(t("popup.noMods"))}</li>`;
 
   $("connect").hidden = s.kind !== "none";
   $("reason").textContent = s.reason;
@@ -50,19 +52,19 @@ function render(s) {
 
   const h = s.helper;
   $("hdot").className = "dot " + (h?.paired ? "ok" : h ? "warn" : "off");
-  $("hstatus").textContent = !h ? "The Morse helper isn't running on this computer"
-    : !h.paired ? `Helper running · ${h.label} · not paired yet`
-    : `Paired · ${h.label}`;
+  $("hstatus").textContent = !h ? t("popup.helper.off")
+    : !h.paired ? t("popup.helper.unpaired", { label: h.label })
+    : t("popup.helper.paired", { label: h.label });
   $("pairrow").hidden = !!h?.paired;
   $("hhint").hidden = !!h?.paired;
   $("unpair").hidden = !h?.paired;
   const hp = h?.provider && s.providers[h.provider];
   $("helperModels").innerHTML = (hp?.models || []).map(m => `<option value="${esc(m)}">`).join("");
-  $("helperModel").placeholder = h?.model ? `${h.model} (the helper's choice)` : "The helper's choice";
+  $("helperModel").placeholder = h?.model ? t("popup.helperChoice.model", { model: h.model }) : t("popup.helperChoice");
   if (document.activeElement !== $("helperModel")) $("helperModel").value = s.helperModel;
 
   $("anthropicModel").innerHTML = s.anthropicModels.map(m => `<option${m === s.anthropicModel ? " selected" : ""}>${esc(m)}</option>`).join("");
-  $("anthropicKey").placeholder = s.anthropicKey ? `Saved: ${s.anthropicKey}` : "sk-ant-…";
+  $("anthropicKey").placeholder = s.anthropicKey ? t("popup.keySaved.placeholder", { key: s.anthropicKey }) : "sk-ant-…";
 }
 
 async function save(patch) {
@@ -84,29 +86,29 @@ $("anthropicKey").onchange = async () => {
   if (!v) return;
   await save({ anthropicKey: v, backend: "anthropic" });
   $("anthropicKey").value = "";
-  note("Key saved.");
+  note(t("welcome.key.saved"));
 };
 $("code").oninput = () => { $("code").value = $("code").value.toUpperCase().replace(/[^A-Z0-9]/g, ""); };
 $("code").onkeydown = e => { if (e.key === "Enter") $("pair").click(); };
 $("pair").onclick = async () => {
   const code = $("code").value.trim();
-  if (code.length !== 6) return note("Type the 6-character code that morse serve shows.", true);
+  if (code.length !== 6) return note(t("popup.code.short"), true);
   $("pair").disabled = true;
   const r = await send({ type: "popup.pair", code });
   $("pair").disabled = false;
   if (r.error) return note(r.error, true);
   $("code").value = "";
   render(r);
-  note("Paired. Morse can use your model now.");
+  note(t("popup.paired"));
 };
 $("unpair").onclick = async () => render(await send({ type: "popup.unpair" }));
 $("test").onclick = async () => {
   $("test").disabled = true;
-  note("Testing. Claude Code can take a few seconds to start.");
+  note(t("popup.testing"));
   const r = await send({ type: "popup.test" });
   $("test").disabled = false;
-  if (!r.ok) return note(r.error || "The test didn't work. Check the model settings and try again.", true);
-  note(`It works. ${r.label} replied “${r.text}” in ${(r.ms / 1000).toFixed(1)}s.`);
+  if (!r.ok) return note(r.error || t("popup.test.failed"), true);
+  note(t("popup.test.ok", { label: r.label, text: r.text, secs: (r.ms / 1000).toFixed(1) }));
 };
 $("go").onclick = async () => { await chrome.tabs.sendMessage(tab.id, { morseToggle: true }).catch(() => {}); window.close(); };
 

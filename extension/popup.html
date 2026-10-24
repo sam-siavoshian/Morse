@@ -5,39 +5,39 @@
   <header><div class="logo"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><b>morse</b><span id="label"></span></header>
 
   <section id="page">
-    <button id="go" class="primary">Change this page <kbd id="key"></kbd></button>
-    <p id="warn" class="notice" hidden>Some sites block mods that add buttons or features. To allow them, turn on <b>Allow User Scripts</b> for Morse in <code>chrome://extensions</code>. Mods that only change the look work either way.</p>
-    <h3>Mods on this site <span id="count"></span></h3>
+    <button id="go" class="primary"><span data-i18n="popup.go">Change this page</span> <kbd id="key"></kbd></button>
+    <p id="warn" class="notice" hidden data-i18n-html="popup.warn">Some sites block mods that add buttons or features. To allow them, turn on <b>Allow User Scripts</b> for Morse in <code>chrome://extensions</code>. Mods that only change the look work either way.</p>
+    <h3><span data-i18n="popup.mods">Mods on this site</span> <span id="count"></span></h3>
     <ul id="mods"></ul>
   </section>
 
   <section id="model">
-    <h3>Model</h3>
-    <p id="connect" class="notice" hidden><b>Connect a model to start.</b> <span id="reason"></span></p>
+    <h3 data-i18n="popup.model">Model</h3>
+    <p id="connect" class="notice" hidden><b data-i18n="popup.connect">Connect a model to start.</b> <span id="reason"></span></p>
 
     <label class="choice"><input type="radio" name="backend" value="helper">
-      <span><b>Morse helper</b><small>Use Claude Code, Codex or an API key on your computer</small></span></label>
+      <span><b data-i18n="popup.helper">Morse helper</b><small data-i18n="popup.helper.sub">Use Claude Code, Codex or an API key on your computer</small></span></label>
     <div class="panel" data-for="helper">
-      <div class="status"><i id="hdot" class="dot"></i><span id="hstatus">Checking…</span></div>
+      <div class="status"><i id="hdot" class="dot"></i><span id="hstatus" data-i18n="popup.checking">Checking…</span></div>
       <div id="pairrow" class="row">
-        <input id="code" maxlength="6" placeholder="Pairing code" autocomplete="off" spellcheck="false">
-        <button id="pair">Pair</button>
+        <input id="code" maxlength="6" placeholder="Pairing code" autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:popup.code">
+        <button id="pair" data-i18n="popup.pair">Pair</button>
       </div>
-      <p id="hhint" class="hint">In a terminal, run <code>morse serve</code>. Type the 6-character code it shows here, then click Pair.</p>
-      <label>Model <input id="helperModel" list="helperModels" placeholder="The helper's choice" spellcheck="false"></label>
+      <p id="hhint" class="hint" data-i18n-html="popup.hhint">In a terminal, run <code>morse serve</code>. Type the 6-character code it shows here, then click Pair.</p>
+      <label><span data-i18n="popup.model">Model</span> <input id="helperModel" list="helperModels" placeholder="The helper's choice" spellcheck="false" data-i18n-attr="placeholder:popup.helperChoice"></label>
       <datalist id="helperModels"></datalist>
-      <button id="unpair" class="link" hidden>Sign this browser out</button>
+      <button id="unpair" class="link" hidden data-i18n="popup.unpair">Sign this browser out</button>
     </div>
 
     <label class="choice"><input type="radio" name="backend" value="anthropic">
-      <span><b>Anthropic API key</b><small>Nothing to install. The key stays in this browser.</small></span></label>
+      <span><b data-i18n="popup.anthropic">Anthropic API key</b><small data-i18n="popup.anthropic.sub">Nothing to install. The key stays in this browser.</small></span></label>
     <div class="panel" data-for="anthropic">
-      <label>API key <input id="anthropicKey" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false"></label>
-      <label>Model <select id="anthropicModel"></select></label>
+      <label><span data-i18n="popup.apiKey">API key</span> <input id="anthropicKey" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false"></label>
+      <label><span data-i18n="popup.model">Model</span> <select id="anthropicModel"></select></label>
     </div>
 
     <div class="row actions">
-      <button id="test">Test the model</button>
+      <button id="test" data-i18n="popup.test">Test the model</button>
       <span id="result" class="hint"></span>
     </div>
   </section>

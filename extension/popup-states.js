@@ -7,6 +7,8 @@
 //   ?url=<url>   check this URL instead of the active tab's (screenshots)
 //   ?tab=<id>    probe this tab instead of the active one
 
+import "./i18n-page.js"; // the person's language (pageSupport's words follow it)
+import { t } from "./core/i18n.js";
 import { pageSupport, modelMissing } from "./core/onboarding.js";
 
 const q = new URLSearchParams(location.search);
@@ -55,19 +57,19 @@ let why = isOptions ? null : pageSupport(url, { fileAccess, extensionId: chrome.
 if (!why && !q.has("url") && tabId != null && /^(https?|file):/.test(url)) {
   try {
     const [r] = await chrome.scripting.executeScript({ target: { tabId }, func: () => ({ morse: document.documentElement.dataset.morseExtension === "1", type: document.contentType }) });
-    if (r?.result?.type === "application/pdf") why = { id: "pdf", text: "Morse can't change PDFs in Chrome's PDF viewer. Web pages work." };
-    else if (r?.result && !r.result.morse) why = { id: "reload", text: "This tab was open before Morse was installed. Reload it to use Morse here.", action: "reload" };
+    if (r?.result?.type === "application/pdf") why = { id: "pdf", text: t("page.pdf") };
+    else if (r?.result && !r.result.morse) why = { id: "reload", text: t("page.reload"), action: "reload" };
   } catch {
-    why = { id: "blocked", text: "Chrome doesn't let extensions run on this page. Any other website works.", action: "practice" };
+    why = { id: "blocked", text: t("page.blocked"), action: "practice" };
   }
 }
 if (why) {
   const go = document.getElementById("go");
   if (go) go.disabled = true;
   const actions = {
-    practice: ["Open the practice page", () => openSetup("practice")],
-    "extension-settings": ["Open Morse's settings", () => openSetup("extension-settings")],
-    reload: ["Reload this tab", () => { chrome.tabs.reload(tabId); window.close(); }],
+    practice: [t("popup.openPractice"), () => openSetup("practice")],
+    "extension-settings": [t("welcome.openSettings"), () => openSetup("extension-settings")],
+    reload: [t("popup.reloadTab"), () => { chrome.tabs.reload(tabId); window.close(); }],
   };
   const [label, run] = actions[why.action] || [];
   notice(why.text, label, run).dataset.state = why.id;
@@ -79,12 +81,12 @@ const status = st?.status || {};
 // first-run hook: the button used to look for a <details> the popup doesn't
 // have, so it did nothing. The welcome page connects a model in one command.
 if (!why && !isOptions && modelMissing(status, document.getElementById("label")?.textContent)) {
-  notice("No model connected yet. The welcome page connects one with a single command.", "Connect a model", () => openSetup("model")).dataset.state = "model";
+  notice(t("popup.noModel"), t("welcome.model.b"), () => openSetup("model")).dataset.state = "model";
 }
 const warn = document.getElementById("warn");
 if (warn && !warn.querySelector("button")) {
   const b = document.createElement("button");
-  b.textContent = "Turn it on";
+  b.textContent = t("popup.turnItOn");
   b.onclick = () => openSetup("userscripts");
   warn.append(b);
 }
