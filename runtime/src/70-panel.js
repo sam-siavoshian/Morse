@@ -33,6 +33,7 @@ const Health = (() => {
     let stats = null;
     try { stats = await call("stats", { modId: id }); } catch {} // an older host can't tell; assume fine
     if (st.get(id) !== s) return;
+    if (stats?.paused) { st.delete(id); return Guard.heard(id, stats.paused); } // guard hook: the kit paused it (64-guard.js)
     const w = stats?.watches || [];
     if (stats?.error) return broken(id, modProblem(stats.error), stats.error);
     if (w.length && w.every(x => !x.total)) {
@@ -164,6 +165,7 @@ function rowHtml(m) {
           <div class="tags">${m.css.trim() ? "<span>style</span>" : ""}${m.js.trim() ? "<span>script</span>" : ""}${m.target ? `<span>${esc(m.target.label || "")}</span>` : "<span>whole page</span>"}${when ? `<em class="when">${changed ? "changed" : "added"} ${esc(when)}</em>` : ""}</div>
         </div>
         ${broken ? `<div class="health" role="status"><p><b>${esc(h.lead || "Not working." /* self-heal hook: 71-heal.js */)}</b> ${esc(h.reason)}</p><button class="primary" data-a="fix">Fix it</button></div>` : ""}
+        ${guardRowHtml(m) /* guard hook: Paused because it was slowing this page down (64-guard.js) */}
         ${galleryRowHtml(m) /* gallery hook: Update available (68-gallery.js) */}
         ${healRowHtml(m) /* self-heal hook: Share the fix (71-heal.js) */}
         <div class="btns"><button data-a="refine">Change</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}">History <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">Copy link</button><button data-a="share">Share</button><button data-a="code">Edit code</button><button data-a="del">Delete</button></div>
@@ -183,6 +185,7 @@ function versionsHtml(m, vs) {
 // ---- actions
 async function toggleMod(m, on) {
   m.enabled = on;
+  if (on) Guard.clear(m); // guard hook: turned back on by hand (64-guard.js)
   await call("mods.save", { mod: m });
   m.enabled ? await applyMod(m) : await removeMod(m.id);
   renderPanel();

@@ -1,4 +1,5 @@
 // Where a mod applies: per file for local pages, per app for desktop apps.
+import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createMod, hostOf, modMatches, toUserscript } from "../core/mod.js";

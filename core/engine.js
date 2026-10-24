@@ -6,6 +6,7 @@ import { parseModResponse, completeCssPrefix } from "./parse.js";
 import { parseReply } from "./answer.js"; // Ask and find
 import { streamChat } from "./providers.js";
 import { selectorsIn, selectorLists } from "./heal.js"; // self-heal hook: shared selector parsing
+import { draftHarm, cssHidesPage } from "./guard.js"; // guard hook: code that would obviously break the page
 
 // `probe(selectors)` (optional, from the host) returns { fp, unmatched }: a
 // fingerprint of what the page renders and which of the given selectors match
@@ -33,7 +34,7 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
           return;
         }
         const css = completeCssPrefix(parseModResponse(raw).css);
-        if (css !== lastCss) { lastCss = css; emit({ type: "css", css }); }
+        if (css !== lastCss && !cssHidesPage(css)) { lastCss = css; emit({ type: "css", css }); } // guard hook: never show a page-hiding rule
       },
     });
     // Ask and find: an answer is final as soon as it's written; nothing runs.
@@ -43,8 +44,17 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       return { ok: true, kind: "answer", answer, title: "", css: "", js: "", raw, attempts: attempt, ms: Date.now() - started };
     }
     const draft = parseModResponse(raw);
-    emit({ type: "css", css: draft.css });
+    // ---- guard: code that would obviously break the page never runs; the
+    // model gets one more try with what was wrong (core/guard.js)
+    const harm = draftHarm(draft, `${request} ${base?.prompt || ""}`);
+    emit({ type: "css", css: harm ? "" : draft.css });
     last = { ...draft, raw, attempts: attempt, ms: Date.now() - started, repairs };
+    if (harm) {
+      previous = { raw, error: harm.model };
+      repairs.push(harm.model);
+      last = { ...last, css: "", js: "", error: harm.user };
+      continue;
+    }
     if (!draft.css.trim() && !draft.js.trim()) {
       previous = { raw, error: "The reply had no ```css or ```js block (or ANSWER: for a question)." };
       repairs.push(previous.error);

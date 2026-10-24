@@ -2,9 +2,9 @@
 // math, the fixes compiler, the words people read, the Describe this image
 // prompt, and the Check this page rules run in real Chromium against the
 // Riverside Library demo site (demo/sites/a11y) and small snippets.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
 import {
   A11Y_TOOLS, A11Y_KINDS, compileA11y, compileFixes, mergeFixes, summarizeFixes, parseColor, contrastRatio, strongerColor, hexColor,
@@ -12,6 +12,7 @@ import {
 } from "../core/a11y.js";
 import { buildMessages } from "../core/prompt.js";
 import { runMorse } from "../core/engine.js";
+import { launchBrowser, noBrowser } from "./helpers/browser.js";
 
 const parses = js => { assert.doesNotThrow(() => new Function("morse", js), js.slice(0, 200)); };
 
@@ -209,10 +210,9 @@ test("Describe this image: through the engine, the answer streams as an answer, 
 
 // ---- Check this page: the rules, in real Chromium
 
-let chromium, browser;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
-before(async () => { if (!skip) browser = await chromium.launch(); });
+let browser;
+const skip = noBrowser;
+before(async () => { if (!skip) browser = await launchBrowser(); });
 after(() => browser?.close());
 
 const ORIGIN = "http://rules.morse.test";

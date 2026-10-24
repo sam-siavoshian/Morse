@@ -1,17 +1,17 @@
 // Runs the mod helper kit in a real (headless) Chromium.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { KIT_SOURCE, wrapModCode } from "../core/kit.js";
+import { noBrowser, launchBrowser } from "./helpers/browser.js";
+import { settle } from "./helpers/wait.js";
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
+const skip = noBrowser;
 let browser, page;
 
 before(async () => {
   if (skip) return;
-  browser = await chromium.launch();
+  browser = await launchBrowser();
   page = await browser.newPage();
   await page.setContent(`<header><button>Share</button></header><ul id="l"><li>a</li></ul>`);
   await page.evaluate(KIT_SOURCE);
@@ -23,14 +23,15 @@ const run = (id, js) => page.evaluate(wrapModCode(id, js));
 test("watch does not match elements the mod inserted", { skip }, async () => {
   const r = await run("m1", `morse.watch("header button", b => b.before(morse.el("button", { text: "Copy" })));`);
   assert.deepEqual(r, { ok: true });
-  await page.waitForTimeout(100);
+  await settle(page); // watch rescans on the frame after a mutation; it must not match its own button
   assert.equal(await page.locator("header button").count(), 2);
 });
 
 test("watch picks up elements added later", { skip }, async () => {
   await run("m2", `morse.watch("#l li", li => li.append(morse.el("b", { text: "!" })));`);
   await page.evaluate(() => { const li = document.createElement("li"); li.textContent = "b"; document.getElementById("l").append(li); });
-  await page.waitForTimeout(100);
+  await page.waitForFunction(() => document.querySelectorAll("#l li b").length === 2);
+  await settle(page);
   assert.equal(await page.locator("#l li b").count(), 2);
 });
 
@@ -63,11 +64,11 @@ test("__stats reports how many elements each watch matches, now and ever", { ski
   assert.deepEqual(s.watches, [{ selector: "#s li", now: 1, total: 1 }, { selector: "#player-bar", now: 0, total: 0 }]);
   assert.equal(s.errors, 0);
   await page.evaluate(() => { const li = document.createElement("li"); document.getElementById("s").append(li); });
-  await page.waitForTimeout(100);
+  await page.waitForFunction(() => morse.__stats("s1").watches[0].total === 2); // `now` is counted on demand; `total` once the watch ran
   s = await page.evaluate(() => morse.__stats("s1"));
   assert.deepEqual(s.watches[0], { selector: "#s li", now: 2, total: 2 });
   await page.evaluate(() => document.querySelectorAll("#s li").forEach(li => li.remove()));
-  await page.waitForTimeout(100);
+  await page.waitForFunction(() => morse.__stats("s1").watches[0].now === 0);
   s = await page.evaluate(() => morse.__stats("s1"));
   assert.deepEqual(s.watches[0], { selector: "#s li", now: 0, total: 2 }, "total remembers what it found");
   await run("s2", `morse.watch("header", h => h.missing.thing);`);

@@ -1,24 +1,23 @@
 // Desktop: the runtime and its host binding live in an isolated world, so the
 // app's own scripts can't use Morse's host API; mods still run in the page's
 // main world. Host reads and writes are scoped to the page that asked.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
-import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { createRequire } from "node:module";
+import { launchBrowser, noBrowser } from "./helpers/browser.js";
+import { TIMEOUT, settle, waitForReady } from "./helpers/wait.js";
+import { freePort } from "./helpers/net.js";
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
+const skip = noBrowser;
 
 let home, browser, page, site, origin, store, Connector, connector;
-const freePort = () => new Promise(r => { const s = net.createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => r(p)); }); });
 const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "null"));
 const probe = () => page.evaluate(() => JSON.parse(document.documentElement.dataset.probe || "null"));
-async function until(get, ms = 10000) {
+async function until(get, ms = TIMEOUT) {
   const end = Date.now() + ms;
   for (;;) { const v = await get(); if (v || Date.now() > end) return v; await new Promise(r => setTimeout(r, 40)); }
 }
@@ -60,7 +59,7 @@ before(async () => {
 
   const port = await freePort();
   const args = [`--remote-debugging-port=${port}`];
-  try { browser = await chromium.launch({ channel: "chromium", args }); } catch { browser = await chromium.launch({ args }); }
+  browser = await launchBrowser({ channel: "chromium", args });
   const ctx = await browser.newContext();
   await ctx.addInitScript(() => localStorage.setItem("morse:debug", "1"));
   page = await ctx.newPage();
@@ -68,9 +67,10 @@ before(async () => {
   ({ Connector } = await import("../daemon/connector.js"));
   connector = new Connector({ port, app: null, settings: { provider: "demo", model: "demo" }, log: () => {} });
   connector.run();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
+  await waitForReady(page);
 });
 after(async () => {
+  await connector?.stop().catch(() => {});
   await browser?.close();
   site?.close();
   if (home) await fs.rm(home, { recursive: true, force: true });
@@ -99,7 +99,7 @@ test("mods still run in the page's main world", { skip }, async () => {
 
 test("after a navigation the runtime is back, still isolated", { skip }, async () => {
   await page.reload();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
+  await waitForReady(page);
   await assertIsolated();
   await until(() => page.evaluate(() => document.body.dataset.seen));
   assert.equal(await page.evaluate(() => document.body.dataset.seen), "s3cret");
@@ -116,7 +116,7 @@ test("a binding with the same name in the main world reaches nothing", { skip },
     __morseHostSend(JSON.stringify({ id: 9, type: "settings.set", settings: { hotkeys: { open: "Alt+KeyQ" } } }));
   }).catch(() => {});
   await page.evaluate(w => __morseHostSend(JSON.stringify({ id: 10, type: "mods.save", mod: w })), WIDE);
-  await new Promise(r => setTimeout(r, 500));
+  await new Promise(r => setTimeout(r, 500)); // an observation window: nothing should arrive anywhere
   const hist = JSON.parse(await fs.readFile(path.join(home, "history.json"), "utf8"));
   assert.ok(!JSON.stringify(hist).includes("forged"));
   assert.ok((await store.listMods()).some(m => m.id === "keepme"));
@@ -131,8 +131,8 @@ test("reattaching reuses the runtime that's already in the page", { skip }, asyn
   // A second connector (a restarted daemon) on the same app.
   const again = new Connector({ port: connector.port, app: null, settings: { provider: "demo", model: "demo" }, log: () => {} });
   const t = (await (await fetch(`http://127.0.0.1:${connector.port}/json/list`)).json()).find(x => x.type === "page" && x.url.startsWith(origin));
-  await again.attach(t);
-  await new Promise(r => setTimeout(r, 300));
+  await again.attach(t); // includes booting in Morse's world
+  await settle(page);
   assert.equal(await page.locator("[data-morse-ui]").count(), 1, "no second overlay");
   for (const s of again.pages.values()) s?.close();
 });

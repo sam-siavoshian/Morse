@@ -4,26 +4,25 @@
 // run's). The chip in the empty bar, Try it then Undo (nothing left
 // behind), Try it then Save, Install through the install review, Update
 // available after the gallery moves on, and the update review.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
-import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { createRequire } from "node:module";
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
+import { launchBrowser, noBrowser } from "./helpers/browser.js";
+import { pressOpen } from "./helpers/keys.js";
+import { TIMEOUT, settle, waitForReady } from "./helpers/wait.js";
+import { freePort } from "./helpers/net.js";
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
+const skip = noBrowser;
 
 const ROOT = new URL("../", import.meta.url);
-let home, browser, page, server, port, indexHits = 0;
-const freePort = () => new Promise(r => { const s = net.createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => r(p)); }); });
+let home, browser, page, server, port, connector, running, indexHits = 0;
 const ui = sel => page.locator(`[data-morse-ui] ${sel}`);
 const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "null"));
-async function waitFor(pred, ms = 15000) {
+async function waitFor(pred, ms = TIMEOUT) {
   const end = Date.now() + ms;
   let s;
   while (Date.now() < end) { s = await status(); if (s && pred(s)) return s; await page.waitForTimeout(30); }
@@ -32,7 +31,7 @@ async function waitFor(pred, ms = 15000) {
 const modFile = id => path.join(home, "mods", `${id}.json`);
 const readMod = async id => JSON.parse(await fs.readFile(modFile(id), "utf8"));
 const exists = p => fs.access(p).then(() => true, () => false);
-async function until(fn, ms = 10000) {
+async function until(fn, ms = TIMEOUT) {
   const end = Date.now() + ms;
   while (Date.now() < end) { if (await fn()) return; await page.waitForTimeout(40); }
   throw new Error("timed out waiting for " + fn);
@@ -63,26 +62,29 @@ before(async () => {
   process.env.MORSE_GALLERY_URL = `http://127.0.0.1:${port}/site/mods/index.json`;
 
   const cdp = await freePort();
-  browser = await chromium.launch({ args: [`--remote-debugging-port=${cdp}`] });
+  browser = await launchBrowser({ args: [`--remote-debugging-port=${cdp}`] });
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   await ctx.addInitScript(() => localStorage.setItem("morse:debug", "1"));
   page = await ctx.newPage();
   page.on("pageerror", e => console.log("pageerror", e.message));
   await page.goto(`http://127.0.0.1:${port}/demo/sites/tunes/`);
   const { Connector } = await import("../daemon/connector.js");
-  new Connector({ port: cdp, app: null, settings: { provider: "demo", model: "demo" }, log: () => {} }).run();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
+  connector = new Connector({ port: cdp, app: null, settings: { provider: "demo", model: "demo" }, log: () => {} });
+  running = connector.run();
+  await waitForReady(page);
 });
 after(async () => {
+  await connector?.stop().catch(() => {});
+  await running;
   await browser?.close();
   server?.close();
   if (home) await fs.rm(home, { recursive: true, force: true });
 });
 
 test("the empty bar suggests the mods others made for this site; nothing is fetched before Morse opens", { skip }, async () => {
-  await page.waitForTimeout(300);
+  await settle(page); // the runtime is ready (hello, mods): anything it fetches at load has been asked for
   assert.equal(indexHits, 0, "opening the page alone doesn't ask the gallery");
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
   await waitFor(s => s.open);
   const chip = ui(".sugs .gl-sug");
   await chip.waitFor();
@@ -110,6 +112,17 @@ test("the empty bar suggests the mods others made for this site; nothing is fetc
 
 test("Try it runs the mod without saving it, and Undo takes it all away", { skip }, async () => {
   await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').click();
+  // The same review as Install…, and nothing on the page before Try it.
+  const card = ui(".modal .card");
+  await card.waitFor();
+  assert.match(await card.locator("header").textContent(), /Try “Sleep timer”\?.*Nothing runs until you press Try it/s);
+  assert.match(await card.textContent(), /What it does.*Adds buttons to the page/s);
+  assert.match(await card.textContent(), new RegExp(`For 127\\.0\\.0\\.1:${port}`));
+  assert.equal(await card.locator(".ctl-code pre").count(), 2, "Show code is there");
+  await page.waitForTimeout(200);
+  assert.equal(await page.locator(".morse-sleep").count(), 0, "nothing runs before Try it");
+  assert.equal(await page.locator('style[data-morse-css="tunes-sleep-timer"]').count(), 0);
+  await card.locator("[data-a=install]").click();
   await page.locator(".morse-sleep").waitFor();
   assert.equal(await page.locator('style[data-morse-css="tunes-sleep-timer"]').count(), 1);
   await ui(".gl-trial").waitFor();
@@ -126,16 +139,16 @@ test("Try it runs the mod without saving it, and Undo takes it all away", { skip
   await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=remove]').click();
   await page.locator(".morse-sleep").waitFor({ state: "detached" });
   assert.equal(await page.locator('style[data-morse-css="tunes-sleep-timer"]').count(), 0);
-  assert.equal(await ui(".gl-trial").isHidden(), true);
+  await ui(".gl-trial").waitFor({ state: "hidden" });
   assert.equal(await exists(modFile("tunes-sleep-timer")), false);
-  await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').waitFor({ timeout: 5000 }); // the panel redraws once the mod is off
-  assert.ok(await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').isVisible(), "back to Try it");
+  await ui('.gl-item[data-glid="tunes-sleep-timer"] [data-gl=try]').waitFor(); // back to Try it once the panel redraws
 });
 
 test("Save keeps a tried mod, with where it came from", { skip }, async () => {
   const grid = page.locator('[data-testid="album-grid"]').first();
   assert.equal(await grid.evaluate(e => getComputedStyle(e).columnGap), "18px");
   await ui('.gl-item[data-glid="tunes-big-covers"] [data-gl=try]').click();
+  await ui(".modal .card [data-a=install]").click(); // Try it, in the review
   await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-testid="album-grid"]')).columnGap === "24px");
   // Save from the strip at the top (the panel can be closed meanwhile).
   await ui(".gl-trial [data-gl=keep]").click();
@@ -179,7 +192,7 @@ test("Update available when the gallery has a newer version; Update… shows wha
   assert.notEqual(v1.js, v2.js);
   await fs.writeFile(modFile("tunes-sleep-timer"), JSON.stringify(v1, null, 2));
   await page.reload();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
+  await waitForReady(page);
   await page.locator(".morse-sleep").waitFor();
   await page.keyboard.press("Alt+Shift+KeyM");
   const row = ui('.panel article[data-id="tunes-sleep-timer"]');
@@ -215,7 +228,7 @@ test("Submit to the gallery is in the Share dialog for your own mods only", { sk
   await fs.writeFile(modFile("mine1"), JSON.stringify({ morse: 1, id: "mine1", title: "Quiet nav", prompt: "make the sidebar quieter",
     match: { hosts: [`127.0.0.1:${port}`], app: null }, target: null, css: "nav { opacity: .8 }", js: "", enabled: true, created: new Date().toISOString(), updated: new Date().toISOString() }));
   await page.reload();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
+  await waitForReady(page);
   await page.keyboard.press("Alt+Shift+KeyM");
   await ui('.panel article[data-id="mine1"] [data-a=share]').click();
   await ui(".modal .card [data-gl=submit]").waitFor();
@@ -230,7 +243,7 @@ test("Show mods others made, turned off, hides the section and the chip", { skip
   await ui(".modal .card [data-a=close]").first().click();
   await fs.rm(modFile("tunes-big-covers"));
   await page.reload();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
+  await waitForReady(page);
   await page.keyboard.press("Alt+Shift+KeyM");
   await ui(".panel .gl-site").waitFor();
   await ui(".panel .gl-head").click();
@@ -239,8 +252,8 @@ test("Show mods others made, turned off, hides the section and the chip", { skip
   await until(async () => JSON.parse(await fs.readFile(path.join(home, "settings.json"), "utf8")).gallery === false);
   const hits = indexHits;
   await page.reload();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
-  await page.keyboard.press(OPEN_KEY);
+  await waitForReady(page);
+  await pressOpen(page);
   await waitFor(s => s.open);
   await ui(".sugs .sug").first().waitFor();
   assert.equal(await ui(".sugs .gl-sug").count(), 0);

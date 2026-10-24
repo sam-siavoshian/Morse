@@ -5,7 +5,10 @@
 import net from "node:net";
 import os from "node:os";
 
-export const PORT_RANGE = [9333, 9399];
+// MORSE_PORT_RANGE=<from>-<to> moves the range (tests and parallel runs use it
+// so concurrent copies don't pick the same port); the default is unchanged.
+const envRange = /^(\d+)-(\d+)$/.exec(process.env.MORSE_PORT_RANGE || "");
+export const PORT_RANGE = envRange ? [Number(envRange[1]), Number(envRange[2])] : [9333, 9399];
 
 // Does anything accept a TCP connection on host:port?
 export function portAnswers(port, host = "127.0.0.1", timeoutMs = 400) {

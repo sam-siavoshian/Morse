@@ -4,22 +4,21 @@
 // Refine a result, step back with Ctrl+Z, keep, restore from History, refine
 // from the panel; a saved mod that broke shows why and Fix it repairs it;
 // the panel's search, keyboard and Copy link.
+import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
 import { bundleRuntime } from "../runtime/bundle.js";
-// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
+import { pressOpen } from "./helpers/keys.js";
+import { noBrowser, launchBrowser } from "./helpers/browser.js";
+import { waitForStatus, waitForReady, settle, TIMEOUT } from "./helpers/wait.js";
 
-let chromium;
-try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const skip = !chromium && "playwright not installed";
+const skip = noBrowser;
 const ROOT = new URL("../", import.meta.url);
 const ORIGIN = "http://morse.test";
 let browser;
 
-before(async () => { if (!skip) browser = await chromium.launch(); });
+before(async () => { if (!skip) browser = await launchBrowser(); });
 after(() => browser?.close());
 
 async function playground({ query = "?light&model=demo", mods = null } = {}) {
@@ -39,14 +38,9 @@ async function playground({ query = "?light&model=demo", mods = null } = {}) {
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   await page.goto(`${ORIGIN}/demo/playground.html${query}`);
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  await waitForReady(page);
   const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
-  const waitFor = async (pred, ms = 25000) => { // generous: `npm test` runs every browser test at once
-    const end = Date.now() + ms;
-    let s;
-    while (Date.now() < end) { s = await status(); if (pred(s)) return s; await page.waitForTimeout(25); }
-    throw new Error("timed out; last status " + JSON.stringify(s));
-  };
+  const waitFor = (pred, ms = TIMEOUT) => waitForStatus(page, pred, { timeout: ms, what: String(pred) });
   return { ctx, page, errors, status, waitFor };
 }
 const saved = page => page.evaluate(() => Object.values(JSON.parse(localStorage.getItem("morse:playground:mods") || "{}")));
@@ -55,7 +49,7 @@ const ui = (page, sel) => page.locator(`[data-morse-ui] ${sel}`);
 
 test("refine a result, step back with Ctrl+Z, keep, restore from History, refine from the panel", { skip }, async () => {
   const { ctx, page, errors, waitFor } = await playground();
-  await page.keyboard.press(OPEN_KEY);
+  await pressOpen(page);
   await waitFor(s => s.open);
   await page.keyboard.type("add a now playing label to the toolbar");
   await page.keyboard.press("Enter");
@@ -113,6 +107,7 @@ test("refine a result, step back with Ctrl+Z, keep, restore from History, refine
 
   // It survives a reload.
   await page.reload();
+  await waitForReady(page);
   await page.waitForFunction(() => document.querySelector("#toolbar .morse-now"));
   assert.equal(await fontSize(page), "14px");
 
@@ -128,11 +123,12 @@ test("refine a result, step back with Ctrl+Z, keep, restore from History, refine
   await page.keyboard.press("Enter");
   await waitFor(s => s.phase === "result" && /version 4/.test(s.hint));
   assert.equal(await fontSize(page), "18px");
-  // Stopping a refine puts back the version you had.
+  // Stopping a refine puts back the version you had. A slower replay keeps it
+  // streaming until Esc lands, however busy the machine is.
+  await page.evaluate(() => { window.__demoMs = 80; });
   await page.keyboard.type("make it smaller");
   await page.keyboard.press("Enter");
-  await waitFor(s => s.phase === "working");
-  await page.waitForTimeout(400);
+  await waitFor(s => s.phase === "working" && /Writing/.test(s.hint));
   await page.keyboard.press("Escape");
   s = await waitFor(s => s.phase === "result" && /Stopped/.test(s.hint));
   assert.equal(s.input, "make it smaller", "the follow-up stays in the input");
@@ -158,6 +154,13 @@ test("a saved mod that stopped working says why, and Fix it repairs it", { skip 
     oops: seed("oops", "Track count", "show the track count", `nowPlaying.textContent = "3 tracks";`),
   };
   const { ctx, page, errors, waitFor } = await playground({ mods });
+  // Record the panel's health checks (the "stats" requests) and when the host answered them.
+  await page.evaluate(() => {
+    const host = globalThis.__morseHost, send = host.send.bind(host), asked = new Map();
+    window.__checked = [];
+    host.send = m => { if (m.type === "stats") asked.set(m.id, m.modId); return send(m); };
+    host.onMessage(m => { if (asked.has(m.reply)) window.__checked.push({ modId: asked.get(m.reply), at: Date.now() }); });
+  });
   await page.keyboard.press("Alt+Shift+KeyM");
   await ui(page, ".panel article").first().waitFor();
   // A mod that throws is flagged right away, in plain words.
@@ -166,9 +169,10 @@ test("a saved mod that stopped working says why, and Fix it repairs it", { skip 
   assert.match(await oops.textContent(), /Not working\. It uses something this page doesn't have\./);
   // One whose selectors match nothing is flagged after 5 seconds.
   const gone = ui(page, ".panel article[data-id=gone] .health");
-  await gone.waitFor({ timeout: 9000 });
+  await gone.waitFor({ timeout: TIMEOUT });
   assert.match(await gone.textContent(), /It looks for a part of the page that isn't there right now\./);
 
+  const fixedAt = await page.evaluate(() => Date.now());
   await gone.locator("[data-a=fix]").click();
   let s = await waitFor(s => s.open && s.phase === "result" && /version 2/.test(s.hint));
   assert.equal(await page.locator("#toolbar .morse-now").count(), 1, "the fixed code finds the toolbar");
@@ -182,7 +186,9 @@ test("a saved mod that stopped working says why, and Fix it repairs it", { skip 
 
   await page.keyboard.press("Alt+Shift+KeyM");
   await ui(page, ".panel article[data-id=gone]").waitFor();
-  await page.waitForTimeout(5600); // past the 5s check
+  // The fixed code's own 5s health check has run and been answered.
+  await page.waitForFunction(t => window.__checked.some(c => c.modId === "gone" && c.at > t), fixedAt, { timeout: TIMEOUT });
+  await settle(page);
   assert.equal(await ui(page, ".panel article[data-id=gone] .health").count(), 0, "fixed: no warning");
   assert.equal(await ui(page, ".panel article[data-id=oops] .health").count(), 1);
   assert.deepEqual(errors, []);

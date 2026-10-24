@@ -1,21 +1,53 @@
 {
-  "name": "morse",
-  "version": "0.1.0",
+  "name": "morse-cli",
+  "version": "0.2.0",
   "description": "Change any app or website in your own words. Point at something, describe the change, and your model (Claude Code, Codex or an API key) makes it while you watch.",
   "license": "MIT",
   "type": "module",
+  "homepage": "https://sam-siavoshian.github.io/RRAA/site/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sam-siavoshian/RRAA.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sam-siavoshian/RRAA/issues"
+  },
+  "keywords": [
+    "morse",
+    "electron",
+    "chrome-extension",
+    "userscript",
+    "claude-code",
+    "codex",
+    "mods"
+  ],
   "bin": {
     "morse": "daemon/cli.js"
   },
+  "files": [
+    "daemon/",
+    "core/",
+    "runtime/bundle.js",
+    "runtime/src/",
+    "design/tokens.css",
+    "dist/extension/",
+    "CHANGELOG.md"
+  ],
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "build": "node scripts/build.js",
-    "test": "node --test tests/*.test.js",
+    "check": "node scripts/check.js",
+    "test": "node --test --test-timeout=300000 tests/*.test.js",
+    "test:ui": "node scripts/build.js && node scripts/test-ui.js",
+    "prepare": "node scripts/build.js",
+    "package:extension": "node scripts/build.js && node scripts/package-extension.js",
+    "pages": "node scripts/build-pages.js",
     "demo:serve": "node demo/serve.js",
     "ui": "node scripts/build.js && node demo/ui-catalog.js && node demo/contrast.js",
-    "screenshots": "node scripts/build.js && node demo/shoot-extension.js && node demo/shoot-desktop.js && node demo/shoot-control.js"
+    "screenshots": "node scripts/build.js && node demo/shoot-extension.js && node demo/shoot-desktop.js && node demo/shoot-control.js",
+    "store:screenshots": "node scripts/build.js && node scripts/store-screenshots.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0"

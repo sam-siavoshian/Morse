@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in - Postbox</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f6f8fc; color: #1f1f1f; font: 14px/1.4 "Segoe UI", Roboto, system-ui, sans-serif; }
+  form { width: 400px; padding: 40px 36px 32px; border-radius: 24px; background: #fff; box-shadow: 0 1px 3px rgba(60, 64, 67, .2); display: grid; gap: 14px; }
+  .lg { display: flex; gap: 8px; align-items: center; font-size: 20px; font-weight: 600; }
+  .lg span { width: 26px; height: 20px; border-radius: 4px; background: linear-gradient(135deg, #ea4335 50%, #c5221f 50%); }
+  h1 { font-size: 24px; font-weight: 400; margin: 10px 0 4px; }
+  label { display: grid; gap: 6px; color: #444; font-size: 13px; }
+  input[type=email], input[type=password], select { height: 44px; border: 1px solid #c4c7c5; border-radius: 8px; padding: 0 14px; font: inherit; font-size: 15px; background: #fff; }
+  .keep { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #1f1f1f; }
+  button { justify-self: end; margin-top: 8px; border: 0; border-radius: 20px; background: #0b57d0; color: #fff; padding: 10px 24px; font: inherit; font-weight: 600; }
+  .done { display: none; color: #0b8043; }
+  form.ok .done { display: block; }
+</style>
+</head>
+<body>
+  <!-- A sign-in for Show me once: typing a password is recorded as "(hidden)". -->
+  <form onsubmit="event.preventDefault(); this.classList.add('ok')">
+    <div class="lg"><span></span>Postbox</div>
+    <h1>Sign in</h1>
+    <label>Email <input type="email" name="email" autocomplete="username"></label>
+    <label>Password <input type="password" name="password" autocomplete="current-password"></label>
+    <label>Open <select name="start"><option>Inbox</option><option>Starred</option><option>Drafts</option></select></label>
+    <label class="keep"><input type="checkbox" name="keep"> Keep me signed in</label>
+    <button>Sign in</button>
+    <p class="done">Signed in.</p>
+  </form>
+</body>
+</html>

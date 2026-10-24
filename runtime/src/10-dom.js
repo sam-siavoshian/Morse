@@ -5,8 +5,13 @@ hostEl.setAttribute("data-morse-ui", "");
 hostEl.style.cssText = "all:initial;position:fixed;inset:0;pointer-events:none;z-index:2147483647;direction:ltr;zoom:1;display:block;"
   .replace(/;/g, " !important;");
 hostEl.dir = "ltr";
+// Debug (an open shadow root and the status attribute, for tests and
+// screenshots) only in a browser driven by automation: localStorage belongs to
+// the page, so on its own the flag would let any site open Morse's UI to its
+// scripts. navigator.webdriver is read in Morse's own world, where the page
+// can't redefine it.
 let DEBUG = false;
-try { DEBUG = !!localStorage.getItem("morse:debug"); } catch {}
+try { DEBUG = navigator.webdriver === true && !!localStorage.getItem("morse:debug"); } catch {}
 const root = hostEl.attachShadow({ mode: DEBUG ? "open" : "closed" });
 // Tokens are custom properties, the one thing that inherits through a shadow
 // boundary. Marked !important, ours beat any `--m-*` the page sets on our host.
