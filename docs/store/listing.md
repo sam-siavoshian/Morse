@@ -48,7 +48,7 @@ What you pointed at and what you asked for go to the model you chose, and nowher
 Open source
 Morse is MIT licensed. Read every line: https://github.com/sam-siavoshian/RRAA
 
-Tip: in chrome://extensions, open Morse's details and turn on "Allow User Scripts". Changes that only restyle a page work without it. Changes that add buttons or features need it on some sites.
+Tip: in chrome://extensions, open Morse's details and turn on "Allow User Scripts". Changes that only restyle a page work without it. Changes that add buttons or features need it, and Morse tells you which of your changes are waiting for it.
 ```
 
 ## Links
@@ -68,12 +68,11 @@ Morse changes the website you are on in the way you describe: you point at part 
 Answer: **Yes, I am using remote code**, and explain:
 
 ```
-Morse runs code that is written at the user's request by the language model the user connected (their own Claude Code, Codex or Anthropic API account), and code from mods the user chooses to install. It runs only after the user asks for a change or confirms an install, and only on the site it was made for. It runs through the chrome.userScripts API, which the user turns on with "Allow User Scripts". The extension's own code is all in the package; nothing is loaded from a Morse server.
+Morse runs code that is written at the user's request by the language model the user connected (their own Claude Code, Codex or Anthropic API account), and code from mods the user chooses to install. It runs only after the user asks for a change or confirms an install, and only on the site it was made for. It runs only through the chrome.userScripts API, which the user turns on with "Allow User Scripts". With it off, Morse runs no such code at all: it only adds the change's CSS, and tells the user which changes are waiting. The extension never runs strings as code in any other way (no eval, no new Function, no scripting.executeScript with generated code). The extension's own code is all in the package; nothing is loaded from a Morse server.
 ```
 
-See docs/store/README.md, "Before you submit": the fallback that runs this
-code with `scripting.executeScript` and `eval` when "Allow User Scripts" is
-off is likely to be rejected under this policy.
+Every place that could run code is listed in docs/store/README.md, "Code that
+Morse runs", and `tests/store.test.js` checks the source and the built zip.
 
 ## Data usage (privacy practices tab)
 

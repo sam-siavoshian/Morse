@@ -153,6 +153,7 @@ function openBar() {
   Voice.refresh();
   requestAnimationFrame(() => input.focus());
   call("clip.start").catch(() => {});
+  call("warm").catch(() => {}); // speed: the model gets ready while you point and type
   refreshPrefs();
   PromptHistory.load();
 }

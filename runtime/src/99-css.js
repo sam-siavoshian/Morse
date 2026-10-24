@@ -258,6 +258,9 @@ function CSS() {
 
   /* ---- modals */
   .modal { position: fixed; inset: 0; background: var(--m-scrim); display: flex; align-items: center; justify-content: center; pointer-events: auto; animation: fade var(--m-fast); }
+  /* a <dialog> (shown modally for reviews, 80-modals.js): none of the browser's dialog look */
+  dialog.modal { margin: 0; padding: 0; border: 0; width: auto; height: auto; max-width: none; max-height: none; color: inherit; overflow: visible; }
+  dialog.modal::backdrop { background: transparent; }
   @keyframes fade { from { opacity: 0 } }
   .card { width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 40px); overflow: auto; background: var(--m-surface); color: var(--m-text); border: 1px solid var(--m-line-strong);
     border-radius: var(--m-r-lg); padding: 20px; font: 400 var(--m-text-md)/1.45 var(--m-font); letter-spacing: var(--m-tracking); box-shadow: var(--m-shadow); animation: rise2 var(--m-med) var(--m-ease); }

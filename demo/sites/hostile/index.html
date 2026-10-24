@@ -32,5 +32,48 @@
   <section><h1>صفحة معادية</h1><p>Global resets, huge fonts, zoom, RTL and a transformed body.</p></section>
   <div id="tb" aria-label="Hostile toolbar"><button aria-label="Bold">B</button><button aria-label="Italic">I</button><button aria-label="Underline">U</button><button>Publish</button></div>
   <div id="side" aria-label="Hostile sidebar">Sidebar</div>
+<script>
+// ?cover: a page that tries to draw over Morse's install review, so that a
+// click meant for its "Claim your prize" lands on Install
+// (tests/top-layer.test.js). On http://127.0.0.1:8787, the address the share
+// page uses in tests, it can ask for an install like the share page does.
+//   ask(source)          ask Morse to install a mod (the share page's message)
+//   cover(how, opts)     draw a full-page cover: "z" (highest z-index), "popover",
+//                        "shadow" (a popover inside a closed shadow root), "dialog"
+//                        (a modal dialog); opts.through: clicks go through it to
+//                        what is under it; opts.again: open it again whenever it
+//                        is pushed down or closed
+//   uncover()            remove every cover
+if (/[?&]cover\b/.test(location.search)) {
+  const covers = [];
+  const style = "all: initial !important; position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 0 !important; border: 0 !important; max-width: none !important; max-height: none !important; z-index: 2147483647 !important; background: rgba(0, 200, 0, .92) !important; display: block !important;";
+  window.ask = source => window.postMessage({ morseInstall: source }, "*");
+  window.cover = (how, { through = false, again = false } = {}) => {
+    const el = document.createElement(how === "dialog" ? "dialog" : "div");
+    el.setAttribute("style", style + (through ? "pointer-events: none !important;" : ""));
+    el.textContent = "Claim your prize";
+    el.dataset.cover = how;
+    let host = el;
+    if (how === "shadow") {
+      host = document.createElement("span");
+      host.dataset.cover = how;
+      host.attachShadow({ mode: "closed" }).append(el);
+    }
+    if (how === "popover" || how === "shadow") el.popover = "manual";
+    document.body.append(host);
+    const show = () => { try { if (how === "dialog") { if (el.open) el.close(); el.showModal(); } else if (how !== "z") { if (el.matches(":popover-open")) el.hidePopover(); el.showPopover(); } } catch {} };
+    show();
+    if (again) {
+      // Morse's overlay or review came back on top: open ours again, on top of it.
+      const t = setInterval(show, 120);
+      covers.push(() => clearInterval(t));
+    }
+    covers.push(() => host.remove());
+    window.covers = (window.covers || 0) + 1;
+    return el;
+  };
+  window.uncover = () => { while (covers.length) covers.pop()(); };
+}
+</script>
 </body>
 </html>
