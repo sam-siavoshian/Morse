@@ -276,7 +276,7 @@ function controlPanel() {
     sus && `<div class="ctl-note"><span>“${esc(sus.title)}” is held back: this page closed or reloaded right after it ran.</span><button data-c="keep-off">Keep it off</button><button data-c="run-again">Turn on</button></div>`,
   ].filter(Boolean).join("");
   panel.querySelector("header")?.insertAdjacentHTML("afterend", `<div class="ctl-strip">
-    <label class="ctl-row"><span class="ctl-l"><span>Pause Morse on ${esc(where)}</span><small>${site ? "Your mods here are saved but not running" : "Stops every mod on this site until you turn it back on"}</small></span>
+    <label class="ctl-row"><span class="ctl-l"><span>Pause Morse on ${esc(where)}</span><small>${site ? "Your mods here are saved but not running" : "Stops every mod on this site"}</small></span>
       <span class="sw"><input type="checkbox" data-c="pause-site" ${site ? "checked" : ""} aria-label="Pause Morse on ${esc(where)}"><span></span></span></label>
     ${notes}</div>`);
   for (const a of panel.querySelectorAll(".list article[data-id]")) {

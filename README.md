@@ -27,6 +27,7 @@ press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ local mo
 | **Desktop** | `morse launch spotify` relaunches an Electron app with a debugging port and attaches over CDP. No patching of app files: code signatures and ASAR integrity stay intact, updates don't break it |
 | **Local models** | Ollama (auto-detected) or any OpenAI-compatible server (llama.cpp, LM Studio, vLLM, or a cloud key if you choose) |
 | **God mode** | Direct editing with no model call: hide, move, resize, rename, recolor, retype, duplicate. Page tools (dark/light mode, text size, hide ads, focus mode). Capture an element in one app and rebuild it in another |
+| **You stay in control** | An off switch for every mod on a page (⌥⇧0), Pause Morse on a site or everywhere, safe start for mods that crash a page, a plain-language summary before anything shared is installed, and one-file backups |
 
 ## Screenshots
 
@@ -85,6 +86,22 @@ Point at something and an edit toolbar anchors to it. Every key is a tool while 
 | ![](docs/screenshots/54-dark-mode.png) Page tools: hide ads, then a smart-invert dark mode that keeps media and already-dark parts as they are | ![](docs/screenshots/55-capture.png) **⇧C**: capture the masthead to the Morse clipboard |
 | ![](docs/screenshots/56-reuse.png) In a different app, pick it from the bar: the model rebuilds that look natively | |
 
+### You stay in control
+
+Captured by [`demo/shoot-control.js`](demo/shoot-control.js) driving the real extension.
+
+| | |
+|---|---|
+| ![](docs/screenshots/95-off-switch.png) **⌥⇧0** (Alt+Shift+0) turns every mod on the page off at once; the toast turns them back on | ![](docs/screenshots/96-install-summary.png) **Before installing** a shared mod: what it does, in plain words, with a note when it sends data elsewhere or reads what you type. The code is folded below |
+| ![](docs/screenshots/97-pause-site.png) **Pause Morse on a site** from the Mods panel; every row says where the mod came from and has **Show code** | ![](docs/screenshots/98-popup-pause.png) The same from the toolbar popup, plus **Pause everywhere** |
+
+- **Off switch.** A hotkey like the others (Settings → Shortcuts, default ⌥⇧0 / Alt+Shift+0). It removes every mod's CSS at once, then undoes their code. It stays off in that tab, even across reloads, until you press it again or click Turn back on. Nothing is deleted.
+- **Pause.** "Pause Morse on <site>" in the Mods panel and the popup, "Pause everywhere" in the popup (the toolbar icon then says *off*), and in a terminal `morse pause [site|app]` / `morse resume`. Paused mods stay saved; every open tab and window follows at once.
+- **Safe start.** If a page closes, crashes or reloads within seconds after a mod ran, three times in a row, Morse holds that mod back on the next load and asks: *Keep it off* or *Turn it back on*. Tracked per tab by the host (`chrome.storage.local`, `~/.morse/control.json`).
+- **What a mod does, before you install it.** [`core/summary.js`](core/summary.js) reads the mod's code and lists what it changes and can do: *Changes how the page looks*, *Adds buttons to the page*, *Reads what you type in this page*, *Sends data to another website*, *Remembers settings on this site*, and so on. It errs on the side of mentioning things. The share page, the Import dialog and `morse import` all show it first, with the code below, and install only on an explicit Install. On the web, a page can't install anything by itself: the share page's Install button opens Morse's own review, and only a click there installs.
+- **Where it came from.** Each mod in the panel and popup says how it got there (made here with which model, your own edits, installed from a shared link and by whom, restored from a backup), with **Show code** next to it. `morse code <id>` does the same in a terminal.
+- **Backups.** *Export all mods* and *Import from file* at the bottom of the Mods panel; `morse export --all [--out file]` and `morse import <file|link>`.
+
 ## Status
 
 Honest accounting of what was verified and how:
@@ -110,6 +127,8 @@ ollama pull qwen2.5-coder:7b
 ```bash
 node daemon/cli.js launch spotify --restart   # or slack, discord, vscode, notion, obsidian, a path…
 node daemon/cli.js mods
+node daemon/cli.js pause                        # stop every mod everywhere (morse resume to undo)
+node daemon/cli.js export --all                 # back up every mod to one file
 node daemon/cli.js model --provider openai --base-url http://127.0.0.1:8080 --model qwen2.5-coder
 ```
 
@@ -149,7 +168,8 @@ Requires Node 22+. For clips, `ffmpeg` on your PATH.
 
 Mods are code running inside apps you're signed into, so:
 
-- The model is told not to use the network, eval, or external scripts, but **that is not enforced yet** (see roadmap). Read shared mods before installing; the share page shows the full code first, and imported mods are marked.
+- The model is told not to use the network, eval, or external scripts, but **that is not enforced yet** (see roadmap). Before a shared mod is installed, Morse says in plain words what its code can do (sending data elsewhere and reading what you type get a clear note) and shows the code; imported mods say where they came from. The summary is pattern matching, not a guarantee, so it errs on the side of mentioning things and flags code that builds code while it runs.
+- One key (⌥⇧0) turns every mod on a page off; Morse can be paused per site or everywhere; a mod that keeps crashing a page is held back on the next load.
 - Mods run in the renderer only. They get no Node/Electron APIs.
 - `morse launch` opens a debugging port on 127.0.0.1. While it's open, **any local process can attach to that app**, which is the same trust level as anything else running as you, but worth knowing. Quit the app normally to close it.
 - Share links carry the mod in the URL fragment, which browsers never send to a server.
