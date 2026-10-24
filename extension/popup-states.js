@@ -17,18 +17,18 @@ const url = q.get("url") || tab?.url || "";
 
 const style = document.createElement("style");
 style.textContent = `
-  .ps { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; padding: 10px 12px; border-radius: 8px;
-    background: var(--m-raised, #18181b); border: 1px solid var(--m-line-strong, #2e2e33); color: var(--m-text, #ededef); font-size: 12px; line-height: 17px; }
-  .ps i { flex: none; width: 6px; height: 6px; margin-top: 6px; border-radius: 1.5px; background: var(--m-warn, #e5a54b); }
+  /* the popup's .notice (popup.css), with the radar-square status dot; tokens only */
+  .ps { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; color: var(--m-text); line-height: 18px; }
+  .ps i { flex: none; width: 6px; height: 6px; margin-top: 6px; border-radius: 1.5px; background: var(--m-warn); }
   .ps div { min-width: 0; }
-  .ps button { display: block; margin-top: 8px; height: 28px; padding: 0 10px; border-radius: 6px; font-size: 12px; }
-  #go:disabled { opacity: .45; cursor: default; }
-  #warn button { display: block; margin-top: 8px; height: 26px; padding: 0 10px; font-size: 12px; }`;
+  .ps button, #warn button { display: block; margin-top: 8px; height: 28px; padding: 0 10px; font-size: var(--m-text-sm); }
+  #go:disabled { background: var(--m-raised); border-color: var(--m-line-strong); color: var(--m-signal-1); cursor: default; }
+  #go:disabled kbd { color: inherit; }`;
 document.head.append(style);
 
 function notice(text, label, run, where = document.querySelector("header")) {
   const el = document.createElement("div");
-  el.className = "ps";
+  el.className = "notice ps";
   el.setAttribute("role", "status");
   el.innerHTML = `<i aria-hidden="true"></i><div><span></span></div>`;
   el.querySelector("span").textContent = text;
@@ -46,7 +46,10 @@ const openSetup = what => send({ type: "onboarding.open", what }).then(() => win
 
 // ---- can Morse run on this page?
 const fileAccess = await new Promise(r => chrome.extension.isAllowedFileSchemeAccess(r));
-let why = pageSupport(url, { fileAccess, extensionId: chrome.runtime.id });
+// The options page is not about a page at all (first-run hook: it said
+// "Chrome doesn't let extensions change other extensions' pages" there).
+const isOptions = document.body.dataset.page === "options";
+let why = isOptions ? null : pageSupport(url, { fileAccess, extensionId: chrome.runtime.id });
 // A page that looks fine may still have no Morse: opened before install, a PDF,
 // or a page Chrome protects. Ask the page itself (host.js marks it).
 if (!why && !q.has("url") && tabId != null && /^(https?|file):/.test(url)) {
@@ -73,11 +76,10 @@ if (why) {
 // ---- no model, user scripts off
 const st = await send({ type: "onboarding.status" });
 const status = st?.status || {};
-if (!why && modelMissing(status, document.getElementById("label")?.textContent)) {
-  const details = document.querySelector("details");
-  notice("No model connected yet. Choose one below so Morse can make changes.", "Choose a model", () => {
-    if (details) { details.open = true; details.scrollIntoView({ block: "start" }); details.querySelector("select, input")?.focus(); }
-  }).dataset.state = "model";
+// first-run hook: the button used to look for a <details> the popup doesn't
+// have, so it did nothing. The welcome page connects a model in one command.
+if (!why && !isOptions && modelMissing(status, document.getElementById("label")?.textContent)) {
+  notice("No model connected yet. The welcome page connects one with a single command.", "Connect a model", () => openSetup("model")).dataset.state = "model";
 }
 const warn = document.getElementById("warn");
 if (warn && !warn.querySelector("button")) {
@@ -89,6 +91,5 @@ if (warn && !warn.querySelector("button")) {
 // Opened from "Connect a model" (the bar or the welcome page): show model settings.
 if ((await chrome.storage.local.get("morse.popupFocus"))["morse.popupFocus"] === "model") {
   await chrome.storage.local.remove("morse.popupFocus");
-  const details = document.querySelector("details");
-  if (details) details.open = true;
+  document.getElementById("model")?.scrollIntoView({ block: "start" });
 }

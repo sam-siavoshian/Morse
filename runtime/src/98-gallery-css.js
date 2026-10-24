@@ -5,17 +5,17 @@
 function GALLERY_CSS() { return `
   /* ---- For this site, under the mods in the panel */
   .gl-site { margin: 8px 4px 4px; padding-top: 12px; border-top: 1px solid var(--m-line); }
-  .gl-site h4 { margin: 0 8px 8px; font: 500 var(--m-text-xs)/16px var(--m-mono); color: var(--m-text-3); text-transform: uppercase; letter-spacing: .06em; }
-  .panel .gl-head { display: flex; align-items: center; gap: 10px; width: 100%; height: auto; padding: 8px 10px; text-align: left; white-space: normal;
-    border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-bg); }
-  .panel .gl-head:hover { background: var(--m-hover); border-color: var(--m-line-strong); }
-  .panel .gl-head:focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
+  .gl-site h4 { margin: 0 8px 8px; }
+  /* the whole row opens and closes the list; the Show/Hide .tbtn is the control */
+  .gl-head { display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 12px; cursor: pointer;
+    border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-bg); transition: background var(--m-fast), border-color var(--m-fast); }
+  .gl-head:hover { background: var(--m-hover); border-color: var(--m-line-strong); }
   .gl-mark { flex: none; display: grid; place-items: center; color: var(--m-text-3); }
   .gl-count { flex: 1; min-width: 0; }
   .gl-count b { display: block; font: 550 var(--m-text-md)/20px var(--m-font); color: var(--m-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .gl-count small { display: block; font: 400 var(--m-text-sm)/16px var(--m-font); color: var(--m-text-3); }
-  .gl-show { flex: none; font: 500 var(--m-text-sm)/16px var(--m-font); color: var(--m-text-2); }
-  .gl-show::after { content: ""; display: inline-block; width: 5px; height: 5px; margin: 0 2px 2px 7px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
+  .panel .gl-show { flex: none; }
+  .gl-show::after { content: ""; display: inline-block; width: 5px; height: 5px; margin: 0 2px 2px 8px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
   .gl-site.open .gl-show::after { transform: rotate(-135deg); margin-bottom: -1px; }
   .gl-items { margin-top: 4px; }
   .gl-item { display: flex; flex-direction: column; padding: 12px 10px; border-bottom: 1px solid var(--m-line); overflow-wrap: anywhere; }
@@ -25,15 +25,13 @@ function GALLERY_CSS() { return `
   .gl-sum { margin: 6px 0 0; color: var(--m-text-2); font: 400 var(--m-text-sm)/16px var(--m-font); }
   .gl-by { margin-top: 6px; color: var(--m-text-3); font: 400 var(--m-text-xs)/16px var(--m-font); }
   .gl-trying { margin: 8px 0 0; color: var(--m-text); font: 500 var(--m-text-sm)/16px var(--m-font); }
-  .gl-trying::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 7px 1px 0; border-radius: 1.5px; background: var(--m-text); vertical-align: middle; animation: gl-pulse 1.4s var(--m-ease) infinite; }
-  @keyframes gl-pulse { 50% { opacity: .3 } }
+  /* still: only "a model is working" loops */
+  .gl-trying::before { content: ""; margin: 0 8px 1px 0; background: var(--m-text); vertical-align: middle; } /* the status dot: 99-css.js */
   .gl-item.trying { background: var(--m-raised); border-radius: var(--m-r-md); border-bottom-color: transparent; }
-  .gl-btns { display: flex; gap: 6px; margin-top: 10px; }
-  .panel .gl-btns button { height: 26px; padding: 0 10px; }
+  .gl-btns { display: flex; gap: 8px; margin-top: 12px; }
   .gl-foot { display: flex; align-items: center; gap: 8px; margin: 4px 10px 0; font: 11px/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; }
   .gl-foot span { flex: 1; min-width: 0; text-align: left; }
-  .panel .gl-link { height: 24px; padding: 0 6px; margin-right: -6px; border: 0; background: none; color: var(--m-text-3); font: 500 var(--m-text-xs)/16px var(--m-font); }
-  .panel .gl-link:hover { color: var(--m-text); background: var(--m-hover); }
+  .panel .gl-link { flex: none; margin-right: -8px; }
 
   /* ---- Update available, on a mod's row */
   .gl-upd { grid-column: 2; display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 8px 8px 8px 12px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-bg); }
@@ -56,20 +54,18 @@ function GALLERY_CSS() { return `
   .gl-trial .gl-txt { min-width: 0; display: flex; align-items: baseline; gap: 8px; margin-right: 4px; }
   .gl-trial .gl-txt b { font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .gl-trial .gl-txt small { color: var(--m-text-3); font-size: var(--m-text-sm); white-space: nowrap; }
-  .gl-trial button { flex: none; height: 28px; padding: 0 12px; background: transparent; color: var(--m-text); border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm);
-    font: 500 var(--m-text-sm)/18px var(--m-font); }
-  .gl-trial button:hover { background: var(--m-hover); border-color: var(--m-signal-1); }
+  .gl-trial .btn { flex: none; }
   @media (max-width: 560px) { .gl-trial { top: auto; bottom: 12px; } .gl-trial .gl-txt small { display: none; } }
 
   /* ---- the update review */
   .gl-what { padding: 12px 14px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-bg); }
-  .gl-what h5 { margin: 0 0 6px; font: 500 var(--m-text-xs)/16px var(--m-mono); color: var(--m-text-3); text-transform: uppercase; letter-spacing: .06em; }
+  .gl-what h5 { margin: 0 0 8px; }
   .gl-what p { margin: 4px 0 0; color: var(--m-text-2); font-size: var(--m-text-md); line-height: 20px; }
   .gl-what p b { color: var(--m-text); font-weight: 550; }
   .gl-what .gl-note { color: var(--m-text); }
   .gl-what .gl-warn { color: var(--m-text); padding-left: 10px; border-left: 2px solid var(--m-warn); }
   .gl-what p.dim { margin-top: 8px; font: 11px/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; }
-  .gl-diff { min-height: 0; max-height: 220px; padding: 8px 0; white-space: pre; }
+  .gl-diff { min-height: 0; max-height: 220px; padding: 8px 0; white-space: pre; resize: none; }
   .gl-diff span { display: block; padding: 0 12px 0 0; min-height: 20px; }
   .gl-diff i { display: inline-block; width: 28px; text-align: center; font-style: normal; color: var(--m-text-3); user-select: none; }
   .gl-diff .add { background: color-mix(in srgb, var(--m-text) 9%, transparent); color: var(--m-text); }

@@ -18,7 +18,8 @@ const Onboarding = (() => {
   let status = {}; // what the host knows: { mode, model: { connected }, userScripts }
   let loadedAt = 0, shownStep = "", shownNote = "";
   let tipSaved = false, tipShare = false;
-  const CHECK = `<svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg>`;
+  // a step that's done: the check from the 16px icon set, drawn small in the middle of its 16px box
+  const CHECK = `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.25 8.25 7.1 10.1 10.75 6"/></svg>`;
 
   const coachEl = makeEl("div", { className: "ob-coach", hidden: true }, { role: "group", "aria-label": "Getting started" });
   const noteEl = makeEl("div", { className: "ob-note", hidden: true }, { role: "note" });
@@ -45,7 +46,11 @@ const Onboarding = (() => {
   function step() {
     if (S.phase === "result") return ["keep", `Like it? <b>Save</b> keeps it for next time. <b>Undo</b> puts the page back.`];
     if (S.phase === "working") return ["describe", `Morse is making the change. You'll see it as it happens. <kbd>Esc</kbd> stops it.`];
-    if (S.phase === "error") return ["describe", `That didn't work. Try other words, or point at something else.`];
+    if (S.phase === "error") { // first-run hook: say what to do about this error, not "try other words" for a missing model
+      const why = explainError(hint.title || hint.textContent), raw = hint.title || hint.textContent;
+      if (why?.action === "model" || why?.action === "setup" || /no model connected|sample answers/i.test(raw)) return ["describe", `Morse needs a model for this. Connect one, then press <kbd>Enter</kbd> to try again.`];
+      return ["describe", `That didn't work. Try other words, or point at something else.`];
+    }
     if (S.target || input.value.trim()) return ["describe", `Say what you want, like “make this bigger”, then press <kbd>Enter</kbd>.`];
     return ["point", `Click the part of the page you want to change. Or skip this and describe a change to the whole page.`];
   }
@@ -61,17 +66,20 @@ const Onboarding = (() => {
     const examples = id === "describe" && S.phase === "idle" ? ` <button type="button" class="ob-link" data-ob="help">See examples</button>` : "";
     coachEl.innerHTML = `
       <ol class="ob-steps">${STEPS.map(([, label], i) => `<li class="${i < at ? "done" : i === at ? "now" : ""}"${i === at ? ` aria-current="step"` : ""}><span class="n">${i < at ? CHECK : i + 1}</span>${label}</li>`).join("")}</ol>
-      <button type="button" class="ob-hide" data-ob="skip">Hide tips</button>
+      <button type="button" class="tbtn ob-hide" data-ob="skip">Hide tips</button>
       <p class="ob-say">${say}${examples}</p>`;
   }
 
   // ---- one notice at a time under the input: no model, then user scripts off
   function noteNow() {
     if (!st || coachOn() || !S.open || bar.hidden || S.phase !== "idle" || paneKind) return null;
-    if (modelMissing(status, S.label) && !st.dismissed.model)
+    if (modelMissing(status, S.label) && !st.dismissed.model && !status.sample) // the practice page's sample answers need no model
       return { id: "model", text: "No model connected yet. Connect one so Morse can make changes.", btn: "Connect a model", act: "model" };
+    const waiting = Waiting.list(); // waiting hook: mods here whose code waits for “Allow User Scripts” (64-waiting.js)
+    if (waiting.length && !Waiting.quiet)
+      return { id: `waiting:${waiting.length}`, text: Waiting.text(waiting), btn: "Turn it on", act: "userscripts" };
     if (status.userScripts === false && !st.dismissed.userScripts)
-      return { id: "userScripts", text: "“Allow User Scripts” is off, so added buttons and features won't run on some sites.", btn: "Turn it on", act: "userscripts" };
+      return { id: "userScripts", text: "“Allow User Scripts” is off, so changes that add buttons or features won't run. Changes to how pages look still work.", btn: "Turn it on", act: "userscripts" };
     return null;
   }
   function renderNote() {
@@ -80,8 +88,8 @@ const Onboarding = (() => {
     if ((n?.id || "") === shownNote) return;
     shownNote = n?.id || "";
     noteEl.innerHTML = n ? `<span class="ob-dot" aria-hidden="true"></span><span class="ob-text">${esc(n.text)}</span>
-      <button type="button" data-ob="${n.act}">${esc(n.btn)}</button>
-      <button type="button" class="ob-close" data-ob="dismiss" data-id="${n.id}" aria-label="Don't show this again" title="Don't show this again">×</button>` : "";
+      <button type="button" class="btn" data-ob="${n.act}">${esc(n.btn)}</button>
+      <button type="button" class="ibtn sm close ob-close" data-ob="dismiss" data-id="${n.id}" aria-label="Don't show this again" title="Don't show this again">×</button>` : "";
   }
 
   // ---- errors in plain words, with a button that does something about it
@@ -95,10 +103,23 @@ const Onboarding = (() => {
     if (label && !actions.querySelector("[data-ob]")) actions.insertAdjacentHTML("afterbegin", `<button type="button" data-ob="${why.action}">${esc(label)}</button>`);
   }
 
+  // ---- progressive reveal (first-run hook). Until the first change is saved
+  // (or tips are hidden), the bar shows the basics: describe, point, talk,
+  // Mods. Page tools, the Edit tools that pop up on what you point at,
+  // "Mods for this site" and Show me once come after; Ctrl+E (in the hint) and Help bring them
+  // sooner. Only CSS: :host([data-new]) in 98-onboarding-css.js.
+  let seenAll = false;
+  const isNew = () => !!st && st.coach !== "done" && !st.tips.saved && !seenAll;
+  function applyReveal() {
+    if (paneKind === "help") seenAll = true; // asked for everything
+    if (hostEl.hasAttribute("data-new") !== isNew()) hostEl.toggleAttribute("data-new", isNew());
+  }
+
   function sync() {
     renderCoach();
     renderNote();
     explainFailure();
+    applyReveal();
   }
 
   // ---- actions behind every button above
@@ -109,6 +130,7 @@ const Onboarding = (() => {
   }
   async function act(what, btn) {
     if (what === "skip") return save({ coach: "done" });
+    if (what === "dismiss" && btn.dataset.id?.startsWith("waiting")) { Waiting.quiet = true; return sync(); } // waiting hook: for this page only
     if (what === "dismiss") return save({ dismissed: { [btn.dataset.id]: true } });
     if (what === "help") return toggleHelp();
     if (what === "start") { panel.hidden = true; return openBar(); }
@@ -143,10 +165,47 @@ const Onboarding = (() => {
   const where = () => S.appName || (/^https?:$/.test(location.protocol) && location.host) || "this page";
   function savedTip() {
     tipSaved = false;
-    const m = S.mods[S.mods.length - 1];
-    const keys = hotkeyText("mods");
-    showTip(`Saved${m ? ` “${m.title}”` : ""} as a mod. It comes back every time you open ${where()}. To turn it off, edit or share it, open Mods${keys ? ` (${keys})` : ""}.`);
+    celebrate(S.mods[S.mods.length - 1]);
   }
+
+  // ---- the first saved change (first-run hook): a small card instead of the
+  // toast. The mark's squares settle into a check; it explains "mod" once,
+  // and names what just showed up in the bar (progressive reveal, above).
+  const winEl = makeEl("div", { className: "ob-win", hidden: true }, { role: "status", "aria-live": "polite" });
+  root.append(winEl);
+  let winMod = null;
+  function celebrate(m) {
+    toastEl.hidden = true;
+    clearTimeout(toast.t);
+    winMod = m || null;
+    const k = id => (hotkey(id) ? caps(hotkey(id)) : "");
+    const edit = hotkey("godmode") ? caps(hotkey("godmode")) : caps([primaryMod, "E"]);
+    const next = [
+      typeof GodQuick !== "undefined" && ["Page tools", "Dark mode, bigger text and more, from the new button in the bar."],
+      ["Edit tools", `Point at something and press ${edit} to hide, move or recolor it.`],
+      ["Ask", "Ask about the page, like “what does this button do?”"],
+    ].filter(Boolean);
+    winEl.innerHTML = `<div class="ob-win-mark" aria-hidden="true">${radar(30)}<svg class="ob-win-check" viewBox="0 0 16 16" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg></div>
+      <div class="ob-win-body">
+        <b>Your first mod is saved</b>
+        <p>A mod is a change you saved. Morse brings ${m ? `“${esc(m.title)}”` : "it"} back every time you open ${esc(where())}. ${k("mods") ? `${k("mods")} opens` : "Mods opens"} the Mods panel, to turn it off or share it.</p>
+        <h4 class="eyebrow">Now in your bar</h4>
+        <ul>${next.map(([t, d]) => `<li><b>${esc(t)}</b><span>${d}</span></li>`).join("")}</ul>
+        <div class="ob-win-row">${m ? `<button type="button" class="btn primary" data-win="share">Share it</button>` : ""}<button type="button" class="btn" data-win="done">Done</button><span><span class="caps"><kbd>F1</kbd></span> for help</span></div>
+      </div>`;
+    winEl.hidden = false;
+    clearTimeout(celebrate.t);
+    celebrate.t = setTimeout(closeWin, 45000);
+  }
+  function closeWin() { clearTimeout(celebrate.t); winEl.hidden = true; }
+  winEl.addEventListener("click", e => {
+    const a = e.target.closest("[data-win]")?.dataset.win;
+    if (!a) return;
+    closeWin();
+    if (a === "share" && winMod) showShare(S.mods.find(x => x.id === winMod.id) || winMod);
+  });
+  listen("keydown", e => { if (e.isTrusted && e.key === "Escape" && !winEl.hidden && !S.open && modal.hidden) { e.stopPropagation(); closeWin(); } }, true);
+  new MutationObserver(() => { if (!bar.hidden && !winEl.hidden) closeWin(); }).observe(bar, { attributes: true, attributeFilter: ["hidden"] });
   outgoing.push(m => {
     if (!st) return;
     // Only a change the model made and you saved counts: edit-tool sessions
@@ -191,3 +250,6 @@ const Onboarding = (() => {
   return { act, emptyMods, state: () => st, status: () => status };
 })();
 function emptyModsHtml() { return Onboarding.emptyMods(); } // 70-panel.js hook
+// Asking for the Edit tools (their shortcut) shows them even before the first
+// saved change (progressive reveal, above). 45-godmode.js calls this.
+function revealEditTools() { hostEl.setAttribute("data-tools", ""); } // first-run hook

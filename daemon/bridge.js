@@ -4,7 +4,8 @@
 //
 //   GET  /v1/health    status (no auth, never includes keys)
 //   POST /v1/pair      { code } -> { token }   one-time code printed by `morse serve` / `morse pair`
-//   POST /v1/complete  { messages, model? }    Bearer token -> NDJSON {type: token|done|error}
+//   POST /v1/complete  { messages, model? }    Bearer token -> NDJSON {type: token|stage|done|error}
+//   POST /v1/warm      { model? }               Bearer token: get the model ready (the bar opened)
 //   GET  /v1/voice, POST /v1/transcribe        Bearer token, see daemon/voice.js
 //
 // The extension runs core/engine.js itself (it has to execute mod JS in the
@@ -23,10 +24,15 @@ import { readFileSync } from "node:fs";
 import { loadConfig, updateConfig } from "./store.js";
 import { settingsFromConfig, settingsLabel } from "./models.js";
 import { detectHarnesses, validModel, TIMEOUT_MS } from "./harness.js";
-import { streamChat, abortError } from "../core/providers.js";
+import { streamChat, abortError, prewarm, HELPER_PORT } from "../core/providers.js";
 import { handleVoice } from "./voice.js";
 
 export const VERSION = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
+
+// The helper's port: 7457, or MORSE_HELPER_PORT (tests run several helpers at
+// once, and point their extension at theirs with chrome.storage.local
+// "morse.helperPort", core/providers.js HELPER_PORT_KEY).
+export const helperPort = () => Number(process.env.MORSE_HELPER_PORT) || HELPER_PORT;
 export const PAIR_TTL_MS = 10 * 60_000;
 const MAX_ATTEMPTS = 5, MAX_TOKENS = 20, MAX_BODY = 1 << 20;
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -42,9 +48,15 @@ export function newPairingCode() {
   return code;
 }
 
+// A pairing code: six characters from CODE_ALPHABET (no 0/O, 1/I).
+export const validPairingCode = c => typeof c === "string" && new RegExp(`^[${CODE_ALPHABET}]{6}$`).test(c);
+
 // Creates a fresh pairing code (replacing any pending one) and stores it.
-export async function startPairing(ttl = PAIR_TTL_MS) {
-  const code = newPairingCode();
+// `given`: a code the welcome page made and the user carried over in
+// `morse setup --pair <code>` (first run), instead of a new one.
+export async function startPairing(ttl = PAIR_TTL_MS, given = "") {
+  if (given && !validPairingCode(given)) throw new Error("That pairing code doesn't look right. Copy the whole command from Morse's welcome page again.");
+  const code = given || newPairingCode();
   await updateConfig(cfg => { cfg.bridge = { ...cfg.bridge, pairing: { code, expires: Date.now() + ttl, attempts: 0 } }; });
   return { code, expires: Date.now() + ttl };
 }
@@ -122,6 +134,7 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
         return send(200, {
           ok: true, version: VERSION, provider: s.provider, model: s.model, label: settingsLabel(s),
           harnesses: { claude: harnesses().claude.found, codex: harnesses().codex.found }, paired: !!rec && (!origin || !rec.origin || rec.origin === origin),
+          pairing: !!cfg.bridge?.pairing && cfg.bridge.pairing.expires > Date.now(), // first run: a code is waiting (never the code itself)
         });
       }
 
@@ -144,7 +157,7 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
           result = [200, { token }];
           return cfg;
         });
-        if (result[0] === 200) log(`  ✓ paired ${origin || "a local client"}`);
+        if (result[0] === 200) log(origin ? "  ✓ Paired with Morse in Chrome. Changes you ask for there come through here." : "  ✓ Paired a local client"); // first-run hook: plain words
         return send(...result);
       }
 
@@ -155,6 +168,15 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
       if (origin && rec.origin && rec.origin !== origin) return send(403, { error: "This pairing belongs to a different copy of Morse. Pair this browser again." });
 
       if (await handleVoice(req, res)) return;
+
+      // speed: the bar opened, so a request is likely soon (core/providers.js prewarm).
+      if (req.method === "POST" && url.pathname === "/v1/warm") {
+        const body = await readJson(req).catch(() => ({}));
+        const model = typeof body?.model === "string" && validModel(body.model) ? body.model : undefined;
+        const settings = settingsFromConfig(cfg, model ? { model } : {}, { harnesses: harnesses() });
+        if (settings.provider !== "none") prewarm(settings);
+        return send(200, { ok: true });
+      }
 
       if (req.method === "POST" && url.pathname === "/v1/complete") {
         const body = await readJson(req);
@@ -173,7 +195,7 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
         const t0 = Date.now();
         active.add(ac);
         try {
-          const text = await streamChat({ ...settings, timeoutMs }, body.messages, { signal: ac.signal, onToken: t => write({ type: "token", text: t }) });
+          const text = await streamChat({ ...settings, timeoutMs }, body.messages, { signal: ac.signal, onToken: t => write({ type: "token", text: t }), onStage: st => write({ type: "stage", stage: st.stage }) });
           write({ type: "done", text });
           log(`  ✓ ${settingsLabel(settings)} · ${text.length} chars · ${Date.now() - t0}ms`);
         } catch (e) {

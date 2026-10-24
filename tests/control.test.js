@@ -1,10 +1,10 @@
 // Pause state, safe start, export/import and the shared control host
 // (core/control.js, core/backup.js, core/control-host.js), and the desktop
 // CLI commands in daemon/control.js against a scratch MORSE_HOME.
-import "./helpers/home.js";
+import { tempDir } from "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
@@ -230,7 +230,7 @@ test("control host: safe start over requests, install and export", async () => {
 });
 
 test("CLI: morse pause / resume, export --all, import", async () => {
-  const home = await mkdtemp(path.join(os.tmpdir(), "morse-ctl-"));
+  const home = tempDir("morse-ctl-");
   process.env.MORSE_HOME = home;
   // store.js reads MORSE_HOME when first imported; nothing else in this file imports it.
   const ctl = await import("../daemon/control.js");

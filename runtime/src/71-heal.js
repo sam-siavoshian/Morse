@@ -36,34 +36,49 @@ const Heal = (() => {
   // ---- counting
   function countOf(sel) {
     let list;
-    try { list = document.querySelectorAll(sel); } catch { return null; }
-    let n = 0, rest = 0;
+    try { list = sel.includes(">>>") ? deepAll(sel) : document.querySelectorAll(sel); } catch { return null; } // "host >>> inside": shadow roots, frames (20-context.js)
+    let n = 0, rest = 0, top = Infinity;
     for (const el of list) {
       if (el.closest(NOT_OURS)) continue;
       n++;
       if (!el.closest(TRANSIENT)) rest++;
+      if (n <= 5) { // how far down the page: a hidden match counts as on the first screen
+        const r = el.getBoundingClientRect();
+        top = r.width || r.height ? Math.min(top, r.top + scrollY) : 0;
+      }
       if (n >= 9999) break;
     }
-    return { n, rest };
+    return { n, rest, top };
   }
   function measure(sels) {
-    const counts = {}, transient = [];
+    const counts = {}, transient = [], tops = {};
     for (const s of sels) {
       const c = countOf(s);
       counts[s] = c ? c.n : 0;
+      if (c && c.n) tops[s] = c.top;
       if (c && c.n && !c.rest) transient.push(s);
     }
-    return { counts, transient };
+    return { counts, transient, tops };
   }
   const pageSize = () => document.body?.getElementsByTagName("*").length || 0;
-  const here = () => ({ url: location.href, size: pageSize() });
+  // A password field on show: a sign-in page (signed out, or the session ended).
+  const signin = () => [...document.querySelectorAll("input[type=password]")].some(el => !el.closest(NOT_OURS) && el.getClientRects().length > 0);
+  const here = () => ({ url: location.href, size: pageSize(), fold: innerHeight, signin: signin() });
+  // Lazy loading: what sits further down may not be there until someone scrolls.
+  let scrolled = false;
+  listen("scroll", () => { scrolled = true; }, { capture: true, passive: true });
 
   function fingerprintNow(m) {
-    const { counts, transient } = measure(selectorsIn(m));
-    return makeFingerprint(m, counts, { ...here(), transient });
+    const { counts, transient, tops } = measure(selectorsIn(m));
+    return makeFingerprint(m, counts, { ...here(), transient, tops });
   }
+  // Saves a fingerprint onto the mod as it is now, never onto a copy read
+  // before an await: the person may have turned it off, changed or deleted it
+  // since, and that must not be undone. Only for the code it was taken for.
   async function saveFp(m, fp) {
-    const next = { ...m, fp };
+    const cur = S.mods.find(x => x.id === m.id);
+    if (!cur || (fp && fp.code !== modCodeHash(cur))) return cur || null;
+    const next = { ...cur, fp };
     const saved = (await call("mods.save", { mod: next }).catch(() => null)) || next;
     S.mods = S.mods.map(x => (x.id === saved.id ? saved : x));
     return saved;
@@ -93,7 +108,7 @@ const Heal = (() => {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   // ---- the check
-  const checkable = m => m.enabled && !modHeld(m) && !!(m.css.trim() || m.js.trim());
+  const checkable = m => m.enabled && !modHeld(m) && !!(m.css.trim() || m.js.trim()) && m.kind !== "style"; // your-style hook: never flagged
 
   // One pass over the mods: learn fingerprints that are missing, and return
   // the ones that look broken now ({ id -> { mod, lost } }) and the ones that
@@ -101,8 +116,11 @@ const Heal = (() => {
   async function pass(only = null, learn = true) {
     const out = new Map();
     out.fine = new Set();
-    const page = { path: pagePathShape(location.href), size: pageSize() };
+    const href = location.href;
+    const page = { path: pagePathShape(href), size: pageSize(), signin: signin(), scrolled };
+    const moved = () => location.href !== href && (out.clear(), out.fine.clear(), true); // a single-page app moved on: this pass can't tell
     for (const m of S.mods.filter(checkable)) {
+      if (moved()) break;
       if (only && !only.has(m.id)) continue;
       if (!fingerprintCurrent(m)) {
         if (!learn) continue;
@@ -116,6 +134,7 @@ const Heal = (() => {
         const stats = await call("stats", { modId: m.id }).catch(() => null); // core/kit.js __stats
         seen = (stats?.watches || []).filter(w => w.total > 0).flatMap(w => String(w.selector).split(",").map(s => s.trim()));
         errors = stats?.errors || 0;
+        if (moved()) break;
       }
       const a = assessFingerprint(m.fp, { ...page, counts, seen, errors });
       if (a.verdict === "broken") out.set(m.id, { mod: m, lost: a.lost });
@@ -125,18 +144,21 @@ const Heal = (() => {
   }
 
   async function run() {
+    scrolled = false;
     await settle();
     if (!live()) return;
-    const href = location.href;
+    const href = location.href, was = [...st.keys()].join();
     let broken = await pass();
     if (broken.size) {
       await sleep(CONFIRM);
       await settle();
       if (!live() || location.href !== href) return;
       broken = await pass(new Set(broken.keys()), false);
+      if (location.href !== href) return;
     }
     for (const [id, { mod, lost }] of broken) mark(mod, lost);
-    paint();
+    // redraw the panel only when something changed: a redraw drops keyboard focus
+    if ([...st.keys()].join() !== was) paint(); else dot();
     if (PREFS.autoFix) for (const [id] of broken) await autoFix(id);
   }
   // Asked again while a check runs (a single-page app moved on): one more after it.
@@ -202,7 +224,9 @@ const Heal = (() => {
     const was = st.get(mod.id);
     st.delete(mod.id);
     if (was) paint();
+    const href = location.href;
     idle(async () => {
+      if (location.href !== href) return; // moved on to another page: a later visit here learns it
       const m = S.mods.find(x => x.id === mod.id) || mod;
       const fp = fingerprintNow(m);
       if (fp) await saveFp(m, fp);
@@ -210,32 +234,47 @@ const Heal = (() => {
     if (was && galleryIdOf(mod) && mod.refined) setTimeout(() => offerShare(mod), 0);
   }
 
-  // ---- auto-fix (Settings): in the background, once per version per tab
+  // ---- auto-fix (Settings): in the background, at most once per version of
+  // a mod, and never for a version that is itself an automatic fix: a site
+  // that flips between two designs (or a page that only looks broken) would
+  // otherwise get a new fix on every visit, each one sending the page to the
+  // model and pushing the person's own versions out of History. The try is
+  // written into the mod before the model is asked, so a reload, another tab
+  // or a page that clears its storage can't start it again; Undo marks it too.
   async function autoFix(id) {
     const m = S.mods.find(x => x.id === id);
     const s = st.get(id);
     if (!m || !s || !checkable(m) || (S.draft?.id === id && S.open)) return;
-    const key = `morse:heal:${id}:${s.code}`;
-    try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, "1"); } catch {}
+    if (m.refined === AUTO_NOTE || m.fp?.tried || modCodeHash(m) !== s.code) return; // the note stays: Fix it is one click
+    await saveFp(m, { ...m.fp, tried: true });
     const ctx = context();
     delete ctx.target; // what the bar points at has nothing to do with this mod
     let res;
     try { res = await call("generate", { genId: id, request: m.prompt, context: ctx, base: { prompt: m.prompt, css: m.css, js: m.js, error: s.error } }); }
     catch (e) { res = { ok: false, error: e.message }; }
-    const next = res?.ok && (res.css?.trim() || res.js?.trim()) ? reviseMod(m, { prompt: AUTO_NOTE, css: res.css || "", js: res.js || "" }) : null;
+    // While the model worked, the person may have turned the mod off, changed
+    // or deleted it: then the fix is dropped and what they did stands.
+    const cur = S.mods.find(x => x.id === id);
+    const still = !!cur && checkable(cur) && modCodeHash(cur) === s.code && !(S.draft?.id === id && S.open);
+    const next = still && res?.ok && (res.css?.trim() || res.js?.trim()) ? reviseMod(cur, { prompt: AUTO_NOTE, css: res.css || "", js: res.js || "" }) : null;
     if (next) setCss(id, next.css);
     const fp = next && fingerprintNow(next);
-    if (!fp) { await showVersion(id, m); return; } // no fix, or one that finds nothing either: leave the note
-    const saved = await saveFp(next, fp);
+    if (!fp) { // no fix, or one that finds nothing either: leave the note (or what the person chose)
+      if (cur?.enabled && !modHeld(cur)) await showVersion(id, cur);
+      else await removeMod(id).catch(() => {});
+      return;
+    }
+    const saved = (await call("mods.save", { mod: { ...next, fp } }).catch(() => null)) || { ...next, fp };
+    S.mods = S.mods.map(x => (x.id === saved.id ? saved : x));
     st.delete(id);
     paint();
     const undo = ["Undo", () => undoFix(saved, s)];
     controlToast(`Fixed “${saved.title}” after this site changed.`, galleryIdOf(saved) ? [undo, ["Share the fix…", () => shareFix(saved)]] : [undo]);
   }
   async function undoFix(m, s) {
-    const back = stepBack(m);
+    const back = stepBack(S.mods.find(x => x.id === m.id) || m);
     if (!back) return;
-    back.fp = s.fp; // what it changed before the site did
+    back.fp = { ...s.fp, tried: true }; // what it changed before the site did; and no second automatic fix
     const saved = (await call("mods.save", { mod: back }).catch(() => null)) || back;
     S.mods = S.mods.map(x => (x.id === saved.id ? saved : x));
     await showVersion(saved.id, saved);
@@ -251,7 +290,9 @@ const Heal = (() => {
   }
   async function shareFix(m) {
     const cur = S.mods.find(x => x.id === m.id) || m;
-    const r = fixIssue(cur, { site: S.appName || location.host }, submitIssue);
+    // Where it runs, as the gallery mod says (its hosts, or the app), never
+    // this page's own address (a company's subdomain, a private host).
+    const r = fixIssue(cur, { site: S.appName || "" }, submitIssue);
     let file = null;
     if (r.attached) file = await call("share", { mod: forGallery(cur), kind: "json" }).catch(() => null);
     try {

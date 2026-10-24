@@ -5,25 +5,28 @@ import { execFile } from "node:child_process";
 import { resolveApp } from "./apps.js";
 import { inspectFuses, formatFuses } from "./fuses.js";
 import { appsCommand, launchCommand, attachCommand, statusCommand, stopCommand } from "./desktop.js";
-import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH } from "./store.js";
-import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask } from "./models.js";
+import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH, HOME } from "./store.js";
+import { commandFor, platformChecks, formatChecks } from "./platform.js";
+import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask, migrateLegacy } from "./models.js";
 import { detectHarnesses, validModel } from "./harness.js";
-import { createBridge, startPairing, VERSION } from "./bridge.js";
-import { streamChat, HELPER_PORT as DEFAULT_HELPER_PORT } from "../core/providers.js";
-// MORSE_HELPER_PORT moves `morse serve` and its health check off 7457 (tests run
-// several helpers at once); the extension always talks to 7457.
-const HELPER_PORT = Number(process.env.MORSE_HELPER_PORT) || DEFAULT_HELPER_PORT;
+import { createBridge, startPairing, VERSION, helperPort } from "./bridge.js";
+import { streamChat } from "../core/providers.js";
+// MORSE_HELPER_PORT moves `morse serve`, `morse setup --pair` and the health
+// check off 7457 (tests run several helpers at once; their extension follows
+// with chrome.storage.local "morse.helperPort", docs/dev/testing.md).
+const HELPER_PORT = helperPort();
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
-import { plainError } from "../core/onboarding.js";
+import { plainError, setHelperPort } from "../core/onboarding.js";
+setHelperPort(HELPER_PORT); // "can't reach 127.0.0.1:<port>" reads as "the helper isn't running"
 import { pauseCli, resumeCli, exportAllCli, importCli, codeCli } from "./control.js"; // user control
 import { configuredHotkeys } from "./store.js";
+import { paint } from "./colors.js";
 
 // The hotkeys as set in ~/.morse/settings.json (platform defaults otherwise).
 const KEYS = await configuredHotkeys().catch(() => ({}));
 const openKey = KEYS.open || "the Open Morse shortcut";
 
-const W = s => `\x1b[97m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`;
-const WARN = s => `\x1b[33m${s}\x1b[0m`, ERR = s => `\x1b[31m${s}\x1b[0m`;
+const { w: W, d: D, b: B, y: WARN, r: ERR } = paint; // plain text when piped, NO_COLOR (colors.js)
 const LOGO = `${W("▪▪▫")}\n${W("▫▪▪")} ${B("morse")} ${D("· change any app in your own words")}\n${W("▪▫▪")}`;
 
 function flags(argv) {
@@ -54,6 +57,7 @@ async function configure(f) {
   if (f.provider && f.provider !== "auto") assertProvider(f.provider);
   if (typeof f.model === "string" && !validModel(f.model)) throw new Error(`"${f.model}" isn't a model name Morse can use. Check the spelling.`);
   await updateConfig(cfg => {
+    migrateLegacy(cfg); // first-run hook: keep what an older morse setup chose
     if (f.provider === "auto") delete cfg.provider;
     else if (typeof f.provider === "string") cfg.provider = f.provider;
     for (const [flag, k] of [["anthropic-key", "anthropic"], ["openai-key", "openai"]]) {
@@ -87,8 +91,10 @@ async function showModel() {
 }
 
 function version(bin) {
-  return new Promise(r => execFile(bin, ["--version"], { timeout: 8000, windowsHide: true, shell: process.platform === "win32" && /\.(cmd|bat)$/i.test(bin) },
-    (e, out) => r(e ? "" : String(out).trim().split("\n")[0])));
+  // claude.cmd in "C:\Program Files\nodejs" has to be quoted for cmd.exe (platform.js).
+  const c = commandFor(bin, ["--version"]);
+  return new Promise(r => execFile(c.file, c.args, { timeout: 8000, windowsHide: true, shell: c.shell },
+    (e, out) => r(e ? "" : String(out).trim().split(/\r?\n/)[0])));
 }
 
 async function helperHealth() {
@@ -111,6 +117,7 @@ ${B("Desktop apps")} (Spotify, Slack, Discord, VS Code and other apps built on E
   morse fuses <app|path>    check whether an app lets Morse connect to it
 
 ${B("Websites")} (the Chrome extension uses the Morse helper to reach your model)
+  morse extension           show the Chrome extension folder and how to add it
   morse serve               start the Morse helper and show a pairing code
   morse pair                show a new pairing code for the running helper
   morse unpair              sign out every paired browser
@@ -132,17 +139,27 @@ ${B("Mods")}
   morse code <id>           what a mod does, in plain words, and its code
   morse export --all        back up every mod to one file  [--out <file>]
 
+${B("Packs")} (several mods shared and installed together)
+  morse pack make <ids…> --name <name>   put mods in one pack file and link  [--note <text>] [--out <file>]
+  morse pack install <file|link|address> say what each mod does and ask first  [--yes] [--replace]
+      --subscribe           check the address for updates, at most once a day
+  morse pack list           your packs, and the ones you get updates from  [--check]
+  morse pack unsubscribe <name>  stop getting updates (the mods stay)
+
 ${B("Pause")}
   morse pause [site|app]    stop every mod everywhere, or on one site or app (they stay saved)
   morse resume [site|app]   start them again  [--all also resumes every single site]
 
 In a connected app, press ${B(openKey)} to open Morse.${KEYS.mods ? ` Press ${B(KEYS.mods)} to see your mods.` : ""}${KEYS.off ? `
 Press ${B(KEYS.off)} to turn all your mods off (press it again to turn them back on).` : ""}
-For websites: run npm run build, load dist/extension in Chrome, then run ${B("morse serve")} and type its code into the Morse popup.`;
+For websites: run ${B("morse extension")} to find the Chrome extension, then ${B("morse serve")} and type its code into the Morse popup.
+morse --version shows the version.`;
 
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const f = flags(rest);
+  if (["--version", "-v", "version"].includes(cmd)) return console.log(VERSION);
+  if (["--help", "-h", "help"].includes(cmd)) return console.log(HELP);
   if (await (await import("./setup.js")).maybeRun(cmd, rest)) return; // onboarding hook: morse setup, and getting started while nothing is set up
   switch (cmd) {
     case "apps":
@@ -192,11 +209,20 @@ async function main() {
     case "pause": await pauseCli(f); break;
     case "resume": await resumeCli(f); break;
     case "code": await codeCli(f); break;
+    case "pack": await (await import("./packs.js")).packCli(f); break; // packs hook: morse pack make | install | list | unsubscribe
     case "model":
     case "config": {
       if (f["api-key"] !== undefined) throw new Error("--api-key is gone. Use --anthropic-key or --openai-key instead.");
       if (MODEL_FLAGS.some(k => f[k] !== undefined)) await configure(f);
       await showModel();
+      break;
+    }
+    case "extension": {
+      const { EXTENSION_DIR } = await import("./setup.js");
+      const { existsSync } = await import("node:fs");
+      if (!existsSync(EXTENSION_DIR)) throw new Error(`The extension isn't built yet. Run npm run build in ${EXTENSION_DIR.replace(/[\\/]dist[\\/]extension$/, "")} first.`);
+      console.log(EXTENSION_DIR);
+      console.log(D(`In Chrome, open chrome://extensions, turn on Developer mode, click Load unpacked and choose this folder.\nThen run morse serve and type its code into Morse.`));
       break;
     }
     case "serve": {
@@ -206,7 +232,7 @@ async function main() {
         throw new Error(e.code === "EADDRINUSE" ? `Port ${port} is already in use, probably by a Morse helper that is already running. Run morse pair to get a new code for it.` : e.message);
       });
       const s = await currentSettings();
-      const { code } = await startPairing();
+      const { code } = await startPairing(undefined, typeof f.pair === "string" ? f.pair.trim().toUpperCase() : ""); // first-run hook: --pair <code from the welcome page>
       console.log(LOGO + "\n");
       console.log(`  helper  http://127.0.0.1:${port}  ${D("v" + VERSION)}`);
       console.log(`  model   ${s.provider === "none" ? `${WARN("none")} ${D("(run morse setup to choose one)")}` : settingsLabel(s)}`);
@@ -237,6 +263,8 @@ async function main() {
       console.log(LOGO + "\n");
       row("node", process.version);
       row("config", CONFIG_PATH);
+      // This computer: system, the Morse folder's permissions, shortcut, colors, platform specifics.
+      console.log(formatChecks(await platformChecks({ home: HOME, shortcut: KEYS.open }), { paint }));
       for (const name of ["claude", "codex"]) {
         const p = h[name].path;
         row(name, p ? `${p} ${D(await version(p))}` : D("not found"));
@@ -271,6 +299,7 @@ async function main() {
 
 main().catch(e => {
   const plain = plainError(e);
-  console.error(`${ERR("✗")} ${plain}${plain !== e.message && e.message ? D(`  (${e.message})`) : ""}`);
+  const details = e?.details || (plain !== e?.message && e?.message) || "";
+  console.error(`${ERR("✗")} ${plain}${details ? D(`  (${details})`) : ""}`);
   process.exit(1);
 });

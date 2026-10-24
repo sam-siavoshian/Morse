@@ -2,10 +2,10 @@ import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
-import { parseModResponse, completeCssPrefix } from "../core/parse.js";
+import { parseModResponse, completeCssPrefix, liveCss } from "../core/parse.js";
 import { createMod, encodeShare, decodeShare, toUserscript, modMatches } from "../core/mod.js";
 import { streamChat, registerProvider } from "../core/providers.js";
-import { runMorse, selectorsIn } from "../core/engine.js";
+import { runMorse, selectorsIn, deadHooks } from "../core/engine.js";
 import { buildMessages } from "../core/prompt.js";
 import { readFuseWire, fuseVerdict } from "../daemon/fuses.js";
 
@@ -27,6 +27,23 @@ test("css prefix ignores braces in strings and comments, keeps nested at-rules w
   assert.equal(completeCssPrefix('a::after{content:"}"} /* } */ b{x:1'), 'a::after{content:"}"}');
   assert.equal(completeCssPrefix("@media (x){a{b:c}}d{"), "@media (x){a{b:c}}");
   assert.equal(completeCssPrefix("@media (x){a{b:c}"), "");
+});
+
+test("live css: each finished property goes on the page before its rule ends", () => {
+  assert.equal(liveCss("a{color:red} b{margin:0;padding:4p"), "a{color:red} b{margin:0;}");
+  assert.equal(liveCss("a{color:red} b{marg"), "a{color:red}");
+  assert.equal(liveCss("a{color:red;"), "a{color:red;}");
+  // a ";" inside url(...) or a string isn't the end of a property
+  assert.equal(liveCss("a{background:url(data:image/png;base64,AA"), "");
+  assert.equal(liveCss('a{content:"x;y'), "");
+  assert.equal(liveCss('a{content:"x;y";b:1'), 'a{content:"x;y";}');
+  // inside @media: finished rules, then finished properties, braces closed
+  assert.equal(liveCss("@media (x){a{b:c}d{e:f;g"), "@media (x){a{b:c}d{e:f;}}");
+  assert.equal(liveCss("@media (x){a{b:c}"), "@media (x){a{b:c}}");
+  assert.equal(liveCss("@media (x){a{b:c}}"), "@media (x){a{b:c}}");
+  // a half-written selector never goes on
+  assert.equal(liveCss("a{b:c}\n.card:not(.x"), "a{b:c}");
+  assert.equal(liveCss(""), "");
 });
 
 test("share links round-trip and drop local state", async () => {
@@ -104,6 +121,34 @@ test("engine streams css, runs js, and repairs a failing first attempt", async (
   assert.ok(events.some(e => e.type === "css" && e.css.includes(".morse-sleep")));
 });
 
+test("CSS rules that reach into a shadow root or frame move to the JS", () => {
+  const d = parseModResponse("TITLE: x\n```css\n.a { color: red }\n#pv >>> .cookie, #pv >>> .x { display: none !important; }\n@media (max-width: 9px) { .b { color: blue } }\n```\n```js\nmorse.toast('hi');\n```");
+  assert.equal(d.css, ".a { color: red }\n@media (max-width: 9px) { .b { color: blue } }\n");
+  assert.equal(d.js, `morse.css("#pv >>> .cookie, #pv >>> .x { display: none !important; }");\nmorse.toast('hi');\n`);
+  const plain = parseModResponse("TITLE: x\n```css\n.a{}\n```");
+  assert.equal(plain.css, ".a{}\n");
+  assert.equal(plain.js, "");
+});
+
+test("a class or CSS variable the JS sets that no CSS uses gets a repair round", async () => {
+  const replies = [
+    "TITLE: Hi\n```css\n.card .pri { color: orange }\n```\n```js\nmorse.watch('.card', c => c.classList.toggle('is-hot', /High/.test(c.textContent)));\n```",
+    "TITLE: Hi\n```css\n.card.is-hot { background: orange }\n```\n```js\nmorse.watch('.card', c => c.classList.toggle('is-hot', /High/.test(c.textContent)));\n```",
+  ];
+  const prompts = [];
+  registerProvider("script", async (s, messages, { onToken }) => { prompts.push(messages.at(-1).content); const r = replies.shift(); onToken(r); return r; });
+  const res = await runMorse({ settings: { provider: "script" }, request: "high ones orange", context: { url: "x", title: "x" }, emit: () => {}, exec: async () => ({ ok: true }) });
+  assert.equal(res.attempts, 2);
+  assert.match(prompts[1], /adds the class "is-hot" and no CSS uses it/);
+  // The page's own classes, and classes the JS reads back, are fine.
+  assert.equal(deadHooks({ css: "", js: "el.classList.add('open')" }, { target: { html: '<div class="menu open">' } }), null);
+  assert.equal(deadHooks({ css: "", js: "el.classList.toggle('x1'); if (el.classList.contains('x1')) go();" }, {}), null);
+  assert.match(deadHooks({ css: ".bar { width: 10px }", js: "document.body.style.setProperty('--p', '50%')" }, {}), /CSS variable --p/);
+  assert.equal(deadHooks({ css: ".bar { width: var(--p) }", js: "document.body.style.setProperty('--p', '50%')" }, {}), null);
+  assert.match(deadHooks({ css: "/* none */", js: "morse.toast(`Turned ${n} off`);" }, {}), /only showed a notice/);
+  assert.equal(deadHooks({ css: "", js: "morse.toast('hi'); morse.watch('a', a => a.remove());" }, {}), null);
+});
+
 test("finds the selectors a draft relies on", () => {
   const sels = selectorsIn({
     css: "/* x */ @media (max-width: 600px) { .a img, .b:hover::after { color: red } }\n@keyframes k { from { opacity: 0 } 50% { opacity: 1 } }\n:root { --x: 1 }\n[data-testid=\"grid\"] > .cv { width: 2px }",
@@ -158,7 +203,7 @@ test("reads an Electron fuse wire", () => {
   assert.equal(w.fuses.EnableNodeCliInspectArguments, "disabled");
   assert.equal(w.fuses.EnableEmbeddedAsarIntegrityValidation, "enabled");
   assert.equal(w.fuses.LoadBrowserProcessSpecificV8Snapshot, "removed");
-  assert.equal(fuseVerdict({ electron: true, ...w }).length, 3);
+  assert.equal(fuseVerdict({ electron: true, ...w }).length, 4, "connect, --inspect off, ASAR integrity, RunAsNode");
   assert.equal(readFuseWire(Buffer.from("no fuses here")), null);
 });
 

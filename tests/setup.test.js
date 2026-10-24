@@ -1,7 +1,7 @@
 // First run without a browser: `morse setup` detection and choices, the
 // getting started a bare `morse` prints, and the shared onboarding rules
 // (state, unsupported pages, errors in plain words).
-import "./helpers/home.js";
+import { tempDir } from "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PassThrough } from "node:stream";
@@ -9,8 +9,9 @@ import { spawnSync } from "node:child_process";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { detectBackends, recommend, configFor, isSetUp, runSetup, whichBin, gettingStarted } from "../daemon/setup.js";
-import { pageSupport, explainError, plainError, mergeOnboarding, normalizeOnboarding, modelMissing } from "../core/onboarding.js";
+import { detectBackends, recommend, configFor, applyChoice, isSetUp, runSetup, whichBin, gettingStarted } from "../daemon/setup.js";
+import { settingsFromConfig, migrateLegacy } from "../daemon/models.js";
+import { pageSupport, explainError, plainError, mergeOnboarding, normalizeOnboarding, modelMissing, setHelperPort } from "../core/onboarding.js";
 
 const plain = s => s.replace(/\x1b\[\d+m/g, "");
 const CLI = new URL("../daemon/cli.js", import.meta.url).pathname;
@@ -45,7 +46,7 @@ test("nothing installed: nothing to recommend", async () => {
 });
 
 test("whichBin finds executables on PATH and skips plain files", async () => {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "morse-path-"));
+  const dir = tempDir("morse-path-");
   await fs.writeFile(path.join(dir, "codex"), "#!/bin/sh\necho codex-cli 0.46.0\n", { mode: 0o755 });
   await fs.writeFile(path.join(dir, "claude"), "not executable", { mode: 0o644 });
   try {
@@ -57,16 +58,30 @@ test("whichBin finds executables on PATH and skips plain files", async () => {
   } finally { await fs.rm(dir, { recursive: true, force: true }); }
 });
 
-test("config for each choice", () => {
+test("config for each choice, in the shape the model settings read", () => {
   assert.deepEqual(configFor("claude-code"), { provider: "claude-code" });
   assert.deepEqual(configFor("codex"), { provider: "codex" });
-  assert.deepEqual(configFor("api-key", { key: "sk-ant-abc" }), { provider: "anthropic", apiKey: "sk-ant-abc" });
-  assert.deepEqual(configFor("api-key", { key: "sk-proj-abc" }), { provider: "openai", baseUrl: "https://api.openai.com", apiKey: "sk-proj-abc" });
-  assert.deepEqual(configFor("api-key", { keyEnv: "ANTHROPIC_API_KEY", vendor: "anthropic" }), { provider: "anthropic", apiKeyEnv: "ANTHROPIC_API_KEY" });
+  assert.deepEqual(configFor("api-key", { key: "sk-ant-abc" }), { provider: "anthropic", keys: { anthropic: "sk-ant-abc" } });
+  assert.deepEqual(configFor("api-key", { key: "sk-proj-abc" }), { provider: "openai", keys: { openai: "sk-proj-abc" } });
+  assert.deepEqual(configFor("api-key", { vendor: "anthropic" }), { provider: "anthropic" }, "a key from the environment is not written");
   assert.throws(() => configFor("gpt"), /doesn't know “gpt”/);
   assert.equal(isSetUp({}), false);
   assert.equal(isSetUp({ model: { provider: "auto" } }), false);
   assert.equal(isSetUp({ model: { provider: "codex" } }), true);
+  assert.equal(isSetUp({ provider: "codex" }), true);
+
+  // What setup saves is what Morse then uses (it used to write a "model"
+  // record nothing read: a pasted key was lost, and Codex lost to Claude Code).
+  const none = { claude: { found: true }, codex: { found: true } };
+  const read = cfg => settingsFromConfig(cfg, {}, { env: {}, harnesses: none });
+  assert.equal(read(applyChoice({}, configFor("codex"))).provider, "codex");
+  const keyed = read(applyChoice({ keys: { openai: "sk-o" } }, configFor("api-key", { key: "sk-ant-abc" })));
+  assert.deepEqual([keyed.provider, keyed.apiKey], ["anthropic", "sk-ant-abc"]);
+  // An older setup's record still counts, and survives `morse config`.
+  assert.equal(read({ model: { provider: "codex" } }).provider, "codex");
+  assert.deepEqual([read({ model: { provider: "anthropic", apiKey: "sk-ant-old" } }).apiKey], ["sk-ant-old"]);
+  assert.deepEqual(migrateLegacy({ model: { provider: "openai", apiKey: "sk-x" } }), { model: { provider: "openai", apiKey: "sk-x" }, provider: "openai", keys: { openai: "sk-x" } });
+  assert.equal(applyChoice({ model: { provider: "codex" }, keep: 1 }, configFor("claude-code")).model, undefined, "the old record is dropped");
 });
 
 // Runs `morse setup` against a fake machine with piped answers.
@@ -85,7 +100,8 @@ async function setup(answers, { args = [], ...m } = {}) {
 test("setup: Enter takes the recommendation and saves it", async () => {
   const { res, saved, out } = await setup([""], { bins: { claude: "2.1.3" } });
   assert.equal(res.saved, true);
-  assert.deepEqual(saved.model, { provider: "claude-code" });
+  assert.equal(saved.provider, "claude-code", "written where daemon/models.js reads it");
+  assert.equal(saved.model, undefined);
   assert.equal(saved.keep, 1, "keeps the rest of config.json");
   assert.equal(saved.setup.backend, "claude-code");
   assert.match(out, /✓ Claude Code {2}2\.1\.3/);
@@ -96,9 +112,12 @@ test("setup: Enter takes the recommendation and saves it", async () => {
 
 test("setup: an API key is pasted, or taken from the environment", async () => {
   const pasted = await setup(["3", "sk-ant-secret"]);
-  assert.deepEqual(pasted.saved.model, { provider: "anthropic", apiKey: "sk-ant-secret" });
+  assert.equal(pasted.saved.provider, "anthropic");
+  assert.deepEqual(pasted.saved.keys, { anthropic: "sk-ant-secret" });
   const fromEnv = await setup(["3"], { env: { OPENAI_API_KEY: "sk-env" } });
-  assert.deepEqual(fromEnv.saved.model, { provider: "openai", baseUrl: "https://api.openai.com", apiKeyEnv: "OPENAI_API_KEY" });
+  assert.equal(fromEnv.saved.provider, "openai");
+  assert.equal(fromEnv.saved.keys, undefined);
+  assert.equal(fromEnv.saved.baseUrls, undefined);
   assert.match(fromEnv.out, /with OPENAI_API_KEY from your environment/);
   assert.ok(!JSON.stringify(fromEnv.saved).includes("sk-env"), "a key from the environment is never written to disk");
 });
@@ -115,10 +134,52 @@ test("setup: choosing something that isn't installed says how to install it and 
 
 test("setup: --use picks without questions; no answer saves nothing", async () => {
   const { saved } = await setup([], { args: ["--use", "codex"], bins: { codex: "0.46.0" } });
-  assert.equal(saved.model.provider, "codex");
+  assert.equal(saved.provider, "codex");
   const none = await setup([]);
   assert.equal(none.res.saved, false);
   assert.match(none.out, /Run morse setup --use api-key to pick without questions/);
+});
+
+test("setup checks that the model answers, and says exactly what to do when it doesn't", async () => {
+  const run = async (check, answers = [""], m = { bins: { claude: "2.1.3" } }) => {
+    const input = new PassThrough(), output = new PassThrough();
+    let text = "";
+    output.on("data", d => (text += d));
+    const p = runSetup([], { input, output, deps: machine(m), load: async () => ({}), save: async () => {}, check, platform: "mac" });
+    for (const a of answers) input.write(a + "\n");
+    input.end();
+    return { res: await p, out: plain(text) };
+  };
+  const ok = await run(async () => ({ ok: true, ms: 5800 }));
+  assert.match(ok.out, /✓ Claude Code answered in 5\.8s\./);
+  const bad = await run(async () => ({ ok: false, error: "The model didn't accept the sign-in or API key. Check it in model settings." }));
+  assert.equal(bad.res.saved, true, "the choice is still saved");
+  assert.match(bad.out, /✗ Claude Code didn't answer: .*\n\s+Run claude once in a terminal and sign in, then run morse setup again\./);
+  const key = await run(async () => { throw new Error("401"); }, ["3", "sk-ant-x"], {});
+  assert.match(key.out, /Check the key at console\.anthropic\.com, then run morse setup again\./);
+});
+
+test("setup --pair: a bad code says what to do; the helper takes the welcome page's code", async () => {
+  const bad = spawnSync(process.execPath, [CLI, "setup", "--pair", "oops"], { env: { ...process.env, MORSE_HOME: os.tmpdir() }, encoding: "utf8" });
+  assert.equal(bad.status, 1);
+  assert.match(plain(bad.stderr), /That pairing code doesn't look right\. Copy the whole command from Morse's welcome page again\./);
+  // In a child process: daemon/store.js reads MORSE_HOME once, when first imported.
+  const home = tempDir("morse-pair-");
+  try {
+    const bridge = new URL("../daemon/bridge.js", import.meta.url).href;
+    const r = spawnSync(process.execPath, ["--input-type=module", "-e", `
+      const { startPairing, validPairingCode } = await import(${JSON.stringify(bridge)});
+      const bad = await startPairing(undefined, "abc").then(() => "", e => e.message);
+      const { code } = await startPairing(undefined, "K7P2QX");
+      console.log(JSON.stringify({ ok: validPairingCode("K7P2QX"), zero: validPairingCode("K7P2Q0"), bad, code }));`], { env: { ...process.env, MORSE_HOME: home }, encoding: "utf8" });
+    const out = JSON.parse(r.stdout);
+    assert.equal(out.ok, true);
+    assert.equal(out.zero, false, "no zero: it reads like O");
+    assert.match(out.bad, /doesn't look right/);
+    assert.equal(out.code, "K7P2QX");
+    const cfg = JSON.parse(await fs.readFile(path.join(home, "config.json"), "utf8"));
+    assert.equal(cfg.bridge.pairing.code, "K7P2QX");
+  } finally { await fs.rm(home, { recursive: true, force: true }); }
 });
 
 test("bare `morse` prints a three-line getting started until something is set up", async () => {
@@ -127,7 +188,7 @@ test("bare `morse` prints a three-line getting started until something is set up
   assert.match(lines[0], /run morse setup/);
   assert.match(lines[2], /Press Ctrl\+Shift\+Space/);
 
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-home-"));
+  const home = tempDir("morse-home-");
   try {
     const env = { ...process.env, MORSE_HOME: home };
     const first = spawnSync(process.execPath, [CLI], { env, encoding: "utf8" });
@@ -202,6 +263,19 @@ test("generation errors in plain words, each with something to do", () => {
   assert.equal(modelMissing({}, "demo model · no model found"), true);
   assert.equal(modelMissing({ model: { connected: true } }, "demo model"), false, "the host's answer wins over the label");
   assert.equal(modelMissing({}, "Claude Code · haiku"), false);
+});
+
+test("the helper not running reads the same on any port the helper was moved to", () => {
+  const refused = port => explainError(`fetch failed: connect ECONNREFUSED 127.0.0.1:${port}`)?.action;
+  assert.equal(refused(7457), "setup");
+  assert.notEqual(refused(41234), "setup", "another local server isn't the helper");
+  setHelperPort(41234); // MORSE_HELPER_PORT=41234 (daemon/cli.js)
+  try {
+    assert.equal(refused(41234), "setup");
+    assert.equal(refused(7457), "setup");
+    assert.notEqual(refused(412345), "setup");
+    assert.notEqual(refused(11434), "setup");
+  } finally { setHelperPort(7457); }
 });
 
 test("plainError: plain words for a person, never raw jargon", () => {

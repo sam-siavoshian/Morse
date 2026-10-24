@@ -19,7 +19,7 @@ const browser = await chromium.launch();
 const shot = async (page, name, opts = {}) => { await page.screenshot({ path: path.join(OUT, name), ...opts }); console.log("  shot", name); };
 const quiet = page => page.locator(".toast").waitFor({ state: "hidden", timeout: 6000 });
 async function tools(page) {
-  if (await page.locator(".bar").isHidden()) await page.keyboard.press("Alt+Space");
+  if (await page.locator(".bar").isHidden()) await page.keyboard.press(process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space") /* the default Open Morse key (core/hotkeys.js) */;
   await page.locator(".gm-qbtn").click();
   await page.locator(".gm-menu .a11y-group").waitFor();
 }

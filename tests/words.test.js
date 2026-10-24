@@ -41,6 +41,7 @@ const ALLOWED = [
   ["runtime/src/80-modals.js", "JavaScript, can use the", "the Edit code view"],
   ["runtime/src/63-control.js", "Style <span class=\"dim\">CSS</span>", "Show code, folded under the install review"],
   ["runtime/src/63-control.js", "JavaScript, runs with the", "Show code, folded under the install review"],
+  ["extension/welcome.js", "node daemon/cli.js setup --pair", "a command to type, shown in <code> like the README's install steps"],
 ];
 // Files that never show text to a person: what the model reads, styles, plumbing.
 const SKIP_FILES = new Set([
@@ -205,4 +206,48 @@ test("the scanner finds jargon, and skips code, comments and regexes", () => {
   assert.equal(found.length, 4, found.join("\n")); // inject, CSS, element, Keep
   assert.ok(found.some(f => /inject/.test(f)) && found.some(f => /CSS/.test(f)) && found.some(f => /element/.test(f)) && found.some(f => /“Keep”/.test(f)));
   assert.ok(found.every(f => /^x\.js:(4|5|8) /.test(f)), "only the toast, the title and the button");
+});
+
+// ---- the user pages in docs/ (not docs/dev, not the style guide itself).
+// Code in backticks and code blocks is skipped (commands and file names are
+// fine), and so are link addresses; link text, headings and tables are read.
+function markdownProse(src) {
+  let fence = null;
+  return src.replace(/<!--[\s\S]*?-->/g, m => m.replace(/[^\n]/g, "")).split("\n").map((l, k) => {
+    const f = /^\s*(```|~~~)/.exec(l);
+    if (fence) { if (f && l.trim().startsWith(fence)) fence = null; return { text: "", line: k + 1 }; }
+    if (f) { fence = f[1]; return { text: "", line: k + 1 }; }
+    const text = l
+      .replace(/(`+)[^`]*?\1/g, " ")            // inline code
+      .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1") // images: keep the alt text
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")  // links: keep the text
+      .replace(/<\/?(kbd|b|i|em|strong|br)\s*\/?>/gi, "")
+      .replace(/[*_|]/g, " ");
+    return { text, line: k + 1 };
+  });
+}
+
+// Words a user page may use on purpose: [file, text the line contains, why].
+const DOCS_ALLOWED = [
+  ["docs/privacy.md", "API address you entered", "the privacy policy names exactly where data goes (site/privacy.html is built from it)"],
+  ["docs/privacy.md", "the CSS rules that style", "the privacy policy names exactly what is sent"],
+  ["docs/privacy.md", "Anthropic API key", "the privacy policy names the account whose terms apply"],
+];
+
+test("the user pages in docs/ show no developer jargon", () => {
+  const files = readdirSync(new URL("docs/", ROOT)).filter(f => f.endsWith(".md") && f !== "WRITING.md").map(f => `docs/${f}`);
+  assert.ok(files.length >= 10, `scans the user pages (found ${files.length})`);
+  const found = [];
+  for (const file of files) {
+    const strings = markdownProse(read(file)).filter(s => !DOCS_ALLOWED.some(([f, t]) => f === file && s.text.includes(t)));
+    found.push(...hits(file, strings));
+  }
+  assert.deepEqual(found, [], `jargon a person would read:\n${found.join("\n")}`);
+});
+
+test("the docs scanner reads prose, and skips code and link addresses", () => {
+  const src = "Run `morse config --provider openai` and see [the guide](dev/runtime.md).\n```\nCSS here\n```\nThe CSS changes.";
+  const found = hits("x.md", markdownProse(src));
+  assert.equal(found.length, 1, found.join("\n"));
+  assert.match(found[0], /^x\.md:5 CSS/);
 });

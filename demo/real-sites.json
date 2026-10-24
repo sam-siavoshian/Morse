@@ -1,0 +1,48 @@
+[
+  {
+    "name": "pypi",
+    "url": "https://pypi.org/project/requests/",
+    "ask": "add a back to top button in the bottom right corner",
+    "check": "(async () => { scrollTo(0, 2500); await new Promise(r => setTimeout(r, 800)); return [...document.querySelectorAll(\"body *\")].some(e => { if (e.closest(\"[data-morse-ui]\")) return false; const cs = getComputedStyle(e); if (cs.position !== \"fixed\" || cs.display === \"none\" || cs.visibility === \"hidden\" || cs.opacity === \"0\") return false; const r = e.getBoundingClientRect(); return r.width > 10 && r.width < 160 && r.height > 10 && r.height < 160 && r.right > innerWidth - 200 && r.bottom > innerHeight - 200; }); })()"
+  },
+  {
+    "name": "nodejs-docs",
+    "url": "https://nodejs.org/api/fs.html",
+    "ask": "hide the left sidebar so the docs use the full width",
+    "check": "(document.querySelector('#column2')?.offsetWidth ?? 0) === 0"
+  },
+  {
+    "name": "go-packages",
+    "url": "https://pkg.go.dev/net/http",
+    "point": "#section-documentation ~ * pre, .Documentation pre",
+    "ask": "make the code examples bigger",
+    "check": "parseFloat(getComputedStyle(document.querySelector('.Documentation pre') || document.querySelector('pre')).fontSize) >= 16"
+  },
+  {
+    "name": "rubygems",
+    "url": "https://rubygems.org/gems/rails",
+    "point": "aside",
+    "ask": "make the download numbers much bigger",
+    "check": "[...document.querySelectorAll('aside *')].some(e => /^[\\d,]{6,}$/.test(e.textContent.trim()) && parseFloat(getComputedStyle(e).fontSize) >= 28)"
+  },
+  {
+    "name": "gitlab",
+    "url": "https://gitlab.com/gitlab-org/gitlab",
+    "point": "aside.project-page-sidebar",
+    "ask": "hide this project information box",
+    "check": "(document.querySelector('aside.project-page-sidebar')?.offsetHeight ?? 0) === 0"
+  },
+  {
+    "name": "gitlab-js",
+    "url": "https://gitlab.com/gitlab-org/gitlab",
+    "ask": "add a back to top button in the bottom right corner",
+    "check": "(async () => { scrollTo(0, 2500); await new Promise(r => setTimeout(r, 800)); return [...document.querySelectorAll(\"body *\")].some(e => { if (e.closest(\"[data-morse-ui]\")) return false; const cs = getComputedStyle(e); if (cs.position !== \"fixed\" || cs.display === \"none\" || cs.visibility === \"hidden\" || cs.opacity === \"0\") return false; const r = e.getBoundingClientRect(); return r.width > 10 && r.width < 160 && r.height > 10 && r.height < 160 && r.right > innerWidth - 200 && r.bottom > innerHeight - 200; }); })()"
+  },
+  {
+    "name": "docker-hub",
+    "url": "https://hub.docker.com/_/nginx",
+    "point": "pre",
+    "ask": "make these code blocks bigger with a dark background",
+    "check": "(() => { const p = document.querySelector('pre'); const cs = getComputedStyle(p); const [r, g, b, a = 1] = cs.backgroundColor.match(/[\\d.]+/g).map(Number); return parseFloat(cs.fontSize) >= 15 && a > 0.5 && r + g + b < 200; })()"
+  }
+]

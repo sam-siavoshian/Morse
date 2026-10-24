@@ -7,5 +7,7 @@ function HEAL_CSS() {
   .bar[data-heal] .row > .mark::after, .panel[data-heal] header > .mark::after { content: ""; position: absolute; top: -3px; right: -3px; width: 7px; height: 7px;
     border-radius: 50%; background: var(--m-danger); box-shadow: 0 0 0 2px var(--m-surface); pointer-events: none; }
   .health.heal-fixed b::before { background: var(--m-signal-3); }
+  /* phone width hides the bar's mark for room; with the dot it is the only sign, so it stays */
+  @media (max-width: 560px) { .bar[data-heal] .row > .mark { display: inline-flex; } }
   `;
 }

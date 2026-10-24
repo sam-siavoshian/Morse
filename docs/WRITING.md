@@ -2,9 +2,9 @@
 
 Every word a person reads in Morse should be simple, clear and friendly. This
 guide covers the bar, the Mods panel, settings, toasts, the extension popup,
-the welcome page, the share page, the website, the `morse` command line and
-the README. Code comments and developer docs can stay technical, but should
-still be plain.
+the welcome page, the share page, the website, the `morse` command line, the
+README and the user pages in `docs/`. Code comments and developer docs
+(`docs/dev/`) can stay technical, but should still be plain.
 
 The reader is a normal person who uses apps, not someone who builds them.
 Assume they have never heard of CSS, Electron or an API. The only places
@@ -54,9 +54,10 @@ written for developers are listed under [Where technical words are fine](#where-
 
 ### Words people don't know
 
-These never appear in text a person reads in Morse, on the website or in the
-top half of the README. `tests/words.test.js` checks the runtime and the
-extension pages for them.
+These never appear in text a person reads in Morse, on the website, in the
+README or in the user pages in `docs/`. `tests/words.test.js` checks the
+runtime, the extension pages, the website and the user pages in `docs/` for
+them (code in backticks is skipped).
 
 | Technical word | Say instead |
 |---|---|
@@ -81,8 +82,8 @@ extension pages for them.
   summary, the gallery's code. People chose to look at code there, so "Style
   (CSS)" and "Script (JavaScript)" are fine as headings.
 - `morse help` flags and `morse doctor` / `morse model` output (developers run
-  them), and the README from **Status** down (how it works, security,
-  roadmap, repo layout).
+  them), and the developer docs in `docs/dev/` (how it works, testing,
+  security, roadmap, repo layout).
 - Code comments, tests and developer docs.
 
 ## Names, one for each thing
@@ -165,6 +166,7 @@ a different thing: it keeps a mod turned off.)
 | **alt text** | The description of a picture that screen readers read. "Save as alt text". | alt attribute, image label |
 | **Accessibility fixes** | The one mod per site that holds what Fix it and Describe this picture saved. | |
 | **Show me once** | Do a task by hand once so Morse can write down the steps; then say what to do with them (a button, a shortcut, every item). Each one is a **step**: Click “Archive”. A password's value shows as “(hidden)”. | record a macro, automation, workflow |
+| **Your style** | One style that follows you to every site and app: your font, text size, calmer colors, no autoplay and more. Say it once in the bar, ending with "everywhere", or set it in Settings. **Not on this site** leaves one site out. **Fit to this site** asks the model to fix what it breaks there; you review it like any change. | theme, global mod, preferences |
 | **capture** | Save the look of something so you can rebuild it in another app. Captured things show under "Captured" in the bar. | copy, clip, clipboard |
 | **voice** | Talking to Morse instead of typing. "Hold ⌥Space to talk." | dictation, speech input |
 | **shortcut** | A keyboard shortcut. | hotkey, keybinding (fine in developer docs) |

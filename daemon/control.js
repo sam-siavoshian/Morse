@@ -11,6 +11,7 @@ import { controlHandler, CONTROL_REQUESTS } from "../core/control-host.js";
 import { normalizeControl, setPause, pauseInfo } from "../core/control.js";
 import { exportBundle, backupFilename, parseImport, prepareInstall } from "../core/backup.js";
 import { summarizeMod, modOrigin } from "../core/summary.js";
+import { paint } from "./colors.js";
 
 export { CONTROL_REQUESTS };
 
@@ -65,7 +66,7 @@ export function watchControl(connector) {
 
 // ---- CLI
 
-const G = s => `\x1b[32m${s}\x1b[0m`, D = s => `\x1b[2m${s}\x1b[0m`, B = s => `\x1b[1m${s}\x1b[0m`, Y = s => `\x1b[33m${s}\x1b[0m`;
+const { g: G, d: D, b: B, y: Y } = paint;
 const out = (...a) => console.log(...a);
 
 function printPause(s) {
@@ -112,10 +113,14 @@ export async function exportAllCli(f) {
   return file;
 }
 
-function describe(mod) {
+// A shared mod's words go to the terminal as text: escape sequences in them
+// could move the cursor and rewrite the review above, or set the clipboard,
+// and a line break could add lines that look like the review's own.
+const shown = s => String(s ?? "").replace(/[\x00-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069]+/g, " ");
+export function describe(mod) { // packs hook: daemon/packs.js lists each mod in a pack the same way
   const s = summarizeMod(mod);
-  const where = mod.match?.app || (mod.match?.hosts || []).join(", ") || "any site";
-  const lines = [`${B(mod.title)} ${D(`for ${where}`)}`, D(`  “${mod.prompt}”`)];
+  const where = shown(mod.match?.app || (mod.match?.hosts || []).join(", ") || "any site");
+  const lines = [`${B(shown(mod.title))} ${D(`for ${where}`)}`, D(`  “${shown(mod.prompt)}”`)];
   if (s.empty) lines.push("  - Doesn't change anything (it has no code)");
   for (const i of s.items) lines.push(`  - ${i.text}`);
   for (const n of s.notes) lines.push(Y(`  Note: ${n.text}`));

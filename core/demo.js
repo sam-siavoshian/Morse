@@ -147,6 +147,15 @@ article p:first-of-type::first-letter {
 }
 `, "");
 
+// A change that is mostly code: its look alone does nothing (tests/store-ui.test.js,
+// the bar without "Allow User Scripts").
+const BACK_TO_TOP = reply("Back to top button", `
+.morse-top { position: fixed; right: 20px; bottom: 20px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #333; color: #fff; font-size: 18px; cursor: pointer; }
+`, `
+const btn = morse.el("button", { class: "morse-top", text: "↑", title: "Back to top", on: { click() { scrollTo({ top: 0, behavior: "smooth" }); } } });
+document.body.append(btn);
+`);
+
 const FALLBACK = reply("Needs a real model", "", `
 morse.toast("The demo model only knows a few requests. Connect a model for anything else.");
 `);
@@ -163,8 +172,25 @@ morse.watch("#toolbar", bar => {
 });
 `);
 
+// The effect check (core/engine.js): the first draft's selector matches
+// nothing, so it changes nothing; the repair round names it and the second
+// draft paints the page.
+const GOLD_MISS = reply("Gold page", `.morse-demo-nothing-here { background: gold !important; }`, "");
+const GOLD = reply("Gold page", `body { background: rgb(255, 215, 0) !important; }`, "");
+
+// Your style (core/style.js adaptRequest): the demo model's fit for a site.
+const STYLE_FIT = reply("Buttons keep their words on one line", `
+:where(button, [role=button], nav a) {
+  white-space: nowrap !important;
+}
+:where(h1, h2, h3) {
+  overflow-wrap: break-word !important;
+}
+`, "");
+
 const RULES = [
   [/now playing/i, NOW_PLAYING],
+  [/back to (the )?top/i, BACK_TO_TOP],
   [/word|token count|character count|count/i, WORD_COUNT],
   [/copy|markdown|export/i, COPY_MD],
   [/sleep|timer/i, null],
@@ -210,6 +236,8 @@ function refine(b, prompt = "") {
   if (b.error) {
     const moved = siteChanged(b, prompt); // self-heal hook
     if (moved) return moved;
+    // guard hook: Morse paused it for slowing down, freezing or hiding the page (core/kit.js): a light version
+    if (/^Morse (paused|stopped) it\b/.test(b.error)) return reply("Lighter version", ".item { border-color: #8aa4c8 }", "");
     const rule = RULES.find(([re]) => re.test(b.original));
     if (rule) return rule[1] || SLEEP;
     return reply("Could not fix", b.css, b.js);
@@ -258,6 +286,8 @@ export function demoResponse(messages) {
   if (answer) return answer;
   const fixes = fixesDemo(request); // Easier to use: Check this page
   if (fixes) return fixes;
+  if (/\bgold\b/i.test(request)) return isRetry ? GOLD : GOLD_MISS;
+  if (/^Your style, for this site\./.test(request)) return STYLE_FIT; // your-style hook: fit it to this site
   for (const [re, resp] of RULES) {
     if (!re.test(request)) continue;
     if (resp === null) return isRetry ? SLEEP : SLEEP_BROKEN;

@@ -108,3 +108,15 @@ test("grants the microphone and transcribes through the connector", { skip }, as
   assert.ok(transcribed.at(-1).bytes > 500, "real audio was uploaded");
 });
 
+test("a change that matches nothing gets one repair round (effect check through the connector)", { skip }, async () => {
+  await status(s => s.open, "the bar to be open");
+  await page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".in").select());
+  await page.keyboard.press("Backspace");
+  await page.keyboard.type("paint the page gold"); // demo model: the first draft's selector matches nothing
+  await page.keyboard.press("Enter");
+  const s = await status(s => s.phase === "result" || s.phase === "error", "the result");
+  assert.equal(s.phase, "result", s.hint);
+  assert.match(s.hint, /second try/, "the effect check sent it back once");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(255, 215, 0)");
+  assert.match(await page.locator("style[data-morse-css]").first().textContent(), /^body \{/, "the repaired CSS replaced the dead one");
+});

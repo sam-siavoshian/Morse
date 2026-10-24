@@ -1,12 +1,13 @@
 // Bug and security hunt, round 4: regressions for what it found. Each test
 // failed before its fix.
+import { tempDir } from "./helpers/home.js"; // first: a MORSE_HOME of its own, and temp folders removed at exit
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
-import { promises as fs, mkdtempSync } from "node:fs";
+import { promises as fs } from "node:fs";
 import { createRequire } from "node:module";
 
 let chromium;
@@ -17,7 +18,7 @@ const cleanups = [];
 after(async () => { for (const f of cleanups.reverse()) await f().catch(() => {}); });
 
 // MORSE_HOME is read when daemon/store.js loads, so one home for this file.
-process.env.MORSE_HOME = mkdtempSync(path.join(os.tmpdir(), "morse-r4-"));
+process.env.MORSE_HOME = tempDir("morse-r4-");
 cleanups.push(() => fs.rm(process.env.MORSE_HOME, { recursive: true, force: true }));
 
 async function serve(handler) {
@@ -38,7 +39,7 @@ async function desktop({ automation = true, initScript = null } = {}) {
   } else {
     // Started by hand and reached over CDP, like `morse` reaches an app.
     const { spawn } = await import("node:child_process");
-    const proc = spawn(chromium.executablePath(), [`--remote-debugging-port=${port}`, `--user-data-dir=${mkdtempSync(path.join(os.tmpdir(), "morse-r4-app-"))}`,
+    const proc = spawn(chromium.executablePath(), [`--remote-debugging-port=${port}`, `--user-data-dir=${tempDir("morse-r4-app-")}`,
       "--no-first-run", "--no-default-browser-check", "--no-sandbox", "--headless=new", "about:blank"], { stdio: "ignore" });
     cleanups.push(async () => proc.kill());
     for (let i = 0; i < 100; i++) { try { await fetch(`http://127.0.0.1:${port}/json/version`); break; } catch { await new Promise(r => setTimeout(r, 100)); } }
@@ -243,7 +244,7 @@ const skipExt = skip || (!process.env.DISPLAY && "extensions need a display (run
 let extCtx = null;
 async function extension() {
   if (extCtx) return extCtx;
-  const ctx = await chromium.launchPersistentContext(mkdtempSync(path.join(os.tmpdir(), "morse-r4-ext-")), {
+  const ctx = await chromium.launchPersistentContext(tempDir("morse-r4-ext-"), {
     headless: false, args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
   });
   cleanups.push(() => ctx.close());
