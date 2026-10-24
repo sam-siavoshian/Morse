@@ -71,7 +71,9 @@ test("settings round-trip through ~/.morse/settings.json", { skip }, async () =>
   await page.keyboard.press("Enter");
   await page.keyboard.press("Alt+KeyJ");
   await waitFor(s => s.hotkeys.open === "Alt+KeyJ");
-  const onDisk = JSON.parse(await fs.readFile(path.join(home, "settings.json"), "utf8"));
+  // The bar updates at once; the host's write lands a moment later (slow under a parallel `npm test`).
+  let onDisk = null;
+  for (let i = 0; i < 100 && !onDisk; i++) { try { onDisk = JSON.parse(await fs.readFile(path.join(home, "settings.json"), "utf8")); } catch { await page.waitForTimeout(50); } }
   assert.equal(onDisk.hotkeys.open, "Alt+KeyJ");
   await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");

@@ -4,22 +4,35 @@ function openModal(html) {
   modal.onclick = e => { if (e.target === modal || e.target.closest("[data-a=close]")) modal.hidden = true; };
   modal.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Escape") modal.hidden = true; });
 }
+// Editing the code by hand makes a new version, like a refine (⌘Z or the
+// panel's History bring the old one back).
+const HAND_EDIT = "Edited the code by hand";
 function showCode(m) {
   if (!m) return;
-  const saved = S.mods.find(x => x.id === m.id);
+  const isDraft = m === S.draft && S.phase === "result";
+  const saved = !isDraft && S.mods.find(x => x.id === m.id);
   openModal(`
-    <header><b>${esc(m.title)}</b><small>“${esc(m.prompt || m.request)}”</small><button data-a="close">×</button></header>
+    <header><b>${esc(m.title)}</b><small>“${esc(m.refined || m.prompt || m.request)}”</small><button data-a="close">×</button></header>
     <label>CSS</label><textarea class="code" data-k="css" spellcheck="false">${esc(m.css)}</textarea>
     <label>JavaScript <span class="dim">runs with the <code>morse</code> helpers</span></label><textarea class="code" data-k="js" spellcheck="false">${esc(m.js)}</textarea>
     <footer><button data-a="close">Cancel</button><button class="primary" data-a="save">${saved ? "Save & re-run" : "Apply"}</button></footer>`);
   modal.querySelector("[data-a=save]").onclick = async () => {
     const css = modal.querySelector("[data-k=css]").value, js = modal.querySelector("[data-k=js]").value;
-    Object.assign(m, { css, js });
-    if (saved) { m.updated = new Date().toISOString(); await call("mods.save", { mod: m }); }
+    modal.hidden = true;
+    if (css === m.css && js === m.js) return;
+    if (isDraft) {
+      S.draft = Object.assign(reviseMod(m, { prompt: HAND_EDIT, css, js }), { saved: null });
+      await showVersion(m.id, S.draft);
+      showResult(S.draft, { note: `Your edit · version ${versionsOf(S.draft).length + 1}` });
+      return;
+    }
+    const next = saved ? reviseMod(m, { prompt: HAND_EDIT, css, js }) : { ...m, css, js };
+    Object.assign(m, next);
+    if (saved) await call("mods.save", { mod: m });
     await removeMod(m.id);
     await applyMod({ ...m, title: m.title || "draft" });
-    modal.hidden = true;
-    toast("Re-applied");
+    if (!panel.hidden) renderPanel();
+    toast(saved ? `Saved your edit · version ${versionsOf(m).length + 1}` : "Re-applied");
   };
 }
 async function showShare(m) {
