@@ -117,7 +117,7 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
         const rec = tokenRecord(cfg, bearer(req));
         return send(200, {
           ok: true, version: VERSION, provider: s.provider, model: s.model, label: settingsLabel(s),
-          harnesses: harnesses(), paired: !!rec && (!origin || !rec.origin || rec.origin === origin),
+          harnesses: { claude: harnesses().claude.found, codex: harnesses().codex.found }, paired: !!rec && (!origin || !rec.origin || rec.origin === origin),
         });
       }
 

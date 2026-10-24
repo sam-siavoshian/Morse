@@ -39,7 +39,7 @@
   };
   const C = globalThis.__cat = {
     mods: structuredClone(MODS[q.get("mods") || "0"] || []),
-    label: q.get("label") || "qwen2.5-coder:7b · ollama",
+    label: q.get("label") || "Claude Code · sonnet",
     gen: null, execFail: null, importFail: null, calls: [],
     token(text) { if (C.gen) emit({ type: "token", text, genId: C.gen.genId }); },
     phase(phase, error) { if (C.gen) emit({ type: "phase", phase, error, genId: C.gen.genId }); },
