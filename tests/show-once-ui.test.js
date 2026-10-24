@@ -102,9 +102,10 @@ test("Show me once: do it by hand, say “every unread email”, and a button do
   const btn = page.locator(".morse-so-btn");
   await until(async () => /Archive every unread email \(3\)/.test(await btn.innerText()));
   await btn.click();
-  await until(async () => (await unread(page)) === 0);
+  // (Opening an email marks it read a moment before Archive takes it away: wait for the end.)
+  await until(async () => /Done for 3 unread emails/.test(await page.evaluate(() => document.body.innerText)), 15000);
+  assert.equal(await unread(page), 0);
   assert.equal(await page.locator(".r9").count(), 6, "read emails stay");
-  await until(async () => /Done for 3 unread emails/.test(await page.evaluate(() => document.body.innerText)));
 
   // Save keeps it like any mod; the steps go with the bar.
   await page.locator(".actions [data-a=keep]").click();
