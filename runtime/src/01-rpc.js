@@ -39,4 +39,9 @@ const MutationObserver = class extends PageObserver {
   observe(...a) { uiObservers.add(this); return super.observe(...a); }
   disconnect() { uiObservers.delete(this); return super.disconnect(); }
 };
-function letGo() { for (const o of uiObservers) o.disconnect(); }
+function letGo() {
+  for (const o of uiObservers) o.disconnect();
+  // The document kept the old bar (and through it the whole old UI) in a
+  // table of its own, reached through the bar's aria-owns: empty the UI.
+  try { bar.removeAttribute("aria-owns"); root.replaceChildren(); hostEl.remove(); } catch {}
+}
