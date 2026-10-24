@@ -10,7 +10,7 @@
 // core/ and the Anthropic SDK by scripts/build.js.
 
 import { runMorse } from "../core/engine.js";
-import { resolveTiers, startLabel, modelNames } from "../core/route.js"; // models: fast and strong (docs/models.md)
+import { popupTiers, startLabel, modelNames } from "../core/route.js"; // models: fast and strong (docs/models.md)
 import { streamChat, settingsLabel, NoModelError, PROVIDERS, HELPER_PORT_KEY, prewarm } from "../core/providers.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, modMatches, hostOf, byCreated, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode, settleMs } from "../core/kit.js";
@@ -24,6 +24,7 @@ import { ONBOARDING_REQUESTS, handleOnboarding, Practice, setModelResolver, prac
 import { GALLERY_REQUESTS, handleGallery } from "./gallery-host.js"; // gallery hook: Mods for this site
 import { Style } from "./style-host.js"; // your-style hook: one style on every site
 import { PACK_REQUESTS, handlePack } from "./pack-host.js"; // packs hook: mod packs
+import { t, setLanguage, pickLanguage } from "../core/i18n.js"; // the words this worker says
 
 const get = async (k, d) => (await chrome.storage.local.get(k))[k] ?? d;
 const set = (k, v) => chrome.storage.local.set({ [k]: v });
@@ -34,6 +35,11 @@ const set = (k, v) => chrome.storage.local.set({ [k]: v });
 // (core/providers.js HELPER_PORT_KEY) are out of a content script's reach.
 try { chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" }).catch(() => {}); } catch {}
 chrome.storage.onChanged.addListener(c => { if (c[HELPER_PORT_KEY]) cached = null; });
+// The words this worker says (labels, reasons, errors) follow Settings → Language,
+// else the browser's, like the pages and the bar (core/i18n.js).
+async function followLanguage() { try { setLanguage((await getPrefs()).language || pickLanguage(navigator.languages?.length ? navigator.languages : [navigator.language])); } catch {} }
+followLanguage();
+chrome.storage.onChanged.addListener(() => { followLanguage().then(() => { cached = null; }); });
 
 // chrome.storage.local "model": { backend: "helper"|"anthropic"|"" (auto),
 //   helperModel, anthropicKey, anthropicModel }
@@ -69,14 +75,16 @@ async function backend(fresh = false) {
     out = { kind: "helper", label, helper, settings: { provider: "helper", baseUrl: await helperUrl(), token: p.helperToken, model: p.helperModel || "", label,
       backend: helper.provider, tiers: helper.tiers || null, pinned: !!p.helperModel || !!helper.pinned } }; // models: the helper's two models
   } else if (want !== "helper" && p.anthropicKey) {
-    // models: the popup's model is the strong one; quick changes use Haiku.
-    const settings = { provider: "anthropic", apiKey: p.anthropicKey, model: p.anthropicModel || PROVIDERS.anthropic.defaultModel, tiers: resolveTiers("anthropic", { best: p.anthropicModel || undefined }) };
+    // models: the popup's model is the strong one (claude-opus-5-5 unless
+    // chosen); small tweaks use claude-sonnet-5-5. Another model chosen there
+    // is used for everything (core/route.js popupTiers).
+    const settings = { provider: "anthropic", apiKey: p.anthropicKey, model: p.anthropicModel || PROVIDERS.anthropic.defaultModel, tiers: popupTiers("anthropic", p.anthropicModel) };
     out = { kind: "anthropic", label: settingsLabel(settings), settings, helper };
   } else {
-    const reason = want === "anthropic" ? "Add your Anthropic API key below."
-      : helper ? "Pair this browser with the Morse helper below."
-      : "Run morse serve on your computer, or add an Anthropic API key.";
-    out = { kind: "none", label: "Connect a model", helper, reason, settings: { provider: "none" } };
+    const reason = want === "anthropic" ? t("bg.reason.key")
+      : helper ? t("bg.reason.pair")
+      : t("bg.reason.serve");
+    out = { kind: "none", label: t("welcome.model.b"), helper, reason, settings: { provider: "none" } };
   }
   cached = out; cachedAt = Date.now();
   return out;
@@ -100,8 +108,8 @@ export function userScriptsAvailable() {
 // through chrome.userScripts; there is no other way in. The practice area (the
 // welcome page's sandboxed sample article) shows style changes only.
 export const NOT_RUN = {
-  userScripts: "This change also adds features. They run once you turn on “Allow User Scripts” for Morse. The new look works now.",
-  practice: "The practice page shows how changes look. Changes that add features work on real websites.",
+  get userScripts() { return t("bg.notRun.userScripts"); },
+  get practice() { return t("bg.notRun.practice"); },
 };
 function cantRun(target) {
   if (Practice.has(target.tabId)) return "practice"; // onboarding hook: the welcome page's practice area
@@ -133,7 +141,7 @@ async function exec(target, modId, js) {
     if (m?.enabled && m.js === js) await putMod({ ...m, enabled: false, paused: { why: "froze", at: new Date().toISOString(), error: FROZE_ERROR } });
     return { ok: false, error: FROZE_ERROR };
   }
-  const res = ran || { ok: false, error: "The change didn't run on this page. Reload the page and try again." };
+  const res = ran || { ok: false, error: t("bg.didntRun") };
   if (!res.ok) return res;
   await new Promise(r => setTimeout(r, settleMs(res))); // speed: core/kit.js settle
   const errs = (await execIn(target, `morse.__errors(${JSON.stringify(modId)})`)) || [];
@@ -226,7 +234,7 @@ async function dispatch(msg, port) {
       const sample = b.kind === "none" && Practice.has(tab.id); // first-run hook: the practice page's sample answers
       const prefs = await getPrefs();
       const shown = b.kind === "none" ? b.label : startLabel({ ...b.settings, mode: prefs.modelMode }, settingsLabel); // models: "Claude Code · Automatic"
-      const label = (sample ? "Sample answers" : shown) + (userScriptsAvailable() || sample ? "" : " · “Allow User Scripts” off");
+      const label = (sample ? t("bg.sample") : shown) + (userScriptsAvailable() || sample ? "" : ` · ${t("bg.scriptsOff")}`);
       // The practice area doesn't use up the "Morse is ready" toast for the first real site (first-run hook).
       const quiet = Practice.has(tab.id) || (!(await get("welcomed", false)) ? (await set("welcomed", true), false) : true);
       return { mode: "extension", app: null, label, quiet, needsModel: b.kind === "none", connect: b.kind === "none" ? b.reason : undefined,
@@ -239,15 +247,15 @@ async function dispatch(msg, port) {
       // mods for its own page, and can't widen where one runs.
       const id = msg.draft ? msg.draft.id : validateMod(msg.mod).id;
       const existing = id ? (await allMods())[id] : null;
-      if (existing && !modMatches(existing, here)) throw new Error("That mod belongs to another app or site");
+      if (existing && !modMatches(existing, here)) throw new Error(t("bg.otherSite"));
       if (msg.draft) return putMod(createMod({ ...msg.draft, url: here.url, app: null, model: msg.draft.model || (await backend()).label })); // hardening: filed under the caller's page
-      if (!saveKeepsScope(msg.mod.match, existing?.match, here)) throw new Error("That mod is for another app or site");
+      if (!saveKeepsScope(msg.mod.match, existing?.match, here)) throw new Error(t("bg.otherSite"));
       return putMod(msg.mod);
     }
     case "mods.delete": {
       await serialized(async () => { // hardening: serialized
         const all = await allMods();
-        if (all[msg.modId] && !modMatches(all[msg.modId], here)) throw new Error("That mod belongs to another app or site");
+        if (all[msg.modId] && !modMatches(all[msg.modId], here)) throw new Error(t("bg.otherSite"));
         delete all[msg.modId];
         await set("mods", all);
       });
@@ -266,9 +274,10 @@ async function dispatch(msg, port) {
     case "ui.load":
       await chrome.scripting.executeScript({ target, files: ["ui.js"] });
       return true;
-    case "warm": { // speed: the bar opened; get the model ready (core/providers.js prewarm)
+    case "warm": { // speed: the bar opened, or the person is typing; get the model ready (core/providers.js prewarm)
       const b = await backend();
-      if (b.kind !== "none") prewarm({ ...b.settings, mode: (await getPrefs()).modelMode }); // models: warms the first model
+      const typed = typeof msg.request === "string" ? msg.request.slice(0, 500) : ""; // models: the strong model for new UI and features
+      if (b.kind !== "none") prewarm({ ...b.settings, mode: (await getPrefs()).modelMode }, typed); // models: warms the model the request starts on
       return true;
     }
     case "exec":
@@ -281,18 +290,18 @@ async function dispatch(msg, port) {
     case "heal.badge": // self-heal hook: a dot on the toolbar button while a mod here stopped working (runtime/src/71-heal.js)
       await chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: "#f2555a" }).catch(() => {});
       await chrome.action.setBadgeText({ tabId: tab.id, text: msg.count > 0 ? " " : "" }).catch(() => {});
-      await chrome.action.setTitle({ tabId: tab.id, title: msg.count > 0 ? "Morse: a mod stopped working after this site changed" : "Morse" }).catch(() => {});
+      await chrome.action.setTitle({ tabId: tab.id, title: msg.count > 0 ? t("bg.healBadge") : "Morse" }).catch(() => {});
       return true;
     case "generate": {
       let b = await backend();
       if (b.kind === "none") b = await backend(true);
       if (b.kind === "none" && Practice.has(tab.id)) { // first-run hook: sample answers on the practice page, before a model is connected
         if (!practiceSample(msg.request) || msg.base) throw new Error(SAMPLE_ONLY);
-        b = { kind: "sample", label: "Sample answers", settings: { provider: "demo" } };
+        b = { kind: "sample", label: t("bg.sample"), settings: { provider: "demo" } };
       }
       if (b.kind === "none") {
         openSettings();
-        throw new NoModelError(`No model connected yet. Morse's welcome page just opened to connect one.`);
+        throw new NoModelError(t("bg.noModel"));
       }
       // gens.run's signal aborts the model call (the helper kills the harness
       // process when the connection closes): Stop in the bar, or closing the tab.
@@ -330,7 +339,7 @@ async function dispatch(msg, port) {
       // captureVisibleTab takes whatever tab is in front: only while that is
       // the one asking, so a picture of another tab never goes to the model.
       const showing = async () => (await chrome.tabs.query({ active: true, windowId: tab.windowId }))[0]?.id === tab.id;
-      const away = "Morse can only take a picture of this tab while it is in front. Switch back to it and try again.";
+      const away = t("bg.away");
       if (!(await showing())) throw new Error(away);
       const shot = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
       if (!(await showing())) throw new Error(away);
@@ -412,10 +421,10 @@ async function popup(msg) {
       try {
         r = await fetch(`${base}/v1/pair`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: String(msg.code || "").trim().toUpperCase() }), signal: AbortSignal.timeout(5000) });
       } catch {
-        return { error: "Can't reach the Morse helper. Run morse serve on this computer." };
+        return { error: t("bg.noHelper") };
       }
       const body = await r.json().catch(() => ({}));
-      if (!r.ok || !body.token) return { error: body.error || `Pairing didn't work (error ${r.status}). Run morse pair for a new code and try again.` };
+      if (!r.ok || !body.token) return { error: body.error || t("bg.pairFailed", { status: r.status }) };
       const p = await modelPrefs();
       await set("helper", { token: body.token, url: base });
       await saveModelPrefs({ ...p, backend: p.backend === "anthropic" ? "anthropic" : "helper" });

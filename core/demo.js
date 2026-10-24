@@ -156,6 +156,103 @@ const btn = morse.el("button", { class: "morse-top", text: "↑", title: "Back t
 document.body.append(btn);
 `);
 
+// Hide the ads and nothing else (a request that also asks for reading comfort
+// gets READER, below).
+const HIDE_ADS = reply("Hide the ads", `
+[data-ad], .ad-slot, aside[aria-label="Sponsored"] {
+  display: none !important;
+}
+.wrap {
+  grid-template-columns: 1fr;
+  max-width: 760px;
+}
+`, "");
+
+// Dark and light mode: written for the demo site the request came from (by
+// its page title), and a plain color flip anywhere else.
+const DARK_BYTE = reply("Dark mode", `
+html, body {
+  background: #15171b;
+  color: #d5d8dd;
+}
+.tb {
+  background: #7a0e20;
+}
+article h1 {
+  color: #f2f3f5;
+}
+.by {
+  color: #8d939c;
+}
+.ad-slot {
+  filter: brightness(0.55) saturate(0.6);
+}
+.pop {
+  background: #1e2228;
+  color: #d5d8dd;
+  border-color: #7a0e20;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+}
+.pop b {
+  color: #ff8a9b;
+}
+`, "");
+const LIGHT_TUNES = reply("Light mode", `
+body {
+  background: #ecebf1;
+  color: #18181c;
+}
+nav {
+  background: #ffffff;
+}
+nav a, nav h5 {
+  color: #5d5a66;
+}
+nav a.on {
+  color: #18181c;
+  background: #efedf5;
+}
+.vw {
+  background: linear-gradient(#e4ddfa 0, #ffffff 280px);
+}
+.vw p.sub, .q8c small, .np small, .pr, .vol {
+  color: #6a6673;
+}
+.q8c {
+  background: #f5f4f8;
+}
+.q8c .cv {
+  box-shadow: 0 8px 20px rgba(40, 30, 80, 0.18);
+}
+.btns button {
+  color: #4b4854;
+}
+.btns [data-testid="play-pause"] {
+  background: #18181c;
+  color: #ffffff;
+}
+.pr .bar, .vol .bar {
+  background: #d6d3de;
+}
+.pr .bar i, .vol .bar i {
+  background: #18181c;
+}
+`, "");
+const FLIP = `html {
+  background: #ffffff;
+  filter: invert(0.92) hue-rotate(180deg);
+}
+img, video, picture, canvas {
+  filter: invert(1) hue-rotate(180deg);
+}`;
+const DARK_ANY = reply("Dark mode", FLIP, "");
+const LIGHT_ANY = reply("Light mode", FLIP, "");
+function themeReply(request, title) {
+  if (/\bdark\b/i.test(request)) return /Daily Byte/.test(title) ? DARK_BYTE : DARK_ANY;
+  if (/\blight\b/i.test(request)) return /Tunes/.test(title) ? LIGHT_TUNES : LIGHT_ANY;
+  return null;
+}
+
 const FALLBACK = reply("Needs a real model", "", `
 morse.toast("The demo model only knows a few requests. Connect a model for anything else.");
 `);
@@ -195,6 +292,7 @@ const RULES = [
   [/copy|markdown|export/i, COPY_MD],
   [/sleep|timer/i, null],
   [/cover|album|bigger|round/i, BIG_COVERS],
+  [/^(?!.*(read|clean|clutter)).*\bads?\b/i, HIDE_ADS],
   [/ads?\b|read|clean|clutter/i, READER],
 ];
 
@@ -289,12 +387,21 @@ export function demoResponse(messages) {
   if (fixes) return fixes;
   if (/\bgold\b/i.test(request)) return isRetry ? GOLD : GOLD_MISS;
   if (/^Your style, for this site\./.test(request)) return STYLE_FIT; // your-style hook: fit it to this site
+  const theme = themeReply(request, (firstUser.match(/^Page title: (.*)$/m) || [])[1] || "");
+  if (theme) return theme;
   for (const [re, resp] of RULES) {
     if (!re.test(request)) continue;
     if (resp === null) return isRetry ? SLEEP : SLEEP_BROKEN;
     return resp;
   }
   return FALLBACK;
+}
+
+// The website's Try it here (site/try.js): a reply that only says the demo
+// model doesn't know the request, so the page can point to installing Morse
+// instead of showing a stand-in change.
+export function isDemoFallback(text) {
+  return /^TITLE: (Needs a real model|No change|Could not fix)\n/.test(text) || /^ANSWER: The demo model only knows/.test(text);
 }
 
 // ---- Ask and find: canned answers in the ANSWER/POINT/STEP format (see

@@ -75,7 +75,7 @@ const KeyPick = (() => {
     hl.hidden = true;
     hintNote = "";
     setHint();
-    if (!quiet) announce("Stopped choosing");
+    if (!quiet) announce(t("kp.stopped"));
   }
   function choose() {
     const el = K.el;
@@ -100,7 +100,7 @@ const KeyPick = (() => {
   function smaller() {
     if (K.wider.length) return show(K.wider.pop());
     const inside = K.list.find(x => x !== K.el && K.el.contains(x));
-    if (!inside) return announce("There's nothing smaller inside");
+    if (!inside) return announce(t("kp.smallest"));
     K.i = K.list.indexOf(inside);
     show(inside);
   }

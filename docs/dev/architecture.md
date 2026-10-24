@@ -277,10 +277,10 @@ text. The file runs unchanged in Node and in the extension's service worker.
 
 | Provider | What it is |
 |---|---|
-| `claude-code` | The `claude` CLI on the user's subscription ([`daemon/harness.js`](../../daemon/harness.js)): `claude -p` with every tool off, no MCP servers, no saved session, in an empty folder under `~/.morse` |
-| `codex` | The `codex` CLI: `codex exec` in a read-only sandbox, in an empty folder |
-| `anthropic` | An Anthropic API key, through the official SDK. `claude-opus-5-5` at low effort unless `claude-sonnet-5-5` or `claude-haiku-5-5` is chosen; refusals become a plain message |
-| `openai` | An OpenAI API key, or any OpenAI-compatible server (`--base-url`); chat completions, streamed |
+| `claude-code` | The `claude` CLI on the user's subscription ([`daemon/harness.js`](../../daemon/harness.js)): `claude -p` with every tool off, no MCP servers, no saved session, in an empty folder under `~/.morse`. Under Automatic `--model sonnet`, `opus` for new UI, features and restyles |
+| `codex` | The `codex` CLI: `codex exec` in a read-only sandbox, in an empty folder. Under Automatic the plan's model at medium effort, high for new UI, features and restyles |
+| `anthropic` | An Anthropic API key, through the official SDK, at low effort. Under Automatic `claude-sonnet-5-5` for small tweaks and `claude-opus-5-5` for new UI, features and restyles ([`core/route.js`](../../core/route.js)); one model chosen is used for everything. Refusals become a plain message |
+| `openai` | An OpenAI API key, or any OpenAI-compatible server (`--base-url`); chat completions, streamed. Under Automatic `gpt-5`, then `gpt-5` with `reasoning_effort: "high"` |
 | `helper` | The extension's client for the Morse helper |
 | `demo` | A test fixture that replays canned replies ([`core/demo.js`](../../core/demo.js)); never offered to users |
 
@@ -302,7 +302,7 @@ Config lives in `~/.morse/config.json` (mode 600); `ANTHROPIC_API_KEY` and
   "css": "…",
   "js": "…",
   "enabled": true,
-  "model": "Claude Code · haiku",
+  "model": "Claude Code · opus",
   "created": "2026-10-24T10:00:00.000Z",
   "updated": "2026-10-24T10:00:00.000Z"
 }
@@ -373,8 +373,10 @@ Mods are code running inside apps you're signed into, so:
   CDP isolated world on the desktop), so the app's or website's scripts can't
   reach Morse's host API: your prompt history, the clipboard, other sites'
   mods, exports or your model. Host requests are answered for the page that
-  asked. The share page's Install button opens Morse's own review; only a
-  click there installs.
+  asked. Only Morse's share page can ask for an install: a page that loaded
+  in `/RRAA/share/` on Morse's site, not any other page on that address
+  (every GitHub Pages project of the same owner shares it). Its Install
+  button opens Morse's own review; only a click there installs.
 - `morse launch` opens a debugging port on 127.0.0.1. While it's open, **any
   local process can attach to that app**, which is the same trust level as
   anything else running as you, but worth knowing. Quit the app normally to

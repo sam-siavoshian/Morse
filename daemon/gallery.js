@@ -9,6 +9,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { createGallery } from "../core/gallery-host.js";
+import { DEMO_INDEX_URL } from "../core/gallery.js";
 import { HOME, ensureHome, loadPrefs, loadConfig } from "./store.js";
 
 export const GALLERY_REQUESTS = new Set(["gallery.list"]);
@@ -30,6 +31,7 @@ export const gallery = createGallery({
     }).catch(() => {})),
   },
   enabled: async () => (await loadPrefs()).gallery !== false,
+  demoIndex: DEMO_INDEX_URL, // the demo apps, run from a checkout
   configured: async () => process.env.MORSE_GALLERY_URL || (await loadConfig()).gallery?.index || "",
 });
 

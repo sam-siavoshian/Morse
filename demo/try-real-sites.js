@@ -4,7 +4,7 @@
 // hotkey, point, describe, Enter, Save, reload: is the change still there?
 //
 //   node scripts/build.js
-//   DISPLAY=:99 MORSE_PROVIDER=claude-code MORSE_MODEL=haiku node demo/try-real-sites.js [sites.json]
+//   DISPLAY=:99 MORSE_PROVIDER=claude-code MORSE_MODEL=sonnet node demo/try-real-sites.js [sites.json]
 //     SHOTS=/tmp/shots FIRST=1     where pictures go (none unless SHOTS is set), and their first number
 //     NO_USER_SCRIPTS=1            leave Chrome's "Allow User Scripts" off
 //     PROXY=http://127.0.0.1:3128  the proxy Chromium should use (default: $HTTPS_PROXY)

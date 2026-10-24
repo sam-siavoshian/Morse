@@ -163,9 +163,11 @@
       ],
       "app": null
     },
-    "version": 1,
+    "version": 2,
     "userScripts": true,
-    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload."
+    "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload.",
+    "updated": "2026-10-24T18:00:00.000Z",
+    "changes": "Finds the cookie notice by its name and looks only at likely notices, so the page stays fast."
   },
   {
     "file": "go-bigger-code.morse.json",

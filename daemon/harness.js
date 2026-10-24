@@ -166,7 +166,7 @@ let warm = []; // started processes waiting for a request: { key, ready, dead, t
 let warmMax = 1; // one person, one request at a time
 let keepOthers = false;
 // The eval runs several cases at once, like several people (evals/run.js).
-// keepOthers: it also compares models side by side (--model haiku,sonnet,auto),
+// keepOthers: it also compares models side by side (--model sonnet,opus,auto),
 // each with its own processes (settings "pool"), so starting one doesn't stop another's.
 export function setWarmPoolSize(n, { keepOthers: k = false } = {}) { warmMax = Math.max(0, n | 0); keepOthers = k; }
 
@@ -282,7 +282,7 @@ export async function claudeCodeStream(s, messages, { onToken, signal, onStage }
     // The next request starts warm (unless this one was stopped), with the
     // usual instructions: a one-off request (describing a picture) doesn't
     // take the place of the common case. models: and with the model requests
-    // start on (haiku), also after one that went to the strong model.
+    // start on (sonnet), also after one that went to the strong model.
     if (!signal?.aborted) prewarmClaudeCode(s.warmAs || warmSettings(s)); // warmAs: the helper, for Chrome (daemon/bridge.js)
   }
 }
