@@ -118,7 +118,7 @@ export class Connector {
       case "mods.list":
         return modsFor({ url: msg.url, app: this.app?.id || null });
       case "mods.save": {
-        if (msg.draft) return saveMod(createMod({ ...msg.draft, app: this.app?.id || null, model: this.settings.model }));
+        if (msg.draft) return saveMod(createMod({ ...msg.draft, app: this.app?.id || null, model: msg.draft.model || settingsLabel(this.settings) }));
         return saveMod(msg.mod);
       }
       case "mods.delete":
@@ -139,6 +139,8 @@ export class Connector {
         await s.send("Runtime.evaluate", { expression: `globalThis.morse && morse.__off(${JSON.stringify(msg.modId)})`, contextId: ctx });
         return true;
       case "generate": {
+        if (!this.settings?.provider || this.settings.provider === "none")
+          throw new Error("No model connected. Run `morse doctor` in a terminal to set one up (Claude Code, Codex or an API key).");
         const t0 = Date.now();
         const res = await this.gens.run(msg.genId, signal => runMorse({
           settings: this.settings,

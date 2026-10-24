@@ -18,7 +18,9 @@ export function keysFrom(cfg, env = process.env) {
 
 export function settingsFromConfig(cfg, overrides = {}, { env = process.env, harnesses = detectHarnesses() } = {}) {
   const keys = keysFrom(cfg, env);
-  let provider = overrides.provider || cfg.provider || env.MORSE_PROVIDER || "";
+  // MORSE_PROVIDER overrides the config for one run (scripts and tests; it is
+  // also the only way to pick the internal "demo" replay fixture).
+  let provider = overrides.provider || env.MORSE_PROVIDER || cfg.provider || "";
   let detected = false;
   if (!provider) {
     detected = true;
