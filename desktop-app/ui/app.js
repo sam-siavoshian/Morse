@@ -41,6 +41,21 @@ function radar(size = 16) {
   }
   return s;
 }
+// An app's own icon, or (for an app with none Morse can read) the Apps glyph
+// from the sidebar: never a letter standing in for a picture.
+function appsGlyph() {
+  const s = document.createElementNS(svgNS, "svg");
+  for (const [k, v] of Object.entries({ viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", "stroke-width": "1.5", "aria-hidden": "true" })) s.setAttribute(k, v);
+  for (const [x, y] of [[2.5, 2.5], [9, 2.5], [2.5, 9], [9, 9]]) {
+    const r = document.createElementNS(svgNS, "rect");
+    for (const [k, v] of Object.entries({ x, y, width: 4.5, height: 4.5, rx: 1.2 })) r.setAttribute(k, v);
+    s.append(r);
+  }
+  return s;
+}
+function appIcon(a) {
+  return h("div", { class: `appicon${a.icon ? " has-img" : ""}`, "aria-hidden": "true" }, a.icon ? h("img", { src: a.icon, alt: "" }) : appsGlyph());
+}
 const caps = combo => h("span", { class: "caps" }, ...String(combo || "").split("+").filter(Boolean).map(k => h("kbd", { text: k })));
 const openKey = () => st.keys.open || (platform === "darwin" ? "⌥+Space" : "Ctrl+Shift+Space");
 // A message with the shortcut's keys in it: t() with {key} as a marker, then the keys put in its place.
@@ -69,11 +84,12 @@ function show(tab) {
   for (const b of document.querySelectorAll("nav button")) {
     if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   }
+  if (tab === "checks") tab = "model"; // simplify: Checks is a card in Model now
   for (const s of document.querySelectorAll("main > section")) s.hidden = s.id !== tab;
   try { sessionStorage.setItem("tab", tab); } catch {}
   $(tab).closest("main").scrollTop = 0;
   // Checks ask the model a question, so they run only when asked.
-  if (tab === "checks" && !$("check-list").children.length) $("check-list").replaceChildren(h("li", { class: "empty" }, t("desk.checks.first")));
+  if (tab === "model" && !$("check-list").children.length) $("check-list").replaceChildren(h("li", { class: "empty" }, t("desk.checks.first")));
 }
 for (const b of document.querySelectorAll("nav button")) b.onclick = () => show(b.dataset.tab);
 for (const b of document.querySelectorAll("[data-go]")) b.onclick = () => show(b.dataset.go);
@@ -91,9 +107,6 @@ const STATUS = {
   closed: a => [h("span", { text: [a.version ? t("desk.app.version", { version: a.version }) : t("desk.app.notOpen"), a.mods ? t("desk.app.mods", { n: a.mods }) : ""].filter(Boolean).join(" · ") })],
 };
 
-function appIcon(a) {
-  return h("div", { class: `appicon${a.icon ? " has-img" : ""}`, "aria-hidden": "true" }, a.icon ? h("img", { src: a.icon, alt: "" }) : (a.name || "?").trim()[0].toUpperCase());
-}
 function appRow(a) {
   const cant = a.canAttach === false;
   const status = cant ? [h("span", { text: t("desk.app.cant", { why: a.why }) })]
@@ -198,7 +211,7 @@ function renderModel() {
     const live = $("model-live");
     if (m.none) live.replaceChildren(h("i", { class: "dot warn" }), h("span", { text: t("desk.model.pick") }));
     else if (m.check?.ok) live.replaceChildren(h("i", { class: "dot on" }), h("span", { text: m.detected ? t("desk.model.answeredFound", { secs: secs(m.check.ms) }) : t("desk.model.answered", { secs: secs(m.check.ms) }) }));
-    else if (m.check) live.replaceChildren(h("i", { class: "dot bad" }), h("span", { text: t("desk.model.noAnswer", { error: m.check.error }) }));
+    else if (m.check) live.replaceChildren(h("i", { class: "dot bad" }), h("span", { text: t("desk.model.noAnswer", { error: unprefixed(m.check.error, m.name) }) }));
     else live.replaceChildren(h("i", { class: "dot" }), h("span", { text: m.detected ? t("desk.model.found") : t("desk.model.unchecked") }));
   }
   const nav = $("nav-model");
@@ -206,6 +219,8 @@ function renderModel() {
   nav.className = m.none || (m.check && !m.check.ok) ? "warn" : "";
 }
 
+// "Claude Code: You've hit your limit" under Claude Code's own name: the words, without the name again.
+const unprefixed = (error, name) => { const e = String(error || ""); return name && e.startsWith(name + ": ") ? e.slice(name.length + 2) : e; };
 let checking = false;
 async function checkModel() {
   checking = true;
@@ -386,7 +401,7 @@ function renderMods() {
   $("mod-groups").dataset.sig = sig;
   const focused = document.activeElement?.dataset?.mod;
   $("mod-groups").replaceChildren(...groups.map(g => h("div", { class: "group" },
-    h("h2", {}, (icon => icon ? h("img", { class: "gicon", src: icon, alt: "" }) : null)(st.apps.find(a => a.id === g.app)?.icon), h("span", { text: g.name }), h("small", { text: t("desk.mods.count", { n: g.mods.length, on: g.mods.filter(m => m.on).length }) })),
+    h("h2", {}, (icon => icon ? h("img", { class: "gicon", src: icon, alt: "" }) : h("span", { class: "gicon none", "aria-hidden": "true" }, appsGlyph()))(st.apps.find(a => a.id === g.app)?.icon), h("span", { text: g.name }), h("small", { text: t("desk.mods.count", { n: g.mods.length, on: g.mods.filter(m => m.on).length }) })),
     h("ul", { class: "list mods" }, ...g.mods.map(m => h("li", { class: m.on ? "" : "off" },
       h("div", { class: "grow" }, h("b", { text: m.title }), h("small", {}, h("span", { text: m.paused ? t("desk.mods.stopped") : `“${m.request}”` }))),
       h("input", { type: "checkbox", role: "switch", "aria-label": t("desk.mods.on", { title: m.title }), "data-mod": m.id, checked: m.on, onchange: e => morse.setModOn(m.id, e.target.checked) })))))));
@@ -409,8 +424,7 @@ async function runChecks() {
       h("span", { class: "label", text: r.label }),
       h("span", { class: "text", text: r.text }))));
     const bad = rows.filter(r => r.ok === false).length;
-    $("nav-checks").textContent = bad ? String(bad) : "";
-    $("nav-checks").className = bad ? "warn" : "";
+    $("checks").classList.toggle("warn", !!bad);
   } catch (e) {
     $("check-list").replaceChildren(h("li", { class: "empty" }, e.message));
   } finally { b.disabled = false; b.textContent = t("desk.checks.run"); }
@@ -436,7 +450,7 @@ function renderFirst() {
   if (m.none) live.replaceChildren(h("i", { class: "dot warn" }), h("span", { text: t("desk.first.noModel") }));
   else if (checking) live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.checking", { name }) }), radar(14));
   else if (m.check?.ok) live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.answered", { name, secs: secs(m.check.ms) }) }), h("span", { class: "badge ready" }, h("i", { class: "dot on" }), t("desk.ready")));
-  else if (m.check) live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.noAnswer", { name, error: m.check.error }) }), h("i", { class: "dot bad" }));
+  else if (m.check) live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.noAnswer", { name, error: unprefixed(m.check.error, m.name) }) }), h("i", { class: "dot bad" }));
   else live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.willUse", { name }) }));
   if (!m.none && !m.check && !firstChecked) { firstChecked = true; checkModel(); }
   $("first-foot").replaceChildren(...withKeys("desk.first.foot", openKey()));

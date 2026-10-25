@@ -257,8 +257,8 @@ test("keyboard only: open, choose with keys, describe, Save, Mods panel, turn a 
     assert.match(await focused(page), /\[m=showonce\]/, "the menu opens on its first item");
     await page.keyboard.press("End");
     assert.match(await focused(page), /\[m=help\]/);
-    await page.keyboard.press("c"); // type-ahead: the first item starting with C
-    assert.match(await focused(page), /\[m=keypick\]/);
+    await page.keyboard.press("s"); // type-ahead: the next item starting with S (from the end, it wraps)
+    assert.match(await focused(page), /\[m=showonce\]/);
     await page.keyboard.press("Home");
     assert.match(await focused(page), /\[m=showonce\]/);
     await page.keyboard.press("Enter");

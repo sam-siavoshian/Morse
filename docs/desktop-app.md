@@ -11,21 +11,27 @@ site or app.
 
 ## Get it
 
-There is no download yet. Until the first release, Morse Desktop is built
-from the Morse folder (see [Releasing](dev/releasing.md)). After that, there
-will be one download for each kind of computer:
+One download for each kind of computer. They are preview builds of the
+newest Morse, made again every time `main` changes (the
+[preview release](https://github.com/sam-siavoshian/RRAA/releases/tag/preview)
+has every file and its SHA-256):
 
 | Computer | Download | The first time |
 |---|---|---|
-| **Linux** | `Morse-<version>-linux-x86_64.AppImage` | Right-click it and choose Properties, then Permissions. Turn on “Allow executing file as program”. Then open it. |
-| **Mac** | `Morse-<version>-mac-arm64.dmg` (Apple silicon) or `-x64.dmg` (Intel) | Open the dmg and drag Morse to Applications. |
-| **Windows** | `Morse-Setup-<version>.exe` | Open it. It installs Morse for you only, with no admin question. |
+| **Mac** with Apple silicon (M1 and later) | [Morse-mac-arm64.dmg](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) | Open the dmg and drag Morse to Applications. |
+| **Mac** with Intel | [Morse-mac-x64.dmg](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg) | The same. |
+| **Windows** | [Morse-Setup.exe](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) | Open it. It installs Morse for you only, with no admin question. |
+| **Linux** | [Morse-linux-x86_64.AppImage](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage) | Make it runnable: right-click it, Properties, Permissions, turn on “Allow executing file as program”. Then open it. |
 
-If a Mac or Windows build isn't signed yet, the computer warns you once. On a
-Mac, right-click Morse in Applications and choose Open. On Windows, click
-**More info**, then **Run anyway**.
+Morse isn't signed yet, so your computer warns you once:
 
-To open it from the Morse folder, run `npm run desktop`.
+- **Mac:** open Morse. When macOS says it can't check it, open System
+  Settings, Privacy & Security, scroll down and click **Open Anyway**. (On
+  macOS 14 and older: right-click Morse in Applications and choose Open.)
+- **Windows:** when SmartScreen says “Windows protected your PC”, click
+  **More info**, then **Run anyway**.
+
+Working from the Morse folder? `npm run desktop` opens it from there.
 
 ## The first time
 
@@ -81,9 +87,12 @@ that, turn off **Let Chrome use Morse**.
 
 To connect Chrome:
 
-1. Add the Morse extension to Chrome. First turn on Developer mode in
-   `chrome://extensions`. Then click **Show the extension folder**. It opens
-   the folder that Chrome's **Load unpacked** asks for.
+1. Click **Add to Chrome**. Morse puts the extension in a folder that stays
+   put (`~/.morse/chrome-extension`), shows that folder, copies where it is,
+   and opens Chrome on `chrome://extensions`. There, turn on **Developer
+   mode** (top right) and drag the folder onto the page. Or click **Load
+   unpacked** and choose it: on a Mac, press ⌘⇧G in that window and paste.
+   Until Morse is in the Chrome Web Store, this is the way in.
 2. On the welcome page Chrome opens, click **Connect**. Morse Desktop asks
    “Allow Chrome to use your Claude Code?”. Click **Allow**. There's no code
    to type.
@@ -111,8 +120,9 @@ every app. Click it again to turn them back on. It is the same off switch as
 
 ## Checks
 
-**Run checks** shows what Morse found on this computer and asks your model a
-short question, like `morse doctor`. A row marked **!** says what to do.
+Under **Model**, **Run checks** shows what Morse found on this computer and
+asks your model a short question, like `morse doctor`. A row marked **!**
+says what to do.
 
 ![Checks: what Morse found, and the model answered](screenshots/173-desktop-app-checks.png)
 

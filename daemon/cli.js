@@ -7,7 +7,8 @@ import "../core/languages.js"; // the other languages' words, read from core/loc
 import { resolveApp } from "./apps.js";
 import { inspectFuses, formatFuses } from "./fuses.js";
 import { appsCommand, launchCommand, attachCommand, statusCommand, stopCommand } from "./desktop.js";
-import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH, HOME, savePrefs } from "./store.js";
+import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CONFIG_PATH, HOME, savePrefs, configUnreadable, keptConfigCopies } from "./store.js";
+import { said } from "./apps.js";
 import { startLabel, modelNames } from "../core/route.js"; // models: fast and strong
 import { commandFor, platformChecks, formatChecks } from "./platform.js";
 import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask, migrateLegacy } from "./models.js";
@@ -156,6 +157,7 @@ ${B(t("settings.model"))} ${h("model.note")}
                             ${h("config.auto")}
       --anthropic-key <key> --openai-key <key> --base-url <url>   ${h("config.keys")}
   morse doctor              ${h("doctor")}
+  morse uninstall           ${h("uninstall")}
 
 ${B(h("mods"))}
   morse mods                ${h("modsCmd")}
@@ -182,11 +184,46 @@ ${h("foot.off", { key: B(KEYS.off) })}` : ""}
 ${h("foot.web", { ext: B("morse extension"), serve: B("morse serve") })}
 ${h("foot.version", { cmd: "morse --version" })}`;
 
+// simplify: `morse help` is the few commands people use; every command and
+// option is behind `morse help --all` (docs/dev/simplify.md).
+const SHORT_HELP = `${LOGO}
+
+${B(h("desktop"))}
+  morse launch <app>        ${h("launch")}
+  morse apps                ${h("apps")}
+  morse stop <app>          ${h("stop")}
+
+${B(h("web"))}
+  morse extension           ${h("extension")}
+  morse serve               ${h("serve")}
+
+${B(t("settings.model"))}
+  morse setup               ${h("setup")}
+  morse doctor              ${h("doctor")}
+
+${B(h("mods"))}
+  morse mods                ${h("modsCmd")}
+  morse install <link|file> ${h("install")}
+  morse pause [site|app]    ${h("pauseCmd")}
+
+${h("foot.open", { key: B(openKey) })}${KEYS.off ? ` ${h("foot.off", { key: B(KEYS.off) })}` : ""}
+${h("all", { cmd: B("morse help --all") })}`;
+
+// The mod a command names: no id asks which; an id that isn't there says so.
+async function findMod(id) {
+  if (!id) throw said(t("cli.whichMod"));
+  const mod = (await listMods()).find(m => m.id === id);
+  if (!mod) throw said(t("cli.noMod", { id: shown(id) }));
+  return mod;
+}
+
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const f = flags(rest);
   if (["--version", "-v", "version"].includes(cmd)) return console.log(VERSION);
-  if (["--help", "-h", "help"].includes(cmd)) return console.log(HELP);
+  if (["--help", "-h", "help"].includes(cmd)) return console.log(f.all || f._[0] === "all" ? HELP : SHORT_HELP);
+  // A config.json that isn't valid JSON: say so once, before anything else (store.js).
+  if (await configUnreadable()) console.error(`${WARN("!")} ${t("cli.config.unreadable", { file: CONFIG_PATH })}`);
   if (await (await import("./setup.js")).maybeRun(cmd, rest)) return; // onboarding hook: morse setup, and getting started while nothing is set up
   switch (cmd) {
     case "apps":
@@ -225,14 +262,15 @@ async function main() {
       }
       break;
     }
-    case "rm":
-      await deleteMod(f._[0]);
-      console.log(t("cli.deleted", { id: f._[0] }));
+    case "rm": {
+      const mod = await findMod(f._[0]); // a typo deletes nothing, and says so
+      await deleteMod(mod.id);
+      console.log(t("cli.deleted", { id: mod.id }));
       break;
+    }
     case "export": {
       if (f.all) return exportAllCli(f); // user control: back up everything
-      const mod = (await listMods()).find(m => m.id === f._[0]);
-      if (!mod) throw new Error(t("cli.noMod", { id: f._[0] }));
+      const mod = await findMod(f._[0]);
       const slug = mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       console.log(await writeExport(`${slug}.morse.json`, JSON.stringify(mod, null, 2)));
       console.log(await writeExport(`${slug}.user.js`, toUserscript(mod)));
@@ -256,7 +294,8 @@ async function main() {
       const { EXTENSION_DIR } = await import("./setup.js");
       const { existsSync } = await import("node:fs");
       if (!existsSync(EXTENSION_DIR)) throw new Error(t("cli.extension.notBuilt", { dir: EXTENSION_DIR.replace(/[\\/]dist[\\/]extension$/, "") }));
-      console.log(EXTENSION_DIR);
+      // Installed with the install line: the copy in the Morse folder, which stays put across updates (daemon/installed.js).
+      console.log(await (await import("./installed.js")).extensionFolder({ builtDir: EXTENSION_DIR }));
       console.log(D(t("cli.extension.how")));
       break;
     }
@@ -291,14 +330,19 @@ async function main() {
       console.log(t("cli.unpaired", { n }));
       break;
     }
+    case "uninstall": // what the install line added (daemon/installed.js)
+      await (await import("./installed.js")).uninstallCli(f);
+      break;
     case "doctor": {
+      // --offline: no request leaves this computer (no version check, no model question).
+      const offline = f.offline === true;
       if (f.provider) assertProvider(f.provider);
       const cfg = await loadConfig();
       const h = detectHarnesses();
       const keys = keysFrom(cfg);
       const row = (k, v) => console.log(`  ${k.padEnd(9)} ${v}`);
       // Is a newer morse-cli on npm? At most once a day; MORSE_NO_UPDATE_CHECK=1 turns it off (docs/privacy.md).
-      const update = (await import("./update-check.js")).checkForUpdate(VERSION).catch(() => ({ state: "unknown" }));
+      const update = offline ? Promise.resolve({ state: "skipped" }) : (await import("./update-check.js")).checkForUpdate(VERSION).catch(() => ({ state: "unknown" }));
       console.log(LOGO + "\n");
       const u = await update;
       // "unpublished": morse-cli isn't on npm (yet), so there is nothing to compare with.
@@ -319,9 +363,10 @@ async function main() {
       row("model", s.provider === "none" ? WARN("none") : `${B(settingsLabel(s))}${s.detected ? D("  (auto-detected)") : ""}`);
       if (s.provider === "none") {
         console.log(`\n  No model is connected. Run morse setup to choose Claude Code, Codex or an API key.`);
-        process.exitCode = 1;
+        if (!offline) process.exitCode = 1;
         break;
       }
+      if (offline) { row("test", D("skipped (--offline): morse doctor asks the model a short question")); break; }
       const t0 = Date.now();
       try {
         const reply = await streamChat(s, [
@@ -336,10 +381,12 @@ async function main() {
       break;
     }
     default:
-      console.log(HELP);
+      if (cmd) { console.log(t("cli.unknown", { cmd: shown(cmd) }) + "\n"); process.exitCode = 1; }
+      console.log(SHORT_HELP);
   }
 }
 
+process.on("exit", () => { for (const file of keptConfigCopies) console.error(D(t("cli.config.copied", { file }))); });
 main().catch(e => {
   const plain = plainError(e);
   const details = e?.details || (plain !== e?.message && e?.message) || "";

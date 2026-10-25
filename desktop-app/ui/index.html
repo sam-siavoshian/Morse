@@ -15,7 +15,7 @@
 
 <!-- The first run: one screen, nothing to decide. The model is found by
      itself; open an app, and (if you like) use Morse in Chrome too. -->
-<div class="first" id="first" hidden>
+<div class="first" id="first" role="main" hidden>
   <div class="first-card">
     <svg class="radar" viewBox="0 0 15 15" width="32" height="32" fill="currentColor" aria-hidden="true"><rect x="4" y="0" width="3" height="3" rx="1" class="o"/><rect x="8" y="0" width="3" height="3" rx="1" class="o"/><rect x="0" y="4" width="3" height="3" rx="1" class="o"/><rect x="4" y="4" width="3" height="3" rx="1" class="c"/><rect x="8" y="4" width="3" height="3" rx="1" class="c"/><rect x="12" y="4" width="3" height="3" rx="1" class="o"/><rect x="0" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="8" width="3" height="3" rx="1" class="c"/><rect x="8" y="8" width="3" height="3" rx="1" class="c"/><rect x="12" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="12" width="3" height="3" rx="1" class="o"/><rect x="8" y="12" width="3" height="3" rx="1" class="o"/></svg>
     <h1 data-i18n="desk.first.h">Welcome to Morse</h1>
@@ -56,9 +56,6 @@
       <button type="button" data-tab="mods">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5l5.5 3L8 8.5l-5.5-3z"/><path d="M2.5 8.2L8 11.2l5.5-3M2.5 10.9L8 13.9l5.5-3"/></svg>
         <span data-i18n="desk.nav.mods">Mods</span><small id="nav-mods"></small></button>
-      <button type="button" data-tab="checks">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M5.6 8.1l1.7 1.7 3.2-3.4"/></svg>
-        <span data-i18n="desk.nav.checks">Checks</span><small id="nav-checks"></small></button>
     </nav>
     <div class="side-foot">
       <label class="switchrow"><span data-i18n="desk.modsOn">Mods on</span><input type="checkbox" role="switch" id="mods-on" checked></label>
@@ -110,6 +107,15 @@
         <div class="row-end"><button type="button" class="btn quiet" id="cancel-choice" data-i18n="desk.cancel">Cancel</button><button type="button" class="btn primary" id="use-choice" data-i18n="desk.model.use">Use this</button></div>
       </div>
       <p class="foot" data-i18n-html="desk.model.foot">Each choice is explained in <button type="button" class="link" data-link="models">Models and setup</button>.</p>
+      <!-- simplify: Checks lives here, under the model it checks (docs/dev/simplify.md) -->
+      <div class="card" id="checks" aria-labelledby="checks-h">
+        <div class="cur-main">
+          <div><span class="eyebrow" id="checks-h" data-i18n="desk.nav.checks">Checks</span><p class="sub" data-i18n="desk.checks.lede">What Morse found on this computer, and whether your model answers.</p></div>
+          <div class="cur-actions"><button type="button" class="btn" id="run-checks" data-i18n="desk.checks.run">Run checks</button></div>
+        </div>
+        <ul class="list checks" id="check-list" aria-label="Checks" data-i18n-attr="aria-label:desk.nav.checks"></ul>
+        <p class="foot" data-i18n-html="desk.checks.foot">If something is wrong, <button type="button" class="link" data-link="troubleshooting">Troubleshooting</button> says what each message means.</p>
+      </div>
     </section>
 
     <!-- Chrome -->
@@ -156,16 +162,6 @@
       </div>
     </section>
 
-    <!-- Checks -->
-    <section id="checks" aria-labelledby="checks-h" hidden>
-      <header class="head two">
-        <h1 id="checks-h" data-i18n="desk.nav.checks">Checks</h1>
-        <div class="head-actions"><button type="button" class="btn primary" id="run-checks" data-i18n="desk.checks.run">Run checks</button></div>
-        <p data-i18n="desk.checks.lede">What Morse found on this computer, and whether your model answers.</p>
-      </header>
-      <ul class="list checks" id="check-list" aria-label="Checks" data-i18n-attr="aria-label:desk.nav.checks"></ul>
-      <p class="foot" data-i18n-html="desk.checks.foot">If something is wrong, <button type="button" class="link" data-link="troubleshooting">Troubleshooting</button> says what each message means.</p>
-    </section>
   </main>
 </div>
 

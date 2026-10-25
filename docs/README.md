@@ -14,6 +14,7 @@ If you're new, start with [Getting started](getting-started.md).
 | [Edit tools and Page tools](edit-and-page-tools.md) | Change things yourself, with no model: hide, move, recolor, rename. Dark mode, text size, hide ads |
 | [Ask and find](ask-and-find.md) | Ask what something does or where a setting is. Show me, and Explain this page |
 | [Show me once](show-me-once.md) | Do a task by hand once, then have Morse do it for you |
+| [Bring a feature](bring-a-feature.md) | Take this in one app, Bring here in another: a feature rebuilt in that app's own look |
 | [Easier to use](easier-to-use.md) | Higher contrast, bigger click targets, easier fonts, Read aloud, Check this page, Describe this picture |
 | [Your style](your-style.md) | One look on every site and app: font, text size, calmer pages, colors, and the sites it skips |
 | [Mods](mods.md) | The Mods panel, sharing, the gallery, Try it, what a mod does before you install it, and fixing mods when a site changes |
@@ -40,6 +41,7 @@ If you're new, start with [Getting started](getting-started.md).
 | [Adding a feature](dev/adding-a-feature.md) | Rules for the in-app code, words, the UI review, docs |
 | [Accessibility of Morse itself](dev/accessibility.md) | Keyboard, screen readers, zoom and forced colors in Morse's own UI, and the axe-core audit |
 | [Onboarding](dev/onboarding.md) | The first minutes mapped and measured before and after, one-click pairing with Morse Desktop, “Allow User Scripts” only when needed |
+| [Simplify](dev/simplify.md) | Every setting, menu and button, what shows and what waits under More, and Morse checked end to end on a fresh setup |
 | [Checking a Mac or Windows PC](dev/platform-testing.md) | The 15-minute check for desktop apps on a real Mac or Windows PC |
 | [Pairing Chrome with the Morse helper](dev/pairing.md) | One-click pairing (the extension asks, the person allows in Morse Desktop) and codes: the requests, Morse Desktop's side, and why it's safe |
 | [Releasing](dev/releasing.md) | One-time setup, then `npm run release` and one push: npm, the GitHub release with the store zip, and Morse Desktop's builds and signing |

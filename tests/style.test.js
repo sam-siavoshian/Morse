@@ -344,6 +344,26 @@ test("sharing: pull, push, a change on the desktop in between, and a helper that
   assert.equal(gets, 2);
 });
 
+// perf: Chrome checks the helper's copy when a page loads (at most every 5 s,
+// extension/style-host.js); when nothing changed, that is one read on each
+// side and no write to chrome.storage.
+test("sharing: a check that finds both copies the same writes nothing", async () => {
+  const { createStyleSync } = await import("../core/style-sync.js");
+  const style = normalizeStyle({ words: "bigger text everywhere", blocks: { size: 2 }, updated: at(9) });
+  const n = { get: 0, load: 0, save: 0, baseSet: 0, put: 0 };
+  let base = "";
+  const sync = createStyleSync({
+    load: async () => { n.load++; return style; }, save: async () => { n.save++; },
+    base: { get: async () => base, set: async v => { n.baseSet++; base = v; } },
+    remote: { get: async () => { n.get++; return { style }; }, put: async () => { n.put++; return true; } },
+  });
+  assert.equal(await sync.sync(), null);
+  assert.equal(base, at(9), "the first check remembers when both agreed");
+  for (const k of Object.keys(n)) n[k] = 0;
+  for (let i = 0; i < 10; i++) assert.equal(await sync.sync(), null);
+  assert.deepEqual(n, { get: 10, load: 10, save: 0, baseSet: 0, put: 0 });
+});
+
 test("sharing, the desktop: reach says where a saved style shows, and a change from another process reaches open windows", async () => {
   const { Style, STYLE_FILE, onStyleChange } = await import("../daemon/style.js");
   const { updateConfig } = await import("../daemon/store.js");

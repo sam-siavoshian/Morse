@@ -1,0 +1,12 @@
+{
+  "model": "claude-code Automatic",
+  "results": [
+    {
+      "id": "vscodium-palette-to-rubygems",
+      "what": "VSCodium's command palette (Ctrl+Shift+P), taken in the desktop app and brought into RubyGems.org in Chrome",
+      "ok": false,
+      "error": "Cannot read properties of null (reading '1')",
+      "totalMs": 5452
+    }
+  ]
+}

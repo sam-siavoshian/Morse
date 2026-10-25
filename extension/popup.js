@@ -34,6 +34,9 @@ const send = msg => chrome.runtime.sendMessage({ ...msg, url });
 const MARK_OF = { "claude-code": ["claude"], codex: ["openai"], anthropic: ["anthropic"], openai: ["openai"] };
 const marks = p => (MARK_OF[p] || []).map(n => `<img src="brand/${n}.png" alt=""${n === "claude" ? "" : ' class="mono"'}>`).join("");
 let devOpened = false;
+// simplify: Model is folded or open as the popup opens, and then left alone,
+// so pairing here doesn't fold away its own "Paired" note.
+let modelPlaced = false;
 let st = await send({ type: "popup.state" });
 render(st);
 
@@ -54,6 +57,10 @@ function render(s) {
     : `<li class="empty">${esc(t("popup.noMods"))}</li>`;
 
   renderApp(s);
+  // simplify: a working model is one line; open it to change it. No model: open.
+  const ok = s.kind !== "none" && (s.kind !== "helper" || s.helper?.paired);
+  $("modelsum").textContent = ok ? `· ${s.label}` : "";
+  if (!modelPlaced) { modelPlaced = true; $("modelbox").open = !ok || isOptions; }
 
   // Auto (no explicit choice): show whichever is in use, else the helper.
   const backend = s.backend || (s.kind === "anthropic" ? "anthropic" : "helper");

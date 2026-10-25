@@ -69,6 +69,11 @@ this page run on your computer and send nothing to the model.
 - Your API keys: in Chrome's storage for Morse, or in `~/.morse/config.json`,
   which only you can read. A key is only sent to the service it is for.
 - Your past requests, backups and exports.
+- What you took with **Take this** ([Bring a feature](bring-a-feature.md)):
+  in Chrome's storage for Morse, and in `~/.morse/taken.json`, which only you
+  can read. When Chrome is paired with the Morse helper, the two share it
+  over the helper on this computer. Its small picture never goes to the
+  model.
 
 ## What mods can do
 

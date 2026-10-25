@@ -23,6 +23,7 @@ const A11y = (() => {
     check: '<path d="M5.75 3.25h6.5M5.75 8h6.5M5.75 12.75h6.5"/><path d="M1.75 3.25l.9.9 1.6-1.8M1.75 8l.9.9 1.6-1.8M1.75 12.75l.9.9 1.6-1.8"/>',
     describe: '<rect x="2.25" y="3" width="11.5" height="10" rx="1.75"/><circle cx="6" cy="6.5" r="1.1"/><path d="M2.5 11.25 6 8.5l2.5 2 1.75-1.25 3.25 2.25"/>',
     on: '<path d="M3.5 8.5 6.5 11.5 12.5 4.5"/>',
+    person: '<circle cx="8" cy="3.25" r="1.25"/><path d="M3 5.75l5 1 5-1M8 6.75v3.25M8 10l-2.25 3.75M8 10l2.25 3.75"/>',
   };
   const where = () => S.appName || location.host || t("panel.thisPage");
 
@@ -30,11 +31,18 @@ const A11y = (() => {
   const modFor = k => S.mods.find(m => m.kind === "quick" && m.edits?.[0]?.op === "a11y" && m.edits[0].kind === k);
   const isOn = k => !!modFor(k)?.enabled;
 
-  // ---- the menu group (46-quick.js rebuilds the menu each time it opens)
+  // ---- the menu group (46-quick.js rebuilds the menu each time it opens).
+  // simplify: it opens from one "Easier to use" item in the page tools, so
+  // the menu shows 9 things instead of 19 (docs/dev/simplify.md).
+  const onCount = () => [...A11Y_KINDS, "fixes"].filter(isOn).length;
+  quickMenuItems.push(() => {
+    const n = onCount();
+    return `<button role="menuitem" tabindex="-1" data-a11y="more" aria-haspopup="menu" aria-expanded="false" aria-controls="m-a11y-group">${svg(I.person)}<span>${t("a11y.title")}</span><span class="gm-state">${n ? svg(I.on) : ""}<span class="a11y-chev" aria-hidden="true">›</span></span></button>`;
+  });
   quickMenuGroups.push(() => {
     const r = modFor("readable");
     const item = (k, label, on, cls = "") => `<button role="menuitemcheckbox" tabindex="-1" class="${cls}" data-a11y="${k}" aria-checked="${on}">${cls ? "" : svg(I[k])}<span>${label}</span><span class="gm-state">${on ? svg(I.on) : ""}</span></button>`;
-    return `<div class="a11y-group menu" role="group" aria-label="${esc(t("a11y.title"))}">
+    return `<div class="a11y-group menu" id="m-a11y-group" role="group" aria-label="${esc(t("a11y.title"))}" hidden>
       <header aria-hidden="true">${t("a11y.title")}<small>${t("a11y.noModel")}</small></header>
       ${A11Y_KINDS.map(k => item(k, t(`a11y.${k}`), isOn(k)) + (k === "readable" ? item("dyslexia", t("a11y.dyslexia"), !!(r?.enabled && r.edits[0].dyslexia), "a11y-sub") : "")).join("")}
       <hr>
@@ -43,9 +51,26 @@ const A11y = (() => {
     </div>`;
   });
   const menu = bar.querySelector(".gm-menu");
+  function showGroup(on) {
+    const g = menu?.querySelector(".a11y-group"), b = menu?.querySelector("[data-a11y=more]");
+    if (!g || !b) return;
+    g.hidden = !on;
+    b.setAttribute("aria-expanded", String(on));
+    const to = on ? g.querySelector("[role^=menuitem]") : b;
+    for (const x of menu.querySelectorAll("[role^=menuitem]")) x.tabIndex = x === to ? 0 : -1;
+    to?.focus({ preventScroll: true });
+  }
+  // The arrow toward the group opens it from its item, the other one goes back (any app's submenu).
+  menu?.addEventListener("keydown", e => {
+    const rtl = getComputedStyle(menu).direction === "rtl";
+    const into = rtl ? "ArrowLeft" : "ArrowRight", back = rtl ? "ArrowRight" : "ArrowLeft";
+    if (e.key === into && e.target.closest?.("[data-a11y=more]")) { e.preventDefault(); e.stopPropagation(); showGroup(true); }
+    else if (e.key === back && e.target.closest?.(".a11y-group")) { e.preventDefault(); e.stopPropagation(); showGroup(false); }
+  });
   menu?.addEventListener("click", e => {
     const b = e.target.closest("button[data-a11y]");
     if (!b) return;
+    if (b.dataset.a11y === "more") return showGroup(b.getAttribute("aria-expanded") !== "true");
     GodQuick.close();
     act(b.dataset.a11y).catch(err => toast(err.message));
   });

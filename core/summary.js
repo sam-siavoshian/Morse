@@ -237,7 +237,7 @@ export function modOrigin(mod) {
   if (mod?.from && (mod.from.title || mod.from.app || mod.from.url)) {
     let where = mod.from.title || mod.from.app || "";
     if (!where) { try { where = new URL(mod.from.url).host; } catch { where = t("origin.anotherPage"); } }
-    return t("origin.rebuilt", { where, by });
+    return t(mod.from.taken ? "origin.taken" : "origin.rebuilt", { where, by }); // take-and-bring hook: Taken from VS Code
   }
   const when = iso => (iso ? t("origin.when", { day: day(iso) }) : "");
   if (mod?.kind === "manual" || mod?.kind === "quick") return t("origin.own", { when: when(mod.created) });

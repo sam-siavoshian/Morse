@@ -316,6 +316,7 @@ test("panel: search past six mods, arrows, Space toggles, Copy link", { skip }, 
 
   // http://morse.test is not a secure context, so there's no clipboard API: stand one in.
   await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async t => { window.__copied = t; } } }));
+  await ui(page, ".panel article[data-id=m3] .rmore summary").click(); // Copy link is under the row's More (docs/dev/simplify.md)
   await ui(page, ".panel article[data-id=m3] [data-a=link]").click();
   await page.waitForFunction(() => /Copied/.test(document.querySelector("[data-morse-ui]").shadowRoot.querySelector("article[data-id=m3] [data-a=link]").textContent));
   const link = await page.evaluate(() => window.__copied);

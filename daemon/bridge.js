@@ -9,6 +9,9 @@
 //   POST /v1/complete  { messages, model? }    Bearer token -> NDJSON {type: token|stage|done|error}
 //   POST /v1/warm      { model? }               Bearer token: get the model ready (the bar opened)
 //   GET  /v1/voice, POST /v1/transcribe        Bearer token, see daemon/voice.js
+//   GET  /v1/taken, POST /v1/taken { item }, POST /v1/taken/remove { id }
+//                      Bearer token: the features taken in desktop apps, shared
+//                      with Chrome (daemon/take.js, core/take-host.js)
 //   GET  /v1/style     -> { style }            Bearer token: Your style as this computer keeps it
 //   POST /v1/style     { style, was }          Bearer token: put Chrome's copy in its place, only
 //                                              if this one is still `was` (409 otherwise); core/style-sync.js
@@ -34,6 +37,7 @@ import { settingsFromConfig, settingsLabel } from "./models.js";
 import { detectHarnesses, validModel, TIMEOUT_MS } from "./harness.js";
 import { streamChat, abortError, prewarm, HELPER_PORT } from "../core/providers.js";
 import { handleVoice } from "./voice.js";
+import { Take } from "./take.js"; // take-and-bring hook
 import { Style } from "./style.js"; // your-style hook: shared with Chrome
 import { hasStyle } from "../core/style.js";
 import { execFile } from "node:child_process"; // onboarding v2: is Claude Code / Codex signed in?
@@ -295,6 +299,16 @@ export function createBridge({ port = 7457, host = "127.0.0.1", log = () => {}, 
       if (origin && rec.origin && rec.origin !== origin) return send(403, { error: "This pairing belongs to a different copy of Morse. Pair this browser again." });
 
       if (await handleVoice(req, res)) return;
+
+      // take-and-bring hook: one list of taken features for Chrome and the desktop apps
+      if (url.pathname === "/v1/taken" || url.pathname === "/v1/taken/remove") {
+        if (req.method === "GET" && url.pathname === "/v1/taken") return send(200, await Take.handle({ type: "taken.list" }));
+        if (req.method !== "POST") return send(405, { error: "Use POST" });
+        const body = await readJson(req);
+        if (url.pathname === "/v1/taken/remove") return send(200, await Take.handle({ type: "taken.remove", takenId: body?.id }));
+        try { return send(200, await Take.handle({ type: "taken.put", item: body?.item })); }
+        catch (e) { return send(400, { error: e.message }); }
+      }
 
       // your-style hook: one style for Chrome and the desktop apps (core/style-sync.js)
       if (url.pathname === "/v1/style") {

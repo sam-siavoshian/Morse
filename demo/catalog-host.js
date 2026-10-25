@@ -119,7 +119,9 @@
     if (q.get("style") === "fitted") s = { ...s, adapt: true, tried: { [styleKey(where())]: now } };
     if (q.get("style") === "plain") s = null;
     let stored = s;
-    return createStyleHost({ load: async () => stored, save: async v => { stored = v; }, now: () => now });
+    // ?reach=web|apps|all: where a saved style shows (round 6: “Every site in Chrome”, “Every site and app”)
+    const reach = ["web", "apps", "all"].includes(q.get("reach")) ? q.get("reach") : "all";
+    return createStyleHost({ load: async () => stored, save: async v => { stored = v; }, now: () => now, reach: async () => reach });
   }) : null;
   if (q.get("guard")) {
     const at = new Date(Date.now() - 20000).toISOString();
@@ -209,7 +211,7 @@
       if (q.get("waiting") && m.type === "exec") return reply({ waiting: "userScripts" });
       if (m.type === "stats" && C.slow?.[m.modId]) return reply({ watches: [], paused: C.slow[m.modId] });
       switch (m.type) {
-        case "hello": return reply({ mode: "catalog", label: C.label, quiet: q.get("quiet") !== "0", appName: q.get("app") || null, settings: C.settings, voice });
+        case "hello": return reply({ mode: "catalog", rebuilt: q.get("rebuilt") === "1", label: C.label, quiet: q.get("quiet") !== "0", appName: q.get("app") || null, settings: C.settings, voice });
         case "settings.get": return reply(C.settings);
         case "settings.set": C.settings = merge(C.settings, m.settings); return reply(structuredClone(C.settings));
         case "history.get": return reply(C.history.slice());

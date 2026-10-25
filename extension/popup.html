@@ -14,7 +14,9 @@
   </section>
 
   <section id="model">
-    <h2 data-i18n="popup.model">Model</h2>
+    <!-- simplify: once a model works, it folds into one line (docs/dev/simplify.md) -->
+    <details id="modelbox" open>
+    <summary><h2><span data-i18n="popup.model">Model</span> <span id="modelsum"></span></h2></summary>
     <!-- Morse in Chrome gets its model from the Morse app: what it uses, or how to get it (popup.js) -->
     <div id="app" class="app" role="status"></div>
 
@@ -50,6 +52,7 @@
       <button id="test" data-i18n="popup.test">Test the model</button>
       <span id="result" class="hint" role="status" aria-live="polite"></span>
     </div>
+    </details>
     </details>
   </section>
   </main>

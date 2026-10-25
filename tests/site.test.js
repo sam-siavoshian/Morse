@@ -96,7 +96,7 @@ test("the landing page has what it promises: buttons, video slot, sections and r
   assert.ok(shots.length >= 6, `screenshots on the page (saw ${shots.length})`);
   for (const s of shots) assert.ok(existsSync(path.join(SITE, s)), s);
   // The first run, in three pictures at most.
-  const firstRun = /<ol class="first-run-list">([\s\S]*?)<\/ol>/.exec(html)?.[1] || "";
+  const firstRun = /<ol class="first-run-list"[^>]*>([\s\S]*?)<\/ol>/.exec(html)?.[1] || "";
   const firstRunShots = (firstRun.match(/<img\b/g) || []).length;
   assert.ok(firstRunShots >= 1 && firstRunShots <= 3, `the first run in three pictures at most (saw ${firstRunShots})`);
   // Every <img> has alt text and a size, so nothing shifts as it loads; all

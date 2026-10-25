@@ -99,12 +99,30 @@ async function writeConfig(cfg) {
   await fs.chmod(CONFIG, 0o600).catch(() => {});
 }
 export async function saveConfig(cfg) {
-  await queue(CONFIG, () => writeConfig(cfg));
+  await queue(CONFIG, async () => { await keepUnreadableConfig(); await writeConfig(cfg); });
+}
+
+// A config.json that isn't valid JSON (edited by hand, cut short): Morse runs
+// on its defaults and says so (daemon/cli.js), and before writing a new one
+// keeps a copy, so nothing in it (keys, tokens) is lost.
+export const keptConfigCopies = [];
+export async function configUnreadable() {
+  let text;
+  try { text = await fs.readFile(CONFIG, "utf8"); } catch { return false; }
+  try { parseJson(text); return false; } catch { return true; }
+}
+async function keepUnreadableConfig() {
+  let text;
+  try { text = await fs.readFile(CONFIG, "utf8"); parseJson(text); return; } catch { if (text === undefined) return; }
+  const copy = `${CONFIG}.unreadable-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+  await fs.writeFile(copy, text, { mode: 0o600 });
+  keptConfigCopies.push(copy);
 }
 
 // Read-modify-write, in the config file's queue.
 export function updateConfig(fn) {
   return queue(CONFIG, async () => {
+    await keepUnreadableConfig();
     const cfg = await loadConfig();
     const out = (await fn(cfg)) ?? cfg;
     await writeConfig(out);

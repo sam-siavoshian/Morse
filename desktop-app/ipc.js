@@ -53,8 +53,8 @@ export const API = {
     const r = await s.useChrome();
     if (r?.error) return r;
     if (r.store) { await n.openExternal(r.store); return { store: true }; }
+    await n.showFolder(r.folder);
     const opened = await n.openChrome();
-    await n.revealFolder(r.folder);
     return { folder: r.shown || r.folder, opened: !!opened };
   }],
   setModOn:           [[id, bool], (s, n, modId, on) => s.setModOn(modId, on)],

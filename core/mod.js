@@ -35,7 +35,8 @@ export function createMod({ id, title, prompt, css, js, url, app, target, model,
     // God mode: manual/quick mods keep their edit list (core/edits.js) so they
     // stay editable; mods rebuilt from a captured element record where it came from.
     ...(manual ? { kind, edits: Array.isArray(edits) ? edits : [] } : {}),
-    ...(from && typeof from === "object" ? { from: { app: from.app || null, url: from.url || null, title: from.title || null } } : {}),
+    ...(from && typeof from === "object" ? { from: { app: from.app || null, url: from.url || null, title: from.title || null,
+      ...(typeof from.taken === "string" ? { taken: from.taken.slice(0, 40) } : {}) } } : {}), // take-and-bring hook: brought from a taken feature
     // A draft refined in the bar before it was kept arrives with its versions.
     ...(Array.isArray(history) && history.length ? { history: versionsOf({ history }) } : {}),
     ...(typeof refined === "string" && refined && refined !== prompt ? { refined } : {}),

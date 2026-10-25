@@ -5,7 +5,9 @@
 //
 // Signing is skipped, not failed, when its secrets are missing: the build
 // still makes an app, just an unsigned one (macOS and Windows then warn the
-// person on first open).
+// person on first open). An unsigned Mac app is still signed "ad hoc" (no
+// name, no Apple account): Apple silicon Macs won't run an app without any
+// signature, and turning Electron's fuses changes the signed files.
 
 export function builderConfig({ stage, out, res, electronDist = null, electronVersion, env = process.env }) {
   const macSigned = !!(env.CSC_LINK || env.CSC_NAME);
@@ -33,6 +35,8 @@ export function builderConfig({ stage, out, res, electronDist = null, electronVe
       enableEmbeddedAsarIntegrityValidation: true,
       onlyLoadAppFromAsar: true,
       grantFileProtocolExtraPrivileges: false,
+      // No Developer ID: sign ad hoc again after the fuses change the files.
+      resetAdHocDarwinSignature: !macSigned,
     },
     // morse://open starts Morse Desktop or shows its window (desktop-app/main.js).
     protocols: [{ name: "Morse", schemes: ["morse"] }],
@@ -47,10 +51,11 @@ export function builderConfig({ stage, out, res, electronDist = null, electronVe
     },
 
     mac: {
-      target: [{ target: "dmg", arch: ["arm64", "x64"] }],
+      // The dmg to download; the zip for whoever prefers one (and for updates later).
+      target: [{ target: "dmg", arch: ["arm64", "x64"] }, { target: "zip", arch: ["arm64", "x64"] }],
       category: "public.app-category.productivity",
       icon: `${res}/icon.png`,
-      hardenedRuntime: true,
+      hardenedRuntime: macSigned, // only with a real signature: notarization needs it, ad hoc it only gets in the way
       gatekeeperAssess: false,
       entitlements: `${res}/entitlements.mac.plist`,
       entitlementsInherit: `${res}/entitlements.mac.plist`,

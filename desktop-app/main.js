@@ -14,19 +14,19 @@
 //   node desktop-app/run.js          start it from a clone
 //   node desktop-app/build.js        package it (docs/dev/releasing.md)
 
-import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, ipcMain, dialog, shell, session, protocol } from "electron";
+import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, ipcMain, dialog, shell, session, protocol, clipboard } from "electron";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { execFile, spawn } from "node:child_process";
+import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { createService, loadDaemon } from "./service.js";
 import { registerIpc, PUSH, isOpenLink } from "./ipc.js";
 import { markPng } from "./mark.js";
-import { chromeCommand, isStoreUrl } from "./chrome.js";
 import { LINKS } from "../site/config.js";
 import { LANGUAGES } from "../core/i18n.js";
 import { iconSource } from "./icons.js";
 import { setAutostart, writeMenuEntry } from "./linux.js";
+import { openChromeExtensions, isStoreUrl } from "./chrome.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // The window's page is served from morse-app://ui/, a scheme of Morse's own
@@ -128,8 +128,8 @@ function trayIcon() {
   return img;
 }
 
-// An app's own icon, as a data: URL for the list (or null: the list shows a
-// letter). icons.js finds the app's real icon file (the icon theme, the app's
+// An app's own icon, as a data: URL for the list (or null: the list shows the
+// Apps glyph, never a letter). icons.js finds the app's real icon file (the icon theme, the app's
 // folder, inside an AppImage, the .icns in a Mac app); Electron's
 // app.getFileIcon is the fallback on macOS and the way on Windows. On Linux it
 // gives a generic "program" picture, not the app's, so it isn't used there.
@@ -286,21 +286,17 @@ app.whenReady().then(async () => {
         });
         return r.canceled ? null : r.filePaths[0];
       },
-      showFolder: async dir => { if (dir) { const e = await shell.openPath(dir); return e ? { error: "Morse couldn't open that folder." } : { ok: true }; } return { error: "The Chrome extension isn't built yet." }; },
-      openExternal: async url => { await shell.openExternal(url); return { ok: true }; },
-      // The folder, selected in its own folder, ready for Chrome's Load unpacked.
-      revealFolder: async dir => { if (!dir) return { error: "The Chrome extension isn't built yet." }; shell.showItemInFolder(dir); return { ok: true }; },
-      // Chrome on its extensions page (desktop-app/chrome.js); false when there's no Chrome here.
-      openChrome: async () => {
-        const c = chromeCommand();
-        if (!c) return false;
-        try {
-          const child = spawn(c.file, c.args, { detached: true, stdio: "ignore" });
-          child.on("error", e => log("Chrome didn't start:", e.message));
-          child.unref();
-          return true;
-        } catch (e) { log("Chrome didn't start:", e.message); return false; }
+      // The extension's folder, shown and selected (so it can be dragged into
+      // Chrome), and its place copied (to paste where Load unpacked asks).
+      showFolder: async dir => {
+        if (!dir) return { error: "The Chrome extension isn't built yet." };
+        shell.showItemInFolder(dir);
+        clipboard.writeText(dir);
+        return { ok: true };
       },
+      openExternal: async url => { await shell.openExternal(url); return { ok: true }; },
+      // Chrome on its extensions page (desktop-app/chrome.js); false when there's no Chrome here.
+      openChrome: () => openChromeExtensions().catch(() => false),
       setLoginItem,
     },
   });

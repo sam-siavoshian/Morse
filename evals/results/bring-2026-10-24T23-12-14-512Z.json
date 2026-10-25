@@ -1,0 +1,53 @@
+{
+  "model": "claude-code Automatic",
+  "results": [
+    {
+      "id": "vscodium-palette-to-rubygems",
+      "what": "VSCodium's command palette (Ctrl+Shift+P), taken in the desktop app and brought into RubyGems.org in Chrome",
+      "taken": {
+        "name": "Command palette",
+        "about": "It is a pop-up search box for finding and running any action in the app by typing part of its name, so you don't have to hunt through menus.\nIt opens with Ctrl+Shift+P, and it floats near the top of the window over everything else.\nAs you type, the list below narrows to matching commands, and a small badge shows how many results match (here 3) and how many are selected.\nYou move through the list with the arrow keys or the mouse, and each row shows the command name with its keyboard shortcut. Pressing Enter or clicking runs the highlighted one.\nIt closes when you run a command, press Escape, or click outside it.",
+        "from": {
+          "app": "VSCodium",
+          "host": "vscode-app"
+        },
+        "steps": 2
+      },
+      "request": "",
+      "ms": 46018,
+      "model": "RubyGems command palette 45.0s · needed a second try",
+      "mod": {
+        "title": "RubyGems command palette",
+        "from": {
+          "app": "VSCodium",
+          "taken": "d7yqugiya3",
+          "title": null,
+          "url": null
+        },
+        "css": ".mcp-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.25);display:flex;justify-content:center;align-items:flex-start;padding-top:80px}\n.mcp-box{width:600px;max-width:92vw;background:#fff;color:#000;border:1px solid #e5e5e5;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.18);font-family:\"Titillium Web\",inherit;overflow:hidden}\n.mcp-head{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #e5e5e5}\n.mcp-input{flex:1;font:inherit;font-size:16px;padding:6px 10px;border:1px solid #d4d4d4;border-radius:6px;outline:none;background:#fbfbfb;color:inherit}\n.mcp-input:focus{border-color:#e9573f;box-shadow:0 0 0 2px rgba(233,87,63,.2)}\n.mcp-badge{font-size:12px;padding:2px 8px;border-radius:999px;background:#f2f2f2;color:#555;white-space:nowrap}\n.mcp-list{max-height:360px;overflow-y:auto;margin:0;padding:4px 0;list-style:none}\n.mcp-row{display:flex;justify-content:space-between;gap:12px;padding:6px 14px;font-size:15px;cursor:pointer}\n.mcp-row small{color:#737373;font-size:12px}\n.mcp-row.mcp-sel{background:#fdece8;color:#c1391f}\n.mcp-empty{padding:10px 14px;color:#737373;font-size:14px}\n.mcp-btn{margin-left:12px;font:inherit;font-size:13px;padding:4px 10px;border:1px solid #d4d4d4;border-radius:6px;background:transparent;color:inherit;cursor:pointer;white-space:nowrap}\n.mcp-btn:hover{border-color:#e9573f;color:#e9573f}\n@media (prefers-color-scheme:dark){.mcp-box{background:#000;color:#fff;border-color:#333}.mcp-head{border-color:#333}.mcp-input{background:#111;border-color:#333}.mcp-badge{background:#222;color:#bbb}.mcp-row.mcp-sel{background:#2a1510;color:#ff8a6f}}\n",
+        "js": "let overlay = null;\nconst clean = s => (s || \"\").replace(/\\s+/g, \" \").trim();\nfunction gather() {\n  const cmds = [], seen = new Set();\n  const add = (label, hint, run) => { const k = label + \"|\" + hint; if (!label || seen.has(k)) return; seen.add(k); cmds.push({ label, hint, run }); };\n  add(\"Search: Focus gem search\", \"Search\", () => { const q = morse.$$(\"#query\")[0]; q && q.focus(); });\n  const groups = [\n    [\"header nav a\", \"Go to\"], [\"nav[aria-label='Breadcrumb'] a\", \"Breadcrumb\"],\n    [\"nav[aria-label='Gem navigation'] a\", \"Gem\"], [\"aside[aria-label='Details'] a\", \"Details\"],\n    [\"main a\", \"Open\"], [\"header div.ml-auto.flex a\", \"Account\"]\n  ];\n  groups.forEach(([sel, p]) => morse.$$(sel).forEach(a => {\n    const t = clean(a.getAttribute(\"aria-label\") || a.textContent);\n    if (t) add(p + \": \" + t, (a.getAttribute(\"href\") || \"\").slice(0, 40), () => a.click());\n  }));\n  morse.$$(\"main h3, aside h1, aside h2\").forEach(h => {\n    const t = clean(h.textContent);\n    add(\"Scroll to: \" + t, \"Section\", () => h.scrollIntoView({ behavior: \"smooth\", block: \"start\" }));\n  });\n  add(\"View: Scroll to top\", \"Home\", () => scrollTo({ top: 0, behavior: \"smooth\" }));\n  return cmds;\n}\nfunction close() { if (overlay) { overlay.remove(); overlay = null; } }\nfunction open() {\n  if (overlay) return;\n  const cmds = gather();\n  let shown = cmds, idx = 0;\n  const input = morse.el(\"input\", { class: \"mcp-input\", placeholder: \"Type the name of a command to run.\", \"aria-label\": \"Command\" });\n  const badge = morse.el(\"span\", { class: \"mcp-badge\" });\n  const list = morse.el(\"ul\", { class: \"mcp-list\", role: \"listbox\" });\n  const run = c => { close(); c && c.run(); };\n  const render = () => {\n    list.textContent = \"\";\n    badge.textContent = shown.length + \" Results\";\n    if (!shown.length) list.append(morse.el(\"li\", { class: \"mcp-empty\", text: \"No matching commands\" }));\n    let sel = null;\n    shown.forEach((c, i) => {\n      const li = morse.el(\"li\", { class: \"mcp-row\" + (i === idx ? \" mcp-sel\" : \"\"), role: \"option\",\n        on: { click: () => run(c), mousemove: () => { if (idx !== i) { idx = i; render(); } } } },\n        morse.el(\"span\", { text: c.label }), morse.el(\"small\", { text: c.hint }));\n      if (i === idx) sel = li;\n      list.append(li);\n    });\n    sel && sel.scrollIntoView({ block: \"nearest\" });\n  };\n  input.addEventListener(\"input\", () => {\n    const words = input.value.replace(/^>/, \"\").toLowerCase().split(/\\s+/).filter(Boolean);\n    shown = cmds.filter(c => words.every(w => c.label.toLowerCase().includes(w)));\n    idx = 0; render();\n  });\n  input.addEventListener(\"keydown\", e => {\n    if (e.key === \"ArrowDown\") { e.preventDefault(); idx = Math.min(idx + 1, shown.length - 1); render(); }\n    else if (e.key === \"ArrowUp\") { e.preventDefault(); idx = Math.max(idx - 1, 0); render(); }\n    else if (e.key === \"Enter\") { e.preventDefault(); run(shown[idx]); }\n    else if (e.key === \"Escape\") { e.preventDefault(); close(); }\n  });\n  const box = morse.el(\"div\", { class: \"mcp-box\", role: \"dialog\", \"aria-label\": \"Command palette\" },\n    morse.el(\"div\", { class: \"mcp-head\" }, input, badge), list);\n  overlay = morse.el(\"div\", { class: \"mcp-overlay\", on: { mousedown: e => { if (e.target === overlay) close(); } } }, box);\n  document.body.append(overlay);\n  input.value = \">\"; render(); input.focus();\n}\nmorse.on(document, \"keydown\", e => {\n  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === \"P\" || e.key === \"p\")) { e.preventDefault(); overlay ? close() : open(); }\n  else if (e.key === \"Escape\" && overlay) close();\n});\nmorse.watch(\"header div.ml-auto.flex > div.ml-3.flex\", el => {\n  el.append(morse.el(\"button\", { class: \"mcp-btn\", type: \"button\", title: \"Command palette (Ctrl+Shift+P)\", text: \"⌘ Commands\", on: { click: open } }));\n});\n"
+      },
+      "opened": true,
+      "fit": {
+        "ok": true,
+        "score": 0.98,
+        "fonts": 1,
+        "colors": 0.95,
+        "corners": 1,
+        "off": [
+          "text rgb(193, 57, 31)"
+        ],
+        "pageFonts": [
+          "titillium web",
+          "fira code"
+        ]
+      },
+      "works": true,
+      "code": [
+        1626
+      ],
+      "ok": true,
+      "totalMs": 87890
+    }
+  ]
+}

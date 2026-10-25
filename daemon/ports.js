@@ -103,8 +103,8 @@ export function safeExtraArgs(args = []) {
   return args.filter(a => !/^(--?|\/)remote-(debugging-(address|port|pipe)|allow-origins)\b/i.test(a));
 }
 
-async function json(port, path) {
-  const res = await fetch(`http://127.0.0.1:${port}${path}`, { signal: AbortSignal.timeout(1500) }).catch(e => { throw appTimeout(e, port); });
+async function json(port, path, ms = 1500) {
+  const res = await fetch(`http://127.0.0.1:${port}${path}`, { signal: AbortSignal.timeout(ms) }).catch(e => { throw appTimeout(e, port); });
   return res.json();
 }
 
@@ -128,8 +128,17 @@ async function browserPid(wsUrl) {
 }
 
 // What is answering on the port: { browser, userAgent, electron, pid }.
-export async function identify(port) {
-  const v = await json(port, "/json/version");
+// An app that just opened, on a busy computer, can take seconds to answer:
+// it gets longer each try (checked end to end: VSCodium opened a second time
+// took over 1.5 s). No answer at all is the app's, never the model's.
+export async function identify(port, { tries = [1500, 3000, 6000] } = {}) {
+  let v;
+  for (let i = 0; ; i++) {
+    try { v = await json(port, "/json/version", tries[i]); break; }
+    catch (e) {
+      if (e?.cause?.name !== "TimeoutError" || i === tries.length - 1) throw e; // appTimeout (cdp.js): the app's, never the model's
+    }
+  }
   return {
     browser: v.Browser || "",
     userAgent: v["User-Agent"] || "",

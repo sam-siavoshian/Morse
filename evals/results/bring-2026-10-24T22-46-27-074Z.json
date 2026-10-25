@@ -1,0 +1,105 @@
+{
+  "model": "claude-code Automatic",
+  "results": [
+    {
+      "id": "go-jump-to-node-docs",
+      "what": "pkg.go.dev's Jump to dialog (press f), brought into the Node.js docs",
+      "taken": {
+        "name": "Jump to identifier",
+        "about": "It lets you quickly find a function, type, or method on a documentation page and go straight to it, without scrolling through a long page.\nPressing the F key opens it as a small window over the page, with the typing box ready to use.\nAs you type, the list narrows to names that contain your letters, with the matching part shown in bold. The top match is highlighted.\nClicking a name takes you to that spot on the page.\nYou close it with the X in the corner or the Close button.",
+        "from": {
+          "app": "Go Packages",
+          "host": "pkg.go.dev"
+        },
+        "steps": 2
+      },
+      "request": "Add “Jump to identifier” from Go Packages here",
+      "ms": 64574,
+      "model": "Jump to identifier 60.0s · needed a second try",
+      "mod": {
+        "title": "Jump to identifier",
+        "from": {
+          "app": "Go Packages",
+          "taken": "ubnc7pirvv",
+          "title": null,
+          "url": null
+        },
+        "css": "#morse-jump{width:480px;max-width:92vw;padding:16px;border:1px solid #ccc;border-radius:4px;box-shadow:0 0 6px rgba(0,0,0,.25);background:#fff;color:rgb(51,51,51);font-family:Lato,\"Lucida Grande\",\"Lucida Sans Unicode\",sans-serif;font-size:16px}\n#morse-jump::backdrop{background:rgba(0,0,0,.3)}\n#morse-jump .mj-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}\n#morse-jump h2{margin:0;font-size:1.15em;font-weight:700;border:0;padding:0}\n#morse-jump .mj-x{background:none;border:0;font-size:22px;cursor:pointer;color:inherit;line-height:1}\n#morse-jump input{width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #43853d;border-radius:4px;font:inherit;outline:none;box-shadow:0 0 1px 1px rgba(67,133,61,.5)}\n#morse-jump .mj-list{display:flex;flex-direction:column;max-height:50vh;overflow:auto;margin:12px 0}\n#morse-jump .mj-list a{padding:3px 6px;border-radius:3px;color:inherit;text-decoration:none;font-family:SFMono-Regular,Menlo,Consolas,monospace;font-size:14px}\n#morse-jump .mj-list a:hover{text-decoration:underline;color:#43853d}\n#morse-jump .mj-list a.mj-active{background:#43853d;color:#fff}\n#morse-jump .mj-actions{text-align:right}\n#morse-jump .mj-close{background:#43853d;color:#fff;border:0;border-radius:4px;padding:8px 12px;font:inherit;font-weight:700;cursor:pointer}\n.mj-btn{cursor:pointer}\n",
+        "js": "let items=[],shown=[],act=0;\nconst list=morse.el('div',{class:'mj-list'});\nconst input=morse.el('input',{type:'text',autocomplete:'off','aria-label':'Filter identifiers'});\nconst dlg=morse.el('dialog',{id:'morse-jump','aria-label':'Jump to identifier'},\n  morse.el('div',{class:'mj-title'},morse.el('h2',{text:'Jump to'}),\n    morse.el('button',{class:'mj-x',type:'button','aria-label':'Close',text:'×',on:{click:()=>dlg.close()}})),\n  input,list,\n  morse.el('div',{class:'mj-actions'},morse.el('button',{class:'mj-close',type:'button',text:'Close',on:{click:()=>dlg.close()}})));\ndocument.body.append(dlg);\nconst esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));\nfunction go(h){dlg.close();const t=document.getElementById(decodeURIComponent(h.slice(1)));if(t){t.scrollIntoView();history.replaceState(null,'',h);}else location.hash=h;}\nfunction render(){\n  const q=input.value.trim().toLowerCase();list.textContent='';\n  shown=items.filter(i=>!q||i.t.toLowerCase().includes(q)).slice(0,200);\n  act=0;\n  shown.forEach((i,n)=>{let html=esc(i.t);\n    if(q){const k=i.t.toLowerCase().indexOf(q);html=esc(i.t.slice(0,k))+'<b>'+esc(i.t.slice(k,k+q.length))+'</b>'+esc(i.t.slice(k+q.length));}\n    list.append(morse.el('a',{href:i.h,tabindex:'-1',html,class:n?'':'mj-active',on:{click:e=>{e.preventDefault();go(i.h);}}}));});\n}\nfunction mark(){[...list.children].forEach((a,n)=>a.classList.toggle('mj-active',n===act));list.children[act]?.scrollIntoView({block:'nearest'});}\nmorse.on(input,'input',render);\nmorse.on(input,'keydown',e=>{\n  if(e.key==='ArrowDown'){act=Math.min(act+1,shown.length-1);mark();e.preventDefault();}\n  else if(e.key==='ArrowUp'){act=Math.max(act-1,0);mark();e.preventDefault();}\n  else if(e.key==='Enter'&&shown[act]){e.preventDefault();go(shown[act].h);}\n});\nmorse.on(dlg,'click',e=>{if(e.target===dlg)dlg.close();});\nfunction collect(){\n  const seen=new Set(),out=[];\n  const add=(t,h)=>{t=(t||'').replace(/#\\s*$/,'').trim();if(t&&h&&h.length>1&&!seen.has(h)){seen.add(h);out.push({t,h});}};\n  morse.$$('#apicontent section h2, #apicontent section h3, #apicontent section h4, #apicontent section h5').forEach(hd=>{\n    const a=hd.querySelector('a[href*=\"#\"]');\n    const id=hd.id||(a&&a.getAttribute('href').split('#')[1]);\n    add(hd.textContent,id?'#'+id:'');\n  });\n  morse.$$('details#toc a[href*=\"#\"]').forEach(a=>{const h=a.getAttribute('href');add(a.textContent,h.slice(h.indexOf('#')));});\n  return out;\n}\nfunction open(){items=collect();input.value='';render();if(!dlg.open)dlg.showModal();input.focus();}\nmorse.on(document,'keydown',e=>{\n  if((e.key==='f'||e.key==='F')&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!dlg.open&&!e.target.closest('input,textarea,select,[contenteditable]')){e.preventDefault();open();}\n});\nmorse.watch('#gtoc > ul',ul=>{\n  ul.append(morse.el('li',{class:'picker-header mj-btn'},morse.el('a',{href:'#',title:'Jump to identifier (F)',text:'Jump to…',on:{click:e=>{e.preventDefault();open();}}})));\n});\n"
+      },
+      "opened": true,
+      "fit": {
+        "ok": true,
+        "score": 1,
+        "fonts": 1,
+        "colors": 1,
+        "corners": 1,
+        "off": [],
+        "pageFonts": [
+          "lato",
+          "sfmono-regular",
+          "arial"
+        ]
+      },
+      "works": true,
+      "code": [
+        1358
+      ],
+      "ok": true,
+      "totalMs": 116522
+    },
+    {
+      "id": "node-dark-switch-to-pypi",
+      "what": "The Node.js docs' dark mode switch, brought into PyPI",
+      "taken": {
+        "name": "Dark mode switch",
+        "about": "It lets you change the whole page between a light look and a dark look. The icon shows a moon with a small cloud, hinting at night.\nYou open it by clicking the icon, which sits in the page's top bar.\nOne click flips the colors right away, so the page turns dark or goes back to light.\nThere is nothing to close: clicking it again switches back, and the choice usually stays for your next visit.",
+        "from": {
+          "app": "Node.js Documentation",
+          "host": "nodejs.org"
+        },
+        "steps": 0
+      },
+      "request": "",
+      "ms": 21036,
+      "model": "Dark mode switch 19.3s",
+      "mod": {
+        "title": "Dark mode switch",
+        "from": {
+          "app": "Node.js Documentation",
+          "taken": "iocmjul53q",
+          "title": null,
+          "url": null
+        },
+        "css": "html.morse-dark body{background:#16191d!important;color:#d6d9dc!important}\nhtml.morse-dark .site-header{background:#0f2a3f!important}\nhtml.morse-dark .banner,html.morse-dark .horizontal-section--grey{background:#1e2329!important;color:#d6d9dc!important}\nhtml.morse-dark main,html.morse-dark .project-tabs,html.morse-dark .project-description,html.morse-dark .site-container{background:transparent!important;color:#d6d9dc!important}\nhtml.morse-dark h1,html.morse-dark h2,html.morse-dark h3,html.morse-dark h4,html.morse-dark p,html.morse-dark li,html.morse-dark span,html.morse-dark td,html.morse-dark th{color:inherit!important}\nhtml.morse-dark #content a:not(.button){color:#7fb8e6!important}\nhtml.morse-dark pre,html.morse-dark code{background:#0d1014!important;color:#e6e6e6!important;border-color:#333!important}\nhtml.morse-dark .vertical-tabs__tab,html.morse-dark .sidebar-section,html.morse-dark .package-snippet{background:#1e2329!important;color:#d6d9dc!important;border-color:#333!important}\nhtml.morse-dark input#search{background:#22272e!important;color:#eee!important}\nhtml.morse-dark footer,html.morse-dark .footer{background:#0b0e11!important}\n.morse-dark-toggle{background:none;border:0;cursor:pointer;color:#fff;padding:0 8px;display:flex;align-items:center;height:100%}\n.morse-dark-toggle svg{fill:currentColor}\n",
+        "js": "const on = v => { document.documentElement.classList.toggle(\"morse-dark\", v); morse.store.set(\"dark\", v); };\non(!!morse.store.get(\"dark\"));\nconst svg = '<svg height=\"22\" width=\"22\" viewBox=\"0 0 24 24\"><path d=\"M11.1 12.08c-2.33-4.51-.5-8.48.53-10.07C6.27 2.2 1.98 6.59 1.98 12c0 .14.02.28.02.42.62-.27 1.29-.42 2-.42 1.66 0 3.18.83 4.1 2.15A4.01 4.01 0 0 1 11 18c0 .52-.1 1.01-.28 1.47.08 0 .17.01.25.01 3.84 0 7.18-2.12 8.88-5.25-3.46.34-7.24-.83-8.75-2.15z\"/><path d=\"M7 16h-.18C6.4 14.84 5.3 14 4 14c-1.66 0-3 1.34-3 3s1.34 3 3 3h3c1.1 0 2-.9 2-2s-.9-2-2-2z\"/></svg>';\nmorse.watch(\"div.site-menu\", m => {\n  m.append(morse.el(\"button\", { class: \"morse-dark-toggle\", title: \"Toggle dark mode\", \"aria-label\": \"Toggle dark mode\", html: svg,\n    on: { click: () => on(!document.documentElement.classList.contains(\"morse-dark\")) } }));\n});\n"
+      },
+      "opened": true,
+      "fit": {
+        "ok": true,
+        "score": 1,
+        "fonts": 1,
+        "colors": 1,
+        "corners": 1,
+        "off": [],
+        "pageFonts": [
+          "source sans 3",
+          "source code pro"
+        ]
+      },
+      "works": true,
+      "code": [
+        1329
+      ],
+      "ok": true,
+      "totalMs": 51921
+    },
+    {
+      "id": "vscodium-palette-to-rubygems",
+      "what": "VSCodium's command palette (Ctrl+Shift+P), taken in the desktop app and brought into RubyGems.org in Chrome",
+      "ok": false,
+      "error": "couldn't reach Take this",
+      "totalMs": 52220
+    }
+  ]
+}

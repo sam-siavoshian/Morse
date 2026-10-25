@@ -13,7 +13,14 @@ export const LINKS = {
   chrome: "./#chrome-steps",
   // "Download Morse": Morse Desktop. Until there is a download, it opens the
   // steps for the morse command. Then put the download page's address here.
-  desktop: "./#desktop-steps",
+  // Morse Desktop: the "preview" release, rebuilt from main on every push
+  // (.github/workflows/preview.yml). The file names never change. common.js
+  // points "desktop" buttons at this visitor's download when it can tell.
+  desktop: "https://github.com/sam-siavoshian/RRAA/releases/tag/preview",
+  desktopMac: "https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg",
+  desktopMacIntel: "https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg",
+  desktopWindows: "https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe",
+  desktopLinux: "https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage",
   github: "https://github.com/sam-siavoshian/RRAA",
   docs: "https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs",
 };

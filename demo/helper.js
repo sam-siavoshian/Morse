@@ -156,7 +156,7 @@ export async function pairExtension(ctx, id, code) {
   await pop.goto(`chrome-extension://${id}/popup.html`);
   await pop.locator("#code").fill(code);
   await pop.locator("#pair").click();
-  await pop.locator("#unpair:not([hidden])").waitFor({ timeout: 30000 });
+  await pop.locator("#unpair:not([hidden])").waitFor({ state: "attached", timeout: 30000 }); // the Model box folds once it works (popup.js)
   await pop.close();
 }
 

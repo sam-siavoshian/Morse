@@ -41,6 +41,7 @@ import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onbo
 import { GALLERY_REQUESTS, handleGallery } from "./gallery.js"; // gallery hook: Mods for this site
 import { PACK_REQUESTS, handlePack } from "./packs.js"; // packs hook: mod packs
 import { Style, onStyleChange } from "./style.js"; // your-style hook: one style on every site and app
+import { Take } from "./take.js"; // take-and-bring hook: features taken in one app, brought into another
 import { STYLE_ID } from "../core/style.js"; // your-style hook
 import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
 import { pageCollapse } from "../core/guard.js"; // guard hook: a change that hides most of the page
@@ -221,6 +222,8 @@ export class Connector {
         if (n === 1) this.log(`  ! Couldn't connect to ${describeTarget(t).title}: ${e.message}`);
       });
     }
+    // soak: targets that are gone (a closed popup that never attached) don't keep a retry entry
+    for (const id of this.retry.keys()) if (!byId.has(id)) this.retry.delete(id);
     if (dirty) this.changed();
   }
 
@@ -391,6 +394,7 @@ export class Connector {
   async stop({ keepBrowser = false } = {}) {
     this.running = false;
     this.state = "stopped";
+    this.recorder?.stop(); this.recorder = null; // soak: a clip being recorded keeps its frames (and the session) otherwise
     this.modWatcher?.close();
     this.controlWatcher?.close(); this.controlWatcher = null;
     this.styleWatch?.(); this.styleWatch = null; // your-style hook
@@ -486,9 +490,9 @@ export class Connector {
   // Effect check (core/engine.js): the runtime's effectProbe, in Morse's world
   // of the document that asked (it shares the DOM with the page). null when
   // it can't answer; the engine then skips the check.
-  async probe(s, caller, target, selectors) {
+  async probe(s, caller, target, selectors, opts = null) {
     if (caller.world == null) return null;
-    const expression = `globalThis.__morseProbe ? globalThis.__morseProbe(${JSON.stringify(target || null)}, ${JSON.stringify(selectors || [])}) : null`;
+    const expression = `globalThis.__morseProbe ? globalThis.__morseProbe(${JSON.stringify(target || null)}, ${JSON.stringify(selectors || [])}${opts ? `, ${JSON.stringify(opts)}` : ""}) : null`; // opts: { quick } (take-and-bring hook)
     const r = await s.send("Runtime.evaluate", { expression, contextId: caller.world, returnByValue: true, awaitPromise: true });
     return r.exceptionDetails ? null : r.result?.value ?? null;
   }
@@ -545,6 +549,7 @@ export class Connector {
     if (ONBOARDING_REQUESTS.has(msg.type)) return handleOnboarding(msg, { settings: await this.freshSettings() }); // onboarding hook
     if (GALLERY_REQUESTS.has(msg.type)) return handleGallery(msg, await here()); // gallery hook: Mods for this site
     if (PACK_REQUESTS.has(msg.type)) { const r = await handlePack(msg); if (/^pack\.(install|update|enable)$/.test(msg.type)) this.modsChanged(s); return r; } // packs hook: mod packs (packs.js)
+    if (Take.owns(msg)) return Take.handle(msg); // take-and-bring hook: ~/.morse/taken.json (daemon/take.js)
     if (Style.owns(msg)) { const r = await Style.handle(msg, await here()); if (msg.type !== "style.get" && msg.type !== "style.preview") this.modsChanged(s); return r; } // your-style hook
     switch (msg.type) {
       case "hello": {
@@ -632,7 +637,7 @@ export class Connector {
           exec: js => this.exec(s, caller, msg.genId, js),
           // The streamed CSS reaches the runtime first: pushes and probes go
           // over the same session, in order.
-          probe: sels => this.probe(s, caller, msg.context?.target?.selector, sels),
+          probe: (sels, opts) => this.probe(s, caller, msg.context?.target?.selector, sels, opts),
           collapse: css => this.collapse(s, caller, msg.genId, css), // guard hook: hid most of the page?
           polish: prefs.polish, review: () => this.shoot(s, caller, msg.context?.target?.selector, msg.genId), // polish: a look at the change (core/polish.js)
           emit: ev => {

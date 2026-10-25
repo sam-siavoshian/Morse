@@ -136,7 +136,7 @@ const YourStyle = (() => {
     setInput("");
     input.placeholder = t("ys.addMore");
     const n = preview.r.summary.length;
-    hint.innerHTML = `<b class="ok">${t("ys.title")}</b> <span class="dim">${n ? `${t("ys.changes", { n })} · ` : ""}${t("ys.everySite")}</span>`;
+    hint.innerHTML = `<b class="ok">${t("ys.title")}</b>${n ? ` <span class="dim">${t("ys.changes", { n })}</span>` : ""}`; // where it shows: the sheet's header says it (reachWords)
     actions.innerHTML = `<button data-a="ys-save" class="primary">${t("btn.save")} <kbd>↵</kbd></button><button data-a="ys-undo">${t("btn.undo")}</button>`;
     showPane("");
     paneKind = "ys";

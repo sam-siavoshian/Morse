@@ -97,6 +97,11 @@ function BAR_CSS() { return `
   .hk .dots .radar rect.c { animation: m-pulse 1.5s ease-in-out infinite both; }
   .hk .dots .radar rect.o { animation: m-pulse-dim 1.5s ease-in-out infinite both; }
   .hkrow.shake .hk { animation: nudge 320ms var(--m-ease); border-color: var(--m-danger); box-shadow: 0 0 0 1px var(--m-danger); }
+  /* simplify: More settings, a disclosure under the few settings people change */
+  .sheet .more-set { display: inline-flex; align-items: center; gap: 6px; margin: 4px 0 8px 0; }
+  .sheet .more-set::after { content: ""; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); transition: transform var(--m-fast) var(--m-ease); }
+  .sheet .more-set[aria-expanded="true"]::after { transform: translateY(1px) rotate(-135deg); }
+  .sheet .more-settings > section:first-child { border-top: 1px solid var(--m-line); padding-top: 8px; }
   .sheet footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0 0; border-top: 1px solid var(--m-line); font: var(--m-text-xs)/16px var(--m-mono); letter-spacing: 0; }
 
   /* cheat sheet */

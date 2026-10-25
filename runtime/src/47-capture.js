@@ -192,5 +192,5 @@ const GodCapture = (() => {
     return msg;
   });
 
-  return { pop, snapshot, refresh: render, get list() { return st.list; } };
+  return { pop, snapshot, thumbOf /* take-and-bring hook: 73-take.js */, refresh: render, get list() { return st.list; } };
 })();

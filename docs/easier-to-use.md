@@ -1,8 +1,9 @@
 # Easier to use
 
-Some apps are hard to read, hard to click, or never stop moving. The **Easier
-to use** group in Page tools fixes that for the site or app you're on. It
-works at once, with no model.
+Some apps are hard to read, hard to click, or never stop moving. **Easier to
+use** in Page tools fixes that for the site or app you're on: click it, or
+press →, and its tools open beside the menu. They work at once, with no
+model.
 
 Each tool is a small mod that Morse makes itself. It stays on for that site.
 Click it again to turn it off. The page goes back to exactly how it was.

@@ -158,7 +158,7 @@
         <h2>Tested on real apps.</h2>
         <p class="lede">Desktop apps built from web pages: Visual Studio Code, VSCodium, Obsidian, Logseq and Joplin, on Linux. Websites in Chrome, such as the Node.js docs, PyPI, RubyGems and Docker Hub.</p>
       </header>
-      <ul class="apps" id="apps-grid"></ul>
+      <ul class="apps" id="apps-grid" aria-label="Tested apps"></ul>
       <p class="fine">Not tested yet: Slack, Discord, Spotify, macOS and Windows. <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/desktop.md#tested-on">What was tested</a></p>
     </div>
   </section>
@@ -193,11 +193,11 @@
           <p>Morse for desktop apps built from web pages.</p>
           <a class="btn btn-primary btn-lg" href="./#desktop-steps" data-link="desktop">Download Morse<span class="icon" aria-hidden="true">→</span></a>
           <details class="get-steps" id="desktop-steps">
-            <summary>No download yet. Use the morse command</summary>
+            <summary>Downloads for every computer</summary>
             <ol>
-              <li>Install it: <code>npm i -g morse-cli</code> (needs <a href="https://nodejs.org/">Node 22</a> or newer).</li>
-              <li>Run <code>morse setup</code>. It finds Claude Code, Codex or an API key and asks which to use.</li>
-              <li>Open an app with Morse: <code>morse launch obsidian</code>. Run <code>morse apps</code> to see which apps it found.</li>
+              <li><a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg" data-link="desktopMac">Mac with Apple silicon</a> · <a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg" data-link="desktopMacIntel">Mac with Intel</a> · <a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe" data-link="desktopWindows">Windows</a> · <a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage" data-link="desktopLinux">Linux</a></li>
+              <li>Not signed yet, so the first time: on a Mac, open Morse, then System Settings, Privacy &amp; Security, <strong>Open Anyway</strong>. On Windows, <strong>More info</strong>, then <strong>Run anyway</strong>.</li>
+              <li>Morse finds Claude Code or Codex by itself. Click <strong>Open with Morse</strong> next to an app.</li>
             </ol>
           </details>
         </article>
@@ -214,7 +214,7 @@
 
       <div class="first-run">
         <h3>Your first minute</h3>
-        <ol class="first-run-list">
+        <ol class="first-run-list" aria-label="Your first minute">
           <li>
             <figure class="shot"><img src="shots/135-welcome.webp" width="1280" height="860" loading="lazy" decoding="async" alt="The Morse welcome page: Morse is installed, a practice page to try it on, and a short list to get set up."></figure>
             <p><span class="step-n">1</span><span>Morse opens a welcome page, with a practice page to try it on.</span></p>

@@ -75,6 +75,15 @@ input, select {
 .dot.warn { background: var(--m-warn); }
 [hidden] { display: none !important; }
 
+/* simplify: Model folds into one line once it works (popup.js) */
+#modelbox > summary { list-style: none; cursor: pointer; }
+#modelbox > summary::-webkit-details-marker { display: none; }
+#modelbox > summary h2 { display: flex; align-items: center; gap: 6px; }
+#modelbox > summary h2::after { content: ""; width: 5px; height: 5px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); }
+#modelbox[open] > summary h2::after { transform: translateY(1px) rotate(-135deg); }
+#modelsum { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--m-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+#modelbox > summary:focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; border-radius: var(--m-r-sm); }
+
 /* Morse in Chrome gets its model from the Morse app: what it uses, or the one thing to do */
 .app { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); background: var(--m-raised); }
 .app > span:last-child { flex: 1; min-width: 0; }

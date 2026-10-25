@@ -338,11 +338,11 @@ export function createService({
     };
   }
 
-  // The folder Chrome's Load unpacked takes. A packaged Morse keeps the
-  // extension inside its own app file (and an AppImage moves on every start),
-  // so Chrome gets a copy in a folder that stays put, made again each time so
-  // it matches this version. A folder of that name that Morse didn't make is
-  // only written over, never emptied.
+  // "Use Morse in Chrome": the folder Chrome's Load unpacked takes. A packaged
+  // Morse keeps the extension inside its own app file (and an AppImage moves
+  // on every start), so Chrome gets a copy in a folder that stays put, made
+  // again each time so it matches this version. A folder of that name that
+  // Morse didn't make is only written over, never emptied.
   const MARK = ".morse-extension";
   async function extensionFolder() {
     if (!copyExtension) return d.EXTENSION_DIR;

@@ -20,12 +20,13 @@
 
 - **One runtime, two hosts.** The same runtime runs in websites (extension)
   and desktop apps (CDP). Only the transport differs.
-- **Free until you use it.** Every page gets only a ~49 KB boot
+- **Free until you use it.** Every page gets only a ~52 KB boot
   (`runtime/boot.js`): it applies your mods (with the guards and safe start),
   follows SPA navigations, checks for broken mods after idle and listens for
   the hotkey, with no overlay, layout reads or timers. The UI is injected the
   first time you open Morse. Measured in [`docs/perf/report.md`](../perf/report.md)
-  (`node demo/perf.js`), guarded by `tests/perf.test.js`.
+  (`node demo/perf.js`), guarded by `tests/perf.test.js`; every budget and
+  the test that holds it is in [`docs/perf/budgets.md`](../perf/budgets.md).
 - **No patching.** On the web, mod JS runs through `chrome.userScripts`, so it
   works on strict-CSP sites. On the desktop, `morse launch` relaunches an
   Electron app with `--remote-debugging-pipe` (a private channel, see
@@ -313,6 +314,7 @@ The files run in order, by number:
 | `50-bar.js` … `59-onboarding.js` | The bar, voice, Settings, history, suggestions, help, first-run guide |
 | `60-generate.js`, `61-ask.js`, `62-markers.js` | A request: generate, show the result, Save/Undo/follow-ups. Questions and answers with markers |
 | `63-control.js` … `71-heal.js` | Feature hooks: user control, Show me once, guards (`64-guard.js`), Easier to use, Read aloud, Check this page, Describe this picture, the gallery, self-heal |
+| `73-take.js` | Take this, Bring here: take a feature in one app, bring it into another ([below](#take-this-bring-here)) |
 | `70-panel.js`, `80-modals.js` | The Mods panel, Share and Edit code |
 | `90-effect.js` | The pixel effect over what the model is changing |
 | `95-keys.js`, `96-shortcuts.js` | Shortcuts and the cheat sheet |
@@ -347,6 +349,40 @@ tracked, so turning the mod off fully undoes it.
 Callbacks are wrapped: an error (or a rejected promise) is recorded on the
 mod, shown in the Mods panel, and fed back to the model on repair.
 `wrapModCode(id, js)` wraps a mod's code for running.
+
+## Take this, Bring here
+
+[User page](../bring-a-feature.md). Pure logic in [`core/take.js`](../../core/take.js)
+(the stored shape, matching a typed request, what the model reads), the
+runtime in [`runtime/src/73-take.js`](../../runtime/src/73-take.js), the
+stored list in [`core/take-host.js`](../../core/take-host.js).
+
+- **Take.** Pointed at something, it is taken at once. With nothing pointed
+  at, Show me once's strip watches (`ShowOnce.start({ take })`) while the
+  person opens the feature; Stop (or the Morse shortcut, when a page's modal
+  dialog keeps the strip from being clicked) takes what opened: the new or
+  newly shown part of the page that holds the focus or floats over it, with
+  the steps that opened it. What is kept is God mode's Capture snapshot
+  (`47-capture.js`: trimmed markup, computed styles, hover rules, a picture
+  of it) with long text cut and every string through `redact()`
+  (`20-context.js`). The model then names it and writes a few plain lines
+  (a `generate` with `context.take`, answered in the Ask format, so every host
+  carries it unchanged). The picture never goes to the model.
+- **The list.** `taken.list` / `taken.put` / `taken.remove`: newest first, at
+  most 30. On the computer it is `~/.morse/taken.json` (`daemon/take.js`); in
+  Chrome it is `chrome.storage.local "taken"`, and when Chrome is paired the
+  Morse helper serves the computer's list over `/v1/taken`
+  (`extension/take-host.js`), so both sides see one list. An item Chrome has
+  seen on the computer and that is gone there was deleted there; one taken
+  while they weren't paired goes over on the next look.
+- **Bring.** A request carries `context.bring`: the feature picked from
+  Bring here…, or one a typed request names (`matchTaken`), or `{ known, app,
+  what }` for a well-known feature of another app (`bringAsk`). `bringPrompt`
+  asks for it to work the way it did and to be built from this app's own
+  fonts, colors, spacing, corners and components (it builds on what the
+  context gives about the page's design). It starts on the strong model
+  (`core/route.js`). The saved mod's `from.taken` names what it was brought
+  from ("Taken from VS Code", `modOrigin`).
 
 ## Guards
 

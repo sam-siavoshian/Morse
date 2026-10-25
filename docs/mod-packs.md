@@ -6,7 +6,7 @@ You can share a pack as a link, as a file, or from an address where your team ke
 
 ## Make a pack
 
-1. Open the Mods panel and press **Make a pack…** (under Packs, near the bottom).
+1. Open the Mods panel and press **More → Make a pack…** (at the bottom).
 2. Tick the mods you want in it, then press **Next**.
 3. Give the pack a name. You can add a note: what the mods are for, and who they're for.
 4. Press **Copy link** to share it as a link, or **Download pack file** to share it as a file.
@@ -17,7 +17,7 @@ The Mods panel shows the mods for the site you're on. To put mods for several si
 
 ## Install a pack
 
-Open the link. Or, in the Mods panel, press **Install a mod…** and paste the link, the text of a pack file, or the address of a pack. **Install from a file…** takes a pack file too.
+Open the link. Or, in the Mods panel, press **Install a mod…** and paste the link, the text of a pack file, or the address of a pack. **Install from a file…** in the same window takes a pack file too.
 
 Morse shows one review for the whole pack. For each mod:
 

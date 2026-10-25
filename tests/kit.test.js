@@ -173,6 +173,44 @@ test("'host >>> inside' reaches into open shadow roots and frames; css(text, whe
   await page.evaluate(() => morse.__off("r6"));
 });
 
+// perf: what a callback puts next to an element used to be found by copying
+// all of the element's siblings before and after the callback: on a long flat
+// list (a feed, the lines of a file) that is quadratic, and a plain watch over
+// 3,000 rows kept the page busy for seconds and was paused as slow.
+test("a watch over a long flat list costs linear time, and what it puts next to each row is still the mod's", { skip }, async () => {
+  await page.evaluate(() => {
+    const make = (id, n) => { const d = document.createElement("div"); d.id = id; for (let i = 0; i < n; i++) { const p = document.createElement("p"); p.className = "row"; p.textContent = `row ${i}`; d.append(p); } document.body.append(d); };
+    make("long", 3000);
+    make("short", 300);
+  });
+  const t0 = Date.now();
+  await run("flat1", `morse.watch("#long > p.row", p => { p.dataset.seen = ""; });`);
+  const ms = Date.now() - t0;
+  assert.equal(await page.evaluate(() => morse.__stats("flat1")?.paused || null), null, "not paused");
+  assert.equal(await page.locator("#long > p[data-seen]").count(), 3000);
+  assert.ok(ms < 1500, `3,000 rows took ${ms} ms`);
+  // Raw elements put before, after and at the end of the list (no morse.el),
+  // in lists long enough that siblings aren't copied: each is known as the
+  // mod's, so a row that re-renders gets them anew, not twice.
+  await page.evaluate(() => { for (let i = 0; i < 300; i++) { const p = document.createElement("p"); p.className = "row"; document.getElementById("long").append(p); } });
+  await run("flat2", `morse.watch("#short > p.row, #long > p.row:nth-child(-n+5)", p => {
+    const tag = cls => Object.assign(document.createElement("i"), { className: cls });
+    const first = p.matches(":first-child");
+    p.after(tag("after"));
+    p.before(tag("before"));
+    if (first) p.parentNode.append(tag("end"));
+  }, { live: true });`);
+  await settle(page);
+  const count = () => page.evaluate(() => ({ after: document.querySelectorAll("i.after").length, before: document.querySelectorAll("i.before").length, end: document.querySelectorAll("i.end").length, rows: document.querySelectorAll("p.row").length }));
+  assert.deepEqual(await count(), { after: 305, before: 305, end: 2, rows: 3600 });
+  await page.evaluate(() => { for (const p of [...document.querySelectorAll("#short > p.row")].slice(0, 3).concat(document.querySelector("#long > p.row"))) p.textContent = "re-rendered"; });
+  await page.waitForFunction(() => document.querySelectorAll("p.row").length === 3600);
+  await settle(page);
+  assert.deepEqual(await count(), { after: 305, before: 305, end: 2, rows: 3600 }, "re-rendered rows get theirs again, not twice");
+  await page.evaluate(() => morse.__off("flat2"));
+  await page.evaluate(() => { morse.__off("flat1"); document.getElementById("long").remove(); document.getElementById("short").remove(); });
+});
+
 // VS Code's ids have dots ("workbench.parts.statusbar"); models write them as
 // "#workbench.parts.statusbar" (an id and two classes), which matches nothing.
 test("an id with dots written as #a.b.c finds the part whose id it is, and #id.class still means a class", { skip }, async () => {
