@@ -144,10 +144,10 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          for APP in dist/desktop-app/mac*/Morse.app; do
+          for APP in dist/desktop-app/mac*/*.app; do
             codesign --verify --deep --strict --verbose=2 "$APP"
           done
-          APP=$(ls -d dist/desktop-app/mac-arm64/Morse.app 2>/dev/null || ls -d dist/desktop-app/mac*/Morse.app | head -n 1)
+          APP=$(ls -d dist/desktop-app/mac-arm64/*.app 2>/dev/null || ls -d dist/desktop-app/mac*/*.app | head -n 1)
           "$APP/Contents/MacOS/morse-desktop" > desktop.log 2>&1 &
           PID=$!
           sleep 10
