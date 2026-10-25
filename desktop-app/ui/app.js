@@ -94,6 +94,7 @@ function show(tab) {
     if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   }
   if (tab === "checks") tab = "model"; // simplify: Checks is a card in Model now
+  if (tab !== "mods") hideUndo(); // a stale "Undo delete" shouldn't wait on another page
   for (const s of document.querySelectorAll("main > section")) s.hidden = s.id !== tab;
   try { sessionStorage.setItem("tab", tab); } catch {}
   $(tab).closest("main").scrollTop = 0;
@@ -152,10 +153,12 @@ function renderApps() {
       if (!li || li.dataset.sig !== sig) {
         const fresh = appRow(a);
         fresh.dataset.sig = sig;
-        const hadFocus = li?.contains(document.activeElement);
+        // A connected row rebuilds on every status tick; keep focus on the same
+        // action (Disconnect stays Disconnect), not always the first button.
+        const act = li?.contains(document.activeElement) ? document.activeElement.dataset.act : null;
         if (li) li.replaceWith(fresh); else list.append(fresh);
         li = fresh;
-        if (hadFocus) li.querySelector("button")?.focus();
+        if (act) (li.querySelector(`[data-act="${act}"]`) || li.querySelector("button"))?.focus();
       }
       if (prev ? prev.nextElementSibling !== li : list.firstElementChild !== li) prev ? prev.after(li) : list.prepend(li);
       prev = li;
@@ -333,23 +336,31 @@ function renderMods() {
     h("ul", { class: "list mods" }, ...g.mods.map(m => h("li", { class: m.on ? "" : "off" },
       h("div", { class: "grow" }, h("b", { text: m.title }), h("small", {}, h("span", { text: m.paused ? t("desk.mods.stopped") : `“${m.request}”` }))),
       h("button", { type: "button", class: "ibtn", title: t("btn.delete"), "aria-label": t("desk.mods.delete", { title: m.title }), "data-del": m.id, onclick: () => deleteMod(m) }, trashGlyph()),
-      h("input", { type: "checkbox", role: "switch", "aria-label": t("desk.mods.on", { title: m.title }), "data-mod": m.id, checked: m.on, onchange: e => morse.setModOn(m.id, e.target.checked) })))))));
+      h("input", { type: "checkbox", role: "switch", "aria-label": t("desk.mods.on", { title: m.title }), "data-mod": m.id, checked: m.on, onchange: e => toggleMod(m.id, e.target) })))))));
   if (focused) document.querySelector(`[data-mod="${CSS.escape(focused)}"]`)?.focus();
+}
+// A switch that lies is worse than a slow one: if the change is refused (the
+// mod is gone, or couldn't be written), put the switch back where it was.
+async function toggleMod(id, el) {
+  const want = el.checked;
+  const r = await morse.setModOn(id, want);
+  if (r?.error) el.checked = !want;
 }
 // Delete takes one click; Undo, above the list, brings it back for a while.
 let undoTimer = 0;
+function hideUndo() { clearTimeout(undoTimer); $("mod-undo").hidden = true; }
 async function deleteMod(m) {
   const r = await morse.deleteMod(m.id);
   if (r?.error) return;
   $("mod-undo-text").textContent = t("toast.deleted", { title: m.title });
   $("mod-undo").hidden = false;
   $("mod-undo-btn").focus();
-  $("mod-undo-btn").onclick = async () => { clearTimeout(undoTimer); $("mod-undo").hidden = true; await morse.undeleteMod(m.id); };
+  $("mod-undo-btn").onclick = async () => { hideUndo(); await morse.undeleteMod(m.id); };
   clearTimeout(undoTimer);
-  undoTimer = setTimeout(() => { $("mod-undo").hidden = true; }, 15000);
+  undoTimer = setTimeout(hideUndo, 15000);
 }
 $("resume").onclick = () => morse.setAllModsOff(false);
-$("mods-on").onchange = e => morse.setAllModsOff(!e.target.checked);
+$("mods-on").onchange = async e => { const off = !e.target.checked; const r = await morse.setAllModsOff(off); if (r?.error) e.target.checked = off; };
 
 // ---------------------------------------------------------------- checks
 async function runChecks() {
@@ -373,7 +384,17 @@ async function runChecks() {
 $("run-checks").onclick = runChecks;
 
 // ---------------------------------------------------------------- settings
-$("auto-open").onchange = e => morse.setAutoOpen(e.target.checked);
+$("auto-open").onchange = async e => { const on = e.target.checked; const r = await morse.setAutoOpen(on); if (r?.error) e.target.checked = !on; };
+
+// Enter in an API-key field is "use this key", the same as the button: typing a
+// key and pressing Enter should save it, not sit there.
+const submitOnEnter = (field, button) => $(field).addEventListener("keydown", e => {
+  if (e.key !== "Enter" || e.isComposing) return;
+  e.preventDefault();
+  if (!$(button).disabled) $(button).click();
+});
+submitOnEnter("api-key", "use-choice");
+submitOnEnter("first-key-input", "first-key-use");
 
 // ---------------------------------------------------------------- first run
 // In the shape of Zephium's: the name forms out of dots with its sound, then
