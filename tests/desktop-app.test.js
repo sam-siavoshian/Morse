@@ -12,6 +12,8 @@ import vm from "node:vm";
 
 const { API, CHANNEL, LINKS, registerIpc, isOpenLink } = await import("../desktop-app/ipc.js");
 const { createService } = await import("../desktop-app/service.js");
+const { t } = await import("../core/i18n.js");
+const { afterOpenBar, barWorld, noticeStillShown, presentApp } = await import("../daemon/open-bar.js");
 const { desktopEntry, setAutostart, AUTOSTART } = await import("../desktop-app/linux.js");
 const { markPng, markPixels } = await import("../desktop-app/mark.js");
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -164,6 +166,87 @@ test("Open the bar: asks the app's connector to open Morse's bar, and says why w
   s.connector = { ...s.connector, openBar: async () => (asked++, asked > 1) };
   assert.deepEqual(await call("openBar", "tunes"), { code: "notReady" }, "no window with Morse in it yet");
   assert.deepEqual(await call("openBar", "tunes"), { ok: true });
+});
+
+// The screenshot: Brave's row says Connected and offers Open the bar, while the
+// banner says Morse isn't running in Brave yet. Open the bar returns notReady
+// when no window has Morse's world; the session is "attached" before that.
+test("a Connected row never sits under “Morse isn't running in … yet”", async () => {
+  const banner = (code, name) => (code === "notReady" ? t("desk.openBar.notReady", { name }) : "");
+  const contradicts = (state, code, name) => state === "connected" && /isn't running in/.test(banner(code, name));
+  assert.equal(t("desk.openBar.notReady", { name: "Brave" }), "Morse isn't running in Brave yet. Wait a moment, then try again.");
+  assert.match(readFileSync(path.join(root, "daemon/connector.js"), "utf8"), /const world = barWorld\(w\)/, "Open the bar uses the same world check as the row");
+
+  // The click came back notReady while the row still said Connected.
+  const shot = afterOpenBar("connected", "notReady");
+  assert.equal(contradicts(shot.state, shot.code, "Brave"), false);
+  assert.equal(shot.state, "connecting", "too early: the row steps back to connecting");
+  assert.equal(shot.canStop, true, "Disconnect stays; the app is ours, Morse just isn't in it");
+  assert.equal(banner(shot.code, "Brave"), "Morse isn't running in Brave yet. Wait a moment, then try again.", "the failure stays on screen");
+  assert.equal(noticeStillShown(shot.state, shot.code), "notReady");
+
+  // Once Morse is really in the app, that banner is gone and the row may say Connected.
+  assert.equal(noticeStillShown("connected", "notReady"), null);
+  assert.equal(contradicts("connected", noticeStillShown("connected", "notReady"), "Brave"), false);
+
+  // Opened outside Morse is a different failure. The row can stay Connected.
+  const outside = afterOpenBar("connected", "notHere");
+  assert.equal(outside.state, "connected");
+  assert.equal(outside.code, "notHere");
+  assert.equal(noticeStillShown("connected", "notHere"), "notHere");
+
+  // A window object with no Morse world is not Connected. A world is.
+  const early = new Map([["w", { ready: false, frameId: "f", frames: new Map([["f", { world: 1 }]]) }]]);
+  assert.equal(barWorld(early.get("w")), null, "ready is set before the world exists");
+  assert.deepEqual(presentApp("connected", { windows: early }), { state: "connecting", canStop: true });
+  const live = new Map([["w", { ready: true, frameId: "f", frames: new Map([["f", { world: 4 }]]) }]]);
+  assert.equal(barWorld(live.get("w")), 4);
+  assert.deepEqual(presentApp("connected", { windows: live }), { state: "connected", canStop: false });
+  assert.deepEqual(presentApp("connected", { state: "attached" }), { state: "connected", canStop: false }, "no window list: trust the session");
+
+  // The same split in the service Brave hits: the port is up, Morse is not in a window yet.
+  const { call, service } = setup();
+  assert.deepEqual(await call("openApp", "tunes"), { ok: true });
+  const held = service.sessions.get("tunes");
+  const windows = new Map();
+  let sent = 0;
+  held.connector = {
+    state: "attached",
+    windows,
+    async openBar() {
+      for (const w of windows.values()) {
+        const world = barWorld(w);
+        if (world == null) continue;
+        sent++;
+        return true;
+      }
+      return false;
+    },
+  };
+  const rowOf = async () => (await call("state")).apps.find(a => a.id === "tunes");
+  let row = await rowOf();
+  let bar = await call("openBar", "tunes");
+  assert.equal(contradicts(row.state, bar.code, row.name), false, "Connected plus the isn't-running banner");
+  assert.equal(row.state, "connecting");
+  assert.equal(row.canStop, true);
+  assert.equal(banner(bar.code, row.name), "Morse isn't running in Tunes yet. Wait a moment, then try again.");
+  assert.equal(sent, 0, "nothing was told to open");
+
+  windows.set("early", { ready: true, frameId: "f", frames: new Map([["f", { world: null }]]), session: {} });
+  row = await rowOf();
+  bar = await call("openBar", "tunes");
+  assert.equal(row.state, "connecting");
+  assert.equal(bar.code, "notReady");
+  assert.equal(sent, 0);
+
+  windows.set("page", { ready: true, frameId: "f", frames: new Map([["f", { world: 4 }]]) });
+  row = await rowOf();
+  bar = await call("openBar", "tunes");
+  assert.equal(row.state, "connected");
+  assert.equal(bar.ok, true);
+  assert.equal(sent, 1);
+  assert.equal(noticeStillShown(row.state, "notReady"), null, "after it connects, the banner is gone");
+  assert.equal(contradicts(row.state, noticeStillShown(row.state, "notReady"), row.name), false);
 });
 
 test("Open with Morse runs the launch steps and holds the session; Disconnect stops it", async () => {

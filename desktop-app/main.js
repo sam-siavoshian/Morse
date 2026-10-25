@@ -37,6 +37,8 @@ const UI_FILES = {
   "/index.html": [path.join(HERE, "ui", "index.html"), "text/html; charset=utf-8"],
   "/app.css": [path.join(HERE, "ui", "app.css"), "text/css; charset=utf-8"],
   "/app.js": [path.join(HERE, "ui", "app.js"), "text/javascript; charset=utf-8"],
+  // When the row may say Connected, and when the "isn't running yet" banner may show.
+  "/open-bar.js": [path.join(HERE, "..", "daemon", "open-bar.js"), "text/javascript; charset=utf-8"],
   "/tokens.css": [path.join(HERE, "..", "design", "tokens.css"), "text/css; charset=utf-8"],
   // The first run: the name forming out of dots, and its sound (ui/sounds/NOTICE.md).
   "/formation.js": [path.join(HERE, "ui", "formation.js"), "text/javascript; charset=utf-8"],

@@ -4,6 +4,7 @@
 
 import { t, setLanguage, loadLanguage, pickLanguage, setLanguageLoader, translatePage } from "./core/i18n.js";
 import { formName } from "./formation.js";
+import { afterOpenBar, noticeStillShown } from "./open-bar.js";
 
 setLanguageLoader(code => import(`./core/locales/${code}.js`).then(m => m.default));
 setLanguage(await loadLanguage(pickLanguage(navigator.languages?.length ? navigator.languages : [navigator.language])));
@@ -125,7 +126,7 @@ function appRow(a) {
   const busy = ["opening", "disconnecting", "connecting"].includes(a.state);
   let button = null;
   if (cant) button = null;
-  else if (a.state === "connected" || a.state === "waiting") button = h("span", { class: "row-acts" },
+  else if (a.state === "connected" || a.state === "waiting" || a.canStop) button = h("span", { class: "row-acts" },
     ...(a.state === "connected" ? [h("button", { type: "button", class: "btn primary", "data-act": "open-bar", onclick: () => openBar(a) }, t("desk.app.openBar"))] : []),
     h("button", { type: "button", class: "btn", "data-act": "disconnect", onclick: () => disconnect(a) }, t("desk.app.disconnect")));
   else if (a.state === "open-connectable") button = h("button", { type: "button", class: "btn", "data-act": "connect", onclick: () => open(a) }, t("desk.app.connect"));
@@ -139,6 +140,7 @@ function appRow(a) {
 // Rows are only rebuilt when what they show changed, so focus stays put
 // while the list refreshes.
 function renderApps() {
+  showAppsError(); // a Connected row clears a stale "isn't running yet" banner
   const list = $("app-list");
   const rows = st.apps;
   const seen = new Set();
@@ -148,7 +150,7 @@ function renderApps() {
     if (list.querySelector("li.empty")) list.replaceChildren();
     let prev = null;
     for (const a of rows) {
-      const sig = JSON.stringify([a.name, a.state, a.windows, a.mods, a.modsOn, a.version, a.icon ? 1 : 0, a.canAttach, a.why]);
+      const sig = JSON.stringify([a.name, a.state, a.canStop ? 1 : 0, a.windows, a.mods, a.modsOn, a.version, a.icon ? 1 : 0, a.canAttach, a.why]);
       let li = list.querySelector(`li[data-app="${CSS.escape(a.id)}"]`);
       if (!li || li.dataset.sig !== sig) {
         const fresh = appRow(a);
@@ -174,7 +176,21 @@ function renderApps() {
   $("apps-lede").replaceChildren(...withKeys("desk.apps.lede", openKey()));
 }
 
-function appError(text) { $("apps-error").textContent = text || ""; $("apps-error").hidden = !text; }
+// plainError: a failure that stands on its own (couldn't open, opened outside
+// Morse). barMiss: Open the bar said Morse isn't in that app yet. The two
+// can't be the screenshot: a Connected row and that banner at once.
+let plainError = "";
+let barMiss = null;
+function showAppsError() {
+  const app = barMiss && st?.apps?.find(a => a.id === barMiss);
+  const code = noticeStillShown(app ? app.state : null, barMiss ? "notReady" : null);
+  if (code !== "notReady") barMiss = null;
+  const text = code === "notReady" && app ? t("desk.openBar.notReady", { name: app.name }) : plainError;
+  const el = $("apps-error");
+  if ((el.textContent || "") !== (text || "")) el.textContent = text || "";
+  el.hidden = !text;
+}
+function appError(text) { plainError = text || ""; barMiss = null; showAppsError(); }
 
 async function open(a, answer) {
   appError("");
@@ -187,7 +203,17 @@ async function open(a, answer) {
 async function openBar(a) {
   appError("");
   const r = await morse.openBar(a.id);
-  if (r?.code) appError(t(`desk.openBar.${r.code}`, { name: a.name }));
+  if (!r?.code) return;
+  if (r.code === "notReady") {
+    // Too early: the row must not keep saying Connected next to this banner.
+    const row = st?.apps?.find(x => x.id === a.id);
+    const next = afterOpenBar(row?.state, r.code);
+    if (row && next.state !== row.state) { row.state = next.state; row.canStop = next.canStop; }
+    barMiss = a.id;
+    renderApps();
+    return;
+  }
+  appError(t(`desk.openBar.${r.code}`, { name: a.name }));
 }
 async function disconnect(a) {
   appError("");

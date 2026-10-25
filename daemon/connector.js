@@ -46,6 +46,7 @@ import { STYLE_ID } from "../core/style.js"; // your-style hook
 import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
 import { pageCollapse } from "../core/guard.js"; // guard hook: a change that hides most of the page
 import { AppProfiler } from "./profile.js"; // app profiles: how the app works inside (docs/dev/rea.md)
+import { barWorld } from "./open-bar.js"; // Open the bar: only a window whose Morse world is up
 
 // Perf: only the small boot goes into every page; the UI is evaluated on first use ("ui.load").
 import { bundleBoot, bundleUI } from "../runtime/bundle.js";
@@ -456,7 +457,7 @@ export class Connector {
   // Morse runs in.
   async openBar() {
     for (const w of this.windows.values()) {
-      const world = w.ready && w.frames?.get(w.frameId)?.world;
+      const world = barWorld(w);
       if (world == null) continue;
       await w.session.send("Page.bringToFront").catch(() => {});
       await w.session.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive({ type: "open" })`, contextId: world }).catch(() => {});

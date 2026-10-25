@@ -11,6 +11,7 @@
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { presentApp } from "../daemon/open-bar.js";
 
 const ANSI = /\x1b\[[0-9;]*m/g;
 const plain = s => String(s ?? "").replace(ANSI, "");
@@ -137,23 +138,29 @@ export function createService({
       const s = sessions.find(x => x.id === a.id);
       const p = a.canAttach === false ? [] : d.findAppProcesses(a, procs, { extraArgs: argsFor(settings, a.id) });
       const port = p.map(x => d.debugPortOf(x.cmd)).find(Boolean) || null;
-      const state = pending.get(a.id)
+      const base = pending.get(a.id)
         || (s ? (s.state === "attached" ? "connected" : s.state === "waiting" ? "waiting" : "connecting")
           : heldOpen(a.id) ? "open-connectable"
           : p.length ? (port ? "open-connectable" : "open") : "closed");
+      // "attached" is the port answering. Connected waits until Morse is in a window.
+      const shown = presentApp(base, own.get(a.id)?.connector);
       rows.push({
         id: a.id, name: a.name, version: (a.version || "").split(".").slice(0, 3).join("."), why: a.why, canAttach: a.canAttach,
-        known: !!a.known, added: !!a.added, state, windows: s?.windows?.length || 0, mine: own.has(a.id),
+        known: !!a.known, added: !!a.added, state: shown.state, canStop: shown.canStop, windows: s?.windows?.length || 0, mine: own.has(a.id),
         mods: mods.filter(m => modFor(a, m)).length, modsOn: mods.filter(m => modFor(a, m) && m.enabled).length,
         icon: await icon(a),
       });
     }
     // Apps a terminal connected to (morse attach) that aren't in the list.
-    for (const s of sessions) if (!rows.some(r => r.id === s.id)) rows.push({
-      id: s.id, name: s.name, version: "", why: "", canAttach: true, known: false, added: false, external: true,
-      state: s.state === "attached" ? "connected" : s.state === "waiting" ? "waiting" : "connecting", windows: s.windows?.length || 0,
-      mine: own.has(s.id), mods: mods.filter(m => m.match?.app === s.id).length, modsOn: mods.filter(m => m.match?.app === s.id && m.enabled).length, icon: null,
-    });
+    for (const s of sessions) if (!rows.some(r => r.id === s.id)) {
+      const base = s.state === "attached" ? "connected" : s.state === "waiting" ? "waiting" : "connecting";
+      const shown = presentApp(base, own.get(s.id)?.connector);
+      rows.push({
+        id: s.id, name: s.name, version: "", why: "", canAttach: true, known: false, added: false, external: true,
+        state: shown.state, canStop: shown.canStop, windows: s.windows?.length || 0,
+        mine: own.has(s.id), mods: mods.filter(m => m.match?.app === s.id).length, modsOn: mods.filter(m => m.match?.app === s.id && m.enabled).length, icon: null,
+      });
+    }
     keepMods(rows);
     const rank = r => r.canAttach === false ? 2 : r.known || r.added ? 0 : 1;
     return rows.sort((x, y) => rank(x) - rank(y) || x.name.localeCompare(y.name));
@@ -192,7 +199,8 @@ export function createService({
         changed();
       });
       await s.flushed;
-      // Until the first window is connected, the row says "Opening".
+      // Until the app answers, the row says "Opening". Connected is later:
+      // presentApp waits until Morse is actually in a window.
       const end = now() + 15000;
       while (now() < end && s.connector.state !== "attached" && s.connector.state !== "stopped") await sleep(100);
       return { ok: true };
