@@ -3,10 +3,9 @@
 // shared parts in 99-css.js (.sw, .tags, .seg, .field, .btns, .sheet, .srow).
 function STYLE_CSS() {
   return `
-  /* the Mods panel: Your style sits above the mods, in a hairline box */
-  /* 11px + the 1px line: the switch and the words line up with the mod rows below (12px, no line) */
-  .ys-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 12px; padding: 11px; margin-bottom: 8px; border: 1px solid var(--m-line-strong);
-    border-radius: var(--m-r-md); background: var(--m-raised); }
+  /* the Mods panel: Your style is the first row, a hairline under it, the same surface as the mods */
+  .ys-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 12px; padding: 12px 8px; margin: 0; border: 0; border-bottom: 1px solid var(--m-line);
+    border-radius: 0; background: transparent; }
   .ys-row.off .meta b { color: var(--m-text-2); }
   .ys-row.off .meta small, .ys-row.off .tags span { color: var(--m-text-3); }
   .ys-row .btns { flex-wrap: wrap; row-gap: 2px; }

@@ -30,7 +30,7 @@ function TAKE_CSS() { return `
   .tk-list { display: flex; flex-direction: column; gap: 2px; max-height: 240px; overflow: auto; scrollbar-width: thin; }
   .tk-it { display: flex; align-items: center; gap: 12px; width: 100%; padding: 6px 8px; border: 1px solid transparent; border-radius: var(--m-r-md);
     background: none; color: var(--m-text); text-align: start; cursor: pointer; font: inherit; }
-  .tk-it:hover, .tk-it:focus-visible { background: var(--m-hover); border-color: var(--m-line); }
+  .tk-it:hover, .tk-it:focus-visible { background: var(--m-hover); border-color: transparent; }
   .tk-empty { margin: 0; padding: 8px; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 18px; }
   .tk-note { margin: 8px 8px 0; color: var(--m-text-3); font: 400 var(--m-text-xs)/16px var(--m-font); }
 

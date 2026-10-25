@@ -198,8 +198,10 @@ function CSS() {
   .panel header > button, .card header > button { flex: none; width: 28px; height: 28px; padding: 0; display: grid; place-items: center; border: 0 !important; background: none !important; color: var(--m-text-2); border-radius: var(--m-r-sm); }
   .panel header > button:hover, .card header > button:hover { color: var(--m-text); background: var(--m-hover) !important; }
   .list { flex: 1; overflow: auto; padding: 8px; }
-  .list article { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 12px; padding: 12px; border-radius: var(--m-r-md); margin-bottom: 4px; transition: background var(--m-fast); }
-  .list article:hover { background: var(--m-raised); }
+  .list article { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 12px; padding: 12px 8px; border-radius: 0; margin: 0; transition: background var(--m-fast); }
+  .list > article + article { border-top: 1px solid var(--m-line); }
+  .list article:hover { background: var(--m-hover); }
+  .list > article:hover, .list > article:hover + article { border-top-color: transparent; }
   .meta { min-width: 0; overflow-wrap: anywhere; }
   .meta b { display: block; font-size: var(--m-text-md); line-height: 20px; font-weight: 550; } .meta small { color: var(--m-text-2); display: block; font-size: var(--m-text-sm); line-height: 16px; margin-top: 2px; }
   /* a disabled mod reads as off, but stays readable (AA) */
@@ -263,8 +265,9 @@ function CSS() {
   .health.guard { flex-wrap: wrap; row-gap: 8px; }
   .health.guard p { flex-basis: 100%; }
   .health.guard p + button { margin-inline-start: auto; }
-  .versions { grid-column: 2; list-style: none; margin-block: 8px 0; margin-inline: -8px 0; padding: 4px; border: 1px solid var(--m-line); border-radius: var(--m-r-sm); }
+  .versions { grid-column: 2; list-style: none; margin-block: 8px 0; margin-inline: -8px 0; padding: 0; border: 0; border-radius: 0; }
   .versions li { margin: 0; }
+  .versions li + li { border-top: 1px solid var(--m-line); }
   .versions li.cur, .panel .versions button { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; width: 100%; height: 24px; padding: 4px 6px;
     border: 0; border-radius: 4px; text-align: start; font: 400 var(--m-text-sm)/16px var(--m-font); letter-spacing: var(--m-tracking); white-space: normal; }
   .panel .versions button:hover { background: var(--m-hover); }
