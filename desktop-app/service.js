@@ -208,6 +208,13 @@ export function createService({
     }
   }
 
+  // "Open the bar": Morse's bar in a connected app, without the shortcut.
+  async function openBar(id) {
+    const s = own.get(id);
+    if (!s?.connector) return { code: "notHere" }; // the window says it in the person's language
+    return (await s.connector.openBar()) ? { ok: true } : { code: "notReady" };
+  }
+
   // "Disconnect": `morse stop <app>`. The app keeps running.
   async function disconnectApp(id) {
     pending.set(id, "disconnecting");
@@ -501,7 +508,7 @@ export function createService({
   }
 
   return {
-    state, apps, openApp, disconnectApp, addApp, model, modelChoices, chooseModel, check, chrome, startHelper, stopHelper, newCode,
+    state, apps, openApp, openBar, disconnectApp, addApp, model, modelChoices, chooseModel, check, chrome, startHelper, stopHelper, newCode,
     extensionFolder, useChrome, askAllow, answerAsk, signOutBrowsers, mods, setModOn, pause, setAllModsOff, doctor, setSetting, loadSettings, shutdown,
     get sessions() { return own; },
   };

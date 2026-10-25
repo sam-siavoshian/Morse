@@ -115,7 +115,9 @@ function appRow(a) {
   const busy = ["opening", "disconnecting", "connecting"].includes(a.state);
   let button = null;
   if (cant) button = null;
-  else if (a.state === "connected" || a.state === "waiting") button = h("button", { type: "button", class: "btn", "data-act": "disconnect", onclick: () => disconnect(a) }, t("desk.app.disconnect"));
+  else if (a.state === "connected" || a.state === "waiting") button = h("span", { class: "row-acts" },
+    ...(a.state === "connected" ? [h("button", { type: "button", class: "btn primary", "data-act": "open-bar", onclick: () => openBar(a) }, t("desk.app.openBar"))] : []),
+    h("button", { type: "button", class: "btn", "data-act": "disconnect", onclick: () => disconnect(a) }, t("desk.app.disconnect")));
   else if (a.state === "open-connectable") button = h("button", { type: "button", class: "btn", "data-act": "connect", onclick: () => open(a) }, t("desk.app.connect"));
   else button = h("button", { type: "button", class: "btn", "data-act": "open", disabled: busy, onclick: () => open(a) }, t("desk.app.open"));
   return h("li", { class: cant ? "cant" : a.state, "data-app": a.id },
@@ -167,6 +169,13 @@ async function open(a, answer) {
   const r = await morse.openApp(a.id, answer);
   if (r?.needsRestart) return askRestart(a);
   if (r?.error) appError(r.error);
+}
+// "Open the bar": Morse's bar in the app, for when the shortcut does nothing
+// (another app took it, or the keyboard makes it hard to press).
+async function openBar(a) {
+  appError("");
+  const r = await morse.openBar(a.id);
+  if (r?.code) appError(t(`desk.openBar.${r.code}`, { name: a.name }));
 }
 async function disconnect(a) {
   appError("");

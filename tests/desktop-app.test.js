@@ -127,7 +127,7 @@ test("arguments are checked: ids, answers, switches, choices, keys, link names, 
   const { call, daemon } = setup();
   for (const [name, args] of [
     ["openApp", ["../etc"]], ["openApp", [{ id: "tunes" }]], ["openApp", ["tunes", "yes please"]], ["openApp", ["tunes", "y", "extra"]],
-    ["disconnectApp", [""]], ["setModOn", ["m1", "true"]], ["setAllModsOff", [1]], ["chooseModel", ["gpt", ""]],
+    ["disconnectApp", [""]], ["openBar", [""]], ["setModOn", ["m1", "true"]], ["setAllModsOff", [1]], ["chooseModel", ["gpt", ""]],
     ["chooseModel", ["api-key", "sk-ant key with spaces"]], ["openLink", ["https://evil.example"]], ["answerAsk", ["short", true]], ["answerAsk", ["abcdefghijkl", "yes"]],
     ["setStartAtLogin", [null]], ["state", ["x", "y"]],
   ]) assert.deepEqual(await call(name, ...args), { error: "Not allowed." }, `${name}(${JSON.stringify(args)})`);
@@ -152,6 +152,17 @@ test("state: each app says whether it's open and connected, with its mods; the m
   assert.equal(st.pause.all, false);
   assert.equal(st.keys.open, "Ctrl+Shift+Space");
   assert.deepEqual(st.settings, { startAtLogin: false, helper: true, welcomed: false }, "login start is off until the person turns it on; the first run shows");
+});
+
+test("Open the bar: asks the app's connector to open Morse's bar, and says why when it can't", async () => {
+  const { call, service } = setup();
+  assert.deepEqual(await call("openBar", "tunes"), { code: "notHere" }, "an app this window didn't open");
+  assert.deepEqual(await call("openApp", "tunes"), { ok: true });
+  const s = service.sessions.get("tunes");
+  let asked = 0;
+  s.connector = { ...s.connector, openBar: async () => (asked++, asked > 1) };
+  assert.deepEqual(await call("openBar", "tunes"), { code: "notReady" }, "no window with Morse in it yet");
+  assert.deepEqual(await call("openBar", "tunes"), { ok: true });
 });
 
 test("Open with Morse runs the launch steps and holds the session; Disconnect stops it", async () => {

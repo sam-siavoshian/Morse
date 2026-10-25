@@ -37,6 +37,7 @@ export const API = {
   state:              [[none], (s) => s.state()],
   refreshApps:        [[none], (s) => s.state({ fresh: true })],
   openApp:            [[id, opt(oneOf("y", "a"))], (s, n, appId, answer) => s.openApp(appId, { answer })],
+  openBar:            [[id], (s, n, appId) => s.openBar(appId)],
   disconnectApp:      [[id], (s, n, appId) => s.disconnectApp(appId)],
   addApp:             [[none], async (s, n) => { const file = await n.pickApp(); return file ? s.addApp(file) : { cancelled: true }; }],
   modelChoices:       [[none], (s) => s.modelChoices()],

@@ -450,6 +450,21 @@ export class Connector {
     } catch {}
   }
 
+  // Morse Desktop's "Open the bar": the app's window comes to the front and
+  // Morse's bar opens in it, no shortcut needed (one taken by another app,
+  // or a keyboard where it is hard to press). The main window: the first one
+  // Morse runs in.
+  async openBar() {
+    for (const w of this.windows.values()) {
+      const world = w.ready && w.frames?.get(w.frameId)?.world;
+      if (world == null) continue;
+      await w.session.send("Page.bringToFront").catch(() => {});
+      await w.session.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive({ type: "open" })`, contextId: world }).catch(() => {});
+      return true;
+    }
+    return false;
+  }
+
   // To the runtime, in Morse's world.
   push(s, caller, msg) {
     return s.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive(${JSON.stringify(msg)})`, contextId: caller.world }).catch(() => {});

@@ -326,3 +326,6 @@ main::-webkit-scrollbar-track { background: transparent; }
 #checks .sub { margin: 4px 0 0; color: var(--m-text-2); font-size: var(--m-text-sm); }
 #checks .list { margin-top: 12px; }
 #checks .foot { margin-top: 12px; }
+
+/* "Open the bar" beside Disconnect on a connected app */
+.row-acts { display: inline-flex; gap: 8px; align-items: center; }
