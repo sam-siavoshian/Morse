@@ -107,6 +107,9 @@ test("a change that adds UI is looked at once and fixed; turning Polish changes 
   await page.keyboard.press(OPEN_KEY);
   await waitFor(s => s.open);
   await page.keyboard.press("Control+Comma");
+  // Polish changes is under More settings (docs/dev/simplify.md).
+  const more = ui(".sheet [data-act=more]");
+  if (await more.getAttribute("aria-expanded") === "false") await more.click();
   const sw = ui('.sheet input[data-k="polish"]');
   await sw.waitFor({ state: "attached" });
   assert.equal(await sw.isChecked(), true, "on by default");
