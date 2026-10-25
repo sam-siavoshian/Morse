@@ -123,9 +123,9 @@ function debugStatus() {
     });
   };
   const timer = setInterval(() => {
-    if (!live()) return clearInterval(timer); // soak: a copy that went quiet (morse stop) stops, and can be let go
+    if (!live()) { clearInterval(timer); B.off(document, "morse:status", write); return; } // soak: a copy that went quiet (morse stop) stops, and can be let go
     write();
   }, 40);
-  B.on(document, "morse:status", write); // B.on drops it once this copy isn't live
+  B.on(document, "morse:status", write);
 }
 if (DEBUG) debugStatus();

@@ -207,7 +207,7 @@ test("Recording rules: hidden values, only the user's own events on this page, o
   assert.deepEqual(await words(page), ["Click “Apply”"]);
   await page.keyboard.press("Escape");
   await until(async () => page.locator(".so-strip").isHidden());
-  assert.match(await page.locator(".toast").innerText(), /Cancelled\. No steps were kept/);
+  assert.match(await page.locator(".toast").innerText(), /Cancelled\. No steps were saved/);
   assert.equal((await status(page)).open, false);
   await page.locator("#pagebtn").click(); // after: not recorded, nowhere to show
   await page.keyboard.press(OPEN_KEY);
