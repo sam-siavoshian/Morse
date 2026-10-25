@@ -265,6 +265,9 @@ jobs:
       - name: SHA256SUMS and notes
         shell: bash
         run: |
+          # What Morse Desktop's updater reads first (desktop-app/updater.js): the
+          # build it compares with its own, and when it was made.
+          printf '{"commit":"%s","builtAt":"%s","version":"%s"}\n' "$GITHUB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(jq -r .version < package.json 2>/dev/null || echo)" > out/build.json
           (cd out && sha256sum -- *) > SHA256SUMS
           mv SHA256SUMS out/
           cat out/SHA256SUMS

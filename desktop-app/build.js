@@ -37,7 +37,7 @@ const say = s => console.log(`· ${s}`);
 
 // What the app needs at run time. Paths relative to the repo.
 const COPY = ["daemon", "core", "runtime", "design/tokens.css", "site/fonts", "site/config.js", "dist/extension"];
-const APP_FILES = ["main.js", "preload.cjs", "service.js", "ipc.js", "icons.js", "appimage.js", "linux.js", "chrome.js", "shell-path.js", "mark.js", "ui"];
+const APP_FILES = ["main.js", "preload.cjs", "service.js", "ipc.js", "icons.js", "appimage.js", "linux.js", "chrome.js", "shell-path.js", "updater.js", "mark.js", "ui"];
 
 async function copy(from, to) {
   const st = await fs.stat(from);
@@ -86,6 +86,10 @@ export async function stage() {
     dependencies: repo.dependencies,
   };
   await fs.writeFile(path.join(STAGE, "package.json"), JSON.stringify(pkg, null, 2));
+  // Which build this is, for the updater (updater.js): the commit it was made from.
+  let commit = process.env.GITHUB_SHA || "";
+  if (!commit) try { commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim(); } catch {}
+  await fs.writeFile(path.join(STAGE, "desktop-app", "build-info.json"), JSON.stringify({ version: repo.version, commit, builtAt: new Date().toISOString() }));
   // desktop-app/package.json says "type": "module" for its files in the repo; the staged root says it for all.
   for (const [name, dir] of await prodDeps(repo)) await copy(dir, path.join(STAGE, "node_modules", name));
   say(`staged ${path.relative(root, STAGE)}`);

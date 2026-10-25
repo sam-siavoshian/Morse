@@ -154,6 +154,14 @@ the bottom left. Then it starts in the tray, without the window.
 
 ![The Morse app in light mode](screenshots/174-desktop-app-light.png)
 
+## Updates
+
+Morse updates itself. It checks for a newer version when it starts and every
+4 hours, and downloads it in the background. It checks the download against
+the release's list of checksums before it uses it. The new version goes in
+when no app is connected to Morse and you aren't using its window, or when
+you quit Morse. You don't need to download anything again.
+
 ## For developers: the morse command
 
 The `morse` command is Morse for a terminal, for developers. It and the

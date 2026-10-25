@@ -9,6 +9,15 @@ under the new version number with the date
 
 ## Unreleased
 
+- **The Morse app updates itself.** It checks for a new version at start and
+  every 4 hours, downloads it in the background, checks it against the
+  release's checksums, and puts it in when no app is connected or when you
+  quit Morse.
+- **The Morse app finds Claude Code and Codex on a Mac** when it's opened from
+  Finder or the Dock, not only from a terminal.
+- **Open the bar**, beside each connected app in the Morse app, opens Morse's
+  bar in that app when the shortcut does nothing (another app may own ⌥Space).
+
 ## 0.2.0 (2026-10-25)
 
 Version 0.2.0, the first version for other people to install.

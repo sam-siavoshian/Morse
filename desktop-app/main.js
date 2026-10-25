@@ -28,6 +28,7 @@ import { iconSource } from "./icons.js";
 import { setAutostart, writeMenuEntry } from "./linux.js";
 import { openChromeExtensions, isStoreUrl } from "./chrome.js";
 import { fullPath } from "./shell-path.js";
+import { createUpdater } from "./updater.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // The window's page is served from morse-app://ui/, a scheme of Morse's own
@@ -81,7 +82,7 @@ if (app.isPackaged && process.platform !== "win32") process.env.PATH = fullPath(
 if (process.env.MORSE_HOME) app.setPath("userData", path.join(process.env.MORSE_HOME, "desktop-profile"));
 if (!app.requestSingleInstanceLock()) { app.quit(); process.exit(0); }
 
-let win = null, tray = null, service = null, quitting = false, lastState = null;
+let win = null, tray = null, service = null, quitting = false, lastState = null, updater = null;
 const startHidden = process.argv.includes("--hidden"); // opened at login: tray only
 
 // ---------------------------------------------------------------- security
@@ -254,6 +255,7 @@ function changed() {
   pushTimer = setTimeout(async () => {
     try { lastState = await service.state(); } catch (e) { log("state", e.message); return; }
     if (win && !win.isDestroyed()) win.webContents.send(PUSH, lastState);
+    updater?.idle(); // an app was disconnected: a downloaded update may install now
     rebuildTray();
   }, 120);
 }
@@ -269,7 +271,8 @@ app.on("before-quit", e => {
   e.preventDefault();
   shutDown = true;
   // Apps Morse connected keep running; their mods come off until next time.
-  Promise.race([service.shutdown(), new Promise(r => setTimeout(r, 5000))]).finally(() => app.quit());
+  // A downloaded update installs now (updater.js), without opening Morse again.
+  Promise.race([service.shutdown(), new Promise(r => setTimeout(r, 5000))]).finally(() => { if (!updater?.onQuit()) app.quit(); });
 });
 app.on("window-all-closed", () => {}); // the tray keeps Morse running
 
@@ -280,6 +283,10 @@ app.whenReady().then(async () => {
   // macOS needs a menu for ⌘Q, ⌘W and copy and paste (the API key field); elsewhere there is none.
   Menu.setApplicationMenu(MAC ? Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }, { role: "windowMenu" }]) : null);
   service = createService({ daemon: await loadDaemon(), emit: changed, log, iconFor, copyExtension: app.isPackaged || process.env.MORSE_COPY_EXTENSION === "1", ...(process.env.MORSE_CHROME_FOLDER && { chromeFolder: process.env.MORSE_CHROME_FOLDER }), chromeStore: isStoreUrl(LINKS.chrome) ? LINKS.chrome : "", self: [process.execPath, APPIMAGE], onAsk: () => showWindow() });
+  // Updates itself from the preview release: downloads in the background, and
+  // installs when no app is connected and the window isn't in use, or at quit.
+  updater = createUpdater({ app, log, getAppImage: () => APPIMAGE, busy: () => service.sessions.size > 0 || !!(win && win.isVisible() && win.isFocused()) });
+  updater.start();
   registerIpc({
     ipcMain, service, isTrusted, log,
     native: {
