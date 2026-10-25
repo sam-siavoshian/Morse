@@ -192,7 +192,6 @@ test("the Tunes cache keeps the 3 most recently used copies of each name, and ev
 const dist = findElectron();
 // Building and reading the app needs only the runtime; running it needs a display.
 const noRuntime = !dist ? "no Electron runtime found. Install one with: npm install --prefix ~/.cache/morse/electron electron (or set MORSE_ELECTRON to an electron binary)"
-  : process.platform === "darwin" ? "build.mjs packages Tunes for Linux and Windows only"
   : false;
 const skip = noRuntime || (process.platform === "linux" && !process.env.DISPLAY ? "Electron needs a display. Run with DISPLAY=:99 (Xvfb)" : false);
 if (skip) console.log(`electron.test.js: skipping the real Electron app: ${skip}`);

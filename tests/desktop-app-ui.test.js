@@ -31,7 +31,6 @@ try { ({ _electron } = createRequire(import.meta.url)("playwright")); } catch {}
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const skip = !electronExe ? "no Electron runtime (npm install --prefix ~/.cache/morse/electron electron)"
   : !_electron ? "playwright not installed"
-  : process.platform === "darwin" ? "Tunes is packaged for Linux and Windows only"
   : process.platform === "linux" && !process.env.DISPLAY ? "Electron needs a display. Run with DISPLAY=:99 (Xvfb)"
   : false;
 if (skip) console.log(`desktop-app-ui.test.js: skipping: ${skip}`);

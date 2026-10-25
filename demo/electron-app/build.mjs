@@ -87,7 +87,7 @@ export async function packAsar(dir, out) {
 //   asar: ship the app as resources/app.asar instead of resources/app/
 export async function buildTunes(outDir = "/opt/Tunes", { dist = findElectron(), asar = false } = {}) {
   if (!dist) throw new Error("No Electron runtime found. Install one: npm install --prefix ~/.cache/morse/electron electron");
-  if (process.platform === "darwin") throw new Error("build.mjs packages for Linux and Windows; on a Mac, run: npx electron demo/electron-app");
+  if (process.platform === "darwin") return buildTunesMac(outDir, { dist, asar });
   await fs.rm(outDir, { recursive: true, force: true });
   await cloneTree(dist, outDir);
   const exe = path.join(outDir, process.platform === "win32" ? "Tunes.exe" : "tunes");
@@ -102,6 +102,31 @@ export async function buildTunes(outDir = "/opt/Tunes", { dist = findElectron(),
     await fs.rm(app, { recursive: true });
   }
   return { dir: outDir, exe, version: electronVersion(outDir) };
+}
+
+// macOS: Tunes.app is Electron.app copied (ditto: no hard links, since
+// codesign rewrites the binary), the app in Contents/Resources/app, named
+// Tunes in its Info.plist, and signed again ad hoc (an Apple silicon Mac won't
+// start an app whose signature its changes broke).
+async function buildTunesMac(outDir, { dist, asar }) {
+  const { execFileSync } = await import("node:child_process");
+  await fs.rm(outDir, { recursive: true, force: true });
+  await fs.mkdir(outDir, { recursive: true });
+  const bundle = path.join(outDir, "Tunes.app");
+  execFileSync("ditto", [path.join(dist, "Electron.app"), bundle]);
+  const res = path.join(bundle, "Contents", "Resources");
+  await fs.rm(path.join(res, "default_app.asar"), { force: true });
+  const app = path.join(res, "app");
+  await fs.mkdir(path.join(app, "ui"), { recursive: true });
+  for (const f of ["package.json", "main.js", "preload.js", "renderer.js", "mini.html"]) await fs.copyFile(path.join(here, f), path.join(app, f));
+  await fs.copyFile(path.join(here, "..", "sites", "tunes", "index.html"), path.join(app, "ui", "index.html"));
+  if (asar) { await packAsar(app, path.join(res, "app.asar")); await fs.rm(app, { recursive: true }); }
+  const plist = path.join(bundle, "Contents", "Info.plist");
+  for (const [k, v] of [["CFBundleName", "Tunes"], ["CFBundleDisplayName", "Tunes"], ["CFBundleIdentifier", "dev.morse.tunes"]]) {
+    try { execFileSync("plutil", ["-replace", k, "-string", v, plist]); } catch {}
+  }
+  execFileSync("codesign", ["--force", "--deep", "--sign", "-", bundle]);
+  return { dir: outDir, exe: path.join(bundle, "Contents", "MacOS", "Electron"), version: electronVersion(dist) };
 }
 
 // Locks the packaged app down the way security-minded apps ship (what
@@ -174,7 +199,9 @@ export async function cachedTunes(name, build, { dist = findElectron(), cache = 
   const h = createHash("sha256").update(`${dist}\0${electronVersion(dist)}\0${name}\0`);
   for (const f of [...(await fs.readdir(here)).sort().map(f => path.join(here, f)), path.join(here, "..", "sites", "tunes", "index.html")]) h.update(path.relative(here, f)).update(await fs.readFile(f));
   const dir = path.join(cache, `${name}-${h.digest("hex").slice(0, 12)}`);
-  const result = () => ({ dir, exe: path.join(dir, process.platform === "win32" ? "Tunes.exe" : "tunes"), version: electronVersion(dir) });
+  const result = () => process.platform === "darwin"
+    ? { dir, exe: path.join(dir, "Tunes.app", "Contents", "MacOS", "Electron"), version: electronVersion(dist) }
+    : { dir, exe: path.join(dir, process.platform === "win32" ? "Tunes.exe" : "tunes"), version: electronVersion(dir) };
   await fs.mkdir(cache, { recursive: true });
   if (existsSync(path.join(dir, ".built"))) {
     await fs.utimes(dir, new Date(), new Date()).catch(() => {}); // used now: pruning goes by last use

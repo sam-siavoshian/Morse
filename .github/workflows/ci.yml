@@ -99,3 +99,38 @@ jobs:
             docs/ui
             test-ui.log
           if-no-files-found: ignore
+
+  # The real-app tests on a Mac: Tunes (a real Electron app, demo/electron-app)
+  # opened with Morse and with Morse Desktop, the shortcut pressed, a change
+  # made and saved. Free on a public repository; only on pushes to main.
+  mac:
+    name: Real apps on macOS
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright (global) and Electron
+        run: |
+          npm install -g "playwright@${PLAYWRIGHT_VERSION}"
+          echo "NODE_PATH=$(npm root -g)" >> "$GITHUB_ENV"
+          npm install --prefix ~/.cache/morse/electron electron
+      - run: node scripts/build.js
+      - name: Real Electron and Morse Desktop on macOS
+        shell: bash
+        env:
+          MORSE_TRACE: ${{ github.workspace }}/trace.log
+        run: node --test --test-timeout=300000 tests/electron.test.js tests/desktop-app-ui.test.js tests/pipe.test.js 2>&1 | tee mac.log
+      - name: Upload the log and trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: |
+            mac.log
+            trace.log
