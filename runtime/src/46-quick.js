@@ -3,6 +3,7 @@
 // code comes from core/edits.js, so it persists and shares like any mod.
 
 const quickMenuGroups = []; // hook: more groups for the menu, as functions returning HTML (65-a11y.js)
+const quickMenuItems = []; // hook: more items before "Turn off all mods here", as functions returning HTML (65-a11y.js)
 
 const GodQuick = (() => {
   const svg = d => `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
@@ -62,7 +63,7 @@ const GodQuick = (() => {
     const ONOFF = new Set(["dark", "light", "noads", "focus"]);
     menu.innerHTML = `<header aria-hidden="true">${t("quick.title")}<small>${esc(where())}</small></header>` + ITEMS.map(it => it
       ? `<button ${ONOFF.has(it.k) ? `role="menuitemcheckbox" aria-checked="${!!quickMod(it.k)?.enabled}"` : `role="menuitem"`} tabindex="-1" data-k="${it.k}">${svg(I[it.k])}<span>${t(it.label)}</span><span class="gm-state">${state(it.k)}</span></button>`
-      : `<hr>`).join("") + quickMenuGroups.map(g => g()).join(""); // hook: 65-a11y.js
+      : quickMenuItems.map(g => g()).join("") + `<hr>`).join("") + quickMenuGroups.map(g => g()).join(""); // hook: 65-a11y.js
     for (const b of menu.querySelectorAll("button")) b.tabIndex = -1; // one Tab stop: the menu's arrows do the rest
     const first = menu.querySelector("[role^=menuitem]");
     if (first) first.tabIndex = 0; // (a menu that scrolls on a small screen still has a way in)

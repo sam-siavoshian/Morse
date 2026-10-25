@@ -19,6 +19,9 @@ How to work on Morse itself. For using Morse, see the [docs](../README.md).
   “Allow User Scripts” only when a change needs it.
 - [Checking a Mac or Windows PC](platform-testing.md): the 15-minute check
   for the desktop support that has only been tested on Linux.
+- [Simplify](simplify.md): every setting, menu and button people meet, what
+  is shown and what waits under More, and Morse checked end to end on a
+  fresh setup.
 
 ## Set up a checkout
 

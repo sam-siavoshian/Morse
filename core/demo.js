@@ -4,6 +4,7 @@
 // One reply ships a deliberate bug on the first try to exercise self-repair.
 
 import { showOnceDemo } from "./showonce-demo.js"; // show-once hook
+import { takeDemo } from "./take-demo.js"; // take-and-bring hook
 
 const fence = (lang, body) => "```" + lang + "\n" + body.trim() + "\n```";
 const reply = (title, css, js) => `TITLE: ${title}\n${fence("css", css || "")}\n${fence("js", js || "")}\n`;
@@ -371,6 +372,8 @@ export function demoResponse(messages) {
   const pic = messages.find(m => Array.isArray(m.content) && m.content.some(b => b?.type === "image"));
   if (pic && pic.content.some(b => /Does it look like it shipped with the app/.test(b?.text || ""))) return "OK"; // polish (core/polish.js): the canned changes look fine
   if (pic) return describeDemo(pic.content.filter(b => b.type === "text").map(b => b.text).join("\n"));
+  const taken = takeDemo(messages); // take-and-bring hook: Take this, Bring here
+  if (taken) return taken;
   // The page context is the last user turn that carries a request (earlier
   // Ask turns come before it; a "That failed" retry comes after).
   const users = messages.filter(m => m.role === "user");

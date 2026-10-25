@@ -22,6 +22,7 @@ const quiet = page => page.locator(".toast").waitFor({ state: "hidden", timeout:
 async function tools(page) {
   if (await page.locator(".bar").isHidden()) await pressOpen(page); // the default Open Morse key (core/hotkeys.js)
   await page.locator(".gm-qbtn").click();
+  await page.locator(".gm-menu [data-a11y=more]").click(); // the group opens from its one item
   await page.locator(".gm-menu .a11y-group").waitFor();
 }
 async function turnOn(page, ...kinds) {

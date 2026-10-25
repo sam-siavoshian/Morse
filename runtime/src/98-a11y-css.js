@@ -7,6 +7,10 @@ function A11Y_CSS() { return `
   .gm-menu .a11y-group { inset-inline-end: calc(100% + 8px); bottom: -1px; width: 264px; animation: none; }
   .bar.top .gm-menu .a11y-group { bottom: auto; top: -1px; }
   .gm-menu .a11y-group header small { color: var(--m-text-3); }
+  .gm-menu .a11y-group[hidden] { display: none; }
+  .gm-menu [data-a11y=more] .gm-state { display: inline-flex; align-items: center; gap: 4px; }
+  .gm-menu .a11y-chev { font-size: 14px; line-height: 1; }
+  :host([dir=rtl]) .gm-menu .a11y-chev { transform: scaleX(-1); }
   .gm-menu .a11y-sub { height: 28px; padding-inline-start: 36px; color: var(--m-text-2); font-size: var(--m-text-sm); }
   .gm-menu .a11y-sub:hover, .gm-menu .a11y-sub:focus-visible { color: var(--m-text); }
   .gm-menu [aria-checked="true"] > span:not(.gm-state) { color: var(--m-text); font-weight: 500; }

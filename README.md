@@ -22,6 +22,12 @@ Press a shortcut, point at something and say what you want: “add a sleep timer
 
 ## Install
 
+**Download Morse Desktop:** [Mac (Apple silicon)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) · [Mac (Intel)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg) · [Windows](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) · [Linux](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage)
+
+These are [preview builds](https://github.com/sam-siavoshian/RRAA/releases/tag/preview) of the newest `main`, not signed yet. The first time, on a Mac: open Morse, then System Settings, Privacy & Security, **Open Anyway**. On Windows: **More info**, then **Run anyway**. More in [Morse Desktop](docs/desktop-app.md#get-it).
+
+For developers, one line installs the `morse` command (needs Node 22): `curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install.sh | sh` on macOS and Linux, `irm https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install.ps1 | iex` in Windows PowerShell. Run it again to update; `morse uninstall` removes it.
+
 You need [Node](https://nodejs.org) 22 or newer. For full steps and help when something goes wrong, see [Getting started](docs/getting-started.md).
 
 **Websites (Chrome)**
@@ -51,6 +57,7 @@ To work on Morse itself, see the [developer guide](docs/dev/README.md#set-up-a-c
 | **Page tools** | Dark or light mode, text size, hide ads and pop-ups, focus mode. One click each. | [Edit tools and Page tools](docs/edit-and-page-tools.md#page-tools) |
 | **Ask and find** | Ask what something does or where a setting is. **Show me** shows where to click. | [Ask and find](docs/ask-and-find.md) |
 | **Show me once** | Do a task by hand once. Then turn it into a button, a shortcut, or “do this to every one”. | [Show me once](docs/show-me-once.md) |
+| **Bring a feature** | **Take this** in one app (a command palette, a dark mode switch), then **Bring here** in another. Morse builds it there, in that app's own look. | [Bring a feature](docs/bring-a-feature.md) |
 | **Easier to use** | Higher contrast, bigger click targets, an easier font and Read aloud. Check this page finds problems, and Fix it fixes them. | [Easier to use](docs/easier-to-use.md) |
 | **Mods** | Turn mods on and off, share them with a link, try mods other people made, and fix one when a site changes. | [Mods](docs/mods.md) |
 | **Mod packs** | Share a set of mods with your team. Each person picks the ones they want. The pack can stay up to date. | [Mod packs](docs/mod-packs.md) |

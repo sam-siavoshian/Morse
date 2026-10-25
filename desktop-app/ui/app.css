@@ -304,3 +304,30 @@ main::-webkit-scrollbar { width: 10px; }
 main::-webkit-scrollbar-thumb { background: var(--m-line-strong); border: 3px solid var(--m-bg); border-radius: 6px; }
 main::-webkit-scrollbar-thumb:hover { background: var(--m-signal-1); }
 main::-webkit-scrollbar-track { background: transparent; }
+
+/* simplify: Checks is a card under Model (index.html) */
+#checks { margin-top: 16px; }
+#checks .sub { margin: 4px 0 0; color: var(--m-text-2); font-size: var(--m-text-sm); }
+#checks .list { margin-top: 12px; }
+#checks .foot { margin-top: 12px; }
+/* "Add to Chrome": the picture of Chrome's extensions page, and the two steps */
+.steps li > div > .add-how { grid-column: 1 / -1; margin-top: var(--s-4); }
+.add-pic { display: block; width: 100%; max-width: 420px; height: auto; font-family: var(--m-font); }
+.add-pic .win { fill: var(--m-surface); stroke: var(--m-line-strong); }
+.add-pic .bar { fill: var(--m-hover); }
+.add-pic .dot, .add-pic .line { fill: var(--m-line-strong); }
+.add-pic .url, .add-pic .card { fill: var(--m-bg); stroke: var(--m-line); }
+.add-pic .t { fill: var(--m-text-2); font-size: 9px; }
+.add-pic .t.h { fill: var(--m-text); font-size: 13px; font-weight: 600; }
+.add-pic .t.num { fill: var(--m-primary); font-size: 11px; font-weight: 700; }
+.add-pic .hl { fill: none; stroke: var(--m-primary); stroke-width: 2; }
+.add-pic .sw { fill: var(--m-primary); }
+.add-pic .knob { fill: var(--m-bg); }
+.add-pic .btnr { fill: var(--m-bg); stroke: var(--m-line-strong); }
+.add-pic .folder { fill: var(--m-primary); }
+.add-pic .arrow { fill: none; stroke: var(--m-primary); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.add-pic .arrowhead { fill: var(--m-primary); }
+.add-steps { margin: var(--s-3) 0 0; padding-left: 1.4em; color: var(--m-text-2); line-height: 20px; }
+.add-steps li { padding: 2px 0; }
+.add-steps b { display: inline; font-size: inherit; line-height: inherit; color: var(--m-text); }
+body.mac .not-mac, body:not(.mac) .mac-only { display: none; }

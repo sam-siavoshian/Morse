@@ -14,7 +14,9 @@
   </section>
 
   <section id="model">
-    <h2 data-i18n="popup.model">Model</h2>
+    <!-- simplify: once a model works, its settings fold into one line (docs/dev/simplify.md) -->
+    <details id="modelbox" open>
+    <summary><h2><span data-i18n="popup.model">Model</span> <span id="modelsum"></span></h2></summary>
     <p id="connect" class="notice" hidden><b data-i18n="popup.connect">Connect a model to start.</b> <span id="reason"></span></p>
 
     <label class="choice"><input type="radio" name="backend" value="helper">
@@ -45,6 +47,7 @@
       <button id="test" data-i18n="popup.test">Test the model</button>
       <span id="result" class="hint" role="status" aria-live="polite"></span>
     </div>
+    </details>
   </section>
   </main>
   <script src="popup.js" type="module"></script>

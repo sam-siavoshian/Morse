@@ -228,6 +228,66 @@ What this says:
 
 Results: `results/2026-10-24T16-02-10-routing-train.json`, `results/2026-10-24T16-20-13-routing-heldout.json`, `results/2026-10-24T16-25-26-routing-differ-x2.json` (each record has `arm`, `model` (who answered), `startedStrong`, `escalated`, `routeWhy`).
 
+## Bring a feature
+
+[`bring.js`](bring.js) checks **Take this** and **Bring here**
+([user page](../docs/bring-a-feature.md)) on real apps and sites, the way a
+person uses them: the built Chrome extension paired with the Morse helper,
+and `morse launch` for a desktop app, both with the same `~/.morse`, so a
+feature taken in the desktop app is brought into a website through the
+helper's shared list. Each case in [`bring-cases.json`](bring-cases.json)
+takes a feature (pointing at it, or opening it while Morse watches and
+pressing the Morse shortcut to stop), waits for the model's name and lines,
+then brings it into another site with **Bring here…**, saves it, and checks:
+
+- **opened**: real keys or clicks show it (the keys it opened with there; if
+  they open nothing, the button Morse added for it),
+- **works**: using it does what it did there (a jump lands on the right
+  heading, a dark mode switch makes the page dark, a palette runs a command),
+- **design fit**: everything Morse added that shows uses the page's own fonts
+  (at least 80%), colors near ones the page already uses, and corners the
+  page already has (score ≥ 0.75).
+
+```bash
+node scripts/build.js
+DISPLAY=:99 MORSE_PROVIDER=claude-code node evals/bring.js        # Automatic: sonnet names it, opus builds it
+DISPLAY=:99 MORSE_PROVIDER=claude-code SHOTS=/tmp/bring node evals/bring.js --only vscodium-palette-to-rubygems
+```
+
+**Results** (October 24, 2026, Claude Code Automatic; `results/bring-*.json`
+keeps each record with the mod's code):
+
+| Case | Took | Brought (model time) | Opened | Works | Fit |
+|---|---|---|---|---|---|
+| pkg.go.dev “Jump to” → Node.js docs | “Jump to identifier” | 60 s, a second try | ✓ | ✓ | 1.0 |
+| Node.js docs dark mode switch → PyPI | “Dark mode switch” | 19 s | ✓ | ✓ | 1.0 |
+| VSCodium command palette → RubyGems.org | “Command palette” | 45 s, a second try | ✓ | ✓ | 0.98 |
+
+The first two rows are `results/bring-2026-10-24T22-46-27-074Z.json`. In that
+run the VSCodium case stopped before anything was taken (Tab didn't reach
+**Take this** under a load average of 80); run again on its own it passed
+(`results/bring-2026-10-24T23-12-14-512Z.json`), as it had in the run before.
+Its one color off the page's own is a red 4 steps from RubyGems' red.
+
+What the development runs showed, and what changed because of them:
+
+- **A list that finds nothing.** Twice, opus's “Jump to” in the Node.js
+  docs collected `#toc a[href^="#"]`, but the links there are written
+  `fs.html#…`, so it listed nothing. It still added its link, so the page
+  changed and the usual effect check passed. Now, for a brought feature, the
+  engine also asks which of the selectors its code uses to find the page's
+  own things match nothing (a quick probe that skips the fingerprint, which
+  timed out on that 10,000-element page) and gives the model a second try
+  with them (`bringMisses`, core/take.js). The next run fixed it.
+- **A dark mode as a filter.** The first dark mode switch in PyPI inverted the
+  whole page (a light blue header, an inverted logo). The prompt now says a
+  look it switches to is the app's own colors, not a filter; the next run
+  used PyPI's own navy and kept the logo.
+- **The harness, not Morse:** a check that counted only `h3`/`h4` headings
+  (Node's are `h5`), a navigation that ended the check's page, and once,
+  under load, Tab not reaching **Take this** in VSCodium (the runner now
+  tries again).
+
 ## Run log
 
 Rows before "baseline (rescored checkers)" used earlier checkers. "dev" rows are this round's development runs on the train split. Results JSON is kept only for the final pair (`results/*-baseline.json`, `results/*-final.json`); this table summarizes the rest. Baseline rows ran from a copy of commit fa7b111 with the current apps and checkers.

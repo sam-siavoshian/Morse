@@ -11,6 +11,16 @@ under the new version number with the date
 
 Version 0.2.0, the first version for other people to install.
 
+### Getting Morse
+
+- Morse Desktop has one download for each computer (Mac, Windows, Linux),
+  rebuilt from `main` on every change, in the `preview` release.
+- **Add to Chrome** in Morse Desktop opens Chrome's extensions page and shows
+  the folder to drag in.
+- For developers: one line installs the `morse` command
+  (`install.sh`, `install.ps1`). Run it again to update; `morse uninstall`
+  removes it. `morse setup --auto` and `morse doctor --offline` are new.
+
 ### Describe a change
 
 - Press the shortcut (⌥Space on a Mac, Ctrl+Shift+Space on Windows and
@@ -23,6 +33,11 @@ Version 0.2.0, the first version for other people to install.
 - Ask for more ("make it smaller") to change the same mod. Step back, go back
   to any of the last 20 versions, or fix a mod that stopped working.
 - Hold the shortcut and talk instead of typing.
+- Bring a feature from one app to another: **Take this** on a command palette,
+  a dark mode switch or a notice in one app or site, then **Bring here** in
+  another, or just type “add VS Code's command palette here”. Morse builds it
+  from that app's own fonts, colors and corners. Chrome and desktop apps share
+  what you took once they are paired.
 
 ### Where it works
 

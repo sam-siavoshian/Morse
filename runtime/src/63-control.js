@@ -290,7 +290,7 @@ function controlPanel() {
     <label class="ctl-row"><span class="ctl-l"><span>${esc(t("ctl.pauseOn", { site: where }))}</span><small>${site ? t("ctl.pausedHere2") : S.mode === "desktop" && S.app ? t("ctl.stopsApp") : t("ctl.pauseHere.help")}</small></span>
       <span class="sw"><input type="checkbox" data-c="pause-site" ${site ? "checked" : ""} aria-label="${esc(t("ctl.pauseOn", { site: where }))}"><span></span></span></label>
     ${notes}</div>`);
-  panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", `<div class="ctl-backup"><span class="eyebrow">${t("ctl.backup")}</span><button data-c="export">${t("ctl.exportAll")}</button><button data-c="import-file">${t("ctl.importFile")}</button></div>`);
+  panel.querySelector("footer")?.insertAdjacentHTML("beforebegin", `<div class="ctl-backup"><span class="eyebrow">${t("ctl.backup")}</span><button data-c="export">${t("ctl.exportAll")}</button></div>`); // simplify: Install from a file… is in Install a mod… (80-modals.js)
 }
 // Each row in the list (re-run whenever the list is redrawn, e.g. by search).
 function controlRows() {
@@ -299,9 +299,7 @@ function controlRows() {
     const meta = a.querySelector(".meta");
     if (!m || !meta) continue;
     const tags = meta.querySelector(".tags");
-    const show = `<button class="ctl-link" data-c="show" title="${esc(t("ctl.showTitle"))}">${t("ctl.showCode")}</button>`;
-    (tags || meta).insertAdjacentHTML("beforebegin", `<small class="ctl-origin">${esc(modOrigin(m))}</small>`);
-    if (tags) tags.insertAdjacentHTML("beforeend", show); else meta.insertAdjacentHTML("beforeend", show);
+    (tags || meta).insertAdjacentHTML("beforebegin", `<small class="ctl-origin">${esc(modOrigin(m))}</small>`); // Show code is in the row's More (70-panel.js)
     if (m.enabled && modHeld(m)) tags?.insertAdjacentHTML("afterbegin", `<span>${t("ctl.notRunning")}</span>`);
     else if (m.enabled && Waiting.has(m.id)) tags?.insertAdjacentHTML("afterbegin", `<span class="waiting" title="${esc(t("wait.tagTitle"))}">${t("wait.tag")}</span>`); // waiting hook (64-waiting.js)
   }

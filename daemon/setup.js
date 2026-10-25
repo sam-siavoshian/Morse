@@ -9,6 +9,10 @@
 //
 //   morse setup                          interactive
 //   morse setup --use claude-code|codex|api-key|demo [--key <key>]
+//   morse setup --auto                   no questions when the answer is obvious:
+//                                        already set up, nothing changes; one
+//                                        found, it is used; none, it says how
+//                                        (the install line runs this)
 //   morse setup --pair <code>            first run from Chrome: the welcome page
 //                                        shows this command with its own code;
 //                                        setup then starts the Morse helper with
@@ -27,6 +31,7 @@ import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LAN
 import { paint } from "./colors.js";
 import { commandFor } from "./platform.js";
 import { validModel } from "./harness.js"; // models: names Morse can pass to claude and codex
+import { extensionPath } from "./installed.js";
 
 const { g: G, d: D, b: B, r: R } = paint;
 const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· setup")}\n${G("▪▫▪")}`;
@@ -35,7 +40,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const EXTENSION_DIR = path.join(ROOT, "dist", "extension");
 const tilde = p => (process.env.HOME && p.startsWith(process.env.HOME) ? "~" + p.slice(process.env.HOME.length) : p);
 // The extension folder as the user can type it: relative inside the repo, else from ~.
-const extDir = () => (path.relative(process.cwd(), EXTENSION_DIR).startsWith("..") ? tilde(EXTENSION_DIR) : path.relative(process.cwd(), EXTENSION_DIR));
+// Installed with the install line, it is the copy in the Morse folder (daemon/installed.js).
+const extDir = () => {
+  const dir = extensionPath(EXTENSION_DIR);
+  return path.relative(process.cwd(), dir).startsWith("..") || path.isAbsolute(path.relative(process.cwd(), dir)) ? tilde(dir) : path.relative(process.cwd(), dir);
+};
 
 // What each choice is, how to get it, and what it writes to config.json's
 // "model". The provider ids are core/providers.js's; keep them in step.
@@ -174,6 +183,7 @@ export const setupHelp = (h = (id, v) => t(`setup.help.${id}`, v)) => `${h("titl
   morse setup --use api-key        ${h("env", { a: "ANTHROPIC_API_KEY", o: "OPENAI_API_KEY" })}
   morse setup --use api-key --key <key>
                                    ${h("key", { path: `${tilde(HOME)}/config.json` })}
+  morse setup --auto               ${h("auto")}
   morse setup --pair <code>        ${h("pair")}
   morse setup --model-mode auto|fast|best
                                    ${h("mode")}
@@ -196,6 +206,12 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
     const v = str(flag(k));
     if (v && !validModel(v)) { say(R(`  ${t("cli.badModel", { model: v })}`)); return { saved: false, rows: [] }; }
   }
+  const auto = flag("auto") === true && !flag("use");
+  if (auto && isSetUp(await load())) {
+    const { settingsFromConfig, settingsLabel } = await import("./models.js");
+    say(`  ${G("✓")} ${t("setup.already", { label: B(settingsLabel(settingsFromConfig(await load()))), cmd: B("morse setup") })}\n`);
+    return { saved: false, already: true, rows: [] };
+  }
   say(`  ${t("setup.looking")}\n`);
   const rows = await detectBackends(deps);
   for (const r of rows) say(`  ${r.found ? G("✓") : D("✗")} ${r.name.padEnd(12)} ${r.found ? r.detail : D(r.detail)}`);
@@ -203,6 +219,12 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
   const best = recommend(rows);
 
   let choice = flag("use");
+  // --auto: what was found, without a question. Nothing found and nobody to ask: say how.
+  if (auto && best) choice = best.id;
+  if (auto && !best && !isTTY) {
+    say(`  ${t("setup.noneFound", { cmd: B("morse setup") })}\n`);
+    return { saved: false, rows };
+  }
   const lines = lineReader(input, output);
   if (!choice) {
     say(`  ${t("setup.which")}`);
@@ -238,7 +260,7 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
   // models: Automatic / Always fast / Always best, and the two names (core/route.js)
   const tiers = resolveTiers(model.provider, { fast: str(flag("fast-model")), best: str(flag("best-model")) });
   let mode = MODES[String(flag("model-mode") || "").toLowerCase()] || "";
-  if (!mode && tiers && isTTY && !flag("use")) {
+  if (!mode && tiers && isTTY && !flag("use") && !auto) {
     const names = { fast: tierName(tiers.fast), best: tierName(tiers.best) };
     say(`\n  ${t("setup.model.which")}`);
     say(`    ${B("1")}  ${t("settings.model.auto").padEnd(12)}  ${D(t("setup.model.autoWhy", names))}  ${G(t("setup.recommended"))}`);
@@ -272,7 +294,7 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
     else say(`  ${R("✗")} ${t("setup.noAnswer", { label, error: checked.error })}\n    ${fixFor(choice, model.provider)}`);
   }
   say("");
-  if (!flag("pair")) say(nextSteps(platform)); // with --pair, connectBrowser says what's next
+  if (!flag("pair") && !auto) say(nextSteps(platform)); // with --pair, connectBrowser says what's next; with --auto, the install line does
   return { saved: true, rows, choice, model, checked, next: () => nextSteps(platform, { pairing: true }) };
 }
 

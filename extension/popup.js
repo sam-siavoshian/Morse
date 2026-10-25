@@ -29,6 +29,9 @@ async function openHotkey() {
 const url = new URLSearchParams(location.search).get("url") || tab?.url || "";
 const send = msg => chrome.runtime.sendMessage({ ...msg, url });
 
+// simplify: Model is folded or open as the popup opens, and then left alone,
+// so pairing here doesn't fold away its own "Paired" note.
+let modelPlaced = false;
 let st = await send({ type: "popup.state" });
 render(st);
 
@@ -50,6 +53,10 @@ function render(s) {
 
   $("connect").hidden = s.kind !== "none";
   $("reason").textContent = s.reason;
+  // simplify: a working model is one line; open it to change it. No model: open.
+  const ok = s.kind !== "none" && (s.kind !== "helper" || s.helper?.paired);
+  $("modelsum").textContent = ok ? `· ${s.label}` : "";
+  if (!modelPlaced) { modelPlaced = true; $("modelbox").open = !ok || isOptions; }
 
   // Auto (no explicit choice): show whichever is in use, else the helper.
   const backend = s.backend || (s.kind === "anthropic" ? "anthropic" : "helper");

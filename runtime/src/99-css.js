@@ -235,6 +235,22 @@ function CSS() {
   .bar.refining .actions [data-a=keep] kbd { display: none; }
   .panel .btns { flex-wrap: wrap; row-gap: 2px; }
   .panel .btns em { font: 10.5px/16px var(--m-mono); font-style: normal; color: var(--m-text-3); margin-inline-start: 2px; letter-spacing: 0; }
+  /* simplify: a row's rarer actions, and the panel's own (backup, packs), under More */
+  .rmore, .pmore { position: relative; }
+  .rmore > summary, .pmore > summary { list-style: none; display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: var(--m-r-sm); color: var(--m-text-3); cursor: pointer;
+    font: 450 var(--m-text-sm)/24px var(--m-font); letter-spacing: var(--m-tracking); }
+  .pmore > summary { height: 28px; color: var(--m-text-2); }
+  .rmore > summary::-webkit-details-marker, .pmore > summary::-webkit-details-marker { display: none; }
+  .rmore > summary::after, .pmore > summary::after { content: ""; width: 5px; height: 5px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); }
+  .rmore[open] > summary::after, .pmore[open] > summary::after { transform: translateY(1px) rotate(-135deg); }
+  .rmore > summary:hover, .pmore > summary:hover { color: var(--m-text); background: var(--m-hover); }
+  .rmore[open] { flex-basis: 100%; }
+  .rmore-list { display: flex; flex-wrap: wrap; gap: 2px; }
+  .pmore { flex: 1; min-width: 0; }
+  .pmore[open] { flex-basis: 100%; order: 3; }
+  .pmore .ctl-backup { padding-inline: 0; border-top: 0; padding-block: 6px 0; font-family: var(--m-font); }
+  .panel footer:has(.pmore[open]) { flex-wrap: wrap; }
+  .card footer .ctl-file { margin-inline-end: auto; }
   .health { grid-column: 2; display: flex; align-items: center; gap: 12px; margin-top: 10px; padding-block: 8px; padding-inline: 12px 8px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-bg); }
   .health p { flex: 1; min-width: 0; margin: 0; font-size: var(--m-text-sm); line-height: 16px; color: var(--m-text-2); overflow-wrap: anywhere; }
   .health b { color: var(--m-text); font-weight: 600; }

@@ -11,6 +11,7 @@ import { wrapModCode } from "../core/kit.js";
 import { createMod, modMatches } from "../core/mod.js";
 import { runMorse } from "../core/engine.js";
 import { pageCollapse } from "../core/guard.js";
+import { createTakeHost } from "../core/take-host.js"; // take-and-bring: taken features, shared by every demo site on this origin
 
 const fake = window.__fake = { requests: [] };
 const KEY = "morse:a11y-host:";
@@ -19,6 +20,7 @@ const store = {
   set(k, v) { localStorage.setItem(KEY + k, JSON.stringify(v)); },
 };
 localStorage.setItem("morse:debug", "1");
+const Take = createTakeHost({ load: async () => store.get("taken", []), save: async l => store.set("taken", l) });
 const subs = [], gens = new Map();
 const emit = m => subs.forEach(f => f(m));
 function run(id, js) {
@@ -47,6 +49,8 @@ globalThis.__morseHost = {
       case "exec": return reply(run(m.modId, m.js));
       case "off": globalThis.morse?.__off(m.modId); return reply(true);
       case "capture": return reply(window.__morseShot ? await window.__morseShot() : null);
+      case "taken.list": case "taken.put": case "taken.remove": // take-and-bring
+        try { return reply(await Take.handle(m)); } catch (e) { return reply(null, e.message); }
       case "generate.cancel": gens.get(m.genId)?.abort(); return reply(true);
       case "generate": {
         fake.requests.push({ request: m.request, context: m.context });

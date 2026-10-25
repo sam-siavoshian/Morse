@@ -33,7 +33,7 @@ await fs.mkdir(path.join(out, "icons"), { recursive: true });
 
 // The worker's own modules import ../core and are only ever bundled into
 // background.js; copied raw they'd be dead files with broken imports.
-const BUNDLED_ONLY = ["background.js", "bar-host.js", "onboarding-host.js", "control-host.js", "gallery-host.js", "style-host.js" /* your-style hook */, "pack-host.js" /* packs hook */, "dev-host.js"];
+const BUNDLED_ONLY = ["background.js", "bar-host.js", "onboarding-host.js", "control-host.js", "gallery-host.js", "style-host.js" /* your-style hook */, "pack-host.js" /* packs hook */, "dev-host.js", "take-host.js" /* take-and-bring hook */];
 for (const f of await fs.readdir(path.join(root, "extension"))) {
   if (!BUNDLED_ONLY.includes(f)) await fs.copyFile(path.join(root, "extension", f), path.join(out, f));
 }
@@ -167,3 +167,9 @@ function crc32(buf) {
 }
 
 console.log(`Built ${path.relative(root, out)} (version ${version}${STORE ? ", store build" : ""}): load it in chrome://extensions → Load unpacked.`);
+// `npm install` (or bun install) in a clone runs this as "prepare": say what's next.
+if (process.env.npm_lifecycle_event === "prepare" && !process.env.CI && !STORE && outArg < 0) {
+  console.log("\nNext: npm run setup   (finds Claude Code or Codex)");
+  console.log("Then, in Chrome: chrome://extensions, Developer mode on, Load unpacked, choose the dist/extension folder.");
+  console.log("Desktop apps: npm run morse -- launch obsidian. Everything else: docs/getting-started.md");
+}

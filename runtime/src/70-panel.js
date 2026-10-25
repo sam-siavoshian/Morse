@@ -71,7 +71,7 @@ function modProblem(e) {
 }
 
 // ---- the panel
-const PanelUI = { q: "", hist: null, focus: null, back: null };
+const PanelUI = { q: "", hist: null, focus: null, back: null, more: null, tools: false }; // more: the row whose More is open; tools: the panel's own More
 const SEARCH_AFTER = 6;
 
 async function openPanel() {
@@ -138,7 +138,7 @@ function matches(m, q) {
 function renderPanel() {
   const where = S.appName || location.host || t("panel.thisPage");
   const active = panel.contains(root.activeElement) ? root.activeElement : null;
-  const keep = active && { search: active.classList.contains("search"), id: active.closest("article")?.dataset.id, a: active.dataset.a, row: active.tagName === "ARTICLE",
+  const keep = active && { search: active.classList.contains("search"), id: active.closest("article")?.dataset.id, a: active.dataset.a || (active.tagName === "SUMMARY" ? "more" : active.dataset.c ? `c-${active.dataset.c}` : undefined), row: active.tagName === "ARTICLE",
     sel: active.classList.contains("search") ? [active.selectionStart, active.selectionEnd] : null };
   const searchable = S.mods.length > SEARCH_AFTER;
   if (!searchable) PanelUI.q = "";
@@ -150,6 +150,7 @@ function renderPanel() {
   renderList();
   controlPanel(); // user control: pause, backup (63-control.js)
   packPanel(); // packs hook: Make a pack… (69-packs.js)
+  panelTools(); // simplify: backup and packs wait under the panel's own More
   if (!keep) return;
   if (keep.search) {
     const s = panel.querySelector(".search");
@@ -158,8 +159,22 @@ function renderPanel() {
   }
   const art = keep.id && panel.querySelector(`article[data-id="${cssEsc(keep.id)}"]`);
   if (!art) return focusRow(0);
-  const target = keep.row ? art : art.querySelector(`[data-a="${keep.a}"]`) || art;
+  const target = keep.row ? art : (keep.a === "more" ? art.querySelector(".rmore summary") : /^c-/.test(keep.a || "") ? art.querySelector(`[data-c="${keep.a.slice(2)}"]`) : art.querySelector(`[data-a="${keep.a}"]`)) || art;
   if (target === art) focusRow(rows().indexOf(art)); else target.focus({ preventScroll: true });
+}
+
+// simplify: the panel's footer shows Install a mod…; the rarer things (back
+// up all mods, make a pack) sit under one More beside it (docs/dev/simplify.md).
+function panelTools() {
+  const extras = [...panel.querySelectorAll(".ctl-backup")];
+  if (!extras.length) return;
+  const d = document.createElement("details");
+  d.className = "pmore";
+  d.open = PanelUI.tools;
+  d.innerHTML = `<summary>${t("bar.more")}</summary>`;
+  d.append(...extras);
+  d.addEventListener("toggle", () => { PanelUI.tools = d.open; });
+  panel.querySelector("footer")?.querySelector("[data-a=import]")?.after(d);
 }
 
 function renderList() {
@@ -169,6 +184,7 @@ function renderList() {
   list.innerHTML = YourStyle.rowHtml() + (!mods.length // your-style hook (72-style.js)
     ? emptyModsHtml() /* onboarding hook: 59-onboarding.js */
     : shown.length ? packListHtml(shown) /* packs hook: pack mods under the pack's name (69-packs.js) */ : `<p class="empty">${t("panel.noMatch", { q: esc(PanelUI.q) })}</p>`);
+  list.insertAdjacentHTML("beforeend", takenSectionHtml()); // take-and-bring hook: Taken from other apps (73-take.js)
   list.insertAdjacentHTML("beforeend", gallerySectionHtml()); // gallery hook: Mods for this site (68-gallery.js)
   const r = rows();
   const i = Math.max(0, r.findIndex(a => a.dataset.id === PanelUI.focus));
@@ -177,6 +193,8 @@ function renderList() {
   roveRows(r[i]);
 }
 
+// simplify: Change and Share show; Copy link, Show code (with Edit code
+// inside it) and Delete wait under the row's More (docs/dev/simplify.md).
 function rowHtml(m) {
   const h = m.enabled ? Health.get(m.id) : null;
   const broken = h?.state === "broken";
@@ -195,7 +213,7 @@ function rowHtml(m) {
         ${guardRowHtml(m) /* guard hook: Paused because it was slowing this page down (64-guard.js) */}
         ${galleryRowHtml(m) /* gallery hook: Update available (68-gallery.js) */}
         ${healRowHtml(m) /* self-heal hook: Share the fix (71-heal.js) */}
-        <div class="btns"><button data-a="refine">${t("btn.change")}</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}"${open ? ` aria-controls="m-versions-${esc(m.id)}"` : ""}>${t("panel.history")} <em>${versions.length + 1}</em></button>` : ""}<button data-a="link">${t("btn.copyLink")}</button><button data-a="share">${t("btn.share")}</button><button data-a="code">${t("btn.editCode")}</button><button data-a="del">${t("btn.delete")}</button></div>
+        <div class="btns"><button data-a="refine">${t("btn.change")}</button><button data-a="share">${t("btn.share")}</button>${versions.length ? `<button data-a="history" aria-expanded="${open ? "true" : "false"}"${open ? ` aria-controls="m-versions-${esc(m.id)}"` : ""}>${t("panel.history")} <em>${versions.length + 1}</em></button>` : ""}<details class="rmore"${PanelUI.more === m.id ? " open" : ""}><summary>${t("bar.more")}</summary><div class="rmore-list"><button data-a="link">${t("btn.copyLink")}</button><button data-c="show" title="${esc(t("ctl.showTitle"))}">${t("ctl.showCode")}</button><button data-a="del">${t("btn.delete")}</button></div></details></div>
         ${open ? versionsHtml(m, versions) : ""}
       </article>`;
 }
@@ -279,6 +297,13 @@ panel.addEventListener("click", async e => {
   if (a === "restore" && m) await restoreTo(m, +btn.dataset.v);
 });
 
+panel.addEventListener("toggle", e => {
+  const d = e.target;
+  if (!d.classList?.contains("rmore")) return;
+  const id = d.closest("article")?.dataset.id;
+  if (d.open) { PanelUI.more = id; for (const o of panel.querySelectorAll(".rmore[open]")) if (o !== d) o.open = false; }
+  else if (PanelUI.more === id) PanelUI.more = null;
+}, true);
 panel.addEventListener("input", e => {
   if (!e.target.classList.contains("search")) return;
   PanelUI.q = e.target.value;

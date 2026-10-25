@@ -75,8 +75,8 @@ data to another website or reads what you type. See
 
 At the bottom of the Mods panel:
 
-- **Export all mods** saves every mod to one file.
-- **Install from a file…** brings them back, on this computer or another one.
+- **More → Export all mods** saves every mod to one file.
+- **Install a mod… → Install from a file…** brings them back, on this computer or another one.
 
 In a terminal, run `morse export --all` to save, and add `--out <file>` to
 choose where. Run `morse install <backup file>` to bring them back.

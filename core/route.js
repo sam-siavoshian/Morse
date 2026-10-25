@@ -115,6 +115,7 @@ export function looksHard(request, context) {
   if (feature) why.push("adds behavior");
   if (NEW_UI.test(text)) why.push("new UI");
   if (RESTYLE.test(text)) why.push("a restyle");
+  if (context?.bring) why.push("a feature from another app"); // take-and-bring hook (core/take.js)
   const strong = why.length > 0; // any one of these is enough
   if (data) why.push("works with the data");
   if (MULTI.test(text) || text.length > 140) why.push("several steps");

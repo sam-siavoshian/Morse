@@ -16,7 +16,7 @@
 // runtime/bundle.js). Hooks: 50-bar.js (⋯ menu), 58-suggest.js (chips).
 
 const ShowOnce = (() => {
-  const R = { on: false, steps: [], els: [], attached: null };
+  const R = { on: false, steps: [], els: [], attached: null, take: null }; // take: Take this watches the same way (73-take.js)
   const css = document.createElement("style");
   css.textContent = SHOW_ONCE_CSS();
   root.append(css);
@@ -45,16 +45,18 @@ const ShowOnce = (() => {
     strip.innerHTML = `
       <header class="so-head">
         <span class="so-dot" aria-hidden="true"></span>
-        <b>${t("menu.showonce")}</b>
+        <b>${R.take?.title || t("menu.showonce") /* take-and-bring hook */}</b>
         <span class="so-count">${n ? t("so.steps", { n }) : t("so.watching")}</span>
         <span class="so-sp"></span>
         <button type="button" class="tbtn" data-so="cancel" title="${esc(t("so.cancelTitle"))}">${t("btn.cancel")}</button>
-        <button type="button" class="btn primary" data-so="stop" title="${esc(t("so.stopTitle"))}">${I_STOP}${t("bar.stop")}</button>
+        <button type="button" class="btn primary" data-so="stop" title="${esc(R.take?.stopTitle || t("so.stopTitle"))}">${I_STOP}${t("bar.stop")}</button>
       </header>
       ${n ? `<ol class="so-steps">${first ? `<li class="so-more">${t("so.earlier", { n: first })}</li>` : ""}${R.steps.slice(first).map((s, k) => stepRow(s, first + k, { last: first + k === n - 1 })).join("")}</ol>`
-        : `<p class="so-empty">${t("so.empty")}</p>`}
-      <footer class="so-foot">${t("so.foot")}</footer>`;
+        : `<p class="so-empty">${R.take?.empty || t("so.empty")}</p>`}
+      <footer class="so-foot">${R.take?.foot || t("so.foot")}</footer>`;
   }
+  // Taking a feature (73-take.js): a press on the strip leaves the page's focus where it is, so what is open stays open.
+  strip.addEventListener("mousedown", ev => { if (R.take) ev.preventDefault(); });
   strip.addEventListener("click", ev => {
     const b = ev.target.closest("[data-so]");
     if (!b) return;
@@ -76,8 +78,10 @@ const ShowOnce = (() => {
   }, true);
 
   // ---- start, stop, cancel
-  function start() {
+  // opts.take (73-take.js): { title, empty, foot, stopTitle, say, done({ steps, els }), cancel() }
+  function start(opts = {}) {
     if (S.phase === "working") return;
+    R.take = opts?.take || null; // take-and-bring hook
     if (Guide.active) Guide.stop();
     detach();
     R.steps = []; R.els = []; R.on = true;
@@ -86,12 +90,13 @@ const ShowOnce = (() => {
     renderStrip();
     strip.classList.remove("top");
     strip.hidden = false;
-    say(t("so.say.start"));
+    say(R.take?.say || t("so.say.start"));
   }
   function finish() {
     if (!R.on) return;
     R.on = false;
     strip.hidden = true;
+    if (R.take) { const h = R.take, got = { steps: R.steps, els: R.els }; R.take = null; R.steps = []; R.els = []; h.done(got); return; } // take-and-bring hook
     if (!R.steps.length) {
       toast(t("so.noSteps"));
       return;
@@ -106,6 +111,7 @@ const ShowOnce = (() => {
     R.on = false;
     strip.hidden = true;
     R.steps = []; R.els = [];
+    if (R.take) { const h = R.take; R.take = null; h.cancel?.(); return; } // take-and-bring hook
     toast(t("so.cancelled"));
   }
 
@@ -177,7 +183,7 @@ const ShowOnce = (() => {
   }
   listen("keydown", e => {
     if (!e.isTrusted || !recording()) return;
-    if (e.key === "Escape" && !e.ctrlKey && !e.metaKey && !e.altKey && panel.hidden && modal.hidden) {
+    if (e.key === "Escape" && !R.take && !e.ctrlKey && !e.metaKey && !e.altKey && panel.hidden && modal.hidden) {
       e.preventDefault();
       e.stopImmediatePropagation();
       cancel();

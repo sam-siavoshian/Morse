@@ -12,6 +12,7 @@ const HOTKEY_HELP = {
 
 // recording: { id, partial, error } while a hotkey button is listening for keys
 let recording = null;
+let settingsMore = false; // simplify: More settings is open (stays open while the bar is)
 const hkNotes = {}; // id -> { level, message } shown under the row after saving
 
 function segHtml(key, label, options, value, extra = "") {
@@ -40,7 +41,7 @@ function renderSettings() {
 function paintSettings() {
   const v = Voice.summary();
   const fx = effectLevel();
-  const keyRows = HOTKEY_ACTIONS.map(({ id, label }) => {
+  const keyRow = ({ id, label }) => {
     const rec = recording?.id === id;
     const n = rec ? recording : hkNotes[id];
     const msg = rec
@@ -60,12 +61,24 @@ function paintSettings() {
         <button type="button" class="hk field" data-hk="${id}" aria-describedby="hk-${id}-msg" aria-label="${esc(t("settings.hkLabel", { label, key: hotkeyText(id) || t("settings.off") }))}">${shown}</button>
       </div>
     </div>`;
-  }).join("");
+  };
+  // simplify: Open Morse is the one shortcut most people ever look for; the
+  // rest wait under More settings with everything else (docs/dev/simplify.md).
+  const openRow = keyRow(HOTKEY_ACTIONS.find(a => a.id === "open"));
+  const otherKeys = HOTKEY_ACTIONS.filter(a => a.id !== "open").map(keyRow).join("");
   pane.innerHTML = `
     <div class="sheet" role="group" aria-label="${esc(t("settings.title"))}">
       <header><b>${t("settings.title")}</b><span class="flash" aria-hidden="true"></span><button type="button" class="tbtn" data-act="done">${t("btn.done")}</button></header>
       ${YourStyle.settingsHtml() /* your-style hook: 72-style.js */}
-      <section><h4>${t("settings.shortcuts")}</h4>${keyRows}</section>
+      <section>
+        ${openRow}
+        <div class="srow"><div class="lbl"><span>${t("settings.theme")}</span></div><div class="ctl">${segHtml("theme", t("settings.theme"), [["auto", t("settings.theme.auto")], ["light", t("settings.theme.light")], ["dark", t("settings.theme.dark")]], PREFS.theme)}</div></div>
+        ${languageRowHtml()}
+        <div class="srow"><div class="lbl"><span>${t("settings.autoFix")}</span><small>${t("settings.autoFix.help")}</small></div><div class="ctl">${switchHtml("autoFix", PREFS.autoFix, t("settings.autoFix"))}</div></div><!-- self-heal hook: 71-heal.js -->
+      </section>
+      <button type="button" class="tbtn more-set" data-act="more" aria-expanded="${settingsMore}" aria-controls="m-more-settings">${t("settings.more")}</button>
+      <div id="m-more-settings" class="more-settings"${settingsMore ? "" : " hidden"}>
+      <section><h4>${t("settings.shortcuts")}</h4>${otherKeys}</section>
       <section><h4>${t("settings.voice")}</h4>
         <div class="srow"><div class="lbl"><span>${t("settings.autoSubmit")}</span><small>${t("settings.autoSubmit.help")}</small></div><div class="ctl">${switchHtml("autoSubmit", PREFS.voice.autoSubmit, t("settings.autoSubmit"))}</div></div>
         <div class="srow"><div class="lbl"><span>${t("settings.speech")}</span><small class="${v.ok ? "" : "warn"}">${esc(v.text)}</small></div><div class="ctl"><span class="pill ${v.ok ? "on" : ""}">${v.ok ? t("settings.ready") : t("settings.off")}</span></div></div>
@@ -73,19 +86,17 @@ function paintSettings() {
       <section><h4>${t("settings.appearance")}</h4>
         <div class="srow"><div class="lbl"><span>${t("settings.effects")}</span><small>${PREFS.effects ? t("settings.effects.help") : t("settings.effects.system")}</small></div><div class="ctl">${segHtml("effects", t("settings.effects"), [["full", t("settings.effects.full")], ["subtle", t("settings.effects.subtle")], ["off", t("settings.off")]], fx)}</div></div>
         <div class="srow"><div class="lbl"><span>${t("settings.position")}</span><small>${t("settings.position.help")}</small></div><div class="ctl">${segHtml("barPosition", t("settings.position"), [["auto", t("settings.position.auto")], ["top", t("settings.position.top")], ["bottom", t("settings.position.bottom")]], PREFS.barPosition)}</div></div>
-        <div class="srow"><div class="lbl"><span>${t("settings.theme")}</span></div><div class="ctl">${segHtml("theme", t("settings.theme"), [["auto", t("settings.theme.auto")], ["light", t("settings.theme.light")], ["dark", t("settings.theme.dark")]], PREFS.theme)}</div></div>
       </section>
       ${modelSection()}
       <section><h4>${t("settings.changes")}</h4>
         <div class="srow"><div class="lbl"><span>${t("settings.polish")}</span><small>${t("settings.polish.help")}</small></div><div class="ctl">${switchHtml("polish", PREFS.polish, t("settings.polish"))}</div></div><!-- polish: core/polish.js -->
       </section>
       <section><h4>${t("settings.general")}</h4>
-        ${languageRowHtml()}
         <div class="srow"><div class="lbl"><span>${t("settings.welcome")}</span><small>${t("settings.welcome.help")}</small></div><div class="ctl">${switchHtml("welcome", PREFS.welcome, t("settings.welcome"))}</div></div>
         <div class="srow"><div class="lbl"><span>${t("settings.gallery")}</span><small>${t("settings.gallery.help")}</small></div><div class="ctl">${switchHtml("gallery", PREFS.gallery, t("settings.gallery"))}</div></div><!-- gallery hook: 68-gallery.js -->
-        <div class="srow"><div class="lbl"><span>${t("settings.autoFix")}</span><small>${t("settings.autoFix.help")}</small></div><div class="ctl">${switchHtml("autoFix", PREFS.autoFix, t("settings.autoFix"))}</div></div><!-- self-heal hook: 71-heal.js -->
       </section>
       <footer><button type="button" class="tbtn" data-act="reset-all">${t("settings.resetAll")}</button><span class="dim">${esc(S.mode === "extension" ? t("settings.synced") : S.mode === "desktop" ? t("settings.savedHere") : "")}</span></footer>
+      </div>
     </div>`;
 }
 // models (core/route.js): Automatic, Always fast, Always best, and the two
@@ -129,6 +140,7 @@ async function saveSetting(patch, focusSel) {
 
 // ---- hotkey recorder
 function startRecording(id) {
+  if (id !== "open") settingsMore = true; // its row is under More settings
   recording = { id, partial: "", error: "" };
   renderSettings();
   pane.querySelector(`[data-hk="${id}"]`)?.focus();
@@ -198,6 +210,7 @@ pane.addEventListener("click", e => {
   if (seg) { const k = seg.closest(".seg").dataset.k; return saveSetting({ [k]: seg.dataset.v }, `.seg[data-k="${k}"] [data-v="${seg.dataset.v}"]`); }
   const act = t.closest("[data-act]")?.dataset.act;
   if (act === "done") return closePane();
+  if (act === "more") { settingsMore = !settingsMore; renderSettings(); return pane.querySelector("[data-act=more]")?.focus(); }
   if (act === "reset-all") { for (const k in hkNotes) hkNotes[k] = null; return saveSetting(structuredClone(DEFAULT_PREFS), `[data-act="reset-all"]`); }
 });
 pane.addEventListener("change", e => {
