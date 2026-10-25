@@ -1,7 +1,7 @@
 // Take this, Bring here: take a feature from one app or site and bring it
 // into another (core/take.js has the words for the model and the matching).
 //
-// Take   A chip in the bar (and the ⋯ menu). Pointed at something: it is taken
+// Take   A chip in the bar. Pointed at something: it is taken
 //        at once. Nothing pointed at: Morse watches like Show me once while
 //        the person opens the feature (a palette, a menu, a notice) and uses
 //        it; Stop takes what opened, with the steps that opened it. What is
@@ -282,7 +282,7 @@ const TakeBring = (() => {
     input.focus();
   }
 
-  // ---- ways in: chips beside the suggestions, and the ⋯ menu
+  // ---- ways in: chips beside the suggestions
   const makeChip = (cls, icon, label, title, fn) => {
     const b = document.createElement("button");
     b.type = "button";
@@ -363,6 +363,4 @@ const TakeBring = (() => {
 
   return { start, pickList, sectionHtml, get list() { return st.list; } };
 })();
-function takeMenuItems() { return [{ id: "take", label: t("take.this"), keys: null }, { id: "bring", label: t("take.bring"), keys: null }]; } // 50-bar.js hook
-function takeMenu(id) { if (id === "take") TakeBring.start(); if (id === "bring") TakeBring.pickList(); } // 50-bar.js hook
 function takenSectionHtml() { return TakeBring.sectionHtml(); } // 70-panel.js hook

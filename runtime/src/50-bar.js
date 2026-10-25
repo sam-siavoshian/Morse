@@ -356,7 +356,6 @@ function toggleSettings() {
 function menuItems() {
   return [
     { id: "showonce", label: t("menu.showonce"), keys: null }, // show-once hook: 64-show-once.js
-    ...takeMenuItems(), // take-and-bring hook: Take this, Bring here… (73-take.js)
     { id: "settings", label: t("menu.settings"), keys: [primaryMod, ","] },
     { id: "help", label: t("menu.help"), keys: ["F1"] }, // onboarding hook: 59-help.js
   ];
@@ -378,7 +377,6 @@ function runMenu(id) {
   if (id === "settings") toggleSettings();
   if (id === "help") toggleHelp(); // onboarding hook: 59-help.js
   if (id === "showonce") ShowOnce.start(); // show-once hook
-  takeMenu(id); // take-and-bring hook (73-take.js)
 }
 moreBtn.addEventListener("click", () => (menuEl.hidden ? showMenu() : hideMenu()));
 menuEl.addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (b) runMenu(b.dataset.m); });

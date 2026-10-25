@@ -14,8 +14,7 @@ change like any other: **Save**, **Undo**, **Share**.
 
 ## Take this
 
-**Take this** is a button under the box in the empty bar, and in the **⋯**
-menu.
+**Take this** is a button under the box in the empty bar.
 
 - **Something you can see** (a switch, a toolbar, a button): point at it,
   then choose **Take this**. It is taken at once.
