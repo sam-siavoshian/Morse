@@ -8,8 +8,6 @@ under the new version number with the date
 
 ## Unreleased
 
-## 0.3.0 (2026-10-25)
-
 - **Change the keys that open the bar.** Settings shows the keys. Press the ones you want. Morse uses those from then on.
 - **Quieter windows.** The restart window and the update window use a thin line. The update window shows the Morse mark and how far the download has got.
 - **The Mods list is easier to read.** An app's name is on its own line. The number of mods is on the line under it.

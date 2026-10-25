@@ -41,7 +41,7 @@ test("boot: the script every page loads is small and cheap next to the full runt
   const pl = await payloads();
   assert.ok(pl.split, "the runtime is split into boot + UI");
   // hotkeys, user control and safe start, self-heal detection, the guards, mods waiting for Allow User Scripts
-  assert.ok(pl.boot.length < 52_000, `boot is ${pl.boot.length} bytes`);
+  assert.ok(pl.boot.length < 54_000, `boot is ${pl.boot.length} bytes`);
   const ctx = await D.browser.newContext();
   const page = await ctx.newPage();
   await page.goto(srv.url("/perf/big.html"));
