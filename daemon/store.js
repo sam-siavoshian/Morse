@@ -6,7 +6,7 @@
 // written to a temp file that is renamed over the old one (a crash or a
 // concurrent reader never sees half a file).
 
-import { promises as fs } from "node:fs";
+import { promises as fs, watchFile, unwatchFile } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { modMatches, validateMod, byCreated } from "../core/mod.js";
@@ -143,6 +143,30 @@ export function savePrefs(patch) {
     await writeAtomic(PREFS, JSON.stringify(next, null, 2));
     return next;
   });
+}
+
+// Tells a connected app when settings.json changes, whoever wrote it (the
+// desktop window, the bar in another app, or morse in a terminal). The first
+// read is only a baseline, so attaching doesn't push what's already on disk.
+// Returns { close(), ready }. ready resolves once that baseline is known.
+export function watchPrefs(onPrefs) {
+  let last;
+  let closed = false;
+  const tick = async () => {
+    if (closed) return;
+    let text = "";
+    try { text = await fs.readFile(PREFS, "utf8"); } catch { text = ""; }
+    if (closed || text === last) return;
+    const first = last === undefined;
+    last = text;
+    if (first || !text) return;
+    let prefs;
+    try { prefs = normalizePrefs(parseJson(text)); } catch { return; }
+    try { onPrefs(prefs); } catch {}
+  };
+  const onChange = () => { tick(); };
+  watchFile(PREFS, { interval: 400 }, onChange).unref?.();
+  return { close() { closed = true; unwatchFile(PREFS, onChange); }, ready: tick() };
 }
 
 // The hotkeys in effect on this computer as people read them ("Ctrl+Shift+Space",

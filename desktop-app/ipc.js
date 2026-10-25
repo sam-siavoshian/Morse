@@ -16,6 +16,14 @@ const id = v => { if (typeof v !== "string" || !ID.test(v)) throw new TypeError(
 const bool = v => { if (typeof v !== "boolean") throw new TypeError("bad switch"); return v; };
 const oneOf = (...ok) => v => { if (!ok.includes(v)) throw new TypeError("bad choice"); return v; };
 const opt = check => v => (v === undefined || v === null ? undefined : check(v));
+// A shortcut the window recorded: "" puts the platform default back. "none"
+// and "default" are words the service answers in a sentence; anything else
+// must already be modifiers plus one key, the way core/hotkeys.js stores them.
+const shortcut = v => {
+  if (v === "" || v === "none" || v === "default") return v;
+  if (typeof v !== "string" || v.length > 80 || !/^((Ctrl|Alt|Shift|Meta)\+){0,4}[A-Za-z0-9]{1,24}$/.test(v)) throw new TypeError("bad shortcut");
+  return v;
+};
 const key = v => {
   if (v === undefined || v === null || v === "") return "";
   if (typeof v !== "string" || v.length > 400 || /\s/.test(v.trim())) throw new TypeError("bad key");
@@ -49,6 +57,7 @@ export const API = {
   setStartAtLogin:    [[bool], async (s, n, on) => { await n.setLoginItem(on); return s.setSetting("startAtLogin", on); }],
   // Always open with Morse: needs Morse running, so it opens at login with it.
   setAutoOpen:        [[bool], async (s, n, on) => { await n.setLoginItem(on); await s.setSetting("startAtLogin", on); return s.setSetting("autoOpen", on); }],
+  setOpenShortcut:    [[shortcut], (s, n, combo) => s.setOpenShortcut(combo)],
   openLink:           [[oneOf(...Object.keys(LINKS))], (s, n, name) => n.openExternal(LINKS[name])],
   finishWelcome:      [[none], (s) => s.setSetting("welcomed", true)],
   installUpdate:      [[none], (s, n) => ({ ok: n.installUpdate() })],

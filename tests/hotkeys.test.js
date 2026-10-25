@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   parseCombo, normalizeCombo, formatCombo, comboParts, comboFromEvent, matchCombo, releasesCombo,
-  checkCombo, defaultHotkeys, resolveHotkeys, detectPlatform,
+  checkCombo, defaultHotkeys, resolveHotkeys, detectPlatform, decideOpenShortcut,
 } from "../core/hotkeys.js";
 import { normalizePrefs, mergePrefs, pushHistory, DEFAULT_PREFS, HISTORY_MAX } from "../core/prefs.js";
 
@@ -103,6 +103,39 @@ test("defaults per platform, and push to talk follows open until changed", () =>
   assert.equal(r.mods, "Alt+Shift+KeyM");
   assert.equal(r.godmode, "");
   assert.equal(resolveHotkeys({ talk: "Alt+KeyT" }, "win").talk, "Alt+KeyT");
+});
+
+test("saving the shortcut that opens Morse: the default, a refusal, and a warning", () => {
+  assert.deepEqual(decideOpenShortcut({}, "", "linux"), { ok: true, value: "", level: "ok", message: "" });
+  assert.deepEqual(decideOpenShortcut({}, "default", "mac"), { ok: true, value: "", level: "ok", message: "" });
+  const off = decideOpenShortcut({}, "none", "linux");
+  assert.equal(off.ok, false);
+  assert.match(off.message, /Morse needs a shortcut/);
+  const bare = decideOpenShortcut({}, "KeyA", "linux");
+  assert.equal(bare.ok, false);
+  assert.match(bare.message, /One key alone/);
+  assert.match(decideOpenShortcut({}, "Alt+Shift", "win").message, /Add a letter/);
+  assert.match(decideOpenShortcut({}, "nope", "mac").message, /One key alone/);
+  assert.match(decideOpenShortcut({}, "Meta+KeyQ", "mac").message, /quits the app/);
+  assert.match(decideOpenShortcut({}, "Ctrl+KeyQ", "linux").message, /quits the app/);
+  assert.match(decideOpenShortcut({}, "Ctrl+KeyQ", "win").message, /quits the app/);
+  const mods = decideOpenShortcut({}, "Alt+Shift+KeyM", "linux");
+  assert.equal(mods.ok, false);
+  assert.match(mods.message, /Mods panel/);
+  const ok = decideOpenShortcut({}, "Alt+Shift+KeyK", "linux");
+  assert.deepEqual(ok, { ok: true, value: "Alt+Shift+KeyK", level: "ok", message: "" });
+  assert.equal(decideOpenShortcut({}, "Alt+Space", "mac").value, "", "recording the Mac default stores nothing");
+  assert.equal(decideOpenShortcut({}, "Ctrl+Shift+Space", "linux").value, "");
+  assert.equal(decideOpenShortcut({}, "Ctrl+Shift+Space", "win").value, "");
+  const copy = decideOpenShortcut({}, "Ctrl+KeyC", "linux");
+  assert.equal(copy.ok, true);
+  assert.equal(copy.value, "Ctrl+KeyC");
+  assert.match(copy.message, /Copy/);
+  assert.match(decideOpenShortcut({}, "Meta+KeyC", "mac").message, /Copy/);
+  const talk = decideOpenShortcut({ talk: "Alt+KeyJ" }, "Alt+KeyJ", "linux");
+  assert.equal(talk.ok, true);
+  assert.match(talk.message, /hold to talk/);
+  assert.equal(decideOpenShortcut({}, "F13", "win").value, "F13");
 });
 
 test("detects the platform", () => {

@@ -8,9 +8,10 @@
 // Every method resolves plain JSON for the window. Errors a person reads are
 // plain sentences (daemon/apps.js said(), core/onboarding.js plainError()).
 
-import { promises as fs } from "node:fs";
+import { promises as fs, watchFile, unwatchFile } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { detectPlatform, decideOpenShortcut, resolveHotkeys } from "../core/hotkeys.js";
 
 const ANSI = /\x1b\[[0-9;]*m/g;
 const plain = s => String(s ?? "").replace(ANSI, "");
@@ -36,6 +37,7 @@ export async function loadDaemon() {
     // mods and the off switch (morse mods, pause, resume)
     listMods: store.listMods, getMod: store.getMod, saveMod: store.saveMod, deleteMod: store.deleteMod,
     loadControl: control.loadControl, saveControl: control.saveControl, setPause: coreControl.setPause, pauseInfo: coreControl.pauseInfo,
+    loadPrefs: store.loadPrefs, savePrefs: store.savePrefs,
     // checks (morse doctor)
     platformChecks: platform.platformChecks, HOME: store.HOME, CONFIG_PATH: store.CONFIG_PATH, configuredHotkeys: store.configuredHotkeys,
     plainError: onboarding.plainError, PROVIDERS: providers.PROVIDERS,
@@ -78,6 +80,28 @@ export function createService({
 
   const changed = () => { try { emit(); } catch {} };
   const fail = e => ({ error: plain(d.plainError ? d.plainError(e) : e?.message || e) });
+
+  // The bar, or morse in a terminal, writes the same settings.json. The window
+  // reads it again so Settings shows the one shortcut.
+  let unwatchPrefs = null;
+  function watchPrefsFile() {
+    if (!d.HOME || unwatchPrefs) return;
+    const file = path.join(d.HOME, "settings.json");
+    let last = null;
+    const tick = async () => {
+      let text = "";
+      try { text = await fs.readFile(file, "utf8"); } catch { text = ""; }
+      if (last === null) { last = text; return; }
+      if (text === last) return;
+      last = text;
+      changed();
+    };
+    try {
+      watchFile(file, { interval: 400 }, tick).unref?.();
+      unwatchPrefs = () => unwatchFile(file, tick);
+    } catch { unwatchPrefs = null; }
+    tick();
+  }
 
   // ---- settings
   async function loadSettings() {
@@ -390,8 +414,36 @@ export function createService({
   // ---- everything the window shows at once
   async function state({ fresh = false } = {}) {
     const [m, a, md, p, s] = await Promise.all([model(), apps({ fresh }), mods(), pause(), loadSettings()]);
-    const keys = await d.configuredHotkeys().catch(() => ({}));
-    return { version: d.VERSION, platform: process.platform, keys: { open: keys.open || "", mods: keys.mods || "", off: keys.off || "" }, model: m, apps: a, mods: md, pause: p, settings: { startAtLogin: !!s.startAtLogin, autoOpen: s.autoOpen !== false, welcomed: !!s.welcomed } };
+    const platform = detectPlatform({ platform: process.platform });
+    const prefs = typeof d.loadPrefs === "function" ? await d.loadPrefs().catch(() => null) : null;
+    const keys = await d.configuredHotkeys(platform).catch(() => ({}));
+    const stored = prefs?.hotkeys && typeof prefs.hotkeys === "object" ? prefs.hotkeys : null;
+    const resolved = stored ? resolveHotkeys(stored, platform) : null;
+    return {
+      version: d.VERSION, platform: process.platform,
+      keys: {
+        open: keys.open || "", mods: keys.mods || "", off: keys.off || "",
+        ...(resolved ? { combo: resolved.open || "", custom: !!stored.open, stored } : {}),
+      },
+      model: m, apps: a, mods: md, pause: p, settings: { startAtLogin: !!s.startAtLogin, autoOpen: s.autoOpen !== false, welcomed: !!s.welcomed },
+    };
+  }
+
+  // The keys that open Morse in a connected app. Saved with the bar's other
+  // settings (settings.json), then pushed to apps this window already connected.
+  async function setOpenShortcut(next) {
+    if (typeof d.savePrefs !== "function" || typeof d.loadPrefs !== "function") return fail(new Error("no prefs"));
+    const platform = detectPlatform({ platform: process.platform });
+    let prefs;
+    try { prefs = await d.loadPrefs(); } catch (e) { return fail(e); }
+    const decision = decideOpenShortcut(prefs?.hotkeys, next, platform);
+    if (!decision.ok) return { error: decision.message };
+    let saved;
+    try { saved = await d.savePrefs({ hotkeys: { open: decision.value } }); }
+    catch (e) { return fail(e); }
+    for (const s of own.values()) { try { s.connector?.applySettings?.(saved); } catch {} }
+    changed();
+    return { ok: true, warn: decision.level === "warn" ? decision.message : "" };
   }
 
   async function setSetting(name, value) {
@@ -407,6 +459,8 @@ export function createService({
   let quitting = false;
   async function shutdown() {
     quitting = true;
+    try { unwatchPrefs?.(); } catch {}
+    unwatchPrefs = null;
     const pipes = [...own.values()].map(s => s.connector?.browser).filter(b => b?.kind === "pipe");
     await Promise.all([...own.values()].map(s => s.stop().catch(() => {})));
     own.clear();
@@ -415,9 +469,10 @@ export function createService({
     await Promise.all(pipes.map(b => Promise.resolve(b.close()).catch(() => {})));
   }
 
+  watchPrefsFile();
   return {
     state, apps, openApp, openBar, disconnectApp, addApp, model, modelChoices, chooseModel, check,
-    mods, setModOn, deleteMod, undeleteMod, pause, setAllModsOff, doctor, setSetting, loadSettings, shutdown,
+    mods, setModOn, deleteMod, undeleteMod, pause, setAllModsOff, doctor, setSetting, setOpenShortcut, loadSettings, shutdown,
     get sessions() { return own; },
   };
 }

@@ -31,7 +31,7 @@ import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LAN
 import { readWords } from "../core/languages.js"; // the bar's words in a language besides English ("i18n.words")
 import { prewarm } from "../core/providers.js";
 import { Recorder } from "./record.js";
-import { loadPrefs, savePrefs, loadHistory, addHistory } from "./store.js";
+import { loadPrefs, savePrefs, loadHistory, addHistory, watchPrefs } from "./store.js";
 import { Generations } from "../core/cancel.js";
 import { cachedVoiceStatus, transcribeAudio } from "./voice.js";
 import { CONTROL_REQUESTS, handleControl, watchControl } from "./control.js"; // user control: pause, safe start, install review, backup
@@ -155,6 +155,7 @@ export class Connector {
     this.running = true;
     this.watchMods();
     this.controlWatcher ||= watchControl(this); // user control: tell windows when Morse is paused or resumed
+    this.prefsWatcher ||= watchPrefs(prefs => this.applySettings(prefs)); // one shortcut: a change on disk reaches this app
     this.styleWatch ||= onStyleChange(() => this.modsChanged()); // your-style hook: a style change reaches every window
     let misses = 0;
     while (this.running) {
@@ -193,6 +194,7 @@ export class Connector {
     this.running = false;
     this.modWatcher?.close();
     this.controlWatcher?.close(); this.controlWatcher = null;
+    this.prefsWatcher?.close(); this.prefsWatcher = null;
     this.styleWatch?.(); this.styleWatch = null; // your-style hook
     return this.state;
   }
@@ -348,6 +350,18 @@ export class Connector {
     await s.send("Runtime.evaluate", { expression: source, contextId: ctx });
   }
 
+  // The shortcut (and the rest of settings) changed. Every window Morse is in
+  // picks it up, including one whose bar is already open.
+  applySettings(prefs) {
+    if (!prefs || typeof prefs !== "object") return;
+    const expression = `globalThis.__morseHostReceive && __morseHostReceive(${JSON.stringify({ type: "settings.changed", settings: prefs })})`;
+    for (const w of this.windows.values()) {
+      const world = w.frames?.get(w.frameId)?.world;
+      if (world == null) continue;
+      w.session?.send("Runtime.evaluate", { expression, contextId: world }).catch(() => {});
+    }
+  }
+
   // Tell every other window to re-read its mods, so a mod saved in one window
   // (or with `morse install` / `morse rm`) shows up in all windows it matches.
   modsChanged(origin = null) {
@@ -397,6 +411,7 @@ export class Connector {
     this.recorder?.stop(); this.recorder = null; // soak: a clip being recorded keeps its frames (and the session) otherwise
     this.modWatcher?.close();
     this.controlWatcher?.close(); this.controlWatcher = null;
+    this.prefsWatcher?.close(); this.prefsWatcher = null;
     this.styleWatch?.(); this.styleWatch = null; // your-style hook
     const ids = (await listMods().catch(() => [])).map(m => m.id).concat(STYLE_ID); // your-style hook: its code goes too
     await Promise.all([...this.windows.values()].map(async w => {
@@ -718,8 +733,12 @@ export class Connector {
         return this.gens.cancel(msg.genId);
       case "settings.get":
         return loadPrefs();
-      case "settings.set":
-        return savePrefs(msg.settings);
+      case "settings.set": {
+        const saved = await savePrefs(msg.settings);
+        this.applySettings(saved);
+        this.changed();
+        return saved;
+      }
       case "history.get":
         return loadHistory(await historyScope());
       case "history.add":

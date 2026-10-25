@@ -3,6 +3,7 @@
 // Its words are in core/locales/*.js (desk.*), in the computer's language.
 
 import { t, setLanguage, loadLanguage, pickLanguage, setLanguageLoader, translatePage } from "./core/i18n.js";
+import { comboFromEvent, comboParts, formatCombo, formatPartial, defaultHotkeys, decideOpenShortcut, detectPlatform } from "./core/hotkeys.js";
 import { formName } from "./formation.js";
 
 setLanguageLoader(code => import(`./core/locales/${code}.js`).then(m => m.default));
@@ -13,6 +14,8 @@ const morse = window.morse;
 const $ = id => document.getElementById(id);
 const platform = new URLSearchParams(location.search).get("platform") || "";
 document.body.classList.toggle("mac", platform === "darwin");
+// The same names core/hotkeys.js uses: the window is told its OS in the page URL.
+const HK_PLATFORM = platform === "darwin" ? "mac" : platform === "win32" ? "win" : platform === "linux" ? "linux" : detectPlatform();
 
 // A small element builder: h("li", { class: "x", onclick }, child, "text").
 function h(tag, props = {}, ...kids) {
@@ -498,6 +501,150 @@ $("first-key-use").onclick = async () => {
   if (r?.error) $("first-model").replaceChildren(h("i", { class: "dot bad" }), h("span", { text: r.error }));
 };
 
+// ---------------------------------------------------------------- shortcut
+// The keys that open Morse. The same recorder as the bar (core/hotkeys.js):
+// one shortcut, saved in settings.json, shown with this computer's key names.
+let recording = false;
+let saving = false;
+let partial = "";
+let shortcutNote = null; // { level, message } after a save or a refusal
+let seenCombo = null;
+
+function keyCaps(combo) {
+  const parts = comboParts(combo, HK_PLATFORM);
+  if (!parts.length) return h("span", { class: "dim", text: t("hk.offShort") });
+  return h("span", { class: "caps" }, ...parts.map(k => h("kbd", { text: k })));
+}
+function partialCaps(part) {
+  const text = formatPartial(part, HK_PLATFORM);
+  if (!text) return h("span", { class: "dim", text: "…" });
+  const bits = HK_PLATFORM === "mac" ? [...text] : text.split("+").filter(Boolean);
+  return h("span", { class: "caps" }, ...bits.map(k => h("kbd", { text: k })));
+}
+function currentCombo() {
+  if (st?.keys && Object.prototype.hasOwnProperty.call(st.keys, "combo")) return st.keys.combo || "";
+  return defaultHotkeys(HK_PLATFORM).open;
+}
+function renderShortcut() {
+  const btn = $("shortcut-key");
+  if (!btn || !st) return;
+  const incoming = currentCombo();
+  if (shortcutNote && seenCombo !== null && seenCombo !== incoming) shortcutNote = null;
+  if (!recording) seenCombo = incoming;
+  const def = defaultHotkeys(HK_PLATFORM).open;
+  const custom = !!st.keys?.custom;
+  const reset = $("shortcut-reset");
+  reset.hidden = recording || !custom;
+  reset.title = t("settings.backTo", { key: formatCombo(def, HK_PLATFORM) });
+  btn.classList.toggle("recording", recording);
+  btn.classList.toggle("bad", shortcutNote?.level === "error");
+  btn.setAttribute("aria-pressed", recording ? "true" : "false");
+  const label = recording
+    ? (formatPartial(partial, HK_PLATFORM) || t("hk.offShort"))
+    : (incoming ? formatCombo(incoming, HK_PLATFORM) : t("hk.offShort"));
+  btn.setAttribute("aria-label", t("desk.settings.hk", { key: label }));
+  btn.replaceChildren(recording ? partialCaps(partial) : keyCaps(incoming));
+  $("shortcut-help").textContent = recording
+    ? t("desk.settings.recording", { esc: "Esc", back: HK_PLATFORM === "mac" ? "⌫" : "Backspace" })
+    : t("desk.settings.open.d");
+  const msg = $("shortcut-msg");
+  if (shortcutNote?.message) {
+    msg.hidden = false;
+    msg.textContent = shortcutNote.message;
+    msg.className = `shortcut-msg${shortcutNote.level === "error" ? " bad" : shortcutNote.level === "warn" ? " warn" : ""}`;
+  } else {
+    msg.hidden = true;
+    msg.textContent = "";
+    msg.className = "shortcut-msg";
+  }
+}
+function shakeShortcut() {
+  const btn = $("shortcut-key");
+  btn.classList.remove("shake");
+  void btn.offsetWidth;
+  btn.classList.add("shake");
+  btn.addEventListener("animationend", () => btn.classList.remove("shake"), { once: true });
+}
+function stopRecording() {
+  recording = false;
+  partial = "";
+  renderShortcut();
+}
+async function commitShortcut(next) {
+  if (saving) return;
+  saving = true;
+  try {
+    const stored = st.keys?.stored && typeof st.keys.stored === "object" ? st.keys.stored : {};
+    const decision = decideOpenShortcut(stored, next, HK_PLATFORM);
+    if (!decision.ok) {
+      partial = "";
+      shortcutNote = { level: "error", message: decision.message };
+      shakeShortcut();
+      renderShortcut();
+      return;
+    }
+    const r = await morse.setOpenShortcut(decision.value);
+    if (r?.error) {
+      partial = "";
+      shortcutNote = { level: "error", message: r.error };
+      shakeShortcut();
+      renderShortcut();
+      return;
+    }
+    recording = false;
+    partial = "";
+    const warn = decision.message || r.warn || "";
+    shortcutNote = { level: warn ? "warn" : "ok", message: warn || t("settings.saved") };
+    const combo = decision.value || defaultHotkeys(HK_PLATFORM).open;
+    seenCombo = combo;
+    if (st.keys) {
+      st.keys.combo = combo;
+      st.keys.custom = !!decision.value;
+      st.keys.stored = { ...stored, open: decision.value };
+      st.keys.open = formatCombo(combo, HK_PLATFORM);
+    }
+    render();
+  } finally {
+    saving = false;
+  }
+}
+$("shortcut-key").onclick = () => {
+  if (recording) { stopRecording(); return; }
+  recording = true;
+  partial = "";
+  shortcutNote = null;
+  renderShortcut();
+  $("shortcut-key").focus();
+};
+$("shortcut-reset").onclick = () => { recording = false; partial = ""; commitShortcut(""); };
+document.addEventListener("keydown", e => {
+  if (!recording || !e.isTrusted) return;
+  if (e.isComposing || e.keyCode === 229) return;
+  if (saving) { e.preventDefault(); return; }
+  const bare = !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey;
+  if (bare && e.code === "Tab") { stopRecording(); return; }
+  e.preventDefault();
+  e.stopPropagation();
+  if (e.repeat) return;
+  const hit = comboFromEvent(e);
+  if (!hit.combo) { partial = hit.partial; renderShortcut(); return; }
+  if (bare && e.code === "Escape") { shortcutNote = null; stopRecording(); return; }
+  if (bare && (e.code === "Backspace" || e.code === "Delete")) { commitShortcut(""); return; }
+  commitShortcut(hit.combo);
+}, true);
+document.addEventListener("keyup", e => {
+  if (!recording || !e.isTrusted) return;
+  e.preventDefault();
+  partial = comboFromEvent(e).partial;
+  renderShortcut();
+}, true);
+document.addEventListener("pointerdown", e => {
+  if (!recording) return;
+  if (e.target.closest?.("#shortcut-key, #shortcut-reset")) return;
+  stopRecording();
+});
+window.addEventListener("blur", () => { if (recording) stopRecording(); });
+
 // ---------------------------------------------------------------- update
 // Morse updating itself: a dialog while it downloads and installs; when apps
 // are connected, Restart now or Later (it installs when Morse quits).
@@ -523,7 +670,7 @@ $("update").addEventListener("cancel", e => { if (["downloading", "installing"].
 function render() {
   if (!st || st.error) return;
   renderFirst();
-  renderApps(); renderModel(); renderMods(); renderUpdate();
+  renderApps(); renderModel(); renderMods(); renderShortcut(); renderUpdate();
   $("auto-open").checked = st.settings.autoOpen;
   $("version").textContent = `Morse ${st.version}`;
   document.documentElement.dataset.ready = "1";
