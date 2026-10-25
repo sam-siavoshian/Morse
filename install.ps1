@@ -8,8 +8,7 @@
 #   2. downloads the small Morse package from the "preview" release on GitHub
 #      and checks it against the release's SHA256SUMS (with no release yet, it
 #      builds the package from the main branch instead, and says so)
-#   3. puts Morse in ~\.morse\app, the Chrome extension in
-#      ~\.morse\chrome-extension, and a morse command in npm's folder for
+#   3. puts Morse in ~\.morse\app and a morse command in npm's folder for
 #      commands (%APPDATA%\npm, already on your PATH), or in ~\.morse\bin,
 #      which it then adds to your PATH
 #   4. runs `morse setup --auto`, which finds Claude Code or Codex
@@ -37,7 +36,7 @@ function Install-Morse {
   $Source = if ($env:MORSE_INSTALL_SOURCE) { $env:MORSE_INSTALL_SOURCE } else { "https://codeload.github.com/$Repo/tar.gz/refs/heads/main" }
   $MorseDir = if ($env:MORSE_HOME) { $env:MORSE_HOME } else { Join-Path $HOME '.morse' }
   $App = Join-Path $MorseDir 'app'
-  $Ext = Join-Path $MorseDir 'chrome-extension'
+  $Ext = Join-Path $MorseDir 'chrome-extension' # older installs' Chrome extension: removed on update
   $Receipt = Join-Path $MorseDir 'install.txt'
   $Mark = 'Morse: added by the install line' # daemon/installed.js looks for it
   $PreviewPage = "https://github.com/$Repo/releases/tag/preview"
@@ -100,7 +99,7 @@ function Install-Morse {
       Remove-Item -LiteralPath $Receipt -Force -ErrorAction SilentlyContinue
       Step "Your mods and settings are still in $MorseDir. Delete that folder to remove them too."
     }
-    Write-Host 'Morse is removed. If you added it to Chrome, remove it there too: chrome://extensions, Morse, Remove.'
+    Write-Host 'Morse is removed.'
     return
   }
 
@@ -176,12 +175,11 @@ function Install-Morse {
       Step 'Building Morse...'
       Push-Location $root.FullName
       try {
-        $env:MORSE_STORE = '1'
         $b = Run-Native $npm @('ci', '--no-audit', '--no-fund', '--loglevel=error') -Quiet
         if ($b.Code -ne 0) { Write-Host $b.Out; throw 'Building Morse from the main branch failed (above).' }
         $b = Run-Native $npm @('pack', '--pack-destination', $tmp) -Quiet
         if ($b.Code -ne 0) { Write-Host $b.Out; throw 'Packing Morse failed (above).' }
-      } finally { Remove-Item Env:\MORSE_STORE -ErrorAction SilentlyContinue; Pop-Location }
+      } finally { Pop-Location }
       $made = Get-ChildItem -LiteralPath $tmp -Filter 'morse-cli-*.tgz' | Select-Object -First 1
       if (-not $made) { throw 'Building Morse made no package. Nothing was installed.' }
       Move-Item -LiteralPath $made.FullName -Destination $pkg
@@ -192,7 +190,7 @@ function Install-Morse {
     New-Item -ItemType Directory -Path $MorseDir -Force | Out-Null
     $r = Read-Receipt
     $cli = Join-Path $App 'daemon\cli.js'
-    if (($r.sha256 -eq $sha) -and (Test-Path -LiteralPath $cli) -and (Test-Path -LiteralPath (Join-Path $App 'dist\extension\manifest.json'))) {
+    if (($r.sha256 -eq $sha) -and (Test-Path -LiteralPath $cli)) {
       $status = 'already up to date'
     } else {
       $status = if (Test-Path -LiteralPath $cli) { 'updated' } else { 'installed' }
@@ -200,7 +198,7 @@ function Install-Morse {
       New-Item -ItemType Directory -Path $stage | Out-Null
       if ((Run-Native $tar @('-xzf', $pkg, '-C', $stage)).Code -ne 0) { throw 'Unpacking the package failed. Nothing was installed.' }
       $new = Join-Path $stage 'package'
-      if (-not (Test-Path -LiteralPath (Join-Path $new 'daemon\cli.js')) -or -not (Test-Path -LiteralPath (Join-Path $new 'dist\extension\manifest.json'))) { throw 'The package has no Morse in it. Nothing was installed.' }
+      if (-not (Test-Path -LiteralPath (Join-Path $new 'daemon\cli.js'))) { throw 'The package has no Morse in it. Nothing was installed.' }
       Step "Getting Morse's one dependency from npm..."
       Push-Location $new
       try {
@@ -215,12 +213,8 @@ function Install-Morse {
       Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    # The Chrome extension, in a folder that stays put (Morse Desktop uses it too).
-    $extNew = Join-Path $MorseDir '.extension-new'
-    if (Test-Path -LiteralPath $extNew) { Remove-Item -LiteralPath $extNew -Recurse -Force }
-    Copy-Item -LiteralPath (Join-Path $App 'dist\extension') -Destination $extNew -Recurse
-    if (Test-Path -LiteralPath $Ext) { Remove-Item -LiteralPath $Ext -Recurse -Force }
-    Move-Item -LiteralPath $extNew -Destination $Ext
+    # An older install's Chrome extension: Morse no longer has one.
+    foreach ($d in @($Ext, (Join-Path $MorseDir '.extension-new'))) { if (Test-Path -LiteralPath $d) { Remove-Item -LiteralPath $d -Recurse -Force } }
 
     # -------------------------------------------------------- the morse command
     # MORSE_BIN_DIR; else npm's folder for commands when it's on PATH (it is,
@@ -257,7 +251,7 @@ function Install-Morse {
     $version = (Run-Native $node @($cli, '--version') -Quiet).Out.Trim()
     $lines = @(
       "# $Mark. morse uninstall removes what is listed here.",
-      "version=$version", "sha256=$sha", "source=$from", "app=$App", "extension=$Ext", "shim=$shim",
+      "version=$version", "sha256=$sha", "source=$from", "app=$App", "shim=$shim",
       "path_added=$pathAdded", "installed=$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
     )
     [IO.File]::WriteAllLines($Receipt, $lines)
@@ -276,12 +270,11 @@ function Install-Morse {
     if ($p.ExitCode -ne 0) { Step "! morse setup didn't finish. Run it again any time: morse setup" }
   }
 
-  $extShown = if ($Ext.StartsWith($HOME)) { '~' + $Ext.Substring($HOME.Length) } else { $Ext }
   Write-Host ''
   Write-Host 'Next:'
-  Write-Host "  1. Chrome: open chrome://extensions, turn on Developer mode, click Load unpacked, choose $extShown"
-  Write-Host "  2. Desktop apps: morse launch obsidian, or Morse Desktop: $PreviewPage"
-  Write-Host '  3. Press Ctrl+Shift+Space on a page or in the app, point at something, and say what to change.'
+  Write-Host '  1. Open an app or your browser with Morse: morse launch obsidian, or morse launch chrome'
+  Write-Host "     (or the Morse app: $PreviewPage)"
+  Write-Host '  2. Press Ctrl+Shift+Space in it, point at something, and say what to change.'
 }
 
 # Run as a file (-File), a failure ends with exit code 1. Through `irm | iex`

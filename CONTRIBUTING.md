@@ -83,8 +83,7 @@ The version is in `package.json` only. Write what changed under
   version like `1.4.0` in place of `minor`. Add `--dry-run` first to see what
   it does.
 - `git push --follow-tags origin main` starts the release workflow. It
-  publishes to npm and makes the GitHub release with the Chrome Web Store zip.
-- Upload that zip as [docs/store/SUBMIT.md](docs/store/SUBMIT.md) says.
+  publishes to npm and makes the GitHub release.
 
 For the one-time setup and the details, see [Releasing](docs/dev/releasing.md).
 

@@ -31,7 +31,7 @@ async function context() {
   const runtime = bundleRuntime();
   await ctx.route(`${ORIGIN}/**`, async route => {
     const path = new URL(route.request().url()).pathname;
-    if (path === "/dist/extension/runtime.js") return route.fulfill({ body: runtime, contentType: TYPES.js });
+    if (path === "/dist/runtime/runtime.js") return route.fulfill({ body: runtime, contentType: TYPES.js });
     try { route.fulfill({ body: await readFile(new URL("." + path, ROOT)), contentType: TYPES[path.split(".").pop()] || "text/plain" }); }
     catch { route.fulfill({ status: 404, body: "" }); }
   });
@@ -310,10 +310,10 @@ test("share page: plain-language summary first, code folded below, an explicit I
   assert.match(await page.locator('.i-note[data-s="typing"]').textContent(), /can read what you type/);
   assert.equal(await page.locator("details#code").evaluate(d => d.open), false);
   assert.equal(await page.locator("#install").textContent(), "Install");
-  // Nothing happens without the click; with the extension the click hands off to Morse's own review.
+  // Nothing happens without the click; with Morse on the page the click hands off to its own review.
   const posted = [];
   await page.exposeFunction("__posted", d => posted.push(d));
-  await page.evaluate(() => { document.documentElement.dataset.morseExtension = "1"; addEventListener("message", e => e.data?.morseInstall && __posted(e.data.morseInstall)); });
+  await page.evaluate(() => { document.documentElement.dataset.morseShare = "1"; addEventListener("message", e => e.data?.morseInstall && __posted(e.data.morseInstall)); });
   await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
   assert.equal(posted.length, 0);
   await page.locator("#install").click();

@@ -1,11 +1,9 @@
-// Take this, Bring here (core/take.js, core/take-host.js, daemon/take.js and
-// the Morse helper's /v1/taken): what a taken feature keeps, how the list is
-// stored and shared between Chrome and the desktop apps, how a typed request
+// Take this, Bring here (core/take.js, core/take-host.js, daemon/take.js):
+// what a taken feature keeps, how the list is stored, how a typed request
 // finds one, and what the model reads to rebuild it in another app's design.
 import { tempDir } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import http from "node:http";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import {
@@ -232,55 +230,25 @@ test("Chrome and the computer share one list: taken on either side shows on both
   assert.deepEqual(r.items.map(i => i.id), ["keep0001"]);
 });
 
-// ---- the computer: ~/.morse/taken.json, served to Chrome by the Morse helper
-const EXT = "chrome-extension://" + "b".repeat(32);
-let tmp, bridge, port, startPairing;
+// ---- the computer: ~/.morse/taken.json, one list for every app and browser Morse opens
+let tmp;
 before(async () => {
   tmp = tempDir("morse-take-");
   process.env.MORSE_HOME = path.join(tmp, "home");
   await fs.mkdir(process.env.MORSE_HOME, { recursive: true });
   await fs.writeFile(path.join(process.env.MORSE_HOME, "config.json"), JSON.stringify({ provider: "none" }));
-  const b = await import("../daemon/bridge.js");
-  startPairing = b.startPairing;
-  bridge = b.createBridge({ port: 0 });
-  port = await bridge.listen();
 });
-after(async () => { await bridge?.close(); await fs.rm(tmp, { recursive: true, force: true }); });
+after(async () => { await fs.rm(tmp, { recursive: true, force: true }); });
 
-function req(method, p, { body, headers = {} } = {}) {
-  return new Promise((resolve, reject) => {
-    const data = body === undefined ? null : Buffer.from(JSON.stringify(body));
-    const r = http.request({ host: "127.0.0.1", port, method, path: p, headers: { ...(data && { "Content-Type": "application/json", "Content-Length": data.length }), ...headers } }, res => {
-      let text = "";
-      res.setEncoding("utf8");
-      res.on("data", d => (text += d));
-      res.on("end", () => { let json = null; try { json = JSON.parse(text); } catch {} resolve({ status: res.statusCode, json }); });
-    });
-    r.on("error", reject);
-    r.end(data);
-  });
-}
-
-test("the Morse helper shares the computer's list with a paired Chrome, and only with it", async () => {
+test("the computer keeps one list, only yours to read, for every app and browser Morse opens", async () => {
   const { Take, TAKEN_FILE } = await import("../daemon/take.js");
-  assert.equal((await req("GET", "/v1/taken", { headers: { Origin: EXT } })).status, 401, "not paired: nothing");
-  const { code } = await startPairing();
-  const token = (await req("POST", "/v1/pair", { body: { code }, headers: { Origin: EXT } })).json.token;
-  const auth = { Origin: EXT, Authorization: `Bearer ${token}` };
-  // Taken in a desktop app (the connector's taken.put), seen by Chrome.
   let r = await Take.handle({ type: "taken.put", item: feature() });
-  assert.equal(r.shared, true, "a browser is paired: both see it");
-  r = await req("GET", "/v1/taken", { headers: auth });
-  assert.equal(r.status, 200);
-  assert.deepEqual(r.json.items.map(i => i.name), ["Command palette"]);
-  // Taken in Chrome, seen by the desktop apps.
-  r = await req("POST", "/v1/taken", { headers: auth, body: { item: feature({ id: "webfeat1", name: "Jump to identifier" }) } });
-  assert.equal(r.status, 200);
-  assert.deepEqual((await Take.handle({ type: "taken.list" })).items.map(i => i.id).sort(), ["palette01", "webfeat1"]);
-  assert.equal((await req("POST", "/v1/taken", { headers: auth, body: { item: { id: "../bad" } } })).status, 400);
-  assert.equal((await req("PUT", "/v1/taken", { headers: auth })).status, 405);
-  r = await req("POST", "/v1/taken/remove", { headers: auth, body: { id: "palette01" } });
-  assert.deepEqual(r.json.items.map(i => i.id), ["webfeat1"]);
+  assert.equal(r.shared, true, "every app and browser reads this list");
+  r = await Take.handle({ type: "taken.put", item: feature({ id: "webfeat1", name: "Jump to identifier" }) });
+  assert.deepEqual(r.items.map(i => i.id).sort(), ["palette01", "webfeat1"]);
+  await assert.rejects(Take.handle({ type: "taken.put", item: { id: "../bad" } }), /Not a taken feature/);
+  r = await Take.handle({ type: "taken.remove", takenId: "palette01" });
+  assert.deepEqual(r.items.map(i => i.id), ["webfeat1"]);
   const file = await fs.stat(TAKEN_FILE);
   if (process.platform !== "win32") assert.equal(file.mode & 0o777, 0o600, "only you can read it");
   assert.deepEqual(JSON.parse(await fs.readFile(TAKEN_FILE, "utf8")).map(i => i.id), ["webfeat1"]);

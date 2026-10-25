@@ -72,8 +72,8 @@ test("made once from the bar, shown for review, then on every site at boot with 
   assert.equal(await stored(), null, "nothing saved yet");
   await byte.keyboard.press("Enter");
   await status(byte, s => !s.open, "the bar to close");
-  // The desktop connector with no browser paired: its apps, not Chrome (tests/style-share.test.js).
-  await until(async () => /Saved your style\. It follows you to every app you open with Morse\./.test(await shadowText(byte, ".toast")), "the Saved toast");
+  // Browsers open with Morse the way apps do, so a style reaches both.
+  await until(async () => /Saved your style\. It follows you to every site and app\./.test(await shadowText(byte, ".toast")), "the Saved toast");
   const s = await until(stored, "style.json");
   assert.deepEqual([s.blocks.size, s.blocks.underline, s.words], [2, true, "bigger text and underline links everywhere"]);
 

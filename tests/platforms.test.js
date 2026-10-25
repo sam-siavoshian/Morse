@@ -392,11 +392,10 @@ test("Morse never changes an app's files: no write in the desktop code except to
 });
 
 test("ports: everything Morse listens on is 127.0.0.1, so no firewall asks", () => {
-  for (const f of ["daemon/bridge.js", "daemon/ports.js"]) {
+  for (const f of ["daemon/ports.js"]) {
     const src = readFileSync(path.join(ROOT, f), "utf8");
     for (const m of src.matchAll(/\.listen\(([^)]*)\)/g)) assert.match(m[1], /host|127\.0\.0\.1/, `${f}: ${m[0]}`);
   }
-  assert.match(readFileSync(path.join(ROOT, "daemon/bridge.js"), "utf8"), /host = "127\.0\.0\.1"/);
   assert.match(readFileSync(path.join(ROOT, "daemon/ports.js"), "utf8"), /export function canBind\(port, host = "127\.0\.0\.1"\)/);
 });
 

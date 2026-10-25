@@ -24,15 +24,14 @@ with as few lines as possible in shared files.
    ```
    Some files offer hook arrays instead, like `quickMenuGroups` in
    `46-quick.js` or `outgoing` in `01-rpc.js`.
-4. **Host requests in both hosts.** The extension routes them from
-   `extension/background.js` to a `extension/<feature>-host.js`. The desktop
-   connector to a `daemon/<feature>.js`. Code both share goes in
+4. **Host requests.** The desktop connector routes them to a
+   `daemon/<feature>.js`. Code the site's Try it here shares goes in
    `core/<feature>-host.js` with its storage passed in (like
    [`core/gallery-host.js`](../../core/gallery-host.js)).
 5. **Tests**: unit tests for the core module, a browser test for the UI
    (`tests/<feature>-ui.test.js`, using [the helpers](testing.md#test-helpers)).
 6. **Screenshots**: a `demo/shoot-<feature>.js` that drives the real
-   extension or connector, writing to `docs/screenshots/`.
+   desktop connector, writing to `docs/screenshots/`.
 7. **Docs**: see [Docs](#docs) below.
 
 ## Runtime rules
@@ -84,7 +83,7 @@ Undo for anything not saved yet, and errors that say what went wrong and the
 one thing to try.
 
 [`tests/words.test.js`](../../tests/words.test.js) scans the runtime's
-strings, the extension's pages, the share page, the website and the user
+strings, the Morse app, the share page, the website and the user
 pages in `docs/` for words people don't know (CSS, selector, element, prompt,
 enable, hotkey, …). When a developer word belongs in a place on purpose (the
 Edit code view), add it to the test's `ALLOWED` list with the reason.

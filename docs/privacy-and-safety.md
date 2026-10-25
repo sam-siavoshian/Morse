@@ -48,32 +48,27 @@ this page run on your computer and send nothing to the model.
   on, Morse downloads the gallery's list from GitHub at most once a day. The
   page you're on never sees this. To stop it, turn off **Show mods others
   made** in Settings.
-- **Voice.** In Chrome, Chrome turns your speech into text. To do that, it
-  sends your speech to Google. In desktop apps, the Morse helper uses OpenAI
-  with your key, or Whisper on your computer (then nothing leaves it).
+- **Voice.** In a browser opened with Morse, the browser turns your speech
+  into text; Chrome does that by sending it to Google. In desktop apps, Morse
+  uses OpenAI with your key, or Whisper on your computer (then nothing leaves
+  it).
 - **Share links.** A share link holds the whole mod after the `#`. Browsers
   never send that part to a server, so the install page never sees the mod.
   You decide who gets the link.
 - **Submit to the gallery** and **Post on X** open a page with things filled
   in. Nothing is posted until you post it.
-- **Settings sync.** In Chrome, your Morse settings (shortcuts, bar position
-  and the like) are kept in Chrome's sync storage. Your keys and mods are not.
 - **Newer version.** `morse doctor` asks npm (registry.npmjs.org) whether a
   newer Morse is out, at most once a day. Nothing about you goes with it.
   To stop it, set `MORSE_NO_UPDATE_CHECK=1`.
 
 ## What stays on your computer
 
-- Your mods: in Chrome's storage for Morse, and in `~/.morse/mods` for
-  desktop apps.
-- Your API keys: in Chrome's storage for Morse, or in `~/.morse/config.json`,
-  which only you can read. A key is only sent to the service it is for.
+- Your mods: in `~/.morse/mods`, for apps and sites alike.
+- Your API keys: in `~/.morse/config.json`, which only you can read. A key is only sent to the service it is for.
 - Your past requests, backups and exports.
 - What you took with **Take this** ([Bring a feature](bring-a-feature.md)):
-  in Chrome's storage for Morse, and in `~/.morse/taken.json`, which only you
-  can read. When Chrome is paired with the Morse helper, the two share it
-  over the helper on this computer. Its small picture never goes to the
-  model.
+  in `~/.morse/taken.json`, which only you can read. Its small picture never
+  goes to the model.
 
 ## What mods can do
 
@@ -141,10 +136,6 @@ What that doesn't cover:
   no mods).
 - **An app that restarts itself** (some do after an update) starts again
   without Morse.
-
-The Morse helper (`morse serve`) only answers on this computer. It only
-answers the Morse extension, and only a browser you paired with its one-time
-code.
 
 For developers, the details are in
 [How Morse works](dev/architecture.md#security).

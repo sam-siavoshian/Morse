@@ -1,17 +1,15 @@
 // Getting Morse to people: one version everywhere, `morse --version` and
 // `morse setup --help`, setup writing what the model code reads, the npm
-// package's file list, the store zip, the privacy page and the Pages build.
+// package's file list, the privacy page and the Pages build.
 import { tempDir } from "./helpers/home.js"; // first: a MORSE_HOME of its own, and temp folders removed at exit
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync, execFileSync } from "node:child_process";
 import { promises as fs, readFileSync, readdirSync, existsSync } from "node:fs";
-import { inflateRawSync } from "node:zlib";
 import os from "node:os";
 import path from "node:path";
 import { applyChoice, configFor, isSetUp } from "../daemon/setup.js";
 import { settingsFromConfig } from "../daemon/models.js";
-import { zipFiles } from "../scripts/package-extension.js";
 import { mdToHtml, privacyHtml, buildPages, brokenLinks } from "../scripts/build-pages.js";
 import { nextVersion, compareVersions, cutChangelog, notesFor, blobBase, withVersion, lockWithVersion } from "../scripts/release.js";
 
@@ -30,10 +28,6 @@ test("one version: package.json, morse --version, and the built manifest", async
       assert.equal(r.stdout.trim(), pkg.version);
     }
   } finally { await fs.rm(home, { recursive: true, force: true }); }
-  const source = JSON.parse(readFileSync(path.join(root, "extension", "manifest.json"), "utf8"));
-  assert.equal(source.version, undefined, "extension/manifest.json has no version of its own; the build adds package.json's");
-  const built = path.join(root, "dist", "extension", "manifest.json");
-  if (existsSync(built)) assert.equal(JSON.parse(readFileSync(built, "utf8")).version, pkg.version);
   // The changelog has an entry for this version, or this version is the next
   // release, still under "Unreleased" (`npm run release` gives it its heading).
   const changelog = readFileSync(path.join(root, "CHANGELOG.md"), "utf8");
@@ -53,7 +47,7 @@ test("morse setup --help explains the choices and changes nothing", async () => 
     assert.match(out, /--use api-key --key <key>/);
     assert.doesNotMatch(out, /Looking for Claude Code/, "it doesn't start the walk-through");
     assert.equal(existsSync(path.join(home, "config.json")), false);
-    assert.match(plain(run(["help"], home).stdout), /morse extension/);
+    assert.match(plain(run(["help"], home).stdout), /morse launch/);
   } finally { await fs.rm(home, { recursive: true, force: true }); }
 });
 
@@ -78,7 +72,6 @@ test("the npm package ships only what the morse command needs", () => {
   assert.deepEqual(pkg.bin, { morse: "daemon/cli.js" });
   assert.match(pkg.engines.node, />=22/);
   assert.ok(readFileSync(CLI, "utf8").startsWith("#!/usr/bin/env node"));
-  // No build here: other tests read dist/extension while this runs.
   const out = execFileSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], env: { ...process.env, npm_config_ignore_scripts: "true" } });
   const files = JSON.parse(out.slice(out.indexOf("[")))[0].files.map(f => f.path);
   // runtime/boot.js: runtime/bundle.js reads it when the CLI starts (every command failed without it)
@@ -86,30 +79,6 @@ test("the npm package ships only what the morse command needs", () => {
   for (const f of readdirSync(path.join(root, "runtime"))) if (f.endsWith(".js")) assert.ok(files.includes(`runtime/${f}`), `ships runtime/${f}`);
   assert.ok(files.some(f => f.startsWith("runtime/src/")), "ships the runtime sources the desktop connector bundles");
   for (const f of files) assert.doesNotMatch(f, /^(tests|demo|docs|site|share|evals|scripts|extension)\//, `doesn't ship ${f}`);
-});
-
-test("the store zip is a valid zip with the files at its root", () => {
-  const entries = [{ name: "manifest.json", data: Buffer.from('{"version":"1.2.3"}') }, { name: "icons/16.png", data: Buffer.alloc(300, 7) }];
-  const zip = zipFiles(entries);
-  // Walk the local headers like an unzip tool does.
-  let off = 0;
-  for (const e of entries) {
-    assert.equal(zip.readUInt32LE(off), 0x04034b50);
-    const method = zip.readUInt16LE(off + 8), size = zip.readUInt32LE(off + 18), nameLen = zip.readUInt16LE(off + 26);
-    assert.equal(zip.toString("utf8", off + 30, off + 30 + nameLen), e.name);
-    const body = zip.subarray(off + 30 + nameLen, off + 30 + nameLen + size);
-    assert.deepEqual(method === 8 ? inflateRawSync(body) : body, e.data);
-    off += 30 + nameLen + size;
-  }
-  assert.equal(zip.readUInt32LE(zip.length - 22), 0x06054b50);
-  assert.equal(zip.readUInt16LE(zip.length - 12), entries.length);
-  if (spawnSync("unzip", ["-v"]).status === 0) {
-    const tmp = path.join(os.tmpdir(), `morse-zip-${process.pid}.zip`);
-    return fs.writeFile(tmp, zip).then(() => {
-      const r = spawnSync("unzip", ["-t", tmp], { encoding: "utf8" });
-      assert.equal(r.status, 0, r.stdout + r.stderr);
-    }).finally(() => fs.rm(tmp, { force: true }));
-  }
 });
 
 test("site/privacy.html is made from docs/privacy.md and is current", async () => {
@@ -136,9 +105,6 @@ test("the Pages build publishes the paths the code uses, with no broken links", 
       assert.equal(u.origin, "https://sam-siavoshian.github.io");
       assert.ok(existsSync(path.join(out, u.pathname.replace(/^\/RRAA\//, ""))), `${url} is published`);
     }
-    // The extension trusts the share page's folder: SHARE_BASE has to be in it.
-    const trusted = JSON.parse(/const SHARE_PAGES = (\[[^\]]*\])/.exec(readFileSync(path.join(root, "extension", "host.js"), "utf8").replace(/\/\*[^*]*\*\//g, ""))[1]);
-    assert.ok(SHARE_BASE.startsWith(trusted[0]) && new URL(trusted[0]).pathname === "/RRAA/share/", `${SHARE_BASE} is in ${trusted[0]}`);
     await fs.writeFile(path.join(out, "site", "broken.html"), '<a href="nope.html">x</a><img src="../docs/launch/missing.png">');
     assert.deepEqual(await brokenLinks(out), ["site/broken.html -> nope.html", "site/broken.html -> ../docs/launch/missing.png"]);
   } finally { await fs.rm(out, { recursive: true, force: true }); }
@@ -237,10 +203,10 @@ test("npm run release in a scratch repository: dry run, then the commit and the 
   assert.equal(r.status, 1);
 });
 
-test("the release workflow: on v* tags, checks and tests first, store zip, npm only with NPM_TOKEN, notes from the changelog", () => {
+test("the release workflow: on v* tags, checks and tests first, npm only with NPM_TOKEN, notes from the changelog", () => {
   const wf = readFileSync(path.join(root, ".github", "workflows", "release.yml"), "utf8");
   assert.match(wf, /on:\s*\n\s+push:\s*\n\s+tags:\s*\["v\*"\]/);
-  for (const step of ["npm ci", "npm run check", "npm test", "MORSE_STORE", "node scripts/release.js notes", "--provenance", "release-desktop.yml"]) assert.ok(wf.includes(step), `release.yml has ${step}`);
+  for (const step of ["npm ci", "npm run check", "npm test", "node scripts/release.js notes", "--provenance", "release-desktop.yml"]) assert.ok(wf.includes(step), `release.yml has ${step}`);
   assert.match(wf, /::notice[^\n]*NPM_TOKEN/, "says clearly when npm is skipped");
   // It holds NPM_TOKEN and can write releases: every action pinned to a commit, as in release-desktop.yml.
   for (const [, u] of wf.matchAll(/uses:\s*(\S+)/g)) assert.match(u, /^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/, `${u} is pinned to a commit, not a tag that can move`);

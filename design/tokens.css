@@ -1,5 +1,5 @@
 /* Morse design tokens. One source of truth for the in-app runtime, the
- * extension popup, the share page and the site. Monochrome by design: the only
+ * Morse app, the share page and the site. Monochrome by design: the only
  * "color" is light. Swap values here to reskin everything.
  *
  * Scale: 4px spacing grid, radii 6/10/14, one font family + one mono.

@@ -75,10 +75,6 @@ Codex doesn't say which models your ChatGPT plan has. So Morse keeps the
 model Codex picks and only changes how long it thinks. To name two models,
 use `morse config --fast-model` and `--best-model`.
 
-In the Morse popup, the model you pick under **Model for harder changes**
-is the strong one. Small changes use `claude-sonnet-5-5`. If you pick another
-model there, Morse uses it for every change.
-
 Morse stays with what you chose. Claude Code stays on your Claude plan, and
 a key is only sent to its own service. Morse never moves your request to a
 service you pay for separately.
@@ -134,37 +130,16 @@ got 47. Small changes on sonnet took about 3 seconds, as quick as haiku.
 Changes by opus took about 10 seconds. See the details in
 [evals](../evals/README.md#fast-and-strong-models-automatic).
 
-## In Chrome
+## In apps and browsers
 
-Morse in Chrome uses the model you chose in the Morse app. In the app, click
-**Use Morse in Chrome**. When Morse's welcome page opens in Chrome, the app
-asks **“Allow Chrome to use your Claude Code?”**. Click **Allow**. That's
-all ([Getting started](getting-started.md#3-websites-too-use-morse-in-chrome)).
-The Morse popup (Chrome's toolbar button) shows which model it uses.
-
-For developers, the popup's **Developer** section (and the welcome page with
-`?dev`) has two more ways:
-
-- **The Morse helper from a terminal.** Run `morse serve`. When the welcome
-  page asks, the terminal asks you. Type `y`. Or it shows a 6-character code.
-  Type the code under **Developer** and click **Pair**. `morse pair` shows a
-  new code. `morse unpair` signs every browser out. When you press Stop or
-  close the tab, the model on your computer stops too.
-- **An Anthropic API key**, kept in this browser. Requests go straight from
-  Chrome to Anthropic.
-
-**Test the model** there sends a small real request and shows the reply.
-
-## In desktop apps
-
-Apps you open with the Morse app use the model you chose there. (`morse
+Apps and browsers you open with the Morse app use the model you chose there. (`morse
 launch` uses the one from `morse setup` or `morse config`: it is the same
 choice.) There is nothing else to set up.
 
-## Voice in desktop apps
+## Voice
 
-In Chrome, Chrome turns your speech into text. In desktop apps, the Morse
-helper does it in one of two ways:
+In a browser opened with Morse, the browser turns your speech into text. In
+desktop apps, Morse does it in one of two ways:
 
 - **With OpenAI**: it uses your OpenAI key from `morse config`, or
   `OPENAI_API_KEY`. Or it uses a key only for voice in
@@ -179,7 +154,7 @@ morse doctor
 ```
 
 This shows your Node version and where your settings are. It shows whether
-Claude Code and Codex are installed, which keys are set, whether the Morse
-helper is running, and which model Morse will use. Then it sends a real test
+Claude Code and Codex are installed, which keys are set, and which model
+Morse will use. Then it sends a real test
 request and shows the reply and how long it took. If something is wrong, see
 [Troubleshooting](troubleshooting.md).

@@ -26,7 +26,7 @@ async function playground() {
   const runtime = bundleRuntime();
   await ctx.route(`${ORIGIN}/**`, async route => {
     const path = new URL(route.request().url()).pathname;
-    if (path === "/dist/extension/runtime.js") return route.fulfill({ body: runtime, contentType: "text/javascript" });
+    if (path === "/dist/runtime/runtime.js") return route.fulfill({ body: runtime, contentType: "text/javascript" });
     try {
       const body = await readFile(new URL("." + path, ROOT));
       route.fulfill({ body, contentType: path.endsWith(".html") ? "text/html" : "text/javascript" });

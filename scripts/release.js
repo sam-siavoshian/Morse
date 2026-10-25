@@ -4,8 +4,7 @@
 //
 //   1. checks: a clean working tree on a branch, a new version, no tag for it
 //      yet, and something under "## Unreleased" in CHANGELOG.md
-//   2. writes the version into package.json and package-lock.json (the build
-//      copies it into the extension's manifest)
+//   2. writes the version into package.json and package-lock.json
 //   3. moves CHANGELOG.md's "Unreleased" section under "## x.y.z (date)" and
 //      leaves an empty "Unreleased" on top
 //   4. runs `npm run check` and `npm test` (puts the files back if they fail)

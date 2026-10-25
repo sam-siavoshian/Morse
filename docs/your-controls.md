@@ -14,10 +14,8 @@ Shortcuts.
 
 ## Pause Morse
 
-- **On one site**: click “Pause Morse on pypi.org” in the Mods panel, or in
-  the Morse popup (Chrome's toolbar button).
-- **Everywhere**: click “Pause everywhere” in the popup. The toolbar button
-  then says *off*.
+- **On one site**: click “Pause Morse on pypi.org” in the Mods panel.
+- **Everywhere**: turn off **Mods on** in the Morse app.
 - **In a terminal**: `morse pause` stops every mod everywhere.
   `morse pause pypi.org` or `morse pause obsidian` stops them on one site or
   app. `morse resume` starts them again.
@@ -58,10 +56,9 @@ When a page freezes anyway:
 
 - **In a desktop app**, Morse notices within a few seconds. It stops the
   mod, turns it off and reloads the page.
-- **In Chrome**, Morse never starts a saved mod with a loop that can't end.
-  If a mod hasn't finished 4 seconds after it starts, Morse turns it off, so
-  the next visit is clean. If a page freezes later, Chrome's own *Page
-  unresponsive* message lets you close it. Safe start then holds the mod back
+- **In a browser**, Morse notices the same way. If a page freezes before
+  Morse can stop it, the browser's own *Page unresponsive* message lets you
+  close it. Safe start then holds the mod back
   next time.
 
 ## Before you install
@@ -83,9 +80,8 @@ choose where. Run `morse install <backup file>` to bring them back.
 
 ## Where mods live
 
-- In Chrome, in the Morse extension's own storage.
-- For desktop apps, in `~/.morse/mods`, in a folder for each app. A mod made
-  in Obsidian only ever runs in Obsidian.
+- In `~/.morse/mods`, in a folder for each app and site. A mod made in
+  Obsidian only ever runs in Obsidian.
 
 To see what leaves your computer, and what a mod can do, read
 [Privacy and safety](privacy-and-safety.md).

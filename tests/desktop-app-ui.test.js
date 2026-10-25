@@ -4,8 +4,7 @@
 // Tunes and the model it found, the window lists Tunes,
 // Open with Morse connects it (Morse's code shows up in Tunes), Disconnect
 // takes Morse off while Tunes keeps running, Connect attaches to it again,
-// an app that is already open asks "Tunes is open. Restart it with Morse?",
-// the Morse extension asking to connect gets a token only after Allow, and
+// an app that is already open asks "Tunes is open. Restart it with Morse?", and
 // closing the window keeps Morse running in the tray. Also: the page
 // sees window.morse and nothing else, and can't navigate anywhere.
 //
@@ -13,17 +12,17 @@
 //   npm install --prefix ~/.cache/morse/electron electron
 //   DISPLAY=:99 node --test tests/desktop-app-ui.test.js
 // The app list is only Tunes (MORSE_DESKTOP_SCAN=0 and desktop.json "apps"),
-// so what is installed on this machine doesn't matter.
+// so what is installed on this machine doesn't matter. Always open with Morse
+// is off here, so Tunes started by hand stays as it is (tests/desktop-app.test.js
+// covers it).
 import { tempDir } from "./helpers/home.js";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { spawn } from "node:child_process";
-import http from "node:http";
 import { createRequire } from "node:module";
 import { promises as fs } from "node:fs";
 import { waitFor } from "./helpers/wait.js";
-import { freePort } from "./helpers/net.js";
 import { electronExe, tunesApp } from "./helpers/tunes.js";
 
 let _electron = null;
@@ -63,23 +62,17 @@ async function quitTunes(port) {
   b.close();
 }
 
-test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects again, asks before restarting it, Allow for Chrome, stays in the tray", { skip, timeout: 300000 }, async () => {
+test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects again, asks before restarting it, stays in the tray", { skip, timeout: 300000 }, async () => {
   const { exe } = await tunesApp();
   const profile = path.join(home, "tunes-profile");
-  await fs.writeFile(path.join(home, "desktop.json"), JSON.stringify({ helper: false, apps: [exe], appArgs: { tunes: [`--user-data-dir=${profile}`, ...ROOT] } }));
+  await fs.writeFile(path.join(home, "desktop.json"), JSON.stringify({ autoOpen: false, apps: [exe], appArgs: { tunes: [`--user-data-dir=${profile}`, ...ROOT] } }));
 
-  const helperPort = await freePort();
-  // "Use Morse in Chrome": a stand-in Chrome that writes down what it was asked to open.
-  const chromeSays = path.join(home, "chrome-args.txt"), chromeFolder = path.join(home, "Morse for Chrome");
-  const fakeChrome = path.join(home, "fake-chrome.sh");
-  await fs.writeFile(fakeChrome, `#!/bin/sh\necho "$@" > "${chromeSays}"\n`, { mode: 0o755 });
   electronApp = await _electron.launch({
     executablePath: electronExe,
     args: [path.join(root, "desktop-app"), ...ROOT],
     // MORSE_PIPE=0: Tunes on a debugging port (the fallback), so this test can
     // look inside it. The private pipe, the default, is the next test.
-    env: { ...process.env, MORSE_HOME: home, MORSE_DESKTOP_SCAN: "0", MORSE_PROVIDER: "demo", MORSE_HELPER_PORT: String(helperPort), ELECTRON_RUN_AS_NODE: "", MORSE_PIPE: "0",
-      MORSE_CHROME: fakeChrome, MORSE_COPY_EXTENSION: "1", MORSE_CHROME_FOLDER: chromeFolder },
+    env: { ...process.env, MORSE_HOME: home, MORSE_DESKTOP_SCAN: "0", MORSE_PROVIDER: "demo", ELECTRON_RUN_AS_NODE: "", MORSE_PIPE: "0" },
     timeout: 60000,
   });
   const logs = [];
@@ -100,7 +93,7 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
     morse: Object.keys(window.morse), frozen: Object.isFrozen(window.morse),
     require: typeof window.require, process: typeof window.process, ipc: typeof window.ipcRenderer, electron: typeof window.electron, Buffer: typeof window.Buffer,
   }));
-  assert.deepEqual(globals.morse, ["state", "refreshApps", "openApp", "openBar", "disconnectApp", "addApp", "modelChoices", "chooseModel", "checkModel", "setHelper", "newPairingCode", "answerAsk", "signOutBrowsers", "showExtensionFolder", "useChrome", "setModOn", "setAllModsOff", "runChecks", "setStartAtLogin", "setAutoOpen", "openLink", "finishWelcome", "installUpdate", "updateLater", "onChange"]);
+  assert.deepEqual(globals.morse, ["state", "refreshApps", "openApp", "openBar", "disconnectApp", "addApp", "modelChoices", "chooseModel", "checkModel", "setModOn", "deleteMod", "undeleteMod", "setAllModsOff", "runChecks", "setStartAtLogin", "setAutoOpen", "openLink", "finishWelcome", "installUpdate", "updateLater", "onChange"]);
   assert.equal(globals.frozen, true);
   for (const k of ["require", "process", "ipc", "electron", "Buffer"]) assert.equal(globals[k], "undefined", k);
   const prefs = await electronApp.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences());
@@ -122,23 +115,6 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
   await w.keyboard.press("Enter"); // Enter goes on, as Continue does
   const first = w.locator('li[data-first-app="tunes"]');
   await first.waitFor({ timeout: 30000 });
-  // One more thing on the same screen: Use Morse in Chrome too. Until Morse is
-  // in the Chrome Web Store: the extension copied to a folder that stays put,
-  // that folder shown, Chrome opened on its extensions page, and the picture
-  // of where to click.
-  assert.equal(await w.locator("#first-chrome").innerText(), "Use Morse in Chrome too");
-  await w.click("#first-chrome");
-  const guide = w.locator("dialog#chrome-guide[open]");
-  await guide.waitFor({ timeout: 30000 });
-  await until(async () => (await fs.readFile(chromeSays, "utf8").catch(() => "")).trim() === "chrome://extensions", 10000, "Chrome to be asked for its extensions page");
-  assert.ok(await guide.locator("img.shot").evaluate(i => i.complete && i.naturalWidth > 0), "the picture of where to click loads");
-  assert.match(await guide.innerText(), /Developer mode[\s\S]*Load unpacked[\s\S]*Morse for Chrome/);
-  assert.ok(JSON.parse(await fs.readFile(path.join(chromeFolder, "manifest.json"), "utf8")).manifest_version, "the extension, in its folder");
-  assert.equal(JSON.parse(await fs.readFile(path.join(home, "desktop.json"), "utf8")).helper, true, "the helper turned on, so Chrome can connect");
-  await w.click("#guide-done");
-  await guide.waitFor({ state: "hidden", timeout: 5000 });
-  assert.equal(await w.locator("#first").isVisible(), true, "still the first run: open an app next");
-
   // Open with Morse, from the first screen: Tunes starts with Morse connected,
   // and the main window takes over for good.
   await first.getByRole("button", { name: "Open with Morse" }).click();
@@ -178,36 +154,6 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
   await until(() => plain.exitCode !== null || plain.signalCode !== null, 15000, "the Tunes started without Morse to have quit");
   const s2 = await session();
 
-  // One-click pairing: the Morse extension asks the helper, Morse asks the
-  // person, Allow makes the token (docs/dev/pairing.md). The helper's side
-  // is onboarding v2's (daemon/bridge.js /v1/pair/ask). The question's words
-  // are Morse's own (askWords), never anything the extension sends.
-  await w.evaluate(() => window.morse.setHelper(true));
-  const EXT = `chrome-extension://${"abcdefghijklmnop".repeat(2)}`;
-  const call = (method, p) => new Promise((resolve, reject) => {
-    const req = http.request({ host: "127.0.0.1", port: helperPort, method, path: p, headers: { Origin: EXT, "Content-Type": "application/json" } }, res => {
-      let d = ""; res.on("data", c => (d += c)); res.on("end", () => resolve({ status: res.statusCode, body: JSON.parse(d || "null") }));
-    });
-    req.on("error", reject);
-    req.end(method === "GET" ? undefined : "{}");
-  });
-  const health = await until(async () => (await call("GET", "/v1/health")).body, 15000, "the Morse helper");
-  assert.equal(health.ask, true, "Morse Desktop's helper asks the person");
-  {
-    assert.equal(health.app, "desktop");
-    const asked = await until(async () => { const r = await call("POST", "/v1/pair/ask"); return r.status === 202 && r; }, 15000, "the helper to take the request");
-    const dialogAsk = w.locator("dialog#ask-pair[open]");
-    await dialogAsk.waitFor({ timeout: 15000 });
-    assert.match(await dialogAsk.locator("h2").innerText(), /^Allow Chrome to use your .+\?$/);
-    assert.doesNotMatch(await dialogAsk.innerText(), /pair\.ask/, "Morse's own words, not a message id");
-    assert.equal((await call("POST", `/v1/pair/ask/${asked.body.id}`)).body.state, "waiting", "nothing until the person answers");
-    await dialogAsk.getByRole("button", { name: "Allow" }).click();
-    const answered = await until(async () => { const r = await call("POST", `/v1/pair/ask/${asked.body.id}`); return r.body?.state !== "waiting" && r; }, 15000, "the answer");
-    assert.equal(answered.body.state, "allowed");
-    assert.ok(answered.body.token?.length >= 40);
-    assert.equal(await w.locator("dialog#ask-pair[open]").count(), 0);
-  }
-
   // Last, since Playwright then waits for a navigation that never comes: the
   // page can't go anywhere else, or open windows.
   const home0 = w.url();
@@ -246,8 +192,8 @@ test("Morse Desktop on the private pipe: no debugging port, Connect again withou
   const home2 = tempDir("morse-desktop-pipe-");
   const { exe } = await tunesApp();
   const profile = path.join(home2, "tunes-profile");
-  await fs.writeFile(path.join(home2, "desktop.json"), JSON.stringify({ helper: false, welcomed: true, apps: [exe], appArgs: { tunes: [`--user-data-dir=${profile}`, ...ROOT] } }));
-  const env = { ...process.env, MORSE_HOME: home2, MORSE_DESKTOP_SCAN: "0", MORSE_PROVIDER: "demo", MORSE_HELPER_PORT: String(await freePort()), ELECTRON_RUN_AS_NODE: "" };
+  await fs.writeFile(path.join(home2, "desktop.json"), JSON.stringify({ autoOpen: false, welcomed: true, apps: [exe], appArgs: { tunes: [`--user-data-dir=${profile}`, ...ROOT] } }));
+  const env = { ...process.env, MORSE_HOME: home2, MORSE_DESKTOP_SCAN: "0", MORSE_PROVIDER: "demo", ELECTRON_RUN_AS_NODE: "" };
   delete env.MORSE_PIPE;
   electronApp = await _electron.launch({ executablePath: electronExe, args: [path.join(root, "desktop-app"), ...ROOT], env, timeout: 60000 });
   const logs = [];

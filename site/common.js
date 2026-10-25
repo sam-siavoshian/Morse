@@ -34,7 +34,7 @@ export function initPage() {
   }
 }
 
-// Buttons name a key in LINKS (data-link="chrome"); the HTML carries the same
+// Buttons name a key in LINKS (data-link="desktop"); the HTML carries the same
 // placeholder so they work before this runs.
 // "desktop" (Download Morse) is this visitor's own download when the browser
 // says which system it is on (a Mac gets the Apple silicon one; the steps
@@ -60,7 +60,7 @@ export function applyLinks(root = document) {
   }
 }
 
-// A link to a <details> (the install steps: ./#chrome-steps) opens it, on
+// A link to a <details> (the install steps: ./#desktop-steps) opens it, on
 // load and on every later jump to it.
 export function openDetailsOnHash() {
   // A broken link (#%E0) can't be read: then it names nothing.

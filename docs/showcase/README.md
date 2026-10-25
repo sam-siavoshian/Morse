@@ -24,7 +24,7 @@ with those details. To redraw the side-by-side pictures:
   quit, opened again with `morse launch`, and the "after" picture was taken
   there.
 - Websites: Chromium with the Morse extension and “Allow User Scripts” on,
-  paired with `morse serve` ([`demo/try-real-sites.js`](../../demo/try-real-sites.js)).
+  paired with `morse serve` (`demo/try-real-sites.js`).
   The "after" picture is after Save and a reload.
 - New buttons and keys were used for real before the "after" picture: a click
   on Start, Focus, Hide distractions or New daily note, a press of

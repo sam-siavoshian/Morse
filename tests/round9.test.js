@@ -121,37 +121,6 @@ test("Linux desktop files: a line break in Morse's path can't add a line, and % 
 // Chrome asking to connect (createBridge's ask)
 // ======================================================================
 
-test("a question whose time ran out before Morse Desktop saw it is answered No at once, and doesn't stay on screen", async () => {
-  const d = { HOME: tempDir("morse-round9-desktop-"), loadConfig: async () => ({}), plainError: e => e.message };
-  const service = createService({ daemon: d, fetchHealth: async () => null, scan: false });
-  const ac = new AbortController();
-  ac.abort();
-  const answer = await Promise.race([service.askAllow({ origin: "chrome-extension://abcdefghijklmnopabcdefghijklmnop", signal: ac.signal }), new Promise(r => setTimeout(() => r("still waiting"), 500))]);
-  assert.equal(answer, false);
-  d.EXTENSION_DIR = "/x";
-  d.helperPort = () => 1;
-  assert.equal((await service.chrome()).ask, null, "no question left waiting for a click");
-});
-
-test("Morse Desktop doesn't call a Morse helper another account on this computer started its own, and says so", async () => {
-  const d = {
-    HOME: tempDir("morse-round9-desktop-"), EXTENSION_DIR: "/x", loadConfig: async () => ({}), plainError: e => e.message, helperPort: () => 7457,
-    createBridge: () => assert.fail("Morse can't start its own helper while the place is taken"),
-    portIsMine: port => (port === 7457 ? false : null),
-  };
-  const service = createService({ daemon: d, fetchHealth: async () => ({ ok: true, version: "9.9.9" }), scan: false });
-  const c = await service.startHelper();
-  assert.equal(c.running, false, "Chrome would be talking to someone else's program");
-  assert.match(c.error, /another account/i);
-  assert.equal((await service.chrome()).running, false);
-  const { loadDaemon } = await import("../desktop-app/service.js");
-  assert.equal(typeof (await loadDaemon()).portIsMine, "function", "the real daemon has the check");
-});
-
-// ======================================================================
-// The release workflow (signing secrets live there)
-// ======================================================================
-
 test("release-desktop.yml: actions pinned to a commit, the write token only in the job that drafts the release, no token left in the checkout", () => {
   const yml = readFileSync(path.join(ROOT, ".github", "workflows", "release-desktop.yml"), "utf8");
   const uses = [...yml.matchAll(/uses:\s*(\S+)/g)].map(m => m[1]);

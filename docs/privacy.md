@@ -1,7 +1,7 @@
 # Morse privacy policy
 
-Last updated: October 24, 2026. This covers the Morse Chrome extension and the
-`morse` command (the Morse helper). It is checked against the code in this
+Last updated: October 25, 2026. This covers the Morse app and the `morse`
+command. It is checked against the code in this
 repository. If the two ever disagree,
 [open an issue](https://github.com/sam-siavoshian/RRAA/issues/new).
 
@@ -89,8 +89,8 @@ mod files that match the site you are on.
 To know, it asks npm, where the command is published:
 `https://registry.npmjs.org/morse-cli/latest`.
 
-- Only `morse doctor` asks. Nothing else in Morse does. The Chrome extension
-  never does.
+- Only `morse doctor` asks. Nothing else in Morse does. (The Morse app checks
+  its own updates on GitHub, below.)
 - It asks at most once a day. The answer (the newest version number and when
   it was asked) is kept in `~/.morse/update-check.json`.
 - The request carries no cookies and nothing about you, your model, your mods
@@ -104,18 +104,14 @@ To know, it asks npm, where the command is published:
 
 These send data somewhere other than your model, and only when you use them:
 
-- **Voice in Chrome.** Morse uses Chrome's own speech recognition. Chrome
-  sends your voice to Google to turn it into text. Morse may also record what
-  you say while you talk to it. It does this if the Morse helper is paired
-  and can turn speech into text, or if you gave Morse an OpenAI key. It sends
-  that recording to the Morse helper (which uses OpenAI or Whisper on your
-  computer, as below) or to OpenAI. If you never use voice, no audio is
-  recorded.
-- **Voice in desktop apps.** The Morse helper turns speech into text with
-  OpenAI (when you gave it an OpenAI key) or with Whisper on your computer
-  (nothing leaves your computer).
+- **Voice in a browser.** In a browser opened with Morse, Morse uses the
+  browser's own speech recognition. Chrome sends your voice to Google to turn
+  it into text. If you never use voice, no audio is recorded.
+- **Voice in desktop apps.** Morse turns speech into text with OpenAI (when
+  you gave it an OpenAI key) or with Whisper on your computer (nothing leaves
+  your computer).
 - **Read aloud.** Morse picks a voice installed on your computer. If there is
-  none, Chrome uses its default voice, which can be an online Google voice.
+  none, the browser uses its default voice, which can be an online Google voice.
 - **Sharing.** A share link holds the whole mod after the `#`. Browsers do not
   send that part to a server, so the install page at GitHub Pages never sees
   the mod. You decide who gets the link. The "Post" button opens x.com with
@@ -128,20 +124,19 @@ These send data somewhere other than your model, and only when you use them:
   "Stop updates" in the Mods panel ends it.
 - **Submitting to the gallery** opens a new GitHub issue with your mod in it,
   in your browser. Nothing is posted until you click Submit on GitHub.
-- **Settings sync.** Your Morse settings (shortcuts, bar position, theme,
-  whether to show gallery mods) are kept in Chrome's sync storage. If you
-  turned on Chrome sync, Google syncs them between your browsers. Your API key,
-  your mods and your history are not in sync storage.
+- **Updates.** The Morse app checks the "preview" release on GitHub for a
+  newer version when it starts and every 4 hours, and downloads it when there
+  is one. The request carries nothing about you; like any website, GitHub sees
+  your IP address.
 
 ## What stays on your computer
 
-- Your mods: in the extension's storage in Chrome, and in `~/.morse/mods` for
-  desktop apps.
-- Your API keys: in the extension's local storage, or in `~/.morse/config.json`.
+- Your mods: in `~/.morse/mods`, for apps and websites alike.
+- Your API keys: in `~/.morse/config.json`, which only you can read.
   They are sent only to the service they are for.
 - Your past requests, backups and exports.
-- The Morse helper listens only on `127.0.0.1` (your own computer). A browser
-  must be paired with a one-time code before the helper writes changes for it.
+- What you asked, and a picture of the part you pointed at, go to the model
+  you chose when you press Enter, and nowhere else.
 
 ## What mods can do
 
@@ -150,10 +145,6 @@ It can see what you see there. Your model writes the mods you make, when you
 ask. Before you install a mod from someone else, Morse tells you what it does
 and lets you read its code. Morse does not check what a mod sends over the
 network. Read the code, or don't install the mod.
-
-In Chrome, a mod's code runs only when you turn on “Allow User Scripts” for
-Morse. Until you do, Morse only changes how pages look, and says which of your
-mods are waiting for it.
 
 ## Things Morse never does
 

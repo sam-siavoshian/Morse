@@ -102,34 +102,6 @@ test("OpenAI first when there's a key; an outage falls back to local whisper", a
   assert.deepEqual((await voiceStatus({ ...opts, provider: "whisper" })).providers, ["whisper"]);
 });
 
-test("the helper route serves /v1/voice and /v1/transcribe", async () => {
-  process.env.MORSE_HOME = path.join(tmp, "home");
-  const saved = { key: process.env.OPENAI_API_KEY, url: process.env.MORSE_OPENAI_BASE_URL };
-  process.env.OPENAI_API_KEY = "sk-env";
-  process.env.MORSE_OPENAI_BASE_URL = base;
-  const { handleVoice } = await import("../daemon/voice.js");
-  const app = http.createServer(async (req, res) => { if (!(await handleVoice(req, res))) res.writeHead(404).end(); });
-  await new Promise(r => app.listen(0, "127.0.0.1", r));
-  const url = `http://127.0.0.1:${app.address().port}`;
-  try {
-    const st = await (await fetch(`${url}/v1/voice`)).json();
-    assert.equal(st.transcribe, true);
-    assert.equal(st.provider, "openai");
-    calls = [];
-    const r = await fetch(`${url}/v1/transcribe`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ audio: AUDIO, mime: "audio/webm" }) });
-    assert.equal(r.status, 200);
-    assert.equal((await r.json()).text, "make the toolbar airier");
-    assert.equal(calls[0].auth, "Bearer sk-env");
-    assert.equal((await fetch(`${url}/v1/transcribe`)).status, 405);
-    assert.equal((await fetch(`${url}/other`)).status, 404);
-  } finally {
-    app.close();
-    process.env.OPENAI_API_KEY = saved.key ?? "";
-    if (saved.url === undefined) delete process.env.MORSE_OPENAI_BASE_URL;
-    if (saved.key === undefined) delete process.env.OPENAI_API_KEY;
-  }
-});
-
 test("generate.cancel aborts the model mid-stream and never runs the JS", async () => {
   const gens = new Generations();
   let execs = 0, tokens = 0;

@@ -12,9 +12,7 @@ pre-release tagged `preview`. The
 every push to `main` (pushes that only change `docs/`, `site/`, `evals/` or
 Markdown are skipped; run it by hand from the Actions tab any time):
 
-1. **package**: `npm run check`, then `morse-cli.tgz` (`npm pack` with the
-   store build of the extension inside, about 2 MB) and
-   `morse-extension.zip` (`npm run store`).
+1. **package**: `npm run check`, then `morse-cli.tgz` (`npm pack`, about 2 MB).
 2. **desktop**: Morse Desktop on `ubuntu-latest`, `macos-latest` and
    `windows-latest`, signed when the secrets in
    [What signing needs](#what-signing-needs) are set. Without them the Mac
@@ -23,8 +21,7 @@ Markdown are skipped; run it by hand from the Actions tab any time):
 3. **smoke**: `install.sh` (piped into `sh`, as people run it) and
    `install.ps1` (through `irm | iex` in Windows PowerShell 5.1, then as a
    file in PowerShell 7) against the package just built, served from the
-   runner: `morse --version`, `morse doctor --offline`, the extension folder,
-   a second run that says "already up to date", then `morse uninstall`.
+   runner: `morse --version`, `morse doctor --offline`, a second run that says "already up to date", then `morse uninstall`.
 4. **release**: only when all of that worked. The `preview` tag moves to the
    commit, and the release's files are replaced, with `SHA256SUMS`. It stays
    a pre-release, so it never shows as the latest release.
@@ -39,21 +36,22 @@ installers use them):
 | `Morse-Setup.exe` | Morse Desktop for Windows (x64 and arm64) |
 | `Morse-linux-x86_64.AppImage` | Morse Desktop for Linux |
 | `morse-cli.tgz` | the `morse` command; what `install.sh` and `install.ps1` install |
-| `morse-extension.zip` | the Chrome extension, as the Chrome Web Store gets it |
-| `SHA256SUMS` | the SHA-256 of each; the installers check `morse-cli.tgz` against it |
+| `SHA256SUMS` | the SHA-256 of each; the installers (`install-app.sh` too) check against it |
 
 at `https://github.com/sam-siavoshian/RRAA/releases/download/preview/<file>`.
 
 The installers (developer path): `install.sh` (macOS, Linux) and
 `install.ps1` (Windows) need Node 22, download `morse-cli.tgz`, check it,
-put Morse in `~/.morse/app`, the extension in `~/.morse/chrome-extension`
-and a `morse` command on the PATH, then run `morse setup --auto`. Running
+put Morse in `~/.morse/app` and a `morse` command on the PATH, then run `morse setup --auto`. Running
 one again updates; `morse uninstall` (or `--uninstall`, `-Uninstall`)
 removes what it added. With no preview release yet, they build the package
 from `main` instead. Try them against files on your computer:
 `node scripts/serve-files.js <folder> 8765` and
 `MORSE_INSTALL_BASE=http://127.0.0.1:8765 sh install.sh`;
-`tests/install.test.js` does that for every case.
+`tests/install.test.js` does that for every case. `install-app.sh` puts the
+Morse app itself in Applications (macOS) or `~/.local/share/morse` (Linux),
+checked against `SHA256SUMS`, with no Gatekeeper prompt: curl marks nothing
+as downloaded from the internet.
 
 ## What one release makes
 
@@ -63,21 +61,18 @@ You push one tag, such as `v0.3.0`. The
 1. checks that the tag, `package.json` and `CHANGELOG.md` agree, and runs
    `npm ci`, `npm run check` and `npm test` (the same headless tests as CI).
    If anything fails, nothing is published.
-2. builds the Chrome Web Store zip (`npm run store`, a `MORSE_STORE=1` build)
-   and the npm package, whose extension is the same store build. It installs
-   the package once and runs `morse --version`, `morse help`,
-   `morse setup --help` and `morse extension` to be sure it works.
+2. builds the npm package. It installs the package once and runs
+   `morse --version`, `morse help` and `morse setup --help` to be sure it
+   works.
 3. publishes `morse-cli` to npm with `npm publish --provenance`, if the
    `NPM_TOKEN` secret is set. Without it, the run says so and goes on.
 4. makes the GitHub release, with the notes from that version's section of
-   `CHANGELOG.md`, the store zip, the npm package and their SHA-256. When
+   `CHANGELOG.md`, the npm package and its SHA-256. When
    `.github/workflows/release-desktop.yml` is there (Morse Desktop), the tag
    starts it too. The release waits for it and adds its AppImage, dmg and
    Windows installer.
 
-The Chrome Web Store upload stays a manual step: Google reviews every
-version, and uploading from a workflow needs a Google API project and keys
-this repository doesn't have.
+
 
 Running the **Release** workflow by hand from the Actions tab is a dry run:
 the same checks and files, `npm publish --dry-run`, and no release. Its files
@@ -134,8 +129,6 @@ Do these once, in this order.
    git push --follow-tags origin main
    ```
 
-   Then upload the store zip, as in step 4 below.
-
 ## Every release after that
 
 1. While you work, write what people will notice under `## Unreleased` in
@@ -149,8 +142,7 @@ Do these once, in this order.
    ```
 
    `npm run release` ([scripts/release.js](../../scripts/release.js)) writes
-   the new version into `package.json` and `package-lock.json` (the build
-   copies it into the extension), moves the "Unreleased" notes under
+   the new version into `package.json` and `package-lock.json`, moves the "Unreleased" notes under
    `## <version> (<date>)`, runs `npm run check` and `npm test`, commits
    `Release v<version>` and makes the tag. It stops, and puts the files
    back, if the checks fail. It never pushes. It prints the command.
@@ -164,12 +156,6 @@ Do these once, in this order.
 
    Watch **Actions → Release**. When it's done, the release is on the
    Releases page and `npm view morse-cli version` shows the new version.
-4. Upload the store zip. Download `morse-extension-<version>-store.zip` from
-   the release (or run `npm run store`, which builds the same thing), and
-   follow [Submitting to the Chrome Web Store](../store/SUBMIT.md), "After
-   it's approved": **Package → Upload new package**, then **Submit for
-   review**. The SHA-256 in the release notes tells you which zip the store
-   has.
 
 ## When something goes wrong
 
@@ -218,14 +204,13 @@ node desktop-app/build.js --mac  # or --win, --linux; --dir for the unpacked app
 
 `desktop-app/build.js`:
 
-1. builds the extension (`scripts/build.js`);
-2. stages the app in `dist/desktop-app/app`: `desktop-app/`, `daemon/`,
-   `core/`, `runtime/`, `design/tokens.css`, `dist/extension` and the one npm
+1. stages the app in `dist/desktop-app/app`: `desktop-app/`, `daemon/`,
+   `core/`, `runtime/`, `design/tokens.css` and the one npm
    dependency (`@anthropic-ai/sdk` and what it needs), with a `package.json`
    whose `main` is `desktop-app/main.js`;
-3. draws the icon (`desktop-app/mark.js`, the radar on a dark tile) and
+2. draws the icon (`desktop-app/mark.js`, the radar on a dark tile) and
    writes the macOS entitlements into `dist/desktop-app/res`;
-4. runs electron-builder with `desktop-app/builder.config.js`.
+3. runs electron-builder with `desktop-app/builder.config.js`.
 
 Everything lands in `dist/`, which git ignores. On Linux the build uses the
 Electron runtime already on the machine (`~/.cache/morse/electron`, the one
@@ -235,10 +220,6 @@ the tests use) when it's the pinned version (`ELECTRON_VERSION` in
 The package is locked down with Electron's fuses: it can't run as plain Node
 (`ELECTRON_RUN_AS_NODE`), ignores `NODE_OPTIONS` and `--inspect`, and only
 loads its own `app.asar`, checked against the hash stored at build time.
-
-The packaged extension lives inside `app.asar`, so **Show the extension
-folder** copies it to `~/.morse/chrome-extension` first (an AppImage's own
-folder changes every time it starts).
 
 ### What signing needs
 
@@ -309,8 +290,7 @@ Morse's own page, which is what the sandbox would protect.
   doesn't.
 - Its own job attaches the files to a draft release for the tag. The
   [release workflow](#what-one-release-makes) waits for this one, takes its
-  files too, and publishes the release with the notes, the store zip and the
-  npm package.
+  files too, and publishes the release with the notes and the npm package.
 - The builds can only read the repo (they run npm packages' install scripts
   next to the signing secrets). Only the job that drafts the release can
   write. Each action is pinned to a commit, with its version in a comment: to
@@ -330,24 +310,23 @@ broken, delete it from the release and say so in the notes):
 2. Choose a model and click **Check**.
 3. **Open with Morse** on an app, make a change, Save; **Disconnect**. Quit
    Morse from the tray.
-4. In Chrome, load the extension with **Add to Chrome** and click
-   **Connect** on the welcome page, then **Allow** in Morse Desktop.
-5. Turn on **Open at login**, log out and in: Morse is in the tray, without
-   the window.
+4. **Open with Morse** on Chrome: a window of its own opens; make a change on
+   a website.
+5. Open an app with mods from the Dock or Start menu: Morse opens it again
+   with Morse (Always open with Morse). Log out and in: Morse is in the tray,
+   without the window.
 
 ### What was checked
 
 - **Linux (x64)**: the AppImage was built here (Electron 45) and its app
-  opened under Xvfb: the window listed this machine's apps, the model and the
-  Morse helper (running inside it) answered, and it opened a packaged Tunes
-  with Morse connected and disconnected it. `tests/desktop-app-ui.test.js`
-  runs the same app unpackaged against Tunes, including the first run and
-  one-click pairing (a request made the way the extension will make it).
-- **macOS and Windows**: the configuration is written and the workflow runs
-  them, but no dmg or installer was built or opened yet, signed or not.
+  opened under Xvfb: the window listed this machine's apps, the model
+  answered, and it opened a packaged Tunes with Morse connected and
+  disconnected it. `tests/desktop-app-ui.test.js` runs the same app
+  unpackaged against Tunes, including the first run.
+- **macOS**: the preview workflow builds the dmg and zip, and the app was used
+  on a real Mac (open with ⌥Space, a change in Spotify, updating itself).
+  **Windows**: built by the workflow, not opened yet.
 - The tray menu and **Open at login** were not tried on a real desktop.
-- One-click pairing from the real extension: the extension side isn't on
-  this branch yet ([Pairing](pairing.md) is the contract it follows).
 - **The installers**: `install.sh` ran end to end on Linux in a fresh home
   against a package served from this computer (install, "already up to
   date", update, a bad checksum refused, no Node, `--uninstall`, `morse

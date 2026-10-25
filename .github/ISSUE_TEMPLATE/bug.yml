@@ -32,8 +32,8 @@ body:
     attributes:
       label: Where you use Morse
       options:
-        - Chrome extension
-        - Desktop app (morse launch)
+        - A website (in a browser opened with Morse)
+        - An app (the Morse app or morse launch)
         - The morse command itself
     validations:
       required: true
@@ -41,7 +41,7 @@ body:
     id: version
     attributes:
       label: Morse version
-      description: Run `morse --version`, or look at Morse in chrome://extensions.
+      description: Run `morse --version`, or look in the Morse app's settings.
       placeholder: 0.2.0
   - type: dropdown
     id: model

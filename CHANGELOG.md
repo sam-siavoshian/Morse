@@ -1,7 +1,6 @@
 # Changelog
 
-Morse's version lives in `package.json`. The build copies it into the Chrome
-extension, and `morse --version` prints it.
+Morse's version lives in `package.json`; `morse --version` prints it.
 
 Add what people will notice under "Unreleased". `npm run release` moves it
 under the new version number with the date
@@ -9,6 +8,15 @@ under the new version number with the date
 
 ## Unreleased
 
+- **No more Chrome extension.** The Morse app opens websites the way it opens
+  apps: pick Chrome, Edge, Brave, Arc or Vivaldi in the Morse app and it opens
+  with Morse in its own profile, so your mods and your style work on every
+  site. Nothing to install in the browser, nothing to pair.
+- **Glass on a Mac.** The Morse app's sidebar and first run show the Mac's own
+  translucent material, like Zephium's window.
+- **Undo for Delete and for going back.** Deleting a mod, in the Mods panel
+  or in the Morse app's Mods list, shows Undo, and the mod comes back as it
+  was, history and all. Bringing back an older version shows Undo too.
 - **Smarter changes at the same speed.** Every change uses Opus (Claude Code or
   an Anthropic key): it thinks briefly for small changes and longer for new
   features, new looks and second tries.

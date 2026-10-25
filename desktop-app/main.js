@@ -1,8 +1,8 @@
 // Morse Desktop: Morse on your computer without a terminal. The Electron main
 // process runs the same daemon code the `morse` command runs (service.js), so
 // there is no Node to install. It shows one window (ui/), sits in the tray or
-// menu bar, runs the Morse helper for Chrome in the background, and opens at
-// login only when the person turns that on.
+// menu bar, opens apps and browsers with Morse, and opens at login for
+// Always open with Morse.
 //
 // Security: the window loads only ui/ from disk, with a strict CSP, context
 // isolation and the sandbox on, and a preload (preload.cjs) that exposes one
@@ -14,7 +14,7 @@
 //   node desktop-app/run.js          start it from a clone
 //   node desktop-app/build.js        package it (docs/dev/releasing.md)
 
-import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, ipcMain, dialog, shell, session, protocol, clipboard } from "electron";
+import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, ipcMain, dialog, shell, session, protocol } from "electron";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { execFile } from "node:child_process";
@@ -22,11 +22,9 @@ import { fileURLToPath } from "node:url";
 import { createService, loadDaemon } from "./service.js";
 import { registerIpc, PUSH, isOpenLink } from "./ipc.js";
 import { markPng } from "./mark.js";
-import { LINKS } from "../site/config.js";
 import { LANGUAGES } from "../core/i18n.js";
 import { iconSource } from "./icons.js";
 import { setAutostart, writeMenuEntry } from "./linux.js";
-import { openChromeExtensions, isStoreUrl } from "./chrome.js";
 import { fullPath } from "./shell-path.js";
 import { createUpdater } from "./updater.js";
 
@@ -46,8 +44,6 @@ const UI_FILES = {
   // The marks of the models you can choose (ui/icons/NOTICE), and the site's own Inter.
   ...Object.fromEntries(["claude", "openai", "anthropic"].map(n => [`/icons/${n}.png`, [path.join(HERE, "ui", "icons", `${n}.png`), "image/png"]])),
   ...Object.fromEntries(["inter-regular", "inter-medium", "interdisplay-semibold"].map(n => [`/fonts/${n}.woff2`, [path.join(HERE, "..", "site", "fonts", `${n}.woff2`), "font/woff2"]])),
-  // Where to click in Chrome (demo/shoot-chrome-steps.js), for Use Morse in Chrome.
-  "/chrome-steps.png": [path.join(HERE, "ui", "chrome-steps.png"), "image/png"],
   // The window's words in the person's language: core/i18n.js and each language's catalog.
   "/core/i18n.js": [path.join(HERE, "..", "core", "i18n.js"), "text/javascript; charset=utf-8"],
   ...Object.fromEntries(LANGUAGES.map(l => [`/core/locales/${l.code}.js`, [path.join(HERE, "..", "core", "locales", `${l.code}.js`), "text/javascript; charset=utf-8"]])),
@@ -103,8 +99,8 @@ function lockSession() {
   s.setPermissionCheckHandler(() => false);
   s.setDevicePermissionHandler?.(() => false);
   // The page loads only its own files. (The daemon's own requests, to your
-  // model and to the Morse helper, come from Node in this process, not from
-  // the page, and don't pass through here.)
+  // model, come from Node in this process, not from the page, and don't pass
+  // through here.)
   s.webRequest.onBeforeRequest((details, done) => {
     const ok = details.url.startsWith(`${SCHEME}://ui/`) || details.url.startsWith("devtools://") || details.url.startsWith("data:");
     if (!ok) log("blocked", details.url);
@@ -155,8 +151,10 @@ function createWindow() {
   win = new BrowserWindow({
     width: 960, height: 720, minWidth: 760, minHeight: 560, show: false,
     title: "Morse", icon: MAC ? undefined : appIcon(),
-    backgroundColor: nativeTheme.shouldUseDarkColors ? "#0b0b0c" : "#fbfbfb",
-    ...(MAC ? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 16, y: 18 } } : { autoHideMenuBar: true }),
+    // On a Mac the window is glass, the way Zephium's is: the system's sidebar
+    // material under a clear background (ui/app.css, body.mac).
+    backgroundColor: MAC ? "#00000000" : nativeTheme.shouldUseDarkColors ? "#0b0b0c" : "#fbfbfb",
+    ...(MAC ? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 16, y: 18 }, vibrancy: "sidebar", visualEffectState: "followWindow" } : { autoHideMenuBar: true }),
     webPreferences: {
       preload: path.join(HERE, "preload.cjs"),
       contextIsolation: true, sandbox: true, nodeIntegration: false, nodeIntegrationInWorker: false, nodeIntegrationInSubFrames: false,
@@ -231,9 +229,7 @@ async function setLoginItem(on) {
 }
 
 // ---------------------------------------------------------------- morse:// links
-// morse://open (from Chrome's welcome page, say) starts Morse or brings its
-// window forward. A link carries nothing else: connecting Chrome goes through
-// the Morse helper and the person's Allow (createBridge's ask, service.js askAllow).
+// morse://open starts Morse or brings its window forward. A link carries nothing else.
 function handleLink(url) {
   if (isOpenLink(url)) app.whenReady().then(showWindow);
 }
@@ -245,7 +241,7 @@ function registerLinks() {
   if (!app.isPackaged) return;
   if (process.platform === "linux") {
     // The AppImage has no installer: Morse adds its own app menu entry, which
-    // is what lets Chrome hand it morse:// links.
+    // is what lets a browser hand it morse:// links.
     const exec = APPIMAGE || process.execPath;
     writeMenuEntry({ exec }).then(() => new Promise(r => execFile("xdg-mime", ["default", "morse-desktop.desktop", "x-scheme-handler/morse"], () => r()))).catch(e => log("menu entry", e.message));
   } else app.setAsDefaultProtocolClient("morse");
@@ -285,7 +281,7 @@ app.whenReady().then(async () => {
   if (MAC) app.dock?.setIcon(appIcon());
   // macOS needs a menu for ⌘Q, ⌘W and copy and paste (the API key field); elsewhere there is none.
   Menu.setApplicationMenu(MAC ? Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }, { role: "windowMenu" }]) : null);
-  service = createService({ daemon: await loadDaemon(), emit: changed, log, iconFor, copyExtension: app.isPackaged || process.env.MORSE_COPY_EXTENSION === "1", ...(process.env.MORSE_CHROME_FOLDER && { chromeFolder: process.env.MORSE_CHROME_FOLDER }), chromeStore: isStoreUrl(LINKS.chrome) ? LINKS.chrome : "", self: [process.execPath, APPIMAGE], onAsk: () => showWindow() });
+  service = createService({ daemon: await loadDaemon(), emit: changed, log, iconFor, self: [process.execPath, APPIMAGE] });
   // Updates itself from the preview release: downloads in the background, and
   // installs when no app is connected and the window isn't in use, or at quit.
   updater = createUpdater({ app, log, getAppImage: () => APPIMAGE, busy: () => service.sessions.size > 0, onStatus: () => { changed(); if (["downloading", "ready"].includes(updater?.status.phase) && win && !win.isVisible()) showWindow(); } });
@@ -305,17 +301,7 @@ app.whenReady().then(async () => {
         });
         return r.canceled ? null : r.filePaths[0];
       },
-      // The extension's folder, shown and selected (so it can be dragged into
-      // Chrome), and its place copied (to paste where Load unpacked asks).
-      showFolder: async dir => {
-        if (!dir) return { error: "The Chrome extension isn't built yet." };
-        shell.showItemInFolder(dir);
-        clipboard.writeText(dir);
-        return { ok: true };
-      },
       openExternal: async url => { await shell.openExternal(url); return { ok: true }; },
-      // Chrome on its extensions page (desktop-app/chrome.js); false when there's no Chrome here.
-      openChrome: () => openChromeExtensions().catch(() => false),
       setLoginItem,
     },
   });
@@ -325,10 +311,7 @@ app.whenReady().then(async () => {
   registerLinks();
   const link = process.argv.find(a => a.startsWith("morse://"));
   if (link) handleLink(link);
-  // The Morse helper runs in the background so Chrome can use your model,
-  // unless you turned it off.
   const s = await service.loadSettings();
-  if (s.helper) await service.startHelper();
   // Always open with Morse (on unless you turn it off) needs Morse running:
   // it opens at login, set once here, after which the switch decides.
   if (app.isPackaged && s.autoOpen && !s.startAtLogin && !s.loginSet) {

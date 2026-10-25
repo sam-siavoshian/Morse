@@ -138,20 +138,6 @@ test("history keeps the newest 50, a repeat moves to the end", () => {
   assert.deepEqual(pushHistory(["a"], "  "), ["a"]);
 });
 
-test("the extension's toolbar shortcut never collides with the in-page hotkeys", async () => {
-  const { readFile } = await import("node:fs/promises");
-  const manifest = JSON.parse(await readFile(new URL("../extension/manifest.json", import.meta.url), "utf8"));
-  const keys = manifest.commands["toggle-morse"].suggested_key;
-  // Chrome's names: Ctrl (which is ⌘ on a Mac), Command, MacCtrl, Alt, Shift.
-  const asCombo = (s, mac) => normalizeCombo(s.replace(/\bCtrl\b/, mac ? "Meta" : "Ctrl").replace(/\bCommand\b/, "Meta").replace(/\bMacCtrl\b/, "Ctrl"));
-  for (const [platform, key] of [["win", keys.windows || keys.default], ["linux", keys.linux || keys.default], ["mac", keys.mac || keys.default]]) {
-    const combo = asCombo(key, platform === "mac");
-    assert.ok(combo, `${platform}: ${key}`);
-    for (const [id, own] of Object.entries(defaultHotkeys(platform))) assert.notEqual(combo, own, `${platform}: ${key} is also the ${id} hotkey`);
-    assert.notEqual(checkCombo(combo, platform).level, "error", `${platform}: ${key}`);
-  }
-});
-
 test("the CLI help shows the hotkey actually configured", async () => {
   const { writeFile, rm } = await import("node:fs/promises");
   const { execFileSync } = await import("node:child_process");

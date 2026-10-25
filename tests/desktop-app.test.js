@@ -85,6 +85,7 @@ function fakeDaemon(over = {}) {
     listMods: async () => [...mods.values()].map(m => ({ ...m })),
     getMod: async id => (mods.has(id) ? { ...mods.get(id) } : null),
     saveMod: rec("saveMod", async m => { mods.set(m.id, m); return m; }),
+    deleteMod: rec("deleteMod", async id => { mods.delete(id); }),
     loadControl: async () => structuredClone(control),
     saveControl: rec("saveControl", async s => { control = s; }),
     setPause: (c, { all }) => ({ ...c, pause: { ...c.pause, all } }),
@@ -127,14 +128,14 @@ test("arguments are checked: ids, answers, switches, choices, keys, link names, 
   const { call, daemon } = setup();
   for (const [name, args] of [
     ["openApp", ["../etc"]], ["openApp", [{ id: "tunes" }]], ["openApp", ["tunes", "yes please"]], ["openApp", ["tunes", "y", "extra"]],
-    ["disconnectApp", [""]], ["openBar", [""]], ["setModOn", ["m1", "true"]], ["setAllModsOff", [1]], ["chooseModel", ["gpt", ""]],
-    ["chooseModel", ["api-key", "sk-ant key with spaces"]], ["openLink", ["https://evil.example"]], ["answerAsk", ["short", true]], ["answerAsk", ["abcdefghijkl", "yes"]],
+    ["disconnectApp", [""]], ["openBar", [""]], ["setModOn", ["m1", "true"]], ["deleteMod", ["../m1"]], ["undeleteMod", [7]], ["setAllModsOff", [1]], ["chooseModel", ["gpt", ""]],
+    ["chooseModel", ["api-key", "sk-ant key with spaces"]], ["openLink", ["https://evil.example"]],
     ["setStartAtLogin", [null]], ["state", ["x", "y"]],
   ]) assert.deepEqual(await call(name, ...args), { error: "Not allowed." }, `${name}(${JSON.stringify(args)})`);
   assert.equal(daemon.calls.filter(c => c[0] === "connectApp").length, 0, "nothing ran");
 });
 
-test("state: each app says whether it's open and connected, with its mods; the model, Chrome and the off switch", async () => {
+test("state: each app says whether it's open and connected, with its mods; the model and the off switch", async () => {
   const { call, daemon } = setup();
   daemon.sessions = [{ id: "port-9222", name: "App on port 9222", pid: 1, state: "attached", windows: [] }];
   const st = await call("state");
@@ -148,10 +149,10 @@ test("state: each app says whether it's open and connected, with its mods; the m
   assert.equal(by["port-9222"].external, true, "an app a terminal attached to is listed too");
   assert.equal(st.apps.at(-1).id, "notes", "apps Morse can't connect to go last");
   assert.equal(st.model.none, true);
-  assert.deepEqual(st.chrome.browsers, 1);
+  assert.equal(st.chrome, undefined, "no Chrome extension any more: browsers are apps");
   assert.equal(st.pause.all, false);
   assert.equal(st.keys.open, "Ctrl+Shift+Space");
-  assert.deepEqual(st.settings, { startAtLogin: false, autoOpen: true, helper: true, welcomed: false }, "Always open with Morse is on (main.js turns login start on for it once); the first run shows");
+  assert.deepEqual(st.settings, { startAtLogin: false, autoOpen: true, welcomed: false }, "Always open with Morse is on (main.js turns login start on for it once); the first run shows");
 });
 
 test("Open the bar: asks the app's connector to open Morse's bar, and says why when it can't", async () => {
@@ -271,113 +272,11 @@ test("the model: choices from what's installed, a choice saved the way morse set
   assert.deepEqual(daemon.calls.filter(c => c[0] === "saveChoice").at(-1).slice(1), ["api-key", { provider: "anthropic", keys: { x: "sk-ant-abc" } }]);
 });
 
-test("Chrome asks to connect: the helper's question waits for Allow or Deny in the window", async () => {
-  const asked = [];
-  const daemon = fakeDaemon();
-  const service = createService({ daemon, fetchHealth: async () => null, onAsk: list => asked.push(list.length) });
-  const ipcMain = fakeIpc();
-  registerIpc({ ipcMain, service, native: {}, isTrusted: e => e === TRUSTED });
-  const call = (name, ...args) => ipcMain.handlers.get(CHANNEL(name))(TRUSTED, ...args);
-  await call("setHelper", true);
-  assert.equal(daemon.bridgeOpts.app, "desktop", "the helper says it's Morse Desktop's");
-  assert.equal(typeof daemon.bridgeOpts.ask, "function", "and that it can ask");
-  const words = { message: "Allow Chrome to use your Claude Code?", detail: "…", allow: "Allow", deny: "Deny" };
-  const origin = "chrome-extension://abcdefghijklmnopabcdefghijklmnop";
-  const answer = daemon.bridgeOpts.ask({ origin, label: "Claude Code", words, signal: new AbortController().signal });
-  let c = (await call("state")).chrome;
-  assert.deepEqual({ ...c.ask, id: "x" }, { id: "x", extension: "abcdefghijklmnopabcdefghijklmnop", words });
-  assert.deepEqual(asked, [1], "the window is brought forward");
-  c = await call("answerAsk", (await call("state")).chrome.ask.id, true);
-  assert.equal(await answer, true, "Allow");
-  assert.equal(c.ask, null);
-  // Deny, and a question nobody answers in time.
-  const no = daemon.bridgeOpts.ask({ origin, words, signal: new AbortController().signal });
-  await call("answerAsk", (await call("state")).chrome.ask.id, false);
-  assert.equal(await no, false);
-  const ac = new AbortController();
-  const gone = daemon.bridgeOpts.ask({ origin, words, signal: ac.signal });
-  const id = (await call("state")).chrome.ask.id;
-  ac.abort();
-  assert.equal(await gone, false);
-  assert.match((await call("answerAsk", id, true)).error, /stopped asking/);
-  // Turning the helper off says no to what's waiting.
-  const off = daemon.bridgeOpts.ask({ origin, words });
-  await call("setHelper", false);
-  assert.equal(await off, false);
-});
-
 test("the first run: shown until an app is opened or Skip, then never again", async () => {
   const { call } = setup();
   assert.equal((await call("state")).settings.welcomed, false);
   await call("finishWelcome");
   assert.equal((await call("state")).settings.welcomed, true);
-});
-
-test("Chrome: the helper runs here unless one is already running; Show a code; Sign out browsers", async () => {
-  const { call, daemon } = setup();
-  let c = await call("setHelper", true);
-  assert.equal(c.running, true);
-  assert.equal(c.ours, true);
-  c = await call("newPairingCode");
-  assert.equal(c.waiting.code, "NEWCDE");
-  c = await call("signOutBrowsers");
-  assert.equal(c.browsers, 0);
-  c = await call("setHelper", false);
-  assert.equal(c.running, false);
-  // A helper started from a terminal (morse serve) is used, not fought.
-  const other = setup();
-  const svc = createService({ daemon: other.daemon, fetchHealth: async () => ({ ok: true }) });
-  const r = await svc.startHelper();
-  assert.equal(r.running, true);
-  assert.equal(r.ours, false);
-  assert.equal(other.daemon.calls.some(x => x[0] === "createBridge"), false);
-});
-
-test("Use Morse in Chrome: the extension in a folder you can see, the folder shown, Chrome on its extensions page, the helper on", async () => {
-  const ext = tempDir("morse-ext-src-");
-  await fs.mkdir(path.join(ext, "core"), { recursive: true });
-  await fs.writeFile(path.join(ext, "manifest.json"), '{"name":"Morse"}');
-  await fs.writeFile(path.join(ext, "core", "i18n.js"), "export {};");
-  const folder = path.join(tempDir("morse-ext-home-"), "Morse for Chrome");
-  const daemon = fakeDaemon({ EXTENSION_DIR: ext });
-  await fs.writeFile(path.join(daemon.HOME, "desktop.json"), JSON.stringify({ helper: false }));
-  const service = createService({ daemon, fetchHealth: async () => null, copyExtension: true, chromeFolder: folder });
-  const ipcMain = fakeIpc();
-  const native = { shown: [], chrome: 0, showFolder: async dir => { native.shown.push(dir); return { ok: true }; }, openChrome: async () => { native.chrome++; return true; }, openExternal: async url => { native.opened = url; } };
-  registerIpc({ ipcMain, service, native, isTrusted: e => e === TRUSTED });
-  const call = (name, ...args) => ipcMain.handlers.get(CHANNEL(name))(TRUSTED, ...args);
-  const r = await call("useChrome");
-  assert.equal(r.opened, true, "Chrome opened on chrome://extensions");
-  assert.equal(native.chrome, 1);
-  assert.deepEqual(native.shown, [folder], "the folder, shown");
-  assert.equal(readFileSync(path.join(folder, "manifest.json"), "utf8"), '{"name":"Morse"}', "a copy of the extension that comes with the app");
-  assert.ok(existsSync(path.join(folder, "core", "i18n.js")));
-  assert.ok(existsSync(path.join(folder, ".morse-extension")), "marked as Morse's own");
-  assert.equal(r.folder, folder.startsWith(os.homedir() + path.sep) ? `~${folder.slice(os.homedir().length)}` : folder, "shown the short way when it's in the home folder");
-  assert.equal((await call("state")).settings.helper, true, "the helper is on, so Chrome can connect");
-  assert.equal((await call("state")).chrome.extensionDir, folder);
-  // Made again each time: a file that isn't the extension's goes (the folder is Morse's).
-  await fs.writeFile(path.join(folder, "old.js"), "");
-  await call("useChrome");
-  assert.equal(existsSync(path.join(folder, "old.js")), false);
-  // A folder of that name Morse didn't make is only written over, never emptied.
-  const theirs = path.join(tempDir("morse-ext-theirs-"), "Morse for Chrome");
-  await fs.mkdir(theirs, { recursive: true });
-  await fs.writeFile(path.join(theirs, "notes.txt"), "mine");
-  await createService({ daemon, fetchHealth: async () => null, copyExtension: true, chromeFolder: theirs }).useChrome();
-  assert.equal(readFileSync(path.join(theirs, "notes.txt"), "utf8"), "mine");
-
-  // Once Morse is in the Chrome Web Store, the button opens its page there instead.
-  const store = "https://chromewebstore.google.com/detail/morse/abcdefghijklmnopabcdefghijklmnop";
-  const ipc2 = fakeIpc();
-  const native2 = { opened: null, openExternal: async url => { native2.opened = url; }, openChrome: async () => assert.fail("no extensions page with a store listing"), showFolder: async () => assert.fail("no folder with a store listing") };
-  registerIpc({ ipcMain: ipc2, service: createService({ daemon, fetchHealth: async () => null, copyExtension: true, chromeFolder: folder, chromeStore: store }), native: native2, isTrusted: e => e === TRUSTED });
-  assert.deepEqual(await ipc2.handlers.get(CHANNEL("useChrome"))(TRUSTED), { store: true });
-  assert.equal(native2.opened, store);
-  const { isStoreUrl } = await import("../desktop-app/chrome.js");
-  assert.equal(isStoreUrl(store), true);
-  assert.equal(isStoreUrl("./#chrome-steps"), false, "the site's own steps aren't a listing");
-  assert.equal(isStoreUrl("https://evil.example/chromewebstore.google.com/"), false);
 });
 
 test("mods: listed per app with switches, and the off switch pauses every mod everywhere", async () => {
@@ -388,16 +287,23 @@ test("mods: listed per app with switches, and the off switch pauses every mod ev
   assert.deepEqual(await call("setModOn", "m1", false), { ok: true });
   assert.equal(daemon.mods.get("m1").enabled, false);
   assert.match((await call("setModOn", "gone", true)).error, /isn't there/);
+  // Delete, then Undo: back as it was.
+  assert.deepEqual(await call("deleteMod", "m1"), { ok: true, title: "Sleep timer" });
+  assert.equal(daemon.mods.has("m1"), false);
+  assert.deepEqual((await call("state")).mods, []);
+  assert.deepEqual(await call("undeleteMod", "m1"), { ok: true });
+  assert.equal(daemon.mods.get("m1").title, "Sleep timer");
+  assert.match((await call("undeleteMod", "m1")).error, /can't be brought back/);
   assert.deepEqual(await call("setAllModsOff", true), { all: true, sites: [] });
   assert.equal(daemon.control.pause.all, true);
   assert.equal((await call("state")).pause.all, true);
 });
 
-test("checks: the platform rows (without terminal colors), what's installed, the helper, the model and its answer", async () => {
+test("checks: the platform rows (without terminal colors), what's installed, the model and its answer", async () => {
   const { call } = setup();
   await call("chooseModel", "claude-code");
   const rows = await call("runChecks");
-  assert.deepEqual(rows.map(r => r.label), ["System", "Display", "Claude Code", "Codex", "API key", "Morse helper", "Model", "Answers"]);
+  assert.deepEqual(rows.map(r => r.label), ["System", "Display", "Claude Code", "Codex", "API key", "Model", "Answers"]);
   assert.equal(rows.find(r => r.label === "Display").ok, false);
   assert.equal(rows.at(-1).ok, true);
 });

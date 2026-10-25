@@ -28,7 +28,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # build + node --check on every JS file + runtime bundle duplicate names + extension files present
+      # build + node --check on every JS file + runtime bundle duplicate names
       - run: npm run check
 
   test:
@@ -65,7 +65,7 @@ jobs:
           if-no-files-found: ignore
 
   test-ui:
-    name: Extension tests (Xvfb)
+    name: Browser tests (Xvfb)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -86,7 +86,7 @@ jobs:
           echo "NODE_PATH=$(npm root -g)" >> "$GITHUB_ENV"
           playwright install --with-deps chromium
           sudo apt-get install -y --no-install-recommends xvfb
-      # builds dist/extension, then runs the display tests under xvfb-run
+      # builds dist/runtime, then runs the display tests under xvfb-run
       - name: npm run test:ui
         shell: bash
         run: npm run test:ui 2>&1 | tee test-ui.log

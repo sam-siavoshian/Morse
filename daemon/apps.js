@@ -79,6 +79,23 @@ export const CATALOG = {
     mac: { bundles: ["Google Chrome.app", "Chromium.app"], ids: ["com.google.Chrome"] },
     win: ["%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe", "%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe", "%LOCALAPPDATA%\\Google\\Chrome\\Application\\chrome.exe"],
     linux: { bin: ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"], snap: "chromium" } },
+  // Other browsers on Chromium: websites, with Morse, in a window of their own
+  // (a Morse profile: browsers don't let anything control your everyday one).
+  edge: { name: "Microsoft Edge", engine: "chromium", browser: true, aliases: ["edge", "msedge"],
+    mac: { bundles: ["Microsoft Edge.app"], ids: ["com.microsoft.edgemac"] },
+    win: ["%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe", "%ProgramFiles%\\Microsoft\\Edge\\Application\\msedge.exe"],
+    linux: { bin: ["microsoft-edge", "microsoft-edge-stable"] } },
+  brave: { name: "Brave", engine: "chromium", browser: true, aliases: ["brave browser"],
+    mac: { bundles: ["Brave Browser.app"], ids: ["com.brave.Browser"] },
+    win: ["%ProgramFiles%\\BraveSoftware\\Brave-Browser\\Application\\brave.exe", "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"],
+    linux: { bin: ["brave-browser", "brave"] } },
+  arc: { name: "Arc", engine: "chromium", browser: true, aliases: ["arc browser"],
+    mac: { bundles: ["Arc.app"], ids: ["company.thebrowser.Browser"] },
+    win: ["%LOCALAPPDATA%\\Microsoft\\WindowsApps\\Arc.exe"], linux: {} },
+  vivaldi: { name: "Vivaldi", engine: "chromium", browser: true, aliases: [],
+    mac: { bundles: ["Vivaldi.app"], ids: ["com.vivaldi.Vivaldi"] },
+    win: ["%LOCALAPPDATA%\\Vivaldi\\Application\\vivaldi.exe", "%ProgramFiles%\\Vivaldi\\Application\\vivaldi.exe"],
+    linux: { bin: ["vivaldi", "vivaldi-stable"] } },
 };
 export const KNOWN_APPS = CATALOG; // older name
 
@@ -1016,7 +1033,10 @@ export function launchArgs(app, port, extraArgs = [], { platform = process.platf
   const extra = safeExtraArgs(extraArgs);
   const args = [port === PIPE ? "--remote-debugging-pipe" : `--remote-debugging-port=${port}`, ...extra];
   const pj = platform === "win32" ? path.win32 : path.posix;
-  if (app.browser && !extra.some(a => a.startsWith("--user-data-dir"))) args.push(`--user-data-dir=${pj.join(HOME, "browser-profile")}`, "--no-first-run");
+  // A browser opens with a Morse profile of its own: since Chrome 136, a
+  // browser takes no remote control of your everyday profile. You sign in to
+  // sites there once. Chrome keeps the folder it always had.
+  if (app.browser && !extra.some(a => a.startsWith("--user-data-dir"))) args.push(`--user-data-dir=${pj.join(HOME, app.id === "chrome" ? "browser-profile" : `browser-profile-${app.id}`)}`, "--no-first-run");
   return args;
 }
 

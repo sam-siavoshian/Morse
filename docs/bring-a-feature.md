@@ -34,7 +34,7 @@ shows both.
 
 These pictures are real: VSCodium and RubyGems.org, Claude Code (sonnet named
 it, opus built it). The palette was taken in the desktop app and brought into
-Chrome, which shares the list through the Morse helper.
+a website in a browser opened with Morse.
 
 More, from real sites:
 
@@ -62,11 +62,9 @@ What you took is listed in the **Mods** panel under **Taken from other
 apps**, with **Bring here** and **Delete**. A mod you brought says where it
 came from: “Taken from VSCodium”.
 
-- **Chrome and desktop apps share the list** once Morse in Chrome is paired
-  with the Morse helper on your computer ([Models and setup](models.md)).
-  Take VS Code's palette in the desktop app, bring it into a website in
-  Chrome, or the other way around. When they aren't paired, the panel says
-  so: “Only in Chrome” or “Only in desktop apps”.
+- **One list for apps and websites.** Take VS Code's palette in the desktop
+  app and bring it into a website in a browser opened with Morse, or the
+  other way around.
 - **What is kept:** the shape of the feature (its parts and their styles),
   how you opened it, a small picture, its name and the app it came from. Long
   text is cut, and the same rules as everything Morse reads apply: no
@@ -89,7 +87,7 @@ Codepad (a small code editor) and Inkwell (a notes app).
 ## How well it works
 
 Checked on October 24, 2026 with real Claude Code (Automatic: sonnet names
-what you took, opus builds it) by [`evals/bring.js`](../evals/bring.js), which
+what you took, opus builds it) by `evals/bring.js`, which
 checks that the brought feature opens and works, and that its fonts, colors
 and corners are ones the page already uses:
 
@@ -107,7 +105,7 @@ the app's own colors. Give it a moment, and say what to change if it isn't
 right (“make the list taller”).
 
 For developers: [How Morse works](dev/architecture.md#take-this-bring-here).
-The check with a real model is [`evals/bring.js`](../evals/bring.js) (cases
+The check with a real model is `evals/bring.js` (cases
 in [`evals/bring-cases.json`](../evals/bring-cases.json)); the test without a
 model is [`tests/take-ui.test.js`](../tests/take-ui.test.js); the pictures of
 the demo apps come from [`demo/shoot-take.js`](../demo/shoot-take.js).

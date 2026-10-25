@@ -104,6 +104,8 @@ export default {
   "toast.linkCopied": "پیوند کپی شد. هر کسی که Morse دارد می‌تواند «{title}» را نصب کند.",
   "toast.linkFailed": "پیوند کپی نشد. به‌جایش از اشتراک استفاده کنید.",
   "toast.deleted": "«{title}» حذف شد",
+  "toast.undeleted": "«{title}» برگشت",
+  "toast.undoFailed": "برگرداندنش نشد. هنوز حذف‌شده است.",
 
   // ---- پنل مادها
   "panel.label": "مادهای این صفحه",
@@ -658,6 +660,7 @@ export default {
   "desk.mods.count": { one: "{n} ماد · {on} روشن", other: "{n} ماد · {on} روشن" },
   "desk.mods.stopped": "متوقف شد چون برنامه را کند کرد یا خراب کرد. برای امتحان دوباره روشنش کنید.",
   "desk.mods.on": "{title} روشن",
+  "desk.mods.delete": "حذف {title}",
   "desk.checks.run": "اجرای بررسی‌ها",
   "desk.checks.running": "در حال بررسی…",
   "desk.checks.lede": "چیزهایی که Morse روی این رایانه پیدا کرد، و این‌که مدل شما جواب می‌دهد یا نه.",
@@ -786,7 +789,7 @@ export default {
   "setup.noKeyEnv": "در ANTHROPIC_API_KEY و OPENAI_API_KEY چیزی نیست",
   "setup.notInstalled": "نصب نیست",
   "setup.start1": "به Morse خوش آمدید. اول {cmd} را اجرا کنید تا انتخاب کنید چه چیزی تغییرهایتان را انجام دهد: Claude Code، Codex یا یک کلید API.",
-  "setup.start2": "بعد، برای وب‌سایت‌ها {dir} را در chrome://extensions بار کنید (حالت توسعه‌دهنده، «Load unpacked»). برای برنامه‌ها: {cmd}.",
+  "setup.start2": "سپس یک برنامه یا مرورگرتان را با Morse باز کنید: {cmd}، یا morse launch chrome.",
   "setup.start3": "در هر صفحه‌ای {key} را بزنید، به چیزی اشاره کنید و بگویید چه چیزی عوض شود.",
   "setup.start3.help": "morse help پرکاربردترین فرمان‌ها را فهرست می‌کند.",
   "setup.next": "قدم بعد",

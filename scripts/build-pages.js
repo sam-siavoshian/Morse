@@ -9,7 +9,7 @@
 //   /RRAA/core/, /RRAA/design/     modules and tokens the pages import
 //   /RRAA/docs/launch/             the demo video and posters
 //   /RRAA/demo/sites/tunes/, byte/ the demo apps in the landing page's Try it here
-//   /RRAA/dist/extension/runtime.js  the Morse runtime that runs inside them
+//   /RRAA/dist/runtime/runtime.js  the Morse runtime that runs inside them
 //
 // Every published page gets its canonical address, link previews (Open Graph
 // and Twitter, with site/og-image.png) and structured data (JSON-LD) where its
@@ -38,7 +38,7 @@ const OUT = path.join(root, "dist", "pages");
 const PUBLISH = ["site", "share", "core", "design/tokens.css", "docs/launch", "docs/showcase", "demo/sites/tunes", "demo/sites/byte"];
 // Try it here (site/try.js) loads the runtime from where scripts/build.js puts
 // it; this writes the same file, so the build needs no other step first.
-const RUNTIME = "dist/extension/runtime.js";
+const RUNTIME = "dist/runtime/runtime.js";
 
 // ---- search engines and link previews
 

@@ -69,28 +69,12 @@ From the real run in the recording (`MORSE_TRACE`, made when the first model was
 Claude Code runs with no tools (`--tools ""`), no MCP servers, no slash commands and no saved
 session, in an empty folder: it can only write text back. Morse applies that text itself.
 
-## The same thing in Chrome
+## Websites
 
-```mermaid
-flowchart LR
-    subgraph Tab["Any website tab"]
-      R["runtime<br/>(content script, isolated world)"]
-      M["mod JS<br/>(chrome.userScripts, USER_SCRIPT world)"]
-    end
-    SW["extension service worker<br/>background.js"]
-    H["Morse helper on 127.0.0.1:7457<br/>(morse serve / Morse Desktop, paired with a code)"]
-    CC["claude -p / codex exec<br/>(your subscription)"]
-    API["Anthropic / OpenAI API<br/>(your key)"]
-    R <-- "chrome.runtime port" --> SW
-    SW -- "HTTP + token" --> H --> CC
-    SW -- "HTTPS" --> API
-    SW -- "userScripts.execute" --> M
-```
-
-- CSS is applied by the runtime as a `<style data-morse-css>` element while the model writes.
-- JS only ever runs through Chrome's user scripts (Allow User Scripts on). Without it, a mod's look
-  still applies and the JS waits.
-- The helper only accepts the extension, with the pairing token, from 127.0.0.1.
+A website works the same way: the Morse app opens Chrome, Edge, Brave, Arc
+or Vivaldi with a Morse profile of its own (since Chrome 136, a browser takes
+no remote control of its everyday profile), connects over CDP like any app,
+and injects the same runtime into each page.
 
 ## Where to look next
 

@@ -17,12 +17,8 @@ later, and Morse adds it to your style. You can also set each part under
 - **Leave a site out.** Say “not on this site” in the bar, or click **Not on
   this site** in the Mods panel. You can also keep a list in Settings.
   “except Figma” in your words leaves out figma.com and the Figma app.
-- **One style in Chrome and your apps.** When Chrome is paired with the Morse
-  helper (the Morse app, or `morse serve` for developers), they share your style. Set it in
-  Chrome and your desktop apps get it too, and the other way round. If both
-  changed, the newer one wins. When Chrome isn't paired, Chrome and your apps
-  each keep their own style. Morse tells you which one you saved to (“every
-  site in Chrome”, or “every app you open with Morse”).
+- **One style everywhere.** Your style is kept once, on your computer, so
+  every app and browser you open with Morse gets it.
 - **You stay in charge.** Your style sits at the top of the Mods panel with
   its own switch. The off switch and pausing Morse turn it off, like any mod.
   Morse never marks it as broken.
@@ -41,8 +37,8 @@ visit it was still there, with no model call. The pictures come from
 [`demo/shoot-style.js`](../demo/shoot-style.js), on three demo sites. Tests:
 [`tests/style.test.js`](../tests/style.test.js),
 [`tests/style-ui.test.js`](../tests/style-ui.test.js) and, for Chrome and the
-apps sharing one style, [`tests/style-share.test.js`](../tests/style-share.test.js).
+apps sharing one style, `tests/style-share.test.js`.
 The code is in [`core/style.js`](../core/style.js),
 [`core/style-host.js`](../core/style-host.js) and
-[`core/style-sync.js`](../core/style-sync.js).
+`core/style-sync.js`.
 

@@ -1,115 +1,168 @@
-# ▦ Morse
+<div align="center">
 
-**Change any website or desktop app in your own words.**
+# Morse: Change Any App
 
-[![Microsoft's Visual Studio Code after “make the whole editor look like a warm paper notebook”: cream backgrounds, brown text, serif file names, and the Morse bar offering Save](https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/321-vscode-result.png)](docs/desktop.md#tested-on)
+### Change any app or website in your own words.
 
-*Visual Studio Code on Linux, after “make the whole editor look like a warm paper notebook: cream backgrounds, dark brown text, and a serif font in the sidebar and the tabs”. Claude Code (opus) wrote it in 18 seconds. It was still there when the app opened again. More real apps and sites: [Tested on](docs/desktop.md#tested-on). Videos are in [`docs/launch`](docs/launch/).*
+**See something you'd change? Point at it and say how.**
 
-Press a shortcut, point at something and say what you want: “add a sleep timer”, “hide the ads”, “make this text bigger”. Morse makes the change while you watch. A mod is a change you saved. Morse brings it back every time you open that site or app.
+[![MIT license](https://img.shields.io/badge/license-MIT-f4c430?style=flat-square)](LICENSE)
+[![macOS, Windows, Linux](https://img.shields.io/badge/macOS_·_Windows_·_Linux-111113?style=flat-square)](#quick-start)
+[![Preview build](https://img.shields.io/badge/preview-newest_main-5c4ee5?style=flat-square)](https://github.com/sam-siavoshian/RRAA/releases/tag/preview)
 
-<!--
-  Contributors: keep this README short. It is the 30-second version.
-  - Put the detail of a feature (how to use it, screenshots, limits) in a page in docs/
-    and list that page in docs/README.md. Developer detail goes in docs/dev/.
-  - For a new feature, add one row to "What you can do" below: a name, one plain line,
-    and a link to its docs page. Nothing else.
-  - Keep "Status" honest and in step with docs/desktop.md and docs/launch/README.md.
-  - Words follow docs/WRITING.md. `npm test` checks every link (tests/docs.test.js).
-  - Images use full https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/... addresses:
-    npmjs.com shows this README too, and can't follow a relative image path.
--->
+**[Website](https://sam-siavoshian.github.io/RRAA/site/) · [Docs](docs/README.md) · [Showcase](docs/showcase/README.md)**
 
-## Install
+[Quick start](#quick-start) · [How Morse works](#how-morse-works) · [What you can change](#what-you-can-change) · [Showcase](#showcase) · [FAQ](#faq) · [Documentation](#documentation)
 
-Morse is one app. On a Mac, paste this in Terminal. It puts Morse in Applications and opens it, with no security prompts:
+<code>curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh</code>
 
-```sh
+<br /><br />
+
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/showcase/vscode-windows-95.jpg" alt="Visual Studio Code before and after one request: a dark editor, then a classic Windows 95 look with gray bevelled panels and a navy title bar. Claude Code (opus) wrote it in 31 seconds, and it was back after quitting and opening the app again." width="1200" />
+
+</div>
+
+---
+
+See something in an app you'd change? Press a shortcut, point at it, and say what you want: "show one cover, not five", "add a sleep timer", "make this sidebar quieter". Morse makes the change while you watch, in the app's own look.
+
+Morse works on desktop apps built on web technology, like VS Code, Slack, Spotify, Obsidian, Notion and Discord, and on websites in Chrome, Edge, Brave, Arc and Vivaldi. It never touches the app's files. Every change you keep comes back each time the app opens.
+
+Morse has no server and no account. It uses the AI you already have: Claude Code, Codex, or an API key.
+
+## Quick start
+
+### Install
+
+**Mac**, in Terminal. There are no security prompts: the line checks Morse against the release's checksums and puts it in Applications.
+
+```bash
 curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh
 ```
 
+**Windows:** [Morse-Setup.exe](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe). **Linux:** the same line as the Mac, or [the AppImage](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage). Or download the Mac app: [Apple silicon](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) · [Intel](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg).
 
-Or **[download Morse](https://sam-siavoshian.github.io/RRAA/site/#install):** [Mac (Apple silicon)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) · [Mac (Intel)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg) · [Windows](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) · [Linux](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage)
+Morse updates itself after that.
 
-1. Open Morse. It finds Claude Code or Codex by itself, and lists your apps.
-2. Click **Open with Morse** next to an app. In the app, press **Ctrl+Shift+Space** (**⌥Space** on a Mac), point at something and say what you want.
-3. **Chrome:** click **Use Morse in Chrome** in the Morse app. Then click **Allow** when Morse asks.
+### Open an app
 
-These are [preview builds](https://github.com/sam-siavoshian/RRAA/releases/tag/preview) of the newest `main`. Morse isn't notarized by Apple (that takes a paid Apple Developer ID), so a Mac warns about the downloaded `.dmg` once: open Morse, then System Settings, Privacy & Security, **Open Anyway**. The Terminal line above skips that: macOS only asks about files a browser downloaded, and the line checks the app against the release's SHA-256 sums instead. On Windows: **More info**, then **Run anyway**. Either way Morse updates itself after that. Full steps and help: [Getting started](docs/getting-started.md).
+Morse finds your AI and lists your apps. Click **Open with Morse** next to one. In the app, press **⌥Space** on a Mac (**Ctrl+Shift+Space** on Windows and Linux).
 
-## What you can do
+### Ask
 
-| | | |
-|---|---|---|
-| **Describe a change** | Point at something and say what you want. Point at nothing to change the whole page. You see the change while the model writes it. | [Changing things](docs/changing-things.md) |
-| **Keep improving it** | Ask for more (“make it smaller”), step back, or go back to any of the last 20 versions. | [Changing things](docs/changing-things.md#keep-improving-it) |
-| **Voice** | Hold the shortcut and talk instead of typing. | [Changing things](docs/changing-things.md#voice) |
-| **Edit tools** | Hide, move, resize, rename, recolor or copy something yourself. No model, no waiting. | [Edit tools and Page tools](docs/edit-and-page-tools.md) |
-| **Page tools** | Dark or light mode, text size, hide ads and pop-ups, focus mode. One click each. | [Edit tools and Page tools](docs/edit-and-page-tools.md#page-tools) |
-| **Ask and find** | Ask what something does or where a setting is. **Show me** shows where to click. | [Ask and find](docs/ask-and-find.md) |
-| **Show me once** | Do a task by hand once. Then turn it into a button, a shortcut, or “do this to every one”. | [Show me once](docs/show-me-once.md) |
-| **Bring a feature** | **Take this** in one app (a command palette, a dark mode switch), then **Bring here** in another. Morse builds it there, in that app's own look. | [Bring a feature](docs/bring-a-feature.md) |
-| **Easier to use** | Higher contrast, bigger click targets, an easier font and Read aloud. Check this page finds problems, and Fix it fixes them. | [Easier to use](docs/easier-to-use.md) |
-| **Mods** | Turn mods on and off, share them with a link, try mods other people made, and fix one when a site changes. | [Mods](docs/mods.md) |
-| **Mod packs** | Share a set of mods with your team. Each person picks the ones they want. The pack can stay up to date. | [Mod packs](docs/mod-packs.md) |
-| **Your controls** | One shortcut turns every mod off. Pause Morse on a site. Morse stops a mod that slows down, freezes or keeps breaking a page. Back up everything to one file. | [Your controls](docs/your-controls.md) |
-| **Your style** | One look on every site and app: your font, bigger text, calmer pages, colors that are easier to tell apart. Say it once and end with “everywhere”. | [Your style](docs/your-style.md) |
-| **The Morse app** | Opens your apps with Morse, finds your model, and adds Morse to Chrome. The apps' own files never change. It waits in the tray. | [The Morse app](docs/desktop-app.md) |
-| **Desktop apps** | Which apps work, and why some can't. | [Desktop apps](docs/desktop.md) |
+```text
+Show one album cover here, not five.
+```
 
-## Which models work
+Point at the part you mean, or at nothing for the whole app. Press **Enter**, then **Save** to keep it.
 
-Morse has no model and no account of its own. It uses a model you already have. The Morse app finds it.
+## How Morse works
 
-| Model | What you need |
-|---|---|
-| **Claude Code** | The `claude` command, signed in with your Claude plan |
-| **Codex** | The `codex` command, signed in |
-| **Anthropic API key** | A key from console.anthropic.com |
-| **OpenAI API key** | A key from platform.openai.com, or from another server that works the same way |
+The Morse app opens your app with one extra setting, so it can connect. When you ask for a change, Morse sends your words, the part you pointed at, and a picture of what you see to your AI. The change shows up while the AI writes it. Morse checks that something really changed and that what it added lines up with the app, and fixes it once if not.
 
-Morse uses strong models unless you name another one. With Claude Code, it uses `sonnet` for small changes and `opus` for new features, new buttons and panels, and new looks. With an API key, it uses `claude-sonnet-5-5` and `claude-opus-5-5`.
+A change you save is a **mod**. Morse puts your mods back every time the app opens, even when you open it from the Dock or the Start menu.
 
-To choose a model and see what each can do, read [Models and setup](docs/models.md).
+## What you can change
 
-## Privacy
+| Where | What works | Notes |
+| --- | --- | --- |
+| **Desktop apps** | VS Code, Cursor, Slack, Discord, Spotify, Obsidian, Notion, Figma, Linear, Signal, Claude, and other apps built on web technology | [Which apps work, and why some can't](docs/desktop.md) |
+| **Websites** | Any site, in Chrome, Edge, Brave, Arc or Vivaldi | Morse opens the browser with a Morse profile of its own; you sign in to your sites there once |
+| **Not yet** | Safari, Firefox, and native apps like Finder or Notes | They give Morse no way in |
 
-There is no Morse server. What you point at and what you ask go only to the model you chose. They go only when you ask, or when you turn on automatic fixes. Your mods stay on your computer.
-More, including what mods can do: [Privacy and safety](docs/privacy-and-safety.md) and the [privacy policy](docs/privacy.md).
+What you can ask for:
 
-## Status
+| | |
+| --- | --- |
+| **Describe a change** | New buttons, panels, shortcuts and looks. Keep improving it, or step back to any of the last 20 versions. [Changing things](docs/changing-things.md) |
+| **Voice** | Hold the shortcut and talk. [Changing things](docs/changing-things.md#voice) |
+| **Edit tools** | Hide, move, resize or recolor something yourself, with no AI and no waiting. [Edit tools](docs/edit-and-page-tools.md) |
+| **Ask and find** | "Where is the export setting?" **Show me** shows where to click. [Ask and find](docs/ask-and-find.md) |
+| **Bring a feature** | **Take this** in one app, **Bring here** in another. Morse rebuilds it in that app's look. [Bring a feature](docs/bring-a-feature.md) |
+| **Your style** | One font, text size or calmer look on every app and site. [Your style](docs/your-style.md) |
+| **Mods** | Turn them on and off, undo, share them with a link, and turn everything off with one shortcut. [Mods](docs/mods.md) · [Your controls](docs/your-controls.md) |
 
-Version 0.2.0, the first release ([download](https://github.com/sam-siavoshian/RRAA/releases/tag/v0.2.0), [changelog](CHANGELOG.md)). Here is what was tested for real, and what wasn't.
+## Showcase
 
-**Tested**
+Real apps, real requests, real Claude Code (opus). Each change was saved, the app was quit and opened again, and the change was back.
 
-- **Websites:** the Chrome extension on three sites in Chromium on Linux. One site had strict security settings. Share links installed in a second browser profile. The Tampermonkey version runs without Morse.
-- **Desktop apps:** a real Electron app built for testing (Electron 45 on Linux). It has a menu bar, a locked-down preload, an embedded page and a second window, and is packed the way apps ship. Real keyboard and mouse input: launch, change, save, quit, launch again, and the mod is back. Morse still connects with fuses locked down and Chromium's sandbox on.
-- **Claude Code with today's defaults** (sonnet for small changes, opus for new features and new looks): 48 of 51 requests worked on 13 demo apps. The earlier haiku-then-sonnet choice got 47 ([evals](evals/README.md#fast-and-strong-models-automatic)).
-- **Claude Code (haiku)**, the earlier default: the demo video, the Electron app, Describe this picture, Show me once (10 of 12 runs), and 55 everyday requests on 6 demo apps, 3 runs each. 163 of 165 worked ([evals](evals/README.md)).
-- **Real apps on Linux**, with Claude Code (haiku) and real keyboard and mouse: VSCodium 1.140 (its `.deb`), Obsidian 1.14 and Joplin 3.7 (AppImages). `morse apps` found them and `morse launch` opened them. Each got one change: a bigger status bar, no ribbon, no Synchronize button. Each took 6 to 16 seconds and was still there after quitting and opening the app again. [Tested on](docs/desktop.md#tested-on).
-- **Microsoft's VS Code 1.143 and Obsidian 1.14, big changes** with Claude Code (opus, and sonnet for two): 14 of them. They range from a Windows 95 look and a typewriter theme to a focus timer, a presentation-mode shortcut, a New daily note button and pinned notes. Each was saved, then the app was closed and opened again with `morse launch`, and each change was back. Four more were on real websites. Before and after pictures: [showcase](docs/showcase/README.md).
-- **Real websites** with the extension and Claude Code (haiku): pypi.org, gitlab.com, pkg.go.dev, rubygems.org, hub.docker.com and nodejs.org. Five changes worked and were still there after a reload. On the Node.js docs, “hide the left sidebar” blanked the whole page every time. With “Allow User Scripts” off, PyPI blocked a new button. GitLab didn't. [Details](docs/desktop.md#websites).
-- **The Morse app on Linux:** it finds Claude Code by itself, lists your apps and opens a real Electron app with Morse. Use Morse in Chrome copies the extension and shows where to click (in the tests, a stand-in took the place of Chrome). It disconnects and connects again, asks before it restarts an open app, and keeps running when its window closes. Its AppImage starts and lists this computer's apps. [The Morse app](docs/desktop-app.md).
-- `npm test` covers every model connection against stand-ins, the Morse helper, the engine, sharing, and the UI in real Chromium.
+### Obsidian: an old typewriter
 
-**Not tested yet**
+"Make Obsidian look like an old typewriter: cream paper background with a subtle paper texture, a typewriter font like Courier for everything, dark brown ink for the text, and paper-colored side panels with thin ruled lines." 14.7 seconds.
 
-- Spotify, Slack or Discord, Flatpak and Snap installs, macOS, Windows and Wayland. Wikipedia, YouTube, GitHub's pages and other sites the test machine couldn't reach. Apps that aren't built from web pages (Finder, most system apps) can't work. See [Desktop apps](docs/desktop.md#which-apps-cant-work-and-why).
-- **Codex** was only tested with a stand-in `codex` command. **The Anthropic and OpenAI APIs** were only tested with stand-in servers.
-- **Mods can do anything the page can.** The model is told not to send data anywhere, but nothing stops it yet. Before you install a shared mod, Morse tells you what it does.
-- The extension isn't in the Chrome Web Store. Nobody has tried the Morse app on macOS or Windows (its builds, their signing, its tray menu, or opening Chrome on its extensions page there) ([Releasing](docs/dev/releasing.md#what-was-checked)).
-- Most screenshots replay saved answers, so they look the same every time. One set uses [real Claude Code](docs/screenshots/claude-code). How each part was tested: [Testing](docs/dev/testing.md#what-was-verified-and-how).
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/showcase/obsidian-typewriter.jpg" alt="Obsidian before and after: plain dark notes, then cream paper, a typewriter font, brown ink and ruled side panels" width="900" />
 
-## For developers
+### VS Code: a focus timer
 
-The `morse` command does everything the app does, from a terminal, and works on Morse itself. It needs [Node](https://nodejs.org) 22 or newer.
+"Add a big Pomodoro focus timer panel in the top right of the editor: a large 25:00 countdown with Start, Pause and Reset buttons, styled like VS Code's own widgets." 28.3 seconds.
 
-- One line installs it: `curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install.sh | sh` on macOS and Linux, `irm https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install.ps1 | iex` in Windows PowerShell. Run it again to update; `morse uninstall` removes it. Or `npm install -g github:sam-siavoshian/RRAA`.
-- `morse setup` chooses the model, `morse apps` lists your apps, `morse launch obsidian` opens one with Morse, and `morse help` lists the rest.
-- The Chrome extension's folder: `morse extension`. Its welcome page with `?dev` has the developer ways to connect: an Anthropic API key, or `morse setup --pair <code>`.
-- To build and test Morse: the [developer guide](docs/dev/README.md#set-up-a-checkout).
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/showcase/vscode-focus-timer.jpg" alt="VS Code before and after: a new 25:00 focus timer panel with Start, Pause and Reset buttons, styled like VS Code's own widgets" width="900" />
 
-## More
+### Obsidian: a New daily note button
 
-[Docs](docs/README.md) · [Contributing](CONTRIBUTING.md) · [How Morse works](docs/dev/architecture.md) · [Privacy policy](docs/privacy.md) · [Changelog](CHANGELOG.md) · [Launch videos](docs/launch/README.md) · MIT licensed (the first run's dots and sound come from [Zephium](https://github.com/zephium-browser/zephium), MPL-2.0: [desktop-app/ui/sounds/NOTICE.md](desktop-app/ui/sounds/NOTICE.md))
+"Add a big New daily note button at the top of the file list, with its label vertically centered and fully visible, that creates a note named with today's date, like 2026-10-24, and opens it." It really makes and opens the day's note. 12.9 seconds.
+
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/showcase/obsidian-daily-note-button.jpg" alt="Obsidian before and after: a new New daily note button at the top of the file list" width="900" />
+
+More, with every request word for word: [the showcase](docs/showcase/README.md). Made something good with Morse? Share it in an [issue](https://github.com/sam-siavoshian/RRAA/issues).
+
+## FAQ
+
+<details>
+<summary><strong>Which AI does Morse use?</strong></summary>
+
+The one you have: Claude Code or Codex signed in with your plan, or an Anthropic or OpenAI API key. The Morse app finds it by itself. With Claude Code or an Anthropic key, every change uses Opus: it thinks briefly for small changes and longer for new features. [Models](docs/models.md)
+
+</details>
+
+<details>
+<summary><strong>Does Morse change the app's files?</strong></summary>
+
+No. Morse opens the app with one extra setting so it can connect, and adds your changes while it runs. Turn every mod off with one shortcut, or quit Morse, and the app is exactly as it was.
+
+</details>
+
+<details>
+<summary><strong>Why does my Mac warn about Morse?</strong></summary>
+
+Morse isn't notarized by Apple yet; that takes a paid Apple Developer ID. A Mac asks about apps a browser downloaded. The Terminal line above installs Morse without that prompt, after checking it against the release's checksums. With the .dmg, open Morse, then System Settings, Privacy & Security, **Open Anyway**.
+
+</details>
+
+<details>
+<summary><strong>Why a separate browser window for websites?</strong></summary>
+
+Since Chrome 136, browsers don't let any program control your everyday profile, for good reason. Morse opens your browser with a Morse profile of its own instead. You sign in to your sites there once.
+
+</details>
+
+<details>
+<summary><strong>What leaves my computer?</strong></summary>
+
+What you ask, the part you pointed at, and a picture of it, sent to the AI you chose when you press Enter. Nothing else, and there is no Morse server. Your mods stay on your computer. [Privacy and safety](docs/privacy-and-safety.md)
+
+</details>
+
+<details>
+<summary><strong>A change didn't work. What now?</strong></summary>
+
+Point at the exact part you mean and say it another way. Morse already checks whether a change did anything and tries again once; if nothing changed, it says so instead of saying it's done. Still stuck? See [Troubleshooting](docs/troubleshooting.md), or [open an issue](https://github.com/sam-siavoshian/RRAA/issues) with the app, what you asked, and what happened.
+
+</details>
+
+## Documentation
+
+- [Getting started](docs/getting-started.md): install, the first change, and every way in.
+- [The Morse app](docs/desktop-app.md): your apps, Always open with Morse, and updates.
+- [Desktop apps](docs/desktop.md): which apps work, and why some can't.
+- [Models](docs/models.md): Claude Code, Codex, API keys, and how Morse picks.
+- [Mods](docs/mods.md) and [Your controls](docs/your-controls.md): on, off, undo, share, and safe start.
+- [For developers](docs/dev/README.md): the `morse` command, and building and testing Morse.
+
+## Contributing
+
+Bugs and ideas: [open an issue](https://github.com/sam-siavoshian/RRAA/issues). Code and docs: [send a pull request](https://github.com/sam-siavoshian/RRAA/pulls). [CONTRIBUTING.md](CONTRIBUTING.md) has the setup and checks, and [How Morse works](docs/dev/architecture.md) maps the code.
+
+## License
+
+[MIT](LICENSE). The first run's dots and sound come from [Zephium](https://github.com/zephium-browser/zephium), under the Mozilla Public License 2.0 ([notice](desktop-app/ui/sounds/NOTICE.md)).

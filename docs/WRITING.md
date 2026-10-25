@@ -1,7 +1,7 @@
 # How Morse talks
 
 Every word a person reads in Morse should be simple, clear and friendly. This
-guide covers the bar, the Mods panel, settings, toasts, the extension popup,
+guide covers the bar, the Mods panel, settings, toasts, the Morse app's window,
 the welcome page, the share page, the website, the `morse` command line, the
 README and the user pages in `docs/`. Code comments and developer docs
 (`docs/dev/`) can stay technical, but should still be plain.
@@ -69,7 +69,7 @@ in everything a person reads (the developer docs only for the marketing words).
 
 These never appear in text a person reads in Morse, on the website, in the
 README or in the user pages in `docs/`. `tests/words.test.js` checks the
-runtime, the extension pages, the website and the user pages in `docs/` for
+runtime, the Morse app, the website and the user pages in `docs/` for
 them (code in backticks is skipped).
 
 | Technical word | Say instead |
@@ -79,8 +79,8 @@ them (code in backticks is skipped).
 | selector, DOM, element, node | part of the page, what you pointed at |
 | CDP, DevTools protocol, debugging port | (say "Morse connects to the app") |
 | userScripts, user scripts (lowercase) | “Allow User Scripts” (Chrome's own words, quoted) |
-| service worker, content script, background page | Morse, the Morse extension |
-| runtime, harness, backend, provider, bridge, daemon | Morse, the model, the Morse helper |
+| service worker, content script, background page | Morse |
+| runtime, harness, backend, provider, bridge, daemon | Morse, the model, the Morse app |
 | endpoint, base URL, API (alone) | server address, API key |
 | localhost, 127.0.0.1, port | this computer |
 | Electron (alone) | desktop apps (VSCodium, Obsidian, Joplin…) |
@@ -102,7 +102,7 @@ them (code in backticks is skipped).
 ## Names, one for each thing
 
 Use these names, and only these names, for these things. The same thing has the
-same name everywhere: in the bar, in toasts, in the popup, on the share page,
+same name everywhere: in the bar, in toasts, in the Morse app, on the share page,
 on the website, in the CLI and in the README.
 
 **Feature names start with a capital letter, everywhere, even mid-sentence:**
@@ -155,7 +155,7 @@ a different thing: it keeps a mod turned off.)
 
 | Term | What it means | Don't call it |
 |---|---|---|
-| **Morse** | The product. Always capitalized in sentences; the lowercase wordmark "morse" is only for the logo. | the tool, the app, the extension (unless you mean the Chrome extension) |
+| **Morse** | The product. Always capitalized in sentences; the lowercase wordmark "morse" is only for the logo. | the tool, the extension |
 | **change** | What you ask for, and what Morse makes. "Describe a change." | customization, tweak, patch |
 | **mod** | A change you saved. Plural "mods". Lowercase in sentences. Explained once on every first stop (see above). | customization, script, plugin, extension, userscript |
 | **the bar** | The box at the bottom (or top) where you type or talk to Morse. | command palette, prompt box, input |
@@ -183,9 +183,6 @@ a different thing: it keeps a mod turned off.)
 | **connect a model** | Tell Morse which model to use: Claude Code, Codex, or an API key. | configure a provider, set a backend |
 | **demo model** | The built-in stand-in Morse uses when no model is connected. It only knows the demo sites. | fake model, mock |
 | **the Morse app** | Morse on your computer: the one thing people install. It finds the model, opens apps with Morse, and adds Morse to Chrome. "Download Morse", "open the Morse app". (Developers call it Morse Desktop, in code and `docs/dev/`.) | Morse Desktop (in what people read), the desktop client, the launcher |
-| **Morse in Chrome** | The Chrome extension. It gets its model from the Morse app. "Use Morse in Chrome". | the plugin, the add-on |
-| **Morse helper** | The part of the Morse app that Chrome talks to on this computer. People rarely need its name; say "the Morse app". For developers, `morse serve` starts one from a terminal. | daemon, host, connector, server, bridge |
-| **pair** | Connect this browser to the Morse helper with its 6-character code. | authenticate, link |
 | **Edit tools** | The toolbar that appears on what you point at: hide, move, resize, edit text, color, text size, duplicate. Works at once, no model. Shortcut: Edit tools. | God mode (that is the code name only), inspector, direct edit mode |
 | **direct edits** | Changes made with the Edit tools. Saved together as one mod called "Direct edits". | manual edits |
 | **Page tools** | One-click changes for the whole page: dark mode, light mode, bigger or smaller text, hide ads and pop-ups, focus mode, turn off all mods. | quick actions, presets |
@@ -247,7 +244,7 @@ in one or two short sentences.
 - Raw errors from the browser, the network or the mod's own code ("Failed to
   fetch", "x is not defined", "synthesis-failed") never reach a person as is.
   `plainError()` in `core/onboarding.js` (built on `explainError()`, shared by
-  the runtime, the popup and the extension pages) turns them into one plain
+  the runtime and the Morse app) turns them into one plain
   sentence; a raw message it can't place becomes "Something went wrong. Try
   again." The raw text stays in the tooltip and the console.
 - A mod that stopped working says why in words, never with its code: "It looks
@@ -266,7 +263,6 @@ in one or two short sentences.
 | Couldn't apply that edit: x | Couldn't make that edit. Press ⌘Z to undo it. |
 | Couldn't read aloud (synthesis-failed). | Couldn't read aloud. Check that this computer has a voice installed. |
 | It looks for “[data-testid="player"] .btns”, and nothing on this page matches. | It looks for a part of the page that isn't there right now. |
-| The Morse helper returned 500 | The Morse helper couldn't answer (error 500). Try again. |
 
 ## Before and after
 
@@ -287,8 +283,6 @@ in one or two short sentences.
 | Gallery, Try it | Keep · Remove | Save · Undo |
 | Settings | Toggle God mode | Show the Edit tools |
 | Share | .user.js for Tampermonkey | Download for Tampermonkey |
-| Popup | Customize this page | Change this page |
-| Popup | Base URL | Server address |
 | CLI | In any attached window: Alt+Space to morse | In a connected app, press Alt+Space to open Morse |
 | README | Customize any app in one sentence. | Change any app or website in your own words. |
 | Website | Mods are data. Share them as a link. | Share a mod with a link. |

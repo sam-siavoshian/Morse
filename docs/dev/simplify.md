@@ -5,6 +5,10 @@ page is the inventory of every setting, menu item, panel, button and shortcut
 people meet, what was decided for each, and an honest log of Morse checked end
 to end on a fresh setup.
 
+> Since October 25, 2026 Morse has no Chrome extension: websites open in a
+> browser the Morse app starts, like any app. The rows below about the toolbar
+> popup, the welcome page, the Morse helper and pairing are history.
+
 The rule used: **the main path (open → point → say → Save) needs no reading**,
 a menu shows the 3 to 5 things people use, and everything else is one **More**
 away. Nothing was deleted outright; each thing that left a menu has another
@@ -113,7 +117,7 @@ change one of its shortcuts.
 
 ## The welcome page and first run
 
-Since then, the one-app change ([Onboarding](onboarding.md)) took the
+Since then, the one-app change (Onboarding) took the
 question and the developer ways off the welcome page: Connect (the Morse app
 found and asked by itself, or Download Morse) → Try it → your first mod.
 What follows is the inventory as it was. Onboarding v2 (another change, `docs/dev/onboarding.md`) owns these screens;

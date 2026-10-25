@@ -113,7 +113,6 @@ test("labels: Automatic until a model answers; the warm model is the first one",
   assert.equal(startLabel(CC, settingsLabel), "Claude Code · Automatic");
   assert.equal(startLabel({ ...CC, mode: "best" }, settingsLabel), "Claude Code · opus, high effort");
   assert.equal(startLabel({ provider: "claude-code", model: "opus", pinned: true, tiers: CC.tiers }, settingsLabel), "Claude Code · opus");
-  assert.equal(startLabel({ provider: "helper", backend: "claude-code", tiers: CC.tiers, mode: "fast", label: "x" }, settingsLabel), "Claude Code · opus, low effort");
   assert.equal(startLabel({ provider: "codex", tiers: resolveTiers("codex"), mode: "best" }, settingsLabel), "Codex · high effort");
   assert.equal(settingsLabel({ provider: "anthropic", tiers: resolveTiers("anthropic"), mode: "auto" }), "Anthropic API · Automatic");
   assert.equal(startLabel({ provider: "openai", tiers: resolveTiers("openai"), mode: "best" }, settingsLabel), "gpt-5, high effort · API");
@@ -281,14 +280,6 @@ test("warm while typing: one process when the bar opens, one more when the words
   await waitFor(async () => (await starts()).length >= m + 1, { what: "sonnet" });
   await new Promise(r => setTimeout(r, 1500));
   assert.equal((await starts()).length - m, 1, "processes started for an easy request");
-});
-
-test("popup: the Anthropic model picked there is the strong one; any other pick is used for everything", async () => {
-  const { popupTiers } = await import("../core/route.js");
-  assert.deepEqual(popupTiers("anthropic"), { fast: { model: "claude-opus-5-5", effort: "low" }, best: { model: "claude-opus-5-5", effort: "high" } });
-  assert.deepEqual(popupTiers("anthropic", "claude-opus-5-5"), popupTiers("anthropic"));
-  const haiku = popupTiers("anthropic", "claude-haiku-5-5"); // someone who picked haiku keeps it
-  assert.deepEqual(planRoute({ provider: "anthropic", tiers: haiku, mode: "auto" }, "add a summary panel", {}).steps.map(x => x.model), ["claude-haiku-5-5"]);
 });
 
 test("claude-code: after a request on the strong tier, the first one (opus, low effort) is the one kept warm", async () => {

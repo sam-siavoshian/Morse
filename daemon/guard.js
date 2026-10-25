@@ -21,12 +21,6 @@
 //
 // Nothing is armed on pages where no mod code ran, so a page that is busy on
 // its own is never interrupted by Morse.
-//
-// The extension can't do this: only a debugger can interrupt a page's script,
-// and Morse doesn't ask for that permission. There, a mod whose code doesn't
-// finish within HANG_MS of starting is turned off the same way (the page
-// stays stuck until Chrome's "Page unresponsive" dialog or a reload), and
-// safe start holds back a mod after which the page keeps dying.
 
 import { HANG_MS, FROZE_ERROR } from "../core/guard.js";
 export { HANG_MS, FROZE_ERROR };

@@ -251,63 +251,6 @@ test("demo/serve.js: another site (DNS rebinding) can't read the repo through it
 // Left open by the round 8 review
 // ======================================================================
 
-// extension/host.js in a stand-in content script world, on the page at `url`.
-// -> { post(data), go(url), asked: [the install requests it passed on] }
-function shareHost(url) {
-  const listeners = [];
-  const window = { addEventListener: (type, f) => { if (type === "message") listeners.push(f); } };
-  window.top = window;
-  const location = {};
-  const go = u => { const x = new URL(u); Object.assign(location, { href: x.href, origin: x.origin, pathname: x.pathname }); };
-  go(url);
-  const chrome = { runtime: { connect: () => ({ postMessage() {}, onMessage: { addListener() {} }, onDisconnect: { addListener() {} } }), onMessage: { addListener() {} } } };
-  const ctx = vm.createContext({ chrome, window, location, document: { documentElement: { dataset: {} } } });
-  vm.runInContext(readFileSync(path.join(ROOT, "extension/host.js"), "utf8"), ctx);
-  const asked = [];
-  ctx.__morseHost.onMessage(m => { if (m.type === "install.request") asked.push(m.source); });
-  return { asked, go, post: data => listeners.forEach(f => f({ source: window, data })) };
-}
-
-test("only Morse's share page can ask for an install, not every page on the same GitHub Pages address", () => {
-  const asks = url => { const h = shareHost(url); h.post({ morseInstall: "#m=x" }); return h.asked.length === 1; };
-  assert.ok(asks("https://sam-siavoshian.github.io/RRAA/share/install.html#m=x"), "the share page");
-  assert.ok(asks("http://127.0.0.1:8787/share/install.html"), "its local copy (test builds)");
-  for (const other of [
-    "https://sam-siavoshian.github.io/",                      // the owner's own page
-    "https://sam-siavoshian.github.io/another-project/",      // any other Pages project
-    "https://sam-siavoshian.github.io/RRAA-fork/share/install.html",
-    "https://sam-siavoshian.github.io/RRAA/site/gallery.html", // Morse's site, but not the share page
-    "https://sam-siavoshian.github.io/RRAA/sharex/install.html",
-    "http://127.0.0.1:8787/demo/sites/hostile/",               // another page on the test address
-    "https://evil.example/RRAA/share/install.html",
-  ]) assert.equal(asks(other), false, other);
-  // A page that moves itself to the share page's address (history.pushState).
-  const h = shareHost("https://sam-siavoshian.github.io/another-project/");
-  h.go("https://sam-siavoshian.github.io/RRAA/share/install.html");
-  h.post({ morseInstall: "#m=x" });
-  assert.deepEqual(h.asked, [], "it has to have loaded there");
-});
-
-test("the demo sites' local gallery list (http, 127.0.0.1:8787) is only read where a host asks for it, never by default", async () => {
-  const { indexUrlFor, GALLERY_INDEX_URL, DEMO_INDEX_URL } = await import("../core/gallery.js");
-  const { createGallery } = await import("../core/gallery-host.js");
-  // Any local server on those ports (wrangler's is on 8787) gets no say in the gallery.
-  for (const page of ["http://127.0.0.1:8787/", "http://localhost:8789/app", "http://127.0.0.1:8797/x"]) {
-    assert.equal(indexUrlFor(page), GALLERY_INDEX_URL, page);
-    assert.equal(indexUrlFor(page, "", DEMO_INDEX_URL), DEMO_INDEX_URL, `${page}, from a checkout`);
-  }
-  const fetched = [];
-  const data = {};
-  const gallery = createGallery({
-    store: { get: async k => data[k], set: async (k, v) => { data[k] = v; } },
-    fetch: async url => { fetched.push(url); return new Response("[]", { status: 200 }); },
-  });
-  await gallery.list({ url: "http://127.0.0.1:8789/demo/sites/tunes/" });
-  assert.deepEqual(fetched, [GALLERY_INDEX_URL]);
-  // The extension asks for it in test builds only (tests/store.test.js builds both).
-  assert.match(readFileSync(path.join(ROOT, "extension/gallery-host.js"), "utf8"), /demoIndex: globalThis\.MORSE_STORE_BUILD \? "" : DEMO_INDEX_URL/);
-  assert.match(readFileSync(path.join(ROOT, "scripts/build.js"), "utf8"), /"globalThis\.MORSE_STORE_BUILD": String\(STORE\)/);
-});
 
 test("a pack's titles and names keep the joiners Persian words and emoji need, and still lose direction tricks", async () => {
   const { cleanText, makePack, parsePack } = await import("../core/pack.js");

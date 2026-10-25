@@ -1,5 +1,5 @@
 // Try it here: the landing page's #try section. The real Morse runtime
-// (dist/extension/runtime.js) runs inside a small demo app (demo/sites/tunes
+// (dist/runtime/runtime.js) runs inside a small demo app (demo/sites/tunes
 // or byte), and this page is its host, the way the extension's service worker
 // or the desktop connector is everywhere else. The demo model
 // (core/demo.js) writes the changes: canned answers, streamed and run through
@@ -34,7 +34,7 @@ const APPS = {
 // One of APPS by its own name (the one saved in localStorage may be anything:
 // "toString" is `in` every object), else the music app.
 export const knownApp = name => (typeof name === "string" && Object.hasOwn(APPS, name) ? name : "tunes");
-const RUNTIME = new URL("../../dist/extension/runtime.js", import.meta.url).href;
+const RUNTIME = new URL("../../dist/runtime/runtime.js", import.meta.url).href;
 const BRIDGE = new URL("frame.js", import.meta.url).href;
 
 // What the bar says for a request the demo model has no answer for.

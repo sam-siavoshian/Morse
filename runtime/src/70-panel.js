@@ -240,18 +240,39 @@ async function toggleMod(m, on) {
   m.enabled ? await applyMod(m) : await removeMod(m.id);
   renderPanel();
 }
-async function restoreTo(m, i) {
-  const v = versionsOf(m)[i];
-  const next = restoreVersion(m, i);
-  if (!v || next === m) return;
-  const saved = (await call("mods.save", { mod: next })) || next;
+// Puts a mod back the way it is in `to` (an older version, or what it was
+// before that): saved, and run again on the page.
+async function putBack(m, to) {
+  const saved = (await call("mods.save", { mod: to })) || to;
   S.mods = S.mods.map(x => (x.id === m.id ? saved : x));
   if (saved.enabled) {
     if (!saved.js.trim()) await call("off", { modId: saved.id }).catch(() => {});
     await applyMod(saved);
-  }
+  } else await removeMod(saved.id);
+  if (!panel.hidden) renderPanel();
+  return saved;
+}
+async function restoreTo(m, i) {
+  const v = versionsOf(m)[i];
+  const next = restoreVersion(m, i);
+  if (!v || next === m) return;
+  const saved = await putBack(m, next);
+  controlToast(t("toast.backToVersion", { n: i + 1, prompt: v.prompt }), [[t("btn.undo"), () => putBack(saved, m)]]);
+}
+// Delete, with Undo in its message: the mod comes back as it was.
+async function deleteWithUndo(m, at) {
+  await removeMod(m.id);
+  await call("mods.delete", { modId: m.id });
+  S.mods = S.mods.filter(x => x.id !== m.id);
   renderPanel();
-  toast(t("toast.backToVersion", { n: i + 1, prompt: v.prompt }));
+  controlToast(t("toast.deleted", { title: m.title }), [[t("btn.undo"), async () => {
+    const saved = (await call("mods.save", { mod: m, restore: true }).catch(() => null)) || null;
+    if (!saved) return toast(t("toast.undoFailed"));
+    S.mods.splice(Math.min(at, S.mods.length), 0, saved);
+    if (saved.enabled) await applyMod(saved);
+    if (!panel.hidden) renderPanel();
+    toast(t("toast.undeleted", { title: saved.title }));
+  }]]);
 }
 async function copyText(text) {
   try { await navigator.clipboard.writeText(text); return; } catch {}
@@ -285,12 +306,8 @@ panel.addEventListener("click", async e => {
   if (a === "toggle" && m) await toggleMod(m, btn.checked);
   if (a === "del" && m) {
     const i = rows().indexOf(art);
-    await removeMod(m.id);
-    await call("mods.delete", { modId: m.id });
-    S.mods = S.mods.filter(x => x !== m);
-    renderPanel();
+    await deleteWithUndo(m, S.mods.indexOf(m));
     focusRow(Math.min(i, rows().length - 1));
-    toast(t("toast.deleted", { title: m.title }));
   }
   if (a === "code" && m) showCode(m);
   if (a === "share" && m) showShare(m);

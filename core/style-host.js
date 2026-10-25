@@ -18,9 +18,8 @@
 //   mods.save / mods.delete of STYLE_ID: the Mods panel's switch and Safe start
 //
 // reach: where a saved style shows, for the words that say so: "all" (every
-// site and app: Chrome and the desktop share it through the Morse helper,
-// core/style-sync.js), "web" (every site in Chrome) or "apps" (every app
-// opened with Morse).
+// site and app Morse opens), "web" (sites only, the site's Try it here) or
+// "apps" (apps only).
 
 import {
   STYLE_ID, STYLE_TITLE, normalizeStyle, hasStyle, parseStyleWords, mergeStyle, styleSummary, styleKey, styleExcepted,
@@ -28,7 +27,6 @@ import {
 } from "./style.js";
 import { compileA11y, A11Y_FONTS } from "./a11y.js";
 import { compileEdits, zoomFor } from "./edits.js";
-import { styleStamp } from "./style-sync.js";
 
 export const STYLE_REQUESTS = new Set(["style.get", "style.preview", "style.save", "style.except", "style.tried"]);
 
@@ -171,19 +169,6 @@ export function createStyleHost({ load, save, onChange = () => {}, now = () => n
       if (!style) return list.filter(m => !isStyleChild(m));
       const entry = styleEntry(style, where);
       return [entry, ...list.filter(m => !isStyleChild(m) || entry.enabled)];
-    },
-
-    // Sharing (core/style-sync.js): the style as kept, and putting another
-    // copy in its place only if this one is still the copy `was` names.
-    shared: () => current(),
-    async replace(next, was = "") {
-      let ok = false;
-      await update(cur => {
-        if (styleStamp(cur) !== was) return undefined;
-        ok = true;
-        return next && hasStyle(next) ? normalizeStyle(next) : null;
-      });
-      return ok;
     },
 
     async handle(msg, where) {

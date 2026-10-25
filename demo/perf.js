@@ -1,5 +1,5 @@
 // Measures what Morse costs the apps it lives in, through the real desktop
-// connector (CDP) and the real extension, and writes docs/perf/report.md.
+// connector (CDP), and writes docs/perf/report.md.
 //
 //   node demo/perf.js                  # measure, print, write the report
 //   node demo/perf.js --label before   # save as the baseline the report compares against
@@ -11,7 +11,7 @@
 // Sections: payload (bytes, compile), boot (per site: what Morse creates and
 // costs before anyone opens it), idle (what still runs), open (hotkey to bar),
 // mods at scale (30 watch mods on a streaming chat), SPA (URL-change
-// detection), effect (frame cost on a 4K target), extension (content script);
+// detection), effect (frame cost on a 4K target);
 // lang (English vs another language on the bar's first open), flat (a watch
 // over a long flat list of rows); on request,
 // realbar (the bar open on big real pages: typing, pointing, scrolling) and
@@ -26,7 +26,7 @@ const argv = process.argv.slice(2);
 const arg = (k, d) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : d; };
 const LABEL = arg("--label", "current");
 const RUNS = Number(arg("--runs", 3));
-const ONLY = new Set(String(arg("--only", "payload,boot,open,lang,mods,flat,spa,effect,extension")).split(","));
+const ONLY = new Set(String(arg("--only", "payload,boot,open,lang,mods,flat,spa,effect")).split(","));
 const OUT = path.join(ROOT, "docs", "perf");
 // --report: rebuild report.md from docs/perf/<label>.json and before.json, no measuring.
 if (argv.includes("--report")) {
@@ -280,52 +280,6 @@ function profileMs(profile, re) {
   return ms;
 }
 
-// ---------------------------------------------------------------- extension
-async function extension() {
-  execFileSync(process.execPath, [path.join(ROOT, "scripts/build.js")], { stdio: "ignore" });
-  const EXT = path.join(ROOT, "dist", "extension");
-  const os = await import("node:os");
-  const profile = await fs.mkdtemp(path.join(os.tmpdir(), "morse-perf-ext-"));
-  let ctx;
-  try {
-    ctx = await chromium.launchPersistentContext(profile, { channel: "chromium", headless: true, args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`] });
-  } catch (e) { await fs.rm(profile, { recursive: true, force: true }).catch(() => {}); return { skipped: e.message.split("\n")[0] }; }
-  const plain = await chromium.launch({ channel: "chromium", headless: true }).catch(() => chromium.launch());
-  try {
-    const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker", { timeout: 10000 });
-    // Its CSS only: this browser has “Allow User Scripts” off, so mod code would
-    // wait for it and Morse would load its UI once per tab to say so (64-waiting.js).
-    const cssOnly = ONE_MOD.map(m => ({ ...m, js: "" }));
-    await sw.evaluate(mods => chrome.storage.local.set({ mods: Object.fromEntries(mods.map(m => [m.id, m])), welcomed: true }), cssOnly);
-    const { instrument } = await import("./perf-lib.js");
-    const one = async (c, url) => {
-      const page = await c.newPage();
-      await page.addInitScript(instrument);
-      const cdp = await c.newCDPSession(page);
-      await cdp.send("Performance.enable");
-      await page.goto(url, { waitUntil: "load" });
-      const end = Date.now() + 4000;
-      while (Date.now() < end && !(await page.evaluate(() => window.__perf.marks.css != null))) await sleep(30);
-      await sleep(1000);
-      const m = await metrics(cdp);
-      const marks = await page.evaluate(() => window.__perf.marks);
-      await page.close();
-      return { m, marks };
-    };
-    const out = {};
-    const plainCtx = await plain.newContext();
-    for (const [name, p] of Object.entries(SITES)) {
-      const a = [], b = [];
-      for (let i = 0; i < RUNS; i++) { b.push(await one(plainCtx, srv.url(p))); a.push(await one(ctx, srv.url(p))); }
-      const dm = k => median(a.map(x => x.m[k])) - median(b.map(x => x.m[k]));
-      out[name] = { nodes: r1(dm("Nodes")), jsListeners: r1(dm("JSEventListeners")), scriptMs: r1(dm("ScriptDuration") * 1000), heapKB: r1(dm("JSHeapUsedSize") / 1024),
-        layouts: r1(dm("LayoutCount")), firstCssMs: r1(median(a.map(x => x.marks.css ?? NaN))), uiMountedAtBoot: a.some(x => x.marks.ui != null) };
-      log(`  extension ${name}: ${JSON.stringify(out[name])}`);
-    }
-    return out;
-  } finally { await ctx.close(); await plain.close(); await fs.rm(profile, { recursive: true, force: true }).catch(() => {}); }
-}
-
 // ---------------------------------------------------------------- a watch over a long flat list
 // A feed, a long table, the lines of a file: every row a sibling of the
 // others. One mod with `morse.watch("p.flat", el => el.dataset.seen = "")`,
@@ -522,7 +476,7 @@ async function realBoot() {
 }
 
 // ---------------------------------------------------------------- run
-const steps = { payload: payloadCost, boot, open: openLatency, mods: modsAtScale, spa, effect, extension, lang, flat, realbar: realBar, realboot: realBoot };
+const steps = { payload: payloadCost, boot, open: openLatency, mods: modsAtScale, spa, effect, lang, flat, realbar: realBar, realboot: realBoot };
 for (const [k, fn] of Object.entries(steps)) {
   if (!ONLY.has(k)) continue;
   log(`▸ ${k}`);
@@ -555,7 +509,7 @@ function report(now, was, wasReal = null) {
   const L = [];
   L.push(`# Morse performance report`, "");
   L.push(`Generated by \`node demo/perf.js\` on ${now.date.slice(0, 10)} (${now.runs} runs per cell, medians). ${was ? `Cells read \`before → **after**\`; the baseline is \`docs/perf/before.json\` (${was.date.slice(0, 10)}).` : ""}`);
-  L.push("", "Measured in headless Chromium through the real desktop connector (CDP, main world, so every call Morse makes is counted by wrapping the page's built-ins and attributing calls by stack) and, for the last table, through the real unpacked extension. Deltas are against the same page without Morse.", "");
+  L.push("", "Measured in headless Chromium through the real desktop connector (CDP, main world, so every call Morse makes is counted by wrapping the page's built-ins and attributing calls by stack). Deltas are against the same page without Morse.", "");
   if (now.payload) {
     L.push("## What every page pays to load Morse", "");
     L.push(table(["", "value"], [
@@ -594,14 +548,9 @@ function report(now, was, wasReal = null) {
       ["Main-thread CPU ms per frame (all work)", "cpuMsPerFrame"], ["rAF callbacks/s with the result showing", "rafPerSecIdleOpen"], ["Callbacks/s after closing", "callbacksPerSecIdleClosed"]];
     L.push("## Working effect", "", "Wall-clock frame times depend on how loaded the machine is (headless, software raster, the desktop host's clip recorder encoding frames); draw calls are exact, and the CPU profile isolates the effect's own work. Baseline target cells are from runs where the old effect stayed on screen for the whole sample.", "", table(["", ...names], k.map(([l, key]) => [l, ...names.map(n => cell(v(now.effect, n, key), v(was, "effect", n, key)))])), "");
   }
-  if (now.extension && !now.extension.error && !now.extension.skipped) {
-    const sites = Object.keys(now.extension);
-    const k = [["DOM nodes added", "nodes"], ["Event listeners added", "jsListeners"], ["Main-thread script (ms)", "scriptMs"], ["Extra layouts", "layouts"], ["JS heap (KB)", "heapKB"], ["First mod CSS applied (ms)", "firstCssMs"], ["Overlay mounted", "uiMountedAtBoot"]];
-    L.push("## Extension (content script, isolated world)", "", "Playwright's Chromium has Allow User Scripts off, so this section runs the mod's CSS only: with its code, Morse would load its UI once per tab to say the code waits for Allow User Scripts (64-waiting.js). The baseline ran the mod with its code; the old runtime built its UI on every page either way.", "", table(["", ...sites], k.map(([l, key]) => [l, ...sites.map(s => cell(v(now.extension, s, key), v(was, "extension", s, key)))])), "");
-  }
   if (now.lang && !now.lang.error && now.lang.en) {
     const L2 = now.lang, W = was?.lang;
-    L.push("## Languages: the bar's words", "", "English ships in the UI bundle. Another language is one request to the host (`i18n.words`; the desktop reads `core/locales/<code>.js` once per process, the extension's worker `locales/<code>.json` once while it runs) the first time the bar opens on a page; that first open waits for the words, 1.5 s at most, so the bar never shows English first. 10k-node page, first open (which also loads the UI).", "",
+    L.push("## Languages: the bar's words", "", "English ships in the UI bundle. Another language is one request to the host (`i18n.words`; the desktop reads `core/locales/<code>.js` once per process) the first time the bar opens on a page; that first open waits for the words, 1.5 s at most, so the bar never shows English first. 10k-node page, first open (which also loads the UI).", "",
       table(["", "English", "German"], [
         ["Hotkey to bar visible, first open (ms)", cell(L2.en.hotkeyToBarMs, W?.en?.hotkeyToBarMs), cell(L2.de.hotkeyToBarMs, W?.de?.hotkeyToBarMs)],
         ["Word requests, first open", fmt(L2.en.wordsRequests), fmt(L2.de.wordsRequests)],

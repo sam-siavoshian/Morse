@@ -11,7 +11,7 @@ import os from "node:os";
 import path from "node:path";
 import { detectBackends, recommend, configFor, applyChoice, isSetUp, runSetup, whichBin, gettingStarted } from "../daemon/setup.js";
 import { settingsFromConfig, migrateLegacy } from "../daemon/models.js";
-import { pageSupport, explainError, plainError, mergeOnboarding, normalizeOnboarding, modelMissing, setHelperPort } from "../core/onboarding.js";
+import { pageSupport, explainError, plainError, mergeOnboarding, normalizeOnboarding, modelMissing } from "../core/onboarding.js";
 
 const plain = s => s.replace(/\x1b\[\d+m/g, "");
 const CLI = new URL("../daemon/cli.js", import.meta.url).pathname;
@@ -159,29 +159,6 @@ test("setup checks that the model answers, and says exactly what to do when it d
   assert.match(key.out, /Check the key at console\.anthropic\.com, then run morse setup again\./);
 });
 
-test("setup --pair: a bad code says what to do; the helper takes the welcome page's code", async () => {
-  const bad = spawnSync(process.execPath, [CLI, "setup", "--pair", "oops"], { env: { ...process.env, MORSE_HOME: os.tmpdir() }, encoding: "utf8" });
-  assert.equal(bad.status, 1);
-  assert.match(plain(bad.stderr), /That pairing code doesn't look right\. Copy the whole command from Morse's welcome page again\./);
-  // In a child process: daemon/store.js reads MORSE_HOME once, when first imported.
-  const home = tempDir("morse-pair-");
-  try {
-    const bridge = new URL("../daemon/bridge.js", import.meta.url).href;
-    const r = spawnSync(process.execPath, ["--input-type=module", "-e", `
-      const { startPairing, validPairingCode } = await import(${JSON.stringify(bridge)});
-      const bad = await startPairing(undefined, "abc").then(() => "", e => e.message);
-      const { code } = await startPairing(undefined, "K7P2QX");
-      console.log(JSON.stringify({ ok: validPairingCode("K7P2QX"), zero: validPairingCode("K7P2Q0"), bad, code }));`], { env: { ...process.env, MORSE_HOME: home }, encoding: "utf8" });
-    const out = JSON.parse(r.stdout);
-    assert.equal(out.ok, true);
-    assert.equal(out.zero, false, "no zero: it reads like O");
-    assert.match(out.bad, /doesn't look right/);
-    assert.equal(out.code, "K7P2QX");
-    const cfg = JSON.parse(await fs.readFile(path.join(home, "config.json"), "utf8"));
-    assert.equal(cfg.bridge.pairing.code, "K7P2QX");
-  } finally { await fs.rm(home, { recursive: true, force: true }); }
-});
-
 test("bare `morse` prints a three-line getting started until something is set up", async () => {
   const lines = plain(gettingStarted({ platform: "win" })).split("\n");
   assert.equal(lines.length, 3);
@@ -263,19 +240,6 @@ test("generation errors in plain words, each with something to do", () => {
   assert.equal(modelMissing({}, "demo model · no model found"), true);
   assert.equal(modelMissing({ model: { connected: true } }, "demo model"), false, "the host's answer wins over the label");
   assert.equal(modelMissing({}, "Claude Code · haiku"), false);
-});
-
-test("the helper not running reads the same on any port the helper was moved to", () => {
-  const refused = port => explainError(`fetch failed: connect ECONNREFUSED 127.0.0.1:${port}`)?.id;
-  assert.equal(refused(7457), "err.helper");
-  assert.notEqual(refused(41234), "err.helper", "another local server isn't the helper");
-  setHelperPort(41234); // MORSE_HELPER_PORT=41234 (daemon/cli.js)
-  try {
-    assert.equal(refused(41234), "err.helper");
-    assert.equal(refused(7457), "err.helper");
-    assert.notEqual(refused(412345), "err.helper");
-    assert.notEqual(refused(11434), "err.helper");
-  } finally { setHelperPort(7457); }
 });
 
 test("plainError: plain words for a person, never raw jargon", () => {

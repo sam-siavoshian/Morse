@@ -37,10 +37,10 @@ test("every language has every message, and nothing English doesn't have", () =>
   }
 });
 
-test("the Morse app's window, the welcome page and the popup: every word id they use is in every language", async () => {
+test("the Morse app's window: every word id it uses is in every language", async () => {
   const { readFileSync } = await import("node:fs");
   const read = p => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
-  const files = ["desktop-app/ui/app.js", "desktop-app/ui/index.html", "extension/welcome.js", "extension/welcome.html", "extension/popup.js", "extension/popup.html"];
+  const files = ["desktop-app/ui/app.js", "desktop-app/ui/index.html"];
   const missing = [];
   for (const f of files) {
     const src = read(f);

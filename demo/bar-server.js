@@ -12,7 +12,7 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", "
 export function serveBar(port = 0) {
   const server = http.createServer(async (req, res) => {
     const p = decodeURIComponent(new URL(req.url, "http://x").pathname);
-    if (p === "/dist/extension/runtime.js") {
+    if (p === "/dist/runtime/runtime.js") {
       res.writeHead(200, { "Content-Type": "text/javascript", "Cache-Control": "no-store" }).end(bundleRuntime());
       return;
     }

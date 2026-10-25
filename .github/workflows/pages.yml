@@ -1,8 +1,7 @@
 # Publishes the site, the share page and the gallery list to GitHub Pages:
 # https://sam-siavoshian.github.io/RRAA/site/ and .../RRAA/share/install.html.
 # The layout mirrors the repo (see scripts/build-pages.js), because share links
-# (core/mod.js SHARE_BASE), the gallery list (core/gallery.js) and the
-# extension's install handshake (extension/host.js SHARE_ORIGINS) use those paths.
+# (core/mod.js SHARE_BASE) and the gallery list (core/gallery.js) use those paths.
 #
 # One-time setup: Settings -> Pages -> Build and deployment -> Source: GitHub Actions.
 name: Pages

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Morse: change any website or desktop app in your own words</title>
-<meta name="description" content="Change any website in Chrome, or desktop apps like VSCodium and Obsidian, by saying what you want. Your own AI makes the change. Free and open source.">
+<meta name="description" content="Change any desktop app, like VS Code, Spotify or Obsidian, or any website, by saying what you want. Your own AI makes the change. Free and open source.">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="color-scheme" content="dark">
 <!-- seo: npm run pages puts the canonical address, link previews and structured data here (scripts/build-pages.js) -->
@@ -54,7 +54,6 @@
         </ul>
         <div class="nav-sheet-get">
           <a class="btn btn-primary" href="./#desktop-steps" data-link="desktop">Download Morse</a>
-          <a class="btn btn-secondary" href="./#chrome-steps" data-link="chrome">Add to Chrome</a>
         </div>
       </nav>
     </div>
@@ -71,7 +70,6 @@
         <p class="hero-sub">Point at something and say what you want. The app changes while you watch. Morse uses the model you already have.</p>
         <div class="get-row">
           <a class="btn btn-primary btn-lg" href="./#desktop-steps" data-link="desktop">Download Morse<span class="icon" aria-hidden="true">→</span></a>
-          <a class="btn btn-secondary btn-lg" href="./#chrome-steps" data-link="chrome">Add to Chrome</a>
         </div>
         <p class="hero-note">Free and open source <span aria-hidden="true">·</span> No account <span aria-hidden="true">·</span> Uses Claude Code, Codex or your API key</p>
       </div>
@@ -164,15 +162,14 @@
   </section>
 
   <!-- =========================================================== install -->
-  <!-- One app (the Morse app, desktop-app/) and, if you like, Chrome too, from
-       inside the app. The morse command is for developers: the README and
-       docs/dev/README.md, not this page. -->
+  <!-- One app (the Morse app, desktop-app/), for apps and websites. The morse
+       command is for developers: the README and docs/dev/README.md, not this page. -->
   <section id="install" class="section">
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow">Install</p>
         <h2>One app. Nothing else to set up.</h2>
-        <p class="lede">Download Morse and open it. It finds Claude Code or Codex by itself and lists your apps. Websites are one more click.</p>
+        <p class="lede">Download Morse and open it. It finds Claude Code or Codex by itself and lists your apps and browsers.</p>
       </header>
       <div class="get">
         <article class="get-card" id="install-desktop">
@@ -194,19 +191,10 @@
             </ol>
           </details>
         </article>
-        <article class="get-card" id="install-chrome">
-          <p class="get-kind">Chrome</p>
-          <h3>Websites too</h3>
-          <p>In the Morse app, click <strong>Use Morse in Chrome</strong>. Morse in Chrome uses the app’s model, so it only asks you to click Allow.</p>
-          <a class="btn btn-secondary btn-lg" href="./#chrome-steps" data-link="chrome">Add to Chrome</a>
-          <details class="get-steps" id="chrome-steps">
-            <summary>Not in the Chrome Web Store yet</summary>
-            <ol>
-              <li>In the Morse app, click <strong>Use Morse in Chrome</strong>. Chrome opens on its extensions page.</li>
-              <li>Turn on <strong>Developer mode</strong>, click <strong>Load unpacked</strong> and choose the <strong>Morse for Chrome</strong> folder the app showed you.</li>
-              <li>Click <strong>Allow</strong> when the Morse app asks.</li>
-            </ol>
-          </details>
+        <article class="get-card" id="install-web">
+          <p class="get-kind">Websites</p>
+          <h3>In the browser you use</h3>
+          <p>Chrome, Edge, Brave, Arc and Vivaldi are in the app's list too. <strong>Open with Morse</strong> opens one in a window of its own, with a Morse profile: browsers don't let any program control your everyday profile. Sign in to your sites there once.</p>
         </article>
       </div>
 
@@ -216,16 +204,16 @@
         <h3>Your first minute</h3>
         <ol class="first-run-list" aria-label="Your first minute">
           <li>
-            <figure class="shot"><img src="shots/340-app-first-run.webp" width="960" height="720" loading="lazy" decoding="async" alt="The Morse app’s first screen: Morse will use Claude Code, it answered in a few seconds; Joplin, Logseq, Obsidian, Visual Studio Code and VSCodium, each with Open with Morse; and Use Morse in Chrome too."></figure>
-            <p><span class="step-n">1</span><span>Open Morse. It finds your model and your apps by itself.</span></p>
+            <figure class="shot"><img src="shots/342-app-welcome.webp" width="1100" height="720" loading="lazy" decoding="async" alt="The Morse app's welcome: the name Morse, Change any app or website in your own words, and Begin."></figure>
+            <p><span class="step-n">1</span><span>Open Morse. Its name forms out of dots, then Begin. It finds your AI and your apps by itself.</span></p>
           </li>
           <li>
             <figure class="shot"><img src="shots/321-vscode-result.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Visual Studio Code after “make the whole editor look like a warm paper notebook”: cream backgrounds, brown text, serif file names, and the Morse bar offering Save."></figure>
             <p><span class="step-n">2</span><span>Click Open with Morse. Point at something, describe a change and click Save.</span></p>
           </li>
           <li>
-            <figure class="shot"><img src="shots/341-chrome-asking.webp" width="1280" height="860" loading="lazy" decoding="async" alt="Morse’s welcome page in Chrome: Found the Morse app on this computer. It can use Claude Code. The Morse app is asking: click Allow there."></figure>
-            <p><span class="step-n">3</span><span>For websites, click Use Morse in Chrome, then Allow.</span></p>
+            <figure class="shot"><img src="shots/343-app-how.webp" width="1100" height="720" loading="lazy" decoding="async" alt="Three moves, in any app: open Morse with the shortcut, point at something, say what you want."></figure>
+            <p><span class="step-n">3</span><span>Three moves in any app or browser: the shortcut, point, say it.</span></p>
           </li>
         </ol>
       </div>
@@ -253,7 +241,7 @@
       <div class="faq-list">
         <details class="faq-item">
           <summary>What do I install?</summary>
-          <p>One app: Morse. Download it, open it, and it finds your model and your apps. For websites, click Use Morse in Chrome in the app. There is nothing to set up in Chrome.</p>
+          <p>One app: Morse. Download it, open it, and it finds your model, your apps and your browsers. There is nothing else to install.</p>
         </details>
         <details class="faq-item">
           <summary>Do I need a terminal or Node?</summary>

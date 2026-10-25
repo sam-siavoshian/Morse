@@ -1,25 +1,26 @@
 # How Morse works
 
 ```
-                 ┌────────────── the app (Chromium renderer) ──────────────┐
-                 │  runtime/runtime.js   picker · bar · effect · panel     │
-                 │  core/kit.js          `morse` helpers mods run against  │
-                 └──────────────▲───────────────────────────▲──────────────┘
-         content script + port  │                           │  CDP binding + Runtime.evaluate
-                 ┌──────────────┴──────────┐   ┌────────────┴───────────────┐
-                 │ extension/background.js │   │ daemon/connector.js        │
-                 │ chrome.userScripts      │   │ morse launch / attach      │
-                 └──────────────┬──────────┘   └────────────┬───────────────┘
-                                │  daemon/bridge.js          │  daemon/harness.js
-                                │  (morse serve, 127.0.0.1)──┤  claude -p · codex exec
-                                └────────── core/ ───────────┘
-                     engine.js (stream → live CSS → run JS → repair)
-                     prompt.js · parse.js · providers.js (Anthropic SDK / OpenAI / helper)
-                     mod.js (format, share links, userscript export)
+          ┌──────────── the app or browser (Chromium renderer) ────────────┐
+          │  runtime/runtime.js   picker · bar · effect · panel            │
+          │  core/kit.js          `morse` helpers mods run against         │
+          └───────────────────────────────▲────────────────────────────────┘
+                                          │  CDP binding + Runtime.evaluate
+                         ┌────────────────┴──────────────────┐
+                         │ daemon/connector.js               │
+                         │ the Morse app, or morse launch     │
+                         └────────────────┬──────────────────┘
+                                          │  daemon/harness.js: claude -p · codex exec
+                         ┌─────────────── core/ ─────────────┐
+                         engine.js (stream → live CSS → run JS → check → repair)
+                         prompt.js · parse.js · providers.js (Anthropic SDK / OpenAI)
+                         mod.js (format, share links, userscript export)
 ```
 
-- **One runtime, two hosts.** The same runtime runs in websites (extension)
-  and desktop apps (CDP). Only the transport differs.
+- **One runtime, one host.** The same runtime runs in desktop apps and in
+  websites: the Morse app opens both over CDP. Browsers (Chrome, Edge, Brave,
+  Arc, Vivaldi) open with a Morse profile of their own, since Chrome 136 takes
+  no remote control of a default profile.
 - **Free until you use it.** Every page gets only a ~52 KB boot
   (`runtime/boot.js`): it applies your mods (with the guards and safe start),
   follows SPA navigations, checks for broken mods after idle and listens for
@@ -27,8 +28,7 @@
   first time you open Morse. Measured in [`docs/perf/report.md`](../perf/report.md)
   (`node demo/perf.js`), guarded by `tests/perf.test.js`; every budget and
   the test that holds it is in [`docs/perf/budgets.md`](../perf/budgets.md).
-- **No patching.** On the web, mod JS runs through `chrome.userScripts`, so it
-  works on strict-CSP sites. On the desktop, `morse launch` relaunches an
+- **No patching.** `morse launch` (and the Morse app) relaunches an
   Electron app with `--remote-debugging-pipe` (a private channel, see
   [The private pipe](#the-private-pipe); `--remote-debugging-port` on
   127.0.0.1 where that can't be used) and attaches over CDP. App files, code
@@ -54,25 +54,6 @@ A host loads the runtime into a page and answers its requests (generate,
 run, save, share, settings, history…). Requests are answered for the page
 that asked: mods, history and saves are scoped to the calling document's URL
 and app, never to what the message claims.
-
-### Chrome extension (`extension/`)
-
-- [`background.js`](../../extension/background.js): the service worker. It
-  serves the same requests the desktop connector does, backed by `chrome.*`
-  APIs, and runs `core/engine.js` itself (it has to run mod JS in the page and
-  retry). Mod JS runs through `chrome.userScripts`, which is exempt from page
-  CSP. Without “Allow User Scripts”, Morse falls back to the page's main
-  world, which strict-CSP sites block. Models: either the Morse helper (see
-  below) or an Anthropic API key in `chrome.storage.local`, called straight
-  from the worker. `scripts/build.js` bundles it with `core/` and the
-  Anthropic SDK.
-- [`host.js`](../../extension/host.js): the content-script side, which
-  bridges the runtime to the worker and reconnects if Chrome recycles it.
-  Requests still waiting when the port closes get an error reply, so the
-  runtime's calls settle instead of hanging.
-- `popup.*`, `welcome.*`, `practice.html`: the toolbar popup, the welcome page
-  and its sandboxed practice page. The `*-host.js` files are hooks, one per
-  feature, that add request handlers to the worker.
 
 ### Desktop connector (`daemon/`)
 
@@ -234,9 +215,10 @@ modules and runs them in place, so there is no separate Node:
   files), Open with Morse and Connect (`connectApp` + `startSession` from
   `desktop.js`, the same steps as `morse launch`, several sessions in one
   process), the model (`setup.js` `detectBackends`, `saveChoice`,
-  `checkModel`), the Morse helper (`createBridge`, `startPairing`, run in the
-  background), mods (`store.js`), the off switch (`control.js` pause) and
-  `morse doctor`'s rows. Its own settings are `~/.morse/desktop.json`.
+  `checkModel`), mods (`store.js`), the off switch (`control.js` pause),
+  `morse doctor`'s rows, and Always open with Morse (`keepMods`: an app with
+  mods that started without Morse is reopened with it). Its own settings are
+  `~/.morse/desktop.json`.
 - [`ipc.js`](../../desktop-app/ipc.js) is the only door from the window: one
   channel per request, argument checks, and a sender check (the main frame
   of Morse's window, on `morse-app://ui/index.html`). Errors come back as
@@ -249,23 +231,11 @@ modules and runs them in place, so there is no separate Node:
   CSP that allows only its own files, the tray, open at login (Electron on
   macOS and Windows, `~/.config/autostart` on Linux), and `morse://open`
   links (they only show the window).
-- The Morse helper runs inside it as `createBridge({ app: "desktop", ask })`
-  (one-click pairing, onboarding v2): the extension asks,
-  the window shows “Allow Chrome to use your Claude Code?”, and only Allow
-  makes a token. The requests are in [Pairing](pairing.md).
-- The first run is one screen: the model Morse found by itself (checked
-  once), the apps to open, and **Use Morse in Chrome too**. Opening an app,
-  or Skip, leads to the main window.
-- **Use Morse in Chrome** (`useChrome` in `service.js` and `ipc.js`,
-  [`chrome.js`](../../desktop-app/chrome.js)): with a Chrome Web Store
-  listing (`site/config.js` `LINKS.chrome`, `isStoreUrl`), it opens it.
-  Until then: the helper on, the extension copied to `~/Morse for Chrome`
-  (a folder Load unpacked can see; a `.morse-extension` mark says it is
-  Morse's to empty), the folder shown and its path copied, Chrome started on
-  `chrome://extensions` (`openChromeExtensions`; `MORSE_CHROME` names a
-  stand-in for tests), and a dialog with one real picture of where to click
-  (`ui/chrome-steps.png`, `demo/shoot-chrome-steps.js`). It closes by
-  itself once a browser is connected.
+- The first run follows Zephium's: the name forms out of dots
+  (`ui/formation.js`, MPL-2.0) with its sound (`ui/sounds/`), then three
+  steps (your AI, how it works, an app to open). Opening an app, Done or Skip
+  leads to the main window.
+- It updates itself from the preview release (`updater.js`).
 - The window's words are `desk.*` in `core/locales/*.js`: `main.js` serves
   `core/i18n.js` and each catalog under `morse-app://ui/core/`, and
   `ui/app.js` picks the language from the computer's (`navigator.languages`).
@@ -274,30 +244,6 @@ modules and runs them in place, so there is no separate Node:
 Sessions Morse Desktop holds are ordinary session files with its own pid, so
 `morse status` and `morse stop` work on them, and apps a terminal connected
 show as connected in the window.
-
-### The Morse helper (`daemon/bridge.js`)
-
-`morse serve` runs a small HTTP server on 127.0.0.1:7457 so the extension
-can use models that need a process on this computer (Claude Code, Codex) or
-keys kept there.
-
-```
-GET  /v1/health    status (no auth, never includes keys)
-POST /v1/pair      { code } -> { token }   one-time code printed by `morse serve` / `morse pair`
-POST /v1/complete  { messages, model? }    Bearer token -> NDJSON {type: token|done|error}
-GET  /v1/voice, POST /v1/transcribe        Bearer token, see daemon/voice.js
-GET  /v1/style     -> { style }            Bearer token: Your style as this computer keeps it
-POST /v1/style     { style, was }          Bearer token: Chrome's copy, only if this one is still `was` (409)
-```
-
-The helper only streams text, and shares Your style: Chrome keeps its own
-copy and syncs it with `~/.morse/style.json` through `/v1/style`
-([`core/style-sync.js`](../../core/style-sync.js)), so a style said in
-either place shows in both. The desktop watches that file, so a change made
-by `morse serve` reaches the windows `morse launch` holds. Closing the connection aborts the generation
-and kills the Claude Code or Codex process. `MORSE_HELPER_PORT` moves it off
-7457 (tests run several helpers at once). The extension talks to 7457 unless a
-test set chrome.storage.local "morse.helperPort" ([testing](testing.md#the-extension-with-a-real-morse-helper)).
 
 ## The runtime (`runtime/`)
 
@@ -314,7 +260,7 @@ design tokens and the pure core modules it shares with the hosts
 (`hotkeys.js` and `prefs.js` inlined with `export` dropped; `edits.js`,
 `versions.js`, `onboarding.js`, `answer.js`, `summary.js`, `control.js`,
 `gallery.js`, `a11y.js`, `showonce.js`, `heal.js`, `style.js` and `guard.js` inlined each
-in its own scope). Both the extension build and the desktop connector inject exactly
+in its own scope). The desktop connector (and `dist/runtime/runtime.js`) inject exactly
 this string after the boot (`bundleBoot()`, `bundleUI()`). Because it is one scope, two files must never declare the same
 top-level name ([Adding a feature](adding-a-feature.md#runtime-rules)).
 
@@ -347,8 +293,7 @@ later attach can start a fresh one.
 ## The kit (`core/kit.js`)
 
 The `morse` object mod code runs against, injected as source text into
-whichever world runs mods (the page's main world over CDP, the USER_SCRIPT
-world in the extension, or a userscript). Every resource a mod creates is
+whichever world runs mods (the page's main world over CDP, or a userscript). Every resource a mod creates is
 tracked, so turning the mod off fully undoes it.
 
 - `morse.watch(selector, fn)`: calls `fn` for every match, now and later
@@ -385,12 +330,8 @@ stored list in [`core/take-host.js`](../../core/take-host.js).
   (a `generate` with `context.take`, answered in the Ask format, so every host
   carries it unchanged). The picture never goes to the model.
 - **The list.** `taken.list` / `taken.put` / `taken.remove`: newest first, at
-  most 30. On the computer it is `~/.morse/taken.json` (`daemon/take.js`); in
-  Chrome it is `chrome.storage.local "taken"`, and when Chrome is paired the
-  Morse helper serves the computer's list over `/v1/taken`
-  (`extension/take-host.js`), so both sides see one list. An item Chrome has
-  seen on the computer and that is gone there was deleted there; one taken
-  while they weren't paired goes over on the next look.
+  most 30, in `~/.morse/taken.json` (`daemon/take.js`): one list for every
+  app and browser Morse opens.
 - **Bring.** A request carries `context.bring`: the feature picked from
   Bring here…, or one a typed request names (`matchTaken`), or `{ known, app,
   what }` for a well-known feature of another app (`bringAsk`). `bringPrompt`
@@ -430,11 +371,7 @@ So a mod can't hurt the page:
   once the mod's code has started), it interrupts the script over CDP
   (`Runtime.terminateExecution`), asks the kit whose code was running, turns
   that mod off and reloads the page. Pages where no mod code ran are never
-  interrupted. In the extension only a debugger could interrupt a page, and
-  Morse doesn't ask for that permission. There, a saved mod with a loop that
-  has no way out never starts, a mod whose code doesn't finish within 4
-  seconds of starting is turned off so the next load is clean, and a freeze
-  later on is left to Chrome's *Page unresponsive* dialog and safe start.
+  interrupted.
 
 ## The engine (`core/engine.js`)
 
@@ -452,8 +389,7 @@ repair round too. Questions get an answer instead of a mod
 setting on (the default) and `review` from the host, a change that adds UI or
 restyles a part (`wantsPolish`; a small CSS tweak skips it) gets one more look:
 the host takes a picture of the changed area without Morse's UI (desktop:
-`Page.captureScreenshot` with a clip, `daemon/connector.js` `shoot`; extension:
-`captureVisibleTab`, cropped in the worker), the model sees it with the request
+`Page.captureScreenshot` with a clip, `daemon/connector.js` `shoot`), the model sees it with the request
 and its own draft and answers `OK` or `FIX:` lines and a new version. The new
 version replaces the draft only if it runs cleanly and keeps the JS; otherwise
 the draft goes back on the page. [evals/design](../../evals/design/README.md)
@@ -466,7 +402,7 @@ what changes to the prompt and context do.
 ## Model providers (`core/providers.js`)
 
 Every provider streams tokens through `onToken` and resolves with the full
-text. The file runs unchanged in Node and in the extension's service worker.
+text. The file runs unchanged in Node and in the browser (the site's Try it here).
 
 | Provider | What it is |
 |---|---|
@@ -474,7 +410,6 @@ text. The file runs unchanged in Node and in the extension's service worker.
 | `codex` | The `codex` CLI: `codex exec` in a read-only sandbox, in an empty folder. Under Automatic the plan's model at medium effort, high for new UI, features and restyles |
 | `anthropic` | An Anthropic API key, through the official SDK, at low effort. Under Automatic `claude-sonnet-5-5` for small tweaks and `claude-opus-5-5` for new UI, features and restyles ([`core/route.js`](../../core/route.js)). One model chosen is used for everything. Refusals become a plain message |
 | `openai` | An OpenAI API key, or any OpenAI-compatible server (`--base-url`). Chat completions, streamed. Under Automatic `gpt-5`, then `gpt-5` with `reasoning_effort: "high"` |
-| `helper` | The extension's client for the Morse helper |
 | `demo` | A test fixture that replays canned replies ([`core/demo.js`](../../core/demo.js)). Never offered to users |
 
 Auto-detect order on a computer: Claude Code on PATH, Codex on PATH, an
@@ -520,7 +455,7 @@ provenance or Your style. The install review is `runtime/src/69-packs.js`;
 `pack.install` re-reads the source and checks the hash the review showed, and
 an id that clashes with one of your mods needs an explicit Keep both or
 Replace yours. Packs from an address (`core/pack-host.js`) are fetched by the
-extension or the helper with the gallery's rules: https only (or loopback),
+host with the gallery's rules: https only (or loopback),
 ETag / Last-Modified, a capped read, at most daily (max-age within a week),
 the old copy kept when offline, and updates applied only from the update
 review.
@@ -588,8 +523,7 @@ Mods are code running inside apps you're signed into, so:
   if what answers isn't the app it started (process id, then user agent),
   and on Linux won't connect when another account's program holds the port
   (`/proc/net/tcp`, `ports.js portIsMine`), since that program could say
-  any process id and user agent. Morse Desktop doesn't count a Morse helper
-  another account started as running, for the same reason.
+  any process id and user agent.
 - Share links carry the mod in the URL fragment, which browsers never send to
   a server.
 - Page text goes to the model, so a page can try to prompt-inject it. That's
@@ -598,12 +532,9 @@ Mods are code running inside apps you're signed into, so:
   working folder: the model can only write text. The context builder leaves
   out field values, hidden fields, secret-looking attributes, email addresses
   and signed URL queries.
-- The Morse helper binds to 127.0.0.1 only, refuses requests with an Origin
-  other than `chrome-extension://<id>` (no Origin means curl or the CLI) and
-  non-loopback Host headers (DNS rebinding), and serves completions only to a
-  browser that paired with a one-time code. Tokens are stored hashed and bound
-  to the pairing extension's origin.
-- The gallery list is fetched by the extension or the helper, never by the
+- Morse listens on no port. Browsers it opens get a debugging port on
+  127.0.0.1 only, with a Morse profile of their own.
+- The gallery list is fetched by the host, never by the
   page, at most once a day, and not at all with "Show mods others made" off.
 
 The user-facing version of this is [Privacy and safety](../privacy-and-safety.md).

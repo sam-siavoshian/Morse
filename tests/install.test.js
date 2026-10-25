@@ -3,7 +3,7 @@
 // morse-cli.tgz (npm pack) and SHA256SUMS.
 //
 //   - a fresh install: the morse command, morse --version, morse doctor
-//     --offline, the extension folder that stays put, the record of what it added
+//     --offline, the record of what it added
 //   - running it again: "already up to date"; with a new package: "updated"
 //   - a download that doesn't match SHA256SUMS: refused, nothing installed
 //   - no Node, or an old one: says how to get it, installs nothing
@@ -65,7 +65,7 @@ function release(name, pkg, { badSum = false } = {}) {
   mkdirSync(dir, { recursive: true });
   copyFileSync(pkg, path.join(dir, "morse-cli.tgz"));
   const sum = badSum ? "0".repeat(64) : sha(pkg);
-  writeFileSync(path.join(dir, "SHA256SUMS"), `${sum}  morse-cli.tgz\n${"1".repeat(64)}  morse-extension.zip\n`);
+  writeFileSync(path.join(dir, "SHA256SUMS"), `${sum}  morse-cli.tgz\n${"1".repeat(64)}  Morse-Setup.exe\n`);
   return `${base}/${name}`;
 }
 
@@ -101,8 +101,6 @@ function morse(home, args) {
 }
 
 function pack(dir) {
-  // The built extension is in the package (package.json "files"); build it once if this checkout hasn't.
-  if (!existsSync(path.join(root, "dist", "extension", "manifest.json"))) execFileSync(process.execPath, [path.join(root, "scripts", "build.js")], { stdio: "ignore" });
   mkdirSync(dir, { recursive: true });
   execFileSync("npm", ["pack", "--ignore-scripts", "--pack-destination", dir], { cwd: root, stdio: "ignore", env: { ...process.env, npm_config_ignore_scripts: "true" } });
   return path.join(dir, readdirSync(dir).find(f => f.endsWith(".tgz")));
@@ -130,7 +128,7 @@ test("install.sh: one line installs Morse, a second run is up to date, a newer p
   assert.equal(r.status, 0, r.out);
   assert.match(r.out, /Checked the download against the release's SHA256SUMS/);
   assert.match(r.out, /Morse 0\.\d+\.\d+ installed/);
-  assert.match(r.out, /Next:\n  1\. Chrome: .*chrome:\/\/extensions.*~\/\.morse\/chrome-extension/);
+  assert.match(r.out, /Next:\n  1\. Open an app or your browser with Morse: .*launch obsidian, or .*launch chrome/);
   assert.match(r.out, /One more line, so your terminal finds the morse command[\s\S]*export PATH=.*\.zshrc/, "the bin folder isn't on PATH: it says the line to add");
   assert.match(r.out, /Nothing that can write your changes was found yet/, "morse setup --auto ran, with nothing to find and nobody to ask");
 
@@ -140,10 +138,7 @@ test("install.sh: one line installs Morse, a second run is up to date, a newer p
   const d = await morse(home, ["doctor", "--offline"]);
   assert.equal(d.status, 0, d.stdout + d.stderr);
   assert.match(d.stdout, /skipped \(--offline\)|No model is connected/);
-  const ext = path.join(home, ".morse", "chrome-extension");
-  assert.ok(existsSync(path.join(ext, "manifest.json")), "the extension folder that stays put");
-  const e = await morse(home, ["extension"]);
-  assert.equal(e.stdout.split("\n")[0], ext, "morse extension names that folder");
+  assert.ok(!existsSync(path.join(home, ".morse", "chrome-extension")), "no Chrome extension any more");
   const receipt = readFileSync(path.join(home, ".morse", "install.txt"), "utf8");
   assert.match(receipt, new RegExp(`^sha256=${sha(pkgA)}$`, "m"));
   assert.match(receipt, new RegExp(`^shim=${path.join(home, "bin", "morse").replace(/[.]/g, "\\.")}$`, "m"));
@@ -229,9 +224,6 @@ test("install.sh: with no release yet, it builds the package from the main branc
   assert.match(r.out, /No preview release yet, so Morse is built from the main branch/);
   assert.match(readFileSync(path.join(home, ".morse", "install.txt"), "utf8"), /^source=main$/m);
   assert.equal((await morse(home, ["--version"])).status, 0);
-  assert.ok(existsSync(path.join(home, ".morse", "chrome-extension", "manifest.json")));
-  // The store build: it doesn't trust the test share page.
-  assert.doesNotMatch(readFileSync(path.join(home, ".morse", "chrome-extension", "host.js"), "utf8"), /"http:\/\/127\.0\.0\.1:8787/);
 });
 
 test("install.sh is plain POSIX sh, and every address in it points at main", () => {
@@ -266,7 +258,6 @@ test("install.ps1 installs, updates, refuses a bad checksum and uninstalls (Powe
   assert.equal(r.status, 0, r.out);
   assert.match(r.out, /Morse 0\.\d+\.\d+ installed/);
   assert.match(readFileSync(path.join(home, "bin", "morse.cmd"), "utf8"), /node ".*daemon[\\/]cli\.js" %\* & exit \/b/);
-  assert.ok(existsSync(path.join(home, ".morse", "chrome-extension", "manifest.json")));
   r = await ps(home, release("v1", pkgA));
   assert.match(r.out, /already up to date/);
   r = await ps(home, release("v2", pkgB));
@@ -282,7 +273,6 @@ test("install.ps1 installs, updates, refuses a bad checksum and uninstalls (Powe
     assert.equal(r.status, 0, r.out);
     assert.match(r.out, /built from the main branch/);
     assert.match(readFileSync(path.join(home2, ".morse", "install.txt"), "utf8"), /^source=main$/m);
-    assert.doesNotMatch(readFileSync(path.join(home2, ".morse", "chrome-extension", "host.js"), "utf8"), /"http:\/\/127\.0\.0\.1:8787/, "the store build");
   }
 });
 
@@ -298,24 +288,12 @@ test("preview.yml: on pushes to main, pinned actions, only the release job can w
   assert.match(release, /contents:\s*write/);
   assert.match(release, /needs: \[package, desktop, smoke\]/);
   for (const os of ["ubuntu-latest", "macos-latest", "windows-latest"]) assert.ok(jobs.includes(os), os);
-  for (const step of ["install.sh", "install.ps1", "morse --version", "morse doctor --offline", "chrome-extension", "morse uninstall", "SHA256SUMS", "--prerelease", "codesign --verify", "morse-cli.tgz", "morse-extension.zip"]) assert.ok(yml.includes(step), `preview.yml has ${step}`);
+  for (const step of ["install.sh", "install.ps1", "morse --version", "morse doctor --offline", "morse uninstall", "SHA256SUMS", "--prerelease", "codesign --verify", "morse-cli.tgz", "install-app.sh"]) assert.ok(yml.includes(step), `preview.yml has ${step}`);
   // The names the README and the site link to.
   for (const f of ["Morse-mac-arm64.dmg", "Morse-mac-x64.dmg", "Morse-Setup.exe", "Morse-linux-x86_64.AppImage"]) {
     assert.ok(readFileSync(path.join(root, "README.md"), "utf8").includes(`releases/download/preview/${f}`), `README links ${f}`);
     assert.ok(readFileSync(path.join(root, "site", "config.js"), "utf8").includes(`releases/download/preview/${f}`), `site/config.js links ${f}`);
   }
-});
-
-test("Add to Chrome opens Chrome on chrome://extensions, on each system", async () => {
-  const { chromeCommands, openChromeExtensions } = await import("../desktop-app/chrome.js");
-  assert.deepEqual(chromeCommands({ platform: "darwin" })[0], ["open", ["-a", "Google Chrome", "chrome://extensions"]]);
-  assert.equal(chromeCommands({ platform: "linux" })[0][0], "google-chrome");
-  const win = chromeCommands({ platform: "win32", env: { ProgramFiles: "C:\\Program Files", LOCALAPPDATA: "C:\\Users\\a\\AppData\\Local" }, has: f => f.startsWith("C:\\Users") });
-  assert.deepEqual(win, [["C:\\Users\\a\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe", ["chrome://extensions"]]]);
-  const tried = [];
-  assert.equal(await openChromeExtensions({ platform: "linux", run: async f => { tried.push(f); return f === "chromium"; } }), true);
-  assert.deepEqual(tried, ["google-chrome", "google-chrome-stable", "chromium"]);
-  assert.equal(await openChromeExtensions({ platform: "linux", run: async () => false }), false, "no Chrome: Morse Desktop says to open it by hand");
 });
 
 test("the site's Download Morse button is this visitor's download", async () => {

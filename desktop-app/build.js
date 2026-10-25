@@ -5,9 +5,8 @@
 //   node desktop-app/build.js --dir          only the unpacked app, no installer
 //   node desktop-app/build.js --stage-only   only dist/desktop-app/app (what goes in the package)
 //
-// Steps: build the extension (scripts/build.js), stage the app in
-// dist/desktop-app/app (desktop-app/, daemon/, core/, runtime/, the design
-// tokens, the built extension and the one npm dependency, with a package.json
+// Steps: stage the app in dist/desktop-app/app (desktop-app/, daemon/, core/,
+// runtime/, the design tokens and the one npm dependency, with a package.json
 // whose main is desktop-app/main.js), draw the icon into
 // dist/desktop-app/res, then run electron-builder (builder.config.js) into
 // dist/desktop-app/. Nothing it makes is committed. electron-builder comes
@@ -36,8 +35,8 @@ const args = process.argv.slice(2);
 const say = s => console.log(`· ${s}`);
 
 // What the app needs at run time. Paths relative to the repo.
-const COPY = ["daemon", "core", "runtime", "design/tokens.css", "site/fonts", "site/config.js", "dist/extension"];
-const APP_FILES = ["main.js", "preload.cjs", "service.js", "ipc.js", "icons.js", "appimage.js", "linux.js", "chrome.js", "shell-path.js", "updater.js", "mark.js", "ui"];
+const COPY = ["daemon", "core", "runtime", "design/tokens.css", "site/fonts", "site/config.js"];
+const APP_FILES = ["main.js", "preload.cjs", "service.js", "ipc.js", "icons.js", "appimage.js", "linux.js", "shell-path.js", "updater.js", "mark.js", "ui"];
 
 async function copy(from, to) {
   const st = await fs.stat(from);
@@ -73,8 +72,6 @@ async function prodDeps(pkgJson) {
 }
 
 export async function stage() {
-  say("building the extension (scripts/build.js)");
-  execFileSync(process.execPath, [path.join(root, "scripts", "build.js")], { stdio: "inherit" });
   await fs.rm(STAGE, { recursive: true, force: true });
   for (const p of COPY) await copy(path.join(root, p), path.join(STAGE, p));
   for (const f of APP_FILES) await copy(path.join(here, f), path.join(STAGE, "desktop-app", f));

@@ -1,17 +1,16 @@
 // Model providers. Every provider streams tokens through onToken and resolves
-// with the full text. This file runs unchanged in Node and in the extension
-// service worker (bundled by scripts/build.js). Providers that need a child
+// with the full text. This file runs in Node and in the browser (the site's Try
+// it here, the demo playgrounds). Providers that need a child
 // process (Claude Code, Codex) live in daemon/harness.js and register here.
 //
 //   claude-code  the `claude` CLI, on the user's Claude subscription (daemon)
 //   codex        the `codex` CLI (daemon)
 //   anthropic    Anthropic API key, through the official SDK
 //   openai       OpenAI API key, or any OpenAI-compatible server
-//   helper       the extension's client for the Morse helper (`morse serve`)
 //   demo         internal test fixture: replays canned replies (never offered to users)
 
-// Loaded on first use, so code that never calls the Anthropic API (the helper,
-// the demo playground running this file in a browser) doesn't need the SDK.
+// Loaded on first use, so code that never calls the Anthropic API (the demo
+// playground running this file in a browser) doesn't need the SDK.
 let AnthropicSDK = null;
 const loadAnthropic = async () => (AnthropicSDK ||= (await import("@anthropic-ai/sdk")).default);
 import { demoResponse } from "./demo.js";
@@ -26,26 +25,13 @@ export const PROVIDERS = {
   openai: { name: "OpenAI API", models: ["gpt-5", "gpt-5-mini"], defaultModel: "gpt-5" },
 };
 export const USER_PROVIDERS = Object.keys(PROVIDERS);
-export const HELPER_PORT = 7457;
-export const HELPER_URL = `http://127.0.0.1:${HELPER_PORT}`;
-// Tests only: chrome.storage.local "morse.helperPort" moves the extension's
-// helper off 7457, so several test runs (each with its own `morse serve` on
-// MORSE_HELPER_PORT) can run at once. Only the service worker reads it, and
-// only the extension's own pages and worker can write it (background.js
-// keeps chrome.storage.local away from content scripts; no message sets it).
-// The helper is always on 127.0.0.1; anything but a whole number in
-// 1024-65535 means the default.
-export const HELPER_PORT_KEY = "morse.helperPort";
-export const validHelperPort = v => (Number.isInteger(v) && v >= 1024 && v <= 65535 ? v : null);
-export const helperUrlFor = port => `http://127.0.0.1:${validHelperPort(port) ?? HELPER_PORT}`;
-
 export const DEFAULT_SETTINGS = { provider: "", model: "", apiKey: "", baseUrl: "" };
 
 // Server-side refusal fallback is only valid on these models.
 const FALLBACK_MODELS = /^claude-(opus|sonnet)-5-5\b/;
 
 export class NoModelError extends Error {
-  constructor(msg = "No model is connected. Run morse serve, or add an API key in Morse's settings.") {
+  constructor(msg = "No model is connected. Choose one in the Morse app, or run morse setup.") {
     super(msg);
     this.code = "no_model";
   }
@@ -55,20 +41,16 @@ const impls = {
   demo: (s, messages, o) => demoStream(messages, { ...o, ms: s.demoMs }),
   openai: openaiStream,
   anthropic: anthropicStream,
-  helper: helperStream,
 };
 
 export function registerProvider(id, fn, { warm } = {}) { impls[id] = fn; if (warm) warmers[id] = warm; }
 
 // ---- speed: get ready before the request exists. Hosts call this when the
 // bar opens: Claude Code starts its next process (daemon/harness.js), the
-// Anthropic API reads the instructions into its cache, the helper passes it on.
+// Anthropic API reads the instructions into its cache.
 // Never throws; returns quickly and does the work in the background.
 const warmers = {
   anthropic: anthropicWarm,
-  helper: s => fetch(`${s.baseUrl || HELPER_URL}/v1/warm`, {
-    method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.token || ""}` }, body: JSON.stringify({ ...(s.model && { model: s.model }), ...(s.effort && { effort: s.effort }) }),
-  }).catch(() => {}),
 };
 // request (optional): what the person has typed so far, not sent yet. Under
 // Automatic, the model that request would start on gets ready (the strong one
@@ -85,7 +67,7 @@ export function prewarm(settings, request) {
 // (toOpenAI, daemon/harness.js); Codex here only reads text.
 export const imageBlocks = messages => messages.flatMap(m => (Array.isArray(m.content) ? m.content.filter(b => b?.type === "image") : []));
 export const textOf = content => (Array.isArray(content) ? content.filter(b => b?.type === "text").map(b => b.text).join("\n\n") : String(content ?? ""));
-const SEES_IMAGES = new Set(["anthropic", "openai", "claude-code", "helper", "demo"]);
+const SEES_IMAGES = new Set(["anthropic", "openai", "claude-code", "demo"]);
 export const seesImages = s => SEES_IMAGES.has(s?.provider);
 function toOpenAI(m) {
   if (!Array.isArray(m.content)) return m;
@@ -109,7 +91,7 @@ export async function streamChat(settings, messages, { onToken, signal, maxToken
 export function settingsLabel(s) {
   // models: "Automatic" until a model answers (then the bar shows which one did)
   const auto = s.mode && !s.tier && routable(s) && modeOf(s) === "auto";
-  const name = PROVIDERS[s.provider === "helper" ? s.backend : s.provider]?.name;
+  const name = PROVIDERS[s.provider]?.name;
   if (auto && name) return `${name} · ${t("settings.model.auto")}`;
   const model = s.model || PROVIDERS[s.provider]?.defaultModel || "";
   switch (s.provider) {
@@ -122,7 +104,6 @@ export function settingsLabel(s) {
       const what = [model, s.effort && `${s.effort} effort`].filter(Boolean).join(", "); // models: the strong tier is gpt-5 thinking longer
       return !host || host === "api.openai.com" ? `${what} · API` : `${what} · ${host}`;
     }
-    case "helper": return s.label || "Morse helper";
     case "demo": return "demo replay";
     default: return t("welcome.model.b");
   }
@@ -277,48 +258,6 @@ async function openaiStream(s, messages, { onToken, signal, maxTokens, onStage }
     if (tok) { text += tok; onToken?.(tok); }
   }
   return text;
-}
-
-// models: after an escalated request, the helper keeps the model the next
-// request starts on warm, not the strong one it just used.
-function nextWarm(s) {
-  if (!routable(s)) return {};
-  const w = warmSettings(s);
-  return { next: { model: w.model || "", ...(w.effort && { effort: w.effort }) } };
-}
-
-// The extension's client for the Morse helper: POST /v1/complete returns
-// NDJSON {type: token|done|error}. Aborting the fetch closes the connection,
-// and the helper kills the harness process.
-async function helperStream(s, messages, { onToken, signal, onStage }) {
-  let res;
-  try {
-    res = await fetch(`${s.baseUrl || HELPER_URL}/v1/complete`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.token || ""}` },
-      body: JSON.stringify({ messages, ...(s.model && { model: s.model }), ...(s.effort && { effort: s.effort }), ...nextWarm(s) }),
-      signal,
-    });
-  } catch (e) {
-    if (signal?.aborted) throw abortError();
-    throw new NoModelError("Can't reach the Morse helper. Run morse serve on this computer.");
-  }
-  if (res.status === 401) throw new NoModelError("The Morse helper doesn't recognize this browser. Pair again in Morse's settings.");
-  if (!res.ok) {
-    let msg = "";
-    try { msg = (await res.json()).error || ""; } catch {}
-    throw new Error(`The Morse helper couldn't answer (error ${res.status})${msg ? `: ${msg}` : ". Try again."}`);
-  }
-  let text = "";
-  for await (const line of lines(res.body)) {
-    const ev = JSON.parse(line);
-    if (ev.type === "token") { text += ev.text; onToken?.(ev.text); }
-    else if (ev.type === "stage") onStage?.(ev); // speed: the model started, or is thinking
-    else if (ev.type === "error") throw new Error(ev.message);
-    else if (ev.type === "done") return typeof ev.text === "string" ? ev.text : text;
-  }
-  if (signal?.aborted) throw abortError();
-  throw new Error("The Morse helper stopped before the change was done. Try again.");
 }
 
 // Internal test fixture: replays pre-written replies. Used by tests and the

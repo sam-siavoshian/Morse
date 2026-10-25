@@ -24,7 +24,7 @@ If you're new, start with [Getting started](getting-started.md).
 | [The Morse app](desktop-app.md) | Morse itself: your apps, your model, Chrome, your mods and checks. The one thing to install |
 | [Models and setup](models.md) | Claude Code, Codex or an API key: how to choose, and how Chrome reaches your model |
 | [Privacy and safety](privacy-and-safety.md) | What leaves your computer, when, and what mods can do |
-| [Privacy policy](privacy.md) | The privacy policy for the extension and the `morse` command |
+| [Privacy policy](privacy.md) | The privacy policy for the Morse app and the `morse` command |
 | [Troubleshooting](troubleshooting.md) | Common messages, what they mean, and what to do |
 | [Morse in your language](i18n.md) | The nine languages, right to left for Persian and Arabic, what stays English, and how to improve a translation |
 
@@ -40,18 +40,15 @@ If you're new, start with [Getting started](getting-started.md).
 | [Testing](dev/testing.md) | `npm run check`, `npm test`, `npm run test:ui`, test helpers, evals, screenshots, what was verified |
 | [Adding a feature](dev/adding-a-feature.md) | Rules for the in-app code, words, the UI review, docs |
 | [Accessibility of Morse itself](dev/accessibility.md) | Keyboard, screen readers, zoom and forced colors in Morse's own UI, and the axe-core audit |
-| [Onboarding](dev/onboarding.md) | The first minutes mapped and measured before and after, one Allow in the Morse app, “Allow User Scripts” only when needed |
 | [Simplify](dev/simplify.md) | Every setting, menu and button, what shows and what waits under More, and Morse checked end to end on a fresh setup |
 | [Checking a Mac or Windows PC](dev/platform-testing.md) | The 15-minute check for desktop apps on a real Mac or Windows PC |
-| [Pairing Chrome with the Morse helper](dev/pairing.md) | One-click pairing (the extension asks, the person allows in the Morse app) and codes: the requests, the app's side, and why it's safe |
-| [Releasing](dev/releasing.md) | One-time setup, then `npm run release` and one push: npm, the GitHub release with the store zip, and Morse Desktop's builds and signing |
+| [Releasing](dev/releasing.md) | One-time setup, then `npm run release` and one push: npm, the GitHub release, and Morse Desktop's builds and signing |
 | [How Morse talks](WRITING.md) | The style guide for every word a person reads |
 | [Wording pass 2: messages](dev/wording-pass-2.md) | Every message in Morse changed by the second plain-words pass, with before and after |
 | [Wording pass 2: docs and website](dev/wording-pass-2-docs.md) | The biggest before and after changes from the second plain-words pass over the docs and the website |
 | [Languages in the code](dev/i18n.md) | `t()`, the message catalogs, the Language setting, right-to-left layout, and text that stays English for the model |
 | [UI review checklist](ui/CHECKLIST.md) | What every screenshot in the UI catalog is checked against |
 | [Launch kit](launch/README.md) | The demo video, clips and how they were recorded |
-| [Chrome Web Store kit](store/README.md) | The store listing, permission notes and screenshots |
 | [Evals](../evals/README.md) | How often Morse does what people ask, measured |
 
 These pages are plain Markdown files in the repo. To add one, see

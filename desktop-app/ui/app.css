@@ -222,70 +222,9 @@ li .radar.live rect.o, .live .radar.live rect.o { animation-name: m-pulse-dim; }
 .keyrow small { color: var(--m-text-3); font-size: 12px; }
 .row-end { display: flex; justify-content: flex-end; align-items: center; gap: var(--s-2); }
 
-/* ---- chrome */
-.steps { list-style: none; margin: var(--s-2) 0 0; padding: 0; display: flex; flex-direction: column; }
-.steps li { display: flex; gap: var(--s-4); padding: var(--s-4) 0; }
-.steps li:last-child { padding-bottom: 0; }
-.steps li + li { border-top: 1px solid var(--m-line); }
-.steps .n { flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 12px; background: var(--m-hover);
-  font: 600 12px/1 var(--m-font); color: var(--m-text-2); }
-.steps b { display: block; font-weight: 600; font-size: 14px; line-height: 24px; }
-.steps div > span { display: block; margin: 2px 0 var(--s-3); color: var(--m-text-2); line-height: 20px; text-wrap: pretty; }
-.steps div > span:last-child { margin-bottom: 0; }
-/* a step's one button sits at its end; the code row runs under the text */
-.steps li > div { flex: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-5); align-items: center; }
-.steps li > div > :is(b, span) { grid-column: 1; }
-.steps li > div > .btn { grid-column: 2; grid-row: 1 / span 2; }
-.steps li > div > span:has(+ .btn) { margin-bottom: 0; }
-.steps li > div > .coderow { grid-column: 1 / -1; }
-.coderow { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
-.coderow small { color: var(--m-text-3); font-size: 12px; }
-.code { display: inline-flex; align-items: center; height: 36px; padding: 0 var(--s-4); border-radius: var(--r); background: var(--m-hover);
-  font: 600 17px/1 var(--m-mono); letter-spacing: .22em; color: var(--m-text); user-select: all; }
-.code.big { height: 48px; padding: 0 var(--s-5); font-size: 22px; justify-content: center; }
 
-/* ---- mods */
-#mod-groups { display: flex; flex-direction: column; gap: var(--s-5); }
-.group h2 { display: flex; align-items: center; gap: var(--s-2); margin: 0 0 var(--s-2) var(--s-1); }
-.group h2 .gicon { width: 20px; height: 20px; border-radius: 5px; object-fit: contain; }
-.group h2 .gicon.none { display: grid; place-items: center; background: var(--m-hover); color: var(--m-text-3); }
-.group h2 .gicon.none svg { width: 12px; height: 12px; }
-.group h2 small { margin-inline-start: auto; font: 500 12px/16px var(--m-font); color: var(--m-text-3); }
-.mods > li { min-height: 60px; padding-inline: var(--s-4); }
-.mods li.off .grow b { color: var(--m-text-2); }
-div.empty { display: flex; flex-direction: column; align-items: center; gap: var(--s-2); padding: var(--s-8) var(--s-5); text-align: center; background: var(--m-surface);
-  border: 1px solid var(--m-line); border-radius: var(--m-r-lg); color: var(--m-text-2); }
-div.empty svg { color: var(--m-text-3); margin-bottom: var(--s-2); }
-div.empty b { color: var(--m-text); font-weight: 600; font-size: 14px; }
-div.empty span { max-width: 360px; }
-
-/* ---- checks */
-.checks > li { min-height: 52px; align-items: flex-start; padding: var(--s-4); }
-.checks .mark { flex: none; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; font: 600 11px/1 var(--m-font); }
-.checks .mark.ok { background: var(--m-primary); color: var(--m-primary-text); }
-.checks .mark.bad { background: color-mix(in srgb, var(--m-warn) 18%, transparent); color: var(--m-warn); }
-.checks .mark.info { background: var(--m-hover); color: var(--m-text-3); }
-.checks .label { flex: none; width: 128px; font-weight: 600; line-height: 20px; }
-.checks .text { flex: 1; min-width: 0; color: var(--m-text-2); line-height: 20px; overflow-wrap: anywhere; user-select: text; }
-.checks li.bad .text { color: var(--m-text); }
-
-/* ---- dialogs */
-dialog { width: 420px; max-width: calc(100vw - 48px); padding: var(--s-5); border: 1px solid var(--m-line-strong); border-radius: var(--m-r-lg); background: var(--m-surface); color: var(--m-text);
-  box-shadow: var(--m-shadow); }
-dialog[open] { display: flex; flex-direction: column; gap: var(--s-3); animation: pop var(--m-med) var(--m-ease); }
-@keyframes pop { from { opacity: 0; transform: translateY(4px) scale(.98); } }
-dialog .mark-tile { margin-bottom: var(--s-1); }
-dialog::backdrop { background: var(--m-scrim); }
-dialog h2 { font: 600 16px/24px var(--display); letter-spacing: -0.01em; }
 dialog p { color: var(--m-text-2); line-height: 20px; }
 dialog .row-end { margin-top: var(--s-3); }
-dialog small.ext { font: 11px/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; }
-/* the picture of where to click in Chrome */
-dialog.wide { width: 640px; }
-dialog img.shot { display: block; width: 100%; height: auto; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); background: #fff; }
-ol.guide { margin: 0; padding-inline-start: 22px; display: flex; flex-direction: column; gap: var(--s-2); color: var(--m-text-2); line-height: 20px; }
-ol.guide b { color: var(--m-text); font-weight: 600; }
-ol.guide code { color: var(--m-text); overflow-wrap: anywhere; user-select: all; }
 /* Advanced: closed until asked for */
 details.advanced > summary { cursor: pointer; font-weight: 600; color: var(--m-text-2); list-style-position: inside; }
 details.advanced > summary:hover { color: var(--m-text); }
@@ -366,12 +305,6 @@ body.mac .first :is(button, input, li, a) { -webkit-app-region: no-drag; }
   .ob-welcome, .ob-welcome > *, .ob-name, .ob-bar { transition: none; }
   .ob-head > *, .ob-scene, .ob-moves li { animation: none; }
 }
-/* Use Morse in Chrome too: one row under the apps */
-.chrome-card { display: flex; align-items: center; gap: var(--s-4); margin-top: var(--s-2); padding: var(--s-3) var(--s-4) var(--s-3) var(--s-3);
-  border: 1px solid var(--m-line); border-radius: var(--m-r-lg); background: var(--m-surface); box-shadow: var(--card-shadow); }
-.chrome-card .mark-tile svg, .chrome-main .mark-tile svg { color: var(--m-text-2); }
-.chrome-card .grow small { white-space: normal; }
-.chrome-card.done .grow small::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--m-signal-4); }
 
 /* ---- small things */
 main::-webkit-scrollbar { width: 10px; }
@@ -391,3 +324,14 @@ main::-webkit-scrollbar-track { background: transparent; }
 /* Updating: a thin progress bar in the update dialog */
 .bar-track { height: 6px; border-radius: 999px; background: var(--m-line-strong); overflow: hidden; }
 .bar-fill { height: 100%; width: 0; border-radius: inherit; background: var(--m-text); transition: width 200ms linear; }
+/* Delete waits until the row is pointed at or focused, so the list stays calm. */
+.list.mods [data-del] { opacity: 0; transition: opacity var(--m-fast); }
+.list.mods > li:hover [data-del], .list.mods > li:focus-within [data-del] { opacity: 1; }
+@media (hover: none) { .list.mods [data-del] { opacity: 1; } }
+/* Glass on a Mac (main.js gives the window the system's sidebar material):
+   the sidebar and the first run show it through; the content keeps a nearly
+   solid page so text reads the same over any wallpaper. */
+body.mac { background: transparent; }
+body.mac .side { background: transparent; }
+body.mac main { background: color-mix(in srgb, var(--m-bg) 92%, transparent); }
+body.mac .first { background: color-mix(in srgb, var(--m-bg) 70%, transparent); }

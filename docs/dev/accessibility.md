@@ -2,8 +2,7 @@
 
 Morse's own interface (the bar, the Mods panel, the modals, the Edit tools,
 Ask and Show me, Show me once, toasts, the gallery, self-heal, guard and
-style rows) and its extension pages (welcome, popup, options, practice) work
-with the keyboard alone and with a screen reader. "Easier to use"
+style rows) and the Morse app's window work with the keyboard alone and with a screen reader. "Easier to use"
 ([`core/a11y.js`](../../core/a11y.js), [docs/easier-to-use.md](../easier-to-use.md))
 is the other direction: Morse making *other* apps easier to use.
 
@@ -16,7 +15,6 @@ The user-facing summary is in
 |---|---|---|
 | axe-core on a few key states (bar, choosing with keys, Edit tools with Color and Text size, ⋯ menu, Page tools, Settings, shortcuts, working, result, Edit code, Share, a toast, the Mods panel with 13 mods, Install a mod, the install review, Show me once) | [`tests/a11y-morse.test.js`](../../tests/a11y-morse.test.js) | `npm test` |
 | axe-core on the gallery, self-heal, guard, Your style, Ask and Show me, Show me once and install-review states, inside their own tests | `tests/{gallery,heal,guard,style,show-once,control}-ui.test.js`, `tests/ask.test.js` | `npm test` |
-| axe-core on the extension's pages | `tests/a11y-morse.test.js` (needs a display) | `npm run test:ui`, `DISPLAY=:99 npm test` |
 | The core flows with the keyboard only | `tests/a11y-morse.test.js` | `npm test` |
 | What screen readers hear during a generation | `tests/a11y-morse.test.js` | `npm test` |
 | Forced colors, 320px, 200% zoom | `tests/a11y-morse.test.js` | `npm test` |
@@ -25,7 +23,7 @@ The user-facing summary is in
 axe-core is **4.13.0** from npm, vendored unchanged at
 [`demo/vendor/axe-4.13.0.min.js`](../../demo/vendor/) (MPL-2.0, its license
 next to it) and loaded by [`demo/axe.js`](../../demo/axe.js). It is only for
-tests: `npm run check` fails if it ever ends up in `dist/extension`, and the
+tests: `npm run check` fails if it ever ends up in `dist/runtime`, and the
 npm package doesn't include `demo/`. `axeCheck(page)` audits the overlay
 inside its shadow root (open only under automation with `morse:debug`, as in
 every UI test); `axeCheck(page, { page: true })` audits a whole page.
@@ -34,11 +32,9 @@ Rules: WCAG 2.2 A and AA plus axe's best practices. On the overlay these are
 off, because they're about the page underneath, not Morse: `region`,
 `landmark-one-main`, `page-has-heading-one`, `bypass`,
 `landmark-complementary-is-top-level`, `landmark-unique` and `heading-order`
-(the overlay follows whatever heading level the page ends on). Extension pages
-get every rule.
+(the overlay follows whatever heading level the page ends on).
 
-`npm run ui` runs axe after each screenshot (whole-page rules on the
-extension's own pages), except on the animation states
+`npm run ui` runs axe after each screenshot, except on the animation states
 (effect, pulse, motion, radar), which are timed to the frame. Findings show
 in `docs/ui/index.html` with the other verdicts, and the run ends with a
 count per rule. `node demo/ui-catalog.js --out=/tmp/ui --theme=dark --width=1100`
@@ -47,7 +43,7 @@ audits without touching `docs/ui`; `--no-axe` skips it.
 ## What was found and fixed (October 2026)
 
 axe-core on the key states before this work (the runtime as it was, driven
-the same way) and on the catalog and the extension pages:
+the same way) and on the catalog:
 
 | Rule | Where | Fix |
 |---|---|---|
@@ -56,15 +52,13 @@ the same way) and on the catalog and the extension pages:
 | `label` (critical) | Edit code's two code fields, the Share link field | `<label for>`, `aria-label` |
 | `aria-allowed-role` (minor) | the Mods panel was an `<aside role=dialog>`, each mod an `<article role=listitem>` | a `<section role=dialog>`. Rows are plain articles with their name |
 | `landmark-no-duplicate-banner`, `landmark-no-duplicate-contentinfo` (moderate) | every card's `<header>`/`<footer>` counted as the page's banner and footer | `role="none"` on them (12-focus.js does it for every card) |
-| `html-has-lang` (serious), `landmark-one-main`, `page-has-heading-one`, `region`, then `heading-order` | popup and options | `lang`, a `<main>`, the wordmark is the `<h1>`, sections are `<h2>`, the test result is a status |
 | `color-contrast` (serious), `landmark-one-main`, `region` | practice page | the byline is #707070 (4.9:1), the ad label .85 opacity, a `<main>`, the cookie bar is a named region |
 | `scrollable-region-focusable` (serious) | the full catalog: Show code and the install review's code blocks, and Page tools at phone width (it scrolls, and its items are out of the Tab order) | the code blocks are named, focusable regions. A menu's current item is its one Tab stop |
 
 The welcome page had none. The full catalog (519 states in the dark theme,
 phone width included) found only `scrollable-region-focusable`. After that
 fix, the light theme's 519 states had no violations at all, nor did the
-111 states of the extension's pages, the popup, Trusted Types and round 4's
-hostile hosts (`--only=extension,popup,trusted-types,hostile-r4`, under Xvfb).
+Trusted Types and round 4's hostile hosts (`--only=trusted-types,hostile-r4`).
 
 
 Semantics added without an axe rule asking for them:

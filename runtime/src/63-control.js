@@ -85,14 +85,17 @@ async function resumeHere() {
   if (Control.pause.all) await setPauseAll(false);
   if (Control.pause.sites?.[controlKey(here())]) await setPauseHere(false);
 }
+// The share page's Install button. Any page can ask, so this only opens the
+// review (one at a time); installing takes a click inside it.
+function installRequest(source) {
+  if (typeof source === "string" && modal.hidden) reviewImport(source, { onDone: r => window.postMessage({ morseInstalled: r }, "*") });
+}
 onEvent(msg => {
   if (msg.type === "control.changed") applyPause(msg.pause);
-  // From the share page, through the extension. Any page can ask, so this only
-  // opens the review (one at a time); installing takes a click inside it.
-  if (msg.type === "install.request" && typeof msg.source === "string" && modal.hidden) {
-    reviewImport(msg.source, { onDone: r => window.postMessage({ morseInstalled: r }, "*") });
-  }
+  if (msg.type === "install.request") installRequest(msg.source);
 });
+document.documentElement.dataset.morseShare = "1"; // the share page hands its link to Morse (not data-morse: that marks Morse's own UI)
+addEventListener("message", e => { if (e.source === window && e.data?.morseInstall) installRequest(e.data.morseInstall); });
 
 // ---- safe start
 

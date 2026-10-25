@@ -38,7 +38,7 @@ async function open({ mods = 0, width = 1100, height = 720, theme = "dark", forc
   const ctx = await browser.newContext({ viewport: { width, height }, colorScheme: theme, forcedColors: forced ? "active" : "none" });
   await ctx.route("http://morse.test/**", async route => {
     const p = decodeURIComponent(new URL(route.request().url()).pathname);
-    if (p === "/dist/extension/runtime.js") return route.fulfill({ body: runtime, contentType: TYPES[".js"] });
+    if (p === "/dist/runtime/runtime.js") return route.fulfill({ body: runtime, contentType: TYPES[".js"] });
     try { await route.fulfill({ body: await readFile(path.join(ROOT, path.normalize(p))), contentType: TYPES[path.extname(p)] || "text/plain" }); }
     catch { await route.fulfill({ status: 404, body: "" }); }
   });
@@ -372,30 +372,3 @@ test("forced colors, 320px and 200% zoom: the focus ring and borders stay, nothi
 });
 
 // ---- the extension's own pages (Chromium loads extensions only with a display)
-test("axe-core finds nothing on the extension's pages: welcome, popup, options, practice", { skip: noDisplay, timeout: TIMEOUT * 4 }, async () => {
-  // Its own build: rebuilding dist/extension in place would pull it out from
-  // under the other display tests, which load it at the same time.
-  const out = await mkdtemp(path.join(os.tmpdir(), "morse-a11y-build-"));
-  const EXT = path.join(out, "extension");
-  execFileSync(process.execPath, [path.join(ROOT, "scripts/build.js"), "--out", EXT], { stdio: "ignore" });
-  const dir = await mkdtemp(path.join(os.tmpdir(), "morse-a11y-ext-"));
-  const ctx = await chromium.launchPersistentContext(dir, { headless: false, timeout: TIMEOUT * 2, args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, "--no-sandbox"] });
-  try {
-    let [worker] = ctx.serviceWorkers();
-    worker ||= await ctx.waitForEvent("serviceworker", { timeout: TIMEOUT });
-    const id = new URL(worker.url()).host;
-    const page = ctx.pages().find(p => p.url().includes("/welcome.html")) || await ctx.newPage();
-    const problems = [];
-    for (const name of ["welcome.html", "popup.html", "options.html"]) {
-      await page.goto(`chrome-extension://${id}/${name}`);
-      await page.waitForLoadState("load");
-      await settle(page);
-      problems.push(...axeLines(await axeCheck(page, { page: true })).map(l => `${name}: ${l}`));
-    }
-    await page.goto(`chrome-extension://${id}/welcome.html`);
-    const practice = await waitFor(() => page.frames().find(f => f.url().includes("practice.html")), { what: "the practice frame" });
-    await practice.waitForLoadState("load");
-    problems.push(...axeLines(await axeCheck(practice, { page: true })).map(l => `practice.html: ${l}`));
-    assert.deepEqual(problems, []);
-  } finally { await ctx.close(); await rm(dir, { recursive: true, force: true }); await rm(out, { recursive: true, force: true }); }
-});

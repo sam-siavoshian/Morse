@@ -481,8 +481,4 @@ test("the measuring setup removes the folders it made", { skip }, async () => {
     await (await desktop({ home: given })).close();
     assert.ok(existsSync(given), "a home it was given stays");
   } finally { rmSync(given, { recursive: true, force: true }); }
-  // demo/perf.js: the extension's browser profile goes when it is done.
-  const src = readFileSync(new URL("../demo/perf.js", import.meta.url), "utf8");
-  assert.deepEqual([...src.matchAll(/const (\w+) = await fs\.mkdtemp\(/g)].map(m => m[1]), ["profile"]);
-  assert.match(src, /finally \{[^\n]*fs\.rm\(profile, \{ recursive: true, force: true \}\)/);
 });

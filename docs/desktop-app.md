@@ -2,8 +2,8 @@
 
 The Morse app is Morse. It is the one thing to install, and the only place
 you set anything up. You don't need a terminal, Node or anything else. It
-finds your model, lists your apps and opens them with Morse, and adds Morse
-to Chrome. It also shows your mods.
+finds your model, lists your apps and browsers and opens them with Morse,
+and shows your mods.
 
 A mod is a change you saved. Morse brings it back every time you open that
 site or app.
@@ -58,7 +58,7 @@ always at the top:
 2. **Three moves, in any app:** press the shortcut, point at something, say
    what you want.
 3. **Pick an app to change**, each with **Open with Morse**. Click one, and
-   you're done. **Use Morse in Chrome too** is there for websites.
+   you're done. Browsers are in the list too, for websites.
 
 ![The welcome: Morse's name, then Begin](screenshots/176-desktop-app-welcome.png)
 ![How it works: open Morse, point at something, say what you want](screenshots/177-desktop-app-how.png)
@@ -110,39 +110,16 @@ make sure it answers.
 The marks of Claude, OpenAI and Anthropic only name the service you choose.
 Where they come from: `desktop-app/ui/icons/NOTICE`.
 
-## Chrome
+## Websites
 
-Click **Use Morse in Chrome** (on the first screen, **Use Morse in Chrome
-too**). Morse in Chrome uses the model you chose here, so there is nothing
-to set up in Chrome.
+Chrome, Edge, Brave, Arc and Vivaldi are in your apps, with **Open with
+Morse** like any app. Each opens in a window of its own with a Morse
+profile: since Chrome 136, browsers don't let any program control your
+everyday profile. Sign in to your sites in that window once; after that,
+every site there works with Morse, and your mods for a site come back each
+time you open it. Your everyday browser window is left alone.
 
-Morse isn't in the Chrome Web Store yet, so the button adds it from a folder:
-
-1. Morse puts the extension in a folder that stays put, **Morse for Chrome**
-   in your home folder, shows that folder, and opens Chrome on its
-   extensions page.
-2. A picture shows where to click there: turn on **Developer mode** (top
-   right), then click **Load unpacked** (top left) and choose that folder.
-   Or drag the folder onto the page.
-3. Morse's welcome page opens in Chrome, and the Morse app asks
-   **“Allow Chrome to use your Claude Code?”**. Click **Allow**. There's no
-   code to type.
-
-Once Morse is in the Chrome Web Store, the same button opens its page there.
-
-![Where to click on Chrome's extensions page](screenshots/176-desktop-app-chrome-guide.png)
-
-![“Allow Chrome to use your Claude Code?”](screenshots/171-desktop-app-allow-chrome.png)
-
-Only the Morse extension on this computer can ask. Nothing connects until you
-click **Allow**. Click Allow only if you added Morse to Chrome a moment ago.
-**Sign out browsers** disconnects every browser.
-
-While the Morse app is open, Chrome can use your model through it. If you
-don't want that, turn off **Let Chrome use Morse**. **Advanced** has the
-extension's folder and a code to type, for developers.
-
-![Chrome: Use Morse in Chrome, and Let Chrome use Morse](screenshots/170-desktop-app-chrome.png)
+Safari and Firefox give Morse no way in.
 
 ## Mods
 
@@ -170,14 +147,13 @@ Linux) or the menu bar (Mac). Click it for:
 - **Open Morse**: the window again.
 - **Open an app with Morse**: your apps. Click a connected one to disconnect it.
 - **Turn all mods off**: the off switch.
-- **Quit Morse**: Morse leaves every app it connected (they keep running) and
-  stops the Morse helper.
+- **Quit Morse**: Morse leaves every app it connected (they keep running).
 
 On Linux, some desktops don't show tray icons. Open the Morse app again, and
 its window comes back.
 
-The Morse app only opens when you log in if you turn on **Open at login** at
-the bottom left. Then it starts in the tray, without the window.
+With **Always open with Morse** on (at the bottom left, on unless you turn it
+off), the Morse app opens when you log in, in the tray, without the window.
 
 ![The Morse app in light mode](screenshots/174-desktop-app-light.png)
 
@@ -202,5 +178,4 @@ as connected in the Morse app too.
 - The window only shows Morse's own page. It never loads anything from the
   internet, and web pages can't control it.
 - Morse never changes an app's files, and asks before it restarts an app.
-- Chrome connects only after you click **Allow** in the Morse app (or type a code).
 - To see what Morse sends to your model, and when, read [Privacy and safety](privacy-and-safety.md).

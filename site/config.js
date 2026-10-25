@@ -1,6 +1,6 @@
 // Every link target, the film and the real pictures, in one place.
 //
-// Each page's buttons carry data-link="chrome" or data-link="desktop", and
+// Each page's buttons carry data-link="desktop" (and the like), and
 // common.js points them here when the page loads. The href written in the
 // HTML is the same placeholder, so the buttons work before the script runs.
 //
@@ -8,9 +8,6 @@
 // tests/site.test.js checks that every one of them resolves.
 
 export const LINKS = {
-  // "Add to Chrome". Until the Chrome Web Store listing is live, it opens the
-  // steps for installing by hand. Then put the listing's address here.
-  chrome: "./#chrome-steps",
   // "Download Morse": Morse Desktop. Until there is a download, it opens the
   // steps for the morse command. Then put the download page's address here.
   // Morse Desktop: the "preview" release, rebuilt from main on every push

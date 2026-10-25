@@ -103,6 +103,8 @@ export default {
   "toast.linkCopied": "链接已复制。装了 Morse 的人都能安装“{title}”。",
   "toast.linkFailed": "无法复制链接。请改用“分享”。",
   "toast.deleted": "已删除“{title}”",
+  "toast.undeleted": "已恢复“{title}”",
+  "toast.undoFailed": "无法恢复，它仍处于删除状态。",
 
   // ---- 模组面板
   "panel.label": "这个页面上的模组",
@@ -657,6 +659,7 @@ export default {
   "desk.mods.count": { other: "{n} 个模组 · {on} 个已开" },
   "desk.mods.stopped": "因为它让应用变慢或出错，所以停了。打开它可以再试一次。",
   "desk.mods.on": "{title} 已开",
+  "desk.mods.delete": "删除 {title}",
   "desk.checks.run": "运行检查",
   "desk.checks.running": "正在检查…",
   "desk.checks.lede": "Morse 在这台电脑上找到了什么，以及你的模型是否回应。",
@@ -785,7 +788,7 @@ export default {
   "setup.noKeyEnv": "ANTHROPIC_API_KEY 和 OPENAI_API_KEY 都没有设置",
   "setup.notInstalled": "未安装",
   "setup.start1": "欢迎使用 Morse。先运行 {cmd}，选择用什么来做你的改动：Claude Code、Codex 或 API 密钥。",
-  "setup.start2": "然后，网站：在 chrome://extensions 里加载 {dir}（开发者模式，“Load unpacked”）。应用：{cmd}。",
+  "setup.start2": "然后用 Morse 打开一个应用或你的浏览器：{cmd}，或 morse launch chrome。",
   "setup.start3": "在任意页面按 {key}，指向某个东西，说出要改什么。",
   "setup.start3.help": "morse help 列出最常用的命令。",
   "setup.next": "下一步",

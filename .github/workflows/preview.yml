@@ -1,9 +1,7 @@
 # The "preview" pre-release: always the newest main, built and tried.
 #
 # Every push to main (and a run by hand from the Actions tab) builds:
-#   package   morse-cli.tgz (npm pack, about 2 MB: the morse command with the
-#             Chrome extension inside) and morse-extension.zip (the extension
-#             as the Chrome Web Store gets it)
+#   package   morse-cli.tgz (npm pack, about 2 MB: the morse command)
 #   desktop   Morse Desktop: Morse-mac-arm64.dmg / -x64.dmg (and .zip),
 #             Morse-Setup.exe (Windows), Morse-linux-x86_64.AppImage.
 #             Signed only when the signing secrets are set (docs/dev/releasing.md);
@@ -11,7 +9,7 @@
 #             "Open Anyway"
 #   smoke     the one-line installers (install.sh, install.ps1) run against the
 #             package just built, on macOS, Windows and Linux: morse --version,
-#             morse doctor --offline, the extension folder, a second run
+#             morse doctor --offline, a second run
 #             (an update), morse uninstall
 #   release   the GitHub pre-release tagged "preview": the tag moves to this
 #             commit and the files are replaced, with SHA256SUMS
@@ -44,7 +42,7 @@ concurrency:
 
 jobs:
   package:
-    name: morse package and extension zip
+    name: morse package
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -57,22 +55,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
-      - name: Chrome extension zip (the store build)
-        run: npm run store
-      - name: The morse package, with the store build of the extension inside
+      - name: The morse package
         shell: bash
-        env:
-          MORSE_STORE: "1" # read by scripts/build.js, which npm pack runs (prepare)
         run: |
           VERSION=$(node -p 'require("./package.json").version')
           mkdir -p out
           npm pack --pack-destination out
           mv "out/morse-cli-$VERSION.tgz" out/morse-cli.tgz
-          mv "dist/morse-extension-$VERSION-store.zip" out/morse-extension.zip
-          if tar -xzOf out/morse-cli.tgz package/dist/extension/host.js | grep -q '"http://127.0.0.1:8787'; then
-            echo "::error::The extension in the package is the test build (it trusts 127.0.0.1:8787)."
-            exit 1
-          fi
           ls -l out
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -217,8 +206,6 @@ jobs:
           command -v morse
           test "$(morse --version)" = "$(node -p 'require("./package.json").version')"
           morse doctor --offline
-          test -f "$HOME/.morse/chrome-extension/manifest.json"
-          test "$(morse extension | head -n 1)" = "$HOME/.morse/chrome-extension"
           morse uninstall --yes
           test ! -e "$HOME/.morse/app"
           hash -r
@@ -236,7 +223,6 @@ jobs:
           if ($v -ne (Get-Content -Raw package.json | ConvertFrom-Json).version) { throw "morse --version said $v" }
           morse doctor --offline
           if ($LASTEXITCODE -ne 0) { throw 'morse doctor --offline failed' }
-          if (-not (Test-Path "$HOME\.morse\chrome-extension\manifest.json")) { throw 'no extension folder' }
       - name: install.ps1 as a file, again (an update), then morse uninstall (PowerShell 7)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -288,7 +274,7 @@ jobs:
             echo
             echo "**Or one line in a terminal** (needs Node 22): \`curl -fsSL https://raw.githubusercontent.com/$R/main/install.sh | sh\` (macOS, Linux) or \`irm https://raw.githubusercontent.com/$R/main/install.ps1 | iex\` (Windows PowerShell)."
             echo
-            echo "\`morse-cli.tgz\` is what the line installs; \`morse-extension.zip\` is the Chrome extension. \`SHA256SUMS\` has every file's SHA-256."
+            echo "\`morse-cli.tgz\` is what the line installs. \`SHA256SUMS\` has every file's SHA-256."
           } > notes.md
       - name: Move the preview tag here and replace the files
         shell: bash

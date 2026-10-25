@@ -104,6 +104,8 @@ export default {
   "toast.linkCopied": "نُسخ الرابط. يمكن لأي شخص لديه Morse تثبيت «{title}».",
   "toast.linkFailed": "تعذّر نسخ الرابط. جرّب المشاركة بدلًا من ذلك.",
   "toast.deleted": "حُذف «{title}»",
+  "toast.undeleted": "أُعيد «{title}»",
+  "toast.undoFailed": "تعذّرت إعادته. لا يزال محذوفًا.",
 
   // ---- لوحة التعديلات
   "panel.label": "التعديلات في هذه الصفحة",
@@ -658,6 +660,7 @@ export default {
   "desk.mods.count": { one: "تعديل واحد · {on} مفعّل", two: "تعديلان · {on} مفعّل", few: "{n} تعديلات · {on} مفعّل", other: "{n} تعديلًا · {on} مفعّل" },
   "desk.mods.stopped": "أُوقف لأنه أبطأ التطبيق أو أفسده. شغّله لتجرّب مرة أخرى.",
   "desk.mods.on": "{title} مفعّل",
+  "desk.mods.delete": "حذف {title}",
   "desk.checks.run": "شغّل الفحوص",
   "desk.checks.running": "جارٍ الفحص…",
   "desk.checks.lede": "ما وجده Morse على هذا الحاسوب، وهل يجيب نموذجك.",
@@ -786,7 +789,7 @@ export default {
   "setup.noKeyEnv": "لا شيء في ANTHROPIC_API_KEY أو OPENAI_API_KEY",
   "setup.notInstalled": "غير مثبّت",
   "setup.start1": "مرحبًا بك في Morse. أولًا، شغّل {cmd} لتختار ما يُجري تغييراتك: Claude Code أو Codex أو مفتاح API.",
-  "setup.start2": "ثم، للمواقع، حمّل {dir} في chrome://extensions (وضع المطوّر، «Load unpacked»). للتطبيقات: {cmd}.",
+  "setup.start2": "ثم افتح تطبيقًا أو متصفحك مع Morse: ‏{cmd}، أو morse launch chrome.",
   "setup.start3": "اضغط {key} في أي صفحة، وأشِر إلى شيء، وقل ما تريد تغييره.",
   "setup.start3.help": "morse help يعرض الأوامر الأكثر استخدامًا.",
   "setup.next": "التالي",

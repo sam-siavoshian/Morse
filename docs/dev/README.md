@@ -14,7 +14,7 @@ How to work on Morse itself. For using Morse, see the [docs](../README.md).
 - [Accessibility of Morse itself](accessibility.md): keyboard, screen
   readers, zoom and forced colors in Morse's own UI, and how axe-core checks
   it.
-- [Onboarding](onboarding.md): the first minutes, mapped and measured before
+- Onboarding: the first minutes, mapped and measured before
   and after onboarding v2, one-click pairing with Morse Desktop, and
   “Allow User Scripts” only when a change needs it.
 - [Checking a Mac or Windows PC](platform-testing.md): the 15-minute check
@@ -26,32 +26,23 @@ How to work on Morse itself. For using Morse, see the [docs](../README.md).
 ## Set up a checkout
 
 You need Node 22 or newer. The browser tests use Playwright, installed
-globally (not an npm dependency), and the tests that load the extension need
+globally (not an npm dependency), and the tests that open real windows need
 a display (Xvfb works). Clips need `ffmpeg`.
 
 ```bash
 git clone https://github.com/sam-siavoshian/RRAA morse && cd morse
 npm ci                       # the Anthropic SDK and esbuild
-npm run build                # builds the Chrome extension into dist/extension
+npm run build                # bundles the runtime into dist/runtime (the site's Try it here)
 npm link                     # so `morse` runs this checkout
+npm run desktop              # the Morse app, from this checkout
 npm run demo:serve           # the demo sites and the website on http://127.0.0.1:8787-8797
 ```
 
-Load `dist/extension` in `chrome://extensions` (Developer mode, Load
-unpacked); `morse extension` prints that folder. After changing anything
-under `runtime/`, `core/` or `extension/`, run `npm run build` again and
-reload the extension in `chrome://extensions`: until then Chrome keeps
-running the old service worker. A build made this way notices: the next time
-you open the bar it says “Morse was rebuilt. Reload it in
-chrome://extensions, then reload this page.” (and the worker's console says
-it too). The build writes an id into the worker and into `build-id.txt`, and
-the worker compares them ([`extension/dev-host.js`](../../extension/dev-host.js));
-a store build (`MORSE_STORE=1`) has neither.
+The Morse app and `morse launch` bundle the runtime from `runtime/` when
+they start, so a change there shows the next time you open an app with Morse.
 
 People who only use Morse install it with `npm install -g morse-cli` (or,
-until the first npm release, `npm install -g github:sam-siavoshian/RRAA`);
-the `prepare` script builds the extension inside the package, and
-`morse extension` prints where it is.
+until the first npm release, `npm install -g github:sam-siavoshian/RRAA`).
 
 ## Repo layout
 
@@ -59,9 +50,9 @@ the `prepare` script builds the extension inside the package, and
 core/        shared logic: engine, prompt, parser, model providers, mod format, the morse kit,
              onboarding and errors, gallery, heal, show-once, a11y, summary, demo replay (tests)
 runtime/     the in-app UI and effect: src/*.js bundled into one file, injected everywhere
-extension/   Chrome MV3 host: service worker, content-script bridge, popup, welcome page
-daemon/      desktop connector and CLI (CDP, app finder and launcher, ports, status, fuses,
-             clip recorder, mod store), the Morse helper for the extension, Claude Code / Codex runners
+daemon/      desktop connector and CLI (CDP, app and browser finder and launcher, ports, status,
+             fuses, clip recorder, mod store), Claude Code / Codex runners
+desktop-app/ the Morse app (Electron): the window, the first run, updates, Always open with Morse
 share/       static install page for share links
 site/        public website: landing page, mod gallery, example mods
 design/      tokens.css: every color, size and radius the UI uses
@@ -100,9 +91,7 @@ for developers), privacy in two lines, a short FAQ.
   bar and footer: `npm run pages` copies them into `site/gallery.html`
   (between its `<!-- chrome:… -->` markers) and `site/privacy.html`.
 - **`site/config.js`**: every link target and every real picture, in one
-  place. `LINKS`: where **Add to Chrome** and **Download Morse** go (the
-  steps by hand, `#chrome-steps` and `#desktop-steps`, until there is a store
-  listing or a Morse Desktop download). `DEMO_VIDEO`: the film under the
+  place. `LINKS`: where **Download Morse** and the other buttons go. `DEMO_VIDEO`: the film under the
   headline (file, poster, shape, captions). `SHOWCASE`: the before and after
   pairs, each with the app's name as it shows on screen (VSCodium, not VS
   Code), what was asked and by which model. Swap in the pictures from
@@ -134,7 +123,7 @@ for developers), privacy in two lines, a short FAQ.
   has no reply for gets a note that points to installing Morse
   (`isDemoFallback`; the section's `data-install` says where). Saved mods
   stay in the page's localStorage (`morse:try:*`). `npm run pages` publishes
-  the two demo apps and writes the runtime to `dist/extension/runtime.js`,
+  the two demo apps and writes the runtime to `dist/runtime/runtime.js`,
   where `try.js` loads it from (run `npm run build` to try it from a
   checkout). [`tests/try.test.js`](../../tests/try.test.js) drives it in
   Chromium on a fresh `npm run pages` build, on a desktop and a 390px phone;
@@ -188,27 +177,20 @@ and `version`. Raise `version` and add a one-line `changes` when you update a
 mod, and people who installed it see Update available. Entries with
 `"demo": true` are for the demo sites (`npm run demo:serve` serves the list at
 `http://127.0.0.1:8787/site/mods/index.json`, which Morse uses on those
-sites in a test build and in the Morse helper. The store build never reads
-it). The gallery page shows them with a “Demo app” badge. To read another list, set
+sites). The gallery page shows them with a “Demo app” badge. To read another list, set
 `MORSE_GALLERY_URL` or `"gallery": { "index": "…" }` in `~/.morse/config.json`
-(desktop), or `morse.gallery.url` in the extension's local storage.
+.
 
 ## Releasing
 
-The version lives in `package.json` only. The build writes it into the
-extension's manifest, and `morse --version` prints it. See
+The version lives in `package.json` only. `morse --version` prints it. See
 [CHANGELOG.md](../../CHANGELOG.md).
 
 `npm run release -- minor`, then `git push --follow-tags origin main`: the
-tag's workflow tests, publishes to npm and makes the GitHub release with the
-store zip. The one-time setup and every step: [Releasing](releasing.md).
+tag's workflow tests, publishes to npm and makes the GitHub release. The one-time setup and every step: [Releasing](releasing.md).
 
-- **npm:** the `prepare` script builds the extension that ships inside the
-  package, also for installs from GitHub.
-- **Chrome Web Store:** `npm run store` makes
-  `dist/morse-extension-<version>-store.zip` (a `MORSE_STORE=1` build) and
-  prints its SHA-256. The listing text, permission notes, screenshots and the
-  step-by-step guide are in [`docs/store/`](../store/SUBMIT.md).
+- **The Morse app:** every push to `main` rebuilds the preview release, and
+  installed copies update themselves from it.
 - **Privacy policy:** [docs/privacy.md](../privacy.md), published as
   `site/privacy.html` by `npm run pages`.
 
@@ -237,8 +219,7 @@ needs, in plain JavaScript with no new dependencies:
 
 - **Days:** tune the prompt and kit with Claude Code and Codex on real
   Spotify, Slack, Discord, VS Code, Notion and ChatGPT. A tray app with a
-  global hotkey (Tauri) so `morse launch` isn't needed. Clip recording in the
-  extension (`tabCapture`).
+  global hotkey (Tauri) so `morse launch` isn't needed.
 - **Weeks:** app profiles for apps whose command runner Morse can't find yet
   (see [App profiles](rea.md#what-doesnt-work-yet)). Enforce the
   no-network rule with a CSP or proxy for mod code. (Mod repair when an app

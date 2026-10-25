@@ -396,8 +396,8 @@ is, and whether Morse can see which apps are open.
   seconds, then ends the app and every process it started. Slack and Discord
   only hide in the tray when their window closes, so for them the second step
   is usual. It's the same as quitting from the tray icon.
-- **No firewall question.** The app's debugging port and the Morse helper
-  only listen on this computer, so Windows Firewall has nothing to ask about.
+- **No firewall question.** The app's debugging port only listens on this
+  computer, so Windows Firewall has nothing to ask about.
 - **Your Morse folder is `%USERPROFILE%\.morse`** (`C:\Users\you\.morse`).
   On macOS and Linux, Morse makes its files readable by you only. Windows
   doesn't use those settings. Instead, your user folder can only be opened by
@@ -554,9 +554,10 @@ check it in [macOS](#macos) and [Windows](#windows).
 
 ### Websites
 
-The same check on public websites, with the built Chrome extension in
-Chromium 153 on Linux, paired with `morse serve` and Claude Code (haiku). Each
-change was saved, then the page was reloaded.
+The same check on public websites, made with Morse's earlier Chrome extension
+in Chromium 153 on Linux and Claude Code (haiku); browsers now open with the
+Morse app, which puts the same Morse in every page. Each change was saved,
+then the page was reloaded.
 
 | Site | What was asked | Result | Time | Back after a reload |
 |---|---|---|---|---|
@@ -588,7 +589,7 @@ hub.docker.com.
 
 The same flow can be run on any installed app with
 [`demo/try-real-app.js`](../demo/try-real-app.js), and on websites with
-[`demo/try-real-sites.js`](../demo/try-real-sites.js) and
+`demo/try-real-sites.js` and
 [`demo/real-sites.json`](../demo/real-sites.json).
 
 ## How this was tested

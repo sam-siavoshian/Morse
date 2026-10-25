@@ -8,10 +8,9 @@
 //   mode     "auto" | "fast" | "best" (prefs "modelMode"; unset = "auto")
 //   tiers    { fast: { model, effort }, best: { model, effort } } or null
 //   pinned   true when the person named one model (morse config --model,
-//            --model on launch, the popup's helper model): routing is off
-//   backend  for the "helper" provider: the provider behind it
+//            --model on launch): routing is off
 //
-// Pure and dependency-free: core/providers.js and the extension worker use it.
+// Pure and dependency-free: core/providers.js uses it.
 
 import { t } from "./i18n.js"; // the model names people read
 export const MODEL_MODES = ["auto", "fast", "best"];
@@ -53,15 +52,6 @@ export function resolveTiers(provider, custom = {}, { baseUrl = "" } = {}) {
   return { fast: tierOf(d?.fast, custom?.fast), best: tierOf(d?.best, custom?.best) };
 }
 
-// The Morse popup's Anthropic key (extension/background.js): the model picked
-// there ("Model for harder changes") is the strong one, after the default
-// first model. Picking any other model means that one for every change, so
-// nothing steps down from it (and a person who picked haiku keeps haiku).
-export function popupTiers(provider, chosen) {
-  if (!chosen || chosen === TIERS[provider]?.best.model) return resolveTiers(provider);
-  return resolveTiers(provider, { fast: chosen, best: chosen });
-}
-
 const sameTier = (a, b) => a.model === b.model && (a.effort || "") === (b.effort || "");
 export const modeOf = s => (MODEL_MODES.includes(s?.mode) ? s.mode : "auto");
 // The tiers routing can use, or null (a pinned model, or none known).
@@ -77,8 +67,7 @@ export function tierSettings(s, tier, name) {
 
 // What the person sees in the bar's footer: "Claude Code · sonnet".
 export function tierLabel(s, label) {
-  if (s.provider !== "helper") return label(s);
-  return label({ provider: s.backend || "", model: s.model, effort: s.effort, baseUrl: "" }) || s.label;
+  return label(s);
 }
 
 // ---- Does this request need the strong model from the start? A cheap look

@@ -152,7 +152,7 @@
     us.download = `${mod.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.user.js`;
     const status = document.getElementById("status");
     document.getElementById("install").onclick = () => {
-      if (document.documentElement.dataset.morseExtension) {
+      if (document.documentElement.dataset.morseShare) {
         window.postMessage({ morseInstall: location.href }, "*");
         status.textContent = t("install.checkWindow");
       } else {
@@ -220,7 +220,7 @@
     file.download = packFilename(pack);
     const status = document.getElementById("status");
     document.getElementById("install").onclick = () => {
-      if (document.documentElement.dataset.morseExtension) {
+      if (document.documentElement.dataset.morseShare) {
         window.postMessage({ morseInstall: location.href }, "*");
         status.textContent = t("install.pk.checkWindow");
       } else {

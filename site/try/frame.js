@@ -4,7 +4,7 @@
 // reach the network on Morse's behalf.
 //
 // This file is the only glue: it gives the real runtime (loaded next, from
-// dist/extension/runtime.js) the host it expects, and passes every request
+// dist/runtime/runtime.js) the host it expects, and passes every request
 // to the page over postMessage. The one job done here is running mod code,
 // so code the demo model wrote only ever runs inside this frame.
 (() => {

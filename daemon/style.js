@@ -1,13 +1,11 @@
-// Your style on the desktop: ~/.morse/style.json, served to every window the
-// Morse helper connects to (core/style-host.js has the logic). Chrome shares
-// it when it is paired with the Morse helper (daemon/bridge.js /v1/style,
-// core/style-sync.js); the file is watched, so a change made by another
-// process (`morse serve` for Chrome, while `morse launch` runs an app) reaches
-// every open window too.
+// Your style: ~/.morse/style.json, served to every app and browser window
+// Morse connects to (core/style-host.js has the logic). The file is watched,
+// so a change made by another process (the Morse app, while `morse launch`
+// runs an app) reaches every open window too.
 
 import { promises as fs, watchFile, unwatchFile } from "node:fs";
 import path from "node:path";
-import { HOME, ensureHome, loadConfig } from "./store.js";
+import { HOME, ensureHome } from "./store.js";
 import { createStyleHost, STYLE_REQUESTS } from "../core/style-host.js";
 
 export { STYLE_REQUESTS };
@@ -43,15 +41,9 @@ export const onStyleChange = fn => {
   return () => { listeners.delete(fn); if (!listeners.size) unwatchFile(STYLE_FILE, onFile); };
 };
 
-// Every app, and every site too when a browser is paired with the Morse helper.
-export async function styleReach() {
-  const cfg = await loadConfig().catch(() => ({}));
-  return (cfg.bridge?.tokens || []).some(t => t.origin) ? "all" : "apps";
-}
-
+// Every app and every site: browsers open with Morse the way apps do.
 export const Style = createStyleHost({
   load: loadStyle,
   save: saveStyle,
   onChange: emit,
-  reach: styleReach,
 });

@@ -2,9 +2,9 @@
 
 ```bash
 npm ci
-npm run check      # build, node --check on every JS file, the runtime bundle, the built extension's files
+npm run check      # build, node --check on every JS file, the runtime bundle
 npm test           # everything that runs headless (Playwright, installed globally, for the browser tests)
-npm run test:ui    # the tests that need a display (the built extension), under xvfb-run if there's no $DISPLAY
+npm run test:ui    # the tests that need a display (real windows), under xvfb-run if there's no $DISPLAY
 DISPLAY=:99 npm test   # everything, on a virtual display
 ```
 
@@ -22,8 +22,7 @@ that need no extra dependencies, and lists every problem:
    top-level name, and the bundle must parse
    ([`scripts/bundle-check.js`](../../scripts/bundle-check.js), also run by
    `tests/bundle.test.js`)
-3. every file `extension/manifest.json` and `extension/*.html` point at (and
-   the modules those import) exists in `dist/extension` after the build
+3. axe-core (test-only) isn't in the built runtime
 
 ## `npm test`
 
@@ -31,7 +30,7 @@ that need no extra dependencies, and lists every problem:
 provider (a fake `claude` and `codex` on PATH from
 [`tests/fake-clis.js`](../../tests/fake-clis.js), fake Anthropic and OpenAI
 servers speaking their streaming protocols, the Anthropic one through the
-official SDK), the Morse helper (pairing, auth, origins, cancel), the engine,
+official SDK), the engine,
 share links, fuses, voice, the Edit tools, and browser tests of the kit and
 the UI in real Chromium.
 
@@ -41,18 +40,18 @@ A few tests read the repo itself:
 - `tests/hardening.test.js`: every window listener goes through `listen()`,
   and every key handler checks `isTrusted`.
 - `tests/words.test.js`: no developer jargon in what people read (the
-  runtime, the extension's pages, the share page, the website, and the user
+  runtime, the Morse app, the share page, the website, and the user
   pages in `docs/`). See [docs/WRITING.md](../WRITING.md).
 - `tests/a11y-morse.test.js`: Morse's own UI with the keyboard alone and a
   screen reader: axe-core (vendored in `demo/vendor/`, test-only) on the key
-  states and the extension's pages, the core flows without a mouse, what is
+  states, the core flows without a mouse, what is
   announced during a generation, forced colors and 320px. `npm run ui` runs
   axe on every catalog state. See [Accessibility](accessibility.md).
 - `tests/docs.test.js`: every relative link and image in the README and
   `docs/` exists, every `#anchor` matches a heading, every page is listed in
   [docs/README.md](../README.md), and the README stays short.
 
-Tests that need a display (Chromium extensions only load headed) skip on
+Tests that need a display (real app windows) skip on
 `noDisplay`; `npm run test:ui` ([`scripts/test-ui.js`](../../scripts/test-ui.js))
 builds and runs just those, on the current display or under `xvfb-run`.
 
@@ -99,31 +98,6 @@ folder of its own:
 T=$(mktemp -d) && TMPDIR=$T DISPLAY=:99 npm test; ls -A $T   # empty
 ```
 
-### The extension with a real Morse helper
-
-The extension looks for the Morse helper on 127.0.0.1:7457. A test that
-pairs the real extension with a real helper (`morse serve`, `morse setup
---pair`) gives both its own port, so runs side by side never meet:
-
-```js
-import { freePort } from "./helpers/net.js";
-
-const port = await freePort();
-// The extension: chrome.storage.local "morse.helperPort", set through its service worker.
-await sw.evaluate(p => chrome.storage.local.set({ "morse.helperPort": p }), port);
-// The CLI: MORSE_HELPER_PORT.
-spawn(process.execPath, [CLI, "serve"], { env: { ...process.env, MORSE_HELPER_PORT: String(port) } });
-```
-
-Set it before the extension looks for a helper: the welcome page opens on
-install and starts looking at once, so reload it after setting the port
-([`tests/first-run.test.js`](../../tests/first-run.test.js) does both). The
-setting only takes a whole number from 1024 to 65535 (anything else means
-7457) and the host is always 127.0.0.1. Only the service worker and the
-extension's own pages can write it: storage.local is closed to content
-scripts, and no message sets it
-([`tests/security.test.js`](../../tests/security.test.js)).
-
 ### The real Electron app
 
 [`tests/electron.test.js`](../../tests/electron.test.js) runs the desktop
@@ -166,8 +140,7 @@ against a fake Chromium app ([`demo/fake-app.js`](../../demo/fake-app.js),
 
 ## Soak tests
 
-Long, heavy use, measured over time: the extension loop on three demo
-sites, the desktop connector with windows, crashes and stop/attach cycles, 50
+Long, heavy use, measured over time: the desktop connector with windows, crashes and stop/attach cycles, 50
 mods on a streaming page, and service worker restarts
 ([`demo/soak/`](../../demo/soak/), results in
 [docs/perf/soak.md](../perf/soak.md)).
@@ -191,12 +164,8 @@ node evals/run.js --split test     # held-out cases: only for final reports
 ```
 
 [`evals/show-once.js`](../../evals/show-once.js) checks Show me once the same
-way. [`evals/bring.js`](../../evals/bring.js) checks Take this and Bring here
-on real apps and sites, through the built extension and the Morse helper (and
-`morse launch` for a desktop app): whether the brought feature opens and works,
-and whether it fits the page's design (its fonts, colors and corners are ones
-the page already uses). See [the evals](../../evals/README.md#bring-a-feature).
-Without a model, [`tests/take-ui.test.js`](../../tests/take-ui.test.js) runs
+way. Take this and Bring here: without a model,
+[`tests/take-ui.test.js`](../../tests/take-ui.test.js) runs
 the whole flow on two demo apps with the demo model.
 
 ## The UI catalog and review
@@ -214,20 +183,18 @@ demo/contrast.js` checks every color token pair. The checklist is
 ## Screenshots
 
 Every screenshot in [`docs/screenshots/`](../screenshots/) is made by a
-script in `demo/`, with the real extension or the real desktop connector.
+script in `demo/`, with the real desktop connector.
 [`docs/screenshots/REVIEW.md`](../screenshots/REVIEW.md) lists each one, the
 script that makes it, and whether it was checked and passed.
 
 ```bash
-DISPLAY=:99 npm run screenshots    # shoot-extension, shoot-desktop, shoot-control
+DISPLAY=:99 npm run screenshots    # shoot-desktop
 DISPLAY=:99 node demo/shoot-desktop-app.js   # Morse Desktop (167-175): Tunes for real, Claude Code checked for real if installed
 ```
 
 The scripts start what they need themselves: the demo sites on free ports
 (shown to the browser at their usual addresses, 127.0.0.1:8787–8790, so other
-runs on those ports don't matter) and the Morse helper on a free port
-(or `MORSE_HELPER_PORT`), which the extension in the script's browser is told
-about ("morse.helperPort", as in the tests). They press the platform's
+runs on those ports don't matter). They press the platform's
 Open Morse key (Ctrl+Shift+Space off macOS, from
 [`tests/helpers/keys.js`](../../tests/helpers/keys.js)) and start as someone
 who has used Morse before, with no first-run guide. They wait for the bar
@@ -259,7 +226,7 @@ and `shoot-site.js` (the website and share page, into
 to what an app does, with and without its profile) from
 [`demo/try-app-logic.js`](../../demo/try-app-logic.js), which also writes the
 numbers in [App profiles](rea.md#measurements). The launch videos are made by
-[`demo/record-launch.js`](../../demo/record-launch.js). See the
+`demo/record-launch.js`. See the
 [launch kit](../launch/README.md).
 
 Every picture up to 146 was retaken on October 24, 2026, after the
@@ -270,8 +237,7 @@ recorded again.
 
 ## What was verified and how
 
-- **Verified end to end** (in a Linux container, Chromium 153): the
-  extension on three sites including a strict-CSP one. The desktop connector
+- **Verified end to end** (in a Linux container, Chromium 153): the desktop connector
   via `morse launch` → CDP attach → inject → generate → self-repair → save →
   full app restart → mods re-applied. Share link → install in a second
   browser profile. Userscript export running standalone. Clip recording to
@@ -285,9 +251,7 @@ recorded again.
   the player) on the first try in about 19 s, and made the album covers
   bigger with rounder corners in about 17 s. An earlier run's covers change
   targeted `img` elements the demo app doesn't have and did nothing visible:
-  a small fast model guessing at markup. The extension was checked the same way: paired with
-  `morse serve`, the popup's Test button, a full generation through the
-  helper, and Stop killing the `claude` process mid-run.
+  a small fast model guessing at markup.
 - **The demo video** was recorded from real runs: Claude Code (haiku) wrote
   the sleep timer and the word count with no edits
   ([launch kit](../launch/README.md#about-the-recordings)).

@@ -3,7 +3,6 @@
 //   - OpenAI API: an image_url data URL (fake chat completions server)
 //   - Claude Code: one stream-json user message on stdin (fake `claude`)
 //   - Codex: refused with a clear message, nothing is run
-//   - the Morse helper accepts picture messages from the extension
 import { tempDir } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -19,7 +18,7 @@ const MESSAGES = [
   { role: "system", content: "You describe pictures." },
   { role: "user", content: [IMAGE, { type: "text", text: "Request: Describe this picture" }] },
 ];
-let tmp, streamChat, createBridge, startPairing;
+let tmp, streamChat;
 
 before(async () => {
   tmp = tempDir("morse-a11y-model-");
@@ -31,7 +30,6 @@ before(async () => {
   await fs.writeFile(path.join(process.env.MORSE_HOME, "config.json"), JSON.stringify({ provider: "claude-code" }));
   ({ streamChat } = await import("../core/providers.js"));
   await import("../daemon/models.js"); // registers claude-code and codex
-  ({ createBridge, startPairing } = await import("../daemon/bridge.js"));
 });
 after(() => fs.rm(tmp, { recursive: true, force: true }));
 
@@ -100,37 +98,4 @@ test("Codex: says plainly it can't look at pictures, and runs nothing", async ()
   await fs.rm(path.join(tmp, "codex.json"), { force: true });
   await assert.rejects(streamChat({ provider: "codex" }, MESSAGES), /^Error: Codex can't look at pictures in Morse\. Use Claude Code or an Anthropic API key for that\.$/);
   await assert.rejects(fs.access(path.join(tmp, "codex.json")));
-});
-
-test("Morse helper: takes picture messages from the extension, and only well-formed ones", async () => {
-  const EXT = "chrome-extension://" + "b".repeat(32);
-  const bridge = createBridge({ port: 0, timeoutMs: 20000 });
-  const port = await bridge.listen();
-  const post = (p, body, headers = {}) => new Promise((resolve, reject) => {
-    const data = Buffer.from(JSON.stringify(body));
-    const r = http.request({ host: "127.0.0.1", port, method: "POST", path: p, headers: { "Content-Type": "application/json", "Content-Length": data.length, Origin: EXT, ...headers } }, res => {
-      let text = "";
-      res.setEncoding("utf8");
-      res.on("data", d => (text += d));
-      res.on("end", () => resolve({ status: res.statusCode, text }));
-    });
-    r.on("error", reject);
-    r.end(data);
-  });
-  try {
-    const { code } = await startPairing();
-    const token = JSON.parse((await post("/v1/pair", { code })).text).token;
-    const auth = { Authorization: `Bearer ${token}` };
-    const ok = await post("/v1/complete", { messages: MESSAGES }, auth);
-    assert.equal(ok.status, 200, ok.text);
-    assert.match(ok.text, /"type":"done"/);
-    const log = JSON.parse(await fs.readFile(path.join(tmp, "claude.json"), "utf8"));
-    assert.equal(JSON.parse(log.input.trim()).message.content[0].source.data, PIXEL);
-    for (const bad of [
-      [{ role: "user", content: [{ type: "image", source: { type: "url", url: "https://x" } }] }],
-      [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: "image/svg+xml", data: "x" } }] }],
-      [{ role: "assistant", content: [IMAGE] }],
-      [{ role: "user", content: [{ type: "tool_use" }] }],
-    ]) assert.equal((await post("/v1/complete", { messages: bad }, auth)).status, 400, JSON.stringify(bad));
-  } finally { await bridge.close(); }
 });

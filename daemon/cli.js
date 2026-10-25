@@ -13,16 +13,11 @@ import { startLabel, modelNames } from "../core/route.js"; // models: fast and s
 import { commandFor, platformChecks, formatChecks } from "./platform.js";
 import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask, migrateLegacy } from "./models.js";
 import { detectHarnesses, validModel } from "./harness.js";
-import { createBridge, startPairing, VERSION, helperPort, terminalAsk } from "./bridge.js";
+import { VERSION } from "./version.js";
 import { streamChat } from "../core/providers.js";
-// MORSE_HELPER_PORT moves `morse serve`, `morse setup --pair` and the health
-// check off 7457 (tests run several helpers at once; their extension follows
-// with chrome.storage.local "morse.helperPort", docs/dev/testing.md).
-const HELPER_PORT = helperPort();
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
-import { plainError, setHelperPort } from "../core/onboarding.js";
+import { plainError } from "../core/onboarding.js";
 import { DOWNLOAD } from "../core/links.js";
-setHelperPort(HELPER_PORT); // "can't reach 127.0.0.1:<port>" reads as "the helper isn't running"
 import { pauseCli, resumeCli, exportAllCli, importCli, codeCli } from "./control.js"; // user control
 import { configuredHotkeys } from "./store.js";
 import { paint, shown } from "./colors.js";
@@ -119,10 +114,6 @@ function version(bin) {
     (e, out) => r(e ? "" : String(out).trim().split(/\r?\n/)[0])));
 }
 
-async function helperHealth() {
-  try { return await (await fetch(`http://127.0.0.1:${HELPER_PORT}/v1/health`, { signal: AbortSignal.timeout(800) })).json(); } catch { return null; }
-}
-
 const h = (id, v) => t(`help.${id}`, v); // the commands and flags stay as typed
 const HELP = `${LOGO}
 ${h("forDevs", { url: DOWNLOAD })}
@@ -140,12 +131,6 @@ ${B(h("desktop"))} ${h("desktop.note")}
   morse stop <app>          ${h("stop")}
   morse fuses <app|path>    ${h("fuses")}
   morse profile <app|path>  ${h("profile")}
-
-${B(h("web"))} ${h("web.note")}
-  morse extension           ${h("extension")}
-  morse serve               ${h("serve")}
-  morse pair                ${h("pair")}
-  morse unpair              ${h("unpair")}
 
 ${B(t("settings.model"))} ${h("model.note")}
   morse setup               ${h("setup")}
@@ -181,7 +166,6 @@ ${B(h("pause"))}
 
 ${h("foot.open", { key: B(openKey) })}${KEYS.mods ? ` ${h("foot.mods", { key: B(KEYS.mods) })}` : ""}${KEYS.off ? `
 ${h("foot.off", { key: B(KEYS.off) })}` : ""}
-${h("foot.web", { ext: B("morse extension"), serve: B("morse serve") })}
 ${h("foot.version", { cmd: "morse --version" })}`;
 
 // simplify: `morse help` is the few commands people use; every command and
@@ -192,10 +176,6 @@ ${B(h("desktop"))}
   morse launch <app>        ${h("launch")}
   morse apps                ${h("apps")}
   morse stop <app>          ${h("stop")}
-
-${B(h("web"))}
-  morse extension           ${h("extension")}
-  morse serve               ${h("serve")}
 
 ${B(t("settings.model"))}
   morse setup               ${h("setup")}
@@ -290,46 +270,6 @@ async function main() {
       await showModel();
       break;
     }
-    case "extension": {
-      const { EXTENSION_DIR } = await import("./setup.js");
-      const { existsSync } = await import("node:fs");
-      if (!existsSync(EXTENSION_DIR)) throw new Error(t("cli.extension.notBuilt", { dir: EXTENSION_DIR.replace(/[\\/]dist[\\/]extension$/, "") }));
-      // Installed with the install line: the copy in the Morse folder, which stays put across updates (daemon/installed.js).
-      console.log(await (await import("./installed.js")).extensionFolder({ builtDir: EXTENSION_DIR }));
-      console.log(D(t("cli.extension.how")));
-      break;
-    }
-    case "serve": {
-      const port = Number(f.port || HELPER_PORT);
-      // onboarding v2: in a terminal (or with --ask), Chrome's Connect asks here: y to allow, no code to type.
-      const canAsk = process.stdin.isTTY || f.ask === true;
-      const bridge = createBridge({ port, log: console.log, ask: canAsk ? terminalAsk() : null });
-      await bridge.listen().catch(e => {
-        throw new Error(e.code === "EADDRINUSE" ? t("cli.serve.inUse", { port }) : e.message);
-      });
-      const s = await currentSettings();
-      const { code } = await startPairing(undefined, typeof f.pair === "string" ? f.pair.trim().toUpperCase() : ""); // first-run hook: --pair <code from the welcome page>
-      console.log(LOGO + "\n");
-      console.log(`  helper  http://127.0.0.1:${port}  ${D("v" + VERSION)}`);
-      console.log(`  model   ${s.provider === "none" ? `${WARN("none")} ${D(t("cli.serve.noModel"))}` : settingsLabel(s)}`);
-      console.log(`  pair    ${B(code)}  ${D(t("cli.serve.pair"))}\n`);
-      const stop = async () => { await bridge.close(); process.exit(0); };
-      process.on("SIGINT", stop);
-      process.on("SIGTERM", stop);
-      break;
-    }
-    case "pair": {
-      const { code } = await startPairing();
-      console.log(`${t("cli.pair.code")} ${B(code)} ${D(t("cli.pair.once"))}`);
-      if (!(await helperHealth())) console.log(D(t("cli.pair.noHelper")));
-      break;
-    }
-    case "unpair": {
-      let n = 0;
-      await updateConfig(cfg => { n = cfg.bridge?.tokens?.length || 0; if (cfg.bridge) cfg.bridge.tokens = []; });
-      console.log(t("cli.unpaired", { n }));
-      break;
-    }
     case "uninstall": // what the install line added (daemon/installed.js)
       await (await import("./installed.js")).uninstallCli(f);
       break;
@@ -357,8 +297,6 @@ async function main() {
         row(name, p ? `${p} ${D(await version(p))}` : D("not found"));
       }
       row("keys", `anthropic ${keys.anthropic ? mask(keys.anthropic) : D("-")} · openai ${keys.openai ? mask(keys.openai) : D("-")}`);
-      const health = await helperHealth();
-      row("helper", health ? `running on 127.0.0.1:${HELPER_PORT} ${D(`v${health.version} · ${health.label}`)}` : D("not running (start it with morse serve)"));
       const s = settingsFromConfig(cfg, { ...(f.provider && { provider: f.provider }), ...(f.model && { model: f.model }) });
       row("model", s.provider === "none" ? WARN("none") : `${B(settingsLabel(s))}${s.detected ? D("  (auto-detected)") : ""}`);
       if (s.provider === "none") {

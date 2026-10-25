@@ -1,4 +1,4 @@
-// The UI catalog: drives the real runtime (dist/extension/runtime.js) through
+// The UI catalog: drives the real runtime (dist/runtime/runtime.js) through
 // every state of every element and saves one tight, element-cropped
 // screenshot per state to docs/ui/<area>/<state>-<theme>.png, in a dark and a
 // light host app, at desktop and phone width, and on hostile host pages.
@@ -89,7 +89,7 @@ async function open({ theme = "dark", width = 1100, height = 720, mods = 0, url,
   if (url) {
     await page.goto(`${BASE}${url}${url.includes("?") ? "&" : "?"}mods=${mods}${extra}`);
     await page.addScriptTag({ url: "/demo/catalog-host.js" });
-    await page.addScriptTag({ url: "/dist/extension/runtime.js" });
+    await page.addScriptTag({ url: "/dist/runtime/runtime.js" });
   } else {
     await page.goto(`${BASE}/demo/catalog.html?theme=${theme}&mods=${mods}${extra}`);
   }

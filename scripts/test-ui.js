@@ -1,5 +1,5 @@
-// `npm run test:ui`: the tests that need a display (Chromium extensions only
-// load headed). They're the test files that skip on `noDisplay`
+// `npm run test:ui`: the tests that need a display (they drive a headed
+// browser). They're the test files that skip on `noDisplay`
 // (tests/helpers/browser.js); `npm test` skips them when there's no $DISPLAY.
 // Runs them on the current display, or under a virtual one with xvfb-run.
 import { spawnSync } from "node:child_process";

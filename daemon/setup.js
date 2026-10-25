@@ -13,16 +13,10 @@
 //                                        already set up, nothing changes; one
 //                                        found, it is used; none, it says how
 //                                        (the install line runs this)
-//   morse setup --pair <code>            first run from Chrome: the welcome page
-//                                        shows this command with its own code;
-//                                        setup then starts the Morse helper with
-//                                        that code waiting, and the page pairs
-//                                        by itself (nothing to type back)
 
 import { spawn } from "node:child_process";
 import { promises as fs, constants as FS } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import readline from "node:readline";
 import { loadConfig, saveConfig, HOME, savePrefs as savePrefsFile } from "./store.js";
 import { resolveTiers } from "../core/route.js"; // models: fast and strong
@@ -31,20 +25,10 @@ import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LAN
 import { paint } from "./colors.js";
 import { commandFor } from "./platform.js";
 import { validModel } from "./harness.js"; // models: names Morse can pass to claude and codex
-import { extensionPath } from "./installed.js";
 
 const { g: G, d: D, b: B, r: R } = paint;
 const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· setup")}\n${G("▪▫▪")}`;
-// fileURLToPath, not URL.pathname: that gives /C:/… on Windows and %20 for spaces.
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-export const EXTENSION_DIR = path.join(ROOT, "dist", "extension");
 const tilde = p => (process.env.HOME && p.startsWith(process.env.HOME) ? "~" + p.slice(process.env.HOME.length) : p);
-// The extension folder as the user can type it: relative inside the repo, else from ~.
-// Installed with the install line, it is the copy in the Morse folder (daemon/installed.js).
-const extDir = () => {
-  const dir = extensionPath(EXTENSION_DIR);
-  return path.relative(process.cwd(), dir).startsWith("..") || path.isAbsolute(path.relative(process.cwd(), dir)) ? tilde(dir) : path.relative(process.cwd(), dir);
-};
 
 // What each choice is, how to get it, and what it writes to config.json's
 // "model". The provider ids are core/providers.js's; keep them in step.
@@ -152,17 +136,16 @@ export function gettingStarted({ platform = detectPlatform({ platform: process.p
   const key = formatCombo(defaultHotkeys(platform).open, platform);
   return [
     `${G("▦")} ${t("setup.start1", { cmd: B("morse setup") })}`,
-    `${G("▦")} ${t("setup.start2", { dir: B(extDir()), cmd: B("morse launch obsidian") })}`,
+    `${G("▦")} ${t("setup.start2", { cmd: B("morse launch obsidian") })}`,
     `${G("▦")} ${t("setup.start3", { key: B(key) })} ${D(t("setup.start3.help"))}`,
   ].join("\n");
 }
 
-// `pairing`: Chrome is being connected right now (connectBrowser says so).
-function nextSteps(platform, { pairing = false } = {}) {
+function nextSteps(platform) {
   const key = formatCombo(defaultHotkeys(platform).open, platform);
   const label = id => D(t(id).padEnd(8));
   return `  ${B(t("setup.next"))}
-${pairing ? "" : `    ${label("setup.next.websites")}  ${t("setup.next.load", { dir: extDir(), how: D(t("setup.next.how")) })}\n`}    ${label("setup.next.apps")}  morse launch obsidian ${D(t("setup.next.or"))}${pairing ? D(t("setup.next.another")) : ""}
+    ${label("setup.next.apps")}  morse launch obsidian ${D(t("setup.next.or"))}
     ${label("setup.next.then")}  ${t("setup.next.press", { key: B(key) })}`;
 }
 
@@ -184,7 +167,6 @@ export const setupHelp = (h = (id, v) => t(`setup.help.${id}`, v)) => `${h("titl
   morse setup --use api-key --key <key>
                                    ${h("key", { path: `${tilde(HOME)}/config.json` })}
   morse setup --auto               ${h("auto")}
-  morse setup --pair <code>        ${h("pair")}
   morse setup --model-mode auto|fast|best
                                    ${h("mode")}
   morse setup --fast-model <name> --best-model <name>
@@ -294,8 +276,8 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
     else say(`  ${R("✗")} ${t("setup.noAnswer", { label, error: checked.error })}\n    ${fixFor(choice, model.provider)}`);
   }
   say("");
-  if (!flag("pair") && !auto) say(nextSteps(platform)); // with --pair, connectBrowser says what's next; with --auto, the install line does
-  return { saved: true, rows, choice, model, checked, next: () => nextSteps(platform, { pairing: true }) };
+  if (!auto) say(nextSteps(platform)); // with --auto, the install line says what's next
+  return { saved: true, rows, choice, model, checked };
 }
 
 // What setup saves for a choice, without the questions (Morse Desktop saves
@@ -361,40 +343,11 @@ export async function checkModel(cfg) {
   } catch (e) { return { ok: false, error: plainError(e) }; }
 }
 
-// First run from Chrome (`morse setup --pair <code>`): the Morse helper starts
-// here with the welcome page's code waiting, so the page pairs by itself. A
-// helper that's already running just gets the code.
-export async function connectBrowser(code, { say = s => console.log(s) } = {}) {
-  const { createBridge, startPairing, helperPort } = await import("./bridge.js");
-  const HELPER_PORT = helperPort();
-  const up = await fetch(`http://127.0.0.1:${HELPER_PORT}/v1/health`, { signal: AbortSignal.timeout(800) }).then(r => r.ok, () => false);
-  if (up) {
-    await startPairing(undefined, code);
-    say(`  ${G("✓")} ${t("setup.helperUp")}`);
-    return null;
-  }
-  const bridge = createBridge({ port: HELPER_PORT, log: console.log });
-  try { await bridge.listen(); }
-  catch (e) { throw new Error(e.code === "EADDRINUSE" ? t("setup.portBusy", { port: HELPER_PORT }) : e.message); }
-  await startPairing(undefined, code);
-  say(`  ${G("✓")} ${t("setup.helperStarted")}`);
-  say(D(`    ${t("setup.leaveOpen")}`));
-  const stop = async () => { await bridge.close(); process.exit(0); };
-  process.on("SIGINT", stop);
-  process.on("SIGTERM", stop);
-  return bridge;
-}
-
 // The one entry point daemon/cli.js calls. Returns true when it handled the command.
 export async function maybeRun(cmd, args = []) {
   if (cmd === "setup" && args.some(a => a === "--help" || a === "-h" || a === "help")) { console.log(setupHelp()); return true; }
   if (cmd === "setup") {
-    const i = args.indexOf("--pair");
-    const code = i >= 0 ? String(args[i + 1] || "").trim().toUpperCase() : "";
-    const { validPairingCode } = await import("./bridge.js");
-    if (i >= 0 && !validPairingCode(code)) throw new Error(t("setup.badCode"));
-    const res = await runSetup(args, { check: process.env.MORSE_SETUP_CHECK === "0" ? null : checkModel });
-    if (res.saved && code) { await connectBrowser(code); console.log("\n" + res.next()); }
+    await runSetup(args, { check: process.env.MORSE_SETUP_CHECK === "0" ? null : checkModel });
     return true;
   }
   if (!cmd && !isSetUp(await loadConfig())) {

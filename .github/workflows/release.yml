@@ -5,11 +5,10 @@
 #
 #   verify   the tag matches package.json, CHANGELOG.md has its section,
 #            npm ci, npm run check, npm test (the headless tests, as in ci.yml)
-#   build    the Chrome Web Store zip (MORSE_STORE=1), the npm package (its
-#            extension is the same store build) installed and tried once,
-#            and the release notes from CHANGELOG.md
+#   build    the npm package, installed and tried once, and the release
+#            notes from CHANGELOG.md
 #   npm      npm publish --provenance, only when the NPM_TOKEN secret is set
-#   release  the GitHub release: the notes, the store zip, the npm package and,
+#   release  the GitHub release: the notes, the npm package and,
 #            when .github/workflows/release-desktop.yml exists, the Morse
 #            Desktop downloads that workflow builds for the same tag
 #
@@ -105,16 +104,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Chrome Web Store zip
-        run: npm run store # MORSE_STORE=1 build, checked, zipped: dist/morse-extension-<version>-store.zip
-      - name: npm package, with the store build of the extension inside
+      - name: npm package
         shell: bash
-        env:
-          MORSE_STORE: "1" # read by scripts/build.js, which `prepare` runs
         run: |
           mkdir -p out
           npm pack --pack-destination out
-          mv "dist/morse-extension-$VERSION-store.zip" out/
           ls -l out
       - name: Install the package and try it
         shell: bash
@@ -124,16 +118,10 @@ jobs:
           export PATH="$PREFIX/bin:$PATH" MORSE_HOME=$(mktemp -d) MORSE_NO_UPDATE_CHECK=1
           test "$(morse --version)" = "$VERSION"
           # (output saved first: grep -q stops reading early, and pipefail would count that)
-          HELP=$(morse help); SETUP=$(morse setup --help); EXTOUT=$(morse extension)
-          grep -q "morse extension" <<< "$HELP"
+          HELP=$(morse help); SETUP=$(morse setup --help)
+          grep -q "morse launch" <<< "$HELP"
           grep -q "morse setup --use claude-code" <<< "$SETUP"
-          EXT=$(sed -n 1p <<< "$EXTOUT")
-          test "$(node -p "require('$EXT/manifest.json').version")" = "$VERSION"
-          if grep -q '"http://127.0.0.1:8787"' "$EXT/host.js"; then
-            echo "::error::The extension in the package is the test build (it trusts 127.0.0.1:8787)."
-            exit 1
-          fi
-          echo "morse $VERSION works from the package; extension at $EXT"
+          echo "morse $VERSION works from the package"
       - name: Release notes
         shell: bash
         run: |
@@ -248,8 +236,7 @@ jobs:
             echo
             echo "### Get it"
             echo
-            if [ -n "$NPM_PUBLISHED" ]; then echo "- The \`morse\` command, with the Chrome extension inside: \`npm install -g morse-cli@$VERSION\`"; fi
-            echo "- \`morse-extension-$VERSION-store.zip\`: the Chrome extension, as uploaded to the Chrome Web Store"
+            if [ -n "$NPM_PUBLISHED" ]; then echo "- The \`morse\` command: \`npm install -g morse-cli@$VERSION\`"; fi
             ls out | grep -qiE '\.(AppImage|dmg|exe)$' && echo "- Morse Desktop: the \`.AppImage\` (Linux), \`.dmg\` (macOS) and \`.exe\` (Windows) below"
             echo
             echo "SHA-256:"
@@ -278,7 +265,7 @@ jobs:
           gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "Morse $VERSION" --notes-file notes-full.md $PRE
           gh release upload "$TAG" $FILES --repo "$GITHUB_REPOSITORY" --clobber
           gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
-          echo "::notice title=Released::https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG. Upload morse-extension-$VERSION-store.zip to the Chrome Web Store by hand (docs/store/SUBMIT.md)."
+          echo "::notice title=Released::https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG."
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: env.DRY_RUN == '1'
         with:

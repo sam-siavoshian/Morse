@@ -9,7 +9,6 @@
 // plain sentences (daemon/apps.js said(), core/onboarding.js plainError()).
 
 import { promises as fs } from "node:fs";
-import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 
@@ -20,10 +19,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // The daemon modules, the way the CLI uses them. One object, so tests can
 // hand createService a fake with the same names.
 export async function loadDaemon() {
-  const [apps, desktop, status, store, models, setup, bridge, control, coreControl, platform, providers, onboarding, ports] = await Promise.all([
+  const [apps, desktop, status, store, models, setup, control, coreControl, platform, providers, onboarding, version] = await Promise.all([
     import("../daemon/apps.js"), import("../daemon/desktop.js"), import("../daemon/status.js"), import("../daemon/store.js"),
-    import("../daemon/models.js"), import("../daemon/setup.js"), import("../daemon/bridge.js"), import("../daemon/control.js"),
-    import("../core/control.js"), import("../daemon/platform.js"), import("../core/providers.js"), import("../core/onboarding.js"), import("../daemon/ports.js"),
+    import("../daemon/models.js"), import("../daemon/setup.js"), import("../daemon/control.js"),
+    import("../core/control.js"), import("../daemon/platform.js"), import("../core/providers.js"), import("../core/onboarding.js"), import("../daemon/version.js"),
   ]);
   return {
     // apps (morse apps, launch, attach, status, stop)
@@ -33,12 +32,9 @@ export async function loadDaemon() {
     // the model (morse setup, morse doctor)
     loadConfig: store.loadConfig, updateConfig: store.updateConfig, settingsFromConfig: models.settingsFromConfig, settingsLabel: models.settingsLabel,
     keysFrom: models.keysFrom, mask: models.mask, detectBackends: setup.detectBackends, recommend: setup.recommend, configFor: setup.configFor,
-    saveChoice: setup.saveChoice, checkModel: setup.checkModel, BACKENDS: setup.BACKENDS, EXTENSION_DIR: setup.EXTENSION_DIR,
-    // the Morse helper (morse serve, pair, unpair)
-    createBridge: bridge.createBridge, startPairing: bridge.startPairing, helperPort: bridge.helperPort, validPairingCode: bridge.validPairingCode, VERSION: bridge.VERSION,
-    portIsMine: ports.portIsMine, // another account's program on the helper's place (Linux)
+    saveChoice: setup.saveChoice, checkModel: setup.checkModel, BACKENDS: setup.BACKENDS, VERSION: version.VERSION,
     // mods and the off switch (morse mods, pause, resume)
-    listMods: store.listMods, getMod: store.getMod, saveMod: store.saveMod,
+    listMods: store.listMods, getMod: store.getMod, saveMod: store.saveMod, deleteMod: store.deleteMod,
     loadControl: control.loadControl, saveControl: control.saveControl, setPause: coreControl.setPause, pauseInfo: coreControl.pauseInfo,
     // checks (morse doctor)
     platformChecks: platform.platformChecks, HOME: store.HOME, CONFIG_PATH: store.CONFIG_PATH, configuredHotkeys: store.configuredHotkeys,
@@ -51,23 +47,16 @@ export async function loadDaemon() {
 //   autoOpen      an app with mods that starts on its own (the Dock, Finder, the
 //                 Start menu) is opened again with Morse, so its mods are there; on
 //   loginSet      Morse turned startAtLogin on by itself once, for autoOpen (never again: your choice stands)
-//   helper        run the Morse helper in the background, for Chrome; on
 //   apps          apps you added by their file, for apps Morse didn't find
 //   appArgs       { "<app id>": [arguments] }: what `morse launch <app> -- <args>` passes (no window for it)
-const DEFAULTS = { startAtLogin: false, autoOpen: true, loginSet: false, helper: true, welcomed: false, apps: [], appArgs: {} };
+const DEFAULTS = { startAtLogin: false, autoOpen: true, loginSet: false, welcomed: false, apps: [], appArgs: {} };
 const argsFor = (s, id) => (Array.isArray(s.appArgs?.[id]) ? s.appArgs[id].map(String) : []);
 
 export function createService({
   daemon: d, emit = () => {}, log = () => {}, iconFor = async () => null,
   scan = process.env.MORSE_DESKTOP_SCAN !== "0", // tests and screenshots: only the apps added by file
-  fetchHealth = defaultHealth, now = () => Date.now(),
-  copyExtension = false, // packaged: the extension lives inside the app, so Chrome gets a copy in the Morse folder
-  // Where the extension's copy goes: a folder you can see, so Chrome's Load
-  // unpacked finds it without showing hidden folders (~/.morse is one).
-  chromeFolder = path.join(os.homedir(), "Morse for Chrome"),
-  chromeStore = "", // Morse's Chrome Web Store page, once it's listed (site/config.js LINKS.chrome); until then the extension that comes with the app
+  now = () => Date.now(),
   self = [], // Morse Desktop's own program: never listed as an app to open with Morse
-  onAsk = () => {}, // Chrome asked to connect: main.js brings the window forward
 } = {}) {
   const SETTINGS = path.join(d.HOME, "desktop.json");
   const own = new Map();     // app id -> a session this process runs (daemon/desktop.js startSession)
@@ -80,9 +69,7 @@ export function createService({
   const pending = new Map(); // app id -> "opening" | "disconnecting"
   const icons = new Map();   // app id -> data URL or null
   let found = null, foundAt = 0;
-  let helper = { bridge: null, running: false, ours: false, error: "" };
   let lastCheck = null;      // { ok, ms, error, at, label }
-  let asks = [];             // Chrome asking to connect, waiting for Allow or Deny: [{ id, extension, words, resolve }]
   let settings = null;
   // Always open with Morse: what each app was at the last look, and when Morse
   // last reopened it (one try a minute, so an app that won't open with Morse
@@ -324,129 +311,6 @@ export function createService({
     } catch (e) { return fail(e); }
   }
 
-  // ---- Chrome: the Morse helper (morse serve) and pairing
-  // A program another account started can sit on the helper's place and answer
-  // like a helper. Chrome would send it your requests, so it never counts as running.
-  const theirs = port => d.portIsMine?.(port) === false;
-  const THEIRS = "A program another account on this computer started is using the Morse helper's place. Chrome can't use your model until it's gone: restart the computer, then turn the helper on again.";
-  async function startHelper() {
-    const port = d.helperPort();
-    if (helper.running && helper.ours) return chrome();
-    if (theirs(port)) { helper = { bridge: null, running: false, ours: false, error: THEIRS }; changed(); return chrome(); }
-    if (await fetchHealth(port)) { helper = { bridge: null, running: true, ours: false, error: "" }; changed(); return chrome(); }
-    // One-click pairing (onboarding v2, daemon/bridge.js): the helper calls
-    // askAllow when Chrome asks to connect; the person answers in this window.
-    const bridge = d.createBridge({ port, app: "desktop", ask: askAllow, log: line => log(`helper: ${plain(line).trim()}`) });
-    try {
-      await bridge.listen();
-      helper = { bridge, running: true, ours: true, error: "" };
-    } catch (e) {
-      helper = { bridge: null, running: false, ours: false, error: e.code === "EADDRINUSE" ? "Another program is using the Morse helper's place on this computer. Close it, then turn the helper on again." : plain(e.message) };
-    }
-    changed();
-    return chrome();
-  }
-  async function stopHelper() {
-    if (helper.bridge) await helper.bridge.close().catch(() => {});
-    helper = { bridge: null, running: false, ours: false, error: "" };
-    for (const a of asks) a.resolve(false);
-    asks = [];
-    changed();
-    return chrome();
-  }
-
-  async function chrome() {
-    const cfg = await d.loadConfig();
-    let running = helper.running;
-    // A helper started from a terminal (morse serve) counts too.
-    if (!helper.ours) {
-      const foreign = theirs(d.helperPort());
-      running = !foreign && !!(await fetchHealth(d.helperPort()));
-      if (running !== helper.running || (foreign && helper.error !== THEIRS)) helper = { ...helper, running, ...(foreign && { error: THEIRS }) };
-    }
-    const p = cfg.bridge?.pairing;
-    const waiting = p && p.expires > now() ? { code: p.code, expires: p.expires } : null;
-    return {
-      running, ours: helper.ours, error: helper.error, browsers: (cfg.bridge?.tokens || []).length, waiting,
-      ask: asks[0] ? { id: asks[0].id, extension: asks[0].extension, words: asks[0].words } : null, // "Allow Chrome to use your Claude Code?"
-      extensionDir: copyExtension ? chromeFolder : d.EXTENSION_DIR,
-      store: chromeStore, // "Use Morse in Chrome" opens it when there is one
-    };
-  }
-
-  // "Use Morse in Chrome": the folder Chrome's Load unpacked takes. A packaged
-  // Morse keeps the extension inside its own app file (and an AppImage moves
-  // on every start), so Chrome gets a copy in a folder that stays put, made
-  // again each time so it matches this version. A folder of that name that
-  // Morse didn't make is only written over, never emptied.
-  const MARK = ".morse-extension";
-  async function extensionFolder() {
-    if (!copyExtension) return d.EXTENSION_DIR;
-    const to = chromeFolder;
-    const copyTree = async (from, dest) => {
-      await fs.mkdir(dest, { recursive: true });
-      for (const e of await fs.readdir(from, { withFileTypes: true })) {
-        if (e.isDirectory()) await copyTree(path.join(from, e.name), path.join(dest, e.name));
-        else await fs.writeFile(path.join(dest, e.name), await fs.readFile(path.join(from, e.name)));
-      }
-    };
-    const ours = await fs.stat(path.join(to, MARK)).then(() => true, () => false);
-    if (ours) await fs.rm(to, { recursive: true, force: true });
-    await copyTree(d.EXTENSION_DIR, to);
-    await fs.writeFile(path.join(to, MARK), "Morse made this folder for Chrome. The Morse app makes it again when you click Use Morse in Chrome.\n");
-    return to;
-  }
-
-  // "Use Morse in Chrome" (desktop-app/chrome.js): the Chrome Web Store page
-  // when Morse is listed there; until then the folder Chrome's Load unpacked
-  // takes. main.js opens the one or the other. The helper has to run for
-  // Chrome to connect, so this turns it on too.
-  async function useChrome() {
-    if (!(await loadSettings()).helper) await setSetting("helper", true);
-    else if (!helper.running) await startHelper();
-    if (chromeStore) return { store: chromeStore };
-    const folder = await extensionFolder();
-    // How the window shows it: ~/Morse for Chrome (on Windows, the whole path).
-    const home = os.homedir();
-    const shown = process.platform !== "win32" && home && folder.startsWith(home + path.sep) ? `~${folder.slice(home.length)}` : folder;
-    return { folder, shown };
-  }
-
-  // "Show a code": a new code to type into Morse's popup in Chrome (morse pair).
-  async function newCode() {
-    if (!helper.running) await startHelper();
-    await d.startPairing();
-    changed();
-    return chrome();
-  }
-
-  // "Allow" or "Deny" for Chrome asking to connect. Only a click here makes a token.
-  // The helper's question (createBridge's `ask`): { origin, label, words, signal } -> true (Allow) | false.
-  function askAllow({ origin, words = null, signal } = {}) {
-    return new Promise(resolve => {
-      if (signal?.aborted) return resolve(false); // its time ran out already: "abort" won't fire again
-      const a = { id: crypto.randomBytes(12).toString("base64url"), extension: String(origin || "").replace(/^chrome-extension:\/\//, ""), words, resolve: null };
-      a.resolve = yes => { asks = asks.filter(x => x !== a); changed(); resolve(yes === true); };
-      asks = [...asks, a];
-      signal?.addEventListener("abort", () => a.resolve(false), { once: true }); // nobody answered in time
-      changed();
-      onAsk(asks);
-    });
-  }
-  async function answerAsk(id, allow) {
-    const a = asks.find(x => x.id === id);
-    if (!a) return { error: "Chrome stopped asking. Open Morse's welcome page in Chrome to ask again." };
-    a.resolve(!!allow);
-    return chrome();
-  }
-
-  // "Sign out browsers": morse unpair.
-  async function signOutBrowsers() {
-    await d.updateConfig(cfg => { if (cfg.bridge) cfg.bridge.tokens = []; return cfg; });
-    changed();
-    return chrome();
-  }
-
   // ---- mods and the off switch (morse mods, pause, resume)
   async function mods() {
     const list = await d.listMods();
@@ -467,6 +331,24 @@ export function createService({
     m.enabled = !!on;
     if (on) delete m.paused; // turning it back on is the person's answer to a guard pausing it
     m.updated = new Date(now()).toISOString();
+    await d.saveMod(m);
+    changed();
+    return { ok: true };
+  }
+  // Delete, and Undo right after: the mod as it was, kept until Morse quits.
+  const deleted = new Map();
+  async function deleteMod(id) {
+    const m = await d.getMod(id);
+    if (!m) return { error: "That mod isn't there any more." };
+    await d.deleteMod(id);
+    deleted.set(id, m);
+    changed();
+    return { ok: true, title: m.title };
+  }
+  async function undeleteMod(id) {
+    const m = deleted.get(id);
+    if (!m) return { error: "That mod can't be brought back any more." };
+    deleted.delete(id);
     await d.saveMod(m);
     changed();
     return { ok: true };
@@ -494,8 +376,6 @@ export function createService({
       const text = plain(b.detail) || (b.found ? "found" : "not installed");
       rows.push({ label: b.name, ok: b.found ? true : null, text: text.replace(/^[a-z]/, c => c.toUpperCase()) }); // "not installed" -> "Not installed"; paths stay as they are
     }
-    const c = await chrome();
-    rows.push({ label: "Morse helper", ok: c.running ? true : null, text: c.running ? `Running${c.ours ? " in Morse" : ""}. ${c.browsers} browser${c.browsers === 1 ? "" : "s"} connected.` : "Off. Chrome can't use your model until it's on." });
     const m = await model();
     rows.push({ label: "Model", ok: m.none ? false : true, text: m.none ? "None chosen. Choose one under Model." : `${m.label}${m.detected ? " (found by itself)" : ""}` });
     if (test && !m.none) {
@@ -507,23 +387,21 @@ export function createService({
 
   // ---- everything the window shows at once
   async function state({ fresh = false } = {}) {
-    const [m, a, c, md, p, s] = await Promise.all([model(), apps({ fresh }), chrome(), mods(), pause(), loadSettings()]);
+    const [m, a, md, p, s] = await Promise.all([model(), apps({ fresh }), mods(), pause(), loadSettings()]);
     const keys = await d.configuredHotkeys().catch(() => ({}));
-    return { version: d.VERSION, platform: process.platform, keys: { open: keys.open || "", mods: keys.mods || "", off: keys.off || "" }, model: m, apps: a, chrome: c, mods: md, pause: p, settings: { startAtLogin: !!s.startAtLogin, autoOpen: s.autoOpen !== false, helper: !!s.helper, welcomed: !!s.welcomed } };
+    return { version: d.VERSION, platform: process.platform, keys: { open: keys.open || "", mods: keys.mods || "", off: keys.off || "" }, model: m, apps: a, mods: md, pause: p, settings: { startAtLogin: !!s.startAtLogin, autoOpen: s.autoOpen !== false, welcomed: !!s.welcomed } };
   }
 
   async function setSetting(name, value) {
     if (!(name in DEFAULTS) || name === "apps" || name === "appArgs") return { error: "There's no such setting." };
     await saveSettings({ [name]: !!value });
-    if (name === "helper") await (value ? startHelper() : stopHelper());
     changed();
     return { ok: true };
   }
 
   // On quit: every app this window connected is disconnected (its mods come
   // off and it keeps running), every pipe Morse holds is let go (the apps
-  // hold their own copy of the pipe's input, so they don't quit), and the
-  // helper stops.
+  // hold their own copy of the pipe's input, so they don't quit).
   let quitting = false;
   async function shutdown() {
     quitting = true;
@@ -533,16 +411,11 @@ export function createService({
     pipes.push(...[...held.values()].map(h => h.browser));
     held.clear();
     await Promise.all(pipes.map(b => Promise.resolve(b.close()).catch(() => {})));
-    await stopHelper();
   }
 
   return {
-    state, apps, openApp, openBar, disconnectApp, addApp, model, modelChoices, chooseModel, check, chrome, startHelper, stopHelper, newCode,
-    extensionFolder, useChrome, askAllow, answerAsk, signOutBrowsers, mods, setModOn, pause, setAllModsOff, doctor, setSetting, loadSettings, shutdown,
+    state, apps, openApp, openBar, disconnectApp, addApp, model, modelChoices, chooseModel, check,
+    mods, setModOn, deleteMod, undeleteMod, pause, setAllModsOff, doctor, setSetting, loadSettings, shutdown,
     get sessions() { return own; },
   };
-}
-
-async function defaultHealth(port) {
-  try { const r = await fetch(`http://127.0.0.1:${port}/v1/health`, { signal: AbortSignal.timeout(800) }); return r.ok ? await r.json() : null; } catch { return null; }
 }

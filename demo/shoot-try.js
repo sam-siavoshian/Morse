@@ -5,7 +5,7 @@
 //
 //   npm run build && node demo/shoot-try.js     (SHOTS=dir to write elsewhere)
 //
-// Try it here loads the runtime from dist/extension/runtime.js, which
+// Try it here loads the runtime from dist/runtime/runtime.js, which
 // npm run build writes. The site is served from this checkout.
 
 import { promises as fs } from "node:fs";
@@ -17,7 +17,7 @@ const { chromium } = createRequire(import.meta.url)("playwright"); // preinstall
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const OUT = path.resolve(root, process.env.SHOTS || path.join("docs", "site"));
 await fs.mkdir(OUT, { recursive: true });
-await fs.access(path.join(root, "dist", "extension", "runtime.js")).catch(() => { throw new Error("Run npm run build first: Try it here needs dist/extension/runtime.js"); });
+await fs.access(path.join(root, "dist", "extension", "runtime.js")).catch(() => { throw new Error("Run npm run build first: Try it here needs dist/runtime/runtime.js"); });
 const sites = await demoSites();
 const SIZES = { desktop: { width: 1440, height: 900 }, mobile: { width: 390, height: 844 } };
 const sleep = ms => new Promise(r => setTimeout(r, ms));

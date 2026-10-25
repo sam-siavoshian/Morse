@@ -81,7 +81,7 @@ When the change is done, the bar shows what it made and how long it took.
 | | |
 |---|---|
 | ![](screenshots/321-vscode-result.png) The result in Visual Studio Code, with Save, Undo, Edit code and Share | ![](screenshots/322-vscode-back.png) Quit the app and open it again: the change is back |
-| ![](screenshots/302-real-result.png) nodejs.org as a printed book (Claude Code, sonnet, 13.4 seconds) | ![](store/screenshots/2-save-what-you-like.png) A new copy button on pypi.org’s code examples |
+| ![](screenshots/302-real-result.png) nodejs.org as a printed book (Claude Code, sonnet, 13.4 seconds) | |
 
 ## Keep improving it
 
@@ -112,10 +112,9 @@ Holding it lets you talk. Your words appear as you speak. Let go, and Morse
 starts on the change. To send as soon as you stop talking, turn on **Send
 after a pause** in Settings.
 
-- **In Chrome**, Chrome turns your speech into text.
-- **In desktop apps**, the Morse helper does it. It uses your OpenAI key, or
-  Whisper if it's on your computer. To set it up, see
-  [Models and setup](models.md#voice-in-desktop-apps).
+- **In a browser** opened with Morse, the browser turns your speech into text.
+- **In desktop apps**, Morse does it. It uses your OpenAI key, or Whisper if
+  it's on your computer. To set it up, see [Models and setup](models.md#voice).
 
 ## Shortcuts and Settings
 
@@ -128,9 +127,8 @@ the small notices. Morse won't take keys that would cause trouble, like ⌘Q
 or Alt+F4.
 
 The default is ⌥Space on macOS. On Windows and Linux it is Ctrl+Shift+Space,
-because Alt+Space opens the window menu there (or KRunner on KDE). Morse's
-button in Chrome's toolbar uses Ctrl+Shift+Y (⌘⇧Y), so it never takes keys
-Morse uses in the page. See the full list in
+because Alt+Space opens the window menu there (or KRunner on KDE). See the
+full list in
 [Getting started](getting-started.md#shortcuts).
 
 In the bar:
@@ -147,5 +145,4 @@ except your Morse shortcuts.
 |---|---|
 | ![](screenshots/317-real-settings.png) **Settings** | ![](screenshots/318-real-shortcuts.png) **?** shows the shortcuts you have |
 
-In Chrome, Morse keeps your settings in Chrome's sync storage. For desktop
-apps, it keeps them in `~/.morse/settings.json`.
+Morse keeps your settings in `~/.morse/settings.json`.

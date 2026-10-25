@@ -2,14 +2,12 @@
 // from the record it leaves in the Morse folder (~/.morse/install.txt):
 //
 //   app=<folder>         Morse itself (~/.morse/app)
-//   extension=<folder>   the Chrome extension, a copy in a folder that stays put
-//                        across updates (~/.morse/chrome-extension, the same one
-//                        Morse Desktop uses), so Chrome keeps finding it
+//   extension=<folder>   older installs only: the Chrome extension's folder
+//                        (~/.morse/chrome-extension), which Morse no longer has
 //   shim=<file>          the `morse` command it added
 //   path_added=<folder>  Windows only: the folder it added to your PATH, if any
 //
-// `morse extension` names that extension folder, and `morse uninstall`
-// removes exactly what is listed, nothing else: your mods and settings stay
+// `morse uninstall` removes exactly what is listed, nothing else: your mods and settings stay
 // unless you say --all. A Morse from npm or from a clone has no record.
 
 import { promises as fs, existsSync, readFileSync, realpathSync } from "node:fs";
@@ -44,23 +42,6 @@ const inside = (dir, p) => { const r = path.relative(real(dir), real(p)); return
 // happens to share the Morse folder).
 export function installedHere(receipt = readReceipt(), root = ROOT) {
   return !!(receipt?.app && real(receipt.app) === real(root));
-}
-
-// Where the extension folder is, without making it (setup's next steps).
-export function extensionPath(builtDir, receipt = readReceipt(), root = ROOT) {
-  return installedHere(receipt, root) && receipt.extension ? receipt.extension : builtDir;
-}
-
-// The folder Chrome's Load unpacked takes. For an install-line Morse, the copy
-// that stays put (made again when it's missing); otherwise the built one.
-export async function extensionFolder({ builtDir, receipt = readReceipt(), root = ROOT } = {}) {
-  if (!installedHere(receipt, root) || !receipt.extension) return builtDir;
-  const to = receipt.extension;
-  if (!existsSync(path.join(to, "manifest.json")) && existsSync(builtDir)) {
-    await fs.rm(to, { recursive: true, force: true });
-    await fs.cp(builtDir, to, { recursive: true });
-  }
-  return to;
 }
 
 // What `morse uninstall` would remove: [{ what, path }].
@@ -137,5 +118,5 @@ export async function uninstallCli(f, { input = process.stdin, say = s => consol
   const failed = await removePlan(plan);
   for (const s of failed) say(`Couldn't remove ${s.path}: ${s.error}`);
   if (failed.length) { process.exitCode = 1; return; }
-  say("Morse is removed. If you added it to Chrome, remove it there too: chrome://extensions, Morse, Remove.");
+  say(receipt.extension ? "Morse is removed. If you added its old Chrome extension to Chrome, remove it there too: chrome://extensions, Morse, Remove." : "Morse is removed.");
 }

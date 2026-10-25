@@ -29,7 +29,6 @@
     "core/",
     "runtime/",
     "design/tokens.css",
-    "dist/extension/",
     "CHANGELOG.md"
   ],
   "engines": {
@@ -40,7 +39,6 @@
     "setup": "node daemon/cli.js setup",
     "morse": "node daemon/cli.js",
     "doctor": "node daemon/cli.js doctor",
-    "extension": "node daemon/cli.js extension",
     "check": "node scripts/check.js",
     "test": "node tests/helpers/disk.js && node --test --test-timeout=300000 tests/*.test.js",
     "test:ui": "node tests/helpers/disk.js && node scripts/build.js && node scripts/test-ui.js",
@@ -48,15 +46,10 @@
     "desktop": "node desktop-app/run.js",
     "desktop:build": "node desktop-app/build.js",
     "prepare": "node scripts/build.js",
-    "package:extension": "node scripts/build.js && node scripts/package-extension.js",
-    "store": "node scripts/store.js",
     "pages": "node scripts/build-pages.js",
     "demo:serve": "node demo/serve.js",
     "ui": "node scripts/build.js && node demo/ui-catalog.js && node demo/contrast.js",
-    "screenshots": "node scripts/build.js && node demo/shoot-extension.js && node demo/shoot-desktop.js && node demo/shoot-control.js",
-    "store:screenshots": "node scripts/build.js && node scripts/store-screenshots.js",
-    "store:promo": "node scripts/store-promo.js",
-    "store:smoke": "node scripts/store-smoke.js",
+    "screenshots": "node scripts/build.js && node demo/shoot-desktop.js",
     "release": "node scripts/release.js"
   },
   "dependencies": {

@@ -1,5 +1,8 @@
 # Dogfood: 12 real tasks, October 24
 
+> A record of one day, kept as it was. Morse had a Chrome extension then;
+> websites now open with Morse from the Morse app, like apps do.
+
 Morse used the way a person would, on real apps and real websites, with
 **Claude Code (haiku)**, then fixed what got in the way. Every task used the
 real shortcut, mouse and keyboard: `xdotool` on the desktop apps, the built

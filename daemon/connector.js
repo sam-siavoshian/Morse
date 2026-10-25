@@ -591,7 +591,9 @@ export class Connector {
           return saveMod(createMod({ ...msg.draft, url: where.url, app, model: msg.draft.model || settingsLabel(this.settings) }));
         }
         validateMod(msg.mod);
-        const existing = await this.ownMod(msg.mod.id, where);
+        // Undo after Delete (70-panel.js): the mod as it was on disk, scope and all.
+        const existing = await this.ownMod(msg.mod.id, where) || (msg.restore && this.deleted?.get(msg.mod.id)) || null;
+        this.deleted?.delete(msg.mod.id);
         // A saved mod can be changed, not widened: its match stays what it
         // was, or is exactly this app (or this site). Wider matches ("*",
         // other hosts) only come in through a confirmed install (mods.import).
@@ -599,9 +601,11 @@ export class Connector {
           throw new Error("That mod is for another app or site");
         return saveMod(msg.mod);
       }
-      case "mods.delete":
-        await this.ownMod(msg.modId, await here());
+      case "mods.delete": {
+        const gone = await this.ownMod(msg.modId, await here());
+        if (gone) (this.deleted ||= new Map()).set(gone.id, gone); // for Undo in the Mods panel
         return deleteMod(msg.modId);
+      }
       // Decode and validate a shared mod without saving it (install confirmation).
       case "mods.import": {
         const src = msg.source.trim();

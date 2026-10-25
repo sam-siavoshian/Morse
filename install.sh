@@ -9,8 +9,7 @@
 #   2. downloads the small Morse package from the "preview" release on GitHub
 #      and checks it against the release's SHA256SUMS (with no release yet, it
 #      builds the package from the main branch instead, and says so)
-#   3. puts Morse in ~/.morse/app, the Chrome extension in
-#      ~/.morse/chrome-extension, and a `morse` command in ~/.local/bin (or
+#   3. puts Morse in ~/.morse/app and a `morse` command in ~/.local/bin (or
 #      npm's own folder for commands, when that is on your PATH and yours)
 #   4. runs `morse setup --auto`, which finds Claude Code or Codex
 #   5. says what to do next
@@ -33,7 +32,7 @@ BASE="${MORSE_INSTALL_BASE:-https://github.com/$REPO/releases/download/preview}"
 SOURCE="${MORSE_INSTALL_SOURCE:-https://codeload.github.com/$REPO/tar.gz/refs/heads/main}"
 MORSE_DIR="${MORSE_HOME:-$HOME/.morse}"
 APP="$MORSE_DIR/app"
-EXT="$MORSE_DIR/chrome-extension"
+EXT="$MORSE_DIR/chrome-extension" # older installs' Chrome extension: removed on update
 RECEIPT="$MORSE_DIR/install.txt"
 MARK="Morse: added by the install line"   # daemon/installed.js looks for it
 PREVIEW_PAGE="https://github.com/$REPO/releases/tag/preview"
@@ -151,9 +150,7 @@ build_from_main() {
   for d in "$TMP"/src/*; do [ -f "$d/package.json" ] && src="$d"; done
   [ -n "$src" ] || fail "The download from $SOURCE isn't the Morse source. Nothing was installed."
   step "Building Morse…"
-  # MORSE_STORE=1: the extension as the Chrome Web Store gets it. npm pack builds it
-  # again (its prepare script), so it needs the setting too.
-  (cd "$src" && export MORSE_STORE=1 && npm ci --no-audit --no-fund --loglevel=error >"$TMP/build.log" 2>&1 \
+  (cd "$src" && npm ci --no-audit --no-fund --loglevel=error >"$TMP/build.log" 2>&1 \
     && npm pack --pack-destination "$TMP" >>"$TMP/build.log" 2>&1) \
     || { cat "$TMP/build.log" >&2; fail "Building Morse from the main branch failed (above)."; }
   for f in "$TMP"/morse-cli-*.tgz; do mv "$f" "$TMP/morse-cli.tgz"; done
@@ -223,7 +220,7 @@ uninstall() {
     rm -f "$RECEIPT"
     step "Your mods and settings are still in $MORSE_DIR. Delete that folder to remove them too."
   fi
-  say "Morse is removed. If you added it to Chrome, remove it there too: chrome://extensions, Morse, Remove."
+  say "Morse is removed."
 }
 
 # ---------------------------------------------------------------- install
@@ -266,7 +263,7 @@ main() {
   mkdir -p "$MORSE_DIR"
   chmod 700 "$MORSE_DIR" 2>/dev/null || true
   old_sha=$(receipt_value sha256 || true)
-  if [ "$old_sha" = "$PKG_SHA" ] && [ -f "$APP/daemon/cli.js" ] && [ -f "$APP/dist/extension/manifest.json" ]; then
+  if [ "$old_sha" = "$PKG_SHA" ] && [ -f "$APP/daemon/cli.js" ]; then
     status="already up to date"
   else
     [ -f "$APP/daemon/cli.js" ] && status="updated" || status="installed"
@@ -275,7 +272,7 @@ main() {
     rm -rf "$STAGE"
     mkdir -p "$STAGE"
     tar -xzf "$PKG" -C "$STAGE"
-    [ -f "$STAGE/package/daemon/cli.js" ] && [ -f "$STAGE/package/dist/extension/manifest.json" ] \
+    [ -f "$STAGE/package/daemon/cli.js" ] \
       || fail "The package has no Morse in it. Nothing was installed."
     step "Getting Morse's one dependency from npm…"
     (cd "$STAGE/package" && npm install --omit=dev --ignore-scripts --no-audit --no-fund --no-package-lock --loglevel=error >"$TMP/npm.log" 2>&1) \
@@ -287,11 +284,8 @@ main() {
     STAGE=""
   fi
 
-  # The Chrome extension, in a folder that stays put (Morse Desktop uses it too).
-  rm -rf "$MORSE_DIR/.extension-new"
-  cp -R "$APP/dist/extension" "$MORSE_DIR/.extension-new"
-  rm -rf "$EXT"
-  mv "$MORSE_DIR/.extension-new" "$EXT"
+  # An older install's Chrome extension: Morse no longer has one.
+  rm -rf "$EXT" "$MORSE_DIR/.extension-new"
 
   pick_bin_dir
   write_shim
@@ -302,7 +296,6 @@ main() {
     say "sha256=$PKG_SHA"
     say "source=$PKG_FROM"
     say "app=$APP"
-    say "extension=$EXT"
     say "shim=$SHIM"
     say "installed=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   } >"$RECEIPT.tmp"
@@ -332,8 +325,7 @@ main() {
     fi
   fi
 
-  if [ "$os" = Darwin ]; then key="⌥Space"; pick=" (in that window: ⌘⇧G, then paste it)"; else key="Ctrl+Shift+Space"; pick=""; fi
-  case "$EXT" in "$HOME"/*) ext_shown="~${EXT#"$HOME"}" ;; *) ext_shown="$EXT" ;; esac
+  if [ "$os" = Darwin ]; then key="⌥Space"; else key="Ctrl+Shift+Space"; fi
   say ""
   if [ -n "$path_line" ]; then
     say "One more line, so your terminal finds the morse command (then open a new terminal):"
@@ -341,9 +333,9 @@ main() {
     say ""
   fi
   say "Next:"
-  say "  1. Chrome: open chrome://extensions, turn on Developer mode, click Load unpacked, choose $ext_shown$pick"
-  say "  2. Desktop apps: $morse launch obsidian, or Morse Desktop: $PREVIEW_PAGE"
-  say "  3. Press $key on a page or in the app, point at something, and say what to change."
+  say "  1. Open an app or your browser with Morse: $morse launch obsidian, or $morse launch chrome"
+  say "     (or the Morse app: $PREVIEW_PAGE)"
+  say "  2. Press $key in it, point at something, and say what to change."
 }
 
 main "$@"

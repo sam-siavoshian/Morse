@@ -39,7 +39,7 @@ What's real, and what the edit changed:
 - **The cursor is drawn in afterwards** from the logged moves (screen recordings don't include it): eased, slightly curved paths with a small overshoot, a soft ripple on each click. The camera's zooms are the edit's.
 - **Music**: “Voxel Revolution” by Kevin MacLeod (incompetech.com), CC BY 4.0. Human-made, not AI. See [MUSIC.md](MUSIC.md).
 
-Made by [`demo/record-social.js`](../../demo/record-social.js) (recording) with [`demo/social-edit.js`](../../demo/social-edit.js) (the cut: beats, camera, captions, music) and [`demo/compose-social.py`](../../demo/compose-social.py) (draws each frame). `REUSE=<work dir> MUSIC=<track>` cuts it again from the saved recordings.
+Made by `demo/record-social.js` (recording) with [`demo/social-edit.js`](../../demo/social-edit.js) (the cut: beats, camera, captions, music) and [`demo/compose-social.py`](../../demo/compose-social.py) (draws each frame). `REUSE=<work dir> MUSIC=<track>` cuts it again from the saved recordings.
 
 Tried and not used: Spotify, Signal, Discord and Slack couldn’t be downloaded on the recording machine (its network blocks their download hosts, the Snap Store and Flathub), and Spotify, Discord and Slack open on a sign-in screen anyway; with an account, Spotify (a web app inside, like Spicetify uses) is worth a try. Joplin’s AppImage started but never drew its window there.
 
@@ -67,7 +67,7 @@ A short thread:
 
 ## The 36-second cut (v2)
 
-[`morse-social-16x9.mp4`](morse-social-16x9.mp4), [`-4x5`](morse-social-4x5.mp4), [`-9x16`](morse-social-9x16.mp4) and [`poster-social.png`](poster-social.png) are the earlier cut: VSCodium (VS Code without Microsoft's branding) as a green terminal and with a focus timer, by Claude Code (haiku), then Show me once and Fix it on this repo's demo apps (Postbox and Tunes), not real ones. Made by `CUT=x` in [`demo/record-launch.js`](../../demo/record-launch.js). The title bar says “[Superuser]” because that machine ran apps as root.
+[`morse-social-16x9.mp4`](morse-social-16x9.mp4), [`-4x5`](morse-social-4x5.mp4), [`-9x16`](morse-social-9x16.mp4) and [`poster-social.png`](poster-social.png) are the earlier cut: VSCodium (VS Code without Microsoft's branding) as a green terminal and with a focus timer, by Claude Code (haiku), then Show me once and Fix it on this repo's demo apps (Postbox and Tunes), not real ones. Made by `CUT=x` in `demo/record-launch.js`. The title bar says “[Superuser]” because that machine ran apps as root.
 
 ## Who it's for
 
@@ -110,7 +110,7 @@ Not yet, or not verified:
 
 ## About the recordings
 
-This section is about the 92-second demo, the first demo and their clips (the launch video above has its own notes). They were recorded from real runs, by [`demo/record-launch.js`](../../demo/record-launch.js). Here is what's real and what was changed in the edit.
+This section is about the 92-second demo, the first demo and their clips (the launch video above has its own notes). They were recorded from real runs, by `demo/record-launch.js`. Here is what's real and what was changed in the edit.
 
 **The apps.** Tunes (a music app), Postbox (an email app) and The Daily Byte (a news site) are the demo apps in this repo ([`demo/sites/`](../../demo/sites/)). They stand in for real apps so the recording can be made again. In the browser they get made-up addresses (tunes.example, postbox.example, byte.example) instead of this computer's address and a port number. The desktop app is Tunes packed as a real Electron app ([`demo/electron-app`](../../demo/electron-app)), opened with a real `morse launch` typed into a terminal.
 

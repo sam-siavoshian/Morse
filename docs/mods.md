@@ -15,6 +15,11 @@ the mods for the site or app you're on. For each one you can:
 - **Share** it
 - under **More**: **Copy link**, **Show code** (with **Edit code** inside it), or **Delete**
 
+Delete and bringing back a version both show **Undo** in Morse's message at
+the bottom of the page. The Morse app's **Mods** list has every mod for every
+app and site, each with its switch and **Delete** (with **Undo**), and one
+switch that turns them all off.
+
 Each mod also says where it came from. It was made here (and with which
 model), made with your own edits, installed from a share link (and from
 whom), or restored from a backup.
@@ -104,7 +109,7 @@ Morse checks the gallery list at most once a day. To stop that, turn off
 
 | | |
 |---|---|
-| ![](store/screenshots/4-mods-others-made.png) **For this site** in the Mods panel, and **Try it**: pypi.org in dark mode, nothing saved yet | ![](site/gallery-desktop.png) The gallery on the website |
+| ![](site/gallery-desktop.png) The gallery on the website | |
 
 ## When a site changes
 

@@ -1,7 +1,7 @@
 // The words people read: no developer jargon in anything Morse shows a
 // person (docs/WRITING.md, "Words people don't know"). Scans every string in
 // runtime/src that reads like a sentence or a label, and the visible text of
-// the extension's pages, the share page and the website.
+// the share page, the website and the Morse app.
 //
 // Places written for developers are allowed explicitly below, each with why.
 import { test } from "node:test";
@@ -77,7 +77,6 @@ const ALLOWED = [
   ["runtime/src/80-modals.js", "JavaScript, can use the", "the Edit code view"],
   ["runtime/src/63-control.js", "Style <span class=\"dim\">CSS</span>", "Show code, folded under the install review"],
   ["runtime/src/63-control.js", "JavaScript, runs with the", "Show code, folded under the install review"],
-  ["extension/welcome.js", "node daemon/cli.js setup --pair", "a command to type, shown in <code> like the README's install steps"],
 ];
 // Files that never show text to a person: what the model reads, styles, plumbing.
 const SKIP_FILES = new Set([
@@ -149,10 +148,8 @@ function pageStrings(src) {
   return [...html.split("\n").map((text, k) => ({ text, line: k + 1 })), ...scripts];
 }
 
-test("the extension's pages, the share page, the website and Morse Desktop show no developer jargon", () => {
+test("the share page, the website and Morse Desktop show no developer jargon", () => {
   const files = [
-    ...readdirSync(new URL("extension/", ROOT)).filter(f => f.endsWith(".html")).map(f => `extension/${f}`),
-    ...readdirSync(new URL("extension/", ROOT)).filter(f => /^(popup|popup-control|popup-states|welcome)\.js$/.test(f)).map(f => `extension/${f}`),
     "share/install.html", "site/index.html", "site/gallery.html",
     "desktop-app/ui/index.html", "desktop-app/ui/app.js", // Morse Desktop's window
   ];
@@ -253,12 +250,11 @@ const prose = (src, { fences = false } = {}) => markdownProse(fences ? src.repla
 
 test("the README, the store listing, the launch kit and the changelog's headings have no hype or filler", () => {
   const found = [];
-  for (const file of ["README.md", "docs/README.md", "docs/launch/README.md", "docs/store/README.md", "CONTRIBUTING.md"]) found.push(...hits(file, prose(read(file)), [HYPE]));
-  found.push(...hits("docs/store/listing.md", prose(read("docs/store/listing.md"), { fences: true }), [HYPE]));
+  for (const file of ["README.md", "docs/README.md", "docs/launch/README.md", "CONTRIBUTING.md"]) found.push(...hits(file, prose(read(file)), [HYPE]));
   const headings = read("CHANGELOG.md").split("\n").map((text, k) => ({ text, line: k + 1 })).filter(l => /^#/.test(l.text));
   assert.ok(headings.length > 5, "reads the changelog's headings");
   found.push(...hits("CHANGELOG.md", headings.map(h => ({ ...h, text: h.text.replace(/^#+\s*/, "") + " is a heading" })), [HYPE]));
-  for (const file of ["package.json", "extension/manifest.json", "desktop-app/package.json"]) {
+  for (const file of ["package.json", "desktop-app/package.json"]) {
     const { description } = JSON.parse(read(file));
     if (description) found.push(...hits(file, [{ text: description, line: "description" }], [HYPE]));
   }

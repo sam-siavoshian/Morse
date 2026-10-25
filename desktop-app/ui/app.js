@@ -54,6 +54,14 @@ function appsGlyph() {
   }
   return s;
 }
+function trashGlyph() {
+  const s = document.createElementNS(svgNS, "svg");
+  for (const [k, v] of Object.entries({ viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", "stroke-width": "1.5", "stroke-linecap": "round", "aria-hidden": "true" })) s.setAttribute(k, v);
+  const p = document.createElementNS(svgNS, "path");
+  p.setAttribute("d", "M2.5 4.5h11M6.5 4.5V3h3v1.5M4 4.5l.7 8.5h6.6l.7-8.5M6.8 7v4M9.2 7v4");
+  s.append(p);
+  return s;
+}
 function appIcon(a) {
   return h("div", { class: `appicon${a.icon ? " has-img" : ""}`, "aria-hidden": "true" }, a.icon ? h("img", { src: a.icon, alt: "" }) : appsGlyph());
 }
@@ -306,96 +314,6 @@ $("use-choice").onclick = async () => {
   render();
 };
 
-// ---------------------------------------------------------------- chrome
-// Morse in Chrome: one button. With Morse in the Chrome Web Store it opens
-// Morse's page there; until then Chrome's extensions page, the folder, and
-// the picture of where to click (the guide below).
-function chromeLine(c) {
-  if (c.error) return [h("i", { class: "dot bad" }), h("span", { text: c.error })];
-  if (!c.running) return [h("i", { class: "dot" }), h("span", { text: t("desk.chrome.off") })];
-  if (c.browsers) return [h("i", { class: "dot on" }), h("span", { text: t("desk.chrome.connected", { n: c.browsers }) }),
-    h("button", { type: "button", class: "link", onclick: () => morse.signOutBrowsers() }, t("desk.chrome.signOut"))];
-  return [h("i", { class: "dot" }), h("span", { text: c.ours ? t("desk.chrome.notYet") : t("desk.chrome.notYetTerminal") })];
-}
-function renderChrome() {
-  const c = st.chrome;
-  $("helper-on").checked = st.settings.helper;
-  $("helper-live").replaceChildren(...chromeLine(c));
-  $("use-chrome").textContent = c.browsers ? t("desk.chrome.again") : t("desk.chrome.use");
-  $("use-chrome").classList.toggle("primary", !c.browsers);
-  // A code waiting: from "Show a code", or the one Chrome's welcome page sent.
-  const w = c.waiting;
-  $("pair-code").hidden = !w || w.fromChrome;
-  if (w && !w.fromChrome) {
-    $("pair-code").textContent = w.code;
-    const min = Math.max(1, Math.round((w.expires - Date.now()) / 60000));
-    $("code-note").textContent = t("desk.chrome.codeOnce", { n: min });
-  } else if (!codeNote) $("code-note").textContent = "";
-  $("new-code").textContent = w ? t("desk.chrome.newCode") : t("desk.chrome.showCode");
-  const nav = $("nav-chrome");
-  nav.textContent = c.browsers ? t("desk.nav.onShort") : "";
-  nav.className = c.browsers && c.running ? "on" : "";
-  // The first run's card, and the guide: done once a browser is connected.
-  $("first-chrome-note").textContent = c.browsers ? t("desk.chrome.card.done") : chromeNote || t("desk.chrome.card.d");
-  $("first-chrome").hidden = !!c.browsers;
-  $("first-chrome-card").classList.toggle("done", !!c.browsers);
-  const g = $("chrome-guide");
-  if (g.open) {
-    $("chrome-guide-live").replaceChildren(...(c.browsers ? [h("i", { class: "dot on" }), h("span", { text: t("desk.guide.connected") })]
-      : [radar(12), h("span", { text: t("desk.guide.waiting") })]));
-    if (c.browsers && !guideClosing) { guideClosing = true; setTimeout(() => { if (g.open) g.close(); guideClosing = false; }, 1600); }
-  }
-  // The Morse extension asked to connect: only Allow here makes it a token.
-  const d = $("ask-pair");
-  if (c.ask && d.dataset.id !== c.ask.id) {
-    d.dataset.id = c.ask.id;
-    $("ask-pair-h").textContent = c.ask.words?.message || t("pair.ask.q", { label: modelPhrase() }); // the helper's own words (askWords), when it has them
-    $("ask-ext").textContent = t("desk.ask.ext", { id: `${c.ask.extension.slice(0, 12)}…` });
-    const mark = providerMark(st.model.provider); mark.id = "ask-mark"; $("ask-mark").replaceWith(mark);
-    if (g.open) g.close(); // the question comes first
-    if (!d.open) d.showModal();
-    $("pair-yes").focus();
-  }
-  if (!c.ask && d.open) { d.close(); delete d.dataset.id; }
-}
-let guideClosing = false, chromeNote = "", codeNote = false;
-// "Claude Code", "Codex", "API key": what Chrome would use.
-function modelPhrase() {
-  const p = st.model.provider;
-  return p === "claude-code" ? "Claude Code" : p === "codex" ? "Codex" : p === "anthropic" || p === "openai" ? t("desk.model.apiKey") : t("pair.ask.yourModel");
-}
-async function answerAsk(allow) {
-  const d = $("ask-pair"), id = d.dataset.id;
-  d.close();
-  delete d.dataset.id;
-  if (id) await morse.answerAsk(id, allow);
-}
-async function useChrome() {
-  for (const b of [$("use-chrome"), $("first-chrome")]) b.disabled = true;
-  try {
-    const r = await morse.useChrome();
-    if (r?.error) { chromeNote = r.error; return renderChrome(); }
-    if (r?.store) { chromeNote = t("desk.chrome.store"); return renderChrome(); }
-    chromeNote = "";
-    const g = $("chrome-guide");
-    $("chrome-guide-lede").textContent = r?.opened ? t("desk.guide.opened") : t("desk.guide.noChrome");
-    $("chrome-guide-3").replaceChildren(...t("desk.guide.3", { folder: "\u0000" }).split("\u0000").flatMap((s, i) => (i ? [h("code", { text: r?.folder || "" }), s] : [s])));
-    if (!g.open) g.showModal();
-    renderChrome();
-    $("guide-done").focus();
-  } finally { for (const b of [$("use-chrome"), $("first-chrome")]) b.disabled = false; }
-}
-$("use-chrome").onclick = useChrome;
-$("first-chrome").onclick = useChrome;
-$("guide-done").onclick = () => $("chrome-guide").close();
-$("guide-folder").onclick = () => morse.showExtensionFolder();
-$("helper-on").onchange = e => morse.setHelper(e.target.checked);
-$("new-code").onclick = () => { codeNote = false; morse.newPairingCode(); };
-$("show-ext").onclick = async () => { const r = await morse.showExtensionFolder(); if (r?.error) { codeNote = true; $("code-note").textContent = r.error; } };
-$("pair-yes").onclick = () => answerAsk(true);
-$("pair-no").onclick = () => answerAsk(false);
-$("ask-pair").addEventListener("cancel", e => { e.preventDefault(); answerAsk(false); }); // Esc is Deny
-
 // ---------------------------------------------------------------- mods
 function renderMods() {
   const groups = st.mods;
@@ -414,8 +332,21 @@ function renderMods() {
     h("h2", {}, (icon => icon ? h("img", { class: "gicon", src: icon, alt: "" }) : h("span", { class: "gicon none", "aria-hidden": "true" }, appsGlyph()))(st.apps.find(a => a.id === g.app)?.icon), h("span", { text: g.name }), h("small", { text: t("desk.mods.count", { n: g.mods.length, on: g.mods.filter(m => m.on).length }) })),
     h("ul", { class: "list mods" }, ...g.mods.map(m => h("li", { class: m.on ? "" : "off" },
       h("div", { class: "grow" }, h("b", { text: m.title }), h("small", {}, h("span", { text: m.paused ? t("desk.mods.stopped") : `“${m.request}”` }))),
+      h("button", { type: "button", class: "ibtn", title: t("btn.delete"), "aria-label": t("desk.mods.delete", { title: m.title }), "data-del": m.id, onclick: () => deleteMod(m) }, trashGlyph()),
       h("input", { type: "checkbox", role: "switch", "aria-label": t("desk.mods.on", { title: m.title }), "data-mod": m.id, checked: m.on, onchange: e => morse.setModOn(m.id, e.target.checked) })))))));
   if (focused) document.querySelector(`[data-mod="${CSS.escape(focused)}"]`)?.focus();
+}
+// Delete takes one click; Undo, above the list, brings it back for a while.
+let undoTimer = 0;
+async function deleteMod(m) {
+  const r = await morse.deleteMod(m.id);
+  if (r?.error) return;
+  $("mod-undo-text").textContent = t("toast.deleted", { title: m.title });
+  $("mod-undo").hidden = false;
+  $("mod-undo-btn").focus();
+  $("mod-undo-btn").onclick = async () => { clearTimeout(undoTimer); $("mod-undo").hidden = true; await morse.undeleteMod(m.id); };
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(() => { $("mod-undo").hidden = true; }, 15000);
 }
 $("resume").onclick = () => morse.setAllModsOff(false);
 $("mods-on").onchange = e => morse.setAllModsOff(!e.target.checked);
@@ -571,7 +502,7 @@ $("update").addEventListener("cancel", e => { if (["downloading", "installing"].
 function render() {
   if (!st || st.error) return;
   renderFirst();
-  renderApps(); renderModel(); renderChrome(); renderMods(); renderUpdate();
+  renderApps(); renderModel(); renderMods(); renderUpdate();
   $("auto-open").checked = st.settings.autoOpen;
   $("version").textContent = `Morse ${st.version}`;
   document.documentElement.dataset.ready = "1";

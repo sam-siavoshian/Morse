@@ -1,28 +1,39 @@
 # Getting started
 
-Morse changes websites and desktop apps in your own words. Point at
+Morse changes desktop apps and websites in your own words. Point at
 something, say what you want, and watch it change. A mod is a change you
-saved. Morse brings it back every time you open that site or app.
+saved. Morse brings it back every time you open that app or site.
 
 Morse is one app. You don't need a terminal, Node or anything else.
 
-## 1. Download Morse and open it
+## 1. Get Morse
 
-Download the Morse app for your computer:
+On a Mac, paste this in Terminal. It downloads Morse, checks it against the
+release's SHA-256 sums, puts it in Applications and opens it, with no
+security prompts:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh
+```
+
+Or download it:
 [Mac (Apple silicon)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) ·
 [Mac (Intel)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg) ·
 [Windows](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) ·
 [Linux](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage).
-The first time you open it, your computer may warn you, because Morse isn't
+Downloaded in a browser, your computer may warn you once, because Morse isn't
 signed yet. [The Morse app](desktop-app.md#get-it) says what to click.
 
-Morse opens on one screen. It finds Claude Code or Codex on this computer by
-itself and checks that it answers. If it finds neither, paste an API key
-there instead. [Models and setup](models.md) explains each one.
+## 2. The first run
 
-![The Morse app's first screen: Morse will use Claude Code, your apps, and Use Morse in Chrome too](screenshots/175-desktop-app-first-run.png)
+Morse's name forms out of dots, then **Begin**. Three short steps follow:
+the AI Morse found by itself (Claude Code or Codex, checked that it answers;
+paste an API key if it found neither), how it works, and an app to try.
+[Models and setup](models.md) explains each AI.
 
-## 2. Open an app with Morse
+![How it works: open Morse, point at something, say what you want](screenshots/177-desktop-app-how.png)
+
+## 3. Open an app or a browser with Morse
 
 Click **Open with Morse** next to an app. Then, in that app, press
 **Ctrl+Shift+Space** (**⌥Space** on a Mac). Point at something and say what
@@ -31,52 +42,16 @@ to change. Click **Save** to keep it.
 If the app is already open, Morse asks to restart it: Morse can only connect
 when the app starts. Which apps work, and which can't: [Desktop apps](desktop.md).
 
+**Websites:** open Chrome, Edge, Brave, Arc or Vivaldi the same way, with
+**Open with Morse**. It opens in a window of its own, with a Morse profile:
+browsers don't let any program control your everyday profile. Sign in to your
+sites there once, and every site in that window works with Morse.
+
 ![The bar in Visual Studio Code, with the guide: point, describe, save](screenshots/320-vscode-ask.png)
 
-## 3. Websites too: Use Morse in Chrome
-
-In the Morse app, click **Use Morse in Chrome too**. Morse isn't in the
-Chrome Web Store yet, so it adds Morse to Chrome from a folder:
-
-1. Chrome opens on its extensions page. Turn on **Developer mode**, at the
-   top right.
-2. Click **Load unpacked**, at the top left, and choose the folder Morse
-   showed you, **Morse for Chrome** in your home folder. (Or drag that
-   folder onto the page.)
-3. Morse's welcome page opens in Chrome and the Morse app asks **“Allow
-   Chrome to use your Claude Code?”**. Click **Allow**. That's all.
-
-![The Morse app shows where to click on Chrome's extensions page](screenshots/176-desktop-app-chrome-guide.png)
-
-![The welcome page in Chrome found the Morse app, which asks you to Allow](screenshots/194-start-asking.png)
-
-Then make your first change on the practice page. Three steps light up as
-you go: open Morse (**⌥Space** on a Mac, **Ctrl+Shift+Space** on Windows
-and Linux), point at the article and type <q>make this easier to read</q>,
-then **Save**. After that, the page suggests a few sites to try.
-
-![The first change: three steps above the practice page](screenshots/198-start-try.png)
-
-If Chrome opened Morse's welcome page before you had the Morse app, it shows
-one button, **Download Morse**. Get the app, open it, and the page connects
-by itself. **Not now: try a sample** lets you try the practice page first.
-
-![No Morse app yet: one button, Download Morse](screenshots/190-start-download.png)
-
-Reload any tab that was open before you added Morse. Chrome only adds Morse
-to pages that load after you install it.
-
-## “Allow User Scripts”, only when a change needs it
-
-Changes to how a site looks always work. A change that adds a button or a
-feature needs one switch in Chrome: **“Allow User Scripts”**. Morse asks for
-it only then. Until the switch is on, the whole change waits, so a page is
-never left half changed. The bar says which change is waiting. Click **Open
-Morse's details** to open the switch, with a small window that shows where
-it is. Turn it on. Morse closes both and takes you back to your tab, and the
-change runs.
-
-![The small window that shows the “Allow User Scripts” switch](screenshots/204-start-allow-window.png)
+**Always open with Morse** is on unless you turn it off: an app with mods
+that you open from the Dock, Finder or the Start menu opens again with Morse
+a moment later, so your mods are always there.
 
 ## Using the bar
 
@@ -97,7 +72,6 @@ These are the defaults. Change any of them in Settings, in the bar.
 | Mods panel | ⌥⇧M | Alt+Shift+M |
 | Show the Edit tools | ⌥⇧G | Alt+Shift+G |
 | Turn every mod on this page off, and back on | ⌥⇧0 | Alt+Shift+0 |
-| Morse's toolbar button in Chrome | ⌘⇧Y | Ctrl+Shift+Y |
 
 In the bar, press **F1** to see example sentences, and **?** to see all your
 shortcuts.
@@ -132,24 +106,17 @@ never read out. Morse also works with Windows High Contrast, with zoom up to
 
 ## Where Morse can't run
 
-- Chrome's own pages (new tab, settings), other extensions' pages and the
-  Chrome Web Store. Chrome doesn't let extensions change them.
-- PDFs in Chrome's PDF viewer.
-- Files on your computer, until you turn on “Allow access to file URLs” in
-  Morse's details in `chrome://extensions`.
+- Safari and Firefox: they give Morse no way in. Use Chrome, Edge, Brave, Arc
+  or Vivaldi for websites.
+- A browser's own pages (new tab, settings) and PDFs in its PDF viewer.
 - Desktop apps that aren't built from web pages, like Finder or System
   Settings. See [Desktop apps](desktop.md#which-apps-cant-work-and-why).
 
 When something doesn't work, see [Troubleshooting](troubleshooting.md). It
 lists the messages Morse shows and what to do about each one.
 
-![What the Morse button and the bar say when Morse can't run or no model is connected](screenshots/73-empty-states.png)
-
 ## For developers
 
-The `morse` command does what the app does, from a terminal. The
-[developer guide](dev/README.md#set-up-a-checkout) sets it up. In Chrome,
-the welcome page with `?dev` added to its address
-(`chrome-extension://<id>/welcome.html?dev`) has the developer ways to
-connect: an Anthropic API key kept in the browser, or
-`morse setup --pair <code>`. The popup has the same under **Developer**.
+The `morse` command does what the app does, from a terminal:
+`morse launch obsidian`, `morse launch chrome`. The
+[developer guide](dev/README.md#set-up-a-checkout) sets it up.

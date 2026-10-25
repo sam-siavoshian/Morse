@@ -5,7 +5,7 @@
 // (tests/desktop-app.test.js checks that the two lists match).
 //
 // No Electron here: main.js passes ipcMain, the service and `native` (the
-// file picker, the folder and link openers, the login item), and tests pass
+// file picker, the link opener, the login item), and tests pass
 // fakes.
 
 export const CHANNEL = name => `morse:${name}`;
@@ -22,13 +22,11 @@ const key = v => {
   return v.trim();
 };
 const none = () => undefined;
-const askId = v => { if (typeof v !== "string" || !/^[\w-]{10,64}$/.test(v)) throw new TypeError("bad request id"); return v; };
 
 // Links the window may open in the browser, by name. Never an address from the window.
 export const LINKS = {
   docs: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/desktop-app.md",
   models: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/models.md",
-  chrome: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/getting-started.md", // no anchor: the page's headings are changing (onboarding v2)
   troubleshooting: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/troubleshooting.md",
 };
 
@@ -43,22 +41,9 @@ export const API = {
   modelChoices:       [[none], (s) => s.modelChoices()],
   chooseModel:        [[oneOf("claude-code", "codex", "api-key"), key], (s, n, choice, k) => s.chooseModel(choice, k)],
   checkModel:         [[none], (s) => s.check()],
-  setHelper:          [[bool], (s, n, on) => s.setSetting("helper", on).then(() => s.chrome())],
-  newPairingCode:     [[none], (s) => s.newCode()],
-  answerAsk:          [[askId, bool], (s, n, id, allow) => s.answerAsk(id, allow)],
-  signOutBrowsers:    [[none], (s) => s.signOutBrowsers()],
-  showExtensionFolder:[[none], async (s, n) => n.showFolder(await s.extensionFolder())],
-  // "Use Morse in Chrome": Morse's Chrome Web Store page, or (until it's
-  // listed) Chrome's extensions page and the folder its Load unpacked takes.
-  useChrome:          [[none], async (s, n) => {
-    const r = await s.useChrome();
-    if (r?.error) return r;
-    if (r.store) { await n.openExternal(r.store); return { store: true }; }
-    await n.showFolder(r.folder);
-    const opened = await n.openChrome();
-    return { folder: r.shown || r.folder, opened: !!opened };
-  }],
   setModOn:           [[id, bool], (s, n, modId, on) => s.setModOn(modId, on)],
+  deleteMod:          [[id], (s, n, modId) => s.deleteMod(modId)],
+  undeleteMod:        [[id], (s, n, modId) => s.undeleteMod(modId)],
   setAllModsOff:      [[bool], (s, n, off) => s.setAllModsOff(off)],
   runChecks:          [[none], (s) => s.doctor()],
   setStartAtLogin:    [[bool], async (s, n, on) => { await n.setLoginItem(on); return s.setSetting("startAtLogin", on); }],

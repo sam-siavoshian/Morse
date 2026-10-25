@@ -27,7 +27,7 @@ async function playground({ query = "?light&model=demo", mods = null } = {}) {
   const runtime = bundleRuntime();
   await ctx.route(`${ORIGIN}/**`, async route => {
     const path = new URL(route.request().url()).pathname;
-    if (path === "/dist/extension/runtime.js") return route.fulfill({ body: runtime, contentType: "text/javascript" });
+    if (path === "/dist/runtime/runtime.js") return route.fulfill({ body: runtime, contentType: "text/javascript" });
     try {
       const body = await readFile(new URL("." + path, ROOT));
       route.fulfill({ body, contentType: path.endsWith(".html") ? "text/html" : "text/javascript" });
@@ -112,6 +112,14 @@ test("refine a result, step back with Ctrl+Z, keep, restore from History, refine
   assert.match(await versions.nth(1).textContent(), /now playing label.*just now/);
   await ui(page, ".panel [data-a=restore][data-v='0']").click();
   await page.waitForFunction(() => getComputedStyle(document.querySelector("#toolbar .morse-now")).fontSize === "14px");
+  // Its message has Undo: the version that showed before comes back.
+  await ui(page, ".ctl-toast .ctl-acts button", { hasText: "Undo" }).click();
+  await page.waitForFunction(() => getComputedStyle(document.querySelector("#toolbar .morse-now")).fontSize === "11px");
+  [mod] = await saved(page);
+  assert.equal(mod.refined, "make it smaller");
+  assert.equal(await ui(page, ".panel .versions li").count(), 2);
+  await ui(page, ".panel [data-a=restore][data-v='0']").click();
+  await page.waitForFunction(() => getComputedStyle(document.querySelector("#toolbar .morse-now")).fontSize === "14px");
   [mod] = await saved(page);
   assert.equal(mod.history.length, 2, "restoring keeps the version it replaced");
   assert.equal(mod.refined, undefined);
@@ -152,6 +160,19 @@ test("refine a result, step back with Ctrl+Z, keep, restore from History, refine
   assert.equal(mod.history.length, 3);
   assert.equal(mod.refined, "make it bigger");
   assert.equal(await page.locator("#toolbar .morse-now").count(), 1);
+
+  // Delete, then Undo in its message: the mod is back, on the page and saved, history and all.
+  await page.keyboard.press("Alt+Shift+KeyM");
+  await ui(page, ".panel article").waitFor();
+  await ui(page, ".panel .rmore summary").click();
+  await ui(page, ".panel [data-a=del]").click();
+  await page.waitForFunction(() => !document.querySelector("#toolbar .morse-now"));
+  await page.waitForFunction(() => !Object.keys(JSON.parse(localStorage.getItem("morse:playground:mods") || "{}")).length);
+  await ui(page, ".ctl-toast .ctl-acts button", { hasText: "Undo" }).click();
+  await page.waitForFunction(() => getComputedStyle(document.querySelector("#toolbar .morse-now") || document.body).fontSize === "18px");
+  [mod] = await saved(page);
+  assert.equal(mod.history.length, 3);
+  assert.equal(await ui(page, ".panel article").count(), 1);
   assert.deepEqual(errors, []);
   await ctx.close();
 });

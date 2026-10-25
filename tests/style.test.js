@@ -266,115 +266,12 @@ test("desktop: the style is kept in style.json and the connector lists it first"
 
 const at = h => `2026-10-24T${String(h).padStart(2, "0")}:00:00.000Z`;
 
-test("sharing: which side changed decides, and a removed style goes across too", async () => {
-  const { syncStep, styleStamp } = await import("../core/style-sync.js");
-  const s = h => normalizeStyle({ words: "bigger text everywhere", blocks: { size: 2 }, updated: at(h) });
-  assert.equal(styleStamp(null), "");
-  assert.equal(styleStamp(s(9)), at(9));
-  assert.equal(syncStep({ local: s(9), remote: s(9), base: at(9) }), null);
-  assert.equal(syncStep({ local: null, remote: null, base: "" }), null);
-  assert.equal(syncStep({ local: s(10), remote: s(9), base: at(9) }), "push", "only Chrome changed");
-  assert.equal(syncStep({ local: s(9), remote: s(10), base: at(9) }), "pull", "only the desktop changed");
-  assert.equal(syncStep({ local: null, remote: s(9), base: "" }), "pull", "first pairing: Chrome had none");
-  assert.equal(syncStep({ local: s(9), remote: null, base: "" }), "push", "first pairing: the desktop had none");
-  assert.equal(syncStep({ local: s(9), remote: null, base: at(9) }), "pull", "reset on the desktop");
-  assert.equal(syncStep({ local: null, remote: s(9), base: at(9) }), "push", "reset in Chrome");
-  assert.equal(syncStep({ local: s(11), remote: s(10), base: at(9) }), "push", "both changed: the newer wins");
-  assert.equal(syncStep({ local: s(10), remote: s(11), base: at(9) }), "pull");
-});
-
-test("sharing: pull, push, a change on the desktop in between, and a helper that isn't there", async () => {
-  const { createStyleSync } = await import("../core/style-sync.js");
-  const s = (h, extra = {}) => normalizeStyle({ words: "underline links everywhere", blocks: { underline: true }, updated: at(h), ...extra });
-  const w = { local: null, remote: null, base: "", up: true, pulled: 0, was: [] };
-  const sync = createStyleSync({
-    load: async () => w.local, save: async v => { w.local = v; },
-    base: { get: async () => w.base, set: async v => { w.base = v; } },
-    remote: {
-      get: async () => (w.up ? { style: w.remote } : undefined),
-      put: async (v, was) => { w.was.push(was); if ((w.remote?.updated || "") !== was) return false; w.remote = v; return true; },
-    },
-    onPulled: () => w.pulled++,
-  });
-  // Made in an app: Chrome takes it, and keeps the sites it already fitted the style to.
-  w.local = s(8, { tried: { "gitlab.com": at(8) } });
-  w.base = at(8);
-  w.remote = s(9, { tried: { "app:obsidian": at(9) } });
-  assert.equal(await sync.sync(), "pull");
-  assert.equal(w.local.updated, at(9));
-  assert.deepEqual(Object.keys(w.local.tried).sort(), ["app:obsidian", "gitlab.com"]);
-  assert.equal(w.pulled, 1);
-  assert.equal(await sync.sync(), null, "nothing more to do");
-  // Made in Chrome: it goes to the desktop, sent against the copy it replaces.
-  w.local = s(10, { words: "Georgia font everywhere" });
-  assert.equal(await sync.sync(), "push");
-  assert.equal(w.remote.words, "Georgia font everywhere");
-  assert.equal(w.was.at(-1), at(9));
-  // Reset in Chrome: the desktop's goes too.
-  w.local = null;
-  assert.equal(await sync.sync(), "push");
-  assert.equal(w.remote, null);
-  // The desktop's copy changed between the read and the write: the helper
-  // refuses, nothing is lost, and the next sync sorts it out.
-  w.local = s(12);
-  const read = w.remote;
-  w.remote = s(11, { words: "dark pages everywhere" });
-  const racing = createStyleSync({
-    load: async () => w.local, save: async v => { w.local = v; },
-    base: { get: async () => w.base, set: async v => { w.base = v; } },
-    remote: { get: async () => ({ style: read }), put: async (v, was) => ((w.remote?.updated || "") === was) },
-  });
-  assert.equal(await racing.sync(), "conflict");
-  assert.equal(w.remote.words, "dark pages everywhere", "the desktop's change stays");
-  assert.equal(w.local.updated, at(12), "and this copy is kept for next time");
-  assert.equal(await sync.sync(), "push", "both changed: the newer (Chrome's) wins");
-  // No helper running (or not paired): nothing changes.
-  w.up = false;
-  assert.equal(await sync.sync(), "offline");
-  // Asked again while one runs: one more runs after it, for everyone who asked meanwhile.
-  let gets = 0;
-  const counted = createStyleSync({
-    load: async () => null, save: async () => {},
-    base: { get: async () => "", set: async () => {} },
-    remote: { get: async () => { gets++; await new Promise(r => setTimeout(r, 20)); return undefined; }, put: async () => true },
-  });
-  const first = counted.sync();
-  await new Promise(r => setTimeout(r, 5));
-  await Promise.all([first, counted.sync(), counted.sync(), counted.sync()]);
-  assert.equal(gets, 2);
-});
-
-// perf: Chrome checks the helper's copy when a page loads (at most every 5 s,
-// extension/style-host.js); when nothing changed, that is one read on each
-// side and no write to chrome.storage.
-test("sharing: a check that finds both copies the same writes nothing", async () => {
-  const { createStyleSync } = await import("../core/style-sync.js");
-  const style = normalizeStyle({ words: "bigger text everywhere", blocks: { size: 2 }, updated: at(9) });
-  const n = { get: 0, load: 0, save: 0, baseSet: 0, put: 0 };
-  let base = "";
-  const sync = createStyleSync({
-    load: async () => { n.load++; return style; }, save: async () => { n.save++; },
-    base: { get: async () => base, set: async v => { n.baseSet++; base = v; } },
-    remote: { get: async () => { n.get++; return { style }; }, put: async () => { n.put++; return true; } },
-  });
-  assert.equal(await sync.sync(), null);
-  assert.equal(base, at(9), "the first check remembers when both agreed");
-  for (const k of Object.keys(n)) n[k] = 0;
-  for (let i = 0; i < 10; i++) assert.equal(await sync.sync(), null);
-  assert.deepEqual(n, { get: 10, load: 10, save: 0, baseSet: 0, put: 0 });
-});
-
-test("sharing, the desktop: reach says where a saved style shows, and a change from another process reaches open windows", async () => {
+test("the desktop: a saved style shows in every app and site, and a change from another process reaches open windows", async () => {
   const { Style, STYLE_FILE, onStyleChange } = await import("../daemon/style.js");
-  const { updateConfig } = await import("../daemon/store.js");
   const where = { url: "http://127.0.0.1:9/", app: "notes" };
-  await updateConfig(cfg => { if (cfg.bridge) delete cfg.bridge.tokens; });
-  let r = await Style.handle({ type: "style.save", add: "underline links everywhere" }, where);
-  assert.equal(r.reach, "apps", "no browser is paired: every app opened with Morse");
-  await updateConfig(cfg => { cfg.bridge = { ...cfg.bridge, tokens: [{ id: "x", hash: "h", origin: "chrome-extension://" + "a".repeat(32), created: T }] }; });
-  r = await Style.handle({ type: "style.get" }, where);
-  assert.equal(r.reach, "all", "Chrome is paired: every site and app");
-  // `morse serve` (Chrome's copy) and `morse launch` (the app) are two processes.
+  const r = await Style.handle({ type: "style.save", add: "underline links everywhere" }, where);
+  assert.equal(r.reach, "all", "browsers open with Morse the way apps do");
+  // The Morse app and `morse launch` (the app) are two processes.
   let heard = 0;
   const stop = onStyleChange(() => heard++);
   try {
@@ -391,6 +288,5 @@ test("sharing, the desktop: reach says where a saved style shows, and a change f
   } finally {
     stop();
     await Style.handle({ type: "style.save", reset: true }, where);
-    await updateConfig(cfg => { if (cfg.bridge) delete cfg.bridge.tokens; });
   }
 });

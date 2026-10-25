@@ -104,6 +104,8 @@ export default {
   "toast.linkCopied": "リンクをコピーしました。Morse があれば誰でも「{title}」をインストールできます。",
   "toast.linkFailed": "リンクをコピーできませんでした。代わりに「共有」を使ってください。",
   "toast.deleted": "「{title}」を削除しました",
+  "toast.undeleted": "「{title}」を元に戻しました",
+  "toast.undoFailed": "元に戻せませんでした。削除されたままです。",
 
   // ---- MODパネル
   "panel.label": "このページの MOD",
@@ -658,6 +660,7 @@ export default {
   "desk.mods.count": { other: "MOD {n} 件 · {on} 件オン" },
   "desk.mods.stopped": "アプリを遅くしたか壊したので止めました。もう一度試すにはオンにしてください。",
   "desk.mods.on": "{title} オン",
+  "desk.mods.delete": "{title} を削除",
   "desk.checks.run": "チェックする",
   "desk.checks.running": "チェックしています…",
   "desk.checks.lede": "このコンピューターで Morse が見つけたものと、モデルが応答するかどうか。",
@@ -786,7 +789,7 @@ export default {
   "setup.noKeyEnv": "ANTHROPIC_API_KEY にも OPENAI_API_KEY にもありません",
   "setup.notInstalled": "未インストール",
   "setup.start1": "Morse へようこそ。まず {cmd} を実行して、変更に使うものを選んでください：Claude Code、Codex、または API キー。",
-  "setup.start2": "次に、ウェブサイト用には chrome://extensions で {dir} を読み込みます（デベロッパー モード、「Load unpacked」）。アプリ用には {cmd}。",
+  "setup.start2": "次に、アプリかブラウザを Morse で開きます: {cmd} または morse launch chrome。",
   "setup.start3": "どのページでも {key} を押し、何かを指して、どう変えるかを伝えてください。",
   "setup.start3.help": "よく使うコマンドは morse help で見られます。",
   "setup.next": "次にやること",

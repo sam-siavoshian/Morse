@@ -60,12 +60,6 @@ export function pageSupport(url, { fileAccess = true, extensionId = "" } = {}) {
 // to the Morse app in Chrome; on the desktop, a tip: choose one in the Morse
 // app), "setup" (copy `morse setup`, which nothing offers any more).
 // The words are message ids (core/locales/en.js), shown in the person's language.
-// The helper's address is 127.0.0.1:7457, or the port a host moved it to
-// (setHelperPort: MORSE_HELPER_PORT in the CLI). Other 127.0.0.1 servers (a
-// local OpenAI-compatible model) aren't the helper.
-let ERROR_HELPER_PORT = 7457;
-export function setHelperPort(port) { if (Number.isInteger(port) && port > 0 && port <= 65535) ERROR_HELPER_PORT = port; }
-const helperAddress = { test: m => /127\.0\.0\.1:7457(?!\d)/.test(m) || new RegExp(`127\\.0\\.0\\.1:${ERROR_HELPER_PORT}(?!\\d)`).test(m) };
 const ERROR_RULES = [
   // Morse's own refusals (core/guard.js draftHarm), said by a host in English: in the person's words here.
   [/^The change would have frozen this page/, "err.harmLoop", ""],
@@ -77,9 +71,6 @@ const ERROR_RULES = [
   [/^This share link is broken\./, "err.shareBroken", ""],
   [/user ?scripts|unsafe-eval|content.security.policy|blocks injected scripts/i,
     "err.userScripts", "userscripts"],
-  [helperAddress, "err.helper", "model"],
-  [/can't reach the morse helper|helper (is )?not running|helper.*(unreachable|offline)/i,
-    "err.helper", "model"],
   [/(claude|codex)\b.*(ENOENT|not found|not installed)|(ENOENT|command not found).*(claude|codex)/i,
     "err.notInstalled", "model"],
   [/\b401\b|unauthori[sz]ed|invalid.{0,20}(api.?key|token|x-api-key)|incorrect api key|authentication|not logged in|please (log|sign) ?in/i,

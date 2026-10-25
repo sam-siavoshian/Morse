@@ -276,4 +276,4 @@ used VSCodium.
 - The page-change check (`noEffect` in `core/engine.js`) can't tell whether a
   behavior change works until someone uses it. The tries above used it the
   way a person would (`demo/try-real-app.js --click/--press/--act`).
-- Websites in Chrome don't get profiles (the extension has no app to read).
+- Websites don't get profiles: a site has no app to read.

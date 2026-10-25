@@ -1,10 +1,8 @@
 // Regressions from the third bug hunt: requests that never settle, page
 // scripts faking key presses, voice over a result, the hotkey recorder vs God
-// mode, a detached runtime that kept the page's keys, the extension command
-// eating the Windows hotkey, and copy that promised things Morse doesn't do.
-// Runtime cases run the real runtime in Chromium against the fake hosts in
-// demo/bar-playground.html and demo/playground.html; extension cases load the
-// built extension (they need a display, like tests/security.test.js).
+// mode, a detached runtime that kept the page's keys, and copy that promised
+// things Morse doesn't do. Runtime cases run the real runtime in Chromium
+// against the fake hosts in demo/bar-playground.html and demo/playground.html.
 import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -24,9 +22,7 @@ const MAC = process.platform === "darwin";
 const OPEN_FLAGS = MAC ? { altKey: true } : { ctrlKey: true, shiftKey: true };
 
 const skip = noBrowser;
-const skipExt = noDisplay;
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const EXT = path.join(root, "dist", "extension");
 let browser, srv;
 
 before(async () => {
@@ -98,36 +94,6 @@ function loadHost() {
   vm.runInContext(readFileSync(path.join(root, "extension/host.js"), "utf8"), ctx);
   return { host: ctx.__morseHost, ports };
 }
-
-test("extension host: when the port closes, every request still waiting gets an error reply", () => {
-  const { host, ports } = loadHost();
-  const got = [];
-  host.onMessage(m => got.push({ ...m })); // copied out of the vm realm for deepEqual
-  host.send({ id: 1, type: "mods.list" });
-  host.send({ id: 2, type: "exec" });
-  host.send({ type: "fire-and-forget" }); // no id: nothing to settle
-  assert.equal(ports.length, 1);
-  ports[0].onMessage.fire({ reply: 1, result: [] });
-  ports[0].onDisconnect.fire(); // the service worker was recycled
-  assert.deepEqual(got, [{ reply: 1, result: [] }, { reply: 2, error: "Morse restarted. Try again." }]);
-  assert.match(plainError(new Error("message port closed")), /^(?!message port closed)/, "the bar shows plain words, not the raw error");
-
-  // The next request reconnects; one sent on a port that died before its
-  // onDisconnect ran is retried on a fresh port, and the old port's
-  // disconnect doesn't fail it.
-  host.send({ id: 3, type: "mods.list" });
-  assert.equal(ports.length, 2);
-  ports[1].dead = true;
-  host.send({ id: 4, type: "mods.list" });
-  assert.equal(ports.length, 3);
-  assert.equal(ports[2].sent.at(-1).id, 4);
-  got.length = 0;
-  ports[1].onDisconnect.fire();
-  assert.deepEqual(got, [{ reply: 3, error: "Morse restarted. Try again." }]);
-  ports[2].onMessage.fire({ reply: 4, result: [] });
-  ports[2].onDisconnect.fire();
-  assert.deepEqual(got, [{ reply: 3, error: "Morse restarted. Try again." }, { reply: 4, result: [] }]);
-});
 
 test("God mode: one edit whose request is lost doesn't stop later edits from applying and saving", { skip }, async () => {
   await scenario({ page: "god", query: "?light&reset", clock: true }, async ({ page }) => {
@@ -294,19 +260,6 @@ test("every window listener in the runtime goes through listen(), which checks l
 
 // ---- 7. the extension command never takes the keys of a default hotkey
 
-test("the extension command's keys differ from every platform's Open Morse and Talk hotkeys", () => {
-  const manifest = JSON.parse(readFileSync(path.join(root, "extension/manifest.json"), "utf8"));
-  const keys = manifest.commands["toggle-morse"].suggested_key;
-  for (const platform of ["mac", "win", "linux"]) {
-    const cmd = keys[platform] || keys.default;
-    const d = defaultHotkeys(platform);
-    // Chrome handles a command's keys before the page, so the bar would never
-    // see them: a tap would only toggle and holding to talk could never work.
-    assert.notEqual(cmd, d.open, `${platform}: the command would take the Open Morse keys`);
-    assert.notEqual(cmd, d.talk, `${platform}: the command would take the Talk keys`);
-  }
-});
-
 // ---- 8, 9. the edit tools hotkey
 
 test("edit tools hotkey: leaves a running change's status alone; help shows the real key", { skip }, async () => {
@@ -330,40 +283,10 @@ test("edit tools hotkey: leaves a running change's status alone; help shows the 
 
 // ---- 10. copy that matches what Morse does
 
-test("copy: no demo fallback promised, no OpenAI key field promised", () => {
+test("copy: no demo fallback promised", () => {
   const runtime = bundleRuntime();
-  for (const [name, s] of [["runtime", runtime], ["popup-states.js", readFileSync(path.join(root, "extension/popup-states.js"), "utf8")]]) {
-    assert.doesNotMatch(s, /demo that only knows/, `${name} still promises a demo`);
-  }
+  assert.doesNotMatch(runtime, /demo that only knows/, "the runtime still promises a demo");
   assert.match(runtime, /No model connected yet\. Connect one so Morse can make changes\./);
-  const barHost = readFileSync(path.join(root, "extension/bar-host.js"), "utf8");
-  const hint = /hint: "(Voice[^"]*)"/.exec(barHost)?.[1];
-  assert.ok(hint, "the voice hint");
-  assert.doesNotMatch(hint, /popup|model settings/i, "no UI stores an OpenAI key for voice");
-  const welcome = readFileSync(path.join(root, "extension/welcome.html"), "utf8");
-  assert.doesNotMatch(welcome, /OpenAI API key in model settings|built-in demo model/);
-  assert.doesNotMatch(readFileSync(path.join(root, "extension/popup.js"), "utf8"), /"Alt\+Space"/, "the popup reads the real shortcut");
-});
-
-test("popup: shows the Open Morse shortcut from settings", { skip: skipExt }, async () => {
-  const ctx = await chromium.launchPersistentContext(tempDir("morse-hard-"), {
-    headless: false, timeout: TIMEOUT * 2, args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
-  });
-  try {
-    const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
-    const id = new URL(sw.url()).host;
-    const p = await ctx.newPage();
-    const key = async () => {
-      await p.goto(`chrome-extension://${id}/popup.html?url=${encodeURIComponent("http://127.0.0.1:8788/")}`);
-      await p.waitForFunction(() => document.getElementById("label")?.textContent);
-      return p.evaluate(() => { const k = document.getElementById("key"); return k.hidden ? null : k.textContent; });
-    };
-    assert.equal(await key(), MAC ? "⌥Space" : "Ctrl+Shift+Space");
-    await sw.evaluate(() => chrome.storage.sync.set({ "morse.settings": { hotkeys: { open: "Alt+Shift+KeyK" } } }));
-    assert.equal(await key(), "Alt+Shift+K");
-    await sw.evaluate(() => chrome.storage.sync.set({ "morse.settings": { hotkeys: { open: "none" } } }));
-    assert.equal(await key(), null);
-  } finally { await ctx.close(); }
 });
 
 // ---- 11. only a model-made change counts as the first save
@@ -389,10 +312,3 @@ test("first-run coach: page tools saving on their own don't finish it or show th
 });
 
 // ---- 12. the build ships no file with imports it can't resolve
-
-test("build: no raw copies of files that are only bundled into background.js", { skip: !existsSync(EXT) && "run node scripts/build.js first" }, () => {
-  for (const f of ["bar-host.js", "onboarding-host.js"]) assert.equal(existsSync(path.join(EXT, f)), false, `${f} was copied raw`);
-  for (const f of readdirSync(EXT).filter(f => f.endsWith(".js"))) {
-    assert.doesNotMatch(readFileSync(path.join(EXT, f), "utf8"), /from\s+["']\.\.\/core\//, `${f} imports ../core, which isn't in the build`);
-  }
-});
