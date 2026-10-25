@@ -47,6 +47,16 @@ export const API = {
   answerAsk:          [[askId, bool], (s, n, id, allow) => s.answerAsk(id, allow)],
   signOutBrowsers:    [[none], (s) => s.signOutBrowsers()],
   showExtensionFolder:[[none], async (s, n) => n.showFolder(await s.extensionFolder())],
+  // "Use Morse in Chrome": Morse's Chrome Web Store page, or (until it's
+  // listed) Chrome's extensions page and the folder its Load unpacked takes.
+  useChrome:          [[none], async (s, n) => {
+    const r = await s.useChrome();
+    if (r?.error) return r;
+    if (r.store) { await n.openExternal(r.store); return { store: true }; }
+    const opened = await n.openChrome();
+    await n.revealFolder(r.folder);
+    return { folder: r.shown || r.folder, opened: !!opened };
+  }],
   setModOn:           [[id, bool], (s, n, modId, on) => s.setModOn(modId, on)],
   setAllModsOff:      [[bool], (s, n, off) => s.setAllModsOff(off)],
   runChecks:          [[none], (s) => s.doctor()],

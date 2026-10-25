@@ -20,6 +20,7 @@ import { streamChat } from "../core/providers.js";
 const HELPER_PORT = helperPort();
 import { toUserscript, decodeShare, encodeShare } from "../core/mod.js";
 import { plainError, setHelperPort } from "../core/onboarding.js";
+import { DOWNLOAD } from "../core/links.js";
 setHelperPort(HELPER_PORT); // "can't reach 127.0.0.1:<port>" reads as "the helper isn't running"
 import { pauseCli, resumeCli, exportAllCli, importCli, codeCli } from "./control.js"; // user control
 import { configuredHotkeys } from "./store.js";
@@ -123,6 +124,7 @@ async function helperHealth() {
 
 const h = (id, v) => t(`help.${id}`, v); // the commands and flags stay as typed
 const HELP = `${LOGO}
+${h("forDevs", { url: DOWNLOAD })}
 
 ${B(h("desktop"))} ${h("desktop.note")}
   morse apps                ${h("apps")}

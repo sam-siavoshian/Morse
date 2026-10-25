@@ -1,5 +1,4 @@
-/* The welcome page, onboarding v2: one screen at a time, one thing to do on
-   each. Tokens from design/tokens.css (copied next to it by scripts/build.js);
+/* The welcome page: one screen at a time, one thing to do on each. Tokens from design/tokens.css (copied next to it by scripts/build.js);
    no other colors. */
 * { box-sizing: border-box; }
 html { color-scheme: dark light; }
@@ -53,18 +52,7 @@ button.link { display: inline; height: auto; margin: 0; padding: 0; border: 0; b
   text-decoration: underline; text-decoration-color: var(--m-signal-1); text-underline-offset: 3px; }
 button.link:hover { text-decoration-color: var(--m-text); }
 
-/* 1. choose */
-.choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.choice { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 148px; padding: 20px; text-align: start;
-  border: 1px solid var(--m-line); border-radius: var(--m-r-lg); background: var(--m-surface); transition: border-color var(--m-fast), background var(--m-fast), transform var(--m-fast); }
-.choice svg { margin-bottom: 30px; color: var(--m-text-2); }
-.choice b { font-weight: 600; font-size: var(--m-text-lg); line-height: 22px; }
-.choice span { color: var(--m-text-3); font-size: var(--m-text-sm); line-height: 18px; }
-.choice:hover { border-color: var(--m-signal-1); background: var(--m-raised); }
-.choice:hover svg { color: var(--m-text); }
-.choice:active { transform: translateY(1px); }
-
-/* 2. connect */
+/* 1. connect */
 .cards { display: grid; gap: 12px; }
 .cards.two { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: stretch; }
 .card { position: relative; padding: 22px; border: 1px solid var(--m-line); border-radius: var(--m-r-lg); background: var(--m-surface); }
@@ -96,6 +84,8 @@ button.link:hover { text-decoration-color: var(--m-text); }
 .more > summary { width: fit-content; padding: 6px 0; color: var(--m-text-2); font-size: var(--m-text-sm); cursor: pointer; }
 .more > summary:hover { color: var(--m-text); }
 .more .card { margin-top: 6px; }
+.more.dev { margin-top: 28px; }
+.more.dev .card + .card { margin-top: 10px; }
 .cmd { display: flex; align-items: center; gap: 6px; margin-top: 12px; padding: 4px 4px 4px 10px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-bg); }
 .cmd code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 12px; line-height: 18px; color: var(--m-text); user-select: all; }
 .cmd button { height: 26px; font-size: var(--m-text-sm); }
@@ -103,7 +93,7 @@ button.link:hover { text-decoration-color: var(--m-text); }
 .skip { margin: 28px 0 0; color: var(--m-text-3); font-size: var(--m-text-sm); }
 .skip .link { color: var(--m-text-2); font-weight: 400; }
 
-/* 3. try */
+/* 2. try */
 .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0 0 14px; padding: 0; list-style: none; }
 .steps li { display: flex; gap: 10px; padding: 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-surface); transition: border-color var(--m-med, .2s), opacity var(--m-med, .2s); }
 .steps .n { flex: none; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--m-line-strong); color: var(--m-text-2); font: 500 11px/1 var(--m-mono); }
@@ -121,7 +111,7 @@ button.link:hover { text-decoration-color: var(--m-text); }
 .wrap[data-screen="try"] h1 { font-size: 28px; margin-bottom: 6px; }
 .wrap[data-screen="try"] .lede { margin-bottom: 18px; }
 
-/* 4. win */
+/* 3. win */
 .win-mark { width: 52px; height: 52px; display: grid; place-items: center; margin-bottom: 22px; border-radius: 26px; background: var(--m-primary); color: var(--m-primary-text); animation: win-in .5s var(--m-ease, ease) both; }
 @keyframes win-in { from { transform: scale(.6); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .win-mark { animation: none; } }
@@ -146,12 +136,7 @@ button.link:hover { text-decoration-color: var(--m-text); }
   .dots button { padding: 0 8px; }
   h1 { font-size: 27px; }
   .lede { font-size: var(--m-text-md); margin-bottom: 28px; }
-  .choices, .cards.two, .steps, .sites { grid-template-columns: 1fr; }
-  .choice { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 2px 14px; padding: 16px; }
-  .choice svg { margin: 0; }
-  .choice b { line-height: 24px; }
-  .choice b { margin: 0; flex: 1; }
-  .choice span { flex-basis: 100%; padding-left: 38px; }
+  .cards.two, .steps, .sites { grid-template-columns: 1fr; }
   .steps { gap: 6px; }
   .steps li { padding: 10px; }
   .frame { height: 600px; }

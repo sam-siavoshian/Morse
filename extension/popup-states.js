@@ -1,7 +1,8 @@
 // Empty and error states for the toolbar popup, added on top of popup.js:
 // pages Morse can't run on (Chrome's own pages, the Web Store, the PDF viewer,
-// files without permission, tabs opened before install), no model connected,
-// and user scripts off. Each says what to do in one sentence, with a button
+// files without permission, tabs opened before install) and user scripts off.
+// (No model: the Model section says what to do, popup.js.) Each says what to
+// do in one sentence, with a button
 // that does it when it can. popup.html loads this with one marked line.
 //
 //   ?url=<url>   check this URL instead of the active tab's (screenshots)
@@ -9,7 +10,7 @@
 
 import "./i18n-page.js"; // the person's language (pageSupport's words follow it)
 import { t } from "./core/i18n.js";
-import { pageSupport, modelMissing } from "./core/onboarding.js";
+import { pageSupport } from "./core/onboarding.js";
 
 const q = new URLSearchParams(location.search);
 const [active] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -75,14 +76,7 @@ if (why) {
   notice(why.text, label, run).dataset.state = why.id;
 }
 
-// ---- no model, user scripts off
-const st = await send({ type: "onboarding.status" });
-const status = st?.status || {};
-// first-run hook: the button used to look for a <details> the popup doesn't
-// have, so it did nothing. The welcome page connects a model in one command.
-if (!why && !isOptions && modelMissing(status, document.getElementById("label")?.textContent)) {
-  notice(t("popup.noModel"), t("welcome.model.b"), () => openSetup("model")).dataset.state = "model";
-}
+// ---- user scripts off (no model: the Model section says what to do, popup.js)
 const warn = document.getElementById("warn");
 if (warn && !warn.querySelector("button")) {
   const b = document.createElement("button");

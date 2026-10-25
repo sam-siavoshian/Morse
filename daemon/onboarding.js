@@ -1,7 +1,7 @@
 // First run and help, desktop side: the runtime's onboarding.get / .set /
 // .open, served by the connector. Progress is ~/.morse/onboarding.json (shape
 // in core/onboarding.js). There are no settings pages to open on the desktop,
-// so "open" answers with the command to run instead.
+// so "open" answers nothing and the bar says where to go (the Morse app).
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -39,7 +39,7 @@ export async function handleOnboarding(msg, { settings } = {}) {
     case "onboarding.set":
       return saveOnboarding(msg.patch);
     case "onboarding.open":
-      return { copy: "morse setup" };
+      return null; // no settings page here: the bar says where to choose a model (ob.howModel: the Morse app)
   }
   throw new Error(`Unknown request ${msg.type}`);
 }

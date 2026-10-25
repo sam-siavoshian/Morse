@@ -56,8 +56,9 @@ export function pageSupport(url, { fileAccess = true, extensionId = "" } = {}) {
 }
 
 // Generation errors in plain words. `action` names a button the runtime can
-// offer: "userscripts" (open Morse's extension settings), "model" (model
-// settings, or `morse setup` on the desktop), "setup" (copy `morse setup`).
+// offer: "userscripts" (open Morse's extension settings), "model" (connect
+// to the Morse app in Chrome; on the desktop, a tip: choose one in the Morse
+// app), "setup" (copy `morse setup`, which nothing offers any more).
 // The words are message ids (core/locales/en.js), shown in the person's language.
 // The helper's address is 127.0.0.1:7457, or the port a host moved it to
 // (setHelperPort: MORSE_HELPER_PORT in the CLI). Other 127.0.0.1 servers (a
@@ -76,11 +77,11 @@ const ERROR_RULES = [
   [/^This share link is broken\./, "err.shareBroken", ""],
   [/user ?scripts|unsafe-eval|content.security.policy|blocks injected scripts/i,
     "err.userScripts", "userscripts"],
-  [helperAddress, "err.helper", "setup"],
+  [helperAddress, "err.helper", "model"],
   [/can't reach the morse helper|helper (is )?not running|helper.*(unreachable|offline)/i,
-    "err.helper", "setup"],
+    "err.helper", "model"],
   [/(claude|codex)\b.*(ENOENT|not found|not installed)|(ENOENT|command not found).*(claude|codex)/i,
-    "err.notInstalled", "setup"],
+    "err.notInstalled", "model"],
   [/\b401\b|unauthori[sz]ed|invalid.{0,20}(api.?key|token|x-api-key)|incorrect api key|authentication|not logged in|please (log|sign) ?in/i,
     "err.signIn", "model"],
   [/\b429\b|rate.?limit|quota|overloaded|insufficient.{0,10}(credit|balance)|credit balance/i,

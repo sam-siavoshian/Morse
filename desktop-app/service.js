@@ -10,6 +10,7 @@
 
 import { promises as fs } from "node:fs";
 import crypto from "node:crypto";
+import os from "node:os";
 import path from "node:path";
 
 const ANSI = /\x1b\[[0-9;]*m/g;
@@ -58,6 +59,10 @@ export function createService({
   scan = process.env.MORSE_DESKTOP_SCAN !== "0", // tests and screenshots: only the apps added by file
   fetchHealth = defaultHealth, now = () => Date.now(),
   copyExtension = false, // packaged: the extension lives inside the app, so Chrome gets a copy in the Morse folder
+  // Where the extension's copy goes: a folder you can see, so Chrome's Load
+  // unpacked finds it without showing hidden folders (~/.morse is one).
+  chromeFolder = path.join(os.homedir(), "Morse for Chrome"),
+  chromeStore = "", // Morse's Chrome Web Store page, once it's listed (site/config.js LINKS.chrome); until then the extension that comes with the app
   self = [], // Morse Desktop's own program: never listed as an app to open with Morse
   onAsk = () => {}, // Chrome asked to connect: main.js brings the window forward
 } = {}) {
@@ -328,17 +333,20 @@ export function createService({
     return {
       running, ours: helper.ours, error: helper.error, browsers: (cfg.bridge?.tokens || []).length, waiting,
       ask: asks[0] ? { id: asks[0].id, extension: asks[0].extension, words: asks[0].words } : null, // "Allow Chrome to use your Claude Code?"
-      extensionDir: copyExtension ? path.join(d.HOME, "chrome-extension") : d.EXTENSION_DIR,
+      extensionDir: copyExtension ? chromeFolder : d.EXTENSION_DIR,
+      store: chromeStore, // "Use Morse in Chrome" opens it when there is one
     };
   }
 
-  // "Show the extension folder": the folder Chrome's Load unpacked takes. A
-  // packaged Morse keeps the extension inside its own app file (and an AppImage
-  // moves on every start), so Chrome gets a copy in the Morse folder, made again
-  // each time so it matches this version.
+  // The folder Chrome's Load unpacked takes. A packaged Morse keeps the
+  // extension inside its own app file (and an AppImage moves on every start),
+  // so Chrome gets a copy in a folder that stays put, made again each time so
+  // it matches this version. A folder of that name that Morse didn't make is
+  // only written over, never emptied.
+  const MARK = ".morse-extension";
   async function extensionFolder() {
     if (!copyExtension) return d.EXTENSION_DIR;
-    const to = path.join(d.HOME, "chrome-extension");
+    const to = chromeFolder;
     const copyTree = async (from, dest) => {
       await fs.mkdir(dest, { recursive: true });
       for (const e of await fs.readdir(from, { withFileTypes: true })) {
@@ -346,9 +354,26 @@ export function createService({
         else await fs.writeFile(path.join(dest, e.name), await fs.readFile(path.join(from, e.name)));
       }
     };
-    await fs.rm(to, { recursive: true, force: true });
+    const ours = await fs.stat(path.join(to, MARK)).then(() => true, () => false);
+    if (ours) await fs.rm(to, { recursive: true, force: true });
     await copyTree(d.EXTENSION_DIR, to);
+    await fs.writeFile(path.join(to, MARK), "Morse made this folder for Chrome. The Morse app makes it again when you click Use Morse in Chrome.\n");
     return to;
+  }
+
+  // "Use Morse in Chrome" (desktop-app/chrome.js): the Chrome Web Store page
+  // when Morse is listed there; until then the folder Chrome's Load unpacked
+  // takes. main.js opens the one or the other. The helper has to run for
+  // Chrome to connect, so this turns it on too.
+  async function useChrome() {
+    if (!(await loadSettings()).helper) await setSetting("helper", true);
+    else if (!helper.running) await startHelper();
+    if (chromeStore) return { store: chromeStore };
+    const folder = await extensionFolder();
+    // How the window shows it: ~/Morse for Chrome (on Windows, the whole path).
+    const home = os.homedir();
+    const shown = process.platform !== "win32" && home && folder.startsWith(home + path.sep) ? `~${folder.slice(home.length)}` : folder;
+    return { folder, shown };
   }
 
   // "Show a code": a new code to type into Morse's popup in Chrome (morse pair).
@@ -477,7 +502,7 @@ export function createService({
 
   return {
     state, apps, openApp, disconnectApp, addApp, model, modelChoices, chooseModel, check, chrome, startHelper, stopHelper, newCode,
-    extensionFolder, askAllow, answerAsk, signOutBrowsers, mods, setModOn, pause, setAllModsOff, doctor, setSetting, loadSettings, shutdown,
+    extensionFolder, useChrome, askAllow, answerAsk, signOutBrowsers, mods, setModOn, pause, setAllModsOff, doctor, setSetting, loadSettings, shutdown,
     get sessions() { return own; },
   };
 }

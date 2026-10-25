@@ -36,8 +36,8 @@ const args = process.argv.slice(2);
 const say = s => console.log(`· ${s}`);
 
 // What the app needs at run time. Paths relative to the repo.
-const COPY = ["daemon", "core", "runtime", "design/tokens.css", "site/fonts", "dist/extension"];
-const APP_FILES = ["main.js", "preload.cjs", "service.js", "ipc.js", "icons.js", "appimage.js", "linux.js", "mark.js", "ui"];
+const COPY = ["daemon", "core", "runtime", "design/tokens.css", "site/fonts", "site/config.js", "dist/extension"];
+const APP_FILES = ["main.js", "preload.cjs", "service.js", "ipc.js", "icons.js", "appimage.js", "linux.js", "mark.js", "chrome.js", "ui"];
 
 async function copy(from, to) {
   const st = await fs.stat(from);

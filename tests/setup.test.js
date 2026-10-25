@@ -240,8 +240,8 @@ test("generation errors in plain words, each with something to do", () => {
   const cases = [
     ["This site blocks injected scripts. Turn on “Allow User Scripts” for Morse in chrome://extensions.", "userscripts"],
     ["Refused to evaluate a string as JavaScript because 'unsafe-eval' is not an allowed source", "userscripts"],
-    ["fetch failed: connect ECONNREFUSED 127.0.0.1:7457", "setup"],
-    ["spawn claude ENOENT", "setup"],
+    ["fetch failed: connect ECONNREFUSED 127.0.0.1:7457", "model"], // the Morse app isn't open: connect to it (or, on the desktop, open it)
+    ["spawn claude ENOENT", "model"],
     ["Model server returned 401", "model"],
     ["Invalid API key provided", "model"],
     ["Failed to fetch", "model"],
@@ -266,15 +266,15 @@ test("generation errors in plain words, each with something to do", () => {
 });
 
 test("the helper not running reads the same on any port the helper was moved to", () => {
-  const refused = port => explainError(`fetch failed: connect ECONNREFUSED 127.0.0.1:${port}`)?.action;
-  assert.equal(refused(7457), "setup");
-  assert.notEqual(refused(41234), "setup", "another local server isn't the helper");
+  const refused = port => explainError(`fetch failed: connect ECONNREFUSED 127.0.0.1:${port}`)?.id;
+  assert.equal(refused(7457), "err.helper");
+  assert.notEqual(refused(41234), "err.helper", "another local server isn't the helper");
   setHelperPort(41234); // MORSE_HELPER_PORT=41234 (daemon/cli.js)
   try {
-    assert.equal(refused(41234), "setup");
-    assert.equal(refused(7457), "setup");
-    assert.notEqual(refused(412345), "setup");
-    assert.notEqual(refused(11434), "setup");
+    assert.equal(refused(41234), "err.helper");
+    assert.equal(refused(7457), "err.helper");
+    assert.notEqual(refused(412345), "err.helper");
+    assert.notEqual(refused(11434), "err.helper");
   } finally { setHelperPort(7457); }
 });
 
