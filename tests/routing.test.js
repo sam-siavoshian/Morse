@@ -70,31 +70,32 @@ test("looks hard: why, and the weaker signals (data, several steps, a canvas, a 
 // ---- the plan
 
 test("plan: fast then strong; hard requests start strong; Always fast / best; a pinned model never changes", () => {
-  const models = p => p.steps.map(s => s.model);
-  assert.deepEqual(models(planRoute(CC, "make the covers bigger", {})), ["sonnet", "opus"]);
+  // A step is its model and how long it thinks: by default the same strong model, briefly then longer.
+  const models = p => p.steps.map(s => (s.effort ? `${s.model}/${s.effort}` : s.model));
+  assert.deepEqual(models(planRoute(CC, "make the covers bigger", {})), ["opus/low", "opus/high"]);
   const hard = planRoute(CC, "add a button that sorts the products by price", {});
-  assert.deepEqual([models(hard), hard.hard], [["opus"], true]);
-  assert.deepEqual(models(planRoute(CC, "add a reading progress bar at the top", {})), ["opus"], "new UI starts on the strong model");
-  assert.deepEqual(models(planRoute({ ...CC, mode: "fast" }, "add a button that sorts by price", {})), ["sonnet"]);
-  assert.deepEqual(models(planRoute({ ...CC, mode: "best" }, "make it bigger", {})), ["opus"]);
+  assert.deepEqual([models(hard), hard.hard], [["opus/high"], true]);
+  assert.deepEqual(models(planRoute(CC, "add a reading progress bar at the top", {})), ["opus/high"], "new UI starts on the strong tier");
+  assert.deepEqual(models(planRoute({ ...CC, mode: "fast" }, "add a button that sorts by price", {})), ["opus/low"]);
+  assert.deepEqual(models(planRoute({ ...CC, mode: "best" }, "make it bigger", {})), ["opus/high"]);
   assert.deepEqual(models(planRoute({ ...CC, model: "opus", pinned: true }, "make it bigger", {})), ["opus"]);
   assert.deepEqual(models(planRoute({ provider: "demo" }, "make it bigger", {})), [undefined], "no tiers: the settings as they are");
-  assert.deepEqual(models(planRoute({ ...CC, mode: "nonsense" }, "make it bigger", {})), ["sonnet", "opus"], "unknown mode means Automatic");
-  // Same name twice: one step.
-  assert.deepEqual(models(planRoute({ ...CC, tiers: resolveTiers("claude-code", { fast: "opus" }) }, "x", {})), ["opus"]);
+  assert.deepEqual(models(planRoute({ ...CC, mode: "nonsense" }, "make it bigger", {})), ["opus/low", "opus/high"], "unknown mode means Automatic");
+  // The same model and effort twice: one step.
+  assert.deepEqual(models(planRoute({ ...CC, tiers: resolveTiers("claude-code", { fast: { model: "opus", effort: "high" } }) }, "x", {})), ["opus/high"]);
   // Someone who chose haiku keeps it.
-  assert.deepEqual(models(planRoute({ ...CC, tiers: resolveTiers("claude-code", { fast: "haiku" }) }, "make it bigger", {})), ["haiku", "opus"]);
+  assert.deepEqual(models(planRoute({ ...CC, tiers: resolveTiers("claude-code", { fast: "haiku" }) }, "make it bigger", {})), ["haiku", "opus/high"]);
 });
 
 test("tiers stay within the chosen backend; names from config.json win", () => {
   // The defaults are strong models: no small model unless the person names one.
-  assert.deepEqual(resolveTiers("claude-code"), { fast: { model: "sonnet" }, best: { model: "opus" } });
-  assert.deepEqual(resolveTiers("anthropic"), { fast: { model: "claude-sonnet-5-5" }, best: { model: "claude-opus-5-5" } });
+  assert.deepEqual(resolveTiers("claude-code"), { fast: { model: "opus", effort: "low" }, best: { model: "opus", effort: "high" } });
+  assert.deepEqual(resolveTiers("anthropic"), { fast: { model: "claude-opus-5-5", effort: "low" }, best: { model: "claude-opus-5-5", effort: "high" } });
   assert.deepEqual(resolveTiers("openai"), { fast: { model: "gpt-5" }, best: { model: "gpt-5", effort: "high" } }, "OpenAI: gpt-5, reasoning longer");
   assert.deepEqual(resolveTiers("codex"), { fast: { model: "", effort: "medium" }, best: { model: "", effort: "high" } }, "Codex: the plan's model, thinking longer");
   for (const t of Object.values(TIERS)) assert.ok(!/haiku|mini/.test(t.fast.model + t.best.model), "never a small model by default");
   assert.deepEqual(resolveTiers("openai", { best: "gpt-4.1" }).best, { model: "gpt-4.1" }, "another model doesn't inherit gpt-5's effort");
-  assert.deepEqual(resolveTiers("claude-code", { fast: "claude-haiku-4-5", best: "opus" }), { fast: { model: "claude-haiku-4-5" }, best: { model: "opus" } });
+  assert.deepEqual(resolveTiers("claude-code", { fast: "claude-haiku-4-5", best: "opus" }), { fast: { model: "claude-haiku-4-5" }, best: { model: "opus", effort: "high" } });
   assert.equal(resolveTiers("openai", {}, { baseUrl: "http://localhost:11434" }), null, "another server: its own names, or none");
   assert.deepEqual(resolveTiers("openai", { fast: "small", best: "big" }, { baseUrl: "http://localhost:11434" }).best, { model: "big" });
   assert.equal(resolveTiers("demo"), null);
@@ -110,19 +111,19 @@ test("escalation rule: a JS error gets the fast model's own repair first; everyt
 test("labels: Automatic until a model answers; the warm model is the first one", () => {
   const { settingsLabel } = providers;
   assert.equal(startLabel(CC, settingsLabel), "Claude Code · Automatic");
-  assert.equal(startLabel({ ...CC, mode: "best" }, settingsLabel), "Claude Code · opus");
+  assert.equal(startLabel({ ...CC, mode: "best" }, settingsLabel), "Claude Code · opus, high effort");
   assert.equal(startLabel({ provider: "claude-code", model: "opus", pinned: true, tiers: CC.tiers }, settingsLabel), "Claude Code · opus");
-  assert.equal(startLabel({ provider: "helper", backend: "claude-code", tiers: CC.tiers, mode: "fast", label: "x" }, settingsLabel), "Claude Code · sonnet");
+  assert.equal(startLabel({ provider: "helper", backend: "claude-code", tiers: CC.tiers, mode: "fast", label: "x" }, settingsLabel), "Claude Code · opus, low effort");
   assert.equal(startLabel({ provider: "codex", tiers: resolveTiers("codex"), mode: "best" }, settingsLabel), "Codex · high effort");
   assert.equal(settingsLabel({ provider: "anthropic", tiers: resolveTiers("anthropic"), mode: "auto" }), "Anthropic API · Automatic");
   assert.equal(startLabel({ provider: "openai", tiers: resolveTiers("openai"), mode: "best" }, settingsLabel), "gpt-5, high effort · API");
-  assert.equal(warmSettings(CC).model, "sonnet");
-  assert.equal(warmSettings({ ...CC, mode: "best" }).model, "opus");
+  assert.equal(warmSettings(CC).effort, "low");
+  assert.equal(warmSettings({ ...CC, mode: "best" }).effort, "high");
   // While the person types: the model those words would start on.
-  assert.equal(warmSettings(CC, "add a summary panel at the top").model, "opus");
-  assert.equal(warmSettings(CC, "hide the ads").model, "sonnet");
-  assert.equal(warmSettings({ ...CC, mode: "fast" }, "add a summary panel at the top").model, "sonnet", "Always fast stays fast");
-  assert.deepEqual(modelNames(CC, settingsLabel), { fast: "sonnet", best: "opus" });
+  assert.equal(warmSettings(CC, "add a summary panel at the top").effort, "high");
+  assert.equal(warmSettings(CC, "hide the ads").effort, "low");
+  assert.equal(warmSettings({ ...CC, mode: "fast" }, "add a summary panel at the top").effort, "low", "Always fast stays fast");
+  assert.deepEqual(modelNames(CC, settingsLabel), { fast: "opus, low effort", best: "opus, high effort" });
   assert.deepEqual(modelNames({ ...CC, model: "opus", pinned: true }, settingsLabel), { pinned: "Claude Code · opus" });
 });
 
@@ -284,13 +285,13 @@ test("warm while typing: one process when the bar opens, one more when the words
 
 test("popup: the Anthropic model picked there is the strong one; any other pick is used for everything", async () => {
   const { popupTiers } = await import("../core/route.js");
-  assert.deepEqual(popupTiers("anthropic"), { fast: { model: "claude-sonnet-5-5" }, best: { model: "claude-opus-5-5" } });
+  assert.deepEqual(popupTiers("anthropic"), { fast: { model: "claude-opus-5-5", effort: "low" }, best: { model: "claude-opus-5-5", effort: "high" } });
   assert.deepEqual(popupTiers("anthropic", "claude-opus-5-5"), popupTiers("anthropic"));
   const haiku = popupTiers("anthropic", "claude-haiku-5-5"); // someone who picked haiku keeps it
   assert.deepEqual(planRoute({ provider: "anthropic", tiers: haiku, mode: "auto" }, "add a summary panel", {}).steps.map(x => x.model), ["claude-haiku-5-5"]);
 });
 
-test("claude-code: after a request on the strong model, the first model (sonnet) is the one kept warm", async () => {
+test("claude-code: after a request on the strong tier, the first one (opus, low effort) is the one kept warm", async () => {
   process.env.FAKE_MODE = "ok";
   process.env.FAKE_WARM_TAG = String(Date.now());
   const { SYSTEM_PROMPT } = await import("../core/prompt.js");
@@ -307,7 +308,8 @@ test("claude-code: after a request on the strong model, the first model (sonnet)
   await providers.streamChat(planRoute(CC, "make it bigger", {}).steps[0], MSGS);
   const fast = JSON.parse(await fs.readFile(path.join(tmp, "claude.json"), "utf8"));
   assert.equal(fast.pid, next, "the process started ahead of time answered");
-  assert.equal(fast.argv[fast.argv.indexOf("--model") + 1], "sonnet");
+  assert.equal(fast.argv[fast.argv.indexOf("--model") + 1], "opus");
+  assert.equal(fast.argv[fast.argv.indexOf("--effort") + 1], "low");
 });
 
 test("codex: the strong tier thinks longer through model_reasoning_effort", async () => {
@@ -338,7 +340,7 @@ test("settings: the bar's Model setting is saved and read back; config.json hold
   // An older config.json with no names gets the current defaults.
   await store.saveConfig({ provider: "claude-code" });
   s = await models.currentSettings();
-  assert.deepEqual([s.tiers.fast.model, s.tiers.best.model], ["sonnet", "opus"]);
+  assert.deepEqual([s.tiers.fast.model, s.tiers.best.model], ["opus", "opus"]);
   assert.equal((await models.currentSettings({}, { env: { MORSE_MODEL_MODE: "fast" } })).mode, "fast");
   s = models.settingsFromConfig({ provider: "claude-code", models: { "claude-code": "opus" } }, {}, { env: {}, harnesses: { claude: { found: true }, codex: {} } });
   assert.deepEqual([s.model, s.pinned], ["opus", true], "a model named in config.json is used for everything");

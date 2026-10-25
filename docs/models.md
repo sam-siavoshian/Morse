@@ -9,9 +9,9 @@ Page tools, Easier to use, Read aloud and Check this page.
 
 | | What you need | How Morse uses it |
 |---|---|---|
-| **Claude Code** | The `claude` command, signed in with your Claude plan | Starts Claude Code with all of its tools turned off, in an empty folder, so it can only write text back. Uses `sonnet` for small changes and `opus` for new features and new looks (see [Quick and harder changes](#quick-and-harder-changes)) |
+| **Claude Code** | The `claude` command, signed in with your Claude plan | Starts Claude Code with all of its tools turned off, in an empty folder, so it can only write text back. Uses `opus` for every change: thinking briefly for small ones, longer for new features, new looks and second tries (see [Quick and harder changes](#quick-and-harder-changes)) |
 | **Codex** | The `codex` command, signed in with your ChatGPT plan | Starts Codex so it can only read, in an empty folder. Uses your plan's model, and thinks longer for new features and new looks |
-| **Anthropic API key** | A key from console.anthropic.com | Uses `claude-sonnet-5-5` for small changes and `claude-opus-5-5` for new features and new looks. If Claude says no to a request, Morse tells you |
+| **Anthropic API key** | A key from console.anthropic.com | Uses `claude-opus-5-5` for every change: low effort for small ones, high effort for new features, new looks and second tries. If Claude says no to a request, Morse tells you |
 | **OpenAI API key** | A key from platform.openai.com, or the address of another server that works the same way | Uses `gpt-5` for small changes, and `gpt-5` thinking longer (high effort) for new features and new looks, unless you choose one model |
 
 Describe this picture needs a model that can look at pictures: Claude Code or
@@ -33,7 +33,7 @@ doesn't. Or set it yourself:
 
 ```bash
 morse model                                              # which model Morse will use
-morse config --provider claude-code                      # Claude Code, choosing sonnet or opus each time
+morse config --provider claude-code                      # Claude Code: opus, thinking briefly or longer each time
 morse config --model opus                                # always this one model (--model auto to undo)
 morse config --provider anthropic --anthropic-key sk-ant-…
 morse config --provider openai --openai-key sk-…
@@ -62,8 +62,8 @@ nothing else:
 
 | You use | Small changes | New features, new buttons and panels, new looks |
 |---|---|---|
-| Claude Code | `sonnet` | `opus` |
-| Anthropic API key | `claude-sonnet-5-5` | `claude-opus-5-5`, or the model you picked in the Morse popup |
+| Claude Code | `opus`, low effort | `opus`, high effort |
+| Anthropic API key | `claude-opus-5-5`, low effort | `claude-opus-5-5`, high effort |
 | OpenAI API key | `gpt-5` | `gpt-5`, reasoning longer (`reasoning_effort: "high"`) |
 | Codex | your plan's usual model, thinking a medium time | the same model, thinking longer |
 | Another server that works like OpenAI's | the names you set | the names you set |

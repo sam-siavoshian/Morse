@@ -24,9 +24,13 @@ export const MODEL_MODES = ["auto", "fast", "best"];
 // plan's own model and the strong one thinks longer (model_reasoning_effort).
 // Names set in ~/.morse/config.json "tiers" (morse config --fast-model /
 // --best-model) win, so a person who chose haiku there keeps it.
+// The first tier is the strongest model thinking briefly (low effort), so a
+// small change is as quick as before and comes out smarter; the second is the
+// same model thinking longer (dogfood: a dark app got a light panel from the
+// quicker model).
 export const TIERS = {
-  "claude-code": { fast: { model: "sonnet" }, best: { model: "opus" } },
-  anthropic: { fast: { model: "claude-sonnet-5-5" }, best: { model: "claude-opus-5-5" } },
+  "claude-code": { fast: { model: "opus", effort: "low" }, best: { model: "opus", effort: "high" } },
+  anthropic: { fast: { model: "claude-opus-5-5", effort: "low" }, best: { model: "claude-opus-5-5", effort: "high" } },
   openai: { fast: { model: "gpt-5" }, best: { model: "gpt-5", effort: "high" } },
   codex: { fast: { model: "", effort: "medium" }, best: { model: "", effort: "high" } },
 };

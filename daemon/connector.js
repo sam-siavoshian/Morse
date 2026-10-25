@@ -655,6 +655,7 @@ export class Connector {
           probe: (sels, opts) => this.probe(s, caller, msg.context?.target?.selector, sels, opts),
           collapse: css => this.collapse(s, caller, msg.genId, css), // guard hook: hid most of the page?
           polish: prefs.polish, review: () => this.shoot(s, caller, msg.context?.target?.selector, msg.genId), // polish: a look at the change (core/polish.js)
+          look: () => this.shoot(s, caller, msg.context?.target?.selector, null), // the app as the person sees it, with the request
           emit: ev => {
             if (ev.type === "token" && !tokens++) trace("stream", `first words from the model after ${Date.now() - t0}ms`);
             if (ev.type === "css" && ev.css && !cssPushes++) trace("page", `CSS reaches the page while the model is still writing (${Date.now() - t0}ms), pushed over CDP to Morse's world`);

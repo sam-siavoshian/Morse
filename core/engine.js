@@ -4,7 +4,7 @@
 import { buildMessages } from "./prompt.js";
 import { parseModResponse, liveCss } from "./parse.js";
 import { parseReply } from "./answer.js"; // Ask and find
-import { streamChat, settingsLabel } from "./providers.js";
+import { streamChat, settingsLabel, seesImages } from "./providers.js";
 import { planRoute, shouldEscalate, tierLabel } from "./route.js"; // models: fast model first, the strong one when needed
 import { selectorsIn, selectorLists } from "./heal.js"; // self-heal hook: shared selector parsing
 import { cannotUndo } from "./showonce.js"; // show-once hook: ask before steps that can't be undone
@@ -28,10 +28,15 @@ import { wantsPolish, polishRound } from "./polish.js"; // polish: a look at the
 // that can't work in this app, or null: app profiles (daemon/profile.js)
 // check that the commands it runs with morse.app.command exist.
 //
+// `look()` (optional, from the host) returns a picture of the app as the
+// person sees it, around what they pointed at ({ mediaType, data }). It goes
+// with the request, so the model sees the app's real look (dark mode, its
+// colors, spacing) before it writes anything. Only for models that see pictures.
+//
 // polish (core/polish.js): with `polish` on and `review(draft)` from the host
 // (a picture of the changed part of the page: { mediaType, data }), a change
 // that adds or restyles something gets one look and, if needed, one fix.
-export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2, probe, collapse, vet, review, polish = false }) {
+export async function runMorse({ settings, request, context, base, exec, emit, signal, maxAttempts = 2, probe, collapse, vet, review, look, polish = false }) {
   let previous = null;
   let last = null;
   const started = Date.now();
@@ -50,6 +55,9 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
   let before = null, beforeDone = !probe;
   // learn: two looks a moment apart, so what moves by itself (a clock) doesn't count as the change.
   const beforeP = probe ? probe([], { learn: true }).catch(() => null).then(b => { before = b; beforeDone = true; }) : null;
+  // The picture of the app, taken while everything else starts (at most 2.5 s).
+  const lookP = look && seesImages(settings) ? Promise.race([Promise.resolve().then(look).catch(() => null), new Promise(r => setTimeout(() => r(null), 2500))]) : null;
+  let picture;
   // speed: when each stage happened, in ms since the call (first attempt only)
   const timing = {};
   const mark = (k, v = Date.now() - started) => { if (timing[k] == null) timing[k] = v; };
@@ -61,7 +69,8 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     if (route.steps.length > 1 || route.hard) emit({ type: "model", label: answered().model, tier: current().tier || null });
     let raw = "", lastCss = "", lastAnswer = "";
     try {
-    raw = await streamChat(current(), buildMessages({ request, context, previous, base }), {
+    if (picture === undefined) picture = lookP ? await lookP : null;
+    raw = await streamChat(current(), withPicture(buildMessages({ request, context, previous, base }), picture), {
       signal,
       // The model has the request ("ready"), or is thinking: real progress for the bar.
       onStage(st) {
@@ -295,6 +304,23 @@ function unasked(context, js) {
   if (!sure.length || /\bmorse\.confirm\s*\(/.test(js || "")) return null;
   const what = sure.map(s => `“${s.label || s.text || s.key}”`).slice(0, 3).join(", ");
   return `${sure[0].n ? `Step ${sure[0].n}` : "A step"} (${what}) can't be undone, and the code never asks first. Before the first such step add: if (!(await morse.confirm("…what will happen…"))) return;`;
+}
+
+// The picture goes with the person's words, in the last message from them.
+export const LOOK_NOTE = "The picture shows the app as the user sees it right now, around what they pointed at. Whatever you add must look like part of it: the same light or dark mode, colors, fonts, sizes and spacing.";
+export function withPicture(messages, picture) {
+  if (!picture?.data) return messages;
+  const i = messages.findLastIndex(m => m.role === "user");
+  if (i < 0) return messages;
+  const m = messages[i];
+  const text = typeof m.content === "string" ? m.content : null;
+  if (text == null) return messages; // already pictures (Describe this image): leave it
+  const out = messages.slice();
+  out[i] = { ...m, content: [
+    { type: "image", source: { type: "base64", media_type: picture.mediaType || "image/jpeg", data: picture.data } },
+    { type: "text", text: `${text}\n\n${LOOK_NOTE}` },
+  ] };
+  return out;
 }
 
 // ---- effect check helpers

@@ -9,6 +9,12 @@ under the new version number with the date
 
 ## Unreleased
 
+- **Smarter changes at the same speed.** Every change uses Opus (Claude Code or
+  an Anthropic key): it thinks briefly for small changes and longer for new
+  features, new looks and second tries.
+- **The model sees what you see.** A picture of the app, around what you
+  pointed at, goes with your words, so what it adds matches the app: its dark
+  or light mode, colors, fonts and spacing.
 - **The Morse app updates itself.** It checks for a new version at start and
   every 4 hours, downloads it in the background, checks it against the
   release's checksums, and puts it in when no app is connected or when you

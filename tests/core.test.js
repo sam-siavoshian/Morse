@@ -206,6 +206,20 @@ test("a change that still does nothing after its repairs never says done: it com
   assert.equal(css, "", "the change that did nothing is taken off the page");
 });
 
+test("a picture of the app goes with the request, for models that see pictures", async () => {
+  let seen = null;
+  registerProvider("script", async (s, messages, { onToken }) => { seen = messages; const r = "TITLE: Panel\n```css\n.x { color: red }\n```"; onToken(r); return r; });
+  const PIC = { mediaType: "image/jpeg", data: "QUJD" };
+  await runMorse({ settings: { provider: "script" }, request: "add a panel", context: { url: "x", title: "x" }, emit: () => {}, exec: async () => ({ ok: true }), look: async () => PIC });
+  assert.equal(typeof seen.at(-1).content, "string", "a model that can't see pictures gets none");
+  const { withPicture, LOOK_NOTE } = await import("../core/engine.js");
+  const m = withPicture([{ role: "system", content: "S" }, { role: "user", content: "add a panel" }], PIC);
+  assert.equal(m[1].content[0].source.data, "QUJD");
+  assert.equal(m[1].content[1].text, `add a panel\n\n${LOOK_NOTE}`);
+  assert.match(LOOK_NOTE, /light or dark mode/);
+  assert.equal(withPicture(m, null), m, "no picture: the messages as they were");
+});
+
 test("behavior-only JS (selectors all match, nothing visible yet) is not sent back", async () => {
   registerProvider("script", async (s, m, { onToken }) => { const r = "TITLE: Keys\n```js\nmorse.on(document, 'keydown', () => {});\n```"; onToken(r); return r; });
   const res = await runMorse({

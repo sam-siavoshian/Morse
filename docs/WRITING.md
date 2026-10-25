@@ -296,7 +296,7 @@ in one or two short sentences.
 | Ask, Show me | You do the clicking; Morse points the way. | Morse shows where to click. You do the clicking. |
 | Settings | Push to talk | Hold to talk |
 | Settings | Effects: Full · Subtle · Off | Effects: Full · Less · Off |
-| Settings | Small tweaks use sonnet. New features, restyles and second tries use opus | Small changes use sonnet. New features, new looks and second tries use opus |
+| Settings | Small tweaks use sonnet. New features, restyles and second tries use opus | Every change uses opus: it thinks briefly for small ones and longer for new features, new looks and second tries |
 | Mods panel | Export all mods | Back up all mods |
 | Error | The change the model wrote didn't work on this page. Try again, or describe it differently. | The model's change didn't work on this page. Try again, or try other words. |
 | Welcome | Already have it? Open Morse Desktop. | If you have it, open the Morse app. |

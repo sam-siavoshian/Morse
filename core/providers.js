@@ -86,6 +86,7 @@ export function prewarm(settings, request) {
 export const imageBlocks = messages => messages.flatMap(m => (Array.isArray(m.content) ? m.content.filter(b => b?.type === "image") : []));
 export const textOf = content => (Array.isArray(content) ? content.filter(b => b?.type === "text").map(b => b.text).join("\n\n") : String(content ?? ""));
 const SEES_IMAGES = new Set(["anthropic", "openai", "claude-code", "helper", "demo"]);
+export const seesImages = s => SEES_IMAGES.has(s?.provider);
 function toOpenAI(m) {
   if (!Array.isArray(m.content)) return m;
   return { role: m.role, content: m.content.map(b => (b?.type === "image"
@@ -112,7 +113,7 @@ export function settingsLabel(s) {
   if (auto && name) return `${name} · ${t("settings.model.auto")}`;
   const model = s.model || PROVIDERS[s.provider]?.defaultModel || "";
   switch (s.provider) {
-    case "claude-code": return model ? `Claude Code · ${model}` : "Claude Code";
+    case "claude-code": { const what = [model, s.effort && t("model.effort", { effort: s.effort })].filter(Boolean).join(", "); return what ? `Claude Code · ${what}` : "Claude Code"; } // models: both tiers are opus, thinking briefly or longer
     case "codex": { const what = [model, s.effort && t("model.effort", { effort: s.effort })].filter(Boolean).join(", "); return what ? `Codex · ${what}` : "Codex"; } // models: a tier may be only an effort
     case "anthropic": return `${model} · API`;
     case "openai": {
