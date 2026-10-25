@@ -8,6 +8,13 @@ under the new version number with the date
 
 ## Unreleased
 
+- **Change the keys that open the bar.** Settings shows the keys. Press the ones you want. Morse uses those from then on.
+- **Quieter windows.** The restart window and the update window use a thin line. The update window shows the Morse mark and how far the download has got.
+- **The Mods list is easier to read.** An app's name is on its own line. The number of mods is on the line under it.
+- **Your apps is one list.** The apps sit on one surface, with a thin line between them.
+- **Connected means Morse is in the app.** An app is not marked Connected while Morse is still starting.
+- **On a Mac, Morse remembers that you allowed it to open your apps.** After it restarts, it does not ask again.
+- **A new film on the website.** It shows the latest Morse and stays under a minute.
 - **No more Chrome extension.** The Morse app opens websites the way it opens
   apps: pick Chrome, Edge, Brave, Arc or Vivaldi in the Morse app and it opens
   with Morse, so your mods and your style work on every site. Nothing to
