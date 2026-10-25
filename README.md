@@ -88,7 +88,7 @@ More, including what mods can do: [Privacy and safety](docs/privacy-and-safety.m
 
 ## Status
 
-Version 0.2, not released yet ([changelog](CHANGELOG.md)). Here is what was tested for real, and what wasn't.
+Version 0.2.0, the first release ([download](https://github.com/sam-siavoshian/RRAA/releases/tag/v0.2.0), [changelog](CHANGELOG.md)). Here is what was tested for real, and what wasn't.
 
 **Tested**
 
