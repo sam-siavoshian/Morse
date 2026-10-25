@@ -119,10 +119,13 @@ after a pause** in Settings.
 
 ## Shortcuts and Settings
 
-Open Settings with the slider button in the bar, or press **⌘,** (Ctrl+,).
-You can change every shortcut there: open Morse, talk, the Mods panel, the
-Edit tools and the off switch. Morse won't take keys that would cause
-trouble, like ⌘Q or Alt+F4.
+Open Settings with the **⋯** button in the bar, or press **⌘,** (Ctrl+,).
+It shows the few things people change: Your style, the shortcut that opens
+Morse, the theme, the language and fixing mods by themselves. **More
+settings** has the rest: the other shortcuts (talk, the Mods panel, the Edit
+tools, the off switch), voice, effects, where the bar sits, the model and
+the small notices. Morse won't take keys that would cause trouble, like ⌘Q
+or Alt+F4.
 
 The default is ⌥Space on macOS. On Windows and Linux it is Ctrl+Shift+Space,
 because Alt+Space opens the window menu there (or KRunner on KDE). Morse's

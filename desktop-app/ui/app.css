@@ -305,6 +305,11 @@ main::-webkit-scrollbar-thumb { background: var(--m-line-strong); border: 3px so
 main::-webkit-scrollbar-thumb:hover { background: var(--m-signal-1); }
 main::-webkit-scrollbar-track { background: transparent; }
 
+/* simplify: Checks is a card under Model (index.html) */
+#checks { margin-top: 16px; }
+#checks .sub { margin: 4px 0 0; color: var(--m-text-2); font-size: var(--m-text-sm); }
+#checks .list { margin-top: 12px; }
+#checks .foot { margin-top: 12px; }
 /* "Add to Chrome": the picture of Chrome's extensions page, and the two steps */
 .steps li > div > .add-how { grid-column: 1 / -1; margin-top: var(--s-4); }
 .add-pic { display: block; width: 100%; max-width: 420px; height: auto; font-family: var(--m-font); }

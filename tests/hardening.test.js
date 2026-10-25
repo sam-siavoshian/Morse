@@ -236,6 +236,7 @@ test("hotkey recorder: God mode doesn't take the keys being recorded", { skip },
     await selectInGodMode(page, "#card h3");
     await page.keyboard.press("Control+Comma");
     await waitFor(s => s.pane === "settings");
+    await page.locator("[data-act=more]").click(); // the Mods panel's shortcut is under More settings (docs/dev/simplify.md)
     await page.locator(".hk[data-hk=mods]").click();
     await page.locator(".hkrow.recording").waitFor();
     await page.keyboard.press("Control+KeyE"); // God mode's "focus the edit tools"

@@ -94,6 +94,7 @@ const exists = id => fs.access(path.join(MODS, `${id}.json`)).then(() => true, (
 // ---- 160: choosing mods for a pack
 await load();
 await openPanel();
+await ui(".panel .pmore summary").click(); // under the panel's More
 await ui(".panel [data-pk=make]").click();
 for (const id of ["sticky-head", "failed-red", "copy-order"]) await ui(`.panel article[data-id="${id}"] [data-pk=sel]`).check();
 await ui(".panel .list").evaluate(l => l.scrollTo({ top: 0 }));

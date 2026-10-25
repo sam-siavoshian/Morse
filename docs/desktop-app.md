@@ -120,8 +120,9 @@ every app. Click it again to turn them back on. It is the same off switch as
 
 ## Checks
 
-**Run checks** shows what Morse found on this computer and asks your model a
-short question, like `morse doctor`. A row marked **!** says what to do.
+Under **Model**, **Run checks** shows what Morse found on this computer and
+asks your model a short question, like `morse doctor`. A row marked **!**
+says what to do.
 
 ![Checks: what Morse found, and the model answered](screenshots/173-desktop-app-checks.png)
 

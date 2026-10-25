@@ -169,8 +169,9 @@ export async function importCli(f) {
 // morse code <id>: what a mod does, where it came from, and its code.
 export async function codeCli(f) {
   const id = f._[0];
-  const mod = (await listMods()).find(m => m.id === id || m.id.startsWith(id || "\0"));
-  if (!mod) throw new Error(t("cli.ctl.noMod", { id: id || "" }));
+  if (!id) throw Object.assign(new Error(t("cli.whichMod")), { plain: true });
+  const mod = (await listMods()).find(m => m.id === id || m.id.startsWith(id));
+  if (!mod) throw Object.assign(new Error(t("cli.ctl.noMod", { id: shown(id) })), { plain: true });
   out(describe(mod));
   out(D(`  ${shown(modOrigin(mod))} · ${t(mod.enabled ? "cli.ctl.on" : "cli.ctl.off")} · ${mod.id}`));
   if (mod.css.trim()) out(`\n${B("CSS")}\n${shownCode(mod.css.trim())}`);

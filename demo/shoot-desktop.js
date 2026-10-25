@@ -166,7 +166,9 @@ await sleep(500);
 await shot("11-mods-panel.png");
 
 // 11. Code view / edit
-await page.locator(".panel article").first().locator("[data-a=code]").click();
+await page.locator(".panel article").first().locator(".rmore summary").click(); // More → Show code → Edit code
+await page.locator(".panel article").first().locator("[data-c=show]").click();
+await page.locator(".card [data-c=edit]").click();
 await sleep(400);
 await shot("12-edit-the-code.png");
 await page.keyboard.press("Escape");
