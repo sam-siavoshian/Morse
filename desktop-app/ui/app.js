@@ -674,15 +674,31 @@ window.addEventListener("blur", () => { if (recording) stopRecording(); });
 // ---------------------------------------------------------------- update
 // Morse updating itself: a dialog while it downloads and installs; when apps
 // are connected, Restart now or Later (it installs when Morse quits).
+// 0%, 40% and 100% stay one run of digits, so the percent doesn't break apart.
+function shownPercent(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return 0;
+  return Math.max(0, Math.min(100, Math.round(v)));
+}
 function renderUpdate() {
   const u = st.update || { phase: "idle" }, d = $("update");
   const show = ["downloading", "installing", "ready", "failed"].includes(u.phase);
   if (!show) { if (d.open) d.close(); return; }
   $("update-h").textContent = t(u.phase === "downloading" ? "desk.update.downloadingH" : u.phase === "ready" ? "desk.update.readyH" : u.phase === "failed" ? "desk.update.failedH" : "desk.update.installingH");
-  $("update-d").textContent = u.phase === "downloading" ? t("desk.update.downloading", { percent: u.percent ?? 0 })
-    : u.phase === "ready" ? t("desk.update.ready") : u.phase === "failed" ? t("desk.update.failed") : t("desk.update.installing");
-  $("update-track").hidden = u.phase !== "downloading";
-  $("update-fill").style.width = `${u.percent ?? 0}%`;
+  const detail = $("update-d");
+  const track = $("update-track");
+  if (u.phase === "downloading") {
+    const pct = shownPercent(u.percent);
+    const msg = t("desk.update.downloading", { percent: "\u0000" });
+    const at = msg.indexOf("\u0000");
+    if (at < 0) detail.textContent = t("desk.update.downloading", { percent: pct });
+    else detail.replaceChildren(msg.slice(0, at), h("span", { class: "update-pct", text: `${pct}${msg.slice(at + 1)}` }));
+    $("update-fill").style.width = `${pct}%`;
+    track.setAttribute("aria-valuenow", String(pct));
+  } else {
+    detail.textContent = u.phase === "ready" ? t("desk.update.ready") : u.phase === "failed" ? t("desk.update.failed") : t("desk.update.installing");
+  }
+  track.hidden = u.phase !== "downloading";
   $("update-acts").hidden = u.phase !== "ready" && u.phase !== "failed";
   $("update-now").hidden = u.phase !== "ready";
   $("update-later").textContent = t(u.phase === "failed" ? "desk.update.close" : "desk.update.later");

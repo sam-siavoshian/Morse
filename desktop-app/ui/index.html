@@ -191,11 +191,11 @@
 </dialog>
 
 <!-- Morse updating itself (updater.js): downloading, then installing -->
-<dialog id="update" aria-labelledby="update-h">
-  <span class="mark-tile" aria-hidden="true"></span>
+<dialog id="update" aria-labelledby="update-h" aria-describedby="update-d">
+  <span class="mark-tile" aria-hidden="true"><svg class="radar" viewBox="0 0 15 15" width="22" height="22" fill="currentColor" aria-hidden="true"><rect x="4" y="0" width="3" height="3" rx="1" class="o"/><rect x="8" y="0" width="3" height="3" rx="1" class="o"/><rect x="0" y="4" width="3" height="3" rx="1" class="o"/><rect x="4" y="4" width="3" height="3" rx="1" class="c"/><rect x="8" y="4" width="3" height="3" rx="1" class="c"/><rect x="12" y="4" width="3" height="3" rx="1" class="o"/><rect x="0" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="8" width="3" height="3" rx="1" class="c"/><rect x="8" y="8" width="3" height="3" rx="1" class="c"/><rect x="12" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="12" width="3" height="3" rx="1" class="o"/><rect x="8" y="12" width="3" height="3" rx="1" class="o"/></svg></span>
   <h2 id="update-h"></h2>
   <p id="update-d"></p>
-  <div class="bar-track" id="update-track" hidden><div class="bar-fill" id="update-fill"></div></div>
+  <div class="bar-track" id="update-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="update-h" hidden><div class="bar-fill" id="update-fill"></div></div>
   <div class="row-end" id="update-acts" hidden><button type="button" class="btn" id="update-later" data-i18n="desk.update.later">Later</button><button type="button" class="btn primary" id="update-now" data-i18n="desk.update.now">Restart now</button></div>
 </dialog>
 
