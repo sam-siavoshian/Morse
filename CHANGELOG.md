@@ -9,6 +9,8 @@ under the new version number with the date
 
 ## Unreleased
 
+## 0.2.0 (2026-10-25)
+
 Version 0.2.0, the first version for other people to install.
 
 ### Getting Morse
