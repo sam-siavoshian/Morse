@@ -139,7 +139,13 @@ jobs:
           for v in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID WIN_CSC_LINK WIN_CSC_KEY_PASSWORD AZURE_TENANT_ID AZURE_CLIENT_ID AZURE_CLIENT_SECRET AZURE_SIGNING_ENDPOINT AZURE_SIGNING_ACCOUNT AZURE_CERT_PROFILE AZURE_PUBLISHER_NAME; do
             [ -z "${!v}" ] && unset "$v"
           done
-          node desktop-app/build.js ${{ matrix.flag }}
+          # On GitHub's Macs, hdiutil sometimes can't eject the disk image it just
+          # made (the system is still scanning it): try the build again.
+          for i in 1 2 3; do
+            node desktop-app/build.js ${{ matrix.flag }} && break
+            [ "$i" = 3 ] && exit 1
+            echo "::warning::build failed (try $i), trying again"; hdiutil info | grep -q "/Volumes/Morse" && hdiutil detach -force "/Volumes/Morse "* 2>/dev/null; sleep 10
+          done
       - name: The Mac app is signed (ad hoc or with the Developer ID) and starts
         if: runner.os == 'macOS'
         shell: bash

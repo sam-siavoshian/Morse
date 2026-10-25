@@ -120,6 +120,10 @@ jobs:
           npm install -g "playwright@${PLAYWRIGHT_VERSION}"
           echo "NODE_PATH=$(npm root -g)" >> "$GITHUB_ENV"
           npm install --prefix ~/.cache/morse/electron electron
+          # Electron's own download runs in its postinstall; run it again to be
+          # sure, and stop here if the runtime isn't there.
+          (cd ~/.cache/morse/electron/node_modules/electron && node install.js)
+          ls ~/.cache/morse/electron/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron
       - run: node scripts/build.js
       - name: Real Electron and Morse Desktop on macOS
         shell: bash
