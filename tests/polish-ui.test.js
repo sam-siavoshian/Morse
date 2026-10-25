@@ -23,7 +23,7 @@ const ROOT = new URL("../", import.meta.url);
 let home, browser, page, server, tunes;
 const freePort = () => new Promise(r => { const s = net.createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => r(p)); }); });
 const ui = sel => page.locator(`[data-morse-ui] ${sel}`);
-const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "null"));
+const status = () => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status || "null"));
 async function waitFor(pred, ms = 30000) {
   const end = Date.now() + ms;
   let s;
@@ -72,7 +72,7 @@ before(async () => {
   await page.goto(tunes);
   const { Connector } = await import("../daemon/connector.js");
   new Connector({ port: cdp, app: null, settings: { provider: "demo", model: "demo" }, log: () => {} }).run();
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 15000 });
+  await page.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status, null, { timeout: 15000 });
 });
 after(async () => {
   await browser?.close();
@@ -107,6 +107,9 @@ test("a change that adds UI is looked at once and fixed; turning Polish changes 
   await page.keyboard.press(OPEN_KEY);
   await waitFor(s => s.open);
   await page.keyboard.press("Control+Comma");
+  // Polish changes is under More settings (docs/dev/simplify.md).
+  const more = ui(".sheet [data-act=more]");
+  if (await more.getAttribute("aria-expanded") === "false") await more.click();
   const sw = ui('.sheet input[data-k="polish"]');
   await sw.waitFor({ state: "attached" });
   assert.equal(await sw.isChecked(), true, "on by default");

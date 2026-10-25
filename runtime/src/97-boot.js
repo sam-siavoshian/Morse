@@ -107,18 +107,25 @@ function guardStop(id, why) {
 // Read-only status for automated screenshots/tests; off unless opted in
 // (Playwright with morse:debug, or a desktop host started with MORSE_DEBUG=1,
 // which a web page can't set). Mirrored into a DOM attribute so it is readable
-// from any JS world.
+// from any JS world. Written every 40 ms, and at once when something
+// dispatches "morse:status" on the document (the listener runs inside that
+// dispatch, whichever world dispatched it): tests/helpers/wait.js readStatus
+// does, so a test never reads the state from before its last key or click.
 let statusOn = false;
 function debugStatus() {
   if (statusOn) return;
   statusOn = true;
+  const write = () => {
+    hostEl.dataset.status = JSON.stringify({
+      ready: !!S.ready, phase: S.phase, hint: hint.textContent, ticker: ticker.textContent, mods: S.mods.length,
+      open: S.open, input: input.value, voice: Voice.state(), backend: Voice.backend(), level: Voice.level(), db: Voice.db(), pane: paneKind,
+      focus: root.activeElement?.className || root.activeElement?.tagName || "", hotkeys: HOTKEYS,
+    });
+  };
   const timer = setInterval(() => {
-  if (!live()) return clearInterval(timer); // soak: a copy that went quiet (morse stop) stops, and can be let go
-  hostEl.dataset.status = JSON.stringify({
-    ready: !!S.ready, phase: S.phase, hint: hint.textContent, ticker: ticker.textContent, mods: S.mods.length,
-    open: S.open, input: input.value, voice: Voice.state(), backend: Voice.backend(), level: Voice.level(), db: Voice.db(), pane: paneKind,
-    focus: root.activeElement?.className || root.activeElement?.tagName || "", hotkeys: HOTKEYS,
-  });
+    if (!live()) { clearInterval(timer); B.off(document, "morse:status", write); return; } // soak: a copy that went quiet (morse stop) stops, and can be let go
+    write();
   }, 40);
+  B.on(document, "morse:status", write);
 }
 if (DEBUG) debugStatus();

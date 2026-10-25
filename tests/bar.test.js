@@ -37,7 +37,7 @@ async function open(query = "", init) {
   page.on("pageerror", e => errors.push(e.message));
   await page.goto(srv.url + query);
   await waitForReady(page);
-  const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
+  const status = () => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status));
   const waitFor = (pred, ms = TIMEOUT) => waitForStatus(page, pred, { timeout: ms, what: String(pred) });
   const log = () => page.evaluate(() => window.__fake.log);
   const shadow = fn => page.evaluate(fn);

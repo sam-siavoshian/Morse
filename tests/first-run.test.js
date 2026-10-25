@@ -110,7 +110,7 @@ const text = (page, sel) => page.locator(sel).first().textContent().catch(() => 
 const stepState = (page, step) => page.evaluate(s => document.querySelector(`#steps [data-step="${s}"]`).className, step);
 // A site's bar, in debug mode (its shadow root open).
 const siteBar = page => ({
-  status: () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status)),
+  status: () => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status)),
   sr: sel => page.evaluate(s => { const n = document.querySelector("[data-morse-ui]").shadowRoot.querySelector(s); return n && !n.hidden && n.getClientRects().length ? n.innerText || n.value : null; }, sel),
   value: () => page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".in").value),
 });
@@ -215,7 +215,7 @@ test("first run: no question, the Morse app found and asked by itself, one Allow
     let opened = ctx.waitForEvent("page");
     await welcome.click("[data-site=wiki]");
     const wiki = await opened;
-    await wiki.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 20000 * SCALE });
+    await wiki.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status, null, { timeout: 20000 * SCALE });
     await until(async () => (await siteBar(wiki).status()).open, 10000, "the bar, open by itself");
     await until(async () => (await siteBar(wiki).value()) === "make this easier to read", 5000, "the words, typed in");
     await wiki.close();
@@ -227,7 +227,7 @@ test("first run: no question, the Morse app found and asked by itself, one Allow
     await welcome.locator("#go-site button").click();
     const site = await opened;
     const b = siteBar(site);
-    await site.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status, null, { timeout: 20000 * SCALE });
+    await site.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status, null, { timeout: 20000 * SCALE });
     await until(async () => (await b.status()).open, 10000, "the bar, open by itself");
     const chips = await until(() => b.sr(".sugs"), 5000, "suggestions");
     assert.match(chips, /Hide the ads/, "this page has ads, so hiding them is offered");
@@ -237,7 +237,7 @@ test("first run: no question, the Morse app found and asked by itself, one Allow
     await site.keyboard.press("Enter"); // Save
     await until(async () => !(await b.status()).open, 5000, "the bar to close on Save");
     await site.reload();
-    await site.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+    await site.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status);
     await until(async () => (await b.status()).mods === 1, 8000, "the mod back after a reload");
     await site.keyboard.press("Alt+Shift+KeyM");
     await until(() => b.sr(".panel"), 5000, "the Mods panel");
@@ -325,7 +325,7 @@ test("“Allow User Scripts” only when a change needs it: one switch, a pictur
     await site.goto(byte);
     await site.evaluate(() => localStorage.setItem("morse:debug", "1"));
     await site.reload();
-    await site.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+    await site.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status);
     await site.keyboard.press(OPEN_KEY);
     await until(async () => (await siteBar(site).status()).open, 5000, "the bar");
     await sleep(500);
@@ -341,7 +341,7 @@ test("“Allow User Scripts” only when a change needs it: one switch, a pictur
     const mod = createMod({ title: "Word count", prompt: "count words", url: byte, css: "h1 { outline: 3px solid rgb(1, 2, 3) !important; }", js: "document.documentElement.dataset.wordCount = 'ran';" });
     await sw.evaluate(mods => chrome.storage.local.set({ mods }), { [mod.id]: mod });
     await site.reload();
-    await site.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+    await site.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status);
     const button = site.locator("[data-morse-ui] button", { hasText: "Open Morse's details" });
     await button.waitFor({ timeout: 10000 * SCALE });
     const pages = [];
@@ -378,9 +378,9 @@ async function playground(state, fn) {
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   await page.goto(bar.url + "?onboarding");
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  await page.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status);
   await page.waitForTimeout(150);
-  const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
+  const status = () => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status));
   const seen = sel => page.evaluate(s => { const n = document.querySelector("[data-morse-ui]").shadowRoot.querySelector(s); return !!n && !n.hidden && n.getClientRects().length > 0; }, sel);
   const text = sel => page.evaluate(s => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(s)?.innerText || "", sel);
   const open = async () => { await page.keyboard.press(OPEN_KEY); await until(async () => (await status()).open, 5000, "the bar"); await page.waitForTimeout(80); };
@@ -436,7 +436,7 @@ test("progressive reveal: a new user's bar keeps to the basics until the first s
 
     // Only the first time.
     await page.reload();
-    await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+    await page.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status);
     await open();
     await point("#toolbar");
     await page.keyboard.type("make the toolbar airier");

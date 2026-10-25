@@ -30,7 +30,7 @@ async function until(fn, ms = 8000) {
     await new Promise(r => setTimeout(r, 40));
   }
 }
-const status = page => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
+const status = page => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status));
 const taken = page => page.evaluate(() => JSON.parse(localStorage.getItem("morse:a11y-host:taken") || "[]"));
 const mods = page => page.evaluate(() => Object.values(JSON.parse(localStorage.getItem("morse:a11y-host:mods") || "{}")));
 const requests = page => page.evaluate(() => window.__fake.requests);
@@ -40,7 +40,7 @@ async function openBar(page) {
 }
 async function go(page, site) {
   await page.goto(`http://sites.morse.test/demo/sites/${site}/index.html`);
-  await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.dataset.status);
+  await page.waitForFunction(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status);
 }
 
 test("Take this in one app, Bring here in another: the palette works there, in that app's own look", { skip }, async () => {

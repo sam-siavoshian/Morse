@@ -167,7 +167,7 @@ async function reviewPage(preview) {
   await page.goto(`http://127.0.0.1:${s.address().port}/`);
   await page.addScriptTag({ content: BOOT });
   await page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.shadowRoot);
-  await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status || "{}").ready);
+  await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status || "{}").ready);
   return page;
 }
 

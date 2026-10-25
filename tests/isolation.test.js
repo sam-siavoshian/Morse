@@ -15,7 +15,7 @@ import { freePort } from "./helpers/net.js";
 const skip = noBrowser;
 
 let home, browser, page, site, origin, store, Connector, connector;
-const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "null"));
+const status = () => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status || "null"));
 const probe = () => page.evaluate(() => JSON.parse(document.documentElement.dataset.probe || "null"));
 async function until(get, ms = TIMEOUT) {
   const end = Date.now() + ms;
@@ -126,7 +126,7 @@ test("a binding with the same name in the main world reaches nothing", { skip },
 });
 
 test("reattaching reuses the runtime that's already in the page", { skip }, async () => {
-  const before = await page.evaluate(() => document.querySelector("[data-morse-ui]").dataset.status);
+  const before = await page.evaluate(() => (document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status);
   assert.ok(before);
   // A second connector (a restarted daemon) on the same app.
   const again = new Connector({ port: connector.port, app: null, settings: { provider: "demo", model: "demo" }, log: () => {} });

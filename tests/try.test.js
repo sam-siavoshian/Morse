@@ -87,7 +87,7 @@ test("Try it here: loads on scroll, makes a suggested change with the real runti
     assert.match(await status.innerText(), /fixed it/, "the first try's mistake was fixed by the real engine");
 
     // Save (Enter in the bar, once it shows the result), then Reload app: it comes back.
-    const bar = () => app().evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status || "{}"));
+    const bar = () => app().evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status || "{}"));
     await waitFor(async () => (await bar()).phase === "result", { what: "the result in the bar" });
     await page.keyboard.press("Enter");
     await waitFor(async () => (await kind()) === "saved", { what: "Saved" });
@@ -149,7 +149,7 @@ test("Try it here on a phone: tap to open, tap a change, and nothing scrolls sid
     await page.locator("#try .try-open").scrollIntoViewIfNeeded();
     await page.waitForSelector("#try.is-live", { timeout: TIMEOUT });
     const app = () => page.frames().find(f => f.parentFrame() === page.mainFrame() && !f.isDetached());
-    const bar = () => app().evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "{}"));
+    const bar = () => app().evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status || "{}"));
     await waitFor(async () => (await bar()).ready, { what: "the runtime in the demo app" });
 
     // The window spans the phone, edge to edge; the page never scrolls sideways.

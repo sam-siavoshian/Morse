@@ -53,10 +53,10 @@ test("typing in the bar doesn't fire the page's capture-phase shortcuts", { skip
     const closedWhiteSpace = await page.evaluate(WHITE_SPACE);
 
     await pressOpen(page);
-    await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).focus === "in");
+    await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status).focus === "in");
     await page.evaluate(() => (__shortcuts.length = 0));
     await page.keyboard.type("jk/gx");
-    await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).input === "jk/gx"); // the bar got every key
+    await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status).input === "jk/gx"); // the bar got every key
     assert.deepEqual(await page.evaluate(() => __shortcuts), [], "the page ran none of its shortcuts");
     const h = await host();
     assert.equal(h.ice, true);
@@ -74,7 +74,7 @@ test("typing in the bar doesn't fire the page's capture-phase shortcuts", { skip
     // Closed again: the host is a plain element and the page's keys work.
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
-    await page.waitForFunction(() => !JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).open);
+    await page.waitForFunction(() => !JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status).open);
     await settle(page);
     assert.equal((await host()).ce, null);
     await page.keyboard.press("k");

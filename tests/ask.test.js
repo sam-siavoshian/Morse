@@ -11,7 +11,7 @@ import { bundleRuntime } from "../runtime/bundle.js";
 import { pressOpen } from "./helpers/keys.js";
 import { noBrowser, launchBrowser } from "./helpers/browser.js";
 import { axeCheck, axeLines } from "../demo/axe.js"; // axe-core on Morse's own UI (tests/a11y-morse.test.js)
-import { waitFor, waitForReady, TIMEOUT } from "./helpers/wait.js";
+import { waitFor, waitForReady, readStatus, TIMEOUT } from "./helpers/wait.js";
 
 const skip = noBrowser;
 const ROOT = new URL("../", import.meta.url);
@@ -44,9 +44,11 @@ async function scenario(fn) {
   try { await fn(t); assert.deepEqual(t.errors, []); }
   finally { await t.ctx.close(); }
 }
-const status = page => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
+const status = readStatus;
 const until = (fn, ms = TIMEOUT) => waitFor(fn, { timeout: ms, interval: 40, what: String(fn) });
 // Types a question and waits for this question's answer (not the last one's).
+// The status is read fresh (readStatus): a snapshot from before Enter would
+// still say "Answered" for the last question while this one streams.
 async function ask(page, text) {
   const n = (await fake(page)).asks.length;
   await page.keyboard.type(text);

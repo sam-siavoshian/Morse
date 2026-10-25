@@ -11,6 +11,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { openSite } from "../demo/show-once-page.js";
 import { axeCheck, axeLines } from "../demo/axe.js"; // axe-core on Morse's own UI (tests/a11y-morse.test.js)
+import { readStatus } from "./helpers/wait.js";
 const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 
 let chromium;
@@ -35,7 +36,7 @@ async function until(fn, ms = 8000) {
     await new Promise(r => setTimeout(r, 40));
   }
 }
-const status = page => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
+const status = readStatus; // read fresh, never the state from before the last key or click
 const sent = page => page.evaluate(() => window.__sent);
 const words = page => page.locator(".so-strip .so-w").allInnerTexts();
 const unread = page => page.locator('.r9[data-unread="true"]').count();
@@ -113,8 +114,12 @@ test("Show me once: do it by hand, say “every unread email”, and a button do
   await page.locator(".actions [data-a=keep]").click();
   await until(async () => (await mods(page)).length === 1);
   assert.equal((await mods(page))[0].title, "Archive every unread email");
+  // The host has it; the bar closes when its answer comes back. The hotkey
+  // pressed before that would close the still-open bar instead of opening it.
+  await until(async () => { const s = await status(page); return !s.open && s.phase === "idle"; });
   assert.equal(await page.locator(".so-card").isHidden(), true);
   await page.keyboard.press(OPEN_KEY);
+  await page.locator(".sugs .so-sug").waitFor();
   assert.equal(await page.locator(".so-card").isHidden(), true, "a new bar starts without old steps");
   assert.equal((await page.locator(".sugs .so-sug").count()), 1);
 }));
@@ -202,7 +207,7 @@ test("Recording rules: hidden values, only the user's own events on this page, o
   assert.deepEqual(await words(page), ["Click “Apply”"]);
   await page.keyboard.press("Escape");
   await until(async () => page.locator(".so-strip").isHidden());
-  assert.match(await page.locator(".toast").innerText(), /Cancelled\. No steps were kept/);
+  assert.match(await page.locator(".toast").innerText(), /Cancelled\. No steps were saved/);
   assert.equal((await status(page)).open, false);
   await page.locator("#pagebtn").click(); // after: not recorded, nowhere to show
   await page.keyboard.press(OPEN_KEY);

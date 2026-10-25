@@ -56,7 +56,7 @@ async function scenario({ page: which = "bar", query = "", init, clock = false }
   const url = which === "god" ? srv.url.replace("bar-playground.html", "playground.html") : srv.url;
   await page.goto(url + query);
   await waitForReady(page);
-  const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status));
+  const status = () => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status));
   const waitFor = async (pred, ms = TIMEOUT) => {
     const end = Date.now() + ms;
     let s;

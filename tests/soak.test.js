@@ -93,19 +93,19 @@ test("a runtime that went quiet (morse stop) lets go of the page: attach and sto
     };
   });
   const probe = await PageProbe.forPage(page);
-  const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "{}"));
+  const status = () => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status || "{}"));
   // Attach, then use it: a change made and undone (what builds the UI's page observers).
   const boot = async () => {
     await install();
     await page.addScriptTag({ content: bundleRuntime() });
-    await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "{}").ready);
+    await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status || "{}").ready);
     await pressOpen(page);
-    await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).open);
+    await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status).open);
     await page.keyboard.type("make the title gold");
     await page.keyboard.press("Enter");
-    await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).phase === "result");
+    await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status).phase === "result");
     await page.locator("[data-morse-ui] .actions [data-a=undo]").click();
-    await page.waitForFunction(() => !JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).open);
+    await page.waitForFunction(() => !JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status).open);
   };
   // What the connector's stop() runs in Morse's world, then its clean-up.
   const stop = () => page.evaluate(() => {
@@ -116,8 +116,11 @@ test("a runtime that went quiet (morse stop) lets go of the page: attach and sto
   await boot();
   const first = await counts(page, probe);
   for (let k = 0; k < 4; k++) { await stop(); await page.waitForTimeout(1300); await boot(); }
-  await page.waitForTimeout(300);
-  const now = await counts(page, probe);
+  // The copy stopped last can still have a toast's timer running for a few
+  // seconds, which holds its overlay until it fires: give it up to 10 s to let
+  // go. A real leak keeps every old overlay, however long this waits.
+  let now = await counts(page, probe);
+  for (let i = 0; i < 10 && now.detached - first.detached > 20; i++) { await page.waitForTimeout(1000); now = await counts(page, probe); }
   assert.ok(now.win - first.win <= 2, `listeners on window: ${first.win} -> ${now.win} after 4 stop + attach`);
   assert.ok(now.mo - first.mo <= 4, `MutationObservers: ${first.mo} -> ${now.mo} after 4 stop + attach`);
   assert.ok(now.detached - first.detached <= 20, `detached elements held: ${first.detached} -> ${now.detached} after 4 stop + attach (a whole old overlay each time?)`);
@@ -147,15 +150,15 @@ test("opening the bar doesn't start recording a clip; making a change does", { s
     };
   });
   await page.addScriptTag({ content: bundleRuntime() });
-  const status = () => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "{}"));
-  await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "{}").ready);
+  const status = () => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status || "{}"));
+  await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]"))?.dataset.status || "{}").ready);
   await pressOpen(page);
-  await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).open);
+  await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status).open);
   await page.waitForTimeout(300);
   assert.equal((await page.evaluate(() => window.__sent)).includes("clip.start"), false, "nothing is recorded while the bar is just open");
   await page.keyboard.type("make the title gold");
   await page.keyboard.press("Enter");
-  await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).phase === "result");
+  await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status).phase === "result");
   const sent = await page.evaluate(() => window.__sent);
   assert.ok(sent.indexOf("clip.start") >= 0 && sent.indexOf("clip.start") < sent.indexOf("generate"), `recording starts with the change: ${sent.join(", ")}`);
   assert.ok((await status()).open);

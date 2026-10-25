@@ -58,13 +58,13 @@ async function playground(ctx, mods = MODS, query = "") {
   await page.evaluate(m => { localStorage.setItem("morse:playground:mods", JSON.stringify(m)); localStorage.setItem("morse:debug", "1"); }, mods);
   await page.goto(`${ORIGIN}/demo/playground.html?light${query}`);
   await waitForReady(page);
-  await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).mods > 0);
+  await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status).mods > 0);
   return { page, errors };
 }
 async function reload(page) {
   await page.reload();
   await waitForReady(page);
-  await page.waitForFunction(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).mods > 0);
+  await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status).mods > 0);
 }
 const sr = sel => `document.querySelector("[data-morse-ui]").shadowRoot.querySelector(${JSON.stringify(sel)})`;
 const text = (page, sel) => page.evaluate(`${sr(sel)}?.textContent || ""`);
@@ -136,7 +136,7 @@ test("the off switch is a setting with a recorder like the other hotkeys", { ski
   assert.match(await text(page, '.hkrow[data-id="off"]'), /Turn off all mods/);
   await click(page, '.hk[data-hk="off"]');
   await page.keyboard.press("Alt+Shift+Digit9");
-  await until(() => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]").dataset.status).hotkeys.off === "Alt+Shift+Digit9"));
+  await until(() => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status).hotkeys.off === "Alt+Shift+Digit9"));
   await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
   await page.keyboard.press("Alt+Shift+Digit9");

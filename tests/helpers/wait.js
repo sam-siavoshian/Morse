@@ -28,8 +28,14 @@ export async function waitFor(fn, { timeout = TIMEOUT, interval = 50, what = "co
 }
 
 // The runtime's debug status (data-status on [data-morse-ui], refreshed every
-// 40ms when localStorage morse:debug is set).
-export const readStatus = page => page.evaluate(() => JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "null"));
+// 40ms when localStorage morse:debug is set). The "morse:status" event has
+// the runtime write it at once (runtime/src/97-boot.js), so it is never the
+// state from before the last key or click. Use this, not dataset.status
+// directly, when the answer decides what the test does next.
+export const readStatus = page => page.evaluate(() => {
+  document.dispatchEvent(new Event("morse:status"));
+  return JSON.parse(document.querySelector("[data-morse-ui]")?.dataset.status || "null");
+});
 
 // Waits until the status matches pred; returns it. Throws with the last status.
 export async function waitForStatus(page, pred, { timeout = TIMEOUT, what = "status" } = {}) {

@@ -112,7 +112,8 @@ test("Mods panel: Change and Share on each row, the rest under More; Install a m
   await page.keyboard.press("Enter"); // Save
   await waitFor(s => !s.open);
   await pressOpen(page, "Alt+Shift+M");
-  await page.locator(".panel article").waitFor();
+  // The panel shows the rows it knows at once and swaps in the host's list when it comes (70-panel.js).
+  await page.locator(".panel article [data-a=refine]").waitFor();
   assert.deepEqual(await page.locator(".panel article .btns > button, .panel article .rmore > summary").evaluateAll(ns => ns.filter(n => n.getClientRects().length).map(n => n.dataset.a || n.tagName)), ["refine", "share", "SUMMARY"]);
   await page.locator(".panel article .rmore summary").click();
   assert.deepEqual(await page.locator(".panel article .rmore-list button").evaluateAll(ns => ns.filter(n => n.getClientRects().length).map(n => n.dataset.a || n.dataset.c)), ["link", "show", "del"]);

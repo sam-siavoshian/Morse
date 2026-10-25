@@ -13,7 +13,7 @@
 // unless you say --all. A Morse from npm or from a clone has no record.
 
 import { promises as fs, existsSync, readFileSync, realpathSync } from "node:fs";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { HOME } from "./store.js";
@@ -88,11 +88,21 @@ function removeFromUserPath(dir) {
   execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], { env: { ...process.env, MORSE_DIR: dir }, stdio: "ignore", windowsHide: true });
 }
 
+function removeLater(file) {
+  const child = spawn(process.env.ComSpec || "cmd.exe", ["/d", "/c", `ping -n 3 127.0.0.1 >nul & del /f /q "${file}"`],
+    { detached: true, stdio: "ignore", windowsHide: true, windowsVerbatimArguments: true });
+  child.unref();
+}
+
 export async function removePlan(plan, { platform = process.platform } = {}) {
   const failed = [];
   for (const step of plan) {
     try {
       if (step.pathEntry) { if (platform === "win32") removeFromUserPath(step.path); continue; }
+      // Windows runs `morse` through morse.cmd, which cmd.exe still reads after
+      // node exits: deleting it now ends the command with "The batch file
+      // cannot be found" and a failure. A hidden cmd deletes it a moment later.
+      if (platform === "win32" && /\.cmd$/i.test(step.path)) { removeLater(step.path); continue; }
       await fs.rm(step.path, { recursive: true, force: true });
     } catch (e) { failed.push({ ...step, error: e.message }); }
   }

@@ -52,7 +52,7 @@ async function open({ mods = 0, width = 1100, height = 720, theme = "dark", forc
 }
 // A share link the catalog host can read (demo/catalog-host.js decodes #m=).
 const LINK = `https://morse.sh/install#m=${Buffer.from(JSON.stringify({ title: "Bigger buttons", prompt: "make every button bigger", css: "button { min-height: 40px }" })).toString("base64")}`;
-const status = page => page.evaluate(() => JSON.parse(document.querySelector(":root > [data-morse-ui]").dataset.status));
+const status = page => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector(":root > [data-morse-ui]")).dataset.status));
 const until = (page, pred, what) => waitForStatus(page, pred, { what });
 // What has focus inside the overlay: "tag.class[data-…]", for messages and checks.
 const focused = page => page.evaluate(() => {
@@ -368,8 +368,11 @@ test("forced colors, 320px and 200% zoom: the focus ring and borders stay, nothi
 
 // ---- the extension's own pages (Chromium loads extensions only with a display)
 test("axe-core finds nothing on the extension's pages: welcome, popup, options, practice", { skip: noDisplay, timeout: TIMEOUT * 4 }, async () => {
-  execFileSync(process.execPath, [path.join(ROOT, "scripts/build.js")], { stdio: "ignore" });
-  const EXT = path.join(ROOT, "dist", "extension");
+  // Its own build: rebuilding dist/extension in place would pull it out from
+  // under the other display tests, which load it at the same time.
+  const out = await mkdtemp(path.join(os.tmpdir(), "morse-a11y-build-"));
+  const EXT = path.join(out, "extension");
+  execFileSync(process.execPath, [path.join(ROOT, "scripts/build.js"), "--out", EXT], { stdio: "ignore" });
   const dir = await mkdtemp(path.join(os.tmpdir(), "morse-a11y-ext-"));
   const ctx = await chromium.launchPersistentContext(dir, { headless: false, timeout: TIMEOUT * 2, args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, "--no-sandbox"] });
   try {
@@ -389,5 +392,5 @@ test("axe-core finds nothing on the extension's pages: welcome, popup, options, 
     await practice.waitForLoadState("load");
     problems.push(...axeLines(await axeCheck(practice, { page: true })).map(l => `practice.html: ${l}`));
     assert.deepEqual(problems, []);
-  } finally { await ctx.close(); await rm(dir, { recursive: true, force: true }); }
+  } finally { await ctx.close(); await rm(dir, { recursive: true, force: true }); await rm(out, { recursive: true, force: true }); }
 });
