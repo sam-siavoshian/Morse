@@ -29,14 +29,14 @@ export const LINKS = {
 // and height set the frame's shape before it loads. caption is the line under
 // it, label is what a screen reader says, and strip is the short line above it.
 export const DEMO_VIDEO = {
-  mp4: "../docs/launch/morse-v3-16x9.mp4",
-  loop: { webm: "../docs/launch/morse-v3-web.webm", mp4: "../docs/launch/morse-v3-web.mp4" },
-  poster: "shots/202-film-poster.webp",
+  mp4: "../docs/launch/morse-v4-16x9.mp4",
+  loop: { webm: "../docs/launch/morse-v4-web.webm", mp4: "../docs/launch/morse-v4-web.mp4" },
+  poster: "../docs/launch/morse-v4-poster.webp",
   width: 1920,
   height: 1080,
-  label: "Morse changing VS Code, Obsidian, Logseq, nodejs.org and Docker Hub, 34 seconds",
-  strip: "Real apps on Linux · Claude Code (Opus) · real runs",
-  caption: "34 seconds. Microsoft’s VS Code, Obsidian and Logseq as downloaded, and the live nodejs.org and Docker Hub. Claude Code (Opus) wrote each change (Your style needs no model); waits for the model are sped up, and the video says so. Music: “Voxel Revolution” by Kevin MacLeod, CC BY 4.0.",
+  label: "Morse changing VS Code, nodejs.org, Obsidian, Docker Hub, Logseq, and a demo app, 50 seconds",
+  strip: "Real apps, then a demo app · Claude Code · real runs",
+  caption: "50 seconds. Opens on VS Code after one sentence. Then nodejs.org, Obsidian, Docker Hub and Logseq, sped up, and a demo app where a site change breaks a mod and Fix it restores it. Waits in the source films are already labelled. Music is an original drum bed.",
 };
 
 // "See it change": the big before and after pairs, in order. Each picture is a

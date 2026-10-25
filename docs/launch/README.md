@@ -2,9 +2,15 @@
 
 **Change any website or desktop app in your own words.**
 
-[![The 34-second launch video](poster-v3.png)](morse-v3-16x9.mp4)
+[![The 50-second launch video](morse-v4-poster.webp)](morse-v4-16x9.mp4)
 
-[Watch the launch video](morse-v3-16x9.mp4) (34 seconds, real apps and sites, with music) · [The longer demo](morse-demo-v2.mp4) (92 seconds, on this repo's demo apps) · [Website](https://sam-siavoshian.github.io/RRAA/site/) · [Source](https://github.com/sam-siavoshian/RRAA)
+[Watch the launch video](morse-v4-16x9.mp4) (50 seconds) · [The previous cut](morse-v3-16x9.mp4) (34 seconds) · [The longer demo](morse-demo-v2.mp4) (92 seconds, on this repo's demo apps) · [Website](https://sam-siavoshian.github.io/RRAA/site/) · [Source](https://github.com/sam-siavoshian/RRAA)
+
+## The launch video (v4)
+
+50 seconds, 1920×1080, with an original drum bed (no third-party music). It opens on the finished VS Code change, runs the real-app scenes and the demo-app edge case sped up, and ends on the install command. [`morse-v4-web.mp4`](morse-v4-web.mp4) and [`morse-v4-web.webm`](morse-v4-web.webm) are the site's muted loop. [`morse-v4-poster.webp`](morse-v4-poster.webp) is the poster. [`morse-v4-tweet.txt`](morse-v4-tweet.txt) is the post.
+
+The Windows 95 relaunch the storyboard describes was not in the footage, so it is not in this cut. The edge case on screen is the demo app: a site change breaks a mod, and Fix it puts it back.
 
 ## The launch video (v3), for X
 

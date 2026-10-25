@@ -1,0 +1,7 @@
+Morse changes a desktop app or a website while you watch: point at it and say what you want.
+
+- Claude Code, Codex, or an API key. No Morse account and no Morse server. Real-app runs so far used Claude Code.
+- A saved mod is put back every time that app opens. The app's files are left as they were.
+- When a change makes no visible difference, the bar says "The change made no difference you can see."
+
+curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh
