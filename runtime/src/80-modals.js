@@ -38,7 +38,10 @@ new MutationObserver(() => {
   setTimeout(() => {
     if (!modal.hidden || !(modal.contains(root.activeElement) || !root.activeElement)) return;
     const visible = n => n?.isConnected && n.getClientRects().length && !n.closest("[hidden]");
-    const to = visible(back) ? back : !bar.hidden ? input : !panel.hidden ? panel.querySelector(".list article[tabindex='0'], [data-a=close]") : back?.isConnected ? back : null;
+    // The panel can redraw while a modal is open (the host's list arrives): the
+    // button it came from is then a new one with the same data-a.
+    const twin = !back?.isConnected && back?.dataset?.a && [bar, panel].find(p => !p.hidden)?.querySelector(`[data-a="${CSS.escape(back.dataset.a)}"]`);
+    const to = visible(back) ? back : visible(twin) ? twin : !bar.hidden ? input : !panel.hidden ? panel.querySelector(".list article[tabindex='0'], [data-a=close]") : back?.isConnected ? back : null;
     try { to?.focus({ preventScroll: true }); } catch {}
   }, 0);
 }).observe(modal, { attributes: true, attributeFilter: ["hidden"] });

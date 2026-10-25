@@ -157,6 +157,11 @@ function renderPanel() {
     if (s) { s.focus({ preventScroll: true }); if (keep.sel) s.setSelectionRange(...keep.sel); }
     return;
   }
+  // A button outside the rows (Install a mod…, the footer's More) keeps focus too.
+  if (!keep.id && keep.a) {
+    const b = keep.a === "more" ? panel.querySelector("footer summary") : panel.querySelector(/^c-/.test(keep.a) ? `[data-c="${cssEsc(keep.a.slice(2))}"]` : `[data-a="${cssEsc(keep.a)}"]`);
+    if (b) return b.focus({ preventScroll: true });
+  }
   const art = keep.id && panel.querySelector(`article[data-id="${cssEsc(keep.id)}"]`);
   if (!art) return focusRow(0);
   const target = keep.row ? art : (keep.a === "more" ? art.querySelector(".rmore summary") : /^c-/.test(keep.a || "") ? art.querySelector(`[data-c="${keep.a.slice(2)}"]`) : art.querySelector(`[data-a="${keep.a}"]`)) || art;

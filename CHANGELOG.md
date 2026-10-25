@@ -137,6 +137,17 @@ Version 0.2.0, the first version for other people to install.
   runs in a small music app and a news site on the page, with sample answers
   for a few changes. Save one and reload the app. It comes back.
 
+### Known issues
+
+- On a page that keeps adding and removing content (a chat, a live feed), a
+  mod that watches it can hold on to the items the page dropped, so memory
+  grows over a long session. Reloading the page frees it. [Details](docs/perf/soak.md).
+- The macOS and Windows apps are not signed yet. The first time, open Morse,
+  then System Settings, Privacy & Security, Open Anyway (Mac), or More info,
+  Run anyway (Windows).
+- Morse on macOS and Windows was only checked by GitHub's build machines, not
+  on a real computer.
+
 ## 0.1.0
 
 A first working version for local models: point, describe, and a model on
