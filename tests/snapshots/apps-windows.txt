@@ -1,5 +1,5 @@
 Apps Morse found on this PC
-  ● Chrome                      browser, separate profile   C:\Program Files\Google\Chrome\Application\chrome.exe
+  ● Chrome                      browser                     C:\Program Files\Google\Chrome\Application\chrome.exe
   ● Discord         1.0.9170    Electron                    open with port 9222
   ● Figma           125.0.3     Electron                    ~\Local\Figma\app-125.0.3\Figma.exe
   ● Obsidian                    Electron                    ~\Local\Programs\Obsidian\Obsidian.exe

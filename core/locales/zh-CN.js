@@ -839,6 +839,7 @@ export default {
   "launch.restartKeys": "[y] 是  [n] 否  [a] 对 {name} 总是这样",
   "launch.restartHow": "运行 {cmd} 退出并重新打开它。Morse 会记住这个选择。",
   "launch.quitting": "正在退出 {name}…",
+  "launch.carry": "正在把 {name} 的登录、标签页和扩展带到 Morse（仅此一次）…",
   "launch.didntQuit": "{name} 没有退出。请自己关掉它，然后再运行一次。",
   "launch.disconnected": "已断开与 {name} 的连接。",
   "launch.disconnectedRunning": "已断开与 {name} 的连接。它会在没有 Morse 的情况下继续运行。",

@@ -1,5 +1,5 @@
 Apps Morse found on this Mac
-  ● Chrome       131.0.6778  browser, separate profile   /Applications/Google Chrome.app
+  ● Chrome       131.0.6778  browser                     /Applications/Google Chrome.app
   ● Claude       0.9.3       Electron 33                 /Applications/Claude.app
   ● Discord      0.0.326     Electron 33                 open with port 9222
   ● Figma        125.0.3     Electron 34                 /Applications/Figma.app

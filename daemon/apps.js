@@ -13,6 +13,7 @@ import os from "node:os";
 import path from "node:path";
 import { HOME, parseJson } from "./store.js";
 import { safeExtraArgs } from "./ports.js";
+import { morseProfileDir, everydayDir } from "./browser-profile.js";
 import { waitForEndpoint, spawnWithPipe } from "./cdp.js";
 import { paint, painter } from "./colors.js";
 
@@ -743,7 +744,7 @@ export function attachVerdict(app) {
   switch (app.engine) {
     case "electron": return { canAttach: true, why: app.engineGuessed ? "Electron app" : `Electron${app.electron ? " " + app.electron.split(".")[0] : ""}` };
     case "cef": return { canAttach: true, why: "Chromium (CEF)" };
-    case "chromium": return { canAttach: true, why: app.browser ? "browser, separate profile" : "Chromium" };
+    case "chromium": return { canAttach: true, why: app.browser ? "browser" : "Chromium" };
     case "native": return { canAttach: false, why: "native app, not built on web technology" };
     default: return { canAttach: null, why: app.appimage ? "AppImage, couldn't look inside" : "couldn't tell what it's built on" };
   }
@@ -932,8 +933,11 @@ export function findAppProcesses(app, procs, { platform = process.platform, extr
   }
   const lower = s => String(s || "").toLowerCase();
   // extraArgs are single arguments (spaces and all), not a command line.
-  const wantProfile = extraArgs.map(a => /^--user-data-dir=(.+)$/.exec(a)?.[1]?.replace(/^"|"$/g, "")).find(Boolean)
-    || (app.browser ? (platform === "win32" ? path.win32 : path.posix).join(HOME, "browser-profile") : null);
+  // A browser is "open" in its everyday profile (no --user-data-dir, or that
+  // folder) or in Morse's (daemon/browser-profile.js); Morse quits the
+  // everyday one before it opens the browser with Morse.
+  const explicit = extraArgs.map(a => /^--user-data-dir=(.+)$/.exec(a)?.[1]?.replace(/^"|"$/g, "")).find(Boolean);
+  const profiles = explicit ? [explicit] : app.browser ? [morseProfileDir(app, { platform }), everydayDir(app, { platform })].filter(Boolean) : null;
   const exe = executableFor(app, platform);
   const base = s => String(s || "").split(/[\\/]/).pop();
   // Windows paths ignore case.
@@ -942,7 +946,7 @@ export function findAppProcesses(app, procs, { platform = process.platform, extr
     if (selfAndParents.has(p.pid) || /\s"?--type=/.test(p.cmd)) return false;
     if (/(^|[\\/])(node|morse)(\.exe)?"?\s/i.test(p.cmd)) return false; // the CLI itself, scripts naming the app
     const profile = argOf(p.cmd, "user-data-dir");
-    if (wantProfile ? !sameProfile(profile, wantProfile) : profile && app.browser) return false;
+    if (profiles && !(app.browser && !explicit && !profile) && !profiles.some(x => sameProfile(profile, x))) return false;
     if (platform === "darwin" && app.path?.endsWith(".app")) return p.cmd.startsWith(app.path.replace(/\/$/, "") + "/Contents/MacOS/");
     if (platform === "win32") {
       // The command line may quote the exe; ExecutablePath doesn't.
@@ -1032,11 +1036,10 @@ export function pipeFor(app, { platform = process.platform, env = process.env } 
 export function launchArgs(app, port, extraArgs = [], { platform = process.platform } = {}) {
   const extra = safeExtraArgs(extraArgs);
   const args = [port === PIPE ? "--remote-debugging-pipe" : `--remote-debugging-port=${port}`, ...extra];
-  const pj = platform === "win32" ? path.win32 : path.posix;
-  // A browser opens with a Morse profile of its own: since Chrome 136, a
-  // browser takes no remote control of your everyday profile. You sign in to
-  // sites there once. Chrome keeps the folder it always had.
-  if (app.browser && !extra.some(a => a.startsWith("--user-data-dir"))) args.push(`--user-data-dir=${pj.join(HOME, app.id === "chrome" ? "browser-profile" : `browser-profile-${app.id}`)}`, "--no-first-run");
+  // A browser opens on Morse's copy of its profile: since Chrome 136, a
+  // browser takes no remote control of your everyday one. The copy carries
+  // every sign-in over (daemon/browser-profile.js), so nobody signs in again.
+  if (app.browser && !extra.some(a => a.startsWith("--user-data-dir"))) args.push(`--user-data-dir=${morseProfileDir(app, { platform })}`, "--no-first-run");
   return args;
 }
 

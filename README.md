@@ -67,7 +67,7 @@ A change you save is a **mod**. Morse puts your mods back every time the app ope
 | Where | What works | Notes |
 | --- | --- | --- |
 | **Desktop apps** | VS Code, Cursor, Slack, Discord, Spotify, Obsidian, Notion, Figma, Linear, Signal, Claude, and other apps built on web technology | [Which apps work, and why some can't](docs/desktop.md) |
-| **Websites** | Any site, in Chrome, Edge, Brave, Arc or Vivaldi | Morse opens the browser with a Morse profile of its own; you sign in to your sites there once |
+| **Websites** | Any site, in Chrome, Edge, Brave, Arc or Vivaldi | Morse opens the browser for you, still signed in to everything |
 | **Not yet** | Safari, Firefox, and native apps like Finder or Notes | They give Morse no way in |
 
 What you can ask for:
@@ -130,9 +130,9 @@ Morse isn't notarized by Apple yet; that takes a paid Apple Developer ID. A Mac 
 </details>
 
 <details>
-<summary><strong>Why a separate browser window for websites?</strong></summary>
+<summary><strong>Do I have to sign in to my sites again?</strong></summary>
 
-Since Chrome 136, browsers don't let any program control your everyday profile, for good reason. Morse opens your browser with a Morse profile of its own instead. You sign in to your sites there once.
+No. Since Chrome 136, browsers don't let any program control your everyday profile, for good reason, so Morse opens your browser on a copy of it in Morse's folder. The first time, the copy takes everything: sign-ins, saved passwords, tabs, extensions, bookmarks (on a Mac it's a clone, instant and free of extra space). Every time after, sign-ins you made in your everyday browser since are brought in too. Morse only reads your everyday profile; it never writes to it. [How it works](daemon/browser-profile.js)
 
 </details>
 

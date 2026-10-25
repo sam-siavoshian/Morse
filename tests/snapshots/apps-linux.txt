@@ -1,5 +1,5 @@
 Apps Morse found on this computer
-  ● Chrome                   browser, separate profile   /usr/bin/chromium
+  ● Chrome                   browser                     /usr/bin/chromium
   ● Discord                  Electron app                open with port 9222
   ● Obsidian                 Electron app                flatpak
   ● Slack                    Electron                    open without Morse → morse launch slack --restart

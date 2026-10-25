@@ -32,7 +32,7 @@ function fakeDaemon(over = {}) {
   let sessions = [];
   const d = {
     calls, mods, apps, get sessions() { return sessions; }, set sessions(v) { sessions = v; }, get cfg() { return cfg; }, get control() { return control; },
-    HOME: tempDir("morse-desktop-fake-"), VERSION: "9.9.9", EXTENSION_DIR: "/repo/dist/extension",
+    HOME: tempDir("morse-desktop-fake-"), VERSION: "9.9.9",
     hostContext: () => ({ platform: "linux" }),
     discoverApps: rec("discoverApps", () => apps.map(a => ({ ...a }))),
     appFromPath: rec("appFromPath", (_ctx, p) => {
@@ -222,6 +222,19 @@ test("Always open with Morse: an app with mods that starts on its own is opened 
   await paused.service.apps();
   await new Promise(r => setTimeout(r, 20));
   assert.equal(paused.daemon.calls.filter(c => c[0] === "connectApp").length, 0);
+});
+
+test("Always open with Morse, for a browser: opened from the Dock with website mods on, it opens again with Morse", async () => {
+  let procs = [];
+  const { daemon, service } = setup({ listProcesses: () => procs });
+  daemon.apps.push({ id: "chrome", name: "Chrome", exe: "/usr/bin/google-chrome", path: "/usr/bin/google-chrome", canAttach: true, why: "browser", known: true, browser: true });
+  daemon.mods.set("w1", { id: "w1", title: "Wide GitHub", prompt: "wider", enabled: true, match: { hosts: ["github.com"] } });
+  const row = async () => (await service.apps()).find(r => r.id === "chrome");
+  assert.deepEqual(((r) => [r.mods, r.modsOn])(await row()), [1, 1], "a browser's mods are the websites' ones");
+  procs = [{ pid: 21, cmd: "/usr/bin/google-chrome" }];
+  await service.apps();
+  await new Promise(r => setTimeout(r, 20));
+  assert.deepEqual(daemon.calls.filter(c => c[0] === "connectApp").map(c => c[1].id), ["chrome"]);
 });
 
 test("an app Morse can't connect to, and errors, come back in plain words without terminal colors", async () => {

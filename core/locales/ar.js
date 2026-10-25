@@ -840,6 +840,7 @@ export default {
   "launch.restartKeys": "[y] نعم  [n] لا  [a] دائمًا لـ {name}",
   "launch.restartHow": "شغّل {cmd} لإغلاقه وفتحه مجددًا. يتذكّر Morse هذا الاختيار.",
   "launch.quitting": "جارٍ إغلاق {name}…",
+  "launch.carry": "جارٍ نقل تسجيلات الدخول والألسنة والإضافات من {name} إلى Morse (هذه المرة فقط)…",
   "launch.didntQuit": "لم يُغلق {name}. أغلقه بنفسك، ثم شغّل هذا مجددًا.",
   "launch.disconnected": "انفصل Morse عن {name}.",
   "launch.disconnectedRunning": "انفصل Morse عن {name}. يستمر في العمل بدون Morse.",

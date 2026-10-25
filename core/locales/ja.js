@@ -840,6 +840,7 @@ export default {
   "launch.restartKeys": "[y] はい  [n] いいえ  [a] {name} では常に",
   "launch.restartHow": "{cmd} を実行すると、終了して開き直します。Morse はこの選択を覚えます。",
   "launch.quitting": "{name} を終了しています…",
+  "launch.carry": "{name} のログイン、タブ、拡張機能を Morse に引き継いでいます（今回だけ）…",
   "launch.didntQuit": "{name} が終了しませんでした。自分で閉じてから、もう一度実行してください。",
   "launch.disconnected": "{name} との接続を切りました。",
   "launch.disconnectedRunning": "{name} との接続を切りました。アプリは Morse なしで動き続けます。",

@@ -95,7 +95,7 @@ onEvent(msg => {
   if (msg.type === "install.request") installRequest(msg.source);
 });
 document.documentElement.dataset.morseShare = "1"; // the share page hands its link to Morse (not data-morse: that marks Morse's own UI)
-addEventListener("message", e => { if (e.source === window && e.data?.morseInstall) installRequest(e.data.morseInstall); });
+listen("message", e => { if (e.source === window && e.data?.morseInstall) installRequest(e.data.morseInstall); });
 
 // ---- safe start
 

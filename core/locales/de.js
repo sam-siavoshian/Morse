@@ -839,6 +839,7 @@ export default {
   "launch.restartKeys": "[y] ja  [n] nein  [a] immer für {name}",
   "launch.restartHow": "Führ {cmd} aus, um es zu beenden und neu zu öffnen. Morse merkt sich diese Wahl.",
   "launch.quitting": "beende {name}…",
+  "launch.carry": "übernehme Anmeldungen, Tabs und Erweiterungen von {name} für Morse (nur dieses eine Mal)…",
   "launch.didntQuit": "{name} wurde nicht beendet. Schließ es selbst und führ das hier noch einmal aus.",
   "launch.disconnected": "Von {name} getrennt.",
   "launch.disconnectedRunning": "Von {name} getrennt. Es läuft ohne Morse weiter.",

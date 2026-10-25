@@ -43,9 +43,10 @@ If the app is already open, Morse asks to restart it: Morse can only connect
 when the app starts. Which apps work, and which can't: [Desktop apps](desktop.md).
 
 **Websites:** open Chrome, Edge, Brave, Arc or Vivaldi the same way, with
-**Open with Morse**. It opens in a window of its own, with a Morse profile:
-browsers don't let any program control your everyday profile. Sign in to your
-sites there once, and every site in that window works with Morse.
+**Open with Morse**. You stay signed in to everything: browsers don't let any
+program control your everyday profile, so Morse opens the browser on a copy of
+it with all your sign-ins, tabs and extensions, and brings in new sign-ins
+each time. Your everyday profile is only read, never changed.
 
 ![The bar in Visual Studio Code, with the guide: point, describe, save](screenshots/320-vscode-ask.png)
 

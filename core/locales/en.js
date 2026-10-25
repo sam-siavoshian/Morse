@@ -1077,6 +1077,7 @@ export default {
   "launch.restartKeys": "[y]es  [n]o  [a]lways for {name}",
   "launch.restartHow": "Run {cmd} to quit it and open it again. Morse remembers that choice.",
   "launch.quitting": "quitting {name}…",
+  "launch.carry": "bringing {name}'s sign-ins, tabs and extensions to Morse (only this once)…",
   "launch.didntQuit": "{name} didn't quit. Close it yourself, then run this again.",
   "launch.disconnected": "Disconnected from {name}.",
   "launch.disconnectedRunning": "Disconnected from {name}. It keeps running without Morse.",

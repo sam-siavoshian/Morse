@@ -125,6 +125,8 @@ export function createService({
     return icons.get(a.id);
   }
 
+  // A browser's mods are the websites' ones; an app's, its own.
+  const modFor = (a, m) => (a.browser ? !m.match?.app : m.match?.app === a.id);
   async function apps({ fresh = false } = {}) {
     const list = await appList({ fresh });
     const procs = d.listProcesses();
@@ -142,7 +144,7 @@ export function createService({
       rows.push({
         id: a.id, name: a.name, version: (a.version || "").split(".").slice(0, 3).join("."), why: a.why, canAttach: a.canAttach,
         known: !!a.known, added: !!a.added, state, windows: s?.windows?.length || 0, mine: own.has(a.id),
-        mods: mods.filter(m => m.match?.app === a.id).length, modsOn: mods.filter(m => m.match?.app === a.id && m.enabled).length,
+        mods: mods.filter(m => modFor(a, m)).length, modsOn: mods.filter(m => modFor(a, m) && m.enabled).length,
         icon: await icon(a),
       });
     }

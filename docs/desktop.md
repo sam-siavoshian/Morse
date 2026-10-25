@@ -144,6 +144,15 @@ morse attach --port 9222 --app Slack
   port only listens on this computer. Morse checks that, and checks that what
   answers is the app it started. While the port is open, other programs on
   this computer can connect to the app too.
+- **You stay signed in.** An app opens with Morse on its own data, so every
+  sign-in is there. A browser can't (since Chrome 136 it takes no remote
+  control of your everyday profile), so it opens on a copy in your Morse
+  folder: the first time the whole profile is copied (sign-ins, saved
+  passwords, tabs, extensions; caches left out; a clone on a Mac), and every
+  time after, sign-ins made in your everyday browser since are brought in,
+  newest first, without removing any. Your everyday profile is only read. If
+  the first copy can't be made, Morse doesn't open the browser at all rather
+  than open it signed out (`daemon/browser-profile.js`).
 - **It never changes the app's files.** Signed apps stay signed, apps that
   check their own files keep passing that check, and app updates don't undo
   anything.

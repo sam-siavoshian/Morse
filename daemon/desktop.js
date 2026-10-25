@@ -13,6 +13,7 @@ import {
 } from "./apps.js";
 import { pickPort, portFree, portAnswers, reachableFrom, identify, checkIdentity, portIsMine } from "./ports.js";
 import { readSessions, publishSession, stopRequested, stopSession, withMods, formatStatus, requestOpen, takeOpenRequest } from "./status.js";
+import { carrySignIns } from "./browser-profile.js";
 import { trace } from "./trace.js"; // MORSE_TRACE: which way Morse reached the app
 import { settingsLabel } from "../core/providers.js";
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
@@ -147,6 +148,15 @@ export async function connectApp(app, { extra = [], pref = null, port: wantPort 
   }
   if (restartFlag && !pref.restart) await saveAppPref(app.id, { restart: true });
   if (noRestart && pref.restart) await saveAppPref(app.id, { restart: null });
+
+  // A browser opens on Morse's copy of its profile, with every sign-in of the
+  // everyday one in it (daemon/browser-profile.js). The browser is closed here.
+  if (!port && app.browser && !extra.some(a => /^--user-data-dir/.test(a))) {
+    try {
+      const r = await carrySignIns(app, { say: () => say(t("launch.carry", { name: app.name })), log: m => trace("connect", m) });
+      if (r.merged) trace("connect", `${r.merged} sign-ins from your everyday ${app.name} brought in`);
+    } catch (e) { throw said(e.message); }
+  }
 
   // Launch on the private pipe: nothing to pick, guard or check, since only
   // this process holds the other end.

@@ -840,6 +840,7 @@ export default {
   "launch.restartKeys": "[y] بله  [n] نه  [a] همیشه برای {name}",
   "launch.restartHow": "برای بستن و باز کردن دوباره، {cmd} را اجرا کنید. Morse این انتخاب را به خاطر می‌سپارد.",
   "launch.quitting": "در حال بستن {name}…",
+  "launch.carry": "در حال آوردن ورودها، زبانه‌ها و افزونه‌های {name} به Morse (فقط همین یک بار)…",
   "launch.didntQuit": "{name} بسته نشد. خودتان ببندیدش و دوباره این را اجرا کنید.",
   "launch.disconnected": "اتصال از {name} قطع شد.",
   "launch.disconnectedRunning": "اتصال از {name} قطع شد. بدون Morse به کارش ادامه می‌دهد.",

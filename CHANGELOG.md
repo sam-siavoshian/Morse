@@ -10,8 +10,14 @@ under the new version number with the date
 
 - **No more Chrome extension.** The Morse app opens websites the way it opens
   apps: pick Chrome, Edge, Brave, Arc or Vivaldi in the Morse app and it opens
-  with Morse in its own profile, so your mods and your style work on every
-  site. Nothing to install in the browser, nothing to pair.
+  with Morse, so your mods and your style work on every site. Nothing to
+  install in the browser, nothing to pair.
+- **Still signed in to everything.** A browser opens with Morse on a copy of
+  your everyday profile: sign-ins, saved passwords, tabs and extensions come
+  along the first time (a clone on a Mac), and new sign-ins every time after.
+  Your everyday profile is only read. With **Always open with Morse**, a
+  browser opened from the Dock opens again with Morse when you have website
+  mods on.
 - **Glass on a Mac.** The Morse app's sidebar and first run show the Mac's own
   translucent material, like Zephium's window.
 - **Undo for Delete and for going back.** Deleting a mod, in the Mods panel
