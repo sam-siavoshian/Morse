@@ -14,6 +14,7 @@ import {
 import { pickPort, portFree, portAnswers, reachableFrom, identify, checkIdentity, portIsMine } from "./ports.js";
 import { readSessions, publishSession, stopRequested, stopSession, withMods, formatStatus, requestOpen, takeOpenRequest } from "./status.js";
 import { carrySignIns } from "./browser-profile.js";
+import { createMacAccess, desktopProgram, fileStore, macAccessFile, readAppManagementStatus, relaunchDesktop } from "./mac-access.js";
 import { trace } from "./trace.js"; // MORSE_TRACE: which way Morse reached the app
 import { settingsLabel } from "../core/providers.js";
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
@@ -21,6 +22,26 @@ import { paint } from "./colors.js";
 
 const { g: G, d: D, b: B } = paint;
 const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+// Morse Desktop on macOS, just before it opens another app. The terminal
+// client is a different program (macOS asks about the terminal, not
+// morse-desktop), so this stays out of its way. See daemon/mac-access.js.
+let macGate = null;
+async function ensureDesktopAccess() {
+  const program = desktopProgram();
+  if (!program) return;
+  macGate ??= createMacAccess({
+    program: () => desktopProgram() || program,
+    readStatus: () => readAppManagementStatus(),
+    store: fileStore(macAccessFile()),
+  });
+  const d = await macGate.beforeOpen();
+  if (d.action === "restart") {
+    await relaunchDesktop(d.plan);
+    throw said(d.message);
+  }
+  if (d.action === "wait" || d.action === "tell") throw said(d.message);
+}
 
 async function ask(question) {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -135,6 +156,8 @@ export async function connectApp(app, { extra = [], pref = null, port: wantPort 
       if (v.ok) { port = open.port; pids = running.map(p => p.pid); say(t("launch.openWithPort", { name: app.name })); }
     }
     if (!port) {
+      // Before quitting the open app: a refused allow must leave it running.
+      await ensureDesktopAccess();
       let restart = restartFlag || (pref.restart === true && !noRestart);
       if (!restart && !noRestart && askRestart) {
         const a = await askRestart(app);
@@ -148,6 +171,9 @@ export async function connectApp(app, { extra = [], pref = null, port: wantPort 
   }
   if (restartFlag && !pref.restart) await saveAppPref(app.id, { restart: true });
   if (noRestart && pref.restart) await saveAppPref(app.id, { restart: null });
+
+  // Not already open: the same check, once, before Morse starts it.
+  if (!port && !running.length) await ensureDesktopAccess();
 
   // A browser opens on Morse's copy of its profile, with every sign-in of the
   // everyday one in it (daemon/browser-profile.js). The browser is closed here.
