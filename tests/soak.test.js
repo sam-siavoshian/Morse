@@ -116,8 +116,11 @@ test("a runtime that went quiet (morse stop) lets go of the page: attach and sto
   await boot();
   const first = await counts(page, probe);
   for (let k = 0; k < 4; k++) { await stop(); await page.waitForTimeout(1300); await boot(); }
-  await page.waitForTimeout(300);
-  const now = await counts(page, probe);
+  // The copy stopped last can still have a toast's timer running for a few
+  // seconds, which holds its overlay until it fires: give it up to 10 s to let
+  // go. A real leak keeps every old overlay, however long this waits.
+  let now = await counts(page, probe);
+  for (let i = 0; i < 10 && now.detached - first.detached > 20; i++) { await page.waitForTimeout(1000); now = await counts(page, probe); }
   assert.ok(now.win - first.win <= 2, `listeners on window: ${first.win} -> ${now.win} after 4 stop + attach`);
   assert.ok(now.mo - first.mo <= 4, `MutationObservers: ${first.mo} -> ${now.mo} after 4 stop + attach`);
   assert.ok(now.detached - first.detached <= 20, `detached elements held: ${first.detached} -> ${now.detached} after 4 stop + attach (a whole old overlay each time?)`);

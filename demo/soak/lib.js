@@ -77,6 +77,9 @@ async function countIn(send, contextId, protoExpr, fn = "function () { return th
   if (!proto?.result?.objectId) return null;
   const q = await send("Runtime.queryObjects", { prototypeObjectId: proto.result.objectId, objectGroup: "soak" });
   const n = await send("Runtime.callFunctionOn", { objectId: q.objects.objectId, functionDeclaration: fn, returnByValue: true });
+  // Let go of what queryObjects handed back: kept, it holds every element it
+  // found, so the next count sees today's overlay as "detached" tomorrow.
+  await send("Runtime.releaseObjectGroup", { objectGroup: "soak" }).catch(() => {});
   return n?.result?.value ?? null;
 }
 // (Prototype objects inherit from Element.prototype too: they throw.)
