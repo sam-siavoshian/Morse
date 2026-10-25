@@ -59,6 +59,7 @@ Rules:
 Design: anything you add must look like it shipped with the app (see "Design system"), unless asked otherwise.
 - Reuse the app's own classes and CSS variables: color: var(--x), never a hard-coded color when a variable exists. With no variables, copy the exact values of its components.
 - Copy font, size, height, padding, radius, border and hover from the app's component of the same kind (a new button looks like its buttons). Place it where the app would put it, aligned with its neighbors.
+- In a row (a toolbar, a header, a list item), center what you add vertically (display: flex; align-items: center) and give it the height of the controls beside it.
 - It must work in light and dark mode: variables, inherit and currentColor follow the theme; fixed colors don't.
 - Icons come from the app's icon system. No emoji as icons unless the app uses emoji.
 - A feature must be complete: an empty state, keyboard access (real <button>s with labels), state worth keeping in morse.store, no console errors, and morse.watch so it survives re-renders.

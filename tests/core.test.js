@@ -191,6 +191,21 @@ test("a change with no visible effect gets a repair round naming the dead select
   assert.match(prompts[1], /`\.covers img`/);
 });
 
+test("a change that still does nothing after its repairs never says done: it comes off and says so", async () => {
+  registerProvider("script", async (s, m, { onToken }) => { const r = "TITLE: One cover\n```css\n.covers > :nth-child(n+2) { display: none }\n```"; onToken(r); return r; });
+  let css = "x", learned = null;
+  const res = await runMorse({
+    settings: { provider: "script" }, request: "show only one cover, not five", context: { url: "x", title: "x" },
+    emit: e => { if (e.type === "css") css = e.css; }, exec: async () => ({ ok: true }),
+    probe: async (sels, opts) => { if (!learned) learned = opts; return { fp: "same", unmatched: sels }; },
+  });
+  assert.deepEqual(learned, { learn: true }, "the look before the change learns what moves by itself");
+  assert.equal(res.ok, false);
+  assert.equal(res.noEffect, true);
+  assert.match(res.error, /nothing on the screen changed/);
+  assert.equal(css, "", "the change that did nothing is taken off the page");
+});
+
 test("behavior-only JS (selectors all match, nothing visible yet) is not sent back", async () => {
   registerProvider("script", async (s, m, { onToken }) => { const r = "TITLE: Keys\n```js\nmorse.on(document, 'keydown', () => {});\n```"; onToken(r); return r; });
   const res = await runMorse({

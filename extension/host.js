@@ -17,7 +17,7 @@
       // the CSS that came before it on this port.
       if (m && m.morseProbe != null) {
         const answer = result => { try { p.postMessage({ morseProbeReply: m.morseProbe, result: result ?? null }); } catch {} };
-        try { Promise.resolve(globalThis.__morseProbe ? globalThis.__morseProbe(m.target, m.selectors, m.quick ? { quick: true } : undefined) : null).then(answer, () => answer(null)); }
+        try { Promise.resolve(globalThis.__morseProbe ? globalThis.__morseProbe(m.target, m.selectors, m.quick ? { quick: true } : m.learn ? { learn: true } : undefined) : null).then(answer, () => answer(null)); }
         catch { answer(null); }
         return;
       }

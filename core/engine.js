@@ -48,7 +48,8 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
   // Effect check: the page before the change. speed: measured while the model
   // starts; no CSS goes on the page until it's done.
   let before = null, beforeDone = !probe;
-  const beforeP = probe ? probe([]).catch(() => null).then(b => { before = b; beforeDone = true; }) : null;
+  // learn: two looks a moment apart, so what moves by itself (a clock) doesn't count as the change.
+  const beforeP = probe ? probe([], { learn: true }).catch(() => null).then(b => { before = b; beforeDone = true; }) : null;
   // speed: when each stage happened, in ms since the call (first attempt only)
   const timing = {};
   const mark = (k, v = Date.now() - started) => { if (timing[k] == null) timing[k] = v; };
@@ -212,13 +213,21 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
         continue;
       }
     }
-    // ---- effect check: did the change do anything visible?
-    if (before && more && !signal?.aborted) {
-      const miss = await noEffect(probe, before, draft).catch(() => null);
+    // ---- effect check: did the change do anything visible? On the last try
+    // too, for a change whose selectors match nothing: that one never says
+    // it's done. (CSS that only guards against something, like overflow-wrap,
+    // may rightly change nothing yet: on the last try it stays.)
+    if (before && !signal?.aborted) {
+      const found = await noEffect(probe, before, draft).catch(() => null);
+      const miss = found && (more || found.nothing) ? found.text : null;
       if (miss) {
         if (draft.js.trim()) await exec("").catch(() => {}); // same mod id: turns the inert draft off
         previous = { raw, error: miss };
         repairs.push(miss);
+        if (!more) {
+          emit({ type: "css", css: "" });
+          return { ...last, css: "", js: "", ok: false, noEffect: true, error: NO_EFFECT };
+        }
         advance("effect");
         continue;
       }
@@ -289,8 +298,9 @@ function unasked(context, js) {
 }
 
 // ---- effect check helpers
-// Returns a repair message when the applied draft changed nothing on the page,
-// or null. Pure behavior (JS whose selectors all match, like a keyboard
+export const NO_EFFECT = "It ran, but nothing on the screen changed. Point at the part you mean and try again, or say it another way.";
+// Returns { text: a repair message, nothing } when the applied draft changed
+// nothing on the page, or null. Pure behavior (JS whose selectors all match, like a keyboard
 // shortcut) and interaction-only CSS (:hover) legitimately change nothing yet.
 async function noEffect(probe, before, draft) {
   const { css, js } = selectorLists(draft);
@@ -303,13 +313,17 @@ async function noEffect(probe, before, draft) {
   const missing = (!draft.js.trim() ? css.filter(s => dead.has(s))
     : js.length ? js.filter(s => dead.has(s))
     : css.length && css.every(s => dead.has(s)) ? css : []).slice(0, 6);
+  // nothing: not one selector it names matches anything (a change aimed at
+  // nothing; on the last try it comes off instead of saying it's done)
+  const all = [...css, ...js];
+  const nothing = all.length > 0 && all.every(s => dead.has(s));
   if (missing.length) {
-    return `It ran, but nothing on the page changed. These selectors match no element: ${missing.map(s => `\`${s}\``).join(", ")}. `
-      + "Use only selectors that match the HTML and layout you were given.";
+    return { nothing, text: `It ran, but nothing on the page changed. These selectors match no element: ${missing.map(s => `\`${s}\``).join(", ")}. `
+      + "Use only selectors that match the HTML and layout you were given." };
   }
   if (draft.js.trim() || /:(hover|focus|active|checked|focus-within|focus-visible)\b/.test(draft.css)) return null;
-  return "The CSS applied but nothing on the page changed: existing rules probably win (more specific selectors, inline styles, or !important). "
-    + "Target what actually sets the property (see the CSS rules given) and use !important.";
+  return { nothing: false, text: "The CSS applied but nothing on the page changed: existing rules probably win (more specific selectors, inline styles, or !important). "
+    + "Target what actually sets the property (see the CSS rules given) and use !important." };
 }
 
 // Selectors a draft relies on: core/heal.js (the runtime's self-heal check reads them too).

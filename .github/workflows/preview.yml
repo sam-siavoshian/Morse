@@ -282,7 +282,9 @@ jobs:
             echo
             echo "**Morse Desktop:** Mac: \`Morse-mac-arm64.dmg\` (Apple silicon) or \`Morse-mac-x64.dmg\` (Intel). Windows: \`Morse-Setup.exe\`. Linux: \`Morse-linux-x86_64.AppImage\`."
             echo
-            echo "Not signed yet, so the first time: on a Mac, open Morse, then System Settings, Privacy & Security, **Open Anyway** (on macOS 14 and older: right-click Morse, Open). On Windows: **More info**, then **Run anyway**."
+            echo "**Mac, with no security prompts:** paste \`curl -fsSL https://raw.githubusercontent.com/$R/main/install-app.sh | sh\` in Terminal. It checks Morse against SHA256SUMS, puts it in Applications and opens it."
+            echo
+            echo "Downloaded in a browser, Morse isn't signed yet, so the first time: on a Mac, open Morse, then System Settings, Privacy & Security, **Open Anyway** (on macOS 14 and older: right-click Morse, Open). On Windows: **More info**, then **Run anyway**."
             echo
             echo "**Or one line in a terminal** (needs Node 22): \`curl -fsSL https://raw.githubusercontent.com/$R/main/install.sh | sh\` (macOS, Linux) or \`irm https://raw.githubusercontent.com/$R/main/install.ps1 | iex\` (Windows PowerShell)."
             echo

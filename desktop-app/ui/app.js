@@ -3,6 +3,7 @@
 // Its words are in core/locales/*.js (desk.*), in the computer's language.
 
 import { t, setLanguage, loadLanguage, pickLanguage, setLanguageLoader, translatePage } from "./core/i18n.js";
+import { formName } from "./formation.js";
 
 setLanguageLoader(code => import(`./core/locales/${code}.js`).then(m => m.default));
 setLanguage(await loadLanguage(pickLanguage(navigator.languages?.length ? navigator.languages : [navigator.language])));
@@ -441,18 +442,76 @@ async function runChecks() {
 $("run-checks").onclick = runChecks;
 
 // ---------------------------------------------------------------- settings
-$("at-login").onchange = e => morse.setStartAtLogin(e.target.checked);
+$("auto-open").onchange = e => morse.setAutoOpen(e.target.checked);
 
 // ---------------------------------------------------------------- first run
-// One screen: the model Morse found by itself (checked once), the apps to
-// open, and Morse in Chrome too. Opening an app, or Skip, leads to the main
-// window for good.
-let firstChecked = false;
+// In the shape of Zephium's: the name forms out of dots with its sound, then
+// three steps: the AI Morse found by itself (checked once), how it works, and
+// an app to open. Opening an app, Done, or Skip leads to the main window for
+// good. Enter goes on; the row at the foot steers.
+const STEPS = ["model", "how", "apps"];
+let firstChecked = false, obStep = "welcome", obStarted = false;
+function obGo(step) {
+  if (!step) return;
+  obStep = step;
+  const f = $("first");
+  f.dataset.step = step;
+  for (const sec of f.querySelectorAll(".ob-step")) sec.hidden = sec.dataset.ob !== step;
+  const at = STEPS.indexOf(step);
+  [...$("ob-dots").children].forEach((li, i) => { li.className = i < at ? "done" : i === at ? "now" : ""; });
+  $("ob-dots").setAttribute("aria-label", t("desk.ob.progress", { at: at + 1, of: STEPS.length }));
+  $("ob-back").hidden = at <= 0;
+  $("ob-next-label").textContent = t(step === "apps" ? "desk.ob.done" : "desk.ob.continue");
+  const head = f.querySelector(`.ob-step[data-ob="${step}"] h1`);
+  head?.setAttribute("tabindex", "-1");
+  head?.focus({ preventScroll: true });
+}
+const obNext = () => (obStep === "welcome" ? obBegin() : obStep === "apps" ? morse.finishWelcome() : obGo(STEPS[STEPS.indexOf(obStep) + 1]));
+function obBegin() {
+  const phase = $("first").dataset.phase;
+  if (obStep === "welcome" && (phase === "formed" || phase === "still")) obGo("model");
+}
+$("ob-begin").onclick = obBegin;
+$("ob-next").onclick = obNext;
+$("ob-back").onclick = () => obGo(STEPS[STEPS.indexOf(obStep) - 1]);
+document.addEventListener("keydown", e => {
+  if ($("first").hidden || e.key !== "Enter" || e.repeat || e.isComposing || document.querySelector("dialog[open]")) return;
+  if (e.target.closest?.("button, a, input")) return;
+  e.preventDefault();
+  obNext();
+});
+// The welcome: the name gathers out of dots while the sound plays, once.
+async function obWelcome() {
+  if (obStarted) return;
+  obStarted = true;
+  const f = $("first"), canvas = $("ob-air"), name = $("ob-name");
+  const phase = p => { f.dataset.phase = p; };
+  phase("forming");
+  const sound = new Audio("sounds/intro.m4a");
+  sound.volume = 0.6;
+  sound.play().catch(() => {}); // no sound device, or it's off: the name forms anyway
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { phase("still"); return; }
+  await document.fonts.load(getComputedStyle(name).font).catch(() => {});
+  const nr = name.getBoundingClientRect(), cr = canvas.getBoundingClientRect();
+  const cs = getComputedStyle(name);
+  const box = { x: nr.left - cr.left, y: nr.top - cr.top, w: nr.width, h: nr.height };
+  formName(canvas, {
+    box,
+    draw: ctx => { ctx.font = cs.font; ctx.letterSpacing = cs.letterSpacing; ctx.textBaseline = "middle"; ctx.textAlign = "center"; ctx.fillText(name.textContent, box.w / 2, box.h / 2 + 2); },
+    density: Math.min(2, devicePixelRatio || 1),
+    color: cs.color || "#fff",
+    onformed: () => phase("formed"),
+    ondone: () => phase("still"),
+  });
+}
 function renderFirst() {
   const first = !st.settings.welcomed;
   $("first").hidden = !first;
   document.querySelector(".app").hidden = first;
   if (!first) return;
+  if (!obStarted) { obGo("welcome"); requestAnimationFrame(() => obWelcome()); }
+  const MAC_KEYS = { Alt: "⌥", Option: "⌥", Meta: "⌘", Cmd: "⌘", Command: "⌘", Shift: "⇧", Control: "⌃", Ctrl: "⌃" };
+  $("ob-key").replaceChildren(caps(platform === "darwin" ? openKey().split("+").map(k => MAC_KEYS[k] || k).join("+") : openKey()));
   const m = st.model, name = modelName(m);
   $("first-key").hidden = !m.none;
   const live = $("first-model");
@@ -462,8 +521,7 @@ function renderFirst() {
   else if (m.check) live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.noAnswer", { name, error: unprefixed(m.check.error, m.name) }) }), h("i", { class: "dot bad" }));
   else live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.willUse", { name }) }));
   if (!m.none && !m.check && !firstChecked) { firstChecked = true; checkModel(); }
-  $("first-foot").replaceChildren(...withKeys("desk.first.foot", openKey()));
-  const apps = st.apps.filter(a => a.canAttach !== false).slice(0, 6);
+  const apps = st.apps.filter(a => a.canAttach !== false).slice(0, 5);
   const sig = JSON.stringify(apps.map(a => [a.id, a.state, a.icon ? 1 : 0]));
   if ($("first-apps").dataset.sig === sig) return;
   $("first-apps").dataset.sig = sig;
@@ -478,7 +536,7 @@ function renderFirst() {
 async function openFirst(a, answer) {
   const r = await morse.openApp(a.id, answer);
   if (r?.needsRestart) return askRestart(a, openFirst); // the same question as everywhere else
-  if (r?.error) { $("first-model").replaceChildren(h("i", { class: "dot bad" }), h("span", { text: r.error })); return; }
+  if (r?.error) { obGo("model"); $("first-model").replaceChildren(h("i", { class: "dot bad" }), h("span", { text: r.error })); return; }
   await morse.finishWelcome();
 }
 $("first-skip").onclick = () => morse.finishWelcome();
@@ -514,7 +572,7 @@ function render() {
   if (!st || st.error) return;
   renderFirst();
   renderApps(); renderModel(); renderChrome(); renderMods(); renderUpdate();
-  $("at-login").checked = st.settings.startAtLogin;
+  $("auto-open").checked = st.settings.autoOpen;
   $("version").textContent = `Morse ${st.version}`;
   document.documentElement.dataset.ready = "1";
 }

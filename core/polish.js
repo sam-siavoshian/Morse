@@ -39,13 +39,16 @@ export function wantsPolish(draft, request = "") {
 
 // The messages for the look: the same request and page, the draft as the
 // model wrote it, then the picture and the question.
+// shot.measured: what the page measured as off (misaligned in its row), given as facts to fix.
 export function polishMessages({ request, context, base, raw, shot }) {
+  const measured = (shot.measured || []).slice(0, 4);
+  const ask = measured.length ? `${POLISH_ASK}\nMeasured in the app (fix these; they are not OK):\n${measured.map(m => `- ${m}`).join("\n")}` : POLISH_ASK;
   return [
     ...buildMessages({ request, context, base }),
     { role: "assistant", content: raw },
     { role: "user", content: [
       { type: "image", source: { type: "base64", media_type: shot.mediaType || "image/png", data: shot.data } },
-      { type: "text", text: POLISH_ASK },
+      { type: "text", text: ask },
     ] },
   ];
 }
@@ -77,7 +80,7 @@ export async function polishRound({ settings, request, context, base, raw, draft
   const ms = () => Date.now() - t0;
   const fixes = fixesIn(reply);
   const next = parseModResponse(reply);
-  if (/^\s*OK\b/i.test(reply) && !next.css.trim() && !next.js.trim()) return { verdict: "ok", ms: ms(), shotMs, fixes: [] };
+  if (/^\s*OK\b/i.test(reply) && !next.css.trim() && !next.js.trim()) return { verdict: "ok", ms: ms(), shotMs, fixes: [], measured: shot.measured || [] };
   if (!next.css.trim() && !next.js.trim()) return { verdict: "ok", ms: ms(), shotMs, fixes };
   // Keep what it does: a new version that drops the draft's JS isn't a polish.
   const why = (draft.js.trim() && !next.js.trim() ? "the new version dropped the JS" : null)

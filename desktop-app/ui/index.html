@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Only this page's own files. No inline code, no other sites, no frames. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; media-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="color-scheme" content="dark light">
 <title>Morse</title>
 <link rel="stylesheet" href="tokens.css">
@@ -13,28 +13,57 @@
 <!-- The words: data-i18n ids in core/locales/*.js (desk.*), in the person's
      language once app.js has loaded them. The English here reads fine first. -->
 
-<!-- The first run: one screen, nothing to decide. The model is found by
-     itself; open an app, and (if you like) use Morse in Chrome too. -->
-<div class="first" id="first" role="main" hidden>
-  <div class="first-card">
-    <svg class="radar" viewBox="0 0 15 15" width="32" height="32" fill="currentColor" aria-hidden="true"><rect x="4" y="0" width="3" height="3" rx="1" class="o"/><rect x="8" y="0" width="3" height="3" rx="1" class="o"/><rect x="0" y="4" width="3" height="3" rx="1" class="o"/><rect x="4" y="4" width="3" height="3" rx="1" class="c"/><rect x="8" y="4" width="3" height="3" rx="1" class="c"/><rect x="12" y="4" width="3" height="3" rx="1" class="o"/><rect x="0" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="8" width="3" height="3" rx="1" class="c"/><rect x="8" y="8" width="3" height="3" rx="1" class="c"/><rect x="12" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="12" width="3" height="3" rx="1" class="o"/><rect x="8" y="12" width="3" height="3" rx="1" class="o"/></svg>
-    <h1 data-i18n="desk.first.h">Welcome to Morse</h1>
-    <p class="lede" data-i18n="desk.first.lede">Change any app or website in your own words.</p>
-    <p class="live" id="first-model" role="status"></p>
-    <div class="keyrow" id="first-key" hidden>
-      <input id="first-key-input" type="password" placeholder="Paste an Anthropic or OpenAI API key" autocomplete="off" spellcheck="false" aria-label="API key" data-i18n-attr="placeholder:desk.key.placeholder;aria-label:desk.key.label">
-      <div class="row-end"><button type="button" class="link" data-link="models" data-i18n="desk.first.otherWays">Other ways to connect a model</button><button type="button" class="btn" id="first-key-use" data-i18n="desk.first.useKey">Use this key</button></div>
-    </div>
-    <h2 data-i18n="desk.first.apps">Open an app with Morse</h2>
-    <ul class="list" id="first-apps" aria-label="Apps" data-i18n-attr="aria-label:desk.nav.apps"></ul>
-    <p class="foot" id="first-foot"></p>
-    <div class="chrome-card" id="first-chrome-card">
-      <span class="mark-tile" aria-hidden="true"><svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="5.5"/><path d="M2.5 8h11M8 2.5c1.6 1.6 2.4 3.4 2.4 5.5S9.6 11.9 8 13.5M8 2.5C6.4 4.1 5.6 5.9 5.6 8s.8 3.9 2.4 5.5"/></svg></span>
-      <div class="grow"><b data-i18n="desk.chrome.card.h">Websites too</b><small><span id="first-chrome-note" data-i18n="desk.chrome.card.d">Change any website in Chrome the same way.</span></small></div>
-      <button type="button" class="btn" id="first-chrome" data-i18n="desk.chrome.useToo">Use Morse in Chrome too</button>
-    </div>
-    <button type="button" class="link" id="first-skip" data-i18n="desk.first.skip">Skip for now</button>
+<!-- The first run, in the shape of Zephium's (desktop-app/ui/formation.js):
+     the name forms out of dots with a sound, then one quiet step at a time,
+     each a heading, a line and one thing to do, steered from one row at the
+     foot: Back, where you are, Continue. Opening an app ends it. -->
+<div class="first" id="first" role="dialog" aria-modal="true" aria-label="Welcome to Morse" data-i18n-attr="aria-label:desk.first.h" data-step="welcome" data-phase="waiting" hidden>
+  <canvas class="ob-air" id="ob-air" aria-hidden="true"></canvas>
+  <div class="ob-top"><button type="button" class="ob-skip" id="first-skip" data-i18n="desk.ob.skip">Skip</button></div>
+
+  <div class="ob-welcome" id="ob-welcome">
+    <h1 class="ob-name" id="ob-name">Morse</h1>
+    <p class="ob-tagline" data-i18n="desk.first.lede">Change any app or website in your own words.</p>
+    <button type="button" class="btn primary ob-cta" id="ob-begin"><span data-i18n="desk.ob.begin">Begin</span><kbd>↵</kbd></button>
   </div>
+
+  <section class="ob-step" data-ob="model" aria-labelledby="ob-model-h" hidden>
+    <header class="ob-head"><h1 id="ob-model-h" data-i18n="desk.ob.modelH">Your AI writes the changes</h1><p data-i18n="desk.ob.modelD">Morse uses the AI you already have. Nothing to set up.</p></header>
+    <div class="ob-scene">
+      <p class="live" id="first-model" role="status"></p>
+      <div class="keyrow" id="first-key" hidden>
+        <input id="first-key-input" type="password" placeholder="Paste an Anthropic or OpenAI API key" autocomplete="off" spellcheck="false" aria-label="API key" data-i18n-attr="placeholder:desk.key.placeholder;aria-label:desk.key.label">
+        <div class="row-end"><button type="button" class="link" data-link="models" data-i18n="desk.first.otherWays">Other ways to connect a model</button><button type="button" class="btn" id="first-key-use" data-i18n="desk.first.useKey">Use this key</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ob-step" data-ob="how" aria-labelledby="ob-how-h" hidden>
+    <header class="ob-head"><h1 id="ob-how-h" data-i18n="desk.ob.howH">Three moves, in any app</h1><p data-i18n="desk.ob.howD">Try it in an app on the next step.</p></header>
+    <ol class="ob-moves">
+      <li><span class="ob-move-art" id="ob-key"></span><b data-i18n="desk.ob.how1">Open Morse</b><small data-i18n="desk.ob.how1d">In the app you want to change.</small></li>
+      <li><span class="ob-move-art" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M5 3.5l13 6.2-5.6 1.7-2.2 5.6z"/><rect x="11.5" y="13.5" width="9" height="7" rx="1.5" stroke-dasharray="2 2"/></svg></span><b data-i18n="desk.ob.how2">Point at something</b><small data-i18n="desk.ob.how2d">Or at nothing, for the whole app.</small></li>
+      <li><span class="ob-move-art ob-quote" data-i18n="desk.ob.howEx">“Show one cover, not five”</span><b data-i18n="desk.ob.how3">Say what you want</b><small data-i18n="desk.ob.how3d">Type it or say it. It's saved, and comes back every time.</small></li>
+    </ol>
+  </section>
+
+  <section class="ob-step" data-ob="apps" aria-labelledby="ob-apps-h" hidden>
+    <header class="ob-head"><h1 id="ob-apps-h" data-i18n="desk.ob.appsH">Pick an app to change</h1><p data-i18n="desk.ob.appsD">It opens with Morse. Then press the keys and try it.</p></header>
+    <div class="ob-scene">
+      <ul class="list" id="first-apps" aria-label="Apps" data-i18n-attr="aria-label:desk.nav.apps"></ul>
+      <div class="chrome-card" id="first-chrome-card">
+        <span class="mark-tile" aria-hidden="true"><svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="5.5"/><path d="M2.5 8h11M8 2.5c1.6 1.6 2.4 3.4 2.4 5.5S9.6 11.9 8 13.5M8 2.5C6.4 4.1 5.6 5.9 5.6 8s.8 3.9 2.4 5.5"/></svg></span>
+        <div class="grow"><b data-i18n="desk.chrome.card.h">Websites too</b><small><span id="first-chrome-note" data-i18n="desk.chrome.card.d">Change any website in Chrome the same way.</span></small></div>
+        <button type="button" class="btn" id="first-chrome" data-i18n="desk.chrome.useToo">Use Morse in Chrome too</button>
+      </div>
+    </div>
+  </section>
+
+  <nav class="ob-bar" aria-label="Welcome to Morse" data-i18n-attr="aria-label:desk.first.h">
+    <span class="ob-side"><button type="button" class="btn quiet ob-pill" id="ob-back" data-i18n="desk.ob.back">Back</button></span>
+    <ol class="ob-dots" id="ob-dots"><li></li><li></li><li></li></ol>
+    <span class="ob-side end"><button type="button" class="btn primary ob-pill" id="ob-next"><span id="ob-next-label" data-i18n="desk.ob.continue">Continue</span><kbd>↵</kbd></button></span>
+  </nav>
 </div>
 
 <div class="app">
@@ -59,7 +88,7 @@
     </nav>
     <div class="side-foot">
       <label class="switchrow"><span data-i18n="desk.modsOn">Mods on</span><input type="checkbox" role="switch" id="mods-on" checked></label>
-      <label class="switchrow"><span data-i18n="desk.atLogin">Open at login</span><input type="checkbox" role="switch" id="at-login"></label>
+      <label class="switchrow" title="Apps with mods open with Morse, even from the Dock. Morse opens at login for this." data-i18n-attr="title:desk.autoOpen.d"><span data-i18n="desk.autoOpen">Always open with Morse</span><input type="checkbox" role="switch" id="auto-open"></label>
       <p class="ver" id="version"></p>
     </div>
   </aside>

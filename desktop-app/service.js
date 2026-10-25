@@ -47,11 +47,14 @@ export async function loadDaemon() {
 }
 
 // Morse Desktop's own choices, in the Morse folder: desktop.json.
-//   startAtLogin  open Morse (in the tray) when you log in; off until you turn it on
+//   startAtLogin  open Morse (in the tray) when you log in; on with autoOpen
+//   autoOpen      an app with mods that starts on its own (the Dock, Finder, the
+//                 Start menu) is opened again with Morse, so its mods are there; on
+//   loginSet      Morse turned startAtLogin on by itself once, for autoOpen (never again: your choice stands)
 //   helper        run the Morse helper in the background, for Chrome; on
 //   apps          apps you added by their file, for apps Morse didn't find
 //   appArgs       { "<app id>": [arguments] }: what `morse launch <app> -- <args>` passes (no window for it)
-const DEFAULTS = { startAtLogin: false, helper: true, welcomed: false, apps: [], appArgs: {} };
+const DEFAULTS = { startAtLogin: false, autoOpen: true, loginSet: false, helper: true, welcomed: false, apps: [], appArgs: {} };
 const argsFor = (s, id) => (Array.isArray(s.appArgs?.[id]) ? s.appArgs[id].map(String) : []);
 
 export function createService({
@@ -81,6 +84,10 @@ export function createService({
   let lastCheck = null;      // { ok, ms, error, at, label }
   let asks = [];             // Chrome asking to connect, waiting for Allow or Deny: [{ id, extension, words, resolve }]
   let settings = null;
+  // Always open with Morse: what each app was at the last look, and when Morse
+  // last reopened it (one try a minute, so an app that won't open with Morse
+  // isn't quit again and again).
+  const seen = new Map(), reopened = new Map();
 
   const changed = () => { try { emit(); } catch {} };
   const fail = e => ({ error: plain(d.plainError ? d.plainError(e) : e?.message || e) });
@@ -158,6 +165,7 @@ export function createService({
       state: s.state === "attached" ? "connected" : s.state === "waiting" ? "waiting" : "connecting", windows: s.windows?.length || 0,
       mine: own.has(s.id), mods: mods.filter(m => m.match?.app === s.id).length, modsOn: mods.filter(m => m.match?.app === s.id && m.enabled).length, icon: null,
     });
+    keepMods(rows);
     const rank = r => r.canAttach === false ? 2 : r.known || r.added ? 0 : 1;
     return rows.sort((x, y) => rank(x) - rank(y) || x.name.localeCompare(y.name));
   }
@@ -205,6 +213,27 @@ export function createService({
     } finally {
       pending.delete(id);
       changed();
+    }
+  }
+
+  // Always open with Morse (autoOpen): an app with mods on that was closed at
+  // the last look and is now open without Morse was just started the usual
+  // way. Morse quits it (politely, as ⌘Q would) and opens it again with
+  // Morse. An app that was already open when Morse started is left alone.
+  function keepMods(rows) {
+    const on = settings?.autoOpen !== false;
+    for (const r of rows) {
+      const was = seen.get(r.id);
+      seen.set(r.id, r.state);
+      if (!on || was !== "closed" || r.state !== "open" || !r.modsOn || r.canAttach === false || r.external) continue;
+      if (now() - (reopened.get(r.id) || 0) < 60000) continue;
+      reopened.set(r.id, now());
+      (async () => {
+        if ((await pause()).all) return; // every mod is off: nothing to bring back
+        log(`${r.name} opened without Morse; opening it again with Morse (its mods are on)`);
+        const res = await openApp(r.id, { answer: "y" });
+        if (res.error) log(`${r.name}: couldn't open it with Morse: ${res.error}`);
+      })().catch(e => log(`reopen ${r.id}: ${e?.message || e}`));
     }
   }
 
@@ -480,7 +509,7 @@ export function createService({
   async function state({ fresh = false } = {}) {
     const [m, a, c, md, p, s] = await Promise.all([model(), apps({ fresh }), chrome(), mods(), pause(), loadSettings()]);
     const keys = await d.configuredHotkeys().catch(() => ({}));
-    return { version: d.VERSION, platform: process.platform, keys: { open: keys.open || "", mods: keys.mods || "", off: keys.off || "" }, model: m, apps: a, chrome: c, mods: md, pause: p, settings: { startAtLogin: !!s.startAtLogin, helper: !!s.helper, welcomed: !!s.welcomed } };
+    return { version: d.VERSION, platform: process.platform, keys: { open: keys.open || "", mods: keys.mods || "", off: keys.off || "" }, model: m, apps: a, chrome: c, mods: md, pause: p, settings: { startAtLogin: !!s.startAtLogin, autoOpen: s.autoOpen !== false, helper: !!s.helper, welcomed: !!s.welcomed } };
   }
 
   async function setSetting(name, value) {

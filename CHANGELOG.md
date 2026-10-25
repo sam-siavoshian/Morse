@@ -17,6 +17,23 @@ under the new version number with the date
   Finder or the Dock, not only from a terminal.
 - **Open the bar**, beside each connected app in the Morse app, opens Morse's
   bar in that app when the shortcut does nothing (another app may own ⌥Space).
+- **Your mods are always there.** Open an app with mods from the Dock, Finder
+  or the Start menu, and the Morse app opens it again with Morse a moment
+  later. **Always open with Morse** is on unless you turn it off; Morse opens
+  at login for it.
+- **A new first run.** Morse's name forms out of dots with a short sound, then
+  three short steps: the AI Morse found, how it works, and an app to try. It
+  follows [Zephium](https://github.com/zephium-browser/zephium)'s first run;
+  the dots and the sound are Zephium's (Mozilla Public License 2.0).
+- **A Mac install with no security prompts:** one line in Terminal puts Morse
+  in Applications, checked against the release's SHA-256 sums:
+  `curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh`.
+- **A change that does nothing never says it's done.** Morse learns what
+  moves on the page by itself (a song's elapsed time) before a change, so a
+  change that did nothing is caught and tried again; if it still does
+  nothing, it comes off and Morse says so.
+- **New things line up.** Morse measures whether what a change adds sits in
+  the middle of its row, and fixes it when it doesn't.
 - **A calmer bar.** No step-by-step tips on top of the bar, a one-line "first
   change" card, and only Save and Undo after a change (Edit code and Share
   are in ⋯).

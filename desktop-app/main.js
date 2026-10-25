@@ -40,6 +40,9 @@ const UI_FILES = {
   "/app.css": [path.join(HERE, "ui", "app.css"), "text/css; charset=utf-8"],
   "/app.js": [path.join(HERE, "ui", "app.js"), "text/javascript; charset=utf-8"],
   "/tokens.css": [path.join(HERE, "..", "design", "tokens.css"), "text/css; charset=utf-8"],
+  // The first run: the name forming out of dots, and its sound (ui/sounds/NOTICE.md).
+  "/formation.js": [path.join(HERE, "ui", "formation.js"), "text/javascript; charset=utf-8"],
+  "/sounds/intro.m4a": [path.join(HERE, "ui", "sounds", "intro.m4a"), "audio/mp4"],
   // The marks of the models you can choose (ui/icons/NOTICE), and the site's own Inter.
   ...Object.fromEntries(["claude", "openai", "anthropic"].map(n => [`/icons/${n}.png`, [path.join(HERE, "ui", "icons", `${n}.png`), "image/png"]])),
   ...Object.fromEntries(["inter-regular", "inter-medium", "interdisplay-semibold"].map(n => [`/fonts/${n}.woff2`, [path.join(HERE, "..", "site", "fonts", `${n}.woff2`), "font/woff2"]])),
@@ -49,7 +52,7 @@ const UI_FILES = {
   "/core/i18n.js": [path.join(HERE, "..", "core", "i18n.js"), "text/javascript; charset=utf-8"],
   ...Object.fromEntries(LANGUAGES.map(l => [`/core/locales/${l.code}.js`, [path.join(HERE, "..", "core", "locales", `${l.code}.js`), "text/javascript; charset=utf-8"]])),
 };
-const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; media-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 protocol.registerSchemesAsPrivileged([{ scheme: SCHEME, privileges: { standard: true, secure: true } }]);
 // Morse's page, whatever its query (?platform=…) says.
 const isPage = url => { try { const u = new URL(url); u.search = ""; u.hash = ""; return u.href === PAGE_URL; } catch { return false; } };
@@ -326,6 +329,13 @@ app.whenReady().then(async () => {
   // unless you turned it off.
   const s = await service.loadSettings();
   if (s.helper) await service.startHelper();
+  // Always open with Morse (on unless you turn it off) needs Morse running:
+  // it opens at login, set once here, after which the switch decides.
+  if (app.isPackaged && s.autoOpen && !s.startAtLogin && !s.loginSet) {
+    await setLoginItem(true).catch(e => log("login item", e.message));
+    await service.setSetting("startAtLogin", true);
+    await service.setSetting("loginSet", true);
+  }
   // Apps opening and closing on their own: look again now and then.
   setInterval(changed, 4000).unref?.();
   changed();

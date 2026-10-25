@@ -325,3 +325,49 @@ test("the site's Download Morse button is this visitor's download", async () => 
   assert.match(desktopLink({ platform: "Linux x86_64", userAgent: "X11; Linux x86_64" }), /AppImage$/);
   assert.match(desktopLink({ platform: "iPhone", userAgent: "iPhone OS like Mac OS X" }), /releases\/tag\/preview$/);
 });
+
+// ---------------------------------------------------------------- install-app.sh: the Morse app in one line
+const APP_SH = path.join(root, "install-app.sh");
+function runAppSh({ url, home }) {
+  return run("sh", [APP_SH], { timeout: 60_000, env: { HOME: home, PATH: "/usr/bin:/bin", MORSE_INSTALL_BASE: url, MORSE_APPS_DIR: path.join(home, "apps"), MORSE_NO_OPEN: "1" } });
+}
+const appRelease = (name, { badSum = false } = {}) => {
+  const dir = path.join(served, name);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(path.join(dir, "Morse-linux-x86_64.AppImage"), `#!/bin/sh\necho ${name}\n`);
+  const sum = badSum ? "0".repeat(64) : sha(path.join(dir, "Morse-linux-x86_64.AppImage"));
+  writeFileSync(path.join(dir, "SHA256SUMS"), `${"2".repeat(64)}  Morse-mac-arm64.zip\n${sum}  Morse-linux-x86_64.AppImage\n`);
+  return `${base}/${name}`;
+};
+const linuxX64 = process.platform === "linux" && process.arch === "x64";
+
+test("install-app.sh: the app, checked against SHA256SUMS, put in place and runnable; again, it's replaced", { skip: !linuxX64 && "the Linux path runs on 64-bit Linux" }, async () => {
+  const home = tempDir("morse-home-");
+  let r = await runAppSh({ home, url: appRelease("app1") });
+  assert.equal(r.status, 0, r.out);
+  assert.match(r.out, /Checked against the release's SHA256SUMS/);
+  const app = path.join(home, "apps", "Morse.AppImage");
+  assert.equal(execFileSync(app, { encoding: "utf8" }).trim(), "app1", "runnable");
+  r = await runAppSh({ home, url: appRelease("app2") });
+  assert.equal(r.status, 0, r.out);
+  assert.equal(execFileSync(app, { encoding: "utf8" }).trim(), "app2");
+});
+
+test("install-app.sh: a download that doesn't match SHA256SUMS installs nothing", { skip: !linuxX64 && "the Linux path runs on 64-bit Linux" }, async () => {
+  const home = tempDir("morse-home-");
+  const r = await runAppSh({ home, url: appRelease("appbad", { badSum: true }) });
+  assert.equal(r.status, 1, r.out);
+  assert.match(r.out, /doesn't match its checksum, so it wasn't installed/);
+  assert.ok(!existsSync(path.join(home, "apps", "Morse.AppImage")));
+});
+
+test("install-app.sh is plain POSIX sh, never sudo or eval, from the preview release", () => {
+  const text = readFileSync(APP_SH, "utf8");
+  assert.equal(spawnSync("sh", ["-n", APP_SH]).status, 0);
+  if (existsSync("/usr/bin/dash")) assert.equal(spawnSync("/usr/bin/dash", ["-n", APP_SH]).status, 0);
+  assert.match(text, /^set -eu$/m);
+  assert.doesNotMatch(text, /\beval\b|\bsudo\b/);
+  assert.match(text, /releases\/download\/preview/);
+  for (const [u] of text.matchAll(/https:\/\/raw\.githubusercontent\.com\/\S+/g)) assert.match(u, /\/main\//);
+  assert.match(text, /dev\.morse\.desktop/, "quits Morse by its real bundle id (builder.config.js appId)");
+});

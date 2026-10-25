@@ -100,7 +100,7 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
     morse: Object.keys(window.morse), frozen: Object.isFrozen(window.morse),
     require: typeof window.require, process: typeof window.process, ipc: typeof window.ipcRenderer, electron: typeof window.electron, Buffer: typeof window.Buffer,
   }));
-  assert.deepEqual(globals.morse, ["state", "refreshApps", "openApp", "openBar", "disconnectApp", "addApp", "modelChoices", "chooseModel", "checkModel", "setHelper", "newPairingCode", "answerAsk", "signOutBrowsers", "showExtensionFolder", "useChrome", "setModOn", "setAllModsOff", "runChecks", "setStartAtLogin", "openLink", "finishWelcome", "installUpdate", "updateLater", "onChange"]);
+  assert.deepEqual(globals.morse, ["state", "refreshApps", "openApp", "openBar", "disconnectApp", "addApp", "modelChoices", "chooseModel", "checkModel", "setHelper", "newPairingCode", "answerAsk", "signOutBrowsers", "showExtensionFolder", "useChrome", "setModOn", "setAllModsOff", "runChecks", "setStartAtLogin", "setAutoOpen", "openLink", "finishWelcome", "installUpdate", "updateLater", "onChange"]);
   assert.equal(globals.frozen, true);
   for (const k of ["require", "process", "ipc", "electron", "Buffer"]) assert.equal(globals[k], "undefined", k);
   const prefs = await electronApp.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences());
@@ -110,10 +110,16 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
   // Fetching anything from the page is refused by the CSP (connect-src 'none').
   assert.equal(await w.evaluate(() => fetch("https://example.com/").then(() => "fetched", () => "refused")), "refused");
 
-  // The first run: one screen. The model is found by itself; Tunes is offered.
+  // The first run: the name forms out of dots, then Begin; the AI Morse found
+  // by itself; how it works; then an app to open. Tunes is offered.
   await w.locator("#first").waitFor({ timeout: 30000 });
   assert.equal(await w.locator(".app").isVisible(), false, "nothing else until the first app is opened");
+  await w.waitForFunction(() => ["formed", "still"].includes(document.getElementById("first").dataset.phase), null, { timeout: 30000 });
+  await w.click("#ob-begin");
   assert.match(await w.locator("#first-model").innerText(), /Morse will use Demo model/);
+  await w.click("#ob-next");
+  assert.match(await w.locator('.ob-step[data-ob="how"]').innerText(), /Open Morse[\s\S]*Point at something[\s\S]*Say what you want/);
+  await w.keyboard.press("Enter"); // Enter goes on, as Continue does
   const first = w.locator('li[data-first-app="tunes"]');
   await first.waitFor({ timeout: 30000 });
   // One more thing on the same screen: Use Morse in Chrome too. Until Morse is

@@ -151,7 +151,7 @@ test("state: each app says whether it's open and connected, with its mods; the m
   assert.deepEqual(st.chrome.browsers, 1);
   assert.equal(st.pause.all, false);
   assert.equal(st.keys.open, "Ctrl+Shift+Space");
-  assert.deepEqual(st.settings, { startAtLogin: false, helper: true, welcomed: false }, "login start is off until the person turns it on; the first run shows");
+  assert.deepEqual(st.settings, { startAtLogin: false, autoOpen: true, helper: true, welcomed: false }, "Always open with Morse is on (main.js turns login start on for it once); the first run shows");
 });
 
 test("Open the bar: asks the app's connector to open Morse's bar, and says why when it can't", async () => {
@@ -187,6 +187,40 @@ test("an app that is already open asks first: Restart once (y) or always (a), th
   const last = daemon.calls.filter(c => c[0] === "connectApp").at(-1)[2];
   assert.equal(await last.ask(), "a", "the answer is handed to connectApp's question");
   assert.ok(service.sessions.has("slack"));
+});
+
+test("Always open with Morse: an app with mods that starts on its own is opened again with Morse; others are left alone", async () => {
+  let procs = [{ pid: 11, cmd: "/usr/lib/slack/slack" }];
+  const { call, daemon, service } = setup({ listProcesses: () => procs });
+  const opened = () => daemon.calls.filter(c => c[0] === "connectApp").map(c => c[1].id);
+  assert.equal((await call("state")).settings.autoOpen, true, "on unless you turn it off");
+  await service.apps(); // first look: Slack was already open when Morse started (no mods anyway); Tunes is closed
+  procs = [...procs, { pid: 12, cmd: "/opt/Tunes/tunes" }]; // Tunes opened from the Dock
+  await service.apps();
+  await new Promise(r => setTimeout(r, 20));
+  assert.deepEqual(opened(), ["tunes"], "Tunes has a mod on, so it opens again with Morse");
+  assert.equal(await daemon.calls.find(c => c[0] === "connectApp")[2].ask(), "y", "quit and open again, without asking");
+  assert.ok(service.sessions.has("tunes"));
+
+  // Off: an app that starts on its own stays as it is.
+  const off = setup({ listProcesses: () => procs.filter(p => p.pid !== 12) });
+  assert.deepEqual(await off.call("setAutoOpen", false), { ok: true });
+  assert.equal(off.native.login, false, "and Morse no longer opens at login for it");
+  await off.service.apps();
+  procs = [...procs];
+  off.daemon.listProcesses = () => procs;
+  await off.service.apps();
+  await new Promise(r => setTimeout(r, 20));
+  assert.equal(off.daemon.calls.filter(c => c[0] === "connectApp").length, 0);
+
+  // Every mod off (the off switch): nothing to bring back.
+  const paused = setup({ listProcesses: () => [] });
+  await paused.call("setAllModsOff", true);
+  await paused.service.apps();
+  paused.daemon.listProcesses = () => [{ pid: 12, cmd: "/opt/Tunes/tunes" }];
+  await paused.service.apps();
+  await new Promise(r => setTimeout(r, 20));
+  assert.equal(paused.daemon.calls.filter(c => c[0] === "connectApp").length, 0);
 });
 
 test("an app Morse can't connect to, and errors, come back in plain words without terminal colors", async () => {

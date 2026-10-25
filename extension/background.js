@@ -166,7 +166,7 @@ function probe(port, targetSelector, selectors, opts = null) {
     const done = v => { clearTimeout(t); port.__probes.delete(id); resolve(v ?? null); };
     const t = setTimeout(() => done(null), 3000);
     port.__probes.set(id, done);
-    try { port.postMessage({ morseProbe: id, target: targetSelector || null, selectors: selectors || [], ...(opts?.quick && { quick: true }) }); } catch { done(null); } // quick: take-and-bring hook
+    try { port.postMessage({ morseProbe: id, target: targetSelector || null, selectors: selectors || [], ...(opts?.quick && { quick: true }), ...(opts?.learn && { learn: true }) }); } catch { done(null); } // quick: take-and-bring hook
   });
 }
 
@@ -196,7 +196,7 @@ async function shoot(port, targetSelector, modId) {
     const bytes = new Uint8Array(await (await c.convertToBlob({ type: "image/jpeg", quality: 0.85 })).arrayBuffer());
     let bin = "";
     for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    return { mediaType: "image/jpeg", data: btoa(bin) };
+    return { mediaType: "image/jpeg", data: btoa(bin), measured: area.misaligned || [] };
   } catch { return null; }
   finally { try { port.postMessage({ morseShotDone: id }); } catch {} }
 }

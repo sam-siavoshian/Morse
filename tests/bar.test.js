@@ -335,3 +335,45 @@ test("Model setting: Automatic, Always fast, Always best, saved; the footer name
     assert.equal(await page.locator(".model").innerText(), "Claude Code · opus");
   });
 });
+
+test("the effect check: a clock ticking on the page is not a change; a real one is", { skip }, async () => {
+  await scenario("", null, async t => {
+    const { page } = t;
+    await pressOpen(page);
+    await t.waitFor(s => s.open);
+    await page.evaluate(() => {
+      const c = Object.assign(document.createElement("time"), { textContent: "0:00" });
+      document.body.append(c);
+      let n = 0;
+      window.__tick = setInterval(() => { c.textContent = `0:${String(++n).padStart(2, "0")}`; c.style.paddingLeft = `${n % 3}px`; }, 50);
+    });
+    const before = await page.evaluate(() => globalThis.__morseProbe(null, [], { learn: true }));
+    await page.waitForTimeout(400);
+    const still = await page.evaluate(() => globalThis.__morseProbe(null, []));
+    assert.equal(still.fp, before.fp, "only the clock moved: the same look");
+    await page.evaluate(() => { document.querySelector("h1, p, div").style.display = "none"; });
+    const changed = await page.evaluate(() => globalThis.__morseProbe(null, []));
+    assert.notEqual(changed.fp, before.fp, "something hidden is a change");
+    await page.evaluate(() => clearInterval(window.__tick));
+  });
+});
+
+test("polish: a field a change added low in its bar is measured as off the middle; a centered one isn't", { skip }, async () => {
+  await scenario("", null, async t => {
+    const { page } = t;
+    await pressOpen(page);
+    await t.waitFor(s => s.open);
+    const measure = () => page.evaluate(async () => { const a = await globalThis.__morseShotArea(null, "m-test"); await globalThis.__morseShotArea(null, null, true); return a.misaligned; });
+    await page.evaluate(() => {
+      const bar = Object.assign(document.createElement("div"), { style: "display:flex;height:56px;align-items:flex-end;gap:8px;background:#eee" });
+      bar.innerHTML = '<button>Home</button><input data-morse="m-test" placeholder="Filter" style="height:28px;box-sizing:border-box">';
+      document.body.prepend(bar);
+      window.__row = bar;
+    });
+    const off = await measure();
+    assert.equal(off.length, 1);
+    assert.match(off[0], /14px below the middle of its row \(the row is 56px tall, it is 28px\)/);
+    await page.evaluate(() => { window.__row.style.alignItems = "center"; });
+    assert.deepEqual(await measure(), []);
+  });
+});

@@ -1047,32 +1047,56 @@ function layout(maxLines = 70, top = document.body) {
 // is rendered (boxes, key styles, text) in the page, its open shadow roots and
 // same-origin frames, plus which of the mod's selectors match nothing. Hosts
 // call it before and after applying a draft.
-function effectProbe(target, selectors = []) {
-  // Styles for the first 4000 elements, boxes for the rest (both cost little
-  // per element, but styles add up on a page of 10,000+).
-  let h = 7, budget = 4000, boxes = 20000;
-  const add = s => { s = String(s); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; };
+// What each element looks like: its box, the styles a change shows in, and
+// its own words. Styles for the first 4000 elements, boxes for the rest (both
+// cost little per element, but styles add up on a page of 10,000+).
+function lookOfPage() {
+  const out = [];
+  let budget = 4000, boxes = 20000;
   for (const root of allRoots(40)) {
     const doc = root.nodeType === 9 ? root : null;
     if (doc && !doc.body) continue;
     const els = doc ? doc.body.getElementsByTagName("*") : root.querySelectorAll("*");
-    add(els.length);
+    out.push([root, `${els.length}`]);
     if (doc) {
-      add(doc.title); add(doc.body.innerText);
       const rs = styleOf(doc.documentElement);
-      add(rs.filter + rs.backgroundColor + styleOf(doc.body).backgroundColor);
-    } else add(root.textContent);
+      out.push([doc.documentElement, rs.filter + rs.backgroundColor + styleOf(doc.body).backgroundColor]);
+    }
     for (let i = 0; i < els.length && boxes > 0; i++, boxes--) {
       const e = els[i];
       if (e.hasAttribute("data-morse-ui")) continue;
       const r = e.getBoundingClientRect();
-      if (budget-- <= 0) { add(`${Math.round(r.x)},${Math.round(r.y)},${Math.round(r.width)},${Math.round(r.height)}`); continue; }
+      const box = `${Math.round(r.x)},${Math.round(r.y)},${Math.round(r.width)},${Math.round(r.height)}`;
+      let words = "";
+      for (const c of e.childNodes) if (c.nodeType === 3) words += c.nodeValue;
+      if (budget-- <= 0) { out.push([e, box + words.trim().slice(0, 80)]); continue; }
       const s = styleOf(e);
-      add(`${Math.round(r.x)},${Math.round(r.y)},${Math.round(r.width)},${Math.round(r.height)}|${s.color}|${s.backgroundColor}|${s.backgroundImage.length}|${s.opacity}|${s.visibility}|${s.fontSize}|${s.fontWeight}|${s.fontFamily.length}|${s.borderRadius}|${s.borderColor}|${s.boxShadow.length}|${s.filter}|${s.transform}|${s.outlineStyle}|${s.position}|${s.cursor}|${s.textDecorationLine}`);
+      out.push([e, `${box}|${s.color}|${s.backgroundColor}|${s.backgroundImage.length}|${s.opacity}|${s.visibility}|${s.display}|${s.fontSize}|${s.fontWeight}|${s.fontFamily.length}|${s.borderRadius}|${s.borderColor}|${s.boxShadow.length}|${s.filter}|${s.transform}|${s.outlineStyle}|${s.position}|${s.cursor}|${s.textDecorationLine}|${words.trim().slice(0, 80)}`]);
     }
   }
+  return out;
+}
+// Parts of the page that change by themselves (a song's elapsed time, a
+// clock, a spinner), learned before a change: the effect check leaves them
+// out, or a page that never sits still always looks changed (dogfood:
+// Spotify's "show one cover, not five" said done and changed nothing).
+let probeNoisy = new WeakSet();
+function effectProbe(target, selectors = [], look = lookOfPage()) {
+  let h = 7;
+  const add = s => { s = String(s); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; };
+  for (const [el, sig] of look) if (!probeNoisy.has(el)) add(sig);
   const unmatched = selectors.filter(sel => { try { return !deepAll(sel).length; } catch { return true; } });
   return { fp: String(h), unmatched, shown: spotsShown() };
+}
+// The look before a change: twice, a moment apart; what differs moves by itself.
+function learnNoise() {
+  const a = new Map(lookOfPage());
+  return new Promise(r => setTimeout(() => {
+    const b = lookOfPage();
+    probeNoisy = new WeakSet();
+    for (const [el, sig] of b) if (a.get(el) !== sig) probeNoisy.add(el);
+    r(b);
+  }, 300));
 }
 // dogfood: how many of 48 spots of the window show a part of the page (the
 // same test as core/guard.js pageCollapse): words of its own, a picture, field
@@ -1097,9 +1121,39 @@ function spotsShown() {
 // connector over CDP, the extension's content script): never the page's. A
 // short wait lets just-applied CSS start rendering (transitions move) first.
 // opts.quick (take-and-bring hook, core/take.js bringMisses): only which selectors match nothing, fast on a huge page.
+// opts.learn (the look before a change, core/engine.js): also learns what moves by itself.
 globalThis.__morseProbe = (target, selectors, opts) => new Promise(r => setTimeout(() => r(opts?.quick
   ? { unmatched: (selectors || []).filter(sel => { try { return !deepAll(sel).length; } catch { return true; } }) }
+  : opts?.learn ? learnNoise().then(look => effectProbe(target, selectors, look))
   : effectProbe(target, selectors)), 100));
+// polish (core/polish.js): what the change made that sits off the middle of
+// its row, measured, so the model's look gets it as a fact (dogfood: a search
+// field added to Spotify's bar sat low, and the picture alone didn't say).
+function misalignedParts(modId) {
+  if (!modId) return [];
+  const parts = new Set(), out = [];
+  for (const m of document.querySelectorAll(`[data-morse="${cssEsc(modId)}"]`)) {
+    parts.add(m);
+    for (const e of m.querySelectorAll("input, button, select, textarea, svg, img, [role=button]")) parts.add(e);
+  }
+  for (const e of parts) {
+    const p = e.parentElement, r = e.getBoundingClientRect();
+    if (!p || !r.width || !r.height || e.closest("svg") !== e && e.closest("svg")) continue;
+    const ps = styleOf(p), pr = p.getBoundingClientRect();
+    const top = pr.top + (parseFloat(ps.paddingTop) || 0) + (parseFloat(ps.borderTopWidth) || 0);
+    const bottom = pr.bottom - (parseFloat(ps.paddingBottom) || 0) - (parseFloat(ps.borderBottomWidth) || 0);
+    const room = bottom - top;
+    if (room <= r.height + 3 || room > r.height * 3) continue; // it fills its row, or the parent is a column of things
+    const side = s => { const q = s.getBoundingClientRect(); return q.width && q.height && q.top < r.bottom && q.bottom > r.top && (q.right <= r.left + 1 || q.left >= r.right - 1); };
+    const row = (/flex/.test(ps.display) && !/column/.test(ps.flexDirection)) || [...p.children].some(s => s !== e && side(s));
+    if (!row) continue;
+    const off = Math.round((r.top + r.bottom) / 2 - (top + bottom) / 2);
+    if (Math.abs(off) >= 3) out.push(`${describe(e)} is ${Math.abs(off)}px ${off > 0 ? "below" : "above"} the middle of its row (the row is ${Math.round(room)}px tall, it is ${Math.round(r.height)}px): center it (align-items: center, or match the row's height)`);
+    if (out.length >= 4) break;
+  }
+  return out;
+}
+
 // polish (core/polish.js): the part of the window to show the model, in CSS
 // px of the viewport: what was pointed at plus what the mod made, with some
 // of the app around it (at least 560×260), within the window. Its scale keeps

@@ -8,7 +8,7 @@ const NAMES = [
   "state", "refreshApps", "openApp", "openBar", "disconnectApp", "addApp",
   "modelChoices", "chooseModel", "checkModel",
   "setHelper", "newPairingCode", "answerAsk", "signOutBrowsers", "showExtensionFolder", "useChrome",
-  "setModOn", "setAllModsOff", "runChecks", "setStartAtLogin", "openLink", "finishWelcome", "installUpdate", "updateLater",
+  "setModOn", "setAllModsOff", "runChecks", "setStartAtLogin", "setAutoOpen", "openLink", "finishWelcome", "installUpdate", "updateLater",
 ];
 
 const api = {};

@@ -62,6 +62,8 @@ export const API = {
   setAllModsOff:      [[bool], (s, n, off) => s.setAllModsOff(off)],
   runChecks:          [[none], (s) => s.doctor()],
   setStartAtLogin:    [[bool], async (s, n, on) => { await n.setLoginItem(on); return s.setSetting("startAtLogin", on); }],
+  // Always open with Morse: needs Morse running, so it opens at login with it.
+  setAutoOpen:        [[bool], async (s, n, on) => { await n.setLoginItem(on); await s.setSetting("startAtLogin", on); return s.setSetting("autoOpen", on); }],
   openLink:           [[oneOf(...Object.keys(LINKS))], (s, n, name) => n.openExternal(LINKS[name])],
   finishWelcome:      [[none], (s) => s.setSetting("welcomed", true)],
   installUpdate:      [[none], (s, n) => ({ ok: n.installUpdate() })],

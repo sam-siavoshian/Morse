@@ -24,7 +24,19 @@ has every file and its SHA-256):
 | **Windows** | [Morse-Setup.exe](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) | Open it. It installs Morse for you only, with no admin question. |
 | **Linux** | [Morse-linux-x86_64.AppImage](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage) | Make it runnable: right-click it, Properties, Permissions, turn on “Allow executing file as program”. Then open it. |
 
-Morse isn't signed yet, so your computer warns you once:
+**Mac, with no security prompts:** paste this in Terminal instead. It
+downloads Morse for your Mac, checks it against the release's SHA-256 sums,
+puts it in Applications and opens it:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh
+```
+
+macOS only asks about apps a browser downloaded; Morse isn't notarized by
+Apple yet (that takes a paid Apple Developer ID). The same line works on
+Linux (it puts the AppImage in `~/.local/share/morse`).
+
+Downloaded in a browser, Morse isn't signed yet, so your computer warns you once:
 
 - **Mac:** open Morse. When macOS says it can't check it, open System
   Settings, Privacy & Security, scroll down and click **Open Anyway**. (On
@@ -36,15 +48,25 @@ Working on Morse itself? `npm run desktop` opens it from the Morse folder.
 
 ## The first time
 
-Morse opens on one screen, with nothing to decide:
+Morse's name forms out of dots, with a short sound, then **Begin**. Three
+steps follow, each with one thing on it; **Enter** goes on, and **Skip** is
+always at the top:
 
-- **Morse will use Claude Code** (or Codex). It finds the one on this
-  computer by itself and checks that it answers. If it finds neither, paste
-  an API key there instead.
-- **Your apps**, each with **Open with Morse**. Click one, and you're done.
-- **Use Morse in Chrome too**, for websites. See [Chrome](#chrome).
+1. **Your AI writes the changes.** Morse uses Claude Code (or Codex): it finds
+   the one on this computer by itself and checks that it answers. If it finds
+   neither, paste an API key there instead.
+2. **Three moves, in any app:** press the shortcut, point at something, say
+   what you want.
+3. **Pick an app to change**, each with **Open with Morse**. Click one, and
+   you're done. **Use Morse in Chrome too** is there for websites.
 
-![The first run: the model Morse found, your apps, and Use Morse in Chrome too](screenshots/175-desktop-app-first-run.png)
+![The welcome: Morse's name, then Begin](screenshots/176-desktop-app-welcome.png)
+![How it works: open Morse, point at something, say what you want](screenshots/177-desktop-app-how.png)
+
+The first run follows [Zephium](https://github.com/zephium-browser/zephium)'s:
+the dots that form the name (`desktop-app/ui/formation.js`) and the sound
+(`desktop-app/ui/sounds/intro.m4a`) are Zephium's, under the Mozilla Public
+License 2.0, which those two files keep.
 
 ## Your apps
 
@@ -56,6 +78,11 @@ to it.
   say what to change.
 - **Disconnect** takes Morse off the app. The app keeps running, and your mods
   come off until next time.
+- **Always open with Morse** (at the bottom of the sidebar, on unless you turn
+  it off): an app with mods that you open the usual way, from the Dock, Finder
+  or the Start menu, is quit and opened again with Morse a moment later, so
+  your mods are always there. An app that was already open when Morse started
+  is left alone. For this, Morse opens at login, in the menu bar or tray.
 - **Connect** shows up for an app that is open and ready for Morse, like
   after you disconnected. Morse connects without a restart.
 - **Add an app…** lets you choose the file of an app Morse didn't find.

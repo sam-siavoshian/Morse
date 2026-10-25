@@ -22,15 +22,20 @@ Press a shortcut, point at something and say what you want: “add a sleep timer
 
 ## Install
 
-Morse is one app. Download it, open it, and you're done.
+Morse is one app. On a Mac, paste this in Terminal. It puts Morse in Applications and opens it, with no security prompts:
 
-**[Download Morse](https://sam-siavoshian.github.io/RRAA/site/#install):** [Mac (Apple silicon)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) · [Mac (Intel)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg) · [Windows](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) · [Linux](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage)
+```sh
+curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh
+```
+
+
+Or **[download Morse](https://sam-siavoshian.github.io/RRAA/site/#install):** [Mac (Apple silicon)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) · [Mac (Intel)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg) · [Windows](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) · [Linux](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage)
 
 1. Open Morse. It finds Claude Code or Codex by itself, and lists your apps.
 2. Click **Open with Morse** next to an app. In the app, press **Ctrl+Shift+Space** (**⌥Space** on a Mac), point at something and say what you want.
 3. **Chrome:** click **Use Morse in Chrome** in the Morse app. Then click **Allow** when Morse asks.
 
-These are [preview builds](https://github.com/sam-siavoshian/RRAA/releases/tag/preview) of the newest `main`, not signed yet. The first time, on a Mac: open Morse, then System Settings, Privacy & Security, **Open Anyway**. On Windows: **More info**, then **Run anyway**. Full steps and help: [Getting started](docs/getting-started.md).
+These are [preview builds](https://github.com/sam-siavoshian/RRAA/releases/tag/preview) of the newest `main`. Morse isn't notarized by Apple (that takes a paid Apple Developer ID), so a Mac warns about the downloaded `.dmg` once: open Morse, then System Settings, Privacy & Security, **Open Anyway**. The Terminal line above skips that: macOS only asks about files a browser downloaded, and the line checks the app against the release's SHA-256 sums instead. On Windows: **More info**, then **Run anyway**. Either way Morse updates itself after that. Full steps and help: [Getting started](docs/getting-started.md).
 
 ## What you can do
 
@@ -107,4 +112,4 @@ The `morse` command does everything the app does, from a terminal, and works on 
 
 ## More
 
-[Docs](docs/README.md) · [Contributing](CONTRIBUTING.md) · [How Morse works](docs/dev/architecture.md) · [Privacy policy](docs/privacy.md) · [Changelog](CHANGELOG.md) · [Launch videos](docs/launch/README.md) · MIT licensed
+[Docs](docs/README.md) · [Contributing](CONTRIBUTING.md) · [How Morse works](docs/dev/architecture.md) · [Privacy policy](docs/privacy.md) · [Changelog](CHANGELOG.md) · [Launch videos](docs/launch/README.md) · MIT licensed (the first run's dots and sound come from [Zephium](https://github.com/zephium-browser/zephium), MPL-2.0: [desktop-app/ui/sounds/NOTICE.md](desktop-app/ui/sounds/NOTICE.md))

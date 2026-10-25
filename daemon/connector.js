@@ -507,7 +507,7 @@ export class Connector {
   // it can't answer; the engine then skips the check.
   async probe(s, caller, target, selectors, opts = null) {
     if (caller.world == null) return null;
-    const expression = `globalThis.__morseProbe ? globalThis.__morseProbe(${JSON.stringify(target || null)}, ${JSON.stringify(selectors || [])}${opts ? `, ${JSON.stringify(opts)}` : ""}) : null`; // opts: { quick } (take-and-bring hook)
+    const expression = `globalThis.__morseProbe ? globalThis.__morseProbe(${JSON.stringify(target || null)}, ${JSON.stringify(selectors || [])}${opts ? `, ${JSON.stringify(opts)}` : ""}) : null`; // opts: { quick } (take-and-bring hook), { learn } (the look before a change)
     const r = await s.send("Runtime.evaluate", { expression, contextId: caller.world, returnByValue: true, awaitPromise: true });
     return r.exceptionDetails ? null : r.result?.value ?? null;
   }
@@ -523,7 +523,7 @@ export class Connector {
     const from = Date.now() / 1000 - 0.15;
     try {
       const r = await s.send("Page.captureScreenshot", { format: "jpeg", quality: 85, clip: { x: a.x + a.scrollX, y: a.y + a.scrollY, width: a.width, height: a.height, scale: a.scale } });
-      return r?.data ? { mediaType: "image/jpeg", data: r.data } : null;
+      return r?.data ? { mediaType: "image/jpeg", data: r.data, measured: a.misaligned || [] } : null;
     } catch { return null; }
     finally {
       await ev("globalThis.__morseShotArea && __morseShotArea(null, null, true)").catch(() => {});

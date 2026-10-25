@@ -28,6 +28,7 @@ globalThis.__morseShotArea = async (selector, modId, done) => {
   if (done) { hostEl.style.setProperty("visibility", "initial"); return null; } // as 10-dom.js set it (all: initial)
   const area = shotArea(selector, modId);
   if (!area) return null;
+  try { area.misaligned = misalignedParts(modId); } catch { area.misaligned = []; } // measured, beside the picture (core/polish.js)
   hostEl.style.setProperty("visibility", "hidden", "important");
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   return area;

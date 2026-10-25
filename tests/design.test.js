@@ -214,6 +214,10 @@ test("polish: which changes are worth a look", () => {
   assert.equal(m[0].role, "system");
   assert.equal(m.at(-2).content, "R");
   assert.equal(m.at(-1).content[0].source.media_type, "image/jpeg");
+  assert.equal(m.at(-1).content[1].text, POLISH_ASK);
+  // What the page measured as off goes with the picture, as facts to fix.
+  const off = polishMessages({ request: "add a filter", context: { url: "u", title: "t" }, raw: "R", shot: { ...PIC, measured: ["Filter field is 6px below the middle of its row"] } });
+  assert.match(off.at(-1).content[1].text, /Measured in the app \(fix these; they are not OK\):\n- Filter field is 6px below the middle of its row/);
 });
 
 test("the Polish changes setting: on by default, can be turned off, survives a reset of others", () => {
