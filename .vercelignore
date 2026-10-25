@@ -1,0 +1,8 @@
+# The site build only publishes site/, share/, core/, design/tokens.css,
+# docs/launch, docs/showcase, docs/privacy.md and two demo apps.
+# Leave the review screenshots and eval runs out of the upload.
+docs/ui
+docs/screenshots
+docs/site
+docs/words
+evals
