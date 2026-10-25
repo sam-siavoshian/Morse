@@ -328,7 +328,6 @@ export default {
   "popup.test.ok": "کار می‌کند. {label} در {secs} ثانیه پاسخ داد «{text}».",
   "popup.openPractice": "باز کردن صفحهٔ تمرین",
   "popup.reloadTab": "بار کردن دوبارهٔ این زبانه",
-  "popup.noModel": "Morse در Chrome هنوز به برنامهٔ Morse وصل نیست.",
   "popup.turnItOn": "روشنش کن",
   "popup.dev": "برای توسعه‌دهنده‌ها",
   "popup.dev.d": "راه‌های دیگر برای وصل شدن، برای کسانی که روی Morse کار می‌کنند.",

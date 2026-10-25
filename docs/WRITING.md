@@ -182,7 +182,9 @@ a different thing: it keeps a mod turned off.)
 | **the model** | The AI that writes changes. Only name it when it matters (settings, errors, the footer label). | the AI, the LLM, the engine, the brain, the backend, the provider |
 | **connect a model** | Tell Morse which model to use: Claude Code, Codex, or an API key. | configure a provider, set a backend |
 | **demo model** | The built-in stand-in Morse uses when no model is connected. It only knows the demo sites. | fake model, mock |
-| **Morse helper** | The small program on your computer that connects Morse to desktop apps and to Claude Code or Codex, and turns speech into text. Started by `morse serve`. | daemon, host, connector, server, bridge |
+| **the Morse app** | Morse on your computer: the one thing people install. It finds the model, opens apps with Morse, and adds Morse to Chrome. "Download Morse", "open the Morse app". (Developers call it Morse Desktop, in code and `docs/dev/`.) | Morse Desktop (in what people read), the desktop client, the launcher |
+| **Morse in Chrome** | The Chrome extension. It gets its model from the Morse app. "Use Morse in Chrome". | the plugin, the add-on |
+| **Morse helper** | The part of the Morse app that Chrome talks to on this computer. People rarely need its name; say "the Morse app". For developers, `morse serve` starts one from a terminal. | daemon, host, connector, server, bridge |
 | **pair** | Connect this browser to the Morse helper with its 6-character code. | authenticate, link |
 | **Edit tools** | The toolbar that appears on what you point at: hide, move, resize, edit text, color, text size, duplicate. Works at once, no model. Shortcut: Edit tools. | God mode (that is the code name only), inspector, direct edit mode |
 | **direct edits** | Changes made with the Edit tools. Saved together as one mod called "Direct edits". | manual edits |
@@ -297,7 +299,7 @@ in one or two short sentences.
 | Settings | Small tweaks use sonnet. New features, restyles and second tries use opus | Small changes use sonnet. New features, new looks and second tries use opus |
 | Mods panel | Export all mods | Back up all mods |
 | Error | The change the model wrote didn't work on this page. Try again, or describe it differently. | The model's change didn't work on this page. Try again, or try other words. |
-| Welcome | Already have it? Open Morse Desktop. | If you have it, open Morse Desktop. |
+| Welcome | Already have it? Open Morse Desktop. | If you have it, open the Morse app. |
 | Safe start | “Loopy” is held back: this page closed or reloaded right after it ran. | “Loopy” is off for now. This page closed or reloaded right after it ran. |
 
 The full list from the second pass over every message is in

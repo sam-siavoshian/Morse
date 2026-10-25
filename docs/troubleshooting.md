@@ -15,16 +15,16 @@ morse status     # which desktop apps Morse is connected to, and the mods on in 
 
 | Message | What it means | What to do |
 |---|---|---|
-| The Morse helper isn't running on this computer. Run morse setup in a terminal to start it. | Chrome reaches your model through the Morse helper, and the helper isn't running. | Run `morse serve` and keep the terminal open. If the browser isn't paired yet, type the code it shows into the Morse popup. |
-| Claude Code or Codex isn't installed here. Run morse setup in a terminal to pick what Morse uses. | Morse was set to use Claude Code or Codex, and can't find it. | Install it (`npm install -g @anthropic-ai/claude-code` or `npm install -g @openai/codex`), or run `morse setup` to choose another model. |
+| The Morse app isn't open on this computer. Open it, then try again. | Chrome reaches your model through the Morse app, and it isn't open. | Open the Morse app. If Chrome isn't connected yet, Morse's welcome page asks it, and you click **Allow** there. (Developers with `morse serve`: keep that terminal open.) |
+| Claude Code or Codex isn't installed here. Open the Morse app to choose what Morse uses. | Morse was set to use Claude Code or Codex, and can't find it. | Install it, or open **Model** in the Morse app and choose another one. **How to install** there says what to do. |
 | The model didn't accept the sign-in or API key. Check it in model settings. | The key is wrong or was removed, or Claude Code or Codex is signed out. | Check the key in the Morse popup or with `morse model`. For Claude Code or Codex, sign in again in a terminal (`claude`, `codex`). |
 | The model is busy or has run out of credit. Wait a minute and try again. | The service is limiting requests, or your plan or account has no credit left. | Wait a minute. If it keeps happening, check your plan or credit. |
 | The model's server had a problem. Wait a minute and try again. | The service had an error on its side. | Wait and try again. |
 | That model isn't available. Pick another one in model settings. | The model name you chose doesn't exist for this key or plan. | Choose another model: `morse config --model <name>`, or in the popup. |
 | Morse couldn't reach the model. Make sure it's running, or choose another one in model settings. | No answer from the model's server, or no internet connection. | Check your connection. If you set a server address, check that it's running. |
 | The model took too long to answer. Try again, or ask for something smaller. | The request took too long and Morse stopped it. | Ask for a smaller change, or split it in two. |
-| No model connected yet. Connect one on the welcome page that opened. | Chrome has no model connected. | With Morse Desktop open, click **Use Claude Code** on the welcome page and Allow it. Or paste an API key there. See [Models and setup](models.md#in-chrome). |
-| No model is connected. Run morse setup in a terminal to choose one. | A desktop app is connected, but no model is chosen. | Run `morse setup`. |
+| Not connected to the Morse app yet. Connect on the welcome page that opened. | Chrome isn't connected to the Morse app. | Open the Morse app and click **Use Morse in Chrome**, or open Morse's welcome page in Chrome. Click **Allow** when the app asks. See [Models and setup](models.md#in-chrome). |
+| No model is connected. Run morse setup to choose one. | The morse command (for developers) opened an app, but no model is chosen. | Run `morse setup`, or choose one under **Model** in the Morse app. |
 
 ## Messages about the change
 

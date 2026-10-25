@@ -37,6 +37,28 @@ test("every language has every message, and nothing English doesn't have", () =>
   }
 });
 
+test("the Morse app's window, the welcome page and the popup: every word id they use is in every language", async () => {
+  const { readFileSync } = await import("node:fs");
+  const read = p => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
+  const files = ["desktop-app/ui/app.js", "desktop-app/ui/index.html", "extension/welcome.js", "extension/welcome.html", "extension/popup.js", "extension/popup.html"];
+  const missing = [];
+  for (const f of files) {
+    const src = read(f);
+    const ids = new Set([
+      ...[...src.matchAll(/\bt\(\s*"([\w.-]+)"/g)].map(m => m[1]),
+      ...[...src.matchAll(/data-i18n(?:-html)?="([\w.-]+)"/g)].map(m => m[1]),
+      ...[...src.matchAll(/data-i18n-attr="([^"]+)"/g)].flatMap(m => m[1].split(";").map(p => p.split(":")[1]?.trim()).filter(Boolean)),
+    ]);
+    assert.ok(ids.size > 5, `${f} uses the catalog`);
+    for (const id of ids) for (const { code } of LANGUAGES) if (CATALOGS[code][id] == null) missing.push(`${f}: ${id} (${code})`);
+  }
+  assert.deepEqual(missing, []);
+  // The window's own words go through t(): no English sentence written into app.js.
+  const app = read("desktop-app/ui/app.js");
+  const literal = [...app.matchAll(/\btext:\s*"([A-Z][a-z][^"]*)"/g)].map(m => m[1]);
+  assert.deepEqual(literal, [], "English written straight into the Morse app's window");
+});
+
 test("translations keep the {placeholders}, the markup and the plural shape", () => {
   const problems = [];
   for (const { code } of LANGUAGES) {

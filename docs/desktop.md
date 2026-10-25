@@ -8,26 +8,24 @@ changes websites: you point at something, say what you want, and keep it.
 This page explains how to do that, what Morse does to the app (and what it
 doesn't), and which apps can't work.
 
-Rather not use a terminal? [Morse Desktop](desktop-app.md) does the same in a
-window: it lists your apps, opens them with Morse and disconnects them.
-
 ![Microsoft's Visual Studio Code with the Morse bar open and a request typed](screenshots/320-vscode-ask.png)
 
 ## The short version
 
-```bash
-morse apps                 # what Morse found, and whether it can connect
-morse launch spotify       # opens Spotify with Morse connected
-```
+1. Open the [Morse app](desktop-app.md). It lists the apps it can connect to.
+2. Click **Open with Morse** next to one.
+3. In the app, press **Ctrl+Shift+Space** (**⌥Space** on a Mac). The Morse
+   bar opens. Point at the part you want to change, type what you want, and
+   press **Enter**. When you like the result, press **Enter** again to save it.
 
-Then, in the app, press **Ctrl+Shift+Space** (**⌥Space** on a Mac). The Morse
-bar opens. Point at the part you want to change, type what you want, and press
-**Enter**. When you like the result, press **Enter** again to save it.
+Next time you open the app with Morse, your changes come back by themselves.
 
-Next time you open the app with `morse launch`, your changes come back by
-themselves.
+The rest of this page goes deeper: what Morse does to an app, which apps
+can't work and why, and each system. The steps use the `morse` command,
+which does what the Morse app does, from a terminal. It is for developers;
+you don't need it.
 
-## Step by step
+## Step by step, with the morse command
 
 ### 1. Find your app
 
@@ -99,8 +97,8 @@ Morse opens most apps on a private connection that only it can use (see
 [What Morse does to the app](#what-morse-does-to-the-app)). That connection
 ends when Morse disconnects, so connecting to the same app again later means
 opening it again: `morse launch` asks first, as for any app that is already
-open. In Morse Desktop, **Connect** after **Disconnect** works without a
-restart, for as long as Morse Desktop stays open.
+open. In the Morse app, **Connect** after **Disconnect** works without a
+restart, for as long as the Morse app stays open.
 
 | | |
 |---|---|
@@ -287,19 +285,22 @@ files on disk, because those live outside the windows.
 
 ### What to do
 
-1. Install Node.js 22 or newer, then Morse: `npm install -g morse-cli`.
+1. [Download Morse](desktop-app.md#get-it) and drag it to Applications.
 2. Open each app you want to change once the usual way, from Finder or
    Launchpad, then quit it. A Mac checks an app you downloaded the first time
-   you open it. Morse starts apps from the terminal, where that first check
-   can stop the app instead of asking you.
-3. Run `morse apps`. It lists the apps in `/Applications`,
+   you open it. Morse starts apps itself, where that first check can stop
+   the app instead of asking you.
+3. Open Morse. It lists the apps in `/Applications`,
    `/Applications/Utilities` and `~/Applications`.
-4. Run `morse launch slack --restart`. If Slack is open, Morse asks it to
-   quit, the same as pressing ⌘Q. The first time, macOS asks whether your
-   terminal may control Slack. Say **OK**: Morse only uses it to ask the app
-   to quit. If you say no, Morse tells the app to stop at once instead,
-   which can lose its window layout.
+4. Click **Open with Morse** next to Slack. If Slack is open, Morse asks
+   whether to restart it, and then asks it to quit, the same as pressing ⌘Q.
+   The first time, macOS asks whether Morse may control Slack. Say **OK**:
+   Morse only uses it to ask the app to quit. If you say no, Morse tells the
+   app to stop at once instead, which can lose its window layout.
 5. In the app, press **⌥Space**. The Morse bar opens.
+
+With the `morse` command (developers): `morse apps`, then
+`morse launch slack --restart`. Then macOS asks about your terminal instead.
 
 `morse doctor` shows your macOS version, whether your Morse folder
 (`~/.morse`) is private, and your shortcut.
@@ -363,11 +364,14 @@ them has been tried on one yet.
 
 ### What to do
 
-1. Install Node.js 22 or newer from nodejs.org, then, in PowerShell or
-   Windows Terminal: `npm install -g morse-cli`.
-2. Run `morse apps`.
-3. Run `morse launch slack --restart`.
+1. [Download Morse](desktop-app.md#get-it) and open the installer.
+2. Open Morse. It lists your apps.
+3. Click **Open with Morse** next to Slack. If Slack is open, Morse asks
+   whether to restart it.
 4. In the app, press **Ctrl+Shift+Space**. The Morse bar opens.
+
+With the `morse` command (developers): `morse apps`, then
+`morse launch slack --restart`.
 
 `morse doctor` shows your Windows version and build, where your Morse folder
 is, and whether Morse can see which apps are open.
@@ -491,7 +495,7 @@ An earlier run, the same day, with Claude Code (haiku):
 `morse apps` found Visual Studio Code, VSCodium, Obsidian and Joplin
 (Logseq was in a folder it doesn't search, so it was opened by its path), and
 `morse fuses` reported each one (from the binary for the two `.deb` apps; for
-the AppImages it says it can't look inside). Morse Desktop shows each of them
+the AppImages it says it can't look inside). The Morse app shows each of them
 with its own icon, read from the app (the icon theme for the `.deb` apps, and
 from inside the AppImage for the others).
 
@@ -518,7 +522,7 @@ What these apps turned up, now fixed:
   folder path. It now matches by the page inside the app.
 - **The Mods panel said "Stops every mod on this site"** in an app. It now
   says "in this app".
-- **Morse Desktop showed a letter for every app.** It now shows the app's own
+- **The Morse app showed a letter for every app.** It now shows the app's own
   icon: from the icon theme, the app's folder, or inside the AppImage, read
   without running it. Logseq's AppImage carries Electron's default icon as
   its main picture; Morse uses Logseq's own icon from inside the app instead.

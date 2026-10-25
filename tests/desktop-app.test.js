@@ -6,6 +6,7 @@ import { home, tempDir } from "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync, promises as fs } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import vm from "node:vm";
 
@@ -285,6 +286,53 @@ test("Chrome: the helper runs here unless one is already running; Show a code; S
   assert.equal(r.running, true);
   assert.equal(r.ours, false);
   assert.equal(other.daemon.calls.some(x => x[0] === "createBridge"), false);
+});
+
+test("Use Morse in Chrome: the extension in a folder you can see, the folder shown, Chrome on its extensions page, the helper on", async () => {
+  const ext = tempDir("morse-ext-src-");
+  await fs.mkdir(path.join(ext, "core"), { recursive: true });
+  await fs.writeFile(path.join(ext, "manifest.json"), '{"name":"Morse"}');
+  await fs.writeFile(path.join(ext, "core", "i18n.js"), "export {};");
+  const folder = path.join(tempDir("morse-ext-home-"), "Morse for Chrome");
+  const daemon = fakeDaemon({ EXTENSION_DIR: ext });
+  await fs.writeFile(path.join(daemon.HOME, "desktop.json"), JSON.stringify({ helper: false }));
+  const service = createService({ daemon, fetchHealth: async () => null, copyExtension: true, chromeFolder: folder });
+  const ipcMain = fakeIpc();
+  const native = { shown: [], chrome: 0, showFolder: async dir => { native.shown.push(dir); return { ok: true }; }, openChrome: async () => { native.chrome++; return true; }, openExternal: async url => { native.opened = url; } };
+  registerIpc({ ipcMain, service, native, isTrusted: e => e === TRUSTED });
+  const call = (name, ...args) => ipcMain.handlers.get(CHANNEL(name))(TRUSTED, ...args);
+  const r = await call("useChrome");
+  assert.equal(r.opened, true, "Chrome opened on chrome://extensions");
+  assert.equal(native.chrome, 1);
+  assert.deepEqual(native.shown, [folder], "the folder, shown");
+  assert.equal(readFileSync(path.join(folder, "manifest.json"), "utf8"), '{"name":"Morse"}', "a copy of the extension that comes with the app");
+  assert.ok(existsSync(path.join(folder, "core", "i18n.js")));
+  assert.ok(existsSync(path.join(folder, ".morse-extension")), "marked as Morse's own");
+  assert.equal(r.folder, folder.startsWith(os.homedir() + path.sep) ? `~${folder.slice(os.homedir().length)}` : folder, "shown the short way when it's in the home folder");
+  assert.equal((await call("state")).settings.helper, true, "the helper is on, so Chrome can connect");
+  assert.equal((await call("state")).chrome.extensionDir, folder);
+  // Made again each time: a file that isn't the extension's goes (the folder is Morse's).
+  await fs.writeFile(path.join(folder, "old.js"), "");
+  await call("useChrome");
+  assert.equal(existsSync(path.join(folder, "old.js")), false);
+  // A folder of that name Morse didn't make is only written over, never emptied.
+  const theirs = path.join(tempDir("morse-ext-theirs-"), "Morse for Chrome");
+  await fs.mkdir(theirs, { recursive: true });
+  await fs.writeFile(path.join(theirs, "notes.txt"), "mine");
+  await createService({ daemon, fetchHealth: async () => null, copyExtension: true, chromeFolder: theirs }).useChrome();
+  assert.equal(readFileSync(path.join(theirs, "notes.txt"), "utf8"), "mine");
+
+  // Once Morse is in the Chrome Web Store, the button opens its page there instead.
+  const store = "https://chromewebstore.google.com/detail/morse/abcdefghijklmnopabcdefghijklmnop";
+  const ipc2 = fakeIpc();
+  const native2 = { opened: null, openExternal: async url => { native2.opened = url; }, openChrome: async () => assert.fail("no extensions page with a store listing"), showFolder: async () => assert.fail("no folder with a store listing") };
+  registerIpc({ ipcMain: ipc2, service: createService({ daemon, fetchHealth: async () => null, copyExtension: true, chromeFolder: folder, chromeStore: store }), native: native2, isTrusted: e => e === TRUSTED });
+  assert.deepEqual(await ipc2.handlers.get(CHANNEL("useChrome"))(TRUSTED), { store: true });
+  assert.equal(native2.opened, store);
+  const { isStoreUrl } = await import("../desktop-app/chrome.js");
+  assert.equal(isStoreUrl(store), true);
+  assert.equal(isStoreUrl("./#chrome-steps"), false, "the site's own steps aren't a listing");
+  assert.equal(isStoreUrl("https://evil.example/chromewebstore.google.com/"), false);
 });
 
 test("mods: listed per app with switches, and the off switch pauses every mod everywhere", async () => {

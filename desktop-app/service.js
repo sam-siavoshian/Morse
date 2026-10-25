@@ -399,7 +399,7 @@ export function createService({
   }
   async function answerAsk(id, allow) {
     const a = asks.find(x => x.id === id);
-    if (!a) return { error: "Chrome stopped asking. Click Connect in Chrome again." };
+    if (!a) return { error: "Chrome stopped asking. Open Morse's welcome page in Chrome to ask again." };
     a.resolve(!!allow);
     return chrome();
   }

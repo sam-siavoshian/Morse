@@ -328,7 +328,6 @@ export default {
   "popup.test.ok": "يعمل. ردّ {label} بـ «{text}» خلال {secs} ث.",
   "popup.openPractice": "افتح صفحة التدريب",
   "popup.reloadTab": "أعد تحميل علامة التبويب هذه",
-  "popup.noModel": "Morse في Chrome غير متصل بتطبيق Morse بعد.",
   "popup.turnItOn": "شغّله",
   "popup.dev": "للمطورين",
   "popup.dev.d": "طرق أخرى للاتصال، لمن يعملون على Morse.",

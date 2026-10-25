@@ -224,7 +224,8 @@ the app's memory or ptrace it, and the app's own child processes inherit fds
 
 ### Morse Desktop (`desktop-app/`)
 
-The app people install instead of the `morse` command ([user page](../desktop-app.md),
+The one app people install ("the Morse app" in everything people read); the
+`morse` command is the developers' way to the same things ([user page](../desktop-app.md),
 [releasing](releasing.md)). Its Electron main process imports the daemon
 modules and runs them in place, so there is no separate Node:
 
@@ -253,7 +254,22 @@ modules and runs them in place, so there is no separate Node:
   the window shows “Allow Chrome to use your Claude Code?”, and only Allow
   makes a token. The requests are in [Pairing](pairing.md).
 - The first run is one screen: the model Morse found by itself (checked
-  once) and the apps to open. Opening one, or Skip, leads to the main window.
+  once), the apps to open, and **Use Morse in Chrome too**. Opening an app,
+  or Skip, leads to the main window.
+- **Use Morse in Chrome** (`useChrome` in `service.js` and `ipc.js`,
+  [`chrome.js`](../../desktop-app/chrome.js)): with a Chrome Web Store
+  listing (`site/config.js` `LINKS.chrome`, `isStoreUrl`), it opens it.
+  Until then: the helper on, the extension copied to `~/Morse for Chrome`
+  (a folder Load unpacked can see; a `.morse-extension` mark says it is
+  Morse's to empty), the folder shown and its path copied, Chrome started on
+  `chrome://extensions` (`openChromeExtensions`; `MORSE_CHROME` names a
+  stand-in for tests), and a dialog with one real picture of where to click
+  (`ui/chrome-steps.png`, `demo/shoot-chrome-steps.js`). It closes by
+  itself once a browser is connected.
+- The window's words are `desk.*` in `core/locales/*.js`: `main.js` serves
+  `core/i18n.js` and each catalog under `morse-app://ui/core/`, and
+  `ui/app.js` picks the language from the computer's (`navigator.languages`).
+  What the service says (errors, the check rows) stays English for now.
 
 Sessions Morse Desktop holds are ordinary session files with its own pid, so
 `morse status` and `morse stop` work on them, and apps a terminal connected

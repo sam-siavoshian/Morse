@@ -327,7 +327,6 @@ export default {
   "popup.test.ok": "Es funktioniert. {label} hat in {secs} s mit „{text}“ geantwortet.",
   "popup.openPractice": "Übungsseite öffnen",
   "popup.reloadTab": "Diesen Tab neu laden",
-  "popup.noModel": "Morse in Chrome ist noch nicht mit der Morse-App verbunden.",
   "popup.turnItOn": "Einschalten",
   "popup.dev": "Für Entwickler",
   "popup.dev.d": "Andere Wege zu verbinden, für Leute, die an Morse arbeiten.",

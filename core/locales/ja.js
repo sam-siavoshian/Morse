@@ -328,7 +328,6 @@ export default {
   "popup.test.ok": "動きます。{label} が {secs} 秒で「{text}」と返事しました。",
   "popup.openPractice": "練習ページを開く",
   "popup.reloadTab": "このタブを再読み込み",
-  "popup.noModel": "Chrome の Morse は、まだ Morse アプリにつながっていません。",
   "popup.turnItOn": "オンにする",
   "popup.dev": "開発者向け",
   "popup.dev.d": "Morse の開発をする人のための、ほかのつなぎ方です。",

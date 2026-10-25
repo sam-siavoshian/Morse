@@ -109,7 +109,7 @@ To connect to a desktop app, Morse has to open it with a switch that lets
 another program control it.
 
 **Most Electron apps get a private connection.** When Morse opens an Electron
-app itself (`morse launch`, or Open with Morse in Morse Desktop), it gives the
+app itself (`morse launch`, or Open with Morse in the Morse app), it gives the
 app a connection that only Morse holds. It doesn't open a port. Other
 programs on your computer, even ones another account runs, can't reach the
 app through it. This was tested on Linux with VSCodium, Obsidian, Joplin and
@@ -134,7 +134,7 @@ What that doesn't cover:
   program holds the port.
 - **After Morse stops or quits**, the app keeps running, and nothing else can
   use the private connection. Morse can't use it again either. To connect
-  later, Morse has to open the app again. (Morse Desktop can connect again
+  later, Morse has to open the app again. (The Morse app can connect again
   while it stays open.) If Morse crashes instead of quitting, it can't take
   its code off. Until the app restarts, pages the app opens still load
   Morse's small start-up code. That code does nothing without Morse (no bar,

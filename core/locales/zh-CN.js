@@ -327,7 +327,6 @@ export default {
   "popup.test.ok": "可以用。{label} 在 {secs} 秒内回复了“{text}”。",
   "popup.openPractice": "打开练习页",
   "popup.reloadTab": "重新加载这个标签页",
-  "popup.noModel": "Chrome 里的 Morse 还没有连接到 Morse 应用。",
   "popup.turnItOn": "打开它",
   "popup.dev": "开发者",
   "popup.dev.d": "其他连接方式，给开发 Morse 的人用。",

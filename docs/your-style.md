@@ -18,7 +18,7 @@ later, and Morse adds it to your style. You can also set each part under
   this site** in the Mods panel. You can also keep a list in Settings.
   “except Figma” in your words leaves out figma.com and the Figma app.
 - **One style in Chrome and your apps.** When Chrome is paired with the Morse
-  helper (Morse Desktop or `morse serve`), they share your style. Set it in
+  helper (the Morse app, or `morse serve` for developers), they share your style. Set it in
   Chrome and your desktop apps get it too, and the other way round. If both
   changed, the newer one wins. When Chrome isn't paired, Chrome and your apps
   each keep their own style. Morse tells you which one you saved to (“every

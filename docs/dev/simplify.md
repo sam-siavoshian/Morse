@@ -113,7 +113,10 @@ change one of its shortcuts.
 
 ## The welcome page and first run
 
-Onboarding v2 (another change, `docs/dev/onboarding.md`) owns these screens;
+Since then, the one-app change ([Onboarding](onboarding.md)) took the
+question and the developer ways off the welcome page: Connect (the Morse app
+found and asked by itself, or Download Morse) → Try it → your first mod.
+What follows is the inventory as it was. Onboarding v2 (another change, `docs/dev/onboarding.md`) owns these screens;
 they were inventoried, not changed: Choose (Websites, Desktop apps, Both) →
 Connect (one button when the Morse helper can ask, a code box, an API key, or
 `morse setup --pair <code>`) → Try it (practice page) → your first mod. The
