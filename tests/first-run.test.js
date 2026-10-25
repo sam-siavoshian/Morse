@@ -1,19 +1,20 @@
-// The first minutes, end to end, as a new user (onboarding v2,
-// docs/dev/onboarding.md): a fresh Chrome profile with the built extension
-// (dist/extension) and a fresh MORSE_HOME.
-//   - install opens the welcome page, and only that; it asks one question
-//   - nothing on the computer: Get Morse Desktop (recommended), or an API key
-//   - Morse Desktop opens: the page finds it, "Use …" is one click, Morse
-//     Desktop asks "Allow Chrome to use your …?", Deny connects nothing,
-//     Allow connects (tests/helpers/fake-desktop.js: the real helper, as
-//     Morse Desktop runs it)
+// The first minutes, end to end, as a new user (docs/dev/onboarding.md): a
+// fresh Chrome profile with the built extension (dist/extension) and a fresh
+// MORSE_HOME.
+//   - install opens the welcome page, and only that; it asks no question
+//   - no Morse app on the computer: one button, Download Morse (no API key,
+//     no terminal: those are for developers, behind ?dev)
+//   - the Morse app opens: the page finds it and asks by itself, the app asks
+//     "Allow Chrome to use your …?", Deny connects nothing, Ask again, Allow
+//     connects (tests/helpers/fake-desktop.js: the real helper, as the Morse
+//     app runs it)
 //   - the first change on the practice page, step by step, then a page that
 //     celebrates it and sends you to a real site: a suggested one opens with
 //     Morse ready and the words typed; a demo site's change is saved, comes
 //     back after a reload, and can be shared
-//   - an Anthropic API key connects too, and one that isn't says so
-//   - the terminal still works: `morse setup --pair <code>` connects by itself;
-//     a helper with only its own code gets a code box
+//   - for developers (?dev): an Anthropic API key connects, and one that isn't
+//     says so; `morse setup --pair <code>` connects by itself; a helper with
+//     only its own code gets a code box
 //   - “Allow User Scripts” shows up only when a change needs it: one switch,
 //     with a picture, and Morse brings you back
 // And, in the bar playground (fake host): progressive reveal and the first
@@ -150,7 +151,7 @@ const ARTICLE = `<!doctype html><html><head><title>Lighthouse</title></head><bod
   <p>A lighthouse is a tower, building, or other type of physical structure designed to emit light from a system of lamps and lenses.</p>
   <p>It serves as a beacon for navigational aid, for maritime pilots at sea or on inland waterways.</p></main></body></html>`;
 
-test("first run: one question, Morse Desktop found, one click and Allow, the first change guided and celebrated, then a real site", { skip: skipExt, timeout: 300000 }, async () => {
+test("first run: no question, the Morse app found and asked by itself, one Allow, the first change guided and celebrated, then a real site", { skip: skipExt, timeout: 300000 }, async () => {
   const { ctx, sw, id, welcome, port, errors } = await install("profile-flow");
   let desk = null;
   try {
@@ -158,36 +159,36 @@ test("first run: one question, Morse Desktop found, one click and Allow, the fir
     await sleep(800);
     assert.deepEqual(ctx.pages().map(p => p.url()).filter(u => u.startsWith("chrome-extension://")), [`chrome-extension://${id}/welcome.html`]);
 
-    // ---- one question
-    assert.equal(await screenOf(welcome), "choose");
-    assert.equal(await text(welcome, "#choose-h"), "What do you want to change?");
-    assert.deepEqual(await welcome.locator("[data-want] b").allTextContents(), ["Websites", "Desktop apps", "Both"]);
-    await welcome.click("[data-want=web]");
+    // ---- no question: straight to connecting to the Morse app
     assert.equal(await screenOf(welcome), "connect");
+    assert.equal(await welcome.locator("[data-want]").count(), 0, "no websites / desktop apps / both question");
+    assert.equal(await text(welcome, "#connect-h"), "Connect to the Morse app");
 
-    // ---- nothing on this computer yet: Morse Desktop (recommended) or an API key
-    await until(() => welcome.locator("[data-view=desktop]").isVisible(), 10000, "Get Morse Desktop");
-    assert.match(await text(welcome, "[data-view=desktop]"), /Recommended.*Get Morse Desktop/s);
-    assert.equal(await welcome.locator("#get-desktop").getAttribute("href"), "https://github.com/sam-siavoshian/RRAA/releases/latest");
-    assert.ok(await welcome.locator("#key").isVisible(), "the API key next to it, for websites");
+    // ---- nothing on this computer yet: one button, Download Morse
+    await until(() => welcome.locator("[data-view=download]").isVisible(), 10000, "Download Morse");
+    assert.match(await text(welcome, "[data-view=download]"), /Get the Morse app.*Download Morse/s);
+    assert.equal(await welcome.locator("#download").getAttribute("href"), "https://sam-siavoshian.github.io/RRAA/site/#install");
+    assert.equal(await welcome.locator("#key").count(), 0, "no API key for normal people (?dev has it)");
+    assert.equal(await welcome.locator("#setup-cmd").count(), 0, "no terminal command (?dev has it)");
+    assert.doesNotMatch(await welcome.locator("body").innerText(), /morse serve|morse setup|pairing code|API key/i);
+    assert.ok(await welcome.locator("#skip").isVisible(), "Not now: try a sample");
 
-    // ---- Morse Desktop opens: the page finds it, one click, Allow
+    // ---- the Morse app opens: the page finds it and asks by itself; the app asks to Allow
     desk = desktop(path.join(tmp, "home-flow"), port);
-    await until(() => /READY/.test(desk.out), 15000, () => "Morse Desktop's helper: " + desk.out);
-    await until(() => welcome.locator("#use").isVisible(), 15000, "the one button");
-    assert.equal(await text(welcome, "[data-view=ask] .head b"), "Found Morse Desktop on this computer");
-    assert.match(await text(welcome, "#use"), /^Use /);
-    await welcome.click("#use");
-    await until(() => /ASK /.test(desk.out), 10000, "Morse Desktop to ask");
+    await until(() => /READY/.test(desk.out), 15000, () => "the Morse app's helper: " + desk.out);
+    await until(() => /ASK /.test(desk.out), 20000, () => "the page to ask by itself: " + desk.out);
+    assert.equal(await text(welcome, "[data-view=ask] .head b"), "Found the Morse app on this computer");
     const words = JSON.parse(/ASK (.*)/.exec(desk.out)[1]);
     assert.match(words.message, /^Allow Chrome to use your .+\?$/);
     assert.deepEqual([words.allow, words.deny], ["Allow", "Deny"]);
-    assert.match(await text(welcome, "#connect .live"), /Morse Desktop is asking\. Click Allow there\./);
+    assert.match(await text(welcome, "#connect .live"), /The Morse app is asking\. Click Allow there\./);
+    assert.equal(await welcome.locator("#use").count(), 0, "nothing to click in Chrome while it asks");
     // Deny connects nothing.
     desk.stdin.write("deny\n");
     await until(async () => /You chose Deny, so Chrome isn't connected/.test(await text(welcome, "#connect .live")), 10000, async () => "the Deny note: " + await welcome.locator("#connect").innerHTML() + desk.out);
     assert.equal(await sw.evaluate(async () => !!(await chrome.storage.local.get("helper")).helper), false);
     // Ask again; Allow connects, and the page moves on by itself.
+    assert.match(await text(welcome, "#use"), /Ask again/);
     await sleep(500);
     await welcome.click("#use");
     await until(() => (desk.out.match(/ASK /g) || []).length === 2, 10000, "the second question");
@@ -204,7 +205,8 @@ test("first run: one question, Morse Desktop found, one click and Allow, the fir
     assert.equal(await text(welcome, "#win-h"), "Your first mod is saved.");
     assert.match(await text(welcome, "#s-win .lede"), /A mod is a change you saved\. Morse brings it back every time you open that site or app\./);
     assert.deepEqual(await welcome.locator("[data-site] b").allTextContents(), ["Wikipedia", "Hacker News", "YouTube", "BBC News"]);
-    assert.equal(await welcome.locator("#apps-h").count(), 0, "websites only: no desktop apps here");
+    assert.match(await text(welcome, "#apps-h"), /Change a desktop app/, "the Morse app is here, so its apps are next");
+    assert.match(await text(welcome, "#s-win"), /In the Morse app, click Open with Morse/);
     assert.doesNotMatch(await welcome.locator("body").innerText(), /Allow User Scripts/, "never asked for on the welcome page");
 
     // ---- a suggested site opens with Morse ready and the words typed
@@ -249,11 +251,15 @@ test("first run: one question, Morse Desktop found, one click and Allow, the fir
   }
 });
 
-test("without Morse Desktop: an Anthropic API key connects in one step; one that isn't says so", { skip: skipExt, timeout: 120000 }, async () => {
-  const { ctx, welcome, errors } = await install("profile-key");
+test("developers (?dev): an Anthropic API key connects in one step; one that isn't says so", { skip: skipExt, timeout: 120000 }, async () => {
+  const { ctx, id, welcome, errors } = await install("profile-key");
   try {
-    await welcome.click("[data-want=web]");
+    // Hidden from normal people; ?dev shows it.
+    await until(() => welcome.locator("[data-view=download]").isVisible(), 10000, "Download Morse");
+    assert.equal(await welcome.locator("#key").count(), 0);
+    await welcome.goto(`chrome-extension://${id}/welcome.html?dev`);
     await until(() => welcome.locator("#key").isVisible(), 10000, "the API key field");
+    assert.match(await text(welcome, "#dev summary"), /Developer/);
     await welcome.locator("#key").fill("hello");
     await welcome.locator("#save-key").click();
     await until(async () => /doesn't look like an Anthropic API key\. It starts with sk-ant-/.test(await text(welcome, "#keynote")), 5000, "the key note");
@@ -262,22 +268,17 @@ test("without Morse Desktop: an Anthropic API key connects in one step; one that
     await until(async () => /Connected/.test(await text(welcome, "#connect")), 8000, "connected");
     await until(async () => (await screenOf(welcome)) === "try", 8000, "on to the first change");
     assert.match(await text(welcome, "#practice-note"), /^This page uses /);
-    // Desktop apps people see the API key only on request: Morse Desktop first.
-    await welcome.click("[data-go=choose]");
-    await welcome.click("[data-want=apps]");
-    assert.equal(await screenOf(welcome), "try", "already connected: straight to the first change");
     assert.deepEqual(errors, []);
   } finally { await ctx.close(); }
 });
 
-test("the terminal still works: morse setup --pair <code> connects by itself; a helper with its own code gets a code box", { skip: skipExt, timeout: 180000 }, async () => {
-  const { ctx, welcome, port, errors } = await install("profile-terminal");
+test("developers (?dev): morse setup --pair <code> connects by itself; a helper with its own code gets a code box", { skip: skipExt, timeout: 180000 }, async () => {
+  const { ctx, id, welcome, port, errors } = await install("profile-terminal");
   let helper = null;
   try {
-    await welcome.click("[data-want=both]");
-    await until(() => welcome.locator("[data-view=desktop]").isVisible(), 10000, "Get Morse Desktop");
-    assert.equal(await welcome.locator("#key").isVisible(), false, "for desktop apps, the API key waits behind a link");
-    await welcome.locator("#term summary").click();
+    await welcome.goto(`chrome-extension://${id}/welcome.html?dev`);
+    await until(() => welcome.locator("[data-view=download]").isVisible(), 10000, "Download Morse");
+    await until(() => welcome.locator("[data-view=terminal]").isVisible(), 10000, "the morse command, for developers");
     const cmd = await text(welcome, "#setup-cmd");
     const m = /^morse setup --pair ([A-HJ-NP-Z2-9]{6})$/.exec(cmd);
     assert.ok(m, `one command with a pairing code: ${cmd}`);
@@ -311,11 +312,8 @@ test("“Allow User Scripts” only when a change needs it: one switch, a pictur
   try {
     assert.equal(await sw.evaluate(() => { try { return !!chrome.userScripts?.execute; } catch { return false; } }), false, "this browser has “Allow User Scripts” off");
     // Not on the welcome page, at any step.
-    for (const want of ["web"]) {
-      await welcome.click(`[data-want=${want}]`);
-      await sleep(600);
-      assert.doesNotMatch(await welcome.locator("body").innerText(), /Allow User Scripts/);
-    }
+    await sleep(600);
+    assert.doesNotMatch(await welcome.locator("body").innerText(), /Allow User Scripts/);
     await welcome.click("#skip");
     await sleep(600);
     assert.doesNotMatch(await welcome.locator("body").innerText(), /Allow User Scripts/);

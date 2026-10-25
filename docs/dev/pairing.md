@@ -15,6 +15,13 @@ The helper side of **Ask** is onboarding v2's, in `daemon/bridge.js`
 extension and Morse Desktop. If the code and this page disagree, the code in
 `daemon/bridge.js` wins. Fix this page.
 
+The welcome page asks by itself as soon as it finds a helper that can ask
+and is in front (`askSoon` in `extension/welcome.js`): the person's only
+step is Allow in the Morse app. After Deny, or two minutes with no answer,
+its **Ask again** button asks once more. The code is for developers: the
+popup's **Developer** section, and the welcome page's code box when a helper
+can only show its own code (`morse serve` with no terminal).
+
 ## The requests
 
 All requests go to `http://127.0.0.1:<port>` (7457, or the test port in

@@ -89,7 +89,13 @@ test("the landing page has what it promises: buttons, video slot, sections and r
   assert.doesNotMatch(html, /logos\//, "no wall of logos");
   assert.match(html, /data-link="chrome"[^>]*>[\s\S]*?Add to Chrome/);
   assert.match(html, /data-link="desktop"[^>]*>[\s\S]*?Download Morse/);
-  assert.match(html, /npm i -g morse-cli/, "one line for developers");
+  // One app: Download Morse first, Add to Chrome second, and no terminal on the page (developers have the guide).
+  const install = /<section id="install"[\s\S]*?<\/section>/.exec(html)[0];
+  assert.ok(install.indexOf('data-link="desktop"') < install.indexOf('data-link="chrome"'), "Download Morse comes before Add to Chrome");
+  assert.match(/<div class="get-row">([\s\S]*?)<\/div>/.exec(html)[1], /^\s*<a class="btn btn-primary[^>]*data-link="desktop"/, "the hero's first button is Download Morse");
+  assert.doesNotMatch(html, /npm i(nstall)? -g|morse setup|morse serve|morse extension|Node 22/, "no terminal steps on the landing page");
+  assert.match(install, /Use Morse in Chrome/, "Chrome comes from the Morse app");
+  assert.match(install, /docs\/dev\/README\.md">developer guide/, "developers get the guide");
   assert.match(html, /data-film/, "the video slot");
   assert.match(html, /<section id="try" class="try" data-install="#install">/, "Try it here, pointing at the install section");
   const shots = [...html.matchAll(/src="(shots\/[^"]+)"/g)].map(m => m[1]);

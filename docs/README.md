@@ -21,7 +21,7 @@ If you're new, start with [Getting started](getting-started.md).
 | [Mod packs](mod-packs.md) | Several mods shared together: make a pack, install the ones you want, and packs that stay up to date for a team |
 | [Your controls](your-controls.md) | The off switch, pausing Morse, Safe start, mods that slow down or freeze a page, and backups |
 | [Desktop apps](desktop.md) | Apps like VS Code, Obsidian and Joplin: how to connect, and which apps can't work |
-| [Morse Desktop](desktop-app.md) | The app for your computer: your apps, your model, Chrome, your mods and checks, without a terminal |
+| [The Morse app](desktop-app.md) | Morse itself: your apps, your model, Chrome, your mods and checks. The one thing to install |
 | [Models and setup](models.md) | Claude Code, Codex or an API key: how to choose, and how Chrome reaches your model |
 | [Privacy and safety](privacy-and-safety.md) | What leaves your computer, when, and what mods can do |
 | [Privacy policy](privacy.md) | The privacy policy for the extension and the `morse` command |
@@ -40,10 +40,10 @@ If you're new, start with [Getting started](getting-started.md).
 | [Testing](dev/testing.md) | `npm run check`, `npm test`, `npm run test:ui`, test helpers, evals, screenshots, what was verified |
 | [Adding a feature](dev/adding-a-feature.md) | Rules for the in-app code, words, the UI review, docs |
 | [Accessibility of Morse itself](dev/accessibility.md) | Keyboard, screen readers, zoom and forced colors in Morse's own UI, and the axe-core audit |
-| [Onboarding](dev/onboarding.md) | The first minutes mapped and measured before and after, one-click pairing with Morse Desktop, “Allow User Scripts” only when needed |
+| [Onboarding](dev/onboarding.md) | The first minutes mapped and measured before and after, one Allow in the Morse app, “Allow User Scripts” only when needed |
 | [Simplify](dev/simplify.md) | Every setting, menu and button, what shows and what waits under More, and Morse checked end to end on a fresh setup |
 | [Checking a Mac or Windows PC](dev/platform-testing.md) | The 15-minute check for desktop apps on a real Mac or Windows PC |
-| [Pairing Chrome with the Morse helper](dev/pairing.md) | One-click pairing (the extension asks, the person allows in Morse Desktop) and codes: the requests, Morse Desktop's side, and why it's safe |
+| [Pairing Chrome with the Morse helper](dev/pairing.md) | One-click pairing (the extension asks, the person allows in the Morse app) and codes: the requests, the app's side, and why it's safe |
 | [Releasing](dev/releasing.md) | One-time setup, then `npm run release` and one push: npm, the GitHub release with the store zip, and Morse Desktop's builds and signing |
 | [How Morse talks](WRITING.md) | The style guide for every word a person reads |
 | [Wording pass 2: messages](dev/wording-pass-2.md) | Every message in Morse changed by the second plain-words pass, with before and after |

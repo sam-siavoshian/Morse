@@ -280,6 +280,16 @@ dialog h2 { font: 600 16px/24px var(--display); letter-spacing: -0.01em; }
 dialog p { color: var(--m-text-2); line-height: 20px; }
 dialog .row-end { margin-top: var(--s-3); }
 dialog small.ext { font: 11px/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; }
+/* the picture of where to click in Chrome */
+dialog.wide { width: 640px; }
+dialog img.shot { display: block; width: 100%; height: auto; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); background: #fff; }
+ol.guide { margin: 0; padding-inline-start: 22px; display: flex; flex-direction: column; gap: var(--s-2); color: var(--m-text-2); line-height: 20px; }
+ol.guide b { color: var(--m-text); font-weight: 600; }
+ol.guide code { color: var(--m-text); overflow-wrap: anywhere; user-select: all; }
+/* Advanced: closed until asked for */
+details.advanced > summary { cursor: pointer; font-weight: 600; color: var(--m-text-2); list-style-position: inside; }
+details.advanced > summary:hover { color: var(--m-text); }
+details.advanced[open] > summary { margin-bottom: var(--s-2); color: var(--m-text); }
 label.check { display: flex; align-items: center; gap: var(--s-2); color: var(--m-text-2); cursor: pointer; }
 label.check input { accent-color: var(--m-signal-4); margin: 0; width: 16px; height: 16px; }
 
@@ -296,6 +306,12 @@ label.check input { accent-color: var(--m-signal-4); margin: 0; width: 16px; hei
 .first-card h2 { margin-top: var(--s-3); }
 .first-card .list > li { min-height: 56px; padding-block: var(--s-2); }
 .first-card #first-skip { align-self: flex-start; font-size: 13px; }
+/* Use Morse in Chrome too: one row under the apps */
+.chrome-card { display: flex; align-items: center; gap: var(--s-4); margin-top: var(--s-2); padding: var(--s-3) var(--s-4) var(--s-3) var(--s-3);
+  border: 1px solid var(--m-line); border-radius: var(--m-r-lg); background: var(--m-surface); box-shadow: var(--card-shadow); }
+.chrome-card .mark-tile svg, .chrome-main .mark-tile svg { color: var(--m-text-2); }
+.chrome-card .grow small { white-space: normal; }
+.chrome-card.done .grow small::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--m-signal-4); }
 body.mac .first { padding-top: 56px; -webkit-app-region: drag; }
 body.mac .first :is(button, input, li) { -webkit-app-region: no-drag; }
 
@@ -310,24 +326,3 @@ main::-webkit-scrollbar-track { background: transparent; }
 #checks .sub { margin: 4px 0 0; color: var(--m-text-2); font-size: var(--m-text-sm); }
 #checks .list { margin-top: 12px; }
 #checks .foot { margin-top: 12px; }
-/* "Add to Chrome": the picture of Chrome's extensions page, and the two steps */
-.steps li > div > .add-how { grid-column: 1 / -1; margin-top: var(--s-4); }
-.add-pic { display: block; width: 100%; max-width: 420px; height: auto; font-family: var(--m-font); }
-.add-pic .win { fill: var(--m-surface); stroke: var(--m-line-strong); }
-.add-pic .bar { fill: var(--m-hover); }
-.add-pic .dot, .add-pic .line { fill: var(--m-line-strong); }
-.add-pic .url, .add-pic .card { fill: var(--m-bg); stroke: var(--m-line); }
-.add-pic .t { fill: var(--m-text-2); font-size: 9px; }
-.add-pic .t.h { fill: var(--m-text); font-size: 13px; font-weight: 600; }
-.add-pic .t.num { fill: var(--m-primary); font-size: 11px; font-weight: 700; }
-.add-pic .hl { fill: none; stroke: var(--m-primary); stroke-width: 2; }
-.add-pic .sw { fill: var(--m-primary); }
-.add-pic .knob { fill: var(--m-bg); }
-.add-pic .btnr { fill: var(--m-bg); stroke: var(--m-line-strong); }
-.add-pic .folder { fill: var(--m-primary); }
-.add-pic .arrow { fill: none; stroke: var(--m-primary); stroke-width: 1.5; stroke-dasharray: 4 3; }
-.add-pic .arrowhead { fill: var(--m-primary); }
-.add-steps { margin: var(--s-3) 0 0; padding-left: 1.4em; color: var(--m-text-2); line-height: 20px; }
-.add-steps li { padding: 2px 0; }
-.add-steps b { display: inline; font-size: inherit; line-height: inherit; color: var(--m-text); }
-body.mac .not-mac, body:not(.mac) .mac-only { display: none; }

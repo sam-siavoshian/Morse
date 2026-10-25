@@ -1,24 +1,26 @@
-// Before and after (onboarding v2, docs/dev/onboarding.md): a new person's
-// first minutes, timed and counted, with a fresh Chrome profile, a fresh
+// Before and after (the one-app change, docs/dev/onboarding.md): a new
+// person's first minutes, timed and counted, with fresh profiles, a fresh
 // MORSE_HOME and the real `claude` CLI. Each run counts what the person does:
 // clicks, keystrokes (a paste is Ctrl+V), decisions (a choice they have to
 // make), and screens (each new surface they have to read: a page, a terminal,
 // a dialog).
 //
-//   node scripts/build.js && DISPLAY=:99 node demo/measure-onboarding.js [--before <old checkout>] [--json out.json]
+//   node scripts/build.js && DISPLAY=:99 node demo/measure-onboarding.js [--before <old checkout>] [--json out.json] [--only chrome|desktop]
 //
-// --before points at a checkout of the old welcome page (git archive of the
-// commit before onboarding v2, built with node scripts/build.js); without it
+// --before points at a checkout of the welcome page before the change (git
+// archive of main before it, built with node scripts/build.js); without it
 // only the new flows run. Flows:
-//   claude   Chrome + Claude Code, to the first saved change on the practice page
-//            before: `morse setup --pair <code>` in a terminal; after: Morse
-//            Desktop is open (tests/helpers/fake-desktop.js, the real helper) and
-//            asks Allow
-//   key      Chrome with an Anthropic API key, to "connected" (no real key here,
-//            so no change is made with it)
+//   before-chrome  onboarding v2: the question, Use Claude Code, Allow in Morse
+//                  Desktop, then the first change on the practice page
+//   after-chrome   the Morse app is open: the page asks by itself, one Allow,
+//                  then the same first change
+//   after-desktop  the Morse app for real (Electron) with Tunes: its first
+//                  screen, Open with Morse, then a change in Tunes, saved
+// Adding the extension to Chrome (Developer mode, Load unpacked) and
+// downloading are Chrome's and the computer's own steps: counted on paper in
+// docs/dev/onboarding.md, not here.
 // Human time is an estimate on top of the measured time (the model, the app):
 // keystroke-level model operators, listed in HUMAN below.
-
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -116,65 +118,26 @@ async function practice(c, welcome, sw, openSel) {
   await until(() => modsSaved(sw), 20000, "the saved mod");
 }
 
-// ---- before: the welcome page's checklist and `morse setup --pair <code>`
-async function beforeClaude() {
-  const c = counter("before: Chrome + Claude Code");
-  const { ctx, sw, welcome, port } = await install(path.join(BEFORE, "dist", "extension"), "before-claude");
-  let helper;
-  try {
-    c.t0 = Date.now();
-    c.screen("welcome page: practice area and a 4-step checklist");
-    c.decide("which way to connect: the command, an API key, or later");
-    const cmd = (await welcome.locator("#setup-cmd").textContent()).trim();
-    await c.click(welcome, "#copy-setup", "Copy the command");
-    c.screen("a terminal");
-    c.offline("open a terminal", { seconds: HUMAN.terminal });
-    c.offline("npm i -g morse-cli, Enter", { keys: "npm i -g morse-cli".length + 1, seconds: HUMAN.install });
-    c.offline("paste the command, Enter", { keys: 3 });
-    helper = cli(path.join(BEFORE, "daemon", "cli.js"), cmd.split(" ").slice(1), { MORSE_HOME: path.join(tmp, "home-before"), MORSE_HELPER_PORT: String(port) });
-    c.decide("which model: Claude Code, Codex or an API key");
-    c.offline("Enter (the recommended choice)", { keys: 1 });
-    helper.stdin.write("1\n");
-    c.decide("Automatic, always fast or always best (asked in a real terminal)");
-    c.offline("Enter (Automatic)", { keys: 1 });
-    await until(() => /The Morse helper is running/.test(helper.out), 120000, "setup to check Claude Code and start the helper");
-    c.screen("back to Chrome");
-    await until(() => welcome.evaluate(() => document.querySelector('[data-step="model"]').classList.contains("done")), 30000, "the page to pair");
-    c.decide("do the other checklist steps now (Allow User Scripts, pin)?");
-    await practice(c, welcome, sw, "#try");
-    return c.result();
-  } catch (e) { await failShot(); throw e; } finally { helper?.kill(); await ctx.close(); }
-}
-async function beforeKey() {
-  const c = counter("before: Chrome + an API key");
-  const { ctx, welcome } = await install(path.join(BEFORE, "dist", "extension"), "before-key");
-  try {
-    c.t0 = Date.now();
-    c.screen("welcome page: practice area and a 4-step checklist");
-    c.decide("which way to connect: the command, an API key, or later");
-    await c.click(welcome, "#alt summary", "Use an Anthropic API key instead");
-    c.offline("copy the key from console.anthropic.com", { seconds: 0 });
-    await welcome.locator("#key").fill("sk-ant-api03-measure-only");
-    c.keys += 2; c.steps.push("key: paste the key");
-    await c.click(welcome, "#save-key", "Save key");
-    await until(() => welcome.evaluate(() => document.querySelector('[data-step="model"]').classList.contains("done")), 10000, "connected");
-    c.decide("do the other checklist steps now (Allow User Scripts, pin)?");
-    return c.result();
-  } catch (e) { await failShot(); throw e; } finally { await ctx.close(); }
-}
-
-// ---- after: one question, then one button that Morse Desktop asks to Allow
-async function afterClaude() {
-  const c = counter("after: Chrome + Claude Code (Morse Desktop)");
+// ---- Chrome, with the Morse app open (tests/helpers/fake-desktop.js: the real
+// helper, as the Morse app runs it), to the first saved change on the practice page.
+// The Morse app is open; nothing set up yet: a fresh Morse folder.
+async function withApp(name, ext, fn) {
   const port = await freePort();
-  // Morse Desktop is open (it runs the helper); nothing set up yet: a fresh Morse folder.
-  const desk = cli(path.join(root, "tests", "helpers", "fake-desktop.js"), [], { MORSE_HOME: path.join(tmp, "home-after"), MORSE_HELPER_PORT: String(port) });
-  await until(() => /READY/.test(desk.out), 20000, "Morse Desktop's helper");
-  const { ctx, sw, welcome } = await install(path.join(root, "dist", "extension"), "after-claude");
+  const desk = cli(path.join(root, "tests", "helpers", "fake-desktop.js"), [], { MORSE_HOME: path.join(tmp, `home-${name}`), MORSE_HELPER_PORT: String(port) });
+  await until(() => /READY/.test(desk.out), 20000, "the Morse app's helper");
+  const { ctx, sw, welcome } = await install(ext, name);
   await sw.evaluate(p => chrome.storage.local.set({ "morse.helperPort": p }), port);
-  await welcome.reload();
-  await sleep(800);
-  try {
+  try { return await fn({ ctx, sw, welcome, desk }); } catch (e) { await failShot(); throw e; } finally { desk.kill(); await ctx.close(); }
+}
+const screenIs = (welcome, s) => welcome.evaluate(() => document.getElementById("app").dataset.screen).then(x => x === s);
+
+// before: onboarding v2 (main before the one-app change): one question, then
+// "Use Claude Code", then Allow in Morse Desktop.
+async function beforeChrome() {
+  const c = counter("before: Chrome, Morse Desktop open (onboarding v2)");
+  return withApp("before-chrome", path.join(BEFORE, "dist", "extension"), async ({ sw, welcome, desk }) => {
+    await welcome.reload();
+    await sleep(800);
     c.t0 = Date.now();
     c.screen("welcome: one question");
     c.decide("websites, desktop apps or both");
@@ -187,34 +150,98 @@ async function afterClaude() {
     c.decide("Allow or Deny");
     c.clicks++; c.steps.push("click: Allow (in Morse Desktop)");
     desk.stdin.write("allow\n");
-    await until(async () => (await welcome.evaluate(() => document.getElementById("app").dataset.screen)) === "try", 20000, "the first change");
+    await until(() => screenIs(welcome, "try"), 20000, "the first change");
     c.screen("try: three steps and the practice page");
     await practice(c, welcome, sw, "#open-bar");
-    await until(async () => (await welcome.evaluate(() => document.getElementById("app").dataset.screen)) === "win", 10000, "the win");
+    await until(() => screenIs(welcome, "win"), 10000, "the win");
     return c.result();
-  } catch (e) { await failShot(); throw e; } finally { desk.kill(); await ctx.close(); }
+  });
 }
-async function afterKey() {
-  const c = counter("after: Chrome + an API key");
-  const { ctx, welcome } = await install(path.join(root, "dist", "extension"), "after-key");
+// after: the welcome page finds the Morse app and asks by itself: one Allow.
+async function afterChrome() {
+  const c = counter("after: Chrome, the Morse app open");
+  return withApp("after-chrome", path.join(root, "dist", "extension"), async ({ sw, welcome, desk }) => {
+    c.t0 = Date.now();
+    await welcome.reload();
+    c.screen("connect: Found the Morse app, it is asking");
+    await until(() => /ASK /.test(desk.out), 20000, "the Morse app to ask (by itself)");
+    c.screen("the Morse app: Allow Chrome to use your Claude Code?");
+    c.decide("Allow or Deny");
+    c.clicks++; c.steps.push("click: Allow (in the Morse app)");
+    desk.stdin.write("allow\n");
+    await until(() => screenIs(welcome, "try"), 20000, "the first change");
+    c.screen("try: three steps and the practice page");
+    await practice(c, welcome, sw, "#open-bar");
+    await until(() => screenIs(welcome, "win"), 10000, "the win");
+    return c.result();
+  });
+}
+
+// ---- the Morse app, for real (Electron), to the first saved change in a
+// desktop app (Tunes, demo/electron-app): the first-run screen, Open with
+// Morse, then the bar in Tunes with real keys (over Tunes' debugging port,
+// MORSE_PIPE=0, so this script can type into it) and the real model.
+async function afterDesktop() {
+  const c = counter("after: the Morse app, to a saved change in a desktop app");
+  const { createRequire: cr } = await import("node:module");
+  const { _electron } = cr(import.meta.url)("playwright");
+  const { electronExe, tunesApp } = await import("../tests/helpers/tunes.js");
+  const { listProcesses } = await import("../daemon/apps.js");
+  const { exe } = await tunesApp();
+  const home = path.join(tmp, "home-desktop");
+  const profile = path.join(tmp, "tunes-profile");
+  const ROOTFLAG = process.getuid?.() === 0 ? ["--no-sandbox"] : [];
+  const { mkdirSync, writeFileSync: wf } = await import("node:fs");
+  mkdirSync(home, { recursive: true });
+  wf(path.join(home, "desktop.json"), JSON.stringify({ apps: [exe], appArgs: { tunes: [`--user-data-dir=${profile}`, ...ROOTFLAG] } }));
+  const app = await _electron.launch({
+    executablePath: electronExe, args: [path.join(root, "desktop-app"), ...ROOTFLAG], timeout: 60000,
+    env: { ...process.env, MORSE_HOME: home, MORSE_DESKTOP_SCAN: "0", MORSE_HELPER_PORT: String(await freePort()), ELECTRON_RUN_AS_NODE: "", MORSE_PIPE: "0", MORSE_DEBUG: "1" },
+  });
   try {
     c.t0 = Date.now();
-    c.screen("welcome: one question");
-    c.decide("websites, desktop apps or both");
-    await c.click(welcome, "[data-want=web]", "Websites");
-    c.screen("connect: Get Morse Desktop, or an API key");
-    c.decide("Morse Desktop or an API key");
-    await welcome.locator("#key").fill("sk-ant-api03-measure-only");
-    c.keys += 2; c.steps.push("key: paste the key");
-    await c.press(welcome, "Enter", "connect");
-    await until(async () => (await welcome.evaluate(() => document.getElementById("app").dataset.screen)) === "try", 10000, "connected");
-    return c.result();
-  } catch (e) { await failShot(); throw e; } finally { await ctx.close(); }
+    const w = await app.firstWindow();
+    await w.waitForSelector("html[data-ready]", { timeout: 30000 });
+    c.screen("the Morse app: Morse will use Claude Code, your apps, Use Morse in Chrome too");
+    // It checks the model by itself; a person reads the screen meanwhile.
+    await w.waitForFunction(() => /answered|didn't answer/.test(document.querySelector("#first-model")?.textContent || ""), null, { timeout: 120000 });
+    c.model = (await w.locator("#first-model").innerText()).trim(); // "Morse will use Claude Code. It answered in …"
+    c.decide("which app to open");
+    await c.click(w, 'li[data-first-app="tunes"] button', "Open with Morse (Tunes)");
+    const session = path.join(home, "sessions", "tunes.json");
+    const port = await until(async () => { const s = JSON.parse((await import("node:fs")).readFileSync(session, "utf8")); return s.state === "attached" && s.windows?.length && s.port; }, 90000, "Tunes, connected");
+    c.screen("Tunes, with Morse");
+    const browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
+    const page = browser.contexts()[0].pages().find(p => p.url().startsWith("app://tunes/"));
+    await until(() => page.evaluate(() => !!document.querySelector("[data-morse-ui]")?.dataset.status), 30000, "Morse in Tunes");
+    const status = () => page.evaluate(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status));
+    await c.press(page, process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space", "open Morse");
+    await until(async () => (await status()).open, 10000, "the bar in Tunes");
+    const h = await page.locator("h1, h2").first().boundingBox();
+    c.clicks++; c.steps.push("click: the heading");
+    await page.mouse.click(h.x + Math.min(40, h.width / 2), h.y + h.height / 2);
+    await sleep(800);
+    await c.type(page, "make this bigger", "the request");
+    await c.press(page, "Enter", "send it");
+    await until(async () => (await status()).phase === "result", 240000, "the change, ready to save");
+    c.decide("keep the change?");
+    await c.press(page, "Enter", "Save");
+    await until(async () => !(await status()).open, 20000, "saved");
+    await until(() => (async () => (await (await import("node:fs/promises")).readdir(path.join(home, "mods")).catch(() => [])).length > 0)(), 10000, "the mod on disk");
+    const r = { ...c.result(), model: c.model, mod: (await (await import("node:fs/promises")).readdir(path.join(home, "mods"))).length };
+    await browser.close().catch(() => {});
+    return r;
+  } catch (e) { throw e; } finally {
+    const pid = app.process().pid;
+    await Promise.race([app.close().catch(() => {}), sleep(10000)]);
+    try { process.kill(pid, "SIGKILL"); } catch {}
+    for (const p of listProcesses()) if (p.cmd.includes(tmp)) try { process.kill(p.pid, "SIGKILL"); } catch {}
+  }
 }
 
 const results = [];
 const only = arg("--only");
-for (const [name, fn, needsBefore] of [["before-key", beforeKey, true], ["after-key", afterKey], ["before-claude", beforeClaude, true], ["after-claude", afterClaude]]) {
+for (const [name, fn, needsBefore] of [["before-chrome", beforeChrome, true], ["after-chrome", afterChrome], ["after-desktop", afterDesktop]]) {
   if ((needsBefore && !BEFORE) || (only && !name.includes(only))) continue;
   try { const r = await fn(); results.push(r); console.log(JSON.stringify(r)); }
   catch (e) {

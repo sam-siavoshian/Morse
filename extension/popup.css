@@ -83,3 +83,18 @@ input, select {
 #modelbox[open] > summary h2::after { transform: translateY(1px) rotate(-135deg); }
 #modelsum { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--m-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 #modelbox > summary:focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; border-radius: var(--m-r-sm); }
+
+/* Morse in Chrome gets its model from the Morse app: what it uses, or the one thing to do */
+.app { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); background: var(--m-raised); }
+.app > span:last-child { flex: 1; min-width: 0; }
+.app b { display: block; font-weight: 600; }
+.app small { display: block; color: var(--m-text-3); font-size: var(--m-text-sm); }
+.app .pmark { flex: none; display: inline-flex; gap: 3px; padding-top: 2px; }
+.app .pmark img { display: block; width: 18px; height: 18px; }
+.app .primary, .app a.btn { margin-top: 10px; }
+a.btn.primary { display: flex; align-items: center; justify-content: center; height: 32px; border-radius: var(--m-r-sm); background: var(--m-primary); color: var(--m-primary-text); font-weight: 600; text-decoration: none; }
+a.btn.primary:hover { background: var(--m-primary-hover); }
+/* Developer: folded away */
+details.dev { margin-top: 14px; }
+details.dev > summary { width: fit-content; color: var(--m-text-3); font-size: var(--m-text-sm); cursor: pointer; }
+details.dev > summary:hover { color: var(--m-text); }

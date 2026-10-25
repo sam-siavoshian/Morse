@@ -13,10 +13,27 @@ Version 0.2.0, the first version for other people to install.
 
 ### Getting Morse
 
-- Morse Desktop has one download for each computer (Mac, Windows, Linux),
+- **One app.** Morse is the Morse app: download it, open it, done. It finds
+  Claude Code or Codex by itself, lists your apps with their own icons and
+  opens them with Morse. Nobody needs Node, npm or a terminal. Its first
+  screen: the model it will use, your apps, and **Use Morse in Chrome too**.
+- **Morse in Chrome gets its model from the Morse app.** Its welcome page
+  finds the app and asks it by itself: you click **Allow** in the app, and
+  that's all. Without the app, it shows one button, **Download Morse** (and
+  **Not now: try a sample**). The question "websites, desktop apps or
+  both", the API key and the terminal command left the welcome page; the
+  popup and the welcome page keep them for developers, under **Developer**
+  and `?dev`.
+- **Use Morse in Chrome** in the Morse app: until Morse is in the Chrome Web
+  Store, it copies the extension to **Morse for Chrome** in your home
+  folder, shows it, opens Chrome on its extensions page, and shows one
+  picture of where to click (Developer mode, Load unpacked). With a store
+  listing, it opens that page instead.
+- The Morse app's window is in your language (the nine languages Morse has).
+- The website and the README say the same: **Download Morse**, then (for
+  websites) Use Morse in Chrome. The `morse` command is in "For developers".
+- The Morse app has one download for each computer (Mac, Windows, Linux),
   rebuilt from `main` on every change, in the `preview` release.
-- **Add to Chrome** in Morse Desktop opens Chrome's extensions page and shows
-  the folder to drag in.
 - For developers: one line installs the `morse` command
   (`install.sh`, `install.ps1`). Run it again to update; `morse uninstall`
   removes it. `morse setup --auto` and `morse doctor --offline` are new.

@@ -1,22 +1,25 @@
-// The welcome page, onboarding v2 (docs/dev/onboarding.md): one question, a
-// model connected in one click, the first change guided on the practice page,
+// The welcome page (docs/dev/onboarding.md): Morse in Chrome connected to the
+// Morse app with one Allow, the first change guided on the practice page,
 // then a real site. One screen at a time (welcome.html):
 //
-//   choose → connect → try → win
+//   connect → try → win
 //
-// Where you are is kept in chrome.storage.local "morse.start" { want, screen },
-// so a reload (or "Connect a model" from the bar, #model) lands in the right place.
+// Where you are is kept in chrome.storage.local "morse.start" { screen }, so a
+// reload (or "Connect a model" from the bar, #model) lands in the right place.
 //
-// Connecting looks for the Morse helper on this computer (popup.state reads its
-// health). Morse Desktop runs one, and so does `morse serve`:
-//   - it can ask (health.ask): one button. The helper asks a person there,
-//     "Allow Chrome to use your Claude Code?", and Allow hands this browser a
-//     token (popup.askStart / popup.askCheck, daemon/bridge.js /v1/pair/ask).
-//   - it waits with a code (`morse setup --pair <this page's code>`): the page
-//     pairs by itself, nothing to type.
-//   - it shows its own code (`morse serve` without a terminal): a code box.
-//   - nothing found: Get Morse Desktop, or paste an Anthropic API key, or (for
-//     people with a terminal) `morse setup --pair <code>`.
+// Morse in Chrome gets its model from the Morse app (desktop-app/), which runs
+// the Morse helper on this computer (popup.state reads its health):
+//   - found, and it can ask (health.ask): the page asks by itself, once it's
+//     in front. The app asks a person there, "Allow Chrome to use your Claude
+//     Code?", and Allow hands this browser a token (popup.askStart /
+//     popup.askCheck, daemon/bridge.js /v1/pair/ask). Nothing to click here.
+//   - not found: Download Morse (core/links.js), and the page keeps looking.
+//     Or "Not now: try a sample".
+// For developers only (?dev on this page, or Developer in the popup): an
+// Anthropic API key kept in this browser, and the morse command (`morse setup
+// --pair <code>` pairs by itself). A helper that only has its own code
+// (`morse serve` with no terminal to ask in) gets the code box: only a
+// developer starts one.
 //
 // The practice area is practice.html in a sandboxed frame; this page relays its
 // requests to the service worker (port "morse", the same dispatch websites use)
@@ -28,15 +31,17 @@ import { t } from "./core/i18n.js";
 import { normalizePrefs } from "./core/prefs.js";
 import { plainError } from "./core/onboarding.js";
 import { detectPlatform, resolveHotkeys, comboParts, matchCombo } from "./core/hotkeys.js";
+import { DOWNLOAD } from "./core/links.js";
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const PLATFORM = detectPlatform(navigator);
 const send = msg => chrome.runtime.sendMessage({ ...msg, url: location.href }).catch(e => ({ error: e.message }));
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const DESKTOP_URL = "https://github.com/sam-siavoshian/RRAA/releases/latest"; // Morse Desktop's downloads (docs/desktop-app.md)
-// The marks of the models (brand/: desktop-app/ui/icons, one set for Morse
-// Desktop and the extension; its NOTICE says where they came from).
+// The developer ways to connect (an API key, the morse command): ?dev.
+const DEV = new URLSearchParams(location.search).has("dev");
+// The marks of the models (brand/: desktop-app/ui/icons, one set for the
+// Morse app and the extension; its NOTICE says where they came from).
 const MARKS = { "claude-code": ["claude"], codex: ["openai"], anthropic: ["anthropic"], openai: ["openai"] };
 const mark = (provider, cls = "pmark") => {
   const names = MARKS[provider];
@@ -69,17 +74,15 @@ async function loadHotkeys() {
 }
 
 // ---- where you are
-const SCREENS = ["choose", "connect", "try", "win"];
-let want = "", screen = "choose", sample = false;
+const SCREENS = ["connect", "try", "win"];
+let screen = "connect", sample = false;
 async function loadStart() {
   let rec = null;
   try { rec = (await chrome.storage.local.get("morse.start"))["morse.start"]; } catch {}
-  want = ["web", "apps", "both"].includes(rec?.want) ? rec.want : "";
   const hash = location.hash.slice(1);
-  screen = hash === "model" ? "connect" : hash === "practice" ? "try" : SCREENS.includes(rec?.screen) ? rec.screen : "choose";
-  if (screen !== "choose" && !want) want = "web";
+  screen = hash === "model" ? "connect" : hash === "practice" ? "try" : SCREENS.includes(rec?.screen) ? rec.screen : "connect";
 }
-const saveStart = () => chrome.storage.local.set({ "morse.start": { want, screen } }).catch(() => {});
+const saveStart = () => chrome.storage.local.set({ "morse.start": { screen } }).catch(() => {});
 function go(to, { focus = true } = {}) {
   screen = to;
   $("app").dataset.screen = to;
@@ -87,34 +90,31 @@ function go(to, { focus = true } = {}) {
   const at = SCREENS.indexOf(to);
   for (const li of document.querySelectorAll("[data-dot]")) {
     const i = SCREENS.indexOf(li.dataset.dot);
-    li.classList.toggle("done", i < at || (to === "win" && i <= 2));
+    li.classList.toggle("done", i < at || (to === "win" && i <= 1));
     li.classList.toggle("now", li.dataset.dot === to || (to === "win" && li.dataset.dot === "try"));
-    li.querySelector("button").disabled = i > at && !(to === "win" && i <= 2) || !want && i > 0;
+    li.querySelector("button").disabled = i > at && !(to === "win" && i <= 1);
     if (li.classList.contains("now")) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
   }
-  if (history.replaceState && location.hash) history.replaceState(null, "", location.pathname);
+  if (history.replaceState && location.hash) history.replaceState(null, "", location.pathname + location.search);
   saveStart();
-  if (to === "connect") { arrived = st && st.kind !== "none"; renderConnect(); }
+  if (to === "connect") { arrived = st && st.kind !== "none"; renderConnect(); askSoon(); }
   if (to === "try") startPractice();
   if (to === "win") renderWin();
   scrollTo({ top: 0, behavior: "auto" });
   if (focus) $(`s-${to}`).querySelector("h1")?.focus({ preventScroll: true });
 }
-for (const b of document.querySelectorAll("[data-want]")) b.addEventListener("click", () => {
-  want = b.dataset.want;
-  go(st && st.kind !== "none" ? "try" : "connect");
-});
 for (const b of document.querySelectorAll("[data-go]")) b.addEventListener("click", () => go(b.dataset.go));
 $("skip").addEventListener("click", () => { sample = true; go("try"); });
 
-// ---- connect a model
+// ---- connect to the Morse app
 // `st` is popup.state: { kind: helper|anthropic|none, label, helper: health | null }.
 let st = null, looked = false, arrived = false;
-let asking = null;   // { state: "waiting" } while the helper asks a person
+let asking = null;   // { state: "waiting" } while the Morse app asks a person
 let askError = "", pairError = "", keyError = "", busy = false, tried = false, triedAt = 0, copied = false;
+let asked = false;   // asked once by itself; after that, the button asks again
 
-// The code for `morse setup --pair <code>` (the terminal path): made here, kept
-// until it is used, so the command shown doesn't change under you.
+// The code for `morse setup --pair <code>` (?dev): made here, kept until it
+// is used, so the command shown doesn't change under you.
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // daemon/bridge.js CODE_ALPHABET
 let pairCode = "";
 async function loadCode(fresh = false) {
@@ -151,11 +151,11 @@ function renderConnect() {
   if (screen !== "connect") return;
   const view = connectView(), h = st?.helper;
   const where = h?.app === "desktop" ? t("start.desktop") : t("start.helper");
-  const key = JSON.stringify([view, h?.app, h?.label, h?.provider, signedOut(h), asking?.state, askError, pairError, keyError, busy, copied, st?.label, want]);
+  const key = JSON.stringify([view, h?.app, h?.label, h?.provider, signedOut(h), asking?.state, asked, askError, pairError, keyError, busy, copied, st?.label]);
   if (key === shownKey) return;
   shownKey = key;
   const box = $("connect");
-  const keep = view === shownView && (view === "none" || view === "code") ? document.activeElement?.id : "";
+  const keep = view === shownView ? document.activeElement?.id : "";
   const keyValue = $("key")?.value || "", codeValue = $("code")?.value || "";
   shownView = view;
   let html = "";
@@ -165,14 +165,14 @@ function renderConnect() {
     html = `<div class="card ok" data-view="connected"><div class="head">${mark(using, "mtile") || `<span class="badge">${CHECK}</span>`}<div><b>${esc(t("start.connected"))}</b><span>${esc(t("welcome.using", { label: st.label }))}</span></div></div>
       ${arrived ? `<button type="button" class="primary big" id="next">${esc(t("start.next"))}</button>` : ""}</div>`;
   } else if (view === "ask") {
-    const name = providerName(h);
+    const name = providerName(h), app = h.app === "desktop";
     const waiting = asking?.state === "waiting";
-    html = `<div class="card found" data-view="ask"><div class="head"><span class="badge">${CHECK}</span><div><b>${esc(t("start.found", { where }))}</b><span>${esc(t("start.canUse", { name }))}</span></div></div>
+    html = `<div class="card found" data-view="ask"><div class="head">${mark(h.provider, "mtile") || `<span class="badge">${CHECK}</span>`}<div><b>${esc(t("start.found", { where }))}</b><span>${esc(t("start.canUse", { name }))}</span></div></div>
       ${signedOut(h) ? `<p class="note bad">${esc(t("start.signedOut", { name }))}</p>` : ""}
-      <button type="button" class="primary big" id="use"${waiting ? " disabled" : ""}>${mark(h.provider)}${esc(t("start.use", { name }))}</button>
-      ${waiting ? LIVE(esc(h.app === "desktop" ? t("start.allowDesktop") : t("start.allowTerminal")))
-        : askError ? LIVE(esc(askError), "bad")
-        : `<p class="small">${esc(h.app === "desktop" ? t("start.askNote") : t("start.askNoteTerminal"))}</p>`}</div>`;
+      ${waiting ? LIVE(esc(app ? t("start.allowDesktop") : t("start.allowTerminal")))
+        : `${askError ? LIVE(esc(askError), "bad") : ""}
+          <button type="button" class="primary big" id="use">${mark(h.provider)}${esc(asked ? t("start.askAgain") : t("start.use", { name }))}</button>
+          ${askError ? "" : `<p class="small">${esc(app ? t("start.askNote") : t("start.askNoteTerminal"))}</p>`}`}</div>`;
   } else if (view === "auto") {
     html = `<div class="card found">${LIVE(esc(busy ? t("welcome.live.connecting") : t("welcome.live.found")))}</div>`;
   } else if (view === "noModel") {
@@ -182,23 +182,14 @@ function renderConnect() {
     html = `<div class="card found" data-view="code"><div class="head"><span class="badge">${CHECK}</span><div><b>${esc(t("start.found", { where }))}</b><span>${esc(t("start.typeCode"))}</span></div></div>
       <div class="row"><input id="code" maxlength="7" placeholder="${esc(t("welcome.code"))}" aria-label="${esc(t("welcome.code.label"))}" autocomplete="off" spellcheck="false"><button type="button" class="primary" id="pair">${esc(t("welcome.connect"))}</button></div>
       ${pairError ? LIVE(esc(pairError), "bad") : busy ? LIVE(esc(t("welcome.live.connecting"))) : ""}</div>`;
-  } else { // none: Morse Desktop, an API key, or a terminal
-    const keyCard = `<div class="card" data-view="key"><b class="with-mark">${mark("anthropic")}${esc(t("start.key.h"))}</b><p>${esc(t("start.key.d"))}</p>
-      <div class="row"><input id="key" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" aria-label="${esc(t("welcome.key.label"))}"><button type="button" class="primary" id="save-key">${esc(t("welcome.connect"))}</button></div>
-      <p class="small${keyError ? " bad" : ""}" id="keynote" role="status">${keyError ? esc(keyError) : t("start.key.where")}</p></div>`;
-    html = `<div class="cards${want === "web" ? " two" : ""}">
-      <div class="card rec" data-view="desktop"><span class="tag">${esc(t("start.recommended"))}</span><b>${esc(t("start.getDesktop.h"))}</b>
-        <p>${esc(t(want === "web" ? "start.getDesktop.web" : "start.getDesktop.d"))}</p>
-        <a class="btn primary big" id="get-desktop" href="${DESKTOP_URL}" target="_blank" rel="noopener">${esc(t("start.getDesktop"))}</a>
-        <p class="small">${t("start.haveDesktop")}</p>
-        ${LIVE(esc(t("start.watching")))}</div>
-      ${want === "web" ? keyCard : ""}</div>
-      ${want === "web" ? "" : `<details class="more" id="key-more"${keyError || keyValue ? " open" : ""}><summary>${esc(t("start.key.more"))}</summary>${keyCard}</details>`}
-      <details class="more" id="term"><summary>${esc(t("start.terminal"))}</summary><div class="card">
-        <p>${esc(t("start.terminal.d"))}</p>
-        <div class="cmd"><code id="setup-cmd">morse setup --pair ${esc(pairCode)}</code><button type="button" id="copy-setup" class="quiet">${esc(copied ? t("btn.copied") : t("welcome.copy"))}</button></div>
-        <p class="small">${t("start.terminal.fallback", { cmd: `<code id="node-cmd">node daemon/cli.js setup --pair ${esc(pairCode)}</code>` })}</p></div></details>`;
+  } else { // none: Download Morse
+    html = `<div class="card rec" data-view="download"><b>${esc(t("start.getApp.h"))}</b>
+        <p>${esc(t("start.getApp.d"))}</p>
+        <a class="btn primary big" id="download" href="${esc(DOWNLOAD)}" target="_blank" rel="noopener">${esc(t("start.download"))}</a>
+        <p class="small">${t("start.haveApp")}</p>
+        ${LIVE(esc(t("start.watching")))}</div>`;
   }
+  if (DEV && view !== "connected") html += devTools();
   const open = [...box.querySelectorAll("details[open]")].map(d => d.id);
   box.innerHTML = html;
   for (const id of open) { const d = $(id); if (d) d.open = true; }
@@ -207,10 +198,21 @@ function renderConnect() {
   if (keep && $(keep)) $(keep).focus();
   wireConnect();
 }
+// ?dev: the other ways to connect, for people working on Morse: an Anthropic
+// API key kept in this browser, and the morse command.
+function devTools() {
+  return `<details class="more dev" id="dev" open><summary>${esc(t("start.dev"))}</summary>
+    <div class="card" data-view="key"><b class="with-mark">${mark("anthropic")}${esc(t("start.key.h"))}</b><p>${esc(t("start.key.d"))}</p>
+      <div class="row"><input id="key" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" aria-label="${esc(t("welcome.key.label"))}"><button type="button" class="primary" id="save-key">${esc(t("welcome.connect"))}</button></div>
+      <p class="small${keyError ? " bad" : ""}" id="keynote" role="status">${keyError ? esc(keyError) : t("start.key.where")}</p></div>
+    <div class="card" data-view="terminal"><b>${esc(t("start.terminal"))}</b><p>${esc(t("start.terminal.d"))}</p>
+      <div class="cmd"><code id="setup-cmd">morse setup --pair ${esc(pairCode)}</code><button type="button" id="copy-setup" class="quiet">${esc(copied ? t("btn.copied") : t("welcome.copy"))}</button></div>
+      <p class="small">${t("start.terminal.fallback", { cmd: `<code id="node-cmd">node daemon/cli.js setup --pair ${esc(pairCode)}</code>` })}</p></div></details>`;
+}
 function wireConnect() {
   $("next")?.addEventListener("click", () => go("try"));
   $("use")?.addEventListener("click", askHelper);
-  $("open-desktop")?.addEventListener("click", () => { location.href = "morse://open"; }); // Morse Desktop opens itself for its link (desktop-app/main.js)
+  $("open-desktop")?.addEventListener("click", () => { location.href = "morse://open"; }); // the Morse app opens itself for its link (desktop-app/main.js)
   $("copy-setup")?.addEventListener("click", async () => {
     copied = true;
     try { await navigator.clipboard.writeText($("setup-cmd").textContent); } catch {}
@@ -237,8 +239,16 @@ function wireConnect() {
   }
 }
 
-// One click: the helper asks a person on this computer, then hands over a token.
+// The Morse app found: it asks a person on this computer, then hands over a
+// token. The page asks by itself once, as soon as it's in front; after Deny,
+// or when nobody answered, the button asks again.
+function askSoon() {
+  if (asked || asking || screen !== "connect" || document.hidden || connectView() !== "ask") return;
+  askHelper();
+}
+document.addEventListener("visibilitychange", askSoon);
 async function askHelper() {
+  asked = true;
   askError = "";
   asking = { state: "waiting" };
   renderConnect();
@@ -257,7 +267,7 @@ async function askHelper() {
   if (asking) { asking = null; askError = t("start.expired"); renderConnect(); }
 }
 
-// The terminal path: our code, waiting in the helper (`morse setup --pair`), or one typed.
+// The morse command: our code, waiting in the helper (`morse setup --pair`), or one typed.
 async function pair(code, auto) {
   busy = true; pairError = ""; renderConnect();
   const r = await send({ type: "popup.pair", code });
@@ -300,11 +310,12 @@ async function modelState() {
     return pair(pairCode, true);
   }
   if (!h?.pairing) tried = false;
-  if (!h) { pairError = ""; askError = ""; }
+  if (!h) { pairError = ""; askError = ""; asked = false; } // the app went away: ask by itself again when it's back
   if (was === "none" && r.kind !== "none" && screen === "connect") return afterConnect();
   renderConnect();
   renderPracticeNote();
-  renderWin(); // Morse Desktop found after the win: the apps part says so
+  renderWin(); // the Morse app found after the win: the apps part says so
+  askSoon();
 }
 
 // ---- the first change, on the practice page
@@ -410,27 +421,28 @@ const SITES = [
   { id: "yt", name: "YouTube", url: "https://www.youtube.com/", ask: "hide Shorts" },
   { id: "bbc", name: "BBC News", url: "https://www.bbc.com/news", ask: "hide everything but the headlines" },
 ];
-const APPS = ["VSCodium", "Obsidian", "Joplin"]; // the apps Morse was tested on (docs/desktop.md#tested-on)
+const APPS = ["Visual Studio Code", "Obsidian", "Logseq", "Joplin"]; // apps Morse was tested on (docs/desktop.md#tested-on)
 let winKey = "";
 function renderWin() {
   if (screen !== "win") return;
   const model = st ? st.kind !== "none" : true;
   const desktop = st?.helper?.app === "desktop";
-  // drawn again only when what it shows changed (the model, Morse Desktop, the keys), so a site being typed stays
-  const key = JSON.stringify([model, desktop, want, HOTKEYS.open, HOTKEYS.mods]);
+  // drawn again only when what it shows changed (the model, the Morse app, the keys), so a site being typed stays
+  const key = JSON.stringify([model, desktop, HOTKEYS.open, HOTKEYS.mods]);
   if (key === winKey && $("win").childElementCount) return;
   winKey = key;
-  const sites = want !== "apps" ? `<section class="next" aria-labelledby="sites-h"><h2 id="sites-h">${esc(t("start.sites.h"))}</h2>
+  const sites = `<section class="next" aria-labelledby="sites-h"><h2 id="sites-h">${esc(t("start.sites.h"))}</h2>
       <p class="small">${esc(t("start.sites.d"))}</p>
       <div class="sites">${SITES.map(s => `<button type="button" class="site" data-site="${s.id}"><b>${esc(s.name)}</b><span><q>${esc(s.ask)}</q></span></button>`).join("")}</div>
       <form class="row go" id="go-site"><input id="site" type="text" inputmode="url" placeholder="${esc(t("start.sites.placeholder"))}" aria-label="${esc(t("start.sites.label"))}" autocomplete="off" spellcheck="false"><button type="submit" class="primary">${esc(t("start.sites.go"))}</button></form>
-      <p class="small" id="site-note" role="status">${t("start.sites.key", { key: caps("open") })}</p></section>` : "";
-  const apps = want !== "web" ? `<section class="next" aria-labelledby="apps-h"><h2 id="apps-h">${esc(t("start.apps.h"))}</h2>
-      <p class="small">${esc(desktop ? t("start.apps.d") : t("start.apps.get"))}</p>
+      <p class="small" id="site-note" role="status">${t("start.sites.key", { key: caps("open") })}</p></section>`;
+  // With the Morse app here: your desktop apps too, from the app.
+  const apps = desktop ? `<section class="next" aria-labelledby="apps-h"><h2 id="apps-h">${esc(t("start.apps.h"))}</h2>
+      <p class="small">${esc(t("start.apps.d"))}</p>
       <ul class="apps">${APPS.map(a => `<li>${esc(a)}</li>`).join("")}</ul>
-      ${desktop ? `<p class="small">${t("start.apps.key", { key: caps("open") })}</p>` : `<a class="btn primary" href="${DESKTOP_URL}" target="_blank" rel="noopener">${esc(t("start.getDesktop"))}</a>`}</section>` : "";
-  const connect = model ? "" : `<div class="card rec" data-view="win-connect"><b>${esc(t("start.win.sample"))}</b><p>${esc(t("start.win.sample.d"))}</p><button type="button" class="primary" id="win-connect">${esc(t("welcome.model.b"))}</button></div>`;
-  $("win").innerHTML = `${connect}${want === "apps" ? apps + sites : sites + apps}
+      <p class="small">${t("start.apps.key", { key: caps("open") })}</p></section>` : "";
+  const connect = model ? "" : `<div class="card rec" data-view="win-connect"><b>${esc(t("start.win.sample"))}</b><p>${esc(t("start.win.sample.d"))}</p><button type="button" class="primary" id="win-connect">${esc(t("start.win.connect"))}</button></div>`;
+  $("win").innerHTML = `${connect}${sites}${apps}
     <p class="small more-help">${t("start.win.help", { mods: caps("mods") })}</p>`;
   $("win-connect")?.addEventListener("click", () => go("connect"));
   for (const b of $("win").querySelectorAll("[data-site]")) b.addEventListener("click", () => { const s = SITES.find(x => x.id === b.dataset.site); openSite(s.url, s.ask); });

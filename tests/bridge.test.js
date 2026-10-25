@@ -273,7 +273,7 @@ test("one-click pairing: only an extension may ask, a person's Allow hands that 
     answer(false);
     assert.deepEqual((await answered(d.json.id)).json, { state: "denied" });
     assert.equal((await call("POST", "/v1/pair/ask", EXT)).status, 429);
-    assert.match(askWords("Codex").detail, /If you didn't click Connect in Chrome a moment ago, choose Deny/);
+    assert.match(askWords("Codex").detail, /If you didn't add Morse to Chrome a moment ago, choose Deny/);
   } finally { await b.close(); }
   // A helper with nobody to ask says so: Chrome types a code instead.
   const quiet = await req("POST", "/v1/pair/ask", { headers: { Origin: EXT } });

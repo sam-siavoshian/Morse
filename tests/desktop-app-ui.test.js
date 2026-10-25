@@ -70,12 +70,17 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
   await fs.writeFile(path.join(home, "desktop.json"), JSON.stringify({ helper: false, apps: [exe], appArgs: { tunes: [`--user-data-dir=${profile}`, ...ROOT] } }));
 
   const helperPort = await freePort();
+  // "Use Morse in Chrome": a stand-in Chrome that writes down what it was asked to open.
+  const chromeSays = path.join(home, "chrome-args.txt"), chromeFolder = path.join(home, "Morse for Chrome");
+  const fakeChrome = path.join(home, "fake-chrome.sh");
+  await fs.writeFile(fakeChrome, `#!/bin/sh\necho "$@" > "${chromeSays}"\n`, { mode: 0o755 });
   electronApp = await _electron.launch({
     executablePath: electronExe,
     args: [path.join(root, "desktop-app"), ...ROOT],
     // MORSE_PIPE=0: Tunes on a debugging port (the fallback), so this test can
     // look inside it. The private pipe, the default, is the next test.
-    env: { ...process.env, MORSE_HOME: home, MORSE_DESKTOP_SCAN: "0", MORSE_PROVIDER: "demo", MORSE_HELPER_PORT: String(helperPort), ELECTRON_RUN_AS_NODE: "", MORSE_PIPE: "0" },
+    env: { ...process.env, MORSE_HOME: home, MORSE_DESKTOP_SCAN: "0", MORSE_PROVIDER: "demo", MORSE_HELPER_PORT: String(helperPort), ELECTRON_RUN_AS_NODE: "", MORSE_PIPE: "0",
+      MORSE_CHROME: fakeChrome, MORSE_COPY_EXTENSION: "1", MORSE_CHROME_FOLDER: chromeFolder },
     timeout: 60000,
   });
   const logs = [];
@@ -96,7 +101,7 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
     morse: Object.keys(window.morse), frozen: Object.isFrozen(window.morse),
     require: typeof window.require, process: typeof window.process, ipc: typeof window.ipcRenderer, electron: typeof window.electron, Buffer: typeof window.Buffer,
   }));
-  assert.deepEqual(globals.morse, ["state", "refreshApps", "openApp", "disconnectApp", "addApp", "modelChoices", "chooseModel", "checkModel", "setHelper", "newPairingCode", "answerAsk", "signOutBrowsers", "showExtensionFolder", "setModOn", "setAllModsOff", "runChecks", "setStartAtLogin", "openLink", "finishWelcome", "onChange"]);
+  assert.deepEqual(globals.morse, ["state", "refreshApps", "openApp", "disconnectApp", "addApp", "modelChoices", "chooseModel", "checkModel", "setHelper", "newPairingCode", "answerAsk", "signOutBrowsers", "showExtensionFolder", "useChrome", "setModOn", "setAllModsOff", "runChecks", "setStartAtLogin", "openLink", "finishWelcome", "onChange"]);
   assert.equal(globals.frozen, true);
   for (const k of ["require", "process", "ipc", "electron", "Buffer"]) assert.equal(globals[k], "undefined", k);
   const prefs = await electronApp.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences());
@@ -112,6 +117,22 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
   assert.match(await w.locator("#first-model").innerText(), /Morse will use Demo model/);
   const first = w.locator('li[data-first-app="tunes"]');
   await first.waitFor({ timeout: 30000 });
+  // One more thing on the same screen: Use Morse in Chrome too. Until Morse is
+  // in the Chrome Web Store: the extension copied to a folder that stays put,
+  // that folder shown, Chrome opened on its extensions page, and the picture
+  // of where to click.
+  assert.equal(await w.locator("#first-chrome").innerText(), "Use Morse in Chrome too");
+  await w.click("#first-chrome");
+  const guide = w.locator("dialog#chrome-guide[open]");
+  await guide.waitFor({ timeout: 30000 });
+  await until(async () => (await fs.readFile(chromeSays, "utf8").catch(() => "")).trim() === "chrome://extensions", 10000, "Chrome to be asked for its extensions page");
+  assert.ok(await guide.locator("img.shot").evaluate(i => i.complete && i.naturalWidth > 0), "the picture of where to click loads");
+  assert.match(await guide.innerText(), /Developer mode[\s\S]*Load unpacked[\s\S]*Morse for Chrome/);
+  assert.ok(JSON.parse(await fs.readFile(path.join(chromeFolder, "manifest.json"), "utf8")).manifest_version, "the extension, in its folder");
+  assert.equal(JSON.parse(await fs.readFile(path.join(home, "desktop.json"), "utf8")).helper, true, "the helper turned on, so Chrome can connect");
+  await w.click("#guide-done");
+  await guide.waitFor({ state: "hidden", timeout: 5000 });
+  assert.equal(await w.locator("#first").isVisible(), true, "still the first run: open an app next");
 
   // Open with Morse, from the first screen: Tunes starts with Morse connected,
   // and the main window takes over for good.

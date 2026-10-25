@@ -398,6 +398,13 @@ q.ask, .ask { font: 400 0.92em/1.5 var(--mono); color: var(--text); quotes: "“
 .dev-prompt { color: var(--text-3); }
 .dev-then { font-size: 14.5px; color: var(--text-3); }
 
+/* the three steps on the Morse app's card */
+.get-3 { margin: 14px 0 0 20px; display: grid; gap: 8px; font-size: 16px; line-height: 1.55; color: var(--text-2); }
+.get-3 li::marker { font: 400 13px var(--mono); color: var(--text-3); }
+.get-3 strong, .get-card > p strong { color: var(--text); font-weight: 500; }
+.dev-link { margin-top: 20px; font-size: 14.5px; color: var(--text-3); }
+.dev-link a { color: var(--text-2); text-decoration: underline; text-decoration-color: #55555c; text-underline-offset: 3px; }
+.dev-link a:hover { color: var(--text); text-decoration-color: var(--text); }
 .first-run { margin-top: 80px; }
 .first-run h3 { font-size: 22px; letter-spacing: -0.02em; margin-bottom: 24px; }
 .first-run-list { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }

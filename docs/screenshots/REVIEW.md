@@ -101,7 +101,7 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | bring-12-pypi-switch.png, bring-13-pypi-dark.png | evals/bring.js (SHOTS) | ✅ | Real: the Node.js docs' dark mode switch in PyPI; a few boxes (Key dates) stay light |
 | bring-14-vscodium-take.png … bring-17-rubygems-palette.png | evals/bring.js (SHOTS) | ✅ | Real: VSCodium's palette taken in the desktop app, brought into RubyGems.org in Chrome |
 | 135-welcome.png … 146-desktop-first-save.png | shoot-first-run.js | ⚠️ | 12 first-run pictures from before onboarding v2: 135–140 show the old welcome page (141–146, sites and desktop apps, still match); not in the docs |
-| 190-start-choose.png … 205-start-first-site.png | shoot-onboarding-v2.js | ✅ | Onboarding v2, in Getting started: the question, connect (nothing found, Morse Desktop found, waiting for Allow), the first change, the win; even numbers 1280×860, odd numbers phone width (390, full page); 204 the “Allow User Scripts” window, 205 a suggested site with the words typed. Real Claude Code. 182–189 left free for work landing at the same time |
+| 190-start-download.png … 206-popup-app.png | shoot-onboarding-v2.js | ✅ | The welcome page in Chrome, in Getting started: no Morse app yet (Download Morse), the Morse app found and asking to Allow, the first change, the win; even numbers 1280×860, odd numbers phone width (390, full page); 204 the “Allow User Scripts” window, 205 a suggested site with the words typed, 206 the popup with no Morse app. Real Claude Code. 182–189 left free for work landing at the same time |
 | 147–152 (VSCodium, Obsidian, Joplin), 153–156-web-* (GitLab, PyPI, Docker Hub) | demo/try-real-app.js, demo/try-real-sites.js (real apps and sites, real Claude Code) | ✅ | Came with main during this review; current words. Not retaken: they need the real apps and network |
 | 150–157-style-* | shoot-style.js | ✅ | Came with main; current words |
 | 158, 159-style-fit-haiku-* | demo/style-fit-real.js (real Claude Code) | ✅ | Came with main |
@@ -111,12 +111,13 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 167-desktop-app-apps.png | shoot-desktop-app.js | ✅ | Morse Desktop: this machine's real apps, each with its own icon (Joplin, Logseq, Obsidian, Visual Studio Code, VSCodium); Microsoft's VS Code really connected |
 | 168-desktop-app-restart.png | shoot-desktop-app.js | ✅ | “Visual Studio Code is open. Restart it with Morse?”, with Always restart |
 | 169-desktop-app-model.png | shoot-desktop-app.js | ✅ | Real Claude Code (sonnet) answered the check; the three choices; four sections, Checks under Model (simplify) |
-| 170-desktop-app-chrome.png | shoot-desktop-app.js | ✅ | The Morse helper on, the three ways to connect Chrome, a code |
+| 170-desktop-app-chrome.png | shoot-desktop-app.js | ✅ | Chrome: Use Morse in Chrome, Let Chrome use Morse, Advanced folded |
 | 171-desktop-app-allow-chrome.png | shoot-desktop-app.js | ✅ | “Allow Chrome to use your Claude Code · sonnet?”: the real helper asking |
 | 172-desktop-app-mods.png | shoot-desktop-app.js | ✅ | Mods per app with switches, the real apps' mods; one turned off |
 | 173-desktop-app-checks.png | shoot-desktop-app.js | ✅ | The checks, a card under Model now (simplify), with the model answering for real; “You're root” is this test machine |
 | 174-desktop-app-light.png | shoot-desktop-app.js | ✅ | Light mode, with the apps' own icons |
-| 175-desktop-app-first-run.png | shoot-desktop-app.js | ✅ | The first run: Claude Code found and checked for real, the apps to open |
+| 175-desktop-app-first-run.png | shoot-desktop-app.js | ✅ | The first run: Claude Code found and checked for real, the apps to open, Use Morse in Chrome too |
+| 176-desktop-app-chrome-guide.png | shoot-desktop-app.js | ✅ | Use Morse in Chrome: the real picture of Chrome's extensions page (demo/shoot-chrome-steps.js), Developer mode and Load unpacked marked, the folder |
 | 300–318-real-*.png | demo/shoot-real.js (Claude Code · sonnet) | ✅ | Real websites: nodejs.org as a printed book (point, working, result, a follow-up, the Mods panel, History, Edit code, Share), Docker Hub (dark mode with Easier to use, Ask, Find, Explain), pkg.go.dev (Check this page), rubygems.org (Edit tools, rename, recolor), gitlab.com (Settings, shortcuts). No 309 (Higher contrast was paused by the slowness guard) or 319 (Stop: the model hadn't started in time) |
 | 320–322-vscode-*.png | demo/try-real-app.js (Claude Code · opus) | ✅ | Microsoft's Visual Studio Code 1.143.1: the request, the paper notebook result, and after reopening. 256 colors |
 | 323–326-obsidian-*.png | demo/try-real-app.js (Claude Code · sonnet) | ✅ | Obsidian 1.14.5: the request, while it writes, the typewritten page, after reopening |

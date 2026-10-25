@@ -22,9 +22,11 @@ import { fileURLToPath } from "node:url";
 import { createService, loadDaemon } from "./service.js";
 import { registerIpc, PUSH, isOpenLink } from "./ipc.js";
 import { markPng } from "./mark.js";
+import { LINKS } from "../site/config.js";
+import { LANGUAGES } from "../core/i18n.js";
 import { iconSource } from "./icons.js";
 import { setAutostart, writeMenuEntry } from "./linux.js";
-import { openChromeExtensions } from "./chrome.js";
+import { openChromeExtensions, isStoreUrl } from "./chrome.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // The window's page is served from morse-app://ui/, a scheme of Morse's own
@@ -39,6 +41,11 @@ const UI_FILES = {
   // The marks of the models you can choose (ui/icons/NOTICE), and the site's own Inter.
   ...Object.fromEntries(["claude", "openai", "anthropic"].map(n => [`/icons/${n}.png`, [path.join(HERE, "ui", "icons", `${n}.png`), "image/png"]])),
   ...Object.fromEntries(["inter-regular", "inter-medium", "interdisplay-semibold"].map(n => [`/fonts/${n}.woff2`, [path.join(HERE, "..", "site", "fonts", `${n}.woff2`), "font/woff2"]])),
+  // Where to click in Chrome (demo/shoot-chrome-steps.js), for Use Morse in Chrome.
+  "/chrome-steps.png": [path.join(HERE, "ui", "chrome-steps.png"), "image/png"],
+  // The window's words in the person's language: core/i18n.js and each language's catalog.
+  "/core/i18n.js": [path.join(HERE, "..", "core", "i18n.js"), "text/javascript; charset=utf-8"],
+  ...Object.fromEntries(LANGUAGES.map(l => [`/core/locales/${l.code}.js`, [path.join(HERE, "..", "core", "locales", `${l.code}.js`), "text/javascript; charset=utf-8"]])),
 };
 const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 protocol.registerSchemesAsPrivileged([{ scheme: SCHEME, privileges: { standard: true, secure: true } }]);
@@ -266,7 +273,7 @@ app.whenReady().then(async () => {
   if (MAC) app.dock?.setIcon(appIcon());
   // macOS needs a menu for ⌘Q, ⌘W and copy and paste (the API key field); elsewhere there is none.
   Menu.setApplicationMenu(MAC ? Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }, { role: "windowMenu" }]) : null);
-  service = createService({ daemon: await loadDaemon(), emit: changed, log, iconFor, copyExtension: app.isPackaged, self: [process.execPath, APPIMAGE], onAsk: () => showWindow() });
+  service = createService({ daemon: await loadDaemon(), emit: changed, log, iconFor, copyExtension: app.isPackaged || process.env.MORSE_COPY_EXTENSION === "1", ...(process.env.MORSE_CHROME_FOLDER && { chromeFolder: process.env.MORSE_CHROME_FOLDER }), chromeStore: isStoreUrl(LINKS.chrome) ? LINKS.chrome : "", self: [process.execPath, APPIMAGE], onAsk: () => showWindow() });
   registerIpc({
     ipcMain, service, isTrusted, log,
     native: {
@@ -279,15 +286,17 @@ app.whenReady().then(async () => {
         });
         return r.canceled ? null : r.filePaths[0];
       },
-      // "Add to Chrome": the folder, shown and selected so it can be dragged into
-      // Chrome; its place copied for Load unpacked; and Chrome on chrome://extensions.
+      // The extension's folder, shown and selected (so it can be dragged into
+      // Chrome), and its place copied (to paste where Load unpacked asks).
       showFolder: async dir => {
         if (!dir) return { error: "The Chrome extension isn't built yet." };
         shell.showItemInFolder(dir);
         clipboard.writeText(dir);
-        return { ok: true, chrome: await openChromeExtensions().catch(() => false) };
+        return { ok: true };
       },
       openExternal: async url => { await shell.openExternal(url); return { ok: true }; },
+      // Chrome on its extensions page (desktop-app/chrome.js); false when there's no Chrome here.
+      openChrome: () => openChromeExtensions().catch(() => false),
       setLoginItem,
     },
   });

@@ -1,13 +1,14 @@
-# Morse Desktop
+# The Morse app
 
-Morse Desktop is Morse as an app on your computer. You don't need a terminal
-or anything else. It lists your apps and opens them with Morse. It also helps
-you choose your model, connects Chrome and shows your mods.
+The Morse app is Morse. It is the one thing to install, and the only place
+you set anything up. You don't need a terminal, Node or anything else. It
+finds your model, lists your apps and opens them with Morse, and adds Morse
+to Chrome. It also shows your mods.
 
 A mod is a change you saved. Morse brings it back every time you open that
 site or app.
 
-![Morse Desktop: your apps, each with its own icon, with Visual Studio Code connected](screenshots/167-desktop-app-apps.png)
+![The Morse app: your apps, each with its own icon, with Visual Studio Code connected](screenshots/167-desktop-app-apps.png)
 
 ## Get it
 
@@ -31,20 +32,23 @@ Morse isn't signed yet, so your computer warns you once:
 - **Windows:** when SmartScreen says “Windows protected your PC”, click
   **More info**, then **Run anyway**.
 
-Working from the Morse folder? `npm run desktop` opens it from there.
+Working on Morse itself? `npm run desktop` opens it from the Morse folder.
 
 ## The first time
 
-Morse Desktop opens on one screen. It finds Claude Code or Codex and checks
-that it answers. Then it shows your apps. Click **Open with Morse** next to
-one, and you're done. If Morse finds neither, paste an API key there instead.
+Morse opens on one screen, with nothing to decide:
 
-![The first run: the model Morse found, and your apps](screenshots/175-desktop-app-first-run.png)
+- **Morse will use Claude Code** (or Codex). It finds the one on this
+  computer by itself and checks that it answers. If it finds neither, paste
+  an API key there instead.
+- **Your apps**, each with **Open with Morse**. Click one, and you're done.
+- **Use Morse in Chrome too**, for websites. See [Chrome](#chrome).
+
+![The first run: the model Morse found, your apps, and Use Morse in Chrome too](screenshots/175-desktop-app-first-run.png)
 
 ## Your apps
 
-Morse Desktop shows the apps Morse can connect to. It's the same list as
-`morse apps`. Each one says whether it's open, and whether Morse is connected
+The Morse app shows the apps Morse can connect to. Each one says whether it's open, and whether Morse is connected
 to it.
 
 - **Open with Morse** opens the app with Morse connected. Then, in the app,
@@ -69,7 +73,7 @@ setting, so it can connect.
 
 Morse has no model of its own. It uses one you already have: Claude Code,
 Codex or an API key. **Change…** shows what's on this computer and suggests
-one, the same as `morse setup`. Each choice says **Ready** or **Not
+one. Each choice says **Ready** or **Not
 installed**. **How to install** shows the one command to run. **Look again**
 finds it once it's there. **Check** asks the model a short question to
 make sure it answers.
@@ -81,31 +85,37 @@ Where they come from: `desktop-app/ui/icons/NOTICE`.
 
 ## Chrome
 
-While Morse Desktop is open, it runs the Morse helper in the background. That
-lets the Morse extension in Chrome use your model too. If you don't want
-that, turn off **Let Chrome use Morse**.
+Click **Use Morse in Chrome** (on the first screen, **Use Morse in Chrome
+too**). Morse in Chrome uses the model you chose here, so there is nothing
+to set up in Chrome.
 
-To connect Chrome:
+Morse isn't in the Chrome Web Store yet, so the button adds it from a folder:
 
-1. Click **Add to Chrome**. Morse puts the extension in a folder that stays
-   put (`~/.morse/chrome-extension`), shows that folder, copies where it is,
-   and opens Chrome on `chrome://extensions`. There, turn on **Developer
-   mode** (top right) and drag the folder onto the page. Or click **Load
-   unpacked** and choose it: on a Mac, press ⌘⇧G in that window and paste.
-   Until Morse is in the Chrome Web Store, this is the way in.
-2. On the welcome page Chrome opens, click **Connect**. Morse Desktop asks
-   “Allow Chrome to use your Claude Code?”. Click **Allow**. There's no code
-   to type.
-3. Or click **Show a code**. Type that code in Morse's menu in Chrome, under
-   Morse helper.
+1. Morse puts the extension in a folder that stays put, **Morse for Chrome**
+   in your home folder, shows that folder, and opens Chrome on its
+   extensions page.
+2. A picture shows where to click there: turn on **Developer mode** (top
+   right), then click **Load unpacked** (top left) and choose that folder.
+   Or drag the folder onto the page.
+3. Morse's welcome page opens in Chrome, and the Morse app asks
+   **“Allow Chrome to use your Claude Code?”**. Click **Allow**. There's no
+   code to type.
 
-![Chrome: the Morse helper is on, with a code to type](screenshots/170-desktop-app-chrome.png)
+Once Morse is in the Chrome Web Store, the same button opens its page there.
+
+![Where to click on Chrome's extensions page](screenshots/176-desktop-app-chrome-guide.png)
 
 ![“Allow Chrome to use your Claude Code?”](screenshots/171-desktop-app-allow-chrome.png)
 
 Only the Morse extension on this computer can ask. Nothing connects until you
-click **Allow**. Click Allow only if you clicked Connect in Chrome a moment
-ago. **Sign out browsers** disconnects every browser.
+click **Allow**. Click Allow only if you added Morse to Chrome a moment ago.
+**Sign out browsers** disconnects every browser.
+
+While the Morse app is open, Chrome can use your model through it. If you
+don't want that, turn off **Let Chrome use Morse**. **Advanced** has the
+extension's folder and a code to type, for developers.
+
+![Chrome: Use Morse in Chrome, and Let Chrome use Morse](screenshots/170-desktop-app-chrome.png)
 
 ## Mods
 
@@ -113,15 +123,14 @@ This lists your mods, app by app. Each has a switch to turn it on or off. A
 mod you turn off stays saved.
 
 The **Mods on** switch at the bottom left turns every mod off at once, in
-every app. Click it again to turn them back on. It is the same off switch as
-`morse pause`.
+every app. Click it again to turn them back on.
 
 ![Mods, app by app, with their switches](screenshots/172-desktop-app-mods.png)
 
 ## Checks
 
 Under **Model**, **Run checks** shows what Morse found on this computer and
-asks your model a short question, like `morse doctor`. A row marked **!**
+asks your model a short question. A row marked **!**
 says what to do.
 
 ![Checks: what Morse found, and the model answered](screenshots/173-desktop-app-checks.png)
@@ -137,25 +146,26 @@ Linux) or the menu bar (Mac). Click it for:
 - **Quit Morse**: Morse leaves every app it connected (they keep running) and
   stops the Morse helper.
 
-On Linux, some desktops don't show tray icons. Open Morse Desktop again, and
+On Linux, some desktops don't show tray icons. Open the Morse app again, and
 its window comes back.
 
-Morse Desktop only opens when you log in if you turn on **Open at login** at
+The Morse app only opens when you log in if you turn on **Open at login** at
 the bottom left. Then it starts in the tray, without the window.
 
-![Morse Desktop in light mode](screenshots/174-desktop-app-light.png)
+![The Morse app in light mode](screenshots/174-desktop-app-light.png)
 
-## Morse Desktop and the morse command
+## For developers: the morse command
 
-They are the same Morse, with the same folder (`~/.morse`), the same model and
-the same mods. `morse status` lists the apps Morse Desktop connected.
+The `morse` command is Morse for a terminal, for developers. It and the
+Morse app are the same Morse, with the same folder (`~/.morse`), the same
+model and the same mods. `morse status` lists the apps the Morse app connected.
 `morse stop <app>` disconnects them. Apps you opened with `morse launch` show
-as connected in Morse Desktop too.
+as connected in the Morse app too.
 
 ## Safety
 
 - The window only shows Morse's own page. It never loads anything from the
   internet, and web pages can't control it.
 - Morse never changes an app's files, and asks before it restarts an app.
-- Chrome connects only after you click **Allow** in Morse Desktop (or type a code).
+- Chrome connects only after you click **Allow** in the Morse app (or type a code).
 - To see what Morse sends to your model, and when, read [Privacy and safety](privacy-and-safety.md).

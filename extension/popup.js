@@ -5,6 +5,7 @@ import { plainError } from "./core/onboarding.js";
 import { normalizePrefs } from "./core/prefs.js";
 import { detectPlatform, resolveHotkeys, formatCombo } from "./core/hotkeys.js";
 import { modExtras } from "./popup-control.js"; // user control: pause switches, where each mod came from, Show code
+import { DOWNLOAD } from "./core/links.js";
 const $ = id => document.getElementById(id);
 const isOptions = document.body.dataset.page === "options";
 const [tab] = isOptions ? [null] : await chrome.tabs.query({ active: true, currentWindow: true });
@@ -29,6 +30,10 @@ async function openHotkey() {
 const url = new URLSearchParams(location.search).get("url") || tab?.url || "";
 const send = msg => chrome.runtime.sendMessage({ ...msg, url });
 
+// The marks of the models (brand/, desktop-app/ui/icons/NOTICE), for the Morse app's card below.
+const MARK_OF = { "claude-code": ["claude"], codex: ["openai"], anthropic: ["anthropic"], openai: ["openai"] };
+const marks = p => (MARK_OF[p] || []).map(n => `<img src="brand/${n}.png" alt=""${n === "claude" ? "" : ' class="mono"'}>`).join("");
+let devOpened = false;
 // simplify: Model is folded or open as the popup opens, and then left alone,
 // so pairing here doesn't fold away its own "Paired" note.
 let modelPlaced = false;
@@ -51,8 +56,7 @@ function render(s) {
     ? s.mods.map(m => `<li><i class="${m.enabled ? "on" : ""}"></i>${esc(m.title)}<small>“${esc(m.prompt)}”</small>${waits(m) ? `<small class="waiting">${esc(t("popup.waits"))}</small>` : ""}${modExtras(m)}</li>`).join("")
     : `<li class="empty">${esc(t("popup.noMods"))}</li>`;
 
-  $("connect").hidden = s.kind !== "none";
-  $("reason").textContent = s.reason;
+  renderApp(s);
   // simplify: a working model is one line; open it to change it. No model: open.
   const ok = s.kind !== "none" && (s.kind !== "helper" || s.helper?.paired);
   $("modelsum").textContent = ok ? `· ${s.label}` : "";
@@ -81,6 +85,25 @@ function render(s) {
 
   $("anthropicModel").innerHTML = s.anthropicModels.map(m => `<option${m === s.anthropicModel ? " selected" : ""}>${esc(m)}</option>`).join("");
   $("anthropicKey").placeholder = s.anthropicKey ? t("popup.keySaved.placeholder", { key: s.anthropicKey }) : "sk-ant-…";
+}
+
+// Morse in Chrome gets its model from the Morse app: what it uses now, or
+// the one thing to do (connect on the welcome page, or get the app). The
+// rest (an API key, a code) waits under Developer.
+function renderApp(s) {
+  const h = s.helper;
+  let html;
+  if (s.kind === "helper") html = `<span class="pmark" aria-hidden="true">${marks(h?.provider)}</span><span><b>${esc(t("popup.app.using", { label: s.label }))}</b><small>${esc(h?.app === "desktop" ? t("popup.app.fromApp") : t("popup.app.fromHelper"))}</small></span>`;
+  else if (s.kind === "anthropic") html = `<span class="pmark" aria-hidden="true">${marks("anthropic")}</span><span><b>${esc(t("popup.app.using", { label: s.label }))}</b><small>${esc(t("popup.app.fromKey"))}</small></span>`;
+  else if (h) html = `<span><b>${esc(h.app === "desktop" ? t("popup.app.found") : t("popup.app.foundHelper"))}</b><small>${esc(t("popup.app.allow"))}</small><button type="button" class="primary" id="app-connect">${esc(t("popup.app.connect"))}</button></span>`;
+  else html = `<span><b>${esc(t("popup.app.none"))}</b><small>${esc(t("popup.app.none.d"))}</small><a class="btn primary" id="app-download" href="${esc(DOWNLOAD)}" target="_blank" rel="noopener">${esc(t("start.download"))}</a></span>`;
+  if ($("app").dataset.html !== html) {
+    $("app").dataset.html = html;
+    $("app").innerHTML = html;
+    $("app-connect")?.addEventListener("click", () => send({ type: "onboarding.open", what: "model" }).then(() => window.close()));
+  }
+  // The developer ways open by themselves when one is in use.
+  if (!devOpened && (s.kind === "anthropic" || s.backend === "anthropic")) { devOpened = true; $("dev").open = true; }
 }
 
 async function save(patch) {

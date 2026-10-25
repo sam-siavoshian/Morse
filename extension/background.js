@@ -448,7 +448,7 @@ async function popup(msg) {
     case "popup.askStart": {
       let r;
       try { r = await fetch(`${await helperUrl()}/v1/pair/ask`, { method: "POST", signal: AbortSignal.timeout(5000) }); }
-      catch { return { error: "Can't reach the Morse helper. Open Morse Desktop on this computer." }; }
+      catch { return { error: "Can't reach the Morse app. Open it on this computer." }; }
       const body = await r.json().catch(() => ({}));
       return r.ok && body.id ? { id: body.id, expires: body.expires } : { error: body.error || `Morse couldn't ask (error ${r.status}).`, code: body.code || "" };
     }
