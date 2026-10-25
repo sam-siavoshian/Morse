@@ -260,7 +260,7 @@ export async function claudeCodeStream(s, messages, opts) {
 }
 async function claudeCodeOnce(s, messages, { onToken, signal, onStage }) {
   const bin = s.bin || which("claude");
-  if (!bin) throw new Error("Claude Code isn't installed on this computer. Install it from claude.com/claude-code, or run morse setup to choose another model.");
+  if (!bin) throw new Error("Claude Code isn't installed on this computer. Install it from claude.com/claude-code, or choose another model (Model in the Morse app, or morse setup).");
   if (!validModel(s.model)) throw new Error(`"${s.model}" isn't a model name Morse can use. Check the spelling.`);
   const { system, prompt } = flattenConversation(messages);
   const t0 = Date.now();
@@ -321,7 +321,7 @@ async function claudeCodeOnce(s, messages, { onToken, signal, onStage }) {
 //   old: {"msg":{"type":"agent_message_delta","delta":...}} / {"msg":{"type":"agent_message","message":...}}
 export async function codexStream(s, messages, { onToken, signal }) {
   const bin = s.bin || which("codex");
-  if (!bin) throw new Error("Codex isn't installed on this computer. Install it with npm i -g @openai/codex, or run morse setup to choose another model.");
+  if (!bin) throw new Error("Codex isn't installed on this computer. Install it with npm i -g @openai/codex, or choose another model (Model in the Morse app, or morse setup).");
   if (!validModel(s.model)) throw new Error(`"${s.model}" isn't a model name Morse can use. Check the spelling.`);
   const { system, prompt } = flattenConversation(messages);
   const dir = await runDir();

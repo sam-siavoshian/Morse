@@ -27,6 +27,7 @@ import { LANGUAGES } from "../core/i18n.js";
 import { iconSource } from "./icons.js";
 import { setAutostart, writeMenuEntry } from "./linux.js";
 import { openChromeExtensions, isStoreUrl } from "./chrome.js";
+import { fullPath } from "./shell-path.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // The window's page is served from morse-app://ui/, a scheme of Morse's own
@@ -69,6 +70,11 @@ if (APPIMAGE) {
     if (kept.length) process.env[k] = kept.join(":"); else delete process.env[k];
   }
 }
+
+// Opened from Finder or a launcher, the app has the system's bare PATH: add the
+// login shell's and the usual install folders, so Claude Code, Codex and the
+// node they need are found (shell-path.js). Run from a terminal it has them.
+if (app.isPackaged && process.platform !== "win32") process.env.PATH = fullPath();
 
 // One Morse at a time: a second start (or a morse://open link) shows this window.
 // A Morse folder of its own (MORSE_HOME, as tests use) is a Morse of its own.
