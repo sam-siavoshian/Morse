@@ -1027,6 +1027,7 @@ export default {
   "ob.howModel": "Morse アプリを開いて、「モデル」でモデルを選んでください。",
   "ob.win.title": "初めての MOD を保存しました",
   "ob.win.body": "MOD は保存した変更です。{where} を開くたびに、Morse が{mod}を戻します。{key} で MOD パネルが開きます。そこでオフにしたり共有したりできます。",
+  "ob.win.short": "{where} を開くたびに {mod} が戻ってきます。",
   "ob.win.it": "それ",
   "ob.win.now": "バーに追加されたもの",
   "ob.win.quick": "ダークモードや大きな文字などは、バーの新しいボタンから。",

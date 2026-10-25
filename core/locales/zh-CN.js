@@ -1026,6 +1026,7 @@ export default {
   "ob.howModel": "打开 Morse 应用，在“模型”里选一个模型。",
   "ob.win.title": "你的第一个模组已保存",
   "ob.win.body": "模组就是你保存下来的改动。每次你打开 {where}，Morse 都会把{mod}带回来。{key} 打开模组面板。在那里可以关闭或分享它。",
+  "ob.win.short": "每次打开 {where}，{mod} 都会回来。",
   "ob.win.it": "它",
   "ob.win.now": "现在在你的输入栏里",
   "ob.win.quick": "深色模式、放大文字等等，在输入栏的新按钮里。",

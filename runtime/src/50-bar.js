@@ -354,7 +354,10 @@ function toggleSettings() {
 // keys (Alt+↓) and the shortcut list (?) are one click away in Help; their
 // keys still work everywhere.
 function menuItems() {
+  // A change waiting to be saved: Edit code and Share are here, not on the bar.
+  const draft = S.phase === "result" && S.draft && !S.draft.saved;
   return [
+    ...(draft ? [{ id: "code", label: t("btn.editCode"), keys: null }, { id: "share", label: t("btn.share"), keys: null }] : []),
     { id: "showonce", label: t("menu.showonce"), keys: null }, // show-once hook: 64-show-once.js
     { id: "settings", label: t("menu.settings"), keys: [primaryMod, ","] },
     { id: "help", label: t("menu.help"), keys: ["F1"] }, // onboarding hook: 59-help.js
@@ -377,6 +380,8 @@ function runMenu(id) {
   if (id === "settings") toggleSettings();
   if (id === "help") toggleHelp(); // onboarding hook: 59-help.js
   if (id === "showonce") ShowOnce.start(); // show-once hook
+  if (id === "code" && S.draft) showCode(S.draft);
+  if (id === "share" && S.draft) keep().then(m => m && showShare(m));
 }
 moreBtn.addEventListener("click", () => (menuEl.hidden ? showMenu() : hideMenu()));
 menuEl.addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (b) runMenu(b.dataset.m); });

@@ -91,7 +91,7 @@ const YourStyle = (() => {
     input.disabled = true;
     bar.classList.remove("done", "err");
     bar.classList.add("working");
-    hint.innerHTML = `${radar(12)} ${t("ys.making")}`;
+    hint.textContent = t("ys.making");
     actions.innerHTML = "";
     let r;
     try { r = await ask("style.preview", { words }); }

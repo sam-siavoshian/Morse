@@ -46,7 +46,7 @@ const Ask = (() => {
     if (msg.type !== "answer" || !A.gen || msg.genId !== A.gen.id) return;
     A.live = msg;
     if (S.phase !== "working") return;
-    if (!hint.textContent.includes(t("ask.answering"))) hint.innerHTML = `${radar(12)} ${t("ask.answering")}`;
+    if (!hint.textContent.includes(t("ask.answering"))) hint.textContent = t("ask.answering");
     render(msg, A.gen.q, true);
   });
 

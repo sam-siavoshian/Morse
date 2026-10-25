@@ -134,12 +134,17 @@ test("axe-core finds nothing in the key states: bar, choosing with keys, edit to
     await model(page);
     await until(page, s => s.phase === "result", "the result");
     await axeOk(page, "the result");
-    await tabTo(page, /\[a=code\]/);
+    // Edit code and Share are in the ⋯ menu.
+    await tabTo(page, /button\.more/);
+    await page.keyboard.press("Enter");
+    await tabTo(page, /\[m=code\]/, { key: "ArrowDown" });
     await page.keyboard.press("Enter");
     await page.locator(".card").waitFor();
     await axeOk(page, "Edit code");
     await page.keyboard.press("Escape");
-    await tabTo(page, /\[a=share\]/);
+    await tabTo(page, /button\.more/);
+    await page.keyboard.press("Enter");
+    await tabTo(page, /\[m=share\]/, { key: "ArrowDown" });
     await page.keyboard.press("Enter");
     await page.locator(".card .exports").waitFor();
     await axeOk(page, "Share");

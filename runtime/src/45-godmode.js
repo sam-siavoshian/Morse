@@ -862,7 +862,7 @@ const GodMode = (() => {
   listen("pointerover", e => {
     if (!S.picking || !e.isTrusted || ours(e) || !e.target.matches?.(FRAMES)) return;
     hoverEl = e.target;
-    boxTo(e.target, hl, describe(e.target));
+    if (!S.target) boxTo(e.target, hl, describe(e.target));
   }, true);
   listen("blur", () => setTimeout(() => {
     const a = document.activeElement;

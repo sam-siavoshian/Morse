@@ -42,8 +42,8 @@ const Voice = (() => {
     micBtn.title = st === "listening" ? t("voice.stop") : st === "transcribing" ? t("voice.transcribing") : (availability().why || `${t("bar.talk")}${how}`);
     bar.classList.toggle("listening", st === "listening" || st === "starting");
     input.placeholder = st === "listening" ? t("voice.listening.placeholder") : st === "transcribing" ? t("voice.transcribing") : S.phase === "result" ? REFINE_PLACEHOLDER() : PLACEHOLDER();
-    if (st === "listening") stickyHint(`${radar(12)} ${mode === "hold" ? t("voice.listening.hold") : t("voice.listening.tap")}`);
-    else if (st === "transcribing") stickyHint(`${radar(12)} ${t("voice.transcribing.hint")}`);
+    if (st === "listening") stickyHint(`${mode === "hold" ? t("voice.listening.hold") : t("voice.listening.tap")}`);
+    else if (st === "transcribing") stickyHint(t("voice.transcribing.hint"));
     else if (hintSticky) stickyHint("");
     // setHint leaves a result's status line alone, so show (and later restore) it here.
     if (resultHint === null) return;
@@ -145,7 +145,8 @@ const Voice = (() => {
       // final words arrive just before "end"
       const ended = srEnded;
       try { sr.stop(); } catch {}
-      await Promise.race([ended, new Promise(r => setTimeout(r, 1200))]);
+      // speed: when it heard nothing and the recording is there, don't wait on it
+      await Promise.race([ended, new Promise(r => setTimeout(r, srText || !rec ? 1200 : 250))]);
     }
     await recDone;
     stopTracks();

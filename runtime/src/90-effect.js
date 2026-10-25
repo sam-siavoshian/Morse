@@ -108,7 +108,6 @@ const Effect = (() => {
     target = el; rect = null; cols = rows = 0; mode = "thinking"; running = true; ok = true; blips = []; shown0 = 0;
     pal = palette();
     t0 = performance.now();
-    logo.classList.add("live");
     layout();
     requestAnimationFrame(draw);
   }

@@ -1026,6 +1026,7 @@ export default {
   "ob.howModel": "Öffne die Morse-App und wähl unter Modell eins aus.",
   "ob.win.title": "Dein erster Mod ist gespeichert",
   "ob.win.body": "Ein Mod ist eine gespeicherte Änderung. Morse bringt {mod} jedes Mal zurück, wenn du {where} öffnest. {key} öffnet den Mods-Bereich. Dort kannst du ihn ausschalten oder teilen.",
+  "ob.win.short": "{mod} ist jedes Mal wieder da, wenn du {where} öffnest.",
   "ob.win.it": "ihn",
   "ob.win.now": "Jetzt in deiner Leiste",
   "ob.win.quick": "Dunkelmodus, größerer Text und mehr, über die neue Taste in der Leiste.",

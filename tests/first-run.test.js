@@ -418,8 +418,8 @@ test("progressive reveal: a new user's bar keeps to the basics until the first s
     await until(() => seen(".ob-win"), 6000, "the first-save card");
     const card = await text(".ob-win");
     assert.match(card, /Your first mod is saved/);
-    assert.match(card, /A mod is a change you saved\. Morse brings “Airier toolbar” back every time you open/);
-    assert.match(card, /Now in your bar.*Page tools.*Edit tools.*Ask/is);
+    assert.match(card, /“Airier toolbar” comes back every time you open/);
+    assert.doesNotMatch(card, /Now in your bar/, "one line, nothing to read through");
     assert.equal(await seen(".toast"), false, "the card takes the toast's place");
     // Share it opens the share card for that mod.
     await page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector("[data-win=share]").click());
@@ -448,7 +448,7 @@ test("progressive reveal: a new user's bar keeps to the basics until the first s
   });
 });
 
-test("progressive reveal: people who already saved a mod, hid the tips or opened Help see everything", { skip, timeout: 60000 }, async () => {
+test("progressive reveal: people who already saved a mod or opened Help see everything", { skip, timeout: 60000 }, async () => {
   await playground({ coach: "done", tips: { saved: true } }, async ({ seen, open, point }) => {
     await open();
     assert.equal(await seen(".gm-qbtn"), true);
@@ -462,10 +462,5 @@ test("progressive reveal: people who already saved a mod, hid the tips or opened
     await until(async () => (await status()).pane === "help", 3000, "help");
     await page.keyboard.press("F1");
     assert.equal(await seen(".gm-qbtn"), true, "Help shows everything");
-  });
-  await playground(null, async ({ page, seen, open }) => {
-    await open();
-    await page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".ob-hide").click());
-    await until(() => seen(".gm-qbtn"), 3000, "Page tools after Hide tips");
   });
 });

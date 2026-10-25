@@ -53,65 +53,27 @@ async function pointAt(page, sel) {
   await page.mouse.click(b.x + b.width / 2, b.y + 4);
 }
 
-test("coach: shows the first time, follows point, describe, keep, then never again", { skip }, async () => {
+test("no step bar: the bar opens without one, and the first saved change gets a short card", { skip }, async () => {
   await scenario("?onboarding", null, async t => {
     const { page } = t;
-    assert.equal(await t.q(".ob-coach", "visible"), false, "nothing before the bar opens");
     await t.open();
-    assert.equal(await t.q(".ob-coach", "visible"), true);
-    assert.match(await t.q(".ob-steps .now"), /Point/);
-    assert.match(await t.q(".ob-say"), /Click the part you want to change/);
-
+    assert.equal(await t.q(".ob-coach", "visible"), false, "no step bar, even the first time");
     await pointAt(page, "#toolbar");
-    await page.waitForFunction(ui(".ob-steps .now") + "?.includes('Describe')");
-    assert.equal(await page.evaluate(`document.querySelector("[data-morse-ui]").shadowRoot.querySelectorAll(".ob-steps .done").length`), 1);
-    assert.match(await t.q(".ob-say"), /then press Enter/);
-
     await page.keyboard.type("make the toolbar airier");
     await page.keyboard.press("Enter");
-    await t.waitFor(s => s.phase === "working");
-    assert.match(await t.q(".ob-say"), /Esc stops it/);
     await t.waitFor(s => s.phase === "result");
-    await page.waitForFunction(ui(".ob-steps .now") + "?.includes('Save')");
-    assert.match(await t.q(".ob-say"), /Save keeps it for next time/);
-
-    await page.keyboard.press("Enter"); // Keep
+    assert.equal(await t.q(".ob-coach", "visible"), false);
+    await page.keyboard.press("Enter"); // Save
     await t.waitFor(s => !s.open);
-    // The first saved change: a card, not the toast (it explains "mod" once).
+    // The first saved change: a short card, not the toast.
     await page.waitForFunction(ui(".ob-win", "visible"));
     assert.equal(await t.q(".toast", "visible"), false);
-    assert.match(await t.q(".ob-win"), /Your first mod is saved.*A mod is a change you saved\. Morse brings “Airier toolbar” back every time you open .*Alt\s*Shift\s*M\s*opens the Mods panel/s);
-    assert.deepEqual(await t.stored(), { coach: "done", tips: { saved: true } });
+    const card = await t.q(".ob-win");
+    assert.match(card, /Your first mod is saved.*“Airier toolbar” comes back every time you open/s);
+    assert.doesNotMatch(card, /Now in your bar|A mod is a change you saved|for help/, "one line, nothing to read through");
+    assert.equal((await t.stored()).tips?.saved, true, "the card shows once");
     await page.keyboard.press("Escape");
     await page.waitForFunction(ui(".ob-win", "hidden"));
-
-    // Same session and after a reload: the coach is gone for good.
-    await t.open();
-    assert.equal(await t.q(".ob-coach", "visible"), false);
-    await page.keyboard.press("Escape");
-    await t.load();
-    await t.open();
-    assert.equal(await t.q(".ob-coach", "visible"), false, "never again after a reload");
-  });
-});
-
-test("coach: Hide tips dismisses it for good; the help pane can bring it back", { skip }, async () => {
-  await scenario("?onboarding", null, async t => {
-    await t.open();
-    await t.click(".ob-hide");
-    await t.page.waitForFunction(ui(".ob-coach", "hidden"));
-    assert.equal((await t.stored()).coach, "done");
-    await t.page.keyboard.press("Escape");
-    await t.load();
-    await t.open();
-    assert.equal(await t.q(".ob-coach", "visible"), false);
-    // Help → "Show the 3 steps again"
-    await t.page.keyboard.press("F1");
-    await t.waitFor(s => s.pane === "help");
-    await t.click("[data-ob=tour]");
-    await t.waitFor(s => s.pane === "");
-    assert.equal(await t.q(".ob-coach", "visible"), true);
-    assert.equal((await t.stored()).coach, "");
   });
 });
 

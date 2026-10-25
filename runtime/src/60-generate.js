@@ -74,7 +74,7 @@ async function submit(request, opts = {}) {
   // The status says what is really happening, step by step (speed: no waiting
   // looks the same as any other): asking, the model reading, thinking,
   // writing, the change showing up as it's written, trying it.
-  const say = text => { hint.innerHTML = `${radar(12)} ${text}`; };
+  const say = text => { hint.textContent = text; }; // one animation at a time: the field over the target (90-effect.js)
   say(t("gen.asking"));
   // Screen readers hear a few steps, never the streaming code: working, the
   // first change on the page, a retry, then done or what went wrong.
@@ -189,7 +189,7 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
   ticker.textContent = "";
   actions.innerHTML = d.saved
     ? `<button data-a="code">${t("btn.editCode")}</button><button data-a="keep">${t("btn.done")}</button>`
-    : `<button data-a="keep" class="primary">${t("btn.save")} <kbd>↵</kbd></button><button data-a="undo">${t("btn.undo")}</button><button data-a="code">${t("btn.editCode")}</button><button data-a="share">${t("btn.share")}</button>`;
+    : `<button data-a="keep" class="primary">${t("btn.save")} <kbd>↵</kbd></button><button data-a="undo">${t("btn.undo")}</button>`; // simplify: Edit code and Share are in ⋯ (50-bar.js menuItems)
   updateChips();
   announce(error ? t("gen.sayFailed", { title: d.title, error })
     : note ? `${d.title}. ${note}`

@@ -54,7 +54,9 @@ const Onboarding = (() => {
     if (S.target || input.value.trim()) return ["describe", t("ob.describe")];
     return ["point", t("ob.point")];
   }
-  const coachOn = () => !!st && st.coach !== "done" && S.open && !bar.hidden && !paneKind;
+  // simplify: no step bar. The bar's own hint says what to do next
+  // ("Point at something, or describe a change"); the coach stays off.
+  const coachOn = () => false;
   function renderCoach() {
     const on = coachOn();
     coachEl.hidden = !on;
@@ -178,24 +180,16 @@ const Onboarding = (() => {
     toastEl.hidden = true;
     clearTimeout(toast.t);
     winMod = m || null;
-    const k = id => (hotkey(id) ? caps(hotkey(id)) : "");
-    const edit = hotkey("godmode") ? caps(hotkey("godmode")) : caps([primaryMod, "E"]);
-    const next = [
-      typeof GodQuick !== "undefined" && [t("quick.title"), esc(t("ob.win.quick"))],
-      [t("hk.godmode"), t("ob.win.edit", { key: edit })],
-      [t("ob.win.ask"), esc(t("ob.win.ask.d"))],
-    ].filter(Boolean);
+    // simplify: one line and two buttons, nothing to read through.
     winEl.innerHTML = `<div class="ob-win-mark" aria-hidden="true">${radar(30)}<svg class="ob-win-check" viewBox="0 0 16 16" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg></div>
       <div class="ob-win-body">
         <b>${t("ob.win.title")}</b>
-        <p>${t("ob.win.body", { mod: m ? `“${esc(m.title)}”` : t("ob.win.it"), where: esc(where()), key: k("mods") || t("bar.mods") })}</p>
-        <h4 class="eyebrow">${t("ob.win.now")}</h4>
-        <ul>${next.map(([title, d]) => `<li><b>${esc(title)}</b><span>${d}</span></li>`).join("")}</ul>
-        <div class="ob-win-row">${m ? `<button type="button" class="btn primary" data-win="share">${t("ob.win.share")}</button>` : ""}<button type="button" class="btn" data-win="done">${t("btn.done")}</button><span>${t("ob.win.help")}</span></div>
+        <p>${t("ob.win.short", { mod: m ? `“${esc(m.title)}”` : t("ob.win.it"), where: esc(where()) })}</p>
+        <div class="ob-win-row">${m ? `<button type="button" class="btn primary" data-win="share">${t("ob.win.share")}</button>` : ""}<button type="button" class="btn" data-win="done">${t("btn.done")}</button></div>
       </div>`;
     winEl.hidden = false;
     clearTimeout(celebrate.t);
-    celebrate.t = setTimeout(closeWin, 45000);
+    celebrate.t = setTimeout(closeWin, 12000);
   }
   function closeWin() { clearTimeout(celebrate.t); winEl.hidden = true; }
   winEl.addEventListener("click", e => {

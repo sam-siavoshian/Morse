@@ -118,7 +118,7 @@ export async function transcribeWhisper({ audio, mime = "audio/webm", bin, model
     let text;
     if (name === "whisper") {
       // openai-whisper (Python): reads any format through ffmpeg, writes <dir>/speech.txt
-      const args = [input, "--model", model && !/[\\/]/.test(model) ? model : "base", "--output_format", "txt", "--output_dir", dir, "--fp16", "False", "--verbose", "False"];
+      const args = [input, "--model", model && !/[\\/]/.test(model) ? model : "base", "--output_format", "txt", "--output_dir", dir, "--fp16", "False", "--verbose", "False", "--beam_size", "1", "--best_of", "1"]; // speed: greedy, a few words don't need a beam search
       if (language) args.push("--language", language);
       await run(bin, args, { signal });
       text = await fs.readFile(path.join(dir, "speech.txt"), "utf8");
@@ -132,7 +132,9 @@ export async function transcribeWhisper({ audio, mime = "audio/webm", bin, model
         try { await run("ffmpeg", ["-nostdin", "-loglevel", "error", "-y", "-i", input, "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", wav], { signal }); }
         catch (e) { throw new Error(/ENOENT/.test(e.message) ? "whisper.cpp needs ffmpeg on your PATH to read browser audio." : e.message); }
       }
-      text = await run(bin, ["-m", modelPath, "-f", wav, "-nt", "-np", "-l", language || "auto"], { signal });
+      // speed: greedy decoding on every core (the default beam search is several times slower for a sentence)
+      const threads = String(Math.max(1, Math.min(8, os.availableParallelism?.() || os.cpus().length || 4)));
+      text = await run(bin, ["-m", modelPath, "-f", wav, "-nt", "-np", "-l", language || "auto", "-t", threads, "-bs", "1", "-bo", "1"], { signal });
     }
     return { text: clean(text), provider: "whisper" };
   } finally {

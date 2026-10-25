@@ -17,6 +17,15 @@ under the new version number with the date
   Finder or the Dock, not only from a terminal.
 - **Open the bar**, beside each connected app in the Morse app, opens Morse's
   bar in that app when the shortcut does nothing (another app may own ⌥Space).
+- **A calmer bar.** No step-by-step tips on top of the bar, a one-line "first
+  change" card, and only Save and Undo after a change (Edit code and Share
+  are in ⋯).
+- **Typing after you pick something is easier.** The page stops lighting up
+  under the mouse once something is chosen; click something else to choose
+  that instead.
+- **One working animation**, over what's changing, instead of three.
+- **Faster voice** with a whisper on your computer: it transcribes once when
+  you stop, on every core, instead of again and again while you talk.
 
 ## 0.2.0 (2026-10-25)
 

@@ -720,6 +720,9 @@ export class Connector {
       case "history.add":
         return addHistory(await historyScope(), msg.text);
       case "transcribe":
+        // speed: a local whisper re-reads the whole recording each time; running it
+        // every 2s while you talk only slows down the one that counts, at the end
+        if (msg.partial && (await cachedVoiceStatus()).provider !== "openai") return { text: "" };
         return transcribeAudio({ audio: msg.audio, mime: msg.mime });
       default:
         throw new Error(`Unknown request ${msg.type}`);

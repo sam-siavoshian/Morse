@@ -23,6 +23,9 @@ function onMove(e) {
   const el = GodMode.deepAt(e.clientX, e.clientY); // God mode hook: also points into open shadow roots
   if (!el || el === hostEl || el === document.documentElement) { hoverEl = null; hl.hidden = true; return; }
   hoverEl = el;
+  // Something is chosen: the page stays still while you type. A click
+  // elsewhere still chooses that instead.
+  if (S.target) { hl.hidden = true; return; }
   boxTo(el, hl, describe(el));
   placeBar(el.getBoundingClientRect());
 }
