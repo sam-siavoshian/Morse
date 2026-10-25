@@ -1,7 +1,7 @@
-Morse changes a desktop app or a website while you watch: point at it and say what you want.
+Edit the headline, hide the ads, turn on dark mode. No model connected. Open the page again and the change is still there.
 
-- Claude Code, Codex, or an API key. No Morse account and no Morse server. Real-app runs so far used Claude Code.
-- A saved mod is put back every time that app opens. The app's files are left as they were.
-- When a change makes no visible difference, the bar says "The change made no difference you can see."
+- Edit text renames the headline and saves it as the mod "Direct edits".
+- Page tools hide the ad slots and the popup, then Dark mode inverts the page. Both save themselves.
+- Quit and open the page again. The three mods are already on.
 
 curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh

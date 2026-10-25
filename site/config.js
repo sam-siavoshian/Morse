@@ -34,9 +34,9 @@ export const DEMO_VIDEO = {
   poster: "../docs/launch/morse-v4-poster.webp",
   width: 1920,
   height: 1080,
-  label: "Morse changing VS Code, nodejs.org, Obsidian, Docker Hub, Logseq, and a demo app, 50 seconds",
-  strip: "Real apps, then a demo app · Claude Code · real runs",
-  caption: "50 seconds. Opens on VS Code after one sentence. Then nodejs.org, Obsidian, Docker Hub and Logseq, sped up, and a demo app where a site change breaks a mod and Fix it restores it. Waits in the source films are already labelled. Music is an original drum bed.",
+  label: "Morse on The Daily Byte: a new headline, the ads hidden, dark mode, then the same page opened again, 50 seconds",
+  strip: "Edit text, hide the ads, dark mode · no model",
+  caption: "50 seconds. Opens on the finished page: the headline is “A quieter front page”, the ads and the popup are gone, and the page is dark. Then those three edits, sped up. The page is opened again and the mods are still on. No model was connected. Music is an original drum bed.",
 };
 
 // "See it change": the big before and after pairs, in order. Each picture is a
