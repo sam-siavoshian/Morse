@@ -1,7 +1,7 @@
 /* Morse Desktop. Colors and radii come from design/tokens.css, the type is
-   the site's own Inter (site/fonts), laid out like a native settings window:
-   one 8px spacing scale, 32px controls, 40px icons, soft surfaces and few
-   lines. Light and dark both follow the tokens. */
+   the site's own Inter (site/fonts). One continuous surface: hairline
+   dividers, quiet type, 32px controls and icons. Buttons stay buttons.
+   Light and dark both follow the tokens. */
 @font-face { font-family: "Inter"; src: url("fonts/inter-regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: block; }
 @font-face { font-family: "Inter"; src: url("fonts/inter-medium.woff2") format("woff2"); font-weight: 500 700; font-style: normal; font-display: block; }
 @font-face { font-family: "Inter Display"; src: url("fonts/interdisplay-semibold.woff2") format("woff2"); font-weight: 500 700; font-style: normal; font-display: block; }
@@ -12,13 +12,11 @@
   --display: "Inter Display", var(--m-font);
   --r: 8px;                         /* controls */
   --side-bg: color-mix(in srgb, var(--m-surface) 55%, var(--m-bg));
-  --row-hover: color-mix(in srgb, var(--m-hover) 60%, transparent);
-  --select: color-mix(in srgb, var(--m-signal-4) 6%, var(--m-surface));
-  --card-shadow: none;
-  --nav-sel: var(--m-hover);
+  --row-hover: color-mix(in srgb, var(--m-hover) 70%, transparent);
+  --select: color-mix(in srgb, var(--m-signal-4) 8%, transparent);
 }
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) { --side-bg: #f4f4f5; --nav-sel: #e6e6e9; --card-shadow: 0 1px 2px rgba(17, 17, 19, .04), 0 0 0 1px rgba(17, 17, 19, .02); --select: #f6f6f7; }
+  :root:not([data-theme="dark"]) { --side-bg: color-mix(in srgb, var(--m-hover) 65%, var(--m-bg)); }
 }
 
 * { box-sizing: border-box; }
@@ -39,26 +37,29 @@ img { -webkit-user-drag: none; }
 .app { display: grid; grid-template-columns: 232px minmax(0, 1fr); height: 100%; }
 
 /* ---- sidebar */
-.side { display: flex; flex-direction: column; gap: var(--s-5); padding: var(--s-5) var(--s-3) var(--s-4); background: var(--side-bg); border-inline-end: 1px solid var(--m-line); }
+.side { display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-5) 0 var(--s-4); background: var(--side-bg); border-inline-end: 1px solid var(--m-line); }
 body.mac .side { padding-top: 52px; -webkit-app-region: drag; }
 body.mac .side :is(button, label, input) { -webkit-app-region: no-drag; }
-.brand { display: flex; align-items: center; gap: 10px; padding: 0 var(--s-3); font: 600 15px/20px var(--display); letter-spacing: -0.01em; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 var(--s-4); font: 600 15px/20px var(--display); letter-spacing: -0.01em; }
 .radar rect.c { opacity: 0.9; } .radar rect.o { opacity: 0.3; }
-nav { display: flex; flex-direction: column; gap: 2px; }
-nav button { display: flex; align-items: center; gap: var(--s-3); height: 36px; padding: 0 var(--s-3); border: 0; border-radius: var(--r); background: transparent;
+nav { display: flex; flex-direction: column; gap: 0; }
+nav button { display: flex; align-items: center; gap: var(--s-3); width: 100%; height: 32px; padding: 0 var(--s-4); border: 0; border-radius: 0; background: transparent;
   color: var(--m-text-2); font: 500 13px/16px var(--m-font); text-align: start; transition: background var(--m-fast), color var(--m-fast); }
 nav button:hover { background: var(--row-hover); color: var(--m-text); }
-nav button[aria-current="page"] { background: var(--nav-sel); color: var(--m-text); }
+nav button[aria-current="page"] { background: var(--row-hover); color: var(--m-text); box-shadow: inset 2px 0 0 var(--m-signal-3); }
+:dir(rtl) nav button[aria-current="page"] { box-shadow: inset -2px 0 0 var(--m-signal-3); }
+nav button:focus-visible { outline-offset: -2px; }
 nav button svg { flex: none; width: 16px; height: 16px; }
-nav button span { flex: 1; }
+nav button span { flex: 1; min-width: 0; }
 nav small { font: 500 11px/16px var(--m-font); color: var(--m-text-3); font-variant-numeric: tabular-nums; }
 nav small.on::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-inline-end: 6px; border-radius: 50%; background: var(--m-signal-4); vertical-align: 1px; }
 nav button[aria-current="page"] small:not(.warn) { color: var(--m-text-2); }
 nav small.warn { color: var(--m-warn); }
-.side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 2px; }
-.side-foot .switchrow { height: 36px; padding: 0 var(--s-3); border-radius: var(--r); color: var(--m-text-2); font-weight: 500; }
+.side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 0; padding-top: var(--s-3); border-top: 1px solid var(--m-line); }
+.side-foot .switchrow { height: auto; min-height: 32px; padding: 6px var(--s-4); border-radius: 0; color: var(--m-text-2); font-weight: 500; }
+.side-foot .switchrow span { flex: 1; min-width: 0; line-height: 16px; text-wrap: balance; }
 .side-foot .switchrow:hover { background: var(--row-hover); color: var(--m-text); }
-.ver { padding: var(--s-2) var(--s-3) 0; font-size: 11px; line-height: 16px; color: var(--m-text-3); }
+.ver { padding: var(--s-2) var(--s-4) 0; font-size: 11px; line-height: 16px; color: var(--m-text-3); }
 
 /* ---- main */
 main { overflow-y: auto; padding: var(--s-7) var(--s-8) var(--s-8); }
@@ -67,7 +68,7 @@ section { max-width: 680px; margin: 0 auto; display: flex; flex-direction: colum
 @keyframes fade { from { opacity: 0; transform: translateY(2px); } }
 @media (prefers-reduced-motion: reduce) { section { animation: none; } }
 .head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s-4); }
-.head p { margin-top: var(--s-1); max-width: 620px; color: var(--m-text-2); font-size: 14px; line-height: 22px; text-wrap: pretty; }
+.head p { margin-top: var(--s-2); max-width: 62ch; color: var(--m-text-2); font-size: 13px; line-height: 20px; text-wrap: pretty; }
 .head-actions { display: flex; align-items: center; gap: var(--s-2); flex: none; }
 /* title and buttons on one line, the text under both */
 .head.two { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 var(--s-4); }
@@ -140,44 +141,49 @@ input[role="switch"]:disabled::after { background: var(--m-signal-1); box-shadow
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) img.mono { filter: invert(1); } }
 :root[data-theme="dark"] img.mono { filter: invert(1); }
 
-/* ---- cards and lists: one surface, no boxes inside boxes */
-.card { padding: var(--s-5); background: var(--m-surface); border: 1px solid var(--m-line); border-radius: var(--m-r-lg); box-shadow: var(--card-shadow); }
-.card > h2 { margin-bottom: var(--s-2); }
-.list { list-style: none; margin: 0; padding: var(--s-1); background: var(--m-surface); border: 1px solid var(--m-line); border-radius: var(--m-r-lg); box-shadow: var(--card-shadow); }
-.list > li { position: relative; display: flex; align-items: center; gap: var(--s-4); min-height: 64px; padding: var(--s-3); border-radius: var(--m-r-md); transition: background var(--m-fast); }
-/* hairlines between rows, starting under the text; none next to the row under the mouse */
-.list > li + li::before { content: ""; position: absolute; top: 0; inset-inline-start: 68px; inset-inline-end: var(--s-3); height: 1px; background: var(--m-line); }
-.list.mods > li + li::before, .list.checks > li + li::before { inset-inline-start: var(--s-3); }
+/* ---- one surface. Rows are lines on it, not cards stacked in a list. */
+.card { padding: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.card > h2 { margin-bottom: var(--s-3); }
+.card.choices { margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--m-line); }
+.list { list-style: none; margin: 0; padding: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.list > li { position: relative; display: flex; align-items: center; gap: var(--s-3); min-height: 52px; padding: var(--s-2) 0; border-radius: 0; transition: background var(--m-fast); }
+/* hairlines between rows, starting after the icon; none next to the row under the mouse */
+.list > li + li::before { content: ""; position: absolute; top: 0; inset-inline-start: 44px; inset-inline-end: 0; height: 1px; background: var(--m-line); }
+.list.mods > li + li::before, .list.checks > li + li::before { inset-inline-start: 0; }
 .list > li:hover { background: var(--row-hover); }
 .list > li:hover::before, .list > li:hover + li::before { opacity: 0; }
-.list > li.empty { justify-content: center; align-items: center; gap: var(--s-2); min-height: 112px; color: var(--m-text-3); text-align: center; }
+.list > li.empty { justify-content: center; gap: var(--s-2); min-height: 52px; padding: var(--s-3) 0; color: var(--m-text-3); text-align: center; }
 .list > li.empty:hover { background: transparent; }
 .grow { flex: 1; min-width: 0; }
 .grow b { display: block; font-weight: 600; font-size: 14px; line-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.grow small { display: flex; align-items: center; gap: var(--s-2); margin-top: 2px; color: var(--m-text-2); font-size: 13px; line-height: 18px; overflow: hidden; white-space: nowrap; }
+.grow small { display: flex; align-items: center; gap: var(--s-2); margin-top: 2px; color: var(--m-text-2); font-size: 12px; line-height: 16px; overflow: hidden; white-space: nowrap; }
 .grow small span { overflow: hidden; text-overflow: ellipsis; }
 .grow small .dot { width: 6px; height: 6px; }
+li.connected .grow small { color: var(--m-text); }
 .list .actions { display: flex; align-items: center; gap: var(--s-2); flex: none; }
 
-/* app rows: 40px icons (real ones when the app has one) */
-.appicon { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: var(--m-hover);
-  font: 600 16px/1 var(--display); color: var(--m-text-2); overflow: hidden; }
-.appicon img { width: 40px; height: 40px; object-fit: contain; }
-.appicon svg { width: 20px; height: 20px; color: var(--m-text-3); }
+/* app rows: 32px icons, the app's own or the Apps glyph */
+.appicon { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: var(--m-r-sm); background: var(--m-hover);
+  font: 600 13px/1 var(--display); color: var(--m-text-2); overflow: hidden; }
+.appicon img { width: 32px; height: 32px; object-fit: contain; }
+.appicon svg { width: 16px; height: 16px; color: var(--m-text-3); }
 .appicon.has-img { background: transparent; }
 li.cant .grow b, li.cant .appicon { color: var(--m-text-3); }
-li.cant .appicon img { filter: grayscale(1); opacity: .6; }
+li.cant .appicon img { filter: grayscale(1); }
 li .radar.live { color: var(--m-text-2); }
 li .radar.live rect, .live .radar.live rect { animation: m-pulse 1.5s ease-in-out infinite both; }
 li .radar.live rect.o, .live .radar.live rect.o { animation-name: m-pulse-dim; }
 .radar.live rect:nth-child(2n) { animation-delay: .4s; } .radar.live rect:nth-child(3n) { animation-delay: .8s; } .radar.live rect:nth-child(5n) { animation-delay: 1.1s; }
 .tag { font: 500 11px/16px var(--m-font); color: var(--m-text-3); }
 
-.notice { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); padding: var(--s-4) var(--s-4) var(--s-4) var(--s-5); background: var(--m-surface);
-  border: 1px solid var(--m-line-strong); border-radius: var(--m-r-lg); color: var(--m-text-2); }
+.notice { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-3) var(--s-4); padding: var(--s-3) 0 var(--s-3) var(--s-4); background: transparent;
+  border: 0; border-radius: 0; box-shadow: inset 2px 0 0 var(--m-signal-2); color: var(--m-text-2); }
+.notice .btn { margin-inline-start: auto; }
 .notice b { color: var(--m-text); }
-.error { padding: var(--s-3) var(--s-4); border-radius: var(--m-r-md); border: 1px solid color-mix(in srgb, var(--m-danger) 40%, var(--m-line)); background: color-mix(in srgb, var(--m-danger) 7%, var(--m-surface));
-  color: var(--m-text); user-select: text; }
+:dir(rtl) .notice { box-shadow: inset -2px 0 0 var(--m-signal-2); }
+.error { padding: var(--s-3) var(--s-4); border: 0; border-radius: 0; background: color-mix(in srgb, var(--m-danger) 8%, transparent);
+  box-shadow: inset 2px 0 0 var(--m-danger); color: var(--m-text); user-select: text; overflow-wrap: anywhere; }
+:dir(rtl) .error { box-shadow: inset -2px 0 0 var(--m-danger); }
 
 /* live status lines */
 .live { display: flex; align-items: center; gap: var(--s-2); min-height: 20px; color: var(--m-text-2); font-size: 13px; line-height: 20px; user-select: text; }
@@ -196,11 +202,13 @@ li .radar.live rect.o, .live .radar.live rect.o { animation-name: m-pulse-dim; }
 #model-live > .radar, #helper-live > .radar { margin-top: 4px; }
 .choices { display: flex; flex-direction: column; gap: var(--s-4); }
 .choices > h2 { margin: 0; }
-#choice-list { display: flex; flex-direction: column; gap: var(--s-1); margin: 0 calc(-1 * var(--s-3)); }
-.choice { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0 var(--s-4); padding: var(--s-3);
-  border-radius: var(--m-r-md); cursor: pointer; transition: background var(--m-fast), box-shadow var(--m-fast); }
+#choice-list { display: flex; flex-direction: column; gap: 0; margin: 0; }
+.choice { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0 var(--s-4); padding: var(--s-3) var(--s-2);
+  border-radius: 0; cursor: pointer; transition: background var(--m-fast), box-shadow var(--m-fast); }
+.choice + .choice::before { content: ""; position: absolute; top: 0; inset-inline: var(--s-2); height: 1px; background: var(--m-line); }
+.choice:hover::before, .choice:hover + .choice::before, .choice:has(input:checked)::before, .choice:has(input:checked) + .choice::before { opacity: 0; }
 .choice:hover { background: var(--row-hover); }
-.choice:has(input:checked) { background: var(--select); box-shadow: inset 0 0 0 1.5px var(--m-signal-2); }
+.choice:has(input:checked) { background: var(--select); box-shadow: inset 0 0 0 1px var(--m-signal-2); }
 .choice:has(input:focus-visible) { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
 /* the radio itself is the ring around the row; it stays a real radio for keys and screen readers */
 .choice input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
@@ -210,8 +218,8 @@ li .radar.live rect.o, .live .radar.live rect.o { animation-name: m-pulse-dim; }
 .choice .rec { font: 500 11px/18px var(--m-font); color: var(--m-text-2); padding: 0 var(--s-2); border-radius: 9px; background: var(--m-hover); }
 .choice .state { display: flex; flex-direction: column; align-items: flex-end; gap: var(--s-1); }
 .choice .state .link { font-size: 12px; line-height: 16px; }
-.howto { grid-column: 2 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2) var(--s-3); margin-top: var(--s-3); padding: var(--s-3) var(--s-4);
-  border-radius: var(--r); background: var(--m-bg); color: var(--m-text-2); font-size: 12px; line-height: 18px; cursor: default; }
+.howto { grid-column: 2 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2) var(--s-3); margin-top: var(--s-3); padding: var(--s-3) 0 0;
+  border-top: 1px solid var(--m-line); border-radius: 0; background: transparent; color: var(--m-text-2); font-size: 12px; line-height: 18px; cursor: default; }
 .howto span { flex-basis: 100%; }
 .howto code { flex: 1 1 220px; min-width: 0; font-size: 12px; color: var(--m-text); user-select: all; overflow-wrap: anywhere; }
 .keyrow { display: flex; flex-direction: column; gap: var(--s-2); }
@@ -287,8 +295,8 @@ label.check input { accent-color: var(--m-signal-4); flex: none; margin: 2px 0 0
 .ob-head > * { animation: ob-rise var(--rise) 150ms backwards; }
 .ob-head > p { animation-delay: 260ms; }
 .ob-scene { width: min(560px, 100%); display: flex; flex-direction: column; gap: var(--s-3); animation: ob-rise var(--rise) 360ms backwards; }
-.ob-scene > .live { gap: var(--s-3); padding: var(--s-3) var(--s-4) var(--s-3) var(--s-3); border: 1px solid var(--m-line); border-radius: var(--m-r-lg);
-  background: var(--m-surface); box-shadow: var(--card-shadow); color: var(--m-text); }
+.ob-scene > .live { gap: var(--s-3); padding: var(--s-3) 0; border: 0; border-bottom: 1px solid var(--m-line); border-radius: 0;
+  background: transparent; box-shadow: none; color: var(--m-text); }
 .ob-scene > .live > span:not(.mark-tile):not(.badge) { flex: 1; min-width: 0; }
 .ob-scene > .live > :is(.badge, .radar, .dot) { flex: none; }
 .ob-scene .list > li { min-height: 56px; padding-block: var(--s-2); }
@@ -296,8 +304,8 @@ label.check input { accent-color: var(--m-signal-4); flex: none; margin: 2px 0 0
 
 /* How it works: three moves side by side */
 .ob-moves { display: grid; grid-template-columns: repeat(3, minmax(0, 200px)); gap: 16px; margin: 0; padding: 0; list-style: none; }
-.ob-moves li { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 24px 16px 20px; text-align: center;
-  border: 1px solid var(--m-line); border-radius: var(--m-r-lg); background: var(--m-surface); box-shadow: var(--card-shadow);
+.ob-moves li { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 12px 4px; text-align: center;
+  border: 0; border-radius: 0; background: transparent; box-shadow: none;
   animation: ob-rise 800ms cubic-bezier(0.16, 1, 0.3, 1) backwards; }
 .ob-moves li:nth-child(1) { animation-delay: 380ms; } .ob-moves li:nth-child(2) { animation-delay: 450ms; } .ob-moves li:nth-child(3) { animation-delay: 520ms; }
 .ob-moves b { font: 600 14px/20px var(--m-font); }
@@ -330,11 +338,48 @@ main::-webkit-scrollbar-thumb { background: var(--m-line-strong); border: 3px so
 main::-webkit-scrollbar-thumb:hover { background: var(--m-signal-1); }
 main::-webkit-scrollbar-track { background: transparent; }
 
-/* simplify: Checks is a card under Model (index.html) */
-#checks { margin-top: 16px; }
-#checks .sub { margin: 4px 0 0; color: var(--m-text-2); font-size: var(--m-text-sm); }
-#checks .list { margin-top: 12px; }
-#checks .foot { margin-top: 12px; }
+/* Checks sits under Model. The same list as the apps: lines, not a card. */
+.eyebrow { font: 500 11px/16px var(--m-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--m-text-3); }
+#checks { margin-top: var(--s-2); padding-top: var(--s-5); border-top: 1px solid var(--m-line); }
+#checks .sub { margin: 4px 0 0; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 18px; max-width: 62ch; }
+#checks .list { margin-top: var(--s-3); }
+#checks .foot { margin-top: var(--s-3); }
+.list.checks > li:not(.empty) { display: grid; grid-template-columns: 20px minmax(7.5rem, 10rem) minmax(0, 1fr); align-items: center; gap: var(--s-3); }
+.mark { display: grid; place-items: center; width: 16px; height: 16px; font: 600 11px/1 var(--m-font); color: var(--m-text-3); }
+.mark.ok { color: var(--m-text); }
+.mark.bad { color: var(--m-danger); }
+.list.checks .label { font-weight: 600; color: var(--m-text); }
+.list.checks .text { min-width: 0; color: var(--m-text-2); overflow-wrap: anywhere; }
+
+/* Mods, app by app. The icon is the group's, the rows are the mods. */
+.group + .group { margin-top: var(--s-6); }
+.group h2 { display: flex; align-items: center; gap: var(--s-2); margin: 0 0 var(--s-1); font: 600 13px/20px var(--m-font); }
+.group h2 small { margin-inline-start: auto; font: 500 12px/16px var(--m-font); color: var(--m-text-3); font-variant-numeric: tabular-nums; }
+.gicon { flex: none; width: 20px; height: 20px; border-radius: 4px; object-fit: contain; }
+.gicon.none { display: grid; place-items: center; color: var(--m-text-3); background: var(--m-hover); }
+.gicon.none svg { width: 14px; height: 14px; }
+.list.mods > li.off .grow b { color: var(--m-text-2); }
+.list.mods > li.off .grow small { color: var(--m-text-3); }
+#no-mods { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-2); max-width: 46ch; padding: var(--s-2) 0 var(--s-4); color: var(--m-text-2); }
+#no-mods b { color: var(--m-text); font: 600 14px/20px var(--m-font); }
+#no-mods .radar { color: var(--m-text-3); }
+
+/* The window's smallest (760 × 560): names wrap, buttons sit under them. */
+@media (max-width: 820px) {
+  main { padding: 28px 20px 32px; }
+  body.mac main { padding-top: 48px; }
+  .list > li { flex-wrap: wrap; align-items: flex-start; }
+  .list .actions { flex: 1 1 100%; justify-content: flex-end; }
+  .grow b, .grow small, .grow small span { white-space: normal; overflow: visible; text-overflow: unset; }
+  .list > li + li::before { inset-inline-start: 0; }
+  .cur-actions { flex: 1 1 100%; justify-content: flex-end; margin-inline-start: 0; }
+  .choice .grow b { flex-wrap: wrap; white-space: normal; overflow: visible; }
+  .howto code { flex-basis: 100%; white-space: nowrap; overflow-wrap: normal; overflow-x: auto; }
+  .list.checks > li:not(.empty) { grid-template-columns: 20px minmax(0, 1fr); }
+  .list.checks .text { grid-column: 2; }
+  .shortcut-row { flex-wrap: wrap; }
+  .shortcut-ctl { margin-inline-start: auto; }
+}
 
 /* "Open the bar" beside Disconnect on a connected app */
 .row-acts { display: inline-flex; gap: 8px; align-items: center; }

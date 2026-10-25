@@ -12,8 +12,9 @@ function PACKS_CSS() { return `
   .pk-card footer { position: sticky; bottom: -20px; z-index: 1; margin: 16px -20px -20px; padding: 12px 20px 20px; background: var(--m-surface); border-top: 1px solid var(--m-line); }
   /* the maker's note: a quote in the box the update review's "What changed" uses (98-gallery-css.js .gl-what) */
   .pk-note { margin: 0 0 12px; padding: 8px 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-bg); color: var(--m-text); overflow-wrap: anywhere; }
-  .pk-items { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .pk-item { min-width: 0; padding: 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-bg); }
+  .pk-items { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .pk-item { min-width: 0; padding: 12px 0; border: 0; border-radius: 0; background: transparent; }
+  .pk-item + .pk-item { border-top: 1px solid var(--m-line); }
   /* unticked: muted by color (the AA tokens), never by opacity */
   .pk-item.off { background: transparent; }
   .pk-item.off .pk-pick b, .pk-item.off .pk-does { color: var(--m-text-2); }
@@ -36,7 +37,7 @@ function PACKS_CSS() { return `
   .card .pk-clash .seg button { height: 24px; border: 0; padding: 0 8px; }
   .card .pk-clash .seg button:hover { background: transparent; }
   .card .pk-clash .seg button[aria-checked="true"] { background: var(--m-surface); }
-  .card .pk-sub { display: flex; align-items: flex-start; gap: 12px; margin: 16px 0 0; padding: 12px; border: 1px solid var(--m-line-strong); border-radius: var(--m-r-md); cursor: pointer;
+  .card .pk-sub { display: flex; align-items: flex-start; gap: 12px; margin: 16px 0 0; padding: 12px 0; border: 0; border-top: 1px solid var(--m-line); border-radius: 0; cursor: pointer;
     font: inherit; letter-spacing: var(--m-tracking); text-transform: none; color: var(--m-text); }
   .pk-sub b { display: block; font-weight: 600; line-height: 20px; }
   .pk-sub small { display: block; color: var(--m-text-2); font-size: var(--m-text-sm); line-height: 16px; }
@@ -61,7 +62,7 @@ function PACKS_CSS() { return `
     border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); font: 450 var(--m-text-md)/20px var(--m-font); letter-spacing: var(--m-tracking); }
   .pk-note-in:focus-visible { border-color: var(--m-signal-3); box-shadow: 0 0 0 1px var(--m-signal-3); }
   .pk-note-in::placeholder { color: var(--m-text-3); opacity: 1; }
-  .pk-list { list-style: none; margin: 0; padding: 4px 12px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); max-height: 200px; overflow: auto; }
+  .pk-list { list-style: none; margin: 0; padding: 0; border: 0; border-radius: 0; max-height: 200px; overflow: auto; }
   .pk-list li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--m-line); }
   .pk-list li:last-child { border-bottom: 0; }
   .pk-list b { min-width: 0; font-weight: 550; overflow-wrap: anywhere; }
@@ -72,8 +73,8 @@ function PACKS_CSS() { return `
   .pk-err:empty { display: none; }
 
   /* ---- the Mods panel: a pack's mods under its name */
-  .pk-group { margin: 8px 0 4px; border: 1px solid var(--m-line); border-radius: var(--m-r-md); overflow: hidden; }
-  .pk-group .pk-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 12px; align-items: center; padding: 12px; background: var(--m-raised); }
+  .pk-group { margin: 8px 0 0; border: 0; border-radius: 0; }
+  .pk-group .pk-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 12px; align-items: center; padding: 12px 8px 4px; background: transparent; }
   .pk-group .pk-head .sw { align-self: start; margin-top: 0; }
   .pk-meta b { display: block; font-weight: 600; line-height: 20px; overflow-wrap: anywhere; }
   .pk-meta small { display: block; color: var(--m-text-3); font-size: var(--m-text-sm); line-height: 16px; }

@@ -7,9 +7,9 @@ function GALLERY_CSS() { return `
   .gl-site { margin: 8px 4px 4px; padding-top: 12px; border-top: 1px solid var(--m-line); }
   .gl-site h4 { margin: 0 8px 8px; }
   /* the whole row opens and closes the list; the Show/Hide .tbtn is the control */
-  .gl-head { display: flex; align-items: center; gap: 12px; padding-block: 8px; padding-inline: 12px 8px; cursor: pointer;
-    border: 1px solid var(--m-line); border-radius: var(--m-r-md); background: var(--m-bg); transition: background var(--m-fast), border-color var(--m-fast); }
-  .gl-head:hover { background: var(--m-hover); border-color: var(--m-line-strong); }
+  .gl-head { display: flex; align-items: center; gap: 12px; padding-block: 8px; padding-inline: 8px; cursor: pointer;
+    border: 0; border-radius: 0; background: transparent; transition: background var(--m-fast); }
+  .gl-head:hover { background: var(--m-hover); }
   .gl-mark { flex: none; display: grid; place-items: center; color: var(--m-text-3); }
   .gl-count { flex: 1; min-width: 0; }
   .gl-count b { display: block; font: 550 var(--m-text-md)/20px var(--m-font); color: var(--m-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -27,7 +27,7 @@ function GALLERY_CSS() { return `
   .gl-trying { margin: 8px 0 0; color: var(--m-text); font: 500 var(--m-text-sm)/16px var(--m-font); }
   /* still: only "a model is working" loops */
   .gl-trying::before { content: ""; margin-block: 0 1px; margin-inline: 0 8px; background: var(--m-text); vertical-align: middle; } /* the status dot: 99-css.js */
-  .gl-item.trying { background: var(--m-raised); border-radius: var(--m-r-md); border-bottom-color: transparent; }
+  .gl-item.trying { background: var(--m-raised); border-radius: 0; border-bottom-color: transparent; }
   .gl-btns { display: flex; gap: 8px; margin-top: 12px; }
   .gl-foot { display: flex; align-items: center; gap: 8px; margin: 4px 10px 0; font: 11px/16px var(--m-mono); color: var(--m-text-3); letter-spacing: 0; }
   .gl-foot span { flex: 1; min-width: 0; text-align: start; }
