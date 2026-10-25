@@ -1,16 +1,15 @@
-// Screenshots of the welcome page, onboarding v2 (docs/getting-started.md),
-// on a desktop window (1280×860) and a phone-width one (390×844):
-//   190/191  choose          one question: websites, desktop apps or both
-//   192/193  connect         nothing found yet: Get Morse Desktop, or an API key
-//   194/195  found           Morse Desktop is open: one button
-//   196/197  allow           waiting for Allow in Morse Desktop
+// Screenshots of the welcome page in Chrome (docs/getting-started.md), on a
+// desktop window (1280×860) and a phone-width one (390×844):
+//   190/191  download        no Morse app on this computer: Download Morse
+//   194/195  asking          the Morse app is open: it asks you to Allow, nothing to click here
 //   198/199  try             the first change, three steps
 //   200/201  try-change      the change on the practice page, ready to save
 //   202/203  win             the first mod is saved; a real site next
 //   204      allow-window    “Allow User Scripts”, only when a change needs it
 //   205      first-site      a suggested site opens with Morse ready and the words typed
-// The real extension (headful, so under Xvfb), Morse Desktop's helper
-// (tests/helpers/fake-desktop.js: the real helper, as Morse Desktop runs it)
+//   206      popup-app       the toolbar popup: no Morse app yet, Download Morse
+// The real extension (headful, so under Xvfb), the Morse app's helper
+// (tests/helpers/fake-desktop.js: the real helper, as the Morse app runs it)
 // and the real `claude` CLI, with a fresh Morse folder each time.
 //
 //   node scripts/build.js && DISPLAY=:99 node demo/shoot-onboarding-v2.js [outDir]   (ONLY=desktop or ONLY=phone)
@@ -36,7 +35,7 @@ async function until(fn, ms = 30000, what = "condition") {
   while (Date.now() < end) { try { const v = await fn(); if (v) return v; } catch {} await sleep(100); }
   throw new Error("timed out waiting for " + what);
 }
-const shot = async (page, name, opts = {}) => { await page.screenshot({ path: path.join(OUT, name), ...opts }); console.log("  📸", name); };
+const shot = async (page, name, opts = {}) => { await page.screenshot({ path: path.join(OUT, name), ...opts }); console.log("  saved", name); };
 const screenOf = page => page.evaluate(() => document.getElementById("app").dataset.screen);
 // The practice frame is sandboxed: its bar's shadow root stays closed. DevTools can read it.
 async function closedText(frame, cls) {
@@ -53,7 +52,7 @@ async function closedText(frame, cls) {
 const demo = await serveDemo();
 const WIKI = `${demo.origin("wiki")}/demo/sites/wiki/`;
 
-async function run({ width, height, scale, n, suffix, want, full }) {
+async function run({ width, height, scale, n, suffix, full }) {
   const port = await freePort();
   const ctx = await chromium.launchPersistentContext(path.join(tmp, `profile${suffix}`), {
     headless: false, viewport: { width, height }, deviceScaleFactor: scale,
@@ -66,27 +65,32 @@ async function run({ width, height, scale, n, suffix, want, full }) {
   await welcome.bringToFront();
   await welcome.addStyleTag({ content: "html { scrollbar-width: none; }" }).catch(() => {}); // the picture is the page, not Chrome's scrollbar
   await welcome.mouse.move(width - 2, height - 2);
-  await sleep(1200);
   const name = (i, what) => `${n + i * 2}-start-${what}${suffix}.png`;
   const opts = { fullPage: full };
 
-  await shot(welcome, name(0, "choose"), opts);
-  await welcome.click(`[data-want=${want}]`);
-  await until(() => welcome.locator("[data-view=desktop]").isVisible(), 15000, "Get Morse Desktop");
-  await sleep(400);
-  await shot(welcome, name(1, "connect"), opts);
+  // No Morse app yet: one button, Download Morse.
+  await until(() => welcome.locator("#download").isVisible(), 15000, "Download Morse");
+  await sleep(600);
+  await shot(welcome, name(0, "download"), opts);
+  if (!suffix) {
+    // The toolbar popup says the same.
+    const pop = await ctx.newPage();
+    await pop.setViewportSize({ width: 348, height: 600 });
+    await pop.goto(`chrome-extension://${new URL(sw.url()).host}/popup.html?url=${encodeURIComponent(WIKI)}`);
+    await sleep(1000);
+    await pop.locator("#model").scrollIntoViewIfNeeded();
+    await shot(pop, "206-popup-app.png");
+    await pop.close();
+    await welcome.bringToFront();
+  }
 
-  // Morse Desktop opens, with Claude Code found on this computer.
+  // The Morse app opens, with Claude Code found on this computer: the page asks by itself.
   const desk = spawn(process.execPath, [path.join(root, "tests", "helpers", "fake-desktop.js")], { env: { ...process.env, MORSE_HOME: path.join(tmp, `home${suffix}`), MORSE_HELPER_PORT: String(port), MORSE_PROVIDER: "" }, stdio: ["pipe", "pipe", "inherit"] });
   procs.push(desk);
   desk.out = ""; desk.stdout.on("data", d => (desk.out += d));
-  await until(() => welcome.locator("#use").isVisible(), 20000, "the one button");
+  await until(() => /ASK /.test(desk.out), 30000, "the Morse app to ask");
   await sleep(2500); // signed in? (checked in the background)
-  await shot(welcome, name(2, "found"), opts);
-  await welcome.click("#use");
-  await until(() => /ASK /.test(desk.out), 15000, "Morse Desktop to ask");
-  await sleep(300);
-  await shot(welcome, name(3, "allow"), opts);
+  await shot(welcome, name(2, "asking"), opts);
   desk.stdin.write("allow\n");
   await until(async () => (await screenOf(welcome)) === "try", 20000, "the first change");
   const frame = await until(() => welcome.frames().find(f => f.url().includes("practice.html")), 30000, "the practice frame");
@@ -133,8 +137,8 @@ async function run({ width, height, scale, n, suffix, want, full }) {
 }
 
 const ONLY = process.env.ONLY || "";
-if (ONLY !== "phone") await run({ width: 1280, height: 860, scale: 1, n: 190, suffix: "", want: "web", full: false });
-if (ONLY !== "desktop") await run({ width: 390, height: 844, scale: 2, n: 191, suffix: "-phone", want: "both", full: true });
+if (ONLY !== "phone") await run({ width: 1280, height: 860, scale: 1, n: 190, suffix: "", full: false });
+if (ONLY !== "desktop") await run({ width: 390, height: 844, scale: 2, n: 191, suffix: "-phone", full: true });
 await demo.close();
 await fs.rm(tmp, { recursive: true, force: true });
 process.exit(0);

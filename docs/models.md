@@ -21,12 +21,15 @@ When no model is connected, the bar says so, with a button to connect one.
 
 ## Choose one
 
-`morse setup` looks for Claude Code, Codex and an API key on this computer.
-It suggests the first one it finds and saves your choice. To choose without
-questions, run `morse setup --use claude-code` (or `codex`, or
-`api-key --key <your key>`).
+The Morse app chooses for you. The first time it opens, it looks for Claude
+Code, Codex and an API key on this computer, uses the first one it finds and
+checks that it answers. To change it, open **Model** in the Morse app and
+click **Change…**. Each choice says **Ready** or **Not installed**, and
+**How to install** says what to do. See [The Morse app](desktop-app.md#model).
 
-Or set it yourself:
+For developers, the `morse` command does the same: `morse setup` asks, and
+`morse setup --use claude-code` (or `codex`, or `api-key --key <your key>`)
+doesn't. Or set it yourself:
 
 ```bash
 morse model                                              # which model Morse will use
@@ -133,32 +136,30 @@ Changes by opus took about 10 seconds. See the details in
 
 ## In Chrome
 
-The extension can reach your model in three ways. The welcome page sets up
-any of them ([Getting started](getting-started.md#3-connect-a-model)). To
-change it later, use the Morse popup (Chrome's toolbar button).
+Morse in Chrome uses the model you chose in the Morse app. In the app, click
+**Use Morse in Chrome**. When Morse's welcome page opens in Chrome, the app
+asks **“Allow Chrome to use your Claude Code?”**. Click **Allow**. That's
+all ([Getting started](getting-started.md#3-websites-too-use-morse-in-chrome)).
+The Morse popup (Chrome's toolbar button) shows which model it uses.
 
-- **Morse Desktop**, the easiest. It runs the Morse helper. The welcome page
-  finds it. Click **Use Claude Code** (or Codex). Morse Desktop asks
-  **“Allow Chrome to use your Claude Code?”**. Click **Allow**.
-- **The Morse helper from a terminal**, for Claude Code, Codex, or keys kept
-  on your computer. Run `morse serve`. When you click Connect on the welcome
-  page, the terminal asks you. Type `y`. Or it shows a 6-character code. Type
-  the code into the popup and click **Pair**. Keep the terminal open.
-  `morse pair` shows a new code. `morse unpair` signs every browser out. When
-  you press Stop or close the tab, the model on your computer stops too.
-- **An Anthropic API key**, with nothing to install. Paste a key in the popup
-  and pick a model. The key stays in this browser. Requests go straight from
+For developers, the popup's **Developer** section (and the welcome page with
+`?dev`) has two more ways:
+
+- **The Morse helper from a terminal.** Run `morse serve`. When the welcome
+  page asks, the terminal asks you. Type `y`. Or it shows a 6-character code.
+  Type the code under **Developer** and click **Pair**. `morse pair` shows a
+  new code. `morse unpair` signs every browser out. When you press Stop or
+  close the tab, the model on your computer stops too.
+- **An Anthropic API key**, kept in this browser. Requests go straight from
   Chrome to Anthropic.
 
-The popup's **Test the model** button sends a small real request and shows
-the reply.
-
-![The Morse popup: mods on this site and model settings](screenshots/34-popup.png)
+**Test the model** there sends a small real request and shows the reply.
 
 ## In desktop apps
 
-`morse launch` uses the model you chose with `morse setup` or `morse config`.
-There is nothing else to set up.
+Apps you open with the Morse app use the model you chose there. (`morse
+launch` uses the one from `morse setup` or `morse config`: it is the same
+choice.) There is nothing else to set up.
 
 ## Voice in desktop apps
 

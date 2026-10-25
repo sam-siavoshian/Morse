@@ -1,9 +1,11 @@
-// Screenshots of Morse Desktop (desktop-app/) for docs/desktop-app.md, taken
+// Screenshots of the Morse app (desktop-app/) for docs/desktop-app.md, taken
 // from the real app with the real apps this machine has, each with its own
 // icon: Microsoft's Visual Studio Code opened with Morse for real; VSCodium,
 // Obsidian, Joplin and Logseq listed (MORSE_SHOT_APPS: more app paths to
 // list); Claude Code (sonnet) checked for real when it's installed (the demo
-// model otherwise).
+// model otherwise). "Use Morse in Chrome" copies the extension to
+// ~/Morse for Chrome (removed afterwards); Chrome itself isn't started
+// (MORSE_CHROME=true), so the window's picture is what shows.
 //
 //   DISPLAY=:99 node demo/shoot-desktop-app.js [outDir]   (default docs/screenshots)
 import { createRequire } from "node:module";
@@ -51,7 +53,10 @@ for (const m of [
   mod("joplin", "file:///joplin/index.html", "Hide Synchronize", "hide this button, I don't use sync"),
 ]) await fs.writeFile(path.join(home, "mods", `${m.id}.json`), JSON.stringify(m, null, 2));
 
-const env = { ...process.env, MORSE_HOME: home, MORSE_DESKTOP_SCAN: "0", MORSE_HELPER_PORT: String(17000 + Math.floor(Math.random() * 2000)), ELECTRON_RUN_AS_NODE: "" };
+const chromeFolder = path.join(os.homedir(), "Morse for Chrome");
+const hadChromeFolder = existsSync(chromeFolder);
+const env = { ...process.env, MORSE_HOME: home, MORSE_DESKTOP_SCAN: "0", MORSE_HELPER_PORT: String(17000 + Math.floor(Math.random() * 2000)), ELECTRON_RUN_AS_NODE: "",
+  MORSE_COPY_EXTENSION: "1", MORSE_CHROME_FOLDER: chromeFolder, MORSE_CHROME: "/bin/true" };
 async function launch(theme) {
   const app = await _electron.launch({ executablePath: electronExe, args: [path.join(root, "desktop-app"), ...ROOT], env: { ...env, MORSE_DESKTOP_THEME: theme }, colorScheme: theme, timeout: 60000 });
   const w = await app.firstWindow();
@@ -77,6 +82,11 @@ try {
   await w.waitForFunction(() => !document.querySelector("#first-model .radar.live") && /answered|didn't answer/.test(document.querySelector("#first-model").textContent), null, { timeout: 120000 });
   await w.mouse.move(5, 600);
   await shot(w, "175-desktop-app-first-run.png");
+  // 0b. Use Morse in Chrome too: the folder, Chrome's extensions page, and the picture of where to click.
+  await w.click("#first-chrome");
+  await w.locator("dialog#chrome-guide[open]").waitFor();
+  await shot(w, "176-desktop-app-chrome-guide.png");
+  await w.click("#guide-done");
   await w.click("#first-skip");
   const row = w.locator(`li[data-app="${APP}"]`);
   await row.waitFor();
@@ -93,7 +103,11 @@ try {
   // ask): the processes with this run's own profile.
   const { listProcesses } = await import("../daemon/apps.js");
   for (const p of listProcesses()) if (p.cmd.includes(profile)) try { process.kill(p.pid, "SIGTERM"); } catch {}
-  await w.locator(`li[data-app="${APP}"].closed`).waitFor({ timeout: 30000 });
+  // VS Code sometimes stays after SIGTERM (it was disconnected, not asked to quit): then it is killed.
+  await w.locator(`li[data-app="${APP}"].closed`).waitFor({ timeout: 10000 }).catch(async () => {
+    for (const p of listProcesses()) if (p.cmd.includes(profile)) try { process.kill(p.pid, "SIGKILL"); } catch {}
+    await w.locator(`li[data-app="${APP}"].closed`).waitFor({ timeout: 30000 });
+  });
   kids.push(spawn(exe, appArgs, { stdio: "ignore", env: { ...process.env, ELECTRON_RUN_AS_NODE: "" } }));
   await w.locator(`li[data-app="${APP}"].open`).waitFor({ timeout: 60000 });
   await row.getByRole("button", { name: "Open with Morse" }).click();
@@ -112,10 +126,9 @@ try {
   await shot(w, "169-desktop-app-model.png");
   await w.click("#cancel-choice");
 
-  // 4. Chrome: the helper on, and a code to type.
+  // 4. Chrome: Use Morse in Chrome, Let Chrome use Morse, and (under Advanced) a code.
   await tab(w, "chrome");
-  await w.click("#new-code");
-  await w.waitForSelector("#pair-code:not([hidden])");
+  await w.mouse.move(5, 500);
   await shot(w, "170-desktop-app-chrome.png");
 
   // 5. The Morse extension asks to connect (the request it makes, docs/dev/pairing.md).
@@ -156,4 +169,5 @@ try {
   const { listProcesses } = await import("../daemon/apps.js");
   for (const p of listProcesses()) if (p.cmd.includes(home)) try { process.kill(p.pid, "SIGKILL"); } catch {}
   await fs.rm(home, { recursive: true, force: true }).catch(() => {});
+  if (!hadChromeFolder) await fs.rm(chromeFolder, { recursive: true, force: true }).catch(() => {});
 }

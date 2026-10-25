@@ -22,29 +22,15 @@ Press a shortcut, point at something and say what you want: “add a sleep timer
 
 ## Install
 
-**Download Morse Desktop:** [Mac (Apple silicon)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) · [Mac (Intel)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg) · [Windows](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) · [Linux](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage)
+Morse is one app. Download it, open it, and you're done.
 
-These are [preview builds](https://github.com/sam-siavoshian/RRAA/releases/tag/preview) of the newest `main`, not signed yet. The first time, on a Mac: open Morse, then System Settings, Privacy & Security, **Open Anyway**. On Windows: **More info**, then **Run anyway**. More in [Morse Desktop](docs/desktop-app.md#get-it).
+**[Download Morse](https://sam-siavoshian.github.io/RRAA/site/#install):** [Mac (Apple silicon)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) · [Mac (Intel)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg) · [Windows](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) · [Linux](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage)
 
-For developers, one line installs the `morse` command (needs Node 22): `curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install.sh | sh` on macOS and Linux, `irm https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install.ps1 | iex` in Windows PowerShell. Run it again to update; `morse uninstall` removes it.
+1. Open Morse. It finds Claude Code or Codex by itself, and lists your apps.
+2. Click **Open with Morse** next to an app. In the app, press **Ctrl+Shift+Space** (**⌥Space** on a Mac), point at something and say what you want.
+3. **Chrome:** click **Use Morse in Chrome** in the Morse app. Then click **Allow** when Morse asks.
 
-You need [Node](https://nodejs.org) 22 or newer. For full steps and help when something goes wrong, see [Getting started](docs/getting-started.md).
-
-**Websites (Chrome)**
-
-1. Install Morse: `npm install -g morse-cli`. Until the first npm release, use `npm install -g github:sam-siavoshian/RRAA`.
-2. Open `chrome://extensions` and turn on **Developer mode**. Click **Load unpacked** and choose the folder that `morse extension` prints. The welcome page opens.
-3. Answer its one question. Then connect a model. With Morse Desktop open, click **Use Claude Code**, then **Allow**. Or paste an Anthropic API key, or run the `morse setup --pair <code>` command it shows.
-4. Make your first change on the practice page. Then press **⌥Space** on any page (Ctrl+Shift+Space on Windows and Linux). Morse asks for **“Allow User Scripts”** only when a change needs it.
-
-**Desktop apps (tested on Visual Studio Code, VSCodium, Obsidian, Logseq and Joplin)**
-
-1. Install Morse as in step 1 above. Then run `morse setup` to choose your model.
-2. Run `morse apps` to see which of your apps Morse can connect to.
-3. Run `morse launch obsidian` to open the app with Morse. Keep the terminal open.
-4. In the app, press **Ctrl+Shift+Space** (⌥Space on a Mac). Point at something and say what you want. More in [Desktop apps](docs/desktop.md).
-
-To work on Morse itself, see the [developer guide](docs/dev/README.md#set-up-a-checkout).
+These are [preview builds](https://github.com/sam-siavoshian/RRAA/releases/tag/preview) of the newest `main`, not signed yet. The first time, on a Mac: open Morse, then System Settings, Privacy & Security, **Open Anyway**. On Windows: **More info**, then **Run anyway**. Full steps and help: [Getting started](docs/getting-started.md).
 
 ## What you can do
 
@@ -63,12 +49,12 @@ To work on Morse itself, see the [developer guide](docs/dev/README.md#set-up-a-c
 | **Mod packs** | Share a set of mods with your team. Each person picks the ones they want. The pack can stay up to date. | [Mod packs](docs/mod-packs.md) |
 | **Your controls** | One shortcut turns every mod off. Pause Morse on a site. Morse stops a mod that slows down, freezes or keeps breaking a page. Back up everything to one file. | [Your controls](docs/your-controls.md) |
 | **Your style** | One look on every site and app: your font, bigger text, calmer pages, colors that are easier to tell apart. Say it once and end with “everywhere”. | [Your style](docs/your-style.md) |
-| **Desktop apps** | `morse launch obsidian` opens the app with Morse. The app's own files never change. | [Desktop apps](docs/desktop.md) |
-| **Morse Desktop** | An app for your computer. Open your apps with Morse, choose your model and connect Chrome, all without a terminal. It waits in the tray. | [Morse Desktop](docs/desktop-app.md) |
+| **The Morse app** | Opens your apps with Morse, finds your model, and adds Morse to Chrome. The apps' own files never change. It waits in the tray. | [The Morse app](docs/desktop-app.md) |
+| **Desktop apps** | Which apps work, and why some can't. | [Desktop apps](docs/desktop.md) |
 
 ## Which models work
 
-Morse has no model and no account of its own. It uses a model you already have. `morse setup` finds it.
+Morse has no model and no account of its own. It uses a model you already have. The Morse app finds it.
 
 | Model | What you need |
 |---|---|
@@ -109,6 +95,15 @@ Version 0.2, not released yet ([changelog](CHANGELOG.md)). Here is what was test
 - **Mods can do anything the page can.** The model is told not to send data anywhere, but nothing stops it yet. Before you install a shared mod, Morse tells you what it does.
 - The extension isn't in the Chrome Web Store. Nobody has tried Morse Desktop's macOS and Windows builds, their signing, its tray menu or connecting Chrome with one click ([Releasing](docs/dev/releasing.md#what-was-checked)).
 - Most screenshots replay saved answers, so they look the same every time. One set uses [real Claude Code](docs/screenshots/claude-code). How each part was tested: [Testing](docs/dev/testing.md#what-was-verified-and-how).
+
+## For developers
+
+The `morse` command does everything the app does, from a terminal, and works on Morse itself. It needs [Node](https://nodejs.org) 22 or newer.
+
+- One line installs it: `curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install.sh | sh` on macOS and Linux, `irm https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install.ps1 | iex` in Windows PowerShell. Run it again to update; `morse uninstall` removes it. Or `npm install -g github:sam-siavoshian/RRAA`.
+- `morse setup` chooses the model, `morse apps` lists your apps, `morse launch obsidian` opens one with Morse, and `morse help` lists the rest.
+- The Chrome extension's folder: `morse extension`. Its welcome page with `?dev` has the developer ways to connect: an Anthropic API key, or `morse setup --pair <code>`.
+- To build and test Morse: the [developer guide](docs/dev/README.md#set-up-a-checkout).
 
 ## More
 
