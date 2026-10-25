@@ -193,6 +193,10 @@ const dist = findElectron();
 // Building and reading the app needs only the runtime; running it needs a display.
 const noRuntime = !dist ? "no Electron runtime found. Install one with: npm install --prefix ~/.cache/morse/electron electron (or set MORSE_ELECTRON to an electron binary)"
   : false;
+// These read the app's process and binary the Linux way (its fuse wire is in
+// the main binary, its pid and ports from /proc); on a Mac, Morse Desktop's
+// tests (desktop-app-ui.test.js) cover the pipe instead.
+const MAC_LINUX_ONLY = process.platform === "darwin" && "reads the app's process and binary the Linux way; desktop-app-ui.test.js covers the pipe on a Mac";
 const skip = noRuntime || (process.platform === "linux" && !process.env.DISPLAY ? "Electron needs a display. Run with DISPLAY=:99 (Xvfb)" : false);
 if (skip) console.log(`electron.test.js: skipping the real Electron app: ${skip}`);
 
@@ -306,10 +310,16 @@ test("real Electron: launch, hotkey, point, change, save, quit, relaunch, second
   assert.equal(await w.ev(`typeof window.tunes?.openMiniPlayer`), "function", "the preload's contextBridge API is there");
   assert.equal(await w.ev(`typeof __morseHostSend + typeof __morseHost`), "undefinedundefined", "the app's own world can't reach Morse's host");
 
-  // The real hotkey, as trusted key events.
-  await w.key("Control", "ControlLeft", { mods: 2, vk: 17 });
-  await w.key(" ", "Space", { mods: 2 | 8, vk: 32 });
-  await until(async () => (await w.status())?.open, 5000, "the bar to open on Ctrl+Shift+Space");
+  // The real hotkey, as trusted key events: ⌥Space on a Mac (Option+Space
+  // types a no-break space there), Ctrl+Shift+Space elsewhere (core/hotkeys.js).
+  if (process.platform === "darwin") {
+    await w.key("Alt", "AltLeft", { mods: 1, vk: 18 });
+    await w.key("\u00a0", "Space", { mods: 1, vk: 32 });
+  } else {
+    await w.key("Control", "ControlLeft", { mods: 2, vk: 17 });
+    await w.key(" ", "Space", { mods: 2 | 8, vk: 32 });
+  }
+  await until(async () => (await w.status())?.open, 5000, `the bar to open on ${process.platform === "darwin" ? "⌥Space" : "Ctrl+Shift+Space"}`);
 
   // Point at the player controls and pick them. Chromium delivers mouse moves
   // on animation frames, and right after the bar opens on a busy machine the
@@ -390,7 +400,7 @@ test("real Electron: launch, hotkey, point, change, save, quit, relaunch, second
   await quit(port);
 });
 
-test("real Electron: packed as app.asar with its fuses locked down, Morse still gets in", { skip, timeout: 90000 }, async () => {
+test("real Electron: packed as app.asar with its fuses locked down, Morse still gets in", { skip: skip || MAC_LINUX_ONLY, timeout: 90000 }, async () => {
   const { exe } = await lockedApp();
   const info = await inspectFuses(exe);
   assert.equal(info.fuses.RunAsNode, "disabled");
@@ -455,7 +465,7 @@ const devtoolsOn = port => fetch(`http://127.0.0.1:${port}/json/version`, { sign
 // Tunes' main process for this profile (not its helpers, not morse).
 const tunesMain = profile => apps.listProcesses().filter(p => p.cmd.includes(profile) && !/\s--type=/.test(p.cmd) && /[\\/]tunes$/i.test(p.cmd.split(/\s+/)[0])).map(p => p.pid);
 
-test("real Electron: on the private pipe Morse is in every window (runtime, saved mod, second window, <webview>), stop takes it off, and the app outlives Morse", { skip, timeout: 120000 }, async () => {
+test("real Electron: on the private pipe Morse is in every window (runtime, saved mod, second window, <webview>), stop takes it off, and the app outlives Morse", { skip: skip || MAC_LINUX_ONLY, timeout: 120000 }, async () => {
   const { exe } = await tunesApp();
   const { connectApp, startSession } = await import("../daemon/desktop.js");
   const { saveMod } = await import("../daemon/store.js");
@@ -509,7 +519,7 @@ test("real Electron: on the private pipe Morse is in every window (runtime, save
   assert.deepEqual(tunesMain(profile), [pid], "the app keeps running without Morse");
 });
 
-test("real Electron: morse launch without --port uses the pipe; --watch opens it again when asked; killing morse leaves the app running", { skip, timeout: 180000 }, async () => {
+test("real Electron: morse launch without --port uses the pipe; --watch opens it again when asked; killing morse leaves the app running", { skip: skip || MAC_LINUX_ONLY, timeout: 180000 }, async () => {
   const { exe } = await tunesApp();
   const profile = path.join(home, "profile-pipe-cli");
   const args = ["--", `--user-data-dir=${profile}`, ...(ROOT ? ["--no-sandbox"] : [])];
