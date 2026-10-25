@@ -470,6 +470,21 @@ test("the window's page: a strict CSP, no inline code, only its own files", () =
   for (const s of ["contextIsolation: true", "sandbox: true", "nodeIntegration: false", "webviewTag: false", "setWindowOpenHandler(() => ({ action: \"deny\" }))", "will-navigate", "setPermissionRequestHandler"]) assert.ok(main.includes(s), s);
 });
 
+test("Mods page: the app name is not glued to the count, rows are not cards, the footer label stays one line", () => {
+  const js = readFileSync(path.join(root, "desktop-app/ui/app.js"), "utf8");
+  const css = readFileSync(path.join(root, "desktop-app/ui/app.css"), "utf8");
+  assert.match(js, /class: "gname"/, "the app name is its own element");
+  assert.match(js, /class: "gmeta"/, "the count sits under the name, not in the same run of text");
+  assert.match(js, /h\("small", \{ text: count \}\)/, "the count is the quiet line");
+  assert.match(js, /aria-label": `\$\{g\.name\}, \$\{count\}`/, "the heading says the name, then the count");
+  assert.doesNotMatch(js, /\$\{g\.name\}\$\{/, "the name is not written against the count");
+  assert.match(css, /#mods \.list\.mods \{[^}]*border:\s*0/, "mod rows are not a bordered card");
+  assert.match(css, /#mods \.list\.mods > li \{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/, "the switch has its own column, so text cannot cover it");
+  assert.match(css, /#mods \.list\.mods \.grow small \{[^}]*text-overflow:\s*ellipsis/, "a long request ends in an ellipsis");
+  assert.match(css, /\.side-foot \.switchrow > span \{[^}]*white-space:\s*nowrap/, "Always open with Morse stays one line");
+  assert.match(css, /grid-template-columns:\s*272px/, "the sidebar is wide enough for that label");
+});
+
 // ---------------------------------------------------------------- links, desktop files, the icon
 
 test("morse:// links: only morse://open, which shows the window", () => {

@@ -36,10 +36,11 @@ h1 { margin: 0; font: 600 24px/32px var(--display); letter-spacing: -0.02em; }
 h2 { margin: 0; font: 600 14px/20px var(--m-font); letter-spacing: -0.01em; }
 img { -webkit-user-drag: none; }
 
-.app { display: grid; grid-template-columns: 232px minmax(0, 1fr); height: 100%; }
+/* 272px so "Always open with Morse" fits on one line beside its switch. */
+.app { display: grid; grid-template-columns: 272px minmax(0, 1fr); height: 100%; }
 
 /* ---- sidebar */
-.side { display: flex; flex-direction: column; gap: var(--s-5); padding: var(--s-5) var(--s-3) var(--s-4); background: var(--side-bg); border-inline-end: 1px solid var(--m-line); }
+.side { display: flex; flex-direction: column; gap: var(--s-5); padding: var(--s-5) var(--s-3); background: var(--side-bg); border-inline-end: 1px solid var(--m-line); }
 body.mac .side { padding-top: 52px; -webkit-app-region: drag; }
 body.mac .side :is(button, label, input) { -webkit-app-region: no-drag; }
 .brand { display: flex; align-items: center; gap: 10px; padding: 0 var(--s-3); font: 600 15px/20px var(--display); letter-spacing: -0.01em; }
@@ -55,10 +56,11 @@ nav small { font: 500 11px/16px var(--m-font); color: var(--m-text-3); font-vari
 nav small.on::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-inline-end: 6px; border-radius: 50%; background: var(--m-signal-4); vertical-align: 1px; }
 nav button[aria-current="page"] small:not(.warn) { color: var(--m-text-2); }
 nav small.warn { color: var(--m-warn); }
-.side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 2px; }
-.side-foot .switchrow { height: 36px; padding: 0 var(--s-3); border-radius: var(--r); color: var(--m-text-2); font-weight: 500; }
+.side-foot { margin-top: auto; display: flex; flex-direction: column; gap: var(--s-1); padding-top: var(--s-3); }
+.side-foot .switchrow { min-height: 36px; height: auto; padding: 8px var(--s-3); border-radius: var(--r); color: var(--m-text-2); font-weight: 500; gap: var(--s-3); }
 .side-foot .switchrow:hover { background: var(--row-hover); color: var(--m-text); }
-.ver { padding: var(--s-2) var(--s-3) 0; font-size: 11px; line-height: 16px; color: var(--m-text-3); }
+.side-foot .switchrow > span { flex: 1; min-width: 0; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ver { margin-top: var(--s-2); padding: var(--s-1) var(--s-3) 0; font-size: 11px; line-height: 16px; color: var(--m-text-3); white-space: nowrap; }
 
 /* ---- main */
 main { overflow-y: auto; padding: var(--s-7) var(--s-8) var(--s-8); }
@@ -352,10 +354,35 @@ main::-webkit-scrollbar-track { background: transparent; }
 #update .mark-tile .radar { width: 22px; height: 22px; }
 #update #update-d { font-variant-numeric: tabular-nums; }
 #update .update-pct { font-weight: 500; color: var(--m-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* ---- mods: one quiet list per app. Rows are not cards. */
+#mod-groups { display: flex; flex-direction: column; gap: var(--s-6); }
+#mods .group h2 { display: flex; align-items: center; gap: var(--s-3); margin: 0 0 var(--s-2); min-width: 0; }
+#mods .gicon { flex: none; width: 24px; height: 24px; object-fit: contain; background: none; border: 0; border-radius: 0; }
+#mods .gicon.none { display: grid; place-items: center; background: none; color: var(--m-text-3); }
+#mods .gicon.none svg { width: 16px; height: 16px; }
+#mods .gmeta { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; gap: 1px; }
+#mods .gname { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--m-text); font: 600 14px/20px var(--m-font); }
+#mods .gmeta small { display: block; margin: 0; font: 500 12px/16px var(--m-font); letter-spacing: 0; color: var(--m-text-3); }
+#mods .list.mods { margin: 0; padding: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+#mods .list.mods > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-3); min-height: 52px; padding: var(--s-2) 2px; border-radius: var(--r); }
+#mods .list.mods > li + li::before { inset-inline-start: 0; inset-inline-end: 0; }
+#mods .list.mods .grow b { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+#mods .list.mods .grow small { display: block; min-width: 0; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+#mods .list.mods .grow small span { display: block; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+#mods .list.mods > li.off .grow b { color: var(--m-text-2); }
+#mods .list.mods > li.off .grow small { color: var(--m-text-3); }
+#mods .mod-actions { display: flex; align-items: center; gap: var(--s-1); flex: none; }
+#mods .modsw { display: grid; place-items: center; width: 44px; height: 32px; margin: 0; cursor: pointer; border-radius: var(--r); }
+#mods .list.mods input[role="switch"]:focus-visible,
+.side-foot input[role="switch"]:focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
 /* Delete waits until the row is pointed at or focused, so the list stays calm. */
-.list.mods [data-del] { opacity: 0; transition: opacity var(--m-fast); }
-.list.mods > li:hover [data-del], .list.mods > li:focus-within [data-del] { opacity: 1; }
-@media (hover: none) { .list.mods [data-del] { opacity: 1; } }
+#mods .list.mods [data-del] { opacity: 0; transition: opacity var(--m-fast); }
+#mods .list.mods > li:hover [data-del], #mods .list.mods > li:focus-within [data-del] { opacity: 1; }
+@media (hover: none) { #mods .list.mods [data-del] { opacity: 1; } }
+#mods .empty { display: flex; flex-direction: column; align-items: center; gap: var(--s-2); padding: var(--s-8) var(--s-5); text-align: center; color: var(--m-text-2); background: none; border: 0; }
+#mods .empty svg { color: var(--m-text-3); margin-bottom: var(--s-2); }
+#mods .empty b { color: var(--m-text); font-weight: 600; font-size: 14px; }
+#mods .empty span { max-width: 360px; line-height: 20px; }
 /* Glass on a Mac (main.js gives the window the system's sidebar material):
    the sidebar and the first run show it through; the content keeps a nearly
    solid page so text reads the same over any wallpaper. */

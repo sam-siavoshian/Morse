@@ -360,13 +360,32 @@ function renderMods() {
   if ($("mod-groups").dataset.sig === sig) return;
   $("mod-groups").dataset.sig = sig;
   const focused = document.activeElement?.dataset?.mod;
-  $("mod-groups").replaceChildren(...groups.map(g => h("div", { class: "group" },
-    h("h2", {}, (icon => icon ? h("img", { class: "gicon", src: icon, alt: "" }) : h("span", { class: "gicon none", "aria-hidden": "true" }, appsGlyph()))(st.apps.find(a => a.id === g.app)?.icon), h("span", { text: g.name }), h("small", { text: t("desk.mods.count", { n: g.mods.length, on: g.mods.filter(m => m.on).length }) })),
-    h("ul", { class: "list mods" }, ...g.mods.map(m => h("li", { class: m.on ? "" : "off" },
-      h("div", { class: "grow" }, h("b", { text: m.title }), h("small", {}, h("span", { text: m.paused ? t("desk.mods.stopped") : `“${m.request}”` }))),
-      h("button", { type: "button", class: "ibtn", title: t("btn.delete"), "aria-label": t("desk.mods.delete", { title: m.title }), "data-del": m.id, onclick: () => deleteMod(m) }, trashGlyph()),
-      h("input", { type: "checkbox", role: "switch", "aria-label": t("desk.mods.on", { title: m.title }), "data-mod": m.id, checked: m.on, onchange: e => toggleMod(m.id, e.target) })))))));
+  $("mod-groups").replaceChildren(...groups.map(groupBlock));
   if (focused) document.querySelector(`[data-mod="${CSS.escape(focused)}"]`)?.focus();
+}
+// The name and the count are separate lines. A heading that puts them in one
+// run of text reads "Obsidian1 mod" — the number glued to the name.
+function groupBlock(g) {
+  const on = g.mods.filter(m => m.on).length;
+  const count = t("desk.mods.count", { n: g.mods.length, on });
+  const icon = st.apps.find(a => a.id === g.app)?.icon;
+  const mark = icon
+    ? h("img", { class: "gicon", src: icon, alt: "", draggable: "false" })
+    : h("span", { class: "gicon none", "aria-hidden": "true" }, appsGlyph());
+  return h("div", { class: "group" },
+    h("h2", { "aria-label": `${g.name}, ${count}` },
+      mark,
+      h("span", { class: "gmeta" }, h("span", { class: "gname", text: g.name }), h("small", { text: count }))),
+    h("ul", { class: "list mods" }, ...g.mods.map(modRow)));
+}
+function modRow(m) {
+  const request = m.paused ? t("desk.mods.stopped") : `“${m.request}”`;
+  return h("li", { class: m.on ? "" : "off" },
+    h("div", { class: "grow" }, h("b", { text: m.title }), h("small", {}, h("span", { text: request }))),
+    h("div", { class: "mod-actions" },
+      h("button", { type: "button", class: "ibtn", title: t("btn.delete"), "aria-label": t("desk.mods.delete", { title: m.title }), "data-del": m.id, onclick: () => deleteMod(m) }, trashGlyph()),
+      h("label", { class: "modsw" },
+        h("input", { type: "checkbox", role: "switch", "aria-label": t("desk.mods.on", { title: m.title }), "data-mod": m.id, checked: m.on, onchange: e => toggleMod(m.id, e.target) }))));
 }
 // A switch that lies is worse than a slow one: if the change is refused (the
 // mod is gone, or couldn't be written), put the switch back where it was.
