@@ -253,7 +253,7 @@ let pushTimer = null;
 function changed() {
   clearTimeout(pushTimer);
   pushTimer = setTimeout(async () => {
-    try { lastState = await service.state(); } catch (e) { log("state", e.message); return; }
+    try { lastState = { ...(await service.state()), update: updater?.status || { phase: "idle" } }; } catch (e) { log("state", e.message); return; }
     if (win && !win.isDestroyed()) win.webContents.send(PUSH, lastState);
     updater?.idle(); // an app was disconnected: a downloaded update may install now
     rebuildTray();
@@ -285,11 +285,14 @@ app.whenReady().then(async () => {
   service = createService({ daemon: await loadDaemon(), emit: changed, log, iconFor, copyExtension: app.isPackaged || process.env.MORSE_COPY_EXTENSION === "1", ...(process.env.MORSE_CHROME_FOLDER && { chromeFolder: process.env.MORSE_CHROME_FOLDER }), chromeStore: isStoreUrl(LINKS.chrome) ? LINKS.chrome : "", self: [process.execPath, APPIMAGE], onAsk: () => showWindow() });
   // Updates itself from the preview release: downloads in the background, and
   // installs when no app is connected and the window isn't in use, or at quit.
-  updater = createUpdater({ app, log, getAppImage: () => APPIMAGE, busy: () => service.sessions.size > 0 || !!(win && win.isVisible() && win.isFocused()) });
+  updater = createUpdater({ app, log, getAppImage: () => APPIMAGE, busy: () => service.sessions.size > 0, onStatus: () => { changed(); if (["downloading", "ready"].includes(updater?.status.phase) && win && !win.isVisible()) showWindow(); } });
   updater.start();
   registerIpc({
     ipcMain, service, isTrusted, log,
     native: {
+      updateStatus: () => updater?.status || { phase: "idle" },
+      installUpdate: () => !!updater?.installNow(),
+      updateLater: () => !!updater?.later(),
       pickApp: async () => {
         const r = await dialog.showOpenDialog(win, {
           title: "Add an app", buttonLabel: "Add",

@@ -329,3 +329,7 @@ main::-webkit-scrollbar-track { background: transparent; }
 
 /* "Open the bar" beside Disconnect on a connected app */
 .row-acts { display: inline-flex; gap: 8px; align-items: center; }
+
+/* Updating: a thin progress bar in the update dialog */
+.bar-track { height: 6px; border-radius: 999px; background: var(--m-line-strong); overflow: hidden; }
+.bar-fill { height: 100%; width: 0; border-radius: inherit; background: var(--m-text); transition: width 200ms linear; }

@@ -488,11 +488,32 @@ $("first-key-use").onclick = async () => {
   if (r?.error) $("first-model").replaceChildren(h("i", { class: "dot bad" }), h("span", { text: r.error }));
 };
 
+// ---------------------------------------------------------------- update
+// Morse updating itself: a dialog while it downloads and installs; when apps
+// are connected, Restart now or Later (it installs when Morse quits).
+function renderUpdate() {
+  const u = st.update || { phase: "idle" }, d = $("update");
+  const show = ["downloading", "installing", "ready", "failed"].includes(u.phase);
+  if (!show) { if (d.open) d.close(); return; }
+  $("update-h").textContent = t(u.phase === "downloading" ? "desk.update.downloadingH" : u.phase === "ready" ? "desk.update.readyH" : u.phase === "failed" ? "desk.update.failedH" : "desk.update.installingH");
+  $("update-d").textContent = u.phase === "downloading" ? t("desk.update.downloading", { percent: u.percent ?? 0 })
+    : u.phase === "ready" ? t("desk.update.ready") : u.phase === "failed" ? t("desk.update.failed") : t("desk.update.installing");
+  $("update-track").hidden = u.phase !== "downloading";
+  $("update-fill").style.width = `${u.percent ?? 0}%`;
+  $("update-acts").hidden = u.phase !== "ready" && u.phase !== "failed";
+  $("update-now").hidden = u.phase !== "ready";
+  $("update-later").textContent = t(u.phase === "failed" ? "desk.update.close" : "desk.update.later");
+  if (!d.open) d.showModal();
+}
+$("update-now").onclick = () => morse.installUpdate();
+$("update-later").onclick = async () => { if (st.update?.phase === "ready") await morse.updateLater(); $("update").close(); st.update = { phase: "idle" }; };
+$("update").addEventListener("cancel", e => { if (["downloading", "installing"].includes(st.update?.phase)) e.preventDefault(); });
+
 // ---------------------------------------------------------------- state
 function render() {
   if (!st || st.error) return;
   renderFirst();
-  renderApps(); renderModel(); renderChrome(); renderMods();
+  renderApps(); renderModel(); renderChrome(); renderMods(); renderUpdate();
   $("at-login").checked = st.settings.startAtLogin;
   $("version").textContent = `Morse ${st.version}`;
   document.documentElement.dataset.ready = "1";

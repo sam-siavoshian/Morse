@@ -34,8 +34,8 @@ export const LINKS = {
 
 // name -> [argument checks, (service, native, ...args) => result]
 export const API = {
-  state:              [[none], (s) => s.state()],
-  refreshApps:        [[none], (s) => s.state({ fresh: true })],
+  state:              [[none], async (s, n) => ({ ...(await s.state()), update: n.updateStatus?.() || { phase: "idle" } })],
+  refreshApps:        [[none], async (s, n) => ({ ...(await s.state({ fresh: true })), update: n.updateStatus?.() || { phase: "idle" } })],
   openApp:            [[id, opt(oneOf("y", "a"))], (s, n, appId, answer) => s.openApp(appId, { answer })],
   openBar:            [[id], (s, n, appId) => s.openBar(appId)],
   disconnectApp:      [[id], (s, n, appId) => s.disconnectApp(appId)],
@@ -64,6 +64,8 @@ export const API = {
   setStartAtLogin:    [[bool], async (s, n, on) => { await n.setLoginItem(on); return s.setSetting("startAtLogin", on); }],
   openLink:           [[oneOf(...Object.keys(LINKS))], (s, n, name) => n.openExternal(LINKS[name])],
   finishWelcome:      [[none], (s) => s.setSetting("welcomed", true)],
+  installUpdate:      [[none], (s, n) => ({ ok: n.installUpdate() })],
+  updateLater:        [[none], (s, n) => ({ ok: n.updateLater() })],
 };
 
 // Registers every channel. isTrusted(event): the request came from Morse's

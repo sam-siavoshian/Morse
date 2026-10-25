@@ -54,19 +54,34 @@ export function bundleOf(exe) {
   return i < 0 ? null : exe.slice(0, i + 4);
 }
 
-export function createUpdater({ app, getAppImage = () => "", busy = () => false, log = () => {}, fetchImpl = globalThis.fetch, here = path.dirname(new URL(import.meta.url).pathname) } = {}) {
+export function createUpdater({ app, getAppImage = () => "", busy = () => false, log = () => {}, onStatus = () => {}, fetchImpl = globalThis.fetch, here = path.dirname(new URL(import.meta.url).pathname), wait = ms => new Promise(r => setTimeout(r, ms)) } = {}) {
   const asset = assetFor();
   let local = null;
   try { local = JSON.parse(readFileSync(path.join(here, "build-info.json"), "utf8")); } catch {}
   let ready = null; // { file, remote } downloaded and checked, waiting for a quiet moment
-  let timer = null, checking = false;
+  let timer = null, checking = false, later = false;
+  // What the window shows (a dialog while it downloads and installs).
+  let status = { phase: "idle" };
+  const set = next => { status = next; try { onStatus(status); } catch {} };
   const enabled = () => app.isPackaged && !!asset && process.env.MORSE_NO_UPDATE !== "1";
   const dir = path.join(app.getPath("userData"), "updates");
 
-  async function get(name, as = "text") {
+  async function get(name, as = "text", progress = null) {
     const r = await fetchImpl(`${RELEASE}/${name}`, { redirect: "follow", cache: "no-store" });
     if (!r.ok) throw new Error(`${name}: HTTP ${r.status}`);
-    return as === "buffer" ? Buffer.from(await r.arrayBuffer()) : r.text();
+    if (as !== "buffer") return r.text();
+    const total = +r.headers?.get?.("content-length") || 0;
+    if (!progress || !r.body?.getReader || !total) return Buffer.from(await r.arrayBuffer());
+    const reader = r.body.getReader(), parts = [];
+    let got = 0, shown = -1;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      parts.push(value); got += value.length;
+      const pct = Math.min(99, Math.floor(got * 100 / total));
+      if (pct !== shown) { shown = pct; progress(pct); }
+    }
+    return Buffer.concat(parts.map(p => Buffer.from(p)));
   }
 
   async function check() {
@@ -78,20 +93,24 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
       const sums = parseSums(await get("SHA256SUMS"));
       const want = sums[asset];
       if (!want) return "missing";
-      const data = await get(asset, "buffer");
+      set({ phase: "downloading", percent: 0, commit: remote.commit });
+      const data = await get(asset, "buffer", percent => set({ phase: "downloading", percent, commit: remote.commit }));
       const got = createHash("sha256").update(data).digest("hex");
       // A release being replaced can show the new SUMS beside an old file for a
       // minute: a mismatch is tried again at the next check, never installed.
-      if (got !== want) { log(`update: ${asset} doesn't match SHA256SUMS yet; trying later`); return "mismatch"; }
+      if (got !== want) { log(`update: ${asset} doesn't match SHA256SUMS yet; trying later`); set({ phase: "idle" }); return "mismatch"; }
       await fs.rm(dir, { recursive: true, force: true });
       await fs.mkdir(dir, { recursive: true });
       const file = path.join(dir, asset);
       await fs.writeFile(file, data, { mode: 0o755 });
       ready = { file, remote };
-      log(`update: ${remote.commit.slice(0, 7)} downloaded, installs when no app is connected or when Morse quits`);
-      if (!busy()) apply();
+      log(`update: ${remote.commit.slice(0, 7)} downloaded`);
+      // Nothing connected: install now. Apps connected: ask (they lose their
+      // mods until they are opened with Morse again), or install at quit.
+      if (!busy()) { set({ phase: "installing" }); await wait(1500); apply(); }
+      else set({ phase: later ? "later" : "ready", commit: remote.commit });
       return "ready";
-    } catch (e) { log(`update: ${e.message}`); return "error"; } finally { checking = false; }
+    } catch (e) { log(`update: ${e.message}`); if (status.phase === "downloading") set({ phase: "idle" }); return "error"; } finally { checking = false; }
   }
 
   // Put the new copy in place and start it. Runs once; Morse quits after.
@@ -130,6 +149,7 @@ ${relaunch ? `"${target}" --updated >/dev/null 2>&1 &` : ""}`;
     } catch (e) {
       log(`update: couldn't install (${e.message}); keeping this version`);
       ready = null; applying = false;
+      set({ phase: "failed", error: e.message });
       return false;
     }
   }
@@ -137,7 +157,7 @@ ${relaunch ? `"${target}" --updated >/dev/null 2>&1 &` : ""}`;
   return {
     start() {
       if (!enabled()) return;
-      setTimeout(check, 30_000).unref?.();
+      setTimeout(check, 5_000).unref?.();
       timer = setInterval(() => { if (ready && !busy()) apply(); else check(); }, EVERY);
       timer.unref?.();
     },
@@ -146,7 +166,11 @@ ${relaunch ? `"${target}" --updated >/dev/null 2>&1 &` : ""}`;
     // Morse is quitting: install now, without opening it again.
     onQuit() { return ready ? apply({ relaunch: false }) : false; },
     // An app was disconnected: if nothing else is connected, now is a good time.
-    idle() { if (ready && !busy()) apply(); },
+    idle() { if (ready && !applying && !busy()) { set({ phase: "installing" }); setTimeout(() => apply(), 1500); } },
+    // The window's buttons: Restart now, or Later (installs when Morse quits).
+    installNow() { if (!ready) return false; set({ phase: "installing" }); setTimeout(() => apply(), 800); return true; },
+    later() { later = true; if (ready) set({ phase: "later", commit: ready.remote.commit }); return true; },
+    get status() { return status; },
     get ready() { return !!ready; },
     get local() { return local; },
   };

@@ -173,6 +173,15 @@
   <div class="row-end"><button type="button" class="btn" value="cancel" id="restart-cancel" data-i18n="desk.cancel">Cancel</button><button type="button" class="btn primary" id="restart-ok" data-i18n="desk.restart">Restart</button></div>
 </dialog>
 
+<!-- Morse updating itself (updater.js): downloading, then installing -->
+<dialog id="update" aria-labelledby="update-h">
+  <span class="mark-tile" aria-hidden="true"></span>
+  <h2 id="update-h"></h2>
+  <p id="update-d"></p>
+  <div class="bar-track" id="update-track" hidden><div class="bar-fill" id="update-fill"></div></div>
+  <div class="row-end" id="update-acts" hidden><button type="button" class="btn" id="update-later" data-i18n="desk.update.later">Later</button><button type="button" class="btn primary" id="update-now" data-i18n="desk.update.now">Restart now</button></div>
+</dialog>
+
 <!-- Asked when the Morse extension in Chrome asks to connect (daemon/bridge.js askWords) -->
 <dialog id="ask-pair" aria-labelledby="ask-pair-h">
   <span class="mark-tile" id="ask-mark" aria-hidden="true"></span>

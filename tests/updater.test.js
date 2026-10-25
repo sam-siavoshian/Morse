@@ -51,8 +51,9 @@ function setup(files, { local = { commit: "abc1234", builtAt: "2026-10-25T00:00:
   writeFileSync(path.join(dir, "build-info.json"), JSON.stringify(local));
   const { fetchImpl, asked } = fakeRelease(files);
   const app = { isPackaged: true, getPath: () => path.join(dir, "userData"), exit() { throw new Error("must not install while busy"); } };
-  const updater = createUpdater({ app, fetchImpl, here: dir, busy: () => true });
-  return { updater, asked, dir, done: () => rmSync(dir, { recursive: true, force: true }) };
+  const statuses = [];
+  const updater = createUpdater({ app, fetchImpl, here: dir, busy: () => true, onStatus: s => statuses.push(s.phase) });
+  return { updater, asked, dir, statuses, done: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
 const asset = assetFor();
@@ -60,7 +61,7 @@ const asset = assetFor();
 test("a newer build is downloaded, checked against SHA256SUMS and kept for a quiet moment", { skip: !asset }, async () => {
   const data = "new morse";
   const sum = createHash("sha256").update(data).digest("hex");
-  const { updater, dir, done } = setup({
+  const { updater, dir, statuses, done } = setup({
     "build.json": JSON.stringify({ commit: "def5678", builtAt: "2026-10-25T02:00:00Z" }),
     "SHA256SUMS": `${sum}  ${asset}\n`,
     [asset]: data,
@@ -68,6 +69,9 @@ test("a newer build is downloaded, checked against SHA256SUMS and kept for a qui
   try {
     assert.equal(await updater.check(), "ready");
     assert.equal(updater.ready, true);
+    assert.deepEqual([...new Set(statuses)], ["downloading", "ready"], "the window shows the download, then asks (an app is connected)");
+    assert.equal(updater.later(), true);
+    assert.equal(updater.status.phase, "later", "Later: it installs when Morse quits");
     assert.equal(readFileSync(path.join(dir, "userData", "updates", asset), "utf8"), data);
   } finally { done(); }
 });
