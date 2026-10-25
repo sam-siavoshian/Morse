@@ -56,7 +56,8 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
   // learn: two looks a moment apart, so what moves by itself (a clock) doesn't count as the change.
   const beforeP = probe ? probe([], { learn: true }).catch(() => null).then(b => { before = b; beforeDone = true; }) : null;
   // The picture of the app, taken while everything else starts (at most 2.5 s).
-  const lookP = look && seesImages(settings) ? Promise.race([Promise.resolve().then(look).catch(() => null), new Promise(r => setTimeout(() => r(null), 2500))]) : null;
+  // Not for the demo replay, which matches words and looks at nothing.
+  const lookP = look && seesImages(settings) && settings.provider !== "demo" ? Promise.race([Promise.resolve().then(look).catch(() => null), new Promise(r => setTimeout(() => r(null), 2500))]) : null;
   let picture;
   // speed: when each stage happened, in ms since the call (first attempt only)
   const timing = {};
