@@ -48,6 +48,7 @@ const UI_FILES = {
   ...Object.fromEntries(["inter-regular", "inter-medium", "interdisplay-semibold"].map(n => [`/fonts/${n}.woff2`, [path.join(HERE, "..", "site", "fonts", `${n}.woff2`), "font/woff2"]])),
   // The window's words in the person's language: core/i18n.js and each language's catalog.
   "/core/i18n.js": [path.join(HERE, "..", "core", "i18n.js"), "text/javascript; charset=utf-8"],
+  "/core/hotkeys.js": [path.join(HERE, "..", "core", "hotkeys.js"), "text/javascript; charset=utf-8"],
   ...Object.fromEntries(LANGUAGES.map(l => [`/core/locales/${l.code}.js`, [path.join(HERE, "..", "core", "locales", `${l.code}.js`), "text/javascript; charset=utf-8"]])),
 };
 const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; media-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";

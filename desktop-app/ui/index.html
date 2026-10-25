@@ -77,6 +77,9 @@
       <button type="button" data-tab="mods">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5l5.5 3L8 8.5l-5.5-3z"/><path d="M2.5 8.2L8 11.2l5.5-3M2.5 10.9L8 13.9l5.5-3"/></svg>
         <span data-i18n="desk.nav.mods">Mods</span><small id="nav-mods"></small></button>
+      <button type="button" data-tab="settings">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="2"/><path d="M8 1.8v1.7M8 12.5v1.7M1.8 8h1.7M12.5 8h1.7M3.6 3.6l1.2 1.2M11.2 11.2l1.2 1.2M12.4 3.6l-1.2 1.2M4.8 11.2l-1.2 1.2"/></svg>
+        <span data-i18n="desk.nav.settings">Settings</span></button>
     </nav>
     <div class="side-foot">
       <label class="switchrow"><span data-i18n="desk.modsOn">Mods on</span><input type="checkbox" role="switch" id="mods-on" checked></label>
@@ -152,6 +155,27 @@
         <svg class="radar" viewBox="0 0 15 15" width="28" height="28" fill="currentColor" aria-hidden="true"><rect x="4" y="0" width="3" height="3" rx="1" class="o"/><rect x="8" y="0" width="3" height="3" rx="1" class="o"/><rect x="0" y="4" width="3" height="3" rx="1" class="o"/><rect x="4" y="4" width="3" height="3" rx="1" class="c"/><rect x="8" y="4" width="3" height="3" rx="1" class="c"/><rect x="12" y="4" width="3" height="3" rx="1" class="o"/><rect x="0" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="8" width="3" height="3" rx="1" class="c"/><rect x="8" y="8" width="3" height="3" rx="1" class="c"/><rect x="12" y="8" width="3" height="3" rx="1" class="o"/><rect x="4" y="12" width="3" height="3" rx="1" class="o"/><rect x="8" y="12" width="3" height="3" rx="1" class="o"/></svg>
         <b data-i18n="desk.mods.none">No mods yet</b>
         <span data-i18n="desk.mods.none.d">Open an app with Morse, point at something and say what to change. When you save it, it shows up here.</span>
+      </div>
+    </section>
+
+    <!-- Settings: the keys that open Morse. The same shortcut the bar saves. -->
+    <section id="settings" aria-labelledby="settings-h" hidden>
+      <header class="head"><div>
+        <h1 id="settings-h" data-i18n="desk.settings.h">Settings</h1>
+        <p data-i18n="desk.settings.lede">The keys that open Morse in an app.</p>
+      </div></header>
+      <div class="card">
+        <div class="shortcut-row">
+          <div class="lbl">
+            <b data-i18n="desk.settings.open">Open Morse</b>
+            <small id="shortcut-help" data-i18n="desk.settings.open.d">Press these keys in a connected app.</small>
+          </div>
+          <div class="shortcut-ctl">
+            <button type="button" class="btn quiet" id="shortcut-reset" hidden data-i18n="desk.settings.reset">Use the default</button>
+            <button type="button" class="hk" id="shortcut-key"></button>
+          </div>
+        </div>
+        <p class="shortcut-msg" id="shortcut-msg" role="status" hidden></p>
       </div>
     </section>
 

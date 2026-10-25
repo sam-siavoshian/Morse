@@ -132,7 +132,7 @@ test("arguments are checked: ids, answers, switches, choices, keys, link names, 
     ["openApp", ["../etc"]], ["openApp", [{ id: "tunes" }]], ["openApp", ["tunes", "yes please"]], ["openApp", ["tunes", "y", "extra"]],
     ["disconnectApp", [""]], ["openBar", [""]], ["setModOn", ["m1", "true"]], ["deleteMod", ["../m1"]], ["undeleteMod", [7]], ["setAllModsOff", [1]], ["chooseModel", ["gpt", ""]],
     ["chooseModel", ["api-key", "sk-ant key with spaces"]], ["openLink", ["https://evil.example"]],
-    ["setStartAtLogin", [null]], ["state", ["x", "y"]],
+    ["setStartAtLogin", [null]], ["setOpenShortcut", ["Alt+"]], ["setOpenShortcut", ["<script>"]], ["setOpenShortcut", [null]], ["state", ["x", "y"]],
   ]) assert.deepEqual(await call(name, ...args), { error: "Not allowed." }, `${name}(${JSON.stringify(args)})`);
   assert.equal(daemon.calls.filter(c => c[0] === "connectApp").length, 0, "nothing ran");
 });
@@ -607,4 +607,60 @@ test("app icons: a Mac .icns gives its PNG nearest 256 pixels", () => {
   const head = Buffer.alloc(8); head.write("icns", 0, "latin1"); head.writeUInt32BE(body.length + 8, 4);
   assert.equal(icnsPng(Buffer.concat([head, body])).readUInt32BE(16), 256);
   assert.equal(icnsPng(Buffer.from("not an icns file")), null);
+});
+
+test("the shortcut that opens Morse is saved, checked, and sent to a connected app", async () => {
+  const store = await import("../daemon/store.js");
+  const { detectPlatform, defaultHotkeys, formatCombo } = await import("../core/hotkeys.js");
+  const platform = detectPlatform({ platform: process.platform });
+  const def = defaultHotkeys(platform).open;
+  const { call, service } = setup({
+    loadPrefs: store.loadPrefs,
+    savePrefs: store.savePrefs,
+    configuredHotkeys: store.configuredHotkeys,
+  });
+  try {
+    const st = await call("state");
+    assert.equal(st.keys.open, formatCombo(def, platform), "untouched: the platform default");
+    assert.equal(st.keys.custom, false);
+    assert.equal(st.keys.combo, def);
+
+    assert.deepEqual(await call("openApp", "tunes"), { ok: true });
+    const held = service.sessions.get("tunes");
+    const pushed = [];
+    held.connector.applySettings = prefs => pushed.push(prefs);
+    const saved = await call("setOpenShortcut", "Alt+Shift+KeyK");
+    assert.equal(saved.ok, true);
+    assert.equal(saved.warn, "");
+    assert.equal((await store.loadPrefs()).hotkeys.open, "Alt+Shift+KeyK");
+    assert.equal(pushed.at(-1)?.hotkeys.open, "Alt+Shift+KeyK", "an app already connected hears the new shortcut");
+    const st2 = await call("state");
+    assert.equal(st2.keys.combo, "Alt+Shift+KeyK");
+    assert.equal(st2.keys.custom, true);
+    assert.equal(st2.keys.open, formatCombo("Alt+Shift+KeyK", platform));
+
+    const quit = platform === "mac" ? "Meta+KeyQ" : "Ctrl+KeyQ";
+    const bad = await call("setOpenShortcut", quit);
+    assert.match(bad.error, /quits the app/);
+    assert.equal((await store.loadPrefs()).hotkeys.open, "Alt+Shift+KeyK", "a refused shortcut is not saved");
+    const mods = await call("setOpenShortcut", "Alt+Shift+KeyM");
+    assert.match(mods.error, /Mods panel/);
+    assert.equal((await store.loadPrefs()).hotkeys.open, "Alt+Shift+KeyK");
+
+    const copy = platform === "mac" ? "Meta+KeyC" : "Ctrl+KeyC";
+    const warn = await call("setOpenShortcut", copy);
+    assert.equal(warn.ok, true);
+    assert.match(warn.warn, /Copy/);
+    assert.equal((await store.loadPrefs()).hotkeys.open, copy);
+
+    assert.equal((await call("setOpenShortcut", "")).ok, true);
+    assert.equal((await store.loadPrefs()).hotkeys.open, "");
+    const st3 = await call("state");
+    assert.equal(st3.keys.custom, false);
+    assert.equal(st3.keys.combo, def);
+    assert.equal(st3.keys.open, formatCombo(def, platform));
+  } finally {
+    await store.savePrefs({ hotkeys: { open: "" } });
+    await service.shutdown();
+  }
 });

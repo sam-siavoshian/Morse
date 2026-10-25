@@ -234,3 +234,23 @@ export function resolveHotkeys(stored = {}, platform) {
   if (!stored.talk) out.talk = out.open;
   return out;
 }
+
+// Saving the shortcut that opens Morse. "" or "default" goes back to this
+// computer's usual keys, and recording those keys again stores nothing, so an
+// untouched shortcut stays the platform default. A combo Morse can't use
+// (no real key, a key that types, one the system owns, or one Morse already
+// uses) comes back as an error in the person's language. A warning is allowed.
+export function decideOpenShortcut(stored = {}, next, platform) {
+  if (next === "" || next === "default") return { ok: true, value: "", level: "ok", message: "" };
+  const combo = normalizeCombo(next);
+  if (!combo || combo === "none") return { ok: false, value: "", level: "error", message: combo === "none" ? t("hk.err.openOff") : t("hk.err.noKey") };
+  const src = stored && typeof stored === "object" ? stored : {};
+  const resolved = resolveHotkeys(src, platform);
+  const others = { ...resolved };
+  delete others.open;
+  if (!src.talk) delete others.talk; // talk left alone follows Open Morse
+  const verdict = checkCombo(combo, platform, { self: "open", others });
+  if (verdict.level === "error") return { ok: false, value: "", level: "error", message: verdict.message };
+  const value = combo === defaultHotkeys(platform).open ? "" : combo;
+  return { ok: true, value, level: verdict.level, message: verdict.message || "" };
+}
