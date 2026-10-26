@@ -74,31 +74,7 @@ Real apps and live sites. Not drawings.
 
 Obsidian ships no focus timer. The note was open. Morse added a panel with the reading time and a 25 minute countdown. Start, and it runs.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian.gif" alt="Obsidian. The focus panel is on the note with the reading time and a 25 minute countdown. The cursor starts it, and it counts down." width="900" />
-
-### Bring a feature from one app into another
-
-VSCodium's command palette, taken while Morse watched, then brought to rubygems.org. Ctrl+Shift+P opens a palette of that page, in RubyGems' own type and colors. [How](docs/bring-a-feature.md).
-
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-17-rubygems-palette.png" alt="rubygems.org with a command palette brought from VSCodium, searching this page's own headings, and a Commands button in the header." width="900" />
-
-pkg.go.dev's Jump to box, brought to the Node.js docs. F opens it. Enter goes to the heading.
-
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-10-node-jump-to.png" alt="The Node.js docs with a Jump to box brought from pkg.go.dev, searching readFile, in the page's own green." width="900" />
-
-### Inject code
-
-On the Node.js docs, the change is code you can open: the style, and the script that runs in the page.
-
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/306-real-edit-code.png" alt="The Node.js docs with Morse's code editor open on the style and script of a saved change, and Save and run." width="900" />
-
-### A feature the app did not have
-
-Visual Studio Code 1.143. Ctrl+Alt+P hides the sidebar and the activity bar and doubles the code, for people at the back of a room. Press it again and the editor is back. The app was quit and opened again. The change was still there.
-
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/showcase/vscode-presentation-shortcut.jpg" alt="Visual Studio Code before and after Ctrl+Alt+P: the sidebar is gone and the code is twice as big. Claude Code (opus) wrote it. It was still there after quitting and opening the app again." width="900" />
-
-More real runs, including the ones that are only a new look: [the showcase](docs/showcase/README.md).
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian.gif" alt="The note is open in Obsidian. A focus panel with the reading time and a 25 minute countdown appears, the cursor starts it, and it counts down." width="900" />
 
 ## FAQ
 
