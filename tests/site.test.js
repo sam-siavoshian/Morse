@@ -104,9 +104,10 @@ test("the landing page has what it promises: buttons, the Morse bar, sections an
   assert.match(demo, /data-save>Save/, "and the result's Save");
   assert.doesNotMatch(html, /data-film|<video\b|docs\/launch\//, "no film");
   assert.doesNotMatch(html, /try\/section\.js|data-install=/, "no live demo on the page");
-  const shots = [...html.matchAll(/src="(shots\/[^"]+)"/g)].map(m => m[1]);
+  const shots = [...html.matchAll(/src="((?:shots|clips)\/[^"]+)"/g)].map(m => m[1]);
   assert.ok(shots.length >= 3, `screenshots on the page (saw ${shots.length})`);
   for (const s of shots) assert.ok(existsSync(path.join(SITE, s)), s);
+  assert.match(html, /clips\/readme-obsidian-ask\.gif/, "the Obsidian timer clip from the README");
   // Every <img> has alt text and a size, so nothing shifts as it loads, and
   // waits until it is near (the hero's are near at once).
   for (const page of PAGES) {

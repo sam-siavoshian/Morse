@@ -423,6 +423,12 @@ q.ask, .ask { font: 400 0.92em/1.5 var(--mono); color: var(--text); quotes: "“
 .demo[data-state="reset"] .demo-after { opacity: 0; transition: opacity 700ms var(--ease-out); }
 .demo figcaption { margin-top: 22px; font-size: 14px; line-height: 1.55; color: var(--faint); text-align: center; }
 
+/* The README's Obsidian clip, on the hero sky: the note, the ask, the panel. */
+.clip { position: relative; margin: clamp(40px, 5vw, 72px) auto 0; max-width: 1000px; }
+.clip .shot { border-radius: 14px; border-color: transparent; box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.1), 0 0 0 8.5px rgba(255, 255, 255, 0.26), 0 50px 120px -30px rgba(6, 20, 64, 0.75); }
+.clip figcaption { max-width: 40rem; margin: 22px auto 0; font-size: 15px; line-height: 1.55; color: rgba(255, 255, 255, 0.92); text-align: center; text-wrap: balance; text-shadow: 0 1px 18px rgba(12, 44, 130, 0.35); }
+.clip figcaption b { display: block; margin-bottom: 6px; font-weight: 600; color: #fff; }
+
 /* The bar: light, like the product's, sitting low in the app's window. Sized
    in em, so it shrinks with the window. */
 .mbar {
