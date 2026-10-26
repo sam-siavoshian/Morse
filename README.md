@@ -15,7 +15,7 @@
 
 <br /><br />
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian.gif" alt="Before: an Obsidian note, Deep Work, with no timer. Adding it: Morse writing a focus panel and a 25 minute countdown. After: the countdown is running." width="1000" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-hero.png" alt="Take what they won't ship, on a blue sky with clouds. Free for Mac, Windows and Linux. Change any app in one sentence. Free and open source." width="1200" />
 
 </div>
 
@@ -68,13 +68,13 @@ A change you save is a **mod**. Morse puts your mods back every time the app ope
 
 ## Real runs
 
-Real apps and live sites. Before, adding it, after. Not drawings.
+Real apps and live sites. Before and after. Not drawings.
 
 ### A timer Obsidian did not ship
 
 Obsidian ships no focus timer. The note was open. Morse added a panel with the reading time and a 25 minute countdown. Start, and it runs.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian.gif" alt="Before: an Obsidian note, Deep Work, with no timer. Adding it: Morse writing a focus panel and a 25 minute countdown. After: the countdown is running." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian.gif" alt="Before: an Obsidian note, Deep Work, with no timer. After: a focus panel with the reading time and a 25 minute countdown, running." width="900" />
 
 ### Bring a feature from one app into another
 
