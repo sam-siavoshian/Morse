@@ -24,6 +24,7 @@
       <a href="./" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="20"></span><span class="brand-name">Morse</span></a>
       <nav class="nav-links" aria-label="Primary">
         <ul class="nav-list">
+          <li><a class="nav-link" href="./#takes">Take it</a></li>
           <li><a class="nav-link" href="./#change">See it change</a></li>
           <li><a class="nav-link" href="./#how">How it works</a></li>
           <li><a class="nav-link" href="./#try">Try it</a></li>
@@ -40,6 +41,7 @@
     <div class="nav-menu" id="nav-menu">
       <nav class="nav-sheet" aria-label="Sections">
         <ul>
+          <li><a href="./#takes">Take it</a></li>
           <li><a href="./#change">See it change</a></li>
           <li><a href="./#how">How it works</a></li>
           <li><a href="./#try">Try it here</a></li>
@@ -104,10 +106,10 @@
 <p>Claude Code and Codex are separate programs with their own privacy terms. Morse starts them and hands them the request. It does not see what they log.</p>
 <p>Apart from that setting, Morse sends nothing to a model on its own. Opening the bar, pointing, the Edit tools, the other Page tools, &quot;Easier to use&quot;, Read aloud and &quot;Check this page&quot; itself run on your computer. They send nothing to the model.</p>
 <h2>The gallery list</h2>
-<p>To show &quot;Mods for this site&quot;, Morse downloads the list of gallery mods from <code>https://sam-siavoshian.github.io/RRAA/site/mods/index.json</code>, and then the mod files that match the site you are on.</p>
+<p>To show &quot;Mods for this site&quot;, Morse downloads the list of gallery mods from <code>https://getmorse.vercel.app/site/mods/index.json</code>, and then the mod files that match the site you are on.</p>
 <ul>
 <li>It happens only when you open the bar or the Mods panel. The list is downloaded at most once a day.</li>
-<li>The request carries no cookies and nothing about you or the page. If you set a different list address in settings, the same goes to that address instead. GitHub hosts the files. Like any website, it sees your IP address and which mod files were asked for. A mod file is named after the site it is for, so this can show that you visited that site.</li>
+<li>The request carries no cookies and nothing about you or the page. If you set a different list address in settings, the same goes to that address instead. The list is hosted at getmorse.vercel.app. Like any website, that host sees your IP address and which mod files were asked for. A mod file is named after the site it is for, so this can show that you visited that site.</li>
 <li>To turn it off, turn off &quot;Show mods others made&quot; in Morse settings. Then nothing is downloaded.</li>
 </ul>
 <h2>Checking for a newer version</h2>
@@ -165,7 +167,7 @@
       </nav>
     </div>
     <div class="foot-base">
-      <span>Change any website or desktop app in your own words.</span>
+      <span>Their app. Your version.</span>
       <span>&copy; 2026 Morse · <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/LICENSE">MIT license</a></span>
     </div>
   </div>

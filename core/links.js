@@ -4,5 +4,5 @@
 // so this is the one address to keep. It is package.json's homepage
 // (tests/site.test.js checks that they agree).
 
-export const SITE = "https://sam-siavoshian.github.io/RRAA/site/";
+export const SITE = "https://getmorse.vercel.app/site/";
 export const DOWNLOAD = `${SITE}#install`;

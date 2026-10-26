@@ -2,31 +2,26 @@
 
 # Morse: Change Any App
 
-### Change any app or website in your own words.
+### Reverse engineer any app.
 
-**See something you'd change? Point at it and say how.**
+**Add any feature to any app. No limit. A change you keep is code you can read.**
 
-[![MIT license](https://img.shields.io/badge/license-MIT-f4c430?style=flat-square)](LICENSE)
-[![macOS, Windows, Linux](https://img.shields.io/badge/macOS_·_Windows_·_Linux-111113?style=flat-square)](#quick-start)
 [![Preview build](https://img.shields.io/badge/preview-newest_main-5c4ee5?style=flat-square)](https://github.com/sam-siavoshian/RRAA/releases/tag/preview)
+**[Website](https://getmorse.vercel.app/) · [Docs](docs/README.md) · [Showcase](docs/showcase/README.md)**
 
-**[Website](https://sam-siavoshian.github.io/RRAA/site/) · [Docs](docs/README.md) · [Showcase](docs/showcase/README.md)**
-
-[Quick start](#quick-start) · [How Morse works](#how-morse-works) · [What you can change](#what-you-can-change) · [Showcase](#showcase) · [FAQ](#faq) · [Documentation](#documentation)
+[Quick start](#quick-start) · [How Morse works](#how-morse-works) · [What you can change](#what-you-can-change) · [Real runs](#real-runs) · [FAQ](#faq) · [Documentation](#documentation)
 
 <code>curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh</code>
 
 <br /><br />
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/showcase/vscode-windows-95.jpg" alt="Visual Studio Code before and after one request: a dark editor, then a classic Windows 95 look with gray bevelled panels and a navy title bar. Claude Code (opus) wrote it in 31 seconds, and it was back after quitting and opening the app again." width="1200" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-17-rubygems-palette.png" alt="rubygems.org for Rails, with a command palette taken from VSCodium: Ctrl+Shift+P opens a search of this page, and a Commands button sits in RubyGems' own header." width="1200" />
 
 </div>
 
 ---
 
-See something in an app you'd change? Press a shortcut, point at it, and say what you want: "show one cover, not five", "add a sleep timer", "make this sidebar quieter". Morse makes the change while you watch, in the app's own look.
-
-Morse works on desktop apps built on web technology, like VS Code, Slack, Spotify, Obsidian, Notion and Discord, and on websites in Chrome, Edge, Brave, Arc and Vivaldi. It never touches the app's files. Every change you keep comes back each time the app opens.
+Take a feature in one app and bring it into another. Delete a paywall that is a box on a page that already loaded. Inject your own code. Add a feature the app never shipped. Morse never changes the app's files. Save it, and it is back the next time the app opens.
 
 Morse has no server and no account. It uses the AI you already have: Claude Code, Codex, or an API key.
 
@@ -48,17 +43,11 @@ Morse updates itself after that.
 
 Morse finds your AI and lists your apps. Click **Open with Morse** next to one. In the app, press **⌥Space** on a Mac (**Ctrl+Shift+Space** on Windows and Linux).
 
-### Ask
-
-```text
-Show one album cover here, not five.
-```
-
-Point at the part you mean, or at nothing for the whole app. Press **Enter**, then **Save** to keep it.
+Point at the part you mean, or at nothing for the whole app. Press **Enter**, then **Save**.
 
 ## How Morse works
 
-The Morse app opens your app with one extra setting, so it can connect. When you ask for a change, Morse sends your words, the part you pointed at, and a picture of what you see to your AI. The change shows up while the AI writes it. Morse checks that something really changed and that what it added lines up with the app, and fixes it once if not.
+The Morse app opens your app with one extra setting, so it can connect. When you ask for a change, Morse sends your words, the part you pointed at, and a picture of what you see to your AI. The change shows up while the AI writes it.
 
 A change you save is a **mod**. Morse puts your mods back every time the app opens, even when you open it from the Dock or the Start menu.
 
@@ -70,41 +59,40 @@ A change you save is a **mod**. Morse puts your mods back every time the app ope
 | **Websites** | Any site, in Chrome, Edge, Brave, Arc or Vivaldi | Morse opens the browser for you, still signed in to everything |
 | **Not yet** | Safari, Firefox, and native apps like Finder or Notes | They give Morse no way in |
 
-What you can ask for:
-
 | | |
 | --- | --- |
-| **Describe a change** | New buttons, panels, shortcuts and looks. Keep improving it, or step back to any of the last 20 versions. [Changing things](docs/changing-things.md) |
-| **Voice** | Hold the shortcut and talk. [Changing things](docs/changing-things.md#voice) |
-| **Edit tools** | Hide, move, resize or recolor something yourself, with no AI and no waiting. [Edit tools](docs/edit-and-page-tools.md) |
-| **Ask and find** | "Where is the export setting?" **Show me** shows where to click. [Ask and find](docs/ask-and-find.md) |
-| **Bring a feature** | **Take this** in one app, **Bring here** in another. Morse rebuilds it in that app's look. [Bring a feature](docs/bring-a-feature.md) |
-| **Your style** | One font, text size or calmer look on every app and site. [Your style](docs/your-style.md) |
-| **Mods** | Turn them on and off, undo, share them with a link, and turn everything off with one shortcut. [Mods](docs/mods.md) · [Your controls](docs/your-controls.md) |
+| **Bring a feature** | **Take this** in the app that has it. **Bring here** in the one that does not. [Bring a feature](docs/bring-a-feature.md) |
+| **Inject code** | Read the style and the script, and change them. [Mods](docs/mods.md) |
+| **Your own feature** | A button, a shortcut, a panel. It stays when the app opens again. [Changing things](docs/changing-things.md) |
+| **A paywall** | Point at the box on a page that already loaded. Morse does not sign you in, and it does not fetch a story the site never sent. |
 
-## Showcase
+## Real runs
 
-Real apps, real requests, real Claude Code (opus). Each change was saved, the app was quit and opened again, and the change was back.
+Screenshots of real apps and live sites. Not drawings.
 
-### Obsidian: an old typewriter
+### Bring a feature from one app into another
 
-"Make Obsidian look like an old typewriter: cream paper background with a subtle paper texture, a typewriter font like Courier for everything, dark brown ink for the text, and paper-colored side panels with thin ruled lines." 14.7 seconds.
+VSCodium's command palette, taken while Morse watched, then brought to rubygems.org. Ctrl+Shift+P opens a palette of that page, in RubyGems' own type and colors. [How](docs/bring-a-feature.md).
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/showcase/obsidian-typewriter.jpg" alt="Obsidian before and after: plain dark notes, then cream paper, a typewriter font, brown ink and ruled side panels" width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-17-rubygems-palette.png" alt="rubygems.org with a command palette brought from VSCodium, searching this page's own headings, and a Commands button in the header." width="900" />
 
-### VS Code: a focus timer
+pkg.go.dev's Jump to box, brought to the Node.js docs. F opens it. Enter goes to the heading.
 
-"Add a big Pomodoro focus timer panel in the top right of the editor: a large 25:00 countdown with Start, Pause and Reset buttons, styled like VS Code's own widgets." 28.3 seconds.
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-10-node-jump-to.png" alt="The Node.js docs with a Jump to box brought from pkg.go.dev, searching readFile, in the page's own green." width="900" />
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/showcase/vscode-focus-timer.jpg" alt="VS Code before and after: a new 25:00 focus timer panel with Start, Pause and Reset buttons, styled like VS Code's own widgets" width="900" />
+### Inject code
 
-### Obsidian: a New daily note button
+On the Node.js docs, the change is code you can open: the style, and the script that runs in the page.
 
-"Add a big New daily note button at the top of the file list, with its label vertically centered and fully visible, that creates a note named with today's date, like 2026-10-24, and opens it." It really makes and opens the day's note. 12.9 seconds.
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/306-real-edit-code.png" alt="The Node.js docs with Morse's code editor open on the style and script of a saved change, and Save and run." width="900" />
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/showcase/obsidian-daily-note-button.jpg" alt="Obsidian before and after: a new New daily note button at the top of the file list" width="900" />
+### A feature the app did not have
 
-More, with every request word for word: [the showcase](docs/showcase/README.md). Made something good with Morse? Share it in an [issue](https://github.com/sam-siavoshian/RRAA/issues).
+Visual Studio Code 1.143. Ctrl+Alt+P hides the sidebar and the activity bar and doubles the code, for people at the back of a room. Press it again and the editor is back. The app was quit and opened again. The change was still there.
+
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/showcase/vscode-presentation-shortcut.jpg" alt="Visual Studio Code before and after Ctrl+Alt+P: the sidebar is gone and the code is twice as big. Claude Code (opus) wrote it. It was still there after quitting and opening the app again." width="900" />
+
+More real runs, including the ones that are only a new look: [the showcase](docs/showcase/README.md).
 
 ## FAQ
 

@@ -9,6 +9,7 @@ under the new version number with the date
 ## Unreleased
 
 - **Check for updates.** Settings has a button that looks for a newer Morse and says whether you're up to date, or that an update is available.
+- **The website is [getmorse.vercel.app](https://getmorse.vercel.app/).** Share links and the gallery list use that address.
 
 ## 0.3.1 (2026-10-25)
 

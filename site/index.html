@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Morse: change any website or desktop app in your own words</title>
-<meta name="description" content="Change any desktop app, like VS Code, Spotify or Obsidian, or any website, by saying what you want. Your own AI makes the change. Free and open source.">
+<title>Morse: take what they won’t ship</title>
+<meta name="description" content="Bring a feature over from another app. Delete a paywall. Add the AI they refused. Fix a bug without waiting months for their team.">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="color-scheme" content="dark">
 <!-- seo: npm run pages puts the canonical address, link previews and structured data here (scripts/build-pages.js) -->
@@ -26,6 +26,7 @@
       <a href="#top" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="20"></span><span class="brand-name">Morse</span></a>
       <nav class="nav-links" aria-label="Primary">
         <ul class="nav-list">
+          <li><a class="nav-link" href="#takes">Take it</a></li>
           <li><a class="nav-link" href="#change">See it change</a></li>
           <li><a class="nav-link" href="#how">How it works</a></li>
           <li><a class="nav-link" href="#try">Try it</a></li>
@@ -42,6 +43,7 @@
     <div class="nav-menu" id="nav-menu">
       <nav class="nav-sheet" aria-label="Sections">
         <ul>
+          <li><a href="#takes">Take it</a></li>
           <li><a href="#change">See it change</a></li>
           <li><a href="#how">How it works</a></li>
           <li><a href="#try">Try it here</a></li>
@@ -65,14 +67,40 @@
   <section class="hero">
     <div class="pixels" aria-hidden="true" data-pixels></div>
     <div class="wrap hero-grid">
-      <h1 class="hero-title">Change any app <span>in your own words.</span></h1>
+      <a class="chip-beam" href="#try"><span class="chip-dot" aria-hidden="true"></span>Try it here, nothing to install<span class="icon" aria-hidden="true">→</span></a>
+      <h1 class="hero-title"><span class="word" style="--i:0">Take </span><span class="word" style="--i:1">what </span><span class="word" style="--i:2">they </span><span class="word" data-line="2" style="--i:3">won’t </span><span class="word" data-line="2" style="--i:4">ship.</span></h1>
       <div class="hero-side">
-        <p class="hero-sub">Point at something and say what you want. The app changes while you watch. Morse uses the model you already have.</p>
+        <p class="hero-sub">Change any app. Bring a feature over from the one that has it. Delete the paywall. Add the AI they refused. Fix the bug tonight.</p>
         <div class="get-row">
           <a class="btn btn-primary btn-lg" href="./#desktop-steps" data-link="desktop">Download Morse<span class="icon" aria-hidden="true">→</span></a>
         </div>
-        <p class="hero-note">Free and open source <span aria-hidden="true">·</span> No account <span aria-hidden="true">·</span> Uses Claude Code, Codex or your API key</p>
+        <p class="hero-note">Free and open source <span aria-hidden="true">·</span> No account <span aria-hidden="true">·</span> Claude Code, Codex, or your API key</p>
       </div>
+    </div>
+
+    <div class="wrap" id="takes">
+      <ul class="takes">
+        <li class="take" style="--i:0">
+          <h2>Bring one feature over</h2>
+          <p class="take-ask"><q>add a sleep timer, the kind music apps have</q></p>
+          <p>The other app has it. This one does not. Take this there. Bring here. It is back next time, in this app’s own look.</p>
+        </li>
+        <li class="take" style="--i:1">
+          <h2>Delete the paywall</h2>
+          <p class="take-ask"><q>remove this paywall</q></p>
+          <p>The page loaded. The box is in the way. Point at it. The box goes. If they never sent the article, there is nothing under it.</p>
+        </li>
+        <li class="take" style="--i:2">
+          <h2>Add the AI they refused</h2>
+          <p class="take-ask"><q>summarize this. this app has no AI</q></p>
+          <p>No model in the app, or they locked it on a plan you do not have. Say summarize this. Yours does it. Theirs is not in the room.</p>
+        </li>
+        <li class="take" style="--i:3">
+          <h2>Fix the bug tonight</h2>
+          <p class="take-ask"><q>this button has been broken for months. make it save</q></p>
+          <p>Point at the broken part and say what it should do. You ship it tonight. Their team can take months.</p>
+        </li>
+      </ul>
     </div>
 
     <!-- The film. Its file, poster, shape and captions live in config.js (DEMO_VIDEO). -->
@@ -93,10 +121,10 @@
   <!-- The pairs come from config.js (SHOWCASE); index.js puts them here. -->
   <section id="change" class="section">
     <div class="wrap">
-      <header class="section-head">
+      <header class="section-head" data-reveal>
         <p class="eyebrow">See it change</p>
-        <h2>Each change took one sentence.</h2>
-        <p class="lede">Real apps and websites. Drag across a picture to see before and after.</p>
+        <h2>One sentence. No ticket.</h2>
+        <p class="lede">Real apps and websites. Drag across a picture. None of this was on a roadmap.</p>
       </header>
       <div class="pairs" id="pairs"></div>
     </div>
@@ -105,11 +133,11 @@
   <!-- ===================================================== how it works -->
   <section id="how" class="section section-alt">
     <div class="wrap">
-      <header class="section-head">
+      <header class="section-head" data-reveal>
         <p class="eyebrow">How it works</p>
-        <h2>Three steps. The app’s own files never change.</h2>
+        <h2>Three steps. Their files never change.</h2>
       </header>
-      <div class="steps" data-steps>
+      <div class="steps" data-steps data-reveal="fade">
         <ol class="steps-list">
           <li class="step is-on">
             <button type="button" class="step-btn" aria-pressed="true" data-step="0">
@@ -120,7 +148,7 @@
           <li class="step">
             <button type="button" class="step-btn" aria-pressed="false" data-step="1">
               <span class="step-n">02</span>
-              <span class="step-text"><strong>Describe the change</strong><span>Type one sentence, or hold the shortcut and talk. You see the change while your model writes it.</span></span>
+              <span class="step-text"><strong>Say what they left out</strong><span>The feature from the other app. The paywall to remove. The bug to fix. The summary you want. Type one sentence, or hold the shortcut and talk. You see the change while your model writes it.</span></span>
             </button>
           </li>
           <li class="step">
@@ -151,12 +179,12 @@
   <!-- The pictures come from config.js (REAL_APPS); index.js puts them here. -->
   <section id="apps" class="section section-alt">
     <div class="wrap">
-      <header class="section-head">
+      <header class="section-head" data-reveal>
         <p class="eyebrow">Real apps</p>
-        <h2>Tested on real apps.</h2>
+        <h2>Apps people already use. Changed in one sentence.</h2>
         <p class="lede">Desktop apps built from web pages: Visual Studio Code, VSCodium, Obsidian, Logseq and Joplin, on Linux. Websites in Chrome, such as the Node.js docs, PyPI, RubyGems and Docker Hub.</p>
       </header>
-      <ul class="apps" id="apps-grid" aria-label="Tested apps"></ul>
+      <ul class="apps" id="apps-grid" data-reveal="fade" aria-label="Tested apps"></ul>
       <p class="fine">Not tested yet: Slack, Discord, Spotify, macOS and Windows. <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/desktop.md#tested-on">What was tested</a></p>
     </div>
   </section>
@@ -166,12 +194,12 @@
        command is for developers: the README and docs/dev/README.md, not this page. -->
   <section id="install" class="section">
     <div class="wrap">
-      <header class="section-head">
+      <header class="section-head" data-reveal>
         <p class="eyebrow">Install</p>
-        <h2>One app. Nothing else to set up.</h2>
-        <p class="lede">Download Morse and open it. It finds Claude Code or Codex by itself and lists your apps and browsers.</p>
+        <h2>Then stop asking them.</h2>
+        <p class="lede">Download Morse and open it. It finds Claude Code or Codex by itself and lists your apps and browsers. Morse has no plan of its own.</p>
       </header>
-      <div class="get">
+      <div class="get" data-reveal="fade">
         <article class="get-card" id="install-desktop">
           <p class="get-kind">The Morse app</p>
           <h3>For your apps and websites</h3>
@@ -200,7 +228,7 @@
 
       <p class="dev-link">Working on Morse, or want it in a terminal? The <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/dev/README.md">developer guide</a>.</p>
 
-      <div class="first-run">
+      <div class="first-run" data-reveal>
         <h3>Your first minute</h3>
         <ol class="first-run-list" aria-label="Your first minute">
           <li>
@@ -223,9 +251,9 @@
   <!-- =========================================================== privacy -->
   <section id="privacy" class="section section-tight section-alt">
     <div class="wrap">
-      <div class="privacy">
+      <div class="privacy" data-reveal>
         <p class="eyebrow">Privacy</p>
-        <p class="privacy-text">Morse has no account and no server. When you ask for a change, Morse sends what you pointed at and what you said to your model. Nothing goes to the people who make Morse. <a href="privacy.html">Read the privacy policy</a></p>
+        <p class="privacy-text">The change stays on your computer. Morse has no account and no server. When you ask, Morse sends what you pointed at and what you said to your model. Nothing goes to the people who make Morse. <a href="privacy.html">Read the privacy policy</a></p>
       </div>
     </div>
   </section>
@@ -233,12 +261,28 @@
   <!-- =============================================================== FAQ -->
   <section id="faq" class="section">
     <div class="wrap faq-grid">
-      <header class="section-head">
+      <header class="section-head" data-reveal>
         <p class="eyebrow">FAQ</p>
-        <h2>Common questions.</h2>
+        <h2>Before you argue about it.</h2>
         <p class="lede">More in the <a href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs">guides</a>.</p>
       </header>
-      <div class="faq-list">
+      <div class="faq-list" data-reveal="fade">
+        <details class="faq-item">
+          <summary>Can I take a feature from one app and put it on another?</summary>
+          <p>Yes. Take this in the app that has it. Bring here in the one that does not. A timer, a button, a palette, a dark mode switch. Morse builds it in that app’s own look. It cannot bring a catalog or an account you do not have.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Can I delete a paywall?</summary>
+          <p>Yes, when it is a box on a page that already loaded. Point at the upgrade wall, the subscribe nag, the banner. It comes off on your computer. Morse does not sign you in, and it does not fetch a story the site never sent.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Can I add AI to an app that will not give it to me?</summary>
+          <p>Yes. Point at the page and say summarize this, rewrite this, or answer from what is on screen. Morse uses Claude Code, Codex, or your API key. Their plan is not involved, including the plan they will not sell you.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Can I fix a bug without waiting for their team?</summary>
+          <p>When you can see it, yes. Point at it and say what it should do. The fix runs on your computer and comes back next time. Their update can break it. Click Fix it. Your model writes it again. A bug that lives only on their server stays theirs.</p>
+        </details>
         <details class="faq-item">
           <summary>What do I install?</summary>
           <p>One app: Morse. Download it, open it, and it finds your model, your apps and your browsers. There is nothing else to install.</p>
@@ -290,7 +334,7 @@
       </nav>
     </div>
     <div class="foot-base">
-      <span>Change any website or desktop app in your own words.</span>
+      <span>Their app. Your version.</span>
       <span>&copy; 2026 Morse · <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/LICENSE">MIT license</a></span>
     </div>
   </div>

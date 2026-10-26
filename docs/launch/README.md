@@ -4,7 +4,7 @@
 
 [![The 33-second launch video](morse-opus-open-poster.webp)](morse-opus-open-16x9.mp4)
 
-[Watch the launch video](morse-opus-open-16x9.mp4) (33 seconds) · [The previous cut](morse-v4-16x9.mp4) (50 seconds) · [The longer demo](morse-demo-v2.mp4) (92 seconds, on this repo's demo apps) · [Website](https://sam-siavoshian.github.io/RRAA/site/) · [Source](https://github.com/sam-siavoshian/RRAA)
+[Watch the launch video](morse-opus-open-16x9.mp4) (33 seconds) · [The previous cut](morse-v4-16x9.mp4) (50 seconds) · [The longer demo](morse-demo-v2.mp4) (92 seconds, on this repo's demo apps) · [Website](https://getmorse.vercel.app/) · [Source](https://github.com/sam-siavoshian/RRAA)
 
 ## The launch video
 

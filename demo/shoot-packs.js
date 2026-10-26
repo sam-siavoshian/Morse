@@ -69,7 +69,7 @@ const serveRepo = prefix => async route => {
   catch { route.fulfill({ status: 404, body: "" }); }
 };
 await ctx.route("http://127.0.0.1:8789/**", serveRepo("/"));
-await ctx.route("https://sam-siavoshian.github.io/RRAA/**", serveRepo("/RRAA/"));
+await ctx.route("https://getmorse.vercel.app/**", serveRepo("/"));
 await ctx.route("https://fonts.googleapis.com/**", route => route.fulfill({ body: "", contentType: "text/css" }));
 new Connector({ port, app: null, settings: { provider: "demo", model: "demo" }, log: () => {} }).run();
 

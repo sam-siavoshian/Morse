@@ -1,15 +1,15 @@
-// Assembles the GitHub Pages site in dist/pages, laid out like the repo so the
-// addresses the code uses keep working:
+// Assembles the public site in dist/pages, laid out like the repo so the
+// addresses the code uses keep working. The site is https://getmorse.vercel.app/
 //
-//   /RRAA/                         -> redirects to site/
-//   /RRAA/site/                    landing page, gallery, privacy policy
-//   /RRAA/privacy.html             redirects to site/privacy.html
-//   /RRAA/site/mods/index.json     the gallery list (core/gallery.js GALLERY_INDEX_URL)
-//   /RRAA/share/install.html       share links (core/mod.js SHARE_BASE)
-//   /RRAA/core/, /RRAA/design/     modules and tokens the pages import
-//   /RRAA/docs/launch/             the demo video and posters
-//   /RRAA/demo/sites/tunes/, byte/ the demo apps in the landing page's Try it here
-//   /RRAA/dist/runtime/runtime.js  the Morse runtime that runs inside them
+//   /                              -> redirects to site/
+//   /site/                         landing page, gallery, privacy policy
+//   /privacy.html                  redirects to site/privacy.html
+//   /site/mods/index.json          the gallery list (core/gallery.js GALLERY_INDEX_URL)
+//   /share/install.html            share links (core/mod.js SHARE_BASE)
+//   /core/, /design/               modules and tokens the pages import
+//   /docs/launch/                  the demo video and posters
+//   /demo/sites/tunes/, byte/      the demo apps in the landing page's Try it here
+//   /dist/runtime/runtime.js       the Morse runtime that runs inside them
 //
 // Every published page gets its canonical address, link previews (Open Graph
 // and Twitter, with site/og-image.png) and structured data (JSON-LD) where its
@@ -42,7 +42,7 @@ const RUNTIME = "dist/runtime/runtime.js";
 
 // ---- search engines and link previews
 
-// Where the site lives: package.json's homepage is .../RRAA/site/.
+// Where the site lives: package.json's homepage is .../site/.
 const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
 export const SITE_URL = new URL("../", pkg.homepage).href;
 const REPO_URL = pkg.repository.url.replace(/^git\+/, "").replace(/\.git$/, "");
@@ -164,10 +164,9 @@ export function sitemapXml() {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
 }
 
-// Search engines read robots.txt only at the root of a host, and this site is
-// a project site under /RRAA/, so this one is for completeness: the noindex
-// tags are what keep pages out, and the sitemap is given to search consoles
-// by its address. Nothing is disallowed, so crawlers can read those tags.
+// robots.txt lives at the host root (getmorse.vercel.app/robots.txt). The
+// noindex tags are what keep pages out of search. Nothing is disallowed, so
+// crawlers can read those tags.
 export function robotsTxt() {
   return `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}sitemap.xml\n`;
 }
@@ -378,8 +377,7 @@ export async function buildPages({ out = OUT, refresh = true } = {}) {
 <link rel="canonical" href="${SITE_URL}site/"></head>
 <body><a href="site/">Morse</a></body></html>
 `);
-  // The policy's address is site/privacy.html (the Chrome Web Store listing
-  // gives that one); /RRAA/privacy.html sends people there too.
+  // The policy's address is site/privacy.html. /privacy.html sends people there too.
   await fs.writeFile(path.join(out, "privacy.html"), `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Morse privacy policy</title>
 <meta name="robots" content="noindex">

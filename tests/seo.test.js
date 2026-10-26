@@ -44,9 +44,9 @@ function walk(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]);
 }
 
-test("the site's address is package.json's homepage, on GitHub Pages", () => {
+test("the site's address is package.json's homepage", () => {
   const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
-  assert.equal(SITE_URL, "https://sam-siavoshian.github.io/RRAA/");
+  assert.equal(SITE_URL, "https://getmorse.vercel.app/");
   assert.equal(pkg.homepage, `${SITE_URL}site/`);
 });
 

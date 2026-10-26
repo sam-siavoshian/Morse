@@ -15,8 +15,8 @@
 import { t } from "./i18n.js"; // the words, in the language the host speaks (core/i18n.js)
 
 // The list lives on the same site as the share page (SHARE_BASE in
-// core/mod.js): https://sam-siavoshian.github.io/RRAA/ + site/mods/index.json.
-export const GALLERY_INDEX_URL = "https://sam-siavoshian.github.io/RRAA/site/mods/index.json";
+// core/mod.js): https://getmorse.vercel.app/ + site/mods/index.json.
+export const GALLERY_INDEX_URL = "https://getmorse.vercel.app/site/mods/index.json";
 // `node demo/serve.js` serves the repo, list included, next to the demo sites.
 export const DEMO_INDEX_URL = "http://127.0.0.1:8787/site/mods/index.json";
 export const GALLERY_REPO = "https://github.com/sam-siavoshian/RRAA";

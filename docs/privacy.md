@@ -70,14 +70,14 @@ nothing to the model.
 ## The gallery list
 
 To show "Mods for this site", Morse downloads the list of gallery mods from
-`https://sam-siavoshian.github.io/RRAA/site/mods/index.json`, and then the
+`https://getmorse.vercel.app/site/mods/index.json`, and then the
 mod files that match the site you are on.
 
 - It happens only when you open the bar or the Mods panel. The list is
   downloaded at most once a day.
 - The request carries no cookies and nothing about you or the page. If you
   set a different list address in settings, the same goes to that address
-  instead. GitHub hosts the files. Like any website, it sees your IP address
+  instead. The list is hosted at getmorse.vercel.app. Like any website, that host sees your IP address
   and which mod files were asked for. A mod file is named after the site it
   is for, so this can show that you visited that site.
 - To turn it off, turn off "Show mods others made" in Morse settings. Then
