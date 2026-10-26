@@ -315,12 +315,19 @@ test("a provider with a fast mode shows the switch; Codex and local servers do n
   assert.match(app, /row\.hidden = !id/);
   assert.match(bar, /if \(!S\.fastModel\) return ""/);
   assert.match(bar, /settings\.fastMode/);
-  const en = readFileSync(path.join(root, "core/locales/en.js"), "utf8");
+  const fastCopy = file => {
+    const text = readFileSync(path.join(root, "core/locales", file), "utf8");
+    return ["desk.model.fastMode.d", "settings.fastMode.help"].map(k => {
+      const m = text.match(new RegExp(`"${k}": "([^"]*)"`));
+      assert.ok(m, `${file} ${k}`);
+      return m[1];
+    }).join("\n");
+  };
+  const en = fastCopy("en.js");
   assert.match(en, /Uses the faster, more expensive mode\. The model you chose stays the same\./);
   assert.doesNotMatch(en, /faster model/i);
-  for (const file of ["ar.js", "de.js", "es.js", "fa.js", "fr.js", "ja.js", "pt-BR.js", "zh-CN.js"]) {
-    const text = readFileSync(path.join(root, "core/locales", file), "utf8");
-    assert.doesNotMatch(text, /faster model|schnellere Modell|modèle le plus rapide|modelo más rápido|modelo mais rápido|更快的模型|النموذج الأسرع|مدل سریع‌تر|速いモデル/);
+  for (const file of ["ar.js", "de.js", "es.js", "fa.js", "fr.js", "ja.js", "pt-BR.js", "zh-CN.js", "en.js"]) {
+    assert.doesNotMatch(fastCopy(file), /faster model|schnellere Modell|modèle le plus rapide|modelo más rápido|modelo mais rápido|更快的模型|النموذج الأسرع|مدل سریع‌تر|速いモデル/);
   }
   const boot = app.slice(app.lastIndexOf("st = await morse.state();"));
   assert.match(boot, /render\(\);\nrefreshChoices\(\);/);
