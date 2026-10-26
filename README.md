@@ -15,7 +15,7 @@
 
 <br /><br />
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-17-rubygems-palette.png" alt="rubygems.org for Rails, with a command palette taken from VSCodium: Ctrl+Shift+P opens a search of this page, and a Commands button sits in RubyGems' own header." width="1200" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian-timer.gif" alt="Obsidian had no focus timer. Morse adds a panel with the note's reading time and a 25 minute timer, and Start counts down." width="1000" />
 
 </div>
 
@@ -68,31 +68,39 @@ A change you save is a **mod**. Morse puts your mods back every time the app ope
 
 ## Real runs
 
-Screenshots of real apps and live sites. Not drawings.
+Five apps. What happened, then the recording. Waits for the model are sped up, and the picture says so.
 
-### Bring a feature from one app into another
+### The paywall came off
 
-VSCodium's command palette, taken while Morse watched, then brought to rubygems.org. Ctrl+Shift+P opens a palette of that page, in RubyGems' own type and colors. [How](docs/bring-a-feature.md).
+The Daily Byte put a subscribe box and ads on the story. Morse deleted the box and the ads. The story was already on the page.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-17-rubygems-palette.png" alt="rubygems.org with a command palette brought from VSCodium, searching this page's own headings, and a Commands button in the header." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-paywall.gif" alt="The Daily Byte with a subscribe box and ads, then both gone, and the story still there." width="900" />
 
-pkg.go.dev's Jump to box, brought to the Node.js docs. F opens it. Enter goes to the heading.
+### A button the page did not have
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-10-node-jump-to.png" alt="The Node.js docs with a Jump to box brought from pkg.go.dev, searching readFile, in the page's own green." width="900" />
+On Docker Hub, the nginx tags were filtered for alpine once. Morse added a Show Alpine button. The same button fills the filter on the redis page.
 
-### Inject code
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-docker-button.gif" alt="Docker Hub nginx tags. A filter typed once becomes a Show Alpine button, and the button works on the redis page too." width="900" />
 
-On the Node.js docs, the change is code you can open: the style, and the script that runs in the page.
+### A feature the app did not ship
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/306-real-edit-code.png" alt="The Node.js docs with Morse's code editor open on the style and script of a saved change, and Save and run." width="900" />
+Obsidian has no focus timer. Morse added a panel with this note's reading time and a 25 minute timer. Start, and it counts down.
 
-### A feature the app did not have
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian-timer.gif" alt="Obsidian with a new focus panel: reading time, a 25 minute timer, and the timer counting down after Start." width="900" />
 
-Visual Studio Code 1.143. Ctrl+Alt+P hides the sidebar and the activity bar and doubles the code, for people at the back of a room. Press it again and the editor is back. The app was quit and opened again. The change was still there.
+### The docs became one reading column
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/showcase/vscode-presentation-shortcut.jpg" alt="Visual Studio Code before and after Ctrl+Alt+P: the sidebar is gone and the code is twice as big. Claude Code (opus) wrote it. It was still there after quitting and opening the app again." width="900" />
+On nodejs.org, one sentence hid both sidebars and turned the introduction into one dark column.
 
-More real runs, including the ones that are only a new look: [the showcase](docs/showcase/README.md).
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-nodejs-reading.gif" alt="The Node.js docs. Both sidebars go away and the introduction becomes one dark reading column." width="900" />
+
+### Said once, already on the next app
+
+In Obsidian, the request was Caladea, bigger text, and dark pages. Logseq was opened after that, and it already had them.
+
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-logseq-style.gif" alt="A style request in Obsidian, Caladea with bigger text and dark pages, then Logseq opened with that look already on." width="900" />
+
+A feature brought from one app into another, as stills: [Bring a feature](docs/bring-a-feature.md). More runs: [the showcase](docs/showcase/README.md).
 
 ## FAQ
 
