@@ -9,13 +9,13 @@
 [![Preview build](https://img.shields.io/badge/preview-newest_main-5c4ee5?style=flat-square)](https://github.com/sam-siavoshian/RRAA/releases/tag/preview)
 **[Website](https://getmorse.vercel.app/) · [Docs](docs/README.md) · [Showcase](docs/showcase/README.md)**
 
-[Quick start](#quick-start) · [How Morse works](#how-morse-works) · [What you can change](#what-you-can-change) · [Real runs](#real-runs) · [FAQ](#faq) · [Documentation](#documentation)
+[Quick start](#quick-start) · [How Morse works](#how-morse-works) · [What you can change](#what-you-can-change) · [App cheats](#app-cheats) · [FAQ](#faq) · [Documentation](#documentation)
 
 <code>curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh</code>
 
 <br /><br />
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian-timer.gif" alt="Obsidian had no focus timer. Morse adds a panel with the note's reading time and a 25 minute timer, and Start counts down." width="1000" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-skips.gif" alt="Before: a player with 0 skips left and a wall that says no skips left. Adding it: Morse on that wall. After: Skip has changed the song, and the counter still says 0." width="1000" />
 
 </div>
 
@@ -66,39 +66,27 @@ A change you save is a **mod**. Morse puts your mods back every time the app ope
 | **Your own feature** | A button, a shortcut, a panel. It stays when the app opens again. [Changing things](docs/changing-things.md) |
 | **A paywall** | Point at the box on a page that already loaded. Morse does not sign you in, and it does not fetch a story the site never sent. |
 
-## Real runs
+## App cheats
 
-What happened, then the recording.
+A limit the app drew on the page. Before, adding it, after.
 
-### The subscription wall came off
+### No skips left
 
-A subscription wall covered the rest of the story. Subscribers only. $5 a month. Subscribe to keep reading. Morse hid the wall. The rest of the story was already on the page.
+The player said free accounts get 6 skips an hour, and this hour was used up. Morse hid that wall. Skip changed the song. The counter still said 0.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-paywall.gif" alt="A story with a subscription wall, Subscribers only, 5 dollars a month, Subscribe to keep reading. Morse hides the wall and the rest of the story is there." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-skips.gif" alt="Before: a player with 0 skips left and a wall that says no skips left. Adding it: Morse on that wall. After: Skip has changed the song, and the counter still says 0." width="900" />
 
-### Copy as Markdown, on every code sample
+### The subscription wall
 
-The Node.js docs put a Copy button on each code sample. Morse added Copy as Markdown beside it. That button copies the sample as Markdown.
+Subscribers only. $5 a month. Subscribe to keep reading. Morse hid the wall. The rest of the story was already on the page.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-copy-markdown.gif" alt="A Node.js docs code sample. It has a Copy button, then a Copy as Markdown button appears beside it." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-paywall.gif" alt="Before: a story under a subscription wall, Subscribers only, 5 dollars a month. Adding it: Morse on that wall. After: the rest of the story, which was already on the page." width="900" />
 
-### A feature the app did not ship
+### No free messages left
 
-Obsidian has no focus timer. Morse added a panel with this note's reading time and a 25 minute timer. Start, and it counts down.
+The chat said today's free messages were used up. Morse hid that wall. The next message sent. The counter still said 0.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian-timer.gif" alt="Obsidian with a new focus panel: reading time, a 25 minute timer, and the timer counting down after Start." width="900" />
-
-### VS Code's command palette, on RubyGems
-
-The command palette was taken from VS Code and brought to rubygems.org. Ctrl+Shift+P searches that page, and a Commands button sits in the header.
-
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-bring-palette.gif" alt="rubygems.org for Rails, then VS Code's command palette open on that page, with a Commands button in the header." width="900" />
-
-### A presentation shortcut VS Code did not have
-
-In Visual Studio Code, Ctrl+Alt+P hides the sidebar and the activity bar and doubles the code, so a room can read it. Press it again and the editor is back. The app was quit and opened again. The shortcut was still there.
-
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-vscode-present.gif" alt="Visual Studio Code, then the same window in presentation mode: sidebar gone, code twice as big, Ctrl+Alt+P to exit." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-messages.gif" alt="Before: a chat with 0 messages left and a wall that says no free messages left. Adding it: Morse on that wall. After: a new message sent, and the counter still says 0." width="900" />
 
 More runs: [Bring a feature](docs/bring-a-feature.md) and [the showcase](docs/showcase/README.md).
 
