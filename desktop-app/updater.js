@@ -19,7 +19,7 @@
 // starts Morse again (--force-run). Linux: the AppImage file is replaced.
 // Only packaged builds update; MORSE_NO_UPDATE=1 turns it off.
 import { createHash } from "node:crypto";
-import { promises as fs, readFileSync, readdirSync } from "node:fs";
+import { promises as fs, readFileSync, writeFileSync, readdirSync, existsSync, renameSync, rmSync, mkdirSync, accessSync, constants } from "node:fs";
 import { spawn, execFileSync } from "node:child_process";
 import path from "node:path";
 
@@ -82,14 +82,15 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
     if (!r.ok) throw new Error(`${name}: HTTP ${r.status}`);
     if (as !== "buffer") return r.text();
     const total = +r.headers?.get?.("content-length") || 0;
-    if (!progress || !r.body?.getReader || !total) return Buffer.from(await r.arrayBuffer());
+    // No length (a redirect hop, or a host that omits it): still move the bar.
+    if (!progress || !r.body?.getReader) return Buffer.from(await r.arrayBuffer());
     const reader = r.body.getReader(), parts = [];
     let got = 0, shown = -1;
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
       parts.push(value); got += value.length;
-      const pct = Math.min(99, Math.floor(got * 100 / total));
+      const pct = total ? Math.min(99, Math.floor(got * 100 / total)) : Math.min(99, Math.floor(got / (2 * 1024 * 1024)));
       if (pct !== shown) { shown = pct; progress(pct); }
     }
     return Buffer.concat(parts.map(p => Buffer.from(p)));
@@ -134,8 +135,15 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
         return user ? "error" : "current";
       }
       if (!isNewer(remote, local)) {
+        try { rmSync(path.join(dir, "attempt.json"), { force: true }); } catch {}
         if (user) set({ phase: "current", version: versionOf(local) || version });
         return "current";
+      }
+      // The last try at this exact build quit and came back as the same copy.
+      // Downloading it again would loop. A click can try once more.
+      if (!user && sameAttempt(remote)) {
+        set({ phase: "failed" });
+        return "failed";
       }
       // A clone, or a computer with no installer: say a newer one is published.
       // Only a packaged app downloads it.
@@ -171,13 +179,25 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
     }
   }
 
+  // The last install of this commit didn't stick: we came back as the old copy.
+  function sameAttempt(remote) {
+    try {
+      const a = JSON.parse(readFileSync(path.join(dir, "attempt.json"), "utf8"));
+      return a.commit === remote.commit && a.commit !== local?.commit && Date.now() - a.at < 30 * 60 * 1000;
+    } catch { return false; }
+  }
+
   // Put the new copy in place and start it. Runs once; Morse quits after.
+  // The swap happens in this process, before quit. A helper that only opens
+  // the new copy used to do the swap, and it died with Morse, so the old
+  // copy opened again and the download started over.
   let applying = false;
   function apply({ relaunch = true } = {}) {
     if (!ready || applying) return false;
     applying = true;
-    const pid = process.pid;
+    const pid = String(process.pid);
     try {
+      try { writeFileSync(path.join(dir, "attempt.json"), JSON.stringify({ commit: ready.remote.commit, at: Date.now() })); } catch {}
       if (process.platform === "darwin") {
         const bundle = bundleOf(process.execPath);
         if (!bundle) throw new Error("not running from an app bundle");
@@ -185,24 +205,33 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
         execFileSync("ditto", ["-x", "-k", ready.file, unpacked]);
         const fresh = readdirApps(unpacked)[0];
         if (!fresh) throw new Error("the update has no app in it");
-        // A small script waits for this Morse to quit, swaps the bundle, opens the new one.
-        const script = `while kill -0 ${pid} 2>/dev/null; do sleep 0.2; done
-rm -rf "${bundle}.old" && mv "${bundle}" "${bundle}.old" && mv "${fresh}" "${bundle}" && rm -rf "${bundle}.old" || { [ -d "${bundle}" ] || mv "${bundle}.old" "${bundle}"; }
-${relaunch ? `open "${bundle}" --args --updated` : ""}`;
-        spawn("/bin/sh", ["-c", script], { detached: true, stdio: "ignore" }).unref();
+        const home = app.getPath("home");
+        const placed = placeMac(dir, fresh, installDest(bundle, home), "cancel-app");
+        // The helper is waiting before the swap. If moving the running app
+        // kills this process, the helper still finishes and opens the new one.
+        wake(dir, macRelaunchScript, { MORSE_PID: pid, MORSE_DEST: placed.dest, MORSE_NEXT: placed.next, MORSE_OLD: placed.old, MORSE_CANCEL: placed.cancel, MORSE_RELAUNCH: relaunch ? "1" : "0" });
+        try { swapInPlace(placed.dest, placed.next); }
+        catch (err) {
+          writeFileSync(placed.cancel, "1");
+          const fallback = path.join(home, "Applications", "Morse.app");
+          if (path.resolve(placed.dest) === path.resolve(fallback)) throw err;
+          const again = placeMac(dir, fresh, fallback, "cancel-home");
+          wake(dir, macRelaunchScript, { MORSE_PID: pid, MORSE_DEST: again.dest, MORSE_NEXT: again.next, MORSE_OLD: again.old, MORSE_CANCEL: again.cancel, MORSE_RELAUNCH: relaunch ? "1" : "0" });
+          try { swapInPlace(again.dest, again.next); }
+          catch (e2) { writeFileSync(again.cancel, "1"); throw e2; }
+        }
       } else if (process.platform === "win32") {
         // The NSIS installer waits for Morse to close, installs over it, and with --force-run starts it.
         spawn(ready.file, ["/S", ...(relaunch ? ["--force-run"] : [])], { detached: true, stdio: "ignore", windowsHide: true }).unref();
       } else {
         const target = getAppImage();
         if (!target) throw new Error("not running from an AppImage");
-        const script = `while kill -0 ${pid} 2>/dev/null; do sleep 0.2; done
-mv -f "${ready.file}" "${target}" && chmod +x "${target}"
-${relaunch ? `"${target}" --updated >/dev/null 2>&1 &` : ""}`;
-        spawn("/bin/sh", ["-c", script], { detached: true, stdio: "ignore" }).unref();
+        wake(dir, linuxSwapScript, { MORSE_PID: pid, MORSE_FRESH: ready.file, MORSE_TARGET: target, MORSE_RELAUNCH: relaunch ? "1" : "0" });
       }
       log(`update: installing ${ready.remote.commit.slice(0, 7)}`);
-      app.exit(0);
+      // Let the helper detach, then quit. exit skips the quit handler, which
+      // would start a second install.
+      setTimeout(() => { try { app.releaseSingleInstanceLock?.(); } catch {} app.exit(0); }, 700);
       return true;
     } catch (e) {
       log(`update: couldn't install (${e.message}); keeping this version`);
@@ -222,7 +251,8 @@ ${relaunch ? `"${target}" --updated >/dev/null 2>&1 &` : ""}`;
     stop() { clearInterval(timer); },
     check,
     // Morse is quitting: install now, without opening it again.
-    onQuit() { return ready ? apply({ relaunch: false }) : false; },
+    // Already installing: say so, so quit doesn't start a second copy.
+    onQuit() { if (applying) return true; return ready ? apply({ relaunch: false }) : false; },
     // An app was disconnected: if nothing else is connected, now is a good time.
     idle() { if (ready && !applying && !busy()) { set({ phase: "installing" }); setTimeout(() => apply(), 1500); } },
     // The window's buttons: Restart now, or Later (installs when Morse quits).
@@ -235,5 +265,109 @@ ${relaunch ? `"${target}" --updated >/dev/null 2>&1 &` : ""}`;
 }
 
 function readdirApps(dir) {
-  try { return readdirSync(dir).filter(n => n.endsWith(".app")).map(n => path.join(dir, n)); } catch { return []; }
+  try {
+    const apps = readdirSync(dir).filter(n => n.endsWith(".app")).map(n => path.join(dir, n));
+    // The zip also carries helper apps inside the real one. Only the top
+    // Morse.app is the update. Prefer that name if several are unpacked.
+    return apps.sort((a, b) => (path.basename(a) === "Morse.app" ? 0 : 1) - (path.basename(b) === "Morse.app" ? 0 : 1));
+  } catch { return []; }
+}
+
+// A running copy opened from a disk image, or from a folder this user can't
+// change, can't be replaced in place. Put the new one in the home Applications.
+export function installDest(bundle, home) {
+  let writable = false;
+  try { accessSync(path.dirname(bundle), constants.W_OK); writable = true; } catch {}
+  if (!bundle || bundle.includes("/AppTranslocation/") || !writable) return path.join(home, "Applications", "Morse.app");
+  return bundle;
+}
+
+// Where the new app will land, the staged copy beside it, and a file the
+// helper reads so a failed try is not opened.
+function placeMac(folder, fresh, dest, cancelName) {
+  const next = stageCopy(dest, fresh);
+  const cancel = path.join(folder, cancelName);
+  rmSync(cancel, { force: true });
+  return { dest, next, old: `${dest}.old`, cancel };
+}
+
+// A full copy of the new app, beside where it will land. ditto keeps the
+// signature a plain copy would drop. The running app is not touched yet.
+function stageCopy(dest, fresh) {
+  mkdirSync(path.dirname(dest), { recursive: true });
+  const next = `${dest}.next`;
+  rmSync(next, { recursive: true, force: true });
+  execFileSync("ditto", [fresh, next]);
+  return next;
+}
+
+// Move the current app aside and the staged copy into its place. A failure
+// puts the current app back. Done in this process: a helper started as a
+// child dies when Morse quits, which is what left the old copy in place.
+export function swapInPlace(dest, next) {
+  const old = `${dest}.old`;
+  rmSync(old, { recursive: true, force: true });
+  if (existsSync(dest)) renameSync(dest, old);
+  try { renameSync(next, dest); }
+  catch (e) {
+    if (!existsSync(dest) && existsSync(old)) { try { renameSync(old, dest); } catch {} }
+    throw e;
+  }
+  return old;
+}
+
+// Quitting Morse kills a child script. The outer shell starts the real work
+// and exits; nohup keeps it. It only opens the app that is actually there.
+export const macRelaunchScript = `#!/bin/bash
+if [ "\${MORSE_UPDATE_INNER}" != 1 ]; then
+  export MORSE_UPDATE_INNER=1
+  nohup /bin/bash "$0" >>"\${MORSE_LOG:-/dev/null}" 2>&1 &
+  exit 0
+fi
+while kill -0 "$MORSE_PID" 2>/dev/null; do sleep 0.2; done
+sleep 0.5
+if [ -f "$MORSE_CANCEL" ]; then exit 0; fi
+# This process died before it could finish the swap. Finish it here.
+if [ -n "$MORSE_NEXT" ] && [ -d "$MORSE_NEXT" ]; then
+  rm -rf "$MORSE_OLD"
+  if [ -d "$MORSE_DEST" ]; then mv "$MORSE_DEST" "$MORSE_OLD" || exit 1; fi
+  mv "$MORSE_NEXT" "$MORSE_DEST" || { [ -d "$MORSE_DEST" ] || mv "$MORSE_OLD" "$MORSE_DEST"; exit 1; }
+fi
+if [ -n "$MORSE_OLD" ]; then rm -rf "$MORSE_OLD"; fi
+if [ "$MORSE_RELAUNCH" = 1 ] && [ -d "$MORSE_DEST" ]; then
+  open "$MORSE_DEST" --args --updated
+fi
+`;
+
+export const linuxSwapScript = `#!/bin/bash
+if [ "\${MORSE_UPDATE_INNER}" != 1 ]; then
+  export MORSE_UPDATE_INNER=1
+  nohup /bin/bash "$0" >>"\${MORSE_LOG:-/dev/null}" 2>&1 &
+  exit 0
+fi
+while kill -0 "$MORSE_PID" 2>/dev/null; do sleep 0.2; done
+sleep 0.5
+mv -f "$MORSE_FRESH" "$MORSE_TARGET" && chmod +x "$MORSE_TARGET" || exit 1
+if [ "$MORSE_RELAUNCH" = 1 ]; then
+  "$MORSE_TARGET" --updated >/dev/null 2>&1 &
+fi
+`;
+
+function wake(folder, script, env) {
+  mkdirSync(folder, { recursive: true });
+  const file = path.join(folder, "install.sh");
+  writeFileSync(file, script, { mode: 0o755 });
+  const child = spawn("/bin/bash", [file], {
+    detached: true,
+    stdio: "ignore",
+    env: {
+      PATH: "/usr/bin:/bin:/usr/sbin:/sbin",
+      HOME: process.env.HOME || "",
+      USER: process.env.USER || "",
+      TMPDIR: process.env.TMPDIR || "/tmp",
+      MORSE_LOG: path.join(folder, "install.log"),
+      ...env,
+    },
+  });
+  child.unref();
 }
