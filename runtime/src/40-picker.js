@@ -1,4 +1,46 @@
 let hoverEl = null;
+// The dashed box stays only while an element is chosen and the bar is still
+// waiting. A finished run, a stop, or a closed bar drops it (releasePick).
+let pinned = false;
+const HOST_MARK = ["morse-selected", "morse-hover"];
+const marked = new Set();
+function watchHost(el) {
+  if (el && el.nodeType === 1 && el !== hostEl) marked.add(el);
+}
+function unmarkHost(el) {
+  if (!el?.classList) return;
+  el.classList.remove(...HOST_MARK);
+  marked.delete(el);
+}
+function clearHostMarks() {
+  const els = new Set(marked);
+  if (hoverEl) els.add(hoverEl);
+  if (S.target) els.add(S.target);
+  marked.clear();
+  for (const el of els) if (el?.classList) el.classList.remove(...HOST_MARK);
+  for (const el of document.querySelectorAll(".morse-selected, .morse-hover")) el.classList.remove(...HOST_MARK);
+}
+// data-pick lets the stylesheet hide the dashed box once the choice is over,
+// even if a scroll tries to draw it again.
+function syncPickFlag() {
+  if (pinned && S.open && S.phase === "idle" && !bar.hidden) hostEl.dataset.pick = "";
+  else delete hostEl.dataset.pick;
+}
+function releasePick() {
+  pinned = false;
+  hoverEl = null;
+  hl.hidden = true;
+  selBox.classList.remove("busy");
+  selBox.hidden = true;
+  clearHostMarks();
+  syncPickFlag();
+  GodMode.release();
+}
+function leaveHover(el) {
+  if (!el?.classList) return;
+  el.classList.remove("morse-hover");
+  if (el !== S.target) unmarkHost(el);
+}
 function boxTo(el, box, label) {
   if (!el) { box.hidden = true; return; }
   const r = el.getBoundingClientRect();
@@ -18,11 +60,52 @@ function boxTo(el, box, label) {
 const ours = e => e.composedPath().includes(hostEl);
 // Pointing is the person's own mouse: a page's synthetic mousemove and click
 // can't choose what Morse changes (isTrusted, like every key Morse takes).
+// The page part under a point, skipping the overlay. Electron's full-screen
+// popover is the first hit even where it does not take the click.
+function pageUnder(x, y) {
+  let el = document.elementsFromPoint(x, y).find(n => n !== hostEl && n.getRootNode?.()?.host !== hostEl) || null;
+  for (let i = 0; el && el !== hostEl && el.shadowRoot && i < 8; i++) {
+    const inner = el.shadowRoot.elementFromPoint(x, y);
+    if (!inner || inner === el) break;
+    el = inner;
+  }
+  return el;
+}
+// The bar can sit on the part you are pointing at. After the pointer rests,
+// move the bar off it. A press before that is a drag or a click on the bar.
+let coverTimer = 0;
 function onMove(e) {
-  if (!S.picking || !e.isTrusted) return;
+  if (!S.picking || !e.isTrusted || barDragging()) return;
+  if (!S.open || bar.hidden) return;
   const el = GodMode.deepAt(e.clientX, e.clientY); // God mode hook: also points into open shadow roots
-  if (!el || el === hostEl || el === document.documentElement) { hoverEl = null; hl.hidden = true; return; }
+  const onUs = el === hostEl || el?.getRootNode?.()?.host === hostEl;
+  if (onUs) {
+    clearTimeout(coverTimer);
+    const x = e.clientX, y = e.clientY;
+    coverTimer = setTimeout(() => {
+      coverTimer = 0;
+      if (!S.open || bar.hidden || barDragging() || barDragHeld()) return;
+      const under = pageUnder(x, y);
+      if (!under || under === document.documentElement) return;
+      placeBar(under.getBoundingClientRect());
+    }, 180);
+    leaveHover(hoverEl);
+    hoverEl = null;
+    hl.hidden = true;
+    return;
+  }
+  clearTimeout(coverTimer);
+  coverTimer = 0;
+  if (!el || el === hostEl || el === document.documentElement) {
+    leaveHover(hoverEl);
+    hoverEl = null;
+    hl.hidden = true;
+    return;
+  }
+  if (hoverEl !== el) leaveHover(hoverEl);
   hoverEl = el;
+  watchHost(el);
+  el.classList.add("morse-hover");
   // Something is chosen: the page stays still while you type. A click
   // elsewhere still chooses that instead.
   if (S.target) { hl.hidden = true; return; }
@@ -30,14 +113,26 @@ function onMove(e) {
   placeBar(el.getBoundingClientRect());
 }
 // The bar sits on the opposite half of the screen from what you point at.
+// A drag this page (50-bar.js) keeps the dropped spot; pointing leaves it.
 function placeBar(r) {
+  if (barDragHeld()) return;
   const c = (r.top + r.height / 2) / innerHeight;
   if (c > 0.55) bar.classList.add("top");
   else if (c < 0.45) bar.classList.remove("top");
 }
 function swallow(e) { if (S.picking && !ours(e)) { e.preventDefault(); e.stopPropagation(); } }
 function onClick(e) {
-  if (!S.picking || ours(e)) return;
+  if (barDragEatClick()) { e.preventDefault(); e.stopPropagation(); return; }
+  if (!S.picking) return;
+  // A click on the bar stays with the bar. A keyboard click has no position
+  // and belongs to the control that was pressed. A pointer click that only
+  // hit the see-through popover is a point at the page underneath.
+  if (ours(e)) {
+    if (!e.clientX && !e.clientY) return;
+    const under = GodMode.deepAt(e.clientX, e.clientY);
+    const scope = under?.getRootNode?.();
+    if (!under || under === hostEl || scope?.host === hostEl) return;
+  }
   e.preventDefault(); e.stopPropagation();
   if (!e.isTrusted) return;
   // A tap on a touch screen clicks with no mouse move first: point at what is under it.
@@ -47,8 +142,27 @@ function onClick(e) {
 let pointerY = innerHeight / 2;
 listen("mousemove", e => { pointerY = e.clientY; }, true);
 listen("mousemove", onMove, true);
+listen("pointerdown", () => { clearTimeout(coverTimer); coverTimer = 0; }, true);
 for (const t of ["pointerdown", "mousedown", "pointerup", "mouseup"]) listen(t, swallow, true);
 listen("click", onClick, true);
-listen("scroll", () => { if (S.target) boxTo(S.target, selBox); }, true);
+// A scroll may follow the live hover or the chosen element. It never brings
+// the dashed box back after the run ends or the bar closes.
+listen("scroll", () => {
+  if (!S.open || bar.hidden) {
+    // Setting hidden, or removing a class that is not there, still records a
+    // mutation in Chromium. A closed bar must not do that on every scroll
+    // tick (tests/perf.test.js). Clear once, and only while a box is still up.
+    const live = pinned || hoverEl || hostEl.hasAttribute("data-pick") || hostEl.hasAttribute("data-gm");
+    if (live || !hl.hidden || !selBox.hidden || selBox.classList.contains("busy")) {
+      if (!hl.hidden) hl.hidden = true;
+      if (selBox.classList.contains("busy")) selBox.classList.remove("busy");
+      if (!selBox.hidden) selBox.hidden = true;
+      if (live) releasePick();
+    }
+    return;
+  }
+  if (S.phase === "working" && selBox.classList.contains("busy") && S.target?.isConnected) boxTo(S.target, selBox);
+  else if (pinned && S.phase === "idle" && S.target?.isConnected && !selBox.hidden) boxTo(S.target, selBox);
+}, true);
 
 // setTarget lives in 50-bar.js (one definition; it calls the God mode hook).

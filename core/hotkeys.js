@@ -27,11 +27,14 @@ export function detectPlatform(nav = globalThis.navigator) {
   return "linux";
 }
 
-// Alt+Space opens the window menu on Windows and on GNOME/Xfce, and KRunner on
-// KDE, so only macOS gets ⌥Space; everywhere else it's Ctrl+Shift+Space.
+// One chord on every platform, registered with the OS by the desktop process
+// (desktop-app/shortcut.js) so the focused app can't eat it. Option+Space is
+// not that chord: Windows, GNOME, Xfce and KDE own Alt+Space, so a global
+// Option+Space never arrives. Control+Space switches the Mac input source.
+// Command+Space is Spotlight. Ctrl+Alt+Space is free of those.
 // Push to talk defaults to holding the open hotkey: tap to open, hold to talk.
 export function defaultHotkeys(platform) {
-  const open = platform === "mac" ? "Alt+Space" : "Ctrl+Shift+Space";
+  const open = "Ctrl+Alt+Space";
   return { open, talk: open, mods: "Alt+Shift+KeyM", godmode: "Alt+Shift+KeyG", off: "Alt+Shift+Digit0" };
 }
 
@@ -221,6 +224,17 @@ export function checkCombo(str, platform, { self = "", others = {} } = {}) {
   if (platform === "mac" && c.alt && !c.ctrl && !c.meta && /^(Key|Digit)/.test(c.code)) return { level: "warn", message: t("hk.warn.macAlt", { shown }) };
   if (platform !== "mac" && c.alt && !c.ctrl && !c.meta && !c.shift && /^Key/.test(c.code)) return { level: "warn", message: t("hk.warn.altMenu", { shown }) };
   return { level: "ok", message: "" };
+}
+
+// The open chord before Ctrl+Alt+Space. On a Mac the bar saved Option+Space
+// itself ("" means "the default", but recording the keys stored "Alt+Space").
+// That was the old default, not a choice. Windows and Linux never used it as
+// the default, so a saved Alt+Space there is kept. Call once: after someone
+// sets Option+Space on purpose, leave it alone.
+export function migrateStoredOpen(stored = {}, platform) {
+  const src = stored && typeof stored === "object" ? { ...stored } : {};
+  if (platform === "mac" && normalizeCombo(src.open) === "Alt+Space") src.open = "";
+  return src;
 }
 
 // The bindings in effect: stored values over platform defaults; "none" is off ("").

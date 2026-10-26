@@ -139,7 +139,9 @@ function segment(el) {
   if (el.id && !looksHashed(el.id)) return { s: idSel(el.id), anchor: true };
   const attr = stableAttr(el);
   if (attr && !/^\[role=/.test(attr)) return { s: tag + attr, anchor: true };
-  const classes = [...el.classList].filter(c => !looksHashed(c)).slice(0, 2).map(c => "." + cssEsc(c)).join("");
+  // morse-hover / morse-selected are the picker's own marks (40-picker.js).
+  // They come off when the choice ends, so a saved edit must not name them.
+  const classes = [...el.classList].filter(c => c !== "morse-hover" && c !== "morse-selected" && !looksHashed(c)).slice(0, 2).map(c => "." + cssEsc(c)).join("");
   let s = tag + (attr || classes);
   const p = parentOf(el);
   if (p) {
@@ -1178,6 +1180,39 @@ function shotArea(selector, modId) {
   if (width < 8 || height < 8) return null;
   return { x: x0, y: y0, width, height, scrollX, scrollY, vw: W, vh: H, scale: Math.min(1, 1280 / width, 900 / height) };
 }
+// Inline scripts and named onclick/onsubmit handlers, so a feature can call
+// the page's own functions. Handler bodies stay out (they can hold secrets);
+// a named onclick="saveNote(...)" is kept as onclick="saveNote()", which the
+// scan already reads. Not an addEventListener line: the boot must not listen
+// on the page's document. External scripts are not fetched.
+function pageSources() {
+  let out = "", n = 0;
+  const cap = 80000;
+  let scripts = [];
+  try { scripts = [...document.querySelectorAll("script:not([src])")]; } catch { scripts = []; }
+  for (const s of scripts) {
+    if (s.hasAttribute("data-morse-ui") || s.closest?.("[data-morse-ui]")) continue;
+    const t = s.textContent || "";
+    if (!t.trim() || /morse\.__kit|Symbol\.for\("morse/.test(t)) continue;
+    const take = t.slice(0, Math.max(0, cap - n));
+    out += take + "\n";
+    n += take.length;
+    if (n >= cap) break;
+  }
+  let nodes = [];
+  try { nodes = [...document.querySelectorAll("[onclick],[onsubmit]")]; } catch { nodes = []; }
+  for (const el of nodes) {
+    if (el.closest?.("[data-morse-ui],[data-morse]")) continue;
+    for (const attr of ["onclick", "onsubmit"]) {
+      const v = el.getAttribute?.(attr);
+      if (!v) continue;
+      const m = /^\s*([A-Za-z_$][\w$]*)\s*\(/.exec(v);
+      if (!m) continue;
+      out += `${attr}="${m[1]}()";\n`;
+    }
+  }
+  return out.trim();
+}
 function context() {
   const cs = getComputedStyle(document.body);
   const roots = allRoots();
@@ -1188,6 +1223,7 @@ function context() {
     outline: outline(roots),
     layout: layout(),
   };
+  try { const sources = pageSources(); if (sources) ctx.sources = sources; } catch {}
   try { ctx.design = designOf(S.target && S.target.isConnected ? S.target : null); } catch {} // design: never in the way of the rest
   if (S.target && S.target.isConnected) {
     const path = [], t = S.target, outer = outerOf(t);

@@ -92,8 +92,16 @@ const GodMode = (() => {
   let GS = newSession();
 
   // ---- picking into open shadow roots
+  // The overlay host is a full-screen popover. In Electron, elementFromPoint
+  // names that host even where it is see-through, and the page sits next in
+  // the list. A real Morse control (the bar, a sheet) is not itself a page target.
   function deepAt(x, y) {
     let el = document.elementFromPoint(x, y);
+    if (el === hostEl) {
+      const inner = root.elementFromPoint(x, y);
+      if (inner && inner !== hostEl && getComputedStyle(inner).pointerEvents !== "none") return hostEl;
+      el = document.elementsFromPoint(x, y).find(n => n !== hostEl && n.getRootNode?.()?.host !== hostEl) || null;
+    }
     for (let i = 0; el && el !== hostEl && el.shadowRoot && i < 8; i++) {
       const inner = el.shadowRoot.elementFromPoint(x, y);
       if (!inner || inner === el) break;
@@ -861,7 +869,10 @@ const GodMode = (() => {
   const FRAMES = "iframe, frame, embed, object";
   listen("pointerover", e => {
     if (!S.picking || !e.isTrusted || ours(e) || !e.target.matches?.(FRAMES)) return;
+    if (hoverEl !== e.target) leaveHover(hoverEl);
     hoverEl = e.target;
+    watchHost(e.target);
+    e.target.classList.add("morse-hover");
     if (!S.target) boxTo(e.target, hl, describe(e.target));
   }, true);
   listen("blur", () => setTimeout(() => {
@@ -875,6 +886,16 @@ const GodMode = (() => {
     e.stopPropagation();
     if (G.kind !== "frame") startText();
   }, true);
+  // The run ended, the chip was dismissed, or the bar is closing: take the
+  // frame off the page. The session itself stays until exit() (bar hidden).
+  function release() {
+    G.el = null; // before finishTool, so a text edit doesn't start pointing again
+    clearTimeout(G.wait);
+    G.wait = 0;
+    finishTool();
+    closePop();
+    hideUi();
+  }
   // Closing the bar ends the session: flush its save and start fresh next time.
   function exit() {
     if (G.editing) endText(true);
@@ -894,6 +915,7 @@ const GodMode = (() => {
   return {
     deepAt, targetOf, find, icon, tip, esc,
     onTarget: select,
+    release,
     exit,
     // "Reset this page" turns every mod here off, this session's included.
     resetSession() { const s = GS; clearTimeout(s.saveTimer); GS = newSession(); syncButtons(); return s; },

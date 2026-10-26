@@ -12,6 +12,7 @@ import { promises as fs, watchFile, unwatchFile } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { detectPlatform, decideOpenShortcut, resolveHotkeys } from "../core/hotkeys.js";
+import { pickShortcutTarget } from "./shortcut.js";
 import { discoverAppsNative, listProcessesNative } from "../daemon/native-scan.js";
 import { presentApp } from "../daemon/open-bar.js";
 import { kindFor, logoFor } from "../daemon/connect.js";
@@ -55,8 +56,8 @@ export async function loadDaemon() {
 
 // Morse Desktop's own choices, in the Morse folder: desktop.json.
 //   startAtLogin  open Morse (in the tray) when you log in; on with autoOpen
-//   autoOpen      an app with mods that starts on its own (the Dock, Finder, the
-//                 Start menu) is opened again with Morse, so its mods are there; on
+//   autoOpen      an app Morse can open that starts on its own (the Dock, Finder,
+//                 the Start menu), or one found later, is opened again with Morse; on
 //   loginSet      Morse turned startAtLogin on by itself once, for autoOpen (never again: your choice stands)
 //   apps          apps you added by their file, for apps Morse didn't find
 //   appArgs       { "<app id>": [arguments] }: what `morse launch <app> -- <args>` passes (no window for it)
@@ -253,6 +254,7 @@ export function createService({
         port: ready.port, browser: ready.browser, app, settings: d.settingsFromConfig(cfg), verify: ready.verify, who: ready.who,
         log: line => log(`${app.name}: ${plain(line).trim()}`), onChange: changed, keep: true,
       });
+      s.pids = [...new Set([...(ready.pids || []), ready.who?.pid].map(Number).filter(n => Number.isInteger(n) && n > 0))];
       own.set(id, s);
       s.done.catch(e => log(`${app.name}: the connection ended with an error: ${e?.stack || e}`)).finally(() => {
         if (own.get(id) === s) own.delete(id);
@@ -275,21 +277,31 @@ export function createService({
     }
   }
 
-  // Always open with Morse (autoOpen): an app with mods on that was closed at
-  // the last look and is now open without Morse was just started the usual
-  // way. Morse quits it (politely, as ⌘Q would) and opens it again with
-  // Morse. An app that was already open when Morse started is left alone.
+  // Always open with Morse (autoOpen): on for a new install, until you turn
+  // it off. An app Morse can connect to that was closed and is now open was
+  // started the usual way. One Morse finds later, already open, is the same.
+  // Morse quits it (politely, as ⌘Q would) and opens it again with Morse, so
+  // you don't press Open with Morse once per app. An app that was already
+  // open when Morse started is left alone. The same switch is in the sidebar
+  // and on the first-run screen.
+  let watched = false;
   function keepMods(rows) {
     const on = settings?.autoOpen !== false;
+    const baseline = !watched;
+    watched = true;
     for (const r of rows) {
+      const known = seen.has(r.id);
       const was = seen.get(r.id);
       seen.set(r.id, r.state);
-      if (!on || was !== "closed" || r.state !== "open" || !r.modsOn || r.canAttach === false || r.external) continue;
+      if (!on || r.state !== "open" || r.canAttach === false || r.external) continue;
+      const started = known && was === "closed";
+      const foundLater = !baseline && !known;
+      if (!started && !foundLater) continue;
       if (now() - (reopened.get(r.id) || 0) < 60000) continue;
       reopened.set(r.id, now());
       (async () => {
         if ((await pause()).all) return; // every mod is off: nothing to bring back
-        log(`${r.name} opened without Morse; opening it again with Morse (its mods are on)`);
+        log(`${r.name} opened without Morse; opening it again with Morse`);
         const res = await openApp(r.id, { answer: "y" });
         if (res.error) log(`${r.name}: couldn't open it with Morse: ${res.error}`);
       })().catch(e => log(`reopen ${r.id}: ${e?.message || e}`));
@@ -301,6 +313,32 @@ export function createService({
     const s = own.get(id);
     if (!s?.connector) return { code: "notHere" }; // the window says it in the person's language
     return (await s.connector.openBar()) ? { ok: true } : { code: "notReady" };
+  }
+
+  // The chord the OS shortcut should register: a saved custom one, or the default.
+  async function openCombo() {
+    const platform = detectPlatform({ platform: process.platform });
+    const prefs = typeof d.loadPrefs === "function" ? await d.loadPrefs().catch(() => null) : null;
+    return resolveHotkeys(prefs?.hotkeys || {}, platform).open || "";
+  }
+
+  // The global shortcut. `pid` is the frontmost process (a promise is fine);
+  // selfPid is Morse Desktop itself, which is not one of the connected apps.
+  async function openFromShortcut(pidOrPromise = 0, selfPid = 0) {
+    const entries = [...own.entries()];
+    if (!entries.length) return { ok: false, reason: "none" };
+    const [pid, focused] = await Promise.all([
+      Promise.resolve(pidOrPromise).then(n => Number(n) || 0).catch(() => 0),
+      Promise.all(entries.map(async ([id, s]) => {
+        try { return (await s.connector?.barFocused?.()) ? id : ""; } catch { return ""; }
+      })),
+    ]);
+    const id = pickShortcutTarget(entries.map(([appId, s]) => ({ id: appId, pids: s.pids || [] })), {
+      pid, selfPid: Number(selfPid) || 0, focused: new Set(focused.filter(Boolean)),
+    });
+    if (!id) return { ok: false, reason: "none" };
+    const ok = await own.get(id)?.connector?.toggleBar?.();
+    return ok ? { ok: true, id } : { ok: false, reason: "notReady", id };
   }
 
   // "Disconnect": `morse stop <app>`. The app keeps running.
@@ -613,7 +651,7 @@ export function createService({
 
   watchPrefsFile();
   return {
-    state, apps, openApp, openBar, disconnectApp, addApp, model, modelChoices, chooseModel, setFastMode, check,
+    state, apps, openApp, openBar, openCombo, openFromShortcut, disconnectApp, addApp, model, modelChoices, chooseModel, setFastMode, check,
     mods, setModOn, deleteMod, undeleteMod, pause, setAllModsOff, doctor, setSetting, setOpenShortcut, loadSettings, shutdown,
     get sessions() { return own; },
   };

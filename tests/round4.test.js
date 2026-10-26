@@ -1,6 +1,7 @@
 // Bug and security hunt, round 4: regressions for what it found. Each test
 // failed before its fix.
 import { tempDir } from "./helpers/home.js"; // first: a MORSE_HOME of its own, and temp folders removed at exit
+import { OPEN_KEY } from "./helpers/keys.js";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -144,7 +145,6 @@ test("desktop: the off switch survives a reload even when the page (or a mod) cl
 
 // ---- the page context sent to the model
 
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 // The real runtime on a page, with a host that records what would go to the model.
 async function withRuntime(html, fn) {
   const { bundleRuntime } = await import("../runtime/bundle.js");

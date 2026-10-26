@@ -16,7 +16,7 @@ import path from "node:path";
 import { promises as fs } from "node:fs";
 import { createRequire } from "node:module";
 import { axeCheck, axeLines } from "../demo/axe.js"; // axe-core on Morse's own UI (tests/a11y-morse.test.js)
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
+import { OPEN_KEY } from "./helpers/keys.js";
 
 let chromium;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}

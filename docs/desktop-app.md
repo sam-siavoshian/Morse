@@ -48,16 +48,20 @@ Working on Morse itself? `npm run desktop` opens it from the Morse folder.
 
 ## The first time
 
-Morse's name forms out of dots, with a short sound, then **Begin**. Three
+Morse's name forms out of dots, with a short sound, then **Begin**. Four
 steps follow, each with one thing on it; **Enter** goes on, and **Skip** is
 always at the top:
 
 1. **Your AI writes the changes.** Morse uses Claude Code (or Codex): it finds
    the one on this computer by itself and checks that it answers. If it finds
    neither, paste an API key there instead.
-2. **Three moves, in any app:** press the shortcut, point at something, say
+2. **Apps open with Morse.** Open an app as you usually do and Morse opens it,
+   including one it finds later. The switch is **Always open with Morse**, the
+   same one at the bottom of the sidebar. Turn it off to open apps yourself.
+   On a Mac, allow Morse when macOS asks.
+3. **Three moves, in any app:** press the shortcut, point at something, say
    what you want.
-3. **Pick an app to change**, each with **Open with Morse**. Click one, and
+4. **Pick an app to change**, each with **Open with Morse**. Click one, and
    you're done. Browsers are in the list too, for websites.
 
 ![The welcome: Morse's name, then Begin](screenshots/176-desktop-app-welcome.webp)
@@ -79,10 +83,12 @@ to it.
 - **Disconnect** takes Morse off the app. The app keeps running, and your mods
   come off until next time.
 - **Always open with Morse** (at the bottom of the sidebar, on unless you turn
-  it off): an app with mods that you open the usual way, from the Dock, Finder
-  or the Start menu, is quit and opened again with Morse a moment later, so
-  your mods are always there. An app that was already open when Morse started
-  is left alone. For this, Morse opens at login, in the menu bar or tray.
+  it off): an app you open the usual way, from the Dock, Finder or the Start
+  menu, is quit and opened again with Morse a moment later. An app Morse finds
+  later is treated the same way. You don't press **Open with Morse** once per
+  app. An app that was already open when Morse started is left alone. The
+  first-run screen has this same switch. For this, Morse opens at login, in
+  the menu bar or tray.
 - **Connect** shows up for an app that is open and ready for Morse, like
   after you disconnected. Morse connects without a restart.
 - **Add an app…** lets you choose the file of an app Morse didn't find.

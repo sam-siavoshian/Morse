@@ -16,7 +16,8 @@
 <!-- The first run, in the shape of Zephium's (desktop-app/ui/formation.js):
      the name forms out of dots, then one quiet step at a time,
      each a heading, a line and one thing to do, steered from one row at the
-     foot: Back, where you are, Continue. Opening an app ends it. It stands
+     foot: Back, where you are, Continue. Apps open with Morse unless that
+     switch is off (the same one as in the sidebar). Opening an app ends it. It stands
      in the website's day sky, which comes apart into the page at its foot. -->
 <div class="first" id="first" role="dialog" aria-modal="true" aria-label="Welcome to Morse" data-i18n-attr="aria-label:desk.first.h" data-step="welcome" data-phase="waiting" hidden>
   <div class="sky" aria-hidden="true"><div class="sky-paint"></div><canvas class="dither" data-dither="down"></canvas></div>
@@ -40,6 +41,14 @@
     </div>
   </section>
 
+  <section class="ob-step" data-ob="open" aria-labelledby="ob-open-h" hidden>
+    <header class="ob-head"><h1 id="ob-open-h" data-i18n="desk.ob.openH">Apps open with Morse</h1><p data-i18n="desk.ob.openD">Open an app as you usually do. Morse opens it, including one it finds later. Turn this off to open apps yourself.</p></header>
+    <div class="ob-scene">
+      <label class="switchrow big"><span><b data-i18n="desk.autoOpen">Always open with Morse</b><small data-i18n="desk.autoOpen.d">Apps open with Morse, even from the Dock. Morse opens at login for this.</small></span><input type="checkbox" role="switch" id="ob-auto-open" checked></label>
+      <p class="ob-note" id="ob-mac-allow" data-i18n="desk.ob.openMac" hidden>On a Mac, allow Morse when macOS asks. That lets Morse open the app.</p>
+    </div>
+  </section>
+
   <section class="ob-step" data-ob="how" aria-labelledby="ob-how-h" hidden>
     <header class="ob-head"><h1 id="ob-how-h" data-i18n="desk.ob.howH">Three moves, in any app</h1><p data-i18n="desk.ob.howD">Try it in an app on the next step.</p></header>
     <ol class="ob-moves">
@@ -58,7 +67,7 @@
 
   <nav class="ob-bar" aria-label="Welcome to Morse" data-i18n-attr="aria-label:desk.first.h">
     <span class="ob-side"><button type="button" class="btn quiet ob-pill" id="ob-back" data-i18n="desk.ob.back">Back</button></span>
-    <ol class="ob-dots" id="ob-dots"><li></li><li></li><li></li></ol>
+    <ol class="ob-dots" id="ob-dots"><li></li><li></li><li></li><li></li></ol>
     <span class="ob-side end"><button type="button" class="btn primary ob-pill" id="ob-next"><span id="ob-next-label" data-i18n="desk.ob.continue">Continue</span><kbd>↵</kbd></button></span>
   </nav>
 </div>
@@ -74,7 +83,7 @@
     </nav>
     <div class="side-foot">
       <label class="switchrow"><span data-i18n="desk.modsOn">Mods on</span><input type="checkbox" role="switch" id="mods-on" checked></label>
-      <label class="switchrow" title="Apps with mods open with Morse, even from the Dock. Morse opens at login for this." data-i18n-attr="title:desk.autoOpen.d"><span data-i18n="desk.autoOpen">Always open with Morse</span><input type="checkbox" role="switch" id="auto-open"></label>
+      <label class="switchrow" title="Apps open with Morse, even from the Dock. Morse opens at login for this." data-i18n-attr="title:desk.autoOpen.d"><span data-i18n="desk.autoOpen">Always open with Morse</span><input type="checkbox" role="switch" id="auto-open" checked></label>
       <p class="ver" id="version"></p>
     </div>
   </aside>

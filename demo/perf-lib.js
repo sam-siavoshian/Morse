@@ -24,8 +24,10 @@ let chromium = null;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
 export { chromium };
 
-// The default Open Morse hotkey: ⌥Space on macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js).
-export const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
+// The default Open Morse hotkey: Ctrl+Alt+Space (core/hotkeys.js), in Playwright's key names.
+import { defaultHotkeys } from "../core/hotkeys.js";
+const HK_PLATFORM = process.platform === "darwin" ? "mac" : process.platform === "win32" ? "win" : "linux";
+export const OPEN_KEY = defaultHotkeys(HK_PLATFORM).open.replaceAll("Ctrl", "Control");
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
 export const median = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor((s.length - 1) / 2)] : NaN; };
 export const freePort = () => new Promise(r => { const s = net.createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => r(p)); }); });
@@ -200,7 +202,7 @@ export function instrument() {
     if (n.matches("[data-morse-ui]")) mark("ui");
   };
   new O.MO(recs => { for (const r of recs) for (const n of r.addedNodes) seen(n); }).observe(document, { childList: true, subtree: true });
-  // The default Open Morse hotkey (Alt+Space on macOS, Ctrl+Shift+Space elsewhere).
+  // The default Open Morse hotkey (Ctrl+Alt+Space).
   O.ael.call(window, "keydown", e => { if (e.code === "Space" && (e.altKey || e.ctrlKey)) P.keydown = O.now(); }, true);
   // Anything that reaches the page's own error handlers.
   P.pageErrors = [];

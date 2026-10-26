@@ -10,6 +10,7 @@
 //   - An AppImage's file:// UI moves every launch, so saved mods didn't come back.
 //   - The Mods panel said "on this site" in a desktop app.
 import { tempDir } from "./helpers/home.js"; // first: a MORSE_HOME of its own, and temp folders removed at exit
+import { OPEN_KEY } from "./helpers/keys.js";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -117,7 +118,6 @@ test("in an app, a file:// UI is matched by its path inside the app: an AppImage
 
 let chromium;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
 let browser, site;
 after(async () => { await browser?.close(); site?.close(); await fs.rm(home, { recursive: true, force: true }); });
 const freePort = () => new Promise(r => { const s = net.createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => r(p)); }); });

@@ -14,9 +14,10 @@
 //     never treated as a grant and the privileged try runs again
 //
 // After one allow, the next open of that browser proceeds. It does not ask
-// again and it does not restart again. If macOS still refuses, Morse says so
-// once. Nothing here writes the TCC database, turns off SIP, or grants the
-// allow by itself.
+// again and it does not restart again. If macOS still refuses, the next press
+// of Open with Morse starts the app anyway: a banner in place of that start
+// never opens it and never asks again. Nothing here writes the TCC database,
+// turns off SIP, or grants the allow by itself.
 
 import { spawn } from "node:child_process";
 import { promises as fs, statSync } from "node:fs";
@@ -74,18 +75,53 @@ export function decideMacAccess({ status, program, saved = {} }) {
 
   if (st === DENIED) {
     // A refusal is not "not yet asked". Don't restart to ask again.
+    // openPlan still starts the app: the press is the retry.
     return { action: "tell", message: REFUSED, markTold: !saved.told };
   }
 
   // Not determined. Not a refusal.
   if (saved.pickedUp) {
     // We already restarted after an allow and macOS still hasn't granted this
-    // process. Say so once. Don't ask again and don't restart again.
+    // process. Don't ask again and don't restart again. The opener still
+    // starts the app (openPlan).
     return { action: "tell", message: REFUSED, markTold: !saved.told };
   }
   if (!saved.asked) return { action: "request", markAsked: true };
-  // Asked, and the allow is not committed yet. Don't try again, don't restart.
+  // Asked, and the allow is not visible yet. Don't restart. The opener still
+  // starts the app: that press is the retry, and starting the app is the ask.
   return { action: "wait", message: WAITING };
+}
+
+// What Open with Morse does with a decision. A missing executable is that
+// error, before anything is quit and before App Management is consulted.
+// restart: the allow is committed and this process has not picked it up.
+// Every other decision starts the app. Starting it is what makes macOS ask,
+// so a wait or a denial must not be a banner that skips the start.
+export function openPlan({ decision, missing = "" } = {}) {
+  if (missing) return { launch: false, message: missing };
+  if (decision?.action === "restart" && decision.plan) {
+    return { launch: false, restart: true, plan: decision.plan, message: decision.message };
+  }
+  return { launch: true };
+}
+
+// One Open, in order. The restart question is not an ask. A missing binary
+// is said first, so a running app is left running.
+export function openSequence({ running = false, confirmed = false, missing = "", decision = null } = {}) {
+  if (missing) return { step: "error", message: missing };
+  if (running && !confirmed) return { step: "askRestart" };
+  const plan = openPlan({ decision });
+  if (plan.restart) return { step: "restartMorse", message: plan.message, plan: plan.plan };
+  if (!plan.launch) return { step: "error", message: plan.message };
+  return { step: running ? "quitAndLaunch" : "launch" };
+}
+
+// `decide` runs only when this press will start the app. The restart question
+// and a missing binary do not record an ask.
+export async function prepareAppOpen({ running = false, confirmed = false, missing = "", decide } = {}) {
+  let decision = null;
+  if (!missing && (!running || confirmed) && typeof decide === "function") decision = await decide();
+  return openSequence({ running, confirmed, missing, decision });
 }
 
 export function memoryStore(initial = {}) {
@@ -161,17 +197,21 @@ export async function readAppManagementStatus({ run = runPreflight, now = () => 
 }
 export function clearAppManagementCache() { cachedStatus = null; }
 
+// The service name is the string macOS checks. Reading the exported symbol
+// with assumingMemoryBound(to: CFString.self) does not load that string, so
+// preflight stays "not determined" after the person has allowed Morse, and
+// Open with Morse shows the waiting banner instead of starting the app.
+export const APP_MANAGEMENT_SERVICE = "kTCCServiceSystemPolicyAppBundles";
+
 // Prints the preflight result, or nothing when the symbol isn't there.
 // 0 granted, 1 denied, 2 not determined.
-const PREFLIGHT_SWIFT = `import Foundation
+export const PREFLIGHT_SWIFT = `import Foundation
 let path = "/System/Library/PrivateFrameworks/TCC.framework/TCC"
 guard let handle = dlopen(path, RTLD_LAZY),
-      let preflightSym = dlsym(handle, "TCCAccessPreflight"),
-      let serviceSym = dlsym(handle, "kTCCServiceSystemPolicyAppBundles") else { exit(0) }
+      let preflightSym = dlsym(handle, "TCCAccessPreflight") else { exit(0) }
 typealias Fn = @convention(c) (CFString, CFDictionary?) -> Int32
 let preflight = unsafeBitCast(preflightSym, to: Fn.self)
-let service = serviceSym.assumingMemoryBound(to: CFString.self).pointee
-print(preflight(service, nil))
+print(preflight("${APP_MANAGEMENT_SERVICE}" as CFString, nil))
 `;
 
 function runPreflight() {

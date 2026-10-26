@@ -132,6 +132,14 @@ function CSS() {
   .hl, .sel { position: fixed; pointer-events: none; border-radius: var(--m-r-sm); transition: all 70ms var(--m-ease);
     outline: 1.5px solid var(--m-signal-4); outline-offset: 0; box-shadow: 0 0 0 4px var(--m-focus); background: color-mix(in srgb, var(--m-signal-4) 6%, transparent); }
   .sel { outline-style: dashed; box-shadow: none; }
+  /* Chosen (data-pick) and the bar still waiting may show the dashed box.
+     A finished run, a stop, an error, or a closed bar leaves the page unmarked.
+     Subtle's still outline (.sel.busy) is the only box while a run is working.
+     display only: no extra motion. */
+  :host(:not([data-pick])) .sel:not(.busy) { display: none !important; }
+  :host(:has(.bar[hidden], .bar.done, .bar.err)) .sel { display: none !important; }
+  :host(:has(.bar[hidden])) .hl { display: none !important; }
+  :host(:has(.bar.working)) .hl { display: none !important; }
   /* the picker label and the edit frame's readout: one inverse mono label */
   .hl span, .gm-read { background: var(--m-signal-4); color: var(--m-text-inverse); font: 500 var(--m-text-xs)/12px var(--m-mono); padding: 4px 6px;
     border-radius: var(--m-r-sm); white-space: nowrap; letter-spacing: 0; font-variant-numeric: tabular-nums; }
@@ -170,6 +178,12 @@ function CSS() {
   .hint { flex: 0 1 auto; min-width: 0; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hint > .radar { vertical-align: -2px; margin-inline-end: 8px; }
   .hint b { color: var(--m-text); font-weight: 500; } .hint i { color: var(--m-warn); font-style: normal; }
+  /* Thinking only (60-generate.js adds .shine). The highlight travels the word.
+     Shine colors are tokens, so a light bar keeps a dark-to-light sweep. */
+  .hint.shine { background-image: linear-gradient(110deg, var(--m-shine) 0%, var(--m-shine) 35%, var(--m-shine-peak) 50%, var(--m-shine) 75%, var(--m-shine) 100%);
+    background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+    animation: m-shine 2s linear infinite; }
+  @keyframes m-shine { from { background-position: 200% 0 } to { background-position: -200% 0 } }
   /* the result: the title gives way, the timing stays */
   .hint:has(.ok) { display: flex; align-items: baseline; gap: 8px; }
   .hint .ok { color: var(--m-text); font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -324,6 +338,9 @@ function CSS() {
     .mark.live .radar rect, .hint .radar rect { animation: none !important; }
     .mark.live .radar rect.c, .hint .radar rect.c { opacity: 1; }
     .mark.live .radar rect.o, .hint .radar rect.o { opacity: 0.55; }
+    /* no infinite sweep: the word stays the normal status color, still readable */
+    .hint.shine { animation: none !important; background-image: none; background-clip: border-box; -webkit-background-clip: border-box;
+      -webkit-text-fill-color: currentColor; color: inherit; }
   }
 
   /* ---- right to left (Persian, Arabic: 04-i18n.js sets dir on the host).
@@ -360,6 +377,8 @@ function CSS() {
     .sw input:checked + span { background: Highlight; }
     .sw input:checked + span::after { background: HighlightText; }
     .hl, .sel, .gm-frame { outline-color: Highlight; border-color: Highlight; }
+    .hint.shine { animation: none !important; background-image: none; background-clip: border-box; -webkit-background-clip: border-box;
+      -webkit-text-fill-color: currentColor; color: inherit; }
     .gm-sw button, .gm-hex i { forced-color-adjust: none; }
   }
 `; }

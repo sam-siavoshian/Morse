@@ -63,11 +63,12 @@ function tabWithin(e, scope) {
 // end of the document, where it would leave the page.
 // The listener sits on the page's body, so it has to come off when this copy
 // goes quiet (letGo). Left there, the closure keeps that whole overlay.
-let pageTopDrop = null;
+let pageTopDrop = null, pageTopArmed = false;
 function clearPageTop() {
   const b = document.body;
   const fn = pageTopDrop;
   pageTopDrop = null;
+  pageTopArmed = false;
   if (!fn || !b) return;
   b.removeEventListener("focusout", fn);
   if (b.getAttribute("tabindex") === "-1") b.removeAttribute("tabindex");
@@ -87,8 +88,39 @@ function focusPageTop() {
     };
     b.addEventListener("focusout", pageTopDrop);
   }
+  // Headless Chromium can still ignore that start for the next Tab (the key
+  // stays on the body, or lands on this popover). One Tab from here goes to
+  // the page's first control. After that, Tab is the page's again.
+  pageTopArmed = true;
   try { b.focus({ preventScroll: true }); } catch {}
 }
+// The first thing Tab can reach on the page, in tree order. Morse's overlay
+// is skipped (it sits after <body>, and a plaintext host would otherwise be
+// a tab stop while it still looks editable).
+function firstPageTab() {
+  const sel = "a[href], button, input:not([type=hidden]), select, textarea, summary, [contenteditable], [tabindex]:not([tabindex='-1'])";
+  for (const n of document.querySelectorAll(sel)) {
+    if (n === document.body || n === document.documentElement || n === hostEl || hostEl.contains(n)) continue;
+    if (n.disabled || n.tabIndex < 0 || n.closest("[hidden], [inert]")) continue;
+    if (!n.getClientRects().length) continue;
+    const s = getComputedStyle(n);
+    if (s.visibility === "hidden" || s.display === "none") continue;
+    return n;
+  }
+  return null;
+}
+listen("keydown", e => {
+  if (!pageTopArmed || !e.isTrusted || e.key !== "Tab" || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  if (S.open || !panel.hidden || !modal.hidden) return;
+  const here = document.activeElement;
+  if (here !== document.body && here !== hostEl) { pageTopArmed = false; return; }
+  const next = firstPageTab();
+  if (!next) return;
+  pageTopArmed = false;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  try { next.focus({ preventScroll: true }); } catch {}
+}, true);
 
 function nowFocused() {
   if (root.activeElement) return root.activeElement;

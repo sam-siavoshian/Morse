@@ -13,7 +13,7 @@ import { modMatches, validateMod, byCreated } from "../core/mod.js";
 import { normalizePrefs, mergePrefs, pushHistory } from "../core/prefs.js";
 import { clipAdd } from "../core/clipboard.js";
 import { serialQueue } from "../core/serial.js";
-import { resolveHotkeys, formatCombo, detectPlatform } from "../core/hotkeys.js";
+import { resolveHotkeys, formatCombo, detectPlatform, migrateStoredOpen } from "../core/hotkeys.js";
 export const HOME = process.env.MORSE_HOME || path.join(os.homedir(), ".morse");
 const MODS = path.join(HOME, "mods");
 const CONFIG = path.join(HOME, "config.json");
@@ -143,14 +143,47 @@ export function updateConfig(fn) {
 export const CONFIG_PATH = CONFIG;
 
 // Command-bar settings (hotkeys, voice, appearance): ~/.morse/settings.json
+const OPEN_HOTKEY_EPOCH = 2;
+
+async function readPrefsRaw() {
+  try { return parseJson(await fs.readFile(PREFS, "utf8")); } catch { return null; }
+}
+
+// null: nothing to write. Otherwise the file with hotkeyEpoch set, and a saved
+// Mac Option+Space (the old default) cleared so the new default applies.
+// A later Option+Space is kept, because the epoch is already set. Other
+// fields on disk are left as they are.
+export function stampOpenHotkey(raw, platform = detectPlatform({ platform: process.platform })) {
+  if (!raw || typeof raw !== "object" || (Number(raw.hotkeyEpoch) || 0) >= OPEN_HOTKEY_EPOCH) return null;
+  // Compare the file's own string. normalizePrefs drops spellings like "⌥Space"
+  // before migrateStoredOpen can see that they are the old Option+Space default.
+  const prev = raw.hotkeys && typeof raw.hotkeys === "object" ? raw.hotkeys : {};
+  const hotkeys = migrateStoredOpen(prev, platform);
+  const body = { ...raw, hotkeyEpoch: OPEN_HOTKEY_EPOCH };
+  if (hotkeys.open !== prev.open) body.hotkeys = { ...prev, open: hotkeys.open };
+  return body;
+}
+
 export async function loadPrefs() {
-  try { return normalizePrefs(parseJson(await fs.readFile(PREFS, "utf8"))); } catch { return normalizePrefs({}); }
+  const raw = await readPrefsRaw();
+  if (!raw) return normalizePrefs({});
+  if ((Number(raw.hotkeyEpoch) || 0) >= OPEN_HOTKEY_EPOCH) return normalizePrefs(raw);
+  const platform = detectPlatform({ platform: process.platform });
+  await queue(PREFS, async () => {
+    const again = await readPrefsRaw();
+    const body = stampOpenHotkey(again, platform);
+    if (body) await writeAtomic(PREFS, JSON.stringify(body, null, 2));
+  });
+  return normalizePrefs(await readPrefsRaw());
 }
 
 export function savePrefs(patch) {
   return queue(PREFS, async () => {
-    const next = mergePrefs(await loadPrefs(), patch);
-    await writeAtomic(PREFS, JSON.stringify(next, null, 2));
+    const raw = await readPrefsRaw();
+    const platform = detectPlatform({ platform: process.platform });
+    const stamped = stampOpenHotkey(raw, platform);
+    const next = mergePrefs(normalizePrefs(stamped || raw), patch);
+    await writeAtomic(PREFS, JSON.stringify({ ...next, hotkeyEpoch: OPEN_HOTKEY_EPOCH }, null, 2));
     return next;
   });
 }
@@ -179,8 +212,8 @@ export function watchPrefs(onPrefs) {
   return { close() { closed = true; unwatchFile(PREFS, onChange); }, ready: tick() };
 }
 
-// The hotkeys in effect on this computer as people read them ("Ctrl+Shift+Space",
-// "⌥Space"); "" for one that's turned off.
+// The hotkeys in effect on this computer as people read them ("Ctrl+Alt+Space",
+// "⌃⌥Space"); "" for one that's turned off.
 export async function configuredHotkeys(platform = detectPlatform({ platform: process.platform })) {
   const keys = resolveHotkeys((await loadPrefs()).hotkeys, platform);
   return Object.fromEntries(Object.entries(keys).map(([id, combo]) => [id, combo ? formatCombo(combo, platform) : ""]));

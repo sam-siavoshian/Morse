@@ -107,7 +107,7 @@ test("setup: Enter takes the recommendation and saves it", async () => {
   assert.match(out, /✓ Claude Code {2}2\.1\.3/);
   assert.match(out, /Claude Code {2}uses your Claude subscription {2}recommended/);
   assert.match(out, /Morse will use Claude Code/);
-  assert.match(out, /press ⌥Space, point at something/);
+  assert.match(out, /press ⌃⌥Space, point at something/);
 });
 
 test("setup: an API key is pasted, or taken from the environment", async () => {
@@ -163,7 +163,7 @@ test("bare `morse` prints a three-line getting started until something is set up
   const lines = plain(gettingStarted({ platform: "win" })).split("\n");
   assert.equal(lines.length, 3);
   assert.match(lines[0], /run morse setup/);
-  assert.match(lines[2], /Press Ctrl\+Shift\+Space/);
+  assert.match(lines[2], /Press Ctrl\+Alt\+Space/);
 
   const home = tempDir("morse-home-");
   try {

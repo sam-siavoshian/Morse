@@ -1,6 +1,6 @@
 // Generating a change, and iterating on it.
-//   - a result stays editable: type a follow-up and Enter refines the same
-//     mod (the model gets the original ask, the current code and the
+//   - a result stays editable: Send (the button or Enter) on new text revises
+//     the same mod (the model gets the original ask, the current code and the
 //     follow-up, and rewrites it whole); Enter on an empty input keeps it
 //   - ⌘Z / Ctrl+Z after a result steps back one version, ⌘⇧Z / Ctrl+Y forward again
 //   - refineMod(m) opens the bar on a saved mod (the panel's Refine), and
@@ -37,6 +37,10 @@ globalThis.__morseShotArea = async (selector, modId, done) => {
 const PLACEHOLDER = () => t("bar.placeholder");
 const REFINE_PLACEHOLDER = () => t("bar.placeholder.refine");
 const FIX_NOTE = () => t("result.fixNote");
+// Only the thinking label shines, and only while a reply is still being made.
+function markThinking() {
+  hint.classList.toggle("shine", S.phase === "working" && hint.textContent === t("gen.thinking"));
+}
 langSubs.add(() => { input.placeholder = bar.classList.contains("done") ? REFINE_PLACEHOLDER() : PLACEHOLDER(); });
 
 // Puts a version's code on the page under the mod's id (the old JS is undone first).
@@ -54,8 +58,12 @@ async function submit(request, opts = {}) {
   const prev = opts.from || null;
   S.phase = "working";
   S.picking = false;
+  pinned = false;
   hl.hidden = true;
+  selBox.classList.remove("busy");
   selBox.hidden = true;
+  clearHostMarks();
+  syncPickFlag();
   input.disabled = true;
   bar.classList.remove("done", "err");
   bar.classList.add("working");
@@ -75,7 +83,7 @@ async function submit(request, opts = {}) {
   // The status says what is really happening, step by step (speed: no waiting
   // looks the same as any other): asking, the model reading, thinking,
   // writing, the change showing up as it's written, trying it.
-  const say = text => { hint.textContent = text; }; // one animation at a time: the field over the target (90-effect.js)
+  const say = text => { hint.textContent = text; markThinking(); }; // one animation at a time: the field over the target (90-effect.js)
   say(t("gen.asking"));
   // Screen readers hear a few steps, never the streaming code: working, the
   // first change on the page, a retry, then done or what went wrong.
@@ -132,10 +140,14 @@ async function submit(request, opts = {}) {
   if (res?.model) S.label = res.model; // models: the footer names the model that answered
 
   if (prev) {
-    if (!res.ok || res.kind === "answer") {
+    // A follow-up that came back with no code must not wipe the change that
+    // is already on the page (an answer with its kind dropped, or an empty
+    // rewrite). Put that version back and keep the same draft.
+    const blank = !(res.css || "").trim() && !(res.js || "").trim();
+    if (!res.ok || res.kind === "answer" || blank) {
       // Nothing is lost: the version from before the refine goes back on the
       // page (a failed attempt is turned off first: showVersion re-runs it).
-      await Effect.finish(res.ok);
+      await Effect.finish(res.ok && !blank);
       const answered = res.kind === "answer" && Ask.handle(id, res); // a question about the change: show the answer (61-ask.js)
       await showVersion(id, prev);
       S.draft = prev;
@@ -145,18 +157,22 @@ async function submit(request, opts = {}) {
       return showResult(prev, { error: plainError(res.error), keepInput: true });
     }
     const next = reviseMod(prev, { prompt: opts.note || request, css: res.css || "", js: res.js || "" });
-    S.draft = Object.assign(next, { saved: null, saving: null, secs, attempts: res.attempts, model: S.label });
+    // A real new name (three words or more) can replace the title. A one-word
+    // tweak ("Smaller") keeps the name this change already has.
+    const title = res.title && res.title.trim().split(/\s+/).length >= 3 ? res.title.trim() : next.title;
+    S.draft = Object.assign(next, { title, saved: null, saving: null, secs, attempts: res.attempts, model: S.label });
     setCss(id, next.css);
     await Effect.finish(true);
   } else {
     Object.assign(S.draft, { title: res.title || request.slice(0, 40), css: res.css || "", js: res.js || "", secs, attempts: res.attempts, model: S.label, updated: new Date().toISOString() });
     setCss(id, S.draft.css);
     await Effect.finish(res.ok);
-    if (Ask.handle(id, res)) return; // Ask and find: an answer, not a mod (61-ask.js)
+    if (Ask.handle(id, res)) { releasePick(); return; } // Ask and find: an answer, not a mod (61-ask.js)
     if (!res.ok) {
       setCss(id, "");
       call("off", { modId: id }).catch(() => {}); // a failed attempt's JS may have left nodes, observers or timers
       if (res.cancelled) return onCancelled(id); // Stop: 50-bar.js
+      releasePick();
       S.phase = "error";
       bar.classList.add("err");
       hint.innerHTML = guardRefusalHint(res.error) || t("result.failed", { detail: esc(plainError(res.error).slice(0, 120)) }); // guard hook: 64-guard.js
@@ -166,8 +182,7 @@ async function submit(request, opts = {}) {
       return;
     }
   }
-  if (S.target) boxTo(S.target, selBox);
-  selBox.hidden = true;
+  releasePick(); // before the after-shot: capture can scroll, and a scroll must not redraw the box
   S.after = { shot: await capture(), rect: S.target?.isConnected ? R(S.target.getBoundingClientRect()) : null, focus: focus?.isConnected ? R(focus.getBoundingClientRect()) : null };
   if (!prev) call("clip.stop", { modId: id }).then(c => { if (c) S.draft.clip = c; }).catch(() => {});
   showResult(S.draft, Waiting.note(res, id)); Waiting.offer(res); // waiting hook: code that waits for “Allow User Scripts” (64-waiting.js)
@@ -176,6 +191,7 @@ async function submit(request, opts = {}) {
 // The result: the title, how it went, and what you can do next. The input
 // stays open for a follow-up.
 function showResult(d, { note = "", error = "", keepInput = false } = {}) {
+  releasePick();
   S.phase = "result";
   bar.classList.remove("err", "working");
   bar.classList.add("done");
@@ -183,7 +199,10 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
   input.placeholder = REFINE_PLACEHOLDER();
   if (!keepInput) setInput("");
   const n = versionsOf(d).length + 1;
-  const meta = note || [d.secs && !d.saved ? t("result.secs", { secs: d.secs }) : "", d.attempts > 1 && !d.saved ? t("result.secondTry") : "", n > 1 ? t("result.version", { n }) : ""].filter(Boolean).join(" · ");
+  // The follow-up sits on this same row, so the line under the input is about
+  // the change that's already showing, not a second request.
+  const follow = !d.saved && d.refined && d.refined !== (d.prompt || d.request) ? d.refined.trim().slice(0, 42) : "";
+  const meta = note || [follow, d.secs && !d.saved ? t("result.secs", { secs: d.secs }) : "", d.attempts > 1 && !d.saved ? t("result.secondTry") : "", n > 1 ? t("result.version", { n }) : ""].filter(Boolean).join(" · ");
   hint.title = error || note; // a long note ends in an ellipsis in the bar: the whole sentence is here
   hint.innerHTML = error
     ? `<b class="ok">${esc(d.title)}</b> <span class="note">${t("result.failedNote", { detail: esc(error).slice(0, 120) })}</span>`
@@ -202,8 +221,10 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
 
 // Leaving the result (opening the bar fresh, an error) puts the usual words back.
 new MutationObserver(() => {
+  markThinking(); // leaving "working", or a later writer replacing the hint, drops the shine
   if (!bar.classList.contains("done") && S.phase !== "working" && input.placeholder === REFINE_PLACEHOLDER()) input.placeholder = PLACEHOLDER();
 }).observe(bar, { attributes: true, attributeFilter: ["class", "hidden"] });
+new MutationObserver(markThinking).observe(hint, { childList: true, characterData: true, subtree: true });
 
 const onEvent = fn => { listeners.add(fn); return () => listeners.delete(fn); };
 let tickBuf = "";
@@ -222,9 +243,10 @@ function refine(text) {
   showPane("");
   sugEl.hidden = true;
   PromptHistory.add(text);
-  submit(text, { from: d, base: { prompt: d.prompt || d.request, css: d.css, js: d.js } });
+  submit(text, { from: d, base: { prompt: d.prompt || d.request, title: d.title || "", css: d.css, js: d.js, ...(d.refined ? { refined: d.refined } : {}) } });
 }
 // While a follow-up is typed, Enter refines (and Save drops its ↵).
+// Send itself revises (50-bar.js); an empty line still keeps the result.
 const markRefining = () => bar.classList.toggle("refining", S.phase === "result" && !!input.value.trim());
 input.addEventListener("input", markRefining);
 new MutationObserver(markRefining).observe(bar, { attributes: true, attributeFilter: ["class"] });
@@ -233,13 +255,13 @@ input.addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey) {
     e.preventDefault();
     const v = input.value.trim();
-    v ? refine(v) : keep();
+    if (v) send(v); else keep();
   }
 });
 goBtn.addEventListener("click", () => {
   if (S.phase !== "result") return;
   const v = input.value.trim();
-  v ? refine(v) : keep();
+  if (v) send(v); else keep();
 });
 
 // ⌘Z / Ctrl+Z after a result: one version back. ⌘⇧Z / Ctrl+Shift+Z (or

@@ -254,7 +254,7 @@ test("keyboard and a11y: dialog, live status, Tab stays in the bar, focus comes 
     await t.waitFor(s => s.pane === "shortcuts" && s.input === "");
     const sheet = await page.evaluate(`${sr(".pane")}.textContent`);
     assert.match(sheet, /Open or close Morse/);
-    assert.match(sheet, OPEN_KEY === "Alt+Space" ? /Alt.*Space/ : /Ctrl.*Shift.*Space/);
+    assert.match(sheet, /(?:Ctrl.*Alt.*Space)|(?:⌃⌥Space)/);
     await page.keyboard.type("x"); // typing closes it and types
     await t.waitFor(s => s.pane === "" && s.input === "x");
     // Shift+Enter is a newline; the input grows.
@@ -358,6 +358,106 @@ test("the effect check: a clock ticking on the page is not a change; a real one 
   });
 });
 
+test("drag: the grip moves the bar, controls do not, and the drop stays on screen", { skip }, async () => {
+  await scenario("", null, async t => {
+    const { page } = t;
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await pressOpen(page);
+    await t.waitFor(s => s.open && s.phase === "idle");
+    await page.waitForTimeout(280); // the entrance animation (220ms) has finished
+    const box = () => page.evaluate(() => {
+      const bar = document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".bar");
+      const b = bar.getBoundingClientRect();
+      return { x: b.x, y: b.y, w: b.width, h: b.height, placed: bar.classList.contains("placed") };
+    });
+    const view = () => page.evaluate(() => ({ w: innerWidth, h: innerHeight }));
+    const near = (a, b, px = 2) => Math.abs(a.x - b.x) < px && Math.abs(a.y - b.y) < px;
+    const drag = async (from, to) => {
+      await page.mouse.move(from.x, from.y);
+      await page.mouse.down();
+      await page.mouse.move(to.x, to.y, { steps: 12 });
+      await page.mouse.up();
+    };
+    // Pointing still parks the bar on the opposite half, before any drag.
+    await page.evaluate(() => {
+      const el = document.createElement("div");
+      el.id = "low";
+      el.textContent = "low";
+      el.style.cssText = "position:fixed;left:8px;bottom:8px;width:48px;height:20px";
+      document.body.append(el);
+    });
+    const low = await page.locator("#low").boundingBox();
+    await page.mouse.move(low.x + 8, low.y + 8);
+    await page.waitForFunction(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".bar").classList.contains("top"));
+    const parked = await box();
+    assert.ok(parked.y < 80, `auto place sits high, saw ${parked.y}`);
+    // Grip drag follows the pointer and commits there, with no slide afterward.
+    const grip = await page.locator(".grip").boundingBox();
+    const from = { x: grip.x + grip.width / 2, y: grip.y + grip.height / 2 };
+    const vw = await view();
+    await drag(from, { x: Math.min(vw.w - 24, from.x + 280), y: Math.min(vw.h - 48, from.y + 220) });
+    const dropped = await box();
+    assert.ok(dropped.placed, "drop marks the bar placed");
+    assert.ok(dropped.x > parked.x + 80, `moved right ${parked.x} -> ${dropped.x}`);
+    assert.ok(dropped.y > parked.y + 80, `moved down ${parked.y} -> ${dropped.y}`);
+    await settle(page);
+    assert.ok(near(await box(), dropped), "no animation after the drop");
+    // Pointing no longer dodges a bar the person placed.
+    await page.mouse.move(low.x + 8, low.y + 8);
+    await page.mouse.move(vw.w / 2, 32);
+    await settle(page);
+    assert.ok(near(await box(), dropped), "placeBar leaves a dropped bar");
+    // The field, mic and send button do not drag. Typing still lands in the field.
+    const still = await box();
+    for (const sel of ["textarea.in", ".mic", ".go"]) {
+      const r = await page.locator(sel).boundingBox();
+      await drag({ x: r.x + Math.min(24, r.width / 2), y: r.y + r.height / 2 }, { x: r.x + 10, y: Math.max(8, r.y - 140) });
+      assert.ok(near(await box(), still, 3), `${sel} drag moved the bar`);
+    }
+    await page.locator("textarea.in").click();
+    await page.keyboard.type("hello");
+    await t.waitFor(s => s.input === "hello");
+    assert.ok(near(await box(), still, 3), "typing moved the bar");
+    await page.keyboard.press("Control+A");
+    await page.keyboard.press("Backspace");
+    await t.waitFor(s => s.input === "");
+    // The chip close still clears the target. #low sits outside the dropped bar.
+    await page.mouse.click(low.x + 8, low.y + 8);
+    await page.waitForFunction(() => !document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".chip").hidden);
+    const x = await page.locator(".chip .x").boundingBox();
+    const beforeX = await box();
+    await page.mouse.click(x.x + x.width / 2, x.y + x.height / 2);
+    await page.waitForFunction(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".chip").hidden);
+    assert.ok(near(await box(), beforeX, 3), "chip close moved the bar");
+    // Clamp: grab the status line (not a control) and pull past each corner.
+    const screen = await view();
+    const onHint = async () => {
+      const hint = await page.locator(".bar .hint").boundingBox();
+      return { x: hint.x + Math.min(140, Math.max(8, hint.width / 2)), y: hint.y + hint.height / 2 };
+    };
+    await drag(await onHint(), { x: 1, y: 1 });
+    await drag(await onHint(), { x: screen.w - 2, y: screen.h - 2 });
+    const clamped = await box();
+    assert.ok(clamped.x >= 7, `left ${clamped.x}`);
+    assert.ok(clamped.y >= 7, `top ${clamped.y}`);
+    assert.ok(clamped.x + clamped.w <= screen.w - 7, `right ${clamped.x + clamped.w} of ${screen.w}`);
+    assert.ok(clamped.y + clamped.h <= screen.h - 7, `bottom ${clamped.y + clamped.h} of ${screen.h}`);
+    // Close and open again: same spot. The grip is not a tab stop.
+    await page.keyboard.press("Escape");
+    await t.waitFor(s => !s.open);
+    await pressOpen(page);
+    await t.waitFor(s => s.open);
+    assert.ok(near(await box(), clamped, 3), "reopen keeps the drop");
+    const gripA11y = await page.evaluate(() => {
+      const g = document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".grip");
+      return { tag: g.tagName, hidden: g.getAttribute("aria-hidden"), tab: g.tabIndex };
+    });
+    assert.equal(gripA11y.tag, "SPAN");
+    assert.equal(gripA11y.hidden, "true");
+    assert.ok(gripA11y.tab < 0);
+  });
+});
+
 test("polish: a field a change added low in its bar is measured as off the middle; a centered one isn't", { skip }, async () => {
   await scenario("", null, async t => {
     const { page } = t;
@@ -375,5 +475,120 @@ test("polish: a field a change added low in its bar is measured as off the middl
     assert.match(off[0], /14px below the middle of its row \(the row is 56px tall, it is 28px\)/);
     await page.evaluate(() => { window.__row.style.alignItems = "center"; });
     assert.deepEqual(await measure(), []);
+  });
+});
+
+// The dashed selection box is Morse's overlay (.sel / the edit frame), not the
+// page's own focus ring. It has to leave when the choice is over.
+test("selection outline is gone after the chip is dismissed, the run ends, or the bar closes", { skip }, async () => {
+  const boxes = page => page.evaluate(() => {
+    const root = document.querySelector("[data-morse-ui]").shadowRoot;
+    const shown = el => {
+      for (let n = el; n; n = n.parentElement) {
+        if (n.hidden) return false;
+        const s = getComputedStyle(n);
+        if (s.display === "none" || s.visibility === "hidden") return false;
+      }
+      return !!el;
+    };
+    return {
+      sel: shown(root.querySelector(".sel")),
+      hl: shown(root.querySelector(".hl")),
+      frame: shown(root.querySelector(".gm-frame")),
+      marks: document.querySelectorAll(".morse-selected, .morse-hover").length,
+    };
+  });
+  const stamp = page => page.evaluate(() => {
+    const el = document.querySelector(".morse-selected") || document.querySelector("#toolbar");
+    el.classList.add("morse-selected", "morse-hover");
+    document.querySelector("#toolbar").classList.add("morse-selected", "morse-hover");
+  });
+
+  await scenario("?ms=40", null, async t => {
+    const { page } = t;
+    await pressOpen(page);
+    await t.waitFor(s => s.open);
+    const tb = await page.locator("#toolbar").boundingBox();
+    const at = (x, y) => ({ x: tb.x + x, y: tb.y + y });
+    await page.mouse.move(at(24, tb.height / 2).x, at(24, tb.height / 2).y);
+    await page.waitForFunction(() => {
+      const hl = document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".hl");
+      return hl && !hl.hidden && getComputedStyle(hl).display !== "none";
+    });
+    await page.mouse.click(at(24, tb.height / 2).x, at(24, tb.height / 2).y);
+    await page.waitForFunction(() => {
+      const root = document.querySelector("[data-morse-ui]").shadowRoot;
+      const frame = root.querySelector(".gm-frame");
+      const sel = root.querySelector(".sel");
+      const vis = el => {
+        for (let n = el; n; n = n.parentElement) {
+          if (!n || n.hidden) return false;
+          const s = getComputedStyle(n);
+          if (s.display === "none" || s.visibility === "hidden") return false;
+        }
+        return !!el;
+      };
+      return vis(frame) || vis(sel);
+    });
+    await stamp(page);
+    assert.ok((await boxes(page)).marks >= 1);
+    await page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".chip.target .x").click());
+    await settle(page);
+    let b = await boxes(page);
+    assert.equal(b.sel, false, "dismissed chip: dashed box");
+    assert.equal(b.frame, false, "dismissed chip: edit frame");
+    assert.equal(b.marks, 0, "dismissed chip: host marks");
+
+    await page.mouse.move(at(70, tb.height / 2).x, at(70, tb.height / 2).y);
+    await page.waitForFunction(() => {
+      const hl = document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".hl");
+      return hl && !hl.hidden && getComputedStyle(hl).display !== "none";
+    });
+    await page.mouse.click(at(70, tb.height / 2).x, at(70, tb.height / 2).y);
+    await page.keyboard.type("make the toolbar airier");
+    await page.keyboard.press("Enter");
+    await t.waitFor(s => s.phase === "working");
+    await stamp(page);
+    await t.waitFor(s => s.phase === "result");
+    await settle(page);
+    await page.evaluate(() => { document.body.style.minHeight = "4000px"; window.scrollTo(0, 500); });
+    await settle(page);
+    b = await boxes(page);
+    assert.equal(b.sel, false, "after the run");
+    assert.equal(b.hl, false, "hover box after the run");
+    assert.equal(b.frame, false, "edit frame after the run");
+    assert.equal(b.marks, 0, "host marks after the run");
+    await page.keyboard.press("Escape");
+    await t.waitFor(s => !s.open);
+    await page.evaluate(() => window.scrollTo(0, 900));
+    await page.mouse.move(40, 40);
+    await settle(page);
+    b = await boxes(page);
+    assert.equal(b.sel, false, "after the bar closes");
+    assert.equal(b.hl, false, "hover box after the bar closes");
+    assert.equal(b.frame, false, "edit frame after the bar closes");
+    assert.equal(b.marks, 0, "host marks after the bar closes");
+  });
+
+  await scenario("?ms=150", null, async t => {
+    const { page } = t;
+    await pressOpen(page);
+    await t.waitFor(s => s.open);
+    const tb = await page.locator("#toolbar").boundingBox();
+    await page.mouse.click(tb.x + tb.width / 2, tb.y + 4);
+    await page.keyboard.type("make the toolbar airier");
+    await page.keyboard.press("Enter");
+    await t.waitFor(s => s.phase === "working");
+    await stamp(page);
+    await page.keyboard.press("Escape");
+    const s = await t.waitFor(s => s.phase === "idle" && /Stopped/.test(s.hint));
+    assert.equal(s.open, true, "a stop leaves the bar open");
+    await settle(page);
+    await page.evaluate(() => { document.body.style.minHeight = "4000px"; window.scrollTo(0, 400); });
+    await settle(page);
+    const b = await boxes(page);
+    assert.equal(b.sel, false, "after cancel");
+    assert.equal(b.frame, false, "edit frame after cancel");
+    assert.equal(b.marks, 0, "host marks after cancel");
   });
 });

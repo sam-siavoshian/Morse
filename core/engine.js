@@ -11,6 +11,7 @@ import { cannotUndo } from "./showonce.js"; // show-once hook: ask before steps 
 import { draftHarm, cssHidesPage, collapseHarm } from "./guard.js"; // guard hook: code that would obviously break the page
 import { bringMisses } from "./take.js"; // take-and-bring hook: a brought feature that finds none of this page's things
 import { wantsPolish, polishRound } from "./polish.js"; // polish: a look at the change, and one fix
+import { replacesHost, unwiredFeature } from "./hooks.js"; // a new control has to call the app, and must not replace a live node
 
 // `probe(selectors)` (optional, from the host) returns { fp, unmatched }: a
 // fingerprint of what the page renders and which of the given selectors match
@@ -161,6 +162,17 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       advance("guard");
       continue;
     }
+    // Replacing a live node (innerHTML on something the app rendered) drops its
+    // listeners. Never run that; the model inserts beside the control instead.
+    const hostHit = replacesHost(draft.js);
+    if (hostHit) {
+      emit({ type: "css", css: "" });
+      previous = { raw, error: hostHit };
+      repairs.push(hostHit);
+      last = { ...last, css: "", js: "", error: hostHit };
+      advance("guard");
+      continue;
+    }
     if (draft.js.trim()) {
       if (signal?.aborted) throw new Error("aborted"); // stopped: never run the JS
       emit({ type: "phase", phase: "applying" });
@@ -211,6 +223,19 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       advance("effect");
       continue;
     }
+    // A button that only looks native: it has to call a function, hook, or
+    // backend route the page already has. Otherwise take it back off.
+    const wire = !signal?.aborted ? unwiredFeature(draft, context, request) : null;
+    if (wire) {
+      if (draft.js.trim()) await exec("").catch(() => {});
+      emit({ type: "css", css: "" });
+      previous = { raw, error: wire.model };
+      repairs.push(wire.model);
+      if (!more) return { ...last, css: "", js: "", ok: false, unwired: true, error: wire.user };
+      last = { ...last, css: "", js: "", error: wire.user };
+      advance("effect");
+      continue;
+    }
     // take-and-bring hook: a brought feature whose JS finds none of this page's things (core/take.js)
     if (context?.bring && probe && draft.js.trim() && more && !signal?.aborted) {
       const sels = selectorLists(draft).js;
@@ -248,7 +273,7 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     if (polish && review && !base?.error && !signal?.aborted && wantsPolish(draft, request)) {
       const p = await polishRound({
         settings: current(), request, context, base, raw, draft, review, exec, emit, signal,
-        check: d => generatedNames(d, context) || deadHooks(d, context) || (vet ? vet(d) : null), // the same checks a draft gets
+        check: d => generatedNames(d, context) || deadHooks(d, context) || unwiredFeature(d, context, request)?.model || replacesHost(d.js) || (vet ? vet(d) : null), // the same checks a draft gets
       });
       timing.polish = p.ms;
       if (p.verdict === "fixed") last = { ...last, ...p.draft, raw: p.raw };
