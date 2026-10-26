@@ -2,10 +2,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync, mkdirSync, chmodSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { assetFor, parseSums, isNewer, versionOf, bundleOf, createUpdater, RELEASE } from "../desktop-app/updater.js";
+import { assetFor, parseSums, isNewer, versionOf, bundleOf, createUpdater, RELEASE, installDest, swapInPlace, macRelaunchScript, linuxSwapScript } from "../desktop-app/updater.js";
 
 test("each computer gets its own file; others don't update themselves", () => {
   assert.equal(assetFor("darwin", "arm64"), "Morse-mac-arm64.zip");
@@ -142,4 +143,128 @@ test("Check for updates says up to date, that an update is published, or that th
   assert.equal(await off.check({ user: true }), "off");
   assert.equal(off.status.phase, "off");
   assert.equal(askedOff.length, 0, "updates turned off are not looked up");
+});
+
+test("an app opened from a disk image lands in the home Applications folder", () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "morse-dest-"));
+  try {
+    const home = path.join(dir, "home");
+    const bundle = path.join(dir, "Applications", "Morse.app");
+    mkdirSync(path.dirname(bundle));
+    assert.equal(installDest(bundle, home), bundle, "a folder this user can change is replaced in place");
+    assert.equal(
+      installDest("/private/var/folders/xx/AppTranslocation/yy/d/Morse.app", home),
+      path.join(home, "Applications", "Morse.app"),
+    );
+    assert.equal(installDest("/no/such/place/Morse.app", home), path.join(home, "Applications", "Morse.app"));
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("the new copy takes the old one's place, and a failed swap puts the old one back", () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "morse-swap-"));
+  try {
+    const dest = path.join(dir, "Morse.app");
+    const next = path.join(dir, "staged.app");
+    mkdirSync(dest); writeFileSync(path.join(dest, "mark"), "old");
+    mkdirSync(next); writeFileSync(path.join(next, "mark"), "new");
+    const old = swapInPlace(dest, next);
+    assert.equal(readFileSync(path.join(dest, "mark"), "utf8"), "new");
+    assert.equal(readFileSync(path.join(old, "mark"), "utf8"), "old");
+    assert.equal(existsSync(next), false);
+
+    mkdirSync(path.join(dir, "again.app")); writeFileSync(path.join(dir, "again.app", "mark"), "keep");
+    assert.throws(() => swapInPlace(path.join(dir, "again.app"), path.join(dir, "missing")));
+    assert.equal(readFileSync(path.join(dir, "again.app", "mark"), "utf8"), "keep", "a failed swap leaves the app that was running");
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("a failed install of this build is not downloaded again on its own", { skip: !asset }, async () => {
+  const data = "new morse";
+  const sum = createHash("sha256").update(data).digest("hex");
+  const ctx = setup({
+    "build.json": JSON.stringify({ commit: "def5678", builtAt: "2026-10-25T02:00:00Z" }),
+    "SHA256SUMS": `${sum}  ${asset}\n`,
+    [asset]: data,
+  });
+  try {
+    const updates = path.join(ctx.dir, "userData", "updates");
+    mkdirSync(updates, { recursive: true });
+    writeFileSync(path.join(updates, "attempt.json"), JSON.stringify({ commit: "def5678", at: Date.now() }));
+    assert.equal(await ctx.updater.check(), "failed");
+    assert.equal(ctx.updater.status.phase, "failed");
+    assert.deepEqual(ctx.asked, [`${RELEASE}/build.json`], "the same build is not downloaded again");
+    assert.equal(await ctx.updater.check({ user: true }), "ready", "a click can try once more");
+  } finally { ctx.done(); }
+});
+
+function hasBash() {
+  try { execFileSync("bash", ["-c", "exit 0"], { stdio: "ignore" }); return true; } catch { return false; }
+}
+
+test("the relaunch script opens the new app only after this one has quit, and only if it is there", { skip: !hasBash() }, () => {
+  for (const script of [macRelaunchScript, linuxSwapScript]) {
+    execFileSync("bash", ["-n"], { input: script, stdio: ["pipe", "ignore", "pipe"] });
+  }
+  const dir = mkdtempSync(path.join(os.tmpdir(), "morse-relaunch-"));
+  try {
+    const dest = path.join(dir, "Morse.app");
+    const old = path.join(dir, "Morse.app.old");
+    mkdirSync(dest); mkdirSync(old);
+    const openLog = path.join(dir, "opened");
+    const openBin = path.join(dir, "open");
+    writeFileSync(openBin, `#!/bin/sh\necho "$@" > "${openLog}"\n`);
+    chmodSync(openBin, 0o755);
+    const dead = execFileSync("bash", ["-c", "echo $$"], { encoding: "utf8" }).trim();
+    const env = {
+      PATH: `${dir}:/usr/bin:/bin`,
+      HOME: dir,
+      MORSE_PID: dead,
+      MORSE_DEST: dest,
+      MORSE_OLD: old,
+      MORSE_RELAUNCH: "1",
+      MORSE_LOG: path.join(dir, "install.log"),
+      MORSE_UPDATE_INNER: "1",
+    };
+    execFileSync("bash", ["-c", macRelaunchScript], { env, timeout: 5000 });
+    assert.equal(existsSync(old), false, "the old copy is removed once this one has quit");
+    assert.match(readFileSync(openLog, "utf8"), /Morse\.app/);
+
+    rmSync(openLog, { force: true });
+    execFileSync("bash", ["-c", macRelaunchScript], { env: { ...env, MORSE_DEST: path.join(dir, "missing.app"), MORSE_OLD: "" }, timeout: 5000 });
+    assert.equal(existsSync(openLog), false, "a swap that left nothing is not opened");
+
+    const half = path.join(dir, "Half.app");
+    const halfNext = path.join(dir, "Half.app.next");
+    mkdirSync(half); writeFileSync(path.join(half, "mark"), "old");
+    mkdirSync(halfNext); writeFileSync(path.join(halfNext, "mark"), "new");
+    const cancel = path.join(dir, "cancel");
+    writeFileSync(cancel, "1");
+    execFileSync("bash", ["-c", macRelaunchScript], { env: { ...env, MORSE_DEST: half, MORSE_NEXT: halfNext, MORSE_OLD: `${half}.old`, MORSE_CANCEL: cancel }, timeout: 5000 });
+    assert.equal(readFileSync(path.join(half, "mark"), "utf8"), "old", "a cancelled try leaves the app that was running");
+    assert.equal(existsSync(openLog), false);
+    rmSync(cancel);
+    execFileSync("bash", ["-c", macRelaunchScript], { env: { ...env, MORSE_DEST: half, MORSE_NEXT: halfNext, MORSE_OLD: `${half}.old`, MORSE_CANCEL: cancel }, timeout: 5000 });
+    assert.equal(readFileSync(path.join(half, "mark"), "utf8"), "new", "a swap this process didn't finish is finished after it quits");
+    assert.match(readFileSync(openLog, "utf8"), /Half\.app/);
+    rmSync(openLog, { force: true });
+
+    const scriptPath = path.join(dir, "install.sh");
+    writeFileSync(scriptPath, macRelaunchScript, { mode: 0o755 });
+    const started = Date.now();
+    try {
+      execFileSync("bash", [scriptPath], {
+        env: { PATH: `${dir}:/usr/bin:/bin`, HOME: dir, MORSE_PID: String(process.pid), MORSE_DEST: dest, MORSE_RELAUNCH: "1", MORSE_LOG: path.join(dir, "install.log") },
+        timeout: 3000,
+      });
+      assert.ok(Date.now() - started < 2000, "the shell Morse starts returns without waiting for it to quit");
+      assert.equal(existsSync(openLog), false, "that shell does not open the app itself");
+    } finally {
+      const ps = execFileSync("ps", ["-ax", "-o", "pid=,command="], { encoding: "utf8" });
+      for (const line of ps.split("\n")) {
+        if (!line.includes(scriptPath)) continue;
+        const pid = Number(line.trim().split(/\s+/)[0]);
+        if (pid && pid !== process.pid) { try { process.kill(pid, "SIGTERM"); } catch {} }
+      }
+    }
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
