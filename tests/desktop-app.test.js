@@ -646,6 +646,38 @@ test("the packaged app is named Morse", async () => {
   assert.equal(c.linux.desktop.entry.Name, "Morse");
   assert.equal(c.nsis.shortcutName, "Morse");
   assert.equal(c.protocols[0].name, "Morse");
+  assert.equal(c.compression, "maximum");
+  assert.equal(c.nsis.buildUniversalInstaller, false, "one Electron runtime per Windows installer");
+  assert.ok(c.electronLanguages.includes("en-US") && c.electronLanguages.includes("en"));
+  assert.equal(typeof c.afterPack, "function");
+});
+
+test("the package drops Electron locales, crashpad and dependency source maps", async () => {
+  const { depFileShips, unusedRuntimeFile, publishedInstallerName, TYPE_ONLY_DEPS } = await import("../desktop-app/slim.js");
+  assert.equal(depFileShips("index.mjs"), true);
+  assert.equal(depFileShips("package.json"), true);
+  assert.equal(depFileShips("LICENSE"), true);
+  assert.equal(depFileShips("index.mjs.map"), false);
+  assert.equal(depFileShips("index.d.ts"), false);
+  assert.equal(depFileShips("index.d.mts"), false);
+  assert.equal(depFileShips("client.ts"), false);
+  assert.equal(depFileShips("README.md"), false);
+  assert.equal(depFileShips("index.js", { siblingMjs: true }), false);
+  assert.equal(depFileShips("index.js", { siblingMjs: false }), true, "a CommonJS-only package still ships its .js");
+  assert.equal(TYPE_ONLY_DEPS.has("json-schema-to-ts"), true);
+  assert.equal(unusedRuntimeFile("locales/en-US.pak"), false);
+  assert.equal(unusedRuntimeFile("locales/de.pak"), false);
+  assert.equal(unusedRuntimeFile("locales/ru.pak"), true);
+  assert.equal(unusedRuntimeFile("en.lproj"), false);
+  assert.equal(unusedRuntimeFile("en_GB.lproj"), false);
+  assert.equal(unusedRuntimeFile("ru.lproj"), true);
+  assert.equal(unusedRuntimeFile("Base.lproj"), false);
+  assert.equal(unusedRuntimeFile("chrome_crashpad_handler"), true);
+  assert.equal(unusedRuntimeFile("LICENSES.chromium.html"), false);
+  assert.equal(unusedRuntimeFile("libvk_swiftshader.so"), false);
+  assert.equal(unusedRuntimeFile("Morse"), false);
+  assert.equal(publishedInstallerName("Morse-Setup-0.3.1-x64.exe"), "Morse-Setup-0.3.1.exe");
+  assert.equal(publishedInstallerName("Morse-Setup-0.3.1-arm64.exe"), "Morse-Setup-0.3.1-arm64.exe");
   assert.match(readFileSync(path.join(root, "desktop-app/ui/index.html"), "utf8"), /<title>Morse<\/title>/);
   assert.equal(t("desk.openBar.notHere", { name: "Tunes" }), "Tunes was opened outside Morse. Open it with Morse here first.");
 });

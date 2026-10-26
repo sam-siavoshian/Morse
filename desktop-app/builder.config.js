@@ -3,11 +3,16 @@
 // installer (signed when the certificate is there). build.js passes this to
 // electron-builder; docs/dev/releasing.md says what each secret is.
 //
+// One architecture per file. The preview Windows installer was 235,410,666
+// bytes because one exe carried both x64 and arm64 Electron runtimes.
+//
 // Signing is skipped, not failed, when its secrets are missing: the build
 // still makes an app, just an unsigned one (macOS and Windows then warn the
 // person on first open). An unsigned Mac app is still signed "ad hoc" (no
 // name, no Apple account): Apple silicon Macs won't run an app without any
 // signature, and turning Electron's fuses changes the signed files.
+
+import { ELECTRON_LANGS, trimPackagedRuntime } from "./slim.js";
 
 export function builderConfig({ stage, out, res, electronDist = null, electronVersion, env = process.env }) {
   const macSigned = !!(env.CSC_LINK || env.CSC_NAME);
@@ -21,10 +26,16 @@ export function builderConfig({ stage, out, res, electronDist = null, electronVe
     directories: { app: stage, output: out, buildResources: res },
     electronVersion,
     ...(electronDist ? { electronDist } : {}),
+    // xz for the AppImage (gzip otherwise). Zip and NSIS use the tighter 7z too.
+    compression: "maximum",
     // The app is already staged (build.js): everything in it ships, inside app.asar.
-    files: ["**/*"],
+    // Maps, declarations and markdown are build leftovers if a dependency still has them.
+    files: ["**/*", "!**/*.map", "!**/*.d.ts", "!**/*.d.mts", "!**/*.d.cts", "!**/*.md", "!**/.github/**"],
     asar: true,
     npmRebuild: false, // no native modules
+    // Chromium UI strings for Morse's languages. The rest of locales/ is dropped.
+    electronLanguages: ELECTRON_LANGS,
+    afterPack: context => trimPackagedRuntime(context.appOutDir),
     // Lock the runtime down: no running it as plain Node, no NODE_OPTIONS, no
     // --inspect, and only the app inside app.asar, checked against its hash.
     electronFuses: {
@@ -82,7 +93,11 @@ export function builderConfig({ stage, out, res, electronDist = null, electronVe
       } } : {}),
     },
     nsis: {
-      artifactName: "Morse-Setup-${version}.exe", // one installer for x64 and arm64
+      // Separate installers. build.js renames the x64 one back to
+      // Morse-Setup-${version}.exe, the name the site already links to.
+      // arm64 is Morse-Setup-${version}-arm64.exe.
+      buildUniversalInstaller: false,
+      artifactName: "Morse-Setup-${version}-${arch}.exe",
       oneClick: true,
       perMachine: false, // installs for this user only: no admin prompt
       shortcutName: "Morse",
