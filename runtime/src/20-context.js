@@ -139,7 +139,9 @@ function segment(el) {
   if (el.id && !looksHashed(el.id)) return { s: idSel(el.id), anchor: true };
   const attr = stableAttr(el);
   if (attr && !/^\[role=/.test(attr)) return { s: tag + attr, anchor: true };
-  const classes = [...el.classList].filter(c => !looksHashed(c)).slice(0, 2).map(c => "." + cssEsc(c)).join("");
+  // morse-hover / morse-selected are the picker's own marks (40-picker.js).
+  // They come off when the choice ends, so a saved edit must not name them.
+  const classes = [...el.classList].filter(c => c !== "morse-hover" && c !== "morse-selected" && !looksHashed(c)).slice(0, 2).map(c => "." + cssEsc(c)).join("");
   let s = tag + (attr || classes);
   const p = parentOf(el);
   if (p) {
@@ -1180,8 +1182,9 @@ function shotArea(selector, modId) {
 }
 // Inline scripts and named onclick/onsubmit handlers, so a feature can call
 // the page's own functions. Handler bodies stay out (they can hold secrets);
-// a named onclick="saveNote(...)" becomes an addEventListener line the scan
-// can read. External scripts are not fetched.
+// a named onclick="saveNote(...)" is kept as onclick="saveNote()", which the
+// scan already reads. Not an addEventListener line: the boot must not listen
+// on the page's document. External scripts are not fetched.
 function pageSources() {
   let out = "", n = 0;
   const cap = 80000;
@@ -1205,7 +1208,7 @@ function pageSources() {
       if (!v) continue;
       const m = /^\s*([A-Za-z_$][\w$]*)\s*\(/.exec(v);
       if (!m) continue;
-      out += `document.addEventListener("${attr === "onsubmit" ? "submit" : "click"}", ${m[1]});\n`;
+      out += `${attr}="${m[1]}()";\n`;
     }
   }
   return out.trim();

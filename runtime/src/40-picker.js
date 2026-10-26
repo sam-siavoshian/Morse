@@ -107,10 +107,16 @@ listen("click", onClick, true);
 // the dashed box back after the run ends or the bar closes.
 listen("scroll", () => {
   if (!S.open || bar.hidden) {
-    hl.hidden = true;
-    selBox.classList.remove("busy");
-    selBox.hidden = true;
-    if (pinned || hoverEl || hostEl.hasAttribute("data-pick") || hostEl.hasAttribute("data-gm")) releasePick();
+    // Setting hidden, or removing a class that is not there, still records a
+    // mutation in Chromium. A closed bar must not do that on every scroll
+    // tick (tests/perf.test.js). Clear once, and only while a box is still up.
+    const live = pinned || hoverEl || hostEl.hasAttribute("data-pick") || hostEl.hasAttribute("data-gm");
+    if (live || !hl.hidden || !selBox.hidden || selBox.classList.contains("busy")) {
+      if (!hl.hidden) hl.hidden = true;
+      if (selBox.classList.contains("busy")) selBox.classList.remove("busy");
+      if (!selBox.hidden) selBox.hidden = true;
+      if (live) releasePick();
+    }
     return;
   }
   if (S.phase === "working" && selBox.classList.contains("busy") && S.target?.isConnected) boxTo(S.target, selBox);

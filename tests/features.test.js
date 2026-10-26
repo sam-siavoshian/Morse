@@ -156,6 +156,7 @@ test("a control that never calls the app is rolled back and the bar gets a short
 
 test("innerHTML on a live control never runs; a morse.el fill still may", async () => {
   assert.equal(replacesHost('const out = morse.el("div"); out.innerHTML = "<span>1</span>";'), "");
+  assert.equal(replacesHost('const input = morse.el("input"), list = morse.el("ul"); list.replaceChildren(morse.el("li"));'), "");
   assert.match(replacesHost('morse.watch("#save", el => { el.innerHTML = "<button>Save</button>"; })'), /listeners/);
   assert.match(KIT_SOURCE, /function keepHostControls/);
   const prompts = [];
@@ -187,4 +188,7 @@ test("with no hook for the action, a class-toggle button is not kept", () => {
   assert.match(wire.model, /no function/);
   const alive = { css: "", js: 'morse.el("button", { on: { click() { pp.click(); } } }); morse.every(1000, () => {});' };
   assert.equal(unwiredFeature(alive, { url: "https://x/" }, "add a sleep timer"), null);
+  // A readout with no handler is not a fake feature (polish still looks at it).
+  const shown = { css: ".pomo { color: red }", js: "morse.el('button', { class: 'pomo', text: '25:00' });" };
+  assert.equal(unwiredFeature(shown, { url: "https://x/" }, "add a pomodoro timer button"), null);
 });

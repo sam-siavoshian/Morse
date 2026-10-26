@@ -163,7 +163,8 @@ export function collectHooks(context) {
   return found;
 }
 
-const SAFE_EL = /(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:morse\.el|document\.createElement)\s*\(/g;
+// const/let/var, including a comma declarator: `const a = morse.el(), b = morse.el()`.
+const SAFE_EL = /(?:const|let|var|,)\s*([A-Za-z_$][\w$]*)\s*=\s*(?:morse\.el|document\.createElement)\s*\(/g;
 
 // JS that would replace a node the app already rendered. "" when it only
 // fills an element the mod itself created (morse.el / createElement).
@@ -185,9 +186,15 @@ const ADDS_CONTROL = /morse\.el\s*\(\s*["'`](button|a|input)\b|createElement\s*\
 const LIFE = /fetch\s*\(|\baxios\s*\.|\.open\s*\(|morse\.app\.command\s*\(|morse\.every\s*\(|morse\.after\s*\(|\.click\s*\(|clipboard|morse\.confirm\s*\(/;
 
 // A button whose handler only flips a class (or similar) and never calls the app.
+// A control with no click, submit, input, or change handler is a visual widget
+// (a timer readout). Polish still looks at it. Only a handler that never calls
+// the app is a fake feature.
 function deadControl(js) {
   if (LIFE.test(js)) return false;
-  const stripped = String(js)
+  const code = String(js);
+  const handled = /\bon\s*:\s*\{[\s\S]{0,800}?\b(?:click|submit|input|change)\b|\bon(?:click|submit)\s*=|\.addEventListener\s*\(\s*["'`](?:click|submit|change|input)|(?:^|[^.\w$])(?:click|submit|input|change)\s*\([^)]*\)\s*\{/.test(code);
+  if (!handled) return false;
+  const stripped = code
     .replace(/\/\*[\s\S]*?\*\//g, " ")
     .replace(/\/\/[^\n]*/g, " ")
     .replace(/\b(?:click|submit|input|change|keydown|keyup)\s*\(\s*\)\s*\{/g, "{")
