@@ -66,47 +66,19 @@ function withKeys(id, combo) {
   const [before, after = ""] = t(id, { key: "\u0000" }).split("\u0000");
   return [before, caps(combo), after];
 }
-// Small monochrome marks, drawn here. Claude Code and an Anthropic key share
-// the spark, Codex and an OpenAI key share the blossom, a local model is a chip.
-function svgEl(tag, attrs) {
-  const el = document.createElementNS(svgNS, tag);
-  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
-  return el;
-}
-function markSvg(extra) {
-  return svgEl("svg", { viewBox: "0 0 24 24", width: "20", height: "20", fill: "currentColor", "aria-hidden": "true", ...extra });
-}
-function claudeMark() {
-  const s = markSvg();
-  for (let i = 0; i < 8; i++) s.append(svgEl("rect", { x: "11.05", y: "2.1", width: "1.9", height: "6.6", rx: "0.95", transform: `rotate(${i * 45} 12 12)` }));
-  return s;
-}
-function openaiMark() {
-  const s = markSvg();
-  for (let i = 0; i < 6; i++) s.append(svgEl("rect", { x: "10.2", y: "1.5", width: "3.6", height: "8.4", rx: "1.8", transform: `rotate(${i * 60} 12 12)` }));
-  return s;
-}
-function localMark() {
-  const s = markSvg({ fill: "none", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round" });
-  s.append(svgEl("rect", { x: "7", y: "7", width: "10", height: "10", rx: "2" }));
-  s.append(svgEl("rect", { x: "10", y: "10", width: "4", height: "4", rx: "0.6", fill: "currentColor", stroke: "none" }));
-  for (const d of ["M9 7V4", "M12 7V4", "M15 7V4", "M9 17v3", "M12 17v3", "M15 17v3", "M7 9H4", "M7 12H4", "M7 15H4", "M17 9h3", "M17 12h3", "M17 15h3"]) s.append(svgEl("path", { d }));
-  return s;
-}
-const MARKS = { "claude-code": claudeMark, claude: claudeMark, anthropic: claudeMark, codex: openaiMark, openai: openaiMark, local: localMark };
+// The mark of what writes your changes (ui/icons/NOTICE): Claude Code, Codex,
+// an API key (both providers' marks), or Morse's own radar for the rest.
+const MARKS = { "claude-code": ["claude"], codex: ["openai"], anthropic: ["anthropic"], openai: ["openai"], "api-key": ["anthropic", "openai"] };
 function providerMark(id, big = false) {
-  const tile = h("span", { class: `mark-tile${big ? " big" : ""}`, "aria-hidden": "true" });
-  const draw = MARKS[id];
-  if (!draw) { const r = radar(big ? 22 : 20); r.classList.remove("live"); tile.append(r); }
-  else tile.append(draw());
+  const names = MARKS[id];
+  const tile = h("span", { class: `mark-tile${big ? " big" : ""}${names?.length > 1 ? " pair" : ""}`, "aria-hidden": "true" });
+  if (!names) { const r = radar(big ? 22 : 18); r.classList.remove("live"); tile.append(r); }
+  else for (const n of names) tile.append(h("img", { src: `icons/${n}.png`, alt: "", class: n === "claude" ? "" : "mono", draggable: "false" }));
   return tile;
 }
 const secs = ms => (ms / 1000).toFixed(1);
-// The model's name, in the person's words. Product names stay as people say them.
-const modelName = m => {
-  if (m.provider === "local" && m.runtime && m.runtime !== "local" && m.name) return m.name;
-  return ({ "claude-code": t("desk.model.claude"), codex: t("desk.model.codex"), anthropic: t("desk.model.anthropic"), openai: t("desk.model.openai"), local: t("desk.model.local"), demo: t("desk.model.demo") }[m.provider] || m.name);
-};
+// The model's name: "Claude Code" and "Codex" as they are, the rest in the person's words.
+const modelName = m => ({ anthropic: t("desk.model.anthropic"), openai: t("desk.model.openai"), demo: t("desk.model.demo") }[m.provider] || m.name);
 
 let st = null;
 
@@ -117,18 +89,11 @@ function show(tab) {
   }
   if (tab === "checks") tab = "model"; // simplify: Checks is a card in Model now
   if (tab !== "mods") hideUndo(); // a stale "Undo delete" shouldn't wait on another page
-  for (const s of document.querySelectorAll("main > section")) {
-    const on = s.id === tab;
-    // Fade only a section that was hidden. The one painted first stays still.
-    if (on && s.hidden) s.classList.add("arrive");
-    else if (!on) s.classList.remove("arrive");
-    s.hidden = !on;
-  }
+  for (const s of document.querySelectorAll("main > section")) s.hidden = s.id !== tab;
   try { sessionStorage.setItem("tab", tab); } catch {}
   $(tab).closest("main").scrollTop = 0;
   // Checks ask the model a question, so they run only when asked.
   if (tab === "model" && !$("check-list").children.length) $("check-list").replaceChildren(h("li", { class: "empty" }, t("desk.checks.first")));
-  if (tab === "model") refreshChoices();
 }
 for (const b of document.querySelectorAll("nav button")) b.onclick = () => show(b.dataset.tab);
 for (const b of document.querySelectorAll("[data-go]")) b.onclick = () => show(b.dataset.go);
@@ -165,43 +130,17 @@ function appRow(a) {
     h("div", { class: "actions" }, button));
 }
 
-// Three quiet rows, the same shape as an app, while the list is not ready yet.
-// No copy: the heading already says what this screen is.
-function skeletonItems(n = 3) {
-  const rows = [];
-  for (let i = 0; i < n; i++) rows.push(h("li", { class: "skel", "aria-hidden": "true" },
-    h("span", { class: "skel-icon" }),
-    h("span", { class: "skel-copy" }, h("span"), h("span"))));
-  return rows;
-}
-
 // Rows are only rebuilt when what they show changed, so focus stays put
 // while the list refreshes.
 function renderApps() {
   showAppsError(); // a Connected row clears a stale "isn't running yet" banner
   const list = $("app-list");
-  // appsPending: the shell is up before the scan (icons, process list). The
-  // skeleton stays until that pass replaces it. data-ready is not held for it.
-  if (st.appsPending) {
-    if (!list.querySelector("li.skel")) list.replaceChildren(...skeletonItems());
-    list.setAttribute("aria-busy", "true");
-    list.dataset.pending = "1";
-    $("no-model").hidden = !st.model?.none;
-    const nav = $("nav-apps");
-    nav.textContent = "";
-    nav.className = "";
-    $("apps-lede").replaceChildren(...withKeys("desk.apps.lede", openKey()));
-    return;
-  }
-  list.removeAttribute("aria-busy");
-  delete list.dataset.pending;
-  const rows = st.apps || [];
+  const rows = st.apps;
   const seen = new Set();
   if (!rows.length) {
-    // Pending scans already returned the skeleton above. An empty list here is a finished scan.
     list.replaceChildren(h("li", { class: "empty" }, t("desk.apps.none")));
   } else {
-    if (list.querySelector("li.empty, li.skel")) list.replaceChildren();
+    if (list.querySelector("li.empty")) list.replaceChildren();
     let prev = null;
     for (const a of rows) {
       const sig = JSON.stringify([a.name, a.state, a.canStop ? 1 : 0, a.windows, a.mods, a.modsOn, a.version, a.icon ? 1 : 0, a.canAttach, a.why]);
@@ -299,359 +238,157 @@ $("add-app").onclick = async () => {
 };
 
 // ---------------------------------------------------------------- model
-// One choice per model Morse can connect. The key choice is Anthropic and
-// OpenAI separately. Local is its own choice. Words for a failure come from
-// the check Morse already ran. With nothing to show, the line stays neutral.
-const CONNECT = [
-  { id: "claude-code", choice: "claude-code", mark: "claude-code", fields: "path", name: () => t("desk.model.claude"), line: () => t("desk.model.lineApp") },
-  { id: "codex", choice: "codex", mark: "codex", fields: "path", name: () => t("desk.model.codex"), line: () => t("desk.model.lineApp") },
-  { id: "anthropic", choice: "anthropic", vendor: "anthropic", mark: "anthropic", fields: "key", name: () => t("desk.model.anthropic"), line: () => t("desk.model.lineKey") },
-  { id: "openai", choice: "openai", vendor: "openai", mark: "openai", fields: "key", name: () => t("desk.model.openai"), line: () => t("desk.model.lineKey") },
-  { id: "local", choice: "local", mark: "local", fields: "local", name: () => t("desk.model.local"), line: () => t("desk.model.lineLocal") },
-];
-const optLabel = opt => opt.nameText || opt.name();
-const optLine = opt => opt.lineText || opt.line();
-let choiceRows = null;
-let picked = null;
-let pickedTouched = false;
-let pendingId = null;
-let connectNote = null;
-
-function lineFor(fields) {
-  if (fields === "key") return () => t("desk.model.lineKey");
-  if (fields === "local") return () => t("desk.model.lineLocal");
-  return () => t("desk.model.lineApp");
-}
-function fieldsOf(row) {
-  if (row.kind === "api" || row.id === "anthropic" || row.id === "openai" || row.id === "api-key") return "key";
-  if (row.kind === "local" || row.id === "local" || row.id === "ollama" || row.id === "lmstudio" || row.id === "llamacpp" || row.id === "llama") return "local";
-  return "path";
-}
-function markOf(row, fields) {
-  if (MARKS[row.logo]) return row.logo;
-  if (MARKS[row.id]) return row.id;
-  if (fields === "key") return row.id === "openai" ? "openai" : "anthropic";
-  if (fields === "local") return "local";
-  return row.id || "local";
-}
-function optionFromRow(row) {
-  const known = CONNECT.find(o => o.id === row.id);
-  const fields = known?.fields || fieldsOf(row);
-  return {
-    id: row.id, choice: row.id, vendor: row.vendor || known?.vendor || "",
-    mark: known?.mark || markOf(row, fields), fields,
-    name: known ? known.name : () => row.name || row.id,
-    line: known ? known.line : lineFor(fields),
-  };
-}
-function ensureLocal(opts) {
-  if (opts.some(o => o.id === "local")) return opts;
-  return [...opts, CONNECT.find(o => o.id === "local")];
-}
-function connectOptions() {
-  const rows = choiceRows;
-  if (!Array.isArray(rows) || !rows.length) return CONNECT;
-  const ids = new Set(rows.map(r => r.id));
-  let opts;
-  // An older list has one key row. The screen still offers Anthropic and OpenAI apart.
-  if (ids.has("api-key") && !ids.has("anthropic") && !ids.has("openai")) {
-    const rest = rows.filter(r => r.id && r.id !== "api-key" && r.id !== "demo").map(optionFromRow);
-    opts = [
-      ...rest,
-      { ...CONNECT.find(o => o.id === "anthropic"), choice: "api-key" },
-      { ...CONNECT.find(o => o.id === "openai"), choice: "api-key" },
-    ];
-  } else opts = rows.filter(r => r?.id && r.id !== "demo" && r.id !== "api-key").map(optionFromRow);
-  return ensureLocal(opts);
-}
-function keyFor(opt, row) {
-  if (!row?.found || !row.keyEnv || opt.fields !== "key") return false;
-  if (row.id === opt.id || (opt.vendor && row.vendor === opt.vendor)) return true;
-  if (row.id !== "api-key" || !opt.vendor) return false;
-  return opt.vendor === "anthropic" ? /ANTHROPIC/i.test(row.keyEnv) : /OPENAI/i.test(row.keyEnv);
-}
-function providerOptionId(provider, runtime) {
-  if (provider === "local") return runtime || "local";
-  if (provider === "claude-code" || provider === "codex" || provider === "anthropic" || provider === "openai") return provider;
-  return null;
-}
-function rowFor(opt) {
-  const rows = choiceRows || [];
-  if (!opt) return null;
-  return rows.find(r => r.id === opt.id) || (opt.fields === "key" ? rows.find(r => r.id === "api-key") : null);
-}
-function pathOf(row) {
-  if (row?.path) return row.path;
-  if (!row?.found) return "";
-  const parts = String(row.detail || "").split(/\s{2,}/).filter(Boolean);
-  const last = parts[parts.length - 1] || "";
-  if (last.startsWith("~") || last.startsWith("/") || /^[A-Za-z]:[\\/]/.test(last)) return last;
-  return "";
-}
-function sameWords(a, b) {
-  const n = s => String(s || "").replace(/[.…]+$/g, "").trim();
-  return n(a) === n(b);
-}
-function serverish(detail) {
-  const d = String(detail || "");
-  return d === t("desk.model.notRunning") || /server not running|isn't running|not running|connection refused/i.test(d);
-}
-function classify(error) {
-  const e = String(error || "");
-  if (!e) return "";
-  if (e === t("err.signIn") || /rejected the API key|didn't accept the sign-in|\b401\b/i.test(e)) return "key";
-  if (e === t("err.unreachable") || serverish(e) || /couldn't reach the model/i.test(e)) return "server";
-  if (e === t("err.notInstalled") || e === t("setup.notInstalled") || /isn't installed|not installed/i.test(e)) return "missing";
-  return "";
-}
-function errorState(text) {
-  const e = String(text || "");
-  const kind = classify(e);
-  if (kind === "key") return { state: "key", label: t("desk.model.keyRejected"), text: e || t("desk.model.keyRejected") };
-  if (kind === "server") return { state: "server", label: t("desk.model.notRunning"), text: e || t("desk.model.notRunning") };
-  if (kind === "missing") return { state: "missing", label: t("desk.model.notInstalled"), text: e || t("desk.model.notInstalled") };
-  return { state: "not-connected", label: t("desk.model.notConnected"), text: e || t("desk.model.notConnected") };
-}
-function fromRow(opt, row) {
-  const detail = String(row?.detail || "");
-  const status = row?.status || "";
-  if (status === "server-down" || serverish(detail)) return { state: "server", label: t("desk.model.notRunning"), text: detail || t("desk.model.notRunning") };
-  if (status === "bad-key" || classify(detail) === "key") return { state: "key", label: t("desk.model.keyRejected"), text: detail || t("desk.model.keyRejected") };
-  if (opt.fields === "path" && (status === "missing" || row?.found === false)) {
-    const text = detail && !/not installed/i.test(detail) ? detail : t("desk.model.notInstalled");
-    return { state: "missing", label: t("desk.model.notInstalled"), text };
-  }
-  if (status === "signed-out") return { state: "not-connected", label: t("desk.model.notConnected"), text: detail || t("desk.model.notConnected") };
-  if (keyFor(opt, row)) return { state: "not-connected", label: t("desk.model.notConnected"), text: t("desk.model.keySet", { env: row.keyEnv }) };
-  if (detail && status && status !== "ready") return { state: "not-connected", label: t("desk.model.notConnected"), text: detail };
-  return { state: "not-connected", label: t("desk.model.notConnected"), text: t("desk.model.notConnected") };
-}
-function optionState(opt) {
-  const m = st?.model;
-  const row = rowFor(opt);
-  const active = !!(m && !m.none && providerOptionId(m.provider, m.runtime) === opt.id);
-  if (pendingId === opt.id || (active && checking)) return { state: "checking", label: t("desk.model.stateChecking"), text: t("desk.model.checking", { name: optLabel(opt) }) };
-  if (connectNote?.id === opt.id) return errorState(connectNote.text);
-  if (active && m.check?.ok) return { state: "connected", label: t("desk.app.connected"), text: m.detected ? t("desk.model.answeredFound", { secs: secs(m.check.ms) }) : t("desk.model.answered", { secs: secs(m.check.ms) }) };
-  if (active && m.check && m.check.ok === false) return errorState(unprefixed(m.check.error, m.name));
-  if (row) return fromRow(opt, row);
-  return { state: "not-connected", label: t("desk.model.notConnected"), text: t("desk.model.notConnected") };
-}
-function currentState() {
-  const m = st?.model;
-  if (pendingId) {
-    const opt = connectOptions().find(o => o.id === pendingId);
-    return { state: "checking", label: t("desk.model.stateChecking"), text: t("desk.model.checking", { name: opt ? optLabel(opt) : modelName(m || {}) }) };
-  }
-  if (checking) return { state: "checking", label: t("desk.model.stateChecking"), text: t("desk.model.checking", { name: modelName(m || {}) }) };
-  if (!m || m.none) return { state: "not-connected", label: t("desk.model.notConnected"), text: t("desk.model.notConnected") };
-  const opt = connectOptions().find(o => o.id === providerOptionId(m.provider, m.runtime));
-  if (opt) return optionState(opt);
-  if (m.check?.ok) return { state: "connected", label: t("desk.app.connected"), text: t("desk.model.answered", { secs: secs(m.check.ms) }) };
-  if (m.check && m.check.ok === false) return errorState(unprefixed(m.check.error, m.name));
-  return { state: "not-connected", label: t("desk.model.notConnected"), text: t("desk.model.notConnected") };
-}
-function stateMark(s) {
-  if (s.state === "checking") return h("i", { class: "dot wait" });
-  if (s.state === "connected") return h("i", { class: "dot on" });
-  if (s.state === "key" || s.state === "server" || s.state === "missing") return h("i", { class: "dot bad" });
-  return h("i", { class: "dot warn" });
-}
-function statusLine(node, s) {
-  const kids = [h("span", { class: "badge", "data-state": s.state }, stateMark(s), s.label)];
-  if (s.text && !sameWords(s.text, s.label)) kids.push(h("span", { text: s.text }));
-  node.replaceChildren(...kids);
-}
 function renderModel() {
   const m = st.model;
-  const cur = currentState();
   $("model-name").textContent = m.none ? t("desk.model.none") : modelName(m);
   const mark = $("model-mark");
-  if (mark.dataset.p !== m.provider || mark.dataset.logo !== (m.logo || "")) {
-    const next = providerMark(m.provider, true);
-    next.id = "model-mark"; next.dataset.p = m.provider; next.dataset.logo = m.logo || "";
-    mark.replaceWith(next);
-  }
+  if (mark.dataset.p !== m.provider) { const next = providerMark(m.provider, true); next.id = "model-mark"; next.dataset.p = m.provider; mark.replaceWith(next); }
   $("model-pill").hidden = !m.model;
   $("model-pill").textContent = m.model;
   $("check-model").hidden = m.none;
-  $("check-model").disabled = checking || !!pendingId;
   $("change-model").textContent = m.none ? t("desk.model.chooseShort") : t("desk.model.change");
-  statusLine($("model-live"), cur);
+  if (!checking) {
+    const live = $("model-live");
+    if (m.none) live.replaceChildren(h("i", { class: "dot warn" }), h("span", { text: t("desk.model.pick") }));
+    else if (m.check?.ok) live.replaceChildren(h("i", { class: "dot on" }), h("span", { text: m.detected ? t("desk.model.answeredFound", { secs: secs(m.check.ms) }) : t("desk.model.answered", { secs: secs(m.check.ms) }) }));
+    else if (m.check) live.replaceChildren(h("i", { class: "dot bad" }), h("span", { text: t("desk.model.noAnswer", { error: unprefixed(m.check.error, m.name) }) }));
+    else live.replaceChildren(h("i", { class: "dot" }), h("span", { text: m.detected ? t("desk.model.found") : t("desk.model.unchecked") }));
+  }
   const nav = $("nav-model");
-  const warn = cur.state !== "connected" && cur.state !== "checking";
-  nav.textContent = warn ? "!" : "";
-  nav.className = warn ? "warn" : "";
-  renderConnect();
+  nav.textContent = m.none ? "!" : m.check && !m.check.ok ? "!" : "";
+  nav.className = m.none || (m.check && !m.check.ok) ? "warn" : "";
+  renderFast();
 }
 
 // "Claude Code: You've hit your limit" under Claude Code's own name: the words, without the name again.
 const unprefixed = (error, name) => { const e = String(error || ""); return name && e.startsWith(name + ": ") ? e.slice(name.length + 2) : e; };
 let checking = false;
 async function checkModel() {
-  if (checking || pendingId || st?.model?.none) return;
   checking = true;
-  renderModel();
+  $("check-model").disabled = true;
+  $("model-live").replaceChildren(radar(12), h("span", { text: t("desk.model.checking", { name: modelName(st.model) }) }));
   if (st && !st.settings.welcomed) renderFirst();
-  try { await morse.checkModel(); } finally { checking = false; st = await morse.state(); render(); }
+  try { await morse.checkModel(); } finally { checking = false; $("check-model").disabled = false; st = await morse.state(); render(); }
 }
 $("check-model").onclick = checkModel;
+$("fast-mode").addEventListener("change", async () => {
+  if (!st?.model) return;
+  const on = $("fast-mode").checked;
+  const prev = !!st.model.fastMode;
+  st.model.fastMode = on;
+  fastSent = on;
+  let r;
+  try { r = await morse.setFastMode(on); }
+  catch (e) { r = { error: e?.message || "" }; }
+  if (r?.error) {
+    st.model.fastMode = prev;
+    fastSent = prev;
+    $("fast-mode").checked = prev;
+  }
+});
 
+// Hidden unless the model already chosen has a faster mode. The choice list
+// below is unchanged.
+let fastSent = null;
+function fastForSelection() {
+  const saved = st?.model || {};
+  const map = st?.fastModels || {};
+  if (!saved.provider || saved.none) return { id: "", known: true };
+  if (Object.prototype.hasOwnProperty.call(map, saved.provider)) return { id: map[saved.provider] || "", known: true };
+  if (saved.fastKnown) return { id: saved.fastModel || "", known: true };
+  return { id: "", known: false };
+}
+function renderFast() {
+  const row = $("fast-mode-row");
+  const input = $("fast-mode");
+  if (!row || !input || !st?.model) return;
+  const { id, known } = fastForSelection();
+  row.hidden = !id;
+  if (document.activeElement !== input) input.checked = !!st.model.fastMode && !!id;
+  if (known && !id && st.model.fastMode) {
+    st.model.fastMode = false;
+    input.checked = false;
+    if (fastSent !== false && morse.setFastMode) {
+      fastSent = false;
+      morse.setFastMode(false).then(r => { if (r?.error) fastSent = null; }, () => { fastSent = null; });
+    }
+  }
+}
+
+let choices = [];
 function refreshChoices() {
   if (!morse?.modelChoices) return;
   const n = ++refreshChoices.n;
   morse.modelChoices().then(rows => {
-    if (n !== refreshChoices.n || !Array.isArray(rows)) return;
-    choiceRows = rows;
-    if (st && !st.loading) renderConnect();
+    if (n !== refreshChoices.n || !Array.isArray(rows) || !st) return;
+    choices = rows;
+    renderFast();
   }).catch(() => {});
 }
 refreshChoices.n = 0;
-
-function renderConnect() {
-  const list = $("connect-list");
-  if (!list || !st) return;
-  if (!pickedTouched && !picked && st.model && !st.model.none) {
-    const id = providerOptionId(st.model.provider, st.model.runtime);
-    if (id) picked = id;
-  }
-  const opts = connectOptions();
-  const focused = document.activeElement?.dataset?.connect;
-  list.replaceChildren(...opts.map(opt => {
-    const s = optionState(opt);
-    return h("button", {
-      type: "button", class: "connect-choice", "data-connect": opt.id, "data-state": s.state,
-      "aria-pressed": opt.id === picked ? "true" : "false", "aria-busy": s.state === "checking" ? "true" : "false",
-      onclick: () => { picked = opt.id; pickedTouched = true; if (connectNote?.id !== opt.id) connectNote = null; renderConnect(); },
-    },
-      (MARKS[opt.mark] || localMark)(),
-      h("span", { class: "connect-copy" }, h("b", { text: optLabel(opt) }), h("small", { text: optLine(opt) })),
-      h("span", { class: "badge", "data-state": s.state }, stateMark(s), s.label));
-  }));
-  if (focused) list.querySelector(`[data-connect="${CSS.escape(focused)}"]`)?.focus();
-  renderForm(opts.find(o => o.id === picked) || null);
+async function loadChoices() {
+  $("choices").hidden = false;
+  $("choice-list").replaceChildren(h("p", { class: "live" }, radar(12), h("span", { text: t("desk.model.looking") })));
+  choices = await morse.modelChoices();
+  const current = { "claude-code": "claude-code", codex: "codex", anthropic: "api-key", openai: "api-key" }[st.model.provider];
+  const pick = current || choices.find(c => c.recommended)?.id || "api-key";
+  $("choice-list").replaceChildren(...choices.map(c => choiceRow(c, c.id === pick)));
+  syncChoice();
+  $("choices").scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
-function fieldSnapshot(form) {
-  const prev = {};
-  form.querySelectorAll("[data-field]").forEach(el => { prev[el.dataset.field] = { value: el.value, touched: el.dataset.touched || "" }; });
-  return prev;
+// One choice: its mark, what it uses, and one word for whether it's ready.
+// Not installed: "How to install" shows the one command, on request.
+const choiceName = c => (c.id === "api-key" ? t("setup.name.key") : c.name);
+const WHY = { "claude-code": "setup.why.claude", codex: "setup.why.codex", "api-key": "setup.why.key" };
+function choiceRow(c, checked) {
+  const ready = c.found;
+  const status = ready ? h("span", { class: "badge ready", title: c.id === "api-key" ? t("desk.model.keySet", { env: c.keyEnv }) : c.detail || null }, h("i", { class: "dot on" }), t("desk.ready"))
+    : c.id === "api-key" ? null
+    : h("span", { class: "badge" }, t("desk.model.notInstalled"));
+  const howto = !ready && c.install && c.id !== "api-key"
+    ? h("div", { class: "howto", hidden: true },
+      h("span", { text: t("desk.model.installFrom", { name: c.name }) }),
+      h("code", { text: c.install }),
+      h("button", { type: "button", class: "btn", onclick: e => { e.preventDefault(); loadChoices(); } }, t("desk.lookAgain")))
+    : null;
+  return h("label", { class: "choice", "data-choice": c.id },
+    h("input", { type: "radio", name: "choice", value: c.id, checked, onchange: syncChoice }),
+    providerMark(c.id),
+    h("span", { class: "grow" },
+      h("b", {}, h("span", { text: choiceName(c) }), c.recommended ? h("span", { class: "rec", text: t("desk.model.recommended") }) : null),
+      h("small", { text: WHY[c.id] ? t(WHY[c.id]) : c.why })),
+    h("span", { class: "state" }, status,
+      howto ? h("button", { type: "button", class: "link", "data-howto": c.id, "aria-expanded": "false", onclick: e => {
+        e.preventDefault();
+        howto.hidden = !howto.hidden;
+        e.currentTarget.setAttribute("aria-expanded", String(!howto.hidden));
+      } }, t("desk.model.howInstall")) : null),
+    howto);
 }
-function restoreFields(form, prev) {
-  form.querySelectorAll("[data-field]").forEach(el => {
-    const p = prev[el.dataset.field];
-    if (el.readOnly || !p || (!p.touched && !p.value)) return;
-    el.value = p.value;
-    if (p.touched) el.dataset.touched = p.touched;
-  });
+$("change-model").onclick = loadChoices;
+function syncChoice() {
+  const v = document.querySelector('input[name="choice"]:checked')?.value;
+  const c = choices.find(x => x.id === v);
+  $("keyrow").hidden = v !== "api-key";
+  $("use-choice").disabled = !c || (v !== "api-key" && !c.found);
 }
-function hintSig(opt) {
-  const row = rowFor(opt);
-  return [opt.id, opt.choice, opt.fields, row?.found, row?.status, row?.install || "", row?.keyEnv || "", row?.vendor || "", row?.baseUrl || "", pathOf(row), (row?.models || []).map(m => m.id).join(",")].join(":");
-}
-function renderForm(opt) {
-  const form = $("connect-form");
-  if (!form) return;
-  if (!opt) { form.hidden = true; form.dataset.for = ""; return; }
-  const sig = hintSig(opt);
-  const same = form.dataset.for === opt.id && form.dataset.hint === sig && form.querySelector(".connect-fields");
-  if (!same) {
-    const prev = fieldSnapshot(form);
-    const row = rowFor(opt);
-    const fields = h("div", { class: "connect-fields" });
-    if (opt.fields === "path") {
-      const input = h("input", { type: "text", "data-field": "path", readonly: true, spellcheck: "false", autocomplete: "off", "aria-label": t("desk.model.path") });
-      input.value = pathOf(row);
-      fields.append(h("label", { class: "field" }, h("span", { text: t("desk.model.path") }), input));
-      if (row && row.found === false && row.install) fields.append(...installHint(opt, row));
-    } else if (opt.fields === "key") {
-      const known = keyFor(opt, row);
-      fields.append(
-        h("label", { class: "field" },
-          h("span", { text: t("desk.key.label") }),
-          h("input", { type: "password", "data-field": "key", id: "api-key", autocomplete: "off", spellcheck: "false", "aria-label": t("desk.key.label"), placeholder: t("desk.key.placeholder") })),
-        h("small", { class: "hint", text: known ? t("desk.model.keySet", { env: row.keyEnv }) : t("desk.key.stays") }),
-      );
-    } else {
-      const fixed = opt.id !== "local" && row?.baseUrl ? row.baseUrl : "";
-      const address = h("input", { type: "text", "data-field": "address", spellcheck: "false", autocomplete: "off", "aria-label": t("desk.model.address"), placeholder: t("desk.model.addressPh"), ...(fixed ? { readonly: true } : {}) });
-      address.value = fixed;
-      const model = h("input", { type: "text", "data-field": "model", spellcheck: "false", autocomplete: "off", "aria-label": t("desk.model.modelName"), placeholder: t("desk.model.modelPh") });
-      fields.append(
-        h("label", { class: "field" }, h("span", { text: t("desk.model.address") }), address),
-        h("label", { class: "field" }, h("span", { text: t("desk.model.modelName") }), model),
-      );
-      if (row?.models?.length) {
-        model.setAttribute("list", "connect-models");
-        fields.append(h("datalist", { id: "connect-models" }, ...row.models.map(m => h("option", { value: m.id }))));
-      }
-      if (row && row.found === false && row.install) fields.append(...installHint(opt, row));
-    }
-    const fade = form.dataset.for !== opt.id;
-    form.dataset.for = opt.id;
-    form.dataset.hint = sig;
-    form.replaceChildren(
-      fields,
-      h("p", { class: "live", id: "connect-status", role: "status" }),
-      h("div", { class: "row-end" }, h("button", { type: "button", class: "btn primary", id: "connect-go", onclick: connectPicked }, t("desk.app.connect"))),
-    );
-    restoreFields(form, prev);
-    form.hidden = false;
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!fade || reduce) form.style.opacity = "1";
-    else { form.style.opacity = "0"; requestAnimationFrame(() => { if (form.dataset.for === opt.id) form.style.opacity = "1"; }); }
-  } else if (form.hidden) form.hidden = false;
-  const go = $("connect-go");
-  if (go) go.disabled = !!pendingId || checking;
-  const status = $("connect-status");
-  if (status) statusLine(status, optionState(opt));
-}
-$("connect-form").addEventListener("keydown", e => {
-  if (e.key !== "Enter" || e.isComposing || !e.target.matches?.("input")) return;
-  e.preventDefault();
-  const b = $("connect-go");
-  if (b && !b.disabled) b.click();
-});
-$("change-model").onclick = () => {
-  const list = $("connect-list");
-  (list.querySelector('[aria-pressed="true"]') || list.querySelector("button"))?.focus();
-};
-function installHint(opt, row) {
-  return [
-    h("p", { class: "hint", text: t("desk.model.installFrom", { name: optLabel(opt) }) }),
-    h("code", { class: "install", text: row.install }),
-    h("div", { class: "row-end" }, h("button", { type: "button", class: "btn", onclick: () => refreshChoices() }, t("desk.lookAgain"))),
-  ];
-}
-function fieldValue(name) {
-  return $("connect-form")?.querySelector(`[data-field="${name}"]`)?.value || "";
-}
-async function connectPicked() {
-  const opt = connectOptions().find(o => o.id === picked);
-  if (!opt || pendingId) return;
-  pendingId = opt.id;
-  connectNote = null;
-  renderModel();
-  const key = opt.fields === "key" ? fieldValue("key") : opt.fields === "local" ? fieldValue("model").trim() : "";
-  const extra = opt.id === "local" ? fieldValue("address").trim() : "";
-  let r;
-  try {
-    const args = [opt.choice, key];
-    if (extra) args.push(extra);
-    r = await morse.chooseModel(...args);
-    // This copy accepts "api-key". A newer copy also accepts "anthropic" and "openai".
-    if (r?.error === "Not allowed." && opt.fields === "key" && opt.choice !== "api-key") r = await morse.chooseModel("api-key", key);
-  } catch (e) { r = { error: e?.message || "" }; }
-  pendingId = null;
-  if (!r || r.error === "Not allowed." || (r && !r.error && !r.check && !r.ok)) connectNote = { id: opt.id, text: "" };
-  else if (r.error) connectNote = { id: opt.id, text: r.error };
-  else if (r.check && r.check.ok === false) connectNote = { id: opt.id, text: r.check.error || "" };
-  else connectNote = null;
-  if (!r?.error) {
-    st = await morse.state();
-    if (st?.model?.check) connectNote = null;
-  }
+$("cancel-choice").onclick = () => { $("choices").hidden = true; $("api-key").value = ""; };
+$("use-choice").onclick = async () => {
+  const v = document.querySelector('input[name="choice"]:checked')?.value;
+  if (!v) return;
+  const c = choices.find(x => x.id === v);
+  checking = true;
+  $("use-choice").disabled = true;
+  $("model-live").replaceChildren(radar(12), h("span", { text: t("desk.model.saved", { name: c ? choiceName(c) : t("desk.model.it") }) }));
+  const r = await morse.chooseModel(v, v === "api-key" ? $("api-key").value : "");
+  checking = false;
+  $("use-choice").disabled = false;
+  if (r?.error) { $("model-live").replaceChildren(h("i", { class: "dot bad" }), h("span", { text: r.error })); return; }
+  $("api-key").value = "";
+  $("choices").hidden = true;
+  st = await morse.state();
   render();
-}
+};
 
 // ---------------------------------------------------------------- mods
 function renderMods() {
@@ -760,6 +497,7 @@ const submitOnEnter = (field, button) => $(field).addEventListener("keydown", e 
   e.preventDefault();
   if (!$(button).disabled) $(button).click();
 });
+submitOnEnter("api-key", "use-choice");
 submitOnEnter("first-key-input", "first-key-use");
 
 // ---------------------------------------------------------------- first run
@@ -837,21 +575,11 @@ function renderFirst() {
   else if (m.check) live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.noAnswer", { name, error: unprefixed(m.check.error, m.name) }) }), h("i", { class: "dot bad" }));
   else live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.willUse", { name }) }));
   if (!m.none && !m.check && !firstChecked) { firstChecked = true; checkModel(); }
-  const host = $("first-apps");
-  if (st.appsPending) {
-    if (host.dataset.sig !== "pending") {
-      host.dataset.sig = "pending";
-      host.setAttribute("aria-busy", "true");
-      host.replaceChildren(...skeletonItems());
-    }
-    return;
-  }
-  host.removeAttribute("aria-busy");
-  const apps = (st.apps || []).filter(a => a.canAttach !== false).slice(0, 5);
+  const apps = st.apps.filter(a => a.canAttach !== false).slice(0, 5);
   const sig = JSON.stringify(apps.map(a => [a.id, a.state, a.icon ? 1 : 0]));
-  if (host.dataset.sig === sig) return;
-  host.dataset.sig = sig;
-  host.replaceChildren(...(apps.length ? apps.map(a => {
+  if ($("first-apps").dataset.sig === sig) return;
+  $("first-apps").dataset.sig = sig;
+  $("first-apps").replaceChildren(...(apps.length ? apps.map(a => {
     const busy = ["opening", "connecting"].includes(a.state);
     return h("li", { "data-first-app": a.id },
       appIcon(a),
@@ -1103,9 +831,6 @@ $("update").addEventListener("cancel", e => { if (["downloading", "installing"].
 // ---------------------------------------------------------------- state
 function render() {
   if (!st || st.error) return;
-  // Asked before the daemon is in: the HTML shell (and its skeleton) is already showing.
-  // data-ready is not held for the app scan; renderApps leaves the skeleton up.
-  if (st.loading) { document.documentElement.dataset.ready = "1"; return; }
   renderFirst();
   renderApps(); renderModel(); renderMods(); renderShortcut(); renderUpdate(); renderUpdateCheck();
   for (const id of ["auto-open", "ob-auto-open"]) $(id).checked = !!st.settings.autoOpen;
@@ -1115,7 +840,7 @@ function render() {
 morse.onChange(next => { if (next && !next.error) { st = next; render(); } });
 st = await morse.state();
 render();
-refreshChoices(); // after data-ready: the chooser is already painted
+refreshChoices();
 let first = "apps";
 try { first = sessionStorage.getItem("tab") || "apps"; } catch {}
 show(first);

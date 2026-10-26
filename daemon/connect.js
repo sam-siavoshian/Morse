@@ -51,6 +51,25 @@ export function loopbackOrigin(raw) {
   return u.origin;
 }
 
+// The models a local server just listed, so a later request can pick the
+// smaller one without probing again. Filled only from a real /v1/models reply.
+const noted = new Map();
+const noteKey = baseUrl => String(baseUrl || "").replace(/\/$/, "");
+export function noteLocalModels(baseUrl, models) {
+  const key = noteKey(baseUrl);
+  if (!key) return;
+  const rows = [];
+  for (const m of models || []) {
+    const id = String(typeof m === "string" ? m : m?.id || "").trim();
+    if (id && !rows.some(x => x.id === id)) rows.push({ id, name: String(typeof m === "object" && m ? m.name || id : id) });
+  }
+  if (rows.length) noted.set(key, rows);
+}
+export function notedLocalModels(baseUrl) {
+  const rows = noted.get(noteKey(baseUrl));
+  return rows ? rows.map(m => m.id) : null;
+}
+
 export function modelsFromBody(body) {
   const rows = Array.isArray(body?.data) ? body.data : Array.isArray(body?.models) ? body.models : [];
   const out = [];
@@ -97,6 +116,7 @@ export async function probeLocalRuntime(runtime, { fetch: doFetch = globalThis.f
     try { body = JSON.parse(text.slice(0, 1_000_000)); } catch { body = {}; }
     const models = modelsFromBody(body);
     if (!models.length) return { ...row, status: "missing", detail: `${name} is running, but no model is loaded.` };
+    noteLocalModels(root, models);
     return { ...row, status: "ready", found: true, detail: "Running.", models };
   } catch (e) {
     if (netFailed(e)) return { ...row, status: "server-down", detail: `${name} isn't running.` };
@@ -341,7 +361,9 @@ async function connectLocal(id, key, opts) {
       rt = runtimeById(up.id, runtimes) || { id: up.id, name: up.name, baseUrl: up.baseUrl };
       const pick = pickedModel(rt, up, key);
       if (pick.error) return pick;
-      return { backend: up.id, config: configFor(up.id, { model: pick.model, baseUrl: up.baseUrl }), status: "ready" };
+      const config = configFor(up.id, { model: pick.model, baseUrl: up.baseUrl });
+      config.listed = up.models;
+      return { backend: up.id, config, status: "ready" };
     }
     rt = { id: "local", name: "Local", logo: "local", kind: "local", baseUrl: origin, why: "a model running on this computer", install: "" };
   }
@@ -349,7 +371,9 @@ async function connectLocal(id, key, opts) {
   const probed = await probeLocalRuntime(rt, opts);
   const pick = pickedModel(rt, probed, key);
   if (pick.error) return pick;
-  return { backend: id, config: configFor(id, { model: pick.model, baseUrl: probed.baseUrl || rt.baseUrl }), status: "ready" };
+  const config = configFor(id, { model: pick.model, baseUrl: probed.baseUrl || rt.baseUrl });
+  config.listed = probed.models;
+  return { backend: id, config, status: "ready" };
 }
 
 // Save nothing here. The desktop service saves only when this returns config.

@@ -6,11 +6,10 @@ No demo apps, no mockups. Every change was written by Claude Code (Opus, or
 Sonnet for two of them; never Haiku) while we watched, then saved. Then the app
 was quit and opened again (or the page reloaded) to check the change came back.
 
-Each picture is three files: `<name>-before.jpg`, `<name>-after.jpg` (same size,
-same framing) and `<name>.jpg`, the two side by side under the words asked, the
-app, the model and the time. [`showcase.json`](showcase.json) lists them all
-with those details. To redraw the side-by-side pictures:
-`python3 -I demo/showcase-pictures.py docs/showcase/showcase.json`.
+Each picture kept here is `<name>.jpg`: the before and the after, side by side,
+under the words asked, the app, the model and the time. The separate
+`<name>-before.jpg` and `<name>-after.jpg` frames were the same scenes again,
+so they are not in the tree. [`showcase.json`](showcase.json) lists every change.
 
 ## How they were made
 

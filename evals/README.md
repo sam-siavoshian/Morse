@@ -192,7 +192,7 @@ What this says:
 - **Speed.** The median grows by about 1.5 s, all of it from the requests that now start on opus (about half of this subset, which leans towards features: 31 of the 86 cases are new UI, behavior or restyles by their words alone). Starting opus while the person types hid about 2 s of its start; at Enter it still had 2.4 s to go (median), since the eval's words arrive only a second before Enter.
 - **Usage.** Claude Code maps `sonnet` to claude-sonnet-5-5 and `opus` to claude-opus-5-5. At API prices sonnet costs 20 times haiku per token and opus 40 times. With these 51 cases that is roughly 7 times the old Automatic's share of a Claude plan (27 sonnet and 24 opus requests against 43 haiku and 8 sonnet), assuming similar lengths. **Always fast** (sonnet only) would use about two thirds of Automatic's.
 
-Results: `results/2026-10-24T17-59-02-models-before-haiku-sonnet.json`, `results/2026-10-24T17-59-04-models-after-sonnet-opus.json`.
+The raw result rows for that pair of runs are not in the tree. The numbers above are the record.
 
 ### Before: haiku, then sonnet
 
@@ -226,7 +226,7 @@ What this says:
 - **Pre-warming sonnet too** would save those few seconds on about one request in eight, for a second waiting process (about 185 MB) every time the bar opens. Left off; the fast model is the one most requests need.
 - **Usage.** Claude Code maps `haiku` to claude-haiku-5-5 and `sonnet` to claude-sonnet-5-5. At Anthropic's API prices sonnet costs about 20 times as much per token (a one-line `claude -p` ping: $0.0006 vs $0.0095 as Claude Code reports it), and a Claude plan's usage limits are used up in proportion. Automatic sent about 14% of requests to sonnet (12% from the start, 2% after haiku), so it uses roughly 3 to 4 times haiku-only's share of the plan, about a fifth of sonnet-only's.
 
-Results: `results/2026-10-24T16-02-10-routing-train.json`, `results/2026-10-24T16-20-13-routing-heldout.json`, `results/2026-10-24T16-25-26-routing-differ-x2.json` (each record has `arm`, `model` (who answered), `startedStrong`, `escalated`, `routeWhy`).
+Each record had `arm`, `model` (who answered), `startedStrong`, `escalated` and `routeWhy`. Those raw rows are not in the tree. The numbers above are the record.
 
 ## Bring a feature
 
@@ -290,7 +290,7 @@ What the development runs showed, and what changed because of them:
 
 ## Run log
 
-Rows before "baseline (rescored checkers)" used earlier checkers. "dev" rows are this round's development runs on the train split. Results JSON is kept only for the final pair (`results/*-baseline.json`, `results/*-final.json`); this table summarizes the rest. Baseline rows ran from a copy of commit fa7b111 with the current apps and checkers.
+Rows before "baseline (rescored checkers)" used earlier checkers. "dev" rows are this round's development runs on the train split. The raw result files are not in the tree. This table is the record. Baseline rows ran from a copy of commit fa7b111 with the current apps and checkers.
 
 | When (UTC) | Label | Model | Split | Pass | Median latency |
 |---|---|---|---|---|---|

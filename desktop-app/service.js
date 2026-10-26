@@ -16,6 +16,7 @@ import { pickShortcutTarget } from "./shortcut.js";
 import { discoverAppsNative, listProcessesNative } from "../daemon/native-scan.js";
 import { presentApp } from "../daemon/open-bar.js";
 import { kindFor, logoFor } from "../daemon/connect.js";
+import { fastModelOf } from "../core/providers.js";
 
 const ANSI = /\x1b\[[0-9;]*m/g;
 const plain = s => String(s ?? "").replace(ANSI, "");
@@ -374,11 +375,24 @@ export function createService({
     const s = d.settingsFromConfig(cfg);
     const localName = { ollama: "Ollama", lmstudio: "LM Studio", llama: "llama.cpp", llamacpp: "llama.cpp", local: "Local" }[s.runtime];
     const name = s.provider === "local" ? (localName || "Local") : ({ "claude-code": "Claude Code", codex: "Codex", anthropic: "Anthropic API key", openai: "OpenAI API key", demo: "Demo model", none: "" }[s.provider] ?? s.provider);
+    const prefs = typeof d.loadPrefs === "function" ? await d.loadPrefs().catch(() => ({})) : {};
+    const fastModel = fastModelOf(s.provider) || "";
+    const fastKnown = true;
     return {
       provider: s.provider, none: s.provider === "none", name, model: s.model || "", label: s.provider === "none" ? "" : plain(d.settingsLabel(s)),
       detected: !!s.detected, check: lastCheck && lastCheck.label === d.settingsLabel(s) ? lastCheck : null,
       kind: kindFor(s), logo: logoFor(s), runtime: s.runtime || "",
+      fastModel, fastKnown, fastMode: !!prefs.fastMode,
     };
+  }
+
+  const LOCAL_ROW = new Set(["local", "ollama", "lmstudio", "llama", "llamacpp"]);
+  function fastFields(r) {
+    const local = r.kind === "local" || LOCAL_ROW.has(r.id);
+    if (local) return { fastModel: "", fastKnown: true };
+    const id = r.id === "api-key" ? (r.vendor || "anthropic") : r.id;
+    if (id === "claude-code" || id === "codex" || id === "anthropic" || id === "openai") return { fastModel: fastModelOf(id) || "", fastKnown: true };
+    return { fastModel: "", fastKnown: false };
   }
 
   function presentChoice(r) {
@@ -388,7 +402,7 @@ export function createService({
       id: r.id, name: r.name, why: r.why || "", install: r.install || "",
       found: !!r.found, detail: plain(r.detail || ""), keyEnv: r.keyEnv || "", recommended: !!r.recommended,
       kind: r.kind || "", status: r.status || (r.found ? "ready" : "missing"), logo: r.logo || "",
-      signedIn: !!r.signedIn, models,
+      signedIn: !!r.signedIn, models, ...fastFields(r),
       path: typeof r.path === "string" ? r.path : "",
       vendor: typeof r.vendor === "string" ? r.vendor : "",
       baseUrl, address: typeof r.address === "string" ? r.address : baseUrl,
@@ -427,6 +441,7 @@ export function createService({
         const cfg = await d.saveChoice(decided.backend || choice, decided.config);
         const next = d.settingsFromConfig(cfg);
         for (const s of own.values()) s.connector.settings = next;
+        await dropFastIfNone(next);
         changed();
         const checked = await check();
         // A failed check still saved. The window reads check, then reloads state.
@@ -449,6 +464,7 @@ export function createService({
       // Apps connected now use the new model from their next change on.
       const next = d.settingsFromConfig(cfg);
       for (const s of own.values()) s.connector.settings = next;
+      await dropFastIfNone(next);
       changed();
       return { ok: true, check: await check() };
     } catch (e) { return fail(e); }
@@ -545,6 +561,12 @@ export function createService({
         ...(resolved ? { combo: resolved.open || "", custom: !!stored.open, stored } : {}),
       },
       model: m, apps: a, appsPending: !!appsPending, mods: md, pause: p,
+      fastModels: {
+        "claude-code": fastModelOf("claude-code") || "",
+        codex: fastModelOf("codex") || "",
+        anthropic: fastModelOf("anthropic") || "",
+        openai: fastModelOf("openai") || "",
+      },
       settings: { startAtLogin: !!s.startAtLogin, autoOpen: s.autoOpen !== false, welcomed: !!s.welcomed },
     };
   }
@@ -584,6 +606,26 @@ export function createService({
     return { ok: true, warn: decision.level === "warn" ? decision.message : "" };
   }
 
+  // Fast mode is a switch on top of the saved model. A provider with no
+  // fast mode turns it off. The saved model id is left as it is.
+  async function dropFastIfNone(next) {
+    if (typeof d.savePrefs !== "function" || !next) return;
+    if (fastModelOf(next.provider)) return;
+    let saved;
+    try { saved = await d.savePrefs({ fastMode: false }); }
+    catch { return; }
+    for (const s of own.values()) { try { s.connector?.applySettings?.(saved); } catch {} }
+  }
+  async function setFastMode(on) {
+    if (typeof d.savePrefs !== "function") return { error: "There's no such setting." };
+    let saved;
+    try { saved = await d.savePrefs({ fastMode: !!on }); }
+    catch (e) { return fail(e); }
+    for (const s of own.values()) { try { s.connector?.applySettings?.(saved); } catch {} }
+    changed();
+    return { ok: true, fastMode: !!saved?.fastMode };
+  }
+
   async function setSetting(name, value) {
     if (!(name in DEFAULTS) || name === "apps" || name === "appArgs") return { error: "There's no such setting." };
     await saveSettings({ [name]: !!value });
@@ -609,7 +651,7 @@ export function createService({
 
   watchPrefsFile();
   return {
-    state, apps, openApp, openBar, openCombo, openFromShortcut, disconnectApp, addApp, model, modelChoices, chooseModel, check,
+    state, apps, openApp, openBar, openCombo, openFromShortcut, disconnectApp, addApp, model, modelChoices, chooseModel, setFastMode, check,
     mods, setModOn, deleteMod, undeleteMod, pause, setAllModsOff, doctor, setSetting, setOpenShortcut, loadSettings, shutdown,
     get sessions() { return own; },
   };

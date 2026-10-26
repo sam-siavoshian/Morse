@@ -20,7 +20,8 @@ and the “Allow User Scripts” window (`--only=welcome`: every step at 1280 an
 website and Try it here (`--only=site`: 1440, 768 and 390) and the newer bar states (`--only=new-bar`: Esc's “Kept”
 toast with Undo, the developer's “rebuilt” note, Your style's “Every site in Chrome” / “Every site and app”, Alt+↑ for a
 bigger part, Redo), runs the automated checks marked **[auto]** on each
-shot, and writes `docs/ui/index.html`. The rest are checked by eye; verdicts
+shot, and writes `docs/ui/index.html`. Those pictures and `index.html` stay
+on the machine that ran it (they are in `.gitignore`). The rest are checked by eye; verdicts
 and notes live in `docs/ui/review.json`.
 
 An item is ✅ when nothing below fails, ⚠️ when an automated check fails or a

@@ -586,7 +586,6 @@ test("the window opens before the daemon, and a login shell is not spawned while
   assert.match(main, /openFromShortcut\(/);
   assert.match(main, /s\.autoOpen && !s\.startAtLogin && !s\.loginSet/, "login start is still set once for Always open with Morse");
   const ui = readFileSync(path.join(root, "desktop-app/ui/app.js"), "utf8");
-  assert.match(ui, /st\.appsPending/);
   assert.match(ui, /document\.documentElement\.dataset\.ready = "1"/);
 });
 
@@ -665,7 +664,7 @@ test("the window's page: a strict CSP, no inline code, only its own files", () =
   for (const s of ["contextIsolation: true", "sandbox: true", "nodeIntegration: false", "webviewTag: false", "setWindowOpenHandler(() => ({ action: \"deny\" }))", "will-navigate", "setPermissionRequestHandler"]) assert.ok(main.includes(s), s);
 });
 
-test("Mods page: the app name is not glued to the count, rows are not cards, the sidebar stays narrow", () => {
+test("Mods page: the app name is not glued to the count, rows are not cards, the footer label stays one line", () => {
   const js = readFileSync(path.join(root, "desktop-app/ui/app.js"), "utf8");
   const css = readFileSync(path.join(root, "desktop-app/ui/app.css"), "utf8");
   assert.match(js, /class: "gname"/, "the app name is its own element");
@@ -676,29 +675,24 @@ test("Mods page: the app name is not glued to the count, rows are not cards, the
   assert.match(css, /#mods \.list\.mods \{[^}]*border:\s*0/, "mod rows are not a bordered card");
   assert.match(css, /#mods \.list\.mods > li \{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/, "the switch has its own column, so text cannot cover it");
   assert.match(css, /#mods \.list\.mods \.grow small \{[^}]*text-overflow:\s*ellipsis/, "a long request ends in an ellipsis");
-  assert.match(css, /\.side-foot \.switchrow > span \{[^}]*white-space:\s*normal/, "Always open with Morse wraps instead of widening the sidebar");
-  assert.match(css, /grid-template-columns:\s*188px minmax\(0,\s*1fr\)/, "the sidebar is 188px and the apps column takes the rest");
+  assert.match(css, /\.side-foot \.switchrow > span \{[^}]*white-space:\s*nowrap/, "Always open with Morse stays one line");
+  assert.match(css, /grid-template-columns:\s*272px/, "the sidebar is wide enough for that label");
   assert.doesNotMatch(css, /nav button \{[^}]*transition:[^;}]*(?:width|left|height|background-position)/, "sidebar selection does not glide");
-  assert.doesNotMatch(css, /(?:^|\n)section \{[^}]*animation:/, "opening a section does not fade");
 });
 
-test("Model screen: one button per model, one form, marks drawn in the page", () => {
+test("Model screen: the choice list, real marks, and Use this", () => {
   const js = readFileSync(path.join(root, "desktop-app/ui/app.js"), "utf8");
   const html = readFileSync(path.join(root, "desktop-app/ui/index.html"), "utf8");
-  const css = readFileSync(path.join(root, "desktop-app/ui/app.css"), "utf8");
-  for (const id of ["claude-code", "codex", "anthropic", "openai", "local"]) assert.match(js, new RegExp(`id: "${id}"`), id);
-  for (const fn of ["claudeMark", "openaiMark", "localMark"]) assert.match(js, new RegExp(`function ${fn}\\(`), fn);
-  assert.match(js, /"aria-pressed":/);
-  assert.match(js, /type: "button", class: "connect-choice"/);
-  assert.doesNotMatch(js, /icons\/(claude|openai|anthropic)\.png/, "marks are drawn in the page");
-  assert.match(html, /id="connect-list"[^>]*role="group"/);
-  assert.doesNotMatch(html, /id="choice-list"/, "the old radio list is gone");
-  assert.match(css, /\.connect-form \{[^}]*transition:\s*opacity 120ms linear/);
-  assert.match(css, /prefers-reduced-motion:\s*reduce\)\s*\{\s*\.connect-form \{\s*transition:\s*none/);
-  assert.doesNotMatch(css, /\.connect-form \{[^}]*(?:transform|height|width)\s*:/);
+  for (const id of ["claude-code", "codex", "api-key"]) assert.match(js, new RegExp(`"${id}"`), id);
+  assert.match(js, /type: "radio", name: "choice"/);
+  assert.match(js, /icons\/\$\{n\}\.png/, "each choice wears its real mark");
+  assert.match(html, /id="choice-list"[^>]*role="radiogroup"/);
+  assert.match(html, /id="use-choice"/);
+  assert.match(html, /id="cancel-choice"/);
+  assert.doesNotMatch(html, /id="connect-list"/);
   const boot = js.slice(js.lastIndexOf("st = await morse.state();"));
-  assert.match(boot, /render\(\);\nrefreshChoices\(\);/, "the model list is asked for after the first paint");
-  assert.doesNotMatch(boot, /await morse\.modelChoices/, "that ask is not awaited before the window is ready");
+  assert.match(boot, /st = await morse\.state\(\);\nrender\(\);/, "the window paints from state");
+  assert.doesNotMatch(boot, /await morse\.modelChoices/, "the choice list waits until Change is pressed");
 });
 
 test("the window wears the website's design: the same tokens, its sky, no drawn icons", () => {
@@ -736,6 +730,38 @@ test("the packaged app is named Morse", async () => {
   assert.equal(c.linux.desktop.entry.Name, "Morse");
   assert.equal(c.nsis.shortcutName, "Morse");
   assert.equal(c.protocols[0].name, "Morse");
+  assert.equal(c.compression, "maximum");
+  assert.equal(c.nsis.buildUniversalInstaller, false, "one Electron runtime per Windows installer");
+  assert.ok(c.electronLanguages.includes("en-US") && c.electronLanguages.includes("en"));
+  assert.equal(typeof c.afterPack, "function");
+});
+
+test("the package drops Electron locales, crashpad and dependency source maps", async () => {
+  const { depFileShips, unusedRuntimeFile, publishedInstallerName, TYPE_ONLY_DEPS } = await import("../desktop-app/slim.js");
+  assert.equal(depFileShips("index.mjs"), true);
+  assert.equal(depFileShips("package.json"), true);
+  assert.equal(depFileShips("LICENSE"), true);
+  assert.equal(depFileShips("index.mjs.map"), false);
+  assert.equal(depFileShips("index.d.ts"), false);
+  assert.equal(depFileShips("index.d.mts"), false);
+  assert.equal(depFileShips("client.ts"), false);
+  assert.equal(depFileShips("README.md"), false);
+  assert.equal(depFileShips("index.js", { siblingMjs: true }), false);
+  assert.equal(depFileShips("index.js", { siblingMjs: false }), true, "a CommonJS-only package still ships its .js");
+  assert.equal(TYPE_ONLY_DEPS.has("json-schema-to-ts"), true);
+  assert.equal(unusedRuntimeFile("locales/en-US.pak"), false);
+  assert.equal(unusedRuntimeFile("locales/de.pak"), false);
+  assert.equal(unusedRuntimeFile("locales/ru.pak"), true);
+  assert.equal(unusedRuntimeFile("en.lproj"), false);
+  assert.equal(unusedRuntimeFile("en_GB.lproj"), false);
+  assert.equal(unusedRuntimeFile("ru.lproj"), true);
+  assert.equal(unusedRuntimeFile("Base.lproj"), false);
+  assert.equal(unusedRuntimeFile("chrome_crashpad_handler"), true);
+  assert.equal(unusedRuntimeFile("LICENSES.chromium.html"), false);
+  assert.equal(unusedRuntimeFile("libvk_swiftshader.so"), false);
+  assert.equal(unusedRuntimeFile("Morse"), false);
+  assert.equal(publishedInstallerName("Morse-Setup-0.3.1-x64.exe"), "Morse-Setup-0.3.1.exe");
+  assert.equal(publishedInstallerName("Morse-Setup-0.3.1-arm64.exe"), "Morse-Setup-0.3.1-arm64.exe");
   assert.match(readFileSync(path.join(root, "desktop-app/ui/index.html"), "utf8"), /<title>Morse<\/title>/);
   assert.equal(t("desk.openBar.notHere", { name: "Tunes" }), "Tunes was opened outside Morse. Open it with Morse here first.");
 });

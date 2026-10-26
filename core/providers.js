@@ -19,15 +19,102 @@ import { warmSettings, routable, modeOf } from "./route.js"; // models: fast and
 import { t } from "./i18n.js"; // the labels people read (the host sets the language)
 
 export const PROVIDERS = {
-  "claude-code": { name: "Claude Code", models: ["opus", "sonnet", "haiku"], defaultModel: "" },
+  // fastMode: the provider's own faster, more expensive mode of the same model.
+  //   settings      Claude Code `--settings {"fastMode":true}` (Opus only)
+  //   speed         Anthropic Messages `speed: "fast"` (Opus only)
+  //   service_tier  OpenAI `service_tier: "fast"` (Astra, gpt-5, and the other models OpenAI lists)
+  // Codex and a local server have no such mode, so the switch stays hidden.
+  "claude-code": { name: "Claude Code", models: ["opus", "sonnet", "haiku"], defaultModel: "", fastMode: "settings" },
   codex: { name: "Codex", models: [], defaultModel: "" },
-  anthropic: { name: "Anthropic API", models: ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"], defaultModel: "claude-opus-5-5" },
-  openai: { name: "OpenAI API", models: ["gpt-5", "gpt-5-mini"], defaultModel: "gpt-5" },
+  anthropic: { name: "Anthropic API", models: ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"], defaultModel: "claude-opus-5-5", fastMode: "speed" },
+  openai: { name: "OpenAI API", models: ["gpt-5", "gpt-5-mini"], defaultModel: "gpt-5", fastMode: "service_tier" },
   // A model server on this computer that speaks the OpenAI chat API (Ollama, LM Studio, llama.cpp).
   local: { name: "Local model", models: [], defaultModel: "" },
 };
 export const USER_PROVIDERS = Object.keys(PROVIDERS);
 export const DEFAULT_SETTINGS = { provider: "", model: "", apiKey: "", baseUrl: "" };
+
+// "fast" when this provider offers that mode, or "". Never a model id: Fast
+// mode does not swap in a smaller model. A local list is ignored.
+export function fastModelOf(provider) {
+  return PROVIDERS[provider]?.fastMode ? "fast" : "";
+}
+
+// The provider's fast-mode parameter, or null when the switch stays hidden.
+// Claude Code: `--settings {"fastMode":true}`. Anthropic: `speed: "fast"`.
+// OpenAI (Astra and the other models that have it): `service_tier: "fast"`.
+export function fastModeChoice(provider) {
+  switch (PROVIDERS[provider]?.fastMode) {
+    case "settings": return { fastMode: true };
+    case "speed": return { speed: "fast" };
+    case "service_tier": return { service_tier: "fast" };
+    default: return null;
+  }
+}
+
+// Opus models that have a fast mode of themselves (platform.claude.com fast mode).
+// Opus 5.5 takes `speed: "fast"` with no beta header. Opus 5 and Opus 4.8 need
+// the `fast-mode-2026-02-01` beta. Sonnet, Haiku, and older Opus do not have it.
+function anthropicFast(model) {
+  const id = String(model || "");
+  if (/^claude-opus-5-5(?:$|[-@])/.test(id)) return { speed: "fast" };
+  if (/^claude-opus-4-8(?:$|[-@])/.test(id)) return { speed: "fast", beta: "fast-mode-2026-02-01" };
+  if (/^claude-opus-5(?:$|@|-20\d{2})/.test(id)) return { speed: "fast", beta: "fast-mode-2026-02-01" };
+  return null;
+}
+
+// OpenAI Fast mode (formerly Priority) is `service_tier: "fast"` on the same
+// model, at a higher price. The ids are the ones on OpenAI's Fast pricing
+// table, including gpt-6-astra. A dated snapshot of one of those counts too.
+const OPENAI_FAST_MODELS = new Set([
+  "gpt-6-astra", "gpt-6.1-sol", "gpt-6-luna", "gpt-6-sol",
+  "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna",
+  "gpt-5.5", "gpt-5.4", "gpt-5.4-mini",
+  "gpt-5.2", "gpt-5.1", "gpt-5.1-codex",
+  "gpt-5", "gpt-5-mini", "gpt-5-codex",
+  "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano",
+  "gpt-4o", "gpt-4o-mini",
+  "o3", "o4-mini",
+]);
+function openaiFastModel(model) {
+  const id = String(model || "").trim();
+  if (OPENAI_FAST_MODELS.has(id)) return true;
+  const dated = id.replace(/-\d{4}-\d{2}-\d{2}$/, "");
+  return dated !== id && OPENAI_FAST_MODELS.has(dated);
+}
+function openaiOfficial(s) {
+  const raw = String(s?.baseUrl || "").trim();
+  if (!raw) return true;
+  try {
+    const u = new URL(raw);
+    return u.protocol === "https:" && u.hostname === "api.openai.com";
+  } catch { return false; }
+}
+
+// What this request adds for Fast mode, or null. The model id is not part of
+// it. A model with no fast mode of its own (Sonnet, Haiku, a local name) gets
+// nothing: Morse does not switch to a different model to turn the mode on.
+export function fastModeExtra(s) {
+  if (!s?.fastMode || !PROVIDERS[s.provider]?.fastMode) return null;
+  const model = s.model || PROVIDERS[s.provider]?.defaultModel || "";
+  if (s.provider === "claude-code") {
+    if (model === "opus" || anthropicFast(model)) return { settings: { fastMode: true } };
+    return null;
+  }
+  if (s.provider === "anthropic") return anthropicFast(model);
+  if (s.provider === "openai" && openaiOfficial(s) && openaiFastModel(model)) return { service_tier: "fast" };
+  return null;
+}
+
+// Fast mode on the request settings. The saved model id, the pin, and the
+// effort stay as they are. A provider with no fast mode turns the flag off
+// for this request only.
+export function applyFastMode(settings) {
+  const s = settings && typeof settings === "object" ? settings : {};
+  if (!s.fastMode) return s;
+  if (!fastModeChoice(s.provider)) return { ...s, fastMode: false };
+  return s;
+}
 
 // Server-side refusal fallback is only valid on these models.
 const FALLBACK_MODELS = /^claude-(opus|sonnet)-5-5\b/;
@@ -59,7 +146,7 @@ const warmers = {
 // Automatic, the model that request would start on gets ready (the strong one
 // for new UI and features, core/route.js warmSettings).
 export function prewarm(settings, request) {
-  const s = warmSettings({ ...DEFAULT_SETTINGS, ...settings }, request); // models: the model the next request starts on
+  const s = warmSettings(applyFastMode({ ...DEFAULT_SETTINGS, ...settings }), request); // models: the model the next request starts on
   try { return Promise.resolve(warmers[s.provider]?.(s)).catch(() => {}); } catch { return Promise.resolve(); }
 }
 
@@ -82,7 +169,7 @@ function toOpenAI(m) {
 // onStage({ spawnMs?, warm? }) (optional): the model has the request and is
 // working on it (speed: timing, and the "Thinking" status in the bar).
 export async function streamChat(settings, messages, { onToken, signal, maxTokens, onStage } = {}) {
-  const s = { ...DEFAULT_SETTINGS, ...settings };
+  const s = applyFastMode({ ...DEFAULT_SETTINGS, ...settings });
   const impl = impls[s.provider];
   if (!s.provider || s.provider === "none") throw new NoModelError();
   if (!impl) throw new Error(`Morse doesn't know the model "${s.provider}". Choose another in Morse's settings.`);
@@ -177,15 +264,23 @@ async function anthropicStream(s, messages, { onToken, signal, maxTokens, onStag
   const { Anthropic, client } = await anthropicFor(s);
   const { system, rest } = splitSystem(messages);
   const model = s.model || PROVIDERS.anthropic.defaultModel;
+  const fast = fastModeExtra({ ...s, provider: "anthropic", model });
+  const betas = [
+    ...(FALLBACK_MODELS.test(model) ? ["server-side-fallback-2026-07-01"] : []),
+    ...(fast?.beta ? [fast.beta] : []),
+  ];
   const params = {
     model,
     max_tokens: maxTokens || 8000,
     ...(system && { system: cachedSystem(system) }),
     messages: rest,
     output_config: { effort: s.effort || "low" },
+    // Fast mode: the same Opus, higher output speed, higher price (speed: "fast").
+    ...(fast && { speed: "fast" }),
     // On a safety-classifier decline, the API re-runs the request on its
     // recommended fallback model inside the same stream.
-    ...(FALLBACK_MODELS.test(model) && { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" }),
+    ...(betas.length && { betas }),
+    ...(FALLBACK_MODELS.test(model) && { fallbacks: "default" }),
   };
   let text = "";
   try {
@@ -222,12 +317,15 @@ const warmedAt = new Map();
 async function anthropicWarm(s, { system = SYSTEM_PROMPT } = {}) {
   if (!s.apiKey || !system) return;
   const model = s.model || PROVIDERS.anthropic.defaultModel;
-  const id = `${s.baseUrl || ""}\u0000${model}\u0000${s.effort || "low"}`;
+  const fast = fastModeExtra({ ...s, provider: "anthropic", model });
+  const id = `${s.baseUrl || ""}\u0000${model}\u0000${s.effort || "low"}\u0000${fast ? "fast" : ""}`;
   if (Date.now() - (warmedAt.get(id) || 0) < WARM_EVERY_MS) return;
   warmedAt.set(id, Date.now());
   const { client } = await anthropicFor(s);
   try {
-    await client.messages.create({ model, max_tokens: 0, system: cachedSystem(system), messages: [{ role: "user", content: "warmup" }], output_config: { effort: s.effort || "low" } });
+    const warm = { model, max_tokens: 0, system: cachedSystem(system), messages: [{ role: "user", content: "warmup" }], output_config: { effort: s.effort || "low" }, ...(fast && { speed: "fast" }) };
+    if (fast?.beta) await client.beta.messages.create({ ...warm, betas: [fast.beta] });
+    else await client.messages.create(warm);
   } catch { warmedAt.delete(id); }
 }
 
@@ -246,6 +344,9 @@ async function openaiStream(s, messages, { onToken, signal, maxTokens, onStage }
   if (local && !s.baseUrl) throw Object.assign(new Error("Choose a model running on this computer."), { plain: true });
   const model = s.model || (local ? "" : PROVIDERS.openai.defaultModel);
   if (local && !model) throw Object.assign(new Error("Choose a model from the list."), { plain: true });
+  // Fast mode: the same model on OpenAI's Fast service tier (Astra, gpt-5, …).
+  // A different host (OpenRouter, a local server) does not get that field.
+  const fastTier = !local && fastModeExtra({ ...s, provider: "openai", model });
   const base = (s.baseUrl || "https://api.openai.com").replace(/\/$/, "").replace(/\/v1$/, "");
   let res;
   try {
@@ -256,6 +357,7 @@ async function openaiStream(s, messages, { onToken, signal, maxTokens, onStage }
         model, messages: messages.map(toOpenAI), stream: true,
         ...(maxTokens ? { [local ? "max_tokens" : "max_completion_tokens"]: maxTokens } : {}),
         ...(!local ? reasoningEffort(s, model) : {}),
+        ...(fastTier ? { service_tier: "fast" } : {}),
       }),
       signal,
     });
