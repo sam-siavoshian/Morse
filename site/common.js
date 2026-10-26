@@ -1,16 +1,12 @@
-// Small shared pieces for the site pages: the nav bar, the links and video
-// from config.js, the radar marks, a tiny monochrome highlighter, mod cards,
-// copy buttons and a toast.
+// Small shared pieces for the site pages: the nav bar, the links from
+// config.js, the repository's stars, the radar marks, a tiny monochrome
+// highlighter, mod cards, copy buttons and a toast.
 import { mountAll } from "./radar.js";
-import { LINKS, DEMO_VIDEO, APP_ICONS } from "./config.js";
+import { LINKS, APP_ICONS } from "./config.js";
 
 export const REPO = LINKS.github;
 
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-
-const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
-// Phones, touch screens and Save-Data: nothing heavy loads by itself.
-const lightOnly = () => !!navigator.connection?.saveData || matchMedia("(max-width: 700px), (hover: none) and (pointer: coarse)").matches;
 
 export function initPage() {
   mountAll();
@@ -24,7 +20,7 @@ export function initPage() {
     addEventListener("scroll", onScroll, { passive: true });
     onScroll();
   }
-  for (const el of document.querySelectorAll("[data-film]")) mountFilm(el);
+  mountStars();
   for (const btn of document.querySelectorAll("[data-copy]")) {
     btn.addEventListener("click", async () => {
       const src = document.getElementById(btn.dataset.copy);
@@ -168,79 +164,29 @@ export function initNav(nav = document.querySelector("header.nav")) {
   matchMedia(WIDE).addEventListener("change", e => { if (e.matches) setSheet(false); });
 }
 
-// ---------- the film ----------
-// The poster shows at once (it is an <img> in the page, so the first screen
-// is fast). The loop (a small 1280-wide copy, WebM or MP4, no sound) loads
-// only after the page has loaded and the film is near the screen; then it
-// plays muted. The press starts the full-quality file from the beginning,
-// with sound and controls. No autoplay with reduced motion, on phones and
-// touch screens, or with Save-Data on: the poster stays until the press. The loop has its own pause control, apart from
-// the play press (WCAG 2.2.2).
-export function mountFilm(figure, film = DEMO_VIDEO) {
-  const frame = figure.querySelector(".film-frame");
-  const play = figure.querySelector(".film-play");
-  const toggle = figure.querySelector(".film-toggle");
-  const caption = figure.querySelector("figcaption");
-  const strip = figure.querySelector("[data-film-strip]");
-  const poster = figure.querySelector(".film-poster");
-  if (!frame || frame.querySelector("video")) return;
-  frame.style.setProperty("--film-ratio", `${film.width} / ${film.height}`);
-  if (poster && poster.getAttribute("src") !== film.poster) poster.src = film.poster;
-  if (caption && film.caption) caption.textContent = film.caption;
-  if (strip && film.strip) strip.textContent = film.strip;
+// ---------- the repository's stars ----------
+// npm run pages writes the count into [data-stars] (scripts/build-pages.js).
+// The page asks GitHub for a fresher one once per visit (kept for the tab's
+// session). If that fails, the built count stays; with neither, the capsule
+// says Star and no number.
+const STARS_KEY = "morse-stars";
+export const starsApi = (repo = LINKS.github) => repo.replace("https://github.com/", "https://api.github.com/repos/");
+export const formatStars = n => (n >= 10000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k` : String(n));
 
-  const video = document.createElement("video");
-  Object.assign(video, { muted: true, loop: true, playsInline: true, preload: "none", poster: film.poster });
-  video.setAttribute("muted", "");
-  video.setAttribute("playsinline", "");
-  video.setAttribute("aria-label", film.label);
-  video.width = film.width;
-  video.height = film.height;
-  frame.prepend(video);
-
-  let loaded = null;
-  // "loop": the small web copies; "full": the file with sound, for the press.
-  const load = (kind = "loop") => {
-    if (loaded === kind || (kind === "loop" && loaded)) return;
-    loaded = kind;
-    video.replaceChildren();
-    const files = kind === "loop" && film.loop ? [[film.loop.webm, "video/webm"], [film.loop.mp4, "video/mp4"]] : [[film.mp4, "video/mp4"]];
-    for (const [src, type] of files) if (src) video.append(Object.assign(document.createElement("source"), { src, type }));
-    video.load();
-  };
-  const state = () => {
-    figure.classList.toggle("is-paused", video.paused);
-    figure.classList.toggle("is-playing", !video.paused || video.currentTime > 0);
-  };
-  video.addEventListener("play", state);
-  video.addEventListener("pause", state);
-  video.addEventListener("playing", state);
-
-  // Autoplay the loop once the page is in, and only while it is on screen.
-  if (!reducedMotion() && !lightOnly()) {
-    const start = () => {
-      const io = new IntersectionObserver(([e]) => {
-        if (figure.classList.contains("is-started")) return;
-        if (e.isIntersecting) { load(); video.play().catch(state); }
-        else if (!video.paused) video.pause();
-      }, { rootMargin: "200px 0px" });
-      io.observe(figure);
-    };
-    if (document.readyState === "complete") start();
-    else addEventListener("load", start, { once: true });
-  }
-
-  toggle?.addEventListener("click", () => { video.paused ? video.play().catch(() => {}) : video.pause(); });
-  play?.addEventListener("click", () => {
-    load("full");
-    figure.classList.add("is-started");
-    video.loop = false;
-    video.muted = false;
-    video.controls = true;
-    video.currentTime = 0;
-    video.play().catch(() => {});
-    video.focus();
-  });
+export async function mountStars(root = document) {
+  const slots = root.querySelectorAll("[data-stars]");
+  if (!slots.length) return;
+  const show = n => { if (Number.isFinite(n) && n >= 0) for (const s of slots) s.textContent = formatStars(n); };
+  let cached = null;
+  try { cached = JSON.parse(sessionStorage.getItem(STARS_KEY)); } catch {}
+  if (cached && Date.now() - cached.at < 36e5) { show(cached.n); return; }
+  try {
+    const res = await fetch(starsApi(), { headers: { Accept: "application/vnd.github+json" } });
+    if (!res.ok) return;
+    const n = (await res.json()).stargazers_count;
+    show(n);
+    try { sessionStorage.setItem(STARS_KEY, JSON.stringify({ n, at: Date.now() })); } catch {}
+  } catch {}
 }
 
 // ---------- highlighter (grays only: comments dim, strings mid, keywords bright) ----------

@@ -257,7 +257,8 @@ test("keyboard only: open, choose with keys, describe, Save, Mods panel, turn a 
     // Show me once, from the ⋯ menu with type-ahead; the task itself by keyboard.
     // Focus starts on the page (its first link), and goes back there when watching starts.
     await page.keyboard.press("Tab");
-    assert.equal(await page.evaluate(() => document.activeElement.textContent), "Home");
+    // Focus can still be on the page itself for a moment after the panel closes.
+    await waitFor(async () => (await page.evaluate(() => document.activeElement?.textContent)) === "Home", { what: "Tab to land on Home" });
     await pressOpen(page);
     await until(page, s => s.open && s.focus === "in", "the bar");
     await tabTo(page, /\bmore\b/);

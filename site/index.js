@@ -1,9 +1,9 @@
-// The landing page: the nav, the links and the film from config.js, the
-// before and after cards and the real-apps strip (also from config.js), and
-// the radar's pixels behind the headline.
+// The landing page: the nav and the links from config.js, the Morse bar in
+// the hero, the before and after cards and the real-apps strip (also from
+// config.js), the skies' pixel edges, the story, and the panes in the glass.
 import { initPage, esc, appIcon } from "./common.js";
 import { SHOWCASE, REAL_APPS } from "./config.js";
-import { mountReveals, mountHeroScroll, mountMark } from "./motion.js";
+import { mountReveals, mountHeroScroll, mountMark, mountDither, mountStory, mountDemo, mountAsker, mountPalette, mountCount, mountLazySkies } from "./motion.js";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -113,11 +113,21 @@ function mountPixels(root) {
 }
 
 initPage();
+mountLazySkies();
+mountDemo(document.querySelector("[data-demo]"));
 mountPairs(document.getElementById("pairs"));
 mountApps(document.getElementById("apps-grid"));
 for (const el of document.querySelectorAll("[data-pixels]")) mountPixels(el);
+for (const el of document.querySelectorAll("[data-dither]")) mountDither(el);
+mountStory(document.querySelector("[data-story]"));
 mountReveals();
-mountHeroScroll(document.querySelector(".hero"), document.querySelector(".hero .film"));
+for (const sw of document.querySelectorAll("button.switch")) {
+  sw.addEventListener("click", () => sw.setAttribute("aria-checked", String(sw.getAttribute("aria-checked") !== "true")));
+}
+mountAsker(document.querySelector("[data-asker]"));
+mountPalette(document.querySelector("[data-palette]"));
+for (const el of document.querySelectorAll("[data-count]")) mountCount(el);
+mountHeroScroll(document.querySelector(".hero"));
 mountMark(document.querySelector("[data-mark]"));
 // The apps row scrolls sideways on a phone; then it takes keyboard focus, so
 // the arrow keys can move it too.
