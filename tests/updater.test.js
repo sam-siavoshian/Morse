@@ -6,7 +6,8 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync, mkdirSync, chmodSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { assetFor, parseSums, isNewer, versionOf, bundleOf, createUpdater, RELEASE, installDest, swapInPlace, macRelaunchScript, linuxSwapScript } from "../desktop-app/updater.js";
+import { pathToFileURL } from "node:url";
+import { assetFor, parseSums, isNewer, versionOf, bundleOf, createUpdater, moduleDir, RELEASE, installDest, swapInPlace, macRelaunchScript, linuxSwapScript } from "../desktop-app/updater.js";
 
 test("each computer gets its own file; others don't update themselves", () => {
   assert.equal(assetFor("darwin", "arm64"), "Morse-mac-arm64.zip");
@@ -108,6 +109,62 @@ test("a version is shown only when it is a version", () => {
   assert.equal(versionOf({ version: "<script>" }), "");
   assert.equal(versionOf({ version: "0.3.1\nmore" }), "");
   assert.equal(versionOf(null), "");
+});
+
+test("a folder with a space still finds this build", () => {
+  const dir = path.join(os.tmpdir(), "morse app", "desktop-app");
+  const url = pathToFileURL(path.join(dir, "updater.js")).href;
+  assert.equal(moduleDir(url), dir);
+  assert.notEqual(path.dirname(new URL(url).pathname), dir, "the raw pathname keeps %20, so the build file would be missed");
+});
+
+test("a redirect in front of the build is followed, and a blank version is not a failed check", async () => {
+  const body = JSON.stringify({ commit: "abc1234", builtAt: "2026-10-25T00:00:00Z", version: "" });
+  const asked = [];
+  const fetchImpl = async url => {
+    asked.push(url);
+    if (url === `${RELEASE}/build.json`) return { ok: false, status: 301, headers: { get: h => h === "location" ? "https://files.example/build.json" : null } };
+    return { ok: true, status: 200, text: async () => body };
+  };
+  const dir = mkdtempSync(path.join(os.tmpdir(), "morse-redir-"));
+  writeFileSync(path.join(dir, "build-info.json"), JSON.stringify({ commit: "abc1234", builtAt: "2026-10-25T00:00:00Z", version: "0.3.1" }));
+  const updater = createUpdater({ app: { isPackaged: true, getPath: () => path.join(dir, "user") }, fetchImpl, here: dir, busy: () => true });
+  try {
+    assert.equal(await updater.check({ user: true }), "current");
+    assert.equal(updater.status.phase, "current");
+    assert.deepEqual(asked, [`${RELEASE}/build.json`, "https://files.example/build.json"]);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("a download that reuses its buffer is still the file that was published", { skip: !asset }, async () => {
+  const data = Buffer.from("new morse".repeat(50));
+  const sum = createHash("sha256").update(data).digest("hex");
+  const pool = Buffer.alloc(8);
+  const fetchImpl = async url => {
+    const name = url.slice(RELEASE.length + 1);
+    const file = name === "build.json" ? JSON.stringify({ commit: "def5678", builtAt: "2026-10-25T02:00:00Z", version: "0.4.0" })
+      : name === "SHA256SUMS" ? `${sum}  ${asset}\n` : data;
+    const body = Buffer.from(file);
+    if (name !== asset) return { ok: true, status: 200, text: async () => body.toString(), headers: { get: () => null } };
+    let off = 0;
+    return {
+      ok: true, status: 200, headers: { get: h => h === "content-length" ? String(body.length) : null },
+      body: { getReader: () => ({ async read() {
+        if (off >= body.length) return { done: true };
+        const n = Math.min(pool.length, body.length - off);
+        body.copy(pool, 0, off, off + n);
+        off += n;
+        return { done: false, value: pool.subarray(0, n) };
+      } }) },
+    };
+  };
+  const dir = mkdtempSync(path.join(os.tmpdir(), "morse-reuse-"));
+  writeFileSync(path.join(dir, "build-info.json"), JSON.stringify({ commit: "abc1234", builtAt: "2026-10-25T00:00:00Z", version: "0.3.1" }));
+  const updater = createUpdater({ app: { isPackaged: true, getPath: () => path.join(dir, "user") }, fetchImpl, here: dir, busy: () => true });
+  try {
+    assert.equal(await updater.check({ user: true }), "ready");
+    assert.equal(readFileSync(path.join(dir, "user", "updates", asset)).equals(data), true);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test("Check for updates says up to date, that an update is published, or that the check failed", async () => {

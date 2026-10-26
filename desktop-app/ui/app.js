@@ -801,7 +801,8 @@ function renderUpdateCheck() {
   if (u.phase === "checking") text = t("desk.update.checking");
   else if (u.phase === "current") text = t("desk.update.current");
   else if (u.phase === "off") { text = t("desk.update.off"); level = "warn"; }
-  else if (u.phase === "error" || u.phase === "failed") { text = t("desk.update.error"); level = "bad"; }
+  else if (u.phase === "failed") { text = t("desk.update.failed"); level = "bad"; }
+  else if (u.phase === "error") { text = t("desk.update.error"); level = "bad"; }
   else if (["available", "downloading", "installing", "ready", "later"].includes(u.phase)) {
     text = u.version ? t("desk.update.available", { version: u.version }) : t("desk.update.availablePlain");
     showGet = u.phase === "available";

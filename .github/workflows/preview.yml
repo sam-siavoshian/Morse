@@ -250,6 +250,11 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       R: ${{ github.repository }}
     steps:
+      # package.json is the version written into build.json. Without a checkout
+      # that field was empty and the app could not name the update.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: preview-*
@@ -260,7 +265,12 @@ jobs:
         run: |
           # What Morse Desktop's updater reads first (desktop-app/updater.js): the
           # build it compares with its own, and when it was made.
-          printf '{"commit":"%s","builtAt":"%s","version":"%s"}\n' "$GITHUB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(jq -r .version < package.json 2>/dev/null || echo)" > out/build.json
+          ver=$(jq -r .version < package.json)
+          case "$ver" in
+            [0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error::package.json has no version to put in build.json (got ${ver:-nothing})"; exit 1 ;;
+          esac
+          printf '{"commit":"%s","builtAt":"%s","version":"%s"}\n' "$GITHUB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$ver" > out/build.json
           (cd out && sha256sum -- *) > SHA256SUMS
           mv SHA256SUMS out/
           cat out/SHA256SUMS

@@ -22,8 +22,19 @@ import { createHash } from "node:crypto";
 import { promises as fs, readFileSync, writeFileSync, readdirSync, existsSync, renameSync, rmSync, mkdirSync, accessSync, constants } from "node:fs";
 import { spawn, execFileSync } from "node:child_process";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-export const RELEASE = "https://github.com/sam-siavoshian/RRAA/releases/download/preview";
+// The repo was renamed RRAA → Morse. GitHub still redirects the old address,
+// and a client that stops at that redirect reads an HTML page as the build
+// and reports that the check failed.
+export const RELEASE = "https://github.com/sam-siavoshian/Morse/releases/download/preview";
+
+// Where this file lives. fileURLToPath decodes spaces (%20); URL.pathname
+// does not, so a copy installed under "Program Files" could not read
+// build-info.json and treated every check as a new download.
+export function moduleDir(metaUrl) {
+  return path.dirname(fileURLToPath(metaUrl));
+}
 const EVERY = 4 * 60 * 60 * 1000;
 
 // This computer's file in the release, or null where Morse can't update itself.
@@ -65,7 +76,7 @@ export function bundleOf(exe) {
   return i < 0 ? null : exe.slice(0, i + 4);
 }
 
-export function createUpdater({ app, getAppImage = () => "", busy = () => false, log = () => {}, onStatus = () => {}, fetchImpl = globalThis.fetch, env = process.env, here = path.dirname(new URL(import.meta.url).pathname), wait = ms => new Promise(r => setTimeout(r, ms)) } = {}) {
+export function createUpdater({ app, getAppImage = () => "", busy = () => false, log = () => {}, onStatus = () => {}, fetchImpl = globalThis.fetch, env = process.env, here = moduleDir(import.meta.url), wait = ms => new Promise(r => setTimeout(r, ms)) } = {}) {
   const asset = assetFor();
   let local = null;
   try { local = JSON.parse(readFileSync(path.join(here, "build-info.json"), "utf8")); } catch {}
@@ -78,7 +89,16 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
   const dir = path.join(app.getPath("userData"), "updates");
 
   async function get(name, as = "text", progress = null) {
-    const r = await fetchImpl(`${RELEASE}/${name}`, { redirect: "follow", cache: "no-store" });
+    // Follow redirects here. redirect:"follow" stops at the repo rename on
+    // some runtimes, and the HTML it returns is not a build.
+    let url = `${RELEASE}/${name}`;
+    let r;
+    for (let hop = 0; ; hop++) {
+      r = await fetchImpl(url, { redirect: "manual", cache: "no-store" });
+      const loc = r.headers?.get?.("location");
+      if (r.status >= 300 && r.status < 400 && loc && hop < 5) { url = new URL(loc, url).href; continue; }
+      break;
+    }
     if (!r.ok) throw new Error(`${name}: HTTP ${r.status}`);
     if (as !== "buffer") return r.text();
     const total = +r.headers?.get?.("content-length") || 0;
@@ -89,11 +109,14 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
-      parts.push(value); got += value.length;
+      // Copy now. A reader may reuse the same bytes for the next chunk;
+      // copying later hashes the wrong file and the check says it failed.
+      const chunk = Buffer.from(value);
+      parts.push(chunk); got += chunk.length;
       const pct = total ? Math.min(99, Math.floor(got * 100 / total)) : Math.min(99, Math.floor(got / (2 * 1024 * 1024)));
       if (pct !== shown) { shown = pct; progress(pct); }
     }
-    return Buffer.concat(parts.map(p => Buffer.from(p)));
+    return Buffer.concat(parts);
   }
 
   // A check that started on its own says nothing when this copy is current.

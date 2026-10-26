@@ -345,6 +345,11 @@ app.whenReady().then(async () => {
       setLoginItem,
     },
   });
+  // Before the daemon. If starting the daemon throws, the window is already
+  // up: Check for updates still has an updater to ask, instead of the
+  // "couldn't check" sentence from a missing one.
+  updater = createUpdater({ app, log, getAppImage: () => APPIMAGE, busy: () => !!service?.sessions.size, onStatus: () => { changed(); if (["downloading", "ready"].includes(updater?.status.phase) && win && !win.isVisible()) showWindow(); } });
+  updater.start();
   createWindow();
   tray = new Tray(trayIcon());
   tray.on("click", showWindow);
@@ -369,11 +374,6 @@ app.whenReady().then(async () => {
     rejectService(e);
     return;
   }
-  // Updates itself from the preview release: downloads in the background, and
-  // installs when no app is connected and the window isn't in use, or at quit.
-  // The check stays on its own 5s delay (updater.js); startup does not add one.
-  updater = createUpdater({ app, log, getAppImage: () => APPIMAGE, busy: () => service.sessions.size > 0, onStatus: () => { changed(); if (["downloading", "ready"].includes(updater?.status.phase) && win && !win.isVisible()) showWindow(); } });
-  updater.start();
   const s = await service.loadSettings();
   // Always open with Morse (on unless you turn it off) needs Morse running:
   // it opens at login, set once here, after which the switch decides.
