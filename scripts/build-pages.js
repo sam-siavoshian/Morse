@@ -97,6 +97,7 @@ export async function structuredData(page, html) {
       "@type": "SoftwareApplication",
       "@id": `${home}#app`,
       name: "Morse",
+      alternateName: ["cheats for apps", "app cheats", "app mods"],
       keywords: "cheats for apps, app cheats, app mods, mod any app, mod any website, closed source, delete a paywall, bring a feature, desktop mods",
       description: pageDescription(html, page.file),
       url: home,
