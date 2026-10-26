@@ -3,7 +3,7 @@
 // config.js), the skies' pixel edges, the story, and the panes in the glass.
 import { initPage, esc, appIcon } from "./common.js";
 import { SHOWCASE, REAL_APPS } from "./config.js";
-import { mountReveals, mountHeroScroll, mountMark, mountDither, mountStory, mountDemo, mountAsker, mountPalette, mountCount, mountLazySkies } from "./motion.js";
+import { mountReveals, mountHeroScroll, mountMark, mountDither, mountStory, mountDemo, mountAsker, mountCount, mountLazySkies } from "./motion.js";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -125,7 +125,6 @@ for (const sw of document.querySelectorAll("button.switch")) {
   sw.addEventListener("click", () => sw.setAttribute("aria-checked", String(sw.getAttribute("aria-checked") !== "true")));
 }
 mountAsker(document.querySelector("[data-asker]"));
-mountPalette(document.querySelector("[data-palette]"));
 for (const el of document.querySelectorAll("[data-count]")) mountCount(el);
 mountHeroScroll(document.querySelector(".hero"));
 mountMark(document.querySelector("[data-mark]"));
