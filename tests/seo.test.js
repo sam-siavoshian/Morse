@@ -169,15 +169,10 @@ test("sitemap.xml lists exactly the pages people should find; robots.txt points 
   assert.doesNotMatch(robots, /Disallow: \S/, "nothing is disallowed, so crawlers can read the noindex tags");
 });
 
-test("the share page, the demo apps in Try it here and the redirects stay out of search", () => {
-  for (const f of ["share/install.html", "demo/sites/tunes/index.html", "demo/sites/byte/index.html", "index.html", "privacy.html"]) {
+test("the share page and the redirects stay out of search", () => {
+  for (const f of ["share/install.html", "index.html", "privacy.html"]) {
     assert.ok(noindex(built(f)), `${f} says noindex`);
   }
-  // Every page Try it here loads into its frame.
-  const tryJs = readFileSync(path.join(root, "site", "try", "try.js"), "utf8");
-  const loaded = [...tryJs.matchAll(/new URL\("((?:\.\.\/)+demo\/[^"]+\.html)", import\.meta\.url\)/g)].map(m => path.relative(out, path.resolve(out, "site", "try", m[1])));
-  assert.ok(loaded.length >= 2, `Try it here's demo apps (saw ${loaded})`);
-  for (const f of loaded) assert.ok(noindex(built(f)), `${f} says noindex`);
   // The redirects name their page by its full address.
   assert.equal(canonical(built("index.html")), `${SITE_URL}site/`);
   assert.equal(canonical(built("privacy.html")), `${SITE_URL}site/privacy.html`);

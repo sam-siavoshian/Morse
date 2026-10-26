@@ -68,9 +68,11 @@ docs/        user docs; docs/dev for developers; screenshots, UI catalog, launch
 [`site/`](../../site/) is the public website: static HTML, CSS and ES
 modules, no build step. The Pages workflow
 ([`.github/workflows/pages.yml`](../../.github/workflows/pages.yml))
-publishes it laid out like the repo (`/site/` for the site,
-`/share/install.html` for share links, `/site/mods/index.json` for the
-gallery list); `npm run pages` builds the same thing into `dist/pages` and
+publishes the pages at the root (`/`, `/gallery.html`, `/privacy.html`).
+`/site/` redirects there. The files stay in that folder so the pages' relative
+paths keep working, share links stay at `/share/install.html`, and the gallery
+list stays at `/site/mods/index.json` (the app already requests that address).
+`npm run pages` builds the same thing into `dist/pages` and
 fails on a broken link. `site/privacy.html` is made from
 [docs/privacy.md](../privacy.md) by `npm run pages`, and
 `tests/release.test.js` checks that it is current.
@@ -110,24 +112,10 @@ for developers), privacy in two lines, a short FAQ.
   gallery cards, the showcase and the strip; a name without one shows its
   first letter. The site has no SVG: the favicon is the Morse mark as a PNG,
   and the arrow, play, pause and slider icons are text.
-- **Try it here** ([`site/try/`](../../site/try/), the `#try` section between
-  `<!-- try-it -->` markers in `site/index.html`): the real runtime in a demo
-  app (`demo/sites/tunes` or `byte`), in an iframe sandboxed with
-  `allow-scripts` only. `section.js` fills the section and adds `try.css`
-  (dark, in the tokens' charcoal, whatever the page around it does). It
-  loads `try.js` only when the section is about to scroll into view or
-  something in it is clicked. `try.js` is the runtime's host, like
-  `demo/playground.html`'s fake host but over postMessage, and `frame.js` is
-  the frame's side and the only place mod code runs. The demo model
-  (`core/demo.js`) writes the changes through the real engine. A request it
-  has no reply for gets a note that points to installing Morse
-  (`isDemoFallback`; the section's `data-install` says where). Saved mods
-  stay in the page's localStorage (`morse:try:*`). `npm run pages` publishes
-  the two demo apps and writes the runtime to `dist/runtime/runtime.js`,
-  where `try.js` loads it from (run `npm run build` to try it from a
-  checkout). [`tests/try.test.js`](../../tests/try.test.js) drives it in
-  Chromium on a fresh `npm run pages` build, on a desktop and a 390px phone;
-  `node demo/shoot-try.js` takes its screenshots.
+- **Motion** ([`site/motion.js`](../../site/motion.js)): parts marked
+  `data-reveal` rise into view once, the headline and the film follow the
+  scroll, and the footer's wordmark lights up under the pointer. With
+  reduced motion nothing moves, and without the script everything shows.
 - [`tests/site.test.js`](../../tests/site.test.js) checks that every link,
   image, icon, fragment and config target on the pages resolves.
 - **`site/gallery.html`**: example mods from [`site/mods/`](../../site/mods/)

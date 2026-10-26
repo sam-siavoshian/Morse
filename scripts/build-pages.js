@@ -8,8 +8,6 @@
 //   /share/install.html            share links (core/mod.js SHARE_BASE)
 //   /core/, /design/               modules and tokens the pages import
 //   /docs/launch/                  the demo video and posters
-//   /demo/sites/tunes/, byte/      the demo apps in the landing page's Try it here
-//   /dist/runtime/runtime.js       the Morse runtime that runs inside them
 //
 // Every published page gets its canonical address, link previews (Open Graph
 // and Twitter, with site/og-image.png) and structured data (JSON-LD) where its
@@ -28,17 +26,13 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { readFileSync } from "node:fs";
-import { bundleRuntime } from "../runtime/bundle.js";
 import { OG } from "./site-images.js";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const OUT = path.join(root, "dist", "pages");
 // docs/showcase holds before and after pictures site/config.js may name; it is
 // published when it exists.
-const PUBLISH = ["site", "share", "core", "design/tokens.css", "docs/launch", "docs/showcase", "demo/sites/tunes", "demo/sites/byte"];
-// Try it here (site/try.js) loads the runtime from where scripts/build.js puts
-// it; this writes the same file, so the build needs no other step first.
-const RUNTIME = "dist/runtime/runtime.js";
+const PUBLISH = ["site", "share", "core", "design/tokens.css", "docs/launch", "docs/showcase"];
 
 // ---- search engines and link previews
 
@@ -366,8 +360,6 @@ export async function buildPages({ out = OUT, refresh = true } = {}) {
     if (p === "docs/showcase" && !(await fs.stat(path.join(root, p)).catch(() => null))) continue;
     await copy(path.join(root, p), path.join(out, p));
   }
-  await fs.mkdir(path.dirname(path.join(out, RUNTIME)), { recursive: true });
-  await fs.writeFile(path.join(out, RUNTIME), bundleRuntime());
   await fs.copyFile(path.join(root, "docs", "privacy.md"), path.join(out, "docs", "privacy.md"));
   await fs.writeFile(path.join(out, ".nojekyll"), "");
   await fs.writeFile(path.join(out, "index.html"), `<!doctype html>

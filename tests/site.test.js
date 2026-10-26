@@ -77,13 +77,13 @@ test("every link, image, video and icon on the site's pages resolves", () => {
 
 test("the landing page has what it promises: buttons, video slot, sections and real screenshots", () => {
   const html = read("index.html");
-  // A hero, see it change, how it works, try it here, real apps, install,
-  // privacy, FAQ: one page that sells in a minute.
-  for (const id of ["change", "how", "try", "apps", "install", "install-web", "install-desktop", "desktop-steps", "privacy", "faq"]) {
+  // A hero, what it does, examples, how it works, privacy, real apps, FAQ and
+  // install: one page that sells in a minute, with room around each part.
+  for (const id of ["takes", "change", "how", "apps", "install", "install-web", "install-desktop", "desktop-steps", "privacy", "faq"]) {
     assert.ok(ids(html).has(id), `a section with id="${id}"`);
   }
   // What was cut stays cut: feature rows, the logo wall, the idea list.
-  for (const id of ["show-me-once", "self-heal", "your-style", "packs", "more", "features", "get"]) {
+  for (const id of ["show-me-once", "self-heal", "your-style", "packs", "more", "features", "get", "try"]) {
     assert.ok(!ids(html).has(id), `no section id="${id}" any more`);
   }
   assert.doesNotMatch(html, /logos\//, "no wall of logos");
@@ -96,14 +96,10 @@ test("the landing page has what it promises: buttons, video slot, sections and r
   assert.match(install, /Chrome, Edge, Brave, Arc and Vivaldi/, "websites come from the Morse app");
   assert.match(install, /docs\/dev\/README\.md">developer guide/, "developers get the guide");
   assert.match(html, /data-film/, "the video slot");
-  assert.match(html, /<section id="try" class="try" data-install="#install">/, "Try it here, pointing at the install section");
+  assert.doesNotMatch(html, /try\/section\.js|data-install=/, "no live demo on the page");
   const shots = [...html.matchAll(/src="(shots\/[^"]+)"/g)].map(m => m[1]);
-  assert.ok(shots.length >= 6, `screenshots on the page (saw ${shots.length})`);
+  assert.ok(shots.length >= 3, `screenshots on the page (saw ${shots.length})`);
   for (const s of shots) assert.ok(existsSync(path.join(SITE, s)), s);
-  // The first run, in three pictures at most.
-  const firstRun = /<ol class="first-run-list"[^>]*>([\s\S]*?)<\/ol>/.exec(html)?.[1] || "";
-  const firstRunShots = (firstRun.match(/<img\b/g) || []).length;
-  assert.ok(firstRunShots >= 1 && firstRunShots <= 3, `the first run in three pictures at most (saw ${firstRunShots})`);
   // Every <img> has alt text and a size, so nothing shifts as it loads; all
   // but the first screen's poster wait until they are near.
   for (const page of PAGES) {
@@ -196,12 +192,12 @@ test("the gallery and the privacy policy carry the landing page's nav bar and fo
 test("no drawn pictures: real screenshots, real app icons, no SVG", async () => {
   // No SVG files, and no inline <svg> in the pages, their scripts or styles:
   // the favicon is the Morse mark as a PNG, the few functional icons are text
-  // (→ ▶ ❚❚ ⟷ ×). Try it here (site/try/) is a live demo and keeps its own.
+  // (→ ▶ ❚❚ ⟷ ×).
   const svgFiles = [], inline = [];
   const walk = dir => {
     for (const e of readdirSync(dir, { withFileTypes: true })) {
       const p = path.join(dir, e.name), rel = path.relative(SITE, p);
-      if (e.isDirectory()) { if (rel !== "try" && rel !== "mods") walk(p); }
+      if (e.isDirectory()) { if (rel !== "mods") walk(p); }
       else if (e.name.endsWith(".svg")) svgFiles.push(rel);
       else if (/\.(html|js|css)$/.test(e.name) && /<svg\b/.test(readFileSync(p, "utf8"))) inline.push(rel);
     }

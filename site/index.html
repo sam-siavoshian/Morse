@@ -26,10 +26,9 @@
       <a href="#top" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="20"></span><span class="brand-name">Morse</span></a>
       <nav class="nav-links" aria-label="Primary">
         <ul class="nav-list">
-          <li><a class="nav-link" href="#takes">Take it</a></li>
-          <li><a class="nav-link" href="#change">See it change</a></li>
+          <li><a class="nav-link" href="#takes">What it does</a></li>
+          <li><a class="nav-link" href="#change">Examples</a></li>
           <li><a class="nav-link" href="#how">How it works</a></li>
-          <li><a class="nav-link" href="#try">Try it</a></li>
           <li><a class="nav-link" href="gallery.html">Gallery</a></li>
           <li><a class="nav-link" href="#faq">FAQ</a></li>
         </ul>
@@ -43,12 +42,10 @@
     <div class="nav-menu" id="nav-menu">
       <nav class="nav-sheet" aria-label="Sections">
         <ul>
-          <li><a href="#takes">Take it</a></li>
-          <li><a href="#change">See it change</a></li>
+          <li><a href="#takes">What it does</a></li>
+          <li><a href="#change">Examples</a></li>
           <li><a href="#how">How it works</a></li>
-          <li><a href="#try">Try it here</a></li>
-          <li><a href="#apps">Real apps</a></li>
-          <li><a href="#install">Install</a></li>
+          <li><a href="#apps">Apps</a></li>
           <li><a href="#faq">FAQ</a></li>
           <li><a href="gallery.html">Gallery</a></li>
           <li><a href="privacy.html">Privacy</a></li>
@@ -64,256 +61,177 @@
 
 <main id="top">
   <!-- ============================================================ hero -->
-  <section class="hero">
+  <section class="hero" aria-labelledby="hero-title">
     <div class="pixels" aria-hidden="true" data-pixels></div>
     <div class="wrap hero-grid">
-      <a class="chip-beam" href="#try"><span class="chip-dot" aria-hidden="true"></span>Try it here, nothing to install<span class="icon" aria-hidden="true">→</span></a>
-      <h1 class="hero-title"><span class="word" style="--i:0">Take </span><span class="word" style="--i:1">what </span><span class="word" style="--i:2">they </span><span class="word" data-line="2" style="--i:3">won’t </span><span class="word" data-line="2" style="--i:4">ship.</span></h1>
-      <div class="hero-side">
-        <p class="hero-sub">Change any app. Bring a feature over from the one that has it. Delete the paywall. Add the AI they refused. Fix the bug tonight.</p>
-        <div class="get-row">
-          <a class="btn btn-primary btn-lg" href="./#desktop-steps" data-link="desktop">Download Morse<span class="icon" aria-hidden="true">→</span></a>
-        </div>
-        <p class="hero-note">Free and open source <span aria-hidden="true">·</span> No account <span aria-hidden="true">·</span> Claude Code, Codex, or your API key</p>
+      <a class="chip-beam" href="#install"><span class="chip-dot" aria-hidden="true"></span>Free for Mac, Windows and Linux<span class="icon" aria-hidden="true">→</span></a>
+      <h1 class="hero-title" id="hero-title"><span class="word" style="--i:0">Take </span><span class="word" style="--i:1">what </span><br class="hero-break"><span class="word" data-line="2" style="--i:2">they </span><span class="word" data-line="2" style="--i:3">won’t </span><span class="word" data-line="2" style="--i:4">ship.</span></h1>
+      <p class="hero-sub">Change any app in one sentence. Free and open source.</p>
+      <div class="get-row">
+        <a class="btn btn-primary btn-lg btn-pill" href="./#desktop-steps" data-link="desktop">Download Morse</a>
+        <a class="btn btn-glass btn-lg btn-pill" href="https://github.com/sam-siavoshian/RRAA" data-link="github">Star on GitHub</a>
       </div>
-    </div>
-
-    <div class="wrap" id="takes">
-      <ul class="takes">
-        <li class="take" style="--i:0">
-          <h2>Bring one feature over</h2>
-          <p class="take-ask"><q>add a sleep timer, the kind music apps have</q></p>
-          <p>The other app has it. This one does not. Take this there. Bring here. It is back next time, in this app’s own look.</p>
-        </li>
-        <li class="take" style="--i:1">
-          <h2>Delete the paywall</h2>
-          <p class="take-ask"><q>remove this paywall</q></p>
-          <p>The page loaded. The box is in the way. Point at it. The box goes. If they never sent the article, there is nothing under it.</p>
-        </li>
-        <li class="take" style="--i:2">
-          <h2>Add the AI they refused</h2>
-          <p class="take-ask"><q>summarize this. this app has no AI</q></p>
-          <p>No model in the app, or they locked it on a plan you do not have. Say summarize this. Yours does it. Theirs is not in the room.</p>
-        </li>
-        <li class="take" style="--i:3">
-          <h2>Fix the bug tonight</h2>
-          <p class="take-ask"><q>this button has been broken for months. make it save</q></p>
-          <p>Point at the broken part and say what it should do. You ship it tonight. Their team can take months.</p>
-        </li>
-      </ul>
     </div>
 
     <!-- The film. Its file, poster, shape and captions live in config.js (DEMO_VIDEO). -->
     <div class="wrap">
       <figure class="film" id="demo" data-film>
-        <p class="film-strip"><span class="film-dot" aria-hidden="true"></span><span data-film-strip>Edit text, hide the ads, dark mode · no model</span></p>
         <div class="film-frame">
           <img class="film-poster" src="../docs/launch/morse-opus-open-poster.webp" width="1920" height="1080" alt="The Daily Byte after Morse: the headline reads A quieter front page, the ads and the popup are gone, and the page is dark." fetchpriority="high">
           <button type="button" class="film-play" aria-label="Play the video from the start, with controls"><span class="film-disc" aria-hidden="true"><span class="icon" aria-hidden="true">►</span></span></button>
           <button type="button" class="film-toggle" aria-label="Pause or play the loop"><span class="icon icon-pause" aria-hidden="true">❚❚</span><span class="icon icon-play" aria-hidden="true">►</span></button>
         </div>
-        <figcaption>50 seconds. Opens on the finished page: the headline is “A quieter front page”, the ads and the popup are gone, and the page is dark. Then those three edits, sped up. The page is opened again and the mods are still on. No model was connected.</figcaption>
+        <figcaption>33 seconds. The finished page first, then how it got there. No model was called.</figcaption>
       </figure>
     </div>
   </section>
 
-  <!-- ===================================================== see it change -->
-  <!-- The pairs come from config.js (SHOWCASE); index.js puts them here. -->
-  <section id="change" class="section">
+  <!-- ======================================================= what it does -->
+  <section id="takes" class="section" aria-labelledby="takes-title">
     <div class="wrap">
-      <header class="section-head" data-reveal>
-        <p class="eyebrow">See it change</p>
-        <h2>One sentence. No ticket.</h2>
-        <p class="lede">Real apps and websites. Drag across a picture. None of this was on a roadmap.</p>
+      <header class="head">
+        <h2 id="takes-title" data-reveal>What they won’t ship.</h2>
+        <p data-reveal style="--delay:0.08s">Four things you can stop asking for.</p>
+      </header>
+      <ul class="abilities">
+        <li data-reveal><p><b>Bring one feature over.</b> The other app has it. Now this one does.</p></li>
+        <li data-reveal style="--delay:0.06s"><p><b>Delete the paywall.</b> Point at the box. It goes.</p></li>
+        <li data-reveal style="--delay:0.12s"><p><b>Add the AI they refused.</b> Summarize, rewrite or explain, in any app.</p></li>
+        <li data-reveal style="--delay:0.18s"><p><b>Fix the bug tonight.</b> Their team can take months.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ========================================================= examples -->
+  <!-- The pairs come from config.js (SHOWCASE); index.js puts them here. -->
+  <section id="change" class="section section-later" aria-labelledby="change-title">
+    <div class="wrap">
+      <header class="head">
+        <h2 id="change-title" data-reveal>One sentence. No ticket.</h2>
+        <p data-reveal style="--delay:0.08s">Real apps. Drag across a picture.</p>
       </header>
       <div class="pairs" id="pairs"></div>
     </div>
   </section>
 
   <!-- ===================================================== how it works -->
-  <section id="how" class="section section-alt">
+  <section id="how" class="section section-later" aria-labelledby="how-title">
     <div class="wrap">
-      <header class="section-head" data-reveal>
-        <p class="eyebrow">How it works</p>
-        <h2>Three steps. Their files never change.</h2>
+      <header class="head">
+        <h2 id="how-title" data-reveal>Three steps. Their files never change.</h2>
+        <p data-reveal style="--delay:0.08s">Obsidian on Linux, 7.8 seconds.</p>
       </header>
-      <div class="steps" data-steps data-reveal="fade">
-        <ol class="steps-list">
-          <li class="step is-on">
-            <button type="button" class="step-btn" aria-pressed="true" data-step="0">
-              <span class="step-n">01</span>
-              <span class="step-text"><strong>Point at it</strong><span>Press <kbd>⌥</kbd><kbd>Space</kbd> (<kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd> on Windows and Linux). Click the part you want to change, or describe the whole page.</span></span>
-            </button>
-          </li>
-          <li class="step">
-            <button type="button" class="step-btn" aria-pressed="false" data-step="1">
-              <span class="step-n">02</span>
-              <span class="step-text"><strong>Say what they left out</strong><span>The feature from the other app. The paywall to remove. The bug to fix. The summary you want. Type one sentence, or hold the shortcut and talk. You see the change while your model writes it.</span></span>
-            </button>
-          </li>
-          <li class="step">
-            <button type="button" class="step-btn" aria-pressed="false" data-step="2">
-              <span class="step-n">03</span>
-              <span class="step-text"><strong>Save it</strong><span>Save keeps it for next time. Undo puts the app back.</span></span>
-            </button>
-          </li>
-        </ol>
-        <figure class="steps-stage">
-          <div class="shot steps-shots">
-            <img class="is-on" src="shots/323-obsidian-ask.webp" width="1024" height="800" loading="lazy" decoding="async" alt="Obsidian with a note open. The Morse bar holds the request “make my notes look like an old typewritten page: yellowed paper, a typewriter font, and the headings underlined in dark red”.">
-            <img src="shots/324-obsidian-working.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The note is already turning yellow while the bar says it is writing the change.">
-            <img src="shots/325-obsidian-result.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The note on yellowed paper in a typewriter font, with dark red underlined headings. The bar says “Old Typewritten Page” and offers Save, Undo, Edit code and Share.">
-          </div>
-          <figcaption>Obsidian on Linux, Claude Code (sonnet), 7.8 seconds: <q class="ask">make my notes look like an old typewritten page</q></figcaption>
-        </figure>
-      </div>
+      <ol class="plates plates-3">
+        <li class="plate" data-reveal="fade">
+          <figure class="shot"><img src="shots/323-obsidian-ask.webp" width="1024" height="800" loading="lazy" decoding="async" alt="Obsidian with a note open. The Morse bar holds the request “make my notes look like an old typewritten page: yellowed paper, a typewriter font, and the headings underlined in dark red”."></figure>
+          <p class="plate-line"><b>Point at it.</b> Press <kbd>⌥</kbd><kbd>Space</kbd>, or <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd>.</p>
+        </li>
+        <li class="plate" data-reveal="fade" style="--delay:0.08s">
+          <figure class="shot"><img src="shots/324-obsidian-working.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The note is already turning yellow while the bar says it is writing the change."></figure>
+          <p class="plate-line"><b>Say what you want.</b> Type it, or hold the shortcut and talk.</p>
+        </li>
+        <li class="plate" data-reveal="fade" style="--delay:0.16s">
+          <figure class="shot"><img src="shots/325-obsidian-result.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The note on yellowed paper in a typewriter font, with dark red underlined headings. The bar says “Old Typewritten Page” and offers Save, Undo, Edit code and Share."></figure>
+          <p class="plate-line"><b>Save it.</b> It comes back next time. Undo puts the app back.</p>
+        </li>
+      </ol>
     </div>
   </section>
 
-  <!-- try-it: the live demo. Everything for it is in site/try/; data-install is where its "Get Morse" link goes. -->
-  <section id="try" class="try" data-install="#install"></section>
-  <script type="module" src="try/section.js"></script>
-  <!-- /try-it -->
+  <!-- =========================================================== privacy -->
+  <section id="privacy" class="section privacy" aria-labelledby="privacy-title">
+    <div class="wrap">
+      <header class="head head-center">
+        <h2 id="privacy-title" data-reveal>Private by design.</h2>
+        <p data-reveal style="--delay:0.08s">Your apps, your model, your computer.</p>
+      </header>
+      <figure class="zero-figure">
+        <span class="zero" data-reveal="fade" role="img" aria-label="0"><span class="reel" aria-hidden="true"><span>7</span><span>3</span><span>9</span><span>1</span><span>6</span><span>4</span><span>8</span><span>2</span><span>5</span><span>0</span></span></span>
+        <figcaption data-reveal style="--delay:0.12s"><b>Zero servers.</b><span>Morse has no account and no server. Nothing goes to the people who make it.</span></figcaption>
+      </figure>
+      <ul class="points">
+        <li data-reveal><b>Kept on your computer.</b><p>Your changes live on your machine, beside the app.</p></li>
+        <li data-reveal style="--delay:0.08s"><b>Your model, your call.</b><p>What you point at goes to the model you chose, and only when you ask.</p></li>
+        <li data-reveal style="--delay:0.16s"><b>Their files stay theirs.</b><p>Morse never edits the app. Updates install as usual.</p></li>
+      </ul>
+      <p class="source" data-reveal>Open source under the MIT license. <a href="https://github.com/sam-siavoshian/RRAA" data-link="github">Read the source <span aria-hidden="true">→</span></a> <a href="privacy.html">Privacy policy <span aria-hidden="true">→</span></a></p>
+    </div>
+  </section>
 
   <!-- ========================================================= real apps -->
   <!-- The pictures come from config.js (REAL_APPS); index.js puts them here. -->
-  <section id="apps" class="section section-alt">
+  <section id="apps" class="section section-later" aria-labelledby="apps-title">
     <div class="wrap">
-      <header class="section-head" data-reveal>
-        <p class="eyebrow">Real apps</p>
-        <h2>Apps people already use. Changed in one sentence.</h2>
-        <p class="lede">Desktop apps built from web pages: Visual Studio Code, VSCodium, Obsidian, Logseq and Joplin, on Linux. Websites in Chrome, such as the Node.js docs, PyPI, RubyGems and Docker Hub.</p>
+      <header class="head">
+        <h2 id="apps-title" data-reveal>Apps you already use.</h2>
+        <p data-reveal style="--delay:0.08s">Desktop apps built from web pages, and websites in your browser.</p>
       </header>
       <ul class="apps" id="apps-grid" data-reveal="fade" aria-label="Tested apps"></ul>
-      <p class="fine">Not tested yet: Slack, Discord, Spotify, macOS and Windows. <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/desktop.md#tested-on">What was tested</a></p>
+      <p class="fine" data-reveal>Tested on Linux and in Chrome. Not yet on macOS or Windows. <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/desktop.md#tested-on">What was tested</a></p>
+    </div>
+  </section>
+
+  <!-- =============================================================== FAQ -->
+  <section id="faq" class="section" aria-labelledby="faq-title">
+    <div class="wrap faq-wrap">
+      <h2 id="faq-title" data-reveal>Questions, answered.</h2>
+      <div class="faq-list" data-reveal="fade" style="--delay:0.08s">
+        <details class="faq-item">
+          <summary>Can I take a feature from one app to another?</summary>
+          <p>Yes. Describe it, and Morse builds it in this app’s own look. It cannot bring an account or a catalog you do not have.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Can I delete a paywall?</summary>
+          <p>When it is a box on a page that already loaded, yes. Morse does not sign you in, and cannot fetch a story the site never sent.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Can I add AI to an app that has none?</summary>
+          <p>Yes. Point and say summarize this, rewrite this, or explain this. Morse uses Claude Code, Codex, or your API key.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Can I fix a bug myself?</summary>
+          <p>When you can see it, yes. The fix runs on your computer. A bug on their server stays theirs.</p>
+        </details>
+        <details class="faq-item">
+          <summary>What does it cost?</summary>
+          <p>Morse is free. Your model costs what it costs you now. A change is usually one request.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Which apps work?</summary>
+          <p>Websites in your browser, and desktop apps built from web pages, like Visual Studio Code, Obsidian and Logseq. Apps like Finder or Word aren’t built from web pages, so they don’t work.</p>
+        </details>
+        <details class="faq-item">
+          <summary>What if the app updates?</summary>
+          <p>Updates install as usual. If one breaks a change, click Fix it and your model writes it again.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Is it safe to install changes other people made?</summary>
+          <p>Before you install one, Morse says what it does and shows its code. One shortcut turns every change off.</p>
+        </details>
+      </div>
     </div>
   </section>
 
   <!-- =========================================================== install -->
   <!-- One app (the Morse app, desktop-app/), for apps and websites. The morse
        command is for developers: the README and docs/dev/README.md, not this page. -->
-  <section id="install" class="section">
-    <div class="wrap">
-      <header class="section-head" data-reveal>
-        <p class="eyebrow">Install</p>
-        <h2>Then stop asking them.</h2>
-        <p class="lede">Download Morse and open it. It finds Claude Code or Codex by itself and lists your apps and browsers. Morse has no plan of its own.</p>
-      </header>
-      <div class="get" data-reveal="fade">
-        <article class="get-card" id="install-desktop">
-          <p class="get-kind">The Morse app</p>
-          <h3>For your apps and websites</h3>
-          <ol class="get-3">
-            <li>Download Morse and open it.</li>
-            <li>Click <strong>Open with Morse</strong> next to an app.</li>
-            <li>Press <strong>Ctrl+Shift+Space</strong> in the app (<strong>⌥Space</strong> on a Mac), point at something and say what you want.</li>
+  <section id="install" class="cta" aria-labelledby="install-title">
+    <div class="wrap cta-grid">
+      <h2 id="install-title" data-reveal>Then stop asking them.<span> Download Morse.</span></h2>
+      <div class="cta-get" id="install-desktop" data-reveal style="--delay:0.08s">
+        <div class="downloads">
+          <a class="btn btn-primary btn-lg btn-pill" href="./#desktop-steps" data-link="desktop">Download Morse</a>
+          <a class="btn btn-glass btn-lg btn-pill" href="https://github.com/sam-siavoshian/RRAA" data-link="github">Star on GitHub</a>
+        </div>
+        <p class="cta-note" id="install-web">Free and open source. It opens Chrome, Edge, Brave, Arc and Vivaldi too, still signed in.</p>
+        <details class="get-steps" id="desktop-steps">
+          <summary>Every download</summary>
+          <ol>
+            <li><a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg" data-link="desktopMac">Mac with Apple silicon</a> · <a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg" data-link="desktopMacIntel">Mac with Intel</a> · <a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe" data-link="desktopWindows">Windows</a> · <a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage" data-link="desktopLinux">Linux</a></li>
+            <li>Morse isn’t signed yet. The first time on a Mac: System Settings, Privacy &amp; Security, <strong>Open Anyway</strong>. On Windows: <strong>More info</strong>, then <strong>Run anyway</strong>.</li>
+            <li>Or on a Mac, paste <code>curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh</code> in Terminal.</li>
+            <li>Working on Morse? The <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/dev/README.md">developer guide</a>.</li>
           </ol>
-          <a class="btn btn-primary btn-lg" href="./#desktop-steps" data-link="desktop">Download Morse<span class="icon" aria-hidden="true">→</span></a>
-          <details class="get-steps" id="desktop-steps">
-            <summary>Downloads for every computer</summary>
-            <ol>
-              <li><a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg" data-link="desktopMac">Mac with Apple silicon</a> · <a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg" data-link="desktopMacIntel">Mac with Intel</a> · <a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe" data-link="desktopWindows">Windows</a> · <a href="https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage" data-link="desktopLinux">Linux</a></li>
-              <li>On a Mac, no security prompts: paste <code>curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh</code> in Terminal. It checks Morse, puts it in Applications and opens it.</li>
-              <li>Downloaded in a browser, Morse isn't signed yet, so the first time: on a Mac, open Morse, then System Settings, Privacy &amp; Security, <strong>Open Anyway</strong>. On Windows, <strong>More info</strong>, then <strong>Run anyway</strong>.</li>
-              <li>No model yet? Morse says what to get, or takes an API key.</li>
-            </ol>
-          </details>
-        </article>
-        <article class="get-card" id="install-web">
-          <p class="get-kind">Websites</p>
-          <h3>In the browser you use</h3>
-          <p>Chrome, Edge, Brave, Arc and Vivaldi are in the app's list too. <strong>Open with Morse</strong> opens it still signed in to everything, with your tabs and extensions. Nothing to install, no sign-in again.</p>
-        </article>
-      </div>
-
-      <p class="dev-link">Working on Morse, or want it in a terminal? The <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/dev/README.md">developer guide</a>.</p>
-
-      <div class="first-run" data-reveal>
-        <h3>Your first minute</h3>
-        <ol class="first-run-list" aria-label="Your first minute">
-          <li>
-            <figure class="shot"><img src="shots/342-app-welcome.webp" width="1100" height="720" loading="lazy" decoding="async" alt="The Morse app's welcome: the name Morse, Change any app or website in your own words, and Begin."></figure>
-            <p><span class="step-n">1</span><span>Open Morse. Its name forms out of dots, then Begin. It finds your AI and your apps by itself.</span></p>
-          </li>
-          <li>
-            <figure class="shot"><img src="shots/321-vscode-result.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Visual Studio Code after “make the whole editor look like a warm paper notebook”: cream backgrounds, brown text, serif file names, and the Morse bar offering Save."></figure>
-            <p><span class="step-n">2</span><span>Click Open with Morse. Point at something, describe a change and click Save.</span></p>
-          </li>
-          <li>
-            <figure class="shot"><img src="shots/343-app-how.webp" width="1100" height="720" loading="lazy" decoding="async" alt="Three moves, in any app: open Morse with the shortcut, point at something, say what you want."></figure>
-            <p><span class="step-n">3</span><span>Three moves in any app or browser: the shortcut, point, say it.</span></p>
-          </li>
-        </ol>
-      </div>
-    </div>
-  </section>
-
-  <!-- =========================================================== privacy -->
-  <section id="privacy" class="section section-tight section-alt">
-    <div class="wrap">
-      <div class="privacy" data-reveal>
-        <p class="eyebrow">Privacy</p>
-        <p class="privacy-text">The change stays on your computer. Morse has no account and no server. When you ask, Morse sends what you pointed at and what you said to your model. Nothing goes to the people who make Morse. <a href="privacy.html">Read the privacy policy</a></p>
-      </div>
-    </div>
-  </section>
-
-  <!-- =============================================================== FAQ -->
-  <section id="faq" class="section">
-    <div class="wrap faq-grid">
-      <header class="section-head" data-reveal>
-        <p class="eyebrow">FAQ</p>
-        <h2>Before you argue about it.</h2>
-        <p class="lede">More in the <a href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs">guides</a>.</p>
-      </header>
-      <div class="faq-list" data-reveal="fade">
-        <details class="faq-item">
-          <summary>Can I take a feature from one app and put it on another?</summary>
-          <p>Yes. Take this in the app that has it. Bring here in the one that does not. A timer, a button, a palette, a dark mode switch. Morse builds it in that app’s own look. It cannot bring a catalog or an account you do not have.</p>
-        </details>
-        <details class="faq-item">
-          <summary>Can I delete a paywall?</summary>
-          <p>Yes, when it is a box on a page that already loaded. Point at the upgrade wall, the subscribe nag, the banner. It comes off on your computer. Morse does not sign you in, and it does not fetch a story the site never sent.</p>
-        </details>
-        <details class="faq-item">
-          <summary>Can I add AI to an app that will not give it to me?</summary>
-          <p>Yes. Point at the page and say summarize this, rewrite this, or answer from what is on screen. Morse uses Claude Code, Codex, or your API key. Their plan is not involved, including the plan they will not sell you.</p>
-        </details>
-        <details class="faq-item">
-          <summary>Can I fix a bug without waiting for their team?</summary>
-          <p>When you can see it, yes. Point at it and say what it should do. The fix runs on your computer and comes back next time. Their update can break it. Click Fix it. Your model writes it again. A bug that lives only on their server stays theirs.</p>
-        </details>
-        <details class="faq-item">
-          <summary>What do I install?</summary>
-          <p>One app: Morse. Download it, open it, and it finds your model, your apps and your browsers. There is nothing else to install.</p>
-        </details>
-        <details class="faq-item">
-          <summary>Do I need a terminal or Node?</summary>
-          <p>No. The Morse app has everything in it. There is also a morse command for developers, in the <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/dev/README.md">developer guide</a>.</p>
-        </details>
-        <details class="faq-item">
-          <summary>What does it cost?</summary>
-          <p>Morse is free. Your model costs what it costs you now. Claude Code and Codex use your plan. With an API key, Anthropic or OpenAI bills you for each request. A change is usually one request.</p>
-        </details>
-        <details class="faq-item">
-          <summary>Which models can I use?</summary>
-          <p>Claude Code or Codex, if you have them. Or an Anthropic or OpenAI API key. Or a model on your own computer, such as LM Studio or llama.cpp. So far, only Claude Code was tested on real apps.</p>
-        </details>
-        <details class="faq-item">
-          <summary>Which apps work?</summary>
-          <p>Websites in your browser — Chrome, Edge, Brave, Arc or Vivaldi — and desktop apps built from web pages. Tested on Visual Studio Code, VSCodium, Obsidian, Logseq and Joplin, on Linux. Not tested yet: Slack, Discord, Spotify, macOS and Windows. Apps like Finder or Word aren’t built from web pages, so they don’t work.</p>
-        </details>
-        <details class="faq-item">
-          <summary>Do I need to know how to code?</summary>
-          <p>No. You describe the change in your own words. If you can code, you can read and edit every line Morse writes.</p>
-        </details>
-        <details class="faq-item">
-          <summary>What if the app or site updates?</summary>
-          <p>Morse never changes the app’s files, so updates install as usual. If an update breaks a mod, click Fix it in the Mods panel. Your model writes a new version.</p>
-        </details>
-        <details class="faq-item">
-          <summary>Is it safe to install mods other people made?</summary>
-          <p>A mod is code that runs in that site or app. Before you install one, Morse tells you what it does and shows its code. One shortcut turns off every mod on a page.</p>
         </details>
       </div>
     </div>
@@ -321,6 +239,7 @@
 </main>
 
 <footer class="foot">
+  <div class="mark" aria-hidden="true" data-mark><span class="mark-letters">Morse</span><span class="mark-light">Morse</span></div>
   <div class="wrap">
     <div class="foot-top">
       <a href="#top" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="20" data-still></span><span class="brand-name">Morse</span></a>

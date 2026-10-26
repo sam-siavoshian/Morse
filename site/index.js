@@ -1,29 +1,22 @@
 // The landing page: the nav, the links and the film from config.js, the
-// before and after pairs and the real-apps strip (also from config.js), the
-// three steps, and the radar's pixels behind the headline.
+// before and after cards and the real-apps strip (also from config.js), and
+// the radar's pixels behind the headline.
 import { initPage, esc, appIcon } from "./common.js";
 import { SHOWCASE, REAL_APPS } from "./config.js";
-import { mountReveals, mountHeroScroll } from "./motion.js";
+import { mountReveals, mountHeroScroll, mountMark } from "./motion.js";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ---------- see it change ----------
 // One picture slides over the other. The range input underneath does the
 // work, so it is a real control: drag, tap, or the arrow keys.
+// Cards two to a row, a wide one beside a narrow one, the sides swapping
+// each row.
+const SPANS = ["span-7", "span-5", "span-5", "span-7"];
 function pairHtml(p, i) {
-  const n = String(i + 1).padStart(2, "0");
-  const total = String(SHOWCASE.length).padStart(2, "0");
   const img = (src, alt, eager) => `<img src="${esc(src)}" width="${p.width}" height="${p.height}" alt="${esc(alt)}" ${eager ? "" : 'loading="lazy" '}decoding="async">`;
   return `
-    <article class="pair" data-reveal="fade">
-      <div class="pair-text">
-        <p class="pair-n">${n} / ${total}</p>
-        <h3 class="pair-app">${appIcon(p.app, 28)}${esc(p.app)}</h3>
-        <p class="pair-kind">${esc(p.kind)}</p>
-        <p class="pair-ask"><span class="sr-only">Asked: </span>${esc(p.ask)}</p>
-        <p class="pair-by">${esc(p.by)}</p>
-        ${p.note ? `<p class="pair-note">${esc(p.note)}</p>` : ""}
-      </div>
+    <article class="plate pair ${SPANS[i % SPANS.length]}" data-reveal="fade" style="--delay:${(i % 2) * 0.08}s">
       <figure class="shot compare" data-side="both">
         ${img(p.after, `After: ${p.alt.after}`)}
         <div class="compare-before">${img(p.before, `Before: ${p.alt.before}`)}</div>
@@ -33,6 +26,10 @@ function pairHtml(p, i) {
         <span class="compare-line" aria-hidden="true"></span>
         <span class="compare-knob" aria-hidden="true"><span class="icon">⟷</span></span>
       </figure>
+      <div class="plate-foot">
+        <p class="plate-line"><b>${appIcon(p.app, 20)}${esc(p.app)}.</b> ${esc(p.line || p.kind)}</p>
+        <p class="plate-by"><span class="sr-only">Asked: ${esc(p.ask)}. </span>${esc(p.by)}</p>
+      </div>
     </article>`;
 }
 
@@ -79,45 +76,10 @@ function mountApps(root) {
         <div class="shot"><img src="${esc(a.src)}" width="${a.width}" height="${a.height}" alt="${esc(a.alt)}" loading="lazy" decoding="async"></div>
         <figcaption>
           <span class="app-name"><strong>${appIcon(a.app, 22)}${esc(a.app)}</strong><span>${esc(a.kind)}</span></span>
-          ${a.ask ? `<q class="app-ask">${esc(a.ask)}</q>` : ""}
-          ${a.by ? `<span class="app-by">${esc(a.by)}</span>` : ""}
+          ${a.ask ? `<span class="sr-only">Asked: ${esc(a.ask)}</span>` : ""}
         </figcaption>
       </figure>
     </li>`).join("");
-}
-
-// ---------- how it works ----------
-// Each step shows its picture. On its own it moves to the next step every few
-// seconds while on screen, until someone picks a step.
-function mountSteps(root) {
-  if (!root) return;
-  const steps = [...root.querySelectorAll(".step")];
-  const shots = [...root.querySelectorAll(".steps-shots img")];
-  let at = 0, timer = 0, visible = false, chosen = false;
-  const show = i => {
-    at = i;
-    steps.forEach((s, j) => { s.classList.toggle("is-on", j === i); s.querySelector(".step-btn").setAttribute("aria-pressed", String(j === i)); });
-    shots.forEach((s, j) => s.classList.toggle("is-on", j === i));
-  };
-  const tick = () => {
-    clearTimeout(timer);
-    if (chosen || !visible || reducedMotion()) return;
-    timer = setTimeout(() => { show((at + 1) % steps.length); tick(); }, 3600);
-  };
-  root.addEventListener("click", e => {
-    const b = e.target.closest(".step-btn");
-    if (!b) return;
-    chosen = true;
-    clearTimeout(timer);
-    show(Number(b.dataset.step));
-  });
-  // The pictures are lazy; load all three once the steps are near, so a
-  // switch never shows an empty frame.
-  new IntersectionObserver(([e]) => {
-    visible = e.isIntersecting;
-    if (visible) for (const s of shots) s.loading = "eager";
-    tick();
-  }, { rootMargin: "100px 0px" }).observe(root);
 }
 
 // ---------- the radar's pixels ----------
@@ -153,14 +115,14 @@ function mountPixels(root) {
 initPage();
 mountPairs(document.getElementById("pairs"));
 mountApps(document.getElementById("apps-grid"));
-mountSteps(document.querySelector("[data-steps]"));
 for (const el of document.querySelectorAll("[data-pixels]")) mountPixels(el);
 mountReveals();
 mountHeroScroll(document.querySelector(".hero"), document.querySelector(".hero .film"));
-// Rows that scroll sideways (the apps and the first minute, on a phone) take
-// keyboard focus while they scroll, so the arrow keys can move them too.
+mountMark(document.querySelector("[data-mark]"));
+// The apps row scrolls sideways on a phone; then it takes keyboard focus, so
+// the arrow keys can move it too.
 function scrollRows() {
-  for (const el of document.querySelectorAll("#apps-grid, .first-run-list")) {
+  for (const el of document.querySelectorAll("#apps-grid")) {
     if (el.scrollWidth > el.clientWidth + 1) el.tabIndex = 0; else el.removeAttribute("tabindex");
   }
 }

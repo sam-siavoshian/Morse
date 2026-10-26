@@ -1,6 +1,7 @@
 // Motion on the landing page: parts marked data-reveal rise into view once,
-// and while scrolling the headline drifts up and fades as the film settles
-// into place. Nothing moves with reduced motion; the CSS rests at the end.
+// while scrolling the headline drifts up and fades as the film settles into
+// place, and the footer's wordmark lights up under the pointer. Nothing moves
+// with reduced motion; the CSS rests at the end.
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // Parts already on screen show at once, so the first screen never blinks.
@@ -56,4 +57,28 @@ export function mountHeroScroll(hero, film) {
   paint();
   addEventListener("scroll", read, { passive: true });
   addEventListener("resize", read, { passive: true });
+}
+
+// A soft light follows the pointer a little behind it over the footer, and
+// finds the edges of the wordmark's letters where it is (--x and --y on the
+// mark). Without a fine pointer it rests in the middle.
+export function mountMark(mark) {
+  if (!mark || reducedMotion() || !matchMedia("(pointer: fine)").matches) return;
+  const zone = mark.closest("footer") || mark;
+  const aim = { x: 0, y: 0 }, now = { x: NaN, y: 0 };
+  let frame = 0;
+  const step = () => {
+    now.x += (aim.x - now.x) * 0.16;
+    now.y += (aim.y - now.y) * 0.16;
+    mark.style.setProperty("--x", `${now.x.toFixed(1)}px`);
+    mark.style.setProperty("--y", `${now.y.toFixed(1)}px`);
+    frame = Math.abs(aim.x - now.x) + Math.abs(aim.y - now.y) > 0.5 ? requestAnimationFrame(step) : 0;
+  };
+  zone.addEventListener("pointermove", e => {
+    const box = mark.getBoundingClientRect();
+    aim.x = e.clientX - box.left;
+    aim.y = e.clientY - box.top;
+    if (Number.isNaN(now.x)) { now.x = box.width / 2; now.y = box.height * 0.45; }
+    if (!frame) frame = requestAnimationFrame(step);
+  }, { passive: true });
 }

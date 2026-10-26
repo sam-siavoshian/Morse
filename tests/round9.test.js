@@ -135,13 +135,3 @@ test("release-desktop.yml: actions pinned to a commit, the write token only in t
   assert.match(release, /permissions:\s*\n\s*contents:\s*write/);
   assert.match(build, /persist-credentials:\s*false/, "checkout doesn't leave the token in .git/config for later steps");
 });
-
-// ======================================================================
-// Try it here
-// ======================================================================
-
-test("Try it here: a stored app name that isn't one of the demo apps (toString, constructor) falls back to the music app", async () => {
-  const { knownApp } = await import("../site/try/try.js");
-  assert.equal(knownApp("byte"), "byte");
-  for (const bad of ["toString", "constructor", "__proto__", "hasOwnProperty", "", null, undefined, 3]) assert.equal(knownApp(bad), "tunes", String(bad));
-});

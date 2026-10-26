@@ -1,8 +1,8 @@
 # Publishes the site, the share page and the gallery list.
-# The public site is https://getmorse.vercel.app/ (the pages are under /site/
-# and /share/). GitHub Pages still builds the same files.
-# The layout mirrors the repo (see scripts/build-pages.js), because share links
-# (core/mod.js SHARE_BASE) and the gallery list (core/gallery.js) use those paths.
+# The public site is https://getmorse.vercel.app/ (the pages are at /, /gallery.html
+# and /privacy.html). /site/ redirects there. GitHub Pages still builds the same
+# files. Share links (core/mod.js SHARE_BASE) stay at /share/, and the gallery
+# list (core/gallery.js) stays at /site/mods/, because the app already asks for it.
 #
 # One-time setup: Settings -> Pages -> Build and deployment -> Source: GitHub Actions.
 name: Pages
@@ -10,7 +10,7 @@ name: Pages
 on:
   push:
     branches: [main]
-    paths: ["site/**", "share/**", "core/**", "design/**", "docs/launch/**", "docs/privacy.md", "scripts/build-pages.js", "scripts/site-images.js", "demo/sites/**", ".github/workflows/pages.yml"]
+    paths: ["site/**", "share/**", "core/**", "design/**", "docs/launch/**", "docs/privacy.md", "scripts/build-pages.js", "scripts/site-images.js", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}site/
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4

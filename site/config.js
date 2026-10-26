@@ -36,12 +36,13 @@ export const DEMO_VIDEO = {
   height: 1080,
   label: "Morse on The Daily Byte, then Obsidian, the Mods list, the shortcut and the update window, 33 seconds",
   strip: "The finished page first, then how it got there",
-  caption: "33 seconds. Opens on the finished page: the headline is “A quieter front page”, the ads and the popup are gone, and the page is dark. Then those edits, Obsidian in light mode, the Mods list, the shortcut and the update window. No model was called. The update percent is the window playing, not a download.",
+  caption: "33 seconds. The finished page first, then how it got there. No model was called.",
 };
 
 // "See it change": the big before and after pairs, in order. Each picture is a
 // real screenshot of a real app or website; app is the name exactly as it
-// shows on screen. before and after must be the same size (width × height),
+// shows on screen, and line is the few words under the picture. before and
+// after must be the same size (width × height),
 // since one slides over the other. To swap a pair, change it here only.
 export const SHOWCASE = [
   {
@@ -50,6 +51,7 @@ export const SHOWCASE = [
     note: "Microsoft’s Visual Studio Code 1.143. CSS only; quit and opened again, it was back.",
     ask: "using only CSS, make VS Code look like a classic Windows 95 app: silver gray 3D bevelled panels, tabs and buttons, a navy blue title bar with white bold text, Tahoma for the menus and panels, black text on every gray panel and tab, white text on navy selections, and a plain white editor with dark text; the current line, the active tab and the section header rows should be light gray with black text; keep VS Code's own icons and the editor's monospace font",
     by: "Claude Code (opus), 31 seconds",
+    line: "Windows 95, from one sentence.",
     before: "shots/210-vscode-windows-95-before.webp",
     after: "shots/211-vscode-windows-95-after.webp",
     width: 1200, height: 750,
@@ -64,6 +66,7 @@ export const SHOWCASE = [
     note: "A real vault. Quit and opened again, it was back.",
     ask: "make Obsidian look like an old typewriter: cream paper background with a subtle paper texture, a typewriter font like Courier for everything, dark brown ink for the text, and paper-colored side panels with thin ruled lines",
     by: "Claude Code (opus), 15 seconds",
+    line: "An old typewriter: cream paper, brown ink.",
     before: "shots/212-obsidian-typewriter-before.webp",
     after: "shots/213-obsidian-typewriter-after.webp",
     width: 1200, height: 750,
@@ -78,6 +81,7 @@ export const SHOWCASE = [
     note: "Microsoft’s Visual Studio Code 1.143. The picture is after pressing Ctrl+Alt+P for real.",
     ask: "when I press Ctrl+Alt+P, switch to a presentation mode: hide the sidebar and the activity bar so the code fills the whole window, and make the code twice as big so people at the back can read it; pressing it again goes back",
     by: "Claude Code (opus), 24 seconds",
+    line: "A presentation mode on Ctrl+Alt+P.",
     before: "shots/214-vscode-presentation-shortcut-before.webp",
     after: "shots/215-vscode-presentation-shortcut-after.webp",
     width: 1200, height: 750,
@@ -92,6 +96,7 @@ export const SHOWCASE = [
     note: "hub.docker.com/_/nginx, the live site, after a reload.",
     ask: "hide everything on this page except the README, and center it in a comfortable reading column",
     by: "Claude Code (opus), 9 seconds",
+    line: "Only the README, in one reading column.",
     before: "shots/216-web-dockerhub-readme-only-before.webp",
     after: "shots/217-web-dockerhub-readme-only-after.webp",
     width: 1200, height: 750,
