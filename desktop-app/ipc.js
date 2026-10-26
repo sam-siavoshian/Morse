@@ -49,7 +49,7 @@ export const API = {
   disconnectApp:      [[id], (s, n, appId) => s.disconnectApp(appId)],
   addApp:             [[none], async (s, n) => { const file = await n.pickApp(); return file ? s.addApp(file) : { cancelled: true }; }],
   modelChoices:       [[none], (s) => s.modelChoices()],
-  chooseModel:        [[oneOf("claude-code", "codex", "api-key"), key], (s, n, choice, k) => s.chooseModel(choice, k)],
+  chooseModel:        [[oneOf("claude-code", "codex", "api-key", "anthropic", "openai", "ollama", "lmstudio", "llama", "llamacpp", "local"), key, opt(key)], (s, n, choice, k, extra) => s.chooseModel(choice, k, extra)],
   checkModel:         [[none], (s) => s.check()],
   setModOn:           [[id, bool], (s, n, modId, on) => s.setModOn(modId, on)],
   deleteMod:          [[id], (s, n, modId) => s.deleteMod(modId)],

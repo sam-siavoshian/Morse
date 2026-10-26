@@ -78,7 +78,7 @@ function withKeys(id, combo) {
 }
 // The mark of what writes your changes (ui/icons/NOTICE): Claude Code, Codex,
 // an API key (both providers' marks), or Morse's own radar for the rest.
-const MARKS = { "claude-code": ["claude"], codex: ["openai"], anthropic: ["anthropic"], openai: ["openai"], "api-key": ["anthropic", "openai"] };
+const MARKS = { "claude-code": ["claude"], claude: ["claude"], codex: ["openai"], anthropic: ["anthropic"], openai: ["openai"], "api-key": ["anthropic", "openai"] };
 function providerMark(id, big = false) {
   const names = MARKS[id];
   const tile = h("span", { class: `mark-tile${big ? " big" : ""}${names?.length > 1 ? " pair" : ""}`, "aria-hidden": "true" });
@@ -252,7 +252,8 @@ function renderModel() {
   const m = st.model;
   $("model-name").textContent = m.none ? t("desk.model.none") : modelName(m);
   const mark = $("model-mark");
-  if (mark.dataset.p !== m.provider) { const next = providerMark(m.provider, true); next.id = "model-mark"; next.dataset.p = m.provider; mark.replaceWith(next); }
+  const markId = m.logo || m.provider;
+  if (mark.dataset.p !== markId) { const next = providerMark(markId, true); next.id = "model-mark"; next.dataset.p = markId; mark.replaceWith(next); }
   $("model-pill").hidden = !m.model;
   $("model-pill").textContent = m.model;
   $("check-model").hidden = m.none;
@@ -286,8 +287,8 @@ async function loadChoices() {
   $("choices").hidden = false;
   $("choice-list").replaceChildren(h("p", { class: "live" }, radar(12), h("span", { text: t("desk.model.looking") })));
   choices = await morse.modelChoices();
-  const current = { "claude-code": "claude-code", codex: "codex", anthropic: "api-key", openai: "api-key" }[st.model.provider];
-  const pick = current || choices.find(c => c.recommended)?.id || "api-key";
+  const current = st.model.provider === "local" ? (st.model.runtime || "local") : { "claude-code": "claude-code", codex: "codex", anthropic: "anthropic", openai: "openai" }[st.model.provider];
+  const pick = (current && choices.some(c => c.id === current) ? current : "") || choices.find(c => c.recommended)?.id || "api-key";
   $("choice-list").replaceChildren(...choices.map(c => choiceRow(c, c.id === pick)));
   syncChoice();
   $("choices").scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -297,11 +298,15 @@ async function loadChoices() {
 const choiceName = c => (c.id === "api-key" ? t("setup.name.key") : c.name);
 const WHY = { "claude-code": "setup.why.claude", codex: "setup.why.codex", "api-key": "setup.why.key" };
 function choiceRow(c, checked) {
-  const ready = c.found;
-  const status = ready ? h("span", { class: "badge ready", title: c.id === "api-key" ? t("desk.model.keySet", { env: c.keyEnv }) : c.detail || null }, h("i", { class: "dot on" }), t("desk.ready"))
-    : c.id === "api-key" ? null
-    : h("span", { class: "badge" }, t("desk.model.notInstalled"));
-  const howto = !ready && c.install && c.id !== "api-key"
+  const statusName = c.status || (c.found ? "ready" : "missing");
+  const api = c.kind === "api" || c.id === "api-key";
+  const status = statusName === "ready"
+    ? h("span", { class: "badge ready", title: c.detail || (c.keyEnv ? t("desk.model.keySet", { env: c.keyEnv }) : null) }, h("i", { class: "dot on" }), t("desk.ready"))
+    : (statusName === "server-down" || statusName === "signed-out" || statusName === "bad-key")
+      ? h("span", { class: "badge", title: c.detail || null }, c.detail || t("desk.model.notInstalled"))
+      : api ? null
+      : h("span", { class: "badge" }, t("desk.model.notInstalled"));
+  const howto = statusName !== "ready" && statusName !== "signed-out" && c.install && !api
     ? h("div", { class: "howto", hidden: true },
       h("span", { text: t("desk.model.installFrom", { name: c.name }) }),
       h("code", { text: c.install }),
@@ -309,7 +314,7 @@ function choiceRow(c, checked) {
     : null;
   return h("label", { class: "choice", "data-choice": c.id },
     h("input", { type: "radio", name: "choice", value: c.id, checked, onchange: syncChoice }),
-    providerMark(c.id),
+    providerMark(c.logo || c.id),
     h("span", { class: "grow" },
       h("b", {}, h("span", { text: choiceName(c) }), c.recommended ? h("span", { class: "rec", text: t("desk.model.recommended") }) : null),
       h("small", { text: WHY[c.id] ? t(WHY[c.id]) : c.why })),
@@ -322,11 +327,55 @@ function choiceRow(c, checked) {
     howto);
 }
 $("change-model").onclick = loadChoices;
+const isApiChoice = c => c && (c.kind === "api" || c.id === "api-key" || c.id === "anthropic" || c.id === "openai");
+const isLocalChoice = c => c && (c.kind === "local" || c.id === "local" || c.id === "ollama" || c.id === "lmstudio" || c.id === "llama" || c.id === "llamacpp");
+function localFields() {
+  const row = $("keyrow");
+  if (!row || $("local-model")) return;
+  const addr = h("input", { id: "local-address", type: "text", spellcheck: "false", autocomplete: "off", "aria-label": "Address on this computer", placeholder: "Address on this computer" });
+  const model = h("input", { id: "local-model", type: "text", spellcheck: "false", autocomplete: "off", "aria-label": "Model name", placeholder: "Model name", list: "local-models" });
+  const mark = () => { addr.dataset.touched = "1"; };
+  addr.addEventListener("input", mark);
+  model.addEventListener("input", () => { model.dataset.touched = "1"; });
+  row.insertBefore(h("datalist", { id: "local-models" }), row.firstChild);
+  row.insertBefore(model, row.firstChild);
+  row.insertBefore(addr, row.firstChild);
+}
+function showLocalFields(on, c) {
+  localFields();
+  const addr = $("local-address");
+  const model = $("local-model");
+  if (!addr || !model) return;
+  addr.hidden = !on;
+  model.hidden = !on;
+  if (!on) return;
+  if (addr.dataset.for !== (c?.id || "")) {
+    delete addr.dataset.touched;
+    delete model.dataset.touched;
+    addr.dataset.for = c?.id || "";
+    addr.value = "";
+    model.value = "";
+  }
+  const fixed = !!(c && c.id !== "local" && (c.baseUrl || c.address));
+  addr.readOnly = fixed;
+  if (!addr.dataset.touched) addr.value = c?.baseUrl || c?.address || "";
+  const names = (c?.models || []).map(m => m.id).filter(Boolean);
+  $("local-models")?.replaceChildren(...names.map(id => h("option", { value: id })));
+  if (!model.dataset.touched && !model.value && names[0]) model.value = names[0];
+}
 function syncChoice() {
   const v = document.querySelector('input[name="choice"]:checked')?.value;
   const c = choices.find(x => x.id === v);
-  $("keyrow").hidden = v !== "api-key";
-  $("use-choice").disabled = !c || (v !== "api-key" && !c.found);
+  const api = isApiChoice(c);
+  const local = isLocalChoice(c);
+  $("keyrow").hidden = !(api || local);
+  const key = $("api-key");
+  if (key) key.hidden = !api;
+  const note = $("keyrow")?.querySelector("small");
+  if (note) note.hidden = !api;
+  showLocalFields(local, c);
+  const missingCli = c && !api && !local && ((c.status ? c.status === "missing" : !c.found));
+  $("use-choice").disabled = !c || missingCli;
 }
 $("cancel-choice").onclick = () => { $("choices").hidden = true; $("api-key").value = ""; };
 $("use-choice").onclick = async () => {
@@ -336,7 +385,11 @@ $("use-choice").onclick = async () => {
   checking = true;
   $("use-choice").disabled = true;
   $("model-live").replaceChildren(radar(12), h("span", { text: t("desk.model.saved", { name: c ? choiceName(c) : t("desk.model.it") }) }));
-  const r = await morse.chooseModel(v, v === "api-key" ? $("api-key").value : "");
+  const api = isApiChoice(c);
+  const local = isLocalChoice(c);
+  const secret = api ? $("api-key").value : local ? ($("local-model")?.value.trim() || "") : "";
+  const extra = local && v === "local" ? ($("local-address")?.value.trim() || "") : "";
+  const r = await morse.chooseModel(v, secret, extra);
   checking = false;
   $("use-choice").disabled = false;
   if (r?.error) { $("model-live").replaceChildren(h("i", { class: "dot bad" }), h("span", { text: r.error })); return; }
