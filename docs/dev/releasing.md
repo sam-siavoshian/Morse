@@ -33,7 +33,7 @@ installers use them):
 | File | What it is |
 |---|---|
 | `Morse-mac-arm64.dmg`, `Morse-mac-x64.dmg` (and `.zip`) | Morse Desktop for Macs with Apple silicon, and with Intel |
-| `Morse-Setup.exe` | Morse Desktop for Windows (x64 and arm64) |
+| `Morse-Setup.exe`, `Morse-Setup-arm64.exe` | Morse Desktop for Windows, one installer per architecture (x64 keeps the old name) |
 | `Morse-linux-x86_64.AppImage` | Morse Desktop for Linux |
 | `morse-cli.tgz` | the `morse` command; what `install.sh` and `install.ps1` install |
 | `SHA256SUMS` | the SHA-256 of each; the installers (`install-app.sh` too) check against it |
@@ -285,7 +285,8 @@ Morse's own page, which is what the sandbox would protect.
 `v0.2.1` is pushed (or by hand, from the Actions tab):
 
 - `ubuntu-latest` makes the AppImage, `macos-latest` the dmg (arm64 and x64),
-  `windows-latest` the installer (x64 and arm64).
+  `windows-latest` one installer per architecture (`Morse-Setup.exe` for x64,
+  `Morse-Setup-arm64.exe` for arm64).
 - Each job signs only when its secrets are set, and says in the log when it
   doesn't.
 - Its own job attaches the files to a draft release for the tag. The

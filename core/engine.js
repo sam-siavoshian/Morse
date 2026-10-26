@@ -4,7 +4,7 @@
 import { buildMessages } from "./prompt.js";
 import { parseModResponse, liveCss } from "./parse.js";
 import { parseReply } from "./answer.js"; // Ask and find
-import { streamChat, settingsLabel, seesImages } from "./providers.js";
+import { streamChat, settingsLabel, seesImages, applyFastMode } from "./providers.js";
 import { planRoute, shouldEscalate, tierLabel } from "./route.js"; // models: fast model first, the strong one when needed
 import { selectorsIn, selectorLists } from "./heal.js"; // self-heal hook: shared selector parsing
 import { cannotUndo } from "./showonce.js"; // show-once hook: ask before steps that can't be undone
@@ -41,6 +41,7 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
   let last = null;
   const started = Date.now();
   const repairs = [];
+  settings = applyFastMode(settings);
   const route = planRoute(settings, request, context);
   const total = maxAttempts + route.steps.length - 1;
   let step = 0, tries = 0, escalated = false;

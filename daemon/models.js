@@ -8,9 +8,9 @@
 // (~/.morse/settings.json "modelMode", core/prefs.js).
 // Auto-detect order: Claude Code on PATH, Codex on PATH, Anthropic key, OpenAI key.
 
-import { loadConfig, loadPrefs } from "./store.js";
+import { loadConfig, loadPrefs, savePrefs } from "./store.js";
 import { detectHarnesses } from "./harness.js"; // also registers the harness providers
-import { PROVIDERS, USER_PROVIDERS, settingsLabel } from "../core/providers.js";
+import { PROVIDERS, USER_PROVIDERS, settingsLabel, fastModelOf } from "../core/providers.js";
 import { resolveTiers, MODEL_MODES } from "../core/route.js";
 
 export { settingsLabel };
@@ -57,17 +57,32 @@ export function settingsFromConfig(cfg, overrides = {}, { env = process.env, har
   const baseUrl = overrides.baseUrl || cfg.baseUrls?.[provider] || (provider === "openai" ? env.OPENAI_BASE_URL || "" : "");
   const tiers = resolveTiers(provider, cfg.tiers?.[provider], { baseUrl }); // models: fast and strong
   const runtime = provider === "local" ? String(cfg.local?.runtime || "") : "";
+  const listedModels = provider === "local" && Array.isArray(cfg.local?.models)
+    ? cfg.local.models.filter(x => typeof x === "string" && x)
+    : undefined;
   // soak: MORSE_DEMO_MS speeds up (or slows down) the demo replay's stream, for long runs (demo/soak)
   const demo = provider === "demo" && Number(env.MORSE_DEMO_MS) >= 0 && env.MORSE_DEMO_MS ? { demoMs: Number(env.MORSE_DEMO_MS) } : {};
-  return { provider, model, apiKey, baseUrl, detected, pinned, tiers, ...(runtime ? { runtime } : {}), ...demo };
+  return { provider, model, apiKey, baseUrl, detected, pinned, tiers, ...(runtime ? { runtime } : {}), ...(listedModels?.length ? { listedModels } : {}), ...demo };
 }
 
 // With the bar's "Model" setting (Automatic, Always fast, Always best).
 // MORSE_MODEL_MODE overrides it for one run.
 export async function currentSettings(overrides = {}, { env = process.env } = {}) {
   const s = settingsFromConfig(await loadConfig(), overrides);
+  const prefs = await loadPrefs();
   const want = overrides.mode || env.MORSE_MODEL_MODE;
-  return { ...s, mode: MODEL_MODES.includes(want) ? want : (await loadPrefs()).modelMode };
+  const fastMode = overrides.fastMode != null ? !!overrides.fastMode : !!prefs.fastMode;
+  return { ...s, mode: MODEL_MODES.includes(want) ? want : prefs.modelMode, fastMode };
+}
+
+// Fast mode stays on only while this provider offers it. Switching to one
+// that doesn't (Codex, a local server) turns the switch off. The saved model
+// id is not touched.
+export async function settleFastMode(provider) {
+  const prefs = await loadPrefs();
+  if (!prefs.fastMode) return prefs;
+  if (fastModelOf(provider)) return prefs;
+  return savePrefs({ fastMode: false });
 }
 
 export function assertProvider(p) {

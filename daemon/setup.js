@@ -85,7 +85,12 @@ export function applyChoice(cfg, choice) {
   if (choice.provider === "local") {
     if (choice.baseUrl) next.baseUrls = { ...cfg.baseUrls, local: choice.baseUrl };
     if (choice.model) next.models = { ...cfg.models, local: choice.model };
-    if (choice.runtime) next.local = { ...(cfg.local && typeof cfg.local === "object" ? cfg.local : {}), runtime: choice.runtime };
+    const local = { ...(cfg.local && typeof cfg.local === "object" ? cfg.local : {}) };
+    if (choice.runtime) local.runtime = choice.runtime;
+    if (Array.isArray(choice.listed)) {
+      local.models = choice.listed.map(m => (typeof m === "string" ? m : m?.id)).filter(x => typeof x === "string" && x).slice(0, 400);
+    }
+    if (Object.keys(local).length) next.local = local;
   }
   return next;
 }
@@ -270,6 +275,7 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
         return { saved: false, rows };
       }
       model = configFor(id, { model: picked, baseUrl: probed.baseUrl || rt.baseUrl });
+      if (probed.models?.length) model.listed = probed.models;
     } else if (choice === "api-key") {
       let key = typeof flag("key") === "string" ? flag("key") : "";
       if (!key && !row?.found) key = (await lines.ask(`  ${t("setup.pasteKeyAsk", { path: `${tilde(HOME)}/config.json` })} `, { secret: isTTY })) || "";
@@ -302,6 +308,9 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
     }
   } });
   if (mode) await savePrefs({ modelMode: mode });
+  const { settingsFromConfig, settleFastMode } = await import("./models.js");
+  const settled = settingsFromConfig(cfg);
+  await settleFastMode(settled.provider, settled.listedModels);
   const label = backend?.name || t("setup.demo");
   const fromEnv = choice === "api-key" && !model.keys ? row?.keyEnv : "";
   say(`\n  ${G("✓")} ${t("setup.willUse", { label: B(label), env: fromEnv ? t("setup.fromEnv", { env: fromEnv }) : "" })} ${D(t("setup.savedIn", { path: `${tilde(HOME)}/config.json` }))}`);

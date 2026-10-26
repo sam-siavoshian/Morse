@@ -15,6 +15,10 @@
 // The Electron runtime: on Linux, the one demo/electron-app/build.mjs finds
 // (~/.cache/morse/electron), so nothing is downloaded; elsewhere
 // electron-builder downloads ELECTRON_VERSION. Signing: docs/dev/releasing.md.
+//
+// What is not copied: source maps, type declarations, TypeScript sources, a
+// CommonJS file that has an .mjs twin, and json-schema-to-ts (types only).
+// The window never plays ui/sounds (nothing references it).
 
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
@@ -24,6 +28,7 @@ import { fileURLToPath } from "node:url";
 import { markPng } from "./mark.js";
 import { builderConfig } from "./builder.config.js";
 import { findElectron, electronVersion } from "../demo/electron-app/build.mjs";
+import { TYPE_ONLY_DEPS, SKIP_DEP_DIRS, depFileShips, publishedInstallerName } from "./slim.js";
 
 export const ELECTRON_VERSION = "45.0.0";
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -41,9 +46,29 @@ const APP_FILES = ["main.js", "preload.cjs", "service.js", "ipc.js", "icons.js",
 async function copy(from, to) {
   const st = await fs.stat(from);
   if (st.isDirectory()) {
+    // ui/sounds/intro.m4a is not referenced by the window.
+    if (path.basename(from) === "sounds" && path.basename(path.dirname(from)) === "ui") return;
     await fs.mkdir(to, { recursive: true });
     for (const e of await fs.readdir(from)) if (e !== "node_modules" && e !== ".DS_Store") await copy(path.join(from, e), path.join(to, e));
   } else { await fs.mkdir(path.dirname(to), { recursive: true }); await fs.copyFile(from, to); }
+}
+
+// A dependency, without the files Node never loads.
+async function copyDep(from, to) {
+  const st = await fs.stat(from);
+  if (st.isDirectory()) {
+    if (SKIP_DEP_DIRS.has(path.basename(from))) return;
+    await fs.mkdir(to, { recursive: true });
+    for (const e of await fs.readdir(from)) {
+      if (e === "node_modules" || e === ".DS_Store" || SKIP_DEP_DIRS.has(e)) continue;
+      await copyDep(path.join(from, e), path.join(to, e));
+    }
+    return;
+  }
+  const twin = from.endsWith(".cjs") ? from.slice(0, -4) + ".mjs" : from.endsWith(".js") ? from.slice(0, -3) + ".mjs" : null;
+  if (!depFileShips(path.basename(from), { siblingMjs: !!(twin && existsSync(twin)) })) return;
+  await fs.mkdir(path.dirname(to), { recursive: true });
+  await fs.copyFile(from, to);
 }
 
 // The npm packages the daemon imports at run time, and theirs, found the way
@@ -65,7 +90,7 @@ async function prodDeps(pkgJson) {
     dir = path.dirname(file);
     out.set(name, dir);
     const pj = JSON.parse(await fs.readFile(file, "utf8"));
-    for (const dep of Object.keys(pj.dependencies || {})) await visit(dep, file);
+    for (const dep of Object.keys(pj.dependencies || {})) if (!TYPE_ONLY_DEPS.has(dep)) await visit(dep, file);
   };
   for (const dep of Object.keys(pkgJson.dependencies || {})) await visit(dep, path.join(root, "package.json"));
   return out;
@@ -88,7 +113,20 @@ export async function stage() {
   if (!commit) try { commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim(); } catch {}
   await fs.writeFile(path.join(STAGE, "desktop-app", "build-info.json"), JSON.stringify({ version: repo.version, commit, builtAt: new Date().toISOString() }));
   // desktop-app/package.json says "type": "module" for its files in the repo; the staged root says it for all.
-  for (const [name, dir] of await prodDeps(repo)) await copy(dir, path.join(STAGE, "node_modules", name));
+  for (const [name, dir] of await prodDeps(repo)) {
+    const dest = path.join(STAGE, "node_modules", name);
+    await copyDep(dir, dest);
+    // electron-builder walks dependencies. A type-only package that is not
+    // on disk (json-schema-to-ts) makes that walk fail, so it is taken out
+    // of the copied package.json too.
+    const meta = path.join(dest, "package.json");
+    if (existsSync(meta)) {
+      const pj = JSON.parse(await fs.readFile(meta, "utf8"));
+      let changed = false;
+      for (const dep of TYPE_ONLY_DEPS) if (pj.dependencies?.[dep]) { delete pj.dependencies[dep]; changed = true; }
+      if (changed) await fs.writeFile(meta, JSON.stringify(pj));
+    }
+  }
   say(`staged ${path.relative(root, STAGE)}`);
   // The icon, drawn (mark.js), and the macOS entitlements.
   await fs.mkdir(RES, { recursive: true });
@@ -129,7 +167,12 @@ async function main() {
     config,
     projectDir: st,
   });
-  for (const f of files) say(`made ${path.relative(root, f)}`);
+  for (const f of files) {
+    const nextName = publishedInstallerName(path.basename(f));
+    const dest = nextName === path.basename(f) ? f : path.join(path.dirname(f), nextName);
+    if (dest !== f) await fs.rename(f, dest);
+    say(`made ${path.relative(root, dest)}`);
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

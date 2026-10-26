@@ -256,6 +256,7 @@ function renderModel() {
   const nav = $("nav-model");
   nav.textContent = m.none ? "!" : m.check && !m.check.ok ? "!" : "";
   nav.className = m.none || (m.check && !m.check.ok) ? "warn" : "";
+  renderFast();
 }
 
 // "Claude Code: You've hit your limit" under Claude Code's own name: the words, without the name again.
@@ -269,8 +270,61 @@ async function checkModel() {
   try { await morse.checkModel(); } finally { checking = false; $("check-model").disabled = false; st = await morse.state(); render(); }
 }
 $("check-model").onclick = checkModel;
+$("fast-mode").addEventListener("change", async () => {
+  if (!st?.model) return;
+  const on = $("fast-mode").checked;
+  const prev = !!st.model.fastMode;
+  st.model.fastMode = on;
+  fastSent = on;
+  let r;
+  try { r = await morse.setFastMode(on); }
+  catch (e) { r = { error: e?.message || "" }; }
+  if (r?.error) {
+    st.model.fastMode = prev;
+    fastSent = prev;
+    $("fast-mode").checked = prev;
+  }
+});
+
+// Hidden unless the model already chosen has a faster mode. The choice list
+// below is unchanged.
+let fastSent = null;
+function fastForSelection() {
+  const saved = st?.model || {};
+  const map = st?.fastModels || {};
+  if (!saved.provider || saved.none) return { id: "", known: true };
+  if (Object.prototype.hasOwnProperty.call(map, saved.provider)) return { id: map[saved.provider] || "", known: true };
+  if (saved.fastKnown) return { id: saved.fastModel || "", known: true };
+  return { id: "", known: false };
+}
+function renderFast() {
+  const row = $("fast-mode-row");
+  const input = $("fast-mode");
+  if (!row || !input || !st?.model) return;
+  const { id, known } = fastForSelection();
+  row.hidden = !id;
+  if (document.activeElement !== input) input.checked = !!st.model.fastMode && !!id;
+  if (known && !id && st.model.fastMode) {
+    st.model.fastMode = false;
+    input.checked = false;
+    if (fastSent !== false && morse.setFastMode) {
+      fastSent = false;
+      morse.setFastMode(false).then(r => { if (r?.error) fastSent = null; }, () => { fastSent = null; });
+    }
+  }
+}
 
 let choices = [];
+function refreshChoices() {
+  if (!morse?.modelChoices) return;
+  const n = ++refreshChoices.n;
+  morse.modelChoices().then(rows => {
+    if (n !== refreshChoices.n || !Array.isArray(rows) || !st) return;
+    choices = rows;
+    renderFast();
+  }).catch(() => {});
+}
+refreshChoices.n = 0;
 async function loadChoices() {
   $("choices").hidden = false;
   $("choice-list").replaceChildren(h("p", { class: "live" }, radar(12), h("span", { text: t("desk.model.looking") })));
@@ -772,6 +826,7 @@ function render() {
 morse.onChange(next => { if (next && !next.error) { st = next; render(); } });
 st = await morse.state();
 render();
+refreshChoices();
 let first = "apps";
 try { first = sessionStorage.getItem("tab") || "apps"; } catch {}
 show(first);
