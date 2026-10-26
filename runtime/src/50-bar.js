@@ -419,7 +419,11 @@ input.addEventListener("keydown", e => {
     return;
   }
   if ((e.key === "ArrowUp" || e.key === "ArrowDown") && plain && !e.shiftKey) {
-    if (PromptHistory.browse(e.key === "ArrowUp" ? -1 : 1)) e.preventDefault();
+    const dir = e.key === "ArrowUp" ? -1 : 1;
+    // history.get may still be in flight (the bar no longer waits on it).
+    // Hold the key and recall once the list is here, instead of dropping it.
+    if (PromptHistory.loaded()) { if (PromptHistory.browse(dir)) e.preventDefault(); }
+    else { e.preventDefault(); PromptHistory.load().then(() => { if (S.open) PromptHistory.browse(dir); }).catch(() => {}); }
   }
 });
 // speed, models: a pause in typing tells the host what the request looks like

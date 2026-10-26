@@ -245,11 +245,14 @@ async function toggleMod(m, on) {
 async function putBack(m, to) {
   const saved = (await call("mods.save", { mod: to })) || to;
   S.mods = S.mods.map(x => (x.id === m.id ? saved : x));
+  // Show the restored version in the panel before the page applies it. applyMod
+  // paints the new CSS, then waits on the host to run the code; a repaint in
+  // that gap used to read the previous version list.
+  if (!panel.hidden) renderPanel();
   if (saved.enabled) {
     if (!saved.js.trim()) await call("off", { modId: saved.id }).catch(() => {});
     await applyMod(saved);
   } else await removeMod(saved.id);
-  if (!panel.hidden) renderPanel();
   return saved;
 }
 async function restoreTo(m, i) {

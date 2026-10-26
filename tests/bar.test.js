@@ -130,7 +130,7 @@ test("prompt history: ↑/↓ in an empty input, per site, persisted", { skip },
     assert.deepEqual(adds.map(a => a.text), ["make it dark", "hide the sidebar"]);
     assert.match(adds[0].scope, /^127\.0\.0\.1:\d+$/);
     await page.reload();
-    await waitForReady(page); // history.get answered
+    await waitForReady(page); // the bar is up; ↑ waits if history.get is still in flight
     await pressOpen(page);
     await t.waitFor(s => s.open);
     await page.keyboard.press("ArrowUp");

@@ -5,17 +5,30 @@
 // to this page's localStorage.
 
 const PromptHistory = (() => {
-  let list = [], loadedFor = "", idx = -1;
+  let list = [], loadedFor = "", idx = -1, inflight = null;
   const scope = () => S.app || location.host || "page";
   const lsKey = sc => `morse:history:${sc}`;
 
-  async function load() {
+  // The scope is not "loaded" until the host answers. Marking it early made a
+  // second load() a no-op, so ↑ right after the bar opened (before history.get
+  // came back) walked an empty list and the key was lost. The bar still opens
+  // without waiting (97-boot.js); the key waits on this promise instead.
+  function load() {
     const sc = scope();
-    if (sc === loadedFor) return;
-    loadedFor = sc;
-    try { list = (await call("history.get", { scope: sc })) || []; }
-    catch { try { list = JSON.parse(localStorage.getItem(lsKey(sc)) || "[]"); } catch { list = []; } }
+    if (inflight?.sc === sc) return inflight.promise;
+    if (sc === loadedFor) return Promise.resolve(list);
+    const flight = { sc, promise: null };
+    flight.promise = (async () => {
+      let next = [];
+      try { next = (await call("history.get", { scope: sc })) || []; }
+      catch { try { next = JSON.parse(localStorage.getItem(lsKey(sc)) || "[]"); } catch { next = []; } }
+      if (scope() === sc) { list = Array.isArray(next) ? next : []; loadedFor = sc; }
+      return list;
+    })().finally(() => { if (inflight === flight) inflight = null; });
+    inflight = flight;
+    return flight.promise;
   }
+  const loaded = () => loadedFor === scope() && !inflight;
   function add(text) {
     const sc = scope();
     list = pushHistory(list, text);
@@ -42,5 +55,5 @@ const PromptHistory = (() => {
   // Typing over an entry ends browsing.
   function edited() { if (idx !== -1 && input.value !== list[idx]) idx = -1; }
   function reset() { idx = -1; }
-  return { load, add, browse, edited, reset, entries: () => list.slice() };
+  return { load, loaded, add, browse, edited, reset, entries: () => list.slice() };
 })();
