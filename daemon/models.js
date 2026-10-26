@@ -75,13 +75,13 @@ export async function currentSettings(overrides = {}, { env = process.env } = {}
   return { ...s, mode: MODEL_MODES.includes(want) ? want : prefs.modelMode, fastMode };
 }
 
-// Fast mode stays on only while this provider has a faster model. Switching
-// to one that doesn't turns the switch off. The saved model id is not touched.
-export async function settleFastMode(provider, listed) {
+// Fast mode stays on only while this provider offers it. Switching to one
+// that doesn't (Codex, a local server) turns the switch off. The saved model
+// id is not touched.
+export async function settleFastMode(provider) {
   const prefs = await loadPrefs();
   if (!prefs.fastMode) return prefs;
-  const id = fastModelOf(provider, provider === "local" ? listed : undefined);
-  if (id) return prefs;
+  if (fastModelOf(provider)) return prefs;
   return savePrefs({ fastMode: false });
 }
 

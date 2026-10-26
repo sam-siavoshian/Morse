@@ -338,9 +338,8 @@ export function createService({
     const localName = { ollama: "Ollama", lmstudio: "LM Studio", llama: "llama.cpp", llamacpp: "llama.cpp", local: "Local" }[s.runtime];
     const name = s.provider === "local" ? (localName || "Local") : ({ "claude-code": "Claude Code", codex: "Codex", anthropic: "Anthropic API key", openai: "OpenAI API key", demo: "Demo model", none: "" }[s.provider] ?? s.provider);
     const prefs = typeof d.loadPrefs === "function" ? await d.loadPrefs().catch(() => ({})) : {};
-    const localList = s.provider === "local" && Array.isArray(s.listedModels) ? s.listedModels : null;
-    const fastModel = (s.provider === "local" ? (localList ? fastModelOf("local", localList) : "") : fastModelOf(s.provider)) || "";
-    const fastKnown = s.provider === "local" ? !!localList : true;
+    const fastModel = fastModelOf(s.provider) || "";
+    const fastKnown = true;
     return {
       provider: s.provider, none: s.provider === "none", name, model: s.model || "", label: s.provider === "none" ? "" : plain(d.settingsLabel(s)),
       detected: !!s.detected, check: lastCheck && lastCheck.label === d.settingsLabel(s) ? lastCheck : null,
@@ -352,13 +351,7 @@ export function createService({
   const LOCAL_ROW = new Set(["local", "ollama", "lmstudio", "llama", "llamacpp"]);
   function fastFields(r) {
     const local = r.kind === "local" || LOCAL_ROW.has(r.id);
-    if (local) {
-      const models = Array.isArray(r.models) ? r.models : null;
-      const ready = r.status === "ready" || r.found === true;
-      if (!models || !ready) return { fastModel: "", fastKnown: false };
-      if (models.length < 2) return { fastModel: "", fastKnown: models.length === 1 };
-      return { fastModel: fastModelOf("local", models) || "", fastKnown: true };
-    }
+    if (local) return { fastModel: "", fastKnown: true };
     const id = r.id === "api-key" ? (r.vendor || "anthropic") : r.id;
     if (id === "claude-code" || id === "codex" || id === "anthropic" || id === "openai") return { fastModel: fastModelOf(id) || "", fastKnown: true };
     return { fastModel: "", fastKnown: false };
@@ -576,11 +569,10 @@ export function createService({
   }
 
   // Fast mode is a switch on top of the saved model. A provider with no
-  // smaller model turns it off. The saved model id is left as it is.
+  // fast mode turns it off. The saved model id is left as it is.
   async function dropFastIfNone(next) {
     if (typeof d.savePrefs !== "function" || !next) return;
-    const id = fastModelOf(next.provider, next.provider === "local" ? (next.listedModels || []) : undefined);
-    if (id) return;
+    if (fastModelOf(next.provider)) return;
     let saved;
     try { saved = await d.savePrefs({ fastMode: false }); }
     catch { return; }

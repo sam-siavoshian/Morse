@@ -93,7 +93,7 @@ async function configure(f) {
     delete cfg.model; // pre-0.2 shape (local-model era)
     return cfg;
   });
-  // Fast mode only stays on for a provider that has a smaller model.
+  // Fast mode only stays on for a provider that offers that mode.
   if (typeof f.provider === "string") {
     const settled = settingsFromConfig(cfg);
     await settleFastMode(settled.provider, settled.listedModels);

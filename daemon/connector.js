@@ -30,7 +30,6 @@ import { configuredHotkeys } from "./store.js"; // first-run hook: what to press
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
 import { readWords } from "../core/languages.js"; // the bar's words in a language besides English ("i18n.words")
 import { prewarm, fastModelOf, applyFastMode } from "../core/providers.js";
-import { notedLocalModels } from "./connect.js";
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory, watchPrefs } from "./store.js";
 import { Generations } from "../core/cancel.js";
@@ -55,25 +54,21 @@ const RUNTIME = bundleBoot();
 const UI = bundleUI();
 import { trace } from "./trace.js"; // MORSE_TRACE: one line per step of a change
 
-// The smaller model this provider already lists, or "". A local server uses
-// the list it returned (or the one saved with the choice). Never a made-up id.
+// "fast" when this provider has a fast mode, or "". Never a model id.
 function fastModelId(settings) {
   const base = settings && typeof settings === "object" ? settings : {};
-  const listed = base.provider === "local" ? (notedLocalModels(base.baseUrl) || base.listedModels || []) : undefined;
-  return fastModelOf(base.provider, base.provider === "local" ? listed : undefined) || "";
+  return fastModelOf(base.provider) || "";
 }
 
-// Settings for one request. Fast mode swaps the model on a copy. The saved
-// model on the connector stays what the person chose.
+// Settings for one request. Fast mode adds the provider's speed flag on a
+// copy. The saved model on the connector stays what the person chose.
 function fastReady(settings, prefs) {
   const base = settings && typeof settings === "object" ? settings : {};
-  const listed = base.provider === "local" ? (notedLocalModels(base.baseUrl) || base.listedModels || []) : undefined;
   const id = fastModelId(base);
   const next = applyFastMode({
     ...base,
     mode: prefs?.modelMode ?? base.mode,
     fastMode: !!prefs?.fastMode && !!id,
-    ...(base.provider === "local" ? { listedModels: listed } : {}),
   });
   return { next, fastModelId: id };
 }

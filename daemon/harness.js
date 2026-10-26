@@ -12,7 +12,7 @@ import { promises as fs, statSync, accessSync, constants } from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { HOME } from "./store.js";
-import { registerProvider, flattenConversation, abortError, imageBlocks } from "../core/providers.js";
+import { registerProvider, flattenConversation, abortError, imageBlocks, fastModeExtra } from "../core/providers.js";
 import { SYSTEM_PROMPT } from "../core/prompt.js";
 import { warmSettings } from "../core/route.js"; // models: keep the first model warm
 
@@ -190,16 +190,20 @@ let noEffort = false;
 export const effortOf = s => (noEffort || s.effort === "default" ? "" : EFFORTS.has(s.effort) ? s.effort : s.tier === "best" ? "" : "medium");
 function claudeArgs(s, sysFile) {
   const effort = effortOf(s);
+  // Fast mode is Claude Code's own Opus setting (`--settings {"fastMode":true}`),
+  // not a different model. Sonnet and Haiku have no fast mode, so they get no flag.
+  const fast = fastModeExtra(s);
   return [
     "-p", "--output-format", "stream-json", "--input-format", "stream-json", "--verbose", "--include-partial-messages",
     "--tools", "", "--strict-mcp-config", "--disable-slash-commands", "--no-session-persistence",
     "--system-prompt-file", sysFile,
     ...(s.model ? ["--model", s.model] : []),
     ...(effort ? ["--effort", effort] : []),
+    ...(fast?.settings ? ["--settings", JSON.stringify(fast.settings)] : []),
   ];
 }
 const claudeKey = (bin, s, system) => crypto.createHash("sha256")
-  .update(JSON.stringify([bin, s.model || "", effortOf(s), system, process.env, s.pool || ""])).digest("hex");
+  .update(JSON.stringify([bin, s.model || "", effortOf(s), system, process.env, s.pool || "", fastModeExtra(s) ? "fast" : ""])).digest("hex");
 
 async function startClaude(bin, s, system) {
   const dir = await runDir();
