@@ -3,6 +3,7 @@
 // three steps, and the radar's pixels behind the headline.
 import { initPage, esc, appIcon } from "./common.js";
 import { SHOWCASE, REAL_APPS } from "./config.js";
+import { mountReveals, mountHeroScroll } from "./motion.js";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -14,7 +15,7 @@ function pairHtml(p, i) {
   const total = String(SHOWCASE.length).padStart(2, "0");
   const img = (src, alt, eager) => `<img src="${esc(src)}" width="${p.width}" height="${p.height}" alt="${esc(alt)}" ${eager ? "" : 'loading="lazy" '}decoding="async">`;
   return `
-    <article class="pair">
+    <article class="pair" data-reveal="fade">
       <div class="pair-text">
         <p class="pair-n">${n} / ${total}</p>
         <h3 class="pair-app">${appIcon(p.app, 28)}${esc(p.app)}</h3>
@@ -154,6 +155,8 @@ mountPairs(document.getElementById("pairs"));
 mountApps(document.getElementById("apps-grid"));
 mountSteps(document.querySelector("[data-steps]"));
 for (const el of document.querySelectorAll("[data-pixels]")) mountPixels(el);
+mountReveals();
+mountHeroScroll(document.querySelector(".hero"), document.querySelector(".hero .film"));
 // Rows that scroll sideways (the apps and the first minute, on a phone) take
 // keyboard focus while they scroll, so the arrow keys can move them too.
 function scrollRows() {

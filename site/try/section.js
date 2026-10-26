@@ -42,12 +42,12 @@ function markup() {
   const ask = (text, at) => `<button type="button" class="try-ask" data-try="ask" data-text="${text}"${at ? ` data-at='${at}'` : ""}>${text}</button>`;
   return `
   <div class="try-wrap">
-    <header class="try-head">
+    <header class="try-head" data-reveal>
       <p class="try-eyebrow">Try it here</p>
       <h2>This music app has no sleep timer. Give it one.</h2>
       <p class="try-lede">This is Morse, in a small music app and a news site. Nothing to install. Open it, point at something, and take the feature they left out.</p>
     </header>
-    <div class="try-stage">
+    <div class="try-stage" data-reveal="fade">
       <div class="try-window">
         <div class="try-chrome">
           <div class="try-tabs" role="tablist" aria-label="Demo app">
@@ -59,7 +59,7 @@ function markup() {
           <button type="button" class="try-tool try-reload" data-try="reload">${reload}Reload app</button>
         </div>
         <div class="try-view" id="try-view" role="tabpanel" aria-label="Demo app">
-          <div class="try-poster" aria-hidden="true"><span class="try-dots"><i></i><i></i><i></i></span><span>Loading the demo</span></div>
+          <div class="try-poster" aria-hidden="true"><span class="try-dots"><i></i><i></i><i></i></span><span class="shimmer">Loading the demo<span class="shimmer-band"><span>Loading the demo</span></span></span></div>
         </div>
       </div>
       <div class="try-guide">
