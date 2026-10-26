@@ -99,6 +99,8 @@ test("Easier to use: each page tool turns on, does its job, and turns off leavin
       assert.notEqual(await css(page, ".signup input", "borderTopColor"), "rgb(236, 236, 236)");
     },
     async targets() {
+      // The mod is listed before its code has resized the page. Wait for it.
+      await until(async () => (await box(page, ".announce-close")).w >= 44);
       for (const s of [".announce-close", ".icon-search", 'a[href="account.html"]', ".heart", 'footer a[href*="facebook"]']) {
         const b = await box(page, s);
         assert.ok(b.w >= 44 && b.h >= 44, `${s} ${JSON.stringify(b)}`);

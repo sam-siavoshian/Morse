@@ -125,6 +125,7 @@ async function submit(request, opts = {}) {
   });
   let res;
   const ask = { genId: id, request, context: ctx, ...(opts.base ? { base: opts.base } : {}) };
+  await TakeBring.ready(); // the taken list, so Enter before it arrives still brings the real feature (73-take.js)
   try { res = stopped ? await stopSignal : await Promise.race([call("generate", ask), stopSignal]); } // Stop: 50-bar.js
   catch (e) { res = { ok: false, error: e.message }; }
   await shot;

@@ -31,16 +31,19 @@ const TakeBring = (() => {
   const I_X = svg('<path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>');
 
   // ---- the list, from the host (it may have been taken in another app)
-  let loading = null;
+  let loading = null, saw = false;
   // rev: a list read that started before a put or a delete is old news when it lands.
   let rev = 0;
   function load() {
     const at = rev;
     loading ||= call("taken.list").then(r => {
       if (at === rev && r && Array.isArray(r.items)) { st.list = r.items; st.shared = !!r.shared; }
-    }, () => {}).finally(() => { loading = null; placeEntries(); if (!panel.hidden) renderPanel(); });
+    }, () => {}).finally(() => { loading = null; saw = true; placeEntries(); if (!panel.hidden) renderPanel(); });
     return loading;
   }
+  // Enter can land while the list is still on its way. A request waits for
+  // that answer so a feature the person already took is the one that goes.
+  function ready() { return loading || (saw ? Promise.resolve() : load()); }
   const took = r => { rev++; if (r && Array.isArray(r.items)) { st.list = r.items; st.shared = !!r.shared; } };
 
   // ---- names people read
@@ -361,6 +364,6 @@ const TakeBring = (() => {
   });
   new MutationObserver(() => { if (!panel.hidden) load(); }).observe(panel, { attributes: true, attributeFilter: ["hidden"] });
 
-  return { start, pickList, sectionHtml, get list() { return st.list; } };
+  return { start, pickList, sectionHtml, ready, get list() { return st.list; } };
 })();
 function takenSectionHtml() { return TakeBring.sectionHtml(); } // 70-panel.js hook

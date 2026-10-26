@@ -168,7 +168,11 @@ async function open(slug, { push = true } = {}) {
   if (mod.js.trim()) blocks.push(`<h3>Script (JavaScript) <span>${mod.js.split("\n").length} lines</span></h3><pre class="code">${highlight(mod.js.trimEnd(), "js")}</pre>`);
   $("d-code").innerHTML = blocks.join("");
 
-  if (push && location.hash !== "#" + slug) history.pushState(null, "", "#" + slug);
+  // The published page lives at /gallery.html and sets <base href="site/"> so
+  // its pictures still load. A bare "#slug" would follow that base and land
+  // on /site/. Keep the hash on this page.
+  const here = location.pathname + location.search;
+  if (push && location.hash !== "#" + slug) history.pushState(null, "", here + "#" + slug);
   drawer.hidden = scrim.hidden = false;
   document.body.classList.add("locked");
   drawer.querySelector(".d-scroll").scrollTop = 0;
