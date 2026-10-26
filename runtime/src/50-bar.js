@@ -97,8 +97,15 @@ function setHint() {
 }
 function startPicking() { S.picking = true; setHint(); }
 
-// ---- position: auto dodges what you point at; Settings can pin it
-function applyBarPosition() { bar.dataset.pos = PREFS.barPosition; }
+// ---- position: auto dodges what you point at; Settings can pin it.
+// A drag (below) overrides that for the rest of this page, including after
+// the bar is closed and opened again. Changing the position setting clears it.
+let barDragPos = null, barDrag = null, barDragEat = false, barPosSeen = null;
+function applyBarPosition() {
+  bar.dataset.pos = PREFS.barPosition;
+  if (barPosSeen !== null && PREFS.barPosition !== barPosSeen) endBarDrag();
+  barPosSeen = PREFS.barPosition;
+}
 prefsSubs.add(applyBarPosition);
 const barIsTop = () => { const r = bar.getBoundingClientRect(); return r.top + r.height / 2 < innerHeight / 2; };
 
@@ -144,7 +151,8 @@ function openBar() {
   S.phase = "idle";
   bar.hidden = false;
   bar.classList.remove("done", "err", "working");
-  bar.classList.toggle("top", pointerY > innerHeight * 0.55);
+  if (!barDragPos) bar.classList.toggle("top", pointerY > innerHeight * 0.55);
+  else fitBarDrag();
   input.disabled = false;
   hintNote = ""; hintSticky = "";
   hideMenu();
@@ -165,6 +173,7 @@ function openBar() {
 }
 function closeBar() {
   if (S.phase === "working") return;
+  if (barDrag) finishBarDrag({ pointerId: barDrag.id });
   // Dismissing a result (Esc, the hotkey, a click away) keeps it, and its
   // toast says so, with Undo (60-generate.js keep).
   if (S.phase === "result" && S.draft && !S.draft.saved) { keep({ closed: true }); return; }
@@ -192,7 +201,7 @@ const Backing = (() => {
   const SHOWN = ".bar:not([hidden]), .so-strip:not([hidden]), .guide:not([hidden]), .ds:not([hidden])";
   const REST = 200; // ms without a scroll
   const answers = new Map(); // "left,top,width,height" -> words under it, until the page moves
-  const sizes = new ResizeObserver(() => soon()), sized = new WeakSet(); // grown or shrunk: a row inside shown or hidden, a second line typed
+  const sizes = new ResizeObserver(entries => { if (entries.some(en => en.target === bar)) fitBarDrag(); soon(); }), sized = new WeakSet(); // grown or shrunk: a row inside shown or hidden, a second line typed
   let timer = 0, scrolledAt = 0;
   // Is page text under this box? A few points across it, the page's topmost
   // part of the page at each, and that part's own lines of text.
@@ -247,11 +256,14 @@ const Backing = (() => {
   // with a changed page (a change applied, time gone by while hidden), so it
   // looks anew. The same class set again (the picker's add("top") on every
   // pointer move) is nothing.
-  const MOVES = new Set(["top", "solid"]);
+  const MOVES = new Set(["top", "solid", "placed", "dragging"]);
   new MutationObserver(recs => {
     let seen = false;
     for (const r of recs) {
       if (!r.target.matches?.(SURFACES)) continue;
+      // The drag writes --m-bdx/--m-bdy on every move. That is the gesture,
+      // not a new place to sample; the drop (dragging removed) looks once.
+      if (r.attributeName === "style" && r.target.classList.contains("dragging")) continue;
       if (r.attributeName === "class") {
         const was = new Set(String(r.oldValue || "").split(/\s+/).filter(Boolean)), now = r.target.classList;
         const changed = [...was].filter(c => !now.contains(c)).concat([...now].filter(c => !was.has(c)));
@@ -268,13 +280,97 @@ const Backing = (() => {
 // only once the pointer rests on it away from its controls. A pointer heading
 // for a button, a suggestion or the page tools never makes it jump.
 let dodgeTimer = 0;
-const dodgeOk = t => S.picking && !input.value && !paneKind && PREFS.barPosition === "auto" && !S.target && !GodMode.selected &&
+const dodgeOk = t => !barDragHeld() && S.picking && !input.value && !paneKind && PREFS.barPosition === "auto" && !S.target && !GodMode.selected &&
   !t?.closest?.("button, .chip, .sugs, .gm-clips, .menu") && !bar.querySelector(".menu:not([hidden])");
 bar.addEventListener("pointermove", e => {
   clearTimeout(dodgeTimer);
   if (dodgeOk(e.target)) dodgeTimer = setTimeout(() => { if (dodgeOk(e.target) && bar.matches(":hover")) bar.classList.toggle("top"); }, 350);
 });
 bar.addEventListener("pointerleave", () => clearTimeout(dodgeTimer));
+
+// ---- drag. The grip, the mark, or empty padding starts it. The field,
+// buttons, the chip's close and the mic do not, so typing and clicking still
+// work. Transform follows the pointer (no reflow per move); the drop commits
+// left/top inside the viewport. Nothing eases it, reduced motion included.
+row.prepend(makeEl("span", { className: "grip" }, { "aria-hidden": "true" }));
+function barDragHeld() { return !!(barDrag || barDragPos); }
+function barDragging() { return !!barDrag; }
+function barDragEatClick() {
+  if (!barDragEat) return false;
+  barDragEat = false;
+  return true;
+}
+function barDragFrom(node) {
+  return !!node && bar.contains(node) && !node.closest("input, textarea, button, a, select, summary, label, .mic, .sugs, .menu, .pane, .field");
+}
+function clampBarBox(x, y, w, h) {
+  const m = 8, maxX = Math.max(m, innerWidth - w - m), maxY = Math.max(m, innerHeight - h - m);
+  return { x: Math.min(maxX, Math.max(m, x)), y: Math.min(maxY, Math.max(m, y)) };
+}
+function pinBar(x, y, dx, dy, h) {
+  bar.style.setProperty("--m-bx", x + "px");
+  bar.style.setProperty("--m-by", y + "px");
+  bar.style.setProperty("--m-bdx", dx + "px");
+  bar.style.setProperty("--m-bdy", dy + "px");
+  bar.classList.add("placed");
+  barDragPos = { x, y };
+  if (h) bar.classList.toggle("top", y + h / 2 < innerHeight / 2);
+}
+function endBarDrag() {
+  if (barDrag) try { bar.releasePointerCapture(barDrag.id); } catch {}
+  barDrag = null; barDragPos = null; barDragEat = false;
+  delete bar.dataset.drag;
+  bar.classList.remove("placed", "dragging");
+  for (const k of ["--m-bx", "--m-by", "--m-bdx", "--m-bdy"]) bar.style.removeProperty(k);
+}
+function fitBarDrag() {
+  if (!barDragPos || bar.dataset.drag) return;
+  const r = bar.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  const p = clampBarBox(barDragPos.x, barDragPos.y, r.width, r.height);
+  if (Math.abs(p.x - barDragPos.x) < 0.5 && Math.abs(p.y - barDragPos.y) < 0.5) return;
+  pinBar(p.x, p.y, 0, 0, r.height);
+}
+function finishBarDrag(e) {
+  if (!barDrag || e.pointerId !== barDrag.id) return;
+  const d = barDrag;
+  barDrag = null;
+  delete bar.dataset.drag;
+  bar.classList.remove("dragging");
+  try { bar.releasePointerCapture(d.id); } catch {}
+  if (!d.moved) return;
+  pinBar(d.nx, d.ny, 0, 0, d.h);
+  barDragEat = true;
+  setTimeout(() => { barDragEat = false; }, 0);
+}
+bar.addEventListener("pointerdown", e => {
+  if (barDrag || !e.isPrimary || (e.pointerType === "mouse" && e.button !== 0) || !e.isTrusted || !barDragFrom(e.target)) return;
+  const r = bar.getBoundingClientRect();
+  barDrag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, left: r.left, top: r.top, w: r.width, h: r.height, moved: false, nx: r.left, ny: r.top };
+  bar.dataset.drag = "1";
+  clearTimeout(dodgeTimer);
+  try { bar.setPointerCapture(e.pointerId); } catch {}
+  e.preventDefault();
+});
+function moveBarDrag(e) {
+  if (!barDrag || e.pointerId !== barDrag.id) return;
+  const dx = e.clientX - barDrag.x0, dy = e.clientY - barDrag.y0;
+  if (!barDrag.moved) {
+    if (dx * dx + dy * dy < 16) return;
+    barDrag.moved = true;
+    bar.classList.add("dragging");
+    pinBar(barDrag.left, barDrag.top, 0, 0, barDrag.h);
+  }
+  const p = clampBarBox(barDrag.left + dx, barDrag.top + dy, barDrag.w, barDrag.h);
+  barDrag.nx = p.x; barDrag.ny = p.y;
+  bar.style.setProperty("--m-bdx", (p.x - barDrag.left) + "px");
+  bar.style.setProperty("--m-bdy", (p.y - barDrag.top) + "px");
+  e.preventDefault();
+}
+listen("pointermove", moveBarDrag, { capture: true, passive: false });
+listen("pointerup", finishBarDrag, true);
+listen("pointercancel", finishBarDrag, true);
+listen("resize", fitBarDrag);
 
 // ---- sending, stopping
 function send(text) {

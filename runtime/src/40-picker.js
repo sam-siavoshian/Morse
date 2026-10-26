@@ -19,7 +19,7 @@ const ours = e => e.composedPath().includes(hostEl);
 // Pointing is the person's own mouse: a page's synthetic mousemove and click
 // can't choose what Morse changes (isTrusted, like every key Morse takes).
 function onMove(e) {
-  if (!S.picking || !e.isTrusted) return;
+  if (!S.picking || !e.isTrusted || barDragging()) return;
   const el = GodMode.deepAt(e.clientX, e.clientY); // God mode hook: also points into open shadow roots
   if (!el || el === hostEl || el === document.documentElement) { hoverEl = null; hl.hidden = true; return; }
   hoverEl = el;
@@ -30,13 +30,16 @@ function onMove(e) {
   placeBar(el.getBoundingClientRect());
 }
 // The bar sits on the opposite half of the screen from what you point at.
+// A drag this page (50-bar.js) keeps the dropped spot; pointing leaves it.
 function placeBar(r) {
+  if (barDragHeld()) return;
   const c = (r.top + r.height / 2) / innerHeight;
   if (c > 0.55) bar.classList.add("top");
   else if (c < 0.45) bar.classList.remove("top");
 }
 function swallow(e) { if (S.picking && !ours(e)) { e.preventDefault(); e.stopPropagation(); } }
 function onClick(e) {
+  if (barDragEatClick()) { e.preventDefault(); e.stopPropagation(); return; }
   if (!S.picking || ours(e)) return;
   e.preventDefault(); e.stopPropagation();
   if (!e.isTrusted) return;
