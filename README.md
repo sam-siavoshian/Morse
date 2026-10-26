@@ -15,7 +15,7 @@
 
 <br /><br />
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-hero.webp" alt="Take what they won't ship, on a blue sky with clouds. Free for Mac, Windows and Linux. Change any app in one sentence. Free and open source." width="1200" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-hero.webp" alt="Change any app. Add anything. Delete anything. Closed source doesn't stop you anymore. Free for Mac, Windows and Linux, on a blue sky with clouds." width="1200" />
 
 </div>
 
