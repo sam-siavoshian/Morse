@@ -2,9 +2,9 @@
 // computer's (navigator.languages) for "Same as my computer". t() is
 // core/i18n.js, inlined by runtime/bundle.js with English only: another
 // language's words come from the host ("i18n.words": the extension's package,
-// or core/locales/ on the computer) when it is chosen. 97-boot.js waits for
-// them before the overlay first shows, so it never opens in English and then
-// changes. Persian and Arabic lay the overlay out right to left: the shadow
+// or core/locales/ on the computer) when it is chosen. The bar opens without
+// waiting for them (97-boot.js); showLanguage swaps the words when they arrive.
+// Persian and Arabic lay the overlay out right to left: the shadow
 // host gets dir="rtl", the CSS uses logical sides (margin-inline-start…), key
 // caps stay left to right.
 //

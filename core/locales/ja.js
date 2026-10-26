@@ -561,6 +561,7 @@ export default {
   "desk.apps.chooseModel": "モデルを選ぶ",
   "desk.apps.foot": "Morse は接続のため、設定を 1 つ加えてアプリを開き直します。アプリのファイルは変更しません。「いつも Morse で開く」がオンの間、Mod のあるアプリは Dock やスタートメニューから開いても Morse で開きます。",
   "desk.apps.none": "Morse がつなげるアプリは見つかりませんでした。「アプリを追加…」をクリックして選んでください。",
+  "desk.apps.looking": "アプリを探しています…",
   "desk.app.connected": "接続中",
   "desk.app.windows": { other: "ウィンドウ {n} 個" },
   "desk.app.modsOn": { other: "MOD {n} 件オン" },

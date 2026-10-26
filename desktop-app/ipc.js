@@ -68,6 +68,22 @@ export const API = {
   checkForUpdate:     [[none], async (s, n) => (await n.checkForUpdate?.()) ?? { phase: "error" }],
 };
 
+// The window can ask before the daemon has loaded (main.js opens it first).
+// Methods wait for `ready` (a promise of the service) instead of throwing.
+// A call that resolves before the service exists answers { loading: true }.
+export function gateService(ready) {
+  return new Proxy({}, {
+    get(_target, prop) {
+      if (typeof prop !== "string" || prop === "then") return undefined;
+      return (...args) => Promise.resolve(ready).then(service => {
+        if (!service) return { loading: true };
+        const fn = service[prop];
+        return typeof fn === "function" ? fn.apply(service, args) : fn;
+      });
+    },
+  });
+}
+
 // Registers every channel. isTrusted(event): the request came from Morse's
 // own page in Morse's own window (main.js). A refused or malformed request
 // gets { error }, never a thrown error with internals in it.

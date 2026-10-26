@@ -10,7 +10,7 @@ import os from "node:os";
 import path from "node:path";
 import vm from "node:vm";
 
-const { API, CHANNEL, LINKS, registerIpc, isOpenLink } = await import("../desktop-app/ipc.js");
+const { API, CHANNEL, LINKS, registerIpc, isOpenLink, gateService } = await import("../desktop-app/ipc.js");
 const { createService } = await import("../desktop-app/service.js");
 const { t } = await import("../core/i18n.js");
 const { afterOpenBar, barWorld, noticeStillShown, presentApp } = await import("../daemon/open-bar.js");
@@ -117,6 +117,16 @@ function setup(over) {
   return { daemon, service, ipcMain, native, channels, call, emitted };
 }
 
+// The first state() answers before discoverApps. Poll until the shared fill lands.
+async function settled(call) {
+  let st = await call("state");
+  for (let i = 0; i < 50 && st?.appsPending; i++) {
+    await new Promise(r => setTimeout(r, 10));
+    st = await call("state");
+  }
+  return st;
+}
+
 // ---------------------------------------------------------------- the IPC handlers
 
 test("every request in the API has one channel, and only Morse's own window may use it", async () => {
@@ -140,7 +150,17 @@ test("arguments are checked: ids, answers, switches, choices, keys, link names, 
 test("state: each app says whether it's open and connected, with its mods; the model and the off switch", async () => {
   const { call, daemon } = setup();
   daemon.sessions = [{ id: "port-9222", name: "App on port 9222", pid: 1, state: "attached", windows: [] }];
-  const st = await call("state");
+  const first = await call("state");
+  assert.equal(first.appsPending, true, "the shell is up before the scan");
+  assert.deepEqual(first.apps, []);
+  assert.equal(daemon.calls.filter(c => c[0] === "discoverApps").length, 0, "the first answer does not walk the disk");
+  assert.equal(first.model.none, true);
+  assert.equal(first.pause.all, false);
+  assert.equal(first.keys.open, "Ctrl+Shift+Space");
+  assert.deepEqual(first.settings, { startAtLogin: false, autoOpen: true, welcomed: false }, "Always open with Morse is on (main.js turns login start on for it once); the first run shows");
+  const st = await settled(call);
+  assert.equal(st.appsPending, false);
+  assert.equal(daemon.calls.filter(c => c[0] === "discoverApps").length, 1, "one scan fills the list");
   assert.equal(st.version, "9.9.9");
   const by = Object.fromEntries(st.apps.map(a => [a.id, a]));
   assert.equal(by.tunes.state, "closed");
@@ -340,7 +360,7 @@ test("Add an app… keeps the file in desktop.json, and refuses native apps", as
   assert.deepEqual(await call("addApp"), { ok: true, id: "acme", name: "Acme" });
   const saved = JSON.parse(readFileSync(path.join(daemon.HOME, "desktop.json"), "utf8"));
   assert.deepEqual(saved.apps, ["/apps/acme"]);
-  assert.ok((await call("state")).apps.some(a => a.id === "acme" && a.added));
+  assert.ok((await settled(call)).apps.some(a => a.id === "acme" && a.added));
   native.pickApp = async () => "/apps/native";
   assert.match((await call("addApp")).error, /Nat is a native app/);
   native.pickApp = async () => null;
@@ -377,7 +397,7 @@ test("the first run: shown until an app is opened or Skip, then never again", as
 
 test("mods: listed per app with switches, and the off switch pauses every mod everywhere", async () => {
   const { call, daemon } = setup();
-  await call("state"); // learns the apps' names
+  await settled(call); // the fill learns the apps' names; the first answer does not scan
   const groups = (await call("state")).mods;
   assert.deepEqual(groups.map(g => [g.name, g.mods.map(m => [m.title, m.on])]), [["Tunes", [["Sleep timer", true]]]]);
   assert.deepEqual(await call("setModOn", "m1", false), { ok: true });
@@ -462,6 +482,81 @@ test("the preload exposes window.morse only: the API's names plus onChange, froz
   off();
   assert.equal(listeners.length, 0);
   assert.equal(typeof api.onChange("not a function"), "function");
+});
+
+test("the window opens before the daemon, and a login shell is not spawned while main.js loads", () => {
+  const main = readFileSync(path.join(root, "desktop-app/main.js"), "utf8");
+  const ready = main.slice(main.indexOf("app.whenReady()"));
+  const winAt = ready.indexOf("createWindow()");
+  const loadAt = ready.indexOf("await loadDaemon()");
+  assert.ok(winAt >= 0 && loadAt > winAt, "createWindow runs before loadDaemon");
+  assert.match(main, /gateService\(serviceReady\)/);
+  assert.match(main, /startShellPath\(/);
+  assert.doesNotMatch(main, /process\.env\.PATH\s*=\s*fullPath\(/);
+  assert.match(main, /updater\.start\(\)/, "the updater keeps its own delayed check");
+  assert.match(main, /s\.autoOpen && !s\.startAtLogin && !s\.loginSet/, "login start is still set once for Always open with Morse");
+  const ui = readFileSync(path.join(root, "desktop-app/ui/app.js"), "utf8");
+  assert.match(ui, /st\.appsPending/);
+  assert.match(ui, /document\.documentElement\.dataset\.ready = "1"/);
+});
+
+test("state waits for the service instead of throwing, and a missing service answers loading", async () => {
+  const daemon = fakeDaemon();
+  const service = createService({ daemon, emit: () => {}, scan: true });
+  const ipcMain = fakeIpc();
+  let resolve;
+  const ready = new Promise(r => { resolve = r; });
+  registerIpc({ ipcMain, service: gateService(ready), isTrusted: e => e === TRUSTED, native: {} });
+  const pending = ipcMain.handlers.get(CHANNEL("state"))(TRUSTED);
+  let done = false;
+  pending.then(() => { done = true; });
+  await new Promise(r => setTimeout(r, 20));
+  assert.equal(done, false, "the call stays queued until the daemon is in");
+  resolve(service);
+  const st = await pending;
+  assert.equal(st.appsPending, true);
+  assert.equal(daemon.calls.filter(c => c[0] === "discoverApps").length, 0);
+
+  let resolveMissing;
+  const missing = new Promise(r => { resolveMissing = r; });
+  const ipc2 = fakeIpc();
+  registerIpc({ ipcMain: ipc2, service: gateService(missing), isTrusted: e => e === TRUSTED, native: {} });
+  const waiting = ipc2.handlers.get(CHANNEL("state"))(TRUSTED);
+  resolveMissing(null);
+  const missingState = await waiting;
+  assert.equal(missingState.loading, true, "the window can paint before the daemon is in");
+});
+
+test("apps() and mods() share one discoverApps, and icons are read together", async () => {
+  const { daemon, service } = setup();
+  await Promise.all([service.apps(), service.mods()]);
+  assert.equal(daemon.calls.filter(c => c[0] === "discoverApps").length, 1);
+  assert.equal((await service.mods())[0].name, "Tunes", "the name arrives with the scan, not from a second one");
+
+  let live = 0, max = 0;
+  const slow = fakeDaemon();
+  const icons = createService({
+    daemon: slow, emit: () => {}, scan: true,
+    iconFor: async () => {
+      live++;
+      max = Math.max(max, live);
+      await new Promise(r => setTimeout(r, 40));
+      live--;
+      return "data:image/png,x";
+    },
+  });
+  await icons.apps();
+  assert.ok(max >= 3, `icon reads overlapped (${max})`);
+});
+
+test("Look again waits for a fresh scan", async () => {
+  const { call, daemon } = setup();
+  await settled(call);
+  daemon.apps.push({ id: "extra", name: "Extra", exe: "/x/extra", path: "/x/extra", canAttach: true, why: "Electron", known: true });
+  const again = await call("refreshApps");
+  assert.equal(again.appsPending, false);
+  assert.ok(again.apps.some(a => a.id === "extra"));
+  assert.equal(daemon.calls.filter(c => c[0] === "discoverApps").length, 2);
 });
 
 test("the window's page: a strict CSP, no inline code, only its own files", () => {

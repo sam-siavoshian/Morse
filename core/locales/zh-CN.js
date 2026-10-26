@@ -560,6 +560,7 @@ export default {
   "desk.apps.chooseModel": "选择模型",
   "desk.apps.foot": "Morse 会加一个设置重新打开应用，以便连接。它从不修改应用的文件。只要“始终用 Morse 打开”开着，有 Mod 的应用即使从程序坞或开始菜单打开，也会用 Morse 打开。",
   "desk.apps.none": "Morse 没有找到能连接的应用。点“添加应用…”选一个。",
+  "desk.apps.looking": "正在查找应用…",
   "desk.app.connected": "已连接",
   "desk.app.windows": { other: "{n} 个窗口" },
   "desk.app.modsOn": { other: "{n} 个模组已开" },

@@ -560,6 +560,7 @@ export default {
   "desk.apps.chooseModel": "Modell wählen",
   "desk.apps.foot": "Morse öffnet die App neu mit einer zusätzlichen Einstellung, damit es sich verbinden kann. Es ändert nie die Dateien der App. Apps mit Mods öffnen sich mit Morse, auch aus dem Dock oder Startmenü, solange „Immer mit Morse öffnen“ an ist.",
   "desk.apps.none": "Morse hat keine Apps gefunden, mit denen es sich verbinden kann. Klick auf App hinzufügen…, um eine zu wählen.",
+  "desk.apps.looking": "Suche nach Apps…",
   "desk.app.connected": "Verbunden",
   "desk.app.windows": { one: "{n} Fenster", other: "{n} Fenster" },
   "desk.app.modsOn": { one: "{n} Mod an", other: "{n} Mods an" },
