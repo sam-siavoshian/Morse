@@ -32,7 +32,7 @@ does and shows its code. `morse rm <id>` deletes one.
 
 | | |
 |---|---|
-| ![](screenshots/304-real-mods-panel.png) The Mods panel on nodejs.org: where each mod came from, with **Show code** | ![](screenshots/306-real-edit-code.png) **Edit code** |
+| ![](screenshots/304-real-mods-panel.webp) The Mods panel on nodejs.org: where each mod came from, with **Show code** | ![](screenshots/306-real-edit-code.webp) **Edit code** |
 
 ## Share a mod
 
@@ -59,7 +59,7 @@ and the share link.
 
 | | |
 |---|---|
-| ![](screenshots/307-real-share.png) **Share**: the share image (before and after), the link and the downloads | |
+| ![](screenshots/307-real-share.webp) **Share**: the share image (before and after), the link and the downloads | |
 
 ## Install a shared mod
 
@@ -109,7 +109,7 @@ Morse checks the gallery list at most once a day. To stop that, turn off
 
 | | |
 |---|---|
-| ![](site/gallery-desktop.png) The gallery on the website | |
+| ![](site/gallery-desktop.webp) The gallery on the website | |
 
 ## When a site changes
 

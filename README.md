@@ -15,7 +15,7 @@
 
 <br /><br />
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-hero.png" alt="Take what they won't ship, on a blue sky with clouds. Free for Mac, Windows and Linux. Change any app in one sentence. Free and open source." width="1200" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-hero.webp" alt="Take what they won't ship, on a blue sky with clouds. Free for Mac, Windows and Linux. Change any app in one sentence. Free and open source." width="1200" />
 
 </div>
 
@@ -80,17 +80,17 @@ Obsidian ships no focus timer. The note was open. Morse added a panel with the r
 
 VSCodium's command palette, taken while Morse watched, then brought to rubygems.org. Ctrl+Shift+P opens a palette of that page, in RubyGems' own type and colors. [How](docs/bring-a-feature.md).
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-17-rubygems-palette.png" alt="rubygems.org with a command palette brought from VSCodium, searching this page's own headings, and a Commands button in the header." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-17-rubygems-palette.webp" alt="rubygems.org with a command palette brought from VSCodium, searching this page's own headings, and a Commands button in the header." width="900" />
 
 pkg.go.dev's Jump to box, brought to the Node.js docs. F opens it. Enter goes to the heading.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-10-node-jump-to.png" alt="The Node.js docs with a Jump to box brought from pkg.go.dev, searching readFile, in the page's own green." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-10-node-jump-to.webp" alt="The Node.js docs with a Jump to box brought from pkg.go.dev, searching readFile, in the page's own green." width="900" />
 
 ### Inject code
 
 On the Node.js docs, the change is code you can open: the style, and the script that runs in the page.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/306-real-edit-code.png" alt="The Node.js docs with Morse's code editor open on the style and script of a saved change, and Save and run." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/306-real-edit-code.webp" alt="The Node.js docs with Morse's code editor open on the style and script of a saved change, and Save and run." width="900" />
 
 ### A feature the app did not have
 

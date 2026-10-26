@@ -36,8 +36,8 @@ any other mod. **⌥⇧G** (Alt+Shift+G) shows the Edit tools from anywhere.
 
 | | |
 |---|---|
-| ![](screenshots/314-real-edit-tools.png) The Edit tools on rubygems.org, with the key in every tooltip | ![](screenshots/315-real-rename.png) **T**: rename the heading in place |
-| ![](screenshots/316-real-recolor.png) **C**: recolor the heading from the palette | |
+| ![](screenshots/314-real-edit-tools.webp) The Edit tools on rubygems.org, with the key in every tooltip | ![](screenshots/315-real-rename.webp) **T**: rename the heading in place |
+| ![](screenshots/316-real-recolor.webp) **C**: recolor the heading from the palette | |
 
 ## Capture
 
@@ -68,4 +68,4 @@ click targets, easier fonts, Read aloud and more. See
 
 | | |
 |---|---|
-| ![](screenshots/308-real-dark-mode.png) Dark mode on Docker Hub, with Easier to use beside Page tools | ![](screenshots/310-real-check-page.png) Check this page on pkg.go.dev |
+| ![](screenshots/308-real-dark-mode.webp) Dark mode on Docker Hub, with Easier to use beside Page tools | ![](screenshots/310-real-check-page.webp) Check this page on pkg.go.dev |

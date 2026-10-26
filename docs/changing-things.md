@@ -7,7 +7,7 @@ what you want. Then watch it change.
 press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the model writes the change ▦▦▦ ─▶ you see it ─▶ Save · Share
 ```
 
-![Obsidian turning into a typewritten page while the model writes the change](screenshots/324-obsidian-working.png)
+![Obsidian turning into a typewritten page while the model writes the change](../site/shots/324-obsidian-working.webp)
 
 *Obsidian 1.14.5 on Linux: “make my notes look like an old typewritten page”. Claude Code (sonnet) wrote it in 7.8 seconds.*
 
@@ -36,7 +36,7 @@ between them.
 
 | | |
 |---|---|
-| ![](screenshots/320-vscode-ask.png) The bar in Visual Studio Code, with the request typed | ![](screenshots/300-real-point.png) The bar on nodejs.org: point at a part, or describe the whole page |
+| ![](screenshots/320-vscode-ask.webp) The bar in Visual Studio Code, with the request typed | ![](screenshots/300-real-point.webp) The bar on nodejs.org: point at a part, or describe the whole page |
 
 ## Watch it happen
 
@@ -62,7 +62,7 @@ Press **Esc** at any time to stop. Nothing is left behind.
 
 | | |
 |---|---|
-| ![](screenshots/301-real-working.png) nodejs.org turning into a printed book while the model writes it | ![](screenshots/324-obsidian-working.png) The same in Obsidian: the note turns yellow before the bar is done |
+| ![](screenshots/301-real-working.webp) nodejs.org turning into a printed book while the model writes it | ![](../site/shots/324-obsidian-working.webp) The same in Obsidian: the note turns yellow before the bar is done |
 
 ## Save or Undo
 
@@ -80,8 +80,8 @@ When the change is done, the bar shows what it made and how long it took.
 
 | | |
 |---|---|
-| ![](screenshots/321-vscode-result.png) The result in Visual Studio Code, with Save, Undo, Edit code and Share | ![](screenshots/322-vscode-back.png) Quit the app and open it again: the change is back |
-| ![](screenshots/302-real-result.png) nodejs.org as a printed book (Claude Code, sonnet, 13.4 seconds) | |
+| ![](../site/shots/321-vscode-result.webp) The result in Visual Studio Code, with Save, Undo, Edit code and Share | ![](screenshots/322-vscode-back.webp) Quit the app and open it again: the change is back |
+| ![](../site/shots/302-real-result.webp) nodejs.org as a printed book (Claude Code, sonnet, 13.4 seconds) | |
 
 ## Keep improving it
 
@@ -103,7 +103,7 @@ You can keep changing a result.
 
 | | |
 |---|---|
-| ![](screenshots/303-real-refine.png) More typed under the result | ![](screenshots/305-real-history.png) **History**: both versions. Click one to bring it back |
+| ![](screenshots/303-real-refine.webp) More typed under the result | ![](screenshots/305-real-history.webp) **History**: both versions. Click one to bring it back |
 
 ## Voice
 
@@ -143,6 +143,6 @@ except your Morse shortcuts.
 
 | | |
 |---|---|
-| ![](screenshots/317-real-settings.png) **Settings** | ![](screenshots/318-real-shortcuts.png) **?** shows the shortcuts you have |
+| ![](screenshots/317-real-settings.webp) **Settings** | ![](screenshots/318-real-shortcuts.webp) **?** shows the shortcuts you have |
 
 Morse keeps your settings in `~/.morse/settings.json`.

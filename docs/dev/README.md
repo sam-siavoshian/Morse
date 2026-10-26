@@ -105,11 +105,10 @@ steps, privacy, a strip of real apps, a short FAQ, and **Install**.
   two sections from it.
 - **`site/site.css`**: the one stylesheet for the site's pages (Inter, Inter
   Display and JetBrains Mono, Latin subsets, OFL, in `site/fonts/`).
-  `site/shots/` holds the screenshots the page shows, as WebP copies of
-  `docs/screenshots/` (same numbers), frames of
-  `docs/launch/morse-social-16x9.mp4` (200, 201) and of
-  `docs/launch/morse-v3-16x9.mp4` (202), and the Chrome Web Store screenshots
-  2 and 3 (182, 184). `site/sky/` holds the two painted skies at 2560 and
+  `site/shots/` holds the screenshots the page shows, as WebP. Same numbers as
+  `docs/screenshots/` where both exist. 200 and 201 are frames from the social
+  film, 202 from the v3 film (those films are not in the tree), and 182 and 184
+  are Chrome Web Store screenshots 2 and 3. `site/sky/` holds the two painted skies at 2560 and
   1280 wide, AVIF and WebP (upscaled with Real-ESRGAN's anime model); the
   stylesheet picks with `image-set()`, and the page preloads the day sky. `site/icons/` holds the real icon of
   each app and site the page names (`APP_ICONS` in `config.js`: from the

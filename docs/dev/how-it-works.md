@@ -1,8 +1,8 @@
 # How a change really happens
 
-A real, unedited recording of everything on this page: [`docs/launch/how-it-works.mp4`](../launch/how-it-works.mp4)
-(VSCodium on the left, the live trace on the right; made by
-[`demo/record-how-it-works.sh`](../../demo/record-how-it-works.sh)). Its trace:
+A recording of this page (VSCodium on the left, the live trace on the right; made by
+[`demo/record-how-it-works.sh`](../../demo/record-how-it-works.sh)) is not in the tree.
+Its trace:
 [`docs/launch/how-it-works-trace.log`](../launch/how-it-works-trace.log). Run any
 desktop session with `MORSE_TRACE=1` (or a file path) to see the same lines.
 The lines hold your requests, what you pointed at and the model's results, never

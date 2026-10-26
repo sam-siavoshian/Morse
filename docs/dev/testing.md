@@ -173,8 +173,8 @@ the whole flow on two demo apps with the demo model.
 `npm run ui` builds the runtime, drives it through every state of every part
 of the UI ([`demo/ui-catalog.js`](../../demo/ui-catalog.js)), saves one
 screenshot per state in a dark and a light host, at desktop and phone width,
-and on hostile host pages, audits each one, and writes
-[`docs/ui/index.html`](../ui/index.html) as a contact sheet. `node
+and on hostile host pages, audits each one, and writes a contact sheet
+beside the shots. The sheet is not committed. `node
 demo/contrast.js` checks every color token pair. The checklist is
 [docs/ui/CHECKLIST.md](../ui/CHECKLIST.md). Verdicts and notes live in
 `docs/ui/review.json`. See
@@ -245,16 +245,15 @@ recorded again.
 - **The main screenshots replay pre-written replies** from
   [`core/demo.js`](../../core/demo.js), a test fixture. The same desktop flow
   was also run with **real Claude Code** (`claude` on the Claude
-  subscription, model `haiku`):
-  [`docs/screenshots/claude-code`](../screenshots/claude-code), last run on
-  October 24, 2026. It built a working sleep timer (a "Sleep" picker under
+  subscription, model `haiku`), last run on
+  October 24, 2026. The step shots from that run are not in the tree. It built a working sleep timer (a "Sleep" picker under
   the player) on the first try in about 19 s, and made the album covers
   bigger with rounder corners in about 17 s. An earlier run's covers change
   targeted `img` elements the demo app doesn't have and did nothing visible:
   a small fast model guessing at markup.
 - **The demo video** was recorded from real runs: Claude Code (haiku) wrote
   the sleep timer and the word count with no edits
-  ([launch kit](../launch/README.md#about-the-recordings)).
+  The film is not in the tree ([launch kit](../launch/README.md)).
 - **Codex** isn't installed in the container, so it is only tested against a
   fake `codex` that prints both of its JSON output formats. **The Anthropic
   and OpenAI APIs** are tested against fake servers speaking their streaming

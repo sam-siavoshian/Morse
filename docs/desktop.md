@@ -8,7 +8,7 @@ changes websites: you point at something, say what you want, and keep it.
 This page explains how to do that, what Morse does to the app (and what it
 doesn't), and which apps can't work.
 
-![Microsoft's Visual Studio Code with the Morse bar open and a request typed](screenshots/320-vscode-ask.png)
+![Microsoft's Visual Studio Code with the Morse bar open and a request typed](screenshots/320-vscode-ask.webp)
 
 ## The short version
 
@@ -78,8 +78,8 @@ off, see their code, share them or delete them.
 
 | | |
 |---|---|
-| ![](screenshots/324-obsidian-working.png) Obsidian: the change shows while the model writes it | ![](screenshots/325-obsidian-result.png) The result, with Save, Undo, Edit code and Share |
-| ![](screenshots/327-vscodium-synthwave.png) VSCodium after “give the editor a synthwave look” | ![](screenshots/328-vscodium-back.png) Quit the app and open it again: the change is back |
+| ![](../site/shots/324-obsidian-working.webp) Obsidian: the change shows while the model writes it | ![](../site/shots/325-obsidian-result.webp) The result, with Save, Undo, Edit code and Share |
+| ![](../site/shots/327-vscodium-synthwave.webp) VSCodium after “give the editor a synthwave look” | ![](screenshots/328-vscodium-back.webp) Quit the app and open it again: the change is back |
 
 ### 4. Check and stop
 
@@ -102,7 +102,7 @@ restart, for as long as the Morse app stays open.
 
 | | |
 |---|---|
-| ![](screenshots/80-apps.png) **`morse apps`**: what's installed, and whether Morse can connect to it | ![](screenshots/81-status.png) **`morse status`**: windows, pop-ups and the mods on in each, and an app started with `--watch` waiting to come back |
+| ![](screenshots/80-apps.webp) **`morse apps`**: what's installed, and whether Morse can connect to it | ![](screenshots/81-status.webp) **`morse status`**: windows, pop-ups and the mods on in each, and an app started with `--watch` waiting to come back |
 
 ### What Morse follows in an app
 
@@ -207,16 +207,16 @@ without it, 4. The ones only this made possible:
 
 | | |
 |---|---|
-| ![](screenshots/231-profile-vscode-format-before.png) VSCodium: "add a button here that formats the document" | ![](screenshots/232-profile-vscode-format-after.png) The Format button in the status bar runs VS Code's own Format Document |
-| ![](screenshots/241-profile-vscode-sort-before.png) "add a button here that sorts the lines of the file alphabetically" | ![](screenshots/233-profile-vscode-sort-after.png) Sorted by VS Code's own Sort Lines |
-| ![](screenshots/234-profile-vscode-remap-without.png) "make Ctrl+Shift+K duplicate the current line instead of deleting it", without: the line is deleted | ![](screenshots/235-profile-vscode-remap-with.png) With: the line is copied |
-| ![](screenshots/237-profile-joplin-duplicate-before.png) Joplin: "add a button that makes a copy of the note I'm looking at" | ![](screenshots/238-profile-joplin-duplicate-after.png) Joplin's own Duplicate made a copy of the welcome note |
-| ![](screenshots/236-profile-vscode-comment-after.png) VSCodium: "add a button here that comments out the line the cursor is on" | ![](screenshots/239-profile-joplin-clipboard-after.png) Joplin: "add a keyboard shortcut Ctrl+Alt+N that creates a new note from what is in the clipboard" |
+| ![](screenshots/231-profile-vscode-format-before.webp) VSCodium: "add a button here that formats the document" | ![](screenshots/232-profile-vscode-format-after.webp) The Format button in the status bar runs VS Code's own Format Document |
+| ![](screenshots/241-profile-vscode-sort-before.webp) "add a button here that sorts the lines of the file alphabetically" | ![](screenshots/233-profile-vscode-sort-after.webp) Sorted by VS Code's own Sort Lines |
+| ![](screenshots/234-profile-vscode-remap-without.webp) "make Ctrl+Shift+K duplicate the current line instead of deleting it", without: the line is deleted | ![](screenshots/235-profile-vscode-remap-with.webp) With: the line is copied |
+| ![](screenshots/237-profile-joplin-duplicate-before.webp) Joplin: "add a button that makes a copy of the note I'm looking at" | ![](screenshots/238-profile-joplin-duplicate-after.webp) Joplin's own Duplicate made a copy of the welcome note |
+| ![](screenshots/236-profile-vscode-comment-after.webp) VSCodium: "add a button here that comments out the line the cursor is on" | ![](screenshots/239-profile-joplin-clipboard-after.webp) Joplin: "add a keyboard shortcut Ctrl+Alt+N that creates a new note from what is in the clipboard" |
 
 In Obsidian the same kind of change worked with or without it (here "add a
 button that inserts today's date into the note where my cursor is"), and with
 it the change used Obsidian's own Insert current date:
-![](screenshots/240-profile-obsidian-date-after.png)
+![](screenshots/240-profile-obsidian-date-after.webp)
 
 Not yet: "save the file automatically a second after I stop typing" in
 VS Code. The change waited for typing in a way VS Code's editor doesn't
@@ -510,9 +510,9 @@ from inside the AppImage for the others).
 
 | | |
 |---|---|
-| ![](screenshots/321-vscode-result.png) Visual Studio Code as a paper notebook | ![](screenshots/322-vscode-back.png) Visual Studio Code opened again: the change is back |
-| ![](screenshots/323-obsidian-ask.png) Obsidian: the request in the bar | ![](screenshots/326-obsidian-back.png) Obsidian opened again: the typewritten page is back |
-| ![](screenshots/330-logseq-working.png) Logseq while the model writes the change | ![](screenshots/329-logseq-notebook.png) Logseq as a lined notebook |
+| ![](../site/shots/321-vscode-result.webp) Visual Studio Code as a paper notebook | ![](screenshots/322-vscode-back.webp) Visual Studio Code opened again: the change is back |
+| ![](../site/shots/323-obsidian-ask.webp) Obsidian: the request in the bar | ![](screenshots/326-obsidian-back.webp) Obsidian opened again: the typewritten page is back |
+| ![](screenshots/330-logseq-working.webp) Logseq while the model writes the change | ![](../site/shots/329-logseq-notebook.webp) Logseq as a lined notebook |
 
 What these apps turned up, now fixed:
 
@@ -593,8 +593,8 @@ hub.docker.com.
 
 | | |
 |---|---|
-| ![](screenshots/153-web-gitlab-back-to-top.png) GitLab: the back to top button (bottom right) | ![](screenshots/154-web-pypi-after-reload.png) PyPI after a reload: the button is still there |
-| ![](screenshots/155-web-docker-hub-code.png) Docker Hub: bigger code on dark blocks | ![](screenshots/156-web-pypi-user-scripts-off.png) PyPI with “Allow User Scripts” off: only an arrow, which doesn't scroll |
+| ![](screenshots/153-web-gitlab-back-to-top.webp) GitLab: the back to top button (bottom right) | ![](screenshots/154-web-pypi-after-reload.webp) PyPI after a reload: the button is still there |
+| ![](screenshots/155-web-docker-hub-code.webp) Docker Hub: bigger code on dark blocks | ![](screenshots/156-web-pypi-user-scripts-off.webp) PyPI with “Allow User Scripts” off: only an arrow, which doesn't scroll |
 
 The same flow can be run on any installed app with
 [`demo/try-real-app.js`](../demo/try-real-app.js), and on websites with

@@ -31,7 +31,7 @@ the AI Morse found by itself (Claude Code or Codex, checked that it answers;
 paste an API key if it found neither), how it works, and an app to try.
 [Models and setup](models.md) explains each AI.
 
-![How it works: open Morse, point at something, say what you want](screenshots/177-desktop-app-how.png)
+![How it works: open Morse, point at something, say what you want](screenshots/177-desktop-app-how.webp)
 
 ## 3. Open an app or a browser with Morse
 
@@ -48,7 +48,7 @@ program control your everyday profile, so Morse opens the browser on a copy of
 it with all your sign-ins, tabs and extensions, and brings in new sign-ins
 each time. Your everyday profile is only read, never changed.
 
-![The bar in Visual Studio Code, with the guide: point, describe, save](screenshots/320-vscode-ask.png)
+![The bar in Visual Studio Code, with the guide: point, describe, save](screenshots/320-vscode-ask.webp)
 
 **Always open with Morse** is on unless you turn it off: an app with mods
 that you open from the Dock, Finder or the Start menu opens again with Morse
