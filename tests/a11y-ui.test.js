@@ -55,8 +55,13 @@ async function tool(page, k) {
   const before = (await mods(page)).length;
   await openTools(page);
   const on = await page.locator(`.gm-menu [data-a11y="${k}"]`).getAttribute("aria-checked") === "true";
+  const toast = () => page.locator(".toast").textContent().catch(() => "");
+  const toastBefore = await toast();
   await page.locator(`.gm-menu [data-a11y="${k}"]`).click();
   await until(async () => (await mods(page)).length === before + (on ? -1 : 1));
+  // The mod is saved before its code runs on the page. The toast is after
+  // that code, so the checks below see the tool, not the page it hasn't touched.
+  if (!on) await until(async () => { const t = await toast(); return t && t !== toastBefore && / on for /.test(t); });
   await page.keyboard.press("Escape");
   await until(async () => !(await status(page)).open);
 }

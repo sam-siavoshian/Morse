@@ -64,10 +64,20 @@ function tabWithin(e, scope) {
 function focusPageTop() {
   const b = document.body;
   if (!b || !live()) return;
-  const had = b.hasAttribute("tabindex");
-  if (!had) b.setAttribute("tabindex", "-1");
+  // Body has to be focusable for this turn or Chromium never records it as
+  // the start of Tab order. Taking tabindex away in the same turn drops that
+  // start, and the next Tab stays on the body (its text is the whole page).
+  // It comes off once Tab moves on, so the body is not itself a tab stop.
+  if (!b.hasAttribute("tabindex")) {
+    b.setAttribute("tabindex", "-1");
+    const drop = () => {
+      if (document.activeElement === b) return;
+      b.removeAttribute("tabindex");
+      b.removeEventListener("focusout", drop);
+    };
+    b.addEventListener("focusout", drop);
+  }
   try { b.focus({ preventScroll: true }); } catch {}
-  if (!had) b.removeAttribute("tabindex");
 }
 
 function nowFocused() {

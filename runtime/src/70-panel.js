@@ -90,8 +90,10 @@ async function openPanel() {
   focusCurrent();
   await syncMods().catch(() => {});
   if (panel.hidden) return;
+  // renderPanel puts focus back on the same row or button when it was in the
+  // panel. A second focus here used to run after Install a mod… had taken
+  // focus, and pull it out of that modal (or off the button Esc returned to).
   renderPanel();
-  if (!panel.contains(root.activeElement)) focusCurrent();
   Health.recheck().catch(() => {});
 }
 panel.setAttribute("role", "dialog");
@@ -104,7 +106,10 @@ new MutationObserver(() => {
   PanelUI.back = null;
   if (S.open || !modal.hidden) return;
   if (back?.isConnected) try { back.focus({ preventScroll: true }); return; } catch {}
-  if (panel.contains(root.activeElement)) focusPageTop();
+  const here = root.activeElement;
+  // Hidden panel: the browser drops focus on the host or the body. Put it at
+  // the top of the page so the next Tab reaches the first link, not Morse.
+  if (!here || here === hostEl || panel.contains(here)) focusPageTop();
 }).observe(panel, { attributes: true, attributeFilter: ["hidden"] });
 
 const rows = () => [...panel.querySelectorAll(".list article")];

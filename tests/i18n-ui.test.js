@@ -82,6 +82,8 @@ test("the browser's language picks Morse's: Spanish bar and panel from a Spanish
   try {
     await pressOpen(t.page);
     await t.waitFor(s => s.open, "bar open");
+    // The bar opens before a language's words arrive, then swaps to them.
+    await t.page.waitForFunction(() => document.querySelector("[data-morse-ui]")?.getAttribute("lang") === "es");
     const u = await t.ui();
     assert.equal(u.lang, "es");
     assert.equal(u.dir, "ltr");

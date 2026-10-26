@@ -113,8 +113,20 @@ test("Mods panel: Change and Share on each row, the rest under More; Install a m
   await waitFor(s => !s.open);
   await pressOpen(page, "Alt+Shift+M");
   // The panel shows the rows it knows at once and swaps in the host's list when it comes (70-panel.js).
+  // During that swap the buttons are in the tree with no box; wait until the row has settled.
   await page.locator(".panel article [data-a=refine]").waitFor();
-  assert.deepEqual(await page.locator(".panel article .btns > button, .panel article .rmore > summary").evaluateAll(ns => ns.filter(n => n.getClientRects().length).map(n => n.dataset.a || n.tagName)), ["refine", "share", "SUMMARY"]);
+  const rowActions = () => page.locator(".panel article .btns > button, .panel article .rmore > summary").evaluateAll(ns => ns.filter(n => n.getClientRects().length).map(n => n.dataset.a || n.tagName));
+  let actions = [], stable = "";
+  const end = Date.now() + TIMEOUT;
+  for (;;) {
+    actions = await rowActions();
+    const key = JSON.stringify(actions);
+    if (actions.length && key === stable) break;
+    stable = actions.length ? key : "";
+    if (Date.now() > end) break;
+    await new Promise(r => setTimeout(r, 50));
+  }
+  assert.deepEqual(actions, ["refine", "share", "SUMMARY"]);
   await page.locator(".panel article .rmore summary").click();
   assert.deepEqual(await page.locator(".panel article .rmore-list button").evaluateAll(ns => ns.filter(n => n.getClientRects().length).map(n => n.dataset.a || n.dataset.c)), ["link", "show", "del"]);
   // Edit code is inside Show code.

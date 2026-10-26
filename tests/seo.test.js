@@ -47,7 +47,7 @@ function walk(dir) {
 test("the site's address is package.json's homepage", () => {
   const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
   assert.equal(SITE_URL, "https://getmorse.vercel.app/");
-  assert.equal(pkg.homepage, `${SITE_URL}site/`);
+  assert.equal(pkg.homepage, SITE_URL);
 });
 
 test("every page: a short, unique title and description, one <h1>, lang, viewport and icons", () => {
@@ -136,15 +136,15 @@ test("structured data: it parses, and has what each kind needs", async () => {
   for (const { page, node } of kinds.BreadcrumbList) {
     const items = node.itemListElement;
     assert.deepEqual(items.map(i => i.position), [1, 2]);
-    assert.equal(items[0].item, `${SITE_URL}site/`);
+    assert.equal(items[0].item, SITE_URL);
     assert.equal(items[1].item, SITE_URL + page.url);
     assert.ok(items.every(i => i.name), "every crumb is named");
   }
-  assert.deepEqual(kinds.BreadcrumbList.map(b => b.page.file).sort(), ["site/gallery.html", "site/privacy.html"]);
+  assert.deepEqual(kinds.BreadcrumbList.map(b => b.page.file).sort(), ["gallery.html", "privacy.html"]);
 });
 
 test("the FAQ's structured data is the landing page's FAQ, word for word", () => {
-  const html = built("site/index.html");
+  const html = built("index.html");
   const faq = jsonLd(html).flatMap(ld => ld["@graph"]).find(n => n["@type"] === "FAQPage");
   const shown = [...html.matchAll(/<details class="faq-item">\s*<summary>([\s\S]*?)<\/summary>\s*<p>([\s\S]*?)<\/p>\s*<\/details>/g)]
     .map(m => [m[1], m[2]].map(s => unesc(s.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim()));
@@ -170,16 +170,18 @@ test("sitemap.xml lists exactly the pages people should find; robots.txt points 
 });
 
 test("the share page and the redirects stay out of search", () => {
-  for (const f of ["share/install.html", "index.html", "privacy.html"]) {
+  for (const f of ["share/install.html", "site/index.html", "site/gallery.html", "site/privacy.html"]) {
     assert.ok(noindex(built(f)), `${f} says noindex`);
   }
-  // The redirects name their page by its full address.
-  assert.equal(canonical(built("index.html")), `${SITE_URL}site/`);
-  assert.equal(canonical(built("privacy.html")), `${SITE_URL}site/privacy.html`);
+  for (const f of ["index.html", "gallery.html", "privacy.html"]) assert.equal(noindex(built(f)), false, `${f} is a page people should find`);
+  // The old /site/ addresses name the page they moved to.
+  assert.equal(canonical(built("site/index.html")), SITE_URL);
+  assert.equal(canonical(built("site/gallery.html")), `${SITE_URL}gallery.html`);
+  assert.equal(canonical(built("site/privacy.html")), `${SITE_URL}privacy.html`);
 });
 
 test("pages: every image says what it shows and has a size; no fonts from other servers", () => {
-  for (const f of ["site/index.html", "site/gallery.html", "site/privacy.html", "share/install.html"]) {
+  for (const f of ["index.html", "gallery.html", "privacy.html", "share/install.html"]) {
     const html = built(f);
     for (const img of html.match(/<img\b[^>]*>/g) || []) {
       assert.match(img, /\swidth="\d+"[^>]*\sheight="\d+"/, `${f}: ${img}`);
@@ -188,5 +190,5 @@ test("pages: every image says what it shows and has a size; no fonts from other 
     assert.doesNotMatch(head(html), /fonts\.googleapis|fonts\.gstatic/, `${f}: its fonts come from the site`);
   }
   // The film's poster is the first screen's largest picture: preloaded.
-  assert.match(head(built("site/index.html")), /<link rel="preload" as="image" href="\.\.\/docs\/launch\/morse-opus-open-poster\.webp" fetchpriority="high">/);
+  assert.match(head(built("index.html")), /<link rel="preload" as="image" href="\.\.\/docs\/launch\/morse-opus-open-poster\.webp" fetchpriority="high">/);
 });

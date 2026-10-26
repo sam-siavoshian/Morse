@@ -250,6 +250,9 @@ test("keyboard only: open, choose with keys, describe, Save, Mods panel, turn a 
     await waitFor(async () => (await focused(page)) !== "", { what: "focus to stay in Morse" });
     await page.keyboard.press("Escape");
     await waitFor(() => page.locator(".panel").isHidden(), { what: "Esc to close the panel" });
+    // The close puts focus at the top of the page on the next frame. Tab before
+    // that stays on the body, whose text is the whole page.
+    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
 
     // Show me once, from the ⋯ menu with type-ahead; the task itself by keyboard.
     // Focus starts on the page (its first link), and goes back there when watching starts.
