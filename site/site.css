@@ -353,7 +353,8 @@ q.ask, .ask { font: 400 0.92em/1.5 var(--mono); color: var(--text); quotes: "“
 .film.is-paused .film-toggle .icon-pause { display: none; }
 .film.is-paused .film-toggle .icon-play { display: block; }
 .film:not(.is-playing) .film-toggle { display: none; }
-.film figcaption { max-width: 60em; margin-top: 14px; padding: 0 2px; font-size: 14px; line-height: 1.55; color: var(--text-3); }
+.film figcaption, .run figcaption { max-width: 60em; margin-top: 14px; padding: 0 2px; font-size: 14px; line-height: 1.55; color: var(--text-3); }
+.run { margin: 0 0 72px; }
 
 /* ---------------------------------------------------------------- sections */
 .section { padding: 128px 0; border-top: 1px solid var(--line); }

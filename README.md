@@ -15,7 +15,7 @@
 
 <br /><br />
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-paywall.gif" alt="Before: a Foreign Policy article stops on a subscription wall, quarterly, annual, and insider. Adding it: Morse on that wall. After: the article continues. The rest of the story was already on the page." width="1000" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian.gif" alt="Before: an Obsidian note, Deep Work, with no timer. Adding it: Morse writing a focus panel and a 25 minute countdown. After: the countdown is running." width="1000" />
 
 </div>
 
@@ -69,12 +69,6 @@ A change you save is a **mod**. Morse puts your mods back every time the app ope
 ## App cheats
 
 Real apps. Before, adding it, after.
-
-### The subscription wall
-
-Foreign Policy, on the live site. The article stops, and the page puts up a subscription: quarterly, annual, insider. Morse hid that wall. The rest of the story was already on the page.
-
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-paywall.gif" alt="Before: a Foreign Policy article stops on a subscription wall, quarterly, annual, and insider. Adding it: Morse on that wall. After: the article continues. The rest of the story was already on the page." width="900" />
 
 ### A timer Obsidian did not ship
 
