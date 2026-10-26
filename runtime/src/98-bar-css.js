@@ -7,10 +7,16 @@ function BAR_CSS() { return `
   .bar { display: flex; flex-direction: column; max-height: calc(100vh - 56px); }
   .bar[data-pos="top"] { bottom: auto !important; top: 28px !important; }
   .bar[data-pos="bottom"] { top: auto !important; bottom: 28px !important; }
-  /* a sheet is a reading surface: solid, not see-through */
-  .bar.has-pane { background: var(--m-surface); }
-  /* the glass is for calm pages: over the page's own words it is solid too (50-bar.js Backing) */
-  :is(.bar, .so-strip, .guide, .ds).solid { background: var(--m-surface); }
+  /* Glass is the calm-page look (backdrop on .bar in 99-css.js). A sheet, or
+     page text sitting under the surface (50-bar.js Backing adds .solid), is an
+     opaque --m-surface. Drop the blur then: it costs a composite and does not
+     change what you read. */
+  .bar.has-pane,
+  :is(.bar, .so-strip, .guide, .ds).solid {
+    background: var(--m-surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
   .row { align-items: flex-start; }
   .row > .mark { margin-top: 7px; }
   .row > .chip { margin-top: 4px; }
