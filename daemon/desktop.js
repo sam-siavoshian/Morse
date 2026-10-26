@@ -4,17 +4,18 @@
 // connector.js (attaching) and status.js.
 
 import { createInterface } from "node:readline/promises";
+import { statSync } from "node:fs";
 import { Connector } from "./connector.js";
 import { waitForEndpoint, pipeBrowser, portBrowser, identifyPipe } from "./cdp.js";
 import { inspectFuses, fuseVerdict, electronBinaryFor } from "./fuses.js";
 import {
   hostContext, discoverApps, resolveApp, launchApp, waitForLaunch, quitApp, listProcesses, findAppProcesses, debugPortOf,
-  loadAppPrefs, saveAppPref, formatApps, said, closedEarly, PIPE, pipeFor,
+  loadAppPrefs, saveAppPref, formatApps, said, closedEarly, PIPE, pipeFor, executableFor, launchFailure,
 } from "./apps.js";
 import { pickPort, portFree, portAnswers, reachableFrom, identify, checkIdentity, portIsMine } from "./ports.js";
 import { readSessions, publishSession, stopRequested, stopSession, withMods, formatStatus, requestOpen, takeOpenRequest } from "./status.js";
 import { carrySignIns } from "./browser-profile.js";
-import { createMacAccess, desktopProgram, fileStore, macAccessFile, readAppManagementStatus, relaunchDesktop } from "./mac-access.js";
+import { createMacAccess, desktopProgram, fileStore, macAccessFile, readAppManagementStatus, relaunchDesktop, clearAppManagementCache, prepareAppOpen } from "./mac-access.js";
 import { trace } from "./trace.js"; // MORSE_TRACE: which way Morse reached the app
 import { settingsLabel } from "../core/providers.js";
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
@@ -26,21 +27,47 @@ const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^
 // The Morse app on macOS, just before it opens another app. The terminal
 // client is a different program (macOS asks about the terminal, not
 // Morse), so this stays out of its way. See daemon/mac-access.js.
+// A wait or a denial does not throw: that banner replaced the launch, so
+// Open with Morse never started the app and never asked again.
 let macGate = null;
-async function ensureDesktopAccess() {
+function accessGate() {
   const program = desktopProgram();
-  if (!program) return;
+  if (!program) return null;
   macGate ??= createMacAccess({
     program: () => desktopProgram() || program,
     readStatus: () => readAppManagementStatus(),
     store: fileStore(macAccessFile()),
   });
-  const d = await macGate.beforeOpen();
-  if (d.action === "restart") {
-    await relaunchDesktop(d.plan);
-    throw said(d.message);
+  return macGate;
+}
+
+// Nothing at the program we would run. Said before a restart question and
+// before quitting an app that is already open.
+function missingLaunch(app) {
+  const file = executableFor(app);
+  try { if (file && statSync(file).isFile()) return ""; } catch {}
+  return launchFailure(app, { error: Object.assign(new Error("missing"), { code: "ENOENT" }) });
+}
+
+async function prepareToStart(app, { running, confirmed }) {
+  const seq = await prepareAppOpen({
+    running, confirmed, missing: missingLaunch(app),
+    decide: async () => {
+      const gate = accessGate();
+      if (!gate) return null;
+      clearAppManagementCache();
+      return gate.beforeOpen();
+    },
+  });
+  if (seq.step === "askRestart") {
+    throw Object.assign(said(`${t("launch.isOpen", { name: app.name })} ${t("launch.restartHow", { cmd: B(`morse launch ${app.id} --restart`) })}`), { running: true });
   }
-  if (d.action === "wait" || d.action === "tell") throw said(d.message);
+  if (seq.step === "error") throw said(seq.message);
+  if (seq.step === "restartMorse") {
+    await relaunchDesktop(seq.plan);
+    throw said(seq.message);
+  }
+  return seq;
 }
 
 async function ask(question) {
@@ -156,24 +183,29 @@ export async function connectApp(app, { extra = [], pref = null, port: wantPort 
       if (v.ok) { port = open.port; pids = running.map(p => p.pid); say(t("launch.openWithPort", { name: app.name })); }
     }
     if (!port) {
-      // Before quitting the open app: a refused allow must leave it running.
-      await ensureDesktopAccess();
+      // A missing program is that error: the app stays open, and it is not
+      // the App Management banner. The restart question is not an ask.
+      // macOS asks when we start the app, after the person confirms.
+      const missing = missingLaunch(app);
+      if (missing) throw said(missing);
       let restart = restartFlag || (pref.restart === true && !noRestart);
       if (!restart && !noRestart && askRestart) {
         const a = await askRestart(app);
         if (a === "a") await saveAppPref(app.id, { restart: true });
         restart = a === "y" || a === "a";
       }
-      if (!restart) throw Object.assign(said(`${t("launch.isOpen", { name: app.name })} ${t("launch.restartHow", { cmd: B(`morse launch ${app.id} --restart`) })}`), { running: true });
-      say(t("launch.quitting", { name: app.name }));
-      if (!await quitApp(app, { procs, extraArgs: extra })) throw said(t("launch.didntQuit", { name: app.name }));
+      const seq = await prepareToStart(app, { running: true, confirmed: !!restart });
+      if (seq.step === "quitAndLaunch") {
+        say(t("launch.quitting", { name: app.name }));
+        if (!await quitApp(app, { procs, extraArgs: extra })) throw said(t("launch.didntQuit", { name: app.name }));
+      }
     }
   }
   if (restartFlag && !pref.restart) await saveAppPref(app.id, { restart: true });
   if (noRestart && pref.restart) await saveAppPref(app.id, { restart: null });
 
   // Not already open: the same check, once, before Morse starts it.
-  if (!port && !running.length) await ensureDesktopAccess();
+  if (!port && !running.length) await prepareToStart(app, { running: false, confirmed: true });
 
   // A browser opens on Morse's copy of its profile, with every sign-in of the
   // everyday one in it (daemon/browser-profile.js). The browser is closed here.
