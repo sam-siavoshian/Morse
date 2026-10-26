@@ -76,6 +76,12 @@ Obsidian ships no focus timer. The note was open with none. Morse is open at the
 
 <img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian-ask.gif" alt="The Obsidian note has no focus timer. Morse is open at the bottom with the ask for a focus panel. The panel was not on the note, then it appears on the right." width="1000" />
 
+### A command palette RubyGems did not have
+
+RubyGems is a website in Chrome. The rails page had a search box and no command palette. Morse took the one from VS Code and built it there, in the page's own red and type. Ctrl+Shift+P opens it. It lists this page's own places: 526 versions, the previous version, the Ruby it needs. A Commands button sits in the header. Neither was on the page.
+
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-17-rubygems-palette.webp" alt="The RubyGems rails page in Chrome. A command palette is open over the page, listing Go to 526 Versions and scrolls to the Ruby version. A Commands button sits in the header. The page had no palette." width="1000" />
+
 ## FAQ
 
 <details>
