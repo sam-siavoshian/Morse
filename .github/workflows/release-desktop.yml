@@ -113,5 +113,5 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
-            || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --title "Morse $TAG" --notes "Morse Desktop for Linux, macOS and Windows. See docs/desktop-app.md."
+            || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --title "Morse $TAG" --notes "Morse for Linux, macOS and Windows. See docs/desktop-app.md."
           gh release upload "$TAG" out/* --repo "$GITHUB_REPOSITORY" --clobber

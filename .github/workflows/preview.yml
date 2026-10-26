@@ -266,7 +266,7 @@ jobs:
           {
             echo "The newest Morse from \`main\` ($GITHUB_SHA), built $(date -u +'%Y-%m-%d %H:%M UTC'). Not a release: it changes with every push."
             echo
-            echo "**Morse Desktop:** Mac: \`Morse-mac-arm64.dmg\` (Apple silicon) or \`Morse-mac-x64.dmg\` (Intel). Windows: \`Morse-Setup.exe\`. Linux: \`Morse-linux-x86_64.AppImage\`."
+            echo "**Morse:** Mac: \`Morse-mac-arm64.dmg\` (Apple silicon) or \`Morse-mac-x64.dmg\` (Intel). Windows: \`Morse-Setup.exe\`. Linux: \`Morse-linux-x86_64.AppImage\`."
             echo
             echo "**Mac, with no security prompts:** paste \`curl -fsSL https://raw.githubusercontent.com/$R/main/install-app.sh | sh\` in Terminal. It checks Morse against SHA256SUMS, puts it in Applications and opens it."
             echo

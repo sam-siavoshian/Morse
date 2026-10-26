@@ -237,7 +237,7 @@ jobs:
             echo "### Get it"
             echo
             if [ -n "$NPM_PUBLISHED" ]; then echo "- The \`morse\` command: \`npm install -g morse-cli@$VERSION\`"; fi
-            ls out | grep -qiE '\.(AppImage|dmg|exe)$' && echo "- Morse Desktop: the \`.AppImage\` (Linux), \`.dmg\` (macOS) and \`.exe\` (Windows) below"
+            ls out | grep -qiE '\.(AppImage|dmg|exe)$' && echo "- Morse: the \`.AppImage\` (Linux), \`.dmg\` (macOS) and \`.exe\` (Windows) below"
             echo
             echo "SHA-256:"
             echo
