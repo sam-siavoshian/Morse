@@ -91,7 +91,14 @@ function placeBar(r) {
 function swallow(e) { if (S.picking && !ours(e)) { e.preventDefault(); e.stopPropagation(); } }
 function onClick(e) {
   if (barDragEatClick()) { e.preventDefault(); e.stopPropagation(); return; }
-  if (!S.picking || ours(e)) return;
+  if (!S.picking) return;
+  // A click on the bar stays with the bar. A click that only hit the
+  // see-through popover is a point at the page underneath.
+  if (ours(e)) {
+    const under = GodMode.deepAt(e.clientX, e.clientY);
+    const scope = under?.getRootNode?.();
+    if (!under || under === hostEl || scope?.host === hostEl) return;
+  }
   e.preventDefault(); e.stopPropagation();
   if (!e.isTrusted) return;
   // A tap on a touch screen clicks with no mouse move first: point at what is under it.
