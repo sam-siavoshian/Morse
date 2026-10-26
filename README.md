@@ -15,7 +15,7 @@
 
 <br /><br />
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/screenshots/bring-17-rubygems-palette.png" alt="rubygems.org for Rails, with a command palette taken from VSCodium: Ctrl+Shift+P opens a search of this page, and a Commands button sits in RubyGems' own header." width="1200" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian.gif" alt="Before: an Obsidian note, Deep Work, with no timer. Adding it: Morse writing a focus panel and a 25 minute countdown. After: the countdown is running." width="1000" />
 
 </div>
 
@@ -68,7 +68,13 @@ A change you save is a **mod**. Morse puts your mods back every time the app ope
 
 ## Real runs
 
-Screenshots of real apps and live sites. Not drawings.
+Real apps and live sites. Before, adding it, after. Not drawings.
+
+### A timer Obsidian did not ship
+
+Obsidian ships no focus timer. The note was open. Morse added a panel with the reading time and a 25 minute countdown. Start, and it runs.
+
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian.gif" alt="Before: an Obsidian note, Deep Work, with no timer. Adding it: Morse writing a focus panel and a 25 minute countdown. After: the countdown is running." width="900" />
 
 ### Bring a feature from one app into another
 
