@@ -15,6 +15,7 @@ const morse = window.morse;
 const $ = id => document.getElementById(id);
 const platform = new URLSearchParams(location.search).get("platform") || "";
 document.body.classList.toggle("mac", platform === "darwin");
+$("ob-mac-allow").hidden = platform !== "darwin";
 // The same names core/hotkeys.js uses: the window is told its OS in the page URL.
 const HK_PLATFORM = platform === "darwin" ? "mac" : platform === "win32" ? "win" : platform === "linux" ? "linux" : detectPlatform();
 
@@ -749,7 +750,19 @@ async function runChecks() {
 $("run-checks").onclick = runChecks;
 
 // ---------------------------------------------------------------- settings
-$("auto-open").onchange = async e => { const on = e.target.checked; const r = await morse.setAutoOpen(on); if (r?.error) e.target.checked = !on; };
+// Always open with Morse: the sidebar switch and the first-run switch are
+// this one setting (desktop.json autoOpen). Neither stores a choice of its own.
+function bindAutoOpen(id) {
+  $(id).onchange = async e => {
+    const on = e.target.checked;
+    const r = await morse.setAutoOpen(on);
+    if (r?.error) { e.target.checked = !on; return; }
+    if (st?.settings) st.settings.autoOpen = on;
+    for (const box of ["auto-open", "ob-auto-open"]) $(box).checked = on;
+  };
+}
+bindAutoOpen("auto-open");
+bindAutoOpen("ob-auto-open");
 
 // Enter in an API-key field is "use this key", the same as the button: typing a
 // key and pressing Enter should save it, not sit there.
@@ -762,10 +775,11 @@ submitOnEnter("first-key-input", "first-key-use");
 
 // ---------------------------------------------------------------- first run
 // In the shape of Zephium's: the name forms out of dots with its sound, then
-// three steps: the AI Morse found by itself (checked once), how it works, and
-// an app to open. Opening an app, Done, or Skip leads to the main window for
-// good. Enter goes on; the row at the foot steers.
-const STEPS = ["model", "how", "apps"];
+// the AI Morse found by itself (checked once), that apps open with Morse
+// (the same switch as the sidebar), how it works, and an app to open.
+// Opening an app, Done, or Skip leads to the main window for good. Enter
+// goes on; the row at the foot steers.
+const STEPS = ["model", "open", "how", "apps"];
 let firstChecked = false, obStep = "welcome", obStarted = false;
 function obGo(step) {
   if (!step) return;
@@ -1108,7 +1122,7 @@ function render() {
   if (st.loading) { document.documentElement.dataset.ready = "1"; return; }
   renderFirst();
   renderApps(); renderModel(); renderMods(); renderShortcut(); renderUpdate(); renderUpdateCheck();
-  $("auto-open").checked = st.settings.autoOpen;
+  for (const id of ["auto-open", "ob-auto-open"]) $(id).checked = !!st.settings.autoOpen;
   $("version").textContent = `Morse ${st.version}`;
   document.documentElement.dataset.ready = "1";
 }

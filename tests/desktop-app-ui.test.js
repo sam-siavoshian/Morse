@@ -104,12 +104,17 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
   assert.equal(await w.evaluate(() => fetch("https://example.com/").then(() => "fetched", () => "refused")), "refused");
 
   // The first run: the name forms out of dots, then Begin; the AI Morse found
-  // by itself; how it works; then an app to open. Tunes is offered.
+  // by itself; apps open with Morse (the same switch as the sidebar); how it
+  // works; then an app to open. Tunes is offered. This test saved autoOpen off.
   await w.locator("#first").waitFor({ timeout: 30000 });
   assert.equal(await w.locator(".app").isVisible(), false, "nothing else until the first app is opened");
   await w.waitForFunction(() => ["formed", "still"].includes(document.getElementById("first").dataset.phase), null, { timeout: 30000 });
   await w.click("#ob-begin");
   assert.match(await w.locator("#first-model").innerText(), /Morse will use Demo model/);
+  await w.click("#ob-next");
+  assert.match(await w.locator('.ob-step[data-ob="open"]').innerText(), /Apps open with Morse/);
+  assert.equal(await w.locator("#ob-auto-open").isChecked(), false, "onboarding shows the saved Always open with Morse setting");
+  assert.equal(await w.locator("#auto-open").isChecked(), false, "the sidebar switch is that same setting");
   await w.click("#ob-next");
   assert.match(await w.locator('.ob-step[data-ob="how"]').innerText(), /Open Morse[\s\S]*Point at something[\s\S]*Say what you want/);
   await w.keyboard.press("Enter"); // Enter goes on, as Continue does

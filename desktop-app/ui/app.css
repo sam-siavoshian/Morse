@@ -325,6 +325,10 @@ label.check input { accent-color: var(--m-signal-4); flex: none; margin: 2px 0 0
 .ob-scene > .live > span:not(.mark-tile):not(.badge) { flex: 1; min-width: 0; }
 .ob-scene > .live > :is(.badge, .radar, .dot) { flex: none; }
 .ob-scene .list > li { min-height: 56px; padding-block: var(--s-2); }
+.ob-scene > .switchrow.big { align-items: center; padding: 8px 2px 14px; border-bottom: 1px solid var(--m-line); }
+.ob-scene > .switchrow.big > span { min-width: 0; }
+.ob-scene > .switchrow.big small { max-width: 46ch; line-height: 1.4; text-wrap: balance; }
+.ob-note { margin: 0; max-width: 52ch; color: var(--m-text-3); font-size: 13px; line-height: 1.45; text-wrap: balance; }
 @keyframes ob-rise { from { opacity: 0; transform: translateY(10px); } }
 
 /* How it works: three moves side by side */
@@ -442,7 +446,8 @@ main::-webkit-scrollbar-track { background: transparent; }
 #mods .mod-actions { display: flex; align-items: center; gap: var(--s-1); flex: none; }
 #mods .modsw { display: grid; place-items: center; width: 44px; height: 32px; margin: 0; cursor: pointer; border-radius: var(--r); }
 #mods .list.mods input[role="switch"]:focus-visible,
-.side-foot input[role="switch"]:focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
+.side-foot input[role="switch"]:focus-visible,
+.ob-scene input[role="switch"]:focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
 /* Delete waits until the row is pointed at or focused, so the list stays calm. */
 #mods .list.mods [data-del] { opacity: 0; transition: opacity var(--m-fast); }
 #mods .list.mods > li:hover [data-del], #mods .list.mods > li:focus-within [data-del] { opacity: 1; }

@@ -293,16 +293,16 @@ test("an app that is already open asks first: Restart once (y) or always (a), th
   assert.ok(service.sessions.has("slack"));
 });
 
-test("Always open with Morse: an app with mods that starts on its own is opened again with Morse; others are left alone", async () => {
+test("Always open with Morse: an app that starts on its own is opened again with Morse; one already open, or with the switch off, is left alone", async () => {
   let procs = [{ pid: 11, cmd: "/usr/lib/slack/slack" }];
   const { call, daemon, service } = setup({ listProcesses: () => procs });
   const opened = () => daemon.calls.filter(c => c[0] === "connectApp").map(c => c[1].id);
   assert.equal((await call("state")).settings.autoOpen, true, "on unless you turn it off");
-  await service.apps(); // first look: Slack was already open when Morse started (no mods anyway); Tunes is closed
+  await service.apps(); // first look: Slack was already open when Morse started; Tunes is closed
   procs = [...procs, { pid: 12, cmd: "/opt/Tunes/tunes" }]; // Tunes opened from the Dock
   await service.apps();
   await new Promise(r => setTimeout(r, 20));
-  assert.deepEqual(opened(), ["tunes"], "Tunes has a mod on, so it opens again with Morse");
+  assert.deepEqual(opened(), ["tunes"], "Tunes went from closed to open, so it opens again with Morse");
   assert.equal(await daemon.calls.find(c => c[0] === "connectApp")[2].ask(), "y", "quit and open again, without asking");
   assert.ok(service.sessions.has("tunes"));
 
@@ -338,6 +338,73 @@ test("Always open with Morse, for a browser: opened from the Dock with website m
   await service.apps();
   await new Promise(r => setTimeout(r, 20));
   assert.deepEqual(daemon.calls.filter(c => c[0] === "connectApp").map(c => c[1].id), ["chrome"]);
+});
+
+test("a new install opens apps with Morse, and onboarding toggles the same setting as the sidebar", async () => {
+  let procs = [];
+  const { call, daemon, service } = setup({ listProcesses: () => procs });
+  const opened = () => daemon.calls.filter(c => c[0] === "connectApp").map(c => c[1].id);
+  const file = path.join(daemon.HOME, "desktop.json");
+  const waitOpen = async n => {
+    for (let i = 0; i < 50 && opened().length < n; i++) await new Promise(r => setTimeout(r, 10));
+  };
+
+  const first = await call("state");
+  assert.equal(first.settings.autoOpen, true, "a new install opens apps with Morse");
+  assert.equal(first.settings.welcomed, false, "the first run shows");
+  assert.equal(existsSync(file), false, "nothing saved yet: the default is on");
+  await settled(call); // first look: apps already open stay as they are
+  assert.deepEqual(opened(), [], "a closed app is not launched until you open it");
+
+  // Slack has no mods. Notes can't be connected. Neither needs a press of Open with Morse.
+  procs = [{ pid: 31, cmd: "/usr/lib/slack/slack" }, { pid: 30, cmd: "/x/notes" }];
+  await service.apps();
+  await waitOpen(1);
+  assert.deepEqual(opened(), ["slack"], "an app with no mods opens with Morse; a native app does not");
+
+  daemon.apps.push({ id: "nova", name: "Nova", exe: "/opt/Nova/nova", path: "/opt/Nova/nova", canAttach: true, why: "Electron", known: true });
+  await service.apps({ fresh: true });
+  await new Promise(r => setTimeout(r, 30));
+  assert.deepEqual(opened(), ["slack"], "a closed app Morse finds later is not launched on its own");
+  procs = [...procs, { pid: 32, cmd: "/opt/Nova/nova" }];
+  await service.apps();
+  await waitOpen(2);
+  assert.deepEqual(opened(), ["slack", "nova"], "one found later opens with Morse when you open it");
+
+  // The sidebar and the first-run screen both call setAutoOpen, which is this field.
+  assert.deepEqual(await call("setAutoOpen", false), { ok: true });
+  assert.equal((await call("state")).settings.autoOpen, false);
+  const saved = JSON.parse(readFileSync(file, "utf8"));
+  assert.equal(saved.autoOpen, false);
+  assert.equal(Object.hasOwn(saved, "openWith"), false, "no second flag beside autoOpen");
+
+  daemon.apps.push({ id: "later", name: "Later", exe: "/opt/Later/later", path: "/opt/Later/later", canAttach: true, why: "Electron", known: true });
+  procs = [...procs, { pid: 33, cmd: "/opt/Later/later" }];
+  await service.apps({ fresh: true });
+  await new Promise(r => setTimeout(r, 30));
+  assert.deepEqual(opened(), ["slack", "nova"], "turned off: a newly found app stays as it is");
+
+  assert.deepEqual(await call("setAutoOpen", true), { ok: true });
+  assert.equal((await call("state")).settings.autoOpen, true, "turned on again is the same setting");
+  daemon.apps.push({ id: "again", name: "Again", exe: "/opt/Again/again", path: "/opt/Again/again", canAttach: true, why: "Electron", known: true });
+  await service.apps({ fresh: true });
+  procs = [...procs, { pid: 34, cmd: "/opt/Again/again" }];
+  await service.apps();
+  await waitOpen(3);
+  assert.deepEqual(opened(), ["slack", "nova", "again"]);
+
+  const html = readFileSync(path.join(root, "desktop-app/ui/index.html"), "utf8");
+  const js = readFileSync(path.join(root, "desktop-app/ui/app.js"), "utf8");
+  assert.match(html, /data-ob="open"/);
+  assert.equal((html.match(/data-i18n="desk\.autoOpen"/g) || []).length, 2, "onboarding and the sidebar use the same words");
+  assert.match(html, /id="ob-auto-open"/);
+  assert.match(html, /id="auto-open"/);
+  assert.match(js, /bindAutoOpen\("auto-open"\)/);
+  assert.match(js, /bindAutoOpen\("ob-auto-open"\)/);
+  assert.equal((js.match(/morse\.setAutoOpen\(on\)/g) || []).length, 1, "both switches write through one call");
+  assert.match(js, /\["auto-open", "ob-auto-open"\]/);
+  assert.doesNotMatch(readFileSync(path.join(root, "desktop-app/service.js"), "utf8"), /openWith|obAutoOpen/);
+  assert.match(readFileSync(path.join(root, "desktop-app/service.js"), "utf8"), /autoOpen: true/);
 });
 
 test("an app Morse can't connect to, and errors, come back in plain words without terminal colors", async () => {

@@ -54,8 +54,8 @@ export async function loadDaemon() {
 
 // Morse Desktop's own choices, in the Morse folder: desktop.json.
 //   startAtLogin  open Morse (in the tray) when you log in; on with autoOpen
-//   autoOpen      an app with mods that starts on its own (the Dock, Finder, the
-//                 Start menu) is opened again with Morse, so its mods are there; on
+//   autoOpen      an app Morse can open that starts on its own (the Dock, Finder,
+//                 the Start menu), or one found later, is opened again with Morse; on
 //   loginSet      Morse turned startAtLogin on by itself once, for autoOpen (never again: your choice stands)
 //   apps          apps you added by their file, for apps Morse didn't find
 //   appArgs       { "<app id>": [arguments] }: what `morse launch <app> -- <args>` passes (no window for it)
@@ -274,21 +274,31 @@ export function createService({
     }
   }
 
-  // Always open with Morse (autoOpen): an app with mods on that was closed at
-  // the last look and is now open without Morse was just started the usual
-  // way. Morse quits it (politely, as ⌘Q would) and opens it again with
-  // Morse. An app that was already open when Morse started is left alone.
+  // Always open with Morse (autoOpen): on for a new install, until you turn
+  // it off. An app Morse can connect to that was closed and is now open was
+  // started the usual way. One Morse finds later, already open, is the same.
+  // Morse quits it (politely, as ⌘Q would) and opens it again with Morse, so
+  // you don't press Open with Morse once per app. An app that was already
+  // open when Morse started is left alone. The same switch is in the sidebar
+  // and on the first-run screen.
+  let watched = false;
   function keepMods(rows) {
     const on = settings?.autoOpen !== false;
+    const baseline = !watched;
+    watched = true;
     for (const r of rows) {
+      const known = seen.has(r.id);
       const was = seen.get(r.id);
       seen.set(r.id, r.state);
-      if (!on || was !== "closed" || r.state !== "open" || !r.modsOn || r.canAttach === false || r.external) continue;
+      if (!on || r.state !== "open" || r.canAttach === false || r.external) continue;
+      const started = known && was === "closed";
+      const foundLater = !baseline && !known;
+      if (!started && !foundLater) continue;
       if (now() - (reopened.get(r.id) || 0) < 60000) continue;
       reopened.set(r.id, now());
       (async () => {
         if ((await pause()).all) return; // every mod is off: nothing to bring back
-        log(`${r.name} opened without Morse; opening it again with Morse (its mods are on)`);
+        log(`${r.name} opened without Morse; opening it again with Morse`);
         const res = await openApp(r.id, { answer: "y" });
         if (res.error) log(`${r.name}: couldn't open it with Morse: ${res.error}`);
       })().catch(e => log(`reopen ${r.id}: ${e?.message || e}`));
