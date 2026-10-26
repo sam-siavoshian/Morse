@@ -8,7 +8,7 @@ and shows your mods.
 A mod is a change you saved. Morse brings it back every time you open that
 site or app.
 
-![The Morse app: your apps, each with its own icon, with Visual Studio Code connected](screenshots/167-desktop-app-apps.png)
+![The Morse app: your apps, each with its own icon, with Visual Studio Code connected](screenshots/167-desktop-app-apps.webp)
 
 ## Get it
 
@@ -60,8 +60,8 @@ always at the top:
 3. **Pick an app to change**, each with **Open with Morse**. Click one, and
    you're done. Browsers are in the list too, for websites.
 
-![The welcome: Morse's name, then Begin](screenshots/176-desktop-app-welcome.png)
-![How it works: open Morse, point at something, say what you want](screenshots/177-desktop-app-how.png)
+![The welcome: Morse's name, then Begin](screenshots/176-desktop-app-welcome.webp)
+![How it works: open Morse, point at something, say what you want](screenshots/177-desktop-app-how.webp)
 
 The first run follows [Zephium](https://github.com/zephium-browser/zephium)'s:
 the dots that form the name (`desktop-app/ui/formation.js`) and the sound
@@ -91,7 +91,7 @@ Morse can only connect to an app when the app starts. If the app is already
 open, Morse asks first. Choose **Always restart**, and it won't ask again for
 that app.
 
-![“Visual Studio Code is open. Restart it with Morse?”](screenshots/168-desktop-app-restart.png)
+![“Visual Studio Code is open. Restart it with Morse?”](screenshots/168-desktop-app-restart.webp)
 
 Morse never changes an app's files. It opens the app again with one extra
 setting, so it can connect.
@@ -105,7 +105,7 @@ installed**. **How to install** shows the one command to run. **Look again**
 finds it once it's there. **Check** asks the model a short question to
 make sure it answers.
 
-![Model: Claude Code answered, and the choices: Claude Code ready, Codex not installed, an API key](screenshots/169-desktop-app-model.png)
+![Model: Claude Code answered, and the choices: Claude Code ready, Codex not installed, an API key](screenshots/169-desktop-app-model.webp)
 
 The marks of Claude, OpenAI and Anthropic only name the service you choose.
 Where they come from: `desktop-app/ui/icons/NOTICE`.
@@ -129,7 +129,7 @@ mod you turn off stays saved.
 The **Mods on** switch at the bottom left turns every mod off at once, in
 every app. Click it again to turn them back on.
 
-![Mods, app by app, with their switches](screenshots/172-desktop-app-mods.png)
+![Mods, app by app, with their switches](screenshots/172-desktop-app-mods.webp)
 
 ## Checks
 
@@ -137,7 +137,7 @@ Under **Model**, **Run checks** shows what Morse found on this computer and
 asks your model a short question. A row marked **!**
 says what to do.
 
-![Checks: what Morse found, and the model answered](screenshots/173-desktop-app-checks.png)
+![Checks: what Morse found, and the model answered](screenshots/173-desktop-app-checks.webp)
 
 ## In the tray or menu bar
 
@@ -155,7 +155,7 @@ its window comes back.
 With **Always open with Morse** on (at the bottom left, on unless you turn it
 off), the Morse app opens when you log in, in the tray, without the window.
 
-![The Morse app in light mode](screenshots/174-desktop-app-light.png)
+![The Morse app in light mode](screenshots/174-desktop-app-light.webp)
 
 ## Updates
 

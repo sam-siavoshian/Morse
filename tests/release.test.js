@@ -95,7 +95,7 @@ test("the Pages build publishes the paths the code uses, with no broken links", 
   const out = tempDir("morse-pages-");
   try {
     await buildPages({ out });
-    for (const p of ["index.html", "site/index.html", "site/privacy.html", "site/mods/index.json", "share/install.html", "core/mod.js", "design/tokens.css", "docs/launch/morse-demo.mp4", ".nojekyll"]) {
+    for (const p of ["index.html", "site/index.html", "site/privacy.html", "site/mods/index.json", "share/install.html", "core/mod.js", "design/tokens.css", "site/og-image.png", "site/sky/day.avif", ".nojekyll"]) {
       assert.ok(existsSync(path.join(out, p)), `publishes ${p}`);
     }
     const { SHARE_BASE } = await import("../core/mod.js");

@@ -63,7 +63,7 @@ The polish round's own question to the model ([`core/polish.js`](../../core/poli
 
 ## Results
 
-Claude Code `sonnet`, one run per case and arm, all arms judged together by Opus ([`results/2026-10-24T21-45-41-judged-all.json`](results/2026-10-24T21-45-41-judged-all.json)). Scores are the mean over cases, 1 to 5; **works** is the functional check.
+Claude Code `sonnet`, one run per case and arm, all arms judged together by Opus. Scores are the mean over cases, 1 to 5; **works** is the functional check. The raw judging file is not in the tree.
 
 | Arm | Works | Native | Typography | Spacing | Dark/light | Polish | No bugs | **Mean** | Time, median / p90 | Polish rounds (fixed), median time |
 |---|---|---|---|---|---|---|---|---|---|---|

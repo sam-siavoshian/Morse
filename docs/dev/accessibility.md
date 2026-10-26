@@ -36,7 +36,7 @@ off, because they're about the page underneath, not Morse: `region`,
 
 `npm run ui` runs axe after each screenshot, except on the animation states
 (effect, pulse, motion, radar), which are timed to the frame. Findings show
-in `docs/ui/index.html` with the other verdicts, and the run ends with a
+in the contact sheet that run writes (`docs/ui/index.html`, not committed) with the other verdicts, and the run ends with a
 count per rule. `node demo/ui-catalog.js --out=/tmp/ui --theme=dark --width=1100`
 audits without touching `docs/ui`; `--no-axe` skips it.
 

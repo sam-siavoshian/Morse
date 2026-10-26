@@ -22,8 +22,8 @@
     "userScripts": false,
     "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload.",
     "shots": {
-      "before": "shots/pypi-dark-mode-before.jpg",
-      "after": "shots/pypi-dark-mode-after.jpg"
+      "before": "shots/pypi-dark-mode-before.webp",
+      "after": "shots/pypi-dark-mode-after.webp"
     }
   },
   {
@@ -118,8 +118,8 @@
     "userScripts": false,
     "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload.",
     "shots": {
-      "before": "shots/nodejs-side-contents-before.jpg",
-      "after": "shots/nodejs-side-contents-after.jpg"
+      "before": "shots/nodejs-side-contents-before.webp",
+      "after": "shots/nodejs-side-contents-after.webp"
     }
   },
   {
@@ -214,8 +214,8 @@
     "userScripts": false,
     "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload.",
     "shots": {
-      "before": "shots/rubygems-dark-mode-before.jpg",
-      "after": "shots/rubygems-dark-mode-after.jpg"
+      "before": "shots/rubygems-dark-mode-before.webp",
+      "after": "shots/rubygems-dark-mode-after.webp"
     }
   },
   {
@@ -241,8 +241,8 @@
     "userScripts": false,
     "checked": "Oct 24, 2026, on the real site: it works, and still works after a reload.",
     "shots": {
-      "before": "shots/docker-dark-code-before.jpg",
-      "after": "shots/docker-dark-code-after.jpg"
+      "before": "shots/docker-dark-code-before.webp",
+      "after": "shots/docker-dark-code-after.webp"
     }
   },
   {
@@ -383,8 +383,8 @@
     "userScripts": false,
     "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
     "shots": {
-      "before": "shots/wiki-dark-mode-before.jpg",
-      "after": "shots/wiki-dark-mode-after.jpg"
+      "before": "shots/wiki-dark-mode-before.webp",
+      "after": "shots/wiki-dark-mode-after.webp"
     },
     "demo": true
   },
@@ -767,8 +767,8 @@
     "userScripts": true,
     "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
     "shots": {
-      "before": "shots/shop-hide-sold-out-before.jpg",
-      "after": "shots/shop-hide-sold-out-after.jpg"
+      "before": "shots/shop-hide-sold-out-before.webp",
+      "after": "shots/shop-hide-sold-out-after.webp"
     },
     "demo": true
   },
@@ -819,8 +819,8 @@
     "userScripts": true,
     "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
     "shots": {
-      "before": "shots/logs-errors-red-before.jpg",
-      "after": "shots/logs-errors-red-after.jpg"
+      "before": "shots/logs-errors-red-before.webp",
+      "after": "shots/logs-errors-red-after.webp"
     },
     "demo": true
   },
@@ -847,8 +847,8 @@
     "userScripts": false,
     "checked": "Oct 24, 2026, on the demo app: it works, and still works after a reload. Checked again by every test run.",
     "shots": {
-      "before": "shots/byte-reading-mode-before.jpg",
-      "after": "shots/byte-reading-mode-after.jpg"
+      "before": "shots/byte-reading-mode-before.webp",
+      "after": "shots/byte-reading-mode-after.webp"
     },
     "demo": true
   },

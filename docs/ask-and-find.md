@@ -17,14 +17,14 @@ page it talks about. Click a number to scroll there.
 You can ask more: “and how do I undo that?” Morse remembers the questions and
 answers for this page while it's open. They are never saved.
 
-![Ask what something does: on Docker Hub, “what does this tab show?”, an answer and a marker on the tab](screenshots/311-real-ask.png)
+![Ask what something does: on Docker Hub, “what does this tab show?”, an answer and a marker on the tab](screenshots/311-real-ask.webp)
 
 ## Find
 
 Ask where something is. If it's inside a closed menu, the answer says which
 menu to open.
 
-![Find something: “where can I see which versions of this image there are?”, with markers on the page](screenshots/312-real-find.png)
+![Find something: “where can I see which versions of this image there are?”, with markers on the page](screenshots/312-real-find.webp)
 
 ## Show me
 
@@ -37,7 +37,7 @@ for you. Morse never clicks or types for you.
 **Explain this page**, in Page tools, says in about five lines what the
 screen is for.
 
-![Explain this page, from Page tools, on Docker Hub](screenshots/313-real-explain.png)
+![Explain this page, from Page tools, on Docker Hub](../site/shots/313-real-explain.webp)
 
 To have Morse repeat a task for you instead of showing you, see
 [Show me once](show-me-once.md).
