@@ -37,6 +37,10 @@ globalThis.__morseShotArea = async (selector, modId, done) => {
 const PLACEHOLDER = () => t("bar.placeholder");
 const REFINE_PLACEHOLDER = () => t("bar.placeholder.refine");
 const FIX_NOTE = () => t("result.fixNote");
+// Only the thinking label shines, and only while a reply is still being made.
+function markThinking() {
+  hint.classList.toggle("shine", S.phase === "working" && hint.textContent === t("gen.thinking"));
+}
 langSubs.add(() => { input.placeholder = bar.classList.contains("done") ? REFINE_PLACEHOLDER() : PLACEHOLDER(); });
 
 // Puts a version's code on the page under the mod's id (the old JS is undone first).
@@ -79,7 +83,7 @@ async function submit(request, opts = {}) {
   // The status says what is really happening, step by step (speed: no waiting
   // looks the same as any other): asking, the model reading, thinking,
   // writing, the change showing up as it's written, trying it.
-  const say = text => { hint.textContent = text; }; // one animation at a time: the field over the target (90-effect.js)
+  const say = text => { hint.textContent = text; markThinking(); }; // one animation at a time: the field over the target (90-effect.js)
   say(t("gen.asking"));
   // Screen readers hear a few steps, never the streaming code: working, the
   // first change on the page, a retry, then done or what went wrong.
@@ -207,8 +211,10 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
 
 // Leaving the result (opening the bar fresh, an error) puts the usual words back.
 new MutationObserver(() => {
+  markThinking(); // leaving "working", or a later writer replacing the hint, drops the shine
   if (!bar.classList.contains("done") && S.phase !== "working" && input.placeholder === REFINE_PLACEHOLDER()) input.placeholder = PLACEHOLDER();
 }).observe(bar, { attributes: true, attributeFilter: ["class", "hidden"] });
+new MutationObserver(markThinking).observe(hint, { childList: true, characterData: true, subtree: true });
 
 const onEvent = fn => { listeners.add(fn); return () => listeners.delete(fn); };
 let tickBuf = "";
