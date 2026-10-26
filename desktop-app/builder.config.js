@@ -78,7 +78,10 @@ export function builderConfig({ stage, out, res, electronDist = null, electronVe
       identity: macSigned ? undefined : null,
       notarize,
     },
-    dmg: { title: "Morse ${version}", writeUpdateInfo: false },
+    // ${arch} is empty for x64 and "-arm64" for Apple silicon. Both dmgs are
+    // built at once; the same volume name makes hdiutil detach fail and the
+    // Mac build is thrown away.
+    dmg: { title: "Morse ${version}${arch}", writeUpdateInfo: false },
 
     win: {
       target: [{ target: "nsis", arch: ["x64", "arm64"] }],

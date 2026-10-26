@@ -89,7 +89,7 @@ jobs:
           if-no-files-found: ignore
 
   build:
-    name: Store zip and npm package
+    name: npm package
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -127,7 +127,17 @@ jobs:
         run: |
           node scripts/release.js notes "$VERSION" > out/notes.md
           test -s out/notes.md || { echo "::error::No release notes for $VERSION in CHANGELOG.md."; exit 1; }
-          (cd out && sha256sum *.zip *.tgz) > out/SHA256SUMS
+          # The store zip is no longer packed. Hash the npm package, and a zip if one is there.
+          (
+            cd out
+            shopt -s nullglob
+            files=(*.tgz *.zip)
+            if [ ${#files[@]} -eq 0 ]; then
+              echo "::error::No package to checksum." >&2
+              exit 1
+            fi
+            sha256sum "${files[@]}"
+          ) > out/SHA256SUMS
           cat out/notes.md out/SHA256SUMS
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

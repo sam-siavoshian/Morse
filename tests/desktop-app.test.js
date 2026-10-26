@@ -731,6 +731,7 @@ test("the packaged app is named Morse", async () => {
   assert.equal(c.nsis.shortcutName, "Morse");
   assert.equal(c.protocols[0].name, "Morse");
   assert.equal(c.compression, "maximum");
+  assert.equal(c.dmg.title, "Morse ${version}${arch}", "arm64 and x64 mount different volumes, or the Mac build dies in hdiutil");
   assert.equal(c.nsis.buildUniversalInstaller, false, "one Electron runtime per Windows installer");
   assert.ok(c.electronLanguages.includes("en-US") && c.electronLanguages.includes("en"));
   assert.equal(typeof c.afterPack, "function");

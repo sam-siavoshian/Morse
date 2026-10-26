@@ -204,9 +204,8 @@ To publish it, push both:
 
   ${push}
 
-The tag starts the release workflow: checks, tests, npm, the GitHub release
-with the Chrome Web Store zip. Then upload the zip by hand
-(docs/store/SUBMIT.md).
+The tag starts the release workflow: checks, tests, the npm package, and the
+GitHub release with the Morse Desktop downloads.
 
 Changed your mind? git tag -d ${tag} && git reset --hard HEAD~1`);
 }
