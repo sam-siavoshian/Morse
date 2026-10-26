@@ -29,14 +29,14 @@ export const LINKS = {
 // and height set the frame's shape before it loads. caption is the line under
 // it, label is what a screen reader says, and strip is the short line above it.
 export const DEMO_VIDEO = {
-  mp4: "../docs/launch/morse-v4-16x9.mp4",
-  loop: { webm: "../docs/launch/morse-v4-web.webm", mp4: "../docs/launch/morse-v4-web.mp4" },
-  poster: "../docs/launch/morse-v4-poster.webp",
+  mp4: "../docs/launch/morse-opus-open-16x9.mp4",
+  loop: { webm: "../docs/launch/morse-opus-open-web.webm", mp4: "../docs/launch/morse-opus-open-web.mp4" },
+  poster: "../docs/launch/morse-opus-open-poster.webp",
   width: 1920,
   height: 1080,
-  label: "Morse on The Daily Byte: a new headline, the ads hidden, dark mode, then the same page opened again, 50 seconds",
-  strip: "Edit text, hide the ads, dark mode · no model",
-  caption: "50 seconds. Opens on the finished page: the headline is “A quieter front page”, the ads and the popup are gone, and the page is dark. Then those three edits, sped up. The page is opened again and the mods are still on. No model was connected. Music is an original drum bed.",
+  label: "Morse on The Daily Byte, then Obsidian, the Mods list, the shortcut and the update window, 33 seconds",
+  strip: "The finished page first, then how it got there",
+  caption: "33 seconds. Opens on the finished page: the headline is “A quieter front page”, the ads and the popup are gone, and the page is dark. Then those edits, Obsidian in light mode, the Mods list, the shortcut and the update window. No model was called. The update percent is the window playing, not a download.",
 };
 
 // "See it change": the big before and after pairs, in order. Each picture is a

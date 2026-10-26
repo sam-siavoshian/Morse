@@ -2,9 +2,13 @@
 
 **Change any website or desktop app in your own words.**
 
-[![The 50-second launch video](morse-v4-poster.webp)](morse-v4-16x9.mp4)
+[![The 33-second launch video](morse-opus-open-poster.webp)](morse-opus-open-16x9.mp4)
 
-[Watch the launch video](morse-v4-16x9.mp4) (50 seconds) · [The previous cut](morse-v3-16x9.mp4) (34 seconds) · [The longer demo](morse-demo-v2.mp4) (92 seconds, on this repo's demo apps) · [Website](https://sam-siavoshian.github.io/RRAA/site/) · [Source](https://github.com/sam-siavoshian/RRAA)
+[Watch the launch video](morse-opus-open-16x9.mp4) (33 seconds) · [The previous cut](morse-v4-16x9.mp4) (50 seconds) · [The longer demo](morse-demo-v2.mp4) (92 seconds, on this repo's demo apps) · [Website](https://sam-siavoshian.github.io/RRAA/site/) · [Source](https://github.com/sam-siavoshian/RRAA)
+
+## The launch video
+
+33 seconds, 1920×1080. It opens on The Daily Byte already changed: the headline “A quieter front page”, the ads and the popup gone, and dark mode. Then those edits, Obsidian in light mode, the Mods list, the shortcut and the update window, then the install command. No model was called. The update percent is the window playing, not a download. [`morse-opus-open-web.mp4`](morse-opus-open-web.mp4) and [`morse-opus-open-web.webm`](morse-opus-open-web.webm) are the site's muted loop. [`morse-opus-open-poster.webp`](morse-opus-open-poster.webp) is the poster. The shot list is [`opus-open-CUT.md`](opus-open-CUT.md).
 
 ## The launch video (v4)
 

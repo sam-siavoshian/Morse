@@ -193,5 +193,5 @@ test("pages: every image says what it shows and has a size; no fonts from other 
     assert.doesNotMatch(head(html), /fonts\.googleapis|fonts\.gstatic/, `${f}: its fonts come from the site`);
   }
   // The film's poster is the first screen's largest picture: preloaded.
-  assert.match(head(built("site/index.html")), /<link rel="preload" as="image" href="\.\.\/docs\/launch\/morse-v4-poster\.webp" fetchpriority="high">/);
+  assert.match(head(built("site/index.html")), /<link rel="preload" as="image" href="\.\.\/docs\/launch\/morse-opus-open-poster\.webp" fetchpriority="high">/);
 });
