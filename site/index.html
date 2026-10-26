@@ -115,6 +115,17 @@
       </div>
     </div>
 
+    <!-- The same clip as the README: the note with no timer, the ask in the
+         Morse bar, then the focus panel on the right. -->
+    <div class="wrap">
+      <figure class="clip">
+        <div class="shot">
+          <img src="clips/readme-obsidian-ask.gif" width="1000" height="674" loading="lazy" decoding="async" alt="The Obsidian note has no focus timer. Morse is open at the bottom with the ask for a focus panel. The panel was not on the note, then it appears on the right.">
+        </div>
+        <figcaption><b>A timer Obsidian did not ship.</b> Obsidian ships no focus timer. The note was open with none. Morse is open at the bottom with the ask: a panel with this note's reading time and a 25 minute countdown. The panel was not there. Then it is.</figcaption>
+      </figure>
+    </div>
+
     <!-- The Morse bar as it looked in a real run (docs/showcase: vscode-windows-95).
          Without motion it rests at the end: the change made, Save and Undo
          offered. motion.js mountDemo plays the run from the shortcut. -->
@@ -258,40 +269,26 @@
   </section>
 
   <!-- ===================================================== how it works -->
-  <!-- With motion, index.js pins the window and the scroll steps through the
-       three (data-pinned, data-step); without it they are three plates. -->
-  <section id="how" class="section section-later story" aria-labelledby="how-title" data-story>
+  <section id="how" class="section section-later" aria-labelledby="how-title">
     <div class="wrap">
       <header class="head">
         <h2 id="how-title" data-reveal>Three steps. Their files never change.</h2>
-        <p data-reveal style="--delay:0.08s">Obsidian on Linux, 7.8 seconds.</p>
+        <p data-reveal style="--delay:0.08s">Point at it, say what you want, save it.</p>
       </header>
-    </div>
-    <div class="story-track">
-      <div class="story-stage">
-        <div class="sky sky-story" aria-hidden="true">
-          <div class="sky-paint"></div>
-          <canvas class="dither" data-dither="up"></canvas>
-          <canvas class="dither" data-dither="down"></canvas>
-        </div>
-        <div class="wrap">
-          <ol class="plates plates-3 story-steps">
-            <li class="plate" data-reveal="fade">
-              <figure class="shot"><img src="shots/323-obsidian-ask.webp" width="1024" height="800" loading="lazy" decoding="async" alt="Obsidian with a note open. The Morse bar holds the request “make my notes look like an old typewritten page: yellowed paper, a typewriter font, and the headings underlined in dark red”."></figure>
-              <p class="plate-line"><b>Point at it.</b> Press <kbd>⌥</kbd><kbd>Space</kbd>, or <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd>.</p>
-            </li>
-            <li class="plate" data-reveal="fade" style="--delay:0.08s">
-              <figure class="shot"><img src="shots/324-obsidian-working.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The note is already turning yellow while the bar says it is writing the change."></figure>
-              <p class="plate-line"><b>Say what you want.</b> Type it, or hold the shortcut and talk.</p>
-            </li>
-            <li class="plate" data-reveal="fade" style="--delay:0.16s">
-              <figure class="shot"><img src="shots/325-obsidian-result.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The note on yellowed paper in a typewriter font, with dark red underlined headings. The bar says “Old Typewritten Page” and offers Save, Undo, Edit code and Share."></figure>
-              <p class="plate-line"><b>Save it.</b> It comes back next time. Undo puts the app back.</p>
-            </li>
-          </ol>
-          <div class="story-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-        </div>
-      </div>
+      <ol class="points" data-reveal="fade">
+        <li>
+          <b>Point at it.</b>
+          <p>Press <kbd>⌥</kbd><kbd>Space</kbd>, or <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd>.</p>
+        </li>
+        <li>
+          <b>Say what you want.</b>
+          <p>Type it, or hold the shortcut and talk. You see the change while your model writes it.</p>
+        </li>
+        <li>
+          <b>Save it.</b>
+          <p>It comes back next time. Undo puts the app back.</p>
+        </li>
+      </ol>
     </div>
   </section>
 
