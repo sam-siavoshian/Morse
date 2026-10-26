@@ -166,6 +166,7 @@ function renderApps() {
   if (st.appsPending) {
     if (!list.querySelector("li.skel")) list.replaceChildren(...skeletonItems());
     list.setAttribute("aria-busy", "true");
+    list.dataset.pending = "1";
     $("no-model").hidden = !st.model?.none;
     const nav = $("nav-apps");
     nav.textContent = "";
@@ -174,7 +175,8 @@ function renderApps() {
     return;
   }
   list.removeAttribute("aria-busy");
-  const rows = st.apps;
+  delete list.dataset.pending;
+  const rows = st.apps || [];
   const seen = new Set();
   if (!rows.length) {
     list.replaceChildren(h("li", { class: "empty" }, t("desk.apps.none")));
@@ -561,12 +563,6 @@ function renderFirst() {
   }
   host.removeAttribute("aria-busy");
   const apps = (st.apps || []).filter(a => a.canAttach !== false).slice(0, 5);
-  if (st.appsPending && !apps.length) {
-    if ($("first-apps").dataset.sig === "pending") return;
-    $("first-apps").dataset.sig = "pending";
-    $("first-apps").replaceChildren(h("li", { class: "empty" }, t("desk.apps.looking")));
-    return;
-  }
   const sig = JSON.stringify(apps.map(a => [a.id, a.state, a.icon ? 1 : 0]));
   if (host.dataset.sig === sig) return;
   host.dataset.sig = sig;
@@ -821,9 +817,10 @@ $("update").addEventListener("cancel", e => { if (["downloading", "installing"].
 
 // ---------------------------------------------------------------- state
 function render() {
-  // { loading: true } is the shell asking before the daemon is in (ipc.js).
-  // The skeleton stays up; data-ready waits for a real state, not for the scan.
-  if (!st || st.error || st.loading) return;
+  if (!st || st.error) return;
+  // Asked before the daemon is in: the HTML shell (and its skeleton) is already showing.
+  // data-ready is not held for the app scan either — renderApps leaves the skeleton up.
+  if (st.loading) { document.documentElement.dataset.ready = "1"; return; }
   renderFirst();
   renderApps(); renderModel(); renderMods(); renderShortcut(); renderUpdate(); renderUpdateCheck();
   $("auto-open").checked = st.settings.autoOpen;
