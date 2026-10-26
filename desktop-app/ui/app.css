@@ -201,6 +201,7 @@ li .radar.live rect.o, .live .radar.live rect.o { animation-name: m-pulse-dim; }
   align-items: center; width: 100%; margin: 0; padding: var(--s-3); border: 1px solid var(--m-line); border-radius: var(--r); background: transparent; color: inherit;
   font: inherit; text-align: start; }
 .connect-choice svg { grid-area: mark; width: 20px; height: 20px; }
+.connect-choice .connect-copy { display: contents; }
 .connect-choice b { grid-area: name; font: 600 14px/20px var(--m-font); }
 .connect-choice small { grid-area: line; color: var(--m-text-2); font-size: 12px; line-height: 16px; white-space: normal; }
 .connect-choice .badge { grid-area: state; justify-self: start; margin-top: 4px; }
