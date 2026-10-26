@@ -29,7 +29,8 @@ import { settingsLabel, currentSettings } from "./models.js"; // also registers 
 import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
 import { readWords } from "../core/languages.js"; // the bar's words in a language besides English ("i18n.words")
-import { prewarm } from "../core/providers.js";
+import { prewarm, fastModelOf, applyFastMode } from "../core/providers.js";
+import { notedLocalModels } from "./connect.js";
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory, watchPrefs } from "./store.js";
 import { Generations } from "../core/cancel.js";
@@ -53,6 +54,29 @@ import { bundleBoot, bundleUI } from "../runtime/bundle.js";
 const RUNTIME = bundleBoot();
 const UI = bundleUI();
 import { trace } from "./trace.js"; // MORSE_TRACE: one line per step of a change
+
+// The smaller model this provider already lists, or "". A local server uses
+// the list it returned (or the one saved with the choice). Never a made-up id.
+function fastModelId(settings) {
+  const base = settings && typeof settings === "object" ? settings : {};
+  const listed = base.provider === "local" ? (notedLocalModels(base.baseUrl) || base.listedModels || []) : undefined;
+  return fastModelOf(base.provider, base.provider === "local" ? listed : undefined) || "";
+}
+
+// Settings for one request. Fast mode swaps the model on a copy. The saved
+// model on the connector stays what the person chose.
+function fastReady(settings, prefs) {
+  const base = settings && typeof settings === "object" ? settings : {};
+  const listed = base.provider === "local" ? (notedLocalModels(base.baseUrl) || base.listedModels || []) : undefined;
+  const id = fastModelId(base);
+  const next = applyFastMode({
+    ...base,
+    mode: prefs?.modelMode ?? base.mode,
+    fastMode: !!prefs?.fastMode && !!id,
+    ...(base.provider === "local" ? { listedModels: listed } : {}),
+  });
+  return { next, fastModelId: id };
+}
 
 export const WORLD = "morse";            // the isolated world's name
 export const BINDING = "__morseHostSend"; // exists only in that world
@@ -355,7 +379,13 @@ export class Connector {
   // picks it up, including one whose bar is already open.
   applySettings(prefs) {
     if (!prefs || typeof prefs !== "object") return;
-    const expression = `globalThis.__morseHostReceive && __morseHostReceive(${JSON.stringify({ type: "settings.changed", settings: prefs })})`;
+    if (this.settings) {
+      const next = { ...this.settings };
+      if (typeof prefs.fastMode === "boolean") next.fastMode = prefs.fastMode;
+      if (prefs.modelMode) next.mode = prefs.modelMode;
+      this.settings = next;
+    }
+    const expression = `globalThis.__morseHostReceive && __morseHostReceive(${JSON.stringify({ type: "settings.changed", settings: prefs, fastModel: fastModelId(this.settings) })})`;
     for (const w of this.windows.values()) {
       const world = w.frames?.get(w.frameId)?.world;
       if (world == null) continue;
@@ -586,8 +616,11 @@ export class Connector {
       case "hello": {
         this.grantMic(s, (await here()).url);
         const prefs = await loadPrefs();
-        return { mode: "desktop", app, appName: this.app?.name || null, label: this.settings ? startLabel({ ...this.settings, mode: prefs.modelMode }, settingsLabel) : settingsLabel({}),
+        const ready = this.settings ? fastReady(this.settings, prefs) : null;
+        const labelSettings = ready && prefs.fastMode && ready.fastModelId ? ready.next : (this.settings ? { ...this.settings, mode: prefs.modelMode } : null);
+        return { mode: "desktop", app, appName: this.app?.name || null, label: labelSettings ? startLabel(labelSettings, settingsLabel) : settingsLabel({}),
           models: this.settings ? modelNames(this.settings, settingsLabel) : null, // models: the names the Settings sheet shows
+          fastModel: ready?.fastModelId || "",
           settings: prefs, voice: await cachedVoiceStatus(),
           quiet: !!s.welcomed || !(s.welcomed = true), // perf: welcome once per window, not on every reload (it loads the UI)
           debug: process.env.MORSE_DEBUG === "1" || undefined }; // status for tests (97-boot.js debugStatus)
@@ -651,7 +684,10 @@ export class Connector {
       case "warm": { // speed: the bar opened, or the person is typing; get the model ready (core/providers.js prewarm)
         const settings = await this.freshSettings();
         const typed = typeof msg.request === "string" ? msg.request.slice(0, 500) : ""; // models: the strong model for new UI and features
-        if (settings?.provider && settings.provider !== "none") prewarm({ ...settings, mode: (await loadPrefs()).modelMode }, typed); // models: warms the model the request starts on
+        if (settings?.provider && settings.provider !== "none") {
+          const prefs = await loadPrefs();
+          prewarm(fastReady(settings, prefs).next, typed); // models: warms the model the request starts on
+        }
         return true;
       }
       case "exec":
@@ -669,7 +705,7 @@ export class Connector {
           throw new Error("No model is connected. Run morse setup in a terminal to choose one.");
         const t0 = Date.now();
         const prefs = await loadPrefs();
-        const mode = prefs.modelMode; // models: Automatic, Always fast, Always best
+        const ready = fastReady({ ...this.settings, mode: prefs.modelMode }, prefs); // models: Automatic, Always fast, Always best, then Fast mode
         const sel = msg.context?.target?.selector;
         trace("bar", `"${msg.request}" · ${sel ? `pointed at ${sel}` : "the whole page"} · ${this.app?.name || "app"}`);
         trace("model", `${this.settings.provider}${this.settings.model ? ` · ${this.settings.model}` : ""}`);
@@ -678,7 +714,7 @@ export class Connector {
         const appLogic = this.profiler ? await this.profiler.slice(s, caller, msg.request, sel).catch(() => "") : "";
         if (appLogic) trace("profile", `the prompt gets ${appLogic.split("\n").length} lines about how ${this.app?.name || "the app"} works inside`);
         const res = await this.gens.run(msg.genId, signal => runMorse({
-          settings: { ...this.settings, mode },
+          settings: ready.next,
           request: msg.request,
           context: { ...msg.context, app: this.app?.name || msg.context.app, ...(appLogic && { appLogic }) },
           vet: this.profiler ? d => this.profiler.vet(d) : undefined, // app profiles: commands the app has

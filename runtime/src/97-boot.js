@@ -4,7 +4,10 @@ onEvent(msg => {
   if (msg.type === "toggle" && typeof msg.text === "string" && msg.text && S.open && !input.value) { input.value = msg.text.slice(0, 200); input.dispatchEvent(new Event("input")); } // onboarding v2: the welcome page's first site
   if (msg.type === "panel") openPanel();
   if (msg.type === "mods.changed") syncMods();
-  if (msg.type === "settings.changed" && msg.settings) setPrefs(msg.settings);
+  if (msg.type === "settings.changed" && msg.settings) {
+    if (typeof msg.fastModel === "string") S.fastModel = msg.fastModel;
+    setPrefs(msg.settings);
+  }
   if (msg.type === "request" && typeof msg.text === "string") hostRequest(msg.text.trim().slice(0, 2000), msg.at);
 });
 
@@ -69,8 +72,9 @@ B.adopt({
 const uiStarted = () => { B.started(); S.ready = true; /* tests: the host answered hello and the mods are on */ };
 B.ready.then(hello => {
   try {
-    setPrefs(B.prefs());
     S.models = hello.models || null; // models: the names the Settings sheet shows (56-settings.js)
+    S.fastModel = typeof hello.fastModel === "string" ? hello.fastModel : "";
+    setPrefs(B.prefs());
     if (hello.settings) hostPrefs = true; // the host sent settings with its hello (03-prefs.js)
     Voice.configure(hello.voice);
     PromptHistory.load();

@@ -19,15 +19,92 @@ import { warmSettings, routable, modeOf } from "./route.js"; // models: fast and
 import { t } from "./i18n.js"; // the labels people read (the host sets the language)
 
 export const PROVIDERS = {
-  "claude-code": { name: "Claude Code", models: ["opus", "sonnet", "haiku"], defaultModel: "" },
+  // fast: the smaller model this provider already lists. It has to be one of
+  // `models`. Codex names none. A local server's list is separate (fastFromList).
+  "claude-code": { name: "Claude Code", models: ["opus", "sonnet", "haiku"], defaultModel: "", fast: "haiku" },
   codex: { name: "Codex", models: [], defaultModel: "" },
-  anthropic: { name: "Anthropic API", models: ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"], defaultModel: "claude-opus-5-5" },
-  openai: { name: "OpenAI API", models: ["gpt-5", "gpt-5-mini"], defaultModel: "gpt-5" },
+  anthropic: { name: "Anthropic API", models: ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"], defaultModel: "claude-opus-5-5", fast: "claude-haiku-5-5" },
+  openai: { name: "OpenAI API", models: ["gpt-5", "gpt-5-mini"], defaultModel: "gpt-5", fast: "gpt-5-mini" },
   // A model server on this computer that speaks the OpenAI chat API (Ollama, LM Studio, llama.cpp).
   local: { name: "Local model", models: [], defaultModel: "" },
 };
 export const USER_PROVIDERS = Object.keys(PROVIDERS);
 export const DEFAULT_SETTINGS = { provider: "", model: "", apiKey: "", baseUrl: "" };
+
+// Words and sizes that mark a smaller model in a server's own list.
+const SMALL_WORD = /(?:^|[^a-z0-9])(haiku|mini|nano|tiny|small|lite|fast)(?:[^a-z0-9]|$)/i;
+const SIZE_WORD = /(?:^|[^a-z0-9])(\d+(?:\.\d+)?)b(?:[^a-z0-9]|$)/i;
+const BIGGER_TAIL = /(?:^|[^a-z0-9])(?:opus|large|xlarge|xl|pro|big|medium|\d+(?:\.\d+)?b)(?:[^a-z0-9]|$)/i;
+
+function modelIds(listed) {
+  const out = [];
+  for (const m of listed || []) {
+    const id = String(typeof m === "string" ? m : m?.id || "").trim();
+    if (id && !out.includes(id)) out.push(id);
+  }
+  return out;
+}
+
+// The smaller model in a server's list, or "" when there is nothing to tell
+// them apart. One model is never a choice. The id is always one the list named.
+export function fastFromList(listed) {
+  const ids = modelIds(listed);
+  if (ids.length < 2) return "";
+  const hinted = ids.filter(id => SMALL_WORD.test(id));
+  if (hinted.length) {
+    const rank = id => {
+      const s = id.toLowerCase();
+      if (/(?:^|[^a-z0-9])(?:nano|tiny|haiku)(?:[^a-z0-9]|$)/.test(s)) return 0;
+      if (/(?:^|[^a-z0-9])mini(?:[^a-z0-9]|$)/.test(s)) return 1;
+      return 2;
+    };
+    return hinted.slice().sort((a, b) => rank(a) - rank(b) || a.length - b.length || (a < b ? -1 : 1))[0];
+  }
+  const sized = [];
+  for (const id of ids) {
+    const m = id.toLowerCase().match(SIZE_WORD);
+    if (m) sized.push({ id, n: Number(m[1]) });
+  }
+  if (sized.length >= 2 && new Set(sized.map(s => s.n)).size >= 2) {
+    sized.sort((a, b) => a.n - b.n || a.id.length - b.id.length);
+    return sized[0].id;
+  }
+  const shorts = ids.filter(id => ids.some(other => {
+    if (other === id || !other.startsWith(id) || other.length === id.length) return false;
+    return BIGGER_TAIL.test(other.slice(id.length)) && !BIGGER_TAIL.test(id);
+  }));
+  return shorts.length === 1 ? shorts[0] : "";
+}
+
+// The fast model for a provider. `listed` is a local server's own models.
+// Without it, only a `fast` id that is already in that provider's `models`.
+export function fastModelOf(provider, listed) {
+  if (Array.isArray(listed)) return fastFromList(listed);
+  const spec = PROVIDERS[provider];
+  if (!spec?.fast || !(spec.models || []).includes(spec.fast)) return "";
+  return spec.fast;
+}
+
+// { id } when Fast mode can be shown, or null when the switch stays hidden.
+export function fastModeChoice(provider, listed) {
+  const id = fastModelOf(provider, listed);
+  return id ? { id } : null;
+}
+
+// Fast mode on a copy of the request settings. The saved model id is left
+// alone (chosenModel keeps it). Routing stays off for this request, so the
+// strong model does not take back over.
+export function applyFastMode(settings) {
+  const s = settings && typeof settings === "object" ? settings : {};
+  if (!s.fastMode) return s;
+  const listed = s.provider === "local" ? s.listedModels : undefined;
+  const id = fastModelOf(s.provider, listed);
+  if (!id) return { ...s, fastMode: false };
+  const next = { ...s, model: id, fastMode: true, pinned: true, chosenModel: s.chosenModel || s.model || "" };
+  delete next.effort;
+  delete next.tier;
+  return next;
+}
 
 // Server-side refusal fallback is only valid on these models.
 const FALLBACK_MODELS = /^claude-(opus|sonnet)-5-5\b/;
@@ -59,7 +136,7 @@ const warmers = {
 // Automatic, the model that request would start on gets ready (the strong one
 // for new UI and features, core/route.js warmSettings).
 export function prewarm(settings, request) {
-  const s = warmSettings({ ...DEFAULT_SETTINGS, ...settings }, request); // models: the model the next request starts on
+  const s = warmSettings(applyFastMode({ ...DEFAULT_SETTINGS, ...settings }), request); // models: the model the next request starts on
   try { return Promise.resolve(warmers[s.provider]?.(s)).catch(() => {}); } catch { return Promise.resolve(); }
 }
 
@@ -82,7 +159,7 @@ function toOpenAI(m) {
 // onStage({ spawnMs?, warm? }) (optional): the model has the request and is
 // working on it (speed: timing, and the "Thinking" status in the bar).
 export async function streamChat(settings, messages, { onToken, signal, maxTokens, onStage } = {}) {
-  const s = { ...DEFAULT_SETTINGS, ...settings };
+  const s = applyFastMode({ ...DEFAULT_SETTINGS, ...settings });
   const impl = impls[s.provider];
   if (!s.provider || s.provider === "none") throw new NoModelError();
   if (!impl) throw new Error(`Morse doesn't know the model "${s.provider}". Choose another in Morse's settings.`);

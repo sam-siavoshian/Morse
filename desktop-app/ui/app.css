@@ -182,6 +182,10 @@ input[role="switch"]:checked::after { transform: translateX(13px); background: #
 input[role="switch"]:disabled { opacity: 0.4; cursor: default; }
 input[role="switch"]:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .switchrow { display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; }
+#fast-mode-row { margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--hair); }
+#fast-mode-row > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#fast-mode-row b { color: var(--text); font: 500 14px/1.35 var(--font); }
+#fast-mode-row small { color: var(--muted); font-size: 12.5px; line-height: 17px; }
 
 /* Status: the radar's pixels. Lit is on. */
 .dot { flex: none; display: inline-block; width: 6px; height: 6px; border-radius: 1.5px; background: rgba(255, 255, 255, 0.32); }

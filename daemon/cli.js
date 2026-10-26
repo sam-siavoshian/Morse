@@ -11,7 +11,7 @@ import { listMods, deleteMod, saveMod, loadConfig, updateConfig, writeExport, CO
 import { said } from "./apps.js";
 import { startLabel, modelNames } from "../core/route.js"; // models: fast and strong
 import { commandFor, platformChecks, formatChecks } from "./platform.js";
-import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask, migrateLegacy } from "./models.js";
+import { currentSettings, settingsFromConfig, settingsLabel, keysFrom, assertProvider, mask, migrateLegacy, settleFastMode } from "./models.js";
 import { detectHarnesses, validModel } from "./harness.js";
 import { VERSION } from "./version.js";
 import { streamChat } from "../core/providers.js";
@@ -65,7 +65,7 @@ async function configure(f) {
     if (!mode) throw new Error(t("cli.badModelMode"));
     await savePrefs({ modelMode: mode });
   }
-  await updateConfig(cfg => {
+  const cfg = await updateConfig(cfg => {
     migrateLegacy(cfg); // first-run hook: keep what an older morse setup chose
     if (f.provider === "auto") delete cfg.provider;
     else if (typeof f.provider === "string") cfg.provider = f.provider;
@@ -93,6 +93,11 @@ async function configure(f) {
     delete cfg.model; // pre-0.2 shape (local-model era)
     return cfg;
   });
+  // Fast mode only stays on for a provider that has a smaller model.
+  if (typeof f.provider === "string") {
+    const settled = settingsFromConfig(cfg);
+    await settleFastMode(settled.provider, settled.listedModels);
+  }
 }
 
 async function showModel() {
