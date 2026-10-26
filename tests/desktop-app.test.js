@@ -592,6 +592,25 @@ test("Mods page: the app name is not glued to the count, rows are not cards, the
   assert.doesNotMatch(css, /(?:^|\n)section \{[^}]*animation:/, "opening a section does not fade");
 });
 
+test("Model screen: one button per model, one form, marks drawn in the page", () => {
+  const js = readFileSync(path.join(root, "desktop-app/ui/app.js"), "utf8");
+  const html = readFileSync(path.join(root, "desktop-app/ui/index.html"), "utf8");
+  const css = readFileSync(path.join(root, "desktop-app/ui/app.css"), "utf8");
+  for (const id of ["claude-code", "codex", "anthropic", "openai", "local"]) assert.match(js, new RegExp(`id: "${id}"`), id);
+  for (const fn of ["claudeMark", "openaiMark", "localMark"]) assert.match(js, new RegExp(`function ${fn}\\(`), fn);
+  assert.match(js, /"aria-pressed":/);
+  assert.match(js, /type: "button", class: "connect-choice"/);
+  assert.doesNotMatch(js, /icons\/(claude|openai|anthropic)\.png/, "marks are drawn in the page");
+  assert.match(html, /id="connect-list"[^>]*role="group"/);
+  assert.doesNotMatch(html, /id="choice-list"/, "the old radio list is gone");
+  assert.match(css, /\.connect-form \{[^}]*transition:\s*opacity 120ms linear/);
+  assert.match(css, /prefers-reduced-motion:\s*reduce\)\s*\{\s*\.connect-form \{\s*transition:\s*none/);
+  assert.doesNotMatch(css, /\.connect-form \{[^}]*(?:transform|height|width)\s*:/);
+  const boot = js.slice(js.lastIndexOf("st = await morse.state();"));
+  assert.match(boot, /render\(\);\nrefreshChoices\(\);/, "the model list is asked for after the first paint");
+  assert.doesNotMatch(boot, /await morse\.modelChoices/, "that ask is not awaited before the window is ready");
+});
+
 // ---------------------------------------------------------------- links, desktop files, the icon
 
 test("morse:// links: only morse://open, which shows the window", () => {

@@ -144,16 +144,11 @@ input[role="switch"]:disabled::after { background: var(--m-signal-1); box-shadow
 @keyframes blink { 50% { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { .dot.wait { animation: none; } }
 
-/* ---- the marks of the models (icons/NOTICE) */
+/* ---- the marks of the models, drawn in the page at about 20px */
 .mark-tile { flex: none; position: relative; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: var(--m-hover); color: var(--m-text); }
-.mark-tile img { width: 22px; height: 22px; }
+.mark-tile svg { width: 20px; height: 20px; }
 .mark-tile.big { width: 48px; height: 48px; border-radius: 12px; }
-.mark-tile.big img { width: 26px; height: 26px; }
-.mark-tile.pair { display: flex; align-items: center; justify-content: center; gap: 3px; }
-.mark-tile.pair img { width: 14px; height: 14px; }
-.mark-tile.big.pair img { width: 17px; height: 17px; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) img.mono { filter: invert(1); } }
-:root[data-theme="dark"] img.mono { filter: invert(1); }
+.mark-tile.big svg { width: 22px; height: 22px; }
 
 /* ---- one surface. Rows are lines on it, not cards stacked in a list. */
 .card { padding: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
@@ -227,28 +222,30 @@ li .radar.live rect.o, .live .radar.live rect.o { animation-name: m-pulse-dim; }
 #model-live, #helper-live { align-items: flex-start; }
 #model-live > .dot, #helper-live > .dot { margin-top: 6px; }
 #model-live > .radar, #helper-live > .radar { margin-top: 4px; }
-.choices { display: flex; flex-direction: column; gap: var(--s-4); }
-.choices > h2 { margin: 0; }
-#choice-list { display: flex; flex-direction: column; gap: 0; margin: 0; }
-.choice { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0 var(--s-4); padding: var(--s-3) var(--s-2);
-  border-radius: 0; cursor: pointer; transition: background var(--m-fast), box-shadow var(--m-fast); }
-.choice + .choice::before { content: ""; position: absolute; top: 0; inset-inline: var(--s-2); height: 1px; background: var(--m-line); }
-.choice:hover::before, .choice:hover + .choice::before, .choice:has(input:checked)::before, .choice:has(input:checked) + .choice::before { opacity: 0; }
-.choice:hover { background: var(--row-hover); }
-.choice:has(input:checked) { background: var(--select); box-shadow: inset 0 0 0 1px var(--m-signal-2); }
-.choice:has(input:focus-visible) { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
-/* the radio itself is the ring around the row; it stays a real radio for keys and screen readers */
-.choice input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
-.choice .grow b { display: flex; align-items: center; gap: var(--s-2); }
-.choice .grow small { display: block; white-space: normal; }
-.choice .grow small::first-letter { text-transform: uppercase; }
-.choice .rec { font: 500 11px/18px var(--m-font); color: var(--m-text-2); padding: 0 var(--s-2); border-radius: 9px; background: var(--m-hover); }
-.choice .state { display: flex; flex-direction: column; align-items: flex-end; gap: var(--s-1); }
-.choice .state .link { font-size: 12px; line-height: 16px; }
-.howto { grid-column: 2 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2) var(--s-3); margin-top: var(--s-3); padding: var(--s-3) 0 0;
-  border-top: 1px solid var(--m-line); border-radius: 0; background: transparent; color: var(--m-text-2); font-size: 12px; line-height: 18px; cursor: default; }
-.howto span { flex-basis: 100%; }
-.howto code { flex: 1 1 220px; min-width: 0; font-size: 12px; color: var(--m-text); user-select: all; overflow-wrap: anywhere; }
+.connect > h2 { margin: 0 0 var(--s-3); }
+#connect-list { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); }
+.connect-choice { display: grid; grid-template-columns: 20px minmax(0, 1fr); grid-template-areas: "mark name" "mark line" "mark state"; column-gap: var(--s-3); row-gap: 2px;
+  align-items: center; width: 100%; margin: 0; padding: var(--s-3); border: 1px solid var(--m-line); border-radius: var(--r); background: transparent; color: inherit;
+  font: inherit; text-align: start; }
+.connect-choice svg { grid-area: mark; width: 20px; height: 20px; }
+.connect-choice .connect-copy { display: contents; }
+.connect-choice b { grid-area: name; font: 600 14px/20px var(--m-font); }
+.connect-choice small { grid-area: line; color: var(--m-text-2); font-size: 12px; line-height: 16px; white-space: normal; }
+.connect-choice .badge { grid-area: state; justify-self: start; margin-top: 4px; }
+.connect-choice:hover { background: var(--row-hover); }
+.connect-choice[aria-pressed="true"] { background: var(--select); box-shadow: inset 0 0 0 1px var(--m-signal-2); }
+.connect-choice:focus-visible { outline: 2px solid var(--m-signal-3); outline-offset: 2px; }
+.connect-form { display: flex; flex-direction: column; gap: var(--s-3); margin-top: var(--s-4); opacity: 1; transition: opacity 120ms linear; }
+.connect-fields { display: flex; flex-direction: column; gap: var(--s-3); }
+.field { display: flex; flex-direction: column; gap: var(--s-2); color: var(--m-text-2); font-size: 12px; line-height: 16px; }
+.field input { height: 36px; padding: 0 var(--s-3); background: var(--m-bg); color: var(--m-text); border: 1px solid var(--m-line-strong); border-radius: var(--r);
+  font: 500 13px/16px var(--m-mono); letter-spacing: 0; user-select: text; }
+.field input:focus-visible { outline: 0; border-color: var(--m-signal-3); box-shadow: 0 0 0 3px var(--m-focus); }
+.field input::placeholder { color: var(--m-text-3); font-family: var(--m-font); }
+.field input[readonly] { color: var(--m-text-2); }
+.connect-fields .hint { color: var(--m-text-3); font-size: 12px; line-height: 18px; }
+.connect-fields code.install { font-size: 12px; color: var(--m-text); user-select: all; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .connect-form { transition: none; } }
 .keyrow { display: flex; flex-direction: column; gap: var(--s-2); }
 .keyrow input { height: 36px; padding: 0 var(--s-3); background: var(--m-bg); color: var(--m-text); border: 1px solid var(--m-line-strong); border-radius: var(--r);
   font: 500 13px/16px var(--m-mono); letter-spacing: 0; user-select: text; }
@@ -401,8 +398,7 @@ main::-webkit-scrollbar-track { background: transparent; }
   .grow b, .grow small, .grow small span { white-space: normal; overflow: visible; text-overflow: unset; }
   .list > li + li::before { inset-inline-start: 0; }
   .cur-actions { flex: 1 1 100%; justify-content: flex-end; margin-inline-start: 0; }
-  .choice .grow b { flex-wrap: wrap; white-space: normal; overflow: visible; }
-  .howto code { flex-basis: 100%; white-space: nowrap; overflow-wrap: normal; overflow-x: auto; }
+  #connect-list { grid-template-columns: 1fr; }
   .list.checks > li:not(.empty) { grid-template-columns: 20px minmax(0, 1fr); }
   .list.checks .text { grid-column: 2; }
   .shortcut-row { flex-wrap: wrap; }

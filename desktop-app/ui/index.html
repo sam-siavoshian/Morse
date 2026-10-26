@@ -125,14 +125,10 @@
           <div class="cur-actions"><button type="button" class="btn" id="check-model" data-i18n="desk.model.check">Check</button><button type="button" class="btn" id="change-model" data-i18n="desk.model.change">Change…</button></div>
         </div>
       </div>
-      <div class="card choices" id="choices" hidden>
-        <h2 id="choices-h" data-i18n="desk.model.choose">Choose what writes your changes</h2>
-        <div id="choice-list" role="radiogroup" aria-labelledby="choices-h"></div>
-        <div class="keyrow" id="keyrow" hidden>
-          <input id="api-key" type="password" placeholder="Paste an Anthropic or OpenAI API key" autocomplete="off" spellcheck="false" aria-label="API key" data-i18n-attr="placeholder:desk.key.placeholder;aria-label:desk.key.label">
-          <small data-i18n="desk.key.stays">It stays on this computer, in your Morse folder.</small>
-        </div>
-        <div class="row-end"><button type="button" class="btn quiet" id="cancel-choice" data-i18n="desk.cancel">Cancel</button><button type="button" class="btn primary" id="use-choice" data-i18n="desk.model.use">Use this</button></div>
+      <div class="card connect" id="connect">
+        <h2 id="connect-h" data-i18n="desk.model.choose">Choose what writes your changes</h2>
+        <div id="connect-list" role="group" aria-labelledby="connect-h"></div>
+        <div class="connect-form" id="connect-form" hidden></div>
       </div>
       <p class="foot" data-i18n-html="desk.model.foot">Each choice is explained in <button type="button" class="link" data-link="models">Models and setup</button>.</p>
       <!-- simplify: Checks lives here, under the model it checks (docs/dev/simplify.md) -->
