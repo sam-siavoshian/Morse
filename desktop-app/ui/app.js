@@ -99,7 +99,13 @@ function show(tab) {
   }
   if (tab === "checks") tab = "model"; // simplify: Checks is a card in Model now
   if (tab !== "mods") hideUndo(); // a stale "Undo delete" shouldn't wait on another page
-  for (const s of document.querySelectorAll("main > section")) s.hidden = s.id !== tab;
+  for (const s of document.querySelectorAll("main > section")) {
+    const on = s.id === tab;
+    // Fade only a section that was hidden. The one painted first stays still.
+    if (on && s.hidden) s.classList.add("arrive");
+    else if (!on) s.classList.remove("arrive");
+    s.hidden = !on;
+  }
   try { sessionStorage.setItem("tab", tab); } catch {}
   $(tab).closest("main").scrollTop = 0;
   // Checks ask the model a question, so they run only when asked.
@@ -140,18 +146,43 @@ function appRow(a) {
     h("div", { class: "actions" }, button));
 }
 
+// Three quiet rows, the same shape as an app, while the list is not ready yet.
+// No copy: the heading already says what this screen is.
+function skeletonItems(n = 3) {
+  const rows = [];
+  for (let i = 0; i < n; i++) rows.push(h("li", { class: "skel", "aria-hidden": "true" },
+    h("span", { class: "skel-icon" }),
+    h("span", { class: "skel-copy" }, h("span"), h("span"))));
+  return rows;
+}
+
 // Rows are only rebuilt when what they show changed, so focus stays put
 // while the list refreshes.
 function renderApps() {
   showAppsError(); // a Connected row clears a stale "isn't running yet" banner
   const list = $("app-list");
+  // appsPending: the shell is up before the scan (icons, process list). The
+  // skeleton stays until that pass replaces it. data-ready is not held for it.
+  if (st.appsPending) {
+    if (!list.querySelector("li.skel")) list.replaceChildren(...skeletonItems());
+    list.setAttribute("aria-busy", "true");
+    list.dataset.pending = "1";
+    $("no-model").hidden = !st.model?.none;
+    const nav = $("nav-apps");
+    nav.textContent = "";
+    nav.className = "";
+    $("apps-lede").replaceChildren(...withKeys("desk.apps.lede", openKey()));
+    return;
+  }
+  list.removeAttribute("aria-busy");
+  delete list.dataset.pending;
   const rows = st.apps || [];
   const seen = new Set();
   if (!rows.length) {
-    // A scan still running is not "Morse found nothing".
-    list.replaceChildren(h("li", { class: "empty", ...(st.appsPending ? { "data-pending": "1" } : {}) }, t(st.appsPending ? "desk.apps.looking" : "desk.apps.none")));
+    // Pending scans already returned the skeleton above. An empty list here is a finished scan.
+    list.replaceChildren(h("li", { class: "empty" }, t("desk.apps.none")));
   } else {
-    if (list.querySelector("li.empty")) list.replaceChildren();
+    if (list.querySelector("li.empty, li.skel")) list.replaceChildren();
     let prev = null;
     for (const a of rows) {
       const sig = JSON.stringify([a.name, a.state, a.canStop ? 1 : 0, a.windows, a.mods, a.modsOn, a.version, a.icon ? 1 : 0, a.canAttach, a.why]);
@@ -522,17 +553,21 @@ function renderFirst() {
   else if (m.check) live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.noAnswer", { name, error: unprefixed(m.check.error, m.name) }) }), h("i", { class: "dot bad" }));
   else live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.willUse", { name }) }));
   if (!m.none && !m.check && !firstChecked) { firstChecked = true; checkModel(); }
-  const apps = (st.apps || []).filter(a => a.canAttach !== false).slice(0, 5);
-  if (st.appsPending && !apps.length) {
-    if ($("first-apps").dataset.sig === "pending") return;
-    $("first-apps").dataset.sig = "pending";
-    $("first-apps").replaceChildren(h("li", { class: "empty" }, t("desk.apps.looking")));
+  const host = $("first-apps");
+  if (st.appsPending) {
+    if (host.dataset.sig !== "pending") {
+      host.dataset.sig = "pending";
+      host.setAttribute("aria-busy", "true");
+      host.replaceChildren(...skeletonItems());
+    }
     return;
   }
+  host.removeAttribute("aria-busy");
+  const apps = (st.apps || []).filter(a => a.canAttach !== false).slice(0, 5);
   const sig = JSON.stringify(apps.map(a => [a.id, a.state, a.icon ? 1 : 0]));
-  if ($("first-apps").dataset.sig === sig) return;
-  $("first-apps").dataset.sig = sig;
-  $("first-apps").replaceChildren(...(apps.length ? apps.map(a => {
+  if (host.dataset.sig === sig) return;
+  host.dataset.sig = sig;
+  host.replaceChildren(...(apps.length ? apps.map(a => {
     const busy = ["opening", "connecting"].includes(a.state);
     return h("li", { "data-first-app": a.id },
       appIcon(a),
@@ -784,8 +819,8 @@ $("update").addEventListener("cancel", e => { if (["downloading", "installing"].
 // ---------------------------------------------------------------- state
 function render() {
   if (!st || st.error) return;
-  // Asked before the daemon is in: the HTML shell is already showing.
-  // data-ready is not held for the app scan; renderApps shows a pending row.
+  // Asked before the daemon is in: the HTML shell (and its skeleton) is already showing.
+  // data-ready is not held for the app scan; renderApps leaves the skeleton up.
   if (st.loading) { document.documentElement.dataset.ready = "1"; return; }
   renderFirst();
   renderApps(); renderModel(); renderMods(); renderShortcut(); renderUpdate(); renderUpdateCheck();

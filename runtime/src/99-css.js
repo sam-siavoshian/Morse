@@ -41,7 +41,7 @@ function CSS() {
 
   /* ---- icon buttons: ghost squares. 32 in the bar row and the toolbar, 28 in headers, 24 inside fields */
   .ibtn { flex: none; position: relative; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--m-r-sm);
-    background: transparent; color: var(--m-text-2); transition: background var(--m-fast), color var(--m-fast); }
+    background: transparent; color: var(--m-text-2); transition: background var(--m-fast), color var(--m-fast), transform var(--m-fast); }
   .ibtn.sm { width: 28px; height: 28px; }
   .ibtn.xs { width: 24px; height: 24px; border-radius: 4px; }
   .ibtn:hover:not(:disabled), .ibtn[aria-expanded="true"] { background: var(--m-hover); color: var(--m-text); }
@@ -51,8 +51,10 @@ function CSS() {
   /* ---- text buttons: outlined 28 (.btn), ghost 24 (.tbtn), primary */
   .btn, .actions button, .panel button, .card button, .sug { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: transparent; color: var(--m-text);
     border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); height: 28px; padding: 0 10px; font: 500 var(--m-text-sm)/18px var(--m-font);
-    letter-spacing: var(--m-tracking); white-space: nowrap; transition: background var(--m-fast), border-color var(--m-fast), color var(--m-fast); }
+    letter-spacing: var(--m-tracking); white-space: nowrap; transition: background var(--m-fast), border-color var(--m-fast), color var(--m-fast), transform var(--m-fast); }
   .btn:hover, .actions button:hover, .panel button:hover, .card button:hover, .sug:hover { background: var(--m-hover); border-color: var(--m-signal-1); }
+  :is(.btn, .actions button, .panel button, .card button, .sug, .tbtn, .go):active:not(:disabled),
+  .ibtn:active:not(:disabled) { transform: scale(0.98); }
   .tbtn, .panel .tbtn, .panel .btns button { height: 24px; padding: 0 8px; border: 0; border-radius: var(--m-r-sm); background: none; color: var(--m-text-2);
     font: 500 var(--m-text-sm)/16px var(--m-font); letter-spacing: var(--m-tracking); white-space: nowrap; transition: background var(--m-fast), color var(--m-fast); }
   .tbtn:hover, .panel .tbtn:hover, .panel .btns button:hover { color: var(--m-text); background: var(--m-hover); }
@@ -143,7 +145,8 @@ function CSS() {
   /* ---- command bar */
   .bar { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); width: min(680px, calc(100vw - 32px)); pointer-events: auto;
     background: var(--m-overlay); backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4);
-    color: var(--m-text); border: 1px solid var(--m-line-strong); border-radius: var(--m-r-lg); box-shadow: var(--m-shadow);
+    color: var(--m-text); border: 1px solid var(--m-line-strong); border-radius: var(--m-r-lg);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--m-signal-4) 22%, transparent), var(--m-shadow);
     font: 400 var(--m-text-md)/1.45 var(--m-font); letter-spacing: var(--m-tracking); animation: rise var(--m-med) var(--m-ease); }
   .bar.top { bottom: auto; top: 28px; }
   @keyframes rise { from { transform: translate(-50%, 6px); opacity: 0 } }
@@ -154,7 +157,7 @@ function CSS() {
   .in { flex: 1; min-width: 0; height: 32px; background: transparent; border: 0; outline: 0; color: var(--m-text); font: 450 var(--m-text-lg)/20px var(--m-font); letter-spacing: var(--m-tracking); padding: 6px 0; margin: 0; }
   .in::placeholder { color: var(--m-text-3); opacity: 1; }
   .in:disabled { color: var(--m-text-2); }
-  .go { flex: none; width: 32px; height: 32px; padding: 0; display: grid; place-items: center; border-radius: var(--m-r-sm); border: 0; background: var(--m-primary); color: var(--m-primary-text); transition: background var(--m-fast); }
+  .go { flex: none; width: 32px; height: 32px; padding: 0; display: grid; place-items: center; border-radius: var(--m-r-sm); border: 0; background: var(--m-primary); color: var(--m-primary-text); transition: background var(--m-fast), transform var(--m-fast); }
   .go:hover { background: var(--m-primary-hover); }
   .chip { display: inline-flex; align-items: center; gap: 2px; height: 24px; max-width: 44%; flex: none; background: var(--m-raised); color: var(--m-text);
     border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); padding-block: 0; padding-inline: 8px 1px; font: 500 var(--m-text-sm)/16px var(--m-mono); letter-spacing: 0; white-space: nowrap; }
@@ -188,11 +191,12 @@ function CSS() {
 
   /* ---- mods panel */
   .panel { position: fixed; top: 12px; inset-inline-end: 12px; bottom: 12px; width: 372px; max-width: calc(100vw - 24px); pointer-events: auto; display: flex; flex-direction: column;
-    background: var(--m-surface); color: var(--m-text); border: 1px solid var(--m-line-strong); border-radius: var(--m-r-lg); box-shadow: var(--m-shadow);
+    background: var(--m-surface); color: var(--m-text); border: 1px solid var(--m-line-strong); border-radius: var(--m-r-lg);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--m-signal-4) 18%, transparent), var(--m-shadow);
     font: 400 var(--m-text-md)/1.45 var(--m-font); letter-spacing: var(--m-tracking); animation: slide var(--m-med) var(--m-ease); }
   @keyframes slide { from { transform: translateX(12px); opacity: 0 } }
   .panel header { display: flex; align-items: center; gap: 12px; padding-block: 12px; padding-inline: 16px 12px; border-bottom: 1px solid var(--m-line); }
-  .panel header div { flex: 1; min-width: 0; } .panel header b { font-size: var(--m-text-lg); line-height: 20px; font-weight: 600; display: block; }
+  .panel header div { flex: 1; min-width: 0; } .panel header b { font-size: var(--m-text-lg); line-height: 20px; font-weight: 600; letter-spacing: -0.02em; display: block; }
   .panel header small { display: block; color: var(--m-text-3); font: var(--m-text-xs)/16px var(--m-mono); letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* the close buttons are .ibtn.sm in all but name */
   .panel header > button, .card header > button { flex: none; width: 28px; height: 28px; padding: 0; display: grid; place-items: center; border: 0 !important; background: none !important; color: var(--m-text-2); border-radius: var(--m-r-sm); }
@@ -201,9 +205,10 @@ function CSS() {
   .list article { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 12px; padding: 12px 8px; border-radius: 0; margin: 0; transition: background var(--m-fast); }
   .list > article + article { border-top: 1px solid var(--m-line); }
   .list article:hover { background: var(--m-hover); }
+  .list article:active { background: var(--m-raised); }
   .list > article:hover, .list > article:hover + article { border-top-color: transparent; }
   .meta { min-width: 0; overflow-wrap: anywhere; }
-  .meta b { display: block; font-size: var(--m-text-md); line-height: 20px; font-weight: 550; } .meta small { color: var(--m-text-2); display: block; font-size: var(--m-text-sm); line-height: 16px; margin-top: 2px; }
+  .meta b { display: block; font-size: var(--m-text-md); line-height: 20px; font-weight: 600; } .meta small { color: var(--m-text-2); display: block; font-size: var(--m-text-sm); line-height: 16px; margin-top: 2px; }
   /* a disabled mod reads as off, but stays readable (AA) */
   .list article.off .meta b { color: var(--m-text-2); } .list article.off .meta small, .list article.off .tags span { color: var(--m-text-3); }
   .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; } .tags span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
@@ -228,7 +233,7 @@ function CSS() {
   .psearch .search { display: block; width: 100%; height: 32px; margin: 0; padding: 0 12px; background: var(--m-bg); color: var(--m-text); border: 1px solid var(--m-line-strong);
     border-radius: var(--m-r-sm); font: 450 var(--m-text-md)/20px var(--m-font); letter-spacing: var(--m-tracking); outline: 0; -webkit-appearance: none; appearance: none; }
   .psearch .search::placeholder { color: var(--m-text-3); opacity: 1; }
-  .psearch .search:focus { border-color: var(--m-signal-2); }
+  .psearch .search:focus { border-color: var(--m-signal-3); box-shadow: 0 0 0 1px var(--m-signal-3); }
   .list article { outline: none; }
   .list article:focus-visible { background: var(--m-raised); outline: 2px solid var(--m-signal-3); outline-offset: -2px; }
   .meta small.latest { color: var(--m-text-3); }
@@ -315,6 +320,7 @@ function CSS() {
   /* reduced motion: nothing slides, pulses or sweeps; state changes are instant */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+    :is(.btn, .actions button, .panel button, .card button, .sug, .tbtn, .go, .ibtn):active:not(:disabled) { transform: none; }
     .mark.live .radar rect, .hint .radar rect { animation: none !important; }
     .mark.live .radar rect.c, .hint .radar rect.c { opacity: 1; }
     .mark.live .radar rect.o, .hint .radar rect.o { opacity: 0.55; }

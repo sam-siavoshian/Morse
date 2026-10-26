@@ -101,7 +101,11 @@
       </header>
       <div class="notice" id="no-model" hidden><span data-i18n-html="desk.apps.noModel"><b>Choose a model first.</b> Morse needs one to write your changes.</span><button type="button" class="btn primary" data-go="model" data-i18n="desk.apps.chooseModel">Choose a model</button></div>
       <p class="error" id="apps-error" role="alert" hidden></p>
-      <ul class="list" id="app-list" aria-label="Apps" data-i18n-attr="aria-label:desk.nav.apps"></ul>
+      <ul class="list" id="app-list" aria-label="Apps" data-i18n-attr="aria-label:desk.nav.apps" aria-busy="true">
+        <li class="skel" aria-hidden="true"><span class="skel-icon"></span><span class="skel-copy"><span></span><span></span></span></li>
+        <li class="skel" aria-hidden="true"><span class="skel-icon"></span><span class="skel-copy"><span></span><span></span></span></li>
+        <li class="skel" aria-hidden="true"><span class="skel-icon"></span><span class="skel-copy"><span></span><span></span></span></li>
+      </ul>
       <p class="foot" data-i18n="desk.apps.foot">Morse opens the app again with one extra setting, so it can connect. It never changes the app's files. When you disconnect or quit the app, your mods come off until next time.</p>
     </section>
 
