@@ -419,7 +419,7 @@ input.addEventListener("keydown", e => {
     return;
   }
   if ((e.key === "ArrowUp" || e.key === "ArrowDown") && plain && !e.shiftKey) {
-    if (PromptHistory.browse(e.key === "ArrowUp" ? -1 : 1)) e.preventDefault();
+    if (PromptHistory.browseKey(e.key === "ArrowUp" ? -1 : 1)) e.preventDefault();
   }
 });
 // speed, models: a pause in typing tells the host what the request looks like
