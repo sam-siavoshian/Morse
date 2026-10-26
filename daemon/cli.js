@@ -86,7 +86,7 @@ async function configure(f) {
       if (f[flag]) cfg.tiers[target][tier] = f[flag]; else delete cfg.tiers[target][tier];
     }
     if (typeof f["base-url"] === "string") {
-      const p = target === "anthropic" ? "anthropic" : "openai";
+      const p = target === "anthropic" ? "anthropic" : target === "local" ? "local" : "openai";
       cfg.baseUrls = { ...cfg.baseUrls };
       if (f["base-url"]) cfg.baseUrls[p] = f["base-url"]; else delete cfg.baseUrls[p];
     }

@@ -13,6 +13,7 @@ import os from "node:os";
 import path from "node:path";
 import { detectPlatform, decideOpenShortcut, resolveHotkeys } from "../core/hotkeys.js";
 import { presentApp } from "../daemon/open-bar.js";
+import { kindFor, logoFor } from "../daemon/connect.js";
 
 const ANSI = /\x1b\[[0-9;]*m/g;
 const plain = s => String(s ?? "").replace(ANSI, "");
@@ -21,10 +22,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // The daemon modules, the way the CLI uses them. One object, so tests can
 // hand createService a fake with the same names.
 export async function loadDaemon() {
-  const [apps, desktop, status, store, models, setup, control, coreControl, platform, providers, onboarding, version] = await Promise.all([
+  const [apps, desktop, status, store, models, setup, control, coreControl, platform, providers, onboarding, version, connect] = await Promise.all([
     import("../daemon/apps.js"), import("../daemon/desktop.js"), import("../daemon/status.js"), import("../daemon/store.js"),
     import("../daemon/models.js"), import("../daemon/setup.js"), import("../daemon/control.js"),
     import("../core/control.js"), import("../daemon/platform.js"), import("../core/providers.js"), import("../core/onboarding.js"), import("../daemon/version.js"),
+    import("../daemon/connect.js"),
   ]);
   return {
     // apps (morse apps, launch, attach, status, stop)
@@ -35,6 +37,9 @@ export async function loadDaemon() {
     loadConfig: store.loadConfig, updateConfig: store.updateConfig, settingsFromConfig: models.settingsFromConfig, settingsLabel: models.settingsLabel,
     keysFrom: models.keysFrom, mask: models.mask, detectBackends: setup.detectBackends, recommend: setup.recommend, configFor: setup.configFor,
     saveChoice: setup.saveChoice, checkModel: setup.checkModel, BACKENDS: setup.BACKENDS, VERSION: version.VERSION,
+    // Choices and connect checks. Not used while the window is first painting.
+    connectionChoices: connect.connectionChoices,
+    connectChoice: (choice, key, extra) => connect.connectChoice(choice, key, { address: extra || "" }),
     // mods and the off switch (morse mods, pause, resume)
     listMods: store.listMods, getMod: store.getMod, saveMod: store.saveMod, deleteMod: store.deleteMod,
     loadControl: control.loadControl, saveControl: control.saveControl, setPause: coreControl.setPause, pauseInfo: coreControl.pauseInfo,
@@ -322,23 +327,45 @@ export function createService({
   }
 
   // ---- the model (morse setup)
+  // The saved choice only. No PATH probe and no local-server probe: those run
+  // when the person opens Choose (modelChoices), after the window is up.
   async function model() {
     const cfg = await d.loadConfig();
     const s = d.settingsFromConfig(cfg);
-    const name = { "claude-code": "Claude Code", codex: "Codex", anthropic: "Anthropic API key", openai: "OpenAI API key", demo: "Demo model", none: "" }[s.provider] ?? s.provider;
+    const localName = { ollama: "Ollama", lmstudio: "LM Studio", llama: "llama.cpp", llamacpp: "llama.cpp", local: "Local" }[s.runtime];
+    const name = s.provider === "local" ? (localName || "Local") : ({ "claude-code": "Claude Code", codex: "Codex", anthropic: "Anthropic API key", openai: "OpenAI API key", demo: "Demo model", none: "" }[s.provider] ?? s.provider);
     return {
       provider: s.provider, none: s.provider === "none", name, model: s.model || "", label: s.provider === "none" ? "" : plain(d.settingsLabel(s)),
       detected: !!s.detected, check: lastCheck && lastCheck.label === d.settingsLabel(s) ? lastCheck : null,
+      kind: kindFor(s), logo: logoFor(s), runtime: s.runtime || "",
+    };
+  }
+
+  function presentChoice(r) {
+    const models = Array.isArray(r.models) ? r.models.map(m => ({ id: String(m.id), name: String(m.name || m.id) })) : [];
+    const baseUrl = typeof r.baseUrl === "string" ? r.baseUrl : "";
+    return {
+      id: r.id, name: r.name, why: r.why || "", install: r.install || "",
+      found: !!r.found, detail: plain(r.detail || ""), keyEnv: r.keyEnv || "", recommended: !!r.recommended,
+      kind: r.kind || "", status: r.status || (r.found ? "ready" : "missing"), logo: r.logo || "",
+      signedIn: !!r.signedIn, models,
+      path: typeof r.path === "string" ? r.path : "",
+      vendor: typeof r.vendor === "string" ? r.vendor : "",
+      baseUrl, address: typeof r.address === "string" ? r.address : baseUrl,
     };
   }
 
   async function modelChoices() {
+    if (typeof d.connectionChoices === "function") return (await d.connectionChoices()).map(presentChoice);
     const rows = await d.detectBackends();
     const best = d.recommend(rows);
-    return d.BACKENDS.map(b => {
-      const r = rows.find(x => x.id === b.id) || {};
-      return { id: b.id, name: b.name, why: b.why, install: b.install, found: !!r.found, detail: plain(r.detail || ""), keyEnv: r.keyEnv || "", recommended: best?.id === b.id };
-    });
+    return d.BACKENDS.map(b => presentChoice({
+      id: b.id, name: b.name, why: b.why, install: b.install, found: !!rows.find(x => x.id === b.id)?.found,
+      detail: rows.find(x => x.id === b.id)?.detail || "", keyEnv: rows.find(x => x.id === b.id)?.keyEnv || "",
+      path: rows.find(x => x.id === b.id)?.path || "", recommended: best?.id === b.id,
+      kind: b.id === "api-key" ? "api" : "cli",
+      logo: b.id === "claude-code" ? "claude" : b.id === "codex" ? "openai" : "anthropic",
+    }));
   }
 
   async function check() {
@@ -351,8 +378,20 @@ export function createService({
   }
 
   // "Use this": what `morse setup` saves for a choice, then the same check.
-  async function chooseModel(choice, key = "") {
+  // key is an API key, or the local model's name. extra is a local address.
+  async function chooseModel(choice, key = "", extra = "") {
     try {
+      if (typeof d.connectChoice === "function") {
+        const decided = await d.connectChoice(choice, key, extra);
+        if (decided?.error) return { error: plain(decided.error), status: decided.status || "" };
+        const cfg = await d.saveChoice(decided.backend || choice, decided.config);
+        const next = d.settingsFromConfig(cfg);
+        for (const s of own.values()) s.connector.settings = next;
+        changed();
+        const checked = await check();
+        // A failed check still saved. The window reads check, then reloads state.
+        return { ok: !!checked.ok, status: checked.ok ? "ready" : "error", check: checked };
+      }
       const rows = await d.detectBackends();
       const row = rows.find(r => r.id === choice);
       const b = d.BACKENDS.find(x => x.id === choice);
@@ -438,9 +477,12 @@ export function createService({
       if (r.label === "colors") continue; // terminal colors: nothing to do with this window
       rows.push({ label: r.label[0].toUpperCase() + r.label.slice(1), ok: r.ok, text: plain(r.text) });
     }
-    for (const b of await d.detectBackends()) {
+    const catalog = typeof d.connectionChoices === "function" ? await d.connectionChoices().catch(() => null) : null;
+    const backendRows = catalog || await d.detectBackends();
+    for (const b of backendRows) {
       const text = plain(b.detail) || (b.found ? "found" : "not installed");
-      rows.push({ label: b.name, ok: b.found ? true : null, text: text.replace(/^[a-z]/, c => c.toUpperCase()) }); // "not installed" -> "Not installed"; paths stay as they are
+      const ok = b.status === "ready" ? true : b.status === "signed-out" || b.status === "server-down" || b.status === "bad-key" ? false : b.found ? true : null;
+      rows.push({ label: b.name, ok, text: text.replace(/^[a-z]/, c => c.toUpperCase()) }); // "not installed" -> "Not installed"; paths stay as they are
     }
     const m = await model();
     rows.push({ label: "Model", ok: m.none ? false : true, text: m.none ? "None chosen. Choose one under Model." : `${m.label}${m.detected ? " (found by itself)" : ""}` });

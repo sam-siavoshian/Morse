@@ -23,6 +23,8 @@ export const PROVIDERS = {
   codex: { name: "Codex", models: [], defaultModel: "" },
   anthropic: { name: "Anthropic API", models: ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"], defaultModel: "claude-opus-5-5" },
   openai: { name: "OpenAI API", models: ["gpt-5", "gpt-5-mini"], defaultModel: "gpt-5" },
+  // A model server on this computer that speaks the OpenAI chat API (Ollama, LM Studio, llama.cpp).
+  local: { name: "Local model", models: [], defaultModel: "" },
 };
 export const USER_PROVIDERS = Object.keys(PROVIDERS);
 export const DEFAULT_SETTINGS = { provider: "", model: "", apiKey: "", baseUrl: "" };
@@ -41,6 +43,7 @@ const impls = {
   demo: (s, messages, o) => demoStream(messages, { ...o, ms: s.demoMs }),
   openai: openaiStream,
   anthropic: anthropicStream,
+  local: openaiStream,
 };
 
 export function registerProvider(id, fn, { warm } = {}) { impls[id] = fn; if (warm) warmers[id] = warm; }
@@ -103,6 +106,10 @@ export function settingsLabel(s) {
       try { host = s.baseUrl ? new URL(s.baseUrl).host : ""; } catch {}
       const what = [model, s.effort && `${s.effort} effort`].filter(Boolean).join(", "); // models: the strong tier is gpt-5 thinking longer
       return !host || host === "api.openai.com" ? `${what} · API` : `${what} · ${host}`;
+    }
+    case "local": {
+      const who = { ollama: "Ollama", lmstudio: "LM Studio", llama: "llama.cpp", llamacpp: "llama.cpp" }[s.runtime] || "Local";
+      return s.model ? `${who} · ${s.model}` : who;
     }
     case "demo": return "demo replay";
     default: return t("welcome.model.b");
@@ -233,14 +240,30 @@ async function anthropicWarm(s, { system = SYSTEM_PROMPT } = {}) {
 const REASONING_MODEL = /^(gpt-5|o\d)/;
 const reasoningEffort = (s, model) => (s.effort && REASONING_MODEL.test(model)
   ? { reasoning_effort: ["low", "medium", "high"].includes(s.effort) ? s.effort : "high" } : {});
+const localWho = s => ({ ollama: "Ollama", lmstudio: "LM Studio", llama: "llama.cpp", llamacpp: "llama.cpp" }[s.runtime] || "The local model");
 async function openaiStream(s, messages, { onToken, signal, maxTokens, onStage }) {
+  const local = s.provider === "local";
+  if (local && !s.baseUrl) throw Object.assign(new Error("Choose a model running on this computer."), { plain: true });
+  const model = s.model || (local ? "" : PROVIDERS.openai.defaultModel);
+  if (local && !model) throw Object.assign(new Error("Choose a model from the list."), { plain: true });
   const base = (s.baseUrl || "https://api.openai.com").replace(/\/$/, "").replace(/\/v1$/, "");
-  const res = await fetch(`${base}/v1/chat/completions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...(s.apiKey ? { Authorization: `Bearer ${s.apiKey}` } : {}) },
-    body: JSON.stringify({ model: s.model || PROVIDERS.openai.defaultModel, messages: messages.map(toOpenAI), stream: true, ...(maxTokens && { max_completion_tokens: maxTokens }), ...reasoningEffort(s, s.model || PROVIDERS.openai.defaultModel) }),
-    signal,
-  });
+  let res;
+  try {
+    res = await fetch(`${base}/v1/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(s.apiKey ? { Authorization: `Bearer ${s.apiKey}` } : {}) },
+      body: JSON.stringify({
+        model, messages: messages.map(toOpenAI), stream: true,
+        ...(maxTokens ? { [local ? "max_tokens" : "max_completion_tokens"]: maxTokens } : {}),
+        ...(!local ? reasoningEffort(s, model) : {}),
+      }),
+      signal,
+    });
+  } catch (e) {
+    if (signal?.aborted) throw abortError();
+    if (local) throw Object.assign(new Error(`${localWho(s)} isn't running.`), { plain: true });
+    throw e;
+  }
   if (!res.ok) {
     let detail = "";
     try { detail = (await res.json()).error?.message || ""; } catch {}

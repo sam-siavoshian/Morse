@@ -25,6 +25,7 @@ import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LAN
 import { paint } from "./colors.js";
 import { commandFor } from "./platform.js";
 import { validModel } from "./harness.js"; // models: names Morse can pass to claude and codex
+import { LOCAL_IDS, runtimeById } from "./local-runtimes.js";
 
 const { g: G, d: D, b: B, r: R } = paint;
 const LOGO = `${G("▪▪▫")}\n${G("▫▪▪")} ${B("morse")} ${D("· setup")}\n${G("▪▫▪")}`;
@@ -41,7 +42,7 @@ const KEY_ENVS = [["ANTHROPIC_API_KEY", "anthropic"], ["OPENAI_API_KEY", "openai
 
 // What a choice writes into config.json: { provider, keys? }. A key from the
 // environment is never written; daemon/models.js reads the environment itself.
-export function configFor(id, { key = "", vendor = "" } = {}) {
+export function configFor(id, { key = "", vendor = "", model = "", baseUrl = "" } = {}) {
   switch (id) {
     case "claude-code": return { provider: "claude-code" };
     case "codex": return { provider: "codex" };
@@ -49,6 +50,15 @@ export function configFor(id, { key = "", vendor = "" } = {}) {
     case "api-key": {
       const v = vendor || keyVendor(key);
       return { provider: v, ...(key ? { keys: { [v]: key } } : {}) };
+    }
+    case "ollama":
+    case "lmstudio":
+    case "llama":
+    case "llamacpp":
+    case "local": {
+      const runtime = id === "llamacpp" ? "llama" : id;
+      const url = baseUrl || runtimeById(runtime)?.baseUrl || "";
+      return { provider: "local", runtime, ...(url ? { baseUrl: url } : {}), ...(model ? { model } : {}) };
     }
   }
   throw new Error(t("setup.unknown", { id, list: `${BACKENDS.map(b => b.id).join(", ")}, demo` }));
@@ -72,6 +82,11 @@ export function applyChoice(cfg, choice) {
   if (Object.keys(keys).length) next.keys = { ...cfg.keys, ...keys };
   const baseUrl = choice.baseUrls?.openai || (choice.provider === "openai" ? choice.baseUrl : "");
   if (baseUrl && baseUrl !== "https://api.openai.com" && !cfg.baseUrls?.openai) next.baseUrls = { ...cfg.baseUrls, openai: baseUrl };
+  if (choice.provider === "local") {
+    if (choice.baseUrl) next.baseUrls = { ...cfg.baseUrls, local: choice.baseUrl };
+    if (choice.model) next.models = { ...cfg.models, local: choice.model };
+    if (choice.runtime) next.local = { ...(cfg.local && typeof cfg.local === "object" ? cfg.local : {}), runtime: choice.runtime };
+  }
   return next;
 }
 
@@ -231,7 +246,31 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
   const backend = BACKENDS.find(b => b.id === choice);
   let model;
   try {
-    if (choice === "api-key") {
+    if (LOCAL_IDS.has(choice) || choice === "llamacpp") {
+      const { probeLocalRuntime, loopbackOrigin } = await import("./connect.js");
+      const { LOCAL_RUNTIMES } = await import("./local-runtimes.js");
+      const id = choice === "llamacpp" ? "llama" : choice;
+      let rt = (deps.runtimes || LOCAL_RUNTIMES).find(r => r.id === id) || null;
+      if (id === "local") {
+        const typed = str(flag("base-url"));
+        const origin = loopbackOrigin(typed);
+        if (!origin) {
+          lines.close();
+          say(R(`  ${typed ? "That address isn't on this computer." : "Add the address of a model running on this computer."}`));
+          return { saved: false, rows };
+        }
+        rt = { id: "local", name: "Local", logo: "local", kind: "local", baseUrl: origin, why: "", install: "" };
+      }
+      const probed = rt ? await probeLocalRuntime(rt, deps) : { status: "missing", detail: "Choose a model running on this computer.", models: [] };
+      if (probed.status !== "ready") { lines.close(); say(R(`  ${probed.detail}`)); return { saved: false, rows }; }
+      const picked = str(flag("model")) || probed.models[0]?.id || "";
+      if (!picked || !probed.models.some(m => m.id === picked)) {
+        lines.close();
+        say(R(`  ${picked ? `${rt.name} doesn't have that model. Choose one it lists.` : probed.detail}`));
+        return { saved: false, rows };
+      }
+      model = configFor(id, { model: picked, baseUrl: probed.baseUrl || rt.baseUrl });
+    } else if (choice === "api-key") {
       let key = typeof flag("key") === "string" ? flag("key") : "";
       if (!key && !row?.found) key = (await lines.ask(`  ${t("setup.pasteKeyAsk", { path: `${tilde(HOME)}/config.json` })} `, { secret: isTTY })) || "";
       key = key.trim();
