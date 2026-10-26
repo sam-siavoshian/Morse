@@ -9,10 +9,10 @@
 //   /site/mods/index.json          the gallery list (core/gallery.js GALLERY_INDEX_URL)
 //   /share/install.html            share links (core/mod.js SHARE_BASE)
 //   /core/, /design/               modules and tokens the pages import
-//   /docs/launch/                  the demo video and posters
+//   /docs/launch/                  the launch videos and posters
 //
 // The pages' own files stay under site/. A <base href="site/"> on the root
-// copies makes their relative paths (shots/, ../docs/launch/, ../core/) resolve
+// copies makes their relative paths (shots/, sky/, ../core/) resolve
 // there, on this host and on a GitHub project site. Links to other pages step
 // back out (../gallery.html). /site/mods/ stays put: installed copies of Morse
 // already request that address.
@@ -21,7 +21,9 @@
 // and Twitter, with site/og-image.png) and structured data (JSON-LD) where its
 // <!-- seo: … --> comment is, from its own <title> and description and the
 // SEO_PAGES list below. Pages not in that list must say noindex. The build
-// also writes sitemap.xml (the indexable pages) and robots.txt.
+// also writes sitemap.xml (the indexable pages) and robots.txt, and the
+// repository's star count into the nav's [data-stars] (the page refreshes it;
+// with no network the capsule says Star).
 //
 // It also writes site/privacy.html from docs/privacy.md, copies the nav bar and
 // footer of site/index.html into site/privacy.html and site/gallery.html (all
@@ -95,6 +97,8 @@ export async function structuredData(page, html) {
       "@type": "SoftwareApplication",
       "@id": `${home}#app`,
       name: "Morse",
+      alternateName: ["cheats for apps", "app cheats", "app mods"],
+      keywords: "cheats for apps, app cheats, app mods, mod any app, mod any website, closed source, delete a paywall, bring a feature, desktop mods",
       description: pageDescription(html, page.file),
       url: home,
       applicationCategory: "UtilitiesApplication",
@@ -174,6 +178,25 @@ export function sitemapXml() {
 export function robotsTxt() {
   return `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}sitemap.xml\n`;
 }
+
+// ---- the repository's stars
+
+// The count GitHub shows, or null when it can't be had (no network, the rate
+// limit). Never fails the build.
+export async function fetchStars(repo = REPO_URL, { timeout = 4000 } = {}) {
+  try {
+    const res = await fetch(repo.replace("https://github.com/", "https://api.github.com/repos/"), {
+      headers: { Accept: "application/vnd.github+json", "User-Agent": "morse-pages" },
+      signal: AbortSignal.timeout(timeout),
+    });
+    if (!res.ok) return null;
+    const n = (await res.json()).stargazers_count;
+    return Number.isInteger(n) && n >= 0 ? n : null;
+  } catch { return null; }
+}
+
+export const withStars = (html, stars) => (stars == null ? html : html.replace(/(<span class="nav-stars-count" data-stars>)(<\/span>)/g, (_, a, b) => a + formatStars(stars) + b));
+const formatStars = n => (n >= 10000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k` : String(n));
 
 // ---- docs/privacy.md -> site/privacy.html
 
@@ -406,7 +429,9 @@ export async function brokenLinks(dir) {
 
 // refresh: false leaves site/privacy.html and site/gallery.html as they are
 // (tests build into a folder of their own while other tests read those).
-export async function buildPages({ out = OUT, refresh = true } = {}) {
+// stars: the count to write into the nav (fetchStars); left out, the
+// published pages carry none and the browser asks GitHub.
+export async function buildPages({ out = OUT, refresh = true, stars = null } = {}) {
   if (refresh) {
     await fs.writeFile(path.join(root, "site", "privacy.html"), await privacyHtml());
     await fs.writeFile(path.join(root, "site", "gallery.html"), await galleryHtml());
@@ -423,7 +448,7 @@ export async function buildPages({ out = OUT, refresh = true } = {}) {
     const fromSite = !page.file.startsWith("share/");
     const src = path.join(out, fromSite ? path.join("site", path.basename(page.file)) : page.file);
     let html = await withSeo(page, await fs.readFile(src, "utf8"));
-    if (fromSite) html = publishAtRoot(html);
+    if (fromSite) html = withStars(publishAtRoot(html), stars);
     await fs.writeFile(path.join(out, page.file), html);
   }
   // Old addresses. vercel.json redirects these on Vercel; the refresh covers
@@ -453,7 +478,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(im
       if (await readSite("gallery.html") !== await galleryHtml()) throw new Error("site/gallery.html's nav or footer is out of date with site/index.html. Run npm run pages.");
       console.log("site/privacy.html and site/gallery.html are current.");
     } else {
-      const r = await buildPages();
+      const r = await buildPages({ stars: await fetchStars() });
       console.log(`Built ${path.relative(root, r.out)}: ${r.files} files.`);
     }
   } catch (e) {

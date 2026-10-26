@@ -41,18 +41,20 @@ const UI_FILES = {
   // When the row may say Connected, and when the "isn't running yet" banner may show.
   "/open-bar.js": [path.join(HERE, "..", "daemon", "open-bar.js"), "text/javascript; charset=utf-8"],
   "/tokens.css": [path.join(HERE, "..", "design", "tokens.css"), "text/css; charset=utf-8"],
-  // The first run: the name forming out of dots, and its sound (ui/sounds/NOTICE.md).
+  // The first run: the name forming out of dots (ui/formation.js).
   "/formation.js": [path.join(HERE, "ui", "formation.js"), "text/javascript; charset=utf-8"],
-  "/sounds/intro.m4a": [path.join(HERE, "ui", "sounds", "intro.m4a"), "audio/mp4"],
-  // The marks of the models you can choose (ui/icons/NOTICE), and the site's own Inter.
+  // The first run's sky, the website's (copied from site/sky), and its pixel edge.
+  "/dither.js": [path.join(HERE, "ui", "dither.js"), "text/javascript; charset=utf-8"],
+  "/sky/day.webp": [path.join(HERE, "ui", "sky", "day.webp"), "image/webp"],
+  // The marks of the models you can choose (ui/icons/NOTICE), and the site's own Inter and JetBrains Mono.
   ...Object.fromEntries(["claude", "openai", "anthropic"].map(n => [`/icons/${n}.png`, [path.join(HERE, "ui", "icons", `${n}.png`), "image/png"]])),
-  ...Object.fromEntries(["inter-regular", "inter-medium", "interdisplay-semibold"].map(n => [`/fonts/${n}.woff2`, [path.join(HERE, "..", "site", "fonts", `${n}.woff2`), "font/woff2"]])),
+  ...Object.fromEntries(["inter-regular", "inter-medium", "interdisplay-semibold", "jetbrainsmono-regular"].map(n => [`/fonts/${n}.woff2`, [path.join(HERE, "..", "site", "fonts", `${n}.woff2`), "font/woff2"]])),
   // The window's words in the person's language: core/i18n.js and each language's catalog.
   "/core/i18n.js": [path.join(HERE, "..", "core", "i18n.js"), "text/javascript; charset=utf-8"],
   "/core/hotkeys.js": [path.join(HERE, "..", "core", "hotkeys.js"), "text/javascript; charset=utf-8"],
   ...Object.fromEntries(LANGUAGES.map(l => [`/core/locales/${l.code}.js`, [path.join(HERE, "..", "core", "locales", `${l.code}.js`), "text/javascript; charset=utf-8"]])),
 };
-const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; media-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 protocol.registerSchemesAsPrivileged([{ scheme: SCHEME, privileges: { standard: true, secure: true } }]);
 // Morse's page, whatever its query (?platform=…) says.
 const isPage = url => { try { const u = new URL(url); u.search = ""; u.hash = ""; return u.href === PAGE_URL; } catch { return false; } };
@@ -156,8 +158,8 @@ function createWindow() {
     width: 960, height: 720, minWidth: 760, minHeight: 560, show: false,
     title: "Morse", icon: MAC ? undefined : appIcon(),
     // On a Mac the window is glass, the way Zephium's is: the system's sidebar
-    // material under a clear background (ui/app.css, body.mac).
-    backgroundColor: MAC ? "#00000000" : nativeTheme.shouldUseDarkColors ? "#0b0b0c" : "#fbfbfb",
+    // material under a clear background (ui/app.css, body.mac). Dark only, like the website.
+    backgroundColor: MAC ? "#00000000" : "#0a0a0b",
     ...(MAC ? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 16, y: 18 }, vibrancy: "sidebar", visualEffectState: "followWindow" } : { autoHideMenuBar: true }),
     webPreferences: {
       preload: path.join(HERE, "preload.cjs"),

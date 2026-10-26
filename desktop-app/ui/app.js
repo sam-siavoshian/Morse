@@ -5,6 +5,7 @@
 import { t, setLanguage, loadLanguage, pickLanguage, setLanguageLoader, translatePage } from "./core/i18n.js";
 import { comboFromEvent, comboParts, formatCombo, formatPartial, defaultHotkeys, decideOpenShortcut, detectPlatform } from "./core/hotkeys.js";
 import { formName } from "./formation.js";
+import { mountDither } from "./dither.js";
 import { afterOpenBar, noticeStillShown } from "./open-bar.js";
 
 setLanguageLoader(code => import(`./core/locales/${code}.js`).then(m => m.default));
@@ -46,26 +47,14 @@ function radar(size = 16) {
   }
   return s;
 }
-// An app's own icon, or (for an app with none Morse can read) the Apps glyph
-// from the sidebar: never a letter standing in for a picture.
-function appsGlyph() {
-  const s = document.createElementNS(svgNS, "svg");
-  for (const [k, v] of Object.entries({ viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", "stroke-width": "1.5", "aria-hidden": "true" })) s.setAttribute(k, v);
-  for (const [x, y] of [[2.5, 2.5], [9, 2.5], [2.5, 9], [9, 9]]) {
-    const r = document.createElementNS(svgNS, "rect");
-    for (const [k, v] of Object.entries({ x, y, width: 4.5, height: 4.5, rx: 1.2 })) r.setAttribute(k, v);
-    s.append(r);
-  }
-  return s;
-}
-function trashGlyph() {
-  const s = document.createElementNS(svgNS, "svg");
-  for (const [k, v] of Object.entries({ viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", "stroke-width": "1.5", "stroke-linecap": "round", "aria-hidden": "true" })) s.setAttribute(k, v);
-  const p = document.createElementNS(svgNS, "path");
-  p.setAttribute("d", "M2.5 4.5h11M6.5 4.5V3h3v1.5M4 4.5l.7 8.5h6.6l.7-8.5M6.8 7v4M9.2 7v4");
-  s.append(p);
-  return s;
-}
+// The still radars in the page (data-radar="size"): the brand, the empty Mods, the update.
+for (const el of document.querySelectorAll("[data-radar]")) { const r = radar(Number(el.dataset.radar) || 16); r.classList.remove("live"); el.append(r); }
+// The skies' pixel edges (dither.js), as on the website.
+for (const c of document.querySelectorAll("canvas.dither")) mountDither(c);
+// An app's own icon, or (for an app with none Morse can read) four squares
+// standing for an app: never a letter standing in for a picture.
+const appsGlyph = () => h("span", { class: "apps-glyph", "aria-hidden": "true" }, h("i"), h("i"), h("i"), h("i"));
+const trashGlyph = () => h("span", { class: "icon", "aria-hidden": "true", text: "×" });
 function appIcon(a) {
   return h("div", { class: `appicon${a.icon ? " has-img" : ""}`, "aria-hidden": "true" }, a.icon ? h("img", { src: a.icon, alt: "" }) : appsGlyph());
 }
@@ -761,7 +750,7 @@ const submitOnEnter = (field, button) => $(field).addEventListener("keydown", e 
 submitOnEnter("first-key-input", "first-key-use");
 
 // ---------------------------------------------------------------- first run
-// In the shape of Zephium's: the name forms out of dots with its sound, then
+// In the shape of Zephium's: the name forms out of dots, then
 // three steps: the AI Morse found by itself (checked once), how it works, and
 // an app to open. Opening an app, Done, or Skip leads to the main window for
 // good. Enter goes on; the row at the foot steers.
@@ -796,16 +785,13 @@ document.addEventListener("keydown", e => {
   e.preventDefault();
   obNext();
 });
-// The welcome: the name gathers out of dots while the sound plays, once.
+// The welcome: the name gathers out of dots, once.
 async function obWelcome() {
   if (obStarted) return;
   obStarted = true;
   const f = $("first"), canvas = $("ob-air"), name = $("ob-name");
   const phase = p => { f.dataset.phase = p; };
   phase("forming");
-  const sound = new Audio("sounds/intro.m4a");
-  sound.volume = 0.6;
-  sound.play().catch(() => {}); // no sound device, or it's off: the name forms anyway
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) { phase("still"); return; }
   await document.fonts.load(getComputedStyle(name).font).catch(() => {});
   const nr = name.getBoundingClientRect(), cr = canvas.getBoundingClientRect();

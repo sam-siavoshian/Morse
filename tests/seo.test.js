@@ -15,6 +15,7 @@ import { promises as fs, existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { buildPages, SEO_PAGES, SITE_URL, faqOf } from "../scripts/build-pages.js";
 import { OG } from "../scripts/site-images.js";
+import { SITE } from "../core/links.js";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 let out;
@@ -48,6 +49,7 @@ test("the site's address is package.json's homepage", () => {
   const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
   assert.equal(SITE_URL, "https://getmorse.vercel.app/");
   assert.equal(pkg.homepage, SITE_URL);
+  assert.equal(SITE, SITE_URL);
 });
 
 test("every page: a short, unique title and description, one <h1>, lang, viewport and icons", () => {
@@ -169,15 +171,24 @@ test("sitemap.xml lists exactly the pages people should find; robots.txt points 
   assert.doesNotMatch(robots, /Disallow: \S/, "nothing is disallowed, so crawlers can read the noindex tags");
 });
 
-test("the share page and the redirects stay out of search", () => {
-  for (const f of ["share/install.html", "site/index.html", "site/gallery.html", "site/privacy.html"]) {
-    assert.ok(noindex(built(f)), `${f} says noindex`);
+test("the public pages are at the root; /site/ only redirects there", () => {
+  const home = built("index.html");
+  assert.match(home, /<base href="site\/">/);
+  assert.equal(canonical(home), SITE_URL);
+  assert.match(home, /href="\.\.\/gallery\.html"/);
+  assert.match(home, /href="\.\.\/#takes"/);
+  assert.ok(!noindex(home));
+  for (const [f, to, canon] of [
+    ["site/index.html", "../", SITE_URL],
+    ["site/gallery.html", "../gallery.html", `${SITE_URL}gallery.html`],
+    ["site/privacy.html", "../privacy.html", `${SITE_URL}privacy.html`],
+  ]) {
+    const html = built(f);
+    assert.ok(noindex(html), `${f} says noindex`);
+    assert.match(html, new RegExp(`url=${to.replace(/\./g, "\\.")}["<]`));
+    assert.equal(canonical(html), canon, f);
   }
-  for (const f of ["index.html", "gallery.html", "privacy.html"]) assert.equal(noindex(built(f)), false, `${f} is a page people should find`);
-  // The old /site/ addresses name the page they moved to.
-  assert.equal(canonical(built("site/index.html")), SITE_URL);
-  assert.equal(canonical(built("site/gallery.html")), `${SITE_URL}gallery.html`);
-  assert.equal(canonical(built("site/privacy.html")), `${SITE_URL}privacy.html`);
+  assert.ok(noindex(built("share/install.html")), "share/install.html says noindex");
 });
 
 test("pages: every image says what it shows and has a size; no fonts from other servers", () => {
@@ -189,6 +200,9 @@ test("pages: every image says what it shows and has a size; no fonts from other 
     }
     assert.doesNotMatch(head(html), /fonts\.googleapis|fonts\.gstatic/, `${f}: its fonts come from the site`);
   }
-  // The film's poster is the first screen's largest picture: preloaded.
-  assert.match(head(built("index.html")), /<link rel="preload" as="image" href="\.\.\/docs\/launch\/morse-opus-open-poster\.webp" fetchpriority="high">/);
+  // The day sky is the first screen's largest picture: preloaded, the half
+  // size copy on a phone.
+  const home = head(built("index.html"));
+  assert.match(home, /<link rel="preload" as="image" href="sky\/day\.avif" type="image\/avif" media="\(min-width: 801px\)" fetchpriority="high">/);
+  assert.match(home, /<link rel="preload" as="image" href="sky\/day-1280\.avif" type="image\/avif" media="\(max-width: 800px\)" fetchpriority="high">/);
 });
