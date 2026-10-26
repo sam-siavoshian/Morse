@@ -64,6 +64,8 @@ test("Settings: four rows and Your style, then More settings, which opens and cl
   await waitFor(s => s.open);
   await page.keyboard.press("Control+Comma");
   await waitFor(s => s.pane === "settings");
+  // The pane state flips before the rows are painted. Reading in that gap sees none.
+  await page.locator(".pane .srow .lbl > span").first().waitFor();
   const rows = await visible(page, ".pane .srow .lbl > span");
   assert.deepEqual(rows.map(s => s.replace(/ ·.*/, "")), ["Your style", "Open Morse", "Theme", "Language", "Fix my mods when a site changes"]);
   const more = page.locator(".pane [data-act=more]");

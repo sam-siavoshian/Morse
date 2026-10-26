@@ -339,7 +339,7 @@ broken, delete it from the release and say so in the notes):
 ## Repository size
 
 On `98bf072d` the files in the tree were 276,152,973 bytes, almost all pictures
-and video. A checkout of this branch is 14,682,640 bytes, not counting `.git`. The UI catalog `npm run ui`
+and video. A checkout of this branch is 14,934,908 bytes, not counting `.git`. The UI catalog `npm run ui`
 writes (`docs/ui/*.png`, `docs/ui/index.html`, `docs/ui/catalog.json`) is
 gitignored. The launch films (100,464,140 bytes of video, GIF and poster files)
 are not in the tree: the landing page shows the bar, not a film. Screenshots
