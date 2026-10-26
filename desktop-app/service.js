@@ -12,6 +12,7 @@ import { promises as fs, watchFile, unwatchFile } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { detectPlatform, decideOpenShortcut, resolveHotkeys } from "../core/hotkeys.js";
+import { discoverAppsNative, listProcessesNative } from "../daemon/native-scan.js";
 import { presentApp } from "../daemon/open-bar.js";
 import { kindFor, logoFor } from "../daemon/connect.js";
 
@@ -30,7 +31,8 @@ export async function loadDaemon() {
   ]);
   return {
     // apps (morse apps, launch, attach, status, stop)
-    hostContext: apps.hostContext, discoverApps: apps.discoverApps, appFromPath: apps.appFromPath, listProcesses: apps.listProcesses,
+    hostContext: apps.hostContext, discoverApps: ctx => discoverAppsNative(apps, ctx), appFromPath: apps.appFromPath,
+    listProcesses: (...args) => listProcessesNative(apps, ...args),
     findAppProcesses: apps.findAppProcesses, debugPortOf: apps.debugPortOf, loadAppPrefs: apps.loadAppPrefs,
     connectApp: desktop.connectApp, startSession: desktop.startSession, readSessions: status.readSessions, stopSession: status.stopSession,
     // the model (morse setup, morse doctor)
@@ -131,7 +133,7 @@ export function createService({
 
   // ---- apps
   // discoverApps walks the disk. One in-flight scan is shared; a fresh look
-  // starts its own. The work is deferred off the caller's stack so a fast
+  // starts its own. The work is deferred off the caller's stack so the first
   // state() can return before it runs.
   function discoverShared({ fresh = false } = {}) {
     if (!fresh && found && now() - foundAt <= 60000) return Promise.resolve(found);
