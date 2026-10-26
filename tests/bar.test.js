@@ -377,3 +377,118 @@ test("polish: a field a change added low in its bar is measured as off the middl
     assert.deepEqual(await measure(), []);
   });
 });
+
+// The dashed selection box is Morse's overlay (.sel / the edit frame), not the
+// page's own focus ring. It has to leave when the choice is over.
+test("selection outline is gone after the chip is dismissed, the run ends, or the bar closes", { skip }, async () => {
+  const boxes = page => page.evaluate(() => {
+    const root = document.querySelector("[data-morse-ui]").shadowRoot;
+    const shown = el => {
+      for (let n = el; n; n = n.parentElement) {
+        if (n.hidden) return false;
+        const s = getComputedStyle(n);
+        if (s.display === "none" || s.visibility === "hidden") return false;
+      }
+      return !!el;
+    };
+    return {
+      sel: shown(root.querySelector(".sel")),
+      hl: shown(root.querySelector(".hl")),
+      frame: shown(root.querySelector(".gm-frame")),
+      marks: document.querySelectorAll(".morse-selected, .morse-hover").length,
+    };
+  });
+  const stamp = page => page.evaluate(() => {
+    const el = document.querySelector(".morse-selected") || document.querySelector("#toolbar");
+    el.classList.add("morse-selected", "morse-hover");
+    document.querySelector("#toolbar").classList.add("morse-selected", "morse-hover");
+  });
+
+  await scenario("?ms=40", null, async t => {
+    const { page } = t;
+    await pressOpen(page);
+    await t.waitFor(s => s.open);
+    const tb = await page.locator("#toolbar").boundingBox();
+    const at = (x, y) => ({ x: tb.x + x, y: tb.y + y });
+    await page.mouse.move(at(24, tb.height / 2).x, at(24, tb.height / 2).y);
+    await page.waitForFunction(() => {
+      const hl = document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".hl");
+      return hl && !hl.hidden && getComputedStyle(hl).display !== "none";
+    });
+    await page.mouse.click(at(24, tb.height / 2).x, at(24, tb.height / 2).y);
+    await page.waitForFunction(() => {
+      const root = document.querySelector("[data-morse-ui]").shadowRoot;
+      const frame = root.querySelector(".gm-frame");
+      const sel = root.querySelector(".sel");
+      const vis = el => {
+        for (let n = el; n; n = n.parentElement) {
+          if (!n || n.hidden) return false;
+          const s = getComputedStyle(n);
+          if (s.display === "none" || s.visibility === "hidden") return false;
+        }
+        return !!el;
+      };
+      return vis(frame) || vis(sel);
+    });
+    await stamp(page);
+    assert.ok((await boxes(page)).marks >= 1);
+    await page.locator("[data-morse-ui]").evaluate(h => h.shadowRoot.querySelector(".chip.target .x").click());
+    await settle(page);
+    let b = await boxes(page);
+    assert.equal(b.sel, false, "dismissed chip: dashed box");
+    assert.equal(b.frame, false, "dismissed chip: edit frame");
+    assert.equal(b.marks, 0, "dismissed chip: host marks");
+
+    await page.mouse.move(at(70, tb.height / 2).x, at(70, tb.height / 2).y);
+    await page.waitForFunction(() => {
+      const hl = document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".hl");
+      return hl && !hl.hidden && getComputedStyle(hl).display !== "none";
+    });
+    await page.mouse.click(at(70, tb.height / 2).x, at(70, tb.height / 2).y);
+    await page.keyboard.type("make the toolbar airier");
+    await page.keyboard.press("Enter");
+    await t.waitFor(s => s.phase === "working");
+    await stamp(page);
+    await t.waitFor(s => s.phase === "result");
+    await settle(page);
+    await page.evaluate(() => { document.body.style.minHeight = "4000px"; window.scrollTo(0, 500); });
+    await settle(page);
+    b = await boxes(page);
+    assert.equal(b.sel, false, "after the run");
+    assert.equal(b.hl, false, "hover box after the run");
+    assert.equal(b.frame, false, "edit frame after the run");
+    assert.equal(b.marks, 0, "host marks after the run");
+    await page.keyboard.press("Escape");
+    await t.waitFor(s => !s.open);
+    await page.evaluate(() => window.scrollTo(0, 900));
+    await page.mouse.move(40, 40);
+    await settle(page);
+    b = await boxes(page);
+    assert.equal(b.sel, false, "after the bar closes");
+    assert.equal(b.hl, false, "hover box after the bar closes");
+    assert.equal(b.frame, false, "edit frame after the bar closes");
+    assert.equal(b.marks, 0, "host marks after the bar closes");
+  });
+
+  await scenario("?ms=150", null, async t => {
+    const { page } = t;
+    await pressOpen(page);
+    await t.waitFor(s => s.open);
+    const tb = await page.locator("#toolbar").boundingBox();
+    await page.mouse.click(tb.x + tb.width / 2, tb.y + 4);
+    await page.keyboard.type("make the toolbar airier");
+    await page.keyboard.press("Enter");
+    await t.waitFor(s => s.phase === "working");
+    await stamp(page);
+    await page.keyboard.press("Escape");
+    const s = await t.waitFor(s => s.phase === "idle" && /Stopped/.test(s.hint));
+    assert.equal(s.open, true, "a stop leaves the bar open");
+    await settle(page);
+    await page.evaluate(() => { document.body.style.minHeight = "4000px"; window.scrollTo(0, 400); });
+    await settle(page);
+    const b = await boxes(page);
+    assert.equal(b.sel, false, "after cancel");
+    assert.equal(b.frame, false, "edit frame after cancel");
+    assert.equal(b.marks, 0, "host marks after cancel");
+  });
+});

@@ -56,16 +56,21 @@ function setInput(text) {
 
 // ---- pointing
 function setTarget(el) {
+  if (S.target && S.target !== el) unmarkHost(S.target);
   S.target = el;
   S.picking = false;
   hl.hidden = true;
   root.host.style.cursor = "";
   if (el) {
+    pinned = true;
+    watchHost(el);
+    el.classList.add("morse-selected");
+    syncPickFlag();
     boxTo(el, selBox);
     placeBar(el.getBoundingClientRect());
     chip.hidden = false;
     chip.querySelector("span").textContent = describe(el);
-  } else { selBox.hidden = true; chip.hidden = true; }
+  } else { chip.hidden = true; releasePick(); }
   setHint();
   updateChips();
   input.focus();
@@ -172,6 +177,9 @@ function closeBar() {
   Voice.cancel();
   stopRecording();
   S.open = false; S.picking = false;
+  S.target = null;
+  chip.hidden = true;
+  releasePick();
   bar.hidden = true; hl.hidden = true; selBox.hidden = true;
   S.phase = "idle";
   hideMenu();
@@ -308,6 +316,7 @@ function stopGeneration() {
 }
 // Called by 60-generate.js once the effect has wound down.
 function onCancelled(id) {
+  releasePick(); // before idle, so the frame cannot flash back on
   setCss(id, "");
   call("off", { modId: id }).catch(() => {});
   call("clip.cancel").catch(() => {});
@@ -318,7 +327,6 @@ function onCancelled(id) {
   autosize();
   input.focus();
   input.setSelectionRange(input.value.length, input.value.length);
-  if (S.target?.isConnected) boxTo(S.target, selBox);
   note(t("bar.stopped"), 0);
   // The prompt stays in the input; any edit clears the note.
   input.addEventListener("input", () => { hintNote = ""; setHint(); }, { once: true });

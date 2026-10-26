@@ -132,6 +132,14 @@ function CSS() {
   .hl, .sel { position: fixed; pointer-events: none; border-radius: var(--m-r-sm); transition: all 70ms var(--m-ease);
     outline: 1.5px solid var(--m-signal-4); outline-offset: 0; box-shadow: 0 0 0 4px var(--m-focus); background: color-mix(in srgb, var(--m-signal-4) 6%, transparent); }
   .sel { outline-style: dashed; box-shadow: none; }
+  /* Chosen (data-pick) and the bar still waiting may show the dashed box.
+     A finished run, a stop, an error, or a closed bar leaves the page unmarked.
+     Subtle's still outline (.sel.busy) is the only box while a run is working.
+     display only: no extra motion. */
+  :host(:not([data-pick])) .sel:not(.busy) { display: none !important; }
+  :host(:has(.bar[hidden], .bar.done, .bar.err)) .sel { display: none !important; }
+  :host(:has(.bar[hidden])) .hl { display: none !important; }
+  :host(:has(.bar.working)) .hl { display: none !important; }
   /* the picker label and the edit frame's readout: one inverse mono label */
   .hl span, .gm-read { background: var(--m-signal-4); color: var(--m-text-inverse); font: 500 var(--m-text-xs)/12px var(--m-mono); padding: 4px 6px;
     border-radius: var(--m-r-sm); white-space: nowrap; letter-spacing: 0; font-variant-numeric: tabular-nums; }

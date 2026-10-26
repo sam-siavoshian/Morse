@@ -54,8 +54,12 @@ async function submit(request, opts = {}) {
   const prev = opts.from || null;
   S.phase = "working";
   S.picking = false;
+  pinned = false;
   hl.hidden = true;
+  selBox.classList.remove("busy");
   selBox.hidden = true;
+  clearHostMarks();
+  syncPickFlag();
   input.disabled = true;
   bar.classList.remove("done", "err");
   bar.classList.add("working");
@@ -151,11 +155,12 @@ async function submit(request, opts = {}) {
     Object.assign(S.draft, { title: res.title || request.slice(0, 40), css: res.css || "", js: res.js || "", secs, attempts: res.attempts, model: S.label, updated: new Date().toISOString() });
     setCss(id, S.draft.css);
     await Effect.finish(res.ok);
-    if (Ask.handle(id, res)) return; // Ask and find: an answer, not a mod (61-ask.js)
+    if (Ask.handle(id, res)) { releasePick(); return; } // Ask and find: an answer, not a mod (61-ask.js)
     if (!res.ok) {
       setCss(id, "");
       call("off", { modId: id }).catch(() => {}); // a failed attempt's JS may have left nodes, observers or timers
       if (res.cancelled) return onCancelled(id); // Stop: 50-bar.js
+      releasePick();
       S.phase = "error";
       bar.classList.add("err");
       hint.innerHTML = guardRefusalHint(res.error) || t("result.failed", { detail: esc(plainError(res.error).slice(0, 120)) }); // guard hook: 64-guard.js
@@ -165,8 +170,7 @@ async function submit(request, opts = {}) {
       return;
     }
   }
-  if (S.target) boxTo(S.target, selBox);
-  selBox.hidden = true;
+  releasePick(); // before the after-shot: capture can scroll, and a scroll must not redraw the box
   S.after = { shot: await capture(), rect: S.target?.isConnected ? R(S.target.getBoundingClientRect()) : null, focus: focus?.isConnected ? R(focus.getBoundingClientRect()) : null };
   if (!prev) call("clip.stop", { modId: id }).then(c => { if (c) S.draft.clip = c; }).catch(() => {});
   showResult(S.draft, Waiting.note(res, id)); Waiting.offer(res); // waiting hook: code that waits for “Allow User Scripts” (64-waiting.js)
@@ -175,6 +179,7 @@ async function submit(request, opts = {}) {
 // The result: the title, how it went, and what you can do next. The input
 // stays open for a follow-up.
 function showResult(d, { note = "", error = "", keepInput = false } = {}) {
+  releasePick();
   S.phase = "result";
   bar.classList.remove("err", "working");
   bar.classList.add("done");
