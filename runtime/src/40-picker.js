@@ -60,10 +60,42 @@ function boxTo(el, box, label) {
 const ours = e => e.composedPath().includes(hostEl);
 // Pointing is the person's own mouse: a page's synthetic mousemove and click
 // can't choose what Morse changes (isTrusted, like every key Morse takes).
+// The page part under a point, skipping the overlay. Electron's full-screen
+// popover is the first hit even where it does not take the click.
+function pageUnder(x, y) {
+  let el = document.elementsFromPoint(x, y).find(n => n !== hostEl && n.getRootNode?.()?.host !== hostEl) || null;
+  for (let i = 0; el && el !== hostEl && el.shadowRoot && i < 8; i++) {
+    const inner = el.shadowRoot.elementFromPoint(x, y);
+    if (!inner || inner === el) break;
+    el = inner;
+  }
+  return el;
+}
+// The bar can sit on the part you are pointing at. After the pointer rests,
+// move the bar off it. A press before that is a drag or a click on the bar.
+let coverTimer = 0;
 function onMove(e) {
   if (!S.picking || !e.isTrusted || barDragging()) return;
   if (!S.open || bar.hidden) return;
   const el = GodMode.deepAt(e.clientX, e.clientY); // God mode hook: also points into open shadow roots
+  const onUs = el === hostEl || el?.getRootNode?.()?.host === hostEl;
+  if (onUs) {
+    clearTimeout(coverTimer);
+    const x = e.clientX, y = e.clientY;
+    coverTimer = setTimeout(() => {
+      coverTimer = 0;
+      if (!S.open || bar.hidden || barDragging() || barDragHeld()) return;
+      const under = pageUnder(x, y);
+      if (!under || under === document.documentElement) return;
+      placeBar(under.getBoundingClientRect());
+    }, 180);
+    leaveHover(hoverEl);
+    hoverEl = null;
+    hl.hidden = true;
+    return;
+  }
+  clearTimeout(coverTimer);
+  coverTimer = 0;
   if (!el || el === hostEl || el === document.documentElement) {
     leaveHover(hoverEl);
     hoverEl = null;
@@ -92,9 +124,11 @@ function swallow(e) { if (S.picking && !ours(e)) { e.preventDefault(); e.stopPro
 function onClick(e) {
   if (barDragEatClick()) { e.preventDefault(); e.stopPropagation(); return; }
   if (!S.picking) return;
-  // A click on the bar stays with the bar. A click that only hit the
-  // see-through popover is a point at the page underneath.
+  // A click on the bar stays with the bar. A keyboard click has no position
+  // and belongs to the control that was pressed. A pointer click that only
+  // hit the see-through popover is a point at the page underneath.
   if (ours(e)) {
+    if (!e.clientX && !e.clientY) return;
     const under = GodMode.deepAt(e.clientX, e.clientY);
     const scope = under?.getRootNode?.();
     if (!under || under === hostEl || scope?.host === hostEl) return;
@@ -108,6 +142,7 @@ function onClick(e) {
 let pointerY = innerHeight / 2;
 listen("mousemove", e => { pointerY = e.clientY; }, true);
 listen("mousemove", onMove, true);
+listen("pointerdown", () => { clearTimeout(coverTimer); coverTimer = 0; }, true);
 for (const t of ["pointerdown", "mousedown", "pointerup", "mouseup"]) listen(t, swallow, true);
 listen("click", onClick, true);
 // A scroll may follow the live hover or the chosen element. It never brings

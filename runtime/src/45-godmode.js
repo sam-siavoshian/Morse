@@ -94,12 +94,12 @@ const GodMode = (() => {
   // ---- picking into open shadow roots
   // The overlay host is a full-screen popover. In Electron, elementFromPoint
   // names that host even where it is see-through, and the page sits next in
-  // the list. A real Morse control (the bar, a sheet) still wins.
+  // the list. A real Morse control (the bar, a sheet) is not itself a page target.
   function deepAt(x, y) {
     let el = document.elementFromPoint(x, y);
     if (el === hostEl) {
       const inner = root.elementFromPoint(x, y);
-      if (inner && inner !== hostEl && getComputedStyle(inner).pointerEvents !== "none") return inner;
+      if (inner && inner !== hostEl && getComputedStyle(inner).pointerEvents !== "none") return hostEl;
       el = document.elementsFromPoint(x, y).find(n => n !== hostEl && n.getRootNode?.()?.host !== hostEl) || null;
     }
     for (let i = 0; el && el !== hostEl && el.shadowRoot && i < 8; i++) {
