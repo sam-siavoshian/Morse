@@ -6,13 +6,11 @@
    run's panes over its sky). The sky is the first run's only. Dark only,
    like the website. The tokens are the site's, by the same names;
    tests/desktop-app.test.js keeps them equal.
-   Fonts: the site's Inter, Inter Display and JetBrains Mono (site/fonts).
-   swap, not block: the first paint uses the system face, then these replace it.
-   A local font must not hold the window blank. */
-@font-face { font-family: "Inter"; src: url("fonts/inter-regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face { font-family: "Inter"; src: url("fonts/inter-medium.woff2") format("woff2"); font-weight: 500 600; font-style: normal; font-display: swap; }
-@font-face { font-family: "Inter Display"; src: url("fonts/interdisplay-semibold.woff2") format("woff2"); font-weight: 500 700; font-style: normal; font-display: swap; }
-@font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrainsmono-regular.woff2") format("woff2"); font-weight: 400 500; font-style: normal; font-display: swap; }
+   Fonts: the site's Inter, Inter Display and JetBrains Mono (site/fonts). */
+@font-face { font-family: "Inter"; src: url("fonts/inter-regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: "Inter"; src: url("fonts/inter-medium.woff2") format("woff2"); font-weight: 500 600; font-style: normal; font-display: block; }
+@font-face { font-family: "Inter Display"; src: url("fonts/interdisplay-semibold.woff2") format("woff2"); font-weight: 500 700; font-style: normal; font-display: block; }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrainsmono-regular.woff2") format("woff2"); font-weight: 400 500; font-style: normal; font-display: block; }
 
 :root {
   color-scheme: dark;
@@ -86,9 +84,8 @@ li .radar.live rect.o, .live .radar.live rect.o { animation-name: m-pulse-dim; }
 .radar.live rect:nth-child(2n) { animation-delay: .4s; } .radar.live rect:nth-child(3n) { animation-delay: .8s; } .radar.live rect:nth-child(5n) { animation-delay: 1.1s; }
 
 /* ------------------------------------------------------------------ layout */
-/* 188px. The apps list keeps the rest. "Always open with Morse" wraps to two
-   lines rather than holding a wide column. */
-.app { display: grid; grid-template-columns: 188px minmax(0, 1fr); height: 100%; }
+/* 272px so "Always open with Morse" fits on one line beside its switch. */
+.app { display: grid; grid-template-columns: 272px minmax(0, 1fr); height: 100%; }
 
 /* ---- the sidebar: the site's nav links, standing up */
 .side { display: flex; flex-direction: column; gap: 18px; padding: 18px 10px 12px; background: var(--bg-alt); box-shadow: inset -0.5px 0 0 var(--hair); }
@@ -101,7 +98,7 @@ body.mac .side :is(button, label, input) { -webkit-app-region: no-drag; }
 .side nav button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 32px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent;
   color: var(--text-2); font: 400 13.5px/1 var(--font); text-align: start; transition: color var(--quick) ease, background-color var(--quick) ease; }
 .side nav button:hover { color: var(--text); background: var(--surface); }
-.side nav button[aria-current="page"] { color: var(--text); background: var(--raised); box-shadow: var(--plate-edge); transition: none; }
+.side nav button[aria-current="page"] { color: var(--text); background: var(--raised); box-shadow: var(--plate-edge); }
 .side nav button span { flex: 1; min-width: 0; }
 .side nav small { display: inline-flex; align-items: center; font: 400 11.5px/1 var(--mono); color: var(--text-3); font-variant-numeric: tabular-nums; }
 .side nav small.on::before { content: ""; width: 5px; height: 5px; margin-inline-end: 7px; border-radius: 1.5px; background: var(--signal); box-shadow: 0 0 0 3px var(--signal-dim); }
@@ -110,7 +107,7 @@ body.mac .side :is(button, label, input) { -webkit-app-region: no-drag; }
 .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 1px; padding-top: 10px; box-shadow: inset 0 0.5px 0 var(--hair); }
 .side-foot .switchrow { min-height: 34px; padding: 6px 8px 6px 10px; border-radius: 8px; color: var(--text-2); gap: 12px; transition: color var(--quick) ease, background-color var(--quick) ease; }
 .side-foot .switchrow:hover { background: var(--surface); color: var(--text); }
-.side-foot .switchrow > span { flex: 1; min-width: 0; font-size: 13.5px; line-height: 18px; white-space: normal; text-wrap: balance; }
+.side-foot .switchrow > span { flex: 1; min-width: 0; font-size: 13.5px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ver { margin-top: 6px; padding: 0 10px; font: 400 11.5px/1.6 var(--mono); color: var(--faint); white-space: nowrap; }
 
 /* ---- the content pane: a title bar, then grouped plates */
@@ -198,10 +195,8 @@ input[role="switch"]:focus-visible { outline: 2px solid #fff; outline-offset: 2p
 /* ---- the marks of the models (icons/NOTICE), on a small dark tile */
 .mark-tile { flex: none; position: relative; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 9px; background: var(--raised); box-shadow: var(--plate-edge); color: var(--text); }
 .mark-tile img { width: 18px; height: 18px; }
-.mark-tile svg { width: 20px; height: 20px; }
 .mark-tile.big { width: 42px; height: 42px; border-radius: 11px; }
 .mark-tile.big img { width: 23px; height: 23px; }
-.mark-tile.big svg { width: 22px; height: 22px; }
 .mark-tile.pair { display: flex; align-items: center; justify-content: center; gap: 2px; }
 .mark-tile.pair img { width: 12px; height: 12px; }
 .mark-tile.big.pair img { width: 15px; height: 15px; }
@@ -223,18 +218,6 @@ img.mono { filter: invert(1); }
 .list > li:hover::before, .list > li:hover + li::before { opacity: 0; }
 .list > li.empty { justify-content: center; gap: 8px; min-height: 52px; color: var(--faint); text-align: center; }
 .list > li.empty:hover { background: transparent; }
-
-/* A calm stand-in while the app list is still on its way. Static: a row that
-   keeps moving is a row you cannot read. Same line as a real app. */
-.list > li.skel { pointer-events: none; }
-.list > li.skel:hover, .list > li.skel:active { background: transparent; }
-.list > li.skel:hover::before, .list > li.skel:hover + li::before { opacity: 1; }
-.skel-icon { flex: none; width: 28px; height: 28px; border-radius: 8px; background: var(--raised); box-shadow: var(--plate-edge); }
-.skel-copy { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.skel-copy > span { display: block; height: 8px; width: 42%; border-radius: 4px; background: var(--line-strong); }
-.skel-copy > span + span { width: 26%; height: 6px; background: var(--line); }
-.list > li.skel:nth-child(2) .skel-copy > span:first-child { width: 56%; }
-.list > li.skel:nth-child(3) .skel-copy > span:first-child { width: 34%; }
 .grow { flex: 1; min-width: 0; }
 .grow b { display: block; color: var(--text); font: 500 14px/1.35 var(--font); letter-spacing: -0.012em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .grow small { display: flex; align-items: center; gap: 7px; margin-top: 1px; color: var(--muted); font-size: 12.5px; line-height: 17px; overflow: hidden; white-space: nowrap; }
@@ -279,34 +262,28 @@ li.cant .appicon img { filter: grayscale(1); opacity: 0.6; }
 #model-live, #helper-live { align-items: flex-start; }
 #model-live > .dot, #helper-live > .dot { margin-top: 6px; }
 #model-live > .radar, #helper-live > .radar { margin-top: 3px; }
-/* One button per model, then one form. Opacity only: the form does not move. */
-.connect > h2 { margin: 0 0 12px; }
-#connect-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.connect-choice { display: grid; grid-template-columns: 20px minmax(0, 1fr); grid-template-areas: "mark name" "mark line" "mark state"; column-gap: 12px; row-gap: 2px;
-  align-items: center; width: 100%; margin: 0; padding: 12px; border: 0; border-radius: var(--row-r); background: transparent; color: inherit;
-  font: inherit; text-align: start; box-shadow: inset 0 0 0 0.5px var(--hair); }
-.connect-choice svg { grid-area: mark; width: 20px; height: 20px; }
-.connect-choice .connect-copy { display: contents; }
-.connect-choice b { grid-area: name; font: 600 14px/1.25 var(--font); letter-spacing: -0.012em; color: var(--text); }
-.connect-choice small { grid-area: line; color: var(--muted); font-size: 12px; line-height: 16px; white-space: normal; }
-.connect-choice .badge { grid-area: state; justify-self: start; margin-top: 4px; }
-.connect-choice:hover { background: var(--row-hover); }
-.connect-choice[aria-pressed="true"] { background: rgba(255, 255, 255, 0.06); box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.26); }
-.connect-choice:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.connect-form { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; opacity: 1; transition: opacity 120ms linear; }
-.connect-fields { display: flex; flex-direction: column; gap: 12px; }
-.field { display: flex; flex-direction: column; gap: 8px; color: var(--muted); font-size: 12px; line-height: 16px; }
-.field input { height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--bg); color: var(--text);
-  box-shadow: inset 0 0 0 0.5px var(--hair), inset 0 1px 2px rgba(0, 0, 0, 0.4);
-  font: 400 12.5px/1 var(--mono); letter-spacing: 0; user-select: text; }
-.field input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.field input::placeholder { color: var(--faint); font-family: var(--font); }
-.field input[readonly] { color: var(--text-2); }
-.connect-fields .hint { color: var(--faint); font-size: 12px; line-height: 18px; }
-.connect-fields code.install { display: block; padding: 6px 10px; border-radius: 8px; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line-strong);
+.choices { display: flex; flex-direction: column; gap: 10px; }
+.choices > h2 { margin: 0; }
+#choice-list { display: flex; flex-direction: column; gap: 2px; margin: 0 -8px; }
+.choice { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0 12px; padding: 9px 10px;
+  border-radius: var(--row-r); cursor: pointer; transition: background-color var(--quick) var(--ease-out), box-shadow var(--quick) var(--ease-out); }
+.choice:hover { background: var(--row-hover); }
+.choice:has(input:checked) { background: rgba(255, 255, 255, 0.06); box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.26); }
+.choice:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* the radio itself is the ring round the row; it stays a real radio for keys and screen readers */
+.choice input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.choice .grow b { display: flex; align-items: center; gap: 8px; }
+.choice .grow small { display: block; white-space: normal; }
+.choice .grow small::first-letter { text-transform: uppercase; }
+.choice .rec { display: inline-flex; align-items: center; height: 19px; padding: 0 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); box-shadow: var(--glass-edge);
+  font: 500 11px/1 var(--font); color: var(--text-2); }
+.choice .state { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.choice .state .link { font-size: 12.5px; line-height: 16px; }
+.howto { grid-column: 2 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin-top: 10px; padding-top: 10px;
+  box-shadow: inset 0 0.5px 0 var(--hair); color: var(--muted); font-size: 12.5px; line-height: 18px; cursor: default; }
+.howto span { flex-basis: 100%; }
+.howto code { flex: 1 1 220px; min-width: 0; padding: 6px 10px; border-radius: 8px; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line-strong);
   font-size: 12px; color: var(--text); user-select: all; overflow-wrap: anywhere; }
-@media (prefers-reduced-motion: reduce) { .connect-form { transition: none; } }
-
 .keyrow { display: flex; flex-direction: column; gap: 8px; }
 .keyrow input { height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--bg); color: var(--text); box-shadow: inset 0 0 0 0.5px var(--hair), inset 0 1px 2px rgba(0, 0, 0, 0.4);
   font: 400 12.5px/1 var(--mono); letter-spacing: 0; user-select: text; }
@@ -462,7 +439,7 @@ label.check input { accent-color: var(--signal); flex: none; margin: 2px 0 0; wi
 .ob-scene > .live > span:not(.mark-tile):not(.badge) { flex: 1; min-width: 0; }
 .ob-scene > .live > :is(.badge, .radar, .dot) { flex: none; }
 .ob-scene .mark-tile { width: 28px; height: 28px; border-radius: 8px; background: rgba(255, 255, 255, 0.16); box-shadow: none; }
-.ob-scene .mark-tile img, .ob-scene .mark-tile svg { width: 16px; height: 16px; }
+.ob-scene .mark-tile img { width: 16px; height: 16px; }
 .ob-scene .mark-tile.pair img { width: 11px; height: 11px; }
 .ob-scene .badge { background: rgba(255, 255, 255, 0.14); color: #fff; box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.3); }
 .ob-scene .dot.on { background: #fff; box-shadow: 0 0 8px rgba(255, 255, 255, 0.8); }
@@ -515,10 +492,11 @@ body.mac .ob-top { -webkit-app-region: drag; }
 body.mac .first :is(button, input, li, a) { -webkit-app-region: no-drag; }
 
 /* ------------------------------------------------------------------ motion */
-/* Quick and quiet: a step's parts settle in, a dialog appears. Switching
-   pages does not fade. With reduced motion nothing moves. */
+/* Quick and quiet: a page fades in when you switch to it, a step's parts
+   settle in, a dialog appears. With reduced motion nothing moves. */
 @keyframes fade { from { opacity: 0; transform: translateY(3px); } }
 @media (prefers-reduced-motion: no-preference) {
+  main > section { animation: fade 200ms var(--ease-out); }
   .ob-head, .ob-scene, .ob-moves { animation: fade 250ms var(--ease-out) backwards; }
   .ob-scene, .ob-moves { animation-delay: 60ms; }
   dialog[open] { animation: fade 180ms var(--ease-out); }
@@ -547,7 +525,8 @@ body.mac .side { background: rgba(12, 12, 14, 0.8); }
   .grow b, .grow small, .grow small span { white-space: normal; overflow: visible; text-overflow: unset; }
   .list > li + li::before { inset-inline-start: 10px; }
   .cur-actions { flex: 1 1 100%; justify-content: flex-end; margin-inline-start: 0; }
-  #connect-list { grid-template-columns: 1fr; }
+  .choice .grow b { flex-wrap: wrap; white-space: normal; overflow: visible; }
+  .howto code { flex-basis: 100%; white-space: nowrap; overflow-wrap: normal; overflow-x: auto; }
   .list.checks > li:not(.empty) { grid-template-columns: 18px minmax(0, 1fr); }
   .list.checks .text { grid-column: 2; }
   .shortcut-row { flex-wrap: wrap; }
