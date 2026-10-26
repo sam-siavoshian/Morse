@@ -44,8 +44,8 @@ function markup() {
   <div class="try-wrap">
     <header class="try-head">
       <p class="try-eyebrow">Try it here</p>
-      <h2>Try Morse here, with nothing to install.</h2>
-      <p class="try-lede">This is the real Morse, in a small music app and a news site. Open it, point at something and pick a change.</p>
+      <h2>This music app has no sleep timer. Give it one.</h2>
+      <p class="try-lede">This is Morse, in a small music app and a news site. Nothing to install. Open it, point at something, and take the feature they left out.</p>
     </header>
     <div class="try-stage">
       <div class="try-window">

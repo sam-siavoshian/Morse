@@ -102,8 +102,8 @@ test("the Pages build publishes the paths the code uses, with no broken links", 
     const { GALLERY_INDEX_URL } = await import("../core/gallery.js");
     for (const url of [SHARE_BASE, GALLERY_INDEX_URL]) {
       const u = new URL(url);
-      assert.equal(u.origin, "https://sam-siavoshian.github.io");
-      assert.ok(existsSync(path.join(out, u.pathname.replace(/^\/RRAA\//, ""))), `${url} is published`);
+      assert.equal(u.origin, "https://getmorse.vercel.app");
+      assert.ok(existsSync(path.join(out, u.pathname.replace(/^\//, ""))), `${url} is published`);
     }
     await fs.writeFile(path.join(out, "site", "broken.html"), '<a href="nope.html">x</a><img src="../docs/launch/missing.png">');
     assert.deepEqual(await brokenLinks(out), ["site/broken.html -> nope.html", "site/broken.html -> ../docs/launch/missing.png"]);

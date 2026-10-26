@@ -96,7 +96,7 @@ Do these once, in this order.
 2. **Turn on GitHub Pages.** **Settings → Pages → Build and deployment →
    Source: GitHub Actions.** Then run the **Pages** workflow from the Actions
    tab (or push to `main`). Check that
-   https://sam-siavoshian.github.io/RRAA/site/privacy.html opens. If the
+   https://getmorse.vercel.app/site/privacy.html opens. If the
    deploy says the branch isn't allowed, open **Settings → Environments →
    github-pages** and add `main` under deployment branches.
 3. **Add the npm token.**

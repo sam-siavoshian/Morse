@@ -10,7 +10,7 @@ import { t } from "./i18n.js"; // the words, in the language the host speaks (co
 // runtime can inline it; it is part of this module's API.
 export { HISTORY_CAP, versionsOf, currentVersion, reviseMod, restoreVersion, stepBack, relativeTime } from "./versions.js";
 
-export const SHARE_BASE = "https://sam-siavoshian.github.io/RRAA/share/install.html";
+export const SHARE_BASE = "https://getmorse.vercel.app/share/install.html";
 
 export function newId() {
   return Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);

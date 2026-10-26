@@ -3,5 +3,5 @@
 blank_issues_enabled: true
 contact_links:
   - name: Privacy policy
-    url: https://sam-siavoshian.github.io/RRAA/site/privacy.html
+    url: https://getmorse.vercel.app/site/privacy.html
     about: What leaves your computer when you use Morse, and to whom.

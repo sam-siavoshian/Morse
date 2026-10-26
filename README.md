@@ -2,15 +2,12 @@
 
 # Morse: Change Any App
 
-### Change any app or website in your own words.
+### Make any app yours.
 
-**See something you'd change? Point at it and say how.**
+**Bring a feature over. Delete the paywall. Add the AI they refused. Fix the bug tonight.**
 
-[![MIT license](https://img.shields.io/badge/license-MIT-f4c430?style=flat-square)](LICENSE)
-[![macOS, Windows, Linux](https://img.shields.io/badge/macOS_·_Windows_·_Linux-111113?style=flat-square)](#quick-start)
 [![Preview build](https://img.shields.io/badge/preview-newest_main-5c4ee5?style=flat-square)](https://github.com/sam-siavoshian/RRAA/releases/tag/preview)
-
-**[Website](https://sam-siavoshian.github.io/RRAA/site/) · [Docs](docs/README.md) · [Showcase](docs/showcase/README.md)**
+**[Website](https://getmorse.vercel.app/) · [Docs](docs/README.md) · [Showcase](docs/showcase/README.md)**
 
 [Quick start](#quick-start) · [How Morse works](#how-morse-works) · [What you can change](#what-you-can-change) · [Showcase](#showcase) · [FAQ](#faq) · [Documentation](#documentation)
 
@@ -24,9 +21,9 @@
 
 ---
 
-See something in an app you'd change? Press a shortcut, point at it, and say what you want: "show one cover, not five", "add a sleep timer", "make this sidebar quieter". Morse makes the change while you watch, in the app's own look.
+Change any app. The other one has the feature. Bring it over. The paywall is a box on a page that already loaded. Take it off. The app has no AI, or they locked it on a plan you do not have. Add yours. The bug has been open for months. Fix it tonight, on your computer. Their team can ship whenever.
 
-Morse works on desktop apps built on web technology, like VS Code, Slack, Spotify, Obsidian, Notion and Discord, and on websites in Chrome, Edge, Brave, Arc and Vivaldi. It never touches the app's files. Every change you keep comes back each time the app opens.
+Press a shortcut, point at the part, and say it. Morse makes the change while you watch, and it is back the next time the app opens. Morse never changes the app's files. It works on desktop apps built on web pages, like VS Code, Slack, Spotify, Obsidian, Notion and Discord, and on websites in Chrome, Edge, Brave, Arc and Vivaldi.
 
 Morse has no server and no account. It uses the AI you already have: Claude Code, Codex, or an API key.
 
@@ -51,7 +48,8 @@ Morse finds your AI and lists your apps. Click **Open with Morse** next to one. 
 ### Ask
 
 ```text
-Show one album cover here, not five.
+Remove this paywall.
+Add a sleep timer, the kind the music app has.
 ```
 
 Point at the part you mean, or at nothing for the whole app. Press **Enter**, then **Save** to keep it.
@@ -78,7 +76,10 @@ What you can ask for:
 | **Voice** | Hold the shortcut and talk. [Changing things](docs/changing-things.md#voice) |
 | **Edit tools** | Hide, move, resize or recolor something yourself, with no AI and no waiting. [Edit tools](docs/edit-and-page-tools.md) |
 | **Ask and find** | "Where is the export setting?" **Show me** shows where to click. [Ask and find](docs/ask-and-find.md) |
-| **Bring a feature** | **Take this** in one app, **Bring here** in another. Morse rebuilds it in that app's look. [Bring a feature](docs/bring-a-feature.md) |
+| **Bring a feature** | **Take this** in the app that has it. **Bring here** in the one that does not. [Bring a feature](docs/bring-a-feature.md) |
+| **Delete a paywall** | Point at the box on a page that already loaded and say remove it. Morse does not sign you in, and it does not fetch a story the site never sent. |
+| **Add the AI they refused** | No model in the app, or it is on a plan you do not have. Say summarize this. Your model does it. [Models](docs/models.md) |
+| **Fix the bug tonight** | Point at the broken part and say what it should do. The fix stays on your computer. Their team can take months. [Your controls](docs/your-controls.md) |
 | **Your style** | One font, text size or calmer look on every app and site. [Your style](docs/your-style.md) |
 | **Mods** | Turn them on and off, undo, share them with a link, and turn everything off with one shortcut. [Mods](docs/mods.md) · [Your controls](docs/your-controls.md) |
 
@@ -107,6 +108,16 @@ Real apps, real requests, real Claude Code (opus). Each change was saved, the ap
 More, with every request word for word: [the showcase](docs/showcase/README.md). Made something good with Morse? Share it in an [issue](https://github.com/sam-siavoshian/RRAA/issues).
 
 ## FAQ
+
+<details>
+<summary><strong>Can I delete a paywall?</strong></summary>
+When it is a box on a page that already loaded, yes. Point at it and say remove it. If the site never sent the article, there is nothing under the box. Morse will not sign you in.
+</details>
+
+<details>
+<summary><strong>Can I add AI the app will not give me?</strong></summary>
+Yes. Say summarize this, rewrite this, or answer from what is on screen. Morse uses the model you already have. Their plan is not in the room.
+</details>
 
 <details>
 <summary><strong>Which AI does Morse use?</strong></summary>

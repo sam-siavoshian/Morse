@@ -8,6 +8,8 @@ under the new version number with the date
 
 ## Unreleased
 
+- **The website is [getmorse.vercel.app](https://getmorse.vercel.app/).** Share links and the gallery list use that address.
+
 ## 0.3.1 (2026-10-25)
 
 - **Change the keys that open the bar.** Settings shows the keys. Press the ones you want. Morse uses those from then on.

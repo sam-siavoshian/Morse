@@ -1,5 +1,6 @@
-# Publishes the site, the share page and the gallery list to GitHub Pages:
-# https://sam-siavoshian.github.io/RRAA/site/ and .../RRAA/share/install.html.
+# Publishes the site, the share page and the gallery list.
+# The public site is https://getmorse.vercel.app/ (the pages are under /site/
+# and /share/). GitHub Pages still builds the same files.
 # The layout mirrors the repo (see scripts/build-pages.js), because share links
 # (core/mod.js SHARE_BASE) and the gallery list (core/gallery.js) use those paths.
 #
