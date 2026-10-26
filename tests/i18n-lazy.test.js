@@ -6,9 +6,9 @@
 //     other language's words, and the package has each language as data
 //   - loadLanguage: English until the words are here, never a message id,
 //     and a failed read is tried again later
-//   - in real Chromium, the extension shows German from the bar's first
-//     paint, Persian right to left after Settings → Language, and its popup
-//     follows; the desktop connector does the same over CDP
+//   - in real Chromium, the bar opens at once (it may flash English) and
+//     ends in German; Persian is right to left after Settings → Language,
+//     and the popup follows; the desktop connector does the same over CDP
 import { home, tempDir } from "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -178,7 +178,11 @@ test("extension: German from the bar's first paint, Persian right to left from S
   assert.equal(de.placeholder, WORDS.de["bar.placeholder"]);
   assert.ok(de.hint.includes(text(WORDS.de["bar.hint.pointing"]).split("·")[0].trim()), de.hint);
   await settle(page); // frames ran with the bar open, so the watcher has seen it
-  assert.deepEqual(await page.evaluate(() => globalThis.__shown), [WORDS.de["bar.placeholder"]], "the bar never showed English first");
+  {
+    const shown = await page.evaluate(() => globalThis.__shown);
+    assert.equal(shown.at(-1), WORDS.de["bar.placeholder"], "the bar ends in German");
+    assert.ok(shown.every(p => p === WORDS.de["bar.placeholder"] || p === EN["bar.placeholder"]), `only English or German: ${JSON.stringify(shown)}`);
+  }
 
   await chooseLanguage(page, "fa");
   await seesPersian(page);
@@ -225,7 +229,11 @@ test("desktop: the connector sends the chosen language's words from core/locales
     assert.equal(de.lang, "de");
     assert.equal(de.placeholder, WORDS.de["bar.placeholder"]);
     await settle(page); // frames ran with the bar open, so the watcher has seen it
-    assert.deepEqual(await page.evaluate(() => globalThis.__shown), [WORDS.de["bar.placeholder"]], "the bar never showed English first");
+    {
+      const shown = await page.evaluate(() => globalThis.__shown);
+      assert.equal(shown.at(-1), WORDS.de["bar.placeholder"], "the bar ends in German");
+      assert.ok(shown.every(p => p === WORDS.de["bar.placeholder"] || p === EN["bar.placeholder"]), `only English or German: ${JSON.stringify(shown)}`);
+    }
     await chooseLanguage(page, "fa");
     await seesPersian(page);
     await waitFor(() => JSON.parse(readFileSync(path.join(home, "settings.json"), "utf8")).language === "fa", { what: "settings.json to say fa" });

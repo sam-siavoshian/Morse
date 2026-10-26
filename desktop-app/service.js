@@ -72,6 +72,9 @@ export function createService({
   const pending = new Map(); // app id -> "opening" | "disconnecting"
   const icons = new Map();   // app id -> data URL or null
   let found = null, foundAt = 0;
+  let scanP = null;          // one cold discoverApps, shared by the app list and anything waiting on it
+  let namesFromScan = new Map(); // app id -> name, including apps added by file
+  let fillQueued = false;
   let lastCheck = null;      // { ok, ms, error, at, label }
   let settings = null;
   // Always open with Morse: what each app was at the last look, and when Morse
@@ -122,21 +125,48 @@ export function createService({
   }
 
   // ---- apps
+  // discoverApps walks the disk. One in-flight scan is shared; a fresh look
+  // starts its own. The work is deferred off the caller's stack so a fast
+  // state() can return before it runs.
+  function discoverShared({ fresh = false } = {}) {
+    if (!fresh && found && now() - foundAt <= 60000) return Promise.resolve(found);
+    if (!fresh && scanP) return scanP;
+    let resolve, reject;
+    const tracked = new Promise((res, rej) => { resolve = res; reject = rej; });
+    const done = tracked.finally(() => { if (scanP === done) scanP = null; });
+    scanP = done;
+    setTimeout(() => {
+      try {
+        found = scan ? d.discoverApps(d.hostContext()) : [];
+        foundAt = now();
+        resolve(found);
+      } catch (e) { reject(e); }
+    }, 0);
+    return done;
+  }
+
   async function appList({ fresh = false } = {}) {
+    await discoverShared({ fresh });
     const ctx = d.hostContext();
-    if (fresh || !found || now() - foundAt > 60000) {
-      found = scan ? d.discoverApps(ctx) : [];
-      foundAt = now();
-    }
     const mine = new Set(self.filter(Boolean));
-    const list = found.filter(a => ![a.exe, a.resolved, a.path].some(p => mine.has(p)));
-    for (const p of (await loadSettings()).apps) {
+    const list = (found || []).filter(a => ![a.exe, a.resolved, a.path].some(p => mine.has(p)));
+    for (const file of (await loadSettings()).apps) {
       let a;
-      try { a = d.appFromPath(ctx, p); } catch { continue; }
+      try { a = d.appFromPath(ctx, file); } catch { continue; }
       if (list.some(x => x.id === a.id || x.exe === a.exe)) continue;
       list.push({ ...a, added: true });
     }
+    namesFromScan = new Map(list.map(a => [a.id, a.name]));
     return list;
+  }
+
+  // The window is up before this finishes. One scan, then morse:changed.
+  function scheduleFill() {
+    if (found || fillQueued) return;
+    fillQueued = true;
+    setTimeout(() => {
+      apps().then(() => changed(), e => log(`apps: ${e?.message || e}`)).finally(() => { fillQueued = false; });
+    }, 0);
   }
 
   async function findApp(id) {
@@ -146,7 +176,8 @@ export function createService({
   }
 
   async function icon(a) {
-    if (!icons.has(a.id)) icons.set(a.id, await iconFor(a).catch(() => null));
+    // Store the promise before it resolves so a list reads every icon at once.
+    if (!icons.has(a.id)) icons.set(a.id, Promise.resolve(iconFor(a)).catch(() => null));
     return icons.get(a.id);
   }
 
@@ -157,8 +188,7 @@ export function createService({
     const procs = d.listProcesses();
     const sessions = (await d.readSessions()).filter(s => s.state !== "stopped");
     const mods = await d.listMods().catch(() => []);
-    const rows = [];
-    for (const a of list) {
+    const rows = await Promise.all(list.map(async a => {
       const s = sessions.find(x => x.id === a.id);
       const p = a.canAttach === false ? [] : d.findAppProcesses(a, procs, { extraArgs: argsFor(settings, a.id) });
       const port = p.map(x => d.debugPortOf(x.cmd)).find(Boolean) || null;
@@ -168,13 +198,13 @@ export function createService({
           : p.length ? (port ? "open-connectable" : "open") : "closed");
       // "attached" is the port answering. Connected waits until Morse is in a window.
       const shown = presentApp(base, own.get(a.id)?.connector);
-      rows.push({
+      return {
         id: a.id, name: a.name, version: (a.version || "").split(".").slice(0, 3).join("."), why: a.why, canAttach: a.canAttach,
         known: !!a.known, added: !!a.added, state: shown.state, canStop: shown.canStop, windows: s?.windows?.length || 0, mine: own.has(a.id),
         mods: mods.filter(m => modFor(a, m)).length, modsOn: mods.filter(m => modFor(a, m) && m.enabled).length,
         icon: await icon(a),
-      });
-    }
+      };
+    }));
     // Apps a terminal connected to (morse attach) that aren't in the list.
     for (const s of sessions) if (!rows.some(r => r.id === s.id)) {
       const base = s.state === "attached" ? "connected" : s.state === "waiting" ? "waiting" : "connecting";
@@ -348,7 +378,9 @@ export function createService({
   // ---- mods and the off switch (morse mods, pause, resume)
   async function mods() {
     const list = await d.listMods();
-    const names = new Map((await appList()).map(a => [a.id, a.name]));
+    // Names from the last scan only. A cold state() must not start discoverApps;
+    // the fill does, once, and the next push has the names.
+    const names = new Map(namesFromScan);
     for (const s of await d.readSessions()) names.set(s.id, s.name);
     const groups = new Map();
     for (const m of list) {
@@ -420,11 +452,8 @@ export function createService({
   }
 
   // ---- everything the window shows at once
-  async function state({ fresh = false } = {}) {
-    const [m, a, md, p, s] = await Promise.all([model(), apps({ fresh }), mods(), pause(), loadSettings()]);
+  function packState({ m, a, md, p, s, prefs, keys, appsPending }) {
     const platform = detectPlatform({ platform: process.platform });
-    const prefs = typeof d.loadPrefs === "function" ? await d.loadPrefs().catch(() => null) : null;
-    const keys = await d.configuredHotkeys(platform).catch(() => ({}));
     const stored = prefs?.hotkeys && typeof prefs.hotkeys === "object" ? prefs.hotkeys : null;
     const resolved = stored ? resolveHotkeys(stored, platform) : null;
     return {
@@ -433,8 +462,27 @@ export function createService({
         open: keys.open || "", mods: keys.mods || "", off: keys.off || "",
         ...(resolved ? { combo: resolved.open || "", custom: !!stored.open, stored } : {}),
       },
-      model: m, apps: a, mods: md, pause: p, settings: { startAtLogin: !!s.startAtLogin, autoOpen: s.autoOpen !== false, welcomed: !!s.welcomed },
+      model: m, apps: a, appsPending: !!appsPending, mods: md, pause: p,
+      settings: { startAtLogin: !!s.startAtLogin, autoOpen: s.autoOpen !== false, welcomed: !!s.welcomed },
     };
+  }
+  async function state({ fresh = false } = {}) {
+    const platform = detectPlatform({ platform: process.platform });
+    const prefsP = typeof d.loadPrefs === "function" ? d.loadPrefs().catch(() => null) : Promise.resolve(null);
+    const keysP = d.configuredHotkeys(platform).catch(() => ({}));
+    // First paint: settings, model, mods and the off switch. The disk scan,
+    // the process list and the icons follow once, then morse:changed.
+    if (!fresh && !found) {
+      const [m, md, p, s, prefs, keys] = await Promise.all([model(), mods(), pause(), loadSettings(), prefsP, keysP]);
+      const out = packState({ m, a: [], md, p, s, prefs, keys, appsPending: true });
+      scheduleFill();
+      return out;
+    }
+    await appList({ fresh });
+    const [m, a, md, p, s, prefs, keys] = await Promise.all([
+      model(), apps({ fresh: false }), mods(), pause(), loadSettings(), prefsP, keysP,
+    ]);
+    return packState({ m, a, md, p, s, prefs, keys, appsPending: false });
   }
 
   // The keys that open Morse in a connected app. Saved with the bar's other

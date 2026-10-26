@@ -20,12 +20,12 @@ import path from "node:path";
 import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { createService, loadDaemon } from "./service.js";
-import { registerIpc, PUSH, isOpenLink } from "./ipc.js";
+import { registerIpc, gateService, PUSH, isOpenLink } from "./ipc.js";
 import { markPng } from "./mark.js";
 import { LANGUAGES } from "../core/i18n.js";
 import { iconSource } from "./icons.js";
 import { setAutostart, writeMenuEntry } from "./linux.js";
-import { fullPath } from "./shell-path.js";
+import { startShellPath } from "./shell-path.js";
 import { createUpdater } from "./updater.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -74,10 +74,10 @@ if (APPIMAGE) {
   }
 }
 
-// Opened from Finder or a launcher, the app has the system's bare PATH: add the
-// login shell's and the usual install folders, so Claude Code, Codex and the
-// node they need are found (shell-path.js). Run from a terminal it has them.
-if (app.isPackaged && process.platform !== "win32") process.env.PATH = fullPath();
+// Opened from Finder or a launcher, the app has the system's bare PATH. The
+// login shell is not asked here: that probe can take seconds, and it used to
+// run while this module loaded, before the window existed. whenReady applies
+// a cached PATH at once and refreshes the shell in the background (shell-path.js).
 
 // One Morse at a time: a second start (or a morse://open link) shows this window.
 // A Morse folder of its own (MORSE_HOME, as tests use) is a Morse of its own.
@@ -192,6 +192,7 @@ async function ask(appName) {
 }
 
 async function openFromTray(a) {
+  if (!service) return;
   let r = await service.openApp(a.id);
   if (r.needsRestart) {
     const answer = await ask(a.name);
@@ -214,7 +215,7 @@ function rebuildTray() {
     { label: "Open Morse", click: showWindow },
     { type: "separator" },
     { label: "Open an app with Morse", submenu: appItems },
-    { label: "Turn all mods off", type: "checkbox", checked: off, click: item => service.setAllModsOff(item.checked) },
+    { label: "Turn all mods off", type: "checkbox", checked: off, click: item => service?.setAllModsOff(item.checked) },
     { type: "separator" },
     { label: "Quit Morse", accelerator: MAC ? "Cmd+Q" : undefined, click: quit },
   ]));
@@ -255,6 +256,7 @@ let pushTimer = null;
 function changed() {
   clearTimeout(pushTimer);
   pushTimer = setTimeout(async () => {
+    if (!service) return;
     try { lastState = { ...(await service.state()), update: updater?.status || { phase: "idle" } }; } catch (e) { log("state", e.message); return; }
     if (win && !win.isDestroyed()) win.webContents.send(PUSH, lastState);
     updater?.idle(); // an app was disconnected: a downloaded update may install now
@@ -278,19 +280,32 @@ app.on("before-quit", e => {
 });
 app.on("window-all-closed", () => {}); // the tray keeps Morse running
 
+// Model and backend detection run commands from PATH. On a first launch the
+// login shell may still be running; wait for it instead of looking too early.
+function whenPathReady(daemon, pathReady) {
+  for (const name of ["detectBackends", "checkModel"]) {
+    const fn = daemon[name];
+    if (typeof fn !== "function") continue;
+    daemon[name] = (...args) => Promise.resolve(pathReady).then(() => fn.apply(daemon, args));
+  }
+  return daemon;
+}
+
 app.whenReady().then(async () => {
   lockSession();
   if (["dark", "light"].includes(process.env.MORSE_DESKTOP_THEME)) nativeTheme.themeSource = process.env.MORSE_DESKTOP_THEME; // screenshots
   if (MAC) app.dock?.setIcon(appIcon());
   // macOS needs a menu for ⌘Q, ⌘W and copy and paste (the API key field); elsewhere there is none.
   Menu.setApplicationMenu(MAC ? Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }, { role: "windowMenu" }]) : null);
-  service = createService({ daemon: await loadDaemon(), emit: changed, log, iconFor, self: [process.execPath, APPIMAGE] });
-  // Updates itself from the preview release: downloads in the background, and
-  // installs when no app is connected and the window isn't in use, or at quit.
-  updater = createUpdater({ app, log, getAppImage: () => APPIMAGE, busy: () => service.sessions.size > 0, onStatus: () => { changed(); if (["downloading", "ready"].includes(updater?.status.phase) && win && !win.isVisible()) showWindow(); } });
-  updater.start();
+  // Cached PATH now (no shell). The probe continues in the background.
+  const pathReady = startShellPath({
+    packaged: app.isPackaged, platform: process.platform,
+    cacheFile: path.join(app.getPath("userData"), "shell-path.json"),
+  });
+  let resolveService, rejectService;
+  const serviceReady = new Promise((res, rej) => { resolveService = res; rejectService = rej; });
   registerIpc({
-    ipcMain, service, isTrusted, log,
+    ipcMain, service: gateService(serviceReady), isTrusted, log,
     native: {
       updateStatus: () => updater?.status || { phase: "idle" },
       installUpdate: () => !!updater?.installNow(),
@@ -319,6 +334,22 @@ app.whenReady().then(async () => {
   registerLinks();
   const link = process.argv.find(a => a.startsWith("morse://"));
   if (link) handleLink(link);
+  // The page is already loading. The daemon comes up behind it; state() waits
+  // (gateService) and then answers without a cold app scan.
+  try {
+    const daemon = whenPathReady(await loadDaemon(), pathReady);
+    service = createService({ daemon, emit: changed, log, iconFor, self: [process.execPath, APPIMAGE] });
+    resolveService(service);
+  } catch (e) {
+    log("start", e?.stack || e);
+    rejectService(e);
+    return;
+  }
+  // Updates itself from the preview release: downloads in the background, and
+  // installs when no app is connected and the window isn't in use, or at quit.
+  // The check stays on its own 5s delay (updater.js); startup does not add one.
+  updater = createUpdater({ app, log, getAppImage: () => APPIMAGE, busy: () => service.sessions.size > 0, onStatus: () => { changed(); if (["downloading", "ready"].includes(updater?.status.phase) && win && !win.isVisible()) showWindow(); } });
+  updater.start();
   const s = await service.loadSettings();
   // Always open with Morse (on unless you turn it off) needs Morse running:
   // it opens at login, set once here, after which the switch decides.

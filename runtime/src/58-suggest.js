@@ -13,6 +13,29 @@ const PAGE_SUGGESTIONS = () => ["darkPage", "distractions", "readPage"].map(id =
 // bar shows its suggestions, never on page load.
 const PAGE_IDEAS = { ads: "ads", media: "sleep", read: "readPage", type: "wordCountPage", dark: "darkPage", light: "lightPage", popups: "popups" };
 let pageIdeasFor = "", pageIdeas = null;
+let genericSuggestions = null;
+let pageScanQueued = false;
+// The first open paints generic chips. Reading the page (rects, styles) waits
+// a frame so the bar is on screen first.
+function genericPageSuggestions() {
+  return genericSuggestions || (genericSuggestions = PAGE_SUGGESTIONS());
+}
+function schedulePageIdeas() {
+  if (pageScanQueued || (pageIdeas && pageIdeasFor === location.href + getLanguage())) return;
+  pageScanQueued = true;
+  const run = () => {
+    pageScanQueued = false;
+    if (!S.open || S.phase !== "idle" || input.value) return;
+    const had = sugEl.contains(root.activeElement);
+    const at = had ? [...sugEl.querySelectorAll(".sug")].indexOf(root.activeElement) : -1;
+    pageSuggestions();
+    updateChips();
+    if (!had) return;
+    const items = [...sugEl.querySelectorAll(".sug")];
+    items[Math.max(0, Math.min(at, items.length - 1))]?.focus();
+  };
+  requestAnimationFrame(() => requestAnimationFrame(run));
+}
 function pageSuggestions() {
   if (pageIdeas && pageIdeasFor === location.href + getLanguage()) return pageIdeas;
   const shown = el => !el.closest("[data-morse-ui]") && el.getClientRects().length > 0;
@@ -57,7 +80,11 @@ function looksText(el) {
 
 function suggestionsFor(el) {
   const steps = showOnceChips(); if (steps) return steps; // show-once hook: 64-show-once.js
-  if (!el || el === document.body || el === document.documentElement) return pageSuggestions(); // first-run hook
+  if (!el || el === document.body || el === document.documentElement) {
+    if (pageIdeas && pageIdeasFor === location.href + getLanguage()) return pageIdeas;
+    schedulePageIdeas();
+    return genericPageSuggestions(); // first-run hook: the page's own chips replace these
+  }
   if (looksMedia(el)) return [sugOf("sleep"), sugOf("speed"), sugOf("biggerControls")];
   if (looksButton(el)) return [sugOf("rename", { fill: true, caret: -1 }), sugOf("biggerButton"), sugOf("hideButton")]; // the request ends in its closing quote: the caret goes inside
   if (looksField(el)) return [sugOf("wordCount"), sugOf("tallerField")];
@@ -93,6 +120,12 @@ function useSuggestion(i) {
 }
 sugEl.addEventListener("click", e => { const b = e.target.closest(".sug"); if (b) useSuggestion(+b.dataset.i); });
 sugEl.addEventListener("mousedown", e => e.preventDefault());
+langSubs.add(() => {
+  genericSuggestions = null;
+  pageIdeas = null;
+  pageIdeasFor = "";
+  if (S.open) updateChips();
+});
 sugEl.addEventListener("keydown", e => {
   const items = [...sugEl.querySelectorAll(".sug")];
   const i = items.indexOf(root.activeElement);

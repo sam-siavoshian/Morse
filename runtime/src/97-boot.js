@@ -77,10 +77,9 @@ B.ready.then(hello => {
     if (hello.debug) debugStatus(); // the host was started with MORSE_DEBUG=1
     if (hello.rebuilt) devRebuilt(); // developers: npm run build ran under a running extension
   } finally {
-    // The person's language first (04-i18n.js), so the overlay never opens in
-    // English and then changes; a host slow to send the words holds it up 1.5 s at most.
-    if (!languageReady) uiStarted();
-    else Promise.race([languageReady, new Promise(r => setTimeout(r, 1500))]).then(uiStarted).catch(e => console.warn("[morse]", e));
+    // Open now. A language still on its way swaps the words when it arrives
+    // (04-i18n.js). Waiting here used to hold the hotkey for up to 1.5s.
+    uiStarted();
   }
 }).catch(e => console.warn("[morse]", e));
 
