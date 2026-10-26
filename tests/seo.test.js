@@ -189,7 +189,7 @@ test("pages: every image says what it shows and has a size; no fonts from other 
   }
   // The day sky is the first screen's largest picture: preloaded, the half
   // size copy on a phone.
-  const home = head(built("site/index.html"));
+  const home = head(built("index.html"));
   assert.match(home, /<link rel="preload" as="image" href="sky\/day\.avif" type="image\/avif" media="\(min-width: 801px\)" fetchpriority="high">/);
   assert.match(home, /<link rel="preload" as="image" href="sky\/day-1280\.avif" type="image\/avif" media="\(max-width: 800px\)" fetchpriority="high">/);
 });
