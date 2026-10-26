@@ -2,10 +2,10 @@
 // (site/site.css: near black, the grey ramp, Inter Display, the radar mark):
 //
 //   site/og-image.png            1200x630, the picture link previews show
-//                                (Open Graph and Twitter cards). Real
-//                                screenshots: VSCodium before and after
-//                                "make it look like a retro green terminal"
-//                                (site/shots/200-… and 201-…).
+//                                (Open Graph and Twitter cards): the
+//                                headline on the day sky, and Visual Studio
+//                                Code after the real Windows 95 run with the
+//                                Morse bar in it (site/shots/211-…).
 //   site/mark/apple-touch-icon.png  180x180, iOS home screen
 //   site/mark/icon-192.png, icon-512.png  the web app manifest's icons
 //
@@ -43,44 +43,46 @@ export const OG = {
   file: "og-image.png",
   width: 1200,
   height: 630,
-  alt: "Morse: change any app in your own words. VSCodium before and after asking Morse to make it look like a retro green terminal.",
+  alt: "Morse: take what they won’t ship. Visual Studio Code after one sentence made it look like Windows 95, with the Morse bar offering Save and Undo.",
 };
 
-const ogHtml = () => `<!doctype html><html><head><meta charset="utf-8"><style>${FONTS}
-  body { position: relative; }
-  .grid { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,.07) 3px, transparent 3px) 0 0 / 22px 22px;
-          -webkit-mask: linear-gradient(#000 3px, transparent 3px) 0 0 / 22px 22px; }
-  .fade { position: absolute; inset: 0; background: radial-gradient(70% 90% at 15% 40%, rgba(10,10,11,.2), #0a0a0b 80%); }
-  .text { position: absolute; left: 64px; top: 64px; width: 430px; }
+// at: how the page reaches site/ (a file: address here; a served page can
+// pass its own).
+export const ogHtml = (at = file) => `<!doctype html><html><head><meta charset="utf-8"><style>${FONTS.replace(/url\("[^"]*\/site\/([^"]+)"\)/g, (_, f) => `url("${at(f)}")`)}
+  body { position: relative; background: linear-gradient(90deg, rgba(18, 52, 150, 0.55), rgba(18, 52, 150, 0.15) 55%, transparent), #3d72d6 url("${at("sky/day.webp")}") 50% 0% / 130% auto; }
+  .text { position: absolute; left: 64px; top: 62px; width: 560px; color: #fff; text-shadow: 0 2px 20px rgba(10, 30, 100, 0.45); }
   .brand { display: flex; align-items: center; gap: 12px; font: 600 26px/1 "Inter Display"; letter-spacing: -0.03em; }
-  h1 { margin-top: 64px; font: 600 58px/1.02 "Inter Display"; letter-spacing: -0.05em; }
-  h1 span { display: block; color: #8b8b94; }
-  p { margin-top: 28px; font-size: 21px; line-height: 1.45; color: #a8a8b0; }
-  .foot { position: absolute; left: 64px; bottom: 56px; font: 400 16px/1.4 "JetBrains Mono"; color: #8b8b94; }
-  .shot { position: absolute; left: 536px; top: 96px; width: 600px; height: 375px; border-radius: 14px; overflow: hidden;
-          box-shadow: 0 0 0 1px #2e2e33, 0 24px 60px rgba(0,0,0,.6); }
-  .shot img { position: absolute; inset: 0; width: 600px; height: 375px; }
-  .before { position: absolute; inset: 0; clip-path: inset(0 50% 0 0); }
-  .line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; background: #f4f4f5; }
-  .tag { position: absolute; top: 14px; padding: 7px 10px; border-radius: 7px; background: rgba(10,10,11,.85); font: 400 14px/1 "JetBrains Mono"; color: #ededef; }
-  .ask { position: absolute; left: 536px; top: 495px; width: 600px; font: 400 17px/1.45 "JetBrains Mono"; color: #ededef; }
-  .ask small { display: block; margin-top: 4px; font-size: 14px; color: #8b8b94; }
+  h1 { margin-top: 64px; font: 600 74px/1.02 "Inter Display"; letter-spacing: -0.05em; }
+  h1 span { display: block; color: rgba(255,255,255,.8); }
+  p { max-width: 400px; margin-top: 26px; font-size: 23px; line-height: 1.4; color: rgba(255,255,255,.92); }
+  .keys { position: absolute; left: 64px; bottom: 60px; text-shadow: 0 1px 12px rgba(10, 30, 100, 0.5); display: flex; align-items: center; gap: 8px; font-size: 17px; color: rgba(255,255,255,.88); }
+  kbd { display: inline-grid; place-items: center; min-width: 40px; height: 36px; padding: 0 12px; border-radius: 9px; background: linear-gradient(#fdfdfe,#eceef3);
+        color: #1b1d24; font: 500 15px/1 Inter; box-shadow: 0 3px 0 #b7bdcc, 0 6px 12px -6px rgba(10,30,90,.45); }
+  .keys span { margin-left: 6px; }
+  .win { position: absolute; left: 640px; top: 96px; width: 720px; height: 450px; border-radius: 14px; overflow: hidden;
+         box-shadow: 0 0 0 8px rgba(255,255,255,.12), 0 0 0 8.5px rgba(255,255,255,.3), 0 40px 90px -20px rgba(6,20,64,.7); }
+  .win img { width: 720px; height: 450px; display: block; }
+  .bar { position: absolute; left: 56px; bottom: 20px; width: 440px; padding: 12px 14px; border-radius: 13px; background: rgba(255,255,255,.95);
+         box-shadow: 0 0 0 .5px rgba(20,22,30,.14), 0 18px 40px -12px rgba(10,14,30,.5); color: #1b1d24; font: 400 14px/1.35 Inter; }
+  .bar .ask { color: #5c606c; }
+  .bar .row { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: .5px solid rgba(20,22,30,.12); }
+  .bar b { flex: 1; font-weight: 500; }
+  .bar .btn { padding: 6px 10px; border-radius: 7px; box-shadow: inset 0 0 0 .5px rgba(20,22,30,.22); font-weight: 500; }
+  .bar .save { background: #111216; color: #fff; box-shadow: none; }
 </style></head><body>
-  <div class="grid"></div><div class="fade"></div>
   <div class="text">
     <div class="brand">${radar(28)}Morse</div>
-    <h1>Change any app <span>in your own words.</span></h1>
-    <p>Websites in Chrome and desktop apps like VSCodium and Obsidian. Say the change, and your AI makes it.</p>
+    <h1>Take what <span>they won’t ship.</span></h1>
+    <p>Change any app in one sentence. Free and open source.</p>
   </div>
-  <div class="foot">Free and open source</div>
-  <div class="shot">
-    <img src="${file("shots/201-vscodium-terminal-after.webp")}">
-    <div class="before"><img src="${file("shots/200-vscodium-terminal-before.webp")}"></div>
-    <span class="line"></span>
-    <span class="tag" style="left:14px">Before</span>
-    <span class="tag" style="right:14px">After</span>
+  <div class="keys"><kbd>⌥</kbd><kbd>Space</kbd><span>opens Morse in any app</span></div>
+  <div class="win">
+    <img src="${at("shots/211-vscode-windows-95-after.webp")}">
+    <div class="bar">
+      <div class="ask">make VS Code look like a classic Windows 95 app…</div>
+      <div class="row"><b>Classic Windows 95 Look</b><span class="btn save">Save</span><span class="btn">Undo</span></div>
+    </div>
   </div>
-  <div class="ask">“make it look like a retro green terminal”<small>VSCodium on Linux · a real run</small></div>
 </body></html>`;
 
 // A dark tile with the radar, light on dark so it reads on any tab bar.

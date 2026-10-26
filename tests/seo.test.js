@@ -187,6 +187,9 @@ test("pages: every image says what it shows and has a size; no fonts from other 
     }
     assert.doesNotMatch(head(html), /fonts\.googleapis|fonts\.gstatic/, `${f}: its fonts come from the site`);
   }
-  // The film's poster is the first screen's largest picture: preloaded.
-  assert.match(head(built("site/index.html")), /<link rel="preload" as="image" href="\.\.\/docs\/launch\/morse-opus-open-poster\.webp" fetchpriority="high">/);
+  // The day sky is the first screen's largest picture: preloaded, the half
+  // size copy on a phone.
+  const home = head(built("site/index.html"));
+  assert.match(home, /<link rel="preload" as="image" href="sky\/day\.avif" type="image\/avif" media="\(min-width: 801px\)" fetchpriority="high">/);
+  assert.match(home, /<link rel="preload" as="image" href="sky\/day-1280\.avif" type="image\/avif" media="\(max-width: 800px\)" fetchpriority="high">/);
 });

@@ -26,33 +26,60 @@
       <a href="./" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="20"></span><span class="brand-name">Morse</span></a>
       <nav class="nav-links" aria-label="Primary">
         <ul class="nav-list">
-          <li><a class="nav-link" href="./#takes">What it does</a></li>
-          <li><a class="nav-link" href="./#change">Examples</a></li>
-          <li><a class="nav-link" href="./#how">How it works</a></li>
-          <li><a class="nav-link" href="gallery.html" aria-current="page">Gallery</a></li>
-          <li><a class="nav-link" href="./#faq">FAQ</a></li>
+          <li class="nav-item" data-menu>
+            <button type="button" class="nav-trigger" aria-expanded="false" aria-controls="nav-panel-product">Product<span class="nav-chevron" aria-hidden="true"></span></button>
+            <div class="nav-panel" id="nav-panel-product" hidden>
+              <ul class="nav-panel-grid">
+                <li><a class="nav-card" href="./#takes"><span class="nav-card-icon" aria-hidden="true">⌥</span><span class="nav-card-text"><strong>What it does</strong><span>Take what they won’t ship, in the apps you use.</span></span></a></li>
+                <li><a class="nav-card" href="./#change"><span class="nav-card-icon" aria-hidden="true">⟷</span><span class="nav-card-text"><strong>Examples</strong><span>Before and after, in real apps.</span></span></a></li>
+                <li><a class="nav-card" href="./#how"><span class="nav-card-icon" aria-hidden="true">↵</span><span class="nav-card-text"><strong>How it works</strong><span>Point at it, say it, save it.</span></span></a></li>
+                <li><a class="nav-card" href="./#privacy"><span class="nav-card-icon" aria-hidden="true">0</span><span class="nav-card-text"><strong>Private by design</strong><span>No account, no server of ours.</span></span></a></li>
+              </ul>
+            </div>
+          </li>
+          <li class="nav-item" data-menu>
+            <button type="button" class="nav-trigger" aria-expanded="false" aria-controls="nav-panel-resources">Resources<span class="nav-chevron" aria-hidden="true"></span></button>
+            <div class="nav-panel" id="nav-panel-resources" hidden>
+              <ul class="nav-panel-grid">
+                <li><a class="nav-card" href="./#apps"><span class="nav-card-icon" aria-hidden="true">◫</span><span class="nav-card-text"><strong>Apps that work</strong><span>What was tested, and where.</span></span></a></li>
+                <li><a class="nav-card" href="./#faq"><span class="nav-card-icon" aria-hidden="true">?</span><span class="nav-card-text"><strong>FAQ</strong><span>Paywalls, bugs, cost and safety.</span></span></a></li>
+                <li><a class="nav-card" href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs"><span class="nav-card-icon" aria-hidden="true">§</span><span class="nav-card-text"><strong>Guides</strong><span>Setup, models and fixes.</span></span></a></li>
+                <li><a class="nav-card" href="privacy.html"><span class="nav-card-icon" aria-hidden="true">✓</span><span class="nav-card-text"><strong>Privacy policy</strong><span>What leaves your computer, and when.</span></span></a></li>
+              </ul>
+            </div>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="gallery.html" aria-current="page">Gallery</a></li>
         </ul>
       </nav>
       <div class="nav-end">
-        <a class="nav-link nav-quiet" href="https://github.com/sam-siavoshian/RRAA" data-link="github">GitHub</a>
-        <a class="btn btn-primary btn-sm" href="./#install">Get Morse</a>
+        <a class="nav-stars" href="https://github.com/sam-siavoshian/RRAA" data-link="github" aria-label="Star Morse on GitHub"><span class="nav-stars-star" aria-hidden="true">☆</span><span class="nav-stars-label">Star</span><span class="nav-stars-count" data-stars></span></a>
+        <a class="btn btn-primary btn-sm btn-pill" href="./#desktop-steps" data-link="desktop">Download</a>
         <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Open menu"><span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span></span></button>
       </div>
     </div>
     <div class="nav-menu" id="nav-menu">
       <nav class="nav-sheet" aria-label="Sections">
-        <ul>
-          <li><a href="./#takes">What it does</a></li>
-          <li><a href="./#change">Examples</a></li>
-          <li><a href="./#how">How it works</a></li>
-          <li><a href="./#apps">Apps</a></li>
-          <li><a href="./#faq">FAQ</a></li>
-          <li><a href="gallery.html">Gallery</a></li>
-          <li><a href="privacy.html">Privacy</a></li>
-          <li><a href="https://github.com/sam-siavoshian/RRAA" data-link="github">GitHub</a></li>
-        </ul>
+        <section class="nav-sheet-group">
+          <p class="nav-sheet-title">Product</p>
+          <ul>
+            <li><a href="./#takes"><span class="nav-card-icon" aria-hidden="true">⌥</span>What it does</a></li>
+            <li><a href="./#change"><span class="nav-card-icon" aria-hidden="true">⟷</span>Examples</a></li>
+            <li><a href="./#how"><span class="nav-card-icon" aria-hidden="true">↵</span>How it works</a></li>
+            <li><a href="./#privacy"><span class="nav-card-icon" aria-hidden="true">0</span>Private by design</a></li>
+          </ul>
+        </section>
+        <section class="nav-sheet-group">
+          <p class="nav-sheet-title">Resources</p>
+          <ul>
+            <li><a href="gallery.html"><span class="nav-card-icon" aria-hidden="true">▦</span>Gallery</a></li>
+            <li><a href="./#apps"><span class="nav-card-icon" aria-hidden="true">◫</span>Apps that work</a></li>
+            <li><a href="./#faq"><span class="nav-card-icon" aria-hidden="true">?</span>FAQ</a></li>
+            <li><a href="privacy.html"><span class="nav-card-icon" aria-hidden="true">✓</span>Privacy policy</a></li>
+            <li><a href="https://github.com/sam-siavoshian/RRAA" data-link="github"><span class="nav-card-icon" aria-hidden="true">☆</span>Star on GitHub<span class="nav-stars-count" data-stars></span></a></li>
+          </ul>
+        </section>
         <div class="nav-sheet-get">
-          <a class="btn btn-primary" href="./#desktop-steps" data-link="desktop">Download Morse</a>
+          <a class="btn btn-primary btn-pill" href="./#desktop-steps" data-link="desktop">Download Morse</a>
         </div>
       </nav>
     </div>

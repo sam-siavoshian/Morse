@@ -4,8 +4,8 @@
 //   - every #fragment points at an id on the page it names
 //   - gallery.html#<slug> links name a mod that is in site/mods/
 //   - every url() in the stylesheets and every import in the scripts resolves
-//   - the link targets, the demo video and the real pictures in site/config.js
-//     resolve too, and every picture is labelled
+//   - the link targets and the real pictures in site/config.js resolve too,
+//     and every picture is labelled
 //   - the nav bar and footer of the gallery and the privacy policy are the
 //     landing page's (npm run pages copies them)
 //   - no drawn pictures: no SVG at all (the favicon is a PNG, the functional
@@ -75,7 +75,7 @@ test("every link, image, video and icon on the site's pages resolves", () => {
   assert.deepEqual(broken, [], `broken:\n${broken.join("\n")}`);
 });
 
-test("the landing page has what it promises: buttons, video slot, sections and real screenshots", () => {
+test("the landing page has what it promises: buttons, the Morse bar, sections and real screenshots", () => {
   const html = read("index.html");
   // A hero, what it does, examples, how it works, privacy, real apps, FAQ and
   // install: one page that sells in a minute, with room around each part.
@@ -95,18 +95,25 @@ test("the landing page has what it promises: buttons, video slot, sections and r
   assert.doesNotMatch(html, /npm i(nstall)? -g|morse setup|morse serve|morse extension|Node 22/, "no terminal steps on the landing page");
   assert.match(install, /Chrome, Edge, Brave, Arc and Vivaldi/, "websites come from the Morse app");
   assert.match(install, /docs\/dev\/README\.md">developer guide/, "developers get the guide");
-  assert.match(html, /data-film/, "the video slot");
+  // The hero shows the Morse bar in a real app, opened by the real shortcut,
+  // with the result's Save and Undo. No video any more.
+  const demo = /<figure class="demo"[\s\S]*?<\/figure>/.exec(html)?.[0] || "";
+  assert.match(demo, /data-demo/, "the Morse bar in the hero");
+  assert.match(demo, /<kbd>⌥<\/kbd><kbd>Space<\/kbd>/, "the shortcut that opens it");
+  assert.match(demo, /shots\/210-vscode-windows-95-before\.webp/, "a real app behind it");
+  assert.match(demo, /data-save>Save/, "and the result's Save");
+  assert.doesNotMatch(html, /data-film|<video\b|docs\/launch\//, "no film");
   assert.doesNotMatch(html, /try\/section\.js|data-install=/, "no live demo on the page");
   const shots = [...html.matchAll(/src="(shots\/[^"]+)"/g)].map(m => m[1]);
   assert.ok(shots.length >= 3, `screenshots on the page (saw ${shots.length})`);
   for (const s of shots) assert.ok(existsSync(path.join(SITE, s)), s);
-  // Every <img> has alt text and a size, so nothing shifts as it loads; all
-  // but the first screen's poster wait until they are near.
+  // Every <img> has alt text and a size, so nothing shifts as it loads, and
+  // waits until it is near (the hero's are near at once).
   for (const page of PAGES) {
     for (const img of read(page).match(/<img\b[^>]*>/g) || []) {
       assert.match(img, /\salt="[^"]*"/, `${page}: ${img}`);
       assert.match(img, /\swidth="\d+"[^>]*\sheight="\d+"/, `${page}: ${img}`);
-      if (page === "index.html" && !/film-poster/.test(img)) assert.match(img, /\sloading="lazy"/, `${page}: ${img}`);
+      if (page === "index.html") assert.match(img, /\sloading="lazy"/, `${page}: ${img}`);
     }
   }
 });
@@ -134,27 +141,14 @@ test("site/config.js: every real picture resolves and says what it shows", async
   }
 });
 
-test("site/config.js: the button targets and the demo video resolve", async () => {
-  const { LINKS, DEMO_VIDEO } = await import("../site/config.js");
+test("site/config.js: the button targets resolve", async () => {
+  const { LINKS } = await import("../site/config.js");
   const index = ids(read("index.html"));
   for (const [key, ref] of Object.entries(LINKS)) {
     const problem = check("index.html", ref, index);
     assert.equal(problem, null, `LINKS.${key} = ${ref}: ${problem}`);
     if (key !== "github" && key !== "docs") assert.match(read("index.html"), new RegExp(`data-link="${key}"`), `a button uses LINKS.${key}`);
   }
-  for (const key of ["mp4", "poster"]) {
-    const problem = check("index.html", DEMO_VIDEO[key], index);
-    assert.equal(problem, null, `DEMO_VIDEO.${key} = ${DEMO_VIDEO[key]}: ${problem}`);
-  }
-  // The autoplay loop is a small copy (the page's speed): each file resolves and stays under 2 MB.
-  for (const [key, ref] of Object.entries(DEMO_VIDEO.loop || {})) {
-    const problem = check("index.html", ref, index);
-    assert.equal(problem, null, `DEMO_VIDEO.loop.${key} = ${ref}: ${problem}`);
-    assert.ok(statSync(path.resolve(SITE, ref)).size < 2e6, `DEMO_VIDEO.loop.${key} is under 2 MB`);
-  }
-  assert.ok(DEMO_VIDEO.width > 0 && DEMO_VIDEO.height > 0 && DEMO_VIDEO.label && DEMO_VIDEO.caption);
-  // The Pages build publishes what the video slot points at.
-  assert.match(readFileSync(path.join(root, "scripts", "build-pages.js"), "utf8"), /"docs\/launch"/, "docs/launch is published");
 });
 
 test("every url() in the stylesheets and every import in the scripts resolves", () => {
@@ -187,6 +181,18 @@ test("the gallery and the privacy policy carry the landing page's nav bar and fo
     assert.match(html, /<footer class="foot">/);
     assert.doesNotMatch(html.replace(/<use href="#i-[\w-]+"/g, "").replace(/href="#top"/g, ""), /href="#(?!top")[\w-]+"/, `${page}: the landing page's own #links point back at it`);
   }
+});
+
+test("the nav shows the repository's stars: written in by the build, and nothing without a count", async () => {
+  const { withStars } = await import("../scripts/build-pages.js");
+  const { formatStars } = await import("../site/common.js").catch(() => ({}));
+  const nav = /<header class="nav">[\s\S]*?<\/header>/.exec(read("index.html"))[0];
+  assert.match(nav, /<a class="nav-stars" href="https:\/\/github\.com\/[^"]+" data-link="github"[^>]*>[\s\S]*?<span class="nav-stars-count" data-stars><\/span><\/a>/);
+  assert.match(withStars(nav, 1234), /data-stars>1\.2k</);
+  assert.match(withStars(nav, 12), /data-stars>12</);
+  assert.equal(withStars(nav, null), nav, "no count, no number");
+  assert.match(read("site.css"), /\.nav-stars-count:empty \{ display: none; \}/);
+  if (formatStars) assert.equal(formatStars(1000), "1k");
 });
 
 test("no drawn pictures: real screenshots, real app icons, no SVG", async () => {
