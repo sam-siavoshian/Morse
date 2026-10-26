@@ -10,7 +10,7 @@ import {
 } from "../core/pack.js";
 import { createPacks } from "../core/pack-host.js";
 import { parseImport } from "../core/backup.js";
-import { encodeShareText } from "../core/mod.js";
+import { encodeShareText, SHARE_BASE } from "../core/mod.js";
 import { modOrigin } from "../core/summary.js";
 import { controlHandler } from "../core/control-host.js";
 import { DAY } from "../core/gallery.js";
@@ -47,7 +47,7 @@ test("making a pack needs a name and at least one mod, at most 50, and never You
 test("a pack link uses the #m= scheme, reads back as the same pack, and a big pack is shared as a file", async () => {
   const p = makePack([mod("a"), mod("b")], { name: "Team" });
   const link = await encodePackLink(p);
-  assert.match(link, /^https:\/\/sam-siavoshian\.github\.io\/RRAA\/share\/install\.html#m=[\w-]+$/);
+  assert.match(link, new RegExp(`^${SHARE_BASE.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}#m=[\\w-]+$`));
   const back = await decodePackLink(link);
   assert.equal(await packHash(back.pack), await packHash(p));
   const r = await parseImport(link);

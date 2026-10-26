@@ -1,4 +1,4 @@
-// Every link target, the film and the real pictures, in one place.
+// Every link target and the real pictures, in one place.
 //
 // Each page's buttons carry data-link="desktop" (and the like), and
 // common.js points them here when the page loads. The href written in the
@@ -20,23 +20,6 @@ export const LINKS = {
   desktopLinux: "https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage",
   github: "https://github.com/sam-siavoshian/RRAA",
   docs: "https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs",
-};
-
-// The film under the headline. To swap in a new video, put the files in
-// docs/launch/ (or site/) and change them here. loop is the muted autoplay
-// copy (1280 wide, WebM and MP4, about 1 MB, made from the full file with
-// ffmpeg); mp4 is the full-quality file with sound the press plays. width
-// and height set the frame's shape before it loads. caption is the line under
-// it, label is what a screen reader says, and strip is the short line above it.
-export const DEMO_VIDEO = {
-  mp4: "../docs/launch/morse-opus-open-16x9.mp4",
-  loop: { webm: "../docs/launch/morse-opus-open-web.webm", mp4: "../docs/launch/morse-opus-open-web.mp4" },
-  poster: "../docs/launch/morse-opus-open-poster.webp",
-  width: 1920,
-  height: 1080,
-  label: "Morse on The Daily Byte, then Obsidian, the Mods list, the shortcut and the update window, 33 seconds",
-  strip: "The finished page first, then how it got there",
-  caption: "33 seconds. The finished page first, then how it got there. No model was called.",
 };
 
 // "See it change": the big before and after pairs, in order. Each picture is a

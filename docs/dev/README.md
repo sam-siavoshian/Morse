@@ -84,17 +84,20 @@ the headline, with a few lit squares pulsing like the mark while a model
 works). Dark only. There are no drawn pictures: every picture is a real
 screenshot or a frame of a real recording, every app icon is the app's own,
 and there is no SVG. `tests/site.test.js` checks that. The landing page, in order: the
-headline and the film, **See it change** (before and after pairs with a
-slider), **How it works** in three steps, **Try it here**, a strip of real
-apps, **Install** (two buttons, the steps by hand behind each, and one line
-for developers), privacy in two lines, a short FAQ.
+headline and the Morse bar in a real app (Visual Studio Code, the Windows 95
+run from `docs/showcase/`), four plates of what it does (each pane a real
+run: a showcase request, a checked gallery mod, a real screenshot), **See it
+change** (before and after pairs with a slider), **How it works** in three
+steps, privacy, a strip of real apps, a short FAQ, and **Install**.
 
 - **`site/index.html`**: the landing page. It holds the one copy of the nav
   bar and footer: `npm run pages` copies them into `site/gallery.html`
   (between its `<!-- chrome:… -->` markers) and `site/privacy.html`.
 - **`site/config.js`**: every link target and every real picture, in one
-  place. `LINKS`: where **Download Morse** and the other buttons go. `DEMO_VIDEO`: the film under the
-  headline (file, poster, shape, captions). `SHOWCASE`: the before and after
+  place. `LINKS`: where **Download Morse** and the other buttons go, and the
+  repository whose stars the nav shows (`npm run pages` writes the count in;
+  the page asks GitHub for a fresh one once per visit, and with neither it
+  says Star). `SHOWCASE`: the before and after
   pairs, each with the app's name as it shows on screen (VSCodium, not VS
   Code), what was asked and by which model. Swap in the pictures from
   `docs/showcase/` there (`npm run pages` publishes that folder when it
@@ -105,17 +108,28 @@ for developers), privacy in two lines, a short FAQ.
   `site/shots/` holds the screenshots the page shows, as WebP copies of
   `docs/screenshots/` (same numbers), frames of
   `docs/launch/morse-social-16x9.mp4` (200, 201) and of
-  `docs/launch/morse-v3-16x9.mp4` (202, the film's poster), and the Chrome Web
-  Store screenshots 2 and 3 (182, 184). `site/icons/` holds the real icon of
+  `docs/launch/morse-v3-16x9.mp4` (202), and the Chrome Web Store screenshots
+  2 and 3 (182, 184). `site/sky/` holds the two painted skies at 2560 and
+  1280 wide, AVIF and WebP (upscaled with Real-ESRGAN's anime model); the
+  stylesheet picks with `image-set()`, and the page preloads the day sky. `site/icons/` holds the real icon of
   each app and site the page names (`APP_ICONS` in `config.js`: from the
   installed app, or the site's own favicon, 64 pixels at most), shown on the
   gallery cards, the showcase and the strip; a name without one shows its
   first letter. The site has no SVG: the favicon is the Morse mark as a PNG,
   and the arrow, play, pause and slider icons are text.
 - **Motion** ([`site/motion.js`](../../site/motion.js)): parts marked
-  `data-reveal` rise into view once, the headline and the film follow the
-  scroll, and the footer's wordmark lights up under the pointer. With
-  reduced motion nothing moves, and without the script everything shows.
+  `data-reveal` rise into view once and the headline follows the scroll. In
+  the hero the Morse bar plays its run: the shortcut's keys go down (⌥ Space
+  on a Mac, Ctrl Shift Space elsewhere), the request types in, the change
+  arrives while it writes, then Save goes in. Under it the requests type
+  into the bar one after another, the palette's lit row steps down, the
+  boxes are counted and struck out one by one, and the switches flip. These
+  loops run only while on screen. How it works holds still while the scroll
+  steps through it, and the footer's wordmark lights up under the pointer.
+  Buttons and key caps press in instead of shrinking. The painted skies come
+  apart into the page in square pixels drawn on a canvas, and the night sky
+  loads only once its part is near. With reduced motion nothing moves, and
+  without the script everything shows at its end.
 - [`tests/site.test.js`](../../tests/site.test.js) checks that every link,
   image, icon, fragment and config target on the pages resolves.
 - **`site/gallery.html`**: example mods from [`site/mods/`](../../site/mods/)

@@ -112,9 +112,15 @@ test("Mods panel: Change and Share on each row, the rest under More; Install a m
   await page.keyboard.press("Enter"); // Save
   await waitFor(s => !s.open);
   await pressOpen(page, "Alt+Shift+M");
-  // The panel shows the rows it knows at once and swaps in the host's list when it comes (70-panel.js).
-  await page.locator(".panel article [data-a=refine]").waitFor();
-  assert.deepEqual(await page.locator(".panel article .btns > button, .panel article .rmore > summary").evaluateAll(ns => ns.filter(n => n.getClientRects().length).map(n => n.dataset.a || n.tagName)), ["refine", "share", "SUMMARY"]);
+  // The panel shows the rows it knows at once, then swaps in the host's list
+  // (70-panel.js). A check in that gap sees no buttons, so wait until the
+  // swap has settled on Change, Share and More.
+  await page.waitForFunction(() => {
+    const root = document.querySelector("[data-morse-ui]")?.shadowRoot;
+    const got = [...(root?.querySelectorAll(".panel article .btns > button, .panel article .rmore > summary") || [])]
+      .filter(n => n.getClientRects().length).map(n => n.dataset.a || n.tagName);
+    return got.join() === "refine,share,SUMMARY";
+  });
   await page.locator(".panel article .rmore summary").click();
   assert.deepEqual(await page.locator(".panel article .rmore-list button").evaluateAll(ns => ns.filter(n => n.getClientRects().length).map(n => n.dataset.a || n.dataset.c)), ["link", "show", "del"]);
   // Edit code is inside Show code.

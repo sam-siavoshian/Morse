@@ -57,6 +57,9 @@ async function tool(page, k) {
   const on = await page.locator(`.gm-menu [data-a11y="${k}"]`).getAttribute("aria-checked") === "true";
   await page.locator(`.gm-menu [data-a11y="${k}"]`).click();
   await until(async () => (await mods(page)).length === before + (on ? -1 : 1));
+  // The mod is saved before its code runs (the host answers a moment later).
+  // Turning one off deletes it only after the code is gone.
+  if (!on) await page.evaluate(() => new Promise(r => setTimeout(r, 50)));
   await page.keyboard.press("Escape");
   await until(async () => !(await status(page)).open);
 }
@@ -94,6 +97,8 @@ test("Easier to use: each page tool turns on, does its job, and turns off leavin
       assert.notEqual(await css(page, ".signup input", "borderTopColor"), "rgb(236, 236, 236)");
     },
     async targets() {
+      // The mod is listed before its code has resized the page. Wait for it.
+      await until(async () => (await box(page, ".announce-close")).w >= 44);
       for (const s of [".announce-close", ".icon-search", 'a[href="account.html"]', ".heart", 'footer a[href*="facebook"]']) {
         const b = await box(page, s);
         assert.ok(b.w >= 44 && b.h >= 44, `${s} ${JSON.stringify(b)}`);

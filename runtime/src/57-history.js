@@ -5,16 +5,25 @@
 // to this page's localStorage.
 
 const PromptHistory = (() => {
-  let list = [], loadedFor = "", idx = -1;
+  let list = [], loadedFor = "", idx = -1, pending = null, ticket = 0;
   const scope = () => S.app || location.host || "page";
   const lsKey = sc => `morse:history:${sc}`;
 
-  async function load() {
+  // One request per scope. A second load() while the first is still out
+  // (boot and opening the bar both ask) waits for that same answer, instead
+  // of returning with the list still empty.
+  function load() {
     const sc = scope();
-    if (sc === loadedFor) return;
+    if (sc === loadedFor) return pending || Promise.resolve();
     loadedFor = sc;
-    try { list = (await call("history.get", { scope: sc })) || []; }
-    catch { try { list = JSON.parse(localStorage.getItem(lsKey(sc)) || "[]"); } catch { list = []; } }
+    pending = call("history.get", { scope: sc })
+      .then(l => { if (scope() === sc) list = Array.isArray(l) ? l : []; })
+      .catch(() => {
+        if (scope() !== sc) return;
+        try { list = JSON.parse(localStorage.getItem(lsKey(sc)) || "[]"); } catch { list = []; }
+      })
+      .finally(() => { if (loadedFor === sc) pending = null; });
+    return pending;
   }
   function add(text) {
     const sc = scope();
@@ -25,6 +34,14 @@ const PromptHistory = (() => {
       .catch(() => { try { localStorage.setItem(lsKey(sc), JSON.stringify(list)); } catch {} });
   }
   // dir -1 = older (↑), +1 = newer (↓). Returns true when it handled the key.
+  // A key that arrives while the list is still on its way is kept and applied
+  // when the answer lands, so the first ↑ after open is not lost.
+  function browseKey(dir) {
+    if (scope() === loadedFor && !pending) return browse(dir);
+    const mine = ++ticket;
+    load().then(() => { if (mine === ticket) browse(dir); });
+    return true;
+  }
   function browse(dir) {
     const browsing = idx !== -1;
     if (browsing ? input.value !== list[idx] : input.value !== "") return false;
@@ -42,5 +59,5 @@ const PromptHistory = (() => {
   // Typing over an entry ends browsing.
   function edited() { if (idx !== -1 && input.value !== list[idx]) idx = -1; }
   function reset() { idx = -1; }
-  return { load, add, browse, edited, reset, entries: () => list.slice() };
+  return { load, add, browse, browseKey, edited, reset, entries: () => list.slice() };
 })();

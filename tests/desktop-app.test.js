@@ -497,6 +497,22 @@ test("Mods page: the app name is not glued to the count, rows are not cards, the
   assert.doesNotMatch(css, /(?:^|\n)section \{[^}]*animation:/, "opening a section does not fade");
 });
 
+test("the window wears the website's design: the same tokens, its sky, no drawn icons", () => {
+  const css = readFileSync(path.join(root, "desktop-app/ui/app.css"), "utf8");
+  const site = readFileSync(path.join(root, "site/site.css"), "utf8");
+  const tokens = src => Object.fromEntries([.../:root\s*\{([^}]*)\}/.exec(src)[1].matchAll(/(--[\w-]+):\s*([^;]+);/g)].map(m => [m[1], m[2].trim()]));
+  const app = tokens(css), web = tokens(site);
+  for (const k of ["--bg", "--text", "--text-2", "--text-3", "--muted", "--faint", "--hair", "--glass-edge", "--primary", "--primary-text", "--font", "--display", "--mono", "--ease-emphasized"]) {
+    assert.ok(k in app, `the window has ${k}`);
+  }
+  for (const [k, v] of Object.entries(app)) if (k in web) assert.equal(v, web[k], `${k} is the website's`);
+  const main = readFileSync(path.join(root, "desktop-app/main.js"), "utf8");
+  assert.match(main, /"\/sky\/day\.webp"/, "main.js serves the first run's sky");
+  assert.match(main, /"\/dither\.js"/, "main.js serves its pixel edge");
+  const html = readFileSync(path.join(root, "desktop-app/ui/index.html"), "utf8");
+  assert.doesNotMatch(html, /<svg/, "icons are text or pictures, as on the website");
+});
+
 // ---------------------------------------------------------------- links, desktop files, the icon
 
 test("morse:// links: only morse://open, which shows the window", () => {
