@@ -12,6 +12,7 @@ test("each computer gets its own file; others don't update themselves", () => {
   assert.equal(assetFor("darwin", "arm64"), "Morse-mac-arm64.zip");
   assert.equal(assetFor("darwin", "x64"), "Morse-mac-x64.zip");
   assert.equal(assetFor("win32", "x64"), "Morse-Setup.exe");
+  assert.equal(assetFor("win32", "arm64"), "Morse-Setup-arm64.exe");
   assert.equal(assetFor("linux", "x64"), "Morse-linux-x86_64.AppImage");
   assert.equal(assetFor("linux", "arm64"), null);
 });

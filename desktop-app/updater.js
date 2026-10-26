@@ -29,7 +29,7 @@ const EVERY = 4 * 60 * 60 * 1000;
 // This computer's file in the release, or null where Morse can't update itself.
 export function assetFor(platform = process.platform, arch = process.arch) {
   if (platform === "darwin") return arch === "arm64" ? "Morse-mac-arm64.zip" : "Morse-mac-x64.zip";
-  if (platform === "win32") return "Morse-Setup.exe";
+  if (platform === "win32") return arch === "arm64" ? "Morse-Setup-arm64.exe" : "Morse-Setup.exe";
   if (platform === "linux" && arch === "x64") return "Morse-linux-x86_64.AppImage";
   return null;
 }
