@@ -554,7 +554,7 @@ export class Connector {
     const where = describeTarget(w).title;
     const mod = id ? await getMod(id).catch(() => null) : null;
     if (mod && mod.js === s.hang.code(id)) {
-      if (mod.enabled) await saveMod({ ...mod, enabled: false, paused: { why: "froze", at: new Date().toISOString(), error: FROZE_ERROR, reloaded: true } });
+      if (mod.enabled) await saveMod({ ...mod, enabled: false, paused: { why: "froze", at: new Date().toISOString(), error: FROZE_ERROR, reloaded: true } }, { ifPresent: true });
       this.modsChanged(s);
       this.log(`  ! “${mod.title}” froze ${where}. Morse stopped it, turned it off and reloaded the page.`);
       await s.send("Page.reload").catch(() => {});
@@ -597,25 +597,39 @@ export class Connector {
         return true;
       case "i18n.words": // the overlay carries English only: the words of the language it shows, from core/locales/
         return readWords(msg.lang);
-      case "mods.list":
-        return Style.list(await modsFor(await here()), await here()); // your-style hook: the style first
+      case "mods.list": {
+        const list = await Style.list(await modsFor(await here()), await here()); // your-style hook: the style first
+        for (const m of list || []) if (m?.id) (this.seenMods ||= new Set()).add(m.id);
+        return list;
+      }
       case "mods.save": {
         const where = await here();
         if (msg.draft) {
           await this.ownMod(msg.draft.id, where);
           trace("save", `Saved "${msg.draft.title || msg.draft.id}" to ${path.join(HOME, "mods")} · it runs again every time this app opens`); // dogfood: MORSE_HOME, not always ~/.morse
-          return saveMod(createMod({ ...msg.draft, url: where.url, app, model: msg.draft.model || settingsLabel(this.settings) }));
+          const saved = await saveMod(createMod({ ...msg.draft, url: where.url, app, model: msg.draft.model || settingsLabel(this.settings) }));
+          if (saved?.id) (this.seenMods ||= new Set()).add(saved.id);
+          return saved;
         }
         validateMod(msg.mod);
+        const onDisk = await this.ownMod(msg.mod.id, where);
+        // The page still has a mod this connector already showed it. The file
+        // was deleted since (a fingerprint save lands a moment later): writing
+        // it back would install that mod before anyone presses Install.
+        // Undo after Delete says restore, and a mod this connector has never
+        // seen is a new one.
+        if (!onDisk && !msg.restore && this.seenMods?.has(msg.mod.id)) return null;
         // Undo after Delete (70-panel.js): the mod as it was on disk, scope and all.
-        const existing = await this.ownMod(msg.mod.id, where) || (msg.restore && this.deleted?.get(msg.mod.id)) || null;
+        const existing = onDisk || (msg.restore && this.deleted?.get(msg.mod.id)) || null;
         this.deleted?.delete(msg.mod.id);
         // A saved mod can be changed, not widened: its match stays what it
         // was, or is exactly this app (or this site). Wider matches ("*",
         // other hosts) only come in through a confirmed install (mods.import).
         if (!saveKeepsScope(msg.mod.match, existing?.match, where))
           throw new Error("That mod is for another app or site");
-        return saveMod(msg.mod);
+        const saved = await saveMod(msg.mod, { ifPresent: !!onDisk });
+        if (saved?.id) (this.seenMods ||= new Set()).add(saved.id);
+        return saved;
       }
       case "mods.delete": {
         const gone = await this.ownMod(msg.modId, await here());

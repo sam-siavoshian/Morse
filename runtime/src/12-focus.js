@@ -61,21 +61,31 @@ function tabWithin(e, scope) {
 // Nothing on the page had focus before Morse took it: the page's next Tab
 // starts from its top, not from after Morse's own (now hidden) UI at the very
 // end of the document, where it would leave the page.
+// The listener sits on the page's body, so it has to come off when this copy
+// goes quiet (letGo). Left there, the closure keeps that whole overlay.
+let pageTopDrop = null;
+function clearPageTop() {
+  const b = document.body;
+  const fn = pageTopDrop;
+  pageTopDrop = null;
+  if (!fn || !b) return;
+  b.removeEventListener("focusout", fn);
+  if (b.getAttribute("tabindex") === "-1") b.removeAttribute("tabindex");
+}
 function focusPageTop() {
   const b = document.body;
   if (!b || !live()) return;
   // Body has to be focusable for this turn or Chromium never records it as
   // the start of Tab order. Taking tabindex away in the same turn drops that
   // start, and the next Tab stays on the body (its text is the whole page).
-  // It comes off once Tab moves on, so the body is not itself a tab stop.
+  // It comes off once focus leaves the body, so the body is not itself a tab stop.
   if (!b.hasAttribute("tabindex")) {
     b.setAttribute("tabindex", "-1");
-    const drop = () => {
+    pageTopDrop = () => {
       if (document.activeElement === b) return;
-      b.removeAttribute("tabindex");
-      b.removeEventListener("focusout", drop);
+      clearPageTop();
     };
-    b.addEventListener("focusout", drop);
+    b.addEventListener("focusout", pageTopDrop);
   }
   try { b.focus({ preventScroll: true }); } catch {}
 }

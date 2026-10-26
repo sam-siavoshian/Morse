@@ -73,11 +73,21 @@ export async function modsFor(where) {
   return (await listMods()).filter(m => modMatches(m, where));
 }
 
-export async function saveMod(mod) {
+// ifPresent: this is an update of a mod already on disk. If the file was
+// removed before the write (the page still had it and learned a fingerprint),
+// leave it gone. A new mod, and Undo after Delete, write either way.
+export async function saveMod(mod, { ifPresent = false } = {}) {
   validateMod(mod);
   const file = path.join(MODS, `${safe(mod.id)}.json`);
-  await queue(file, () => writeAtomic(file, JSON.stringify(mod, null, 2)));
-  return mod;
+  let skipped = false;
+  await queue(file, async () => {
+    if (ifPresent) {
+      try { await fs.access(file); }
+      catch { skipped = true; return; }
+    }
+    await writeAtomic(file, JSON.stringify(mod, null, 2));
+  });
+  return skipped ? null : mod;
 }
 
 export async function deleteMod(id) {

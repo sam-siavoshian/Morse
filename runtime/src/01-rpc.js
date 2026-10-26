@@ -42,6 +42,7 @@ const MutationObserver = class extends PageObserver {
 };
 function letGo() {
   for (const o of uiObservers) o.disconnect();
+  try { clearPageTop(); } catch {} // the body's focus listener, or this copy stays (12-focus.js)
   // The document keeps some of the old UI's elements in tables of its own (the
   // bar through its aria-owns, the settings pane), and through one element
   // its whole tree: take every element apart, so each holds only itself.
