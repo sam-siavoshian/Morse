@@ -495,6 +495,21 @@ async function checkModel() {
   try { await morse.checkModel(); } finally { checking = false; st = await morse.state(); render(); }
 }
 $("check-model").onclick = checkModel;
+$("fast-mode").addEventListener("change", async () => {
+  if (!st?.model) return;
+  const on = $("fast-mode").checked;
+  const prev = !!st.model.fastMode;
+  st.model.fastMode = on;
+  fastSent = on;
+  let r;
+  try { r = await morse.setFastMode(on); }
+  catch (e) { r = { error: e?.message || "" }; }
+  if (r?.error) {
+    st.model.fastMode = prev;
+    fastSent = prev;
+    $("fast-mode").checked = prev;
+  }
+});
 
 function refreshChoices() {
   if (!morse?.modelChoices) return;
@@ -507,9 +522,55 @@ function refreshChoices() {
 }
 refreshChoices.n = 0;
 
+// The provider the person is looking at. Static ones come from the map on
+// the first paint. A local server is known only once its own list is in.
+function fastForSelection() {
+  const map = st?.fastModels || {};
+  const saved = st?.model || {};
+  const opt = connectOptions().find(o => o.id === picked);
+  if (opt && opt.fields !== "local") {
+    const key = opt.id === "claude-code" || opt.id === "codex" || opt.id === "anthropic" || opt.id === "openai" ? opt.id : (opt.vendor || opt.choice || opt.id);
+    if (Object.prototype.hasOwnProperty.call(map, key)) return { id: map[key] || "", known: true };
+    if (saved.provider === key && saved.fastKnown) return { id: saved.fastModel || "", known: true };
+    return { id: "", known: false };
+  }
+  if (opt && opt.fields === "local") {
+    const row = rowFor(opt);
+    if (row?.fastKnown) return { id: row.fastModel || "", known: true };
+    if (saved.provider === "local" && providerOptionId(saved.provider, saved.runtime) === opt.id && saved.fastKnown) return { id: saved.fastModel || "", known: true };
+    return { id: "", known: false };
+  }
+  if (!saved.provider || saved.none || saved.provider === "none") return { id: "", known: true };
+  if (saved.provider === "local") {
+    if (saved.fastKnown) return { id: saved.fastModel || "", known: true };
+    const row = (choiceRows || []).find(r => r.id === (saved.runtime || "local"));
+    if (row?.fastKnown) return { id: row.fastModel || "", known: true };
+    return { id: "", known: false };
+  }
+  if (Object.prototype.hasOwnProperty.call(map, saved.provider)) return { id: map[saved.provider] || "", known: true };
+  if (saved.fastKnown) return { id: saved.fastModel || "", known: true };
+  return { id: "", known: false };
+}
+let fastSent = null;
+function renderFast() {
+  const row = $("fast-mode-row");
+  const input = $("fast-mode");
+  if (!row || !input || !st?.model) return;
+  const { id, known } = fastForSelection();
+  row.hidden = !id;
+  if (document.activeElement !== input) input.checked = !!st.model.fastMode && !!id;
+  if (known && !id && st.model.fastMode) {
+    st.model.fastMode = false;
+    input.checked = false;
+    if (fastSent !== false && morse.setFastMode) {
+      fastSent = false;
+      morse.setFastMode(false).then(r => { if (r?.error) fastSent = null; }, () => { fastSent = null; });
+    }
+  }
+}
 function renderConnect() {
   const list = $("connect-list");
-  if (!list || !st) return;
+  if (!list || !st) { renderFast(); return; }
   if (!pickedTouched && !picked && st.model && !st.model.none) {
     const id = providerOptionId(st.model.provider, st.model.runtime);
     if (id) picked = id;
@@ -529,6 +590,7 @@ function renderConnect() {
   }));
   if (focused) list.querySelector(`[data-connect="${CSS.escape(focused)}"]`)?.focus();
   renderForm(opts.find(o => o.id === picked) || null);
+  renderFast();
 }
 function fieldSnapshot(form) {
   const prev = {};

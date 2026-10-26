@@ -50,6 +50,7 @@ export const API = {
   addApp:             [[none], async (s, n) => { const file = await n.pickApp(); return file ? s.addApp(file) : { cancelled: true }; }],
   modelChoices:       [[none], (s) => s.modelChoices()],
   chooseModel:        [[oneOf("claude-code", "codex", "api-key", "anthropic", "openai", "ollama", "lmstudio", "llama", "llamacpp", "local"), key, opt(key)], (s, n, choice, k, extra) => s.chooseModel(choice, k, extra)],
+  setFastMode:        [[bool], (s, n, on) => s.setFastMode(on)],
   checkModel:         [[none], (s) => s.check()],
   setModOn:           [[id, bool], (s, n, modId, on) => s.setModOn(modId, on)],
   deleteMod:          [[id], (s, n, modId) => s.deleteMod(modId)],

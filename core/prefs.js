@@ -17,6 +17,8 @@ export const DEFAULT_PREFS = {
   autoFix: false,      // self-heal hook: "Fix my mods when a site changes"
   language: "",        // "" = same as my computer; else a code from core/i18n.js LANGUAGES
   modelMode: "auto",   // models: "auto" (fast model, strong one when needed) | "fast" | "best" (core/route.js)
+  // Fast mode: the smaller model, on top of the saved one
+  fastMode: false,
   // polish: "Polish changes", one look at a new or restyled part and a fix (core/polish.js)
   polish: true,
 };
@@ -45,6 +47,7 @@ export function normalizePrefs(p) {
     autoFix: src.autoFix === true, // self-heal hook
     language: pickPref(src.language, PREF_LANGUAGES, ""),
     modelMode: pickPref(src.modelMode, ["auto", "fast", "best"], "auto"), // models
+    fastMode: src.fastMode === true,
     polish: src.polish !== false,
   };
 }

@@ -101,15 +101,21 @@ function paintSettings() {
 }
 // models (core/route.js): Automatic, Always fast, Always best, and the two
 // names. The names are set with morse setup / morse config, or in the popup.
+function fastModeRow() {
+  if (!S.fastModel) return "";
+  return `<div class="srow"><div class="lbl"><span>${t("settings.fastMode")}</span><small>${t("settings.fastMode.help")}</small></div><div class="ctl">${switchHtml("fastMode", !!PREFS.fastMode, t("settings.fastMode"))}</div></div>`;
+}
 function modelSection() {
   const m = S.models;
   if (!m) return "";
   const head = `<section><h4>${t("settings.model")}</h4>`;
-  if (m.pinned) return `${head}<div class="srow"><div class="lbl"><span>${t("settings.model")}</span><small>${esc(t("settings.model.pinned", { model: m.pinned }))}</small></div></div></section>`;
+  const fast = fastModeRow();
+  if (m.pinned) return `${head}<div class="srow"><div class="lbl"><span>${t("settings.model")}</span><small>${esc(t("settings.model.pinned", { model: m.pinned }))}</small></div></div>${fast}</section>`;
   const mode = PREFS.modelMode || "auto";
   const note = t(`settings.model.note.${mode}`, { fast: m.fast, best: m.best });
   return `${head}
         <div class="srow"><div class="lbl"><span>${t("settings.model")}</span><small>${esc(note)}</small></div><div class="ctl">${segHtml("modelMode", t("settings.model"), [["auto", t("settings.model.auto")], ["fast", t("settings.model.fast")], ["best", t("settings.model.best")]], mode)}</div></div>
+        ${fast}
       </section>`;
 }
 // Language: "Same as my computer" (the default), or one of core/i18n.js LANGUAGES,
@@ -220,6 +226,7 @@ pane.addEventListener("change", e => {
   if (k === "gallery") saveSetting({ gallery: e.target.checked }, `[data-k="gallery"]`); // gallery hook: 68-gallery.js
   if (k === "autoFix") saveSetting({ autoFix: e.target.checked }, `[data-k="autoFix"]`); // self-heal hook: 71-heal.js
   if (k === "polish") saveSetting({ polish: e.target.checked }, `[data-k="polish"]`); // polish: core/polish.js
+  if (k === "fastMode") saveSetting({ fastMode: e.target.checked }, `[data-k="fastMode"]`);
   if (k === "language") saveSetting({ language: e.target.value }, `[data-k="language"]`);
 });
 // Radio groups: arrows move and select, like native radios.
