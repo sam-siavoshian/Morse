@@ -57,6 +57,9 @@ async function tool(page, k) {
   const on = await page.locator(`.gm-menu [data-a11y="${k}"]`).getAttribute("aria-checked") === "true";
   await page.locator(`.gm-menu [data-a11y="${k}"]`).click();
   await until(async () => (await mods(page)).length === before + (on ? -1 : 1));
+  // The mod is saved before its code runs (the host answers a moment later).
+  // Turning one off deletes it only after the code is gone.
+  if (!on) await page.evaluate(() => new Promise(r => setTimeout(r, 50)));
   await page.keyboard.press("Escape");
   await until(async () => !(await status(page)).open);
 }
