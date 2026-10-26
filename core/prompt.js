@@ -94,11 +94,14 @@ export function basePrompt(base, request) {
     `Original request: ${base.prompt || "(none)"}`,
     "Current code:\n" + fence("css", base.css) + "\n" + fence("js", base.js),
   ];
+  if (base.title) lines.push(`This change is called “${base.title}”. Keep that name unless the follow-up changes what it is.`);
+  if (base.refined) lines.push(`Already applied: ${base.refined}`);
   if (base.error) {
     lines.push(`What went wrong: ${base.error}`);
     lines.push(`Fix it so it works on the page as it is now and still does what was asked.${request && request !== base.prompt ? ` The user adds: ${request}` : ""}`);
   } else {
     lines.push(`Follow-up: ${request}`);
+    lines.push("This follow-up revises that same change. It is not a new request. If it says the change does not work, or to fix it, repair this change. Do not drop what the current code already does unless the follow-up asks you to.");
   }
   lines.push("Reply with the complete new version: all of its CSS and JS, not only what changed, in the same format. Keep the parts the user didn't ask to change.");
   return lines.join("\n\n");

@@ -381,8 +381,13 @@ listen("pointercancel", finishBarDrag, true);
 listen("resize", fitBarDrag);
 
 // ---- sending, stopping
+// A result still on the bar (Save and Undo, or Done on a saved mod) takes the
+// next Send as a follow-up: same mod, the model sees the original ask, the
+// code it wrote, and this line. Nothing pending: a new request, as before.
 function send(text) {
-  if (S.phase !== "idle" || !text) return;
+  if (!text || S.phase === "working") return;
+  if (S.phase === "result" && S.draft) return refine(text);
+  if (S.phase !== "idle") return;
   hintNote = "";
   clearTimeout(warmTimer); warmedFor = ""; // models: the request itself picks the model now
   Voice.cancel();

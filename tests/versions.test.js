@@ -26,6 +26,8 @@ test("refine: the model gets the original request, the current code and the foll
   assert.ok(user.includes("```css\n#toolbar .morse-now { font-size: 14px; }\n```"));
   assert.ok(user.includes("```js\nmorse.watch('#toolbar', b => b.append(morse.el('span')));\n```"));
   assert.match(user, /^Follow-up: make it smaller$/m);
+  assert.match(user, /not a new request/);
+  assert.match(user, /does not work/);
   assert.match(user, /complete new version/);
   assert.doesNotMatch(user, /^Request:/m, "the follow-up isn't mistaken for a fresh request");
   assert.ok(user.indexOf("Page outline") < user.indexOf("Original request"), "page context comes first");

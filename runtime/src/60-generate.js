@@ -1,6 +1,6 @@
 // Generating a change, and iterating on it.
-//   - a result stays editable: type a follow-up and Enter refines the same
-//     mod (the model gets the original ask, the current code and the
+//   - a result stays editable: Send (the button or Enter) on new text revises
+//     the same mod (the model gets the original ask, the current code and the
 //     follow-up, and rewrites it whole); Enter on an empty input keeps it
 //   - ⌘Z / Ctrl+Z after a result steps back one version, ⌘⇧Z / Ctrl+Y forward again
 //   - refineMod(m) opens the bar on a saved mod (the panel's Refine), and
@@ -140,10 +140,14 @@ async function submit(request, opts = {}) {
   if (res?.model) S.label = res.model; // models: the footer names the model that answered
 
   if (prev) {
-    if (!res.ok || res.kind === "answer") {
+    // A follow-up that came back with no code must not wipe the change that
+    // is already on the page (an answer with its kind dropped, or an empty
+    // rewrite). Put that version back and keep the same draft.
+    const blank = !(res.css || "").trim() && !(res.js || "").trim();
+    if (!res.ok || res.kind === "answer" || blank) {
       // Nothing is lost: the version from before the refine goes back on the
       // page (a failed attempt is turned off first: showVersion re-runs it).
-      await Effect.finish(res.ok);
+      await Effect.finish(res.ok && !blank);
       const answered = res.kind === "answer" && Ask.handle(id, res); // a question about the change: show the answer (61-ask.js)
       await showVersion(id, prev);
       S.draft = prev;
@@ -153,7 +157,10 @@ async function submit(request, opts = {}) {
       return showResult(prev, { error: plainError(res.error), keepInput: true });
     }
     const next = reviseMod(prev, { prompt: opts.note || request, css: res.css || "", js: res.js || "" });
-    S.draft = Object.assign(next, { saved: null, saving: null, secs, attempts: res.attempts, model: S.label });
+    // A real new name (three words or more) can replace the title. A one-word
+    // tweak ("Smaller") keeps the name this change already has.
+    const title = res.title && res.title.trim().split(/\s+/).length >= 3 ? res.title.trim() : next.title;
+    S.draft = Object.assign(next, { title, saved: null, saving: null, secs, attempts: res.attempts, model: S.label });
     setCss(id, next.css);
     await Effect.finish(true);
   } else {
@@ -192,7 +199,10 @@ function showResult(d, { note = "", error = "", keepInput = false } = {}) {
   input.placeholder = REFINE_PLACEHOLDER();
   if (!keepInput) setInput("");
   const n = versionsOf(d).length + 1;
-  const meta = note || [d.secs && !d.saved ? t("result.secs", { secs: d.secs }) : "", d.attempts > 1 && !d.saved ? t("result.secondTry") : "", n > 1 ? t("result.version", { n }) : ""].filter(Boolean).join(" · ");
+  // The follow-up sits on this same row, so the line under the input is about
+  // the change that's already showing, not a second request.
+  const follow = !d.saved && d.refined && d.refined !== (d.prompt || d.request) ? d.refined.trim().slice(0, 42) : "";
+  const meta = note || [follow, d.secs && !d.saved ? t("result.secs", { secs: d.secs }) : "", d.attempts > 1 && !d.saved ? t("result.secondTry") : "", n > 1 ? t("result.version", { n }) : ""].filter(Boolean).join(" · ");
   hint.title = error || note; // a long note ends in an ellipsis in the bar: the whole sentence is here
   hint.innerHTML = error
     ? `<b class="ok">${esc(d.title)}</b> <span class="note">${t("result.failedNote", { detail: esc(error).slice(0, 120) })}</span>`
@@ -233,9 +243,10 @@ function refine(text) {
   showPane("");
   sugEl.hidden = true;
   PromptHistory.add(text);
-  submit(text, { from: d, base: { prompt: d.prompt || d.request, css: d.css, js: d.js } });
+  submit(text, { from: d, base: { prompt: d.prompt || d.request, title: d.title || "", css: d.css, js: d.js, ...(d.refined ? { refined: d.refined } : {}) } });
 }
 // While a follow-up is typed, Enter refines (and Save drops its ↵).
+// Send itself revises (50-bar.js); an empty line still keeps the result.
 const markRefining = () => bar.classList.toggle("refining", S.phase === "result" && !!input.value.trim());
 input.addEventListener("input", markRefining);
 new MutationObserver(markRefining).observe(bar, { attributes: true, attributeFilter: ["class"] });
@@ -244,13 +255,13 @@ input.addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey) {
     e.preventDefault();
     const v = input.value.trim();
-    v ? refine(v) : keep();
+    if (v) send(v); else keep();
   }
 });
 goBtn.addEventListener("click", () => {
   if (S.phase !== "result") return;
   const v = input.value.trim();
-  v ? refine(v) : keep();
+  if (v) send(v); else keep();
 });
 
 // ⌘Z / Ctrl+Z after a result: one version back. ⌘⇧Z / Ctrl+Shift+Z (or
