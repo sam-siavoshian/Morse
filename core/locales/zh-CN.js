@@ -577,7 +577,7 @@ export default {
   "desk.app.unknown": "Morse 看不出它是用什么做的。你仍然可以试试。",
   "desk.app.disconnect": "断开",
   "desk.app.openBar": "打开输入栏",
-  "desk.openBar.notHere": "{name} 不是通过 Morse Desktop 打开的。请先在这里用 Morse 打开它。",
+  "desk.openBar.notHere": "{name} 不是通过 Morse 打开的。请先在这里用 Morse 打开它。",
   "desk.openBar.notReady": "Morse 还没有在 {name} 中运行。请稍等，然后再试一次。",
   "desk.update.downloadingH": "正在更新 Morse",
   "desk.update.downloading": "正在下载新版本… {percent}%",

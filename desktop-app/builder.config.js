@@ -16,7 +16,7 @@ export function builderConfig({ stage, out, res, electronDist = null, electronVe
     appId: "dev.morse.desktop",
     productName: "Morse",
     copyright: "MIT License",
-    executableName: "morse-desktop",
+    executableName: "Morse",
     artifactName: "Morse-${version}-${os}-${arch}.${ext}",
     directories: { app: stage, output: out, buildResources: res },
     electronVersion,

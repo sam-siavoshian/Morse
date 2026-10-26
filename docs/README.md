@@ -42,7 +42,7 @@ If you're new, start with [Getting started](getting-started.md).
 | [Accessibility of Morse itself](dev/accessibility.md) | Keyboard, screen readers, zoom and forced colors in Morse's own UI, and the axe-core audit |
 | [Simplify](dev/simplify.md) | Every setting, menu and button, what shows and what waits under More, and Morse checked end to end on a fresh setup |
 | [Checking a Mac or Windows PC](dev/platform-testing.md) | The 15-minute check for desktop apps on a real Mac or Windows PC |
-| [Releasing](dev/releasing.md) | One-time setup, then `npm run release` and one push: npm, the GitHub release, and Morse Desktop's builds and signing |
+| [Releasing](dev/releasing.md) | One-time setup, then `npm run release` and one push: npm, the GitHub release, and Morse's builds and signing |
 | [How Morse talks](WRITING.md) | The style guide for every word a person reads |
 | [Wording pass 2: messages](dev/wording-pass-2.md) | Every message in Morse changed by the second plain-words pass, with before and after |
 | [Wording pass 2: docs and website](dev/wording-pass-2-docs.md) | The biggest before and after changes from the second plain-words pass over the docs and the website |

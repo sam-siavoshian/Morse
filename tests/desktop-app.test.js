@@ -493,8 +493,24 @@ test("morse:// links: only morse://open, which shows the window", () => {
   for (const bad of ["morse://pair?code=ABC234", "https://open", "morse://evil", "not a url", null]) assert.equal(isOpenLink(bad), false, String(bad));
 });
 
+test("the packaged app is named Morse", async () => {
+  const { builderConfig } = await import("../desktop-app/builder.config.js");
+  const pkg = JSON.parse(readFileSync(path.join(root, "desktop-app/package.json"), "utf8"));
+  assert.equal(pkg.productName, "Morse");
+  assert.doesNotMatch(`${pkg.productName} ${pkg.description}`, /morse-desktop|Morse Desktop/);
+  const c = builderConfig({ stage: "/s", out: "/o", res: "/r", electronVersion: "0", env: {} });
+  assert.equal(c.productName, "Morse");
+  assert.equal(c.executableName, "Morse", "the program macOS and the task list show is Morse");
+  assert.equal(c.linux.desktop.entry.Name, "Morse");
+  assert.equal(c.nsis.shortcutName, "Morse");
+  assert.equal(c.protocols[0].name, "Morse");
+  assert.match(readFileSync(path.join(root, "desktop-app/ui/index.html"), "utf8"), /<title>Morse<\/title>/);
+  assert.equal(t("desk.openBar.notHere", { name: "Tunes" }), "Tunes was opened outside Morse. Open it with Morse here first.");
+});
+
 test("Linux desktop files: quoted Exec lines, the login one starts hidden, the menu one takes morse:// links", async () => {
   const entry = desktopEntry({ exec: "/home/sam/Apps/Morse 0.2.AppImage", url: true, icon: "morse" });
+  assert.match(entry, /^Name=Morse$/m, "the app menu shows Morse");
   assert.match(entry, /^Exec="\/home\/sam\/Apps\/Morse 0\.2\.AppImage" %u$/m);
   assert.match(entry, /^MimeType=x-scheme-handler\/morse;$/m);
   assert.doesNotMatch(entry, /--hidden/);

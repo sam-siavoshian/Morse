@@ -143,10 +143,10 @@ jobs:
             codesign --verify --deep --strict --verbose=2 "$APP"
           done
           APP=$(ls -d dist/desktop-app/mac-arm64/*.app 2>/dev/null || ls -d dist/desktop-app/mac*/*.app | head -n 1)
-          "$APP/Contents/MacOS/morse-desktop" > desktop.log 2>&1 &
+          "$APP/Contents/MacOS/Morse" > desktop.log 2>&1 &
           PID=$!
           sleep 10
-          if kill -0 "$PID" 2>/dev/null; then echo "Morse Desktop started."; kill "$PID"; else cat desktop.log; echo "::error::Morse Desktop quit right after starting."; exit 1; fi
+          if kill -0 "$PID" 2>/dev/null; then echo "Morse started."; kill "$PID"; else cat desktop.log; echo "::error::Morse quit right after starting."; exit 1; fi
       - name: Names that don't change
         shell: bash
         run: |

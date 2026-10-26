@@ -48,7 +48,7 @@ export function isNewer(remote, local) {
   return !(r && l) || r > l;
 }
 
-// The .app bundle this process runs from (…/Morse.app/Contents/MacOS/morse-desktop).
+// The .app bundle this process runs from (…/Morse.app/Contents/MacOS/Morse).
 export function bundleOf(exe) {
   const i = exe.indexOf(".app/Contents/MacOS/");
   return i < 0 ? null : exe.slice(0, i + 4);

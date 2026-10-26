@@ -578,7 +578,7 @@ export default {
   "desk.app.unknown": "Morse نتوانست بفهمد این برنامه با چه ساخته شده. باز هم می‌توانید امتحان کنید.",
   "desk.app.disconnect": "قطع کردن",
   "desk.app.openBar": "باز کردن نوار",
-  "desk.openBar.notHere": "{name} بیرون از Morse Desktop باز شده است. اول از همین‌جا آن را با Morse باز کنید.",
+  "desk.openBar.notHere": "{name} بیرون از Morse باز شده است. اول از همین‌جا آن را با Morse باز کنید.",
   "desk.openBar.notReady": "Morse هنوز در {name} اجرا نشده است. کمی صبر کنید و دوباره امتحان کنید.",
   "desk.update.downloadingH": "در حال به‌روزرسانی Morse",
   "desk.update.downloading": "در حال دانلود نسخهٔ جدید… {percent}٪",

@@ -138,7 +138,7 @@ Version 0.2.0, the first version for other people to install.
   request. A change can then run the app's own commands ("add a button that
   formats the document" in VSCodium). `morse profile <app>` shows what Morse
   found.
-- Morse Desktop: an app for your computer, so you don't need a terminal or
+- Morse: an app for your computer, so you don't need a terminal or
   Node. It lists your apps and opens them with Morse. It chooses and checks
   your model, and runs the Morse helper for Chrome. Chrome asks once and you
   click Allow, with no code to type. It shows your mods and checks. The first
@@ -206,8 +206,8 @@ Version 0.2.0, the first version for other people to install.
   `npm run store:smoke` tries that zip in a fresh browser.
   [docs/store/SUBMIT.md](docs/store/SUBMIT.md) goes through the submission.
 - The welcome page asks one question: websites, desktop apps or both. Then
-  you connect in one click. With Morse Desktop open, click **Use Claude
-  Code**, and Morse Desktop asks you to Allow. No code to type, no terminal.
+  you connect in one click. With Morse open, click **Use Claude
+  Code**, and Morse asks you to Allow. No code to type, no terminal.
   Or paste an Anthropic API key. A practice page guides your first change.
   Then a site you choose opens with Morse ready. “Allow User Scripts” comes up
   only when a change needs it, with a picture of the switch.

@@ -1,7 +1,7 @@
 // macOS App Management, the blue hand in Privacy & Security:
-// "morse-desktop" was prevented from modifying apps on your Mac.
+// "Morse" was prevented from modifying apps on your Mac.
 //
-// Morse Desktop opens a browser by running the program inside the app
+// Morse opens a browser by running the program inside the app
 // (daemon/apps.js). macOS then charges that browser's own updates to Morse.
 // The first time, it shows the notification. The person allows it once.
 //
@@ -116,10 +116,11 @@ export function macAccessFile(home = HOME) {
   return path.join(home, "mac-access.json");
 }
 
-// The running Morse Desktop program, or null (the terminal, tests, Linux).
+// The running Morse app, or null (the terminal, tests, Linux).
 // dev is the file's identity: a copy or a rewritten binary is a different one.
+// The packaged binary is Morse.app/Contents/MacOS/Morse (electron-builder executableName).
 export function desktopProgram(exe = process.execPath, stat = statSync) {
-  if (process.platform !== "darwin" || !/\/morse-desktop$/.test(exe)) return null;
+  if (process.platform !== "darwin" || !/\/Morse$/.test(exe)) return null;
   const i = exe.indexOf(".app/Contents/MacOS/");
   if (i < 0) return null;
   const bundle = exe.slice(0, i + 4);

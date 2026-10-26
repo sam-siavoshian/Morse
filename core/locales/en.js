@@ -805,7 +805,7 @@ export default {
   "desk.app.unknown": "Morse couldn't tell what it's built on. You can still try.",
   "desk.app.disconnect": "Disconnect",
   "desk.app.openBar": "Open the bar",
-  "desk.openBar.notHere": "{name} was opened outside Morse Desktop. Open it with Morse here first.",
+  "desk.openBar.notHere": "{name} was opened outside Morse. Open it with Morse here first.",
   "desk.openBar.notReady": "Morse isn't running in {name} yet. Wait a moment, then try again.",
   "desk.update.downloadingH": "Updating Morse",
   "desk.update.downloading": "Downloading the new version… {percent}%",

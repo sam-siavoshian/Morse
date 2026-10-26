@@ -578,7 +578,7 @@ export default {
   "desk.app.unknown": "何で作られたアプリか Morse にはわかりませんでした。それでも試せます。",
   "desk.app.disconnect": "切断",
   "desk.app.openBar": "バーを開く",
-  "desk.openBar.notHere": "{name} は Morse Desktop の外で開かれました。先にここから Morse で開いてください。",
+  "desk.openBar.notHere": "{name} は Morse の外で開かれました。先にここから Morse で開いてください。",
   "desk.openBar.notReady": "Morse はまだ {name} で動いていません。少し待ってから、もう一度試してください。",
   "desk.update.downloadingH": "Morse を更新しています",
   "desk.update.downloading": "新しいバージョンをダウンロード中… {percent}%",

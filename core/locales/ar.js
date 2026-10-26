@@ -578,7 +578,7 @@ export default {
   "desk.app.unknown": "لم يعرف Morse على أي شيء بُني هذا التطبيق. يمكنك أن تجرّب مع ذلك.",
   "desk.app.disconnect": "اقطع الاتصال",
   "desk.app.openBar": "افتح الشريط",
-  "desk.openBar.notHere": "فُتح {name} خارج Morse Desktop. افتحه أولًا مع Morse من هنا.",
+  "desk.openBar.notHere": "فُتح {name} خارج Morse. افتحه أولًا مع Morse من هنا.",
   "desk.openBar.notReady": "لا يعمل Morse في {name} بعد. انتظر قليلًا ثم حاول مرة أخرى.",
   "desk.update.downloadingH": "جارٍ تحديث Morse",
   "desk.update.downloading": "جارٍ تنزيل الإصدار الجديد… {percent}٪",

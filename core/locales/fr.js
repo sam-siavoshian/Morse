@@ -577,7 +577,7 @@ export default {
   "desk.app.unknown": "Morse n'a pas pu savoir sur quoi elle est construite. Vous pouvez quand même essayer.",
   "desk.app.disconnect": "Déconnecter",
   "desk.app.openBar": "Ouvrir la barre",
-  "desk.openBar.notHere": "{name} a été ouvert en dehors de Morse Desktop. Ouvrez-le d'abord avec Morse ici.",
+  "desk.openBar.notHere": "{name} a été ouvert en dehors de Morse. Ouvrez-le d'abord avec Morse ici.",
   "desk.openBar.notReady": "Morse ne tourne pas encore dans {name}. Attendez un instant, puis réessayez.",
   "desk.update.downloadingH": "Mise à jour de Morse",
   "desk.update.downloading": "Téléchargement de la nouvelle version… {percent} %",

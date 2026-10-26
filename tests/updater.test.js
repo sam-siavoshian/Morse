@@ -30,8 +30,8 @@ test("a newer build is another commit made later; the same commit or an older on
 });
 
 test("the app bundle is found from the running executable", () => {
-  assert.equal(bundleOf("/Applications/Morse.app/Contents/MacOS/morse-desktop"), "/Applications/Morse.app");
-  assert.equal(bundleOf("/opt/morse/morse-desktop"), null);
+  assert.equal(bundleOf("/Applications/Morse.app/Contents/MacOS/Morse"), "/Applications/Morse.app");
+  assert.equal(bundleOf("/opt/morse/Morse"), null);
 });
 
 function fakeRelease(files) {

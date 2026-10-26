@@ -23,9 +23,9 @@ import { paint } from "./colors.js";
 const { g: G, d: D, b: B } = paint;
 const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
-// Morse Desktop on macOS, just before it opens another app. The terminal
+// The Morse app on macOS, just before it opens another app. The terminal
 // client is a different program (macOS asks about the terminal, not
-// morse-desktop), so this stays out of its way. See daemon/mac-access.js.
+// Morse), so this stays out of its way. See daemon/mac-access.js.
 let macGate = null;
 async function ensureDesktopAccess() {
   const program = desktopProgram();

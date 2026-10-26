@@ -1,4 +1,4 @@
-// macOS App Management (the blue hand: "morse-desktop" was prevented from
+// macOS App Management (the blue hand: "Morse" was prevented from
 // modifying apps). The allow has to survive the restart that picks it up.
 // This runs on Linux: the preflight result is injected, the real TCC call is not.
 import { home } from "./helpers/home.js";
@@ -14,7 +14,7 @@ void home;
 
 const program = {
   bundle: "/Applications/Morse.app",
-  exe: "/Applications/Morse.app/Contents/MacOS/morse-desktop",
+  exe: "/Applications/Morse.app/Contents/MacOS/Morse",
   dev: "1:2:300",
 };
 
@@ -63,9 +63,9 @@ test("approval followed by restart must not request again", async () => {
 });
 
 test("a different unsigned binary is not what gets restarted, and it does not ask again", async () => {
-  const copy = { bundle: "/tmp/Morse-copy.app", exe: "/tmp/Morse-copy.app/Contents/MacOS/morse-desktop", dev: "9:9:9", copy: true };
+  const copy = { bundle: "/tmp/Morse-copy.app", exe: "/tmp/Morse-copy.app/Contents/MacOS/Morse", dev: "9:9:9", copy: true };
   assert.equal(relaunchPlan(copy), null);
-  assert.equal(relaunchPlan({ ...program, bundle: "/private/var/folders/x/AppTranslocation/Morse.app", exe: "/private/var/folders/x/AppTranslocation/Morse.app/Contents/MacOS/morse-desktop", dev: "4:5:6" }), null);
+  assert.equal(relaunchPlan({ ...program, bundle: "/private/var/folders/x/AppTranslocation/Morse.app", exe: "/private/var/folders/x/AppTranslocation/Morse.app/Contents/MacOS/Morse", dev: "4:5:6" }), null);
   const store = memoryStore({ asked: true, pickedUp: true, recorded: program });
   const open = () => createMacAccess({ program: () => copy, readStatus: async () => 2, store }).beforeOpen();
   const first = await open();

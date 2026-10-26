@@ -116,7 +116,7 @@ Not yet, or not verified:
 - **Codex** is only tested with a stand-in `codex` command. **The Anthropic and OpenAI APIs** are only tested with stand-in servers, not the real ones.
 - **Mods can do anything the page can.** The model is told not to send data anywhere, but nothing stops it yet. Read what a shared mod does before you install it. The install page tells you, with all of its code below.
 - **The gallery is small**: a few example mods, most of them for the demo apps in this repo.
-- **Morse Desktop was tested on Linux only.** Its tray menu, and the macOS and Windows builds, weren't tried yet.
+- **Morse was tested on Linux only.** Its tray menu, and the macOS and Windows builds, weren't tried yet.
 
 ## About the recordings
 
