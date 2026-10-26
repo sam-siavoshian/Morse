@@ -1,13 +1,21 @@
-// Assembles the public site in dist/pages, laid out like the repo so the
-// addresses the code uses keep working. The site is https://getmorse.vercel.app/
+// Assembles the public site in dist/pages. The site is https://getmorse.vercel.app/
 //
-//   /                              -> redirects to site/
-//   /site/                         landing page, gallery, privacy policy
-//   /privacy.html                  redirects to site/privacy.html
+//   /                              landing page
+//   /gallery.html                  gallery
+//   /privacy.html                  privacy policy
+//   /site/, /site/index.html       redirect to /
+//   /site/gallery.html             redirects to /gallery.html
+//   /site/privacy.html             redirects to /privacy.html
 //   /site/mods/index.json          the gallery list (core/gallery.js GALLERY_INDEX_URL)
 //   /share/install.html            share links (core/mod.js SHARE_BASE)
 //   /core/, /design/               modules and tokens the pages import
 //   /docs/launch/                  the demo video and posters
+//
+// The pages' own files stay under site/. A <base href="site/"> on the root
+// copies makes their relative paths (shots/, ../docs/launch/, ../core/) resolve
+// there, on this host and on a GitHub project site. Links to other pages step
+// back out (../gallery.html). /site/mods/ stays put: installed copies of Morse
+// already request that address.
 //
 // Every published page gets its canonical address, link previews (Open Graph
 // and Twitter, with site/og-image.png) and structured data (JSON-LD) where its
@@ -36,9 +44,9 @@ const PUBLISH = ["site", "share", "core", "design/tokens.css", "docs/launch", "d
 
 // ---- search engines and link previews
 
-// Where the site lives: package.json's homepage is .../site/.
+// Where the site lives: package.json's homepage, with a trailing slash.
 const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
-export const SITE_URL = new URL("../", pkg.homepage).href;
+export const SITE_URL = new URL(pkg.homepage).href;
 const REPO_URL = pkg.repository.url.replace(/^git\+/, "").replace(/\.git$/, "");
 
 // The pages people should find in a search, in the sitemap's order. url is
@@ -46,9 +54,9 @@ const REPO_URL = pkg.repository.url.replace(/^git\+/, "").replace(/\.git$/, "");
 // share/install.html has link previews (people paste share links into chat)
 // but stays out of search: what it shows depends on the link.
 export const SEO_PAGES = [
-  { file: "site/index.html", url: "site/", index: true, ld: ["site", "app", "faq"] },
-  { file: "site/gallery.html", url: "site/gallery.html", index: true, crumbs: "Gallery" },
-  { file: "site/privacy.html", url: "site/privacy.html", index: true, crumbs: "Privacy policy" },
+  { file: "index.html", url: "", index: true, ld: ["site", "app", "faq"] },
+  { file: "gallery.html", url: "gallery.html", index: true, crumbs: "Gallery" },
+  { file: "privacy.html", url: "privacy.html", index: true, crumbs: "Privacy policy" },
   { file: "share/install.html", url: "share/install.html", index: false },
 ];
 
@@ -73,11 +81,13 @@ const realLink = href => (/^https:\/\//.test(href || "") && !href.startsWith("ht
 
 export async function structuredData(page, html) {
   const url = SITE_URL + page.url;
-  const home = SITE_URL + "site/";
+  const home = SITE_URL;
+  // Pictures stay next to the page files, under /site/.
+  const assets = `${SITE_URL}site/`;
   const graph = [];
   if (page.ld?.includes("site")) {
     graph.push({ "@type": "WebSite", "@id": `${home}#website`, name: "Morse", url: home, inLanguage: "en", publisher: { "@id": `${home}#org` } });
-    graph.push({ "@type": "Organization", "@id": `${home}#org`, name: "Morse", url: home, logo: `${home}mark/icon-512.png`, sameAs: [REPO_URL] });
+    graph.push({ "@type": "Organization", "@id": `${home}#org`, name: "Morse", url: home, logo: `${assets}mark/icon-512.png`, sameAs: [REPO_URL] });
   }
   if (page.ld?.includes("app")) {
     const { LINKS } = await import("../site/config.js");
@@ -94,8 +104,8 @@ export async function structuredData(page, html) {
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
       isAccessibleForFree: true,
       license: "https://opensource.org/licenses/MIT",
-      image: home + OG.file,
-      screenshot: home + OG.file,
+      image: assets + OG.file,
+      screenshot: assets + OG.file,
       publisher: { "@id": `${home}#org` },
     };
     if (realLink(LINKS.chrome)) app.installUrl = LINKS.chrome;
@@ -326,6 +336,50 @@ async function walk(dir) {
   return out;
 }
 
+// A root page keeps the files under site/. <base href="site/"> resolves
+// favicon.png, shots/ and ../docs/ to that folder. Links to the other pages
+// step back out, so they land on / and /gallery.html rather than /site/.
+export function publishAtRoot(html) {
+  if (!html.includes("<head>")) throw new Error("page has no <head>");
+  return html.replace("<head>", "<head>\n<base href=\"site/\">").replace(/\shref="([^"]*)"/g, (full, href) => {
+    if (/^([a-z][a-z0-9+.-]*:|\/\/)/i.test(href) || href === "site/") return full;
+    if (href === "./" || href === "index.html" || href === "./index.html") return ' href="../"';
+    if (href === "gallery.html" || href === "./gallery.html") return ' href="../gallery.html"';
+    if (href === "privacy.html" || href === "./privacy.html") return ' href="../privacy.html"';
+    if (href.startsWith("#")) return ` href="../${href}"`;
+    if (href.startsWith("./#")) return ` href="..${href.slice(1)}"`;
+    return full;
+  });
+}
+
+function redirectHtml(to, title, canonical) {
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>${title}</title>
+<meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="0; url=${to}">
+<link rel="canonical" href="${canonical}"></head>
+<body><a href="${to}">${title}</a></body></html>
+`;
+}
+
+// Where a link lands inside the published folder. A <base href> (the root
+// pages) is applied first. A path that is a directory names its index.html.
+function resolvePublished(dir, file, ref, base) {
+  const raw = decodeURIComponent(ref.split(/[?#]/)[0]);
+  if (base) {
+    const basePath = new URL(base, "https://example.com/").pathname;
+    const rel = decodeURIComponent(new URL(raw || ".", `https://example.com${basePath}`).pathname).replace(/^\/+/, "");
+    return rel === "" || rel.endsWith("/") ? path.join(dir, rel, "index.html") : path.join(dir, rel);
+  }
+  if (raw.startsWith("/")) {
+    const rel = raw.replace(/^\/+/, "");
+    return rel === "" || rel.endsWith("/") ? path.join(dir, rel, "index.html") : path.join(dir, rel);
+  }
+  let target = path.resolve(path.dirname(file), raw);
+  if (raw.endsWith("/") || raw === "./" || raw === "../" || raw === "") target = path.join(target, "index.html");
+  return target;
+}
+
 // Every relative href/src in the HTML and every relative import in the JS has
 // to point at a published file.
 export async function brokenLinks(dir) {
@@ -335,14 +389,16 @@ export async function brokenLinks(dir) {
     const ext = path.extname(file);
     if (ext !== ".html" && ext !== ".js") continue;
     const text = await fs.readFile(file, "utf8");
+    const base = ext === ".html" ? (/<base href="([^"]+)">/.exec(text)?.[1] || "") : "";
     const refs = ext === ".html"
       ? [...text.matchAll(/\s(?:href|src|poster)="([^"]+)"/g), ...text.matchAll(/\bfrom\s+"(\.{1,2}\/[^"]+)"/g)].map(m => m[1])
       : [...text.matchAll(/(?:^|\n)\s*import\s[^;]*?from\s+"(\.{1,2}\/[^"]+)"/g), ...text.matchAll(/\bimport\("(\.{1,2}\/[^"]+)"\)/g)].map(m => m[1]);
     for (const ref of refs) {
+      if (base && ref === base) continue; // the <base> itself, not a file
       if (/^([a-z]+:|\/\/|#|\$\{)/i.test(ref) || ref.includes("${")) continue;
-      let target = path.resolve(path.dirname(file), decodeURIComponent(ref.split(/[?#]/)[0]));
-      if (ref.split(/[?#]/)[0].endsWith("/") || ref === "./" || ref === "../") target = path.join(target, "index.html");
-      if (!target.startsWith(dir) || !(await exists(target))) broken.push(`${path.relative(dir, file)} -> ${ref}`);
+      const target = resolvePublished(dir, file, ref, base);
+      const inside = target === dir || target.startsWith(dir + path.sep);
+      if (!inside || !(await exists(target))) broken.push(`${path.relative(dir, file)} -> ${ref}`);
     }
   }
   return broken;
@@ -362,25 +418,20 @@ export async function buildPages({ out = OUT, refresh = true } = {}) {
   }
   await fs.copyFile(path.join(root, "docs", "privacy.md"), path.join(out, "docs", "privacy.md"));
   await fs.writeFile(path.join(out, ".nojekyll"), "");
-  await fs.writeFile(path.join(out, "index.html"), `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Morse</title>
-<meta name="robots" content="noindex">
-<meta http-equiv="refresh" content="0; url=site/">
-<link rel="canonical" href="${SITE_URL}site/"></head>
-<body><a href="site/">Morse</a></body></html>
-`);
-  // The policy's address is site/privacy.html. /privacy.html sends people there too.
-  await fs.writeFile(path.join(out, "privacy.html"), `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Morse privacy policy</title>
-<meta name="robots" content="noindex">
-<meta http-equiv="refresh" content="0; url=site/privacy.html">
-<link rel="canonical" href="${SITE_URL}site/privacy.html"></head>
-<body><a href="site/privacy.html">Morse privacy policy</a></body></html>
-`);
+  // Read the copies under site/ before replacing them with redirects.
   for (const page of SEO_PAGES) {
-    const f = path.join(out, page.file);
-    await fs.writeFile(f, await withSeo(page, await fs.readFile(f, "utf8")));
+    const fromSite = !page.file.startsWith("share/");
+    const src = path.join(out, fromSite ? path.join("site", path.basename(page.file)) : page.file);
+    let html = await withSeo(page, await fs.readFile(src, "utf8"));
+    if (fromSite) html = publishAtRoot(html);
+    await fs.writeFile(path.join(out, page.file), html);
   }
+  // Old addresses. vercel.json redirects these on Vercel; the refresh covers
+  // GitHub Pages, which has no redirects file. Relative targets work both at
+  // the domain root and under a project path.
+  await fs.writeFile(path.join(out, "site", "index.html"), redirectHtml("../", "Morse", SITE_URL));
+  await fs.writeFile(path.join(out, "site", "gallery.html"), redirectHtml("../gallery.html", "Morse gallery", `${SITE_URL}gallery.html`));
+  await fs.writeFile(path.join(out, "site", "privacy.html"), redirectHtml("../privacy.html", "Morse privacy policy", `${SITE_URL}privacy.html`));
   await fs.writeFile(path.join(out, "sitemap.xml"), sitemapXml());
   await fs.writeFile(path.join(out, "robots.txt"), robotsTxt());
   // A page that isn't in SEO_PAGES stays out of search (the demo apps, the
