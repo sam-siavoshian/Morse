@@ -142,13 +142,19 @@ function appRow(a) {
 
 // Rows are only rebuilt when what they show changed, so focus stays put
 // while the list refreshes.
+// A scan still running is not "Morse found nothing". The English line is
+// here because the locale catalogs are shared with other work.
+function appsLooking() {
+  const s = t("desk.apps.looking");
+  return s === "desk.apps.looking" ? "Looking for apps…" : s;
+}
 function renderApps() {
   showAppsError(); // a Connected row clears a stale "isn't running yet" banner
   const list = $("app-list");
-  const rows = st.apps;
+  const rows = st.apps || [];
   const seen = new Set();
   if (!rows.length) {
-    list.replaceChildren(h("li", { class: "empty" }, t("desk.apps.none")));
+    list.replaceChildren(h("li", { class: "empty", ...(st.appsPending ? { "data-pending": "1" } : {}) }, st.appsPending ? appsLooking() : t("desk.apps.none")));
   } else {
     if (list.querySelector("li.empty")) list.replaceChildren();
     let prev = null;
@@ -521,7 +527,13 @@ function renderFirst() {
   else if (m.check) live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.noAnswer", { name, error: unprefixed(m.check.error, m.name) }) }), h("i", { class: "dot bad" }));
   else live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.willUse", { name }) }));
   if (!m.none && !m.check && !firstChecked) { firstChecked = true; checkModel(); }
-  const apps = st.apps.filter(a => a.canAttach !== false).slice(0, 5);
+  const apps = (st.apps || []).filter(a => a.canAttach !== false).slice(0, 5);
+  if (st.appsPending && !apps.length) {
+    if ($("first-apps").dataset.sig === "pending") return;
+    $("first-apps").dataset.sig = "pending";
+    $("first-apps").replaceChildren(h("li", { class: "empty" }, appsLooking()));
+    return;
+  }
   const sig = JSON.stringify(apps.map(a => [a.id, a.state, a.icon ? 1 : 0]));
   if ($("first-apps").dataset.sig === sig) return;
   $("first-apps").dataset.sig = sig;

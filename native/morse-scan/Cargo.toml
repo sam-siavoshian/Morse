@@ -1,0 +1,9 @@
+[package]
+name = "morse-scan"
+version = "0.1.0"
+edition = "2021"
+description = "App discovery, process list, and local-model probe for Morse Desktop"
+publish = false
+
+[dependencies]
+serde_json = "1"

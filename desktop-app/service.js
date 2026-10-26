@@ -12,6 +12,7 @@ import { promises as fs, watchFile, unwatchFile } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { detectPlatform, decideOpenShortcut, resolveHotkeys } from "../core/hotkeys.js";
+import { discoverAppsNative, listProcessesNative } from "../daemon/native-scan.js";
 import { presentApp } from "../daemon/open-bar.js";
 
 const ANSI = /\x1b\[[0-9;]*m/g;
@@ -28,7 +29,8 @@ export async function loadDaemon() {
   ]);
   return {
     // apps (morse apps, launch, attach, status, stop)
-    hostContext: apps.hostContext, discoverApps: apps.discoverApps, appFromPath: apps.appFromPath, listProcesses: apps.listProcesses,
+    hostContext: apps.hostContext, discoverApps: ctx => discoverAppsNative(apps, ctx), appFromPath: apps.appFromPath,
+    listProcesses: (...args) => listProcessesNative(apps, ...args),
     findAppProcesses: apps.findAppProcesses, debugPortOf: apps.debugPortOf, loadAppPrefs: apps.loadAppPrefs,
     connectApp: desktop.connectApp, startSession: desktop.startSession, readSessions: status.readSessions, stopSession: status.stopSession,
     // the model (morse setup, morse doctor)
@@ -72,6 +74,9 @@ export function createService({
   const pending = new Map(); // app id -> "opening" | "disconnecting"
   const icons = new Map();   // app id -> data URL or null
   let found = null, foundAt = 0;
+  let scanP = null;          // one cold discoverApps, shared by the app list and anything waiting on it
+  let namesFromScan = new Map(); // app id -> name, including apps added by file
+  let fillQueued = false;
   let lastCheck = null;      // { ok, ms, error, at, label }
   let settings = null;
   // Always open with Morse: what each app was at the last look, and when Morse
@@ -122,21 +127,48 @@ export function createService({
   }
 
   // ---- apps
+  // discoverApps walks the disk. One in-flight scan is shared; a fresh look
+  // starts its own. The work is deferred off the caller's stack so the first
+  // state() can return before it runs.
+  function discoverShared({ fresh = false } = {}) {
+    if (!fresh && found && now() - foundAt <= 60000) return Promise.resolve(found);
+    if (!fresh && scanP) return scanP;
+    let resolve, reject;
+    const tracked = new Promise((res, rej) => { resolve = res; reject = rej; });
+    const done = tracked.finally(() => { if (scanP === done) scanP = null; });
+    scanP = done;
+    setTimeout(() => {
+      try {
+        found = scan ? d.discoverApps(d.hostContext()) : [];
+        foundAt = now();
+        resolve(found);
+      } catch (e) { reject(e); }
+    }, 0);
+    return done;
+  }
+
   async function appList({ fresh = false } = {}) {
+    await discoverShared({ fresh });
     const ctx = d.hostContext();
-    if (fresh || !found || now() - foundAt > 60000) {
-      found = scan ? d.discoverApps(ctx) : [];
-      foundAt = now();
-    }
     const mine = new Set(self.filter(Boolean));
-    const list = found.filter(a => ![a.exe, a.resolved, a.path].some(p => mine.has(p)));
-    for (const p of (await loadSettings()).apps) {
+    const list = (found || []).filter(a => ![a.exe, a.resolved, a.path].some(p => mine.has(p)));
+    for (const file of (await loadSettings()).apps) {
       let a;
-      try { a = d.appFromPath(ctx, p); } catch { continue; }
+      try { a = d.appFromPath(ctx, file); } catch { continue; }
       if (list.some(x => x.id === a.id || x.exe === a.exe)) continue;
       list.push({ ...a, added: true });
     }
+    namesFromScan = new Map(list.map(a => [a.id, a.name]));
     return list;
+  }
+
+  // The window is up before this finishes. One scan, then morse:changed.
+  function scheduleFill() {
+    if (found || fillQueued) return;
+    fillQueued = true;
+    setTimeout(() => {
+      apps().then(() => changed(), e => log(`apps: ${e?.message || e}`)).finally(() => { fillQueued = false; });
+    }, 0);
   }
 
   async function findApp(id) {
@@ -348,7 +380,9 @@ export function createService({
   // ---- mods and the off switch (morse mods, pause, resume)
   async function mods() {
     const list = await d.listMods();
-    const names = new Map((await appList()).map(a => [a.id, a.name]));
+    // Names from the last scan only. A cold state() must not start discoverApps;
+    // the fill does, once, and the next push has the names.
+    const names = new Map(namesFromScan);
     for (const s of await d.readSessions()) names.set(s.id, s.name);
     const groups = new Map();
     for (const m of list) {
@@ -420,11 +454,8 @@ export function createService({
   }
 
   // ---- everything the window shows at once
-  async function state({ fresh = false } = {}) {
-    const [m, a, md, p, s] = await Promise.all([model(), apps({ fresh }), mods(), pause(), loadSettings()]);
+  function packState({ m, a, md, p, s, prefs, keys, appsPending }) {
     const platform = detectPlatform({ platform: process.platform });
-    const prefs = typeof d.loadPrefs === "function" ? await d.loadPrefs().catch(() => null) : null;
-    const keys = await d.configuredHotkeys(platform).catch(() => ({}));
     const stored = prefs?.hotkeys && typeof prefs.hotkeys === "object" ? prefs.hotkeys : null;
     const resolved = stored ? resolveHotkeys(stored, platform) : null;
     return {
@@ -433,8 +464,27 @@ export function createService({
         open: keys.open || "", mods: keys.mods || "", off: keys.off || "",
         ...(resolved ? { combo: resolved.open || "", custom: !!stored.open, stored } : {}),
       },
-      model: m, apps: a, mods: md, pause: p, settings: { startAtLogin: !!s.startAtLogin, autoOpen: s.autoOpen !== false, welcomed: !!s.welcomed },
+      model: m, apps: a, appsPending: !!appsPending, mods: md, pause: p,
+      settings: { startAtLogin: !!s.startAtLogin, autoOpen: s.autoOpen !== false, welcomed: !!s.welcomed },
     };
+  }
+  async function state({ fresh = false } = {}) {
+    const platform = detectPlatform({ platform: process.platform });
+    const prefsP = typeof d.loadPrefs === "function" ? d.loadPrefs().catch(() => null) : Promise.resolve(null);
+    const keysP = d.configuredHotkeys(platform).catch(() => ({}));
+    // First paint: settings, model, mods and the off switch. The disk scan,
+    // the process list and the icons follow once, then morse:changed.
+    if (!fresh && !found) {
+      const [m, md, p, s, prefs, keys] = await Promise.all([model(), mods(), pause(), loadSettings(), prefsP, keysP]);
+      const out = packState({ m, a: [], md, p, s, prefs, keys, appsPending: true });
+      scheduleFill();
+      return out;
+    }
+    await appList({ fresh });
+    const [m, a, md, p, s, prefs, keys] = await Promise.all([
+      model(), apps({ fresh: false }), mods(), pause(), loadSettings(), prefsP, keysP,
+    ]);
+    return packState({ m, a, md, p, s, prefs, keys, appsPending: false });
   }
 
   // The keys that open Morse in a connected app. Saved with the bar's other

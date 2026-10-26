@@ -117,6 +117,16 @@ function setup(over) {
   return { daemon, service, ipcMain, native, channels, call, emitted };
 }
 
+// The first state() answers before discoverApps. Poll until the shared fill lands.
+async function settled(call) {
+  let st = await call("state");
+  for (let i = 0; i < 50 && st?.appsPending; i++) {
+    await new Promise(r => setTimeout(r, 10));
+    st = await call("state");
+  }
+  return st;
+}
+
 // ---------------------------------------------------------------- the IPC handlers
 
 test("every request in the API has one channel, and only Morse's own window may use it", async () => {
@@ -140,7 +150,13 @@ test("arguments are checked: ids, answers, switches, choices, keys, link names, 
 test("state: each app says whether it's open and connected, with its mods; the model and the off switch", async () => {
   const { call, daemon } = setup();
   daemon.sessions = [{ id: "port-9222", name: "App on port 9222", pid: 1, state: "attached", windows: [] }];
-  const st = await call("state");
+  const first = await call("state");
+  assert.equal(first.appsPending, true, "the shell is up before the scan");
+  assert.deepEqual(first.apps, []);
+  assert.equal(daemon.calls.filter(c => c[0] === "discoverApps").length, 0, "the first answer does not walk the disk");
+  const st = await settled(call);
+  assert.equal(st.appsPending, false);
+  assert.equal(daemon.calls.filter(c => c[0] === "discoverApps").length, 1, "one scan fills the list");
   assert.equal(st.version, "9.9.9");
   const by = Object.fromEntries(st.apps.map(a => [a.id, a]));
   assert.equal(by.tunes.state, "closed");
@@ -340,7 +356,7 @@ test("Add an app… keeps the file in desktop.json, and refuses native apps", as
   assert.deepEqual(await call("addApp"), { ok: true, id: "acme", name: "Acme" });
   const saved = JSON.parse(readFileSync(path.join(daemon.HOME, "desktop.json"), "utf8"));
   assert.deepEqual(saved.apps, ["/apps/acme"]);
-  assert.ok((await call("state")).apps.some(a => a.id === "acme" && a.added));
+  assert.ok((await settled(call)).apps.some(a => a.id === "acme" && a.added));
   native.pickApp = async () => "/apps/native";
   assert.match((await call("addApp")).error, /Nat is a native app/);
   native.pickApp = async () => null;
@@ -377,7 +393,7 @@ test("the first run: shown until an app is opened or Skip, then never again", as
 
 test("mods: listed per app with switches, and the off switch pauses every mod everywhere", async () => {
   const { call, daemon } = setup();
-  await call("state"); // learns the apps' names
+  await settled(call); // the fill learns the apps' names; the first answer does not scan
   const groups = (await call("state")).mods;
   assert.deepEqual(groups.map(g => [g.name, g.mods.map(m => [m.title, m.on])]), [["Tunes", [["Sleep timer", true]]]]);
   assert.deepEqual(await call("setModOn", "m1", false), { ok: true });
