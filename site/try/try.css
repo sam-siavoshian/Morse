@@ -72,6 +72,15 @@
 .try-dots i:nth-child(2) { animation-delay: 0.15s; }
 .try-dots i:nth-child(3) { animation-delay: 0.3s; }
 @keyframes try-dot { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+/* A band of light passes over the words while the demo loads. */
+.shimmer { position: relative; display: inline-block; }
+.shimmer-band {
+  position: absolute; inset: 0; color: var(--t-text); pointer-events: none;
+  -webkit-mask: linear-gradient(100deg, transparent 35%, #000 50%, transparent 65%) 100% 0 / 300% 100% no-repeat;
+          mask: linear-gradient(100deg, transparent 35%, #000 50%, transparent 65%) 100% 0 / 300% 100% no-repeat;
+  animation: shimmer 2.4s var(--ease-out, ease) infinite;
+}
+@keyframes shimmer { from { -webkit-mask-position: 100% 0; mask-position: 100% 0; } to { -webkit-mask-position: 0 0; mask-position: 0 0; } }
 .try.is-live .try-poster { display: none; }
 .try.is-failed .try-dots { display: none; }
 
@@ -133,4 +142,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .try *, .try *::before, .try *::after { animation: none !important; transition: none !important; }
+  .shimmer-band { display: none; }
 }
