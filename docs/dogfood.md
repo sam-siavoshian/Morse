@@ -137,8 +137,8 @@ in a store build) and `tests/perf.test.js` (its temp folders).
 
 | | |
 |---|---|
-| ![](screenshots/182-dogfood-pypi-release-dates.png) PyPI: release dates beside every version, after two follow-ups | ![](screenshots/183-dogfood-gitlab-collapsed-files.png) GitLab: a long file list, collapsed |
-| ![](screenshots/184-dogfood-obsidian-wider-editor.png) Obsidian: a wider editor and bigger text | ![](screenshots/185-dogfood-joplin-word-count.png) Joplin: a word count (top right) that follows your typing |
-| ![](screenshots/186-dogfood-node-toc-filter.png) Node.js docs: the table of contents, filtered by “watch” | ![](screenshots/187-dogfood-gitlab-copy-clone-link.png) Show me once on GitLab: **Copy clone link** next to Star, and GitLab's own “Copied” |
-| ![](screenshots/188-dogfood-self-heal.png) A broken mod: “Not working” and **Fix it** | ![](screenshots/189-dogfood-your-style.png) Your style on GitLab: Georgia, bigger text, underlined links |
-| ![](screenshots/190-dogfood-obsidian-off-switch.png) The off switch in Obsidian names the app | |
+| ![](screenshots/182-dogfood-pypi-release-dates.webp) PyPI: release dates beside every version, after two follow-ups | ![](screenshots/183-dogfood-gitlab-collapsed-files.webp) GitLab: a long file list, collapsed |
+| ![](screenshots/184-dogfood-obsidian-wider-editor.webp) Obsidian: a wider editor and bigger text | ![](screenshots/185-dogfood-joplin-word-count.webp) Joplin: a word count (top right) that follows your typing |
+| ![](screenshots/186-dogfood-node-toc-filter.webp) Node.js docs: the table of contents, filtered by “watch” | ![](screenshots/187-dogfood-gitlab-copy-clone-link.webp) Show me once on GitLab: **Copy clone link** next to Star, and GitLab's own “Copied” |
+| ![](screenshots/188-dogfood-self-heal.webp) A broken mod: “Not working” and **Fix it** | ![](screenshots/189-dogfood-your-style.webp) Your style on GitLab: Georgia, bigger text, underlined links |
+| ![](screenshots/190-dogfood-obsidian-off-switch.webp) The off switch in Obsidian names the app | |

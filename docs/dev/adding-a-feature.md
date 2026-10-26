@@ -98,8 +98,9 @@ Edit code view), add it to the test's `ALLOWED` list with the reason.
 2. Each shot is audited automatically (clipped text, boxes off screen,
    control heights, style leaking in from the host, text contrast), and
    `node demo/contrast.js` checks every token pair.
-3. Open [`docs/ui/index.html`](../ui/index.html), the contact sheet, and
+3. Open the contact sheet `npm run ui` wrote beside the shots, and
    check each shot by eye against [the checklist](../ui/CHECKLIST.md).
+   The sheet is not committed.
 4. Write verdicts and notes in `docs/ui/review.json`
    (`{ states: { "area/state": { note, verdict, accept } } }`). An automated
    issue that is fine on purpose needs an `accept` with the reason.

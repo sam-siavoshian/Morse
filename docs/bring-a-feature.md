@@ -29,8 +29,8 @@ shows both.
 
 | | |
 |---|---|
-| ![](screenshots/bring-14-vscodium-take.png) **Take this** in VSCodium: open the command palette while Morse watches | ![](screenshots/bring-15-vscodium-taken.png) **Taken**: the model named it and wrote what it does |
-| ![](screenshots/bring-16-rubygems-before.png) **RubyGems.org in Chrome**, before | ![](screenshots/bring-17-rubygems-palette.png) **Brought**: Ctrl+Shift+P opens a palette of this page's own things, and a **Commands** button sits in the header, in RubyGems' own font, red and corners |
+| ![](screenshots/bring-14-vscodium-take.webp) **Take this** in VSCodium: open the command palette while Morse watches | ![](screenshots/bring-15-vscodium-taken.webp) **Taken**: the model named it and wrote what it does |
+| ![](screenshots/bring-16-rubygems-before.webp) **RubyGems.org in Chrome**, before | ![](screenshots/bring-17-rubygems-palette.webp) **Brought**: Ctrl+Shift+P opens a palette of this page's own things, and a **Commands** button sits in the header, in RubyGems' own font, red and corners |
 
 These pictures are real: VSCodium and RubyGems.org, Claude Code (sonnet named
 it, opus built it). The palette was taken in the desktop app and brought into
@@ -40,9 +40,9 @@ More, from real sites:
 
 | | |
 |---|---|
-| ![](screenshots/bring-08-go-take.png) **pkg.go.dev**: its “Jump to” box (press F), taken while Morse watches | ![](screenshots/bring-09-node-before.png) **The Node.js docs**, before |
-| ![](screenshots/bring-10-node-jump-to.png) **Brought**: F opens “Jump to” in Node's green and font, and a “Jump to…” link joins the page's own links | ![](screenshots/bring-11-node-jumped.png) **It works**: Enter goes to `filehandle.readFile()` |
-| ![](screenshots/bring-12-pypi-switch.png) **The Node.js docs' dark mode switch**, brought into PyPI: the moon sits in PyPI's top bar | ![](screenshots/bring-13-pypi-dark.png) **Clicked**: PyPI in dark colors of its own, not a filter over the page |
+| ![](screenshots/bring-08-go-take.webp) **pkg.go.dev**: its “Jump to” box (press F), taken while Morse watches | ![](screenshots/bring-09-node-before.webp) **The Node.js docs**, before |
+| ![](screenshots/bring-10-node-jump-to.webp) **Brought**: F opens “Jump to” in Node's green and font, and a “Jump to…” link joins the page's own links | ![](screenshots/bring-11-node-jumped.webp) **It works**: Enter goes to `filehandle.readFile()` |
+| ![](screenshots/bring-12-pypi-switch.webp) **The Node.js docs' dark mode switch**, brought into PyPI: the moon sits in PyPI's top bar | ![](screenshots/bring-13-pypi-dark.webp) **Clicked**: PyPI in dark colors of its own, not a filter over the page |
 
 ## Bring here
 
@@ -79,10 +79,10 @@ Codepad (a small code editor) and Inkwell (a notes app).
 
 | | |
 |---|---|
-| ![](screenshots/bring-01-take-this.png) **Take this**, under the box | ![](screenshots/bring-02-watching.png) **Watching**: each step in the strip |
-| ![](screenshots/bring-03-taken.png) **Taken**, with what to do next | ![](screenshots/bring-04-bring-here.png) **Bring here…** in Inkwell |
-| ![](screenshots/bring-05-bringing.png) **Bringing**: press Enter | ![](screenshots/bring-06-brought.png) **Brought**: Ctrl+Shift+P in Inkwell, in its font and corners |
-| ![](screenshots/bring-07-mods-panel.png) **The Mods panel**: “Taken from Codepad”, and Taken from other apps | |
+| ![](screenshots/bring-01-take-this.webp) **Take this**, under the box | ![](screenshots/bring-02-watching.webp) **Watching**: each step in the strip |
+| ![](screenshots/bring-03-taken.webp) **Taken**, with what to do next | ![](screenshots/bring-04-bring-here.webp) **Bring here…** in Inkwell |
+| ![](screenshots/bring-05-bringing.webp) **Bringing**: press Enter | ![](screenshots/bring-06-brought.webp) **Brought**: Ctrl+Shift+P in Inkwell, in its font and corners |
+| ![](screenshots/bring-07-mods-panel.webp) **The Mods panel**: “Taken from Codepad”, and Taken from other apps | |
 
 ## How well it works
 

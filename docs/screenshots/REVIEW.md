@@ -1,5 +1,8 @@
 # Screenshot review
 
+Pictures nothing links are not in this folder. The table is the record of what
+was taken and how to take it again.
+
 Every picture the docs, the website and the store kit use, the script that
 makes it, and whether it passed a look on October 24, 2026. A picture passes
 (✅) when it uses today's words (Save, Change, Edit tools, no local models),
@@ -54,8 +57,8 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 72-help.png | shoot-onboarding.js | ✅ | |
 | 73-empty-states.png | shoot-onboarding.js | ✅ | Each popup tile ends at "Change this page". Back in the docs |
 | 74-cli-setup.png | shoot-onboarding.js | ✅ | Claude Code, Codex, API key; no local models. Back in the docs |
-| 80-apps.png | shoot-apps.js | ✅ | |
-| 81-status.png | shoot-apps.js | ✅ | |
+| 80-apps.webp | shoot-apps.js | ✅ | |
+| 81-status.webp | shoot-apps.js | ✅ | |
 | 90-ask.png | shoot-ask.js | ✅ | |
 | 91-find.png | shoot-ask.js | ✅ | |
 | 92-show-me.png | shoot-ask.js | ✅ | |
@@ -90,16 +93,16 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 132-show-once-result.png | shoot-show-once.js | ✅ | |
 | 133-show-once-done.png | shoot-show-once.js | ✅ | |
 | 134-show-once-hidden.png | shoot-show-once.js | ✅ | |
-| bring-01-take-this.png | shoot-take.js | ✅ | Take this in the empty bar (Codepad, a demo code editor) |
-| bring-02-watching.png | shoot-take.js | ✅ | The palette open while Morse watches; the strip lists the two steps |
-| bring-03-taken.png | shoot-take.js | ✅ | Name and lines from the demo model |
-| bring-04-bring-here.png | shoot-take.js | ✅ | Inkwell: the Bring here list |
-| bring-05-bringing.png | shoot-take.js | ✅ | |
-| bring-06-brought.png | shoot-take.js | ✅ | The demo model's palette in Inkwell's font and corners |
-| bring-07-mods-panel.png | shoot-take.js | ✅ | “Taken from Codepad” on the mod, Taken from other apps below |
-| bring-08-go-take.png … bring-11-node-jumped.png | evals/bring.js (SHOTS) | ✅ | Real: pkg.go.dev's Jump to, brought into the Node.js docs by Claude Code (opus); the jump lands on `filehandle.readFile()` |
-| bring-12-pypi-switch.png, bring-13-pypi-dark.png | evals/bring.js (SHOTS) | ✅ | Real: the Node.js docs' dark mode switch in PyPI; a few boxes (Key dates) stay light |
-| bring-14-vscodium-take.png … bring-17-rubygems-palette.png | evals/bring.js (SHOTS) | ✅ | Real: VSCodium's palette taken in the desktop app, brought into RubyGems.org in Chrome |
+| bring-01-take-this.webp | shoot-take.js | ✅ | Take this in the empty bar (Codepad, a demo code editor) |
+| bring-02-watching.webp | shoot-take.js | ✅ | The palette open while Morse watches; the strip lists the two steps |
+| bring-03-taken.webp | shoot-take.js | ✅ | Name and lines from the demo model |
+| bring-04-bring-here.webp | shoot-take.js | ✅ | Inkwell: the Bring here list |
+| bring-05-bringing.webp | shoot-take.js | ✅ | |
+| bring-06-brought.webp | shoot-take.js | ✅ | The demo model's palette in Inkwell's font and corners |
+| bring-07-mods-panel.webp | shoot-take.js | ✅ | “Taken from Codepad” on the mod, Taken from other apps below |
+| bring-08-go-take.webp … bring-11-node-jumped.webp | evals/bring.js (SHOTS) | ✅ | Real: pkg.go.dev's Jump to, brought into the Node.js docs by Claude Code (opus); the jump lands on `filehandle.readFile()` |
+| bring-12-pypi-switch.webp, bring-13-pypi-dark.webp | evals/bring.js (SHOTS) | ✅ | Real: the Node.js docs' dark mode switch in PyPI; a few boxes (Key dates) stay light |
+| bring-14-vscodium-take.webp … bring-17-rubygems-palette.webp | evals/bring.js (SHOTS) | ✅ | Real: VSCodium's palette taken in the desktop app, brought into RubyGems.org in Chrome |
 | 135-welcome.png … 146-desktop-first-save.png | shoot-first-run.js | ⚠️ | 12 first-run pictures from before onboarding v2: 135–140 show the old welcome page (141–146, sites and desktop apps, still match); not in the docs |
 | 190-start-download.png … 206-popup-app.png | shoot-onboarding-v2.js | ✅ | The welcome page in Chrome, in Getting started: no Morse app yet (Download Morse), the Morse app found and asking to Allow, the first change, the win; even numbers 1280×860, odd numbers phone width (390, full page); 204 the “Allow User Scripts” window, 205 a suggested site with the words typed, 206 the popup with no Morse app. Real Claude Code. 182–189 left free for work landing at the same time |
 | 147–152 (VSCodium, Obsidian, Joplin), 153–156-web-* (GitLab, PyPI, Docker Hub) | demo/try-real-app.js, demo/try-real-sites.js (real apps and sites, real Claude Code) | ✅ | Came with main during this review; current words. Not retaken: they need the real apps and network |
@@ -108,14 +111,14 @@ How to retake them: [Testing → Screenshots](../dev/testing.md#screenshots).
 | 160–166-pack-* | shoot-packs.js | ✅ | Came with main; current words |
 | clip-sleep-timer.gif, .mp4 | shoot-desktop.js's recording (`MORSE_HOME/clips`), encoded at double speed | ✅ | Today's bar; the machine was slow, so it is played twice as fast |
 | claude-code/01 … 14 | shoot-desktop.js with `MORSE_PROVIDER=claude-code MORSE_MODEL=haiku SHOTS=docs/screenshots/claude-code` | ✅ | Whole run with real Claude Code. 14-share-card.png is new. Taken before the last merge from main, so the Mods panel (11) has no Packs row yet; a rerun after it was worse (haiku answered in 5 s, so 04 caught the finished change) and wasn't kept |
-| 167-desktop-app-apps.png | shoot-desktop-app.js | ✅ | Morse Desktop: this machine's real apps, each with its own icon (Joplin, Logseq, Obsidian, Visual Studio Code, VSCodium); Microsoft's VS Code really connected |
-| 168-desktop-app-restart.png | shoot-desktop-app.js | ✅ | “Visual Studio Code is open. Restart it with Morse?”, with Always restart |
-| 169-desktop-app-model.png | shoot-desktop-app.js | ✅ | Real Claude Code (sonnet) answered the check; the three choices; four sections, Checks under Model (simplify) |
+| 167-desktop-app-apps.webp | shoot-desktop-app.js | ✅ | Morse Desktop: this machine's real apps, each with its own icon (Joplin, Logseq, Obsidian, Visual Studio Code, VSCodium); Microsoft's VS Code really connected |
+| 168-desktop-app-restart.webp | shoot-desktop-app.js | ✅ | “Visual Studio Code is open. Restart it with Morse?”, with Always restart |
+| 169-desktop-app-model.webp | shoot-desktop-app.js | ✅ | Real Claude Code (sonnet) answered the check; the three choices; four sections, Checks under Model (simplify) |
 | 170-desktop-app-chrome.png | shoot-desktop-app.js | ✅ | Chrome: Use Morse in Chrome, Let Chrome use Morse, Advanced folded |
 | 171-desktop-app-allow-chrome.png | shoot-desktop-app.js | ✅ | “Allow Chrome to use your Claude Code · sonnet?”: the real helper asking |
-| 172-desktop-app-mods.png | shoot-desktop-app.js | ✅ | Mods per app with switches, the real apps' mods; one turned off |
-| 173-desktop-app-checks.png | shoot-desktop-app.js | ✅ | The checks, a card under Model now (simplify), with the model answering for real; “You're root” is this test machine |
-| 174-desktop-app-light.png | shoot-desktop-app.js | ✅ | Light mode, with the apps' own icons |
+| 172-desktop-app-mods.webp | shoot-desktop-app.js | ✅ | Mods per app with switches, the real apps' mods; one turned off |
+| 173-desktop-app-checks.webp | shoot-desktop-app.js | ✅ | The checks, a card under Model now (simplify), with the model answering for real; “You're root” is this test machine |
+| 174-desktop-app-light.webp | shoot-desktop-app.js | ✅ | Light mode, with the apps' own icons |
 | 175-desktop-app-first-run.png | shoot-desktop-app.js | ✅ | The first run: Claude Code found and checked for real, the apps to open, Use Morse in Chrome too |
 | 176-desktop-app-chrome-guide.png | shoot-desktop-app.js | ✅ | Use Morse in Chrome: the real picture of Chrome's extensions page (demo/shoot-chrome-steps.js), Developer mode and Load unpacked marked, the folder |
 | 300–318-real-*.png | demo/shoot-real.js (Claude Code · sonnet) | ✅ | Real websites: nodejs.org as a printed book (point, working, result, a follow-up, the Mods panel, History, Edit code, Share), Docker Hub (dark mode with Easier to use, Ask, Find, Explain), pkg.go.dev (Check this page), rubygems.org (Edit tools, rename, recolor), gitlab.com (Settings, shortcuts). No 309 (Higher contrast was paused by the slowness guard) or 319 (Stop: the model hadn't started in time) |

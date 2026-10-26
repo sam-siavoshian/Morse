@@ -14,3 +14,14 @@ dist/
 
 # evals/gallery.js --generate writes its drafts here; the kept ones are in site/mods/
 evals/results/gallery-drafts/
+
+# `npm run ui` writes a contact sheet here. It is local: committing it
+# put about 100 MB of pictures in the tree.
+docs/ui/**/*.png
+docs/ui/index.html
+docs/ui/catalog.json
+
+# Launch films. The landing page shows the bar, not a film.
+docs/launch/*.mp4
+docs/launch/*.webm
+docs/launch/*.gif

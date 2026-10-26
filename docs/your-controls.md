@@ -22,7 +22,7 @@ Shortcuts.
 
 Paused mods stay saved. Every open tab and window follows at once.
 
-![Pause Morse on a site, at the top of the Mods panel (nodejs.org)](screenshots/304-real-mods-panel.png)
+![Pause Morse on a site, at the top of the Mods panel (nodejs.org)](screenshots/304-real-mods-panel.webp)
 
 ## Safe start
 

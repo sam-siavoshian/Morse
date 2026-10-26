@@ -8,7 +8,7 @@ model.
 Each tool is a small mod that Morse makes itself. It stays on for that site.
 Click it again to turn it off. The page goes back to exactly how it was.
 
-![Easier to use, beside Page tools, on Docker Hub](screenshots/308-real-dark-mode.png)
+![Easier to use, beside Page tools, on Docker Hub](screenshots/308-real-dark-mode.webp)
 
 ## The tools
 
@@ -59,7 +59,7 @@ tooltip, icon or link, makes a color darker or a size bigger. These fixes are
 saved in one mod called “Accessibility fixes”. For the rest, Morse sends one
 exact request to the model. You save or undo the result like any change.
 
-![Check this page on pkg.go.dev: 77 places, each with a marker, and Fix it](screenshots/310-real-check-page.png)
+![Check this page on pkg.go.dev: 77 places, each with a marker, and Fix it](screenshots/310-real-check-page.webp)
 
 ## Describe this picture
 
