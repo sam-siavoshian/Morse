@@ -358,6 +358,106 @@ test("the effect check: a clock ticking on the page is not a change; a real one 
   });
 });
 
+test("drag: the grip moves the bar, controls do not, and the drop stays on screen", { skip }, async () => {
+  await scenario("", null, async t => {
+    const { page } = t;
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await pressOpen(page);
+    await t.waitFor(s => s.open && s.phase === "idle");
+    await page.waitForTimeout(280); // the entrance animation (220ms) has finished
+    const box = () => page.evaluate(() => {
+      const bar = document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".bar");
+      const b = bar.getBoundingClientRect();
+      return { x: b.x, y: b.y, w: b.width, h: b.height, placed: bar.classList.contains("placed") };
+    });
+    const view = () => page.evaluate(() => ({ w: innerWidth, h: innerHeight }));
+    const near = (a, b, px = 2) => Math.abs(a.x - b.x) < px && Math.abs(a.y - b.y) < px;
+    const drag = async (from, to) => {
+      await page.mouse.move(from.x, from.y);
+      await page.mouse.down();
+      await page.mouse.move(to.x, to.y, { steps: 12 });
+      await page.mouse.up();
+    };
+    // Pointing still parks the bar on the opposite half, before any drag.
+    await page.evaluate(() => {
+      const el = document.createElement("div");
+      el.id = "low";
+      el.textContent = "low";
+      el.style.cssText = "position:fixed;left:8px;bottom:8px;width:48px;height:20px";
+      document.body.append(el);
+    });
+    const low = await page.locator("#low").boundingBox();
+    await page.mouse.move(low.x + 8, low.y + 8);
+    await page.waitForFunction(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".bar").classList.contains("top"));
+    const parked = await box();
+    assert.ok(parked.y < 80, `auto place sits high, saw ${parked.y}`);
+    // Grip drag follows the pointer and commits there, with no slide afterward.
+    const grip = await page.locator(".grip").boundingBox();
+    const from = { x: grip.x + grip.width / 2, y: grip.y + grip.height / 2 };
+    const vw = await view();
+    await drag(from, { x: Math.min(vw.w - 24, from.x + 280), y: Math.min(vw.h - 48, from.y + 220) });
+    const dropped = await box();
+    assert.ok(dropped.placed, "drop marks the bar placed");
+    assert.ok(dropped.x > parked.x + 80, `moved right ${parked.x} -> ${dropped.x}`);
+    assert.ok(dropped.y > parked.y + 80, `moved down ${parked.y} -> ${dropped.y}`);
+    await settle(page);
+    assert.ok(near(await box(), dropped), "no animation after the drop");
+    // Pointing no longer dodges a bar the person placed.
+    await page.mouse.move(low.x + 8, low.y + 8);
+    await page.mouse.move(vw.w / 2, 32);
+    await settle(page);
+    assert.ok(near(await box(), dropped), "placeBar leaves a dropped bar");
+    // The field, mic and send button do not drag. Typing still lands in the field.
+    const still = await box();
+    for (const sel of ["textarea.in", ".mic", ".go"]) {
+      const r = await page.locator(sel).boundingBox();
+      await drag({ x: r.x + Math.min(24, r.width / 2), y: r.y + r.height / 2 }, { x: r.x + 10, y: Math.max(8, r.y - 140) });
+      assert.ok(near(await box(), still, 3), `${sel} drag moved the bar`);
+    }
+    await page.locator("textarea.in").click();
+    await page.keyboard.type("hello");
+    await t.waitFor(s => s.input === "hello");
+    assert.ok(near(await box(), still, 3), "typing moved the bar");
+    await page.keyboard.press("Control+A");
+    await page.keyboard.press("Backspace");
+    await t.waitFor(s => s.input === "");
+    // The chip close still clears the target. #low sits outside the dropped bar.
+    await page.mouse.click(low.x + 8, low.y + 8);
+    await page.waitForFunction(() => !document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".chip").hidden);
+    const x = await page.locator(".chip .x").boundingBox();
+    const beforeX = await box();
+    await page.mouse.click(x.x + x.width / 2, x.y + x.height / 2);
+    await page.waitForFunction(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".chip").hidden);
+    assert.ok(near(await box(), beforeX, 3), "chip close moved the bar");
+    // Clamp: grab the status line (not a control) and pull past each corner.
+    const screen = await view();
+    const onHint = async () => {
+      const hint = await page.locator(".bar .hint").boundingBox();
+      return { x: hint.x + Math.min(140, Math.max(8, hint.width / 2)), y: hint.y + hint.height / 2 };
+    };
+    await drag(await onHint(), { x: 1, y: 1 });
+    await drag(await onHint(), { x: screen.w - 2, y: screen.h - 2 });
+    const clamped = await box();
+    assert.ok(clamped.x >= 7, `left ${clamped.x}`);
+    assert.ok(clamped.y >= 7, `top ${clamped.y}`);
+    assert.ok(clamped.x + clamped.w <= screen.w - 7, `right ${clamped.x + clamped.w} of ${screen.w}`);
+    assert.ok(clamped.y + clamped.h <= screen.h - 7, `bottom ${clamped.y + clamped.h} of ${screen.h}`);
+    // Close and open again: same spot. The grip is not a tab stop.
+    await page.keyboard.press("Escape");
+    await t.waitFor(s => !s.open);
+    await pressOpen(page);
+    await t.waitFor(s => s.open);
+    assert.ok(near(await box(), clamped, 3), "reopen keeps the drop");
+    const gripA11y = await page.evaluate(() => {
+      const g = document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".grip");
+      return { tag: g.tagName, hidden: g.getAttribute("aria-hidden"), tab: g.tabIndex };
+    });
+    assert.equal(gripA11y.tag, "SPAN");
+    assert.equal(gripA11y.hidden, "true");
+    assert.ok(gripA11y.tab < 0);
+  });
+});
+
 test("polish: a field a change added low in its bar is measured as off the middle; a centered one isn't", { skip }, async () => {
   await scenario("", null, async t => {
     const { page } = t;

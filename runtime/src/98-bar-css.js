@@ -7,6 +7,18 @@ function BAR_CSS() { return `
   .bar { display: flex; flex-direction: column; max-height: calc(100vh - 56px); }
   .bar[data-pos="top"] { bottom: auto !important; top: 28px !important; }
   .bar[data-pos="bottom"] { top: auto !important; bottom: 28px !important; }
+  /* A dropped bar: left/top from the drag (50-bar.js). The gesture only changes
+     the translate, so the page does not reflow per move, and nothing eases it
+     (prefers-reduced-motion included: the bar just follows the pointer). */
+  .bar.placed {
+    left: var(--m-bx) !important; top: var(--m-by) !important; right: auto !important; bottom: auto !important;
+    transform: translate3d(var(--m-bdx, 0px), var(--m-bdy, 0px), 0) !important;
+    animation: none !important; transition: none !important;
+  }
+  .bar.dragging, .bar.dragging * { cursor: grabbing !important; }
+  .grip { flex: none; width: 16px; height: 20px; margin-top: 6px; align-self: flex-start; cursor: grab; touch-action: none;
+    background: radial-gradient(circle, var(--m-text-3) 1.15px, transparent 1.4px) center / 6px 6px; }
+  .grip:hover { background-image: radial-gradient(circle, var(--m-text-2) 1.15px, transparent 1.4px); }
   /* Glass is the calm-page look (backdrop on .bar in 99-css.js). A sheet, or
      page text sitting under the surface (50-bar.js Backing adds .solid), is an
      opaque --m-surface. Drop the blur then: it costs a composite and does not
@@ -17,10 +29,10 @@ function BAR_CSS() { return `
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
-  .row { align-items: flex-start; }
-  .row > .mark { margin-top: 7px; }
+  .row { align-items: flex-start; cursor: grab; user-select: none; }
+  .row > .mark { margin-top: 7px; cursor: grab; touch-action: none; }
   .row > .chip { margin-top: 4px; }
-  textarea.in { display: block; resize: none; height: 32px; max-height: 113px; overflow-y: hidden; margin: 0; scrollbar-width: thin; field-sizing: fixed; }
+  textarea.in { display: block; resize: none; height: 32px; max-height: 113px; overflow-y: hidden; margin: 0; scrollbar-width: thin; field-sizing: fixed; cursor: text; user-select: text; }
   textarea.in::placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .in.interim { color: var(--m-text-2); }
   .bar.listening .in::placeholder { color: var(--m-text-2); }
@@ -45,7 +57,7 @@ function BAR_CSS() { return `
   .bar.listening { border-color: var(--m-signal-2); }
 
   /* the status line: room for one-line notes */
-  .status { position: relative; }
+  .status { position: relative; cursor: grab; user-select: none; touch-action: none; }
   .hint:has(.note) { flex: 1 1 auto; max-width: none; }
   .hint .note { color: var(--m-text-2); font-style: normal; overflow: hidden; text-overflow: ellipsis; }
   .hint .note::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-block: 0 1px; margin-inline: 0 8px; border-radius: 2px; background: var(--m-warn); vertical-align: middle; }
