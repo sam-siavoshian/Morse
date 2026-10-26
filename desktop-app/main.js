@@ -14,7 +14,7 @@
 //   node desktop-app/run.js          start it from a clone
 //   node desktop-app/build.js        package it (docs/dev/releasing.md)
 
-import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, ipcMain, dialog, shell, session, protocol } from "electron";
+import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, ipcMain, dialog, shell, session, protocol, globalShortcut } from "electron";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { execFile } from "node:child_process";
@@ -27,6 +27,7 @@ import { iconSource } from "./icons.js";
 import { setAutostart, writeMenuEntry } from "./linux.js";
 import { startShellPath } from "./shell-path.js";
 import { createUpdater } from "./updater.js";
+import { acceleratorFor, createOpenShortcut, readForegroundPid } from "./shortcut.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // The window's page is served from morse-app://ui/, a scheme of Morse's own
@@ -84,7 +85,7 @@ if (APPIMAGE) {
 if (process.env.MORSE_HOME) app.setPath("userData", path.join(process.env.MORSE_HOME, "desktop-profile"));
 if (!app.requestSingleInstanceLock()) { app.quit(); process.exit(0); }
 
-let win = null, tray = null, service = null, quitting = false, lastState = null, updater = null;
+let win = null, tray = null, service = null, quitting = false, lastState = null, updater = null, opener = null;
 const startHidden = process.argv.includes("--hidden"); // opened at login: tray only
 
 // ---------------------------------------------------------------- security
@@ -253,8 +254,20 @@ function registerLinks() {
 
 // ---------------------------------------------------------------- start, quit
 let pushTimer = null;
+// The open chord, held by this process. The OS delivers it even when the
+// focused app eats the key. A saved custom chord replaces the default.
+function syncOpenShortcut() {
+  if (!opener || !service?.openCombo) return;
+  service.openCombo().then(combo => {
+    const platform = MAC ? "mac" : WIN ? "win" : "linux";
+    const r = opener.register(acceleratorFor(combo, platform));
+    if (!r.ok && combo) log("shortcut", `couldn't register ${combo}; a connected page can still open Morse with it`);
+  }).catch(e => log("shortcut", e.message));
+}
+
 function changed() {
   clearTimeout(pushTimer);
+  syncOpenShortcut();
   pushTimer = setTimeout(async () => {
     if (!service) return;
     try { lastState = { ...(await service.state()), update: updater?.status || { phase: "idle" } }; } catch (e) { log("state", e.message); return; }
@@ -266,6 +279,7 @@ function changed() {
 
 async function quit() {
   quitting = true;
+  try { opener?.unregister(); } catch {}
   app.quit();
 }
 let shutDown = false;
@@ -278,6 +292,7 @@ app.on("before-quit", e => {
   // A downloaded update installs now (updater.js), without opening Morse again.
   Promise.race([service.shutdown(), new Promise(r => setTimeout(r, 5000))]).finally(() => { if (!updater?.onQuit()) app.quit(); });
 });
+app.on("will-quit", () => { try { opener?.unregister(); globalShortcut.unregisterAll(); } catch {} });
 app.on("window-all-closed", () => {}); // the tray keeps Morse running
 
 // Model and backend detection run commands from PATH. On a first launch the
@@ -340,6 +355,13 @@ app.whenReady().then(async () => {
     const daemon = whenPathReady(await loadDaemon(), pathReady);
     service = createService({ daemon, emit: changed, log, iconFor, self: [process.execPath, APPIMAGE] });
     resolveService(service);
+    opener = createOpenShortcut({
+      globalShortcut, log,
+      onFire: () => {
+        service?.openFromShortcut(readForegroundPid(), process.pid).catch(e => log("shortcut", e.message));
+      },
+    });
+    syncOpenShortcut();
   } catch (e) {
     log("start", e?.stack || e);
     rejectService(e);

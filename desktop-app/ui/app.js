@@ -70,7 +70,7 @@ function appIcon(a) {
   return h("div", { class: `appicon${a.icon ? " has-img" : ""}`, "aria-hidden": "true" }, a.icon ? h("img", { src: a.icon, alt: "" }) : appsGlyph());
 }
 const caps = combo => h("span", { class: "caps" }, ...String(combo || "").split("+").filter(Boolean).map(k => h("kbd", { text: k })));
-const openKey = () => st.keys.open || (platform === "darwin" ? "⌥+Space" : "Ctrl+Shift+Space");
+const openKey = () => st.keys.open || formatCombo(defaultHotkeys(HK_PLATFORM).open, HK_PLATFORM);
 // A message with the shortcut's keys in it: t() with {key} as a marker, then the keys put in its place.
 function withKeys(id, combo) {
   const [before, after = ""] = t(id, { key: "\u0000" }).split("\u0000");

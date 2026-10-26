@@ -177,6 +177,26 @@ test("state: each app says whether it's open and connected, with its mods; the m
   assert.deepEqual(st.settings, { startAtLogin: false, autoOpen: true, welcomed: false }, "Always open with Morse is on (main.js turns login start on for it once); the first run shows");
 });
 
+test("the global shortcut toggles the app in front; a saved chord is kept", async () => {
+  const { call, service } = setup();
+  assert.equal(await service.openCombo(), "Ctrl+Alt+Space", "nothing saved: the default chord");
+  assert.deepEqual(await service.openFromShortcut(1, 2), { ok: false, reason: "none" });
+  assert.deepEqual(await call("openApp", "tunes"), { ok: true });
+  const s = service.sessions.get("tunes");
+  let toggled = 0;
+  s.connector = { ...s.connector, toggleBar: async () => (toggled++, true), barFocused: async () => false };
+  s.pids = [42];
+  assert.deepEqual(await service.openFromShortcut(42, 7), { ok: true, id: "tunes" });
+  assert.equal(toggled, 1);
+  assert.deepEqual(await service.openFromShortcut(99, 7), { ok: false, reason: "none" }, "another app is in front");
+  assert.equal(toggled, 1);
+  await service.shutdown();
+
+  const custom = setup({ loadPrefs: async () => ({ hotkeys: { open: "Alt+Shift+KeyK" } }) });
+  assert.equal(await custom.service.openCombo(), "Alt+Shift+KeyK");
+  await custom.service.shutdown();
+});
+
 test("Open the bar: asks the app's connector to open Morse's bar, and says why when it can't", async () => {
   const { call, service } = setup();
   assert.deepEqual(await call("openBar", "tunes"), { code: "notHere" }, "an app this window didn't open");
@@ -494,6 +514,9 @@ test("the window opens before the daemon, and a login shell is not spawned while
   assert.match(main, /startShellPath\(/);
   assert.doesNotMatch(main, /process\.env\.PATH\s*=\s*fullPath\(/);
   assert.match(main, /updater\.start\(\)/, "the updater keeps its own delayed check");
+  assert.match(main, /globalShortcut/);
+  assert.match(main, /createOpenShortcut\(/);
+  assert.match(main, /openFromShortcut\(/);
   assert.match(main, /s\.autoOpen && !s\.startAtLogin && !s\.loginSet/, "login start is still set once for Always open with Morse");
   const ui = readFileSync(path.join(root, "desktop-app/ui/app.js"), "utf8");
   assert.match(ui, /st\.appsPending/);

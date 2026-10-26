@@ -581,7 +581,10 @@ listeners.add(msg => {
   else if (UI_EVENTS.has(msg.type)) { queued.push(msg); loadUI().catch(() => {}); }
 });
 
-// Hotkeys: the only keys Morse ever takes from the page while it's closed.
+// Hotkeys while the bar is closed. This listener is the fallback for a tab
+// whose desktop process isn't attached. Morse Desktop registers the open
+// chord with the OS (desktop-app/shortcut.js), which is what arrives when
+// the focused app eats the key.
 on(W, "keydown", e => {
   // Only real key presses: a page can't open Morse with a synthetic KeyboardEvent.
   if (ui || !e.isTrusted || e.isComposing || e.keyCode === 229) return;

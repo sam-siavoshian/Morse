@@ -310,16 +310,11 @@ test("real Electron: launch, hotkey, point, change, save, quit, relaunch, second
   assert.equal(await w.ev(`typeof window.tunes?.openMiniPlayer`), "function", "the preload's contextBridge API is there");
   assert.equal(await w.ev(`typeof __morseHostSend + typeof __morseHost`), "undefinedundefined", "the app's own world can't reach Morse's host");
 
-  // The real hotkey, as trusted key events: ⌥Space on a Mac (Option+Space
-  // types a no-break space there), Ctrl+Shift+Space elsewhere (core/hotkeys.js).
-  if (process.platform === "darwin") {
-    await w.key("Alt", "AltLeft", { mods: 1, vk: 18 });
-    await w.key("\u00a0", "Space", { mods: 1, vk: 32 });
-  } else {
-    await w.key("Control", "ControlLeft", { mods: 2, vk: 17 });
-    await w.key(" ", "Space", { mods: 2 | 8, vk: 32 });
-  }
-  await until(async () => (await w.status())?.open, 5000, `the bar to open on ${process.platform === "darwin" ? "⌥Space" : "Ctrl+Shift+Space"}`);
+  // The real hotkey, as trusted key events: Ctrl+Alt+Space (⌃⌥Space on a Mac).
+  await w.key("Control", "ControlLeft", { mods: 2, vk: 17 });
+  await w.key("Alt", "AltLeft", { mods: 1 | 2, vk: 18 });
+  await w.key(" ", "Space", { mods: 1 | 2, vk: 32 });
+  await until(async () => (await w.status())?.open, 5000, "the bar to open on Ctrl+Alt+Space");
 
   // Point at the player controls and pick them. Chromium delivers mouse moves
   // on animation frames, and right after the bar opens on a busy machine the

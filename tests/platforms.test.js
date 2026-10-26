@@ -399,10 +399,10 @@ test("ports: everything Morse listens on is 127.0.0.1, so no firewall asks", () 
   assert.match(readFileSync(path.join(ROOT, "daemon/ports.js"), "utf8"), /export function canBind\(port, host = "127\.0\.0\.1"\)/);
 });
 
-test("default shortcuts: ⌥Space on a Mac, Ctrl+Shift+Space on Windows and Linux", () => {
-  assert.equal(formatCombo(defaultHotkeys("mac").open, "mac"), "⌥Space");
-  assert.equal(formatCombo(defaultHotkeys("win").open, "win"), "Ctrl+Shift+Space");
-  assert.equal(formatCombo(defaultHotkeys("linux").open, "linux"), "Ctrl+Shift+Space");
+test("default shortcuts: Ctrl+Alt+Space everywhere (⌃⌥Space on a Mac)", () => {
+  assert.equal(formatCombo(defaultHotkeys("mac").open, "mac"), "⌃⌥Space");
+  assert.equal(formatCombo(defaultHotkeys("win").open, "win"), "Ctrl+Alt+Space");
+  assert.equal(formatCombo(defaultHotkeys("linux").open, "linux"), "Ctrl+Alt+Space");
 });
 
 test("the popular apps are known on both platforms", () => {
@@ -442,7 +442,7 @@ test("`morse doctor` platform rows: the Morse folder's permissions, the shortcut
   const by = rows => Object.fromEntries(rows.map(r => [r.label, r]));
   assert.equal(by(mac).system.text, "macOS 15 (Apple silicon)");
   assert.equal(by(mac).folder.ok, true);
-  assert.match(by(mac).shortcut.text, /^⌥Space opens Morse/);
+  assert.match(by(mac).shortcut.text, /^⌃⌥Space opens Morse/);
   assert.match(by(mac).access.text, /no Accessibility, Screen Recording or other permission/);
   // A folder others can list, with config.json still private: worth knowing, not a problem.
   const listed = await platformChecks({ platform: "darwin", release: "23.0.0", arch: "x64", env: {}, home: "/Users/sam/.morse", stat: async p => ({ mode: p.endsWith("config.json") ? 0o100600 : 0o40755 }) });
@@ -459,14 +459,14 @@ test("`morse doctor` platform rows: the Morse folder's permissions, the shortcut
   assert.equal(by(win).system.text, "Windows 11 (build 22631, x64)");
   assert.equal(by(win).folder.ok, true);
   assert.match(by(win).folder.text, /only you, administrators and Windows itself/);
-  assert.match(by(win).shortcut.text, /^Ctrl\+Shift\+Space opens Morse/);
+  assert.match(by(win).shortcut.text, /^Ctrl\+Alt\+Space opens Morse/);
   assert.equal(by(win).processes.ok, true);
   assert.match(by(win).firewall.text, /127\.0\.0\.1/);
   assert.match(by(win).colors.text, /^off/);
   const shared = await platformChecks({ platform: "win32", release: "10.0.19045", env: {}, home: "D:\\Shared\\morse", userHome: "C:\\Users\\sam", exists: () => false, shortcut: "Alt+Shift+Space" });
   assert.equal(by(shared).folder.ok, false, "outside the user folder");
   assert.equal(by(shared).processes.ok, false);
-  assert.match(by(shared).shortcut.text, /Alt\+Shift\+Space opens Morse \(the default here is Ctrl\+Shift\+Space\)/);
+  assert.match(by(shared).shortcut.text, /Alt\+Shift\+Space opens Morse \(the default here is Ctrl\+Alt\+Space\)/);
   assert.equal(by(shared).system.text, "Windows 10 (build 19045, x64)");
   assert.equal(by(await platformChecks({ platform: "win32", home: "C:\\Users\\samuel\\.morse", userHome: "C:\\Users\\sam", env: {}, exists: () => true })).folder.ok, false, "C:\\Users\\samuel isn't inside C:\\Users\\sam");
 

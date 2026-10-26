@@ -466,19 +466,51 @@ export class Connector {
     } catch {}
   }
 
+  async windowFocused(w, world) {
+    return w.session.send("Runtime.evaluate", { expression: "document.hasFocus()", contextId: world, returnByValue: true }).then(r => r?.result?.value === true).catch(() => false);
+  }
+
+  // true when one of this app's pages has keyboard focus.
+  async barFocused() {
+    for (const w of this.windows.values()) {
+      const world = barWorld(w);
+      if (world != null && await this.windowFocused(w, world)) return true;
+    }
+    return false;
+  }
+
+  async deliverBar(w, world, type, front) {
+    if (front) await w.session.send("Page.bringToFront").catch(() => {});
+    await w.session.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive({ type: ${JSON.stringify(type)} })`, contextId: world }).catch(() => {});
+    return true;
+  }
+
+  // preferFocus: the window the user is in, else the first one Morse runs in.
+  async signalBar(type, { preferFocus = false } = {}) {
+    let fallback = null;
+    for (const w of this.windows.values()) {
+      const world = barWorld(w);
+      if (world == null) continue;
+      if (preferFocus && await this.windowFocused(w, world)) return this.deliverBar(w, world, type, false);
+      if (!fallback) fallback = { w, world };
+    }
+    if (!fallback) return false;
+    return this.deliverBar(fallback.w, fallback.world, type, true);
+  }
+
   // Morse Desktop's "Open the bar": the app's window comes to the front and
   // Morse's bar opens in it, no shortcut needed (one taken by another app,
   // or a keyboard where it is hard to press). The main window: the first one
   // Morse runs in.
   async openBar() {
-    for (const w of this.windows.values()) {
-      const world = barWorld(w);
-      if (world == null) continue;
-      await w.session.send("Page.bringToFront").catch(() => {});
-      await w.session.send("Runtime.evaluate", { expression: `globalThis.__morseHostReceive && __morseHostReceive({ type: "open" })`, contextId: world }).catch(() => {});
-      return true;
-    }
-    return false;
+    return this.signalBar("open");
+  }
+
+  // The global shortcut. A press opens the bar, or closes it when it's already
+  // open. The focused window wins; a native widget (the page isn't focused)
+  // still reaches the first window Morse runs in.
+  async toggleBar() {
+    return this.signalBar("toggle", { preferFocus: true });
   }
 
   // To the runtime, in Morse's world.

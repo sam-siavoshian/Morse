@@ -1,6 +1,6 @@
 // The default hotkeys, in Playwright's key syntax. Headless Chromium reports
-// the host OS, so the runtime picks the default for this platform: ⌥Space on
-// macOS, Ctrl+Shift+Space elsewhere (core/hotkeys.js defaultHotkeys).
+// the host OS. Open Morse is Ctrl+Alt+Space on every platform
+// (core/hotkeys.js defaultHotkeys): ⌃⌥Space on a Mac.
 import { defaultHotkeys } from "../../core/hotkeys.js";
 
 const PLATFORM = process.platform === "darwin" ? "mac" : process.platform === "win32" ? "win" : "linux";

@@ -12,7 +12,7 @@ import { createRequire } from "node:module";
 import { openSite } from "../demo/show-once-page.js";
 import { axeCheck, axeLines } from "../demo/axe.js"; // axe-core on Morse's own UI (tests/a11y-morse.test.js)
 import { readStatus } from "./helpers/wait.js";
-const OPEN_KEY = process.platform === "darwin" ? "Alt+Space" : "Control+Shift+Space";
+import { OPEN_KEY } from "./helpers/keys.js";
 
 let chromium;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}

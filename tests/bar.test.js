@@ -254,7 +254,7 @@ test("keyboard and a11y: dialog, live status, Tab stays in the bar, focus comes 
     await t.waitFor(s => s.pane === "shortcuts" && s.input === "");
     const sheet = await page.evaluate(`${sr(".pane")}.textContent`);
     assert.match(sheet, /Open or close Morse/);
-    assert.match(sheet, OPEN_KEY === "Alt+Space" ? /Alt.*Space/ : /Ctrl.*Shift.*Space/);
+    assert.match(sheet, /(?:Ctrl.*Alt.*Space)|(?:⌃⌥Space)/);
     await page.keyboard.type("x"); // typing closes it and types
     await t.waitFor(s => s.pane === "" && s.input === "x");
     // Shift+Enter is a newline; the input grows.

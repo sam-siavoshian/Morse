@@ -12,6 +12,7 @@ import { promises as fs, watchFile, unwatchFile } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { detectPlatform, decideOpenShortcut, resolveHotkeys } from "../core/hotkeys.js";
+import { pickShortcutTarget } from "./shortcut.js";
 import { discoverAppsNative, listProcessesNative } from "../daemon/native-scan.js";
 import { presentApp } from "../daemon/open-bar.js";
 import { kindFor, logoFor } from "../daemon/connect.js";
@@ -252,6 +253,7 @@ export function createService({
         port: ready.port, browser: ready.browser, app, settings: d.settingsFromConfig(cfg), verify: ready.verify, who: ready.who,
         log: line => log(`${app.name}: ${plain(line).trim()}`), onChange: changed, keep: true,
       });
+      s.pids = [...new Set([...(ready.pids || []), ready.who?.pid].map(Number).filter(n => Number.isInteger(n) && n > 0))];
       own.set(id, s);
       s.done.catch(e => log(`${app.name}: the connection ended with an error: ${e?.stack || e}`)).finally(() => {
         if (own.get(id) === s) own.delete(id);
@@ -300,6 +302,32 @@ export function createService({
     const s = own.get(id);
     if (!s?.connector) return { code: "notHere" }; // the window says it in the person's language
     return (await s.connector.openBar()) ? { ok: true } : { code: "notReady" };
+  }
+
+  // The chord the OS shortcut should register: a saved custom one, or the default.
+  async function openCombo() {
+    const platform = detectPlatform({ platform: process.platform });
+    const prefs = typeof d.loadPrefs === "function" ? await d.loadPrefs().catch(() => null) : null;
+    return resolveHotkeys(prefs?.hotkeys || {}, platform).open || "";
+  }
+
+  // The global shortcut. `pid` is the frontmost process (a promise is fine);
+  // selfPid is Morse Desktop itself, which is not one of the connected apps.
+  async function openFromShortcut(pidOrPromise = 0, selfPid = 0) {
+    const entries = [...own.entries()];
+    if (!entries.length) return { ok: false, reason: "none" };
+    const [pid, focused] = await Promise.all([
+      Promise.resolve(pidOrPromise).then(n => Number(n) || 0).catch(() => 0),
+      Promise.all(entries.map(async ([id, s]) => {
+        try { return (await s.connector?.barFocused?.()) ? id : ""; } catch { return ""; }
+      })),
+    ]);
+    const id = pickShortcutTarget(entries.map(([appId, s]) => ({ id: appId, pids: s.pids || [] })), {
+      pid, selfPid: Number(selfPid) || 0, focused: new Set(focused.filter(Boolean)),
+    });
+    if (!id) return { ok: false, reason: "none" };
+    const ok = await own.get(id)?.connector?.toggleBar?.();
+    return ok ? { ok: true, id } : { ok: false, reason: "notReady", id };
   }
 
   // "Disconnect": `morse stop <app>`. The app keeps running.
@@ -571,7 +599,7 @@ export function createService({
 
   watchPrefsFile();
   return {
-    state, apps, openApp, openBar, disconnectApp, addApp, model, modelChoices, chooseModel, check,
+    state, apps, openApp, openBar, openCombo, openFromShortcut, disconnectApp, addApp, model, modelChoices, chooseModel, check,
     mods, setModOn, deleteMod, undeleteMod, pause, setAllModsOff, doctor, setSetting, setOpenShortcut, loadSettings, shutdown,
     get sessions() { return own; },
   };
