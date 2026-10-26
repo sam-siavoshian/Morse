@@ -52,6 +52,115 @@ function installMorseKit() {
   let cur = null;           // the mod whose code is running (for __hung)
   let depth = 0;            // > 0 while any mod's code is running
 
+  // A mod must not replace a live control with a clone that dropped the app's
+  // listeners. While the mod itself assigns innerHTML / outerHTML / replaceWith
+  // / replaceChildren on a node that already contains a control, the new nodes
+  // go beside it and a new button clicks the host control. The app's own
+  // functions (a different stack frame) still update the page normally.
+  function keepHostControls() {
+    const proto = globalThis.Element && Element.prototype;
+    if (!proto) return;
+    const desc = Object.getOwnPropertyDescriptor(proto, "innerHTML");
+    const outer = Object.getOwnPropertyDescriptor(proto, "outerHTML");
+    if (!desc || !desc.set || !desc.get || desc.set.morseHost) return;
+    const HOST = "a[href],button,input,select,textarea,summary,[role='button'],[role='link'],[role='menuitem'],form";
+    const controlsIn = el => {
+      if (!el || el.nodeType !== 1 || el.closest?.("[data-morse]")) return null;
+      let list = [];
+      try { list = [...el.querySelectorAll(HOST)].filter(n => n !== el); } catch { return null; }
+      return list.length ? list : null;
+    };
+    const writtenByMod = () => {
+      if (depth <= 0) return false;
+      let stack = "";
+      try { stack = new Error().stack || ""; } catch { return false; }
+      for (const line of stack.split("\n").slice(1)) {
+        if (/keepHostControls/.test(line)) continue;
+        return /morse-mod-/.test(line);
+      }
+      return false;
+    };
+    const labelOf = el => (el.getAttribute?.("aria-label") || el.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+    const stamp = (nodes, orig) => {
+      const buttons = orig.filter(n => n.localName === "button" || n.localName === "a" || n.localName === "summary" || n.getAttribute?.("role") === "button");
+      const pick = node => {
+        const lab = labelOf(node);
+        return buttons.find(b => lab && labelOf(b) === lab) || buttons[0] || orig[0];
+      };
+      for (const node of nodes) {
+        if (!node || node.nodeType !== 1) continue;
+        if (cur && cur.id) try { node.setAttribute("data-morse", cur.id); } catch {}
+        const fresh = [node];
+        try { fresh.push(...node.querySelectorAll("a[href],button,[role='button'],[role='link'],summary,form")); } catch {}
+        for (const el of fresh) {
+          const isForm = el.localName === "form";
+          const clickable = isForm || el.localName === "button" || el.localName === "a" || el.localName === "summary" || el.getAttribute("role") === "button" || el.getAttribute("role") === "link";
+          if (!clickable || el.getAttribute("onclick") || el.getAttribute("onsubmit")) continue;
+          const host = pick(el);
+          if (!host || host === el) continue;
+          el.addEventListener(isForm ? "submit" : "click", ev => { ev.preventDefault(); try { host.click(); } catch {} });
+        }
+      }
+    };
+    const parse = html => {
+      try {
+        const tpl = document.createElement("template");
+        desc.set.call(tpl, String(html ?? ""));
+        return tpl.content;
+      } catch { return null; }
+    };
+    const beside = (el, frag, orig) => {
+      const nodes = [...frag.childNodes];
+      try { el.after(frag); } catch { return; }
+      stamp(nodes, orig);
+    };
+    function keepHostControlsSet(v) {
+      const live = writtenByMod() ? controlsIn(this) : null;
+      if (!live) { desc.set.call(this, v); return; }
+      const frag = parse(v);
+      if (!frag) return;
+      beside(this, frag, live);
+    }
+    keepHostControlsSet.morseHost = true;
+    Object.defineProperty(proto, "innerHTML", { configurable: true, enumerable: desc.enumerable, get() { return desc.get.call(this); }, set: keepHostControlsSet });
+    if (outer && outer.set && outer.get) {
+      function keepHostControlsOuter(v) {
+        const live = writtenByMod() ? controlsIn(this) : null;
+        if (!live) { outer.set.call(this, v); return; }
+        const frag = parse(v);
+        if (!frag) return;
+        beside(this, frag, live);
+      }
+      keepHostControlsOuter.morseHost = true;
+      Object.defineProperty(proto, "outerHTML", { configurable: true, enumerable: outer.enumerable, get() { return outer.get.call(this); }, set: keepHostControlsOuter });
+    }
+    const origReplace = proto.replaceWith;
+    if (typeof origReplace === "function" && !origReplace.morseHost) {
+      function keepHostControlsReplace(...nodes) {
+        const live = writtenByMod() ? controlsIn(this) : null;
+        if (!live) return origReplace.apply(this, nodes);
+        const frag = document.createDocumentFragment();
+        for (const n of nodes) frag.append(n && n.nodeType ? n : String(n));
+        beside(this, frag, live);
+      }
+      keepHostControlsReplace.morseHost = true;
+      proto.replaceWith = keepHostControlsReplace;
+    }
+    const origKids = proto.replaceChildren;
+    if (typeof origKids === "function" && !origKids.morseHost) {
+      function keepHostControlsKids(...nodes) {
+        const live = writtenByMod() ? controlsIn(this) : null;
+        if (!live) return origKids.apply(this, nodes);
+        const frag = document.createDocumentFragment();
+        for (const n of nodes) frag.append(n && n.nodeType ? n : String(n));
+        beside(this, frag, live);
+      }
+      keepHostControlsKids.morseHost = true;
+      proto.replaceChildren = keepHostControlsKids;
+    }
+  }
+  keepHostControls();
+
   // speed: a mod's late errors come from its callbacks. Watch and observer
   // callbacks for new matches run a frame after a change, so a short wait
   // covers them; timers need until they first fire; listeners for events that

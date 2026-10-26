@@ -13,6 +13,8 @@
 // keeps evidence for every finding; Morse only needs names, quickly, so it
 // scans text with bounded regular expressions. docs/dev/rea.md explains the choice.
 
+import { scanHooks, hookFits } from "./hooks.js";
+
 export const PROFILE_VERSION = 1;
 
 // ---- limits: a profile stays small on disk and in a prompt
@@ -213,6 +215,13 @@ export function scanCode(text, { file = "", role = "" } = {}) {
   for (const m of text.matchAll(/\(\s*this\s*,\s*"([A-Z][\w$]{3,60})"\s*\)/g)) { if (classes.size >= MAX.classes) break; classes.add(m[1]); }
   for (const m of text.matchAll(/\bclass\s+([A-Z][\w$]{3,60})\b/g)) { if (classes.size >= MAX.classes) break; classes.add(m[1]); }
   out.classes = [...classes];
+  // Click/submit handlers, the functions that call the backend, and those URLs.
+  // DOM event names stay out of `events` (those are the app's own events).
+  const hooks = scanHooks(text);
+  out.handlers = hooks.handlers;
+  out.endpoints = hooks.endpoints;
+  out.functions = hooks.functions;
+  out.modules = hooks.modules;
   return out;
 }
 
@@ -229,7 +238,7 @@ export function bundlerOf(text) {
 
 // Many files' findings in one profile part ({ files, ipc, bridge, commands, … }).
 export function mergeScans(scans) {
-  const p = { files: [], ipc: [], bridge: [], commands: [], keys: [], actions: [], routes: [], events: [], classes: [], windows: [] };
+  const p = { files: [], ipc: [], bridge: [], commands: [], keys: [], actions: [], routes: [], events: [], classes: [], windows: [], handlers: [], endpoints: [], functions: [], modules: [] };
   const cmd = new Map(), seen = new Map();
   const uniq = (key, list, max) => { const s = seen.get(key) || seen.set(key, new Set(p[key].map(x => JSON.stringify(x)))).get(key); for (const x of list) { const k = JSON.stringify(x); if (s.size >= max) break; if (!s.has(k)) { s.add(k); p[key].push(x); } } };
   for (const s of scans) {
@@ -243,6 +252,10 @@ export function mergeScans(scans) {
     uniq("events", s.events, MAX.events);
     uniq("classes", s.classes, MAX.classes);
     uniq("windows", s.windows, 20);
+    uniq("handlers", s.handlers || [], 80);
+    uniq("endpoints", s.endpoints || [], 80);
+    uniq("functions", s.functions || [], 60);
+    uniq("modules", s.modules || [], 80);
   }
   p.commands = [...cmd].map(([id, label]) => label ? [id, label] : [id]);
   return p;
@@ -250,7 +263,7 @@ export function mergeScans(scans) {
 
 // ---------------------------------------------------------------- the prompt
 // Requests about what the app does, not how it looks: they get the profile.
-const LOGIC = /\b(when(ever)?|every ?time|after|before|once|on (save|open|close|start)|shortcuts?|keyboard|hot ?keys?|key ?(combo|binding)s?|press(es|ing)?|ctrl|cmd|alt\+|run(s|ning)?|commands?|actually|really|random(ly|ize)?|shuffl\w*|automatic(ally)?|auto[- ]?\w*|insert\w*|creat\w*|new (note|file|tab|window|todo|task)s?|cop(y|ies|ying)|clipboard|past(e|ing)|format\w*|toggl\w*|undo|redo|word count|counts?|remap\w*|instead|behaviou?rs?|trigger\w*|sort\w*|sav(e|es|ed|ing)|open(s|ed|ing)?|clos(e|es|ed|ing)|delet\w*|export\w*|sync\w*|play\w*|skip\w*|next|previous|repeat\w*|search\w*|replac\w*|duplicat\w*|today'?s|dates?|timestamps?|buttons?\b[^.]{0,30}\b(that|to|which|for)|upper ?case|lower ?case|capitali[sz]\w*|comment\w*|indent\w*|convert\w*|select(ed|ion)?|calls?|api|functions?|actions?|does|do)\b/i;
+const LOGIC = /\b(when(ever)?|every ?time|after|before|once|on (save|open|close|start)|shortcuts?|keyboard|hot ?keys?|key ?(combo|binding)s?|press(es|ing)?|ctrl|cmd|alt\+|run(s|ning)?|commands?|actually|really|random(ly|ize)?|shuffl\w*|automatic(ally)?|auto[- ]?\w*|insert\w*|creat\w*|new (note|file|tab|window|todo|task)s?|cop(y|ies|ying)|clipboard|past(e|ing)|format\w*|toggl\w*|undo|redo|word count|counts?|remap\w*|instead|behaviou?rs?|trigger\w*|sort\w*|sav(e|es|ed|ing)|open(s|ed|ing)?|clos(e|es|ed|ing)|delet\w*|export\w*|sync\w*|play\w*|skip\w*|next|previous|repeat\w*|search\w*|replac\w*|duplicat\w*|today'?s|dates?|timestamps?|buttons?\b[^.]{0,30}\b(that|to|which|for)|upper ?case|lower ?case|capitali[sz]\w*|comment\w*|indent\w*|convert\w*|select(ed|ion)?|calls?|api|functions?|actions?|does|do|features?|change this|add (?:a |an |another )?(?:new )?(?:button|card|section|control|widget)\b)\b/i;
 export const needsLogic = request => LOGIC.test(String(request || ""));
 
 const STOP = new Set("the a an and or to of in on for with that this here there it its me my i you your make makes made add when then after also all any be is are was do does show put use using into from at by as so if not no can just like want please button key keys shortcut press app".split(" "));
@@ -300,6 +313,27 @@ function rarity(words, list) {
 }
 const best = (list, score, n) => list.map(x => [x, score(x)]).filter(([, s]) => s > 0).sort((a, b) => b[1] - a[1]).slice(0, n).map(([x]) => x);
 
+// Click handlers, functions, backend URLs and modules, ranked by the request.
+// Shown first so a prompt that clips the slice still keeps them. When nothing
+// scores (a bare "add a feature"), the first few still go in.
+function hookLines(st, request) {
+  const rank = (list, label, n) => {
+    const scored = list.map(x => ({ x, s: hookFits(request, label(x)) }));
+    const hit = scored.filter(i => i.s > 0).sort((a, b) => b.s - a.s);
+    return (hit.length ? hit : scored).slice(0, n).map(i => i.x);
+  };
+  const out = [];
+  const handlers = rank(st.handlers || [], h => `${h.event} ${h.fn}`, 8);
+  if (handlers.length) out.push(`- Handlers in its code: ${handlers.map(h => `${h.event} ${h.fn}`).join(", ")}`);
+  const fns = rank(st.functions || [], f => f, 8);
+  if (fns.length) out.push(`- Functions that call its backend or those handlers: ${fns.join(", ")}`);
+  const ends = rank(st.endpoints || [], e => `${e.method} ${e.url}`, 8);
+  if (ends.length) out.push(`- Backend calls in its code: ${ends.map(e => `${e.method} ${e.url}`).join(", ")}`);
+  const mods = rank(st.modules || [], m => m, 8);
+  if (mods.length) out.push(`- Modules it exports: ${mods.join(", ")}`);
+  return out;
+}
+
 // The part of a profile that helps with this request, as prompt text, or "".
 // `target`: what the person pointed at does ({ listeners: [...] } from the
 // running app, daemon/profile.js targetLogic). Small on purpose: at most ~25
@@ -309,7 +343,7 @@ export function profileSlice(profile, request, { target = null, force = false } 
   const words = requestWords(request);
   const rt = profile.runtime || {};
   const st = profile.static || {};
-  const lines = [];
+  const lines = hookLines(st, request);
   // The running app's list when there is one (it has the commands plugins
   // added), with names from the code where the app gave none.
   const named = new Map((st.commands || []).filter(c => c[1]).map(c => [c[0], c[1]]));
@@ -361,6 +395,7 @@ export function profileSlice(profile, request, { target = null, force = false } 
     runner ? "Do it with the app's own commands and objects, not by clicking its buttons or faking key presses (keys sent from code don't reach the app's shortcuts). Wrap calls in try/catch and morse.toast a short message if one fails."
       : "Prefer the app's own objects over clicking its buttons or faking key presses (keys sent from code don't reach the app's shortcuts).",
     "To react to the app (a save, a note opening), listen with morse.on on its events, or on keys. Never replace or wrap the app's own functions.",
+    "A new control calls a listed function, module, hook, or backend route. It must not only toggle a class, and it must not cover or replace a control that already works.",
   ];
   // Taking over a key the app already uses: the app's own handler runs first unless the mod's runs in the capture phase.
   if (/\b(shortcut|key|press|ctrl|cmd|alt|remap|instead)\b/i.test(request)) rules.push("A key the app already uses: listen with morse.on(window, \"keydown\", fn, true) (capture, so yours runs first), check the exact keys, then e.preventDefault() and e.stopImmediatePropagation() before running the command.");
