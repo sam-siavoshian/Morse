@@ -15,7 +15,7 @@
 
 <br /><br />
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-skips.gif" alt="Before: a player with 0 skips left and a wall that says no skips left. Adding it: Morse on that wall. After: Skip has changed the song, and the counter still says 0." width="1000" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-paywall.gif" alt="Before: a Foreign Policy article stops on a subscription wall, quarterly, annual, and insider. Adding it: Morse on that wall. After: the article continues. The rest of the story was already on the page." width="1000" />
 
 </div>
 
@@ -68,25 +68,19 @@ A change you save is a **mod**. Morse puts your mods back every time the app ope
 
 ## App cheats
 
-A limit the app drew on the page. Before, adding it, after.
-
-### No skips left
-
-The player said free accounts get 6 skips an hour, and this hour was used up. Morse hid that wall. Skip changed the song. The counter still said 0.
-
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-skips.gif" alt="Before: a player with 0 skips left and a wall that says no skips left. Adding it: Morse on that wall. After: Skip has changed the song, and the counter still says 0." width="900" />
+Real apps. Before, adding it, after.
 
 ### The subscription wall
 
-Subscribers only. $5 a month. Subscribe to keep reading. Morse hid the wall. The rest of the story was already on the page.
+Foreign Policy, on the live site. The article stops, and the page puts up a subscription: quarterly, annual, insider. Morse hid that wall. The rest of the story was already on the page.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-paywall.gif" alt="Before: a story under a subscription wall, Subscribers only, 5 dollars a month. Adding it: Morse on that wall. After: the rest of the story, which was already on the page." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-paywall.gif" alt="Before: a Foreign Policy article stops on a subscription wall, quarterly, annual, and insider. Adding it: Morse on that wall. After: the article continues. The rest of the story was already on the page." width="900" />
 
-### No free messages left
+### A timer Obsidian did not ship
 
-The chat said today's free messages were used up. Morse hid that wall. The next message sent. The counter still said 0.
+Obsidian ships no focus timer. The note was open. Morse added a panel with the reading time and a 25 minute countdown. Start, and it runs.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-messages.gif" alt="Before: a chat with 0 messages left and a wall that says no free messages left. Adding it: Morse on that wall. After: a new message sent, and the counter still says 0." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian.gif" alt="Before: an Obsidian note, Deep Work, with no timer. Adding it: Morse writing a focus panel and a 25 minute countdown. After: the countdown is running." width="900" />
 
 More runs: [Bring a feature](docs/bring-a-feature.md) and [the showcase](docs/showcase/README.md).
 
