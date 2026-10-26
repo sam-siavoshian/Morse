@@ -68,19 +68,19 @@ A change you save is a **mod**. Morse puts your mods back every time the app ope
 
 ## Real runs
 
-Five apps. What happened, then the recording. Waits for the model are sped up, and the picture says so.
+What happened, then the recording.
 
-### The paywall came off
+### The subscription wall came off
 
-The Daily Byte put a subscribe box and ads on the story. Morse deleted the box and the ads. The story was already on the page.
+A subscription wall covered the rest of the story. Subscribers only. $5 a month. Subscribe to keep reading. Morse hid the wall. The rest of the story was already on the page.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-paywall.gif" alt="The Daily Byte with a subscribe box and ads, then both gone, and the story still there." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-paywall.gif" alt="A story with a subscription wall, Subscribers only, 5 dollars a month, Subscribe to keep reading. Morse hides the wall and the rest of the story is there." width="900" />
 
-### A button the page did not have
+### Copy as Markdown, on every code sample
 
-On Docker Hub, the nginx tags were filtered for alpine once. Morse added a Show Alpine button. The same button fills the filter on the redis page.
+The Node.js docs put a Copy button on each code sample. Morse added Copy as Markdown beside it. That button copies the sample as Markdown.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-docker-button.gif" alt="Docker Hub nginx tags. A filter typed once becomes a Show Alpine button, and the button works on the redis page too." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-copy-markdown.gif" alt="A Node.js docs code sample. It has a Copy button, then a Copy as Markdown button appears beside it." width="900" />
 
 ### A feature the app did not ship
 
@@ -88,19 +88,19 @@ Obsidian has no focus timer. Morse added a panel with this note's reading time a
 
 <img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian-timer.gif" alt="Obsidian with a new focus panel: reading time, a 25 minute timer, and the timer counting down after Start." width="900" />
 
-### The docs became one reading column
+### VS Code's command palette, on RubyGems
 
-On nodejs.org, one sentence hid both sidebars and turned the introduction into one dark column.
+The command palette was taken from VS Code and brought to rubygems.org. Ctrl+Shift+P searches that page, and a Commands button sits in the header.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-nodejs-reading.gif" alt="The Node.js docs. Both sidebars go away and the introduction becomes one dark reading column." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-bring-palette.gif" alt="rubygems.org for Rails, then VS Code's command palette open on that page, with a Commands button in the header." width="900" />
 
-### Said once, already on the next app
+### A presentation shortcut VS Code did not have
 
-In Obsidian, the request was Caladea, bigger text, and dark pages. Logseq was opened after that, and it already had them.
+In Visual Studio Code, Ctrl+Alt+P hides the sidebar and the activity bar and doubles the code, so a room can read it. Press it again and the editor is back. The app was quit and opened again. The shortcut was still there.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-logseq-style.gif" alt="A style request in Obsidian, Caladea with bigger text and dark pages, then Logseq opened with that look already on." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-vscode-present.gif" alt="Visual Studio Code, then the same window in presentation mode: sidebar gone, code twice as big, Ctrl+Alt+P to exit." width="900" />
 
-A feature brought from one app into another, as stills: [Bring a feature](docs/bring-a-feature.md). More runs: [the showcase](docs/showcase/README.md).
+More runs: [Bring a feature](docs/bring-a-feature.md) and [the showcase](docs/showcase/README.md).
 
 ## FAQ
 
