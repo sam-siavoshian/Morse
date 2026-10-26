@@ -22,6 +22,7 @@
      messages: settings.get/set, history.get/add, transcribe, generate.cancel.
      Used by tests/bar.test.js and demo/shoot-bar.js.
        ?ms=30       token interval        ?light       light page
+       ?think=1500  hold the Thinking stage this many ms before tokens
        ?voice=0     no transcription      ?auto        auto-submit voice
        ?onboarding  first run (coach, tips, notices; see the onboarding cases below)
        ?keepmods    saved mods stay in the Mods panel (demo/shoot-i18n.js) -->
@@ -81,18 +82,19 @@
         case "generate.cancel": {
           fake.cancelled.push(m.genId);
           const g = fake.gens.get(m.genId);
-          if (g) { clearInterval(g.t); fake.gens.delete(m.genId); setTimeout(() => emit({ reply: g.id, result: { ok: false, cancelled: true, error: "Stopped" } }), 10); }
+          if (g) { clearInterval(g.t); clearTimeout(g.hold); fake.gens.delete(m.genId); setTimeout(() => emit({ reply: g.id, result: { ok: false, cancelled: true, error: "Stopped" } }), 10); }
           return reply(true);
         }
         case "generate": {
           if (q.has("fail")) return setTimeout(() => reply({ ok: false, error: q.get("fail") }), 300); // onboarding: error states
           let i = 0, css = "";
           const speed = Number(q.get("ms") || 30);
+          const thinkFor = q.has("think") ? (Number(q.get("think")) || 800) : 0; // ?think=1500: stay on Thinking before tokens
           const g = { id: m.id };
           fake.gens.set(m.genId, g);
-          emit({ type: "stage", stage: "ready", genId: m.genId }); // the model has the request (the bar says so)
+          emit({ type: "stage", stage: thinkFor ? "thinking" : "ready", genId: m.genId }); // the model has the request (the bar says so)
           if (q.has("models")) emit({ type: "phase", phase: "fixing", stronger: true, genId: m.genId }); // ?models: the strong model took over
-          g.t = setInterval(() => {
+          const pump = () => { g.t = setInterval(() => {
             const tok = TEXT.slice(i, i += 4);
             emit({ type: "token", text: tok, genId: m.genId });
             const sofar = TEXT.slice(0, i), block = sofar.split("```css\n")[1];
@@ -101,7 +103,9 @@
               if (done !== css) { css = done; emit({ type: "css", css, genId: m.genId }); }
             }
             if (i >= TEXT.length) { clearInterval(g.t); fake.gens.delete(m.genId); reply({ ok: true, title: "Airier toolbar", css, js: "", attempts: 1, ...(q.has("models") && { model: "Claude Code · opus" }) }); }
-          }, speed);
+          }, speed); };
+          if (thinkFor) g.hold = setTimeout(pump, thinkFor);
+          else pump();
           return;
         }
         // first run and help (runtime/src/59-onboarding.js): ?onboarding is a fresh install,

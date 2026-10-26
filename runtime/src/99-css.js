@@ -170,6 +170,12 @@ function CSS() {
   .hint { flex: 0 1 auto; min-width: 0; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hint > .radar { vertical-align: -2px; margin-inline-end: 8px; }
   .hint b { color: var(--m-text); font-weight: 500; } .hint i { color: var(--m-warn); font-style: normal; }
+  /* Thinking only (60-generate.js adds .shine). The highlight travels the word.
+     Shine colors are tokens, so a light bar keeps a dark-to-light sweep. */
+  .hint.shine { background-image: linear-gradient(110deg, var(--m-shine) 0%, var(--m-shine) 35%, var(--m-shine-peak) 50%, var(--m-shine) 75%, var(--m-shine) 100%);
+    background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+    animation: m-shine 2s linear infinite; }
+  @keyframes m-shine { from { background-position: 200% 0 } to { background-position: -200% 0 } }
   /* the result: the title gives way, the timing stays */
   .hint:has(.ok) { display: flex; align-items: baseline; gap: 8px; }
   .hint .ok { color: var(--m-text); font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -324,6 +330,9 @@ function CSS() {
     .mark.live .radar rect, .hint .radar rect { animation: none !important; }
     .mark.live .radar rect.c, .hint .radar rect.c { opacity: 1; }
     .mark.live .radar rect.o, .hint .radar rect.o { opacity: 0.55; }
+    /* no infinite sweep: the word stays the normal status color, still readable */
+    .hint.shine { animation: none !important; background-image: none; background-clip: border-box; -webkit-background-clip: border-box;
+      -webkit-text-fill-color: currentColor; color: inherit; }
   }
 
   /* ---- right to left (Persian, Arabic: 04-i18n.js sets dir on the host).
@@ -360,6 +369,8 @@ function CSS() {
     .sw input:checked + span { background: Highlight; }
     .sw input:checked + span::after { background: HighlightText; }
     .hl, .sel, .gm-frame { outline-color: Highlight; border-color: Highlight; }
+    .hint.shine { animation: none !important; background-image: none; background-clip: border-box; -webkit-background-clip: border-box;
+      -webkit-text-fill-color: currentColor; color: inherit; }
     .gm-sw button, .gm-hex i { forced-color-adjust: none; }
   }
 `; }

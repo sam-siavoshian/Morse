@@ -23,6 +23,9 @@
   --m-text-2: #a0a0a8;
   --m-text-3: #86868e; /* was #6b6b73: 3.6:1 on surface, below WCAG AA */
   --m-text-inverse: #0b0b0c;
+  /* thinking label: a dim gray swept by white, on the dark bar */
+  --m-shine: #404040;
+  --m-shine-peak: #ffffff;
 
   /* the signal: pixels and accents are shades of one gray ramp */
   --m-signal-0: #2a2a2e;
@@ -79,6 +82,9 @@
     --m-warn: #8a5300; /* #e5a54b is 2:1 on white */
     --m-danger: #c4262e; /* #f2555a is 3.4:1 on white */
     --m-text-inverse: #ffffff;
+    /* thinking shine stays on the text ramp, so it reads on a light bar */
+    --m-shine: var(--m-text);
+    --m-shine-peak: var(--m-text-3);
     --m-signal-0: #e4e4e7;
     --m-signal-1: #c4c4ca;
     --m-signal-2: #8e8e96;
@@ -108,6 +114,9 @@
     --m-warn: #8a5300;
     --m-danger: #c4262e;
     --m-text-inverse: #ffffff;
+    /* thinking shine stays on the text ramp, so it reads on a light bar */
+    --m-shine: var(--m-text);
+    --m-shine-peak: var(--m-text-3);
     --m-signal-0: #e4e4e7;
     --m-signal-1: #c4c4ca;
     --m-signal-2: #8e8e96;
