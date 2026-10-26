@@ -17,7 +17,7 @@ export function initPage() {
   applyLinks();
   initNav();
   openDetailsOnHash();
-  // The nav bar (and the share page's header) gets a line once scrolled.
+  // The nav bar turns to glass (the share page's header gets a line) once scrolled.
   const bars = document.querySelectorAll("header.nav, .top");
   if (bars.length) {
     const onScroll = () => { for (const b of bars) b.classList.toggle("scrolled", scrollY > 8); };
