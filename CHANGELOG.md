@@ -8,6 +8,7 @@ under the new version number with the date
 
 ## Unreleased
 
+- **Check for updates works.** The installed app was missing a file it needs to start, so Settings couldn't see whether a newer Morse was published. It starts, and Check for updates says if you're up to date.
 - **Check for updates.** Settings has a button that looks for a newer Morse and says whether you're up to date, or that an update is available.
 - **The website is [getmorse.vercel.app](https://getmorse.vercel.app/).** Share links and the gallery list use that address.
 

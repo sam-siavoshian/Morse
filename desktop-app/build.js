@@ -41,7 +41,7 @@ const say = s => console.log(`· ${s}`);
 
 // What the app needs at run time. Paths relative to the repo.
 const COPY = ["daemon", "core", "runtime", "design/tokens.css", "site/fonts", "site/config.js"];
-const APP_FILES = ["main.js", "preload.cjs", "service.js", "ipc.js", "icons.js", "appimage.js", "linux.js", "shell-path.js", "updater.js", "mark.js", "ui"];
+export const APP_FILES = ["main.js", "preload.cjs", "service.js", "ipc.js", "icons.js", "appimage.js", "linux.js", "shell-path.js", "shortcut.js", "updater.js", "mark.js", "ui"];
 
 async function copy(from, to) {
   const st = await fs.stat(from);

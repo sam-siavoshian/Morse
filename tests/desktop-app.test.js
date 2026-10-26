@@ -953,3 +953,25 @@ test("the shortcut that opens Morse is saved, checked, and sent to a connected a
     await service.shutdown();
   }
 });
+
+test("the packaged app includes every file it imports", async () => {
+  const { APP_FILES } = await import("../desktop-app/build.js");
+  const dir = path.join(root, "desktop-app");
+  const shipped = APP_FILES.filter(f => f.endsWith(".js") || f.endsWith(".cjs"));
+  const seen = new Set();
+  const queue = [...shipped];
+  while (queue.length) {
+    const file = queue.pop();
+    if (seen.has(file)) continue;
+    seen.add(file);
+    const text = readFileSync(path.join(dir, file), "utf8");
+    for (const m of text.matchAll(/from\s+["'](\.\/[^"']+)["']/g)) {
+      let rel = m[1];
+      if (!/\.(?:js|cjs)$/.test(rel)) rel += ".js";
+      const name = path.basename(rel);
+      assert.ok(APP_FILES.includes(name), `${file} imports ${rel}, and that file is not in the package`);
+      if (!seen.has(name)) queue.push(name);
+    }
+  }
+  assert.ok(APP_FILES.includes("shortcut.js"));
+});
