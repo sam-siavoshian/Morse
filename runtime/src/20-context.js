@@ -1178,6 +1178,38 @@ function shotArea(selector, modId) {
   if (width < 8 || height < 8) return null;
   return { x: x0, y: y0, width, height, scrollX, scrollY, vw: W, vh: H, scale: Math.min(1, 1280 / width, 900 / height) };
 }
+// Inline scripts and named onclick/onsubmit handlers, so a feature can call
+// the page's own functions. Handler bodies stay out (they can hold secrets);
+// a named onclick="saveNote(...)" becomes an addEventListener line the scan
+// can read. External scripts are not fetched.
+function pageSources() {
+  let out = "", n = 0;
+  const cap = 80000;
+  let scripts = [];
+  try { scripts = [...document.querySelectorAll("script:not([src])")]; } catch { scripts = []; }
+  for (const s of scripts) {
+    if (s.hasAttribute("data-morse-ui") || s.closest?.("[data-morse-ui]")) continue;
+    const t = s.textContent || "";
+    if (!t.trim() || /morse\.__kit|Symbol\.for\("morse/.test(t)) continue;
+    const take = t.slice(0, Math.max(0, cap - n));
+    out += take + "\n";
+    n += take.length;
+    if (n >= cap) break;
+  }
+  let nodes = [];
+  try { nodes = [...document.querySelectorAll("[onclick],[onsubmit]")]; } catch { nodes = []; }
+  for (const el of nodes) {
+    if (el.closest?.("[data-morse-ui],[data-morse]")) continue;
+    for (const attr of ["onclick", "onsubmit"]) {
+      const v = el.getAttribute?.(attr);
+      if (!v) continue;
+      const m = /^\s*([A-Za-z_$][\w$]*)\s*\(/.exec(v);
+      if (!m) continue;
+      out += `document.addEventListener("${attr === "onsubmit" ? "submit" : "click"}", ${m[1]});\n`;
+    }
+  }
+  return out.trim();
+}
 function context() {
   const cs = getComputedStyle(document.body);
   const roots = allRoots();
@@ -1188,6 +1220,7 @@ function context() {
     outline: outline(roots),
     layout: layout(),
   };
+  try { const sources = pageSources(); if (sources) ctx.sources = sources; } catch {}
   try { ctx.design = designOf(S.target && S.target.isConnected ? S.target : null); } catch {} // design: never in the way of the rest
   if (S.target && S.target.isConnected) {
     const path = [], t = S.target, outer = outerOf(t);
