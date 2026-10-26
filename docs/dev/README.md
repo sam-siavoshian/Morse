@@ -114,8 +114,11 @@ for developers), privacy in two lines, a short FAQ.
   and the arrow, play, pause and slider icons are text.
 - **Motion** ([`site/motion.js`](../../site/motion.js)): parts marked
   `data-reveal` rise into view once, the headline and the film follow the
-  scroll, and the footer's wordmark lights up under the pointer. With
-  reduced motion nothing moves, and without the script everything shows.
+  scroll, How it works holds still while the scroll steps through it, and
+  the footer's wordmark lights up under the pointer. The painted skies
+  (`site/sky/`, set by the stylesheet) come apart into the page in square
+  pixels drawn on a canvas. With reduced motion nothing moves, and without
+  the script everything shows.
 - [`tests/site.test.js`](../../tests/site.test.js) checks that every link,
   image, icon, fragment and config target on the pages resolves.
 - **`site/gallery.html`**: example mods from [`site/mods/`](../../site/mods/)

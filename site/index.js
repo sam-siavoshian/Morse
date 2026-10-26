@@ -1,9 +1,9 @@
 // The landing page: the nav, the links and the film from config.js, the
-// before and after cards and the real-apps strip (also from config.js), and
-// the radar's pixels behind the headline.
+// before and after cards and the real-apps strip (also from config.js), the
+// skies' pixel edges, the story, and the switches in the glass.
 import { initPage, esc, appIcon } from "./common.js";
 import { SHOWCASE, REAL_APPS } from "./config.js";
-import { mountReveals, mountHeroScroll, mountMark } from "./motion.js";
+import { mountReveals, mountHeroScroll, mountMark, mountDither, mountStory } from "./motion.js";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -116,7 +116,12 @@ initPage();
 mountPairs(document.getElementById("pairs"));
 mountApps(document.getElementById("apps-grid"));
 for (const el of document.querySelectorAll("[data-pixels]")) mountPixels(el);
+for (const el of document.querySelectorAll("[data-dither]")) mountDither(el);
+mountStory(document.querySelector("[data-story]"));
 mountReveals();
+for (const sw of document.querySelectorAll("button.switch")) {
+  sw.addEventListener("click", () => sw.setAttribute("aria-checked", String(sw.getAttribute("aria-checked") !== "true")));
+}
 mountHeroScroll(document.querySelector(".hero"), document.querySelector(".hero .film"));
 mountMark(document.querySelector("[data-mark]"));
 // The apps row scrolls sideways on a phone; then it takes keyboard focus, so

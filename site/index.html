@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Morse: take what they won’t ship</title>
-<meta name="description" content="Bring a feature over from another app. Delete a paywall. Add the AI they refused. Fix a bug without waiting months for their team.">
+<title>Cheats for apps | Morse</title>
+<meta name="description" content="Like game cheats, for the apps and sites you already use. Add a feature or take one off. You don't need the source.">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="color-scheme" content="dark">
 <!-- seo: npm run pages puts the canonical address, link previews and structured data here (scripts/build-pages.js) -->
@@ -13,6 +13,7 @@
 <link rel="manifest" href="site.webmanifest">
 <link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
+<link rel="preload" as="image" href="sky/day.webp" fetchpriority="high">
 <link rel="preload" as="image" href="../docs/launch/morse-opus-open-poster.webp" fetchpriority="high">
 <link rel="stylesheet" href="site.css">
 </head>
@@ -62,7 +63,10 @@
 <main id="top">
   <!-- ============================================================ hero -->
   <section class="hero" aria-labelledby="hero-title">
-    <div class="pixels" aria-hidden="true" data-pixels></div>
+    <div class="sky sky-hero" aria-hidden="true">
+      <div class="sky-paint"></div>
+      <canvas class="dither" data-dither="down"></canvas>
+    </div>
     <div class="wrap hero-grid">
       <a class="chip-beam" href="#install"><span class="chip-dot" aria-hidden="true"></span>Free for Mac, Windows and Linux<span class="icon" aria-hidden="true">→</span></a>
       <h1 class="hero-title" id="hero-title"><span class="word" style="--i:0">Take </span><span class="word" style="--i:1">what </span><br class="hero-break"><span class="word" data-line="2" style="--i:2">they </span><span class="word" data-line="2" style="--i:3">won’t </span><span class="word" data-line="2" style="--i:4">ship.</span></h1>
@@ -93,12 +97,90 @@
         <h2 id="takes-title" data-reveal>What they won’t ship.</h2>
         <p data-reveal style="--delay:0.08s">Four things you can stop asking for.</p>
       </header>
-      <ul class="abilities">
-        <li data-reveal><p><b>Bring one feature over.</b> The other app has it. Now this one does.</p></li>
-        <li data-reveal style="--delay:0.06s"><p><b>Delete the paywall.</b> Point at the box. It goes.</p></li>
-        <li data-reveal style="--delay:0.12s"><p><b>Add the AI they refused.</b> Summarize, rewrite or explain, in any app.</p></li>
-        <li data-reveal style="--delay:0.18s"><p><b>Fix the bug tonight.</b> Their team can take months.</p></li>
-      </ul>
+
+      <div class="features">
+        <article class="feature feature-wide" data-reveal="fade">
+          <div class="feature-copy">
+            <h3>Any app, one shortcut away.</h3>
+            <p>Point at the part and say what you want. Morse changes it while you watch.</p>
+            <p class="keys"><kbd>⌥</kbd><kbd>Space</kbd><span>or</span><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd></p>
+          </div>
+          <div class="scene" style="--pos: 78% 30%">
+            <div class="glass asker" role="img" aria-label="The Morse bar, with “Hide the upgrade box” typed in and three more asks under it.">
+              <div class="ask-bar"><span class="ask-dot"></span><span class="ask-text">Hide the upgrade box</span><span class="ask-caret"></span></div>
+              <ul class="ask-list">
+                <li class="is-on"><i class="gi gi-obsidian"></i>Hide the upgrade box<em>Obsidian</em><kbd>↵</kbd></li>
+                <li><i class="gi gi-vscode"></i>Make it look like Windows 95<em>VS Code</em></li>
+                <li><i class="gi gi-rubygems"></i>Bring the command palette over<em>RubyGems</em></li>
+                <li><i class="gi gi-docker"></i>Only the README, one column<em>Docker Hub</em></li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="feature" data-reveal="fade">
+          <div class="scene" style="--pos: 12% 40%">
+            <div class="glass wall" role="img" aria-label="A news site after Morse: four boxes gone on this page, each line struck through.">
+              <div class="glass-head"><span class="glass-icon">R</span><span><b>readerly.com</b><small>Changed by Morse</small></span><span class="switch is-on"></span></div>
+              <p class="big"><span>4</span>boxes gone on this page</p>
+              <ul class="struck">
+                <li>Subscribe to keep reading</li>
+                <li>You have 0 free articles left</li>
+                <li>Turn off your ad blocker</li>
+                <li>Upgrade to Premium</li>
+              </ul>
+            </div>
+          </div>
+          <p class="feature-line"><b>Delete the paywall.</b> When it is a box on a page that already loaded, point at it. It goes.</p>
+        </article>
+
+        <article class="feature" data-reveal="fade" style="--delay:0.08s">
+          <div class="scene" style="--pos: 88% 55%">
+            <div class="glass palette" role="img" aria-label="A command palette taken from VSCodium, open on rubygems.org.">
+              <div class="palette-bar"><span>Search this page</span><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>P</kbd></div>
+              <ul>
+                <li class="is-on">Go to versions<em>rails</em></li>
+                <li>Copy the install line<em>gem</em></li>
+                <li>Open the changelog<em>7.2.1</em></li>
+                <li>Show reverse dependencies</li>
+              </ul>
+              <p class="palette-from"><i class="gi gi-vscodium"></i>From VSCodium<span>→</span><i class="gi gi-rubygems"></i>On RubyGems</p>
+            </div>
+          </div>
+          <p class="feature-line"><b>Bring one feature over.</b> VSCodium has a command palette. Now RubyGems does too.</p>
+        </article>
+
+        <article class="feature" data-reveal="fade">
+          <div class="scene" style="--pos: 50% 85%">
+            <div class="glass ai" role="img" aria-label="A paragraph picked in a notes app, with Summarize, Rewrite and Explain, and a three-line summary.">
+              <p class="ai-quote">The launch moves to Friday. Docs still need a pass before then, and the demo has no owner yet…</p>
+              <div class="ai-pills"><span class="is-on">Summarize</span><span>Rewrite</span><span>Explain</span></div>
+              <ul class="ai-answer">
+                <li>Launch is Friday.</li>
+                <li>Docs need one more pass.</li>
+                <li>Someone has to own the demo.</li>
+              </ul>
+            </div>
+          </div>
+          <p class="feature-line"><b>Add the AI they refused.</b> Summarize, rewrite or explain, in any app, with the model you chose.</p>
+        </article>
+
+        <article class="feature" data-reveal="fade" style="--delay:0.08s">
+          <div class="scene scene-night" style="--pos: 20% 35%">
+            <div class="glass fixes">
+              <p class="glass-title">Kept on this computer</p>
+              <ul>
+                <li><i class="gi gi-obsidian"></i><span>Sidebar stops jumping<small>Obsidian</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Sidebar stops jumping"></button></li>
+                <li><i class="gi gi-vscode"></i><span>Windows 95 look<small>VS Code</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Windows 95 look"></button></li>
+                <li><i class="gi gi-docker"></i><span>Readable code blocks<small>Docker Hub</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Readable code blocks"></button></li>
+                <li><i class="gi gi-logseq"></i><span>Search that finds dates<small>Logseq</small></span><button type="button" class="switch" role="switch" aria-checked="false" aria-label="Search that finds dates"></button></li>
+                <li><i class="gi gi-pypi"></i><span>Copy button on every command<small>PyPI</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Copy button on every command"></button></li>
+              </ul>
+            </div>
+          </div>
+          <p class="feature-line"><b>Fix the bug tonight.</b> Their team can take months. Each fix you keep gets its own switch.</p>
+        </article>
+      </div>
     </div>
   </section>
 
@@ -115,31 +197,50 @@
   </section>
 
   <!-- ===================================================== how it works -->
-  <section id="how" class="section section-later" aria-labelledby="how-title">
+  <!-- With motion, index.js pins the window and the scroll steps through the
+       three (data-pinned, data-step); without it they are three plates. -->
+  <section id="how" class="section section-later story" aria-labelledby="how-title" data-story>
     <div class="wrap">
       <header class="head">
         <h2 id="how-title" data-reveal>Three steps. Their files never change.</h2>
         <p data-reveal style="--delay:0.08s">Obsidian on Linux, 7.8 seconds.</p>
       </header>
-      <ol class="plates plates-3">
-        <li class="plate" data-reveal="fade">
-          <figure class="shot"><img src="shots/323-obsidian-ask.webp" width="1024" height="800" loading="lazy" decoding="async" alt="Obsidian with a note open. The Morse bar holds the request “make my notes look like an old typewritten page: yellowed paper, a typewriter font, and the headings underlined in dark red”."></figure>
-          <p class="plate-line"><b>Point at it.</b> Press <kbd>⌥</kbd><kbd>Space</kbd>, or <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd>.</p>
-        </li>
-        <li class="plate" data-reveal="fade" style="--delay:0.08s">
-          <figure class="shot"><img src="shots/324-obsidian-working.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The note is already turning yellow while the bar says it is writing the change."></figure>
-          <p class="plate-line"><b>Say what you want.</b> Type it, or hold the shortcut and talk.</p>
-        </li>
-        <li class="plate" data-reveal="fade" style="--delay:0.16s">
-          <figure class="shot"><img src="shots/325-obsidian-result.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The note on yellowed paper in a typewriter font, with dark red underlined headings. The bar says “Old Typewritten Page” and offers Save, Undo, Edit code and Share."></figure>
-          <p class="plate-line"><b>Save it.</b> It comes back next time. Undo puts the app back.</p>
-        </li>
-      </ol>
+    </div>
+    <div class="story-track">
+      <div class="story-stage">
+        <div class="sky sky-story" aria-hidden="true">
+          <div class="sky-paint"></div>
+          <canvas class="dither" data-dither="up"></canvas>
+          <canvas class="dither" data-dither="down"></canvas>
+        </div>
+        <div class="wrap">
+          <ol class="plates plates-3 story-steps">
+            <li class="plate" data-reveal="fade">
+              <figure class="shot"><img src="shots/323-obsidian-ask.webp" width="1024" height="800" loading="lazy" decoding="async" alt="Obsidian with a note open. The Morse bar holds the request “make my notes look like an old typewritten page: yellowed paper, a typewriter font, and the headings underlined in dark red”."></figure>
+              <p class="plate-line"><b>Point at it.</b> Press <kbd>⌥</kbd><kbd>Space</kbd>, or <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd>.</p>
+            </li>
+            <li class="plate" data-reveal="fade" style="--delay:0.08s">
+              <figure class="shot"><img src="shots/324-obsidian-working.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The note is already turning yellow while the bar says it is writing the change."></figure>
+              <p class="plate-line"><b>Say what you want.</b> Type it, or hold the shortcut and talk.</p>
+            </li>
+            <li class="plate" data-reveal="fade" style="--delay:0.16s">
+              <figure class="shot"><img src="shots/325-obsidian-result.webp" width="1024" height="800" loading="lazy" decoding="async" alt="The note on yellowed paper in a typewriter font, with dark red underlined headings. The bar says “Old Typewritten Page” and offers Save, Undo, Edit code and Share."></figure>
+              <p class="plate-line"><b>Save it.</b> It comes back next time. Undo puts the app back.</p>
+            </li>
+          </ol>
+          <div class="story-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- =========================================================== privacy -->
   <section id="privacy" class="section privacy" aria-labelledby="privacy-title">
+    <div class="sky sky-night" aria-hidden="true">
+      <div class="sky-paint"></div>
+      <canvas class="dither" data-dither="up"></canvas>
+      <canvas class="dither" data-dither="down"></canvas>
+    </div>
     <div class="wrap">
       <header class="head head-center">
         <h2 id="privacy-title" data-reveal>Private by design.</h2>
@@ -216,6 +317,11 @@
   <!-- One app (the Morse app, desktop-app/), for apps and websites. The morse
        command is for developers: the README and docs/dev/README.md, not this page. -->
   <section id="install" class="cta" aria-labelledby="install-title">
+    <div class="sky sky-cta" aria-hidden="true">
+      <div class="sky-paint"></div>
+      <canvas class="dither" data-dither="up"></canvas>
+      <canvas class="dither" data-dither="down"></canvas>
+    </div>
     <div class="wrap cta-grid">
       <h2 id="install-title" data-reveal>Then stop asking them.<span> Download Morse.</span></h2>
       <div class="cta-get" id="install-desktop" data-reveal style="--delay:0.08s">
