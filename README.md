@@ -72,9 +72,9 @@ Real apps and live sites. Not drawings.
 
 ### A timer Obsidian did not ship
 
-Obsidian ships no focus timer. The note was open with none. The ask went into Morse: a panel with this note's reading time and a 25 minute countdown. The panel appeared. Start, and it runs.
+Obsidian ships no focus timer. The note was open with none. Morse is open at the bottom with the ask: a panel with this note's reading time and a 25 minute countdown. The panel was not there. Then it is.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian.gif" alt="The note is open in Obsidian with no focus timer. The ask goes into Morse, a panel with the reading time and a 25 minute countdown appears, the cursor starts it, and it counts down." width="900" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian-ask.gif" alt="The Obsidian note has no focus timer. Morse is open at the bottom with the ask for a focus panel. The panel was not on the note, then it appears on the right." width="1000" />
 
 ## FAQ
 

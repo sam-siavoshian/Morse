@@ -26,4 +26,4 @@ docs/launch/*.mp4
 docs/launch/*.webm
 docs/launch/*.gif
 # The README's Obsidian timer stays. It is a short clip, not a launch film.
-!docs/launch/readme-obsidian.gif
+!docs/launch/readme-obsidian-ask.gif
