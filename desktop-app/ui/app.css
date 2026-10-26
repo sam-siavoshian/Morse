@@ -34,20 +34,21 @@ h1 { margin: 0; font: 600 24px/32px var(--display); letter-spacing: -0.02em; }
 h2 { margin: 0; font: 600 14px/20px var(--m-font); letter-spacing: -0.01em; }
 img { -webkit-user-drag: none; }
 
-/* 272px so "Always open with Morse" fits on one line beside its switch. */
-.app { display: grid; grid-template-columns: 272px minmax(0, 1fr); height: 100%; }
+/* 188px. The apps list keeps the rest. "Always open with Morse" wraps to two
+   lines rather than holding a wide column. */
+.app { display: grid; grid-template-columns: 188px minmax(0, 1fr); height: 100%; }
 
 /* ---- sidebar. No horizontal padding, so the selected item is a full-width band. */
 .side { display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-5) 0 var(--s-4); background: var(--side-bg); border-inline-end: 1px solid var(--m-line); }
 body.mac .side { padding-top: 52px; -webkit-app-region: drag; }
 body.mac .side :is(button, label, input) { -webkit-app-region: no-drag; }
-.brand { display: flex; align-items: center; gap: 10px; padding: 0 var(--s-4); font: 600 15px/20px var(--display); letter-spacing: -0.01em; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 var(--s-3); font: 600 15px/20px var(--display); letter-spacing: -0.01em; }
 .radar rect.c { opacity: 0.9; } .radar rect.o { opacity: 0.3; }
 nav { display: flex; flex-direction: column; gap: 0; }
-nav button { display: flex; align-items: center; gap: var(--s-3); width: 100%; height: 32px; padding: 0 var(--s-4); border: 0; border-radius: 0; background: transparent;
-  color: var(--m-text-2); font: 500 13px/16px var(--m-font); text-align: start; transition: background var(--m-fast), color var(--m-fast); }
+nav button { display: flex; align-items: center; gap: var(--s-3); width: 100%; height: 32px; padding: 0 var(--s-3); border: 0; border-radius: 0; background: transparent;
+  color: var(--m-text-2); font: 500 13px/16px var(--m-font); text-align: start; transition: color 100ms var(--m-ease); }
 nav button:hover { background: var(--row-hover); color: var(--m-text); }
-nav button[aria-current="page"] { background: var(--row-hover); color: var(--m-text); box-shadow: inset 2px 0 0 var(--m-signal-3); }
+nav button[aria-current="page"] { background: var(--row-hover); color: var(--m-text); box-shadow: inset 2px 0 0 var(--m-signal-3); transition: none; }
 :dir(rtl) nav button[aria-current="page"] { box-shadow: inset -2px 0 0 var(--m-signal-3); }
 nav button:focus-visible { outline-offset: -2px; }
 nav button svg { flex: none; width: 16px; height: 16px; }
@@ -57,17 +58,15 @@ nav small.on::before { content: ""; display: inline-block; width: 6px; height: 6
 nav button[aria-current="page"] small:not(.warn) { color: var(--m-text-2); }
 nav small.warn { color: var(--m-warn); }
 .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 0; padding-top: var(--s-3); border-top: 1px solid var(--m-line); }
-.side-foot .switchrow { height: auto; min-height: 32px; padding: 6px var(--s-4); border-radius: 0; color: var(--m-text-2); font-weight: 500; gap: var(--s-3); }
+.side-foot .switchrow { height: auto; min-height: 32px; padding: 6px var(--s-3); border-radius: 0; color: var(--m-text-2); font-weight: 500; gap: var(--s-3); }
 .side-foot .switchrow:hover { background: var(--row-hover); color: var(--m-text); }
-.side-foot .switchrow > span { flex: 1; min-width: 0; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ver { margin-top: var(--s-2); padding: var(--s-1) var(--s-4) 0; font-size: 11px; line-height: 16px; color: var(--m-text-3); white-space: nowrap; }
+.side-foot .switchrow > span { flex: 1; min-width: 0; line-height: 18px; white-space: normal; text-wrap: balance; }
+.ver { margin-top: var(--s-2); padding: var(--s-1) var(--s-3) 0; font-size: 11px; line-height: 16px; color: var(--m-text-3); white-space: nowrap; }
 
 /* ---- main */
 main { overflow-y: auto; padding: var(--s-7) var(--s-8) var(--s-8); }
 body.mac main { padding-top: 52px; }
-section { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s-5); animation: fade var(--m-med) var(--m-ease); }
-@keyframes fade { from { opacity: 0; transform: translateY(2px); } }
-@media (prefers-reduced-motion: reduce) { section { animation: none; } }
+section { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s-5); }
 .head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s-4); }
 .head p { margin-top: var(--s-2); max-width: 62ch; color: var(--m-text-2); font-size: 13px; line-height: 20px; text-wrap: pretty; }
 .head-actions { display: flex; align-items: center; gap: var(--s-2); flex: none; }
@@ -455,3 +454,8 @@ button.hk.shake { animation: hk-shake 280ms var(--m-ease); }
 #updates { margin-top: var(--s-2); padding-top: var(--s-5); border-top: 1px solid var(--m-line); }
 #updates .row-end { margin-top: var(--s-3); }
 button.hk .dim { color: var(--m-text-3); }
+/* After every other rule, so a reduced-motion sidebar has nothing left moving. */
+@media (prefers-reduced-motion: reduce) {
+  .side, .side *, .side *::before, .side *::after,
+  .side input[role="switch"], .side input[role="switch"]::after { animation: none; transition: none; }
+}

@@ -480,7 +480,7 @@ test("the window's page: a strict CSP, no inline code, only its own files", () =
   for (const s of ["contextIsolation: true", "sandbox: true", "nodeIntegration: false", "webviewTag: false", "setWindowOpenHandler(() => ({ action: \"deny\" }))", "will-navigate", "setPermissionRequestHandler"]) assert.ok(main.includes(s), s);
 });
 
-test("Mods page: the app name is not glued to the count, rows are not cards, the footer label stays one line", () => {
+test("Mods page: the app name is not glued to the count, rows are not cards, the sidebar stays narrow", () => {
   const js = readFileSync(path.join(root, "desktop-app/ui/app.js"), "utf8");
   const css = readFileSync(path.join(root, "desktop-app/ui/app.css"), "utf8");
   assert.match(js, /class: "gname"/, "the app name is its own element");
@@ -491,8 +491,10 @@ test("Mods page: the app name is not glued to the count, rows are not cards, the
   assert.match(css, /#mods \.list\.mods \{[^}]*border:\s*0/, "mod rows are not a bordered card");
   assert.match(css, /#mods \.list\.mods > li \{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/, "the switch has its own column, so text cannot cover it");
   assert.match(css, /#mods \.list\.mods \.grow small \{[^}]*text-overflow:\s*ellipsis/, "a long request ends in an ellipsis");
-  assert.match(css, /\.side-foot \.switchrow > span \{[^}]*white-space:\s*nowrap/, "Always open with Morse stays one line");
-  assert.match(css, /grid-template-columns:\s*272px/, "the sidebar is wide enough for that label");
+  assert.match(css, /\.side-foot \.switchrow > span \{[^}]*white-space:\s*normal/, "Always open with Morse wraps instead of widening the sidebar");
+  assert.match(css, /grid-template-columns:\s*188px minmax\(0,\s*1fr\)/, "the sidebar is 188px and the apps column takes the rest");
+  assert.doesNotMatch(css, /nav button \{[^}]*transition:[^;}]*(?:width|left|height|background-position)/, "sidebar selection does not glide");
+  assert.doesNotMatch(css, /(?:^|\n)section \{[^}]*animation:/, "opening a section does not fade");
 });
 
 // ---------------------------------------------------------------- links, desktop files, the icon
