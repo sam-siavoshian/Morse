@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { assetFor, parseSums, isNewer, bundleOf, createUpdater, RELEASE } from "../desktop-app/updater.js";
+import { assetFor, parseSums, isNewer, versionOf, bundleOf, createUpdater, RELEASE } from "../desktop-app/updater.js";
 
 test("each computer gets its own file; others don't update themselves", () => {
   assert.equal(assetFor("darwin", "arm64"), "Morse-mac-arm64.zip");
@@ -46,11 +46,11 @@ function fakeRelease(files) {
   return { fetchImpl, asked };
 }
 
-function setup(files, { local = { commit: "abc1234", builtAt: "2026-10-25T00:00:00Z" } } = {}) {
+function setup(files, { local = { commit: "abc1234", builtAt: "2026-10-25T00:00:00Z", version: "0.3.1" }, packaged = true } = {}) {
   const dir = mkdtempSync(path.join(os.tmpdir(), "morse-updater-"));
   writeFileSync(path.join(dir, "build-info.json"), JSON.stringify(local));
   const { fetchImpl, asked } = fakeRelease(files);
-  const app = { isPackaged: true, getPath: () => path.join(dir, "userData"), exit() { throw new Error("must not install while busy"); } };
+  const app = { isPackaged: packaged, getPath: () => path.join(dir, "userData"), exit() { throw new Error("must not install while busy"); } };
   const statuses = [];
   const updater = createUpdater({ app, fetchImpl, here: dir, busy: () => true, onStatus: s => statuses.push(s.phase) });
   return { updater, asked, dir, statuses, done: () => rmSync(dir, { recursive: true, force: true }) };
@@ -98,4 +98,48 @@ test("a build run from a clone (not packaged) never updates itself", async () =>
   const app = { isPackaged: false, getPath: () => os.tmpdir() };
   const u = createUpdater({ app, fetchImpl: async () => { throw new Error("no network"); } });
   assert.equal(await u.check(), "off");
+});
+
+test("a version is shown only when it is a version", () => {
+  assert.equal(versionOf({ version: "v0.3.1" }), "0.3.1");
+  assert.equal(versionOf({ version: "0.3.1-beta.1" }), "0.3.1-beta.1");
+  assert.equal(versionOf({ version: "<script>" }), "");
+  assert.equal(versionOf({ version: "0.3.1\nmore" }), "");
+  assert.equal(versionOf(null), "");
+});
+
+test("Check for updates says up to date, that an update is published, or that the check failed", async () => {
+  const current = setup({ "build.json": JSON.stringify({ commit: "abc1234", builtAt: "2026-10-25T00:00:00Z", version: "v0.3.1" }) });
+  try {
+    assert.equal(await current.updater.check({ user: true }), "current");
+    assert.equal(current.updater.status.phase, "current");
+    assert.equal(current.updater.status.version, "0.3.1");
+    assert.deepEqual(current.statuses, ["checking", "current"], "the button shows that it is looking, then the result");
+    assert.equal(current.asked.length, 1, "a click reads the release");
+  } finally { current.done(); }
+
+  const newer = setup({ "build.json": JSON.stringify({ commit: "def5678", builtAt: "2026-10-26T00:00:00Z", version: "0.4.0" }) }, { packaged: false });
+  try {
+    assert.equal(await newer.updater.check({ user: true }), "available");
+    assert.equal(newer.updater.status.phase, "available");
+    assert.equal(newer.updater.status.version, "0.4.0");
+    assert.deepEqual(newer.asked, [`${RELEASE}/build.json`], "a clone reports the update and does not download it");
+  } finally { newer.done(); }
+
+  const bad = setup({ "build.json": "not json" });
+  try {
+    assert.equal(await bad.updater.check({ user: true }), "error");
+    assert.equal(bad.updater.status.phase, "error");
+    assert.equal(bad.updater.status.version, undefined, "a failed check names no version");
+  } finally { bad.done(); }
+
+  const askedOff = [];
+  const off = createUpdater({
+    app: { isPackaged: true, getPath: () => os.tmpdir() },
+    env: { MORSE_NO_UPDATE: "1" },
+    fetchImpl: async () => { askedOff.push(1); throw new Error("no network"); },
+  });
+  assert.equal(await off.check({ user: true }), "off");
+  assert.equal(off.status.phase, "off");
+  assert.equal(askedOff.length, 0, "updates turned off are not looked up");
 });

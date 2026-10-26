@@ -165,6 +165,10 @@ the release's list of checksums before it uses it. The new version goes in
 when no app is connected to Morse and you aren't using its window, or when
 you quit Morse. You don't need to download anything again.
 
+**Check for updates** in Settings looks now. It says whether you're up to date,
+or that an update is available. When Morse can install it, the update window
+opens. When it can't, **Get the update** opens the download.
+
 ## For developers: the morse command
 
 The `morse` command is Morse for a terminal, for developers. It and the

@@ -8,6 +8,8 @@ under the new version number with the date
 
 ## Unreleased
 
+- **Check for updates.** Settings has a button that looks for a newer Morse and says whether you're up to date, or that an update is available.
+
 ## 0.3.1 (2026-10-25)
 
 - **Change the keys that open the bar.** Settings shows the keys. Press the ones you want. Morse uses those from then on.

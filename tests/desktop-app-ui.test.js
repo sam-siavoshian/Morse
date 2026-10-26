@@ -93,7 +93,7 @@ test("Morse Desktop: first run, opens Tunes with Morse, disconnects, connects ag
     morse: Object.keys(window.morse), frozen: Object.isFrozen(window.morse),
     require: typeof window.require, process: typeof window.process, ipc: typeof window.ipcRenderer, electron: typeof window.electron, Buffer: typeof window.Buffer,
   }));
-  assert.deepEqual(globals.morse, ["state", "refreshApps", "openApp", "openBar", "disconnectApp", "addApp", "modelChoices", "chooseModel", "checkModel", "setModOn", "deleteMod", "undeleteMod", "setAllModsOff", "runChecks", "setStartAtLogin", "setAutoOpen", "setOpenShortcut", "openLink", "finishWelcome", "installUpdate", "updateLater", "onChange"]);
+  assert.deepEqual(globals.morse, ["state", "refreshApps", "openApp", "openBar", "disconnectApp", "addApp", "modelChoices", "chooseModel", "checkModel", "setModOn", "deleteMod", "undeleteMod", "setAllModsOff", "runChecks", "setStartAtLogin", "setAutoOpen", "setOpenShortcut", "openLink", "finishWelcome", "installUpdate", "updateLater", "checkForUpdate", "onChange"]);
   assert.equal(globals.frozen, true);
   for (const k of ["require", "process", "ipc", "electron", "Buffer"]) assert.equal(globals[k], "undefined", k);
   const prefs = await electronApp.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences());

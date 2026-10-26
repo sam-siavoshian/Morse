@@ -724,14 +724,61 @@ function renderUpdate() {
   if (!d.open) d.showModal();
 }
 $("update-now").onclick = () => morse.installUpdate();
-$("update-later").onclick = async () => { if (st.update?.phase === "ready") await morse.updateLater(); $("update").close(); st.update = { phase: "idle" }; };
+$("update-later").onclick = async () => {
+  const phase = st.update?.phase;
+  if (phase === "ready") await morse.updateLater();
+  // Later keeps the download and installs when Morse quits. Close dismisses a failure.
+  st.update = phase === "ready" ? { ...(st.update || {}), phase: "later" } : { phase: "idle" };
+  $("update").close();
+  render();
+};
+$("update-restart").onclick = () => morse.installUpdate();
+
+// Settings → Check for updates. The same check Morse runs on its own
+// (updater.js): the preview release's build against this one.
+function renderUpdateCheck() {
+  const u = st?.update || { phase: "idle" };
+  const b = $("check-updates"), msg = $("update-msg"), extra = $("update-extra");
+  if (!b || !msg || !extra) return;
+  const busy = ["checking", "downloading", "installing"].includes(u.phase);
+  b.disabled = busy;
+  b.setAttribute("aria-busy", busy ? "true" : "false");
+  let text = "", level = "", showGet = false, showRestart = false;
+  if (u.phase === "checking") text = t("desk.update.checking");
+  else if (u.phase === "current") text = t("desk.update.current");
+  else if (u.phase === "off") { text = t("desk.update.off"); level = "warn"; }
+  else if (u.phase === "error" || u.phase === "failed") { text = t("desk.update.error"); level = "bad"; }
+  else if (["available", "downloading", "installing", "ready", "later"].includes(u.phase)) {
+    text = u.version ? t("desk.update.available", { version: u.version }) : t("desk.update.availablePlain");
+    showGet = u.phase === "available";
+    showRestart = u.phase === "later" || u.phase === "ready";
+  }
+  msg.hidden = !text;
+  msg.textContent = text;
+  msg.className = `shortcut-msg${level ? ` ${level}` : ""}`;
+  $("update-get").hidden = !showGet;
+  $("update-restart").hidden = !showRestart;
+  extra.hidden = !showGet && !showRestart;
+}
+$("check-updates").onclick = async () => {
+  if ($("check-updates").disabled) return;
+  st = st || {};
+  st.update = { phase: "checking" };
+  renderUpdateCheck();
+  let r;
+  try { r = await morse.checkForUpdate(); }
+  catch { r = null; }
+  if (r?.phase) st.update = r;
+  else st.update = { phase: "error" };
+  render();
+};
 $("update").addEventListener("cancel", e => { if (["downloading", "installing"].includes(st.update?.phase)) e.preventDefault(); });
 
 // ---------------------------------------------------------------- state
 function render() {
   if (!st || st.error) return;
   renderFirst();
-  renderApps(); renderModel(); renderMods(); renderShortcut(); renderUpdate();
+  renderApps(); renderModel(); renderMods(); renderShortcut(); renderUpdate(); renderUpdateCheck();
   $("auto-open").checked = st.settings.autoOpen;
   $("version").textContent = `Morse ${st.version}`;
   document.documentElement.dataset.ready = "1";

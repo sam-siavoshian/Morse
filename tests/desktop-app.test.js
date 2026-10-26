@@ -404,6 +404,16 @@ test("checks: the platform rows (without terminal colors), what's installed, the
   assert.equal(rows.at(-1).ok, true);
 });
 
+test("Check for updates returns what the updater found, and nothing else", async () => {
+  const { call, native } = setup();
+  native.checkForUpdate = async () => { native.checked = (native.checked || 0) + 1; return { phase: "current", version: "0.3.1" }; };
+  assert.deepEqual(await call("checkForUpdate"), { phase: "current", version: "0.3.1" });
+  assert.equal(native.checked, 1);
+  assert.deepEqual(await call("checkForUpdate", "https://evil.example", "more"), { error: "Not allowed." });
+  assert.equal(native.checked, 1, "an extra argument never reaches the updater");
+  assert.equal(LINKS.release, "https://github.com/sam-siavoshian/RRAA/releases/tag/preview");
+});
+
 test("links open only by name, and login start goes through the native side", async () => {
   const { call, native } = setup();
   for (const name of Object.keys(LINKS)) await call("openLink", name);

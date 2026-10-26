@@ -295,6 +295,11 @@ app.whenReady().then(async () => {
       updateStatus: () => updater?.status || { phase: "idle" },
       installUpdate: () => !!updater?.installNow(),
       updateLater: () => !!updater?.later(),
+      checkForUpdate: async () => {
+        if (!updater) return { phase: "error" };
+        await updater.check({ user: true });
+        return { ...updater.status };
+      },
       pickApp: async () => {
         const r = await dialog.showOpenDialog(win, {
           title: "Add an app", buttonLabel: "Add",

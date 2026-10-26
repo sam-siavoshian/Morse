@@ -36,6 +36,8 @@ export const LINKS = {
   docs: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/desktop-app.md",
   models: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/models.md",
   troubleshooting: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/troubleshooting.md",
+  // The preview release, where a copy that can't install itself sends the person.
+  release: "https://github.com/sam-siavoshian/RRAA/releases/tag/preview",
 };
 
 // name -> [argument checks, (service, native, ...args) => result]
@@ -62,6 +64,8 @@ export const API = {
   finishWelcome:      [[none], (s) => s.setSetting("welcomed", true)],
   installUpdate:      [[none], (s, n) => ({ ok: n.installUpdate() })],
   updateLater:        [[none], (s, n) => ({ ok: n.updateLater() })],
+  // What the preview release says, compared with this build. The window shows it.
+  checkForUpdate:     [[none], async (s, n) => (await n.checkForUpdate?.()) ?? { phase: "error" }],
 };
 
 // Registers every channel. isTrusted(event): the request came from Morse's

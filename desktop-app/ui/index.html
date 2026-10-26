@@ -177,6 +177,22 @@
         </div>
         <p class="shortcut-msg" id="shortcut-msg" role="status" hidden></p>
       </div>
+      <div class="card" id="updates">
+        <div class="shortcut-row">
+          <div class="lbl">
+            <b id="updates-h" data-i18n="desk.update.h">Updates</b>
+            <small data-i18n="desk.update.lede">See whether a newer Morse is published.</small>
+          </div>
+          <div class="shortcut-ctl">
+            <button type="button" class="btn" id="check-updates" data-i18n="desk.update.check" aria-describedby="update-msg">Check for updates</button>
+          </div>
+        </div>
+        <p class="shortcut-msg" id="update-msg" role="status" hidden></p>
+        <div class="row-end" id="update-extra" hidden>
+          <button type="button" class="btn" id="update-get" data-link="release" data-i18n="desk.update.get" hidden>Get the update</button>
+          <button type="button" class="btn primary" id="update-restart" data-i18n="desk.update.now" hidden>Restart now</button>
+        </div>
+      </div>
     </section>
 
   </main>
