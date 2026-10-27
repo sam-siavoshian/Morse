@@ -1,6 +1,6 @@
 {
   "name": "morse-cli",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Hack your apps in your own words. Reverse engineer closed apps, remove unwanted features, and build your own. Save, edit and share your mods.",
   "license": "MIT",
   "type": "module",

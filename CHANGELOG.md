@@ -8,6 +8,8 @@ under the new version number with the date
 
 ## Unreleased
 
+## 0.3.4 (2026-10-27)
+
 - **Move a captured look.** The dots on a capture show you can pick it up. Drag it onto the page and Morse rebuilds that look where you drop it. **Use it here** does the same for what you pointed at, or for the page. Click the capture again, or press Backspace, to clear the pick. **Remove** takes it out of the bar.
 - **First run shows the app.** Setup stands on a night sky, with a window of Morse beside the steps. Each step has an icon. The app you pick has one Open button.
 - **A zoomed app stays in the picture.** Morse crops the picture to what you pointed at, including when the app is zoomed out.
