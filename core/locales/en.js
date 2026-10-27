@@ -1920,7 +1920,7 @@ export default {
   "help.web": "Websites",
   "help.web.note": "(the Chrome extension uses the Morse helper to reach your model)",
   "help.extension": "show the Chrome extension folder and how to add it",
-  "help.uninstall": "remove what the install line added  [--all: your mods and settings too]",
+  "help.uninstall": "remove a legacy terminal installation  [--all: your mods and settings too]",
   "help.serve": "start the Morse helper and show a pairing code",
   "help.pair": "show a new pairing code for the running helper",
   "help.unpair": "sign out every paired browser",

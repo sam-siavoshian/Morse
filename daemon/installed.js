@@ -1,4 +1,4 @@
-// What the install line (install.sh, install.ps1) put on this computer, read
+// Compatibility for legacy terminal installations, read
 // from the record it leaves in the Morse folder (~/.morse/install.txt):
 //
 //   app=<folder>         Morse itself (~/.morse/app)
@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import { HOME } from "./store.js";
 
 export const RECEIPT = path.join(HOME, "install.txt");
-// The first line of every file the install line writes. Only a file that
+// The marker written by legacy terminal installers. Only a file that
 // says so is removed.
 export const MARK = "Morse: added by the install line";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -38,7 +38,7 @@ export function readReceipt(file = RECEIPT) {
 const real = p => { try { return realpathSync(p); } catch { return path.resolve(p); } };
 const inside = (dir, p) => { const r = path.relative(real(dir), real(p)); return !!r && !r.startsWith("..") && !path.isAbsolute(r); };
 
-// This Morse was put here by the install line (and not, say, a clone that
+// This Morse was put here by a legacy terminal installer (and not, say, a clone that
 // happens to share the Morse folder).
 export function installedHere(receipt = readReceipt(), root = ROOT) {
   return !!(receipt?.app && real(receipt.app) === real(root));
@@ -63,7 +63,7 @@ function isOurs(file) {
   try { return readFileSync(file, "utf8").slice(0, 400).includes(MARK); } catch { return false; }
 }
 
-// Windows: take the folder back out of the user's PATH (the install line added it).
+// Windows: take the folder back out of the user's PATH (a legacy installer added it).
 function removeFromUserPath(dir) {
   const script = "$d=$env:MORSE_DIR; $p=[Environment]::GetEnvironmentVariable('Path','User'); if ($p) { $n=($p -split ';' | Where-Object { $_ -and ($_.TrimEnd('\\') -ne $d.TrimEnd('\\')) }) -join ';'; [Environment]::SetEnvironmentVariable('Path',$n,'User') }";
   execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], { env: { ...process.env, MORSE_DIR: dir }, stdio: "ignore", windowsHide: true });
@@ -99,7 +99,7 @@ export async function uninstallCli(f, { input = process.stdin, say = s => consol
       ? `This Morse runs from a folder you cloned (${ROOT}). Delete that folder to remove it.`
       : ROOT.split(path.sep).includes("node_modules")
         ? "This Morse came from npm. Remove it with: npm uninstall -g morse-cli"
-        : "Morse wasn't installed with the install line, so there is nothing for this command to remove.");
+        : "No legacy terminal installation was found, so there is nothing for this command to remove.");
     process.exitCode = 1;
     return;
   }

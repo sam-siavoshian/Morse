@@ -11,7 +11,7 @@
 
 [Quick start](#quick-start) · [How Morse works](#how-morse-works) · [What you can change](#what-you-can-change) · [Real runs](#real-runs) · [FAQ](#faq) · [Documentation](#documentation)
 
-<code>curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh</code>
+[Download Morse](https://github.com/sam-siavoshian/RRAA/releases/tag/preview)
 
 <br /><br />
 
@@ -29,15 +29,11 @@ Morse has no server and no account. It uses the AI you already have: Claude Code
 
 ### Install
 
-**Mac**, in Terminal. There are no security prompts: the line checks Morse against the release's checksums and puts it in Applications.
+**Mac:** [Apple silicon](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) · [Intel](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg). Open the disk image and drag Morse to Applications.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh
-```
+**Windows:** [Morse-Setup.exe](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe). **Linux:** [the AppImage](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage).
 
-**Windows:** [Morse-Setup.exe](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe). **Linux:** the same line as the Mac, or [the AppImage](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage). Or download the Mac app: [Apple silicon](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) · [Intel](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg).
-
-Morse updates itself after that.
+Morse updates itself after that. [First-time setup](docs/desktop-app.md#get-it).
 
 ### Open an app
 
@@ -95,7 +91,7 @@ No. Morse opens the app with one extra setting so it can connect, and adds your 
 <details>
 <summary><strong>Why does my Mac warn about Morse?</strong></summary>
 
-Morse isn't notarized by Apple yet; that takes a paid Apple Developer ID. A Mac asks about apps a browser downloaded. The Terminal line above installs Morse without that prompt, after checking it against the release's checksums. With the .dmg, open Morse, then System Settings, Privacy & Security, **Open Anyway**.
+Morse isn't notarized by Apple yet; that takes a paid Apple Developer ID. After installing the .dmg, open Morse, then System Settings, Privacy & Security, **Open Anyway**.
 
 </details>
 

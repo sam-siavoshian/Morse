@@ -8,15 +8,13 @@
 #             Signed only when the signing secrets are set (docs/dev/releasing.md);
 #             otherwise the Mac app is signed ad hoc, so it opens after one
 #             "Open Anyway"
-#   smoke     the one-line installers (install.sh, install.ps1) run against the
-#             package just built, on macOS, Windows and Linux: morse --version,
-#             morse doctor --offline, a second run
-#             (an update), morse uninstall
+#   smoke     the packaged CLI and automatic updater tests on macOS, Windows
+#             and Linux
 #   release   the GitHub pre-release tagged "preview": the tag moves to this
 #             commit and the files are replaced, with SHA256SUMS
 #
 # The names never change, so these addresses always give the newest build
-# (README.md, site/config.js and the installers use them):
+# (README.md, site/config.js and the automatic updater use them):
 #   https://github.com/sam-siavoshian/RRAA/releases/download/preview/<file>
 #
 # Nothing is published unless the package, every Morse Desktop build and every
@@ -166,7 +164,7 @@ jobs:
           if-no-files-found: error
 
   smoke:
-    name: Installer on ${{ matrix.os }}
+    name: Package and updater on ${{ matrix.os }}
     needs: package
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
@@ -175,7 +173,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     env:
-      MORSE_INSTALL_BASE: http://127.0.0.1:8765
       MORSE_NO_UPDATE_CHECK: "1"
       MORSE_SETUP_CHECK: "0"
     steps:
@@ -189,55 +186,16 @@ jobs:
         with:
           name: preview-package
           path: assets
-      - name: SHA256SUMS, as the release has it
-        shell: bash
-        run: node -e 'const fs=require("fs"),c=require("crypto");fs.writeFileSync("assets/SHA256SUMS",fs.readdirSync("assets").map(f=>c.createHash("sha256").update(fs.readFileSync("assets/"+f)).digest("hex")+"  "+f).join("\n")+"\n")' && cat assets/SHA256SUMS
-
-      - name: install.sh (macOS, Linux)
-        if: runner.os != 'Windows'
+      - name: Packaged CLI starts
         shell: bash
         run: |
-          node scripts/serve-files.js assets 8765 &
-          sleep 1
-          # Piped into sh, the way people run it.
-          sh install.sh < /dev/null
-          sh -s -- --no-setup < install.sh | tee second.log
-          grep -q "already up to date" second.log
-          export PATH="$HOME/.local/bin:$PATH"
-          command -v morse
-          test "$(morse --version)" = "$(node -p 'require("./package.json").version')"
-          morse doctor --offline
-          morse uninstall --yes
-          test ! -e "$HOME/.morse/app"
-          hash -r
-          ! command -v morse || { echo "::error::morse is still there after morse uninstall"; exit 1; }
-
-      - name: install.ps1 through irm | iex (Windows PowerShell 5.1)
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          Start-Process node -ArgumentList 'scripts/serve-files.js', 'assets', '8765' -WindowStyle Hidden
-          Start-Sleep -Seconds 2
-          Get-Content -Raw install.ps1 | Invoke-Expression
-          $env:Path = $env:Path + ';' + [Environment]::GetEnvironmentVariable('Path', 'User') # in case it added ~\.morse\bin
-          $v = (morse --version | Out-String).Trim()
-          if ($v -ne (Get-Content -Raw package.json | ConvertFrom-Json).version) { throw "morse --version said $v" }
-          morse doctor --offline
-          if ($LASTEXITCODE -ne 0) { throw 'morse doctor --offline failed' }
-      - name: install.ps1 as a file, again (an update), then morse uninstall (PowerShell 7)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Start-Process node -ArgumentList 'scripts/serve-files.js', 'assets', '8765' -WindowStyle Hidden
-          Start-Sleep -Seconds 2
-          $out = ./install.ps1 -NoSetup *>&1 | Out-String
-          Write-Host $out
-          if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw 'install.ps1 failed' }
-          if ($out -notmatch 'already up to date') { throw 'the second run should be up to date' }
-          $env:Path = $env:Path + ';' + [Environment]::GetEnvironmentVariable('Path', 'User') # in case it added ~\.morse\bin
-          morse uninstall --yes
-          if ($LASTEXITCODE -ne 0) { throw 'morse uninstall failed' }
-          if (Test-Path "$HOME\.morse\app") { throw 'Morse is still there' }
+          npm install --prefix smoke-package --ignore-scripts --no-audit --no-fund ./assets/morse-cli.tgz
+          CLI=smoke-package/node_modules/morse-cli/daemon/cli.js
+          test "$(node "$CLI" --version)" = "$(node -p 'require("./package.json").version')"
+          node "$CLI" doctor --offline
+      - name: Automatic updater
+        if: runner.os != 'Windows' # relaunch tests use POSIX paths and process tools
+        run: node --test tests/updater.test.js
 
   release:
     name: Update the preview release
@@ -279,13 +237,9 @@ jobs:
             echo
             echo "**Morse:** Mac: \`Morse-mac-arm64.dmg\` (Apple silicon) or \`Morse-mac-x64.dmg\` (Intel). Windows: \`Morse-Setup.exe\` (x64) or \`Morse-Setup-arm64.exe\`. Linux: \`Morse-linux-x86_64.AppImage\`."
             echo
-            echo "**Mac, with no security prompts:** paste \`curl -fsSL https://raw.githubusercontent.com/$R/main/install-app.sh | sh\` in Terminal. It checks Morse against SHA256SUMS, puts it in Applications and opens it."
-            echo
             echo "Downloaded in a browser, Morse isn't signed yet, so the first time: on a Mac, open Morse, then System Settings, Privacy & Security, **Open Anyway** (on macOS 14 and older: right-click Morse, Open). On Windows: **More info**, then **Run anyway**."
             echo
-            echo "**Or one line in a terminal** (needs Node 22): \`curl -fsSL https://raw.githubusercontent.com/$R/main/install.sh | sh\` (macOS, Linux) or \`irm https://raw.githubusercontent.com/$R/main/install.ps1 | iex\` (Windows PowerShell)."
-            echo
-            echo "\`morse-cli.tgz\` is what the line installs. \`SHA256SUMS\` has every file's SHA-256."
+            echo "\`morse-cli.tgz\` is the CLI package. \`SHA256SUMS\` has every file's SHA-256."
           } > notes.md
       - name: Move the preview tag here and replace the files
         shell: bash

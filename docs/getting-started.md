@@ -8,15 +8,7 @@ Morse is one app. You don't need a terminal, Node or anything else.
 
 ## 1. Get Morse
 
-On a Mac, paste this in Terminal. It downloads Morse, checks it against the
-release's SHA-256 sums, puts it in Applications and opens it, with no
-security prompts:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh
-```
-
-Or download it:
+Download Morse for your computer:
 [Mac (Apple silicon)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) ·
 [Mac (Intel)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg) ·
 [Windows](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) ·

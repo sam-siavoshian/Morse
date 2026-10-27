@@ -24,18 +24,6 @@ has every file and its SHA-256):
 | **Windows** | [Morse-Setup.exe](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) | Open it. It installs Morse for you only, with no admin question. |
 | **Linux** | [Morse-linux-x86_64.AppImage](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage) | Make it runnable: right-click it, Properties, Permissions, turn on “Allow executing file as program”. Then open it. |
 
-**Mac, with no security prompts:** paste this in Terminal instead. It
-downloads Morse for your Mac, checks it against the release's SHA-256 sums,
-puts it in Applications and opens it:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh
-```
-
-macOS only asks about apps a browser downloaded; Morse isn't notarized by
-Apple yet (that takes a paid Apple Developer ID). The same line works on
-Linux (it puts the AppImage in `~/.local/share/morse`).
-
 Downloaded in a browser, Morse isn't signed yet, so your computer warns you once:
 
 - **Mac:** open Morse. When macOS says it can't check it, open System
