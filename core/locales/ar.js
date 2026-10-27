@@ -395,6 +395,7 @@ export default {
   "desk.app.waiting": "بانتظار أن يُفتح مرة أخرى",
   "desk.app.connecting": "جارٍ الاتصال…",
   "desk.app.waitingPage": "افتح موقعًا إلكترونيًا لاستخدام Morse",
+  "desk.app.noAnswer": "لم يستجب {name}.",
   "desk.app.browserControls": "شريط أدوات المتصفح",
   "desk.app.browserControlsHint": "افحص علامات التبويب وشريط العنوان وعناصر التحكم في {name}.",
   "desk.app.inspectControls": "فحص عناصر التحكم",

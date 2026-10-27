@@ -395,6 +395,7 @@ export default {
   "desk.app.waiting": "در انتظار باز شدن دوباره",
   "desk.app.connecting": "در حال وصل شدن…",
   "desk.app.waitingPage": "برای استفاده از Morse یک وب‌سایت باز کنید",
+  "desk.app.noAnswer": "{name} پاسخ نداد.",
   "desk.app.browserControls": "نوار ابزار مرورگر",
   "desk.app.browserControlsHint": "زبانه‌ها، نوار نشانی و کنترل‌های {name} را بررسی کنید.",
   "desk.app.inspectControls": "بررسی کنترل‌ها",

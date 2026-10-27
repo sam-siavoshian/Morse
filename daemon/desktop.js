@@ -347,7 +347,12 @@ async function runSession({ port, browser = null, app, id = app.id, name = app.n
 // leaves the pipe open (Morse Desktop connects again over it).
 export function startSession({ port, browser = null, app, id = app.id, name = app.name, settings, watch = false, verify = null, who, log = console.log, onChange = null, reopen = null, keep = false }) {
   const modsApp = app && !app.browser ? app : null;
-  const connector = new Connector({ port, browser, app: modsApp, settings, watch, verify, log, onChange: () => { pub.changed(); onChange?.(connector); } });
+  const connector = new Connector({
+    port, browser, app: modsApp, settings, watch, verify, log, onChange: () => { pub.changed(); onChange?.(connector); },
+    // Mods stay per site (modsApp is null). The row still has to know this is a
+    // browser, or a new tab sits on Connecting with no page Morse can join.
+    browserHost: app?.browser ? { name: app.name, id: app.id } : null,
+  });
   const pub = publishSession(connector, {
     id, name, path: app?.path || null, aliases: app?.aliases || [], modsApp: modsApp?.id ?? null,
     browser: who?.browser || null, electron: who?.electron || null, started: new Date().toISOString(),

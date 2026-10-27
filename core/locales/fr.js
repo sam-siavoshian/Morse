@@ -394,6 +394,7 @@ export default {
   "desk.app.waiting": "En attente de sa réouverture",
   "desk.app.connecting": "Connexion…",
   "desk.app.waitingPage": "Ouvrez un site web pour utiliser Morse",
+  "desk.app.noAnswer": "{name} n'a pas répondu.",
   "desk.app.browserControls": "Barre du navigateur",
   "desk.app.browserControlsHint": "Inspecter les onglets, la barre d’adresse et les contrôles de {name}.",
   "desk.app.inspectControls": "Inspecter les contrôles",

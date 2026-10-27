@@ -394,6 +394,7 @@ export default {
   "desk.app.waiting": "Wartet, bis sie wieder offen ist",
   "desk.app.connecting": "Verbinde…",
   "desk.app.waitingPage": "Öffne eine Website, um Morse zu verwenden",
+  "desk.app.noAnswer": "{name} hat nicht geantwortet.",
   "desk.app.browserControls": "Browser-Symbolleiste",
   "desk.app.browserControlsHint": "Tabs, Adressleiste und Steuerelemente in {name} untersuchen.",
   "desk.app.inspectControls": "Steuerelemente prüfen",

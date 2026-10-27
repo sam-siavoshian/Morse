@@ -207,6 +207,7 @@ const STATUS = {
   connected: a => [h("i", { class: "dot on" }), h("span", { text: [t("desk.app.connected"), a.windows ? t("desk.app.windows", { n: a.windows }) : "", a.modsOn ? t("desk.app.modsOn", { n: a.modsOn }) : ""].filter(Boolean).join(" · ") })],
   waiting: () => [h("i", { class: "dot wait" }), h("span", { text: t("desk.app.waiting") })],
   "waiting-page": () => [h("i", { class: "dot wait" }), h("span", { text: t("desk.app.waitingPage") })],
+  "no-answer": a => [h("i", { class: "dot wait" }), h("span", { text: t("desk.app.noAnswer", { name: a.name }) })],
   connecting: () => [radar(12), h("span", { text: t("desk.app.connecting") })],
   opening: a => [radar(12), h("span", { text: t("desk.app.opening", { name: a.name }) })],
   disconnecting: () => [radar(12), h("span", { text: t("desk.app.disconnecting") })],

@@ -395,6 +395,7 @@ export default {
   "desk.app.waiting": "もう一度開くのを待っています",
   "desk.app.connecting": "接続しています…",
   "desk.app.waitingPage": "ウェブサイトを開いて Morse を使う",
+  "desk.app.noAnswer": "{name} が応答しませんでした。",
   "desk.app.browserControls": "ブラウザのツールバー",
   "desk.app.browserControlsHint": "{name} のタブ、アドレスバー、ツールバーの操作項目を調べます。",
   "desk.app.inspectControls": "操作項目を調べる",
