@@ -161,7 +161,7 @@ test("installing marks each mod with its pack; unticked or unknown ids are left 
   assert.deepEqual(put[0].pack, { id: "team", name: "Team tools", mod: "a", at: "2026-05-05T00:00:00.000Z" });
   assert.equal(put[0].importedFrom, "pack");
   assert.equal(put[0].imported, true);
-  assert.equal(modOrigin(put[0]), "From the pack “Team tools” on May 5");
+  assert.equal(modOrigin(put[0]), `From the pack “Team tools” on ${new Date(put[0].pack.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`);
   assert.throws(() => planInstall(p, [], []), /Tick at least one mod/);
   assert.deepEqual(packGroups(put), [{ id: "team", name: "Team tools", count: 2, on: 2, url: "" }]);
 });

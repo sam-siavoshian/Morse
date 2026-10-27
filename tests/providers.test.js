@@ -55,7 +55,7 @@ test("claude-code: streams text deltas with every tool off, prompt on stdin, in 
   assert.equal(argv[argv.indexOf("--tools") + 1], "", "no tools");
   assert.equal(argv[argv.indexOf("--model") + 1], "haiku");
   assert.ok(!argv.some(a => /dangerously|bypass/i.test(a)));
-  assert.ok(cwd.startsWith(path.join(process.env.MORSE_HOME, "run")), cwd);
+  assert.ok(cwd.startsWith(await fs.realpath(path.join(process.env.MORSE_HOME, "run"))), cwd);
   assert.deepEqual(await fs.readdir(cwd).catch(() => []), []); // empty (and removed afterwards)
   // The system prompt reaches the CLI unchanged.
   const sysIdx = argv.findIndex(a => a === "--system-prompt" || a === "--system-prompt-file");

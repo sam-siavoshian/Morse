@@ -463,7 +463,7 @@ test("`morse doctor` platform rows: the Morse folder's permissions, the shortcut
   assert.equal(by(win).processes.ok, true);
   assert.match(by(win).firewall.text, /127\.0\.0\.1/);
   assert.match(by(win).colors.text, /^off/);
-  const shared = await platformChecks({ platform: "win32", release: "10.0.19045", env: {}, home: "D:\\Shared\\morse", userHome: "C:\\Users\\sam", exists: () => false, shortcut: "Alt+Shift+Space" });
+  const shared = await platformChecks({ platform: "win32", arch: "x64", release: "10.0.19045", env: {}, home: "D:\\Shared\\morse", userHome: "C:\\Users\\sam", exists: () => false, shortcut: "Alt+Shift+Space" });
   assert.equal(by(shared).folder.ok, false, "outside the user folder");
   assert.equal(by(shared).processes.ok, false);
   assert.match(by(shared).shortcut.text, /Alt\+Shift\+Space opens Morse \(the default here is Ctrl\+Alt\+Space\)/);

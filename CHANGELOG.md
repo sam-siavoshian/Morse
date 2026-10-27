@@ -8,7 +8,7 @@ under the new version number with the date
 
 ## Unreleased
 
-## 0.3.3 (2026-10-26)
+## 0.3.3 (2026-10-27)
 
 - **Your apps have cheat codes.** The desktop welcome, in-app prompts, CLI, website and docs share the same direct language about removing unwanted features and building your own. Core branding is updated in every supported language.
 - **A clearer desktop app.** App search and filters, connection status, model setup, navigation and saving mods have additional checks and fixes.

@@ -1455,7 +1455,7 @@ export default {
   "ys.deleted": "Deleted your style",
   "ys.startPlaceholder": "Your style, like “bigger text and softer colors everywhere”",
   "ys.startHint": "Describe your style and end with <b>everywhere</b>",
-  "wait.many": { one: "{n} change", other: "{n} changes" },
+  "wait.many": { one: "{n} mod", other: "{n} mods" },
   "so.hidden": "(hidden)",
   "so.askShort": "What to do with the steps?",
   "origin.pack": "From the pack “{name}”{by}{on}",
