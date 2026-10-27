@@ -822,7 +822,15 @@ export default {
   "cap.captured": "Aufgenommen",
   "cap.items": "Aufgenommenes",
   "cap.using": "Verwendet",
-  "cap.placeholder": "Beschreib, wo und wie es hier verwendet werden soll…",
+  "cap.placeholder": "Sag, wo es hin soll",
+  "cap.useHere": "Hier verwenden",
+  "cap.useHere.p": "Hier verwenden",
+  "cap.useHere.title": "Hier verwenden (Enter)",
+  "cap.useNamed": "{label} hier verwenden",
+  "cap.hint": "<b>Hier verwenden</b>, oder sag, wo es hin soll · <kbd>Esc</kbd> schließt",
+  "cap.pick": "{label} verwenden",
+  "cap.selected": "{label} ausgewählt",
+  "cap.remove": "{label} entfernen",
 
   // ---- Vorschläge
   "sug.try": "Probier",

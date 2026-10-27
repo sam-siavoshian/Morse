@@ -1,9 +1,10 @@
 // Capture and reuse across apps. Shift+C in God mode saves a snapshot of the
 // selected element (trimmed HTML, key computed styles for it and a few of its
 // parts, hover rules, a thumbnail, a note, where it came from) to the Morse
-// clipboard (host: clipboard.put / clipboard.list). In any other app the bar
-// shows those snapshots as chips; picking one sends it with the next request,
-// so the model rebuilds that look natively, and the mod records `from`.
+// clipboard (host: clipboard.put / clipboard.list / clipboard.remove). In any
+// other app the bar shows those snapshots under Captured. Use it here rebuilds
+// that look on what you pointed at (or the page). Pick one to say where it
+// goes, click it again or Backspace to clear that pick, Remove to drop it.
 
 const GodCapture = (() => {
   const st = { list: [], picked: null, used: null };
@@ -129,12 +130,14 @@ const GodCapture = (() => {
   }
 
   // ---- clipboard chips in the bar
+  // Removed this session, so a slow list refresh can't put one back under the click that dropped it.
+  const gone = new Set();
   const row = document.createElement("div");
   row.className = "gm-clips";
   row.hidden = true;
-  row.innerHTML = `<span class="gm-clips-l">${t("cap.captured")}</span><div class="gm-chips" role="group" aria-label="${esc(t("cap.items"))}"></div>`;
+  row.innerHTML = `<span class="gm-clips-l">${t("cap.captured")}</span><div class="gm-chips" role="group" aria-label="${esc(t("cap.items"))}"></div><button type="button" class="btn gm-use" hidden></button>`;
   bar.insertBefore(row, bar.querySelector(".status"));
-  const chips = row.querySelector(".gm-chips"), label = row.querySelector(".gm-clips-l");
+  const chips = row.querySelector(".gm-chips"), label = row.querySelector(".gm-clips-l"), useBtn = row.querySelector(".gm-use");
 
   function render() {
     // Dark/light mode inverts the whole page, our overlay included: flip thumbnails back.
@@ -143,29 +146,89 @@ const GodCapture = (() => {
     const used = phase !== "idle" && st.used;
     const items = used ? [st.used] : st.list.slice(0, 8);
     row.hidden = bar.hidden || !items.length || (phase !== "idle" && !used);
+    useBtn.hidden = row.hidden || phase !== "idle";
+    useBtn.textContent = t("cap.useHere");
+    const named = st.picked || items[0];
+    useBtn.title = st.picked ? t("cap.useHere.title") : (named ? t("cap.useNamed", { label: named.label }) : "");
     if (row.hidden) return;
     label.textContent = used ? t("cap.using") : t("cap.captured");
-    chips.innerHTML = items.map(it => `<button class="gm-chip" data-id="${esc(it.id)}" aria-pressed="${!!used || st.picked?.id === it.id}" title="${esc(it.label)}${it.note ? " · " + esc(it.note) : ""}">
-      ${thumbHtml(it)}<span><b>${esc(it.label)}</b><small>${esc(it.from?.app || it.from?.title || "")}</small></span></button>`).join("");
+    chips.innerHTML = items.map(it => {
+      const pressed = !!used || st.picked?.id === it.id;
+      const note = it.note ? ` · ${it.note}` : "";
+      const title = (pressed ? t("cap.selected", { label: it.label }) : t("cap.pick", { label: it.label })) + note;
+      // The × is the shared close glyph (.x). While a run is using the capture, it stays put.
+      return `<div class="gm-chip${pressed ? " on" : ""}" data-id="${esc(it.id)}">
+        <button type="button" class="gm-chip-main" aria-pressed="${pressed}" title="${esc(title)}">
+          ${thumbHtml(it)}<span><b>${esc(it.label)}</b><small>${esc(it.from?.app || it.from?.title || "")}</small></span>
+        </button>${used ? "" : `<button type="button" class="x" aria-label="${esc(t("cap.remove", { label: it.label }))}" title="${esc(t("cap.remove", { label: it.label }))}">×</button>`}
+      </div>`;
+    }).join("");
     chips.querySelectorAll("img").forEach(i => (i.onerror = () => i.replaceWith(Object.assign(document.createElement("span"), { className: "gm-ph", innerHTML: GodMode.icon("capture", 16) }))));
   }
-  function pick(item) {
-    st.picked = st.picked?.id === item?.id ? null : item;
-    input.placeholder = st.picked ? t("cap.placeholder") : PLACEHOLDER();
+  // The hint, the placeholder and Send all follow the pick. Safe only after the bar exists (callers are clicks and observers).
+  function applyPick() {
+    if (!bar.hidden && S.phase === "idle") input.placeholder = st.picked ? t("cap.placeholder") : PLACEHOLDER();
     render();
+    if (!bar.hidden && S.phase === "idle") { setHint(); updateChips(); }
+    syncSendLabel();
+  }
+  function pick(item) {
+    if (!item || S.phase !== "idle") return;
+    st.picked = st.picked?.id === item.id ? null : item;
+    applyPick();
     input.focus();
   }
+  function clear() {
+    if (!st.picked || S.phase !== "idle") return;
+    st.picked = null;
+    applyPick();
+    input.focus();
+  }
+  // One click pastes the picked capture, or the newest one when nothing is picked.
+  function useHere() {
+    if (S.phase !== "idle") return;
+    const item = st.picked || st.list[0];
+    if (!item) return;
+    st.picked = item;
+    const typed = input.value.trim();
+    send(typed || t("cap.useHere.p"));
+  }
+  async function remove(id) {
+    if (!id || S.phase !== "idle") return;
+    gone.add(id);
+    st.list = st.list.filter(i => i.id !== id);
+    if (st.picked?.id === id) st.picked = null;
+    applyPick();
+    input.focus();
+    try {
+      const l = await call("clipboard.remove", { id });
+      if (bar.hidden || !Array.isArray(l)) return;
+      st.list = l.filter(i => i && typeof i.id === "string" && !gone.has(i.id));
+      if (st.picked && !st.list.some(i => i.id === st.picked.id)) st.picked = null;
+      applyPick();
+    } catch {}
+  }
+  function request() {
+    return S.phase === "idle" && st.picked ? t("cap.useHere.p") : "";
+  }
   chips.addEventListener("click", e => {
-    const b = e.target.closest(".gm-chip");
-    if (!b || S.phase !== "idle") return;
-    pick(st.list.find(i => i.id === b.dataset.id));
+    if (S.phase !== "idle") return;
+    const x = e.target.closest(".x");
+    if (x) { remove(x.closest(".gm-chip")?.dataset.id); return; }
+    const b = e.target.closest(".gm-chip-main");
+    if (!b) return;
+    pick(st.list.find(i => i.id === b.closest(".gm-chip").dataset.id));
   });
+  useBtn.addEventListener("click", useHere);
   new MutationObserver(() => {
     if (bar.hidden) {
+      gone.clear();
       st.picked = null;
       if (!S.draft || S.draft.saved) st.used = null;
       input.placeholder = PLACEHOLDER();
       row.hidden = true;
+      useBtn.hidden = true;
+      syncSendLabel();
       return;
     }
     render();
@@ -173,8 +236,14 @@ const GodCapture = (() => {
   // Refresh the list whenever the bar opens (it may have been captured in another app).
   new MutationObserver(() => {
     if (bar.hidden) return;
-    call("clipboard.list").then(l => { st.list = Array.isArray(l) ? l : []; render(); }).catch(() => {});
+    call("clipboard.list").then(l => {
+      if (bar.hidden) return;
+      st.list = Array.isArray(l) ? l.filter(i => i && typeof i.id === "string" && !gone.has(i.id)) : [];
+      if (st.picked && !st.list.some(i => i.id === st.picked.id)) st.picked = null;
+      applyPick();
+    }).catch(() => {});
   }).observe(bar, { attributes: true, attributeFilter: ["hidden"] });
+  langSubs.add(() => { if (!row.hidden) render(); });
 
   // Hook (01-rpc.js): attach the picked snapshot to the next request, and its
   // origin to the mod that request produces.
@@ -192,5 +261,9 @@ const GodCapture = (() => {
     return msg;
   });
 
-  return { pop, snapshot, thumbOf /* take-and-bring hook: 73-take.js */, refresh: render, get list() { return st.list; } };
+  return {
+    pop, snapshot, thumbOf /* take-and-bring hook: 73-take.js */, refresh: render, clear, request,
+    get list() { return st.list; },
+    get picked() { return st.picked; },
+  };
 })();

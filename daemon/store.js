@@ -11,7 +11,7 @@ import os from "node:os";
 import path from "node:path";
 import { modMatches, validateMod, byCreated } from "../core/mod.js";
 import { normalizePrefs, mergePrefs, pushHistory } from "../core/prefs.js";
-import { clipAdd } from "../core/clipboard.js";
+import { clipAdd, clipDrop } from "../core/clipboard.js";
 import { serialQueue } from "../core/serial.js";
 import { resolveHotkeys, formatCombo, detectPlatform, migrateStoredOpen } from "../core/hotkeys.js";
 export const HOME = process.env.MORSE_HOME || path.join(os.homedir(), ".morse");
@@ -252,6 +252,13 @@ export async function readClipboard() {
 export function putClipboard(item) {
   return queue(CLIPBOARD, async () => {
     const list = clipAdd(await readClipboard(), item);
+    await writeAtomic(CLIPBOARD, JSON.stringify(list));
+    return list;
+  });
+}
+export function dropClipboard(id) {
+  return queue(CLIPBOARD, async () => {
+    const list = clipDrop(await readClipboard(), id);
     await writeAtomic(CLIPBOARD, JSON.stringify(list));
     return list;
   });

@@ -822,7 +822,15 @@ export default {
   "cap.captured": "已捕获",
   "cap.items": "已捕获的内容",
   "cap.using": "正在使用",
-  "cap.placeholder": "描述要在这里的哪个位置、怎么使用…",
+  "cap.placeholder": "说一下放在哪里",
+  "cap.useHere": "用在这里",
+  "cap.useHere.p": "用在这里",
+  "cap.useHere.title": "用在这里（Enter）",
+  "cap.useNamed": "把{label}用在这里",
+  "cap.hint": "<b>用在这里</b>，或说一下放在哪里 · <kbd>Esc</kbd> 关闭",
+  "cap.pick": "使用{label}",
+  "cap.selected": "已选{label}",
+  "cap.remove": "移除{label}",
 
   // ---- 建议
   "sug.try": "试试",

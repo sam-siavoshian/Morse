@@ -4,7 +4,7 @@ import "./helpers/home.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { compileEdits, summarizeEdits, describeEdit, zoomFor, EDIT_TITLE } from "../core/edits.js";
-import { clipAdd, CLIPBOARD_MAX } from "../core/clipboard.js";
+import { clipAdd, clipDrop, CLIPBOARD_MAX } from "../core/clipboard.js";
 import { buildMessages } from "../core/prompt.js";
 import { createMod } from "../core/mod.js";
 import { demoResponse } from "../core/demo.js";
@@ -184,6 +184,10 @@ test("the clipboard keeps the newest 20 and rejects junk", () => {
   assert.equal(list.filter(i => i.id === "c10").length, 1);
   assert.throws(() => clipAdd(list, { label: "no id" }), /Not a clipboard item/);
   assert.throws(() => clipAdd(list, { id: "big", html: "x".repeat(500_000) }), /too large/);
+  list = clipDrop(list, "c24");
+  assert.equal(list.some(i => i.id === "c24"), false);
+  assert.equal(clipDrop(list, "missing").length, list.length);
+  assert.throws(() => clipDrop(list, ""), /Not a clipboard item/);
 });
 
 test("a picked snapshot goes into the prompt, and the demo model rebuilds it", () => {

@@ -823,7 +823,15 @@ export default {
   "cap.captured": "تم الالتقاط",
   "cap.items": "العناصر الملتقطة",
   "cap.using": "قيد الاستخدام",
-  "cap.placeholder": "صِف أين وكيف تستخدمه هنا…",
+  "cap.placeholder": "قُل أين يذهب",
+  "cap.useHere": "استخدمه هنا",
+  "cap.useHere.p": "استخدمه هنا",
+  "cap.useHere.title": "استخدمه هنا (Enter)",
+  "cap.useNamed": "استخدم {label} هنا",
+  "cap.hint": "<b>استخدمه هنا</b>، أو قُل أين يذهب · <kbd>Esc</kbd> للإغلاق",
+  "cap.pick": "استخدم {label}",
+  "cap.selected": "تم اختيار {label}",
+  "cap.remove": "إزالة {label}",
 
   // ---- الاقتراحات
   "sug.try": "جرّب",

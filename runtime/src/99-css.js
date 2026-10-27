@@ -34,10 +34,10 @@ function CSS() {
   button > svg:not(.radar), .menu svg, .gm-note > svg { flex: none; width: 16px; height: 16px; }
   button > svg[stroke], .menu svg[stroke], .gm-note > svg[stroke] { stroke-width: 1.5px; }
   /* the close icon (×) as a mask, so the glyph in any markup draws the same */
-  .chip .x, .panel header > button, .card header > button, .ibtn.close { font-size: 0 !important; display: flex !important; align-items: center; justify-content: center; }
-  .chip .x::before, .panel header > button::before, .card header > button::before, .ibtn.close::before { content: ""; width: 16px; height: 16px; background: currentColor;
+  .chip .x, .gm-chip .x, .panel header > button, .card header > button, .ibtn.close { font-size: 0 !important; display: flex !important; align-items: center; justify-content: center; }
+  .chip .x::before, .gm-chip .x::before, .panel header > button::before, .card header > button::before, .ibtn.close::before { content: ""; width: 16px; height: 16px; background: currentColor;
     -webkit-mask-image: ${ICON_CLOSE}; mask-image: ${ICON_CLOSE}; -webkit-mask-size: 16px; mask-size: 16px; }
-  .chip .x::before { width: 14px; height: 14px; -webkit-mask-size: 14px; mask-size: 14px; }
+  .chip .x::before, .gm-chip .x::before { width: 14px; height: 14px; -webkit-mask-size: 14px; mask-size: 14px; }
 
   /* ---- icon buttons: ghost squares. 32 in the bar row and the toolbar, 28 in headers, 24 inside fields */
   .ibtn { flex: none; position: relative; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--m-r-sm);
@@ -170,9 +170,9 @@ function CSS() {
   .chip { display: inline-flex; align-items: center; gap: 2px; height: 24px; max-width: 44%; flex: none; background: var(--m-raised); color: var(--m-text);
     border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); padding-block: 0; padding-inline: 8px 1px; font: 500 var(--m-text-sm)/16px var(--m-mono); letter-spacing: 0; white-space: nowrap; }
   .chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  .chip .x { flex: none; width: 20px; height: 20px; display: grid; place-items: center; border: 0; border-radius: 4px; background: none; color: var(--m-text-3); padding: 0; }
-  .chip .x:hover { color: var(--m-text); background: var(--m-hover); }
-  .chip .x:focus-visible { outline-offset: 0; } /* nested in the chip: flush, so the ring doesn't cover the words */
+  .chip .x, .gm-chip .x { flex: none; width: 20px; height: 20px; display: grid; place-items: center; border: 0; border-radius: 4px; background: none; color: var(--m-text-3); padding: 0; }
+  .chip .x:hover, .gm-chip .x:hover { color: var(--m-text); background: var(--m-hover); }
+  .chip .x:focus-visible, .gm-chip .x:focus-visible { outline-offset: 0; } /* nested in the chip: flush, so the ring doesn't cover the words */
   .status { display: flex; align-items: center; gap: 12px; padding-block: 6px; padding-inline: 16px 8px; border-top: 1px solid var(--m-line); font-size: var(--m-text-sm); line-height: 16px; color: var(--m-text-2); min-height: 40px; }
   /* one line that ends in an ellipsis, whatever it holds (hint, error, phase) */
   .hint { flex: 0 1 auto; min-width: 0; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -370,8 +370,8 @@ function CSS() {
       outline: 2px solid Highlight !important; outline-offset: 2px; }
     :is(.menu, .a11y-group) > button:focus-visible, .list article:focus-visible { outline-offset: -2px; }
     .bar, .panel, .card, .toast, .pop, .gm-tb, .gm-pop, .gm-note, .menu, .chip, .tip, .guide, .ctl-toast, .so-strip, kbd { border: 1px solid CanvasText; }
-    .go, .ibtn, .tbtn, .seg button, .sug, .chip .x, .panel header > button, .card header > button, .gm-chip { border: 1px solid ButtonText !important; }
-    :is(.seg button, .ibtn, .gm-chip, .gm-sw button):is([aria-checked="true"], [aria-pressed="true"]) { outline: 2px solid Highlight; outline-offset: -2px; }
+    .go, .ibtn, .tbtn, .seg button, .sug, .chip .x, .gm-chip .x, .panel header > button, .card header > button, .gm-chip { border: 1px solid ButtonText !important; }
+    :is(.seg button, .ibtn, .gm-chip-main, .gm-sw button):is([aria-checked="true"], [aria-pressed="true"]) { outline: 2px solid Highlight; outline-offset: -2px; }
     .sw span { border: 1px solid ButtonText; }
     .sw span::after { background: ButtonText; }
     .sw input:checked + span { background: Highlight; }

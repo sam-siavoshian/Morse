@@ -95,7 +95,8 @@ function suggestionsFor(el) {
 
 let shownSuggestions = [];
 function updateChips() {
-  const show = S.open && S.phase === "idle" && !input.value && !paneKind && !Voice.active();
+  // A picked capture has its own next step (Use it here). The Try row would hide that.
+  const show = S.open && S.phase === "idle" && !input.value && !paneKind && !Voice.active() && !GodCapture.picked;
   if (!show) { if (!sugEl.hidden && sugEl.contains(root.activeElement)) input.focus(); sugEl.hidden = true; return; }
   const list = suggestionsFor(S.target);
   if (sugEl.hidden || list !== shownSuggestions) {

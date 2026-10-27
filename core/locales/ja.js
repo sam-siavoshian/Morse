@@ -823,7 +823,15 @@ export default {
   "cap.captured": "取り込み済み",
   "cap.items": "取り込んだもの",
   "cap.using": "使用中",
-  "cap.placeholder": "ここのどこで、どう使うかを説明…",
+  "cap.placeholder": "どこに置くか書いてください",
+  "cap.useHere": "ここで使う",
+  "cap.useHere.p": "ここで使う",
+  "cap.useHere.title": "ここで使う（Enter）",
+  "cap.useNamed": "{label}をここで使う",
+  "cap.hint": "<b>ここで使う</b>か、どこに置くか書く · <kbd>Esc</kbd> で閉じる",
+  "cap.pick": "{label}を使う",
+  "cap.selected": "{label}を選択中",
+  "cap.remove": "{label}を取り除く",
 
   // ---- 提案
   "sug.try": "試す",

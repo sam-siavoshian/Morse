@@ -42,9 +42,10 @@ any other mod. **⌥⇧G** (Alt+Shift+G) shows the Edit tools from anywhere.
 ## Capture
 
 To reuse how something looks in another app, point at it and press **⇧C**.
-Morse saves it under **Captured** in the bar. Open Morse in the other app,
-pick it from the bar, and say where you want it. The model rebuilds that
-look there.
+Morse saves it under **Captured** in the bar. Open Morse in the other app.
+**Use it here** rebuilds that look on what you pointed at, or on the page if
+you didn't point. You can also pick it and say where it goes. Click it again,
+or press Backspace, to clear that pick. **Remove** takes it out of the bar.
 
 ## Page tools
 

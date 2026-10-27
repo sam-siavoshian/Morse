@@ -88,15 +88,19 @@ function GOD_CSS() { return `
   .gm-menu .gm-state { margin-inline-start: auto; display: inline-flex; color: var(--m-text-2); font: 500 var(--m-text-xs)/16px var(--m-mono); letter-spacing: 0; }
   .gm-menu .gm-state svg { color: var(--m-text); }
 
-  /* ---- clipboard chips in the bar, on its 16px inset */
-  .gm-clips { display: flex; align-items: center; gap: 12px; padding-block: 0 8px; padding-inline: 16px 8px; min-width: 0; }
+  /* ---- clipboard chips in the bar, above the suggestions. Use it here sits at the end. */
+  .gm-clips { display: flex; align-items: center; gap: 8px; padding-block: 0 8px; padding-inline: 16px 8px; min-width: 0; }
   .gm-clips-l { flex: none; }
   .gm-chips { display: flex; gap: 8px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
   .gm-chips::-webkit-scrollbar { display: none; }
-  .gm-chip { flex: none; display: inline-flex; align-items: center; gap: 8px; max-width: 232px; height: 32px; padding-block: 0; padding-inline: 3px 12px; text-align: start;
-    border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-raised); color: var(--m-text); transition: border-color var(--m-fast), background var(--m-fast); }
-  .gm-chip:hover { background: var(--m-hover); border-color: var(--m-signal-1); }
-  .gm-chip[aria-pressed="true"] { border-color: var(--m-text); background: var(--m-surface); }
+  .gm-use { flex: none; margin-inline-start: auto; }
+  .gm-chip { flex: none; display: inline-flex; align-items: center; gap: 2px; max-width: 248px; height: 32px; padding-block: 0; padding-inline: 3px 2px;
+    border: 1px solid var(--m-line); border-radius: var(--m-r-sm); background: var(--m-raised); color: var(--m-text); transition: border-color var(--m-fast), background var(--m-fast); }
+  .gm-chip:hover { border-color: var(--m-signal-1); }
+  .gm-chip.on { border-color: var(--m-text); background: var(--m-surface); }
+  .gm-chip.on:hover { border-color: var(--m-text); }
+  .gm-chip-main { flex: 1; min-width: 0; display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 4px 0 0; border: 0; background: none; color: inherit; text-align: start; }
+  .gm-chip button:focus-visible { outline-offset: 0; }
   .gm-chip img, .gm-chip .gm-ph { flex: none; width: 40px; height: 24px; border-radius: 4px; object-fit: cover; object-position: left center; background: var(--m-hover); }
   .gm-chip .gm-ph { display: grid; place-items: center; color: var(--m-text-3); }
   .gm-chip span:not(.gm-ph) { display: flex; flex-direction: column; min-width: 0; }

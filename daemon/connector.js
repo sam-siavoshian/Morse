@@ -19,7 +19,7 @@ import { spawn } from "node:child_process";
 import { mkdirSync, watch } from "node:fs";
 import path from "node:path";
 import { portBrowser } from "./cdp.js"; // a debugging port, or the private pipe (cdp.js pipeBrowser)
-import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putClipboard } from "./store.js";
+import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putClipboard, dropClipboard } from "./store.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode, settleMs } from "../core/kit.js";
 import { asReviewed } from "../core/summary.js"; // installs keep only the reviewed code
@@ -745,6 +745,8 @@ export class Connector {
         return readClipboard();
       case "clipboard.put":
         return putClipboard({ ...msg.item, from: { ...msg.item?.from, app: this.app?.name || msg.item?.from?.app || null } });
+      case "clipboard.remove":
+        return dropClipboard(msg.id);
       case "warm": { // speed: the bar opened, or the person is typing; get the model ready (core/providers.js prewarm)
         const settings = await this.freshSettings();
         const typed = typeof msg.request === "string" ? msg.request.slice(0, 500) : ""; // models: the strong model for new UI and features

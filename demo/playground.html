@@ -126,6 +126,7 @@
       }
       if (m.type === "clipboard.list") return reply(store.get("clipboard", []));
       if (m.type === "clipboard.put") { const l = clip.clipAdd(store.get("clipboard", []), m.item); store.set("clipboard", l); return reply(l); }
+      if (m.type === "clipboard.remove") { const l = clip.clipDrop(store.get("clipboard", []), m.id); store.set("clipboard", l); return reply(l); }
       if (m.type === "generate" && ASK) {
         // ?ask: the real engine + parser with the demo model (core/demo.js),
         // replying the way the real hosts do (answers travel as events only).

@@ -175,7 +175,8 @@ function BAR_CSS() { return `
   .bar .status { background: color-mix(in srgb, var(--m-bg) 20%, transparent); border-radius: 0 0 17px 17px; gap: 8px; padding: 5px 8px 5px 12px; min-height: 36px; border-top-color: color-mix(in srgb, var(--m-text) 10%, transparent); }
   .bar .actions { gap: 6px; }
   .bar .model { max-width: 120px; font-family: var(--m-font); }
-  .bar .sugs { padding-inline: 12px 8px; gap: 6px; }
+  .bar .sugs, .bar .gm-clips { padding-inline: 12px 8px; }
+  .bar .sugs { gap: 6px; }
   .bar .sug { height: 26px; padding-inline: 8px; border-color: transparent; background: color-mix(in srgb, var(--m-text) 4%, transparent); }
   .bar .sug:hover { border-color: var(--m-line-strong); background: var(--m-hover); }
   .bar .chip { font-family: var(--m-font); max-width: min(28%, 140px); border-color: transparent; background: color-mix(in srgb, var(--m-text) 5%, transparent); }
