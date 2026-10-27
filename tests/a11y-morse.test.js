@@ -93,7 +93,7 @@ test("axe-core finds nothing in the key states: bar, choosing with keys, edit to
     await axeOk(page, "choosing with keys");
     await page.keyboard.press("Enter");
     await until(page, s => !!s.hint && /Edit tools/.test(s.hint), "a chosen part, with the edit tools");
-    await page.keyboard.press("Control+KeyE");
+    await page.keyboard.press("ControlOrMeta+KeyE");
     await page.keyboard.press("c");
     await page.locator(".gm-pop").waitFor();
     await axeOk(page, "the edit toolbar with Color open");
@@ -120,7 +120,7 @@ test("axe-core finds nothing in the key states: bar, choosing with keys, edit to
     await page.locator(".gm-menu").waitFor();
     await axeOk(page, "Page tools");
     await page.keyboard.press("Escape");
-    await page.keyboard.press("Control+Comma");
+    await page.keyboard.press("ControlOrMeta+Comma");
     await until(page, s => s.pane === "settings", "Settings");
     await axeOk(page, "Settings");
     await page.keyboard.press("Escape");

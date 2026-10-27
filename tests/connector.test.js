@@ -61,7 +61,7 @@ after(async () => {
 test("settings round-trip through ~/.morse/settings.json", { skip }, async () => {
   await pressOpen(page);
   await status(s => s.open, "the bar to open");
-  await page.keyboard.press("Control+Comma");
+  await page.keyboard.press("ControlOrMeta+Comma");
   await status(s => s.pane === "settings", "the settings sheet");
   await page.keyboard.press("Enter");
   await page.keyboard.press("Alt+KeyJ");

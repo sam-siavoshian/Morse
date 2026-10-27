@@ -180,7 +180,7 @@ test("auto-fix (off by default) fixes a gallery mod in the background, with Undo
   // Turn on "Fix my mods when a site changes".
   await page.keyboard.press(OPEN_KEY);
   await waitFor(s => s.open);
-  await page.keyboard.press("Control+Comma");
+  await page.keyboard.press("ControlOrMeta+Comma");
   await ui(".sheet [data-act=more]").click();
   await ui('details:has(input[data-k="autoFix"]) > summary').click();
   const sw = ui('.sheet input[data-k="autoFix"]');

@@ -100,7 +100,7 @@ function spaPage() {
 }
 
 // The effect's worst case: a target that fills a 4K screen.
-const effectPage = () => `<!doctype html><html><head><meta charset="utf-8"><title>Effect</title><style>body{margin:0;font:14px system-ui}#huge{position:absolute;inset:20px;background:#eef;border:1px solid #99c}</style></head><body><div id="huge"><h1>Huge target</h1></div></body></html>`;
+const effectPage = () => `<!doctype html><html><head><meta charset="utf-8"><title>Effect</title><style>body{margin:0;font:14px system-ui}#huge{position:absolute;inset:20px;background:#eef;border:1px solid #99c}</style></head><body><div id="huge"><article class="wrap"><h1>Huge target</h1><p>Content for the reading-mode change.</p></article></div></body></html>`;
 
 export const SYNTHETIC = { "/perf/big.html": bigPage, "/perf/chat.html": chatPage, "/perf/spa.html": spaPage, "/perf/effect.html": effectPage };
 
