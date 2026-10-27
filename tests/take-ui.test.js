@@ -142,7 +142,8 @@ test("a typed request that names a taken feature brings it; one for a well-known
     await page.keyboard.press("Enter");
     await until(async () => (await status(page)).phase === "result", 30000);
     assert.equal((await requests(page)).at(-1).context.bring.name, "Command palette");
-    assert.ok(await page.locator(".morse-pal-open").count(), "built here");
+    // The bar can say the change is showing before the open button is in the page.
+    await page.locator(".morse-pal-open").waitFor();
     await page.locator(".actions [data-a=undo]").click();
     await until(async () => !(await status(page)).open);
     await openBar(page);
