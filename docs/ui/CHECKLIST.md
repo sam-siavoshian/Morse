@@ -7,18 +7,14 @@ God mode (edit toolbar, popovers, frame, page tools, capture, clipboard),
 voice, settings, hotkey recorder, cheat sheet, suggestions, history and Stop,
 and (round 3) Mods for this site, Easier to use (with each page tool on the
 demo/sites/a11y library), user control (install review, off switch, pause,
-safe start, Show code, backup, the popup's pause switches), refine, version
+safe start, Show code, backup), refine, version
 history and a broken mod with Fix it, and (round 4) Show me once, Your style, the guards, first run in the bar, the
-extension's own pages (welcome, practice, popup: the real extension, headful under Xvfb, `--only=extension`) and the bar,
-panel, toolbar and settings on a page that enforces Trusted Types (pixel-compared with the normal page), and (round 5) mods
-waiting for “Allow User Scripts” (notice, bar note, panel tag, result, popup), mod packs (Make a pack, the install
+panel, toolbar and settings on a page that enforces Trusted Types (pixel-compared with the normal page), and (round 5) mod packs (Make a pack, the install
 review with ticks and clashes, the grouped panel, the update review), every status stage of a model run, and a
 guard row under Your style's softer colors pixel-compared with the same row without it, and (round 6) Morse Desktop (the real
-Electron app under Xvfb, `--only=desktop`: first run, Apps with the apps' own icons, Model with the real marks, Chrome, the
-Allow question, Mods, Checks, empty, loading and error states, the window at 760 × 560), the welcome page of onboarding v2
-and the “Allow User Scripts” window (`--only=welcome`: every step at 1280 and 390 in English, German and Persian), the
+Electron app under Xvfb, `--only=desktop`: first run, Apps with the apps' own icons, Model with the real marks, Mods, Checks, empty, loading and error states, the window at 760 × 560), the
 website and Try it here (`--only=site`: 1440, 768 and 390) and the newer bar states (`--only=new-bar`: Esc's “Kept”
-toast with Undo, the developer's “rebuilt” note, Your style's “Every site in Chrome” / “Every site and app”, Alt+↑ for a
+toast with Undo, Your style's “Every site in Chrome” / “Every site and app”, Alt+↑ for a
 bigger part, Redo), runs the automated checks marked **[auto]** on each
 shot, and writes `docs/ui/index.html`. Those pictures and `index.html` stay
 on the machine that ran it (they are in `.gitignore`). The rest are checked by eye; verdicts

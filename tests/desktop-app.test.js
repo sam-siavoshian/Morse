@@ -976,3 +976,16 @@ test("the packaged app includes every file it imports", async () => {
   }
   assert.ok(APP_FILES.includes("shortcut.js"));
 });
+
+test("updates wait for active work, not simply for connected sessions", async () => {
+  const { service } = setup();
+  let active = false;
+  service.sessions.set("idle-app", { connector: { isUpdateBusy: async () => active }, stop: async () => {} });
+  try {
+    assert.equal(await service.isUpdateBusy(), false);
+    active = true;
+    assert.equal(await service.isUpdateBusy(), true);
+    active = false;
+    assert.equal(await service.isUpdateBusy(), false);
+  } finally { await service.shutdown(); }
+});

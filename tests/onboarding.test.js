@@ -118,21 +118,19 @@ test("help pane: from the menu and F1, examples fill the input, links to the sho
   });
 });
 
-test("notices: no model has a button and can be dismissed for good; “Allow User Scripts” waits until a change needs it", { skip }, async () => {
-  await scenario("?onboarding&nomodel&noscripts", { coach: "done" }, async t => {
+test("notices: no model has a button and can be dismissed for good", { skip }, async () => {
+  await scenario("?onboarding&nomodel", { coach: "done" }, async t => {
     await t.open();
     assert.match(await t.q(".ob-note"), /No model connected yet/);
     await t.click(".ob-note [data-ob=model]");
     await t.page.waitForFunction(() => window.__fake.opened === "model");
     await t.click(".ob-note .ob-close");
-    // onboarding v2: no standing “Allow User Scripts” note (it comes with a change that needs it, 64-waiting.js)
     await t.page.waitForFunction(ui(".ob-note", "hidden"));
     assert.equal((await t.stored()).dismissed.model, true);
-    assert.ok(!(await t.stored()).dismissed.userScripts, "nothing about “Allow User Scripts” was shown to dismiss");
-    // The help pane still offers both.
+    // The help pane still offers model setup.
     await t.page.keyboard.press("F1");
     await t.waitFor(s => s.pane === "help");
-    assert.match(await t.q(".ob-help footer"), /No model connected.*Connect a model.*Turn on “Allow User Scripts”/s);
+    assert.match(await t.q(".ob-help footer"), /No model connected.*Connect a model/s);
   });
 });
 

@@ -11,13 +11,12 @@
 // Only English is built in. Another language's words are loaded when that
 // language is chosen (loadLanguage), from where the caller says
 // (setLanguageLoader): core/languages.js reads core/locales/ (the CLI, the
-// desktop connector, the website), the extension reads locales/<code>.json
-// from its own package (extension/words.js), and the in-page runtime asks its
+// desktop connector, the website), and the in-page runtime asks its
 // host (runtime/src/04-i18n.js). So no build carries every language.
 //
 // No dependencies besides the English catalog, which is plain data:
 // runtime/bundle.js inlines this file and it into the in-page runtime; the
-// extension pages, the share page and the CLI import it as a module.
+// desktop app, the share page and the CLI import it as a module.
 
 import en from "./locales/en.js";
 

@@ -11,7 +11,6 @@
 //   ?hist=1        fixture prompt history
 //   ?gallery=1 ?suspect=1 ?paused=1 ?versions=1   see the round 3 fixtures below
 //   ?style= ?guard=1 ?onboard=   see the round 4 fixtures below
-//   ?waiting=1 ?packs=1 ?lang=de  see the round 5 fixtures below
 (() => {
   if (globalThis.__morseHost) return;
   try { localStorage.setItem("morse:debug", "1"); } catch {}
@@ -108,7 +107,7 @@
   //                  on everywhere, off everywhere, off on this site, fitted to this site
   //   ?guard=1       three mods the guards paused (slowing, froze, hid) and one that is
   //                  about to slow the page (C.slow: the kit's __stats says so)
-  //   ?onboard=new|nomodel|noscripts|done   first-run progress (onboarding.get)
+  //   ?onboard=new|nomodel|done   first-run progress (onboarding.get)
   const where = () => ({ url: location.href, app: null });
   const styleHost = q.get("style") ? import("/core/style-host.js").then(async ({ createStyleHost }) => {
     const { parseStyleWords, mergeStyle, styleKey } = await import("/core/style.js");
@@ -135,14 +134,12 @@
   }
   if (q.get("style") === "fitted") C.mods.push(fixture(50, { title: `Your style for ${location.host}`, prompt: "Fit Your style to this site", parent: "morse-style", css: ".app { max-width: 100vw }" }));
   const ONBOARD = {
-    new: { state: {}, status: { mode: "catalog", model: { connected: true }, userScripts: true } },
-    nomodel: { state: { coach: "done" }, status: { mode: "catalog", model: { connected: false }, userScripts: true } },
-    noscripts: { state: { coach: "done" }, status: { mode: "catalog", model: { connected: true }, userScripts: false } },
-    done: { state: { coach: "done", tips: { saved: true } }, status: { mode: "catalog", model: { connected: true }, userScripts: true } },
+    new: { state: {}, status: { mode: "catalog", model: { connected: true } } },
+    nomodel: { state: { coach: "done" }, status: { mode: "catalog", model: { connected: false } } },
+    done: { state: { coach: "done", tips: { saved: true } }, status: { mode: "catalog", model: { connected: true } } },
   }[q.get("onboard") || ""];
 
-  // ---- round 5 fixtures: “Allow User Scripts” off, mod packs
-  //   ?waiting=1   a mod's code waits for “Allow User Scripts” (exec answers { waiting })
+  // ---- round 5 fixtures: mod packs
   //   ?packs=1     mod packs, with the real core/pack-host.js kept in memory. The team's
   //                pack is at PACK_URL (C.packServed); __cat.later(days) moves the clock
   //                on, so the next check fetches it again
@@ -208,10 +205,9 @@
         if (code === "en" || !/^[a-z]{2}(-[A-Z]{2})?$/.test(code)) return reply(null);
         try { return reply((await import(`/core/locales/${code}.js`)).default); } catch { return reply(null); }
       }
-      if (q.get("waiting") && m.type === "exec") return reply({ waiting: "userScripts" });
       if (m.type === "stats" && C.slow?.[m.modId]) return reply({ watches: [], paused: C.slow[m.modId] });
       switch (m.type) {
-        case "hello": return reply({ mode: "catalog", rebuilt: q.get("rebuilt") === "1", label: C.label, quiet: q.get("quiet") !== "0", appName: q.get("app") || null, settings: C.settings, voice });
+        case "hello": return reply({ mode: "catalog", label: C.label, quiet: q.get("quiet") !== "0", appName: q.get("app") || null, settings: C.settings, voice });
         case "settings.get": return reply(C.settings);
         case "settings.set": C.settings = merge(C.settings, m.settings); return reply(structuredClone(C.settings));
         case "history.get": return reply(C.history.slice());

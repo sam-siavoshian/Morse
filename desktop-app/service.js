@@ -653,6 +653,11 @@ export function createService({
   return {
     state, apps, openApp, openBar, openCombo, openFromShortcut, disconnectApp, addApp, model, modelChoices, chooseModel, setFastMode, check,
     mods, setModOn, deleteMod, undeleteMod, pause, setAllModsOff, doctor, setSetting, setOpenShortcut, loadSettings, shutdown,
+    async isUpdateBusy() {
+      if (pending.size) return true;
+      const busy = await Promise.all([...own.values()].map(s => s.connector?.isUpdateBusy?.() ?? false));
+      return pending.size > 0 || busy.some(Boolean);
+    },
     get sessions() { return own; },
   };
 }

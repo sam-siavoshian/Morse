@@ -274,7 +274,7 @@ function changed() {
     if (!service) return;
     try { lastState = { ...(await service.state()), update: updater?.status || { phase: "idle" } }; } catch (e) { log("state", e.message); return; }
     if (win && !win.isDestroyed()) win.webContents.send(PUSH, lastState);
-    updater?.idle(); // an app was disconnected: a downloaded update may install now
+    updater?.idle(); // a change may have finished: a downloaded update can install now
     rebuildTray();
   }, 120);
 }
@@ -283,6 +283,23 @@ async function quit() {
   quitting = true;
   try { opener?.unregister(); } catch {}
   app.quit();
+}
+// Automatic updates use app.exit after the installer is ready, which skips
+// Electron's quit events. Release sessions and native resources explicitly.
+async function prepareForUpdate() {
+  quitting = true;
+  shutDown = true;
+  updater?.stop();
+  clearTimeout(pushTimer);
+  try { opener?.unregister(); globalShortcut.unregisterAll(); } catch {}
+  let timeout;
+  try {
+    await Promise.race([
+      service?.shutdown(),
+      new Promise(resolve => { timeout = setTimeout(resolve, 5000); }),
+    ]);
+  } catch (e) { log("update cleanup", e.message); }
+  finally { clearTimeout(timeout); }
 }
 let shutDown = false;
 app.on("before-quit", e => {
@@ -348,7 +365,7 @@ app.whenReady().then(async () => {
   // Before the daemon. If starting the daemon throws, the window is already
   // up: Check for updates still has an updater to ask, instead of the
   // "couldn't check" sentence from a missing one.
-  updater = createUpdater({ app, log, getAppImage: () => APPIMAGE, busy: () => !!service?.sessions.size, onStatus: () => { changed(); if (["downloading", "ready"].includes(updater?.status.phase) && win && !win.isVisible()) showWindow(); } });
+  updater = createUpdater({ app, log, getAppImage: () => APPIMAGE, busy: () => service?.isUpdateBusy() ?? false, beforeExit: prepareForUpdate, onStatus: () => { changed(); if (["downloading", "ready"].includes(updater?.status.phase) && win && !win.isVisible()) showWindow(); } });
   updater.start();
   createWindow();
   tray = new Tray(trayIcon());

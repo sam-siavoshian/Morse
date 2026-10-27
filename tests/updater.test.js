@@ -49,14 +49,14 @@ function fakeRelease(files) {
   return { fetchImpl, asked };
 }
 
-function setup(files, { local = { commit: "abc1234", builtAt: "2026-10-25T00:00:00Z", version: "0.3.1" }, packaged = true } = {}) {
+function setup(files, { local = { commit: "abc1234", builtAt: "2026-10-25T00:00:00Z", version: "0.3.1" }, packaged = true, options = {} } = {}) {
   const dir = mkdtempSync(path.join(os.tmpdir(), "morse-updater-"));
   writeFileSync(path.join(dir, "build-info.json"), JSON.stringify(local));
   const { fetchImpl, asked } = fakeRelease(files);
   const app = { isPackaged: packaged, getPath: () => path.join(dir, "userData"), exit() { throw new Error("must not install while busy"); } };
   const statuses = [];
-  const updater = createUpdater({ app, fetchImpl, here: dir, busy: () => true, onStatus: s => statuses.push(s.phase) });
-  return { updater, asked, dir, statuses, done: () => rmSync(dir, { recursive: true, force: true }) };
+  const updater = createUpdater({ app, fetchImpl, here: dir, busy: () => true, onStatus: s => statuses.push(s.phase), ...options });
+  return { app, updater, asked, dir, statuses, done: () => { updater.stop(); rmSync(dir, { recursive: true, force: true }); } };
 }
 
 const asset = assetFor();
@@ -325,4 +325,203 @@ test("the relaunch script opens the new app only after this one has quit, and on
       }
     }
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+const downloadedRelease = () => {
+  const body = "verified new app";
+  return {
+    "build.json": JSON.stringify({ commit: "def5678", builtAt: "2026-10-25T02:00:00Z", version: "0.4.0" }),
+    SHA256SUMS: `${createHash("sha256").update(body).digest("hex")}  ${asset}\n`,
+    [asset]: body,
+  };
+};
+const flushUpdate = () => new Promise(resolve => setImmediate(resolve));
+
+test("an idle connection updates automatically once, after installer handoff and cleanup", { skip: !asset }, async t => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const events = [];
+  const ctx = setup(downloadedRelease(), { options: {
+    busy: async () => false,
+    install: async () => { events.push("installer ready"); },
+    beforeExit: async () => { events.push("sessions stopped"); },
+  } });
+  ctx.app.releaseSingleInstanceLock = () => events.push("lock released");
+  ctx.app.exit = code => events.push(`exit ${code}`);
+  try {
+    await ctx.updater.check();
+    for (let i = 0; i < 20; i++) ctx.updater.idle();
+    assert.deepEqual(events, [], "download alone does not interrupt cleanup");
+    t.mock.timers.tick(1500); await flushUpdate();
+    assert.deepEqual(events, ["installer ready", "sessions stopped", "lock released", "exit 0"]);
+    assert.equal(ctx.updater.status.phase, "installing");
+    t.mock.timers.tick(10000); await flushUpdate();
+    assert.equal(events.filter(x => x === "installer ready").length, 1);
+  } finally { ctx.done(); }
+});
+
+test("work starting during the countdown defers installation until the next idle check", { skip: !asset }, async t => {
+  t.mock.timers.enable({ apis: ["setTimeout", "setInterval"] });
+  let active = false, installs = 0;
+  const ctx = setup(downloadedRelease(), { options: { busy: () => active, install: async () => { installs++; } } });
+  ctx.app.exit = () => {};
+  try {
+    ctx.updater.start();
+    await ctx.updater.check();
+    active = true;
+    t.mock.timers.tick(1500); await flushUpdate();
+    assert.equal(installs, 0);
+    active = false;
+    t.mock.timers.tick(5000); await flushUpdate();
+    t.mock.timers.tick(1500); await flushUpdate();
+    assert.equal(installs, 1, "the updater notices idle even without a window state event");
+  } finally { ctx.done(); }
+});
+
+test("Later cancels automatic installation, but quitting installs without relaunching", { skip: !asset }, async t => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const installs = [];
+  const ctx = setup(downloadedRelease(), { options: { busy: () => false, install: async opts => installs.push(opts.relaunch) } });
+  ctx.app.exit = () => {};
+  try {
+    await ctx.updater.check();
+    ctx.updater.later(); ctx.updater.idle();
+    t.mock.timers.tick(10000); await flushUpdate();
+    assert.deepEqual(installs, []);
+    assert.equal(ctx.updater.status.phase, "later");
+    assert.equal(ctx.updater.onQuit(), true);
+    await flushUpdate();
+    assert.deepEqual(installs, [false]);
+  } finally { ctx.done(); }
+});
+
+test("stopping the updater cancels both startup and a pending installation", { skip: !asset }, async t => {
+  t.mock.timers.enable({ apis: ["setTimeout", "setInterval"] });
+  let installs = 0;
+  const ctx = setup(downloadedRelease(), { options: { busy: () => false, install: async () => { installs++; } } });
+  ctx.app.exit = () => {};
+  try {
+    ctx.updater.start();
+    await ctx.updater.check();
+    const requests = ctx.asked.length;
+    ctx.updater.stop();
+    t.mock.timers.tick(4 * 60 * 60 * 1000); await flushUpdate();
+    assert.equal(installs, 0);
+    assert.equal(ctx.asked.length, requests);
+  } finally { ctx.done(); }
+});
+
+test("a verified pending download is installed after restart without another download", { skip: !asset }, async t => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const ctx = setup(downloadedRelease());
+  let resumed, installs = 0;
+  try {
+    await ctx.updater.check(); ctx.updater.stop();
+    ctx.app.exit = () => {};
+    resumed = createUpdater({ app: ctx.app, here: ctx.dir, busy: () => false,
+      fetchImpl: async () => { throw new Error("offline"); },
+      install: async ({ file }) => { assert.equal(readFileSync(file, "utf8"), "verified new app"); installs++; },
+    });
+    assert.equal(await resumed.check(), "ready");
+    t.mock.timers.tick(1500); await flushUpdate();
+    assert.equal(installs, 1);
+  } finally { resumed?.stop(); ctx.done(); }
+});
+
+test("a corrupt cached download is not installed, and a failed installer never exits Morse", { skip: !asset }, async t => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const ctx = setup(downloadedRelease());
+  let resumed, exits = 0;
+  ctx.app.exit = () => { exits++; };
+  try {
+    await ctx.updater.check(); ctx.updater.stop();
+    writeFileSync(path.join(ctx.dir, "userData", "updates", asset), "corrupt");
+    resumed = createUpdater({ app: ctx.app, here: ctx.dir, busy: () => false,
+      fetchImpl: async () => { throw new Error("offline"); },
+    });
+    assert.equal(await resumed.check({ user: true }), "error");
+    assert.equal(resumed.ready, false);
+    resumed.stop();
+    const { fetchImpl } = fakeRelease(downloadedRelease());
+    resumed = createUpdater({ app: ctx.app, here: ctx.dir, fetchImpl, busy: () => false,
+      install: async () => { throw new Error("cannot launch installer"); },
+    });
+    await resumed.check(); t.mock.timers.tick(1500); await flushUpdate();
+    assert.equal(resumed.status.phase, "failed");
+    assert.equal(exits, 0);
+    assert.equal(resumed.ready, true, "verified download remains available for retry");
+  } finally { resumed?.stop(); ctx.done(); }
+});
+
+test("macOS installs a real ZIP and its detached helper cleans up after the parent exits", { skip: process.platform !== "darwin" }, async () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "morse-mac-update-"));
+  const dest = path.join(dir, "Applications", "Morse.app");
+  const fresh = path.join(dir, "release", "Morse.app");
+  const zip = path.join(dir, "Morse.zip");
+  try {
+    mkdirSync(dest, { recursive: true }); writeFileSync(path.join(dest, "mark"), "old");
+    mkdirSync(fresh, { recursive: true }); writeFileSync(path.join(fresh, "mark"), "new");
+    execFileSync("ditto", ["-c", "-k", "--keepParent", fresh, zip]);
+    const entry = path.join(dir, "install.mjs");
+    writeFileSync(entry, `import { installUpdate } from ${JSON.stringify(new URL("../desktop-app/updater.js", import.meta.url).href)};
+await installUpdate({ app: { getPath: () => ${JSON.stringify(dir)} }, file: ${JSON.stringify(zip)}, dir: ${JSON.stringify(dir)}, platform: "darwin", executable: ${JSON.stringify(dest + "/Contents/MacOS/Morse")}, relaunch: false });`);
+    execFileSync(process.execPath, [entry], { timeout: 15000 });
+    assert.equal(readFileSync(path.join(dest, "mark"), "utf8"), "new");
+    const end = Date.now() + 8000;
+    while (existsSync(`${dest}.old`) && Date.now() < end) await new Promise(r => setTimeout(r, 50));
+    assert.equal(existsSync(`${dest}.old`), false, "detached worker survives the installing process");
+    assert.equal(existsSync(`${dest}.next`), false);
+    // A later update must not retain files from the previous extracted bundle.
+    writeFileSync(path.join(dir, "new", "Morse.app", "removed-in-next-build"), "obsolete");
+    writeFileSync(path.join(fresh, "mark"), "newer");
+    rmSync(zip);
+    execFileSync("ditto", ["-c", "-k", "--keepParent", fresh, zip]);
+    execFileSync(process.execPath, [entry], { timeout: 15000 });
+    assert.equal(readFileSync(path.join(dest, "mark"), "utf8"), "newer");
+    assert.equal(existsSync(path.join(dest, "removed-in-next-build")), false);
+    const again = Date.now() + 8000;
+    while (existsSync(`${dest}.old`) && Date.now() < again) await new Promise(r => setTimeout(r, 50));
+    assert.equal(existsSync(`${dest}.old`), false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("Linux helper replaces the AppImage and launches it after the parent exits", { skip: process.platform === "win32" }, async () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "morse-linux-update-"));
+  const dest = path.join(dir, "Morse.AppImage"), fresh = path.join(dir, "new.AppImage"), marker = path.join(dir, "opened");
+  try {
+    writeFileSync(dest, "old");
+    const quoted = `'${marker.replaceAll("'", "'\\''")}'`;
+    writeFileSync(fresh, `#!/bin/sh\nprintf '%s' "$1" > ${quoted}\n`);
+    const entry = path.join(dir, "install.mjs");
+    writeFileSync(entry, `import { installUpdate } from ${JSON.stringify(new URL("../desktop-app/updater.js", import.meta.url).href)};
+await installUpdate({ file: ${JSON.stringify(fresh)}, dir: ${JSON.stringify(dir)}, platform: "linux", getAppImage: () => ${JSON.stringify(dest)}, relaunch: true });`);
+    execFileSync(process.execPath, [entry], { timeout: 15000 });
+    const end = Date.now() + 8000;
+    while (!existsSync(marker) && Date.now() < end) await new Promise(r => setTimeout(r, 50));
+    assert.equal(readFileSync(marker, "utf8"), "--updated");
+    assert.equal(existsSync(`${dest}.old`), false);
+    assert.equal(existsSync(`${dest}.next`), false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("a Windows installer that cannot be spawned reports failure instead of exiting", async () => {
+  const { installUpdate } = await import("../desktop-app/updater.js");
+  await assert.rejects(installUpdate({ file: path.join(os.tmpdir(), "no-such-morse-installer.exe"), platform: "win32" }), /ENOENT/);
+});
+
+test("concurrent checks share a download and a successful upgrade clears staged copies", { skip: !asset }, async () => {
+  const ctx = setup(downloadedRelease());
+  let next;
+  try {
+    assert.deepEqual(await Promise.all([ctx.updater.check(), ctx.updater.check()]), ["ready", "ready"]);
+    assert.equal(ctx.asked.filter(url => url.endsWith(`/${asset}`)).length, 1);
+    ctx.updater.stop();
+    const updates = path.join(ctx.dir, "userData", "updates");
+    mkdirSync(path.join(updates, "new", "Morse.app"), { recursive: true });
+    writeFileSync(path.join(ctx.dir, "build-info.json"), JSON.stringify({ commit: "def5678", builtAt: "2026-10-25T02:00:00Z", version: "0.4.0" }));
+    const { fetchImpl } = fakeRelease(downloadedRelease());
+    next = createUpdater({ app: ctx.app, here: ctx.dir, fetchImpl, busy: () => true });
+    assert.equal(await next.check(), "current");
+    for (const file of [asset, "new", "pending.json", "attempt.json"]) assert.equal(existsSync(path.join(updates, file)), false, file);
+    assert.equal(existsSync(path.join(updates, "updater.log")), true, "diagnostics survive the successful upgrade");
+  } finally { next?.stop(); ctx.done(); }
 });

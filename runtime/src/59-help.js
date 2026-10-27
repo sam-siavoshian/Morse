@@ -28,7 +28,6 @@ function helpSetup() {
   const rows = [];
   if (modelMissing(status, S.label)) rows.push(`<span>${t("help.noModel")}</span><button type="button" class="tbtn" data-ob="model">${t("welcome.model.b")}</button>`);
   else if (S.label) rows.push(`<span class="dim">${t("help.model", { label: esc(S.label) })}</span>`);
-  if (status.userScripts === false) rows.push(`<button type="button" class="tbtn" data-ob="userscripts">${t("help.userScripts")}</button>`);
   return rows.join("");
 }
 

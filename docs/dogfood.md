@@ -81,10 +81,6 @@ from the welcome page. Each task was watched closely on its own screen, with
   ([Your style](your-style.md)).
 - **Esc on a result** still keeps it, but now says so: “Kept … Closing the bar
   keeps a change.”, with Undo right there (`runtime/src/60-generate.js`).
-- **A stale extension after a rebuild.** A build from `npm run build` puts an
-  id in the extension and in `build-id.txt`. When they differ, the bar
-  says “Morse was rebuilt. Reload it in chrome://extensions, then reload this
-  page.” Never in a store build (`extension/dev-host.js`).
 - **Disk.** `demo/perf.js` and `tests/perf.test.js` remove the
   `/tmp/morse-perf-*` folders they make, and the packaged Tunes copies in
   `~/.cache/morse/tunes` (up to 224 MB each; the folder had reached 4.6 GB)
@@ -130,8 +126,7 @@ Each fix has a test that failed before it:
 `tests/style.test.js`, `tests/bridge.test.js` and `tests/style-share.test.js`
 (Your style shared through the helper, and the words when it isn't),
 `tests/iterate.test.js` (Esc says it kept the change, with Undo),
-`tests/dev-build.test.js` and `tests/store.test.js` (the rebuilt note, never
-in a store build) and `tests/perf.test.js` (its temp folders).
+and `tests/perf.test.js` (its temp folders).
 
 ## Pictures
 

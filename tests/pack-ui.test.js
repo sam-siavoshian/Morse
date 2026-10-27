@@ -42,7 +42,7 @@ before(async () => {
   if (skip) return;
   await fs.mkdir(path.join(home, "mods"), { recursive: true });
   await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false, gallery: false }));
-  await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } }));
+  await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true } }));
   port = await freePort();
   server = http.createServer((req, res) => {
     if (req.url.startsWith("/team.morse-pack.json")) {

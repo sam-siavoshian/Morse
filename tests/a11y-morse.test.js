@@ -18,7 +18,7 @@ import os from "node:os";
 import path from "node:path";
 import { bundleRuntime } from "../runtime/bundle.js";
 import { axeCheck, axeLines } from "../demo/axe.js";
-import { chromium, launchBrowser, noBrowser, noDisplay } from "./helpers/browser.js";
+import { launchBrowser, noBrowser } from "./helpers/browser.js";
 import { HOTKEYS, pressOpen } from "./helpers/keys.js";
 import { waitFor, waitForStatus, settle, TIMEOUT } from "./helpers/wait.js";
 
