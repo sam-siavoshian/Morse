@@ -38,8 +38,22 @@ installs themselves** (`frida`, which `daemon/` never requires).
 
 Adopting any of this into the shipping product is a maintainer decision about
 what Morse is willing to be, not a detail of this prototype. The code is
-written so that decision stays easy to make in either direction: nothing in
-`daemon/` imports from `native-dbi/`.
+written so that decision stays easy to make in either direction: the one seam
+into the daemon is `daemon/native-dbi.js`, and `daemon/` reaches the prototype
+only through it.
+
+**Wired in (CLI only, so far).** `morse launch <native app>` now takes the DBI
+route instead of printing "can't connect": it finds the app's running process,
+runs the ownership gate and the platform assessment, and — when `frida` is
+installed and the target is attachable — holds a native session that
+`morse status` and `morse stop` manage like any other. `morse apps` lists
+native apps as `native · experimental` rather than unconnectable. This stays
+deliberately narrow: the native route is not CDP, so `attachVerdict` keeps
+`canAttach:false` for native apps (a new `dbi:true` flag marks the route), and
+the **Electron desktop app's own macOS Accessibility native path is untouched**
+— folding DBI into that UI is a separate, larger piece of work. There are no
+native *mods* yet: launch attaches and holds the connection (the substrate),
+and authoring/among-revisions mod generation is future work.
 
 ### Non-goals, enforced where we can and stated where we can't
 
@@ -231,5 +245,8 @@ Prototype. Pure modules (`sigscan.js`, `schema.js`, the parsing/diagnostic
 logic in `boundaries.js`, the REA response mapping in `rea-inspect.js`) run and
 are unit-testable without Frida or a target. The Frida paths
 (`frida-runner.js`, `agent.js`) are written against Frida's documented API and
-need `frida` installed plus a real, user-owned target to exercise. No part of
-this is wired into the CLI, the desktop app, or `daemon/`.
+need `frida` installed plus a real, user-owned target to exercise. Reached from
+the CLI through `daemon/native-dbi.js` and `morse launch` (above); the Electron
+desktop app and the CDP connector are untouched. Covered by
+`tests/native-dbi.test.js` (pure modules) and `tests/native-launch.test.js`
+(the daemon bridge's frida-optional guard).

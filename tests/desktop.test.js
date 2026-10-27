@@ -44,7 +44,8 @@ test("discovers macOS apps from .app bundles: Info.plist, Electron Framework, CE
   assert.equal(found.slack.electron, "32.2.6");
   assert.equal(found.slack.bundleId, "com.tinyspeck.slackmacgap");
   assert.equal(found.spotify.engine, "cef");
-  assert.equal(found.chatgpt.canAttach, false, "ChatGPT for Mac is native");
+  assert.equal(found.chatgpt.canAttach, false, "ChatGPT for Mac is native (not CDP-attachable)");
+  assert.equal(found.chatgpt.dbi, true, "but reachable by the experimental DBI route");
   assert.match(found.chatgpt.why, /native/);
   assert.equal(found.obsidian.path, "/Users/sam/Applications/Obsidian.app", "~/Applications is searched");
   assert.equal(found.beeper.known, false, "Electron apps outside the catalog are listed too");
@@ -92,9 +93,10 @@ test("`morse apps` output: attachable first, plain reasons, running state", asyn
   assert.match(out, /Apps Morse found on this Mac/);
   assert.match(out, /Slack .*open without Morse → morse launch slack --restart/);
   assert.match(out, /VS Code .*connected · port 9333/);
-  assert.match(out, /ChatGPT .*can't connect: native app, not built on web technology/);
-  const lines = out.split("\n");
-  assert.ok(lines.findIndex(l => l.includes("ChatGPT")) > lines.findIndex(l => l.includes("VS Code")), "apps Morse can't attach to go last");
+  // Native apps are no longer a flat "can't connect": they get the
+  // experimental DBI route (morse launch), not the CDP path.
+  assert.match(out, /ChatGPT .*native · experimental · morse launch chatgpt/);
+  assert.doesNotMatch(out, /ChatGPT .*can't connect/);
   assert.match(out, /Other Electron and Chromium apps\n.*Beeper/);
 });
 

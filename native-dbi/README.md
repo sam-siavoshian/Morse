@@ -6,9 +6,11 @@ change today, using [Frida](https://frida.re) for instrumentation and
 
 > **Read [`docs/dev/native-dbi.md`](../docs/dev/native-dbi.md) first.** This
 > crosses the "no native instrumentation" boundary Morse set on purpose
-> (`docs/dev/rea.md`). It is opt-in, off by default, gated on an optional
-> dependency (`frida`), and **nothing in `daemon/` imports it.** Adopting any of
-> it into the product is a maintainer decision, not a detail of this prototype.
+> (`docs/dev/rea.md`). It is opt-in, off by default, and gated on an optional
+> dependency (`frida`). `daemon/` reaches it only through the one seam
+> `daemon/native-dbi.js`, used by `morse launch` for native apps; the Electron
+> desktop app and the CDP connector are untouched. Adopting it further into the
+> product is a maintainer decision, not a detail of this prototype.
 
 ## What's here
 
