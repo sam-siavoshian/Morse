@@ -251,7 +251,6 @@ function BAR_CSS() { return `
     .bar.done .hint { flex-basis: calc(100% - 38px); }
     .bar .actions { max-width: calc(100% - 38px); }
   }
-  .bar.working .hint.shine { background: none; color: var(--m-text-2); -webkit-text-fill-color: currentColor; animation: none; }
 
   /* Quiet surfaces and clear grouping keep the request as the focal point. */
   .bar, .bar.solid, .bar.has-pane { background: var(--m-surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
