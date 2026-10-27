@@ -55,6 +55,7 @@ async function showVersion(id, v) {
 // opts.from: the draft being refined (its id is reused, so the new code
 // replaces the old one live). opts.base: { prompt, css, js, error? } for the model.
 async function submit(request, opts = {}) {
+  if (S.draft?.saving) return;
   const prev = opts.from || null;
   S.phase = "working";
   S.picking = false;
@@ -65,7 +66,7 @@ async function submit(request, opts = {}) {
   clearHostMarks();
   syncPickFlag();
   input.disabled = true;
-  bar.classList.remove("done", "err");
+  bar.classList.remove("done", "err", "has-error");
   bar.classList.add("working");
   const id = prev ? prev.id : uid();
   const ctx = context();
@@ -174,8 +175,11 @@ async function submit(request, opts = {}) {
       if (res.cancelled) return onCancelled(id); // Stop: 50-bar.js
       releasePick();
       S.phase = "error";
+      input.disabled = false;
+      input.focus({ preventScroll: true });
       bar.classList.add("err");
-      hint.innerHTML = guardRefusalHint(res.error) || t("result.failed", { detail: esc(plainError(res.error).slice(0, 120)) }); // guard hook: 64-guard.js
+      hint.tabIndex = 0;
+      hint.innerHTML = guardRefusalHint(res.error) || t("result.failed", { detail: esc(plainError(res.error)) }); // guard hook: 64-guard.js
       announce(t("result.failedSay", { text: hint.textContent }));
       hint.title = res.error || "";
       actions.innerHTML = `<button data-a="again">${t("result.again")}</button>`;
@@ -190,29 +194,31 @@ async function submit(request, opts = {}) {
 
 // The result: the title, how it went, and what you can do next. The input
 // stays open for a follow-up.
-function showResult(d, { note = "", error = "", keepInput = false } = {}) {
+function showResult(d, { note = "", error = "", keepInput = false, saveError = false } = {}) {
   releasePick();
   S.phase = "result";
   bar.classList.remove("err", "working");
   bar.classList.add("done");
+  bar.classList.toggle("has-error", !!error);
+  if (error) hint.tabIndex = 0; else hint.removeAttribute("tabindex");
   input.disabled = false;
   input.placeholder = REFINE_PLACEHOLDER();
   if (!keepInput) setInput("");
   const n = versionsOf(d).length + 1;
   // The follow-up sits on this same row, so the line under the input is about
   // the change that's already showing, not a second request.
-  const follow = !d.saved && d.refined && d.refined !== (d.prompt || d.request) ? d.refined.trim().slice(0, 42) : "";
-  const meta = note || [follow, d.secs && !d.saved ? t("result.secs", { secs: d.secs }) : "", d.attempts > 1 && !d.saved ? t("result.secondTry") : "", n > 1 ? t("result.version", { n }) : ""].filter(Boolean).join(" · ");
-  hint.title = error || note; // a long note ends in an ellipsis in the bar: the whole sentence is here
+  const meta = note || [!d.saved ? t("result.preview") : "", n > 1 ? t("result.version", { n }) : ""].filter(Boolean).join(" · ");
+  hint.title = error || note || [d.refined, d.attempts > 1 ? t("result.secondTry") : ""].filter(Boolean).join(" · "); // a long note ends in an ellipsis in the bar: the whole sentence is here
   hint.innerHTML = error
-    ? `<b class="ok">${esc(d.title)}</b> <span class="note">${t("result.failedNote", { detail: esc(error).slice(0, 120) })}</span>`
+    ? `<b class="ok">${esc(d.title)}</b> <span class="note">${t(saveError ? "result.saveFailed" : "result.failedNote", { detail: esc(error) })}</span>`
     : `<b class="ok">${esc(d.title)}</b> <span class="dim${note ? " said" : ""}">${esc(meta || (d.saved ? t("result.describeChange") : ""))}</span>`;
   ticker.textContent = "";
   actions.innerHTML = d.saved
     ? `<button data-a="code">${t("btn.editCode")}</button><button data-a="keep">${t("btn.done")}</button>`
     : `<button data-a="keep" class="primary">${t("btn.save")} <kbd>↵</kbd></button><button data-a="undo">${t("btn.undo")}</button>`; // simplify: Edit code and Share are in ⋯ (50-bar.js menuItems)
   updateChips();
-  announce(error ? t("gen.sayFailed", { title: d.title, error })
+  announce(saveError ? t("result.saveFailed", { detail: error })
+    : error ? t("gen.sayFailed", { title: d.title, error })
     : note ? `${d.title}. ${note}`
     : d.saved ? t("gen.saySaved", { title: d.title })
     : t("gen.sayDone", { title: d.title, meta: meta ? `, ${meta}` : "" }));
@@ -236,7 +242,7 @@ function tick(t) {
 // ---- refine
 function refine(text) {
   const d = S.draft;
-  if (!d || S.phase !== "result" || !text) return;
+  if (!d || d.saving || S.phase !== "result" || !text) return;
   hintNote = "";
   Voice.cancel();
   hideMenu();
@@ -250,20 +256,6 @@ function refine(text) {
 const markRefining = () => bar.classList.toggle("refining", S.phase === "result" && !!input.value.trim());
 input.addEventListener("input", markRefining);
 new MutationObserver(markRefining).observe(bar, { attributes: true, attributeFilter: ["class"] });
-input.addEventListener("keydown", e => {
-  if (S.phase !== "result" || e.isComposing || e.keyCode === 229) return;
-  if (e.key === "Enter" && !e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey) {
-    e.preventDefault();
-    const v = input.value.trim();
-    if (v) send(v); else keep();
-  }
-});
-goBtn.addEventListener("click", () => {
-  if (S.phase !== "result") return;
-  const v = input.value.trim();
-  if (v) send(v); else keep();
-});
-
 // ⌘Z / Ctrl+Z after a result: one version back. ⌘⇧Z / Ctrl+Shift+Z (or
 // Ctrl+Y) forward again (dogfood: a step back used to lose the newer version
 // for good). Typing in the input keeps the usual text undo; God mode's own ⌘Z
@@ -282,7 +274,7 @@ listen("keydown", e => {
 
 async function stepBackDraft() {
   const d = S.draft;
-  if (!d) return;
+  if (!d || d.saving) return;
   const back = stepBack(d);
   if (!back) {
     if (!d.mod) return undo(); // the first version of a new change: same as Undo
@@ -295,6 +287,7 @@ async function stepBackDraft() {
 // The version a step back left, while nothing new was asked since (dogfood).
 async function stepForwardDraft() {
   const d = S.draft;
+  if (d?.saving) return;
   const ahead = d?.ahead || [];
   if (!ahead.length) return;
   const next = Object.assign(ahead[ahead.length - 1], { saved: null, saving: null, ahead: ahead.slice(0, -1) });
@@ -346,7 +339,18 @@ async function keep({ closed = false } = {}) {
     if (S.phase === "result" && S.draft === d) { S.phase = "idle"; closeBar(); } // "Done" on a saved mod
     return d.saved;
   }
-  if (d.saving) return d.saving; // Save then Share (or a double click) saves once
+  if (d.saving) return d.saving.catch(() => null); // Save then Share (or a double click) saves once
+  hideMenu();
+  const locked = [...bar.querySelectorAll("button, textarea, input")].map(el => [el, el.disabled]);
+  locked.forEach(([el]) => { el.disabled = true; });
+  bar.classList.add("saving");
+  bar.classList.remove("has-error");
+  bar.setAttribute("aria-busy", "true");
+  hint.textContent = t("result.saving");
+  hint.title = "";
+  announce(t("result.saving"));
+  const saveButton = actions.querySelector('[data-a="keep"]');
+  if (saveButton) saveButton.textContent = t("result.saving");
   d.saving = (async () => {
     if (d.mod) {
       // Refined a saved mod: same mod, new version.
@@ -359,11 +363,24 @@ async function keep({ closed = false } = {}) {
     }
     const saved = await call("mods.save", { draft: { id: d.id, title: d.title, prompt: d.request, css: d.css, js: d.js, url: location.href, app: S.app, target: d.ctx?.target, model: d.model,
       ...(d.history?.length ? { history: d.history } : {}), ...(d.refined ? { refined: d.refined } : {}), ...(d.style || {}) /* your-style hook: a fit for this site (72-style.js) */ } });
+    if (!saved?.id) throw new Error(t("err.generic"));
     S.mods.push(saved);
     return saved;
   })();
   let mod;
-  try { mod = await d.saving; } finally { d.saving = null; }
+  let saveFailure;
+  try { mod = await d.saving; }
+  catch (error) { saveFailure = plainError(error); }
+  finally {
+    d.saving = null;
+    bar.classList.remove("saving");
+    bar.setAttribute("aria-busy", "false");
+    locked.forEach(([el, disabled]) => { el.disabled = disabled; });
+  }
+  if (saveFailure) {
+    showResult(d, { error: saveFailure, saveError: true, keepInput: true });
+    return null;
+  }
   d.saved = mod;
   d.mod = mod;
   Health.ran(mod, { ok: true }); // it ran fine just now; check it keeps finding its elements
@@ -393,6 +410,7 @@ async function undoKept(mod, before) {
   if (!panel.hidden) renderPanel();
 }
 async function undo() {
+  if (S.draft?.saving) return;
   const d = S.draft;
   if (!d) return;
   if (d.mod) {

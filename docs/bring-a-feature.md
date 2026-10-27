@@ -1,7 +1,8 @@
 # Bring a feature from one app to another
 
-Like the command palette in VS Code, the dark mode switch on one site, or the
-“Jump to” box on another? Take it, and bring it into the app you use.
+Take the feature. Put it where you want. Ask for VS Code’s command palette
+in your inbox, or a search-and-jump control inside an app that has none.
+Morse rebuilds the behavior using the receiving app’s own controls and style.
 
 1. In the app or site that has it, open Morse and choose **Take this**.
 2. In the app or site that should have it, open Morse and choose

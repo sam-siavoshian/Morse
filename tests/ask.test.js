@@ -184,12 +184,14 @@ test("Follow-ups carry the page's earlier questions; New topic forgets them", { 
 
 test("Explain this page from the page tools: a plain summary with markers", { skip }, () => scenario(async ({ page }) => {
   await pressOpen(page);
-  await page.locator(".gm-qbtn").click();
+  await page.locator(".more").click();
+  await page.locator('[data-m="tools"]').click();
   const item = page.locator(".gm-menu [data-ask=explain]");
   assert.equal(await item.innerText(), "Explain this page");
   // It survives the menu re-rendering, and is first in it.
-  await page.locator(".gm-qbtn").click();
-  await page.locator(".gm-qbtn").click();
+  await page.keyboard.press("Escape");
+  await page.locator(".more").click();
+  await page.locator('[data-m="tools"]').click();
   assert.equal(await page.locator(".gm-menu button").first().getAttribute("data-ask"), "explain");
   await item.click();
   await until(async () => /Answered/.test((await status(page)).hint));

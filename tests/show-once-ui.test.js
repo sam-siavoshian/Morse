@@ -43,7 +43,8 @@ const unread = page => page.locator('.r9[data-unread="true"]').count();
 const mods = page => page.evaluate(() => Object.values(JSON.parse(localStorage.getItem("morse:a11y-host:mods") || "{}")));
 async function startFromChip(page) {
   await page.keyboard.press(OPEN_KEY);
-  await page.locator(".sugs .so-sug").click();
+  await page.locator(".more").click();
+  await page.locator('[data-m="showonce"]').click();
   await page.locator(".so-strip").waitFor();
   await until(async () => !(await status(page)).open); // the bar steps aside; the page is theirs
 }
@@ -56,9 +57,11 @@ async function stopAndAsk(page, request) {
 }
 
 test("Show me once: do it by hand, say “every unread email”, and a button does it for all of them", { skip }, () => scenario(async ({ page }) => {
-  // The way in: a chip under the empty input.
+  // The way in: More keeps optional workflows out of the request row.
   await page.keyboard.press(OPEN_KEY);
-  assert.equal((await page.locator(".sugs .so-sug").innerText()).trim(), "Show me once");
+  await page.locator(".more").click();
+  assert.equal((await page.locator('[data-m="showonce"]').innerText()).trim(), "Show me once");
+  await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
   await startFromChip(page);
   assert.match(await page.locator(".so-strip").innerText(), /Do the task by hand, once/);
@@ -119,9 +122,10 @@ test("Show me once: do it by hand, say “every unread email”, and a button do
   await until(async () => { const s = await status(page); return !s.open && s.phase === "idle"; });
   assert.equal(await page.locator(".so-card").isHidden(), true);
   await page.keyboard.press(OPEN_KEY);
-  await page.locator(".sugs .so-sug").waitFor();
+  await page.locator(".more").click();
+  await page.locator('[data-m="showonce"]').waitFor();
   assert.equal(await page.locator(".so-card").isHidden(), true, "a new bar starts without old steps");
-  assert.equal((await page.locator(".sugs .so-sug").count()), 1);
+  assert.equal((await page.locator('[data-m="showonce"]').count()), 1);
 }));
 
 test("Show me once from the ⋯ menu, on a shortcut: Ctrl+Shift+A archives whatever email is open", { skip }, () => scenario(async ({ page }) => {
@@ -132,7 +136,9 @@ test("Show me once from the ⋯ menu, on a shortcut: Ctrl+Shift+A archives whate
   const item = page.locator(".bmenu [data-m=showonce]");
   assert.equal((await item.innerText()).trim(), "Show me once");
   assert.equal(await page.locator(".bmenu [data-m=showonce] .caps").count(), 0, "no shortcut shown, not even Off");
-  assert.equal(await page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.activeElement?.dataset.m), "showonce", "first in the menu");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  assert.equal(await page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.activeElement?.dataset.m), "showonce", "optional workflows are reachable with arrow keys");
   await page.keyboard.press("Enter");
   await page.locator(".so-strip").waitFor();
   await page.locator(".rd .acts button", { hasText: "Archive" }).click();

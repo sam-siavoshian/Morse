@@ -664,7 +664,7 @@ test("the window's page: a strict CSP, no inline code, only its own files", () =
   for (const s of ["contextIsolation: true", "sandbox: true", "nodeIntegration: false", "webviewTag: false", "setWindowOpenHandler(() => ({ action: \"deny\" }))", "will-navigate", "setPermissionRequestHandler"]) assert.ok(main.includes(s), s);
 });
 
-test("Mods page: the app name is not glued to the count, rows are not cards, the footer label stays one line", () => {
+test("Mods page: names and counts are separate, rows are grouped, and sidebar labels can wrap", () => {
   const js = readFileSync(path.join(root, "desktop-app/ui/app.js"), "utf8");
   const css = readFileSync(path.join(root, "desktop-app/ui/app.css"), "utf8");
   assert.match(js, /class: "gname"/, "the app name is its own element");
@@ -675,8 +675,8 @@ test("Mods page: the app name is not glued to the count, rows are not cards, the
   assert.match(css, /#mods \.list\.mods \{[^}]*border:\s*0/, "mod rows are not a bordered card");
   assert.match(css, /#mods \.list\.mods > li \{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/, "the switch has its own column, so text cannot cover it");
   assert.match(css, /#mods \.list\.mods \.grow small \{[^}]*text-overflow:\s*ellipsis/, "a long request ends in an ellipsis");
-  assert.match(css, /\.side-foot \.switchrow > span \{[^}]*white-space:\s*nowrap/, "Always open with Morse stays one line");
-  assert.match(css, /grid-template-columns:\s*272px/, "the sidebar is wide enough for that label");
+  assert.match(css, /\.side-foot \.switchrow > span \{[^}]*white-space:\s*normal/, "long translated switch labels wrap instead of being cut off");
+  assert.match(css, /grid-template-columns:\s*200px/, "the compact sidebar leaves room for app content");
   assert.doesNotMatch(css, /nav button \{[^}]*transition:[^;}]*(?:width|left|height|background-position)/, "sidebar selection does not glide");
 });
 
@@ -690,12 +690,14 @@ test("Model screen: the choice list, real marks, and Use this", () => {
   assert.match(html, /id="use-choice"/);
   assert.match(html, /id="cancel-choice"/);
   assert.doesNotMatch(html, /id="connect-list"/);
+  assert.doesNotMatch(html, /id="choices"[^>]*hidden/);
+  assert.match(html, /<section[^>]*id="checks"/);
   const boot = js.slice(js.lastIndexOf("st = await morse.state();"));
   assert.match(boot, /st = await morse\.state\(\);\nrender\(\);/, "the window paints from state");
-  assert.doesNotMatch(boot, /await morse\.modelChoices/, "the choice list waits until Change is pressed");
+  assert.doesNotMatch(boot, /await morse\.modelChoices/, "provider discovery does not block the first paint");
 });
 
-test("the window wears the website's design: the same tokens, its sky, no drawn icons", () => {
+test("the window wears the website's design: the same tokens, its sky, accessible navigation icons", () => {
   const css = readFileSync(path.join(root, "desktop-app/ui/app.css"), "utf8");
   const site = readFileSync(path.join(root, "site/site.css"), "utf8");
   const tokens = src => Object.fromEntries([.../:root\s*\{([^}]*)\}/.exec(src)[1].matchAll(/(--[\w-]+):\s*([^;]+);/g)].map(m => [m[1], m[2].trim()]));
@@ -708,7 +710,7 @@ test("the window wears the website's design: the same tokens, its sky, no drawn 
   assert.match(main, /"\/sky\/day\.webp"/, "main.js serves the first run's sky");
   assert.match(main, /"\/dither\.js"/, "main.js serves its pixel edge");
   const html = readFileSync(path.join(root, "desktop-app/ui/index.html"), "utf8");
-  assert.doesNotMatch(html, /<svg/, "icons are text or pictures, as on the website");
+  for (const icon of html.matchAll(/<svg[^>]*>/g)) assert.match(icon[0], /aria-hidden="true"/, "decorative icons do not repeat navigation labels");
 });
 
 // ---------------------------------------------------------------- links, desktop files, the icon
@@ -921,7 +923,8 @@ test("the shortcut that opens Morse is saved, checked, and sent to a connected a
     held.connector.applySettings = prefs => pushed.push(prefs);
     const saved = await call("setOpenShortcut", "Alt+Shift+KeyK");
     assert.equal(saved.ok, true);
-    assert.equal(saved.warn, "");
+    if (platform === "mac") assert.match(saved.warn, /special character/, "Option shortcuts warn about text entry on Mac");
+    else assert.equal(saved.warn, "");
     assert.equal((await store.loadPrefs()).hotkeys.open, "Alt+Shift+KeyK");
     assert.equal(pushed.at(-1)?.hotkeys.open, "Alt+Shift+KeyK", "an app already connected hears the new shortcut");
     const st2 = await call("state");

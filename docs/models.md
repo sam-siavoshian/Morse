@@ -158,3 +158,20 @@ Claude Code and Codex are installed, which keys are set, and which model
 Morse will use. Then it sends a real test
 request and shows the reply and how long it took. If something is wrong, see
 [Troubleshooting](troubleshooting.md).
+
+### Self-hosted endpoint in Morse Desktop
+
+In **AI setup**, select **Self-hosted** and enter your server's OpenAI-compatible
+server address. Examples: `http://localhost:1234/v1` for LM Studio,
+`http://localhost:11434/v1` for Ollama, or your own LAN/HTTPS server address.
+An address behind a reverse proxy, such as `https://ai.example.com/proxy/v1`,
+is supported too. This connects to an existing inference server; Morse does
+not install or start that server.
+
+Add an API key only if your server requires one, click **Load models**, choose
+one of the returned models, then **Save connection**. Morse discovers models
+with `GET /v1/models` and generates changes with streaming
+`POST /v1/chat/completions`. The endpoint, model, and optional key are saved
+in the existing local Morse configuration. An OpenAI account key is never
+sent to this server automatically. Test connection sends a small inference
+request to check that the selected model can answer.

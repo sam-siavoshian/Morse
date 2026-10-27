@@ -27,6 +27,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { markPng } from "./mark.js";
 import { builderConfig } from "./builder.config.js";
+import { buildNativePicker } from "./native-picker.js";
 import { findElectron, electronVersion } from "../demo/electron-app/build.mjs";
 import { TYPE_ONLY_DEPS, SKIP_DEP_DIRS, depFileShips, publishedInstallerName } from "./slim.js";
 
@@ -41,7 +42,7 @@ const say = s => console.log(`· ${s}`);
 
 // What the app needs at run time. Paths relative to the repo.
 const COPY = ["daemon", "core", "runtime", "design/tokens.css", "site/fonts", "site/config.js"];
-export const APP_FILES = ["main.js", "preload.cjs", "service.js", "ipc.js", "icons.js", "appimage.js", "linux.js", "shell-path.js", "shortcut.js", "updater.js", "mark.js", "ui"];
+export const APP_FILES = ["main.js", "native-picker.js", "preload.cjs", "service.js", "ipc.js", "icons.js", "appimage.js", "linux.js", "shell-path.js", "shortcut.js", "updater.js", "mark.js", "ui"];
 
 async function copy(from, to) {
   const st = await fs.stat(from);
@@ -103,7 +104,7 @@ export async function stage() {
   const repo = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
   const pkg = {
     name: "morse-desktop", productName: "Morse", version: repo.version,
-    description: "Change any app or website in your own words.", license: repo.license, homepage: repo.homepage,
+    description: "Hack your apps. Remove unwanted features. Build your own.", license: repo.license, homepage: repo.homepage,
     author: { name: "Morse", url: repo.homepage }, type: "module", main: "desktop-app/main.js",
     dependencies: repo.dependencies,
   };
@@ -132,6 +133,15 @@ export async function stage() {
   await fs.mkdir(RES, { recursive: true });
   await fs.writeFile(path.join(RES, "icon.png"), markPng(1024, { tile: true }));
   await fs.writeFile(path.join(RES, "entitlements.mac.plist"), ENTITLEMENTS);
+  if (process.platform === "darwin") {
+    const bins = [];
+    for (const arch of ["arm64", "x86_64"]) {
+      const file = path.join(RES, `morse-native-picker-${arch}`);
+      await buildNativePicker(file, { arch }); bins.push(file);
+    }
+    execFileSync("/usr/bin/lipo", ["-create", ...bins, "-output", path.join(RES, "morse-native-picker")]);
+    await fs.copyFile(path.join(root, "native/morse-picker/rea/LICENSE"), path.join(RES, "REA-LICENSE"));
+  }
   return { stage: STAGE, res: RES, version: repo.version };
 }
 

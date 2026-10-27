@@ -6,11 +6,12 @@
 // ---- DOM additions to the base bar in 10-dom.js
 const row = $(".row"), goBtn = $(".go"), statusRow = $(".status");
 bar.setAttribute("role", "dialog");
+ticker.setAttribute("aria-hidden", "true");
 bar.setAttribute("aria-modal", "true");
 tBind(bar, "aria-label", "bar.dialog");
 tBind(input, "aria-label", "bar.input");
 goBtn.setAttribute("aria-label", t("bar.send"));
-goBtn.innerHTML = `<svg class="i-go" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9.5M8.75 4.25 12.5 8l-3.75 3.75"/></svg><svg class="i-stop" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5"/></svg>`;
+goBtn.innerHTML = `<svg class="i-go" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9.5M8.75 4.25 12.5 8l-3.75 3.75"/></svg><svg class="i-save" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 8 3 3 7-7"/></svg><svg class="i-stop" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5"/></svg>`;
 const micBtn = tBind(makeEl("button", { className: "mic ibtn", type: "button" }), "aria-label", "bar.talk");
 goBtn.before(micBtn);
 const sugEl = tBind(makeEl("div", { className: "sugs", hidden: true }, { role: "toolbar" }), "aria-label", "bar.suggestions");
@@ -70,6 +71,7 @@ function setTarget(el) {
     placeBar(el.getBoundingClientRect());
     chip.hidden = false;
     chip.querySelector("span").textContent = describe(el);
+    chip.title = describe(el);
   } else { chip.hidden = true; releasePick(); }
   setHint();
   updateChips();
@@ -96,9 +98,9 @@ function setHint() {
   if (S.phase !== "idle") return;
   hint.innerHTML = hintSticky || hintNote || (S.picking
     ? `${t("bar.hint.pointing")}<span class="sr"> · ${t("bar.hint.keys", { key: PLATFORM === "mac" ? "Option" : "Alt" })}</span>`
-    : S.target ? `${t("bar.hint.target")} · ${t("bar.hint.wider", { key: PLATFORM === "mac" ? "⌥↑" : "Alt+↑" })}` : t("bar.hint.page")); // dogfood: Alt+↑
+    : S.target ? t("bar.hint.target") : t("bar.hint.page")); // dogfood: Alt+↑
   ticker.textContent = "";
-  actions.innerHTML = `<button data-a="mods">${t("bar.mods")}${S.mods.length ? ` <em>${S.mods.length}</em>` : ""}</button><span class="model">${esc(S.label)}</span>`;
+  actions.innerHTML = `<button data-a="mods">${t("bar.mods")}${S.mods.length ? ` <em>${S.mods.length}</em>` : ""}</button>`;
 }
 function startPicking() { S.picking = true; setHint(); }
 
@@ -145,6 +147,7 @@ function trapTab(e) {
 }
 
 function openBar() {
+  if (S.draft?.saving) return;
   if (S.phase === "working") return;
   if (!S.open) {
     const a = deepActive();
@@ -154,8 +157,9 @@ function openBar() {
   applyTheme();
   applyBarPosition();
   S.phase = "idle";
+  hint.removeAttribute("tabindex");
   bar.hidden = false;
-  bar.classList.remove("done", "err", "working");
+  bar.classList.remove("done", "err", "working", "has-error", "saving");
   if (!barDragPos) bar.classList.toggle("top", pointerY > innerHeight * 0.55);
   else fitBarDrag();
   input.disabled = false;
@@ -167,7 +171,7 @@ function openBar() {
   setTarget(null);
   startPicking();
   Voice.refresh();
-  requestAnimationFrame(() => input.focus());
+  requestAnimationFrame(() => { if (S.open && !paneKind && menuEl.hidden) input.focus(); });
   // soak: the clip starts with the change (60-generate.js submit), not here: on
   // the desktop it screencasts every frame, which made the bar, the Edit tools
   // and the page tools 2 to 4 times slower for as long as the bar was open.
@@ -309,7 +313,7 @@ function barDragEatClick() {
   return true;
 }
 function barDragFrom(node) {
-  return !!node && bar.contains(node) && !node.closest("input, textarea, button, a, select, summary, label, .mic, .sugs, .menu, .pane, .field");
+  return !!node && bar.contains(node) && !node.closest("input, textarea, button, a, select, summary, label, .mic, .sugs, .menu, .pane, .field, .err .hint, .has-error .hint");
 }
 function clampBarBox(x, y, w, h) {
   const m = 8, maxX = Math.max(m, innerWidth - w - m), maxY = Math.max(m, innerHeight - h - m);
@@ -385,8 +389,10 @@ listen("resize", fitBarDrag);
 // next Send as a follow-up: same mod, the model sees the original ask, the
 // code it wrote, and this line. Nothing pending: a new request, as before.
 function send(text) {
+  if (S.draft?.saving) return;
   if (!text || S.phase === "working") return;
   if (S.phase === "result" && S.draft) return refine(text);
+  if (S.phase === "error") { S.phase = "idle"; hint.removeAttribute("tabindex"); }
   if (S.phase !== "idle") return;
   hintNote = "";
   clearTimeout(warmTimer); warmedFor = ""; // models: the request itself picks the model now
@@ -467,8 +473,10 @@ function menuItems() {
   const draft = S.phase === "result" && S.draft && !S.draft.saved;
   return [
     ...(draft ? [{ id: "code", label: t("btn.editCode"), keys: null }, { id: "share", label: t("btn.share"), keys: null }] : []),
+    ...(S.phase === "idle" ? [{ id: "take", label: t("take.this"), keys: null }, ...(TakeBring.list.length ? [{ id: "bring", label: t("take.bring"), keys: null }] : [])] : []),
+    { id: "tools", label: t("quick.title"), keys: null },
     { id: "showonce", label: t("menu.showonce"), keys: null }, // show-once hook: 64-show-once.js
-    { id: "settings", label: t("menu.settings"), keys: [primaryMod, ","] },
+    { id: "settings", label: t("menu.settings"), sub: S.label, keys: [primaryMod, ","] },
     { id: "help", label: t("menu.help"), keys: ["F1"] }, // onboarding hook: 59-help.js
   ];
 }
@@ -486,6 +494,9 @@ function hideMenu() {
 }
 function runMenu(id) {
   hideMenu();
+  if (id === "take") TakeBring.start();
+  if (id === "bring") TakeBring.pickList();
+  if (id === "tools") GodQuick.open();
   if (id === "settings") toggleSettings();
   if (id === "help") toggleHelp(); // onboarding hook: 59-help.js
   if (id === "showonce") ShowOnce.start(); // show-once hook
@@ -520,6 +531,7 @@ input.addEventListener("keydown", e => {
     e.preventDefault();
     const v = input.value.trim();
     if (v) send(v);
+    else if (S.phase === "result") keep();
     return;
   }
   if (e.key === "?" && plain && !input.value) {
@@ -579,5 +591,27 @@ actions.addEventListener("click", e => {
   if (a === "undo") undo();
   if (a === "code") showCode(S.draft);
   if (a === "share") keep().then(m => m && showShare(m));
-  if (a === "again") { S.phase = "idle"; bar.classList.remove("err"); input.disabled = false; input.focus(); setHint(); updateChips(); }
+  if (a === "again") { const text = input.value.trim(); if (text) send(text); else { S.phase = "idle"; bar.classList.remove("err"); hint.removeAttribute("tabindex"); input.disabled = false; input.focus(); setHint(); updateChips(); } }
 });
+
+// A soft edge light, like the desktop glass. No idle animation or page listeners.
+let barLightFrame = 0, barLightPoint = null;
+const barMotion = matchMedia("(prefers-reduced-motion: reduce)");
+function clearBarLight() {
+  cancelAnimationFrame(barLightFrame); barLightFrame = 0; barLightPoint = null;
+  bar.classList.remove("lit");
+}
+bar.addEventListener("pointermove", event => {
+  if (event.pointerType !== "mouse" || barMotion.matches || hostEl.dataset.fx === "off" || barDragging()) return;
+  barLightPoint = { x: event.clientX, y: event.clientY };
+  if (barLightFrame) return;
+  barLightFrame = requestAnimationFrame(() => {
+    barLightFrame = 0;
+    const rect = bar.getBoundingClientRect();
+    bar.style.setProperty("--bar-light-x", `${barLightPoint.x - rect.left}px`);
+    bar.style.setProperty("--bar-light-y", `${barLightPoint.y - rect.top}px`);
+    bar.classList.add("lit");
+  });
+}, { passive: true });
+bar.addEventListener("pointerleave", clearBarLight);
+B.on(barMotion, "change", clearBarLight);

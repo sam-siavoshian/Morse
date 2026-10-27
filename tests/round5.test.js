@@ -329,7 +329,8 @@ async function mail() {
 const statusOf = page => readStatus(page);
 async function startRecording(page) {
   await pressOpen(page);
-  await page.locator(".sugs .so-sug").click();
+  await page.locator(".more").click();
+  await page.locator('[data-m="showonce"]').click();
   await page.locator(".so-strip").waitFor();
   await waitFor(async () => !(await statusOf(page)).open);
 }

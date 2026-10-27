@@ -56,12 +56,16 @@ export function builderConfig({ stage, out, res, electronDist = null, electronVe
       target: ["AppImage"],
       category: "Utility",
       icon: `${res}/icon.png`,
-      synopsis: "Change any app in your own words",
+      synopsis: "Hack your apps. Build your version.",
       mimeTypes: ["x-scheme-handler/morse"],
-      desktop: { entry: { Name: "Morse", Comment: "Change any app in your own words", StartupWMClass: "Morse" } },
+      desktop: { entry: { Name: "Morse", Comment: "Hack your apps. Build your version.", StartupWMClass: "Morse" } },
     },
 
     mac: {
+      extraResources: [
+        { from: `${res}/morse-native-picker`, to: "morse-native-picker" },
+        { from: `${res}/REA-LICENSE`, to: "REA-LICENSE" },
+      ],
       // The dmg to download; the zip for whoever prefers one (and for updates later).
       target: [{ target: "dmg", arch: ["arm64", "x64"] }, { target: "zip", arch: ["arm64", "x64"] }],
       category: "public.app-category.productivity",

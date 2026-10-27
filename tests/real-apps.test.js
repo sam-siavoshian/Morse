@@ -143,7 +143,7 @@ test("Trusted Types (VS Code's window): the bar starts, the Mods panel says \"in
     const ui = sel => page.evaluate(s => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(s)?.textContent || "", sel);
     // The UI the templates describe, built node by node: SVG in its namespace, the input, the buttons.
     assert.equal(await page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".bar .mark svg")?.namespaceURI), "http://www.w3.org/2000/svg");
-    assert.equal(await page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".bar textarea.in")?.placeholder), "Describe a change…");
+    assert.equal(await page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".bar textarea.in")?.placeholder), "What do you want to hack?");
     await page.keyboard.press(OPEN_KEY);
     await page.waitForFunction(() => JSON.parse((document.dispatchEvent(new Event("morse:status")), document.querySelector("[data-morse-ui]")).dataset.status).open);
     await page.keyboard.press("Escape");

@@ -48,8 +48,9 @@ test("Take this in one app, Bring here in another: the palette works there, in t
   try {
     // ---- Take: nothing pointed at, so Morse watches while the palette opens
     await openBar(page);
-    assert.equal((await page.locator(".sugs .tk-take").innerText()).trim(), "Take this");
-    await page.locator(".sugs .tk-take").click();
+    await page.locator(".more").click();
+    assert.equal((await page.locator('[data-m="take"]').innerText()).trim(), "Take this");
+    await page.locator('[data-m="take"]').click();
     await page.locator(".so-strip").waitFor();
     assert.match(await page.locator(".so-strip").innerText(), /Take this[\s\S]*Open the feature you want to take/);
     await page.keyboard.press("Control+Shift+P");
@@ -82,7 +83,8 @@ test("Take this in one app, Bring here in another: the palette works there, in t
     await go(page, "notes");
     const font = await page.evaluate(() => getComputedStyle(document.body).fontFamily);
     await openBar(page);
-    await page.locator(".sugs .tk-bring").click();
+    await page.locator(".more").click();
+    await page.locator('[data-m="bring"]').click();
     await page.locator(".tk-pick .tk-it").first().waitFor();
     assert.match(await page.locator(".tk-pick").innerText(), /Command palette[\s\S]*Taken from Codepad/);
     await page.locator(".tk-pick .tk-it").first().click();
@@ -159,8 +161,9 @@ test("pointing and taking keeps no email address, and the Mods panel can delete 
     const row = page.locator(".r9", { hasText: "Leo Martins" });
     await row.hover();
     await row.click();
-    await until(async () => /pointed at/.test(await page.locator(".sugs .tk-take").getAttribute("title")));
-    await page.locator(".sugs .tk-take").click();
+    await page.locator(".chip.target").waitFor();
+    await page.locator(".more").click();
+    await page.locator('[data-m="take"]').click();
     await until(async () => (await taken(page)).length === 1);
     const json = JSON.stringify(await taken(page));
     assert.doesNotMatch(json, /[\w.+-]+@[\w-]+\.[a-z]{2,}/i, "no email address is kept");

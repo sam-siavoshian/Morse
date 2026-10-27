@@ -91,7 +91,7 @@ export function segments(MODEL_LABEL) {
   ];
 }
 const END_BEATS = 6;
-const END = { line: "Morse: change any app in your own words", chip: "Open source", url: "github.com/sam-siavoshian/RRAA" };
+const END = { line: "Morse: hack your apps in your own words", chip: "Open source", url: "github.com/sam-siavoshian/Morse" };
 
 // Scene time → output time, for one segment: model waits folded (the
 // anchor's to land it on its beat), idle stretches shortened.

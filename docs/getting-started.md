@@ -1,8 +1,8 @@
 # Getting started
 
-Morse changes desktop apps and websites in your own words. Point at
-something, say what you want, and watch it change. A mod is a change you
-saved. Morse brings it back every time you open that app or site.
+The company shipped its version. Build yours. Open an app with Morse, say
+what to rip out or build in, and watch the change. Save it as a mod to keep
+your version the next time you open the app.
 
 Morse is one app. You don't need a terminal, Node or anything else.
 

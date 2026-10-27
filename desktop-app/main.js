@@ -7,9 +7,10 @@
 // Security: the window loads only ui/ from disk, with a strict CSP, context
 // isolation and the sandbox on, and a preload (preload.cjs) that exposes one
 // narrow API. It never loads remote content, never navigates, opens no other
-// windows and asks for no permissions; requests from anything but that page
+// web windows; requests from anything but that page
 // are refused (ipc.js). Morse never changes another app's files: it opens
-// apps with one extra switch (daemon/apps.js).
+// apps with one extra switch (daemon/apps.js). The macOS native picker is a
+// separate helper requiring Accessibility access and explicit control actions.
 //
 //   node desktop-app/run.js          start it from a clone
 //   node desktop-app/build.js        package it (docs/dev/releasing.md)
@@ -28,6 +29,7 @@ import { setAutostart, writeMenuEntry } from "./linux.js";
 import { startShellPath } from "./shell-path.js";
 import { createUpdater } from "./updater.js";
 import { acceleratorFor, createOpenShortcut, readForegroundPid } from "./shortcut.js";
+import { createNativePicker } from "./native-picker.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // The window's page is served from morse-app://ui/, a scheme of Morse's own
@@ -37,6 +39,7 @@ const PAGE_URL = `${SCHEME}://ui/index.html`;
 const UI_FILES = {
   "/index.html": [path.join(HERE, "ui", "index.html"), "text/html; charset=utf-8"],
   "/app.css": [path.join(HERE, "ui", "app.css"), "text/css; charset=utf-8"],
+  "/app-list.js": [path.join(HERE, "ui", "app-list.js"), "text/javascript; charset=utf-8"],
   "/app.js": [path.join(HERE, "ui", "app.js"), "text/javascript; charset=utf-8"],
   // When the row may say Connected, and when the "isn't running yet" banner may show.
   "/open-bar.js": [path.join(HERE, "..", "daemon", "open-bar.js"), "text/javascript; charset=utf-8"],
@@ -47,7 +50,7 @@ const UI_FILES = {
   "/dither.js": [path.join(HERE, "ui", "dither.js"), "text/javascript; charset=utf-8"],
   "/sky/day.webp": [path.join(HERE, "ui", "sky", "day.webp"), "image/webp"],
   // The marks of the models you can choose (ui/icons/NOTICE), and the site's own Inter and JetBrains Mono.
-  ...Object.fromEntries(["claude", "openai", "anthropic"].map(n => [`/icons/${n}.png`, [path.join(HERE, "ui", "icons", `${n}.png`), "image/png"]])),
+  ...Object.fromEntries(["claude", "openai", "anthropic", "ollama", "lmstudio", "llamacpp"].map(n => [`/icons/${n}.png`, [path.join(HERE, "ui", "icons", `${n}.png`), "image/png"]])),
   ...Object.fromEntries(["inter-regular", "inter-medium", "interdisplay-semibold", "jetbrainsmono-regular"].map(n => [`/fonts/${n}.woff2`, [path.join(HERE, "..", "site", "fonts", `${n}.woff2`), "font/woff2"]])),
   // The window's words in the person's language: core/i18n.js and each language's catalog.
   "/core/i18n.js": [path.join(HERE, "..", "core", "i18n.js"), "text/javascript; charset=utf-8"],
@@ -60,6 +63,8 @@ protocol.registerSchemesAsPrivileged([{ scheme: SCHEME, privileges: { standard: 
 const isPage = url => { try { const u = new URL(url); u.search = ""; u.hash = ""; return u.href === PAGE_URL; } catch { return false; } };
 const MAC = process.platform === "darwin", WIN = process.platform === "win32";
 const log = (...a) => { if (!app.isPackaged || process.env.MORSE_DEBUG) console.log("[morse]", ...a); };
+let nativePicker = null;
+
 
 app.setName("Morse");
 
@@ -263,6 +268,7 @@ function syncOpenShortcut() {
   service.openCombo().then(combo => {
     const platform = MAC ? "mac" : WIN ? "win" : "linux";
     const r = opener.register(acceleratorFor(combo, platform));
+    if (process.env.MORSE_DEBUG) log("shortcut", combo, r);
     if (!r.ok && combo) log("shortcut", `couldn't register ${combo}; a connected page can still open Morse with it`);
   }).catch(e => log("shortcut", e.message));
 }
@@ -292,6 +298,7 @@ async function prepareForUpdate() {
   updater?.stop();
   clearTimeout(pushTimer);
   try { opener?.unregister(); globalShortcut.unregisterAll(); } catch {}
+  nativePicker?.stop();
   let timeout;
   try {
     await Promise.race([
@@ -312,6 +319,7 @@ app.on("before-quit", e => {
   Promise.race([service.shutdown(), new Promise(r => setTimeout(r, 5000))]).finally(() => { if (!updater?.onQuit()) app.quit(); });
 });
 app.on("will-quit", () => { try { opener?.unregister(); globalShortcut.unregisterAll(); } catch {} });
+app.on("will-quit", () => nativePicker?.stop());
 app.on("window-all-closed", () => {}); // the tray keeps Morse running
 
 // Model and backend detection run commands from PATH. On a first launch the
@@ -349,6 +357,27 @@ app.whenReady().then(async () => {
         await updater.check({ user: true });
         return { ...updater.status };
       },
+      nativeControls: async pid => {
+        log("native-picker", "requested", pid);
+        if (!nativePicker) return { error: "Native controls are still starting." };
+        const access = await nativePicker.access();
+        if (!access.trusted) return { permissionNeeded: true, access };
+        nativePicker.stop();
+        const ok = await nativePicker.toggle(pid, { force: true });
+        if (ok) return { ok: true };
+        const latest = await nativePicker.access();
+        return latest.trusted ? { error: "The native picker couldn't open. Try again." } : { permissionNeeded: true, access: latest };
+      },
+      nativeSetup: async action => {
+        if (!MAC) return { supported: false, trusted: false };
+        if (!nativePicker) return { error: "Native controls are still starting." };
+        if (action === "settings") await shell.openExternal("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility");
+        if (action === "reveal" && !app.isPackaged) {
+          const file = await nativePicker.prepare();
+          shell.showItemInFolder(path.dirname(path.dirname(path.dirname(file))));
+        }
+        return nativePicker.access();
+      },
       pickApp: async () => {
         const r = await dialog.showOpenDialog(win, {
           title: "Add an app", buttonLabel: "Add",
@@ -379,10 +408,25 @@ app.whenReady().then(async () => {
     const daemon = whenPathReady(await loadDaemon(), pathReady);
     service = createService({ daemon, emit: changed, log, iconFor, self: [process.execPath, APPIMAGE] });
     resolveService(service);
+    nativePicker = createNativePicker({
+      packaged: app.isPackaged, resourcesPath: process.resourcesPath,
+      cacheDir: path.join(app.getPath("userData"), "native-picker"),
+      report: (message, code) => {
+        log("native-picker", code || "error", message);
+        // Permission help is contextual in the app list. A hotkey must never
+        // interrupt the user's current app with a repeated system-style alert.
+      },
+    });
+    nativePicker.prepare().catch(e => log("native-picker", e.message));
     opener = createOpenShortcut({
       globalShortcut, log,
       onFire: () => {
-        service?.openFromShortcut(readForegroundPid(), process.pid).catch(e => log("shortcut", e.message));
+        (async () => {
+          const pid = await readForegroundPid();
+          log("shortcut", "native route", pid);
+          if (await nativePicker.toggle(pid)) return;
+          await service?.openFromShortcut(Promise.resolve(pid), process.pid);
+        })().catch(e => log("shortcut", e.message));
       },
     });
     syncOpenShortcut();

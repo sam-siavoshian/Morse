@@ -310,7 +310,7 @@ test("a provider with a fast mode shows the switch; Codex and local servers do n
   const bar = readFileSync(path.join(root, "runtime/src/56-settings.js"), "utf8");
   assert.match(html, /id="fast-mode"/);
   assert.match(html, /data-i18n="desk\.model\.fastMode"/);
-  assert.match(html, /faster, more expensive mode/);
+  assert.match(html, /Faster responses at a higher usage cost/);
   assert.doesNotMatch(html, /faster model/i);
   assert.match(app, /row\.hidden = !id/);
   assert.match(bar, /if \(!S\.fastModel\) return ""/);
@@ -330,7 +330,7 @@ test("a provider with a fast mode shows the switch; Codex and local servers do n
     assert.doesNotMatch(fastCopy(file), /faster model|schnellere Modell|modèle le plus rapide|modelo más rápido|modelo mais rápido|更快的模型|النموذج الأسرع|مدل سریع‌تر|速いモデル/);
   }
   const boot = app.slice(app.lastIndexOf("st = await morse.state();"));
-  assert.match(boot, /render\(\);\nrefreshChoices\(\);/);
+  assert.match(boot, /render\(\);\nloadChoices\(\);/);
   assert.doesNotMatch(boot, /await morse\.modelChoices|await morse\.setFastMode/);
 });
 

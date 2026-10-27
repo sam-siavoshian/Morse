@@ -31,6 +31,8 @@ const SPEECH_FAILS = () => {
 
 async function open(query = "", init) {
   const ctx = await browser.newContext({ viewport: { width: 1100, height: 760 } });
+  // These recorder assertions exercise Ctrl-based shortcuts on every host OS.
+  await ctx.addInitScript(() => Object.defineProperty(navigator, "platform", { get: () => "Linux x86_64" }));
   if (init) await ctx.addInitScript(init);
   const page = await ctx.newPage();
   const errors = [];
@@ -305,8 +307,9 @@ test("Model setting: Automatic, Always fast, Always best, saved; the footer name
       await t.waitFor(s => s.open);
       await page.keyboard.press("Control+Comma");
       await t.waitFor(s => s.pane === "settings");
-      // The model is under More settings (docs/dev/simplify.md).
+      // Model controls are grouped inside Advanced settings.
       if (await page.locator("[data-act=more]").getAttribute("aria-expanded") === "false") await page.locator("[data-act=more]").click();
+      await page.locator("details").filter({ has: page.locator('.seg[data-k="modelMode"]') }).locator("summary").click();
     };
     await openSettings();
     assert.equal(await page.locator(seg("auto")).getAttribute("aria-checked"), "true", "Automatic unless chosen");
@@ -332,7 +335,8 @@ test("Model setting: Automatic, Always fast, Always best, saved; the footer name
     await t.waitFor(s => !s.open);
     await pressOpen(page);
     await t.waitFor(s => s.open && s.phase === "idle");
-    assert.equal(await page.locator(".model").innerText(), "Claude Code · opus");
+    await page.locator(".more").click();
+    assert.equal(await page.locator('[data-m="settings"] small').innerText(), "Claude Code · opus");
   });
 });
 
@@ -378,7 +382,7 @@ test("drag: the grip moves the bar, controls do not, and the drop stays on scree
       await page.mouse.move(to.x, to.y, { steps: 12 });
       await page.mouse.up();
     };
-    // Pointing still parks the bar on the opposite half, before any drag.
+    // Hover stays put; explicitly selecting parks opposite the target.
     await page.evaluate(() => {
       const el = document.createElement("div");
       el.id = "low";
@@ -387,12 +391,16 @@ test("drag: the grip moves the bar, controls do not, and the drop stays on scree
       document.body.append(el);
     });
     const low = await page.locator("#low").boundingBox();
+    const beforeHover = await box();
     await page.mouse.move(low.x + 8, low.y + 8);
+    await page.waitForTimeout(250);
+    assert.ok(near(await box(), beforeHover), "hover must not move the bar");
+    await page.mouse.click(low.x + 8, low.y + 8);
     await page.waitForFunction(() => document.querySelector("[data-morse-ui]").shadowRoot.querySelector(".bar").classList.contains("top"));
     const parked = await box();
     assert.ok(parked.y < 80, `auto place sits high, saw ${parked.y}`);
     // Grip drag follows the pointer and commits there, with no slide afterward.
-    const grip = await page.locator(".grip").boundingBox();
+    const grip = await page.locator(".row > .mark").boundingBox();
     const from = { x: grip.x + grip.width / 2, y: grip.y + grip.height / 2 };
     const vw = await view();
     await drag(from, { x: Math.min(vw.w - 24, from.x + 280), y: Math.min(vw.h - 48, from.y + 220) });
@@ -590,5 +598,37 @@ test("selection outline is gone after the chip is dismissed, the run ends, or th
     assert.equal(b.sel, false, "after cancel");
     assert.equal(b.frame, false, "edit frame after cancel");
     assert.equal(b.marks, 0, "host marks after cancel");
+  });
+});
+
+test("simple bar: suggestions are editable, tools are in More, and settings disclose one group at a time", { skip }, async () => {
+  await scenario("?models", null, async t => {
+    const { page } = t;
+    await pressOpen(page);
+    await t.waitFor(s => s.open);
+    assert.equal(await page.locator(".gm-qbtn").isVisible(), false);
+    assert.equal(await page.locator(".status .model").count(), 0);
+    await page.locator(".sug").first().click();
+    await t.waitFor(s => s.input.length > 0 && s.phase === "idle");
+    assert.equal((await t.log()).some(m => m.type === "generate"), false);
+    await page.locator(".more").click();
+    await page.locator('[data-m="tools"]').click();
+    await page.locator("#m-page-tools").waitFor();
+    await page.keyboard.press("Escape");
+    assert.equal(await page.locator(".more").evaluate(el => el.getRootNode().activeElement === el), true);
+    await page.keyboard.press("Control+Comma");
+    await t.waitFor(s => s.pane === "settings");
+    assert.equal(await page.locator('[data-k="autoFix"]').isVisible(), false);
+    await page.locator('[data-act="more"]').click();
+    assert.equal(await page.locator('[data-k="autoFix"]').isVisible(), false);
+    await page.locator("details summary").first().focus();
+    await page.keyboard.press("Tab");
+    assert.equal(await page.locator("details summary").nth(1).evaluate(el => el.getRootNode().activeElement === el), true, "Tab skips collapsed controls");
+    const group = page.locator("details").filter({ has: page.locator('[data-k="autoFix"]') });
+    await group.locator("summary").click();
+    await page.locator('label.sw:has([data-k="autoFix"])').click();
+    await page.waitForFunction(() => window.__fake.log.some(m => m.type === "settings.set" && "autoFix" in m.settings));
+    assert.equal(await group.getAttribute("open"), "");
+    assert.equal(await page.locator('[data-k="modelMode"]').isVisible(), false);
   });
 });

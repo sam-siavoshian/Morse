@@ -1,5 +1,5 @@
 // Suggestion chips under an empty input, chosen from what you pointed at.
-// Tab reaches them; ←/→ move between them; Enter runs one; Esc goes back to
+// Tab reaches them; ←/→ move between them; Enter fills the input; Esc goes back to
 // the input. A chip with `fill` puts its text in the input to finish instead.
 
 // A chip in the person's language: label "sug.<id>", what it asks "sug.<id>.p"
@@ -116,7 +116,8 @@ function useSuggestion(i) {
     return;
   }
   setInput(s.prompt);
-  send(s.prompt);
+  // Suggestions are starting points. Let the person review or edit before sending.
+  input.focus();
 }
 sugEl.addEventListener("click", e => { const b = e.target.closest(".sug"); if (b) useSuggestion(+b.dataset.i); });
 sugEl.addEventListener("mousedown", e => e.preventDefault());

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// morse: change any app in your own words.
+// morse: hack your apps in your own words.
 
 import { execFile } from "node:child_process";
 import { setLanguage, languageFromEnv, loadLanguage, t } from "../core/i18n.js";

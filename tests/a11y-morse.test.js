@@ -93,7 +93,7 @@ test("axe-core finds nothing in the key states: bar, choosing with keys, edit to
     await axeOk(page, "choosing with keys");
     await page.keyboard.press("Enter");
     await until(page, s => !!s.hint && /Edit tools/.test(s.hint), "a chosen part, with the edit tools");
-    await page.keyboard.press("Control+KeyE");
+    await page.keyboard.press("ControlOrMeta+KeyE");
     await page.keyboard.press("c");
     await page.locator(".gm-pop").waitFor();
     await axeOk(page, "the edit toolbar with Color open");
@@ -113,12 +113,14 @@ test("axe-core finds nothing in the key states: bar, choosing with keys, edit to
     await page.locator(".bmenu").waitFor();
     await axeOk(page, "the ⋯ menu");
     await page.keyboard.press("Escape");
-    await tabTo(page, /gm-qbtn/, { key: "Shift+Tab" });
+    await tabTo(page, /\bmore\b/);
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("p");
     await page.keyboard.press("Enter");
     await page.locator(".gm-menu").waitFor();
     await axeOk(page, "Page tools");
     await page.keyboard.press("Escape");
-    await page.keyboard.press("Control+Comma");
+    await page.keyboard.press("ControlOrMeta+Comma");
     await until(page, s => s.pane === "settings", "Settings");
     await axeOk(page, "Settings");
     await page.keyboard.press("Escape");
@@ -263,13 +265,14 @@ test("keyboard only: open, choose with keys, describe, Save, Mods panel, turn a 
     await until(page, s => s.open && s.focus === "in", "the bar");
     await tabTo(page, /\bmore\b/);
     await page.keyboard.press("Enter");
-    assert.match(await focused(page), /\[m=showonce\]/, "the menu opens on its first item");
+    assert.match(await focused(page), /\[m=take\]/, "the menu opens on its first item");
     await page.keyboard.press("End");
     assert.match(await focused(page), /\[m=help\]/);
     await page.keyboard.press("s"); // type-ahead: the next item starting with S (from the end, it wraps)
     assert.match(await focused(page), /\[m=showonce\]/);
     await page.keyboard.press("Home");
-    assert.match(await focused(page), /\[m=showonce\]/);
+    assert.match(await focused(page), /\[m=take\]/);
+    await page.keyboard.press("s");
     await page.keyboard.press("Enter");
     await page.locator(".so-strip").waitFor();
     assert.equal(await page.evaluate(() => document.activeElement.textContent), "Home", "focus is back on the page");

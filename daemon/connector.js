@@ -223,6 +223,10 @@ export class Connector {
   sync(list) {
     const byId = new Map(list.map(t => [t.id, t]));
     let dirty = false;
+    if (this.app?.browser) {
+      const needsPage = !list.some(t => classifyTarget(t, t.parentId ? byId.get(t.parentId)?.url : null).attach);
+      if (this.needsPage !== needsPage) { this.needsPage = needsPage; dirty = true; }
+    }
     for (const t of list) {
       const w = this.windows.get(t.id);
       if (w) {

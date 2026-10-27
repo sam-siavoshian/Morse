@@ -31,6 +31,9 @@ export function morseRunning(connector) {
 // Until then the row stays "connecting", and Disconnect stays (canStop):
 // the app is already ours, it just has no Morse world yet.
 export function presentApp(sessionState, connector) {
+  // A browser on New Tab or Settings is reachable, but has no supported
+  // document. Waiting cannot finish until the user opens a website.
+  if (sessionState === "connected" && connector?.needsPage === true) return { state: "waiting-page", canStop: true };
   if (sessionState === "connected" && morseRunning(connector) === false) return { state: "connecting", canStop: true };
   return { state: sessionState, canStop: false };
 }

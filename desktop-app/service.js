@@ -43,7 +43,8 @@ export async function loadDaemon() {
     saveChoice: setup.saveChoice, checkModel: setup.checkModel, BACKENDS: setup.BACKENDS, VERSION: version.VERSION,
     // Choices and connect checks. Not used while the window is first painting.
     connectionChoices: connect.connectionChoices,
-    connectChoice: (choice, key, extra) => connect.connectChoice(choice, key, { address: extra || "" }),
+    connectChoice: (choice, key, extra, apiKey) => connect.connectChoice(choice, key, { address: extra || "", selfHosted: choice === "local" && !!extra, apiKey: apiKey || "", timeoutMs: 8000 }),
+    probeEndpoint: connect.probeEndpoint,
     // mods and the off switch (morse mods, pause, resume)
     listMods: store.listMods, getMod: store.getMod, saveMod: store.saveMod, deleteMod: store.deleteMod,
     loadControl: control.loadControl, saveControl: control.saveControl, setPause: coreControl.setPause, pauseInfo: coreControl.pauseInfo,
@@ -199,7 +200,7 @@ export function createService({
     const mods = await d.listMods().catch(() => []);
     const rows = await Promise.all(list.map(async a => {
       const s = sessions.find(x => x.id === a.id);
-      const p = a.canAttach === false ? [] : d.findAppProcesses(a, procs, { extraArgs: argsFor(settings, a.id) });
+      const p = d.findAppProcesses(a, procs, { extraArgs: argsFor(settings, a.id) });
       const port = p.map(x => d.debugPortOf(x.cmd)).find(Boolean) || null;
       const base = pending.get(a.id)
         || (s ? (s.state === "attached" ? "connected" : s.state === "waiting" ? "waiting" : "connecting")
@@ -209,6 +210,7 @@ export function createService({
       const shown = presentApp(base, own.get(a.id)?.connector);
       return {
         id: a.id, name: a.name, version: (a.version || "").split(".").slice(0, 3).join("."), why: a.why, canAttach: a.canAttach,
+        browser: !!a.browser, engine: a.engine, running: p.length > 0,
         known: !!a.known, added: !!a.added, state: shown.state, canStop: shown.canStop, windows: s?.windows?.length || 0, mine: own.has(a.id),
         mods: mods.filter(m => modFor(a, m)).length, modsOn: mods.filter(m => modFor(a, m) && m.enabled).length,
         icon: await icon(a),
@@ -316,6 +318,13 @@ export function createService({
   }
 
   // The chord the OS shortcut should register: a saved custom one, or the default.
+  async function nativeTarget(id) {
+    const app = await findApp(id);
+    const procs = d.findAppProcesses(app, d.listProcesses(), { extraArgs: argsFor(settings, id) });
+    if (!procs.length) throw new Error(`Open ${app.name} first, then choose Native controls.`);
+    return procs[0].pid;
+  }
+
   async function openCombo() {
     const platform = detectPlatform({ platform: process.platform });
     const prefs = typeof d.loadPrefs === "function" ? await d.loadPrefs().catch(() => null) : null;
@@ -381,6 +390,7 @@ export function createService({
     return {
       provider: s.provider, none: s.provider === "none", name, model: s.model || "", label: s.provider === "none" ? "" : plain(d.settingsLabel(s)),
       detected: !!s.detected, check: lastCheck && lastCheck.label === d.settingsLabel(s) ? lastCheck : null,
+      baseUrl: s.provider === "local" ? s.baseUrl : "",
       kind: kindFor(s), logo: logoFor(s), runtime: s.runtime || "",
       fastModel, fastKnown, fastMode: !!prefs.fastMode,
     };
@@ -433,10 +443,10 @@ export function createService({
 
   // "Use this": what `morse setup` saves for a choice, then the same check.
   // key is an API key, or the local model's name. extra is a local address.
-  async function chooseModel(choice, key = "", extra = "") {
+  async function chooseModel(choice, key = "", extra = "", apiKey = "") {
     try {
       if (typeof d.connectChoice === "function") {
-        const decided = await d.connectChoice(choice, key, extra);
+        const decided = await d.connectChoice(choice, key, extra, apiKey);
         if (decided?.error) return { error: plain(decided.error), status: decided.status || "" };
         const cfg = await d.saveChoice(decided.backend || choice, decided.config);
         const next = d.settingsFromConfig(cfg);
@@ -651,7 +661,8 @@ export function createService({
 
   watchPrefsFile();
   return {
-    state, apps, openApp, openBar, openCombo, openFromShortcut, disconnectApp, addApp, model, modelChoices, chooseModel, setFastMode, check,
+    probeEndpoint: (address, key) => d.probeEndpoint(address, key),
+    state, apps, openApp, openBar, nativeTarget, openCombo, openFromShortcut, disconnectApp, addApp, model, modelChoices, chooseModel, setFastMode, check,
     mods, setModOn, deleteMod, undeleteMod, pause, setAllModsOff, doctor, setSetting, setOpenShortcut, loadSettings, shutdown,
     async isUpdateBusy() {
       if (pending.size) return true;

@@ -100,7 +100,8 @@ test("hide, move, rename, recolor and dark mode apply live, undo, save, and come
   await page.locator(".in").fill("");
 
   // Dark mode from the quick menu.
-  await page.locator(".gm-qbtn").click();
+  await page.locator(".more").click();
+  await page.locator('[data-m="tools"]').click();
   await page.locator(".gm-menu button[data-k=dark]").click();
   await until(async () => /invert\(0\.93\)/.test(await style(page, "html", "filter")));
 
@@ -177,7 +178,8 @@ test("edge cases: shadow DOM, mixed inline text, frames, duplicates, and dark pa
 
   // The playground is dark by default, so Dark mode leaves it alone.
   await page.keyboard.press("Escape");
-  await page.locator(".gm-qbtn").click();
+  await page.locator(".more").click();
+  await page.locator('[data-m="tools"]').click();
   await page.locator(".gm-menu button[data-k=dark]").click();
   await page.locator(".toast").getByText("This page is already dark").waitFor(); // it says so instead (and screen readers hear it)
   await settle(page);

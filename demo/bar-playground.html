@@ -27,6 +27,7 @@
        ?onboarding  first run (coach, tips, notices; see the onboarding cases below)
        ?keepmods    saved mods stay in the Mods panel (demo/shoot-i18n.js) -->
 <div class="stage">
+  <button class="cta" id="open-morse" type="button">Open Morse</button>
   <div class="toolbar" id="toolbar" data-testid="player-controls" aria-label="Player controls"><button aria-label="Shuffle">⤮</button><button aria-label="Previous">⏮</button><button aria-label="Play">▶</button><button aria-label="Next">⏭</button><button aria-label="Repeat">↻</button><span class="now">Now playing · Low Light — Kiasmos</span><span style="flex:1"></span><button>Settings</button></div>
   <div class="card" id="card">
     <h3>Release notes</h3>
@@ -37,6 +38,7 @@
 </div>
 <script>
   const q = new URLSearchParams(location.search);
+  if (q.has("inspect")) Object.defineProperty(navigator, "webdriver", { value: true });
   if (q.has("light")) document.body.classList.add("light");
   localStorage.setItem("morse:debug", "1");
   const store = {
@@ -48,6 +50,7 @@
   if (q.has("auto")) store.set("settings", { ...store.get("settings", {}), voice: { autoSubmit: true } });
   const subs = [];
   const emit = m => subs.forEach(f => f(m));
+  document.getElementById("open-morse").onclick = () => emit({ type: "open" });
   const merge = (a, b) => { const o = { ...a }; for (const [k, v] of Object.entries(b || {})) o[k] = v && typeof v === "object" && !Array.isArray(v) ? { ...(a[k] || {}), ...v } : v; return o; };
   const voice = q.get("voice") === "0"
     ? { transcribe: false, provider: null, label: "", hint: "Voice isn't available here. Type your change instead, or set up voice in the Morse helper on this computer (an OpenAI key or whisper)." }
@@ -114,9 +117,10 @@
         case "onboarding.set": { const s = merge(store.get("onboarding", {}), m.patch); store.set("onboarding", s); return reply(s); }
         case "onboarding.open": fake.opened = m.what; return reply({ ok: true });
         case "mods.save": {
+          if (q.has("savefail")) return setTimeout(() => reply(null, "Could not write the change. Try again."), Number(q.get("savems") || 700));
           const saved = { ...(m.draft || m.mod), enabled: true, created: new Date().toISOString(), updated: new Date().toISOString() };
           if (q.has("keepmods")) store.set("mods", [...store.get("mods", []).filter(x => x.id !== saved.id), saved]);
-          return reply(saved);
+          return setTimeout(() => reply(saved), Number(q.get("savems") || 0));
         }
         case "exec": return reply({ ok: true });
         default: return reply(null);

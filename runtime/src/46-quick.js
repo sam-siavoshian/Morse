@@ -38,6 +38,8 @@ const GodQuick = (() => {
   label();
   langSubs.add(label);
   const row = bar.querySelector(".row");
+  // Page tools live in the bar’s More menu; retain the trigger for hooks.
+  btn.hidden = true;
   row.insertBefore(btn, row.querySelector(".go"));
   const menu = document.createElement("div");
   menu.className = "gm-menu menu";
@@ -78,7 +80,7 @@ const GodQuick = (() => {
     if (menu.hidden) return;
     menu.hidden = true;
     btn.setAttribute("aria-expanded", "false");
-    if (refocus) btn.focus({ preventScroll: true });
+    if (refocus) moreBtn.focus({ preventScroll: true });
   }
   btn.addEventListener("click", () => (menu.hidden ? open() : close()));
   menu.addEventListener("click", e => {

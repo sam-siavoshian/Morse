@@ -232,7 +232,9 @@ test("fit to each site (opt-in): the first visit asks the model once, shows the 
   // Turn it on in Settings.
   await pressOpen(byte);
   await status(byte, s => s.open, "the bar");
-  await byte.keyboard.press("Control+Comma");
+  await byte.keyboard.press("ControlOrMeta+Comma");
+  await byte.locator(".sheet [data-act=more]").click();
+  await byte.locator('details[data-group="style"] > summary').click();
   await byte.locator(".pane [data-ys-sec]").waitFor();
   await byte.locator('[data-ys="adapt"]').evaluate(el => el.click());
   await until(async () => (await stored()).adapt === true, "the setting saved");

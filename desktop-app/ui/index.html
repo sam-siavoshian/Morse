@@ -22,44 +22,44 @@
 <div class="first" id="first" role="dialog" aria-modal="true" aria-label="Welcome to Morse" data-i18n-attr="aria-label:desk.first.h" data-step="welcome" data-phase="waiting" hidden>
   <div class="sky" aria-hidden="true"><div class="sky-paint"></div><canvas class="dither" data-dither="down"></canvas></div>
   <canvas class="ob-air" id="ob-air" aria-hidden="true"></canvas>
-  <div class="ob-top"><button type="button" class="ob-skip" id="first-skip" data-i18n="desk.ob.skip">Skip</button></div>
+  <div class="ob-top"><button type="button" class="ob-skip" id="first-skip" data-i18n="desk.ob.skip">Skip setup</button></div>
 
   <div class="ob-welcome" id="ob-welcome">
     <h1 class="ob-name" id="ob-name">Morse</h1>
-    <p class="ob-tagline" data-i18n="desk.first.lede">Change any app or website in your own words.</p>
-    <button type="button" class="btn primary ob-cta" id="ob-begin"><span data-i18n="desk.ob.begin">Begin</span><kbd>↵</kbd></button>
+    <p class="ob-tagline" data-i18n="desk.first.lede">Your apps have cheat codes. You write them.</p>
+    <button type="button" class="btn primary ob-cta" id="ob-begin"><span data-i18n="desk.ob.begin">Get started</span><kbd>↵</kbd></button>
   </div>
 
   <section class="ob-step" data-ob="model" aria-labelledby="ob-model-h" hidden>
-    <header class="ob-head"><h1 id="ob-model-h" data-i18n="desk.ob.modelH">Your AI writes the changes</h1><p data-i18n="desk.ob.modelD">Morse uses the AI you already have. Nothing to set up.</p></header>
+    <header class="ob-head"><h1 id="ob-model-h" data-i18n="desk.ob.modelH">Connect your AI</h1><p data-i18n="desk.ob.modelD">Connect the AI that will write your mods.</p></header>
     <div class="ob-scene">
       <p class="live" id="first-model" role="status"></p>
       <div class="keyrow" id="first-key" hidden>
         <input id="first-key-input" type="password" placeholder="Paste an Anthropic or OpenAI API key" autocomplete="off" spellcheck="false" aria-label="API key" data-i18n-attr="placeholder:desk.key.placeholder;aria-label:desk.key.label">
-        <div class="row-end"><button type="button" class="link" data-link="models" data-i18n="desk.first.otherWays">Other ways to connect a model</button><button type="button" class="btn" id="first-key-use" data-i18n="desk.first.useKey">Use this key</button></div>
+        <div class="row-end"><button type="button" class="link" data-link="models" data-i18n="desk.first.otherWays">AI setup help</button><button type="button" class="btn" id="first-key-use" data-i18n="desk.first.useKey">Save API key</button></div>
       </div>
     </div>
   </section>
 
   <section class="ob-step" data-ob="open" aria-labelledby="ob-open-h" hidden>
-    <header class="ob-head"><h1 id="ob-open-h" data-i18n="desk.ob.openH">Apps open with Morse</h1><p data-i18n="desk.ob.openD">Open an app as you usually do. Morse opens it, including one it finds later. Turn this off to open apps yourself.</p></header>
+    <header class="ob-head"><h1 id="ob-open-h" data-i18n="desk.ob.openH">Connect apps automatically</h1><p data-i18n="desk.ob.openD">Let Morse connect when you open a supported app. You can turn this off at any time.</p></header>
     <div class="ob-scene">
-      <label class="switchrow big"><span><b data-i18n="desk.autoOpen">Always open with Morse</b><small data-i18n="desk.autoOpen.d">Apps open with Morse, even from the Dock. Morse opens at login for this.</small></span><input type="checkbox" role="switch" id="ob-auto-open" checked></label>
-      <p class="ob-note" id="ob-mac-allow" data-i18n="desk.ob.openMac" hidden>On a Mac, allow Morse when macOS asks. That lets Morse open the app.</p>
+      <label class="switchrow big"><span><b data-i18n="desk.autoOpen">Auto-connect apps</b><small data-i18n="desk.autoOpen.d">Connect supported apps when you open them. This also starts Morse when you sign in.</small></span><input type="checkbox" role="switch" id="ob-auto-open" checked></label>
+      <p class="ob-note" id="ob-mac-allow" data-i18n="desk.ob.openMac" hidden>macOS may ask for permission to restart the app.</p>
     </div>
   </section>
 
   <section class="ob-step" data-ob="how" aria-labelledby="ob-how-h" hidden>
-    <header class="ob-head"><h1 id="ob-how-h" data-i18n="desk.ob.howH">Three moves, in any app</h1><p data-i18n="desk.ob.howD">Try it in an app on the next step.</p></header>
+    <header class="ob-head"><h1 id="ob-how-h" data-i18n="desk.ob.howH">Hack your first app</h1><p data-i18n="desk.ob.howD">Remove what gets in your way. Add what the app never shipped.</p></header>
     <ol class="ob-moves">
-      <li><span class="ob-move-art" id="ob-key"></span><b data-i18n="desk.ob.how1">Open Morse</b><small data-i18n="desk.ob.how1d">In the app you want to change.</small></li>
-      <li><span class="ob-move-art ob-point" aria-hidden="true"><span class="ob-target"></span><span class="ob-arrow"></span></span><b data-i18n="desk.ob.how2">Point at something</b><small data-i18n="desk.ob.how2d">Or at nothing, for the whole app.</small></li>
-      <li><span class="ob-move-art ob-quote" data-i18n="desk.ob.howEx">“Show one cover, not five”</span><b data-i18n="desk.ob.how3">Say what you want</b><small data-i18n="desk.ob.how3d">Type it or say it. It's saved, and comes back every time.</small></li>
+      <li><span class="ob-move-art" id="ob-key"></span><b data-i18n="desk.ob.how1">Open the controls</b><small data-i18n="desk.ob.how1d">Press this shortcut in the app.</small></li>
+      <li><span class="ob-move-art ob-point" aria-hidden="true"><span class="ob-target"></span><span class="ob-arrow"></span></span><b data-i18n="desk.ob.how2">Choose an area</b><small data-i18n="desk.ob.how2d">Point at what you want to change, or leave it unselected.</small></li>
+      <li><span class="ob-move-art ob-quote" data-i18n="desk.ob.howEx">“Delete the recommendation feed”</span><b data-i18n="desk.ob.how3">Describe the hack</b><small data-i18n="desk.ob.how3d">Say what to add or remove. Watch it change, then save your version.</small></li>
     </ol>
   </section>
 
   <section class="ob-step" data-ob="apps" aria-labelledby="ob-apps-h" hidden>
-    <header class="ob-head"><h1 id="ob-apps-h" data-i18n="desk.ob.appsH">Pick an app to change</h1><p data-i18n="desk.ob.appsD">It opens with Morse. Then press the keys and try it.</p></header>
+    <header class="ob-head"><h1 id="ob-apps-h" data-i18n="desk.ob.appsH">Choose an app</h1><p data-i18n="desk.ob.appsD">Choose an app. Build the version you want.</p></header>
     <div class="ob-scene">
       <ul class="list" id="first-apps" aria-label="Apps" data-i18n-attr="aria-label:desk.nav.apps"></ul>
     </div>
@@ -73,17 +73,18 @@
 </div>
 
 <div class="app">
+  <div class="sky app-sky" aria-hidden="true"><div class="sky-paint"></div><canvas class="dither" data-dither="down"></canvas></div>
   <aside class="side">
     <div class="brand"><span class="brand-mark" data-radar="20"></span><b>Morse</b></div>
     <nav aria-label="Sections" data-i18n-attr="aria-label:desk.nav">
-      <button type="button" data-tab="apps" aria-current="page"><span data-i18n="desk.nav.apps">Apps</span><small id="nav-apps"></small></button>
-      <button type="button" data-tab="model"><span data-i18n="desk.nav.model">Model</span><small id="nav-model"></small></button>
-      <button type="button" data-tab="mods"><span data-i18n="desk.nav.mods">Mods</span><small id="nav-mods"></small></button>
-      <button type="button" data-tab="settings"><span data-i18n="desk.nav.settings">Settings</span></button>
+      <button type="button" data-tab="apps" aria-current="page"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2ZM3 9h18M7 6.5h.01M10 6.5h.01"/></svg><span data-i18n="desk.nav.apps">Apps</span><small id="nav-apps"></small></button>
+      <button type="button" data-tab="model"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h8a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3ZM9 9h6v6H9ZM9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg><span data-i18n="desk.nav.model">AI setup</span><small id="nav-model"></small></button>
+      <button type="button" data-tab="mods"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9ZM14 3v6h6M8 15l3 3 5-6"/></svg><span data-i18n="desk.nav.mods">Mods</span><small id="nav-mods"></small></button>
+      <button type="button" data-tab="settings"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 2h5l.5 2.5 2 1.2 2.4-.8 2.5 4.2-1.9 1.7v2.4l1.9 1.7-2.5 4.2-2.4-.8-2 1.2-.5 2.5h-5L9 19.5l-2-1.2-2.4.8-2.5-4.2L4 13.2v-2.4L2.1 9.1l2.5-4.2 2.4.8 2-1.2ZM15.5 12a3.5 3.5 0 1 0-7 0 3.5 3.5 0 0 0 7 0Z"/></svg><span data-i18n="desk.nav.settings">Settings</span></button>
     </nav>
     <div class="side-foot">
       <label class="switchrow"><span data-i18n="desk.modsOn">Mods on</span><input type="checkbox" role="switch" id="mods-on" checked></label>
-      <label class="switchrow" title="Apps open with Morse, even from the Dock. Morse opens at login for this." data-i18n-attr="title:desk.autoOpen.d"><span data-i18n="desk.autoOpen">Always open with Morse</span><input type="checkbox" role="switch" id="auto-open" checked></label>
+      <label class="switchrow" title="Connect supported apps when you open them. This also starts Morse when you sign in." data-i18n-attr="title:desk.autoOpen.d"><span data-i18n="desk.autoOpen">Auto-connect apps</span><input type="checkbox" role="switch" id="auto-open" checked></label>
       <p class="ver" id="version"></p>
     </div>
   </aside>
@@ -92,73 +93,95 @@
     <!-- Your apps -->
     <section id="apps" aria-labelledby="apps-h">
       <header class="head two">
-        <h1 id="apps-h" data-i18n="desk.apps.h">Your apps</h1>
+        <h1 id="apps-h" data-i18n="desk.apps.h">Apps</h1>
         <div class="head-actions">
-          <button type="button" class="ibtn" id="refresh" aria-label="Look again" title="Look again" data-i18n-attr="aria-label:desk.lookAgain;title:desk.lookAgain"><span class="icon" aria-hidden="true">↻</span></button>
-          <button type="button" class="btn quiet" id="add-app" data-i18n="desk.apps.add">Add an app…</button>
+          <button type="button" class="ibtn" id="refresh" aria-label="Refresh" title="Refresh" data-i18n-attr="aria-label:desk.lookAgain;title:desk.lookAgain"><span class="icon" aria-hidden="true">↻</span></button>
+          <button type="button" class="btn quiet" id="add-app" data-i18n="desk.apps.add">Add app</button>
         </div>
         <p id="apps-lede"></p>
       </header>
-      <div class="notice" id="no-model" hidden><span data-i18n-html="desk.apps.noModel"><b>Choose a model first.</b> Morse needs one to write your changes.</span><button type="button" class="btn primary" data-go="model" data-i18n="desk.apps.chooseModel">Choose a model</button></div>
+      <div class="notice" id="no-model" hidden><span data-i18n-html="desk.apps.noModel"><b>Connect your AI.</b> Choose an AI connection to start making changes.</span><button type="button" class="btn primary" data-go="model" data-i18n="desk.apps.chooseModel">Set up AI</button></div>
+      <div class="app-tools">
+        <input type="search" id="app-search" placeholder="Search apps" aria-label="Search apps" data-i18n-attr="placeholder:desk.apps.search;aria-label:desk.apps.search" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn connected-filter" id="connected-filter" aria-pressed="false" data-i18n="desk.app.connected">Connected</button>
+      </div>
       <p class="error" id="apps-error" role="alert" hidden></p>
       <ul class="list" id="app-list" aria-label="Apps" data-i18n-attr="aria-label:desk.nav.apps"></ul>
-      <p class="foot" data-i18n="desk.apps.foot">Morse opens the app again with one extra setting, so it can connect. It never changes the app's files. When you disconnect or quit the app, your mods come off until next time.</p>
+      <p class="foot" data-i18n="desk.apps.foot">Connecting may require an app restart. Save your work before continuing.</p>
     </section>
 
     <!-- Model -->
     <section id="model" aria-labelledby="model-h" hidden>
       <header class="head"><div>
-        <h1 id="model-h" data-i18n="desk.model.h">Model</h1>
-        <p data-i18n="desk.model.lede">Morse has no model of its own. It uses one you already have.</p>
+        <h1 id="model-h" data-i18n="desk.model.h">AI setup</h1>
+        <p data-i18n="desk.model.lede">Choose the AI that writes your mods.</p>
       </div></header>
-      <div class="card current">
+      <p class="error" id="model-error" role="alert" hidden></p>
+      <div class="card current" id="current-model">
         <div class="cur-main">
           <span class="mark-tile big" id="model-mark" aria-hidden="true"></span>
           <div class="grow">
             <div class="cur-name"><b id="model-name">…</b><span class="pill" id="model-pill" hidden></span></div>
             <p class="live" id="model-live" role="status"></p>
           </div>
-          <div class="cur-actions"><button type="button" class="btn" id="check-model" data-i18n="desk.model.check">Check</button><button type="button" class="btn" id="change-model" data-i18n="desk.model.change">Change…</button></div>
+          <div class="cur-actions"><button type="button" class="btn primary" id="check-model" data-i18n="desk.model.check">Test connection</button></div>
         </div>
-        <label class="switchrow" id="fast-mode-row" hidden>
-          <span><b data-i18n="desk.model.fastMode">Fast mode</b><small data-i18n="desk.model.fastMode.d">Uses the faster, more expensive mode. The model you chose stays the same.</small></span>
-          <input type="checkbox" role="switch" id="fast-mode">
-        </label>
+
       </div>
-      <div class="card choices" id="choices" hidden>
-        <h2 id="choices-h" data-i18n="desk.model.choose">Choose what writes your changes</h2>
+      <div class="card choices" id="choices" aria-busy="false">
+        <h2 id="choices-h" data-i18n="desk.model.choose">Choose an AI connection</h2>
         <div id="choice-list" role="radiogroup" aria-labelledby="choices-h"></div>
+        <p class="live" id="choice-progress" role="status" hidden></p>
+        <p class="error" id="choice-error" role="alert" hidden></p>
         <div class="keyrow" id="keyrow" hidden>
           <input id="api-key" type="password" placeholder="Paste an Anthropic or OpenAI API key" autocomplete="off" spellcheck="false" aria-label="API key" data-i18n-attr="placeholder:desk.key.placeholder;aria-label:desk.key.label">
-          <small data-i18n="desk.key.stays">It stays on this computer, in your Morse folder.</small>
+          <small data-i18n="desk.key.stays">Your key is stored on this computer.</small>
         </div>
-        <div class="row-end"><button type="button" class="btn quiet" id="cancel-choice" data-i18n="desk.cancel">Cancel</button><button type="button" class="btn primary" id="use-choice" data-i18n="desk.model.use">Use this</button></div>
+        <div id="endpoint-fields" class="endpoint-fields" hidden>
+          <label for="endpoint-url" data-i18n="desk.endpoint.url">Server address</label>
+          <input id="endpoint-url" type="url" placeholder="http://localhost:1234/v1" spellcheck="false" autocomplete="off" aria-describedby="endpoint-help">
+          <small id="endpoint-help" data-i18n="desk.endpoint.help">Use your server’s address, including /v1 if it needs it.</small>
+          <label for="endpoint-key" data-i18n="desk.endpoint.key">API key (optional)</label>
+          <input id="endpoint-key" type="password" autocomplete="off" spellcheck="false">
+          <button id="endpoint-load" class="btn" type="button" data-i18n="desk.endpoint.models">Load models</button>
+          <p id="endpoint-status" class="live" role="status" hidden></p>
+          <label for="endpoint-model" data-i18n="desk.endpoint.model">Model</label>
+          <select id="endpoint-model" disabled><option value="" data-i18n="desk.endpoint.pick">Choose a model</option></select>
+        </div>
+        <div class="row-end"><button type="button" class="btn quiet" id="cancel-choice" data-i18n="desk.cancel">Cancel</button><button type="button" class="btn primary" id="use-choice" data-i18n="desk.model.use">Save connection</button></div>
       </div>
-      <p class="foot" data-i18n-html="desk.model.foot">Each choice is explained in <button type="button" class="link" data-link="models">Models and setup</button>.</p>
+        <label class="switchrow card" id="fast-mode-row" hidden>
+          <span><b data-i18n="desk.model.fastMode">Fast mode</b><small data-i18n="desk.model.fastMode.d">Faster responses at a higher usage cost.</small></span>
+          <input type="checkbox" role="switch" id="fast-mode">
+        </label>
       <!-- simplify: Checks lives here, under the model it checks (docs/dev/simplify.md) -->
-      <div class="card" id="checks" aria-labelledby="checks-h">
+      <section class="card" id="checks" aria-labelledby="checks-h">
+        <h2 id="checks-h" data-i18n="desk.nav.checks">Connection checks</h2>
         <div class="cur-main">
-          <div><span class="eyebrow" id="checks-h" data-i18n="desk.nav.checks">Checks</span><p class="sub" data-i18n="desk.checks.lede">What Morse found on this computer, and whether your model answers.</p></div>
+          <p class="sub" data-i18n="desk.checks.lede">Check your AI connection and required tools.</p>
           <div class="cur-actions"><button type="button" class="btn" id="run-checks" data-i18n="desk.checks.run">Run checks</button></div>
         </div>
-        <ul class="list checks" id="check-list" aria-label="Checks" data-i18n-attr="aria-label:desk.nav.checks"></ul>
-        <p class="foot" data-i18n-html="desk.checks.foot">If something is wrong, <button type="button" class="link" data-link="troubleshooting">Troubleshooting</button> says what each message means.</p>
-      </div>
+        <ul class="list checks" id="check-list" aria-live="polite" aria-busy="false" aria-label="Checks" data-i18n-attr="aria-label:desk.nav.checks"></ul>
+        <p class="foot" data-i18n-html="desk.checks.foot">Having trouble? <button type="button" class="link" data-link="troubleshooting">Read the troubleshooting guide</button>.</p>
+      </section>
+      <p class="foot" data-i18n-html="desk.model.foot">Need help connecting? <button type="button" class="link" data-link="models">Read the setup guide</button>.</p>
     </section>
 
     <!-- Mods -->
     <section id="mods" aria-labelledby="mods-h" hidden>
       <header class="head"><div>
         <h1 id="mods-h" data-i18n="desk.nav.mods">Mods</h1>
-        <p data-i18n="desk.mods.lede">A mod is a change you saved. Morse brings it back every time you open that app.</p>
+        <p data-i18n="desk.mods.lede">Your versions of their apps. Read, edit or turn off each mod.</p>
       </div></header>
-      <div class="notice" id="paused" hidden><span data-i18n-html="desk.mods.paused"><b>All mods are off.</b> They are saved, and come back when you turn them on.</span><button type="button" class="btn" id="resume" data-i18n="desk.mods.resume">Turn them on</button></div>
+      <div class="notice" id="paused" hidden><span data-i18n-html="desk.mods.paused"><b>Mods are paused.</b> Turn them on to apply them again.</span><button type="button" class="btn" id="resume" data-i18n="desk.mods.resume">Turn mods on</button></div>
+      <p class="error" id="mods-error" role="alert" hidden></p>
       <div class="notice" id="mod-undo" role="status" hidden><span id="mod-undo-text"></span><button type="button" class="btn" id="mod-undo-btn" data-i18n="btn.undo">Undo</button></div>
       <div id="mod-groups"></div>
       <div class="plate empty" id="no-mods" hidden>
         <span data-radar="24"></span>
         <b data-i18n="desk.mods.none">No mods yet</b>
-        <span data-i18n="desk.mods.none.d">Open an app with Morse, point at something and say what to change. When you save it, it shows up here.</span>
+        <span data-i18n="desk.mods.none.d">Open an app with Morse, describe a change, and save the result. It will appear here.</span>
+        <button type="button" class="btn" data-go="apps" data-i18n="desk.first.apps">Open an app with Morse</button>
       </div>
     </section>
 
@@ -166,17 +189,18 @@
     <section id="settings" aria-labelledby="settings-h" hidden>
       <header class="head"><div>
         <h1 id="settings-h" data-i18n="desk.settings.h">Settings</h1>
-        <p data-i18n="desk.settings.lede">The keys that open Morse in an app.</p>
+        <p data-i18n="desk.settings.lede">Keyboard shortcut and app updates.</p>
       </div></header>
+      <p class="error" id="settings-error" role="alert" hidden></p>
       <div class="card">
         <div class="shortcut-row">
           <div class="lbl">
-            <b data-i18n="desk.settings.open">Open Morse</b>
-            <small id="shortcut-help" data-i18n="desk.settings.open.d">Press these keys in a connected app.</small>
+            <b data-i18n="desk.settings.open">Keyboard shortcut</b>
+            <small id="shortcut-help" data-i18n="desk.settings.open.d">Press to change the shortcut for connected apps.</small>
           </div>
           <div class="shortcut-ctl">
-            <button type="button" class="btn quiet" id="shortcut-reset" hidden data-i18n="desk.settings.reset">Use the default</button>
-            <button type="button" class="hk" id="shortcut-key"></button>
+            <button type="button" class="btn quiet" id="shortcut-reset" hidden data-i18n="desk.settings.reset">Reset shortcut</button>
+            <button type="button" class="hk" id="shortcut-key" aria-describedby="shortcut-help shortcut-msg"></button>
           </div>
         </div>
         <p class="shortcut-msg" id="shortcut-msg" role="status" hidden></p>
@@ -185,7 +209,7 @@
         <div class="shortcut-row">
           <div class="lbl">
             <b id="updates-h" data-i18n="desk.update.h">Updates</b>
-            <small data-i18n="desk.update.lede">See whether a newer Morse is published.</small>
+            <small id="settings-version"></small>
           </div>
           <div class="shortcut-ctl">
             <button type="button" class="btn" id="check-updates" data-i18n="desk.update.check" aria-describedby="update-msg">Check for updates</button>
@@ -193,7 +217,7 @@
         </div>
         <p class="shortcut-msg" id="update-msg" role="status" hidden></p>
         <div class="row-end" id="update-extra" hidden>
-          <button type="button" class="btn" id="update-get" data-link="release" data-i18n="desk.update.get" hidden>Get the update</button>
+          <button type="button" class="btn" id="update-get" data-link="release" data-i18n="desk.update.get" hidden>Download update</button>
           <button type="button" class="btn primary" id="update-restart" data-i18n="desk.update.now" hidden>Restart now</button>
         </div>
       </div>
@@ -203,11 +227,11 @@
 </div>
 
 <!-- Asked when an app is already open -->
-<dialog id="ask-restart" aria-labelledby="ask-restart-h">
+<dialog id="ask-restart" aria-labelledby="ask-restart-h" aria-describedby="ask-restart-d">
   <h2 id="ask-restart-h"></h2>
-  <p data-i18n="desk.restart.d">Morse can only connect to an app when it starts. Save your work in it first.</p>
+  <p id="ask-restart-d" data-i18n="desk.restart.d">Save your work first. Morse needs to restart this app to connect.</p>
   <label class="check"><input type="checkbox" id="always-restart"><span id="always-label"></span></label>
-  <div class="row-end"><button type="button" class="btn" value="cancel" id="restart-cancel" data-i18n="desk.cancel">Cancel</button><button type="button" class="btn primary" id="restart-ok" data-i18n="desk.restart">Restart</button></div>
+  <div class="row-end"><button type="button" class="btn" value="cancel" id="restart-cancel" data-i18n="desk.cancel">Cancel</button><button type="button" class="btn primary" id="restart-ok" data-i18n="desk.restart">Restart app</button></div>
 </dialog>
 
 <!-- Morse updating itself (updater.js): downloading, then installing -->
@@ -215,10 +239,14 @@
   <span class="mark-tile" aria-hidden="true"><span data-radar="22"></span></span>
   <h2 id="update-h"></h2>
   <p id="update-d"></p>
+  <p class="error" id="update-error" role="alert" hidden></p>
   <div class="bar-track" id="update-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="update-h" hidden><div class="bar-fill" id="update-fill"></div></div>
   <div class="row-end" id="update-acts" hidden><button type="button" class="btn" id="update-later" data-i18n="desk.update.later">Later</button><button type="button" class="btn primary" id="update-now" data-i18n="desk.update.now">Restart now</button></div>
 </dialog>
 
+<div id="native-setup-home" hidden>
+      <section id="native-setup" class="native-setup" aria-labelledby="native-setup-title" hidden></section>
+</div>
 <script src="app.js" type="module"></script>
 </body>
 </html>

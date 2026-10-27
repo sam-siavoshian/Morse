@@ -89,7 +89,7 @@ test("a pending result: Send revises it; with nothing pending, Send starts a new
   await page.keyboard.type("make it smaller");
   await sendBtn().click();
   s = await waitFor(s => s.phase === "result" && /version 2/.test(s.hint));
-  assert.match(s.hint, /make it smaller/, "the same row shows the follow-up");
+  assert.match(await page.locator("[data-morse-ui] .hint").getAttribute("title"), /make it smaller/, "the same row shows the follow-up");
   assert.match(s.hint, /Now playing label/, "a one-word tweak keeps the name");
   assert.equal(s.input, "", "the follow-up is taken");
   assert.equal(s.mods, 0, "a follow-up does not save");
@@ -107,7 +107,7 @@ test("a pending result: Send revises it; with nothing pending, Send starts a new
   await page.keyboard.type("It does not work");
   await sendBtn().click();
   s = await waitFor(s => s.phase === "result" && /version 3/.test(s.hint));
-  assert.match(s.hint, /It does not work/);
+  assert.match(await page.locator("[data-morse-ui] .hint").getAttribute("title"), /It does not work/);
   assert.equal(await labels(page).count(), 1);
   g = await gens();
   assert.equal(g.length, 3);
@@ -129,14 +129,14 @@ test("a pending result: Send revises it; with nothing pending, Send starts a new
 
   await pressOpen(page);
   await waitFor(s => s.open && s.phase === "idle");
-  await page.keyboard.type("hide the sidebar");
+  await page.keyboard.type("add a back to top button");
   await sendBtn().click();
   s = await waitFor(s => s.phase === "result");
   g = await gens();
   assert.equal(g.length, 4);
   assert.notEqual(g[3].id, id, "nothing pending: a new request");
   assert.equal(g[3].base, null);
-  assert.equal(g[3].request, "hide the sidebar");
+  assert.equal(g[3].request, "add a back to top button");
   await page.locator("[data-morse-ui] .actions [data-a=undo]").click();
   await waitFor(s => !s.open);
   assert.equal((await saved()).length, 1, "Undo drops the new one and leaves the saved change");
@@ -164,12 +164,12 @@ test("a follow-up with no code keeps the change; a new name updates the same row
   assert.equal(s.mods, 0);
   assert.deepEqual(await saved(), []);
 
-  await page.keyboard.press("Control+A");
+  await page.keyboard.press("ControlOrMeta+A");
   await page.keyboard.type("call it compact");
   await sendBtn().click();
   s = await waitFor(s => s.phase === "result" && /Compact now playing/.test(s.hint));
   assert.match(s.hint, /version 2/);
-  assert.match(s.hint, /call it compact/);
+  assert.match(await page.locator("[data-morse-ui] .hint").getAttribute("title"), /call it compact/);
   assert.equal((await gens()).at(-1).id, id, "the rename is the same mod");
   assert.equal(await labels(page).count(), 1);
   assert.equal(await fontSize(page), "11px");

@@ -312,10 +312,12 @@ const YourStyle = (() => {
   function openSettings() {
     panel.hidden = true;
     if (!S.open) openBar();
+    settingsMore = true;
     if (paneKind !== "settings") showPane("settings");
     refresh().then(() => {
       renderSettings();
       const sec = pane.querySelector("[data-ys-sec]");
+      if (sec?.closest("details")) sec.closest("details").open = true;
       sec?.scrollIntoView({ block: "start" });
       sec?.querySelector("input, button")?.focus({ preventScroll: true });
     });

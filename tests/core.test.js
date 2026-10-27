@@ -124,17 +124,18 @@ test("openai: the strong tier is gpt-5 reasoning longer; other models never get 
 
 test("engine streams css, runs js, and repairs a failing first attempt", async () => {
   const events = [];
-  let runs = 0;
+  const runs = [];
   const res = await runMorse({
     settings: { provider: "demo" },
     request: "add a sleep timer",
     context: { url: "app://tunes", title: "Tunes" },
     emit: e => events.push(e),
-    exec: async js => { runs++; return /player\.dataset/.test(js) ? { ok: false, error: "ReferenceError: player is not defined" } : { ok: true }; },
+    exec: async js => { runs.push(js); return /player\.dataset/.test(js) ? { ok: false, error: "ReferenceError: player is not defined" } : { ok: true }; },
   });
   assert.equal(res.ok, true);
   assert.equal(res.attempts, 2);
-  assert.equal(runs, 2);
+  assert.equal(runs.filter(Boolean).length, 2);
+  assert.equal(runs[1], "", "the failed draft is cleaned up before its replacement runs");
   assert.ok(events.some(e => e.type === "phase" && e.phase === "fixing"));
   assert.ok(events.some(e => e.type === "css" && e.css.includes(".morse-sleep")));
 });

@@ -1,9 +1,8 @@
 # The Morse app
 
-The Morse app is Morse. It is the one thing to install, and the only place
-you set anything up. You don't need a terminal, Node or anything else. It
-finds your model, lists your apps and browsers and opens them with Morse,
-and shows your mods.
+Morse is where you start hacking your apps. Connect your AI, open an app,
+and tell it what to add or rip out. Your saved mods live here, grouped by
+app. Read them, edit them or turn them off. No terminal needed.
 
 A mod is a change you saved. Morse brings it back every time you open that
 site or app.
