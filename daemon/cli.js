@@ -275,7 +275,7 @@ async function main() {
       await showModel();
       break;
     }
-    case "uninstall": // what the install line added (daemon/installed.js)
+    case "uninstall": // remove a legacy terminal installation (daemon/installed.js)
       await (await import("./installed.js")).uninstallCli(f);
       break;
     case "doctor": {

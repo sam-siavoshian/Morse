@@ -12,7 +12,6 @@
 //   morse setup --auto                   no questions when the answer is obvious:
 //                                        already set up, nothing changes; one
 //                                        found, it is used; none, it says how
-//                                        (the install line runs this)
 
 import { spawn } from "node:child_process";
 import { promises as fs, constants as FS } from "node:fs";
@@ -324,7 +323,7 @@ export async function runSetup(args = [], { input = process.stdin, output = proc
     else say(`  ${R("✗")} ${t("setup.noAnswer", { label, error: checked.error })}\n    ${fixFor(choice, model.provider)}`);
   }
   say("");
-  if (!auto) say(nextSteps(platform)); // with --auto, the install line says what's next
+  if (!auto) say(nextSteps(platform)); // automated callers handle their own next steps
   return { saved: true, rows, choice, model, checked };
 }
 

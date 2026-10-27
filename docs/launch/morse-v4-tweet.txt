@@ -4,4 +4,4 @@ Edit the headline, hide the ads, turn on dark mode. No model connected. Open the
 - Page tools hide the ad slots and the popup, then Dark mode inverts the page. Both save themselves.
 - Quit and open the page again. The three mods are already on.
 
-curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh
+Download Morse: https://getmorse.vercel.app/
