@@ -1,7 +1,8 @@
 # Morse docs
 
-Morse lets you change any website or desktop app in your own words. A mod is a
-change you saved. Morse brings it back every time you open that site or app.
+Hack your apps in your own words. Remove the feed. Build the missing export.
+Take a feature from another app and make it work here. Save your version as
+a mod, and Morse brings it back every time you open the app.
 
 If you're new, start with [Getting started](getting-started.md).
 

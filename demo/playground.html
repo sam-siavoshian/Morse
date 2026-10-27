@@ -106,12 +106,7 @@
         return reply(x);
       }
       if (m.type === "mods.delete") { const all = store.get("mods", {}); delete all[m.modId]; store.set("mods", all); return reply(true); }
-      // ?scriptsoff: the extension with Chrome's "Allow User Scripts" off
-      // (extension/background.js cantRun): code never runs, it waits.
-      const scriptsOff = new URLSearchParams(location.search).has("scriptsoff");
-      if (scriptsOff && m.type === "onboarding.open") { fake.opened = m.what; return reply({ ok: true }); }
       const exec = (id, js) => {
-        if (scriptsOff) return { ok: false, waiting: "userScripts", error: "Waits for Allow User Scripts" };
         let r;
         try { r = (0, eval)(kit.wrapModCode(id, js)); } catch (e) { r = { ok: false, error: String(e.message || e) }; }
         const errs = r && r.ok ? morse.__errors(id) : [];
@@ -127,7 +122,7 @@
         const { runMorse } = await import("/core/engine.js");
         const res = await runMorse({ settings: demo(), request: m.request, context: m.context, base: m.base,
           exec: async js => exec(m.genId, js), emit: ev => emit({ ...ev, genId: m.genId }) }).catch(e => ({ ok: false, error: e.message }));
-        return reply({ ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts, waiting: res.waiting });
+        return reply({ ok: res.ok, error: res.error, title: res.title, css: res.css, js: res.js, attempts: res.attempts });
       }
       if (m.type === "clipboard.list") return reply(store.get("clipboard", []));
       if (m.type === "clipboard.put") { const l = clip.clipAdd(store.get("clipboard", []), m.item); store.set("clipboard", l); return reply(l); }

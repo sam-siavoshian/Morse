@@ -47,7 +47,8 @@ const snapshot = page => page.evaluate(() => ({
 
 async function openTools(page) {
   if (await page.locator(".bar").isHidden()) await pressOpen(page);
-  await page.locator(".gm-qbtn").click();
+  await page.locator(".more").click();
+  await page.locator('[data-m="tools"]').click();
   await page.locator(".gm-menu [data-a11y=more]").click(); // the group opens from its one item (docs/dev/simplify.md)
   await page.locator(".gm-menu .a11y-group").waitFor();
 }

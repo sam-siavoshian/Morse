@@ -267,31 +267,6 @@ function heardSoon() {
   }, Math.max(30, heardAt + 1000 - pristine.now()));
 }
 
-// ---- mods waiting for “Allow User Scripts” (64-waiting.js has the UI). In
-// the extension, mod code only runs with it on; while it's off, exec answers
-// { waiting: "userScripts" }: the style shows, the code never ran, and it
-// doesn't count as run for safe start. The UI is loaded to say so once per
-// tab; coming back to the tab tries the waiting mods again.
-const waiting = new Map();
-let waitHeard = false;
-function waitingAdd(m) {
-  if (ui) { try { ui.waitingAdd?.(m); } catch (e) { warn(e); } return; }
-  waiting.set(m.id, m);
-  if (!seen("morse:waiting-told")) loadUI().catch(() => {});
-  if (waitHeard) return;
-  waitHeard = true;
-  // Only the person coming back: a page firing focus events can't make it
-  // send every waiting mod to the host again and again.
-  const retry = e => {
-    if (ui || !e.isTrusted || D.visibilityState !== "visible" || !waiting.size) return;
-    const list = [...waiting.values()];
-    waiting.clear();
-    for (const x of list) applyMod(S.mods.find(y => y.id === x.id) || x).catch(warn);
-  };
-  on(D, "visibilitychange", retry);
-  on(W, "focus", retry);
-}
-
 async function applyMod(m) {
   await controlled;
   if (held(m) || !live()) return;
@@ -303,10 +278,6 @@ async function applyMod(m) {
     if (!live()) return;
     if (!guard.ok) look = guardLook();
     const r = await call("exec", { modId: m.id, js: m.js });
-    // dogfood: a mod's style is often half of a change its code finishes
-    // (hide the small date, then add a big one): alone it can leave the page
-    // worse than before. While the code waits, so does the style.
-    if (r?.waiting) { setCss(m.id, ""); return waitingAdd(m); }
     health(m, r);
     if (r && !r.ok && !guardPaused(m, r)) { warn(m.title, r.error); notify({ id: "mod.failedHere", vars: { title: m.title } }); }
   }
@@ -411,7 +382,7 @@ const Heal = (() => {
   const NOT_OURS = "[data-morse-ui],[data-morse]";
   const TRANSIENT = "dialog,[role=dialog],[role=alertdialog],[aria-modal=true],[popover],[role=menu],[role=listbox],[role=tooltip]";
   const broken = new Map(); // mod id -> lost selectors [[selector, countBefore]]
-  let running = null, again = false, badged = -1, wantUi = false;
+  let running = null, again = false, wantUi = false;
   const wait = ms => new Promise(r => pristine.setTimeout(r, ms));
   const pageSize = () => (D.body ? D.body.getElementsByTagName("*").length : 0);
   // "host >>> inside": into open shadow roots and same-origin frames (20-context.js deepAll).
@@ -528,8 +499,6 @@ const Heal = (() => {
     report();
   }
   function report() {
-    const n = [...broken.keys()].filter(id => S.mods.some(m => m.id === id && m.enabled)).length;
-    if (S.mode === "extension" && n !== badged) { badged = n; call("heal.badge", { count: n }).catch(() => {}); } // the toolbar button
     if (ui) { try { ui.healFound?.(); } catch (e) { warn(e); } }
     // Auto-fix (Settings) needs the model and the UI's review flow: load it now,
     // for a mod it would try (once per version, never on its own fix: 71-heal.js autoFix).
@@ -661,8 +630,6 @@ Object.defineProperty(W, BOOT, { configurable: true, value: Object.freeze({
     for (const t of toasts.splice(0)) try { ui.toast(t); } catch (e) { warn(e); }
     for (const [m, r] of healthLog.values()) health(m, r);
     healthLog.clear();
-    for (const m of waiting.values()) waitingAdd(m);
-    waiting.clear();
     for (const [name, args] of tasks.splice(0)) try { ui[name]?.(...args); } catch (e) { warn(e); }
     Heal.adopted();
   },

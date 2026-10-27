@@ -8,6 +8,14 @@ under the new version number with the date
 
 ## Unreleased
 
+## 0.3.3 (2026-10-26)
+
+- **Your apps have cheat codes.** The desktop welcome, in-app prompts, CLI, website and docs share the same direct language about removing unwanted features and building your own. Core branding is updated in every supported language.
+- **A clearer desktop app.** App search and filters, connection status, model setup, navigation and saving mods have additional checks and fixes.
+- **Native controls on macOS.** Morse includes a native control picker with Accessibility setup for supported actions outside web content.
+- **More reliable changes.** Failed or cancelled drafts are cleaned up, incomplete responses are rejected, and saved mods have regression coverage.
+- **Self-hosted AI setup.** Connect an existing compatible model server from the desktop app.
+
 ## 0.3.2 (2026-10-26)
 
 - **Check for updates works.** The installed app was missing a file it needs to start, so Settings couldn't see whether a newer Morse was published. It starts, and Check for updates says if you're up to date.

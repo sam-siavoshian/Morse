@@ -34,7 +34,7 @@ process.env.MORSE_HOME = home;
 const MODS = path.join(home, "mods");
 await fs.mkdir(MODS, { recursive: true });
 await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false, gallery: false }));
-await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } }));
+await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true } }));
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
 const mod = (id, title, prompt, extra) => ({ morse: 1, id, title, prompt, match: { hosts: [HOST], app: null }, css: "", js: "", enabled: true, model: "Claude Code · sonnet", created: ago(5 * 86400), updated: ago(5 * 86400), ...extra });
 const writeMod = m => fs.writeFile(path.join(MODS, `${m.id}.json`), JSON.stringify(m, null, 2));

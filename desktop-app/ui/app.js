@@ -6,6 +6,7 @@ import { t, setLanguage, loadLanguage, pickLanguage, setLanguageLoader, translat
 import { comboFromEvent, comboParts, formatCombo, formatPartial, defaultHotkeys, decideOpenShortcut, detectPlatform } from "./core/hotkeys.js";
 import { formName } from "./formation.js";
 import { mountDither } from "./dither.js";
+import { filterApps, nativeAction } from "./app-list.js";
 import { afterOpenBar, noticeStillShown } from "./open-bar.js";
 
 setLanguageLoader(code => import(`./core/locales/${code}.js`).then(m => m.default));
@@ -55,65 +56,275 @@ for (const c of document.querySelectorAll("canvas.dither")) mountDither(c);
 // An app's own icon, or (for an app with none Morse can read) four squares
 // standing for an app: never a letter standing in for a picture.
 const appsGlyph = () => h("span", { class: "apps-glyph", "aria-hidden": "true" }, h("i"), h("i"), h("i"), h("i"));
-const trashGlyph = () => h("span", { class: "icon", "aria-hidden": "true", text: "×" });
+function trashGlyph() {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  for (const [key, value] of Object.entries({ viewBox: "0 0 24 24", width: "16", height: "16", fill: "none", stroke: "currentColor", "stroke-width": "1.5", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" })) svg.setAttribute(key, value);
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7");
+  svg.append(path);
+  return svg;
+}
 function appIcon(a) {
   return h("div", { class: `appicon${a.icon ? " has-img" : ""}`, "aria-hidden": "true" }, a.icon ? h("img", { src: a.icon, alt: "" }) : appsGlyph());
 }
 const caps = combo => h("span", { class: "caps" }, ...String(combo || "").split("+").filter(Boolean).map(k => h("kbd", { text: k })));
 const openKey = () => st.keys.open || formatCombo(defaultHotkeys(HK_PLATFORM).open, HK_PLATFORM);
 // A message with the shortcut's keys in it: t() with {key} as a marker, then the keys put in its place.
-function withKeys(id, combo) {
+function withKeys(id) {
   const [before, after = ""] = t(id, { key: "\u0000" }).split("\u0000");
-  return [before, caps(combo), after];
+  return [before, keyCaps(st.keys.combo || defaultHotkeys(HK_PLATFORM).open), after];
 }
 // The mark of what writes your changes (ui/icons/NOTICE): Claude Code, Codex,
 // an API key (both providers' marks), or Morse's own radar for the rest.
-const MARKS = { "claude-code": ["claude"], codex: ["openai"], anthropic: ["anthropic"], openai: ["openai"], "api-key": ["anthropic", "openai"] };
+const MARKS = { "claude-code": ["claude"], "codex": ["openai"], anthropic: ["anthropic"], openai: ["openai"], "api-key": ["anthropic", "openai"], ollama: ["ollama"], lmstudio: ["lmstudio"], llama: ["llamacpp"], llamacpp: ["llamacpp"] };
 function providerMark(id, big = false) {
   const names = MARKS[id];
   const tile = h("span", { class: `mark-tile${big ? " big" : ""}${names?.length > 1 ? " pair" : ""}`, "aria-hidden": "true" });
-  if (!names) { const r = radar(big ? 22 : 18); r.classList.remove("live"); tile.append(r); }
-  else for (const n of names) tile.append(h("img", { src: `icons/${n}.png`, alt: "", class: n === "claude" ? "" : "mono", draggable: "false" }));
+  if (id === "local") {
+    const icon = document.createElementNS(svgNS, "svg");
+    for (const [key, value] of Object.entries({ viewBox: "0 0 24 24", width: big ? "22" : "18", height: big ? "22" : "18", fill: "none", stroke: "currentColor", "stroke-width": "1.5", "stroke-linecap": "round", "stroke-linejoin": "round" })) icon.setAttribute(key, value);
+    const path = document.createElementNS(svgNS, "path");
+    path.setAttribute("d", "M5 3h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM8 22h8M12 18v4");
+    icon.append(path); tile.append(icon);
+  }
+  else if (!names) { const r = radar(big ? 22 : 18); r.classList.remove("live"); tile.append(r); }
+  else for (const n of names) tile.append(h("img", { src: `icons/${n}.png`, alt: "", class: ["anthropic", "openai"].includes(n) ? "mono" : "", draggable: "false" }));
   return tile;
 }
 const secs = ms => (ms / 1000).toFixed(1);
 // The model's name: "Claude Code" and "Codex" as they are, the rest in the person's words.
-const modelName = m => ({ anthropic: t("desk.model.anthropic"), openai: t("desk.model.openai"), demo: t("desk.model.demo") }[m.provider] || m.name);
+const modelName = m => m.provider === "local" && m.runtime === "local" ? t("desk.endpoint.name") : ({ anthropic: t("desk.model.anthropic"), openai: t("desk.model.openai"), demo: t("desk.model.demo") }[m.provider] || m.name);
 
 let st = null;
+const errorText = error => String(error?.message || error || t("err.generic"));
+function showError(id, error) {
+  const el = $(id);
+  el.textContent = error ? errorText(error) : "";
+  el.hidden = !error;
+}
+function actionError(error) {
+  const tab = document.querySelector("main > section:not([hidden])")?.id || "apps";
+  if (tab === "apps") appError(error ? errorText(error) : "");
+  else showError(`${tab}-error`, error);
+}
 
 // ---------------------------------------------------------------- sections
+const navButtons = [...document.querySelectorAll(".side nav button[data-tab]")];
+const panels = [...document.querySelectorAll("main > section")];
+const main = document.querySelector("main");
+const scrollPositions = new Map();
+let activeTab = null;
 function show(tab) {
-  for (const b of document.querySelectorAll("nav button")) {
-    if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  if (tab === "checks") tab = "model";
+  if (!["apps", "model", "mods", "settings"].includes(tab)) tab = "apps";
+  // A second click must not reset the page or interrupt an in-progress edit.
+  if (tab === activeTab) return;
+  if (activeTab) scrollPositions.set(activeTab, main.scrollTop);
+  if (activeTab === "settings" && recording) stopRecording();
+  const previous = panels.find(panel => panel.id === activeTab);
+  const moveFocus = previous?.contains(document.activeElement);
+  activeTab = tab;
+  for (const button of navButtons) {
+    if (button.dataset.tab === tab) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
   }
-  if (tab === "checks") tab = "model"; // simplify: Checks is a card in Model now
-  if (tab !== "mods") hideUndo(); // a stale "Undo delete" shouldn't wait on another page
-  for (const s of document.querySelectorAll("main > section")) s.hidden = s.id !== tab;
+  if (tab !== "mods") hideUndo();
+  for (const panel of panels) panel.hidden = panel.id !== tab;
+  main.scrollTop = scrollPositions.get(tab) || 0;
+  // Links within a page must not leave keyboard focus inside its hidden panel.
+  if (moveFocus) navButtons.find(button => button.dataset.tab === tab)?.focus({ preventScroll: true });
   try { sessionStorage.setItem("tab", tab); } catch {}
-  $(tab).closest("main").scrollTop = 0;
-  // Checks ask the model a question, so they run only when asked.
   if (tab === "model" && !$("check-list").children.length) $("check-list").replaceChildren(h("li", { class: "empty" }, t("desk.checks.first")));
 }
-for (const b of document.querySelectorAll("nav button")) b.onclick = () => show(b.dataset.tab);
+for (const b of navButtons) b.onclick = () => show(b.dataset.tab);
 for (const b of document.querySelectorAll("[data-go]")) b.onclick = () => show(b.dataset.go);
 for (const b of document.querySelectorAll("[data-link]")) b.onclick = () => morse.openLink(b.dataset.link);
+
+function clearAppFilters() {
+  $("app-search").value = "";
+  $("connected-filter").setAttribute("aria-pressed", "false");
+  renderApps();
+  $("app-search").focus();
+}
+$("app-search").addEventListener("input", () => { if (st) renderApps(); });
+$("app-search").addEventListener("keydown", event => {
+  if (event.key === "Escape") { event.preventDefault(); clearAppFilters(); }
+});
+$("connected-filter").onclick = () => {
+  const button = $("connected-filter");
+  button.setAttribute("aria-pressed", String(button.getAttribute("aria-pressed") !== "true"));
+  if (st) renderApps();
+};
+document.addEventListener("keydown", event => {
+  if (!(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey || event.repeat || event.isComposing || !$("first").hidden || document.querySelector("dialog[open]") || recording) return;
+  if (event.key.toLowerCase() === "f") { event.preventDefault(); show("apps"); $("app-search").focus(); $("app-search").select(); }
+  const tab = { "1": "apps", "2": "model", "3": "mods", "4": "settings" }[event.key];
+  if (tab) { event.preventDefault(); show(tab); document.querySelector(`[data-tab="${tab}"]`).focus(); }
+});
+for (const [index, button] of [...document.querySelectorAll(".side nav button")].entries()) {
+  const shortcut = `${platform === "darwin" ? "⌘" : "Ctrl+"}${index + 1}`;
+  button.title = `${button.textContent.trim()} · ${shortcut}`;
+  button.setAttribute("aria-keyshortcuts", `${platform === "darwin" ? "Meta" : "Control"}+${index + 1}`);
+}
+$("app-search").title = platform === "darwin" ? "⌘F" : "Ctrl+F";
+
+// The footer light from site/motion.js: settle toward the pointer, then stop.
+const liquidMotion = matchMedia("(prefers-reduced-motion: reduce)");
+for (const zone of document.querySelectorAll(".head-actions, .app-tools")) {
+  let frame = 0, x = 0, y = 0, aimX = 0, aimY = 0;
+  const step = () => {
+    x += (aimX - x) * 0.16; y += (aimY - y) * 0.16;
+    zone.style.setProperty("--light-x", `${x.toFixed(1)}px`);
+    zone.style.setProperty("--light-y", `${y.toFixed(1)}px`);
+    frame = Math.abs(aimX - x) + Math.abs(aimY - y) > 0.5 ? requestAnimationFrame(step) : 0;
+  };
+  const stop = () => { cancelAnimationFrame(frame); frame = 0; zone.classList.remove("lit"); };
+  zone.addEventListener("pointermove", event => {
+    if (liquidMotion.matches || event.pointerType !== "mouse") return;
+    const box = zone.getBoundingClientRect();
+    aimX = event.clientX - box.left; aimY = event.clientY - box.top;
+    if (!zone.classList.contains("lit")) { x = aimX; y = aimY; }
+    zone.classList.add("lit");
+    if (!frame) frame = requestAnimationFrame(step);
+  }, { passive: true });
+  zone.addEventListener("pointerleave", stop);
+  liquidMotion.addEventListener("change", stop);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); });
+}
 
 // ---------------------------------------------------------------- apps
 const STATUS = {
   connected: a => [h("i", { class: "dot on" }), h("span", { text: [t("desk.app.connected"), a.windows ? t("desk.app.windows", { n: a.windows }) : "", a.modsOn ? t("desk.app.modsOn", { n: a.modsOn }) : ""].filter(Boolean).join(" · ") })],
   waiting: () => [h("i", { class: "dot wait" }), h("span", { text: t("desk.app.waiting") })],
+  "waiting-page": () => [h("i", { class: "dot wait" }), h("span", { text: t("desk.app.waitingPage") })],
   connecting: () => [radar(12), h("span", { text: t("desk.app.connecting") })],
   opening: a => [radar(12), h("span", { text: t("desk.app.opening", { name: a.name }) })],
   disconnecting: () => [radar(12), h("span", { text: t("desk.app.disconnecting") })],
   "open-connectable": () => [h("i", { class: "dot" }), h("span", { text: t("desk.app.ready") })],
   open: () => [h("i", { class: "dot" }), h("span", { text: t("desk.app.openWithout") })],
-  closed: a => [h("span", { text: [a.version ? t("desk.app.version", { version: a.version }) : t("desk.app.notOpen"), a.mods ? t("desk.app.mods", { n: a.mods }) : ""].filter(Boolean).join(" · ") })],
+  closed: a => [h("span", { text: [t("desk.app.notOpen"), a.mods ? t("desk.app.mods", { n: a.mods }) : ""].filter(Boolean).join(" · ") })],
 };
+
+const nativePending = new Set();
+let nativeGuide = null;
+let nativeCheck = false;
+let nativeRecheckOnFocus = false;
+function dismissNativeGuide() {
+  const row = nativeGuideRow();
+  nativeGuide = null;
+  nativeRecheckOnFocus = false;
+  $("native-setup").hidden = true;
+  $("native-setup-home").append($("native-setup"));
+  row?.querySelector('[data-act="native-controls"]')?.focus();
+}
+function nativeGuideRow() {
+  if (!nativeGuide) return null;
+  const list = $(nativeGuide.onboarding ? "first-apps" : "app-list");
+  const key = nativeGuide.onboarding ? "data-first-app" : "data-app";
+  return list.querySelector(`[${key}="${CSS.escape(nativeGuide.app.id)}"]`);
+}
+function placeNativeGuide() {
+  if (!nativeGuide) return;
+  const box = $("native-setup"), row = nativeGuideRow();
+  // Keep the one guide alive across status updates; filters never move it to another app.
+  if (row) { row.append(box); box.hidden = false; }
+  else { $("native-setup-home").append(box); box.hidden = true; }
+}
+async function setupNativeForApp(app, button) {
+  button.disabled = true;
+  try {
+    const access = await morse.nativeSetup("status");
+    nativeGuide = { app, access, onboarding: true, checked: false, error: access.error || "" };
+    renderNativeGuide();
+    $("native-setup-title").focus({ preventScroll: true });
+  } catch (error) { button.disabled = false; button.title = errorText(error); }
+  finally { button.disabled = false; }
+}
+function renderNativeGuide() {
+  const box = $("native-setup");
+  box.hidden = !nativeGuide;
+  if (!nativeGuide) return;
+  placeNativeGuide();
+  const { app, access, checked, error } = nativeGuide;
+  const ready = access.trusted;
+  const check = h("button", { type: "button", "data-act": "check-access", class: ready ? "btn primary" : "btn", disabled: nativeCheck,
+    onclick: async event => {
+      if (!ready) return checkNativeAccess();
+      if (nativeGuide.onboarding) return dismissNativeGuide();
+      await inspectNative(app, event.currentTarget);
+    } }, t(nativeCheck ? "desk.native.checking" : ready ? (nativeGuide.onboarding ? "desk.ob.continue" : "desk.native.continue") : "desk.native.check", { name: app.name }));
+  box.classList.toggle("ready", ready);
+  box.replaceChildren(
+    h("div", { class: "native-setup-head" },
+      h("h2", { id: "native-setup-title", tabindex: "-1", text: t("desk.native.title", { name: app.name }) }),
+      h("button", { type: "button", class: "btn quiet", onclick: dismissNativeGuide }, t("desk.native.later"))),
+    ...(!ready ? [h("p", { class: "native-setup-instructions" },
+      t("desk.native.step1"), " ", t("desk.native.step2", { app: access.targetName || "Morse" }))] : []),
+    h("div", { class: "native-setup-actions" },
+      ...(!ready ? [h("button", { type: "button", class: "btn primary", onclick: () => nativeSetupAction("settings") }, t("desk.native.settings")),
+        ...(access.canReveal ? [h("button", { type: "button", class: "btn quiet", onclick: () => nativeSetupAction("reveal") }, t("desk.native.reveal"))] : [])] : []), check),
+    h("p", { role: "status", "aria-live": "polite", class: error ? "error" : "native-setup-status", text: error || t(ready ? "desk.native.ready" : checked ? "desk.native.off" : "desk.native.optional", { app: access.targetName || "Morse" }) }));
+}
+async function checkNativeAccess() {
+  if (!nativeGuide || nativeCheck) return;
+  const guide = nativeGuide;
+  const restoreFocus = $("native-setup").contains(document.activeElement);
+  nativeCheck = true;
+  renderNativeGuide();
+  try {
+    const access = await morse.nativeSetup("status");
+    if (access.error) throw new Error(access.error);
+    if (nativeGuide === guide) Object.assign(guide, { access, checked: true, error: "" });
+  } catch (e) { if (nativeGuide === guide) guide.error = errorText(e); }
+  finally {
+    nativeCheck = false; renderNativeGuide();
+    if (nativeGuide === guide && restoreFocus) $("native-setup").querySelector('[data-act="check-access"]')?.focus({ preventScroll: true });
+  }
+}
+async function nativeSetupAction(action) {
+  const guide = nativeGuide;
+  nativeRecheckOnFocus = true;
+  try {
+    const result = await morse.nativeSetup(action);
+    if (result.error) throw new Error(result.error);
+  } catch (e) { if (guide === nativeGuide) { guide.error = errorText(e); renderNativeGuide(); } }
+}
+window.addEventListener("focus", () => {
+  if (!nativeGuide || !nativeRecheckOnFocus) return;
+  nativeRecheckOnFocus = false;
+  checkNativeAccess();
+});
+
+async function inspectNative(a, button) {
+  if (nativePending.has(a.id)) return;
+  nativePending.add(a.id);
+  appError("");
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
+  const label = button.textContent;
+  button.textContent = t("desk.app.opening", { name: a.name });
+  try {
+    const result = await morse.nativeControls(a.id);
+    if (result.permissionNeeded) {
+      nativeGuide = { app: a, access: result.access, checked: false, error: "" };
+      renderNativeGuide();
+      $("native-setup-title").focus({ preventScroll: true });
+      $("native-setup").scrollIntoView({ block: "nearest", behavior: "auto" });
+    } else if (result.error) appError(result.error);
+    else if (result.ok && nativeGuide?.app.id === a.id) dismissNativeGuide();
+  } catch (e) { appError(errorText(e)); }
+  finally {
+    nativePending.delete(a.id);
+    button.disabled = false;
+    button.removeAttribute("aria-busy");
+    button.textContent = label;
+  }
+}
 
 function appRow(a) {
   const cant = a.canAttach === false;
-  const status = cant ? [h("span", { text: t("desk.app.cant", { why: a.why }) })]
+  const native = nativeAction(a, platform);
+  const status = cant ? [h("span", { text: platform === "darwin" && a.engine === "native" ? t(a.running ? "desk.app.nativeReady" : "desk.app.nativeClosed", { name: a.name }) : t("desk.app.cant", { why: a.why }) })]
     : a.canAttach === null && a.state === "closed" ? [h("span", { text: t("desk.app.unknown") })]
     : (STATUS[a.state] || STATUS.closed)(a);
   const busy = ["opening", "disconnecting", "connecting"].includes(a.state);
@@ -124,10 +335,16 @@ function appRow(a) {
     h("button", { type: "button", class: "btn", "data-act": "disconnect", onclick: () => disconnect(a) }, t("desk.app.disconnect")));
   else if (a.state === "open-connectable") button = h("button", { type: "button", class: "btn", "data-act": "connect", onclick: () => open(a) }, t("desk.app.connect"));
   else button = h("button", { type: "button", class: "btn", "data-act": "open", disabled: busy, onclick: () => open(a) }, t("desk.app.open"));
+  const nativeButton = native ? h("button", {
+    type: "button", class: native === "browser" ? "native-link" : "btn", "data-act": "native-controls",
+    disabled: nativePending.has(a.id),
+    title: t(native === "browser" ? "desk.app.browserControlsHint" : "desk.app.inspectControlsHint", { name: a.name }),
+    onclick: event => inspectNative(a, event.currentTarget),
+  }, t(native === "browser" ? "desk.app.browserControls" : "desk.app.inspectControls")) : null;
   return h("li", { class: cant ? "cant" : a.state, "data-app": a.id },
     appIcon(a),
-    h("div", { class: "grow" }, h("b", { text: a.name }), h("small", {}, ...status)),
-    h("div", { class: "actions" }, button));
+    h("div", { class: "grow" }, h("b", { text: a.name, title: a.version ? `${a.name} · ${t("desk.app.version", { version: a.version })}` : a.name }), h("small", {}, ...status), native === "browser" ? nativeButton : null),
+    h("div", { class: "actions" }, native === "native" ? nativeButton : button));
 }
 
 // Rows are only rebuilt when what they show changed, so focus stays put
@@ -135,15 +352,16 @@ function appRow(a) {
 function renderApps() {
   showAppsError(); // a Connected row clears a stale "isn't running yet" banner
   const list = $("app-list");
-  const rows = st.apps;
+  const rows = filterApps(st.apps, $("app-search").value, $("connected-filter").getAttribute("aria-pressed") === "true");
   const seen = new Set();
+  list.setAttribute("aria-busy", String(!!st.appsPending));
   if (!rows.length) {
-    list.replaceChildren(h("li", { class: "empty" }, t("desk.apps.none")));
+    list.replaceChildren(h("li", { class: "empty", role: "status" }, ...(st.appsPending ? [radar(14), t("desk.apps.looking")] : [t(st.apps.length ? "desk.apps.noMatch" : "desk.apps.none"), ...(st.apps.length ? [h("button", { type: "button", class: "btn", onclick: clearAppFilters }, t("desk.apps.clear"))] : [])])));
   } else {
     if (list.querySelector("li.empty")) list.replaceChildren();
     let prev = null;
     for (const a of rows) {
-      const sig = JSON.stringify([a.name, a.state, a.canStop ? 1 : 0, a.windows, a.mods, a.modsOn, a.version, a.icon ? 1 : 0, a.canAttach, a.why]);
+      const sig = JSON.stringify([a.name, a.state, a.running, a.browser, a.engine, a.canStop ? 1 : 0, a.windows, a.mods, a.modsOn, a.version, a.icon ? 1 : 0, a.canAttach, a.why]);
       let li = list.querySelector(`li[data-app="${CSS.escape(a.id)}"]`);
       if (!li || li.dataset.sig !== sig) {
         const fresh = appRow(a);
@@ -151,6 +369,7 @@ function renderApps() {
         // A connected row rebuilds on every status tick; keep focus on the same
         // action (Disconnect stays Disconnect), not always the first button.
         const act = li?.contains(document.activeElement) ? document.activeElement.dataset.act : null;
+        if (li?.contains($("native-setup"))) $("native-setup-home").append($("native-setup"));
         if (li) li.replaceWith(fresh); else list.append(fresh);
         li = fresh;
         if (act) (li.querySelector(`[data-act="${act}"]`) || li.querySelector("button"))?.focus();
@@ -160,13 +379,17 @@ function renderApps() {
       seen.add(a.id);
     }
   }
-  for (const li of [...list.querySelectorAll("li[data-app]")]) if (!seen.has(li.dataset.app)) li.remove();
+  placeNativeGuide();
+  for (const li of [...list.querySelectorAll("li[data-app]")]) if (!seen.has(li.dataset.app)) {
+    if (li.contains($("native-setup"))) { $("native-setup-home").append($("native-setup")); $("native-setup").hidden = true; }
+    li.remove();
+  }
   $("no-model").hidden = !st.model.none;
-  const on = rows.filter(a => a.state === "connected").length;
+  const on = st.apps.filter(a => a.state === "connected").length;
   const nav = $("nav-apps");
-  nav.textContent = on ? t("desk.nav.on", { n: on }) : rows.filter(a => a.canAttach !== false).length || "";
+  nav.textContent = on ? t("desk.nav.on", { n: on }) : st.apps.filter(a => a.canAttach !== false).length || "";
   nav.className = on ? "on" : "";
-  $("apps-lede").replaceChildren(...withKeys("desk.apps.lede", openKey()));
+  $("apps-lede").replaceChildren(...withKeys("desk.apps.lede"));
 }
 
 // plainError: a failure that stands on its own (couldn't open, opened outside
@@ -187,15 +410,19 @@ function appError(text) { plainError = text || ""; barMiss = null; showAppsError
 
 async function open(a, answer) {
   appError("");
-  const r = await morse.openApp(a.id, answer);
-  if (r?.needsRestart) return askRestart(a);
-  if (r?.error) appError(r.error);
+  try {
+    const r = await morse.openApp(a.id, answer);
+    if (r?.needsRestart) return askRestart(a);
+    if (r?.error) appError(r.error);
+  } catch (e) { appError(errorText(e)); }
 }
 // "Open the bar": Morse's bar in the app, for when the shortcut does nothing
 // (another app took it, or the keyboard makes it hard to press).
 async function openBar(a) {
   appError("");
-  const r = await morse.openBar(a.id);
+  let r;
+  try { r = await morse.openBar(a.id); }
+  catch (e) { appError(errorText(e)); return; }
   if (!r?.code) return;
   if (r.code === "notReady") {
     // Too early: the row must not keep saying Connected next to this banner.
@@ -210,8 +437,10 @@ async function openBar(a) {
 }
 async function disconnect(a) {
   appError("");
-  const r = await morse.disconnectApp(a.id);
-  if (r?.error) appError(r.error);
+  try {
+    const r = await morse.disconnectApp(a.id);
+    if (r?.error) appError(r.error);
+  } catch (e) { appError(errorText(e)); }
 }
 
 // "Tunes is open. Restart it with Morse?" (the same question as `morse launch`)
@@ -223,18 +452,30 @@ function askRestart(a, then = open) {
   $("restart-ok").onclick = () => { const always = $("always-restart").checked; d.close(); then(a, always ? "a" : "y"); };
   $("restart-cancel").onclick = () => d.close();
   d.showModal();
-  $("restart-ok").focus();
+  $("restart-cancel").focus();
 }
 
 $("refresh").onclick = async () => {
+  if ($("refresh").disabled) return;
+  $("refresh").disabled = true;
+  appError("");
   $("refresh").classList.add("spin");
-  try { st = await morse.refreshApps(); render(); } finally { setTimeout(() => $("refresh").classList.remove("spin"), 300); }
+  try {
+    const next = await morse.refreshApps();
+    if (next?.error) throw new Error(next.error);
+    st = next; render();
+  } catch (e) { appError(errorText(e)); }
+  finally { $("refresh").disabled = false; $("refresh").classList.remove("spin"); }
 };
 $("add-app").onclick = async () => {
   appError("");
-  const r = await morse.addApp();
-  if (r?.error) appError(r.error);
-  else if (r?.ok) { st = await morse.state(); render(); }
+  $("add-app").disabled = true;
+  try {
+    const r = await morse.addApp();
+    if (r?.error) appError(r.error);
+    else if (r?.ok) { st = await morse.state(); render(); }
+  } catch (e) { appError(errorText(e)); }
+  finally { $("add-app").disabled = false; }
 };
 
 // ---------------------------------------------------------------- model
@@ -246,7 +487,6 @@ function renderModel() {
   $("model-pill").hidden = !m.model;
   $("model-pill").textContent = m.model;
   $("check-model").hidden = m.none;
-  $("change-model").textContent = m.none ? t("desk.model.chooseShort") : t("desk.model.change");
   if (!checking) {
     const live = $("model-live");
     if (m.none) live.replaceChildren(h("i", { class: "dot warn" }), h("span", { text: t("desk.model.pick") }));
@@ -264,26 +504,34 @@ function renderModel() {
 const unprefixed = (error, name) => { const e = String(error || ""); return name && e.startsWith(name + ": ") ? e.slice(name.length + 2) : e; };
 let checking = false;
 async function checkModel() {
+  if (checking || choosing) return;
   checking = true;
+  showError("model-error", "");
   $("check-model").disabled = true;
   $("model-live").replaceChildren(radar(12), h("span", { text: t("desk.model.checking", { name: modelName(st.model) }) }));
   if (st && !st.settings.welcomed) renderFirst();
-  try { await morse.checkModel(); } finally { checking = false; $("check-model").disabled = false; st = await morse.state(); render(); }
+  try { await morse.checkModel(); st = await morse.state(); }
+  catch (e) { showError("model-error", errorText(e)); }
+  finally { checking = false; $("check-model").disabled = false; render(); syncChoice(); }
 }
 $("check-model").onclick = checkModel;
 $("fast-mode").addEventListener("change", async () => {
   if (!st?.model) return;
   const on = $("fast-mode").checked;
   const prev = !!st.model.fastMode;
+  showError("model-error", "");
+  $("fast-mode").disabled = true;
   st.model.fastMode = on;
   fastSent = on;
   let r;
   try { r = await morse.setFastMode(on); }
-  catch (e) { r = { error: e?.message || "" }; }
+  catch (e) { r = { error: errorText(e) }; }
+  $("fast-mode").disabled = false;
   if (r?.error) {
     st.model.fastMode = prev;
     fastSent = prev;
     $("fast-mode").checked = prev;
+    showError("model-error", r.error);
   }
 });
 
@@ -316,33 +564,44 @@ function renderFast() {
 }
 
 let choices = [];
-function refreshChoices() {
-  if (!morse?.modelChoices) return;
-  const n = ++refreshChoices.n;
-  morse.modelChoices().then(rows => {
-    if (n !== refreshChoices.n || !Array.isArray(rows) || !st) return;
-    choices = rows;
-    renderFast();
-  }).catch(() => {});
-}
-refreshChoices.n = 0;
+let choiceRequest = 0;
+let choosing = false;
 async function loadChoices() {
+  if (checking || choosing) return;
+  const request = ++choiceRequest;
   $("choices").hidden = false;
+  $("current-model").hidden = false;
+  $("choices").setAttribute("aria-busy", "true");
+  $("keyrow").hidden = true;
+  $("use-choice").disabled = true;
+  showError("choice-error", "");
   $("choice-list").replaceChildren(h("p", { class: "live" }, radar(12), h("span", { text: t("desk.model.looking") })));
-  choices = await morse.modelChoices();
-  const current = { "claude-code": "claude-code", codex: "codex", anthropic: "api-key", openai: "api-key" }[st.model.provider];
+  let rows;
+  try { rows = await morse.modelChoices(); if (!Array.isArray(rows)) throw new Error(rows?.error || t("err.generic")); }
+  catch (e) {
+    if (request !== choiceRequest) return;
+    $("choice-list").replaceChildren(h("button", { type: "button", class: "btn", onclick: loadChoices }, t("result.again")));
+    showError("choice-error", errorText(e));
+    $("choices").setAttribute("aria-busy", "false");
+    return;
+  }
+  if (request !== choiceRequest) return;
+  $("choices").setAttribute("aria-busy", "false");
+  choices = rows;
+  renderFast();
+  const current = currentChoiceId();
   const pick = current || choices.find(c => c.recommended)?.id || "api-key";
   $("choice-list").replaceChildren(...choices.map(c => choiceRow(c, c.id === pick)));
   syncChoice();
-  $("choices").scrollIntoView({ block: "nearest", behavior: "smooth" });
+
 }
 // One choice: its mark, what it uses, and one word for whether it's ready.
 // Not installed: "How to install" shows the one command, on request.
-const choiceName = c => (c.id === "api-key" ? t("setup.name.key") : c.name);
+const choiceName = c => (c.id === "local" ? t("desk.endpoint.name") : c.id === "api-key" ? t("setup.name.key") : c.name);
 const WHY = { "claude-code": "setup.why.claude", codex: "setup.why.codex", "api-key": "setup.why.key" };
 function choiceRow(c, checked) {
   const ready = c.found;
-  const status = ready ? h("span", { class: "badge ready", title: c.id === "api-key" ? t("desk.model.keySet", { env: c.keyEnv }) : c.detail || null }, h("i", { class: "dot on" }), t("desk.ready"))
+  const status = c.id === "local" ? null : ready ? h("span", { class: "badge ready", title: c.id === "api-key" ? t("desk.model.keySet", { env: c.keyEnv }) : c.detail || null }, h("i", { class: "dot on" }), t("desk.ready"))
     : c.id === "api-key" ? null
     : h("span", { class: "badge" }, t("desk.model.notInstalled"));
   const howto = !ready && c.install && c.id !== "api-key"
@@ -356,7 +615,7 @@ function choiceRow(c, checked) {
     providerMark(c.id),
     h("span", { class: "grow" },
       h("b", {}, h("span", { text: choiceName(c) }), c.recommended ? h("span", { class: "rec", text: t("desk.model.recommended") }) : null),
-      h("small", { text: WHY[c.id] ? t(WHY[c.id]) : c.why })),
+      h("small", { text: c.id === "local" ? t("desk.endpoint.why") : WHY[c.id] ? t(WHY[c.id]) : c.why })),
     h("span", { class: "state" }, status,
       howto ? h("button", { type: "button", class: "link", "data-howto": c.id, "aria-expanded": "false", onclick: e => {
         e.preventDefault();
@@ -365,29 +624,120 @@ function choiceRow(c, checked) {
       } }, t("desk.model.howInstall")) : null),
     howto);
 }
-$("change-model").onclick = loadChoices;
+function currentChoiceId() {
+  const provider = st?.model?.provider;
+  if (st?.model?.none) return "";
+  return choices.find(c => c.id === provider)?.id
+    || choices.find(c => c.kind === "local" && c.name === st.model.name)?.id
+    || (["anthropic", "openai"].includes(provider) ? "api-key" : "");
+}
 function syncChoice() {
   const v = document.querySelector('input[name="choice"]:checked')?.value;
   const c = choices.find(x => x.id === v);
   $("keyrow").hidden = v !== "api-key";
-  $("use-choice").disabled = !c || (v !== "api-key" && !c.found);
+  $("endpoint-fields").hidden = v !== "local";
+  if (v === "local" && !$("endpoint-url").value && st.model.baseUrl) $("endpoint-url").value = st.model.baseUrl;
+  if (v === "local") {
+    $("use-choice").disabled = choosing || endpointLoading || !$("endpoint-model").value || endpointVerified !== endpointSignature();
+    $("cancel-choice").disabled = choosing;
+    return;
+  }
+  const unchanged = v === currentChoiceId() && !$("api-key").value.trim();
+  $("cancel-choice").disabled = choosing || unchanged;
+  $("use-choice").disabled = choosing || checking || unchanged || !c || (v === "api-key" ? !c.found && !$("api-key").value.trim() : !c.found);
 }
-$("cancel-choice").onclick = () => { $("choices").hidden = true; $("api-key").value = ""; };
+let endpointLoading = false, endpointVerified = "", endpointRequest = 0;
+const endpointSignature = () => JSON.stringify([$("endpoint-url").value.trim(), $("endpoint-key").value.trim()]);
+function invalidateEndpoint() {
+  ++endpointRequest; endpointVerified = ""; endpointLoading = false;
+  $("endpoint-load").disabled = false;
+  $("endpoint-status").hidden = true;
+  $("endpoint-model").replaceChildren(h("option", { value: "" }, t("desk.endpoint.pick")));
+  $("endpoint-model").disabled = true;
+  syncChoice();
+}
+for (const id of ["endpoint-url", "endpoint-key"]) $(id).addEventListener("input", invalidateEndpoint);
+$("endpoint-model").addEventListener("change", syncChoice);
+$("endpoint-load").onclick = async () => {
+  if (endpointLoading || choosing) return;
+  const request = ++endpointRequest, signature = endpointSignature();
+  endpointLoading = true; endpointVerified = "";
+  $("endpoint-load").disabled = true;
+  $("endpoint-status").hidden = false;
+  $("endpoint-status").textContent = t("desk.endpoint.loading");
+  showError("choice-error", ""); syncChoice();
+  try {
+    const result = await morse.probeEndpoint($("endpoint-url").value.trim(), $("endpoint-key").value.trim());
+    if (request !== endpointRequest || signature !== endpointSignature()) return;
+    if (result?.error || !result?.models?.length) throw new Error(result?.error || t("err.generic"));
+    $("endpoint-model").replaceChildren(...result.models.map(m => h("option", { value: m.id }, m.name || m.id)));
+    if (result.models.some(m => m.id === st.model.model)) $("endpoint-model").value = st.model.model;
+    $("endpoint-model").disabled = false;
+    endpointVerified = signature;
+  } catch (error) { if (request === endpointRequest) showError("choice-error", errorText(error)); }
+  finally {
+    if (request === endpointRequest) {
+      endpointLoading = false; $("endpoint-load").disabled = false; $("endpoint-status").hidden = true; syncChoice();
+    }
+  }
+};
+$("api-key").addEventListener("input", syncChoice);
+$("choices").addEventListener("keydown", event => {
+  if (event.key === "Escape" && !choosing) { event.preventDefault(); $("cancel-choice").click(); }
+  if (event.key === "Enter" && event.target === $("api-key") && !event.isComposing) { event.preventDefault(); $("use-choice").click(); }
+});
+$("cancel-choice").onclick = () => {
+  $("api-key").value = "";
+  $("endpoint-key").value = "";
+  invalidateEndpoint();
+  const current = currentChoiceId();
+  for (const input of $("choice-list").querySelectorAll("input")) input.checked = input.value === current;
+  showError("choice-error", "");
+  syncChoice();
+  $("choice-list").querySelector("input:checked")?.focus({ preventScroll: true });
+};
 $("use-choice").onclick = async () => {
   const v = document.querySelector('input[name="choice"]:checked')?.value;
-  if (!v) return;
+  if (!v || choosing || $("use-choice").disabled) return;
   const c = choices.find(x => x.id === v);
   checking = true;
+  choosing = true;
+  showError("choice-error", "");
+  $("choices").setAttribute("aria-busy", "true");
+  $("choice-progress").hidden = false;
+  $("choice-progress").replaceChildren(radar(12), h("span", { text: t("desk.model.saved", { name: c ? choiceName(c) : t("desk.model.it") }) }));
   $("use-choice").disabled = true;
+  $("cancel-choice").disabled = true;
+  $("check-model").disabled = true;
+  $("choice-list").querySelectorAll("input").forEach(input => { input.disabled = true; });
+  $("api-key").disabled = true;
+  for (const id of ["endpoint-url", "endpoint-key", "endpoint-load", "endpoint-model"]) $(id).disabled = true;
   $("model-live").replaceChildren(radar(12), h("span", { text: t("desk.model.saved", { name: c ? choiceName(c) : t("desk.model.it") }) }));
-  const r = await morse.chooseModel(v, v === "api-key" ? $("api-key").value : "");
-  checking = false;
-  $("use-choice").disabled = false;
-  if (r?.error) { $("model-live").replaceChildren(h("i", { class: "dot bad" }), h("span", { text: r.error })); return; }
-  $("api-key").value = "";
-  $("choices").hidden = true;
-  st = await morse.state();
-  render();
+  try {
+    const r = v === "local"
+      ? await morse.chooseModel(v, $("endpoint-model").value, $("endpoint-url").value.trim(), $("endpoint-key").value.trim())
+      : await morse.chooseModel(v, v === "api-key" ? $("api-key").value.trim() : "");
+    if (r?.error) throw new Error(r.error);
+    $("api-key").value = "";
+    $("endpoint-key").value = "";
+    endpointVerified = "";
+    $("choices").hidden = false;
+    $("current-model").hidden = false;
+    st = await morse.state();
+    $("choice-list").querySelector("input:checked")?.focus({ preventScroll: true });
+  } catch (e) { showError("choice-error", errorText(e)); }
+  finally {
+    checking = false;
+    choosing = false;
+    $("choices").setAttribute("aria-busy", "false");
+    $("choice-progress").hidden = true;
+    for (const id of ["cancel-choice", "check-model", "api-key"]) $(id).disabled = false;
+    $("choice-list").querySelectorAll("input").forEach(input => { input.disabled = false; });
+    for (const id of ["endpoint-url", "endpoint-key", "endpoint-load", "endpoint-model"]) $(id).disabled = false;
+    syncChoice();
+    render();
+
+  }
 };
 
 // ---------------------------------------------------------------- mods
@@ -396,15 +746,20 @@ function renderMods() {
   const total = groups.reduce((n, g) => n + g.mods.length, 0);
   $("no-mods").hidden = total > 0;
   $("paused").hidden = !st.pause.all;
-  $("mods-on").checked = !st.pause.all;
+  if (!$("mods-on").disabled) $("mods-on").checked = !st.pause.all;
   const nav = $("nav-mods");
   nav.textContent = st.pause.all ? t("desk.nav.off") : total || "";
   nav.className = st.pause.all ? "warn" : "";
   const sig = JSON.stringify([groups, groups.map(g => !!st.apps.find(a => a.id === g.app)?.icon)]);
   if ($("mod-groups").dataset.sig === sig) return;
   $("mod-groups").dataset.sig = sig;
-  const focused = document.activeElement?.dataset?.mod;
+  const active = document.activeElement;
+  const focused = active?.dataset?.mod;
+  const expanded = [...$("mod-groups").querySelectorAll("details[open]")].map(el => el.dataset.request);
+  const focusedRequest = active?.closest("details")?.dataset.request;
   $("mod-groups").replaceChildren(...groups.map(groupBlock));
+  for (const id of expanded) $("mod-groups").querySelector(`details[data-request="${CSS.escape(id)}"]`)?.setAttribute("open", "");
+  if (focusedRequest) $("mod-groups").querySelector(`details[data-request="${CSS.escape(focusedRequest)}"] summary`)?.focus();
   if (focused) document.querySelector(`[data-mod="${CSS.escape(focused)}"]`)?.focus();
 }
 // The name and the count are separate lines. A heading that puts them in one
@@ -425,9 +780,12 @@ function groupBlock(g) {
 function modRow(m) {
   const request = m.paused ? t("desk.mods.stopped") : `“${m.request}”`;
   return h("li", { class: m.on ? "" : "off" },
-    h("div", { class: "grow" }, h("b", { text: m.title }), h("small", {}, h("span", { text: request }))),
+    h("details", { class: "grow mod-detail", "data-request": m.id },
+      h("summary", { "aria-label": m.title }, h("b", { text: m.title }), h("small", {}, h("span", { text: request }))),
+      h("p", { class: "mod-request", text: `“${m.request}”` }),
+      m.paused ? h("p", { class: "mod-paused", text: t("desk.mods.stopped") }) : null),
     h("div", { class: "mod-actions" },
-      h("button", { type: "button", class: "ibtn", title: t("btn.delete"), "aria-label": t("desk.mods.delete", { title: m.title }), "data-del": m.id, onclick: () => deleteMod(m) }, trashGlyph()),
+      h("button", { type: "button", class: "ibtn", title: t("btn.delete"), "aria-label": t("desk.mods.delete", { title: m.title }), "data-del": m.id, onclick: e => deleteMod(m, e.currentTarget) }, trashGlyph()),
       h("label", { class: "modsw" },
         h("input", { type: "checkbox", role: "switch", "aria-label": t("desk.mods.on", { title: m.title }), "data-mod": m.id, checked: m.on, onchange: e => toggleMod(m.id, e.target) }))));
 }
@@ -435,34 +793,69 @@ function modRow(m) {
 // mod is gone, or couldn't be written), put the switch back where it was.
 async function toggleMod(id, el) {
   const want = el.checked;
-  const r = await morse.setModOn(id, want);
-  if (r?.error) el.checked = !want;
+  showError("mods-error", "");
+  el.disabled = true;
+  try {
+    const r = await morse.setModOn(id, want);
+    if (r?.error) throw new Error(r.error);
+  } catch (e) { el.checked = !want; showError("mods-error", errorText(e)); }
+  finally { el.disabled = false; }
 }
 // Delete takes one click; Undo, above the list, brings it back for a while.
 let undoTimer = 0;
 function hideUndo() { clearTimeout(undoTimer); $("mod-undo").hidden = true; }
-async function deleteMod(m) {
-  const r = await morse.deleteMod(m.id);
-  if (r?.error) return;
+async function deleteMod(m, button) {
+  if (button?.disabled) return;
+  if (button) button.disabled = true;
+  showError("mods-error", "");
+  try {
+    const r = await morse.deleteMod(m.id);
+    if (r?.error) throw new Error(r.error);
+  } catch (e) { showError("mods-error", errorText(e)); return; }
+  finally { if (button) button.disabled = false; }
   $("mod-undo-text").textContent = t("toast.deleted", { title: m.title });
   $("mod-undo").hidden = false;
   $("mod-undo-btn").focus();
-  $("mod-undo-btn").onclick = async () => { hideUndo(); await morse.undeleteMod(m.id); };
+  $("mod-undo-btn").onclick = async () => {
+    $("mod-undo-btn").disabled = true;
+    try {
+      const r = await morse.undeleteMod(m.id);
+      if (r?.error) throw new Error(r.error);
+      hideUndo();
+    } catch (e) { showError("mods-error", errorText(e)); }
+    finally { $("mod-undo-btn").disabled = false; }
+  };
   clearTimeout(undoTimer);
   undoTimer = setTimeout(hideUndo, 15000);
 }
-$("resume").onclick = () => morse.setAllModsOff(false);
-$("mods-on").onchange = async e => { const off = !e.target.checked; const r = await morse.setAllModsOff(off); if (r?.error) e.target.checked = off; };
+async function setModsPaused(off) {
+  if ($("mods-on").disabled) return;
+  actionError("");
+  $("mods-on").disabled = true;
+  $("resume").disabled = true;
+  try {
+    const r = await morse.setAllModsOff(off);
+    if (r?.error) throw new Error(r.error);
+    st.pause.all = off;
+    $("mods-on").checked = !off;
+    renderMods();
+  } catch (e) { $("mods-on").checked = off; actionError(errorText(e)); }
+  finally { $("mods-on").disabled = false; $("resume").disabled = false; }
+}
+$("resume").onclick = () => setModsPaused(false);
+$("mods-on").onchange = e => setModsPaused(!e.target.checked);
 
 // ---------------------------------------------------------------- checks
 async function runChecks() {
   const b = $("run-checks");
+  if (b.disabled) return;
+  $("check-list").setAttribute("aria-busy", "true");
   b.disabled = true;
   b.textContent = t("desk.checks.running");
   $("check-list").replaceChildren(h("li", { class: "empty" }, radar(14), " ", t("desk.checks.looking")));
   try {
     const rows = await morse.runChecks();
-    if (rows?.error) throw new Error(rows.error);
+    if (!Array.isArray(rows)) throw new Error(rows?.error || t("err.generic"));
     $("check-list").replaceChildren(...rows.map(r => h("li", { class: r.ok === false ? "bad" : "" },
       h("span", { class: `mark ${r.ok === true ? "ok" : r.ok === false ? "bad" : "info"}`, "aria-label": r.ok === true ? t("desk.checks.fine") : r.ok === false ? t("desk.checks.fix") : t("desk.checks.info") }, r.ok === true ? "✓" : r.ok === false ? "!" : "i"),
       h("span", { class: "label", text: r.label }),
@@ -470,8 +863,8 @@ async function runChecks() {
     const bad = rows.filter(r => r.ok === false).length;
     $("checks").classList.toggle("warn", !!bad);
   } catch (e) {
-    $("check-list").replaceChildren(h("li", { class: "empty" }, e.message));
-  } finally { b.disabled = false; b.textContent = t("desk.checks.run"); }
+    $("check-list").replaceChildren(h("li", { class: "empty", role: "alert" }, errorText(e)));
+  } finally { b.disabled = false; b.textContent = t("desk.checks.run"); $("check-list").setAttribute("aria-busy", "false"); }
 }
 $("run-checks").onclick = runChecks;
 
@@ -481,10 +874,19 @@ $("run-checks").onclick = runChecks;
 function bindAutoOpen(id) {
   $(id).onchange = async e => {
     const on = e.target.checked;
-    const r = await morse.setAutoOpen(on);
-    if (r?.error) { e.target.checked = !on; return; }
-    if (st?.settings) st.settings.autoOpen = on;
-    for (const box of ["auto-open", "ob-auto-open"]) $(box).checked = on;
+    const input = e.target;
+    actionError("");
+    input.disabled = true;
+    try {
+      const r = await morse.setAutoOpen(on);
+      if (r?.error) throw new Error(r.error);
+      if (st?.settings) st.settings.autoOpen = on;
+      for (const box of ["auto-open", "ob-auto-open"]) $(box).checked = on;
+    } catch (e) {
+      input.checked = !on;
+      if (id === "ob-auto-open") { $("ob-mac-allow").hidden = false; $("ob-mac-allow").textContent = errorText(e); }
+      else actionError(errorText(e));
+    } finally { input.disabled = false; }
   };
 }
 bindAutoOpen("auto-open");
@@ -510,9 +912,12 @@ const STEPS = ["model", "open", "how", "apps"];
 let firstChecked = false, obStep = "welcome", obStarted = false;
 function obGo(step) {
   if (!step) return;
+  if (nativeGuide?.onboarding && step !== "apps") dismissNativeGuide();
   obStep = step;
   const f = $("first");
   f.dataset.step = step;
+  f.querySelector(".ob-welcome").inert = step !== "welcome";
+  f.querySelector(".ob-bar").hidden = step === "welcome";
   for (const sec of f.querySelectorAll(".ob-step")) sec.hidden = sec.dataset.ob !== step;
   const at = STEPS.indexOf(step);
   [...$("ob-dots").children].forEach((li, i) => { li.className = i < at ? "done" : i === at ? "now" : ""; });
@@ -523,10 +928,9 @@ function obGo(step) {
   head?.setAttribute("tabindex", "-1");
   head?.focus({ preventScroll: true });
 }
-const obNext = () => (obStep === "welcome" ? obBegin() : obStep === "apps" ? morse.finishWelcome() : obGo(STEPS[STEPS.indexOf(obStep) + 1]));
+const obNext = () => (obStep === "welcome" ? obBegin() : obStep === "apps" ? finishWelcome() : obGo(STEPS[STEPS.indexOf(obStep) + 1]));
 function obBegin() {
-  const phase = $("first").dataset.phase;
-  if (obStep === "welcome" && (phase === "formed" || phase === "still")) obGo("model");
+  if (obStep === "welcome") obGo("model");
 }
 $("ob-begin").onclick = obBegin;
 $("ob-next").onclick = obNext;
@@ -562,10 +966,9 @@ function renderFirst() {
   const first = !st.settings.welcomed;
   $("first").hidden = !first;
   document.querySelector(".app").hidden = first;
-  if (!first) return;
+  if (!first) { if (nativeGuide?.onboarding) dismissNativeGuide(); return; }
   if (!obStarted) { obGo("welcome"); requestAnimationFrame(() => obWelcome()); }
-  const MAC_KEYS = { Alt: "⌥", Option: "⌥", Meta: "⌘", Cmd: "⌘", Command: "⌘", Shift: "⇧", Control: "⌃", Ctrl: "⌃" };
-  $("ob-key").replaceChildren(caps(platform === "darwin" ? openKey().split("+").map(k => MAC_KEYS[k] || k).join("+") : openKey()));
+  $("ob-key").replaceChildren(keyCaps(st.keys?.combo || defaultHotkeys(HK_PLATFORM).open));
   const m = st.model, name = modelName(m);
   $("first-key").hidden = !m.none;
   const live = $("first-model");
@@ -575,29 +978,53 @@ function renderFirst() {
   else if (m.check) live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.noAnswer", { name, error: unprefixed(m.check.error, m.name) }) }), h("i", { class: "dot bad" }));
   else live.replaceChildren(providerMark(m.provider), h("span", { text: t("desk.first.willUse", { name }) }));
   if (!m.none && !m.check && !firstChecked) { firstChecked = true; checkModel(); }
-  const apps = st.apps.filter(a => a.canAttach !== false).slice(0, 5);
-  const sig = JSON.stringify(apps.map(a => [a.id, a.state, a.icon ? 1 : 0]));
+  const apps = st.apps.filter(a => a.canAttach !== false || (platform === "darwin" && a.engine === "native")).slice(0, 5);
+  const sig = JSON.stringify([st.appsPending, apps.map(a => [a.id, a.state, a.browser, a.engine, a.icon ? 1 : 0])]);
   if ($("first-apps").dataset.sig === sig) return;
   $("first-apps").dataset.sig = sig;
+  if ($("first-apps").contains($("native-setup"))) $("native-setup-home").append($("native-setup"));
   $("first-apps").replaceChildren(...(apps.length ? apps.map(a => {
     const busy = ["opening", "connecting"].includes(a.state);
+    const needsControls = platform === "darwin" && (a.browser || a.engine === "native");
     return h("li", { "data-first-app": a.id },
       appIcon(a),
       h("div", { class: "grow" }, h("b", { text: a.name }), h("small", {}, ...(busy ? [radar(12), h("span", { text: t("desk.app.opening", { name: a.name }) })] : [h("span", { text: a.state === "closed" ? t("desk.app.notOpen") : t("desk.app.openNow") })]))),
-      h("button", { type: "button", class: "btn", disabled: busy, onclick: () => openFirst(a) }, t("desk.app.open")));
-  }) : [h("li", { class: "empty" }, t("desk.first.noApps"))]));
+      h("div", { class: "actions" },
+        ...(needsControls ? [h("button", { type: "button", class: "btn quiet", "data-act": "native-controls", disabled: busy, onclick: event => setupNativeForApp(a, event.currentTarget) }, t(a.browser ? "desk.app.browserControls" : "desk.app.inspectControls"))] : []),
+        ...(a.canAttach !== false ? [h("button", { type: "button", class: "btn", disabled: busy, onclick: () => openFirst(a) }, t("desk.app.open"))] : [])));
+  }) : [h("li", { class: "empty", role: "status" }, t(st.appsPending ? "desk.apps.looking" : "desk.first.noApps"))]));
+  placeNativeGuide();
+}
+function firstError(error) {
+  obGo("model");
+  $("first-model").replaceChildren(h("i", { class: "dot bad" }), h("span", { text: errorText(error) }));
 }
 async function openFirst(a, answer) {
-  const r = await morse.openApp(a.id, answer);
-  if (r?.needsRestart) return askRestart(a, openFirst); // the same question as everywhere else
-  if (r?.error) { obGo("model"); $("first-model").replaceChildren(h("i", { class: "dot bad" }), h("span", { text: r.error })); return; }
-  await morse.finishWelcome();
+  try {
+    const r = await morse.openApp(a.id, answer);
+    if (r?.needsRestart) return askRestart(a, openFirst);
+    if (r?.error) throw new Error(r.error);
+    await morse.finishWelcome();
+  } catch (error) { firstError(error); }
 }
-$("first-skip").onclick = () => morse.finishWelcome();
+async function finishWelcome() {
+  $("first-skip").disabled = true;
+  $("ob-next").disabled = true;
+  try { await morse.finishWelcome(); } catch (error) { firstError(error); }
+  finally { $("first-skip").disabled = false; $("ob-next").disabled = false; }
+}
+$("first-skip").onclick = finishWelcome;
 $("first-key-use").onclick = async () => {
-  const r = await morse.chooseModel("api-key", $("first-key-input").value);
-  $("first-key-input").value = "";
-  if (r?.error) $("first-model").replaceChildren(h("i", { class: "dot bad" }), h("span", { text: r.error }));
+  const button = $("first-key-use"), input = $("first-key-input");
+  if (!input.value.trim()) { input.focus(); return; }
+  button.disabled = true;
+  input.disabled = true;
+  try {
+    const r = await morse.chooseModel("api-key", input.value);
+    if (r?.error) throw new Error(r.error);
+    input.value = "";
+  } catch (error) { firstError(error); }
+  finally { button.disabled = false; input.disabled = false; }
 };
 
 // ---------------------------------------------------------------- shortcut
@@ -641,7 +1068,7 @@ function renderShortcut() {
   const label = recording
     ? (formatPartial(partial, HK_PLATFORM) || t("hk.offShort"))
     : (incoming ? formatCombo(incoming, HK_PLATFORM) : t("hk.offShort"));
-  btn.setAttribute("aria-label", t("desk.settings.hk", { key: label }));
+  btn.setAttribute("aria-label", recording ? t("desk.settings.recording", { esc: "Esc", back: HK_PLATFORM === "mac" ? "⌫" : "Backspace" }) : t("desk.settings.hk", { key: label }));
   btn.replaceChildren(recording ? partialCaps(partial) : keyCaps(incoming));
   $("shortcut-help").textContent = recording
     ? t("desk.settings.recording", { esc: "Esc", back: HK_PLATFORM === "mac" ? "⌫" : "Backspace" })
@@ -703,6 +1130,10 @@ async function commitShortcut(next) {
       st.keys.open = formatCombo(combo, HK_PLATFORM);
     }
     render();
+  } catch (error) {
+    partial = "";
+    shortcutNote = { level: "error", message: errorText(error) };
+    renderShortcut();
   } finally {
     saving = false;
   }
@@ -777,16 +1208,37 @@ function renderUpdate() {
   $("update-later").textContent = t(u.phase === "failed" ? "desk.update.close" : "desk.update.later");
   if (!d.open) d.showModal();
 }
-$("update-now").onclick = () => morse.installUpdate();
+async function installUpdate(event) {
+  const button = event.currentTarget;
+  if (button.disabled) return;
+  button.disabled = true;
+  const errorId = $("update").open ? "update-error" : "settings-error";
+  showError(errorId, "");
+  try {
+    const result = await morse.installUpdate();
+    if (result?.error) throw new Error(result.error);
+  } catch (error) { showError(errorId, errorText(error)); }
+  finally { button.disabled = false; }
+}
+$("update-now").onclick = installUpdate;
 $("update-later").onclick = async () => {
-  const phase = st.update?.phase;
-  if (phase === "ready") await morse.updateLater();
-  // Later keeps the download and installs when Morse quits. Close dismisses a failure.
-  st.update = phase === "ready" ? { ...(st.update || {}), phase: "later" } : { phase: "idle" };
-  $("update").close();
-  render();
+  const button = $("update-later");
+  if (button.disabled) return;
+  button.disabled = true;
+  showError("update-error", "");
+  try {
+    const phase = st.update?.phase;
+    if (phase === "ready") {
+      const result = await morse.updateLater();
+      if (result?.error) throw new Error(result.error);
+    }
+    st.update = phase === "ready" ? { ...(st.update || {}), phase: "later" } : { phase: "idle" };
+    $("update").close();
+    render();
+  } catch (error) { showError("update-error", errorText(error)); }
+  finally { button.disabled = false; }
 };
-$("update-restart").onclick = () => morse.installUpdate();
+$("update-restart").onclick = installUpdate;
 
 // Settings → Check for updates. The same check Morse runs on its own
 // (updater.js): the preview release's build against this one.
@@ -827,21 +1279,31 @@ $("check-updates").onclick = async () => {
   else st.update = { phase: "error" };
   render();
 };
-$("update").addEventListener("cancel", e => { if (["downloading", "installing"].includes(st.update?.phase)) e.preventDefault(); });
+$("update").addEventListener("cancel", event => {
+  event.preventDefault();
+  if (!["downloading", "installing"].includes(st.update?.phase)) $("update-later").click();
+});
 
 // ---------------------------------------------------------------- state
 function render() {
   if (!st || st.error) return;
   renderFirst();
   renderApps(); renderModel(); renderMods(); renderShortcut(); renderUpdate(); renderUpdateCheck();
-  for (const id of ["auto-open", "ob-auto-open"]) $(id).checked = !!st.settings.autoOpen;
+  for (const id of ["auto-open", "ob-auto-open"]) if (!$(id).disabled) $(id).checked = !!st.settings.autoOpen;
   $("version").textContent = `Morse ${st.version}`;
+  $("settings-version").textContent = t("desk.app.version", { version: st.version });
   document.documentElement.dataset.ready = "1";
 }
-morse.onChange(next => { if (next && !next.error) { st = next; render(); } });
+morse.onChange(next => {
+  if (!next || next.error) return;
+  // The main process also polls. An unchanged snapshot needs no DOM work.
+  if (JSON.stringify(next) === JSON.stringify(st)) return;
+  st = next;
+  render();
+});
 st = await morse.state();
 render();
-refreshChoices();
+loadChoices();
 let first = "apps";
 try { first = sessionStorage.getItem("tab") || "apps"; } catch {}
 show(first);

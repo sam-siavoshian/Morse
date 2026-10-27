@@ -154,4 +154,116 @@ function BAR_CSS() { return `
   :host([data-fx="off"]) .mark.live .radar rect, :host([data-fx="off"]) .hint .radar rect { animation: none; }
   :host([data-fx="off"]) .bar, :host([data-fx="off"]) .pane, :host([data-fx="off"]) .menu, :host([data-fx="subtle"]) .bar { animation: none; }
   @media (prefers-reduced-motion: reduce) { .bar, .pane, .menu, .mic.nudge, .hkrow.shake .hk { animation: none !important; } }
+
+  /* Landing-page glass and button treatment (site/site.css .glass / .btn).
+     Keep theme tokens for light host apps and opaque backing over busy content. */
+  .bar { width: min(600px, calc(100vw - 24px)); isolation: isolate;
+    --m-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --m-mono: "JetBrains Mono", "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    border-radius: 18px; font-feature-settings: "cv11", "ss01"; -webkit-font-smoothing: antialiased;
+    border-color: color-mix(in srgb, var(--m-text) 18%, transparent);
+    background: linear-gradient(155deg, rgba(125, 163, 224, 0.13), transparent 65%), var(--m-overlay);
+    backdrop-filter: blur(22px) saturate(1.5); -webkit-backdrop-filter: blur(22px) saturate(1.5);
+    box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--m-text) 16%, transparent), inset 0 1px 0 color-mix(in srgb, var(--m-text) 12%, transparent), var(--m-shadow); }
+  .bar::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: -1; border-radius: inherit;
+    background: radial-gradient(180px circle at var(--bar-light-x, 50%) var(--bar-light-y, 0%), color-mix(in srgb, var(--m-text) 9%, transparent), transparent);
+    opacity: 0; transition: opacity 300ms var(--m-ease); }
+  .bar.lit::before { opacity: 1; }
+  .bar.solid, .bar.has-pane { background: linear-gradient(155deg, rgba(125, 163, 224, 0.10), transparent 65%), var(--m-surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .bar .row { gap: 8px; padding: 8px 8px 8px 12px; }
+  .bar textarea.in { font-size: var(--m-text-md); line-height: 21px; }
+  .bar .status { background: color-mix(in srgb, var(--m-bg) 20%, transparent); border-radius: 0 0 17px 17px; gap: 8px; padding: 5px 8px 5px 12px; min-height: 36px; border-top-color: color-mix(in srgb, var(--m-text) 10%, transparent); }
+  .bar .actions { gap: 6px; }
+  .bar .model { max-width: 120px; font-family: var(--m-font); }
+  .bar .sugs { padding-inline: 12px 8px; gap: 6px; }
+  .bar .sug { height: 26px; padding-inline: 8px; border-color: transparent; background: color-mix(in srgb, var(--m-text) 4%, transparent); }
+  .bar .sug:hover { border-color: var(--m-line-strong); background: var(--m-hover); }
+  .bar .chip { font-family: var(--m-font); max-width: min(28%, 140px); border-color: transparent; background: color-mix(in srgb, var(--m-text) 5%, transparent); }
+  .bar .actions button, .bar .go, .bar .ibtn { border-radius: 9px; }
+  .bar .btn, .bar .actions button { background: color-mix(in srgb, var(--m-text) 6%, transparent);
+    border-color: color-mix(in srgb, var(--m-text) 16%, transparent);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.24), inset 0 -1px 0 color-mix(in srgb, var(--m-text) 8%, transparent);
+    transition: background-color 140ms var(--m-ease), border-color 140ms var(--m-ease), transform 90ms var(--m-ease), box-shadow 90ms var(--m-ease); }
+  .bar .btn:hover, .bar .actions button:hover { background: var(--m-hover); border-color: var(--m-signal-1); }
+  .bar .go:not(:disabled), .bar .actions button.primary { background: var(--m-primary); color: var(--m-primary-text);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.18), inset 0 -1px 0 rgba(255, 255, 255, 0.45); }
+  .bar .go:not(:disabled):hover, .bar .actions button.primary:hover { background: var(--m-primary-hover); }
+  .bar.working .go:not(:disabled) { background: var(--m-raised); color: var(--m-text); box-shadow: inset 0 0 0 1px var(--m-line-strong); }
+  .bar .ibtn, .bar .sug { box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.16), inset 0 -1px 0 color-mix(in srgb, var(--m-text) 5%, transparent); }
+  .bar .go:active:not(:disabled), .bar .actions button:active:not(:disabled), .bar .btn:active:not(:disabled), .bar .ibtn:active:not(:disabled), .bar .sug:active:not(:disabled) {
+    box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.3), inset 0 -1px 0 color-mix(in srgb, var(--m-text) 5%, transparent); }
+  .bar.working { border-color: var(--m-signal-2); }
+  .bar.err, .bar.has-error { border-color: color-mix(in srgb, var(--m-danger) 60%, var(--m-line-strong)); }
+  .bar .pane { border-top-color: color-mix(in srgb, var(--m-text) 10%, transparent); border-radius: 0 0 17px 17px; }
+  .bar.has-pane .status { border-radius: 0; }
+  .bar .sheet { padding: 6px 12px 12px; }
+  .bar .sheet header b { font-family: "Inter Display", var(--m-font); font-size: 15px; letter-spacing: -0.025em; }
+  .bar .sheet h4, .bar .menu > header, .bar .sugs .try { text-transform: none; letter-spacing: 0.02em; font-weight: 400; }
+  .bar .srow { padding-inline: 8px; }
+  .bar .menu { min-width: min(248px, calc(100vw - 48px)); max-width: calc(100vw - 48px); padding: 6px; border-radius: 14px;
+    background: linear-gradient(155deg, rgba(125, 163, 224, 0.08), transparent 65%), var(--m-surface);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--m-text) 12%, transparent), var(--m-shadow); }
+  .bar .menu > button { border-radius: 8px; }
+  .bar kbd { border-radius: 6px; }
+  .bar .actions button:active:not(:disabled), .bar .go:active:not(:disabled), .bar .ibtn:active:not(:disabled) { transform: translateY(1px); }
+  .bar .ticker { display: none; }
+  .bar.working .hint { flex: 1; }
+  .bar.done .status { flex-wrap: wrap; }
+  .bar.done .hint { flex: 1 1 220px; flex-wrap: wrap; column-gap: 8px; row-gap: 0; }
+  .bar.done .hint .ok { overflow-wrap: anywhere; white-space: normal; }
+  .bar.done .hint .dim { font-size: var(--m-text-xs); font-family: var(--m-font); }
+  .bar.err .status, .bar.has-error .status { flex-wrap: wrap; align-items: flex-start; }
+  .bar.err .hint, .bar.has-error .hint { flex: 1 1 calc(100% - 40px); max-height: min(28vh, 160px); overflow: auto; white-space: normal; overflow-wrap: anywhere; user-select: text; cursor: text; scrollbar-width: thin; }
+  .bar.has-error .hint .note { white-space: normal; overflow: visible; flex-basis: 100%; }
+  .bar.err .hint i { color: var(--m-text-2); }
+  .bar.err .actions, .bar.has-error .actions { order: 2; }
+  .bar.saving .hint { color: var(--m-text-2); }
+  .bar.saving button:disabled { cursor: wait; }
+  .bar.saving .go, .bar.saving .actions button { background: var(--m-raised) !important; color: var(--m-text-3) !important; border-color: var(--m-line-strong) !important; }
+  @media (max-width: 560px) {
+    .bar .chip { max-width: 100%; }
+    .bar.done .hint { flex-basis: calc(100% - 40px); }
+    .bar .actions { flex-wrap: wrap; }
+    .bar .sugs { gap: 4px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bar::before { display: none; }
+    .bar *, .bar::before { transition-duration: 0.01ms !important; }
+    .bar .actions button:active:not(:disabled), .bar .go:active:not(:disabled), .bar .ibtn:active:not(:disabled) { transform: none; }
+  }
+
+  /* One primary action per state: Send while typing, Save below a preview.
+     Keep the send button's place stable while a follow-up is empty. */
+  .bar .grip { display: none; }
+  .bar .row > .mark { margin-inline-end: 0; }
+  .bar.done:not(.refining) .go { visibility: hidden; pointer-events: none; }
+  .bar .go .i-save { display: none; }
+  .bar .row { padding-block: 10px; }
+  .bar .status { min-height: 40px; padding-block: 6px; }
+  .bar .actions button { height: 28px; padding-inline: 10px; }
+  .bar.done .hint { flex-basis: 160px; }
+  .bar.done .hint .ok { max-height: 60px; overflow-y: auto; scrollbar-width: thin; user-select: text; }
+  .bar .bmenu { max-height: min(400px, calc(100vh - 160px)); overflow-y: auto; overscroll-behavior: contain; }
+  .bar .pane { overscroll-behavior: contain; }
+  @media (max-width: 400px) {
+    .bar .row { gap: 6px; padding-inline: 10px; }
+    .bar .status { gap: 6px; padding-inline: 10px; }
+    .bar.done .hint { flex-basis: calc(100% - 38px); }
+    .bar .actions { max-width: calc(100% - 38px); }
+  }
+  .bar.working .hint.shine { background: none; color: var(--m-text-2); -webkit-text-fill-color: currentColor; animation: none; }
+
+  /* Quiet surfaces and clear grouping keep the request as the focal point. */
+  .bar, .bar.solid, .bar.has-pane { background: var(--m-surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .bar::before { display: none; }
+  .bar .btn, .bar .actions button, .bar .ibtn, .bar .sug { box-shadow: none; }
+  .bar .row { padding: 14px 12px; }
+  .bar textarea.in { font-size: var(--m-text-lg); }
+  .bar .sugs { padding: 0 12px 12px; }
+  .bar .status { background: transparent; }
+  .bar .settings-group { border-top: 1px solid var(--m-line); }
+  .bar .settings-group > summary { padding: 13px 8px; cursor: pointer; font-weight: 500; color: var(--m-text); }
+  .bar .settings-group > summary:hover { background: var(--m-hover); border-radius: 8px; }
+  .bar .settings-group > section { border-top: 0; margin: 0; }
+  .bar .settings-group[data-group="style"] h4 { display: none; }
 `; }

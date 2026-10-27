@@ -12,10 +12,8 @@
 //   node demo/ui-catalog.js --out=/tmp/ui --only=panel   audit run, docs/ui untouched
 //   node demo/ui-catalog.js --theme=dark --width=1100          one theme, one width
 //   node demo/ui-catalog.js --no-axe                     skip axe-core (demo/axe.js) on each state
-//   DISPLAY=:99 node demo/ui-catalog.js --only=extension   the extension's own pages
-//                                   (welcome, practice, popup) need the real extension, headful
-//   DISPLAY=:99 node demo/ui-catalog.js --only=desktop,welcome,site,new-bar   round 6: Morse Desktop
-//                                   (the real Electron app), onboarding v2, the website and Try it here, newer bar states
+//   DISPLAY=:99 node demo/ui-catalog.js --only=desktop,site,new-bar   round 6: Morse Desktop
+//                                   (the real Electron app), the website and Try it here, newer bar states
 //
 // Needs Playwright (resolved from the global install).
 import { createRequire } from "node:module";
@@ -1456,85 +1454,6 @@ async function controlStates(theme, width) {
   await close(p);
 }
 
-// The extension popup's pause switches (extension/popup-control.js), served
-// from dist/extension with a stand-in chrome API.
-async function popupStates(theme) {
-  const ctx = await browser.newContext({ viewport: { width: 368, height: 760 }, deviceScaleFactor: 2, colorScheme: theme });
-  await ctx.addInitScript(([paused]) => {
-    const state = { all: false, here: !!paused };
-    const reply = msg => {
-      if (msg.type === "popup.state") return { label: "Claude Code · sonnet", userScripts: true, kind: "helper", reason: "", backend: "helper", helper: { paired: true, label: "Claude Code", provider: "claude-code" }, providers: {}, helperModel: "", anthropicModels: ["claude-sonnet"], anthropicModel: "claude-sonnet",
-        mods: [{ id: "a", title: "Calm reading", prompt: "hide the ads and make the article easier to read", css: ".ad { display: none }", js: "", enabled: true, created: "2026-10-18T10:00:00Z" },
-          { id: "b", title: "No newsletter popup", prompt: "get rid of the newsletter popup", css: ".pop { display: none }", js: "", enabled: !state.here, imported: true, importedFrom: "link", author: "Ana" }] };
-      if (msg.type === "control.get") return { info: state };
-      if (msg.type === "control.pause") { state[msg.scope === "all" ? "all" : "here"] = msg.on; return { info: state }; }
-      return null;
-    };
-    globalThis.chrome = { runtime: { id: "catalog", sendMessage: async m => ({ result: reply(m), ...reply(m) }) }, tabs: { query: async () => [{ id: 1, url: "https://thedailybyte.news/" }], sendMessage: async () => {} },
-      storage: { sync: { get: async () => ({}) }, local: { get: async () => ({}) } } };
-  }, [false]);
-  let page = await ctx.newPage();
-  page.on("pageerror", e => console.warn("  [pageerror]", e.message));
-  await page.goto(`${BASE}/dist/extension/popup.html?url=${encodeURIComponent("https://thedailybyte.news/")}`);
-  await page.waitForSelector("#ctl .ctl-row", { timeout: 5000 }).catch(() => {});
-  await sleep(300);
-  page.vp = "";
-  const popShot = async (state, target, opts = {}) => {
-    const b = await target.boundingBox();
-    const file = path.join(OUT, "popup", `${state}-${theme}.png`);
-    await fs.mkdir(path.dirname(file), { recursive: true });
-    await page.screenshot({ path: file, clip: { x: Math.max(0, b.x - 8), y: Math.max(0, b.y - 8), width: b.width + 16, height: b.height + 16 } });
-    const issues = (opts.checks || []).filter(Boolean);
-    results.push({ area: "popup", state: `${state}-${theme}`, theme, file: path.relative(OUT, file), issues, note: opts.note || "" });
-    console.log(`  ${issues.length ? "!" : "✓"} popup/${state}-${theme}${issues.length ? "  " + issues.join(" | ") : ""}`);
-  };
-  const box = page.locator("#ctl");
-  await popShot("pause-off", box);
-  await page.locator("#ctl .ctl-row").first().hover(); await sleep(150);
-  await popShot("pause-hover", box);
-  await page.keyboard.press("Tab"); // focus the first switch from the keyboard
-  await page.locator("#ctl input[data-scope=site]").focus(); await sleep(150);
-  const ring = await page.locator("#ctl input[data-scope=site]").evaluate(el => { const c = getComputedStyle(el.nextElementSibling); return el.matches(":focus-visible") && c.outlineStyle !== "none" && parseFloat(c.outlineWidth) >= 2 ? "" : "no 2px focus ring on the switch"; });
-  await popShot("pause-focus", box, { checks: [ring] });
-  await page.locator("#ctl .ctl-row").first().click(); await sleep(250);
-  await page.mouse.move(2, 2);
-  await popShot("pause-site-on", box);
-  await popShot("whole", page.locator("body"), { note: "the whole popup with this site paused" });
-  await page.locator("#go").focus(); await page.keyboard.press("Shift"); await page.locator("#go").focus(); await sleep(150);
-  const goRing = await page.locator("#go").evaluate(el => { const c = getComputedStyle(el); return c.outlineStyle !== "none" && parseFloat(c.outlineWidth) >= 2 ? "" : "no 2px focus ring"; });
-  await popShot("go-focus", page.locator("#go"), { checks: [goRing] });
-  await ctx.close();
-
-  // round 5: “Allow User Scripts” off, with mods here whose code waits for it
-  const wctx = await browser.newContext({ viewport: { width: 368, height: 760 }, deviceScaleFactor: 2, colorScheme: theme });
-  await wctx.addInitScript(() => {
-    const reply = msg => {
-      if (msg.type === "popup.state") return { label: "Claude Code · sonnet", userScripts: false, kind: "helper", reason: "", backend: "helper", helper: { paired: true, label: "Claude Code", provider: "claude-code" }, providers: {}, helperModel: "", anthropicModels: ["claude-sonnet"], anthropicModel: "claude-sonnet",
-        mods: [{ id: "a", title: "Calm reading", prompt: "hide the ads and make the article easier to read", css: ".ad { display: none }", js: "", enabled: true, created: "2026-10-18T10:00:00Z" },
-          { id: "b", title: "Reading time", prompt: "show how long the article takes to read", css: ".rt { opacity: .7 }", js: "morse.watch('article', a => a.prepend(morse.el('small')))", enabled: true, created: "2026-10-19T10:00:00Z" },
-          { id: "c", title: "Copy quotes with the link", prompt: "add a button to copy a quote with a link to the article", css: "", js: "morse.el('button')", enabled: true, created: "2026-10-20T10:00:00Z" }] };
-      if (msg.type === "control.get") return { info: { all: false, here: false } };
-      if (msg.type === "onboarding.status") return { state: {}, status: { model: { connected: true }, userScripts: false } };
-      return null;
-    };
-    const tab = { id: 1, url: "https://thedailybyte.news/" };
-    globalThis.chrome = { runtime: { id: "catalog", sendMessage: async m => ({ result: reply(m), ...reply(m) }) }, tabs: { query: async () => [tab], get: async () => tab, sendMessage: async () => {} },
-      extension: { isAllowedFileSchemeAccess: cb => cb(true) }, scripting: { executeScript: async () => [{ result: { morse: true, type: "text/html" } }] },
-      storage: { sync: { get: async () => ({}) }, local: { get: async () => ({}), remove: async () => {} } } };
-  });
-  const wp = await wctx.newPage();
-  wp.on("pageerror", e => console.warn("  [pageerror]", e.message));
-  await wp.goto(`${BASE}/dist/extension/popup.html?url=${encodeURIComponent("https://thedailybyte.news/")}`);
-  await wp.waitForSelector("#mods li", { timeout: 5000 }).catch(() => {}); await sleep(300);
-  const keep = page;
-  page = wp; // popShot shoots `page`
-  await popShot("waiting-warn", wp.locator("#warn"), { note: "which mods here wait for “Allow User Scripts”, and that their new look already shows" });
-  await popShot("waiting-mods", wp.locator("#mods"), { note: "“Waits for “Allow User Scripts”” under each mod whose code waits; a mod that only changes the look has none" });
-  await popShot("waiting-whole", wp.locator("body"), { note: "the whole popup with “Allow User Scripts” off" });
-  page = keep;
-  await wctx.close();
-}
-
 // ---- keep iterating: refine, version history, a broken mod and Fix it
 async function iterateStates(theme, width) {
   const n = width < 600, H = n ? 844 : 720;
@@ -1991,7 +1910,7 @@ async function firstRunStates(theme, width) {
   await shot(p, "first-run", "revealed", ui(p, ".bar"), { note: "after the first save: Page tools and Show me once are in the bar now" });
   await close(p);
 
-  for (const [kind, state] of [["nomodel", "note-no-model"], ["noscripts", "note-user-scripts"]]) {
+  for (const [kind, state] of [["nomodel", "note-no-model"]]) {
     p = await open({ theme, width, height: H, extra: `&onboard=${kind}` });
     await openBar(p); await p.mouse.move(5, H / 2); await sleep(200);
     await shot(p, "first-run", state, ui(p, ".bar"));
@@ -2004,102 +1923,6 @@ async function firstRunStates(theme, width) {
   await finish(p, { ok: false, error: "Can't reach the Morse helper at 127.0.0.1:7457" });
   await shot(p, "first-run", "error-with-action", ui(p, ".bar"), { note: "an error in plain words, with a button that does something about it" });
   await close(p);
-}
-
-// ---- first run on the extension's own pages: the real built extension,
-// headful under Xvfb (DISPLAY), with the replies about the model stubbed so
-// each state comes out the same every time (no helper on 7457 needed).
-const PARTS = new Set(String(args.ext || "popup").split(",")); // the welcome page is welcomeStates (onboarding v2)
-const extCtxs = []; // the extension's own browsers: closed (and their profiles removed) if a flow fails
-async function extensionStates() {
-  if (!process.env.DISPLAY) { console.warn("  ! extension pages need DISPLAY (Xvfb :99)"); return; }
-  const os = await import("node:os");
-  const EXT = path.join(ROOT, "dist", "extension");
-  const STATES = {
-    waiting: { kind: "none", helper: null, label: "", reason: "" },
-    found: { kind: "none", helper: { paired: false, pairing: false, label: "Claude Code", provider: "claude-code" }, label: "", reason: "" },
-    wrong: { kind: "none", helper: { paired: false, pairing: true, label: "Claude Code", provider: "claude-code" }, label: "", reason: "", pairFails: true },
-    nomodel: { kind: "none", helper: { paired: true, pairing: false, label: "No model", provider: "none" }, label: "", reason: "" },
-    connected: { kind: "helper", helper: { paired: true, label: "Claude Code", provider: "claude-code" }, label: "Claude Code · sonnet", reason: "" },
-  };
-  const stub = ([st, scripts]) => {
-    if (location.protocol !== "chrome-extension:" || !globalThis.chrome?.runtime?.sendMessage) return;
-    const real = chrome.runtime.sendMessage.bind(chrome.runtime);
-    const base = { userScripts: scripts, backend: "", providers: {}, helperModel: "", anthropicModels: ["claude-sonnet-4-5"], anthropicModel: "claude-sonnet-4-5", mods: [] };
-    const connected = st.kind !== "none";
-    chrome.runtime.sendMessage = async m => {
-      if (m?.type === "popup.state") return { ...base, ...st };
-      if (m?.type === "popup.pair") return st.pairFails || m.code === "ZZZZZZ" ? { error: "That code doesn't match the one the Morse helper shows. Check it and try again." } : { ...base, ...st };
-      if (m?.type === "popup.save") return { error: "The key was refused: invalid x-api-key" };
-      if (m?.type === "onboarding.status") return { state: {}, status: { model: { connected }, userScripts: scripts, mods: 0 } };
-      return real(m);
-    };
-  };
-  const launch = async (theme, width, height, st, scripts = true) => {
-    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "morse-ui-ext-"));
-    const ctx = await chromium.launchPersistentContext(dir, {
-      headless: false, viewport: { width, height }, deviceScaleFactor: 2, colorScheme: theme,
-      args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, "--no-sandbox"],
-    });
-    const shut = ctx.close.bind(ctx);
-    ctx.close = async () => { await shut().catch(() => {}); await fs.rm(dir, { recursive: true, force: true }).catch(() => {}); }; // a profile is ~8MB: never leave one behind
-    extCtxs.push(ctx);
-    await ctx.addInitScript(stub, [st, scripts]);
-    const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
-    const id = sw.url().split("/")[2];
-    // the welcome page the install opened: closed, it is opened again with the stub in place
-    await sleep(800);
-    for (const pg of ctx.pages()) if (pg.url().includes("welcome.html")) await pg.close();
-    return { ctx, id };
-  };
-  const extShot = async (page, area, state, theme, target, opts = {}) => {
-    const vp = page.viewportSize();
-    let clip = { x: 0, y: 0, width: vp.width, height: vp.height };
-    if (target) {
-      // in page coordinates, so a part below the fold (the checklist under the practice page at 390px) is shot whole
-      await target.scrollIntoViewIfNeeded().catch(() => {});
-      const b = await target.boundingBox(), sy = await page.evaluate(() => scrollY);
-      const pad = opts.pad ?? 12;
-      const x = Math.max(0, b.x - pad), y = Math.max(0, b.y + sy - pad);
-      clip = { x, y, width: Math.min(vp.width - x, b.width + 2 * pad), height: b.height + 2 * pad };
-    }
-    const name = `${state}${vp.width < 600 && area !== "popup" ? "-narrow" : ""}-${theme}`;
-    const file = path.join(OUT, area, `${name}.png`);
-    await fs.mkdir(path.dirname(file), { recursive: true });
-    await page.screenshot(opts.full && !target ? { path: file, fullPage: true } : { path: file, clip, fullPage: !!target });
-    const issues = (await page.evaluate(() => {
-      const out = [], W = innerWidth;
-      for (const el of document.querySelectorAll("body *")) {
-        const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
-        if (!r.width || cs.visibility === "hidden" || el.closest("[hidden]")) continue;
-        if (r.right > W + 0.5 && cs.position !== "fixed") out.push(`${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""} sticks out of the page (${Math.round(r.right)} > ${W})`);
-        const text = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
-        if (text && el.scrollWidth > el.clientWidth + 1 && /hidden|clip/.test(cs.overflowX) && cs.textOverflow !== "ellipsis") out.push(`${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""} clips its text`);
-      }
-      if (document.documentElement.scrollWidth > W + 1) out.push(`the page scrolls sideways (${document.documentElement.scrollWidth} > ${W})`);
-      return out.slice(0, 6);
-    })).concat((opts.checks || []).filter(Boolean));
-    // axe-core on the whole extension page (demo/axe.js), every rule
-    if (!args["no-axe"]) {
-      const found = await axeCheck(page, { page: true }).catch(e => [{ id: "axe-failed", impact: "critical", help: e.message.split("\n")[0], targets: [] }]);
-      for (const v of found) axeTally.set(v.id, (axeTally.get(v.id) || 0) + 1);
-      issues.push(...axeLines(found));
-    }
-    results.push({ area, state: name, theme, file: path.relative(OUT, file), issues, note: opts.note || "" });
-    console.log(`  ${issues.length ? "!" : "✓"} ${area}/${name}${issues.length ? "  " + issues.join(" | ") : ""}`);
-  };
-  for (const theme of ["dark", "light"]) {
-    // the popup: no model; a page Morse can't run on; user scripts off
-    for (const [state, st, url, scripts] of [["no-model", STATES.waiting, "https://thedailybyte.news/", true], ["chrome-page", STATES.connected, "chrome://settings/", true],
-      ["store-page", STATES.connected, "https://chromewebstore.google.com/detail/x", true], ["user-scripts-off", STATES.connected, "https://thedailybyte.news/", false], ["ready", STATES.connected, "https://thedailybyte.news/", true]].filter(() => PARTS.has("popup"))) {
-      const { ctx, id } = await launch(theme, 380, 640, st, scripts);
-      const pg = await ctx.newPage();
-      await pg.goto(`chrome-extension://${id}/popup.html?url=${encodeURIComponent(url)}`); await sleep(900);
-      await extShot(pg, "popup", `first-run-${state}`, theme, pg.locator("body"), { pad: 0 });
-      if (state === "no-model") await extShot(pg, "popup", "first-run-model", theme, pg.locator("#model"), { pad: 8 });
-      await ctx.close();
-    }
-  }
 }
 
 // ---- Trusted Types: the same UI, built without innerHTML (00-trusted-html.js)
@@ -2205,43 +2028,6 @@ async function hostileR4States() {
     }
     await close(p);
   }
-}
-
-// ---- round 5: mods waiting for “Allow User Scripts” (64-waiting.js)
-async function waitingStates(theme, width) {
-  const n = width < 600, H = n ? 844 : 720;
-  let p = await open({ theme, width, height: H, mods: 1, extra: "&waiting=1&onboard=done" });
-  await p.evaluate(() => sessionStorage.removeItem("morse:waiting-told"));
-  // the notice, once per site in this tab
-  await ui(p, ".ctl-toast").waitFor({ timeout: 4000 }).catch(() => {}); await sleep(300);
-  await shot(p, "waiting", "notice", ui(p, ".ctl-toast"), { pad: 16, note: "once per site in a tab: which mod waits, what already shows, and Open Morse's details" });
-  if (!n) await shot(p, "waiting", "notice-focus", ui(p, ".ctl-toast"), { pad: 16, checks: [await focusVisible(p, ui(p, ".ctl-toast [data-i='1']"))] });
-  await ui(p, ".ctl-toast").evaluate(el => (el.hidden = true));
-  // the bar's note under the input
-  await openBar(p); await p.mouse.move(5, H / 2); await sleep(200);
-  await shot(p, "waiting", "bar-note", ui(p, ".bar"), { note: "the bar's note: the same words, Turn it on, and × (for this page)" });
-  if (!n) await shot(p, "waiting", "bar-note-focus", ui(p, ".ob-note"), { pad: 8, checks: [await focusVisible(p, ui(p, ".ob-note .btn"))] });
-  await p.keyboard.press("Escape"); await sleep(200);
-  // the Mods panel: a tag on the mod
-  await p.keyboard.press("Alt+Shift+KeyM"); await ui(p, ".panel").waitFor(); await sleep(400); await p.mouse.move(2, 2);
-  await blur(p);
-  await shot(p, "waiting", "panel-row", ui(p, ".list article").first(), { pad: 8, note: "the tag on the mod: waits for “Allow User Scripts” (the full sentence is its title)" });
-  await p.keyboard.press("Escape"); await sleep(200);
-  // a new change whose code waits: the result says so and offers the one click
-  await openBar(p); await pick(p, "#card");
-  await submit(p, "add a button that copies the title");
-  await finish(p, OK({ title: "Copy the title", js: "morse.el('button')", waiting: "userScripts" }));
-  await p.mouse.move(5, H / 2); await sleep(150);
-  await shot(p, "waiting", "result", ui(p, ".bar"), { note: "the result never just looks done: the note, and Turn on “Allow User Scripts” first" });
-  await close(p);
-  // the practice page: what it adds works only on real websites
-  p = await open({ theme, width, height: H, mods: 0 });
-  await openBar(p); await pick(p, "#card");
-  await submit(p, "add a button that copies the title");
-  await finish(p, OK({ title: "Copy the title", js: "morse.el('button')", waiting: "practice" }));
-  await p.mouse.move(5, H / 2); await sleep(150);
-  await shot(p, "waiting", "result-practice", ui(p, ".bar"), { note: "on the practice page: this is how it looks, and what it adds works on real websites" });
-  await close(p);
 }
 
 // ---- round 5: the overlay in German (long words) and Persian (right to left), core/i18n.js
@@ -2593,31 +2379,6 @@ async function desktopStates() {
     await w.click("#check-model");
     await w.waitForFunction(() => /Answered/.test(document.querySelector("#model-live").textContent), null, { timeout: 60000 });
 
-    // ---- Chrome
-    await tab(w, "chrome");
-    await both(app, w, "chrome", null, { note: "the Morse helper on, the ways to connect Chrome" });
-    await w.click("#new-code");
-    await w.waitForSelector("#pair-code:not([hidden])");
-    await w.mouse.move(4, 710);
-    await both(app, w, "chrome-code", null, { note: "a code to type in Chrome, for a few minutes" });
-    await w.click("#helper-on"); await sleep(1500);
-    await both(app, w, "chrome-off", () => w.locator("section#chrome .card").first(), { note: "the helper off: Chrome can't use the model" });
-    await both(app, w, "chrome-switch-focus", () => w.locator("section#chrome .card").first(), { themes: ["dark"], pad: 8, checks: [await pageFocus(w, w.locator("#helper-on"))] });
-    await w.click("#helper-on"); await sleep(2500);
-    // the Morse extension asks to connect (daemon/bridge.js /v1/pair/ask), as the welcome page does
-    const health = await fetch(`http://127.0.0.1:${port}/v1/health`).then(r => r.json(), () => ({}));
-    if (health.ask) {
-      const http = await import("node:http");
-      await new Promise((resolve, reject) => {
-        const req = http.request({ host: "127.0.0.1", port, method: "POST", path: "/v1/pair/ask", headers: { Origin: `chrome-extension://${"lkbmdfnoigeajfhc".repeat(2)}`, "Content-Type": "application/json" } }, res => { res.resume(); res.on("end", resolve); });
-        req.on("error", reject); req.end("{}");
-      });
-      await w.waitForSelector("dialog#ask-pair[open]", { timeout: 30000 });
-      await sleep(400);
-      await both(app, w, "allow", null, { note: "“Allow Chrome to use your Claude Code · sonnet?”: the real helper asking" });
-      await w.click("#pair-no");
-    } else console.warn("  ! the helper can't ask: no Allow state");
-
     // ---- Mods
     await tab(w, "mods");
     await both(app, w, "mods", null, { note: "mods per app, each app's icon, a switch each; one off" });
@@ -2674,152 +2435,6 @@ async function desktopStates() {
     for (const k of kids) { try { process.kill(k.process().pid, "SIGKILL"); } catch {} }
     try { const { listProcesses } = await import("../daemon/apps.js"); for (const p of listProcesses()) if (p.cmd.includes(tmp)) try { process.kill(p.pid, "SIGKILL"); } catch {} } catch {}
     await fs.rm(tmp, { recursive: true, force: true }).catch(() => {});
-  }
-}
-
-// ---- the welcome page, onboarding v2 (extension/welcome.*), and the
-// “Allow User Scripts” window (extension/allow.html): the real built
-// extension, headful under Xvfb, every screen at 1280 and 390, dark and light,
-// in English, German (long words) and Persian (right to left). What the page
-// hears about the model (popup.state, the Allow question, pairing, a key) is
-// stubbed per state, so each shot is the same every time; the practice page
-// is the real one, with sample answers.
-const HELPER = { app: "desktop", ask: true, paired: false, pairing: false, provider: "claude-code", label: "Claude Code · sonnet", signedIn: { claude: true } };
-const WELCOME = {
-  none: { st: { kind: "none", label: "", helper: null } },
-  looking: { st: { kind: "none", label: "", helper: null }, slow: 60000 },
-  ask: { st: { kind: "none", label: "", helper: HELPER } },
-  "ask-signed-out": { st: { kind: "none", label: "", helper: { ...HELPER, signedIn: { claude: false } } } },
-  "ask-waiting": { st: { kind: "none", label: "", helper: HELPER }, ask: "waiting" },
-  "ask-denied": { st: { kind: "none", label: "", helper: HELPER }, ask: "denied" },
-  code: { st: { kind: "none", label: "", helper: { ...HELPER, app: "cli", ask: false } } },
-  "no-model": { st: { kind: "none", label: "", helper: { ...HELPER, provider: "none", label: "No model" } } },
-  connected: { st: { kind: "helper", label: "Claude Code · sonnet", helper: { ...HELPER, paired: true } } },
-};
-async function welcomeStates() {
-  if (!process.env.DISPLAY) { console.warn("  ! the welcome page needs DISPLAY (Xvfb :99)"); return; }
-  const os = await import("node:os");
-  const EXT = path.join(ROOT, "dist", "extension");
-  // The page's messages about the model, answered from localStorage["morse-ui"] (set before each reload).
-  const stub = () => {
-    if (location.protocol !== "chrome-extension:" || !globalThis.chrome?.runtime?.sendMessage) return;
-    const real = chrome.runtime.sendMessage.bind(chrome.runtime);
-    const conf = () => { try { return JSON.parse(localStorage.getItem("morse-ui") || "null"); } catch { return null; } };
-    chrome.runtime.sendMessage = async m => {
-      const c = conf();
-      if (!c) return real(m);
-      if (m?.type === "popup.state") { if (c.slow) await new Promise(r => setTimeout(r, c.slow)); return { userScripts: true, mods: [], ...c.st }; }
-      if (m?.type === "popup.askStart") return { id: "ask-1", expires: Date.now() + 120000 };
-      if (m?.type === "popup.askCheck") return { state: c.ask || "waiting" };
-      if (m?.type === "popup.pair") return { error: "That code doesn't match the one the Morse helper shows. Check it and try again." };
-      if (m?.type === "popup.save") return { error: "The key was refused: invalid x-api-key" };
-      if (m?.type === "onboarding.status") return { state: {}, status: { model: { connected: c.st.kind !== "none" }, userScripts: true, mods: 0 } };
-      return real(m);
-    };
-  };
-  for (const theme of ["dark", "light"]) {
-    const dir = await fs.mkdtemp(path.join(existsSync("/dev/shm") ? "/dev/shm" : os.tmpdir(), "morse-ui-welcome-"));
-    const ctx = await chromium.launchPersistentContext(dir, {
-      headless: false, viewport: { width: 1280, height: 860 }, deviceScaleFactor: 1, colorScheme: theme,
-      args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, "--no-sandbox"],
-    });
-    extCtxs.push(ctx);
-    try {
-      ctx.setDefaultTimeout(Number(process.env.UI_TIMEOUT) || 15000);
-      await ctx.addInitScript(stub);
-      const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
-      const id = sw.url().split("/")[2];
-      await sleep(800);
-      for (const pg of ctx.pages()) if (pg.url().includes("welcome.html")) await pg.close().catch(() => {});
-      const w = await ctx.newPage();
-      await w.goto(`chrome-extension://${id}/welcome.html`);
-      await w.addStyleTag({ content: "html { scrollbar-width: none; }" }).catch(() => {});
-      // One screen of the welcome page: where you are, the language, what the page hears.
-      const at = async ({ screen = "choose", want = "web", lang = "en", state = "none", width = 1280 }) => {
-        await w.setViewportSize({ width, height: width < 600 ? 844 : 860 });
-        await w.evaluate(async ({ screen, want, lang, conf }) => {
-          localStorage.setItem("morse-ui", JSON.stringify(conf));
-          await chrome.storage.local.set({ "morse.start": { want, screen }, "morse.settings": { language: lang } });
-          await chrome.storage.sync.remove("morse.settings").catch(() => {});
-        }, { screen, want, lang, conf: WELCOME[state] });
-        await w.reload();
-        await w.addStyleTag({ content: "html { scrollbar-width: none; }" }).catch(() => {});
-        await w.waitForFunction(s => document.getElementById("app")?.dataset.screen === s, screen);
-        await sleep(state === "looking" ? 600 : 1500);
-        await w.mouse.move(width - 4, 4);
-      };
-      const shoot = (state, opts = {}) => pageShot(w, "welcome", state, theme, opts.target || null, { full: !opts.target, ...opts });
-      for (const width of [1280, 390]) {
-        for (const lang of ["en", "de", "fa"]) {
-          const L = lang === "en" ? "" : `${lang}-`;
-          await at({ screen: "choose", lang, width });
-          await shoot(`${L}choose`, { note: "one question: websites, desktop apps or both" });
-          if (lang === "en" && width > 600) {
-            await w.locator("[data-want=web]").hover(); await sleep(200);
-            await shoot("choose-hover", { target: w.locator(".choices"), note: "a choice under the pointer: one step lighter" });
-            await shoot("choose-focus", { target: w.locator(".choices"), checks: [await pageFocus(w, w.locator("[data-want=apps]"))] });
-            await w.mouse.move(width - 4, 4);
-          }
-          await at({ screen: "connect", want: "web", lang, width });
-          await shoot(`${L}connect`, { note: "nothing found yet: Get Morse Desktop, or an API key" });
-          await at({ screen: "connect", want: "both", lang, state: "ask", width });
-          await shoot(`${L}connect-found`, { note: "Morse Desktop is open, with Claude Code · sonnet: one button" });
-          await at({ screen: "try", lang, state: "none", width });
-          await sleep(1500);
-          await shoot(`${L}try`, { note: "the first change: three steps, the practice page, sample answers until a model is connected" });
-          await at({ screen: "win", want: "both", lang, state: "connected", width });
-          await shoot(`${L}win`, { note: "the first mod is saved: a real site next, and the apps" });
-          if (lang !== "en") continue;
-          // the rest of connect, in English
-          await at({ screen: "connect", want: "both", width });
-          await shoot("connect-both", { note: "websites and apps: Morse Desktop first, the key folded away" });
-          await w.locator("#term summary").click(); await w.locator("#key-more summary").click(); await sleep(300);
-          await shoot("connect-both-open", { note: "the key and the terminal, opened" });
-          await at({ screen: "connect", want: "web", width });
-          await w.locator("#key").fill("my-key-123"); await w.locator("#save-key").click(); await sleep(400);
-          await shoot("connect-key-bad", { target: w.locator("[data-view=key]"), note: "a key that isn't one" });
-          await w.locator("#key").fill("sk-ant-api03-xxxx"); await w.locator("#save-key").click(); await sleep(600);
-          await shoot("connect-key-refused", { target: w.locator("[data-view=key]"), note: "a key the API refused" });
-          if (width > 600) await shoot("connect-key-focus", { target: w.locator("[data-view=key]"), checks: [await pageFocus(w, w.locator("#key"))] });
-          await at({ screen: "connect", width, state: "looking" });
-          await shoot("connect-looking", { target: w.locator("#connect"), note: "looking for Morse Desktop" });
-          for (const s of ["ask-signed-out", "code", "no-model", "connected"]) {
-            await at({ screen: "connect", want: "both", state: s, width });
-            if (s === "code") { await w.locator("#code").fill("ZZZZZ"); await w.locator("#pair").click(); await sleep(400); }
-            await shoot(`connect-${s}`, { target: w.locator("#connect"), note: { "ask-signed-out": "Claude Code found but signed out", code: "a helper started from a terminal: type its code", "no-model": "Morse Desktop without a model", connected: "connected: on to the first change" }[s] });
-          }
-          for (const s of ["ask-waiting", "ask-denied"]) {
-            await at({ screen: "connect", want: "both", state: s, width });
-            await w.locator("#use").click(); await sleep(1600);
-            await shoot(`connect-${s}`, { target: w.locator("#connect"), note: s === "ask-waiting" ? "waiting for Allow in Morse Desktop" : "Denied in Morse Desktop" });
-          }
-          if (width > 600) {
-            await at({ screen: "connect", want: "both", state: "ask", width });
-            await shoot("connect-use-focus", { target: w.locator("#connect"), checks: [await pageFocus(w, w.locator("#use"))] });
-          }
-          for (const want of ["web", "apps"]) {
-            await at({ screen: "win", want, state: want === "web" ? "connected" : "ask", width });
-            await shoot(`win-${want}${want === "apps" ? "-no-model" : ""}`, { note: want === "web" ? "websites only" : "apps only, tried with a sample answer: connect a model next" });
-          }
-          // the practice page's bar, with the sample suggestions
-          await at({ screen: "try", state: "none", width });
-          await w.locator("#open-bar").click().catch(() => {}); await sleep(1800);
-          await pageShot(w, "practice", "sample-bar", theme, w.locator("#frame"), { note: "the practice bar, opened from step 1: the coach, sample suggestions" });
-        }
-      }
-      // the “Allow User Scripts” window, as Chrome shows it beside Morse's details
-      const a = await ctx.newPage();
-      for (const lang of ["en", "de", "fa"]) {
-        await w.evaluate(lang => chrome.storage.local.set({ "morse.settings": { language: lang } }), lang);
-        await a.setViewportSize({ width: 360, height: 440 });
-        await a.goto(`chrome-extension://${id}/allow.html`); await sleep(900);
-        await pageShot(a, "welcome", `${lang === "en" ? "" : lang + "-"}allow-window`, theme, null, { suffix: "", full: true, note: "“Allow User Scripts”: a picture of the switch, and Morse waits for it" });
-      }
-      await a.close();
-    } finally {
-      await ctx.close().catch(() => {});
-      await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
-    }
   }
 }
 
@@ -2881,7 +2496,7 @@ async function siteStates() {
 }
 
 // ---- round 6 bar states: Esc keeps a change (“Kept it”, with Undo), the
-// developer's “rebuilt” note, Your style's header saying where it shows,
+// Your style's header saying where it shows,
 // Alt+↑ for a bigger part, and Redo in the edit tools.
 async function newBarStates(theme, width) {
   const n = width < 600, H = n ? 844 : 720;
@@ -2895,11 +2510,6 @@ async function newBarStates(theme, width) {
   await ui(p, ".ctl-toast").waitFor({ timeout: 6000 }); await sleep(300); await p.mouse.move(2, H / 2);
   await shot(p, "new-bar", "kept-toast", ui(p, ".ctl-toast"), { pad: 16, note: "Esc keeps the change and says so, with Undo" });
   if (!n) await shot(p, "new-bar", "kept-undo-focus", ui(p, ".ctl-toast"), { pad: 16, checks: [await focusVisible(p, ui(p, ".ctl-toast button").first())] });
-  await close(p);
-  // the developer's note: npm run build ran under a running extension
-  p = await open({ theme, width, height: H, extra: "&rebuilt=1" });
-  await ui(p, ".ctl-toast").waitFor({ timeout: 6000 }); await sleep(300);
-  await shot(p, "new-bar", "rebuilt", ui(p, ".ctl-toast"), { pad: 16, note: "for people working on Morse: reload the extension, then the page" });
   await close(p);
   // Your style: where it shows, in the sheet's header
   for (const reach of ["web", "all"]) {
@@ -2946,7 +2556,6 @@ async function guard(area, fn) {
     console.warn(`  ! ${area}: ${msg}`);
     results.push({ area, state: `flow-failed-${results.length}`, theme: "", file: "", issues: [msg], note: "" });
     for (const c of browser.contexts()) await c.close().catch(() => {});
-    for (const c of extCtxs.splice(0)) await c.close().catch(() => {});
     if (!browser.isConnected()) browser = await launchBrowser(); // a crashed renderer took the browser with it: the next area starts fresh
   }
 }
@@ -2980,12 +2589,10 @@ for (const theme of THEMES) {
     if (want("style")) await guard("style", () => styleStates(theme, width));
     if (want("guard")) await guard("guard", () => guardStates(theme, width));
     if (want("first-run")) await guard("first-run", () => firstRunStates(theme, width));
-    if (want("waiting")) await guard("waiting", () => waitingStates(theme, width));
     if (want("packs")) await guard("packs", () => packStates(theme, width));
     if (want("i18n")) await guard("i18n", () => i18nStates(theme, width));
     if (want("new-bar")) await guard("new-bar", () => newBarStates(theme, width));
   }
-  if (want("popup")) await guard("popup", () => popupStates(theme));
   if (want("motion")) await guard("motion", () => reducedMotion(theme));
 }
 if (want("hostile")) { console.log("— hostile hosts"); await hostileStates(); }
@@ -2993,8 +2600,6 @@ if (want("hostile") || want("hostile-r4")) { console.log("— hostile hosts, rou
 if (want("trusted-types")) { console.log("— Trusted Types"); await guard("trusted-types", trustedTypesStates); }
 if (want("site")) { console.log("— the website and Try it here"); await guard("site", siteStates); }
 if (want("desktop")) { console.log("— Morse Desktop (Xvfb)"); await guard("desktop", desktopStates); }
-if (want("welcome") || want("extension")) { console.log("— the welcome page, onboarding v2 (Xvfb)"); await guard("welcome", welcomeStates); }
-if (want("extension")) { console.log("— the extension's own pages (Xvfb)"); await guard("extension", extensionStates); }
 if (want("a11y-site")) { console.log("— Riverside Library (page tools)"); for (const w of WIDTHS) await a11ySiteStates(w); }
 await browser.close();
 server.close();

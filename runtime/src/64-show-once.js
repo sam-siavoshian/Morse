@@ -292,22 +292,7 @@ const ShowOnce = (() => {
     m.context = { ...m.context, recording: { steps: stepsForModel(R.attached.steps) } };
   });
 
-  // ---- ways in: a chip in the empty bar, and the ⋯ menu (50-bar.js)
-  const entry = document.createElement("button");
-  entry.type = "button";
-  entry.className = "sug so-sug";
-  entry.tabIndex = -1;
-  const entryWords = () => { entry.title = t("so.entryTitle"); entry.innerHTML = `${I_REC}${esc(t("menu.showonce"))}`; };
-  entryWords();
-  langSubs.add(entryWords);
-  entry.addEventListener("click", ev => { ev.stopPropagation(); start(); });
-  function placeEntry() {
-    if (sugEl.hidden || R.attached) { if (entry.isConnected) entry.remove(); return; }
-    if (entry.isConnected) return;
-    const gallery = sugEl.querySelector(".gl-sug");
-    gallery ? gallery.before(entry) : sugEl.append(entry);
-  }
-  new MutationObserver(placeEntry).observe(sugEl, { attributes: true, attributeFilter: ["hidden"], childList: true });
+  // Start from the bar’s More menu; the empty input only shows request ideas.
 
   // With steps attached, the chips are what people usually want.
   // label "so.chip.<x>", what it asks "so.chip.<x>.p" (a `fill` one is finished in the input)

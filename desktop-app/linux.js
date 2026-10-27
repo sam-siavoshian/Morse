@@ -26,7 +26,7 @@ export function desktopEntry({ exec, args = [], icon = "", hidden = false, url =
     "[Desktop Entry]",
     "Type=Application",
     "Name=Morse",
-    "Comment=Change any app in your own words",
+    "Comment=Hack your apps. Build your version.",
     `Exec=${[exec, ...args].map(quote).join(" ")}${hidden ? " --hidden" : ""}${url ? " %u" : ""}`,
     icon ? `Icon=${icon}` : "",
     "Terminal=false",

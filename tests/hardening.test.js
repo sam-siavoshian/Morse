@@ -6,14 +6,13 @@
 import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
-import vm from "node:vm";
 import { serveBar } from "../demo/bar-server.js";
 import { bundleRuntime } from "../runtime/bundle.js";
 import { defaultHotkeys } from "../core/hotkeys.js";
 import { plainError } from "../core/onboarding.js";
-import { chromium, launchBrowser, noBrowser, noDisplay } from "./helpers/browser.js";
+import { launchBrowser, noBrowser } from "./helpers/browser.js";
 import { holdKeys, pressOpen, releaseKeys } from "./helpers/keys.js";
 import { TIMEOUT, hostRoundTrip, settle, waitForReady } from "./helpers/wait.js";
 import { tempDir } from "./helpers/home.js";
@@ -70,29 +69,6 @@ async function selectInGodMode(page, sel) {
   await page.mouse.move(r.x + 12, r.y + 8);
   await page.mouse.click(r.x + 12, r.y + 8);
   await page.locator(".gm-tb").waitFor({ state: "visible" });
-}
-
-// ---- 1. a closed port settles every request that was waiting on it
-
-function loadHost() {
-  const event = () => { const fns = []; return { addListener: f => fns.push(f), fire: (...a) => fns.forEach(f => f(...a)) }; };
-  const ports = [];
-  const chrome = {
-    runtime: {
-      connect() {
-        const p = { sent: [], dead: false, onMessage: event(), onDisconnect: event(),
-          postMessage(m) { if (p.dead) throw new Error("Attempting to use a disconnected port object"); p.sent.push(m); } };
-        ports.push(p);
-        return p;
-      },
-      onMessage: { addListener() {} },
-    },
-  };
-  const window = { addEventListener() {} };
-  window.top = window;
-  const ctx = vm.createContext({ chrome, window, document: { documentElement: { dataset: {} } }, location: { href: "https://a.test/", origin: "https://a.test" } });
-  vm.runInContext(readFileSync(path.join(root, "extension/host.js"), "utf8"), ctx);
-  return { host: ctx.__morseHost, ports };
 }
 
 test("God mode: one edit whose request is lost doesn't stop later edits from applying and saving", { skip }, async () => {
@@ -300,7 +276,8 @@ test("first-run coach: page tools saving on their own don't finish it or show th
     await waitFor(s => s.pane === "help");
     await page.keyboard.press("F1");
     await waitFor(s => s.pane === "");
-    await page.locator(".gm-qbtn").click();
+    await page.locator(".more").click();
+  await page.locator('[data-m="tools"]').click();
     await page.locator(".gm-menu button[data-k=dark]").click();
     await page.waitForFunction(() => window.__fake.log.some(m => m.type === "mods.save"));
     await hostRoundTrip(page); // the save's reply, and whatever the coach does with it, are done

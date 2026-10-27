@@ -38,7 +38,7 @@ const TakeBring = (() => {
     const at = rev;
     loading ||= call("taken.list").then(r => {
       if (at === rev && r && Array.isArray(r.items)) { st.list = r.items; st.shared = !!r.shared; }
-    }, () => {}).finally(() => { loading = null; saw = true; placeEntries(); if (!panel.hidden) renderPanel(); });
+    }, () => {}).finally(() => { loading = null; saw = true; if (!panel.hidden) renderPanel(); });
     return loading;
   }
   // Enter can land while the list is still on its way. A request waits for
@@ -286,32 +286,7 @@ const TakeBring = (() => {
   }
 
   // ---- ways in: chips beside the suggestions
-  const makeChip = (cls, icon, label, title, fn) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = `sug tk-sug ${cls}`;
-    b.tabIndex = -1;
-    b.addEventListener("click", ev => { ev.stopPropagation(); fn(); });
-    b.paint = () => { b.title = title(); b.innerHTML = `${icon}${esc(label())}`; };
-    b.paint();
-    return b;
-  };
-  const takeChip = makeChip("tk-take", I_TAKE, () => t("take.this"), () => (S.target ? t("take.this.title") : t("take.watch.title")), () => start());
-  const bringChip = makeChip("tk-bring", I_BRING, () => t("take.bring"), () => t("take.bring.title"), () => pickList());
-  langSubs.add(() => { takeChip.paint(); bringChip.paint(); });
-  function placeEntries() {
-    const off = sugEl.hidden || !!ShowOnce.chips() || !!st.bring;
-    for (const [b, want] of [[takeChip, !off], [bringChip, !off && !st.card && st.list.length > 0]]) {
-      if (!want) { if (b.isConnected) b.remove(); continue; }
-      b.paint();
-      if (b.isConnected) continue;
-      const gallery = sugEl.querySelector(".gl-sug");
-      gallery ? gallery.before(b) : sugEl.append(b);
-    }
-    if (bringChip.isConnected && takeChip.isConnected && bringChip.previousSibling !== takeChip) takeChip.after(bringChip);
-  }
-  new MutationObserver(placeEntries).observe(sugEl, { attributes: true, attributeFilter: ["hidden"], childList: true });
-
+  // Take and Bring are available from the bar’s More menu.
   function start() {
     if (S.phase !== "idle") return;
     const el = S.target && S.target.isConnected ? S.target : null;

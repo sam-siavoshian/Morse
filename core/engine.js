@@ -64,7 +64,16 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
   // speed: when each stage happened, in ms since the call (first attempt only)
   const timing = {};
   const mark = (k, v = Date.now() - started) => { if (timing[k] == null) timing[k] = v; };
+  let liveJs = false, accepted = false;
+  const rollback = async () => {
+    if (liveJs) { await exec(""); liveJs = false; }
+    emit({ type: "css", css: "" });
+  };
+  try {
   for (let attempt = 1; attempt <= total; attempt++) {
+    // A retry replaces the whole draft, including listeners and timers from
+    // a failed JS attempt whose replacement may contain only CSS.
+    if (attempt > 1) await rollback();
     const more = attempt < total;
     tries++;
     const stronger = escalated && tries === 1;
@@ -110,6 +119,7 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     // Ask and find: an answer is final as soon as it's written; nothing runs.
     const answer = parseReply(raw, { final: true });
     if (answer.kind === "answer" && answer.text) {
+      accepted = true;
       emit({ type: "answer", ...answer });
       return { ok: true, kind: "answer", answer, title: "", css: "", js: "", raw, attempts: attempt, ms: Date.now() - started, ...answered() };
     }
@@ -129,12 +139,19 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       advance("guard");
       continue;
     }
-    const wrong = more && vet ? vet(draft) : null; // app profiles: a command the app doesn't have
+    const wrong = vet ? await vet(draft) : null; // app profiles: a command the app doesn't have
     if (wrong) {
       previous = { raw, error: wrong };
       repairs.push(wrong);
       last = { ...last, error: wrong };
       advance("guard");
+      continue;
+    }
+    if ((draft.css.trim() && !draft.cssComplete) || (draft.js.trim() && !draft.jsComplete)) {
+      previous = { raw, error: "The response ended before a code block was closed. Return the complete CSS and JS; do not leave a partial feature." };
+      repairs.push(previous.error);
+      last.error = previous.error;
+      advance("empty");
       continue;
     }
     if (!draft.css.trim() && !draft.js.trim()) {
@@ -176,10 +193,10 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     if (draft.js.trim()) {
       if (signal?.aborted) throw new Error("aborted"); // stopped: never run the JS
       emit({ type: "phase", phase: "applying" });
+      liveJs = true;
       const res = await exec(draft.js);
       // Not run at all (Chrome's "Allow User Scripts" is off, or the practice
       // page): not the model's mistake. The CSS shows; the JS waits.
-      if (res.waiting) return { ...last, ok: true, waiting: res.waiting, note: res.error };
       if (!res.ok) {
         previous = { raw, error: res.error };
         repairs.push(res.error);
@@ -193,7 +210,7 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       const after = before?.shown >= 8 && !signal?.aborted ? await probe([]).catch(() => null) : null;
       const gone = after ? collapseHarm({ before: before.shown, after: after.shown }) : null;
       if (gone) {
-        await exec("").catch(() => {}); // same mod id: turns the draft off
+        await rollback().catch(() => {}); // same mod id: turns the draft off
         emit({ type: "css", css: "" });
         previous = { raw, error: gone.model.replace("your CSS hid", "your change hid") };
         repairs.push(previous.error);
@@ -204,22 +221,24 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     // ---- class names the page notes call generated: it works now and stops
     // working with the app's next release. The kind of slip a stronger model
     // makes less (core/route.js), so it counts like a guard hit.
-    const fleeting = more && !signal?.aborted ? generatedNames(draft, context) : null;
+    const fleeting = !signal?.aborted ? generatedNames(draft, context) : null;
     if (fleeting) {
-      if (draft.js.trim()) await exec("").catch(() => {});
+      if (draft.js.trim()) await rollback().catch(() => {});
       emit({ type: "css", css: "" });
       previous = { raw, error: fleeting };
       repairs.push(fleeting);
+      last.error = fleeting;
       advance("guard");
       continue;
     }
     // ---- hooks nothing uses: JS that marks elements for CSS that isn't there,
     // or a change that only says it happened
-    const dead = more && !signal?.aborted ? deadHooks(draft, context) : null;
+    const dead = !signal?.aborted ? deadHooks(draft, context) : null;
     if (dead) {
-      if (draft.js.trim()) await exec("").catch(() => {}); // same mod id: turns the draft off
+      if (draft.js.trim()) await rollback().catch(() => {}); // same mod id: turns the draft off
       previous = { raw, error: dead };
       repairs.push(dead);
+      last.error = dead;
       advance("effect");
       continue;
     }
@@ -227,7 +246,7 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     // backend route the page already has. Otherwise take it back off.
     const wire = !signal?.aborted ? unwiredFeature(draft, context, request) : null;
     if (wire) {
-      if (draft.js.trim()) await exec("").catch(() => {});
+      if (draft.js.trim()) await rollback().catch(() => {});
       emit({ type: "css", css: "" });
       previous = { raw, error: wire.model };
       repairs.push(wire.model);
@@ -237,14 +256,15 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       continue;
     }
     // take-and-bring hook: a brought feature whose JS finds none of this page's things (core/take.js)
-    if (context?.bring && probe && draft.js.trim() && more && !signal?.aborted) {
+    if (context?.bring && probe && draft.js.trim() && !signal?.aborted) {
       const sels = selectorLists(draft).js;
       const miss = sels.length ? bringMisses(draft.js, sels, (await probe(sels, { quick: true }).catch(() => null))?.unmatched) : null;
       if (miss) {
-        await exec("").catch(() => {});
+        await rollback().catch(() => {});
         emit({ type: "css", css: "" });
         previous = { raw, error: miss };
         repairs.push(miss);
+        last.error = miss;
         advance("effect");
         continue;
       }
@@ -257,7 +277,7 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       const found = await noEffect(probe, before, draft).catch(() => null);
       const miss = found && (more || found.nothing) ? found.text : null;
       if (miss) {
-        if (draft.js.trim()) await exec("").catch(() => {}); // same mod id: turns the inert draft off
+        if (draft.js.trim()) await rollback().catch(() => {}); // same mod id: turns the inert draft off
         previous = { raw, error: miss };
         repairs.push(miss);
         if (!more) {
@@ -273,15 +293,25 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     if (polish && review && !base?.error && !signal?.aborted && wantsPolish(draft, request)) {
       const p = await polishRound({
         settings: current(), request, context, base, raw, draft, review, exec, emit, signal,
+        verify: before && probe ? async d => {
+          const effect = await noEffect(probe, before, d);
+          if (effect) return effect.text;
+          const after = before.shown >= 8 ? await probe([]) : null;
+          return after ? collapseHarm({ before: before.shown, after: after.shown })?.model : null;
+        } : undefined,
         check: d => generatedNames(d, context) || deadHooks(d, context) || unwiredFeature(d, context, request)?.model || replacesHost(d.js) || (vet ? vet(d) : null), // the same checks a draft gets
       });
       timing.polish = p.ms;
       if (p.verdict === "fixed") last = { ...last, ...p.draft, raw: p.raw };
       last = { ...last, polish: { verdict: p.verdict, ms: p.ms, shotMs: p.shotMs, fixes: p.fixes || [], ...(p.error && { error: p.error }) } };
     }
+    accepted = true;
     return { ...last, ok: true };
   }
-  return { ...last, ok: false, error: last?.error || "The model's answer had no change in it. Try other words." };
+  return { ...last, css: "", js: "", ok: false, error: last?.error || "The model's answer had no change in it. Try other words." };
+  } finally {
+    if (!accepted) await rollback();
+  }
 }
 
 // A class the JS adds (or a CSS variable it sets) that no CSS uses changes
@@ -358,8 +388,12 @@ export const NO_EFFECT = "It ran, but nothing on the screen changed. Point at th
 async function noEffect(probe, before, draft) {
   const { css, js } = selectorLists(draft);
   const now = await probe([...new Set([...css, ...js])]);
-  if (!now || now.fp !== before.fp) return null;
+  if (!now) return null;
   const dead = new Set(now.unmatched || []);
+  // Unrelated animations or decorative DOM must not mask missing targets.
+  const allMissing = [...css, ...js].length > 0 && [...css, ...js].every(s => dead.has(s));
+  if (allMissing) return { nothing: true, text: `It ran, but nothing on the page changed. These selectors match no element: ${[...css, ...js].slice(0, 6).map(s => `\`${s}\``).join(", ")}. Use the actual page controls from the context.` };
+  if (now.fp !== before.fp) return null;
   // With JS, CSS for state that only appears on interaction ([data-sort="asc"])
   // is fine; what matters is whether the JS found its targets, or, when it
   // names none, whether any of its CSS applies to anything at all.

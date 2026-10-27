@@ -51,6 +51,20 @@ export function loopbackOrigin(raw) {
   return u.origin;
 }
 
+// Explicit user-supplied OpenAI-compatible server. Keep proxy path prefixes.
+export function endpointBase(raw) {
+  let u;
+  try { u = new URL(String(raw || "").trim()); } catch { return ""; }
+  if (!["http:", "https:"].includes(u.protocol) || u.username || u.password || u.search || u.hash) return "";
+  return u.href.replace(/\/+$/, "").replace(/\/v1$/, "");
+}
+export async function probeEndpoint(address, apiKey = "", opts = {}) {
+  const baseUrl = endpointBase(address);
+  if (!baseUrl) return { error: "Enter an HTTP or HTTPS API base URL, without credentials, a query, or a fragment.", models: [] };
+  const row = await probeLocalRuntime({ id: "local", name: "The server", baseUrl }, { ...opts, apiKey, timeoutMs: opts.timeoutMs || 8000 });
+  return row.found ? row : { ...row, error: row.detail };
+}
+
 // The models a local server just listed, so a later request can pick the
 // smaller one without probing again. Filled only from a real /v1/models reply.
 const noted = new Map();
@@ -89,7 +103,7 @@ function netFailed(e) {
 }
 
 // One local server. Connection refused or a timeout is "server-down", never ready.
-export async function probeLocalRuntime(runtime, { fetch: doFetch = globalThis.fetch, timeoutMs = 800 } = {}) {
+export async function probeLocalRuntime(runtime, { fetch: doFetch = globalThis.fetch, timeoutMs = 800, apiKey = "" } = {}) {
   const name = runtime?.name || "The local model";
   const root = String(runtime?.baseUrl || "").replace(/\/$/, "");
   const row = {
@@ -100,7 +114,7 @@ export async function probeLocalRuntime(runtime, { fetch: doFetch = globalThis.f
   if (!root) return { ...row, status: "missing", detail: "Add the address of a model running on this computer." };
   const fetchModels = async (pathname) => {
     const res = await doFetch(`${root}${pathname}`, {
-      headers: { Accept: "application/json" },
+      headers: { Accept: "application/json", ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}) },
       redirect: "manual",
       signal: AbortSignal.timeout(timeoutMs),
     });
@@ -352,8 +366,8 @@ async function connectLocal(id, key, opts) {
   let rt = runtimeById(id, runtimes);
   if (id === "local") {
     const typed = String(opts.address || "").trim();
-    const origin = loopbackOrigin(typed);
-    if (typed && !origin) return { error: "That address isn't on this computer.", status: "missing" };
+    const origin = opts.selfHosted ? endpointBase(typed) : loopbackOrigin(typed);
+    if (typed && !origin) return { error: opts.selfHosted ? "Enter a valid HTTP or HTTPS API base URL." : "That address isn't on this computer.", status: "missing" };
     if (!origin) {
       const probed = await Promise.all(runtimes.map(r => probeLocalRuntime(r, opts)));
       const up = probed.find(p => p.status === "ready");
@@ -373,6 +387,7 @@ async function connectLocal(id, key, opts) {
   if (pick.error) return pick;
   const config = configFor(id, { model: pick.model, baseUrl: probed.baseUrl || rt.baseUrl });
   config.listed = probed.models;
+  if (opts.selfHosted) config.keys = { local: opts.apiKey || "" };
   return { backend: id, config, status: "ready" };
 }
 

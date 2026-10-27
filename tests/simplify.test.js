@@ -9,7 +9,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { serveBar } from "./helpers/demo-server.js";
 import { pressOpen } from "./helpers/keys.js";
-import { noBrowser, noDisplay, launchBrowser, chromium } from "./helpers/browser.js";
+import { noBrowser, launchBrowser } from "./helpers/browser.js";
 import { waitForStatus, waitForReady, TIMEOUT } from "./helpers/wait.js";
 import { home, tempDir } from "./helpers/home.js";
 import { writeFileSync, readdirSync, readFileSync } from "node:fs";
@@ -40,14 +40,14 @@ async function scenario(query, fn) {
 }
 const active = page => page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.activeElement);
 const activeText = page => page.evaluate(() => document.querySelector("[data-morse-ui]").shadowRoot.activeElement?.textContent.trim());
-const visible = (page, sel) => page.locator(sel).evaluateAll(ns => ns.filter(n => n.getClientRects().length).map(n => n.textContent.trim().replace(/\s+/g, " ")));
+const visible = (page, sel) => page.locator(sel).evaluateAll(ns => ns.filter(n => n.getClientRects().length && !n.closest("details:not([open]) > :not(summary)")).map(n => n.textContent.trim().replace(/\s+/g, " ")));
 
-test("the ⋯ menu has three things; Talk, Mods, Choose with keys and the shortcut list keep their own ways in", { skip }, () => scenario("", async ({ page, waitFor }) => {
+test("the ⋯ menu groups optional tools; Talk, Mods, Choose with keys and the shortcut list keep their own ways in", { skip }, () => scenario("", async ({ page, waitFor }) => {
   await pressOpen(page);
   await waitFor(s => s.open);
   await page.locator(".bar .more").click();
   const items = await visible(page, ".bmenu [role=menuitem]");
-  assert.deepEqual(items.map(s => s.replace(/\s*(Ctrl|⌘).*|\s*F1$/, "")), ["Show me once", "Settings", "Help and examples"]);
+  assert.deepEqual(await page.locator(".bmenu [role=menuitem]").evaluateAll(ns => ns.map(n => n.dataset.m)), ["take", "tools", "showonce", "settings", "help"]);
   await page.keyboard.press("Escape");
   // Each one that left the menu is still a click or a key away.
   assert.equal(await page.locator(".bar .mic").isVisible(), true, "Talk: the mic button");
@@ -59,24 +59,24 @@ test("the ⋯ menu has three things; Talk, Mods, Choose with keys and the shortc
   assert.match(await page.locator(".pane").innerText(), /Choose with keys/, "Choose with keys is on the shortcut list");
 }));
 
-test("Settings: four rows and Your style, then More settings, which opens and closes from the keyboard", { skip }, () => scenario("", async ({ page, waitFor }) => {
+test("Settings: three essentials, then collapsed advanced groups", { skip }, () => scenario("", async ({ page, waitFor }) => {
   await pressOpen(page);
   await waitFor(s => s.open);
-  await page.keyboard.press("Control+Comma");
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+Comma" : "Control+Comma");
   await waitFor(s => s.pane === "settings");
   // The pane state flips before the rows are painted. Reading in that gap sees none.
   await page.locator(".pane .srow .lbl > span").first().waitFor();
   const rows = await visible(page, ".pane .srow .lbl > span");
-  assert.deepEqual(rows.map(s => s.replace(/ ·.*/, "")), ["Your style", "Open Morse", "Theme", "Language", "Fix my mods when a site changes"]);
+  assert.deepEqual(rows.map(s => s.replace(/ ·.*/, "")), ["Open Morse", "Theme", "Language"]);
   const more = page.locator(".pane [data-act=more]");
   assert.equal(await more.getAttribute("aria-expanded"), "false");
   await more.focus();
   await page.keyboard.press("Enter");
   await page.locator(".pane #m-more-settings:not([hidden])").waitFor();
   assert.equal(await page.locator(".pane [data-act=more]").getAttribute("aria-expanded"), "true");
-  assert.equal(await activeText(page), "More settings", "focus stays on the button");
+  assert.equal(await activeText(page), "Advanced settings", "focus stays on the button");
   const all = await visible(page, ".pane .srow .lbl > span");
-  assert.ok(all.length >= rows.length + 9, all.join(" | ")); // the other shortcuts, voice, effects, position, notices
+  assert.deepEqual(all, rows, "advanced controls wait until their group opens");
   assert.ok(await page.locator(".pane [data-act=reset-all]").isVisible(), "Reset all settings");
   await page.keyboard.press("Enter");
   await page.locator(".pane #m-more-settings[hidden]").waitFor({ state: "attached" });
@@ -85,7 +85,8 @@ test("Settings: four rows and Your style, then More settings, which opens and cl
 test("page tools: nine things; Easier to use opens its group with a click or →, ← goes back", { skip }, () => scenario("", async ({ page, waitFor }) => {
   await pressOpen(page);
   await waitFor(s => s.open);
-  await page.locator(".gm-qbtn").click();
+  await page.locator(".more").click();
+  await page.locator('[data-m="tools"]').click();
   const items = await visible(page, ".gm-menu [role^=menuitem]");
   assert.ok(items.length <= 10, items.join(" | "));
   assert.ok(items.some(s => /^Easier to use/.test(s)), "Easier to use is one item");

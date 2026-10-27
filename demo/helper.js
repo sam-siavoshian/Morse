@@ -86,7 +86,7 @@ export async function pick(page, sel, fx = 0.5, fy = 0.5) {
 
 // Someone who has used Morse before: the first-run coach is done, the tools
 // are revealed, and no "Morse is ready" toast: MORSE_HOME/onboarding.json.
-export const SEASONED = { coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } };
+export const SEASONED = { coach: "done", tips: { saved: true, share: true }, dismissed: { model: true } };
 export async function seasonHome(home) {
   await fs.mkdir(home, { recursive: true });
   await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify(SEASONED));

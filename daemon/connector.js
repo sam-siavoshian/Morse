@@ -222,6 +222,10 @@ export class Connector {
   sync(list) {
     const byId = new Map(list.map(t => [t.id, t]));
     let dirty = false;
+    if (this.app?.browser) {
+      const needsPage = !list.some(t => classifyTarget(t, t.parentId ? byId.get(t.parentId)?.url : null).attach);
+      if (this.needsPage !== needsPage) { this.needsPage = needsPage; dirty = true; }
+    }
     for (const t of list) {
       const w = this.windows.get(t.id);
       if (w) {
@@ -491,6 +495,32 @@ export class Connector {
     } catch {}
   }
 
+  // Connected does not mean busy. Keep edits and unsaved previews intact
+  // while allowing an idle connection to survive an automatic Morse update.
+  async isUpdateBusy() {
+    if (this.gens.size || this.activeRequests || this.recorder) return true;
+    for (const w of this.windows.values()) {
+      if (!w.session || w.session.closed) continue;
+      const worlds = new Set([barWorld(w), ...[...(w.frames?.values() || [])].map(f => f.world)]);
+      for (const world of worlds) {
+        if (world == null) continue;
+        let timer;
+        try {
+          const result = await Promise.race([
+            w.session.send("Runtime.evaluate", {
+              expression: `(() => { const b = globalThis[Symbol.for("morse.boot")]; if (!b?.live()) return false; const s = b.S; return !!(s.open || s.phase === "working" || s.draft?.saving || (s.draft && !s.draft.saved)); })()`,
+              contextId: world, returnByValue: true,
+            }),
+            new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("activity check timed out")), 1500); }),
+          ]);
+          if (result.exceptionDetails || result.result?.value === true) return true;
+        } catch { if (!w.session.closed) return true; }
+        finally { clearTimeout(timer); }
+      }
+    }
+    return !!(this.gens.size || this.activeRequests || this.recorder);
+  }
+
   async windowFocused(w, world) {
     return w.session.send("Runtime.evaluate", { expression: "document.hasFocus()", contextId: world, returnByValue: true }).then(r => r?.result?.value === true).catch(() => false);
   }
@@ -627,6 +657,12 @@ export class Connector {
   }
 
   async dispatch(s, caller, msg) {
+    this.activeRequests = (this.activeRequests || 0) + 1;
+    try { return await this.handleRequest(s, caller, msg); }
+    finally { this.activeRequests--; }
+  }
+
+  async handleRequest(s, caller, msg) {
     const app = this.app?.id || null;
     // Where the caller is, from the caller's document, not from the message.
     let at;

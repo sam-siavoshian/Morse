@@ -6,7 +6,7 @@
 //      read the release's build.json; a different commit than this build's
 //      (build-info.json) is an update
 //   2. download this computer's file, and check it against SHA256SUMS
-//   3. when no app is connected, or when Morse quits: put the new copy in
+//   3. when no change is in progress, or when Morse quits: put the new copy in
 //      place of this one and start it
 //
 // The button reports the same check: up to date, an update (then the download
@@ -76,12 +76,12 @@ export function bundleOf(exe) {
   return i < 0 ? null : exe.slice(0, i + 4);
 }
 
-export function createUpdater({ app, getAppImage = () => "", busy = () => false, log = () => {}, onStatus = () => {}, fetchImpl = globalThis.fetch, env = process.env, here = moduleDir(import.meta.url), wait = ms => new Promise(r => setTimeout(r, ms)) } = {}) {
+export function createUpdater({ app, getAppImage = () => "", busy = () => false, log = () => {}, onStatus = () => {}, fetchImpl = globalThis.fetch, env = process.env, here = moduleDir(import.meta.url), beforeInstall = async () => {}, install = installUpdate } = {}) {
   const asset = assetFor();
   let local = null;
   try { local = JSON.parse(readFileSync(path.join(here, "build-info.json"), "utf8")); } catch {}
   let ready = null; // { file, remote } downloaded and checked, waiting for a quiet moment
-  let timer = null, later = false, flight = null;
+  let timer = null, startup = null, idleTimer = null, installTimer = null, later = false, flight = null, stopped = false;
   // What the window shows (a dialog while it downloads and installs).
   let status = { phase: "idle" };
   const set = next => { status = next; try { onStatus(status); } catch {} };
@@ -137,7 +137,10 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
       if (user) reveal(result);
       return result;
     }
+    if (!ready && enabled()) await restoreDownload();
     if (ready) {
+      if (user) later = false;
+      scheduleInstall();
       if (user) set({ phase: later ? "later" : "ready", commit: ready.remote.commit, version: versionOf(ready.remote) });
       return "ready";
     }
@@ -187,12 +190,11 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
       await fs.mkdir(dir, { recursive: true });
       const file = path.join(dir, asset);
       await fs.writeFile(file, data, { mode: 0o755 });
-      ready = { file, remote: { ...remote, version } };
+      ready = { file, remote: { ...remote, version }, sha256: want };
+      await fs.writeFile(path.join(dir, "pending.json"), JSON.stringify({ remote: ready.remote, sha256: want }));
       log(`update: ${remote.commit.slice(0, 7)} downloaded`);
-      // Nothing connected: install now. Apps connected: ask (they lose their
-      // mods until they are opened with Morse again), or install at quit.
-      if (!busy()) { set({ phase: "installing", version }); await wait(1500); apply(); }
-      else set({ phase: later ? "later" : "ready", commit: remote.commit, version });
+      set({ phase: later ? "later" : "ready", commit: remote.commit, version });
+      scheduleInstall();
       return "ready";
     } catch (e) {
       log(`update: ${e.message}`);
@@ -210,55 +212,55 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
     } catch { return false; }
   }
 
-  // Put the new copy in place and start it. Runs once; Morse quits after.
-  // The swap happens in this process, before quit. A helper that only opens
-  // the new copy used to do the swap, and it died with Morse, so the old
-  // copy opened again and the download started over.
+  // A verified download survives a restart; never trust the cache without hashing it.
+  async function restoreDownload() {
+    try {
+      const saved = JSON.parse(await fs.readFile(path.join(dir, "pending.json"), "utf8"));
+      if (!isNewer(saved.remote, local)) return;
+      const file = path.join(dir, asset);
+      const sum = createHash("sha256").update(await fs.readFile(file)).digest("hex");
+      if (sum !== saved.sha256) return;
+      ready = { file, remote: saved.remote, sha256: sum };
+      set({ phase: sameAttempt(saved.remote) ? "failed" : "ready", commit: saved.remote.commit, version: versionOf(saved.remote) });
+    } catch {} // no cached download, or an incomplete write
+  }
+
+  // One countdown, even when window status updates repeatedly call idle().
+  // Recheck activity at the deadline: a change may have started meanwhile.
+  function scheduleInstall({ force = false, relaunch = true } = {}) {
+    if (!ready || applying || installTimer || stopped || (!force && (later || sameAttempt(ready.remote)))) return false;
+    installTimer = setTimeout(async () => {
+      installTimer = null;
+      if (!ready || applying || stopped || (!force && later)) return;
+      try {
+        if (await busy()) return;
+        if (!ready || applying || stopped || (!force && later)) return;
+        await apply({ relaunch });
+      } catch (e) { log(`update: waiting for activity check (${e.message})`); }
+    }, 1500);
+    installTimer.unref?.();
+    return true;
+  }
+
   let applying = false;
-  function apply({ relaunch = true } = {}) {
+  async function apply({ relaunch = true } = {}) {
     if (!ready || applying) return false;
     applying = true;
-    const pid = String(process.pid);
+    clearTimeout(installTimer); installTimer = null;
+    const update = ready;
+    set({ phase: "installing", version: versionOf(update.remote), commit: update.remote.commit });
     try {
-      try { writeFileSync(path.join(dir, "attempt.json"), JSON.stringify({ commit: ready.remote.commit, at: Date.now() })); } catch {}
-      if (process.platform === "darwin") {
-        const bundle = bundleOf(process.execPath);
-        if (!bundle) throw new Error("not running from an app bundle");
-        const unpacked = path.join(dir, "new");
-        execFileSync("ditto", ["-x", "-k", ready.file, unpacked]);
-        const fresh = readdirApps(unpacked)[0];
-        if (!fresh) throw new Error("the update has no app in it");
-        const home = app.getPath("home");
-        const placed = placeMac(dir, fresh, installDest(bundle, home), "cancel-app");
-        // The helper is waiting before the swap. If moving the running app
-        // kills this process, the helper still finishes and opens the new one.
-        wake(dir, macRelaunchScript, { MORSE_PID: pid, MORSE_DEST: placed.dest, MORSE_NEXT: placed.next, MORSE_OLD: placed.old, MORSE_CANCEL: placed.cancel, MORSE_RELAUNCH: relaunch ? "1" : "0" });
-        try { swapInPlace(placed.dest, placed.next); }
-        catch (err) {
-          writeFileSync(placed.cancel, "1");
-          const fallback = path.join(home, "Applications", "Morse.app");
-          if (path.resolve(placed.dest) === path.resolve(fallback)) throw err;
-          const again = placeMac(dir, fresh, fallback, "cancel-home");
-          wake(dir, macRelaunchScript, { MORSE_PID: pid, MORSE_DEST: again.dest, MORSE_NEXT: again.next, MORSE_OLD: again.old, MORSE_CANCEL: again.cancel, MORSE_RELAUNCH: relaunch ? "1" : "0" });
-          try { swapInPlace(again.dest, again.next); }
-          catch (e2) { writeFileSync(again.cancel, "1"); throw e2; }
-        }
-      } else if (process.platform === "win32") {
-        // The NSIS installer waits for Morse to close, installs over it, and with --force-run starts it.
-        spawn(ready.file, ["/S", ...(relaunch ? ["--force-run"] : [])], { detached: true, stdio: "ignore", windowsHide: true }).unref();
-      } else {
-        const target = getAppImage();
-        if (!target) throw new Error("not running from an AppImage");
-        wake(dir, linuxSwapScript, { MORSE_PID: pid, MORSE_FRESH: ready.file, MORSE_TARGET: target, MORSE_RELAUNCH: relaunch ? "1" : "0" });
-      }
-      log(`update: installing ${ready.remote.commit.slice(0, 7)}`);
-      // Let the helper detach, then quit. exit skips the quit handler, which
-      // would start a second install.
-      setTimeout(() => { try { app.releaseSingleInstanceLock?.(); } catch {} app.exit(0); }, 700);
+      // app.exit bypasses Electron's quit events. Run cleanup explicitly first.
+      writeFileSync(path.join(dir, "attempt.json"), JSON.stringify({ commit: update.remote.commit, at: Date.now() }));
+      await install({ app, file: update.file, dir, getAppImage, relaunch });
+      await beforeInstall();
+      log(`update: installing ${update.remote.commit.slice(0, 7)}`);
+      try { app.releaseSingleInstanceLock?.(); } catch {}
+      app.exit(0);
       return true;
     } catch (e) {
       log(`update: couldn't install (${e.message}); keeping this version`);
-      ready = null; applying = false;
+      applying = false;
       set({ phase: "failed", error: e.message });
       return false;
     }
@@ -266,25 +268,81 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
 
   return {
     start() {
-      if (!enabled()) return;
-      setTimeout(check, 5_000).unref?.();
-      timer = setInterval(() => { if (ready && !busy()) apply(); else check(); }, EVERY);
+      if (!enabled() || timer) return;
+      stopped = false;
+      startup = setTimeout(() => { startup = null; check(); }, 5_000);
+      startup.unref?.();
+      timer = setInterval(check, EVERY);
       timer.unref?.();
+      // Completion of a generation need not cause a window refresh.
+      idleTimer = setInterval(() => scheduleInstall(), 5_000);
+      idleTimer.unref?.();
     },
-    stop() { clearInterval(timer); },
+    stop() {
+      stopped = true;
+      clearTimeout(startup); clearTimeout(installTimer);
+      clearInterval(timer); clearInterval(idleTimer);
+      startup = installTimer = timer = idleTimer = null;
+    },
     check,
-    // Morse is quitting: install now, without opening it again.
-    // Already installing: say so, so quit doesn't start a second copy.
-    onQuit() { if (applying) return true; return ready ? apply({ relaunch: false }) : false; },
-    // An app was disconnected: if nothing else is connected, now is a good time.
-    idle() { if (ready && !applying && !busy()) { set({ phase: "installing" }); setTimeout(() => apply(), 1500); } },
-    // The window's buttons: Restart now, or Later (installs when Morse quits).
-    installNow() { if (!ready) return false; set({ phase: "installing" }); setTimeout(() => apply(), 800); return true; },
-    later() { later = true; if (ready) set({ phase: "later", commit: ready.remote.commit, version: versionOf(ready.remote) }); return true; },
+    onQuit() {
+      if (applying) return true;
+      if (!ready) return false;
+      void apply({ relaunch: false }).then(ok => { if (!ok) app.quit(); });
+      return true;
+    },
+    idle: () => scheduleInstall(),
+    installNow() {
+      if (!ready) return false;
+      later = false;
+      return scheduleInstall({ force: true });
+    },
+    later() {
+      later = true;
+      clearTimeout(installTimer); installTimer = null;
+      if (ready && !applying) set({ phase: "later", commit: ready.remote.commit, version: versionOf(ready.remote) });
+      return true;
+    },
     get status() { return status; },
     get ready() { return !!ready; },
     get local() { return local; },
   };
+}
+
+// Platform handoff, separate from scheduling so it can be exercised on fixture apps.
+export async function installUpdate({ app, file, dir, getAppImage = () => "", relaunch = true, platform = process.platform, executable = process.execPath }) {
+  const pid = String(process.pid);
+  if (platform === "darwin") {
+    const bundle = bundleOf(executable);
+    if (!bundle) throw new Error("not running from an app bundle");
+    const unpacked = path.join(dir, "new");
+    execFileSync("ditto", ["-x", "-k", file, unpacked]);
+    const fresh = readdirApps(unpacked)[0];
+    if (!fresh) throw new Error("the update has no app in it");
+    const home = app.getPath("home");
+    const placed = placeMac(dir, fresh, installDest(bundle, home), "cancel-app");
+    // The helper is waiting before the swap. If moving the running app
+    // kills this process, the helper still finishes and opens the new one.
+    await wake(dir, macRelaunchScript, { MORSE_PID: pid, MORSE_DEST: placed.dest, MORSE_NEXT: placed.next, MORSE_OLD: placed.old, MORSE_CANCEL: placed.cancel, MORSE_RELAUNCH: relaunch ? "1" : "0" });
+    try { swapInPlace(placed.dest, placed.next); }
+    catch (err) {
+      writeFileSync(placed.cancel, "1");
+      const fallback = path.join(home, "Applications", "Morse.app");
+      if (path.resolve(placed.dest) === path.resolve(fallback)) throw err;
+      const again = placeMac(dir, fresh, fallback, "cancel-home");
+      await wake(dir, macRelaunchScript, { MORSE_PID: pid, MORSE_DEST: again.dest, MORSE_NEXT: again.next, MORSE_OLD: again.old, MORSE_CANCEL: again.cancel, MORSE_RELAUNCH: relaunch ? "1" : "0" });
+      try { swapInPlace(again.dest, again.next); }
+      catch (e2) { writeFileSync(again.cancel, "1"); throw e2; }
+    }
+  } else if (platform === "win32") {
+    // The NSIS installer waits for Morse to close, installs over it, and with --force-run starts it.
+    await launchDetached(file, ["/S", ...(relaunch ? ["--force-run"] : [])], { detached: true, stdio: "ignore", windowsHide: true });
+  } else {
+    const target = getAppImage();
+    if (!target) throw new Error("not running from an AppImage");
+    await wake(dir, linuxSwapScript, { MORSE_PID: pid, MORSE_FRESH: file, MORSE_TARGET: target, MORSE_RELAUNCH: relaunch ? "1" : "0" });
+  }
+
 }
 
 function readdirApps(dir) {
@@ -345,8 +403,16 @@ export const macRelaunchScript = `#!/bin/bash
 if [ "\${MORSE_UPDATE_INNER}" != 1 ]; then
   export MORSE_UPDATE_INNER=1
   nohup /bin/bash "$0" >>"\${MORSE_LOG:-/dev/null}" 2>&1 &
+  if [ -n "$MORSE_STARTED" ]; then
+    for ((i=0; i<100; i++)); do
+      [ -f "$MORSE_STARTED" ] && exit 0
+      sleep 0.05
+    done
+    exit 1
+  fi
   exit 0
 fi
+[ -z "$MORSE_STARTED" ] || : > "$MORSE_STARTED"
 while kill -0 "$MORSE_PID" 2>/dev/null; do sleep 0.2; done
 sleep 0.5
 if [ -f "$MORSE_CANCEL" ]; then exit 0; fi
@@ -366,8 +432,16 @@ export const linuxSwapScript = `#!/bin/bash
 if [ "\${MORSE_UPDATE_INNER}" != 1 ]; then
   export MORSE_UPDATE_INNER=1
   nohup /bin/bash "$0" >>"\${MORSE_LOG:-/dev/null}" 2>&1 &
+  if [ -n "$MORSE_STARTED" ]; then
+    for ((i=0; i<100; i++)); do
+      [ -f "$MORSE_STARTED" ] && exit 0
+      sleep 0.05
+    done
+    exit 1
+  fi
   exit 0
 fi
+[ -z "$MORSE_STARTED" ] || : > "$MORSE_STARTED"
 while kill -0 "$MORSE_PID" 2>/dev/null; do sleep 0.2; done
 sleep 0.5
 mv -f "$MORSE_FRESH" "$MORSE_TARGET" && chmod +x "$MORSE_TARGET" || exit 1
@@ -376,11 +450,13 @@ if [ "$MORSE_RELAUNCH" = 1 ]; then
 fi
 `;
 
-function wake(folder, script, env) {
+async function wake(folder, script, env) {
   mkdirSync(folder, { recursive: true });
-  const file = path.join(folder, "install.sh");
+  const file = path.join(folder, `install-${path.basename(env.MORSE_CANCEL || "linux")}.sh`);
+  const started = `${file}.started`;
+  rmSync(started, { force: true });
   writeFileSync(file, script, { mode: 0o755 });
-  const child = spawn("/bin/bash", [file], {
+  await launchDetached("/bin/bash", [file], {
     detached: true,
     stdio: "ignore",
     env: {
@@ -389,8 +465,20 @@ function wake(folder, script, env) {
       USER: process.env.USER || "",
       TMPDIR: process.env.TMPDIR || "/tmp",
       MORSE_LOG: path.join(folder, "install.log"),
+      MORSE_STARTED: started,
       ...env,
     },
+  }, true);
+}
+
+function launchDetached(file, args, options, waitForExit = false) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(file, args, options);
+    child.once("error", reject);
+    if (waitForExit) child.once("exit", code => {
+      if (code === 0) { child.unref(); resolve(); }
+      else reject(new Error(`Update helper exited with code ${code}`));
+    });
+    else child.once("spawn", () => { child.unref(); resolve(); });
   });
-  child.unref();
 }

@@ -64,7 +64,7 @@ const fixesIn = text => [...String(text).matchAll(/^\s*FIX:\s*(.+)$/gm)].map(m =
 //              when it ran): the draft is back on the page
 //   "noshot"   no picture (the host couldn't take one)
 //   "error"    the model call failed (or can't see pictures): the draft stays
-export async function polishRound({ settings, request, context, base, raw, draft, review, exec, emit, signal, check, timeoutMs = 60_000 }) {
+export async function polishRound({ settings, request, context, base, raw, draft, review, exec, emit, signal, check, verify, timeoutMs = 60_000 }) {
   const t0 = Date.now();
   const shot = await withTimeout(Promise.resolve().then(() => review(draft)).catch(() => null), 8000);
   const shotMs = Date.now() - t0;
@@ -81,11 +81,11 @@ export async function polishRound({ settings, request, context, base, raw, draft
   const fixes = fixesIn(reply);
   const next = parseModResponse(reply);
   if (/^\s*OK\b/i.test(reply) && !next.css.trim() && !next.js.trim()) return { verdict: "ok", ms: ms(), shotMs, fixes: [], measured: shot.measured || [] };
-  if (!next.css.trim() && !next.js.trim()) return { verdict: "ok", ms: ms(), shotMs, fixes };
+  if (!next.css.trim() && !next.js.trim()) return { verdict: "kept", ms: ms(), shotMs, fixes, error: "The review returned neither OK nor a complete replacement." };
   // Keep what it does: a new version that drops the draft's JS isn't a polish.
   const why = (draft.js.trim() && !next.js.trim() ? "the new version dropped the JS" : null)
     || draftHarm(next, `${request} ${base?.prompt || ""}`)?.model
-    || (check ? check(next) : null);
+    || (check ? await check(next) : null);
   if (why) return { verdict: "kept", ms: ms(), shotMs, fixes, error: why };
   if (signal?.aborted) return { verdict: "error", ms: ms(), shotMs, error: "stopped" };
   emit?.({ type: "css", css: next.css });
@@ -96,6 +96,16 @@ export async function polishRound({ settings, request, context, base, raw, draft
       emit?.({ type: "css", css: draft.css });
       if (draft.js.trim()) await exec(draft.js).catch(() => {});
       return { verdict: "kept", ms: ms(), shotMs, fixes, error: res?.error || "it didn't run" };
+    }
+  }
+  if (verify) {
+    let error;
+    try { error = await verify(next); } catch (e) { error = `Could not verify the replacement: ${e?.message || e}`; }
+    if (error) {
+      emit?.({ type: "css", css: draft.css });
+      const restored = await exec(draft.js).catch(e => ({ ok: false, error: String(e?.message || e) }));
+      if (!restored?.ok) throw new Error(`Could not restore the working change: ${restored?.error || "it did not run"}`);
+      return { verdict: "kept", ms: ms(), shotMs, fixes, error };
     }
   }
   return { verdict: "fixed", ms: ms(), shotMs, fixes, draft: { ...next, title: draft.title || next.title }, raw: reply };

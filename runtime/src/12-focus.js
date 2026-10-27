@@ -15,6 +15,7 @@ const barExtras = [];
 function tabbables(scope) {
   if (!scope) return [];
   return [...scope.querySelectorAll("button, textarea, input, select, a[href], summary, [tabindex]")]
+    .filter(n => { const closed = n.closest("details:not([open])"); return !closed || closed.querySelector(":scope > summary")?.contains(n); })
     .filter(n => !n.disabled && n.tabIndex >= 0 && !n.closest("[hidden], [inert]") && n.getClientRects().length && getComputedStyle(n).visibility !== "hidden");
 }
 

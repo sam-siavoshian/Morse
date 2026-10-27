@@ -34,7 +34,7 @@ before(async () => {
   if (skip) return;
   await fs.mkdir(path.join(home, "mods"), { recursive: true });
   await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false, gallery: false }));
-  await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } }));
+  await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true } }));
   server = http.createServer(async (req, res) => {
     const p = decodeURIComponent(new URL(req.url, "http://x").pathname);
     try { res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(await fs.readFile(new URL("." + (p.endsWith("/") ? p + "index.html" : p), ROOT))); }
