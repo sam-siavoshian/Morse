@@ -822,7 +822,17 @@ export default {
   "cap.captured": "Capturé",
   "cap.items": "Éléments capturés",
   "cap.using": "Utilisé",
-  "cap.placeholder": "Décrivez où et comment l'utiliser ici…",
+  "cap.placeholder": "Faites-le glisser, ou dites où le placer",
+  "cap.useHere": "L'utiliser ici",
+  "cap.useHere.p": "L'utiliser ici",
+  "cap.useHere.title": "L'utiliser ici (Enter)",
+  "cap.useNamed": "Utiliser {label} ici",
+  "cap.hint": "<b>Glissez-le</b> où il va, ou dites où · <kbd>Esc</kbd> pour fermer",
+  "cap.pick": "Utiliser {label}",
+  "cap.selected": "{label} choisi",
+  "cap.remove": "Retirer {label}",
+  "cap.move": "Déplacer {label}",
+  "cap.drag": "Glisser pour le déplacer",
 
   // ---- suggestions
   "sug.try": "Essayez",

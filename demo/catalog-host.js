@@ -214,6 +214,7 @@
         case "history.add": C.history = C.history.filter(x => x !== m.text).concat(m.text).slice(-50); return reply(C.history.slice());
         case "clipboard.list": return reply(structuredClone(C.clips));
         case "clipboard.put": C.clips = [m.item, ...C.clips]; return reply(structuredClone(C.clips));
+        case "clipboard.remove": C.clips = C.clips.filter(i => i && i.id !== m.id); return reply(structuredClone(C.clips));
         case "transcribe": {
           if (!voice?.transcribe) return fail("Unknown request transcribe");
           if (m.partial) return reply({ text: C.transcript.split(" ").slice(0, 3).join(" ") });
@@ -253,7 +254,7 @@
         case "open": C.opened = m.url; return reply(true);
         case "off": return reply(true);
         case "capture": return reply(globalThis.__catCapture ? await globalThis.__catCapture() : card);
-        case "generate": C.gen = { genId: m.genId, reply }; return;
+        case "generate": C.gen = { genId: m.genId, request: m.request, context: m.context, reply }; return;
         case "share": return reply(m.kind === "link"
           ? { link: `https://morse.sh/install#m=${btoa(JSON.stringify({ t: m.mod.title })).slice(0, 48)}…` }
           : { path: `~/Downloads/${m.kind === "json" ? "mod.morse.json" : "mod.user.js"}` });

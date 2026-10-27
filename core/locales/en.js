@@ -365,7 +365,17 @@ export default {
   "cap.captured": "Captured",
   "cap.items": "Captured items",
   "cap.using": "Using",
-  "cap.placeholder": "Describe where and how to use it here…",
+  "cap.placeholder": "Drag it, or say where it goes",
+  "cap.useHere": "Use it here",
+  "cap.useHere.p": "Use this here",
+  "cap.useHere.title": "Use it here (Enter)",
+  "cap.useNamed": "Use {label} here",
+  "cap.hint": "<b>Drag it</b> where it goes, or say where · <kbd>Esc</kbd> to close",
+  "cap.pick": "Use {label}",
+  "cap.selected": "{label} selected",
+  "cap.remove": "Remove {label}",
+  "cap.move": "Move {label}",
+  "cap.drag": "Drag to move it",
 
   // ---- suggestions under the input (58-suggest.js): a label, and what it asks for (.p).
   // "sug.rename.p" ends with its closing quote: the caret goes just inside it.

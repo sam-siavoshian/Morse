@@ -17,6 +17,9 @@ goBtn.before(micBtn);
 const sugEl = tBind(makeEl("div", { className: "sugs", hidden: true }, { role: "toolbar" }), "aria-label", "bar.suggestions");
 const pane = makeEl("div", { className: "pane", hidden: true });
 row.after(sugEl, pane);
+// Captured things sit under the input, above the suggestions, with Use it here beside them (47-capture.js).
+const clipsRow = bar.querySelector(".gm-clips");
+if (clipsRow) sugEl.before(clipsRow);
 const moreBtn = tBind(tBind(makeEl("button", { className: "more ibtn sm", type: "button" }, { "aria-haspopup": "menu", "aria-expanded": "false", "aria-controls": "m-more-menu" }), "title", "bar.more.title"), "aria-label", "bar.more");
 moreBtn.innerHTML = `<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="8" r="1.25"/><circle cx="8" cy="8" r="1.25"/><circle cx="12.5" cy="8" r="1.25"/></svg>`;
 statusRow.append(moreBtn);
@@ -82,7 +85,7 @@ function setTarget(el) {
 chip.querySelector(".x").onclick = () => { setTarget(null); startPicking(); };
 tBind(chip.querySelector(".x"), "aria-label", "bar.repoint");
 tBind(chip.querySelector(".x"), "title", "bar.repoint");
-langSubs.add(() => { if (S.open && S.phase === "idle") setHint(); });
+langSubs.add(() => { if (S.open && S.phase === "idle") { setHint(); syncSendLabel(); } });
 
 // ---- the status line. A note (voice errors, "Stopped") sits on top of the
 // default hint for a few seconds; a sticky hint stays while voice is live.
@@ -96,9 +99,11 @@ function note(html, ms = 6000) {
 function stickyHint(html) { hintSticky = html; setHint(); }
 function setHint() {
   if (S.phase !== "idle") return;
-  hint.innerHTML = hintSticky || hintNote || (S.picking
+  // A picked capture names the next step. Otherwise the bar is still for pointing or the whole page.
+  const pointing = S.picking
     ? `${t("bar.hint.pointing")}<span class="sr"> · ${t("bar.hint.keys", { key: PLATFORM === "mac" ? "Option" : "Alt" })}</span>`
-    : S.target ? t("bar.hint.target") : t("bar.hint.page")); // dogfood: Alt+↑
+    : S.target ? t("bar.hint.target") : t("bar.hint.page"); // dogfood: Alt+↑
+  hint.innerHTML = hintSticky || hintNote || (GodCapture.picked ? t("cap.hint") : pointing);
   ticker.textContent = "";
   actions.innerHTML = `<button data-a="mods">${t("bar.mods")}${S.mods.length ? ` <em>${S.mods.length}</em>` : ""}</button>`;
 }
@@ -527,11 +532,17 @@ input.addEventListener("keydown", e => {
   e.stopPropagation();
   if (e.isComposing || e.keyCode === 229) return;
   const plain = !e.metaKey && !e.ctrlKey && !e.altKey;
+  if (e.key === "Backspace" && plain && !input.value && typeof GodCapture !== "undefined" && GodCapture.picked) {
+    e.preventDefault();
+    GodCapture.clear();
+    return;
+  }
   if (e.key === "Enter" && !e.shiftKey && plain) {
     e.preventDefault();
     const v = input.value.trim();
     if (v) send(v);
     else if (S.phase === "result") keep();
+    else if (S.phase === "idle" && typeof GodCapture !== "undefined" && GodCapture.request?.()) send(GodCapture.request());
     return;
   }
   if (e.key === "?" && plain && !input.value) {
@@ -568,20 +579,25 @@ input.addEventListener("input", () => {
   input.classList.remove("interim");
   warmAsYouType();
   updateChips();
+  syncSendLabel();
 });
 for (const t of ["keyup", "keypress", "input"]) input.addEventListener(t, e => e.stopPropagation());
 goBtn.onclick = () => {
   if (S.phase === "working") return stopGeneration();
-  const v = input.value.trim();
+  const v = input.value.trim() || (S.phase === "idle" && GodCapture.request()) || "";
   if (v) send(v);
 };
-// The run button becomes Stop while the model works; keep focus on it so
-// Enter/Space stop too (the input is disabled meanwhile).
-new MutationObserver(() => {
+// Send becomes "Use it here" when a capture is picked and the line is empty,
+// and Stop while the model works. Keep focus on Stop so Enter/Space stop too.
+function syncSendLabel() {
   const working = bar.classList.contains("working");
-  goBtn.setAttribute("aria-label", working ? t("bar.stop") : t("bar.send"));
-  goBtn.title = working ? t("bar.stop.title", { key: `${primaryMod}.` }) : t("bar.send.title");
-  if (working && (!root.activeElement || root.activeElement === input)) goBtn.focus({ preventScroll: true });
+  const paste = !working && S.phase === "idle" && !input.value.trim() && GodCapture.picked;
+  goBtn.setAttribute("aria-label", working ? t("bar.stop") : (paste ? t("cap.useHere") : t("bar.send")));
+  goBtn.title = working ? t("bar.stop.title", { key: `${primaryMod}.` }) : (paste ? t("cap.useHere.title") : t("bar.send.title"));
+}
+new MutationObserver(() => {
+  syncSendLabel();
+  if (bar.classList.contains("working") && (!root.activeElement || root.activeElement === input)) goBtn.focus({ preventScroll: true });
 }).observe(bar, { attributes: true, attributeFilter: ["class"] });
 
 actions.addEventListener("click", e => {

@@ -823,7 +823,17 @@ export default {
   "cap.captured": "برداشته شد",
   "cap.items": "چیزهای برداشته‌شده",
   "cap.using": "در حال استفاده",
-  "cap.placeholder": "بگویید کجا و چطور اینجا استفاده شود…",
+  "cap.placeholder": "بکشید، یا بگویید کجا قرار بگیرد",
+  "cap.useHere": "اینجا استفاده کنید",
+  "cap.useHere.p": "اینجا استفاده کنید",
+  "cap.useHere.title": "اینجا استفاده کنید (Enter)",
+  "cap.useNamed": "{label} را اینجا استفاده کنید",
+  "cap.hint": "<b>بکشید</b> به جایی که باید برود، یا بگویید کجا · <kbd>Esc</kbd> برای بستن",
+  "cap.pick": "استفاده از {label}",
+  "cap.selected": "{label} انتخاب شد",
+  "cap.remove": "برداشتن {label}",
+  "cap.move": "جابه‌جایی {label}",
+  "cap.drag": "برای جابه‌جایی بکشید",
 
   // ---- پیشنهادها
   "sug.try": "امتحان کنید",
