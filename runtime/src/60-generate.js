@@ -208,7 +208,7 @@ function showResult(d, { note = "", error = "", keepInput = false, saveError = f
   // The follow-up sits on this same row, so the line under the input is about
   // the change that's already showing, not a second request.
   const meta = note || [!d.saved ? t("result.preview") : "", n > 1 ? t("result.version", { n }) : ""].filter(Boolean).join(" · ");
-  hint.title = error || note; // a long note ends in an ellipsis in the bar: the whole sentence is here
+  hint.title = error || note || [d.refined, d.attempts > 1 ? t("result.secondTry") : ""].filter(Boolean).join(" · "); // a long note ends in an ellipsis in the bar: the whole sentence is here
   hint.innerHTML = error
     ? `<b class="ok">${esc(d.title)}</b> <span class="note">${t(saveError ? "result.saveFailed" : "result.failedNote", { detail: esc(error) })}</span>`
     : `<b class="ok">${esc(d.title)}</b> <span class="dim${note ? " said" : ""}">${esc(meta || (d.saved ? t("result.describeChange") : ""))}</span>`;

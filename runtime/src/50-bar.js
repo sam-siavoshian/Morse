@@ -614,4 +614,4 @@ bar.addEventListener("pointermove", event => {
   });
 }, { passive: true });
 bar.addEventListener("pointerleave", clearBarLight);
-barMotion.addEventListener("change", clearBarLight);
+B.on(barMotion, "change", clearBarLight);

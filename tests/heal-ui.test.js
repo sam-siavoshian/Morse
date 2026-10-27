@@ -181,6 +181,8 @@ test("auto-fix (off by default) fixes a gallery mod in the background, with Undo
   await page.keyboard.press(OPEN_KEY);
   await waitFor(s => s.open);
   await page.keyboard.press("Control+Comma");
+  await ui(".sheet [data-act=more]").click();
+  await ui('details:has(input[data-k="autoFix"]) > summary').click();
   const sw = ui('.sheet input[data-k="autoFix"]');
   await sw.waitFor({ state: "attached" });
   assert.equal(await sw.isChecked(), false, "off by default");

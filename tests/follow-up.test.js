@@ -89,7 +89,7 @@ test("a pending result: Send revises it; with nothing pending, Send starts a new
   await page.keyboard.type("make it smaller");
   await sendBtn().click();
   s = await waitFor(s => s.phase === "result" && /version 2/.test(s.hint));
-  assert.match(s.hint, /make it smaller/, "the same row shows the follow-up");
+  assert.match(await page.locator("[data-morse-ui] .hint").getAttribute("title"), /make it smaller/, "the same row shows the follow-up");
   assert.match(s.hint, /Now playing label/, "a one-word tweak keeps the name");
   assert.equal(s.input, "", "the follow-up is taken");
   assert.equal(s.mods, 0, "a follow-up does not save");
@@ -107,7 +107,7 @@ test("a pending result: Send revises it; with nothing pending, Send starts a new
   await page.keyboard.type("It does not work");
   await sendBtn().click();
   s = await waitFor(s => s.phase === "result" && /version 3/.test(s.hint));
-  assert.match(s.hint, /It does not work/);
+  assert.match(await page.locator("[data-morse-ui] .hint").getAttribute("title"), /It does not work/);
   assert.equal(await labels(page).count(), 1);
   g = await gens();
   assert.equal(g.length, 3);
@@ -169,7 +169,7 @@ test("a follow-up with no code keeps the change; a new name updates the same row
   await sendBtn().click();
   s = await waitFor(s => s.phase === "result" && /Compact now playing/.test(s.hint));
   assert.match(s.hint, /version 2/);
-  assert.match(s.hint, /call it compact/);
+  assert.match(await page.locator("[data-morse-ui] .hint").getAttribute("title"), /call it compact/);
   assert.equal((await gens()).at(-1).id, id, "the rename is the same mod");
   assert.equal(await labels(page).count(), 1);
   assert.equal(await fontSize(page), "11px");

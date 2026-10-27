@@ -69,7 +69,7 @@ test("no step bar: the bar opens without one, and the first saved change gets a 
     await page.waitForFunction(ui(".ob-win", "visible"));
     assert.equal(await t.q(".toast", "visible"), false);
     const card = await t.q(".ob-win");
-    assert.match(card, /Your first mod is saved.*“Airier toolbar” comes back every time you open/s);
+    assert.match(card, /Your version is saved.*“Airier toolbar” comes back every time you open/s);
     assert.doesNotMatch(card, /Now in your bar|A mod is a change you saved|for help/, "one line, nothing to read through");
     assert.equal((await t.stored()).tips?.saved, true, "the card shows once");
     await page.keyboard.press("Escape");
@@ -153,7 +153,7 @@ test("empty Mods panel says what to do and its buttons do it", { skip }, async (
   await scenario("?onboarding", { coach: "done" }, async t => {
     await t.page.keyboard.press("Alt+Shift+KeyM");
     await t.page.waitForFunction(ui(".panel .ob-empty", "visible"));
-    assert.match(await t.q(".panel .ob-empty"), /No mods on 127\.0\.0\.1:\d+ yet.*Press.*point at something/s);
+    assert.match(await t.q(".panel .ob-empty"), /No mods on 127\.0\.0\.1:\d+ yet.*Press.*Describe what to rip out or build in/s);
     await t.click(".panel [data-ob=help]");
     await t.waitFor(s => s.open && s.pane === "help");
     assert.equal(await t.q(".panel", "hidden"), true);

@@ -116,7 +116,7 @@ test("a change that matches nothing gets one repair round (effect check through 
   await page.keyboard.press("Enter");
   const s = await status(s => s.phase === "result" || s.phase === "error", "the result");
   assert.equal(s.phase, "result", s.hint);
-  assert.match(s.hint, /second try/, "the effect check sent it back once");
+  assert.match(await page.locator("[data-morse-ui] .hint").getAttribute("title"), /second try/, "the effect check sent it back once");
   assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(255, 215, 0)");
   assert.match(await page.locator("style[data-morse-css]").first().textContent(), /^body \{/, "the repaired CSS replaced the dead one");
 });
