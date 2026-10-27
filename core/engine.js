@@ -179,7 +179,6 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       const res = await exec(draft.js);
       // Not run at all (Chrome's "Allow User Scripts" is off, or the practice
       // page): not the model's mistake. The CSS shows; the JS waits.
-      if (res.waiting) return { ...last, ok: true, waiting: res.waiting, note: res.error };
       if (!res.ok) {
         previous = { raw, error: res.error };
         repairs.push(res.error);

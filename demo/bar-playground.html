@@ -109,8 +109,8 @@
           return;
         }
         // first run and help (runtime/src/59-onboarding.js): ?onboarding is a fresh install,
-        // ?nomodel / ?noscripts report no model / user scripts off, ?fail=<error> fails generation
-        case "onboarding.get": return reply(q.has("onboarding") ? { state: store.get("onboarding", {}), status: { mode: "playground", model: { connected: !q.has("nomodel") }, userScripts: !q.has("noscripts") } } : null);
+        // ?nomodel reports no model; ?fail=<error> fails generation
+        case "onboarding.get": return reply(q.has("onboarding") ? { state: store.get("onboarding", {}), status: { mode: "playground", model: { connected: !q.has("nomodel") } } } : null);
         case "onboarding.set": { const s = merge(store.get("onboarding", {}), m.patch); store.set("onboarding", s); return reply(s); }
         case "onboarding.open": fake.opened = m.what; return reply({ ok: true });
         case "mods.save": {

@@ -185,7 +185,7 @@ async function submit(request, opts = {}) {
   releasePick(); // before the after-shot: capture can scroll, and a scroll must not redraw the box
   S.after = { shot: await capture(), rect: S.target?.isConnected ? R(S.target.getBoundingClientRect()) : null, focus: focus?.isConnected ? R(focus.getBoundingClientRect()) : null };
   if (!prev) call("clip.stop", { modId: id }).then(c => { if (c) S.draft.clip = c; }).catch(() => {});
-  showResult(S.draft, Waiting.note(res, id)); Waiting.offer(res); // waiting hook: code that waits for “Allow User Scripts” (64-waiting.js)
+  showResult(S.draft);
 }
 
 // The result: the title, how it went, and what you can do next. The input

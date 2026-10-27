@@ -95,7 +95,7 @@ function paintSettings() {
         <div class="srow"><div class="lbl"><span>${t("settings.welcome")}</span><small>${t("settings.welcome.help")}</small></div><div class="ctl">${switchHtml("welcome", PREFS.welcome, t("settings.welcome"))}</div></div>
         <div class="srow"><div class="lbl"><span>${t("settings.gallery")}</span><small>${t("settings.gallery.help")}</small></div><div class="ctl">${switchHtml("gallery", PREFS.gallery, t("settings.gallery"))}</div></div><!-- gallery hook: 68-gallery.js -->
       </section>
-      <footer><button type="button" class="tbtn" data-act="reset-all">${t("settings.resetAll")}</button><span class="dim">${esc(S.mode === "extension" ? t("settings.synced") : S.mode === "desktop" ? t("settings.savedHere") : "")}</span></footer>
+      <footer><button type="button" class="tbtn" data-act="reset-all">${t("settings.resetAll")}</button><span class="dim">${esc(S.mode === "desktop" ? t("settings.savedHere") : "")}</span></footer>
       </div>
     </div>`;
 }

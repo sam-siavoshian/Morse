@@ -304,7 +304,6 @@ function controlRows() {
     const tags = meta.querySelector(".tags");
     (tags || meta).insertAdjacentHTML("beforebegin", `<small class="ctl-origin">${esc(modOrigin(m))}</small>`); // Show code is in the row's More (70-panel.js)
     if (m.enabled && modHeld(m)) tags?.insertAdjacentHTML("afterbegin", `<span>${t("ctl.notRunning")}</span>`);
-    else if (m.enabled && Waiting.has(m.id)) tags?.insertAdjacentHTML("afterbegin", `<span class="waiting" title="${esc(t("wait.tagTitle"))}">${t("wait.tag")}</span>`); // waiting hook (64-waiting.js)
   }
 }
 panel.addEventListener("click", e => {

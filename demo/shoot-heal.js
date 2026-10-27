@@ -32,7 +32,7 @@ const MODS = path.join(home, "mods");
 await fs.mkdir(MODS, { recursive: true });
 const settings = s => fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false, gallery: false, ...s }));
 await settings({});
-await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } }));
+await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true } }));
 const writeMod = m => fs.writeFile(path.join(MODS, `${m.id}.json`), JSON.stringify(m, null, 2));
 const readMod = async id => JSON.parse(await fs.readFile(path.join(MODS, `${id}.json`), "utf8"));
 const ago = s => new Date(Date.now() - s * 1000).toISOString();

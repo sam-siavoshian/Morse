@@ -156,8 +156,11 @@ off), the Morse app opens when you log in, in the tray, without the window.
 Morse updates itself. It checks for a newer version when it starts and every
 4 hours, and downloads it in the background. It checks the download against
 the release's list of checksums before it uses it. The new version goes in
-when no app is connected to Morse and you aren't using its window, or when
-you quit Morse. You don't need to download anything again.
+automatically after you finish your change and close the editing bar. Connected
+apps alone do not delay it. Morse saves the verified download across restarts,
+stops its connections cleanly, installs the update and opens again. Your other
+apps stay open; reconnect them to Morse afterward. **Later** postpones installation
+until you quit Morse. You don't need to download anything again.
 
 **Check for updates** in Settings looks now. It says whether you're up to date,
 or that an update is available. When Morse can install it, the update window

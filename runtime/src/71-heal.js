@@ -35,7 +35,6 @@ const Heal = (() => {
   const NOT_OURS = "[data-morse-ui],[data-morse]";
   const TRANSIENT = "dialog,[role=dialog],[role=alertdialog],[aria-modal=true],[popover],[role=menu],[role=listbox],[role=tooltip]";
   const st = new Map(); // id -> { state: "broken", lead, reason, error (lazy), lost, code }
-  let badged = -1;
 
   // ---- counting
   function countOf(sel) {
@@ -178,7 +177,6 @@ const Heal = (() => {
     if (bar.hasAttribute("data-heal") !== n > 0) bar.toggleAttribute("data-heal", n > 0);
     if (panel.hasAttribute("data-heal") !== n > 0) panel.toggleAttribute("data-heal", n > 0);
     logo.title = n ? t("heal.dot", { n }) : "";
-    if (S.mode === "extension" && n !== badged) { badged = n; call("heal.badge", { count: n }).catch(() => {}); } // the toolbar button
   }
   function paint() {
     dot();

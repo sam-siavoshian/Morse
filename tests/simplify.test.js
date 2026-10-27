@@ -9,7 +9,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { serveBar } from "./helpers/demo-server.js";
 import { pressOpen } from "./helpers/keys.js";
-import { noBrowser, noDisplay, launchBrowser, chromium } from "./helpers/browser.js";
+import { noBrowser, launchBrowser } from "./helpers/browser.js";
 import { waitForStatus, waitForReady, TIMEOUT } from "./helpers/wait.js";
 import { home, tempDir } from "./helpers/home.js";
 import { writeFileSync, readdirSync, readFileSync } from "node:fs";
