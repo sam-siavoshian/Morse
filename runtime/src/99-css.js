@@ -370,7 +370,7 @@ function CSS() {
       outline: 2px solid Highlight !important; outline-offset: 2px; }
     :is(.menu, .a11y-group) > button:focus-visible, .list article:focus-visible { outline-offset: -2px; }
     .bar, .panel, .card, .toast, .pop, .gm-tb, .gm-pop, .gm-note, .menu, .chip, .tip, .guide, .ctl-toast, .so-strip, kbd { border: 1px solid CanvasText; }
-    .go, .ibtn, .tbtn, .seg button, .sug, .chip .x, .gm-chip .x, .panel header > button, .card header > button, .gm-chip { border: 1px solid ButtonText !important; }
+    .go, .ibtn, .tbtn, .seg button, .sug, .chip .x, .gm-chip .x, .panel header > button, .card header > button, .gm-chip, .gm-grip, .gm-drag { border: 1px solid ButtonText !important; }
     :is(.seg button, .ibtn, .gm-chip-main, .gm-sw button):is([aria-checked="true"], [aria-pressed="true"]) { outline: 2px solid Highlight; outline-offset: -2px; }
     .sw span { border: 1px solid ButtonText; }
     .sw span::after { background: ButtonText; }

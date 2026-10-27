@@ -61,16 +61,16 @@ test("a capture can be pasted, picked, cleared, and removed", { skip, timeout: T
 
     // Pick, then clear by clicking again. The hint and the field say what to do.
     await chip("c2").locator(".gm-chip-main").click();
-    let s = await waitForStatus(page, s => /Use it here/.test(s.hint), { what: "the hint to name Use it here" });
+    let s = await waitForStatus(page, s => /Drag it/.test(s.hint), { what: "the hint to name the drag" });
     assert.equal(await chip("c2").locator(".gm-chip-main").getAttribute("aria-pressed"), "true");
     assert.equal(await chip("c1").locator(".gm-chip-main").getAttribute("aria-pressed"), "false");
-    assert.equal(await q(page, "textarea.in").getAttribute("placeholder"), "Say where it goes");
+    assert.equal(await q(page, "textarea.in").getAttribute("placeholder"), "Drag it, or say where it goes");
     assert.equal(await q(page, ".sugs").isHidden(), true, "Try steps aside once a capture is picked");
     assert.equal(await q(page, ".go").getAttribute("aria-label"), "Use it here");
-    assert.match(s.hint, /say where it goes/i);
+    assert.match(s.hint, /where it goes/i);
 
     await chip("c2").locator(".gm-chip-main").click();
-    await waitForStatus(page, s => !/Use it here/.test(s.hint), { what: "the pointing hint to come back" });
+    await waitForStatus(page, s => !/Drag it/.test(s.hint), { what: "the pointing hint to come back" });
     assert.equal(await chip("c2").locator(".gm-chip-main").getAttribute("aria-pressed"), "false");
     assert.equal(await q(page, "textarea.in").getAttribute("placeholder"), "What do you want to hack?");
     assert.equal(await q(page, ".sugs").isVisible(), true);
@@ -78,9 +78,9 @@ test("a capture can be pasted, picked, cleared, and removed", { skip, timeout: T
 
     // Backspace clears a pick when the line is empty.
     await chip("c2").locator(".gm-chip-main").click();
-    await waitForStatus(page, s => /Use it here/.test(s.hint), { what: "the capture hint again" });
+    await waitForStatus(page, s => /Drag it/.test(s.hint), { what: "the capture hint again" });
     await page.keyboard.press("Backspace");
-    await waitForStatus(page, s => !/Use it here/.test(s.hint), { what: "Backspace to clear the pick" });
+    await waitForStatus(page, s => !/Drag it/.test(s.hint), { what: "Backspace to clear the pick" });
     assert.equal(await chip("c2").locator(".gm-chip-main").getAttribute("aria-pressed"), "false");
 
     // Remove drops it from the bar and from the saved list.
@@ -113,6 +113,42 @@ test("a capture can be pasted, picked, cleared, and removed", { skip, timeout: T
     await page.waitForFunction(() => globalThis.__cat.gen?.request === "in the header");
     const again = await page.evaluate(() => globalThis.__cat.gen.context.snapshot.label);
     assert.match(again, /Subscribe/);
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
+test("a capture shows a grip and can be dragged onto the page", { skip, timeout: TIMEOUT }, async () => {
+  const { ctx, page, errors } = await open();
+  try {
+    await pressOpen(page);
+    await waitForStatus(page, s => s.open, { what: "the bar to open" });
+    const grip = q(page, `.gm-chip[data-id=c1] .gm-grip`);
+    await grip.waitFor({ state: "visible" });
+    assert.match(await grip.getAttribute("aria-label"), /Daily Byte/);
+    assert.equal(await grip.getAttribute("title"), "Drag to move it");
+    const box = await grip.boundingBox();
+    assert.equal(Math.round(box.width), 20);
+    assert.equal(Math.round(box.height), 20);
+    assert.equal(await grip.evaluate(el => getComputedStyle(el).cursor), "grab");
+
+    const card = await page.locator("#card").boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 36, box.y - 28, { steps: 6 });
+    await q(page, ".gm-drag").waitFor({ state: "visible" });
+    assert.equal(await page.evaluate(() => document.body.style.cursor), "grabbing");
+    await page.mouse.move(card.x + 48, card.y + 48, { steps: 8 });
+    await page.mouse.up();
+
+    await page.waitForFunction(() => globalThis.__cat.gen?.request === "Use this here");
+    const landed = await page.evaluate(() => {
+      const c = globalThis.__cat.gen.context;
+      return { label: c.snapshot.label, where: `${c.target?.selector || ""} ${c.target?.label || ""} ${c.target?.html || ""}` };
+    });
+    assert.match(landed.label, /Daily Byte/);
+    assert.match(landed.where, /card|Release notes/);
+    assert.equal(await q(page, ".gm-drag").count(), 1);
+    assert.equal(await q(page, ".gm-drag").isHidden(), true, "the ghost goes away after the drop");
     assert.deepEqual(errors, []);
   } finally { await ctx.close(); }
 });
