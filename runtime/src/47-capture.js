@@ -323,7 +323,7 @@ const GodCapture = (() => {
   listen("pointerup", onDragEnd, true);
   listen("pointercancel", onDragEnd, true);
   listen("keydown", e => {
-    if (!drag || e.key !== "Escape") return;
+    if (!e.isTrusted || !drag || e.key !== "Escape") return;
     cancelDrag();
     ateDrop = true;
     setTimeout(() => { ateDrop = false; }, 0);
