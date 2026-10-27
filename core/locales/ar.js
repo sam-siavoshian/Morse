@@ -432,7 +432,7 @@ export default {
   "desk.update.downloadingH": "جارٍ تحديث Morse",
   "desk.update.downloading": "جارٍ تنزيل الإصدار الجديد… {percent}٪",
   "desk.update.readyH": "التحديث جاهز",
-  "desk.update.ready": "سيُعاد تشغيل Morse لإكمال التحديث. التطبيقات التي فتحتها مع Morse تبقى مفتوحة؛ افتحها مع Morse مرة أخرى لاستعادة تغييراتك. أو اختر لاحقًا ليُثبَّت عند إغلاق Morse.",
+  "desk.update.ready": "سيُعاد تشغيل Morse تلقائيًا بعد إنهاء التغيير وإغلاق شريط التحرير. تبقى التطبيقات الأخرى مفتوحة؛ أعد توصيلها بعد ذلك. اختيار «لاحقًا» يثبّت التحديث عند الخروج من Morse.",
   "desk.update.installingH": "جارٍ تثبيت التحديث",
   "desk.update.installing": "سيفتح Morse مرة أخرى بعد لحظة.",
   "desk.update.failedH": "لم يُثبَّت التحديث",

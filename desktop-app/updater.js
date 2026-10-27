@@ -18,8 +18,8 @@
 // Gatekeeper asking again. Windows: the installer runs silently (/S) and
 // starts Morse again (--force-run). Linux: the AppImage file is replaced.
 // Only packaged builds update; MORSE_NO_UPDATE=1 turns it off.
-import { createHash } from "node:crypto";
-import { promises as fs, readFileSync, writeFileSync, readdirSync, existsSync, renameSync, rmSync, mkdirSync, accessSync, constants } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
+import { promises as fs, readFileSync, writeFileSync, appendFileSync, readdirSync, existsSync, renameSync, rmSync, mkdirSync, accessSync, constants } from "node:fs";
 import { spawn, execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -76,7 +76,7 @@ export function bundleOf(exe) {
   return i < 0 ? null : exe.slice(0, i + 4);
 }
 
-export function createUpdater({ app, getAppImage = () => "", busy = () => false, log = () => {}, onStatus = () => {}, fetchImpl = globalThis.fetch, env = process.env, here = moduleDir(import.meta.url), beforeInstall = async () => {}, install = installUpdate } = {}) {
+export function createUpdater({ app, getAppImage = () => "", busy = () => false, log = () => {}, onStatus = () => {}, fetchImpl = globalThis.fetch, env = process.env, here = moduleDir(import.meta.url), beforeExit = async () => {}, install = installUpdate } = {}) {
   const asset = assetFor();
   let local = null;
   try { local = JSON.parse(readFileSync(path.join(here, "build-info.json"), "utf8")); } catch {}
@@ -87,6 +87,11 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
   const set = next => { status = next; try { onStatus(status); } catch {} };
   const enabled = () => app.isPackaged && !!asset && env.MORSE_NO_UPDATE !== "1";
   const dir = path.join(app.getPath("userData"), "updates");
+  const report = log;
+  log = message => {
+    try { mkdirSync(dir, { recursive: true }); appendFileSync(path.join(dir, "updater.log"), `${new Date().toISOString()} ${message}\n`); } catch {}
+    try { report(message); } catch {}
+  };
 
   async function get(name, as = "text", progress = null) {
     // Follow redirects here. redirect:"follow" stops at the repo rename on
@@ -132,15 +137,21 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
   // user: Settings asked. Otherwise this is the check at start and every 4 hours.
   async function check(opts = {}) {
     const user = !!opts?.user;
+    if (applying) return "installing";
     if (flight) {
       const result = await flight;
       if (user) reveal(result);
       return result;
     }
     if (!ready && enabled()) await restoreDownload();
+    if (flight) {
+      const result = await flight;
+      if (user) reveal(result);
+      return result;
+    }
     if (ready) {
       if (user) later = false;
-      scheduleInstall();
+      scheduleInstall({ force: user });
       if (user) set({ phase: later ? "later" : "ready", commit: ready.remote.commit, version: versionOf(ready.remote) });
       return "ready";
     }
@@ -216,7 +227,11 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
   async function restoreDownload() {
     try {
       const saved = JSON.parse(await fs.readFile(path.join(dir, "pending.json"), "utf8"));
-      if (!isNewer(saved.remote, local)) return;
+      if (!isNewer(saved.remote, local)) {
+        // The new build is running: remove staged app/archive copies, keeping logs.
+        for (const name of [asset, "new", "pending.json", "attempt.json"]) await fs.rm(path.join(dir, name), { recursive: true, force: true });
+        return;
+      }
       const file = path.join(dir, asset);
       const sum = createHash("sha256").update(await fs.readFile(file)).digest("hex");
       if (sum !== saved.sha256) return;
@@ -253,7 +268,7 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
       // app.exit bypasses Electron's quit events. Run cleanup explicitly first.
       writeFileSync(path.join(dir, "attempt.json"), JSON.stringify({ commit: update.remote.commit, at: Date.now() }));
       await install({ app, file: update.file, dir, getAppImage, relaunch });
-      await beforeInstall();
+      await beforeExit();
       log(`update: installing ${update.remote.commit.slice(0, 7)}`);
       try { app.releaseSingleInstanceLock?.(); } catch {}
       app.exit(0);
@@ -316,6 +331,7 @@ export async function installUpdate({ app, file, dir, getAppImage = () => "", re
     const bundle = bundleOf(executable);
     if (!bundle) throw new Error("not running from an app bundle");
     const unpacked = path.join(dir, "new");
+    rmSync(unpacked, { recursive: true, force: true });
     execFileSync("ditto", ["-x", "-k", file, unpacked]);
     const fresh = readdirApps(unpacked)[0];
     if (!fresh) throw new Error("the update has no app in it");
@@ -342,7 +358,6 @@ export async function installUpdate({ app, file, dir, getAppImage = () => "", re
     if (!target) throw new Error("not running from an AppImage");
     await wake(dir, linuxSwapScript, { MORSE_PID: pid, MORSE_FRESH: file, MORSE_TARGET: target, MORSE_RELAUNCH: relaunch ? "1" : "0" });
   }
-
 }
 
 function readdirApps(dir) {
@@ -367,7 +382,7 @@ export function installDest(bundle, home) {
 // helper reads so a failed try is not opened.
 function placeMac(folder, fresh, dest, cancelName) {
   const next = stageCopy(dest, fresh);
-  const cancel = path.join(folder, cancelName);
+  const cancel = path.join(folder, `${cancelName}-${randomUUID()}`);
   rmSync(cancel, { force: true });
   return { dest, next, old: `${dest}.old`, cancel };
 }
@@ -444,7 +459,12 @@ fi
 [ -z "$MORSE_STARTED" ] || : > "$MORSE_STARTED"
 while kill -0 "$MORSE_PID" 2>/dev/null; do sleep 0.2; done
 sleep 0.5
-mv -f "$MORSE_FRESH" "$MORSE_TARGET" && chmod +x "$MORSE_TARGET" || exit 1
+next="$MORSE_TARGET.next"
+old="$MORSE_TARGET.old"
+cp "$MORSE_FRESH" "$next" && chmod +x "$next" || { rm -f "$next"; exit 1; }
+if [ -e "$MORSE_TARGET" ]; then mv -f "$MORSE_TARGET" "$old" || exit 1; fi
+mv -f "$next" "$MORSE_TARGET" || { [ -e "$MORSE_TARGET" ] || mv -f "$old" "$MORSE_TARGET"; exit 1; }
+rm -f "$old" "$MORSE_FRESH"
 if [ "$MORSE_RELAUNCH" = 1 ]; then
   "$MORSE_TARGET" --updated >/dev/null 2>&1 &
 fi
@@ -460,6 +480,7 @@ async function wake(folder, script, env) {
     detached: true,
     stdio: "ignore",
     env: {
+      ...Object.fromEntries(["DISPLAY", "WAYLAND_DISPLAY", "XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS", "XAUTHORITY", "XDG_SESSION_TYPE", "LANG"].filter(k => process.env[k]).map(k => [k, process.env[k]])),
       PATH: "/usr/bin:/bin:/usr/sbin:/sbin",
       HOME: process.env.HOME || "",
       USER: process.env.USER || "",

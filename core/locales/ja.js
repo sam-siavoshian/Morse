@@ -432,7 +432,7 @@ export default {
   "desk.update.downloadingH": "Morse を更新しています",
   "desk.update.downloading": "新しいバージョンをダウンロード中… {percent}%",
   "desk.update.readyH": "更新の準備ができました",
-  "desk.update.ready": "Morse を再起動して完了します。Morse で開いたアプリはそのまま動きます。もう一度 Morse で開くと変更が戻ります。「あとで」を選ぶと、Morse の終了時にインストールします。",
+  "desk.update.ready": "変更を終えて編集バーを閉じると、Morse は自動的に再起動します。他のアプリは開いたままです。後で再接続してください。「後で」を選ぶと Morse 終了時にインストールします。",
   "desk.update.installingH": "更新をインストールしています",
   "desk.update.installing": "Morse はすぐにまた開きます。",
   "desk.update.failedH": "更新をインストールできませんでした",

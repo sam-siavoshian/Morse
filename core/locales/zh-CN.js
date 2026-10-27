@@ -431,7 +431,7 @@ export default {
   "desk.update.downloadingH": "正在更新 Morse",
   "desk.update.downloading": "正在下载新版本… {percent}%",
   "desk.update.readyH": "更新已准备好",
-  "desk.update.ready": "Morse 需要重启来完成更新。用 Morse 打开的应用会继续运行；再次用 Morse 打开它们即可恢复你的改动。也可以选择“稍后”，在退出 Morse 时安装。",
+  "desk.update.ready": "完成更改并关闭编辑栏后，Morse 会自动重启。其他应用会保持打开，请在之后重新连接。选择“稍后”会在退出 Morse 时安装。",
   "desk.update.installingH": "正在安装更新",
   "desk.update.installing": "Morse 马上会重新打开。",
   "desk.update.failedH": "更新没有安装成功",

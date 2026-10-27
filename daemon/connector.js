@@ -146,6 +146,7 @@ export class Connector {
     this.retry = new Map();   // target id -> { at, n } after a failed attach
     this.recentSaves = new Map();
     this.gens = new Generations();
+    this.activeRequests = 0;
     this.state = "starting";  // starting | attached | waiting | stopped
     // app profiles: built in the background once Morse is in the app's window
     this.profiler = app && AppProfiler.enabled() ? new AppProfiler({ app, port, log: this.log }) : null;

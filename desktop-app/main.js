@@ -305,7 +305,8 @@ async function prepareForUpdate() {
       service?.shutdown(),
       new Promise(resolve => { timeout = setTimeout(resolve, 5000); }),
     ]);
-  } finally { clearTimeout(timeout); }
+  } catch (e) { log("update cleanup", e.message); }
+  finally { clearTimeout(timeout); }
 }
 let shutDown = false;
 app.on("before-quit", e => {
@@ -393,7 +394,7 @@ app.whenReady().then(async () => {
   // Before the daemon. If starting the daemon throws, the window is already
   // up: Check for updates still has an updater to ask, instead of the
   // "couldn't check" sentence from a missing one.
-  updater = createUpdater({ app, log, getAppImage: () => APPIMAGE, busy: () => service?.isUpdateBusy() ?? false, beforeInstall: prepareForUpdate, onStatus: () => { changed(); if (["downloading", "ready"].includes(updater?.status.phase) && win && !win.isVisible()) showWindow(); } });
+  updater = createUpdater({ app, log, getAppImage: () => APPIMAGE, busy: () => service?.isUpdateBusy() ?? false, beforeExit: prepareForUpdate, onStatus: () => { changed(); if (["downloading", "ready"].includes(updater?.status.phase) && win && !win.isVisible()) showWindow(); } });
   updater.start();
   createWindow();
   tray = new Tray(trayIcon());

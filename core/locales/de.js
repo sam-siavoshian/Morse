@@ -431,7 +431,7 @@ export default {
   "desk.update.downloadingH": "Morse wird aktualisiert",
   "desk.update.downloading": "Die neue Version wird geladen… {percent} %",
   "desk.update.readyH": "Das Update ist bereit",
-  "desk.update.ready": "Morse startet neu, um es abzuschließen. Apps, die du mit Morse geöffnet hast, laufen weiter; öffne sie wieder mit Morse, um deine Änderungen zurückzuholen. Oder wähle Später, dann wird es beim Beenden von Morse installiert.",
+  "desk.update.ready": "Morse startet automatisch neu, wenn du deine Änderung beendet und die Bearbeitungsleiste geschlossen hast. Andere Apps bleiben offen; verbinde sie danach erneut. Später installiert beim Beenden von Morse.",
   "desk.update.installingH": "Update wird installiert",
   "desk.update.installing": "Morse öffnet sich gleich wieder.",
   "desk.update.failedH": "Das Update wurde nicht installiert",
