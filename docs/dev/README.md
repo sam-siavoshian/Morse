@@ -68,7 +68,7 @@ docs/        user docs; docs/dev for developers; screenshots, UI catalog, launch
 [`site/`](../../site/) is the public website: static HTML, CSS and ES
 modules, no build step. The Pages workflow
 ([`.github/workflows/pages.yml`](../../.github/workflows/pages.yml))
-publishes the pages at the root (`/`, `/gallery.html`, `/privacy.html`).
+publishes the pages at the root (`/`, `/privacy.html`).
 `/site/` redirects there. The files stay in that folder so the pages' relative
 paths keep working, share links stay at `/share/install.html`, and the gallery
 list stays at `/site/mods/index.json` (the app already requests that address).
@@ -91,8 +91,7 @@ change** (before and after pairs with a slider), **How it works** in three
 steps, privacy, a strip of real apps, a short FAQ, and **Install**.
 
 - **`site/index.html`**: the landing page. It holds the one copy of the nav
-  bar and footer: `npm run pages` copies them into `site/gallery.html`
-  (between its `<!-- chrome:… -->` markers) and `site/privacy.html`.
+  bar and footer: `npm run pages` copies them into `site/privacy.html`.
 - **`site/config.js`**: every link target and every real picture, in one
   place. `LINKS`: where **Download Morse** and the other buttons go, and the
   repository whose stars the nav shows (`npm run pages` writes the count in;
@@ -131,12 +130,6 @@ steps, privacy, a strip of real apps, a short FAQ, and **Install**.
   without the script everything shows at its end.
 - [`tests/site.test.js`](../../tests/site.test.js) checks that every link,
   image, icon, fragment and config target on the pages resolves.
-- **`site/gallery.html`**: example mods from [`site/mods/`](../../site/mods/)
-  (`index.json` lists them; each `*.morse.json` is a normal mod). Search,
-  filter by app, read the code, then **Install in Morse** (a share link built
-  exactly like `encodeShare` in `core/mod.js`), **Download for Tampermonkey**
-  or **Copy link**. The mods were written by hand against each app in October
-  2026, so a selector may need a refresh.
 - **`site/radar.js`**: the radar mark (OpenCode's 4×4 pixel spinner) as a
   tiny module.
 - **`share/install.html`** follows the reader's light or dark setting, in

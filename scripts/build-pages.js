@@ -1,10 +1,8 @@
 // Assembles the public site in dist/pages. The site is https://getmorse.vercel.app/
 //
 //   /                              landing page
-//   /gallery.html                  gallery
 //   /privacy.html                  privacy policy
 //   /site/, /site/index.html       redirect to /
-//   /site/gallery.html             redirects to /gallery.html
 //   /site/privacy.html             redirects to /privacy.html
 //   /site/mods/index.json          the gallery list (core/gallery.js GALLERY_INDEX_URL)
 //   /share/install.html            share links (core/mod.js SHARE_BASE)
@@ -14,7 +12,7 @@
 // The pages' own files stay under site/. A <base href="site/"> on the root
 // copies makes their relative paths (shots/, sky/, ../core/) resolve
 // there, on this host and on a GitHub project site. Links to other pages step
-// back out (../gallery.html). /site/mods/ stays put: installed copies of Morse
+// back out (../privacy.html). /site/mods/ stays put: installed copies of Morse
 // already request that address.
 //
 // Every published page gets its canonical address, link previews (Open Graph
@@ -26,7 +24,7 @@
 // with no network the capsule says Star).
 //
 // It also writes site/privacy.html from docs/privacy.md, copies the nav bar and
-// footer of site/index.html into site/privacy.html and site/gallery.html (all
+// footer of site/index.html into site/privacy.html (all
 // committed, so the pages work from a checkout too), and fails if any page
 // links to a file that isn't published.
 //
@@ -57,7 +55,6 @@ const REPO_URL = pkg.repository.url.replace(/^git\+/, "").replace(/\.git$/, "");
 // but stays out of search: what it shows depends on the link.
 export const SEO_PAGES = [
   { file: "index.html", url: "", index: true, ld: ["site", "app", "faq"] },
-  { file: "gallery.html", url: "gallery.html", index: true, crumbs: "Gallery" },
   { file: "privacy.html", url: "privacy.html", index: true, crumbs: "Privacy policy" },
   { file: "share/install.html", url: "share/install.html", index: false },
 ];
@@ -246,9 +243,9 @@ export function mdToHtml(md) {
 
 // ---- the nav bar and footer, shared by every page
 //
-// site/index.html holds the one copy. The gallery and the privacy policy take
-// theirs from it, with the landing page's own links (#how) pointed back at it
-// (./#how). The privacy policy is written whole; site/gallery.html keeps its
+// site/index.html holds the one copy. The privacy policy takes
+// its nav and footer from it, with the landing page's own links (#how) pointed back at it
+// (./#how). The privacy policy is written whole; it keeps its
 // copy between <!-- chrome:NAME --> and <!-- /chrome:NAME --> markers, and
 // npm run pages refreshes it (--check fails when it is out of date).
 
@@ -282,9 +279,6 @@ export function withChrome(html, chrome) {
 
 const readSite = f => fs.readFile(path.join(root, "site", f), "utf8");
 
-export async function galleryHtml() {
-  return withChrome(await readSite("gallery.html"), siteChrome(await readSite("index.html"), "gallery.html"));
-}
 
 // The page's own head holds the <h1>, so the policy's "# " title is left out
 // (one <h1> per page).
@@ -361,13 +355,12 @@ async function walk(dir) {
 
 // A root page keeps the files under site/. <base href="site/"> resolves
 // favicon.png, shots/ and ../docs/ to that folder. Links to the other pages
-// step back out, so they land on / and /gallery.html rather than /site/.
+// step back out, so they land on / and /privacy.html rather than /site/.
 export function publishAtRoot(html) {
   if (!html.includes("<head>")) throw new Error("page has no <head>");
   return html.replace("<head>", "<head>\n<base href=\"site/\">").replace(/\shref="([^"]*)"/g, (full, href) => {
     if (/^([a-z][a-z0-9+.-]*:|\/\/)/i.test(href) || href === "site/") return full;
     if (href === "./" || href === "index.html" || href === "./index.html") return ' href="../"';
-    if (href === "gallery.html" || href === "./gallery.html") return ' href="../gallery.html"';
     if (href === "privacy.html" || href === "./privacy.html") return ' href="../privacy.html"';
     if (href.startsWith("#")) return ` href="../${href}"`;
     if (href.startsWith("./#")) return ` href="..${href.slice(1)}"`;
@@ -427,14 +420,13 @@ export async function brokenLinks(dir) {
   return broken;
 }
 
-// refresh: false leaves site/privacy.html and site/gallery.html as they are
+// refresh: false leaves site/privacy.html as they are
 // (tests build into a folder of their own while other tests read those).
 // stars: the count to write into the nav (fetchStars); left out, the
 // published pages carry none and the browser asks GitHub.
 export async function buildPages({ out = OUT, refresh = true, stars = null } = {}) {
   if (refresh) {
     await fs.writeFile(path.join(root, "site", "privacy.html"), await privacyHtml());
-    await fs.writeFile(path.join(root, "site", "gallery.html"), await galleryHtml());
   }
   await fs.rm(out, { recursive: true, force: true });
   for (const p of PUBLISH) {
@@ -455,7 +447,6 @@ export async function buildPages({ out = OUT, refresh = true, stars = null } = {
   // GitHub Pages, which has no redirects file. Relative targets work both at
   // the domain root and under a project path.
   await fs.writeFile(path.join(out, "site", "index.html"), redirectHtml("../", "Morse", SITE_URL));
-  await fs.writeFile(path.join(out, "site", "gallery.html"), redirectHtml("../gallery.html", "Morse gallery", `${SITE_URL}gallery.html`));
   await fs.writeFile(path.join(out, "site", "privacy.html"), redirectHtml("../privacy.html", "Morse privacy policy", `${SITE_URL}privacy.html`));
   await fs.writeFile(path.join(out, "sitemap.xml"), sitemapXml());
   await fs.writeFile(path.join(out, "robots.txt"), robotsTxt());
@@ -475,8 +466,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(im
     if (process.argv.includes("--check")) {
       const now = await fs.readFile(path.join(root, "site", "privacy.html"), "utf8").catch(() => "");
       if (now !== await privacyHtml()) throw new Error("site/privacy.html is out of date with docs/privacy.md or site/index.html. Run npm run pages.");
-      if (await readSite("gallery.html") !== await galleryHtml()) throw new Error("site/gallery.html's nav or footer is out of date with site/index.html. Run npm run pages.");
-      console.log("site/privacy.html and site/gallery.html are current.");
+      console.log("site/privacy.html is current.");
     } else {
       const r = await buildPages({ stars: await fetchStars() });
       console.log(`Built ${path.relative(root, r.out)}: ${r.files} files.`);

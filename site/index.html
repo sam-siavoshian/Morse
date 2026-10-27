@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Morse: take what they won’t ship</title>
-<meta name="description" content="Bring a feature over from another app. Delete a paywall. Add the AI they refused. Fix a bug without waiting months for their team.">
+<title>Morse: change any app</title>
+<meta name="description" content="Change any app. Add anything. Delete anything. Closed source doesn’t stop you anymore.">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="color-scheme" content="dark">
 <meta name="application-name" content="Morse">
@@ -21,11 +21,11 @@
 <link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/inter-medium.woff2" crossorigin>
-<link rel="modulepreload" href="common.js">
-<link rel="modulepreload" href="config.js">
+<link rel="modulepreload" href="common.js?v=20261026-trimmed">
+<link rel="modulepreload" href="config.js?v=20261026-trimmed">
 <link rel="modulepreload" href="motion.js">
 <link rel="modulepreload" href="radar.js">
-<link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="site.css?v=20261026-trimmed">
 <script>document.documentElement.setAttribute("data-js", "");</script>
 </head>
 <body>
@@ -42,10 +42,10 @@
             <button type="button" class="nav-trigger" aria-expanded="false" aria-controls="nav-panel-product">Product<span class="nav-chevron" aria-hidden="true"></span></button>
             <div class="nav-panel" id="nav-panel-product" hidden>
               <ul class="nav-panel-grid">
-                <li><a class="nav-card" href="#takes"><span class="nav-card-icon" aria-hidden="true">⌥</span><span class="nav-card-text"><strong>What it does</strong><span>Take what they won’t ship, in the apps you use.</span></span></a></li>
-                <li><a class="nav-card" href="#change"><span class="nav-card-icon" aria-hidden="true">⟷</span><span class="nav-card-text"><strong>Examples</strong><span>Before and after, in real apps.</span></span></a></li>
-                <li><a class="nav-card" href="#how"><span class="nav-card-icon" aria-hidden="true">↵</span><span class="nav-card-text"><strong>How it works</strong><span>Point at it, say it, save it.</span></span></a></li>
-                <li><a class="nav-card" href="#privacy"><span class="nav-card-icon" aria-hidden="true">0</span><span class="nav-card-text"><strong>Private by design</strong><span>No account, no server of ours.</span></span></a></li>
+                <li><a class="nav-card" href="#takes"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/tools.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span><span class="nav-card-text"><strong>What it does</strong><span>Add anything. Delete anything.</span></span></a></li>
+                <li><a class="nav-card" href="#takes"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/diff.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span><span class="nav-card-text"><strong>Examples</strong><span>Delete the feed. Add your own controls.</span></span></a></li>
+                <li><a class="nav-card" href="#how"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/workflow.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span><span class="nav-card-text"><strong>How it works</strong><span>Describe the hack. Keep the change.</span></span></a></li>
+                <li><a class="nav-card" href="#privacy"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/shield-lock.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span><span class="nav-card-text"><strong>Private by design</strong><span>No account, no server of ours.</span></span></a></li>
               </ul>
             </div>
           </li>
@@ -53,18 +53,17 @@
             <button type="button" class="nav-trigger" aria-expanded="false" aria-controls="nav-panel-resources">Resources<span class="nav-chevron" aria-hidden="true"></span></button>
             <div class="nav-panel" id="nav-panel-resources" hidden>
               <ul class="nav-panel-grid">
-                <li><a class="nav-card" href="#apps"><span class="nav-card-icon" aria-hidden="true">◫</span><span class="nav-card-text"><strong>Apps that work</strong><span>What was tested, and where.</span></span></a></li>
-                <li><a class="nav-card" href="#faq"><span class="nav-card-icon" aria-hidden="true">?</span><span class="nav-card-text"><strong>FAQ</strong><span>Paywalls, bugs, cost and safety.</span></span></a></li>
-                <li><a class="nav-card" href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs"><span class="nav-card-icon" aria-hidden="true">§</span><span class="nav-card-text"><strong>Guides</strong><span>Setup, models and fixes.</span></span></a></li>
-                <li><a class="nav-card" href="privacy.html"><span class="nav-card-icon" aria-hidden="true">✓</span><span class="nav-card-text"><strong>Privacy policy</strong><span>What leaves your computer, and when.</span></span></a></li>
+                <li><a class="nav-card" href="#apps"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/apps.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span><span class="nav-card-text"><strong>Apps that work</strong><span>What was tested, and where.</span></span></a></li>
+                <li><a class="nav-card" href="#faq"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/question.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span><span class="nav-card-text"><strong>FAQ</strong><span>Paywalls, bugs, cost and safety.</span></span></a></li>
+                <li><a class="nav-card" href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/book.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span><span class="nav-card-text"><strong>Guides</strong><span>Setup, models and fixes.</span></span></a></li>
+                <li><a class="nav-card" href="privacy.html"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/shield-check.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span><span class="nav-card-text"><strong>Privacy policy</strong><span>What leaves your computer, and when.</span></span></a></li>
               </ul>
             </div>
           </li>
-          <li class="nav-item"><a class="nav-link" href="gallery.html">Gallery</a></li>
         </ul>
       </nav>
       <div class="nav-end">
-        <a class="nav-stars" href="https://github.com/sam-siavoshian/RRAA" data-link="github" aria-label="Star Morse on GitHub"><span class="nav-stars-star" aria-hidden="true">☆</span><span class="nav-stars-label">Star</span><span class="nav-stars-count" data-stars></span></a>
+        <a class="nav-stars" href="https://github.com/sam-siavoshian/RRAA" data-link="github" aria-label="Star Morse on GitHub"><span class="nav-stars-star" aria-hidden="true"></span><span class="nav-stars-label">Star</span><span class="nav-stars-count" data-stars></span></a>
         <a class="btn btn-primary btn-sm btn-pill" href="./#desktop-steps" data-link="desktop">Download</a>
         <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Open menu"><span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span></span></button>
       </div>
@@ -74,20 +73,19 @@
         <section class="nav-sheet-group">
           <p class="nav-sheet-title">Product</p>
           <ul>
-            <li><a href="#takes"><span class="nav-card-icon" aria-hidden="true">⌥</span>What it does</a></li>
-            <li><a href="#change"><span class="nav-card-icon" aria-hidden="true">⟷</span>Examples</a></li>
-            <li><a href="#how"><span class="nav-card-icon" aria-hidden="true">↵</span>How it works</a></li>
-            <li><a href="#privacy"><span class="nav-card-icon" aria-hidden="true">0</span>Private by design</a></li>
+            <li><a href="#takes"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/tools.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span>What it does</a></li>
+            <li><a href="#takes"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/diff.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span>Examples</a></li>
+            <li><a href="#how"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/workflow.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span>How it works</a></li>
+            <li><a href="#privacy"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/shield-lock.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span>Private by design</a></li>
           </ul>
         </section>
         <section class="nav-sheet-group">
           <p class="nav-sheet-title">Resources</p>
           <ul>
-            <li><a href="gallery.html"><span class="nav-card-icon" aria-hidden="true">▦</span>Gallery</a></li>
-            <li><a href="#apps"><span class="nav-card-icon" aria-hidden="true">◫</span>Apps that work</a></li>
-            <li><a href="#faq"><span class="nav-card-icon" aria-hidden="true">?</span>FAQ</a></li>
-            <li><a href="privacy.html"><span class="nav-card-icon" aria-hidden="true">✓</span>Privacy policy</a></li>
-            <li><a href="https://github.com/sam-siavoshian/RRAA" data-link="github"><span class="nav-card-icon" aria-hidden="true">☆</span>Star on GitHub<span class="nav-stars-count" data-stars></span></a></li>
+            <li><a href="#apps"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/apps.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span>Apps that work</a></li>
+            <li><a href="#faq"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/question.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span>FAQ</a></li>
+            <li><a href="privacy.html"><span class="nav-card-icon" aria-hidden="true"><img src="mark/nav/shield-check.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span>Privacy policy</a></li>
+            <li><a href="https://github.com/sam-siavoshian/RRAA" data-link="github"><span class="nav-card-icon" aria-hidden="true"><img src="mark/github-logo-white.png" width="20" height="20" loading="lazy" alt="" aria-hidden="true"></span>Star on GitHub<span class="nav-stars-count" data-stars></span></a></li>
           </ul>
         </section>
         <div class="nav-sheet-get">
@@ -106,12 +104,11 @@
       <canvas class="dither" data-dither="down"></canvas>
     </div>
     <div class="wrap hero-grid">
-      <a class="hero-chip" href="#install"><span class="chip-dot" aria-hidden="true"></span>Free for Mac, Windows and Linux<span class="icon" aria-hidden="true">→</span></a>
-      <h1 class="hero-title" id="hero-title"><span class="word" style="--i:0">Take </span><span class="word" style="--i:1">what </span><br class="hero-break"><span class="word" data-line="2" style="--i:2">they </span><span class="word" data-line="2" style="--i:3">won’t </span><span class="word" data-line="2" style="--i:4">ship.</span></h1>
-      <p class="hero-sub">Change any app in one sentence. Free and open source.</p>
+      <h1 class="hero-title" id="hero-title"><span class="word" style="--i:0">Change </span><span class="word" style="--i:1">any </span><span class="word" style="--i:2">app.</span><br class="hero-break"><span class="word" data-line="2" style="--i:3">Add </span><span class="word" data-line="2" style="--i:4">anything. </span><br class="hero-split"><span class="word" data-line="2" style="--i:5">Delete </span><span class="word" data-line="2" style="--i:6">anything.</span></h1>
+      <p class="hero-sub">Closed source doesn’t stop you anymore.</p>
       <div class="get-row">
         <a class="btn btn-primary btn-lg btn-pill" href="./#desktop-steps" data-link="desktop">Download Morse</a>
-        <a class="btn btn-glass btn-lg btn-pill" href="https://github.com/sam-siavoshian/RRAA" data-link="github">Star on GitHub</a>
+        <a class="btn btn-glass btn-lg btn-pill" href="https://github.com/sam-siavoshian/RRAA" data-link="github"><img class="btn-logo" loading="lazy" src="mark/github-logo-white.png" width="20" height="20" alt="" aria-hidden="true">Star on GitHub</a>
       </div>
     </div>
 
@@ -126,65 +123,31 @@
       </figure>
     </div>
 
-    <!-- The Morse bar as it looked in a real run (docs/showcase: vscode-windows-95).
-         Without motion it rests at the end: the change made, Save and Undo
-         offered. motion.js mountDemo plays the run from the shortcut. -->
-    <div class="wrap">
-      <figure class="demo" id="demo" data-demo>
-        <p class="demo-keys"><span class="demo-caps" data-keys><kbd>⌥</kbd><kbd>Space</kbd></span><span>opens Morse in any app</span></p>
-        <div class="demo-window">
-          <img class="demo-before" src="shots/210-vscode-windows-95-before.webp" width="1200" height="750" loading="lazy" decoding="async" alt="Visual Studio Code with its usual dark theme, server.js open beside the file list.">
-          <img class="demo-after" src="shots/211-vscode-windows-95-after.webp" width="1200" height="750" loading="lazy" decoding="async" alt="The same Visual Studio Code window as a Windows 95 app: navy title bar, silver gray bevelled panels and a white editor.">
-          <div class="mbar" aria-hidden="true">
-            <div class="mbar-tips">
-              <ol class="mbar-steps"><li class="is-done" data-n="1">Point</li><li class="is-done" data-n="2">Describe</li><li class="is-now" data-n="3">Save</li></ol>
-              <span class="mbar-quiet">Hide tips</span>
-              <p class="mbar-tip" data-for="ask">Say what you want, like “make this bigger”, then press <kbd>Enter</kbd>.</p>
-              <p class="mbar-tip" data-for="work">Morse is making the change. You’ll see it as it happens. <kbd>Esc</kbd> stops it.</p>
-              <p class="mbar-tip" data-for="done"><b>Save</b> keeps it for next time. <b>Undo</b> puts the page back.</p>
-            </div>
-            <div class="mbar-input">
-              <span class="mbar-mark" data-radar="16" data-still></span>
-              <p class="mbar-field"><span class="mbar-placeholder">Describe what to change…</span><span class="mbar-typed" data-typed>make VS Code look like a classic Windows 95 app: silver gray 3D bevelled panels, tabs and buttons, a navy blue title bar with white bold text…</span><span class="mbar-caret"></span></p>
-              <span class="mbar-send"><span class="mbar-go">→</span><span class="mbar-stop"></span></span>
-            </div>
-            <div class="mbar-foot">
-              <p class="mbar-row" data-for="ask"><span><b>Point</b> at something, or describe a change · <kbd>Esc</kbd> to close</span><span class="mbar-btn">Mods</span><span class="mbar-model">Claude Code · opus</span><span class="mbar-more">⋯</span></p>
-              <p class="mbar-row" data-for="work"><span class="mbar-mark" data-radar="12"></span><span>Writing the change · you can see it now</span><span class="mbar-time" data-clock>31.4s</span><span class="mbar-more">⋯</span></p>
-              <p class="mbar-row" data-for="done"><span><b>Classic Windows 95 Look</b><span class="mbar-time">31.4s</span></span><span class="mbar-btn mbar-save" data-save>Save <kbd>↵</kbd></span><span class="mbar-btn">Undo</span><span class="mbar-btn mbar-wide">Edit code</span><span class="mbar-btn mbar-wide">Share</span><span class="mbar-more">⋯</span></p>
-            </div>
-          </div>
-        </div>
-        <figcaption>Visual Studio Code on Linux, a real run. Claude Code (opus) made it in 31.4 seconds.</figcaption>
-      </figure>
-    </div>
+
   </section>
 
   <!-- ======================================================= what it does -->
-  <!-- Every pane shows a real run: docs/showcase, the gallery's checked mods
-       (site/mods/VERIFIED.md) and the screenshots in docs/screenshots. -->
+  <!-- These prompts illustrate ideas to try. Recorded runs appear below. -->
   <section id="takes" class="section" aria-labelledby="takes-title">
     <div class="wrap">
       <header class="head">
-        <h2 id="takes-title" data-reveal>What they won’t ship.</h2>
-        <p data-reveal style="--delay:0.08s">Three things you can stop asking for.</p>
+        <h2 id="takes-title" data-reveal>Your apps have cheat codes now.</h2>
+        <p data-reveal style="--delay:0.08s">Reverse engineer the app. Rewrite the parts you hate. Add the parts they never built.</p>
       </header>
 
       <div class="features">
         <article class="feature feature-wide" data-reveal="fade">
           <div class="feature-copy">
-            <h3>Any app, one shortcut away.</h3>
-            <p>Point at the part and say what you want. Morse changes it while you watch.</p>
-            <p class="keys"><kbd>⌥</kbd><kbd>Space</kbd><span>or</span><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd></p>
+            <h3>Stop asking for features. Start adding them.</h3>
+            <p>Closed source means the company keeps the code. Morse inspects the running app and writes your changes anyway. Delete the feed. Add the missing export. Take a feature from another app. Tell it what to hack:</p>
+            <a class="keys keys-open" href="morse://open" aria-label="Open the Morse app"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>Space</kbd><span>or</span><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>Space</kbd><span class="keys-action">Open Morse</span></a>
           </div>
           <div class="scene" style="--pos: 78% 30%">
-            <div class="glass asker" role="img" aria-label="The Morse bar with four real requests: make VS Code look like a classic Windows 95 app, make Obsidian look like an old typewriter, make the Logseq journal look like a lined paper notebook, and add a copy button to every code example on PyPI." data-asker>
-              <div class="ask-bar"><span class="ask-mark" data-radar="16" data-still></span><span class="ask-text" data-typed>make VS Code look like a classic Windows 95 app</span><span class="ask-caret"></span></div>
+            <div class="glass asker" role="img" aria-label="Ideas to try: remove YouTube Shorts and recommendations, and link promises to the original emails in Gmail." data-asker>
+              <div class="ask-bar"><span class="ask-mark" data-radar="16" data-still></span><span class="ask-text" data-typed>delete Shorts and recommendations. leave only my subscriptions.</span><span class="ask-caret"></span></div>
               <ul class="ask-list">
-                <li class="is-on"><i class="gi gi-vscode"></i><span>make VS Code look like a classic Windows 95 app</span><em>VS Code</em><kbd>↵</kbd></li>
-                <li><i class="gi gi-obsidian"></i><span>make Obsidian look like an old typewriter</span><em>Obsidian</em><kbd>↵</kbd></li>
-                <li><i class="gi gi-logseq"></i><span>make the journal look like a lined paper notebook</span><em>Logseq</em><kbd>↵</kbd></li>
-                <li><i class="gi gi-pypi"></i><span>add a copy button to every code example</span><em>PyPI</em><kbd>↵</kbd></li>
+                <li class="is-on"><i class="gi gi-youtube"></i><span>delete Shorts and recommendations. leave only my subscriptions.</span><em>YouTube</em><kbd>↵</kbd></li>
+                <li><i class="gi gi-gmail"></i><span>add a receipts button. link every promise to the original email.</span><em>Gmail</em><kbd>↵</kbd></li>
               </ul>
             </div>
           </div>
@@ -192,63 +155,35 @@
 
         <article class="feature" data-reveal="fade">
           <div class="scene" style="--pos: 12% 40%">
-            <div class="glass wall" role="img" aria-label="pkg.go.dev after Morse: the cookie notice and the Go survey banner are gone, and the documentation still shows. Checked on the live site." data-wall>
-              <div class="glass-head"><i class="gi gi-go"></i><span><b>pkg.go.dev/net/http</b><small>Checked on the live site</small></span><span class="switch is-on"></span></div>
-              <p class="big"><span data-count="2">2</span>boxes gone on this page</p>
+            <div class="glass wall" role="img" aria-label="An illustrative request to remove a paywall overlay from an article already loaded in the browser." data-wall>
+              <div class="glass-head"><span><b>Delete the box. Read the article.</b><small>For articles already loaded behind an overlay</small></span><span class="switch is-on"></span></div>
+              <p class="big"><span data-count="2">2</span>popups removed</p>
               <ul class="struck">
-                <li style="--i:0">The cookie notice at the bottom</li>
-                <li style="--i:1">The Go survey banner</li>
-                <li class="kept" style="--i:2">The documentation still shows</li>
+                <li style="--i:0">The paywall overlay</li>
+                <li style="--i:1">The “create an account” popup</li>
+                <li class="kept" style="--i:2">The article stays visible</li>
               </ul>
             </div>
           </div>
-          <p class="feature-line"><b>Delete the paywall.</b> When it is a box on a page that already loaded, point at it. It goes.</p>
+          <p class="feature-line"><b>The article loaded. Delete what’s covering it.</b> “Remove the paywall overlay. Remove the signup popup. Let me scroll.” Morse can strip away those blocks when the article is already in your browser.</p>
         </article>
 
-        <article class="feature" data-reveal="fade">
-          <div class="scene" style="--pos: 50% 85%">
-            <div class="glass ai" role="img" aria-label="Morse asked to explain the nginx page on Docker Hub: what the Overview tab, the Tags tab and the tag summary are for. Claude Code (sonnet), 6.4 seconds." data-ai>
-              <p class="ai-ask"><i class="gi gi-docker"></i>Explain this page</p>
-              <p class="ai-lead">This is the Docker Hub page for the official nginx image, a popular web server packaged as a container.</p>
-              <ol class="ai-answer">
-                <li style="--i:0"><span>1</span>The Overview tab explains the image and how to use it.</li>
-                <li style="--i:1"><span>2</span>The Tags tab lists every version to pull.</li>
-                <li style="--i:2"><span>3</span>The tag summary lets you pick a tag and copy the pull command.</li>
-              </ol>
-              <p class="ai-foot"><b>Answered</b> · Claude Code · sonnet · 6.4s</p>
-            </div>
-          </div>
-          <p class="feature-line"><b>Add the AI they refused.</b> Explain, summarize or rewrite, in any app, with the model you chose.</p>
-        </article>
+
 
         <article class="feature" data-reveal="fade" style="--delay:0.08s">
           <div class="scene scene-night" style="--pos: 20% 35%">
             <div class="glass fixes">
-              <p class="glass-title">Mods, each checked on the live site</p>
+              <p class="glass-title">Your own controls. Inside their apps.</p>
               <ul>
-                <li><i class="gi gi-pypi"></i><span>Hide pre-releases and yanked versions<small>PyPI</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Hide pre-releases and yanked versions, PyPI"></button></li>
-                <li><i class="gi gi-nodejs"></i><span>J and K to jump between sections<small>Node.js docs</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="J and K to jump between sections, Node.js docs"></button></li>
-                <li><i class="gi gi-packagist"></i><span>Copy the install command<small>Packagist</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Copy the install command, Packagist"></button></li>
-                <li><i class="gi gi-gitlab"></i><span>Hide the left sidebar<small>GitLab</small></span><button type="button" class="switch" role="switch" aria-checked="false" aria-label="Hide the left sidebar, GitLab"></button></li>
-                <li><i class="gi gi-metacpan"></i><span>Contents always in view<small>MetaCPAN</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Contents always in view, MetaCPAN"></button></li>
+                <li><i class="gi gi-youtube"></i><span>Delete Shorts and recommendations.<small>Keep the subscriptions. Lose the feed.</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Delete Shorts and recommendations, YouTube"></button></li>
+                <li><i class="gi gi-gmail"></i><span>Make “as discussed” prove it.<small>Link promises to the original emails</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Track promises and linked receipts, Gmail"></button></li>
+                <li><i class="gi gi-gitlab"></i><span>Show what changed after approval.<small>Add a review timeline to the merge request</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Add a merge request review timeline, GitLab"></button></li>
               </ul>
             </div>
           </div>
-          <p class="feature-line"><b>Fix the bug tonight.</b> Their team can take months. Each fix you keep gets its own switch.</p>
+          <p class="feature-line"><b>Their roadmap doesn’t decide your version.</b> Remove what gets in your way. Build what they won’t. Save your mods and turn each one on or off.</p>
         </article>
       </div>
-    </div>
-  </section>
-
-  <!-- ========================================================= examples -->
-  <!-- The pairs come from config.js (SHOWCASE); index.js puts them here. -->
-  <section id="change" class="section section-later" aria-labelledby="change-title">
-    <div class="wrap">
-      <header class="head">
-        <h2 id="change-title" data-reveal>One sentence. No ticket.</h2>
-        <p data-reveal style="--delay:0.08s">Real apps. Drag across a picture.</p>
-      </header>
-      <div class="pairs" id="pairs"></div>
     </div>
   </section>
 
@@ -256,21 +191,21 @@
   <section id="how" class="section section-later" aria-labelledby="how-title">
     <div class="wrap">
       <header class="head">
-        <h2 id="how-title" data-reveal>Three steps. Their files never change.</h2>
-        <p data-reveal style="--delay:0.08s">Point at it, say what you want, save it.</p>
+        <h2 id="how-title" data-reveal>Describe the hack. Watch the app change.</h2>
+        <p data-reveal style="--delay:0.08s">No waiting for a feature request. Open the app and tell Morse what to add or remove.</p>
       </header>
       <ol class="points" data-reveal="fade">
         <li>
-          <b>Point at it.</b>
-          <p>Press <kbd>⌥</kbd><kbd>Space</kbd>, or <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd>.</p>
+          <b>Open Morse.</b>
+          <p>Press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>Space</kbd> on Mac, or <kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>Space</kbd> on Windows and Linux.</p>
         </li>
         <li>
-          <b>Say what you want.</b>
-          <p>Type it, or hold the shortcut and talk. You see the change while your model writes it.</p>
+          <b>Tell it what to hack.</b>
+          <p>“Delete YouTube Shorts.” “Add an export button.” “Build Gmail’s snooze here.” Type it or say it. Morse inspects the app, writes a mod and applies it while you watch.</p>
         </li>
         <li>
-          <b>Save it.</b>
-          <p>It comes back next time. Undo puts the app back.</p>
+          <b>Keep your version.</b>
+          <p>Hit Save to keep the mod. Keep hacking from there. Hit Undo whenever you want the original back.</p>
         </li>
       </ol>
     </div>
@@ -285,17 +220,17 @@
     </div>
     <div class="wrap">
       <header class="head head-center">
-        <h2 id="privacy-title" data-reveal>Private by design.</h2>
-        <p data-reveal style="--delay:0.08s">Your apps, your model, your computer.</p>
+        <h2 id="privacy-title" data-reveal>Your hacks stay on your machine.</h2>
+        <p data-reveal style="--delay:0.08s">No Morse account. No Morse server collecting your apps or your changes.</p>
       </header>
       <figure class="zero-figure">
         <span class="zero" data-reveal="fade" role="img" aria-label="0"><span class="reel" aria-hidden="true"><span>7</span><span>3</span><span>9</span><span>1</span><span>6</span><span>4</span><span>8</span><span>2</span><span>5</span><span>0</span></span></span>
         <figcaption data-reveal style="--delay:0.12s"><b>Zero servers.</b><span>Morse has no account and no server. Nothing goes to the people who make it.</span></figcaption>
       </figure>
       <ul class="points">
-        <li data-reveal><b>Kept on your computer.</b><p>Your changes live on your machine, beside the app.</p></li>
+        <li data-reveal><b>Your mods. Your files.</b><p>The changes live on your computer. Save them, edit them and keep building on them.</p></li>
         <li data-reveal style="--delay:0.08s"><b>Your model, your call.</b><p>What you point at goes to the model you chose, and only when you ask.</p></li>
-        <li data-reveal style="--delay:0.16s"><b>Their files stay theirs.</b><p>Morse never edits the app. Updates install as usual.</p></li>
+        <li data-reveal style="--delay:0.16s"><b>Patch the running app.</b><p>Morse changes the app while it runs. Your mods stay separate from its original files, so updates install as usual.</p></li>
       </ul>
       <p class="source" data-reveal>Open source under the MIT license. <a href="https://github.com/sam-siavoshian/RRAA" data-link="github">Read the source <span aria-hidden="true">→</span></a> <a href="privacy.html">Privacy policy <span aria-hidden="true">→</span></a></p>
     </div>
@@ -306,34 +241,34 @@
   <section id="apps" class="section section-later" aria-labelledby="apps-title">
     <div class="wrap">
       <header class="head">
-        <h2 id="apps-title" data-reveal>Apps you already use.</h2>
-        <p data-reveal style="--delay:0.08s">Desktop apps built from web pages, and websites in your browser.</p>
+        <h2 id="apps-title" data-reveal>Start with an app you want to break open.</h2>
+        <p data-reveal style="--delay:0.08s">These are real Morse runs in real apps. Open one of your own and tell it what needs to change.</p>
       </header>
       <ul class="apps" id="apps-grid" data-reveal="fade" aria-label="Tested apps"></ul>
-      <p class="fine" data-reveal>Tested on Linux and in Chrome. Not yet on macOS or Windows. <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/desktop.md#tested-on">What was tested</a></p>
+      <p class="fine" data-reveal>Earlier runs tested on Linux and in Chrome. Windows is not yet tested. <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/desktop.md#tested-on">What was tested</a></p>
     </div>
   </section>
 
   <!-- =============================================================== FAQ -->
   <section id="faq" class="section" aria-labelledby="faq-title">
     <div class="wrap faq-wrap">
-      <h2 id="faq-title" data-reveal>Questions, answered.</h2>
+      <h2 id="faq-title" data-reveal>What can you actually hack?</h2>
       <div class="faq-list" data-reveal="fade" style="--delay:0.08s">
         <details class="faq-item">
-          <summary>Can I take a feature from one app to another?</summary>
-          <p>Yes. Describe it, and Morse builds it in this app’s own look. It cannot bring an account or a catalog you do not have.</p>
+          <summary>Can I steal my favorite feature from another app?</summary>
+          <p>Yes. Tell Morse which behavior to rebuild and where to put it. A command palette on a website. An export button in an app that left one out. Morse writes a mod for the app you have open; it doesn’t copy another service’s backend.</p>
         </details>
         <details class="faq-item">
           <summary>Can I delete a paywall?</summary>
-          <p>When it is a box on a page that already loaded, yes. Morse does not sign you in, and cannot fetch a story the site never sent.</p>
+          <p>If the article has loaded and a paywall overlay covers it, Morse can remove that overlay. Content kept on the publisher’s server still requires access; removing a box cannot retrieve it.</p>
         </details>
         <details class="faq-item">
-          <summary>Can I add AI to an app that has none?</summary>
-          <p>Yes. Point and say summarize this, rewrite this, or explain this. Morse uses Claude Code, Codex, or your API key.</p>
+          <summary>Can I put my own AI inside an app?</summary>
+          <p>Yes. Add your own AI controls to the app you already use: a button that checks a thread for contradictions, or a panel that answers questions about the page. Morse works with Claude Code, Codex, or your API key.</p>
         </details>
         <details class="faq-item">
-          <summary>Can I fix a bug myself?</summary>
-          <p>When you can see it, yes. The fix runs on your computer. A bug on their server stays theirs.</p>
+          <summary>Does the source code have to be public?</summary>
+          <p>No. Morse reverse engineers the interface and code it can inspect in the running app, then writes your mod. The company doesn’t have to publish its source. The changes run on your computer; they don’t give you control of the company’s servers.</p>
         </details>
         <details class="faq-item">
           <summary>What does it cost?</summary>
@@ -365,11 +300,11 @@
       <canvas class="dither" data-dither="down"></canvas>
     </div>
     <div class="wrap cta-grid">
-      <h2 id="install-title" data-reveal>Then stop asking them.<span> Download Morse.</span></h2>
+      <h2 id="install-title" data-reveal>They built the app.<span> Hack your version.</span></h2>
       <div class="cta-get" id="install-desktop" data-reveal style="--delay:0.08s">
         <div class="downloads">
           <a class="btn btn-primary btn-lg btn-pill" href="./#desktop-steps" data-link="desktop">Download Morse</a>
-          <a class="btn btn-glass btn-lg btn-pill" href="https://github.com/sam-siavoshian/RRAA" data-link="github">Star on GitHub</a>
+          <a class="btn btn-glass btn-lg btn-pill" href="https://github.com/sam-siavoshian/RRAA" data-link="github"><img class="btn-logo" loading="lazy" src="mark/github-logo-white.png" width="20" height="20" alt="" aria-hidden="true">Star on GitHub</a>
         </div>
         <p class="cta-note" id="install-web">Free and open source. It opens Chrome, Edge, Brave, Arc and Vivaldi too, still signed in.</p>
         <details class="get-steps" id="desktop-steps">
@@ -389,10 +324,9 @@
   <div class="mark" aria-hidden="true" data-mark><span class="mark-letters">Morse</span><span class="mark-light">Morse</span></div>
   <div class="wrap">
     <div class="foot-top">
-      <a href="#top" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="20" data-still></span><span class="brand-name">Morse</span></a>
+      <a href="#top" class="brand" aria-label="Morse home"><span class="brand-mark" data-radar="20"></span><span class="brand-name">Morse</span></a>
       <nav class="foot-links" aria-label="Footer">
         <a href="#install">Install</a>
-        <a href="gallery.html">Gallery</a>
         <a href="privacy.html">Privacy</a>
         <a href="https://github.com/sam-siavoshian/RRAA/tree/HEAD/docs" data-link="docs">Guides</a>
         <a href="https://github.com/sam-siavoshian/RRAA" data-link="github">Source on GitHub</a>
@@ -400,12 +334,12 @@
       </nav>
     </div>
     <div class="foot-base">
-      <span>Their app. Your version.</span>
+      <span>Closed source. Your rules.</span>
       <span>&copy; 2026 Morse · <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/LICENSE">MIT license</a></span>
     </div>
   </div>
 </footer>
 
-<script type="module" src="index.js"></script>
+<script type="module" src="index.js?v=20261026-trimmed"></script>
 </body>
 </html>

@@ -8,7 +8,6 @@
     { "source": "/site", "destination": "/", "permanent": true },
     { "source": "/site/", "destination": "/", "permanent": true },
     { "source": "/site/index.html", "destination": "/", "permanent": true },
-    { "source": "/site/gallery.html", "destination": "/gallery.html", "permanent": true },
     { "source": "/site/privacy.html", "destination": "/privacy.html", "permanent": true }
   ]
 }

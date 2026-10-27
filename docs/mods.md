@@ -88,10 +88,7 @@ it matters, read the code too.
 
 ## Mods other people made
 
-The [gallery](../site/gallery.html) has mods other people made, for sites
-like PyPI, GitLab and the Node.js docs. On the website, you can search them
-and read their code. You can install them, download them for Tampermonkey or
-copy their link.
+The Mods panel in Morse offers shared mods for sites like PyPI, GitLab and the Node.js docs. You can read their code before installing them.
 
 When the site you're on has mods in the gallery, the empty bar says so (“2
 mods for pypi.org”). The Mods panel lists them under **For this site**, with
