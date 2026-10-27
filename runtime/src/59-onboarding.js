@@ -6,7 +6,7 @@
 // (and a button) for generation errors, and the Mods panel's empty state.
 //
 // Progress lives in the host (onboarding.get / onboarding.set):
-// chrome.storage.local in the extension, ~/.morse/onboarding.json on the
+// ~/.morse/onboarding.json on the
 // desktop. A host without that store shows none of it. The rules (state shape,
 // error wording) are core/onboarding.js, inlined by runtime/bundle.js.
 // Hooks into shared files, each marked "onboarding hook": 10-dom.js (CSS),
@@ -15,7 +15,7 @@
 
 const Onboarding = (() => {
   let st = null;   // normalized progress; null until the host answers, and for good if it can't
-  let status = {}; // what the host knows: { mode, model: { connected }, userScripts }
+  let status = {}; // what the host knows: { mode, model: { connected } }
   let loadedAt = 0, shownStep = "", shownNote = "";
   let tipSaved = false, tipShare = false;
   // a step that's done: the check from the 16px icon set, drawn small in the middle of its 16px box
@@ -77,10 +77,6 @@ const Onboarding = (() => {
     if (!st || coachOn() || !S.open || bar.hidden || S.phase !== "idle" || paneKind) return null;
     if (modelMissing(status, S.label) && !st.dismissed.model && !status.sample) // the practice page's sample answers need no model
       return { id: "model", text: t("ob.noModel"), btn: t("welcome.model.b"), act: "model" };
-    const waiting = Waiting.list(); // waiting hook: mods here whose code waits for “Allow User Scripts” (64-waiting.js)
-    if (waiting.length && !Waiting.quiet)
-      return { id: `waiting:${waiting.length}`, text: Waiting.text(waiting), btn: t("popup.turnItOn"), act: "userscripts" };
-    // onboarding v2: no standing “Allow User Scripts is off” note. It comes up when a change needs it (Waiting, above; 60-generate.js).
     return null;
   }
   function renderNote() {
@@ -94,7 +90,7 @@ const Onboarding = (() => {
   }
 
   // ---- errors in plain words, with a button that does something about it
-  const ACTION_LABEL = { userscripts: "help.userScripts", model: "ob.modelSettings", setup: "ob.copySetup" };
+  const ACTION_LABEL = { model: "ob.modelSettings", setup: "ob.copySetup" };
   function explainFailure() {
     if (S.phase !== "error" || hint.querySelector(".ob-why")) return;
     const why = explainError(hint.title || hint.textContent);
@@ -131,17 +127,16 @@ const Onboarding = (() => {
   }
   async function act(what, btn) {
     if (what === "skip") return save({ coach: "done" });
-    if (what === "dismiss" && btn.dataset.id?.startsWith("waiting")) { Waiting.quiet = true; return sync(); } // waiting hook: for this page only
     if (what === "dismiss") return save({ dismissed: { [btn.dataset.id]: true } });
     if (what === "help") return toggleHelp();
     if (what === "start") { panel.hidden = true; return openBar(); }
     if (what === "tour") { save({ coach: "" }); return closePane(); }
     if (what === "setup") return copyCommand("morse setup");
-    // "model", "userscripts": the host opens the right settings page
+    // The host opens model settings when supported.
     let r = null;
     try { r = await call("onboarding.open", { what }); } catch {}
     if (r && r.copy) return copyCommand(r.copy);
-    if (!r) showTip(what === "userscripts" ? t("ob.howScripts") : S.mode === "extension" ? t("ob.howModelExt") : t("ob.howModel"), 9000);
+    if (!r) showTip(t("ob.howModel"), 9000);
   }
   for (const el of [coachEl, noteEl, actions]) el.addEventListener("click", e => {
     const b = e.target.closest("[data-ob]");

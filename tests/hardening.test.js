@@ -6,14 +6,13 @@
 import "./helpers/home.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
-import vm from "node:vm";
 import { serveBar } from "../demo/bar-server.js";
 import { bundleRuntime } from "../runtime/bundle.js";
 import { defaultHotkeys } from "../core/hotkeys.js";
 import { plainError } from "../core/onboarding.js";
-import { chromium, launchBrowser, noBrowser, noDisplay } from "./helpers/browser.js";
+import { launchBrowser, noBrowser } from "./helpers/browser.js";
 import { holdKeys, pressOpen, releaseKeys } from "./helpers/keys.js";
 import { TIMEOUT, hostRoundTrip, settle, waitForReady } from "./helpers/wait.js";
 import { tempDir } from "./helpers/home.js";
@@ -72,29 +71,6 @@ async function selectInGodMode(page, sel) {
   await page.locator(".gm-tb").waitFor({ state: "visible" });
 }
 
-// ---- 1. a closed port settles every request that was waiting on it
-
-function loadHost() {
-  const event = () => { const fns = []; return { addListener: f => fns.push(f), fire: (...a) => fns.forEach(f => f(...a)) }; };
-  const ports = [];
-  const chrome = {
-    runtime: {
-      connect() {
-        const p = { sent: [], dead: false, onMessage: event(), onDisconnect: event(),
-          postMessage(m) { if (p.dead) throw new Error("Attempting to use a disconnected port object"); p.sent.push(m); } };
-        ports.push(p);
-        return p;
-      },
-      onMessage: { addListener() {} },
-    },
-  };
-  const window = { addEventListener() {} };
-  window.top = window;
-  const ctx = vm.createContext({ chrome, window, document: { documentElement: { dataset: {} } }, location: { href: "https://a.test/", origin: "https://a.test" } });
-  vm.runInContext(readFileSync(path.join(root, "extension/host.js"), "utf8"), ctx);
-  return { host: ctx.__morseHost, ports };
-}
-
 test("God mode: one edit whose request is lost doesn't stop later edits from applying and saving", { skip }, async () => {
   await scenario({ page: "god", query: "?light&reset", clock: true }, async ({ page }) => {
     // The host never answers the first exec (a reply lost on the way back).
@@ -106,7 +82,7 @@ test("God mode: one edit whose request is lost doesn't stop later edits from app
     const saved = () => page.evaluate(() => Object.values(JSON.parse(localStorage.getItem("morse:playground:mods") || "{}")));
     await pressOpen(page);
     await selectInGodMode(page, "#card h3");
-    await page.keyboard.press("Control+e");
+    await page.keyboard.press(MAC ? "Meta+e" : "Control+e");
     await page.keyboard.press("t");
     await page.keyboard.type("One");
     await page.keyboard.press("Enter");
@@ -118,7 +94,7 @@ test("God mode: one edit whose request is lost doesn't stop later edits from app
     assert.deepEqual((await saved())[0].edits.map(e => e.op), ["text"]);
     // The next edit runs the code again, so the lost one isn't lost for good.
     await selectInGodMode(page, "#toolbar button >> nth=1");
-    await page.keyboard.press("Control+e");
+    await page.keyboard.press(MAC ? "Meta+e" : "Control+e");
     await page.keyboard.press("h");
     await page.waitForFunction(() => window.__execs >= 2);
   });
@@ -200,13 +176,14 @@ test("hotkey recorder: God mode doesn't take the keys being recorded", { skip },
   await scenario({ page: "god", query: "?light&reset" }, async ({ page, waitFor }) => {
     await pressOpen(page);
     await selectInGodMode(page, "#card h3");
-    await page.keyboard.press("Control+Comma");
+    await page.keyboard.press(MAC ? "Meta+Comma" : "Control+Comma");
     await waitFor(s => s.pane === "settings");
     await page.locator("[data-act=more]").click(); // the Mods panel's shortcut is under More settings (docs/dev/simplify.md)
+    await page.locator('details.settings-group:has([data-hk=mods]) > summary').click();
     await page.locator(".hk[data-hk=mods]").click();
     await page.locator(".hkrow.recording").waitFor();
-    await page.keyboard.press("Control+KeyE"); // God mode's "focus the edit tools"
-    const s = await waitFor(s => s.hotkeys.mods === "Ctrl+KeyE");
+    await page.keyboard.press(MAC ? "Meta+KeyE" : "Control+KeyE"); // God mode's "focus the edit tools"
+    const s = await waitFor(s => s.hotkeys.mods === (MAC ? "Meta+KeyE" : "Ctrl+KeyE"));
     assert.equal(s.pane, "settings");
   });
 });
@@ -269,7 +246,7 @@ test("edit tools hotkey: leaves a running change's status alone; help shows the 
     await page.keyboard.press("F1");
     await waitFor(s => s.pane === "help");
     const help = await ui(".ob-can");
-    assert.match(help, /Use the Edit toolsPoint at something, then press AltShiftG/);
+    assert.match(help, MAC ? /Use the Edit toolsPoint at something, then press ⌥⇧G/ : /Use the Edit toolsPoint at something, then press AltShiftG/);
     await page.keyboard.press("F1");
     await page.keyboard.type("make it airy");
     await page.keyboard.press("Enter");
@@ -300,7 +277,8 @@ test("first-run coach: page tools saving on their own don't finish it or show th
     await waitFor(s => s.pane === "help");
     await page.keyboard.press("F1");
     await waitFor(s => s.pane === "");
-    await page.locator(".gm-qbtn").click();
+    await page.locator(".more").click();
+  await page.locator('[data-m="tools"]').click();
     await page.locator(".gm-menu button[data-k=dark]").click();
     await page.waitForFunction(() => window.__fake.log.some(m => m.type === "mods.save"));
     await hostRoundTrip(page); // the save's reply, and whatever the coach does with it, are done

@@ -67,7 +67,6 @@ B.adopt({
   guardStop, // guard hook: boot.js didn't apply a mod, or undid it (64-guard.js)
   guardReady, // guard hook: a mod that froze the page was turned off (64-guard.js)
   styleReady: () => YourStyle.ready(), // your-style hook: fit it to this site once, if turned on (72-style.js)
-  waitingAdd: m => Waiting.add(m), // waiting hook: “Allow User Scripts” is off; the style shows, the code never ran (64-waiting.js)
 });
 const uiStarted = () => { B.started(); S.ready = true; /* tests: the host answered hello and the mods are on */ };
 B.ready.then(hello => {
@@ -79,21 +78,12 @@ B.ready.then(hello => {
     Voice.configure(hello.voice);
     PromptHistory.load();
     if (hello.debug) debugStatus(); // the host was started with MORSE_DEBUG=1
-    if (hello.rebuilt) devRebuilt(); // developers: npm run build ran under a running extension
   } finally {
     // Open now. A language still on its way swaps the words when it arrives
     // (04-i18n.js). Waiting here used to hold the hotkey for up to 1.5s.
     uiStarted();
   }
 }).catch(e => console.warn("[morse]", e));
-
-// For people working on Morse (extension/dev-host.js; never in a store build):
-// the service worker still runs the code from before `npm run build`. It
-// stays until closed. (No Reload button: chrome.runtime.reload() unloads an
-// extension that was started with --load-extension.)
-function devRebuilt() {
-  controlToast(t("dev.rebuilt"), [], { sticky: true });
-}
 
 // boot.js applies the mods, so the guards around applyMod run there
 // (core/guard.js finds the harm); the reason the model gets for Fix it is

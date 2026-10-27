@@ -105,27 +105,6 @@ change one of its shortcuts.
 | Install from a file… | rarely | **merge into Install a mod…** (a button in its dialog) |
 | Export all mods, Make a pack… | rarely | **More**, beside Install a mod… |
 
-## The toolbar popup (`extension/popup*`)
-
-| Thing | How often | Decision |
-|---|---|---|
-| Change this page (with its key) | often | keep |
-| "Allow User Scripts is off" and which mods wait | when it is off | keep |
-| Mods on this site, with Show code | sometimes | keep |
-| Pause on this site, Pause everywhere, the off switch's key | sometimes | keep |
-| Model: Morse helper or Anthropic API key, pairing code, Pair, helper's model, Sign this browser out, API key, model for harder changes, Test the model | once (setup), then rarely | **fold into one line** once a model works ("Model · Claude Code · …"); open when there is none, when the bar or welcome page sends you there, and on the options page |
-
-## The welcome page and first run
-
-Since then, the one-app change (Onboarding) took the
-question and the developer ways off the welcome page: Connect (the Morse app
-found and asked by itself, or Download Morse) → Try it → your first mod.
-What follows is the inventory as it was. Onboarding v2 (another change, `docs/dev/onboarding.md`) owns these screens;
-they were inventoried, not changed: Choose (Websites, Desktop apps, Both) →
-Connect (one button when the Morse helper can ask, a code box, an API key, or
-`morse setup --pair <code>`) → Try it (practice page) → your first mod. The
-Allow User Scripts page (`extension/allow.html`) is theirs too.
-
 ## Morse Desktop (`desktop-app/`)
 
 | Thing | How often | Decision |

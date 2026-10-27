@@ -28,7 +28,7 @@ async function browser() {
 // The boot alone on a page, with a stand-in host in the page that logs every
 // request. Its "ui.load" adds the UI the way the hosts do (on first use).
 // debug: the UI comes at once, with an open shadow root (webdriver is on).
-async function bootPage({ mods = [], exec = { ok: true }, debug = false, told = false } = {}) {
+async function bootPage({ mods = [], exec = { ok: true }, debug = false } = {}) {
   const s = http.createServer((q, r) => {
     if (q.url === "/ui.js") return r.writeHead(200, { "Content-Type": "text/javascript" }).end(UI);
     r.writeHead(200, { "Content-Type": "text/html" }).end(`<!doctype html><title>Shop</title><body style="margin:0">
@@ -39,10 +39,9 @@ async function bootPage({ mods = [], exec = { ok: true }, debug = false, told = 
   const origin = `http://127.0.0.1:${s.address().port}`;
   const ctx = await (await browser()).newContext({ viewport: { width: 900, height: 600 } });
   cleanups.push(() => ctx.close());
-  await ctx.addInitScript(({ mods, exec, debug, told }) => {
+  await ctx.addInitScript(({ mods, exec, debug }) => {
     if (window !== top) return;
     if (debug) localStorage.setItem("morse:debug", "1");
-    if (told) sessionStorage.setItem("morse:waiting-told", "1"); // the boot keeps them without loading the UI
     const log = window.__log = [];
     const subs = [];
     const emit = m => subs.forEach(f => f(m));
@@ -52,7 +51,7 @@ async function bootPage({ mods = [], exec = { ok: true }, debug = false, told = 
         log.push(m.type);
         const reply = result => setTimeout(() => emit({ reply: m.id, result }), 2);
         switch (m.type) {
-          case "hello": return reply({ mode: "extension", label: "test", quiet: true, settings: { welcome: false } });
+          case "hello": return reply({ mode: "desktop", label: "test", quiet: true, settings: { welcome: false } });
           case "settings.get": return reply({ welcome: false });
           case "mods.list": return reply(mods);
           case "exec": return reply(exec);
@@ -67,7 +66,7 @@ async function bootPage({ mods = [], exec = { ok: true }, debug = false, told = 
         }
       },
     };
-  }, { mods, exec, debug, told });
+  }, { mods, exec, debug });
   const page = await ctx.newPage();
   await page.goto(`${origin}/`);
   await page.addScriptTag({ content: BOOT });
@@ -112,35 +111,6 @@ test("pointing: a page's synthetic mousemove and click can't choose what Morse c
 // ======================================================================
 // The boot and the UI: a page can't keep Morse busy
 // ======================================================================
-
-test("waiting mods: a page firing focus events doesn't send them to the host again and again (boot, and once the UI is here)", { skip, timeout: 60000 }, async () => {
-  const waiting = { ok: false, waiting: "userScripts", error: "waiting" };
-  for (const ui of [false, true]) {
-    const again = await bootPage({ mods: [CODE_MOD], exec: waiting, debug: ui, told: !ui });
-    await waitFor(async () => (await again.count("exec")) >= 1, { what: "the first try" });
-    if (ui) await again.page.waitForFunction(() => document.querySelector("[data-morse-ui]"));
-    await again.page.waitForTimeout(500);
-    const before = await again.count("exec");
-    await again.page.evaluate(() => new Promise(r => {
-      let n = 0;
-      const t = setInterval(() => { dispatchEvent(new Event("focus")); document.dispatchEvent(new Event("visibilitychange", { bubbles: true })); if (++n === 60) { clearInterval(t); setTimeout(r, 300); } }, 10);
-    }));
-    assert.equal(await again.count("exec") - before, 0, `${ui ? "the UI" : "the boot"} didn't try the waiting mod again for the page's events`);
-  }
-});
-
-// dogfood: a shared PyPI mod hid the small release date (style) and added a
-// big one (code). In a profile with “Allow User Scripts” off, only the style
-// ran: every date was gone. Now the style waits with the code.
-test("waiting mods: while the code waits for “Allow User Scripts”, the style waits too; a mod with no code still shows", { skip, timeout: 60000 }, async () => {
-  const LOOK = { ...CODE_MOD, id: "r7-look", js: "", css: "#b { outline: 3px solid blue }" };
-  const { page, count } = await bootPage({ mods: [CODE_MOD, LOOK], exec: { ok: false, waiting: "userScripts", error: "waiting" }, told: true });
-  await waitFor(async () => (await count("exec")) >= 1, { what: "the code mod's try" });
-  await page.waitForTimeout(300);
-  const outline = sel => page.evaluate(s => getComputedStyle(document.querySelector(s)).outlineStyle, sel);
-  assert.equal(await outline("#a"), "none", "the waiting mod's style is held back");
-  assert.equal(await outline("#b"), "solid", "a style-only mod needs nothing and shows");
-});
 
 test("morse:paused: a page firing it over and over gets one check a second, not one per event (boot, and once the UI is here)", { skip, timeout: 60000 }, async () => {
   for (const ui of [false, true]) {

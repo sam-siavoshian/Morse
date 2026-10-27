@@ -31,7 +31,7 @@ export async function openStyleWorld({ launch, settings = { provider: "demo", mo
   if (!home) throw new Error("Set MORSE_HOME before opening the style world");
   await fs.mkdir(path.join(home, "mods"), { recursive: true });
   await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false, gallery: false }));
-  await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } }));
+  await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true } }));
 
   const { Connector } = await import("../daemon/connector.js");
   const port = await freePort();

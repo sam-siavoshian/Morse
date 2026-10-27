@@ -1,0 +1,134 @@
+Morse reliability investigation — 27 October 2026
+
+Scope: generation, execution, recovery and visual review behind the injected bar.
+The desktop app interface was not changed for this investigation. Existing work
+in the checkout was preserved. The runtime bundle was rebuilt; the installed
+/Applications/Morse.app package was not rebuilt or replaced.
+
+CONFIRMED ROOT CAUSES AND FIXES
+
+1. Last-attempt validation bypass (core/engine.js).
+   App-command validation, generated-selector checks, dead-hook detection and
+   imported-feature target checks were conditional on another retry remaining.
+   Invalid final drafts could therefore be reported as successful. These checks
+   now apply on every attempt. Unclosed code blocks are rejected as incomplete.
+
+2. Failed previews survived replacement (core/engine.js).
+   A failed JavaScript draft could leave listeners/elements behind when the next
+   attempt contained only CSS. Exhausted or cancelled runs could leave preview
+   state behind. Retries replace the whole draft; failed/cancelled runs clean up
+   JavaScript and streamed CSS and return no successful change.
+
+3. Asynchronous failures were missed (core/kit.js, daemon/connector.js).
+   The initializer's returned Promise was ignored; host checks only waited
+   150–600 ms. Async callbacks in timer wrappers also lost their return values.
+   Returned setup/handler promises are now tracked. The connector awaits their
+   completion with a bounded timeout and reports errors before accepting them.
+   Cleanup returned by an async initializer also runs if setup finishes after
+   the mod has been stopped. Fire-and-forget promises still need to be returned
+   by generated code, which the prompt now explicitly requests.
+
+4. Buttons could be cosmetic or call inaccessible internals (core/hooks.js,
+   core/prompt.js, core/profile.js, runtime/src/20-context.js).
+   Source-scanned function names were treated as callable globals, and repair
+   guidance could force those names even when native controls worked. They are
+   now described as evidence, with runtime verification required. Native DOM
+   controls and complete local implementations are accepted. Inert buttons are
+   rejected. Native range selectors, units, bounds and current values are sent
+   with the context, and the normal prompt documents morse.type.
+
+   Real Spotify reproduction: assigning input.value=30000 and dispatching input
+   and change events changed the input value but left the displayed song time
+   at 0:01, without errors. The existing morse.type helper changed the actual
+   displayed position to 0:45. The helper itself was already correct; missing
+   generation guidance was the problem. See spotify-seek-proof.json.
+
+5. Controls disappeared after app redraws (core/kit.js).
+   Watch invalidation looked at the watched node and its descendants. Removing
+   a generated sibling changed its parent, so the owner watch was not retried.
+   Removal now invalidates the owning watch through its recorded anchor.
+   Verified by deleting the generated Spotify +15 control, then clicking its
+   replacement and observing the actual song time change to 0:15.
+
+6. Visual review saw the wrong pixels and could break a working draft
+   (daemon/screenshot.js, daemon/connector.js, core/polish.js).
+   At Spotify's 83.33% zoom and 1.667 devicePixelRatio, the previous screenshot
+   formula captured blank space below the player. The corrected calculation
+   accounts for browser zoom and display density. crop-before.jpg and
+   crop-after.jpg use the same measured player rectangle, old formula versus
+   the current Connector.shoot method. See crop-proof.json for raw metrics.
+   Polish replacements now require complete code, pass the same static checks,
+   and are rechecked for missing targets/effects/page collapse. Failed versions
+   restore the working draft; a failed restoration is surfaced as a failure.
+   Unrelated screen animation no longer masks entirely missing selectors.
+
+REAL SPOTIFY PROOF
+
+The saved request in spotify-generated-result.json was sent to the real engine
+with Claude Code Sonnet, normal runtime context and visual review. The resulting
+CSS/JavaScript was not hand-edited. It succeeded in one generation attempt.
+The generation script used full-page screenshots for its model image inputs;
+production screenshot cropping was separately verified with Connector.shoot.
+
+verify-spotify.mjs reapplies that exact output in the installed Spotify app,
+using a separate temporary kit namespace. spotify-functional-proof.json records:
+- Rewind: 1:00 -> 0:45.
+- Forward: 0:45 -> 1:00.
+- Keyboard Enter: 1:00 -> 1:15.
+- Beginning-of-song clamping: 0:05 -> 0:00.
+- Removed control is restored once and still seeks: 0:00 -> 0:15.
+- Added/native controls share font, idle color, height and vertical alignment.
+- Hover color also matches the native Spotify control.
+- No generated-code errors after those interactions.
+- Undo removes all generated nodes.
+Playback remained paused; its original position was restored afterwards.
+
+Screenshots are actual Spotify captures, not mockups:
+  spotify-controls-before-click.png
+  spotify-controls-working.png
+  crop-before.jpg
+  crop-after.jpg
+
+VALIDATION
+
+final-tests.txt: 111 passed, 0 failed, 0 skipped, using Node 22.21.1 and Chromium.
+related-tests.txt: 56 passed, 0 failed, 1 skipped (additional lifecycle, profile,
+recorded-workflow, feature-transfer and healing checks). Total: 167 passed.
+baseline-tests.txt: all 9 new engine regression cases fail against the source
+snapshot taken before these fixes (/tmp/morse-reliability-baseline/core).
+fixed-tests.txt: those same 9 regression cases pass with the fixes.
+The tests use deterministic faulty model replies to reproduce specific defects;
+the Spotify run separately uses actual model output and actual app interactions.
+
+The build succeeds. The repository-wide syntax check reports one existing
+showcase snippet: docs/showcase/spotify-loop-station/mod.js:59 has a top-level
+return intended for a mod wrapper. That separate file was not changed here.
+See build-check.txt. No claim that the entire repository suite is green.
+
+REPRODUCING
+
+Use Node >=22 (package.json's requirement) and make Playwright available.
+In this machine's environment:
+  NODE_PATH=/tmp/morse-bar-qa/node_modules
+  Node: /Users/samsiavoshian/.nvm/versions/node/v22.21.1/bin/node
+
+From the repository root:
+  node --test tests/reliability.test.js tests/core.test.js tests/features.test.js tests/design.test.js tests/kit.test.js tests/screenshot.test.js tests/guard.test.js tests/versions.test.js tests/context-privacy.test.js tests/fast-mode.test.js tests/connector.test.js tests/polish-ui.test.js
+
+Live Spotify proof (temporarily seeks the current song, then restores it):
+  node artifacts/reliability-2026-10-26/verify-spotify.mjs
+  node artifacts/reliability-2026-10-26/verify-crop.mjs
+These default to Spotify CDP at 127.0.0.1:9333; SPOTIFY_CDP overrides the URL.
+generate-spotify.mjs records a fresh model-generated feature. It uses the
+configured Claude Code session; verify-spotify.mjs subsequently cleans it up.
+
+This evidence covers the demonstrated Spotify seek feature and the specific
+failure paths above. Static checks and visual review cannot establish that every
+arbitrary feature request has complete app semantics. The screenshots are not
+used as a substitute for the recorded behavioral checks.
+
+INSTALLATION FOLLOW-UP — 27 October 2026
+The user subsequently requested installation. The app was rebuilt and installed
+at /Applications/Morse.app, Spotify was restarted and reconnected, and the new
+live helper was verified. The bar was left open for testing. See
+../install-2026-10-27/INSTALL.txt and spotify-ready.png.

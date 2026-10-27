@@ -1,22 +1,14 @@
 # Getting started
 
-Morse changes desktop apps and websites in your own words. Point at
-something, say what you want, and watch it change. A mod is a change you
-saved. Morse brings it back every time you open that app or site.
+The company shipped its version. Build yours. Open an app with Morse, say
+what to rip out or build in, and watch the change. Save it as a mod to keep
+your version the next time you open the app.
 
 Morse is one app. You don't need a terminal, Node or anything else.
 
 ## 1. Get Morse
 
-On a Mac, paste this in Terminal. It downloads Morse, checks it against the
-release's SHA-256 sums, puts it in Applications and opens it, with no
-security prompts:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh
-```
-
-Or download it:
+Download Morse for your computer:
 [Mac (Apple silicon)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) ·
 [Mac (Intel)](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg) ·
 [Windows](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) ·

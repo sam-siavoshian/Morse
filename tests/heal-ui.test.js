@@ -64,7 +64,7 @@ before(async () => {
   process.env.MORSE_HOME = home;
   await fs.mkdir(path.join(home, "mods"), { recursive: true });
   await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false, gallery: false }));
-  await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } }));
+  await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true } }));
   // "Share the fix…" opens a browser (xdg-open / open): a stand-in records the address instead.
   bin = tempDir("morse-heal-bin-");
   for (const name of ["xdg-open", "open"]) await fs.writeFile(path.join(bin, name), `#!/bin/sh\nprintf '%s' "$1" > "${bin}/opened.txt"\n`, { mode: 0o755 });

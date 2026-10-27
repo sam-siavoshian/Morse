@@ -65,7 +65,6 @@ function CONTROL_CSS() { return `
   .ctl-warn:has(+ .ctl-warn) { padding-bottom: 4px; border-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
   .ctl-warn + .ctl-warn { margin-top: 0; padding-top: 4px; border-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
   .ctl-warn + .ctl-warn b { display: none; }
-  .tags .waiting { color: var(--m-warn); }
   .ctl-warn b { display: block; color: var(--m-warn); font: 600 var(--m-text-xs)/16px var(--m-mono); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
   .ctl-code { margin-top: 12px; }
   .ctl-code summary { display: inline-flex; align-items: center; gap: 6px; height: 28px; cursor: pointer; color: var(--m-text-2); font-weight: 500; border-radius: var(--m-r-sm); list-style: none; }

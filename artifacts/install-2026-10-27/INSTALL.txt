@@ -1,0 +1,18 @@
+Installed Morse update — 27 October 2026
+
+Rebuilt current checkout for macOS arm64 using desktop-app/build.js --mac --dir.
+Installed: /Applications/Morse.app
+Verified ad hoc signature: codesign --verify --deep --strict
+Verified 13 fix-related packaged files match the checkout exactly.
+Verified installed app.asar matches the built app.asar.
+SHA256: c38016299dac4a9451f6f7c8aaffb252b0df21e2432867e9ba2e2678b2987c94
+
+Restarted Spotify and reconnected it through the installed Morse app.
+Confirmed the live helper has __ready and detects asynchronous rejection.
+Confirmed Spotify shows Connected, 1 window, 3 existing changes on.
+Opened the bar and left its input focused for the user.
+User shortcut preserved: Control + backtick.
+
+Backup: /Users/samsiavoshian/morse/dist/install-backup-20261027/Morse.app
+Screenshot: spotify-ready.png
+Detailed package and session evidence: package-proof.json, live-proof.json

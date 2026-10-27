@@ -29,7 +29,7 @@ const home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-gallery-"));
 process.env.MORSE_HOME = home;
 await fs.mkdir(path.join(home, "mods"), { recursive: true });
 await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false }));
-await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } }));
+await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true } }));
 const MODS = path.join(home, "mods");
 const writeMod = m => fs.writeFile(path.join(MODS, `${m.id}.json`), JSON.stringify(m, null, 2));
 const ago = s => new Date(Date.now() - s * 1000).toISOString();

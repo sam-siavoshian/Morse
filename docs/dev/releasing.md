@@ -18,40 +18,30 @@ Markdown are skipped; run it by hand from the Actions tab any time):
    [What signing needs](#what-signing-needs) are set. Without them the Mac
    app is signed ad hoc (Apple silicon won't open an app with no signature
    at all) and the job checks it with `codesign --verify` and starts it once.
-3. **smoke**: `install.sh` (piped into `sh`, as people run it) and
-   `install.ps1` (through `irm | iex` in Windows PowerShell 5.1, then as a
-   file in PowerShell 7) against the package just built, served from the
-   runner: `morse --version`, `morse doctor --offline`, a second run that says "already up to date", then `morse uninstall`.
+3. **smoke**: install the packaged CLI with npm and check its version and
+   `doctor --offline` on macOS, Windows and Linux; run the updater tests on
+   macOS and Linux.
 4. **release**: only when all of that worked. The `preview` tag moves to the
    commit, and the release's files are replaced, with `SHA256SUMS`. It stays
    a pre-release, so it never shows as the latest release.
 
 The file names never change, so these addresses always give the newest
 build (the README, `site/config.js`, `docs/desktop-app.md` and the
-installers use them):
+automatic updater use them):
 
 | File | What it is |
 |---|---|
 | `Morse-mac-arm64.dmg`, `Morse-mac-x64.dmg` (and `.zip`) | Morse Desktop for Macs with Apple silicon, and with Intel |
 | `Morse-Setup.exe`, `Morse-Setup-arm64.exe` | Morse Desktop for Windows, one installer per architecture (x64 keeps the old name) |
 | `Morse-linux-x86_64.AppImage` | Morse Desktop for Linux |
-| `morse-cli.tgz` | the `morse` command; what `install.sh` and `install.ps1` install |
-| `SHA256SUMS` | the SHA-256 of each; the installers (`install-app.sh` too) check against it |
+| `morse-cli.tgz` | the `morse` command, packaged for npm |
+| `SHA256SUMS` | the SHA-256 of each; the automatic updater checks against it |
 
 at `https://github.com/sam-siavoshian/RRAA/releases/download/preview/<file>`.
 
-The installers (developer path): `install.sh` (macOS, Linux) and
-`install.ps1` (Windows) need Node 22, download `morse-cli.tgz`, check it,
-put Morse in `~/.morse/app` and a `morse` command on the PATH, then run `morse setup --auto`. Running
-one again updates; `morse uninstall` (or `--uninstall`, `-Uninstall`)
-removes what it added. With no preview release yet, they build the package
-from `main` instead. Try them against files on your computer:
-`node scripts/serve-files.js <folder> 8765` and
-`MORSE_INSTALL_BASE=http://127.0.0.1:8765 sh install.sh`;
-`tests/install.test.js` does that for every case. `install-app.sh` puts the
-Morse app itself in Applications (macOS) or `~/.local/share/morse` (Linux),
-checked against `SHA256SUMS`, with no Gatekeeper prompt: curl marks nothing
-as downloaded from the internet.
+The desktop app updates itself using `build.json`, `SHA256SUMS` and the
+platform download. Mac updates use the `.zip` files; keep them alongside the
+`.dmg` downloads. `tests/updater.test.js` covers the updater.
 
 ## What one release makes
 
@@ -328,14 +318,6 @@ broken, delete it from the release and say so in the notes):
   on a real Mac (open with ⌥Space, a change in Spotify, updating itself).
   **Windows**: built by the workflow, not opened yet.
 - The tray menu and **Open at login** were not tried on a real desktop.
-- **The installers**: `install.sh` ran end to end on Linux in a fresh home
-  against a package served from this computer (install, "already up to
-  date", update, a bad checksum refused, no Node, `--uninstall`, `morse
-  uninstall`, and the build from `main` when there is no release), checked
-  with shellcheck. `install.ps1` ran the same cases in PowerShell 7 on
-  Linux. On macOS and Windows they run in the preview workflow's smoke jobs;
-  the ad hoc signed Mac app and "Add to Chrome" opening Chrome weren't tried
-  on a real Mac or PC.
 
 ## Repository size
 
@@ -349,5 +331,5 @@ there, recompressed.
 
 Git history was not rewritten, so a full clone still downloads the old blobs.
 `git clone --depth 1` gets the current tree. People who use Morse do not need a
-clone: the downloads and the one-line installers take the
+clone: download the app from the
 [preview release](#the-preview-release-every-push-to-main).

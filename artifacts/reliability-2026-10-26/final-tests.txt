@@ -1,0 +1,676 @@
+TAP version 13
+# Subtest: settings round-trip through ~/.morse/settings.json
+ok 1 - settings round-trip through ~/.morse/settings.json
+  ---
+  duration_ms: 1477.364125
+  type: 'test'
+  ...
+# Subtest: Stop mid-generation aborts the model on the desktop host
+ok 2 - Stop mid-generation aborts the model on the desktop host
+  ---
+  duration_ms: 1048.915042
+  type: 'test'
+  ...
+# Subtest: grants the microphone and transcribes through the connector
+ok 3 - grants the microphone and transcribes through the connector
+  ---
+  duration_ms: 2318.675666
+  type: 'test'
+  ...
+# Subtest: a change that matches nothing gets one repair round (effect check through the connector)
+ok 4 - a change that matches nothing gets one repair round (effect check through the connector)
+  ---
+  duration_ms: 4508.918
+  type: 'test'
+  ...
+# Subtest: the connector waits for asynchronous setup and reports its rejection
+ok 5 - the connector waits for asynchronous setup and reports its rejection
+  ---
+  duration_ms: 959.423583
+  type: 'test'
+  ...
+# Subtest: no input values, secrets or emails reach the prompt
+ok 6 - no input values, secrets or emails reach the prompt
+  ---
+  duration_ms: 566.163542
+  type: 'test'
+  ...
+# Subtest: the redact helper scrubs strings, cloned elements and objects
+ok 7 - the redact helper scrubs strings, cloned elements and objects
+  ---
+  duration_ms: 20.113333
+  type: 'test'
+  ...
+# Subtest: the context reaches into open shadow roots and same-origin frames
+ok 8 - the context reaches into open shadow roots and same-origin frames
+  ---
+  duration_ms: 26.028083
+  type: 'test'
+  ...
+# Subtest: media controls expose usable bounds and units without unrelated field values
+ok 9 - media controls expose usable bounds and units without unrelated field values
+  ---
+  duration_ms: 42.034709
+  type: 'test'
+  ...
+# Subtest: panes placed by the app's own code (VS Code's split view) get a note; a normal page doesn't
+ok 10 - panes placed by the app's own code (VS Code's split view) get a note; a normal page doesn't
+  ---
+  duration_ms: 114.095166
+  type: 'test'
+  ...
+# Subtest: parses title, css and js from a full reply
+ok 11 - parses title, css and js from a full reply
+  ---
+  duration_ms: 1.840875
+  type: 'test'
+  ...
+# Subtest: parses a reply that is still streaming
+ok 12 - parses a reply that is still streaming
+  ---
+  duration_ms: 0.410625
+  type: 'test'
+  ...
+# Subtest: css prefix ignores braces in strings and comments, keeps nested at-rules whole
+ok 13 - css prefix ignores braces in strings and comments, keeps nested at-rules whole
+  ---
+  duration_ms: 0.117875
+  type: 'test'
+  ...
+# Subtest: live css: each finished property goes on the page before its rule ends
+ok 14 - live css: each finished property goes on the page before its rule ends
+  ---
+  duration_ms: 0.52475
+  type: 'test'
+  ...
+# Subtest: share links round-trip and drop local state
+ok 15 - share links round-trip and drop local state
+  ---
+  duration_ms: 24.771291
+  type: 'test'
+  ...
+# Subtest: rejects links that aren't mods
+ok 16 - rejects links that aren't mods
+  ---
+  duration_ms: 1.462083
+  type: 'test'
+  ...
+# Subtest: matching by host and by app
+ok 17 - matching by host and by app
+  ---
+  duration_ms: 0.391375
+  type: 'test'
+  ...
+# Subtest: userscript export is valid JS with a Tampermonkey header
+ok 18 - userscript export is valid JS with a Tampermonkey header
+  ---
+  duration_ms: 1.037125
+  type: 'test'
+  ...
+# Subtest: prompt includes target, request, and previous error on retry
+ok 19 - prompt includes target, request, and previous error on retry
+  ---
+  duration_ms: 0.683125
+  type: 'test'
+  ...
+# Subtest: openai-compatible provider streams SSE tokens
+ok 20 - openai-compatible provider streams SSE tokens
+  ---
+  duration_ms: 34.85875
+  type: 'test'
+  ...
+# Subtest: openai: the strong tier is gpt-5 reasoning longer; other models never get reasoning_effort
+ok 21 - openai: the strong tier is gpt-5 reasoning longer; other models never get reasoning_effort
+  ---
+  duration_ms: 17.22375
+  type: 'test'
+  ...
+# Subtest: engine streams css, runs js, and repairs a failing first attempt
+ok 22 - engine streams css, runs js, and repairs a failing first attempt
+  ---
+  duration_ms: 8847.060416
+  type: 'test'
+  ...
+# Subtest: CSS rules that reach into a shadow root or frame move to the JS
+ok 23 - CSS rules that reach into a shadow root or frame move to the JS
+  ---
+  duration_ms: 0.24175
+  type: 'test'
+  ...
+# Subtest: a class or CSS variable the JS sets that no CSS uses gets a repair round
+ok 24 - a class or CSS variable the JS sets that no CSS uses gets a repair round
+  ---
+  duration_ms: 0.62975
+  type: 'test'
+  ...
+# Subtest: finds the selectors a draft relies on
+ok 25 - finds the selectors a draft relies on
+  ---
+  duration_ms: 0.608709
+  type: 'test'
+  ...
+# Subtest: a change with no visible effect gets a repair round naming the dead selectors
+ok 26 - a change with no visible effect gets a repair round naming the dead selectors
+  ---
+  duration_ms: 0.553375
+  type: 'test'
+  ...
+# Subtest: a change that still does nothing after its repairs never says done: it comes off and says so
+ok 27 - a change that still does nothing after its repairs never says done: it comes off and says so
+  ---
+  duration_ms: 0.319375
+  type: 'test'
+  ...
+# Subtest: a picture of the app goes with the request, for models that see pictures
+ok 28 - a picture of the app goes with the request, for models that see pictures
+  ---
+  duration_ms: 0.368167
+  type: 'test'
+  ...
+# Subtest: behavior-only JS (selectors all match, nothing visible yet) is not sent back
+ok 29 - behavior-only JS (selectors all match, nothing visible yet) is not sent back
+  ---
+  duration_ms: 0.136583
+  type: 'test'
+  ...
+# Subtest: CSS for state that appears on interaction doesn't count as a miss when the JS found its targets
+ok 30 - CSS for state that appears on interaction doesn't count as a miss when the JS found its targets
+  ---
+  duration_ms: 0.492584
+  type: 'test'
+  ...
+# Subtest: reads an Electron fuse wire
+ok 31 - reads an Electron fuse wire
+  ---
+  duration_ms: 0.250041
+  type: 'test'
+  ...
+# Subtest: design: the app's variables, fonts, components, icons and mode reach the model
+ok 32 - design: the app's variables, fonts, components, icons and mode reach the model
+  ---
+  duration_ms: 484.664166
+  type: 'test'
+  ...
+# Subtest: design: an app without variables says so, and the prompt carries the design part
+ok 33 - design: an app without variables says so, and the prompt carries the design part
+  ---
+  duration_ms: 41.25775
+  type: 'test'
+  ...
+# Subtest: the prompt's design rules: variables over fixed colors, the app's classes, both modes, icons, complete features
+ok 34 - the prompt's design rules: variables over fixed colors, the app's classes, both modes, icons, complete features
+  ---
+  duration_ms: 1.517292
+  type: 'test'
+  ...
+# Subtest: polish: the model sees a picture of the change and its fixed version replaces the draft
+ok 35 - polish: the model sees a picture of the change and its fixed version replaces the draft
+  ---
+  duration_ms: 11.503417
+  type: 'test'
+  ...
+# Subtest: polish: OK keeps the draft; a fix that fails to run puts the draft back
+ok 36 - polish: OK keeps the draft; a fix that fails to run puts the draft back
+  ---
+  duration_ms: 1.657041
+  type: 'test'
+  ...
+# Subtest: polish: off, a tiny CSS tweak, no picture, or a fix of a saved mod: no extra round
+ok 37 - polish: off, a tiny CSS tweak, no picture, or a fix of a saved mod: no extra round
+  ---
+  duration_ms: 1.647666
+  type: 'test'
+  ...
+# Subtest: polish: which changes are worth a look
+ok 38 - polish: which changes are worth a look
+  ---
+  duration_ms: 2.690458
+  type: 'test'
+  ...
+# Subtest: the Polish changes setting: on by default, can be turned off, survives a reset of others
+ok 39 - the Polish changes setting: on by default, can be turned off, survives a reset of others
+  ---
+  duration_ms: 1.19125
+  type: 'test'
+  ...
+# Subtest: the switch is the provider's fast mode, never a smaller model id
+ok 40 - the switch is the provider's fast mode, never a smaller model id
+  ---
+  duration_ms: 38.89125
+  type: 'test'
+  ...
+# Subtest: a local list never becomes a fast model
+ok 41 - a local list never becomes a fast model
+  ---
+  duration_ms: 0.321958
+  type: 'test'
+  ...
+# Subtest: Fast mode keeps the chosen model and sends that provider's fast option
+ok 42 - Fast mode keeps the chosen model and sends that provider's fast option
+  ---
+  duration_ms: 1069.11325
+  type: 'test'
+  ...
+# Subtest: Anthropic fast mode is speed:fast on the same Opus
+ok 43 - Anthropic fast mode is speed:fast on the same Opus
+  ---
+  duration_ms: 361.715458
+  type: 'test'
+  ...
+# Subtest: OpenAI fast mode is service_tier fast on the same model, including Astra
+ok 44 - OpenAI fast mode is service_tier fast on the same model, including Astra
+  ---
+  duration_ms: 8.651958
+  type: 'test'
+  ...
+# Subtest: the switch is saved with the other model settings and does not change the saved model
+ok 45 - the switch is saved with the other model settings and does not change the saved model
+  ---
+  duration_ms: 14.928542
+  type: 'test'
+  ...
+# Subtest: a provider with a fast mode shows the switch; Codex and local servers do not
+ok 46 - a provider with a fast mode shows the switch; Codex and local servers do not
+  ---
+  duration_ms: 10.531625
+  type: 'test'
+  ...
+# Subtest: connecting a local server keeps the chosen model when Fast mode is on
+ok 47 - connecting a local server keeps the chosen model when Fast mode is on
+  ---
+  duration_ms: 8.0625
+  type: 'test'
+  ...
+# Subtest: scanned source names the real handler and the backend URL, and the prompt does not get the rest of the file
+ok 48 - scanned source names the real handler and the backend URL, and the prompt does not get the rest of the file
+  ---
+  duration_ms: 11.268833
+  type: 'test'
+  ...
+# Subtest: a long profile keeps the hook names and the rules that say to use them
+ok 49 - a long profile keeps the hook names and the rules that say to use them
+  ---
+  duration_ms: 0.266375
+  type: 'test'
+  ...
+# Subtest: the new control calls the page's saveNote, after a class-toggle button is sent back
+ok 50 - the new control calls the page's saveNote, after a class-toggle button is sent back
+  ---
+  duration_ms: 7.994291
+  type: 'test'
+  ...
+# Subtest: a control that never calls the app is rolled back and the bar gets a short error
+ok 51 - a control that never calls the app is rolled back and the bar gets a short error
+  ---
+  duration_ms: 1.670125
+  type: 'test'
+  ...
+# Subtest: innerHTML on a live control never runs; a morse.el fill still may
+ok 52 - innerHTML on a live control never runs; a morse.el fill still may
+  ---
+  duration_ms: 1.813875
+  type: 'test'
+  ...
+# Subtest: with no hook for the action, a class-toggle button is not kept
+ok 53 - with no hook for the action, a class-toggle button is not kept
+  ---
+  duration_ms: 0.351583
+  type: 'test'
+  ...
+# Subtest: source-scanned private functions do not disqualify working native or local controls
+ok 54 - source-scanned private functions do not disqualify working native or local controls
+  ---
+  duration_ms: 0.155708
+  type: 'test'
+  ...
+# Subtest: CSS that hides, blanks or locks the whole page is found
+ok 55 - CSS that hides, blanks or locks the whole page is found
+  ---
+  duration_ms: 209.340208
+  type: 'test'
+  ...
+# Subtest: JS that would freeze, reload, wipe or hide the page is found
+ok 56 - JS that would freeze, reload, wipe or hide the page is found
+  ---
+  duration_ms: 4.498959
+  type: 'test'
+  ...
+# Subtest: engine: a draft that would break the page never runs; the model gets one plain repair round
+ok 57 - engine: a draft that would break the page never runs; the model gets one plain repair round
+  ---
+  duration_ms: 4.893958
+  type: 'test'
+  ...
+# Subtest: engine: still harmful after the second try: nothing is applied and the person reads why
+ok 58 - engine: still harmful after the second try: nothing is applied and the person reads why
+  ---
+  duration_ms: 0.313833
+  type: 'test'
+  ...
+# Subtest: share links don't carry a mod's paused state
+ok 59 - share links don't carry a mod's paused state
+  ---
+  duration_ms: 0.271167
+  type: 'test'
+  ...
+# Subtest: every() and setInterval run at most every 100ms; off stops every timer, frame and observer
+ok 60 - every() and setInterval run at most every 100ms; off stops every timer, frame and observer
+  ---
+  duration_ms: 1032.633917
+  type: 'test'
+  ...
+# Subtest: a mod's own changes never feed back into it
+ok 61 - a mod's own changes never feed back into it
+  ---
+  duration_ms: 484.983708
+  type: 'test'
+  ...
+# Subtest: a heavy watch is paused for slowing the page down, with why in __stats and __errors
+ok 62 - a heavy watch is paused for slowing the page down, with why in __stats and __errors
+  ---
+  duration_ms: 1745.710542
+  type: 'test'
+  ...
+# Subtest: one burst over a second is paused at once
+ok 63 - one burst over a second is paused at once
+  ---
+  duration_ms: 1196.486166
+  type: 'test'
+  ...
+# Subtest: a feedback loop through the page (a framework re-rendering what the mod changes) is paused
+ok 64 - a feedback loop through the page (a framework re-rendering what the mod changes) is paused
+  ---
+  duration_ms: 1480.629334
+  type: 'test'
+  ...
+# Subtest: an observer looping through a promise is paused before it can freeze the page
+ok 65 - an observer looping through a promise is paused before it can freeze the page
+  ---
+  duration_ms: 194.7545
+  type: 'test'
+  ...
+# Subtest: huge insertions: past the element cap the mod is paused and what it added is gone
+ok 66 - huge insertions: past the element cap the mod is paused and what it added is gone
+  ---
+  duration_ms: 288.1225
+  type: 'test'
+  ...
+# Subtest: errors: the console hears the first few, __stats counts them all
+ok 67 - errors: the console hears the first few, __stats counts them all
+  ---
+  duration_ms: 1112.014
+  type: 'test'
+  ...
+# Subtest: time per mod is measured; mod code can still declare the names the kit guards
+ok 68 - time per mod is measured; mod code can still declare the names the kit guards
+  ---
+  duration_ms: 78.520917
+  type: 'test'
+  ...
+# Subtest: __hung names the mod whose code was running and stops it
+ok 69 - __hung names the mod whose code was running and stops it
+  ---
+  duration_ms: 93.632375
+  type: 'test'
+  ...
+# Subtest: watch does not match elements the mod inserted
+ok 70 - watch does not match elements the mod inserted
+  ---
+  duration_ms: 496.381291
+  type: 'test'
+  ...
+# Subtest: settle: short for watch and clicks, until the first tick for timers, full for events that fire on their own
+ok 71 - settle: short for watch and clicks, until the first tick for timers, full for events that fire on their own
+  ---
+  duration_ms: 53.782542
+  type: 'test'
+  ...
+# Subtest: watch picks up elements added later
+ok 72 - watch picks up elements added later
+  ---
+  duration_ms: 62.907458
+  type: 'test'
+  ...
+# Subtest: turning a mod off removes everything it created
+ok 73 - turning a mod off removes everything it created
+  ---
+  duration_ms: 13.279875
+  type: 'test'
+  ...
+# Subtest: a throwing mod reports the error and leaves nothing behind
+ok 74 - a throwing mod reports the error and leaves nothing behind
+  ---
+  duration_ms: 11.79425
+  type: 'test'
+  ...
+# Subtest: errors inside callbacks are collected for the repair loop
+ok 75 - errors inside callbacks are collected for the repair loop
+  ---
+  duration_ms: 12.990125
+  type: 'test'
+  ...
+# Subtest: __stats reports how many elements each watch matches, now and ever
+ok 76 - __stats reports how many elements each watch matches, now and ever
+  ---
+  duration_ms: 58.897875
+  type: 'test'
+  ...
+# Subtest: watch puts back what a re-render wiped: added elements, classes, styles, text
+ok 77 - watch puts back what a re-render wiped: added elements, classes, styles, text
+  ---
+  duration_ms: 100.324166
+  type: 'test'
+  ...
+# Subtest: a mod's own clicks are its new state, not something to put back
+ok 78 - a mod's own clicks are its new state, not something to put back
+  ---
+  duration_ms: 162.335417
+  type: 'test'
+  ...
+# Subtest: live watches follow rows a virtualized list reuses
+ok 79 - live watches follow rows a virtualized list reuses
+  ---
+  duration_ms: 60.616584
+  type: 'test'
+  ...
+# Subtest: 'host >>> inside' reaches into open shadow roots and frames; css(text, where) styles inside
+ok 80 - 'host >>> inside' reaches into open shadow roots and frames; css(text, where) styles inside
+  ---
+  duration_ms: 68.15375
+  type: 'test'
+  ...
+# Subtest: a watch over a long flat list costs linear time, and what it puts next to each row is still the mod's
+ok 81 - a watch over a long flat list costs linear time, and what it puts next to each row is still the mod's
+  ---
+  duration_ms: 117.201041
+  type: 'test'
+  ...
+# Subtest: an id with dots written as \#a.b.c finds the part whose id it is, and \#id.class still means a class
+ok 82 - an id with dots written as \#a.b.c finds the part whose id it is, and \#id.class still means a class
+  ---
+  duration_ms: 40.474167
+  type: 'test'
+  ...
+# Subtest: async initialization is verified and a rejected setup is reported
+ok 83 - async initialization is verified and a rejected setup is reported
+  ---
+  duration_ms: 807.289875
+  type: 'test'
+  ...
+# Subtest: async initialization cleanup survives resolution after the mod is stopped
+ok 84 - async initialization cleanup survives resolution after the mod is stopped
+  ---
+  duration_ms: 5.380333
+  type: 'test'
+  ...
+# Subtest: async setup has a bounded timeout
+ok 85 - async setup has a bounded timeout
+  ---
+  duration_ms: 29.087208
+  type: 'test'
+  ...
+# Subtest: async timer callbacks report failures instead of unhandled rejections
+ok 86 - async timer callbacks report failures instead of unhandled rejections
+  ---
+  duration_ms: 208.795292
+  type: 'test'
+  ...
+# Subtest: a watch restores a sibling control removed by an app render
+ok 87 - a watch restores a sibling control removed by an app render
+  ---
+  duration_ms: 46.640542
+  type: 'test'
+  ...
+# Subtest: a change that adds UI is looked at once and fixed; turning Polish changes off skips it
+ok 88 - a change that adds UI is looked at once and fixed; turning Polish changes off skips it
+  ---
+  duration_ms: 4911.175875
+  type: 'test'
+  ...
+# Subtest: last attempt cannot bypass app command validation
+ok 89 - last attempt cannot bypass app command validation
+  ---
+  duration_ms: 4.514
+  type: 'test'
+  ...
+# Subtest: last attempt cannot accept a notice in place of the feature
+ok 90 - last attempt cannot accept a notice in place of the feature
+  ---
+  duration_ms: 1.609875
+  type: 'test'
+  ...
+# Subtest: truncated code cannot be executed or saved as a complete feature
+ok 91 - truncated code cannot be executed or saved as a complete feature
+  ---
+  duration_ms: 0.639417
+  type: 'test'
+  ...
+# Subtest: a retry removes the previous JavaScript even when the replacement is CSS only
+ok 92 - a retry removes the previous JavaScript even when the replacement is CSS only
+  ---
+  duration_ms: 0.653834
+  type: 'test'
+  ...
+# Subtest: exhausted retries remove both preview CSS and JavaScript
+ok 93 - exhausted retries remove both preview CSS and JavaScript
+  ---
+  duration_ms: 0.7055
+  type: 'test'
+  ...
+# Subtest: cancellation while applying removes the preview instead of accepting it
+ok 94 - cancellation while applying removes the preview instead of accepting it
+  ---
+  duration_ms: 0.825458
+  type: 'test'
+  ...
+# Subtest: a decorative UI change cannot hide that all behavior targets are missing
+ok 95 - a decorative UI change cannot hide that all behavior targets are missing
+  ---
+  duration_ms: 2.090875
+  type: 'test'
+  ...
+# Subtest: visual polish cannot replace a working feature with selectors that match nothing
+ok 96 - visual polish cannot replace a working feature with selectors that match nothing
+  ---
+  duration_ms: 1.16525
+  type: 'test'
+  ...
+# Subtest: truncated visual polish keeps the working draft
+ok 97 - truncated visual polish keeps the working draft
+  ---
+  duration_ms: 1.772875
+  type: 'test'
+  ...
+# Subtest: Spotify at 83% zoom: crop follows the actual player instead of blank space below it
+ok 98 - Spotify at 83% zoom: crop follows the actual player instead of blank space below it
+  ---
+  duration_ms: 2.293
+  type: 'test'
+  ...
+# Subtest: Retina and scrolled documents keep screenshot bounds and output size
+ok 99 - Retina and scrolled documents keep screenshot bounds and output size
+  ---
+  duration_ms: 0.784833
+  type: 'test'
+  ...
+# Subtest: older hosts without zoom metrics retain the normal clip
+ok 100 - older hosts without zoom metrics retain the normal clip
+  ---
+  duration_ms: 0.22025
+  type: 'test'
+  ...
+# Subtest: no base: the prompt is unchanged
+ok 101 - no base: the prompt is unchanged
+  ---
+  duration_ms: 1.792625
+  type: 'test'
+  ...
+# Subtest: refine: the model gets the original request, the current code and the follow-up, and is asked for a full replacement
+ok 102 - refine: the model gets the original request, the current code and the follow-up, and is asked for a full replacement
+  ---
+  duration_ms: 0.913042
+  type: 'test'
+  ...
+# Subtest: base works with earlier Ask turns and a captured snapshot in the same request
+ok 103 - base works with earlier Ask turns and a captured snapshot in the same request
+  ---
+  duration_ms: 0.881542
+  type: 'test'
+  ...
+# Subtest: fix: the error goes in, and the self-repair retry still works on top
+ok 104 - fix: the error goes in, and the self-repair retry still works on top
+  ---
+  duration_ms: 0.278791
+  type: 'test'
+  ...
+# Subtest: reviseMod keeps the version it replaces; the original request stays the mod's prompt
+ok 105 - reviseMod keeps the version it replaces; the original request stays the mod's prompt
+  ---
+  duration_ms: 3.398625
+  type: 'test'
+  ...
+# Subtest: history is capped at 20, dropping the oldest
+ok 106 - history is capped at 20, dropping the oldest
+  ---
+  duration_ms: 0.565
+  type: 'test'
+  ...
+# Subtest: restoreVersion brings one back and keeps the current; stepBack drops the current
+ok 107 - restoreVersion brings one back and keeps the current; stepBack drops the current
+  ---
+  duration_ms: 0.743958
+  type: 'test'
+  ...
+# Subtest: versionsOf drops malformed entries; createMod carries a draft's versions; share links leave history out
+ok 108 - versionsOf drops malformed entries; createMod carries a draft's versions; share links leave history out
+  ---
+  duration_ms: 60.06375
+  type: 'test'
+  ...
+# Subtest: relative times in plain words
+ok 109 - relative times in plain words
+  ---
+  duration_ms: 63.073958
+  type: 'test'
+  ...
+# Subtest: demo model: refines the code it is given, and fixes a broken mod from its request
+ok 110 - demo model: refines the code it is given, and fixes a broken mod from its request
+  ---
+  duration_ms: 3.73925
+  type: 'test'
+  ...
+# Subtest: runMorse sends the base through to the model
+ok 111 - runMorse sends the base through to the model
+  ---
+  duration_ms: 782.72225
+  type: 'test'
+  ...
+1..111
+# tests 111
+# suites 0
+# pass 111
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12076.796041

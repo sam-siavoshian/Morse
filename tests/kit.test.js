@@ -230,3 +230,47 @@ test("an id with dots written as #a.b.c finds the part whose id it is, and #id.c
   assert.equal(await page.evaluate(() => document.querySelector('[id="workbench.parts.statusbar"] button')?.textContent), "Format");
   await page.evaluate(() => morse.__off("ids1"));
 });
+
+test("async initialization is verified and a rejected setup is reported", { skip }, async () => {
+  await run("async-ready", `return (async () => { await new Promise(resolve => setTimeout(resolve, 800)); throw new Error("Async setup failed"); })();`);
+  const r = await page.evaluate(() => morse.__ready("async-ready"));
+  assert.equal(r.ok, false);
+  assert.match(r.error, /Async setup failed/);
+  await page.evaluate(() => morse.__off("async-ready"));
+});
+test("async initialization cleanup survives resolution after the mod is stopped", { skip }, async () => {
+  await run("async-clean", `return new Promise(resolve => { window.__finishSetup = () => resolve(() => { window.__asyncCleaned = true; }); });`);
+  await page.evaluate(async () => { morse.__off("async-clean"); window.__finishSetup(); await Promise.resolve(); });
+  assert.equal(await page.evaluate(() => window.__asyncCleaned), true);
+});
+test("async setup has a bounded timeout", { skip }, async () => {
+  await run("async-timeout", `return new Promise(() => {});`);
+  const r = await page.evaluate(() => morse.__ready("async-timeout", 20));
+  assert.equal(r.ok, false);
+  assert.match(r.error, /did not finish/);
+  await page.evaluate(() => morse.__off("async-timeout"));
+});
+
+test("async timer callbacks report failures instead of unhandled rejections", { skip }, async () => {
+  for (const schedule of ['setTimeout', 'morse.after', 'requestAnimationFrame']) {
+    const callback = `async () => { await new Promise(resolve => setTimeout(resolve, 50)); throw new Error('Async timer failed'); }`;
+    const code = schedule === 'morse.after' ? `morse.after(0, ${callback});` : `${schedule}(${callback}, 0);`;
+    await run('async-timer', code);
+    await page.waitForFunction(() => morse.__errors('async-timer').length > 0);
+    const r = await page.evaluate(() => morse.__ready('async-timer'));
+    assert.equal(r.ok, false, schedule);
+    assert.match(r.error, /Async timer failed/);
+    await page.evaluate(() => morse.__off('async-timer'));
+  }
+});
+
+test("a watch restores a sibling control removed by an app render", { skip }, async () => {
+  await page.evaluate(() => { const anchor = document.createElement('button'); anchor.id = 'stable-anchor'; document.body.append(anchor); });
+  await run("sibling-restore", `morse.watch('#stable-anchor', anchor => anchor.after(morse.el('button', {class:'sibling-control', text:'Seek'})));`);
+  await page.locator('.sibling-control').evaluate(el => el.remove());
+  await page.locator('.sibling-control').waitFor();
+  assert.equal(await page.locator('.sibling-control').count(), 1);
+  await page.evaluate(() => morse.__off('sibling-restore'));
+  assert.equal(await page.locator('.sibling-control').count(), 0);
+  await page.locator('#stable-anchor').evaluate(el => el.remove());
+});

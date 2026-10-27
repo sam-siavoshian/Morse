@@ -1,0 +1,75 @@
+{
+  "builtAt": "2026-10-27T07:31:15.828Z",
+  "build": {
+    "version": "0.3.2",
+    "commit": "f54680107705a7f148dc8204f8ad95496a25c719",
+    "builtAt": "2026-10-27T07:29:24.300Z"
+  },
+  "files": [
+    {
+      "file": "core/engine.js",
+      "source": "d535cf97896f1582a7cdcf0fafbd68b61617fdb914c4980a78831fb7443bb633",
+      "packaged": "d535cf97896f1582a7cdcf0fafbd68b61617fdb914c4980a78831fb7443bb633"
+    },
+    {
+      "file": "core/kit.js",
+      "source": "1bdb0e2b2d6eee5d6ea77910b8a5798c7d0fc209142f12b58213e542178aa2ae",
+      "packaged": "1bdb0e2b2d6eee5d6ea77910b8a5798c7d0fc209142f12b58213e542178aa2ae"
+    },
+    {
+      "file": "core/hooks.js",
+      "source": "3f7c5d716509684a07d68552f3c843bbcf20c98d536876beca1c2d0df68546c8",
+      "packaged": "3f7c5d716509684a07d68552f3c843bbcf20c98d536876beca1c2d0df68546c8"
+    },
+    {
+      "file": "core/prompt.js",
+      "source": "db571ee4200d523d08877ed92c6d16c9a146ec5ae1fafe9aa878d136d4ae83d1",
+      "packaged": "db571ee4200d523d08877ed92c6d16c9a146ec5ae1fafe9aa878d136d4ae83d1"
+    },
+    {
+      "file": "core/polish.js",
+      "source": "8e580393818339013b5754e7fff05a150cfe1d47a8be0d87781a4e3a62b492e1",
+      "packaged": "8e580393818339013b5754e7fff05a150cfe1d47a8be0d87781a4e3a62b492e1"
+    },
+    {
+      "file": "core/profile.js",
+      "source": "02582097e89b26751dbce039071ffc3a77d80597e5e024dcb4a64fc55f2cee18",
+      "packaged": "02582097e89b26751dbce039071ffc3a77d80597e5e024dcb4a64fc55f2cee18"
+    },
+    {
+      "file": "core/parse.js",
+      "source": "6476723bdf9a1fd149b8319072485dcae1bb493f375f42ebf65f6818480498dc",
+      "packaged": "6476723bdf9a1fd149b8319072485dcae1bb493f375f42ebf65f6818480498dc"
+    },
+    {
+      "file": "daemon/connector.js",
+      "source": "021464f94a09ef21eec6f29890b1389e829282ffdf2af6889e8931266b18f6fd",
+      "packaged": "021464f94a09ef21eec6f29890b1389e829282ffdf2af6889e8931266b18f6fd"
+    },
+    {
+      "file": "daemon/screenshot.js",
+      "source": "8b630786a7e108835d6067b10118ac9a2b97bed0c8b1d9c238d863b1afdf26ca",
+      "packaged": "8b630786a7e108835d6067b10118ac9a2b97bed0c8b1d9c238d863b1afdf26ca"
+    },
+    {
+      "file": "runtime/src/20-context.js",
+      "source": "231b3cb830a6a945a3cbe979be38cf1395d41ff62e390b367869f989cb4c31ef",
+      "packaged": "231b3cb830a6a945a3cbe979be38cf1395d41ff62e390b367869f989cb4c31ef"
+    },
+    {
+      "file": "runtime/src/50-bar.js",
+      "source": "46d711b36de86f0c94a5df9052550cac0f540b9bbd97b327b70c446387112b6b",
+      "packaged": "46d711b36de86f0c94a5df9052550cac0f540b9bbd97b327b70c446387112b6b"
+    },
+    {
+      "file": "runtime/src/56-settings.js",
+      "source": "bf1872e366483f05582fff824224015eb32288a4f0d89acfe8dc2702c868de34",
+      "packaged": "bf1872e366483f05582fff824224015eb32288a4f0d89acfe8dc2702c868de34"
+    },
+    {
+      "file": "runtime/src/60-generate.js",
+      "source": "f4772c016a06526ef85384eaf53a7186a238c0a4ca5bc6ce12b910920b544d16",
+      "packaged": "f4772c016a06526ef85384eaf53a7186a238c0a4ca5bc6ce12b910920b544d16"
+    }
+  ]
+}

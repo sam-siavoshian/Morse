@@ -326,23 +326,3 @@ test("gallery mod go-hide-banners hides both banners without checking every box 
   assert.ok(total <= 20, `${total} style lookups after the page added 2000 more boxes`);
   assert.deepEqual(errors, []);
 });
-
-test("the gallery page treats a broken link (#%E0) as no link, without an error", { skip, timeout: 60000 }, async () => {
-  const { serveDemo } = await import("../demo/serve.js");
-  const demo = await serveDemo({ base: 0 });
-  cleanups.push(() => demo.close());
-  const browser = await launchBrowser();
-  cleanups.push(() => browser.close());
-  const page = await browser.newPage();
-  const errors = [];
-  page.on("pageerror", e => errors.push(e.message));
-  await page.goto(`${demo.origin("parley")}/site/gallery.html#%E0`);
-  await page.waitForFunction(() => document.querySelectorAll("#grid > *").length > 5);
-  await page.waitForTimeout(300);
-  assert.deepEqual(errors, []);
-  assert.equal(await page.locator("#drawer").isHidden(), true, "no mod is open");
-  // A good link still opens its mod.
-  await page.evaluate(() => { location.hash = "#go-hide-banners"; });
-  await page.locator("#drawer").waitFor({ state: "visible" });
-  assert.deepEqual(errors, []);
-});

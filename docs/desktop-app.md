@@ -1,9 +1,8 @@
 # The Morse app
 
-The Morse app is Morse. It is the one thing to install, and the only place
-you set anything up. You don't need a terminal, Node or anything else. It
-finds your model, lists your apps and browsers and opens them with Morse,
-and shows your mods.
+Morse is where you start hacking your apps. Connect your AI, open an app,
+and tell it what to add or rip out. Your saved mods live here, grouped by
+app. Read them, edit them or turn them off. No terminal needed.
 
 A mod is a change you saved. Morse brings it back every time you open that
 site or app.
@@ -23,18 +22,6 @@ has every file and its SHA-256):
 | **Mac** with Intel | [Morse-mac-x64.dmg](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg) | The same. |
 | **Windows** | [Morse-Setup.exe](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe) | Open it. It installs Morse for you only, with no admin question. |
 | **Linux** | [Morse-linux-x86_64.AppImage](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage) | Make it runnable: right-click it, Properties, Permissions, turn on “Allow executing file as program”. Then open it. |
-
-**Mac, with no security prompts:** paste this in Terminal instead. It
-downloads Morse for your Mac, checks it against the release's SHA-256 sums,
-puts it in Applications and opens it:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh
-```
-
-macOS only asks about apps a browser downloaded; Morse isn't notarized by
-Apple yet (that takes a paid Apple Developer ID). The same line works on
-Linux (it puts the AppImage in `~/.local/share/morse`).
 
 Downloaded in a browser, Morse isn't signed yet, so your computer warns you once:
 
@@ -168,8 +155,11 @@ off), the Morse app opens when you log in, in the tray, without the window.
 Morse updates itself. It checks for a newer version when it starts and every
 4 hours, and downloads it in the background. It checks the download against
 the release's list of checksums before it uses it. The new version goes in
-when no app is connected to Morse and you aren't using its window, or when
-you quit Morse. You don't need to download anything again.
+automatically after you finish your change and close the editing bar. Connected
+apps alone do not delay it. Morse saves the verified download across restarts,
+stops its connections cleanly, installs the update and opens again. Your other
+apps stay open; reconnect them to Morse afterward. **Later** postpones installation
+until you quit Morse. You don't need to download anything again.
 
 **Check for updates** in Settings looks now. It says whether you're up to date,
 or that an update is available. When Morse can install it, the update window

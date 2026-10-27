@@ -1,0 +1,174 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. See LICENSE in this directory.
+ * Ported from Zephium commit 276b1ba8a1e6e74966fbb0688ff61ff351dc4931.
+ * Svelte selectors are scoped to Morse onboarding; setup actions remain Morse. */
+#first {
+/* The one control: every button and dropdown trigger in the product shares
+   this height, padding, corner and type. The size is the About page's Copy
+   Details and Show Logs. What differs between controls is their fill, never
+   their size.
+
+   ui-control        the metrics, for a Button, a select trigger or any
+                     native button that is a control rather than a row.
+   ui-control-icon   the same height, square, for a glyph alone.
+
+   Pair it with ui-shine ui-shine-press for the secondary plate (shine.css). */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  min-height: var(--control-height);
+  padding: 0 var(--control-inset);
+  border: 0;
+  border-radius: var(--radius-shine);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-label);
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: default;
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.btn.ui-shine {
+  --shine-radius: var(--radius-shine);
+}
+
+.btn-icon {
+  inline-size: var(--control-height);
+  padding: 0;
+}
+
+@media (forced-colors: active) {
+  .btn {
+    border: 1px solid ButtonText;
+  }
+}
+
+
+  .btn {
+    transition:
+      background-color var(--motion-instant) var(--ease-smooth),
+      color var(--motion-instant) var(--ease-smooth),
+      scale var(--motion-fast) var(--ease-smooth),
+      opacity var(--motion-fast) var(--ease-smooth);
+  }
+
+  .btn:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+  }
+
+  .btn:active:not(:disabled) {
+    scale: 0.97;
+    transition-duration: var(--motion-fast);
+  }
+
+  /* Primary is the lit rung, solid: the brightest thing on the row. */
+  .btn.primary {
+    background: var(--color-lit);
+    color: var(--color-on-lit);
+  }
+
+  .btn.primary:hover:not(:disabled) {
+    background: var(--color-lit-hover);
+  }
+
+  .btn.primary:active:not(:disabled) {
+    background: var(--color-lit);
+  }
+
+  .btn.quiet {
+    background: transparent;
+    color: var(--color-muted);
+  }
+
+  .btn.quiet:hover:not(:disabled) {
+    background: var(--color-fill-hover);
+    color: var(--color-text);
+  }
+
+  .btn.quiet:active:not(:disabled) {
+    background: var(--color-fill-pressed);
+  }
+
+  .btn[data-variant="danger"] {
+    background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+    color: var(--color-danger);
+  }
+
+  .btn[data-variant="danger"]:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-danger) 18%, transparent);
+  }
+
+  .btn[data-variant="danger"]:active:not(:disabled) {
+    background: color-mix(in srgb, var(--color-danger) 24%, transparent);
+  }
+
+  .btn[data-size="large"] {
+    min-height: var(--control-large);
+    padding-inline: 16px;
+    border-radius: var(--radius-control-large);
+    font-size: var(--text-body);
+  }
+
+  .btn[data-size="large"][data-shape="capsule"] {
+    border-radius: var(--radius-capsule);
+    padding-inline: 18px;
+  }
+
+  .pending {
+    display: inline-flex;
+    gap: 3px;
+  }
+
+  .pending > i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentcolor;
+    animation: pending 900ms var(--ease-in-out) infinite;
+  }
+
+  .pending > i:nth-child(2) {
+    animation-delay: 150ms;
+  }
+
+  .pending > i:nth-child(3) {
+    animation-delay: 300ms;
+  }
+
+  @keyframes pending {
+    0%,
+    100% {
+      opacity: 0.25;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn:active:not(:disabled) {
+      scale: 1;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .btn.primary {
+      background: Highlight;
+      color: HighlightText;
+    }
+  }
+
+}

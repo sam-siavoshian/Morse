@@ -11,7 +11,7 @@ import os from "node:os";
 import path from "node:path";
 import { detectBackends, recommend, configFor, applyChoice, isSetUp, runSetup, whichBin, gettingStarted } from "../daemon/setup.js";
 import { settingsFromConfig, migrateLegacy } from "../daemon/models.js";
-import { pageSupport, explainError, plainError, mergeOnboarding, normalizeOnboarding, modelMissing } from "../core/onboarding.js";
+import { explainError, plainError, mergeOnboarding, normalizeOnboarding, modelMissing } from "../core/onboarding.js";
 
 const plain = s => s.replace(/\x1b\[\d+m/g, "");
 const CLI = new URL("../daemon/cli.js", import.meta.url).pathname;
@@ -180,43 +180,15 @@ test("bare `morse` prints a three-line getting started until something is set up
 });
 
 test("onboarding state merges one level deep and drops unknown keys", () => {
-  assert.deepEqual(normalizeOnboarding(null), { coach: "", tips: { saved: false, share: false }, dismissed: { model: false, userScripts: false } });
+  assert.deepEqual(normalizeOnboarding(null), { coach: "", tips: { saved: false, share: false }, dismissed: { model: false } });
   const a = mergeOnboarding({ tips: { share: true } }, { coach: "done", tips: { saved: true }, junk: 1 });
-  assert.deepEqual(a, { coach: "done", tips: { saved: true, share: true }, dismissed: { model: false, userScripts: false } });
+  assert.deepEqual(a, { coach: "done", tips: { saved: true, share: true }, dismissed: { model: false } });
   assert.equal(mergeOnboarding(a, { coach: "" }).coach, "", "the tour can be shown again");
 });
 
-test("unsupported pages are explained in one sentence, with what to do", () => {
-  const id = "abcdefghijklmnopabcdefghijklmnop";
-  const cases = [
-    ["chrome://settings", "browser", "practice"],
-    ["chrome://newtab/", "newtab", "practice"],
-    ["about:blank", "newtab", "practice"],
-    ["edge://flags", "browser", "practice"],
-    ["view-source:https://example.com", "browser", "practice"],
-    ["https://chromewebstore.google.com/detail/x", "webstore", "practice"],
-    ["https://chrome.google.com/webstore/category", "webstore", "practice"],
-    ["chrome-extension://otherotherotherotherotherotherot/page.html", "extension", "practice"],
-    ["https://example.com/report.PDF", "pdf", undefined],
-    ["data:text/html,hi", "other", undefined],
-  ];
-  for (const [url, want, action] of cases) {
-    const r = pageSupport(url, { extensionId: id });
-    assert.equal(r?.id, want, url);
-    assert.equal(r.action, action, url);
-    assert.ok(r.text.length < 120 && /\.$/.test(r.text), `one sentence: ${r.text}`);
-  }
-  assert.equal(pageSupport("file:///home/me/a.html", { fileAccess: false }).action, "extension-settings");
-  assert.equal(pageSupport("file:///home/me/a.html", { fileAccess: true }), null);
-  assert.equal(pageSupport("https://example.com/"), null);
-  assert.equal(pageSupport("https://chrome.google.com/search"), null);
-  assert.equal(pageSupport(`chrome-extension://${id}/welcome.html`, { extensionId: id }), null, "the welcome page has a practice area");
-});
 
 test("generation errors in plain words, each with something to do", () => {
   const cases = [
-    ["This site blocks injected scripts. Turn on “Allow User Scripts” for Morse in chrome://extensions.", "userscripts"],
-    ["Refused to evaluate a string as JavaScript because 'unsafe-eval' is not an allowed source", "userscripts"],
     ["fetch failed: connect ECONNREFUSED 127.0.0.1:7457", "model"], // the Morse app isn't open: connect to it (or, on the desktop, open it)
     ["spawn claude ENOENT", "model"],
     ["Model server returned 401", "model"],

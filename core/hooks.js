@@ -1,6 +1,7 @@
 // Hooks a page already has: click and submit handlers, the functions that call
 // them, and the backend URLs in its source. The model sees these names (not a
-// guessed API) and a new control has to call one. Pure: no files, no network.
+// guessed API). Source names still need runtime verification before use.
+// Pure: no files, no network.
 
 const RESERVED = new Set(("function return if else for while switch case break continue new typeof instanceof void delete try catch finally throw class const let var async await of in do default export import from true false null undefined this super yield static get set document window console Math JSON Object Array String Number Boolean Date RegExp Promise Error Map Set fetch axios").split(" "));
 // At least three characters, so a minified `h` in el.on("click", h) is not a hook.
@@ -121,12 +122,12 @@ export function formatHooks(found, request) {
   const endpoints = pick(found.endpoints || [], e => `${e.method} ${e.url}`, request, 8);
   const modules = pick(found.modules || [], m => m, request, 8);
   if (!handlers.length && !functions.length && !endpoints.length && !modules.length) return "";
-  const lines = ["Hooks this app already has (call these from anything you add; names and URLs are from its code, not a guessed API):"];
+  const lines = ["Hooks found in this app’s source (names and URLs are evidence of implementation, not proof that a function is callable from the page):"];
   for (const h of handlers) lines.push(`- ${h.event} handler: ${h.fn}`);
   for (const f of functions) lines.push(`- function: ${f}`);
   for (const e of endpoints) lines.push(`- backend: ${e.method} ${e.url}`);
   for (const m of modules) lines.push(`- module: ${m}`);
-  lines.push("A new control must call one of these when one does that action. If none does, do not add a button that only toggles a class, and do not cover or remove the working control: morse.toast(\"This app has no function for that\").");
+  lines.push("Use a verified app command or an existing DOM control when possible. Bundled functions/modules may be private; do not call them as globals without runtime evidence. A complete local implementation is valid. Never cover or remove the working control.");
   return lines.join("\n");
 }
 
@@ -183,17 +184,19 @@ export function replacesHost(js) {
 }
 
 const ADDS_CONTROL = /morse\.el\s*\(\s*["'`](button|a|input)\b|createElement\s*\(\s*["'`](button|a|input)\b|<button[\s>/]|<input[\s>/]/i;
-const LIFE = /fetch\s*\(|\baxios\s*\.|\.open\s*\(|morse\.app\.command\s*\(|morse\.every\s*\(|morse\.after\s*\(|\.click\s*\(|clipboard|morse\.confirm\s*\(/;
+const LIFE = /fetch\s*\(|\baxios\s*\.|\.open\s*\(|morse\.app\.command\s*\(|morse\.every\s*\(|morse\.after\s*\(|\.click\s*\(|clipboard|morse\.confirm\s*\(|morse\.type\s*\(/;
 
-// A button whose handler only flips a class (or similar) and never calls the app.
-// A control with no click, submit, input, or change handler is a visual widget
-// (a timer readout). Polish still looks at it. Only a handler that never calls
-// the app is a fake feature.
+// Reject inert buttons and cosmetic handlers. This is a conservative static
+// check, not proof of behavior: native controls and local implementations are
+// valid even when they do not use a name found in the app's bundled source.
 function deadControl(js) {
   if (LIFE.test(js)) return false;
   const code = String(js);
   const handled = /\bon\s*:\s*\{[\s\S]{0,800}?\b(?:click|submit|input|change)\b|\bon(?:click|submit)\s*=|\.addEventListener\s*\(\s*["'`](?:click|submit|change|input)|(?:^|[^.\w$])(?:click|submit|input|change)\s*\([^)]*\)\s*\{/.test(code);
-  if (!handled) return false;
+  // A real button with no handler is not a working feature. A readout
+  // belongs in a span/output, and an anchor with href already has behavior.
+  if (!handled) return /morse\.el\s*\(\s*["'`]button["'`]|createElement\s*\(\s*["'`]button["'`]/.test(code)
+    && !/morse\.on\s*\(|\.on(?:change|input|keydown)\s*=|addEventListener\s*\(/.test(code);
   const stripped = code
     .replace(/\/\*[\s\S]*?\*\//g, " ")
     .replace(/\/\/[^\n]*/g, " ")
@@ -221,15 +224,10 @@ export function unwiredFeature(draft, context, request) {
   ];
   const fits = items.filter(i => i.score > 0);
   const unique = [...new Set(fits.map(i => i.name))];
-  if (unique.length && !unique.some(name => js.includes(name))) {
+  if (deadControl(js)) {
     return {
-      model: `The new control does not call this app. Call one of these from its click or submit (they are in the app's code): ${unique.slice(0, 6).join(", ")}. A button that only toggles a class does not do the feature, and it must not cover or remove the working control.`,
-      user: UNWIRED_ERROR,
-    };
-  }
-  if (!unique.length && deadControl(js)) {
-    return {
-      model: "The new control only toggles a class or restyles itself, and this app has no function listed for that action. Do not pretend it works. If nothing in the app does it, morse.toast(\"This app has no function for that\") and do not cover, hide, or replace the working control.",
+      model: "The new control has no working handler, or only toggles a class or restyles itself. Implement the requested behavior through an existing DOM control, a verified app command, or a complete local implementation. A readout belongs in a span/output, not an inert button. Do not cover, hide, or replace the working control."
+        + (unique.length ? ` Relevant source names: ${unique.slice(0, 6).join(", ")}. These may be private; use them only if runtime evidence shows they are callable.` : ""),
       user: UNWIRED_ERROR,
     };
   }

@@ -2,7 +2,7 @@
 
 **Duration:** 33.0 s (1920x1080, 30 fps).
 
-It opens on the finished change: The Daily Byte with a new headline, no ads, dark mode and a speedrun timer reading 0:24.0. It rewinds to the page as it was, then plays the run that got there. After that it shows the same thing in a desktop app (Obsidian), the Mods list, the shortcut recorder and the update window. It ends on the install line.
+It opens on the finished change: The Daily Byte with a new headline, no ads, dark mode and a speedrun timer reading 0:24.0. It rewinds to the page as it was, then plays the run that got there. After that it shows the same thing in a desktop app (Obsidian), the Mods list, the shortcut recorder and the update window. It ends on the download link.
 
 ## Files
 
@@ -35,11 +35,9 @@ The bed runs at 120 BPM, so a beat is 0.5 s. Every cut is on a beat, and the rev
 | 19.0–21.0 | Mods | The app name on its own line with the count under it: Obsidian "1 mod · 1 on", byte "3 mods · 3 on", and the four mods from this film. |
 | 21.0–23.0 | Shortcut | Settings, Open Morse. Clicks the recorder and presses Ctrl, Alt, M. "Saved", "Use the default". |
 | 23.0–26.0 | Update | The update window with the radar mark and a 1px edge. "Downloading the new version…" from 0 to 99%, then "The update is ready" with Later and Restart now at 25.0. |
-| 26.0–33.0 | End | Radar mark. "Change any app in your own words." The install line is fully on screen from about 26.95 and held to the last frame, about 6 s. "macOS and Linux, in Terminal". |
+| 26.0–33.0 | End | Radar mark. "Change any app in your own words." The download link is fully on screen from about 26.95 and held to the last frame, about 6 s. "Mac, Windows and Linux". |
 
-```
-curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh
-```
+[Download Morse](https://getmorse.vercel.app/)
 
 ### Speed
 
@@ -71,7 +69,7 @@ Not used:
   - risers into each reveal and a low impact on it;
   - UI ticks on the clicks and key presses, as they appear on screen;
   - a rising tone under the update download, and a soft chime when it's ready.
-- **End card:** the drums stop at 26.0. Morse's own intro sound sits under the install line: `desktop-app/ui/sounds/intro.m4a`, from [Zephium](https://github.com/zephium-browser/zephium), MPL 2.0. It's trimmed to its first 3 s with a fade-out and lowered in level.
+- **End card:** the drums stop at 26.0. Morse's own intro sound sits under the download link: `desktop-app/ui/sounds/intro.m4a`, from [Zephium](https://github.com/zephium-browser/zephium), MPL 2.0. It's trimmed to its first 3 s with a fade-out and lowered in level.
 - **Speech:** none.
 - **Loudness:** measured with ffmpeg `ebur128=peak=true` on the master's AAC track. -14.6 LUFS integrated, true peak -1.4 dBTP, loudness range 5.6 LU.
 
@@ -89,7 +87,7 @@ Not used:
   - 0.5 s: the finished page with the timer. There's no logo, title card or "introducing" in the first 2 s.
   - 2.0 s: the before page with the timer at 0:00.0.
   - 16.5 s, the middle: Obsidian with the Morse bar open.
-  - 32.5 s, the last second: the install line.
+  - 32.5 s, the last second: the download link.
 
 ## Tweet
 

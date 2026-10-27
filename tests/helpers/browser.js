@@ -8,8 +8,6 @@ export let chromium = null;
 try { ({ chromium } = createRequire(import.meta.url)("playwright")); } catch {}
 
 export const noBrowser = !chromium && "playwright not installed";
-// Extensions only load in headed Chromium: run these under Xvfb (npm run test:ui).
-export const noDisplay = noBrowser || (!process.env.DISPLAY && "extensions need a display (run under Xvfb: npm run test:ui)");
 
 // channel "chromium" is the new headless mode (real audio capture, closer to a
 // real browser); older Playwright builds fall back to the default.

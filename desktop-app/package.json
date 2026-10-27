@@ -2,7 +2,7 @@
   "name": "morse-desktop",
   "productName": "Morse",
   "version": "0.2.0",
-  "description": "Morse for your computer: open your apps with Morse, choose your model and connect Chrome, without a terminal.",
+  "description": "Hack your apps. Remove unwanted features, build your own, and keep your mods.",
   "license": "MIT",
   "private": true,
   "type": "module",

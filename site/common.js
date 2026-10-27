@@ -2,7 +2,7 @@
 // config.js, the repository's stars, the radar marks, a tiny monochrome
 // highlighter, mod cards, copy buttons and a toast.
 import { mountAll } from "./radar.js";
-import { LINKS, APP_ICONS } from "./config.js";
+import { LINKS, APP_ICONS } from "./config.js?v=20261026-cheatcodes";
 
 export const REPO = LINKS.github;
 
@@ -35,19 +35,39 @@ export function initPage() {
 // "desktop" (Download Morse) is this visitor's own download when the browser
 // says which system it is on (a Mac gets the Apple silicon one; the steps
 // under the button list every download).
-export function desktopLink(nav = globalThis.navigator) {
+export function desktopOS(nav = globalThis.navigator) {
   const p = `${nav?.userAgentData?.platform || ""} ${nav?.platform || ""} ${nav?.userAgent || ""}`;
-  if (/android|iphone|ipad|cros/i.test(p)) return LINKS.desktop;
-  if (/mac/i.test(p)) return LINKS.desktopMac;
-  if (/win/i.test(p)) return LINKS.desktopWindows;
-  if (/linux/i.test(p)) return LINKS.desktopLinux;
-  return LINKS.desktop;
+  if (/android|iphone|ipad|cros/i.test(p) || (nav?.maxTouchPoints > 1 && /mac/i.test(p))) return null;
+  if (/mac/i.test(p)) return "mac";
+  if (/win/i.test(p)) return "windows";
+  if (/linux/i.test(p)) return "linux";
+  return null;
+}
+
+export function desktopLink(nav = globalThis.navigator) {
+  const key = { mac: "desktopMac", windows: "desktopWindows", linux: "desktopLinux" }[desktopOS(nav)];
+  return LINKS[key || "desktop"];
 }
 
 export function applyLinks(root = document) {
   for (const a of root.querySelectorAll("a[data-link]")) {
     const href = a.dataset.link === "desktop" ? desktopLink() : LINKS[a.dataset.link];
     if (!href) continue;
+    if (a.dataset.link === "desktop" && a.classList.contains("btn")) {
+      const os = desktopOS();
+      let icon = a.querySelector(".btn-os-icon");
+      if (os) {
+        if (!icon) {
+          icon = document.createElement("img");
+          icon.className = "btn-logo btn-os-icon";
+          icon.alt = "";
+          icon.setAttribute("aria-hidden", "true");
+          icon.width = icon.height = 20;
+          a.prepend(icon);
+        }
+        icon.src = `icons/os-${os}.png`;
+      } else icon?.remove();
+    }
     // A link to this same page stays a fragment, so it scrolls instead of
     // loading the page again (/site/ and /site/index.html are one page).
     const page = u => u.origin + u.pathname.replace(/\/index\.html$/, "/");

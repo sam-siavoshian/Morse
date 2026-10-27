@@ -1,7 +1,8 @@
 # Changing things
 
-Everything starts in the bar. Press the shortcut, point at something and say
-what you want. Then watch it change.
+The bar is where you rewrite the app. Press the shortcut and say what to
+remove or build. Morse writes the mod while you watch. Save your version
+or undo the change.
 
 ```
 press ⌥Space ─▶ point ─▶ "add a sleep timer" ─▶ ▦▦▦ the model writes the change ▦▦▦ ─▶ you see it ─▶ Save · Share

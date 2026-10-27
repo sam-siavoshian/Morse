@@ -46,7 +46,7 @@ export async function soakMods(opts = {}) {
     const home = process.env.MORSE_HOME;
     await fs.mkdir(home, { recursive: true });
     await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false }));
-    await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true, editTools: true }, dismissed: { model: true, userScripts: true } }));
+    await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true, editTools: true }, dismissed: { model: true } }));
     const demo = await startDemoServer();
     cleanups.push(() => demo.close());
     const { saveMod } = await import("../../daemon/store.js");

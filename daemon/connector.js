@@ -46,6 +46,7 @@ import { STYLE_ID } from "../core/style.js"; // your-style hook
 import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
 import { pageCollapse } from "../core/guard.js"; // guard hook: a change that hides most of the page
 import { AppProfiler } from "./profile.js"; // app profiles: how the app works inside (docs/dev/rea.md)
+import { screenshotClip } from "./screenshot.js";
 import { barWorld } from "./open-bar.js"; // Open the bar: only a window whose Morse world is up
 
 // Perf: only the small boot goes into every page; the UI is evaluated on first use ("ui.load").
@@ -146,6 +147,7 @@ export class Connector {
     this.retry = new Map();   // target id -> { at, n } after a failed attach
     this.recentSaves = new Map();
     this.gens = new Generations();
+    this.activeRequests = 0;
     this.state = "starting";  // starting | attached | waiting | stopped
     // app profiles: built in the background once Morse is in the app's window
     this.profiler = app && AppProfiler.enabled() ? new AppProfiler({ app, port, log: this.log }) : null;
@@ -222,6 +224,10 @@ export class Connector {
   sync(list) {
     const byId = new Map(list.map(t => [t.id, t]));
     let dirty = false;
+    if (this.app?.browser) {
+      const needsPage = !list.some(t => classifyTarget(t, t.parentId ? byId.get(t.parentId)?.url : null).attach);
+      if (this.needsPage !== needsPage) { this.needsPage = needsPage; dirty = true; }
+    }
     for (const t of list) {
       const w = this.windows.get(t.id);
       if (w) {
@@ -491,6 +497,32 @@ export class Connector {
     } catch {}
   }
 
+  // Connected does not mean busy. Keep edits and unsaved previews intact
+  // while allowing an idle connection to survive an automatic Morse update.
+  async isUpdateBusy() {
+    if (this.gens.size || this.activeRequests || this.recorder) return true;
+    for (const w of this.windows.values()) {
+      if (!w.session || w.session.closed) continue;
+      const worlds = new Set([barWorld(w), ...[...(w.frames?.values() || [])].map(f => f.world)]);
+      for (const world of worlds) {
+        if (world == null) continue;
+        let timer;
+        try {
+          const result = await Promise.race([
+            w.session.send("Runtime.evaluate", {
+              expression: `(() => { const b = globalThis[Symbol.for("morse.boot")]; if (!b?.live()) return false; const s = b.S; return !!(s.open || s.phase === "working" || s.draft?.saving || (s.draft && !s.draft.saved)); })()`,
+              contextId: world, returnByValue: true,
+            }),
+            new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("activity check timed out")), 1500); }),
+          ]);
+          if (result.exceptionDetails || result.result?.value === true) return true;
+        } catch { if (!w.session.closed) return true; }
+        finally { clearTimeout(timer); }
+      }
+    }
+    return !!(this.gens.size || this.activeRequests || this.recorder);
+  }
+
   async windowFocused(w, world) {
     return w.session.send("Runtime.evaluate", { expression: "document.hasFocus()", contextId: world, returnByValue: true }).then(r => r?.result?.value === true).catch(() => false);
   }
@@ -570,9 +602,9 @@ export class Connector {
     // Errors inside watch/on callbacks surface a moment later. speed: the kit
     // says how long that can be for this mod (core/kit.js settle).
     await new Promise(r2 => setTimeout(r2, settleMs(res)));
-    const e = await s.send("Runtime.evaluate", { expression: `morse.__errors(${JSON.stringify(modId)})`, contextId: ctx, returnByValue: true });
-    const errs = e.result?.value || [];
-    return errs.length ? { ok: false, error: errs[0].split("\n")[0] } : { ok: true };
+    const e = await s.send("Runtime.evaluate", { expression: `morse.__ready ? morse.__ready(${JSON.stringify(modId)}) : { ok: !morse.__errors(${JSON.stringify(modId)}).length, error: morse.__errors(${JSON.stringify(modId)})[0] }`, contextId: ctx, returnByValue: true, awaitPromise: true });
+    if (e.exceptionDetails) return { ok: false, error: e.exceptionDetails.exception?.description || e.exceptionDetails.text };
+    return e.result?.value || { ok: false, error: "The change could not be verified" };
   }
 
   // Effect check (core/engine.js): the runtime's effectProbe, in Morse's world
@@ -595,7 +627,8 @@ export class Connector {
     if (!a) return null;
     const from = Date.now() / 1000 - 0.15;
     try {
-      const r = await s.send("Page.captureScreenshot", { format: "jpeg", quality: 85, clip: { x: a.x + a.scrollX, y: a.y + a.scrollY, width: a.width, height: a.height, scale: a.scale } });
+      const metrics = await s.send("Page.getLayoutMetrics").catch(() => ({}));
+      const r = await s.send("Page.captureScreenshot", { format: "jpeg", quality: 85, clip: screenshotClip(a, metrics) });
       return r?.data ? { mediaType: "image/jpeg", data: r.data, measured: a.misaligned || [] } : null;
     } catch { return null; }
     finally {
@@ -627,6 +660,12 @@ export class Connector {
   }
 
   async dispatch(s, caller, msg) {
+    this.activeRequests = (this.activeRequests || 0) + 1;
+    try { return await this.handleRequest(s, caller, msg); }
+    finally { this.activeRequests--; }
+  }
+
+  async handleRequest(s, caller, msg) {
     const app = this.app?.id || null;
     // Where the caller is, from the caller's document, not from the message.
     let at;

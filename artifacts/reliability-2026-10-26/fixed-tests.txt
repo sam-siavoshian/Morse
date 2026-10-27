@@ -1,0 +1,64 @@
+TAP version 13
+# Subtest: last attempt cannot bypass app command validation
+ok 1 - last attempt cannot bypass app command validation
+  ---
+  duration_ms: 2.046667
+  type: 'test'
+  ...
+# Subtest: last attempt cannot accept a notice in place of the feature
+ok 2 - last attempt cannot accept a notice in place of the feature
+  ---
+  duration_ms: 0.580292
+  type: 'test'
+  ...
+# Subtest: truncated code cannot be executed or saved as a complete feature
+ok 3 - truncated code cannot be executed or saved as a complete feature
+  ---
+  duration_ms: 0.37075
+  type: 'test'
+  ...
+# Subtest: a retry removes the previous JavaScript even when the replacement is CSS only
+ok 4 - a retry removes the previous JavaScript even when the replacement is CSS only
+  ---
+  duration_ms: 0.5025
+  type: 'test'
+  ...
+# Subtest: exhausted retries remove both preview CSS and JavaScript
+ok 5 - exhausted retries remove both preview CSS and JavaScript
+  ---
+  duration_ms: 0.213334
+  type: 'test'
+  ...
+# Subtest: cancellation while applying removes the preview instead of accepting it
+ok 6 - cancellation while applying removes the preview instead of accepting it
+  ---
+  duration_ms: 0.264292
+  type: 'test'
+  ...
+# Subtest: a decorative UI change cannot hide that all behavior targets are missing
+ok 7 - a decorative UI change cannot hide that all behavior targets are missing
+  ---
+  duration_ms: 0.771041
+  type: 'test'
+  ...
+# Subtest: visual polish cannot replace a working feature with selectors that match nothing
+ok 8 - visual polish cannot replace a working feature with selectors that match nothing
+  ---
+  duration_ms: 0.66925
+  type: 'test'
+  ...
+# Subtest: truncated visual polish keeps the working draft
+ok 9 - truncated visual polish keeps the working draft
+  ---
+  duration_ms: 0.73725
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8058.276166

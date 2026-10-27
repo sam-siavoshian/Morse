@@ -23,3 +23,13 @@ openai.png     The OpenAI mark (OpenAI), from OpenAI's own avatar on its GitHub
 
 The black marks (anthropic.png, openai.png) are shown white in dark mode by a
 CSS invert, the way both companies show them on dark backgrounds.
+
+Local model provider artwork (downloaded 2026-10-26, original files):
+ollama.png    https://ollama.com/public/ollama-nav.png
+              Ollama's official navigation mark, displayed without a color filter.
+lmstudio.png  https://lmstudio.ai/assets/marketing/brand/download/logos/lm-studio-icon-color.png
+              Official app icon from https://lmstudio.ai/brand, unmodified.
+llamacpp.png  https://raw.githubusercontent.com/ggml-org/llama.cpp/master/media/llama1-icon-transparent.png
+              Official llama.cpp repository artwork, unmodified.
+These marks belong to their respective owners and identify the user's chosen
+provider; they do not imply endorsement. Generic Local uses a computer glyph.

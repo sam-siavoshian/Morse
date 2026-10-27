@@ -13,7 +13,7 @@ import { freePort, listen } from "./helpers/net.js";
 import { waitFor, waitForStatus, waitForReady } from "./helpers/wait.js";
 
 const skip = noBrowser;
-let browser, page, site, openai, conn, running, transcribed = [];
+let browser, page, site, openai, conn, running, transcribed = [], logs = [];
 const status = (pred, what) => waitForStatus(page, pred, { what });
 const readJson = async f => JSON.parse(await fs.readFile(path.join(home, f), "utf8"));
 
@@ -38,16 +38,24 @@ before(async () => {
   const ctx = await browser.newContext({ viewport: { width: 1000, height: 700 } });
   await ctx.addInitScript(() => {
     localStorage.setItem("morse:debug", "1");
-    globalThis.webkitSpeechRecognition = class extends EventTarget { // as inside Electron (page world only: Morse's isolated world gets Chromium's own, which fails the same way here)
-      start() { setTimeout(() => { this.onerror?.(Object.assign(new Event("error"), { error: "network" })); const e = new Event("end"); this.onend?.(e); this.dispatchEvent(e); }, 20); }
-      stop() {} abort() {}
-    };
   });
   page = await ctx.newPage();
   await page.goto(`http://127.0.0.1:${sitePort}/`);
+  // Force the speech-service failure in the world where Morse actually
+  // reads the API. A page-world stub cannot control an isolated world, and
+  // Chromium's real speech service may succeed instead of using the recorder.
+  const cdp = await ctx.newCDPSession(page);
+  const speechFailure = `globalThis.SpeechRecognition = globalThis.webkitSpeechRecognition = class extends EventTarget {
+    start() { setTimeout(() => { this.onerror?.(Object.assign(new Event('error'), {error:'network'})); const e=new Event('end'); this.onend?.(e); this.dispatchEvent(e); }, 20); }
+    stop() {} abort() {}
+  };`;
+  await cdp.send('Page.addScriptToEvaluateOnNewDocument', { worldName: 'morse', source: speechFailure });
+  const tree = await cdp.send('Page.getFrameTree');
+  const world = await cdp.send('Page.createIsolatedWorld', { frameId: tree.frameTree.frame.id, worldName: 'morse' });
+  await cdp.send('Runtime.evaluate', { contextId: world.executionContextId, expression: speechFailure });
   const { Connector } = await import("../daemon/connector.js");
   // demoMs: a slower demo reply, so Stop reliably lands mid-stream on a busy machine.
-  conn = new Connector({ port, app: { id: "testapp", name: "Test App" }, settings: { provider: "demo", model: "demo", demoMs: 60 }, log: () => {} });
+  conn = new Connector({ port, app: { id: "testapp", name: "Test App" }, settings: { provider: "demo", model: "demo", demoMs: 60 }, log: line => logs.push(line) });
   running = conn.run();
   await waitForReady(page);
 });
@@ -61,7 +69,7 @@ after(async () => {
 test("settings round-trip through ~/.morse/settings.json", { skip }, async () => {
   await pressOpen(page);
   await status(s => s.open, "the bar to open");
-  await page.keyboard.press("Control+Comma");
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+Comma" : "Control+Comma");
   await status(s => s.pane === "settings", "the settings sheet");
   await page.keyboard.press("Enter");
   await page.keyboard.press("Alt+KeyJ");
@@ -116,7 +124,24 @@ test("a change that matches nothing gets one repair round (effect check through 
   await page.keyboard.press("Enter");
   const s = await status(s => s.phase === "result" || s.phase === "error", "the result");
   assert.equal(s.phase, "result", s.hint);
-  assert.match(s.hint, /second try/, "the effect check sent it back once");
+  assert.ok(logs.some(line => /paint the page gold.*2 attempts/.test(line)), "the effect check sent it back once");
   assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(255, 215, 0)");
   assert.match(await page.locator("style[data-morse-css]").first().textContent(), /^body \{/, "the repaired CSS replaced the dead one");
+});
+
+test("the connector waits for asynchronous setup and reports its rejection", { skip }, async () => {
+  const w = [...conn.windows.values()].find(w => w.frames?.get(w.frameId)?.main != null);
+  assert.ok(w, 'a real attached page');
+  const caller = { ...w.frames.get(w.frameId), frameId: w.frameId };
+  const id = 'async-connector-test';
+  try {
+    const result = await conn.exec(w.session, caller, id, `return (async () => {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      throw new Error('Delayed Spotify-style setup failure');
+    })();`);
+    assert.equal(result.ok, false);
+    assert.match(result.error, /Delayed Spotify-style setup failure/);
+  } finally {
+    await conn.exec(w.session, caller, id, '');
+  }
 });

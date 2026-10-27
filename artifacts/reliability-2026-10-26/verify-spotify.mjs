@@ -1,0 +1,61 @@
+import {createRequire} from 'node:module';
+import {fileURLToPath} from 'node:url';
+const {chromium}=createRequire(import.meta.url)('playwright');
+import {writeFile,readFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import {screenshotClip} from '../../daemon/screenshot.js';
+import {wrapModCode} from '../../core/kit.js';
+const out=fileURLToPath(new URL('.',import.meta.url)),id='morse-reliability-generated';
+const b=await chromium.connectOverCDP(process.env.SPOTIFY_CDP || 'http://127.0.0.1:9333');const p=b.contexts()[0].pages().find(p=>p.url().includes('xpui.app.spotify.com'));await p.bringToFront();
+const slider='[data-testid="playback-progressbar"] input[type="range"]';
+const state=()=>p.evaluate(sel=>({time:document.querySelector('[data-testid="playback-position"]')?.textContent,value:Number(document.querySelector(sel)?.value),playLabel:document.querySelector('[data-testid="control-button-playpause"]')?.getAttribute('aria-label')}),slider);
+const original=await state(), checks=[];
+const generated=JSON.parse(await readFile(`${out}/spotify-generated-result.json`,'utf8')).result;
+await p.evaluate(css=>{const el=document.createElement('style');el.id='morse-reliability-style';el.textContent=css;document.head.append(el);},generated.css);
+await p.evaluate(wrapModCode(id,generated.js).replaceAll('globalThis.morse','globalThis.__morseReliabilityKit').replace('\nmorse.__run(', '\n__morseReliabilityKit.__run('));
+const seek=async v=>{await p.evaluate(({sel,v})=>__morseReliabilityKit.__run('test-position',m=>m.type(document.querySelector(sel),v)),{sel:slider,v});await p.waitForTimeout(600);};
+const snap=async name=>{const box=await p.locator('[data-testid="general-controls"]').boundingBox();const s=await p.context().newCDPSession(p);const metrics=await s.send('Page.getLayoutMetrics');const dpr=await p.evaluate(()=>devicePixelRatio);const area={x:box.x-100,y:box.y-24,width:box.width+200,height:96,dpr,scale:1};const r=await s.send('Page.captureScreenshot',{format:'png',clip:screenshotClip(area,metrics)});await writeFile(`${out}/${name}.png`,Buffer.from(r.data,'base64'));await s.detach();};
+try {
+ await seek(60000);await snap('spotify-controls-before-click');
+ for (const [action,expected,keyboard] of [['Rewind 15 seconds',45000,false],['Forward 15 seconds',60000,false],['Forward 15 seconds',75000,true]]) {
+  const before=await state();const btn=p.getByRole('button',{name:action,exact:true});
+  if(keyboard){await btn.focus();await p.keyboard.press('Enter');}else await btn.click();
+  await p.waitForTimeout(700);const after=await state();
+  assert.ok(Math.abs(after.value-expected)<1100,JSON.stringify({action,expected,after}));
+  assert.equal(after.time,`${Math.floor(expected/60000)}:${String(Math.floor(expected/1000)%60).padStart(2,'0')}`);
+  assert.equal(after.playLabel,original.playLabel);
+  checks.push({action:keyboard?`${action} using keyboard Enter`:action,before,after,pass:true});
+ }
+ await snap('spotify-controls-working');
+ await p.screenshot({path:`${out}/spotify-working-full.png`});
+ await seek(5000);await p.getByRole('button',{name:'Rewind 15 seconds',exact:true}).click();await p.waitForTimeout(700);
+ assert.equal((await state()).value,0);checks.push({action:'Clamp at beginning of song',after:await state(),pass:true});
+ await p.locator('button[data-testid="seek-forward-15"]').evaluate(el=>el.remove());
+ await p.locator('button[data-testid="seek-forward-15"]').waitFor();
+ assert.equal(await p.locator('button[data-testid="seek-forward-15"]').count(),1);
+ await p.getByRole('button',{name:'Forward 15 seconds',exact:true}).click();await p.waitForTimeout(700);
+ assert.equal((await state()).time,'0:15');
+ checks.push({action:'Restore generated control after DOM removal and verify it still seeks',after:await state(),pass:true});
+ await p.mouse.move(100,100);
+ await p.evaluate(()=>document.activeElement?.blur());
+ await p.waitForFunction(()=>!document.querySelector('[data-testid="seek-forward-15"]').matches(':hover,:focus,:active'));
+ await p.waitForTimeout(250);
+ const metrics=await p.evaluate(()=>{const read=el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return {color:s.color,background:s.backgroundColor,font:s.fontFamily,height:r.height,centerY:r.y+r.height/2};};return {native:read(document.querySelector('[data-testid="control-button-skip-forward"]')),added:read(document.querySelector('[data-testid="seek-forward-15"]'))};});
+ assert.equal(metrics.native.color,metrics.added.color);assert.equal(metrics.native.font,metrics.added.font);assert.equal(metrics.native.height,metrics.added.height);assert.ok(Math.abs(metrics.native.centerY-metrics.added.centerY)<1);
+ checks.push({action:'Native font, color, height and vertical alignment',metrics,pass:true});
+ await p.locator('[data-testid="control-button-skip-forward"]').hover();await p.waitForTimeout(250);
+ const nativeHover=await p.locator('[data-testid="control-button-skip-forward"]').evaluate(el=>getComputedStyle(el).color);
+ await p.locator('[data-testid="seek-forward-15"]').hover();await p.waitForTimeout(250);
+ const addedHover=await p.locator('[data-testid="seek-forward-15"]').evaluate(el=>getComputedStyle(el).color);
+ assert.equal(addedHover,nativeHover);checks.push({action:'Hover color matches native Spotify control',nativeHover,addedHover,pass:true});
+ await p.mouse.move(100,100);
+ assert.deepEqual(await p.evaluate(id=>__morseReliabilityKit.__errors(id),id),[]);
+ checks.push({action:'No generated-code errors after interactions',pass:true});
+} finally {
+ await seek(original.value);
+ if(original.playLabel==='Play' && (await state()).playLabel==='Pause')await p.locator('[data-testid="control-button-playpause"]').click();
+ await p.evaluate(id=>{__morseReliabilityKit.__off(id);__morseReliabilityKit.__off('test-position');document.querySelector('#morse-reliability-style')?.remove();delete globalThis.__morseReliabilityKit;delete globalThis.__morseReliabilityContext;},id);
+ const residue=await p.locator(`[data-morse="${id}"]`).count();checks.push({action:'Undo removes all generated controls',remainingNodes:residue,pass:residue===0});
+ await writeFile(`${out}/spotify-functional-proof.json`,JSON.stringify({environment:'Installed Spotify for macOS, real model output; no hand editing of generated CSS or JS',original,checks,restored:await state()},null,2));
+ console.log(JSON.stringify(checks,null,2));await b.close();
+}

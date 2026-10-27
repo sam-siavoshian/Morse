@@ -43,7 +43,7 @@ export const OG = {
   file: "og-image.png",
   width: 1200,
   height: 630,
-  alt: "Morse: take what they won’t ship. Visual Studio Code after one sentence made it look like Windows 95, with the Morse bar offering Save and Undo.",
+  alt: "Morse: change any app. Add anything. Delete anything. Closed source doesn’t stop you anymore. Visual Studio Code after one sentence made it look like Windows 95, with the Morse bar offering Save and Undo.",
 };
 
 // at: how the page reaches site/ (a file: address here; a served page can
@@ -72,8 +72,8 @@ export const ogHtml = (at = file) => `<!doctype html><html><head><meta charset="
 </style></head><body>
   <div class="text">
     <div class="brand">${radar(28)}Morse</div>
-    <h1>Take what <span>they won’t ship.</span></h1>
-    <p>Change any app in one sentence. Free and open source.</p>
+    <h1>Change any app.<span>Add anything. Delete anything.</span></h1>
+    <p>Closed source doesn’t stop you anymore.</p>
   </div>
   <div class="keys"><kbd>⌥</kbd><kbd>Space</kbd><span>opens Morse in any app</span></div>
   <div class="win">

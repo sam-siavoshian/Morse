@@ -2,48 +2,58 @@
 
 # Morse: Change Any App
 
-### Reverse engineer any app.
+### Your apps have cheat codes. You write them.
 
-**Add any feature to any app. No limit. A change you keep is code you can read.**
+**Reverse engineer closed apps. Rip out the parts you hate. Build the features they won’t give you.**
 
-[![Preview build](https://img.shields.io/badge/preview-newest_main-5c4ee5?style=flat-square)](https://github.com/sam-siavoshian/RRAA/releases/tag/preview)
+[![Preview build](https://img.shields.io/badge/preview-newest_main-5c4ee5?style=flat-square)](https://github.com/sam-siavoshian/Morse/releases/tag/preview)
 **[Website](https://getmorse.vercel.app/) · [Docs](docs/README.md) · [Showcase](docs/showcase/README.md)**
 
 [Quick start](#quick-start) · [How Morse works](#how-morse-works) · [What you can change](#what-you-can-change) · [Real runs](#real-runs) · [FAQ](#faq) · [Documentation](#documentation)
 
-<code>curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh</code>
+[Download Morse](https://github.com/sam-siavoshian/Morse/releases/tag/preview)
 
 <br /><br />
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-hero.webp" alt="Change any app. Add anything. Delete anything. Closed source doesn't stop you anymore. Free for Mac, Windows and Linux, on a blue sky with clouds." width="1200" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/Morse/main/docs/launch/readme-hero.webp" alt="Change any app. Add anything. Delete anything. Closed source doesn't stop you anymore. Free for Mac, Windows and Linux, on a blue sky with clouds." width="1200" />
 
 </div>
 
 ---
 
-Take a feature in one app and bring it into another. Delete a paywall that is a box on a page that already loaded. Inject your own code. Add a feature the app never shipped. Morse never changes the app's files. Save it, and it is back the next time the app opens.
+The company shipped its version. You don’t have to keep it. Morse inspects the running app and writes code to change it. Delete the feed. Build the missing export. Take a feature from another app and make it work here. Save your version as a mod you can read, edit and turn off.
 
 Morse has no server and no account. It uses the AI you already have: Claude Code, Codex, or an API key.
+
+## Hack your version
+
+These are **example requests to try**, not claims of recorded results. The real recording is under [Real runs](#real-runs).
+
+| The app | Tell Morse |
+| --- | --- |
+| **YouTube** | “Rip out Shorts and recommendations. Make the home page subscriptions-only.” |
+| **Spotify** | “Give me my data. Add a CSV export for the playlist tracks already loaded: names, artists and albums.” |
+| **Gmail** | “Give this inbox VS Code’s command palette. Search the actions on this page and run them from the keyboard.” |
+| **GitLab** | “Add an approval tripwire. Flag changes made to this merge request after the last approval.” |
+| **An article behind an overlay** | “Delete the paywall overlay and signup popup. Let me scroll.” The article must already be loaded. |
+
+The point is control over the app on your computer. Morse can change the interface and behavior it can reach; it doesn’t unlock a service’s private backend or turn paid access into free access.
 
 ## Quick start
 
 ### Install
 
-**Mac**, in Terminal. There are no security prompts: the line checks Morse against the release's checksums and puts it in Applications.
+**Mac:** [Apple silicon](https://github.com/sam-siavoshian/Morse/releases/download/preview/Morse-mac-arm64.dmg) · [Intel](https://github.com/sam-siavoshian/Morse/releases/download/preview/Morse-mac-x64.dmg). Open the disk image and drag Morse to Applications.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh
-```
+**Windows:** [Morse-Setup.exe](https://github.com/sam-siavoshian/Morse/releases/download/preview/Morse-Setup.exe). **Linux:** [the AppImage](https://github.com/sam-siavoshian/Morse/releases/download/preview/Morse-linux-x86_64.AppImage).
 
-**Windows:** [Morse-Setup.exe](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-Setup.exe). **Linux:** the same line as the Mac, or [the AppImage](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-linux-x86_64.AppImage). Or download the Mac app: [Apple silicon](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-arm64.dmg) · [Intel](https://github.com/sam-siavoshian/RRAA/releases/download/preview/Morse-mac-x64.dmg).
-
-Morse updates itself after that.
+Morse updates itself after that. [First-time setup](docs/desktop-app.md#get-it).
 
 ### Open an app
 
-Morse finds your AI and lists your apps. Click **Open with Morse** next to one. In the app, press **⌥Space** on a Mac (**Ctrl+Shift+Space** on Windows and Linux).
+Morse finds your AI and lists your apps. Click **Open with Morse** next to one. In the app, press **Ctrl+Alt+Space** (shown as **⌃⌥Space** on a Mac).
 
-Point at the part you mean, or at nothing for the whole app. Press **Enter**, then **Save**.
+Point at the part you mean, or target the whole app. Tell Morse what to rip out or build in. Press **Enter**, watch the change, then **Save** to keep your version.
 
 ## How Morse works
 
@@ -68,13 +78,13 @@ A change you save is a **mod**. Morse puts your mods back every time the app ope
 
 ## Real runs
 
-Real apps and live sites. Not drawings.
+Actual recordings from installed apps and live sites. The requests above are ideas; this section shows what ran.
 
 ### A timer Obsidian did not ship
 
 Obsidian ships no focus timer. The note was open with none. Morse is open at the bottom with the ask: a panel with this note's reading time and a 25 minute countdown. The panel was not there. Then it is.
 
-<img src="https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/docs/launch/readme-obsidian-ask.gif" alt="The Obsidian note has no focus timer. Morse is open at the bottom with the ask for a focus panel. The panel was not on the note, then it appears on the right." width="1000" />
+<img src="https://raw.githubusercontent.com/sam-siavoshian/Morse/main/docs/launch/readme-obsidian-ask.gif" alt="The Obsidian note has no focus timer. Morse is open at the bottom with the ask for a focus panel. The panel was not on the note, then it appears on the right." width="1000" />
 
 ## FAQ
 
@@ -95,7 +105,7 @@ No. Morse opens the app with one extra setting so it can connect, and adds your 
 <details>
 <summary><strong>Why does my Mac warn about Morse?</strong></summary>
 
-Morse isn't notarized by Apple yet; that takes a paid Apple Developer ID. A Mac asks about apps a browser downloaded. The Terminal line above installs Morse without that prompt, after checking it against the release's checksums. With the .dmg, open Morse, then System Settings, Privacy & Security, **Open Anyway**.
+Morse isn't notarized by Apple yet; that takes a paid Apple Developer ID. After installing the .dmg, open Morse, then System Settings, Privacy & Security, **Open Anyway**.
 
 </details>
 
@@ -116,7 +126,7 @@ What you ask, the part you pointed at, and a picture of it, sent to the AI you c
 <details>
 <summary><strong>A change didn't work. What now?</strong></summary>
 
-Point at the exact part you mean and say it another way. Morse already checks whether a change did anything and tries again once; if nothing changed, it says so instead of saying it's done. Still stuck? See [Troubleshooting](docs/troubleshooting.md), or [open an issue](https://github.com/sam-siavoshian/RRAA/issues) with the app, what you asked, and what happened.
+Point at the exact part you mean and say it another way. Morse already checks whether a change did anything and tries again once; if nothing changed, it says so instead of saying it's done. Still stuck? See [Troubleshooting](docs/troubleshooting.md), or [open an issue](https://github.com/sam-siavoshian/Morse/issues) with the app, what you asked, and what happened.
 
 </details>
 
@@ -131,7 +141,7 @@ Point at the exact part you mean and say it another way. Morse already checks wh
 
 ## Contributing
 
-Bugs and ideas: [open an issue](https://github.com/sam-siavoshian/RRAA/issues). Code and docs: [send a pull request](https://github.com/sam-siavoshian/RRAA/pulls). [CONTRIBUTING.md](CONTRIBUTING.md) has the setup and checks, and [How Morse works](docs/dev/architecture.md) maps the code.
+Bugs and ideas: [open an issue](https://github.com/sam-siavoshian/Morse/issues). Code and docs: [send a pull request](https://github.com/sam-siavoshian/Morse/pulls). [CONTRIBUTING.md](CONTRIBUTING.md) has the setup and checks, and [How Morse works](docs/dev/architecture.md) maps the code.
 
 ## License
 

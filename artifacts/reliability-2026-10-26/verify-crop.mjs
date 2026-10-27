@@ -1,0 +1,15 @@
+import {createRequire} from 'node:module';
+import {fileURLToPath} from 'node:url';
+const {chromium}=createRequire(import.meta.url)('playwright');import {writeFile} from 'node:fs/promises';import {Connector} from '../../daemon/connector.js';
+const out=fileURLToPath(new URL('.',import.meta.url));
+const b=await chromium.connectOverCDP(process.env.SPOTIFY_CDP || 'http://127.0.0.1:9333');const p=b.contexts()[0].pages().find(p=>p.url().includes('xpui.app.spotify.com'));await p.bringToFront();const s=await p.context().newCDPSession(p);
+const box=await p.locator('[data-testid="general-controls"]').boundingBox();const dpr=await p.evaluate(()=>devicePixelRatio);const area={x:box.x-100,y:box.y-24,width:box.width+200,height:96,scrollX:0,scrollY:0,dpr,scale:1};
+const tree=await s.send('Page.getFrameTree');const {executionContextId}=await s.send('Page.createIsolatedWorld',{frameId:tree.frameTree.frame.id,worldName:'morse-reliability-crop-proof'});
+await s.send('Runtime.evaluate',{expression:`globalThis.__morseShotArea = (t,m,restore) => restore ? null : ${JSON.stringify(area)}`,contextId:executionContextId});
+const old=await s.send('Page.captureScreenshot',{format:'jpeg',quality:85,clip:{x:area.x,y:area.y,width:area.width,height:area.height,scale:area.scale}});
+await writeFile(`${out}/crop-before.jpg`,Buffer.from(old.data,'base64'));
+const fixed=await Connector.prototype.shoot.call({},s,{world:executionContextId},null,null);
+if(!fixed?.data)throw new Error('No screenshot from connector');
+await writeFile(`${out}/crop-after.jpg`,Buffer.from(fixed.data,'base64'));
+await writeFile(`${out}/crop-proof.json`,JSON.stringify({area,metrics:await s.send('Page.getLayoutMetrics'),method:'Old captureScreenshot formula versus current Connector.shoot on the same live Spotify player'},null,2));
+await s.send('Runtime.evaluate',{expression:'delete globalThis.__morseShotArea',contextId:executionContextId});await b.close();

@@ -1,0 +1,352 @@
+TAP version 13
+# Subtest: God mode: one edit whose request is lost doesn't stop later edits from applying and saving
+ok 1 - God mode: one edit whose request is lost doesn't stop later edits from applying and saving
+  ---
+  duration_ms: 2056.53375
+  type: 'test'
+  ...
+# Subtest: synthetic key events from the page don't open the bar, talk, or act inside it
+ok 2 - synthetic key events from the page don't open the bar, talk, or act inside it
+  ---
+  duration_ms: 712.978167
+  type: 'test'
+  ...
+# Subtest: voice over a result: holding the hotkey dictates a refinement instead of saving and closing
+ok 3 - voice over a result: holding the hotkey dictates a refinement instead of saving and closing
+  ---
+  duration_ms: 8753.547625
+  type: 'test'
+  ...
+# Subtest: hotkey recorder: God mode doesn't take the keys being recorded
+ok 4 - hotkey recorder: God mode doesn't take the keys being recorded
+  ---
+  duration_ms: 575.592334
+  type: 'test'
+  ...
+# Subtest: desktop onboarding: provider "none" is not a connected model
+ok 5 - desktop onboarding: provider "none" is not a connected model
+  ---
+  duration_ms: 11.434542
+  type: 'test'
+  ...
+# Subtest: after the host detaches, the old runtime leaves the page's clicks and keys alone
+ok 6 - after the host detaches, the old runtime leaves the page's clicks and keys alone
+  ---
+  duration_ms: 230.39225
+  type: 'test'
+  ...
+# Subtest: every window listener in the runtime goes through listen(), which checks live()
+ok 7 - every window listener in the runtime goes through listen(), which checks live()
+  ---
+  duration_ms: 7.886125
+  type: 'test'
+  ...
+# Subtest: edit tools hotkey: leaves a running change's status alone; help shows the real key
+ok 8 - edit tools hotkey: leaves a running change's status alone; help shows the real key
+  ---
+  duration_ms: 259.768917
+  type: 'test'
+  ...
+# Subtest: copy: no demo fallback promised
+ok 9 - copy: no demo fallback promised
+  ---
+  duration_ms: 8.05975
+  type: 'test'
+  ...
+# Subtest: first-run coach: page tools saving on their own don't finish it or show the first-save tip
+ok 10 - first-run coach: page tools saving on their own don't finish it or show the first-save tip
+  ---
+  duration_ms: 565.72975
+  type: 'test'
+  ...
+# Subtest: the engine and the self-heal check read a mod's selectors the same way
+ok 11 - the engine and the self-heal check read a mod's selectors the same way
+  ---
+  duration_ms: 2.38325
+  type: 'test'
+  ...
+# Subtest: a fingerprint keeps only what matched, on the page at rest, for this version of the code
+ok 12 - a fingerprint keeps only what matched, on the page at rest, for this version of the code
+  ---
+  duration_ms: 3.299625
+  type: 'test'
+  ...
+# Subtest: page paths: ids and numbers blanked, hash routes kept
+ok 13 - page paths: ids and numbers blanked, hash routes kept
+  ---
+  duration_ms: 0.500167
+  type: 'test'
+  ...
+# Subtest: broken only when everything it used to change is gone from the same page
+ok 14 - broken only when everything it used to change is gone from the same page
+  ---
+  duration_ms: 0.801
+  type: 'test'
+  ...
+# Subtest: what the person reads, and what the model reads
+ok 15 - what the person reads, and what the model reads
+  ---
+  duration_ms: 1.421375
+  type: 'test'
+  ...
+# Subtest: the demo model fixes the Tunes redesign, and only that
+ok 16 - the demo model fixes the Tunes redesign, and only that
+  ---
+  duration_ms: 1.569291
+  type: 'test'
+  ...
+# Subtest: words to look for where the old selectors went
+ok 17 - words to look for where the old selectors went
+  ---
+  duration_ms: 0.658459
+  type: 'test'
+  ...
+# Subtest: the fingerprint never leaves this machine; auto-fix is off by default
+ok 18 - the fingerprint never leaves this machine; auto-fix is off by default
+  ---
+  duration_ms: 0.662
+  type: 'test'
+  ...
+# Subtest: sharing a fix of a gallery mod opens the gallery's issue, titled as a fix
+ok 19 - sharing a fix of a gallery mod opens the gallery's issue, titled as a fix
+  ---
+  duration_ms: 0.780542
+  type: 'test'
+  ...
+# Subtest: scanCode: IPC channels (also through minified aliases), contextBridge APIs, menu keys, windows and preloads
+ok 20 - scanCode: IPC channels (also through minified aliases), contextBridge APIs, menu keys, windows and preloads
+  ---
+  duration_ms: 4.56775
+  type: 'test'
+  ...
+# Subtest: scanCode: commands the way real apps register them, with their names
+ok 21 - scanCode: commands the way real apps register them, with their names
+  ---
+  duration_ms: 0.938
+  type: 'test'
+  ...
+# Subtest: scanCode: store actions, routes, the app's own events, exports and bundlers
+ok 22 - scanCode: store actions, routes, the app's own events, exports and bundlers
+  ---
+  duration_ms: 0.729
+  type: 'test'
+  ...
+# Subtest: scanCode on a 20 MB bundle takes well under a few seconds
+ok 23 - scanCode on a 20 MB bundle takes well under a few seconds
+  ---
+  duration_ms: 436.388667
+  type: 'test'
+  ...
+# Subtest: the static profile of demo/electron-app (unpacked in resources/app), and its files stay the same
+ok 24 - the static profile of demo/electron-app (unpacked in resources/app), and its files stay the same
+  ---
+  duration_ms: 57.467834
+  type: 'test'
+  ...
+# Subtest: the static profile of demo/electron-app (packed as app.asar), and its files stay the same
+ok 25 - the static profile of demo/electron-app (packed as app.asar), and its files stay the same
+  ---
+  duration_ms: 63.863584
+  type: 'test'
+  ...
+# Subtest: an asar's unpacked files are read from <name>.asar.unpacked, and a broken archive is refused
+ok 26 - an asar's unpacked files are read from <name>.asar.unpacked, and a broken archive is refused
+  ---
+  duration_ms: 2.310834
+  type: 'test'
+  ...
+# Subtest: profiles are cached per app and code version in ~/.morse/profiles, and an update makes a new one
+ok 27 - profiles are cached per app and code version in ~/.morse/profiles, and an update makes a new one
+  ---
+  duration_ms: 35.345833
+  type: 'test'
+  ...
+# Subtest: the prompt gets the profile only for requests about behavior, with the commands that fit first
+ok 28 - the prompt gets the profile only for requests about behavior, with the commands that fit first
+  ---
+  duration_ms: 8.092875
+  type: 'test'
+  ...
+# Subtest: a draft that runs a command the app doesn't have gets a repair round with the close ones
+ok 29 - a draft that runs a command the app doesn't have gets a repair round with the close ones
+  ---
+  duration_ms: 3.157958
+  type: 'test'
+  ...
+# Subtest: runtime: the command runner from the app's globals, its commands, its buttons, and the handle mods use
+ok 30 - runtime: the command runner from the app's globals, its commands, its buttons, and the handle mods use
+  ---
+  duration_ms: 404.717875
+  type: 'test'
+  ...
+# Subtest: runtime: a command service reachable only through an event listener's closure (no globals), and nothing of the app's is changed
+ok 31 - runtime: a command service reachable only through an event listener's closure (no globals), and nothing of the app's is changed
+  ---
+  duration_ms: 488.482875
+  type: 'test'
+  ...
+# Subtest: real Electron: morse launch profiles Tunes in the background, a mod runs its own command, and its files stay the same
+ok 32 - real Electron: morse launch profiles Tunes in the background, a mod runs its own command, and its files stay the same # SKIP no Electron runtime (see demo/electron-app/build.mjs)
+  ---
+  duration_ms: 0.103083
+  type: 'test'
+  ...
+# Subtest: each kind of step reads as plain words; hidden values never show
+ok 33 - each kind of step reads as plain words; hidden values never show
+  ---
+  duration_ms: 465.663334
+  type: 'test'
+  ...
+# Subtest: typing in one field is one step; a double click is one click; on then off cancels out
+ok 34 - typing in one field is one step; a double click is one click; on then off cancels out
+  ---
+  duration_ms: 0.600542
+  type: 'test'
+  ...
+# Subtest: a recording stops growing at the step limit
+ok 35 - a recording stops growing at the step limit
+  ---
+  duration_ms: 0.123333
+  type: 'test'
+  ...
+# Subtest: the model gets the steps in order, with selectors, labels and list items, and never a hidden value
+ok 36 - the model gets the steps in order, with selectors, labels and list items, and never a hidden value
+  ---
+  duration_ms: 1.745375
+  type: 'test'
+  ...
+# Subtest: demo model: a recorded flow becomes a button, a shortcut, or the steps for every matching item
+ok 37 - demo model: a recorded flow becomes a button, a shortcut, or the steps for every matching item
+  ---
+  duration_ms: 1.350292
+  type: 'test'
+  ...
+# Subtest: selectors: ids, test ids, names and labels first; never hashed names
+ok 38 - selectors: ids, test ids, names and labels first; never hashed names
+  ---
+  duration_ms: 8.916041
+  type: 'test'
+  ...
+# Subtest: selectors: a button with no attributes is found by its words, inside a named part of the page
+ok 39 - selectors: a button with no attributes is found by its words, inside a named part of the page
+  ---
+  duration_ms: 2.370584
+  type: 'test'
+  ...
+# Subtest: selectors: every element in the page is found again by the selector chosen for it
+ok 40 - selectors: every element in the page is found again by the selector chosen for it
+  ---
+  duration_ms: 3.482125
+  type: 'test'
+  ...
+# Subtest: list items: a click in an inbox row names the row, its kind, its place and its state
+ok 41 - list items: a click in an inbox row names the row, its kind, its place and its state
+  ---
+  duration_ms: 7.73175
+  type: 'test'
+  ...
+# Subtest: hidden fields: passwords, card numbers and security codes
+ok 42 - hidden fields: passwords, card numbers and security codes
+  ---
+  duration_ms: 5.845291
+  type: 'test'
+  ...
+# Subtest: kit: waitFor waits for an element to appear, by words; type, choose and key act like a person
+ok 43 - kit: waitFor waits for an element to appear, by words; type, choose and key act like a person
+  ---
+  duration_ms: 432.957166
+  type: 'test'
+  ...
+# Subtest: kit: waitFor and byText find an icon button by its name; a counter id is not a selector
+ok 44 - kit: waitFor and byText find an icon button by its name; a counter id is not a selector
+  ---
+  duration_ms: 16.418541
+  type: 'test'
+  ...
+# Subtest: kit: an async handler's error is collected, and a mod turned off stops waiting
+ok 45 - kit: an async handler's error is collected, and a mod turned off stops waiting
+  ---
+  duration_ms: 340.073583
+  type: 'test'
+  ...
+# Subtest: a taken feature keeps only its shape: plain strings, a small picture, no stray fields
+ok 46 - a taken feature keeps only its shape: plain strings, a small picture, no stray fields
+  ---
+  duration_ms: 6.588083
+  type: 'test'
+  ...
+# Subtest: the list: newest first, one per id, at most 30; two lists merge by what changed last
+ok 47 - the list: newest first, one per id, at most 30; two lists merge by what changed last
+  ---
+  duration_ms: 8.62
+  type: 'test'
+  ...
+# Subtest: a typed request finds the feature it names, and only then
+ok 48 - a typed request finds the feature it names, and only then
+  ---
+  duration_ms: 1.226208
+  type: 'test'
+  ...
+# Subtest: a request for a well-known feature of another app is noticed, with the app and the feature
+ok 49 - a request for a well-known feature of another app is noticed, with the app and the feature
+  ---
+  duration_ms: 1.041375
+  type: 'test'
+  ...
+# Subtest: Take: the model names it and says what it does, from the parts and the steps, never the picture
+ok 50 - Take: the model names it and says what it does, from the parts and the steps, never the picture
+  ---
+  duration_ms: 1.038125
+  type: 'test'
+  ...
+# Subtest: Bring: the request says what to build, how it opened, and to use this app's own design
+ok 51 - Bring: the request says what to build, how it opened, and to use this app's own design
+  ---
+  duration_ms: 7.005125
+  type: 'test'
+  ...
+# Subtest: a brought feature whose code finds none of this page's things gets another try (it would list nothing)
+ok 52 - a brought feature whose code finds none of this page's things gets another try (it would list nothing)
+  ---
+  duration_ms: 6.334375
+  type: 'test'
+  ...
+# Subtest: the mod remembers what it was brought from: “Taken from VSCodium”
+ok 53 - the mod remembers what it was brought from: “Taken from VSCodium”
+  ---
+  duration_ms: 0.492209
+  type: 'test'
+  ...
+# Subtest: the demo model names a taken feature and brings back a working palette
+ok 54 - the demo model names a taken feature and brings back a working palette
+  ---
+  duration_ms: 1.392375
+  type: 'test'
+  ...
+# Subtest: taken.*: put, list and remove, and whether the other side sees them
+ok 55 - taken.*: put, list and remove, and whether the other side sees them
+  ---
+  duration_ms: 1.008083
+  type: 'test'
+  ...
+# Subtest: Chrome and the computer share one list: taken on either side shows on both; deleted on one, gone from both
+ok 56 - Chrome and the computer share one list: taken on either side shows on both; deleted on one, gone from both
+  ---
+  duration_ms: 0.846459
+  type: 'test'
+  ...
+# Subtest: the computer keeps one list, only yours to read, for every app and browser Morse opens
+ok 57 - the computer keeps one list, only yours to read, for every app and browser Morse opens
+  ---
+  duration_ms: 10.337625
+  type: 'test'
+  ...
+1..57
+# tests 57
+# suites 0
+# pass 56
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 13483.211958

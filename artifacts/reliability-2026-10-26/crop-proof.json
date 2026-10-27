@@ -1,0 +1,59 @@
+{
+  "area": {
+    "x": 388.4844055175781,
+    "y": 941.6062622070312,
+    "width": 840.6405944824219,
+    "height": 96,
+    "scrollX": 0,
+    "scrollY": 0,
+    "dpr": 1.6666666269302368,
+    "scale": 1
+  },
+  "metrics": {
+    "layoutViewport": {
+      "pageX": 0,
+      "pageY": 0,
+      "clientWidth": 2696,
+      "clientHeight": 1730
+    },
+    "visualViewport": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "pageX": 0,
+      "pageY": 0,
+      "clientWidth": 2696,
+      "clientHeight": 1730,
+      "scale": 1,
+      "zoom": 0.8333333134651184
+    },
+    "contentSize": {
+      "x": 0,
+      "y": 0,
+      "width": 2696,
+      "height": 1730
+    },
+    "cssLayoutViewport": {
+      "pageX": 0,
+      "pageY": 0,
+      "clientWidth": 1617,
+      "clientHeight": 1038
+    },
+    "cssVisualViewport": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "pageX": 0,
+      "pageY": 0,
+      "clientWidth": 1617.60009765625,
+      "clientHeight": 1038,
+      "scale": 1,
+      "zoom": 0.8333333134651184
+    },
+    "cssContentSize": {
+      "x": 0,
+      "y": 0,
+      "width": 1617,
+      "height": 1038
+    }
+  },
+  "method": "Old captureScreenshot formula versus current Connector.shoot on the same live Spotify player"
+}

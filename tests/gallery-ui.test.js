@@ -43,7 +43,7 @@ before(async () => {
   home = tempDir("morse-gallery-");
   process.env.MORSE_HOME = home;
   await fs.writeFile(path.join(home, "settings.json"), JSON.stringify({ welcome: false }));
-  await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true, userScripts: true } }));
+  await fs.writeFile(path.join(home, "onboarding.json"), JSON.stringify({ coach: "done", tips: { saved: true, share: true }, dismissed: { model: true } }));
 
   // The repo, served like demo/serve.js does; the demo mods' host is this run's port.
   port = await freePort();

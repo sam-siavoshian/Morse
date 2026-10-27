@@ -1,0 +1,35 @@
+{
+  "verifiedAt": "2026-10-27T07:34:14.234Z",
+  "installedApp": "/Applications/Morse.app",
+  "installedArchiveSHA256": "c38016299dac4a9451f6f7c8aaffb252b0df21e2432867e9ba2e2678b2987c94",
+  "runtime": {
+    "updatedKit": true,
+    "asyncRejectionDetected": true
+  },
+  "session": {
+    "id": "spotify",
+    "name": "Spotify",
+    "path": "/Applications/Spotify.app",
+    "aliases": [],
+    "modsApp": "spotify",
+    "browser": "Chrome/151.0.7922.138",
+    "electron": null,
+    "started": "2026-10-27T07:33:35.994Z",
+    "pid": 30293,
+    "port": 9333,
+    "transport": "port",
+    "state": "attached",
+    "watch": false,
+    "windows": [
+      {
+        "id": "F4FE04FCC2FF0D09DA895EB287C32980",
+        "type": "page",
+        "kind": "window",
+        "url": "https://xpui.app.spotify.com/index.html",
+        "since": 1793086416000,
+        "title": "Spotify - Web Player: Listen to Music, Podcasts, and Audiobooks Online"
+      }
+    ],
+    "updated": "2026-10-27T07:34:11.001Z"
+  }
+}

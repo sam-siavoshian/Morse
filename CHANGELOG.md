@@ -60,9 +60,6 @@ under the new version number with the date
   three short steps: the AI Morse found, how it works, and an app to try. It
   follows [Zephium](https://github.com/zephium-browser/zephium)'s first run;
   the dots and the sound are Zephium's (Mozilla Public License 2.0).
-- **A Mac install with no security prompts:** one line in Terminal puts Morse
-  in Applications, checked against the release's SHA-256 sums:
-  `curl -fsSL https://raw.githubusercontent.com/sam-siavoshian/RRAA/main/install-app.sh | sh`.
 - **A change that does nothing never says it's done.** Morse learns what
   moves on the page by itself (a song's elapsed time) before a change, so a
   change that did nothing is caught and tried again; if it still does
@@ -106,9 +103,7 @@ Version 0.2.0, the first version for other people to install.
   websites) Use Morse in Chrome. The `morse` command is in "For developers".
 - The Morse app has one download for each computer (Mac, Windows, Linux),
   rebuilt from `main` on every change, in the `preview` release.
-- For developers: one line installs the `morse` command
-  (`install.sh`, `install.ps1`). Run it again to update; `morse uninstall`
-  removes it. `morse setup --auto` and `morse doctor --offline` are new.
+- For developers: `morse setup --auto` and `morse doctor --offline` are new.
 
 ### Describe a change
 

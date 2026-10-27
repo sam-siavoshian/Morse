@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// morse: change any app in your own words.
+// morse: hack your apps in your own words.
 
 import { execFile } from "node:child_process";
 import { setLanguage, languageFromEnv, loadLanguage, t } from "../core/i18n.js";
@@ -275,7 +275,7 @@ async function main() {
       await showModel();
       break;
     }
-    case "uninstall": // what the install line added (daemon/installed.js)
+    case "uninstall": // remove a legacy terminal installation (daemon/installed.js)
       await (await import("./installed.js")).uninstallCli(f);
       break;
     case "doctor": {

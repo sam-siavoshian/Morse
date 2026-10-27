@@ -1,0 +1,110 @@
+{
+  "environment": "Installed Spotify for macOS, real model output; no hand editing of generated CSS or JS",
+  "original": {
+    "time": "0:00",
+    "value": 0,
+    "playLabel": "Play"
+  },
+  "checks": [
+    {
+      "action": "Rewind 15 seconds",
+      "before": {
+        "time": "1:00",
+        "value": 60000,
+        "playLabel": "Play"
+      },
+      "after": {
+        "time": "0:45",
+        "value": 45000,
+        "playLabel": "Play"
+      },
+      "pass": true
+    },
+    {
+      "action": "Forward 15 seconds",
+      "before": {
+        "time": "0:45",
+        "value": 45000,
+        "playLabel": "Play"
+      },
+      "after": {
+        "time": "1:00",
+        "value": 60000,
+        "playLabel": "Play"
+      },
+      "pass": true
+    },
+    {
+      "action": "Forward 15 seconds using keyboard Enter",
+      "before": {
+        "time": "1:00",
+        "value": 60000,
+        "playLabel": "Play"
+      },
+      "after": {
+        "time": "1:15",
+        "value": 75000,
+        "playLabel": "Play"
+      },
+      "pass": true
+    },
+    {
+      "action": "Clamp at beginning of song",
+      "after": {
+        "time": "0:00",
+        "value": 0,
+        "playLabel": "Play"
+      },
+      "pass": true
+    },
+    {
+      "action": "Restore generated control after DOM removal and verify it still seeks",
+      "after": {
+        "time": "0:15",
+        "value": 15000,
+        "playLabel": "Play"
+      },
+      "pass": true
+    },
+    {
+      "action": "Native font, color, height and vertical alignment",
+      "metrics": {
+        "native": {
+          "color": "rgb(179, 179, 179)",
+          "background": "rgba(0, 0, 0, 0)",
+          "font": "SpotifyMixUI, SpotifyMixUI-Arab, SpotifyMixUI-Cyrl, SpotifyMixUI-Grek, SpotifyMixUI-Hebr, SpotifyMixUI-Thai, DevanagariFallback, \"Helvetica Neue\", helvetica, arial, \"Hiragino Sans\", \"Hiragino Kaku Gothic ProN\", Meiryo, \"MS Gothic\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Noto Color Emoji\"",
+          "height": 31.996875762939453,
+          "centerY": 981.604700088501
+        },
+        "added": {
+          "color": "rgb(179, 179, 179)",
+          "background": "rgba(0, 0, 0, 0)",
+          "font": "SpotifyMixUI, SpotifyMixUI-Arab, SpotifyMixUI-Cyrl, SpotifyMixUI-Grek, SpotifyMixUI-Hebr, SpotifyMixUI-Thai, DevanagariFallback, \"Helvetica Neue\", helvetica, arial, \"Hiragino Sans\", \"Hiragino Kaku Gothic ProN\", Meiryo, \"MS Gothic\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Noto Color Emoji\"",
+          "height": 31.996875762939453,
+          "centerY": 981.604700088501
+        }
+      },
+      "pass": true
+    },
+    {
+      "action": "Hover color matches native Spotify control",
+      "nativeHover": "rgb(255, 255, 255)",
+      "addedHover": "rgb(255, 255, 255)",
+      "pass": true
+    },
+    {
+      "action": "No generated-code errors after interactions",
+      "pass": true
+    },
+    {
+      "action": "Undo removes all generated controls",
+      "remainingNodes": 0,
+      "pass": true
+    }
+  ],
+  "restored": {
+    "time": "0:00",
+    "value": 0,
+    "playLabel": "Play"
+  }
+}

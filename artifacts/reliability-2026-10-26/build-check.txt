@@ -1,0 +1,14 @@
+· build
+Built dist/runtime/runtime.js
+· node --check on every JS file
+  300 files
+· runtime bundle: duplicate top-level names, and it parses
+  717 top-level names
+· axe-core is not in the built runtime
+
+✗ 1 problem:
+  - docs/showcase/spotify-loop-station/mod.js: /Users/samsiavoshian/morse/docs/showcase/spotify-loop-station/mod.js:59
+    return ()=>{panel.remove();launch.remove()};
+    ^^^^^^
+    
+    SyntaxError: Illegal return statement

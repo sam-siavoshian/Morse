@@ -134,7 +134,7 @@ test("engine streams css, runs js, and repairs a failing first attempt", async (
   });
   assert.equal(res.ok, true);
   assert.equal(res.attempts, 2);
-  assert.equal(runs, 2);
+  assert.equal(runs, 3, "failed JS is explicitly removed before the replacement runs");
   assert.ok(events.some(e => e.type === "phase" && e.phase === "fixing"));
   assert.ok(events.some(e => e.type === "css" && e.css.includes(".morse-sleep")));
 });
@@ -187,8 +187,8 @@ test("a change with no visible effect gets a repair round naming the dead select
   });
   assert.equal(res.ok, true);
   assert.equal(res.attempts, 2);
-  assert.match(prompts[1], /nothing on the page changed/);
-  assert.match(prompts[1], /`\.covers img`/);
+  assert.match(prompts[1], /selectors match the page/);
+  assert.match(prompts[1], /\.covers img/);
 });
 
 test("a change that still does nothing after its repairs never says done: it comes off and says so", async () => {

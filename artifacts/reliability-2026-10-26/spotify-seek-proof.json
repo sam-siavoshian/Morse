@@ -1,0 +1,45 @@
+{
+  "scope": "Live installed Spotify, paused playback, real native progress control",
+  "initial": {
+    "position": "0:01",
+    "value": "0",
+    "max": "297437",
+    "playing": "Play"
+  },
+  "cases": [
+    {
+      "version": "raw-value-assignment",
+      "targetMs": 30000,
+      "start": {
+        "position": "0:01",
+        "value": "0",
+        "max": "297437",
+        "playing": "Play"
+      },
+      "end": {
+        "position": "0:01",
+        "value": "30000",
+        "max": "297437",
+        "playing": "Play"
+      },
+      "errors": []
+    },
+    {
+      "version": "morse-type-helper",
+      "targetMs": 45000,
+      "start": {
+        "position": "0:01",
+        "value": "30000",
+        "max": "297437",
+        "playing": "Play"
+      },
+      "end": {
+        "position": "0:45",
+        "value": "45000",
+        "max": "297437",
+        "playing": "Play"
+      },
+      "errors": []
+    }
+  ]
+}

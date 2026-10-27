@@ -26,6 +26,7 @@ function switchHtml(key, on, label) {
 // Re-rendering keeps keyboard focus on the same control.
 function focusKeyOf(n) {
   if (!n || !pane.contains(n)) return "";
+  if (n.matches("summary")) return `details[data-group="${n.parentElement.dataset.group}"] > summary`;
   for (const a of ["hk", "off", "reset", "act", "ys" /* your-style hook */]) if (n.dataset[a]) return `[data-${a}="${n.dataset[a]}"]`;
   if (n.dataset.v) return `.seg[data-k="${n.closest(".seg").dataset.k}"] [data-v="${n.dataset.v}"]`;
   if (n.dataset.k) return `[data-k="${n.dataset.k}"]`;
@@ -34,7 +35,9 @@ function focusKeyOf(n) {
 function renderSettings() {
   if (paneKind !== "settings") return;
   const keep = focusKeyOf(root.activeElement), scroll = pane.scrollTop;
+  const expanded = [...pane.querySelectorAll("details[open]")].map(n => n.dataset.group);
   paintSettings();
+  for (const group of expanded) pane.querySelector(`details[data-group="${group}"]`)?.setAttribute("open", "");
   pane.scrollTop = scroll;
   if (keep) pane.querySelector(keep)?.focus({ preventScroll: true });
 }
@@ -69,12 +72,10 @@ function paintSettings() {
   pane.innerHTML = `
     <div class="sheet" role="group" aria-label="${esc(t("settings.title"))}">
       <header><b>${t("settings.title")}</b><span class="flash" aria-hidden="true"></span><button type="button" class="tbtn" data-act="done">${t("btn.done")}</button></header>
-      ${YourStyle.settingsHtml() /* your-style hook: 72-style.js */}
       <section>
         ${openRow}
         <div class="srow"><div class="lbl"><span>${t("settings.theme")}</span></div><div class="ctl">${segHtml("theme", t("settings.theme"), [["auto", t("settings.theme.auto")], ["light", t("settings.theme.light")], ["dark", t("settings.theme.dark")]], PREFS.theme)}</div></div>
         ${languageRowHtml()}
-        <div class="srow"><div class="lbl"><span>${t("settings.autoFix")}</span><small>${t("settings.autoFix.help")}</small></div><div class="ctl">${switchHtml("autoFix", PREFS.autoFix, t("settings.autoFix"))}</div></div><!-- self-heal hook: 71-heal.js -->
       </section>
       <button type="button" class="tbtn more-set" data-act="more" aria-expanded="${settingsMore}" aria-controls="m-more-settings">${t("settings.more")}</button>
       <div id="m-more-settings" class="more-settings"${settingsMore ? "" : " hidden"}>
@@ -88,16 +89,32 @@ function paintSettings() {
         <div class="srow"><div class="lbl"><span>${t("settings.position")}</span><small>${t("settings.position.help")}</small></div><div class="ctl">${segHtml("barPosition", t("settings.position"), [["auto", t("settings.position.auto")], ["top", t("settings.position.top")], ["bottom", t("settings.position.bottom")]], PREFS.barPosition)}</div></div>
       </section>
       ${modelSection()}
+      <details class="settings-group" data-group="style"><summary>${t("ys.title")}</summary>${YourStyle.settingsHtml()}</details>
       <section><h4>${t("settings.changes")}</h4>
+        <div class="srow"><div class="lbl"><span>${t("settings.autoFix")}</span><small>${t("settings.autoFix.help")}</small></div><div class="ctl">${switchHtml("autoFix", PREFS.autoFix, t("settings.autoFix"))}</div></div><!-- self-heal hook: 71-heal.js -->
+
         <div class="srow"><div class="lbl"><span>${t("settings.polish")}</span><small>${t("settings.polish.help")}</small></div><div class="ctl">${switchHtml("polish", PREFS.polish, t("settings.polish"))}</div></div><!-- polish: core/polish.js -->
       </section>
       <section><h4>${t("settings.general")}</h4>
         <div class="srow"><div class="lbl"><span>${t("settings.welcome")}</span><small>${t("settings.welcome.help")}</small></div><div class="ctl">${switchHtml("welcome", PREFS.welcome, t("settings.welcome"))}</div></div>
         <div class="srow"><div class="lbl"><span>${t("settings.gallery")}</span><small>${t("settings.gallery.help")}</small></div><div class="ctl">${switchHtml("gallery", PREFS.gallery, t("settings.gallery"))}</div></div><!-- gallery hook: 68-gallery.js -->
       </section>
-      <footer><button type="button" class="tbtn" data-act="reset-all">${t("settings.resetAll")}</button><span class="dim">${esc(S.mode === "extension" ? t("settings.synced") : S.mode === "desktop" ? t("settings.savedHere") : "")}</span></footer>
+      <footer><button type="button" class="tbtn" data-act="reset-all">${t("settings.resetAll")}</button><span class="dim">${esc(S.mode === "desktop" ? t("settings.savedHere") : "")}</span></footer>
       </div>
     </div>`;
+  const advanced = pane.querySelector(".more-settings");
+  for (const section of [...advanced.querySelectorAll(":scope > section")]) {
+    const heading = section.querySelector("h4");
+    if (!heading) continue;
+    const details = document.createElement("details");
+    details.className = "settings-group";
+    details.dataset.group = String([...advanced.children].indexOf(section));
+    const summary = document.createElement("summary");
+    summary.textContent = heading.textContent;
+    heading.remove();
+    section.replaceWith(details);
+    details.append(summary, section);
+  }
 }
 // models (core/route.js): Automatic, Always fast, Always best, and the two
 // names. The names are set with morse setup / morse config, or in the popup.
@@ -149,7 +166,9 @@ function startRecording(id) {
   if (id !== "open") settingsMore = true; // its row is under More settings
   recording = { id, partial: "", error: "" };
   renderSettings();
-  pane.querySelector(`[data-hk="${id}"]`)?.focus();
+  const key = pane.querySelector(`[data-hk="${id}"]`);
+  if (key?.closest("details")) key.closest("details").open = true;
+  key?.focus();
   announce(t("settings.recording.say"));
 }
 function stopRecording(focus = true) {

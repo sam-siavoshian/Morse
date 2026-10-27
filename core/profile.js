@@ -395,7 +395,7 @@ export function profileSlice(profile, request, { target = null, force = false } 
     runner ? "Do it with the app's own commands and objects, not by clicking its buttons or faking key presses (keys sent from code don't reach the app's shortcuts). Wrap calls in try/catch and morse.toast a short message if one fails."
       : "Prefer the app's own objects over clicking its buttons or faking key presses (keys sent from code don't reach the app's shortcuts).",
     "To react to the app (a save, a note opening), listen with morse.on on its events, or on keys. Never replace or wrap the app's own functions.",
-    "A new control calls a listed function, module, hook, or backend route. It must not only toggle a class, and it must not cover or replace a control that already works.",
+    "Source-scanned function and module names can be private to a bundle, not globals. Use verified commands or runtime objects, existing DOM controls, or a complete local implementation. Do not guess that a source name is callable. Preserve controls that already work.",
   ];
   // Taking over a key the app already uses: the app's own handler runs first unless the mod's runs in the capture phase.
   if (/\b(shortcut|key|press|ctrl|cmd|alt|remap|instead)\b/i.test(request)) rules.push("A key the app already uses: listen with morse.on(window, \"keydown\", fn, true) (capture, so yours runs first), check the exact keys, then e.preventDefault() and e.stopImmediatePropagation() before running the command.");

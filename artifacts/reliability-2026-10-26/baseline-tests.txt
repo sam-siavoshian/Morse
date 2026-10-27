@@ -1,0 +1,203 @@
+TAP version 13
+# Subtest: last attempt cannot bypass app command validation
+not ok 1 - last attempt cannot bypass app command validation
+  ---
+  duration_ms: 3.500125
+  type: 'test'
+  location: '/Users/samsiavoshian/morse/tests/reliability.test.js:14:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/samsiavoshian/morse/tests/reliability.test.js:17:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: last attempt cannot accept a notice in place of the feature
+not ok 2 - last attempt cannot accept a notice in place of the feature
+  ---
+  duration_ms: 0.715834
+  type: 'test'
+  location: '/Users/samsiavoshian/morse/tests/reliability.test.js:20:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/samsiavoshian/morse/tests/reliability.test.js:23:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: truncated code cannot be executed or saved as a complete feature
+not ok 3 - truncated code cannot be executed or saved as a complete feature
+  ---
+  duration_ms: 0.168666
+  type: 'test'
+  location: '/Users/samsiavoshian/morse/tests/reliability.test.js:26:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/samsiavoshian/morse/tests/reliability.test.js:29:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a retry removes the previous JavaScript even when the replacement is CSS only
+not ok 4 - a retry removes the previous JavaScript even when the replacement is CSS only
+  ---
+  duration_ms: 0.66
+  type: 'test'
+  location: '/Users/samsiavoshian/morse/tests/reliability.test.js:33:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    no failed buttons/listeners survive the replacement
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/samsiavoshian/morse/tests/reliability.test.js:38:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: exhausted retries remove both preview CSS and JavaScript
+not ok 5 - exhausted retries remove both preview CSS and JavaScript
+  ---
+  duration_ms: 0.83125
+  type: 'test'
+  location: '/Users/samsiavoshian/morse/tests/reliability.test.js:40:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/samsiavoshian/morse/tests/reliability.test.js:45:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: cancellation while applying removes the preview instead of accepting it
+not ok 6 - cancellation while applying removes the preview instead of accepting it
+  ---
+  duration_ms: 0.81075
+  type: 'test'
+  location: '/Users/samsiavoshian/morse/tests/reliability.test.js:50:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///Users/samsiavoshian/morse/tests/reliability.test.js:58:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a decorative UI change cannot hide that all behavior targets are missing
+not ok 7 - a decorative UI change cannot hide that all behavior targets are missing
+  ---
+  duration_ms: 1.624208
+  type: 'test'
+  location: '/Users/samsiavoshian/morse/tests/reliability.test.js:62:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/samsiavoshian/morse/tests/reliability.test.js:66:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: visual polish cannot replace a working feature with selectors that match nothing
+not ok 8 - visual polish cannot replace a working feature with selectors that match nothing
+  ---
+  duration_ms: 1.508208
+  type: 'test'
+  location: '/Users/samsiavoshian/morse/tests/reliability.test.js:69:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    'fixed' !== 'kept'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'kept'
+  actual: 'fixed'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/samsiavoshian/morse/tests/reliability.test.js:78:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: truncated visual polish keeps the working draft
+not ok 9 - truncated visual polish keeps the working draft
+  ---
+  duration_ms: 1.038167
+  type: 'test'
+  location: '/Users/samsiavoshian/morse/tests/reliability.test.js:84:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    'fixed' !== 'kept'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'kept'
+  actual: 'fixed'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/samsiavoshian/morse/tests/reliability.test.js:92:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 0
+# fail 9
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8101.56125

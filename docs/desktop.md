@@ -224,10 +224,16 @@ report, with or without this.
 
 ## Which apps can't work, and why
 
-**Native apps.** Morse changes web pages. Apps that aren't drawn with web
-technology have no page to change: Finder, System Settings, most built-in
-macOS and Windows apps, Microsoft Office, and native apps like ChatGPT for Mac.
-`morse apps` marks them "can't connect".
+**Native apps.** Native interfaces have no webpage for Morse's generated
+mods that change web pages. On macOS, the desktop shortcut also supports a native picker
+adapted from [Rea](https://github.com/morluto/rea): hover a native control, press
+the Morse shortcut, then Return to select. Supported controls offer Press,
+increment/decrement, and Set value. Escape closes the picker. This requires
+Accessibility access for Morse (Electron for development). Browser tabs and
+toolbars use this path; webpage content retains the existing page picker.
+Native layout redesign, natural-language native mods, and Windows/Linux native
+control are not implemented. The CLI's connection status still describes only
+web-content connections. See [native picker details](../native/morse-picker/README.md).
 
 **Apps that turn off or block the debugging switch.** Morse needs the app to
 open its debugging port when it starts. A few apps remove that switch, quit

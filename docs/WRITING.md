@@ -21,16 +21,12 @@ written for developers are listed under [Where technical words are fine](#where-
 - **Write for someone who has never heard of CSS or Electron.** Keep technical
   terms for developer docs and for the code view, where people chose to look
   at code.
-- **Calm, not excited.** No exclamation marks. No emoji. No hype.
-- **No sales rhythm.** No rhetorical questions ("Like it?"), no "X. Y. Z."
-  slogans, no lists of three for the sound of it, no em dashes. Say the one
-  thing that is true, and stop.
+- **Bold about control. Precise about behavior.** Brand copy can say “hack your apps,” “rip out the feed,” and “build what they won’t ship.” Describe a concrete change. No invented results, exclamation marks or emoji.
+- **Match the surface.** Headlines and onboarding can carry the hacking voice. Setup steps, permissions, errors and recovery messages must say exactly what happens and what to do next. Keep those instructions literal.
 - **Only claim what was checked.** Name the apps Morse was
   [tested on](desktop.md#tested-on) (Visual Studio Code, VSCodium, Obsidian, Logseq, Joplin), not apps it
   might work with.
-- **Plain, not clever.** No jokes, puns or cute names. A label says what the
-  thing does. "Rewire" and "the magic moment" say nothing; "Change keys" and
-  "Watch it happen" do.
+- **Concrete, not vague.** “Delete the recommendation feed” says what changes. “Unleash the magic” says nothing. Action labels still name their actual behavior.
 - **Sentence case** for everything: buttons, headings, menu items, settings.
   "Keyboard shortcuts", not "Keyboard Shortcuts". Feature names follow the
   rule below.
@@ -284,7 +280,7 @@ in one or two short sentences.
 | Settings | Toggle God mode | Show the Edit tools |
 | Share | .user.js for Tampermonkey | Download for Tampermonkey |
 | CLI | In any attached window: Alt+Space to morse | In a connected app, press Alt+Space to open Morse |
-| README | Customize any app in one sentence. | Change any app or website in your own words. |
+| README | Customize any app in one sentence. | Hack your apps in your own words. |
 | Website | Mods are data. Share them as a link. | Share a mod with a link. |
 | Bar, first tip | Like it? Save keeps it for next time… | Save keeps it for next time. Undo puts the page back. |
 | Ask, Show me | You do the clicking; Morse points the way. | Morse shows where to click. You do the clicking. |
