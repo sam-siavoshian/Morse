@@ -2,7 +2,7 @@
 // config.js, the repository's stars, the radar marks, a tiny monochrome
 // highlighter, mod cards, copy buttons and a toast.
 import { mountAll } from "./radar.js";
-import { LINKS, APP_ICONS } from "./config.js?v=20261026-trimmed";
+import { LINKS, APP_ICONS } from "./config.js?v=20261026-cheatcodes";
 
 export const REPO = LINKS.github;
 

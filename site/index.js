@@ -1,8 +1,8 @@
 // The landing page: the nav and the links from config.js, the Morse bar in
 // the hero, the before and after cards and the real-apps strip (also from
 // config.js), the skies' pixel edges, the story, and the panes in the glass.
-import { initPage, esc, appIcon } from "./common.js?v=20261026-trimmed";
-import { SHOWCASE, REAL_APPS } from "./config.js?v=20261026-trimmed";
+import { initPage, esc, appIcon } from "./common.js?v=20261026-cheatcodes";
+import { SHOWCASE, REAL_APPS } from "./config.js?v=20261026-cheatcodes";
 import { mountReveals, mountHeroScroll, mountMark, mountDither, mountStory, mountDemo, mountAsker, mountCount, mountLazySkies } from "./motion.js";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;

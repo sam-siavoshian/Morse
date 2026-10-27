@@ -21,11 +21,11 @@
 <link rel="preload" as="font" type="font/woff2" href="fonts/interdisplay-semibold.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/inter-regular.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/inter-medium.woff2" crossorigin>
-<link rel="modulepreload" href="common.js?v=20261026-trimmed">
-<link rel="modulepreload" href="config.js?v=20261026-trimmed">
+<link rel="modulepreload" href="common.js?v=20261026-cheatcodes">
+<link rel="modulepreload" href="config.js?v=20261026-cheatcodes">
 <link rel="modulepreload" href="motion.js">
 <link rel="modulepreload" href="radar.js">
-<link rel="stylesheet" href="site.css?v=20261026-trimmed">
+<link rel="stylesheet" href="site.css?v=20261026-cheatcodes">
 <script>document.documentElement.setAttribute("data-js", "");</script>
 </head>
 <body>
@@ -131,23 +131,24 @@
   <section id="takes" class="section" aria-labelledby="takes-title">
     <div class="wrap">
       <header class="head">
-        <h2 id="takes-title" data-reveal>Your apps have cheat codes now.</h2>
-        <p data-reveal style="--delay:0.08s">Reverse engineer the app. Rewrite the parts you hate. Add the parts they never built.</p>
+        <h2 id="takes-title" data-reveal>Your apps have cheat codes. You write them.</h2>
+        <p data-reveal style="--delay:0.08s">Reverse engineer closed apps. Rip out the parts you hate. Build the features they won’t give you.</p>
       </header>
 
       <div class="features">
         <article class="feature feature-wide" data-reveal="fade">
           <div class="feature-copy">
-            <h3>Stop asking for features. Start adding them.</h3>
-            <p>Closed source means the company keeps the code. Morse inspects the running app and writes your changes anyway. Delete the feed. Add the missing export. Take a feature from another app. Tell it what to hack:</p>
+            <h3>Skip the feature request. Hack it in.</h3>
+            <p>The company shipped its version. You don’t have to keep it. Morse inspects the running app and writes code to change it. Kill the feed. Build the missing export. Take a feature from another app and make it work here. Tell Morse what you want:</p>
             <a class="keys keys-open" href="morse://open" aria-label="Open the Morse app"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>Space</kbd><span>or</span><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>Space</kbd><span class="keys-action">Open Morse</span></a>
           </div>
           <div class="scene" style="--pos: 78% 30%">
-            <div class="glass asker" role="img" aria-label="Ideas to try: remove YouTube Shorts and recommendations, and link promises to the original emails in Gmail." data-asker>
-              <div class="ask-bar"><span class="ask-mark" data-radar="16" data-still></span><span class="ask-text" data-typed>delete Shorts and recommendations. leave only my subscriptions.</span><span class="ask-caret"></span></div>
+            <div class="glass asker" role="img" aria-label="Example requests: remove YouTube’s feed, export loaded Spotify playlist data, add a command palette to Gmail, and flag GitLab changes made after approval." data-asker>
+              <div class="ask-bar"><span class="ask-mark" data-radar="16" data-still></span><span class="ask-text" data-typed>rip out Shorts and recommendations. make YouTube subscriptions-only.</span><span class="ask-caret"></span></div>
               <ul class="ask-list">
-                <li class="is-on"><i class="gi gi-youtube"></i><span>delete Shorts and recommendations. leave only my subscriptions.</span><em>YouTube</em><kbd>↵</kbd></li>
-                <li><i class="gi gi-gmail"></i><span>add a receipts button. link every promise to the original email.</span><em>Gmail</em><kbd>↵</kbd></li>
+                <li class="is-on"><i class="gi gi-youtube"></i><span>rip out Shorts and recommendations. make YouTube subscriptions-only.</span><em>YouTube</em><kbd>↵</kbd></li>
+                <li><i class="gi gi-gmail"></i><span>give Gmail VS Code’s command palette. run my inbox from the keyboard.</span><em>Gmail</em><kbd>↵</kbd></li>
+                <li><i class="gi gi-spotify"></i><span>give me my data. export this playlist’s loaded tracks as a CSV.</span><em>Spotify</em><kbd>↵</kbd></li>
               </ul>
             </div>
           </div>
@@ -156,7 +157,7 @@
         <article class="feature" data-reveal="fade">
           <div class="scene" style="--pos: 12% 40%">
             <div class="glass wall" role="img" aria-label="An illustrative request to remove a paywall overlay from an article already loaded in the browser." data-wall>
-              <div class="glass-head"><span><b>Delete the box. Read the article.</b><small>For articles already loaded behind an overlay</small></span><span class="switch is-on"></span></div>
+              <div class="glass-head"><span><b>Delete the paywall overlay.</b><small>For articles already loaded behind an overlay</small></span><span class="switch is-on"></span></div>
               <p class="big"><span data-count="2">2</span>popups removed</p>
               <ul class="struck">
                 <li style="--i:0">The paywall overlay</li>
@@ -165,7 +166,7 @@
               </ul>
             </div>
           </div>
-          <p class="feature-line"><b>The article loaded. Delete what’s covering it.</b> “Remove the paywall overlay. Remove the signup popup. Let me scroll.” Morse can strip away those blocks when the article is already in your browser.</p>
+          <p class="feature-line"><b>The words are here. The box can go.</b> “Delete the paywall overlay. Kill the signup popup. Let me scroll.” Ask Morse to remove the blocks covering an article that has already loaded.</p>
         </article>
 
 
@@ -173,15 +174,16 @@
         <article class="feature" data-reveal="fade" style="--delay:0.08s">
           <div class="scene scene-night" style="--pos: 20% 35%">
             <div class="glass fixes">
-              <p class="glass-title">Your own controls. Inside their apps.</p>
+              <p class="glass-title">Mods you weren’t supposed to need</p>
               <ul>
-                <li><i class="gi gi-youtube"></i><span>Delete Shorts and recommendations.<small>Keep the subscriptions. Lose the feed.</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Delete Shorts and recommendations, YouTube"></button></li>
-                <li><i class="gi gi-gmail"></i><span>Make “as discussed” prove it.<small>Link promises to the original emails</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Track promises and linked receipts, Gmail"></button></li>
-                <li><i class="gi gi-gitlab"></i><span>Show what changed after approval.<small>Add a review timeline to the merge request</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Add a merge request review timeline, GitLab"></button></li>
+                <li><i class="gi gi-youtube"></i><span>Kill the recommendation feed.<small>YouTube opens to the channels you chose</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Delete Shorts and recommendations, YouTube"></button></li>
+                <li><i class="gi gi-spotify"></i><span>Give me my data.<small>Spotify: export loaded track names, artists and albums</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Export loaded playlist metadata, Spotify"></button></li>
+                <li><i class="gi gi-gmail"></i><span>Put VS Code’s command palette in Gmail.<small>Search actions. Run your inbox from the keyboard.</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Add a command palette, Gmail"></button></li>
+                <li><i class="gi gi-gitlab"></i><span>Catch the edit made after “approved.”<small>GitLab: flag changes since the last approval</small></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Flag changes made after approval, GitLab"></button></li>
               </ul>
             </div>
           </div>
-          <p class="feature-line"><b>Their roadmap doesn’t decide your version.</b> Remove what gets in your way. Build what they won’t. Save your mods and turn each one on or off.</p>
+          <p class="feature-line"><b>Their app. Your rules.</b> Delete the parts designed to keep you scrolling. Add the controls they left out. Keep your version as a mod you can read, edit and switch off.</p>
         </article>
       </div>
     </div>
@@ -192,7 +194,7 @@
     <div class="wrap">
       <header class="head">
         <h2 id="how-title" data-reveal>Describe the hack. Watch the app change.</h2>
-        <p data-reveal style="--delay:0.08s">No waiting for a feature request. Open the app and tell Morse what to add or remove.</p>
+        <p data-reveal style="--delay:0.08s">Open the app. Say what you want to rip out or build in. Morse writes the mod while you watch.</p>
       </header>
       <ol class="points" data-reveal="fade">
         <li>
@@ -201,11 +203,11 @@
         </li>
         <li>
           <b>Tell it what to hack.</b>
-          <p>“Delete YouTube Shorts.” “Add an export button.” “Build Gmail’s snooze here.” Type it or say it. Morse inspects the app, writes a mod and applies it while you watch.</p>
+          <p>“Delete the feed.” “Export this playlist’s loaded tracks.” “Put VS Code’s command palette here.” Type it or say it. Morse inspects the app and applies the code it writes.</p>
         </li>
         <li>
           <b>Keep your version.</b>
-          <p>Hit Save to keep the mod. Keep hacking from there. Hit Undo whenever you want the original back.</p>
+          <p>Save the hack. It comes back the next time you open the app. Stack more mods on top, or hit Undo to put things back.</p>
         </li>
       </ol>
     </div>
@@ -220,7 +222,7 @@
     </div>
     <div class="wrap">
       <header class="head head-center">
-        <h2 id="privacy-title" data-reveal>Your hacks stay on your machine.</h2>
+        <h2 id="privacy-title" data-reveal>Hack your apps. Keep your code.</h2>
         <p data-reveal style="--delay:0.08s">No Morse account. No Morse server collecting your apps or your changes.</p>
       </header>
       <figure class="zero-figure">
@@ -241,8 +243,8 @@
   <section id="apps" class="section section-later" aria-labelledby="apps-title">
     <div class="wrap">
       <header class="head">
-        <h2 id="apps-title" data-reveal>Start with an app you want to break open.</h2>
-        <p data-reveal style="--delay:0.08s">These are real Morse runs in real apps. Open one of your own and tell it what needs to change.</p>
+        <h2 id="apps-title" data-reveal>Closed source is where you start.</h2>
+        <p data-reveal style="--delay:0.08s">Real apps. Real changes. These recorded runs show the starting point. The prompts above are ideas for what to try next.</p>
       </header>
       <ul class="apps" id="apps-grid" data-reveal="fade" aria-label="Tested apps"></ul>
       <p class="fine" data-reveal>Earlier runs tested on Linux and in Chrome. Windows is not yet tested. <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/docs/desktop.md#tested-on">What was tested</a></p>
@@ -300,7 +302,7 @@
       <canvas class="dither" data-dither="down"></canvas>
     </div>
     <div class="wrap cta-grid">
-      <h2 id="install-title" data-reveal>They built the app.<span> Hack your version.</span></h2>
+      <h2 id="install-title" data-reveal>They wrote the rules.<span> Rewrite your app.</span></h2>
       <div class="cta-get" id="install-desktop" data-reveal style="--delay:0.08s">
         <div class="downloads">
           <a class="btn btn-primary btn-lg btn-pill" href="./#desktop-steps" data-link="desktop">Download Morse</a>
@@ -334,12 +336,12 @@
       </nav>
     </div>
     <div class="foot-base">
-      <span>Closed source. Your rules.</span>
+      <span>Their code. Your changes.</span>
       <span>&copy; 2026 Morse · <a href="https://github.com/sam-siavoshian/RRAA/blob/HEAD/LICENSE">MIT license</a></span>
     </div>
   </div>
 </footer>
 
-<script type="module" src="index.js?v=20261026-trimmed"></script>
+<script type="module" src="index.js?v=20261026-cheatcodes"></script>
 </body>
 </html>
