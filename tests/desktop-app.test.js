@@ -697,6 +697,17 @@ test("Model screen: the choice list, real marks, and Use this", () => {
   assert.doesNotMatch(boot, /await morse\.modelChoices/, "provider discovery does not block the first paint");
 });
 
+test("the Mac window can be dragged from the title area", () => {
+  const css = readFileSync(path.join(root, "desktop-app/ui/app.css"), "utf8");
+  assert.match(css, /body\.mac \.app::before \{[^}]*-webkit-app-region:\s*drag/, "the top of the window is a drag region");
+  assert.match(css, /body\.mac \.side \{[^}]*-webkit-app-region:\s*drag/, "the sidebar is a drag region");
+  assert.match(css, /body\.mac \.head \{[^}]*-webkit-app-region:\s*drag/, "the page title is a drag region");
+  assert.match(css, /body\.mac \.first\[data-step="welcome"\]::before \{[^}]*-webkit-app-region:\s*drag/, "the first run can move before its bar is shown");
+  assert.doesNotMatch(css, /\.app-sky \{[^}]*-webkit-app-region:\s*no-drag/, "the sky must not cancel the title strip");
+  assert.match(css, /\.side::before \{[^}]*backdrop-filter:/, "the sidebar blur is its own layer");
+  assert.doesNotMatch(css, /(?:^|\n)\.side(?:::before)?,\s*body\.mac \.side \{[^}]*backdrop-filter/, "the drag element itself is not blurred");
+});
+
 test("the window wears the website's design: the same tokens, its sky, accessible navigation icons", () => {
   const css = readFileSync(path.join(root, "desktop-app/ui/app.css"), "utf8");
   const site = readFileSync(path.join(root, "site/site.css"), "utf8");

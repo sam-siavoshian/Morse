@@ -89,9 +89,12 @@ li .radar.live rect.o, .live .radar.live rect.o { animation-name: m-pulse-dim; }
 
 /* ---- the sidebar: the site's nav links, standing up */
 .side { display: flex; flex-direction: column; gap: 18px; min-height: 0; margin: 12px 0 12px 10px; padding: 16px 8px 10px; border-radius: 14px;
-  background: rgba(16, 18, 26, 0.86);
-  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 10px 30px -10px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(18px) saturate(1.6); }
+  background: transparent;
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 10px 30px -10px rgba(0, 0, 0, 0.45); }
+/* The blur lives on its own layer. backdrop-filter on the drag element itself
+   makes macOS ignore -webkit-app-region, so the window cannot move. */
+.side::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none;
+  background: rgba(16, 18, 26, 0.86); backdrop-filter: blur(18px) saturate(1.6); }
 :dir(rtl) .side { margin: 12px 12px 12px 0; }
 body.mac .side { margin-top: 48px; -webkit-app-region: drag; }
 body.mac .side :is(nav, button, label, input) { -webkit-app-region: no-drag; }
@@ -117,7 +120,8 @@ body.mac .side :is(nav, button, label, input) { -webkit-app-region: no-drag; }
 main { overflow-y: auto; padding: 0 24px 28px; background: transparent; scrollbar-gutter: stable; }
 main > section { max-width: 960px; min-width: 0; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
 .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 30px 2px 8px; }
-body.mac .head { padding-top: 48px; }
+body.mac .head { padding-top: 48px; -webkit-app-region: drag; }
+body.mac .head :is(button, a, input, label) { -webkit-app-region: no-drag; }
 .head h1 { font: 600 26px/1.2 var(--display); letter-spacing: -0.03em; color: #fff; text-shadow: 0 2px 24px rgba(12, 44, 130, 0.25); }
 .head p { margin-top: 8px; max-width: 62ch; font-size: 13px; line-height: 1.55; color: #bdc4d1; text-shadow: 0 1px 18px rgba(12, 44, 130, 0.35); }
 .head-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 6px; flex: none; }
@@ -545,6 +549,8 @@ main > section > .foot { padding: 2px 4px; color: var(--text-2); background: tra
 .ob-dots li.now { width: 18px; background: #fff; }
 body.mac .ob-top { -webkit-app-region: drag; }
 body.mac .first :is(button, input, li, a) { -webkit-app-region: no-drag; }
+/* Welcome hides that bar, so the top of the first run is its own drag strip. */
+body.mac .first[data-step="welcome"]::before { content: ""; position: absolute; z-index: 6; inset: 0 0 auto; height: 52px; -webkit-app-region: drag; }
 
 /* ------------------------------------------------------------------ motion */
 /* Quick and quiet: a page fades in when you switch to it, a step's parts
@@ -570,11 +576,10 @@ main::-webkit-scrollbar-track { background: transparent; }
    material): the sidebar lets it through under a dark tint, so it stays dark
    over a light desktop; the content pane and the first run stay solid. */
 body.mac { background: transparent; }
-body.mac .side { background: rgba(16, 18, 26, 0.86); }
+body.mac .side { background: transparent; }
 .side { overflow-y: auto; }
 .side nav, .brand, .side-foot { flex-shrink: 0; }
-.app-sky { -webkit-app-region: no-drag; }
-body.mac .app::before { content: ""; position: absolute; inset: 0 0 auto; height: 32px; -webkit-app-region: drag; }
+body.mac .app::before { content: ""; position: absolute; z-index: 5; inset: 0 0 auto; height: 48px; -webkit-app-region: drag; }
 
 /* The window's smallest (760 × 560): names wrap, buttons sit under them. */
 @media (max-width: 820px) {
@@ -601,7 +606,7 @@ body.mac .app::before { content: ""; position: absolute; inset: 0 0 auto; height
 }
 
 /* The website's glass, pointer light and emphasized motion, at desktop scale. */
-.side, body.mac .side { background: rgba(24, 30, 44, 0.64); backdrop-filter: blur(22px) saturate(1.5); }
+.side::before { background: rgba(24, 30, 44, 0.64); backdrop-filter: blur(22px) saturate(1.5); }
 .side { position: relative; isolation: isolate; }
 .head-actions::before, .app-tools::before {
   content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
