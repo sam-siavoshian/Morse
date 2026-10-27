@@ -127,6 +127,25 @@ test("the context reaches into open shadow roots and same-origin frames", { skip
   assert.match(inside.facts, /x-panel::part\(go\)/);
 });
 
+test("media controls expose usable bounds and units without unrelated field values", { skip }, async () => {
+  await page.evaluate(() => {
+    const player = document.createElement('div');
+    player.id = 'test-player';
+    player.innerHTML = '<div data-testid="playback-progressbar"><input type="range" min="0" max="240000" step="1000" value="45000" aria-valuetext="0:45"></div>';
+    document.body.append(player);
+  });
+  try {
+    const ctx = await contextFor(null);
+    assert.match(ctx.notes, /Native range controls.*morse\.type/);
+    assert.match(ctx.notes, /playback-progressbar/);
+    assert.match(ctx.notes, /min=0, max=240000, step=1000, value=45000 \(0:45\)/);
+    assert.match(ctx.notes, /app's displayed state changes/);
+    assert.ok(!JSON.stringify(ctx).includes(SECRETS.typed));
+  } finally {
+    await page.locator('#test-player').evaluate(el => el.remove());
+  }
+});
+
 // dogfood: in VSCodium "hide the sidebar until I hover" left a 300px gap
 // twice; the panes are placed by the app's own code, and the model now hears so.
 test("panes placed by the app's own code (VS Code's split view) get a note; a normal page doesn't", { skip }, async () => {

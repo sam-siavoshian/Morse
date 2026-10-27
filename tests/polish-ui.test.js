@@ -36,11 +36,11 @@ async function until(fn, ms = 15000) {
   throw new Error("timed out waiting for " + fn);
 }
 
-// The model: a draft with a foreign red button, and, when it is shown the
+// The model: a draft with a foreign red readout, and, when it is shown the
 // picture, a version in the page's own colors. Every call is recorded.
 const calls = [];
-const DRAFT = "TITLE: Timer button\n```css\n.pomo { color: rgb(255, 0, 0); }\n```\n```js\nmorse.watch('[data-testid=\"player-controls\"]', c => c.append(morse.el('button', { class: 'pomo', text: '25:00' })));\n```";
-const FIXED = "FIX: The red is foreign to the player; use its own text color.\nTITLE: Timer button\n```css\n.pomo { color: rgb(0, 128, 0); }\n```\n```js\nmorse.watch('[data-testid=\"player-controls\"]', c => c.append(morse.el('button', { class: 'pomo', text: '25:00' })));\n```";
+const DRAFT = "TITLE: Timer readout\n```css\n.pomo { color: rgb(255, 0, 0); }\n```\n```js\nmorse.watch('[data-testid=\"player-controls\"]', c => c.append(morse.el('span', { class: 'pomo', text: '25:00' })));\n```";
+const FIXED = "FIX: The red is foreign to the player; use its own text color.\nTITLE: Timer readout\n```css\n.pomo { color: rgb(0, 128, 0); }\n```\n```js\nmorse.watch('[data-testid=\"player-controls\"]', c => c.append(morse.el('span', { class: 'pomo', text: '25:00' })));\n```";
 registerProvider("demo", async (s, messages, { onToken } = {}) => {
   const pics = messages.flatMap(m => (Array.isArray(m.content) ? m.content.filter(b => b.type === "image") : []));
   calls.push({ pics });
@@ -90,7 +90,7 @@ const ask = async text => {
 const pomoColor = () => page.evaluate(() => { const b = document.querySelector(".pomo"); return b && getComputedStyle(b).color; });
 
 test("a change that adds UI is looked at once and fixed; turning Polish changes off skips it", { skip, timeout: 120000 }, async () => {
-  await ask("add a pomodoro timer button to the player");
+  await ask("add a pomodoro timer readout to the player");
   assert.equal(calls.length, 2, "the draft, then the look at it");
   const [pic] = calls[1].pics;
   assert.equal(pic.source.media_type, "image/jpeg");
@@ -106,13 +106,13 @@ test("a change that adds UI is looked at once and fixed; turning Polish changes 
   // Settings: Polish changes is on; turn it off.
   await page.keyboard.press(OPEN_KEY);
   await waitFor(s => s.open);
-  await page.keyboard.press("ControlOrMeta+Comma");
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+Comma" : "Control+Comma");
   // Polish changes is under More settings (docs/dev/simplify.md).
   const more = ui(".sheet [data-act=more]");
   if (await more.getAttribute("aria-expanded") === "false") await more.click();
-  await ui('details:has(input[data-k="polish"]) > summary').click();
   const sw = ui('.sheet input[data-k="polish"]');
   await sw.waitFor({ state: "attached" });
+  await ui('details.settings-group:has(input[data-k="polish"]) > summary').click();
   assert.equal(await sw.isChecked(), true, "on by default");
   assert.equal(await ui('.sheet .srow:has(input[data-k="polish"]) .lbl span').textContent(), "Polish changes");
   await ui('.sheet .srow:has(input[data-k="polish"]) .sw span').click();
@@ -122,7 +122,7 @@ test("a change that adds UI is looked at once and fixed; turning Polish changes 
   await waitFor(s => !s.open);
 
   const n = calls.length;
-  await ask("add another pomodoro timer button");
+  await ask("add another pomodoro timer readout");
   assert.equal(calls.length, n + 1, "one call, no picture");
   assert.equal(calls.at(-1).pics.length, 0);
 });

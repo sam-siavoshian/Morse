@@ -46,6 +46,7 @@ import { STYLE_ID } from "../core/style.js"; // your-style hook
 import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
 import { pageCollapse } from "../core/guard.js"; // guard hook: a change that hides most of the page
 import { AppProfiler } from "./profile.js"; // app profiles: how the app works inside (docs/dev/rea.md)
+import { screenshotClip } from "./screenshot.js";
 import { barWorld } from "./open-bar.js"; // Open the bar: only a window whose Morse world is up
 
 // Perf: only the small boot goes into every page; the UI is evaluated on first use ("ui.load").
@@ -601,9 +602,9 @@ export class Connector {
     // Errors inside watch/on callbacks surface a moment later. speed: the kit
     // says how long that can be for this mod (core/kit.js settle).
     await new Promise(r2 => setTimeout(r2, settleMs(res)));
-    const e = await s.send("Runtime.evaluate", { expression: `morse.__errors(${JSON.stringify(modId)})`, contextId: ctx, returnByValue: true });
-    const errs = e.result?.value || [];
-    return errs.length ? { ok: false, error: errs[0].split("\n")[0] } : { ok: true };
+    const e = await s.send("Runtime.evaluate", { expression: `morse.__ready ? morse.__ready(${JSON.stringify(modId)}) : { ok: !morse.__errors(${JSON.stringify(modId)}).length, error: morse.__errors(${JSON.stringify(modId)})[0] }`, contextId: ctx, returnByValue: true, awaitPromise: true });
+    if (e.exceptionDetails) return { ok: false, error: e.exceptionDetails.exception?.description || e.exceptionDetails.text };
+    return e.result?.value || { ok: false, error: "The change could not be verified" };
   }
 
   // Effect check (core/engine.js): the runtime's effectProbe, in Morse's world
@@ -626,7 +627,8 @@ export class Connector {
     if (!a) return null;
     const from = Date.now() / 1000 - 0.15;
     try {
-      const r = await s.send("Page.captureScreenshot", { format: "jpeg", quality: 85, clip: { x: a.x + a.scrollX, y: a.y + a.scrollY, width: a.width, height: a.height, scale: a.scale } });
+      const metrics = await s.send("Page.getLayoutMetrics").catch(() => ({}));
+      const r = await s.send("Page.captureScreenshot", { format: "jpeg", quality: 85, clip: screenshotClip(a, metrics) });
       return r?.data ? { mediaType: "image/jpeg", data: r.data, measured: a.misaligned || [] } : null;
     } catch { return null; }
     finally {

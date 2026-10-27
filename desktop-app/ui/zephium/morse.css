@@ -1,0 +1,110 @@
+/* Morse integration for the upstream Zephium components (MPL-2.0).
+   Structure, tokens and metrics are in the source-derived companion files. */
+#first {
+  background: var(--color-canvas);
+  --font: var(--font-sans);
+  --display: var(--font-sans);
+  --text: var(--color-text);
+  --muted: var(--color-muted);
+  --faint: var(--color-faint);
+  --sky-shadow: var(--sky-night-shadow);
+}
+#first .ob-stage { isolation: isolate; }
+#first .ob-step { position: static; display: contents; padding: 0; overflow: visible; }
+#first .ob-step[hidden] { display: none; }
+#first .ob-head { padding: 0; max-width: none; z-index: 2; }
+#first .ob-head h1 { font-family: var(--font-sans); color: var(--color-text); filter: none; }
+#first .ob-head p { color: var(--color-muted); text-shadow: none; }
+#first .ob-scene { width: auto; padding: 0; border-radius: 0; background: none; box-shadow: none; backdrop-filter: none; z-index: 2; }
+#first .ob-scene[data-scene="open"] { top: 236px; }
+#first .ob-scene[data-scene="apps"] { inset-inline: 0; top: 236px; }
+#first .ob-scene[data-scene="model"] > *,
+#first .ob-scene[data-scene="open"] > * { width: 512px; box-sizing: border-box; }
+#first .ob-scene .live, #first .ob-scene .keyrow, #first .ob-scene .switchrow.big {
+  padding: 18px; border-radius: var(--radius-card); background: var(--color-card); box-shadow: var(--shadow-raise);
+  color: var(--color-text); border: 0;
+}
+#first .ob-scene .live { margin: 0 0 12px; }
+#first .ob-scene .live > span, #first .ob-scene .switchrow b { color: var(--color-text); }
+#first .ob-scene .switchrow small, #first .ob-note { color: var(--color-muted); }
+#first .ob-scene input[type="password"] { background: var(--color-field); color: var(--color-text); border-color: var(--color-border); }
+#first .btn { font-family: var(--font-sans); box-shadow: none; background: var(--color-control); border: 0; }
+#first .btn.quiet { background: transparent; color: var(--color-muted); }
+#first .btn.primary { color: var(--color-on-lit); background: var(--color-lit); }
+#first .btn.primary:hover { background: var(--color-lit-hover); }
+#first .ob-skip { box-shadow: none; backdrop-filter: none; min-height: 0; }
+#first[data-step="welcome"] .ob-top { display: none; }
+#first .ob-bar { z-index: 3; min-height: 0; }
+#first .ob-bar .ob-side { width: auto; }
+#first .ob-dots { gap: 5px; }
+#first .ob-dots li { width: 18px; height: 3px; border-radius: var(--radius-capsule); }
+#first .ob-dots li.now { width: 34px; background: var(--color-text); box-shadow: none; }
+#first .ob-dots li.done { background: var(--color-faint); }
+#first .ob-welcome { inset: 0; display: block; padding: 0; transform: none; z-index: 2; }
+#first:not([data-step="welcome"]) .ob-welcome { opacity: 0; pointer-events: none; }
+#first .ob-name { position: absolute; top: 288px; inset-inline: 0; text-align: center; font: 500 64px/1.1 var(--font-sans); letter-spacing: -.04em; filter: none; color: var(--sky-ink); }
+#first .ob-tagline { position: absolute; top: 390px; left: 50%; translate: -50% 0; width: 30ch; max-width: 30ch; }
+#first .ob-cta { position: absolute; top: 472px; left: 50%; translate: -50% 0; }
+#first .ob-preview-page { position: relative; overflow: hidden; border-radius: 10px; background: var(--sky-night-paper); }
+#first .ob-preview-page img { position: absolute; width: 840px; height: 473px; max-width: none; left: -108px; top: 0; }
+#first .ob-preview-name { position: absolute; top: 223px; left: 199.5px; width: 225px; text-align: center; font: 500 42px/1 var(--font-sans); color: white; }
+#first[data-step="welcome"] .ob-preview-name { visibility: hidden; }
+#first .ob-rig { z-index: 0; pointer-events: none; }
+#first .ob-air { z-index: 3; }
+#first .ob-moves { grid-template-columns: repeat(3, 248px); gap: 16px; margin: 0; list-style: none; }
+#first .ob-moves li { width: 248px; min-height: 176px; padding: 18px 18px 20px; border-radius: var(--radius-card); background: var(--color-card); box-shadow: var(--shadow-raise); backdrop-filter: none; color: var(--color-text); }
+#first .ob-moves b { font-size: 15px; font-weight: 500; color: var(--color-text); }
+#first .ob-moves small { font-size: 13px; color: var(--color-muted); line-height: 1.45; }
+#first .ob-scene[data-scene="apps"] { inset-inline: 142px auto; top: 236px; }
+#first #first-apps { display: grid; grid-template-columns: repeat(4, 64px); gap: 30px 22px; align-items: start; padding: 0; margin: 0; width: 322px; }
+#first #first-apps > li { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; border: 0; background: none; border-radius: 0; min-height: 0; }
+#first #first-apps > li::before { display: none; }
+#first #first-apps .appicon, #first #first-apps .appicon img { width: 30px; height: 30px; background: none; box-shadow: none; border-radius: 0; }
+#first #first-apps .native-link { font-size: 10px; min-height: 24px; padding: 0; margin: 0; text-align: center; color: var(--color-muted); }
+#first #first-apps > li:has(.native-setup:not([hidden])) { grid-column: 1 / -1; align-items: flex-start; }
+#first #first-apps .native-setup { width: 322px; flex: none; padding: 14px; border-radius: var(--radius-card); background: var(--color-card); box-shadow: var(--shadow-raise); }
+#first .native-setup { flex-basis: 100%; margin: 0; padding: 10px 0 0; border: 0; border-top: 1px solid var(--color-border); background: none; }
+#first .native-setup h2 { font-size: 13px; }
+#first .native-setup-instructions { font-size: 13px; }
+#first .native-setup-status { font-size: 12px; }
+#first .native-setup .btn { min-height: 28px; }
+#first .ob-scene:has(.native-setup:not([hidden])) { max-height: 440px; overflow-y: auto; }
+#first .ob-air { width: 1240px; height: 780px; }
+@media (prefers-reduced-motion: reduce) { #first *, #first *::before { animation: none !important; transition: none !important; } }
+
+#first .ob-moves { justify-content: center; }
+#first .ob-scene .switchrow.big b, #first .ob-scene .switchrow.big small { display: block; }
+#first .ob-scene .switchrow.big small { margin-top: 5px; }
+
+/* Task-focused Morse setup: upstream controls, with less visual competition. */
+#first:not([data-step="welcome"]) .ob-rig { opacity: 0; }
+#first .setup-icon, .native-setup .setup-icon { width: 18px; height: 18px; flex: none; }
+#first .ob-head { top: 82px; gap: 10px; }
+#first .ob-step-icon { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 6px; border-radius: 13px; background: var(--color-fill); color: var(--color-muted); }
+#first .ob-step-icon .setup-icon { width: 24px; height: 24px; }
+#first .ob-head h1 { font-size: 32px; }
+#first .ob-head p { font-size: 14px; }
+#first .ob-scene[data-scene] { top: 268px; inset-inline: 0; }
+#first .ob-moves { gap: 0; grid-template-columns: repeat(3, 224px); }
+#first .ob-moves li { width: 224px; min-height: 210px; border-radius: 0; background: none; box-shadow: none; padding: 20px 24px; }
+#first .ob-moves li + li { border-inline-start: 1px solid var(--color-border); }
+#first .ob-moves .setup-icon { width: 28px; height: 28px; margin: 0 auto 18px; color: var(--color-muted); }
+#first .ob-moves .ob-move-art { height: auto; min-height: 0; margin-bottom: 14px; }
+#first .ob-moves b { margin-bottom: 8px; }
+#first .ob-middle { display: grid; justify-items: center; gap: 10px; }
+#first .ob-progress { color: var(--color-faint); font-size: 12px; }
+#first #first-apps { width: 560px; display: flex; flex-direction: column; gap: 0; max-height: 388px; overflow-y: auto; }
+#first #first-apps > li { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; width: 100%; gap: 14px; padding: 14px 0; min-height: 68px; }
+#first #first-apps > li + li { border-top: 1px solid var(--color-border); }
+#first #first-apps .grow { flex: 1; min-width: 0; }
+#first #first-apps .grow b { color: var(--color-text); font-size: 14px; font-weight: 500; }
+#first #first-apps .native-link { display: flex; align-items: center; gap: 5px; margin-top: 5px; font-size: 12px; min-height: 26px; text-align: start; }
+#first #first-apps .native-link .setup-icon { width: 14px; height: 14px; }
+#first #first-apps .appicon, #first #first-apps .appicon img { width: 32px; height: 32px; border-radius: 7px; }
+#first #first-apps .first-app-open { gap: 10px; padding: 0 12px; min-height: 32px; }
+#first #first-apps > li:has(.native-setup:not([hidden])) { align-items: center; }
+#first #first-apps .native-setup { width: auto; flex-basis: calc(100% - 46px); margin-inline-start: 46px; padding: 12px 14px; border-radius: 10px; box-shadow: none; }
+.native-setup h2 { display: flex; align-items: center; gap: 7px; }
+#first .ob-scene:has(.native-setup:not([hidden])) { max-height: none; overflow: visible; }
+#first .native-setup-instructions { font-size: 12px; }
+#first .native-setup-status { font-size: 11px; }

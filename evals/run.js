@@ -203,8 +203,7 @@ async function runCase(c, rep, arm = arms[0]) {
         catch (e) { return { ok: false, error: String(e.message || e).split("\n")[0].replace(/^page\.evaluate: /, "") }; }
         if (!r?.ok) return r || { ok: false, error: "no result" };
         await page.waitForTimeout(settleMs(r)); // speed: core/kit.js settle
-        const errs = await page.evaluate(id => morse.__errors(id), modId);
-        return errs.length ? { ok: false, error: errs[0].split("\n")[0] } : { ok: true };
+        return page.evaluate(id => morse.__ready(id), modId);
       },
       polish: opt.polish,
       review: async () => {

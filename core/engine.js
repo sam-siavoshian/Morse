@@ -292,19 +292,20 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     // fixes what doesn't look native, once (core/polish.js)
     if (polish && review && !base?.error && !signal?.aborted && wantsPolish(draft, request)) {
       const p = await polishRound({
-        settings: current(), request, context, base, raw, draft, review, exec, emit, signal,
+        settings: current(), request, context, base, raw, draft, review, exec: js => { liveJs = !!js; return exec(js); }, emit, signal,
         verify: before && probe ? async d => {
           const effect = await noEffect(probe, before, d);
           if (effect) return effect.text;
           const after = before.shown >= 8 ? await probe([]) : null;
           return after ? collapseHarm({ before: before.shown, after: after.shown })?.model : null;
         } : undefined,
-        check: d => generatedNames(d, context) || deadHooks(d, context) || unwiredFeature(d, context, request)?.model || replacesHost(d.js) || (vet ? vet(d) : null), // the same checks a draft gets
+        check: d => unasked(context, d.js) || generatedNames(d, context) || deadHooks(d, context) || unwiredFeature(d, context, request)?.model || replacesHost(d.js) || (vet ? vet(d) : null), // the same checks a draft gets
       });
       timing.polish = p.ms;
       if (p.verdict === "fixed") last = { ...last, ...p.draft, raw: p.raw };
       last = { ...last, polish: { verdict: p.verdict, ms: p.ms, shotMs: p.shotMs, fixes: p.fixes || [], ...(p.error && { error: p.error }) } };
     }
+    if (signal?.aborted) throw new Error("aborted");
     accepted = true;
     return { ...last, ok: true };
   }

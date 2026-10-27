@@ -26,7 +26,7 @@ function setup() {
   };
   const context = { Set, CSS: { escape: s => s }, document: { activeElement: null },
     window: { addEventListener: (e, fn) => { events[e] = fn; } },
-    morse: api, $: id => ids.get(id), h: node, t: key => key, appError() {}, errorText: e => e.message || String(e) };
+    morse: api, $: id => ids.get(id), h: node, setupIcon: () => node("svg"), t: key => key, appError() {}, errorText: e => e.message || String(e) };
   const source = readFileSync(new URL('../desktop-app/ui/app.js', import.meta.url), 'utf8');
   vm.runInNewContext(source.slice(source.indexOf('const nativePending ='), source.indexOf('\nfunction appRow(')) + '\nglobalThis.testAPI = {inspectNative, checkNativeAccess, dismissNativeGuide, nativeSetupAction, setupNativeForApp};', context);
   const all = () => { const out = []; const visit = n => { if (!n || typeof n !== 'object') return; out.push(n); n.children?.forEach(visit); }; visit(ids.get('native-setup')); return out; };
