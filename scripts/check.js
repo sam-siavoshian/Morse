@@ -38,8 +38,10 @@ function jsFiles(dir) {
 const SRC = path.join(root, "runtime", "src");
 // runtime/src files and runtime/boot.js are fragments of a function body
 // (top-level `return`); check 2 parses them as the bundle.
+// Showcase mod.js files are the same kind of fragment: the body of a saved mod.
 const BOOT = path.join(root, "runtime", "boot.js");
-const files = jsFiles(root).filter(f => !f.startsWith(SRC + path.sep) && f !== BOOT);
+const SHOWCASE_MOD = `${path.sep}docs${path.sep}showcase${path.sep}`;
+const files = jsFiles(root).filter(f => !f.startsWith(SRC + path.sep) && f !== BOOT && !(f.includes(SHOWCASE_MOD) && f.endsWith(`${path.sep}mod.js`)));
 const nodeCheck = f => new Promise(resolve => execFile(process.execPath, ["--check", f], (e, so, se) => resolve(e ? String(se).trim().split("\n").slice(0, 5).join("\n") : null)));
 for (let i = 0; i < files.length; i += 8) {
   const batch = files.slice(i, i + 8);

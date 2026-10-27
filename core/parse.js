@@ -57,7 +57,7 @@ export function liftDeepCss(draft) {
   if (!deep.length) return draft;
   const css = rules.filter(r => !deep.includes(r)).map(r => r.text).join("") + rest;
   const lift = `morse.css(${JSON.stringify(deep.map(r => r.text.trim()).join("\n"))});\n`;
-  return { ...draft, css: css.replace(/^\s*\n/, ""), js: lift + draft.js };
+  return { ...draft, css: css.replace(/^\s*\n/, ""), js: lift + draft.js, jsComplete: !draft.js.trim() || draft.jsComplete };
 }
 
 // Returns the prefix of a (possibly partial) stylesheet that ends on a complete
