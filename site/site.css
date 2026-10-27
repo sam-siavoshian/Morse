@@ -145,6 +145,8 @@ q.ask, .ask { font: 400 0.92em/1.5 var(--mono); color: var(--text); quotes: "“
    edge and the shadow under it fold away, and its face takes a shadow from
    the rim. It never shrinks. */
 .btn:active, .nav-stars:active, .nav-toggle:active { transform: translateY(2px); }
+.btn-logo { width: 20px; height: 20px; flex: 0 0 20px; object-fit: contain; }
+.btn-sm .btn-logo { width: 16px; height: 16px; flex-basis: 16px; }
 .btn .icon { width: 17px; height: 17px; transition: transform 160ms var(--ease); }
 .btn:hover .icon { transform: translateX(2px); }
 .btn-primary {
@@ -231,12 +233,12 @@ q.ask, .ask { font: 400 0.92em/1.5 var(--mono); color: var(--text); quotes: "“
   display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 14px 0 12px; border-radius: 999px;
   background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.18), 0 2px 0 rgba(0, 0, 0, 0.25);
   font: 500 14px/1 var(--font); color: #fff; font-variant-numeric: tabular-nums;
-  transition: background-color 140ms var(--ease), transform 90ms var(--ease-out), box-shadow 90ms var(--ease-out);
+  transition: color 140ms var(--ease), background-color 140ms var(--ease), transform 90ms var(--ease-out), box-shadow 90ms var(--ease-out);
 }
-.nav-stars:hover { background: rgba(255, 255, 255, 0.14); }
+
 .nav-stars:active { box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.18), inset 0 2px 5px rgba(0, 0, 0, 0.35); }
-.nav-stars-star { font-size: 15px; line-height: 1; transition: transform 300ms var(--ease-emphasized); }
-.nav-stars:hover .nav-stars-star { transform: rotate(72deg); }
+.nav-stars-star { display: block; flex: 0 0 16px; width: 16px; height: 16px; background: center / contain no-repeat url("mark/github-star.png"); }
+.nav-stars:hover .nav-stars-star { background-image: url("mark/github-star-fill.png"); }
 .nav-stars-count:empty { display: none; }
 .nav-stars .nav-stars-count { padding-left: 8px; margin-left: 1px; box-shadow: -0.5px 0 0 rgba(255, 255, 255, 0.25); }
 .nav-toggle {
@@ -306,7 +308,7 @@ q.ask, .ask { font: 400 0.92em/1.5 var(--mono); color: var(--text); quotes: "“
   text-shadow: 0 2px 24px rgba(12, 44, 130, 0.25);
 }
 .hero-title .word { padding-bottom: 0.08em; }
-.hero-title .word[data-line="2"] { color: rgba(255, 255, 255, 0.8); }
+.hero-title .word[data-line="2"] { color: rgba(255, 255, 255, 0.8); font-size: 0.64em; }
 .hero .hero-sub { max-width: 36rem; color: rgba(255, 255, 255, 0.92); text-shadow: 0 1px 18px rgba(12, 44, 130, 0.35); }
 .hero .btn-glass { background: rgba(255, 255, 255, 0.18); color: #fff; box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.45), 0 2px 0 rgba(10, 30, 90, 0.28); }
 .hero .btn-glass:hover { background: rgba(255, 255, 255, 0.26); }
@@ -360,8 +362,9 @@ q.ask, .ask { font: 400 0.92em/1.5 var(--mono); color: var(--text); quotes: "“
 .hero-chip .icon { width: auto; color: rgba(255, 255, 255, 0.75); transition: transform 300ms var(--ease-out); }
 .hero-chip:hover .icon { transform: translateX(2px); }
 
-.hero-break { display: none; }
-@media (min-width: 641px) { .hero-break { display: inline; } }
+.hero-break { display: inline; }
+.hero-split { display: none; }
+@media (max-width: 640px) { .hero-split { display: inline; } }
 .hero-sub { margin-top: 22px; max-width: 30rem; font-size: clamp(17px, 0.95rem + 0.35vw, 20px); line-height: 1.5; letter-spacing: -0.012em; color: var(--muted); text-wrap: balance; }
 .get-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 32px; }
 
@@ -1007,3 +1010,17 @@ pre.code .k { color: #ffffff; font-weight: 500; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0.01ms !important; animation: none !important; }
 }
+
+.gi-youtube { background-image: url("icons/youtube-red.png"); }
+.gi-gmail { background-image: url("icons/gmail.png"); }
+.demo-native video { display: block; width: 100%; height: 100%; object-fit: contain; }
+.demo-native figcaption a { color: inherit; text-decoration: underline; }
+#pairs > .pair:only-child { grid-column: 1 / -1; }
+
+.gi-spotify { background-image: url("icons/spotify.png"); }
+
+.nav-card-icon img { display: block; width: 20px; height: 20px; object-fit: contain; opacity: 0.9; }
+.keys-open { width: fit-content; padding: 6px 0; border-radius: 8px; }
+.keys-open:hover kbd { background: #fff; }
+.keys-open:focus-visible { outline: 2px solid #fff; outline-offset: 6px; }
+.keys .keys-action { color: var(--text-2); font-size: 12px; margin-left: 10px; }

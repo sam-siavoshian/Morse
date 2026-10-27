@@ -1,5 +1,5 @@
 # Publishes the site, the share page and the gallery list.
-# The public site is https://getmorse.vercel.app/ (the pages are at /, /gallery.html
+# The public site is https://getmorse.vercel.app/ (the pages are at /
 # and /privacy.html). /site/ redirects there. GitHub Pages still builds the same
 # files. Share links (core/mod.js SHARE_BASE) stay at /share/, and the gallery
 # list (core/gallery.js) stays at /site/mods/, because the app already asks for it.

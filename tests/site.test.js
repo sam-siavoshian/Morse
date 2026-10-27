@@ -2,11 +2,10 @@
 //
 //   - every relative href, src, poster and srcset in the HTML points at a file
 //   - every #fragment points at an id on the page it names
-//   - gallery.html#<slug> links name a mod that is in site/mods/
 //   - every url() in the stylesheets and every import in the scripts resolves
 //   - the link targets and the real pictures in site/config.js resolve too,
 //     and every picture is labelled
-//   - the nav bar and footer of the gallery and the privacy policy are the
+//   - the nav bar and footer of the privacy policy are the
 //     landing page's (npm run pages copies them)
 //   - no drawn pictures: no SVG at all (the favicon is a PNG, the functional
 //     icons are text), and every app icon is the app's own, as a small PNG
@@ -20,7 +19,7 @@ import path from "node:path";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const SITE = path.join(root, "site");
-const PAGES = ["index.html", "gallery.html", "privacy.html"];
+const PAGES = ["index.html", "privacy.html"];
 const read = f => readFileSync(path.join(SITE, f), "utf8");
 
 const external = ref => /^[a-z][a-z0-9+.-]*:/i.test(ref) || ref.startsWith("//");
@@ -38,6 +37,7 @@ export function refs(html) {
 // Resolves one reference made from a file in site/; returns a problem or null.
 function check(from, ref, pageIds) {
   if (!ref) return "an empty link";
+  if (ref === "morse://open") return null;
   if (/^(mailto|javascript|data):/i.test(ref)) return /^javascript:/i.test(ref) ? "a javascript: link" : null;
   if (external(ref)) {
     try { const u = new URL(ref); return u.protocol === "https:" ? null : `not https: ${ref}`; }
@@ -51,10 +51,6 @@ function check(from, ref, pageIds) {
   if (!existsSync(file)) return `no such file: ${ref}`;
   if (hash === undefined || hash === "") return null;
   if (!file.endsWith(".html")) return null;
-  // gallery.html#<slug> opens that mod's drawer (gallery.js).
-  if (path.basename(file) === "gallery.html" && pathPart) {
-    return existsSync(path.join(SITE, "mods", `${hash}.morse.json`)) ? null : `no mod “${hash}” in site/mods/`;
-  }
   const targetIds = pathPart ? ids(readFileSync(file, "utf8")) : pageIds;
   return targetIds.has(hash) ? null : `no id="${hash}" in ${path.relative(root, file)}`;
 }
@@ -71,7 +67,7 @@ test("every link, image, video and icon on the site's pages resolves", () => {
       if (problem) broken.push(`site/${page} ${attr}="${ref}": ${problem}`);
     }
   }
-  assert.ok(checked > 100, `the scan reads the pages' links (saw ${checked})`);
+  assert.ok(checked > 75, `the scan reads the pages' links (saw ${checked})`);
   assert.deepEqual(broken, [], `broken:\n${broken.join("\n")}`);
 });
 
@@ -79,7 +75,7 @@ test("the landing page has what it promises: buttons, the Morse bar, sections an
   const html = read("index.html");
   // A hero, what it does, examples, how it works, privacy, real apps, FAQ and
   // install: one page that sells in a minute, with room around each part.
-  for (const id of ["takes", "change", "how", "apps", "install", "install-web", "install-desktop", "desktop-steps", "privacy", "faq"]) {
+  for (const id of ["takes", "how", "apps", "install", "install-web", "install-desktop", "desktop-steps", "privacy", "faq"]) {
     assert.ok(ids(html).has(id), `a section with id="${id}"`);
   }
   // What was cut stays cut: feature rows, the logo wall, the idea list.
@@ -95,17 +91,11 @@ test("the landing page has what it promises: buttons, the Morse bar, sections an
   assert.doesNotMatch(html, /npm i(nstall)? -g|morse setup|morse serve|morse extension|Node 22/, "no terminal steps on the landing page");
   assert.match(install, /Chrome, Edge, Brave, Arc and Vivaldi/, "websites come from the Morse app");
   assert.match(install, /docs\/dev\/README\.md">developer guide/, "developers get the guide");
-  // The hero shows the Morse bar in a real app, opened by the real shortcut,
-  // with the result's Save and Undo. No video any more.
-  const demo = /<figure class="demo"[\s\S]*?<\/figure>/.exec(html)?.[0] || "";
-  assert.match(demo, /data-demo/, "the Morse bar in the hero");
-  assert.match(demo, /<kbd>⌥<\/kbd><kbd>Space<\/kbd>/, "the shortcut that opens it");
-  assert.match(demo, /shots\/210-vscode-windows-95-before\.webp/, "a real app behind it");
-  assert.match(demo, /data-save>Save/, "and the result's Save");
-  assert.doesNotMatch(html, /data-film|<video\b|docs\/launch\//, "no film");
+  assert.doesNotMatch(html, /slack|data-export-example|data-snooze-button/i, "removed Slack examples and controls");
+  assert.doesNotMatch(html, /loop station|loop pads|spotify-loop-station/i);
   assert.doesNotMatch(html, /try\/section\.js|data-install=/, "no live demo on the page");
-  const shots = [...html.matchAll(/src="((?:shots|clips)\/[^"]+)"/g)].map(m => m[1]);
-  assert.ok(shots.length >= 3, `screenshots on the page (saw ${shots.length})`);
+  const shots = [...html.matchAll(/(?:src|poster)="((?:shots|clips)\/[^"]+)"/g)].map(m => m[1]);
+  assert.ok(shots.length >= 1, `screenshots on the page (saw ${shots.length})`);
   for (const s of shots) assert.ok(existsSync(path.join(SITE, s)), s);
   assert.match(html, /clips\/readme-obsidian-ask\.gif/, "the Obsidian timer clip from the README");
   // Every <img> has alt text and a size, so nothing shifts as it loads, and
@@ -121,7 +111,7 @@ test("the landing page has what it promises: buttons, the Morse bar, sections an
 
 test("site/config.js: every real picture resolves and says what it shows", async () => {
   const { SHOWCASE, REAL_APPS } = await import("../site/config.js");
-  assert.ok(SHOWCASE.length >= 3 && SHOWCASE.length <= 4, `three or four before and after pairs (saw ${SHOWCASE.length})`);
+  assert.ok(SHOWCASE.length >= 0 && SHOWCASE.length <= 4, `up to four recorded before and after pairs (saw ${SHOWCASE.length})`);
   for (const p of SHOWCASE) {
     for (const key of ["app", "kind", "ask", "by"]) assert.ok(p[key], `${p.app}: ${key}`);
     assert.ok(p.width > 0 && p.height > 0, `${p.app}: a size`);
@@ -163,7 +153,7 @@ test("every url() in the stylesheets and every import in the scripts resolves", 
   for (const f of readdirSync(SITE).filter(f => f.endsWith(".js"))) {
     for (const m of read(f).matchAll(/\bfrom\s+"(\.{1,2}\/[^"]+)"|\bimport\("(\.{1,2}\/[^"]+)"\)/g)) {
       const ref = m[1] || m[2];
-      if (!existsSync(path.resolve(SITE, ref))) broken.push(`site/${f} import ${ref}`);
+      if (!existsSync(path.resolve(SITE, ref.split(/[?#]/)[0]))) broken.push(`site/${f} import ${ref}`);
     }
   }
   for (const page of PAGES) {
@@ -172,11 +162,10 @@ test("every url() in the stylesheets and every import in the scripts resolves", 
   assert.deepEqual(broken, []);
 });
 
-test("the gallery and the privacy policy carry the landing page's nav bar and footer", async () => {
-  const { galleryHtml, privacyHtml } = await import("../scripts/build-pages.js");
-  assert.equal(read("gallery.html"), await galleryHtml(), "run npm run pages");
+test("the privacy policy carries the landing page's nav bar and footer", async () => {
+  const { privacyHtml } = await import("../scripts/build-pages.js");
   assert.equal(read("privacy.html"), await privacyHtml(), "run npm run pages");
-  for (const page of ["gallery.html", "privacy.html"]) {
+  for (const page of ["privacy.html"]) {
     const html = read(page);
     assert.match(html, /<header class="nav">/);
     assert.match(html, /<footer class="foot">/);

@@ -142,7 +142,7 @@ test("structured data: it parses, and has what each kind needs", async () => {
     assert.equal(items[1].item, SITE_URL + page.url);
     assert.ok(items.every(i => i.name), "every crumb is named");
   }
-  assert.deepEqual(kinds.BreadcrumbList.map(b => b.page.file).sort(), ["gallery.html", "privacy.html"]);
+  assert.deepEqual(kinds.BreadcrumbList.map(b => b.page.file).sort(), ["privacy.html"]);
 });
 
 test("the FAQ's structured data is the landing page's FAQ, word for word", () => {
@@ -175,12 +175,10 @@ test("the public pages are at the root; /site/ only redirects there", () => {
   const home = built("index.html");
   assert.match(home, /<base href="site\/">/);
   assert.equal(canonical(home), SITE_URL);
-  assert.match(home, /href="\.\.\/gallery\.html"/);
   assert.match(home, /href="\.\.\/#takes"/);
   assert.ok(!noindex(home));
   for (const [f, to, canon] of [
     ["site/index.html", "../", SITE_URL],
-    ["site/gallery.html", "../gallery.html", `${SITE_URL}gallery.html`],
     ["site/privacy.html", "../privacy.html", `${SITE_URL}privacy.html`],
   ]) {
     const html = built(f);
@@ -192,11 +190,11 @@ test("the public pages are at the root; /site/ only redirects there", () => {
 });
 
 test("pages: every image says what it shows and has a size; no fonts from other servers", () => {
-  for (const f of ["index.html", "gallery.html", "privacy.html", "share/install.html"]) {
+  for (const f of ["index.html", "privacy.html", "share/install.html"]) {
     const html = built(f);
     for (const img of html.match(/<img\b[^>]*>/g) || []) {
       assert.match(img, /\swidth="\d+"[^>]*\sheight="\d+"/, `${f}: ${img}`);
-      assert.match(img, /\salt="[^"]{20,}"/, `${f}: ${img} says what it shows`);
+      if (!/aria-hidden="true"/.test(img)) assert.match(img, /\salt="[^"]{20,}"/, `${f}: ${img} says what it shows`);
     }
     assert.doesNotMatch(head(html), /fonts\.googleapis|fonts\.gstatic/, `${f}: its fonts come from the site`);
   }
