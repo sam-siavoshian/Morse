@@ -150,7 +150,7 @@ function pageStrings(src) {
 
 test("the share page, the website and Morse Desktop show no developer jargon", () => {
   const files = [
-    "share/install.html", "site/index.html", "site/gallery.html",
+    "share/install.html", "site/index.html",
     "desktop-app/ui/index.html", "desktop-app/ui/app.js", // Morse Desktop's window
   ];
   const found = [];

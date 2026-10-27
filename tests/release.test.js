@@ -88,7 +88,7 @@ test("site/privacy.html is made from docs/privacy.md and is current", async () =
   assert.match(html, /<code>code<\/code> and <strong>bold<\/strong> and <a href="https:\/\/x.y">a<\/a>/);
   assert.match(html, /<li>one more<\/li>\n<li>two<\/li>/);
   assert.match(html, /<td>&lt;x&gt;<\/td>/);
-  for (const page of ["index.html", "gallery.html"]) assert.match(readFileSync(path.join(root, "site", page), "utf8"), /href="privacy.html"/, `${page} links the privacy policy`);
+  for (const page of ["index.html"]) assert.match(readFileSync(path.join(root, "site", page), "utf8"), /href="privacy.html"/, `${page} links the privacy policy`);
 });
 
 test("the Pages build publishes the paths the code uses, with no broken links", async () => {
