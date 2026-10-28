@@ -579,6 +579,32 @@ on(W, "focus", () => {
   loadPrefs().catch(() => {});
 });
 
+// An unsaved change stays on the page across a reload, until Save or Undo
+// (60-generate.js opens the bar on it). A host that doesn't keep one answers
+// nothing; a slow answer must not hold the page.
+function usablePending(d) {
+  return !!d && typeof d === "object" && typeof d.id === "string" && /^[\w-]{1,40}$/.test(d.id)
+    && typeof d.css === "string" && typeof d.js === "string" && !!(d.css.trim() || d.js.trim());
+}
+async function restorePending() {
+  let raw = null;
+  try {
+    raw = await Promise.race([
+      call("pending.get"),
+      new Promise(r => pristine.setTimeout(() => r(null), 2500)),
+    ]);
+  } catch { return; }
+  if (!usablePending(raw) || !live() || S.draft || S.phase === "working") return;
+  const saved = S.mods.find(m => m.id === raw.id);
+  if (saved && saved.css === raw.css && saved.js === raw.js && (saved.title || "") === (raw.title || "")) {
+    call("pending.clear", { id: raw.id }).catch(() => {});
+    return;
+  }
+  await applyMod({ id: raw.id, title: raw.title || raw.request || "change", css: raw.css, js: raw.js, enabled: true });
+  if (!live() || S.draft || S.phase === "working") return;
+  uiTask("pendingReady", raw); // the bar: Save or Undo, same as before the reload
+}
+
 // ---- start: hello, safe start and the mods in parallel
 syncMods().then(() => {
   // What the UI's controlReady() (63-control.js) would say after the first sync.
@@ -590,6 +616,7 @@ syncMods().then(() => {
   // Your style, fitted to this site once with the model, when the person turned that on (72-style.js).
   const ys = S.mods.find(x => x.kind === "style");
   if (ys?.enabled && ys.adapt && !ys.fitted && !S.mods.some(x => x.parent === "morse-style") && W.top === W && !held(ys)) uiTask("styleReady");
+  restorePending().catch(e => warn("pending", e)); // in-progress change: back after a reload
   Heal.soon(); // self-heal: after the page settles and idles
 }).catch(e => warn("couldn't load mods", e));
 const ready = (async () => {

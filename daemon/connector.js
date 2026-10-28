@@ -36,6 +36,7 @@ import { Generations } from "../core/cancel.js";
 import { cachedVoiceStatus, transcribeAudio } from "./voice.js";
 import { CONTROL_REQUESTS, handleControl, watchControl } from "./control.js"; // user control: pause, safe start, install review, backup
 import { HOME, listMods } from "./store.js";
+import { pendingFor, rememberPending, forgetPending } from "./pending.js"; // in-progress change: still there after a reload, until Save or Undo
 import { classifyTarget, describeTarget } from "./targets.js";
 import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
 import { GALLERY_REQUESTS, handleGallery } from "./gallery.js"; // gallery hook: Mods for this site
@@ -735,6 +736,14 @@ export class Connector {
         if (gone) (this.deleted ||= new Map()).set(gone.id, gone); // for Undo in the Mods panel
         return deleteMod(msg.modId);
       }
+      // The preview on the bar. Scoped to the caller's page, like a save: a
+      // reload applies it again until Save or Undo (runtime/boot.js).
+      case "pending.get":
+        return pendingFor(await here());
+      case "pending.put":
+        return rememberPending(await here(), msg.draft);
+      case "pending.clear":
+        return forgetPending(await here(), msg.id);
       // Decode and validate a shared mod without saving it (install confirmation).
       case "mods.import": {
         const src = msg.source.trim();

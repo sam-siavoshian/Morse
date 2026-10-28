@@ -192,6 +192,61 @@ async function submit(request, opts = {}) {
   showResult(S.draft);
 }
 
+// The preview isn't a saved mod. The host keeps it (pending.put) so a reload
+// of the app puts it back on the page until Save or Undo.
+function pendingBody(d) {
+  const target = d.ctx?.target;
+  return {
+    id: d.id, title: d.title || "", request: d.request || d.prompt || "", prompt: d.prompt || d.request || "",
+    css: d.css || "", js: d.js || "", history: d.history || [], refined: d.refined || "",
+    updated: d.updated || new Date().toISOString(), model: d.model || "",
+    ...(d.secs ? { secs: d.secs } : {}), ...(d.attempts ? { attempts: d.attempts } : {}),
+    target: target?.selector ? { selector: String(target.selector).slice(0, 500), label: String(target.label || "").slice(0, 120) } : null,
+    ...(d.style ? { style: d.style } : {}),
+  };
+}
+function rememberDraft(d) {
+  if (!d || d.saved || d.saving) return;
+  if (!(d.css || "").trim() && !(d.js || "").trim()) return;
+  call("pending.put", { draft: pendingBody(d) }).catch(() => {});
+}
+function forgetDraft(id) {
+  call("pending.clear", id ? { id } : {}).catch(() => {});
+}
+// boot.js applied the change already. Open the bar on it, the way it was.
+function pendingReady(raw) {
+  if (!raw || typeof raw.id !== "string") return;
+  if (S.phase === "working" || S.phase === "result") return;
+  if (S.open && (input.value || "").trim()) return;
+  const saved = S.mods.find(m => m.id === raw.id);
+  if (saved && saved.css === raw.css && saved.js === raw.js && (saved.title || "") === (raw.title || "")) {
+    forgetDraft(raw.id);
+    return;
+  }
+  const d = {
+    id: raw.id, request: raw.request || raw.prompt || "", prompt: raw.prompt || raw.request || "",
+    ctx: raw.target?.selector ? { target: raw.target } : null,
+    title: raw.title || "", css: raw.css || "", js: raw.js || "",
+    history: Array.isArray(raw.history) ? raw.history : [], refined: raw.refined || "",
+    updated: raw.updated || "", model: raw.model || "", secs: raw.secs, attempts: raw.attempts,
+    ...(raw.style ? { style: raw.style } : {}),
+    saved: null, saving: null, mod: S.mods.find(m => m.id === raw.id) || null,
+  };
+  S.draft = d;
+  S.open = true;
+  S.picking = false;
+  applyTheme();
+  applyBarPosition();
+  bar.hidden = false;
+  bar.classList.remove("err", "working", "has-error", "saving");
+  let el = null;
+  try { el = raw.target?.selector ? document.querySelector(raw.target.selector) : null; } catch {}
+  S.target = el && !el.closest("[data-morse-ui]") ? el : null;
+  chip.hidden = !S.target;
+  if (S.target) { chip.querySelector("span").textContent = describe(S.target); placeBar(S.target.getBoundingClientRect()); }
+  showResult(d);
+}
+
 // The result: the title, how it went, and what you can do next. The input
 // stays open for a follow-up.
 function showResult(d, { note = "", error = "", keepInput = false, saveError = false } = {}) {
@@ -223,6 +278,7 @@ function showResult(d, { note = "", error = "", keepInput = false, saveError = f
     : d.saved ? t("gen.saySaved", { title: d.title })
     : t("gen.sayDone", { title: d.title, meta: meta ? `, ${meta}` : "" }));
   input.focus({ preventScroll: true });
+  rememberDraft(d); // still here after a reload, until Save or Undo
 }
 
 // Leaving the result (opening the bar fresh, an error) puts the usual words back.
@@ -383,6 +439,7 @@ async function keep({ closed = false } = {}) {
   }
   d.saved = mod;
   d.mod = mod;
+  forgetDraft(d.id); // kept: a reload runs the saved mod, and the bar stays closed
   Health.ran(mod, { ok: true }); // it ran fine just now; check it keeps finding its elements
   Heal.kept(mod); // self-heal hook: remember what it changes (71-heal.js)
   S.phase = "idle";
@@ -413,6 +470,7 @@ async function undo() {
   if (S.draft?.saving) return;
   const d = S.draft;
   if (!d) return;
+  forgetDraft(d.id); // gone: a reload must not bring it back
   if (d.mod) {
     // Editing a saved mod: Undo goes back to the saved version.
     await showVersion(d.id, d.mod);

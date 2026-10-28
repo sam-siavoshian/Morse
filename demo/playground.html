@@ -65,7 +65,7 @@
     get(k, d) { try { return JSON.parse(localStorage.getItem("morse:playground:" + k)) ?? d; } catch { return d; } },
     set(k, v) { localStorage.setItem("morse:playground:" + k, JSON.stringify(v)); },
   };
-  const core = Promise.all([import("/core/kit.js"), import("/core/mod.js"), import("/core/clipboard.js"), import("/core/control-host.js")]);
+  const core = Promise.all([import("/core/kit.js"), import("/core/mod.js"), import("/core/clipboard.js"), import("/core/control-host.js"), import("/core/pending.js")]);
   // ?demoms=60 (or window.__demoMs) slows the demo model's replay, for tests that press Stop mid-stream.
   const demo = () => ({ provider: "demo", demoMs: Number(window.__demoMs || new URLSearchParams(location.search).get("demoms")) || undefined });
   const subs = [];
@@ -75,7 +75,7 @@
     onMessage: fn => subs.push(fn),
     async send(m) {
       const reply = result => setTimeout(() => emit({ reply: m.id, result }), 10);
-      const [kit, mod, clip, control] = await core;
+      const [kit, mod, clip, control, pending] = await core;
       // User control (pause, safe start, install review, backup) through the real host logic.
       if (m.type.startsWith("control.") || m.type === "mods.preview") {
         globalThis.__ctl ||= control.controlHandler({
@@ -106,6 +106,18 @@
         return reply(x);
       }
       if (m.type === "mods.delete") { const all = store.get("mods", {}); delete all[m.modId]; store.set("mods", all); return reply(true); }
+      // An unsaved change survives a reload until Save or Undo (core/pending.js).
+      const pendingWhere = () => ({ url: location.href, app: asApp ? asApp.toLowerCase() : null });
+      if (m.type === "pending.get") return reply(pending.readPending(store.get("pending", {}), pendingWhere()));
+      if (m.type === "pending.put") {
+        const next = pending.packPending(store.get("pending", {}), pendingWhere(), m.draft);
+        if (next) store.set("pending", next);
+        return reply(next ? pending.readPending(next, pendingWhere()) : null);
+      }
+      if (m.type === "pending.clear") {
+        store.set("pending", pending.dropPending(store.get("pending", {}), pendingWhere(), m.id));
+        return reply(true);
+      }
       const exec = (id, js) => {
         let r;
         try { r = (0, eval)(kit.wrapModCode(id, js)); } catch (e) { r = { ok: false, error: String(e.message || e) }; }
