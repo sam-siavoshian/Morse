@@ -21,9 +21,10 @@ test("behavior asks are planned as behavior, and visual asks stay visual", () =>
   assert.equal(wantsBehavior(PLAIN), true);
   assert.equal(needsLogic(PLAIN), true, "a recommendation ask gets the app profile without the word feature");
   assert.equal(looksHard(ASK, {}).hard, true);
-  for (const r of ["make the title bigger", "make the covers bigger", "make it look like a card", "add a now playing label", "hide this ribbon", "make the status bar taller"]) {
+  for (const r of ["make the title bigger", "make the covers bigger", "make it look like a card", "add a now playing label", "hide this ribbon", "make the status bar taller", "Don't undo the user's style"]) {
     assert.equal(wantsBehavior(r), false, r);
   }
+  assert.equal(wantsBehavior("add undo"), true);
   assert.equal(needsLogic("make the status bar taller"), false);
   assert.equal(needsLogic("hide this ribbon"), false);
   assert.equal(looksHard("make the album covers bigger", { notes: "" }).hard, false);

@@ -122,7 +122,9 @@ export function looksHard(request, context) {
 // A request that has to change what the app does, not only how it looks.
 // Visual asks ("make the title bigger", "make it look like…", "add a now
 // playing label") stay false. Bare "like" stays out: it matches "look like".
-const BEHAVIOR = /\b(lets? me|dislik\w*|recommend\w*|ranks?|ranking|reorders?|re-?ranks?|prefers?|vot(?:e|es|ed|ing)|bookmarks?|show me more|more of (?:that|this|those|the same)|tune (?:the |my )?(?:feed|recommendations?)|affect (?:the )?(?:recommendation|feed|ranking|order)|sort\w*|filters? (?:by|out|the)|shortcuts?|when i (?:press|click|type|hit)|timers?|remembers?|undos?|cop(?:y|ies|ying)|downloads?|exports?|saves? (?:it|this|my)|back to (?:the )?top)\b/i;
+// "undo" is the action of adding Undo. "Don't undo the user's style" is a
+// constraint, and must not send a look-only fit through the behavior check.
+const BEHAVIOR = /(?<!\b(?:don't|do not|never|without) )\bundos?\b|\b(lets? me|dislik\w*|recommend\w*|ranks?|ranking|reorders?|re-?ranks?|prefers?|vot(?:e|es|ed|ing)|bookmarks?|show me more|more of (?:that|this|those|the same)|tune (?:the |my )?(?:feed|recommendations?)|affect (?:the )?(?:recommendation|feed|ranking|order)|sort\w*|filters? (?:by|out|the)|shortcuts?|when i (?:press|click|type|hit)|timers?|remembers?|cop(?:y|ies|ying)|downloads?|exports?|saves? (?:it|this|my)|back to (?:the )?top)\b/i;
 export const wantsBehavior = request => BEHAVIOR.test(String(request || ""));
 
 // The plan for one request: the settings to try, in order, and why.
