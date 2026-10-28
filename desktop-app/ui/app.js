@@ -207,6 +207,7 @@ const STATUS = {
   connected: a => [h("i", { class: "dot on" }), h("span", { text: [t("desk.app.connected"), a.windows ? t("desk.app.windows", { n: a.windows }) : "", a.modsOn ? t("desk.app.modsOn", { n: a.modsOn }) : ""].filter(Boolean).join(" · ") })],
   waiting: () => [h("i", { class: "dot wait" }), h("span", { text: t("desk.app.waiting") })],
   "waiting-page": () => [h("i", { class: "dot wait" }), h("span", { text: t("desk.app.waitingPage") })],
+  "no-answer": a => [h("i", { class: "dot wait" }), h("span", { text: t("desk.app.noAnswer", { name: a.name }) })],
   connecting: () => [radar(12), h("span", { text: t("desk.app.connecting") })],
   opening: a => [radar(12), h("span", { text: t("desk.app.opening", { name: a.name }) })],
   disconnecting: () => [radar(12), h("span", { text: t("desk.app.disconnecting") })],
@@ -1198,6 +1199,14 @@ function shownPercent(n) {
   if (!Number.isFinite(v)) return 0;
   return Math.max(0, Math.min(100, Math.round(v)));
 }
+function updateProblem(u) {
+  if (u?.reason === "unsupported") return t("desk.update.unsupported");
+  if (u?.reason === "mismatch") return t("desk.update.mismatch");
+  if (u?.reason === "download") return t("desk.update.downloadError");
+  if (u?.reason === "notInstalled") return t("desk.update.notInstalled");
+  if (u?.phase === "failed") return t("desk.update.failed");
+  return t("desk.update.error");
+}
 function renderUpdate() {
   const u = st.update || { phase: "idle" }, d = $("update");
   const show = ["downloading", "installing", "ready", "failed"].includes(u.phase);
@@ -1214,7 +1223,7 @@ function renderUpdate() {
     $("update-fill").style.width = `${pct}%`;
     track.setAttribute("aria-valuenow", String(pct));
   } else {
-    detail.textContent = u.phase === "ready" ? t("desk.update.ready") : u.phase === "failed" ? t("desk.update.failed") : t("desk.update.installing");
+    detail.textContent = u.phase === "ready" ? t("desk.update.ready") : u.phase === "failed" ? updateProblem(u) : t("desk.update.installing");
   }
   track.hidden = u.phase !== "downloading";
   $("update-acts").hidden = u.phase !== "ready" && u.phase !== "failed";
@@ -1267,8 +1276,7 @@ function renderUpdateCheck() {
   if (u.phase === "checking") text = t("desk.update.checking");
   else if (u.phase === "current") text = t("desk.update.current");
   else if (u.phase === "off") { text = t("desk.update.off"); level = "warn"; }
-  else if (u.phase === "failed") { text = t("desk.update.failed"); level = "bad"; }
-  else if (u.phase === "error") { text = t("desk.update.error"); level = "bad"; }
+  else if (u.phase === "failed" || u.phase === "error") { text = updateProblem(u); level = "bad"; }
   else if (["available", "downloading", "installing", "ready", "later"].includes(u.phase)) {
     text = u.version ? t("desk.update.available", { version: u.version }) : t("desk.update.availablePlain");
     showGet = u.phase === "available";
@@ -1278,6 +1286,7 @@ function renderUpdateCheck() {
   msg.textContent = text;
   msg.className = `shortcut-msg${level ? ` ${level}` : ""}`;
   $("update-get").hidden = !showGet;
+  $("update-get").disabled = busy;
   $("update-restart").hidden = !showRestart;
   extra.hidden = !showGet && !showRestart;
 }
@@ -1293,6 +1302,24 @@ $("check-updates").onclick = async () => {
   else st.update = { phase: "error" };
   render();
 };
+// Download update: download the published file, replace this copy, open Morse again.
+// The button used to open the release page. It does not.
+async function downloadUpdate() {
+  const button = $("update-get");
+  if (!button || button.disabled) return;
+  showError("settings-error", "");
+  st = st || {};
+  const version = st.update?.version;
+  st.update = { ...(st.update || {}), phase: "downloading", percent: 0, version, action: "install" };
+  render();
+  let r;
+  try { r = await morse.downloadUpdate(); }
+  catch { r = null; }
+  if (r?.phase) st.update = r;
+  else st.update = { phase: "error", reason: "download", version, action: "install" };
+  render();
+}
+$("update-get").onclick = downloadUpdate;
 $("update").addEventListener("cancel", event => {
   event.preventDefault();
   if (!["downloading", "installing"].includes(st.update?.phase)) $("update-later").click();

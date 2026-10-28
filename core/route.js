@@ -80,7 +80,7 @@ export function tierLabel(s, label) {
 // count when there are two of them.
 // New behavior (needs JS): a button that does something, a key, a search
 // as you type, copying, saving, asking first, a timer, jumping somewhere.
-const FEATURE = /\b(add (a|an|some) [\w ]{0,20}?button|buttons? (that|to|which)|shortcut|keyboard|press(es|ing)? \w|when i (press|click|type|hit)|let me|toggle|filter|search|cop(y|ies)|download|save (it |this |my )?[\w ]{0,12}as|export|confirm|ask (me )?(first|before)|timer|remind|jump|back to (the )?top|remember|undo|drag|as i type|live)\b/i;
+const FEATURE = /\b(add (a|an|some) [\w ]{0,20}?button|buttons? (that|to|which)|shortcut|keyboard|press(es|ing)? \w|when i (press|click|type|hit)|lets? me|toggle|filter|search|cop(y|ies)|download|save (it |this |my )?[\w ]{0,12}as|export|confirm|ask (me )?(first|before)|timer|remind|jump|back to (the )?top|remember|undo|drag|as i type|live|dislik\w*|recommend\w*|ranks?|ranking|reorders?|re-?ranks?|votes?|voting|bookmarks?|show me more|tune (the |my )?(feed|recommendations?))\b/i;
 // New UI: a part of the interface that isn't there yet ("add a summary
 // panel", "show a word count", "put a badge on…"). Not "add a border to the
 // cards" or "make the button green": the thing added has to be a new part.
@@ -118,6 +118,14 @@ export function looksHard(request, context) {
   if ((feature || data || every) && DYNAMIC.test(notes)) why.push("a page that keeps changing");
   return { hard: strong || why.length >= 2, why };
 }
+
+// A request that has to change what the app does, not only how it looks.
+// Visual asks ("make the title bigger", "make it look like…", "add a now
+// playing label") stay false. Bare "like" stays out: it matches "look like".
+// "undo" is the action of adding Undo. "Don't undo the user's style" is a
+// constraint, and must not send a look-only fit through the behavior check.
+const BEHAVIOR = /(?<!\b(?:don't|do not|never|without) )\bundos?\b|\b(lets? me|dislik\w*|recommend\w*|ranks?|ranking|reorders?|re-?ranks?|prefers?|vot(?:e|es|ed|ing)|bookmarks?|show me more|more of (?:that|this|those|the same)|tune (?:the |my )?(?:feed|recommendations?)|affect (?:the )?(?:recommendation|feed|ranking|order)|sort\w*|filters? (?:by|out|the)|shortcuts?|when i (?:press|click|type|hit)|timers?|remembers?|cop(?:y|ies|ying)|downloads?|exports?|saves? (?:it|this|my)|back to (?:the )?top)\b/i;
+export const wantsBehavior = request => BEHAVIOR.test(String(request || ""));
 
 // The plan for one request: the settings to try, in order, and why.
 //   { steps: [settings…], mode, hard, why }

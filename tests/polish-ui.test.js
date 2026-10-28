@@ -39,8 +39,8 @@ async function until(fn, ms = 15000) {
 // The model: a draft with a foreign red readout, and, when it is shown the
 // picture, a version in the page's own colors. Every call is recorded.
 const calls = [];
-const DRAFT = "TITLE: Timer readout\n```css\n.pomo { color: rgb(255, 0, 0); }\n```\n```js\nmorse.watch('[data-testid=\"player-controls\"]', c => c.append(morse.el('span', { class: 'pomo', text: '25:00' })));\n```";
-const FIXED = "FIX: The red is foreign to the player; use its own text color.\nTITLE: Timer readout\n```css\n.pomo { color: rgb(0, 128, 0); }\n```\n```js\nmorse.watch('[data-testid=\"player-controls\"]', c => c.append(morse.el('span', { class: 'pomo', text: '25:00' })));\n```";
+const DRAFT = "TITLE: Timer readout\n```css\n.pomo { color: rgb(255, 0, 0); }\n```\n```js\nmorse.watch('[data-testid=\"player-controls\"]', c => c.append(morse.el('span', { class: 'pomo', text: '25:00' })));\nmorse.every(60000, () => {});\n```";
+const FIXED = "FIX: The red is foreign to the player; use its own text color.\nTITLE: Timer readout\n```css\n.pomo { color: rgb(0, 128, 0); }\n```\n```js\nmorse.watch('[data-testid=\"player-controls\"]', c => c.append(morse.el('span', { class: 'pomo', text: '25:00' })));\nmorse.every(60000, () => {});\n```";
 registerProvider("demo", async (s, messages, { onToken } = {}) => {
   const pics = messages.flatMap(m => (Array.isArray(m.content) ? m.content.filter(b => b.type === "image") : []));
   calls.push({ pics });

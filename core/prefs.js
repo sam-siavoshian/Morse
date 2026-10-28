@@ -17,6 +17,7 @@ export const DEFAULT_PREFS = {
   autoFix: false,      // self-heal hook: "Fix my mods when a site changes"
   language: "",        // "" = same as my computer; else a code from core/i18n.js LANGUAGES
   modelMode: "auto",   // models: "auto" (fast model, strong one when needed) | "fast" | "best" (core/route.js)
+  modelPick: "",       // "": keep the saved model; "auto"; or one model id (core/providers.js applyModelPick)
   // Fast mode: the smaller model, on top of the saved one
   fastMode: false,
   // polish: "Polish changes", one look at a new or restyled part and a fix (core/polish.js)
@@ -26,6 +27,8 @@ export const DEFAULT_PREFS = {
 export const PREF_LANGUAGES = ["en", "es", "de", "fr", "pt-BR", "zh-CN", "ja", "fa", "ar"];
 
 const PREF_COMBO = /^((Ctrl|Alt|Shift|Meta)\+){0,4}[A-Za-z0-9]{1,24}$/;
+// Same shape as a model name the harness will accept (daemon/harness.js validModel).
+const MODEL_PICK = /^[A-Za-z0-9][\w.:/\[\]-]{0,80}$/;
 const pickPref = (v, allowed, d) => (allowed.includes(v) ? v : d);
 
 export function normalizePrefs(p) {
@@ -47,6 +50,7 @@ export function normalizePrefs(p) {
     autoFix: src.autoFix === true, // self-heal hook
     language: pickPref(src.language, PREF_LANGUAGES, ""),
     modelMode: pickPref(src.modelMode, ["auto", "fast", "best"], "auto"), // models
+    modelPick: src.modelPick === "auto" || (typeof src.modelPick === "string" && MODEL_PICK.test(src.modelPick)) ? src.modelPick : "",
     fastMode: src.fastMode === true,
     polish: src.polish !== false,
   };

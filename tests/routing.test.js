@@ -220,7 +220,7 @@ test("engine: the fast model failing outright (an error, not a draft) also goes 
 
 test("engine: a hard request starts on the strong model; Always fast and a pinned model never move", async () => {
   let calls = fakeModels({ strong: [GOOD] });
-  let { res } = await run(FAKE, "add a button that sorts the products by price");
+  let { res } = await run(FAKE, "add a summary panel above the orders");
   assert.deepEqual([calls.map(c => c.model), res.hard, res.escalated], [["strong"], true, false]);
   calls = fakeModels({ fast: [NOTHING, NOTHING], strong: [GOOD] });
   ({ res } = await run({ ...FAKE, mode: "fast" }, "make the covers bigger"));
@@ -320,6 +320,32 @@ test("prefs: Model is Automatic unless set; only the three choices are kept", ()
   assert.equal(normalizePrefs({ modelMode: "best" }).modelMode, "best");
   assert.equal(normalizePrefs({ modelMode: "opus" }).modelMode, "auto");
   assert.equal(mergePrefs({ modelMode: "fast", theme: "dark" }, { theme: "light" }).modelMode, "fast", "other settings keep it");
+  assert.equal(DEFAULT_PREFS.modelPick, "");
+  assert.equal(normalizePrefs({ modelPick: "sonnet" }).modelPick, "sonnet");
+  assert.equal(normalizePrefs({ modelPick: "auto" }).modelPick, "auto");
+  assert.equal(normalizePrefs({ modelPick: "../etc/passwd" }).modelPick, "");
+  assert.equal(mergePrefs({ modelPick: "haiku", theme: "dark" }, { theme: "light" }).modelPick, "haiku");
+});
+
+test("a model chosen in the bar is the one the next request uses", () => {
+  const { applyModelPick, modelChoicesFor } = providers;
+  const claude = { provider: "claude-code", model: "", pinned: false, tiers: resolveTiers("claude-code"), mode: "auto" };
+  assert.deepEqual(modelChoicesFor(claude, "").ids, ["opus", "sonnet", "haiku"]);
+  assert.equal(modelChoicesFor(claude, "").current, "auto");
+  assert.equal(modelChoicesFor({ provider: "codex", tiers: resolveTiers("codex") }, ""), null, "Codex has no named models");
+  const picked = applyModelPick(claude, "haiku");
+  assert.equal(picked.pinned, true);
+  const hard = planRoute(picked, "add a button that copies the title", {});
+  assert.deepEqual([hard.mode, hard.steps.length, hard.steps[0].model], ["single", 1, "haiku"], "routing stays off once a model is chosen");
+  assert.equal(warmSettings(picked, "add a panel").model, "haiku");
+  assert.equal(applyModelPick(claude, "gpt-9").model, "", "a model this provider doesn't have is ignored");
+  const pinned = { ...claude, model: "opus", pinned: true };
+  assert.equal(modelChoicesFor(pinned, "").current, "opus");
+  const back = applyModelPick(pinned, "auto");
+  assert.equal(back.pinned, false);
+  assert.equal(planRoute(back, "hide the sidebar", {}).steps[0].model, "opus");
+  const openai = { provider: "openai", model: "gpt-5", pinned: false, tiers: resolveTiers("openai"), mode: "auto" };
+  assert.equal(applyModelPick(openai, "gpt-5-mini").model, "gpt-5-mini");
 });
 
 test("settings: the bar's Model setting is saved and read back; config.json holds the names and a pinned model", async () => {

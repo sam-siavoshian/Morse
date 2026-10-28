@@ -7,7 +7,7 @@ test('native actions are limited to running browsers and native apps on macOS', 
   assert.equal(nativeAction(browser, 'darwin'), 'browser');
   assert.equal(nativeAction({ engine: 'native', running: true, state: 'open' }, 'darwin'), 'native');
   for (const engine of ['electron', 'cef', undefined]) assert.equal(nativeAction({ engine, running: true, state: 'connected' }, 'darwin'), null);
-  for (const state of ['opening', 'connecting', 'disconnecting']) assert.equal(nativeAction({ ...browser, state }, 'darwin'), null);
+  for (const state of ['opening', 'connecting', 'disconnecting', 'no-answer']) assert.equal(nativeAction({ ...browser, state }, 'darwin'), null);
   assert.equal(nativeAction({ ...browser, running: false }, 'darwin'), null);
   assert.equal(nativeAction(browser, 'win32'), null);
 });

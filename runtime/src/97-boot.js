@@ -67,12 +67,14 @@ B.adopt({
   guardStop, // guard hook: boot.js didn't apply a mod, or undid it (64-guard.js)
   guardReady, // guard hook: a mod that froze the page was turned off (64-guard.js)
   styleReady: () => YourStyle.ready(), // your-style hook: fit it to this site once, if turned on (72-style.js)
+  pendingReady, // in-progress change: the bar again after a reload, until Save or Undo (60-generate.js)
 });
 const uiStarted = () => { B.started(); S.ready = true; /* tests: the host answered hello and the mods are on */ };
 B.ready.then(hello => {
   try {
     S.models = hello.models || null; // models: the names the Settings sheet shows (56-settings.js)
     S.fastModel = typeof hello.fastModel === "string" ? hello.fastModel : "";
+    setModelChoices(hello.modelChoices || null); // models: the bar's selector (51-model.js), before prefs so the saved choice paints with it
     setPrefs(B.prefs());
     if (hello.settings) hostPrefs = true; // the host sent settings with its hello (03-prefs.js)
     Voice.configure(hello.voice);

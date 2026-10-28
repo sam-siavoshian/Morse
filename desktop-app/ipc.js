@@ -36,7 +36,8 @@ export const LINKS = {
   docs: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/desktop-app.md",
   models: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/models.md",
   troubleshooting: "https://github.com/sam-siavoshian/RRAA/blob/main/docs/troubleshooting.md",
-  // The preview release, where a copy that can't install itself sends the person.
+  // The preview release page. Download update does not open it; that button
+  // downloads, replaces this copy and starts Morse (updater.js).
   release: "https://github.com/sam-siavoshian/RRAA/releases/tag/preview",
 };
 
@@ -70,6 +71,8 @@ export const API = {
   updateLater:        [[none], (s, n) => ({ ok: n.updateLater() })],
   // What the preview release says, compared with this build. The window shows it.
   checkForUpdate:     [[none], async (s, n) => (await n.checkForUpdate?.()) ?? { phase: "error" }],
+  // Download, replace this copy, start Morse. Never an address for the window to open.
+  downloadUpdate:     [[none], async (s, n) => (await n.downloadUpdate?.()) ?? { phase: "error", reason: "download", action: "install" }],
 };
 
 // The window can ask before the daemon has loaded (main.js opens it first).

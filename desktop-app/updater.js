@@ -9,9 +9,12 @@
 //   3. when no change is in progress, or when Morse quits: put the new copy in
 //      place of this one and start it
 //
-// The button reports the same check: up to date, an update (then the download
-// above), or that the preview release could not be read. A copy that isn't
-// packaged reports the result and does not download.
+// Check for updates reports the same check: up to date, an update, or that the
+// preview release could not be read. Install update (the button next to an
+// available update) downloads this computer's file, checks it, replaces this
+// copy and starts it. It does not open a download page. A copy that isn't
+// packaged does not download until that button is pressed. A computer with no
+// published file is told so, and nothing is installed.
 //
 // macOS: the .zip, unpacked with ditto, replaces the Morse.app bundle. A file
 // Node downloads gets no quarantine flag, so the new copy opens without
@@ -76,8 +79,8 @@ export function bundleOf(exe) {
   return i < 0 ? null : exe.slice(0, i + 4);
 }
 
-export function createUpdater({ app, getAppImage = () => "", busy = () => false, log = () => {}, onStatus = () => {}, fetchImpl = globalThis.fetch, env = process.env, here = moduleDir(import.meta.url), beforeExit = async () => {}, install = installUpdate } = {}) {
-  const asset = assetFor();
+export function createUpdater({ app, getAppImage = () => "", busy = () => false, log = () => {}, onStatus = () => {}, fetchImpl = globalThis.fetch, env = process.env, here = moduleDir(import.meta.url), beforeExit = async () => {}, install = installUpdate, assetName } = {}) {
+  const asset = assetName === undefined ? assetFor() : assetName;
   let local = null;
   try { local = JSON.parse(readFileSync(path.join(here, "build-info.json"), "utf8")); } catch {}
   let ready = null; // { file, remote } downloaded and checked, waiting for a quiet moment
@@ -130,7 +133,7 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
     if (status.phase !== "idle" && status.phase !== "checking") return;
     if (result === "current") set({ phase: "current", version: versionOf(local) });
     else if (result === "off") set({ phase: "off" });
-    else if (result === "available") set({ phase: "available", version: "" });
+    else if (result === "available") set({ phase: "available", version: status.version || "", action: "install" });
     else set({ phase: "error" });
   }
 
@@ -161,7 +164,25 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
     return flight;
   }
 
-  async function runCheck(user) {
+  // The Install update button: download (if this computer has a file), check
+  // it, replace this copy and start it. No page to open.
+  async function downloadUpdate() {
+    if (applying) return "installing";
+    if (env.MORSE_NO_UPDATE === "1") { set({ phase: "off" }); return "off"; }
+    if (!asset) { set({ phase: "error", reason: "unsupported", action: "install" }); return "unsupported"; }
+    if (flight) await flight;
+    if (!ready) await restoreDownload();
+    if (!ready) {
+      flight = runCheck(true, { force: true }).finally(() => { flight = null; });
+      const result = await flight;
+      if (result !== "ready") return result;
+    }
+    later = false;
+    const ok = await apply({ relaunch: true });
+    return ok ? "installing" : "failed";
+  }
+
+  async function runCheck(user, { force = false } = {}) {
     if (user) set({ phase: "checking" });
     try {
       const remote = JSON.parse(await get("build.json"));
@@ -182,21 +203,26 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
         set({ phase: "failed" });
         return "failed";
       }
-      // A clone, or a computer with no installer: say a newer one is published.
-      // Only a packaged app downloads it.
-      if (!enabled()) {
-        if (user) set({ phase: "available", version, commit: remote.commit });
+      // No file for this computer: say so. Never hand back an address to open.
+      if (!asset) {
+        if (user || force) set({ phase: "error", reason: "unsupported", version, action: "install" });
+        return "unsupported";
+      }
+      // A clone reports the update and waits for Install update. A packaged app
+      // downloads on this check. Either way the next step is install, not a page.
+      if (!force && !app.isPackaged) {
+        if (user) set({ phase: "available", version, commit: remote.commit, action: "install" });
         return "available";
       }
       const sums = parseSums(await get("SHA256SUMS"));
       const want = sums[asset];
-      if (!want) { if (user) set({ phase: "error" }); return "missing"; }
-      set({ phase: "downloading", percent: 0, commit: remote.commit, version });
-      const data = await get(asset, "buffer", percent => set({ phase: "downloading", percent, commit: remote.commit, version }));
+      if (!want) { if (user || force) set({ phase: "error", ...(force ? { reason: "download" } : {}) }); return "missing"; }
+      set({ phase: "downloading", percent: 0, commit: remote.commit, version, action: "install" });
+      const data = await get(asset, "buffer", percent => set({ phase: "downloading", percent, commit: remote.commit, version, action: "install" }));
       const got = createHash("sha256").update(data).digest("hex");
       // A release being replaced can show the new SUMS beside an old file for a
       // minute: a mismatch is tried again at the next check, never installed.
-      if (got !== want) { log(`update: ${asset} doesn't match SHA256SUMS yet; trying later`); set({ phase: user ? "error" : "idle" }); return "mismatch"; }
+      if (got !== want) { log(`update: ${asset} doesn't match SHA256SUMS yet; trying later`); set(user || force ? { phase: "error", reason: "mismatch", action: "install" } : { phase: "idle" }); return "mismatch"; }
       await fs.rm(dir, { recursive: true, force: true });
       await fs.mkdir(dir, { recursive: true });
       const file = path.join(dir, asset);
@@ -204,12 +230,12 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
       ready = { file, remote: { ...remote, version }, sha256: want };
       await fs.writeFile(path.join(dir, "pending.json"), JSON.stringify({ remote: ready.remote, sha256: want }));
       log(`update: ${remote.commit.slice(0, 7)} downloaded`);
-      set({ phase: later ? "later" : "ready", commit: remote.commit, version });
-      scheduleInstall();
+      set({ phase: later && !force ? "later" : "ready", commit: remote.commit, version, action: "install" });
+      if (!force) scheduleInstall();
       return "ready";
     } catch (e) {
       log(`update: ${e.message}`);
-      if (user) set({ phase: "error" });
+      if (user || force) set({ phase: "error", ...(force || status.phase === "downloading" ? { reason: "download", action: "install" } : {}) });
       else if (status.phase === "downloading") set({ phase: "idle" });
       return "error";
     }
@@ -276,7 +302,8 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
     } catch (e) {
       log(`update: couldn't install (${e.message}); keeping this version`);
       applying = false;
-      set({ phase: "failed", error: e.message });
+      const permanent = /not running from|has no app in it/i.test(String(e.message || ""));
+      set({ phase: "failed", reason: permanent ? "notInstalled" : "install", error: e.message, action: "install" });
       return false;
     }
   }
@@ -300,6 +327,7 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
       startup = installTimer = timer = idleTimer = null;
     },
     check,
+    downloadUpdate,
     onQuit() {
       if (applying) return true;
       if (!ready) return false;
@@ -328,15 +356,16 @@ export function createUpdater({ app, getAppImage = () => "", busy = () => false,
 export async function installUpdate({ app, file, dir, getAppImage = () => "", relaunch = true, platform = process.platform, executable = process.execPath }) {
   const pid = String(process.pid);
   if (platform === "darwin") {
-    const bundle = bundleOf(executable);
-    if (!bundle) throw new Error("not running from an app bundle");
+    const home = app.getPath("home");
+    // A packaged app is replaced in place. Any other Mac copy (the Install
+    // update button) lands in the home Applications folder, then opens.
+    const dest = macInstallTarget(executable, home);
     const unpacked = path.join(dir, "new");
     rmSync(unpacked, { recursive: true, force: true });
     execFileSync("ditto", ["-x", "-k", file, unpacked]);
     const fresh = readdirApps(unpacked)[0];
     if (!fresh) throw new Error("the update has no app in it");
-    const home = app.getPath("home");
-    const placed = placeMac(dir, fresh, installDest(bundle, home), "cancel-app");
+    const placed = placeMac(dir, fresh, dest, "cancel-app");
     // The helper is waiting before the swap. If moving the running app
     // kills this process, the helper still finishes and opens the new one.
     await wake(dir, macRelaunchScript, { MORSE_PID: pid, MORSE_DEST: placed.dest, MORSE_NEXT: placed.next, MORSE_OLD: placed.old, MORSE_CANCEL: placed.cancel, MORSE_RELAUNCH: relaunch ? "1" : "0" });
@@ -367,6 +396,15 @@ function readdirApps(dir) {
     // Morse.app is the update. Prefer that name if several are unpacked.
     return apps.sort((a, b) => (path.basename(a) === "Morse.app" ? 0 : 1) - (path.basename(b) === "Morse.app" ? 0 : 1));
   } catch { return []; }
+}
+
+// Where the new Mac app should land. A running bundle that this user can
+// change is replaced in place. Anything else (a disk image, a folder that
+// can't be changed, or a copy that isn't the app) goes to the home Applications.
+export function macInstallTarget(executable, home) {
+  const bundle = bundleOf(executable);
+  if (!bundle) return path.join(home, "Applications", "Morse.app");
+  return installDest(bundle, home);
 }
 
 // A running copy opened from a disk image, or from a folder this user can't

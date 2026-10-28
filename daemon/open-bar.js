@@ -29,11 +29,13 @@ export function morseRunning(connector) {
 
 // The apps-list state. Connected only once Morse is running in the app.
 // Until then the row stays "connecting", and Disconnect stays (canStop):
-// the app is already ours, it just has no Morse world yet.
+// the app is already ours, it just has no Morse world yet. connectStalled
+// means those attempts ended: the row says so instead of spinning.
 export function presentApp(sessionState, connector) {
   // A browser on New Tab or Settings is reachable, but has no supported
   // document. Waiting cannot finish until the user opens a website.
   if (sessionState === "connected" && connector?.needsPage === true) return { state: "waiting-page", canStop: true };
+  if (connector?.connectStalled && morseRunning(connector) !== true && (sessionState === "connected" || sessionState === "connecting")) return { state: "no-answer", canStop: true };
   if (sessionState === "connected" && morseRunning(connector) === false) return { state: "connecting", canStop: true };
   return { state: sessionState, canStop: false };
 }
