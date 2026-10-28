@@ -7,7 +7,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 const NAMES = [
   "state", "refreshApps", "openApp", "openBar", "nativeControls", "nativeSetup", "disconnectApp", "addApp",
   "modelChoices", "probeEndpoint", "chooseModel", "setFastMode", "checkModel",
-  "setModOn", "deleteMod", "undeleteMod", "setAllModsOff", "runChecks", "setStartAtLogin", "setAutoOpen", "setOpenShortcut", "openLink", "finishWelcome", "installUpdate", "updateLater", "checkForUpdate",
+  "setModOn", "deleteMod", "undeleteMod", "setAllModsOff", "runChecks", "setStartAtLogin", "setAutoOpen", "setOpenShortcut", "openLink", "finishWelcome", "installUpdate", "updateLater", "checkForUpdate", "downloadUpdate",
 ];
 
 const api = {};

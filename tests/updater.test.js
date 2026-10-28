@@ -7,7 +7,7 @@ import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync, mkdirSync
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { assetFor, parseSums, isNewer, versionOf, bundleOf, createUpdater, moduleDir, RELEASE, installDest, swapInPlace, macRelaunchScript, linuxSwapScript } from "../desktop-app/updater.js";
+import { assetFor, parseSums, isNewer, versionOf, bundleOf, createUpdater, moduleDir, RELEASE, installDest, macInstallTarget, swapInPlace, macRelaunchScript, linuxSwapScript, installUpdate } from "../desktop-app/updater.js";
 
 test("each computer gets its own file; others don't update themselves", () => {
   assert.equal(assetFor("darwin", "arm64"), "Morse-mac-arm64.zip");
@@ -182,6 +182,9 @@ test("Check for updates says up to date, that an update is published, or that th
     assert.equal(await newer.updater.check({ user: true }), "available");
     assert.equal(newer.updater.status.phase, "available");
     assert.equal(newer.updater.status.version, "0.4.0");
+    assert.equal(newer.updater.status.action, "install", "the download path is install, not a page");
+    assert.equal(newer.updater.status.url, undefined);
+    assert.doesNotMatch(JSON.stringify(newer.updater.status), /https?:|openLink|releases\//);
     assert.deepEqual(newer.asked, [`${RELEASE}/build.json`], "a clone reports the update and does not download it");
   } finally { newer.done(); }
 
@@ -201,6 +204,17 @@ test("Check for updates says up to date, that an update is published, or that th
   assert.equal(await off.check({ user: true }), "off");
   assert.equal(off.status.phase, "off");
   assert.equal(askedOff.length, 0, "updates turned off are not looked up");
+});
+
+test("a Mac that isn't running inside Morse.app installs into the home Applications folder", () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "morse-mac-target-"));
+  try {
+    const home = path.join(dir, "home");
+    const bundle = path.join(dir, "Applications", "Morse.app");
+    mkdirSync(path.dirname(bundle));
+    assert.equal(macInstallTarget(process.execPath, home), path.join(home, "Applications", "Morse.app"));
+    assert.equal(macInstallTarget(`${bundle}/Contents/MacOS/Morse`, home), bundle);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test("an app opened from a disk image lands in the home Applications folder", () => {
@@ -504,8 +518,109 @@ await installUpdate({ file: ${JSON.stringify(fresh)}, dir: ${JSON.stringify(dir)
 });
 
 test("a Windows installer that cannot be spawned reports failure instead of exiting", async () => {
-  const { installUpdate } = await import("../desktop-app/updater.js");
   await assert.rejects(installUpdate({ file: path.join(os.tmpdir(), "no-such-morse-installer.exe"), platform: "win32" }), /ENOENT/);
+});
+
+test("Linux can replace the running AppImage only", async () => {
+  await assert.rejects(installUpdate({ file: path.join(os.tmpdir(), "morse-update-unused"), platform: "linux", getAppImage: () => "" }), /AppImage/);
+});
+
+function noDownloadPage(status) {
+  assert.equal(status.url, undefined);
+  assert.equal(status.href, undefined);
+  assert.notEqual(status.action, "open");
+  assert.doesNotMatch(JSON.stringify(status), /https?:|openLink|releases\//);
+}
+
+test("Download update downloads, checks, installs and relaunches", { skip: !asset }, async () => {
+  const events = [];
+  const ctx = setup(downloadedRelease(), { packaged: false, options: {
+    install: async opts => { events.push(["install", opts.relaunch, readFileSync(opts.file, "utf8")]); },
+    beforeExit: async () => { events.push(["cleanup"]); },
+  } });
+  ctx.app.releaseSingleInstanceLock = () => events.push(["unlock"]);
+  ctx.app.exit = code => events.push(["exit", code]);
+  try {
+    assert.equal(await ctx.updater.check({ user: true }), "available");
+    assert.equal(ctx.updater.status.action, "install");
+    noDownloadPage(ctx.updater.status);
+    assert.equal(ctx.asked.some(url => url.endsWith(`/${asset}`)), false);
+    assert.equal(await ctx.updater.downloadUpdate(), "installing");
+    assert.deepEqual(events, [["install", true, "verified new app"], ["cleanup"], ["unlock"], ["exit", 0]]);
+    assert.equal(ctx.updater.status.phase, "installing");
+    noDownloadPage(ctx.updater.status);
+    assert.equal(ctx.asked.filter(url => url.endsWith(`/${asset}`)).length, 1);
+  } finally { ctx.done(); }
+});
+
+test("a download that doesn't match, a failed fetch, or a failed install is not a success", { skip: !asset }, async () => {
+  const bad = setup({
+    "build.json": JSON.stringify({ commit: "def5678", builtAt: "2026-10-25T02:00:00Z", version: "0.4.0" }),
+    "SHA256SUMS": `${"0".repeat(64)}  ${asset}\n`,
+    [asset]: "tampered",
+  }, { packaged: false, options: { install: async () => { throw new Error("installed a bad file"); } } });
+  bad.app.exit = () => { throw new Error("exited after a bad file"); };
+  try {
+    assert.equal(await bad.updater.downloadUpdate(), "mismatch");
+    assert.equal(bad.updater.status.phase, "error");
+    assert.equal(bad.updater.status.reason, "mismatch");
+    assert.equal(bad.updater.ready, false);
+    noDownloadPage(bad.updater.status);
+  } finally { bad.done(); }
+
+  const dir = mkdtempSync(path.join(os.tmpdir(), "morse-upd-net-"));
+  writeFileSync(path.join(dir, "build-info.json"), JSON.stringify({ commit: "abc1234", builtAt: "2026-10-25T00:00:00Z", version: "0.3.1" }));
+  const offline = createUpdater({
+    app: { isPackaged: false, getPath: () => path.join(dir, "user"), exit() { throw new Error("exited offline"); } },
+    here: dir,
+    fetchImpl: async () => { throw new Error("offline"); },
+    install: async () => { throw new Error("installed offline"); },
+  });
+  try {
+    assert.equal(await offline.downloadUpdate(), "error");
+    assert.equal(offline.status.phase, "error");
+    assert.equal(offline.status.reason, "download");
+    assert.equal(offline.ready, false);
+    noDownloadPage(offline.status);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+
+  const stuck = setup(downloadedRelease(), { packaged: false, options: {
+    install: async () => { throw new Error("not running from an AppImage"); },
+  } });
+  let exits = 0;
+  stuck.app.exit = () => { exits++; };
+  try {
+    assert.equal(await stuck.updater.downloadUpdate(), "failed");
+    assert.equal(stuck.updater.status.phase, "failed");
+    assert.equal(stuck.updater.status.reason, "notInstalled");
+    assert.equal(exits, 0, "a failed install leaves Morse running");
+    assert.equal(stuck.updater.ready, true, "the checked download can be tried again");
+    noDownloadPage(stuck.updater.status);
+  } finally { stuck.done(); }
+});
+
+test("a computer with no published file gets a failure, not a download page", async () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "morse-upd-arch-"));
+  writeFileSync(path.join(dir, "build-info.json"), JSON.stringify({ commit: "abc1234", builtAt: "2026-10-25T00:00:00Z", version: "0.3.1" }));
+  const asked = [];
+  const fetchImpl = async url => {
+    asked.push(url);
+    if (url.endsWith("/build.json")) return { ok: true, status: 200, text: async () => JSON.stringify({ commit: "def5678", builtAt: "2026-10-26T00:00:00Z", version: "0.4.0" }) };
+    return { ok: false, status: 404 };
+  };
+  const app = { isPackaged: true, getPath: () => path.join(dir, "user"), exit() { throw new Error("exited"); } };
+  const updater = createUpdater({ app, fetchImpl, here: dir, assetName: null, install: async () => { throw new Error("installed"); } });
+  try {
+    assert.equal(await updater.check({ user: true }), "unsupported");
+    assert.equal(updater.status.phase, "error");
+    assert.equal(updater.status.reason, "unsupported");
+    assert.equal(updater.status.version, "0.4.0");
+    noDownloadPage(updater.status);
+    assert.deepEqual(asked, [`${RELEASE}/build.json`]);
+    assert.equal(await updater.downloadUpdate(), "unsupported");
+    assert.equal(asked.length, 1, "saying there is no file does not download one");
+    noDownloadPage(updater.status);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test("concurrent checks share a download and a successful upgrade clears staged copies", { skip: !asset }, async () => {
