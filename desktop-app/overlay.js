@@ -30,7 +30,7 @@ const DEFAULT_PRELOAD = path.join(path.dirname(fileURLToPath(import.meta.url)), 
 // surface (backdrop-filter) within its bounds. When set: "mac" vibrancy values
 // ("hud", "under-window", "fullscreen-ui") or Windows backgroundMaterial
 // ("mica", "acrylic", "tabbed").
-export function createOverlayHost({ BrowserWindow, screen = null, ipcMain = null, runtimeUrl = OVERLAY_URL, platform = process.platform, preload = DEFAULT_PRELOAD, material = null } = {}) {
+export function createOverlayHost({ BrowserWindow, screen = null, ipcMain = null, runtimeUrl = OVERLAY_URL, platform = process.platform, preload = DEFAULT_PRELOAD, material = null, nativeService = null } = {}) {
   if (!BrowserWindow) throw new TypeError("createOverlayHost needs Electron's BrowserWindow");
   let win = null;
 
@@ -38,10 +38,15 @@ export function createOverlayHost({ BrowserWindow, screen = null, ipcMain = null
   // the pointer is over the bar, and click-through again when it leaves.
   const onInteractive = (_event, on) => { if (win && !win.isDestroyed()) win.setIgnoreMouseEvents(!on, { forward: true }); };
   ipcMain?.on?.("morse-overlay:interactive", onInteractive);
-  // The bar's "apply a change" messages reach here. Native mod generation isn't
-  // built yet, so the default answer is honest; the app replaces this handler
-  // when the native backend exists.
-  ipcMain?.handle?.("morse-overlay:native", async () => ({ ok: false, error: "Native mods aren't wired yet." }));
+  // The bar's "apply a change" messages (generate / save / list / toggle) reach
+  // here and go to the native mod service (native-dbi/apply.js) when one is
+  // wired. Without a service — or when the model that writes the hook isn't
+  // connected — the reply is honest rather than a pretend success.
+  ipcMain?.handle?.("morse-overlay:native", async (_event, msg) => {
+    if (!nativeService) return { ok: false, error: "No native session is active for this app." };
+    try { return await nativeService.handle(msg); }
+    catch (e) { return { ok: false, error: e?.message || String(e) }; }
+  });
 
   const ensure = () => {
     if (win && !win.isDestroyed()) return win;
@@ -107,9 +112,9 @@ export function createOverlayHost({ BrowserWindow, screen = null, ipcMain = null
 // Tie the host to the native window: start the controller tracking `pid`, and
 // return a handle whose stop() tears the overlay down. `BrowserWindow`/`screen`
 // come from main.js; `boundsFor` is injectable for tests.
-export async function startNativeOverlay({ pid, BrowserWindow, screen = null, ipcMain = null, platform = process.platform, preload = DEFAULT_PRELOAD, material = null, regionOptions = {}, boundsFor = null, subscribe = null, onGone = null }) {
+export async function startNativeOverlay({ pid, BrowserWindow, screen = null, ipcMain = null, platform = process.platform, preload = DEFAULT_PRELOAD, material = null, nativeService = null, regionOptions = {}, boundsFor = null, subscribe = null, onGone = null }) {
   const { OverlayController, trackWindow } = await import("../native-dbi/overlay.js");
-  const host = createOverlayHost({ BrowserWindow, screen, ipcMain, platform, preload, material });
+  const host = createOverlayHost({ BrowserWindow, screen, ipcMain, platform, preload, material, nativeService });
   // The real bar expands to panels, so the overlay covers the whole window and
   // hit-tests the bar for click-through (overlay-boot.js), rather than being a
   // fixed strip.

@@ -14,6 +14,8 @@ export { createModSpec, validateModSpec, createContext } from "./schema.js";
 export { parsePattern, scan, resolveOffset, toFridaPattern, uniqueness } from "./sigscan.js";
 export { assess, authorizeTarget, probeRestrictions } from "./boundaries.js";
 export { NativeSession } from "./frida-runner.js";
+export { NativeModService } from "./apply.js";
+export { createStore, keyFor } from "./store.js";
 
 // Step 1–4 of discovery/context extraction. Returns a context ready to show the
 // person (what can be hooked) plus the authorization verdict and any warnings.
