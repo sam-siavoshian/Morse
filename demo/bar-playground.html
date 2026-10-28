@@ -63,7 +63,7 @@
       switch (m.type) {
         case "hello":
           return reply({ mode: "playground", label: "demo replay", quiet: !q.has("welcome"), settings: store.get("settings", {}), voice,
-            ...(q.has("models") && { models: { fast: "sonnet", best: "opus" } }) }); // ?models: the Model setting (core/route.js)
+            ...(q.has("models") && { models: { fast: "sonnet", best: "opus" }, modelChoices: { ids: ["opus", "sonnet", "haiku"], current: (store.get("settings", {}).modelPick && store.get("settings", {}).modelPick !== "auto") ? store.get("settings", {}).modelPick : "auto" } }) }); // ?models: the Model setting, and the bar's model selector
         case "mods.list": return reply(q.has("keepmods") ? store.get("mods", []) : []); // ?keepmods: saved mods come back (demo/shoot-i18n.js)
         // the runtime carries English only; another language's words come from core/locales/ (core/languages.js)
         case "i18n.words": return import("/core/languages.js").then(x => x.readWords(m.lang)).then(w => reply(w), e => reply(null, String(e)));
@@ -89,6 +89,9 @@
           return reply(true);
         }
         case "generate": {
+          const pick = store.get("settings", {}).modelPick;
+          const used = pick && pick !== "auto" ? pick : "opus";
+          if (q.has("models")) fake.log.at(-1).model = used; // the selector's choice is what this ask uses
           if (q.has("fail")) return setTimeout(() => reply({ ok: false, error: q.get("fail") }), 300); // onboarding: error states
           let i = 0, css = "";
           const speed = Number(q.get("ms") || 30);
@@ -105,7 +108,7 @@
               const done = block.split("```")[0].match(/[^}]*\}/g)?.join("") || "";
               if (done !== css) { css = done; emit({ type: "css", css, genId: m.genId }); }
             }
-            if (i >= TEXT.length) { clearInterval(g.t); fake.gens.delete(m.genId); reply({ ok: true, title: "Airier toolbar", css, js: "", attempts: 1, ...(q.has("models") && { model: "Claude Code · opus" }) }); }
+            if (i >= TEXT.length) { clearInterval(g.t); fake.gens.delete(m.genId); reply({ ok: true, title: "Airier toolbar", css, js: "", attempts: 1, ...(q.has("models") && { model: `Claude Code · ${used}` }) }); }
           }, speed); };
           if (thinkFor) g.hold = setTimeout(pump, thinkFor);
           else pump();
