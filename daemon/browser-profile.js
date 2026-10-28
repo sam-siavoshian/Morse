@@ -6,8 +6,14 @@
 // site again, so Morse never opens one when there is an everyday profile:
 //
 //   - the first time, the everyday profile is copied in whole (sign-ins,
-//     saved passwords, tabs, extensions, bookmarks), caches left out. On a Mac
-//     the copy is a clone: instant, and no extra space.
+//     saved passwords, tabs, extensions, bookmarks), caches left out. A folder
+//     with no cache inside it is cloned in one shot: on a Mac that is one
+//     clonefile of the folder, and on a disk that can share blocks it is a
+//     reflink. Copying every file on its own (even as its own clone) is what
+//     made this first open take the better part of a minute. A disk that
+//     cannot clone falls back to a normal copy, with the heavy folders copied
+//     at the same time. A clone shares the disk blocks until either profile
+//     writes them, so it takes no extra space.
 //   - every time after, sign-ins made in the everyday browser since are
 //     merged in: a cookie newer there replaces the one here, a saved password
 //     not here is added. Nothing here is removed, so a sign-in made in the
@@ -18,6 +24,7 @@
 // browser is closed (daemon/desktop.js quits it first), so every file is
 // whole.
 
+import { execFile } from "node:child_process";
 import { promises as fs, constants } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -57,14 +64,158 @@ const keep = src => !SKIP.has(path.basename(src)) && !/^BrowserMetrics-/.test(pa
 
 const exists = p => fs.access(p).then(() => true, () => false);
 
+// The same bytes fs.cp used to write, one file after another. Still the
+// fallback when a folder cannot be cloned, and how skipped files are dropped.
+const CP = { recursive: true, filter: keep, mode: constants.COPYFILE_FICLONE, preserveTimestamps: true, verbatimSymlinks: true };
+const COPY_PARALLEL = 4;
+
+// One clone of a whole folder. macOS `cp -c` is clonefile(2): the folder and
+// everything under it, in one call, sharing the disk blocks. Linux
+// `--reflink=always` fails unless the disk can share blocks, so a normal
+// disk never takes the slow copy by mistake. Windows has no directory clone.
+export function profileCloneCommand(platform, from, to) {
+  if (platform === "darwin") return { file: "/bin/cp", args: ["-cRp", from, to] };
+  if (platform === "linux") return { file: "cp", args: ["-a", "--reflink=always", from, to] };
+  return null;
+}
+
+function run(file, args, timeout = 120_000) {
+  return new Promise(resolve => {
+    execFile(file, args, { timeout, windowsHide: true }, err => resolve(!err));
+  });
+}
+
+let reflinkKnown;
+async function linuxCanReflink() {
+  if (reflinkKnown !== undefined) return reflinkKnown;
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "morse-reflink-"));
+  try {
+    const a = path.join(dir, "a");
+    await fs.writeFile(a, "x");
+    reflinkKnown = await run("cp", ["--reflink=always", a, path.join(dir, "b")], 5000);
+  } catch { reflinkKnown = false; }
+  finally { await fs.rm(dir, { recursive: true, force: true }); }
+  return reflinkKnown;
+}
+
+// cloneDir is a test double, null to force a normal copy, or omitted for
+// what this computer can actually do.
+async function resolveCloneDir(osPlatform, cloneDir) {
+  if (cloneDir !== undefined) return cloneDir || null;
+  if (osPlatform === "linux" && !await linuxCanReflink()) return null;
+  if (osPlatform !== "darwin" && osPlatform !== "linux") return null;
+  return (from, to) => {
+    const cmd = profileCloneCommand(osPlatform, from, to);
+    return cmd ? run(cmd.file, cmd.args) : false;
+  };
+}
+
+const isRealDir = e => e.isDirectory() && !e.isSymbolicLink();
+// Cloning a parent of one of these would take the caches inside it along.
+// The profile folders are checked when they themselves are copied; Storage
+// is walked, because its caches sit several levels under an extension id.
+const HOLDS_CACHES = /^(Default|Guest Profile|System Profile|Profile \d+|Service Worker|Storage)$/;
+
+// "dirs": a cache folder sits directly inside this one (do not clone it).
+// "nested": a profile or Storage sits inside, so a clone would take its caches.
+// "files": only a lock file is in the way. "clean": clone the whole folder.
+// A cache folder is never opened. IndexedDB, Extensions and the other heavy
+// folders are not walked either: their names are not caches, so one clone
+// takes the whole tree. The listing budget keeps a huge Storage from being
+// split into one clone per file.
+async function classify(dir, budget, deep) {
+  if (budget.n++ > budget.max) return "clean";
+  const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => null);
+  if (!entries) return "clean";
+  let fileSkip = false;
+  const subdirs = [];
+  for (const e of entries) {
+    const p = path.join(dir, e.name);
+    if (!keep(p)) {
+      if (isRealDir(e)) return "dirs";
+      fileSkip = true;
+      continue;
+    }
+    if (isRealDir(e)) subdirs.push(e.name);
+  }
+  if (deep || path.basename(dir) === "Storage") {
+    for (const name of subdirs) {
+      const sub = await classify(path.join(dir, name), budget, true);
+      if (sub === "dirs" || sub === "nested") return "nested";
+      if (sub === "files") fileSkip = true;
+    }
+  } else if (subdirs.some(name => HOLDS_CACHES.test(name))) return "nested";
+  return fileSkip ? "files" : "clean";
+}
+
+async function tryClone(from, to, clone) {
+  if (!clone.fn) return false;
+  let ok = false;
+  try { ok = (await clone.fn(from, to)) === true; } catch { ok = false; }
+  if (!ok) {
+    clone.fn = null; // this disk cannot clone; the rest of the profile is copied
+    await fs.rm(to, { recursive: true, force: true });
+    return false;
+  }
+  return true;
+}
+
+async function mapLimit(items, limit, fn) {
+  if (!items.length) return;
+  let i = 0, err = null;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (err == null && i < items.length) {
+      const item = items[i++];
+      try { await fn(item); } catch (e) { err ||= e; }
+    }
+  });
+  await Promise.all(workers);
+  if (err) throw err;
+}
+
+async function copyTree(from, to, ctx) {
+  const st = await fs.lstat(from);
+  if (st.isSymbolicLink() || !st.isDirectory()) {
+    await fs.cp(from, to, CP);
+    return;
+  }
+  let nested = false;
+  if (ctx.clone.fn) {
+    const kind = await classify(from, ctx.budget, ctx.deep);
+    if (kind === "clean") {
+      if (await tryClone(from, to, ctx.clone)) return;
+      await fs.cp(from, to, CP); // this disk cannot clone; a clean folder has no caches
+      return;
+    }
+    // A lock file, a cache, or a profile folder. Split so the heavy folders
+    // underneath are still cloned, and so the cache folders are never opened.
+    nested = kind === "nested" && (ctx.deep || path.basename(from) === "Storage");
+  } else {
+    const entries = await fs.readdir(from, { withFileTypes: true });
+    if (!entries.some(e => isRealDir(e) && !keep(path.join(from, e.name)))) {
+      await fs.cp(from, to, CP);
+      return;
+    }
+  }
+  // A cache folder stays behind. Each kept folder is cloned or copied on its own,
+  // several at once: Extensions, IndexedDB and the session files don't wait on each other.
+  const entries = await fs.readdir(from, { withFileTypes: true });
+  await fs.mkdir(to, { recursive: true });
+  await fs.chmod(to, st.mode).catch(() => {});
+  await fs.utimes(to, st.atime, st.mtime).catch(() => {});
+  const kept = entries.filter(e => keep(path.join(from, e.name)));
+  const child = nested ? { ...ctx, deep: true } : ctx;
+  await mapLimit(kept, COPY_PARALLEL, e => copyTree(path.join(from, e.name), path.join(to, e.name), child));
+}
+
 // A whole folder, through a temporary one, so a copy that fails half way
 // leaves nothing behind.
-async function copyWhole(from, to) {
+async function copyWhole(from, to, clone) {
   const tmp = `${to}.copying`;
   await fs.rm(tmp, { recursive: true, force: true });
   await fs.mkdir(path.dirname(to), { recursive: true });
   try {
-    await fs.cp(from, tmp, { recursive: true, filter: keep, mode: constants.COPYFILE_FICLONE, preserveTimestamps: true, verbatimSymlinks: true });
+    await copyTree(from, tmp, { clone, budget: { n: 0, max: 20000 }, deep: false });
     await fs.rename(tmp, to);
   } catch (e) { await fs.rm(tmp, { recursive: true, force: true }); throw e; }
 }
@@ -128,13 +279,16 @@ const COOKIE_KEY = ["host_key", "top_frame_site_key", "has_cross_site_ancestor",
 // { copied } the first time, { merged } after, or {} when there is no everyday
 // profile. Throws only when the first copy fails: Morse then doesn't open the
 // browser on an empty profile.
-export async function carrySignIns(app, { platform = process.platform, env = process.env, home, morseHome, say = () => {}, log = () => {} } = {}) {
+export async function carrySignIns(app, { platform = process.platform, env = process.env, home, morseHome, say = () => {}, log = () => {}, cloneDir } = {}) {
   const from = everydayDir(app, { platform, env, ...(home && { home }) });
   const to = morseProfileDir(app, { platform, ...(morseHome && { home: morseHome }) });
   if (!from || !(await exists(path.join(from, "Local State")))) return {};
+  // What this computer can clone, shared by the first copy and any profile
+  // that shows up later. A failure turns it off for the rest of this pass.
+  const clone = { fn: await resolveCloneDir(process.platform, cloneDir) };
   if (!(await exists(path.join(to, "Local State")))) {
     say(`Bringing ${app.name}'s sign-ins, tabs and extensions to Morse (only this once)…`);
-    try { await copyWhole(from, to); } catch (e) {
+    try { await copyWhole(from, to, clone); } catch (e) {
       throw Object.assign(new Error(`Morse couldn't copy your ${app.name} profile (${e.code || e.message}), so it didn't open ${app.name}: you would have had to sign in again. Your ${app.name} is as it was.`), { said: true });
     }
     return { copied: true };
@@ -143,7 +297,7 @@ export async function carrySignIns(app, { platform = process.platform, env = pro
   for (const p of await profilesIn(from)) {
     const here = path.join(to, p), there = path.join(from, p);
     if (!(await exists(path.join(here, "Preferences")))) {
-      try { await copyWhole(there, here); merged++; } catch (e) { log(`${app.name} ${p}: ${e.message}`); }
+      try { await copyWhole(there, here, clone); merged++; } catch (e) { log(`${app.name} ${p}: ${e.message}`); }
       continue;
     }
     for (const [file, table, opts] of [
