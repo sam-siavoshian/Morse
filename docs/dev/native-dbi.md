@@ -239,6 +239,62 @@ theirs — install a debuggable build, run at a matching integrity level, change
 their own kernel setting — and when the honest remedy is "you can't, and you
 shouldn't try," that is what it says.
 
+## The bar over native apps (overlay)
+
+The Morse bar is a web UI (`runtime/`): HTML/CSS/JS a Chromium renderer draws.
+A native process has no DOM to draw it in — Frida's injected runtime is a bare
+JS engine with `Interceptor`/`Memory`/`Module` and no `document`. Rendering the
+bar *inside* the target would mean injecting a whole browser engine
+(CEF/WebView2/WKWebView) into it and compositing into its window: invasive,
+fragile, per-platform, and the overlay-injection technique this project avoids
+(`native/morse-picker/README.md`: "does not inject into or patch app binaries").
+
+So the bar reaches native apps the same way the native picker already does —
+as a **Morse-owned window over the app**, not injected into it. A transparent,
+always-on-top overlay window renders the *exact same* runtime and is pinned
+over the target's window, following it as it moves. Same HTML/CSS → the same
+bar, pixel for pixel, with no injection of UI into the foreign process. The DBI
+session stays the data/action channel underneath; the overlay is only about
+*where a window goes*.
+
+```
+  windowBounds(pid)  ──►  OverlayController  ──►  host.show/move/hide
+  (native-dbi/            (native-dbi/overlay.js,     (desktop-app/overlay.js:
+   window-bounds.js)       pure: follow/diff/hide)     transparent Electron window
+                                                        over the app, click-through
+                                                        except the bar)
+```
+
+- **`native-dbi/window-bounds.js`** — the target window's screen rect for a
+  PID, per platform (macOS `osascript` AX geometry, Windows `GetWindowRect`,
+  Linux X11 `xdotool`; Wayland can't and says so). Pure parsers, unit-tested.
+- **`native-dbi/overlay.js`** — `computeRegion` (where the bar sits: a centred
+  strip, or full-window) and `OverlayController`, which polls the bounds and
+  calls the host only when the region changes, hides on a vanished window
+  (minimised/closed) and reappears when it returns. Pure, unit-tested.
+- **`desktop-app/overlay.js`** — the Electron host: a `transparent`,
+  `frame:false`, `alwaysOnTop("screen-saver")`, `skipTaskbar` `BrowserWindow`
+  that loads `morse://ui/overlay.html` and is created click-through
+  (`setIgnoreMouseEvents(true, {forward})`); the page re-enables mouse events
+  only over the bar (`overlay-preload.cjs` → `morse-overlay:interactive`). It
+  takes the Electron pieces as parameters, so it's testable against a stub.
+- **`desktop-app/ui/overlay.{html,css}` + `overlay-boot.js`** — the overlay
+  page: transparent, styled from the same `design/tokens.css` as the in-page
+  bar. `startNativeOverlay({ pid, BrowserWindow, screen, ipcMain })` ties bounds
+  → controller → host.
+
+**What's wired, and what's next.** The overlay *engine* (tracking, region math,
+lifecycle) and the Electron host are built and tested (the host against a fake
+`BrowserWindow`; a live display is needed to confirm compositing). The overlay
+page renders a token-styled bar shell today. The remaining seam is mounting the
+**full `runtime/` bundle** into `#morse-overlay-root` and bridging its host RPC
+(generate / run / save) to the native DBI session over IPC — i.e. native *mods*,
+which don't exist yet (launch attaches and holds the connection; see above).
+`overlay-boot.js` marks the exact mount point. Auto-launching the overlay from
+the desktop app's native flow is one `startNativeOverlay` call away but left
+out until that flow opens a DBI session (today the desktop native path is the
+macOS Accessibility picker, which is untouched).
+
 ## Status
 
 Prototype. Pure modules (`sigscan.js`, `schema.js`, the parsing/diagnostic
@@ -246,7 +302,11 @@ logic in `boundaries.js`, the REA response mapping in `rea-inspect.js`) run and
 are unit-testable without Frida or a target. The Frida paths
 (`frida-runner.js`, `agent.js`) are written against Frida's documented API and
 need `frida` installed plus a real, user-owned target to exercise. Reached from
-the CLI through `daemon/native-dbi.js` and `morse launch` (above); the Electron
-desktop app and the CDP connector are untouched. Covered by
-`tests/native-dbi.test.js` (pure modules) and `tests/native-launch.test.js`
-(the daemon bridge's frida-optional guard).
+the CLI through `daemon/native-dbi.js` and `morse launch` (above); the CDP
+connector is untouched. The overlay engine (`window-bounds.js`, `overlay.js`)
+and the Electron host (`desktop-app/overlay.js`) are built and tested; mounting
+the full bar bundle and bridging it to native mods is the remaining seam.
+Covered by `tests/native-dbi.test.js` (pure modules), `tests/native-launch.test.js`
+(the daemon bridge's frida-optional guard), and `tests/native-overlay.test.js`
+(bounds parsers, region math, controller lifecycle, the Electron host against a
+stub, and the packaging guard).

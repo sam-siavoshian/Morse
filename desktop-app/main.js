@@ -39,6 +39,11 @@ const PAGE_URL = `${SCHEME}://ui/index.html`;
 const UI_FILES = {
   "/index.html": [path.join(HERE, "ui", "index.html"), "text/html; charset=utf-8"],
   "/app.css": [path.join(HERE, "ui", "app.css"), "text/css; charset=utf-8"],
+  // The native overlay window (desktop-app/overlay.js): the same bar, over a
+  // native app. See docs/dev/native-dbi.md.
+  "/overlay.html": [path.join(HERE, "ui", "overlay.html"), "text/html; charset=utf-8"],
+  "/overlay.css": [path.join(HERE, "ui", "overlay.css"), "text/css; charset=utf-8"],
+  "/overlay-boot.js": [path.join(HERE, "ui", "overlay-boot.js"), "text/javascript; charset=utf-8"],
   "/app-list.js": [path.join(HERE, "ui", "app-list.js"), "text/javascript; charset=utf-8"],
   "/app.js": [path.join(HERE, "ui", "app.js"), "text/javascript; charset=utf-8"],
   // When the row may say Connected, and when the "isn't running yet" banner may show.

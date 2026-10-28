@@ -1,0 +1,43 @@
+/* The overlay window is transparent; only the bar paints. Colours and radii
+   come from design/tokens.css (served as tokens.css) so this matches the
+   in-page bar. This is the prototype shell the full runtime bar replaces. */
+html, body {
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+  /* The window itself is click-through (set by the Electron host); the bar
+     re-enables pointer events for itself. */
+  pointer-events: none;
+}
+
+#morse-overlay-root {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+#morse-overlay-bar {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: var(--radius, 12px);
+  background: var(--panel, rgba(20, 20, 24, 0.92));
+  color: var(--text, #ededef);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  font-family: var(--font, "Inter", system-ui, sans-serif);
+  font-size: 13px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.morse-overlay-mark {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent, #5c4ee5);
+  box-shadow: 0 0 10px var(--accent, #5c4ee5);
+}
+.morse-overlay-title { font-weight: 600; }
+.morse-overlay-hint { opacity: 0.6; font-size: 11px; }

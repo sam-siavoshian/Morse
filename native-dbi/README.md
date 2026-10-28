@@ -24,6 +24,13 @@ change today, using [Frida](https://frida.re) for instrumentation and
 | `agent.js` | the in-target Frida agent (hook install/revert) | needs Frida + target |
 | `frida-runner.js` | host-side attach/apply/detach, error isolation | needs `frida` |
 | `index.js` | the pipeline + `prepareTarget` / `runMods` | orchestration |
+| `window-bounds.js` | target window geometry per platform (for the overlay) | partly (parsers are pure) |
+| `overlay.js` | overlay region math + follow/hide controller | ✅ pure |
+
+The overlay that puts the same bar over a native app is split across
+`window-bounds.js` + `overlay.js` here (tracking, pure) and
+`desktop-app/overlay.js` + `desktop-app/ui/overlay.*` (the Electron window).
+See the "bar over native apps" section of the doc.
 
 ## Boundaries (enforced / stated)
 
