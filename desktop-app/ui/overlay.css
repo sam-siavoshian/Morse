@@ -1,10 +1,13 @@
-/* The overlay window is transparent; only the bar paints. Colours and radii
-   come from design/tokens.css (served as tokens.css) so this matches the
-   in-page bar. This is the prototype shell the full runtime bar replaces. */
+/* The overlay window is transparent; only the bar paints. Every colour, radius,
+   font and shadow comes from design/tokens.css (served as tokens.css), so the
+   overlay bar is the same design system as the in-page bar — monochrome, "the
+   only colour is light". This is the prototype shell the full runtime bar
+   replaces. */
 html, body {
   margin: 0;
   background: transparent;
   overflow: hidden;
+  color-scheme: dark;
   /* The window itself is click-through (set by the Electron host); the bar
      re-enables pointer events for itself. */
   pointer-events: none;
@@ -23,21 +26,27 @@ html, body {
   gap: 10px;
   height: 40px;
   padding: 0 16px;
-  border-radius: var(--radius, 12px);
-  background: var(--panel, rgba(20, 20, 24, 0.92));
-  color: var(--text, #ededef);
-  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
-  font-family: var(--font, "Inter", system-ui, sans-serif);
-  font-size: 13px;
+  border-radius: var(--m-r-lg, 14px);
+  background: var(--m-overlay, rgba(11, 11, 12, 0.86));
+  color: var(--m-text, #ededef);
+  border: 1px solid var(--m-line-strong, #2e2e33);
+  box-shadow: var(--m-shadow, 0 12px 40px rgba(0, 0, 0, 0.45));
+  backdrop-filter: blur(12px);
+  font-family: var(--m-font, "Inter", system-ui, sans-serif);
+  font-size: var(--m-text-md, 13px);
+  letter-spacing: var(--m-tracking, -0.01em);
   -webkit-user-select: none;
   user-select: none;
 }
 
+/* Monochrome: the mark is light, not a colour. */
 .morse-overlay-mark {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--accent, #5c4ee5);
-  box-shadow: 0 0 10px var(--accent, #5c4ee5);
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--m-signal-4, #f4f4f5);
+  box-shadow: 0 0 8px var(--m-signal-2, #7a7a82);
 }
 .morse-overlay-title { font-weight: 600; }
-.morse-overlay-hint { opacity: 0.6; font-size: 11px; }
+.morse-overlay-hint {
+  color: var(--m-text-3, #86868e);
+  font-size: var(--m-text-xs, 11px);
+}

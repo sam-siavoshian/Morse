@@ -1,8 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Morse's own chrome is dark-only, like the app window and the site; pin it
+       so the bar doesn't flip to light under a light-mode OS. -->
+  <meta name="color-scheme" content="dark" />
   <title>Morse overlay</title>
   <!-- Same design tokens as the in-page bar, so the overlay reads as one
        system with the web/Electron bar. CSP (set by the server) is
