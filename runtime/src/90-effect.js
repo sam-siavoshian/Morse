@@ -1,8 +1,12 @@
 // The "it's working" moment, in gray. The target becomes a field of radar
 // pixels: every pixel pulses on its own phase (the OpenCode spinner, scaled
-// up), a ping ring sweeps out from a bright core, and each character the model writes
-// arrives as a blip of real Morse code (dot = 1 pixel, dash = 3). When the
-// change lands, a ping ring expands from the center and clears the field.
+// up). The bright figure on that field shuffles through Morse-dot patterns
+// (core/patterns.js): the original orbit, a line of Morse, a figure-eight,
+// a pulsing ring, a diagonal sweep, a corner dash, a double orbit, a
+// heartbeat. Each character the model writes arrives as a blip of real Morse
+// code (dot = 1 pixel, dash = 3). When the change lands, a ping ring expands
+// from the center and clears the field. prefers-reduced-motion keeps the
+// still field: no shuffle, no pulse, no ping.
 const MORSE_CODE = {
   a: ".-", b: "-...", c: "-.-.", d: "-..", e: ".", f: "..-.", g: "--.", h: "....", i: "..", j: ".---", k: "-.-", l: ".-..", m: "--",
   n: "-.", o: "---", p: ".--.", q: "--.-", r: ".-.", s: "...", t: "-", u: "..-", v: "...-", w: ".--", x: "-..-", y: "-.--", z: "--..",
@@ -24,12 +28,32 @@ const Effect = (() => {
   let t0 = 0, end0 = 0, endResolve = null, ok = true, frame = 0, pal = null, blips = [], shown0 = 0;
   // Per-cell constants, rebuilt when the grid changes, and the cells drawn at
   // all (every cell over a target; only the edge band page-wide).
-  let delay, dur, rc, ell, dist, core, per, active = new Int32Array(0);
+  let delay, dur, rc, ell, dist, core, per, active = new Int32Array(0), eightD = new Float32Array(0), eightP = new Float32Array(0);
   const buckets = Array.from({ length: 4 * LEVELS }, () => []);
   const COLORS = ["lo", "mid", "hi", "top"];
-  // prefers-reduced-motion: a calm, static field (no pulse, ping, scan or
-  // blips) that simply fades out when the change lands.
+  // prefers-reduced-motion: a calm, static field (no pulse, ping, scan,
+  // pattern shuffle or blips) that simply fades out when the change lands.
   const calm = matchMedia("(prefers-reduced-motion: reduce)");
+  // dit dit dah, then a letter gap. Shared by the shapes so each one reads
+  // as Morse, not as a solid stroke. The line spells "morse" instead.
+  const RHYTHM = [1, 0, 1, 0, 1, 1, 1, 0, 0, 0];
+  const LINE_TRACK = trackOf("morse");
+  // Two tilted ellipses in the center square, beads running opposite ways.
+  const ORBIT_TRACKS = [
+    { c: Math.cos(0.42), s: Math.sin(0.42), rx: 0.92, ry: 0.4, speed: 0.7, dir: 1 },
+    { c: Math.cos(-0.55), s: Math.sin(-0.55), rx: 0.46, ry: 0.9, speed: 0.55, dir: -1 },
+  ];
+  // Figure-eight samples, once. grid() stores each cell's distance to it.
+  const EIGHT_N = 72;
+  const eightSX = new Float32Array(EIGHT_N), eightSY = new Float32Array(EIGHT_N);
+  for (let k = 0; k < EIGHT_N; k++) {
+    const th = (k / EIGHT_N) * Math.PI * 2, s = Math.sin(th), c = Math.cos(th), d = 1 + s * s;
+    eightSX[k] = 0.92 * c / d; eightSY[k] = 0.92 * s * c / d;
+  }
+  // The pattern on screen, the one it is blending out of, and when this one started.
+  let motif = "", motifPrev = "", motifAt = 0;
+  let pingR = 0, pingF = 1, diagLen = 1;
+  const hit = { a: 0, c: 0 };
 
   function palette() {
     const cs = getComputedStyle(hostEl);
@@ -86,7 +110,9 @@ const Effect = (() => {
     const N = cols * rows, cx = cols / 2, cy = rows / 2;
     delay = new Float32Array(N); dur = new Float32Array(N); rc = new Float32Array(N); ell = new Float32Array(N);
     dist = new Float32Array(N); core = new Uint8Array(N); per = new Int32Array(N);
+    eightD = new Float32Array(N); eightP = new Float32Array(N);
     const coreR = Math.max(1.6, Math.min(cx, cy) * 0.55);
+    const reach = Math.max(1, Math.min(cols, rows) * 0.46);
     const on = [];
     for (let i = 0; i < N; i++) {
       const x = i % cols, y = (i / cols) | 0;
@@ -101,6 +127,16 @@ const Effect = (() => {
       const band = x < BAND || y < BAND || x >= cols - BAND || y >= rows - BAND;
       per[i] = y < BAND ? x : x >= cols - BAND ? cols + y : y >= rows - BAND ? cols + rows + (cols - x) : 2 * cols + rows + (rows - y);
       if (target || band) on.push(i);
+      // Distance to the figure-eight, in the center square (so a wide target
+      // doesn't squash it). Cells far from that square skip the search.
+      const ex = (x + 0.5 - cx) / reach, ey = (y + 0.5 - cy) / reach;
+      if (ex * ex + ey * ey > 2.6) { eightD[i] = 2; continue; }
+      let best = 1e9, phase = 0;
+      for (let k = 0; k < EIGHT_N; k++) {
+        const dx8 = ex - eightSX[k], dy8 = ey - eightSY[k], d2 = dx8 * dx8 + dy8 * dy8;
+        if (d2 < best) { best = d2; phase = k / EIGHT_N; }
+      }
+      eightD[i] = Math.sqrt(best); eightP[i] = phase;
     }
     active = Int32Array.from(on);
   }
@@ -108,8 +144,18 @@ const Effect = (() => {
     target = el; rect = null; cols = rows = 0; mode = "thinking"; running = true; ok = true; blips = []; shown0 = 0;
     pal = palette();
     t0 = performance.now();
+    armMotif(t0, true);
     layout();
     requestAnimationFrame(draw);
+  }
+  // A fresh load picks any pattern except the one the previous load ended on.
+  // A shuffle while this load stays up blends out of the one on screen.
+  function armMotif(now, fresh) {
+    const prev = motif;
+    motif = nextPattern(prev || null);
+    motifPrev = fresh ? "" : prev;
+    motifAt = now;
+    if (DEBUG && fx.dataset.motif !== motif) fx.dataset.motif = motif;
   }
   // Each token becomes a Morse blip on the current ring (or along the edge band).
   function token(text) {
@@ -159,6 +205,132 @@ const Effect = (() => {
   const PING = 1.6; // seconds between rings
   const ringRadius = now => ((((now - t0) / 1000) % PING) / PING) * Math.SQRT2;
   const TAU = Math.PI * 2;
+  // A Morse unit. Negative positions (the line scrolls in from the left) wrap.
+  function unitOn(track, unit) {
+    const n = track.length;
+    let i = Math.floor(unit) % n;
+    if (i < 0) i += n;
+    return track[i];
+  }
+  const morseOn = unit => unitOn(RHYTHM, unit);
+  function trackOf(word) {
+    const u = [];
+    for (const ch of word) {
+      const code = MORSE_CODE[ch];
+      if (!code) continue;
+      for (const s of code) {
+        for (let k = 0, n = s === "-" ? 3 : 1; k < n; k++) u.push(1);
+        u.push(0);
+      }
+      u.push(0, 0);
+    }
+    u.push(0, 0, 0);
+    return Uint8Array.from(u);
+  }
+  // -1: this cell isn't part of the figure (keep the dim field).
+  // 0..1: a gap or a lit Morse mark. Heads sit at the top of that range.
+  function lineLift(x, y, time) {
+    if (Math.abs(y - (rows - 1) / 2) > 1) return -1;
+    return unitOn(LINE_TRACK, (x - time * 18) / 2) ? 0.9 : 0.04;
+  }
+  function eightLift(i, time) {
+    if (eightD[i] > 0.13) return -1;
+    const edge = 1 - eightD[i] / 0.13;
+    if (!morseOn(eightP[i] * RHYTHM.length * 4)) return 0.04 * edge;
+    const head = (time * 0.36) % 1;
+    let d = Math.abs(eightP[i] - head);
+    if (d > 0.5) d = 1 - d;
+    const near = d < 0.1 ? 1 : d < 0.28 ? 0.45 : 0.15;
+    return (0.5 + 0.48 * near) * edge;
+  }
+  function ringLift(x, y, time) {
+    const dx = x + 0.5 - cols / 2, dy = y + 0.5 - rows / 2, d = Math.hypot(dx, dy);
+    const rad = (0.62 + 0.28 * Math.sin(time * 2.2)) * Math.min(cols, rows) * 0.5;
+    const gap = Math.abs(d - rad);
+    if (gap > 1.4) return -1;
+    const on = morseOn((Math.atan2(dy, dx) / TAU + time * 0.1) * RHYTHM.length * 3);
+    const edge = 1 - gap / 1.4;
+    return (on ? 0.9 : 0.04) * edge;
+  }
+  function sweepLift(x, y, time) {
+    const px = x + 0.5, py = y + 0.5;
+    const perp = (rows * px - cols * py) / diagLen;
+    const maxP = cols * rows / diagLen;
+    const head = ((time * 0.4) % 1) * 2 * maxP - maxP;
+    const behind = head - perp;
+    if (behind < 0 || behind > 16) return -1;
+    const along = (px * cols + py * rows) / diagLen;
+    const edge = 1 - behind / 16;
+    return (morseOn(along / 2) ? 0.55 + 0.4 * edge : 0.04) * edge;
+  }
+  function dashLift(x, y, time) {
+    const leg = Math.floor(time / 2.2) & 1, p = (time % 2.2) / 2.2;
+    const px = x + 0.5, py = y + 0.5;
+    const dist = (leg ? Math.abs(rows * px + cols * py - cols * rows) : Math.abs(rows * px - cols * py)) / diagLen;
+    if (dist > 1.6) return -1;
+    const along = (leg ? px * cols + (rows - py) * rows : px * cols + py * rows) / (diagLen * diagLen);
+    const cell = 1 / diagLen, delta = along - p;
+    if (delta > 1.2 * cell || delta < -12 * cell) return -1;
+    const unit = Math.floor(-delta / (2.2 * cell));
+    if (unit <= 2 || unit === 4) return 0.92;
+    if (unit === 3) return 0.04;
+    return -1;
+  }
+  function doubleLift(x, y, time) {
+    const reach = Math.max(1, Math.min(cols, rows) * 0.48);
+    const dx = (x + 0.5 - cols / 2) / reach, dy = (y + 0.5 - rows / 2) / reach;
+    let best = -1;
+    for (let o = 0; o < ORBIT_TRACKS.length; o++) {
+      const tr = ORBIT_TRACKS[o];
+      const px = dx * tr.c + dy * tr.s, py = -dx * tr.s + dy * tr.c;
+      const gap = Math.abs(Math.hypot(px / tr.rx, py / tr.ry) - 1);
+      if (gap > 0.18) continue;
+      const ang = (Math.atan2(py / tr.ry, px / tr.rx) + Math.PI) / TAU;
+      let head = (time * tr.speed * tr.dir) % 1;
+      if (head < 0) head += 1;
+      let d = Math.abs(ang - head);
+      if (d > 0.5) d = 1 - d;
+      const edge = 1 - gap / 0.18;
+      const v = (morseOn(ang * RHYTHM.length * 3) ? (d < 0.08 ? 0.96 : 0.62) : 0.04) * edge;
+      if (v > best) best = v;
+    }
+    return best;
+  }
+  function beatLift(x, y, time) {
+    const mid = (rows - 1) / 2, yOff = y - mid;
+    const head = ((time * 0.42) % 1) * (cols + 16) - 8, dx = x - head;
+    let h = 0, hot = false;
+    if (dx >= -1 && dx <= 1) { h = Math.max(3.5, rows * 0.38); hot = true; }
+    else if (dx >= 3.3 && dx <= 4.7) h = Math.max(2.5, rows * 0.22);
+    if (h) {
+      const up = -yOff;
+      if (up >= -0.6 && up <= h) return hot && up > 1 ? 0.95 : 0.74;
+    }
+    if (Math.abs(yOff) <= 0.6) return morseOn(x / 2) ? 0.52 : 0.04;
+    return -1;
+  }
+  // Orbit keeps the original ping, so a steady orbit frame matches the field
+  // from before the other patterns existed. Anything else replaces that ping.
+  function motifOf(name, i, pulse, time) {
+    const x = i % cols, y = (i / cols) | 0;
+    hit.a = 0.1 + pulse * 0.14; hit.c = 0;
+    if (name === "orbit") {
+      if (core[i]) { hit.a = 0.3 + pulse * 0.5; hit.c = core[i] === 2 ? 2 : 1; }
+      const ellR = pingR * ell[i], ring = Math.abs(rc[i] - ellR);
+      if (ring < 0.75) { hit.a = Math.max(hit.a, 0.6 * pingF + 0.15); hit.c = 2; }
+      else if (ring < 2.2 && rc[i] < ellR) hit.a += 0.1 * pingF;
+      return;
+    }
+    const v = name === "line" ? lineLift(x, y, time)
+      : name === "eight" ? eightLift(i, time)
+      : name === "ring" ? ringLift(x, y, time)
+      : name === "sweep" ? sweepLift(x, y, time)
+      : name === "dash" ? dashLift(x, y, time)
+      : name === "double" ? doubleLift(x, y, time)
+      : beatLift(x, y, time);
+    if (v < 0) return;
+    hit.a = v; hit.c = v >= 0.8 ? 3 : v >= 0.2 ? 2 : 0;
+  }
   function draw(now) {
     if (!running) return;
     frame++;
@@ -168,6 +340,21 @@ const Effect = (() => {
     const end = mode === "end", endP = end ? Math.min(1, (now - end0) / 650) : 0;
     const maxR = Math.SQRT2, tol = 1.1 / Math.max(2, Math.min(cols / 2, rows / 2));
     const ping = ringRadius(now), pingFade = 1 - ping / maxR;
+    pingR = ping; pingF = pingFade; diagLen = Math.hypot(cols, rows) || 1;
+    // Shuffle only while a target is covered and motion is allowed. A fresh
+    // pattern blends in; reduced motion never leaves the still field.
+    let nameA = motif, nameB = motif, blendB = 0;
+    if (target && !still && !end) {
+      if ((now - motifAt) / 1000 >= PATTERN_HOLD) armMotif(now, false);
+      if (motifPrev) {
+        const u = (now - motifAt) / 1000;
+        if (u < PATTERN_BLEND) {
+          const k = u / PATTERN_BLEND;
+          blendB = k * k * (3 - 2 * k);
+          nameA = motifPrev; nameB = motif;
+        }
+      }
+    }
     const veil = shown0 ? Math.max(0, 1 - (now - shown0) / 300) : 1; // 1 = covered, 0 = the change shows through (reveal)
     // Morse blips light cells; collect them per frame.
     let lit = null;
@@ -197,20 +384,25 @@ const Effect = (() => {
       } else {
         // OpenCode-style pulse: every pixel alive on its own phase
         const w = (Math.sin(((t + delay[i]) / dur[i]) * TAU) + 1) / 2; // t is 0 when still: a fixed pattern
-        a = 0.1 + w * 0.14;
-        if (target) {
-          // the spinner's inner four, scaled up: a small bright pulsing core
-          if (core[i]) { a = 0.3 + w * 0.5; color = core[i] === 2 ? 2 : 1; }
-          // the radar ping: a thin ring sweeping outward, fading with distance
-          if (!still) {
-            const ellR = ping * ell[i], ring = Math.abs(rc[i] - ellR);
-            if (ring < 0.75) { a = Math.max(a, 0.6 * pingFade + 0.15); color = 2; }
-            else if (ring < 2.2 && rc[i] < ellR) a += 0.1 * pingFade;
+        if (target && !still) {
+          motifOf(nameA, i, w, t);
+          a = hit.a; color = hit.c;
+          if (blendB > 0) {
+            const a0 = a, c0 = color;
+            motifOf(nameB, i, w, t);
+            a = a0 * (1 - blendB) + hit.a * blendB;
+            color = hit.a * blendB > a0 * (1 - blendB) ? hit.c : c0;
           }
-        } else if (!still) {
-          // page-wide: a scan travels the perimeter
-          const d = (pos - per[i] + perim) % perim;
-          if (d < 14) { a += (1 - d / 14) * 0.6; color = 2; }
+        } else {
+          a = 0.1 + w * 0.14;
+          if (target) {
+            // reduced motion: the still core, no ping and no shuffle
+            if (core[i]) { a = 0.3 + w * 0.5; color = core[i] === 2 ? 2 : 1; }
+          } else if (!still) {
+            // page-wide: a scan travels the perimeter
+            const d = (pos - per[i] + perim) % perim;
+            if (d < 14) { a += (1 - d / 14) * 0.6; color = 2; }
+          }
         }
         const l = lit && lit.get(i);
         if (l) { a = Math.max(a, 0.35 + l * 0.65); color = l > 0.5 ? 3 : 2; }
