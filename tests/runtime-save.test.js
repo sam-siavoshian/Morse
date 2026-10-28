@@ -18,7 +18,7 @@ function harness() {
     hideMenu() {}, t: id => id, announce() {}, plainError: e => e.message || String(e),
     call() { view.calls++; return new Promise((yes, no) => { resolve = yes; reject = no; }); },
     showResult(draft, options) { view.error = options; state.phase = 'result'; },
-    closeBar() { view.closed++; }, Health: { ran() {} }, Heal: { kept() {} }, versionsOf: () => [],
+    closeBar() { view.closed++; }, forgetDraft() {}, Health: { ran() {} }, Heal: { kept() {} }, versionsOf: () => [],
     toast(message) { view.saved = message; }, controlToast(message) { view.saved = message; },
   });
   vm.runInContext(keepSource, context);
