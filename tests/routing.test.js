@@ -220,7 +220,7 @@ test("engine: the fast model failing outright (an error, not a draft) also goes 
 
 test("engine: a hard request starts on the strong model; Always fast and a pinned model never move", async () => {
   let calls = fakeModels({ strong: [GOOD] });
-  let { res } = await run(FAKE, "add a button that sorts the products by price");
+  let { res } = await run(FAKE, "add a summary panel above the orders");
   assert.deepEqual([calls.map(c => c.model), res.hard, res.escalated], [["strong"], true, false]);
   calls = fakeModels({ fast: [NOTHING, NOTHING], strong: [GOOD] });
   ({ res } = await run({ ...FAKE, mode: "fast" }, "make the covers bigger"));

@@ -14,6 +14,7 @@
 // scans text with bounded regular expressions. docs/dev/rea.md explains the choice.
 
 import { scanHooks, hookFits } from "./hooks.js";
+import { wantsBehavior } from "./route.js"; // a like, a rank, a recommendation: still about what the app does
 
 export const PROFILE_VERSION = 1;
 
@@ -264,7 +265,7 @@ export function mergeScans(scans) {
 // ---------------------------------------------------------------- the prompt
 // Requests about what the app does, not how it looks: they get the profile.
 const LOGIC = /\b(when(ever)?|every ?time|after|before|once|on (save|open|close|start)|shortcuts?|keyboard|hot ?keys?|key ?(combo|binding)s?|press(es|ing)?|ctrl|cmd|alt\+|run(s|ning)?|commands?|actually|really|random(ly|ize)?|shuffl\w*|automatic(ally)?|auto[- ]?\w*|insert\w*|creat\w*|new (note|file|tab|window|todo|task)s?|cop(y|ies|ying)|clipboard|past(e|ing)|format\w*|toggl\w*|undo|redo|word count|counts?|remap\w*|instead|behaviou?rs?|trigger\w*|sort\w*|sav(e|es|ed|ing)|open(s|ed|ing)?|clos(e|es|ed|ing)|delet\w*|export\w*|sync\w*|play\w*|skip\w*|next|previous|repeat\w*|search\w*|replac\w*|duplicat\w*|today'?s|dates?|timestamps?|buttons?\b[^.]{0,30}\b(that|to|which|for)|upper ?case|lower ?case|capitali[sz]\w*|comment\w*|indent\w*|convert\w*|select(ed|ion)?|calls?|api|functions?|actions?|does|do|features?|change this|add (?:a |an |another )?(?:new )?(?:button|card|section|control|widget)\b)\b/i;
-export const needsLogic = request => LOGIC.test(String(request || ""));
+export const needsLogic = request => LOGIC.test(String(request || "")) || wantsBehavior(request);
 
 const STOP = new Set("the a an and or to of in on for with that this here there it its me my i you your make makes made add when then after also all any be is are was do does show put use using into from at by as so if not no can just like want please button key keys shortcut press app".split(" "));
 // A few everyday words and what apps call them.

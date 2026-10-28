@@ -129,7 +129,11 @@ async function submit(request, opts = {}) {
     }
   });
   let res;
-  const ask = { genId: id, request, context: ctx, ...(opts.base ? { base: opts.base } : {}) };
+  // A follow-up revises the change already made, on the element it was made
+  // for. A new point (the chip can move while the result is up) must not
+  // turn that into a request about a different part of the page.
+  const askCtx = (prev && prev.ctx) || ctx;
+  const ask = { genId: id, request, context: askCtx, ...(opts.base ? { base: opts.base } : {}) };
   await TakeBring.ready(); // the taken list, so Enter before it arrives still brings the real feature (73-take.js)
   try { res = stopped ? await stopSignal : await Promise.race([call("generate", ask), stopSignal]); } // Stop: 50-bar.js
   catch (e) { res = { ok: false, error: e.message }; }
@@ -286,6 +290,15 @@ new MutationObserver(() => {
   markThinking(); // leaving "working", or a later writer replacing the hint, drops the shine
   if (!bar.classList.contains("done") && S.phase !== "working" && input.placeholder === REFINE_PLACEHOLDER()) input.placeholder = PLACEHOLDER();
 }).observe(bar, { attributes: true, attributeFilter: ["class", "hidden"] });
+// Once a change is on the bar, the field is a follow-up. Another writer can
+// put the fresh-ask placeholder back; put the follow-up line back, and leave
+// the listening / transcribing lines alone.
+new MutationObserver(() => {
+  if (S.phase !== "result" || !bar.classList.contains("done")) return;
+  const cur = input.placeholder;
+  if (cur === REFINE_PLACEHOLDER() || cur === t("voice.listening.placeholder") || cur === t("voice.transcribing")) return;
+  input.placeholder = REFINE_PLACEHOLDER();
+}).observe(input, { attributes: true, attributeFilter: ["placeholder"] });
 new MutationObserver(markThinking).observe(hint, { childList: true, characterData: true, subtree: true });
 
 const onEvent = fn => { listeners.add(fn); return () => listeners.delete(fn); };
