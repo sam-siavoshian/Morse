@@ -64,6 +64,12 @@ function resolveTarget(t) {
 
 // Install one mod. Any throw is the caller's to catch, revert, and report.
 function installOne(spec) {
+  // Re-applying an id that's already live would overwrite the map entry and
+  // leave the previous hook installed but untracked (a later revert misses it).
+  // Revert the old one first — and if that revert fails, do NOT install the
+  // replacement over a hook we couldn't remove: throw so the batch reports it
+  // errored and the old record stays tracked.
+  if (installed.has(spec.id) && !revertOne(spec.id)) throw new Error("couldn't revert the existing hook for " + spec.id + " before replacing it");
   const addr = resolveTarget(spec.target);
   const a = spec.action;
 
@@ -105,15 +111,19 @@ function installOne(spec) {
   throw new Error("unknown action kind: " + a.kind);
 }
 
+// Returns whether the hook is actually gone. On a detach/revert throw it keeps
+// the record (so the hook stays tracked and a retry can try again) and reports
+// false — the caller must not then treat the mod as reverted.
 function revertOne(id) {
   const rec = installed.get(id);
-  if (!rec || rec.reverted) return;
+  if (!rec || rec.reverted) return true;
   try {
     if (rec.listener) rec.listener.detach();
     if (rec.replaced) Interceptor.revert(rec.target);
-  } catch (e) { report("error", id, "revert: " + e.message); }
+  } catch (e) { report("error", id, "revert: " + e.message); return false; }
   rec.reverted = true;
   installed.delete(id);
+  return true;
 }
 
 // Apply a batch. Each mod is independent: one failing neither stops the others
@@ -147,7 +157,7 @@ function detachAll() {
 // The runner calls these over Frida's rpc bridge.
 rpc.exports = {
   apply: function (specs) { return applyAll(specs || MODS_PLACEHOLDER); },
-  revert: function (id) { revertOne(id); return { id: id }; },
+  revert: function (id) { return { id: id, ok: revertOne(id) }; },
   detach: function () { return detachAll(); },
   status: function () {
     return Array.from(installed.entries()).map(function (e) { return { id: e[0], reverted: e[1].reverted }; });

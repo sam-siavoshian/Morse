@@ -304,17 +304,46 @@ the app shows through, and the bar paints its own frosted surface.
 
 **What's wired, and what's next.** The overlay renders the real Morse bar —
 the input, the suggestion chips, the Mods panel, settings, history — from the
-same `runtime/` bundle, proven by a headless render (`node --test`'s stub host
-plus the manual proof harness). Its data messages (settings/history/saved mods)
-are kept per-viewer in the overlay today; the one genuine gap is the **"apply a
-change" backend**: `generate` / `mods.save` route through
-`overlay-preload.cjs` → `morse-overlay:native` to the DBI session, and until
-native mod generation exists they reply honestly rather than pretend (the bar
-shows the flow; the change isn't applied to the app yet). Live compositing over
-a real app still needs a display to confirm, and auto-launching the overlay
-from the desktop app's native flow is one `startNativeOverlay` call away, left
-out until that flow opens a DBI session (the macOS Accessibility picker path is
-untouched).
+same `runtime/` bundle, proven by a headless render. The bar's `generate` /
+`mods.save` / `mods.list` / toggle messages route through
+`overlay-preload.cjs` → `morse-overlay:native` to the **apply service**
+(`native-dbi/apply.js`, below), which plans a `ModSpec`, applies it through the
+session, saves it (`native-dbi/store.js`), and reverts on Undo. The one genuine
+gap left is **the planner** — turning a sentence into the right hook (which
+function, what to change). That's the model's job and an injected seam; a
+request that already carries a `target`+`action` applies with no planner, and
+free text without a planner gets an honest refusal rather than a fake success.
+Live compositing over a real app still needs a display to confirm, and
+auto-launching the overlay (with a service) from the desktop app's native flow
+is one `startNativeOverlay({ nativeService })` call away, left until that flow
+opens a DBI session (the macOS Accessibility picker path is untouched).
+
+## Apply: a bar request → an applied native mod
+
+`native-dbi/apply.js` (`NativeModService`) is the plumbing between the bar and
+the running app:
+
+```
+  bar submit → plan(request) → applySpec → session.apply → save → report
+                  │                                          │
+          planner (model seam) or a            store.js (~/.morse/native-mods.json,
+          direct target+action                 keyed by exe; restore() re-applies)
+```
+
+- **plan** — a direct request (carries `target`+`action`) becomes a `ModSpec`
+  as-is; otherwise the injected `planner(request, context)` (the model) writes
+  one; with no planner, free text is refused with a reason.
+- **applySpec** — applies through `NativeSession.apply([spec])` (incremental,
+  added for this), tracks it live, and `store.upsert`s it. A mod the app
+  rejects reports the failure and saves nothing.
+- **list / setEnabled / remove / restore** — the Mods panel, Undo (revert the
+  hook, keep it saved), delete, and re-applying saved mods on a fresh attach.
+
+Proven live by `native-dbi/example/apply-from-bar.mjs`: a simulated bar submit
+("give bulk buyers 20% off") plans a signature mod, applies it to the stripped
+`ticketd` (qty 3 `$57 → $45`), saves it, and Undo reverts it (`$45 → $57`) with
+the mod kept but off. Unit-tested in `tests/native-apply.test.js` (store, plan,
+apply, failure, undo, restore, dispatch — 8, pure).
 
 ## Services: real features & external data
 
@@ -372,10 +401,11 @@ are unit-testable without Frida or a target. The Frida paths
 (`frida-runner.js`, `agent.js`) are written against Frida's documented API and
 need `frida` installed plus a real, user-owned target to exercise. Reached from
 the CLI through `daemon/native-dbi.js` and `morse launch` (above); the CDP
-connector is untouched. The overlay engine (`window-bounds.js`, `overlay.js`)
-and the Electron host (`desktop-app/overlay.js`) are built and tested; mounting
-the full bar bundle and bridging it to native mods is the remaining seam.
-Covered by `tests/native-dbi.test.js` (pure modules), `tests/native-launch.test.js`
-(the daemon bridge's frida-optional guard), and `tests/native-overlay.test.js`
+connector is untouched. The overlay renders the real bar and its requests reach
+the apply service (`apply.js`), which plans, applies, saves and reverts native
+mods; the remaining seam is the planner that writes a hook from a sentence (the
+model). Covered by `tests/native-dbi.test.js` (pure modules), `tests/native-launch.test.js`
+(the daemon bridge's frida-optional guard), `tests/native-apply.test.js` (store
++ apply service), and `tests/native-overlay.test.js`
 (bounds parsers, region math, controller lifecycle, the Electron host against a
 stub, and the packaging guard).

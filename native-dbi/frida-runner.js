@@ -98,8 +98,30 @@ export class NativeSession extends EventEmitter {
     }
   }
 
-  // Revert a single mod in the running target.
-  async revert(id) { try { await this.script?.exports.revert(id); } catch (e) { this.emit("error", e); } }
+  // Apply more mods into an already-attached session (the agent installs each
+  // and leaves the rest alone). Returns per-mod results, or a single errored
+  // row if the rpc call itself fails. Validated+applicable specs only.
+  async apply(specs = []) {
+    const ready = specs.filter(s => isApplicable(s, this.context));
+    if (!ready.length || !this.script) return ready.map(s => ({ id: s.id, status: "errored", error: "no session" }));
+    try {
+      const res = await this.script.exports.apply(ready);
+      for (const r of res) { const i = this.applied.findIndex(a => a.id === r.id); if (i >= 0) this.applied[i] = r; else this.applied.push(r); }
+      return res;
+    } catch (e) {
+      // emit("error") with no listener throws (Node), which would swallow the
+      // return below. Only emit when something is listening.
+      if (this.listenerCount("error")) this.emit("error", e);
+      return ready.map(s => ({ id: s.id, status: "errored", error: e.message }));
+    }
+  }
+
+  // Revert a single mod in the running target. Returns whether it succeeded, so
+  // the caller only marks a mod off once the hook is actually gone.
+  async revert(id) {
+    try { const r = await this.script?.exports.revert(id); return !r || r.ok !== false; }
+    catch (e) { if (this.listenerCount("error")) this.emit("error", e); return false; }
+  }
 
   // Clean detach: revert every hook inside the target, unload the script, then
   // detach the session — in that order, so nothing is left behind. Safe to call

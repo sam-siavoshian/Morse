@@ -183,11 +183,16 @@ test("bar open: the solid backing looks when the bar or the page moves, not on e
     await sleep(500);
     assert.equal((await counts()).hitTests || 0, 0, "the backing's hit tests while pointing at the page (the picker's own one per move aside)");
     // Pointing low and high in turn: the bar steps to the top and back each time.
+    // A look is up to 20 hit tests, cached per rounded position (Backing.answers),
+    // so the two resting places (top, bottom) cost two looks — not one per step.
+    // A busy machine can register a transient position or two mid-step before it
+    // settles (each its own cached look), so budget a few looks; never the ~480 a
+    // per-step look would cost, which is what this guards against.
     await t.reset();
     for (let i = 0; i < 24; i++) { await t.page.mouse.move(60 + i * 10, i % 2 ? 560 : 120); await sleep(80); }
     await sleep(500);
     const stepping = await t.snap();
-    assert.ok((stepping.counts.hitTests || 0) <= 40, `hit tests while the bar stepped between top and bottom: ${stepping.counts.hitTests}`);
+    assert.ok((stepping.counts.hitTests || 0) <= 20 * 4, `hit tests while the bar stepped between top and bottom: ${stepping.counts.hitTests}`);
     await t.reset();
     for (let i = 0; i < 20; i++) { await t.page.mouse.wheel(0, 100); await sleep(60); }
     await sleep(800);

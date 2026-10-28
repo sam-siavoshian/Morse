@@ -24,6 +24,8 @@ change today, using [Frida](https://frida.re) for instrumentation and
 | `agent.js` | the in-target Frida agent (hook install/revert) | needs Frida + target |
 | `frida-runner.js` | host-side attach/apply/detach, error isolation | needs `frida` |
 | `index.js` | the pipeline + `prepareTarget` / `runMods` | orchestration |
+| `apply.js` | `NativeModService`: bar request → plan → apply → save → undo | ✅ (planner seam injected) |
+| `store.js` | persist native mods per app (`~/.morse/native-mods.json`) | ✅ pure (fs injectable) |
 | `window-bounds.js` | target window geometry per platform (for the overlay) | partly (parsers are pure) |
 | `overlay.js` | overlay region math + follow/hide controller | ✅ pure |
 
