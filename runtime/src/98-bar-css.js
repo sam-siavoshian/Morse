@@ -244,7 +244,7 @@ function BAR_CSS() { return `
   .bar .actions button { height: 28px; padding-inline: 10px; }
   .bar.done .hint { flex-basis: 160px; }
   .bar.done .hint .ok { max-height: 60px; overflow-y: auto; scrollbar-width: thin; user-select: text; }
-  .bar .bmenu { max-height: min(400px, calc(100vh - 160px)); overflow-y: auto; overscroll-behavior: contain; }
+  .bar .bmenu, .bar .modelmenu { max-height: min(400px, calc(100vh - 160px)); overflow-y: auto; overscroll-behavior: contain; }
   .bar .pane { overscroll-behavior: contain; }
   @media (max-width: 400px) {
     .bar .row { gap: 6px; padding-inline: 10px; }

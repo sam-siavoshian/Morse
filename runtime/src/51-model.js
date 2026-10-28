@@ -5,7 +5,7 @@
 const modelBtn = makeEl("button", { className: "btn modelpick", type: "button", hidden: true }, { "aria-haspopup": "menu", "aria-expanded": "false", "aria-controls": "m-model-menu" });
 modelBtn.innerHTML = `<span class="mi" aria-hidden="true"></span><span class="name"></span><i class="chev" aria-hidden="true"></i>`;
 micBtn.before(modelBtn);
-const modelMenu = makeEl("div", { className: "bmenu menu modelmenu", hidden: true, id: "m-model-menu" }, { role: "menu" });
+const modelMenu = makeEl("div", { className: "menu modelmenu", hidden: true, id: "m-model-menu" }, { role: "menu" });
 bar.append(modelMenu);
 modelBtn.addEventListener("mousedown", e => e.preventDefault()); // keep the caret; the menu takes focus on open
 
@@ -149,6 +149,7 @@ function setModelChoices(choices) {
 
 modelBtn.addEventListener("click", () => (modelMenu.hidden ? showModelMenu() : hideModelMenu(true)));
 modelBtn.addEventListener("keydown", e => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
   if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
   e.preventDefault();
   e.stopPropagation();
