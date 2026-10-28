@@ -90,6 +90,9 @@ export class NativeSession extends EventEmitter {
     if (m?.type === "send" && m.payload?.type === "mod") {
       const p = m.payload;
       this.emit("mod", { level: p.level, id: p.id, message: p.message, extra: p.extra });
+    } else if (m?.type === "send" && m.payload?.type === "tap") {
+      // A tap event from inside the app → the services bus (services/bus.js).
+      this.emit("tap", { id: m.payload.id, data: m.payload.data });
     } else if (m?.type === "error") {
       this.emit("error", new Error(`agent: ${m.description || m.stack || "script error"}`));
     }

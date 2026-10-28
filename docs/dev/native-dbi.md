@@ -303,6 +303,32 @@ from the desktop app's native flow is one `startNativeOverlay` call away, left
 out until that flow opens a DBI session (the macOS Accessibility picker path is
 untouched).
 
+## Services: real features & external data
+
+The overlay shows the bar; the bar's requests need a backend that does
+something real. `native-dbi/services/` is that backend — the honest answer to
+the Spotify "AI lyrics" ask the bar refused (no service in the app → no fake
+Generate button; a configured real source → a real feature):
+
+- **Tap** — an `observe` mod calls `emit({...})` inside the app (a new scope
+  helper in `agent.js`), sending a minimal JSON event out. `NativeSession`
+  surfaces it as a `"tap"` event.
+- **Bus** (`services/bus.js`) — the daemon routes taps to **providers**
+  (`services/providers.js`) with caching, per-provider rate limits, in-flight
+  de-dup, and change detection, all outside the target's memory. One provider
+  failing is isolated.
+- **Render** (`services/render.js`) — Electron via a CDP DOM injection
+  (textContent only), native via a message to the overlay window; one shared
+  `payloadToView`.
+
+Integrity is built in: factual providers fetch from a real configured source
+and show an honest empty state rather than inventing (lyrics are never
+generated); generative payloads carry `generated: true` so the UI labels them.
+And the render layer deliberately does **not** hook a GPU present/draw call to
+blit into the app's framebuffer — the pinned transparent window does the job
+without drawing inside another process. Full write-up and a live demo:
+[`native-dbi/services/README.md`](../../native-dbi/services/README.md).
+
 ## Verified end-to-end
 
 `native-dbi/example/` is a runnable proof of the instrumentation core: a real

@@ -68,14 +68,17 @@ function installOne(spec) {
   const a = spec.action;
 
   if (a.kind === "observe") {
-    // Read-only: an Interceptor.attach whose callbacks only observe. The
-    // bodies are mod-authored JS; they run with { args, retval, log } in scope.
-    const onEnter = a.onEnter ? new Function("args", "log", a.onEnter) : null;
-    const onLeave = a.onLeave ? new Function("retval", "log", a.onLeave) : null;
+    // Read-only: an Interceptor.attach whose callbacks only observe. The bodies
+    // are mod-authored JS; they run with { args/retval, log, emit } in scope.
+    // emit(obj) sends a minimal JSON event out to the daemon (services/bus.js) —
+    // the tap. The heavy work (lookups, keys, caching) happens there, not here.
+    const onEnter = a.onEnter ? new Function("args", "log", "emit", a.onEnter) : null;
+    const onLeave = a.onLeave ? new Function("retval", "log", "emit", a.onLeave) : null;
     const log = function (m) { report("info", spec.id, String(m)); };
+    const emit = function (obj) { try { send({ type: "tap", id: spec.id, data: obj }); } catch (e) { report("error", spec.id, "emit: " + e.message); } };
     const listener = Interceptor.attach(addr, {
-      onEnter: function (args) { if (onEnter) { try { onEnter(args, log); } catch (e) { report("error", spec.id, "onEnter: " + e.message); } } },
-      onLeave: function (retval) { if (onLeave) { try { onLeave(retval, log); } catch (e) { report("error", spec.id, "onLeave: " + e.message); } } },
+      onEnter: function (args) { if (onEnter) { try { onEnter(args, log, emit); } catch (e) { report("error", spec.id, "onEnter: " + e.message); } } },
+      onLeave: function (retval) { if (onLeave) { try { onLeave(retval, log, emit); } catch (e) { report("error", spec.id, "onLeave: " + e.message); } } },
     });
     installed.set(spec.id, { listener: listener, target: addr, reverted: false });
     return;
