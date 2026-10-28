@@ -25,8 +25,8 @@ Everything Morse ships is non-invasive, and that is a promise, not an accident:
 - `docs/dev/rea.md`, "Read only": **"No native instrumentation, no hooking, no
   injection into native processes."** Profiles are static reads of the app's
   JavaScript plus CDP in its pages.
-- `README.md`: Morse "doesn't unlock a service's private backend or turn paid
-  access into free access."
+- `README.md`: Morse changes the app you run, "not a service's private backend"
+  and not paid access into free access.
 
 DBI is the opposite kind of tool. It injects a thread into another process and
 rewrites its instructions in memory. The person owns the process and asks for
@@ -109,9 +109,9 @@ fallbacks:
 
 | | active-window → PID | PID → exe path | metadata |
 |---|---|---|---|
-| macOS | `osascript` (System Events `unix id`) | `ps -p … -o comm=` / `lsof` | Mach-O magic, arch, signature via `codesign` |
-| Windows | PowerShell `GetForegroundWindow` + `GetWindowThreadProcessId` | `(Get-Process -Id).Path` | PE magic, machine field, Authenticode presence |
-| Linux | `xdotool` / `xprop _NET_WM_PID` (X11 only) | `/proc/<pid>/exe` | ELF magic, class, `PT_GNU_STACK`/RELRO hints |
+| macOS | `osascript` (System Events `unix id`) | `ps -p … -o comm=` / `lsof` | Mach-O header, arch, signature via `codesign` |
+| Windows | PowerShell `GetForegroundWindow` + `GetWindowThreadProcessId` | `(Get-Process -Id).Path` | PE header, machine field, Authenticode presence |
+| Linux | `xdotool` / `xprop _NET_WM_PID` (X11 only) | `/proc/<pid>/exe` | ELF header, class, `PT_GNU_STACK`/RELRO hints |
 
 It reuses `daemon/apps.js`'s `listProcesses()` for the PID→row mapping so the
 two agree on what a process is. The output is a `TargetContext` (see
@@ -219,7 +219,7 @@ person can act on**, never to defeat it.
 | Platform | Restriction | What the tool reports (it does not bypass) |
 |---|---|---|
 | **macOS** | Hardened runtime without `get-task-allow`; SIP protects system binaries; Apple-platform & App Store apps aren't debuggable by you | "This app uses the hardened runtime and can't be instrumented. DBI needs a build you can debug (a debug build, or one re-signed with the `get-task-allow` entitlement **by you, for an app you're entitled to re-sign**). System apps are protected by SIP and are out of scope." |
-| **Windows** | Target at a higher integrity level (admin/System) than Morse; PPL; a debugger-present or anti-tamper check | "This app runs at a higher integrity level than Morse, so it can't be opened for instrumentation. Run both the same way, or stop — don't elevate to get around a protection." |
+| **Windows** | Target at a higher integrity level (admin/System) than Morse; PPL; a debugger-present or anti-tamper check | "This app runs at a higher integrity level than Morse, so it can't be opened for instrumentation. Run both the same way, or stop — don't run as administrator to get around a protection." |
 | **Linux** | `yama ptrace_scope` ≥ 1 blocks non-child attach; a container may drop `CAP_SYS_PTRACE` | "The kernel's `ptrace_scope` is set to N; non-child attach is blocked. This is a system setting — change it yourself if it's your machine and you accept the trade-off; Morse won't change it for you." |
 
 `boundaries.js` exposes:
