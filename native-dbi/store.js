@@ -24,13 +24,21 @@ const realFs = {
 };
 
 export function createStore({ file = DEFAULT_FILE, fs = realFs } = {}) {
-  // A missing store reads as empty; a present-but-corrupt one throws rather than
-  // reading as empty, so the next write can't silently wipe saved mods.
+  // A missing store reads as empty; any other read error (permissions, I/O) and
+  // a present-but-corrupt file throw rather than reading as empty, so the next
+  // write can't silently wipe saved mods.
+  const corrupt = () => new Error(`native mods store is corrupt (${file}); not overwriting it`);
   const read = () => {
     let raw;
-    try { raw = fs.read(file); } catch { return {}; }
-    try { const v = JSON.parse(raw); return v && typeof v === "object" ? v : {}; }
-    catch { throw new Error(`native mods store is corrupt (${file}); not overwriting it`); }
+    try { raw = fs.read(file); }
+    catch (e) { if (e && e.code === "ENOENT") return {}; throw e; }
+    let v;
+    try { v = JSON.parse(raw); } catch { throw corrupt(); }
+    // Only a plain object maps app keys → mod arrays. null, an array, or any
+    // other JSON value is a wrong shape — treat it as corrupt, not empty, so a
+    // write can't replace real data derived from it.
+    if (!v || typeof v !== "object" || Array.isArray(v)) throw corrupt();
+    return v;
   };
   // Write a temp file, then atomically rename over the store, so a partial write
   // can't corrupt it or be read half-written.

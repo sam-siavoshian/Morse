@@ -25,7 +25,8 @@ const planner = async (req) => /discount|% ?off|cheaper|bulk/i.test(req.prompt)
 
 // In-memory store so the demo doesn't write to ~/.morse.
 let blob = null;
-const store = createStore({ file: "mem", fs: { read: () => { if (blob == null) throw 0; return blob; }, write: (_p, c) => { blob = c; }, rename: () => {}, mkdir: () => {} } });
+const enoent = () => { const e = new Error("ENOENT"); e.code = "ENOENT"; return e; }; // the store reads only ENOENT as "empty"
+const store = createStore({ file: "mem", fs: { read: () => { if (blob == null) throw enoent(); return blob; }, write: (_p, c) => { blob = c; }, rename: () => {}, mkdir: () => {} } });
 
 const dev = await frida.getLocalDevice();
 let buf = "";

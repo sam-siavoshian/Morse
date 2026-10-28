@@ -119,7 +119,7 @@ export class NativeSession extends EventEmitter {
   // Revert a single mod in the running target. Returns whether it succeeded, so
   // the caller only marks a mod off once the hook is actually gone.
   async revert(id) {
-    try { await this.script?.exports.revert(id); return true; }
+    try { const r = await this.script?.exports.revert(id); return !r || r.ok !== false; }
     catch (e) { if (this.listenerCount("error")) this.emit("error", e); return false; }
   }
 

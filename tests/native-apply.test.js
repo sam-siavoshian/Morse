@@ -9,10 +9,13 @@ import { createStore, keyFor } from "../native-dbi/store.js";
 import { NativeModService } from "../native-dbi/apply.js";
 import { createContext } from "../native-dbi/schema.js";
 
+// A missing-file error the store recognizes (only ENOENT reads as empty).
+function enoent() { const e = new Error("ENOENT: no such file"); e.code = "ENOENT"; return e; }
+
 // In-memory fs for the store.
 function memStore() {
   let blob = null;
-  const fs = { read: () => { if (blob == null) throw new Error("empty"); return blob; }, write: (_p, c) => { blob = c; }, rename: () => {}, mkdir: () => {} };
+  const fs = { read: () => { if (blob == null) throw enoent(); return blob; }, write: (_p, c) => { blob = c; }, rename: () => {}, mkdir: () => {} };
   return createStore({ file: "mem", fs });
 }
 
@@ -48,13 +51,19 @@ test("store: saves, lists, upserts and removes per app key", () => {
 });
 
 test("store: a corrupt file throws rather than silently wiping saved mods", () => {
-  let blob = "{ not valid json";
-  const fs = { read: () => blob, write: (_p, c) => { blob = c; }, rename: () => {}, mkdir: () => {} };
-  const store = createStore({ file: "mem", fs });
-  assert.throws(() => store.list("k"), /corrupt/);
-  // a missing file still reads as empty, not an error
-  const missing = createStore({ file: "mem", fs: { read: () => { throw new Error("ENOENT"); }, write: () => {}, rename: () => {}, mkdir: () => {} } });
+  const storeReading = raw => createStore({ file: "mem", fs: { read: () => raw, write: () => {}, rename: () => {}, mkdir: () => {} } });
+  // unparseable JSON, and valid JSON of the wrong shape, are all corrupt — not empty
+  assert.throws(() => storeReading("{ not valid json").list("k"), /corrupt/);
+  assert.throws(() => storeReading("[]").list("k"), /corrupt/, "a top-level array is the wrong shape");
+  assert.throws(() => storeReading("null").list("k"), /corrupt/, "null is the wrong shape");
+  assert.throws(() => storeReading('"a string"').list("k"), /corrupt/);
+  // a missing file (ENOENT) still reads as empty, not an error
+  const missing = createStore({ file: "mem", fs: { read: () => { throw enoent(); }, write: () => {}, rename: () => {}, mkdir: () => {} } });
   assert.deepEqual(missing.list("k"), []);
+  // any other read error (permissions, I/O) must propagate, not read as empty —
+  // treating it as empty would let the next write wipe real saved mods
+  const denied = createStore({ file: "mem", fs: { read: () => { const e = new Error("EACCES"); e.code = "EACCES"; throw e; }, write: () => {}, rename: () => {}, mkdir: () => {} } });
+  assert.throws(() => denied.list("k"), /EACCES/);
 });
 
 test("apply: a direct request (target+action) applies, reports, and saves", async () => {
@@ -137,6 +146,18 @@ test("apply: re-saving a live mod reverts the old hook first (no second live hoo
   assert.equal(session.calls[1][0], "apply", "then re-applies");
   assert.equal(svc.list().filter(m => m.id === id).length, 1, "still exactly one saved entry");
   assert.equal(svc.list().find(m => m.id === id).applied, true, "and it's live");
+});
+
+test("apply: re-saving a live mod whose revert fails keeps it, installs nothing over it", async () => {
+  const session = fakeSession({ failRevert: true });
+  const svc = new NativeModService({ session, context: ctx, store: memStore() });
+  const { id } = await svc.generate(directReq); // applied + live (wasn't active, so no pre-revert)
+  session.calls.length = 0; // only watch the re-save
+  const r = await svc.handle({ type: "mods.save", draft: { id, title: "again", target: directReq.target, action: directReq.action } });
+  assert.equal(r.ok, false, "a failed revert of the live hook is not reported as replaced");
+  assert.deepEqual(session.calls[0], ["revert", id], "tried to revert the live hook");
+  assert.ok(!session.calls.some(c => c[0] === "apply"), "never applied a replacement over an un-reverted hook");
+  assert.equal(svc.list().find(m => m.id === id).applied, true, "still live and tracked");
 });
 
 test("apply: a store-write failure reports applied-but-unsaved, keeps the hook", async () => {
