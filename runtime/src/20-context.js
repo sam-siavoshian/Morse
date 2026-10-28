@@ -698,6 +698,13 @@ function placedPanes() {
 }
 function pageNotes(roots) {
   const notes = [];
+  // Range values are application state, not just appearance. The units and
+  // stable selectors make media/volume controls usable without invented APIs.
+  const ranges = roots.flatMap(r => [...r.querySelectorAll('input[type="range"]')])
+    .filter(el => !isMorseUI(el) && el.getClientRects().length).slice(0, 8);
+  if (ranges.length) notes.push("Native range controls (use morse.type(el, value), not direct .value assignment; frameworks may ignore synthetic input/change events after direct assignment): " + ranges.map(el =>
+    `${selectorFor(el)}: min=${el.min || "0"}, max=${el.max || "100"}, step=${el.step || "1"}, value=${el.value}${el.getAttribute("aria-valuetext") ? ` (${clip(el.getAttribute("aria-valuetext"), 60)})` : ""}${el.disabled ? " [disabled]" : ""}`
+  ).join("; ") + ". Read current values and resolve the control inside each handler; respect these units and bounds. Verify the app's displayed state changes, not just the input value.");
   // Generated class names (CSS modules, emotion, Tailwind JIT builds…)
   let withClass = 0, hashed = 0;
   const examples = new Set(), modules = new Set();
@@ -1178,7 +1185,7 @@ function shotArea(selector, modId) {
   x0 = Math.max(0, Math.floor(x0)); y0 = Math.max(0, Math.floor(y0)); x1 = Math.min(W, Math.ceil(x1)); y1 = Math.min(H, Math.ceil(y1));
   const width = x1 - x0, height = y1 - y0;
   if (width < 8 || height < 8) return null;
-  return { x: x0, y: y0, width, height, scrollX, scrollY, vw: W, vh: H, scale: Math.min(1, 1280 / width, 900 / height) };
+  return { x: x0, y: y0, width, height, scrollX, scrollY, dpr: devicePixelRatio || 1, vw: W, vh: H, scale: Math.min(1, 1280 / width, 900 / height) };
 }
 // Inline scripts and named onclick/onsubmit handlers, so a feature can call
 // the page's own functions. Handler bodies stay out (they can hold secrets);

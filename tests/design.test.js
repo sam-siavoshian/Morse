@@ -109,8 +109,8 @@ test("the prompt's design rules: variables over fixed colors, the app's classes,
 });
 
 // ---- polish (core/polish.js) with a fake model and fake pictures
-const DRAFT = "TITLE: Timer\n```css\n.pomo { color: red; }\n```\n```js\nmorse.watch('.status-bar', bar => bar.append(morse.el('div', { class: 'pomo', text: '25:00' })));\n```";
-const POLISHED = "FIX: The red text is foreign; use the status bar's color.\nFIX: Match the items' padding.\nTITLE: Timer\n```css\n.pomo { color: var(--status-bar-text-color); padding: 3px 4px; }\n```\n```js\nmorse.watch('.status-bar', bar => bar.append(morse.el('div', { class: 'pomo status-bar-item', text: '25:00' })));\n```";
+const DRAFT = "TITLE: Timer\n```css\n.pomo { color: red; }\n```\n```js\nmorse.watch('.status-bar', bar => bar.append(morse.el('div', { class: 'pomo', text: '25:00' })));\nmorse.every(60000, () => {});\n```";
+const POLISHED = "FIX: The red text is foreign; use the status bar's color.\nFIX: Match the items' padding.\nTITLE: Timer\n```css\n.pomo { color: var(--status-bar-text-color); padding: 3px 4px; }\n```\n```js\nmorse.watch('.status-bar', bar => bar.append(morse.el('div', { class: 'pomo status-bar-item', text: '25:00' })));\nmorse.every(60000, () => {});\n```";
 const PIC = { mediaType: "image/jpeg", data: Buffer.from("fake jpeg bytes").toString("base64") };
 
 function fakeModel(replies) {

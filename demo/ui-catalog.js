@@ -821,7 +821,7 @@ async function godStates(theme, width) {
   if (!n) {
     await ui(p, ".gm-chip[data-id=c2]").hover(); await sleep(150);
     await shot(p, "clipboard", "chip-hover", ui(p, ".gm-clips"), { pad: 8 });
-    await shot(p, "clipboard", "chip-focus", ui(p, ".gm-clips"), { pad: 8, checks: [await focusVisible(p, ui(p, ".gm-chip[data-id=c2]"))] });
+    await shot(p, "clipboard", "chip-focus", ui(p, ".gm-clips"), { pad: 8, checks: [await focusVisible(p, ui(p, ".gm-chip[data-id=c2] .gm-chip-main"))] });
   }
   await ui(p, ".gm-chip[data-id=c1]").click(); await sleep(150);
   await shot(p, "clipboard", "picked", ui(p, ".bar"));

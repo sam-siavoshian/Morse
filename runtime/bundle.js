@@ -71,6 +71,7 @@ export function bundleUI() {
   shared.push(inlineModule("../core/style.js")); // your-style hook: one style on every site (72-style.js)
   shared.push(inlineModule("../core/guard.js")); // guard hook: CSS that would hide the whole page (64-guard.js)
   shared.push(inlineModule("../core/take.js")); // take-and-bring hook: Take this, Bring here (73-take.js)
+  shared.push(inlineModule("../core/patterns.js")); // loading field: moving shapes and the shuffle (90-effect.js)
   return guarded("ui", `const TOKENS_CSS = ${JSON.stringify(tokens)};\n${shared.join("\n")}\n${parts.join("\n")}`);
 }
 

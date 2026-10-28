@@ -521,6 +521,27 @@ test("Check for updates returns what the updater found, and nothing else", async
   assert.equal(LINKS.release, "https://github.com/sam-siavoshian/RRAA/releases/tag/preview");
 });
 
+test("Download update installs in place and does not open a download page", async () => {
+  const { call, native } = setup();
+  native.downloadUpdate = async () => {
+    native.downloads = (native.downloads || 0) + 1;
+    return { phase: "installing", action: "install", version: "0.3.4" };
+  };
+  assert.deepEqual(await call("downloadUpdate"), { phase: "installing", action: "install", version: "0.3.4" });
+  assert.equal(native.downloads, 1);
+  assert.deepEqual(native.opened, [], "the install path does not open a browser");
+  assert.equal(JSON.stringify(await call("downloadUpdate")).includes("http"), false);
+  assert.deepEqual(await call("downloadUpdate", "https://github.com/sam-siavoshian/Morse/releases/tag/preview", "more"), { error: "Not allowed." });
+  assert.equal(native.downloads, 2, "an address is refused and does not download");
+  const html = readFileSync(path.join(root, "desktop-app/ui/index.html"), "utf8");
+  const button = html.match(/<button[^>]*id="update-get"[^>]*>/)[0];
+  assert.doesNotMatch(button, /data-link|https?:/);
+  const ui = readFileSync(path.join(root, "desktop-app/ui/app.js"), "utf8");
+  const fn = ui.slice(ui.indexOf("async function downloadUpdate"), ui.indexOf("$(\"update-get\").onclick"));
+  assert.match(fn, /morse\.downloadUpdate\(/);
+  assert.doesNotMatch(fn, /openLink|openExternal|https?:/);
+});
+
 test("links open only by name, and login start goes through the native side", async () => {
   const { call, native } = setup();
   for (const name of Object.keys(LINKS)) await call("openLink", name);
@@ -695,6 +716,17 @@ test("Model screen: the choice list, real marks, and Use this", () => {
   const boot = js.slice(js.lastIndexOf("st = await morse.state();"));
   assert.match(boot, /st = await morse\.state\(\);\nrender\(\);/, "the window paints from state");
   assert.doesNotMatch(boot, /await morse\.modelChoices/, "provider discovery does not block the first paint");
+});
+
+test("the Mac window can be dragged from the title area", () => {
+  const css = readFileSync(path.join(root, "desktop-app/ui/app.css"), "utf8");
+  assert.match(css, /body\.mac \.app::before \{[^}]*-webkit-app-region:\s*drag/, "the top of the window is a drag region");
+  assert.match(css, /body\.mac \.side \{[^}]*-webkit-app-region:\s*drag/, "the sidebar is a drag region");
+  assert.match(css, /body\.mac \.head \{[^}]*-webkit-app-region:\s*drag/, "the page title is a drag region");
+  assert.match(css, /body\.mac \.first\[data-step="welcome"\]::before \{[^}]*-webkit-app-region:\s*drag/, "the first run can move before its bar is shown");
+  assert.doesNotMatch(css, /\.app-sky \{[^}]*-webkit-app-region:\s*no-drag/, "the sky must not cancel the title strip");
+  assert.match(css, /\.side::before \{[^}]*backdrop-filter:/, "the sidebar blur is its own layer");
+  assert.doesNotMatch(css, /(?:^|\n)\.side(?:::before)?,\s*body\.mac \.side \{[^}]*backdrop-filter/, "the drag element itself is not blurred");
 });
 
 test("the window wears the website's design: the same tokens, its sky, accessible navigation icons", () => {

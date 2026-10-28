@@ -5,6 +5,7 @@
 import { t, setLanguage, loadLanguage, pickLanguage, setLanguageLoader, translatePage } from "./core/i18n.js";
 import { comboFromEvent, comboParts, formatCombo, formatPartial, defaultHotkeys, decideOpenShortcut, detectPlatform } from "./core/hotkeys.js";
 import { formName } from "./formation.js";
+import { mountStage } from "./zephium/stage.js";
 import { mountDither } from "./dither.js";
 import { filterApps, nativeAction } from "./app-list.js";
 import { afterOpenBar, noticeStillShown } from "./open-bar.js";
@@ -13,6 +14,7 @@ setLanguageLoader(code => import(`./core/locales/${code}.js`).then(m => m.defaul
 setLanguage(await loadLanguage(pickLanguage(navigator.languages?.length ? navigator.languages : [navigator.language])));
 translatePage(document);
 
+mountStage(document.getElementById("first"));
 const morse = window.morse;
 const $ = id => document.getElementById(id);
 const platform = new URLSearchParams(location.search).get("platform") || "";
@@ -35,6 +37,14 @@ function h(tag, props = {}, ...kids) {
   return el;
 }
 const svgNS = "http://www.w3.org/2000/svg";
+// Consistent line icons with text labels; never the only accessible name.
+function setupIcon(name) {
+  const paths = {"key": "M8 15a5 5 0 1 1 4-8l9 0v4h-3v3h-3l-3-3M7 7h.01", "plug": "M8 3v4m8-4v4M6 7h12v3a6 6 0 0 1-6 6v5M6 7v3a6 6 0 0 0 6 6", "pointer": "m5 3 14 9-7 1-3 7-4-17Z", "message": "M21 11a8 8 0 0 1-8 8H7l-5 3V11a9 9 0 0 1 19 0ZM7 9h9M7 13h6", "keyboard": "M3 5h18v14H3ZM6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M10 13h.01M14 13h.01M18 13h.01M8 16h8", "shield": "m12 3 8 3v6c0 5-8 9-8 9S4 17 4 12V6l8-3Zm-4 9 3 3 5-6", "arrow": "M5 12h14m-5-5 5 5-5 5", "apps": "M3 3h7v7H3Zm11 0h7v7h-7ZM3 14h7v7H3Zm11 0h7v7h-7Z", "check": "m5 12 4 4L19 6"};
+  const icon = document.createElementNS(svgNS, "svg");
+  for (const [key, value] of Object.entries({class:"setup-icon",viewBox:"0 0 24 24",fill:"none",stroke:"currentColor","stroke-width":"1.6","stroke-linecap":"round","stroke-linejoin":"round","aria-hidden":"true"})) icon.setAttribute(key,value);
+  const path = document.createElementNS(svgNS,"path"); path.setAttribute("d",paths[name] || paths.apps); icon.append(path);
+  return icon;
+}
 // The radar, pulsing: Morse is working on it.
 function radar(size = 16) {
   const s = document.createElementNS(svgNS, "svg");
@@ -197,6 +207,7 @@ const STATUS = {
   connected: a => [h("i", { class: "dot on" }), h("span", { text: [t("desk.app.connected"), a.windows ? t("desk.app.windows", { n: a.windows }) : "", a.modsOn ? t("desk.app.modsOn", { n: a.modsOn }) : ""].filter(Boolean).join(" · ") })],
   waiting: () => [h("i", { class: "dot wait" }), h("span", { text: t("desk.app.waiting") })],
   "waiting-page": () => [h("i", { class: "dot wait" }), h("span", { text: t("desk.app.waitingPage") })],
+  "no-answer": a => [h("i", { class: "dot wait" }), h("span", { text: t("desk.app.noAnswer", { name: a.name }) })],
   connecting: () => [radar(12), h("span", { text: t("desk.app.connecting") })],
   opening: a => [radar(12), h("span", { text: t("desk.app.opening", { name: a.name }) })],
   disconnecting: () => [radar(12), h("span", { text: t("desk.app.disconnecting") })],
@@ -256,7 +267,7 @@ function renderNativeGuide() {
   box.classList.toggle("ready", ready);
   box.replaceChildren(
     h("div", { class: "native-setup-head" },
-      h("h2", { id: "native-setup-title", tabindex: "-1", text: t("desk.native.title", { name: app.name }) }),
+      h("h2", { id: "native-setup-title", tabindex: "-1" }, setupIcon(ready ? "check" : "shield"), t("desk.native.title", { name: app.name })),
       h("button", { type: "button", class: "btn quiet", onclick: dismissNativeGuide }, t("desk.native.later"))),
     ...(!ready ? [h("p", { class: "native-setup-instructions" },
       t("desk.native.step1"), " ", t("desk.native.step2", { app: access.targetName || "Morse" }))] : []),
@@ -922,6 +933,7 @@ function obGo(step) {
   const at = STEPS.indexOf(step);
   [...$("ob-dots").children].forEach((li, i) => { li.className = i < at ? "done" : i === at ? "now" : ""; });
   $("ob-dots").setAttribute("aria-label", t("desk.ob.progress", { at: at + 1, of: STEPS.length }));
+  $("ob-progress").textContent = t("desk.ob.progress", { at: at + 1, of: STEPS.length });
   $("ob-back").hidden = at <= 0;
   $("ob-next-label").textContent = t(step === "apps" ? "desk.ob.done" : "desk.ob.continue");
   const head = f.querySelector(`.ob-step[data-ob="${step}"] h1`);
@@ -952,7 +964,8 @@ async function obWelcome() {
   await document.fonts.load(getComputedStyle(name).font).catch(() => {});
   const nr = name.getBoundingClientRect(), cr = canvas.getBoundingClientRect();
   const cs = getComputedStyle(name);
-  const box = { x: nr.left - cr.left, y: nr.top - cr.top, w: nr.width, h: nr.height };
+  const fit = cr.width / canvas.clientWidth || 1;
+  const box = { x: (nr.left - cr.left) / fit, y: (nr.top - cr.top) / fit, w: nr.width / fit, h: nr.height / fit };
   formName(canvas, {
     box,
     draw: ctx => { ctx.font = cs.font; ctx.letterSpacing = cs.letterSpacing; ctx.textBaseline = "middle"; ctx.textAlign = "center"; ctx.fillText(name.textContent, box.w / 2, box.h / 2 + 2); },
@@ -988,10 +1001,12 @@ function renderFirst() {
     const needsControls = platform === "darwin" && (a.browser || a.engine === "native");
     return h("li", { "data-first-app": a.id },
       appIcon(a),
-      h("div", { class: "grow" }, h("b", { text: a.name }), h("small", {}, ...(busy ? [radar(12), h("span", { text: t("desk.app.opening", { name: a.name }) })] : [h("span", { text: a.state === "closed" ? t("desk.app.notOpen") : t("desk.app.openNow") })]))),
-      h("div", { class: "actions" },
-        ...(needsControls ? [h("button", { type: "button", class: "btn quiet", "data-act": "native-controls", disabled: busy, onclick: event => setupNativeForApp(a, event.currentTarget) }, t(a.browser ? "desk.app.browserControls" : "desk.app.inspectControls"))] : []),
-        ...(a.canAttach !== false ? [h("button", { type: "button", class: "btn", disabled: busy, onclick: () => openFirst(a) }, t("desk.app.open"))] : [])));
+      h("div", {class:"grow"}, h("b", {text:a.name}),
+        ...(needsControls ? [h("button", {type:"button",class:"native-link","data-act":"native-controls",disabled:busy,
+          onclick:event=>setupNativeForApp(a,event.currentTarget)}, setupIcon("shield"), t(a.browser ? "desk.app.browserControls" : "desk.app.inspectControls"))] : [])),
+      h("button", {type:"button",class:"btn first-app-open",disabled:busy,
+        onclick:event=>a.canAttach===false ? setupNativeForApp(a,event.currentTarget) : openFirst(a),
+        "aria-label":t("desk.app.open")+" "+a.name}, t(busy ? "desk.app.opening" : "desk.app.open",{name:a.name}), setupIcon("arrow")));
   }) : [h("li", { class: "empty", role: "status" }, t(st.appsPending ? "desk.apps.looking" : "desk.first.noApps"))]));
   placeNativeGuide();
 }
@@ -1184,6 +1199,14 @@ function shownPercent(n) {
   if (!Number.isFinite(v)) return 0;
   return Math.max(0, Math.min(100, Math.round(v)));
 }
+function updateProblem(u) {
+  if (u?.reason === "unsupported") return t("desk.update.unsupported");
+  if (u?.reason === "mismatch") return t("desk.update.mismatch");
+  if (u?.reason === "download") return t("desk.update.downloadError");
+  if (u?.reason === "notInstalled") return t("desk.update.notInstalled");
+  if (u?.phase === "failed") return t("desk.update.failed");
+  return t("desk.update.error");
+}
 function renderUpdate() {
   const u = st.update || { phase: "idle" }, d = $("update");
   const show = ["downloading", "installing", "ready", "failed"].includes(u.phase);
@@ -1200,7 +1223,7 @@ function renderUpdate() {
     $("update-fill").style.width = `${pct}%`;
     track.setAttribute("aria-valuenow", String(pct));
   } else {
-    detail.textContent = u.phase === "ready" ? t("desk.update.ready") : u.phase === "failed" ? t("desk.update.failed") : t("desk.update.installing");
+    detail.textContent = u.phase === "ready" ? t("desk.update.ready") : u.phase === "failed" ? updateProblem(u) : t("desk.update.installing");
   }
   track.hidden = u.phase !== "downloading";
   $("update-acts").hidden = u.phase !== "ready" && u.phase !== "failed";
@@ -1253,8 +1276,7 @@ function renderUpdateCheck() {
   if (u.phase === "checking") text = t("desk.update.checking");
   else if (u.phase === "current") text = t("desk.update.current");
   else if (u.phase === "off") { text = t("desk.update.off"); level = "warn"; }
-  else if (u.phase === "failed") { text = t("desk.update.failed"); level = "bad"; }
-  else if (u.phase === "error") { text = t("desk.update.error"); level = "bad"; }
+  else if (u.phase === "failed" || u.phase === "error") { text = updateProblem(u); level = "bad"; }
   else if (["available", "downloading", "installing", "ready", "later"].includes(u.phase)) {
     text = u.version ? t("desk.update.available", { version: u.version }) : t("desk.update.availablePlain");
     showGet = u.phase === "available";
@@ -1264,6 +1286,7 @@ function renderUpdateCheck() {
   msg.textContent = text;
   msg.className = `shortcut-msg${level ? ` ${level}` : ""}`;
   $("update-get").hidden = !showGet;
+  $("update-get").disabled = busy;
   $("update-restart").hidden = !showRestart;
   extra.hidden = !showGet && !showRestart;
 }
@@ -1279,6 +1302,24 @@ $("check-updates").onclick = async () => {
   else st.update = { phase: "error" };
   render();
 };
+// Download update: download the published file, replace this copy, open Morse again.
+// The button used to open the release page. It does not.
+async function downloadUpdate() {
+  const button = $("update-get");
+  if (!button || button.disabled) return;
+  showError("settings-error", "");
+  st = st || {};
+  const version = st.update?.version;
+  st.update = { ...(st.update || {}), phase: "downloading", percent: 0, version, action: "install" };
+  render();
+  let r;
+  try { r = await morse.downloadUpdate(); }
+  catch { r = null; }
+  if (r?.phase) st.update = r;
+  else st.update = { phase: "error", reason: "download", version, action: "install" };
+  render();
+}
+$("update-get").onclick = downloadUpdate;
 $("update").addEventListener("cancel", event => {
   event.preventDefault();
   if (!["downloading", "installing"].includes(st.update?.phase)) $("update-later").click();

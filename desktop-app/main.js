@@ -52,6 +52,10 @@ const UI_FILES = {
   "/tokens.css": [path.join(HERE, "..", "design", "tokens.css"), "text/css; charset=utf-8"],
   // The first run: the name forming out of dots (ui/formation.js).
   "/formation.js": [path.join(HERE, "ui", "formation.js"), "text/javascript; charset=utf-8"],
+  // Zephium's onboarding port: explicit assets only, with the existing CSP.
+  ...Object.fromEntries(["tokens", "onboarding", "window", "button", "cards", "essentials", "morse"].map(n => [`/zephium/${n}.css`, [path.join(HERE, "ui", "zephium", `${n}.css`), "text/css; charset=utf-8"]])),
+  ...Object.fromEntries(["camera", "stage"].map(n => [`/zephium/${n}.js`, [path.join(HERE, "ui", "zephium", `${n}.js`), "text/javascript; charset=utf-8"]])),
+  ...Object.fromEntries(["day", "night"].map(n => [`/zephium/sky-${n}.avif`, [path.join(HERE, "ui", "zephium", `sky-${n}.avif`), "image/avif"]])),
   // The first run's sky, the website's (copied from site/sky), and its pixel edge.
   "/dither.js": [path.join(HERE, "ui", "dither.js"), "text/javascript; charset=utf-8"],
   "/sky/day.webp": [path.join(HERE, "ui", "sky", "day.webp"), "image/webp"],
@@ -373,6 +377,11 @@ app.whenReady().then(async () => {
       checkForUpdate: async () => {
         if (!updater) return { phase: "error" };
         await updater.check({ user: true });
+        return { ...updater.status };
+      },
+      downloadUpdate: async () => {
+        if (!updater) return { phase: "error", reason: "download", action: "install" };
+        await updater.downloadUpdate();
         return { ...updater.status };
       },
       nativeControls: async pid => {

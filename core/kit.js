@@ -173,7 +173,7 @@ function installMorseKit() {
 
   function ctxFor(id) {
     if (mods.has(id)) return mods.get(id);
-    const c = { id, cleanups: [], errors: [], nerr: 0, observers: new Set(), watches: [], timers: new Set(), frames: new Set(),
+    const c = { id, cleanups: [], pending: new Set(), errors: [], nerr: 0, observers: new Set(), watches: [], timers: new Set(), frames: new Set(),
       els: [], elsMax: 256, ms: 0, hits: 0, in: 0, t1: 0, k: 0, g: { w: now(), t: 0, n: 0, h: 0, hot: 0, bulk: 0, flood: 0 },
       settle: SETTLE_MS }; // speed: how long a host waits before reading its errors (see __run)
     mods.set(id, c);
@@ -187,6 +187,18 @@ function installMorseKit() {
     if (!log) return;
     if (c.nerr <= L.LOG) console.warn("[morse]", c.id, e);
     else if (c.nerr === L.LOG + 1) console.warn("[morse]", c.id, "keeps failing; later errors are counted in morse.__stats, not logged");
+  }
+
+  // Async initialization and handlers are part of the change, not successful
+  // just because they returned a Promise. Hosts can await these before saving.
+  function track(c, promise, cleanup = false) {
+    const task = Promise.resolve(promise).then(fn => {
+      if (!cleanup || typeof fn !== "function") return;
+      if (c.dead) { try { fn(); } catch {} } else c.cleanups.push(fn);
+    }, e => { if (!c.dead) fail(c, e); });
+    c.pending.add(task);
+    task.then(() => c.pending.delete(task));
+    return task;
   }
 
   // ---- "host >>> inside": into an open shadow root or a same-origin frame.
@@ -281,6 +293,13 @@ function installMorseKit() {
   function onMutations(recs) {
     let changed = false, dirty = false;
     for (const r of recs) {
+      // Insertions beside a watched node are owned by that watch too. Their
+      // removal changes the parent, not the watched node, so ancestor-only
+      // invalidation misses them (e.g. Spotify replacing a toolbar sibling).
+      if (r.type === "childList") for (const n of r.removedNodes) {
+        const made = madeBy.get(n), anchor = made?.anchor?.deref();
+        if (anchor?.isConnected && !made.watch.c.dead) { made.watch.dirty.add(anchor); dirty = true; }
+      }
       const t = r.target.nodeType === 1 ? r.target : r.target.parentElement;
       if (t && ours(t)) continue;
       // A change in or on an element a watch handled: check it next frame.
@@ -420,7 +439,7 @@ function installMorseKit() {
       const prev = enter(c), t0 = now();
       try {
         const r = fn.apply(this, args);
-        if (r && typeof r.then === "function") r.then(null, e => fail(c, e)); // async handlers (show-once hook)
+        if (r && typeof r.then === "function") track(c, r); // async handlers (show-once hook)
         return r;
       } catch (e) { fail(c, e); }
       finally { leave(c, prev, t0); }
@@ -434,7 +453,7 @@ function installMorseKit() {
     const later = (set, clear, min) => function (fn, ms, ...args) {
       if (typeof fn !== "function") return set(fn, ms);
       settleFor(c, (min ? Math.max(min, +ms || 0) : +ms || 0) + 60);
-      const id = set(guard(c, function () { if (!min) c.timers.delete(id); fn.apply(this, args); }), min ? Math.max(min, +ms || 0) : ms);
+      const id = set(guard(c, function () { if (!min) c.timers.delete(id); return fn.apply(this, args); }), min ? Math.max(min, +ms || 0) : ms);
       c.timers.add(id);
       return id;
     };
@@ -462,7 +481,7 @@ function installMorseKit() {
       later(setI, clearI, L.MIN_EVERY),
       cancel(clearT, c.timers),
       cancel(clearI, c.timers),
-      fn => { const id = raf(guard(c, t => { c.frames.delete(id); fn(t); })); c.frames.add(id); return id; },
+      fn => { const id = raf(guard(c, t => { c.frames.delete(id); return fn(t); })); c.frames.add(id); return id; },
       cancel(caf, c.frames),
       Observer,
     ];
@@ -494,7 +513,7 @@ function installMorseKit() {
         const run = el => {
           if (c.dead) return;
           if (!c.t1) c.t1 = now();
-          try { fn(el); } catch (e) { fail(c, e); }
+          try { const result = fn(el); if (result && typeof result.then === "function") track(c, result); } catch (e) { fail(c, e); }
           // Many matches at once with a slow callback: stop now, not after all of them.
           if (!(++c.k & 15) && now() - c.t1 > L.STALL_MS) pause(c, "slow", `one run of its morse.watch callback over the elements it found kept the page busy for over ${L.STALL_MS} ms. Do far less work per element.`);
         };
@@ -540,7 +559,7 @@ function installMorseKit() {
           const kids0 = new Set(el.childNodes), sibs0 = sibsBefore(el);
           // A burst of re-runs means fn and the page are fighting over el: then leave it alone.
           const t = now(), burst = prev && t - prev.at < 100 ? prev.burst + 1 : 0;
-          const r = { created: [], at: t, burst, root: inner(el) };
+          const r = { created: [], at: t, burst, root: inner(el), anchor: new WeakRef(el), watch: w };
           const outer = c.current;
           c.current = r;
           try { run(el); } finally { c.current = outer; }
@@ -737,7 +756,7 @@ function installMorseKit() {
       },
       after(ms, fn) {
         settleFor(c, (+ms || 0) + 60);
-        const t = setT(guard(c, () => { c.timers.delete(t); fn(); }), ms);
+        const t = setT(guard(c, () => { c.timers.delete(t); return fn(); }), ms);
         c.timers.add(t);
         return t;
       },
@@ -904,6 +923,10 @@ function installMorseKit() {
       try {
         const cleanup = fn(api(c), ...scope(c));
         if (typeof cleanup === "function") c.cleanups.push(cleanup);
+        else if (cleanup && typeof cleanup.then === "function") {
+          settleFor(c, SETTLE_MAX);
+          track(c, cleanup, true);
+        }
       } catch (e) { res = { ok: false, error: String(e && e.message || e) }; }
       leave(c, prev, t0); // its start counts too: a start that takes over a second pauses it
       const p = paused.get(id);
@@ -911,6 +934,20 @@ function installMorseKit() {
       if (!res.ok) this.__off(id);
       else res.settle = c.settle;
       return res;
+    },
+    async __ready(id, timeout = 5000) {
+      const c = mods.get(id);
+      if (!c) return { ok: false, error: paused.get(id)?.error || "The change was stopped" };
+      let timer;
+      const expired = new Promise(resolve => { timer = setT(() => resolve(false), timeout); });
+      try {
+        while (c.pending.size && !c.dead) {
+          if (!(await Promise.race([Promise.all([...c.pending]).then(() => true), expired])))
+            return { ok: false, error: "The change's asynchronous setup did not finish" };
+        }
+        const errors = this.__errors(id);
+        return c.dead ? { ok: false, error: "The change was stopped" } : errors.length ? { ok: false, error: errors[0].split("\n")[0] } : { ok: true };
+      } finally { clearT(timer); }
     },
     __off(id) {
       paused.delete(id);

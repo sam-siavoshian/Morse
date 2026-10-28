@@ -7,7 +7,7 @@ import { promises as fs } from "node:fs";
 import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
-import { carrySignIns, everydayDir, morseProfileDir } from "../daemon/browser-profile.js";
+import { carrySignIns, everydayDir, morseProfileDir, profileCloneCommand } from "../daemon/browser-profile.js";
 
 const { DatabaseSync } = await import("node:sqlite").catch(() => ({}));
 const skip = !DatabaseSync && "this Node has no node:sqlite";
@@ -123,6 +123,90 @@ test("no everyday profile (a browser never used): nothing to bring, Morse's prof
   const home = await fs.mkdtemp(path.join(os.tmpdir(), "morse-bp-"));
   assert.deepEqual(await carrySignIns(chrome, { platform: "darwin", home, morseHome: path.join(home, ".morse") }), {});
   assert.deepEqual(await carrySignIns({ id: "arc", name: "Arc" }, { platform: "win32", env: {}, home, morseHome: path.join(home, ".morse") }), {});
+});
+
+test("a Mac clone is one directory clone; a normal disk is not asked to pretend a slow copy was a clone", () => {
+  assert.deepEqual(profileCloneCommand("darwin", "/src/Chrome", "/dst/browser-profile"), { file: "/bin/cp", args: ["-cRp", "/src/Chrome", "/dst/browser-profile"] });
+  assert.deepEqual(profileCloneCommand("linux", "/src/Chrome", "/dst/browser-profile"), { file: "cp", args: ["-a", "--reflink=always", "/src/Chrome", "/dst/browser-profile"] });
+  assert.equal(profileCloneCommand("win32", "C:\\src", "C:\\dst"), null);
+});
+
+// The first open used to copy every file on its own. A real Chrome profile is
+// tens of thousands of files, and that copy took about a minute even when each
+// file was a clone. Caches are left unread; heavy folders are one clone each.
+test("first open clones each heavy folder once and does not read the caches", { skip }, async () => {
+  const { home, from, morseHome } = await everydayChrome();
+  const idb = path.join(from, "Default", "IndexedDB", "https_github.com_0.indexeddb.leveldb");
+  await fs.mkdir(idb, { recursive: true });
+  await Promise.all(Array.from({ length: 40 }, (_, i) => fs.writeFile(path.join(idb, `f${i}`), "x".repeat(32))));
+  await fs.mkdir(path.join(from, "Default", "Extensions", "ext", "1.0"), { recursive: true });
+  await fs.writeFile(path.join(from, "Default", "Extensions", "ext", "1.0", "manifest.json"), "{}");
+  const swDb = path.join(from, "Default", "Service Worker", "Database");
+  await fs.mkdir(swDb, { recursive: true });
+  await fs.writeFile(path.join(swDb, "CURRENT"), "ok");
+  const swCache = path.join(from, "Default", "Service Worker", "CacheStorage");
+  await fs.mkdir(swCache, { recursive: true });
+  await fs.writeFile(path.join(swCache, "blob"), "nope");
+  const storageCache = path.join(from, "Default", "Storage", "ext", "abc", "def", "CacheStorage");
+  await fs.mkdir(storageCache, { recursive: true });
+  await fs.writeFile(path.join(storageCache, "blob"), "nope");
+  const storageKeep = path.join(from, "Default", "Storage", "ext", "abc", "def", "Local Storage", "leveldb");
+  await fs.mkdir(storageKeep, { recursive: true });
+  await fs.writeFile(path.join(storageKeep, "CURRENT"), "keep");
+  // Opening either cache is the minute-long part. The copy must not do it.
+  await fs.chmod(path.join(from, "Default", "Cache"), 0);
+  await fs.chmod(swCache, 0);
+  await fs.chmod(storageCache, 0);
+  const calls = [];
+  const cloneDir = async (src, dst) => {
+    calls.push(path.relative(from, src));
+    await fs.cp(src, dst, { recursive: true, verbatimSymlinks: true });
+    return true;
+  };
+  try {
+    assert.deepEqual(await carrySignIns(chrome, { platform: "darwin", home, morseHome, cloneDir }), { copied: true });
+  } finally {
+    await fs.chmod(path.join(from, "Default", "Cache"), 0o755).catch(() => {});
+    await fs.chmod(swCache, 0o755).catch(() => {});
+    await fs.chmod(storageCache, 0o755).catch(() => {});
+  }
+  assert.equal(calls.filter(c => c === "Default/IndexedDB").length, 1, calls.join("\n"));
+  assert.equal(calls.filter(c => c.startsWith("Default/IndexedDB/")).length, 0);
+  assert.equal(calls.filter(c => c === "Default/Extensions").length, 1);
+  assert.ok(!calls.includes("") && !calls.includes("Default") && !calls.includes("Default/Storage"), calls.join("\n"));
+  assert.ok(calls.every(c => !/(^|\/)(Cache|Code Cache|CacheStorage|GPUCache)(\/|$)/.test(c)), calls.join("\n"));
+  const to = morseProfileDir(chrome, { platform: "darwin", home: morseHome });
+  assert.equal((await fs.readdir(path.join(to, "Default", "IndexedDB", "https_github.com_0.indexeddb.leveldb"))).length, 40);
+  assert.equal(await fs.readFile(path.join(to, "Default", "Extensions", "ext", "1.0", "manifest.json"), "utf8"), "{}");
+  assert.equal(await fs.readFile(path.join(to, "Default", "Service Worker", "Database", "CURRENT"), "utf8"), "ok");
+  assert.equal(await fs.readFile(path.join(to, "Default", "Storage", "ext", "abc", "def", "Local Storage", "leveldb", "CURRENT"), "utf8"), "keep");
+  assert.equal(await fs.readFile(path.join(to, "Default", "Current Session"), "utf8"), "tabs");
+  await assert.rejects(fs.access(path.join(to, "Default", "Cache")));
+  await assert.rejects(fs.access(path.join(to, "Default", "Service Worker", "CacheStorage")));
+  await assert.rejects(fs.access(path.join(to, "Default", "Storage", "ext", "abc", "def", "CacheStorage")));
+  await assert.rejects(fs.lstat(path.join(to, "SingletonLock")));
+});
+
+test("when the disk cannot clone, the same profile is still copied and the caches stay out", { skip }, async () => {
+  const { home, from, morseHome } = await everydayChrome();
+  const idb = path.join(from, "Default", "IndexedDB", "origin");
+  await fs.mkdir(idb, { recursive: true });
+  await Promise.all(Array.from({ length: 8 }, (_, i) => fs.writeFile(path.join(idb, `f${i}`), "y")));
+  let tries = 0;
+  const cloneDir = async (src, dst) => {
+    tries++;
+    await fs.mkdir(dst, { recursive: true });
+    await fs.writeFile(path.join(dst, "partial"), "x");
+    return false;
+  };
+  assert.deepEqual(await carrySignIns(chrome, { platform: "darwin", home, morseHome, cloneDir }), { copied: true });
+  assert.ok(tries >= 1);
+  const to = morseProfileDir(chrome, { platform: "darwin", home: morseHome });
+  assert.equal((await fs.readdir(path.join(to, "Default", "IndexedDB", "origin"))).length, 8);
+  await assert.rejects(fs.access(path.join(to, "Default", "IndexedDB", "origin", "partial")));
+  await assert.rejects(fs.access(path.join(to, "Default", "Cache")));
+  assert.deepEqual(cookiesIn(path.join(to, "Default", "Network", "Cookies")), [".github.com user_session=gh-1", ".spotify.com sp_dc=sp-1"]);
+  await assert.rejects(fs.access(`${to}.copying`));
 });
 
 test("an everyday Chrome counts as Chrome being open (Morse quits it before opening its copy); another profile doesn't", async () => {

@@ -5,6 +5,7 @@
 
 import { showOnceDemo } from "./showonce-demo.js"; // show-once hook
 import { takeDemo } from "./take-demo.js"; // take-and-bring hook
+import { wantsBehavior } from "./route.js"; // a behavior ask is a change, even when it starts with "show me"
 
 const fence = (lang, body) => "```" + lang + "\n" + body.trim() + "\n```";
 const reply = (title, css, js) => `TITLE: ${title}\n${fence("css", css || "")}\n${fence("js", js || "")}\n`;
@@ -286,7 +287,65 @@ const STYLE_FIT = reply("Buttons keep their words on one line", `
 }
 `, "");
 
+// Like and dislike on each post, remembered, and the feed reorders so a liked
+// type comes first and a disliked type goes last. Works on a feed the page
+// already has (data-feed, articles, or a YouTube-style shelf).
+const TASTE = reply("Like or dislike to tune feed", `
+.morse-taste { display: inline-flex; gap: 6px; margin: 6px 0 0; vertical-align: middle; }
+.morse-taste button { font: inherit; font-size: 12px; line-height: 1.4; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; background: transparent; color: inherit; cursor: pointer; }
+.morse-on { outline: 2px solid currentColor; }
+`, `
+const KEY = "morse-taste";
+function readScores() {
+  const v = morse.store.get(KEY);
+  return v && typeof v === "object" ? v : {};
+}
+function typeOf(el) {
+  const own = el.getAttribute && el.getAttribute("data-type");
+  if (own) return own;
+  const inner = el.querySelector && el.querySelector("[data-type]");
+  if (inner) return inner.getAttribute("data-type");
+  return (el.innerText || "").trim().slice(0, 32).toLowerCase();
+}
+function feedParents() {
+  const found = morse.$$("[data-feed], ytd-rich-grid-renderer #contents, ytd-reel-shelf-renderer #contents");
+  if (found.length) return found;
+  const articles = morse.$$("article");
+  const parent = articles[0] && articles[0].parentElement;
+  return parent ? [parent] : [];
+}
+function rank() {
+  const scores = readScores();
+  for (const parent of feedParents()) {
+    const items = [...parent.children].filter(el => !el.closest("[data-morse-ui]"));
+    items.sort((a, b) => (scores[typeOf(b)] || 0) - (scores[typeOf(a)] || 0));
+    for (const el of items) {
+      parent.append(el);
+      el.classList.toggle("morse-on", (scores[typeOf(el)] || 0) > 0);
+    }
+  }
+}
+function vote(item, dir) {
+  const scores = readScores();
+  const t = typeOf(item);
+  scores[t] = (scores[t] || 0) + dir;
+  morse.store.set(KEY, scores);
+  rank();
+}
+morse.watch("[data-feed] > *, article, ytd-rich-item-renderer, ytd-reel-item-renderer", item => {
+  if (item.closest("[data-morse-ui]") || item.querySelector(".morse-taste")) return;
+  const up = morse.el("button", { class: "morse-like", type: "button", text: "Like", "aria-label": "Like" });
+  const down = morse.el("button", { class: "morse-dislike", type: "button", text: "Dislike", "aria-label": "Dislike" });
+  morse.on(up, "click", () => vote(item, 1));
+  morse.on(down, "click", () => vote(item, -1));
+  item.append(morse.el("span", { class: "morse-taste" }, up, down));
+});
+rank();
+`);
+const TASTE_ASK = /like or dislike|dislik\w*|recommend\w*|tune (?:the |my )?feed|show me more/i;
+
 const RULES = [
+  [TASTE_ASK, TASTE],
   [/now playing/i, NOW_PLAYING],
   [/back to (the )?top/i, BACK_TO_TOP],
   [/word|token count|character count|count/i, WORD_COUNT],
@@ -331,6 +390,24 @@ function siteChanged(b, prompt) {
   const swap = s => s.replaceAll("album-grid", "release-grid");
   return reply("Bigger rounded covers", swap(b.css), swap(b.js));
 }
+// A follow-up on the taste change keeps the same buttons and scores, and
+// applies the new rule (hide what was disliked) instead of starting over.
+function tuneFollowUp(b) {
+  if (!/morse-taste|morse-like/.test(b.js)) return null;
+  const ask = b.followUp || "";
+  if (/hide|remove|don'?t show|do not show|filter/i.test(ask) && /dislik/i.test(ask)) {
+    let js = b.js;
+    if (!js.includes("morse-down")) {
+      js = js.replace(
+        'el.classList.toggle("morse-on", (scores[typeOf(el)] || 0) > 0);',
+        'el.classList.toggle("morse-on", (scores[typeOf(el)] || 0) > 0);\n      el.classList.toggle("morse-down", (scores[typeOf(el)] || 0) < 0);',
+      );
+    }
+    const css = /\.morse-down\b/.test(b.css) ? b.css : `${b.css}\n.morse-down { display: none !important; }`;
+    return reply("Hide disliked posts", css, js);
+  }
+  return null;
+}
 function refine(b, prompt = "") {
   if (b.error) {
     const moved = siteChanged(b, prompt); // self-heal hook
@@ -342,7 +419,13 @@ function refine(b, prompt = "") {
     return reply("Could not fix", b.css, b.js);
   }
   const ask = b.followUp;
-  const scale = /smaller|tighter|less|compact/i.test(ask) ? 0.8 : /bigger|larger|more/i.test(ask) ? 1.25 : 0;
+  const tuned = tuneFollowUp(b);
+  if (tuned) return tuned;
+  // A behavior follow-up on some other change still becomes that behavior,
+  // instead of the demo model answering "No change" for anything past a size tweak.
+  if (wantsBehavior(ask) && TASTE_ASK.test(ask) && !/morse-taste/.test(b.js)) return TASTE;
+  // "more" in "show me more" is a behavior follow-up, not a size tweak.
+  const scale = wantsBehavior(ask) ? 0 : /smaller|tighter|less|compact/i.test(ask) ? 0.8 : /bigger|larger|more/i.test(ask) ? 1.25 : 0;
   if (scale) {
     const css = b.css.replace(/(\d+(?:\.\d+)?)px/g, (_, n) => `${Math.max(1, Math.round(n * scale))}px`);
     return reply(scale < 1 ? "Smaller" : "Bigger", css, b.js);
@@ -517,6 +600,9 @@ function explainGeneric(prompt) {
 }
 
 function demoAnswer(request, prompt, messages) {
+  // "show me more of that type" is a change. "where is the export button?" stays a question.
+  const lookup = /\?\s*$|^\s*(what|what's|whats|why|where|where's|how|which|who|when|is|are|does|do|find|explain|help)\b/i.test(request);
+  if (wantsBehavior(request) && !lookup) return null;
   const explain = /^Explain this page:/m.test(prompt) || /\bexplain (this|the) (page|screen|app)\b/i.test(request);
   if (!explain && (!QUESTION.test(request) || CHANGE.test(request))) return null;
   const title = (prompt.match(/^Page title: (.*)$/m) || [])[1] || "";

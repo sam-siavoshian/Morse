@@ -63,7 +63,7 @@ const ours = e => e.composedPath().includes(hostEl);
 // Hover only highlights the page. Never move the controls out from under a
 // pointer approaching them; reposition only after an explicit selection.
 function onMove(e) {
-  if (!S.picking || !e.isTrusted || barDragging()) return;
+  if (!S.picking || !e.isTrusted || barDragging() || (typeof GodCapture !== "undefined" && GodCapture.dragging)) return;
   if (!S.open || bar.hidden) return;
   const el = e.composedPath().includes(bar) ? hostEl : GodMode.deepAt(e.clientX, e.clientY); // Respect actual bar hits before testing the page.
   const onUs = el === hostEl || el?.getRootNode?.()?.host === hostEl;
@@ -98,7 +98,7 @@ function placeBar(r) {
 }
 function swallow(e) { if (S.picking && !ours(e)) { e.preventDefault(); e.stopPropagation(); } }
 function onClick(e) {
-  if (barDragEatClick()) { e.preventDefault(); e.stopPropagation(); return; }
+  if (barDragEatClick() || (typeof GodCapture !== "undefined" && GodCapture.ateDrop?.())) { e.preventDefault(); e.stopPropagation(); return; }
   if (!S.picking || e.composedPath().includes(bar)) return;
   // A click on the bar stays with the bar. A keyboard click has no position
   // and belongs to the control that was pressed. A pointer click that only

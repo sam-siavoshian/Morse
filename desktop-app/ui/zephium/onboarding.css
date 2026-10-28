@@ -1,0 +1,372 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. See LICENSE in this directory.
+ * Ported from Zephium commit 276b1ba8a1e6e74966fbb0688ff61ff351dc4931.
+ * Svelte selectors are scoped to Morse onboarding; setup actions remain Morse. */
+#first {
+
+  & {
+    --camera: 1400ms cubic-bezier(0.7, 0, 0.12, 1);
+
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    color: var(--color-text);
+    font-family: var(--font-sans);
+  }
+
+  /* Nothing drawn: the window's material, or its canvas, is the ground. */
+  .ob-ground {
+    position: absolute;
+    inset: 0;
+  }
+
+  .ob-stage {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    inline-size: 1240px;
+    block-size: 780px;
+    transform-origin: center;
+  }
+
+  .ob-air {
+    position: absolute;
+    inset: 0;
+    inline-size: 1240px;
+    block-size: 780px;
+    pointer-events: none;
+  }
+
+  /* Under the name, in the sky: white words, and a white control with the
+     sky's own ink. */
+  .ob-welcome {
+    --color-lit: var(--sky-ink);
+    --color-lit-hover: var(--sky-ink-hover);
+    --color-on-lit: var(--sky-on-ink);
+
+    position: absolute;
+    inset-inline: 0;
+    display: grid;
+    justify-items: center;
+    gap: 28px;
+    pointer-events: none;
+  }
+
+  .ob-welcome p {
+    max-inline-size: 30ch;
+    margin: 0;
+    color: var(--sky-ink);
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 1.5;
+    text-align: center;
+    text-shadow: 0 1px 18px var(--sky-shadow);
+    text-wrap: balance;
+  }
+
+  .ob-welcome > * {
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity 1000ms var(--ease-out),
+      transform 1000ms var(--ease-emphasized);
+  }
+
+  .ob-welcome > :last-child {
+    transition-delay: 220ms;
+  }
+
+  .ob-welcome .btn {
+    gap: 12px;
+    padding-inline: 20px 11px;
+  }
+
+  &[data-step="welcome"]:is([data-phase="formed"], [data-phase="still"]) .ob-welcome {
+    pointer-events: auto;
+  }
+
+  &[data-step="welcome"]:is([data-phase="formed"], [data-phase="still"])
+    .ob-welcome
+    > * {
+    opacity: 1;
+    transform: none;
+  }
+
+  &:not([data-step="welcome"]) .ob-welcome > * {
+    transition-duration: 300ms;
+    transition-delay: 0ms;
+  }
+
+  /* The window, framed for each scene by moving and scaling it, never by
+     changing its layout. */
+  .ob-rig {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inline-size: 880px;
+    block-size: 560px;
+    transition:
+      transform var(--camera),
+      --reach var(--camera),
+      opacity 900ms var(--ease-out);
+  }
+
+  /* While it waits below the opening scenes, it fades into the ground. */
+  .ob-rig[data-masked="true"] {
+    mask-image: linear-gradient(
+      to bottom,
+      black calc(var(--reach) - 180px),
+      transparent var(--reach)
+    );
+  }
+
+  .ob-rig[data-placed="false"] {
+    transition: none;
+  }
+
+  @property --reach {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 1200px;
+  }
+
+  .ob-head {
+    position: absolute;
+    inset-block-start: 74px;
+    inset-inline: 0;
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .ob-head h1 {
+    margin: 0;
+    font-size: 40px;
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -0.032em;
+  }
+
+  .ob-head p {
+    max-inline-size: 52ch;
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 15px;
+    line-height: 1.5;
+    text-wrap: balance;
+  }
+
+  .ob-head > * {
+    animation: rise 900ms var(--ease-emphasized) 250ms backwards;
+  }
+
+  .ob-head > p {
+    animation-delay: 360ms;
+  }
+
+  .ob-features {
+    display: flex;
+    gap: 30px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+    animation: none;
+  }
+
+  .ob-features li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-muted);
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    animation: rise 800ms var(--ease-emphasized) backwards;
+    animation-delay: calc(380ms + var(--i) * 70ms);
+  }
+
+  .ob-features li svg {
+    color: var(--color-text);
+  }
+
+  .ob-scene {
+    position: absolute;
+    inset-inline: 0;
+    display: grid;
+    justify-items: center;
+    animation: rise 900ms var(--ease-emphasized) 420ms backwards;
+  }
+
+  .ob-scene[data-scene="you"] {
+    inset-block-start: 236px;
+  }
+
+  /* Beside the window, centred on it however many browsers were found. */
+  .ob-scene[data-scene="import"] {
+    inset-block-start: 272px;
+    inset-inline: 832px auto;
+    block-size: 392px;
+    align-content: center;
+  }
+
+  .ob-scene[data-scene="apps"] {
+    inset-block-start: 236px;
+    inset-inline: 142px auto;
+  }
+
+  .ob-scene[data-scene="how"] {
+    inset-block-start: 226px;
+  }
+
+  .ob-scene[data-scene="model"] {
+    inset-block-start: 236px;
+  }
+
+  /* One quiet row for the whole journey, at the foot of the stage: nothing
+     floats over the scene it steers. */
+  .ob-bar {
+    position: absolute;
+    inset-block-end: 34px;
+    inset-inline: 56px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    block-size: 44px;
+    transition:
+      opacity 600ms var(--ease-out),
+      transform 600ms var(--ease-emphasized);
+  }
+
+  &:is([data-step="welcome"], [data-leaving="true"]) .ob-bar {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(12px);
+  }
+
+  .ob-side {
+    display: flex;
+  }
+
+  .ob-side.end {
+    justify-content: flex-end;
+  }
+
+  .ob-side.end .btn {
+    gap: 12px;
+    min-inline-size: 132px;
+    padding-inline: 20px 12px;
+  }
+
+  /* On the lit fill a control-grey key vanishes; it takes the label's ink. */
+  & .btn[data-variant="primary"]  kbd {
+    background: color-mix(in srgb, var(--color-on-lit) 10%, transparent);
+    color: color-mix(in srgb, var(--color-on-lit) 64%, transparent);
+  }
+
+  .ob-middle ol {
+    display: flex;
+    gap: 5px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ob-middle li {
+    inline-size: 18px;
+    block-size: 3px;
+    border-radius: var(--radius-capsule);
+    background: var(--color-fill-strong);
+    transition:
+      inline-size var(--motion-page) var(--ease-emphasized),
+      background-color var(--motion-slow) var(--ease-out);
+  }
+
+  .ob-middle li.done {
+    background: var(--color-faint);
+  }
+
+  .ob-middle li.now {
+    inline-size: 34px;
+    background: var(--color-text);
+  }
+
+  .ob-notice {
+    color: var(--color-danger);
+    font-size: 12.5px;
+  }
+
+  .ob-top {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    block-size: 52px;
+    padding-inline-end: 20px;
+  }
+
+  .ob-skip {
+    padding: 6px 10px;
+    border: 0;
+    border-radius: var(--radius-control-compact);
+    background: transparent;
+    color: var(--color-faint);
+    font: inherit;
+    font-size: var(--text-label);
+    font-weight: 500;
+    cursor: default;
+    transition:
+      color var(--motion-instant) var(--ease-smooth),
+      background-color var(--motion-instant) var(--ease-smooth);
+  }
+
+  .ob-skip:hover {
+    background: var(--color-fill);
+    color: var(--color-muted);
+  }
+
+  /* Leaving: the words go first, then the camera goes back into the new
+     tab, and the browser arrives on its sky. */
+  &[data-leaving="true"] :is(.ob-head, .ob-scene, .ob-top) {
+    opacity: 0;
+    transition: opacity 360ms var(--ease-exit);
+  }
+
+  .ob-flights {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .ob-flights .flight {
+    position: fixed;
+    object-fit: contain;
+    will-change: transform, opacity;
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ob-rig,
+    .ob-bar,
+    .ob-welcome > * {
+      transition: none;
+    }
+
+    .ob-head > *,
+    .ob-features li,
+    .ob-scene {
+      animation: none;
+    }
+  }
+
+}

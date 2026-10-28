@@ -11,3 +11,9 @@ export function clipAdd(list, item, max = CLIPBOARD_MAX) {
   const rest = (Array.isArray(list) ? list : []).filter(i => i && i.id !== item.id);
   return [{ ...item, created: item.created || new Date().toISOString() }, ...rest].slice(0, max);
 }
+
+// Take one capture out of the bar. The id has to be a real one; anything else is a bug, not a quiet no-op.
+export function clipDrop(list, id) {
+  if (typeof id !== "string" || !id) throw new Error("Not a clipboard item");
+  return (Array.isArray(list) ? list : []).filter(i => i && i.id !== id);
+}

@@ -11,7 +11,7 @@ import { cannotUndo } from "./showonce.js"; // show-once hook: ask before steps 
 import { draftHarm, cssHidesPage, collapseHarm } from "./guard.js"; // guard hook: code that would obviously break the page
 import { bringMisses } from "./take.js"; // take-and-bring hook: a brought feature that finds none of this page's things
 import { wantsPolish, polishRound } from "./polish.js"; // polish: a look at the change, and one fix
-import { replacesHost, unwiredFeature } from "./hooks.js"; // a new control has to call the app, and must not replace a live node
+import { replacesHost, unwiredFeature, cosmeticBehavior } from "./hooks.js"; // a new control has to call the app, and must not replace a live node; behavior can't be only a new look
 
 // `probe(selectors)` (optional, from the host) returns { fp, unmatched }: a
 // fingerprint of what the page renders and which of the given selectors match
@@ -255,6 +255,20 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
       advance("effect");
       continue;
     }
+    // Behavior (a control that does something, a preference that changes what
+    // comes next) can't succeed as a restyle. The follow-up still counts: the
+    // original ask is in base.prompt.
+    const cosmetic = !signal?.aborted ? cosmeticBehavior(draft, `${request || ""}\n${base?.prompt || ""}`) : null;
+    if (cosmetic) {
+      if (draft.js.trim()) await rollback().catch(() => {});
+      emit({ type: "css", css: "" });
+      previous = { raw, error: cosmetic.model };
+      repairs.push(cosmetic.model);
+      if (!more) return { ...last, css: "", js: "", ok: false, cosmetic: true, error: cosmetic.user };
+      last = { ...last, css: "", js: "", error: cosmetic.user };
+      advance("effect");
+      continue;
+    }
     // take-and-bring hook: a brought feature whose JS finds none of this page's things (core/take.js)
     if (context?.bring && probe && draft.js.trim() && !signal?.aborted) {
       const sels = selectorLists(draft).js;
@@ -292,19 +306,20 @@ export async function runMorse({ settings, request, context, base, exec, emit, s
     // fixes what doesn't look native, once (core/polish.js)
     if (polish && review && !base?.error && !signal?.aborted && wantsPolish(draft, request)) {
       const p = await polishRound({
-        settings: current(), request, context, base, raw, draft, review, exec, emit, signal,
+        settings: current(), request, context, base, raw, draft, review, exec: js => { liveJs = !!js; return exec(js); }, emit, signal,
         verify: before && probe ? async d => {
           const effect = await noEffect(probe, before, d);
           if (effect) return effect.text;
           const after = before.shown >= 8 ? await probe([]) : null;
           return after ? collapseHarm({ before: before.shown, after: after.shown })?.model : null;
         } : undefined,
-        check: d => generatedNames(d, context) || deadHooks(d, context) || unwiredFeature(d, context, request)?.model || replacesHost(d.js) || (vet ? vet(d) : null), // the same checks a draft gets
+        check: d => unasked(context, d.js) || generatedNames(d, context) || deadHooks(d, context) || unwiredFeature(d, context, request)?.model || cosmeticBehavior(d, `${request || ""}\n${base?.prompt || ""}`)?.model || replacesHost(d.js) || (vet ? vet(d) : null), // the same checks a draft gets
       });
       timing.polish = p.ms;
       if (p.verdict === "fixed") last = { ...last, ...p.draft, raw: p.raw };
       last = { ...last, polish: { verdict: p.verdict, ms: p.ms, shotMs: p.shotMs, fixes: p.fixes || [], ...(p.error && { error: p.error }) } };
     }
+    if (signal?.aborted) throw new Error("aborted");
     accepted = true;
     return { ...last, ok: true };
   }

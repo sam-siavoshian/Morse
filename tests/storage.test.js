@@ -41,6 +41,10 @@ test("daemon: 20 concurrent history adds keep 20", async () => {
 test("daemon: 20 concurrent clipboard puts keep 20", async () => {
   await Promise.all(Array.from({ length: 20 }, (_, i) => store.putClipboard({ id: `c${i}`, kind: "element", title: `item ${i}`, html: "<b>x</b>" })));
   assert.equal((await store.readClipboard()).length, 20);
+  const left = await store.dropClipboard("c0");
+  assert.equal(left.length, 19);
+  assert.equal(left.some(i => i.id === "c0"), false);
+  assert.equal((await store.readClipboard()).some(i => i.id === "c0"), false);
 });
 
 test("daemon: concurrent settings patches all land", async () => {

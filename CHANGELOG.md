@@ -8,6 +8,15 @@ under the new version number with the date
 
 ## Unreleased
 
+- **Download update installs Morse.** When a newer version is published, Download update downloads it, checks it against the release, replaces this copy and opens Morse again. If the download or the install can't finish, Morse says so and keeps this version.
+
+## 0.3.4 (2026-10-27)
+
+- **Move a captured look.** The dots on a capture show you can pick it up. Drag it onto the page and Morse rebuilds that look where you drop it. **Use it here** does the same for what you pointed at, or for the page. Click the capture again, or press Backspace, to clear the pick. **Remove** takes it out of the bar.
+- **First run shows the app.** Setup stands on a night sky, with a window of Morse beside the steps. Each step has an icon. The app you pick has one Open button.
+- **A zoomed app stays in the picture.** Morse crops the picture to what you pointed at, including when the app is zoomed out.
+- **Stopping a change stops it.** If you stop while Morse is still fixing the change, it stops.
+
 ## 0.3.3 (2026-10-27)
 
 - **Your apps have cheat codes.** The desktop welcome, in-app prompts, CLI, website and docs share the same direct language about removing unwanted features and building your own. Core branding is updated in every supported language.

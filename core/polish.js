@@ -82,6 +82,8 @@ export async function polishRound({ settings, request, context, base, raw, draft
   const next = parseModResponse(reply);
   if (/^\s*OK\b/i.test(reply) && !next.css.trim() && !next.js.trim()) return { verdict: "ok", ms: ms(), shotMs, fixes: [], measured: shot.measured || [] };
   if (!next.css.trim() && !next.js.trim()) return { verdict: "kept", ms: ms(), shotMs, fixes, error: "The review returned neither OK nor a complete replacement." };
+  if ((next.css.trim() && !next.cssComplete) || (next.js.trim() && !next.jsComplete))
+    return { verdict: "kept", ms: ms(), shotMs, fixes, error: "The replacement was incomplete." };
   // Keep what it does: a new version that drops the draft's JS isn't a polish.
   const why = (draft.js.trim() && !next.js.trim() ? "the new version dropped the JS" : null)
     || draftHarm(next, `${request} ${base?.prompt || ""}`)?.model
@@ -94,7 +96,8 @@ export async function polishRound({ settings, request, context, base, raw, draft
     if (!res?.ok) {
       // Put the draft that worked back.
       emit?.({ type: "css", css: draft.css });
-      if (draft.js.trim()) await exec(draft.js).catch(() => {});
+      const restored = await exec(draft.js).catch(e => ({ ok: false, error: String(e?.message || e) }));
+      if (!restored?.ok) throw new Error(`Could not restore the working change: ${restored?.error || "it did not run"}`);
       return { verdict: "kept", ms: ms(), shotMs, fixes, error: res?.error || "it didn't run" };
     }
   }

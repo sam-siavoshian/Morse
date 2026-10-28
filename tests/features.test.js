@@ -79,7 +79,7 @@ test("scanned source names the real handler and the backend URL, and the prompt 
   assert.ok(user.indexOf("saveNote") < user.indexOf("Request:"));
   assert.ok(!user.includes(SECRET), "a sentinel in the script is not part of the prompt");
   assert.ok(!user.includes("JSON.stringify"), "raw source stays out; only the hook names go in");
-  assert.match(formatHooks(found, "add a feature to save the note"), /call these from anything you add/);
+  assert.match(formatHooks(found, "add a feature to save the note"), /not proof that a function is callable/);
 });
 
 test("a long profile keeps the hook names and the rules that say to use them", () => {
@@ -185,10 +185,18 @@ test("with no hook for the action, a class-toggle button is not kept", () => {
   const dead = { css: ".x.on{}", js: 'morse.el("button", { on: { click() { btn.classList.toggle("on"); } } });' };
   const wire = unwiredFeature(dead, { url: "https://x/" }, "add a feature");
   assert.equal(wire.user, UNWIRED_ERROR);
-  assert.match(wire.model, /no function/);
+  assert.match(wire.model, /no working handler/);
   const alive = { css: "", js: 'morse.el("button", { on: { click() { pp.click(); } } }); morse.every(1000, () => {});' };
   assert.equal(unwiredFeature(alive, { url: "https://x/" }, "add a sleep timer"), null);
-  // A readout with no handler is not a fake feature (polish still looks at it).
+  // A button-shaped readout is not a working timer button.
   const shown = { css: ".pomo { color: red }", js: "morse.el('button', { class: 'pomo', text: '25:00' });" };
-  assert.equal(unwiredFeature(shown, { url: "https://x/" }, "add a pomodoro timer button"), null);
+  assert.equal(unwiredFeature(shown, { url: "https://x/" }, "add a pomodoro timer button").user, UNWIRED_ERROR);
+});
+
+test("source-scanned private functions do not disqualify working native or local controls", () => {
+  const context = { hooks: { handlers: [{ event: 'click', fn: 'seekTrack' }], functions: [], endpoints: [], modules: [] } };
+  const native = { js: `morse.el('button', {on:{click(){morse.type(morse.$('input[type=range]'), 15000);}}});` };
+  const local = { js: `function seekLocally(){ player.currentTime += 15; } morse.el('button', {on:{click:seekLocally}});` };
+  assert.equal(unwiredFeature(native, context, 'add a seek button'), null);
+  assert.equal(unwiredFeature(local, context, 'add a seek button'), null);
 });

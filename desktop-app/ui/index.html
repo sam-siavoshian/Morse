@@ -8,31 +8,47 @@
 <title>Morse</title>
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="zephium/tokens.css">
+<link rel="stylesheet" href="zephium/onboarding.css">
+<link rel="stylesheet" href="zephium/window.css">
+<link rel="stylesheet" href="zephium/button.css">
+<link rel="stylesheet" href="zephium/cards.css">
+<link rel="stylesheet" href="zephium/essentials.css">
+<link rel="stylesheet" href="zephium/morse.css">
 </head>
 <body>
 <!-- The words: data-i18n ids in core/locales/*.js (desk.*), in the person's
      language once app.js has loaded them. The English here reads fine first. -->
 
-<!-- The first run, in the shape of Zephium's (desktop-app/ui/formation.js):
-     the name forms out of dots, then one quiet step at a time,
-     each a heading, a line and one thing to do, steered from one row at the
-     foot: Back, where you are, Continue. Apps open with Morse unless that
-     switch is off (the same one as in the sidebar). Opening an app ends it. It stands
-     in the website's day sky, which comes apart into the page at its foot. -->
-<div class="first" id="first" role="dialog" aria-modal="true" aria-label="Welcome to Morse" data-i18n-attr="aria-label:desk.first.h" data-step="welcome" data-phase="waiting" hidden>
-  <div class="sky" aria-hidden="true"><div class="sky-paint"></div><canvas class="dither" data-dither="down"></canvas></div>
+<!-- Onboarding ported from Zephium; see ui/zephium/README.md. -->
+<div class="first" id="first" role="dialog" aria-modal="true" aria-label="Welcome to Morse" data-i18n-attr="aria-label:desk.first.h" data-step="welcome" data-phase="waiting" data-sky="night" hidden>
+  <div class="ob-ground"></div>
+  <div class="ob-stage" id="ob-stage">
+    <div class="ob-rig" id="ob-rig" aria-hidden="true">
+      <div class="zw-window" data-mode="browse">
+        <aside class="zw-side"><div class="zw-browse">
+          <div class="zw-top"><span class="zw-lights"><i></i><i></i><i></i></span></div>
+          <div class="zw-address">Morse</div>
+          <div class="zw-row zw-current" data-i18n="desk.nav.apps">Apps</div>
+          <div class="zw-row" data-i18n="desk.nav.model">AI setup</div>
+          <div class="zw-row" data-i18n="desk.nav.mods">Mods</div>
+          <div class="zw-row" data-i18n="desk.nav.settings">Settings</div>
+        </div></aside>
+        <div class="ob-preview-page"><img src="zephium/sky-night.avif" alt=""><span class="ob-preview-name">Morse</span></div>
+      </div>
+    </div>
   <canvas class="ob-air" id="ob-air" aria-hidden="true"></canvas>
-  <div class="ob-top"><button type="button" class="ob-skip" id="first-skip" data-i18n="desk.ob.skip">Skip setup</button></div>
+
 
   <div class="ob-welcome" id="ob-welcome">
     <h1 class="ob-name" id="ob-name">Morse</h1>
-    <p class="ob-tagline" data-i18n="desk.first.lede">Your apps have cheat codes. You write them.</p>
-    <button type="button" class="btn primary ob-cta" id="ob-begin"><span data-i18n="desk.ob.begin">Get started</span><kbd>↵</kbd></button>
+    <p class="ob-tagline" data-i18n="desk.first.lede">Change your apps in your own words.</p>
+    <button type="button" class="btn primary ob-cta" data-size="large" data-shape="capsule" id="ob-begin"><span data-i18n="desk.ob.begin">Get started</span><kbd>↵</kbd></button>
   </div>
 
   <section class="ob-step" data-ob="model" aria-labelledby="ob-model-h" hidden>
-    <header class="ob-head"><h1 id="ob-model-h" data-i18n="desk.ob.modelH">Connect your AI</h1><p data-i18n="desk.ob.modelD">Connect the AI that will write your mods.</p></header>
-    <div class="ob-scene">
+    <header class="ob-head"><span class="ob-step-icon"><svg class="setup-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 15a5 5 0 1 1 4-8l9 0v4h-3v3h-3l-3-3M7 7h.01"/></svg></span><h1 id="ob-model-h" data-i18n="desk.ob.modelH">Connect your AI</h1><p data-i18n="desk.ob.modelD">Morse uses your AI to make changes.</p></header>
+    <div class="ob-scene" data-scene="model">
       <p class="live" id="first-model" role="status"></p>
       <div class="keyrow" id="first-key" hidden>
         <input id="first-key-input" type="password" placeholder="Paste an Anthropic or OpenAI API key" autocomplete="off" spellcheck="false" aria-label="API key" data-i18n-attr="placeholder:desk.key.placeholder;aria-label:desk.key.label">
@@ -42,34 +58,36 @@
   </section>
 
   <section class="ob-step" data-ob="open" aria-labelledby="ob-open-h" hidden>
-    <header class="ob-head"><h1 id="ob-open-h" data-i18n="desk.ob.openH">Connect apps automatically</h1><p data-i18n="desk.ob.openD">Let Morse connect when you open a supported app. You can turn this off at any time.</p></header>
-    <div class="ob-scene">
+    <header class="ob-head"><span class="ob-step-icon"><svg class="setup-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v4m8-4v4M6 7h12v3a6 6 0 0 1-6 6v5M6 7v3a6 6 0 0 0 6 6"/></svg></span><h1 id="ob-open-h" data-i18n="desk.ob.openH">Connect automatically</h1><p data-i18n="desk.ob.openD">Choose how Morse connects to your apps.</p></header>
+    <div class="ob-scene" data-scene="open">
       <label class="switchrow big"><span><b data-i18n="desk.autoOpen">Auto-connect apps</b><small data-i18n="desk.autoOpen.d">Connect supported apps when you open them. This also starts Morse when you sign in.</small></span><input type="checkbox" role="switch" id="ob-auto-open" checked></label>
       <p class="ob-note" id="ob-mac-allow" data-i18n="desk.ob.openMac" hidden>macOS may ask for permission to restart the app.</p>
     </div>
   </section>
 
   <section class="ob-step" data-ob="how" aria-labelledby="ob-how-h" hidden>
-    <header class="ob-head"><h1 id="ob-how-h" data-i18n="desk.ob.howH">Hack your first app</h1><p data-i18n="desk.ob.howD">Remove what gets in your way. Add what the app never shipped.</p></header>
-    <ol class="ob-moves">
-      <li><span class="ob-move-art" id="ob-key"></span><b data-i18n="desk.ob.how1">Open the controls</b><small data-i18n="desk.ob.how1d">Press this shortcut in the app.</small></li>
-      <li><span class="ob-move-art ob-point" aria-hidden="true"><span class="ob-target"></span><span class="ob-arrow"></span></span><b data-i18n="desk.ob.how2">Choose an area</b><small data-i18n="desk.ob.how2d">Point at what you want to change, or leave it unselected.</small></li>
-      <li><span class="ob-move-art ob-quote" data-i18n="desk.ob.howEx">“Delete the recommendation feed”</span><b data-i18n="desk.ob.how3">Describe the hack</b><small data-i18n="desk.ob.how3d">Say what to add or remove. Watch it change, then save your version.</small></li>
+    <header class="ob-head"><span class="ob-step-icon"><svg class="setup-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 3 14 9-7 1-3 7-4-17Z"/></svg></span><h1 id="ob-how-h" data-i18n="desk.ob.howH">Make your first change</h1><p data-i18n="desk.ob.howD">Point at the part you want to change.</p></header>
+    <ol class="ob-moves ob-scene" data-scene="how">
+      <li><svg class="setup-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v14H3ZM6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M10 13h.01M14 13h.01M18 13h.01M8 16h8"/></svg><span class="ob-move-art" id="ob-key"></span><b data-i18n="desk.ob.how1">Open the controls</b><small data-i18n="desk.ob.how1d">Use this shortcut in any supported app.</small></li>
+      <li><svg class="setup-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 3 14 9-7 1-3 7-4-17Z"/></svg><b data-i18n="desk.ob.how2">Point at the part</b><small data-i18n="desk.ob.how2d">Select the part you want to change.</small></li>
+      <li><svg class="setup-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11a8 8 0 0 1-8 8H7l-5 3V11a9 9 0 0 1 19 0ZM7 9h9M7 13h6"/></svg><b data-i18n="desk.ob.how3">Describe the change</b><small data-i18n="desk.ob.how3d">Describe what to change, then save the result.</small></li>
     </ol>
   </section>
 
   <section class="ob-step" data-ob="apps" aria-labelledby="ob-apps-h" hidden>
-    <header class="ob-head"><h1 id="ob-apps-h" data-i18n="desk.ob.appsH">Choose an app</h1><p data-i18n="desk.ob.appsD">Choose an app. Build the version you want.</p></header>
-    <div class="ob-scene">
+    <header class="ob-head"><span class="ob-step-icon"><svg class="setup-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v7H3Zm11 0h7v7h-7ZM3 14h7v7H3Zm11 0h7v7h-7Z"/></svg></span><h1 id="ob-apps-h" data-i18n="desk.ob.appsH">Open an app</h1><p data-i18n="desk.ob.appsD">Open a supported app to try your first change.</p></header>
+    <div class="ob-scene" data-scene="apps">
       <ul class="list" id="first-apps" aria-label="Apps" data-i18n-attr="aria-label:desk.nav.apps"></ul>
     </div>
   </section>
 
   <nav class="ob-bar" aria-label="Welcome to Morse" data-i18n-attr="aria-label:desk.first.h">
-    <span class="ob-side"><button type="button" class="btn quiet ob-pill" id="ob-back" data-i18n="desk.ob.back">Back</button></span>
-    <ol class="ob-dots" id="ob-dots"><li></li><li></li><li></li><li></li></ol>
-    <span class="ob-side end"><button type="button" class="btn primary ob-pill" id="ob-next"><span id="ob-next-label" data-i18n="desk.ob.continue">Continue</span><kbd>↵</kbd></button></span>
+    <span class="ob-side"><button type="button" class="btn quiet ob-pill" data-size="large" data-shape="capsule" id="ob-back" data-i18n="desk.ob.back">Back</button></span>
+    <span class="ob-middle"><span id="ob-progress" class="ob-progress"></span><ol class="ob-dots" id="ob-dots"><li></li><li></li><li></li><li></li></ol></span>
+    <span class="ob-side end"><button type="button" class="btn primary ob-pill" data-size="large" data-shape="capsule" id="ob-next"><span id="ob-next-label" data-i18n="desk.ob.continue">Continue</span><kbd>↵</kbd></button></span>
   </nav>
+  </div>
+  <div class="ob-top"><button type="button" class="ob-skip" id="first-skip" data-i18n="desk.ob.skip">Skip setup</button></div>
 </div>
 
 <div class="app">
@@ -217,7 +235,7 @@
         </div>
         <p class="shortcut-msg" id="update-msg" role="status" hidden></p>
         <div class="row-end" id="update-extra" hidden>
-          <button type="button" class="btn" id="update-get" data-link="release" data-i18n="desk.update.get" hidden>Download update</button>
+          <button type="button" class="btn" id="update-get" data-i18n="desk.update.get" hidden>Download update</button>
           <button type="button" class="btn primary" id="update-restart" data-i18n="desk.update.now" hidden>Restart now</button>
         </div>
       </div>

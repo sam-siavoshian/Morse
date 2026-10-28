@@ -49,13 +49,17 @@ Rules:
   morse.el(tag, props, ...kids)     create an element (props: class, style, text, html, on: {click: fn}, any attribute); you must append it
   morse.css(text, where?)           add more CSS; with where (components or frames), inside each one
   morse.on(target, event, fn)       add a listener
+  morse.type(el, value)             update an existing text field or range through its app handler (including React-controlled sliders); use the range's min/max/step units
   morse.every(ms, fn)               run fn repeatedly
   morse.byText(selector, text)      first element matching selector whose text contains text
   morse.store.get(key) / set(key, value)   persist small values
   morse.toast(message)              show a short notice
   Everything created through morse is removed automatically when the mod is turned off.
 - No new endpoints, no eval, no external scripts. A backend call already listed in this prompt may be called the same way the page calls it. Do not invent an API. Keep it short.
-- A new control must call a listed function, module, hook, or endpoint. Do not leave a button that only toggles a class. If none of them does what was asked, morse.toast("This app has no function for that") and do not cover, hide, or replace the working control.
+- A new control must implement the requested behavior, not just its appearance. Use an available app command, the app's existing DOM controls, or a complete local implementation (timers, filtering, clipboard). A name found in bundled source is not necessarily a global you can call. Do not guess globals such as Spicetify.Player; only use them when the context confirms they exist.
+- When the request asks for behavior (doing something, remembering a choice, changing what shows up next), CSS alone is not enough. Write JS that performs it, keep the choice in morse.store when it should last, and change what is shown next (reorder, filter, or prefer). Prefer CSS when the request is only about looks.
+- For React-controlled fields and range sliders, assigning .value or dispatching synthetic keyboard events can change the UI without changing app state. Use morse.type(el, value), read the real min/max/step, and check the app's resulting state. Resolve the current element inside each handler.
+- Return any asynchronous initialization promise so errors are tracked. Every interactive control needs a real handler. If the app cannot do the requested action, explain that limitation instead of drawing a pretend control.
 - Never set innerHTML, outerHTML, replaceWith, or replaceChildren on an element the app already rendered (that drops its listeners). Insert beside it with morse.el and call the app's function from click or submit.
 - No prompt(), alert() or confirm(): Electron apps throw on prompt() and the others freeze the app. Ask for input with elements you make (morse.el).
 - Faked key presses (dispatchEvent of a KeyboardEvent) don't run the app's or the browser's commands (copy, paste, save, shortcuts). Do the work yourself: read the text from the page, navigator.clipboard.writeText(text), click the app's own button.

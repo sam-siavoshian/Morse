@@ -55,12 +55,22 @@ class Session {
     this.handlers = new Map();
     this.closed = false;
   }
-  send(method, params = {}) {
+  send(method, params = {}, opts = null) {
     if (this.closed) return Promise.reject(new Error("CDP session closed"));
     const id = this.nextId();
+    const timeoutMs = Number(opts?.timeoutMs) || 0;
     return new Promise((resolve, reject) => {
-      this.pending.set(id, { resolve, reject, method });
-      try { this.write({ id, method, params }); } catch (e) { this.pending.delete(id); reject(e); }
+      const entry = { resolve, reject, method };
+      if (timeoutMs > 0) {
+        entry.timer = setTimeout(() => {
+          if (this.pending.get(id) !== entry) return;
+          this.pending.delete(id);
+          reject(Object.assign(new Error(`${method} timed out`), { timeout: true }));
+        }, timeoutMs);
+      }
+      this.pending.set(id, entry);
+      try { this.write({ id, method, params }); }
+      catch (e) { clearTimeout(entry.timer); this.pending.delete(id); reject(e); }
     });
   }
   nextId() { return ++this.seq; }
@@ -78,13 +88,14 @@ class Session {
       const p = this.pending.get(msg.id);
       if (!p) return;
       this.pending.delete(msg.id);
+      clearTimeout(p.timer);
       msg.error ? p.reject(new Error(`${p.method}: ${msg.error.message}`)) : p.resolve(msg.result);
     } else if (msg.method) this.emit(msg.method, msg.params);
   }
   ended() {
     if (this.over) return;
     this.over = this.closed = true;
-    for (const { reject } of this.pending.values()) reject(new Error("CDP session closed"));
+    for (const { reject, timer } of this.pending.values()) { clearTimeout(timer); reject(new Error("CDP session closed")); }
     this.pending.clear();
     this.emit("close");
   }
@@ -92,12 +103,25 @@ class Session {
 
 // One target over its own WebSocket (a debugging port).
 export class CDPSession extends Session {
-  static connect(wsUrl) {
+  static connect(wsUrl, { timeoutMs = 10000 } = {}) {
     return new Promise((resolve, reject) => {
-      const ws = new WebSocket(wsUrl);
+      let settled = false;
+      let ws;
+      const finish = (fn, value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        fn(value);
+      };
+      const timer = setTimeout(() => {
+        try { ws?.close(); } catch {}
+        finish(reject, new Error(`Could not connect to ${wsUrl}`));
+      }, timeoutMs);
+      try { ws = new WebSocket(wsUrl); }
+      catch (e) { finish(reject, e); return; }
       const s = new CDPSession(ws);
-      ws.addEventListener("open", () => resolve(s), { once: true });
-      ws.addEventListener("error", () => reject(new Error(`Could not connect to ${wsUrl}`)), { once: true });
+      ws.addEventListener("open", () => finish(resolve, s), { once: true });
+      ws.addEventListener("error", () => finish(reject, new Error(`Could not connect to ${wsUrl}`)), { once: true });
     });
   }
   constructor(ws) {
@@ -116,7 +140,7 @@ export function portBrowser(port) {
     kind: "port",
     port,
     listTargets: () => listTargets(port),
-    connect: target => CDPSession.connect(target.webSocketDebuggerUrl),
+    connect: target => CDPSession.connect(target.webSocketDebuggerUrl, { timeoutMs: 2500 }),
     close() {},
   };
 }
@@ -250,13 +274,13 @@ export function pipeBrowser(conn) {
     async listTargets() {
       // Like a port that stopped answering: the connector counts misses on this code.
       if (conn.closed) throw Object.assign(new Error("The app closed its end of the pipe"), { code: "ECONNRESET" });
-      let timer;
-      const late = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("The app didn't answer")), 5000); timer.unref?.(); });
-      const r = await Promise.race([conn.root.send("Target.getTargets"), late]).finally(() => clearTimeout(timer));
+      let r;
+      try { r = await conn.root.send("Target.getTargets", {}, { timeoutMs: 4000 }); }
+      catch (e) { if (e?.timeout) throw new Error("The app didn't answer"); throw e; }
       return (r.targetInfos || []).map(listEntry);
     },
     async connect(target) {
-      const { sessionId } = await conn.root.send("Target.attachToTarget", { targetId: target.id, flatten: true });
+      const { sessionId } = await conn.root.send("Target.attachToTarget", { targetId: target.id, flatten: true }, { timeoutMs: 4000 });
       return conn.session(sessionId);
     },
     close: () => conn.close(),

@@ -474,3 +474,14 @@ test("an app that doesn't answer its debugging port in time says so, not that th
   await assert.rejects(listTargets(silent.address().port), e => /didn't answer Morse in time/.test(plainError(e)));
   silent.close();
 });
+
+test("a debugging socket that never opens fails fast", async () => {
+  const net = await import("node:net");
+  const { CDPSession } = await import("../daemon/cdp.js");
+  const silent = net.createServer(sock => sock.on("error", () => {})).listen(0, "127.0.0.1");
+  await new Promise(r => silent.once("listening", r));
+  const t0 = Date.now();
+  await assert.rejects(CDPSession.connect(`ws://127.0.0.1:${silent.address().port}/devtools/page/x`, { timeoutMs: 200 }), /Could not connect/);
+  assert.ok(Date.now() - t0 < 1500);
+  silent.close();
+});

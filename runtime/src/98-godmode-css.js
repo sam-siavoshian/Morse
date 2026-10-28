@@ -88,15 +88,29 @@ function GOD_CSS() { return `
   .gm-menu .gm-state { margin-inline-start: auto; display: inline-flex; color: var(--m-text-2); font: 500 var(--m-text-xs)/16px var(--m-mono); letter-spacing: 0; }
   .gm-menu .gm-state svg { color: var(--m-text); }
 
-  /* ---- clipboard chips in the bar, on its 16px inset */
-  .gm-clips { display: flex; align-items: center; gap: 12px; padding-block: 0 8px; padding-inline: 16px 8px; min-width: 0; }
+  /* ---- clipboard chips in the bar, above the suggestions. Use it here sits at the end. */
+  .gm-clips { display: flex; align-items: center; gap: 8px; padding-block: 0 8px; padding-inline: 16px 8px; min-width: 0; }
   .gm-clips-l { flex: none; }
   .gm-chips { display: flex; gap: 8px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
   .gm-chips::-webkit-scrollbar { display: none; }
-  .gm-chip { flex: none; display: inline-flex; align-items: center; gap: 8px; max-width: 232px; height: 32px; padding-block: 0; padding-inline: 3px 12px; text-align: start;
-    border: 1px solid var(--m-line-strong); border-radius: var(--m-r-sm); background: var(--m-raised); color: var(--m-text); transition: border-color var(--m-fast), background var(--m-fast); }
-  .gm-chip:hover { background: var(--m-hover); border-color: var(--m-signal-1); }
-  .gm-chip[aria-pressed="true"] { border-color: var(--m-text); background: var(--m-surface); }
+  .gm-use { flex: none; margin-inline-start: auto; }
+  .gm-chip { flex: none; display: inline-flex; align-items: center; gap: 2px; max-width: 248px; height: 32px; padding-block: 0; padding-inline: 2px;
+    border: 1px solid var(--m-line); border-radius: var(--m-r-sm); background: var(--m-raised); color: var(--m-text); cursor: grab;
+    transition: border-color var(--m-fast), background var(--m-fast); }
+  .gm-chip:hover { border-color: var(--m-signal-1); }
+  .gm-chip.on { border-color: var(--m-text); background: var(--m-surface); }
+  .gm-chip.on:hover { border-color: var(--m-text); }
+  .gm-chip.lifting { border-style: dashed; }
+  .gm-grip { flex: none; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; cursor: grab; touch-action: none;
+    background: radial-gradient(circle, var(--m-text-2) 1.15px, transparent 1.4px) center / 6px 6px; }
+  .gm-chip:hover .gm-grip, .gm-grip:hover { background-image: radial-gradient(circle, var(--m-text) 1.15px, transparent 1.4px); }
+  .gm-chip .x { cursor: pointer; }
+  .gm-chip-main { flex: 1; min-width: 0; display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 4px 0 0; border: 0; background: none; color: inherit; text-align: start; cursor: grab; }
+  .gm-drag { position: fixed; z-index: 6; pointer-events: none; display: flex; align-items: center; gap: 8px; height: 32px; max-width: 260px; padding-inline: 8px;
+    border: 1px solid var(--m-text); border-radius: var(--m-r-sm); background: var(--m-surface); color: var(--m-text); box-shadow: var(--m-shadow); cursor: grabbing; }
+  .gm-drag b { min-width: 0; font: 500 var(--m-text-sm)/14px var(--m-font); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gm-drag img, .gm-drag .gm-ph { flex: none; width: 40px; height: 24px; border-radius: 4px; object-fit: cover; object-position: left center; background: var(--m-hover); }
+  .gm-chip button:focus-visible { outline-offset: 0; }
   .gm-chip img, .gm-chip .gm-ph { flex: none; width: 40px; height: 24px; border-radius: 4px; object-fit: cover; object-position: left center; background: var(--m-hover); }
   .gm-chip .gm-ph { display: grid; place-items: center; color: var(--m-text-3); }
   .gm-chip span:not(.gm-ph) { display: flex; flex-direction: column; min-width: 0; }

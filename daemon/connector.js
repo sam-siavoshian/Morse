@@ -19,7 +19,7 @@ import { spawn } from "node:child_process";
 import { mkdirSync, watch } from "node:fs";
 import path from "node:path";
 import { portBrowser } from "./cdp.js"; // a debugging port, or the private pipe (cdp.js pipeBrowser)
-import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putClipboard } from "./store.js";
+import { modsFor, saveMod, deleteMod, getMod, writeExport, readClipboard, putClipboard, dropClipboard } from "./store.js";
 import { createMod, encodeShare, decodeShare, toUserscript, validateMod, hostOf, modMatches, saveKeepsScope } from "../core/mod.js";
 import { wrapModCode, settleMs } from "../core/kit.js";
 import { asReviewed } from "../core/summary.js"; // installs keep only the reviewed code
@@ -29,13 +29,14 @@ import { settingsLabel, currentSettings } from "./models.js"; // also registers 
 import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
 import { readWords } from "../core/languages.js"; // the bar's words in a language besides English ("i18n.words")
-import { prewarm, fastModelOf, applyFastMode } from "../core/providers.js";
+import { prewarm, fastModelOf, applyFastMode, applyModelPick, modelChoicesFor } from "../core/providers.js";
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory, watchPrefs } from "./store.js";
 import { Generations } from "../core/cancel.js";
 import { cachedVoiceStatus, transcribeAudio } from "./voice.js";
 import { CONTROL_REQUESTS, handleControl, watchControl } from "./control.js"; // user control: pause, safe start, install review, backup
 import { HOME, listMods } from "./store.js";
+import { pendingFor, rememberPending, forgetPending } from "./pending.js"; // in-progress change: still there after a reload, until Save or Undo
 import { classifyTarget, describeTarget } from "./targets.js";
 import { ONBOARDING_REQUESTS, handleOnboarding } from "./onboarding.js"; // onboarding hook: first-run state
 import { GALLERY_REQUESTS, handleGallery } from "./gallery.js"; // gallery hook: Mods for this site
@@ -46,7 +47,8 @@ import { STYLE_ID } from "../core/style.js"; // your-style hook
 import { HangGuard, FROZE_ERROR } from "./guard.js"; // guard hook: a mod that freezes the page is stopped
 import { pageCollapse } from "../core/guard.js"; // guard hook: a change that hides most of the page
 import { AppProfiler } from "./profile.js"; // app profiles: how the app works inside (docs/dev/rea.md)
-import { barWorld } from "./open-bar.js"; // Open the bar: only a window whose Morse world is up
+import { screenshotClip } from "./screenshot.js";
+import { barWorld, morseRunning } from "./open-bar.js"; // Open the bar: only a window whose Morse world is up
 
 // Perf: only the small boot goes into every page; the UI is evaluated on first use ("ui.load").
 import { bundleBoot, bundleUI } from "../runtime/bundle.js";
@@ -127,6 +129,14 @@ const cleanup = ids => `(() => { try {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+// A browser row stops saying Connecting once every page Morse can use has
+// failed a few times. A new tab (or a page that hasn't failed yet) keeps trying.
+function connectionStalled(self, ranked) {
+  if (self.needsPage || morseRunning(self) === true || !ranked.length) return false;
+  if (ranked.some(({ t }) => self.pages.has(t.id))) return false;
+  return ranked.every(({ t }) => (self.retry.get(t.id)?.n || 0) >= 3);
+}
+
 
 export class Connector {
   // port: the app's debugging port; or browser: how to reach the app
@@ -134,12 +144,19 @@ export class Connector {
   // watch: keep waiting when the app quits and attach again when it's back.
   // verify(): called before attaching again after a restart; { ok, why }.
   // onChange(connector): windows or state changed (for `morse status`).
-  constructor({ port = null, browser = null, app = null, settings, log = console.log, watch = false, verify = null, onChange = null, interval = 1000 }) {
+  constructor({ port = null, browser = null, app = null, settings, log = console.log, watch = false, verify = null, onChange = null, interval = 1000, browserHost = null, attachTimeout = 4000, attachSlots = 2, startBudget = 12000 } = {}) {
     // Log lines name windows (the page's own title), mods (a shared mod's
     // title) and the model's results: as text, never escape sequences that
     // could rewrite the terminal or set its clipboard.
     const shown = s => String(s).replace(/[\x00-\x09\x0b-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069]+/g, " ");
     Object.assign(this, { app, settings, log: line => log(shown(line)), watch, verify, onChange, interval });
+    // Browsers keep mods per site (app stays null). browserHost is only so the
+    // apps row can tell "open a website" from an endless Connecting.
+    this.browserHost = browserHost || (app?.browser ? { name: app.name, id: app.id } : null);
+    this.attachTimeout = attachTimeout;
+    this.attachSlots = attachSlots;
+    this.startBudget = startBudget;
+    this.connectStalled = false;
     this.browser = browser || portBrowser(port);
     this.pages = new Map();   // target id -> CDPSession (null while connecting)
     this.windows = new Map(); // target id -> { id, type, kind, title, url, frame, session, since }
@@ -155,7 +172,7 @@ export class Connector {
   // app profiles: the window a session belongs to
   windowOf(s) { for (const w of this.windows.values()) if (w.session === s) return w; return null; }
 
-  get appName() { return this.app?.name || "The app"; }
+  get appName() { return this.app?.name || this.browserHost?.name || "The app"; }
   get port() { return this.browser.port ?? null; }
   get transport() { return this.browser.kind || "port"; }
 
@@ -174,6 +191,7 @@ export class Connector {
   // on stop().
   async run() {
     this.running = true;
+    this.startedAt = Date.now();
     this.watchMods();
     this.controlWatcher ||= watchControl(this); // user control: tell windows when Morse is paused or resumed
     this.prefsWatcher ||= watchPrefs(prefs => this.applySettings(prefs)); // one shortcut: a change on disk reaches this app
@@ -209,8 +227,16 @@ export class Connector {
         // pipe only Morse can open it again.
         this.log(`  … ${pipe ? t("launch.closedWaitingPipe", { name: this.appName, cmd: `morse launch ${this.app?.id || ""}`.trim() }) : t("launch.closedWaiting", { name: this.appName })}`);
         this.changed();
+      } else if (!list && this.state === "starting" && !this.connectStalled && Date.now() - this.startedAt > this.startBudget) {
+        // The port was supposed to be up already. Sitting on Connecting with
+        // no answer never finishes; Disconnect stays so the person can retry.
+        this.connectStalled = true;
+        this.log(`  ! ${t("desk.app.noAnswer", { name: this.appName })}`);
+        this.changed();
       }
-      await sleep(this.interval);
+      const browser = !!(this.app?.browser || this.browserHost);
+      const hurry = this.state === "starting" || (browser && this.state === "attached" && !this.needsPage && !this.connectStalled && morseRunning(this) !== true);
+      await sleep(hurry ? Math.min(200, this.interval) : this.interval);
     }
     this.running = false;
     this.modWatcher?.close();
@@ -221,42 +247,94 @@ export class Connector {
   }
 
   sync(list) {
+    this.lastList = list;
     const byId = new Map(list.map(t => [t.id, t]));
     let dirty = false;
-    if (this.app?.browser) {
+    const browser = !!(this.app?.browser || this.browserHost);
+    if (browser) {
       const needsPage = !list.some(t => classifyTarget(t, t.parentId ? byId.get(t.parentId)?.url : null).attach);
       if (this.needsPage !== needsPage) { this.needsPage = needsPage; dirty = true; }
     }
     for (const t of list) {
       const w = this.windows.get(t.id);
-      if (w) {
-        if (w.title !== t.title || w.url !== t.url) { w.title = t.title; w.url = t.url; dirty = true; }
-        continue;
-      }
-      if (this.pages.has(t.id)) continue;
+      if (w && (w.title !== t.title || w.url !== t.url)) { w.title = t.title; w.url = t.url; dirty = true; }
+    }
+    // Websites before app frames, and the newest tab first: that is the one
+    // the person is looking at, and two at a time so a stuck tab can't queue
+    // every other page behind it.
+    const ranked = [];
+    list.forEach((t, i) => {
       const c = classifyTarget(t, t.parentId ? byId.get(t.parentId)?.url : null);
-      if (!c.attach) continue;
+      if (c.attach) ranked.push({ t, c, i });
+    });
+    ranked.sort((a, b) => {
+      const af = a.c.frame ? 1 : 0, bf = b.c.frame ? 1 : 0;
+      if (af !== bf) return af - bf;
+      const ah = /^https?:/i.test(a.t.url || "") ? 0 : 1, bh = /^https?:/i.test(b.t.url || "") ? 0 : 1;
+      if (ah !== bh) return ah - bh;
+      return b.i - a.i;
+    });
+    let inFlight = 0;
+    for (const [id, session] of this.pages) {
+      const w = this.windows.get(id);
+      if (session == null || !w?.ready) inFlight++;
+    }
+    let room = Math.max(0, (this.attachSlots || 2) - inFlight);
+    for (const { t, c } of ranked) {
+      if (this.windows.has(t.id) || this.pages.has(t.id)) continue;
       const r = this.retry.get(t.id);
+      if ((r?.n || 0) >= 3) continue;
       if (r && Date.now() < r.at) continue;
+      if (room <= 0) break;
+      room--;
       this.pages.set(t.id, null);
-      this.attach(t, c).then(() => this.retry.delete(t.id), e => {
+      Promise.resolve(this.attach(t, c)).then(() => this.retry.delete(t.id), e => {
         this.pages.delete(t.id);
         this.windows.get(t.id)?.session?.close();
         this.windows.delete(t.id);
         if (this.state === "stopped") return; // `morse stop` closed it mid-attach: not a failure to report
         const n = (r?.n || 0) + 1;
-        this.retry.set(t.id, { at: Date.now() + Math.min(30000, 500 * 2 ** n), n });
-        if (n === 1) this.log(`  ! Couldn't connect to ${describeTarget(t).title}: ${e.message}`);
-      });
+        this.retry.set(t.id, { at: Date.now() + Math.min(1500, 200 * 2 ** (n - 1)), n });
+        if (n === 1 && this.log) this.log(`  ! Couldn't connect to ${describeTarget(t).title}: ${e.message}`);
+      }).finally(() => { if (this.running !== false) this.pump?.(); });
     }
     // soak: targets that are gone (a closed popup that never attached) don't keep a retry entry
     for (const id of this.retry.keys()) if (!byId.has(id)) this.retry.delete(id);
-    if (dirty) this.changed();
+    if (browser) {
+      const stalled = connectionStalled(this, ranked);
+      if (stalled !== !!this.connectStalled) {
+        this.connectStalled = stalled;
+        dirty = true;
+        if (stalled && this.log) this.log(`  ! ${t("desk.app.noAnswer", { name: this.appName })}`);
+      }
+    }
+    if (dirty && this.changed) this.changed();
   }
 
+  // An attach finished (or failed): fill the next free slot without waiting
+  // out the poll.
+  pump() { if (this.lastList) this.sync(this.lastList); }
+
   async attach(target, how = classifyTarget(target)) {
-    const s = await this.browser.connect(target);
-    if (!this.running && this.state === "stopped") { s.close(); return; }
+    let s = null;
+    let timer;
+    const late = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        try { s?.close(); } catch {}
+        reject(Object.assign(new Error("The page didn't answer"), { timeout: true }));
+      }, this.attachTimeout || 4000);
+    });
+    const work = (async () => {
+      s = await this.browser.connect(target);
+      if (!this.running && this.state === "stopped") { try { s.close(); } catch {} return; }
+      await this.openTarget(s, target, how);
+    })();
+    work.catch(() => {}); // the race below owns the failure; a late close must not be unhandled
+    try { await Promise.race([work, late]); }
+    finally { clearTimeout(timer); }
+  }
+
+  async openTarget(s, target, how) {
     const { kind, title } = describeTarget(target);
     const w = { id: target.id, type: target.type, kind, title: target.title, url: target.url, frame: !!how.frame, session: s, since: Date.now() };
     const source = how.frame ? BOOT.frame : BOOT.window;
@@ -333,19 +411,29 @@ export class Connector {
     const readTitle = () => s.send("Runtime.evaluate", { expression: "document.title", returnByValue: true })
       .then(r => { const t = r?.result?.value; if (t && t !== w.docTitle) { w.docTitle = t; this.changed(); } }, () => {});
     s.on("Page.loadEventFired", readTitle);
-    await s.send("Inspector.enable").catch(() => {});
-    await s.send("Page.enable");
-    w.frameId = (await s.send("Page.getFrameTree").catch(() => null))?.frameTree?.frame?.id || target.id;
-    await s.send("Runtime.addBinding", { name: BINDING, executionContextName: WORLD });
-    // Every new document: Chromium creates Morse's world and runs the runtime in it.
-    w.pristine = (await s.send("Page.addScriptToEvaluateOnNewDocument", { source: PRISTINE }))?.identifier; // reliability: for the kit, in the main world
-    w.script = (await s.send("Page.addScriptToEvaluateOnNewDocument", { source, worldName: WORLD }))?.identifier;
+    // Page has to be on before its scripts and the frame tree. The rest of
+    // that setup doesn't depend on each other, so it goes out together.
+    await Promise.all([
+      s.send("Inspector.enable").catch(() => {}),
+      s.send("Page.enable"),
+    ]);
+    if (s.closed || w.detaching || this.state === "stopped") return;
+    const [tree, , pristine, script] = await Promise.all([
+      s.send("Page.getFrameTree").catch(() => null),
+      s.send("Runtime.addBinding", { name: BINDING, executionContextName: WORLD }),
+      s.send("Page.addScriptToEvaluateOnNewDocument", { source: PRISTINE }), // reliability: for the kit, in the main world
+      s.send("Page.addScriptToEvaluateOnNewDocument", { source, worldName: WORLD }), // every new document: Morse's world and the runtime
+    ]);
+    w.frameId = tree?.frameTree?.frame?.id || target.id;
+    w.pristine = pristine?.identifier;
+    w.script = script?.identifier;
     await s.send("Runtime.enable"); // reports existing contexts, including a Morse world left by an earlier session
     w.ready = true;
     // The document that's already loaded. A page that is mid-crash or
-    // mid-navigation gets the runtime from its next document.
-    await this.boot(s, w, source).catch(() => {});
-    if (w.detaching || this.state === "stopped") return; // stopped meanwhile: nothing was connected
+    // mid-navigation gets the runtime from its next document. A session we
+    // already gave up on must not count as connected.
+    await this.boot(s, w, source).catch(e => { if (s.closed || w.detaching || this.state === "stopped") throw e; });
+    if (s.closed || w.detaching || this.state === "stopped") return;
     readTitle();
     this.log(`  ✓ ${t("launch.connected", { title })}${kind === "window" ? "" : ` (${kind})`}`);
     trace("connect", `CDP attached to "${title}": Morse's code runs in its own isolated world ("morse"), talks to this process through the __morseHostSend binding`);
@@ -601,9 +689,9 @@ export class Connector {
     // Errors inside watch/on callbacks surface a moment later. speed: the kit
     // says how long that can be for this mod (core/kit.js settle).
     await new Promise(r2 => setTimeout(r2, settleMs(res)));
-    const e = await s.send("Runtime.evaluate", { expression: `morse.__errors(${JSON.stringify(modId)})`, contextId: ctx, returnByValue: true });
-    const errs = e.result?.value || [];
-    return errs.length ? { ok: false, error: errs[0].split("\n")[0] } : { ok: true };
+    const e = await s.send("Runtime.evaluate", { expression: `morse.__ready ? morse.__ready(${JSON.stringify(modId)}) : { ok: !morse.__errors(${JSON.stringify(modId)}).length, error: morse.__errors(${JSON.stringify(modId)})[0] }`, contextId: ctx, returnByValue: true, awaitPromise: true });
+    if (e.exceptionDetails) return { ok: false, error: e.exceptionDetails.exception?.description || e.exceptionDetails.text };
+    return e.result?.value || { ok: false, error: "The change could not be verified" };
   }
 
   // Effect check (core/engine.js): the runtime's effectProbe, in Morse's world
@@ -626,7 +714,8 @@ export class Connector {
     if (!a) return null;
     const from = Date.now() / 1000 - 0.15;
     try {
-      const r = await s.send("Page.captureScreenshot", { format: "jpeg", quality: 85, clip: { x: a.x + a.scrollX, y: a.y + a.scrollY, width: a.width, height: a.height, scale: a.scale } });
+      const metrics = await s.send("Page.getLayoutMetrics").catch(() => ({}));
+      const r = await s.send("Page.captureScreenshot", { format: "jpeg", quality: 85, clip: screenshotClip(a, metrics) });
       return r?.data ? { mediaType: "image/jpeg", data: r.data, measured: a.misaligned || [] } : null;
     } catch { return null; }
     finally {
@@ -680,10 +769,12 @@ export class Connector {
       case "hello": {
         this.grantMic(s, (await here()).url);
         const prefs = await loadPrefs();
-        const ready = this.settings ? fastReady(this.settings, prefs) : null;
-        const labelSettings = ready && prefs.fastMode && ready.fastModelId ? ready.next : (this.settings ? { ...this.settings, mode: prefs.modelMode } : null);
+        const base = this.settings ? applyModelPick({ ...this.settings, mode: prefs.modelMode }, prefs.modelPick) : null;
+        const ready = base ? fastReady(base, prefs) : null;
+        const labelSettings = ready && prefs.fastMode && ready.fastModelId ? ready.next : base;
         return { mode: "desktop", app, appName: this.app?.name || null, label: labelSettings ? startLabel(labelSettings, settingsLabel) : settingsLabel({}),
           models: this.settings ? modelNames(this.settings, settingsLabel) : null, // models: the names the Settings sheet shows
+          modelChoices: modelChoicesFor(this.settings, prefs.modelPick), // models: the bar's selector (runtime/src/51-model.js)
           fastModel: ready?.fastModelId || "",
           settings: prefs, voice: await cachedVoiceStatus(),
           quiet: !!s.welcomed || !(s.welcomed = true), // perf: welcome once per window, not on every reload (it loads the UI)
@@ -733,6 +824,14 @@ export class Connector {
         if (gone) (this.deleted ||= new Map()).set(gone.id, gone); // for Undo in the Mods panel
         return deleteMod(msg.modId);
       }
+      // The preview on the bar. Scoped to the caller's page, like a save: a
+      // reload applies it again until Save or Undo (runtime/boot.js).
+      case "pending.get":
+        return pendingFor(await here());
+      case "pending.put":
+        return rememberPending(await here(), msg.draft);
+      case "pending.clear":
+        return forgetPending(await here(), msg.id);
       // Decode and validate a shared mod without saving it (install confirmation).
       case "mods.import": {
         const src = msg.source.trim();
@@ -745,12 +844,14 @@ export class Connector {
         return readClipboard();
       case "clipboard.put":
         return putClipboard({ ...msg.item, from: { ...msg.item?.from, app: this.app?.name || msg.item?.from?.app || null } });
+      case "clipboard.remove":
+        return dropClipboard(msg.id);
       case "warm": { // speed: the bar opened, or the person is typing; get the model ready (core/providers.js prewarm)
         const settings = await this.freshSettings();
         const typed = typeof msg.request === "string" ? msg.request.slice(0, 500) : ""; // models: the strong model for new UI and features
         if (settings?.provider && settings.provider !== "none") {
           const prefs = await loadPrefs();
-          prewarm(fastReady(settings, prefs).next, typed); // models: warms the model the request starts on
+          prewarm(fastReady(applyModelPick({ ...settings, mode: prefs.modelMode }, prefs.modelPick), prefs).next, typed); // models: warms the model the request starts on, including one chosen in the bar
         }
         return true;
       }
@@ -769,10 +870,11 @@ export class Connector {
           throw new Error("No model is connected. Run morse setup in a terminal to choose one.");
         const t0 = Date.now();
         const prefs = await loadPrefs();
-        const ready = fastReady({ ...this.settings, mode: prefs.modelMode }, prefs); // models: Automatic, Always fast, Always best, then Fast mode
+        const picked = applyModelPick({ ...this.settings, mode: prefs.modelMode }, prefs.modelPick); // models: the bar's choice, else Automatic / fast / best
+        const ready = fastReady(picked, prefs);
         const sel = msg.context?.target?.selector;
         trace("bar", `"${msg.request}" · ${sel ? `pointed at ${sel}` : "the whole page"} · ${this.app?.name || "app"}`);
-        trace("model", `${this.settings.provider}${this.settings.model ? ` · ${this.settings.model}` : ""}`);
+        trace("model", `${picked.provider}${picked.model ? ` · ${picked.model}` : ""}${prefs.modelPick && prefs.modelPick !== "auto" ? " · chosen in the bar" : ""}`);
         let cssPushes = 0, tokens = 0;
         // app profiles: what the request needs to know about how the app works (core/profile.js profileSlice)
         const appLogic = this.profiler ? await this.profiler.slice(s, caller, msg.request, sel).catch(() => "") : "";

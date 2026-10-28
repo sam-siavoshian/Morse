@@ -1,8 +1,12 @@
 // The "it's working" moment, in gray. The target becomes a field of radar
 // pixels: every pixel pulses on its own phase (the OpenCode spinner, scaled
-// up), a ping ring sweeps out from a bright core, and each character the model writes
-// arrives as a blip of real Morse code (dot = 1 pixel, dash = 3). When the
-// change lands, a ping ring expands from the center and clears the field.
+// up). The bright figure on that field shuffles through moving shapes
+// (core/patterns.js): the original orbit, a rotating radar wedge, expanding
+// rings, a three-arm spinner, orbiting comets, a traveling wave, a turning
+// spiral, rising bars. Each character the model writes arrives as a blip of
+// real Morse code (dot = 1 pixel, dash = 3). When the change lands, a ping
+// ring expands from the center and clears the field. prefers-reduced-motion
+// keeps the still field: no shuffle, no pulse, no ping.
 const MORSE_CODE = {
   a: ".-", b: "-...", c: "-.-.", d: "-..", e: ".", f: "..-.", g: "--.", h: "....", i: "..", j: ".---", k: "-.-", l: ".-..", m: "--",
   n: "-.", o: "---", p: ".--.", q: "--.-", r: ".-.", s: "...", t: "-", u: "..-", v: "...-", w: ".--", x: "-..-", y: "-.--", z: "--..",
@@ -24,12 +28,17 @@ const Effect = (() => {
   let t0 = 0, end0 = 0, endResolve = null, ok = true, frame = 0, pal = null, blips = [], shown0 = 0;
   // Per-cell constants, rebuilt when the grid changes, and the cells drawn at
   // all (every cell over a target; only the edge band page-wide).
-  let delay, dur, rc, ell, dist, core, per, active = new Int32Array(0);
+  let delay, dur, rc, ell, dist, core, per, eang, active = new Int32Array(0);
   const buckets = Array.from({ length: 4 * LEVELS }, () => []);
   const COLORS = ["lo", "mid", "hi", "top"];
-  // prefers-reduced-motion: a calm, static field (no pulse, ping, scan or
-  // blips) that simply fades out when the change lands.
+  // prefers-reduced-motion: a calm, static field (no pulse, ping, scan,
+  // pattern shuffle or blips) that simply fades out when the change lands.
   const calm = matchMedia("(prefers-reduced-motion: reduce)");
+  // The pattern on screen, the one it is blending out of, and when this one started.
+  // `pin` (debug only) holds one figure still so a single shape can be looked at.
+  let motif = "", motifPrev = "", motifAt = 0, pin = "";
+  let pingR = 0, pingF = 1;
+  const hit = { a: 0, c: 0 };
 
   function palette() {
     const cs = getComputedStyle(hostEl);
@@ -85,7 +94,7 @@ const Effect = (() => {
   function grid() {
     const N = cols * rows, cx = cols / 2, cy = rows / 2;
     delay = new Float32Array(N); dur = new Float32Array(N); rc = new Float32Array(N); ell = new Float32Array(N);
-    dist = new Float32Array(N); core = new Uint8Array(N); per = new Int32Array(N);
+    dist = new Float32Array(N); core = new Uint8Array(N); per = new Int32Array(N); eang = new Float32Array(N);
     const coreR = Math.max(1.6, Math.min(cx, cy) * 0.55);
     const on = [];
     for (let i = 0; i < N; i++) {
@@ -95,6 +104,7 @@ const Effect = (() => {
       // rings follow the target's shape on wide toolbars and tall sidebars.
       const dx = (x + 0.5 - cx) / cx, dy = (y + 0.5 - cy) / cy, th = Math.atan2(dy, dx);
       dist[i] = Math.hypot(dx, dy);
+      eang[i] = th;
       rc[i] = Math.hypot(x + 0.5 - cx, y + 0.5 - cy); // in cells, so the ring is one pixel thick on any shape
       ell[i] = Math.hypot(Math.cos(th) * cx, Math.sin(th) * cy);
       core[i] = rc[i] < coreR * 0.6 ? 2 : rc[i] < coreR ? 1 : 0;
@@ -108,8 +118,28 @@ const Effect = (() => {
     target = el; rect = null; cols = rows = 0; mode = "thinking"; running = true; ok = true; blips = []; shown0 = 0;
     pal = palette();
     t0 = performance.now();
+    readPin();
+    armMotif(t0, true);
     layout();
     requestAnimationFrame(draw);
+  }
+  // A fresh load picks any pattern except the one the previous load ended on.
+  // A shuffle while this load stays up blends out of the one on screen.
+  // ?motif=radar (debug only) holds that one figure, so a shape can be looked at on its own.
+  function readPin() {
+    pin = "";
+    if (!DEBUG) return;
+    try {
+      const q = new URLSearchParams(location.search).get("motif");
+      if (LOAD_PATTERNS.includes(q)) pin = q;
+    } catch {}
+  }
+  function armMotif(now, fresh) {
+    const prev = motif;
+    motif = pin || nextPattern(prev || null);
+    motifPrev = pin || fresh ? "" : prev; // a pin, or a fresh load, has nothing to blend out of
+    motifAt = now;
+    if (DEBUG && fx.dataset.motif !== motif) fx.dataset.motif = motif;
   }
   // Each token becomes a Morse blip on the current ring (or along the edge band).
   function token(text) {
@@ -159,6 +189,22 @@ const Effect = (() => {
   const PING = 1.6; // seconds between rings
   const ringRadius = now => ((((now - t0) / 1000) % PING) / PING) * Math.SQRT2;
   const TAU = Math.PI * 2;
+  // Orbit keeps the original ping, so a steady orbit frame matches the field
+  // from before the other figures existed. Anything else is a moving shape.
+  function motifOf(name, i, pulse, time) {
+    const x = i % cols, y = (i / cols) | 0;
+    hit.a = 0.1 + pulse * 0.14; hit.c = 0;
+    if (name === "orbit") {
+      if (core[i]) { hit.a = 0.3 + pulse * 0.5; hit.c = core[i] === 2 ? 2 : 1; }
+      const ellR = pingR * ell[i], ring = Math.abs(rc[i] - ellR);
+      if (ring < 0.75) { hit.a = Math.max(hit.a, 0.6 * pingF + 0.15); hit.c = 2; }
+      else if (ring < 2.2 && rc[i] < ellR) hit.a += 0.1 * pingF;
+      return;
+    }
+    const v = shapeLift(name, x, y, dist[i], rc[i], ell[i], eang[i], time, cols, rows);
+    if (v < 0) return;
+    hit.a = v; hit.c = v >= 0.8 ? 3 : v >= 0.2 ? 2 : 0;
+  }
   function draw(now) {
     if (!running) return;
     frame++;
@@ -168,6 +214,22 @@ const Effect = (() => {
     const end = mode === "end", endP = end ? Math.min(1, (now - end0) / 650) : 0;
     const maxR = Math.SQRT2, tol = 1.1 / Math.max(2, Math.min(cols / 2, rows / 2));
     const ping = ringRadius(now), pingFade = 1 - ping / maxR;
+    pingR = ping; pingF = pingFade;
+    // Shuffle only while a target is covered and motion is allowed. A fresh
+    // pattern blends in; reduced motion never leaves the still field.
+    // A pinned figure (debug) stays put so it can be looked at on its own.
+    let nameA = motif, nameB = motif, blendB = 0;
+    if (target && !still && !end && !pin) {
+      if ((now - motifAt) / 1000 >= PATTERN_HOLD) armMotif(now, false);
+      if (motifPrev) {
+        const u = (now - motifAt) / 1000;
+        if (u < PATTERN_BLEND) {
+          const k = u / PATTERN_BLEND;
+          blendB = k * k * (3 - 2 * k);
+          nameA = motifPrev; nameB = motif;
+        }
+      }
+    }
     const veil = shown0 ? Math.max(0, 1 - (now - shown0) / 300) : 1; // 1 = covered, 0 = the change shows through (reveal)
     // Morse blips light cells; collect them per frame.
     let lit = null;
@@ -197,20 +259,25 @@ const Effect = (() => {
       } else {
         // OpenCode-style pulse: every pixel alive on its own phase
         const w = (Math.sin(((t + delay[i]) / dur[i]) * TAU) + 1) / 2; // t is 0 when still: a fixed pattern
-        a = 0.1 + w * 0.14;
-        if (target) {
-          // the spinner's inner four, scaled up: a small bright pulsing core
-          if (core[i]) { a = 0.3 + w * 0.5; color = core[i] === 2 ? 2 : 1; }
-          // the radar ping: a thin ring sweeping outward, fading with distance
-          if (!still) {
-            const ellR = ping * ell[i], ring = Math.abs(rc[i] - ellR);
-            if (ring < 0.75) { a = Math.max(a, 0.6 * pingFade + 0.15); color = 2; }
-            else if (ring < 2.2 && rc[i] < ellR) a += 0.1 * pingFade;
+        if (target && !still) {
+          motifOf(nameA, i, w, t);
+          a = hit.a; color = hit.c;
+          if (blendB > 0) {
+            const a0 = a, c0 = color;
+            motifOf(nameB, i, w, t);
+            a = a0 * (1 - blendB) + hit.a * blendB;
+            color = hit.a * blendB > a0 * (1 - blendB) ? hit.c : c0;
           }
-        } else if (!still) {
-          // page-wide: a scan travels the perimeter
-          const d = (pos - per[i] + perim) % perim;
-          if (d < 14) { a += (1 - d / 14) * 0.6; color = 2; }
+        } else {
+          a = 0.1 + w * 0.14;
+          if (target) {
+            // reduced motion: the still core, no ping and no shuffle
+            if (core[i]) { a = 0.3 + w * 0.5; color = core[i] === 2 ? 2 : 1; }
+          } else if (!still) {
+            // page-wide: a scan travels the perimeter
+            const d = (pos - per[i] + perim) % perim;
+            if (d < 14) { a += (1 - d / 14) * 0.6; color = 2; }
+          }
         }
         const l = lit && lit.get(i);
         if (l) { a = Math.max(a, 0.35 + l * 0.65); color = l > 0.5 ? 3 : 2; }
