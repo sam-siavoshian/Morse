@@ -244,7 +244,7 @@ function BAR_CSS() { return `
   .bar .actions button { height: 28px; padding-inline: 10px; }
   .bar.done .hint { flex-basis: 160px; }
   .bar.done .hint .ok { max-height: 60px; overflow-y: auto; scrollbar-width: thin; user-select: text; }
-  .bar .bmenu { max-height: min(400px, calc(100vh - 160px)); overflow-y: auto; overscroll-behavior: contain; }
+  .bar .bmenu, .bar .modelmenu { max-height: min(400px, calc(100vh - 160px)); overflow-y: auto; overscroll-behavior: contain; }
   .bar .pane { overscroll-behavior: contain; }
   @media (max-width: 400px) {
     .bar .row { gap: 6px; padding-inline: 10px; }
@@ -266,4 +266,21 @@ function BAR_CSS() { return `
   .bar .settings-group > summary:hover { background: var(--m-hover); border-radius: 8px; }
   .bar .settings-group > section { border-top: 0; margin: 0; }
   .bar .settings-group[data-group="style"] h4 { display: none; }
+
+  /* Model for the next change: a .btn in the input row, and a .menu of the same icons. */
+  .bar .modelpick { align-self: flex-end; flex: none; justify-content: flex-start; gap: 6px; height: 32px; max-width: 136px; padding-inline: 8px; border-radius: 9px; }
+  .bar .modelpick .mi { display: inline-flex; flex: none; color: var(--m-text-2); }
+  .bar .modelpick .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .bar .modelpick .chev { flex: none; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-1px) rotate(45deg); color: var(--m-text-3); }
+  .bar .modelpick[aria-expanded="true"] { background: var(--m-hover); }
+  .bar .modelpick[aria-expanded="true"] .chev { transform: translateY(2px) rotate(-135deg); }
+  .bar .modelpick:disabled { color: var(--m-text-3); }
+  .bar .modelmenu { inset-inline-end: auto; min-width: 200px; }
+  .bar .modelmenu > button > svg:first-child { flex: none; }
+  .bar .modelmenu .tick { flex: none; margin-inline-start: 8px; visibility: hidden; color: var(--m-text); }
+  .bar .modelmenu [aria-checked="true"] .tick { visibility: visible; }
+  @media (max-width: 560px) {
+    .bar .modelpick { width: 32px; max-width: 32px; padding-inline: 0; justify-content: center; }
+    .bar .modelpick .name, .bar .modelpick .chev { display: none; }
+  }
 `; }

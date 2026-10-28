@@ -170,6 +170,7 @@ function openBar() {
   input.disabled = false;
   hintNote = ""; hintSticky = "";
   hideMenu();
+  hideModelMenu();
   showPane("");
   PromptHistory.reset();
   setInput("");
@@ -201,6 +202,7 @@ function closeBar() {
   bar.hidden = true; hl.hidden = true; selBox.hidden = true;
   S.phase = "idle";
   hideMenu();
+  hideModelMenu();
   showPane("");
   restoreFocus();
 }
@@ -486,6 +488,7 @@ function menuItems() {
   ];
 }
 function showMenu() {
+  hideModelMenu();
   menuEl.innerHTML = menuItems().map(m => `<button role="menuitem" tabindex="-1" data-m="${m.id}"><span>${esc(m.label)}</span>${m.sub ? `<small>${esc(m.sub)}</small>` : ""}${m.keys ? caps(m.keys) : ""}</button>`).join(""); // show-once hook: no keys
   menuEl.hidden = false;
   menuEl.classList.toggle("below", barIsTop());
@@ -519,6 +522,7 @@ root.addEventListener("pointerdown", e => { if (!menuEl.hidden && !e.composedPat
 
 // Esc peels one layer at a time: menu, voice, generation, pane, bar.
 function barEscape() {
+  if (!modelMenu.hidden) { hideModelMenu(true); return; }
   if (!menuEl.hidden) { hideMenu(); moreBtn.focus(); return; }
   if (Voice.active()) { Voice.stop({ submit: false }); return; }
   if (S.phase === "working") { stopGeneration(); return; }

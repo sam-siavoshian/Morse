@@ -29,7 +29,7 @@ import { settingsLabel, currentSettings } from "./models.js"; // also registers 
 import { configuredHotkeys } from "./store.js"; // first-run hook: what to press, once connected
 import { t } from "../core/i18n.js"; // daemon/cli.js sets the language from LANG / LC_ALL
 import { readWords } from "../core/languages.js"; // the bar's words in a language besides English ("i18n.words")
-import { prewarm, fastModelOf, applyFastMode } from "../core/providers.js";
+import { prewarm, fastModelOf, applyFastMode, applyModelPick, modelChoicesFor } from "../core/providers.js";
 import { Recorder } from "./record.js";
 import { loadPrefs, savePrefs, loadHistory, addHistory, watchPrefs } from "./store.js";
 import { Generations } from "../core/cancel.js";
@@ -769,10 +769,12 @@ export class Connector {
       case "hello": {
         this.grantMic(s, (await here()).url);
         const prefs = await loadPrefs();
-        const ready = this.settings ? fastReady(this.settings, prefs) : null;
-        const labelSettings = ready && prefs.fastMode && ready.fastModelId ? ready.next : (this.settings ? { ...this.settings, mode: prefs.modelMode } : null);
+        const base = this.settings ? applyModelPick({ ...this.settings, mode: prefs.modelMode }, prefs.modelPick) : null;
+        const ready = base ? fastReady(base, prefs) : null;
+        const labelSettings = ready && prefs.fastMode && ready.fastModelId ? ready.next : base;
         return { mode: "desktop", app, appName: this.app?.name || null, label: labelSettings ? startLabel(labelSettings, settingsLabel) : settingsLabel({}),
           models: this.settings ? modelNames(this.settings, settingsLabel) : null, // models: the names the Settings sheet shows
+          modelChoices: modelChoicesFor(this.settings, prefs.modelPick), // models: the bar's selector (runtime/src/51-model.js)
           fastModel: ready?.fastModelId || "",
           settings: prefs, voice: await cachedVoiceStatus(),
           quiet: !!s.welcomed || !(s.welcomed = true), // perf: welcome once per window, not on every reload (it loads the UI)
@@ -849,7 +851,7 @@ export class Connector {
         const typed = typeof msg.request === "string" ? msg.request.slice(0, 500) : ""; // models: the strong model for new UI and features
         if (settings?.provider && settings.provider !== "none") {
           const prefs = await loadPrefs();
-          prewarm(fastReady(settings, prefs).next, typed); // models: warms the model the request starts on
+          prewarm(fastReady(applyModelPick({ ...settings, mode: prefs.modelMode }, prefs.modelPick), prefs).next, typed); // models: warms the model the request starts on, including one chosen in the bar
         }
         return true;
       }
@@ -868,10 +870,11 @@ export class Connector {
           throw new Error("No model is connected. Run morse setup in a terminal to choose one.");
         const t0 = Date.now();
         const prefs = await loadPrefs();
-        const ready = fastReady({ ...this.settings, mode: prefs.modelMode }, prefs); // models: Automatic, Always fast, Always best, then Fast mode
+        const picked = applyModelPick({ ...this.settings, mode: prefs.modelMode }, prefs.modelPick); // models: the bar's choice, else Automatic / fast / best
+        const ready = fastReady(picked, prefs);
         const sel = msg.context?.target?.selector;
         trace("bar", `"${msg.request}" · ${sel ? `pointed at ${sel}` : "the whole page"} · ${this.app?.name || "app"}`);
-        trace("model", `${this.settings.provider}${this.settings.model ? ` · ${this.settings.model}` : ""}`);
+        trace("model", `${picked.provider}${picked.model ? ` · ${picked.model}` : ""}${prefs.modelPick && prefs.modelPick !== "auto" ? " · chosen in the bar" : ""}`);
         let cssPushes = 0, tokens = 0;
         // app profiles: what the request needs to know about how the app works (core/profile.js profileSlice)
         const appLogic = this.profiler ? await this.profiler.slice(s, caller, msg.request, sel).catch(() => "") : "";

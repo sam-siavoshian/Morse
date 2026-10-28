@@ -116,6 +116,45 @@ export function applyFastMode(settings) {
   return s;
 }
 
+// A model chosen in the bar (prefs.modelPick). "auto" lets routing choose.
+// Anything else is used for the whole request, the way `morse config --model`
+// pins one name. Unknown names are ignored so a saved pref can't point the
+// next request at a model this provider doesn't have.
+const MODEL_PICK_RE = /^[A-Za-z0-9][\w.:/\[\]-]{0,80}$/;
+function addModelId(ids, id) {
+  if (typeof id !== "string" || !id || id === "auto" || !MODEL_PICK_RE.test(id) || ids.includes(id)) return;
+  ids.push(id);
+}
+export function knownModelIds(settings) {
+  const s = settings || {};
+  if (!s.provider || s.provider === "none" || s.provider === "demo") return [];
+  const ids = [];
+  for (const id of PROVIDERS[s.provider]?.models || []) addModelId(ids, id);
+  for (const id of s.listedModels || []) addModelId(ids, id);
+  addModelId(ids, s.tiers?.fast?.model);
+  addModelId(ids, s.tiers?.best?.model);
+  if (s.pinned) addModelId(ids, s.model);
+  return ids;
+}
+export function applyModelPick(settings, pick) {
+  const s = settings && typeof settings === "object" ? settings : {};
+  if (pick === "auto") return s.pinned ? { ...s, pinned: false } : s;
+  if (!pick || !MODEL_PICK_RE.test(pick) || !knownModelIds(s).includes(pick)) return s;
+  if (s.model === pick && s.pinned) return s;
+  return { ...s, model: pick, pinned: true };
+}
+// What the bar's selector lists. null: this provider has no named models
+// (Codex uses the plan's own model). current is the name the next request
+// would start from, or "auto".
+export function modelChoicesFor(settings, pick) {
+  const ids = knownModelIds(settings);
+  if (!ids.length) return null;
+  let current = "auto";
+  if (pick && pick !== "auto" && ids.includes(pick)) current = pick;
+  else if (settings?.pinned && ids.includes(settings.model)) current = settings.model;
+  return { ids, current };
+}
+
 // Server-side refusal fallback is only valid on these models.
 const FALLBACK_MODELS = /^claude-(opus|sonnet)-5-5\b/;
 
