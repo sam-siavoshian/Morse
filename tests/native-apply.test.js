@@ -126,6 +126,19 @@ test("undo: a failed revert leaves the mod on (UI must not lie about state)", as
   assert.equal(svc.list().length, 1, "still saved");
 });
 
+test("apply: re-saving a live mod reverts the old hook first (no second live hook)", async () => {
+  const session = fakeSession();
+  const svc = new NativeModService({ session, context: ctx, store: memStore() });
+  const { id } = await svc.generate(directReq);
+  session.calls.length = 0; // only watch the re-save
+  // The bar's "mods.save" on a mod that's already on.
+  await svc.handle({ type: "mods.save", draft: { id, title: "same mod again", target: directReq.target, action: directReq.action } });
+  assert.deepEqual(session.calls[0], ["revert", id], "reverts the live hook before re-applying");
+  assert.equal(session.calls[1][0], "apply", "then re-applies");
+  assert.equal(svc.list().filter(m => m.id === id).length, 1, "still exactly one saved entry");
+  assert.equal(svc.list().find(m => m.id === id).applied, true, "and it's live");
+});
+
 test("apply: a store-write failure reports applied-but-unsaved, keeps the hook", async () => {
   const session = fakeSession();
   const throwingStore = { list: () => [], upsert: () => { throw new Error("disk full"); }, remove: () => {} };

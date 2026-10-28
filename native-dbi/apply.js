@@ -60,6 +60,11 @@ export class NativeModService {
 
   // Apply one ModSpec in the running target and (optionally) remember it.
   async applySpec(spec, { save = false } = {}) {
+    // A re-save of an already-live id (the bar's "mods.save" on a mod that's
+    // on) must not stack a second hook. Revert the live one first so only the
+    // replacement stays tracked — the agent reverts-then-installs too, but
+    // making it explicit here keeps the invariant independent of the backend.
+    if (this.active.has(spec.id)) { await this.session.revert(spec.id); this.active.delete(spec.id); }
     const results = await this.session.apply([spec]);
     const res = Array.isArray(results) ? results[0] : results;
     if (!res || res.status !== "applied") {
