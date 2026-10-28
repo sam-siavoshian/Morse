@@ -57,6 +57,8 @@ test("store: a corrupt file throws rather than silently wiping saved mods", () =
   assert.throws(() => storeReading("[]").list("k"), /corrupt/, "a top-level array is the wrong shape");
   assert.throws(() => storeReading("null").list("k"), /corrupt/, "null is the wrong shape");
   assert.throws(() => storeReading('"a string"').list("k"), /corrupt/);
+  assert.throws(() => storeReading('{"/apps/Player": null}').list("k"), /corrupt/, "a non-array bucket is the wrong shape");
+  assert.throws(() => storeReading('{"/apps/Player": {"not": "an array"}}').list("k"), /corrupt/, "an object bucket is the wrong shape");
   // a missing file (ENOENT) still reads as empty, not an error
   const missing = createStore({ file: "mem", fs: { read: () => { throw enoent(); }, write: () => {}, rename: () => {}, mkdir: () => {} } });
   assert.deepEqual(missing.list("k"), []);

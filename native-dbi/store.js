@@ -36,8 +36,11 @@ export function createStore({ file = DEFAULT_FILE, fs = realFs } = {}) {
     try { v = JSON.parse(raw); } catch { throw corrupt(); }
     // Only a plain object maps app keys → mod arrays. null, an array, or any
     // other JSON value is a wrong shape — treat it as corrupt, not empty, so a
-    // write can't replace real data derived from it.
+    // write can't replace real data derived from it. Each present bucket must
+    // itself be an array; a non-array bucket (e.g. null) would read as empty
+    // and then be overwritten, silently losing whatever it held.
     if (!v || typeof v !== "object" || Array.isArray(v)) throw corrupt();
+    for (const key of Object.keys(v)) if (!Array.isArray(v[key])) throw corrupt();
     return v;
   };
   // Write a temp file, then atomically rename over the store, so a partial write
