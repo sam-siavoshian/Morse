@@ -289,6 +289,19 @@ session stays the data/action channel underneath; the overlay is only about
   injects its stylesheet into a shadow root). `startNativeOverlay({ pid,
   BrowserWindow, screen, ipcMain })` ties bounds → controller → host.
 
+**Anchoring and materials.** `OverlayController` polls `window-bounds.js` by
+default, but takes an optional `subscribe(cb)` event source: a native helper
+that posts OS window-change events (macOS AXObserver / NSWindow notifications,
+Windows `SetWinEventHook` `EVENT_OBJECT_LOCATIONCHANGE`) calls `cb(bounds)` the
+instant the target moves/resizes, so the overlay re-anchors in the same frame
+with no poll lag (polling stays as a slow safety net). That native helper is
+the one piece still to build per platform — the Swift `morse-picker` already
+reads AX geometry and is the place to post those notifications; `subscribe` is
+the seam it feeds. The Electron host also takes an opt-in `material` (macOS
+vibrancy, Windows Mica/Acrylic) for a feature whose chrome should read as part
+of the OS; it's off by default because a pinned overlay stays transparent so
+the app shows through, and the bar paints its own frosted surface.
+
 **What's wired, and what's next.** The overlay renders the real Morse bar —
 the input, the suggestion chips, the Mods panel, settings, history — from the
 same `runtime/` bundle, proven by a headless render (`node --test`'s stub host

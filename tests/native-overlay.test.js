@@ -92,6 +92,40 @@ test("OverlayController: shows, moves only on change, hides when the window is g
   assert.equal(calls.filter(c => c[0] === "destroy").length, 1);
 });
 
+test("OverlayController: an event source re-anchors immediately (no poll wait)", () => {
+  const calls = [];
+  const host = { show: r => calls.push(["show", r]), move: r => calls.push(["move", r]), hide: () => calls.push(["hide"]), destroy: () => calls.push(["destroy"]) };
+  let pushCb = null;
+  const subscribe = cb => { pushCb = cb; return () => { pushCb = null; }; };
+  // bounds() (poll) returns nothing; all movement comes from the event source.
+  const c = new OverlayController({ host, bounds: () => null, subscribe, regionOptions: { mode: "full" } });
+  c.start();
+  assert.equal(typeof pushCb, "function", "subscribed to the event source");
+  pushCb({ x: 0, y: 0, width: 800, height: 600 });        // OS says: window here → show
+  pushCb({ x: 40, y: 0, width: 800, height: 600 });        // moved → move
+  pushCb({ x: 40, y: 0, width: 800, height: 600 });        // same → nothing
+  pushCb(null);                                            // minimized → hide
+  assert.deepEqual(calls.map(c => c[0]), ["show", "move", "hide"]);
+  c.stop();
+  assert.equal(pushCb, null, "unsubscribed on stop");
+});
+
+test("createOverlayHost: material opts into native vibrancy / Mica", () => {
+  const { BW, instances } = fakeBrowserWindow();
+  const mac = createOverlayHost({ BrowserWindow: BW, platform: "darwin", material: "hud" });
+  mac.show({ x: 0, y: 0, width: 10, height: 10 });
+  assert.equal(instances[0].opts.vibrancy, "hud");
+  assert.equal(instances[0].opts.transparent, true, "still transparent so the app shows through");
+
+  const win = createOverlayHost({ BrowserWindow: BW, platform: "win32", material: "mica" });
+  win.show({ x: 0, y: 0, width: 10, height: 10 });
+  assert.equal(instances[1].opts.backgroundMaterial, "mica");
+
+  const plain = createOverlayHost({ BrowserWindow: BW, platform: "darwin" });
+  plain.show({ x: 0, y: 0, width: 10, height: 10 });
+  assert.equal(instances[2].opts.vibrancy, undefined, "no material by default");
+});
+
 test("OverlayController: onGone fires while the window is absent", () => {
   let gone = 0;
   const host = { show() {}, move() {}, hide() {}, destroy() {} };

@@ -49,26 +49,43 @@ export function sameRegion(a, b) {
 // actually changes; a null bounds (minimised/closed/off-space) hides the
 // overlay without destroying it, so it reappears when the window returns.
 export class OverlayController {
-  constructor({ host, bounds, pollMs = 250, regionOptions = {}, onGone = null } = {}) {
+  // `subscribe(cb)` is an optional event-driven source: a native helper that
+  // posts OS window-change events (macOS AXObserver / NSWindow notifications,
+  // Windows SetWinEventHook EVENT_OBJECT_LOCATIONCHANGE) calls `cb(bounds)` the
+  // moment the target moves/resizes, so the overlay re-anchors in the same
+  // frame with no lag. It must return an unsubscribe function. `bounds()`
+  // polling stays as the fallback (and the source of truth when no event
+  // source is wired); with a source, polling drops to a slow safety net.
+  constructor({ host, bounds, subscribe = null, pollMs = 250, regionOptions = {}, onGone = null } = {}) {
     if (!host || typeof host.show !== "function") throw new TypeError("overlay host is required");
     if (typeof bounds !== "function") throw new TypeError("bounds must be a function");
     this.host = host;
     this.bounds = bounds;
-    this.pollMs = pollMs;
+    this.subscribe = typeof subscribe === "function" ? subscribe : null;
+    this.pushed = undefined; // last event-pushed bounds (undefined = none yet)
+    this.pollMs = this.subscribe ? Math.max(pollMs, 2000) : pollMs;
     this.regionOptions = regionOptions;
     this.onGone = onGone;
     this.timer = null;
+    this.unsubscribe = null;
     this.visible = false;
     this.region = null;
     this.goneSince = null;
     this.stopped = false;
   }
 
+  // Current bounds: the latest event-pushed value if we have a source, else the
+  // polled read.
+  #read() { return this.subscribe && this.pushed !== undefined ? this.pushed : this.bounds(); }
+
+  // Fed by the event source — re-anchor immediately.
+  push(bounds) { this.pushed = bounds; this.tick(); }
+
   // One tracking step. Exposed so tests can drive it deterministically instead
   // of waiting on the timer.
   tick() {
     if (this.stopped) return;
-    const region = computeRegion(this.bounds(), this.regionOptions);
+    const region = computeRegion(this.#read(), this.regionOptions);
     if (!region) {
       if (this.visible) { this.host.hide(); this.visible = false; }
       this.goneSince ??= Date.now();
@@ -82,6 +99,7 @@ export class OverlayController {
 
   start() {
     if (this.timer || this.stopped) return this;
+    if (this.subscribe) { try { this.unsubscribe = this.subscribe(b => this.push(b)); } catch {} }
     this.tick();
     this.timer = setInterval(() => this.tick(), this.pollMs);
     this.timer.unref?.();
@@ -93,6 +111,7 @@ export class OverlayController {
     if (this.stopped) return;
     this.stopped = true;
     if (this.timer) { clearInterval(this.timer); this.timer = null; }
+    try { this.unsubscribe?.(); } catch {}
     try { this.host.destroy(); } catch {}
     this.visible = false;
   }
@@ -102,8 +121,8 @@ export class OverlayController {
 // platform host (Electron in the product). Returns the started controller;
 // call .stop() to tear down. `boundsFor` is injectable for tests; the default
 // uses window-bounds.js (synchronous, so the poll stays simple).
-export function trackWindow({ pid, host, platform = process.platform, pollMs = 250, regionOptions = {}, boundsFor, onGone = null }) {
+export function trackWindow({ pid, host, platform = process.platform, pollMs = 250, regionOptions = {}, boundsFor, subscribe = null, onGone = null }) {
   const read = boundsFor || (() => windowBounds(pid, { platform }));
-  const controller = new OverlayController({ host, bounds: () => { try { return read(); } catch { return null; } }, pollMs, regionOptions, onGone });
+  const controller = new OverlayController({ host, bounds: () => { try { return read(); } catch { return null; } }, subscribe, pollMs, regionOptions, onGone });
   return controller.start();
 }

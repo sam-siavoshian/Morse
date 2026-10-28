@@ -23,7 +23,14 @@ import { fileURLToPath } from "node:url";
 export const OVERLAY_URL = "morse-app://ui/overlay.html";
 const DEFAULT_PRELOAD = path.join(path.dirname(fileURLToPath(import.meta.url)), "overlay-preload.cjs");
 
-export function createOverlayHost({ BrowserWindow, screen = null, ipcMain = null, runtimeUrl = OVERLAY_URL, platform = process.platform, preload = DEFAULT_PRELOAD } = {}) {
+// `material` opts into a system-native window material for the overlay surface
+// (macOS vibrancy, Windows Mica/Acrylic), for a feature whose chrome should
+// read as part of the OS. It's off by default: a pinned overlay is mostly
+// transparent so the app shows through, and the bar paints its own frosted
+// surface (backdrop-filter) within its bounds. When set: "mac" vibrancy values
+// ("hud", "under-window", "fullscreen-ui") or Windows backgroundMaterial
+// ("mica", "acrylic", "tabbed").
+export function createOverlayHost({ BrowserWindow, screen = null, ipcMain = null, runtimeUrl = OVERLAY_URL, platform = process.platform, preload = DEFAULT_PRELOAD, material = null } = {}) {
   if (!BrowserWindow) throw new TypeError("createOverlayHost needs Electron's BrowserWindow");
   let win = null;
 
@@ -42,6 +49,10 @@ export function createOverlayHost({ BrowserWindow, screen = null, ipcMain = null
       show: false, frame: false, transparent: true, backgroundColor: "#00000000",
       resizable: false, movable: false, minimizable: false, maximizable: false, fullscreenable: false,
       skipTaskbar: true, focusable: true, acceptFirstMouse: true, hasShadow: false,
+      // System-native material (opt-in). Transparent stays on so the app shows
+      // through where the material/overlay is clear.
+      ...(material && platform === "darwin" ? { vibrancy: material, visualEffectState: "active" } : {}),
+      ...(material && platform === "win32" ? { backgroundMaterial: material } : {}),
       // Keep it off screen captures of the desktop where the OS supports it.
       webPreferences: {
         preload: preload || undefined,
@@ -96,15 +107,15 @@ export function createOverlayHost({ BrowserWindow, screen = null, ipcMain = null
 // Tie the host to the native window: start the controller tracking `pid`, and
 // return a handle whose stop() tears the overlay down. `BrowserWindow`/`screen`
 // come from main.js; `boundsFor` is injectable for tests.
-export async function startNativeOverlay({ pid, BrowserWindow, screen = null, ipcMain = null, platform = process.platform, preload = DEFAULT_PRELOAD, regionOptions = {}, boundsFor = null, onGone = null }) {
+export async function startNativeOverlay({ pid, BrowserWindow, screen = null, ipcMain = null, platform = process.platform, preload = DEFAULT_PRELOAD, material = null, regionOptions = {}, boundsFor = null, subscribe = null, onGone = null }) {
   const { OverlayController, trackWindow } = await import("../native-dbi/overlay.js");
-  const host = createOverlayHost({ BrowserWindow, screen, ipcMain, platform, preload });
+  const host = createOverlayHost({ BrowserWindow, screen, ipcMain, platform, preload, material });
   // The real bar expands to panels, so the overlay covers the whole window and
   // hit-tests the bar for click-through (overlay-boot.js), rather than being a
   // fixed strip.
   regionOptions = { mode: "full", ...regionOptions };
   const controller = boundsFor
-    ? new OverlayController({ host, bounds: () => boundsFor(), regionOptions, onGone }).start()
-    : trackWindow({ pid, host, platform, regionOptions, onGone });
+    ? new OverlayController({ host, bounds: () => boundsFor(), subscribe, regionOptions, onGone }).start()
+    : trackWindow({ pid, host, platform, regionOptions, subscribe, onGone });
   return { stop: () => controller.stop(), host, controller };
 }
