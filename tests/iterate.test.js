@@ -172,6 +172,8 @@ test("refine a result, step back with Ctrl+Z, keep, restore from History, refine
   await page.waitForFunction(() => getComputedStyle(document.querySelector("#toolbar .morse-now") || document.body).fontSize === "18px");
   [mod] = await saved(page);
   assert.equal(mod.history.length, 3);
+  // Undo puts the mod back on the page (the size above) before the list redraws.
+  await ui(page, ".panel article").waitFor();
   assert.equal(await ui(page, ".panel article").count(), 1);
   assert.deepEqual(errors, []);
   await ctx.close();
