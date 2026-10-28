@@ -303,6 +303,28 @@ from the desktop app's native flow is one `startNativeOverlay` call away, left
 out until that flow opens a DBI session (the macOS Accessibility picker path is
 untouched).
 
+## Verified end-to-end
+
+`native-dbi/example/` is a runnable proof of the instrumentation core: a real
+native binary, **stripped of symbols** (the closed-source case), whose
+`compute_total()` Morse finds **by signature** (`sigscan.js`, one unique match)
+and replaces — via the real agent (`agent.js`: in-agent `Memory.scan` +
+`Interceptor`) and a declarative `ModSpec` (`schema.js`) — to add a bulk
+discount the binary never shipped, then reverts cleanly:
+
+```
+BEFORE  qty=3 $57  qty=4 $76  qty=5 $95      (as shipped)
+MORSE   qty=3 $45  qty=4 $60  qty=5 $76      (20% off for 3+ — new feature)
+DETACH  qty=3 $57  qty=4 $76  qty=5 $95      (hook reverted, unchanged)
+```
+
+Caveats, kept honest: the target is compiled here (a commercial closed-source
+app can't be run in CI) and headless (the overlay bar isn't in this loop — that
+was verified separately), and the example opens the session with Frida `spawn`
+because attach-to-running stalls on some container ptrace configs (`morse
+launch` uses the attach path; the hooking is identical). See the example's
+README.
+
 ## Status
 
 Prototype. Pure modules (`sigscan.js`, `schema.js`, the parsing/diagnostic

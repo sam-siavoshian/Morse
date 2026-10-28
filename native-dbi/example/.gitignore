@@ -1,0 +1,3 @@
+# built target (reproduce with: cc -O1 -o ticketd ticketd.c && strip ticketd)
+ticketd
+*.o
