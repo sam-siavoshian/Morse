@@ -394,6 +394,7 @@ export default {
   "desk.app.waiting": "等它再次打开",
   "desk.app.connecting": "正在连接…",
   "desk.app.waitingPage": "打开网站以使用 Morse",
+  "desk.app.noAnswer": "{name} 没有响应。",
   "desk.app.browserControls": "浏览器工具栏",
   "desk.app.browserControlsHint": "检查 {name} 的标签页、地址栏和工具栏控件。",
   "desk.app.inspectControls": "检查控件",

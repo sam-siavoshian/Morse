@@ -53,6 +53,17 @@ test("framing: a null byte ends each message; chunks split anywhere, even inside
   assert.deepEqual(u.push(Buffer.from(',"result":{}}\0')), [{ id: 2, result: {} }]);
 });
 
+test("a command with no answer fails fast, and a late answer is ignored", async () => {
+  const { conn, answer } = wired();
+  const t0 = Date.now();
+  await assert.rejects(conn.root.send("Browser.getVersion", {}, { timeoutMs: 40 }), e => e.timeout === true && /timed out/.test(e.message));
+  assert.ok(Date.now() - t0 < 1000);
+  answer({ id: 1, result: { product: "late" } });
+  const next = conn.root.send("Browser.getVersion", {}, { timeoutMs: 1000 });
+  answer({ id: 2, result: { product: "Chrome/1" } });
+  assert.deepEqual(await next, { product: "Chrome/1" });
+});
+
 test("TargetInfo becomes /json/list's shape: id, parentId from the frame it sits in, openerId", () => {
   assert.deepEqual(cdp.listEntry({ targetId: "F", type: "iframe", title: "", url: "https://x.test/", parentFrameId: "W", attached: false, browserContextId: "C" }),
     { id: "F", type: "iframe", title: "", url: "https://x.test/", parentId: "W", browserContextId: "C" });

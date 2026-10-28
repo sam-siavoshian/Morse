@@ -8,7 +8,7 @@ export function filterApps(apps, query = "", connectedOnly = false) {
 // Browsers need a separate route for their toolbar; native apps have no page
 // route at all. Ordinary Electron/CEF apps already have their main action.
 export function nativeAction(app, platform) {
-  if (platform !== "darwin" || !app.running || ["opening", "disconnecting", "connecting"].includes(app.state)) return null;
+  if (platform !== "darwin" || !app.running || ["opening", "disconnecting", "connecting", "no-answer"].includes(app.state)) return null;
   if (app.browser) return "browser";
   return app.engine === "native" ? "native" : null;
 }
