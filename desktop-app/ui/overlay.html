@@ -3,28 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Morse's own chrome is dark-only, like the app window and the site; pin it
-       so the bar doesn't flip to light under a light-mode OS. -->
+  <!-- Morse's own chrome is dark-only, like the app window and the site. -->
   <meta name="color-scheme" content="dark" />
   <title>Morse overlay</title>
-  <!-- Same design tokens as the in-page bar, so the overlay reads as one
-       system with the web/Electron bar. CSP (set by the server) is
-       script-src 'self'; style-src 'self', so styles and scripts are external. -->
-  <link rel="stylesheet" href="tokens.css" />
   <link rel="stylesheet" href="overlay.css" />
 </head>
 <body>
-  <!-- The whole window is transparent and click-through; only #morse-overlay-bar
-       is interactive (overlay-boot.js toggles the host's mouse pass-through on
-       hover). The full runtime bar (runtime/) mounts into #morse-overlay-root;
-       until that seam is wired, the token-styled shell below stands in. -->
-  <div id="morse-overlay-root">
-    <div id="morse-overlay-bar" role="toolbar" aria-label="Morse">
-      <span class="morse-overlay-mark" aria-hidden="true"></span>
-      <span class="morse-overlay-title">Morse</span>
-      <span class="morse-overlay-hint" id="morse-overlay-hint">native · experimental</span>
-    </div>
-  </div>
+  <!-- The real Morse bar (runtime/) mounts itself into document.body. First
+       overlay-boot.js installs the host the runtime talks to, then
+       overlay-runtime.js (= bundleRuntime()) loads and renders the same bar the
+       web and Electron hosts render. No placeholder. -->
   <script src="overlay-boot.js"></script>
+  <script src="overlay-runtime.js"></script>
 </body>
 </html>

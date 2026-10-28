@@ -274,26 +274,34 @@ session stays the data/action channel underneath; the overlay is only about
   (minimised/closed) and reappears when it returns. Pure, unit-tested.
 - **`desktop-app/overlay.js`** — the Electron host: a `transparent`,
   `frame:false`, `alwaysOnTop("screen-saver")`, `skipTaskbar` `BrowserWindow`
-  that loads `morse://ui/overlay.html` and is created click-through
+  that loads `morse://ui/overlay.html` covering the app, created click-through
   (`setIgnoreMouseEvents(true, {forward})`); the page re-enables mouse events
-  only over the bar (`overlay-preload.cjs` → `morse-overlay:interactive`). It
-  takes the Electron pieces as parameters, so it's testable against a stub.
-- **`desktop-app/ui/overlay.{html,css}` + `overlay-boot.js`** — the overlay
-  page: transparent, styled from the same `design/tokens.css` as the in-page
-  bar. `startNativeOverlay({ pid, BrowserWindow, screen, ipcMain })` ties bounds
-  → controller → host.
+  only while the pointer is over the bar (`overlay-preload.cjs` →
+  `morse-overlay:interactive`). It takes the Electron pieces as parameters, so
+  it's testable against a stub.
+- **`desktop-app/ui/overlay.html` + `overlay-boot.js`** — the overlay page
+  renders the **real bar**: `overlay-boot.js` installs the host the runtime
+  talks to (`globalThis.__morseHost`, the same contract
+  `demo/bar-playground.html` uses), then `overlay.html` loads
+  `overlay-runtime.js` — `bundleRuntime()`, the identical bundle the web and
+  Electron bars use. Same code → same bar. `main.js` serves that bundle and
+  gives this one page a CSP with `style-src 'unsafe-inline'` (the runtime
+  injects its stylesheet into a shadow root). `startNativeOverlay({ pid,
+  BrowserWindow, screen, ipcMain })` ties bounds → controller → host.
 
-**What's wired, and what's next.** The overlay *engine* (tracking, region math,
-lifecycle) and the Electron host are built and tested (the host against a fake
-`BrowserWindow`; a live display is needed to confirm compositing). The overlay
-page renders a token-styled bar shell today. The remaining seam is mounting the
-**full `runtime/` bundle** into `#morse-overlay-root` and bridging its host RPC
-(generate / run / save) to the native DBI session over IPC — i.e. native *mods*,
-which don't exist yet (launch attaches and holds the connection; see above).
-`overlay-boot.js` marks the exact mount point. Auto-launching the overlay from
-the desktop app's native flow is one `startNativeOverlay` call away but left
-out until that flow opens a DBI session (today the desktop native path is the
-macOS Accessibility picker, which is untouched).
+**What's wired, and what's next.** The overlay renders the real Morse bar —
+the input, the suggestion chips, the Mods panel, settings, history — from the
+same `runtime/` bundle, proven by a headless render (`node --test`'s stub host
+plus the manual proof harness). Its data messages (settings/history/saved mods)
+are kept per-viewer in the overlay today; the one genuine gap is the **"apply a
+change" backend**: `generate` / `mods.save` route through
+`overlay-preload.cjs` → `morse-overlay:native` to the DBI session, and until
+native mod generation exists they reply honestly rather than pretend (the bar
+shows the flow; the change isn't applied to the app yet). Live compositing over
+a real app still needs a display to confirm, and auto-launching the overlay
+from the desktop app's native flow is one `startNativeOverlay` call away, left
+out until that flow opens a DBI session (the macOS Accessibility picker path is
+untouched).
 
 ## Status
 

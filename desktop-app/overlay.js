@@ -31,6 +31,10 @@ export function createOverlayHost({ BrowserWindow, screen = null, ipcMain = null
   // the pointer is over the bar, and click-through again when it leaves.
   const onInteractive = (_event, on) => { if (win && !win.isDestroyed()) win.setIgnoreMouseEvents(!on, { forward: true }); };
   ipcMain?.on?.("morse-overlay:interactive", onInteractive);
+  // The bar's "apply a change" messages reach here. Native mod generation isn't
+  // built yet, so the default answer is honest; the app replaces this handler
+  // when the native backend exists.
+  ipcMain?.handle?.("morse-overlay:native", async () => ({ ok: false, error: "Native mods aren't wired yet." }));
 
   const ensure = () => {
     if (win && !win.isDestroyed()) return win;
@@ -75,8 +79,11 @@ export function createOverlayHost({ BrowserWindow, screen = null, ipcMain = null
       if (!win.isVisible()) win.showInactive();
     },
     hide() { if (win && !win.isDestroyed() && win.isVisible()) win.hide(); },
+    // Open the bar (the app calls this on the Morse hotkey).
+    open() { if (win && !win.isDestroyed()) win.webContents.send("morse-overlay:open"); },
     destroy() {
       ipcMain?.removeListener?.("morse-overlay:interactive", onInteractive);
+      ipcMain?.removeHandler?.("morse-overlay:native");
       if (win && !win.isDestroyed()) win.destroy();
       win = null;
     },
@@ -92,6 +99,10 @@ export function createOverlayHost({ BrowserWindow, screen = null, ipcMain = null
 export async function startNativeOverlay({ pid, BrowserWindow, screen = null, ipcMain = null, platform = process.platform, preload = DEFAULT_PRELOAD, regionOptions = {}, boundsFor = null, onGone = null }) {
   const { OverlayController, trackWindow } = await import("../native-dbi/overlay.js");
   const host = createOverlayHost({ BrowserWindow, screen, ipcMain, platform, preload });
+  // The real bar expands to panels, so the overlay covers the whole window and
+  // hit-tests the bar for click-through (overlay-boot.js), rather than being a
+  // fixed strip.
+  regionOptions = { mode: "full", ...regionOptions };
   const controller = boundsFor
     ? new OverlayController({ host, bounds: () => boundsFor(), regionOptions, onGone }).start()
     : trackWindow({ pid, host, platform, regionOptions, onGone });
