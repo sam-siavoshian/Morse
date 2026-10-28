@@ -361,6 +361,11 @@ app.whenReady().then(async () => {
         await updater.check({ user: true });
         return { ...updater.status };
       },
+      downloadUpdate: async () => {
+        if (!updater) return { phase: "error", reason: "download", action: "install" };
+        await updater.downloadUpdate();
+        return { ...updater.status };
+      },
       nativeControls: async pid => {
         log("native-picker", "requested", pid);
         if (!nativePicker) return { error: "Native controls are still starting." };

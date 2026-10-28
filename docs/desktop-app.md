@@ -162,8 +162,9 @@ apps stay open; reconnect them to Morse afterward. **Later** postpones installat
 until you quit Morse. You don't need to download anything again.
 
 **Check for updates** in Settings looks now. It says whether you're up to date,
-or that an update is available. When Morse can install it, the update window
-opens. When it can't, **Get the update** opens the download.
+or that an update is available. **Download update** downloads that version,
+checks it, replaces this copy and opens Morse again. If the download or the
+install can't finish, Morse says so and keeps this version.
 
 ## For developers: the morse command
 

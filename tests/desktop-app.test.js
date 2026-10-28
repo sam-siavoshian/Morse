@@ -521,6 +521,27 @@ test("Check for updates returns what the updater found, and nothing else", async
   assert.equal(LINKS.release, "https://github.com/sam-siavoshian/RRAA/releases/tag/preview");
 });
 
+test("Download update installs in place and does not open a download page", async () => {
+  const { call, native } = setup();
+  native.downloadUpdate = async () => {
+    native.downloads = (native.downloads || 0) + 1;
+    return { phase: "installing", action: "install", version: "0.3.4" };
+  };
+  assert.deepEqual(await call("downloadUpdate"), { phase: "installing", action: "install", version: "0.3.4" });
+  assert.equal(native.downloads, 1);
+  assert.deepEqual(native.opened, [], "the install path does not open a browser");
+  assert.equal(JSON.stringify(await call("downloadUpdate")).includes("http"), false);
+  assert.deepEqual(await call("downloadUpdate", "https://github.com/sam-siavoshian/Morse/releases/tag/preview", "more"), { error: "Not allowed." });
+  assert.equal(native.downloads, 2, "an address is refused and does not download");
+  const html = readFileSync(path.join(root, "desktop-app/ui/index.html"), "utf8");
+  const button = html.match(/<button[^>]*id="update-get"[^>]*>/)[0];
+  assert.doesNotMatch(button, /data-link|https?:/);
+  const ui = readFileSync(path.join(root, "desktop-app/ui/app.js"), "utf8");
+  const fn = ui.slice(ui.indexOf("async function downloadUpdate"), ui.indexOf("$(\"update-get\").onclick"));
+  assert.match(fn, /morse\.downloadUpdate\(/);
+  assert.doesNotMatch(fn, /openLink|openExternal|https?:/);
+});
+
 test("links open only by name, and login start goes through the native side", async () => {
   const { call, native } = setup();
   for (const name of Object.keys(LINKS)) await call("openLink", name);
