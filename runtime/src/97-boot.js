@@ -67,6 +67,7 @@ B.adopt({
   guardStop, // guard hook: boot.js didn't apply a mod, or undid it (64-guard.js)
   guardReady, // guard hook: a mod that froze the page was turned off (64-guard.js)
   styleReady: () => YourStyle.ready(), // your-style hook: fit it to this site once, if turned on (72-style.js)
+  pendingReady, // in-progress change: the bar again after a reload, until Save or Undo (60-generate.js)
 });
 const uiStarted = () => { B.started(); S.ready = true; /* tests: the host answered hello and the mods are on */ };
 B.ready.then(hello => {
