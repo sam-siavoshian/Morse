@@ -49,7 +49,7 @@ written for developers are listed under [Where technical words are fine](#where-
 | Let's…, Ready to…? | (say what to do: "Connect a model") |
 | customize, customization | change |
 | enable, disable, toggle | turn on, turn off |
-| refine (in the UI) | change, "describe what to change" |
+| refine (in the UI) | change, "follow up on this change" |
 | prompt (in the UI) | request, or "what you asked for" |
 | target, element, node (in the UI) | what you pointed at, this, part of the page |
 | inject, injected | add, run |
@@ -271,7 +271,7 @@ in one or two short sentences.
 | Bar, stopped | **Stopped** · nothing was changed · Enter to run again | **Stopped.** Nothing was changed · Enter to try again |
 | Bar, result | Keep · Undo · Code · Share | Save · Undo · Edit code · Share |
 | Bar, result | 4.2s · repaired once | 4.2s · needed a second try |
-| Bar, after a result | Refine… | Describe what to change… |
+| Bar, after a result | Refine… | Follow up on this change… |
 | Toast | Saved “Sleep timer” · it'll be here next time | Saved “Sleep timer”. It will be here next time. |
 | Mods panel | Import mod… | Install a mod… |
 | Mods panel | Refine | Change |

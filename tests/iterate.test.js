@@ -57,7 +57,7 @@ test("refine a result, step back with Ctrl+Z, keep, restore from History, refine
   assert.equal(await page.locator("#toolbar .morse-now").count(), 1);
   assert.equal(await fontSize(page), "14px");
   // The input stays usable for a follow-up.
-  assert.equal(await ui(page, ".in").getAttribute("placeholder"), "Describe what to change…");
+  assert.equal(await ui(page, ".in").getAttribute("placeholder"), "Follow up on this change…");
   assert.equal(await ui(page, ".in").isEnabled(), true);
   assert.equal(s.focus, "in");
 

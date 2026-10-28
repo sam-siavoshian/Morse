@@ -3,6 +3,8 @@
 // guessed API). Source names still need runtime verification before use.
 // Pure: no files, no network.
 
+import { wantsBehavior } from "./route.js";
+
 const RESERVED = new Set(("function return if else for while switch case break continue new typeof instanceof void delete try catch finally throw class const let var async await of in do default export import from true false null undefined this super yield static get set document window console Math JSON Object Array String Number Boolean Date RegExp Promise Error Map Set fetch axios").split(" "));
 // At least three characters, so a minified `h` in el.on("click", h) is not a hook.
 const isName = n => typeof n === "string" && /^[A-Za-z_$][\w$]{2,60}$/.test(n) && !RESERVED.has(n);
@@ -90,7 +92,7 @@ export function mergeHookLists(a, b) {
 // Feature and behavior requests. Visual tweaks ("make the status bar taller",
 // "hide this ribbon") stay false so they still get an empty profile slice.
 const WANTS = /\b(features?|change this|add (?:a |an |another )?(?:new )?(?:button|card|section|control|widget|panel)|buttons?\b[^.]{0,40}\b(?:that|to|which|for)|when(?:ever)?|shortcuts?|keyboard|hotkeys?|commands?|functions?|modules?|hooks?|backend|apis?|fetch|submit|sav(?:e|es|ed|ing)|timer)\b/i;
-export const wantsHooks = request => WANTS.test(String(request || ""));
+export const wantsHooks = request => WANTS.test(String(request || "")) || wantsBehavior(request);
 
 const SKIP_WORD = new Set("add feature features button buttons this change make makes made app page the and for that with from your into new control widget card section panel when then also all any just like want please here there".split(" "));
 const stem = w => (w.length < 4 ? w : w.replace(/ies$/, "y").replace(/s$/, ""));
@@ -184,7 +186,7 @@ export function replacesHost(js) {
 }
 
 const ADDS_CONTROL = /morse\.el\s*\(\s*["'`](button|a|input)\b|createElement\s*\(\s*["'`](button|a|input)\b|<button[\s>/]|<input[\s>/]/i;
-const LIFE = /fetch\s*\(|\baxios\s*\.|\.open\s*\(|morse\.app\.command\s*\(|morse\.every\s*\(|morse\.after\s*\(|\.click\s*\(|clipboard|morse\.confirm\s*\(|morse\.type\s*\(/;
+const LIFE = /fetch\s*\(|\baxios\s*\.|\.open\s*\(|morse\.app\.command\s*\(|morse\.every\s*\(|morse\.after\s*\(|\.click\s*\(|clipboard|morse\.confirm\s*\(|morse\.type\s*\(|morse\.store\b|localStorage|sessionStorage/;
 
 // Reject inert buttons and cosmetic handlers. This is a conservative static
 // check, not proof of behavior: native controls and local implementations are
@@ -232,4 +234,26 @@ export function unwiredFeature(draft, context, request) {
     };
   }
   return null;
+}
+
+// The request asked for behavior. CSS, or a control that only changes its
+// own look, does not do that work.
+export function implementsBehavior(js) {
+  const code = String(js || "");
+  if (!/\S/.test(code)) return false;
+  if (LIFE.test(code)) return true;
+  if (/\.sort\s*\(|\bstyle\.order\b/.test(code)) return true;
+  const handled = /\bon\s*:\s*\{|\.addEventListener\s*\(|morse\.on\s*\(/.test(code);
+  return handled && !deadControl(code);
+}
+
+export const COSMETIC_ERROR = "That only changed how it looks. Say it again so it also does what you asked.";
+const COSMETIC_MODEL = "The request asks for behavior, not only a new look. Return JavaScript that does the work: a real handler, saved state with morse.store when the choice should last, and an update to what is shown next (reorder, filter, or prefer). CSS alone is not enough.";
+
+// null when the draft does the behavior, or the request is only about looks.
+// Otherwise { model, user }.
+export function cosmeticBehavior(draft, request) {
+  if (!wantsBehavior(request)) return null;
+  if (implementsBehavior(draft?.js)) return null;
+  return { model: COSMETIC_MODEL, user: COSMETIC_ERROR };
 }

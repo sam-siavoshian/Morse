@@ -18,7 +18,8 @@
 <!-- Dev playground: the real runtime with a fake host that streams canned
      tokens, so the UI and effect can be iterated on without a model.
      Open with ?light for the light theme, ?reset to forget saved mods,
-     ?model=demo to generate with the real engine and the demo model.
+     ?model=demo to generate with the real engine and the demo model,
+     ?feed for a few posts a like or dislike can reorder.
      Mods and the God mode clipboard persist in localStorage, and mod JS runs
      through the real helper kit, so manual edits re-apply after a reload. -->
 <div class="stage">
@@ -59,6 +60,16 @@
     more.addEventListener("click", () => setOpen(menu.hidden));
     document.getElementById("export").addEventListener("click", () => { setOpen(false); fake.exported = (fake.exported || 0) + 1; });
     document.addEventListener("click", e => fake.clicks.push({ id: e.target.id || e.target.textContent.trim().slice(0, 20), trusted: e.isTrusted }), true);
+  }
+  // ?feed: a small feed so a like/dislike change can reorder real posts.
+  if (location.search.includes("feed")) {
+    document.querySelector(".stage").insertAdjacentHTML("beforeend", `
+      <section id="feed" data-feed aria-label="Feed" style="display:grid;gap:10px">
+        <article data-type="music" style="padding:12px;border-radius:10px;background:color-mix(in srgb, currentColor 8%, transparent)">Music: a quiet piano piece</article>
+        <article data-type="sports" style="padding:12px;border-radius:10px;background:color-mix(in srgb, currentColor 8%, transparent)">Sports: a late inning</article>
+        <article data-type="music" style="padding:12px;border-radius:10px;background:color-mix(in srgb, currentColor 8%, transparent)">Music: a loud chorus</article>
+        <article data-type="news" style="padding:12px;border-radius:10px;background:color-mix(in srgb, currentColor 8%, transparent)">News: a short update</article>
+      </section>`);
   }
   const TEXT = "TITLE: Demo\n```css\n#toolbar { gap: 20px; letter-spacing: .02em; }\n#toolbar button { opacity: .9; }\n```\n```js\nmorse.watch('#toolbar', t => t.append(morse.el('span', { text: 'hello' })));\n```\n";
   const store = {
