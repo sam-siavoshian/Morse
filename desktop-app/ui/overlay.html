@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Morse's own chrome is dark-only, like the app window and the site. -->
+  <meta name="color-scheme" content="dark" />
+  <title>Morse overlay</title>
+  <link rel="stylesheet" href="overlay.css" />
+</head>
+<body>
+  <!-- The real Morse bar (runtime/) mounts itself into document.body. First
+       overlay-boot.js installs the host the runtime talks to, then
+       overlay-runtime.js (= bundleRuntime()) loads and renders the same bar the
+       web and Electron hosts render. No placeholder. -->
+  <script src="overlay-boot.js"></script>
+  <script src="overlay-runtime.js"></script>
+</body>
+</html>

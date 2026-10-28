@@ -13,7 +13,8 @@ import {
   loadAppPrefs, saveAppPref, formatApps, said, closedEarly, PIPE, pipeFor, executableFor, launchFailure,
 } from "./apps.js";
 import { pickPort, portFree, portAnswers, reachableFrom, identify, checkIdentity, portIsMine } from "./ports.js";
-import { readSessions, publishSession, stopRequested, stopSession, withMods, formatStatus, requestOpen, takeOpenRequest } from "./status.js";
+import { readSessions, publishSession, stopRequested, stopSession, withMods, formatStatus, requestOpen, takeOpenRequest, writeSession, removeSession, isAlive } from "./status.js";
+import { nativeAvailable, nativePid, connectNative } from "./native-dbi.js";
 import { carrySignIns } from "./browser-profile.js";
 import { createMacAccess, desktopProgram, fileStore, macAccessFile, readAppManagementStatus, relaunchDesktop, clearAppManagementCache, prepareAppOpen } from "./mac-access.js";
 import { trace } from "./trace.js"; // MORSE_TRACE: which way Morse reached the app
@@ -107,6 +108,8 @@ export async function launchCommand(f, { settingsFrom, logo }) {
   const ctx = hostContext();
   const app = resolveApp(f._.join(" "), { ctx });
   if (f.name) Object.assign(app, { id: slug(f.name), name: String(f.name), aliases: [...(app.aliases || []), app.name] });
+  // Native apps take the experimental DBI route (native-dbi/), not CDP.
+  if (app.engine === "native" || app.dbi) return launchNative(app, { logo });
   if (app.canAttach === false) throw said(t("launch.cant", { name: app.name, why: app.why }));
   const extra = f.rest || [];
   const pref = (await loadAppPrefs())[app.id] || {};
@@ -153,6 +156,72 @@ export async function launchCommand(f, { settingsFrom, logo }) {
   // Morse to open the app again (status.js requestOpen).
   const reopen = req => connectApp(app, { ...options, port: null, pref: null, ask: null, extra: req.extra.length ? req.extra : extra, restart: req.restart, noRestart: false });
   return runSession({ port: ready.port, browser: ready.browser, app, settings, watch: !!f.watch, verify: ready.verify, who: ready.who, reopen });
+}
+
+// `morse launch` for a native app: the experimental DBI route. Native support
+// attaches to a process the person already started (it doesn't spawn or inject
+// into a fresh launch), so the app must be running. Everything hard — the
+// ownership gate, the platform assessment, frida being optional — lives in
+// daemon/native-dbi.js and native-dbi/; this prints the flow and holds the
+// session so `morse status` / `morse stop` work like any other.
+async function launchNative(app, { logo }) {
+  console.log(logo + "\n");
+  console.log(`  app     ${B(app.name)} ${D(app.path)}`);
+  console.log(`  engine  ${D("native · experimental (dynamic binary instrumentation)")}`);
+
+  const avail = await nativeAvailable();
+  if (!avail.ok) throw said(avail.message);
+
+  const pid = nativePid(app);
+  if (!pid) throw said(`${app.name} isn't running. Native support attaches to a process you already started, so open ${app.name} first, then run ${B(`morse launch ${app.id}`)} again.`);
+  console.log(`  pid     ${pid}`);
+
+  const existing = (await readSessions()).find(s => s.id === app.id);
+  if (existing) { console.log(`\n  ${t("launch.already", { name: app.name, port: existing.port, status: B("morse status"), stop: B(`morse stop ${app.id}`) })}`); return; }
+
+  const res = await connectNative(app, { pid, mods: [], onEvent: (kind, e) => {
+    if (kind === "mod") console.log(`  ${e.level === "error" ? "!" : "·"} ${D(`${e.id}: ${e.message}`)}`);
+    else if (kind === "error") console.log(`  ! ${e.message}`);
+    else if (kind === "detached") { /* handled by runNativeSession */ }
+  } });
+
+  console.log("");
+  for (const line of String(res.diagnostics || "").split("\n").filter(Boolean)) console.log(D(`  ${line}`));
+  if (!res.ok) throw said(res.reason === "frida-missing" ? res.diagnostics : `Morse couldn't attach to ${app.name}. ${res.reason === "unauthorized" ? "" : "See the reason above."}`.trim());
+
+  console.log(`\n  ${B("attached")} ${D("· no native mods yet — this is an experimental connection to build native mods against")}\n`);
+  return runNativeSession({ app, session: res.session, targetPid: pid });
+}
+
+// Hold a native session open: keep its status file current, detach cleanly on
+// stop / the app quitting / Ctrl-C. The native cousin of runSession, without a
+// Connector (there is no CDP, no windows).
+async function runNativeSession({ app, session, targetPid }) {
+  const id = app.id, name = app.name;
+  const record = () => ({ id, name, path: app.path || null, aliases: app.aliases || [], pid: process.pid,
+    port: null, transport: "frida", native: true, state: "attached", windows: [], started: new Date().toISOString() });
+  await writeSession(record());
+  const beat = setInterval(() => { writeSession(record()).catch(() => {}); }, 5000); beat.unref?.();
+
+  let ending = false;
+  const finish = async (how) => {
+    if (ending) return;
+    ending = true;
+    clearInterval(beat); clearInterval(poll);
+    try { await session?.detach(); } catch {}
+    removeSession(id);
+    console.log(how === "stop" ? t("launch.disconnected", { name }) : `\n${t("launch.disconnectedRunning", { name })}`);
+    process.exit(0);
+  };
+  session?.on?.("detached", () => finish("stop"));
+  const poll = setInterval(() => {
+    if (ending) return;
+    if (stopRequested(id)) return finish("stop");
+    if (targetPid && !isAlive(targetPid)) return finish("gone");
+  }, 400);
+  process.once("SIGINT", () => finish("interrupt"));
+  process.once("SIGTERM", () => finish("stop"));
+  await new Promise(() => {}); // held open until finish() exits the process
 }
 
 // The steps of `morse launch` once the app is chosen, without the terminal

@@ -30,6 +30,7 @@ import { startShellPath } from "./shell-path.js";
 import { createUpdater } from "./updater.js";
 import { acceleratorFor, createOpenShortcut, readForegroundPid } from "./shortcut.js";
 import { createNativePicker } from "./native-picker.js";
+import { bundleRuntime } from "../runtime/bundle.js"; // the real bar, for the native overlay window
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // The window's page is served from morse-app://ui/, a scheme of Morse's own
@@ -39,6 +40,11 @@ const PAGE_URL = `${SCHEME}://ui/index.html`;
 const UI_FILES = {
   "/index.html": [path.join(HERE, "ui", "index.html"), "text/html; charset=utf-8"],
   "/app.css": [path.join(HERE, "ui", "app.css"), "text/css; charset=utf-8"],
+  // The native overlay window (desktop-app/overlay.js): the same bar, over a
+  // native app. See docs/dev/native-dbi.md.
+  "/overlay.html": [path.join(HERE, "ui", "overlay.html"), "text/html; charset=utf-8"],
+  "/overlay.css": [path.join(HERE, "ui", "overlay.css"), "text/css; charset=utf-8"],
+  "/overlay-boot.js": [path.join(HERE, "ui", "overlay-boot.js"), "text/javascript; charset=utf-8"],
   "/app-list.js": [path.join(HERE, "ui", "app-list.js"), "text/javascript; charset=utf-8"],
   "/app.js": [path.join(HERE, "ui", "app.js"), "text/javascript; charset=utf-8"],
   // When the row may say Connected, and when the "isn't running yet" banner may show.
@@ -62,6 +68,11 @@ const UI_FILES = {
   ...Object.fromEntries(LANGUAGES.map(l => [`/core/locales/${l.code}.js`, [path.join(HERE, "..", "core", "locales", `${l.code}.js`), "text/javascript; charset=utf-8"]])),
 };
 const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+// The native overlay window renders the real runtime bar, which injects its
+// stylesheet into a shadow root — so this page (and only this page) needs
+// style-src 'unsafe-inline'. Scripts stay 'self' (the bundle is served from here).
+const OVERLAY_CSP = "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+const OVERLAY_PATHS = new Set(["/overlay.html", "/overlay.css", "/overlay-boot.js", "/overlay-runtime.js"]);
 protocol.registerSchemesAsPrivileged([{ scheme: SCHEME, privileges: { standard: true, secure: true } }]);
 // Morse's page, whatever its query (?platform=…) says.
 const isPage = url => { try { const u = new URL(url); u.search = ""; u.hash = ""; return u.href === PAGE_URL; } catch { return false; } };
@@ -124,10 +135,17 @@ function lockSession() {
   // The page's files, from inside the app, with the CSP as a header too.
   s.protocol.handle(SCHEME, async req => {
     const u = new URL(req.url);
-    const hit = u.host === "ui" && UI_FILES[u.pathname];
-    if (!hit || req.method !== "GET") return new Response("Not found", { status: 404 });
+    if (req.method !== "GET" || u.host !== "ui") return new Response("Not found", { status: 404 });
+    const csp = OVERLAY_PATHS.has(u.pathname) ? OVERLAY_CSP : CSP;
+    const common = { "content-security-policy": csp, "x-content-type-options": "nosniff", "cache-control": "no-store" };
+    // The real bar, bundled fresh, for the native overlay window.
+    if (u.pathname === "/overlay-runtime.js") {
+      return new Response(bundleRuntime(), { headers: { "content-type": "text/javascript; charset=utf-8", ...common } });
+    }
+    const hit = UI_FILES[u.pathname];
+    if (!hit) return new Response("Not found", { status: 404 });
     const body = await fs.readFile(hit[0]);
-    return new Response(body, { headers: { "content-type": hit[1], "content-security-policy": CSP, "x-content-type-options": "nosniff", "cache-control": "no-store" } });
+    return new Response(body, { headers: { "content-type": hit[1], ...common } });
   });
 }
 

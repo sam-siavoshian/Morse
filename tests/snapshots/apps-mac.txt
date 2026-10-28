@@ -1,4 +1,5 @@
 Apps Morse found on this Mac
+  ◐ ChatGPT      1.2025.014  native · experimental · morse launch chatgpt
   ● Chrome       131.0.6778  browser                     /Applications/Google Chrome.app
   ● Claude       0.9.3       Electron 33                 /Applications/Claude.app
   ● Discord      0.0.326     Electron 33                 open with port 9222
@@ -8,7 +9,6 @@ Apps Morse found on this Mac
   ● Slack        4.41.105    Electron 32                 open without Morse → morse launch slack --restart
   ● Spotify      1.2.52      Chromium (CEF)              /Applications/Spotify.app
   ● VS Code      1.95.3      Electron 32                 connected · port 9333
-  ○ ChatGPT      1.2025.014  can't connect: native app, not built on web technology
 
 Other Electron and Chromium apps
   ● Beeper       4.0.5       Electron 31                 /Applications/Beeper.app

@@ -28,6 +28,7 @@
     "daemon/",
     "core/",
     "runtime/",
+    "native-dbi/",
     "design/tokens.css",
     "CHANGELOG.md"
   ],

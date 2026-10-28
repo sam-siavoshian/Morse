@@ -745,7 +745,12 @@ export function attachVerdict(app) {
     case "electron": return { canAttach: true, why: app.engineGuessed ? "Electron app" : `Electron${app.electron ? " " + app.electron.split(".")[0] : ""}` };
     case "cef": return { canAttach: true, why: "Chromium (CEF)" };
     case "chromium": return { canAttach: true, why: app.browser ? "browser" : "Chromium" };
-    case "native": return { canAttach: false, why: "native app, not built on web technology" };
+    // Native apps aren't CDP-attachable (canAttach stays false, so every
+    // CDP-shaped path — the Electron launch, the desktop app's Open button —
+    // keeps treating them as it did). `dbi` marks the separate, experimental
+    // route: dynamic binary instrumentation via native-dbi/, reached from
+    // `morse launch`. See docs/dev/native-dbi.md.
+    case "native": return { canAttach: false, native: true, dbi: true, why: "native app, not built on web technology" };
     default: return { canAttach: null, why: app.appimage ? "AppImage, couldn't look inside" : "couldn't tell what it's built on" };
   }
 }
@@ -1192,6 +1197,8 @@ export function formatApps(apps, { running = new Map(), sessions = [], platform 
   const row = a => {
     const s = sessions.find(x => x.id === a.id);
     const run = running.get(a.id);
+    // Native apps: not CDP, but reachable by the experimental DBI route.
+    if (a.dbi) return `  ${c.y("◐")} ${c.b(pad(a.name, nameWidth))}${c.d(pad(version(a), 12))}${c.d(`native · experimental · ${c.b(`morse launch ${a.id}`)}`)}`;
     const dot = a.canAttach === false ? c.d("○") : a.canAttach ? c.g("●") : c.d("◌");
     if (a.canAttach === false) return `  ${dot} ${c.d(pad(a.name, nameWidth) + pad(version(a), 12) + `can't connect: ${a.why}`)}`;
     const state = s ? c.g(`connected · port ${s.port}`)
@@ -1200,7 +1207,10 @@ export function formatApps(apps, { running = new Map(), sessions = [], platform 
       : c.d(a.note || where(a));
     return `  ${dot} ${c.b(pad(a.name, nameWidth))}${c.d(pad(version(a), 12))}${pad(a.why, 28)}${state}`;
   };
-  const order = (x, y) => (x.canAttach === false) - (y.canAttach === false) || x.name.localeCompare(y.name);
+  // Can't-connect apps sort last; native (DBI-reachable) apps are actionable,
+  // so they don't.
+  const rank = a => a.canAttach === false && !a.dbi ? 1 : 0;
+  const order = (x, y) => rank(x) - rank(y) || x.name.localeCompare(y.name);
   const known = apps.filter(a => a.known).sort(order), other = apps.filter(a => !a.known).sort(order);
   const out = [`Apps Morse found on ${PLACE[platform] || "this computer"}`, ...known.map(row)];
   if (other.length) out.push("", c.d("Other Electron and Chromium apps"), ...other.map(row));

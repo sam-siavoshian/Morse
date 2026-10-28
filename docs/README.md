@@ -38,6 +38,7 @@ If you're new, start with [Getting started](getting-started.md).
 | [How a change really happens](dev/how-it-works.md) | A real recording, the live trace, and every step from your words to the change on screen |
 | [How Morse works](dev/architecture.md) | Hosts, the in-app code, the `morse` kit, the engine, models, the mod format, security |
 | [App profiles](dev/rea.md) | How Morse reads how a desktop app works inside (its commands, channels, objects) so changes can use the app's own logic, and what was taken from REA |
+| [Native apps (prototype)](dev/native-dbi.md) | A fenced-off prototype for native apps via Frida dynamic binary instrumentation, why it crosses Morse's read-only boundary, and the ownership gate and platform diagnostics that keep it in scope |
 | [Testing](dev/testing.md) | `npm run check`, `npm test`, `npm run test:ui`, test helpers, evals, screenshots, what was verified |
 | [Adding a feature](dev/adding-a-feature.md) | Rules for the in-app code, words, the UI review, docs |
 | [Accessibility of Morse itself](dev/accessibility.md) | Keyboard, screen readers, zoom and forced colors in Morse's own UI, and the axe-core audit |

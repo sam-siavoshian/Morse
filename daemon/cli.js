@@ -225,7 +225,10 @@ async function main() {
       const app = resolveApp(f._.join(" "));
       const info = await inspectFuses(app.path);
       if (f.json) return console.log(JSON.stringify(info, null, 2));
-      // A native app has no fuses, and Morse can't connect to it anyway: say that.
+      // A native app has no Electron fuses. It isn't CDP-attachable, but it
+      // can be reached by the experimental DBI route — point there, not at a
+      // flat "can't connect".
+      if (app.dbi) return console.log(`${app.name}  ${app.path}\n  native app — no Electron fuses. Experimental native support: morse launch ${app.id}`);
       if (app.canAttach === false) return console.log(`${app.name}  ${app.path}\n  ${t("cli.cantConnect", { why: app.why })}`);
       console.log(formatFuses(info, app.name));
       break;

@@ -1,0 +1,11 @@
+/* The overlay window is transparent and covers the target app; the real Morse
+   bar (runtime/) paints itself into a shadow root with its own styles, so this
+   file only keeps the page out of the way. */
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  color-scheme: dark;
+}
