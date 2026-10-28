@@ -109,13 +109,19 @@ export class NativeSession extends EventEmitter {
       for (const r of res) { const i = this.applied.findIndex(a => a.id === r.id); if (i >= 0) this.applied[i] = r; else this.applied.push(r); }
       return res;
     } catch (e) {
-      this.emit("error", e);
+      // emit("error") with no listener throws (Node), which would swallow the
+      // return below. Only emit when something is listening.
+      if (this.listenerCount("error")) this.emit("error", e);
       return ready.map(s => ({ id: s.id, status: "errored", error: e.message }));
     }
   }
 
-  // Revert a single mod in the running target.
-  async revert(id) { try { await this.script?.exports.revert(id); } catch (e) { this.emit("error", e); } }
+  // Revert a single mod in the running target. Returns whether it succeeded, so
+  // the caller only marks a mod off once the hook is actually gone.
+  async revert(id) {
+    try { await this.script?.exports.revert(id); return true; }
+    catch (e) { if (this.listenerCount("error")) this.emit("error", e); return false; }
+  }
 
   // Clean detach: revert every hook inside the target, unload the script, then
   // detach the session — in that order, so nothing is left behind. Safe to call

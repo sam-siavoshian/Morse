@@ -7,7 +7,7 @@
 // Run (needs `npm install frida` + the built target — see README.md):
 //   cc -O1 -o native-dbi/example/ticketd native-dbi/example/ticketd.c && strip native-dbi/example/ticketd
 //   node native-dbi/example/apply-from-bar.mjs
-import frida from "/home/user/Morse/node_modules/frida/build/src/frida.js";
+import frida from "frida";
 import { fileURLToPath } from "node:url";
 import { buildAgentSource } from "../agent.js";
 import { createContext } from "../schema.js";
@@ -25,7 +25,7 @@ const planner = async (req) => /discount|% ?off|cheaper|bulk/i.test(req.prompt)
 
 // In-memory store so the demo doesn't write to ~/.morse.
 let blob = null;
-const store = createStore({ file: "mem", fs: { read: () => { if (blob == null) throw 0; return blob; }, write: (_p, c) => { blob = c; }, mkdir: () => {} } });
+const store = createStore({ file: "mem", fs: { read: () => { if (blob == null) throw 0; return blob; }, write: (_p, c) => { blob = c; }, rename: () => {}, mkdir: () => {} } });
 
 const dev = await frida.getLocalDevice();
 let buf = "";

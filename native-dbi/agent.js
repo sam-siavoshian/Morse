@@ -64,6 +64,10 @@ function resolveTarget(t) {
 
 // Install one mod. Any throw is the caller's to catch, revert, and report.
 function installOne(spec) {
+  // Re-applying an id that's already live would overwrite the map entry and
+  // leave the previous hook installed but untracked (a later revert misses it).
+  // Revert the old one first.
+  if (installed.has(spec.id)) revertOne(spec.id);
   const addr = resolveTarget(spec.target);
   const a = spec.action;
 

@@ -6,7 +6,7 @@
 // A tiny JSON file by default (~/.morse/native-mods.json), but the fs is
 // injectable so the logic is unit-testable without touching disk.
 
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, renameSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -19,12 +19,27 @@ export function keyFor(context) { return (context && context.exe) || "*"; }
 const realFs = {
   read: p => readFileSync(p, "utf8"),
   write: (p, c) => writeFileSync(p, c),
+  rename: (a, b) => renameSync(a, b),
   mkdir: d => { try { mkdirSync(d, { recursive: true }); } catch {} },
 };
 
 export function createStore({ file = DEFAULT_FILE, fs = realFs } = {}) {
-  const read = () => { try { const v = JSON.parse(fs.read(file)); return v && typeof v === "object" ? v : {}; } catch { return {}; } };
-  const write = data => { fs.mkdir(path.dirname(file)); fs.write(file, JSON.stringify(data, null, 2)); };
+  // A missing store reads as empty; a present-but-corrupt one throws rather than
+  // reading as empty, so the next write can't silently wipe saved mods.
+  const read = () => {
+    let raw;
+    try { raw = fs.read(file); } catch { return {}; }
+    try { const v = JSON.parse(raw); return v && typeof v === "object" ? v : {}; }
+    catch { throw new Error(`native mods store is corrupt (${file}); not overwriting it`); }
+  };
+  // Write a temp file, then atomically rename over the store, so a partial write
+  // can't corrupt it or be read half-written.
+  const write = data => {
+    fs.mkdir(path.dirname(file));
+    const tmp = `${file}.${process.pid}.tmp`;
+    fs.write(tmp, JSON.stringify(data, null, 2));
+    fs.rename(tmp, file);
+  };
   return {
     // All saved mods for a target, in insertion order.
     list(key) { const l = read()[key]; return Array.isArray(l) ? l : []; },

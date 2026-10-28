@@ -68,9 +68,17 @@ export class NativeModService {
       return { ok: false, id: spec.id, error };
     }
     this.active.set(spec.id, spec);
-    if (save) this.store.upsert(this.key, { ...spec, status: "applied" });
+    if (save) {
+      try { this.store.upsert(this.key, { ...spec, status: "applied" }); }
+      catch (e) {
+        // The hook is live and working; a store-write hiccup shouldn't revert
+        // it. Report applied-but-unsaved so a retry doesn't double-install.
+        this.onEvent?.("error", { id: spec.id, message: `applied but couldn't save: ${e.message}` });
+        return { ok: true, id: spec.id, status: "applied", saved: false, spec, warning: `applied but not saved: ${e.message}` };
+      }
+    }
     this.onEvent?.("applied", { id: spec.id, title: spec.title });
-    return { ok: true, id: spec.id, status: "applied", spec };
+    return { ok: true, id: spec.id, status: "applied", saved: save || undefined, spec };
   }
 
   // Saved mods for this app, each flagged with whether it's live right now.
@@ -82,7 +90,10 @@ export class NativeModService {
     if (!saved) return { ok: false, error: "no such mod" };
     if (on && !this.active.has(id)) return this.applySpec({ ...saved, active: true }, { save: true });
     if (!on && this.active.has(id)) {
-      await this.session.revert(id);
+      // Only mark it off once the hook is actually gone — a failed revert must
+      // not leave the UI saying "off" while the hook runs.
+      const reverted = await this.session.revert(id);
+      if (!reverted) return { ok: false, id, error: "couldn't revert the hook; left on" };
       this.active.delete(id);
       this.store.upsert(this.key, { ...saved, status: "idle" });
       this.onEvent?.("reverted", { id });
@@ -93,7 +104,11 @@ export class NativeModService {
 
   // Forget a mod entirely (revert if live, then drop from the store).
   async remove(id) {
-    if (this.active.has(id)) { await this.session.revert(id); this.active.delete(id); }
+    if (this.active.has(id)) {
+      const reverted = await this.session.revert(id);
+      if (!reverted) return { ok: false, id, error: "couldn't revert the hook; not removed" };
+      this.active.delete(id);
+    }
     this.store.remove(this.key, id);
     this.onEvent?.("removed", { id });
     return { ok: true, id, removed: true };

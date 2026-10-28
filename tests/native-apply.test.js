@@ -12,17 +12,18 @@ import { createContext } from "../native-dbi/schema.js";
 // In-memory fs for the store.
 function memStore() {
   let blob = null;
-  const fs = { read: () => { if (blob == null) throw new Error("empty"); return blob; }, write: (_p, c) => { blob = c; }, mkdir: () => {} };
+  const fs = { read: () => { if (blob == null) throw new Error("empty"); return blob; }, write: (_p, c) => { blob = c; }, rename: () => {}, mkdir: () => {} };
   return createStore({ file: "mem", fs });
 }
 
 // A fake session that records apply/revert and lets a test force a failure.
-function fakeSession({ failIds = [] } = {}) {
+// revert() returns whether it succeeded, like the real NativeSession.
+function fakeSession({ failIds = [], failRevert = false } = {}) {
   const calls = [];
   return {
     calls,
     async apply(specs) { calls.push(["apply", specs.map(s => s.id)]); return specs.map(s => failIds.includes(s.id) ? { id: s.id, status: "errored", error: "no match" } : { id: s.id, status: "applied" }); },
-    async revert(id) { calls.push(["revert", id]); },
+    async revert(id) { calls.push(["revert", id]); return !failRevert; },
   };
 }
 
@@ -44,6 +45,16 @@ test("store: saves, lists, upserts and removes per app key", () => {
   store.remove(key, "b");
   assert.deepEqual(store.list(key).map(s => s.id), ["a"]);
   assert.deepEqual(store.list("/other/app"), [], "keyed per app");
+});
+
+test("store: a corrupt file throws rather than silently wiping saved mods", () => {
+  let blob = "{ not valid json";
+  const fs = { read: () => blob, write: (_p, c) => { blob = c; }, rename: () => {}, mkdir: () => {} };
+  const store = createStore({ file: "mem", fs });
+  assert.throws(() => store.list("k"), /corrupt/);
+  // a missing file still reads as empty, not an error
+  const missing = createStore({ file: "mem", fs: { read: () => { throw new Error("ENOENT"); }, write: () => {}, rename: () => {}, mkdir: () => {} } });
+  assert.deepEqual(missing.list("k"), []);
 });
 
 test("apply: a direct request (target+action) applies, reports, and saves", async () => {
@@ -101,6 +112,28 @@ test("undo: setEnabled(false) reverts the hook; (true) re-applies; remove forget
 
   await svc.remove(id);
   assert.equal(svc.list().length, 0, "removed from the store");
+});
+
+test("undo: a failed revert leaves the mod on (UI must not lie about state)", async () => {
+  const session = fakeSession({ failRevert: true });
+  const svc = new NativeModService({ session, context: ctx, store: memStore() });
+  const { id } = await svc.generate(directReq);
+  const off = await svc.setEnabled(id, false);
+  assert.equal(off.ok, false, "revert failed → not reported as off");
+  assert.equal(svc.list()[0].applied, true, "still live");
+  const rm = await svc.remove(id);
+  assert.equal(rm.ok, false, "revert failed → not removed");
+  assert.equal(svc.list().length, 1, "still saved");
+});
+
+test("apply: a store-write failure reports applied-but-unsaved, keeps the hook", async () => {
+  const session = fakeSession();
+  const throwingStore = { list: () => [], upsert: () => { throw new Error("disk full"); }, remove: () => {} };
+  const svc = new NativeModService({ session, context: ctx, store: throwingStore });
+  const r = await svc.applySpec({ morseNative: 1, id: "x", title: "t", target: directReq.target, action: directReq.action }, { save: true });
+  assert.equal(r.ok, true, "the hook is live, so it's not a failure");
+  assert.equal(r.saved, false);
+  assert.match(r.warning, /not saved/);
 });
 
 test("restore: re-applies saved, enabled mods on a fresh attach (skips disabled)", async () => {
