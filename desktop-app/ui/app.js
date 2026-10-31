@@ -1334,6 +1334,10 @@ function render() {
   $("version").textContent = `Morse ${st.version}`;
   $("settings-version").textContent = t("desk.app.version", { version: st.version });
   document.documentElement.dataset.ready = "1";
+  // Start-up marks (desktop-app/startup-trace.js): the first render, and the
+  // first with the app list itself (apps, or "no apps"), not "looking".
+  if (!performance.getEntriesByName("morse:first-render").length) performance.mark("morse:first-render");
+  if (!st.appsPending && !performance.getEntriesByName("morse:apps-listed").length) performance.mark("morse:apps-listed");
 }
 morse.onChange(next => {
   if (!next || next.error) return;

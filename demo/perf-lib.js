@@ -343,3 +343,47 @@ export async function runGeneration(t, { target = null, prompt = "make it calmer
   await page.keyboard.type(prompt);
   await page.keyboard.press("Enter");
 }
+
+// ---------------------------------------------------------------- desktop start-up
+// Starts Morse Desktop (desktop-app/) `runs` times with MORSE_STARTUP_TRACE
+// (desktop-app/startup-trace.js) and returns each run's marks as milliseconds
+// after the spawn. Cold: a new Morse folder (and Chromium profile) each run.
+// Warm: one folder, started once first so its caches exist. The OS file cache
+// is warm in both (dropping it needs root): "cold" is a first launch on this
+// computer, not the first after a reboot.
+export async function desktopStartup({ runs = 5, electron = null, env = {}, timeoutMs = 90000 } = {}) {
+  const { spawn } = await import("node:child_process");
+  const { findElectron } = await import("./electron-app/build.mjs");
+  const dist = electron || findElectron();
+  if (!dist) throw new Error("No Electron runtime found (desktop-app/run.js explains where it looks).");
+  const exe = path.join(dist, { win32: "electron.exe", darwin: "Electron.app/Contents/MacOS/Electron" }[process.platform] || "electron");
+  const appDir = path.join(ROOT, "desktop-app");
+  const root = process.getuid?.() === 0 ? ["--no-sandbox"] : [];
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "morse-startup-"));
+  const once = async home => {
+    const trace = path.join(tmp, `trace-${Date.now()}-${Math.random().toString(36).slice(2)}.json`);
+    const e = { ...process.env, ...env, MORSE_HOME: home, MORSE_STARTUP_TRACE: trace, MORSE_STARTUP_QUIT: "1" };
+    delete e.ELECTRON_RUN_AS_NODE;
+    const t0 = Date.now();
+    const child = spawn(exe, [appDir, ...root], { env: e, stdio: "ignore" });
+    const exited = await new Promise(resolve => {
+      const timer = setTimeout(() => { child.kill("SIGKILL"); resolve(false); }, timeoutMs);
+      child.on("exit", () => { clearTimeout(timer); resolve(true); });
+    });
+    const exitMs = Date.now() - t0;
+    let marks;
+    try { marks = JSON.parse(await fs.readFile(trace, "utf8")); } catch { return { error: exited ? "no trace written" : "timed out" }; }
+    const rel = Object.fromEntries(Object.entries(marks).map(([k, v]) => [k, v - t0]));
+    return { ...rel, exitMs };
+  };
+  const cold = [], warm = [];
+  try {
+    for (let i = 0; i < runs; i++) cold.push(await once(await fs.mkdtemp(path.join(tmp, "cold-"))));
+    const home = await fs.mkdtemp(path.join(tmp, "warm-"));
+    await once(home); // first start: profile, caches, the app scan
+    for (let i = 0; i < runs; i++) warm.push(await once(home));
+  } finally { await fs.rm(tmp, { recursive: true, force: true }).catch(() => {}); }
+  const keys = [...new Set([...cold, ...warm].flatMap(r => Object.keys(r)))].filter(k => k !== "error");
+  const med = rs => Object.fromEntries(keys.map(k => [k, median(rs.map(r => r[k]).filter(Number.isFinite))]));
+  return { runs, cold: med(cold), warm: med(warm), all: { cold, warm } };
+}

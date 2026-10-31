@@ -15,6 +15,7 @@
 //   node desktop-app/run.js          start it from a clone
 //   node desktop-app/build.js        package it (docs/dev/releasing.md)
 
+import { mark, collect as collectStartup } from "./startup-trace.js";
 import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, ipcMain, dialog, shell, session, protocol, globalShortcut } from "electron";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -32,6 +33,7 @@ import { acceleratorFor, createOpenShortcut, readForegroundPid } from "./shortcu
 import { createNativePicker } from "./native-picker.js";
 import { bundleRuntime } from "../runtime/bundle.js"; // the real bar, for the native overlay window
 
+mark("main:loaded");
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // The window's page is served from morse-app://ui/, a scheme of Morse's own
 // (Electron's advice over file://): only the files listed here exist there.
@@ -196,8 +198,10 @@ function createWindow() {
     },
   });
   win.removeMenu?.();
+  mark("window");
   win.loadURL(`${PAGE_URL}?platform=${process.platform}`);
-  win.once("ready-to-show", () => { if (!startHidden) win.show(); });
+  win.once("ready-to-show", () => { mark("ready-to-show"); if (!startHidden) win.show(); });
+  collectStartup(win, { quit });
   // Closing the window keeps Morse in the tray; Quit (tray menu, ⌘Q) ends it.
   win.on("close", e => { if (!quitting) { e.preventDefault(); win.hide(); if (MAC) app.dock?.hide(); } });
   win.on("show", () => { if (MAC) app.dock?.show(); });
@@ -356,16 +360,19 @@ function whenPathReady(daemon, pathReady) {
 }
 
 app.whenReady().then(async () => {
+  mark("app-ready");
   lockSession();
   if (["dark", "light"].includes(process.env.MORSE_DESKTOP_THEME)) nativeTheme.themeSource = process.env.MORSE_DESKTOP_THEME; // screenshots
   if (MAC) app.dock?.setIcon(appIcon());
   // macOS needs a menu for ⌘Q, ⌘W and copy and paste (the API key field); elsewhere there is none.
   Menu.setApplicationMenu(MAC ? Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }, { role: "windowMenu" }]) : null);
+  mark("menu");
   // Cached PATH now (no shell). The probe continues in the background.
   const pathReady = startShellPath({
     packaged: app.isPackaged, platform: process.platform,
     cacheFile: path.join(app.getPath("userData"), "shell-path.json"),
   });
+  mark("shell-path");
   let resolveService, rejectService;
   const serviceReady = new Promise((res, rej) => { resolveService = res; rejectService = rej; });
   registerIpc({
@@ -423,9 +430,11 @@ app.whenReady().then(async () => {
   // "couldn't check" sentence from a missing one.
   updater = createUpdater({ app, log, getAppImage: () => APPIMAGE, busy: () => service?.isUpdateBusy() ?? false, beforeExit: prepareForUpdate, onStatus: () => { changed(); if (["downloading", "ready"].includes(updater?.status.phase) && win && !win.isVisible()) showWindow(); } });
   updater.start();
+  mark("updater");
   createWindow();
   tray = new Tray(trayIcon());
   tray.on("click", showWindow);
+  mark("tray");
   registerLinks();
   const link = process.argv.find(a => a.startsWith("morse://"));
   if (link) handleLink(link);
@@ -435,6 +444,7 @@ app.whenReady().then(async () => {
     const daemon = whenPathReady(await loadDaemon(), pathReady);
     service = createService({ daemon, emit: changed, log, iconFor, self: [process.execPath, APPIMAGE] });
     resolveService(service);
+    mark("service");
     nativePicker = createNativePicker({
       packaged: app.isPackaged, resourcesPath: process.resourcesPath,
       cacheDir: path.join(app.getPath("userData"), "native-picker"),

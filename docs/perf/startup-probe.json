@@ -1,0 +1,75 @@
+{
+  "label": "probe",
+  "date": "2026-10-31T19:30:49.118Z",
+  "runs": 1,
+  "cold": {
+    "process": 71,
+    "main:start": 213,
+    "main:loaded": 240,
+    "app-ready": 304,
+    "window": 484,
+    "service": 547,
+    "ready-to-show": 676,
+    "page:domContentLoaded": 672,
+    "page:load": 673,
+    "page:first-paint": 724,
+    "page:first-contentful-paint": 724,
+    "page:first-render": 737,
+    "page:apps-listed": 946,
+    "exitMs": 1020
+  },
+  "warm": {
+    "process": 36,
+    "main:start": 167,
+    "main:loaded": 192,
+    "app-ready": 247,
+    "window": 400,
+    "service": 453,
+    "ready-to-show": 549,
+    "page:domContentLoaded": 546,
+    "page:load": 546,
+    "page:first-paint": 600,
+    "page:first-contentful-paint": 600,
+    "page:first-render": 558,
+    "page:apps-listed": 840,
+    "exitMs": 916
+  },
+  "all": {
+    "cold": [
+      {
+        "process": 71,
+        "main:start": 213,
+        "main:loaded": 240,
+        "app-ready": 304,
+        "window": 484,
+        "service": 547,
+        "ready-to-show": 676,
+        "page:domContentLoaded": 672,
+        "page:load": 673,
+        "page:first-paint": 724,
+        "page:first-contentful-paint": 724,
+        "page:first-render": 737,
+        "page:apps-listed": 946,
+        "exitMs": 1020
+      }
+    ],
+    "warm": [
+      {
+        "process": 36,
+        "main:start": 167,
+        "main:loaded": 192,
+        "app-ready": 247,
+        "window": 400,
+        "service": 453,
+        "ready-to-show": 549,
+        "page:domContentLoaded": 546,
+        "page:load": 546,
+        "page:first-paint": 600,
+        "page:first-contentful-paint": 600,
+        "page:first-render": 558,
+        "page:apps-listed": 840,
+        "exitMs": 916
+      }
+    ]
+  }
+}

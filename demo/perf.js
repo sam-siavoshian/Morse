@@ -36,6 +36,22 @@ if (argv.includes("--report")) {
   console.log(md);
   process.exit(0);
 }
+// --only startup: Morse Desktop from spawn to a usable window, cold and warm
+// (docs/perf/startup.md). Needs an Electron runtime and a display, not Playwright.
+// Writes docs/perf/startup-<label>.json.
+if (ONLY.size === 1 && ONLY.has("startup")) {
+  const { desktopStartup } = await import("./perf-lib.js");
+  const r = await desktopStartup({ runs: Number(arg("--runs", 5)) });
+  const out = { label: LABEL, date: new Date().toISOString(), ...r };
+  await fs.mkdir(OUT, { recursive: true });
+  await fs.writeFile(path.join(OUT, `startup-${LABEL}.json`), JSON.stringify(out, null, 2));
+  const rows = Object.keys(r.cold).filter(k => k !== "process").sort((a, b) => (r.warm[a] ?? r.cold[a]) - (r.warm[b] ?? r.cold[b]));
+  console.log(`| ms after spawn (median of ${r.runs}) | cold | warm |\n|---|---|---|`);
+  for (const k of rows) console.log(`| ${k} | ${Math.round(r.cold[k])} | ${Math.round(r.warm[k])} |`);
+  const errors = [...r.all.cold, ...r.all.warm].filter(x => x.error).map(x => x.error);
+  if (errors.length) console.log("errors:", errors);
+  process.exit(0);
+}
 if (!chromium) { console.error("playwright is not installed"); process.exit(1); }
 
 const srv = await serve();

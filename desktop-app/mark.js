@@ -19,12 +19,14 @@ function inRound(px, py, x, y, w, h, r) {
 
 // The radar on its 15-unit grid: 3x3 squares every 4 units, corners off, the
 // inner four bright (0.9) and the outer eight dim (0.3), like the still mark.
+// The squares don't overlap, so only the one under (u, v) is asked: the
+// window icon is drawn at start-up and this is its inner loop.
 function radarAlpha(u, v, dim = 0.3) {
-  for (let i = 0; i < 16; i++) {
-    if (CORNER.has(i)) continue;
-    if (inRound(u, v, (i % 4) * 4, Math.floor(i / 4) * 4, 3, 3, 1)) return OUTER.has(i) ? dim : 0.9;
-  }
-  return 0;
+  const col = Math.floor(u / 4), row = Math.floor(v / 4);
+  if (col < 0 || row < 0 || col > 3 || row > 3) return 0;
+  const i = row * 4 + col;
+  if (CORNER.has(i) || !inRound(u, v, col * 4, row * 4, 3, 3, 1)) return 0;
+  return OUTER.has(i) ? dim : 0.9;
 }
 
 // tile: draw the mark on a dark rounded square (the app icon); without it,
