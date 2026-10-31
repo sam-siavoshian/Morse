@@ -1,6 +1,6 @@
 # Handoff: Measure and cut desktop app cold-start time to first usable window
 
-w-1ytgx6h7-startup-e1 stopped (previous worker stopped). w-1ytgx6h7-startup-e2 takes over on branch morrow/1ytgx6h7/startup.
+w-1ytgx6h7-startup-e2 stopped (previous replacement failed to start). w-1ytgx6h7-startup-e3 takes over on branch morrow/1ytgx6h7/startup.
 
 Last checkpoint: da62c4357e8c8e00aaa63ad8d799a59377560057.
 
@@ -37,10 +37,11 @@ Whole task: Incress the speed in app, it should be faster to open
 - demo/perf.js
 - demo/perf-lib.js
 
-## Decisions so far (messages from w-1ytgx6h7-startup-e1, newest last)
-- startup: got Electron 45 running locally under Xvfb (user-space libs, no root). Adding MORSE_STARTUP_TRACE marks (main + page) and a `node demo/perf.js --only startup` harness for cold/warm numbers; baseline next, then defer/cache work.
+## Decisions so far (messages from w-1ytgx6h7-startup-e2, newest last)
+- None recorded.
 
 ## Changed files on the branch
+- .morrow/handoff/ws-startup.md
 - demo/perf-lib.js
 - demo/perf.js
 - desktop-app/main.js
@@ -59,7 +60,7 @@ Whole task: Incress the speed in app, it should be faster to open
 ## Who is who
 People (Relay names): h-sam-siavoshian. h-sam-siavoshian created this task and decides when a person has to.
 Workstreams:
-- startup: Measure and cut desktop app cold-start time to first usable window (branch morrow/1ytgx6h7/startup, owns desktop-app/**, daemon/**, docs/perf/**, demo/perf.js, demo/perf-lib.js). This is you: w-1ytgx6h7-startup-e2, codex on sam-siavoshian's machine.
+- startup: Measure and cut desktop app cold-start time to first usable window (branch morrow/1ytgx6h7/startup, owns desktop-app/**, daemon/**, docs/perf/**, demo/perf.js, demo/perf-lib.js). This is you: w-1ytgx6h7-startup-e3, claude on sam-siavoshian's machine.
 
 ## If you stop
 Every worker spends a teammate's plan. When a plan hits its usage limit, or a CLI crashes or signs out, Morrow stops that worker, commits and pushes its worktree as a checkpoint, and starts a replacement on another teammate's machine on the same branch. The replacement starts from that checkpoint and a handoff note, so commit working steps often and post decisions in the channel: what is neither committed nor written down is lost. A replacement confirms with ACK <its lease id>.
