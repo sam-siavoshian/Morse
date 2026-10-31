@@ -88,11 +88,38 @@ sound is left out) inside an asar.
 
 ## After
 
-**Not measured yet.** The machine these changes were made on can't start
-Electron (no display, missing system libraries), so the after numbers need a
-run on a desktop:
+`startup-after.json`, 7 runs, medians, the same machine and setup as the
+baseline (Linux VM, Electron 45 under Xvfb), 2026-10-31:
 
-    node demo/perf.js --only startup --runs 7 --label after
+| ms after spawn | cold before | cold after | warm before | warm after |
+|---|---|---|---|---|
+| main:start | 169 | 121 (-48) | 164 | 122 (-42) |
+| app-ready | 244 | 174 (-70) | 244 | 173 (-71) |
+| updater | 252 | 184 (-68) | 251 | 185 (-66) |
+| window | 402 | 203 (-199) | 395 | 205 (-190) |
+| service | 453 | 362 (-91) | 443 | 306 (-137) |
+| page:domContentLoaded | 561 | 493 (-68) | 543 | 464 (-79) |
+| ready-to-show | 595 | 506 (-89) | 572 | 478 (-94) |
+| page:first-render | 570 | 566 (-4) | 553 | 493 (-60) |
+| **page:apps-listed** | 777 | 566 (-211) | 710 | 493 (-217) |
+| exitMs | 859 | 656 (-203) | 780 | 565 (-215) |
 
-and the table above filled in from `startup-after.json`. Until then, the
-expected savings above come from timing each piece in Node.
+- **The window exists 200 ms sooner** (402 → 203 ms): the icon is no longer
+  drawn first and the static import graph is smaller (`main:start` −48 ms).
+- **It is shown ~90 ms sooner** (`ready-to-show` 595 → 506 cold, 572 → 478 warm).
+- **The app list is usable ~215 ms sooner** (777 → 566 cold, 710 → 493 warm),
+  27–31 % less time from launch. The 120 ms debounce is gone from the first
+  push. This VM has no apps to find, so the cached app scan shows little here;
+  on a computer with many apps (a Mac reads each app's Info.plist) it saves the
+  whole scan on warm starts.
+- `service` is still earlier (−91 ms cold, −137 ms warm), but the span from
+  window to service grew from ~50 to ~100–160 ms: service.js and the daemon
+  are now parsed after the window exists, behind the loading page, and warm
+  starts read them from the compile cache.
+
+Tried and left out: asking for the first state at the top of ui/app.js
+instead of its end gave −38 ms cold but nothing clear warm (noise), and
+the tests pin the existing boot order.
+
+`exitMs` (spawn to the process exiting after the trace is written) went
+859 → 656 cold and 780 → 565 warm.
