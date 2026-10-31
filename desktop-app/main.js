@@ -21,6 +21,7 @@ import { promises as fs, statSync } from "node:fs";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import nodeModule from "node:module";
 // service.js (and the daemon behind it), icons.js, native-picker.js and the
 // runtime bundle are imported when first used, after the window is created:
 // as static imports they were parsed before any of this file ran.
@@ -107,6 +108,10 @@ if (APPIMAGE) {
 // A Morse folder of its own (MORSE_HOME, as tests use) is a Morse of its own.
 if (process.env.MORSE_HOME) app.setPath("userData", path.join(process.env.MORSE_HOME, "desktop-profile"));
 if (!app.requestSingleInstanceLock()) { app.quit(); process.exit(0); }
+// V8's compiled code for the modules imported from here on (service.js, the
+// daemon, icons.js: imported after the window is created) is kept in the
+// profile, so a second start doesn't parse them again (~45 ms).
+try { nodeModule.enableCompileCache?.(path.join(app.getPath("userData"), "compile-cache")); } catch {}
 
 let win = null, tray = null, service = null, quitting = false, lastState = null, updater = null, opener = null;
 const startHidden = process.argv.includes("--hidden"); // opened at login: tray only
