@@ -1012,6 +1012,69 @@ test("the packaged app includes every file it imports", async () => {
   assert.ok(APP_FILES.includes("shortcut.js"));
 });
 
+test("start-up: the last app scan is listed first, then the disk is walked again and saved", async () => {
+  const saved = [];
+  const store = { scan: null };
+  const withScan = d => Object.assign(d, {
+    loadAppScan: async ({ key }) => (store.scan?.key === key ? store.scan.apps : null),
+    saveAppScan: async (apps, { key }) => { saved.push(apps.map(a => a.id)); store.scan = { key, apps }; },
+  });
+  const wait = async (fn, ms = 3000) => { const t0 = Date.now(); while (!fn() && Date.now() - t0 < ms) await new Promise(r => setTimeout(r, 10)); return fn(); };
+
+  // First launch: no scan on disk. The list comes from discoverApps and is kept.
+  const d1 = withScan(fakeDaemon());
+  const s1 = createService({ daemon: d1, scan: true });
+  assert.equal((await s1.state()).appsPending, true, "the first state still answers before any list");
+  assert.ok(await wait(() => saved.length === 1), "the scan was saved");
+  assert.deepEqual(saved[0].sort(), ["notes", "slack", "tunes"]);
+
+  // Next launch: the kept list (here, an app since removed) is pushed first,
+  // without waiting for discoverApps; the fresh scan follows and replaces it.
+  store.scan.apps = [{ id: "gone", name: "Gone", exe: "/x/gone", path: "/x/gone", canAttach: true, why: "Electron", known: false }];
+  const d2 = withScan(fakeDaemon());
+  let pushes = 0;
+  const s2 = createService({ daemon: d2, scan: true, emit: () => { pushes++; } });
+  assert.equal((await s2.state()).appsPending, true);
+  assert.ok(await wait(() => pushes >= 1));
+  const first = await s2.state();
+  assert.equal(first.appsPending, false);
+  assert.deepEqual(first.apps.map(a => a.id), ["gone"], "the last launch's list, at once");
+  assert.equal(d2.calls.filter(c => c[0] === "discoverApps").length, 0, "the disk isn't walked before that list is out");
+  assert.ok(await wait(() => pushes >= 2), "a second push after the fresh scan");
+  assert.deepEqual((await s2.state()).apps.map(a => a.id).sort(), ["notes", "slack", "tunes"]);
+  assert.equal(d2.calls.filter(c => c[0] === "discoverApps").length, 1, "one fresh scan");
+  assert.equal(saved.length, 2);
+
+  // Another version's (or platform's) scan is not used.
+  const d3 = withScan(fakeDaemon());
+  d3.VERSION = "10.0.0";
+  store.scan.apps = [{ id: "gone", name: "Gone", exe: "/x/gone", path: "/x/gone", canAttach: true, why: "Electron" }];
+  const s3 = createService({ daemon: d3, scan: true, emit: () => {} });
+  await s3.state();
+  assert.ok(await wait(() => saved.length === 3));
+  assert.ok(!(await s3.state()).apps.some(a => a.id === "gone"));
+});
+
+test("start-up: daemon/store.js keeps the app scan under a key", async () => {
+  const store = await import("../daemon/store.js");
+  assert.equal(await store.loadAppScan({ key: "linux:1" }), null, "nothing kept yet");
+  await store.saveAppScan([{ id: "a", name: "A" }], { key: "linux:1" });
+  assert.deepEqual(await store.loadAppScan({ key: "linux:1" }), [{ id: "a", name: "A" }]);
+  assert.equal(await store.loadAppScan({ key: "linux:2" }), null, "another version's scan is not used");
+});
+
+test("start-up: the window icon is not drawn before the window exists", () => {
+  const main = readFileSync(path.join(root, "desktop-app/main.js"), "utf8");
+  const create = main.slice(main.indexOf("function createWindow()"), main.indexOf("function showWindow()"));
+  assert.match(create, /cachedAppIcon\(\)/, "the kept icon, or none");
+  assert.doesNotMatch(create.slice(0, create.indexOf("new BrowserWindow")), /\bappIcon\(\)/, "never drawn before the window");
+  assert.match(main, /setIconsLater/, "drawn after ready-to-show");
+  for (const lazy of ["./service.js", "./icons.js", "./native-picker.js", "../runtime/bundle.js"]) {
+    assert.ok(!new RegExp(`^import .* from "${lazy.replace(/[.\/]/g, "\\$&")}"`, "m").test(main), `${lazy} is imported when used`);
+    assert.ok(main.includes(`import("${lazy}")`), `${lazy} is still imported`);
+  }
+});
+
 test("updates wait for active work, not simply for connected sessions", async () => {
   const { service } = setup();
   let active = false;
