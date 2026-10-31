@@ -45,6 +45,8 @@ export async function loadDaemon() {
     connectionChoices: connect.connectionChoices,
     connectChoice: (choice, key, extra, apiKey) => connect.connectChoice(choice, key, { address: extra || "", selfHosted: choice === "local" && !!extra, apiKey: apiKey || "", timeoutMs: 8000 }),
     probeEndpoint: connect.probeEndpoint,
+    // the last app scan, for the next launch's first list
+    loadAppScan: store.loadAppScan, saveAppScan: store.saveAppScan,
     // mods and the off switch (morse mods, pause, resume)
     listMods: store.listMods, getMod: store.getMod, saveMod: store.saveMod, deleteMod: store.deleteMod,
     loadControl: control.loadControl, saveControl: control.saveControl, setPause: coreControl.setPause, pauseInfo: coreControl.pauseInfo,
@@ -82,6 +84,8 @@ export function createService({
   const pending = new Map(); // app id -> "opening" | "disconnecting"
   const icons = new Map();   // app id -> data URL or null
   let found = null, foundAt = 0;
+  let fromCache = false;     // found is the last launch's scan (app-scan.json) until the disk is walked again
+  const scanKey = `${process.platform}:${d.VERSION || ""}`;
   let scanP = null;          // one cold discoverApps, shared by the app list and anything waiting on it
   let namesFromScan = new Map(); // app id -> name, including apps added by file
   let fillQueued = false;
@@ -139,7 +143,7 @@ export function createService({
   // starts its own. The work is deferred off the caller's stack so the first
   // state() can return before it runs.
   function discoverShared({ fresh = false } = {}) {
-    if (!fresh && found && now() - foundAt <= 60000) return Promise.resolve(found);
+    if (!fresh && found && (fromCache || now() - foundAt <= 60000)) return Promise.resolve(found);
     if (!fresh && scanP) return scanP;
     let resolve, reject;
     const tracked = new Promise((res, rej) => { resolve = res; reject = rej; });
@@ -149,6 +153,8 @@ export function createService({
       try {
         found = scan ? d.discoverApps(d.hostContext()) : [];
         foundAt = now();
+        fromCache = false;
+        if (scan && typeof d.saveAppScan === "function") Promise.resolve(d.saveAppScan(found, { key: scanKey })).catch(() => {});
         resolve(found);
       } catch (e) { reject(e); }
     }, 0);
@@ -171,11 +177,26 @@ export function createService({
   }
 
   // The window is up before this finishes. One scan, then morse:changed.
+  // With the last launch's scan on disk, that list goes first and the disk is
+  // walked again a moment later (the scan is synchronous: it waits until the
+  // window has had the list), then morse:changed again.
   function scheduleFill() {
     if (found || fillQueued) return;
     fillQueued = true;
-    setTimeout(() => {
-      apps().then(() => changed(), e => log(`apps: ${e?.message || e}`)).finally(() => { fillQueued = false; });
+    setTimeout(async () => {
+      try {
+        const cached = scan && typeof d.loadAppScan === "function" ? await Promise.resolve(d.loadAppScan({ key: scanKey })).catch(() => null) : null;
+        if (Array.isArray(cached) && cached.length && !found) {
+          found = cached; foundAt = now(); fromCache = true;
+          await apps();
+          changed();
+          await sleep(400);
+          if (fromCache) await apps({ fresh: true });
+        } else {
+          await apps();
+        }
+        changed();
+      } catch (e) { log(`apps: ${e?.message || e}`); } finally { fillQueued = false; }
     }, 0);
   }
 

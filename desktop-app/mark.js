@@ -39,14 +39,45 @@ export function markPixels(size, { tile = false, color = [237, 237, 239], tileCo
   const pad = inset ?? (tile ? size * 0.25 : size * 0.06);
   const box = size - pad * 2;
   const radius = size * 0.225; // the app icon's corner
-  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-    let markA = 0, tileA = 0;
-    for (let sy = 0; sy < S; sy++) for (let sx = 0; sx < S; sx++) {
-      const px = x + (sx + 0.5) / S, py = y + (sy + 0.5) / S;
-      if (tile && inRound(px, py, size * 0.06, size * 0.06, size * 0.88, size * 0.88, radius * 0.88)) tileA += 1;
-      markA += radarAlpha(((px - pad) / box) * 15, ((py - pad) / box) * 15, dim);
+  const tx = size * 0.06, tw = size * 0.88, tr = radius * 0.88;
+  const toU = p => ((p - pad) / box) * 15;
+  const lo = 0.5 / S, hi = (S - 0.5) / S; // the first and last sample in a pixel
+  // Every shape is convex: when a pixel's four outermost samples are inside
+  // one, all its samples are; when its samples' box misses a shape's box,
+  // none are. Only pixels on an edge are sampled one by one (the same
+  // samples, so the same bytes), which keeps the 256 px window icon cheap.
+  const tileFast = (x, y) => {
+    if (x + hi < tx || y + hi < ty || x + lo > tx + tw || y + lo > ty + tw) return 0;
+    if (inRound(x + lo, y + lo, tx, ty, tw, tw, tr) && inRound(x + hi, y + lo, tx, ty, tw, tw, tr)
+      && inRound(x + lo, y + hi, tx, ty, tw, tw, tr) && inRound(x + hi, y + hi, tx, ty, tw, tw, tr)) return 1;
+    return -1;
+  };
+  const ty = tx;
+  // a pixel all at alpha a, added up the way the samples are (16 x 0.3 is not 4.8)
+  const full = a => { let m = 0; for (let k = 0; k < S * S; k++) m += a; return m / (S * S); };
+  const markFast = (x, y) => {
+    const u0 = toU(x + lo), u1 = toU(x + hi), v0 = toU(y + lo), v1 = toU(y + hi);
+    const a = radarAlpha(u0, v0, dim);
+    if (a === radarAlpha(u1, v0, dim) && a === radarAlpha(u0, v1, dim) && a === radarAlpha(u1, v1, dim)) {
+      // The same square (or none) at all four: inside it, or in a gap no
+      // wider than the samples' box only when that box misses every square.
+      if (a > 0 && Math.floor(u0 / 4) === Math.floor(u1 / 4) && Math.floor(v0 / 4) === Math.floor(v1 / 4)) return full(a);
+      if (a === 0 && !touchesSquare(Math.min(u0, u1), Math.max(u0, u1), Math.min(v0, v1), Math.max(v0, v1))) return 0;
     }
-    markA /= S * S; tileA /= S * S;
+    return -1;
+  };
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    let markA = markFast(x, y), tileA = tile ? tileFast(x, y) : 0;
+    if (markA < 0 || tileA < 0) {
+      let m = 0, t = 0;
+      for (let sy = 0; sy < S; sy++) for (let sx = 0; sx < S; sx++) {
+        const px = x + (sx + 0.5) / S, py = y + (sy + 0.5) / S;
+        if (tileA < 0 && inRound(px, py, tx, ty, tw, tw, tr)) t += 1;
+        if (markA < 0) m += radarAlpha(toU(px), toU(py), dim);
+      }
+      if (markA < 0) markA = m / (S * S);
+      if (tileA < 0) tileA = t / (S * S);
+    }
     const i = (y * size + x) * 4;
     if (tile) {
       // The mark over the tile: light on dark.
@@ -59,6 +90,16 @@ export function markPixels(size, { tile = false, color = [237, 237, 239], tileCo
     }
   }
   return out;
+}
+
+// Does the box [u0, u1] x [v0, v1] (radar units) reach any lit square's box?
+function touchesSquare(u0, u1, v0, v1) {
+  for (let i = 0; i < 16; i++) {
+    if (CORNER.has(i)) continue;
+    const x = (i % 4) * 4, y = Math.floor(i / 4) * 4;
+    if (u1 >= x && u0 <= x + 3 && v1 >= y && v0 <= y + 3) return true;
+  }
+  return false;
 }
 
 const CRC = (() => {

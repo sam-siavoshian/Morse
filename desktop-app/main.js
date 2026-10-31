@@ -17,21 +17,20 @@
 
 import { mark, collect as collectStartup } from "./startup-trace.js";
 import { app, BrowserWindow, Tray, Menu, nativeImage, nativeTheme, ipcMain, dialog, shell, session, protocol, globalShortcut } from "electron";
-import { promises as fs } from "node:fs";
+import { promises as fs, statSync } from "node:fs";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { createService, loadDaemon } from "./service.js";
+// service.js (and the daemon behind it), icons.js, native-picker.js and the
+// runtime bundle are imported when first used, after the window is created:
+// as static imports they were parsed before any of this file ran.
 import { registerIpc, gateService, PUSH, isOpenLink } from "./ipc.js";
 import { markPng } from "./mark.js";
 import { LANGUAGES } from "../core/i18n.js";
-import { iconSource } from "./icons.js";
 import { setAutostart, writeMenuEntry } from "./linux.js";
 import { startShellPath } from "./shell-path.js";
 import { createUpdater } from "./updater.js";
 import { acceleratorFor, createOpenShortcut, readForegroundPid } from "./shortcut.js";
-import { createNativePicker } from "./native-picker.js";
-import { bundleRuntime } from "../runtime/bundle.js"; // the real bar, for the native overlay window
 
 mark("main:loaded");
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -142,6 +141,7 @@ function lockSession() {
     const common = { "content-security-policy": csp, "x-content-type-options": "nosniff", "cache-control": "no-store" };
     // The real bar, bundled fresh, for the native overlay window.
     if (u.pathname === "/overlay-runtime.js") {
+      const { bundleRuntime } = await import("../runtime/bundle.js");
       return new Response(bundleRuntime(), { headers: { "content-type": "text/javascript; charset=utf-8", ...common } });
     }
     const hit = UI_FILES[u.pathname];
@@ -157,7 +157,36 @@ const isTrusted = event => !!win && !win.isDestroyed() && event.sender === win.w
   && event.senderFrame === win.webContents.mainFrame && isPage(event.senderFrame?.url);
 
 // ---------------------------------------------------------------- icons
-const appIcon = () => nativeImage.createFromBuffer(markPng(256, { tile: true }));
+// The window (and Dock) icon is drawn in code, which takes ~50 ms of this
+// thread: too long to spend before the window exists. It is drawn once and
+// kept in the profile; a first start shows the window first and draws it
+// right after (setIconsLater).
+let appIconImage = null;
+function iconCacheFile() {
+  // A clone keys it by mark.js itself, so a changed mark is drawn again.
+  let stamp = app.getVersion();
+  if (!app.isPackaged) try { stamp += `-${Math.round(statSync(path.join(HERE, "mark.js")).mtimeMs)}`; } catch {}
+  return path.join(app.getPath("userData"), `window-icon-${stamp}.png`);
+}
+function cachedAppIcon() {
+  if (appIconImage) return appIconImage;
+  try { const img = nativeImage.createFromPath(iconCacheFile()); if (!img.isEmpty()) appIconImage = img; } catch {}
+  return appIconImage;
+}
+function appIcon() {
+  if (cachedAppIcon()) return appIconImage;
+  const buf = markPng(256, { tile: true });
+  appIconImage = nativeImage.createFromBuffer(buf);
+  const file = iconCacheFile();
+  fs.mkdir(path.dirname(file), { recursive: true }).then(() => fs.writeFile(file, buf)).catch(e => log("icon cache", e.message));
+  return appIconImage;
+}
+function setIconsLater() {
+  setTimeout(() => {
+    if (MAC) app.dock?.setIcon(appIcon());
+    else if (win && !win.isDestroyed()) win.setIcon(appIcon());
+  }, 0);
+}
 function trayIcon() {
   // macOS: a template image (black, the menu bar tints it). Elsewhere: light
   // on the usual dark panel.
@@ -175,6 +204,7 @@ function trayIcon() {
 // app.getFileIcon is the fallback on macOS and the way on Windows. On Linux it
 // gives a generic "program" picture, not the app's, so it isn't used there.
 async function iconFor(a) {
+  const { iconSource } = await import("./icons.js");
   const src = iconSource(a);
   let img = src?.png ? nativeImage.createFromBuffer(src.png) : src?.file ? nativeImage.createFromPath(src.file) : null;
   if ((!img || img.isEmpty()) && (MAC || WIN)) img = await app.getFileIcon(a.path || a.exe, { size: "large" });
@@ -183,9 +213,10 @@ async function iconFor(a) {
 
 // ---------------------------------------------------------------- the window
 function createWindow() {
+  const icon = MAC ? undefined : cachedAppIcon() || undefined; // drawn after ready-to-show when not kept yet
   win = new BrowserWindow({
     width: 960, height: 720, minWidth: 760, minHeight: 560, show: false,
-    title: "Morse", icon: MAC ? undefined : appIcon(),
+    title: "Morse", icon,
     // On a Mac the window is glass, the way Zephium's is: the system's sidebar
     // material under a clear background (ui/app.css, body.mac). Dark only, like the website.
     backgroundColor: MAC ? "#00000000" : "#0a0a0b",
@@ -200,7 +231,11 @@ function createWindow() {
   win.removeMenu?.();
   mark("window");
   win.loadURL(`${PAGE_URL}?platform=${process.platform}`);
-  win.once("ready-to-show", () => { mark("ready-to-show"); if (!startHidden) win.show(); });
+  win.once("ready-to-show", () => {
+    mark("ready-to-show");
+    if (!startHidden) win.show();
+    if (MAC ? !appIconImage : !icon) setIconsLater();
+  });
   collectStartup(win, { quit });
   // Closing the window keeps Morse in the tray; Quit (tray menu, ⌘Q) ends it.
   win.on("close", e => { if (!quitting) { e.preventDefault(); win.hide(); if (MAC) app.dock?.hide(); } });
@@ -302,13 +337,16 @@ function syncOpenShortcut() {
 function changed() {
   clearTimeout(pushTimer);
   syncOpenShortcut();
+  // Changes come in bursts and are pushed together, except until the window
+  // has shown the app list: the first list is pushed at once (start-up).
+  const wait = lastState && !lastState.appsPending ? 120 : 0;
   pushTimer = setTimeout(async () => {
     if (!service) return;
     try { lastState = { ...(await service.state()), update: updater?.status || { phase: "idle" } }; } catch (e) { log("state", e.message); return; }
     if (win && !win.isDestroyed()) win.webContents.send(PUSH, lastState);
     updater?.idle(); // a change may have finished: a downloaded update can install now
     rebuildTray();
-  }, 120);
+  }, wait);
 }
 
 async function quit() {
@@ -363,7 +401,7 @@ app.whenReady().then(async () => {
   mark("app-ready");
   lockSession();
   if (["dark", "light"].includes(process.env.MORSE_DESKTOP_THEME)) nativeTheme.themeSource = process.env.MORSE_DESKTOP_THEME; // screenshots
-  if (MAC) app.dock?.setIcon(appIcon());
+  if (MAC && cachedAppIcon()) app.dock?.setIcon(appIconImage); // else drawn after ready-to-show
   // macOS needs a menu for ⌘Q, ⌘W and copy and paste (the API key field); elsewhere there is none.
   Menu.setApplicationMenu(MAC ? Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }, { role: "windowMenu" }]) : null);
   mark("menu");
@@ -441,10 +479,12 @@ app.whenReady().then(async () => {
   // The page is already loading. The daemon comes up behind it; state() waits
   // (gateService) and then answers without a cold app scan.
   try {
+    const { createService, loadDaemon } = await import("./service.js");
     const daemon = whenPathReady(await loadDaemon(), pathReady);
     service = createService({ daemon, emit: changed, log, iconFor, self: [process.execPath, APPIMAGE] });
     resolveService(service);
     mark("service");
+    const { createNativePicker } = await import("./native-picker.js");
     nativePicker = createNativePicker({
       packaged: app.isPackaged, resourcesPath: process.resourcesPath,
       cacheDir: path.join(app.getPath("userData"), "native-picker"),

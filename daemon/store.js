@@ -244,6 +244,20 @@ export async function writeExport(filename, data) {
   return p;
 }
 
+// The last app scan (Morse Desktop's list): ~/.morse/app-scan.json. Only a
+// head start for the next launch, which shows it while the disk is walked
+// again; a scan from another platform or Morse version is not used.
+const APP_SCAN = path.join(HOME, "app-scan.json");
+export async function loadAppScan({ key = "" } = {}) {
+  try {
+    const v = parseJson(await fs.readFile(APP_SCAN, "utf8"));
+    return v && v.key === key && Array.isArray(v.apps) ? v.apps : null;
+  } catch { return null; }
+}
+export function saveAppScan(apps, { key = "" } = {}) {
+  return queue(APP_SCAN, () => writeAtomic(APP_SCAN, JSON.stringify({ key, apps })));
+}
+
 // God mode's cross-app clipboard: ~/.morse/clipboard.json, newest first, max 20.
 const CLIPBOARD = path.join(HOME, "clipboard.json");
 export async function readClipboard() {
