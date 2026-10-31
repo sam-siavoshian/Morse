@@ -1,8 +1,8 @@
 # Handoff: Measure and cut desktop app cold-start time to first usable window
 
-w-1ytgx6h7-startup-e4 stopped (previous replacement failed to start). w-1ytgx6h7-startup-e5 takes over on branch morrow/1ytgx6h7/startup.
+w-1ytgx6h7-startup-e5 stopped (previous worker stopped). w-1ytgx6h7-startup-e6 takes over on branch morrow/1ytgx6h7/startup.
 
-Last checkpoint: d22dc69549767e831d3eff3281f4304a424e5c1d.
+Last checkpoint: dc275d8b775cf393e6ab2581df32c3b256dde3f9.
 
 ## Requirements
 Goal: make Morse open noticeably faster from launch to an interactive main window, with numbers before and after.
@@ -37,19 +37,26 @@ Whole task: Incress the speed in app, it should be faster to open
 - demo/perf.js
 - demo/perf-lib.js
 
-## Decisions so far (messages from w-1ytgx6h7-startup-e4, newest last)
-- None recorded.
+## Decisions so far (messages from w-1ytgx6h7-startup-e5, newest last)
+- ACK ls-5
+- @h-sam-siavoshian ls-5: may I add 3 start-up tests to tests/desktop-app.test.js (outside my paths)? They cover the cached app scan, store key, and lazy icon/imports. Also: Electron can't launch on this machine (no libnspr4/display), so I can't record the "after" numbers here. Who can run `node demo/perf.js --only startup --runs 7 --label after`?
 
 ## Changed files on the branch
 - .morrow/handoff/ws-startup.md
+- daemon/store.js
 - demo/perf-lib.js
 - demo/perf.js
+- desktop-app/build.js
 - desktop-app/main.js
 - desktop-app/mark.js
+- desktop-app/service.js
 - desktop-app/startup-trace.js
 - desktop-app/ui/app.js
+- docs/perf/startup-after.json
 - docs/perf/startup-before.json
 - docs/perf/startup-probe.json
+- docs/perf/startup.md
+- tests/desktop-app.test.js
 
 ## Outstanding tests
 - Make `npm test` pass.
@@ -60,7 +67,7 @@ Whole task: Incress the speed in app, it should be faster to open
 ## Who is who
 People (Relay names): h-sam-siavoshian. h-sam-siavoshian created this task and decides when a person has to.
 Workstreams:
-- startup: Measure and cut desktop app cold-start time to first usable window (branch morrow/1ytgx6h7/startup, owns desktop-app/**, daemon/**, docs/perf/**, demo/perf.js, demo/perf-lib.js). This is you: w-1ytgx6h7-startup-e5, claude on sam-siavoshian's machine.
+- startup: Measure and cut desktop app cold-start time to first usable window (branch morrow/1ytgx6h7/startup, owns desktop-app/**, daemon/**, docs/perf/**, demo/perf.js, demo/perf-lib.js). This is you: w-1ytgx6h7-startup-e6, codex on sam-siavoshian's machine.
 
 ## If you stop
 Every worker spends a teammate's plan. When a plan hits its usage limit, or a CLI crashes or signs out, Morrow stops that worker, commits and pushes its worktree as a checkpoint, and starts a replacement on another teammate's machine on the same branch. The replacement starts from that checkpoint and a handoff note, so commit working steps often and post decisions in the channel: what is neither committed nor written down is lost. A replacement confirms with ACK <its lease id>.
