@@ -1,6 +1,6 @@
 # Handoff: Measure and cut desktop app cold-start time to first usable window
 
-w-1ytgx6h7-startup-e3 stopped (previous worker stopped). w-1ytgx6h7-startup-e4 takes over on branch morrow/1ytgx6h7/startup.
+w-1ytgx6h7-startup-e4 stopped (previous replacement failed to start). w-1ytgx6h7-startup-e5 takes over on branch morrow/1ytgx6h7/startup.
 
 Last checkpoint: d22dc69549767e831d3eff3281f4304a424e5c1d.
 
@@ -37,8 +37,8 @@ Whole task: Incress the speed in app, it should be faster to open
 - demo/perf.js
 - demo/perf-lib.js
 
-## Decisions so far (messages from w-1ytgx6h7-startup-e3, newest last)
-- ACK ls-3
+## Decisions so far (messages from w-1ytgx6h7-startup-e4, newest last)
+- None recorded.
 
 ## Changed files on the branch
 - .morrow/handoff/ws-startup.md
@@ -60,7 +60,7 @@ Whole task: Incress the speed in app, it should be faster to open
 ## Who is who
 People (Relay names): h-sam-siavoshian. h-sam-siavoshian created this task and decides when a person has to.
 Workstreams:
-- startup: Measure and cut desktop app cold-start time to first usable window (branch morrow/1ytgx6h7/startup, owns desktop-app/**, daemon/**, docs/perf/**, demo/perf.js, demo/perf-lib.js). This is you: w-1ytgx6h7-startup-e4, codex on sam-siavoshian's machine.
+- startup: Measure and cut desktop app cold-start time to first usable window (branch morrow/1ytgx6h7/startup, owns desktop-app/**, daemon/**, docs/perf/**, demo/perf.js, demo/perf-lib.js). This is you: w-1ytgx6h7-startup-e5, claude on sam-siavoshian's machine.
 
 ## If you stop
 Every worker spends a teammate's plan. When a plan hits its usage limit, or a CLI crashes or signs out, Morrow stops that worker, commits and pushes its worktree as a checkpoint, and starts a replacement on another teammate's machine on the same branch. The replacement starts from that checkpoint and a handoff note, so commit working steps often and post decisions in the channel: what is neither committed nor written down is lost. A replacement confirms with ACK <its lease id>.
